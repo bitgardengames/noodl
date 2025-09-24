@@ -18,11 +18,63 @@ local FruitEvents = {}
 
 local DEFAULT_COMBO_WINDOW = 2.25
 
+local TAIL_STREAKS = {
+    { length = 0,  windowAdjust = 0,    comboBonus = 0 },
+    { length = 10, windowAdjust = 0.25, comboBonus = 1, label = "Tail Rhythm I" },
+    { length = 16, windowAdjust = 0.45, comboBonus = 2, label = "Tail Rhythm II" },
+    { length = 24, windowAdjust = 0.7,  comboBonus = 3, label = "Tail Rhythm III" },
+    { length = 32, windowAdjust = 1.0,  comboBonus = 4, label = "Tail Rhythm IV" },
+}
+
 local comboState = {
     count = 0,
     timer = 0,
     window = DEFAULT_COMBO_WINDOW,
+    baseWindow = DEFAULT_COMBO_WINDOW,
+    tailWindowBonus = 0,
+    tailComboBonus = 0,
+    tailLabel = nil,
+    lastTierShown = nil,
 }
+
+local function syncComboToUI()
+    UI:setCombo(
+        comboState.count or 0,
+        comboState.timer or 0,
+        comboState.window or DEFAULT_COMBO_WINDOW,
+        comboState.tailComboBonus or 0,
+        comboState.tailLabel,
+        comboState.tailWindowBonus or 0
+    )
+end
+
+local function evaluateTailAssist(length, fx, fy)
+    local tierIndex = 1
+    for i = 1, #TAIL_STREAKS do
+        if length >= TAIL_STREAKS[i].length then
+            tierIndex = i
+        else
+            break
+        end
+    end
+
+    local tier = TAIL_STREAKS[tierIndex]
+    comboState.tailWindowBonus = tier.windowAdjust or 0
+    comboState.tailComboBonus = tier.comboBonus or 0
+    comboState.tailLabel = tier.label
+
+    local previousTier = comboState.lastTierShown or 1
+    if tier.label and tierIndex > previousTier then
+        comboState.lastTierShown = tierIndex
+        FloatingText:add(tier.label, fx, fy + 20, {0.6, 0.85, 1.0, 1}, 1.4, 60)
+    elseif not comboState.lastTierShown then
+        comboState.lastTierShown = tierIndex
+    end
+
+    local baseWindow = comboState.baseWindow or DEFAULT_COMBO_WINDOW
+    local adjusted = baseWindow + comboState.tailWindowBonus
+    comboState.window = math.max(0.75, adjusted)
+end
 
 local function comboTagline(count)
     if count >= 6 then
@@ -45,27 +97,33 @@ local function applyComboReward(x, y)
         comboState.count = 1
     end
 
-    comboState.timer = comboState.window
+    evaluateTailAssist(Snake:getLength(), x, y)
 
+    comboState.timer = comboState.window
     local comboCount = comboState.count
-    UI:setCombo(comboCount, comboState.timer, comboState.window)
+    syncComboToUI()
 
     if comboCount < 2 then
         return
     end
 
     local burstColor = {1, 0.82, 0.3, 1}
-    local bonus = math.min((comboCount - 1) * 2, 10)
+    local baseBonus = math.min((comboCount - 1) * 2, 10)
+    local tailBonus = (comboState.tailComboBonus or 0) * math.max(comboCount - 1, 0)
+    local totalBonus = baseBonus + tailBonus
 
     FloatingText:add(comboTagline(comboCount), x, y - 32, burstColor, 1.3, 55)
 
-    if bonus > 0 then
-        Score:addBonus(bonus)
-        FloatingText:add("+" .. tostring(bonus) .. " bonus", x, y - 64, {1, 0.95, 0.6, 1}, 1.1, 50)
+    if totalBonus > 0 then
+        Score:addBonus(totalBonus)
+        FloatingText:add("+" .. tostring(totalBonus) .. " bonus", x, y - 64, {1, 0.95, 0.6, 1}, 1.1, 50)
+        if tailBonus > 0 then
+            FloatingText:add("Tail Flow +" .. tostring(tailBonus), x, y - 94, {0.6, 0.85, 1, 1}, 1.2, 55)
+        end
     end
 
     Particles:spawnBurst(x, y, {
-        count = love.math.random(10, 14) + comboCount,
+        count = love.math.random(10, 14) + comboCount + math.floor((comboState.tailComboBonus or 0) * 1.5),
         speed = 90 + comboCount * 12,
         life = 0.6,
         size = 4,
@@ -81,7 +139,12 @@ function FruitEvents.reset()
     comboState.count = 0
     comboState.timer = 0
     comboState.window = DEFAULT_COMBO_WINDOW
-    UI:setCombo(0, 0, comboState.window)
+    comboState.baseWindow = DEFAULT_COMBO_WINDOW
+    comboState.tailWindowBonus = 0
+    comboState.tailComboBonus = 0
+    comboState.tailLabel = nil
+    comboState.lastTierShown = nil
+    syncComboToUI()
 end
 
 function FruitEvents:getComboWindow()
@@ -93,9 +156,10 @@ function FruitEvents:getDefaultComboWindow()
 end
 
 function FruitEvents:setComboWindow(window)
-    comboState.window = math.max(0.5, window or DEFAULT_COMBO_WINDOW)
+    comboState.baseWindow = math.max(0.5, window or DEFAULT_COMBO_WINDOW)
+    comboState.window = math.max(0.75, comboState.baseWindow + (comboState.tailWindowBonus or 0))
     comboState.timer = math.min(comboState.timer or 0, comboState.window)
-    UI:setCombo(comboState.count or 0, comboState.timer, comboState.window)
+    syncComboToUI()
 end
 
 function FruitEvents.update(dt)
@@ -106,7 +170,7 @@ function FruitEvents.update(dt)
             comboState.count = 0
         end
 
-        UI:setCombo(comboState.count, comboState.timer, comboState.window)
+        syncComboToUI()
     end
 end
 

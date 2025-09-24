@@ -25,6 +25,9 @@ UI.combo = {
     duration = 0,
     pop = 0,
     tagline = nil,
+    tailBonus = 0,
+    tailLabel = nil,
+    tailWindowBonus = 0,
 }
 
 -- Button states
@@ -173,6 +176,9 @@ function UI:reset()
     self.combo.duration = 0
     self.combo.pop = 0
     self.combo.tagline = nil
+    self.combo.tailBonus = 0
+    self.combo.tailLabel = nil
+    self.combo.tailWindowBonus = 0
     self.floorModifiers = {}
 end
 
@@ -296,7 +302,7 @@ function UI:update(dt)
     end
 end
 
-function UI:setCombo(count, timer, duration)
+function UI:setCombo(count, timer, duration, tailBonus, tailLabel, tailWindowBonus)
     local combo = self.combo
     local previous = combo.count or 0
 
@@ -308,6 +314,10 @@ function UI:setCombo(count, timer, duration)
     elseif not combo.duration then
         combo.duration = 0
     end
+
+    combo.tailBonus = tailBonus or 0
+    combo.tailLabel = tailLabel
+    combo.tailWindowBonus = tailWindowBonus or 0
 
     if combo.count >= 2 then
         if combo.count > previous then
@@ -345,7 +355,7 @@ local function drawComboIndicator(self)
     local progress = timer / duration
     local screenW = love.graphics.getWidth()
     local width = math.max(220, UI.fonts.button:getWidth("Combo x" .. combo.count) + 120)
-    local height = 58
+    local height = 68
     local x = (screenW - width) / 2
     local y = 16
 
@@ -374,6 +384,24 @@ local function drawComboIndicator(self)
         UI.setFont("small")
         love.graphics.setColor(1, 0.9, 0.65, 0.9)
         love.graphics.printf(combo.tagline, x, y + 30, width, "center")
+    end
+
+    if combo.tailBonus and combo.tailBonus > 0 then
+        UI.setFont("small")
+        love.graphics.setColor(0.65, 0.85, 1, 0.9)
+        local label
+        if combo.tailLabel then
+            label = string.format("%s · +%d Tail Flow", combo.tailLabel, combo.tailBonus)
+        else
+            label = "Tail Flow +" .. tostring(combo.tailBonus)
+        end
+        love.graphics.printf(label, x, y + 44, width, "center")
+    elseif combo.tailWindowBonus and math.abs(combo.tailWindowBonus) > 0.05 then
+        UI.setFont("small")
+        local color = combo.tailWindowBonus > 0 and {0.7, 0.9, 1, 0.75} or {1, 0.6, 0.6, 0.85}
+        love.graphics.setColor(color)
+        local sign = combo.tailWindowBonus > 0 and "+" or ""
+        love.graphics.printf("Window " .. sign .. string.format("%.1fs", combo.tailWindowBonus), x, y + 44, width, "center")
     end
 
     local barPadding = 18
