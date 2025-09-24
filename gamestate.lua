@@ -9,6 +9,16 @@ GameState.transitioning = false
 GameState.transitionDirection = 1 -- 1 = fade out, -1 = fade in
 GameState.pendingData = nil
 
+local transitionBlockedEvents = {
+    mousepressed = true,
+    mousereleased = true,
+    keypressed = true,
+    joystickpressed = true,
+    joystickreleased = true,
+    gamepadpressed = true,
+    gamepadreleased = true,
+}
+
 -- Easing function: cubic ease-in-out (t in [0,1])
 local function easeInOutCubic(t)
     if t < 0.5 then
@@ -42,16 +52,8 @@ local function callCurrentState(self, methodName, ...)
     end
 end
 
-local function processAction(result)
-    if type(result) == "table" and result.state then
-        GameState:switch(result.state, result.data)
-        return nil
-    elseif type(result) == "string" and GameState.states[result] then
-        GameState:switch(result)
-        return nil
-    end
-
-    return result
+local function shouldBlockDuringTransition(eventName)
+    return transitionBlockedEvents[eventName]
 end
 
 function GameState:switch(stateName, data)
@@ -92,8 +94,7 @@ function GameState:update(dt)
         return
     end
 
-    local result = callCurrentState(self, "update", dt)
-    processAction(result)
+    return callCurrentState(self, "update", dt)
 end
 
 function GameState:draw()
@@ -108,39 +109,40 @@ function GameState:draw()
     end
 end
 
+function GameState:dispatch(eventName, ...)
+    if self.transitioning and shouldBlockDuringTransition(eventName) then
+        return
+    end
+
+    return callCurrentState(self, eventName, ...)
+end
+
 function GameState:mousepressed(x, y, button)
-    if self.transitioning then return end
-    return processAction(callCurrentState(self, "mousepressed", x, y, button))
+    return self:dispatch("mousepressed", x, y, button)
 end
 
 function GameState:mousereleased(x, y, button)
-    if self.transitioning then return end
-    return callCurrentState(self, "mousereleased", x, y, button)
+    return self:dispatch("mousereleased", x, y, button)
 end
 
 function GameState:keypressed(key)
-    if self.transitioning then return end
-    return processAction(callCurrentState(self, "keypressed", key))
+    return self:dispatch("keypressed", key)
 end
 
 function GameState:joystickpressed(joystick, button)
-    if self.transitioning then return end
-    return processAction(callCurrentState(self, "joystickpressed", joystick, button))
+    return self:dispatch("joystickpressed", joystick, button)
 end
 
 function GameState:joystickreleased(joystick, button)
-    if self.transitioning then return end
-    return callCurrentState(self, "joystickreleased", joystick, button)
+    return self:dispatch("joystickreleased", joystick, button)
 end
 
 function GameState:gamepadpressed(joystick, button)
-    if self.transitioning then return end
-    return processAction(callCurrentState(self, "gamepadpressed", joystick, button))
+    return self:dispatch("gamepadpressed", joystick, button)
 end
 
 function GameState:gamepadreleased(joystick, button)
-    if self.transitioning then return end
-    return callCurrentState(self, "gamepadreleased", joystick, button)
+    return self:dispatch("gamepadreleased", joystick, button)
 end
 
 return GameState
