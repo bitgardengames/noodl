@@ -4,7 +4,7 @@
 ## 🎮 Game Feel
 - [x] Add floating text for powerups and bonuses
 - [x] Add subtle shake or pop effect when collecting fruit
-- [ ] Add minor camera shake or flash when dying
+- [x] Add minor camera shake or flash when dying
 - [ ] Add sfx/audio cue for achievements popping
 
 ## 🖼️ Visual Polish
