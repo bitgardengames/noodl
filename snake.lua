@@ -8,6 +8,7 @@ local screenW, screenH
 local direction = { x = 1, y = 0 }
 local pendingDir = { x = 1, y = 0 }
 local trail = {}
+local descendingHole = nil
 local segmentCount = 1
 local reverseControls = false
 local popTimer = 0
@@ -66,6 +67,126 @@ local function toCell(x, y)
     return math.floor(x / SEGMENT_SPACING + 0.5), math.floor(y / SEGMENT_SPACING + 0.5)
 end
 
+local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
+    local dx = qx - px
+    local dy = qy - py
+    local fx = px - cx
+    local fy = py - cy
+
+    local a = dx * dx + dy * dy
+    if a == 0 then
+        return nil, nil
+    end
+
+    local b = 2 * (fx * dx + fy * dy)
+    local c = fx * fx + fy * fy - radius * radius
+    local discriminant = b * b - 4 * a * c
+
+    if discriminant < 0 then
+        return nil, nil
+    end
+
+    discriminant = math.sqrt(discriminant)
+    local t1 = (-b - discriminant) / (2 * a)
+    local t2 = (-b + discriminant) / (2 * a)
+
+    local t
+    if t1 >= 0 and t1 <= 1 then
+        t = t1
+    elseif t2 >= 0 and t2 <= 1 then
+        t = t2
+    end
+
+    if not t then
+        return nil, nil
+    end
+
+    return px + t * dx, py + t * dy
+end
+
+local function cloneSegment(seg)
+    local copy = {}
+    for k, v in pairs(seg) do
+        copy[k] = v
+    end
+    return copy
+end
+
+local function trimHoleSegments(hole)
+    if not hole or not trail or #trail == 0 then
+        return
+    end
+
+    local hx, hy = hole.x, hole.y
+    local radius = hole.radius or 0
+    if radius <= 0 then
+        return
+    end
+
+    local radiusSq = radius * radius
+    local consumed = hole.consumedLength or 0
+    local lastInside = nil
+    local removedAny = false
+    local i = 1
+
+    while i <= #trail do
+        local seg = trail[i]
+        local x = seg.drawX
+        local y = seg.drawY
+
+        if not (x and y) then
+            break
+        end
+
+        local dx = x - hx
+        local dy = y - hy
+        if dx * dx + dy * dy <= radiusSq then
+            removedAny = true
+            lastInside = { x = x, y = y, dirX = seg.dirX, dirY = seg.dirY }
+
+            local nextSeg = trail[i + 1]
+            if nextSeg then
+                local nx, ny = nextSeg.drawX, nextSeg.drawY
+                if nx and ny then
+                    local segDx = nx - x
+                    local segDy = ny - y
+                    consumed = consumed + math.sqrt(segDx * segDx + segDy * segDy)
+                end
+            end
+
+            table.remove(trail, i)
+        else
+            break
+        end
+    end
+
+    local newHead = trail[1]
+    if removedAny and newHead and lastInside then
+        local oldDx = newHead.drawX - lastInside.x
+        local oldDy = newHead.drawY - lastInside.y
+        local oldLen = math.sqrt(oldDx * oldDx + oldDy * oldDy)
+        if oldLen > 0 then
+            consumed = consumed - oldLen
+        end
+
+        local ix, iy = findCircleIntersection(lastInside.x, lastInside.y, newHead.drawX, newHead.drawY, hx, hy, radius)
+        if ix and iy then
+            local newDx = ix - lastInside.x
+            local newDy = iy - lastInside.y
+            local newLen = math.sqrt(newDx * newDx + newDy * newDy)
+            consumed = consumed + newLen
+            newHead.drawX = ix
+            newHead.drawY = iy
+        else
+            -- fallback: if no intersection, clamp head to previous inside point
+            newHead.drawX = lastInside.x
+            newHead.drawY = lastInside.y
+        end
+    end
+
+    hole.consumedLength = consumed
+end
+
 -- Build initial trail aligned to CELL CENTERS
 local function buildInitialTrail()
     local t = {}
@@ -95,6 +216,7 @@ function Snake:load(w, h)
     isDead = false
     self.reverseState = false
     trail = buildInitialTrail()
+    descendingHole = nil
 end
 
 function Snake:setReverseControls(state)
@@ -150,7 +272,65 @@ function Snake:drawClipped(hx, hy, hr)
     end
 
     local headX, headY = self:getHead()
-    local clipRadius = (hr or 0) * 0.5
+    local clipRadius = hr or 0
+    local renderTrail = trail
+
+    if clipRadius > 0 then
+        local radiusSq = clipRadius * clipRadius
+        local firstVisible = 1
+
+        while firstVisible <= #trail do
+            local seg = trail[firstVisible]
+            local x = seg.drawX or seg.x
+            local y = seg.drawY or seg.y
+
+            if not (x and y) then
+                break
+            end
+
+            local dx = x - hx
+            local dy = y - hy
+            if dx * dx + dy * dy > radiusSq then
+                break
+            end
+
+            firstVisible = firstVisible + 1
+        end
+
+        if firstVisible > 1 then
+            if firstVisible > #trail then
+                renderTrail = {}
+            else
+                local trimmed = {}
+                local prev = trail[firstVisible - 1]
+                local curr = trail[firstVisible]
+                local px = prev and (prev.drawX or prev.x)
+                local py = prev and (prev.drawY or prev.y)
+                local cx = curr and (curr.drawX or curr.x)
+                local cy = curr and (curr.drawY or curr.y)
+
+                if px and py and cx and cy then
+                    local ix, iy = findCircleIntersection(px, py, cx, cy, hx, hy, clipRadius)
+                    if ix and iy then
+                        trimmed[#trimmed + 1] = {
+                            drawX = ix,
+                            drawY = iy,
+                            dirX = curr.dirX or prev.dirX,
+                            dirY = curr.dirY or prev.dirY
+                        }
+                    end
+                end
+
+                trimmed[#trimmed + 1] = cloneSegment(curr)
+
+                for i = firstVisible + 1, #trail do
+                    trimmed[#trimmed + 1] = cloneSegment(trail[i])
+                end
+
+                renderTrail = trimmed
+            end
+        end
+    end
 
     love.graphics.push("all")
 
@@ -161,7 +341,7 @@ function Snake:drawClipped(hx, hy, hr)
         love.graphics.setStencilTest("equal", 0)
     end
 
-    DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
+    DrawSnake(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
         if headX and headY and clipRadius > 0 then
             local dx = headX - hx
             local dy = headY - hy
@@ -176,12 +356,37 @@ function Snake:drawClipped(hx, hy, hr)
     love.graphics.pop()
 end
 
+function Snake:startDescending(hx, hy, hr)
+    descendingHole = {
+        x = hx,
+        y = hy,
+        radius = hr or 0,
+        consumedLength = 0
+    }
+end
+
+function Snake:finishDescending()
+    descendingHole = nil
+end
+
 function Snake:update(dt)
     if isDead then return false end
 
     -- base speed with upgrades/modifiers
     local head = trail[1]
     local speed = self:getSpeed()
+
+    local hole = descendingHole
+    if hole and head then
+        local dx = hole.x - head.drawX
+        local dy = hole.y - head.drawY
+        local dist = math.sqrt(dx * dx + dy * dy)
+        if dist > 1e-4 then
+            local nx, ny = dx / dist, dy / dist
+            direction = { x = nx, y = ny }
+            pendingDir = { x = nx, y = ny }
+        end
+    end
 
     -- adrenaline boost check
     if self.adrenaline and self.adrenaline.active then
@@ -192,29 +397,35 @@ function Snake:update(dt)
         end
     end
 
-    local newX = head.drawX + direction.x * speed * dt
-    local newY = head.drawY + direction.y * speed * dt
+    local stepX = direction.x * speed * dt
+    local stepY = direction.y * speed * dt
+    local newX = head.drawX + stepX
+    local newY = head.drawY + stepY
 
     -- advance cell clock, maybe snap & commit queued direction
     local snappedThisTick = false
     local moveInterval
-    if speed > 0 then
+    if speed > 0 and not hole then
         moveInterval = SEGMENT_SPACING / speed
     end
 
-    moveTimer = moveTimer + dt
-    local snaps = 0
-    while moveInterval and moveTimer >= moveInterval do
-        moveTimer = moveTimer - moveInterval
-        snaps = snaps + 1
-    end
-    if snaps > 0 then
-        -- snap to the nearest grid center
-        newX = snapToCenter(newX)
-        newY = snapToCenter(newY)
-        -- commit queued direction
-        direction = { x = pendingDir.x, y = pendingDir.y }
-        snappedThisTick = true
+    if hole then
+        moveTimer = 0
+    else
+        moveTimer = moveTimer + dt
+        local snaps = 0
+        while moveInterval and moveTimer >= moveInterval do
+            moveTimer = moveTimer - moveInterval
+            snaps = snaps + 1
+        end
+        if snaps > 0 then
+            -- snap to the nearest grid center
+            newX = snapToCenter(newX)
+            newY = snapToCenter(newY)
+            -- commit queued direction
+            direction = { x = pendingDir.x, y = pendingDir.y }
+            snappedThisTick = true
+        end
     end
 
     -- spatially uniform sampling along the motion path
@@ -248,6 +459,14 @@ function Snake:update(dt)
         trail[1].drawY = newY
     end
 
+    if hole then
+        trimHoleSegments(hole)
+        head = trail[1]
+        if head then
+            newX, newY = head.drawX, head.drawY
+        end
+    end
+
     -- tail trimming
     local tailBeforeX, tailBeforeY = nil, nil
     local len = #trail
@@ -259,7 +478,14 @@ function Snake:update(dt)
         tailBeforeCol, tailBeforeRow = toCell(tailBeforeX, tailBeforeY)
     end
 
-    local maxLen = segmentCount * SEGMENT_SPACING
+    local consumedLength = (hole and hole.consumedLength) or 0
+    local maxLen = math.max(0, segmentCount * SEGMENT_SPACING - consumedLength)
+
+    if maxLen == 0 then
+        trail = {}
+        len = 0
+    end
+
     local traveled = 0
     for i = 2, #trail do
         local dx = trail[i-1].drawX - trail[i].drawX
