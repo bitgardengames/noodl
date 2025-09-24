@@ -95,12 +95,14 @@ end
 function Game:startDescending(holeX, holeY, holeRadius)
     self.state = "descending"
     self.hole = {x = holeX, y = holeY, radius = holeRadius or 24}
+    Snake:startDescending(self.hole.x, self.hole.y, self.hole.radius)
 end
 
 -- start a floor transition
 function Game:startFloorTransition(advance, skipFade)
-	self.state = "transition"
-	self.transitionPhase = "fadeout"   -- new
+        Snake:finishDescending()
+        self.state = "transition"
+        self.transitionPhase = "fadeout"   -- new
 	self.transitionTimer = 0
 	self.transitionDuration = skipFade and 0 or 1.0
 	self.transitionAdvance = advance
@@ -166,6 +168,7 @@ function Game:update(dt)
             local dx, dy = tail.drawX - self.hole.x, tail.drawY - self.hole.y
             local dist = math.sqrt(dx*dx + dy*dy)
             if dist < self.hole.radius then
+                Snake:finishDescending()
                 self:startFloorTransition(true) -- will advance to next floor when finished
             end
         end
