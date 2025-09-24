@@ -97,10 +97,39 @@ local pool = {
         end
     },
     {
-        name = "Rust Spores",
-        desc = "Saw blades spin 50% slower",
+        name = "Gem Maw",
+        desc = "Fruits have a 12% chance to erupt into +5 bonus score",
         apply = function()
-            Saws.spinMult = (Saws.spinMult or 1) * 0.5
+            if Score.addJackpotChance then
+                Score:addJackpotChance(0.12, 5)
+            else
+                Score.jackpotChance = math.min(1, (Score.jackpotChance or 0) + 0.12)
+                Score.jackpotReward = (Score.jackpotReward or 0) + 5
+            end
+        end
+    },
+    {
+        name = "Stonebreaker Hymn",
+        desc = "Each fruit shatters the nearest rock",
+        apply = function()
+            if Rocks.addShatterOnFruit then
+                Rocks:addShatterOnFruit(1)
+            else
+                Rocks.shatterOnFruit = (Rocks.shatterOnFruit or 0) + 1
+            end
+        end
+    },
+    {
+        name = "Echo Aegis",
+        desc = "Crash shields unleash a shockwave that stalls saws",
+        apply = function()
+            if Snake.addShieldBurst then
+                Snake:addShieldBurst({ rocks = 1, stall = 1.5 })
+            else
+                Snake.shieldBurst = Snake.shieldBurst or { rocks = 0, stall = 0 }
+                Snake.shieldBurst.rocks = (Snake.shieldBurst.rocks or 0) + 1
+                Snake.shieldBurst.stall = math.max(Snake.shieldBurst.stall or 0, 1.5)
+            end
         end
     },
 }

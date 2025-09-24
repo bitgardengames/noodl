@@ -1,11 +1,13 @@
 local Particles = require("particles")
 local Theme = require("theme")
 local Arena = require("arena")
+local SnakeUtils = require("snakeutils")
 
 local Rocks = {}
 local current = {}
 
 Rocks.spawnChance = 0.25
+Rocks.shatterOnFruit = 0
 
 local ROCK_SIZE = 24
 local SPAWN_DURATION = 0.3
@@ -33,6 +35,7 @@ local function generateRockShape(size, seed)
 end
 
 function Rocks:spawn(x, y)
+    local col, row = Arena:getTileFromWorld(x, y)
     table.insert(current, {
         x = x,
         y = y,
@@ -44,6 +47,8 @@ function Rocks:spawn(x, y)
         scaleY = 0,
         offsetY = -40,
         shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999)),
+        col = col,
+        row = row,
     })
 end
 
@@ -52,8 +57,73 @@ function Rocks:getAll()
 end
 
 function Rocks:reset()
+    for _, rock in ipairs(current) do
+        releaseOccupancy(rock)
+    end
     current = {}
     self.spawnChance = 0.25
+    self.shatterOnFruit = 0
+end
+
+local function releaseOccupancy(rock)
+    if not rock then return end
+    local col, row = rock.col, rock.row
+    if not col or not row then
+        col, row = Arena:getTileFromWorld(rock.x or 0, rock.y or 0)
+    end
+    if col and row then
+        SnakeUtils.setOccupied(col, row, false)
+    end
+end
+
+local function spawnShatterFX(x, y)
+    Particles:spawnBurst(x, y, {
+        count = love.math.random(8, 12),
+        speed = 70,
+        life = 0.45,
+        size = 4,
+        color = {0.85, 0.75, 0.6, 1},
+        spread = math.pi * 2,
+    })
+end
+
+function Rocks:shatterNearest(x, y, count)
+    count = count or 1
+    if count <= 0 or #current == 0 then return end
+
+    for _ = 1, count do
+        if #current == 0 then break end
+
+        local bestIndex, bestDist = nil, math.huge
+        for i, rock in ipairs(current) do
+            local dx = (rock.x or x) - x
+            local dy = (rock.y or y) - y
+            local dist = dx * dx + dy * dy
+            if dist < bestDist then
+                bestDist = dist
+                bestIndex = i
+            end
+        end
+
+        if not bestIndex then break end
+
+        local shattered = table.remove(current, bestIndex)
+        if shattered then
+            spawnShatterFX(shattered.x, shattered.y)
+            releaseOccupancy(shattered)
+        end
+    end
+end
+
+function Rocks:addShatterOnFruit(count)
+    if not count or count <= 0 then return end
+    self.shatterOnFruit = (self.shatterOnFruit or 0) + count
+end
+
+function Rocks:onFruitCollected(x, y)
+    local count = math.floor(self.shatterOnFruit or 0)
+    if count <= 0 then return end
+    self:shatterNearest(x or 0, y or 0, count)
 end
 
 function Rocks:update(dt)

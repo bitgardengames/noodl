@@ -1,6 +1,8 @@
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local DrawSnake = require("snakedraw")
+local Rocks = require("rocks")
+local Saws = require("saws")
 
 local Snake = {}
 
@@ -25,6 +27,7 @@ Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
 Snake.crashShields = 0 -- crash protection: number of hits the snake can absorb
 Snake.extraGrowth = 0
+Snake.shieldBurst = nil
 
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
@@ -53,9 +56,38 @@ function Snake:resetModifiers()
     self.speedMult    = 1.0
     self.crashShields = 0
     self.extraGrowth  = 0
+    self.shieldBurst  = nil
     if self.adrenaline then
         self.adrenaline.active = false
         self.adrenaline.timer = 0
+    end
+end
+
+function Snake:addShieldBurst(config)
+    config = config or {}
+    self.shieldBurst = self.shieldBurst or { rocks = 0, stall = 0 }
+    local rocks = config.rocks or 0
+    local stall = config.stall or 0
+    if rocks ~= 0 then
+        self.shieldBurst.rocks = (self.shieldBurst.rocks or 0) + rocks
+    end
+    if stall ~= 0 then
+        local current = self.shieldBurst.stall or 0
+        self.shieldBurst.stall = math.max(current, stall)
+    end
+end
+
+function Snake:onShieldConsumed(x, y, cause)
+    if not self.shieldBurst then return end
+
+    local rocksToBreak = math.floor(self.shieldBurst.rocks or 0)
+    if rocksToBreak > 0 and Rocks and Rocks.shatterNearest then
+        Rocks:shatterNearest(x or 0, y or 0, rocksToBreak)
+    end
+
+    local stallDuration = self.shieldBurst.stall or 0
+    if stallDuration > 0 and Saws and Saws.stall then
+        Saws:stall(stallDuration)
     end
 end
 
