@@ -145,31 +145,34 @@ function Snake:getSafeZone(lookahead)
 end
 
 function Snake:drawClipped(hx, hy, hr)
-    local visible = {}
-    for _, seg in ipairs(trail) do
-        local dx, dy = seg.drawX - hx, seg.drawY - hy
-        local dist = math.sqrt(dx*dx + dy*dy)
-
-        if dist < hr then
-            break
-        end
-
-        visible[#visible + 1] = {
-            drawX = seg.drawX,
-            drawY = seg.drawY,
-            dirX = seg.dirX,
-            dirY = seg.dirY
-        }
-    end
-
-    if #visible == 0 then
+    if not trail or #trail == 0 then
         return
     end
 
+    local headX, headY = self:getHead()
+    local clipRadius = (hr or 0) * 0.5
+
     love.graphics.push("all")
-    DrawSnake(visible, math.min(segmentCount, #visible), SEGMENT_SIZE, popTimer, function()
-        return self:getHead()
+
+    if clipRadius > 0 then
+        love.graphics.stencil(function()
+            love.graphics.circle("fill", hx, hy, clipRadius)
+        end, "replace", 1)
+        love.graphics.setStencilTest("equal", 0)
+    end
+
+    DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
+        if headX and headY and clipRadius > 0 then
+            local dx = headX - hx
+            local dy = headY - hy
+            if dx * dx + dy * dy < clipRadius * clipRadius then
+                return nil, nil
+            end
+        end
+        return headX, headY
     end)
+
+    love.graphics.setStencilTest()
     love.graphics.pop()
 end
 
