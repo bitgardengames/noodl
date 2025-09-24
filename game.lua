@@ -114,15 +114,17 @@ end
 function Game:update(dt)
 	--if self.state == "gameover" then return end
 
-	-- pause
-	if self.state == "paused" then
-		PauseMenu:update(dt, true)
-		return
-	else
-		PauseMenu:update(dt, false)
-	end
+        -- pause
+        if self.state == "paused" then
+                PauseMenu:update(dt, true)
+                return
+        else
+                PauseMenu:update(dt, false)
+        end
 
-	if self.state == "transition" then
+        FruitEvents.update(dt)
+
+        if self.state == "transition" then
 		self.transitionTimer = self.transitionTimer + dt
 
 		if self.transitionPhase == "fadeout" then
@@ -215,11 +217,11 @@ function Game:update(dt)
 	Rocks:update(dt)
 	Saws:update(dt)
 	Arena:update(dt)
-	Particles:update(dt)
-	Achievements:update(dt)
-	FloatingText:update(dt)
+        Particles:update(dt)
+        Achievements:update(dt)
+        FloatingText:update(dt)
 
-	if self.state == "dying" then
+        if self.state == "dying" then
 		Death:update(dt)
 		if Death:isFinished() then
 			Achievements:save()
@@ -233,6 +235,8 @@ end
 
 function Game:setupFloor(floorNum)
     self.currentFloorData = Floors[floorNum] or Floors[1]
+
+    FruitEvents.reset()
 
     if self.currentFloorData.palette then
         for k, v in pairs(self.currentFloorData.palette) do
