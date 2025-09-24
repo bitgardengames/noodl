@@ -24,6 +24,7 @@ local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enou
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
 Snake.crashShields = 0 -- crash protection: number of hits the snake can absorb
+Snake.extraGrowth = 0
 
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
@@ -51,6 +52,11 @@ end
 function Snake:resetModifiers()
     self.speedMult    = 1.0
     self.crashShields = 0
+    self.extraGrowth  = 0
+    if self.adrenaline then
+        self.adrenaline.active = false
+        self.adrenaline.timer = 0
+    end
 end
 
 -- >>> Small integration note:
@@ -472,7 +478,8 @@ function Snake:updateReverseState(reversed)
 end
 
 function Snake:grow()
-    segmentCount = segmentCount + 1
+    local bonus = self.extraGrowth or 0
+    segmentCount = segmentCount + 1 + bonus
     popTimer = POP_DURATION
 end
 

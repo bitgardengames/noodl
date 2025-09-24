@@ -1,6 +1,7 @@
 local Snake = require("snake")
 local Rocks = require("rocks")
 local Saws = require("saws")
+local Score = require("score")
 local UI = require("ui")
 
 local Upgrades = {}
@@ -43,6 +44,63 @@ local pool = {
                 duration = 3, -- seconds
                 boost = 1.5 -- 50% faster
             }
+        end
+    },
+    {
+        name = "Stone Whisperer",
+        desc = "Rocks appear far less often after you snack",
+        apply = function()
+            local chance = Rocks.spawnChance or Rocks:getSpawnChance()
+            Rocks.spawnChance = math.max(0.02, chance * 0.6)
+        end
+    },
+    {
+        name = "Tail Trainer",
+        desc = "Gain an extra segment each time you grow",
+        apply = function()
+            Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
+        end
+    },
+    {
+        name = "Lucky Bite",
+        desc = "+1 score every time you eat fruit",
+        apply = function()
+            if Score.addFruitBonus then
+                Score:addFruitBonus(1)
+            else
+                Score.fruitBonus = (Score.fruitBonus or 0) + 1
+            end
+        end
+    },
+    {
+        name = "Momentum Memory",
+        desc = "Adrenaline bursts last 2 seconds longer",
+        apply = function()
+            Snake.adrenaline = Snake.adrenaline or {
+                active = false,
+                timer = 0,
+                duration = 3,
+                boost = 1.5
+            }
+            Snake.adrenaline.duration = Snake.adrenaline.duration + 2
+        end
+    },
+    {
+        name = "Circuit Breaker",
+        desc = "Saw tracks freeze for 2s after each fruit",
+        apply = function()
+            if Saws.setStallOnFruit then
+                Saws:setStallOnFruit(math.max(Saws:getStallOnFruit(), 2))
+            else
+                Saws.stallOnFruit = math.max(Saws.stallOnFruit or 0, 2)
+            end
+        end
+    },
+    {
+        name = "Rust Spores",
+        desc = "Saw blades spin 50% slower",
+        apply = function()
+            Saws.spinMult = (Saws.spinMult or 1) * 0.5
         end
     },
 }
