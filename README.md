@@ -31,6 +31,11 @@
 - [ ] Allow keyboard rebinding or arrow/WASD toggle
 - [x] Add volume sliders instead of just mute toggle
 
+## 🎯 Design & Balance
+- [x] Document why fruit value and tail length matter to the game loop
+- [ ] Prototype fruit streak systems that interact with tail length
+- [ ] Evaluate cosmetic unlocks tied to extreme tail milestones
+
 ## 🏁 Final Touches / Launch Polish
 - [x] Add game version to main menu
 - [ ] Add credits screen (can be simple)
