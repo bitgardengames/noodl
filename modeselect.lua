@@ -3,16 +3,15 @@ local Screen = require("screen")
 local Score = require("score")
 local UI = require("ui")
 local Theme = require("theme")
+local ButtonList = require("buttonlist")
 
 local ModeSelect = {}
 
-local buttons = {}
-local hoveredButton = nil
+local buttonList = ButtonList.new()
 
 function ModeSelect:enter()
     Screen:update()
-
-	UI.buttons = {}
+    UI.clearButtons()
 
     local sw, sh = Screen:get()
     local centerX = sw / 2
@@ -23,84 +22,64 @@ function ModeSelect:enter()
     local x = centerX - buttonWidth / 2
     local y = 160
 
-    buttons = {}
+    local defs = {}
 
     for i, key in ipairs(GameModes.modeList) do
         local mode = GameModes.available[key]
         local isUnlocked = mode.unlocked == true
         local desc = isUnlocked and mode.description or ("Locked — " .. (mode.unlockDescription or "???"))
         local score = Score:getHighScore(key)
-        local id = "mode_" .. key
 
-        -- create local button entry
-        table.insert(buttons, {
-            id = id,
+        defs[#defs + 1] = {
+            id = "mode_" .. key,
             x = x,
             y = y,
             w = buttonWidth,
             h = buttonHeight,
             text = mode.label,
+            action = nil,
             description = desc,
             score = score,
             modeKey = key,
-            hovered = false,
             unlocked = isUnlocked,
-        })
-
-        -- register with UI so hitboxes exist immediately
-        UI.registerButton(id, x, y, buttonWidth, buttonHeight)
+        }
 
         y = y + buttonHeight + spacing
     end
 
-    -- Back button
-    local backId = "modeBack"
-    local backY = y + 10
-
-    table.insert(buttons, {
-        id = backId,
+    defs[#defs + 1] = {
+        id = "modeBack",
         x = x,
-        y = backY,
+        y = y + 10,
         w = 220,
         h = 44,
         text = "Back to Menu",
-        description = "",
+        action = "menu",
         modeKey = "back",
-        hovered = false,
         unlocked = true,
-    })
-    UI.registerButton(backId, x, backY, 220, 44)
+    }
+
+    buttonList:reset(defs)
 end
 
 function ModeSelect:update(dt)
     local mx, my = love.mouse.getPosition()
-    hoveredButton = nil
-
-    for _, btn in ipairs(buttons) do
-        btn.hovered = UI.isHovered(btn.x, btn.y, btn.w, btn.h, mx, my)
-        if btn.hovered then hoveredButton = btn end
-    end
+    buttonList:updateHover(mx, my)
 end
 
 function ModeSelect:draw()
     local sw, sh = Screen:get()
 
-    -- Background
     love.graphics.setColor(Theme.bgColor)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-    -- Title
     love.graphics.setFont(UI.fonts.title)
     love.graphics.setColor(Theme.textColor)
     love.graphics.printf("Select Game Mode", 0, 40, sw, "center")
 
-    -- Buttons
-    for _, btn in ipairs(buttons) do
-        -- Register + draw the button
-        UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
-        UI.drawButton(btn.id)
+    buttonList:draw()
 
-        -- Description
+    for _, btn in buttonList:iter() do
         if btn.description and btn.description ~= "" then
             love.graphics.setFont(UI.fonts.body)
             local descColor = btn.unlocked and Theme.textColor or Theme.lockedCardColor
@@ -108,7 +87,6 @@ function ModeSelect:draw()
             love.graphics.printf(btn.description, btn.x + 20, btn.y + btn.h - 32, btn.w - 40, "left")
         end
 
-        -- Score display
         if btn.unlocked and btn.score and btn.modeKey ~= "back" then
             local scoreText = "High Score: " .. tostring(btn.score)
             love.graphics.setFont(UI.fonts.body)
@@ -120,22 +98,18 @@ function ModeSelect:draw()
 end
 
 function ModeSelect:mousepressed(x, y, button)
-    UI:mousepressed(x, y, button)
+    buttonList:mousepressed(x, y, button)
 end
 
 function ModeSelect:mousereleased(x, y, button)
-    local id = UI:mousereleased(x, y, button)
-    if not id then return end
+    local _, btn = buttonList:mousereleased(x, y, button)
+    if not btn then return end
 
-    for _, btn in ipairs(buttons) do
-        if btn.id == id then
-            if btn.modeKey == "back" then
-                return "menu"
-            elseif btn.unlocked then
-                GameModes:set(btn.modeKey)
-                return "game"
-            end
-        end
+    if btn.modeKey == "back" then
+        return "menu"
+    elseif btn.unlocked then
+        GameModes:set(btn.modeKey)
+        return "game"
     end
 end
 

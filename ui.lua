@@ -20,6 +20,10 @@ UI.goalCelebrated = false
 -- Button states
 UI.buttons = {}
 
+function UI.clearButtons()
+    UI.buttons = {}
+end
+
 -- Fonts
 UI.fonts = {
     title      = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 72),
@@ -148,30 +152,6 @@ function UI:mousereleased(x, y, button)
             end
         end
     end
-end
-
--- Label
-function UI.drawLabel(text, x, y, font, align)
-    font = font or "body"
-    align = align or "left"
-    UI.setFont(font)
-    love.graphics.setColor(Theme.textColor)
-    love.graphics.printf(text, x, y, love.graphics.getWidth(), align)
-end
-
--- Panel
-function UI.drawPanel(x, y, w, h)
-    local s = UI.spacing
-
-    love.graphics.setColor(Theme.shadowColor)
-    UI.drawRoundedRect(x + s.shadowOffset, y + s.shadowOffset, w, h, s.panelRadius)
-
-    love.graphics.setColor(Theme.panelColor)
-    UI.drawRoundedRect(x, y, w, h, s.panelRadius)
-
-    love.graphics.setColor(Theme.panelBorder)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, w, h, s.panelRadius)
 end
 
 -- Score pulse logic
