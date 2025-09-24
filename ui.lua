@@ -17,6 +17,8 @@ UI.socketSize = 26
 UI.goalReachedAnim = 0
 UI.goalCelebrated = false
 
+UI.floorModifiers = {}
+
 UI.combo = {
     count = 0,
     timer = 0,
@@ -171,6 +173,7 @@ function UI:reset()
     self.combo.duration = 0
     self.combo.pop = 0
     self.combo.tagline = nil
+    self.floorModifiers = {}
 end
 
 function UI:triggerScorePulse()
@@ -181,7 +184,7 @@ end
 function UI:setFruitGoal(required)
     self.fruitRequired = required
     self.fruitCollected = 0
-	self.fruitSockets = {} -- clear collected fruit sockets each floor
+        self.fruitSockets = {} -- clear collected fruit sockets each floor
 end
 
 function UI:getFruitGoal(required)
@@ -190,6 +193,49 @@ end
 
 function UI:addFruit()
     self.fruitCollected = math.min(self.fruitCollected + 1, self.fruitRequired)
+end
+
+function UI:setFloorModifiers(modifiers)
+    if type(modifiers) == "table" then
+        self.floorModifiers = modifiers
+    else
+        self.floorModifiers = {}
+    end
+end
+
+function UI:drawFloorModifiers()
+    local modifiers = self.floorModifiers
+    if not modifiers or #modifiers == 0 then return end
+
+    local margin = 20
+    local width = 280
+    local x = love.graphics.getWidth() - width - margin
+    local y = margin
+
+    local lineHeight = UI.fonts.body:getHeight()
+    local height = 56 + (#modifiers * (lineHeight * 2))
+
+    love.graphics.setColor(Theme.panelColor)
+    love.graphics.rectangle("fill", x, y, width, height, 12, 12)
+
+    love.graphics.setColor(Theme.panelBorder)
+    love.graphics.setLineWidth(3)
+    love.graphics.rectangle("line", x, y, width, height, 12, 12)
+
+    love.graphics.setColor(Theme.textColor)
+    UI.setFont("button")
+    love.graphics.printf("Floor Traits", x + 16, y + 16, width - 32, "left")
+
+    UI.setFont("body")
+    local textY = y + 48
+    for _, trait in ipairs(modifiers) do
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.printf(trait.name, x + 16, textY, width - 32, "left")
+        textY = textY + lineHeight
+        love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75)
+        love.graphics.printf(trait.desc, x + 16, textY, width - 32, "left")
+        textY = textY + lineHeight + 8
+    end
 end
 
 function UI:isGoalReached()
@@ -450,6 +496,8 @@ function UI:draw()
             200, "left"
         )
     end
+
+    self:drawFloorModifiers()
 end
 
 return UI

@@ -24,14 +24,15 @@ local Floors = {
 	[1] = {
 		name = "Verdant Garden",
 		flavor = "The sun is warm, the air sweet with life.",
-		palette = {
-			bgColor     = {0.20, 0.28, 0.20, 1}, -- darker forest green backdrop
-			arenaBG     = {0.42, 0.62, 0.35, 1}, -- still bright, grassy playfield
-			arenaBorder = {0.55, 0.75, 0.4, 1},  -- leafy, slightly lighter edge
-			snake       = {0.12, 0.9, 0.48, 1},  -- vivid spring green snake
-			rock        = {0.68, 0.58, 0.42, 1}, -- warm tan stone
-		}
-	},
+                palette = {
+                        bgColor     = {0.20, 0.28, 0.20, 1}, -- darker forest green backdrop
+                        arenaBG     = {0.42, 0.62, 0.35, 1}, -- still bright, grassy playfield
+                        arenaBorder = {0.55, 0.75, 0.4, 1},  -- leafy, slightly lighter edge
+                        snake       = {0.12, 0.9, 0.48, 1},  -- vivid spring green snake
+                        rock        = {0.68, 0.58, 0.42, 1}, -- warm tan stone
+                },
+                traits = {"lushGrowth"},
+        },
     [2] = {
         name = "Echoing Caverns",
         flavor = "The air cools; faint echoes linger in the dark.",
@@ -41,7 +42,8 @@ local Floors = {
             arenaBorder= {0.2, 0.28, 0.42, 1},  -- cool blue edge
             snake      = {0.6, 0.65, 0.7, 1},   -- pale stone
             rock       = {0.25, 0.28, 0.32, 1}, -- sheen
-        }
+        },
+        traits = {"restlessEarth"},
     },
     [3] = {
         name = "Mushroom Grotto",
@@ -53,7 +55,8 @@ local Floors = {
             snake      = {0.45, 0.95, 0.75, 1}, -- neon cyan-green
             rock       = {0.25, 0.2, 0.3, 1},   -- fungus stone
             sawColor   = {0.85, 0.6, 0.9, 1},   -- bright fungal pink-pop
-        }
+        },
+        traits = {"glowingSpores"},
     },
     [4] = {
         name = "Ancient Ruins",
@@ -65,7 +68,8 @@ local Floors = {
             snake      = {0.95, 0.85, 0.55, 1}, -- faded gold
             rock       = {0.3, 0.25, 0.2, 1},   -- collapsed stone
             sawColor   = {0.7, 0.7, 0.75, 1},   -- pale tarnished steel
-        }
+        },
+        traits = {"ancientMachinery"},
     },
     [5] = {
         name = "Crystal Hollows",
@@ -77,7 +81,8 @@ local Floors = {
             snake      = {0.75, 0.9, 1.0, 1},   -- icy shine
             rock       = {0.3, 0.35, 0.5, 1},   -- tinted crystal gray
             sawColor   = {0.65, 0.85, 1.0, 1},  -- crystalline edges
-        }
+        },
+        traits = {"crystallineResonance"},
     },
     [6] = {
         name = "The Abyss",
@@ -89,7 +94,8 @@ local Floors = {
             snake      = {0.7, 0.35, 0.85, 1},  -- glowing violet
             rock       = {0.08, 0.1, 0.14, 1},  -- deep obsidian
             sawColor   = {0.55, 0.25, 0.6, 1},  -- eerie violet shimmer
-        }
+        },
+        traits = {"echoingStillness", "restlessEarth"},
     },
     [7] = {
         name = "Inferno Gates",
@@ -101,7 +107,8 @@ local Floors = {
             snake      = {1.0, 0.55, 0.25, 1},  -- ember orange
             rock       = {0.35, 0.15, 0.1, 1},  -- brimstone
             sawColor   = {1.0, 0.25, 0.25, 1},  -- glowing hot red
-        }
+        },
+        traits = {"infernalPressure"},
     },
     [8] = {
         name = "The Underworld",
@@ -113,7 +120,8 @@ local Floors = {
             snake      = {0.9, 0.15, 0.25, 1},  -- crimson glow
             rock       = {0.18, 0.15, 0.15, 1}, -- ashstone
             sawColor   = {1.0, 0.1, 0.2, 1},    -- hellsteel
-        }
+        },
+        traits = {"ashenTithe", "glowingSpores"},
     },
 }
 
