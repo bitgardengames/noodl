@@ -160,7 +160,8 @@ function Game:update(dt)
         Snake:update(dt)
 
         -- check tail position
-        local tail = Snake:getSegments()[#Snake:getSegments()]
+        local segments = Snake:getSegments()
+        local tail = segments[#segments]
         if tail then
             local dx, dy = tail.drawX - self.hole.x, tail.drawY - self.hole.y
             local dist = math.sqrt(dx*dx + dy*dy)
