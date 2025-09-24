@@ -28,9 +28,36 @@ local function getTransitionAlpha(t, direction)
     end
 end
 
+local function getCurrentState(self)
+    return self.states[self.current]
+end
+
+local function callCurrentState(self, methodName, ...)
+    local state = getCurrentState(self)
+    if state then
+        local handler = state[methodName]
+        if handler then
+            return handler(state, ...)
+        end
+    end
+end
+
+local function processAction(result)
+    if type(result) == "table" and result.state then
+        GameState:switch(result.state, result.data)
+        return nil
+    elseif type(result) == "string" and GameState.states[result] then
+        GameState:switch(result)
+        return nil
+    end
+
+    return result
+end
+
 function GameState:switch(stateName, data)
-    if self.current and self.states[self.current].leave then
-        self.states[self.current]:leave()
+    local currentState = getCurrentState(self)
+    if currentState and currentState.leave then
+        currentState:leave()
     end
 
     self.next = stateName
@@ -38,14 +65,6 @@ function GameState:switch(stateName, data)
     self.transitioning = true
     self.transitionDirection = 1
     self.transitionTime = 0
-end
-
-local handleAction = function(result)
-	if type(result) == "string" then
-		GameState:switch(result)
-	elseif type(result) == "table" and result.state then
-		GameState:switch(result.state, result.data)
-	end
 end
 
 function GameState:update(dt)
@@ -59,8 +78,9 @@ function GameState:update(dt)
             self.current = self.next
             self.next = nil
 
-            if self.states[self.current] and self.states[self.current].enter then
-                self.states[self.current]:enter(self.pendingData)
+            local nextState = getCurrentState(self)
+            if nextState and nextState.enter then
+                nextState:enter(self.pendingData)
             end
 
             self.pendingData = nil
@@ -72,17 +92,12 @@ function GameState:update(dt)
         return
     end
 
-    if self.current and self.states[self.current].update then
-        local result = self.states[self.current]:update(dt)
-
-		handleAction(result)
-    end
+    local result = callCurrentState(self, "update", dt)
+    processAction(result)
 end
 
 function GameState:draw()
-    if self.current and self.states[self.current].draw then
-        self.states[self.current]:draw()
-    end
+    callCurrentState(self, "draw")
 
     -- Fade overlay with easing
     if self.transitioning then
@@ -95,43 +110,37 @@ end
 
 function GameState:mousepressed(x, y, button)
     if self.transitioning then return end
-    if self.current and self.states[self.current].mousepressed then
-        return self.states[self.current]:mousepressed(x, y, button)
-    end
+    return processAction(callCurrentState(self, "mousepressed", x, y, button))
 end
 
 function GameState:mousereleased(x, y, button)
     if self.transitioning then return end
-    if self.current and self.states[self.current].mousereleased then
-        return self.states[self.current]:mousereleased(x, y, button)
-    end
+    return callCurrentState(self, "mousereleased", x, y, button)
 end
 
 function GameState:keypressed(key)
     if self.transitioning then return end
-    if self.current and self.states[self.current].keypressed then
-        local result = self.states[self.current]:keypressed(key)
+    return processAction(callCurrentState(self, "keypressed", key))
+end
 
-		handleAction(result)
-    end
+function GameState:joystickpressed(joystick, button)
+    if self.transitioning then return end
+    return processAction(callCurrentState(self, "joystickpressed", joystick, button))
+end
+
+function GameState:joystickreleased(joystick, button)
+    if self.transitioning then return end
+    return callCurrentState(self, "joystickreleased", joystick, button)
 end
 
 function GameState:gamepadpressed(joystick, button)
     if self.transitioning then return end
-    if self.current and self.states[self.current].gamepadpressed then
-        local result = self.states[self.current]:gamepadpressed(joystick, button)
-
-		handleAction(result)
-
-        return result
-    end
+    return processAction(callCurrentState(self, "gamepadpressed", joystick, button))
 end
 
 function GameState:gamepadreleased(joystick, button)
     if self.transitioning then return end
-    if self.current and self.states[self.current].gamepadreleased then
-        return self.states[self.current]:gamepadreleased(joystick, button)
-    end
+    return callCurrentState(self, "gamepadreleased", joystick, button)
 end
 
 return GameState
