@@ -15,12 +15,10 @@ local isDead = false
 
 local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
 local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING
-local MOVE_INTERVAL = 0.1 -- seconds per grid cell
 local moveTimer = 0
 local POP_DURATION = SnakeUtils.POP_DURATION
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
-local headResidue = 0                       -- leftover distance not yet emitted as a node
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
@@ -115,16 +113,25 @@ end
 
 function Snake:getHead()
     local head = trail[1]
+    if not head then
+        return nil, nil
+    end
     return head.drawX, head.drawY
 end
 
 function Snake:getHeadCell()
-    local hx, hy = trail[1].drawX, trail[1].drawY
+    local hx, hy = self:getHead()
+    if not (hx and hy) then
+        return nil, nil
+    end
     return toCell(hx, hy)
 end
 
 function Snake:getSafeZone(lookahead)
     local hx, hy = self:getHeadCell()
+    if not (hx and hy) then
+        return {}
+    end
     local dir = self:getDirection()
     local cells = {}
 
@@ -138,25 +145,32 @@ function Snake:getSafeZone(lookahead)
 end
 
 function Snake:drawClipped(hx, hy, hr)
-    local segments = self:getSegments()
-    if not segments then return end
-
-    for i, seg in ipairs(segments) do
+    local visible = {}
+    for _, seg in ipairs(trail) do
         local dx, dy = seg.drawX - hx, seg.drawY - hy
         local dist = math.sqrt(dx*dx + dy*dy)
 
-        -- stop drawing once this segment is inside the hole
         if dist < hr then
             break
         end
 
-        -- use your normal snake drawing code for consistency
-        love.graphics.push("all")
-        DrawSnake({seg}, 1, SEGMENT_SIZE, 0, function()
-            return self:getHead()
-        end)
-        love.graphics.pop()
+        visible[#visible + 1] = {
+            drawX = seg.drawX,
+            drawY = seg.drawY,
+            dirX = seg.dirX,
+            dirY = seg.dirY
+        }
     end
+
+    if #visible == 0 then
+        return
+    end
+
+    love.graphics.push("all")
+    DrawSnake(visible, math.min(segmentCount, #visible), SEGMENT_SIZE, popTimer, function()
+        return self:getHead()
+    end)
+    love.graphics.pop()
 end
 
 function Snake:update(dt)
@@ -180,9 +194,18 @@ function Snake:update(dt)
 
     -- advance cell clock, maybe snap & commit queued direction
     local snappedThisTick = false
+    local moveInterval
+    if speed > 0 then
+        moveInterval = SEGMENT_SPACING / speed
+    end
+
     moveTimer = moveTimer + dt
-    if moveTimer >= MOVE_INTERVAL then
-        moveTimer = moveTimer - MOVE_INTERVAL
+    local snaps = 0
+    while moveInterval and moveTimer >= moveInterval do
+        moveTimer = moveTimer - moveInterval
+        snaps = snaps + 1
+    end
+    if snaps > 0 then
         -- snap to the nearest grid center
         newX = snapToCenter(newX)
         newY = snapToCenter(newY)
@@ -223,10 +246,10 @@ function Snake:update(dt)
     end
 
     -- tail trimming
-    local lenBeforeTrim = #trail
     local tailBeforeX, tailBeforeY = nil, nil
-    if lenBeforeTrim > 0 then
-        tailBeforeX, tailBeforeY = trail[lenBeforeTrim].drawX, trail[lenBeforeTrim].drawY
+    local len = #trail
+    if len > 0 then
+        tailBeforeX, tailBeforeY = trail[len].drawX, trail[len].drawY
     end
     local tailBeforeCol, tailBeforeRow
     if tailBeforeX and tailBeforeY then
@@ -257,12 +280,10 @@ function Snake:update(dt)
         end
     end
 
-    local tailMoved = (#trail < lenBeforeTrim)
-
     -- collision with self (grid-cell based, only at snap ticks)
-	if snappedThisTick then
-		local hx, hy = trail[1].drawX, trail[1].drawY
-		local headCol, headRow = toCell(hx, hy)
+        if snappedThisTick then
+                local hx, hy = trail[1].drawX, trail[1].drawY
+                local headCol, headRow = toCell(hx, hy)
 
 		-- Don’t check the first ~1 segment of body behind the head (neck).
 		-- Compute by *distance*, not “skip N nodes”.
@@ -345,7 +366,17 @@ function Snake:resetPosition()
 end
 
 function Snake:getSegments()
-    return trail
+    local copy = {}
+    for i = 1, #trail do
+        local seg = trail[i]
+        copy[i] = {
+            drawX = seg.drawX,
+            drawY = seg.drawY,
+            dirX = seg.dirX,
+            dirY = seg.dirY
+        }
+    end
+    return copy
 end
 
 function Snake:isDead()

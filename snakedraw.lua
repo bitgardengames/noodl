@@ -1,10 +1,6 @@
 local Face = require("face")
 local Theme = require("theme")
 
-local faceTexture = love.graphics.newImage("Assets/faceBlank.png")
-local bodyTexture = love.graphics.newImage("Assets/SnakeBodyDesaturated.png")
-bodyTexture:setWrap("repeat", "repeat")
-
 local unpack = unpack
 
 -- tweakables
@@ -14,7 +10,6 @@ local OUTLINE_SIZE   = 6
 
 -- colors (body color reused for patches so they blend)
 local BODY_R, BODY_G, BODY_B = Theme.snakeDefault
-local TINT_ALPHA = 0.1
 
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
@@ -97,65 +92,76 @@ local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
 end
 
 local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead)
-  if not trail or #trail < 2 then return end
+  if not trail or #trail == 0 then return end
 
   --local thickness = SEGMENT_SIZE * 0.75
   local thickness = SEGMENT_SIZE * 0.8
   local half      = thickness / 2
 
   local coords = buildCoords(trail)
-  if #coords < 4 then return end
-
   local head = trail[1]
   local tail = trail[#trail]
 
   love.graphics.setLineStyle("smooth")
   love.graphics.setLineJoin("bevel") -- or "bevel" if you prefer fewer spikes
 
-  -- render into a canvas once
-  local ww, hh = love.graphics.getDimensions()
-  if not snakeCanvas or snakeCanvas:getWidth() ~= ww or snakeCanvas:getHeight() ~= hh then
-    snakeCanvas = love.graphics.newCanvas(ww, hh, {msaa = 8})
+  local hx, hy
+  if getHead then
+    hx, hy = getHead()
+  end
+  if not (hx and hy) then
+    hx, hy = ptXY(head)
   end
 
-  love.graphics.setCanvas(snakeCanvas)
-  love.graphics.clear(0,0,0,0)
-  renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
-  love.graphics.setCanvas()
+  if #coords >= 4 then
+    -- render into a canvas once
+    local ww, hh = love.graphics.getDimensions()
+    if not snakeCanvas or snakeCanvas:getWidth() ~= ww or snakeCanvas:getHeight() ~= hh then
+      snakeCanvas = love.graphics.newCanvas(ww, hh, {msaa = 8})
+    end
 
-  -- single-pass drop shadow
-  love.graphics.setColor(0,0,0,0.25)
-  love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
+    love.graphics.setCanvas(snakeCanvas)
+    love.graphics.clear(0,0,0,0)
+    renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
+    love.graphics.setCanvas()
 
-  -- snake
-  love.graphics.setColor(1,1,1,1)
-  love.graphics.draw(snakeCanvas, 0, 0)
+    -- single-pass drop shadow
+    love.graphics.setColor(0,0,0,0.25)
+    love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
 
-	if head and head.drawX then
-		local hx, hy = getHead()
-		if hx and hy then
-			local faceTexture = Face:getTexture()
-			local faceScale = 1
-			local ox = faceTexture:getWidth() / 2
-			local oy = faceTexture:getHeight() / 2
+    -- snake
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.draw(snakeCanvas, 0, 0)
+  elseif hx and hy then
+    -- fallback: draw a simple disk when only the head is visible
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.setLineWidth(OUTLINE_SIZE)
+    love.graphics.circle("line", hx, hy, half + OUTLINE_SIZE * 0.5)
+    love.graphics.setColor(BODY_R, BODY_G, BODY_B)
+    love.graphics.circle("fill", hx, hy, half)
+  end
 
-			love.graphics.setColor(1, 1, 1, 1)
-			love.graphics.draw(faceTexture, hx, hy, 0, faceScale, faceScale, ox, oy)
-		end
-	end
+  if hx and hy then
+    local faceTexture = Face:getTexture()
+    local faceScale = 1
+    local ox = faceTexture:getWidth() / 2
+    local oy = faceTexture:getHeight() / 2
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(faceTexture, hx, hy, 0, faceScale, faceScale, ox, oy)
+  end
 
   -- POP EFFECT
-  if popTimer and popTimer > 0 then
+  if popTimer and popTimer > 0 and hx and hy then
     local t = 1 - (popTimer / POP_DURATION)
     if t < 1 then
       local pulse = 0.8 + 0.4 * math.sin(t * math.pi)
-      local px, py = hx, hy
-      if px and py then
-        love.graphics.setColor(1, 1, 1, 0.4)
-        love.graphics.circle("fill", px, py, thickness * 0.6 * pulse)
-      end
+      love.graphics.setColor(1, 1, 1, 0.4)
+      love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
     end
   end
+
+  love.graphics.setColor(1, 1, 1, 1)
 end
 
 return drawSnake
