@@ -66,6 +66,43 @@ local function toCell(x, y)
     return math.floor(x / SEGMENT_SPACING + 0.5), math.floor(y / SEGMENT_SPACING + 0.5)
 end
 
+local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
+    local dx = qx - px
+    local dy = qy - py
+    local fx = px - cx
+    local fy = py - cy
+
+    local a = dx * dx + dy * dy
+    if a == 0 then
+        return nil, nil
+    end
+
+    local b = 2 * (fx * dx + fy * dy)
+    local c = fx * fx + fy * fy - radius * radius
+    local discriminant = b * b - 4 * a * c
+
+    if discriminant < 0 then
+        return nil, nil
+    end
+
+    discriminant = math.sqrt(discriminant)
+    local t1 = (-b - discriminant) / (2 * a)
+    local t2 = (-b + discriminant) / (2 * a)
+
+    local t
+    if t1 >= 0 and t1 <= 1 then
+        t = t1
+    elseif t2 >= 0 and t2 <= 1 then
+        t = t2
+    end
+
+    if not t then
+        return nil, nil
+    end
+
+    return px + t * dx, py + t * dy
+end
+
 -- Build initial trail aligned to CELL CENTERS
 local function buildInitialTrail()
     local t = {}
@@ -150,7 +187,42 @@ function Snake:drawClipped(hx, hy, hr)
     end
 
     local headX, headY = self:getHead()
-    local clipRadius = (hr or 0) * 0.5
+    local clipRadius = hr or 0
+    local renderTrail = trail
+
+    if clipRadius > 0 then
+        local radiusSq = clipRadius * clipRadius
+        local trimmed = {}
+
+        for i = 1, #trail do
+            local seg = trail[i]
+            local x = seg.drawX or seg.x
+            local y = seg.drawY or seg.y
+
+            if x and y then
+                local dx = x - hx
+                local dy = y - hy
+                if dx * dx + dy * dy <= radiusSq then
+                    if i > 1 then
+                        local prev = trail[i - 1]
+                        local px = prev.drawX or prev.x
+                        local py = prev.drawY or prev.y
+                        if px and py then
+                            local ix, iy = findCircleIntersection(px, py, x, y, hx, hy, clipRadius)
+                            if ix and iy then
+                                trimmed[#trimmed + 1] = { drawX = ix, drawY = iy }
+                            end
+                        end
+                    end
+                    renderTrail = trimmed
+                    break
+                end
+            end
+
+            trimmed[#trimmed + 1] = seg
+            renderTrail = trimmed
+        end
+    end
 
     love.graphics.push("all")
 
@@ -161,7 +233,7 @@ function Snake:drawClipped(hx, hy, hr)
         love.graphics.setStencilTest("equal", 0)
     end
 
-    DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
+    DrawSnake(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
         if headX and headY and clipRadius > 0 then
             local dx = headX - hx
             local dy = headY - hy
