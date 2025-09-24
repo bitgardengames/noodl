@@ -8,6 +8,7 @@ local screenW, screenH
 local direction = { x = 1, y = 0 }
 local pendingDir = { x = 1, y = 0 }
 local trail = {}
+local descendingHole = nil
 local segmentCount = 1
 local reverseControls = false
 local popTimer = 0
@@ -132,6 +133,7 @@ function Snake:load(w, h)
     isDead = false
     self.reverseState = false
     trail = buildInitialTrail()
+    descendingHole = nil
 end
 
 function Snake:setReverseControls(state)
@@ -248,12 +250,36 @@ function Snake:drawClipped(hx, hy, hr)
     love.graphics.pop()
 end
 
+function Snake:startDescending(hx, hy, hr)
+    descendingHole = {
+        x = hx,
+        y = hy,
+        radius = hr or 0
+    }
+end
+
+function Snake:finishDescending()
+    descendingHole = nil
+end
+
 function Snake:update(dt)
     if isDead then return false end
 
     -- base speed with upgrades/modifiers
     local head = trail[1]
     local speed = self:getSpeed()
+
+    local hole = descendingHole
+    if hole and head then
+        local dx = hole.x - head.drawX
+        local dy = hole.y - head.drawY
+        local dist = math.sqrt(dx * dx + dy * dy)
+        if dist > 1e-4 then
+            local nx, ny = dx / dist, dy / dist
+            direction = { x = nx, y = ny }
+            pendingDir = { x = nx, y = ny }
+        end
+    end
 
     -- adrenaline boost check
     if self.adrenaline and self.adrenaline.active then
@@ -264,29 +290,35 @@ function Snake:update(dt)
         end
     end
 
-    local newX = head.drawX + direction.x * speed * dt
-    local newY = head.drawY + direction.y * speed * dt
+    local stepX = direction.x * speed * dt
+    local stepY = direction.y * speed * dt
+    local newX = head.drawX + stepX
+    local newY = head.drawY + stepY
 
     -- advance cell clock, maybe snap & commit queued direction
     local snappedThisTick = false
     local moveInterval
-    if speed > 0 then
+    if speed > 0 and not hole then
         moveInterval = SEGMENT_SPACING / speed
     end
 
-    moveTimer = moveTimer + dt
-    local snaps = 0
-    while moveInterval and moveTimer >= moveInterval do
-        moveTimer = moveTimer - moveInterval
-        snaps = snaps + 1
-    end
-    if snaps > 0 then
-        -- snap to the nearest grid center
-        newX = snapToCenter(newX)
-        newY = snapToCenter(newY)
-        -- commit queued direction
-        direction = { x = pendingDir.x, y = pendingDir.y }
-        snappedThisTick = true
+    if hole then
+        moveTimer = 0
+    else
+        moveTimer = moveTimer + dt
+        local snaps = 0
+        while moveInterval and moveTimer >= moveInterval do
+            moveTimer = moveTimer - moveInterval
+            snaps = snaps + 1
+        end
+        if snaps > 0 then
+            -- snap to the nearest grid center
+            newX = snapToCenter(newX)
+            newY = snapToCenter(newY)
+            -- commit queued direction
+            direction = { x = pendingDir.x, y = pendingDir.y }
+            snappedThisTick = true
+        end
     end
 
     -- spatially uniform sampling along the motion path
