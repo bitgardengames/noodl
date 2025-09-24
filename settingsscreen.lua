@@ -30,7 +30,7 @@ function SettingsScreen:enter()
     local startY = sh / 2 - totalHeight / 2
 
     -- reset UI.buttons so we don’t keep stale hitboxes
-    UI.buttons = {}
+    UI.clearButtons()
     buttons = {}
 
     for i, opt in ipairs(options) do

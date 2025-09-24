@@ -3,6 +3,7 @@ local SessionStats = require("sessionstats")
 local Audio = require("audio")
 local Theme = require("theme")
 local UI = require("ui")
+local ButtonList = require("buttonlist")
 
 local GameOver = {}
 
@@ -58,7 +59,7 @@ local deathMessages = {
 local fontLarge
 local fontSmall
 local stats = {}
-local buttons = {}
+local buttonList = ButtonList.new()
 
 -- Layout constants
 local BUTTON_WIDTH = 250
@@ -72,9 +73,9 @@ local buttonDefs = {
 }
 
 function GameOver:enter(data)
-	UI.buttons = {}
+    UI.clearButtons()
 
-	data = data or {cause = "unknown"}
+    data = data or {cause = "unknown"}
 
     Audio:playMusic("scorescreen")
     Screen:update()
@@ -113,10 +114,10 @@ function GameOver:enter(data)
     local startY = math.floor(sh * 0.55)
     local centerX = sw / 2 - BUTTON_WIDTH / 2
 
-    buttons = {}
+    local defs = {}
     for i, def in ipairs(buttonDefs) do
         local y = startY + (i - 1) * (BUTTON_HEIGHT + BUTTON_SPACING)
-        buttons[#buttons + 1] = {
+        defs[#defs + 1] = {
             id = def.id,
             text = def.text,
             action = def.action,
@@ -124,9 +125,10 @@ function GameOver:enter(data)
             y = y,
             w = BUTTON_WIDTH,
             h = BUTTON_HEIGHT,
-            hovered = false,
         }
     end
+
+    buttonList:reset(defs)
 end
 
 function GameOver:draw()
@@ -158,26 +160,17 @@ function GameOver:draw()
 	love.graphics.setColor(1, 0.8, 0.8) -- light red/pink for flavor
 	love.graphics.printf(self.deathMessage, 0, y + #statLines * lineHeight + 20, sw, "center")
 
-    -- Buttons (register + draw)
-    for _, btn in ipairs(buttons) do
-        UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
-        UI.drawButton(btn.id)
-    end
+    -- Buttons
+    buttonList:draw()
 end
 
 function GameOver:mousepressed(x, y, button)
-    UI:mousepressed(x, y, button)
+    buttonList:mousepressed(x, y, button)
 end
 
 function GameOver:mousereleased(x, y, button)
-    local id = UI:mousereleased(x, y, button)
-    if id then
-        for _, btn in ipairs(buttons) do
-            if btn.id == id then
-                return btn.action
-            end
-        end
-    end
+    local action = buttonList:mousereleased(x, y, button)
+    return action
 end
 
 return GameOver

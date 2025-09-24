@@ -68,8 +68,8 @@ function Game:reset()
 end
 
 function Game:enter()
-	UI.buttons = {}
-	self:load()
+    UI.clearButtons()
+    self:load()
 	Audio:playMusic("game")
 	SessionStats:reset()
 	PlayerStats:add("sessionsPlayed", 1)
