@@ -56,15 +56,6 @@ function Rocks:getAll()
     return current
 end
 
-function Rocks:reset()
-    for _, rock in ipairs(current) do
-        releaseOccupancy(rock)
-    end
-    current = {}
-    self.spawnChance = 0.25
-    self.shatterOnFruit = 0
-end
-
 local function releaseOccupancy(rock)
     if not rock then return end
     local col, row = rock.col, rock.row
@@ -74,6 +65,15 @@ local function releaseOccupancy(rock)
     if col and row then
         SnakeUtils.setOccupied(col, row, false)
     end
+end
+
+function Rocks:reset()
+    for _, rock in ipairs(current) do
+        releaseOccupancy(rock)
+    end
+    current = {}
+    self.spawnChance = 0.25
+    self.shatterOnFruit = 0
 end
 
 local function spawnShatterFX(x, y)
