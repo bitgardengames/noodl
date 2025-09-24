@@ -5,6 +5,8 @@ local Arena = require("arena")
 local Rocks = {}
 local current = {}
 
+Rocks.spawnChance = 0.25
+
 local ROCK_SIZE = 24
 local SPAWN_DURATION = 0.3
 local SQUASH_DURATION = 0.15
@@ -51,6 +53,7 @@ end
 
 function Rocks:reset()
     current = {}
+    self.spawnChance = 0.25
 end
 
 function Rocks:update(dt)
@@ -117,6 +120,10 @@ function Rocks:draw()
 
         love.graphics.pop()
     end
+end
+
+function Rocks:getSpawnChance()
+    return self.spawnChance or 0.25
 end
 
 return Rocks

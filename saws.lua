@@ -16,6 +16,14 @@ local SINK_OFFSET = 2
 
 -- modifiers
 Saws.speedMult = 1.0
+Saws.spinMult = 1.0
+Saws.stallOnFruit = 0
+
+local stallTimer = 0
+
+local function getMoveSpeed()
+    return MOVE_SPEED * (Saws.speedMult or 1)
+end
 
 -- Easing similar to Rocks
 local function easeOutBack(t)
@@ -52,12 +60,20 @@ end
 
 function Saws:reset()
     current = {}
+    self.speedMult = 1.0
+    self.spinMult = 1.0
+    self.stallOnFruit = 0
+    stallTimer = 0
 end
 
 function Saws:update(dt)
+    if stallTimer > 0 then
+        stallTimer = math.max(0, stallTimer - dt)
+    end
+
     for _, saw in ipairs(current) do
         saw.timer = saw.timer + dt
-        saw.rotation = (saw.rotation + dt * 5) % (math.pi * 2)
+        saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (math.pi * 2)
 
         if saw.phase == "drop" then
             local progress = math.min(saw.timer / SPAWN_DURATION, 1)
@@ -91,16 +107,18 @@ function Saws:update(dt)
                 saw.offsetY = 0
             end
         elseif saw.phase == "done" then
-            -- Move along the track
-            local delta = (MOVE_SPEED * dt) / TRACK_LENGTH
-            saw.progress = saw.progress + delta * saw.direction
+            if stallTimer <= 0 then
+                -- Move along the track
+                local delta = (getMoveSpeed() * dt) / TRACK_LENGTH
+                saw.progress = saw.progress + delta * saw.direction
 
-            if saw.progress > 1 then
-                saw.progress = 1
-                saw.direction = -1
-            elseif saw.progress < 0 then
-                saw.progress = 0
-                saw.direction = 1
+                if saw.progress > 1 then
+                    saw.progress = 1
+                    saw.direction = -1
+                elseif saw.progress < 0 then
+                    saw.progress = 0
+                    saw.direction = 1
+                end
             end
         end
     end
@@ -216,6 +234,25 @@ function Saws:draw()
 
         -- Reset stencil
         love.graphics.setStencilTest()
+    end
+end
+
+function Saws:stall(duration)
+    stallTimer = math.max(stallTimer, duration or 0)
+end
+
+function Saws:setStallOnFruit(duration)
+    self.stallOnFruit = duration or 0
+end
+
+function Saws:getStallOnFruit()
+    return self.stallOnFruit or 0
+end
+
+function Saws:onFruitCollected()
+    local duration = self:getStallOnFruit()
+    if duration > 0 then
+        self:stall(duration)
     end
 end
 

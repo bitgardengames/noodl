@@ -48,22 +48,23 @@ function FruitEvents.handleConsumption(x, y)
 
     Fruit:spawn(Snake:getSegments(), Rocks)
 
-    if love.math.random() < 0.25 then
+    if love.math.random() < Rocks:getSpawnChance() then
         local fx, fy, col, row = SnakeUtils.getSafeSpawn(Snake:getSegments(), Fruit, Rocks)
         if fx then
             --Rocks:spawn(fx, fy)
-			Rocks:spawn(fx, fy, "small")
+                        Rocks:spawn(fx, fy, "small")
 
             SnakeUtils.setOccupied(col, row, true)
         end
     end
 
     UI:triggerScorePulse()
-	UI:addFruit(FruitType)
+        UI:addFruit(FruitType)
+        Saws:onFruitCollected()
 
-	if Snake.adrenaline then
-		Snake.adrenaline.active = true
-		Snake.adrenaline.timer = Snake.adrenaline.duration
+        if Snake.adrenaline then
+                Snake.adrenaline.active = true
+                Snake.adrenaline.timer = Snake.adrenaline.duration
 	end
 
     local state = {

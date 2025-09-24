@@ -8,6 +8,7 @@ local Score = {}
 Score.current = 0
 Score.highscores = {}
 Score.saveFile = "scores.lua"
+Score.fruitBonus = 0
 
 function Score:load()
 	self.current = 0
@@ -51,9 +52,10 @@ function Score:save()
 end
 
 function Score:reset(mode)
-	if mode == nil then
-		-- Just reset the current score
-		self.current = 0
+    if mode == nil then
+        -- Just reset the current score
+        self.current = 0
+        self.fruitBonus = 0
 	elseif mode == "all" then
 		self.highscores = {}
 		self:save()
@@ -83,8 +85,8 @@ function Score:setHighScore(mode, score)
 end
 
 function Score:increase(points)
-	points = points or 1
-	self.current = self.current + points
+    points = points or 1
+        self.current = self.current + points + (self.fruitBonus or 0)
 
 	PlayerStats:add("totalApplesEaten", 1)
 
@@ -93,6 +95,10 @@ function Score:increase(points)
 		snakeScore = self.current,
 		currentMode = GameModes:getCurrentName(),
 	})
+end
+
+function Score:addFruitBonus(amount)
+        self.fruitBonus = (self.fruitBonus or 0) + (amount or 0)
 end
 
 function Score:handleGameOver(cause)
