@@ -164,7 +164,10 @@ function Game:update(dt)
         -- check tail position
         local segments = Snake:getSegments()
         local tail = segments[#segments]
-        if tail then
+        if not tail then
+            Snake:finishDescending()
+            self:startFloorTransition(true)
+        else
             local dx, dy = tail.drawX - self.hole.x, tail.drawY - self.hole.y
             local dist = math.sqrt(dx*dx + dy*dy)
             if dist < self.hole.radius then

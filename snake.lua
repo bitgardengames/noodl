@@ -194,6 +194,7 @@ function Snake:drawClipped(hx, hy, hr)
 
     if clipRadius > 0 then
         local radiusSq = clipRadius * clipRadius
+
         local trimmed = {}
 
         for i = 1, #trail do
@@ -352,6 +353,14 @@ function Snake:update(dt)
         trail[1].drawY = newY
     end
 
+    if hole then
+        trimHoleSegments(hole)
+        head = trail[1]
+        if head then
+            newX, newY = head.drawX, head.drawY
+        end
+    end
+
     -- tail trimming
     local tailBeforeX, tailBeforeY = nil, nil
     local len = #trail
@@ -363,7 +372,14 @@ function Snake:update(dt)
         tailBeforeCol, tailBeforeRow = toCell(tailBeforeX, tailBeforeY)
     end
 
-    local maxLen = segmentCount * SEGMENT_SPACING
+    local consumedLength = (hole and hole.consumedLength) or 0
+    local maxLen = math.max(0, segmentCount * SEGMENT_SPACING - consumedLength)
+
+    if maxLen == 0 then
+        trail = {}
+        len = 0
+    end
+
     local traveled = 0
     for i = 2, #trail do
         local dx = trail[i-1].drawX - trail[i].drawX
