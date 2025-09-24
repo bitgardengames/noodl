@@ -9,12 +9,24 @@ Score.current = 0
 Score.highscores = {}
 Score.saveFile = "scores.lua"
 Score.fruitBonus = 0
+Score.jackpotChance = 0
+Score.jackpotReward = 0
+
+local function updateAchievementChecks(self)
+        Achievements:checkAll({
+                totalApplesEaten = PlayerStats:get("totalApplesEaten"),
+                snakeScore = self.current,
+                currentMode = GameModes:getCurrentName(),
+        })
+end
 
 function Score:load()
-	self.current = 0
-	self.highscores = {}
+        self.current = 0
+        self.highscores = {}
+        self.jackpotChance = 0
+        self.jackpotReward = 0
 
-	-- Load from file
+        -- Load from file
 	if love.filesystem.getInfo(self.saveFile) then
 		local chunk = love.filesystem.load(self.saveFile)
 		local ok, saved = pcall(chunk)
@@ -56,6 +68,8 @@ function Score:reset(mode)
         -- Just reset the current score
         self.current = 0
         self.fruitBonus = 0
+        self.jackpotChance = 0
+        self.jackpotReward = 0
 	elseif mode == "all" then
 		self.highscores = {}
 		self:save()
@@ -88,17 +102,35 @@ function Score:increase(points)
     points = points or 1
         self.current = self.current + points + (self.fruitBonus or 0)
 
-	PlayerStats:add("totalApplesEaten", 1)
-
-	Achievements:checkAll({
-		totalApplesEaten = PlayerStats:get("totalApplesEaten"),
-		snakeScore = self.current,
-		currentMode = GameModes:getCurrentName(),
-	})
+        PlayerStats:add("totalApplesEaten", 1)
+        updateAchievementChecks(self)
 end
 
 function Score:addFruitBonus(amount)
         self.fruitBonus = (self.fruitBonus or 0) + (amount or 0)
+end
+
+function Score:addBonus(points)
+        if not points or points == 0 then return end
+        self.current = self.current + points
+        updateAchievementChecks(self)
+end
+
+function Score:addJackpotChance(chance, reward)
+        if chance and chance > 0 then
+                self.jackpotChance = math.min(1, (self.jackpotChance or 0) + chance)
+        end
+        if reward and reward > 0 then
+                self.jackpotReward = (self.jackpotReward or 0) + reward
+        end
+end
+
+function Score:getJackpotChance()
+        return self.jackpotChance or 0
+end
+
+function Score:getJackpotReward()
+        return self.jackpotReward or 0
 end
 
 function Score:handleGameOver(cause)

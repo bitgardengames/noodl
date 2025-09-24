@@ -61,11 +61,33 @@ function FruitEvents.handleConsumption(x, y)
     UI:triggerScorePulse()
         UI:addFruit(FruitType)
         Saws:onFruitCollected()
+        if Rocks.onFruitCollected then
+                Rocks:onFruitCollected(x, y)
+        end
 
         if Snake.adrenaline then
                 Snake.adrenaline.active = true
                 Snake.adrenaline.timer = Snake.adrenaline.duration
-	end
+        end
+
+    local jackpotChance = Score.getJackpotChance and Score:getJackpotChance() or 0
+    if jackpotChance > 0 then
+        if love.math.random() < jackpotChance then
+            local reward = Score.getJackpotReward and Score:getJackpotReward() or 0
+            if reward > 0 and Score.addBonus then
+                Score:addBonus(reward)
+                FloatingText:add("Jackpot +" .. tostring(reward), x, y - 28, {1, 0.85, 0.2, 1}, 1.2, 55)
+                Particles:spawnBurst(x, y, {
+                    count = love.math.random(10, 14),
+                    speed = 80,
+                    life = 0.5,
+                    size = 4,
+                    color = {1, 0.9, 0.4, 1},
+                    spread = math.pi * 2,
+                })
+            end
+        end
+    end
 
     local state = {
         snakeScore = Score:get(),
