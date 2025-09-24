@@ -17,6 +17,14 @@ UI.socketSize = 26
 UI.goalReachedAnim = 0
 UI.goalCelebrated = false
 
+UI.combo = {
+    count = 0,
+    timer = 0,
+    duration = 0,
+    pop = 0,
+    tagline = nil,
+}
+
 -- Button states
 UI.buttons = {}
 
@@ -158,6 +166,11 @@ end
 function UI:reset()
     scorePulse = 1.0
     pulseTimer = 0
+    self.combo.count = 0
+    self.combo.timer = 0
+    self.combo.duration = 0
+    self.combo.pop = 0
+    self.combo.tagline = nil
 end
 
 function UI:triggerScorePulse()
@@ -231,6 +244,108 @@ function UI:update(dt)
             self.goalCelebrated = false
         end
     end
+
+    if self.combo.pop > 0 then
+        self.combo.pop = math.max(0, self.combo.pop - dt * 3)
+    end
+end
+
+function UI:setCombo(count, timer, duration)
+    local combo = self.combo
+    local previous = combo.count or 0
+
+    combo.count = count or 0
+    combo.timer = timer or 0
+
+    if duration and duration > 0 then
+        combo.duration = duration
+    elseif not combo.duration then
+        combo.duration = 0
+    end
+
+    if combo.count >= 2 then
+        if combo.count > previous then
+            combo.pop = 1.0
+        end
+
+        if combo.count >= 6 then
+            combo.tagline = "Unstoppable!"
+        elseif combo.count >= 5 then
+            combo.tagline = "Blazing!"
+        elseif combo.count >= 4 then
+            combo.tagline = "Hot Streak!"
+        elseif combo.count >= 3 then
+            combo.tagline = "Juicy!"
+        else
+            combo.tagline = "Keep it going!"
+        end
+    else
+        if previous >= 2 then
+            combo.pop = 0
+        end
+        combo.tagline = nil
+    end
+end
+
+local function drawComboIndicator(self)
+    local combo = self.combo
+    if not combo or combo.count < 2 then return end
+    local duration = combo.duration or 0
+    if duration <= 0 then return end
+
+    local timer = math.max(0, math.min(combo.timer or 0, duration))
+    if timer <= 0 then return end
+
+    local progress = timer / duration
+    local screenW = love.graphics.getWidth()
+    local width = math.max(220, UI.fonts.button:getWidth("Combo x" .. combo.count) + 120)
+    local height = 58
+    local x = (screenW - width) / 2
+    local y = 16
+
+    local scale = 1 + 0.08 * math.sin((1 - progress) * math.pi * 2) + (combo.pop or 0) * 0.25
+
+    love.graphics.push()
+    love.graphics.translate(x + width / 2, y + height / 2)
+    love.graphics.scale(scale, scale)
+    love.graphics.translate(-(x + width / 2), -(y + height / 2))
+
+    love.graphics.setColor(0, 0, 0, 0.4)
+    love.graphics.rectangle("fill", x + 4, y + 6, width, height, 18, 18)
+
+    love.graphics.setColor(Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], 0.95)
+    love.graphics.rectangle("fill", x, y, width, height, 18, 18)
+
+    love.graphics.setColor(Theme.panelBorder)
+    love.graphics.setLineWidth(3)
+    love.graphics.rectangle("line", x, y, width, height, 18, 18)
+
+    UI.setFont("button")
+    love.graphics.setColor(Theme.textColor)
+    love.graphics.printf("Combo x" .. combo.count, x, y + 8, width, "center")
+
+    if combo.tagline then
+        UI.setFont("small")
+        love.graphics.setColor(1, 0.9, 0.65, 0.9)
+        love.graphics.printf(combo.tagline, x, y + 30, width, "center")
+    end
+
+    local barPadding = 18
+    local barHeight = 10
+    local barWidth = width - barPadding * 2
+    local barY = y + height - barPadding - barHeight
+
+    love.graphics.setColor(0, 0, 0, 0.25)
+    love.graphics.rectangle("fill", x + barPadding, barY, barWidth, barHeight, 6, 6)
+
+    local glow = 0.5 + 0.5 * math.sin(love.timer.getTime() * 6)
+    love.graphics.setColor(1, 0.78, 0.3, 0.85)
+    love.graphics.rectangle("fill", x + barPadding, barY, barWidth * progress, barHeight, 6, 6)
+
+    love.graphics.setColor(1, 0.95, 0.75, 0.4 + glow * 0.2)
+    love.graphics.rectangle("line", x + barPadding - 2, barY - 2, barWidth + 4, barHeight + 4, 8, 8)
+
+    love.graphics.pop()
 end
 
 local function drawFruitIcon(fruit, x, y, size, scale)
@@ -318,6 +433,7 @@ function UI:drawFruitSockets()
 end
 
 function UI:draw()
+    drawComboIndicator(self)
     -- draw socket grid
     self:drawFruitSockets()
 
