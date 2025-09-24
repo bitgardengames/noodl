@@ -104,89 +104,6 @@ local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
     return px + t * dx, py + t * dy
 end
 
-local function cloneSegment(seg)
-    local copy = {}
-    for k, v in pairs(seg) do
-        copy[k] = v
-    end
-    return copy
-end
-
-local function trimHoleSegments(hole)
-    if not hole or not trail or #trail == 0 then
-        return
-    end
-
-    local hx, hy = hole.x, hole.y
-    local radius = hole.radius or 0
-    if radius <= 0 then
-        return
-    end
-
-    local radiusSq = radius * radius
-    local consumed = hole.consumedLength or 0
-    local lastInside = nil
-    local removedAny = false
-    local i = 1
-
-    while i <= #trail do
-        local seg = trail[i]
-        local x = seg.drawX
-        local y = seg.drawY
-
-        if not (x and y) then
-            break
-        end
-
-        local dx = x - hx
-        local dy = y - hy
-        if dx * dx + dy * dy <= radiusSq then
-            removedAny = true
-            lastInside = { x = x, y = y, dirX = seg.dirX, dirY = seg.dirY }
-
-            local nextSeg = trail[i + 1]
-            if nextSeg then
-                local nx, ny = nextSeg.drawX, nextSeg.drawY
-                if nx and ny then
-                    local segDx = nx - x
-                    local segDy = ny - y
-                    consumed = consumed + math.sqrt(segDx * segDx + segDy * segDy)
-                end
-            end
-
-            table.remove(trail, i)
-        else
-            break
-        end
-    end
-
-    local newHead = trail[1]
-    if removedAny and newHead and lastInside then
-        local oldDx = newHead.drawX - lastInside.x
-        local oldDy = newHead.drawY - lastInside.y
-        local oldLen = math.sqrt(oldDx * oldDx + oldDy * oldDy)
-        if oldLen > 0 then
-            consumed = consumed - oldLen
-        end
-
-        local ix, iy = findCircleIntersection(lastInside.x, lastInside.y, newHead.drawX, newHead.drawY, hx, hy, radius)
-        if ix and iy then
-            local newDx = ix - lastInside.x
-            local newDy = iy - lastInside.y
-            local newLen = math.sqrt(newDx * newDx + newDy * newDy)
-            consumed = consumed + newLen
-            newHead.drawX = ix
-            newHead.drawY = iy
-        else
-            -- fallback: if no intersection, clamp head to previous inside point
-            newHead.drawX = lastInside.x
-            newHead.drawY = lastInside.y
-        end
-    end
-
-    hole.consumedLength = consumed
-end
-
 -- Build initial trail aligned to CELL CENTERS
 local function buildInitialTrail()
     local t = {}
@@ -277,58 +194,36 @@ function Snake:drawClipped(hx, hy, hr)
 
     if clipRadius > 0 then
         local radiusSq = clipRadius * clipRadius
-        local firstVisible = 1
 
-        while firstVisible <= #trail do
-            local seg = trail[firstVisible]
+        local trimmed = {}
+
+        for i = 1, #trail do
+            local seg = trail[i]
             local x = seg.drawX or seg.x
             local y = seg.drawY or seg.y
 
-            if not (x and y) then
-                break
-            end
-
-            local dx = x - hx
-            local dy = y - hy
-            if dx * dx + dy * dy > radiusSq then
-                break
-            end
-
-            firstVisible = firstVisible + 1
-        end
-
-        if firstVisible > 1 then
-            if firstVisible > #trail then
-                renderTrail = {}
-            else
-                local trimmed = {}
-                local prev = trail[firstVisible - 1]
-                local curr = trail[firstVisible]
-                local px = prev and (prev.drawX or prev.x)
-                local py = prev and (prev.drawY or prev.y)
-                local cx = curr and (curr.drawX or curr.x)
-                local cy = curr and (curr.drawY or curr.y)
-
-                if px and py and cx and cy then
-                    local ix, iy = findCircleIntersection(px, py, cx, cy, hx, hy, clipRadius)
-                    if ix and iy then
-                        trimmed[#trimmed + 1] = {
-                            drawX = ix,
-                            drawY = iy,
-                            dirX = curr.dirX or prev.dirX,
-                            dirY = curr.dirY or prev.dirY
-                        }
+            if x and y then
+                local dx = x - hx
+                local dy = y - hy
+                if dx * dx + dy * dy <= radiusSq then
+                    if i > 1 then
+                        local prev = trail[i - 1]
+                        local px = prev.drawX or prev.x
+                        local py = prev.drawY or prev.y
+                        if px and py then
+                            local ix, iy = findCircleIntersection(px, py, x, y, hx, hy, clipRadius)
+                            if ix and iy then
+                                trimmed[#trimmed + 1] = { drawX = ix, drawY = iy }
+                            end
+                        end
                     end
+                    renderTrail = trimmed
+                    break
                 end
-
-                trimmed[#trimmed + 1] = cloneSegment(curr)
-
-                for i = firstVisible + 1, #trail do
-                    trimmed[#trimmed + 1] = cloneSegment(trail[i])
-                end
-
-                renderTrail = trimmed
             end
+
+            trimmed[#trimmed + 1] = seg
+            renderTrail = trimmed
         end
     end
 
@@ -360,8 +255,7 @@ function Snake:startDescending(hx, hy, hr)
     descendingHole = {
         x = hx,
         y = hy,
-        radius = hr or 0,
-        consumedLength = 0
+        radius = hr or 0
     }
 end
 
