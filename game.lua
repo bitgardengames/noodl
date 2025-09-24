@@ -19,6 +19,7 @@ local Arena = require("arena")
 local UI = require("ui")
 local Theme = require("theme")
 local FruitEvents = require("fruitevents")
+local FloorTraits = require("floortraits")
 local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
@@ -48,10 +49,11 @@ function Game:load()
 
 	if Snake.adrenaline then Snake.adrenaline.active = false end -- reset adrenaline state
 
-	-- prepare floor 1 immediately for gameplay (theme, spawns, etc.)
-	self:setupFloor(self.floor)
+        -- prepare floor 1 immediately for gameplay (theme, spawns, etc.)
+        self:setupFloor(self.floor)
+        self.transitionTraits = self.activeFloorTraits
 
-	-- first intro: fade-in text for floor 1 only
+        -- first intro: fade-in text for floor 1 only
 	self.state = "transition"
 	self.transitionPhase = "floorintro"
 	self.transitionTimer = 0
@@ -258,12 +260,23 @@ function Game:setupFloor(floorNum)
         SnakeUtils.setOccupied(col, row, true)
     end
 
-    -- fruit goal based on actual floorNum
-    UI:setFruitGoal(floorNum * 5)
+    -- difficulty scaling baseline with floor traits
+    local traitContext = {
+        floor = floorNum,
+        fruitGoal = floorNum * 5,
+        rocks = math.min(3 + floorNum * 2, 40),
+        saws = math.min(math.floor(floorNum / 2), 8),
+    }
 
-    -- difficulty scaling
-    local numRocks = math.min(3 + floorNum * 2, 40)
-    local numSaws = math.min(math.floor(floorNum / 2), 8)
+    local _, appliedTraits = FloorTraits:apply(self.currentFloorData.traits, traitContext)
+
+    UI:setFruitGoal(traitContext.fruitGoal)
+    UI:setFloorModifiers(appliedTraits)
+    self.activeFloorTraits = appliedTraits
+    self.transitionTraits = appliedTraits
+
+    local numRocks = traitContext.rocks
+    local numSaws = traitContext.saws
     local safeZone = Snake:getSafeZone(3)
 
     -- Spawn saws FIRST so they reserve their track cells
@@ -325,16 +338,25 @@ function Game:draw()
 			love.graphics.setColor(0,0,0,1)
 			love.graphics.rectangle("fill", 0,0,self.screenWidth,self.screenHeight)
 			Shop:draw(self.screenWidth, self.screenHeight)
-		elseif self.transitionPhase == "floorintro" then
-			local data = self.transitionFloorData or self.currentFloorData
-			if data then
-				local t = math.min(1, self.transitionTimer / self.transitionDuration)
-				love.graphics.setColor(1,1,1,t)
-				love.graphics.setFont(UI.fonts.title)
-				love.graphics.printf(data.name, 0, self.screenHeight/2 - 80, self.screenWidth, "center")
-				love.graphics.setFont(UI.fonts.button)
-				love.graphics.printf(data.flavor, 0, self.screenHeight/2, self.screenWidth, "center")
-			end
+                elseif self.transitionPhase == "floorintro" then
+                        local data = self.transitionFloorData or self.currentFloorData
+                        if data then
+                                local t = math.min(1, self.transitionTimer / self.transitionDuration)
+                                love.graphics.setColor(1,1,1,t)
+                                love.graphics.setFont(UI.fonts.title)
+                                love.graphics.printf(data.name, 0, self.screenHeight/2 - 80, self.screenWidth, "center")
+                                love.graphics.setFont(UI.fonts.button)
+                                love.graphics.printf(data.flavor, 0, self.screenHeight/2, self.screenWidth, "center")
+                                local traits = self.transitionTraits or self.activeFloorTraits
+                                if traits and #traits > 0 then
+                                        love.graphics.setFont(UI.fonts.body)
+                                        local y = self.screenHeight/2 + 64
+                                        for i, trait in ipairs(traits) do
+                                                local text = trait.name .. ": " .. trait.desc
+                                                love.graphics.printf(text, self.screenWidth * 0.2, y + (i-1) * 36, self.screenWidth * 0.6, "center")
+                                        end
+                                end
+                        end
 		elseif self.transitionPhase == "fadein" then
 			local t = math.min(1, self.transitionTimer / self.transitionDuration)
 			local alpha = 1 - t

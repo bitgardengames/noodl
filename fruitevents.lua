@@ -16,10 +16,12 @@ local Achievements = require("achievements")
 
 local FruitEvents = {}
 
+local DEFAULT_COMBO_WINDOW = 2.25
+
 local comboState = {
     count = 0,
     timer = 0,
-    window = 2.25,
+    window = DEFAULT_COMBO_WINDOW,
 }
 
 local function comboTagline(count)
@@ -78,7 +80,22 @@ end
 function FruitEvents.reset()
     comboState.count = 0
     comboState.timer = 0
+    comboState.window = DEFAULT_COMBO_WINDOW
     UI:setCombo(0, 0, comboState.window)
+end
+
+function FruitEvents:getComboWindow()
+    return comboState.window or DEFAULT_COMBO_WINDOW
+end
+
+function FruitEvents:getDefaultComboWindow()
+    return DEFAULT_COMBO_WINDOW
+end
+
+function FruitEvents:setComboWindow(window)
+    comboState.window = math.max(0.5, window or DEFAULT_COMBO_WINDOW)
+    comboState.timer = math.min(comboState.timer or 0, comboState.window)
+    UI:setCombo(comboState.count or 0, comboState.timer, comboState.window)
 end
 
 function FruitEvents.update(dt)
