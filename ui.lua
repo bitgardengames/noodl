@@ -219,21 +219,10 @@ function UI:setFloorModifiers(modifiers)
     end
 end
 
-function UI:setDepthModifiers(modifiers)
-    if type(modifiers) == "table" then
-        self.depthModifiers = modifiers
-    else
-        self.depthModifiers = {}
-    end
-end
-
 local function collectModifierSections(self)
     local sections = {}
     if self.floorModifiers and #self.floorModifiers > 0 then
         table.insert(sections, { title = "Floor Traits", items = self.floorModifiers })
-    end
-    if self.depthModifiers and #self.depthModifiers > 0 then
-        table.insert(sections, { title = "Depth Effects", items = self.depthModifiers })
     end
     return sections
 end
@@ -287,7 +276,7 @@ function UI:drawFloorModifiers()
     for sectionIndex, section in ipairs(measuredSections) do
         love.graphics.setColor(Theme.textColor)
         UI.setFont("button")
-        local title = section.title or (sectionIndex == 1 and "Floor Traits" or "Depth Effects")
+        local title = section.title or "Floor Traits"
         love.graphics.printf(title, x + 16, textY, width - 32, "left")
         textY = textY + UI.fonts.button:getHeight() + spacing
 
