@@ -13,7 +13,6 @@ local fruitTypes = {
         metaReward = {
             key = "orchardSeeds",
             amount = 1,
-            label = "Orchard Seed",
             color = Theme.appleColor,
         },
     },
@@ -27,14 +26,12 @@ local fruitTypes = {
             {
                 type = "comboTime",
                 amount = 0.75,
-                label = "+0.75s Combo",
                 color = {1, 0.92, 0.4, 1},
             },
         },
         metaReward = {
             key = "sunSigils",
             amount = 2,
-            label = "Sun Sigil",
             color = Theme.bananaColor,
         },
     },
@@ -48,14 +45,12 @@ local fruitTypes = {
             {
                 type = "stallSaws",
                 amount = 0.8,
-                label = "Saws Stalled",
                 color = {0.6, 0.75, 1, 1},
             },
         },
         metaReward = {
             key = "duskDrops",
             amount = 3,
-            label = "Dusk Drop",
             color = Theme.blueberryColor,
         },
     },
@@ -69,7 +64,6 @@ local fruitTypes = {
             {
                 type = "shield",
                 amount = 1,
-                label = "Gilded Shield",
                 color = Theme.goldenPearColor,
                 showLabel = false,
             },
@@ -77,9 +71,7 @@ local fruitTypes = {
         metaReward = {
             key = "auricSeeds",
             amount = 5,
-            label = "Auric Seed",
             color = Theme.goldenPearColor,
-            showTotal = true,
         },
     },
     {
@@ -92,23 +84,19 @@ local fruitTypes = {
             {
                 type = "shield",
                 amount = 1,
-                label = "Mythic Shield",
                 color = Theme.dragonfruitColor,
                 showLabel = false,
             },
             {
                 type = "stallSaws",
                 amount = 1.5,
-                label = "Saws Frozen",
                 color = {1, 0.4, 1, 1},
             },
         },
         metaReward = {
             key = "wyrmCores",
             amount = 8,
-            label = "Wyrm Core",
             color = Theme.dragonfruitColor,
-            showTotal = true,
         },
     },
 }
