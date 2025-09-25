@@ -86,9 +86,8 @@ local function evaluateTailAssist(length, fx, fy)
     comboState.tailLabel = tier.label
 
     local previousTier = comboState.lastTierShown or 1
-    if tier.label and tierIndex > previousTier then
+    if tierIndex > previousTier then
         comboState.lastTierShown = tierIndex
-        FloatingText:add(tier.label, fx, fy + 20, {0.6, 0.85, 1.0, 1}, 1.4, 60)
     elseif not comboState.lastTierShown then
         comboState.lastTierShown = tierIndex
     end
@@ -132,43 +131,20 @@ local function applyComboReward(x, y)
     local tailBonus = (comboState.tailComboBonus or 0) * math.max(comboCount - 1, 0)
     local multiplier = Score.getComboBonusMultiplier and Score:getComboBonusMultiplier() or 1
     local scaledCombo = math.floor((baseBonus + tailBonus) * multiplier + 0.5)
-    local scaledTailBonus = math.floor((tailBonus or 0) * multiplier + 0.5)
 
-    local extraBonus, extraBreakdown = 0, nil
+    local extraBonus = 0
     if Upgrades and Upgrades.getComboBonus then
-        extraBonus, extraBreakdown = Upgrades:getComboBonus(comboCount)
+        extraBonus = Upgrades:getComboBonus(comboCount) or 0
     end
 
-    local totalBonus = math.max(0, scaledCombo + (extraBonus or 0))
+    local totalBonus = math.max(0, scaledCombo + extraBonus)
 
     FloatingText:add(comboTagline(comboCount), x, y - 32, burstColor, 1.3, 55)
 
     if totalBonus > 0 then
         Score:addBonus(totalBonus)
 
-        local detailParts = {}
-        if scaledTailBonus > 0 then
-            table.insert(detailParts, "Tail Flow +" .. tostring(scaledTailBonus))
-        end
-        if multiplier > 1.01 then
-            table.insert(detailParts, string.format("x%.1f surge", multiplier))
-        end
-        if extraBreakdown and #extraBreakdown > 0 then
-            for _, info in ipairs(extraBreakdown) do
-                if info.amount and info.amount ~= 0 then
-                    local label = info.label or "Relic"
-                    table.insert(detailParts, string.format("%s %+d", label, info.amount))
-                end
-            end
-        elseif extraBonus and extraBonus > 0 then
-            table.insert(detailParts, "Relic +" .. tostring(extraBonus))
-        end
-
-        local summary = "+" .. tostring(totalBonus) .. " bonus"
-        if #detailParts > 0 then
-            summary = summary .. " (" .. table.concat(detailParts, " · ") .. ")"
-        end
-
+        local summary = string.format("Combo Bonus +%d", totalBonus)
         FloatingText:add(summary, x, y - 74, {1, 0.95, 0.6, 1}, 1.3, 48)
     end
 
