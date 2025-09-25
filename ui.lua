@@ -267,8 +267,8 @@ function UI:drawFloorModifiers()
 
     local margin = 20
     local width = 280
-    local x = love.graphics.getWidth() - width - margin
-    local y = margin
+    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local x = screenW - width - margin
 
     local lineHeight = UI.fonts.body:getHeight()
     local spacing = 12
@@ -298,6 +298,9 @@ function UI:drawFloorModifiers()
     end
 
     local height = totalHeight
+
+    local minY = margin
+    local y = math.max(minY, screenH - height - margin)
 
     love.graphics.setColor(Theme.panelColor)
     love.graphics.rectangle("fill", x, y, width, height, 12, 12)

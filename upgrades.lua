@@ -301,7 +301,7 @@ local pool = {
         desc = "Saw tracks freeze for 2s after each fruit.",
         rarity = "uncommon",
         onAcquire = function(state)
-            state.effects.sawStall = math.max(state.effects.sawStall or 0, 2)
+            state.effects.sawStall = (state.effects.sawStall or 0) + 2
         end,
     }),
     register({
@@ -465,7 +465,7 @@ local pool = {
         rarity = "rare",
         onAcquire = function(state)
             state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 1.15
-            state.effects.sawStall = math.max(state.effects.sawStall or 0, 1.5)
+            state.effects.sawStall = (state.effects.sawStall or 0) + 1.5
         end,
     }),
     register({
@@ -784,7 +784,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
 
     local stallBase = base.sawStall or 0
     local stallBonus = effects.sawStall or 0
-    local stallValue = math.max(stallBase, stallBonus)
+    local stallValue = stallBase + stallBonus
     if Saws.setStallOnFruit then
         Saws:setStallOnFruit(stallValue)
     else
