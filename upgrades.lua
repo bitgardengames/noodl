@@ -24,6 +24,11 @@ local rarities = {
         weight = 12,
         label = "Rare",
         color = {0.76, 0.56, 0.88, 1},
+    },
+    epic = {
+        weight = 2,
+        label = "Epic",
+        color = {1, 0.52, 0.28, 1},
     }
 }
 
@@ -623,6 +628,39 @@ local pool = {
                 Snake:addCrashShields(1)
             end,
         },
+    }),
+    register({
+        id = "titanblood_pact",
+        name = "Titanblood Pact",
+        desc = "Gain +3 crash shields and saw stall +2s, but grow by +5 and gain +1 extra growth.",
+        rarity = "epic",
+        tags = {"defense", "risk"},
+        weight = 1,
+        onAcquire = function(state)
+            Snake:addCrashShields(3)
+            state.effects.sawStall = (state.effects.sawStall or 0) + 2
+            for _ = 1, 5 do
+                Snake:grow()
+            end
+            Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
+        end,
+    }),
+    register({
+        id = "chronospiral_core",
+        name = "Chronospiral Core",
+        desc = "Saws slow by 25% and spin 40% slower, combo rewards +60%, but grow by +4 and gain +1 extra growth.",
+        rarity = "epic",
+        tags = {"combo", "defense", "risk"},
+        weight = 1,
+        onAcquire = function(state)
+            state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.75
+            state.effects.sawSpinMult = (state.effects.sawSpinMult or 1) * 0.6
+            state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.6
+            for _ = 1, 4 do
+                Snake:grow()
+            end
+            Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
+        end,
     }),
 }
 
