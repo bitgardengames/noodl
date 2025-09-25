@@ -91,6 +91,23 @@ local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
 	drawCornerPlugs(trail, half)
 end
 
+local function drawSoftGlow(x, y, radius, r, g, b, a)
+  if radius <= 0 then return end
+
+  love.graphics.push("all")
+  love.graphics.setBlendMode("add")
+
+  local layers = 4
+  for i = 1, layers do
+    local t = (i - 1) / (layers - 1)
+    local fade = (1 - t)
+    love.graphics.setColor(r, g, b, (a or 1) * fade * fade)
+    love.graphics.circle("fill", x, y, radius * (0.55 + 0.35 * t))
+  end
+
+  love.graphics.pop()
+end
+
 local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
   local hasShield = shieldCount and shieldCount > 0
   if not hasShield and not (shieldFlashTimer and shieldFlashTimer > 0) then
@@ -111,6 +128,8 @@ local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTi
     pulse = pulse + flash * 0.25
     alpha = alpha + flash * 0.4
   end
+
+  drawSoftGlow(hx, hy, baseRadius * (1.2 + 0.1 * pulse), 0.35, 0.8, 1, alpha * 0.8)
 
   love.graphics.setLineWidth(4)
   local lineAlpha = alpha + (hasShield and 0.25 or 0.45)
@@ -145,6 +164,8 @@ local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
 
   local baseRadius = SEGMENT_SIZE * (1.05 + 0.04 * math.min(stacks, 3))
   local baseAlpha = 0.18 + 0.08 * math.min(stacks, 3)
+
+  drawSoftGlow(hx, hy, baseRadius * 1.25, 0.95, 0.86, 0.6, baseAlpha * 1.2)
 
   love.graphics.setLineWidth(2)
   love.graphics.setColor(0.52, 0.46, 0.4, baseAlpha)
@@ -192,6 +213,8 @@ local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
 
   local pulse = 0.9 + 0.1 * math.sin(time * 6)
   local radius = SEGMENT_SIZE * (0.6 + 0.35 * intensity) * pulse
+
+  drawSoftGlow(hx, hy, radius * 1.4, 1, 0.68 + 0.2 * intensity, 0.25, 0.4 + 0.5 * intensity)
 
   love.graphics.setColor(1, 0.6 + 0.25 * intensity, 0.2, 0.35 + 0.4 * intensity)
   love.graphics.circle("fill", hx, hy, radius)
