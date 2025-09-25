@@ -54,18 +54,6 @@ local function syncComboToUI()
     )
 end
 
-local function comboTagline(count)
-    if count >= 6 then
-        return "Unstoppable!"
-    elseif count >= 5 then
-        return "Blazing!"
-    elseif count >= 4 then
-        return "Hot Streak!"
-    elseif count >= 3 then
-        return "Juicy!"
-    end
-end
-
 local function applyComboReward(x, y)
     if comboState.timer > 0 then
         comboState.count = comboState.count + 1
@@ -92,11 +80,6 @@ local function applyComboReward(x, y)
     end
 
     local totalBonus = math.max(0, scaledCombo + extraBonus)
-
-    local tagline = comboTagline(comboCount)
-    if tagline then
-        FloatingText:add(tagline, x, y - 32, burstColor, 1.3, 55)
-    end
 
     if totalBonus > 0 then
         Score:addBonus(totalBonus)
