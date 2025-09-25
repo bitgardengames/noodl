@@ -1,7 +1,7 @@
 local Audio = require("audio")
 local Localization = require("localization")
 local PlayerStats = require("playerstats")
-local Snake = require("snake")
+local Snake
 
 local Achievements = {
     definitions = {},
@@ -122,6 +122,16 @@ function Achievements:_ensureInitialized()
         end)
 
         self:registerStateProvider(function()
+            if not Snake then
+                local ok, module = pcall(require, "snake")
+                if ok then
+                    Snake = module
+                else
+                    print("[achievements] failed to require snake:", module)
+                    return nil
+                end
+            end
+
             if Snake and Snake.getLength then
                 local length = Snake:getLength()
                 if length then
