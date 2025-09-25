@@ -6,6 +6,7 @@ local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local drawSnake = require("snakedraw")
+local SnakeUtils = require("snakeutils")
 
 local AchievementsMenu = {}
 
@@ -25,37 +26,36 @@ local minScrollOffset = 0
 local viewportHeight = 0
 local contentHeight = 0
 
-local thumbSnakePattern = {
-    {0.5, 1.0},
-    {0.82, 0.82},
-    {0.2, 0.66},
-    {0.82, 0.5},
-    {0.18, 0.34},
-    {0.74, 0.18},
-    {0.5, 0.0},
-}
-
 local function buildThumbSnakeTrail(trackX, thumbY, trackWidth, thumbHeight)
-    local marginX = math.max(1, trackWidth * 0.18)
-    local marginY = math.max(2, thumbHeight * 0.18)
-    local usableWidth = trackWidth - marginX * 2
-    local usableHeight = thumbHeight - marginY * 2
-    if usableWidth <= 0 or usableHeight <= 0 then
-        return {}, marginX, marginY, usableWidth, usableHeight
+    local segmentSize = SnakeUtils.SEGMENT_SIZE
+    local halfSegment = segmentSize * 0.5
+
+    local trackCenterX = trackX + trackWidth * 0.5
+    local topY = thumbY + halfSegment
+    local bottomY = thumbY + thumbHeight - halfSegment
+
+    if bottomY < topY then
+        bottomY = thumbY + thumbHeight * 0.5
+        topY = bottomY
     end
 
     local trail = {}
-    for _, pt in ipairs(thumbSnakePattern) do
-        local px = trackX + marginX + pt[1] * usableWidth
-        local py = thumbY + marginY + pt[2] * usableHeight
-        trail[#trail + 1] = { x = px, y = py }
+    trail[#trail + 1] = { x = trackCenterX, y = bottomY }
+
+    local spacing = SnakeUtils.SEGMENT_SPACING or segmentSize
+    local y = bottomY - spacing
+    while y > topY do
+        trail[#trail + 1] = { x = trackCenterX, y = y }
+        y = y - spacing
     end
 
-    return trail, marginX, marginY, usableWidth, usableHeight
+    trail[#trail + 1] = { x = trackCenterX, y = topY }
+
+    return trail, segmentSize
 end
 
 local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
-    local trail, marginX, marginY, _, usableHeight = buildThumbSnakeTrail(trackX, thumbY, trackWidth, thumbHeight)
+    local trail, segmentSize = buildThumbSnakeTrail(trackX, thumbY, trackWidth, thumbHeight)
     if #trail < 2 then
         return
     end
@@ -64,12 +64,14 @@ local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, t
 
     love.graphics.push("all")
 
-    local highlightX = trackX + marginX * 0.35
-    local highlightY = thumbY + marginY * 0.3
-    local highlightW = math.max(0, trackWidth - marginX * 0.7)
-    local highlightH = math.max(0, thumbHeight - marginY * 0.6)
+    local highlightInsetX = math.max(4, (trackWidth - segmentSize) * 0.35)
+    local highlightInsetY = math.max(6, segmentSize * 0.45)
+    local highlightX = trackX + highlightInsetX
+    local highlightY = thumbY + highlightInsetY
+    local highlightW = math.max(0, trackWidth - highlightInsetX * 2)
+    local highlightH = math.max(0, thumbHeight - highlightInsetY * 2)
     love.graphics.setColor(snakeR, snakeG, snakeB, 0.22)
-    love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, trackWidth * 0.35)
+    love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, segmentSize * 0.45)
 
     local scissorX = trackX - 2
     local scissorY = trackY - 2
@@ -77,7 +79,6 @@ local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, t
     local scissorH = trackHeight + 4
     love.graphics.setScissor(scissorX, scissorY, scissorW, scissorH)
 
-    local segmentSize = math.max(4, math.min(trackWidth * 0.9, math.max(1, usableHeight) * 0.55))
     drawSnake(trail, #trail, segmentSize, nil, nil, nil, nil, nil, false)
 
     local head = trail[#trail]
@@ -286,8 +287,10 @@ function AchievementsMenu:draw()
     love.graphics.setScissor()
 
     if contentHeight > viewportHeight then
-        local trackX = sw - 52
-        local trackWidth = 12
+        local segmentSize = SnakeUtils.SEGMENT_SIZE
+        local trackPadding = 40
+        local trackWidth = segmentSize + 12
+        local trackX = sw - trackPadding - trackWidth
         local trackY = scissorTop
         local trackHeight = viewportHeight
 
@@ -300,10 +303,10 @@ function AchievementsMenu:draw()
         local thumbY = trackY + (trackHeight - thumbHeight) * scrollProgress
 
         love.graphics.setColor(0, 0, 0, 0.35)
-        love.graphics.rectangle("fill", trackX - 2, trackY, trackWidth + 4, trackHeight, 6)
+        love.graphics.rectangle("fill", trackX - 2, trackY, trackWidth + 4, trackHeight, segmentSize * 0.35)
 
         love.graphics.setColor(0.15, 0.18, 0.22, 0.9)
-        love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, 6)
+        love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, segmentSize * 0.35)
 
         drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
     end
