@@ -10,6 +10,11 @@ Score.fruitBonus = 0
 Score.jackpotChance = 0
 Score.jackpotReward = 0
 Score.comboBonusMult = 1
+Score.comboBonusBase = 1
+Score.comboRushBonus = 1
+Score.comboRushActive = false
+Score.comboRushTimer = 0
+Score.comboRushDuration = 0
 Score.highScoreGlowDuration = 4
 Score.highScoreGlowTimer = 0
 Score.previousHighScore = 0
@@ -28,7 +33,12 @@ function Score:load()
         self.highscores = {}
         self.jackpotChance = 0
         self.jackpotReward = 0
+        self.comboBonusBase = 1
+        self.comboRushBonus = 1
         self.comboBonusMult = 1
+        self.comboRushActive = false
+        self.comboRushTimer = 0
+        self.comboRushDuration = 0
         self.highScoreGlowTimer = 0
         self.previousHighScore = 0
         self.runHighScoreTriggered = false
@@ -77,7 +87,12 @@ function Score:reset(mode)
         self.fruitBonus = 0
         self.jackpotChance = 0
         self.jackpotReward = 0
+        self.comboBonusBase = 1
+        self.comboRushBonus = 1
         self.comboBonusMult = 1
+        self.comboRushActive = false
+        self.comboRushTimer = 0
+        self.comboRushDuration = 0
         self.highScoreGlowTimer = 0
         self.runHighScoreTriggered = false
         self.previousHighScore = self:getHighScore(GameModes:getCurrentName())
@@ -147,19 +162,84 @@ function Score:addJackpotChance(chance, reward)
         end
 end
 
+local function updateComboBonusValue(self)
+        local base = self.comboBonusBase or 1
+        local rush = self.comboRushBonus or 1
+        if base < 0 then base = 0 end
+        if rush < 0 then rush = 0 end
+        self.comboBonusMult = base * rush
+        return self.comboBonusMult
+end
+
 function Score:setComboBonusMultiplier(mult)
         mult = mult or 1
         if mult < 0 then mult = 0 end
-        self.comboBonusMult = mult
+        self.comboBonusBase = mult
+        return updateComboBonusValue(self)
 end
 
 function Score:getComboBonusMultiplier()
-        return self.comboBonusMult or 1
+        return updateComboBonusValue(self)
+end
+
+function Score:startComboRush(mult, duration)
+        mult = mult or 1
+        if mult < 1 then mult = 1 end
+        duration = duration or 0
+
+        self.comboRushBonus = mult
+        self.comboRushActive = duration > 0 and mult > 1
+        self.comboRushDuration = duration
+        self.comboRushTimer = duration
+
+        updateComboBonusValue(self)
+end
+
+function Score:extendComboRush(extra)
+        if not self.comboRushActive then return end
+        if not extra or extra <= 0 then return end
+
+        self.comboRushTimer = math.min((self.comboRushDuration or 0), (self.comboRushTimer or 0) + extra)
+end
+
+function Score:stopComboRush()
+        self.comboRushBonus = 1
+        self.comboRushActive = false
+        self.comboRushTimer = 0
+        self.comboRushDuration = 0
+        updateComboBonusValue(self)
+end
+
+function Score:isComboRushActive()
+        return self.comboRushActive and (self.comboRushTimer or 0) > 0
+end
+
+function Score:getComboRushTimer()
+        if not self.comboRushTimer then return 0 end
+        return math.max(0, self.comboRushTimer)
+end
+
+function Score:getComboRushDuration()
+        return math.max(0, self.comboRushDuration or 0)
+end
+
+function Score:getComboRushIntensity()
+        if not self:isComboRushActive() then return 0 end
+        local duration = self:getComboRushDuration()
+        if duration <= 0 then return 0 end
+        return math.max(0, math.min(1, self.comboRushTimer / duration))
 end
 
 function Score:update(dt)
         if self.highScoreGlowTimer and self.highScoreGlowTimer > 0 then
                 self.highScoreGlowTimer = math.max(0, self.highScoreGlowTimer - dt)
+        end
+
+        if self.comboRushActive and self.comboRushTimer then
+                self.comboRushTimer = math.max(0, self.comboRushTimer - dt)
+                if self.comboRushTimer <= 0 then
+                        self:stopComboRush()
+                end
         end
 end
 

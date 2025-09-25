@@ -26,6 +26,14 @@ UI.combo = {
     tagline = nil,
 }
 
+UI.comboRush = {
+    progress = 0,
+    active = false,
+    timer = 0,
+    duration = 0,
+    pulse = 0,
+}
+
 -- Button states
 UI.buttons = {}
 
@@ -172,6 +180,11 @@ function UI:reset()
     self.combo.duration = 0
     self.combo.pop = 0
     self.combo.tagline = nil
+    self.comboRush.progress = 0
+    self.comboRush.active = false
+    self.comboRush.timer = 0
+    self.comboRush.duration = 0
+    self.comboRush.pulse = 0
     self.floorModifiers = {}
 end
 
@@ -356,6 +369,10 @@ function UI:update(dt)
     if self.combo.pop > 0 then
         self.combo.pop = math.max(0, self.combo.pop - dt * 3)
     end
+
+    if self.comboRush.pulse and self.comboRush.pulse > 0 then
+        self.comboRush.pulse = math.max(0, self.comboRush.pulse - dt * 2.4)
+    end
 end
 
 function UI:setCombo(count, timer, duration)
@@ -395,63 +412,134 @@ function UI:setCombo(count, timer, duration)
     end
 end
 
+function UI:setComboRush(progress, active, timer, duration)
+    local rush = self.comboRush
+    progress = progress or 0
+    if progress < 0 then progress = 0 end
+    if progress > 1 then progress = 1 end
+
+    rush.progress = progress
+    rush.timer = math.max(0, timer or 0)
+    if duration and duration > 0 then
+        rush.duration = duration
+    end
+
+    if active and not rush.active then
+        rush.pulse = 1.0
+    elseif not active and rush.active then
+        rush.pulse = 0
+    end
+
+    rush.active = active and (rush.duration or 0) > 0 and (rush.timer or 0) >= 0
+end
+
 local function drawComboIndicator(self)
     local combo = self.combo
-    if not combo or combo.count < 2 then return end
+    local rush = self.comboRush or {}
+    local comboActive = combo and combo.count >= 2 and (combo.duration or 0) > 0
+    local rushVisible = rush.active or (rush.progress or 0) > 0.05
+
+    if not comboActive and not rushVisible then
+        return
+    end
+
     local duration = combo.duration or 0
-    if duration <= 0 then return end
+    local timer = 0
+    local progress = 0
+    if comboActive then
+        timer = math.max(0, math.min(combo.timer or 0, duration))
+        progress = duration > 0 and timer / duration or 0
+    end
 
-    local timer = math.max(0, math.min(combo.timer or 0, duration))
-    if timer <= 0 then return end
-
-    local progress = timer / duration
     local screenW = love.graphics.getWidth()
-    local width = math.max(220, UI.fonts.button:getWidth("Combo x" .. combo.count) + 120)
-    local height = 68
+    local titleText = "Combo"
+    if comboActive then
+        titleText = "Combo x" .. combo.count
+    elseif rushVisible then
+        titleText = "Combo Rush"
+    end
+
+    local width = math.max(240, UI.fonts.button:getWidth(titleText) + 120)
+    local baseHeight = 68
+    local extraHeight = rushVisible and 24 or 0
+    local height = baseHeight + extraHeight
     local x = (screenW - width) / 2
     local y = 16
 
     local scale = 1 + 0.08 * math.sin((1 - progress) * math.pi * 2) + (combo.pop or 0) * 0.25
+    if rush.active then
+        scale = scale + 0.04 * math.sin(love.timer.getTime() * 8 + (rush.pulse or 0) * 3)
+    end
 
     love.graphics.push()
     love.graphics.translate(x + width / 2, y + height / 2)
     love.graphics.scale(scale, scale)
     love.graphics.translate(-(x + width / 2), -(y + height / 2))
 
-    love.graphics.setColor(0, 0, 0, 0.4)
+    local backdropAlpha = rush.active and 0.55 or 0.4
+    love.graphics.setColor(0, 0, 0, backdropAlpha)
     love.graphics.rectangle("fill", x + 4, y + 6, width, height, 18, 18)
 
-    love.graphics.setColor(Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], 0.95)
+    if rush.active then
+        local pulse = 0.65 + 0.35 * math.sin(love.timer.getTime() * 6)
+        love.graphics.setColor(0.55 + 0.25 * pulse, 0.75 + 0.15 * pulse, 1, 0.98)
+    else
+        love.graphics.setColor(Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], 0.95)
+    end
     love.graphics.rectangle("fill", x, y, width, height, 18, 18)
 
-    love.graphics.setColor(Theme.panelBorder)
+    if rush.active then
+        love.graphics.setColor(0.7, 0.9, 1, 1)
+    else
+        love.graphics.setColor(Theme.panelBorder)
+    end
     love.graphics.setLineWidth(3)
     love.graphics.rectangle("line", x, y, width, height, 18, 18)
 
     UI.setFont("button")
     love.graphics.setColor(Theme.textColor)
-    love.graphics.printf("Combo x" .. combo.count, x, y + 8, width, "center")
+    love.graphics.printf(titleText, x, y + 8, width, "center")
 
-    if combo.tagline then
+    if comboActive and combo.tagline then
         UI.setFont("small")
         love.graphics.setColor(1, 0.9, 0.65, 0.9)
         love.graphics.printf(combo.tagline, x, y + 30, width, "center")
+    elseif rush.active then
+        UI.setFont("small")
+        love.graphics.setColor(0.85, 1, 1, 0.95)
+        love.graphics.printf(string.format("Rush %0.1fs", rush.timer or 0), x, y + 30, width, "center")
     end
 
     local barPadding = 18
     local barHeight = 10
     local barWidth = width - barPadding * 2
-    local barY = y + height - barPadding - barHeight
+    local comboBarY = y + height - barPadding - barHeight - (rushVisible and (barHeight + 8) or 0)
 
-    love.graphics.setColor(0, 0, 0, 0.25)
-    love.graphics.rectangle("fill", x + barPadding, barY, barWidth, barHeight, 6, 6)
+    if comboActive then
+        love.graphics.setColor(0, 0, 0, 0.25)
+        love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth, barHeight, 6, 6)
 
-    local glow = 0.5 + 0.5 * math.sin(love.timer.getTime() * 6)
-    love.graphics.setColor(1, 0.78, 0.3, 0.85)
-    love.graphics.rectangle("fill", x + barPadding, barY, barWidth * progress, barHeight, 6, 6)
+        local glow = 0.5 + 0.5 * math.sin(love.timer.getTime() * 6)
+        love.graphics.setColor(1, 0.78, 0.3, 0.85)
+        love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
 
-    love.graphics.setColor(1, 0.95, 0.75, 0.4 + glow * 0.2)
-    love.graphics.rectangle("line", x + barPadding - 2, barY - 2, barWidth + 4, barHeight + 4, 8, 8)
+        love.graphics.setColor(1, 0.95, 0.75, 0.4 + glow * 0.2)
+        love.graphics.rectangle("line", x + barPadding - 2, comboBarY - 2, barWidth + 4, barHeight + 4, 8, 8)
+    end
+
+    if rushVisible then
+        local rushY = y + height - barPadding - barHeight
+        love.graphics.setColor(0, 0, 0, 0.25)
+        love.graphics.rectangle("fill", x + barPadding, rushY, barWidth, barHeight, 6, 6)
+
+        local glow = 0.6 + 0.4 * math.sin(love.timer.getTime() * 7 + (rush.pulse or 0) * 4)
+        local alpha = rush.active and 0.95 or 0.65
+        love.graphics.setColor(0.55, 0.85, 1, alpha)
+        love.graphics.rectangle("fill", x + barPadding, rushY, barWidth * (rush.progress or 0), barHeight, 6, 6)
+
+        love.graphics.setColor(0.8, 1, 1, 0.35 + glow * 0.2)
+        love.graphics.rectangle("line", x + barPadding - 2, rushY - 2, barWidth + 4, barHeight + 4, 8, 8)
+    end
 
     love.graphics.pop()
 end
