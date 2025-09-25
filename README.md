@@ -21,10 +21,9 @@
 - [x] Prototype fruit streak systems that interact with tail length
 - [ ] Evaluate cosmetic unlocks tied to extreme tail milestones
 
-### Tail Rhythm Streaks
-- Fruit combos now scale with the snake's body length via Tail Rhythm tiers.
-- Longer tails extend the combo window and add extra "Tail Flow" bonus points when streaking.
-- Each tier pops celebratory floating text so players understand when their tail powers up.
+### Combo Updates
+- Removed Tail Rhythm tiers so fruit streaks no longer depend on tail length.
+- Simplified combo messaging to focus on the current streak without "Tail Flow" bonuses.
 
 ## 🏁 Final Touches / Launch Polish
 - [x] Add game version to main menu
