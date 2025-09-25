@@ -226,7 +226,12 @@ function AchievementsMenu:mousereleased(x, y, button)
     return action
 end
 
-function AchievementsMenu:wheelmoved(_, dy)
+function AchievementsMenu:wheelmoved(dx, dy)
+    -- The colon syntax implicitly passes `self` as the first argument.
+    -- The previous signature treated that implicit parameter as the
+    -- horizontal scroll delta, so `dy` was always zero and scrolling
+    -- never occurred. Accept the real horizontal delta explicitly and
+    -- ignore it instead.
     if dy == 0 then
         return
     end
