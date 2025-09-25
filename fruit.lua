@@ -11,11 +11,6 @@ local fruitTypes = {
     {name = "Dragonfruit", color = Theme.dragonfruitColor, points = 50, weight = 0.2}
 }
 
-local defaultWeights = {}
-for _, fruit in ipairs(fruitTypes) do
-    defaultWeights[fruit.name] = fruit.weight
-end
-
 local Fruit = {}
 
 local SEGMENT_SIZE   = 24
@@ -64,75 +59,6 @@ local function chooseFruitType()
         if r <= sum then return f end
     end
     return fruitTypes[1]
-end
-
-local function applyWeightModifier(fruit, modifier)
-    local base = defaultWeights[fruit.name] or fruit.weight or 0
-
-    if type(modifier) == "number" then
-        return math.max(0, modifier)
-    elseif type(modifier) == "table" then
-        local weight = base
-        if modifier.weight ~= nil then
-            weight = modifier.weight
-        end
-        if modifier.mult then
-            weight = weight * modifier.mult
-        end
-        if modifier.add then
-            weight = weight + modifier.add
-        end
-        if modifier.min then
-            weight = math.max(modifier.min, weight)
-        end
-        if modifier.max then
-            weight = math.min(modifier.max, weight)
-        end
-        return math.max(0, weight)
-    end
-
-    return math.max(0, base)
-end
-
-function Fruit:getFruitTypes()
-    return fruitTypes
-end
-
-function Fruit:resetWeights()
-    for _, fruit in ipairs(fruitTypes) do
-        local base = defaultWeights[fruit.name]
-        if base then
-            fruit.weight = base
-        end
-    end
-end
-
-function Fruit:applyWeightProfile(profile)
-    self:resetWeights()
-
-    if type(profile) ~= "table" then
-        return
-    end
-
-    local fallbackMult = profile.fallbackMult
-
-    for _, fruit in ipairs(fruitTypes) do
-        local key = fruit.name
-        local lower = string.lower(key)
-        local modifier = profile[key] or profile[lower]
-
-        local weight
-        if modifier ~= nil then
-            weight = applyWeightModifier(fruit, modifier)
-        elseif fallbackMult ~= nil then
-            local base = defaultWeights[key] or fruit.weight
-            weight = math.max(0, base * fallbackMult)
-        else
-            weight = defaultWeights[key] or fruit.weight
-        end
-
-        fruit.weight = weight
-    end
 end
 
 local function aabb(x1,y1,w1,h1, x2,y2,w2,h2)
