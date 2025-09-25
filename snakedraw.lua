@@ -209,7 +209,7 @@ local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
   love.graphics.setLineWidth(1)
 end
 
-local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals)
+local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
   if not trail or #trail == 0 then return end
 
   --local thickness = SEGMENT_SIZE * 0.75
@@ -259,7 +259,7 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     love.graphics.circle("fill", hx, hy, half)
   end
 
-  if hx and hy then
+  if hx and hy and drawFace ~= false then
     if upgradeVisuals and upgradeVisuals.adrenaline then
       drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
     end
