@@ -193,6 +193,23 @@ function UI:setFruitGoal(required)
         self.fruitSockets = {} -- clear collected fruit sockets each floor
 end
 
+function UI:adjustFruitGoal(delta)
+    if not delta or delta == 0 then return end
+
+    local newGoal = math.max(1, (self.fruitRequired or 0) + delta)
+    self.fruitRequired = newGoal
+
+    if (self.fruitCollected or 0) > newGoal then
+        self.fruitCollected = newGoal
+    end
+
+    if type(self.fruitSockets) == "table" then
+        while #self.fruitSockets > newGoal do
+            table.remove(self.fruitSockets)
+        end
+    end
+end
+
 function UI:getFruitGoal(required)
     return self.fruitRequired
 end

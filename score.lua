@@ -11,6 +11,7 @@ Score.saveFile = "scores.lua"
 Score.fruitBonus = 0
 Score.jackpotChance = 0
 Score.jackpotReward = 0
+Score.comboBonusMult = 1
 
 local function updateAchievementChecks(self)
         Achievements:checkAll({
@@ -25,6 +26,7 @@ function Score:load()
         self.highscores = {}
         self.jackpotChance = 0
         self.jackpotReward = 0
+        self.comboBonusMult = 1
 
         -- Load from file
 	if love.filesystem.getInfo(self.saveFile) then
@@ -70,6 +72,7 @@ function Score:reset(mode)
         self.fruitBonus = 0
         self.jackpotChance = 0
         self.jackpotReward = 0
+        self.comboBonusMult = 1
 	elseif mode == "all" then
 		self.highscores = {}
 		self:save()
@@ -123,6 +126,16 @@ function Score:addJackpotChance(chance, reward)
         if reward and reward > 0 then
                 self.jackpotReward = (self.jackpotReward or 0) + reward
         end
+end
+
+function Score:setComboBonusMultiplier(mult)
+        mult = mult or 1
+        if mult < 0 then mult = 0 end
+        self.comboBonusMult = mult
+end
+
+function Score:getComboBonusMultiplier()
+        return self.comboBonusMult or 1
 end
 
 function Score:getJackpotChance()
