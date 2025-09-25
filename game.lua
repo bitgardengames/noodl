@@ -224,6 +224,7 @@ function Game:update(dt)
         Particles:update(dt)
         Achievements:update(dt)
         FloatingText:update(dt)
+        Score:update(dt)
 
         if self.state == "dying" then
 		Death:update(dt)
@@ -407,6 +408,39 @@ function Game:draw()
 	Popup:draw()
 	Arena:drawBorder()
         FloatingText:draw()
+
+        local glowStrength = Score:getHighScoreGlowStrength()
+        if Snake.adrenaline and Snake.adrenaline.active then
+                local duration = Snake.adrenaline.duration or 1
+                if duration > 0 then
+                        local adrenalineStrength = math.max(0, math.min(1, (Snake.adrenaline.timer or 0) / duration))
+                        glowStrength = math.max(glowStrength, adrenalineStrength * 0.85)
+                end
+        end
+        if glowStrength > 0 then
+                local pulse = 0.55 + 0.45 * math.sin(love.timer.getTime() * 5)
+                love.graphics.setBlendMode("add")
+                love.graphics.setColor(0.7, 0.9, 1.0, 0.35 * glowStrength * pulse)
+                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                love.graphics.setBlendMode("alpha")
+
+                local vignetteAlpha = 0.45 * glowStrength
+                local borderThickness = 120
+                local previousLineWidth = love.graphics.getLineWidth()
+                love.graphics.setColor(0, 0, 0, vignetteAlpha)
+                love.graphics.setLineWidth(borderThickness)
+                love.graphics.rectangle(
+                        "line",
+                        borderThickness / 2,
+                        borderThickness / 2,
+                        math.max(0, self.screenWidth - borderThickness),
+                        math.max(0, self.screenHeight - borderThickness),
+                        48,
+                        48
+                )
+                love.graphics.setLineWidth(previousLineWidth)
+                love.graphics.setColor(1, 1, 1, 1)
+        end
 
         Death:drawFlash(self.screenWidth, self.screenHeight)
         PauseMenu:draw(self.screenWidth, self.screenHeight)

@@ -2,14 +2,14 @@
 # 🧪 Game Polish Checklist
 
 ## 🎮 Game Feel
-- [ ] Add sfx/audio cue for achievements popping
+- [x] Add sfx/audio cue for achievements popping
 
 ## 🖼️ Visual Polish
-- [ ] Add screen glow/vignette during high scores or powerups
+- [x] Add screen glow/vignette during high scores or powerups
 
 ## 🗂️ Systems Polish
 - [ ] Add achievements for edge cases (like collecting a fruit at the same time as dying)
-- [ ] Add sound/music toggle directly on pause/settings screen
+- [x] Add sound/music toggle directly on pause/settings screen
 - [ ] Improve save data feedback (e.g. "Saved!" text on exit)
 - [x] Ensure achievements persist and can't be earned multiple times erroneously
 
