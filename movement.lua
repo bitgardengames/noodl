@@ -118,7 +118,8 @@ function Movement:update(dt)
                                         count = 8, speed = 40, life = 0.4, size = 3,
                                         color = {0.9, 0.8, 0.5, 1}, spread = math.pi*2
                                 })
-                                -- optionally mark rock as destroyed or not; I'm leaving it intact
+                                Rocks:destroy(rock, { spawnFX = false })
+                                -- clear the shattered rock so the next frame doesn't collide again
                                 if Snake.onShieldConsumed then
                                         local centerX = rock.x + rock.w / 2
                                         local centerY = rock.y + rock.h / 2

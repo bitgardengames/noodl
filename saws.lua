@@ -3,6 +3,8 @@ local Theme = require("theme")
 
 local Saws = {}
 local current = {}
+local slots = {}
+local nextSlotId = 0
 
 local SAW_RADIUS = 24
 local SAW_TEETH = 12
@@ -22,6 +24,27 @@ local stallTimer = 0
 
 local function getMoveSpeed()
     return MOVE_SPEED * (Saws.speedMult or 1)
+end
+
+local function getOrCreateSlot(x, y, dir)
+    dir = dir or "horizontal"
+
+    for _, slot in ipairs(slots) do
+        if slot.x == x and slot.y == y and slot.dir == dir then
+            return slot
+        end
+    end
+
+    nextSlotId = nextSlotId + 1
+    local slot = {
+        id = nextSlotId,
+        x = x,
+        y = y,
+        dir = dir,
+    }
+
+    table.insert(slots, slot)
+    return slot
 end
 
 local function getSawCenter(saw)
@@ -77,6 +100,8 @@ end
 -- Easing similar to Rocks
 -- Spawn a saw on a track
 function Saws:spawn(x, y, radius, teeth, dir, side)
+    local slot = getOrCreateSlot(x, y, dir)
+
     table.insert(current, {
         x = x,
         y = y,
@@ -94,6 +119,7 @@ function Saws:spawn(x, y, radius, teeth, dir, side)
         side = side,
         progress = 0,
         direction = 1,
+        slotId = slot and slot.id or nil,
     })
 end
 
@@ -103,6 +129,8 @@ end
 
 function Saws:reset()
     current = {}
+    slots = {}
+    nextSlotId = 0
     self.speedMult = 1.0
     self.spinMult = 1.0
     self.stallOnFruit = 0
@@ -172,39 +200,28 @@ function Saws:update(dt)
 end
 
 function Saws:draw()
-    for _, saw in ipairs(current) do
-        -- Compute saw’s actual position along its track
-        local px, py
-        if saw.dir == "horizontal" then
-            local minX = saw.x - TRACK_LENGTH/2 + saw.radius
-            local maxX = saw.x + TRACK_LENGTH/2 - saw.radius
-            px = minX + (maxX - minX) * saw.progress
-            py = saw.y
-		else
-			local minY = saw.y - TRACK_LENGTH/2 + saw.radius
-			local maxY = saw.y + TRACK_LENGTH/2 - saw.radius
-			py = minY + (maxY - minY) * saw.progress
-
-			-- hub stays centered like horizontal saws
-			px = saw.x
-		end
-
-        -- Draw the track slot (slimmer, dropped 1px)
+    if #slots > 0 then
         love.graphics.setColor(0, 0, 0, 1)
-        if saw.dir == "horizontal" then
-            love.graphics.rectangle("fill", saw.x - TRACK_LENGTH/2, saw.y - 5, TRACK_LENGTH, 10, 6, 6)
-        else
-            love.graphics.rectangle("fill", saw.x - 5, saw.y - TRACK_LENGTH/2, 10, TRACK_LENGTH, 6, 6)
+        for _, slot in ipairs(slots) do
+            if slot.dir == "horizontal" then
+                love.graphics.rectangle("fill", slot.x - TRACK_LENGTH/2, slot.y - 5, TRACK_LENGTH, 10, 6, 6)
+            else
+                love.graphics.rectangle("fill", slot.x - 5, slot.y - TRACK_LENGTH/2, 10, TRACK_LENGTH, 6, 6)
+            end
         end
+    end
+
+    for _, saw in ipairs(current) do
+        local px, py = getSawCenter(saw)
 
         -- Stencil: clip saw into the track (adjust direction for left/right mounted saws)
         love.graphics.stencil(function()
             if saw.dir == "horizontal" then
-				love.graphics.rectangle("fill",
-					saw.x - TRACK_LENGTH/2 - saw.radius,
-					saw.y - 999 + SINK_OFFSET,
-					TRACK_LENGTH + saw.radius * 2,
-					999)
+                love.graphics.rectangle("fill",
+                    saw.x - TRACK_LENGTH/2 - saw.radius,
+                    saw.y - 999 + SINK_OFFSET,
+                    TRACK_LENGTH + saw.radius * 2,
+                    999)
             else
                 -- For vertical saws, choose stencil side based on saw.side
                 local height = TRACK_LENGTH + saw.radius * 2
@@ -212,7 +229,7 @@ function Saws:draw()
                 if saw.side == "left" then
                     -- allow rightwards area (blade peeking into arena)
                     love.graphics.rectangle("fill",
-                        saw.x, -- start at wall x, extend right
+                        saw.x,
                         top,
                         999,
                         height)
@@ -238,16 +255,7 @@ function Saws:draw()
 
         -- Saw blade
         love.graphics.push()
-        love.graphics.translate(px, py + SINK_OFFSET) -- sink blade into track
-
-        -- rotate so orientation + spin behave nicely; spin is applied after base orientation
-        if saw.side == "left" then
-            -- blade points to the right (since it's mounted on left wall)
-            -- rotate 0 for vertical saws (we'll just spin normally)
-            -- (no extra rotate needed here unless you want directional angle)
-        elseif saw.side == "right" then
-            -- similarly default orientation is fine
-        end
+        love.graphics.translate(px or saw.x, (py or saw.y) + SINK_OFFSET)
 
         -- apply spinning rotation
         love.graphics.rotate(saw.rotation)
