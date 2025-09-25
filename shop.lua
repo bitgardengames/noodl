@@ -65,12 +65,15 @@ function Shop:start(currentFloor)
     self.shopkeeperLine, self.shopkeeperSubline = buildFlavor(self.floor, extraChoices)
     self.cardStates = {}
     self.time = 0
+    self.selectionProgress = 0
     for i = 1, #self.cards do
         self.cardStates[i] = {
             progress = 0,
             delay = (i - 1) * 0.08,
             selection = 0,
             selectionClock = 0,
+            focus = 0,
+            fadeOut = 0,
         }
     end
 end
@@ -79,6 +82,13 @@ function Shop:update(dt)
     if not dt then return end
     self.time = (self.time or 0) + dt
     if not self.cardStates then return end
+
+    self.selectionProgress = self.selectionProgress or 0
+    if self.selected then
+        self.selectionProgress = math.min(1, self.selectionProgress + dt * 2.4)
+    else
+        self.selectionProgress = math.max(0, self.selectionProgress - dt * 3)
+    end
 
     for i, state in ipairs(self.cardStates) do
         if self.time >= state.delay and state.progress < 1 then
@@ -90,12 +100,21 @@ function Shop:update(dt)
         if isSelected then
             state.selection = math.min(1, (state.selection or 0) + dt * 4)
             state.selectionClock = (state.selectionClock or 0) + dt
+            state.focus = math.min(1, (state.focus or 0) + dt * 3)
+            state.fadeOut = math.max(0, (state.fadeOut or 0) - dt * 4)
         else
             state.selection = math.max(0, (state.selection or 0) - dt * 3)
             if state.selection <= 0.001 then
                 state.selectionClock = 0
             else
                 state.selectionClock = (state.selectionClock or 0) + dt
+            end
+            if self.selected then
+                state.fadeOut = math.min(1, (state.fadeOut or 0) + dt * 3.2)
+                state.focus = math.max(0, (state.focus or 0) - dt * 4)
+            else
+                state.fadeOut = math.max(0, (state.fadeOut or 0) - dt * 3)
+                state.focus = math.max(0, (state.focus or 0) - dt * 3)
             end
         end
     end
@@ -107,6 +126,15 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
     local fadeAlpha = appearanceAlpha or 1
     local function setColor(r, g, b, a)
         love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
+    end
+
+    if isSelected then
+        local glowClock = love.timer and love.timer.getTime and love.timer.getTime() or 0
+        local pulse = 0.35 + 0.25 * (math.sin(glowClock * 5) * 0.5 + 0.5)
+        setColor(1, 0.9, 0.45, pulse)
+        love.graphics.setLineWidth(10)
+        love.graphics.rectangle("line", x - 14, y - 14, w + 28, h + 28, 18, 18)
+        love.graphics.setLineWidth(4)
     end
 
     local base = hovered and 0.28 or 0.22
@@ -184,6 +212,14 @@ function Shop:draw(screenW, screenH)
     end
     love.graphics.setColor(1, 1, 1, 1)
 
+    local selectionOverlay = self.selectionProgress or 0
+    if selectionOverlay > 0 then
+        local overlayEase = selectionOverlay * selectionOverlay * (3 - 2 * selectionOverlay)
+        love.graphics.setColor(0, 0, 0, 0.35 * overlayEase)
+        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+
     local cardWidth, cardHeight = 264, 344
     local spacing = 48
     local totalWidth = (#self.cards * cardWidth) + math.max(0, (#self.cards - 1)) * spacing
@@ -193,7 +229,7 @@ function Shop:draw(screenW, screenH)
     local mx, my = love.mouse.getPosition()
 
     for i, card in ipairs(self.cards) do
-        local x = startX + (i - 1) * (cardWidth + spacing)
+        local baseX = startX + (i - 1) * (cardWidth + spacing)
         local alpha = 1
         local scale = 1
         local yOffset = 0
@@ -213,14 +249,42 @@ function Shop:draw(screenW, screenH)
             end
         end
 
-        local centerX = x + cardWidth / 2
+        local focus = state and state.focus or 0
+        local fadeOut = state and state.fadeOut or 0
+        local focusEase = focus * focus * (3 - 2 * focus)
+        local fadeEase = fadeOut * fadeOut * (3 - 2 * fadeOut)
+
+        if card == self.selected then
+            yOffset = yOffset + 46 * focusEase
+            scale = scale * (1 + 0.35 * focusEase)
+            alpha = math.min(1, alpha * (1 + 0.6 * focusEase))
+        else
+            yOffset = yOffset - 32 * fadeEase
+            scale = scale * (1 - 0.2 * fadeEase)
+            alpha = alpha * (1 - 0.9 * fadeEase)
+        end
+
+        alpha = math.max(0, math.min(alpha, 1))
+
+        local centerX = baseX + cardWidth / 2
         local centerY = y + cardHeight / 2 - yOffset
+
+        if card == self.selected then
+            centerX = centerX + (screenW / 2 - centerX) * focusEase
+            local targetY = screenH * 0.48
+            centerY = centerY + (targetY - centerY) * focusEase
+        else
+            centerY = centerY + 28 * fadeEase
+        end
+
         local drawWidth = cardWidth * scale
         local drawHeight = cardHeight * scale
         local drawX = centerX - drawWidth / 2
         local drawY = centerY - drawHeight / 2
 
-        local hovered = mx >= drawX and mx <= drawX + drawWidth and my >= drawY and my <= drawY + drawHeight
+        local hovered = not self.selected
+            and mx >= drawX and mx <= drawX + drawWidth
+            and my >= drawY and my <= drawY + drawHeight
 
         love.graphics.push()
         love.graphics.translate(centerX, centerY)
@@ -284,6 +348,7 @@ function Shop:mousepressed(x, y, button)
 end
 
 function Shop:pick(i)
+    if self.selected then return false end
     local card = self.cards[i]
     if not card then return false end
 
