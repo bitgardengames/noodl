@@ -117,36 +117,4 @@ function GameState:dispatch(eventName, ...)
     return callCurrentState(self, eventName, ...)
 end
 
-function GameState:mousepressed(x, y, button)
-    return self:dispatch("mousepressed", x, y, button)
-end
-
-function GameState:mousereleased(x, y, button)
-    return self:dispatch("mousereleased", x, y, button)
-end
-
-function GameState:keypressed(key)
-    return self:dispatch("keypressed", key)
-end
-
-function GameState:joystickpressed(joystick, button)
-    return self:dispatch("joystickpressed", joystick, button)
-end
-
-function GameState:joystickreleased(joystick, button)
-    return self:dispatch("joystickreleased", joystick, button)
-end
-
-function GameState:gamepadpressed(joystick, button)
-    return self:dispatch("gamepadpressed", joystick, button)
-end
-
-function GameState:gamepadreleased(joystick, button)
-    return self:dispatch("gamepadreleased", joystick, button)
-end
-
-function GameState:wheelmoved(x, y)
-    return self:dispatch("wheelmoved", x, y)
-end
-
 return GameState
