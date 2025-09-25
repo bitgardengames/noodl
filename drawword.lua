@@ -34,15 +34,28 @@ local letters = {
 local function drawWord(word, ox, oy, cellSize, spacing)
   local x = ox
   local fullTrail = {}
+
+  local letterCount = 0
+  for i = 1, #word do
+    if letters[word:sub(i, i)] then
+      letterCount = letterCount + 1
+    end
+  end
+
+  local drawnLetters = 0
   for i = 1, #word do
     local ch = word:sub(i,i)
     local def = letters[ch]
     if def then
+      drawnLetters = drawnLetters + 1
       local letterTrail = {}
       for _, pt in ipairs(def) do
         table.insert(letterTrail, {x = x + pt[1] * cellSize, y = oy + pt[2] * cellSize})
       end
-      drawSnake(letterTrail, #letterTrail, cellSize)
+
+      local showFace = (drawnLetters == letterCount)
+      drawSnake(letterTrail, #letterTrail, cellSize, nil, nil, nil, nil, nil, showFace)
+
       for _, p in ipairs(letterTrail) do table.insert(fullTrail, p) end
 
       x = x + (3 * cellSize) + spacing
