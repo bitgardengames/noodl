@@ -31,28 +31,6 @@ local letters = {
 	}
 }
 
-local function drawLetter(letterDef, ox, oy, cellSize)
-  local trail = {}
-  for i, pt in ipairs(letterDef) do
-    trail[#trail+1] = {
-      x = ox + pt[1] * cellSize,
-      y = oy + pt[2] * cellSize,
-    }
-  end
-
-  local function getHead()
-    return trail[#trail].x, trail[#trail].y
-  end
-
-for _, p in ipairs(trail) do
-  love.graphics.setColor(1, 0, 0)
-  love.graphics.circle("fill", p.x, p.y, 3)
-end
-
-
-  drawSnake(trail, #trail, cellSize, 0, getHead)
-end
-
 local function drawWord(word, ox, oy, cellSize, spacing)
   local x = ox
   local fullTrail = {}

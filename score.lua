@@ -1,8 +1,6 @@
 local PlayerStats = require("playerstats")
 local Achievements = require("achievements")
 local GameModes = require("gamemodes")
-local Snake = require("snake")
-
 local Score = {}
 
 Score.current = 0
