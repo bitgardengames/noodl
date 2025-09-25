@@ -1,5 +1,6 @@
 local Popup = require("popup")
 local PlayerStats = require("playerstats")
+local Localization = require("localization")
 
 local GameModes = {}
 
@@ -21,8 +22,8 @@ GameModes.UNLOCK_FILE  = "unlocks.lua"
 -------------------------------------------------
 GameModes.available = {
     classic = {
-        label = "Classic",
-        description = "Traditional Snake — steady pace, no pressure.",
+        labelKey = "gamemodes.classic.label",
+        descriptionKey = "gamemodes.classic.description",
         speed = 0.08,
         timed = false,
         timeLimit = nil,
@@ -36,8 +37,8 @@ GameModes.available = {
     },
 
     hardcore = {
-        label = "Hardcore",
-        description = "Faster speed, tighter reflexes required.",
+        labelKey = "gamemodes.hardcore.label",
+        descriptionKey = "gamemodes.hardcore.description",
         speed = 0.04,
         timed = false,
         timeLimit = nil,
@@ -47,7 +48,7 @@ GameModes.available = {
             mode = "classic",
             value = 25,
         },
-        unlockDescription = "Score 25 in Classic mode.",
+        unlockDescriptionKey = "gamemodes.hardcore.unlock_description",
 
         load = function(game)
             if game.Effects and game.Effects.shake then
@@ -57,8 +58,8 @@ GameModes.available = {
     },
 
     timed = {
-        label = "Timed",
-        description = "60 seconds. Eat as many apples as you can.",
+        labelKey = "gamemodes.timed.label",
+        descriptionKey = "gamemodes.timed.description",
         speed = 0.06,
         timed = true,
         timeLimit = 60,
@@ -68,7 +69,7 @@ GameModes.available = {
             stat = "totalApplesEaten",
             value = 50,
         },
-        unlockDescription = "Eat 50 apples total.",
+        unlockDescriptionKey = "gamemodes.timed.unlock_description",
 
         load = function(game)
             game.timer = game.mode.timeLimit
@@ -91,15 +92,16 @@ GameModes.available = {
                 local timeLeft = math.ceil(game.timer)
                 love.graphics.setColor(1, 1, 1, 0.9)
                 love.graphics.setFont(FONTS.timer)
-                love.graphics.printf("Time: " .. timeLeft, 0, 16, love.graphics.getWidth(), "center")
+                local label = Localization:get("gamemodes.timed.timer_label", { seconds = timeLeft })
+                love.graphics.printf(label, 0, 16, love.graphics.getWidth(), "center")
                 love.graphics.setColor(1, 1, 1, 1) -- reset color
             end
         end,
     },
 
     daily = {
-        label = "Daily Challenge",
-        description = "A new challenge each day — random effects, one shot.",
+        labelKey = "gamemodes.daily.label",
+        descriptionKey = "gamemodes.daily.description",
         speed = 0.06,
         timed = false,
         timeLimit = nil,
@@ -197,7 +199,10 @@ function GameModes:unlock(modeID)
 
         local mode = self.available[modeID]
         if Popup and Popup.show then
-            Popup:show(mode.label .. " Unlocked!", mode.description or "")
+            local modeName = mode.labelKey and Localization:get(mode.labelKey) or mode.label or modeID
+            local description = mode.descriptionKey and Localization:get(mode.descriptionKey) or mode.description or ""
+            local title = Localization:get("gamemodes.unlock_popup", { mode = modeName })
+            Popup:show(title, description)
         end
     end
 end

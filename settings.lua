@@ -3,6 +3,7 @@ local Settings = {
     sfxVolume   = 1.0,
     muteMusic   = false,
     muteSFX     = false,
+    language    = "english",
 }
 
 local saveFile = "user_settings.lua"

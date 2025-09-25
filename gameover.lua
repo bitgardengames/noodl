@@ -4,57 +4,19 @@ local Audio = require("audio")
 local Theme = require("theme")
 local UI = require("ui")
 local ButtonList = require("buttonlist")
+local Localization = require("localization")
 
 local GameOver = {}
 
--- Add one about no snakes were harmed in the making of this game
-local deathMessages = {
-    self = {
-        "You bit yourself. Ouch.",
-        "Snake vs. Snake: Snake wins.",
-        "Ever heard of personal space?",
-        "Cannibalism? Bold choice.",
-        "Your tail says hi… a little too close.",
-        "Snake made a knot it couldn’t untie.",
-		"Congratulations, you played yourself.",
-		"Snake practiced yoga… permanently.",
-    },
-    wall = {
-        "Splat! Right into the wall.",
-        "The wall was stronger.",
-        "Note to self: bricks don’t move.",
-        "Snake discovered geometry… fatally.",
-        "That’s not an exit.",
-        "Turns out walls don’t taste like apples.",
-        "Ever heard of brakes?",
-        "Snake tried parkour. Failed.",
-    },
-    rock = {
-        "That rock didn’t budge.",
-        "Oof. Rocks are hard.",
-        "Who put that there?!",
-        "Snake tested rock durability. Confirmed.",
-        "Rock 1 – Snake 0.",
-        "Snake’s greatest enemy: landscaping.",
-		"New diet: minerals.",
-		"You’ve unlocked Rock Appreciation 101.",
-		"Rock solid. Snake squishy.",
-    },
-	saw = {
-		"That wasn’t a salad spinner.",
-		"Just rub some dirt on it.",
-		"OSHA has entered the chat.",
-		"Snake auditioned for a horror movie."
-	},
-    unknown = {
-        "Mysterious demise...",
-        "The void has claimed you.",
-        "Well, that’s one way to end it.",
-        "Snake blinked out of existence.",
-        "Cosmic forces intervened.",
-        "Snake entered the glitch dimension.",
-    },
-}
+local function pickDeathMessage(cause)
+    local deathTable = Localization:getTable("gameover.deaths") or {}
+    local entries = deathTable[cause] or deathTable.unknown or {}
+    if #entries == 0 then
+        return Localization:get("gameover.default_message")
+    end
+
+    return entries[love.math.random(#entries)]
+end
 
 local fontLarge
 local fontSmall
@@ -68,8 +30,8 @@ local BUTTON_SPACING = 20
 
 -- All button definitions in one place
 local buttonDefs = {
-    { id = "goPlay", text = "Play Again", action = "game" },
-    { id = "goMenu", text = "Quit to Menu", action = "menu" },
+    { id = "goPlay", textKey = "gameover.play_again", action = "game" },
+    { id = "goMenu", textKey = "gameover.quit_to_menu", action = "menu" },
 }
 
 function GameOver:enter(data)
@@ -80,14 +42,8 @@ function GameOver:enter(data)
     Audio:playMusic("scorescreen")
     Screen:update()
 
-	local cause = data.cause or "unknown"
-	self.deathMessage = "You died."
-
-	-- Pick a random quip if we have one
-	if deathMessages[cause] then
-		local options = deathMessages[cause]
-		self.deathMessage = options[love.math.random(#options)]
-	end
+        local cause = data.cause or "unknown"
+        self.deathMessage = pickDeathMessage(cause)
 
     fontLarge = love.graphics.newFont(32)
     fontSmall = love.graphics.newFont(18)
@@ -117,9 +73,11 @@ function GameOver:enter(data)
     local defs = {}
     for i, def in ipairs(buttonDefs) do
         local y = startY + (i - 1) * (BUTTON_HEIGHT + BUTTON_SPACING)
+        local buttonText = def.textKey and Localization:get(def.textKey) or def.text or ""
         defs[#defs + 1] = {
             id = def.id,
-            text = def.text,
+            textKey = def.textKey,
+            text = buttonText,
             action = def.action,
             x = centerX,
             y = y,
@@ -140,16 +98,16 @@ function GameOver:draw()
     -- Title
     love.graphics.setFont(fontLarge)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Game Over", 0, 80, sw, "center")
+    love.graphics.printf(Localization:get("gameover.title"), 0, 80, sw, "center")
 
     -- Stats block
     love.graphics.setFont(fontSmall)
     local y = 140
     local lineHeight = 25
     local statLines = {
-        ("Final Score: %d"):format(stats.score),
-        ("High Score: %d"):format(stats.highScore),
-        ("Apples Eaten: %d"):format(stats.apples),
+        Localization:get("gameover.final_score", { score = stats.score }),
+        Localization:get("gameover.high_score", { score = stats.highScore }),
+        Localization:get("gameover.apples_eaten", { count = stats.apples }),
     }
     for i, text in ipairs(statLines) do
         love.graphics.printf(text, 0, y + (i - 1) * lineHeight, sw, "center")
@@ -158,9 +116,15 @@ function GameOver:draw()
 	-- Death message
 	love.graphics.setFont(fontSmall)
 	love.graphics.setColor(1, 0.8, 0.8) -- light red/pink for flavor
-	love.graphics.printf(self.deathMessage, 0, y + #statLines * lineHeight + 20, sw, "center")
+        love.graphics.printf(self.deathMessage or Localization:get("gameover.default_message"), 0, y + #statLines * lineHeight + 20, sw, "center")
 
     -- Buttons
+    for _, btn in buttonList:iter() do
+        if btn.textKey then
+            btn.text = Localization:get(btn.textKey)
+        end
+    end
+
     buttonList:draw()
 end
 

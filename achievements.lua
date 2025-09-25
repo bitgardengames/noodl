@@ -1,11 +1,12 @@
 local Audio = require("audio")
+local Localization = require("localization")
 
 local Achievements = {}
 
 Achievements.definitions = {
     firstApple = {
-        title = "Tasty Beginning",
-        description = "Eat your first apple",
+        titleKey = "achievements_definitions.firstApple.title",
+        descriptionKey = "achievements_definitions.firstApple.description",
         icon = "Apple",
         unlocked = false,
         progress = 0,
@@ -18,8 +19,8 @@ Achievements.definitions = {
         end
     },
     appleHoarder = {
-        title = "Apple Hoarder",
-        description = "Eat 100 total apples",
+        titleKey = "achievements_definitions.appleHoarder.title",
+        descriptionKey = "achievements_definitions.appleHoarder.description",
         icon = "Apple",
         unlocked = false,
         progress = 0,
@@ -32,8 +33,8 @@ Achievements.definitions = {
         end
     },
     fullBelly = {
-        title = "Full Belly",
-        description = "Reach a snake length of 50",
+        titleKey = "achievements_definitions.fullBelly.title",
+        descriptionKey = "achievements_definitions.fullBelly.description",
         icon = "Apple",
         unlocked = false,
         progress = 0,
@@ -45,13 +46,13 @@ Achievements.definitions = {
             return math.min(state.snakeLength or 0, 50)
         end
     },
-	dragonHunter = {
-		title = "Dragon Hunter",
-		description = "Collect the legendary Dragonfruit",
-		icon = "Dragonfruit",
-		unlocked = false,
-		progress = 0,
-		goal = 1,
+        dragonHunter = {
+                titleKey = "achievements_definitions.dragonHunter.title",
+                descriptionKey = "achievements_definitions.dragonHunter.description",
+                icon = "Dragonfruit",
+                unlocked = false,
+                progress = 0,
+                goal = 1,
 		condition = function(state)
 			return (state.totalDragonfruitEaten or 0) >= 1
 		end,
@@ -202,14 +203,22 @@ function Achievements:draw()
     end
 
     -- Title text
+    local localizedTitle = Localization:get(ach.titleKey)
+    local localizedDescription = Localization:get(ach.descriptionKey)
+    local heading = Localization:get("achievements.popup_heading", { title = localizedTitle })
+
     love.graphics.setColor(1, 1, 0.2, alpha)
     love.graphics.setFont(fontTitle)
-    love.graphics.printf("Achievement Unlocked!", x + padding + iconSize, y + 15, width - (padding * 2) - iconSize, "left")
+    love.graphics.printf(heading, x + padding + iconSize, y + 15, width - (padding * 2) - iconSize, "left")
 
     -- Description text
     love.graphics.setColor(1, 1, 1, alpha)
     love.graphics.setFont(fontDesc)
-    love.graphics.printf(ach.title .. ": " .. ach.description, x + padding + iconSize, y + 50, width - (padding * 2) - iconSize, "left")
+    local message = Localization:get("achievements.popup_message", {
+        title = localizedTitle,
+        description = localizedDescription,
+    })
+    love.graphics.printf(message, x + padding + iconSize, y + 50, width - (padding * 2) - iconSize, "left")
 
     love.graphics.pop()
 end

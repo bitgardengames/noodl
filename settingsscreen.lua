@@ -3,19 +3,21 @@ local Audio = require("audio")
 local UI = require("ui")
 local Theme = require("theme")
 local Settings = require("settings")
+local Localization = require("localization")
 
 local SettingsScreen = {}
 
 local options = {
-    { label = "Toggle Fullscreen", action = function()
+    { type = "action", labelKey = "settings.toggle_fullscreen", action = function()
         love.window.setFullscreen(not love.window.getFullscreen())
         Settings:save()
     end },
-    { label = "Toggle Music", toggle = "muteMusic" },
-    { label = "Toggle Sound FX", toggle = "muteSFX" },
-    { label = "Music Volume", slider = "musicVolume" },
-    { label = "SFX Volume", slider = "sfxVolume" },
-    { label = "Back", action = "menu" }
+    { type = "toggle", labelKey = "settings.toggle_music", toggle = "muteMusic" },
+    { type = "toggle", labelKey = "settings.toggle_sfx", toggle = "muteSFX" },
+    { type = "slider", labelKey = "settings.music_volume", slider = "musicVolume" },
+    { type = "slider", labelKey = "settings.sfx_volume", slider = "sfxVolume" },
+    { type = "cycle", labelKey = "settings.language", setting = "language" },
+    { type = "action", labelKey = "settings.back", action = "menu" }
 }
 
 local buttons = {}
@@ -51,8 +53,8 @@ function SettingsScreen:enter()
         })
 
         -- register for clickable items (skip sliders, those are custom)
-        if not opt.slider then
-            UI.registerButton(id, x, y, w, h, opt.label)
+        if opt.type ~= "slider" then
+            UI.registerButton(id, x, y, w, h, Localization:get(opt.labelKey))
         end
     end
 end
@@ -87,21 +89,22 @@ function SettingsScreen:draw()
 
     love.graphics.setFont(UI.fonts.title)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Settings", 0, 80, sw, "center")
+    love.graphics.printf(Localization:get("settings.title"), 0, 80, sw, "center")
 
     love.graphics.setFont(UI.fonts.body)
 
     for _, btn in ipairs(buttons) do
         local opt = btn.option
-        local label = opt.label
+        local label = Localization:get(opt.labelKey)
 
-        if opt.toggle then
+        if opt.type == "toggle" and opt.toggle then
             local isMuted = Settings[opt.toggle]
-            label = label .. ": " .. (isMuted and "Off" or "On")
+            local state = isMuted and Localization:get("common.off") or Localization:get("common.on")
+            label = string.format("%s: %s", label, state)
             UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
             UI.drawButton(btn.id)
 
-        elseif opt.slider then
+        elseif opt.type == "slider" and opt.slider then
             -- slider UI
             love.graphics.setColor(1, 1, 1)
             love.graphics.printf(label, btn.x, btn.y - 20, btn.w, "center")
@@ -123,6 +126,13 @@ function SettingsScreen:draw()
             local percentText = string.format("%.0f%%", value * 100)
             love.graphics.printf(percentText, btn.x + btn.w + 10, btn.y + btn.h / 2 - 8, 50, "left")
 
+        elseif opt.type == "cycle" and opt.setting == "language" then
+            local current = Settings.language or Localization:getCurrentLanguage()
+            local state = Localization:getLanguageName(current)
+            label = string.format("%s: %s", label, state)
+            UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
+            UI.drawButton(btn.id)
+
         else
             -- plain button
             UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
@@ -138,7 +148,15 @@ function SettingsScreen:mousepressed(x, y, button)
         local opt = btn.option
 
         if btn.id and btn.id == id then
-            if opt.action then
+            if opt.type == "cycle" and opt.setting == "language" then
+                local nextLang = Localization:cycleLanguage(Settings.language)
+                Settings.language = nextLang
+                Settings:save()
+                Localization:setLanguage(nextLang)
+                -- refresh button labels after language switch
+                self:enter()
+                return nil
+            elseif opt.action then
                 if type(opt.action) == "function" then
                     opt.action()
                 else

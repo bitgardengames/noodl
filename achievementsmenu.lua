@@ -3,6 +3,7 @@ local Screen = require("screen")
 local Theme = require("theme")
 local UI = require("ui")
 local ButtonList = require("buttonlist")
+local Localization = require("localization")
 
 local AchievementsMenu = {}
 
@@ -22,7 +23,8 @@ function AchievementsMenu:enter()
             y = sh - 80,
             w = UI.spacing.buttonWidth,
             h = UI.spacing.buttonHeight,
-            text = "Back to Menu",
+            textKey = "achievements.back_to_menu",
+            text = Localization:get("achievements.back_to_menu"),
             action = "menu",
         },
     })
@@ -49,7 +51,7 @@ function AchievementsMenu:draw()
 
     love.graphics.setFont(UI.fonts.title)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Achievements", 0, 80, sw, "center")
+    love.graphics.printf(Localization:get("achievements.title"), 0, 80, sw, "center")
 
     local startY = 180
     local spacing = 110
@@ -101,11 +103,11 @@ function AchievementsMenu:draw()
 
         love.graphics.setFont(UI.fonts.achieve)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.printf(ach.title, textX, y + 8, cardWidth - 80, "left")
+        love.graphics.printf(Localization:get(ach.titleKey), textX, y + 8, cardWidth - 80, "left")
 
         love.graphics.setFont(UI.fonts.body)
         love.graphics.setColor(0.9, 0.9, 0.9)
-        love.graphics.printf(ach.description, textX, y + 32, cardWidth - 80, "left")
+        love.graphics.printf(Localization:get(ach.descriptionKey), textX, y + 32, cardWidth - 80, "left")
 
         if hasProgress then
             local barW = cardWidth - 80
@@ -119,6 +121,12 @@ function AchievementsMenu:draw()
 
             love.graphics.setColor(Theme.progressColor)
             love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 4)
+        end
+    end
+
+    for _, btn in buttonList:iter() do
+        if btn.textKey then
+            btn.text = Localization:get(btn.textKey)
         end
     end
 

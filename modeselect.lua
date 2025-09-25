@@ -4,6 +4,7 @@ local Score = require("score")
 local UI = require("ui")
 local Theme = require("theme")
 local ButtonList = require("buttonlist")
+local Localization = require("localization")
 
 local ModeSelect = {}
 
@@ -27,7 +28,8 @@ function ModeSelect:enter()
     for i, key in ipairs(GameModes.modeList) do
         local mode = GameModes.available[key]
         local isUnlocked = mode.unlocked == true
-        local desc = isUnlocked and mode.description or ("Locked — " .. (mode.unlockDescription or "???"))
+        local descKey = mode.descriptionKey
+        local unlockKey = mode.unlockDescriptionKey
         local score = Score:getHighScore(key)
 
         defs[#defs + 1] = {
@@ -36,9 +38,12 @@ function ModeSelect:enter()
             y = y,
             w = buttonWidth,
             h = buttonHeight,
-            text = mode.label,
+            textKey = mode.labelKey,
+            text = Localization:get(mode.labelKey),
             action = nil,
-            description = desc,
+            descriptionKey = descKey,
+            unlockDescriptionKey = unlockKey,
+            description = Localization:get(descKey),
             score = score,
             modeKey = key,
             unlocked = isUnlocked,
@@ -53,7 +58,8 @@ function ModeSelect:enter()
         y = y + 10,
         w = 220,
         h = 44,
-        text = "Back to Menu",
+        textKey = "modeselect.back_to_menu",
+        text = Localization:get("modeselect.back_to_menu"),
         action = "menu",
         modeKey = "back",
         unlocked = true,
@@ -75,7 +81,27 @@ function ModeSelect:draw()
 
     love.graphics.setFont(UI.fonts.title)
     love.graphics.setColor(Theme.textColor)
-    love.graphics.printf("Select Game Mode", 0, 40, sw, "center")
+    love.graphics.printf(Localization:get("modeselect.title"), 0, 40, sw, "center")
+
+    for _, btn in buttonList:iter() do
+        if btn.textKey then
+            btn.text = Localization:get(btn.textKey)
+        end
+
+        if btn.modeKey ~= "back" then
+            if btn.unlocked and btn.descriptionKey then
+                btn.description = Localization:get(btn.descriptionKey)
+            else
+                local unlockDescription
+                if btn.unlockDescriptionKey then
+                    unlockDescription = Localization:get(btn.unlockDescriptionKey)
+                else
+                    unlockDescription = Localization:get("common.unknown")
+                end
+                btn.description = Localization:get("modeselect.locked_prefix", { description = unlockDescription })
+            end
+        end
+    end
 
     buttonList:draw()
 
@@ -88,7 +114,7 @@ function ModeSelect:draw()
         end
 
         if btn.unlocked and btn.score and btn.modeKey ~= "back" then
-            local scoreText = "High Score: " .. tostring(btn.score)
+            local scoreText = Localization:get("modeselect.high_score", { score = tostring(btn.score) })
             love.graphics.setFont(UI.fonts.body)
             love.graphics.setColor(Theme.progressColor)
             local tw = UI.fonts.body:getWidth(scoreText)
