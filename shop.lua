@@ -74,6 +74,7 @@ function Shop:start(currentFloor)
             selectionClock = 0,
             focus = 0,
             fadeOut = 0,
+            selectionFlash = nil,
         }
     end
 end
@@ -115,6 +116,14 @@ function Shop:update(dt)
             else
                 state.fadeOut = math.max(0, (state.fadeOut or 0) - dt * 3)
                 state.focus = math.max(0, (state.focus or 0) - dt * 3)
+            end
+        end
+
+        if state.selectionFlash then
+            local flashDuration = 0.75
+            state.selectionFlash = state.selectionFlash + dt
+            if state.selectionFlash >= flashDuration then
+                state.selectionFlash = nil
             end
         end
     end
@@ -310,6 +319,25 @@ function Shop:draw(screenW, screenH)
         drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, nil, self.selected == card, alpha)
         love.graphics.pop()
         card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
+
+        if state and state.selectionFlash then
+            local flashDuration = 0.75
+            local t = math.max(0, math.min(1, state.selectionFlash / flashDuration))
+            local ease = 1 - ((1 - t) * (1 - t))
+            local ringAlpha = (1 - ease) * 0.8
+            local burstAlpha = (1 - ease) * 0.45
+            local radiusBase = math.max(cardWidth, cardHeight) * 0.42
+            local radius = radiusBase + ease * 180
+
+            love.graphics.setLineWidth(6)
+            love.graphics.setColor(1, 0.88, 0.45, ringAlpha)
+            love.graphics.circle("line", centerX, centerY, radius)
+
+            local burstRadius = radiusBase * (1 + ease * 0.5)
+            love.graphics.setColor(1, 0.72, 0.32, burstAlpha)
+            love.graphics.circle("fill", centerX, centerY, burstRadius)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
     end
 
     love.graphics.setFont(UI.fonts.small)
@@ -371,6 +399,11 @@ function Shop:pick(i)
 
     Upgrades:acquire(card, { floor = self.floor })
     self.selected = card
+
+    local state = self.cardStates and self.cardStates[i]
+    if state then
+        state.selectionFlash = 0
+    end
     return true
 end
 
