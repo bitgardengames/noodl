@@ -89,6 +89,43 @@ local function spawnShatterFX(x, y)
     })
 end
 
+local function removeRockAt(index, spawnFX)
+    if not index then return nil end
+
+    local rock = table.remove(current, index)
+    if not rock then return nil end
+
+    releaseOccupancy(rock)
+
+    if spawnFX ~= false then
+        spawnShatterFX(rock.x, rock.y)
+    end
+
+    return rock
+end
+
+function Rocks:destroy(target, opts)
+    if not target then return nil end
+
+    opts = opts or {}
+    local spawnFX = opts.spawnFX
+    if spawnFX == nil then
+        spawnFX = true
+    end
+
+    if type(target) == "number" then
+        return removeRockAt(target, spawnFX)
+    end
+
+    for index, rock in ipairs(current) do
+        if rock == target then
+            return removeRockAt(index, spawnFX)
+        end
+    end
+
+    return nil
+end
+
 function Rocks:shatterNearest(x, y, count)
     count = count or 1
     if count <= 0 or #current == 0 then return end
@@ -109,11 +146,7 @@ function Rocks:shatterNearest(x, y, count)
 
         if not bestIndex then break end
 
-        local shattered = table.remove(current, bestIndex)
-        if shattered then
-            spawnShatterFX(shattered.x, shattered.y)
-            releaseOccupancy(shattered)
-        end
+        removeRockAt(bestIndex, true)
     end
 end
 
