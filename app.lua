@@ -7,6 +7,7 @@ local Score = require("score")
 local PlayerStats = require("playerstats")
 local GameModes = require("gamemodes")
 local UI = require("ui")
+local Localization = require("localization")
 
 local App = {
     stateModules = {
@@ -36,6 +37,7 @@ end
 function App:loadSubsystems()
     Screen:update()
     Settings:load()
+    Localization:setLanguage(Settings.language)
     Audio:load()
     Achievements:load()
     Score:load()

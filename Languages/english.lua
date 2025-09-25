@@ -1,3 +1,149 @@
-local english = {}
+local english = {
+    name = "English",
+    strings = {
+        common = {
+            back = "Back",
+            back_to_menu = "Back to Menu",
+            on = "On",
+            off = "Off",
+            unknown = "???",
+            yes = "Yes",
+            no = "No",
+        },
+        menu = {
+            start_game = "Start Game",
+            settings = "Settings",
+            achievements = "Achievements",
+            quit = "Quit",
+            version = "v1.0.0",
+            title_word = "noodl",
+        },
+        settings = {
+            title = "Settings",
+            toggle_fullscreen = "Toggle Fullscreen",
+            toggle_music = "Toggle Music",
+            toggle_sfx = "Toggle Sound FX",
+            music_volume = "Music Volume",
+            sfx_volume = "SFX Volume",
+            language = "Language",
+            back = "Back",
+        },
+        modeselect = {
+            title = "Select Game Mode",
+            locked_prefix = "Locked — ${description}",
+            back_to_menu = "Back to Menu",
+            high_score = "High Score: ${score}",
+        },
+        achievements = {
+            title = "Achievements",
+            back_to_menu = "Back to Menu",
+            popup_heading = "${title} Unlocked!",
+            popup_message = "${title}: ${description}",
+        },
+        pause = {
+            title = "Paused",
+            resume = "Resume",
+            toggle_music = "Music: ${state}",
+            toggle_sfx = "Sound FX: ${state}",
+            quit = "Quit to Menu",
+        },
+        gameover = {
+            title = "Game Over",
+            final_score = "Final Score: ${score}",
+            high_score = "High Score: ${score}",
+            apples_eaten = "Apples Eaten: ${count}",
+            default_message = "You died.",
+            play_again = "Play Again",
+            quit_to_menu = "Quit to Menu",
+            deaths = {
+                self = {
+                    "You bit yourself. Ouch.",
+                    "Snake vs. Snake: Snake wins.",
+                    "Ever heard of personal space?",
+                    "Cannibalism? Bold choice.",
+                    "Your tail says hi… a little too close.",
+                    "Snake made a knot it couldn’t untie.",
+                    "Congratulations, you played yourself.",
+                    "Snake practiced yoga… permanently.",
+                },
+                wall = {
+                    "Splat! Right into the wall.",
+                    "The wall was stronger.",
+                    "Note to self: bricks don’t move.",
+                    "Snake discovered geometry… fatally.",
+                    "That’s not an exit.",
+                    "Turns out walls don’t taste like apples.",
+                    "Ever heard of brakes?",
+                    "Snake tried parkour. Failed.",
+                },
+                rock = {
+                    "That rock didn’t budge.",
+                    "Oof. Rocks are hard.",
+                    "Who put that there?!",
+                    "Snake tested rock durability. Confirmed.",
+                    "Rock 1 – Snake 0.",
+                    "Snake’s greatest enemy: landscaping.",
+                    "New diet: minerals.",
+                    "You’ve unlocked Rock Appreciation 101.",
+                    "Rock solid. Snake squishy.",
+                },
+                saw = {
+                    "That wasn’t a salad spinner.",
+                    "Just rub some dirt on it.",
+                    "OSHA has entered the chat.",
+                    "Snake auditioned for a horror movie.",
+                },
+                unknown = {
+                    "Mysterious demise...",
+                    "The void has claimed you.",
+                    "Well, that’s one way to end it.",
+                    "Snake blinked out of existence.",
+                    "Cosmic forces intervened.",
+                    "Snake entered the glitch dimension.",
+                },
+            },
+        },
+        gamemodes = {
+            unlock_popup = "${mode} Unlocked!",
+            classic = {
+                label = "Classic",
+                description = "Traditional Snake — steady pace, no pressure.",
+            },
+            hardcore = {
+                label = "Hardcore",
+                description = "Faster speed, tighter reflexes required.",
+                unlock_description = "Score 25 in Classic mode.",
+            },
+            timed = {
+                label = "Timed",
+                description = "60 seconds. Eat as many apples as you can.",
+                unlock_description = "Eat 50 apples total.",
+                timer_label = "Time: ${seconds}",
+            },
+            daily = {
+                label = "Daily Challenge",
+                description = "A new challenge each day — random effects, one shot.",
+            },
+        },
+        achievements_definitions = {
+            firstApple = {
+                title = "Tasty Beginning",
+                description = "Eat your first apple",
+            },
+            appleHoarder = {
+                title = "Apple Hoarder",
+                description = "Eat 100 total apples",
+            },
+            fullBelly = {
+                title = "Full Belly",
+                description = "Reach a snake length of 50",
+            },
+            dragonHunter = {
+                title = "Dragon Hunter",
+                description = "Collect the legendary Dragonfruit",
+            },
+        },
+    },
+}
 
 return english

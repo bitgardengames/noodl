@@ -1,5 +1,6 @@
 local Audio = require("audio")
 local Settings = require("settings")
+local Localization = require("localization")
 
 local PauseMenu = {}
 
@@ -24,19 +25,21 @@ local function toggleSFX()
 end
 
 local baseButtons = {
-    { text = "Resume",       id = "pauseResume", action = "resume" },
-    { text = "",             id = "pauseToggleMusic", action = toggleMusic },
-    { text = "",             id = "pauseToggleSFX",   action = toggleSFX },
-    { text = "Quit to Menu", id = "pauseQuit",   action = "menu" },
+    { textKey = "pause.resume",       id = "pauseResume", action = "resume" },
+    { id = "pauseToggleMusic", action = toggleMusic },
+    { id = "pauseToggleSFX",   action = toggleSFX },
+    { textKey = "pause.quit", id = "pauseQuit",   action = "menu" },
 }
 
 local buttonList = ButtonList.new()
 
 local function getToggleLabel(id)
     if id == "pauseToggleMusic" then
-        return "Music: " .. (Settings.muteMusic and "Off" or "On")
+        local state = Settings.muteMusic and Localization:get("common.off") or Localization:get("common.on")
+        return Localization:get("pause.toggle_music", { state = state })
     elseif id == "pauseToggleSFX" then
-        return "Sound FX: " .. (Settings.muteSFX and "Off" or "On")
+        local state = Settings.muteSFX and Localization:get("common.off") or Localization:get("common.on")
+        return Localization:get("pause.toggle_sfx", { state = state })
     end
 
     return nil
@@ -44,6 +47,9 @@ end
 
 function PauseMenu:updateButtonLabels()
     for _, button in buttonList:iter() do
+        if button.textKey then
+            button.text = Localization:get(button.textKey)
+        end
         local label = getToggleLabel(button.id)
         if label then
             button.text = label
@@ -61,7 +67,8 @@ function PauseMenu:load(screenWidth, screenHeight)
     for i, btn in ipairs(baseButtons) do
         defs[#defs + 1] = {
             id = btn.id,
-            text = getToggleLabel(btn.id) or btn.text,
+            local baseText = btn.textKey and Localization:get(btn.textKey) or ""
+            text = getToggleLabel(btn.id) or baseText,
             action = btn.action,
             x = centerX - 100,
             y = centerY - 40 + (i - 1) * spacing,
@@ -98,7 +105,7 @@ function PauseMenu:draw(screenWidth, screenHeight)
 
     love.graphics.setFont(fontLarge)
     love.graphics.setColor(1, 1, 1, alpha)
-    love.graphics.printf("Paused", 0, 120, screenWidth, "center")
+    love.graphics.printf(Localization:get("pause.title"), 0, 120, screenWidth, "center")
 
     buttonList:draw()
 end

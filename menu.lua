@@ -5,6 +5,7 @@ local Theme = require("theme")
 local drawWord = require("drawword")
 local Face = require("face")
 local ButtonList = require("buttonlist")
+local Localization = require("localization")
 
 local Menu = {}
 
@@ -24,10 +25,10 @@ function Menu:enter()
     local startY = sh / 2 - ((UI.spacing.buttonHeight + UI.spacing.buttonSpacing) * 2.5)
 
     local labels = {
-        { text = "Start Game",   action = "modeselect" },
-        { text = "Settings",     action = "settings" },
-        { text = "Achievements", action = "achievementsmenu" },
-        { text = "Quit",         action = "quit" },
+        { key = "menu.start_game",   action = "modeselect" },
+        { key = "menu.settings",     action = "settings" },
+        { key = "menu.achievements", action = "achievementsmenu" },
+        { key = "menu.quit",         action = "quit" },
     }
 
     local defs = {}
@@ -42,7 +43,8 @@ function Menu:enter()
             y = y,
             w = UI.spacing.buttonWidth,
             h = UI.spacing.buttonHeight,
-            text = entry.text,
+            labelKey = entry.key,
+            text = Localization:get(entry.key),
             action = entry.action,
             hovered = false,
             scale = 1,
@@ -83,7 +85,7 @@ function Menu:draw()
     love.graphics.rectangle("fill", 0, 0, sw, sh)
 
     local cellSize = 20
-    local word = "noodl"
+    local word = Localization:get("menu.title_word")
     local spacing = 10
     local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
     local ox = (sw - wordWidth) / 2
@@ -100,6 +102,10 @@ function Menu:draw()
     end
 
     for _, btn in ipairs(buttons) do
+        if btn.labelKey then
+            btn.text = Localization:get(btn.labelKey)
+        end
+
         if btn.alpha > 0 then
             UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
 
@@ -116,7 +122,7 @@ function Menu:draw()
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(Theme.textColor)
-    love.graphics.print("v1.0.0", 10, sh - 24)
+    love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
 end
 
 function Menu:mousepressed(x, y, button)
