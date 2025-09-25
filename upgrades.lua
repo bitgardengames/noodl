@@ -4,8 +4,10 @@ local Saws = require("saws")
 local Score = require("score")
 local UI = require("ui")
 local FloatingText = require("floatingtext")
+local Particles = require("particles")
 
 local Upgrades = {}
+local poolById = {}
 
 local rarities = {
     common = {
@@ -51,6 +53,10 @@ local defaultEffects = {
     adrenaline = nil,
     adrenalineDurationBonus = 0,
     adrenalineBoostBonus = 0,
+    comboWindowBonus = 0,
+    comboBonusFlat = 0,
+    comboDepthScaler = 0,
+    shopSlots = 0,
 }
 
 local function newRunState()
@@ -71,6 +77,7 @@ local function register(upgrade)
     upgrade.id = upgrade.id or upgrade.name
     upgrade.rarity = upgrade.rarity or "common"
     upgrade.weight = upgrade.weight or 1
+    poolById[upgrade.id] = upgrade
     return upgrade
 end
 
@@ -117,6 +124,21 @@ local pool = {
                 UI:adjustFruitGoal(-1)
             end
         end,
+    }),
+    register({
+        id = "metronome_totem",
+        name = "Metronome Totem",
+        desc = "Fruit adds +0.35s to the combo timer.",
+        rarity = "common",
+        tags = {"combo"},
+        handlers = {
+            fruitCollected = function()
+                local FruitEvents = require("fruitevents")
+                if FruitEvents.boostComboTimer then
+                    FruitEvents.boostComboTimer(0.35)
+                end
+            end,
+        },
     }),
     register({
         id = "adrenaline_surge",
@@ -251,6 +273,42 @@ local pool = {
         },
     }),
     register({
+        id = "momentum_cache",
+        name = "Momentum Cache",
+        desc = "Combo finishers grant +1 bonus per link but saws move 5% faster.",
+        rarity = "uncommon",
+        tags = {"economy", "risk"},
+        onAcquire = function(state)
+            state.effects.comboBonusFlat = (state.effects.comboBonusFlat or 0) + 1
+            state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 1.05
+        end,
+    }),
+    register({
+        id = "aurora_band",
+        name = "Aurora Band",
+        desc = "Combo window +0.35s but exit needs +1 fruit.",
+        rarity = "uncommon",
+        tags = {"combo", "risk"},
+        onAcquire = function(state)
+            state.effects.comboWindowBonus = (state.effects.comboWindowBonus or 0) + 0.35
+            state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+            if UI.adjustFruitGoal then
+                UI:adjustFruitGoal(1)
+            end
+        end,
+    }),
+    register({
+        id = "caravan_contract",
+        name = "Caravan Contract",
+        desc = "Shops offer +1 card but an extra rock spawns.",
+        rarity = "uncommon",
+        tags = {"economy", "risk"},
+        onAcquire = function(state)
+            state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
+            state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
+        end,
+    }),
+    register({
         id = "venomous_hunger",
         name = "Venomous Hunger",
         desc = "Combo rewards are 50% stronger but the exit needs +1 fruit.",
@@ -310,6 +368,49 @@ local pool = {
             state.effects.sawStall = math.max(state.effects.sawStall or 0, 1.5)
         end,
     }),
+    register({
+        id = "ember_engine",
+        name = "Ember Engine",
+        desc = "First fruit each floor stalls saws for 3s and erupts sparks.",
+        rarity = "rare",
+        tags = {"defense"},
+        onAcquire = function(state)
+            state.counters.ember_engine_ready = false
+        end,
+        handlers = {
+            floorStart = function(_, state)
+                state.counters.ember_engine_ready = true
+            end,
+            fruitCollected = function(data, state)
+                if not state.counters.ember_engine_ready then return end
+                state.counters.ember_engine_ready = false
+                Saws:stall(3)
+                if data and data.x and data.y then
+                    FloatingText:add("Ember Engine", data.x, data.y - 48, {1, 0.58, 0.2, 1}, 1.2, 55)
+                    Particles:spawnBurst(data.x, data.y, {
+                        count = 14,
+                        speed = 120,
+                        life = 0.8,
+                        size = 5,
+                        color = {1, 0.55, 0.2, 1},
+                        spread = math.pi * 2,
+                        gravity = 20,
+                    })
+                end
+            end,
+        },
+    }),
+    register({
+        id = "depthsong_chime",
+        name = "Depthsong Chime",
+        desc = "Combo finishers grant +depth bonus but +1 rock spawns.",
+        rarity = "rare",
+        tags = {"economy"},
+        onAcquire = function(state)
+            state.effects.comboDepthScaler = (state.effects.comboDepthScaler or 0) + 1
+            state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
+        end,
+    }),
 }
 
 local function getRarityInfo(rarity)
@@ -322,6 +423,16 @@ end
 
 function Upgrades:getRunState()
     return self.runState
+end
+
+function Upgrades:getEffect(name)
+    if not name then return nil end
+    return self.runState.effects[name]
+end
+
+function Upgrades:getUpgradeById(id)
+    if not id then return nil end
+    return poolById[id]
 end
 
 function Upgrades:hasTag(tag)
@@ -349,6 +460,10 @@ function Upgrades:addEventHandler(event, handler)
 end
 
 function Upgrades:notify(event, data)
+    if event == "floorStart" then
+        local depth = (data and data.floor) or self.runState.counters.depth or 1
+        self.runState.counters.depth = depth
+    end
     local handlers = self.runState.handlers[event]
     if not handlers then return end
     for _, handler in ipairs(handlers) do
@@ -383,6 +498,46 @@ function Upgrades:modifyFloorContext(context)
     end
 
     return context
+end
+
+local function round(value)
+    if value >= 0 then
+        return math.floor(value + 0.5)
+    else
+        return -math.floor(math.abs(value) + 0.5)
+    end
+end
+
+function Upgrades:getComboBonus(comboCount)
+    local bonus = 0
+    local breakdown = {}
+
+    if not comboCount or comboCount < 2 then
+        return bonus, breakdown
+    end
+
+    local effects = self.runState.effects
+    local flat = (effects.comboBonusFlat or 0) * (comboCount - 1)
+    if flat ~= 0 then
+        local amount = round(flat)
+        if amount ~= 0 then
+            bonus = bonus + amount
+            table.insert(breakdown, { label = "Momentum", amount = amount })
+        end
+    end
+
+    local depthScale = effects.comboDepthScaler or 0
+    if depthScale ~= 0 then
+        local depth = self.runState.counters.depth or 1
+        local amount = round(depth * depthScale)
+        if amount ~= 0 then
+            bonus = bonus + amount
+            local label = depthScale > 0 and "Depthsong" or "Depth Debt"
+            table.insert(breakdown, { label = label, amount = amount })
+        end
+    end
+
+    return bonus, breakdown
 end
 
 local function captureBaseline(state)
