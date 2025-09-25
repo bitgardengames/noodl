@@ -49,11 +49,6 @@ local lastCollectedType = fruitTypes[1]
 local function clamp(a, lo, hi) if a < lo then return lo elseif a > hi then return hi else return a end end
 
 local function easeOutQuad(t)  return 1 - (1 - t)^2 end
-local function easeOutBack(t)
-    local c1 = 1.70158; local c3 = c1 + 1
-    return 1 + c3 * (t - 1)^3 + c1 * (t - 1)^2
-end
-
 -- Helpers
 local function chooseFruitType()
     local total = 0

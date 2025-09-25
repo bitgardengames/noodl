@@ -1,6 +1,5 @@
 local Particles = require("particles")
 local Theme = require("theme")
-local Arena = require("arena")
 
 local Saws = {}
 local current = {}
@@ -26,12 +25,6 @@ local function getMoveSpeed()
 end
 
 -- Easing similar to Rocks
-local function easeOutBack(t)
-    local c1 = 1.70158
-    local c3 = c1 + 1
-    return 1 + c3 * (t - 1)^3 + c1 * (t - 1)^2
-end
-
 -- Spawn a saw on a track
 function Saws:spawn(x, y, radius, teeth, dir, side)
     table.insert(current, {

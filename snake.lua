@@ -142,14 +142,6 @@ local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
     return px + t * dx, py + t * dy
 end
 
-local function cloneSegment(seg)
-    local copy = {}
-    for k, v in pairs(seg) do
-        copy[k] = v
-    end
-    return copy
-end
-
 local function trimHoleSegments(hole)
     if not hole or not trail or #trail == 0 then
         return

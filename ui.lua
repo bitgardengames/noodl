@@ -1,7 +1,6 @@
 local Score = require("score")
 local Audio = require("audio")
 local Theme = require("theme")
-local Fruit = require("fruit")
 
 local UI = {}
 
@@ -437,31 +436,6 @@ local function drawComboIndicator(self)
     love.graphics.rectangle("line", x + barPadding - 2, barY - 2, barWidth + 4, barHeight + 4, 8, 8)
 
     love.graphics.pop()
-end
-
-local function drawFruitIcon(fruit, x, y, size, scale)
-    local r = size / 2
-    scale = scale or 1
-
-    -- shadow
-    love.graphics.setColor(0, 0, 0, 0.25)
-    love.graphics.ellipse("fill", x+2, y+2, r*scale, r*scale*0.85, 24)
-
-    -- body
-    love.graphics.setColor(fruit.color[1], fruit.color[2], fruit.color[3], 1)
-    love.graphics.ellipse("fill", x, y, r*scale, r*scale*0.85, 24)
-
-    -- outline
-    love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.setLineWidth(2)
-    love.graphics.ellipse("line", x, y, r*scale, r*scale*0.85, 24)
-
-    -- dragonfruit glow
-    if fruit.name == "Dragonfruit" then
-        local pulse = 0.5 + 0.5 * math.sin(love.timer.getTime() * 6.0)
-        love.graphics.setColor(1, 0, 1, 0.25 * pulse)
-        love.graphics.circle("line", x, y, r*scale + 3*pulse)
-    end
 end
 
 function UI:drawFruitSockets()

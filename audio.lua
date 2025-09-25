@@ -64,14 +64,4 @@ function Audio:stopMusic()
     end
 end
 
-function Audio:update(dt)
-    if self.movementTimer > 0 then
-        self.movementTimer = self.movementTimer - dt
-    end
-end
-
-function Audio:saveSettings()
-    Settings:save()
-end
-
 return Audio

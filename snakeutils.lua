@@ -59,75 +59,6 @@ function SnakeUtils.occupySawTrack(fx, fy, dir, radius, trackLength, side)
 end
 
 -- Safe spawn: just randomize until we find a free cell
-function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone)
-    local maxAttempts = 200
-    local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
-    local cols, rows = Arena.cols, Arena.rows
-
-    trail = trail or {}
-    local fruitX, fruitY = 0, 0
-    if fruit and fruit.getPosition then
-        fruitX, fruitY = fruit:getPosition()
-    end
-    local rockList = (rocks and rocks.getAll and rocks:getAll()) or {}
-
-    for _ = 1, maxAttempts do
-        local col = math.random(1, cols)
-        local row = math.random(1, rows)
-        local cx, cy = Arena:getCenterOfTile(col, row)
-
-        local blocked = false
-
-        -- occupancy check
-        if SnakeUtils.isOccupied(col, row) then
-            blocked = true
-        end
-
-        -- snake trail (pixel AABB check)
-        if not blocked then
-            for _, segment in ipairs(trail) do
-                if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, segment.drawX, segment.drawY, SEGMENT_SIZE, SEGMENT_SIZE) then
-                    blocked = true
-                    break
-                end
-            end
-        end
-
-        -- fruit check
-        if not blocked then
-            if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, fruitX, fruitY, SEGMENT_SIZE) then
-                blocked = true
-            end
-        end
-
-        -- rock checks
-        if not blocked then
-            for _, rock in ipairs(rockList) do
-                if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, rock.x, rock.y, rock.w) then
-                    blocked = true
-                    break
-                end
-            end
-        end
-
-        -- NEW: safeZone rejection (list of {col,row} cells)
-        if not blocked and safeZone then
-            for _, cell in ipairs(safeZone) do
-                if cell[1] == col and cell[2] == row then
-                    blocked = true
-                    break
-                end
-            end
-        end
-
-        if not blocked then
-            return cx, cy
-        end
-    end
-
-    return nil, nil
-end
-
 -- Axis-Aligned Bounding Box
 function SnakeUtils.aabb(ax, ay, asize, bx, by, bsize)
     -- If tables passed, extract drawX/drawY
@@ -144,12 +75,6 @@ function SnakeUtils.aabb(ax, ay, asize, bx, by, bsize)
            ax + asize > bx and
            ay < by + bsize and
            ay + asize > by
-end
-
--- trimTrail was from the old continuous snake
--- we can safely disable/remove it in grid-based mode
-function SnakeUtils.trimTrail(trail, segmentCount, SEGMENT_SPACING)
-    -- No-op for grid snake
 end
 
 -- handle input direction
@@ -170,8 +95,8 @@ SnakeUtils.directions = {
 }
 
 -- safer apple spawn (grid aware)
-function SnakeUtils.getSafeSpawn(trail, fruit, rocks)
-    local maxAttempts = 100
+function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone)
+    local maxAttempts = 200
     local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
     local cols, rows = Arena.cols, Arena.rows
 
@@ -181,6 +106,7 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks)
         fruitX, fruitY = fruit:getPosition()
     end
     local rockList = (rocks and rocks.getAll and rocks:getAll()) or {}
+    local safeCells = safeZone or {}
 
     for _ = 1, maxAttempts do
         local col = math.random(1, cols)
@@ -189,16 +115,22 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks)
 
         local blocked = false
 
+        if SnakeUtils.isOccupied(col, row) then
+            blocked = true
+        end
+
         -- snake trail
-        for _, segment in ipairs(trail) do
-            if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, segment.drawX, segment.drawY, SEGMENT_SIZE, SEGMENT_SIZE) then
-                blocked = true
-                break
+        if not blocked then
+            for _, segment in ipairs(trail) do
+                if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, segment.drawX, segment.drawY, SEGMENT_SIZE, SEGMENT_SIZE) then
+                    blocked = true
+                    break
+                end
             end
         end
 
         -- fruit
-        if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, fruitX, fruitY, SEGMENT_SIZE) then
+        if not blocked and SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, fruitX, fruitY, SEGMENT_SIZE) then
             blocked = true
         end
 
@@ -206,6 +138,15 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks)
         if not blocked then
             for _, rock in ipairs(rockList) do
                 if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, rock.x, rock.y, rock.w) then
+                    blocked = true
+                    break
+                end
+            end
+        end
+
+        if not blocked and safeZone then
+            for _, cell in ipairs(safeCells) do
+                if cell[1] == col and cell[2] == row then
                     blocked = true
                     break
                 end
