@@ -32,13 +32,34 @@ local comboState = {
     timer = 0,
     window = DEFAULT_COMBO_WINDOW,
     baseWindow = DEFAULT_COMBO_WINDOW,
+    baseOverride = DEFAULT_COMBO_WINDOW,
     tailWindowBonus = 0,
     tailComboBonus = 0,
     tailLabel = nil,
     lastTierShown = nil,
 }
 
+local function getUpgradeEffect(name)
+    if Upgrades and Upgrades.getEffect then
+        return Upgrades:getEffect(name)
+    end
+end
+
+local function getBaseWindow()
+    local override = comboState.baseOverride or DEFAULT_COMBO_WINDOW
+    local bonus = getUpgradeEffect("comboWindowBonus") or 0
+    return math.max(0.5, override + bonus)
+end
+
+local function updateComboWindow()
+    comboState.baseWindow = getBaseWindow()
+    local adjusted = comboState.baseWindow + (comboState.tailWindowBonus or 0)
+    comboState.window = math.max(0.75, adjusted)
+    comboState.timer = math.min(comboState.timer or 0, comboState.window)
+end
+
 local function syncComboToUI()
+    updateComboWindow()
     UI:setCombo(
         comboState.count or 0,
         comboState.timer or 0,
@@ -72,9 +93,7 @@ local function evaluateTailAssist(length, fx, fy)
         comboState.lastTierShown = tierIndex
     end
 
-    local baseWindow = comboState.baseWindow or DEFAULT_COMBO_WINDOW
-    local adjusted = baseWindow + comboState.tailWindowBonus
-    comboState.window = math.max(0.75, adjusted)
+    updateComboWindow()
 end
 
 local function comboTagline(count)
@@ -111,22 +130,46 @@ local function applyComboReward(x, y)
     local burstColor = {1, 0.82, 0.3, 1}
     local baseBonus = math.min((comboCount - 1) * 2, 10)
     local tailBonus = (comboState.tailComboBonus or 0) * math.max(comboCount - 1, 0)
-    local rawTotal = baseBonus + tailBonus
     local multiplier = Score.getComboBonusMultiplier and Score:getComboBonusMultiplier() or 1
-    local totalBonus = math.floor(rawTotal * multiplier + 0.5)
+    local scaledCombo = math.floor((baseBonus + tailBonus) * multiplier + 0.5)
     local scaledTailBonus = math.floor((tailBonus or 0) * multiplier + 0.5)
+
+    local extraBonus, extraBreakdown = 0, nil
+    if Upgrades and Upgrades.getComboBonus then
+        extraBonus, extraBreakdown = Upgrades:getComboBonus(comboCount)
+    end
+
+    local totalBonus = math.max(0, scaledCombo + (extraBonus or 0))
 
     FloatingText:add(comboTagline(comboCount), x, y - 32, burstColor, 1.3, 55)
 
     if totalBonus > 0 then
         Score:addBonus(totalBonus)
-        FloatingText:add("+" .. tostring(totalBonus) .. " bonus", x, y - 64, {1, 0.95, 0.6, 1}, 1.1, 50)
+
+        local detailParts = {}
         if scaledTailBonus > 0 then
-            FloatingText:add("Tail Flow +" .. tostring(scaledTailBonus), x, y - 94, {0.6, 0.85, 1, 1}, 1.2, 55)
+            table.insert(detailParts, "Tail Flow +" .. tostring(scaledTailBonus))
         end
         if multiplier > 1.01 then
-            FloatingText:add(string.format("Combo x%.1f", multiplier), x, y - 124, {0.9, 0.65, 1.0, 1}, 1.1, 55)
+            table.insert(detailParts, string.format("x%.1f surge", multiplier))
         end
+        if extraBreakdown and #extraBreakdown > 0 then
+            for _, info in ipairs(extraBreakdown) do
+                if info.amount and info.amount ~= 0 then
+                    local label = info.label or "Relic"
+                    table.insert(detailParts, string.format("%s %+d", label, info.amount))
+                end
+            end
+        elseif extraBonus and extraBonus > 0 then
+            table.insert(detailParts, "Relic +" .. tostring(extraBonus))
+        end
+
+        local summary = "+" .. tostring(totalBonus) .. " bonus"
+        if #detailParts > 0 then
+            summary = summary .. " (" .. table.concat(detailParts, " · ") .. ")"
+        end
+
+        FloatingText:add(summary, x, y - 74, {1, 0.95, 0.6, 1}, 1.3, 48)
     end
 
     Particles:spawnBurst(x, y, {
@@ -145,8 +188,9 @@ end
 function FruitEvents.reset()
     comboState.count = 0
     comboState.timer = 0
-    comboState.window = DEFAULT_COMBO_WINDOW
+    comboState.baseOverride = DEFAULT_COMBO_WINDOW
     comboState.baseWindow = DEFAULT_COMBO_WINDOW
+    comboState.window = DEFAULT_COMBO_WINDOW
     comboState.tailWindowBonus = 0
     comboState.tailComboBonus = 0
     comboState.tailLabel = nil
@@ -163,13 +207,12 @@ function FruitEvents:getDefaultComboWindow()
 end
 
 function FruitEvents:setComboWindow(window)
-    comboState.baseWindow = math.max(0.5, window or DEFAULT_COMBO_WINDOW)
-    comboState.window = math.max(0.75, comboState.baseWindow + (comboState.tailWindowBonus or 0))
-    comboState.timer = math.min(comboState.timer or 0, comboState.window)
+    comboState.baseOverride = math.max(0.5, window or DEFAULT_COMBO_WINDOW)
     syncComboToUI()
 end
 
 function FruitEvents.update(dt)
+    updateComboWindow()
     if comboState.timer > 0 then
         comboState.timer = math.max(0, comboState.timer - dt)
 
@@ -179,6 +222,17 @@ function FruitEvents.update(dt)
 
         syncComboToUI()
     end
+end
+
+function FruitEvents.getComboCount()
+    return comboState.count or 0
+end
+
+function FruitEvents.boostComboTimer(amount)
+    if not amount or amount <= 0 then return end
+    updateComboWindow()
+    comboState.timer = math.min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
+    syncComboToUI()
 end
 
 function FruitEvents.handleConsumption(x, y)
