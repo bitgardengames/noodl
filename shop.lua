@@ -336,7 +336,8 @@ function Shop:draw(screenW, screenH)
         love.graphics.translate(centerX, centerY)
         love.graphics.scale(scale, scale)
         love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
-        drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, nil, self.selected == card, alpha)
+        local appearanceAlpha = self.selected == card and 1 or alpha
+        drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, nil, self.selected == card, appearanceAlpha)
         love.graphics.pop()
         card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
 
