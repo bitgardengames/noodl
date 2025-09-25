@@ -12,11 +12,53 @@ local buttonList = ButtonList.new()
 local iconCache = {}
 local displayBlocks = {}
 
+local START_Y = 180
+local CARD_SPACING = 120
+local CARD_WIDTH = 600
+local CARD_HEIGHT = 100
+local CATEGORY_SPACING = 40
+local SCROLL_SPEED = 60
+
+local scrollOffset = 0
+local minScrollOffset = 0
+
+local function updateScrollBounds(sw, sh)
+    local viewportBottom = sh - 120
+    local viewportHeight = math.max(0, viewportBottom - START_Y)
+
+    local y = START_Y
+    local maxBottom = START_Y
+
+    if displayBlocks then
+        for _, block in ipairs(displayBlocks) do
+            if block.achievements then
+                for _ in ipairs(block.achievements) do
+                    maxBottom = math.max(maxBottom, y + CARD_HEIGHT)
+                    y = y + CARD_SPACING
+                end
+            end
+            y = y + CATEGORY_SPACING
+        end
+    end
+
+    local contentHeight = math.max(0, maxBottom - START_Y)
+    minScrollOffset = math.min(0, viewportHeight - contentHeight)
+
+    if scrollOffset < minScrollOffset then
+        scrollOffset = minScrollOffset
+    elseif scrollOffset > 0 then
+        scrollOffset = 0
+    end
+end
+
 function AchievementsMenu:enter()
     Screen:update()
     UI.clearButtons()
 
     local sw, sh = Screen:get()
+
+    scrollOffset = 0
+    minScrollOffset = 0
 
     buttonList:reset({
         {
@@ -33,6 +75,8 @@ function AchievementsMenu:enter()
 
     iconCache = {}
     displayBlocks = Achievements:getDisplayOrder()
+
+    updateScrollBounds(sw, sh)
 
     for _, block in ipairs(displayBlocks) do
         for _, ach in ipairs(block.achievements) do
@@ -66,13 +110,23 @@ function AchievementsMenu:draw()
         displayBlocks = Achievements:getDisplayOrder()
     end
 
-    local startY = 180
-    local spacing = 120
-    local cardWidth = 600
-    local cardHeight = 100
+    updateScrollBounds(sw, sh)
+
+    local startY = START_Y
+    local spacing = CARD_SPACING
+    local cardWidth = CARD_WIDTH
+    local cardHeight = CARD_HEIGHT
     local xCenter = sw / 2
     local lockedCardColor = Theme.lockedCardColor or {0.12, 0.12, 0.15}
-    local categorySpacing = 40
+    local categorySpacing = CATEGORY_SPACING
+
+    local scissorTop = START_Y - 80
+    local scissorBottom = sh - 120
+    local scissorHeight = math.max(0, scissorBottom - scissorTop)
+    love.graphics.setScissor(0, scissorTop, sw, scissorHeight)
+
+    love.graphics.push()
+    love.graphics.translate(0, scrollOffset)
 
     local y = startY
     for _, block in ipairs(displayBlocks) do
@@ -151,6 +205,9 @@ function AchievementsMenu:draw()
         y = y + categorySpacing
     end
 
+    love.graphics.pop()
+    love.graphics.setScissor()
+
     for _, btn in buttonList:iter() do
         if btn.textKey then
             btn.text = Localization:get(btn.textKey)
@@ -167,6 +224,16 @@ end
 function AchievementsMenu:mousereleased(x, y, button)
     local action = buttonList:mousereleased(x, y, button)
     return action
+end
+
+function AchievementsMenu:wheelmoved(_, dy)
+    if dy == 0 then
+        return
+    end
+
+    scrollOffset = scrollOffset + dy * SCROLL_SPEED
+    local sw, sh = Screen:get()
+    updateScrollBounds(sw, sh)
 end
 
 function AchievementsMenu:gamepadpressed(_, button)

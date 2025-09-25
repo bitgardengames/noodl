@@ -20,6 +20,10 @@ function love.mousereleased(x, y, button)
     App:mousereleased(x, y, button)
 end
 
+function love.wheelmoved(dx, dy)
+    App:wheelmoved(dx, dy)
+end
+
 function love.keypressed(key)
     App:keypressed(key)
 end
