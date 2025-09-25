@@ -14,6 +14,7 @@ local Particles = require("particles")
 local Theme = require("theme")
 local Achievements = require("achievements")
 local Upgrades = require("upgrades")
+local FruitWallet = require("fruitwallet")
 
 local FruitEvents = {}
 
@@ -99,6 +100,90 @@ local function applyComboReward(x, y)
         drag = 2.5,
         fadeTo = 0
     })
+end
+
+local function addFloatingText(label, x, y, color, duration, size)
+    if not label or label == "" then return end
+    FloatingText:add(label, x, y, color or Theme.textColor, duration or 1.1, size or 42)
+end
+
+local function applyRunRewards(fruitType, x, y)
+    if not fruitType then return end
+
+    local rewards = fruitType.runRewards or fruitType.runReward
+    if not rewards then return end
+
+    if rewards.type then
+        rewards = { rewards }
+    end
+
+    local offset = 74
+    for _, reward in ipairs(rewards) do
+        local rewardType = reward.type
+        if rewardType == "comboTime" then
+            local amount = reward.amount or reward.duration or 0
+            if amount and amount ~= 0 then
+                FruitEvents.boostComboTimer(amount)
+                if reward.label then
+                    addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
+                    offset = offset + 22
+                end
+            end
+        elseif rewardType == "stallSaws" then
+            local duration = reward.duration or reward.amount or 0
+            if duration and duration > 0 then
+                Saws:stall(duration)
+                if reward.label then
+                    addFloatingText(reward.label, x, y - offset, reward.color or {0.8, 0.9, 1, 1}, reward.duration, reward.size)
+                    offset = offset + 22
+                end
+            end
+        elseif rewardType == "shield" then
+            local shields = math.floor(reward.amount or 0)
+            if shields ~= 0 then
+                Snake:addCrashShields(shields)
+                if reward.label and reward.showLabel ~= false then
+                    addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
+                    offset = offset + 22
+                end
+            end
+        elseif rewardType == "scoreBonus" then
+            local bonus = math.floor(reward.amount or 0)
+            if bonus ~= 0 then
+                Score:addBonus(bonus)
+                if reward.label then
+                    addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
+                    offset = offset + 22
+                end
+            end
+        end
+    end
+end
+
+local function applyMetaReward(fruitType, x, y)
+    if not fruitType then return end
+
+    local metaReward = fruitType.metaReward
+    if not metaReward then return end
+
+    local result = FruitWallet:grantMeta(fruitType)
+    if not result then return end
+
+    local label = metaReward.label
+    if label and metaReward.showAmount ~= false then
+        label = string.format("+%d %s", result.amount or metaReward.amount or 0, label)
+    end
+
+    local baseY = y - 96
+    if label then
+        addFloatingText(label, x, baseY, metaReward.color, metaReward.duration or 1.2, metaReward.size or 50)
+        baseY = baseY + 26
+    end
+
+    if metaReward.showTotal then
+        local totalText = string.format("Total: %d", result.lifetime or 0)
+        addFloatingText(totalText, x, baseY, metaReward.totalColor or {1, 1, 1, 0.85}, 1.0, 36)
+    end
 end
 
 function FruitEvents.reset()
@@ -196,6 +281,8 @@ function FruitEvents.handleConsumption(x, y)
     end
 
     applyComboReward(x, y)
+    applyRunRewards(fruitType, x, y)
+    applyMetaReward(fruitType, x, y)
 
     if Snake.adrenaline then
         Snake.adrenaline.active = true
