@@ -136,4 +136,26 @@ function Menu:mousereleased(x, y, button)
     end
 end
 
+local function handleMenuConfirm()
+    local action = buttonList:activateFocused()
+    if action then
+        Audio:playSound("click")
+    end
+    return action
+end
+
+function Menu:gamepadpressed(_, button)
+    if button == "dpup" or button == "dpleft" then
+        buttonList:moveFocus(-1)
+    elseif button == "dpdown" or button == "dpright" then
+        buttonList:moveFocus(1)
+    elseif button == "a" or button == "start" then
+        return handleMenuConfirm()
+    elseif button == "b" then
+        return "quit"
+    end
+end
+
+Menu.joystickpressed = Menu.gamepadpressed
+
 return Menu

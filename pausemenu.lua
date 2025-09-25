@@ -134,4 +134,42 @@ function PauseMenu:getAlpha()
     return alpha
 end
 
+local function handleActionResult(action, entry)
+    if type(action) == "function" then
+        action()
+        if entry then
+            return nil, true
+        end
+        return nil, true
+    end
+
+    return action, entry and getToggleLabel(entry.id) ~= nil
+end
+
+function PauseMenu:activateFocused()
+    local action, entry = buttonList:activateFocused()
+    if not entry and not action then return nil end
+
+    local resolved, requiresRefresh = handleActionResult(action, entry)
+    if requiresRefresh then
+        self:updateButtonLabels()
+    end
+
+    return resolved
+end
+
+function PauseMenu:gamepadpressed(_, button)
+    if button == "dpup" or button == "dpleft" then
+        buttonList:moveFocus(-1)
+    elseif button == "dpdown" or button == "dpright" then
+        buttonList:moveFocus(1)
+    elseif button == "a" or button == "start" then
+        return self:activateFocused()
+    elseif button == "b" then
+        return "resume"
+    end
+end
+
+PauseMenu.joystickpressed = PauseMenu.gamepadpressed
+
 return PauseMenu

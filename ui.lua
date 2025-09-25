@@ -45,6 +45,18 @@ function UI.clearButtons()
     UI.buttons = {}
 end
 
+function UI.setButtonFocus(id, focused)
+    if not id then return end
+
+    local btn = UI.buttons[id]
+    if not btn then
+        btn = { pressed = false, anim = 0 }
+        UI.buttons[id] = btn
+    end
+
+    btn.focused = focused or nil
+end
+
 -- Fonts
 UI.fonts = {
     title      = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 72),
@@ -93,8 +105,9 @@ end
 -- Register a button (once per frame in your draw code)
 function UI.registerButton(id, x, y, w, h, text)
     UI.buttons[id] = UI.buttons[id] or {pressed = false, anim = 0}
-    UI.buttons[id].bounds = {x = x, y = y, w = w, h = h}
-    UI.buttons[id].text = text
+    local btn = UI.buttons[id]
+    btn.bounds = {x = x, y = y, w = w, h = h}
+    btn.text = text
 end
 
 -- Draw button (render only)
@@ -107,6 +120,9 @@ function UI.drawButton(id)
 
     local mx, my = love.mouse.getPosition()
     local hovered = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
+    if btn.focused then
+        hovered = true
+    end
 
     -- Animate press depth
     local target = (btn.pressed and 1 or 0)
