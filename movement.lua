@@ -142,6 +142,8 @@ function Movement:update(dt)
                 end
 
                 if survivedSaw then
+                        Saws:destroy(sawHit)
+
                         Particles:spawnBurst(headX, headY, {
                                 count = 8, speed = 40, life = 0.35, size = 3,
                                 color = {0.9,0.7,0.3,1}, spread = math.pi*2

@@ -24,6 +24,56 @@ local function getMoveSpeed()
     return MOVE_SPEED * (Saws.speedMult or 1)
 end
 
+local function getSawCenter(saw)
+    if not saw then
+        return nil, nil
+    end
+
+    if saw.dir == "horizontal" then
+        local minX = saw.x - TRACK_LENGTH/2 + saw.radius
+        local maxX = saw.x + TRACK_LENGTH/2 - saw.radius
+        local px = minX + (maxX - minX) * saw.progress
+        return px, saw.y
+    end
+
+    local minY = saw.y - TRACK_LENGTH/2 + saw.radius
+    local maxY = saw.y + TRACK_LENGTH/2 - saw.radius
+    local py = minY + (maxY - minY) * saw.progress
+
+    local hang = 0
+    if saw.side == "left" then
+        hang = math.abs(saw.radius) * HANG_FACTOR
+    elseif saw.side == "right" then
+        hang = -math.abs(saw.radius) * HANG_FACTOR
+    end
+
+    local px = saw.x + hang
+    return px, py
+end
+
+local function removeSaw(target)
+    if not target then
+        return
+    end
+
+    for index, saw in ipairs(current) do
+        if saw == target or index == target then
+            local px, py = getSawCenter(saw)
+            Particles:spawnBurst(px or saw.x, py or saw.y, {
+                count = 12,
+                speed = 80,
+                life = 0.35,
+                size = 3,
+                color = {0.85, 0.8, 0.75, 1},
+                spread = math.pi * 2,
+            })
+
+            table.remove(current, index)
+            break
+        end
+    end
+end
+
 -- Easing similar to Rocks
 -- Spawn a saw on a track
 function Saws:spawn(x, y, radius, teeth, dir, side)
@@ -57,6 +107,10 @@ function Saws:reset()
     self.spinMult = 1.0
     self.stallOnFruit = 0
     stallTimer = 0
+end
+
+function Saws:destroy(target)
+    removeSaw(target)
 end
 
 function Saws:update(dt)
@@ -251,26 +305,7 @@ end
 
 function Saws:checkCollision(x, y, w, h)
     for _, saw in ipairs(self:getAll()) do
-        -- Get saw’s center position
-        local px, py
-        if saw.dir == "horizontal" then
-            local minX = saw.x - TRACK_LENGTH/2 + saw.radius
-            local maxX = saw.x + TRACK_LENGTH/2 - saw.radius
-            px = minX + (maxX - minX) * saw.progress
-            py = saw.y
-        else
-            local minY = saw.y - TRACK_LENGTH/2 + saw.radius
-            local maxY = saw.y + TRACK_LENGTH/2 - saw.radius
-            py = minY + (maxY - minY) * saw.progress
-
-            local hang = 0
-            if saw.side == "left" then
-                hang = math.abs(saw.radius) * HANG_FACTOR
-            elseif saw.side == "right" then
-                hang = -math.abs(saw.radius) * HANG_FACTOR
-            end
-            px = saw.x + hang
-        end
+        local px, py = getSawCenter(saw)
 
         -- Circle vs AABB
         local closestX = math.max(x, math.min(px, x + w))
@@ -278,10 +313,10 @@ function Saws:checkCollision(x, y, w, h)
         local dx = px - closestX
         local dy = py - closestY
         if dx * dx + dy * dy < saw.radius * saw.radius then
-            return true
+            return saw
         end
     end
-    return false
+    return nil
 end
 
 return Saws
