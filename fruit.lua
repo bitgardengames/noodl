@@ -4,11 +4,113 @@ local Theme = require("theme")
 local Arena = require("arena")
 
 local fruitTypes = {
-    {name = "Apple", color = Theme.appleColor, points = 1,  weight = 70},
-    {name = "Banana", color = Theme.bananaColor, points = 3,  weight = 20},
-    {name = "Blueberry", color = Theme.blueberryColor,  points = 5,  weight = 8},
-    {name = "GoldenPear", color = Theme.goldenPearColor, points = 10, weight = 2},
-    {name = "Dragonfruit", color = Theme.dragonfruitColor, points = 50, weight = 0.2}
+    {
+        id = "apple",
+        name = "Apple",
+        color = Theme.appleColor,
+        points = 1,
+        weight = 70,
+        metaReward = {
+            key = "orchardSeeds",
+            amount = 1,
+            label = "Orchard Seed",
+            color = Theme.appleColor,
+        },
+    },
+    {
+        id = "banana",
+        name = "Banana",
+        color = Theme.bananaColor,
+        points = 3,
+        weight = 20,
+        runRewards = {
+            {
+                type = "comboTime",
+                amount = 0.75,
+                label = "+0.75s Combo",
+                color = {1, 0.92, 0.4, 1},
+            },
+        },
+        metaReward = {
+            key = "sunSigils",
+            amount = 2,
+            label = "Sun Sigil",
+            color = Theme.bananaColor,
+        },
+    },
+    {
+        id = "blueberry",
+        name = "Blueberry",
+        color = Theme.blueberryColor,
+        points = 5,
+        weight = 8,
+        runRewards = {
+            {
+                type = "stallSaws",
+                amount = 0.8,
+                label = "Saws Stalled",
+                color = {0.6, 0.75, 1, 1},
+            },
+        },
+        metaReward = {
+            key = "duskDrops",
+            amount = 3,
+            label = "Dusk Drop",
+            color = Theme.blueberryColor,
+        },
+    },
+    {
+        id = "goldenPear",
+        name = "GoldenPear",
+        color = Theme.goldenPearColor,
+        points = 10,
+        weight = 2,
+        runRewards = {
+            {
+                type = "shield",
+                amount = 1,
+                label = "Gilded Shield",
+                color = Theme.goldenPearColor,
+                showLabel = false,
+            },
+        },
+        metaReward = {
+            key = "auricSeeds",
+            amount = 5,
+            label = "Auric Seed",
+            color = Theme.goldenPearColor,
+            showTotal = true,
+        },
+    },
+    {
+        id = "dragonfruit",
+        name = "Dragonfruit",
+        color = Theme.dragonfruitColor,
+        points = 50,
+        weight = 0.2,
+        runRewards = {
+            {
+                type = "shield",
+                amount = 1,
+                label = "Mythic Shield",
+                color = Theme.dragonfruitColor,
+                showLabel = false,
+            },
+            {
+                type = "stallSaws",
+                amount = 1.5,
+                label = "Saws Frozen",
+                color = {1, 0.4, 1, 1},
+            },
+        },
+        metaReward = {
+            key = "wyrmCores",
+            amount = 8,
+            label = "Wyrm Core",
+            color = Theme.dragonfruitColor,
+            showTotal = true,
+        },
+    },
 }
 
 local Fruit = {}
@@ -224,5 +326,19 @@ function Fruit:getPoints()   return lastCollectedType.points or 1 end
 function Fruit:getTypeName() return lastCollectedType.name or "Apple" end
 function Fruit:getType()     return lastCollectedType end
 function Fruit:getTile()     return active.col, active.row end
+
+function Fruit:getFruitTypes()
+    return fruitTypes
+end
+
+function Fruit:getFruitTypeById(id)
+    if not id then return nil end
+    for _, info in ipairs(fruitTypes) do
+        if info.id == id then
+            return info
+        end
+    end
+    return nil
+end
 
 return Fruit

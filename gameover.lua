@@ -5,6 +5,7 @@ local Theme = require("theme")
 local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
+local FruitWallet = require("fruitwallet")
 
 local GameOver = {}
 
@@ -22,6 +23,7 @@ local fontLarge
 local fontSmall
 local stats = {}
 local buttonList = ButtonList.new()
+local fruitSummary = {}
 
 -- Layout constants
 local BUTTON_WIDTH = 250
@@ -87,6 +89,8 @@ function GameOver:enter(data)
     end
 
     buttonList:reset(defs)
+
+    fruitSummary = FruitWallet:getRunSummary() or {}
 end
 
 function GameOver:draw()
@@ -113,10 +117,24 @@ function GameOver:draw()
         love.graphics.printf(text, 0, y + (i - 1) * lineHeight, sw, "center")
     end
 
-	-- Death message
-	love.graphics.setFont(fontSmall)
-	love.graphics.setColor(1, 0.8, 0.8) -- light red/pink for flavor
+        -- Death message
+        love.graphics.setFont(fontSmall)
+        love.graphics.setColor(1, 0.8, 0.8) -- light red/pink for flavor
         love.graphics.printf(self.deathMessage or Localization:get("gameover.default_message"), 0, y + #statLines * lineHeight + 20, sw, "center")
+
+    if fruitSummary and #fruitSummary > 0 then
+        local summaryBase = y + #statLines * lineHeight + 60
+        love.graphics.setFont(fontSmall)
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.printf("Fruit Spoils", 0, summaryBase, sw, "center")
+        for i, info in ipairs(fruitSummary) do
+            local line = string.format("%s: +%d (Total %d)", info.label, info.gained or 0, info.total or 0)
+            local color = info.color or Theme.textColor
+            love.graphics.setColor(color[1] or 1, color[2] or 1, color[3] or 1, 1)
+            love.graphics.printf(line, 0, summaryBase + i * lineHeight, sw, "center")
+        end
+        love.graphics.setColor(1, 1, 1, 1)
+    end
 
     -- Buttons
     for _, btn in buttonList:iter() do
