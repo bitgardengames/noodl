@@ -20,7 +20,6 @@ local UI = require("ui")
 local Theme = require("theme")
 local FruitEvents = require("fruitevents")
 local FloorTraits = require("floortraits")
-local DepthMutations = require("depthmutations")
 local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
@@ -37,10 +36,6 @@ local function buildModifierSections(self)
 
     if self.activeFloorTraits and #self.activeFloorTraits > 0 then
         table.insert(sections, { title = "Floor Traits", items = self.activeFloorTraits })
-    end
-
-    if self.activeDepthMutations and #self.activeDepthMutations > 0 then
-        table.insert(sections, { title = "Depth Effects", items = self.activeDepthMutations })
     end
 
     if #sections == 0 then
@@ -95,7 +90,6 @@ function Game:load()
 
         Score:load()
         Upgrades:beginRun()
-        DepthMutations:reset()
         GameUtils:prepareGame(self.screenWidth, self.screenHeight)
         Face:set("idle")
 
@@ -108,7 +102,6 @@ function Game:load()
 
         -- prepare floor 1 immediately for gameplay (theme, spawns, etc.)
         self:setupFloor(self.floor)
-        self.activeDepthMutations = self.activeDepthMutations or {}
         self.transitionTraits = buildModifierSections(self)
 
         -- first intro: fade-in text for floor 1 only
@@ -123,7 +116,6 @@ function Game:reset()
         Face:set("idle")
         self.state = "playing"
         self.floor = 1
-        DepthMutations:reset()
 end
 
 function Game:enter()
@@ -484,15 +476,11 @@ function Game:setupFloor(floorNum)
     local adjustedContext, appliedTraits = FloorTraits:apply(self.currentFloorData.traits, traitContext)
     traitContext = adjustedContext or traitContext
 
-    local depthContext, depthTraits = DepthMutations:apply(floorNum, traitContext)
-    traitContext = depthContext or traitContext
     traitContext = Upgrades:modifyFloorContext(traitContext)
 
     UI:setFruitGoal(traitContext.fruitGoal)
     UI:setFloorModifiers(appliedTraits)
-    UI:setDepthModifiers(depthTraits)
     self.activeFloorTraits = appliedTraits
-    self.activeDepthMutations = depthTraits
     self.transitionTraits = buildModifierSections(self)
 
     Upgrades:applyPersistentEffects(true)
