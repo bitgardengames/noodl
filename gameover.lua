@@ -5,7 +5,6 @@ local Theme = require("theme")
 local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
-local Backdrop = require("backdrop")
 
 local GameOver = {}
 
@@ -68,8 +67,6 @@ function GameOver:enter(data)
 
     -- Build buttons
     local sw, sh = Screen:get()
-    Backdrop:resize(sw, sh)
-    Backdrop:onPaletteChanged()
     local startY = math.floor(sh * 0.55)
     local centerX = sw / 2 - BUTTON_WIDTH / 2
 
@@ -92,17 +89,11 @@ function GameOver:enter(data)
     buttonList:reset(defs)
 end
 
-function GameOver:update(dt)
-    local sw, sh = Screen:get()
-    Backdrop:update(dt, sw, sh)
-end
-
 function GameOver:draw()
     local sw, sh = Screen:get()
-    local bg = Theme.bgColor or {0, 0, 0, 1}
-    love.graphics.clear(bg[1] or 0, bg[2] or 0, bg[3] or 0, bg[4] or 1)
 
-    Backdrop:drawBase(sw, sh)
+    love.graphics.setColor(Theme.bgColor)
+    love.graphics.rectangle("fill", 0, 0, sw, sh)
 
     -- Title
     love.graphics.setFont(fontLarge)
@@ -135,8 +126,6 @@ function GameOver:draw()
     end
 
     buttonList:draw()
-
-    Backdrop:drawVignette(sw, sh)
 end
 
 function GameOver:mousepressed(x, y, button)

@@ -130,12 +130,6 @@ local Theme = {
 
     -- General background
     bgColor         = {0.08, 0.08, 0.1, 1}, -- Deep slate gray
-    bgGradientTop    = {0.16, 0.12, 0.24, 1}, -- Rich indigo highlight
-    bgGradientBottom = {0.04, 0.05, 0.1, 1},  -- Midnight base
-    bgAccent         = {0.9, 0.55, 0.75, 0.16}, -- Soft magenta glow
-    bgAccentSecondary= {0.45, 0.7, 0.9, 0.12},  -- Cool cyan accent
-    scanlineColor    = {0.95, 0.75, 1.0, 0.1},  -- Moving light band
-    vignetteColor    = {0.02, 0.01, 0.06, 0.82}, -- Dark edge vignette
     shadowColor     = {0, 0, 0, 0.4},       -- Stronger shadow for depth
     highlightColor  = {1, 1, 1, 0.05},      -- Very subtle sheen
 
@@ -147,12 +141,6 @@ local Theme = {
     -- Panels
     panelColor      = {0.18, 0.18, 0.22, 0.9}, -- Dark slate
     panelBorder     = {0.35, 0.3, 0.5, 1},     -- Dusty periwinkle
-
-    -- Arena accents
-    arenaHighlight   = {0.95, 0.7, 0.95, 0.2},  -- Central glow
-    arenaHorizon     = {0.55, 0.45, 0.75, 0.14}, -- Horizon bloom
-    arenaGridPrimary = {1, 1, 1, 0.05},         -- Base grid lines
-    arenaGridHighlight = {0.9, 0.6, 0.85, 0.1}, -- Animated diagonals
 
     -- Text
     textColor       = {0.85, 0.85, 0.9, 1}, -- Soft off-white

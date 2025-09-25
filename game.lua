@@ -27,7 +27,6 @@ local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
 local Upgrades = require("upgrades")
-local Backdrop = require("backdrop")
 
 local Game = {}
 local TRACK_LENGTH = 120
@@ -91,7 +90,6 @@ function Game:load()
         Screen:update()
         self.screenWidth, self.screenHeight = Screen:get()
         Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
-        Backdrop:resize(self.screenWidth, self.screenHeight)
 
         Score:load()
         Upgrades:beginRun()
@@ -443,8 +441,6 @@ function Game:drawDescending()
 end
 
 function Game:update(dt)
-        Backdrop:update(dt, self.screenWidth, self.screenHeight)
-
         if self.state == "paused" then
                 PauseMenu:update(dt, true)
                 return
@@ -489,8 +485,6 @@ function Game:setupFloor(floorNum)
             Theme[k] = v
         end
     end
-
-    Backdrop:onPaletteChanged()
 
     -- reset entities
     Arena:resetExit()
@@ -575,21 +569,18 @@ function Game:setupFloor(floorNum)
 end
 
 function Game:draw()
-        local bg = Theme.bgColor or {0, 0, 0, 1}
-        love.graphics.clear(bg[1] or 0, bg[2] or 0, bg[3] or 0, bg[4] or 1)
+        love.graphics.clear()
 
-        Backdrop:drawBase(self.screenWidth, self.screenHeight)
+        love.graphics.setColor(Theme.bgColor)
+        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 
         if self.state == "transition" then
                 self:drawTransition()
-                Backdrop:drawVignette(self.screenWidth, self.screenHeight)
                 return
         end
 
         Arena:drawBackground()
-        Backdrop:drawArenaGlow(Arena)
         Death:applyShake()
-        Backdrop:drawArenaGrid(Arena)
 
         Fruit:draw()
         Rocks:draw()
@@ -619,8 +610,6 @@ function Game:draw()
         if self.mode and self.mode.draw then
                 self.mode.draw(self, self.screenWidth, self.screenHeight)
         end
-
-        Backdrop:drawVignette(self.screenWidth, self.screenHeight)
 end
 
 function Game:keypressed(key)

@@ -5,7 +5,6 @@ local Theme = require("theme")
 local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
-local Backdrop = require("backdrop")
 
 local AchievementsMenu = {}
 
@@ -18,8 +17,6 @@ function AchievementsMenu:enter()
     UI.clearButtons()
 
     local sw, sh = Screen:get()
-    Backdrop:resize(sw, sh)
-    Backdrop:onPaletteChanged()
 
     buttonList:reset({
         {
@@ -53,19 +50,13 @@ function AchievementsMenu:enter()
 end
 
 function AchievementsMenu:update(dt)
-    local sw, sh = Screen:get()
-    Backdrop:update(dt, sw, sh)
-
     local mx, my = love.mouse.getPosition()
     buttonList:updateHover(mx, my)
 end
 
 function AchievementsMenu:draw()
     local sw, sh = Screen:get()
-    local bg = Theme.bgColor or {0, 0, 0, 1}
-    love.graphics.clear(bg[1] or 0, bg[2] or 0, bg[3] or 0, bg[4] or 1)
-
-    Backdrop:drawBase(sw, sh)
+    love.graphics.clear(Theme.bgColor)
 
     love.graphics.setFont(UI.fonts.title)
     love.graphics.setColor(1, 1, 1)
@@ -167,8 +158,6 @@ function AchievementsMenu:draw()
     end
 
     buttonList:draw()
-
-    Backdrop:drawVignette(sw, sh)
 end
 
 function AchievementsMenu:mousepressed(x, y, button)
