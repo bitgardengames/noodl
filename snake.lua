@@ -3,6 +3,8 @@ local SnakeUtils = require("snakeutils")
 local DrawSnake = require("snakedraw")
 local Rocks = require("rocks")
 local Saws = require("saws")
+local UI = require("ui")
+local FloatingText = require("floatingtext")
 
 local Snake = {}
 
@@ -44,14 +46,35 @@ end
 
 function Snake:addCrashShields(n)
     n = n or 1
-    self.crashShields = (self.crashShields or 0) + n
+    local previous = self.crashShields or 0
+    local updated = previous + n
+    if updated < 0 then
+        updated = 0
+    end
+    self.crashShields = updated
+
+    if n ~= 0 then
+        UI:setCrashShields(self.crashShields)
+    end
+
+    if n and n > 0 then
+        local headX, headY = self:getHead()
+        if headX and headY then
+            local label = n > 1 and ("Shield +" .. tostring(n)) or "Shield +1"
+            FloatingText:add(label, headX, headY - 52, {0.7, 0.9, 1.0, 1}, 1.0, 42)
+        end
+    end
 end
 
 function Snake:consumeCrashShield()
     if (self.crashShields or 0) > 0 then
         self.crashShields = self.crashShields - 1
         self.shieldFlashTimer = SHIELD_FLASH_DURATION
-        -- optional: spawn particle / sound feedback here
+        UI:setCrashShields(self.crashShields)
+        local headX, headY = self:getHead()
+        if headX and headY then
+            FloatingText:add("Shield!", headX, headY - 56, {0.65, 0.9, 1.0, 1}, 0.9, 48)
+        end
         return true
     end
     return false
@@ -69,6 +92,7 @@ function Snake:resetModifiers()
         self.adrenaline.active = false
         self.adrenaline.timer = 0
     end
+    UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
 
 function Snake:setStonebreakerStacks(count)
