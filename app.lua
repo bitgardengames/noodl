@@ -104,6 +104,10 @@ function App:mousereleased(x, y, button)
     return self:dispatch("mousereleased", x, y, button)
 end
 
+function App:wheelmoved(dx, dy)
+    return self:dispatch("wheelmoved", dx, dy)
+end
+
 function App:keypressed(key)
     if key == "printscreen" then
         local time = os.date("%Y-%m-%d_%H-%M-%S")
