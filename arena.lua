@@ -1,4 +1,42 @@
 local Theme = require("theme")
+
+local EXIT_SAFE_ATTEMPTS = 180
+local MIN_HEAD_DISTANCE_TILES = 2
+
+local function getModule(name)
+    local loaded = package.loaded[name]
+    if loaded ~= nil then
+        if loaded == true then
+            return nil
+        end
+        return loaded
+    end
+
+    local ok, result = pcall(require, name)
+    if ok then
+        return result
+    end
+
+    return nil
+end
+
+local function distanceSquared(ax, ay, bx, by)
+    local dx, dy = ax - bx, ay - by
+    return dx * dx + dy * dy
+end
+
+local function isTileInSafeZone(safeZone, col, row)
+    if not safeZone then return false end
+
+    for _, cell in ipairs(safeZone) do
+        if cell[1] == col and cell[2] == row then
+            return true
+        end
+    end
+
+    return false
+end
+
 local Arena = {
     x = 0, y = 0,
     width = 792,
@@ -141,14 +179,116 @@ end
 -- Spawn an exit at a random valid tile
 function Arena:spawnExit()
     if self.exit then return end
-    local col, row = self:getRandomTile()
-    local x, y = self:getCenterOfTile(col, row)
+
+    local SnakeUtils = getModule("snakeutils")
+    local Fruit = getModule("fruit")
+    local fruitCol, fruitRow = nil, nil
+    if Fruit and Fruit.getTile then
+        fruitCol, fruitRow = Fruit:getTile()
+    end
+
+    local Rocks = getModule("rocks")
+    local rockList = (Rocks and Rocks.getAll and Rocks:getAll()) or {}
+
+    local Snake = getModule("snake")
+    local snakeSegments = nil
+    local snakeSafeZone = nil
+    local headX, headY = nil, nil
+    if Snake then
+        if Snake.getSegments then
+            snakeSegments = Snake:getSegments()
+        end
+        if Snake.getSafeZone then
+            snakeSafeZone = Snake:getSafeZone(3)
+        end
+        if Snake.getHead then
+            headX, headY = Snake:getHead()
+        end
+    end
+
+    local threshold = (SnakeUtils and SnakeUtils.SEGMENT_SIZE) or self.tileSize
+    local halfThreshold = threshold * 0.5
+    local minHeadDistance = self.tileSize * MIN_HEAD_DISTANCE_TILES
+    local minHeadDistanceSq = minHeadDistance * minHeadDistance
+
+    local function tileIsSafe(col, row)
+        local cx, cy = self:getCenterOfTile(col, row)
+
+        if SnakeUtils and SnakeUtils.isOccupied and SnakeUtils.isOccupied(col, row) then
+            return false
+        end
+
+        if fruitCol and fruitRow and fruitCol == col and fruitRow == row then
+            return false
+        end
+
+        for _, rock in ipairs(rockList) do
+            local rcol, rrow = self:getTileFromWorld(rock.x or cx, rock.y or cy)
+            if rcol == col and rrow == row then
+                return false
+            end
+        end
+
+        if snakeSafeZone and isTileInSafeZone(snakeSafeZone, col, row) then
+            return false
+        end
+
+        if snakeSegments then
+            for _, seg in ipairs(snakeSegments) do
+                local dx = math.abs((seg.drawX or 0) - cx)
+                local dy = math.abs((seg.drawY or 0) - cy)
+                if dx < halfThreshold and dy < halfThreshold then
+                    return false
+                end
+            end
+        end
+
+        if headX and headY then
+            if distanceSquared(cx, cy, headX, headY) < minHeadDistanceSq then
+                return false
+            end
+        end
+
+        return true
+    end
+
+    local chosenCol, chosenRow
+    for _ = 1, EXIT_SAFE_ATTEMPTS do
+        local col, row = self:getRandomTile()
+        if tileIsSafe(col, row) then
+            chosenCol, chosenRow = col, row
+            break
+        end
+    end
+
+    if not (chosenCol and chosenRow) then
+        for row = 2, self.rows - 1 do
+            for col = 2, self.cols - 1 do
+                if tileIsSafe(col, row) then
+                    chosenCol, chosenRow = col, row
+                    break
+                end
+            end
+            if chosenCol then break end
+        end
+    end
+
+    chosenCol = chosenCol or math.floor(self.cols / 2)
+    chosenRow = chosenRow or math.floor(self.rows / 2)
+
+    if SnakeUtils and SnakeUtils.setOccupied then
+        SnakeUtils.setOccupied(chosenCol, chosenRow, true)
+    end
+
+    local x, y = self:getCenterOfTile(chosenCol, chosenRow)
     local size = self.tileSize * 0.75
     self.exit = {
         x = x, y = y,
         size = size,
         anim = 0,                -- 0 = closed, 1 = fully open
-        animTime = 0.4           -- seconds to open
+        animTime = 0.4,          -- seconds to open
+        col = chosenCol,
+        row = chosenRow,
     }
 end
 
@@ -166,6 +306,13 @@ end
 
 -- Reset/clear exit when moving to next floor
 function Arena:resetExit()
+    if self.exit then
+        local SnakeUtils = getModule("snakeutils")
+        if SnakeUtils and SnakeUtils.setOccupied and self.exit.col and self.exit.row then
+            SnakeUtils.setOccupied(self.exit.col, self.exit.row, false)
+        end
+    end
+
     self.exit = nil
 end
 
