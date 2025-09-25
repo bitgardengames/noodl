@@ -170,6 +170,7 @@ end
 
 function Game:openShop()
         Shop:start(self.floor)
+        self.shopCloseRequested = nil
         startTransitionPhase(self, "shop", 0)
 end
 
@@ -197,6 +198,10 @@ function Game:updateTransition(dt)
 
         elseif self.transitionPhase == "shop" then
                 Shop:update(dt)
+                if self.shopCloseRequested and Shop:isSelectionComplete() then
+                        self.shopCloseRequested = nil
+                        self:startFloorIntro()
+                end
 
         elseif self.transitionPhase == "floorintro" then
                 if self.transitionTimer >= self.transitionDuration then
@@ -586,7 +591,7 @@ end
 function Game:keypressed(key)
         if self.transitionPhase == "shop" then
                 if Shop:keypressed(key) then
-                        self:startFloorIntro()
+                        self.shopCloseRequested = true
                 end
         else
                 Controls:keypressed(self, key)
@@ -594,13 +599,13 @@ function Game:keypressed(key)
 end
 
 function Game:mousepressed(x, y, button)
-    if self.state == "paused" then
-        PauseMenu:mousepressed(x, y, button)
+        if self.state == "paused" then
+                PauseMenu:mousepressed(x, y, button)
 
-    elseif self.transitionPhase == "shop" then
-        if Shop:mousepressed(x, y, button) then
-            self:startFloorIntro()
-        end
+        elseif self.transitionPhase == "shop" then
+                if Shop:mousepressed(x, y, button) then
+                        self.shopCloseRequested = true
+                end
         end
 end
 
