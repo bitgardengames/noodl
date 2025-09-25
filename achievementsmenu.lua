@@ -21,10 +21,12 @@ local SCROLL_SPEED = 60
 
 local scrollOffset = 0
 local minScrollOffset = 0
+local viewportHeight = 0
+local contentHeight = 0
 
 local function updateScrollBounds(sw, sh)
     local viewportBottom = sh - 120
-    local viewportHeight = math.max(0, viewportBottom - START_Y)
+    viewportHeight = math.max(0, viewportBottom - START_Y)
 
     local y = START_Y
     local maxBottom = START_Y
@@ -41,7 +43,7 @@ local function updateScrollBounds(sw, sh)
         end
     end
 
-    local contentHeight = math.max(0, maxBottom - START_Y)
+    contentHeight = math.max(0, maxBottom - START_Y)
     minScrollOffset = math.min(0, viewportHeight - contentHeight)
 
     if scrollOffset < minScrollOffset then
@@ -207,6 +209,35 @@ function AchievementsMenu:draw()
 
     love.graphics.pop()
     love.graphics.setScissor()
+
+    if contentHeight > viewportHeight then
+        local trackX = sw - 52
+        local trackWidth = 12
+        local trackY = scissorTop
+        local trackHeight = viewportHeight
+
+        local scrollRange = -minScrollOffset
+        local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
+
+        local minThumbHeight = 36
+        local thumbHeight = math.max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
+        thumbHeight = math.min(thumbHeight, trackHeight)
+        local thumbY = trackY + (trackHeight - thumbHeight) * scrollProgress
+
+        love.graphics.setColor(0, 0, 0, 0.35)
+        love.graphics.rectangle("fill", trackX - 2, trackY, trackWidth + 4, trackHeight, 6)
+
+        love.graphics.setColor(0.15, 0.18, 0.22, 0.9)
+        love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, 6)
+
+        local snakeR, snakeG, snakeB = unpack(Theme.snakeDefault)
+        love.graphics.setColor(snakeR, snakeG, snakeB, 0.95)
+        love.graphics.rectangle("fill", trackX, thumbY, trackWidth, thumbHeight, 6)
+
+        love.graphics.setColor(snakeR * 0.7, snakeG * 0.7, snakeB * 0.7, 1)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", trackX, thumbY, trackWidth, thumbHeight, 6)
+    end
 
     for _, btn in buttonList:iter() do
         if btn.textKey then
