@@ -137,4 +137,23 @@ function GameOver:mousereleased(x, y, button)
     return action
 end
 
+function GameOver:gamepadpressed(_, button)
+    if button == "dpup" or button == "dpleft" then
+        buttonList:moveFocus(-1)
+    elseif button == "dpdown" or button == "dpright" then
+        buttonList:moveFocus(1)
+    elseif button == "a" or button == "start" then
+        local action = buttonList:activateFocused()
+        if action then
+            Audio:playSound("click")
+        end
+        return action
+    elseif button == "b" then
+        Audio:playSound("click")
+        return "menu"
+    end
+end
+
+GameOver.joystickpressed = GameOver.gamepadpressed
+
 return GameOver

@@ -615,19 +615,30 @@ end
 
 local map = { dpleft="left", dpright="right", dpup="up", dpdown="down" }
 local function handleGamepadInput(self, button)
-	if self.state == "paused" then
-		if button == "start" then self.state = "playing" end
-	else
-		if map[button] then
-			Controls:keypressed(self, map[button])
-		elseif button == "start" and self.state == "playing" then
-			self.state = "paused"
-		end
-	end
+        if self.state == "paused" then
+                if button == "start" then
+                        self.state = "playing"
+                        return
+                end
+
+                local action = PauseMenu:gamepadpressed(nil, button)
+                if action == "resume" then
+                        self.state = "playing"
+                elseif action == "menu" then
+                        Achievements:save()
+                        return "menu"
+                end
+        else
+                if map[button] then
+                        Controls:keypressed(self, map[button])
+                elseif button == "start" and self.state == "playing" then
+                        self.state = "paused"
+                end
+        end
 end
 
 function Game:gamepadpressed(_, button)
-	return handleGamepadInput(self, button)
+        return handleGamepadInput(self, button)
 end
 Game.joystickpressed = Game.gamepadpressed
 

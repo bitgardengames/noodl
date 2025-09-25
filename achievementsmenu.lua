@@ -1,3 +1,4 @@
+local Audio = require("audio")
 local Achievements = require("achievements")
 local Screen = require("screen")
 local Theme = require("theme")
@@ -141,5 +142,21 @@ function AchievementsMenu:mousereleased(x, y, button)
     local action = buttonList:mousereleased(x, y, button)
     return action
 end
+
+function AchievementsMenu:gamepadpressed(_, button)
+    if button == "dpup" or button == "dpleft" then
+        buttonList:moveFocus(-1)
+    elseif button == "dpdown" or button == "dpright" then
+        buttonList:moveFocus(1)
+    elseif button == "a" or button == "start" or button == "b" then
+        local action = buttonList:activateFocused()
+        if action then
+            Audio:playSound("click")
+        end
+        return action
+    end
+end
+
+AchievementsMenu.joystickpressed = AchievementsMenu.gamepadpressed
 
 return AchievementsMenu

@@ -1,3 +1,4 @@
+local Audio = require("audio")
 local GameModes = require("gamemodes")
 local Screen = require("screen")
 local Score = require("score")
@@ -138,5 +139,30 @@ function ModeSelect:mousereleased(x, y, button)
         return "game"
     end
 end
+
+function ModeSelect:gamepadpressed(_, button)
+    if button == "dpup" or button == "dpleft" then
+        buttonList:moveFocus(-1)
+    elseif button == "dpdown" or button == "dpright" then
+        buttonList:moveFocus(1)
+    elseif button == "a" or button == "start" then
+        local _, btn = buttonList:activateFocused()
+        if not btn then return end
+
+        if btn.modeKey == "back" then
+            Audio:playSound("click")
+            return "menu"
+        elseif btn.unlocked then
+            Audio:playSound("click")
+            GameModes:set(btn.modeKey)
+            return "game"
+        end
+    elseif button == "b" then
+        Audio:playSound("click")
+        return "menu"
+    end
+end
+
+ModeSelect.joystickpressed = ModeSelect.gamepadpressed
 
 return ModeSelect
