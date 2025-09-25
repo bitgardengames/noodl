@@ -18,6 +18,7 @@ local Upgrades = require("upgrades")
 local FruitEvents = {}
 
 local DEFAULT_COMBO_WINDOW = 2.25
+local baseComboWindow = DEFAULT_COMBO_WINDOW
 
 local comboState = {
     count = 0,
@@ -34,7 +35,7 @@ local function getUpgradeEffect(name)
 end
 
 local function getBaseWindow()
-    local override = comboState.baseOverride or DEFAULT_COMBO_WINDOW
+    local override = comboState.baseOverride or baseComboWindow or DEFAULT_COMBO_WINDOW
     local bonus = getUpgradeEffect("comboWindowBonus") or 0
     return math.max(0.5, override + bonus)
 end
@@ -104,9 +105,9 @@ end
 function FruitEvents.reset()
     comboState.count = 0
     comboState.timer = 0
-    comboState.baseOverride = DEFAULT_COMBO_WINDOW
-    comboState.baseWindow = DEFAULT_COMBO_WINDOW
-    comboState.window = DEFAULT_COMBO_WINDOW
+    comboState.baseOverride = baseComboWindow
+    comboState.baseWindow = baseComboWindow
+    comboState.window = baseComboWindow
     syncComboToUI()
 end
 
@@ -115,11 +116,18 @@ function FruitEvents:getComboWindow()
 end
 
 function FruitEvents:getDefaultComboWindow()
-    return DEFAULT_COMBO_WINDOW
+    return baseComboWindow
 end
 
 function FruitEvents:setComboWindow(window)
-    comboState.baseOverride = math.max(0.5, window or DEFAULT_COMBO_WINDOW)
+    comboState.baseOverride = math.max(0.5, window or baseComboWindow)
+    syncComboToUI()
+end
+
+function FruitEvents:setBaseComboWindow(window)
+    baseComboWindow = math.max(0.5, window or DEFAULT_COMBO_WINDOW)
+    comboState.baseOverride = baseComboWindow
+    updateComboWindow()
     syncComboToUI()
 end
 
