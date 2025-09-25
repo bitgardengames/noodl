@@ -9,7 +9,6 @@ local nextSlotId = 0
 local SAW_RADIUS = 24
 local SAW_TEETH = 12
 local TRACK_LENGTH = 120 -- how far the saw moves on its track
-local HANG_FACTOR = 0.6 -- how far the blade hub peeks into the arena (multiplied by radius)
 local MOVE_SPEED = 60    -- units per second along the track
 local SPAWN_DURATION = 0.3
 local SQUASH_DURATION = 0.15
@@ -63,15 +62,11 @@ local function getSawCenter(saw)
     local maxY = saw.y + TRACK_LENGTH/2 - saw.radius
     local py = minY + (maxY - minY) * saw.progress
 
-    local hang = 0
-    if saw.side == "left" then
-        hang = math.abs(saw.radius) * HANG_FACTOR
-    elseif saw.side == "right" then
-        hang = -math.abs(saw.radius) * HANG_FACTOR
-    end
-
-    local px = saw.x + hang
-    return px, py
+    -- Vertical saws should sit centered in their track just like horizontal ones.
+    -- Previously we offset the hub using `HANG_FACTOR`, which made the blade
+    -- appear to jut too far into the arena. Keep the center aligned with the
+    -- track instead so both orientations look consistent.
+    return saw.x, py
 end
 
 local function removeSaw(target)
