@@ -26,21 +26,23 @@ local Saws = require("saws")
 local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
+local Upgrades = require("upgrades")
 
 local Game = {}
 local TRACK_LENGTH = 120
 
 function Game:load()
-	self.state = "playing"
-	self.floor = 1
+        self.state = "playing"
+        self.floor = 1
 
-	Screen:update()
-	self.screenWidth, self.screenHeight = Screen:get()
-	Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
+        Screen:update()
+        self.screenWidth, self.screenHeight = Screen:get()
+        Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
 
-	Score:load()
-	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-	Face:set("idle")
+        Score:load()
+        Upgrades:beginRun()
+        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+        Face:set("idle")
 
 	self.mode = GameModes:get()
 	if self.mode and self.mode.load then
@@ -137,9 +139,9 @@ function Game:update(dt)
 					self:setupFloor(self.floor)
 					self.floorApplied = true
 				end
-				self.transitionPhase = "shop"
-				self.transitionTimer = 0
-				Shop:start()
+                                self.transitionPhase = "shop"
+                                self.transitionTimer = 0
+                                Shop:start(self.floor)
 			end
 
 		elseif self.transitionPhase == "shop" then
@@ -268,12 +270,17 @@ function Game:setupFloor(floorNum)
         saws = math.min(math.floor(floorNum / 2), 8),
     }
 
-    local _, appliedTraits = FloorTraits:apply(self.currentFloorData.traits, traitContext)
+    local adjustedContext, appliedTraits = FloorTraits:apply(self.currentFloorData.traits, traitContext)
+    traitContext = adjustedContext or traitContext
+    traitContext = Upgrades:modifyFloorContext(traitContext)
 
     UI:setFruitGoal(traitContext.fruitGoal)
     UI:setFloorModifiers(appliedTraits)
     self.activeFloorTraits = appliedTraits
     self.transitionTraits = appliedTraits
+
+    Upgrades:applyPersistentEffects(true)
+    Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
 
     local numRocks = traitContext.rocks
     local numSaws = traitContext.saws

@@ -13,6 +13,7 @@ local FloatingText = require("floatingtext")
 local Particles = require("particles")
 local Theme = require("theme")
 local Achievements = require("achievements")
+local Upgrades = require("upgrades")
 
 local FruitEvents = {}
 
@@ -110,15 +111,21 @@ local function applyComboReward(x, y)
     local burstColor = {1, 0.82, 0.3, 1}
     local baseBonus = math.min((comboCount - 1) * 2, 10)
     local tailBonus = (comboState.tailComboBonus or 0) * math.max(comboCount - 1, 0)
-    local totalBonus = baseBonus + tailBonus
+    local rawTotal = baseBonus + tailBonus
+    local multiplier = Score.getComboBonusMultiplier and Score:getComboBonusMultiplier() or 1
+    local totalBonus = math.floor(rawTotal * multiplier + 0.5)
+    local scaledTailBonus = math.floor((tailBonus or 0) * multiplier + 0.5)
 
     FloatingText:add(comboTagline(comboCount), x, y - 32, burstColor, 1.3, 55)
 
     if totalBonus > 0 then
         Score:addBonus(totalBonus)
         FloatingText:add("+" .. tostring(totalBonus) .. " bonus", x, y - 64, {1, 0.95, 0.6, 1}, 1.1, 50)
-        if tailBonus > 0 then
-            FloatingText:add("Tail Flow +" .. tostring(tailBonus), x, y - 94, {0.6, 0.85, 1, 1}, 1.2, 55)
+        if scaledTailBonus > 0 then
+            FloatingText:add("Tail Flow +" .. tostring(scaledTailBonus), x, y - 94, {0.6, 0.85, 1, 1}, 1.2, 55)
+        end
+        if multiplier > 1.01 then
+            FloatingText:add(string.format("Combo x%.1f", multiplier), x, y - 124, {0.9, 0.65, 1.0, 1}, 1.1, 55)
         end
     end
 
@@ -227,6 +234,14 @@ function FruitEvents.handleConsumption(x, y)
         Snake.adrenaline.active = true
         Snake.adrenaline.timer = Snake.adrenaline.duration
     end
+
+    Upgrades:notify("fruitCollected", {
+        x = x,
+        y = y,
+        fruitType = fruitType,
+        name = name,
+        combo = comboState.count or 0,
+    })
 
     local jackpotChance = Score.getJackpotChance and Score:getJackpotChance() or 0
     if jackpotChance > 0 then

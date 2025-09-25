@@ -3,144 +3,595 @@ local Rocks = require("rocks")
 local Saws = require("saws")
 local Score = require("score")
 local UI = require("ui")
+local FloatingText = require("floatingtext")
 
 local Upgrades = {}
+
+local rarities = {
+    common = {
+        weight = 60,
+        label = "Common",
+        color = {0.75, 0.82, 0.88, 1},
+    },
+    uncommon = {
+        weight = 28,
+        label = "Uncommon",
+        color = {0.55, 0.78, 0.58, 1},
+    },
+    rare = {
+        weight = 12,
+        label = "Rare",
+        color = {0.76, 0.56, 0.88, 1},
+    }
+}
+
+local function deepcopy(value)
+    if type(value) ~= "table" then
+        return value
+    end
+
+    local copy = {}
+    for k, v in pairs(value) do
+        copy[k] = deepcopy(v)
+    end
+    return copy
+end
+
+local defaultEffects = {
+    sawSpeedMult = 1,
+    sawSpinMult = 1,
+    sawStall = 0,
+    rockSpawnMult = 1,
+    rockSpawnFlat = 0,
+    rockShatter = 0,
+    comboBonusMult = 1,
+    fruitGoalDelta = 0,
+    rockSpawnBonus = 0,
+    sawSpawnBonus = 0,
+    adrenaline = nil,
+    adrenalineDurationBonus = 0,
+    adrenalineBoostBonus = 0,
+}
+
+local function newRunState()
+    return {
+        takenOrder = {},
+        takenSet = {},
+        tags = {},
+        counters = {},
+        handlers = {},
+        effects = deepcopy(defaultEffects),
+        baseline = {},
+    }
+end
+
+Upgrades.runState = newRunState()
+
+local function register(upgrade)
+    upgrade.id = upgrade.id or upgrade.name
+    upgrade.rarity = upgrade.rarity or "common"
+    upgrade.weight = upgrade.weight or 1
+    return upgrade
+end
+
 local pool = {
-    { -- movement
+    register({
+        id = "quick_fangs",
         name = "Quick Fangs",
-        desc = "Snake moves 10% faster",
-        apply = function()
+        desc = "Snake moves 10% faster.",
+        rarity = "common",
+        allowDuplicates = true,
+        maxStacks = 4,
+        onAcquire = function(state)
             Snake:addSpeedMultiplier(1.10)
-        end
-    },
-    { -- crash protection
+        end,
+    }),
+    register({
+        id = "stone_skin",
         name = "Stone Skin",
-        desc = "Survive one crash",
-        apply = function()
+        desc = "Gain a crash shield.",
+        rarity = "common",
+        allowDuplicates = true,
+        maxStacks = 4,
+        onAcquire = function(state)
             Snake:addCrashShields(1)
-        end
-    },
-    { -- slow saws
+        end,
+    }),
+    register({
+        id = "saw_grease",
         name = "Saw Grease",
-        desc = "Saws move 20% slower",
-        apply = function()
-            Saws.speedMult = (Saws.speedMult or 1) * 0.8
-        end
-    },
-    { -- exit unlock tweak (defensive)
+        desc = "Saws move 20% slower.",
+        rarity = "common",
+        onAcquire = function(state)
+            state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.8
+        end,
+    }),
+    register({
+        id = "extra_bite",
         name = "Extra Bite",
-        desc = "Exit unlocks one fruit earlier",
-        apply = function()
-			UI:setFruitGoal( math.max(1, UI:getFruitGoal() - 1) )
-        end
-    },
-    { -- speed up after fruit collection
+        desc = "Exit unlocks one fruit earlier.",
+        rarity = "common",
+        onAcquire = function(state)
+            state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
+            if UI.adjustFruitGoal then
+                UI:adjustFruitGoal(-1)
+            end
+        end,
+    }),
+    register({
+        id = "adrenaline_surge",
         name = "Adrenaline Surge",
-        desc = "Snake gains a burst of speed after eating fruit",
-        apply = function()
-            Snake.adrenaline = {
-                active = false,
-                timer = 0,
-                duration = 3, -- seconds
-                boost = 1.5 -- 50% faster
-            }
-        end
-    },
-    {
+        desc = "Snake gains a burst of speed after eating fruit.",
+        rarity = "uncommon",
+        tags = {"adrenaline"},
+        onAcquire = function(state)
+            state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+        end,
+    }),
+    register({
+        id = "stone_whisperer",
         name = "Stone Whisperer",
-        desc = "Rocks appear far less often after you snack",
-        apply = function()
-            local chance = Rocks.spawnChance or Rocks:getSpawnChance()
-            Rocks.spawnChance = math.max(0.02, chance * 0.6)
-        end
-    },
-    {
+        desc = "Rocks appear far less often after you snack.",
+        rarity = "common",
+        onAcquire = function(state)
+            state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.6
+        end,
+    }),
+    register({
+        id = "tail_trainer",
         name = "Tail Trainer",
-        desc = "Gain an extra segment each time you grow",
-        apply = function()
+        desc = "Gain an extra segment each time you grow.",
+        rarity = "common",
+        allowDuplicates = true,
+        maxStacks = 3,
+        onAcquire = function(state)
             Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
-        end
-    },
-    {
+        end,
+    }),
+    register({
+        id = "lucky_bite",
         name = "Lucky Bite",
-        desc = "+1 score every time you eat fruit",
-        apply = function()
+        desc = "+1 score every time you eat fruit.",
+        rarity = "common",
+        allowDuplicates = true,
+        maxStacks = 3,
+        onAcquire = function(state)
             if Score.addFruitBonus then
                 Score:addFruitBonus(1)
             else
                 Score.fruitBonus = (Score.fruitBonus or 0) + 1
             end
-        end
-    },
-    {
-        name = "Momentum Memory",
-        desc = "Adrenaline bursts last 2 seconds longer",
-        apply = function()
-            Snake.adrenaline = Snake.adrenaline or {
-                active = false,
-                timer = 0,
-                duration = 3,
-                boost = 1.5
-            }
-            Snake.adrenaline.duration = Snake.adrenaline.duration + 2
-        end
-    },
-    {
-        name = "Circuit Breaker",
-        desc = "Saw tracks freeze for 2s after each fruit",
-        apply = function()
-            if Saws.setStallOnFruit then
-                Saws:setStallOnFruit(math.max(Saws:getStallOnFruit(), 2))
+        end,
+    }),
             else
-                Saws.stallOnFruit = math.max(Saws.stallOnFruit or 0, 2)
+                Score.fruitBonus = (Score.fruitBonus or 0) + 1
             end
-        end
-    },
-    {
+        end,
+    }),
+    register({
+        id = "momentum_memory",
+        name = "Momentum Memory",
+        desc = "Adrenaline bursts last 2 seconds longer.",
+        rarity = "uncommon",
+        requiresTags = {"adrenaline"},
+        onAcquire = function(state)
+            state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+            state.effects.adrenalineDurationBonus = (state.effects.adrenalineDurationBonus or 0) + 2
+        end,
+    }),
+    register({
+        id = "circuit_breaker",
+        name = "Circuit Breaker",
+        desc = "Saw tracks freeze for 2s after each fruit.",
+        rarity = "uncommon",
+        onAcquire = function(state)
+            state.effects.sawStall = math.max(state.effects.sawStall or 0, 2)
+        end,
+    }),
+    register({
+        id = "gem_maw",
         name = "Gem Maw",
-        desc = "Fruits have a 12% chance to erupt into +5 bonus score",
-        apply = function()
+        desc = "Fruits have a 12% chance to erupt into +5 bonus score.",
+        rarity = "uncommon",
+        onAcquire = function(state)
             if Score.addJackpotChance then
                 Score:addJackpotChance(0.12, 5)
             else
                 Score.jackpotChance = math.min(1, (Score.jackpotChance or 0) + 0.12)
                 Score.jackpotReward = (Score.jackpotReward or 0) + 5
             end
-        end
-    },
-    {
+        end,
+    }),
+    register({
+        id = "stonebreaker_hymn",
         name = "Stonebreaker Hymn",
-        desc = "Each fruit shatters the nearest rock",
-        apply = function()
-            if Rocks.addShatterOnFruit then
-                Rocks:addShatterOnFruit(1)
-            else
-                Rocks.shatterOnFruit = (Rocks.shatterOnFruit or 0) + 1
-            end
-        end
-    },
-    {
+        desc = "Each fruit shatters the nearest rock.",
+        rarity = "uncommon",
+        onAcquire = function(state)
+            state.effects.rockShatter = (state.effects.rockShatter or 0) + 1
+        end,
+    }),
+    register({
+        id = "echo_aegis",
         name = "Echo Aegis",
-        desc = "Crash shields unleash a shockwave that stalls saws",
-        apply = function()
+        desc = "Crash shields unleash a shockwave that stalls saws.",
+        rarity = "uncommon",
+        onAcquire = function(state)
             if Snake.addShieldBurst then
                 Snake:addShieldBurst({ rocks = 1, stall = 1.5 })
             else
                 Snake.shieldBurst = Snake.shieldBurst or { rocks = 0, stall = 0 }
                 Snake.shieldBurst.rocks = (Snake.shieldBurst.rocks or 0) + 1
-                Snake.shieldBurst.stall = math.max(Snake.shieldBurst.stall or 0, 1.5)
+                local current = Snake.shieldBurst.stall or 0
+                Snake.shieldBurst.stall = math.max(current, 1.5)
             end
-        end
-    },
+        end,
+    }),
+    register({
+        id = "gilded_trail",
+        name = "Gilded Trail",
+        desc = "Every 5th fruit grants +3 bonus score.",
+        rarity = "common",
+        tags = {"economy"},
+        onAcquire = function(state)
+            state.counters.gildedTrail = state.counters.gildedTrail or 0
+        end,
+        handlers = {
+            fruitCollected = function(data, state)
+                state.counters.gildedTrail = (state.counters.gildedTrail or 0) + 1
+                if state.counters.gildedTrail % 5 == 0 then
+                    if Score.addBonus then
+                        Score:addBonus(3)
+                    end
+                    if FloatingText and data and data.x and data.y then
+                        FloatingText:add("Gilded Trail +3", data.x, data.y - 36, {1, 0.88, 0.35, 1}, 1.2, 55)
+                    end
+                end
+            end,
+        },
+    }),
+    register({
+        id = "venomous_hunger",
+        name = "Venomous Hunger",
+        desc = "Combo rewards are 50% stronger but the exit needs +1 fruit.",
+        rarity = "uncommon",
+        tags = {"risk"},
+        onAcquire = function(state)
+            state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.5
+            state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+            if UI.adjustFruitGoal then
+                UI:adjustFruitGoal(1)
+            end
+        end,
+    }),
+    register({
+        id = "predators_reflex",
+        name = "Predator's Reflex",
+        desc = "Adrenaline bursts are 25% stronger and trigger at floor start.",
+        rarity = "rare",
+        requiresTags = {"adrenaline"},
+        onAcquire = function(state)
+            state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+            state.effects.adrenalineBoostBonus = (state.effects.adrenalineBoostBonus or 0) + 0.25
+        end,
+        handlers = {
+            floorStart = function()
+                if Snake.adrenaline then
+                    Snake.adrenaline.active = true
+                    Snake.adrenaline.timer = (Snake.adrenaline.duration or 0) * 0.5
+                end
+            end,
+        },
+    }),
+    register({
+        id = "grim_reliquary",
+        name = "Grim Reliquary",
+        desc = "Begin each floor with +1 crash shield, but saws move 10% faster.",
+        rarity = "rare",
+        requiresTags = {"risk"},
+        tags = {"defense"},
+        onAcquire = function(state)
+            state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 1.1
+            Snake:addCrashShields(1)
+        end,
+        handlers = {
+            floorStart = function()
+                Snake:addCrashShields(1)
+            end,
+        },
+    }),
+    register({
+        id = "relentless_pursuit",
+        name = "Relentless Pursuit",
+        desc = "Saws gain 15% speed but stall for +1.5s after fruit.",
+        rarity = "rare",
+        onAcquire = function(state)
+            state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 1.15
+            state.effects.sawStall = math.max(state.effects.sawStall or 0, 1.5)
+        end,
+    }),
 }
 
-function Upgrades:getRandom(n)
-    local chosen = {}
-    for i = 1, n do
-        local pick = pool[love.math.random(1, #pool)]
-        table.insert(chosen, pick)
+local function getRarityInfo(rarity)
+    return rarities[rarity or "common"] or rarities.common
+end
+
+function Upgrades:beginRun()
+    self.runState = newRunState()
+end
+
+function Upgrades:getRunState()
+    return self.runState
+end
+
+function Upgrades:hasTag(tag)
+    return tag and self.runState.tags[tag] or false
+end
+
+function Upgrades:addTag(tag)
+    if not tag then return end
+    self.runState.tags[tag] = true
+end
+
+function Upgrades:getTakenCount(id)
+    if not id then return 0 end
+    return self.runState.takenSet[id] or 0
+end
+
+function Upgrades:addEventHandler(event, handler)
+    if not event or type(handler) ~= "function" then return end
+    local handlers = self.runState.handlers[event]
+    if not handlers then
+        handlers = {}
+        self.runState.handlers[event] = handlers
     end
-    return chosen
+    table.insert(handlers, handler)
+end
+
+function Upgrades:notify(event, data)
+    local handlers = self.runState.handlers[event]
+    if not handlers then return end
+    for _, handler in ipairs(handlers) do
+        handler(data, self.runState)
+    end
+end
+
+local function clamp(value, min, max)
+    if min and value < min then return min end
+    if max and value > max then return max end
+    return value
+end
+
+function Upgrades:modifyFloorContext(context)
+    if not context then return context end
+
+    local effects = self.runState.effects
+    if effects.fruitGoalDelta and context.fruitGoal then
+        local goal = context.fruitGoal + effects.fruitGoalDelta
+        goal = math.floor(goal + 0.5)
+        context.fruitGoal = clamp(goal, 1)
+    end
+    if effects.rockSpawnBonus and context.rocks then
+        local rocks = context.rocks + effects.rockSpawnBonus
+        rocks = math.floor(rocks + 0.5)
+        context.rocks = clamp(rocks, 0)
+    end
+    if effects.sawSpawnBonus and context.saws then
+        local saws = context.saws + effects.sawSpawnBonus
+        saws = math.floor(saws + 0.5)
+        context.saws = clamp(saws, 0)
+    end
+
+    return context
+end
+
+local function captureBaseline(state)
+    local baseline = state.baseline
+    baseline.sawSpeedMult = Saws.speedMult or 1
+    baseline.sawSpinMult = Saws.spinMult or 1
+    if Saws.getStallOnFruit then
+        baseline.sawStall = Saws:getStallOnFruit()
+    else
+        baseline.sawStall = Saws.stallOnFruit or 0
+    end
+    if Rocks.getSpawnChance then
+        baseline.rockSpawnChance = Rocks:getSpawnChance()
+    else
+        baseline.rockSpawnChance = Rocks.spawnChance or 0.25
+    end
+    baseline.rockShatter = Rocks.shatterOnFruit or 0
+    if Score.getComboBonusMultiplier then
+        baseline.comboBonusMult = Score:getComboBonusMultiplier()
+    else
+        baseline.comboBonusMult = Score.comboBonusMult or 1
+    end
+end
+
+local function ensureBaseline(state)
+    state.baseline = state.baseline or {}
+    if not next(state.baseline) then
+        captureBaseline(state)
+    end
+end
+
+function Upgrades:applyPersistentEffects(rebaseline)
+    local state = self.runState
+    local effects = state.effects
+
+    if rebaseline then
+        state.baseline = {}
+    end
+    ensureBaseline(state)
+    local base = state.baseline
+
+    local sawSpeed = (base.sawSpeedMult or 1) * (effects.sawSpeedMult or 1)
+    local sawSpin = (base.sawSpinMult or 1) * (effects.sawSpinMult or 1)
+    Saws.speedMult = sawSpeed
+    Saws.spinMult = sawSpin
+
+    local stallBase = base.sawStall or 0
+    local stallBonus = effects.sawStall or 0
+    local stallValue = math.max(stallBase, stallBonus)
+    if Saws.setStallOnFruit then
+        Saws:setStallOnFruit(stallValue)
+    else
+        Saws.stallOnFruit = stallValue
+    end
+
+    local rockBase = base.rockSpawnChance or 0.25
+    local rockChance = math.max(0.02, rockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
+    Rocks.spawnChance = rockChance
+    Rocks.shatterOnFruit = (base.rockShatter or 0) + (effects.rockShatter or 0)
+
+    local comboBase = base.comboBonusMult or 1
+    local comboMult = comboBase * (effects.comboBonusMult or 1)
+    if Score.setComboBonusMultiplier then
+        Score:setComboBonusMultiplier(comboMult)
+    else
+        Score.comboBonusMult = comboMult
+    end
+
+    if effects.adrenaline then
+        Snake.adrenaline = Snake.adrenaline or {}
+        Snake.adrenaline.active = Snake.adrenaline.active or false
+        Snake.adrenaline.timer = Snake.adrenaline.timer or 0
+        local duration = (effects.adrenaline.duration or 3) + (effects.adrenalineDurationBonus or 0)
+        Snake.adrenaline.duration = duration
+        local boost = (effects.adrenaline.boost or 1.5) + (effects.adrenalineBoostBonus or 0)
+        Snake.adrenaline.boost = boost
+    end
+end
+
+local function calculateWeight(upgrade)
+    local rarityInfo = getRarityInfo(upgrade.rarity)
+    local rarityWeight = rarityInfo.weight or 1
+    return rarityWeight * (upgrade.weight or 1)
+end
+
+function Upgrades:canOffer(upgrade, context, allowTaken)
+    if not upgrade then return false end
+
+    local count = self:getTakenCount(upgrade.id)
+    if not allowTaken then
+        if (count > 0 and not upgrade.allowDuplicates) then
+            return false
+        end
+        if upgrade.maxStacks and count >= upgrade.maxStacks then
+            return false
+        end
+    end
+
+    if upgrade.requiresTags then
+        for _, tag in ipairs(upgrade.requiresTags) do
+            if not self:hasTag(tag) then
+                return false
+            end
+        end
+    end
+
+    if upgrade.excludesTags then
+        for _, tag in ipairs(upgrade.excludesTags) do
+            if self:hasTag(tag) then
+                return false
+            end
+        end
+    end
+
+    if upgrade.condition and not upgrade.condition(self.runState, context) then
+        return false
+    end
+
+    return true
+end
+
+local function decorateCard(upgrade)
+    local rarityInfo = getRarityInfo(upgrade.rarity)
+    return {
+        id = upgrade.id,
+        name = upgrade.name,
+        desc = upgrade.desc,
+        rarity = upgrade.rarity,
+        rarityColor = rarityInfo.color,
+        rarityLabel = rarityInfo.label,
+        upgrade = upgrade,
+    }
+end
+
+function Upgrades:getRandom(n, context)
+    local available = {}
+    for _, upgrade in ipairs(pool) do
+        if self:canOffer(upgrade, context, false) then
+            table.insert(available, upgrade)
+        end
+    end
+
+    if #available == 0 then
+        for _, upgrade in ipairs(pool) do
+            if self:canOffer(upgrade, context, true) then
+                table.insert(available, upgrade)
+            end
+        end
+    end
+
+    local cards = {}
+    n = math.min(n or 3, #available)
+    for _ = 1, n do
+        local totalWeight = 0
+        local weights = {}
+        for i, upgrade in ipairs(available) do
+            local weight = calculateWeight(upgrade)
+            totalWeight = totalWeight + weight
+            weights[i] = weight
+        end
+
+        if totalWeight <= 0 then break end
+
+        local roll = love.math.random() * totalWeight
+        local cumulative = 0
+        local chosenIndex = 1
+        for i, weight in ipairs(weights) do
+            cumulative = cumulative + weight
+            if roll <= cumulative then
+                chosenIndex = i
+                break
+            end
+        end
+
+        local choice = available[chosenIndex]
+        table.insert(cards, decorateCard(choice))
+        table.remove(available, chosenIndex)
+        if #available == 0 then break end
+    end
+
+    return cards
+end
+
+function Upgrades:acquire(card, context)
+    if not card or not card.upgrade then return end
+
+    local upgrade = card.upgrade
+    local state = self.runState
+
+    state.takenSet[upgrade.id] = (state.takenSet[upgrade.id] or 0) + 1
+    table.insert(state.takenOrder, upgrade.id)
+
+    if upgrade.tags then
+        for _, tag in ipairs(upgrade.tags) do
+            self:addTag(tag)
+        end
+    end
+
+    if upgrade.onAcquire then
+        upgrade.onAcquire(state, context)
+    end
+
+    if upgrade.handlers then
+        for event, handler in pairs(upgrade.handlers) do
+            self:addEventHandler(event, handler)
+        end
+    end
+
+    self:applyPersistentEffects(false)
 end
 
 return Upgrades
