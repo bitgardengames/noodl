@@ -219,9 +219,28 @@ function UI:setFloorModifiers(modifiers)
     end
 end
 
+function UI:setDepthModifiers(modifiers)
+    if type(modifiers) == "table" then
+        self.depthModifiers = modifiers
+    else
+        self.depthModifiers = {}
+    end
+end
+
+local function collectModifierSections(self)
+    local sections = {}
+    if self.floorModifiers and #self.floorModifiers > 0 then
+        table.insert(sections, { title = "Floor Traits", items = self.floorModifiers })
+    end
+    if self.depthModifiers and #self.depthModifiers > 0 then
+        table.insert(sections, { title = "Depth Effects", items = self.depthModifiers })
+    end
+    return sections
+end
+
 function UI:drawFloorModifiers()
-    local modifiers = self.floorModifiers
-    if not modifiers or #modifiers == 0 then return end
+    local sections = collectModifierSections(self)
+    if not sections or #sections == 0 then return end
 
     local margin = 20
     local width = 280
@@ -232,20 +251,30 @@ function UI:drawFloorModifiers()
     local spacing = 12
     local wrapWidth = width - 32
 
-    local totalHeight = 48 -- header area
-    local measured = {}
+    local totalHeight = 16
+    local measuredSections = {}
     UI.setFont("body")
-    for _, trait in ipairs(modifiers) do
-        local _, wrapped = UI.fonts.body:getWrap(trait.desc or "", wrapWidth)
-        local descLines = math.max(1, #wrapped)
-        local descHeight = descLines * lineHeight
-        table.insert(measured, { trait = trait, descHeight = descHeight })
-        totalHeight = totalHeight + lineHeight + descHeight + spacing
+
+    for _, section in ipairs(sections) do
+        local entries = {}
+        local sectionHeight = UI.fonts.button:getHeight() + spacing
+        if section.items then
+            for _, trait in ipairs(section.items) do
+                local _, wrapped = UI.fonts.body:getWrap(trait.desc or "", wrapWidth)
+                local descLines = math.max(1, #wrapped)
+                local descHeight = descLines * lineHeight
+                table.insert(entries, { trait = trait, descHeight = descHeight })
+                sectionHeight = sectionHeight + lineHeight + descHeight + spacing
+            end
+        end
+        if #entries > 0 then
+            sectionHeight = sectionHeight - spacing
+        end
+        totalHeight = totalHeight + sectionHeight
+        table.insert(measuredSections, { title = section.title, entries = entries, height = sectionHeight })
     end
-    if #measured > 0 then
-        totalHeight = totalHeight - spacing -- no extra padding after last entry
-    end
-    local height = totalHeight + 16 -- bottom padding
+
+    local height = totalHeight
 
     love.graphics.setColor(Theme.panelColor)
     love.graphics.rectangle("fill", x, y, width, height, 12, 12)
@@ -254,21 +283,29 @@ function UI:drawFloorModifiers()
     love.graphics.setLineWidth(3)
     love.graphics.rectangle("line", x, y, width, height, 12, 12)
 
-    love.graphics.setColor(Theme.textColor)
-    UI.setFont("button")
-    love.graphics.printf("Floor Traits", x + 16, y + 16, width - 32, "left")
-
-    UI.setFont("body")
-    local textY = y + 48
-    for index, info in ipairs(measured) do
-        local trait = info.trait
+    local textY = y + 16
+    for sectionIndex, section in ipairs(measuredSections) do
         love.graphics.setColor(Theme.textColor)
-        love.graphics.printf(trait.name, x + 16, textY, width - 32, "left")
-        textY = textY + lineHeight
-        love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75)
-        love.graphics.printf(trait.desc, x + 16, textY, width - 32, "left")
-        textY = textY + info.descHeight
-        if index < #measured then
+        UI.setFont("button")
+        local title = section.title or (sectionIndex == 1 and "Floor Traits" or "Depth Effects")
+        love.graphics.printf(title, x + 16, textY, width - 32, "left")
+        textY = textY + UI.fonts.button:getHeight() + spacing
+
+        UI.setFont("body")
+        for entryIndex, info in ipairs(section.entries) do
+            local trait = info.trait
+            love.graphics.setColor(Theme.textColor)
+            love.graphics.printf(trait.name, x + 16, textY, width - 32, "left")
+            textY = textY + lineHeight
+            love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75)
+            love.graphics.printf(trait.desc, x + 16, textY, width - 32, "left")
+            textY = textY + info.descHeight
+            if entryIndex < #section.entries then
+                textY = textY + spacing
+            end
+        end
+
+        if sectionIndex < #measuredSections then
             textY = textY + spacing
         end
     end

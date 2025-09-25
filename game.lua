@@ -20,6 +20,7 @@ local UI = require("ui")
 local Theme = require("theme")
 local FruitEvents = require("fruitevents")
 local FloorTraits = require("floortraits")
+local DepthMutations = require("depthmutations")
 local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
@@ -30,6 +31,24 @@ local Upgrades = require("upgrades")
 
 local Game = {}
 local TRACK_LENGTH = 120
+
+local function buildModifierSections(self)
+    local sections = {}
+
+    if self.activeFloorTraits and #self.activeFloorTraits > 0 then
+        table.insert(sections, { title = "Floor Traits", items = self.activeFloorTraits })
+    end
+
+    if self.activeDepthMutations and #self.activeDepthMutations > 0 then
+        table.insert(sections, { title = "Depth Effects", items = self.activeDepthMutations })
+    end
+
+    if #sections == 0 then
+        return nil
+    end
+
+    return sections
+end
 
 local function startTransitionPhase(self, phase, duration, extra)
     self.state = "transition"
@@ -76,6 +95,7 @@ function Game:load()
 
         Score:load()
         Upgrades:beginRun()
+        DepthMutations:reset()
         GameUtils:prepareGame(self.screenWidth, self.screenHeight)
         Face:set("idle")
 
@@ -88,7 +108,8 @@ function Game:load()
 
         -- prepare floor 1 immediately for gameplay (theme, spawns, etc.)
         self:setupFloor(self.floor)
-        self.transitionTraits = self.activeFloorTraits
+        self.activeDepthMutations = self.activeDepthMutations or {}
+        self.transitionTraits = buildModifierSections(self)
 
         -- first intro: fade-in text for floor 1 only
         startTransitionPhase(self, "floorintro", 2.5, {
@@ -98,10 +119,11 @@ function Game:load()
 end
 
 function Game:reset()
-	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-	Face:set("idle")
-	self.state = "playing"
-	self.floor = 1
+        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+        Face:set("idle")
+        self.state = "playing"
+        self.floor = 1
+        DepthMutations:reset()
 end
 
 function Game:enter()
@@ -307,16 +329,51 @@ function Game:drawTransition()
                                 end
                         end
 
-                        local traits = self.transitionTraits or self.activeFloorTraits
-                        if traits and #traits > 0 then
-                                love.graphics.setFont(UI.fonts.body)
+                        local sections = self.transitionTraits or buildModifierSections(self)
+                        if sections and #sections > 0 then
+                                local entries = {}
+                                for _, section in ipairs(sections) do
+                                        if section.items and #section.items > 0 then
+                                                table.insert(entries, { type = "header", title = section.title or "Traits" })
+                                                for _, trait in ipairs(section.items) do
+                                                        table.insert(entries, {
+                                                                type = "trait",
+                                                                title = section.title,
+                                                                name = trait.name,
+                                                                desc = trait.desc,
+                                                        })
+                                                end
+                                        end
+                                end
+
                                 local y = self.screenHeight / 2 + 64
-                                for i, trait in ipairs(traits) do
-                                        local traitAlpha = fadeAlpha(1.0 + (i - 1) * 0.25, 0.35)
-                                        if traitAlpha > 0 then
-                                                love.graphics.setColor(1, 1, 1, traitAlpha)
-                                                local text = trait.name .. ": " .. trait.desc
-                                                love.graphics.printf(text, self.screenWidth * 0.2, y + (i - 1) * 36, self.screenWidth * 0.6, "center")
+                                local width = self.screenWidth * 0.6
+                                local x = self.screenWidth * 0.2
+                                local index = 0
+
+                                for _, entry in ipairs(entries) do
+                                        index = index + 1
+                                        local traitAlpha = fadeAlpha(1.0 + (index - 1) * 0.25, 0.35)
+
+                                        if entry.type == "header" then
+                                                local headerHeight = UI.fonts.button:getHeight() + 6
+                                                if traitAlpha > 0 then
+                                                        love.graphics.setFont(UI.fonts.button)
+                                                        love.graphics.setColor(1, 1, 1, traitAlpha)
+                                                        love.graphics.printf(entry.title or "Traits", x, y, width, "center")
+                                                end
+                                                y = y + headerHeight
+                                        else
+                                                local text = (entry.name or "") .. ": " .. (entry.desc or "")
+                                                local _, wrapped = UI.fonts.body:getWrap(text, width)
+                                                local lines = math.max(1, #wrapped)
+                                                local blockHeight = lines * UI.fonts.body:getHeight() + 18
+                                                if traitAlpha > 0 then
+                                                        love.graphics.setFont(UI.fonts.body)
+                                                        love.graphics.setColor(1, 1, 1, traitAlpha)
+                                                        love.graphics.printf(text, x, y, width, "center")
+                                                end
+                                                y = y + blockHeight
                                         end
                                 end
                         end
@@ -426,12 +483,17 @@ function Game:setupFloor(floorNum)
 
     local adjustedContext, appliedTraits = FloorTraits:apply(self.currentFloorData.traits, traitContext)
     traitContext = adjustedContext or traitContext
+
+    local depthContext, depthTraits = DepthMutations:apply(floorNum, traitContext)
+    traitContext = depthContext or traitContext
     traitContext = Upgrades:modifyFloorContext(traitContext)
 
     UI:setFruitGoal(traitContext.fruitGoal)
     UI:setFloorModifiers(appliedTraits)
+    UI:setDepthModifiers(depthTraits)
     self.activeFloorTraits = appliedTraits
-    self.transitionTraits = appliedTraits
+    self.activeDepthMutations = depthTraits
+    self.transitionTraits = buildModifierSections(self)
 
     Upgrades:applyPersistentEffects(true)
     Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })

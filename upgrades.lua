@@ -57,6 +57,8 @@ local defaultEffects = {
     comboBonusFlat = 0,
     comboDepthScaler = 0,
     shopSlots = 0,
+    depthMitigation = 0,
+    depthBoon = 0,
 }
 
 local function getEventPosition(data)
@@ -498,6 +500,39 @@ local pool = {
                         gravity = 20,
                     })
                 end
+            end,
+        },
+    }),
+    register({
+        id = "abyssal_anchor",
+        name = "Abyssal Anchor",
+        desc = "Depth penalties shrink by 40%.",
+        rarity = "uncommon",
+        tags = {"depth", "defense"},
+        onAcquire = function(state)
+            local current = state.effects.depthMitigation or 0
+            state.effects.depthMitigation = math.min(2, current + 0.4)
+        end,
+    }),
+    register({
+        id = "void_lantern",
+        name = "Void Lantern",
+        desc = "Depth boons are 35% stronger. Descents grant +depth bonus score.",
+        rarity = "rare",
+        tags = {"depth", "economy"},
+        onAcquire = function(state)
+            state.effects.depthBoon = (state.effects.depthBoon or 0) + 0.35
+        end,
+        handlers = {
+            floorStart = function(data, state)
+                local depth = 1
+                if data and data.floor then
+                    depth = data.floor
+                elseif state and state.counters and state.counters.depth then
+                    depth = state.counters.depth
+                end
+                depth = math.max(1, math.floor(depth + 0.5))
+                Score:addBonus(depth)
             end,
         },
     }),
