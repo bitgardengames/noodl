@@ -20,6 +20,7 @@ local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
 local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING
 local moveTimer = 0
 local POP_DURATION = SnakeUtils.POP_DURATION
+local SHIELD_FLASH_DURATION = 0.3
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
 -- movement baseline + modifiers
@@ -28,6 +29,7 @@ Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
 Snake.crashShields = 0 -- crash protection: number of hits the snake can absorb
 Snake.extraGrowth = 0
 Snake.shieldBurst = nil
+Snake.shieldFlashTimer = 0
 
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
@@ -46,6 +48,7 @@ end
 function Snake:consumeCrashShield()
     if (self.crashShields or 0) > 0 then
         self.crashShields = self.crashShields - 1
+        self.shieldFlashTimer = SHIELD_FLASH_DURATION
         -- optional: spawn particle / sound feedback here
         return true
     end
@@ -57,6 +60,7 @@ function Snake:resetModifiers()
     self.crashShields = 0
     self.extraGrowth  = 0
     self.shieldBurst  = nil
+    self.shieldFlashTimer = 0
     if self.adrenaline then
         self.adrenaline.active = false
         self.adrenaline.timer = 0
@@ -254,6 +258,7 @@ function Snake:load(w, h)
     moveTimer = 0
     isDead = false
     self.reverseState = false
+    self.shieldFlashTimer = 0
     trail = buildInitialTrail()
     descendingHole = nil
 end
@@ -278,6 +283,39 @@ function Snake:getHead()
         return nil, nil
     end
     return head.drawX, head.drawY
+end
+
+function Snake:setHeadPosition(x, y)
+    local head = trail[1]
+    if not head then
+        return
+    end
+
+    head.drawX = x
+    head.drawY = y
+end
+
+local function normalizeDirection(dx, dy)
+    local len = math.sqrt(dx * dx + dy * dy)
+    if len == 0 then
+        return 0, 0
+    end
+    return dx / len, dy / len
+end
+
+function Snake:setDirectionVector(dx, dy)
+    if isDead then return end
+
+    dx = dx or 0
+    dy = dy or 0
+
+    local nx, ny = normalizeDirection(dx, dy)
+    if nx == 0 and ny == 0 then
+        return
+    end
+
+    direction = { x = nx, y = ny }
+    pendingDir = { x = nx, y = ny }
 end
 
 function Snake:getHeadCell()
@@ -367,7 +405,7 @@ function Snake:drawClipped(hx, hy, hr)
             end
         end
         return headX, headY
-    end)
+    end, self.crashShields or 0, self.shieldFlashTimer or 0)
 
     love.graphics.setStencilTest()
     love.graphics.pop()
@@ -584,6 +622,10 @@ function Snake:update(dt)
         popTimer = math.max(0, popTimer - dt)
     end
 
+    if self.shieldFlashTimer and self.shieldFlashTimer > 0 then
+        self.shieldFlashTimer = math.max(0, self.shieldFlashTimer - dt)
+    end
+
     return true
 end
 
@@ -604,7 +646,7 @@ function Snake:draw()
     if not isDead then
         DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
             return self:getHead()
-        end)
+        end, self.crashShields or 0, self.shieldFlashTimer or 0)
     end
 end
 

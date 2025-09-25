@@ -11,12 +11,72 @@ local SEGMENT_SIZE = 24 -- same size as rocks and snake
 
 -- AABB collision check
 local function aabb(ax, ay, aw, ah, bx, by, bw, bh)
-	return ax < bx + bw and ax + aw > bx and
-		   ay < by + bh and ay + ah > by
+        return ax < bx + bw and ax + aw > bx and
+                   ay < by + bh and ay + ah > by
+end
+
+local function rerouteAlongWall(headX, headY)
+        local ax, ay, aw, ah = Arena:getBounds()
+        local inset = Arena.tileSize / 2
+        local left = ax + inset
+        local right = ax + aw - inset
+        local top = ay + inset
+        local bottom = ay + ah - inset
+
+        local clampedX = math.max(left + 1, math.min(right - 1, headX or left))
+        local clampedY = math.max(top + 1, math.min(bottom - 1, headY or top))
+
+        local distances = {
+                left = math.abs((headX or clampedX) - left),
+                right = math.abs((headX or clampedX) - right),
+                top = math.abs((headY or clampedY) - top),
+                bottom = math.abs((headY or clampedY) - bottom),
+        }
+
+        local side = "left"
+        local minDist = distances.left
+        for key, value in pairs(distances) do
+                if value < minDist then
+                        minDist = value
+                        side = key
+                end
+        end
+
+        local dir = Snake:getDirection() or { x = 0, y = 0 }
+        local newDirX, newDirY = dir.x or 0, dir.y or 0
+        local centerX = ax + aw / 2
+        local centerY = ay + ah / 2
+
+        local function towardCenter(delta)
+                if delta < 0 then return 1 end
+                if delta > 0 then return -1 end
+                return 1
+        end
+
+        if side == "left" or side == "right" then
+                newDirX = 0
+                if newDirY == 0 then
+                        newDirY = towardCenter(clampedY - centerY)
+                else
+                        newDirY = newDirY > 0 and 1 or -1
+                end
+        else
+                newDirY = 0
+                if newDirX == 0 then
+                        newDirX = towardCenter(clampedX - centerX)
+                else
+                        newDirX = newDirX > 0 and 1 or -1
+                end
+        end
+
+        Snake:setHeadPosition(clampedX, clampedY)
+        Snake:setDirectionVector(newDirX, newDirY)
+
+        return Snake:getHead()
 end
 
 function Movement:reset()
-	Snake:resetPosition()
+        Snake:resetPosition()
 end
 
 function Movement:update(dt)
@@ -29,7 +89,19 @@ function Movement:update(dt)
 
         if not Arena:isInside(headX, headY) then
                 if Snake:consumeCrashShield() then
-                        -- survived, maybe bounce back / particles
+                        local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
+                        headX = reroutedX or headX
+                        headY = reroutedY or headY
+
+                        Particles:spawnBurst(headX, headY, {
+                                count = 12,
+                                speed = 70,
+                                life = 0.45,
+                                size = 4,
+                                color = {0.55, 0.85, 1, 1},
+                                spread = math.pi * 2,
+                        })
+
                         if Snake.onShieldConsumed then
                                 Snake:onShieldConsumed(headX, headY, "wall")
                         end

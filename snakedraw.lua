@@ -91,7 +91,40 @@ local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
 	drawCornerPlugs(trail, half)
 end
 
-local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead)
+local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
+  local hasShield = shieldCount and shieldCount > 0
+  if not hasShield and not (shieldFlashTimer and shieldFlashTimer > 0) then
+    return
+  end
+
+  local baseRadius = SEGMENT_SIZE * (0.95 + 0.06 * math.max(0, (shieldCount or 1) - 1))
+  local time = 0
+  if love and love.timer and love.timer.getTime then
+    time = love.timer.getTime()
+  end
+
+  local pulse = 1 + 0.08 * math.sin(time * 6)
+  local alpha = 0.35 + 0.1 * math.sin(time * 5)
+
+  if shieldFlashTimer and shieldFlashTimer > 0 then
+    local flash = math.min(1, shieldFlashTimer / 0.3)
+    pulse = pulse + flash * 0.25
+    alpha = alpha + flash * 0.4
+  end
+
+  love.graphics.setLineWidth(4)
+  local lineAlpha = alpha + (hasShield and 0.25 or 0.45)
+  love.graphics.setColor(0.45, 0.85, 1, lineAlpha)
+  love.graphics.circle("line", hx, hy, baseRadius * pulse)
+
+  love.graphics.setColor(0.45, 0.85, 1, (alpha + 0.15) * 0.5)
+  love.graphics.circle("fill", hx, hy, baseRadius * 0.8 * pulse)
+
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.setLineWidth(1)
+end
+
+local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer)
   if not trail or #trail == 0 then return end
 
   --local thickness = SEGMENT_SIZE * 0.75
@@ -149,6 +182,8 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead)
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(faceTexture, hx, hy, 0, faceScale, faceScale, ox, oy)
+
+    drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
   end
 
   -- POP EFFECT
