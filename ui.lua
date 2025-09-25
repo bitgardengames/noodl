@@ -235,7 +235,23 @@ function UI:drawFloorModifiers()
     local y = margin
 
     local lineHeight = UI.fonts.body:getHeight()
-    local height = 56 + (#modifiers * (lineHeight * 2))
+    local spacing = 12
+    local wrapWidth = width - 32
+
+    local totalHeight = 48 -- header area
+    local measured = {}
+    UI.setFont("body")
+    for _, trait in ipairs(modifiers) do
+        local _, wrapped = UI.fonts.body:getWrap(trait.desc or "", wrapWidth)
+        local descLines = math.max(1, #wrapped)
+        local descHeight = descLines * lineHeight
+        table.insert(measured, { trait = trait, descHeight = descHeight })
+        totalHeight = totalHeight + lineHeight + descHeight + spacing
+    end
+    if #measured > 0 then
+        totalHeight = totalHeight - spacing -- no extra padding after last entry
+    end
+    local height = totalHeight + 16 -- bottom padding
 
     love.graphics.setColor(Theme.panelColor)
     love.graphics.rectangle("fill", x, y, width, height, 12, 12)
@@ -250,13 +266,17 @@ function UI:drawFloorModifiers()
 
     UI.setFont("body")
     local textY = y + 48
-    for _, trait in ipairs(modifiers) do
+    for index, info in ipairs(measured) do
+        local trait = info.trait
         love.graphics.setColor(Theme.textColor)
         love.graphics.printf(trait.name, x + 16, textY, width - 32, "left")
         textY = textY + lineHeight
         love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75)
         love.graphics.printf(trait.desc, x + 16, textY, width - 32, "left")
-        textY = textY + lineHeight + 8
+        textY = textY + info.descHeight
+        if index < #measured then
+            textY = textY + spacing
+        end
     end
 end
 
