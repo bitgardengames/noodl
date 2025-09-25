@@ -67,7 +67,7 @@ function PauseMenu:load(screenWidth, screenHeight)
     for i, btn in ipairs(baseButtons) do
         defs[#defs + 1] = {
             id = btn.id,
-            local baseText = btn.textKey and Localization:get(btn.textKey) or ""
+            baseText = btn.textKey and Localization:get(btn.textKey) or "",
             text = getToggleLabel(btn.id) or baseText,
             action = btn.action,
             x = centerX - 100,
