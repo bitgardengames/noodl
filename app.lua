@@ -68,22 +68,19 @@ function App:resolveAction(action)
     end
 end
 
-function App:dispatch(eventName, ...)
-    local handler = GameState[eventName]
-    if not handler then return end
-
-    local result = handler(GameState, ...)
-    self:resolveAction(result)
-
-    return result
-end
-
 function App:load()
     love.window.setMode(0, 0, {fullscreen = true, fullscreentype = "desktop"})
 
     self:registerStates()
     self:loadSubsystems()
     GameState:switch("menu")
+end
+
+function App:forwardEvent(eventName, ...)
+    local result = GameState:dispatch(eventName, ...)
+    self:resolveAction(result)
+
+    return result
 end
 
 function App:update(dt)
@@ -97,15 +94,15 @@ function App:draw()
 end
 
 function App:mousepressed(x, y, button)
-    return self:dispatch("mousepressed", x, y, button)
+    return self:forwardEvent("mousepressed", x, y, button)
 end
 
 function App:mousereleased(x, y, button)
-    return self:dispatch("mousereleased", x, y, button)
+    return self:forwardEvent("mousereleased", x, y, button)
 end
 
 function App:wheelmoved(dx, dy)
-    return self:dispatch("wheelmoved", dx, dy)
+    return self:forwardEvent("wheelmoved", dx, dy)
 end
 
 function App:keypressed(key)
@@ -114,23 +111,23 @@ function App:keypressed(key)
         love.graphics.captureScreenshot("screenshot_" .. time .. ".png")
     end
 
-    return self:dispatch("keypressed", key)
+    return self:forwardEvent("keypressed", key)
 end
 
 function App:joystickpressed(joystick, button)
-    return self:dispatch("joystickpressed", joystick, button)
+    return self:forwardEvent("joystickpressed", joystick, button)
 end
 
 function App:joystickreleased(joystick, button)
-    return self:dispatch("joystickreleased", joystick, button)
+    return self:forwardEvent("joystickreleased", joystick, button)
 end
 
 function App:gamepadpressed(joystick, button)
-    return self:dispatch("gamepadpressed", joystick, button)
+    return self:forwardEvent("gamepadpressed", joystick, button)
 end
 
 function App:gamepadreleased(joystick, button)
-    return self:dispatch("gamepadreleased", joystick, button)
+    return self:forwardEvent("gamepadreleased", joystick, button)
 end
 
 function App:resize()
