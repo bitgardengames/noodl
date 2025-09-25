@@ -68,7 +68,7 @@ function Shop:start(currentFloor)
     self.time = 0
     self.selectionProgress = 0
     self.selectionTimer = 0
-    self.selectionHoldDuration = 0.85
+    self.selectionHoldDuration = 1.35
     self.selectionComplete = false
     for i = 1, #self.cards do
         self.cardStates[i] = {
