@@ -155,8 +155,16 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
     end
 
     setColor(1, 1, 1, 1)
-    love.graphics.setFont(UI.fonts.button)
-    love.graphics.printf(card.name, x + 14, y + 24, w - 28, "center")
+    local titleFont = UI.fonts.button
+    love.graphics.setFont(titleFont)
+    local titleWidth = w - 28
+    local titleY = y + 24
+    love.graphics.printf(card.name, x + 14, titleY, titleWidth, "center")
+
+    local _, titleLines = titleFont:getWrap(card.name or "", titleWidth)
+    local titleLineCount = math.max(1, #titleLines)
+    local titleHeight = titleLineCount * titleFont:getHeight() * titleFont:getLineHeight()
+    local contentTop = titleY + titleHeight
 
     if index then
         love.graphics.setFont(UI.fonts.small)
@@ -165,22 +173,31 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
         setColor(1, 1, 1, 1)
     end
 
+    local descStart
     if card.rarityLabel then
-        love.graphics.setFont(UI.fonts.body)
+        local rarityFont = UI.fonts.body
+        love.graphics.setFont(rarityFont)
         setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
-        love.graphics.printf(card.rarityLabel, x + 14, y + 64, w - 28, "center")
+        local rarityY = contentTop + 10
+        love.graphics.printf(card.rarityLabel, x + 14, rarityY, titleWidth, "center")
+
         setColor(1, 1, 1, 0.3)
         love.graphics.setLineWidth(2)
-        love.graphics.line(x + 24, y + 92, x + w - 24, y + 92)
+        local rarityHeight = rarityFont:getHeight() * rarityFont:getLineHeight()
+        local dividerY = rarityY + rarityHeight + 8
+        love.graphics.line(x + 24, dividerY, x + w - 24, dividerY)
+        descStart = dividerY + 16
     else
         setColor(1, 1, 1, 0.3)
         love.graphics.setLineWidth(2)
-        love.graphics.line(x + 24, y + 68, x + w - 24, y + 68)
+        local dividerY = contentTop + 14
+        love.graphics.line(x + 24, dividerY, x + w - 24, dividerY)
+        descStart = dividerY + 16
     end
 
     love.graphics.setFont(UI.fonts.body)
     setColor(0.92, 0.92, 0.92, 1)
-    local descY = card.rarityLabel and (y + 108) or (y + 80)
+    local descY = descStart
     if card.upgrade and card.upgrade.tags and #card.upgrade.tags > 0 then
         love.graphics.setFont(UI.fonts.small)
         setColor(0.8, 0.85, 0.9, 0.9)
