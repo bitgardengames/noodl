@@ -63,21 +63,6 @@ local function drawAdrenalineGlow(self)
     love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
     love.graphics.setBlendMode("alpha")
 
-    local vignetteAlpha = 0.45 * glowStrength
-    local borderThickness = 120
-    local previousLineWidth = love.graphics.getLineWidth()
-    love.graphics.setColor(0, 0, 0, vignetteAlpha)
-    love.graphics.setLineWidth(borderThickness)
-    love.graphics.rectangle(
-        "line",
-        borderThickness / 2,
-        borderThickness / 2,
-        math.max(0, self.screenWidth - borderThickness),
-        math.max(0, self.screenHeight - borderThickness),
-        48,
-        48
-    )
-    love.graphics.setLineWidth(previousLineWidth)
     love.graphics.setColor(1, 1, 1, 1)
 end
 

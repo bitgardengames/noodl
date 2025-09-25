@@ -190,20 +190,14 @@ local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
     time = love.timer.getTime()
   end
 
-  local innerRadius = SEGMENT_SIZE * (0.45 + 0.25 * intensity)
-  local outerRadius = SEGMENT_SIZE * (0.95 + 0.35 * intensity)
+  local pulse = 0.9 + 0.1 * math.sin(time * 6)
+  local radius = SEGMENT_SIZE * (0.6 + 0.35 * intensity) * pulse
 
-  love.graphics.setColor(1, 0.6 + 0.25 * intensity, 0.2, 0.28 + 0.32 * intensity)
-  love.graphics.circle("fill", hx, hy, innerRadius)
+  love.graphics.setColor(1, 0.6 + 0.25 * intensity, 0.2, 0.35 + 0.4 * intensity)
+  love.graphics.circle("fill", hx, hy, radius)
 
-  local layers = 4
-  for i = 1, layers do
-    local t = i / layers
-    local radius = innerRadius + t * (outerRadius - innerRadius)
-    local fade = 1 - (i - 1) / layers
-    love.graphics.setColor(1, 0.52 + 0.3 * intensity, 0.18, (0.16 + 0.18 * intensity) * fade)
-    love.graphics.circle("line", hx, hy, radius)
-  end
+  love.graphics.setColor(1, 0.52 + 0.3 * intensity, 0.18, 0.2 + 0.25 * intensity)
+  love.graphics.circle("line", hx, hy, radius * 1.1)
 
   love.graphics.setColor(1, 1, 1, 1)
   love.graphics.setLineWidth(1)
