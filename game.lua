@@ -69,21 +69,13 @@ local function drawAdrenalineGlow(self)
         end
     end
 
-    local rushIntensity = Score.getComboRushIntensity and Score:getComboRushIntensity() or 0
-
-    if glowStrength <= 0 and rushIntensity <= 0 then return end
+    if glowStrength <= 0 then return end
 
     love.graphics.setBlendMode("add")
 
     if glowStrength > 0 then
         local pulse = 0.55 + 0.45 * math.sin(love.timer.getTime() * 5)
         love.graphics.setColor(0.7, 0.9, 1.0, 0.35 * glowStrength * pulse)
-        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-    end
-
-    if rushIntensity > 0 then
-        local wave = 0.6 + 0.4 * math.sin(love.timer.getTime() * 7)
-        love.graphics.setColor(0.4, 0.85, 1.0, 0.25 * rushIntensity * wave)
         love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
     end
 

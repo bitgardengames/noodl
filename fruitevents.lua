@@ -27,18 +27,6 @@ local comboState = {
     baseOverride = DEFAULT_COMBO_WINDOW,
 }
 
-local rushState = {
-    meter = 0,
-    meterMax = 120,
-    decayRate = 22,
-    active = false,
-    timer = 0,
-    duration = 6,
-    bonusMult = 1.6,
-    stallDuration = 1.1,
-    extendPerFruit = 0.45,
-}
-
 local function getUpgradeEffect(name)
     if Upgrades and Upgrades.getEffect then
         return Upgrades:getEffect(name)
@@ -63,12 +51,6 @@ local function syncComboToUI()
         comboState.count or 0,
         comboState.timer or 0,
         comboState.window or DEFAULT_COMBO_WINDOW
-    )
-    UI:setComboRush(
-        rushState.meter / (rushState.meterMax > 0 and rushState.meterMax or 1),
-        rushState.active,
-        rushState.timer,
-        rushState.duration
     )
 end
 
@@ -125,10 +107,6 @@ function FruitEvents.reset()
     comboState.baseOverride = DEFAULT_COMBO_WINDOW
     comboState.baseWindow = DEFAULT_COMBO_WINDOW
     comboState.window = DEFAULT_COMBO_WINDOW
-    rushState.meter = 0
-    rushState.timer = 0
-    rushState.active = false
-    Score:stopComboRush()
     syncComboToUI()
 end
 
@@ -156,28 +134,6 @@ function FruitEvents.update(dt)
 
         syncComboToUI()
     end
-
-    if rushState.active then
-        rushState.timer = math.max(0, (rushState.timer or 0) - dt)
-        rushState.meter = rushState.meterMax
-        if rushState.timer <= 0 then
-            rushState.active = false
-            rushState.meter = 0
-            Score:stopComboRush()
-        end
-    elseif rushState.meter > 0 then
-        local decay = rushState.decayRate or 0
-        if decay > 0 then
-            rushState.meter = math.max(0, rushState.meter - decay * dt)
-        end
-    end
-
-    UI:setComboRush(
-        rushState.meter / (rushState.meterMax > 0 and rushState.meterMax or 1),
-        rushState.active,
-        rushState.timer,
-        rushState.duration
-    )
 end
 
 function FruitEvents.getComboCount()
@@ -239,40 +195,6 @@ function FruitEvents.handleConsumption(x, y)
     end
 
     applyComboReward(x, y)
-
-    local comboCount = comboState.count or 0
-    if comboCount >= 3 then
-        local gain = 18 + (comboCount - 3) * 9
-        rushState.meter = math.min(rushState.meterMax, (rushState.meter or 0) + gain)
-
-        if rushState.active then
-            local extend = rushState.extendPerFruit or 0
-            if extend > 0 then
-                rushState.timer = math.min(rushState.duration, (rushState.timer or 0) + extend)
-                Score:extendComboRush(extend)
-            end
-        elseif rushState.meter >= rushState.meterMax then
-            rushState.active = true
-            rushState.timer = rushState.duration
-            rushState.meter = rushState.meterMax
-            Score:startComboRush(rushState.bonusMult, rushState.duration)
-            if Saws and Saws.stall and rushState.stallDuration and rushState.stallDuration > 0 then
-                Saws:stall(rushState.stallDuration)
-            end
-            FloatingText:add("Combo Rush!", x, y - 96, {0.6, 0.9, 1, 1}, 1.4, 70)
-            Particles:spawnBurst(x, y, {
-                count = 18,
-                speed = 110,
-                life = 0.75,
-                size = 5,
-                color = {0.6, 0.9, 1, 1},
-                spread = math.pi * 2,
-                gravity = -20,
-                drag = 1.5,
-            })
-            Audio:playSound("achievement")
-        end
-    end
 
     if Snake.adrenaline then
         Snake.adrenaline.active = true
