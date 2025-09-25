@@ -1,29 +1,26 @@
 -- floors.lua
 
 --[[
-	Garden → bright, life-filled
-	Caverns → neutral stone
-	Mushroom Grotto → whimsical glow
-	Ancient Ruins → mysterious decay
-	Crystal Depths → eerie beauty
-	Abyss → oppressive darkness
-	Inferno Gates → heat and danger
-	Underworld → finale, red/charcoal palette
-
-	Additional floor ideas
-	Flooded Catacombs (murky blues, greens, with dripping sound/flavor).
-	Bone Pits (ashen white, pale sickly snake color).
-	Obsidian Keep (lava cracks in black stone).
-	Spirit realm, hidden or hardmode only floor? requires something extra to reach
-
-	if we incorporate heaven somehow
-	Sky Spire (ethereal whites, golds, like climbing out of hell into false heaven).
+        Verdant Garden → bright, life-filled welcome
+        Echoing Caverns → cooler stone, lingering echoes
+        Mushroom Grotto → whimsical glow and spores
+        Flooded Catacombs → damp stone and muffled waves
+        Ancient Ruins → mysterious decay and hidden machines
+        Crystal Hollows → eerie, refracted calm
+        Bone Pits → brittle remains underfoot
+        The Abyss → oppressive darkness and pressure
+        Inferno Gates → searing heat and rising danger
+        Obsidian Keep → molten veins beneath black stone
+        Ashen Frontier → scorched wastes before the end
+        Spirit Crucible → astral winds and wailing phantoms
+        The Underworld → final gauntlet of ash and fire
+        Sky Spire → false dawn beyond the pit
 ]]
 
 local Floors = {
-	[1] = {
-		name = "Verdant Garden",
-		flavor = "The sun is warm, the air sweet with life.",
+        [1] = {
+                name = "Verdant Garden",
+                flavor = "The sun is warm, the air sweet with life.",
                 palette = {
                         bgColor     = {0.20, 0.28, 0.20, 1}, -- darker forest green backdrop
                         arenaBG     = {0.42, 0.62, 0.35, 1}, -- still bright, grassy playfield
@@ -43,7 +40,7 @@ local Floors = {
             snake      = {0.6, 0.65, 0.7, 1},   -- pale stone
             rock       = {0.25, 0.28, 0.32, 1}, -- sheen
         },
-        traits = {"restlessEarth"},
+        traits = {"echoingStillness"},
     },
     [3] = {
         name = "Mushroom Grotto",
@@ -59,71 +56,6 @@ local Floors = {
         traits = {"glowingSpores"},
     },
     [4] = {
-        name = "Ancient Ruins",
-        flavor = "Forgotten walls crumble; whispers cling to the stone.",
-        palette = {
-            bgColor    = {0.14, 0.12, 0.08, 1}, -- dim brown haze
-            arenaBG    = {0.18, 0.16, 0.12, 1}, -- sandstone
-            arenaBorder= {0.4, 0.38, 0.25, 1},  -- moss overtaking
-            snake      = {0.95, 0.85, 0.55, 1}, -- faded gold
-            rock       = {0.3, 0.25, 0.2, 1},   -- collapsed stone
-            sawColor   = {0.7, 0.7, 0.75, 1},   -- pale tarnished steel
-        },
-        traits = {"ancientMachinery"},
-    },
-    [5] = {
-        name = "Crystal Hollows",
-        flavor = "Shards of crystal scatter light in eerie hues.",
-        palette = {
-            bgColor    = {0.06, 0.08, 0.12, 1}, -- sapphire veil
-            arenaBG    = {0.09, 0.11, 0.16, 1}, -- cold blue
-            arenaBorder= {0.4, 0.65, 0.9, 1},   -- refracted glow
-            snake      = {0.75, 0.9, 1.0, 1},   -- icy shine
-            rock       = {0.3, 0.35, 0.5, 1},   -- tinted crystal gray
-            sawColor   = {0.65, 0.85, 1.0, 1},  -- crystalline edges
-        },
-        traits = {"crystallineResonance"},
-    },
-    [6] = {
-        name = "The Abyss",
-        flavor = "The silence is heavy; unseen things stir below.",
-        palette = {
-            bgColor    = {0.02, 0.02, 0.05, 1}, -- depth-black
-            arenaBG    = {0.05, 0.05, 0.08, 1}, -- void
-            arenaBorder= {0.22, 0.12, 0.35, 1}, -- violet rim
-            snake      = {0.7, 0.35, 0.85, 1},  -- glowing violet
-            rock       = {0.08, 0.1, 0.14, 1},  -- deep obsidian
-            sawColor   = {0.55, 0.25, 0.6, 1},  -- eerie violet shimmer
-        },
-        traits = {"echoingStillness", "restlessEarth"},
-    },
-    [7] = {
-        name = "Inferno Gates",
-        flavor = "Heat rises, and the walls bleed with firelight.",
-        palette = {
-            bgColor    = {0.12, 0.03, 0.03, 1}, -- hazy red
-            arenaBG    = {0.15, 0.04, 0.04, 1}, -- burning tone
-            arenaBorder= {0.65, 0.25, 0.25, 1}, -- fiery rim
-            snake      = {1.0, 0.55, 0.25, 1},  -- ember orange
-            rock       = {0.35, 0.15, 0.1, 1},  -- brimstone
-            sawColor   = {1.0, 0.25, 0.25, 1},  -- glowing hot red
-        },
-        traits = {"infernalPressure"},
-    },
-    [8] = {
-        name = "The Underworld",
-        flavor = "Ash and shadow coil around you; the end awaits.",
-        palette = {
-            bgColor    = {0.06, 0.02, 0.04, 1}, -- smoky dark veil
-            arenaBG    = {0.08, 0.05, 0.08, 1}, -- charcoal
-            arenaBorder= {0.3, 0.05, 0.08, 1},  -- blood red
-            snake      = {0.9, 0.15, 0.25, 1},  -- crimson glow
-            rock       = {0.18, 0.15, 0.15, 1}, -- ashstone
-            sawColor   = {1.0, 0.1, 0.2, 1},    -- hellsteel
-        },
-        traits = {"ashenTithe", "glowingSpores"},
-    },
-    [9] = {
         name = "Flooded Catacombs",
         flavor = "Cold water laps at your scales; echoes gurgle through the dark.",
         palette = {
@@ -136,7 +68,33 @@ local Floors = {
         },
         traits = {"waterloggedCatacombs"},
     },
-    [10] = {
+    [5] = {
+        name = "Ancient Ruins",
+        flavor = "Forgotten walls crumble; whispers cling to the stone.",
+        palette = {
+            bgColor    = {0.14, 0.12, 0.08, 1}, -- dim brown haze
+            arenaBG    = {0.18, 0.16, 0.12, 1}, -- sandstone
+            arenaBorder= {0.4, 0.38, 0.25, 1},  -- moss overtaking
+            snake      = {0.95, 0.85, 0.55, 1}, -- faded gold
+            rock       = {0.3, 0.25, 0.2, 1},   -- collapsed stone
+            sawColor   = {0.7, 0.7, 0.75, 1},   -- pale tarnished steel
+        },
+        traits = {"ancientMachinery"},
+    },
+    [6] = {
+        name = "Crystal Hollows",
+        flavor = "Shards of crystal scatter light in eerie hues.",
+        palette = {
+            bgColor    = {0.06, 0.08, 0.12, 1}, -- sapphire veil
+            arenaBG    = {0.09, 0.11, 0.16, 1}, -- cold blue
+            arenaBorder= {0.4, 0.65, 0.9, 1},   -- refracted glow
+            snake      = {0.75, 0.9, 1.0, 1},   -- icy shine
+            rock       = {0.3, 0.35, 0.5, 1},   -- tinted crystal gray
+            sawColor   = {0.65, 0.85, 1.0, 1},  -- crystalline edges
+        },
+        traits = {"crystallineResonance"},
+    },
+    [7] = {
         name = "Bone Pits",
         flavor = "Crunching ivory shards warn you: nothing escapes intact.",
         palette = {
@@ -149,7 +107,33 @@ local Floors = {
         },
         traits = {"boneHarvest", "restlessEarth"},
     },
-    [11] = {
+    [8] = {
+        name = "The Abyss",
+        flavor = "The silence is heavy; unseen things stir below.",
+        palette = {
+            bgColor    = {0.02, 0.02, 0.05, 1}, -- depth-black
+            arenaBG    = {0.05, 0.05, 0.08, 1}, -- void
+            arenaBorder= {0.22, 0.12, 0.35, 1}, -- violet rim
+            snake      = {0.7, 0.35, 0.85, 1},  -- glowing violet
+            rock       = {0.08, 0.1, 0.14, 1},  -- deep obsidian
+            sawColor   = {0.55, 0.25, 0.6, 1},  -- eerie violet shimmer
+        },
+        traits = {"echoingStillness", "restlessEarth"},
+    },
+    [9] = {
+        name = "Inferno Gates",
+        flavor = "Heat rises, and the walls bleed with firelight.",
+        palette = {
+            bgColor    = {0.12, 0.03, 0.03, 1}, -- hazy red
+            arenaBG    = {0.15, 0.04, 0.04, 1}, -- burning tone
+            arenaBorder= {0.65, 0.25, 0.25, 1}, -- fiery rim
+            snake      = {1.0, 0.55, 0.25, 1},  -- ember orange
+            rock       = {0.35, 0.15, 0.1, 1},  -- brimstone
+            sawColor   = {1.0, 0.25, 0.25, 1},  -- glowing hot red
+        },
+        traits = {"infernalPressure"},
+    },
+    [10] = {
         name = "Obsidian Keep",
         flavor = "Molten veins pulse beneath mirror-black stone.",
         palette = {
@@ -161,6 +145,19 @@ local Floors = {
             sawColor   = {1.0, 0.35, 0.18, 1},   -- forgefire
         },
         traits = {"obsidianResonance", "infernalPressure"},
+    },
+    [11] = {
+        name = "Ashen Frontier",
+        flavor = "Scorched winds howl across the wastes beyond the keep.",
+        palette = {
+            bgColor    = {0.08, 0.04, 0.03, 1},  -- ember-stained dusk
+            arenaBG    = {0.12, 0.06, 0.05, 1},  -- charred earth
+            arenaBorder= {0.45, 0.2, 0.12, 1},   -- smoldering ridge
+            snake      = {0.88, 0.52, 0.28, 1},  -- wind-burnt scales
+            rock       = {0.26, 0.18, 0.15, 1},  -- scorched stone
+            sawColor   = {0.95, 0.4, 0.2, 1},    -- cindersteel
+        },
+        traits = {"ashenTithe", "glowingSpores"},
     },
     [12] = {
         name = "Spirit Crucible",
@@ -176,6 +173,19 @@ local Floors = {
         traits = {"spectralEchoes", "echoingStillness"},
     },
     [13] = {
+        name = "The Underworld",
+        flavor = "Ash and shadow coil around you; the end awaits.",
+        palette = {
+            bgColor    = {0.06, 0.02, 0.04, 1}, -- smoky dark veil
+            arenaBG    = {0.08, 0.05, 0.08, 1}, -- charcoal
+            arenaBorder= {0.3, 0.05, 0.08, 1},  -- blood red
+            snake      = {0.9, 0.15, 0.25, 1},  -- crimson glow
+            rock       = {0.18, 0.15, 0.15, 1}, -- ashstone
+            sawColor   = {1.0, 0.1, 0.2, 1},    -- hellsteel
+        },
+        traits = {"ashenTithe", "infernalPressure"},
+    },
+    [14] = {
         name = "Sky Spire",
         flavor = "Clouds part to reveal a false dawn of gleaming marble.",
         palette = {
