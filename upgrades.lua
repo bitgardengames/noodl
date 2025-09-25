@@ -305,10 +305,16 @@ local pool = {
     register({
         id = "stonebreaker_hymn",
         name = "Stonebreaker Hymn",
-        desc = "Each fruit shatters the nearest rock.",
+        desc = "Every other fruit shatters the nearest rock. Stacks to every fruit.",
         rarity = "uncommon",
+        allowDuplicates = true,
+        maxStacks = 2,
         onAcquire = function(state)
-            state.effects.rockShatter = (state.effects.rockShatter or 0) + 1
+            state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.5
+            state.counters.stonebreakerStacks = (state.counters.stonebreakerStacks or 0) + 1
+            if Snake.setStonebreakerStacks then
+                Snake:setStonebreakerStacks(state.counters.stonebreakerStacks)
+            end
         end,
     }),
     register({
@@ -709,6 +715,17 @@ function Upgrades:applyPersistentEffects(rebaseline)
     local rockChance = math.max(0.02, rockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
     Rocks.spawnChance = rockChance
     Rocks.shatterOnFruit = (base.rockShatter or 0) + (effects.rockShatter or 0)
+    if Snake.setStonebreakerStacks then
+        local stacks = 0
+        if state and state.counters then
+            stacks = state.counters.stonebreakerStacks or 0
+        end
+        if stacks <= 0 and effects.rockShatter then
+            local perStack = 0.5
+            stacks = math.floor(((effects.rockShatter or 0) / perStack) + 0.5)
+        end
+        Snake:setStonebreakerStacks(stacks)
+    end
 
     local comboBase = base.comboBonusMult or 1
     local comboMult = comboBase * (effects.comboBonusMult or 1)

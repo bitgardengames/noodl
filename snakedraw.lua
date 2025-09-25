@@ -124,7 +124,92 @@ local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTi
   love.graphics.setLineWidth(1)
 end
 
-local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer)
+local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
+  if not data then return end
+  local stacks = data.stacks or 0
+  if stacks <= 0 then return end
+
+  local progress = data.progress or 0
+  local rate = data.rate or 0
+  if rate >= 1 then
+    progress = 1
+  else
+    if progress < 0 then progress = 0 end
+    if progress > 1 then progress = 1 end
+  end
+
+  local time = 0
+  if love and love.timer and love.timer.getTime then
+    time = love.timer.getTime()
+  end
+
+  local baseRadius = SEGMENT_SIZE * (1.05 + 0.04 * math.min(stacks, 3))
+  local baseAlpha = 0.18 + 0.08 * math.min(stacks, 3)
+
+  love.graphics.setLineWidth(2)
+  love.graphics.setColor(0.52, 0.46, 0.4, baseAlpha)
+  love.graphics.circle("line", hx, hy, baseRadius)
+
+  if progress > 0 then
+    local startAngle = -math.pi / 2
+    love.graphics.setColor(0.88, 0.74, 0.46, 0.35 + 0.25 * progress)
+    love.graphics.setLineWidth(3)
+    love.graphics.arc("line", "open", hx, hy, baseRadius * 1.08, startAngle, startAngle + progress * math.pi * 2)
+  end
+
+  local shards = math.max(4, 3 + math.min(stacks * 2, 6))
+  local ready = (rate >= 1) or (progress >= 0.99)
+  for i = 1, shards do
+    local angle = time * (0.8 + stacks * 0.2) + (i / shards) * math.pi * 2
+    local wobble = 0.08 * math.sin(time * 3 + i)
+    local radius = baseRadius * (1.05 + wobble)
+    local size = SEGMENT_SIZE * (0.08 + 0.02 * math.min(stacks, 3))
+    local alpha = 0.25 + 0.35 * progress
+    if ready then
+      alpha = alpha + 0.2
+    end
+    love.graphics.setColor(0.95, 0.86, 0.6, alpha)
+    love.graphics.circle("fill", hx + math.cos(angle) * radius, hy + math.sin(angle) * radius, size)
+  end
+
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.setLineWidth(1)
+end
+
+local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
+  if not data or not data.active then return end
+
+  local duration = data.duration or 0
+  if duration <= 0 then duration = 1 end
+  local timer = data.timer or 0
+  if timer < 0 then timer = 0 end
+  local intensity = math.min(1, timer / duration)
+
+  local time = 0
+  if love and love.timer and love.timer.getTime then
+    time = love.timer.getTime()
+  end
+
+  local baseRadius = SEGMENT_SIZE * (0.7 + 0.35 * intensity)
+  love.graphics.setColor(1, 0.58 + 0.3 * intensity, 0.18, 0.22 + 0.3 * intensity)
+  love.graphics.circle("fill", hx, hy, baseRadius)
+
+  local flares = 6
+  local length = SEGMENT_SIZE * (1.1 + 0.45 * intensity)
+  love.graphics.setColor(1, 0.5 + 0.4 * intensity, 0.18, 0.35 + 0.35 * intensity)
+  love.graphics.setLineWidth(2 + intensity * 2)
+  for i = 1, flares do
+    local angle = time * (2.2 + intensity * 1.5) + (i / flares) * math.pi * 2
+    local ox = math.cos(angle) * length
+    local oy = math.sin(angle) * length
+    love.graphics.line(hx, hy, hx + ox, hy + oy)
+  end
+
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.setLineWidth(1)
+end
+
+local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals)
   if not trail or #trail == 0 then return end
 
   --local thickness = SEGMENT_SIZE * 0.75
@@ -175,6 +260,10 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   end
 
   if hx and hy then
+    if upgradeVisuals and upgradeVisuals.adrenaline then
+      drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
+    end
+
     local faceTexture = Face:getTexture()
     local faceScale = 1
     local ox = faceTexture:getWidth() / 2
@@ -184,6 +273,10 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     love.graphics.draw(faceTexture, hx, hy, 0, faceScale, faceScale, ox, oy)
 
     drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
+
+    if upgradeVisuals and upgradeVisuals.stonebreaker then
+      drawStonebreakerAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.stonebreaker)
+    end
   end
 
   -- POP EFFECT

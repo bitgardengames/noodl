@@ -30,6 +30,7 @@ Snake.crashShields = 0 -- crash protection: number of hits the snake can absorb
 Snake.extraGrowth = 0
 Snake.shieldBurst = nil
 Snake.shieldFlashTimer = 0
+Snake.stonebreakerStacks = 0
 
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
@@ -61,10 +62,17 @@ function Snake:resetModifiers()
     self.extraGrowth  = 0
     self.shieldBurst  = nil
     self.shieldFlashTimer = 0
+    self.stonebreakerStacks = 0
     if self.adrenaline then
         self.adrenaline.active = false
         self.adrenaline.timer = 0
     end
+end
+
+function Snake:setStonebreakerStacks(count)
+    count = count or 0
+    if count < 0 then count = 0 end
+    self.stonebreakerStacks = count
 end
 
 function Snake:addShieldBurst(config)
@@ -230,6 +238,40 @@ local function trimHoleSegments(hole)
     hole.consumedLength = consumed
 end
 
+local function collectUpgradeVisuals(self)
+    local visuals = nil
+
+    if (self.stonebreakerStacks or 0) > 0 then
+        visuals = visuals or {}
+        local progress = 0
+        if Rocks.getShatterProgress then
+            progress = Rocks:getShatterProgress()
+        end
+        local rate = 0
+        if Rocks.getShatterRate then
+            rate = Rocks:getShatterRate()
+        else
+            rate = Rocks.shatterOnFruit or 0
+        end
+        visuals.stonebreaker = {
+            stacks = self.stonebreakerStacks or 0,
+            progress = progress,
+            rate = rate,
+        }
+    end
+
+    if self.adrenaline and self.adrenaline.active then
+        visuals = visuals or {}
+        visuals.adrenaline = {
+            active = true,
+            timer = self.adrenaline.timer or 0,
+            duration = self.adrenaline.duration or 0,
+        }
+    end
+
+    return visuals
+end
+
 -- Build initial trail aligned to CELL CENTERS
 local function buildInitialTrail()
     local t = {}
@@ -388,6 +430,7 @@ function Snake:drawClipped(hx, hy, hr)
     end
 
     love.graphics.push("all")
+    local upgradeVisuals = collectUpgradeVisuals(self)
 
     if clipRadius > 0 then
         love.graphics.stencil(function()
@@ -405,7 +448,7 @@ function Snake:drawClipped(hx, hy, hr)
             end
         end
         return headX, headY
-    end, self.crashShields or 0, self.shieldFlashTimer or 0)
+    end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals)
 
     love.graphics.setStencilTest()
     love.graphics.pop()
@@ -644,9 +687,10 @@ end
 
 function Snake:draw()
     if not isDead then
+        local upgradeVisuals = collectUpgradeVisuals(self)
         DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
             return self:getHead()
-        end, self.crashShields or 0, self.shieldFlashTimer or 0)
+        end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals)
     end
 end
 

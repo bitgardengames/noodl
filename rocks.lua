@@ -8,6 +8,7 @@ local current = {}
 
 Rocks.spawnChance = 0.25
 Rocks.shatterOnFruit = 0
+Rocks.shatterProgress = 0
 
 local ROCK_SIZE = 24
 local SPAWN_DURATION = 0.3
@@ -74,6 +75,7 @@ function Rocks:reset()
     current = {}
     self.spawnChance = 0.25
     self.shatterOnFruit = 0
+    self.shatterProgress = 0
 end
 
 local function spawnShatterFX(x, y)
@@ -121,9 +123,30 @@ function Rocks:addShatterOnFruit(count)
 end
 
 function Rocks:onFruitCollected(x, y)
-    local count = math.floor(self.shatterOnFruit or 0)
+    local rate = self.shatterOnFruit or 0
+    if rate <= 0 then
+        self.shatterProgress = 0
+        return
+    end
+
+    self.shatterProgress = (self.shatterProgress or 0) + rate
+    local count = math.floor(self.shatterProgress or 0)
     if count <= 0 then return end
+
+    self.shatterProgress = (self.shatterProgress or 0) - count
+    if self.shatterProgress < 0 then
+        self.shatterProgress = 0
+    end
+
     self:shatterNearest(x or 0, y or 0, count)
+end
+
+function Rocks:getShatterProgress()
+    return self.shatterProgress or 0
+end
+
+function Rocks:getShatterRate()
+    return self.shatterOnFruit or 0
 end
 
 function Rocks:update(dt)
