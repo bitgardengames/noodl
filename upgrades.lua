@@ -185,11 +185,6 @@ local pool = {
             end
         end,
     }),
-            else
-                Score.fruitBonus = (Score.fruitBonus or 0) + 1
-            end
-        end,
-    }),
     register({
         id = "momentum_memory",
         name = "Momentum Memory",
