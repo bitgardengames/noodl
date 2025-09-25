@@ -63,8 +63,6 @@ local function comboTagline(count)
         return "Hot Streak!"
     elseif count >= 3 then
         return "Juicy!"
-    else
-        return "Keep it going!"
     end
 end
 
@@ -95,7 +93,10 @@ local function applyComboReward(x, y)
 
     local totalBonus = math.max(0, scaledCombo + extraBonus)
 
-    FloatingText:add(comboTagline(comboCount), x, y - 32, burstColor, 1.3, 55)
+    local tagline = comboTagline(comboCount)
+    if tagline then
+        FloatingText:add(tagline, x, y - 32, burstColor, 1.3, 55)
+    end
 
     if totalBonus > 0 then
         Score:addBonus(totalBonus)
