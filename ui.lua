@@ -361,15 +361,15 @@ function UI:setCombo(count, timer, duration, tailBonus, tailLabel, tailWindowBon
         end
 
         if combo.count >= 6 then
-            combo.tagline = "Unstoppable!"
+            combo.tagline = "Max streak bonus!"
         elseif combo.count >= 5 then
-            combo.tagline = "Blazing!"
+            combo.tagline = "Huge streak bonus!"
         elseif combo.count >= 4 then
-            combo.tagline = "Hot Streak!"
+            combo.tagline = "Bigger streak bonus!"
         elseif combo.count >= 3 then
-            combo.tagline = "Juicy!"
+            combo.tagline = "Streak bonus active!"
         else
-            combo.tagline = "Keep it going!"
+            combo.tagline = nil
         end
     else
         if previous >= 2 then

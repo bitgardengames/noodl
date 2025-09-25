@@ -298,20 +298,41 @@ function Game:drawTransition()
         if self.transitionPhase == "floorintro" then
                 local data = self.transitionFloorData or self.currentFloorData
                 if data then
-                        local progress = (self.transitionDuration <= 0) and 1 or math.min(1, self.transitionTimer / self.transitionDuration)
-                        love.graphics.setColor(1, 1, 1, progress)
-                        love.graphics.setFont(UI.fonts.title)
-                        love.graphics.printf(data.name, 0, self.screenHeight / 2 - 80, self.screenWidth, "center")
-                        love.graphics.setFont(UI.fonts.button)
-                        love.graphics.printf(data.flavor, 0, self.screenHeight / 2, self.screenWidth, "center")
+                        local timer = self.transitionTimer or 0
+                        local progress = (self.transitionDuration <= 0) and 1 or math.min(1, timer / self.transitionDuration)
+
+                        local function fadeAlpha(delay, duration)
+                                local t = math.max(0, math.min(1, (timer - delay) / (duration or 0.35)))
+                                return progress * t
+                        end
+
+                        local nameAlpha = fadeAlpha(0.0, 0.4)
+                        if nameAlpha > 0 then
+                                love.graphics.setFont(UI.fonts.title)
+                                love.graphics.setColor(1, 1, 1, nameAlpha)
+                                love.graphics.printf(data.name, 0, self.screenHeight / 2 - 80, self.screenWidth, "center")
+                        end
+
+                        if data.flavor and data.flavor ~= "" then
+                                local flavorAlpha = fadeAlpha(0.45, 0.4)
+                                if flavorAlpha > 0 then
+                                        love.graphics.setFont(UI.fonts.button)
+                                        love.graphics.setColor(1, 1, 1, flavorAlpha)
+                                        love.graphics.printf(data.flavor, 0, self.screenHeight / 2, self.screenWidth, "center")
+                                end
+                        end
 
                         local traits = self.transitionTraits or self.activeFloorTraits
                         if traits and #traits > 0 then
                                 love.graphics.setFont(UI.fonts.body)
                                 local y = self.screenHeight / 2 + 64
                                 for i, trait in ipairs(traits) do
-                                        local text = trait.name .. ": " .. trait.desc
-                                        love.graphics.printf(text, self.screenWidth * 0.2, y + (i - 1) * 36, self.screenWidth * 0.6, "center")
+                                        local traitAlpha = fadeAlpha(1.0 + (i - 1) * 0.25, 0.35)
+                                        if traitAlpha > 0 then
+                                                love.graphics.setColor(1, 1, 1, traitAlpha)
+                                                local text = trait.name .. ": " .. trait.desc
+                                                love.graphics.printf(text, self.screenWidth * 0.2, y + (i - 1) * 36, self.screenWidth * 0.6, "center")
+                                        end
                                 end
                         end
                 end
