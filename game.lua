@@ -32,6 +32,39 @@ local FruitWallet = require("fruitwallet")
 local Game = {}
 local TRACK_LENGTH = 120
 
+local function clamp01(value)
+        if value < 0 then return 0 end
+        if value > 1 then return 1 end
+        return value
+end
+
+local function easeInOutCubic(t)
+        if t < 0.5 then
+                return 4 * t * t * t
+        end
+        t = (2 * t) - 2
+        return 0.5 * t * t * t + 1
+end
+
+local function easeOutExpo(t)
+        if t >= 1 then return 1 end
+        return 1 - math.pow(2, -10 * t)
+end
+
+local function easeOutBack(t)
+        local c1 = 1.70158
+        local c3 = c1 + 1
+        return 1 + c3 * math.pow(t - 1, 3) + c1 * math.pow(t - 1, 2)
+end
+
+local function easedProgress(timer, duration)
+        if not duration or duration <= 0 then
+                return 1
+        end
+
+        return easeInOutCubic(clamp01(timer / duration))
+end
+
 local function buildModifierSections(self)
     local sections = {}
 
@@ -317,17 +350,44 @@ end
 
 function Game:drawTransition()
         if self.transitionPhase == "fadeout" then
-                local alpha = (self.transitionDuration <= 0) and 1 or math.min(1, self.transitionTimer / self.transitionDuration)
-                love.graphics.setColor(0, 0, 0, alpha)
+                local progress = easedProgress(self.transitionTimer, self.transitionDuration)
+                local overlayAlpha = progress * 0.9
+                local scale = 1 - 0.04 * easeOutExpo(progress)
+                local yOffset = 24 * progress
+
+                love.graphics.push()
+                love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 + yOffset)
+                love.graphics.scale(scale, scale)
+                love.graphics.translate(-self.screenWidth / 2, -self.screenHeight / 2)
+                love.graphics.setColor(Theme.bgColor)
                 love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                love.graphics.pop()
+
+                love.graphics.setColor(0, 0, 0, overlayAlpha)
+                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+
+                love.graphics.setBlendMode("add")
+                love.graphics.setColor(1, 1, 1, overlayAlpha * 0.25)
+                local radius = math.sqrt(self.screenWidth * self.screenWidth + self.screenHeight * self.screenHeight)
+                love.graphics.circle("fill", self.screenWidth / 2, self.screenHeight / 2, radius, 64)
+                love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(1, 1, 1, 1)
                 return
         end
 
         if self.transitionPhase == "shop" then
-                love.graphics.setColor(0, 0, 0, 1)
+                local entrance = easeOutBack(clamp01((self.transitionTimer or 0) / 0.6))
+                local scale = 0.92 + 0.08 * entrance
+                local yOffset = (1 - entrance) * 40
+
+                love.graphics.setColor(0, 0, 0, 0.9)
                 love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                love.graphics.push()
+                love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 + yOffset)
+                love.graphics.scale(scale, scale)
+                love.graphics.translate(-self.screenWidth / 2, -self.screenHeight / 2)
                 Shop:draw(self.screenWidth, self.screenHeight)
+                love.graphics.pop()
                 love.graphics.setColor(1, 1, 1, 1)
                 return
         end
@@ -336,26 +396,42 @@ function Game:drawTransition()
                 local data = self.transitionFloorData or self.currentFloorData
                 if data then
                         local timer = self.transitionTimer or 0
-                        local progress = (self.transitionDuration <= 0) and 1 or math.min(1, timer / self.transitionDuration)
+                        local progress = easedProgress(timer, self.transitionDuration)
+
+                        love.graphics.setColor(0, 0, 0, math.min(0.75, progress * 0.85))
+                        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                        love.graphics.setColor(1, 1, 1, 1)
 
                         local function fadeAlpha(delay, duration)
-                                local t = math.max(0, math.min(1, (timer - delay) / (duration or 0.35)))
-                                return progress * t
+                                return progress * clamp01((timer - delay) / (duration or 0.35))
                         end
 
-                        local nameAlpha = fadeAlpha(0.0, 0.4)
+                        local nameAlpha = fadeAlpha(0.0, 0.45)
                         if nameAlpha > 0 then
+                                local titleProgress = easeOutBack(clamp01((timer - 0.1) / 0.6))
+                                local titleScale = 0.9 + 0.1 * titleProgress
+                                local yOffset = (1 - titleProgress) * 36
                                 love.graphics.setFont(UI.fonts.title)
                                 love.graphics.setColor(1, 1, 1, nameAlpha)
-                                love.graphics.printf(data.name, 0, self.screenHeight / 2 - 80, self.screenWidth, "center")
+                                love.graphics.push()
+                                love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 - 80 + yOffset)
+                                love.graphics.scale(titleScale, titleScale)
+                                love.graphics.translate(-self.screenWidth / 2, -(self.screenHeight / 2 - 80 + yOffset))
+                                love.graphics.printf(data.name, 0, self.screenHeight / 2 - 80 + yOffset, self.screenWidth, "center")
+                                love.graphics.pop()
                         end
 
                         if data.flavor and data.flavor ~= "" then
                                 local flavorAlpha = fadeAlpha(0.45, 0.4)
                                 if flavorAlpha > 0 then
+                                        local flavorProgress = easeOutExpo(clamp01((timer - 0.45) / 0.65))
+                                        local flavorOffset = (1 - flavorProgress) * 24
                                         love.graphics.setFont(UI.fonts.button)
                                         love.graphics.setColor(1, 1, 1, flavorAlpha)
+                                        love.graphics.push()
+                                        love.graphics.translate(0, flavorOffset)
                                         love.graphics.printf(data.flavor, 0, self.screenHeight / 2, self.screenWidth, "center")
+                                        love.graphics.pop()
                                 end
                         end
 
@@ -383,14 +459,15 @@ function Game:drawTransition()
 
                                 for _, entry in ipairs(entries) do
                                         index = index + 1
-                                        local traitAlpha = fadeAlpha(1.0 + (index - 1) * 0.25, 0.35)
+                                        local traitAlpha = fadeAlpha(0.9 + (index - 1) * 0.25, 0.45)
+                                        local traitOffset = (1 - easeOutExpo(clamp01((timer - (0.9 + (index - 1) * 0.25)) / 0.6))) * 18
 
                                         if entry.type == "header" then
                                                 local headerHeight = UI.fonts.button:getHeight() + 6
                                                 if traitAlpha > 0 then
                                                         love.graphics.setFont(UI.fonts.button)
                                                         love.graphics.setColor(1, 1, 1, traitAlpha)
-                                                        love.graphics.printf(entry.title or "Traits", x, y, width, "center")
+                                                        love.graphics.printf(entry.title or "Traits", x, y + traitOffset, width, "center")
                                                 end
                                                 y = y + headerHeight
                                         else
@@ -401,7 +478,7 @@ function Game:drawTransition()
                                                 if traitAlpha > 0 then
                                                         love.graphics.setFont(UI.fonts.body)
                                                         love.graphics.setColor(1, 1, 1, traitAlpha)
-                                                        love.graphics.printf(text, x, y, width, "center")
+                                                        love.graphics.printf(text, x, y + traitOffset, width, "center")
                                                 end
                                                 y = y + blockHeight
                                         end
@@ -414,9 +491,18 @@ function Game:drawTransition()
         end
 
         if self.transitionPhase == "fadein" then
-                local progress = (self.transitionDuration <= 0) and 1 or math.min(1, self.transitionTimer / self.transitionDuration)
+                local progress = easedProgress(self.transitionTimer, self.transitionDuration)
                 local alpha = 1 - progress
-                love.graphics.setColor(0, 0, 0, alpha)
+                local scale = 1 + 0.03 * alpha
+                local yOffset = alpha * 20
+                love.graphics.push()
+                love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 + yOffset)
+                love.graphics.scale(scale, scale)
+                love.graphics.translate(-self.screenWidth / 2, -self.screenHeight / 2)
+                love.graphics.setColor(Theme.bgColor)
+                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                love.graphics.pop()
+                love.graphics.setColor(0, 0, 0, alpha * 0.85)
                 love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
                 love.graphics.setColor(1, 1, 1, 1)
         end
