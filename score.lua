@@ -12,6 +12,10 @@ Score.fruitBonus = 0
 Score.jackpotChance = 0
 Score.jackpotReward = 0
 Score.comboBonusMult = 1
+Score.highScoreGlowDuration = 4
+Score.highScoreGlowTimer = 0
+Score.previousHighScore = 0
+Score.runHighScoreTriggered = false
 
 local function updateAchievementChecks(self)
         Achievements:checkAll({
@@ -27,6 +31,9 @@ function Score:load()
         self.jackpotChance = 0
         self.jackpotReward = 0
         self.comboBonusMult = 1
+        self.highScoreGlowTimer = 0
+        self.previousHighScore = 0
+        self.runHighScoreTriggered = false
 
         -- Load from file
 	if love.filesystem.getInfo(self.saveFile) then
@@ -73,12 +80,16 @@ function Score:reset(mode)
         self.jackpotChance = 0
         self.jackpotReward = 0
         self.comboBonusMult = 1
-	elseif mode == "all" then
-		self.highscores = {}
-		self:save()
-	elseif self.highscores[mode] then
-		self.highscores[mode] = nil
-		self:save()
+        self.highScoreGlowTimer = 0
+        self.runHighScoreTriggered = false
+        self.previousHighScore = self:getHighScore(GameModes:getCurrentName())
+        elseif mode == "all" then
+                self.highscores = {}
+                self.previousHighScore = 0
+                self:save()
+        elseif self.highscores[mode] then
+                self.highscores[mode] = nil
+                self:save()
 	end
 end
 
@@ -107,6 +118,11 @@ function Score:increase(points)
 
         PlayerStats:add("totalApplesEaten", 1)
         updateAchievementChecks(self)
+
+        if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
+                self.runHighScoreTriggered = true
+                self.highScoreGlowTimer = self.highScoreGlowDuration
+        end
 end
 
 function Score:addFruitBonus(amount)
@@ -117,6 +133,11 @@ function Score:addBonus(points)
         if not points or points == 0 then return end
         self.current = self.current + points
         updateAchievementChecks(self)
+
+        if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
+                self.runHighScoreTriggered = true
+                self.highScoreGlowTimer = self.highScoreGlowDuration
+        end
 end
 
 function Score:addJackpotChance(chance, reward)
@@ -136,6 +157,21 @@ end
 
 function Score:getComboBonusMultiplier()
         return self.comboBonusMult or 1
+end
+
+function Score:update(dt)
+        if self.highScoreGlowTimer and self.highScoreGlowTimer > 0 then
+                self.highScoreGlowTimer = math.max(0, self.highScoreGlowTimer - dt)
+        end
+end
+
+function Score:getHighScoreGlowStrength()
+        if not self.highScoreGlowTimer or self.highScoreGlowTimer <= 0 then
+                return 0
+        end
+
+        local normalized = self.highScoreGlowTimer / self.highScoreGlowDuration
+        return math.max(0, math.min(1, normalized))
 end
 
 function Score:getJackpotChance()

@@ -1,3 +1,5 @@
+local Audio = require("audio")
+
 local Achievements = {}
 
 Achievements.definitions = {
@@ -78,12 +80,15 @@ function Achievements:unlock(name)
 
     -- Unlock it!
     achievement.unlocked = true
+    if achievement.goal then
+        achievement.progress = achievement.goal
+    end
     achievement.unlockedAt = os.time()
     table.insert(self.unlocked, name)
     table.insert(self.popupQueue, achievement)
 
     -- Trigger any visuals/sfx
-    -- love.audio.newSource("Assets/Sounds/achievement.wav", "static"):play()
+    Audio:playSound("achievement")
 
     -- Save achievements
     self:save()
@@ -98,9 +103,7 @@ function Achievements:check(key, state)
         end
 
         if not ach.unlocked and ach.condition(state) then
-            ach.unlocked = true
-            table.insert(self.unlocked, key)
-            table.insert(self.popupQueue, ach)
+            self:unlock(key)
         end
     end
 end
@@ -113,9 +116,7 @@ function Achievements:checkAll(state)
         end
 
         if not ach.unlocked and ach.condition(state) then
-            ach.unlocked = true
-            table.insert(self.unlocked, key)
-            table.insert(self.popupQueue, ach)
+            self:unlock(key)
         end
     end
 end
