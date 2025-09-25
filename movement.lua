@@ -134,12 +134,18 @@ function Movement:update(dt)
         local sawHit = Saws:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
 
         if sawHit then
-                if Snake:consumeCrashShield() then
+                local shielded = Snake:consumeCrashShield()
+                local survivedSaw = shielded
+
+                if not survivedSaw and Snake.consumeStoneSkinSawGrace then
+                        survivedSaw = Snake:consumeStoneSkinSawGrace()
+                end
+
+                if survivedSaw then
                         Particles:spawnBurst(headX, headY, {
                                 count = 8, speed = 40, life = 0.35, size = 3,
                                 color = {0.9,0.7,0.3,1}, spread = math.pi*2
                         })
-                        -- shield consumed -> survive
                         if Snake.onShieldConsumed then
                                 Snake:onShieldConsumed(headX, headY, "saw")
                         end

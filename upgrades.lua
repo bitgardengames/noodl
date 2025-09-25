@@ -74,6 +74,16 @@ local function getEventPosition(data)
     return nil, nil
 end
 
+local function stoneSkinShieldHandler(data, state)
+    if not state then return end
+    if (state.takenSet and (state.takenSet["stone_skin"] or 0) <= 0) then return end
+    if not data or data.cause ~= "rock" then return end
+    if not Rocks or not Rocks.shatterNearest then return end
+
+    local fx, fy = getEventPosition(data)
+    Rocks:shatterNearest(fx or 0, fy or 0, 1)
+end
+
 local function newRunState()
     return {
         takenOrder = {},
@@ -111,12 +121,19 @@ local pool = {
     register({
         id = "stone_skin",
         name = "Stone Skin",
-        desc = "Gain a crash shield.",
+        desc = "Gain a crash shield that shatters rocks and shrugs off a saw clip.",
         rarity = "common",
         allowDuplicates = true,
         maxStacks = 4,
         onAcquire = function(state)
             Snake:addCrashShields(1)
+            if Snake.addStoneSkinSawGrace then
+                Snake:addStoneSkinSawGrace(1)
+            end
+            if not state.counters.stoneSkinHandlerRegistered then
+                state.counters.stoneSkinHandlerRegistered = true
+                Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
+            end
         end,
     }),
     register({

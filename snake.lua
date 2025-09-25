@@ -31,6 +31,7 @@ Snake.extraGrowth = 0
 Snake.shieldBurst = nil
 Snake.shieldFlashTimer = 0
 Snake.stonebreakerStacks = 0
+Snake.stoneSkinSawGrace = 0
 
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
@@ -63,6 +64,7 @@ function Snake:resetModifiers()
     self.shieldBurst  = nil
     self.shieldFlashTimer = 0
     self.stonebreakerStacks = 0
+    self.stoneSkinSawGrace = 0
     if self.adrenaline then
         self.adrenaline.active = false
         self.adrenaline.timer = 0
@@ -110,6 +112,21 @@ function Snake:onShieldConsumed(x, y, cause)
             cause = cause or "unknown",
         })
     end
+end
+
+function Snake:addStoneSkinSawGrace(n)
+    n = n or 1
+    if n <= 0 then return end
+    self.stoneSkinSawGrace = (self.stoneSkinSawGrace or 0) + n
+end
+
+function Snake:consumeStoneSkinSawGrace()
+    if (self.stoneSkinSawGrace or 0) > 0 then
+        self.stoneSkinSawGrace = self.stoneSkinSawGrace - 1
+        self.shieldFlashTimer = SHIELD_FLASH_DURATION
+        return true
+    end
+    return false
 end
 
 -- >>> Small integration note:
