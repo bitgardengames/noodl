@@ -31,7 +31,7 @@ local Floors = {
                         snake       = {0.12, 0.9, 0.48, 1},  -- vivid spring green snake
                         rock        = {0.68, 0.58, 0.42, 1}, -- warm tan stone
                 },
-                traits = {"lushGrowth"},
+                traits = {"sunlitSanctuary"},
         },
     [2] = {
         name = "Echoing Caverns",
