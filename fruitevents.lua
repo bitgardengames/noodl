@@ -19,24 +19,12 @@ local FruitEvents = {}
 
 local DEFAULT_COMBO_WINDOW = 2.25
 
-local TAIL_STREAKS = {
-    { length = 0,  windowAdjust = 0,    comboBonus = 0 },
-    { length = 10, windowAdjust = 0.25, comboBonus = 1, label = "Tail Rhythm I" },
-    { length = 16, windowAdjust = 0.45, comboBonus = 2, label = "Tail Rhythm II" },
-    { length = 24, windowAdjust = 0.7,  comboBonus = 3, label = "Tail Rhythm III" },
-    { length = 32, windowAdjust = 1.0,  comboBonus = 4, label = "Tail Rhythm IV" },
-}
-
 local comboState = {
     count = 0,
     timer = 0,
     window = DEFAULT_COMBO_WINDOW,
     baseWindow = DEFAULT_COMBO_WINDOW,
     baseOverride = DEFAULT_COMBO_WINDOW,
-    tailWindowBonus = 0,
-    tailComboBonus = 0,
-    tailLabel = nil,
-    lastTierShown = nil,
 }
 
 local function getUpgradeEffect(name)
@@ -53,8 +41,7 @@ end
 
 local function updateComboWindow()
     comboState.baseWindow = getBaseWindow()
-    local adjusted = comboState.baseWindow + (comboState.tailWindowBonus or 0)
-    comboState.window = math.max(0.75, adjusted)
+    comboState.window = math.max(0.75, comboState.baseWindow)
     comboState.timer = math.min(comboState.timer or 0, comboState.window)
 end
 
@@ -63,36 +50,8 @@ local function syncComboToUI()
     UI:setCombo(
         comboState.count or 0,
         comboState.timer or 0,
-        comboState.window or DEFAULT_COMBO_WINDOW,
-        comboState.tailComboBonus or 0,
-        comboState.tailLabel,
-        comboState.tailWindowBonus or 0
+        comboState.window or DEFAULT_COMBO_WINDOW
     )
-end
-
-local function evaluateTailAssist(length, fx, fy)
-    local tierIndex = 1
-    for i = 1, #TAIL_STREAKS do
-        if length >= TAIL_STREAKS[i].length then
-            tierIndex = i
-        else
-            break
-        end
-    end
-
-    local tier = TAIL_STREAKS[tierIndex]
-    comboState.tailWindowBonus = tier.windowAdjust or 0
-    comboState.tailComboBonus = tier.comboBonus or 0
-    comboState.tailLabel = tier.label
-
-    local previousTier = comboState.lastTierShown or 1
-    if tierIndex > previousTier then
-        comboState.lastTierShown = tierIndex
-    elseif not comboState.lastTierShown then
-        comboState.lastTierShown = tierIndex
-    end
-
-    updateComboWindow()
 end
 
 local function comboTagline(count)
@@ -116,8 +75,6 @@ local function applyComboReward(x, y)
         comboState.count = 1
     end
 
-    evaluateTailAssist(Snake:getLength(), x, y)
-
     comboState.timer = comboState.window
     local comboCount = comboState.count
     syncComboToUI()
@@ -128,9 +85,8 @@ local function applyComboReward(x, y)
 
     local burstColor = {1, 0.82, 0.3, 1}
     local baseBonus = math.min((comboCount - 1) * 2, 10)
-    local tailBonus = (comboState.tailComboBonus or 0) * math.max(comboCount - 1, 0)
     local multiplier = Score.getComboBonusMultiplier and Score:getComboBonusMultiplier() or 1
-    local scaledCombo = math.floor((baseBonus + tailBonus) * multiplier + 0.5)
+    local scaledCombo = math.floor(baseBonus * multiplier + 0.5)
 
     local extraBonus = 0
     if Upgrades and Upgrades.getComboBonus then
@@ -149,7 +105,7 @@ local function applyComboReward(x, y)
     end
 
     Particles:spawnBurst(x, y, {
-        count = love.math.random(10, 14) + comboCount + math.floor((comboState.tailComboBonus or 0) * 1.5),
+        count = love.math.random(10, 14) + comboCount,
         speed = 90 + comboCount * 12,
         life = 0.6,
         size = 4,
@@ -167,10 +123,6 @@ function FruitEvents.reset()
     comboState.baseOverride = DEFAULT_COMBO_WINDOW
     comboState.baseWindow = DEFAULT_COMBO_WINDOW
     comboState.window = DEFAULT_COMBO_WINDOW
-    comboState.tailWindowBonus = 0
-    comboState.tailComboBonus = 0
-    comboState.tailLabel = nil
-    comboState.lastTierShown = nil
     syncComboToUI()
 end
 
