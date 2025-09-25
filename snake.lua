@@ -78,16 +78,25 @@ function Snake:addShieldBurst(config)
 end
 
 function Snake:onShieldConsumed(x, y, cause)
-    if not self.shieldBurst then return end
+    if self.shieldBurst then
+        local rocksToBreak = math.floor(self.shieldBurst.rocks or 0)
+        if rocksToBreak > 0 and Rocks and Rocks.shatterNearest then
+            Rocks:shatterNearest(x or 0, y or 0, rocksToBreak)
+        end
 
-    local rocksToBreak = math.floor(self.shieldBurst.rocks or 0)
-    if rocksToBreak > 0 and Rocks and Rocks.shatterNearest then
-        Rocks:shatterNearest(x or 0, y or 0, rocksToBreak)
+        local stallDuration = self.shieldBurst.stall or 0
+        if stallDuration > 0 and Saws and Saws.stall then
+            Saws:stall(stallDuration)
+        end
     end
 
-    local stallDuration = self.shieldBurst.stall or 0
-    if stallDuration > 0 and Saws and Saws.stall then
-        Saws:stall(stallDuration)
+    local Upgrades = package.loaded["upgrades"]
+    if Upgrades and Upgrades.notify then
+        Upgrades:notify("shieldConsumed", {
+            x = x,
+            y = y,
+            cause = cause or "unknown",
+        })
     end
 end
 
@@ -559,12 +568,13 @@ function Snake:update(dt)
 				(i == #trail) and (tailBeforeCol == headCol and tailBeforeRow == headRow)
 
 			if not tailVacated and cx == headCol and cy == headRow then
-				if self:consumeCrashShield() then
-					-- survived; optional FX here
-				else
-					isDead = true
-					return false, "self"
-				end
+                                if self:consumeCrashShield() then
+                                        -- survived; optional FX here
+                                        self:onShieldConsumed(hx, hy, "self")
+                                else
+                                        isDead = true
+                                        return false, "self"
+                                end
 			end
 		end
 	end

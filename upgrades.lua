@@ -59,6 +59,21 @@ local defaultEffects = {
     shopSlots = 0,
 }
 
+local function getEventPosition(data)
+    if data and data.x and data.y then
+        return data.x, data.y
+    end
+
+    if Snake.getHead then
+        local hx, hy = Snake:getHead()
+        if hx and hy then
+            return hx, hy
+        end
+    end
+
+    return nil, nil
+end
+
 local function newRunState()
     return {
         takenOrder = {},
@@ -103,6 +118,39 @@ local pool = {
         onAcquire = function(state)
             Snake:addCrashShields(1)
         end,
+    }),
+    register({
+        id = "aegis_recycler",
+        name = "Aegis Recycler",
+        desc = "Every 2 broken shields forge a fresh one.",
+        rarity = "common",
+        tags = {"defense"},
+        onAcquire = function(state)
+            state.counters.aegisRecycler = state.counters.aegisRecycler or 0
+        end,
+        handlers = {
+            shieldConsumed = function(data, state)
+                state.counters.aegisRecycler = (state.counters.aegisRecycler or 0) + 1
+                if state.counters.aegisRecycler >= 2 then
+                    state.counters.aegisRecycler = state.counters.aegisRecycler - 2
+                    Snake:addCrashShields(1)
+                    local fx, fy = getEventPosition(data)
+                    if FloatingText and fx and fy then
+                        FloatingText:add("Aegis Reforged", fx, fy - 52, {0.6, 0.85, 1, 1}, 1.1, 60)
+                    end
+                    if Particles and fx and fy then
+                        Particles:spawnBurst(fx, fy, {
+                            count = 10,
+                            speed = 90,
+                            life = 0.45,
+                            size = 4,
+                            color = {0.55, 0.8, 1, 1},
+                            spread = math.pi * 2,
+                        })
+                    end
+                end
+            end,
+        },
     }),
     register({
         id = "saw_grease",
@@ -195,6 +243,41 @@ local pool = {
             state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
             state.effects.adrenalineDurationBonus = (state.effects.adrenalineDurationBonus or 0) + 2
         end,
+    }),
+    register({
+        id = "molting_reflex",
+        name = "Molting Reflex",
+        desc = "Crash shields trigger a 60% adrenaline surge.",
+        rarity = "uncommon",
+        requiresTags = {"adrenaline"},
+        tags = {"adrenaline", "defense"},
+        handlers = {
+            shieldConsumed = function(data)
+                if not Snake.adrenaline then return end
+
+                Snake.adrenaline.active = true
+                local baseDuration = Snake.adrenaline.duration or 2.5
+                local surgeDuration = baseDuration * 0.6
+                if surgeDuration <= 0 then surgeDuration = 1 end
+                local currentTimer = Snake.adrenaline.timer or 0
+                Snake.adrenaline.timer = math.max(currentTimer, surgeDuration)
+
+                local fx, fy = getEventPosition(data)
+                if FloatingText and fx and fy then
+                    FloatingText:add("Molting Reflex", fx, fy - 44, {0.92, 0.98, 0.85, 1}, 1.0, 58)
+                end
+                if Particles and fx and fy then
+                    Particles:spawnBurst(fx, fy, {
+                        count = 12,
+                        speed = 120,
+                        life = 0.5,
+                        size = 4,
+                        color = {1, 0.72, 0.28, 1},
+                        spread = math.pi * 2,
+                    })
+                end
+            end,
+        },
     }),
     register({
         id = "circuit_breaker",
@@ -405,6 +488,40 @@ local pool = {
             state.effects.comboDepthScaler = (state.effects.comboDepthScaler or 0) + 1
             state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
         end,
+    }),
+    register({
+        id = "luminous_cache",
+        name = "Luminous Cache",
+        desc = "Broken shields scatter embers worth +depth score.",
+        rarity = "rare",
+        tags = {"economy", "defense"},
+        handlers = {
+            shieldConsumed = function(data, state)
+                local depth = 1
+                if state and state.counters then
+                    depth = math.max(1, math.floor((state.counters.depth or 1) + 0.5))
+                end
+
+                if Score.addBonus then
+                    Score:addBonus(depth)
+                end
+
+                local fx, fy = getEventPosition(data)
+                if FloatingText and fx and fy then
+                    FloatingText:add("Luminous Cache +" .. tostring(depth), fx, fy - 60, {1, 0.84, 0.45, 1}, 1.2, 62)
+                end
+                if Particles and fx and fy then
+                    Particles:spawnBurst(fx, fy, {
+                        count = 14,
+                        speed = 110,
+                        life = 0.55,
+                        size = 5,
+                        color = {1, 0.72, 0.35, 1},
+                        spread = math.pi * 2,
+                    })
+                end
+            end,
+        },
     }),
 }
 

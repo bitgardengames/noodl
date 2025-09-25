@@ -48,7 +48,9 @@ function Movement:update(dt)
                                 })
                                 -- optionally mark rock as destroyed or not; I'm leaving it intact
                                 if Snake.onShieldConsumed then
-                                        Snake:onShieldConsumed(rock.x, rock.y, "rock")
+                                        local centerX = rock.x + rock.w / 2
+                                        local centerY = rock.y + rock.h / 2
+                                        Snake:onShieldConsumed(centerX, centerY, "rock")
                                 end
                         else
                                 return "dead", "rock"
