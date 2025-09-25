@@ -108,9 +108,10 @@ function Game:load()
         self.transitionTraits = buildModifierSections(self)
 
         -- first intro: fade-in text for floor 1 only
-        startTransitionPhase(self, "floorintro", 2.5, {
+        self:startFloorIntro(3.5, {
                 transitionAdvance = false,
                 transitionFloorData = Floors[self.floor] or Floors[1],
+                transitionResumePhase = "play",
         })
 end
 
@@ -175,7 +176,19 @@ function Game:openShop()
 end
 
 function Game:startFloorIntro(duration, extra)
-        startTransitionPhase(self, "floorintro", duration or 2.5, extra)
+        extra = extra or {}
+
+        if extra.transitionResumePhase == nil then
+                extra.transitionResumePhase = "fadein"
+        end
+
+        if extra.transitionResumePhase == "fadein" and extra.transitionResumeFadeDuration == nil then
+                extra.transitionResumeFadeDuration = 1.2
+        elseif extra.transitionResumePhase ~= "fadein" then
+                extra.transitionResumeFadeDuration = nil
+        end
+
+        startTransitionPhase(self, "floorintro", duration or 3.5, extra)
 end
 
 function Game:startFadeIn(duration)
@@ -205,7 +218,18 @@ function Game:updateTransition(dt)
 
         elseif self.transitionPhase == "floorintro" then
                 if self.transitionTimer >= self.transitionDuration then
-                        self:startFadeIn(1.2)
+                        local resumePhase = self.transitionResumePhase or "fadein"
+                        local fadeDuration = self.transitionResumeFadeDuration
+
+                        self.transitionResumePhase = nil
+                        self.transitionResumeFadeDuration = nil
+
+                        if resumePhase == "fadein" then
+                                self:startFadeIn(fadeDuration or 1.2)
+                        else
+                                self.state = "playing"
+                                self.transitionPhase = nil
+                        end
                 end
 
         elseif self.transitionPhase == "fadein" then
