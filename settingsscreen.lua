@@ -4,7 +4,6 @@ local UI = require("ui")
 local Theme = require("theme")
 local Settings = require("settings")
 local Localization = require("localization")
-local Backdrop = require("backdrop")
 
 local SettingsScreen = {}
 
@@ -29,8 +28,6 @@ local focusedIndex = 1
 function SettingsScreen:enter()
     Screen:update()
     local sw, sh = Screen:get()
-    Backdrop:resize(sw, sh)
-    Backdrop:onPaletteChanged()
     local centerX = sw / 2
     local totalHeight = (#options) * (UI.spacing.buttonHeight + UI.spacing.buttonSpacing) - UI.spacing.buttonSpacing
     local startY = sh / 2 - totalHeight / 2
@@ -81,9 +78,6 @@ function SettingsScreen:update(dt)
     local mx, my = love.mouse.getPosition()
     hoveredIndex = nil
 
-    local sw, sh = Screen:get()
-    Backdrop:update(dt, sw, sh)
-
     for i, btn in ipairs(buttons) do
         local opt = btn.option
         btn.hovered = UI.isHovered(btn.x, btn.y, btn.w, btn.h, mx, my)
@@ -107,11 +101,8 @@ function SettingsScreen:update(dt)
 end
 
 function SettingsScreen:draw()
-    local sw, sh = Screen:get()
-    local bg = Theme.bgColor or {0, 0, 0, 1}
-    love.graphics.clear(bg[1] or 0, bg[2] or 0, bg[3] or 0, bg[4] or 1)
-
-    Backdrop:drawBase(sw, sh)
+    local sw, _ = Screen:get()
+    love.graphics.clear(Theme.bgColor)
 
     love.graphics.setFont(UI.fonts.title)
     love.graphics.setColor(1, 1, 1)
@@ -177,8 +168,6 @@ function SettingsScreen:draw()
             UI.drawButton(btn.id)
         end
     end
-
-    Backdrop:drawVignette(sw, sh)
 end
 
 function SettingsScreen:updateFocusVisuals()

@@ -6,7 +6,6 @@ local drawWord = require("drawword")
 local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
-local Backdrop = require("backdrop")
 
 local Menu = {}
 
@@ -22,8 +21,6 @@ function Menu:enter()
     Screen:update()
 
     local sw, sh = Screen:get()
-    Backdrop:resize(sw, sh)
-    Backdrop:onPaletteChanged()
     local centerX = sw / 2
     local startY = sh / 2 - ((UI.spacing.buttonHeight + UI.spacing.buttonSpacing) * 2.5)
 
@@ -62,9 +59,6 @@ end
 function Menu:update(dt)
     t = t + dt
 
-    local sw, sh = Screen:get()
-    Backdrop:update(dt, sw, sh)
-
     local mx, my = love.mouse.getPosition()
     buttonList:updateHover(mx, my)
 
@@ -86,10 +80,9 @@ end
 
 function Menu:draw()
     local sw, sh = Screen:get()
-    local bg = Theme.bgColor or {0, 0, 0, 1}
-    love.graphics.clear(bg[1] or 0, bg[2] or 0, bg[3] or 0, bg[4] or 1)
 
-    Backdrop:drawBase(sw, sh)
+    love.graphics.setColor(Theme.bgColor)
+    love.graphics.rectangle("fill", 0, 0, sw, sh)
 
     local cellSize = 20
     local word = Localization:get("menu.title_word")
@@ -130,8 +123,6 @@ function Menu:draw()
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(Theme.textColor)
     love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
-
-    Backdrop:drawVignette(sw, sh)
 end
 
 function Menu:mousepressed(x, y, button)
