@@ -55,10 +55,7 @@ local defaultEffects = {
     adrenalineBoostBonus = 0,
     comboWindowBonus = 0,
     comboBonusFlat = 0,
-    comboDepthScaler = 0,
     shopSlots = 0,
-    depthMitigation = 0,
-    depthBoon = 0,
 }
 
 local function getEventPosition(data)
@@ -504,80 +501,126 @@ local pool = {
         },
     }),
     register({
-        id = "abyssal_anchor",
-        name = "Abyssal Anchor",
-        desc = "Depth penalties shrink by 40%.",
+        id = "gyro_stabilizers",
+        name = "Gyro Stabilizers",
+        desc = "Saws spin 35% slower.",
         rarity = "uncommon",
-        tags = {"depth", "defense"},
+        tags = {"defense"},
         onAcquire = function(state)
-            local current = state.effects.depthMitigation or 0
-            state.effects.depthMitigation = math.min(2, current + 0.4)
+            state.effects.sawSpinMult = (state.effects.sawSpinMult or 1) * 0.65
         end,
     }),
     register({
-        id = "void_lantern",
-        name = "Void Lantern",
-        desc = "Depth boons are 35% stronger. Descents grant +depth bonus score.",
-        rarity = "rare",
-        tags = {"depth", "economy"},
-        onAcquire = function(state)
-            state.effects.depthBoon = (state.effects.depthBoon or 0) + 0.35
-        end,
+        id = "tempest_nectar",
+        name = "Tempest Nectar",
+        desc = "Fruit grant +1 bonus score and stall saws for 0.6s.",
+        rarity = "uncommon",
+        tags = {"economy", "defense"},
         handlers = {
-            floorStart = function(data, state)
-                local depth = 1
-                if data and data.floor then
-                    depth = data.floor
-                elseif state and state.counters and state.counters.depth then
-                    depth = state.counters.depth
+            fruitCollected = function(data)
+                if Saws and Saws.stall then
+                    Saws:stall(0.6)
                 end
-                depth = math.max(1, math.floor(depth + 0.5))
-                Score:addBonus(depth)
+                if Score.addBonus then
+                    Score:addBonus(1)
+                end
+                local fx, fy = getEventPosition(data)
+                if FloatingText and fx and fy then
+                    FloatingText:add("Tempest Nectar +1", fx, fy - 40, {0.8, 0.95, 1, 1}, 1.0, 52)
+                end
+                if Particles and fx and fy then
+                    Particles:spawnBurst(fx, fy, {
+                        count = 10,
+                        speed = 90,
+                        life = 0.45,
+                        size = 4,
+                        color = {0.55, 0.82, 1, 1},
+                        spread = math.pi * 2,
+                    })
+                end
             end,
         },
     }),
     register({
-        id = "depthsong_chime",
-        name = "Depthsong Chime",
-        desc = "Combo finishers grant +depth bonus but +1 rock spawns.",
-        rarity = "rare",
-        tags = {"economy"},
-        onAcquire = function(state)
-            state.effects.comboDepthScaler = (state.effects.comboDepthScaler or 0) + 1
-            state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
-        end,
-    }),
-    register({
-        id = "luminous_cache",
-        name = "Luminous Cache",
-        desc = "Broken shields scatter embers worth +depth score.",
+        id = "solar_reservoir",
+        name = "Solar Reservoir",
+        desc = "First fruit each floor stalls saws 2s and grants +4 bonus score.",
         rarity = "rare",
         tags = {"economy", "defense"},
+        onAcquire = function(state)
+            state.counters.solarReservoirReady = false
+        end,
         handlers = {
-            shieldConsumed = function(data, state)
-                local depth = 1
-                if state and state.counters then
-                    depth = math.max(1, math.floor((state.counters.depth or 1) + 0.5))
+            floorStart = function(_, state)
+                state.counters.solarReservoirReady = true
+            end,
+            fruitCollected = function(data, state)
+                if not state.counters.solarReservoirReady then return end
+                state.counters.solarReservoirReady = false
+                if Saws and Saws.stall then
+                    Saws:stall(2)
                 end
-
                 if Score.addBonus then
-                    Score:addBonus(depth)
+                    Score:addBonus(4)
                 end
-
                 local fx, fy = getEventPosition(data)
                 if FloatingText and fx and fy then
-                    FloatingText:add("Luminous Cache +" .. tostring(depth), fx, fy - 60, {1, 0.84, 0.45, 1}, 1.2, 62)
+                    FloatingText:add("Solar Reservoir +4", fx, fy - 52, {1, 0.86, 0.32, 1}, 1.2, 62)
                 end
                 if Particles and fx and fy then
                     Particles:spawnBurst(fx, fy, {
-                        count = 14,
-                        speed = 110,
-                        life = 0.55,
+                        count = 16,
+                        speed = 130,
+                        life = 0.65,
                         size = 5,
-                        color = {1, 0.72, 0.35, 1},
+                        color = {1, 0.74, 0.28, 1},
                         spread = math.pi * 2,
                     })
                 end
+            end,
+        },
+    }),
+    register({
+        id = "crystal_cache",
+        name = "Crystal Cache",
+        desc = "Crash shields burst into motes worth +2 bonus score.",
+        rarity = "rare",
+        tags = {"economy", "defense"},
+        handlers = {
+            shieldConsumed = function(data)
+                if Score.addBonus then
+                    Score:addBonus(2)
+                end
+                local fx, fy = getEventPosition(data)
+                if FloatingText and fx and fy then
+                    FloatingText:add("Crystal Cache +2", fx, fy - 60, {0.86, 0.96, 1, 1}, 1.1, 60)
+                end
+                if Particles and fx and fy then
+                    Particles:spawnBurst(fx, fy, {
+                        count = 12,
+                        speed = 115,
+                        life = 0.55,
+                        size = 5,
+                        color = {0.72, 0.92, 1, 1},
+                        spread = math.pi * 2,
+                    })
+                end
+            end,
+        },
+    }),
+    register({
+        id = "tectonic_resolve",
+        name = "Tectonic Resolve",
+        desc = "Rock spawns -15%. Begin each floor with +1 crash shield.",
+        rarity = "rare",
+        tags = {"defense"},
+        onAcquire = function(state)
+            state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
+            Snake:addCrashShields(1)
+        end,
+        handlers = {
+            floorStart = function()
+                Snake:addCrashShields(1)
             end,
         },
     }),
@@ -630,10 +673,6 @@ function Upgrades:addEventHandler(event, handler)
 end
 
 function Upgrades:notify(event, data)
-    if event == "floorStart" then
-        local depth = (data and data.floor) or self.runState.counters.depth or 1
-        self.runState.counters.depth = depth
-    end
     local handlers = self.runState.handlers[event]
     if not handlers then return end
     for _, handler in ipairs(handlers) do
@@ -693,17 +732,6 @@ function Upgrades:getComboBonus(comboCount)
         if amount ~= 0 then
             bonus = bonus + amount
             table.insert(breakdown, { label = "Momentum", amount = amount })
-        end
-    end
-
-    local depthScale = effects.comboDepthScaler or 0
-    if depthScale ~= 0 then
-        local depth = self.runState.counters.depth or 1
-        local amount = round(depth * depthScale)
-        if amount ~= 0 then
-            bonus = bonus + amount
-            local label = depthScale > 0 and "Depthsong" or "Depth Debt"
-            table.insert(breakdown, { label = label, amount = amount })
         end
     end
 
