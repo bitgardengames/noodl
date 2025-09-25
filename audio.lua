@@ -12,6 +12,8 @@ function Audio:load()
     self.sounds.hover = love.audio.newSource("Assets/Sounds/tick_002.ogg", "static")
     self.sounds.click = love.audio.newSource("Assets/Sounds/select.ogg", "static")
     self.sounds.achievement = love.audio.newSource("Assets/Sounds/Retro Event Acute 11.wav", "static")
+    self.sounds.shield_gain = love.audio.newSource("Assets/Sounds/switch_001.ogg", "static")
+    self.sounds.shield_break = love.audio.newSource("Assets/Sounds/abs-cancel-1.wav", "static")
 
     -- Music Tracks
     self.musicTracks.menu = love.audio.newSource("Assets/Music/Menu2.ogg", "stream")

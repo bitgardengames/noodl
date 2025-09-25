@@ -26,6 +26,18 @@ UI.combo = {
     tagline = nil,
 }
 
+UI.shields = {
+    count = 0,
+    display = 0,
+    popDuration = 0.32,
+    popTimer = 0,
+    shakeDuration = 0.45,
+    shakeTimer = 0,
+    flashDuration = 0.4,
+    flashTimer = 0,
+    lastDirection = 0,
+}
+
 -- Button states
 UI.buttons = {}
 
@@ -173,6 +185,12 @@ function UI:reset()
     self.combo.pop = 0
     self.combo.tagline = nil
     self.floorModifiers = {}
+    self.shields.count = 0
+    self.shields.display = 0
+    self.shields.popTimer = 0
+    self.shields.shakeTimer = 0
+    self.shields.flashTimer = 0
+    self.shields.lastDirection = 0
 end
 
 function UI:triggerScorePulse()
@@ -357,6 +375,35 @@ function UI:update(dt)
         self.combo.pop = math.max(0, self.combo.pop - dt * 3)
     end
 
+    local shields = self.shields
+    if shields then
+        if shields.display == nil then
+            shields.display = shields.count or 0
+        end
+
+        local target = shields.count or 0
+        local current = shields.display or 0
+        local diff = target - current
+        if math.abs(diff) > 0.01 then
+            local step = diff * math.min(dt * 10, 1)
+            shields.display = current + step
+        else
+            shields.display = target
+        end
+
+        if shields.popTimer and shields.popTimer > 0 then
+            shields.popTimer = math.max(0, shields.popTimer - dt)
+        end
+
+        if shields.shakeTimer and shields.shakeTimer > 0 then
+            shields.shakeTimer = math.max(0, shields.shakeTimer - dt)
+        end
+
+        if shields.flashTimer and shields.flashTimer > 0 then
+            shields.flashTimer = math.max(0, shields.flashTimer - dt)
+        end
+    end
+
 end
 
 function UI:setCombo(count, timer, duration)
@@ -393,6 +440,54 @@ function UI:setCombo(count, timer, duration)
             combo.pop = 0
         end
         combo.tagline = nil
+    end
+end
+
+function UI:getCrashShields()
+    return (self.shields and self.shields.count) or 0
+end
+
+function UI:setCrashShields(count, opts)
+    local shields = self.shields
+    if not shields then return end
+
+    count = math.max(0, math.floor((count or 0) + 0.0001))
+
+    if shields.count == nil then
+        shields.count = count
+        shields.display = count
+        return
+    end
+
+    local previous = shields.count or 0
+    shields.count = count
+
+    if opts and opts.immediate then
+        shields.display = count
+    end
+
+    if count == previous then
+        return
+    end
+
+    local silent = opts and opts.silent
+
+    if count > previous then
+        shields.lastDirection = 1
+        shields.popTimer = shields.popDuration
+        shields.flashTimer = shields.flashDuration * 0.6
+        shields.shakeTimer = 0
+        if not silent then
+            Audio:playSound("shield_gain")
+        end
+    else
+        shields.lastDirection = -1
+        shields.shakeTimer = shields.shakeDuration
+        shields.flashTimer = shields.flashDuration
+        shields.popTimer = 0
+        if not silent then
+            Audio:playSound("shield_break")
+        end
     end
 end
 
@@ -466,6 +561,108 @@ local function drawComboIndicator(self)
     love.graphics.pop()
 end
 
+local function buildShieldPoints(radius)
+    return {
+        0, -radius,
+        radius * 0.78, -radius * 0.28,
+        radius * 0.55, radius * 0.85,
+        0, radius,
+        -radius * 0.55, radius * 0.85,
+        -radius * 0.78, -radius * 0.28,
+    }
+end
+
+function UI:drawShields()
+    local shields = self.shields
+    if not shields then return end
+
+    local display = math.max(shields.display or shields.count or 0, 0)
+    local count = shields.count or 0
+    local flashTimer = shields.flashTimer or 0
+
+    if count <= 0 and display <= 0.05 and flashTimer <= 0 then
+        return
+    end
+
+    local screenW = love.graphics.getWidth()
+    local baseX = screenW - 24
+    local baseY = 28
+    local spacing = 38
+    local maxIcons = 4
+
+    local iconsToDraw = math.min(maxIcons, math.max(count, math.ceil(display)))
+    if iconsToDraw <= 0 and flashTimer > 0 then
+        iconsToDraw = 1
+    end
+
+    local shakeOffset = 0
+    if shields.shakeTimer and shields.shakeTimer > 0 and shields.shakeDuration > 0 then
+        local t = shields.shakeTimer / shields.shakeDuration
+        shakeOffset = math.sin(love.timer.getTime() * 32) * 4 * t
+    end
+
+    for i = 1, iconsToDraw do
+        local x = baseX - (i - 1) * spacing + shakeOffset
+        local y = baseY
+        local radius = 16
+
+        love.graphics.push("all")
+        love.graphics.translate(x, y)
+
+        local scale = 1
+        if shields.popTimer and shields.popTimer > 0 and shields.popDuration > 0 and i == 1 and shields.lastDirection > 0 then
+            local t = shields.popTimer / shields.popDuration
+            scale = scale + 0.25 * math.sin(t * math.pi)
+        end
+
+        love.graphics.scale(scale, scale)
+
+        local fillColor = {0.55, 0.82, 1.0, 0.92}
+        local borderColor = {0.15, 0.35, 0.6, 1.0}
+
+        if flashTimer > 0 and shields.lastDirection < 0 then
+            local denom = (shields.flashDuration and shields.flashDuration > 0) and shields.flashDuration or 1
+            local strength = math.min(1, flashTimer / denom)
+            fillColor = {1.0, 0.55 + 0.25 * strength, 0.45 + 0.1 * strength, 0.92}
+            borderColor = {0.65, 0.2, 0.2, 1}
+        end
+
+        local shieldPoints = buildShieldPoints(radius)
+        local shadowPoints = buildShieldPoints(radius + 2)
+
+        love.graphics.push()
+        love.graphics.translate(3, 4)
+        love.graphics.setColor(0, 0, 0, 0.35)
+        love.graphics.polygon("fill", shadowPoints)
+        love.graphics.setColor(0, 0, 0, 0.45)
+        love.graphics.setLineWidth(2)
+        love.graphics.polygon("line", shadowPoints)
+        love.graphics.pop()
+
+        love.graphics.setColor(fillColor)
+        love.graphics.polygon("fill", shieldPoints)
+
+        love.graphics.setColor(borderColor)
+        love.graphics.setLineWidth(2)
+        love.graphics.polygon("line", shieldPoints)
+
+        love.graphics.setColor(1, 1, 1, 0.18)
+        love.graphics.setLineWidth(2)
+        love.graphics.line(-radius * 0.45, -radius * 0.1, 0, radius * 0.6)
+        love.graphics.line(0, radius * 0.6, radius * 0.45, -radius * 0.1)
+
+        love.graphics.pop()
+    end
+
+    if count > maxIcons then
+        love.graphics.setFont(UI.fonts.button)
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.printf("x" .. tostring(count), baseX - maxIcons * spacing - 60, baseY - 18, 120, "right")
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 function UI:drawFruitSockets()
     local baseX, baseY = 20, 60
     local perRow = 10
@@ -526,6 +723,7 @@ function UI:drawFruitSockets()
 end
 
 function UI:draw()
+    self:drawShields()
     drawComboIndicator(self)
     -- draw socket grid
     self:drawFruitSockets()
