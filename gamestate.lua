@@ -4,7 +4,7 @@ GameState.states = {}
 GameState.current = nil
 GameState.next = nil
 GameState.transitionTime = 0
-GameState.transitionDuration = 0.6
+GameState.transitionDuration = 1.2
 GameState.transitioning = false
 GameState.transitionDirection = 1 -- 1 = fade out, -1 = fade in
 GameState.pendingData = nil

@@ -155,7 +155,7 @@ function Game:startFloorTransition(advance, skipFade)
         Snake:finishDescending()
         local pendingFloor = advance and (self.floor + 1) or nil
         local floorData = Floors[pendingFloor or self.floor] or Floors[1]
-        startTransitionPhase(self, "fadeout", skipFade and 0 or 1.0, {
+        startTransitionPhase(self, "fadeout", skipFade and 0 or 1.2, {
                 transitionAdvance = advance,
                 pendingFloor = pendingFloor,
                 transitionFloorData = floorData,
@@ -173,7 +173,7 @@ function Game:startFloorIntro(duration, extra)
 end
 
 function Game:startFadeIn(duration)
-        startTransitionPhase(self, "fadein", duration or 1.0)
+        startTransitionPhase(self, "fadein", duration or 1.2)
 end
 
 function Game:updateTransition(dt)
@@ -195,7 +195,7 @@ function Game:updateTransition(dt)
 
         elseif self.transitionPhase == "floorintro" then
                 if self.transitionTimer >= self.transitionDuration then
-                        self:startFadeIn(1.0)
+                        self:startFadeIn(1.2)
                 end
 
         elseif self.transitionPhase == "fadein" then
