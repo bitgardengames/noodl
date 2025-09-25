@@ -85,6 +85,81 @@ local traits = {
             Rocks:addShatterOnFruit(1)
         end
     },
+    waterloggedCatacombs = {
+        name = "Waterlogged Passages",
+        desc = "Flooding slows saws, reduces rocks, and stalls blades on fruit.",
+        apply = function(ctx)
+            if ctx.rocks then
+                ctx.rocks = math.max(0, math.floor((ctx.rocks * 0.7) + 0.5))
+            end
+
+            local chance = Rocks:getSpawnChance() or 0.25
+            Rocks.spawnChance = math.max(0.05, chance * 0.6)
+
+            Saws.speedMult = (Saws.speedMult or 1) * 0.85
+            local currentStall = Saws:getStallOnFruit()
+            Saws:setStallOnFruit(math.max(currentStall, 0.8))
+        end
+    },
+    boneHarvest = {
+        name = "Bone Harvest",
+        desc = "More bones litter the arena, but fruits grind them to dust.",
+        apply = function(ctx)
+            if ctx.rocks then
+                ctx.rocks = math.min(40, math.floor((ctx.rocks * 1.2) + 0.5))
+            end
+            if ctx.fruitGoal then
+                ctx.fruitGoal = math.max(1, ctx.fruitGoal + 1)
+            end
+
+            Rocks:addShatterOnFruit(0.75)
+        end
+    },
+    obsidianResonance = {
+        name = "Obsidian Resonance",
+        desc = "Saw blades surge faster and an extra guardian awakens.",
+        apply = function(ctx)
+            if ctx.saws then
+                ctx.saws = math.min(8, ctx.saws + 1)
+            end
+
+            Saws.speedMult = (Saws.speedMult or 1) * 1.2
+            Saws.spinMult = (Saws.spinMult or 1) * 1.3
+        end
+    },
+    spectralEchoes = {
+        name = "Spectral Echoes",
+        desc = "Combo window extends while phantoms thin the stone.",
+        apply = function(ctx)
+            if ctx.rocks then
+                ctx.rocks = math.max(0, math.floor((ctx.rocks * 0.6) + 0.5))
+            end
+
+            local chance = Rocks:getSpawnChance() or 0.25
+            Rocks.spawnChance = math.max(0.05, chance * 0.7)
+
+            local base = FruitEvents:getDefaultComboWindow()
+            FruitEvents:setComboWindow(base + 0.5)
+        end
+    },
+    divineAscent = {
+        name = "Trial of Light",
+        desc = "Fruit goal rises, but saws pause longer after each feast.",
+        apply = function(ctx)
+            if ctx.fruitGoal then
+                ctx.fruitGoal = math.max(1, ctx.fruitGoal + 4)
+            end
+            if ctx.saws then
+                ctx.saws = math.max(0, ctx.saws - 1)
+            end
+
+            local chance = Rocks:getSpawnChance() or 0.25
+            Rocks.spawnChance = math.max(0.05, chance * 0.75)
+
+            local currentStall = Saws:getStallOnFruit()
+            Saws:setStallOnFruit(math.max(currentStall, 1.0))
+        end
+    },
 }
 
 function FloorTraits:apply(list, context)

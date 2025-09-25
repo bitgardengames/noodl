@@ -123,6 +123,71 @@ local Floors = {
         },
         traits = {"ashenTithe", "glowingSpores"},
     },
+    [9] = {
+        name = "Flooded Catacombs",
+        flavor = "Cold water laps at your scales; echoes gurgle through the dark.",
+        palette = {
+            bgColor    = {0.03, 0.08, 0.1, 1},   -- deep teal void
+            arenaBG    = {0.05, 0.12, 0.14, 1},  -- water-stained stone
+            arenaBorder= {0.1, 0.28, 0.3, 1},    -- mossy cyan edge
+            snake      = {0.35, 0.9, 0.85, 1},   -- luminous aqua
+            rock       = {0.2, 0.35, 0.4, 1},    -- soaked slate
+            sawColor   = {0.5, 0.8, 0.85, 1},    -- oxidized steel
+        },
+        traits = {"waterloggedCatacombs"},
+    },
+    [10] = {
+        name = "Bone Pits",
+        flavor = "Crunching ivory shards warn you: nothing escapes intact.",
+        palette = {
+            bgColor    = {0.12, 0.11, 0.1, 1},   -- sepulchral haze
+            arenaBG    = {0.18, 0.17, 0.16, 1},  -- dusty bone field
+            arenaBorder= {0.5, 0.45, 0.38, 1},   -- tarnished bone rim
+            snake      = {0.86, 0.84, 0.75, 1},  -- ashen ivory
+            rock       = {0.42, 0.36, 0.32, 1},  -- brittle remains
+            sawColor   = {0.76, 0.62, 0.52, 1},  -- aged bronze
+        },
+        traits = {"boneHarvest", "restlessEarth"},
+    },
+    [11] = {
+        name = "Obsidian Keep",
+        flavor = "Molten veins pulse beneath mirror-black stone.",
+        palette = {
+            bgColor    = {0.01, 0.01, 0.02, 1},  -- abyssal black
+            arenaBG    = {0.07, 0.05, 0.07, 1},  -- polished obsidian
+            arenaBorder= {0.45, 0.18, 0.08, 1},  -- smoldering cracks
+            snake      = {0.95, 0.45, 0.25, 1},  -- molten ember
+            rock       = {0.22, 0.16, 0.18, 1},  -- volcanic glass
+            sawColor   = {1.0, 0.35, 0.18, 1},   -- forgefire
+        },
+        traits = {"obsidianResonance", "infernalPressure"},
+    },
+    [12] = {
+        name = "Spirit Crucible",
+        flavor = "Wails of the lost weave through a glowing astral gale.",
+        palette = {
+            bgColor    = {0.04, 0.02, 0.08, 1},  -- ethereal violet
+            arenaBG    = {0.09, 0.05, 0.14, 1},  -- twilight bloom
+            arenaBorder= {0.5, 0.35, 0.75, 1},   -- spectral rim
+            snake      = {0.7, 0.85, 1.0, 1},    -- ghostlight
+            rock       = {0.2, 0.18, 0.28, 1},   -- phantasmal stone
+            sawColor   = {0.8, 0.65, 1.0, 1},    -- spirit steel
+        },
+        traits = {"spectralEchoes", "echoingStillness"},
+    },
+    [13] = {
+        name = "Sky Spire",
+        flavor = "Clouds part to reveal a false dawn of gleaming marble.",
+        palette = {
+            bgColor    = {0.12, 0.12, 0.18, 1},  -- starlit indigo
+            arenaBG    = {0.85, 0.88, 0.92, 1},  -- alabaster platform
+            arenaBorder= {0.95, 0.78, 0.45, 1},  -- gilded trim
+            snake      = {0.98, 0.85, 0.4, 1},   -- auric serpent
+            rock       = {0.75, 0.72, 0.68, 1},  -- polished stone
+            sawColor   = {1.0, 0.65, 0.3, 1},    -- radiant brass
+        },
+        traits = {"divineAscent", "crystallineResonance"},
+    },
 }
 
 return Floors
