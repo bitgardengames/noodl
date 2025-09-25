@@ -111,6 +111,20 @@ function Arena:drawBackground()
     love.graphics.setColor(Theme.arenaBG)
     love.graphics.rectangle("fill", ax, ay, aw, ah)
 
+    love.graphics.push("all")
+    love.graphics.setScissor(ax, ay, aw, ah)
+    love.graphics.setBlendMode("add")
+
+    local glow = Theme.arenaHighlight or {1, 1, 1, 0.12}
+    love.graphics.setColor(glow[1], glow[2], glow[3], glow[4] or 0.12)
+    love.graphics.ellipse("fill", ax + aw / 2, ay + ah / 2, aw * 0.48, ah * 0.44, 96)
+
+    local horizon = Theme.arenaHorizon or {0.6, 0.45, 0.7, 0.12}
+    love.graphics.setColor(horizon[1], horizon[2], horizon[3], horizon[4] or 0.12)
+    love.graphics.rectangle("fill", ax, ay + ah * 0.55, aw, ah * 0.45)
+
+    love.graphics.pop()
+
     love.graphics.setColor(1, 1, 1, 1)
 end
 
