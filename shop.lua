@@ -62,10 +62,14 @@ function Shop:start(currentFloor)
     local cardCount = 3 + extraChoices
     self.cards = Upgrades:getRandom(cardCount, { floor = self.floor }) or {}
     self.selected = nil
+    self.selectedIndex = nil
     self.shopkeeperLine, self.shopkeeperSubline = buildFlavor(self.floor, extraChoices)
     self.cardStates = {}
     self.time = 0
     self.selectionProgress = 0
+    self.selectionTimer = 0
+    self.selectionHoldDuration = 0.85
+    self.selectionComplete = false
     for i = 1, #self.cards do
         self.cardStates[i] = {
             progress = 0,
@@ -126,6 +130,22 @@ function Shop:update(dt)
                 state.selectionFlash = nil
             end
         end
+    end
+
+    if self.selected then
+        self.selectionTimer = (self.selectionTimer or 0) + dt
+        if not self.selectionComplete then
+            local hold = self.selectionHoldDuration or 0
+            local state = self.selectedIndex and self.cardStates and self.cardStates[self.selectedIndex] or nil
+            local flashDone = not (state and state.selectionFlash)
+            if self.selectionTimer >= hold and flashDone then
+                self.selectionComplete = true
+            end
+        end
+    else
+        self.selectionTimer = 0
+        self.selectionComplete = false
+        self.selectedIndex = nil
     end
 end
 
@@ -399,12 +419,19 @@ function Shop:pick(i)
 
     Upgrades:acquire(card, { floor = self.floor })
     self.selected = card
+    self.selectedIndex = i
+    self.selectionTimer = 0
+    self.selectionComplete = false
 
     local state = self.cardStates and self.cardStates[i]
     if state then
         state.selectionFlash = 0
     end
     return true
+end
+
+function Shop:isSelectionComplete()
+    return self.selected ~= nil and self.selectionComplete == true
 end
 
 return Shop
