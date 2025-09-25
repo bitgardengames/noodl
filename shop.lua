@@ -3,10 +3,6 @@ local Upgrades = require("upgrades")
 
 local Shop = {}
 
-local function randomRange(min, max)
-    return min + (max - min) * love.math.random()
-end
-
 local function getLastUpgradeName()
     if not Upgrades.getRunState then return nil end
     local state = Upgrades:getRunState()
@@ -67,115 +63,22 @@ function Shop:start(currentFloor)
     self.cards = Upgrades:getRandom(cardCount, { floor = self.floor }) or {}
     self.selected = nil
     self.shopkeeperLine, self.shopkeeperSubline = buildFlavor(self.floor, extraChoices)
-    self.time = 0
-    self.glowOrbs = {}
-    self.sparkles = {}
-    self.sparkleCooldown = 0
-
-    for _ = 1, 6 do
-        table.insert(self.glowOrbs, {
-            angle = love.math.random() * math.pi * 2,
-            radius = randomRange(60, 180),
-            speed = randomRange(0.25, 0.65),
-            size = randomRange(140, 220),
-            wobble = randomRange(0.6, 1.2),
-            color = {
-                randomRange(0.95, 1),
-                randomRange(0.55, 0.75),
-                randomRange(0.25, 0.45),
-                0.17,
-            },
-        })
-    end
 end
 
 function Shop:update(dt)
-    if not self.time then
-        self.time = 0
-    end
-    self.time = self.time + dt
-
-    self.sparkles = self.sparkles or {}
-
-    if self.glowOrbs then
-        for _, orb in ipairs(self.glowOrbs) do
-            orb.angle = orb.angle + dt * orb.speed
-        end
-    end
-
-    if self.sparkleCooldown == nil then
-        self.sparkleCooldown = 0
-    end
-
-    if self.lastScreenW and self.lastScreenH then
-        self.sparkleCooldown = self.sparkleCooldown - dt
-        if self.sparkleCooldown <= 0 then
-            local duration = randomRange(0.6, 1.2)
-            table.insert(self.sparkles, {
-                x = randomRange(self.lastScreenW * 0.18, self.lastScreenW * 0.82),
-                y = randomRange(self.lastScreenH * 0.25, self.lastScreenH * 0.35),
-                vy = randomRange(-22, -12),
-                wobble = randomRange(2.5, 4.5),
-                baseSize = randomRange(8, 14),
-                rotation = love.math.random() * math.pi,
-                duration = duration,
-                remaining = duration,
-                elapsed = 0,
-                baseAlpha = randomRange(0.65, 0.9),
-                color = {
-                    1,
-                    randomRange(0.82, 0.95),
-                    randomRange(0.45, 0.65),
-                },
-            })
-            self.sparkleCooldown = randomRange(0.12, 0.28)
-        end
-    end
-
-    for i = #self.sparkles, 1, -1 do
-        local s = self.sparkles[i]
-        s.elapsed = s.elapsed + dt
-        s.remaining = s.remaining - dt
-        s.y = s.y + s.vy * dt
-        s.x = s.x + math.sin(s.elapsed * s.wobble) * 6 * dt
-        s.rotation = s.rotation + dt * 1.3
-
-        local fadeIn = math.min(1, s.elapsed / 0.15)
-        local fadeOut = math.min(1, math.max(0, s.remaining) / 0.25)
-        s.alpha = s.baseAlpha * math.min(fadeIn, fadeOut)
-
-        if s.remaining <= 0 then
-            table.remove(self.sparkles, i)
-        end
-    end
+    -- visual effects were toned down; update kept for compatibility
 end
 
 local rarityBorderAlpha = 0.85
 
-local function drawSparkle(s)
-    love.graphics.push()
-    love.graphics.translate(s.x, s.y)
-    love.graphics.rotate(s.rotation)
-    local pulse = 1 + 0.2 * math.sin(s.elapsed * 3)
-    local size = s.baseSize * pulse
-    love.graphics.setColor(s.color[1], s.color[2], s.color[3], s.alpha)
-    love.graphics.setLineWidth(2)
-    love.graphics.line(-size, 0, size, 0)
-    love.graphics.line(0, -size * 0.6, 0, size * 0.6)
-    love.graphics.circle("fill", 0, 0, size * 0.35)
-    love.graphics.pop()
-end
-
-local function drawCard(card, x, y, w, h, hovered, index, time, isSelected)
-    local shimmer = math.sin((time or 0) * 2.4 + (index or 0) * 0.9) * 0.04
-    local base = hovered and 0.28 or 0.2
-    local bgColor = {base + shimmer, base + shimmer * 0.8, base + shimmer * 0.2, 1}
+local function drawCard(card, x, y, w, h, hovered, index, _, isSelected)
+    local base = hovered and 0.28 or 0.22
+    local bgColor = {base, base * 0.92, base * 0.65, 1}
     love.graphics.setColor(bgColor)
     love.graphics.rectangle("fill", x, y, w, h, 12, 12)
 
     local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
-    local borderAlpha = rarityBorderAlpha + shimmer * 0.5
-    love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], borderAlpha)
+    love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], rarityBorderAlpha)
     love.graphics.setLineWidth(4)
     love.graphics.rectangle("line", x, y, w, h, 12, 12)
 
@@ -225,23 +128,8 @@ local function drawCard(card, x, y, w, h, hovered, index, time, isSelected)
 end
 
 function Shop:draw(screenW, screenH)
-    self.lastScreenW, self.lastScreenH = screenW, screenH
-
     love.graphics.setColor(0.07, 0.08, 0.11, 0.92)
     love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-
-    if self.glowOrbs then
-        love.graphics.setBlendMode("add")
-        for _, orb in ipairs(self.glowOrbs) do
-            local baseX = screenW * 0.5
-            local baseY = screenH * 0.52
-            local offsetX = math.cos(orb.angle) * orb.radius
-            local offsetY = math.sin(orb.angle * orb.wobble) * (orb.radius * 0.35)
-            love.graphics.setColor(orb.color)
-            love.graphics.circle("fill", baseX + offsetX, baseY + offsetY, orb.size)
-        end
-        love.graphics.setBlendMode("alpha")
-    end
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setFont(UI.fonts.title)
@@ -259,7 +147,7 @@ function Shop:draw(screenW, screenH)
     end
     love.graphics.setColor(1, 1, 1, 1)
 
-    local cardWidth, cardHeight = 240, 320
+    local cardWidth, cardHeight = 264, 344
     local spacing = 48
     local totalWidth = (#self.cards * cardWidth) + math.max(0, (#self.cards - 1)) * spacing
     local startX = (screenW - totalWidth) / 2
@@ -270,16 +158,8 @@ function Shop:draw(screenW, screenH)
     for i, card in ipairs(self.cards) do
         local x = startX + (i - 1) * (cardWidth + spacing)
         local hovered = mx >= x and mx <= x + cardWidth and my >= y and my <= y + cardHeight
-        drawCard(card, x, y, cardWidth, cardHeight, hovered, i, self.time, self.selected == card)
+        drawCard(card, x, y, cardWidth, cardHeight, hovered, i, nil, self.selected == card)
         card.bounds = { x = x, y = y, w = cardWidth, h = cardHeight }
-    end
-
-    if self.sparkles and #self.sparkles > 0 then
-        love.graphics.setBlendMode("add")
-        for _, sparkle in ipairs(self.sparkles) do
-            drawSparkle(sparkle)
-        end
-        love.graphics.setBlendMode("alpha")
     end
 
     love.graphics.setFont(UI.fonts.small)
