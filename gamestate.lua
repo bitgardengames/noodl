@@ -145,4 +145,8 @@ function GameState:gamepadreleased(joystick, button)
     return self:dispatch("gamepadreleased", joystick, button)
 end
 
+function GameState:wheelmoved(x, y)
+    return self:dispatch("wheelmoved", x, y)
+end
+
 return GameState
