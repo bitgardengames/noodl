@@ -124,12 +124,15 @@ end
 function Game:enter()
     UI.clearButtons()
     self:load()
-	Audio:playMusic("game")
-	SessionStats:reset()
-	PlayerStats:add("sessionsPlayed", 1)
-	if self.mode and self.mode.enter then
-		self.mode.enter(self)
-	end
+        Audio:playMusic("game")
+        SessionStats:reset()
+        PlayerStats:add("sessionsPlayed", 1)
+        Achievements:checkAll({
+                sessionsPlayed = PlayerStats:get("sessionsPlayed"),
+        })
+        if self.mode and self.mode.enter then
+                self.mode.enter(self)
+        end
 end
 
 function Game:leave()

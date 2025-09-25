@@ -1,132 +1,310 @@
 local Audio = require("audio")
 local Localization = require("localization")
+local PlayerStats = require("playerstats")
+local Snake = require("snake")
 
-local Achievements = {}
-
-Achievements.definitions = {
-    firstApple = {
-        titleKey = "achievements_definitions.firstApple.title",
-        descriptionKey = "achievements_definitions.firstApple.description",
-        icon = "Apple",
-        unlocked = false,
-        progress = 0,
-        goal = 1,
-        condition = function(state)
-            return state.totalApplesEaten >= 1
-        end,
-        updateProgress = function(state)
-            return math.min(state.totalApplesEaten, 1)
-        end
-    },
-    appleHoarder = {
-        titleKey = "achievements_definitions.appleHoarder.title",
-        descriptionKey = "achievements_definitions.appleHoarder.description",
-        icon = "Apple",
-        unlocked = false,
-        progress = 0,
-        goal = 100,
-        condition = function(state)
-            return (state.totalApplesEaten or 0) >= 100
-        end,
-        updateProgress = function(state)
-            return math.min(state.totalApplesEaten or 0, 100)
-        end
-    },
-    fullBelly = {
-        titleKey = "achievements_definitions.fullBelly.title",
-        descriptionKey = "achievements_definitions.fullBelly.description",
-        icon = "Apple",
-        unlocked = false,
-        progress = 0,
-        goal = 50,
-        condition = function(state)
-            return (state.snakeLength or 0) >= 50
-        end,
-        updateProgress = function(state)
-            return math.min(state.snakeLength or 0, 50)
-        end
-    },
-        dragonHunter = {
-                titleKey = "achievements_definitions.dragonHunter.title",
-                descriptionKey = "achievements_definitions.dragonHunter.description",
-                icon = "Dragonfruit",
-                unlocked = false,
-                progress = 0,
-                goal = 1,
-		condition = function(state)
-			return (state.totalDragonfruitEaten or 0) >= 1
-		end,
-		updateProgress = function(state)
-			return math.min(state.totalDragonfruitEaten or 0, 1)
-		end
-	},
+local Achievements = {
+    definitions = {},
+    definitionOrder = {},
+    categories = {},
+    categoryOrder = {},
+    unlocked = {},
+    popupQueue = {},
+    popupTimer = 0,
+    popupDuration = 3,
+    stateProviders = {},
 }
 
-Achievements.unlocked = {}
-Achievements.popupQueue = {}
-Achievements.popupTimer = 0
-Achievements.popupDuration = 3
+local DEFAULT_CATEGORY_ORDER = 100
+local DEFAULT_ORDER = 1000
+
+local function copyTable(source)
+    local target = {}
+    if source then
+        for key, value in pairs(source) do
+            target[key] = value
+        end
+    end
+    return target
+end
+
+local function applyDefaults(def)
+    def.id = def.id or ""
+    def.titleKey = def.titleKey or ("achievements_definitions." .. def.id .. ".title")
+    def.descriptionKey = def.descriptionKey or ("achievements_definitions." .. def.id .. ".description")
+    def.category = def.category or "general"
+    def.goal = def.goal or 0
+    def.order = def.order or DEFAULT_ORDER
+    def.categoryOrder = def.categoryOrder or DEFAULT_CATEGORY_ORDER
+    def.unlocked = false
+    def.progress = 0
+    def.popupIcon = def.popupIcon or def.icon
+    return def
+end
+
+function Achievements:registerStateProvider(provider)
+    if type(provider) == "function" then
+        table.insert(self.stateProviders, provider)
+    end
+end
+
+function Achievements:_addDefinition(rawDef)
+    local def = applyDefaults(copyTable(rawDef))
+    self.definitions[def.id] = def
+    table.insert(self.definitionOrder, def.id)
+
+    self.categories[def.category] = self.categories[def.category] or {}
+    table.insert(self.categories[def.category], def.id)
+end
+
+local function sortAchievements(aId, bId, definitions)
+    local a = definitions[aId]
+    local b = definitions[bId]
+    if a.order == b.order then
+        return (a.titleKey or a.id) < (b.titleKey or b.id)
+    end
+    return (a.order or DEFAULT_ORDER) < (b.order or DEFAULT_ORDER)
+end
+
+function Achievements:_finalizeOrdering()
+    table.sort(self.definitionOrder, function(aId, bId)
+        return sortAchievements(aId, bId, self.definitions)
+    end)
+
+    local orderedCategories = {}
+    for category, ids in pairs(self.categories) do
+        table.sort(ids, function(aId, bId)
+            return sortAchievements(aId, bId, self.definitions)
+        end)
+        orderedCategories[#orderedCategories + 1] = {
+            id = category,
+            order = (self.definitions[ids[1]] and self.definitions[ids[1]].categoryOrder) or DEFAULT_CATEGORY_ORDER
+        }
+    end
+
+    table.sort(orderedCategories, function(a, b)
+        if a.order == b.order then
+            return a.id < b.id
+        end
+        return a.order < b.order
+    end)
+
+    self.categoryOrder = {}
+    for _, info in ipairs(orderedCategories) do
+        table.insert(self.categoryOrder, info.id)
+    end
+end
+
+function Achievements:_ensureInitialized()
+    if self._initialized then
+        return
+    end
+
+    local ok, definitions = pcall(require, "achievement_definitions")
+    if not ok then
+        error("Failed to load achievement definitions: " .. tostring(definitions))
+    end
+
+    for _, def in ipairs(definitions) do
+        self:_addDefinition(def)
+    end
+
+    self:_finalizeOrdering()
+
+    if not self._defaultProvidersRegistered then
+        self:registerStateProvider(function()
+            return {
+                totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0,
+                sessionsPlayed = PlayerStats:get("sessionsPlayed") or 0,
+                totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
+                bestScore = PlayerStats:get("snakeScore") or 0,
+            }
+        end)
+
+        self:registerStateProvider(function()
+            if Snake and Snake.getLength then
+                local length = Snake:getLength()
+                if length then
+                    return { snakeLength = length }
+                end
+            end
+            return nil
+        end)
+
+        self._defaultProvidersRegistered = true
+    end
+
+    self._iconCache = {}
+    self._initialized = true
+end
+
+local function mergeStateValue(target, key, value)
+    local existing = target[key]
+    if type(value) == "number" then
+        if type(existing) == "number" then
+            if value > existing then
+                target[key] = value
+            end
+        else
+            target[key] = value
+        end
+    else
+        if existing == nil then
+            target[key] = value
+        end
+    end
+end
+
+function Achievements:_mergeState(target, source)
+    if not source then return end
+    for key, value in pairs(source) do
+        mergeStateValue(target, key, value)
+    end
+end
+
+function Achievements:_buildState(external)
+    local combined = {}
+    for _, provider in ipairs(self.stateProviders) do
+        local ok, result = pcall(provider, combined)
+        if ok then
+            if type(result) == "table" then
+                self:_mergeState(combined, result)
+            end
+        else
+            print("[achievements] state provider failed:", result)
+        end
+    end
+
+    if external then
+        self:_mergeState(combined, external)
+    end
+
+    return combined
+end
+
+local function evaluateProgress(def, state)
+    if def.progressFn then
+        local ok, value = pcall(def.progressFn, state, def)
+        if ok and type(value) == "number" then
+            return value
+        elseif not ok then
+            print("[achievements] progress function failed for", def.id, value)
+        end
+    end
+
+    if def.stat then
+        return state[def.stat] or 0
+    end
+
+    return def.progress or 0
+end
+
+local function shouldUnlock(def, state, progress)
+    if def.condition then
+        local ok, result = pcall(def.condition, state, def)
+        if ok then
+            if type(result) == "boolean" then
+                return result
+            elseif type(result) == "number" then
+                return result >= (def.goal or result)
+            end
+        else
+            print("[achievements] condition failed for", def.id, result)
+        end
+    end
+
+    if def.goal and def.goal > 0 then
+        return progress >= def.goal
+    end
+
+    return false
+end
+
+local function clampProgress(def, progress)
+    if def.goal and def.goal > 0 then
+        return math.min(progress, def.goal)
+    end
+    return progress
+end
 
 function Achievements:unlock(name)
+    self:_ensureInitialized()
+
     local achievement = self.definitions[name]
     if not achievement then
         print("Unknown achievement:", name)
         return
     end
 
-    -- Already unlocked? Do nothing
     if achievement.unlocked then
         return
     end
 
-    -- Unlock it!
     achievement.unlocked = true
     if achievement.goal then
         achievement.progress = achievement.goal
     end
     achievement.unlockedAt = os.time()
-    table.insert(self.unlocked, name)
+
+    if not self._unlockedLookup then
+        self._unlockedLookup = {}
+    end
+    if not self._unlockedLookup[name] then
+        table.insert(self.unlocked, name)
+        self._unlockedLookup[name] = true
+    end
+
     table.insert(self.popupQueue, achievement)
 
-    -- Trigger any visuals/sfx
-    Audio:playSound("achievement")
+    if Audio and Audio.playSound then
+        Audio:playSound("achievement")
+    end
 
-    -- Save achievements
     self:save()
 end
 
--- Check/update only a specific achievement
 function Achievements:check(key, state)
-    local ach = self.definitions[key]
-    if ach then
-        if ach.updateProgress then
-            ach.progress = ach.updateProgress(state)
-        end
+    self:_ensureInitialized()
 
-        if not ach.unlocked and ach.condition(state) then
-            self:unlock(key)
-        end
+    local achievement = self.definitions[key]
+    if not achievement then
+        return
+    end
+
+    local combinedState = self:_buildState(state)
+    local progress = evaluateProgress(achievement, combinedState)
+    if type(progress) == "number" then
+        achievement.progress = clampProgress(achievement, progress)
+    end
+
+    if not achievement.unlocked and shouldUnlock(achievement, combinedState, progress) then
+        self:unlock(key)
     end
 end
 
--- Updates all achievement progress and unlocks
 function Achievements:checkAll(state)
-    for key, ach in pairs(self.definitions) do
-        if ach.updateProgress then
-            ach.progress = ach.updateProgress(state)
+    self:_ensureInitialized()
+
+    local combinedState = self:_buildState(state)
+
+    for key, achievement in pairs(self.definitions) do
+        local progress = evaluateProgress(achievement, combinedState)
+        if type(progress) == "number" then
+            achievement.progress = clampProgress(achievement, progress)
         end
 
-        if not ach.unlocked and ach.condition(state) then
+        if not achievement.unlocked and shouldUnlock(achievement, combinedState, progress) then
             self:unlock(key)
         end
     end
 end
 
--- Update popup logic with nicer timing
 function Achievements:update(dt)
+    self:_ensureInitialized()
+
     if #self.popupQueue > 0 then
         self.popupTimer = self.popupTimer + dt
-        local totalTime = self.popupDuration + 1.0 -- extra second for slide-out
+        local totalTime = self.popupDuration + 1.0
 
         if self.popupTimer >= totalTime then
             table.remove(self.popupQueue, 1)
@@ -135,16 +313,57 @@ function Achievements:update(dt)
     end
 end
 
--- Draw juiced popup
+function Achievements:_getPopupFonts()
+    if not self._popupFonts then
+        self._popupFonts = {
+            title = love.graphics.newFont(18),
+            description = love.graphics.newFont(14),
+        }
+    end
+    return self._popupFonts.title, self._popupFonts.description
+end
+
+local function iconPaths(iconName)
+    return {
+        string.format("Assets/Achievements/%s.png", iconName),
+        string.format("Assets/%s.png", iconName),
+    }
+end
+
+function Achievements:_getIcon(iconName)
+    if not iconName then return nil end
+    self._iconCache = self._iconCache or {}
+
+    if self._iconCache[iconName] ~= nil then
+        return self._iconCache[iconName]
+    end
+
+    for _, path in ipairs(iconPaths(iconName)) do
+        if love.filesystem.getInfo(path) then
+            local ok, image = pcall(love.graphics.newImage, path)
+            if ok then
+                self._iconCache[iconName] = image
+                return image
+            end
+        end
+    end
+
+    self._iconCache[iconName] = false
+    return nil
+end
+
 function Achievements:draw()
-    if #self.popupQueue == 0 then return end
+    self:_ensureInitialized()
+
+    if #self.popupQueue == 0 then
+        return
+    end
 
     local ach = self.popupQueue[1]
     local Screen = require("screen")
     local sw, sh = Screen:get()
 
-    local fontTitle = love.graphics.newFont(18)
-    local fontDesc = love.graphics.newFont(14)
+    local fontTitle, fontDesc = self:_getPopupFonts()
 
     local padding = 20
     local width = 500
@@ -152,28 +371,24 @@ function Achievements:draw()
     local baseX = (sw - width) / 2
     local baseY = sh * 0.25
 
-    -- Animation timings
-    local appearTime = 0.4  -- slide/bounce in
-    local holdTime   = self.popupDuration
-    local exitTime   = 0.6
+    local appearTime = 0.4
+    local holdTime = self.popupDuration
+    local exitTime = 0.6
 
     local t = self.popupTimer
     local alpha, offsetY, scale = 1, 0, 1
 
     if t < appearTime then
-        -- Sliding in
         local p = t / appearTime
-        local ease = p * p * (3 - 2 * p) -- smoothstep
+        local ease = p * p * (3 - 2 * p)
         offsetY = (1 - ease) * -150
-        scale = 1.0 + 0.2 * (1 - ease) -- bounce scale
+        scale = 1.0 + 0.2 * (1 - ease)
         alpha = ease
     elseif t < appearTime + holdTime then
-        -- Holding
         offsetY = 0
         scale = 1.0
         alpha = 1
     else
-        -- Sliding out
         local p = (t - appearTime - holdTime) / exitTime
         local ease = p * p
         offsetY = ease * -150
@@ -184,59 +399,68 @@ function Achievements:draw()
     local y = baseY + offsetY
 
     love.graphics.push()
-    love.graphics.translate(x + width/2, y + height/2)
+    love.graphics.translate(x + width / 2, y + height / 2)
     love.graphics.scale(scale)
-    love.graphics.translate(-(x + width/2), -(y + height/2))
+    love.graphics.translate(-(x + width / 2), -(y + height / 2))
 
-    -- Background
     love.graphics.setColor(0, 0, 0, 0.75 * alpha)
     love.graphics.rectangle("fill", x, y, width, height, 12, 12)
 
-    -- Optional icon
+    local icon = self:_getIcon(ach.popupIcon or ach.icon)
     local iconSize = 64
-    if ach.icon then
-        local ok, iconImg = pcall(love.graphics.newImage, "Assets/Icons/" .. ach.icon .. ".png")
-        if ok and iconImg then
-            love.graphics.setColor(1, 1, 1, alpha)
-            love.graphics.draw(iconImg, x + padding, y + (height - iconSize)/2, 0, iconSize / iconImg:getWidth(), iconSize / iconImg:getHeight())
-        end
+    local iconSpace = icon and iconSize or 0
+
+    if icon then
+        love.graphics.setColor(1, 1, 1, alpha)
+        local scaleX = iconSize / icon:getWidth()
+        local scaleY = iconSize / icon:getHeight()
+        love.graphics.draw(icon, x + padding, y + (height - iconSize) / 2, 0, scaleX, scaleY)
     end
 
-    -- Title text
     local localizedTitle = Localization:get(ach.titleKey)
     local localizedDescription = Localization:get(ach.descriptionKey)
     local heading = Localization:get("achievements.popup_heading", { title = localizedTitle })
 
     love.graphics.setColor(1, 1, 0.2, alpha)
     love.graphics.setFont(fontTitle)
-    love.graphics.printf(heading, x + padding + iconSize, y + 15, width - (padding * 2) - iconSize, "left")
+    love.graphics.printf(heading, x + padding + iconSpace, y + 15, width - (padding * 2) - iconSpace, "left")
 
-    -- Description text
     love.graphics.setColor(1, 1, 1, alpha)
     love.graphics.setFont(fontDesc)
     local message = Localization:get("achievements.popup_message", {
         title = localizedTitle,
         description = localizedDescription,
     })
-    love.graphics.printf(message, x + padding + iconSize, y + 50, width - (padding * 2) - iconSize, "left")
+    love.graphics.printf(message, x + padding + iconSpace, y + 50, width - (padding * 2) - iconSpace, "left")
 
     love.graphics.pop()
 end
 
--- Save to file (custom serialization)
+local function serializeValue(value)
+    if type(value) == "number" then
+        if math.type and math.type(value) == "integer" then
+            return string.format("%d", value)
+        end
+        return string.format("%0.4f", value)
+    end
+    return tostring(value)
+end
+
 function Achievements:save()
+    self:_ensureInitialized()
+
     local data = {}
     for key, ach in pairs(self.definitions) do
         data[key] = {
             unlocked = ach.unlocked,
-            progress = ach.progress
+            progress = ach.progress,
         }
     end
 
-    local lines = {"return {"}
+    local lines = { "return {" }
     for key, value in pairs(data) do
-        table.insert(lines, string.format("  [\"%s\"] = { unlocked = %s, progress = %d },",
-            key, tostring(value.unlocked), value.progress or 0))
+        table.insert(lines, string.format("  [\"%s\"] = { unlocked = %s, progress = %s },",
+            key, tostring(value.unlocked), serializeValue(value.progress or 0)))
     end
     table.insert(lines, "}")
 
@@ -244,20 +468,86 @@ function Achievements:save()
     love.filesystem.write("achievementdata.lua", luaData)
 end
 
--- Load from file
-function Achievements:load()
-    if love.filesystem.getInfo("achievementdata.lua") then
-        local chunk = love.filesystem.load("achievementdata.lua")
-        local ok, data = pcall(chunk)
-        if ok and type(data) == "table" then
-            for key, saved in pairs(data) do
-                if self.definitions[key] then
-                    self.definitions[key].unlocked = saved.unlocked or false
-                    self.definitions[key].progress = saved.progress or 0
+local function applySavedData(definitions, saved)
+    for key, info in pairs(saved) do
+        local def = definitions[key]
+        if def then
+            def.unlocked = info.unlocked or false
+            if info.progress ~= nil then
+                if type(info.progress) == "number" then
+                    def.progress = info.progress
+                elseif type(info.progress) == "string" then
+                    local numeric = tonumber(info.progress)
+                    if numeric then
+                        def.progress = numeric
+                    end
                 end
             end
         end
     end
+end
+
+function Achievements:load()
+    self:_ensureInitialized()
+
+    if love.filesystem.getInfo("achievementdata.lua") then
+        local chunk = love.filesystem.load("achievementdata.lua")
+        local ok, data = pcall(chunk)
+        if ok and type(data) == "table" then
+            applySavedData(self.definitions, data)
+        end
+    end
+end
+
+function Achievements:getDisplayOrder()
+    self:_ensureInitialized()
+
+    local blocks = {}
+    for _, category in ipairs(self.categoryOrder) do
+        local ids = self.categories[category] or {}
+        local entries = {}
+        for _, id in ipairs(ids) do
+            entries[#entries + 1] = self.definitions[id]
+        end
+        blocks[#blocks + 1] = {
+            id = category,
+            achievements = entries,
+        }
+    end
+    return blocks
+end
+
+function Achievements:getProgressLabel(def)
+    self:_ensureInitialized()
+
+    if def.unlocked then
+        return Localization:get("achievements.progress.unlocked")
+    end
+
+    if def.formatProgress then
+        local ok, result = pcall(def.formatProgress, def)
+        if ok and result then
+            return result
+        end
+    end
+
+    if def.goal and def.goal > 0 then
+        local progress = math.floor(def.progress or 0)
+        local goal = math.floor(def.goal)
+        return Localization:get("achievements.progress.label", {
+            current = progress,
+            goal = goal,
+        })
+    end
+
+    return nil
+end
+
+function Achievements:getProgressRatio(def)
+    if def.goal and def.goal > 0 then
+        return math.min(1, (def.progress or 0) / def.goal)
+    end
+    return def.unlocked and 1 or 0
 end
 
 return Achievements

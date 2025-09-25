@@ -39,6 +39,15 @@ local english = {
             back_to_menu = "Back to Menu",
             popup_heading = "${title} Unlocked!",
             popup_message = "${title}: ${description}",
+            categories = {
+                progress = "Milestones",
+                skill = "Skill",
+                collection = "Collection",
+            },
+            progress = {
+                label = "${current}/${goal}",
+                unlocked = "Completed",
+            },
         },
         pause = {
             title = "Paused",
@@ -126,6 +135,10 @@ local english = {
             },
         },
         achievements_definitions = {
+            sessionStarter = {
+                title = "First Steps",
+                description = "Start your first run",
+            },
             firstApple = {
                 title = "Tasty Beginning",
                 description = "Eat your first apple",
@@ -134,13 +147,29 @@ local english = {
                 title = "Apple Hoarder",
                 description = "Eat 100 total apples",
             },
+            appleConqueror = {
+                title = "Apple Conqueror",
+                description = "Eat 500 total apples",
+            },
             fullBelly = {
                 title = "Full Belly",
                 description = "Reach a snake length of 50",
             },
+            scoreChaser = {
+                title = "Score Chaser",
+                description = "Reach a score of 250",
+            },
+            scoreLegend = {
+                title = "Score Legend",
+                description = "Reach a score of 500",
+            },
             dragonHunter = {
                 title = "Dragon Hunter",
                 description = "Collect the legendary Dragonfruit",
+            },
+            seasonedRunner = {
+                title = "Seasoned Runner",
+                description = "Play 20 total runs",
             },
         },
     },

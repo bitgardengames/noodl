@@ -3,6 +3,13 @@ local Achievements = require("achievements")
 local GameModes = require("gamemodes")
 local Score = {}
 
+Achievements:registerStateProvider(function()
+    return {
+        snakeScore = Score.current or 0,
+        currentMode = GameModes:getCurrentName(),
+    }
+end)
+
 Score.current = 0
 Score.highscores = {}
 Score.saveFile = "scores.lua"
@@ -193,6 +200,11 @@ end
 
 function Score:handleGameOver(cause)
     PlayerStats:updateMax("snakeScore", self.current)
+
+    Achievements:checkAll({
+        bestScore = PlayerStats:get("snakeScore"),
+        snakeScore = self.current,
+    })
 
     local mode = GameModes:getCurrentName()
     self:setHighScore(mode, self.current)

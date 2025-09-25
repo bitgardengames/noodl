@@ -174,6 +174,7 @@ function FruitEvents.handleConsumption(x, y)
     end
 
     if name == "Dragonfruit" then
+        PlayerStats:add("totalDragonfruitEaten", 1)
         Achievements:unlock("dragonHunter")
     end
 
