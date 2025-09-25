@@ -31,6 +31,56 @@ local Upgrades = require("upgrades")
 local Game = {}
 local TRACK_LENGTH = 120
 
+local function startTransitionPhase(self, phase, duration, extra)
+    self.state = "transition"
+    self.transitionPhase = phase
+    self.transitionTimer = 0
+    self.transitionDuration = duration or 0
+
+    if extra then
+        for key, value in pairs(extra) do
+            self[key] = value
+        end
+    end
+end
+
+local function drawAdrenalineGlow(self)
+    local glowStrength = Score:getHighScoreGlowStrength()
+
+    if Snake.adrenaline and Snake.adrenaline.active then
+        local duration = Snake.adrenaline.duration or 1
+        if duration > 0 then
+            local adrenalineStrength = math.max(0, math.min(1, (Snake.adrenaline.timer or 0) / duration))
+            glowStrength = math.max(glowStrength, adrenalineStrength * 0.85)
+        end
+    end
+
+    if glowStrength <= 0 then return end
+
+    local pulse = 0.55 + 0.45 * math.sin(love.timer.getTime() * 5)
+    love.graphics.setBlendMode("add")
+    love.graphics.setColor(0.7, 0.9, 1.0, 0.35 * glowStrength * pulse)
+    love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+    love.graphics.setBlendMode("alpha")
+
+    local vignetteAlpha = 0.45 * glowStrength
+    local borderThickness = 120
+    local previousLineWidth = love.graphics.getLineWidth()
+    love.graphics.setColor(0, 0, 0, vignetteAlpha)
+    love.graphics.setLineWidth(borderThickness)
+    love.graphics.rectangle(
+        "line",
+        borderThickness / 2,
+        borderThickness / 2,
+        math.max(0, self.screenWidth - borderThickness),
+        math.max(0, self.screenHeight - borderThickness),
+        48,
+        48
+    )
+    love.graphics.setLineWidth(previousLineWidth)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 function Game:load()
         self.state = "playing"
         self.floor = 1
@@ -44,24 +94,22 @@ function Game:load()
         GameUtils:prepareGame(self.screenWidth, self.screenHeight)
         Face:set("idle")
 
-	self.mode = GameModes:get()
-	if self.mode and self.mode.load then
-		self.mode.load(self)
-	end
+        self.mode = GameModes:get()
+        if self.mode and self.mode.load then
+                self.mode.load(self)
+        end
 
-	if Snake.adrenaline then Snake.adrenaline.active = false end -- reset adrenaline state
+        if Snake.adrenaline then Snake.adrenaline.active = false end -- reset adrenaline state
 
         -- prepare floor 1 immediately for gameplay (theme, spawns, etc.)
         self:setupFloor(self.floor)
         self.transitionTraits = self.activeFloorTraits
 
         -- first intro: fade-in text for floor 1 only
-	self.state = "transition"
-	self.transitionPhase = "floorintro"
-	self.transitionTimer = 0
-	self.transitionDuration = 2.5
-	self.transitionAdvance = false
-	self.transitionFloorData = Floors[self.floor]
+        startTransitionPhase(self, "floorintro", 2.5, {
+                transitionAdvance = false,
+                transitionFloorData = Floors[self.floor] or Floors[1],
+        })
 end
 
 function Game:reset()
@@ -105,137 +153,236 @@ end
 -- start a floor transition
 function Game:startFloorTransition(advance, skipFade)
         Snake:finishDescending()
-        self.state = "transition"
-        self.transitionPhase = "fadeout"   -- new
-	self.transitionTimer = 0
-	self.transitionDuration = skipFade and 0 or 1.0
-	self.transitionAdvance = advance
-	self.pendingFloor = advance and (self.floor + 1) or nil
-	self.transitionFloorData = Floors[self.pendingFloor or self.floor] or Floors[1]
-	self.floorApplied = false
+        local pendingFloor = advance and (self.floor + 1) or nil
+        local floorData = Floors[pendingFloor or self.floor] or Floors[1]
+        startTransitionPhase(self, "fadeout", skipFade and 0 or 1.0, {
+                transitionAdvance = advance,
+                pendingFloor = pendingFloor,
+                transitionFloorData = floorData,
+                floorApplied = false,
+        })
 end
 
-function Game:update(dt)
-	--if self.state == "gameover" then return end
+function Game:openShop()
+        Shop:start(self.floor)
+        startTransitionPhase(self, "shop", 0)
+end
 
-        -- pause
-        if self.state == "paused" then
-                PauseMenu:update(dt, true)
-                return
-        else
-                PauseMenu:update(dt, false)
+function Game:startFloorIntro(duration, extra)
+        startTransitionPhase(self, "floorintro", duration or 2.5, extra)
+end
+
+function Game:startFadeIn(duration)
+        startTransitionPhase(self, "fadein", duration or 1.0)
+end
+
+function Game:updateTransition(dt)
+        self.transitionTimer = self.transitionTimer + dt
+
+        if self.transitionPhase == "fadeout" then
+                if self.transitionTimer >= self.transitionDuration then
+                        if self.transitionAdvance and not self.floorApplied and self.pendingFloor then
+                                self.floor = self.pendingFloor
+                                self:setupFloor(self.floor)
+                                self.floorApplied = true
+                        end
+
+                        self:openShop()
+                end
+
+        elseif self.transitionPhase == "shop" then
+                Shop:update(dt)
+
+        elseif self.transitionPhase == "floorintro" then
+                if self.transitionTimer >= self.transitionDuration then
+                        self:startFadeIn(1.0)
+                end
+
+        elseif self.transitionPhase == "fadein" then
+                if self.transitionTimer >= self.transitionDuration then
+                        self.state = "playing"
+                        self.transitionPhase = nil
+                end
         end
+end
 
-        FruitEvents.update(dt)
-
-        if self.state == "transition" then
-		self.transitionTimer = self.transitionTimer + dt
-
-		if self.transitionPhase == "fadeout" then
-			if self.transitionTimer >= self.transitionDuration then
-				-- Apply floor in darkness
-				if self.transitionAdvance and not self.floorApplied then
-					self.floor = self.pendingFloor
-					self:setupFloor(self.floor)
-					self.floorApplied = true
-				end
-                                self.transitionPhase = "shop"
-                                self.transitionTimer = 0
-                                Shop:start(self.floor)
-			end
-
-		elseif self.transitionPhase == "shop" then
-			Shop:update(dt)
-		elseif self.transitionPhase == "floorintro" then
-			if self.transitionTimer >= self.transitionDuration then
-				self.transitionPhase = "fadein"
-				self.transitionTimer = 0
-				self.transitionDuration = 1.0 -- how long the fade back takes
-			end
-
-		elseif self.transitionPhase == "fadein" then
-			if self.transitionTimer >= self.transitionDuration then
-				self.state = "playing"
-				self.transitionPhase = nil
-			end
-		end
-
-		return
-	end
-
-    if self.state == "descending" then
-        -- let snake keep moving normally toward hole
+function Game:updateDescending(dt)
         Snake:update(dt)
 
-        -- check tail position
         local segments = Snake:getSegments()
         local tail = segments[#segments]
         if not tail then
-            Snake:finishDescending()
-            self:startFloorTransition(true)
-        else
-            local dx, dy = tail.drawX - self.hole.x, tail.drawY - self.hole.y
-            local dist = math.sqrt(dx*dx + dy*dy)
-            if dist < self.hole.radius then
                 Snake:finishDescending()
-                self:startFloorTransition(true) -- will advance to next floor when finished
-            end
+                self:startFloorTransition(true)
+                return
         end
-        return
-    end
 
-	if self.mode and self.mode.update then
-		self.mode.update(self, dt)
-	end
+        local dx, dy = tail.drawX - self.hole.x, tail.drawY - self.hole.y
+        local dist = math.sqrt(dx * dx + dy * dy)
+        if dist < self.hole.radius then
+                Snake:finishDescending()
+                self:startFloorTransition(true)
+        end
+end
 
-	-- movement + fruit
-	if self.state == "playing" then
-		local fruitX, fruitY = Fruit:getPosition()
-		local moveResult, cause = Movement:update(dt)
-		if moveResult == "dead" then
-			self.deathCause = cause
-			self:beginDeath()
-		elseif moveResult == "scored" then
-			FruitEvents.handleConsumption(fruitX, fruitY)
+function Game:updateGameplay(dt)
+        local fruitX, fruitY = Fruit:getPosition()
+        local moveResult, cause = Movement:update(dt)
 
-			if UI:isGoalReached() then -- threshold check to unlock exit
-				Arena:spawnExit()
-			end
-		end
-	end
+        if moveResult == "dead" then
+                self.deathCause = cause
+                self:beginDeath()
+                return
+        end
 
-	local snakeX, snakeY = Snake:getHead()
+        if moveResult == "scored" then
+                FruitEvents.handleConsumption(fruitX, fruitY)
 
-	-- next floor trigger
-	if Arena:checkExitCollision(snakeX, snakeY) then
-		local hx, hy, hr = Arena:getExitCenter()
-		if hx and hy then
-			self:startDescending(hx, hy, hr)
-		end
-	end
+                if UI:isGoalReached() then
+                        Arena:spawnExit()
+                end
+        end
 
-	-- entity updates
-	Face:update(dt)
-	Popup:update(dt)
-	Fruit:update(dt)
-	Rocks:update(dt)
-	Saws:update(dt)
-	Arena:update(dt)
+        local snakeX, snakeY = Snake:getHead()
+        if Arena:checkExitCollision(snakeX, snakeY) then
+                local hx, hy, hr = Arena:getExitCenter()
+                if hx and hy then
+                        self:startDescending(hx, hy, hr)
+                end
+        end
+end
+
+function Game:updateEntities(dt)
+        Face:update(dt)
+        Popup:update(dt)
+        Fruit:update(dt)
+        Rocks:update(dt)
+        Saws:update(dt)
+        Arena:update(dt)
         Particles:update(dt)
         Achievements:update(dt)
         FloatingText:update(dt)
         Score:update(dt)
+end
 
-        if self.state == "dying" then
-		Death:update(dt)
-		if Death:isFinished() then
-			Achievements:save()
-			local result = Score:handleGameOver(self.deathCause)
-			if result then
-				return {state = "gameover", data = result}
-			end
-		end
-	end
+function Game:handleDeath(dt)
+        if self.state ~= "dying" then return end
+
+        Death:update(dt)
+        if not Death:isFinished() then return end
+
+        Achievements:save()
+        local result = Score:handleGameOver(self.deathCause)
+        if result then
+                return { state = "gameover", data = result }
+        end
+end
+
+function Game:drawTransition()
+        if self.transitionPhase == "fadeout" then
+                local alpha = (self.transitionDuration <= 0) and 1 or math.min(1, self.transitionTimer / self.transitionDuration)
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                love.graphics.setColor(1, 1, 1, 1)
+                return
+        end
+
+        if self.transitionPhase == "shop" then
+                love.graphics.setColor(0, 0, 0, 1)
+                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                Shop:draw(self.screenWidth, self.screenHeight)
+                love.graphics.setColor(1, 1, 1, 1)
+                return
+        end
+
+        if self.transitionPhase == "floorintro" then
+                local data = self.transitionFloorData or self.currentFloorData
+                if data then
+                        local progress = (self.transitionDuration <= 0) and 1 or math.min(1, self.transitionTimer / self.transitionDuration)
+                        love.graphics.setColor(1, 1, 1, progress)
+                        love.graphics.setFont(UI.fonts.title)
+                        love.graphics.printf(data.name, 0, self.screenHeight / 2 - 80, self.screenWidth, "center")
+                        love.graphics.setFont(UI.fonts.button)
+                        love.graphics.printf(data.flavor, 0, self.screenHeight / 2, self.screenWidth, "center")
+
+                        local traits = self.transitionTraits or self.activeFloorTraits
+                        if traits and #traits > 0 then
+                                love.graphics.setFont(UI.fonts.body)
+                                local y = self.screenHeight / 2 + 64
+                                for i, trait in ipairs(traits) do
+                                        local text = trait.name .. ": " .. trait.desc
+                                        love.graphics.printf(text, self.screenWidth * 0.2, y + (i - 1) * 36, self.screenWidth * 0.6, "center")
+                                end
+                        end
+                end
+
+                love.graphics.setColor(1, 1, 1, 1)
+                return
+        end
+
+        if self.transitionPhase == "fadein" then
+                local progress = (self.transitionDuration <= 0) and 1 or math.min(1, self.transitionTimer / self.transitionDuration)
+                local alpha = 1 - progress
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                love.graphics.setColor(1, 1, 1, 1)
+        end
+end
+
+function Game:drawDescending()
+        if not self.hole then
+                Snake:draw()
+                return
+        end
+
+        local hx, hy, hr = self.hole.x, self.hole.y, self.hole.radius
+
+        love.graphics.setColor(0.05, 0.05, 0.05, 1)
+        love.graphics.circle("fill", hx, hy, hr)
+
+        Snake:drawClipped(hx, hy, hr)
+
+        love.graphics.setColor(0, 0, 0, 1)
+        local previousLineWidth = love.graphics.getLineWidth()
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", hx, hy, hr)
+        love.graphics.setLineWidth(previousLineWidth)
+        love.graphics.setColor(1, 1, 1, 1)
+end
+
+function Game:update(dt)
+        if self.state == "paused" then
+                PauseMenu:update(dt, true)
+                return
+        end
+
+        PauseMenu:update(dt, false)
+        FruitEvents.update(dt)
+
+        if self.state == "transition" then
+                self:updateTransition(dt)
+                return
+        end
+
+        if self.state == "descending" then
+                self:updateDescending(dt)
+                return
+        end
+
+        if self.mode and self.mode.update then
+                self.mode.update(self, dt)
+        end
+
+        if self.state == "playing" then
+                self:updateGameplay(dt)
+        end
+
+        self:updateEntities(dt)
+
+        local result = self:handleDeath(dt)
+        if result then
+                return result
+        end
 end
 
 function Game:setupFloor(floorNum)
@@ -331,141 +478,57 @@ function Game:setupFloor(floorNum)
 end
 
 function Game:draw()
-	love.graphics.clear()
+        love.graphics.clear()
 
-	love.graphics.setColor(Theme.bgColor)
-	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+        love.graphics.setColor(Theme.bgColor)
+        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 
-	if self.state == "transition" then
-		local alpha = 1.0
-		if self.transitionPhase == "fadeout" then
-			alpha = math.min(1, self.transitionTimer / self.transitionDuration)
-			love.graphics.setColor(0,0,0,alpha)
-			love.graphics.rectangle("fill", 0,0,self.screenWidth,self.screenHeight)
-		elseif self.transitionPhase == "shop" then
-			love.graphics.setColor(0,0,0,1)
-			love.graphics.rectangle("fill", 0,0,self.screenWidth,self.screenHeight)
-			Shop:draw(self.screenWidth, self.screenHeight)
-                elseif self.transitionPhase == "floorintro" then
-                        local data = self.transitionFloorData or self.currentFloorData
-                        if data then
-                                local t = math.min(1, self.transitionTimer / self.transitionDuration)
-                                love.graphics.setColor(1,1,1,t)
-                                love.graphics.setFont(UI.fonts.title)
-                                love.graphics.printf(data.name, 0, self.screenHeight/2 - 80, self.screenWidth, "center")
-                                love.graphics.setFont(UI.fonts.button)
-                                love.graphics.printf(data.flavor, 0, self.screenHeight/2, self.screenWidth, "center")
-                                local traits = self.transitionTraits or self.activeFloorTraits
-                                if traits and #traits > 0 then
-                                        love.graphics.setFont(UI.fonts.body)
-                                        local y = self.screenHeight/2 + 64
-                                        for i, trait in ipairs(traits) do
-                                                local text = trait.name .. ": " .. trait.desc
-                                                love.graphics.printf(text, self.screenWidth * 0.2, y + (i-1) * 36, self.screenWidth * 0.6, "center")
-                                        end
-                                end
-                        end
-		elseif self.transitionPhase == "fadein" then
-			local t = math.min(1, self.transitionTimer / self.transitionDuration)
-			local alpha = 1 - t
-			love.graphics.setColor(0, 0, 0, alpha)
-			love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-		end
-		return
-	end
+        if self.state == "transition" then
+                self:drawTransition()
+                return
+        end
 
-	Arena:drawBackground()
-	Death:applyShake()
+        Arena:drawBackground()
+        Death:applyShake()
 
-	Fruit:draw()
-	Rocks:draw()
-	Saws:draw()
-	Arena:drawExit()
+        Fruit:draw()
+        Rocks:draw()
+        Saws:draw()
+        Arena:drawExit()
 
-	if self.state == "dying" then
-		Death:draw()
-	elseif self.state ~= "gameover" then
-		if self.state == "descending" and self.hole then
-			local hx, hy, hr = self.hole.x, self.hole.y, self.hole.radius
+        if self.state == "descending" then
+                self:drawDescending()
+        elseif self.state == "dying" then
+                Death:draw()
+        elseif self.state ~= "gameover" then
+                Snake:draw()
+        end
 
-			-- draw hole
-			love.graphics.setColor(0.05, 0.05, 0.05, 1)
-			love.graphics.circle("fill", hx, hy, hr)
-
-			-- draw snake only until it reaches the hole
-			Snake:drawClipped(hx, hy, hr)
-
-			-- optional: rim
-			love.graphics.setColor(0, 0, 0, 1)
-			love.graphics.setLineWidth(2)
-			love.graphics.circle("line", hx, hy, hr)
-		else
-			Snake:draw()
-		end
-	end
-
-	Particles:draw()
-	Popup:draw()
-	Arena:drawBorder()
+        Particles:draw()
+        Popup:draw()
+        Arena:drawBorder()
         FloatingText:draw()
 
-        local glowStrength = Score:getHighScoreGlowStrength()
-        if Snake.adrenaline and Snake.adrenaline.active then
-                local duration = Snake.adrenaline.duration or 1
-                if duration > 0 then
-                        local adrenalineStrength = math.max(0, math.min(1, (Snake.adrenaline.timer or 0) / duration))
-                        glowStrength = math.max(glowStrength, adrenalineStrength * 0.85)
-                end
-        end
-        if glowStrength > 0 then
-                local pulse = 0.55 + 0.45 * math.sin(love.timer.getTime() * 5)
-                love.graphics.setBlendMode("add")
-                love.graphics.setColor(0.7, 0.9, 1.0, 0.35 * glowStrength * pulse)
-                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-                love.graphics.setBlendMode("alpha")
-
-                local vignetteAlpha = 0.45 * glowStrength
-                local borderThickness = 120
-                local previousLineWidth = love.graphics.getLineWidth()
-                love.graphics.setColor(0, 0, 0, vignetteAlpha)
-                love.graphics.setLineWidth(borderThickness)
-                love.graphics.rectangle(
-                        "line",
-                        borderThickness / 2,
-                        borderThickness / 2,
-                        math.max(0, self.screenWidth - borderThickness),
-                        math.max(0, self.screenHeight - borderThickness),
-                        48,
-                        48
-                )
-                love.graphics.setLineWidth(previousLineWidth)
-                love.graphics.setColor(1, 1, 1, 1)
-        end
+        drawAdrenalineGlow(self)
 
         Death:drawFlash(self.screenWidth, self.screenHeight)
         PauseMenu:draw(self.screenWidth, self.screenHeight)
         UI:draw()
         Achievements:draw()
 
-	--SnakeUtils.debugDrawOccupancy(SnakeUtils.occupied, Arena.tileSize)
-	--SnakeUtils.debugDrawGrid(SnakeUtils.SEGMENT_SIZE)
-
-	if self.mode and self.mode.draw then
-		self.mode.draw(self, self.screenWidth, self.screenHeight)
-	end
+        if self.mode and self.mode.draw then
+                self.mode.draw(self, self.screenWidth, self.screenHeight)
+        end
 end
 
 function Game:keypressed(key)
-	if self.transitionPhase == "shop" then
-		if Shop:keypressed(key) then
-			self.state = "transition"
-			self.transitionPhase = "floorintro"
-			self.transitionTimer = 0
-			self.transitionDuration = 2.5
-		end
-	else
-		Controls:keypressed(self, key)
-	end
+        if self.transitionPhase == "shop" then
+                if Shop:keypressed(key) then
+                        self:startFloorIntro()
+                end
+        else
+                Controls:keypressed(self, key)
+        end
 end
 
 function Game:mousepressed(x, y, button)
@@ -474,12 +537,9 @@ function Game:mousepressed(x, y, button)
 
     elseif self.transitionPhase == "shop" then
         if Shop:mousepressed(x, y, button) then
-            self.state = "transition"
-            self.transitionPhase = "floorintro"
-            self.transitionTimer = 0
-            self.transitionDuration = 2.5
+            self:startFloorIntro()
         end
-	end
+        end
 end
 
 function Game:mousereleased(x, y, button)
