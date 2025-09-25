@@ -63,66 +63,103 @@ function Shop:start(currentFloor)
     self.cards = Upgrades:getRandom(cardCount, { floor = self.floor }) or {}
     self.selected = nil
     self.shopkeeperLine, self.shopkeeperSubline = buildFlavor(self.floor, extraChoices)
+    self.cardStates = {}
+    self.time = 0
+    for i = 1, #self.cards do
+        self.cardStates[i] = {
+            progress = 0,
+            delay = (i - 1) * 0.08,
+            selection = 0,
+            selectionClock = 0,
+        }
+    end
 end
 
 function Shop:update(dt)
-    -- visual effects were toned down; update kept for compatibility
+    if not dt then return end
+    self.time = (self.time or 0) + dt
+    if not self.cardStates then return end
+
+    for i, state in ipairs(self.cardStates) do
+        if self.time >= state.delay and state.progress < 1 then
+            state.progress = math.min(1, state.progress + dt * 3.2)
+        end
+
+        local card = self.cards and self.cards[i]
+        local isSelected = card and self.selected == card
+        if isSelected then
+            state.selection = math.min(1, (state.selection or 0) + dt * 4)
+            state.selectionClock = (state.selectionClock or 0) + dt
+        else
+            state.selection = math.max(0, (state.selection or 0) - dt * 3)
+            if state.selection <= 0.001 then
+                state.selectionClock = 0
+            else
+                state.selectionClock = (state.selectionClock or 0) + dt
+            end
+        end
+    end
 end
 
 local rarityBorderAlpha = 0.85
 
-local function drawCard(card, x, y, w, h, hovered, index, _, isSelected)
+local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appearanceAlpha)
+    local fadeAlpha = appearanceAlpha or 1
+    local function setColor(r, g, b, a)
+        love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
+    end
+
     local base = hovered and 0.28 or 0.22
     local bgColor = {base, base * 0.92, base * 0.65, 1}
-    love.graphics.setColor(bgColor)
+    setColor(bgColor[1], bgColor[2], bgColor[3], bgColor[4])
     love.graphics.rectangle("fill", x, y, w, h, 12, 12)
 
     local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
-    love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], rarityBorderAlpha)
+    setColor(borderColor[1], borderColor[2], borderColor[3], rarityBorderAlpha)
     love.graphics.setLineWidth(4)
     love.graphics.rectangle("line", x, y, w, h, 12, 12)
 
     if hovered or isSelected then
         local glowAlpha = hovered and 0.55 or 0.35
-        love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], glowAlpha)
+        setColor(borderColor[1], borderColor[2], borderColor[3], glowAlpha)
         love.graphics.setLineWidth(2)
         love.graphics.rectangle("line", x + 6, y + 6, w - 12, h - 12, 10, 10)
     end
 
-    love.graphics.setColor(1, 1, 1, 1)
+    setColor(1, 1, 1, 1)
     love.graphics.setFont(UI.fonts.button)
     love.graphics.printf(card.name, x + 14, y + 24, w - 28, "center")
 
     if index then
         love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(1, 1, 1, 0.65)
+        setColor(1, 1, 1, 0.65)
         love.graphics.printf("[" .. tostring(index) .. "]", x + 18, y + 8, w - 36, "left")
-        love.graphics.setColor(1, 1, 1, 1)
+        setColor(1, 1, 1, 1)
     end
 
     if card.rarityLabel then
         love.graphics.setFont(UI.fonts.body)
-        love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
+        setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
         love.graphics.printf(card.rarityLabel, x + 14, y + 64, w - 28, "center")
-        love.graphics.setColor(1, 1, 1, 0.3)
+        setColor(1, 1, 1, 0.3)
         love.graphics.setLineWidth(2)
         love.graphics.line(x + 24, y + 92, x + w - 24, y + 92)
     else
-        love.graphics.setColor(1, 1, 1, 0.3)
+        setColor(1, 1, 1, 0.3)
         love.graphics.setLineWidth(2)
         love.graphics.line(x + 24, y + 68, x + w - 24, y + 68)
     end
 
     love.graphics.setFont(UI.fonts.body)
-    love.graphics.setColor(0.92, 0.92, 0.92, 1)
+    setColor(0.92, 0.92, 0.92, 1)
     local descY = card.rarityLabel and (y + 108) or (y + 80)
     if card.upgrade and card.upgrade.tags and #card.upgrade.tags > 0 then
         love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(0.8, 0.85, 0.9, 0.9)
+        setColor(0.8, 0.85, 0.9, 0.9)
         love.graphics.printf(table.concat(card.upgrade.tags, " • "), x + 18, descY, w - 36, "center")
         descY = descY + 22
         love.graphics.setFont(UI.fonts.body)
-        love.graphics.setColor(0.92, 0.92, 0.92, 1)
+        setColor(0.92, 0.92, 0.92, 1)
     end
     love.graphics.printf(card.desc or "", x + 18, descY, w - 36, "center")
 end
@@ -157,9 +194,41 @@ function Shop:draw(screenW, screenH)
 
     for i, card in ipairs(self.cards) do
         local x = startX + (i - 1) * (cardWidth + spacing)
-        local hovered = mx >= x and mx <= x + cardWidth and my >= y and my <= y + cardHeight
-        drawCard(card, x, y, cardWidth, cardHeight, hovered, i, nil, self.selected == card)
-        card.bounds = { x = x, y = y, w = cardWidth, h = cardHeight }
+        local alpha = 1
+        local scale = 1
+        local yOffset = 0
+        local state = self.cardStates and self.cardStates[i]
+        if state then
+            local progress = state.progress or 0
+            local eased = progress * progress * (3 - 2 * progress)
+            alpha = eased
+            yOffset = (1 - eased) * 48
+            scale = 0.94 + 0.06 * eased
+
+            local selection = state.selection or 0
+            if selection > 0 then
+                local pulse = 1 + 0.05 * math.sin((state.selectionClock or 0) * 8)
+                scale = scale * (1 + 0.08 * selection) * pulse
+                alpha = math.min(1, alpha * (1 + 0.2 * selection))
+            end
+        end
+
+        local centerX = x + cardWidth / 2
+        local centerY = y + cardHeight / 2 - yOffset
+        local drawWidth = cardWidth * scale
+        local drawHeight = cardHeight * scale
+        local drawX = centerX - drawWidth / 2
+        local drawY = centerY - drawHeight / 2
+
+        local hovered = mx >= drawX and mx <= drawX + drawWidth and my >= drawY and my <= drawY + drawHeight
+
+        love.graphics.push()
+        love.graphics.translate(centerX, centerY)
+        love.graphics.scale(scale, scale)
+        love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
+        drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, nil, self.selected == card, alpha)
+        love.graphics.pop()
+        card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
     end
 
     love.graphics.setFont(UI.fonts.small)
