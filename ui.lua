@@ -18,8 +18,6 @@ UI.goalCelebrated = false
 
 UI.floorModifiers = {}
 
-UI.relicDisplay = { items = {}, nextVault = nil, nextSkip = nil }
-
 UI.combo = {
     count = 0,
     timer = 0,
@@ -337,74 +335,6 @@ function UI:drawFloorModifiers()
 
         if sectionIndex < #measuredSections then
             textY = textY + spacing
-        end
-    end
-end
-
-function UI:setRelics(data)
-    self.relicDisplay = self.relicDisplay or { items = {}, nextVault = nil, nextSkip = nil }
-    data = data or {}
-    self.relicDisplay.items = data.items or {}
-    self.relicDisplay.nextVault = data.nextVault
-    self.relicDisplay.nextSkip = data.nextSkip
-end
-
-function UI:drawRelics()
-    local display = self.relicDisplay or {}
-    local items = display.items or {}
-    local nextVault = display.nextVault
-    local nextSkip = display.nextSkip
-    if (#items == 0) and not nextVault then
-        return
-    end
-
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local panelWidth = 260
-    local headerHeight = 46
-    local itemHeight = #items * 44
-    local infoHeight = nextVault and 48 or 0
-    local panelHeight = headerHeight + itemHeight + infoHeight + 18
-    local x = screenW - panelWidth - 28
-    local y = 28
-
-    love.graphics.setColor(0, 0, 0, 0.35)
-    love.graphics.rectangle('fill', x + 6, y + 8, panelWidth, panelHeight, 14, 14)
-    love.graphics.setColor(0.1, 0.12, 0.18, 0.92)
-    love.graphics.rectangle('fill', x, y, panelWidth, panelHeight, 14, 14)
-    love.graphics.setColor(1, 1, 1, 0.2)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle('line', x, y, panelWidth, panelHeight, 14, 14)
-
-    love.graphics.setFont(UI.fonts.button)
-    love.graphics.setColor(1, 1, 1, 0.92)
-    love.graphics.printf('Relics', x, y + 10, panelWidth, 'center')
-
-    local cursor = y + 44
-    for _, entry in ipairs(items) do
-        local nameColor = entry.color or {1, 1, 1, 1}
-        if entry.highlight then
-            love.graphics.setColor(nameColor[1], nameColor[2], nameColor[3], 0.18)
-        else
-            love.graphics.setColor(1, 1, 1, 0.08)
-        end
-        love.graphics.rectangle('fill', x + 10, cursor - 4, panelWidth - 20, 38, 10, 10)
-
-        love.graphics.setFont(UI.fonts.body)
-        love.graphics.setColor(nameColor[1], nameColor[2], nameColor[3], entry.highlight and 1 or 0.82)
-        love.graphics.printf(entry.name or '', x + 18, cursor, panelWidth - 36, 'left')
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(1, 1, 1, 0.68)
-        love.graphics.printf(entry.summary or '', x + 18, cursor + 18, panelWidth - 36, 'left')
-        cursor = cursor + 40
-    end
-
-    if nextVault then
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(1, 1, 1, 0.75)
-        love.graphics.printf(string.format('Next Vault: Floor %d', nextVault), x + 18, cursor + 6, panelWidth - 36, 'left')
-        if nextSkip then
-            love.graphics.setColor(1, 1, 1, 0.6)
-            love.graphics.printf(string.format('Bank Reward: +%d', nextSkip), x + 18, cursor + 24, panelWidth - 36, 'left')
         end
     end
 end
@@ -833,7 +763,6 @@ function UI:draw()
         )
     end
 
-    self:drawRelics()
     self:drawFloorModifiers()
 end
 

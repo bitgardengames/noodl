@@ -27,8 +27,6 @@ local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
 local Upgrades = require("upgrades")
-local Relics = require("relics")
-local RelicVault = require("relicvault")
 local FruitWallet = require("fruitwallet")
 
 local Game = {}
@@ -129,7 +127,6 @@ function Game:load()
 
         Score:load()
         Upgrades:beginRun()
-        Relics:beginRun()
         GameUtils:prepareGame(self.screenWidth, self.screenHeight)
         Face:set("idle")
 
@@ -213,17 +210,6 @@ function Game:openShop()
         startTransitionPhase(self, "shop", 0)
 end
 
-function Game:openRelicVault(options)
-        if not options or #options == 0 then
-                self:startFloorIntro()
-                return
-        end
-
-        RelicVault:start(self.floor, options)
-        self.vaultCloseRequested = nil
-        startTransitionPhase(self, "relicvault", 0)
-end
-
 function Game:startFloorIntro(duration, extra)
         extra = extra or {}
 
@@ -260,24 +246,8 @@ function Game:updateTransition(dt)
 
         elseif self.transitionPhase == "shop" then
                 Shop:update(dt)
-                if Shop:isSelectionComplete() and self.shopCloseRequested then
+                if self.shopCloseRequested and Shop:isSelectionComplete() then
                         self.shopCloseRequested = nil
-                        if Relics:shouldOfferVault(self.floor) then
-                                local vaultOptions = Relics:prepareVault(self.floor)
-                                if vaultOptions and #vaultOptions > 0 then
-                                        self:openRelicVault(vaultOptions)
-                                else
-                                        self:startFloorIntro()
-                                end
-                        else
-                                self:startFloorIntro()
-                        end
-                end
-
-        elseif self.transitionPhase == "relicvault" then
-                RelicVault:update(dt)
-                if RelicVault:isSelectionComplete() and self.vaultCloseRequested then
-                        self.vaultCloseRequested = nil
                         self:startFloorIntro()
                 end
 
@@ -456,14 +426,6 @@ function Game:drawTransition()
                 love.graphics.translate(-self.screenWidth / 2, -self.screenHeight / 2)
                 Shop:draw(self.screenWidth, self.screenHeight)
                 love.graphics.pop()
-                love.graphics.setColor(1, 1, 1, 1)
-                return
-        end
-
-        if self.transitionPhase == "relicvault" then
-                love.graphics.setColor(0, 0, 0, 0.9)
-                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-                RelicVault:draw(self.screenWidth, self.screenHeight)
                 love.graphics.setColor(1, 1, 1, 1)
                 return
         end
@@ -718,7 +680,6 @@ function Game:update(dt)
         end
 end
 
-
 function Game:setupFloor(floorNum)
     self.currentFloorData = Floors[floorNum] or Floors[1]
 
@@ -755,7 +716,6 @@ function Game:setupFloor(floorNum)
     local adjustedContext, appliedTraits = FloorTraits:apply(self.currentFloorData.traits, traitContext)
     traitContext = adjustedContext or traitContext
 
-    traitContext = Relics:modifyFloorContext(traitContext, floorNum)
     traitContext = Upgrades:modifyFloorContext(traitContext)
 
     UI:setFruitGoal(traitContext.fruitGoal)
@@ -765,7 +725,6 @@ function Game:setupFloor(floorNum)
 
     Upgrades:applyPersistentEffects(true)
     Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
-    Relics:onFloorStart(floorNum, traitContext)
 
     local numRocks = traitContext.rocks
     local numSaws = traitContext.saws
@@ -834,10 +793,6 @@ function Game:keypressed(key)
                 if Shop:keypressed(key) then
                         self.shopCloseRequested = true
                 end
-        elseif self.transitionPhase == "relicvault" then
-                if RelicVault:keypressed(key) then
-                        self.vaultCloseRequested = true
-                end
         else
                 Controls:keypressed(self, key)
         end
@@ -850,10 +805,6 @@ function Game:mousepressed(x, y, button)
         elseif self.transitionPhase == "shop" then
                 if Shop:mousepressed(x, y, button) then
                         self.shopCloseRequested = true
-                end
-        elseif self.transitionPhase == "relicvault" then
-                if RelicVault:mousepressed(x, y, button) then
-                        self.vaultCloseRequested = true
                 end
         end
 end
