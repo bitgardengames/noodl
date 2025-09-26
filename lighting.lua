@@ -89,6 +89,20 @@ local function drawRadialLight(self, x, y, radius, color, intensity)
 
     love.graphics.setColor(color[1], color[2], color[3], intensity)
     love.graphics.draw(mesh, x, y, 0, radius, radius)
+
+local function drawRadialLight(x, y, radius, color, intensity, layers)
+    layers = layers or 5
+    if radius <= 0 then return end
+
+    for i = layers, 1, -1 do
+        local t = (i - 1) / math.max(1, layers - 1)
+        local alpha = intensity * (1 - t)
+        alpha = alpha * alpha
+
+        love.graphics.setColor(color[1], color[2], color[3], alpha)
+        local ringRadius = radius * (0.35 + 0.65 * t)
+        love.graphics.circle("fill", x, y, ringRadius)
+    end
 end
 
 local function calculateDepthFactor(floorNum)
@@ -159,14 +173,12 @@ function Lighting:draw(renderState)
     for i = 1, maxLights do
         local seg = sources[i]
         if seg and seg.drawX and seg.drawY then
-            local strength = 1 - (i - 1) / math.max(1, maxLights)
-            strength = clamp(strength, 0, 1) * falloff
-            local intensity = darkness * (0.55 + 0.45 * strength)
+            local strength = 1 - (i - 1) / math.max(1, maxLights - 1)
+            strength = strength * falloff
             if i == 1 then
-                intensity = intensity * (self.headBoost or 1.25)
+                strength = strength * 1.35
             end
-            local scale = 0.85 + 0.2 * strength
-            drawRadialLight(self, seg.drawX, seg.drawY, radius * scale, color, intensity)
+            drawRadialLight(seg.drawX, seg.drawY, radius * (0.9 + 0.15 * strength), color, darkness * strength, 6)
         end
     end
 
