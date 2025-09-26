@@ -103,6 +103,23 @@ shapeDrawers.blank = function()
     -- intentionally empty: blank face has no visible eyes
 end
 
+local shapeDrawers = {}
+
+shapeDrawers.idle = function()
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS)
+    love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS)
+end
+
+shapeDrawers.blink = function()
+    love.graphics.setColor(0, 0, 0, 1)
+    local leftX = LEFT_EYE_CENTER_X - EYELID_WIDTH / 2
+    local rightX = RIGHT_EYE_CENTER_X - EYELID_WIDTH / 2
+    local top = EYE_CENTER_Y - EYELID_HEIGHT / 2
+    love.graphics.rectangle("fill", leftX, top, EYELID_WIDTH, EYELID_HEIGHT)
+    love.graphics.rectangle("fill", rightX, top, EYELID_WIDTH, EYELID_HEIGHT)
+end
+
 Face.state = "idle"
 Face.timer = 0
 
