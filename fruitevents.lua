@@ -15,6 +15,7 @@ local Theme = require("theme")
 local Achievements = require("achievements")
 local Upgrades = require("upgrades")
 local FruitWallet = require("fruitwallet")
+local Boss = require("boss")
 
 local FruitEvents = {}
 
@@ -263,13 +264,16 @@ function FruitEvents.handleConsumption(x, y)
         Achievements:unlock("dragonHunter")
     end
 
-    Fruit:spawn(Snake:getSegments(), Rocks)
+    local suppressSpawns = Boss and Boss.shouldHoldFruit and Boss:shouldHoldFruit()
+    if not suppressSpawns then
+        Fruit:spawn(Snake:getSegments(), Rocks)
 
-    if love.math.random() < Rocks:getSpawnChance() then
-        local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(Snake:getSegments(), Fruit, Rocks)
-        if fx then
-            Rocks:spawn(fx, fy, "small")
-            SnakeUtils.setOccupied(tileCol, tileRow, true)
+        if love.math.random() < Rocks:getSpawnChance() then
+            local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(Snake:getSegments(), Fruit, Rocks)
+            if fx then
+                Rocks:spawn(fx, fy, "small")
+                SnakeUtils.setOccupied(tileCol, tileRow, true)
+            end
         end
     end
 
