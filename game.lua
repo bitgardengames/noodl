@@ -226,8 +226,8 @@ function Game:startFloorIntro(duration, extra)
         startTransitionPhase(self, "floorintro", duration or 3.5, extra)
 end
 
-function Game:startFadeIn(duration)
-        startTransitionPhase(self, "fadein", duration or 1.2)
+function Game:startFadeIn(duration, extra)
+        startTransitionPhase(self, "fadein", duration or 1.2, extra)
 end
 
 function Game:updateTransition(dt)
@@ -260,8 +260,13 @@ function Game:updateTransition(dt)
                         self.transitionResumeFadeDuration = nil
 
                         if resumePhase == "fadein" then
-                                self:startFadeIn(fadeDuration or 1.2)
+                                local fadeInStartAlpha = self.floorIntroLastOverlayAlpha or 1
+                                self.floorIntroLastOverlayAlpha = nil
+                                self:startFadeIn(fadeDuration or 1.2, {
+                                        fadeInStartAlpha = fadeInStartAlpha,
+                                })
                         else
+                                self.floorIntroLastOverlayAlpha = nil
                                 self.state = "playing"
                                 self.transitionPhase = nil
                         end
@@ -271,6 +276,7 @@ function Game:updateTransition(dt)
                 if self.transitionTimer >= self.transitionDuration then
                         self.state = "playing"
                         self.transitionPhase = nil
+                        self.fadeInStartAlpha = nil
                 end
         end
 end
@@ -431,6 +437,9 @@ function Game:drawTransition()
         end
 
         if self.transitionPhase == "floorintro" then
+                drawPlayfieldLayers(self, "playing")
+                drawInterfaceLayers(self)
+
                 local data = self.transitionFloorData or self.currentFloorData
                 if data then
                         local timer = self.transitionTimer or 0
@@ -446,8 +455,10 @@ function Game:drawTransition()
 
                         local overlayAlpha = math.min(0.75, progress * 0.85)
                         if outroProgress > 0 then
-                                overlayAlpha = overlayAlpha + (1 - overlayAlpha) * outroProgress
+                                local fadeOutFactor = easeOutExpo(outroProgress)
+                                overlayAlpha = overlayAlpha * (1 - fadeOutFactor) + 0.35 * fadeOutFactor
                         end
+                        self.floorIntroLastOverlayAlpha = overlayAlpha
                         love.graphics.setColor(0, 0, 0, overlayAlpha)
                         love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
                         love.graphics.setColor(1, 1, 1, 1)
@@ -569,7 +580,8 @@ function Game:drawTransition()
 
         if self.transitionPhase == "fadein" then
                 local progress = easedProgress(self.transitionTimer, self.transitionDuration)
-                local alpha = 1 - progress
+                local startAlpha = clamp01(self.fadeInStartAlpha or 1)
+                local alpha = startAlpha * (1 - progress)
                 local scale = 1 + 0.03 * alpha
                 local yOffset = alpha * 20
 
