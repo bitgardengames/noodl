@@ -22,7 +22,7 @@ function Menu:enter()
 
     local sw, sh = Screen:get()
     local centerX = sw / 2
-    local startY = sh / 2 - ((UI.spacing.buttonHeight + UI.spacing.buttonSpacing) * 2.5)
+    local startY = sh / 2 - ((UI.spacing.buttonHeight + UI.spacing.buttonSpacing) * 2.5) + UI.spacing.buttonHeight
 
     local labels = {
         { key = "menu.start_game",   action = "modeselect" },
