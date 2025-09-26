@@ -17,6 +17,7 @@ local english = {
             quit = "Quit",
             version = "v1.0.0",
             title_word = "noodl",
+            tagline = "Glide, grow, and glow.",
         },
         settings = {
             title = "Settings",

@@ -8,6 +8,26 @@ local scorePulse = 1.0
 local pulseTimer = 0
 local PULSE_DURATION = 0.3
 
+local function clamp01(value)
+    if value < 0 then return 0 end
+    if value > 1 then return 1 end
+    return value
+end
+
+local function lightenColor(color, amount)
+    amount = clamp01(amount or 0)
+    local r = color[1] or 0
+    local g = color[2] or 0
+    local b = color[3] or 0
+    local a = color[4] or 1
+    return {
+        r + (1 - r) * amount,
+        g + (1 - g) * amount,
+        b + (1 - b) * amount,
+        a,
+    }
+end
+
 UI.fruitCollected = 0
 UI.fruitRequired = 0
 UI.fruitSockets = {}
@@ -124,6 +144,10 @@ function UI.drawButton(id)
         hovered = true
     end
 
+    local targetHover = hovered and 1 or 0
+    btn.hoverAnim = btn.hoverAnim or targetHover
+    btn.hoverAnim = btn.hoverAnim + (targetHover - btn.hoverAnim) * 0.2
+
     -- Animate press depth
     local target = (btn.pressed and 1 or 0)
     btn.anim = btn.anim + (target - btn.anim) * 0.25
@@ -137,21 +161,40 @@ function UI.drawButton(id)
     love.graphics.rectangle("fill", b.x + SHADOW_OFFSET, b.y + SHADOW_OFFSET + yOffset, b.w, b.h, radius, radius)
 
     -- OUTLINE
-    love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.setLineWidth(6)
+    local borderColor = Theme.borderColor
+    local borderAlpha = (borderColor[4] or 1) * (0.55 + 0.35 * btn.hoverAnim)
+    love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], borderAlpha)
+    love.graphics.setLineWidth(3)
     love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 
     -- BODY
-    love.graphics.setColor(Theme.buttonColor)
+    local fillColor = lightenColor(Theme.buttonColor, 0.15 + 0.2 * btn.hoverAnim)
+    love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4])
     love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
+
+    -- TOP HIGHLIGHT
+    love.graphics.setColor(1, 1, 1, 0.12 + 0.18 * btn.hoverAnim)
+    love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h / 2, radius, radius)
+
+    -- BOTTOM SHADE
+    love.graphics.setColor(0, 0, 0, 0.08 + 0.1 * (1 - btn.hoverAnim))
+    love.graphics.rectangle("fill", b.x, b.y + yOffset + b.h / 2, b.w, b.h / 2, radius, radius)
+
+    -- FOCUS GLOW
+    if btn.focused then
+        love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1) * 0.75)
+        love.graphics.setLineWidth(4)
+        love.graphics.rectangle("line", b.x - 3, b.y + yOffset - 3, b.w + 6, b.h + 6, radius + 6, radius + 6)
+    end
 
     -- HOVER / PRESS overlay
     if hovered or btn.pressed then
-        love.graphics.setColor(1, 1, 1, 0.3)
+        love.graphics.setColor(1, 1, 1, 0.18 + 0.18 * btn.hoverAnim)
         love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
     end
 
     -- TEXT
+    love.graphics.setLineWidth(1)
     UI.setFont("button")
     love.graphics.setColor(Theme.textColor)
     love.graphics.printf(btn.text, b.x, b.y + yOffset + (b.h / 2) - UI.fonts.button:getHeight() / 2, b.w, "center")
