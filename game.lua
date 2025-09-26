@@ -517,12 +517,25 @@ function Game:drawStateTransition(direction, progress, eased, alpha)
 
         self:draw()
 
-        love.graphics.setColor(1, 1, 1, 1)
-
         if isFloorTransition then
+                love.graphics.setColor(1, 1, 1, 1)
                 return { skipOverlay = true }
         end
 
+        if direction == "in" then
+                local width = self.screenWidth or love.graphics.getWidth()
+                local height = self.screenHeight or love.graphics.getHeight()
+
+                if alpha and alpha > 0 then
+                        love.graphics.setColor(0, 0, 0, alpha)
+                        love.graphics.rectangle("fill", 0, 0, width, height)
+                end
+
+                love.graphics.setColor(1, 1, 1, 1)
+                return { skipOverlay = true }
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
         return true
 end
 
