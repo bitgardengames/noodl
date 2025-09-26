@@ -19,16 +19,6 @@ local function pickDeathMessage(cause)
     return entries[love.math.random(#entries)]
 end
 
-local function copyColor(color, alphaOverride)
-    color = color or { 1, 1, 1, 1 }
-    return {
-        color[1] or 1,
-        color[2] or 1,
-        color[3] or 1,
-        alphaOverride or color[4] or 1,
-    }
-end
-
 local fontTitle
 local fontScore
 local fontSmall
@@ -37,46 +27,15 @@ local fontBadge
 local stats = {}
 local buttonList = ButtonList.new()
 local fruitSummary = {}
-local backgroundOrbs = {}
 
 -- Layout constants
 local BUTTON_WIDTH = 250
 local BUTTON_HEIGHT = 50
 local BUTTON_SPACING = 20
 
-local function generateBackgroundOrbs(sw, sh)
-    backgroundOrbs = {}
-
-    local primary = copyColor(Theme.highlightColor, 0.18)
-    local secondary = copyColor(Theme.progressColor, 0.2)
-    local tertiary = copyColor(Theme.buttonHover, 0.15)
-    local palette = { primary, secondary, tertiary }
-
-    for i = 1, 6 do
-        local radius = love.math.random(math.floor(sh * 0.09), math.floor(sh * 0.17))
-        local orb = {
-            x = love.math.random(radius, sw - radius),
-            y = love.math.random(radius, math.floor(sh * 0.6)),
-            radius = radius,
-            color = palette[(i - 1) % #palette + 1],
-            speed = 0.3 + love.math.random() * 0.35,
-            phase = love.math.random() * math.pi * 2,
-        }
-        backgroundOrbs[#backgroundOrbs + 1] = orb
-    end
-end
-
-local function drawBackground(sw, sh, time)
+local function drawBackground(sw, sh)
     love.graphics.setColor(Theme.bgColor)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
-
-    for _, orb in ipairs(backgroundOrbs) do
-        local wobble = math.sin(time * orb.speed + orb.phase) * (orb.radius * 0.08)
-        love.graphics.setColor(orb.color[1], orb.color[2], orb.color[3], orb.color[4])
-        love.graphics.circle("fill", orb.x + wobble, orb.y + wobble * 0.35, orb.radius)
-    end
-
-    love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- All button definitions in one place
@@ -95,7 +54,6 @@ function GameOver:enter(data)
 
     local cause = data.cause or "unknown"
     self.deathMessage = pickDeathMessage(cause)
-    self.animTime = 0
 
     fontTitle = love.graphics.newFont(48)
     fontScore = love.graphics.newFont(72)
@@ -120,9 +78,6 @@ function GameOver:enter(data)
     if data.mode then stats.mode = data.mode end
     if data.totalApples then stats.totalApples = data.totalApples end
 
-    local sw, sh = Screen:get()
-    generateBackgroundOrbs(sw, sh)
-
     local tipTable = Localization:getTable("gameover.tips") or {}
     if #tipTable > 0 then
         self.runTip = tipTable[love.math.random(#tipTable)]
@@ -143,6 +98,8 @@ function GameOver:enter(data)
     stats.highScore = stats.highScore or 0
     stats.totalApples = stats.totalApples or stats.apples or 0
     self.isNewHighScore = (stats.score or 0) > 0 and (stats.score or 0) >= (stats.highScore or 0)
+
+    local sw, sh = Screen:get()
 
     -- Build buttons
     local totalButtonHeight = #buttonDefs * BUTTON_HEIGHT + (#buttonDefs - 1) * BUTTON_SPACING
@@ -172,119 +129,133 @@ end
 
 function GameOver:draw()
     local sw, sh = Screen:get()
-    local time = self.animTime or 0
+    drawBackground(sw, sh)
 
-    drawBackground(sw, sh, time)
+    local contentWidth = math.min(sw * 0.72, 560)
+    local contentX = (sw - contentWidth) / 2
+    local padding = 28
 
     -- Title
     love.graphics.setFont(fontTitle)
     love.graphics.setColor(1, 1, 1, 0.95)
     love.graphics.printf(Localization:get("gameover.title"), 0, 40, sw, "center")
 
-    -- Death ribbon for the final moment
-    local ribbonWidth = math.min(sw * 0.8, 640)
-    local ribbonX = (sw - ribbonWidth) / 2
-    local ribbonY = 96
-    love.graphics.setColor(0.9, 0.35, 0.45, 0.82)
-    love.graphics.rectangle("fill", ribbonX, ribbonY, ribbonWidth, 56, 18, 18)
-    love.graphics.setColor(1, 1, 1, 0.2)
+    -- Death message panel
+    local messageHeight = 68
+    local messageY = 112
+    love.graphics.setColor(Theme.panelColor)
+    love.graphics.rectangle("fill", contentX, messageY, contentWidth, messageHeight, 20, 20)
+    love.graphics.setColor(Theme.panelBorder)
     love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", ribbonX, ribbonY, ribbonWidth, 56, 18, 18)
+    love.graphics.rectangle("line", contentX, messageY, contentWidth, messageHeight, 20, 20)
     love.graphics.setLineWidth(1)
     love.graphics.setFont(fontSmall)
-    love.graphics.setColor(1, 1, 1, 0.95)
-    love.graphics.printf(self.deathMessage or Localization:get("gameover.default_message"), ribbonX + 16, ribbonY + 16, ribbonWidth - 32, "center")
+    love.graphics.setColor(1, 1, 1, 0.9)
+    local messageTextY = messageY + (messageHeight - fontSmall:getHeight()) / 2
+    love.graphics.printf(self.deathMessage or Localization:get("gameover.default_message"), contentX + padding, messageTextY, contentWidth - padding * 2, "center")
 
-    -- Score card panel
-    local panelWidth = math.min(sw * 0.75, 540)
-    local panelHeight = 270
-    local panelX = (sw - panelWidth) / 2
-    local panelY = ribbonY + 88
+    -- Score + stats panel
+    local panelY = messageY + messageHeight + 28
+    local statsLines = {
+        Localization:get("gameover.high_score", { score = stats.highScore }),
+        Localization:get("gameover.apples_eaten", { count = stats.apples }),
+        Localization:get("gameover.total_apples_collected", { count = stats.totalApples }),
+        Localization:get("gameover.mode_label", { mode = self.modeLabel or Localization:get("common.unknown") }),
+    }
+
+    local headerHeight = fontSmall:getHeight()
+    local scoreHeight = fontScore:getHeight()
+    local lineHeight = fontSmall:getHeight() + 10
+    local badgeHeight = 0
+    if self.isNewHighScore then
+        badgeHeight = fontBadge:getHeight() + 22
+    end
+    local statsHeight = #statsLines * lineHeight
+    local statsStartOffset = 24
+    local panelHeight = padding * 2 + headerHeight + 12 + scoreHeight + 20 + badgeHeight + statsStartOffset + statsHeight
+
     love.graphics.setColor(Theme.panelColor)
-    love.graphics.rectangle("fill", panelX, panelY, panelWidth, panelHeight, 22, 22)
+    love.graphics.rectangle("fill", contentX, panelY, contentWidth, panelHeight, 22, 22)
     love.graphics.setColor(Theme.panelBorder)
-    love.graphics.setLineWidth(3)
-    love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 22, 22)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", contentX, panelY, contentWidth, panelHeight, 22, 22)
     love.graphics.setLineWidth(1)
 
+    local textY = panelY + padding
     love.graphics.setFont(fontSmall)
     love.graphics.setColor(1, 1, 1, 0.85)
-    love.graphics.printf(Localization:get("gameover.run_summary_title"), panelX, panelY + 18, panelWidth, "center")
+    love.graphics.printf(Localization:get("gameover.run_summary_title"), contentX, textY, contentWidth, "center")
 
+    textY = textY + headerHeight + 12
     love.graphics.setFont(fontScore)
     local progressColor = Theme.progressColor or { 1, 1, 1, 1 }
-    love.graphics.setColor(progressColor[1] or 1, progressColor[2] or 1, progressColor[3] or 1, 0.9)
-    love.graphics.printf(tostring(stats.score or 0), panelX, panelY + 48, panelWidth, "center")
+    love.graphics.setColor(progressColor[1] or 1, progressColor[2] or 1, progressColor[3] or 1, 0.92)
+    love.graphics.printf(tostring(stats.score or 0), contentX, textY, contentWidth, "center")
 
+    textY = textY + scoreHeight + 20
     if self.isNewHighScore then
         local badgeColor = Theme.achieveColor or { 1, 1, 1, 1 }
         love.graphics.setFont(fontBadge)
         love.graphics.setColor(badgeColor[1] or 1, badgeColor[2] or 1, badgeColor[3] or 1, 0.9)
-        love.graphics.printf(Localization:get("gameover.high_score_badge"), panelX, panelY + 128, panelWidth, "center")
+        love.graphics.printf(Localization:get("gameover.high_score_badge"), contentX + padding, textY, contentWidth - padding * 2, "center")
+        textY = textY + fontBadge:getHeight() + 22
     end
 
-    love.graphics.setColor(1, 1, 1, 0.1)
-    love.graphics.rectangle("fill", panelX + 24, panelY + panelHeight - 110, panelWidth - 48, 1)
+    local dividerY = textY + statsStartOffset - 12
+    love.graphics.setColor(1, 1, 1, 0.15)
+    love.graphics.rectangle("fill", contentX + padding, dividerY, contentWidth - padding * 2, 2, 1, 1)
 
     love.graphics.setFont(fontSmall)
     love.graphics.setColor(1, 1, 1, 0.9)
-    local detailY = panelY + panelHeight - 94
-    local halfWidth = panelWidth / 2
-    love.graphics.printf(Localization:get("gameover.high_score", { score = stats.highScore }), panelX, detailY, halfWidth, "center")
-    love.graphics.printf(Localization:get("gameover.apples_eaten", { count = stats.apples }), panelX + halfWidth, detailY, halfWidth, "center")
+    local statsY = textY + statsStartOffset
+    for _, line in ipairs(statsLines) do
+        love.graphics.printf(line, contentX + padding, statsY, contentWidth - padding * 2, "left")
+        statsY = statsY + lineHeight
+    end
 
-    love.graphics.setColor(1, 1, 1, 0.75)
-    love.graphics.printf(Localization:get("gameover.mode_label", { mode = self.modeLabel or Localization:get("common.unknown") }), panelX, detailY + 30, panelWidth, "center")
-    love.graphics.printf(Localization:get("gameover.total_apples_collected", { count = stats.totalApples }), panelX, detailY + 58, panelWidth, "center")
-
-    -- Fruit summary area
-    local summaryY = panelY + panelHeight + 40
+    -- Fruit summary panel
+    local fruitPanelY = panelY + panelHeight + 24
     love.graphics.setFont(fontSmall)
-    love.graphics.setColor(1, 1, 1, 0.95)
-    love.graphics.printf(Localization:get("gameover.fruit_summary_title"), 0, summaryY, sw, "center")
-    summaryY = summaryY + 32
+    local fruitTitleHeight = fontSmall:getHeight()
+    local fruitLineHeight = fontSmall:getHeight() + 12
+    local fruitCount = fruitSummary and #fruitSummary or 0
+    local fruitContentHeight
+    if fruitCount > 0 then
+        fruitContentHeight = fruitCount * fruitLineHeight
+    else
+        fruitContentHeight = fruitLineHeight
+    end
+    local fruitPanelHeight = padding * 2 + fruitTitleHeight + 12 + fruitContentHeight
 
-    if fruitSummary and #fruitSummary > 0 then
-        local chipAreaWidth = sw * 0.85
-        local startX = (sw - chipAreaWidth) / 2
-        local currentX = startX
-        local currentY = summaryY
-        local chipPaddingX = 18
-        local chipPaddingY = 8
-        local chipSpacing = 14
-        local chipHeight = fontSmall:getHeight() + chipPaddingY * 2
+    love.graphics.setColor(Theme.panelColor)
+    love.graphics.rectangle("fill", contentX, fruitPanelY, contentWidth, fruitPanelHeight, 22, 22)
+    love.graphics.setColor(Theme.panelBorder)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", contentX, fruitPanelY, contentWidth, fruitPanelHeight, 22, 22)
+    love.graphics.setLineWidth(1)
 
+    local fruitTextY = fruitPanelY + padding
+    love.graphics.setColor(1, 1, 1, 0.85)
+    love.graphics.printf(Localization:get("gameover.fruit_summary_title"), contentX, fruitTextY, contentWidth, "center")
+
+    fruitTextY = fruitTextY + fruitTitleHeight + 12
+    if fruitCount > 0 then
         for _, info in ipairs(fruitSummary) do
-            local gained = info.gained or 0
-            local total = info.total or 0
             local chipText = Localization:get("gameover.fruit_chip", {
                 label = info.label or Localization:get("common.unknown"),
-                gained = gained,
-                total = total,
+                gained = info.gained or 0,
+                total = info.total or 0,
             })
-            local textWidth = fontSmall:getWidth(chipText)
-            local chipWidth = textWidth + chipPaddingX * 2
-
-            if currentX + chipWidth > startX + chipAreaWidth then
-                currentX = startX
-                currentY = currentY + chipHeight + chipSpacing
-            end
-
             local color = info.color or Theme.progressColor or { 1, 1, 1, 1 }
-            love.graphics.setColor(color[1] or 1, color[2] or 1, color[3] or 1, 0.28)
-            love.graphics.rectangle("fill", currentX, currentY, chipWidth, chipHeight, 16, 16)
-            love.graphics.setColor(color[1] or 1, color[2] or 1, color[3] or 1, 0.7)
-            love.graphics.setLineWidth(2)
-            love.graphics.rectangle("line", currentX, currentY, chipWidth, chipHeight, 16, 16)
-            love.graphics.setLineWidth(1)
-            love.graphics.setColor(1, 1, 1, 0.95)
-            love.graphics.printf(chipText, currentX, currentY + chipPaddingY - 2, chipWidth, "center")
-
-            currentX = currentX + chipWidth + chipSpacing
+            love.graphics.setColor(color[1] or 1, color[2] or 1, color[3] or 1, 0.8)
+            love.graphics.circle("fill", contentX + padding + 10, fruitTextY + fontSmall:getHeight() / 2, 6)
+            love.graphics.setColor(1, 1, 1, 0.92)
+            love.graphics.printf(chipText, contentX + padding + 24, fruitTextY, contentWidth - padding * 2 - 24, "left")
+            fruitTextY = fruitTextY + fruitLineHeight
         end
     else
         love.graphics.setColor(1, 1, 1, 0.6)
-        love.graphics.printf(Localization:get("gameover.no_fruit_summary"), 0, summaryY, sw, "center")
+        love.graphics.printf(Localization:get("gameover.no_fruit_summary"), contentX + padding, fruitTextY, contentWidth - padding * 2, "center")
     end
 
     -- Play tip at the bottom
@@ -292,7 +263,7 @@ function GameOver:draw()
         love.graphics.setFont(fontTiny)
         love.graphics.setColor(1, 1, 1, 0.6)
         local tipText = Localization:get("gameover.tip_prefix", { tip = self.runTip })
-        love.graphics.printf(tipText, 60, sh - 120, sw - 120, "center")
+        love.graphics.printf(tipText, contentX + padding, fruitPanelY + fruitPanelHeight + 24, contentWidth - padding * 2, "center")
     end
 
     -- Buttons
@@ -307,7 +278,7 @@ function GameOver:draw()
 end
 
 function GameOver:update(dt)
-    self.animTime = (self.animTime or 0) + (dt or 0)
+    -- No animated elements yet, but keep hook for future transitions
 end
 
 function GameOver:mousepressed(x, y, button)
