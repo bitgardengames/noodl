@@ -1,3 +1,5 @@
+local Theme = require("theme")
+
 local GameState = {}
 
 GameState.states = {}
@@ -96,6 +98,42 @@ local function updateTransitionContext(self, data)
     context.to = data.to
 
     return context
+end
+
+local function getTransitionFillColor(state, directionName, context)
+    if not state then
+        return nil
+    end
+
+    if state.getTransitionFillColor then
+        local color = state:getTransitionFillColor(directionName, context)
+        if color then
+            return color
+        end
+    end
+
+    if state.getBackgroundColor then
+        local color = state:getBackgroundColor()
+        if color then
+            return color
+        end
+    end
+
+    if state.backgroundColor then
+        return state.backgroundColor
+    end
+
+    return Theme and Theme.bgColor
+end
+
+local function unpackColor(color)
+    if type(color) == "table" then
+        if color.r then
+            return color.r, color.g, color.b, color.a or 1
+        else
+            return color[1], color[2], color[3], color[4] or 1
+        end
+    end
 end
 
 local function getCurrentState(self)
@@ -328,6 +366,25 @@ function GameState:draw()
                 love.graphics.translate(width / 2, height / 2 + offsetY)
                 love.graphics.scale(scale, scale)
                 love.graphics.translate(-width / 2, -height / 2)
+
+                if scale < 1 then
+                    local fillColor = getTransitionFillColor(state, directionName, context)
+
+                    if fillColor then
+                        local r, g, b, a = unpackColor(fillColor)
+
+                        if r then
+                            local invScale = 1 / math.max(scale, 1e-4)
+                            local padX = (invScale - 1) * width * 0.5
+                            local padY = (invScale - 1) * height * 0.5
+
+                            love.graphics.setColor(r, g, b, a or 1)
+                            love.graphics.rectangle("fill", -padX, -padY, width + padX * 2, height + padY * 2)
+                            love.graphics.setColor(1, 1, 1, 1)
+                        end
+                    end
+                end
+
                 state:draw()
                 love.graphics.pop()
             end
