@@ -26,8 +26,8 @@ function Menu:enter()
 
     local labels = {
         { key = "menu.start_game",   action = "modeselect" },
-        { key = "menu.settings",     action = "settings" },
         { key = "menu.achievements", action = "achievementsmenu" },
+        { key = "menu.settings",     action = "settings" },
         { key = "menu.quit",         action = "quit" },
     }
 
