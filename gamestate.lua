@@ -11,6 +11,7 @@ GameState.transitionDirection = 1 -- 1 = fade out, -1 = fade in
 GameState.pendingData = nil
 GameState.queuedState = nil
 GameState.queuedData = nil
+GameState.transitionContext = nil
 
 local transitionBlockedEvents = {
     mousepressed = true,
@@ -39,6 +40,62 @@ local function getTransitionAlpha(t, direction)
     else
         return easeInOutCubic(1 - t)
     end
+end
+
+local function clamp01(value)
+    if value < 0 then
+        return 0
+    elseif value > 1 then
+        return 1
+    end
+
+    return value
+end
+
+local function updateTransitionContext(self, data)
+    local context = self.transitionContext
+    if not context then
+        context = {}
+        self.transitionContext = context
+    end
+
+    context.transitioning = data.transitioning or false
+    context.direction = data.direction or 0
+
+    if context.transitioning then
+        if context.direction == 1 then
+            context.directionName = "out"
+        elseif context.direction == -1 then
+            context.directionName = "in"
+        else
+            context.directionName = nil
+        end
+    else
+        context.directionName = nil
+    end
+
+    local progress = data.progress
+    if progress == nil then
+        progress = context.transitioning and 0 or 1
+    end
+    progress = clamp01(progress)
+
+    context.progress = progress
+    context.duration = data.duration or self.transitionDuration or 0
+    context.time = data.time or (progress * context.duration)
+
+    if context.direction ~= 0 and context.transitioning then
+        context.eased = easeInOutCubic(progress)
+        context.alpha = getTransitionAlpha(progress, context.direction)
+    else
+        context.eased = progress
+        context.alpha = 0
+    end
+
+    context.from = data.from
+    context.to = data.to
+
+    return context
 end
 
 local function getCurrentState(self)
@@ -88,6 +145,16 @@ function GameState:switch(stateName, data)
             nextState:onTransitionEnd("in", nil)
         end
 
+        updateTransitionContext(self, {
+            transitioning = false,
+            direction = 0,
+            progress = 1,
+            duration = self.transitionDuration,
+            time = 0,
+            from = nil,
+            to = self.current,
+        })
+
         return
     end
 
@@ -102,11 +169,23 @@ function GameState:switch(stateName, data)
     if currentState and currentState.onTransitionStart then
         currentState:onTransitionStart("out", stateName)
     end
+
+    updateTransitionContext(self, {
+        transitioning = true,
+        direction = 1,
+        progress = 0,
+        duration = self.transitionDuration,
+        time = 0,
+        from = self.current,
+        to = self.next,
+    })
 end
 
 function GameState:update(dt)
     if self.transitioning then
         self.transitionTime = math.min(1, self.transitionTime + dt / self.transitionDuration)
+
+        local context
 
         if self.transitionDirection == 1 and self.transitionTime >= 1 then
             local previousState = getCurrentState(self)
@@ -131,6 +210,15 @@ function GameState:update(dt)
             end
 
             self.pendingData = nil
+            context = updateTransitionContext(self, {
+                transitioning = true,
+                direction = self.transitionDirection,
+                progress = self.transitionTime,
+                duration = self.transitionDuration,
+                time = 0,
+                from = self.transitionFrom,
+                to = self.current,
+            })
         elseif self.transitionDirection == -1 and self.transitionTime >= 1 then
             local activeState = getCurrentState(self)
             if activeState and activeState.onTransitionEnd then
@@ -146,10 +234,48 @@ function GameState:update(dt)
                 self.queuedState, self.queuedData = nil, nil
                 self:switch(queuedState, queuedData)
             end
+            context = updateTransitionContext(self, {
+                transitioning = false,
+                direction = self.transitionDirection,
+                progress = self.transitionTime,
+                duration = self.transitionDuration,
+                time = 0,
+                from = nil,
+                to = self.current,
+            })
+        else
+            local fromName, toName
+            if self.transitionDirection == 1 then
+                fromName = self.current
+                toName = self.next
+            else
+                fromName = self.transitionFrom
+                toName = self.current
+            end
+
+            context = updateTransitionContext(self, {
+                transitioning = true,
+                direction = self.transitionDirection,
+                progress = self.transitionTime,
+                duration = self.transitionDuration,
+                time = self.transitionTime * self.transitionDuration,
+                from = fromName,
+                to = toName,
+            })
         end
 
-        return callCurrentState(self, "transitionUpdate", dt, self.transitionDirection, self.transitionTime)
+        return callCurrentState(self, "transitionUpdate", dt, self.transitionDirection, self.transitionTime, context)
     end
+
+    updateTransitionContext(self, {
+        transitioning = false,
+        direction = 0,
+        progress = 1,
+        duration = self.transitionDuration,
+        time = 0,
+        from = nil,
+        to = self.current,
+    })
 
     return callCurrentState(self, "update", dt)
 end
@@ -157,19 +283,20 @@ end
 function GameState:draw()
     local handledTransitionDraw = false
     local skipOverlay = false
+    local context = self.transitionContext
 
     if self.transitioning then
-        local directionName = self.transitionDirection == 1 and "out" or "in"
+        local directionName = (context and context.directionName) or (self.transitionDirection == 1 and "out" or "in")
         local stateName = self.transitionDirection == 1 and self.transitionFrom or self.current
         local state = stateName and self.states[stateName]
 
         if state then
-            local progress = math.min(math.max(self.transitionTime, 0), 1)
-            local eased = easeInOutCubic(progress)
-            local alpha = getTransitionAlpha(progress, self.transitionDirection)
+            local progress = (context and context.progress) or math.min(math.max(self.transitionTime, 0), 1)
+            local eased = (context and context.eased) or easeInOutCubic(progress)
+            local alpha = (context and context.alpha) or getTransitionAlpha(progress, self.transitionDirection)
 
             if state.drawStateTransition then
-                local override = state:drawStateTransition(directionName, progress, eased, alpha)
+                local override = state:drawStateTransition(directionName, progress, eased, alpha, context)
 
                 if override ~= nil then
                     if type(override) == "table" then
@@ -215,7 +342,7 @@ function GameState:draw()
     if self.transitioning and not skipOverlay then
         local width = love.graphics.getWidth()
         local height = love.graphics.getHeight()
-        local alpha = getTransitionAlpha(self.transitionTime, self.transitionDirection)
+        local alpha = (context and context.alpha) or getTransitionAlpha(self.transitionTime, self.transitionDirection)
 
         love.graphics.setColor(0, 0, 0, alpha * 0.85)
         love.graphics.rectangle("fill", 0, 0, width, height)
@@ -227,6 +354,45 @@ function GameState:draw()
         love.graphics.setBlendMode("alpha")
         love.graphics.setColor(1, 1, 1, 1)
     end
+end
+
+function GameState:getTransitionContext()
+    if not self.transitionContext then
+        local fromName, toName
+        if self.transitionDirection == 1 then
+            fromName = self.current
+            toName = self.next
+        else
+            fromName = self.transitionFrom
+            toName = self.current
+        end
+
+        updateTransitionContext(self, {
+            transitioning = self.transitioning,
+            direction = self.transitionDirection,
+            progress = self.transitioning and self.transitionTime or 1,
+            duration = self.transitionDuration,
+            time = self.transitioning and (self.transitionTime * self.transitionDuration) or 0,
+            from = fromName,
+            to = toName,
+        })
+    end
+
+    return self.transitionContext
+end
+
+function GameState:isTransitioning()
+    return self.transitioning == true
+end
+
+function GameState:getTransitionProgress()
+    local context = self:getTransitionContext()
+    return context and context.progress or 1
+end
+
+function GameState:getTransitionAlpha()
+    local context = self:getTransitionContext()
+    return context and context.alpha or 0
 end
 
 function GameState:dispatch(eventName, ...)

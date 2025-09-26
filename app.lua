@@ -84,6 +84,7 @@ function App:forwardEvent(eventName, ...)
 end
 
 function App:update(dt)
+    Screen:update(dt)
     local action = GameState:update(dt)
     self:resolveAction(action)
     UI:update(dt)
