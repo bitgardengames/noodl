@@ -349,41 +349,17 @@ function GameState:draw()
             if not handledTransitionDraw and state.draw then
                 handledTransitionDraw = true
 
-                local width = love.graphics.getWidth()
-                local height = love.graphics.getHeight()
-                local scale, offsetY
+                local offsetY
 
                 if self.transitionDirection == 1 then
-                    scale = 1 - 0.05 * eased
                     offsetY = 24 * eased
                 else
                     local inv = 1 - eased
-                    scale = 1 + 0.05 * inv
                     offsetY = 32 * inv
                 end
 
                 love.graphics.push()
-                love.graphics.translate(width / 2, height / 2 + offsetY)
-                love.graphics.scale(scale, scale)
-                love.graphics.translate(-width / 2, -height / 2)
-
-                if scale < 1 then
-                    local fillColor = getTransitionFillColor(state, directionName, context)
-
-                    if fillColor then
-                        local r, g, b, a = unpackColor(fillColor)
-
-                        if r then
-                            local invScale = 1 / math.max(scale, 1e-4)
-                            local padX = (invScale - 1) * width * 0.5
-                            local padY = (invScale - 1) * height * 0.5
-
-                            love.graphics.setColor(r, g, b, a or 1)
-                            love.graphics.rectangle("fill", -padX, -padY, width + padX * 2, height + padY * 2)
-                            love.graphics.setColor(1, 1, 1, 1)
-                        end
-                    end
-                end
+                love.graphics.translate(0, offsetY)
 
                 state:draw()
                 love.graphics.pop()
