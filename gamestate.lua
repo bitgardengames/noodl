@@ -348,36 +348,7 @@ function GameState:draw()
 
             if not handledTransitionDraw and state.draw then
                 handledTransitionDraw = true
-
-                local width = love.graphics.getWidth()
-                local height = love.graphics.getHeight()
-                local centerX, centerY = width / 2, height / 2
-
-                local wobble = math.sin(progress * math.pi * 6) * 0.02
-                local scale
-                local rotation
-                local travel
-
-                if self.transitionDirection == 1 then
-                    scale = 1 + eased * 0.18 + wobble
-                    rotation = eased * 0.12
-                    travel = eased * 48
-                else
-                    local inv = 1 - eased
-                    scale = 0.88 + eased * 0.12 + wobble
-                    rotation = inv * -0.1
-                    travel = inv * -36
-                end
-
-                love.graphics.push()
-                love.graphics.translate(centerX, centerY + travel)
-                love.graphics.rotate(rotation)
-                love.graphics.scale(scale, scale)
-                love.graphics.translate(-centerX, -centerY)
-
                 state:draw()
-
-                love.graphics.pop()
             end
         end
     end
@@ -386,7 +357,7 @@ function GameState:draw()
         callCurrentState(self, "draw")
     end
 
-    -- Stylized overlay with state-driven accent colour and streaks
+    -- Simple eased fade overlay using the transition fill colour
     if self.transitioning and not skipOverlay then
         local width = love.graphics.getWidth()
         local height = love.graphics.getHeight()
@@ -404,26 +375,9 @@ function GameState:draw()
         local r, g, b, a = unpackColor(accentColor)
         r, g, b, a = r or 0.15, g or 0.08, b or 0.2, a or 1
 
-        love.graphics.setColor(r, g, b, alpha * 0.65)
+        love.graphics.setColor(r, g, b, alpha)
         love.graphics.rectangle("fill", 0, 0, width, height)
 
-        love.graphics.setBlendMode("add")
-
-        local pulse = 0.2 + 0.2 * math.sin((context and context.time or self.transitionTime) * math.pi * 2)
-        love.graphics.setColor(r, g, b, alpha * (0.3 + pulse))
-        local radius = math.sqrt(width * width + height * height) * (0.5 + 0.2 * alpha)
-        love.graphics.circle("fill", width / 2, height / 2, radius, 64)
-
-        love.graphics.setColor(1, 1, 1, alpha * 0.18)
-        local streakSpacing = 96
-        local streakWidth = 42 + 18 * alpha
-        local streakOffset = (context and context.time or self.transitionTime) * 240
-        for i = -2, math.ceil(width / streakSpacing) + 2 do
-            local x = (i * streakSpacing + streakOffset) % (width + streakSpacing) - streakSpacing
-            love.graphics.rectangle("fill", x, -32, streakWidth, height + 64)
-        end
-
-        love.graphics.setBlendMode("alpha")
         love.graphics.setColor(1, 1, 1, 1)
     end
 end
