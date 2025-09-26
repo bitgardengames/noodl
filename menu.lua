@@ -12,70 +12,6 @@ local Menu = {}
 local buttonList = ButtonList.new()
 local buttons = {}
 local t = 0
-local gridOffset = 0
-local backgroundGradient
-local gradientSize = { w = 0, h = 0 }
-local backgroundOrbs = {}
-local GRID_SPACING = 72
-
-local function colorWithAlpha(color, alpha)
-    return {
-        color[1],
-        color[2],
-        color[3],
-        (color[4] or 1) * alpha,
-    }
-end
-
-local function lighten(color, amount)
-    amount = math.min(math.max(amount or 0, 0), 1)
-    return {
-        color[1] + (1 - color[1]) * amount,
-        color[2] + (1 - color[2]) * amount,
-        color[3] + (1 - color[3]) * amount,
-        color[4] or 1,
-    }
-end
-
-local function rebuildGradient(sw, sh)
-    local topColor = lighten(Theme.buttonColor, 0.55)
-    topColor[4] = 0.65
-    local bottomColor = Theme.bgColor
-
-    backgroundGradient = love.graphics.newMesh({
-        {0, 0, 0, 0, topColor[1], topColor[2], topColor[3], topColor[4]},
-        {1, 0, 1, 0, topColor[1], topColor[2], topColor[3], topColor[4]},
-        {1, 1, 1, 1, bottomColor[1], bottomColor[2], bottomColor[3], bottomColor[4]},
-        {0, 1, 0, 1, bottomColor[1], bottomColor[2], bottomColor[3], bottomColor[4]},
-    }, "fan", "static")
-
-    gradientSize.w = sw
-    gradientSize.h = sh
-end
-
-local function refreshOrbs(sw, sh)
-    backgroundOrbs = {}
-    local count = 8 + math.floor(sw / 320)
-    local baseColor = lighten(Theme.buttonColor, 0.4)
-    baseColor[4] = 0.4
-
-    for i = 1, count do
-        backgroundOrbs[i] = {
-            x = love.math.random() * sw,
-            y = love.math.random() * sh,
-            radius = love.math.random(80, 140),
-            speed = love.math.random() * 0.3 + 0.25,
-            drift = love.math.random(12, 36),
-            phase = love.math.random() * math.pi * 2,
-            color = {
-                baseColor[1] + (love.math.random() - 0.5) * 0.1,
-                baseColor[2] + (love.math.random() - 0.5) * 0.1,
-                baseColor[3] + (love.math.random() - 0.5) * 0.1,
-                baseColor[4],
-            },
-        }
-    end
-end
 
 function Menu:enter()
     t = 0
@@ -85,9 +21,6 @@ function Menu:enter()
     Screen:update()
 
     local sw, sh = Screen:get()
-    rebuildGradient(sw, sh)
-    refreshOrbs(sw, sh)
-    gridOffset = 0
     local centerX = sw / 2
     local startY = sh / 2 - ((UI.spacing.buttonHeight + UI.spacing.buttonSpacing) * 2.5)
 
@@ -125,7 +58,6 @@ end
 
 function Menu:update(dt)
     t = t + dt
-    gridOffset = (gridOffset + dt * 22) % GRID_SPACING
 
     local mx, my = love.mouse.getPosition()
     buttonList:updateHover(mx, my)
@@ -149,41 +81,8 @@ end
 function Menu:draw()
     local sw, sh = Screen:get()
 
-    if not backgroundGradient or gradientSize.w ~= sw or gradientSize.h ~= sh then
-        rebuildGradient(sw, sh)
-        refreshOrbs(sw, sh)
-    end
-
     love.graphics.setColor(Theme.bgColor)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
-
-    if backgroundGradient then
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(backgroundGradient, 0, 0, 0, sw, sh)
-    end
-
-    local highlight = colorWithAlpha(Theme.highlightColor, 2.3)
-    love.graphics.setLineWidth(1)
-    love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-
-    local offset = gridOffset
-    for x = -GRID_SPACING, sw + GRID_SPACING, GRID_SPACING do
-        love.graphics.line(x + offset, 0, x + offset, sh)
-    end
-    for y = -GRID_SPACING, sh + GRID_SPACING, GRID_SPACING do
-        love.graphics.line(0, y + offset * 0.65, sw, y + offset * 0.65)
-    end
-
-    love.graphics.setBlendMode("add")
-    for _, orb in ipairs(backgroundOrbs) do
-        local wobbleX = math.cos((t * orb.speed) + orb.phase) * orb.drift
-        local wobbleY = math.sin((t * orb.speed * 0.6) + orb.phase) * orb.drift * 0.6
-        local alphaPulse = 0.4 + 0.3 * math.sin((t * orb.speed * 1.4) + orb.phase)
-        local orbColor = colorWithAlpha(orb.color, alphaPulse)
-        love.graphics.setColor(orbColor[1], orbColor[2], orbColor[3], orbColor[4])
-        love.graphics.circle("fill", orb.x + wobbleX, orb.y + wobbleY, orb.radius)
-    end
-    love.graphics.setBlendMode("alpha")
 
     local cellSize = 20
     local word = Localization:get("menu.title_word")
@@ -193,14 +92,6 @@ function Menu:draw()
     local oy = sh * 0.2
 
     local trail = drawWord(word, ox, oy, cellSize, spacing)
-
-    local tagline = Localization:get("menu.tagline")
-    if tagline and tagline ~= "menu.tagline" then
-        local taglineColor = colorWithAlpha(Theme.textColor, 0.75)
-        love.graphics.setFont(UI.fonts.body)
-        love.graphics.setColor(taglineColor[1], taglineColor[2], taglineColor[3], taglineColor[4])
-        love.graphics.printf(tagline, 0, oy + cellSize * 2.2, sw, "center")
-    end
 
     if trail and #trail > 0 then
         local head = trail[#trail]
@@ -230,8 +121,7 @@ function Menu:draw()
     end
 
     love.graphics.setFont(UI.fonts.small)
-    local versionColor = colorWithAlpha(Theme.textColor, 0.6)
-    love.graphics.setColor(versionColor[1], versionColor[2], versionColor[3], versionColor[4])
+    love.graphics.setColor(Theme.textColor)
     love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
 end
 
