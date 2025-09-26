@@ -348,6 +348,45 @@ function Game:handleDeath(dt)
         end
 end
 
+local function drawPlayfieldLayers(self, stateOverride)
+        local renderState = stateOverride or self.state
+
+        Arena:drawBackground()
+        Death:applyShake()
+
+        Fruit:draw()
+        Rocks:draw()
+        Saws:draw()
+        Arena:drawExit()
+
+        if renderState == "descending" then
+                self:drawDescending()
+        elseif renderState == "dying" then
+                Death:draw()
+        elseif renderState ~= "gameover" then
+                Snake:draw()
+        end
+
+        Particles:draw()
+        Popup:draw()
+        Arena:drawBorder()
+end
+
+local function drawInterfaceLayers(self)
+        FloatingText:draw()
+
+        drawAdrenalineGlow(self)
+
+        Death:drawFlash(self.screenWidth, self.screenHeight)
+        PauseMenu:draw(self.screenWidth, self.screenHeight)
+        UI:draw()
+        Achievements:draw()
+
+        if self.mode and self.mode.draw then
+                self.mode.draw(self, self.screenWidth, self.screenHeight)
+        end
+end
+
 function Game:drawTransition()
         if self.transitionPhase == "fadeout" then
                 local progress = easedProgress(self.transitionTimer, self.transitionDuration)
@@ -495,15 +534,23 @@ function Game:drawTransition()
                 local alpha = 1 - progress
                 local scale = 1 + 0.03 * alpha
                 local yOffset = alpha * 20
+
                 love.graphics.push()
                 love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 + yOffset)
                 love.graphics.scale(scale, scale)
                 love.graphics.translate(-self.screenWidth / 2, -self.screenHeight / 2)
-                love.graphics.setColor(Theme.bgColor)
-                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                drawPlayfieldLayers(self, "playing")
                 love.graphics.pop()
+
+                drawInterfaceLayers(self)
+
                 love.graphics.setColor(0, 0, 0, alpha * 0.85)
                 love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                love.graphics.setBlendMode("add")
+                love.graphics.setColor(1, 1, 1, alpha * 0.2)
+                local radius = math.sqrt(self.screenWidth * self.screenWidth + self.screenHeight * self.screenHeight) * 0.75
+                love.graphics.circle("fill", self.screenWidth / 2, self.screenHeight / 2, radius, 64)
+                love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(1, 1, 1, 1)
         end
 end
@@ -699,37 +746,8 @@ function Game:draw()
                 return
         end
 
-        Arena:drawBackground()
-        Death:applyShake()
-
-        Fruit:draw()
-        Rocks:draw()
-        Saws:draw()
-        Arena:drawExit()
-
-        if self.state == "descending" then
-                self:drawDescending()
-        elseif self.state == "dying" then
-                Death:draw()
-        elseif self.state ~= "gameover" then
-                Snake:draw()
-        end
-
-        Particles:draw()
-        Popup:draw()
-        Arena:drawBorder()
-        FloatingText:draw()
-
-        drawAdrenalineGlow(self)
-
-        Death:drawFlash(self.screenWidth, self.screenHeight)
-        PauseMenu:draw(self.screenWidth, self.screenHeight)
-        UI:draw()
-        Achievements:draw()
-
-        if self.mode and self.mode.draw then
-                self.mode.draw(self, self.screenWidth, self.screenHeight)
-        end
+        drawPlayfieldLayers(self)
+        drawInterfaceLayers(self)
 end
 
 function Game:keypressed(key)
