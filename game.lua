@@ -508,6 +508,24 @@ function Game:drawTransition()
         end
 end
 
+function Game:drawStateTransition(direction, progress, eased, alpha)
+        local isFloorTransition = (self.state == "transition")
+
+        if direction == "out" and not isFloorTransition then
+                return nil
+        end
+
+        self:draw()
+
+        love.graphics.setColor(1, 1, 1, 1)
+
+        if isFloorTransition then
+                return { skipOverlay = true }
+        end
+
+        return true
+end
+
 function Game:drawDescending()
         if not self.hole then
                 Snake:draw()
