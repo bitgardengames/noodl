@@ -3,54 +3,6 @@ local Upgrades = require("upgrades")
 
 local Shop = {}
 
-local function getLastUpgradeName()
-    if not Upgrades.getRunState then return nil end
-    local state = Upgrades:getRunState()
-    if not state or not state.takenOrder then return nil end
-    local lastId = state.takenOrder[#state.takenOrder]
-    if not lastId then return nil end
-    if Upgrades.getUpgradeById then
-        local upgrade = Upgrades:getUpgradeById(lastId)
-        if upgrade and upgrade.name then
-            return upgrade.name
-        end
-    end
-    return nil
-end
-
-local function buildFlavor(floor, extraChoices)
-    local lines = {}
-    local last = getLastUpgradeName()
-    if last then
-        table.insert(lines, string.format("That %s is still humming on you.", last))
-    end
-    if extraChoices and extraChoices > 0 then
-        table.insert(lines, "I smuggled an extra relic from the caravans for you.")
-    end
-    if floor and floor >= 5 then
-        table.insert(lines, "Depth bites harder down here—carry something brave.")
-    end
-
-    local fallback = {
-        "Browse awhile. The dungeon never minds a short delay.",
-        "Relics for scales, friend. Pick the one that sings to you.",
-        "Listen—the stones hum louder the deeper we trade.",
-    }
-    for _, line in ipairs(fallback) do
-        table.insert(lines, line)
-    end
-
-    local chosen = lines[love.math.random(#lines)]
-    local subline
-    if extraChoices and extraChoices > 0 then
-        subline = string.format("Choices on the table: %d", 3 + extraChoices)
-    elseif floor then
-        subline = string.format("Depth %d wares", floor)
-    end
-
-    return chosen, subline
-end
-
 function Shop:start(currentFloor)
     self.floor = currentFloor or 1
     local extraChoices = 0
@@ -63,7 +15,8 @@ function Shop:start(currentFloor)
     self.cards = Upgrades:getRandom(cardCount, { floor = self.floor }) or {}
     self.selected = nil
     self.selectedIndex = nil
-    self.shopkeeperLine, self.shopkeeperSubline = buildFlavor(self.floor, extraChoices)
+    self.shopkeeperLine = nil
+    self.shopkeeperSubline = nil
     self.cardStates = {}
     self.time = 0
     self.selectionProgress = 0
