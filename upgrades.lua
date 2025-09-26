@@ -231,13 +231,94 @@ local pool = {
     register({
         id = "tail_trainer",
         name = "Tail Trainer",
-        desc = "Gain an extra segment each time you grow.",
+        desc = "Gain an extra segment each time you grow and move 4% faster.",
         rarity = "common",
         allowDuplicates = true,
         maxStacks = 3,
+        tags = {"speed"},
         onAcquire = function(state)
             Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
+            Snake:addSpeedMultiplier(1.04)
         end,
+    }),
+    register({
+        id = "pocket_springs",
+        name = "Pocket Springs",
+        desc = "Every 4 fruits forge a crash shield charge.",
+        rarity = "common",
+        tags = {"defense"},
+        onAcquire = function(state)
+            state.counters.pocketSprings = state.counters.pocketSprings or 0
+        end,
+        handlers = {
+            fruitCollected = function(data, state)
+                state.counters.pocketSprings = (state.counters.pocketSprings or 0) + 1
+                if state.counters.pocketSprings >= 4 then
+                    state.counters.pocketSprings = state.counters.pocketSprings - 4
+                    Snake:addCrashShields(1)
+                    local fx, fy = getEventPosition(data)
+                    if FloatingText and fx and fy then
+                        FloatingText:add("Pocket Springs", fx, fy - 44, {0.65, 0.92, 1, 1}, 1.0, 52)
+                    end
+                    if Particles and fx and fy then
+                        Particles:spawnBurst(fx, fy, {
+                            count = 10,
+                            speed = 95,
+                            life = 0.5,
+                            size = 4,
+                            color = {0.6, 0.9, 1, 1},
+                            spread = math.pi * 2,
+                        })
+                    end
+                end
+            end,
+        },
+    }),
+    register({
+        id = "mapmakers_compass",
+        name = "Mapmaker's Compass",
+        desc = "Exit unlocks one fruit earlier but rocks spawn 15% more often.",
+        rarity = "uncommon",
+        tags = {"economy", "risk"},
+        onAcquire = function(state)
+            state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
+            state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
+            if UI.adjustFruitGoal then
+                UI:adjustFruitGoal(-1)
+            end
+        end,
+    }),
+    register({
+        id = "twilight_parade",
+        name = "Twilight Parade",
+        desc = "Fruit at 4+ combo grant +2 bonus score and stall saws 0.8s.",
+        rarity = "uncommon",
+        tags = {"combo", "defense", "economy"},
+        handlers = {
+            fruitCollected = function(data)
+                if not data or (data.combo or 0) < 4 then return end
+                if Score.addBonus then
+                    Score:addBonus(2)
+                end
+                if Saws and Saws.stall then
+                    Saws:stall(0.8)
+                end
+                local fx, fy = getEventPosition(data)
+                if FloatingText and fx and fy then
+                    FloatingText:add("Twilight Parade +2", fx, fy - 40, {0.85, 0.8, 1, 1}, 1.1, 52)
+                end
+                if Particles and fx and fy then
+                    Particles:spawnBurst(fx, fy, {
+                        count = 14,
+                        speed = 110,
+                        life = 0.55,
+                        size = 4,
+                        color = {0.78, 0.72, 1, 1},
+                        spread = math.pi * 2,
+                    })
+                end
+            end,
+        },
     }),
     register({
         id = "lucky_bite",
