@@ -2,7 +2,6 @@ local Snake = require("snake")
 local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Saws = require("saws")
-local Presses = require("presses")
 local Arena = require("arena")
 local Particles = require("particles")
 
@@ -155,27 +154,6 @@ function Movement:update(dt)
                         end
                 else
                         return "dead", "saw"
-                end
-        end
-
-        local pressHit = Presses:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
-
-        if pressHit then
-                if Snake:consumeCrashShield() then
-                        Particles:spawnBurst(headX, headY + SEGMENT_SIZE / 2, {
-                                count = 10,
-                                speed = 55,
-                                life = 0.35,
-                                size = 3,
-                                color = {0.8, 0.75, 0.7, 1},
-                                gravity = 220,
-                        })
-                        Presses:bounce(pressHit)
-                        if Snake.onShieldConsumed then
-                                Snake:onShieldConsumed(headX, headY, "press")
-                        end
-                else
-                        return "dead", "press"
                 end
         end
 
