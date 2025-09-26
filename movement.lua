@@ -4,6 +4,7 @@ local Rocks = require("rocks")
 local Saws = require("saws")
 local Arena = require("arena")
 local Particles = require("particles")
+local Boss = require("boss")
 
 local Movement = {}
 
@@ -157,9 +158,25 @@ function Movement:update(dt)
                 end
         end
 
-	if Fruit:checkCollisionWith(headX, headY) then
-		return "scored"
-	end
+        if Boss:isActive() or Boss:isDefeated() then
+                local hazard = Boss:checkCollision(headX, headY, SEGMENT_SIZE)
+                if hazard == "core" then
+                        Boss:onCoreEntered(headX, headY)
+                elseif hazard == "ring" or hazard == "pulse" then
+                        if Snake:consumeCrashShield() then
+                                Boss:onShieldBlocked(headX, headY)
+                                if Snake.onShieldConsumed then
+                                        Snake:onShieldConsumed(headX, headY, "boss")
+                                end
+                        else
+                                return "dead", "boss"
+                        end
+                end
+        end
+
+        if Fruit:checkCollisionWith(headX, headY) then
+                return "scored"
+        end
 end
 
 return Movement
