@@ -145,7 +145,6 @@ function Game:load()
         self:startFloorIntro(3.5, {
                 transitionAdvance = false,
                 transitionFloorData = Floors[self.floor] or Floors[1],
-                transitionResumePhase = "play",
         })
 end
 
@@ -435,21 +434,30 @@ function Game:drawTransition()
                 local data = self.transitionFloorData or self.currentFloorData
                 if data then
                         local timer = self.transitionTimer or 0
-                        local progress = easedProgress(timer, self.transitionDuration)
+                        local duration = self.transitionDuration or 0
+                        local progress = easedProgress(timer, duration)
+                        local outroDuration = math.min(0.6, duration > 0 and duration * 0.5 or 0)
+                        local outroProgress = 0
+                        if outroDuration > 0 then
+                                local outroStart = math.max(0, duration - outroDuration)
+                                outroProgress = clamp01((timer - outroStart) / outroDuration)
+                        end
+                        local outroAlpha = 1 - outroProgress
 
-                        love.graphics.setColor(0, 0, 0, math.min(0.75, progress * 0.85))
+                        love.graphics.setColor(0, 0, 0, math.min(0.75, progress * 0.85) * outroAlpha)
                         love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
                         love.graphics.setColor(1, 1, 1, 1)
 
-                        local function fadeAlpha(delay, duration)
-                                return progress * clamp01((timer - delay) / (duration or 0.35))
+                        local function fadeAlpha(delay, fadeDuration)
+                                local alpha = progress * clamp01((timer - delay) / (fadeDuration or 0.35))
+                                return alpha * outroAlpha
                         end
 
                         local nameAlpha = fadeAlpha(0.0, 0.45)
                         if nameAlpha > 0 then
                                 local titleProgress = easeOutBack(clamp01((timer - 0.1) / 0.6))
                                 local titleScale = 0.9 + 0.1 * titleProgress
-                                local yOffset = (1 - titleProgress) * 36
+                                local yOffset = (1 - titleProgress) * 36 * outroAlpha
                                 love.graphics.setFont(UI.fonts.title)
                                 love.graphics.setColor(1, 1, 1, nameAlpha)
                                 love.graphics.push()
@@ -464,7 +472,7 @@ function Game:drawTransition()
                                 local flavorAlpha = fadeAlpha(0.45, 0.4)
                                 if flavorAlpha > 0 then
                                         local flavorProgress = easeOutExpo(clamp01((timer - 0.45) / 0.65))
-                                        local flavorOffset = (1 - flavorProgress) * 24
+                                        local flavorOffset = (1 - flavorProgress) * 24 * outroAlpha
                                         love.graphics.setFont(UI.fonts.button)
                                         love.graphics.setColor(1, 1, 1, flavorAlpha)
                                         love.graphics.push()
@@ -499,7 +507,7 @@ function Game:drawTransition()
                                 for _, entry in ipairs(entries) do
                                         index = index + 1
                                         local traitAlpha = fadeAlpha(0.9 + (index - 1) * 0.25, 0.45)
-                                        local traitOffset = (1 - easeOutExpo(clamp01((timer - (0.9 + (index - 1) * 0.25)) / 0.6))) * 18
+                                        local traitOffset = (1 - easeOutExpo(clamp01((timer - (0.9 + (index - 1) * 0.25)) / 0.6))) * 18 * outroAlpha
 
                                         if entry.type == "header" then
                                                 local headerHeight = UI.fonts.button:getHeight() + 6
