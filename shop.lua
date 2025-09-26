@@ -238,7 +238,12 @@ function Shop:draw(screenW, screenH)
             local eased = progress * progress * (3 - 2 * progress)
             alpha = eased
             yOffset = (1 - eased) * 48
-            scale = 0.94 + 0.06 * eased
+
+            -- Start cards a touch smaller and ease them up to full size so
+            -- the reveal animation feels like a gentle pop rather than a flat fade.
+            local appearScaleMin = 0.94
+            local appearScaleMax = 1.0
+            scale = appearScaleMin + (appearScaleMax - appearScaleMin) * eased
 
             local selection = state.selection or 0
             if selection > 0 then
