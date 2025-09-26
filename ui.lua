@@ -273,8 +273,10 @@ function UI:drawFloorModifiers()
     local lineHeight = UI.fonts.body:getHeight()
     local spacing = 12
     local wrapWidth = width - 32
+    local topPadding = 20
+    local bottomPadding = 28
 
-    local totalHeight = 16
+    local totalHeight = topPadding + bottomPadding
     local measuredSections = {}
     UI.setFont("body")
 
@@ -305,11 +307,11 @@ function UI:drawFloorModifiers()
     love.graphics.setColor(Theme.panelColor)
     love.graphics.rectangle("fill", x, y, width, height, 12, 12)
 
-    love.graphics.setColor(Theme.panelBorder)
+    love.graphics.setColor(0, 0, 0, 1)
     love.graphics.setLineWidth(3)
     love.graphics.rectangle("line", x, y, width, height, 12, 12)
 
-    local textY = y + 16
+    local textY = y + topPadding
     for sectionIndex, section in ipairs(measuredSections) do
         love.graphics.setColor(Theme.textColor)
         UI.setFont("button")
