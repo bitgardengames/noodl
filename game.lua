@@ -23,6 +23,7 @@ local FloorTraits = require("floortraits")
 local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
+local Presses = require("presses")
 local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
@@ -326,6 +327,7 @@ function Game:updateEntities(dt)
         Popup:update(dt)
         Fruit:update(dt)
         Rocks:update(dt)
+        Presses:update(dt)
         Saws:update(dt)
         Arena:update(dt)
         Particles:update(dt)
@@ -355,6 +357,7 @@ local function drawPlayfieldLayers(self, stateOverride)
 
         Fruit:draw()
         Rocks:draw()
+        Presses:draw()
         Saws:draw()
         Arena:drawExit()
 
@@ -698,6 +701,7 @@ function Game:setupFloor(floorNum)
     Particles:reset()
     Rocks:reset()
     Saws:reset()
+    Presses:reset()
     SnakeUtils.initOccupancy()
 
     for _, seg in ipairs(Snake:getSegments()) do
@@ -711,6 +715,7 @@ function Game:setupFloor(floorNum)
         fruitGoal = floorNum * 5,
         rocks = math.min(3 + floorNum * 2, 40),
         saws = math.min(math.floor(floorNum / 2), 8),
+        presses = math.min(math.floor((floorNum + 1) / 4), 5),
     }
 
     local adjustedContext, appliedTraits = FloorTraits:apply(self.currentFloorData.traits, traitContext)
@@ -728,6 +733,7 @@ function Game:setupFloor(floorNum)
 
     local numRocks = traitContext.rocks
     local numSaws = traitContext.saws
+    local numPresses = traitContext.presses or 0
     local safeZone = Snake:getSafeZone(3)
 
     -- Spawn saws FIRST so they reserve their track cells
@@ -757,6 +763,14 @@ function Game:setupFloor(floorNum)
 			SnakeUtils.occupySawTrack(fx, fy, "vertical", r, TRACK_LENGTH, side)
 		end
 	end
+
+    -- Spawn hydraulic presses before rocks so floor hazards reserve their tiles
+        for i = 1, numPresses do
+                local fx, fy, col, row = SnakeUtils.getSafeSpawn(Snake:getSegments(), nil, Rocks, safeZone)
+                if fx then
+                        Presses:spawn(fx, fy, { col = col, row = row })
+                end
+        end
 
     -- Now spawn rocks
     for i = 1, numRocks do
