@@ -28,7 +28,6 @@ local Floors = require("floors")
 local Shop = require("shop")
 local Upgrades = require("upgrades")
 local FruitWallet = require("fruitwallet")
-local Boss = require("boss")
 
 local Game = {}
 local TRACK_LENGTH = 120
@@ -310,7 +309,7 @@ function Game:updateGameplay(dt)
                 FruitEvents.handleConsumption(fruitX, fruitY)
 
                 if UI:isGoalReached() then
-                        self:onFloorGoalReached()
+                        Arena:spawnExit()
                 end
         end
 
@@ -323,25 +322,12 @@ function Game:updateGameplay(dt)
         end
 end
 
-function Game:onFloorGoalReached()
-        if Boss:requiresEncounter() then
-                if not Boss:hasEncounterStarted() and not Boss:isDefeated() then
-                        Boss:startEncounter({ floor = self.floor, screenWidth = self.screenWidth, screenHeight = self.screenHeight })
-                elseif Boss:isDefeated() then
-                        Arena:spawnExit()
-                end
-        else
-                Arena:spawnExit()
-        end
-end
-
 function Game:updateEntities(dt)
         Face:update(dt)
         Popup:update(dt)
         Fruit:update(dt)
         Rocks:update(dt)
         Saws:update(dt)
-        Boss:update(dt)
         Arena:update(dt)
         Particles:update(dt)
         Achievements:update(dt)
@@ -596,7 +582,6 @@ function Game:setupFloor(floorNum)
     Particles:reset()
     Rocks:reset()
     Saws:reset()
-    Boss:prepareFloor(floorNum)
     SnakeUtils.initOccupancy()
 
     for _, seg in ipairs(Snake:getSegments()) do
@@ -689,7 +674,6 @@ function Game:draw()
         Fruit:draw()
         Rocks:draw()
         Saws:draw()
-        Boss:draw()
         Arena:drawExit()
 
         if self.state == "descending" then
