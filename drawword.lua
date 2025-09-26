@@ -53,8 +53,9 @@ local function drawWord(word, ox, oy, cellSize, spacing)
         table.insert(letterTrail, {x = x + pt[1] * cellSize, y = oy + pt[2] * cellSize})
       end
 
-      local showFace = (drawnLetters == letterCount)
-      drawSnake(letterTrail, #letterTrail, cellSize, nil, nil, nil, nil, nil, showFace)
+      -- The menu draws the face manually so it sits at the end of the word.
+      -- Disable the built-in face rendering here to avoid double faces.
+      drawSnake(letterTrail, #letterTrail, cellSize, nil, nil, nil, nil, nil, false)
 
       for _, p in ipairs(letterTrail) do table.insert(fullTrail, p) end
 
