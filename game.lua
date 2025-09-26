@@ -489,49 +489,75 @@ function Game:drawTransition()
                         local sections = self.transitionTraits or buildModifierSections(self)
                         if sections and #sections > 0 then
                                 local entries = {}
+                                local maxTraits = 4
+                                local totalTraits = 0
+                                local shownTraits = 0
+
                                 for _, section in ipairs(sections) do
                                         if section.items and #section.items > 0 then
-                                                table.insert(entries, { type = "header", title = section.title or "Traits" })
+                                                local visible = {}
                                                 for _, trait in ipairs(section.items) do
-                                                        table.insert(entries, {
-                                                                type = "trait",
-                                                                title = section.title,
-                                                                name = trait.name,
-                                                                desc = trait.desc,
-                                                        })
+                                                        totalTraits = totalTraits + 1
+                                                        if shownTraits < maxTraits then
+                                                                table.insert(visible, trait)
+                                                                shownTraits = shownTraits + 1
+                                                        end
+                                                end
+
+                                                if #visible > 0 then
+                                                        table.insert(entries, { type = "header", title = section.title or "Traits" })
+                                                        for _, trait in ipairs(visible) do
+                                                                table.insert(entries, {
+                                                                        type = "trait",
+                                                                        name = trait.name,
+                                                                })
+                                                        end
                                                 end
                                         end
                                 end
 
+                                local remaining = math.max(0, totalTraits - shownTraits)
+                                if remaining > 0 then
+                                        table.insert(entries, {
+                                                type = "note",
+                                                text = string.format("+%d more modifier%s", remaining, remaining == 1 and "" or "s"),
+                                        })
+                                end
+
                                 local y = self.screenHeight / 2 + 64
-                                local width = self.screenWidth * 0.6
-                                local x = self.screenWidth * 0.2
+                                local width = self.screenWidth * 0.45
+                                local x = (self.screenWidth - width) / 2
                                 local index = 0
 
                                 for _, entry in ipairs(entries) do
                                         index = index + 1
-                                        local traitAlpha = fadeAlpha(0.9 + (index - 1) * 0.25, 0.45)
-                                        local traitOffset = (1 - easeOutExpo(clamp01((timer - (0.9 + (index - 1) * 0.25)) / 0.6))) * 18 * outroAlpha
+                                        local traitAlpha = fadeAlpha(0.9 + (index - 1) * 0.22, 0.4)
+                                        local traitOffset = (1 - easeOutExpo(clamp01((timer - (0.9 + (index - 1) * 0.22)) / 0.55))) * 16 * outroAlpha
 
                                         if entry.type == "header" then
-                                                local headerHeight = UI.fonts.button:getHeight() + 6
+                                                local headerHeight = UI.fonts.button:getHeight() + 4
                                                 if traitAlpha > 0 then
                                                         love.graphics.setFont(UI.fonts.button)
                                                         love.graphics.setColor(1, 1, 1, traitAlpha)
                                                         love.graphics.printf(entry.title or "Traits", x, y + traitOffset, width, "center")
                                                 end
                                                 y = y + headerHeight
-                                        else
-                                                local text = (entry.name or "") .. ": " .. (entry.desc or "")
-                                                local _, wrapped = UI.fonts.body:getWrap(text, width)
-                                                local lines = math.max(1, #wrapped)
-                                                local blockHeight = lines * UI.fonts.body:getHeight() + 18
+                                        elseif entry.type == "trait" then
+                                                local lineHeight = UI.fonts.button:getHeight()
+                                                if traitAlpha > 0 then
+                                                        love.graphics.setFont(UI.fonts.button)
+                                                        love.graphics.setColor(1, 1, 1, traitAlpha)
+                                                        love.graphics.printf("• " .. (entry.name or ""), x, y + traitOffset, width, "center")
+                                                end
+                                                y = y + lineHeight + 6
+                                        elseif entry.type == "note" then
+                                                local noteHeight = UI.fonts.body:getHeight()
                                                 if traitAlpha > 0 then
                                                         love.graphics.setFont(UI.fonts.body)
                                                         love.graphics.setColor(1, 1, 1, traitAlpha)
-                                                        love.graphics.printf(text, x, y + traitOffset, width, "center")
+                                                        love.graphics.printf(entry.text or "", x, y + traitOffset, width, "center")
                                                 end
-                                                y = y + blockHeight
+                                                y = y + noteHeight
                                         end
                                 end
                         end
