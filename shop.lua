@@ -227,7 +227,7 @@ function Shop:draw(screenW, screenH)
 
     local mx, my = love.mouse.getPosition()
 
-    for i, card in ipairs(self.cards) do
+    local function renderCard(i, card)
         local baseX = startX + (i - 1) * (cardWidth + spacing)
         local alpha = 1
         local scale = 1
@@ -323,6 +323,19 @@ function Shop:draw(screenW, screenH)
             love.graphics.circle("fill", centerX, centerY, burstRadius)
             love.graphics.setColor(1, 1, 1, 1)
         end
+    end
+
+    local selectedIndex
+    for i, card in ipairs(self.cards) do
+        if card == self.selected then
+            selectedIndex = i
+        else
+            renderCard(i, card)
+        end
+    end
+
+    if selectedIndex then
+        renderCard(selectedIndex, self.cards[selectedIndex])
     end
 
     love.graphics.setFont(UI.fonts.small)
