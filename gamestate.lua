@@ -156,35 +156,54 @@ end
 
 function GameState:draw()
     local handledTransitionDraw = false
+    local skipOverlay = false
 
     if self.transitioning then
+        local directionName = self.transitionDirection == 1 and "out" or "in"
         local stateName = self.transitionDirection == 1 and self.transitionFrom or self.current
         local state = stateName and self.states[stateName]
 
-        if state and state.draw then
-            handledTransitionDraw = true
-
-            local width = love.graphics.getWidth()
-            local height = love.graphics.getHeight()
+        if state then
             local progress = math.min(math.max(self.transitionTime, 0), 1)
             local eased = easeInOutCubic(progress)
-            local scale, offsetY
+            local alpha = getTransitionAlpha(progress, self.transitionDirection)
 
-            if self.transitionDirection == 1 then
-                scale = 1 - 0.05 * eased
-                offsetY = 24 * eased
-            else
-                local inv = 1 - eased
-                scale = 1 + 0.05 * inv
-                offsetY = 32 * inv
+            if state.drawStateTransition then
+                local override = state:drawStateTransition(directionName, progress, eased, alpha)
+
+                if override ~= nil then
+                    if type(override) == "table" then
+                        skipOverlay = override.skipOverlay == true
+                        handledTransitionDraw = override.handled ~= false
+                    else
+                        handledTransitionDraw = override and true or false
+                    end
+                end
             end
 
-            love.graphics.push()
-            love.graphics.translate(width / 2, height / 2 + offsetY)
-            love.graphics.scale(scale, scale)
-            love.graphics.translate(-width / 2, -height / 2)
-            state:draw()
-            love.graphics.pop()
+            if not handledTransitionDraw and state.draw then
+                handledTransitionDraw = true
+
+                local width = love.graphics.getWidth()
+                local height = love.graphics.getHeight()
+                local scale, offsetY
+
+                if self.transitionDirection == 1 then
+                    scale = 1 - 0.05 * eased
+                    offsetY = 24 * eased
+                else
+                    local inv = 1 - eased
+                    scale = 1 + 0.05 * inv
+                    offsetY = 32 * inv
+                end
+
+                love.graphics.push()
+                love.graphics.translate(width / 2, height / 2 + offsetY)
+                love.graphics.scale(scale, scale)
+                love.graphics.translate(-width / 2, -height / 2)
+                state:draw()
+                love.graphics.pop()
+            end
         end
     end
 
@@ -193,7 +212,7 @@ function GameState:draw()
     end
 
     -- Fade overlay with easing and subtle bloom
-    if self.transitioning then
+    if self.transitioning and not skipOverlay then
         local width = love.graphics.getWidth()
         local height = love.graphics.getHeight()
         local alpha = getTransitionAlpha(self.transitionTime, self.transitionDirection)
