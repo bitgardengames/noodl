@@ -78,6 +78,56 @@ local function getEventPosition(data)
     return nil, nil
 end
 
+local function celebrateUpgrade(label, data, options)
+    options = options or {}
+
+    local fx = options.x
+    local fy = options.y
+    if not fx or not fy then
+        fx, fy = getEventPosition(data)
+    end
+
+    if fx and fy and label and not options.skipText and FloatingText then
+        local textColor = options.textColor or options.color or {1, 1, 1, 1}
+        local textOffset = options.textOffset or 44
+        local textScale = options.textScale or 1.05
+        local textLife = options.textLife or 56
+        FloatingText:add(label, fx, fy - textOffset, textColor, textScale, textLife)
+    end
+
+    if fx and fy and not options.skipParticles and Particles then
+        local particleOptions
+        if options.particles then
+            particleOptions = deepcopy(options.particles)
+        else
+            particleOptions = {
+                count = options.particleCount or 12,
+                speed = options.particleSpeed or 110,
+                life = options.particleLife or 0.45,
+                size = options.particleSize or 4,
+                spread = options.particleSpread or math.pi * 2,
+                angleJitter = options.particleAngleJitter,
+                speedVariance = options.particleSpeedVariance,
+                scaleMin = options.particleScaleMin,
+                scaleVariance = options.particleScaleVariance,
+                drag = options.particleDrag,
+                gravity = options.particleGravity,
+                fadeTo = options.particleFadeTo,
+            }
+        end
+
+        particleOptions = particleOptions or {}
+        if particleOptions.count == nil then
+            particleOptions.count = 12
+        end
+        if particleOptions.color == nil then
+            particleOptions.color = options.particleColor or options.color
+        end
+
+        Particles:spawnBurst(fx, fy, particleOptions)
+    end
+end
+
 local function stoneSkinShieldHandler(data, state)
     if not state then return end
     if (state.takenSet and (state.takenSet["stone_skin"] or 0) <= 0) then return end
@@ -85,6 +135,16 @@ local function stoneSkinShieldHandler(data, state)
     if not Rocks or not Rocks.shatterNearest then return end
 
     local fx, fy = getEventPosition(data)
+    celebrateUpgrade("Stone Skin!", nil, {
+        x = fx,
+        y = fy,
+        color = {0.75, 0.82, 0.88, 1},
+        particleCount = 16,
+        particleSpeed = 100,
+        particleLife = 0.42,
+        textOffset = 52,
+        textScale = 1.08,
+    })
     Rocks:shatterNearest(fx or 0, fy or 0, 1)
 end
 
@@ -120,6 +180,50 @@ local pool = {
         maxStacks = 4,
         onAcquire = function(state)
             Snake:addSpeedMultiplier(1.10)
+            celebrateUpgrade("Quick Fangs", nil, {
+                color = {1, 0.63, 0.42, 1},
+                particleCount = 18,
+                particleSpeed = 150,
+                particleLife = 0.38,
+                textOffset = 46,
+                textScale = 1.18,
+            })
+            if not state.counters.quickFangsHandlerRegistered then
+                state.counters.quickFangsHandlerRegistered = true
+                Upgrades:addEventHandler("fruitCollected", function(data, runState)
+                    local fx, fy = getEventPosition(data)
+                    if not fx or not fy then return end
+
+                    local stacks = (runState.takenSet and runState.takenSet.quick_fangs) or 1
+                    if Particles then
+                        Particles:spawnBurst(fx, fy, {
+                            count = math.min(6 + stacks * 3, 24),
+                            speed = 140 + stacks * 12,
+                            life = 0.32,
+                            size = 3,
+                            color = {1, 0.55, 0.35, 1},
+                            spread = math.pi * 1.2,
+                            angleJitter = 0.4,
+                            speedVariance = 50,
+                        })
+                    end
+
+                    runState.counters.quickFangsCombo = (runState.counters.quickFangsCombo or 0) + 1
+                    local threshold = math.max(1, 4 - stacks)
+                    if runState.counters.quickFangsCombo >= threshold then
+                        runState.counters.quickFangsCombo = 0
+                        celebrateUpgrade("Fang Rush", nil, {
+                            x = fx,
+                            y = fy,
+                            color = {1, 0.7, 0.45, 1},
+                            skipParticles = true,
+                            textOffset = 36,
+                            textScale = 1 + 0.02 * stacks,
+                            textLife = 48,
+                        })
+                    end
+                end)
+            end
         end,
     }),
     register({
@@ -138,6 +242,14 @@ local pool = {
                 state.counters.stoneSkinHandlerRegistered = true
                 Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
             end
+            celebrateUpgrade("Stone Skin", nil, {
+                color = {0.75, 0.82, 0.88, 1},
+                particleCount = 14,
+                particleSpeed = 90,
+                particleLife = 0.45,
+                textOffset = 50,
+                textScale = 1.12,
+            })
         end,
     }),
     register({
@@ -180,6 +292,14 @@ local pool = {
         rarity = "common",
         onAcquire = function(state)
             state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.8
+            celebrateUpgrade("Saw Grease", nil, {
+                color = {0.96, 0.78, 0.4, 1},
+                particleCount = 12,
+                particleSpeed = 80,
+                particleLife = 0.4,
+                textOffset = 40,
+                textScale = 1.08,
+            })
         end,
     }),
     register({
@@ -192,6 +312,14 @@ local pool = {
             if UI.adjustFruitGoal then
                 UI:adjustFruitGoal(-1)
             end
+            celebrateUpgrade("Early Exit", nil, {
+                color = {1, 0.86, 0.36, 1},
+                particleCount = 10,
+                particleSpeed = 70,
+                particleLife = 0.38,
+                textOffset = 38,
+                textScale = 1.04,
+            })
         end,
     }),
     register({
@@ -201,10 +329,21 @@ local pool = {
         rarity = "common",
         tags = {"combo"},
         handlers = {
-            fruitCollected = function()
+            fruitCollected = function(data)
                 local FruitEvents = require("fruitevents")
                 if FruitEvents.boostComboTimer then
                     FruitEvents.boostComboTimer(0.35)
+                end
+                if data and (data.combo or 0) >= 1 then
+                    celebrateUpgrade("+0.35s", data, {
+                        color = {0.55, 0.78, 0.58, 1},
+                        particleCount = 8,
+                        particleSpeed = 70,
+                        particleLife = 0.35,
+                        textOffset = 32,
+                        textScale = 0.95,
+                        textLife = 42,
+                    })
                 end
             end,
         },
@@ -217,6 +356,34 @@ local pool = {
         tags = {"adrenaline"},
         onAcquire = function(state)
             state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+            state.counters.adrenalineFruitCount = state.counters.adrenalineFruitCount or 0
+            if not state.counters.adrenalineHandlerRegistered then
+                state.counters.adrenalineHandlerRegistered = true
+                Upgrades:addEventHandler("fruitCollected", function(data, runState)
+                    runState.counters.adrenalineFruitCount = (runState.counters.adrenalineFruitCount or 0) + 1
+                    local fx, fy = getEventPosition(data)
+                    celebrateUpgrade(runState.counters.adrenalineFruitCount % 2 == 1 and "Adrenaline!" or nil, nil, {
+                        x = fx,
+                        y = fy,
+                        color = {1, 0.42, 0.42, 1},
+                        particleCount = 16,
+                        particleSpeed = 150,
+                        particleLife = 0.34,
+                        particleSpread = math.pi * 2,
+                        textOffset = 34,
+                        textScale = 1.06,
+                        textLife = 46,
+                    })
+                end)
+            end
+            celebrateUpgrade("Adrenaline Surge", nil, {
+                color = {1, 0.42, 0.42, 1},
+                particleCount = 20,
+                particleSpeed = 160,
+                particleLife = 0.36,
+                textOffset = 42,
+                textScale = 1.16,
+            })
         end,
     }),
     register({
