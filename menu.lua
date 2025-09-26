@@ -26,8 +26,8 @@ function Menu:enter()
 
     local labels = {
         { key = "menu.start_game",   action = "modeselect" },
-        { key = "menu.settings",     action = "settings" },
         { key = "menu.achievements", action = "achievementsmenu" },
+        { key = "menu.settings",     action = "settings" },
         { key = "menu.quit",         action = "quit" },
     }
 
@@ -84,9 +84,13 @@ function Menu:draw()
     love.graphics.setColor(Theme.bgColor)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-    local cellSize = 20
+    local baseCellSize = 20
+    local baseSpacing = 10
+    local wordScale = 2
+
+    local cellSize = baseCellSize * wordScale
     local word = Localization:get("menu.title_word")
-    local spacing = 10
+    local spacing = baseSpacing * wordScale
     local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
     local ox = (sw - wordWidth) / 2
     local oy = sh * 0.2
@@ -98,7 +102,7 @@ function Menu:draw()
         local faceTex = Face:getTexture()
         local fw, fh = faceTex:getWidth(), faceTex:getHeight()
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(faceTex, head.x - fw / 2, head.y - fh / 2)
+        love.graphics.draw(faceTex, head.x, head.y, 0, wordScale, wordScale, fw / 2, fh / 2)
     end
 
     for _, btn in ipairs(buttons) do
