@@ -281,13 +281,8 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
       drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
     end
 
-    local faceTexture = Face:getTexture()
     local faceScale = 1
-    local ox = faceTexture:getWidth() / 2
-    local oy = faceTexture:getHeight() / 2
-
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(faceTexture, hx, hy, 0, faceScale, faceScale, ox, oy)
+    Face:draw(hx, hy, faceScale)
 
     drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
 
