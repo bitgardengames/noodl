@@ -348,21 +348,7 @@ function GameState:draw()
 
             if not handledTransitionDraw and state.draw then
                 handledTransitionDraw = true
-
-                local offsetY
-
-                if self.transitionDirection == 1 then
-                    offsetY = 24 * eased
-                else
-                    local inv = 1 - eased
-                    offsetY = 32 * inv
-                end
-
-                love.graphics.push()
-                love.graphics.translate(0, offsetY)
-
                 state:draw()
-                love.graphics.pop()
             end
         end
     end
@@ -371,20 +357,27 @@ function GameState:draw()
         callCurrentState(self, "draw")
     end
 
-    -- Fade overlay with easing and subtle bloom
+    -- Simple eased fade overlay using the transition fill colour
     if self.transitioning and not skipOverlay then
         local width = love.graphics.getWidth()
         local height = love.graphics.getHeight()
         local alpha = (context and context.alpha) or getTransitionAlpha(self.transitionTime, self.transitionDirection)
+        local directionName = (context and context.directionName) or (self.transitionDirection == 1 and "out" or "in")
 
-        love.graphics.setColor(0, 0, 0, alpha * 0.85)
+        local accentState
+        if self.transitionDirection == 1 then
+            accentState = self.transitionFrom and self.states[self.transitionFrom]
+        else
+            accentState = self.current and self.states[self.current]
+        end
+
+        local accentColor = getTransitionFillColor(accentState, directionName, context)
+        local r, g, b, a = unpackColor(accentColor)
+        r, g, b, a = r or 0.15, g or 0.08, b or 0.2, a or 1
+
+        love.graphics.setColor(r, g, b, alpha)
         love.graphics.rectangle("fill", 0, 0, width, height)
 
-        love.graphics.setBlendMode("add")
-        love.graphics.setColor(1, 1, 1, alpha * 0.2)
-        local radius = math.sqrt(width * width + height * height) * 0.75
-        love.graphics.circle("fill", width / 2, height / 2, radius, 64)
-        love.graphics.setBlendMode("alpha")
         love.graphics.setColor(1, 1, 1, 1)
     end
 end
