@@ -99,10 +99,7 @@ function Menu:draw()
 
     if trail and #trail > 0 then
         local head = trail[#trail]
-        local faceTex = Face:getTexture()
-        local fw, fh = faceTex:getWidth(), faceTex:getHeight()
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(faceTex, head.x, head.y, 0, wordScale, wordScale, fw / 2, fh / 2)
+        Face:draw(head.x, head.y, wordScale)
     end
 
     for _, btn in ipairs(buttons) do
