@@ -444,7 +444,11 @@ function Game:drawTransition()
                         end
                         local outroAlpha = 1 - outroProgress
 
-                        love.graphics.setColor(0, 0, 0, math.min(0.75, progress * 0.85) * outroAlpha)
+                        local overlayAlpha = math.min(0.75, progress * 0.85)
+                        if outroProgress > 0 then
+                                overlayAlpha = overlayAlpha + (1 - overlayAlpha) * outroProgress
+                        end
+                        love.graphics.setColor(0, 0, 0, overlayAlpha)
                         love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
                         love.graphics.setColor(1, 1, 1, 1)
 
