@@ -110,6 +110,12 @@ local english = {
                     "OSHA has entered the chat.",
                     "Snake auditioned for a horror movie.",
                 },
+                pillar = {
+                    "Stone bloom turned Snake into a shish kebab.",
+                    "Impaled on ancient masonry—ouch.",
+                    "Maybe don’t hug the glowing pillar next time.",
+                    "Snake met the pointy end of old architecture.",
+                },
                 unknown = {
                     "Mysterious demise...",
                     "The void has claimed you.",

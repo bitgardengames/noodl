@@ -2,6 +2,7 @@ local Snake = require("snake")
 local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Saws = require("saws")
+local Pillars = require("pillars")
 local Arena = require("arena")
 local Particles = require("particles")
 
@@ -154,6 +155,27 @@ function Movement:update(dt)
                         end
                 else
                         return "dead", "saw"
+                end
+        end
+
+        local pillarHit = Pillars:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+
+        if pillarHit then
+                if Snake:consumeCrashShield() then
+                        Particles:spawnBurst(headX, headY, {
+                                count = 10,
+                                speed = 50,
+                                life = 0.4,
+                                size = 3,
+                                color = {0.75, 0.7, 0.6, 1},
+                                gravity = 240,
+                        })
+                        Pillars:bounce(pillarHit)
+                        if Snake.onShieldConsumed then
+                                Snake:onShieldConsumed(headX, headY, "pillar")
+                        end
+                else
+                        return "dead", "pillar"
                 end
         end
 
