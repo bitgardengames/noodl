@@ -257,6 +257,12 @@ function Shop:draw(screenW, screenH)
             yOffset = yOffset + 46 * focusEase
             scale = scale * (1 + 0.35 * focusEase)
             alpha = math.min(1, alpha * (1 + 0.6 * focusEase))
+            -- Make sure the selected card renders at full opacity while it
+            -- animates toward the center. Without this clamp the focus easing
+            -- could leave it slightly translucent until the animation fully
+            -- completes, which felt like a bug. Forcing alpha to 1 keeps the
+            -- spotlighted card crisp for the whole animation.
+            alpha = 1
         else
             yOffset = yOffset - 32 * fadeEase
             scale = scale * (1 - 0.2 * fadeEase)
