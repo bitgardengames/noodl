@@ -10,6 +10,7 @@ local Lighting = {
     overlayMargin = 48,
     cachedSegments = {},
     glowColor = {1, 0.95, 0.8, 1},
+    meshSegments = 64,
 }
 
 local function clamp(value, min, max)
@@ -47,6 +48,48 @@ local function brightenColor(color, strength)
     return {r, g, b, 1}
 end
 
+local function buildRadialMesh(segments)
+    segments = segments or 48
+
+    if not love or not love.graphics or not love.graphics.newMesh then
+        return nil
+    end
+
+    local vertices = {}
+    vertices[1] = {0, 0, 0.5, 0.5, 1, 1, 1, 1}
+
+    for i = 0, segments do
+        local angle = (i / segments) * math.pi * 2
+        local x = math.cos(angle)
+        local y = math.sin(angle)
+        vertices[#vertices + 1] = {x, y, x * 0.5 + 0.5, y * 0.5 + 0.5, 1, 1, 1, 0}
+    end
+
+    return love.graphics.newMesh(vertices, "fan", "static")
+end
+
+local function ensureRadialMesh(self)
+    if self.lightMesh then
+        return self.lightMesh
+    end
+
+    self.lightMesh = buildRadialMesh(self.meshSegments)
+    return self.lightMesh
+end
+
+local function drawRadialLight(self, x, y, radius, color, intensity)
+    if radius <= 0 or intensity <= 0 then return end
+
+    local mesh = ensureRadialMesh(self)
+    if not mesh then
+        love.graphics.setColor(color[1], color[2], color[3], intensity)
+        love.graphics.circle("fill", x, y, radius)
+        return
+    end
+
+    love.graphics.setColor(color[1], color[2], color[3], intensity)
+    love.graphics.draw(mesh, x, y, 0, radius, radius)
+
 local function drawRadialLight(x, y, radius, color, intensity, layers)
     layers = layers or 5
     if radius <= 0 then return end
@@ -76,15 +119,16 @@ function Lighting:setFloorData(floorData, floorNum)
     local depthFactor = calculateDepthFactor(floorNum)
 
     -- Baseline darkness rises as the arena palette gets darker and the player descends.
-    local darkness = 0.1 + (0.75 - brightness) * 0.55
-    darkness = darkness + depthFactor * 0.25
-    self.darkness = clamp(darkness, 0.05, 0.85)
+    local darkness = 0.08 + (0.6 - brightness) * 0.4
+    darkness = darkness + depthFactor * 0.18
+    self.darkness = clamp(darkness, 0.05, 0.65)
 
-    self.lightRadius = SnakeUtils.SEGMENT_SIZE * (8 + depthFactor * 4 + (1 - brightness) * 6)
-    self.maxLights = 10 + math.floor(depthFactor * 6)
-    self.segmentFalloff = 0.55 + depthFactor * 0.25
+    self.lightRadius = SnakeUtils.SEGMENT_SIZE * (9 + depthFactor * 4 + (1 - brightness) * 5)
+    self.maxLights = 8 + math.floor(depthFactor * 4)
+    self.segmentFalloff = 0.4 + depthFactor * 0.25
+    self.headBoost = 1.15 + depthFactor * 0.1
 
-    self.glowColor = brightenColor(snakeColor, 0.45 + depthFactor * 0.2)
+    self.glowColor = brightenColor(snakeColor, 0.35 + depthFactor * 0.18)
 end
 
 function Lighting:getLightSources(renderState)
