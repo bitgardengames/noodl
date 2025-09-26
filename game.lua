@@ -13,6 +13,7 @@ local Score = require("score")
 local PauseMenu = require("pausemenu")
 local Movement = require("movement")
 local Particles = require("particles")
+local Lighting = require("lighting")
 local Achievements = require("achievements")
 local FloatingText = require("floatingtext")
 local Arena = require("arena")
@@ -369,6 +370,7 @@ local function drawPlayfieldLayers(self, stateOverride)
         Particles:draw()
         Popup:draw()
         Arena:drawBorder()
+        Lighting:draw(renderState)
 end
 
 local function drawInterfaceLayers(self)
@@ -664,6 +666,8 @@ function Game:setupFloor(floorNum)
             Theme[k] = v
         end
     end
+
+    Lighting:setFloorData(self.currentFloorData, floorNum)
 
     -- reset entities
     Arena:resetExit()
