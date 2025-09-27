@@ -29,6 +29,7 @@ local Floors = require("floors")
 local Shop = require("shop")
 local Upgrades = require("upgrades")
 local FruitWallet = require("fruitwallet")
+local FloorShaders = require("floorshaders")
 
 local Game = {}
 local TRACK_LENGTH = 120
@@ -333,6 +334,7 @@ function Game:updateEntities(dt)
         Flamethrowers:update(dt)
         Saws:update(dt)
         Arena:update(dt)
+        FloorShaders:update(dt)
         Particles:update(dt)
         Achievements:update(dt)
         FloatingText:update(dt)
@@ -691,6 +693,8 @@ function Game:setupFloor(floorNum)
 
     FruitEvents.reset()
 
+    FloorShaders:setFloor(floorNum)
+
     if self.currentFloorData.palette then
         for k, v in pairs(self.currentFloorData.palette) do
             Theme[k] = v
@@ -794,7 +798,11 @@ function Game:draw()
         love.graphics.clear()
 
         love.graphics.setColor(Theme.bgColor)
+        local usedShader = FloorShaders:apply("background", self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
         love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+        if usedShader then
+                FloorShaders:clear()
+        end
 
         if self.state == "transition" then
                 self:drawTransition()
