@@ -23,6 +23,8 @@ function Shop:start(currentFloor)
     self.selectionTimer = 0
     self.selectionHoldDuration = 1.85
     self.selectionComplete = false
+    self.focusIndex = (#self.cards > 0) and 1 or nil
+    self.hasGamepadFocus = false
     for i = 1, #self.cards do
         self.cardStates[i] = {
             progress = 0,
@@ -58,7 +60,6 @@ function Shop:update(dt)
         if isSelected then
             state.selection = math.min(1, (state.selection or 0) + dt * 4)
             state.selectionClock = (state.selectionClock or 0) + dt
-            state.focus = math.min(1, (state.focus or 0) + dt * 3)
             state.fadeOut = math.max(0, (state.fadeOut or 0) - dt * 4)
         else
             state.selection = math.max(0, (state.selection or 0) - dt * 3)
@@ -69,11 +70,17 @@ function Shop:update(dt)
             end
             if self.selected then
                 state.fadeOut = math.min(1, (state.fadeOut or 0) + dt * 3.2)
-                state.focus = math.max(0, (state.focus or 0) - dt * 4)
             else
                 state.fadeOut = math.max(0, (state.fadeOut or 0) - dt * 3)
-                state.focus = math.max(0, (state.focus or 0) - dt * 3)
             end
+        end
+
+        local shouldFocus = isSelected
+            or (not self.selected and self.hasGamepadFocus and self.focusIndex == i)
+        if shouldFocus then
+            state.focus = math.min(1, (state.focus or 0) + dt * 3)
+        else
+            state.focus = math.max(0, (state.focus or 0) - dt * 3)
         end
 
         if state.selectionFlash then
@@ -553,9 +560,11 @@ function Shop:draw(screenW, screenH)
         local drawX = centerX - drawWidth / 2
         local drawY = centerY - drawHeight / 2
 
+        local hasFocus = not self.selected and self.hasGamepadFocus and self.focusIndex == i
         local hovered = not self.selected
             and mx >= drawX and mx <= drawX + drawWidth
             and my >= drawY and my <= drawY + drawHeight
+        hovered = hovered or hasFocus
 
         love.graphics.push()
         love.graphics.translate(centerX, centerY)
@@ -640,6 +649,43 @@ function Shop:keypressed(key)
         return self:pick(index)
     end
 end
+
+local focusButtonsNegative = {
+    dpleft = true,
+    dpup = true,
+    leftshoulder = true,
+}
+
+local focusButtonsPositive = {
+    dpright = true,
+    dpdown = true,
+    rightshoulder = true,
+}
+
+local function wrapFocus(self, delta)
+    local count = self.cards and #self.cards or 0
+    if count == 0 or self.selected then return end
+    self.focusIndex = ((self.focusIndex or 1) - 1 + delta) % count + 1
+    self.hasGamepadFocus = true
+end
+
+function Shop:gamepadpressed(_, button)
+    if focusButtonsNegative[button] then
+        wrapFocus(self, -1)
+    elseif focusButtonsPositive[button] then
+        wrapFocus(self, 1)
+    elseif button == "a" then
+        if not self.focusIndex and self.cards and #self.cards > 0 then
+            self.focusIndex = 1
+        end
+        self.hasGamepadFocus = true
+        if self.focusIndex then
+            return self:pick(self.focusIndex)
+        end
+    end
+end
+
+Shop.joystickpressed = Shop.gamepadpressed
 
 function Shop:mousepressed(x, y, button)
     if button ~= 1 then return end

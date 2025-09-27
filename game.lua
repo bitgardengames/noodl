@@ -879,6 +879,13 @@ end
 
 local map = { dpleft="left", dpright="right", dpup="up", dpdown="down" }
 local function handleGamepadInput(self, button)
+        if self.transitionPhase == "shop" then
+                if Shop:gamepadpressed(nil, button) then
+                        self.shopCloseRequested = true
+                end
+                return
+        end
+
         if self.state == "paused" then
                 if button == "start" then
                         self.state = "playing"
