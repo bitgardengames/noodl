@@ -2,7 +2,7 @@ local Snake = require("snake")
 local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Saws = require("saws")
-local Presses = require("presses")
+local Flamethrowers = require("flamethrowers")
 local Arena = require("arena")
 local Particles = require("particles")
 
@@ -187,31 +187,31 @@ function Movement:update(dt)
                 end
         end
 
-        local pressHit = Presses:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+        local flamethrowerHit = Flamethrowers:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
 
-        if pressHit then
+        if flamethrowerHit then
                 if Snake:consumeCrashShield() then
                         Particles:spawnBurst(headX, headY + SEGMENT_SIZE / 2, {
-                                count = 10,
-                                speed = 55,
-                                speedVariance = 45,
-                                life = 0.35,
+                                count = 12,
+                                speed = 60,
+                                speedVariance = 48,
+                                life = 0.32,
                                 size = 3,
-                                color = {0.8, 0.75, 0.7, 1},
-                                gravity = 220,
-                                angleJitter = math.pi * 0.65,
-                                drag = 2.6,
-                                spread = math.pi * 1.5,
+                                color = {0.95, 0.6, 0.3, 1},
+                                gravity = 200,
+                                angleJitter = math.pi * 0.7,
+                                drag = 2.4,
+                                spread = math.pi * 1.7,
                                 scaleMin = 0.5,
                                 scaleVariance = 0.6,
                                 fadeTo = 0,
                         })
-                        Presses:bounce(pressHit)
+                        Flamethrowers:bounce(flamethrowerHit)
                         if Snake.onShieldConsumed then
-                                Snake:onShieldConsumed(headX, headY, "press")
+                                Snake:onShieldConsumed(headX, headY, "flame")
                         end
                 else
-                        return "dead", "press"
+                        return "dead", "flame"
                 end
         end
 

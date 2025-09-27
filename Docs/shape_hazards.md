@@ -11,10 +11,10 @@ This note explores how to extend the existing saw blade motif—constructed from
 
 ## Hazard Families
 
-### 1. Crank Press
-- **Core Shapes:** Tall rectangle body; inner rectangle inset; top circle as the hydraulic cap.
-- **Motion:** Animate the inner rectangle sliding down to “squash” the player zone.
-- **Accent:** Add a thin triangle pointer on the pressing face to signal danger.
+### 1. Temple Flame Vent
+- **Core Shapes:** Rounded square floor plate with concentric rings; vertical rectangle nozzle capped by a circle.
+- **Motion:** Telegraph with pulsing rings before scaling a tapered triangle flame burst up from the vent.
+- **Accent:** Layer translucent ellipse heat haze and ember particles to sell the sustained jet.
 
 ### 2. Arc Laser Turret
 - **Core Shapes:** Half-circle shell (two stacked rectangles with a semicircle); small circle lens.
