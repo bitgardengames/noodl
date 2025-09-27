@@ -21,6 +21,16 @@ function Menu:enter()
     Audio:playMusic("menu")
     Screen:update()
 
+    local sw, sh = Screen:get()
+    local safe = UI.layout.safeMargin
+    local centerX = sw / 2
+
+    local buttonWidth = math.min(UI.spacing.buttonWidth, sw - safe.x * 2)
+    local totalHeight = (#labels) * (UI.spacing.buttonHeight + UI.spacing.buttonSpacing) - UI.spacing.buttonSpacing
+    local alignedTop = safe.y + UI.fonts.title:getHeight() + 60
+    local centeredTop = sh / 2 - totalHeight / 2
+    local startY = math.max(alignedTop, centeredTop)
+
     local labels = {
         { key = "menu.start_game",   action = "modeselect" },
         { key = "menu.achievements", action = "achievementsmenu" },
