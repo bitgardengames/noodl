@@ -32,6 +32,8 @@ function ButtonList:reset(definitions)
         button.x = button.x or 0
         button.y = button.y or 0
         button.hoveredByMouse = false
+        button.textAlign = button.textAlign or "center"
+        button.textPadding = button.textPadding or 0
 
         self.buttons[#self.buttons + 1] = button
     end
@@ -95,6 +97,7 @@ end
 function ButtonList:syncUI()
     for _, button in ipairs(self.buttons) do
         UI.registerButton(button.id, button.x, button.y, button.w, button.h, button.text)
+        UI.setButtonTextAlign(button.id, button.textAlign, button.textPadding)
     end
 end
 
