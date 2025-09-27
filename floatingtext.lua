@@ -1,5 +1,3 @@
-local UI = require("ui")
-
 local FloatingText = {}
 
 local entries = {}
@@ -246,8 +244,6 @@ function FloatingText:update(dt)
 end
 
 function FloatingText:draw()
-    UI.pushTextShadow(false)
-
     for _, entry in ipairs(entries) do
         love.graphics.setFont(entry.font)
 
@@ -280,8 +276,6 @@ function FloatingText:draw()
 
         love.graphics.pop()
     end
-
-    UI.popTextShadow()
 
     love.graphics.setColor(1, 1, 1, 1)
 end

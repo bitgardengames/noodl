@@ -70,176 +70,18 @@ UI.fonts = {
 
 -- Spacing and layout constants
 UI.spacing = {
-    buttonWidth      = 260,
-    buttonHeight     = 56,
-    buttonRadius     = 12,
-    buttonSpacing    = 24,
-    panelRadius      = 10,
-    panelPadding     = 16,
-    panelShadow      = 12,
-    shadowOffset     = 4,
+    buttonWidth   = 260,
+    buttonHeight  = 56,
+    buttonRadius  = 12,
+    buttonSpacing = 24,
+    panelRadius   = 10,
+    panelPadding  = 16,
+    shadowOffset  = 4,
 }
-
-UI.layout = {
-    safeMargin = { x = 80, y = 72 },
-    columnWidth = 560,
-}
-
-UI.textShadow = {
-    enabled = true,
-    offsetX = 2,
-    offsetY = 2,
-    useTextAlpha = true,
-}
-
-UI._shadowStack = {}
-
-local function cloneColor(color, alphaOverride)
-    local base = color or { 0, 0, 0, 1 }
-    return {
-        base[1] or 0,
-        base[2] or 0,
-        base[3] or 0,
-        alphaOverride or base[4] or 1,
-    }
-end
-
-UI.textShadow.color = cloneColor(Theme.shadowColor, Theme.shadowColor and Theme.shadowColor[4] or 0.4)
-
-local lg = love.graphics
-local unpack = table.unpack or unpack
-local originalPrint = lg.print
-local originalPrintf = lg.printf
-
-local function drawWithShadow(drawFunc)
-    if not UI.textShadow.enabled then
-        drawFunc(0, 0)
-        return
-    end
-
-    local textR, textG, textB, textA = lg.getColor()
-    local shadowColor = UI.textShadow.color or Theme.shadowColor or {0, 0, 0, 0.4}
-    local offsetX = UI.textShadow.offsetX or 0
-    local offsetY = UI.textShadow.offsetY or 0
-    local shadowAlpha = shadowColor[4] or 1
-
-    if UI.textShadow.useTextAlpha then
-        shadowAlpha = shadowAlpha * (textA or 1)
-    end
-
-    if (shadowAlpha > 0) and (offsetX ~= 0 or offsetY ~= 0) then
-        lg.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
-        drawFunc(offsetX, offsetY)
-        lg.setColor(textR, textG, textB, textA)
-    end
-
-    drawFunc(0, 0)
-end
-
-lg.print = function(text, x, y, r, sx, sy, ox, oy, kx, ky)
-    x = x or 0
-    y = y or 0
-    r = r or 0
-    sx = sx or 1
-    sy = sy or sx
-    ox = ox or 0
-    oy = oy or 0
-    kx = kx or 0
-    ky = ky or 0
-
-    drawWithShadow(function(offsetX, offsetY)
-        return originalPrint(text, x + offsetX, y + offsetY, r, sx, sy, ox, oy, kx, ky)
-    end)
-end
-
-lg.printf = function(text, x, y, limit, align, r, sx, sy, ox, oy, kx, ky)
-    x = x or 0
-    y = y or 0
-    limit = limit or lg.getWidth()
-    align = align or "left"
-    r = r or 0
-    sx = sx or 1
-    sy = sy or sx
-    ox = ox or 0
-    oy = oy or 0
-    kx = kx or 0
-    ky = ky or 0
-
-    drawWithShadow(function(offsetX, offsetY)
-        return originalPrintf(text, x + offsetX, y + offsetY, limit, align, r, sx, sy, ox, oy, kx, ky)
-    end)
-end
-
-function UI.pushTextShadow(enabled)
-    UI._shadowStack[#UI._shadowStack + 1] = UI.textShadow.enabled
-    UI.textShadow.enabled = enabled
-end
-
-function UI.popTextShadow()
-    local previous = UI._shadowStack[#UI._shadowStack]
-    if previous == nil then return end
-    UI._shadowStack[#UI._shadowStack] = nil
-    UI.textShadow.enabled = previous
-end
-
-function UI.withoutTextShadow(fn)
-    UI.pushTextShadow(false)
-    local results = {pcall(fn)}
-    UI.popTextShadow()
-
-    if not results[1] then
-        error(results[2])
-    end
-
-    return unpack(results, 2)
-end
 
 -- Utility: set font
 function UI.setFont(font)
     love.graphics.setFont(UI.fonts[font or "body"])
-end
-
-local function setColor(color)
-    if not color then return end
-    love.graphics.setColor(color[1], color[2], color[3], color[4] or 1)
-end
-
-function UI.print(text, x, y, opts)
-    opts = opts or {}
-
-    local prevFont = love.graphics.getFont()
-    local prevColor = {love.graphics.getColor()}
-
-    if opts.font then
-        UI.setFont(opts.font)
-    elseif opts.fontObject then
-        love.graphics.setFont(opts.fontObject)
-    end
-
-    setColor(opts.color or Theme.textColor)
-    love.graphics.print(text, x, y)
-
-    love.graphics.setFont(prevFont)
-    setColor(prevColor)
-end
-
-function UI.printf(text, x, y, limit, align, opts)
-    opts = opts or {}
-
-    local prevFont = love.graphics.getFont()
-    local prevColor = {love.graphics.getColor()}
-
-    if opts.font then
-        UI.setFont(opts.font)
-    elseif opts.fontObject then
-        love.graphics.setFont(opts.fontObject)
-    end
-
-    setColor(opts.color or Theme.textColor)
-    love.graphics.printf(text, x, y, limit or love.graphics.getWidth(), align or "left", opts.r, opts.sx, opts.sy, opts.ox, opts.oy, opts.kx, opts.ky)
-
-    love.graphics.setFont(prevFont)
-    setColor(prevColor)
 end
 
 -- Utility: draw rounded rectangle
@@ -255,44 +97,6 @@ function UI.drawRoundedRect(x, y, w, h, r)
     love.graphics.circle("fill", x + w - r, y + h - r, r, segments)
 end
 
-function UI.drawPanel(x, y, w, h, opts)
-    opts = opts or {}
-
-    local radius = opts.radius or UI.spacing.panelRadius
-    local shadowOffset = opts.shadowOffset or UI.spacing.panelShadow
-    local shadowColor = opts.shadowColor or Theme.shadowColor
-
-    if shadowColor and (shadowColor[4] or 0) > 0 then
-        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowColor[4])
-        love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h, radius, radius)
-    end
-
-    setColor(opts.color or Theme.panelColor)
-    love.graphics.rectangle("fill", x, y, w, h, radius, radius)
-
-    local borderColor = opts.borderColor
-    if borderColor == nil then
-        borderColor = Theme.panelBorder
-    end
-
-    if borderColor and (borderColor[4] or 0) > 0 then
-        love.graphics.setLineWidth(opts.borderWidth or 3)
-        love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
-        love.graphics.rectangle("line", x, y, w, h, radius, radius)
-        love.graphics.setLineWidth(1)
-    end
-end
-
-function UI.setButtonTextAlign(id, align, padding)
-    if not id then return end
-
-    local btn = UI.buttons[id]
-    if not btn then return end
-
-    btn.textAlign = align or "center"
-    btn.textPadding = padding or 0
-end
-
 -- Easing
 local function easeOutQuad(t)
     return t * (2 - t)
@@ -304,8 +108,6 @@ function UI.registerButton(id, x, y, w, h, text)
     local btn = UI.buttons[id]
     btn.bounds = {x = x, y = y, w = w, h = h}
     btn.text = text
-    btn.textAlign = btn.textAlign or "center"
-    btn.textPadding = btn.textPadding or 0
 end
 
 -- Draw button (render only)
@@ -350,11 +152,9 @@ function UI.drawButton(id)
     end
 
     -- TEXT
-    local textAlign = btn.textAlign or "center"
-    local padding = btn.textPadding or 0
-    local textX = b.x + padding
-    local textWidth = math.max(0, b.w - padding * 2)
-    UI.printf(btn.text, textX, b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2, textWidth, textAlign, { font = "button", color = Theme.textColor })
+    UI.setFont("button")
+    love.graphics.setColor(Theme.textColor)
+    love.graphics.printf(btn.text, b.x, b.y + yOffset + (b.h / 2) - UI.fonts.button:getHeight() / 2, b.w, "center")
 end
 
 -- Hover check
