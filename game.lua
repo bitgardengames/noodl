@@ -208,9 +208,14 @@ function Game:beginDeath()
 end
 
 function Game:startDescending(holeX, holeY, holeRadius)
-    self.state = "descending"
-    self.hole = {x = holeX, y = holeY, radius = holeRadius or 24}
-    Snake:startDescending(self.hole.x, self.hole.y, self.hole.radius)
+        self.state = "descending"
+        self.hole = {
+                x = holeX,
+                y = holeY,
+                radius = holeRadius or 24,
+                baseRadius = holeRadius or 24,
+        }
+        Snake:startDescending(self.hole.x, self.hole.y, self.hole.radius)
 end
 
 -- start a floor transition
@@ -309,6 +314,11 @@ end
 
 function Game:updateDescending(dt)
         Snake:update(dt)
+
+        local radius = Snake:getDescendingVisualRadius()
+        if radius and self.hole then
+                self.hole.radius = radius
+        end
 
         local segments = Snake:getSegments()
         local tail = segments[#segments]
