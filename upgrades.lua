@@ -795,6 +795,45 @@ local pool = {
         },
     }),
     register({
+        id = "spectral_harvest",
+        name = "Spectral Harvest",
+        desc = "Once per floor, echoes collect the next fruit instantly after you do.",
+        rarity = "rare",
+        tags = {"economy", "combo"},
+        onAcquire = function(state)
+            state.counters.spectralHarvestReady = true
+        end,
+        handlers = {
+            floorStart = function(_, state)
+                state.counters.spectralHarvestReady = true
+            end,
+            fruitCollected = function(_, state)
+                if not state.counters.spectralHarvestReady then return end
+                state.counters.spectralHarvestReady = false
+
+                local Fruit = require("fruit")
+                local FruitEvents = require("fruitevents")
+                if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
+
+                local fx, fy = Fruit:getPosition()
+                if not (fx and fy) then return end
+
+                celebrateUpgrade("Spectral Harvest", nil, {
+                    x = fx,
+                    y = fy,
+                    color = {0.76, 0.9, 1, 1},
+                    particleCount = 18,
+                    particleSpeed = 120,
+                    particleLife = 0.55,
+                    textOffset = 56,
+                    textScale = 1.14,
+                })
+
+                FruitEvents.handleConsumption(fx, fy)
+            end,
+        },
+    }),
+    register({
         id = "solar_reservoir",
         name = "Solar Reservoir",
         desc = "First fruit each floor stalls saws 2s and grants +4 bonus score.",
@@ -910,6 +949,16 @@ local pool = {
             Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
         end,
     }),
+    register({
+        id = "phoenix_echo",
+        name = "Phoenix Echo",
+        desc = "Once per run, a fatal crash rewinds the floor instead of ending the run.",
+        rarity = "epic",
+        tags = {"defense", "risk"},
+        onAcquire = function(state)
+            state.counters.phoenixEchoCharges = (state.counters.phoenixEchoCharges or 0) + 1
+        end,
+    }),
 }
 
 local function getRarityInfo(rarity)
@@ -1022,6 +1071,43 @@ function Upgrades:getComboBonus(comboCount)
     end
 
     return bonus, breakdown
+end
+
+function Upgrades:tryFloorReplay(game, cause)
+    if not game then return false end
+
+    local state = self.runState
+    if not state or not state.counters then return false end
+
+    local charges = state.counters.phoenixEchoCharges or 0
+    if charges <= 0 then return false end
+
+    state.counters.phoenixEchoCharges = charges - 1
+    state.counters.phoenixEchoUsed = (state.counters.phoenixEchoUsed or 0) + 1
+    state.counters.phoenixEchoLastCause = cause
+
+    game.transitionPhase = nil
+    game.transitionTimer = 0
+    game.transitionDuration = 0
+    game.shopCloseRequested = nil
+
+    game:setupFloor(game.floor)
+    game.state = "playing"
+    game.deathCause = nil
+
+    local hx, hy = Snake:getHead()
+    celebrateUpgrade("Phoenix Echo", nil, {
+        x = hx,
+        y = hy,
+        color = {1, 0.62, 0.32, 1},
+        particleCount = 24,
+        particleSpeed = 170,
+        particleLife = 0.6,
+        textOffset = 60,
+        textScale = 1.22,
+    })
+
+    return true
 end
 
 local function captureBaseline(state)

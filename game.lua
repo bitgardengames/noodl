@@ -300,6 +300,9 @@ function Game:updateGameplay(dt)
         local moveResult, cause = Movement:update(dt)
 
         if moveResult == "dead" then
+                if Upgrades.tryFloorReplay and Upgrades:tryFloorReplay(self, cause) then
+                        return
+                end
                 self.deathCause = cause
                 self:beginDeath()
                 return
