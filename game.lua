@@ -218,6 +218,16 @@ function Game:startFloorTransition(advance, skipFade)
         Snake:finishDescending()
         local pendingFloor = advance and (self.floor + 1) or nil
         local floorData = Floors[pendingFloor or self.floor] or Floors[1]
+
+        if advance then
+                local currentFloor = self.floor or 1
+                local nextFloor = currentFloor + 1
+                PlayerStats:add("floorsCleared", 1)
+                PlayerStats:updateMax("deepestFloorReached", nextFloor)
+                SessionStats:add("floorsCleared", 1)
+                SessionStats:updateMax("deepestFloorReached", nextFloor)
+        end
+
         startTransitionPhase(self, "fadeout", skipFade and 0 or 1.2, {
                 transitionAdvance = advance,
                 pendingFloor = pendingFloor,

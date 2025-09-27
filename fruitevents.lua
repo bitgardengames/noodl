@@ -26,7 +26,15 @@ local comboState = {
     window = DEFAULT_COMBO_WINDOW,
     baseWindow = DEFAULT_COMBO_WINDOW,
     baseOverride = DEFAULT_COMBO_WINDOW,
+    best = 0,
 }
+
+Achievements:registerStateProvider(function()
+    return {
+        currentCombo = comboState.count or 0,
+        bestComboStreak = math.max(comboState.best or 0, comboState.count or 0),
+    }
+end)
 
 local function getUpgradeEffect(name)
     if Upgrades and Upgrades.getEffect then
@@ -64,6 +72,8 @@ local function applyComboReward(x, y)
 
     comboState.timer = comboState.window
     local comboCount = comboState.count
+    comboState.best = math.max(comboState.best or 0, comboCount)
+    PlayerStats:updateMax("bestComboStreak", comboState.best or comboCount or 0)
     syncComboToUI()
 
     if comboCount < 2 then
@@ -192,6 +202,7 @@ function FruitEvents.reset()
     comboState.baseOverride = DEFAULT_COMBO_WINDOW
     comboState.baseWindow = DEFAULT_COMBO_WINDOW
     comboState.window = DEFAULT_COMBO_WINDOW
+    comboState.best = 0
     syncComboToUI()
 end
 

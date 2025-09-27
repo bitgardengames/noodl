@@ -41,6 +41,7 @@ local english = {
             popup_message = "${title}: ${description}",
             categories = {
                 progress = "Milestones",
+                depth = "Descent",
                 skill = "Skill",
                 collection = "Collection",
             },
@@ -173,13 +174,41 @@ local english = {
                 title = "Apple Conqueror",
                 description = "Eat 500 total apples",
             },
+            appleTycoon = {
+                title = "Apple Tycoon",
+                description = "Eat 1,000 total apples",
+            },
+            appleEternal = {
+                title = "Endless Appetite",
+                description = "Eat 2,500 total apples",
+            },
             fullBelly = {
                 title = "Full Belly",
                 description = "Reach a snake length of 50",
             },
+            comboSpark = {
+                title = "Combo Spark",
+                description = "Chain a combo of 3 fruit",
+            },
+            comboSurge = {
+                title = "Combo Surge",
+                description = "Chain a combo of 6 fruit",
+            },
+            comboInferno = {
+                title = "Combo Inferno",
+                description = "Chain a combo of 10 fruit",
+            },
             scoreChaser = {
                 title = "Score Chaser",
                 description = "Reach a score of 250",
+            },
+            fruitFiesta = {
+                title = "Fruit Fiesta",
+                description = "Eat 25 fruit in a single run",
+            },
+            floorSprinter = {
+                title = "Floor Sprinter",
+                description = "Clear 3 floors in a single run",
             },
             scoreLegend = {
                 title = "Score Legend",
@@ -188,6 +217,30 @@ local english = {
             dragonHunter = {
                 title = "Dragon Hunter",
                 description = "Collect the legendary Dragonfruit",
+            },
+            floorScout = {
+                title = "Depth Scout",
+                description = "Reach floor 3",
+            },
+            floorDiver = {
+                title = "Cavern Diver",
+                description = "Reach floor 6",
+            },
+            floorAbyss = {
+                title = "Abyss Stalker",
+                description = "Reach floor 10",
+            },
+            floorAscendant = {
+                title = "Skyward Survivor",
+                description = "Reach floor 14",
+            },
+            floorTraveler = {
+                title = "Seasoned Descent",
+                description = "Clear 20 floors total",
+            },
+            floorVoyager = {
+                title = "Underworld Voyager",
+                description = "Clear 60 floors total",
             },
             seasonedRunner = {
                 title = "Seasoned Runner",

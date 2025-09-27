@@ -118,6 +118,18 @@ function Achievements:_ensureInitialized()
                 sessionsPlayed = PlayerStats:get("sessionsPlayed") or 0,
                 totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
                 bestScore = PlayerStats:get("snakeScore") or 0,
+                floorsCleared = PlayerStats:get("floorsCleared") or 0,
+                deepestFloorReached = PlayerStats:get("deepestFloorReached") or 0,
+                bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
+            }
+        end)
+
+        self:registerStateProvider(function()
+            local SessionStats = require("sessionstats")
+            return {
+                runApplesEaten = SessionStats:get("applesEaten") or 0,
+                runFloorsCleared = SessionStats:get("floorsCleared") or 0,
+                runDeepestFloor = SessionStats:get("deepestFloorReached") or 0,
             }
         end)
 
