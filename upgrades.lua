@@ -251,6 +251,65 @@ local function updateGuildLedger(state)
     state.effects.rockSpawnFlat = (state.effects.rockSpawnFlat or 0) - previous + newBonus
 end
 
+local function updateComboHarmonizer(state)
+    if not state then return end
+
+    local perCombo = state.counters and state.counters.comboHarmonizerPerTag or 0
+    if perCombo == 0 then return end
+
+    local previous = state.counters.comboHarmonizerBonus or 0
+    local comboCount = countUpgradesWithTag(state, "combo")
+    local newBonus = perCombo * comboCount
+    state.counters.comboHarmonizerBonus = newBonus
+    state.effects.comboWindowBonus = (state.effects.comboWindowBonus or 0) - previous + newBonus
+end
+
+local function updateStoneCensus(state)
+    if not state then return end
+
+    local perEconomy = state.counters and state.counters.stoneCensusReduction or 0
+    if perEconomy == 0 then return end
+
+    local previous = state.counters.stoneCensusMult or 1
+    if previous <= 0 then previous = 1 end
+
+    local effects = state.effects or {}
+    effects.rockSpawnMult = effects.rockSpawnMult or 1
+    effects.rockSpawnMult = effects.rockSpawnMult / previous
+
+    local economyCount = countUpgradesWithTag(state, "economy")
+    local newMult = math.max(0.2, 1 - perEconomy * economyCount)
+
+    state.counters.stoneCensusMult = newMult
+    effects.rockSpawnMult = effects.rockSpawnMult * newMult
+    state.effects = effects
+end
+
+local function handleBulwarkChorusFloorStart(_, state)
+    if not state or not state.counters then return end
+    if not state.takenSet or (state.takenSet.wardens_chorus or 0) <= 0 then return end
+
+    local perDefense = state.counters.bulwarkChorusPerDefense or 0
+    if perDefense <= 0 then return end
+
+    local defenseCount = countUpgradesWithTag(state, "defense")
+    if defenseCount <= 0 then return end
+
+    local progress = (state.counters.bulwarkChorusProgress or 0) + perDefense * defenseCount
+    local shields = math.floor(progress)
+    state.counters.bulwarkChorusProgress = progress - shields
+
+    if shields > 0 and Snake.addCrashShields then
+        Snake:addCrashShields(shields)
+        celebrateUpgrade("Warden's Chorus", nil, {
+            color = {0.7, 0.9, 1.0, 1},
+            skipParticles = true,
+            textScale = 1.0,
+            textLife = 44,
+        })
+    end
+end
+
 local pool = {
     register({
         id = "quick_fangs",
@@ -786,6 +845,32 @@ local pool = {
         end,
     }),
     register({
+        id = "wardens_chorus",
+        name = "Warden's Chorus",
+        desc = "Floor starts build crash shield progress from each Defense upgrade.",
+        rarity = "rare",
+        requiresTags = {"defense"},
+        tags = {"defense"},
+        onAcquire = function(state)
+            state.counters.bulwarkChorusPerDefense = 0.33
+            state.counters.bulwarkChorusProgress = state.counters.bulwarkChorusProgress or 0
+
+            if not state.counters.bulwarkChorusHandlerRegistered then
+                state.counters.bulwarkChorusHandlerRegistered = true
+                Upgrades:addEventHandler("floorStart", handleBulwarkChorusFloorStart)
+            end
+
+            celebrateUpgrade("Warden's Chorus", nil, {
+                color = {0.66, 0.88, 1, 1},
+                particleCount = 18,
+                particleSpeed = 120,
+                particleLife = 0.46,
+                textOffset = 46,
+                textScale = 1.1,
+            })
+        end,
+    }),
+    register({
         id = "gilded_trail",
         name = "Gilded Trail",
         desc = "Every 5th fruit grants +3 bonus score.",
@@ -842,6 +927,37 @@ local pool = {
         onAcquire = function(state)
             state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
             state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
+        end,
+    }),
+    register({
+        id = "stone_census",
+        name = "Stone Census",
+        desc = "Each Economy upgrade cuts rock spawn chance by 7% (min 20%).",
+        rarity = "rare",
+        requiresTags = {"economy"},
+        tags = {"economy", "defense"},
+        onAcquire = function(state)
+            state.counters.stoneCensusReduction = 0.07
+            state.counters.stoneCensusMult = state.counters.stoneCensusMult or 1
+            updateStoneCensus(state)
+
+            if not state.counters.stoneCensusHandlerRegistered then
+                state.counters.stoneCensusHandlerRegistered = true
+                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+                    if not runState then return end
+                    if not runState.takenSet or (runState.takenSet.stone_census or 0) <= 0 then return end
+                    updateStoneCensus(runState)
+                end)
+            end
+
+            celebrateUpgrade("Stone Census", nil, {
+                color = {0.85, 0.92, 1, 1},
+                particleCount = 16,
+                particleSpeed = 110,
+                particleLife = 0.4,
+                textOffset = 44,
+                textScale = 1.08,
+            })
         end,
     }),
     register({
@@ -906,6 +1022,36 @@ local pool = {
                 end
             end,
         },
+    }),
+    register({
+        id = "combo_harmonizer",
+        name = "Combo Harmonizer",
+        desc = "Combo window extends 0.12s for every Combo upgrade you own.",
+        rarity = "rare",
+        requiresTags = {"combo"},
+        tags = {"combo"},
+        onAcquire = function(state)
+            state.counters.comboHarmonizerPerTag = 0.12
+            updateComboHarmonizer(state)
+
+            if not state.counters.comboHarmonizerHandlerRegistered then
+                state.counters.comboHarmonizerHandlerRegistered = true
+                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+                    if not runState then return end
+                    if not runState.takenSet or (runState.takenSet.combo_harmonizer or 0) <= 0 then return end
+                    updateComboHarmonizer(runState)
+                end)
+            end
+
+            celebrateUpgrade("Combo Harmonizer", nil, {
+                color = {0.82, 0.78, 1, 1},
+                particleCount = 18,
+                particleSpeed = 115,
+                particleLife = 0.45,
+                textOffset = 44,
+                textScale = 1.12,
+            })
+        end,
     }),
     register({
         id = "grim_reliquary",
