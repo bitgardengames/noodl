@@ -23,7 +23,6 @@ local FloorTraits = require("floortraits")
 local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
-local Flamethrowers = require("flamethrowers")
 local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
@@ -79,23 +78,11 @@ local function buildBaselineFloorContext(floorNum)
         fruitGoal = math.max(3, math.floor(4 + step * 3.5)),
         rocks = math.max(0, math.min(32, math.floor(1 + step * 1.6))),
         saws = math.max(0, math.min(7, math.floor(step / 1.5))),
-        flamethrowers = math.max(0, math.min(5, math.floor((step - 1) / 3))),
         rockSpawnChance = math.min(0.55, 0.22 + step * 0.028),
         sawSpeedMult = 1 + math.min(0.6, step * 0.045),
         sawSpinMult = 1 + math.min(0.5, step * 0.04),
         sawStall = math.max(0, 0.5 - normalized * 0.4),
-        flamethrowerTiming = {
-            idleMin = lerp(1.8, 1.0, normalized),
-            idleMax = lerp(2.6, 1.4, normalized),
-            warmup = lerp(0.65, 0.45, normalized),
-            fire = lerp(0.8, 1.05, normalized),
-            cooldown = lerp(0.5, 0.35, normalized),
-        },
     }
-
-    if context.flamethrowerTiming.idleMax < context.flamethrowerTiming.idleMin + 0.1 then
-        context.flamethrowerTiming.idleMax = context.flamethrowerTiming.idleMin + 0.1
-    end
 
     return context
 end
@@ -364,7 +351,6 @@ function Game:updateEntities(dt)
         Popup:update(dt)
         Fruit:update(dt)
         Rocks:update(dt)
-        Flamethrowers:update(dt)
         Saws:update(dt)
         Arena:update(dt)
         Particles:update(dt)
@@ -394,7 +380,6 @@ local function drawPlayfieldLayers(self, stateOverride)
 
         Fruit:draw()
         Rocks:draw()
-        Flamethrowers:draw()
         Saws:draw()
         Arena:drawExit()
 
@@ -738,7 +723,6 @@ function Game:setupFloor(floorNum)
     Particles:reset()
     Rocks:reset()
     Saws:reset()
-    Flamethrowers:reset()
     SnakeUtils.initOccupancy()
 
     for _, seg in ipairs(Snake:getSegments()) do
@@ -767,10 +751,6 @@ function Game:setupFloor(floorNum)
         Saws.stallOnFruit = traitContext.sawStall or 0
     end
 
-    if Flamethrowers.setTiming then
-        Flamethrowers:setTiming(traitContext.flamethrowerTiming)
-    end
-
     local adjustedContext, appliedTraits = FloorTraits:apply(self.currentFloorData.traits, traitContext)
     traitContext = adjustedContext or traitContext
 
@@ -790,14 +770,10 @@ function Game:setupFloor(floorNum)
     else
         traitContext.sawStall = Saws.stallOnFruit or 0
     end
-    if Flamethrowers.getTiming then
-        traitContext.flamethrowerTiming = Flamethrowers:getTiming()
-    end
     Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
 
     local numRocks = traitContext.rocks
     local numSaws = traitContext.saws
-    local numFlamethrowers = traitContext.flamethrowers or 0
     local safeZone = Snake:getSafeZone(3)
 
     -- Spawn saws FIRST so they reserve their track cells
@@ -827,14 +803,6 @@ function Game:setupFloor(floorNum)
 			SnakeUtils.occupySawTrack(fx, fy, "vertical", r, TRACK_LENGTH, side)
 		end
 	end
-
-    -- Spawn flamethrowers before rocks so hazards reserve their tiles
-        for i = 1, numFlamethrowers do
-                local fx, fy, col, row = SnakeUtils.getSafeSpawn(Snake:getSegments(), nil, Rocks, safeZone)
-                if fx then
-                        Flamethrowers:spawn(fx, fy, { col = col, row = row })
-                end
-        end
 
     -- Now spawn rocks
     for i = 1, numRocks do
