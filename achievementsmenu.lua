@@ -31,13 +31,11 @@ local DPAD_SCROLL_AMOUNT = CARD_SPACING
 local function buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
     local segmentSize = SnakeUtils.SEGMENT_SIZE
     local halfSegment = segmentSize * 0.5
-    local outlineRadius = segmentSize * 0.525
-
     local trackCenterX = trackX + trackWidth * 0.5
-    local trackTop = trackY + outlineRadius
-    local trackBottom = trackY + trackHeight - outlineRadius
-    local topY = math.max(trackTop, thumbY + halfSegment)
-    local bottomY = math.min(trackBottom, thumbY + thumbHeight - halfSegment)
+    local trackTop = trackY + halfSegment
+    local trackBottom = trackY + trackHeight - halfSegment
+    local topY = math.max(trackTop, math.min(trackBottom, thumbY + halfSegment))
+    local bottomY = math.min(trackBottom, math.max(trackTop, thumbY + thumbHeight - halfSegment))
 
     if bottomY < topY then
         local midpoint = (topY + bottomY) * 0.5
@@ -84,7 +82,7 @@ local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, t
     love.graphics.setColor(hr, hg, hb, ha)
     love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, segmentSize * 0.45)
 
-    local outlinePad = math.max(6, segmentSize * 0.75)
+    local outlinePad = math.max(10, segmentSize)
     local scissorX = trackX - outlinePad
     local scissorY = trackY - outlinePad
     local scissorW = trackWidth + outlinePad * 2
