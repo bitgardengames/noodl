@@ -39,6 +39,10 @@ local function clamp01(value)
         return value
 end
 
+local function lerp(a, b, t)
+        return a + (b - a) * t
+end
+
 local function easeInOutCubic(t)
         if t < 0.5 then
                 return 4 * t * t * t
@@ -64,6 +68,36 @@ local function easedProgress(timer, duration)
         end
 
         return easeInOutCubic(clamp01(timer / duration))
+end
+
+local function buildBaselineFloorContext(floorNum)
+    local step = math.max(0, (floorNum or 1) - 1)
+    local normalized = clamp01(step / 10)
+
+    local context = {
+        floor = floorNum,
+        fruitGoal = math.max(3, math.floor(4 + step * 3.5)),
+        rocks = math.max(0, math.min(32, math.floor(1 + step * 1.6))),
+        saws = math.max(0, math.min(7, math.floor(step / 1.5))),
+        flamethrowers = math.max(0, math.min(5, math.floor((step - 1) / 3))),
+        rockSpawnChance = math.min(0.55, 0.22 + step * 0.028),
+        sawSpeedMult = 1 + math.min(0.6, step * 0.045),
+        sawSpinMult = 1 + math.min(0.5, step * 0.04),
+        sawStall = math.max(0, 0.5 - normalized * 0.4),
+        flamethrowerTiming = {
+            idleMin = lerp(1.8, 1.0, normalized),
+            idleMax = lerp(2.6, 1.4, normalized),
+            warmup = lerp(0.65, 0.45, normalized),
+            fire = lerp(0.8, 1.05, normalized),
+            cooldown = lerp(0.5, 0.35, normalized),
+        },
+    }
+
+    if context.flamethrowerTiming.idleMax < context.flamethrowerTiming.idleMin + 0.1 then
+        context.flamethrowerTiming.idleMax = context.flamethrowerTiming.idleMin + 0.1
+    end
+
+    return context
 end
 
 local function buildModifierSections(self)
@@ -713,13 +747,29 @@ function Game:setupFloor(floorNum)
     end
 
     -- difficulty scaling baseline with floor traits
-    local traitContext = {
-        floor = floorNum,
-        fruitGoal = floorNum * 5,
-        rocks = math.min(3 + floorNum * 2, 40),
-        saws = math.min(math.floor(floorNum / 2), 8),
-        flamethrowers = math.min(math.floor((floorNum + 1) / 4), 5),
-    }
+    local traitContext = buildBaselineFloorContext(floorNum)
+
+    if traitContext.rockSpawnChance then
+        Rocks.spawnChance = traitContext.rockSpawnChance
+    end
+
+    if traitContext.sawSpeedMult then
+        Saws.speedMult = traitContext.sawSpeedMult
+    end
+
+    if traitContext.sawSpinMult then
+        Saws.spinMult = traitContext.sawSpinMult
+    end
+
+    if Saws.setStallOnFruit then
+        Saws:setStallOnFruit(traitContext.sawStall or 0)
+    else
+        Saws.stallOnFruit = traitContext.sawStall or 0
+    end
+
+    if Flamethrowers.setTiming then
+        Flamethrowers:setTiming(traitContext.flamethrowerTiming)
+    end
 
     local adjustedContext, appliedTraits = FloorTraits:apply(self.currentFloorData.traits, traitContext)
     traitContext = adjustedContext or traitContext
@@ -732,6 +782,17 @@ function Game:setupFloor(floorNum)
     self.transitionTraits = buildModifierSections(self)
 
     Upgrades:applyPersistentEffects(true)
+    traitContext.rockSpawnChance = Rocks:getSpawnChance()
+    traitContext.sawSpeedMult = Saws.speedMult
+    traitContext.sawSpinMult = Saws.spinMult
+    if Saws.getStallOnFruit then
+        traitContext.sawStall = Saws:getStallOnFruit()
+    else
+        traitContext.sawStall = Saws.stallOnFruit or 0
+    end
+    if Flamethrowers.getTiming then
+        traitContext.flamethrowerTiming = Flamethrowers:getTiming()
+    end
     Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
 
     local numRocks = traitContext.rocks

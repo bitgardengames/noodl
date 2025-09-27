@@ -13,6 +13,31 @@ local SnakeUtils = require("snakeutils")
 local Flamethrowers = {}
 local active = {}
 
+local defaultTiming = {
+    idleMin = 1.2,
+    idleMax = 2.2,
+    warmup = 0.55,
+    fire = 0.85,
+    cooldown = 0.45,
+}
+
+local function cloneTiming(source)
+    return {
+        idleMin = source.idleMin,
+        idleMax = source.idleMax,
+        warmup = source.warmup,
+        fire = source.fire,
+        cooldown = source.cooldown,
+    }
+end
+
+local function ensureTiming(self)
+    if not self.timing then
+        self.timing = cloneTiming(defaultTiming)
+    end
+    return self.timing
+end
+
 local function clamp01(value)
     if value < 0 then return 0 end
     if value > 1 then return 1 end
@@ -47,10 +72,43 @@ end
 
 function Flamethrowers:reset()
     active = {}
+    self.timing = cloneTiming(defaultTiming)
 end
 
 function Flamethrowers:getAll()
     return active
+end
+
+function Flamethrowers:getTiming()
+    local timing = ensureTiming(self)
+    return {
+        idleMin = timing.idleMin,
+        idleMax = timing.idleMax,
+        warmup = timing.warmup,
+        fire = timing.fire,
+        cooldown = timing.cooldown,
+    }
+end
+
+function Flamethrowers:setTiming(opts)
+    if not opts then
+        self.timing = cloneTiming(defaultTiming)
+        return
+    end
+
+    local timing = ensureTiming(self)
+
+    local idleMin = opts.idleMin or timing.idleMin or defaultTiming.idleMin
+    idleMin = math.max(0.4, idleMin)
+
+    local idleMax = opts.idleMax or opts.idleMin or timing.idleMax or defaultTiming.idleMax
+    idleMax = math.max(idleMin + 0.1, idleMax)
+
+    timing.idleMin = idleMin
+    timing.idleMax = idleMax
+    timing.warmup = math.max(0.2, opts.warmup or timing.warmup or defaultTiming.warmup)
+    timing.fire = math.max(0.3, opts.fire or timing.fire or defaultTiming.fire)
+    timing.cooldown = math.max(0.2, opts.cooldown or timing.cooldown or defaultTiming.cooldown)
 end
 
 function Flamethrowers:spawn(x, y, opts)
@@ -64,6 +122,13 @@ function Flamethrowers:spawn(x, y, opts)
     setOccupied(col, row)
 
     local tile = Arena.tileSize or 24
+    local timing = ensureTiming(self)
+    local idleMin = timing.idleMin or defaultTiming.idleMin
+    local idleMax = timing.idleMax or defaultTiming.idleMax
+    if idleMax < idleMin then
+        idleMax = idleMin
+    end
+
     local unit = {
         x = x,
         y = y,
@@ -77,10 +142,10 @@ function Flamethrowers:spawn(x, y, opts)
         flameWidth = tile * 0.78,
         state = "idle",
         timer = love.math.random() * 0.5,
-        idleDuration = love.math.random(1.2, 2.2),
-        warmupDuration = 0.55,
-        fireDuration = 0.85,
-        cooldownDuration = 0.45,
+        idleDuration = love.math.random(idleMin, idleMax),
+        warmupDuration = timing.warmup or defaultTiming.warmup,
+        fireDuration = timing.fire or defaultTiming.fire,
+        cooldownDuration = timing.cooldown or defaultTiming.cooldown,
         flameProgress = 0,
         warningPulse = 0,
         isDangerous = false,
