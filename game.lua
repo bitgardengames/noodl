@@ -676,14 +676,39 @@ function Game:drawDescending()
         end
 
         local hx, hy, hr = self.hole.x, self.hole.y, self.hole.radius
+        local progress = Snake:getDescendingProgress()
 
-        love.graphics.setColor(0.05, 0.05, 0.05, 1)
+        love.graphics.push("all")
+        love.graphics.setColor(0.04, 0.04, 0.05, 1)
         love.graphics.circle("fill", hx, hy, hr)
 
+        local layers = 4
+        for i = 1, layers do
+                local t = (i - 1) / math.max(1, layers - 1)
+                local radius = hr * (0.88 - 0.22 * t)
+                local shade = 0.06 + 0.18 * t
+                local alpha = 0.55 - 0.12 * t
+                love.graphics.setColor(shade, shade * 0.9, shade * 0.95, alpha)
+                love.graphics.circle("fill", hx, hy, radius)
+        end
+
+        if progress > 0 then
+                local glowRadius = hr * (0.55 - 0.25 * progress)
+                if glowRadius > 0 then
+                        love.graphics.setBlendMode("add")
+                        love.graphics.setColor(0.25, 0.4, 0.6, 0.28 * progress)
+                        love.graphics.circle("fill", hx, hy, glowRadius)
+                        love.graphics.setBlendMode("alpha")
+                end
+        end
+
+        love.graphics.pop()
+
+        love.graphics.setColor(1, 1, 1, 1)
         Snake:drawClipped(hx, hy, hr)
 
-        love.graphics.setColor(0, 0, 0, 1)
         local previousLineWidth = love.graphics.getLineWidth()
+        love.graphics.setColor(0, 0, 0, 1)
         love.graphics.setLineWidth(2)
         love.graphics.circle("line", hx, hy, hr)
         love.graphics.setLineWidth(previousLineWidth)

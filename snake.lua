@@ -203,11 +203,10 @@ local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
     return px + t * dx, py + t * dy
 end
 
-local function easeOutCubic(t)
+local function smoothstep(t)
     if t <= 0 then return 0 end
     if t >= 1 then return 1 end
-    local inv = 1 - t
-    return 1 - inv * inv * inv
+    return t * t * (3 - 2 * t)
 end
 
 local function calculateTrailLength()
@@ -559,62 +558,63 @@ end
 
 function Snake:startDescending(hx, hy, hr)
     local headX, headY = self:getHead()
-    local dirX, dirY = normalizeDirection(direction.x or 0, direction.y or 0)
-    if dirX == 0 and dirY == 0 then
-        dirX, dirY = 1, 0
-    end
-
-    if headX and headY then
-        local dx = (hx or headX) - headX
-        local dy = (hy or headY) - headY
+    local dirX, dirY = 0, 0
+    if hx and hy and headX and headY then
+        local dx = hx - headX
+        local dy = hy - headY
         local dist = math.sqrt(dx * dx + dy * dy)
         if dist > 1e-4 then
             dirX, dirY = dx / dist, dy / dist
         end
     end
 
+    if dirX == 0 and dirY == 0 then
+        dirX, dirY = normalizeDirection(direction.x or 0, direction.y or 0)
+        if dirX == 0 and dirY == 0 then
+            dirX, dirY = 0, -1
+        end
+    end
+
     local entryX = headX or hx
     local entryY = headY or hy
 
+    local baseRadius = hr or 0
     local approachDistance = 0
-    if headX and headY and hx and hy then
-        local dx = hx - headX
-        local dy = hy - headY
+    if entryX and entryY and hx and hy then
+        local dx = hx - entryX
+        local dy = hy - entryY
         approachDistance = math.sqrt(dx * dx + dy * dy)
     end
 
-    local speed = self:getSpeed()
-    local approachDuration = 0.3
-    if speed and speed > 1e-3 then
-        local estimate = (approachDistance / speed) * 1.1
-        approachDuration = math.max(0.18, math.min(0.75, estimate))
-    end
-
-    local descendDuration = 0.6 + math.min(0.8, math.max(0, (segmentCount - 1) * 0.035))
+    local descendDuration = 0.65 + math.min(0.85, math.max(0, (segmentCount - 1) * 0.03))
     local trailLength = calculateTrailLength()
     local logicalLength = math.max(0, (segmentCount or 0) * SEGMENT_SPACING)
+    local depth = math.max(baseRadius * 0.9, SEGMENT_SPACING * 1.5)
+    local pathLength = approachDistance + depth
+    if pathLength <= 1e-3 then
+        pathLength = depth
+    end
 
     descendingHole = {
         x = hx,
         y = hy,
-        radius = hr or 0,
-        baseRadius = hr or 0,
-        visualRadius = hr or 0,
+        radius = baseRadius,
+        baseRadius = baseRadius,
+        visualRadius = baseRadius,
         entryX = entryX,
         entryY = entryY,
         entryDirX = dirX,
         entryDirY = dirY,
-        approachDuration = approachDuration,
         descendDuration = descendDuration,
-        consumeDelay = 0.12,
         timer = 0,
         consumedLength = 0,
         consumeTarget = nil,
         totalLength = trailLength,
         logicalLength = logicalLength,
         scripted = true,
-        depthOffset = (hr or 0) * 0.9,
-        entryDistance = approachDistance,
+        pathLength = pathLength,
+        depthOffset = depth,
+        sinkProgress = 0,
     }
 end
 
@@ -627,6 +627,20 @@ function Snake:getDescendingVisualRadius()
         return nil
     end
     return descendingHole.visualRadius or descendingHole.radius
+end
+
+function Snake:getDescendingProgress()
+    if not descendingHole then
+        return 0
+    end
+    local progress = descendingHole.sinkProgress or 0
+    if progress < 0 then
+        return 0
+    end
+    if progress > 1 then
+        return 1
+    end
+    return progress
 end
 
 function Snake:update(dt)
@@ -655,68 +669,34 @@ function Snake:update(dt)
     if hole and head then
         hole.timer = (hole.timer or 0) + dt
 
-        local hx = hole.x or head.drawX
-        local hy = hole.y or head.drawY
         local startX = hole.entryX or head.drawX
         local startY = hole.entryY or head.drawY
+        local dirX = hole.entryDirX or 0
+        local dirY = hole.entryDirY or 0
 
-        local approachDuration = hole.approachDuration or 0
-        local approachProgress = approachDuration > 0 and math.min(1, hole.timer / approachDuration) or 1
-        local approachEased = easeOutCubic(approachProgress)
-
-        local targetX = startX + (hx - startX) * approachEased
-        local targetY = startY + (hy - startY) * approachEased
-
-        local consumeDelay = hole.consumeDelay or 0
         local descendDuration = hole.descendDuration or 0.75
-        local sinkStart = approachDuration + consumeDelay
-        local sinkTime = math.max(0, hole.timer - sinkStart)
-        local sinkProgress = descendDuration > 0 and math.min(1, sinkTime / descendDuration) or 1
+        local sinkProgress = descendDuration > 0 and math.min(1, hole.timer / descendDuration) or 1
         if sinkProgress < 0 then sinkProgress = 0 end
 
-        if approachProgress >= 1 and sinkProgress > 0 then
-            local offset = (hole.depthOffset or (hole.radius or 0)) * sinkProgress
-            if (hole.entryDistance or 0) <= 1e-3 then
-                offset = 0
-            end
-            targetX = hx + (hole.entryDirX or 0) * offset
-            targetY = hy + (hole.entryDirY or 0) * offset
-        end
+        local easedSink = smoothstep(sinkProgress)
+        local travel = (hole.pathLength or 0) * easedSink
+        local targetX = startX + dirX * travel
+        local targetY = startY + dirY * travel
 
         newX = targetX
         newY = targetY
 
-        local moveDx = newX - head.drawX
-        local moveDy = newY - head.drawY
-        local moveDist = math.sqrt(moveDx * moveDx + moveDy * moveDy)
-        if moveDist > 1e-4 then
-            local nx = moveDx / moveDist
-            local ny = moveDy / moveDist
-            direction = { x = nx, y = ny }
-            pendingDir = { x = nx, y = ny }
+        if dirX ~= 0 or dirY ~= 0 then
+            direction = { x = dirX, y = dirY }
+            pendingDir = { x = dirX, y = dirY }
         end
 
         moveTimer = 0
 
         local logicalLength = math.max(0, segmentCount * SEGMENT_SPACING)
         hole.logicalLength = logicalLength
-    
-        if sinkProgress >= 0.995 then
-            hole.consumeTarget = logicalLength
-        else
-            hole.consumeTarget = nil
-        end
-
-        local baseRadius = hole.baseRadius or hole.radius or 0
-        if baseRadius > 0 then
-            local easedSink = sinkProgress * sinkProgress
-            local minRadius = baseRadius * 0.35
-            hole.visualRadius = baseRadius - (baseRadius - minRadius) * easedSink
-        else
-            hole.visualRadius = nil
-        end
-
-        hole.approachProgress = approachProgress
+        hole.consumeTarget = logicalLength * sinkProgress
+        hole.visualRadius = hole.baseRadius or hole.radius
         hole.sinkProgress = sinkProgress
     else
         local stepX = direction.x * speed * dt
