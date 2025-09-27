@@ -2,7 +2,7 @@ local Snake = require("snake")
 local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Saws = require("saws")
-local Presses = require("presses")
+local Spikes = require("spikes")
 local Arena = require("arena")
 local Particles = require("particles")
 
@@ -187,9 +187,9 @@ function Movement:update(dt)
                 end
         end
 
-        local pressHit = Presses:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+        local spikeHit = Spikes:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
 
-        if pressHit then
+        if spikeHit then
                 if Snake:consumeCrashShield() then
                         Particles:spawnBurst(headX, headY + SEGMENT_SIZE / 2, {
                                 count = 10,
@@ -206,12 +206,12 @@ function Movement:update(dt)
                                 scaleVariance = 0.6,
                                 fadeTo = 0,
                         })
-                        Presses:bounce(pressHit)
+                        Spikes:bounce(spikeHit)
                         if Snake.onShieldConsumed then
-                                Snake:onShieldConsumed(headX, headY, "press")
+                                Snake:onShieldConsumed(headX, headY, "spike")
                         end
                 else
-                        return "dead", "press"
+                        return "dead", "spike"
                 end
         end
 

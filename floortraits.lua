@@ -201,8 +201,8 @@ function FloorTraits:apply(list, context)
     if ctx.saws then
         ctx.saws = math.max(0, math.min(8, math.floor(ctx.saws + 0.5)))
     end
-    if ctx.presses then
-        ctx.presses = math.max(0, math.min(5, math.floor(ctx.presses + 0.5)))
+    if ctx.spikes then
+        ctx.spikes = math.max(0, math.min(5, math.floor(ctx.spikes + 0.5)))
     end
     if ctx.fruitGoal then
         ctx.fruitGoal = math.max(1, math.floor(ctx.fruitGoal + 0.5))

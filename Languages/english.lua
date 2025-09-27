@@ -110,11 +110,11 @@ local english = {
                     "OSHA has entered the chat.",
                     "Snake auditioned for a horror movie.",
                 },
-                press = {
-                    "Snake got stamped into noodle sheets.",
-                    "Hydraulic press says: paper-thin.",
-                    "Mind the crushing ceiling next time.",
-                    "That press really nailed the landing—on you.",
+                spike = {
+                    "Snake got skewered by blooming spikes.",
+                    "Mind the bramble burst next time.",
+                    "Those spikes were feeling pointy today.",
+                    "Turns out the floor bites back.",
                 },
                 unknown = {
                     "Mysterious demise...",

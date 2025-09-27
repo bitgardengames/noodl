@@ -11,10 +11,10 @@ This note explores how to extend the existing saw blade motif—constructed from
 
 ## Hazard Families
 
-### 1. Crank Press
-- **Core Shapes:** Tall rectangle body; inner rectangle inset; top circle as the hydraulic cap.
-- **Motion:** Animate the inner rectangle sliding down to “squash” the player zone.
-- **Accent:** Add a thin triangle pointer on the pressing face to signal danger.
+### 1. Blooming Spike Patch
+- **Core Shapes:** Rounded square floor plate with an inset diamond telegraph; clusters of three tall triangles for spikes.
+- **Motion:** Animate the diamond pulsing before the spikes rise smoothly from the floor and lock in place.
+- **Accent:** Add a shallow rim rectangle around the plate so the hazard feels rooted to the arena.
 
 ### 2. Arc Laser Turret
 - **Core Shapes:** Half-circle shell (two stacked rectangles with a semicircle); small circle lens.
