@@ -3,6 +3,7 @@ local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Presses = require("presses")
+local Spikes = require("spikes")
 local Arena = require("arena")
 local Particles = require("particles")
 
@@ -179,9 +180,22 @@ function Movement:update(dt)
                 end
         end
 
-	if Fruit:checkCollisionWith(headX, headY) then
-		return "scored"
-	end
+        local spikeHit = Spikes:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+
+        if spikeHit then
+                if Snake:consumeCrashShield() then
+                        Spikes:shatter(spikeHit)
+                        if Snake.onShieldConsumed then
+                                Snake:onShieldConsumed(headX, headY, "spike")
+                        end
+                else
+                        return "dead", "spike"
+                end
+        end
+
+        if Fruit:checkCollisionWith(headX, headY) then
+                return "scored"
+        end
 end
 
 return Movement
