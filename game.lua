@@ -24,7 +24,6 @@ local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
 local Presses = require("presses")
-local Spikes = require("spikes")
 local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
@@ -329,7 +328,6 @@ function Game:updateEntities(dt)
         Fruit:update(dt)
         Rocks:update(dt)
         Presses:update(dt)
-        Spikes:update(dt)
         Saws:update(dt)
         Arena:update(dt)
         Particles:update(dt)
@@ -359,7 +357,6 @@ local function drawPlayfieldLayers(self, stateOverride)
 
         Fruit:draw()
         Rocks:draw()
-        Spikes:draw()
         Presses:draw()
         Saws:draw()
         Arena:drawExit()
@@ -705,7 +702,6 @@ function Game:setupFloor(floorNum)
     Rocks:reset()
     Saws:reset()
     Presses:reset()
-    Spikes:reset()
     SnakeUtils.initOccupancy()
 
     for _, seg in ipairs(Snake:getSegments()) do
@@ -720,7 +716,6 @@ function Game:setupFloor(floorNum)
         rocks = math.min(3 + floorNum * 2, 40),
         saws = math.min(math.floor(floorNum / 2), 8),
         presses = math.min(math.floor((floorNum + 1) / 4), 5),
-        spikes = math.min(math.floor((floorNum + 2) / 3), 6),
     }
 
     local adjustedContext, appliedTraits = FloorTraits:apply(self.currentFloorData.traits, traitContext)
@@ -739,7 +734,6 @@ function Game:setupFloor(floorNum)
     local numRocks = traitContext.rocks
     local numSaws = traitContext.saws
     local numPresses = traitContext.presses or 0
-    local numSpikes = traitContext.spikes or 0
     local safeZone = Snake:getSafeZone(3)
 
     -- Spawn saws FIRST so they reserve their track cells
@@ -775,14 +769,6 @@ function Game:setupFloor(floorNum)
                 local fx, fy, col, row = SnakeUtils.getSafeSpawn(Snake:getSegments(), nil, Rocks, safeZone)
                 if fx then
                         Presses:spawn(fx, fy, { col = col, row = row })
-                end
-        end
-
-    -- Spawn floor spikes after presses so they respect occupied slots
-        for i = 1, numSpikes do
-                local fx, fy, col, row = SnakeUtils.getSafeSpawn(Snake:getSegments(), nil, Rocks, safeZone)
-                if fx then
-                        Spikes:spawn(fx, fy, { col = col, row = row })
                 end
         end
 
