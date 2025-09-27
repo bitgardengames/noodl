@@ -75,13 +75,13 @@ local function buildBaselineFloorContext(floorNum)
 
     local context = {
         floor = floorNum,
-        fruitGoal = math.max(3, math.floor(4 + step * 3.5)),
-        rocks = math.max(0, math.min(32, math.floor(1 + step * 1.6))),
-        saws = math.max(0, math.min(7, math.floor(step / 1.5))),
-        rockSpawnChance = math.min(0.55, 0.22 + step * 0.028),
-        sawSpeedMult = 1 + math.min(0.6, step * 0.045),
-        sawSpinMult = 1 + math.min(0.5, step * 0.04),
-        sawStall = math.max(0, 0.5 - normalized * 0.4),
+        fruitGoal = math.max(4, math.floor(5 + step * 3)),
+        rocks = math.max(0, math.min(32, math.floor(3 + step * 1.4))),
+        saws = math.max(1, math.min(7, math.floor(step / 1.35) + 1)),
+        rockSpawnChance = math.min(0.6, 0.26 + step * 0.03),
+        sawSpeedMult = 1.05 + math.min(0.55, step * 0.05),
+        sawSpinMult = 1 + math.min(0.45, step * 0.045),
+        sawStall = math.max(0, 0.4 - normalized * 0.3),
     }
 
     return context

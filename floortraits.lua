@@ -20,16 +20,16 @@ local traits = {
     },
     sunlitSanctuary = {
         name = "Sunlit Sanctuary",
-        desc = "Begin with a crash shield while the garden grows gently.",
+        desc = "Begin with a crash shield while the grove thins the stones a little.",
         apply = function(ctx)
             if ctx.rocks then
-                ctx.rocks = math.max(0, ctx.rocks - 2)
+                ctx.rocks = math.max(0, ctx.rocks - 1)
             end
 
             Snake:addCrashShields(1)
 
             local chance = Rocks:getSpawnChance() or 0.25
-            Rocks.spawnChance = math.max(0.05, chance * 0.6)
+            Rocks.spawnChance = math.max(0.08, chance * 0.75)
         end
     },
     restlessEarth = {
