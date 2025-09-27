@@ -177,6 +177,80 @@ local function register(upgrade)
     return upgrade
 end
 
+local function countUpgradesWithTag(state, tag)
+    if not state or not tag then return 0 end
+
+    local total = 0
+    if not state.takenSet then return total end
+
+    for id, count in pairs(state.takenSet) do
+        local upgrade = poolById[id]
+        if upgrade and upgrade.tags then
+            for _, upgradeTag in ipairs(upgrade.tags) do
+                if upgradeTag == tag then
+                    total = total + (count or 0)
+                    break
+                end
+            end
+        end
+    end
+
+    return total
+end
+
+local function updateResonantShellBonus(state)
+    if not state then return end
+
+    local perBonus = state.counters and state.counters.resonantShellPerBonus or 0
+    if perBonus <= 0 then return end
+
+    local previous = state.counters.resonantShellBonus or 0
+    local defenseCount = countUpgradesWithTag(state, "defense")
+    local newBonus = perBonus * defenseCount
+    state.counters.resonantShellBonus = newBonus
+    state.effects.sawStall = (state.effects.sawStall or 0) - previous + newBonus
+end
+
+local function updateLinkedHydraulics(state)
+    if not state then return end
+
+    local perStack = state.counters and state.counters.linkedHydraulicsPerStack or 0
+    local perStall = state.counters and state.counters.linkedHydraulicsPerStall or 0
+    if perStack <= 0 and perStall <= 0 then return end
+
+    local stacks = 0
+    if state.takenSet then
+        stacks = state.takenSet.hydraulic_tracks or 0
+    end
+
+    local stall = 0
+    if state.effects then
+        stall = state.effects.sawStall or 0
+    end
+
+    local previous = state.counters.linkedHydraulicsBonus or 0
+    local newBonus = stacks * perStack + stall * perStall
+    state.counters.linkedHydraulicsBonus = newBonus
+    state.effects.sawSinkDuration = (state.effects.sawSinkDuration or 0) - previous + newBonus
+end
+
+local function updateGuildLedger(state)
+    if not state then return end
+
+    local perSlot = state.counters and state.counters.guildLedgerFlatPerSlot or 0
+    if perSlot == 0 then return end
+
+    local slots = 0
+    if state.effects then
+        slots = state.effects.shopSlots or 0
+    end
+
+    local previous = state.counters.guildLedgerBonus or 0
+    local newBonus = -(perSlot * slots)
+    state.counters.guildLedgerBonus = newBonus
+    state.effects.rockSpawnFlat = (state.effects.rockSpawnFlat or 0) - previous + newBonus
+end
+
 local pool = {
     register({
         id = "quick_fangs",
@@ -503,6 +577,39 @@ local pool = {
         end,
     }),
     register({
+        id = "linked_hydraulics",
+        name = "Linked Hydraulics",
+        desc = "Hydraulic Tracks gain +0.75s sink time per stack and +0.25s per second of saw stall.",
+        rarity = "rare",
+        condition = function(state)
+            return state and state.takenSet and (state.takenSet.hydraulic_tracks or 0) > 0
+        end,
+        tags = {"defense"},
+        onAcquire = function(state)
+            state.counters.linkedHydraulicsPerStack = 0.75
+            state.counters.linkedHydraulicsPerStall = 0.25
+            updateLinkedHydraulics(state)
+
+            if not state.counters.linkedHydraulicsHandlerRegistered then
+                state.counters.linkedHydraulicsHandlerRegistered = true
+                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+                    if not runState then return end
+                    if not runState.takenSet or (runState.takenSet.linked_hydraulics or 0) <= 0 then return end
+                    updateLinkedHydraulics(runState)
+                end)
+            end
+
+            celebrateUpgrade("Linked Hydraulics", nil, {
+                color = {0.62, 0.84, 1, 1},
+                particleCount = 20,
+                particleSpeed = 140,
+                particleLife = 0.46,
+                textOffset = 44,
+                textScale = 1.14,
+            })
+        end,
+    }),
+    register({
         id = "twilight_parade",
         name = "Twilight Parade",
         desc = "Fruit at 4+ combo grant +2 bonus score and stall saws 0.8s.",
@@ -649,6 +756,36 @@ local pool = {
         end,
     }),
     register({
+        id = "resonant_shell",
+        name = "Resonant Shell",
+        desc = "Gain +0.35s saw stall for every Defense upgrade you've taken.",
+        rarity = "rare",
+        requiresTags = {"defense"},
+        tags = {"defense"},
+        onAcquire = function(state)
+            state.counters.resonantShellPerBonus = 0.35
+            updateResonantShellBonus(state)
+
+            if not state.counters.resonantShellHandlerRegistered then
+                state.counters.resonantShellHandlerRegistered = true
+                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+                    if not runState then return end
+                    if not runState.takenSet or (runState.takenSet.resonant_shell or 0) <= 0 then return end
+                    updateResonantShellBonus(runState)
+                end)
+            end
+
+            celebrateUpgrade("Resonant Shell", nil, {
+                color = {0.8, 0.88, 1, 1},
+                particleCount = 18,
+                particleSpeed = 120,
+                particleLife = 0.48,
+                textOffset = 48,
+                textScale = 1.12,
+            })
+        end,
+    }),
+    register({
         id = "gilded_trail",
         name = "Gilded Trail",
         desc = "Every 5th fruit grants +3 bonus score.",
@@ -705,6 +842,36 @@ local pool = {
         onAcquire = function(state)
             state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
             state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
+        end,
+    }),
+    register({
+        id = "guild_ledger",
+        name = "Guild Ledger",
+        desc = "Each shop slot cuts rock spawn chance by 1.5%.",
+        rarity = "rare",
+        requiresTags = {"economy"},
+        tags = {"economy", "defense"},
+        onAcquire = function(state)
+            state.counters.guildLedgerFlatPerSlot = 0.015
+            updateGuildLedger(state)
+
+            if not state.counters.guildLedgerHandlerRegistered then
+                state.counters.guildLedgerHandlerRegistered = true
+                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+                    if not runState then return end
+                    if not runState.takenSet or (runState.takenSet.guild_ledger or 0) <= 0 then return end
+                    updateGuildLedger(runState)
+                end)
+            end
+
+            celebrateUpgrade("Guild Ledger", nil, {
+                color = {1, 0.86, 0.46, 1},
+                particleCount = 16,
+                particleSpeed = 120,
+                particleLife = 0.42,
+                textOffset = 42,
+                textScale = 1.1,
+            })
         end,
     }),
     register({
@@ -1384,6 +1551,7 @@ function Upgrades:acquire(card, context)
         end
     end
 
+    self:notify("upgradeAcquired", { id = upgrade.id, upgrade = upgrade, context = context })
     self:applyPersistentEffects(false)
 end
 
