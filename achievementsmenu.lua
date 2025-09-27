@@ -354,6 +354,42 @@ function AchievementsMenu:wheelmoved(dx, dy)
     scrollBy(dy * SCROLL_SPEED)
 end
 
+function AchievementsMenu:keypressed(key)
+    if key == "up" then
+        scrollBy(DPAD_SCROLL_AMOUNT)
+        buttonList:moveFocus(-1)
+    elseif key == "down" then
+        scrollBy(-DPAD_SCROLL_AMOUNT)
+        buttonList:moveFocus(1)
+    elseif key == "left" then
+        buttonList:moveFocus(-1)
+    elseif key == "right" then
+        buttonList:moveFocus(1)
+    elseif key == "pageup" then
+        local pageStep = DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING))
+        scrollBy(pageStep)
+    elseif key == "pagedown" then
+        local pageStep = DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING))
+        scrollBy(-pageStep)
+    elseif key == "home" then
+        scrollBy(-scrollOffset)
+    elseif key == "end" then
+        scrollBy(minScrollOffset - scrollOffset)
+    elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
+        local action = buttonList:activateFocused()
+        if action then
+            Audio:playSound("click")
+        end
+        return action
+    elseif key == "escape" or key == "backspace" then
+        local action = buttonList:activateFocused() or "menu"
+        if action then
+            Audio:playSound("click")
+        end
+        return action
+    end
+end
+
 function AchievementsMenu:gamepadpressed(_, button)
     if button == "dpup" then
         scrollBy(DPAD_SCROLL_AMOUNT)

@@ -158,6 +158,18 @@ function PauseMenu:activateFocused()
     return resolved
 end
 
+function PauseMenu:keypressed(key)
+    if key == "up" or key == "left" then
+        buttonList:moveFocus(-1)
+    elseif key == "down" or key == "right" then
+        buttonList:moveFocus(1)
+    elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
+        return self:activateFocused()
+    elseif key == "escape" or key == "backspace" then
+        return "resume"
+    end
+end
+
 function PauseMenu:gamepadpressed(_, button)
     if button == "dpup" or button == "dpleft" then
         buttonList:moveFocus(-1)

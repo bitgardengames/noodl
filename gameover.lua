@@ -226,6 +226,23 @@ function GameOver:mousereleased(x, y, button)
     return action
 end
 
+function GameOver:keypressed(key)
+    if key == "up" or key == "left" then
+        buttonList:moveFocus(-1)
+    elseif key == "down" or key == "right" then
+        buttonList:moveFocus(1)
+    elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
+        local action = buttonList:activateFocused()
+        if action then
+            Audio:playSound("click")
+        end
+        return action
+    elseif key == "escape" or key == "backspace" then
+        Audio:playSound("click")
+        return "menu"
+    end
+end
+
 function GameOver:gamepadpressed(_, button)
     if button == "dpup" or button == "dpleft" then
         buttonList:moveFocus(-1)

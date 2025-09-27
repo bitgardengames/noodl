@@ -140,6 +140,29 @@ function ModeSelect:mousereleased(x, y, button)
     end
 end
 
+function ModeSelect:keypressed(key)
+    if key == "up" or key == "left" then
+        buttonList:moveFocus(-1)
+    elseif key == "down" or key == "right" then
+        buttonList:moveFocus(1)
+    elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
+        local _, btn = buttonList:activateFocused()
+        if not btn then return end
+
+        if btn.modeKey == "back" then
+            Audio:playSound("click")
+            return "menu"
+        elseif btn.unlocked then
+            Audio:playSound("click")
+            GameModes:set(btn.modeKey)
+            return "game"
+        end
+    elseif key == "escape" or key == "backspace" then
+        Audio:playSound("click")
+        return "menu"
+    end
+end
+
 function ModeSelect:gamepadpressed(_, button)
     if button == "dpup" or button == "dpleft" then
         buttonList:moveFocus(-1)
