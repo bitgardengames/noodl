@@ -577,16 +577,16 @@ function Shop:draw(screenW, screenH)
         local drawX = centerX - drawWidth / 2
         local drawY = centerY - drawHeight / 2
 
-        local usingGamepad = self.inputMode == "gamepad"
+        local usingFocusNavigation = self.inputMode == "gamepad" or self.inputMode == "keyboard"
         local mouseHover = mx >= drawX and mx <= drawX + drawWidth
             and my >= drawY and my <= drawY + drawHeight
-        if not self.selected and mouseHover and not usingGamepad then
+        if not self.selected and mouseHover and not usingFocusNavigation then
             self:setFocus(i)
         end
 
         local hovered = not self.selected and (
-            (usingGamepad and self.focusIndex == i) or
-            (not usingGamepad and mouseHover)
+            (usingFocusNavigation and self.focusIndex == i) or
+            (not usingFocusNavigation and mouseHover)
         )
 
         love.graphics.push()
@@ -636,7 +636,7 @@ function Shop:draw(screenW, screenH)
     local keyHint
     local choices = #self.cards
     if choices > 0 then
-        keyHint = string.format("Press 1-%d to claim a relic", choices)
+        keyHint = string.format("Press 1-%d or use arrows + Enter to claim a relic", choices)
     else
         keyHint = "No relics available"
     end
@@ -667,9 +667,28 @@ local function pickIndexFromKey(key)
 end
 
 function Shop:keypressed(key)
+    if not self.cards or #self.cards == 0 then return end
+
     local index = pickIndexFromKey(key)
     if index then
+        self.inputMode = "keyboard"
         return self:pick(index)
+    end
+
+    if self.selected then return end
+
+    if key == "left" or key == "up" then
+        self.inputMode = "keyboard"
+        self:moveFocus(-1)
+        return true
+    elseif key == "right" or key == "down" then
+        self.inputMode = "keyboard"
+        self:moveFocus(1)
+        return true
+    elseif key == "return" or key == "kpenter" or key == "enter" then
+        self.inputMode = "keyboard"
+        local focusIndex = self.focusIndex or 1
+        return self:pick(focusIndex)
     end
 end
 
