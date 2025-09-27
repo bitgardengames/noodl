@@ -56,8 +56,11 @@ end
 
 shapeDrawers.idle = function()
     love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS)
-    love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS)
+    -- Explicitly provide a generous segment count so the filled circles stay
+    -- visually round even after any scaling applied to the snake sprite.
+    local circleSegments = 24
+    love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
+    love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
 end
 
 shapeDrawers.blink = function()
@@ -107,8 +110,9 @@ local shapeDrawers = {}
 
 shapeDrawers.idle = function()
     love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS)
-    love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS)
+    local circleSegments = 24
+    love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
+    love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
 end
 
 shapeDrawers.blink = function()
