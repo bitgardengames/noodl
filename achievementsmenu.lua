@@ -84,10 +84,11 @@ local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, t
     love.graphics.setColor(hr, hg, hb, ha)
     love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, segmentSize * 0.45)
 
-    local scissorX = trackX - 2
-    local scissorY = trackY - 2
-    local scissorW = trackWidth + 4
-    local scissorH = trackHeight + 4
+    local outlinePad = math.max(6, segmentSize * 0.75)
+    local scissorX = trackX - outlinePad
+    local scissorY = trackY - outlinePad
+    local scissorW = trackWidth + outlinePad * 2
+    local scissorH = trackHeight + outlinePad * 2
     love.graphics.setScissor(scissorX, scissorY, scissorW, scissorH)
 
     drawSnake(trail, #trail, segmentSize, nil, nil, nil, nil, nil)
