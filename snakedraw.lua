@@ -82,13 +82,13 @@ local function drawFruitBulges(trail, head, radius)
     if seg and seg.fruitMarker and seg ~= head then
       local x = seg.fruitMarkerX or (seg.drawX or seg.x)
       local y = seg.fruitMarkerY or (seg.drawY or seg.y)
+
       if x and y then
         love.graphics.circle("fill", x, y, radius)
       end
     end
   end
 end
-
 
 local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
         -- OUTLINE
@@ -249,7 +249,6 @@ end
 local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
   if not trail or #trail == 0 then return end
 
-  --local thickness = SEGMENT_SIZE * 0.75
   local thickness = SEGMENT_SIZE * 0.8
   local half      = thickness / 2
 

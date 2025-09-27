@@ -240,6 +240,7 @@ function FruitEvents.handleConsumption(x, y)
 
     Snake:grow()
     Snake:markFruitSegment(x, y)
+
     Face:set("happy", 2)
     FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40)
     Score:increase(points)
