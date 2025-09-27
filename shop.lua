@@ -23,6 +23,11 @@ function Shop:start(currentFloor)
     self.selectionTimer = 0
     self.selectionHoldDuration = 1.85
     self.selectionComplete = false
+    self.focusIndex = nil
+    self.inputMode = nil
+    if #self.cards > 0 then
+        self:setFocus(1)
+    end
     for i = 1, #self.cards do
         self.cardStates[i] = {
             progress = 0,
@@ -34,6 +39,25 @@ function Shop:start(currentFloor)
             selectionFlash = nil,
         }
     end
+end
+
+function Shop:setFocus(index)
+    if not self.cards or not index then return end
+    if index < 1 or index > #self.cards then return end
+    self.focusIndex = index
+    return self.cards[index]
+end
+
+function Shop:moveFocus(delta)
+    if not delta or delta == 0 then return end
+    if not self.cards or #self.cards == 0 then return end
+
+    local count = #self.cards
+    local index = self.focusIndex or 1
+    index = ((index - 1 + delta) % count) + 1
+    self.focusIndex = index
+
+    return self.cards[index]
 end
 
 function Shop:update(dt)
@@ -553,9 +577,17 @@ function Shop:draw(screenW, screenH)
         local drawX = centerX - drawWidth / 2
         local drawY = centerY - drawHeight / 2
 
-        local hovered = not self.selected
-            and mx >= drawX and mx <= drawX + drawWidth
+        local usingGamepad = self.inputMode == "gamepad"
+        local mouseHover = mx >= drawX and mx <= drawX + drawWidth
             and my >= drawY and my <= drawY + drawHeight
+        if not self.selected and mouseHover and not usingGamepad then
+            self:setFocus(i)
+        end
+
+        local hovered = not self.selected and (
+            (usingGamepad and self.focusIndex == i) or
+            (not usingGamepad and mouseHover)
+        )
 
         love.graphics.push()
         love.graphics.translate(centerX, centerY)
@@ -643,13 +675,34 @@ end
 
 function Shop:mousepressed(x, y, button)
     if button ~= 1 then return end
+    self.inputMode = "mouse"
     for i, card in ipairs(self.cards) do
         local b = card.bounds
         if b and x >= b.x and x <= b.x + b.w and y >= b.y and y <= b.y + b.h then
+            self:setFocus(i)
             return self:pick(i)
         end
     end
 end
+
+function Shop:gamepadpressed(_, button)
+    if not self.cards or #self.cards == 0 then return end
+
+    self.inputMode = "gamepad"
+
+    if self.selected then return end
+
+    if button == "dpup" or button == "dpleft" then
+        self:moveFocus(-1)
+    elseif button == "dpdown" or button == "dpright" then
+        self:moveFocus(1)
+    elseif button == "a" or button == "start" then
+        local index = self.focusIndex or 1
+        return self:pick(index)
+    end
+end
+
+Shop.joystickpressed = Shop.gamepadpressed
 
 function Shop:pick(i)
     if self.selected then return false end
