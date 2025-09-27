@@ -801,16 +801,6 @@ local pool = {
         },
     }),
     register({
-        id = "gyro_stabilizers",
-        name = "Gyro Stabilizers",
-        desc = "Saws spin 35% slower.",
-        rarity = "uncommon",
-        tags = {"defense"},
-        onAcquire = function(state)
-            state.effects.sawSpinMult = (state.effects.sawSpinMult or 1) * 0.65
-        end,
-    }),
-    register({
         id = "tempest_nectar",
         name = "Tempest Nectar",
         desc = "Fruit grant +1 bonus score and stall saws for 0.6s.",
