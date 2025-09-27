@@ -7,7 +7,7 @@ local unpack = unpack
 local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3
 local OUTLINE_SIZE   = 6
-local FRUIT_BULGE_SCALE = 1.15
+local FRUIT_BULGE_SCALE = 1.22
 
 -- colors (body color reused for patches so they blend)
 local BODY_R, BODY_G, BODY_B = Theme.snakeDefault
@@ -96,7 +96,8 @@ local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
         drawPolyline(coords)
         drawEndcaps(head, tail, half + OUTLINE_SIZE * 0.5)
         drawCornerPlugs(trail, half + OUTLINE_SIZE*0.5)
-        drawFruitBulges(trail, head, half * FRUIT_BULGE_SCALE + OUTLINE_SIZE * 0.5)
+        local bulgeRadius = half * FRUIT_BULGE_SCALE
+        drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
 
         -- BODY
         love.graphics.setColor(BODY_R, BODY_G, BODY_B)
@@ -106,7 +107,7 @@ local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
 
         love.graphics.setColor(BODY_R, BODY_G, BODY_B)
         drawCornerPlugs(trail, half)
-        drawFruitBulges(trail, head, half * FRUIT_BULGE_SCALE)
+        drawFruitBulges(trail, head, bulgeRadius)
 end
 
 local function drawSoftGlow(x, y, radius, r, g, b, a)
