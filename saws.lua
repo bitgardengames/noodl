@@ -13,6 +13,8 @@ local MOVE_SPEED = 60    -- units per second along the track
 local SPAWN_DURATION = 0.3
 local SQUASH_DURATION = 0.15
 local SINK_OFFSET = 2
+local SINK_DISTANCE = 28
+local SINK_SPEED = 3
 
 -- modifiers
 Saws.speedMult = 1.0
@@ -20,6 +22,9 @@ Saws.spinMult = 1.0
 Saws.stallOnFruit = 0
 
 local stallTimer = 0
+local sinkTimer = 0
+local sinkAutoRaise = false
+local sinkActive = false
 
 local function getMoveSpeed()
     return MOVE_SPEED * (Saws.speedMult or 1)
@@ -115,6 +120,9 @@ function Saws:spawn(x, y, radius, teeth, dir, side)
         progress = 0,
         direction = 1,
         slotId = slot and slot.id or nil,
+
+        sinkProgress = sinkActive and 1 or 0,
+        sinkTarget = sinkActive and 1 or 0,
     })
 end
 
@@ -130,6 +138,9 @@ function Saws:reset()
     self.spinMult = 1.0
     self.stallOnFruit = 0
     stallTimer = 0
+    sinkTimer = 0
+    sinkAutoRaise = false
+    sinkActive = false
 end
 
 function Saws:destroy(target)
@@ -141,9 +152,24 @@ function Saws:update(dt)
         stallTimer = math.max(0, stallTimer - dt)
     end
 
+    if sinkAutoRaise and sinkTimer > 0 then
+        sinkTimer = math.max(0, sinkTimer - dt)
+        if sinkTimer <= 0 then
+            self:unsink()
+        end
+    end
+
     for _, saw in ipairs(current) do
         saw.timer = saw.timer + dt
         saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (math.pi * 2)
+
+        local sinkDirection = (saw.sinkTarget or 0) > 0 and 1 or -1
+        saw.sinkProgress = saw.sinkProgress + sinkDirection * dt * SINK_SPEED
+        if saw.sinkProgress < 0 then
+            saw.sinkProgress = 0
+        elseif saw.sinkProgress > 1 then
+            saw.sinkProgress = 1
+        end
 
         if saw.phase == "drop" then
             local progress = math.min(saw.timer / SPAWN_DURATION, 1)
@@ -250,10 +276,14 @@ function Saws:draw()
 
         -- Saw blade
         love.graphics.push()
-        love.graphics.translate(px or saw.x, (py or saw.y) + SINK_OFFSET)
+        local sinkOffset = (saw.sinkProgress or 0) * SINK_DISTANCE
+        love.graphics.translate(px or saw.x, (py or saw.y) + SINK_OFFSET + sinkOffset)
 
         -- apply spinning rotation
         love.graphics.rotate(saw.rotation)
+
+        local sinkScale = 1 - 0.1 * (saw.sinkProgress or 0)
+        love.graphics.scale(sinkScale, sinkScale)
 
         local points = {}
         local teeth = saw.teeth or 8
@@ -291,6 +321,32 @@ function Saws:stall(duration)
     stallTimer = math.max(stallTimer, duration or 0)
 end
 
+function Saws:sink(duration)
+    for _, saw in ipairs(self:getAll()) do
+        saw.sinkTarget = 1
+    end
+
+    sinkActive = true
+
+    if duration and duration > 0 then
+        sinkTimer = math.max(sinkTimer, duration)
+        sinkAutoRaise = true
+    else
+        sinkTimer = 0
+        sinkAutoRaise = false
+    end
+end
+
+function Saws:unsink()
+    for _, saw in ipairs(self:getAll()) do
+        saw.sinkTarget = 0
+    end
+
+    sinkTimer = 0
+    sinkAutoRaise = false
+    sinkActive = false
+end
+
 function Saws:setStallOnFruit(duration)
     self.stallOnFruit = duration or 0
 end
@@ -308,15 +364,17 @@ end
 
 function Saws:checkCollision(x, y, w, h)
     for _, saw in ipairs(self:getAll()) do
-        local px, py = getSawCenter(saw)
+        if not ((saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0) then
+            local px, py = getSawCenter(saw)
 
-        -- Circle vs AABB
-        local closestX = math.max(x, math.min(px, x + w))
-        local closestY = math.max(y, math.min(py, y + h))
-        local dx = px - closestX
-        local dy = py - closestY
-        if dx * dx + dy * dy < saw.radius * saw.radius then
-            return saw
+            -- Circle vs AABB
+            local closestX = math.max(x, math.min(px, x + w))
+            local closestY = math.max(y, math.min(py, y + h))
+            local dx = px - closestX
+            local dy = py - closestY
+            if dx * dx + dy * dy < saw.radius * saw.radius then
+                return saw
+            end
         end
     end
     return nil
