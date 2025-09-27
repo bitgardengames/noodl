@@ -110,11 +110,11 @@ local english = {
                     "OSHA has entered the chat.",
                     "Snake auditioned for a horror movie.",
                 },
-                spike = {
-                    "Snake got skewered by blooming spikes.",
-                    "Mind the bramble burst next time.",
-                    "Those spikes were feeling pointy today.",
-                    "Turns out the floor bites back.",
+                flame = {
+                    "Snake got toasted by a searing flame jet.",
+                    "Those vents breathe fire—give them space.",
+                    "A molten wake isn't a good place to swim.",
+                    "The floor decided to exhale… loudly.",
                 },
                 unknown = {
                     "Mysterious demise...",

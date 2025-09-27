@@ -11,10 +11,10 @@ This note explores how to extend the existing saw blade motif—constructed from
 
 ## Hazard Families
 
-### 1. Blooming Spike Patch
-- **Core Shapes:** Rounded square floor plate with an inset diamond telegraph; clusters of three tall triangles for spikes.
-- **Motion:** Animate the diamond pulsing before the spikes rise smoothly from the floor and lock in place.
-- **Accent:** Add a shallow rim rectangle around the plate so the hazard feels rooted to the arena.
+### 1. Temple Flame Vent
+- **Core Shapes:** Rounded square floor plate with concentric rings; vertical rectangle nozzle capped by a circle.
+- **Motion:** Telegraph with pulsing rings before scaling a tapered triangle flame burst up from the vent.
+- **Accent:** Layer translucent ellipse heat haze and ember particles to sell the sustained jet.
 
 ### 2. Arc Laser Turret
 - **Core Shapes:** Half-circle shell (two stacked rectangles with a semicircle); small circle lens.
