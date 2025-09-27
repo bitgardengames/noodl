@@ -156,8 +156,8 @@ local function aabb(x1,y1,w1,h1, x2,y2,w2,h2)
            y1 < y2 + h2 and y1 + h1 > y2
 end
 
-function Fruit:spawn(trail, rocks)
-    local cx, cy, col, row = SnakeUtils.getSafeSpawn(trail, self, rocks)
+function Fruit:spawn(trail, rocks, safeZone)
+    local cx, cy, col, row = SnakeUtils.getSafeSpawn(trail, self, rocks, safeZone)
     if not cx then
         col, row = Arena:getRandomTile()
         cx, cy = Arena:getCenterOfTile(col, row)

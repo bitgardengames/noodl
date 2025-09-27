@@ -26,7 +26,7 @@ function GameUtils:prepareGame(sw, sh)
 
         --SnakeUtils.initOccupancy()
 
-        Fruit:spawn(Snake:getSegments(), Rocks)
+        Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
 end
 
 return GameUtils

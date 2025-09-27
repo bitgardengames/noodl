@@ -271,15 +271,17 @@ function FruitEvents.handleConsumption(x, y)
         SnakeUtils.setOccupied(col, row, false)
     end
 
+    local safeZone = Snake:getSafeZone(3)
+
     if name == "Dragonfruit" then
         PlayerStats:add("totalDragonfruitEaten", 1)
         Achievements:unlock("dragonHunter")
     end
 
-    Fruit:spawn(Snake:getSegments(), Rocks)
+    Fruit:spawn(Snake:getSegments(), Rocks, safeZone)
 
     if love.math.random() < Rocks:getSpawnChance() then
-        local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(Snake:getSegments(), Fruit, Rocks)
+        local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(Snake:getSegments(), Fruit, Rocks, safeZone)
         if fx then
             Rocks:spawn(fx, fy, "small")
             SnakeUtils.setOccupied(tileCol, tileRow, true)
