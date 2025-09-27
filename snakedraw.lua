@@ -7,7 +7,7 @@ local unpack = unpack
 local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3
 local OUTLINE_SIZE   = 6
-local FRUIT_BULGE_SCALE = 1.25
+local FRUIT_BULGE_SCALE = 1.22
 
 -- colors (body color reused for patches so they blend)
 local BODY_R, BODY_G, BODY_B = Theme.snakeDefault
@@ -80,7 +80,9 @@ local function drawFruitBulges(trail, head, radius)
   for i = 1, #trail do
     local seg = trail[i]
     if seg and seg.fruitMarker and seg ~= head then
-      local x, y = ptXY(seg)
+      local x = seg.fruitMarkerX or (seg.drawX or seg.x)
+      local y = seg.fruitMarkerY or (seg.drawY or seg.y)
+
       if x and y then
         love.graphics.circle("fill", x, y, radius)
       end
