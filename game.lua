@@ -200,17 +200,19 @@ function Game:leave()
 end
 
 function Game:beginDeath()
-	if self.state ~= "dying" then
-		self.state = "dying"
-		local trail = Snake:getSegments()
-		Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
-	end
+        if self.state ~= "dying" then
+                self.state = "dying"
+                local trail = Snake:getSegments()
+                Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
+                Audio:playSound("death")
+        end
 end
 
 function Game:startDescending(holeX, holeY, holeRadius)
-    self.state = "descending"
-    self.hole = {x = holeX, y = holeY, radius = holeRadius or 24}
-    Snake:startDescending(self.hole.x, self.hole.y, self.hole.radius)
+        self.state = "descending"
+        self.hole = {x = holeX, y = holeY, radius = holeRadius or 24}
+        Snake:startDescending(self.hole.x, self.hole.y, self.hole.radius)
+        Audio:playSound("exit_enter")
 end
 
 -- start a floor transition
@@ -226,6 +228,7 @@ function Game:startFloorTransition(advance, skipFade)
                 PlayerStats:updateMax("deepestFloorReached", nextFloor)
                 SessionStats:add("floorsCleared", 1)
                 SessionStats:updateMax("deepestFloorReached", nextFloor)
+                Audio:playSound("floor_advance")
         end
 
         startTransitionPhase(self, "fadeout", skipFade and 0 or 1.2, {
@@ -240,6 +243,7 @@ function Game:openShop()
         Shop:start(self.floor)
         self.shopCloseRequested = nil
         startTransitionPhase(self, "shop", 0)
+        Audio:playSound("shop_open")
 end
 
 function Game:startFloorIntro(duration, extra)
@@ -256,6 +260,7 @@ function Game:startFloorIntro(duration, extra)
         end
 
         startTransitionPhase(self, "floorintro", duration or 3.5, extra)
+        Audio:playSound("floor_intro")
 end
 
 function Game:startFadeIn(duration)

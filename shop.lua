@@ -1,5 +1,6 @@
 local UI = require("ui")
 local Upgrades = require("upgrades")
+local Audio = require("audio")
 
 local Shop = {}
 
@@ -738,6 +739,7 @@ function Shop:pick(i)
     if state then
         state.selectionFlash = 0
     end
+    Audio:playSound("shop_purchase")
     return true
 end
 

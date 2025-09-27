@@ -14,6 +14,13 @@ function Audio:load()
     self.sounds.achievement = love.audio.newSource("Assets/Sounds/Retro Event Acute 11.wav", "static")
     self.sounds.shield_gain = love.audio.newSource("Assets/Sounds/switch_001.ogg", "static")
     self.sounds.shield_break = love.audio.newSource("Assets/Sounds/abs-cancel-1.wav", "static")
+    self.sounds.death = love.audio.newSource("Assets/Sounds/error_007.ogg", "static")
+    self.sounds.exit_spawn = love.audio.newSource("Assets/Sounds/toggle_001.ogg", "static")
+    self.sounds.exit_enter = love.audio.newSource("Assets/Sounds/abs-confirm-1.wav", "static")
+    self.sounds.floor_advance = love.audio.newSource("Assets/Sounds/Retro PickUp 18.wav", "static")
+    self.sounds.floor_intro = love.audio.newSource("Assets/Sounds/Retro Event Acute 08.wav", "static")
+    self.sounds.shop_open = love.audio.newSource("Assets/Sounds/apple.wav", "static")
+    self.sounds.shop_purchase = love.audio.newSource("Assets/Sounds/abs-confirm-1.wav", "static")
 
     -- Music Tracks
     self.musicTracks.menu = love.audio.newSource("Assets/Music/Menu2.ogg", "stream")
@@ -26,6 +33,16 @@ function Audio:load()
 
     self:applyVolumes()
 end
+
+Audio.soundDesignNotes = {
+    death = "Short, heavy failure sting with a crunchy impact to sell the snake's demise.",
+    exit_spawn = "Gentle magical chime that signals the exit portal appearing nearby.",
+    exit_enter = "Deep whoosh or portal suction to reinforce diving into the exit.",
+    floor_advance = "Upbeat arpeggio or rising tone to celebrate clearing a floor.",
+    floor_intro = "Soft swell or drum hit that sets the tone for the new floor intro card.",
+    shop_open = "Friendly bell or door chime that implies entering the shop.",
+    shop_purchase = "Satisfied confirmation click confirming an upgrade purchase.",
+}
 
 function Audio:applyVolumes()
     for _, track in pairs(self.musicTracks) do
