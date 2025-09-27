@@ -104,11 +104,121 @@ end
 
 local rarityBorderAlpha = 0.85
 
+local rarityStyles = {
+    common = {
+        base = {0.20, 0.23, 0.28, 1},
+        highlight = {0.32, 0.35, 0.42, 0.82},
+        lowlight = {0.13, 0.15, 0.20, 0.88},
+        highlightHeight = 0.45,
+        accent = {0.72, 0.82, 0.92, 0.26},
+        shadowAlpha = 0.22,
+        glow = 0.08,
+        innerGlow = 0.18,
+    },
+    uncommon = {
+        base = {0.18, 0.27, 0.21, 1},
+        highlight = {0.26, 0.36, 0.29, 0.86},
+        lowlight = {0.10, 0.16, 0.13, 0.9},
+        highlightHeight = 0.5,
+        accent = {0.56, 0.78, 0.58, 0.32},
+        shadowAlpha = 0.26,
+        glow = 0.14,
+        innerGlow = 0.22,
+        stripes = {
+            color = {0.72, 0.92, 0.76, 0.12},
+            width = 24,
+            spacing = 38,
+            angle = -math.pi / 7,
+        },
+        sparkles = {
+            color = {0.84, 1.0, 0.86, 0.55},
+            radius = 10,
+            speed = 1.6,
+            positions = {
+                {0.24, 0.26, 0.9},
+                {0.68, 0.34, 1.1},
+                {0.42, 0.58, 0.7},
+            },
+        },
+    },
+    rare = {
+        base = {0.23, 0.16, 0.32, 1},
+        highlight = {0.34, 0.24, 0.48, 0.88},
+        lowlight = {0.17, 0.11, 0.26, 0.92},
+        highlightHeight = 0.52,
+        accent = {0.76, 0.56, 0.88, 0.38},
+        shadowAlpha = 0.32,
+        glow = 0.2,
+        innerGlow = 0.26,
+        stripes = {
+            color = {0.90, 0.76, 1.0, 0.18},
+            width = 28,
+            spacing = 36,
+            angle = -math.pi / 8,
+        },
+        sparkles = {
+            color = {0.95, 0.82, 1.0, 0.68},
+            radius = 11,
+            speed = 1.85,
+            positions = {
+                {0.22, 0.28, 1.0},
+                {0.74, 0.30, 1.2},
+                {0.56, 0.56, 0.9},
+                {0.36, 0.68, 0.8},
+            },
+        },
+        flare = {
+            color = {0.86, 0.64, 1.0, 0.26},
+            radius = 0.38,
+        },
+    },
+    epic = {
+        base = {0.28, 0.12, 0.06, 1},
+        highlight = {0.44, 0.20, 0.12, 0.94},
+        lowlight = {0.20, 0.07, 0.04, 0.95},
+        highlightHeight = 0.58,
+        accent = {1.0, 0.52, 0.28, 0.46},
+        shadowAlpha = 0.36,
+        glow = 0.28,
+        innerGlow = 0.3,
+        stripes = {
+            color = {1.0, 0.72, 0.48, 0.22},
+            width = 32,
+            spacing = 40,
+            angle = -math.pi / 9,
+        },
+        sparkles = {
+            color = {1.0, 0.82, 0.62, 0.76},
+            radius = 12,
+            speed = 2.2,
+            positions = {
+                {0.22, 0.24, 1.05},
+                {0.5, 0.32, 1.3},
+                {0.78, 0.28, 1.1},
+                {0.64, 0.58, 0.9},
+                {0.36, 0.62, 1.0},
+            },
+        },
+        flare = {
+            color = {1.0, 0.64, 0.36, 0.32},
+            radius = 0.42,
+        },
+    },
+}
+
+local function applyColor(setColorFn, color, overrideAlpha)
+    if not color then return end
+    setColorFn(color[1], color[2], color[3], overrideAlpha or color[4] or 1)
+end
+
 local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appearanceAlpha)
     local fadeAlpha = appearanceAlpha or 1
     local function setColor(r, g, b, a)
         love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
     end
+
+    local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
+    local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
 
     if isSelected then
         local glowClock = love.timer and love.timer.getTime and love.timer.getTime() or 0
@@ -119,22 +229,93 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
         love.graphics.setLineWidth(4)
     end
 
-    local base = hovered and 0.28 or 0.22
-    local bgColor = {base, base * 0.92, base * 0.65, 1}
-    setColor(bgColor[1], bgColor[2], bgColor[3], bgColor[4])
+    if style.shadowAlpha and style.shadowAlpha > 0 then
+        setColor(0, 0, 0, style.shadowAlpha)
+        love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
+    end
+
+    applyColor(setColor, style.base)
     love.graphics.rectangle("fill", x, y, w, h, 12, 12)
 
-    local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
-    setColor(borderColor[1], borderColor[2], borderColor[3], rarityBorderAlpha)
-    love.graphics.setLineWidth(4)
+    if style.lowlight then
+        applyColor(setColor, style.lowlight)
+        local lowlightHeight = (style.lowlightHeight or 0.36) * h
+        love.graphics.rectangle("fill", x, y + h - lowlightHeight, w, lowlightHeight, 12, 12)
+    end
+
+    if style.highlight then
+        applyColor(setColor, style.highlight)
+        local highlightHeight = (style.highlightHeight or 0.48)
+        love.graphics.rectangle("fill", x + 6, y + 6, w - 12, (h - 12) * highlightHeight, 10, 10)
+    end
+
+    if style.flare then
+        love.graphics.setScissor(x, y, w, h)
+        applyColor(setColor, style.flare.color)
+        local radius = math.min(w, h) * (style.flare.radius or 0.36)
+        love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
+        love.graphics.setScissor()
+    end
+
+    if style.stripes then
+        love.graphics.push()
+        love.graphics.setScissor(x, y, w, h)
+        love.graphics.translate(x + w / 2, y + h / 2)
+        love.graphics.rotate(style.stripes.angle or -math.pi / 6)
+        local diag = math.sqrt(w * w + h * h)
+        local spacing = style.stripes.spacing or 34
+        local width = style.stripes.width or 22
+        applyColor(setColor, style.stripes.color)
+        local stripeCount = math.ceil((diag * 2) / spacing) + 2
+        for i = -stripeCount, stripeCount do
+            local pos = i * spacing
+            love.graphics.rectangle("fill", -diag, pos - width / 2, diag * 2, width)
+        end
+        love.graphics.pop()
+        love.graphics.setScissor()
+    end
+
+    if style.sparkles and style.sparkles.positions then
+        local time = (love.timer and love.timer.getTime and love.timer.getTime()) or 0
+        love.graphics.setScissor(x, y, w, h)
+        for i, pos in ipairs(style.sparkles.positions) do
+            local px, py, scale = pos[1], pos[2], pos[3] or 1
+            local pulse = 0.6 + 0.4 * math.sin(time * (style.sparkles.speed or 1.8) + i * 0.9)
+            local radius = (style.sparkles.radius or 9) * scale * pulse
+            local sparkleColor = style.sparkles.color or borderColor
+            local sparkleAlpha = (sparkleColor[4] or 1) * pulse
+            applyColor(setColor, sparkleColor, sparkleAlpha)
+            love.graphics.circle("fill", x + px * w, y + py * h, radius)
+        end
+        love.graphics.setScissor()
+    end
+
+    if style.glow and style.glow > 0 then
+        applyColor(setColor, borderColor, style.glow)
+        love.graphics.setLineWidth(6)
+        love.graphics.rectangle("line", x - 3, y - 3, w + 6, h + 6, 16, 16)
+    end
+
+    applyColor(setColor, borderColor, rarityBorderAlpha)
+    love.graphics.setLineWidth(style.borderWidth or 4)
     love.graphics.rectangle("line", x, y, w, h, 12, 12)
 
-    if hovered or isSelected then
+    if style.innerGlow and style.innerGlow > 0 then
+        local baseAlpha = style.innerGlow
+        if hovered or isSelected then
+            baseAlpha = math.max(baseAlpha, hovered and 0.6 or 0.4)
+        end
+        applyColor(setColor, borderColor, baseAlpha)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", x + 6, y + 6, w - 12, h - 12, 10, 10)
+    elseif hovered or isSelected then
         local glowAlpha = hovered and 0.55 or 0.35
-        setColor(borderColor[1], borderColor[2], borderColor[3], glowAlpha)
+        applyColor(setColor, borderColor, glowAlpha)
         love.graphics.setLineWidth(2)
         love.graphics.rectangle("line", x + 6, y + 6, w - 12, h - 12, 10, 10)
     end
+
+    love.graphics.setLineWidth(4)
 
     setColor(1, 1, 1, 1)
     local titleFont = UI.fonts.button
