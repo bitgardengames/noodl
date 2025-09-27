@@ -644,8 +644,7 @@ local pool = {
             else
                 Snake.shieldBurst = Snake.shieldBurst or { rocks = 0, stall = 0 }
                 Snake.shieldBurst.rocks = (Snake.shieldBurst.rocks or 0) + 1
-                local current = Snake.shieldBurst.stall or 0
-                Snake.shieldBurst.stall = math.max(current, 1.5)
+                Snake.shieldBurst.stall = (Snake.shieldBurst.stall or 0) + 1.5
             end
         end,
     }),

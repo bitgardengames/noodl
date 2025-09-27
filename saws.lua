@@ -332,7 +332,11 @@ function Saws:draw()
 end
 
 function Saws:stall(duration)
-    stallTimer = math.max(stallTimer, duration or 0)
+    if not duration or duration <= 0 then
+        return
+    end
+
+    stallTimer = (stallTimer or 0) + duration
 end
 
 function Saws:sink(duration)
