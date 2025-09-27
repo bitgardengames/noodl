@@ -17,6 +17,13 @@ local Achievements = {
 
 local DEFAULT_CATEGORY_ORDER = 100
 local DEFAULT_ORDER = 1000
+local META_TOKEN_KEYS = {
+    "orchardSeeds",
+    "sunSigils",
+    "duskDrops",
+    "auricSeeds",
+    "wyrmCores",
+}
 
 local function copyTable(source)
     local target = {}
@@ -121,16 +128,38 @@ function Achievements:_ensureInitialized()
                 floorsCleared = PlayerStats:get("floorsCleared") or 0,
                 deepestFloorReached = PlayerStats:get("deepestFloorReached") or 0,
                 bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
+                shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0,
+                shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0,
+                shieldSawParries = PlayerStats:get("shieldSawParries") or 0,
+                jackpotsTriggered = PlayerStats:get("jackpotsTriggered") or 0,
             }
         end)
 
         self:registerStateProvider(function()
             local SessionStats = require("sessionstats")
-            return {
+            local state = {
                 runApplesEaten = SessionStats:get("applesEaten") or 0,
                 runFloorsCleared = SessionStats:get("floorsCleared") or 0,
                 runDeepestFloor = SessionStats:get("deepestFloorReached") or 0,
+                runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0,
+                runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0,
+                runShieldSawParries = SessionStats:get("runShieldSawParries") or 0,
+                runJackpotsTriggered = SessionStats:get("runJackpotsTriggered") or 0,
             }
+
+            local uniqueMeta = 0
+            for _, key in ipairs(META_TOKEN_KEYS) do
+                local statKey = "fruitMetaGain_" .. key
+                local amount = SessionStats:get(statKey) or 0
+                state[statKey] = amount
+                if amount > 0 then
+                    uniqueMeta = uniqueMeta + 1
+                end
+            end
+
+            state.runMetaUniqueTypes = uniqueMeta
+
+            return state
         end)
 
         self:registerStateProvider(function()
