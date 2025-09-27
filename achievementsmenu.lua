@@ -328,22 +328,6 @@ function AchievementsMenu:draw()
         thumbHeight = math.min(thumbHeight, trackHeight)
         local thumbY = trackY + (trackHeight - thumbHeight) * scrollProgress
 
-        local trackRadius = segmentSize * 0.55
-        local snakeR, snakeG, snakeB = unpack(Theme.snakeDefault)
-        local baseR = snakeR * 0.3
-        local baseG = snakeG * 0.3
-        local baseB = snakeB * 0.3
-
-        love.graphics.setColor(0, 0, 0, 0.4)
-        UI.drawRoundedRect(trackX - 1, trackY + 3, trackWidth + 2, trackHeight, trackRadius)
-
-        love.graphics.setColor(baseR, baseG, baseB, 0.95)
-        UI.drawRoundedRect(trackX, trackY, trackWidth, trackHeight, trackRadius)
-
-        love.graphics.setColor(0, 0, 0, 0.85)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", trackX, trackY, trackWidth, trackHeight, trackRadius)
-
         drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
     end
 
