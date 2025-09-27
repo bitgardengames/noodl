@@ -291,7 +291,16 @@ function Saws:draw()
         -- Saw blade
         love.graphics.push()
         local sinkOffset = (saw.sinkProgress or 0) * SINK_DISTANCE
-        love.graphics.translate(px or saw.x, (py or saw.y) + SINK_OFFSET + sinkOffset)
+        local offsetX, offsetY = 0, 0
+
+        if saw.dir == "horizontal" then
+            offsetY = SINK_OFFSET + sinkOffset
+        else
+            local sinkDir = (saw.side == "left") and -1 or 1
+            offsetX = sinkDir * (SINK_OFFSET + sinkOffset)
+        end
+
+        love.graphics.translate((px or saw.x) + offsetX, (py or saw.y) + offsetY)
 
         -- apply spinning rotation
         love.graphics.rotate(saw.rotation)
