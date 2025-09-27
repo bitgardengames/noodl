@@ -1,5 +1,4 @@
 local Theme = require("theme")
-local FloorShaders = require("floorshaders")
 
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
@@ -110,11 +109,7 @@ function Arena:drawBackground()
 
     -- Solid fill
     love.graphics.setColor(Theme.arenaBG)
-    local usedShader = FloorShaders:apply("arena", love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.rectangle("fill", ax, ay, aw, ah)
-    if usedShader then
-        FloorShaders:clear()
-    end
 
     love.graphics.setColor(1, 1, 1, 1)
 end
