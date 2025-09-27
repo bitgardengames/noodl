@@ -700,6 +700,7 @@ function Snake:update(dt)
 
         local logicalLength = math.max(0, segmentCount * SEGMENT_SPACING)
         hole.logicalLength = logicalLength
+    
         if sinkProgress >= 0.995 then
             hole.consumeTarget = logicalLength
         else
