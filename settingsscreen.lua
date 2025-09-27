@@ -315,6 +315,22 @@ function SettingsScreen:mousereleased(x, y, button)
     sliderDragging = nil
 end
 
+function SettingsScreen:keypressed(key)
+    if key == "up" then
+        self:moveFocus(-1)
+    elseif key == "down" then
+        self:moveFocus(1)
+    elseif key == "left" then
+        self:adjustFocused(-1)
+    elseif key == "right" then
+        self:adjustFocused(1)
+    elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
+        return self:activateFocused()
+    elseif key == "escape" or key == "backspace" then
+        return "menu"
+    end
+end
+
 function SettingsScreen:gamepadpressed(_, button)
     if button == "dpup" then
         self:moveFocus(-1)
