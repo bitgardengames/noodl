@@ -25,6 +25,7 @@ local scrollOffset = 0
 local minScrollOffset = 0
 local viewportHeight = 0
 local contentHeight = 0
+local DPAD_SCROLL_AMOUNT = CARD_SPACING
 
 local function buildThumbSnakeTrail(trackX, thumbY, trackWidth, thumbHeight)
     local segmentSize = SnakeUtils.SEGMENT_SIZE
@@ -127,6 +128,17 @@ local function updateScrollBounds(sw, sh)
     elseif scrollOffset > 0 then
         scrollOffset = 0
     end
+end
+
+local function scrollBy(amount)
+    if amount == 0 then
+        return
+    end
+
+    scrollOffset = scrollOffset + amount
+
+    local sw, sh = Screen:get()
+    updateScrollBounds(sw, sh)
 end
 
 function AchievementsMenu:enter()
@@ -339,16 +351,24 @@ function AchievementsMenu:wheelmoved(dx, dy)
         return
     end
 
-    scrollOffset = scrollOffset + dy * SCROLL_SPEED
-    local sw, sh = Screen:get()
-    updateScrollBounds(sw, sh)
+    scrollBy(dy * SCROLL_SPEED)
 end
 
 function AchievementsMenu:gamepadpressed(_, button)
-    if button == "dpup" or button == "dpleft" then
+    if button == "dpup" then
+        scrollBy(DPAD_SCROLL_AMOUNT)
         buttonList:moveFocus(-1)
-    elseif button == "dpdown" or button == "dpright" then
+    elseif button == "dpleft" then
+        buttonList:moveFocus(-1)
+    elseif button == "dpdown" then
+        scrollBy(-DPAD_SCROLL_AMOUNT)
         buttonList:moveFocus(1)
+    elseif button == "dpright" then
+        buttonList:moveFocus(1)
+    elseif button == "leftshoulder" then
+        scrollBy(DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING)))
+    elseif button == "rightshoulder" then
+        scrollBy(-DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING)))
     elseif button == "a" or button == "start" or button == "b" then
         local action = buttonList:activateFocused()
         if action then
