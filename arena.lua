@@ -1,4 +1,5 @@
 local Theme = require("theme")
+local Audio = require("audio")
 
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
@@ -290,6 +291,7 @@ function Arena:spawnExit()
         col = chosenCol,
         row = chosenRow,
     }
+    Audio:playSound("exit_spawn")
 end
 
 function Arena:getExitCenter()
