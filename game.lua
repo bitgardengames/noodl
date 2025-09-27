@@ -127,16 +127,16 @@ local function drawAdrenalineGlow(self)
 
     if glowStrength <= 0 then return end
 
+    local time = love.timer and love.timer.getTime and love.timer.getTime() or 0
+    local pulse = 0.85 + 0.15 * math.sin(time * 2.25)
+    local easedStrength = 0.6 + glowStrength * 0.4
+    local alpha = 0.18 * easedStrength * pulse
+
+    love.graphics.push("all")
     love.graphics.setBlendMode("add")
-
-    if glowStrength > 0 then
-        local pulse = 0.55 + 0.45 * math.sin(love.timer.getTime() * 5)
-        love.graphics.setColor(0.7, 0.9, 1.0, 0.35 * glowStrength * pulse)
-        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-    end
-
-    love.graphics.setBlendMode("alpha")
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(0.65, 0.82, 0.95, alpha)
+    love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+    love.graphics.pop()
 end
 
 function Game:load()
