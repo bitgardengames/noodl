@@ -214,9 +214,33 @@ local english = {
                 title = "Score Legend",
                 description = "Reach a score of 500",
             },
+            wallRicochet = {
+                title = "Ricochet Routine",
+                description = "Bounce off a wall using a crash shield.",
+            },
+            rockShatter = {
+                title = "Stone Sneeze",
+                description = "Shatter a rock by face-checking it with a crash shield.",
+            },
+            sawParry = {
+                title = "Saw Whisperer",
+                description = "Let a crash shield devour a saw for you.",
+            },
+            shieldTriad = {
+                title = "Crash-Test Maestro",
+                description = "In one run, shrug off a wall, rock, and saw with crash shields.",
+            },
+            jackpotSpark = {
+                title = "Lucky Spark",
+                description = "Trigger a fruit jackpot payout.",
+            },
             dragonHunter = {
                 title = "Dragon Hunter",
                 description = "Collect the legendary Dragonfruit",
+            },
+            tokenMenagerie = {
+                title = "Token Menagerie",
+                description = "Collect four different meta fruit tokens in a single run.",
             },
             floorScout = {
                 title = "Depth Scout",

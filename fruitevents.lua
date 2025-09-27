@@ -325,6 +325,9 @@ function FruitEvents.handleConsumption(x, y)
                     color = {1, 0.9, 0.4, 1},
                     spread = math.pi * 2,
                 })
+                SessionStats:add("runJackpotsTriggered", 1)
+                PlayerStats:add("jackpotsTriggered", 1)
+                Achievements:check("jackpotSpark")
             end
         end
     end

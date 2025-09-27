@@ -5,10 +5,54 @@ local Saws = require("saws")
 local Arena = require("arena")
 local Particles = require("particles")
 local Upgrades = require("upgrades")
+local PlayerStats = require("playerstats")
+local SessionStats = require("sessionstats")
+local Achievements = require("achievements")
 
 local Movement = {}
 
 local SEGMENT_SIZE = 24 -- same size as rocks and snake
+
+local shieldStatMap = {
+        wall = {
+                lifetime = "shieldWallBounces",
+                run = "runShieldWallBounces",
+                achievements = { "wallRicochet" },
+        },
+        rock = {
+                lifetime = "shieldRockBreaks",
+                run = "runShieldRockBreaks",
+                achievements = { "rockShatter" },
+        },
+        saw = {
+                lifetime = "shieldSawParries",
+                run = "runShieldSawParries",
+                achievements = { "sawParry" },
+        },
+}
+
+local function recordShieldEvent(cause)
+        local info = shieldStatMap[cause]
+        if not info then
+                return
+        end
+
+        if info.run then
+                SessionStats:add(info.run, 1)
+        end
+
+        if info.lifetime then
+                PlayerStats:add(info.lifetime, 1)
+        end
+
+        if info.achievements then
+                for _, achievementId in ipairs(info.achievements) do
+                        Achievements:check(achievementId)
+                end
+        end
+
+        Achievements:check("shieldTriad")
+end
 
 -- AABB collision check
 local function aabb(ax, ay, aw, ah, bx, by, bw, bh)
@@ -231,6 +275,7 @@ function Movement:update(dt)
                         if Snake.onShieldConsumed then
                                 Snake:onShieldConsumed(headX, headY, "wall")
                         end
+                        recordShieldEvent("wall")
                 else
                         return "dead", "wall"
                 end
@@ -262,6 +307,7 @@ function Movement:update(dt)
                                         local centerY = rock.y + rock.h / 2
                                         Snake:onShieldConsumed(centerX, centerY, "rock")
                                 end
+                                recordShieldEvent("rock")
                         else
                                 return "dead", "rock"
                         end
@@ -299,6 +345,9 @@ function Movement:update(dt)
                         })
                         if Snake.onShieldConsumed then
                                 Snake:onShieldConsumed(headX, headY, "saw")
+                        end
+                        if shielded then
+                                recordShieldEvent("saw")
                         end
                 else
                         return "dead", "saw"

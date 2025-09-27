@@ -233,6 +233,92 @@ local definitions = {
         order = 50,
     },
     {
+        id = "wallRicochet",
+        titleKey = "achievements_definitions.wallRicochet.title",
+        descriptionKey = "achievements_definitions.wallRicochet.description",
+        icon = "Apple",
+        goal = 1,
+        stat = "shieldWallBounces",
+        category = "skill",
+        categoryOrder = 2,
+        order = 60,
+    },
+    {
+        id = "rockShatter",
+        titleKey = "achievements_definitions.rockShatter.title",
+        descriptionKey = "achievements_definitions.rockShatter.description",
+        icon = "Apple",
+        goal = 1,
+        stat = "shieldRockBreaks",
+        category = "skill",
+        categoryOrder = 2,
+        order = 70,
+    },
+    {
+        id = "sawParry",
+        titleKey = "achievements_definitions.sawParry.title",
+        descriptionKey = "achievements_definitions.sawParry.description",
+        icon = "Apple",
+        goal = 1,
+        stat = "shieldSawParries",
+        category = "skill",
+        categoryOrder = 2,
+        order = 80,
+    },
+    {
+        id = "shieldTriad",
+        titleKey = "achievements_definitions.shieldTriad.title",
+        descriptionKey = "achievements_definitions.shieldTriad.description",
+        icon = "Apple",
+        goal = 3,
+        category = "skill",
+        categoryOrder = 2,
+        order = 85,
+        progressFn = function(state)
+            local count = 0
+            local keys = {
+                "runShieldWallBounces",
+                "runShieldRockBreaks",
+                "runShieldSawParries",
+            }
+
+            for _, key in ipairs(keys) do
+                if (state[key] or 0) > 0 then
+                    count = count + 1
+                end
+            end
+
+            return count
+        end,
+        condition = function(state)
+            local progress = 0
+            local keys = {
+                "runShieldWallBounces",
+                "runShieldRockBreaks",
+                "runShieldSawParries",
+            }
+
+            for _, key in ipairs(keys) do
+                if (state[key] or 0) > 0 then
+                    progress = progress + 1
+                end
+            end
+
+            return progress >= 3
+        end,
+    },
+    {
+        id = "jackpotSpark",
+        titleKey = "achievements_definitions.jackpotSpark.title",
+        descriptionKey = "achievements_definitions.jackpotSpark.description",
+        icon = "Apple",
+        goal = 1,
+        stat = "jackpotsTriggered",
+        category = "skill",
+        categoryOrder = 2,
+        order = 90,
+    },
+    {
         id = "dragonHunter",
         titleKey = "achievements_definitions.dragonHunter.title",
         descriptionKey = "achievements_definitions.dragonHunter.description",
@@ -242,6 +328,52 @@ local definitions = {
         category = "collection",
         categoryOrder = 3,
         order = 10,
+    },
+    {
+        id = "tokenMenagerie",
+        titleKey = "achievements_definitions.tokenMenagerie.title",
+        descriptionKey = "achievements_definitions.tokenMenagerie.description",
+        icon = "Apple",
+        goal = 4,
+        category = "collection",
+        categoryOrder = 3,
+        order = 20,
+        progressFn = function(state)
+            local keys = {
+                "fruitMetaGain_orchardSeeds",
+                "fruitMetaGain_sunSigils",
+                "fruitMetaGain_duskDrops",
+                "fruitMetaGain_auricSeeds",
+                "fruitMetaGain_wyrmCores",
+            }
+            local unique = 0
+
+            for _, key in ipairs(keys) do
+                if (state[key] or 0) > 0 then
+                    unique = unique + 1
+                end
+            end
+
+            return unique
+        end,
+        condition = function(state)
+            local keys = {
+                "fruitMetaGain_orchardSeeds",
+                "fruitMetaGain_sunSigils",
+                "fruitMetaGain_duskDrops",
+                "fruitMetaGain_auricSeeds",
+                "fruitMetaGain_wyrmCores",
+            }
+            local unique = 0
+
+            for _, key in ipairs(keys) do
+                if (state[key] or 0) > 0 then
+                    unique = unique + 1
+                end
+            end
+
+            return unique >= 4
+        end,
     },
 }
 
