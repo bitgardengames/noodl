@@ -82,10 +82,17 @@ local function spawnShatterFX(x, y)
     Particles:spawnBurst(x, y, {
         count = love.math.random(8, 12),
         speed = 70,
+        speedVariance = 55,
         life = 0.45,
         size = 4,
         color = {0.85, 0.75, 0.6, 1},
         spread = math.pi * 2,
+        angleJitter = math.pi * 0.9,
+        drag = 3.0,
+        gravity = 240,
+        scaleMin = 0.5,
+        scaleVariance = 0.7,
+        fadeTo = 0.05,
     })
 end
 
@@ -198,10 +205,17 @@ function Rocks:update(dt)
                 Particles:spawnBurst(rock.x, rock.y, {
                     count = love.math.random(6, 10),
                     speed = 40,
+                    speedVariance = 34,
                     life = 0.4,
                     size = 3,
                     color = {0.6, 0.5, 0.4, 1},
                     spread = math.pi * 2,
+                    angleJitter = math.pi * 0.85,
+                    drag = 2.2,
+                    gravity = 160,
+                    scaleMin = 0.6,
+                    scaleVariance = 0.5,
+                    fadeTo = 0.1,
                 })
             end
 

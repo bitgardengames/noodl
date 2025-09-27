@@ -107,12 +107,17 @@ local function spawnImpactBurst(press)
     Particles:spawnBurst(press.x, press.targetY + press.headHeight * 0.5, {
         count = 8,
         speed = 70,
+        speedVariance = 50,
         life = 0.35,
         size = 3,
         color = {r, g, b, 1},
         gravity = 260,
         spread = math.pi,
         angleJitter = 0.6,
+        drag = 3.0,
+        scaleMin = 0.5,
+        scaleVariance = 0.7,
+        fadeTo = 0,
     })
 end
 

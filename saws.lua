@@ -85,10 +85,17 @@ local function removeSaw(target)
             Particles:spawnBurst(px or saw.x, py or saw.y, {
                 count = 12,
                 speed = 80,
-                life = 0.35,
+                speedVariance = 65,
+                life = 0.4,
                 size = 3,
                 color = {0.85, 0.8, 0.75, 1},
                 spread = math.pi * 2,
+                angleJitter = math.pi,
+                drag = 3.6,
+                gravity = 260,
+                scaleMin = 0.55,
+                scaleVariance = 0.65,
+                fadeTo = 0.05,
             })
 
             table.remove(current, index)
@@ -183,10 +190,17 @@ function Saws:update(dt)
                 Particles:spawnBurst(saw.x, saw.y, {
                     count = love.math.random(6, 10),
                     speed = 60,
+                    speedVariance = 40,
                     life = 0.4,
                     size = 3,
                     color = {0.8, 0.8, 0.8, 1},
                     spread = math.pi * 2,
+                    angleJitter = math.pi * 0.8,
+                    drag = 2.4,
+                    gravity = 180,
+                    scaleMin = 0.6,
+                    scaleVariance = 0.55,
+                    fadeTo = 0.1,
                 })
             end
 
