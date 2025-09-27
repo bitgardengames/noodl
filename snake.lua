@@ -747,6 +747,17 @@ function Snake:grow()
     popTimer = POP_DURATION
 end
 
+function Snake:markFruitSegment()
+    if not trail or #trail == 0 then
+        return
+    end
+
+    local headSegment = trail[1]
+    if headSegment then
+        headSegment.fruitMarker = true
+    end
+end
+
 function Snake:draw()
     if not isDead then
         local upgradeVisuals = collectUpgradeVisuals(self)

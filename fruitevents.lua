@@ -239,6 +239,7 @@ function FruitEvents.handleConsumption(x, y)
     local col, row = Fruit:getTile()
 
     Snake:grow()
+    Snake:markFruitSegment()
     Face:set("happy", 2)
     FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40)
     Score:increase(points)
