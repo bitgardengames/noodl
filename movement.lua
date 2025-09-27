@@ -5,6 +5,7 @@ local Saws = require("saws")
 local Flamethrowers = require("flamethrowers")
 local Arena = require("arena")
 local Particles = require("particles")
+local Upgrades = require("upgrades")
 
 local Movement = {}
 
@@ -76,6 +77,121 @@ local function rerouteAlongWall(headX, headY)
         return Snake:getHead()
 end
 
+local function clamp(value, min, max)
+        if min and value < min then
+                return min
+        end
+        if max and value > max then
+                return max
+        end
+        return value
+end
+
+local function portalThroughWall(headX, headY)
+        if not (Upgrades and Upgrades.getEffect and Upgrades:getEffect("wallPortal")) then
+                return nil, nil
+        end
+
+        local ax, ay, aw, ah = Arena:getBounds()
+        local inset = Arena.tileSize / 2
+        local left = ax + inset
+        local right = ax + aw - inset
+        local top = ay + inset
+        local bottom = ay + ah - inset
+
+        local outLeft = headX < left
+        local outRight = headX > right
+        local outTop = headY < top
+        local outBottom = headY > bottom
+
+        if not (outLeft or outRight or outTop or outBottom) then
+                return nil, nil
+        end
+
+        local horizontalDist = 0
+        if outLeft then
+                horizontalDist = left - headX
+        elseif outRight then
+                horizontalDist = headX - right
+        end
+
+        local verticalDist = 0
+        if outTop then
+                verticalDist = top - headY
+        elseif outBottom then
+                verticalDist = headY - bottom
+        end
+
+        local entryX = clamp(headX, left, right)
+        local entryY = clamp(headY, top, bottom)
+
+        local margin = math.max(4, math.floor(Arena.tileSize * 0.3))
+        local function insideX(x)
+                return clamp(x, left + margin, right - margin)
+        end
+
+        local function insideY(y)
+                return clamp(y, top + margin, bottom - margin)
+        end
+
+        local exitX, exitY
+        if horizontalDist >= verticalDist then
+                if outLeft then
+                        exitX = insideX(right - margin)
+                else
+                        exitX = insideX(left + margin)
+                end
+                exitY = insideY(headY)
+        else
+                if outTop then
+                        exitY = insideY(bottom - margin)
+                else
+                        exitY = insideY(top + margin)
+                end
+                exitX = insideX(headX)
+        end
+
+        local dx = (exitX or headX) - headX
+        local dy = (exitY or headY) - headY
+
+        if dx == 0 and dy == 0 then
+                return nil, nil
+        end
+
+        if Snake.translate then
+                Snake:translate(dx, dy)
+        else
+                Snake:setHeadPosition(headX + dx, headY + dy)
+        end
+
+        local newHeadX, newHeadY = Snake:getHead()
+
+        if Particles then
+                Particles:spawnBurst(entryX, entryY, {
+                        count = 18,
+                        speed = 120,
+                        speedVariance = 80,
+                        life = 0.5,
+                        size = 5,
+                        color = {0.9, 0.75, 0.3, 1},
+                        spread = math.pi * 2,
+                        fadeTo = 0.1,
+                })
+                Particles:spawnBurst(newHeadX, newHeadY, {
+                        count = 22,
+                        speed = 150,
+                        speedVariance = 90,
+                        life = 0.55,
+                        size = 5,
+                        color = {1.0, 0.88, 0.4, 1},
+                        spread = math.pi * 2,
+                        fadeTo = 0.05,
+                })
+        end
+
+        return newHeadX, newHeadY
+end
+
 function Movement:reset()
         Snake:resetPosition()
 end
@@ -89,7 +205,10 @@ function Movement:update(dt)
 	local headX, headY = Snake:getHead()
 
         if not Arena:isInside(headX, headY) then
-                if Snake:consumeCrashShield() then
+                local portalX, portalY = portalThroughWall(headX, headY)
+                if portalX and portalY then
+                        headX, headY = portalX, portalY
+                elseif Snake:consumeCrashShield() then
                         local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
                         headX = reroutedX or headX
                         headY = reroutedY or headY

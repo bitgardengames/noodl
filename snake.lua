@@ -378,6 +378,27 @@ function Snake:setHeadPosition(x, y)
     head.drawY = y
 end
 
+function Snake:translate(dx, dy)
+    dx = dx or 0
+    dy = dy or 0
+    if dx == 0 and dy == 0 then
+        return
+    end
+
+    for i = 1, #trail do
+        local seg = trail[i]
+        if seg then
+            seg.drawX = seg.drawX + dx
+            seg.drawY = seg.drawY + dy
+        end
+    end
+
+    if descendingHole then
+        descendingHole.x = (descendingHole.x or 0) + dx
+        descendingHole.y = (descendingHole.y or 0) + dy
+    end
+end
+
 local function normalizeDirection(dx, dy)
     local len = math.sqrt(dx * dx + dy * dy)
     if len == 0 then
