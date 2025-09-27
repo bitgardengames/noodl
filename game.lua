@@ -745,6 +745,28 @@ function Game:setupFloor(floorNum)
         SnakeUtils.setOccupied(col, row, true)
     end
 
+    local safeZone = Snake:getSafeZone(3)
+    local headCol, headRow = Snake:getHeadCell()
+    local reservedCandidates = {}
+
+    if headCol and headRow then
+        for dx = -1, 1 do
+            for dy = -1, 1 do
+                local col = headCol + dx
+                local row = headRow + dy
+                reservedCandidates[#reservedCandidates + 1] = {col, row}
+            end
+        end
+    end
+
+    if safeZone then
+        for _, cell in ipairs(safeZone) do
+            reservedCandidates[#reservedCandidates + 1] = {cell[1], cell[2]}
+        end
+    end
+
+    local reservedCells = SnakeUtils.reserveCells(reservedCandidates)
+
     -- difficulty scaling baseline with floor traits
     local traitContext = buildBaselineFloorContext(floorNum)
 
@@ -789,35 +811,44 @@ function Game:setupFloor(floorNum)
 
     local numRocks = traitContext.rocks
     local numSaws = traitContext.saws
-    local safeZone = Snake:getSafeZone(3)
 
     -- Spawn saws FIRST so they reserve their track cells
-	for i = 1, numSaws do
-		local dir = (love.math.random() < 0.5) and "horizontal" or "vertical"
-		local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
-		local r = 16 -- blade radius
+    local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
+    local bladeRadius = 16 -- blade radius
 
-		if dir == "horizontal" then
-			-- Pick a row inside borders
-			local row = love.math.random(2, Arena.rows - 1)
-			-- Pick a safe column so track fits horizontally
-			local col = love.math.random(1 + halfTiles, Arena.cols - halfTiles)
+    for _ = 1, numSaws do
+        local dir = (love.math.random() < 0.5) and "horizontal" or "vertical"
+        local placed = false
+        local attempts = 0
+        local maxAttempts = 60
 
-			local fx, fy = Arena:getCenterOfTile(col, row)
-			Saws:spawn(fx, fy, r, 8, "horizontal")
-			SnakeUtils.occupySawTrack(fx, fy, "horizontal", r, TRACK_LENGTH)
+        while not placed and attempts < maxAttempts do
+            attempts = attempts + 1
 
-		else -- vertical
-			local side = (love.math.random() < 0.5) and "left" or "right"
-			local col = (side == "left") and 1 or Arena.cols
-			-- Pick a safe row so track fits vertically
-			local row = love.math.random(1 + halfTiles, Arena.rows - halfTiles)
+            if dir == "horizontal" then
+                local row = love.math.random(2, Arena.rows - 1)
+                local col = love.math.random(1 + halfTiles, Arena.cols - halfTiles)
+                local fx, fy = Arena:getCenterOfTile(col, row)
 
-			local fx, fy = Arena:getCenterOfTile(col, row)
-			Saws:spawn(fx, fy, r, 8, "vertical", side)
-			SnakeUtils.occupySawTrack(fx, fy, "vertical", r, TRACK_LENGTH, side)
-		end
-	end
+                if SnakeUtils.trackIsFree(fx, fy, "horizontal", TRACK_LENGTH) then
+                    Saws:spawn(fx, fy, bladeRadius, 8, "horizontal")
+                    SnakeUtils.occupySawTrack(fx, fy, "horizontal", bladeRadius, TRACK_LENGTH)
+                    placed = true
+                end
+            else
+                local side = (love.math.random() < 0.5) and "left" or "right"
+                local col = (side == "left") and 1 or Arena.cols
+                local row = love.math.random(1 + halfTiles, Arena.rows - halfTiles)
+                local fx, fy = Arena:getCenterOfTile(col, row)
+
+                if SnakeUtils.trackIsFree(fx, fy, "vertical", TRACK_LENGTH) then
+                    Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side)
+                    SnakeUtils.occupySawTrack(fx, fy, "vertical", bladeRadius, TRACK_LENGTH, side)
+                    placed = true
+                end
+            end
+        end
+    end
 
     -- Now spawn rocks
     for i = 1, numRocks do
@@ -829,7 +860,9 @@ function Game:setupFloor(floorNum)
         end
     end
 
-    Fruit:spawn(Snake:getSegments(), Rocks)
+    Fruit:spawn(Snake:getSegments(), Rocks, safeZone)
+
+    SnakeUtils.releaseCells(reservedCells)
 
     --FloatingText:add("Floor " .. floorNum, self.screenWidth/2, self.screenHeight/2, {1,1,0}, 2)
 end

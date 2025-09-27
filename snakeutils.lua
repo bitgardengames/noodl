@@ -31,30 +31,98 @@ function SnakeUtils.isOccupied(col, row)
     return SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row]
 end
 
--- Mark every grid cell overlapped by a saw’s track
-function SnakeUtils.occupySawTrack(fx, fy, dir, radius, trackLength, side)
-    -- Snap the center to tile space
+local function cellWithinBounds(col, row)
+    return col >= 1 and col <= Arena.cols and row >= 1 and row <= Arena.rows
+end
+
+-- Reserve a collection of cells and return the subset that we actually marked.
+function SnakeUtils.reserveCells(cells)
+    if not cells then return {} end
+
+    local reserved = {}
+
+    for _, cell in ipairs(cells) do
+        local col, row = cell[1], cell[2]
+        if col and row then
+            col = math.floor(col + 0.5)
+            row = math.floor(row + 0.5)
+            if cellWithinBounds(col, row) and not SnakeUtils.isOccupied(col, row) then
+                SnakeUtils.setOccupied(col, row, true)
+                reserved[#reserved + 1] = {col, row}
+            end
+        end
+    end
+
+    return reserved
+end
+
+function SnakeUtils.releaseCells(cells)
+    if not cells then return end
+
+    for _, cell in ipairs(cells) do
+        local col, row = cell[1], cell[2]
+        if col and row then
+            col = math.floor(col + 0.5)
+            row = math.floor(row + 0.5)
+            if cellWithinBounds(col, row) then
+                SnakeUtils.setOccupied(col, row, false)
+            end
+        end
+    end
+end
+
+function SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
     local centerCol, centerRow = Arena:getTileFromWorld(fx, fy)
     local tileSize = SnakeUtils.SEGMENT_SIZE
     local halfTiles = math.floor((trackLength / tileSize) / 2)
+    local cells = {}
 
     if dir == "horizontal" then
         local startCol = centerCol - halfTiles
         local endCol   = centerCol + halfTiles
-        local row      = centerRow
+        if startCol < 1 or endCol > Arena.cols then
+            return {}
+        end
 
         for c = startCol, endCol do
-            SnakeUtils.setOccupied(c, row, true)
+            cells[#cells + 1] = {c, centerRow}
         end
-
-    else -- vertical
+    else
         local startRow = centerRow - halfTiles
         local endRow   = centerRow + halfTiles
-        local col      = centerCol
+        if startRow < 1 or endRow > Arena.rows then
+            return {}
+        end
 
         for r = startRow, endRow do
-            SnakeUtils.setOccupied(col, r, true)
+            cells[#cells + 1] = {centerCol, r}
         end
+    end
+
+    return cells
+end
+
+function SnakeUtils.trackIsFree(fx, fy, dir, trackLength)
+    local cells = SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
+    if #cells == 0 then
+        return false
+    end
+
+    for _, cell in ipairs(cells) do
+        local col, row = cell[1], cell[2]
+        if SnakeUtils.isOccupied(col, row) then
+            return false
+        end
+    end
+
+    return true
+end
+
+-- Mark every grid cell overlapped by a saw’s track
+function SnakeUtils.occupySawTrack(fx, fy, dir, radius, trackLength, side)
+    local cells = SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
+    for _, cell in ipairs(cells) do
+        SnakeUtils.setOccupied(cell[1], cell[2], true)
     end
 end
 
