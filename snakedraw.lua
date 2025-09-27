@@ -7,7 +7,7 @@ local unpack = unpack
 local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3
 local OUTLINE_SIZE   = 6
-local FRUIT_BULGE_SCALE = 1.22
+local FRUIT_BULGE_SCALE = 1.25
 
 -- colors (body color reused for patches so they blend)
 local BODY_R, BODY_G, BODY_B = Theme.snakeDefault
