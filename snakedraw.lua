@@ -7,6 +7,7 @@ local unpack = unpack
 local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3
 local OUTLINE_SIZE   = 6
+local FRUIT_BULGE_SCALE = 1.22
 
 -- colors (body color reused for patches so they blend)
 local BODY_R, BODY_G, BODY_B = Theme.snakeDefault
@@ -73,22 +74,41 @@ local function drawCornerPlugs(trail, radius)
 end
 
 
+local function drawFruitBulges(trail, head, radius)
+  if not trail or radius <= 0 then return end
+
+  for i = 1, #trail do
+    local seg = trail[i]
+    if seg and seg.fruitMarker and seg ~= head then
+      local x = seg.fruitMarkerX or (seg.drawX or seg.x)
+      local y = seg.fruitMarkerY or (seg.drawY or seg.y)
+      if x and y then
+        love.graphics.circle("fill", x, y, radius)
+      end
+    end
+  end
+end
+
+
 local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
-	-- OUTLINE
-	love.graphics.setColor(0, 0, 0, 1)
-	love.graphics.setLineWidth(thickness + OUTLINE_SIZE)
-	drawPolyline(coords)
-	drawEndcaps(head, tail, half + OUTLINE_SIZE * 0.5)
-	drawCornerPlugs(trail, half + OUTLINE_SIZE*0.5)
+        -- OUTLINE
+        love.graphics.setColor(0, 0, 0, 1)
+        love.graphics.setLineWidth(thickness + OUTLINE_SIZE)
+        drawPolyline(coords)
+        drawEndcaps(head, tail, half + OUTLINE_SIZE * 0.5)
+        drawCornerPlugs(trail, half + OUTLINE_SIZE*0.5)
+        local bulgeRadius = half * FRUIT_BULGE_SCALE
+        drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
 
-	-- BODY
-	love.graphics.setColor(BODY_R, BODY_G, BODY_B)
-	love.graphics.setLineWidth(thickness)
-	drawPolyline(coords)
-	drawEndcaps(head, tail, half)
+        -- BODY
+        love.graphics.setColor(BODY_R, BODY_G, BODY_B)
+        love.graphics.setLineWidth(thickness)
+        drawPolyline(coords)
+        drawEndcaps(head, tail, half)
 
-	love.graphics.setColor(BODY_R, BODY_G, BODY_B)
-	drawCornerPlugs(trail, half)
+        love.graphics.setColor(BODY_R, BODY_G, BODY_B)
+        drawCornerPlugs(trail, half)
+        drawFruitBulges(trail, head, bulgeRadius)
 end
 
 local function drawSoftGlow(x, y, radius, r, g, b, a)

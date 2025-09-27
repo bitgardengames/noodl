@@ -747,6 +747,47 @@ function Snake:grow()
     popTimer = POP_DURATION
 end
 
+function Snake:markFruitSegment(fruitX, fruitY)
+    if not trail or #trail == 0 then
+        return
+    end
+
+    local targetIndex = 1
+
+    if fruitX and fruitY then
+        local bestDistSq = math.huge
+        for i = 1, #trail do
+            local seg = trail[i]
+            local sx = seg and (seg.drawX or seg.x)
+            local sy = seg and (seg.drawY or seg.y)
+            if sx and sy then
+                local dx = fruitX - sx
+                local dy = fruitY - sy
+                local distSq = dx * dx + dy * dy
+                if distSq < bestDistSq then
+                    bestDistSq = distSq
+                    targetIndex = i
+                    if distSq <= 1 then
+                        break
+                    end
+                end
+            end
+        end
+    end
+
+    local segment = trail[targetIndex]
+    if segment then
+        segment.fruitMarker = true
+        if fruitX and fruitY then
+            segment.fruitMarkerX = fruitX
+            segment.fruitMarkerY = fruitY
+        else
+            segment.fruitMarkerX = nil
+            segment.fruitMarkerY = nil
+        end
+    end
+end
+
 function Snake:draw()
     if not isDead then
         local upgradeVisuals = collectUpgradeVisuals(self)
