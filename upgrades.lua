@@ -53,6 +53,7 @@ local defaultEffects = {
     sawSpeedMult = 1,
     sawSpinMult = 1,
     sawStall = 0,
+    sawSinkDuration = 0,
     rockSpawnMult = 1,
     rockSpawnFlat = 0,
     rockShatter = 0,
@@ -305,6 +306,46 @@ local pool = {
                 particleLife = 0.4,
                 textOffset = 40,
                 textScale = 1.08,
+            })
+        end,
+    }),
+    register({
+        id = "hydraulic_tracks",
+        name = "Hydraulic Tracks",
+        desc = "Fruit retracts saws for 1.5s (+1.5s per stack).",
+        rarity = "uncommon",
+        allowDuplicates = true,
+        maxStacks = 3,
+        onAcquire = function(state)
+            local durationPerStack = 1.5
+            state.effects.sawSinkDuration = (state.effects.sawSinkDuration or 0) + durationPerStack
+
+            if not state.counters.hydraulicTracksHandlerRegistered then
+                state.counters.hydraulicTracksHandlerRegistered = true
+                Upgrades:addEventHandler("fruitCollected", function(data, runState)
+                    local sinkDuration = (runState.effects and runState.effects.sawSinkDuration) or 0
+                    if sinkDuration and sinkDuration > 0 and Saws and Saws.sink then
+                        Saws:sink(sinkDuration)
+                        celebrateUpgrade(nil, data, {
+                            skipText = true,
+                            color = {0.68, 0.84, 1, 1},
+                            particleCount = 12,
+                            particleSpeed = 90,
+                            particleLife = 0.36,
+                            particleSize = 3,
+                            particleSpread = math.pi * 2,
+                        })
+                    end
+                end)
+            end
+
+            celebrateUpgrade("Hydraulic Tracks", nil, {
+                color = {0.68, 0.84, 1, 1},
+                particleCount = 14,
+                particleSpeed = 95,
+                particleLife = 0.42,
+                textOffset = 44,
+                textScale = 1.1,
             })
         end,
     }),
