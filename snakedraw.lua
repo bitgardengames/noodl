@@ -7,7 +7,7 @@ local unpack = unpack
 local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3
 local OUTLINE_SIZE   = 6
-local FRUIT_BULGE_SCALE = 1.22
+local FRUIT_BULGE_SCALE = 1.25
 
 -- colors (body color reused for patches so they blend)
 local BODY_R, BODY_G, BODY_B = Theme.snakeDefault
@@ -87,7 +87,6 @@ local function drawFruitBulges(trail, head, radius)
     end
   end
 end
-
 
 local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
         -- OUTLINE
@@ -248,7 +247,6 @@ end
 local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
   if not trail or #trail == 0 then return end
 
-  --local thickness = SEGMENT_SIZE * 0.75
   local thickness = SEGMENT_SIZE * 0.8
   local half      = thickness / 2
 
