@@ -205,10 +205,17 @@ function Fruit:update(dt)
             Particles:spawnBurst(active.x, active.y, {
                 count = love.math.random(6, 9),
                 speed = 48,
+                speedVariance = 36,
                 life  = 0.35,
                 size  = 3,
                 color = {col[1], col[2], col[3], 1},
-                spread= math.pi * 2
+                spread= math.pi * 2,
+                angleJitter = math.pi,
+                drag = 2.2,
+                gravity = 160,
+                scaleMin = 0.55,
+                scaleVariance = 0.65,
+                fadeTo = 0,
             })
             active.phase = "squash"
             active.timer = 0

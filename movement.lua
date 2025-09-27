@@ -97,10 +97,17 @@ function Movement:update(dt)
                         Particles:spawnBurst(headX, headY, {
                                 count = 12,
                                 speed = 70,
+                                speedVariance = 55,
                                 life = 0.45,
                                 size = 4,
                                 color = {0.55, 0.85, 1, 1},
                                 spread = math.pi * 2,
+                                angleJitter = math.pi * 0.75,
+                                drag = 3.2,
+                                gravity = 180,
+                                scaleMin = 0.5,
+                                scaleVariance = 0.75,
+                                fadeTo = 0,
                         })
 
                         if Snake.onShieldConsumed then
@@ -116,8 +123,19 @@ function Movement:update(dt)
                         if Snake:consumeCrashShield() then
                                 -- shield absorbed the hit, play feedback and continue
                                 Particles:spawnBurst(rock.x + rock.w/2, rock.y + rock.h/2, {
-                                        count = 8, speed = 40, life = 0.4, size = 3,
-                                        color = {0.9, 0.8, 0.5, 1}, spread = math.pi*2
+                                        count = 8,
+                                        speed = 40,
+                                        speedVariance = 36,
+                                        life = 0.4,
+                                        size = 3,
+                                        color = {0.9, 0.8, 0.5, 1},
+                                        spread = math.pi * 2,
+                                        angleJitter = math.pi * 0.8,
+                                        drag = 2.8,
+                                        gravity = 210,
+                                        scaleMin = 0.55,
+                                        scaleVariance = 0.5,
+                                        fadeTo = 0.05,
                                 })
                                 Rocks:destroy(rock, { spawnFX = false })
                                 -- clear the shattered rock so the next frame doesn't collide again
@@ -147,8 +165,19 @@ function Movement:update(dt)
                         Saws:destroy(sawHit)
 
                         Particles:spawnBurst(headX, headY, {
-                                count = 8, speed = 40, life = 0.35, size = 3,
-                                color = {0.9,0.7,0.3,1}, spread = math.pi*2
+                                count = 8,
+                                speed = 40,
+                                speedVariance = 34,
+                                life = 0.35,
+                                size = 3,
+                                color = {0.9, 0.7, 0.3, 1},
+                                spread = math.pi * 2,
+                                angleJitter = math.pi * 0.9,
+                                drag = 3.0,
+                                gravity = 240,
+                                scaleMin = 0.5,
+                                scaleVariance = 0.6,
+                                fadeTo = 0,
                         })
                         if Snake.onShieldConsumed then
                                 Snake:onShieldConsumed(headX, headY, "saw")
@@ -165,10 +194,17 @@ function Movement:update(dt)
                         Particles:spawnBurst(headX, headY + SEGMENT_SIZE / 2, {
                                 count = 10,
                                 speed = 55,
+                                speedVariance = 45,
                                 life = 0.35,
                                 size = 3,
                                 color = {0.8, 0.75, 0.7, 1},
                                 gravity = 220,
+                                angleJitter = math.pi * 0.65,
+                                drag = 2.6,
+                                spread = math.pi * 1.5,
+                                scaleMin = 0.5,
+                                scaleVariance = 0.6,
+                                fadeTo = 0,
                         })
                         Presses:bounce(pressHit)
                         if Snake.onShieldConsumed then
