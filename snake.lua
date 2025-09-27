@@ -110,8 +110,7 @@ function Snake:addShieldBurst(config)
         self.shieldBurst.rocks = (self.shieldBurst.rocks or 0) + rocks
     end
     if stall ~= 0 then
-        local current = self.shieldBurst.stall or 0
-        self.shieldBurst.stall = math.max(current, stall)
+        self.shieldBurst.stall = (self.shieldBurst.stall or 0) + stall
     end
 end
 
