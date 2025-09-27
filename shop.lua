@@ -211,6 +211,32 @@ local function applyColor(setColorFn, color, overrideAlpha)
     setColorFn(color[1], color[2], color[3], overrideAlpha or color[4] or 1)
 end
 
+local function withTransformedScissor(x, y, w, h, fn)
+    if not fn then return end
+
+    local sx1, sy1 = love.graphics.transformPoint(x, y)
+    local sx2, sy2 = love.graphics.transformPoint(x + w, y + h)
+
+    local scissorX = math.min(sx1, sx2)
+    local scissorY = math.min(sy1, sy2)
+    local scissorW = math.abs(sx2 - sx1)
+    local scissorH = math.abs(sy2 - sy1)
+
+    if scissorW <= 0 or scissorH <= 0 then
+        fn()
+        return
+    end
+
+    local previous = { love.graphics.getScissor() }
+    love.graphics.setScissor(scissorX, scissorY, scissorW, scissorH)
+    fn()
+    if previous[1] then
+        love.graphics.setScissor(previous[1], previous[2], previous[3], previous[4])
+    else
+        love.graphics.setScissor()
+    end
+end
+
 local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appearanceAlpha)
     local fadeAlpha = appearanceAlpha or 1
     local function setColor(r, g, b, a)
@@ -250,44 +276,44 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
     end
 
     if style.flare then
-        love.graphics.setScissor(x, y, w, h)
-        applyColor(setColor, style.flare.color)
-        local radius = math.min(w, h) * (style.flare.radius or 0.36)
-        love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
-        love.graphics.setScissor()
+        withTransformedScissor(x, y, w, h, function()
+            applyColor(setColor, style.flare.color)
+            local radius = math.min(w, h) * (style.flare.radius or 0.36)
+            love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
+        end)
     end
 
     if style.stripes then
-        love.graphics.push()
-        love.graphics.setScissor(x, y, w, h)
-        love.graphics.translate(x + w / 2, y + h / 2)
-        love.graphics.rotate(style.stripes.angle or -math.pi / 6)
-        local diag = math.sqrt(w * w + h * h)
-        local spacing = style.stripes.spacing or 34
-        local width = style.stripes.width or 22
-        applyColor(setColor, style.stripes.color)
-        local stripeCount = math.ceil((diag * 2) / spacing) + 2
-        for i = -stripeCount, stripeCount do
-            local pos = i * spacing
-            love.graphics.rectangle("fill", -diag, pos - width / 2, diag * 2, width)
-        end
-        love.graphics.pop()
-        love.graphics.setScissor()
+        withTransformedScissor(x, y, w, h, function()
+            love.graphics.push()
+            love.graphics.translate(x + w / 2, y + h / 2)
+            love.graphics.rotate(style.stripes.angle or -math.pi / 6)
+            local diag = math.sqrt(w * w + h * h)
+            local spacing = style.stripes.spacing or 34
+            local width = style.stripes.width or 22
+            applyColor(setColor, style.stripes.color)
+            local stripeCount = math.ceil((diag * 2) / spacing) + 2
+            for i = -stripeCount, stripeCount do
+                local pos = i * spacing
+                love.graphics.rectangle("fill", -diag, pos - width / 2, diag * 2, width)
+            end
+            love.graphics.pop()
+        end)
     end
 
     if style.sparkles and style.sparkles.positions then
-        local time = (love.timer and love.timer.getTime and love.timer.getTime()) or 0
-        love.graphics.setScissor(x, y, w, h)
-        for i, pos in ipairs(style.sparkles.positions) do
-            local px, py, scale = pos[1], pos[2], pos[3] or 1
-            local pulse = 0.6 + 0.4 * math.sin(time * (style.sparkles.speed or 1.8) + i * 0.9)
-            local radius = (style.sparkles.radius or 9) * scale * pulse
-            local sparkleColor = style.sparkles.color or borderColor
-            local sparkleAlpha = (sparkleColor[4] or 1) * pulse
-            applyColor(setColor, sparkleColor, sparkleAlpha)
-            love.graphics.circle("fill", x + px * w, y + py * h, radius)
-        end
-        love.graphics.setScissor()
+        withTransformedScissor(x, y, w, h, function()
+            local time = (love.timer and love.timer.getTime and love.timer.getTime()) or 0
+            for i, pos in ipairs(style.sparkles.positions) do
+                local px, py, scale = pos[1], pos[2], pos[3] or 1
+                local pulse = 0.6 + 0.4 * math.sin(time * (style.sparkles.speed or 1.8) + i * 0.9)
+                local radius = (style.sparkles.radius or 9) * scale * pulse
+                local sparkleColor = style.sparkles.color or borderColor
+                local sparkleAlpha = (sparkleColor[4] or 1) * pulse
+                applyColor(setColor, sparkleColor, sparkleAlpha)
+                love.graphics.circle("fill", x + px * w, y + py * h, radius)
+            end
+        end)
     end
 
     if style.glow and style.glow > 0 then
