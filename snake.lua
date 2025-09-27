@@ -609,7 +609,7 @@ function Snake:startDescending(hx, hy, hr)
         consumeDelay = 0.12,
         timer = 0,
         consumedLength = 0,
-        consumeTarget = 0,
+        consumeTarget = nil,
         totalLength = trailLength,
         logicalLength = logicalLength,
         scripted = true,
@@ -700,11 +700,11 @@ function Snake:update(dt)
 
         local logicalLength = math.max(0, segmentCount * SEGMENT_SPACING)
         hole.logicalLength = logicalLength
-        local targetConsume = logicalLength * sinkProgress
-        if hole.consumeTarget then
-            hole.consumeTarget = math.max(hole.consumeTarget, targetConsume)
+    
+        if sinkProgress >= 0.995 then
+            hole.consumeTarget = logicalLength
         else
-            hole.consumeTarget = targetConsume
+            hole.consumeTarget = nil
         end
 
         local baseRadius = hole.baseRadius or hole.radius or 0
