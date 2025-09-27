@@ -22,7 +22,6 @@ end
 local fontTitle
 local fontScore
 local fontSmall
-local fontTiny
 local fontBadge
 local stats = {}
 local buttonList = ButtonList.new()
@@ -58,7 +57,6 @@ function GameOver:enter(data)
     fontTitle = love.graphics.newFont(48)
     fontScore = love.graphics.newFont(72)
     fontSmall = love.graphics.newFont(20)
-    fontTiny = love.graphics.newFont(14)
     fontBadge = love.graphics.newFont(26)
 
     -- Merge default stats with provided stats
@@ -77,13 +75,6 @@ function GameOver:enter(data)
     if data.apples then stats.apples = data.apples end
     if data.mode then stats.mode = data.mode end
     if data.totalApples then stats.totalApples = data.totalApples end
-
-    local tipTable = Localization:getTable("gameover.tips") or {}
-    if #tipTable > 0 then
-        self.runTip = tipTable[love.math.random(#tipTable)]
-    else
-        self.runTip = nil
-    end
 
     local modeID = stats.mode
     local localizedMode = modeID and Localization:get("gamemodes." .. modeID .. ".label") or nil
@@ -256,14 +247,6 @@ function GameOver:draw()
     else
         love.graphics.setColor(1, 1, 1, 0.6)
         love.graphics.printf(Localization:get("gameover.no_fruit_summary"), contentX + padding, fruitTextY, contentWidth - padding * 2, "center")
-    end
-
-    -- Play tip at the bottom
-    if self.runTip then
-        love.graphics.setFont(fontTiny)
-        love.graphics.setColor(1, 1, 1, 0.6)
-        local tipText = Localization:get("gameover.tip_prefix", { tip = self.runTip })
-        love.graphics.printf(tipText, contentX + padding, fruitPanelY + fruitPanelHeight + 24, contentWidth - padding * 2, "center")
     end
 
     -- Buttons
