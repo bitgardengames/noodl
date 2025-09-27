@@ -205,6 +205,31 @@ local rarityStyles = {
             width = 3,
         },
     },
+    legendary = {
+        base = {0.38, 0.26, 0.04, 1},
+        shadowAlpha = 0.42,
+        aura = {
+            color = {1.0, 0.86, 0.32, 0.42},
+            radius = 0.92,
+            y = 0.4,
+        },
+        outerGlow = {
+            color = {1.0, 0.9, 0.5, 1},
+            min = 0.22,
+            max = 0.48,
+            speed = 2.5,
+            expand = 9,
+            width = 9,
+        },
+        innerGlow = {
+            color = {1.0, 0.96, 0.72, 1},
+            min = 0.26,
+            max = 0.5,
+            speed = 2.8,
+            inset = 8,
+            width = 3,
+        },
+    },
 }
 
 local function applyColor(setColorFn, color, overrideAlpha)

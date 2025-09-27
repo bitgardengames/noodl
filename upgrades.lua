@@ -29,7 +29,12 @@ local rarities = {
         weight = 2,
         label = "Epic",
         color = {1, 0.52, 0.28, 1},
-    }
+    },
+    legendary = {
+        weight = 0.35,
+        label = "Legendary",
+        color = {1, 0.84, 0.2, 1},
+    },
 }
 
 local function deepcopy(value)
@@ -61,6 +66,7 @@ local defaultEffects = {
     comboWindowBonus = 0,
     comboBonusFlat = 0,
     shopSlots = 0,
+    wallPortal = false,
 }
 
 local function getEventPosition(data)
@@ -957,6 +963,27 @@ local pool = {
         tags = {"defense", "risk"},
         onAcquire = function(state)
             state.counters.phoenixEchoCharges = (state.counters.phoenixEchoCharges or 0) + 1
+        end,
+    }),
+    register({
+        id = "event_horizon",
+        name = "Event Horizon",
+        desc = "Legendary: Colliding with a wall opens a portal that ejects you from the opposite side of the arena.",
+        rarity = "legendary",
+        tags = {"defense", "mobility"},
+        allowDuplicates = false,
+        weight = 1,
+        onAcquire = function(state)
+            state.effects.wallPortal = true
+            celebrateUpgrade("Event Horizon", nil, {
+                color = {1, 0.86, 0.34, 1},
+                particleCount = 32,
+                particleSpeed = 160,
+                particleLife = 0.6,
+                particleSize = 5,
+                particleSpread = math.pi * 2,
+                particleSpeedVariance = 90,
+            })
         end,
     }),
 }
