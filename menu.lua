@@ -12,6 +12,22 @@ local Menu = {}
 local buttonList = ButtonList.new()
 local buttons = {}
 local t = 0
+local buttonArea = nil
+
+local MENU_BUTTONS = {
+    { key = "menu.start_game",   action = "modeselect" },
+    { key = "menu.achievements", action = "achievementsmenu" },
+    { key = "menu.settings",     action = "settings" },
+    { key = "menu.quit",         action = "quit" },
+}
+
+-- Preserve the historic public surface area so any callers that still reference
+-- `Menu.labels` (or even the old global `labels`) continue to receive the
+-- current button configuration. This avoids nil lookups during the transition
+-- to the centralized configuration table above.
+Menu.buttonLabels = MENU_BUTTONS
+Menu.labels = MENU_BUTTONS
+rawset(_G, "labels", MENU_BUTTONS)
 
 function Menu:enter()
     t = 0
@@ -21,27 +37,27 @@ function Menu:enter()
     Screen:update()
 
     local sw, sh = Screen:get()
+    local safe = UI.layout.safeMargin
     local centerX = sw / 2
-    local startY = sh / 2 - ((UI.spacing.buttonHeight + UI.spacing.buttonSpacing) * 2.5) + UI.spacing.buttonHeight
 
-    local labels = {
-        { key = "menu.start_game",   action = "modeselect" },
-        { key = "menu.achievements", action = "achievementsmenu" },
-        { key = "menu.settings",     action = "settings" },
-        { key = "menu.quit",         action = "quit" },
-    }
+    local labels = Menu.buttonLabels or MENU_BUTTONS
+    local buttonWidth = math.min(UI.spacing.buttonWidth, sw - safe.x * 2)
+    local totalHeight = (#labels) * (UI.spacing.buttonHeight + UI.spacing.buttonSpacing) - UI.spacing.buttonSpacing
+    local alignedTop = safe.y + UI.fonts.title:getHeight() + 60
+    local centeredTop = sh / 2 - totalHeight / 2
+    local startY = math.max(alignedTop, centeredTop)
 
     local defs = {}
 
     for i, entry in ipairs(labels) do
-        local x = centerX - UI.spacing.buttonWidth / 2
+        local x = centerX - buttonWidth / 2
         local y = startY + (i - 1) * (UI.spacing.buttonHeight + UI.spacing.buttonSpacing)
 
         defs[#defs + 1] = {
             id = "menuButton" .. i,
             x = x,
             y = y,
-            w = UI.spacing.buttonWidth,
+            w = buttonWidth,
             h = UI.spacing.buttonHeight,
             labelKey = entry.key,
             text = Localization:get(entry.key),
@@ -54,6 +70,28 @@ function Menu:enter()
     end
 
     buttons = buttonList:reset(defs)
+
+    if #buttons > 0 then
+        local minX, minY = math.huge, math.huge
+        local maxX, maxY = -math.huge, -math.huge
+
+        for _, btn in ipairs(buttons) do
+            minX = math.min(minX, btn.x)
+            minY = math.min(minY, btn.y)
+            maxX = math.max(maxX, btn.x + btn.w)
+            maxY = math.max(maxY, btn.y + btn.h)
+        end
+
+        local padding = UI.spacing.panelPadding * 1.5
+        buttonArea = {
+            x = minX - padding,
+            y = minY - padding,
+            w = (maxX - minX) + padding * 2,
+            h = (maxY - minY) + padding * 2,
+        }
+    else
+        buttonArea = nil
+    end
 end
 
 function Menu:update(dt)
@@ -102,6 +140,12 @@ function Menu:draw()
         Face:draw(head.x, head.y, wordScale)
     end
 
+    if buttonArea then
+        UI.drawPanel(buttonArea.x, buttonArea.y, buttonArea.w, buttonArea.h, {
+            radius = UI.spacing.buttonRadius + 4,
+        })
+    end
+
     for _, btn in ipairs(buttons) do
         if btn.labelKey then
             btn.text = Localization:get(btn.labelKey)
@@ -121,9 +165,8 @@ function Menu:draw()
         end
     end
 
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(Theme.textColor)
-    love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
+    local safe = UI.layout.safeMargin
+    UI.print(Localization:get("menu.version"), safe.x, sh - safe.y, { font = "small" })
 end
 
 function Menu:mousepressed(x, y, button)
