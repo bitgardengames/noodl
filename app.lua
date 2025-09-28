@@ -8,6 +8,7 @@ local PlayerStats = require("playerstats")
 local GameModes = require("gamemodes")
 local UI = require("ui")
 local Localization = require("localization")
+local DebugOverlay = require("debugoverlay")
 
 local App = {
     stateModules = {
@@ -73,6 +74,7 @@ function App:load()
 
     self:registerStates()
     self:loadSubsystems()
+    DebugOverlay:load()
     GameState:switch("menu")
 end
 
@@ -88,10 +90,12 @@ function App:update(dt)
     local action = GameState:update(dt)
     self:resolveAction(action)
     UI:update(dt)
+    DebugOverlay:update(dt)
 end
 
 function App:draw()
     GameState:draw()
+    DebugOverlay:draw()
 end
 
 function App:mousepressed(x, y, button)
@@ -112,6 +116,7 @@ function App:keypressed(key)
         love.graphics.captureScreenshot("screenshot_" .. time .. ".png")
     end
 
+    DebugOverlay:keypressed(key)
     return self:forwardEvent("keypressed", key)
 end
 
