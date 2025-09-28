@@ -329,52 +329,6 @@ local definitions = {
         categoryOrder = 3,
         order = 10,
     },
-    {
-        id = "tokenMenagerie",
-        titleKey = "achievements_definitions.tokenMenagerie.title",
-        descriptionKey = "achievements_definitions.tokenMenagerie.description",
-        icon = "Apple",
-        goal = 4,
-        category = "collection",
-        categoryOrder = 3,
-        order = 20,
-        progressFn = function(state)
-            local keys = {
-                "fruitMetaGain_orchardSeeds",
-                "fruitMetaGain_sunSigils",
-                "fruitMetaGain_duskDrops",
-                "fruitMetaGain_auricSeeds",
-                "fruitMetaGain_wyrmCores",
-            }
-            local unique = 0
-
-            for _, key in ipairs(keys) do
-                if (state[key] or 0) > 0 then
-                    unique = unique + 1
-                end
-            end
-
-            return unique
-        end,
-        condition = function(state)
-            local keys = {
-                "fruitMetaGain_orchardSeeds",
-                "fruitMetaGain_sunSigils",
-                "fruitMetaGain_duskDrops",
-                "fruitMetaGain_auricSeeds",
-                "fruitMetaGain_wyrmCores",
-            }
-            local unique = 0
-
-            for _, key in ipairs(keys) do
-                if (state[key] or 0) > 0 then
-                    unique = unique + 1
-                end
-            end
-
-            return unique >= 4
-        end,
-    },
 }
 
 return definitions

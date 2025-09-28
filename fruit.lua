@@ -10,11 +10,6 @@ local fruitTypes = {
         color = Theme.appleColor,
         points = 1,
         weight = 70,
-        metaReward = {
-            key = "orchardSeeds",
-            amount = 1,
-            color = Theme.appleColor,
-        },
     },
     {
         id = "banana",
@@ -28,11 +23,6 @@ local fruitTypes = {
                 amount = 0.75,
                 color = {1, 0.92, 0.4, 1},
             },
-        },
-        metaReward = {
-            key = "sunSigils",
-            amount = 2,
-            color = Theme.bananaColor,
         },
     },
     {
@@ -48,11 +38,6 @@ local fruitTypes = {
                 color = {0.6, 0.75, 1, 1},
             },
         },
-        metaReward = {
-            key = "duskDrops",
-            amount = 3,
-            color = Theme.blueberryColor,
-        },
     },
     {
         id = "goldenPear",
@@ -67,11 +52,6 @@ local fruitTypes = {
                 color = Theme.goldenPearColor,
                 showLabel = false,
             },
-        },
-        metaReward = {
-            key = "auricSeeds",
-            amount = 5,
-            color = Theme.goldenPearColor,
         },
     },
     {
@@ -92,11 +72,6 @@ local fruitTypes = {
                 amount = 1.5,
                 color = {1, 0.4, 1, 1},
             },
-        },
-        metaReward = {
-            key = "wyrmCores",
-            amount = 8,
-            color = Theme.dragonfruitColor,
         },
     },
 }

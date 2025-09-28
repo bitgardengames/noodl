@@ -14,7 +14,6 @@ local Particles = require("particles")
 local Theme = require("theme")
 local Achievements = require("achievements")
 local Upgrades = require("upgrades")
-local FruitWallet = require("fruitwallet")
 
 local FruitEvents = {}
 
@@ -170,32 +169,6 @@ local function applyRunRewards(fruitType, x, y)
     end
 end
 
-local function applyMetaReward(fruitType, x, y)
-    if not fruitType then return end
-
-    local metaReward = fruitType.metaReward
-    if not metaReward then return end
-
-    local result = FruitWallet:grantMeta(fruitType)
-    if not result then return end
-
-    local label = metaReward.label
-    if label and metaReward.showAmount ~= false then
-        label = string.format("+%d %s", result.amount or metaReward.amount or 0, label)
-    end
-
-    local baseY = y - 96
-    if label then
-        addFloatingText(label, x, baseY, metaReward.color, metaReward.duration or 1.2, metaReward.size or 50)
-        baseY = baseY + 26
-    end
-
-    if metaReward.showTotal then
-        local totalText = string.format("Total: %d", result.lifetime or 0)
-        addFloatingText(totalText, x, baseY, metaReward.totalColor or {1, 1, 1, 0.85}, 1.0, 36)
-    end
-end
-
 function FruitEvents.reset()
     comboState.count = 0
     comboState.timer = 0
@@ -297,7 +270,6 @@ function FruitEvents.handleConsumption(x, y)
 
     applyComboReward(x, y)
     applyRunRewards(fruitType, x, y)
-    applyMetaReward(fruitType, x, y)
 
     if Snake.adrenaline then
         Snake.adrenaline.active = true
