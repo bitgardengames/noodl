@@ -45,6 +45,10 @@ end
 function Shop:setFocus(index)
     if not self.cards or not index then return end
     if index < 1 or index > #self.cards then return end
+    local previous = self.focusIndex
+    if previous ~= index then
+        Audio:playSound("shop_focus")
+    end
     self.focusIndex = index
     return self.cards[index]
 end
