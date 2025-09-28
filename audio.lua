@@ -20,14 +20,18 @@ function Audio:load()
     self.sounds.floor_advance = love.audio.newSource("Assets/Sounds/Retro PickUp 18.wav", "static")
     self.sounds.floor_intro = love.audio.newSource("Assets/Sounds/Retro Event Acute 08.wav", "static")
     self.sounds.shop_open = love.audio.newSource("Assets/Sounds/apple.wav", "static")
-    self.sounds.shop_focus = love.audio.newSource("Assets/Sounds/harp strum 3.wav", "static")
+    self.sounds.shop_focus = love.audio.newSource("Assets/Sounds/harp strum 4.wav", "static")
     self.sounds.shop_card_deal = love.audio.newSource("Assets/Sounds/deal1.ogg", "static")
     self.sounds.shop_card_select = love.audio.newSource("Assets/Sounds/deal2.ogg", "static")
     self.sounds.shop_purchase = love.audio.newSource("Assets/Sounds/Coin Dropped on Wood Rattle.wav", "static")
     self.sounds.goal_reached = love.audio.newSource("Assets/Sounds/power_up.wav", "static")
-    self.sounds.combo_increase = love.audio.newSource("Assets/Sounds/harp strum 3.wav", "static")
+    self.sounds.combo_increase = love.audio.newSource("Assets/Sounds/harp strum 6.wav", "static")
     self.sounds.combo_break = love.audio.newSource("Assets/Sounds/impact2.ogg", "static")
     self.sounds.jackpot = love.audio.newSource("Assets/Sounds/Coin Slid Along Wood.wav", "static")
+    self.sounds.wall_portal = love.audio.newSource("Assets/Sounds/Glyph Activation Light 01.wav", "static")
+    self.sounds.shield_wall = love.audio.newSource("Assets/Sounds/Activate Glyph Forcefield.wav", "static")
+    self.sounds.shield_rock = love.audio.newSource("Assets/Sounds/Rotate Stone 03.wav", "static")
+    self.sounds.shield_saw = love.audio.newSource("Assets/Sounds/Arcane Wind Chime Gust.wav", "static")
 
     -- Music Tracks
     self.musicTracks.menu = love.audio.newSource("Assets/Music/Menu2.ogg", "stream")
@@ -56,6 +60,10 @@ Audio.soundDesignNotes = {
     combo_increase = "Short melodic lift that grows as the combo builds.",
     combo_break = "Snappy thunk signalling a lost streak.",
     jackpot = "Burst of coins emphasizing a jackpot reward.",
+    wall_portal = "Gentle shimmer hinting at slipping through the arena wall.",
+    shield_wall = "Firm magical rebound when a shield saves you from the arena edge.",
+    shield_rock = "Crunchy crack as the shield pulverizes a rock.",
+    shield_saw = "Arcane whoosh to sell deflecting a spinning saw.",
 }
 
 function Audio:applyVolumes()

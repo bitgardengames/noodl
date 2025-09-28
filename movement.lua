@@ -1,4 +1,5 @@
 local Snake = require("snake")
+local Audio = require("audio")
 local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Saws = require("saws")
@@ -251,6 +252,7 @@ function Movement:update(dt)
                 local portalX, portalY = portalThroughWall(headX, headY)
                 if portalX and portalY then
                         headX, headY = portalX, portalY
+                        Audio:playSound("wall_portal")
                 elseif Snake:consumeCrashShield() then
                         local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
                         headX = reroutedX or headX
@@ -271,6 +273,8 @@ function Movement:update(dt)
                                 scaleVariance = 0.75,
                                 fadeTo = 0,
                         })
+
+                        Audio:playSound("shield_wall")
 
                         if Snake.onShieldConsumed then
                                 Snake:onShieldConsumed(headX, headY, "wall")
@@ -300,6 +304,7 @@ function Movement:update(dt)
                                         scaleVariance = 0.5,
                                         fadeTo = 0.05,
                                 })
+                                Audio:playSound("shield_rock")
                                 Rocks:destroy(rock, { spawnFX = false })
                                 -- clear the shattered rock so the next frame doesn't collide again
                                 if Snake.onShieldConsumed then
@@ -343,6 +348,7 @@ function Movement:update(dt)
                                 scaleVariance = 0.6,
                                 fadeTo = 0,
                         })
+                        Audio:playSound("shield_saw")
                         if Snake.onShieldConsumed then
                                 Snake:onShieldConsumed(headX, headY, "saw")
                         end
