@@ -69,20 +69,163 @@ local function easedProgress(timer, duration)
         return easeInOutCubic(clamp01(timer / duration))
 end
 
-local function buildBaselineFloorContext(floorNum)
-    local step = math.max(0, (floorNum or 1) - 1)
-    local normalized = clamp01(step / 10)
+local baselinePlan = {
+    [1] = {
+        fruitGoal = 5,
+        rocks = 2,
+        saws = 1,
+        rockSpawnChance = 0.18,
+        sawSpeedMult = 0.95,
+        sawSpinMult = 0.9,
+        sawStall = 1.1,
+    },
+    [2] = {
+        fruitGoal = 6,
+        rocks = 3,
+        saws = 1,
+        rockSpawnChance = 0.2,
+        sawSpeedMult = 1.0,
+        sawSpinMult = 0.95,
+        sawStall = 0.9,
+    },
+    [3] = {
+        fruitGoal = 7,
+        rocks = 4,
+        saws = 1,
+        rockSpawnChance = 0.22,
+        sawSpeedMult = 1.05,
+        sawSpinMult = 1.0,
+        sawStall = 0.8,
+    },
+    [4] = {
+        fruitGoal = 8,
+        rocks = 5,
+        saws = 2,
+        rockSpawnChance = 0.24,
+        sawSpeedMult = 1.08,
+        sawSpinMult = 1.05,
+        sawStall = 0.7,
+    },
+    [5] = {
+        fruitGoal = 9,
+        rocks = 6,
+        saws = 2,
+        rockSpawnChance = 0.26,
+        sawSpeedMult = 1.12,
+        sawSpinMult = 1.08,
+        sawStall = 0.65,
+    },
+    [6] = {
+        fruitGoal = 10,
+        rocks = 7,
+        saws = 2,
+        rockSpawnChance = 0.28,
+        sawSpeedMult = 1.18,
+        sawSpinMult = 1.12,
+        sawStall = 0.6,
+    },
+    [7] = {
+        fruitGoal = 11,
+        rocks = 8,
+        saws = 3,
+        rockSpawnChance = 0.3,
+        sawSpeedMult = 1.24,
+        sawSpinMult = 1.18,
+        sawStall = 0.55,
+    },
+    [8] = {
+        fruitGoal = 12,
+        rocks = 9,
+        saws = 3,
+        rockSpawnChance = 0.33,
+        sawSpeedMult = 1.3,
+        sawSpinMult = 1.24,
+        sawStall = 0.5,
+    },
+    [9] = {
+        fruitGoal = 13,
+        rocks = 11,
+        saws = 4,
+        rockSpawnChance = 0.36,
+        sawSpeedMult = 1.35,
+        sawSpinMult = 1.3,
+        sawStall = 0.45,
+    },
+    [10] = {
+        fruitGoal = 14,
+        rocks = 13,
+        saws = 4,
+        rockSpawnChance = 0.4,
+        sawSpeedMult = 1.4,
+        sawSpinMult = 1.35,
+        sawStall = 0.38,
+    },
+    [11] = {
+        fruitGoal = 15,
+        rocks = 14,
+        saws = 5,
+        rockSpawnChance = 0.44,
+        sawSpeedMult = 1.45,
+        sawSpinMult = 1.4,
+        sawStall = 0.32,
+    },
+    [12] = {
+        fruitGoal = 16,
+        rocks = 15,
+        saws = 5,
+        rockSpawnChance = 0.48,
+        sawSpeedMult = 1.5,
+        sawSpinMult = 1.45,
+        sawStall = 0.28,
+    },
+    [13] = {
+        fruitGoal = 17,
+        rocks = 16,
+        saws = 6,
+        rockSpawnChance = 0.52,
+        sawSpeedMult = 1.55,
+        sawSpinMult = 1.5,
+        sawStall = 0.24,
+    },
+    [14] = {
+        fruitGoal = 18,
+        rocks = 18,
+        saws = 6,
+        rockSpawnChance = 0.56,
+        sawSpeedMult = 1.6,
+        sawSpinMult = 1.55,
+        sawStall = 0.21,
+    },
+}
 
-    local context = {
-        floor = floorNum,
-        fruitGoal = math.max(4, math.floor(5 + step * 3)),
-        rocks = math.max(0, math.min(32, math.floor(3 + step * 1.4))),
-        saws = math.max(1, math.min(7, math.floor(step / 1.35) + 1)),
-        rockSpawnChance = math.min(0.6, 0.26 + step * 0.03),
-        sawSpeedMult = 1.05 + math.min(0.55, step * 0.05),
-        sawSpinMult = 1 + math.min(0.45, step * 0.045),
-        sawStall = math.max(0, 0.4 - normalized * 0.3),
-    }
+local function buildBaselineFloorContext(floorNum)
+    local floorIndex = math.max(1, floorNum or 1)
+    local plan = baselinePlan[floorIndex]
+
+    if plan then
+        local context = { floor = floorIndex }
+        for key, value in pairs(plan) do
+            context[key] = value
+        end
+        return context
+    end
+
+    local lastIndex = #baselinePlan
+    local lastPlan = baselinePlan[lastIndex]
+    local extraFloors = floorIndex - lastIndex
+    local context = { floor = floorIndex }
+
+    for key, value in pairs(lastPlan) do
+        context[key] = value
+    end
+
+    context.fruitGoal = math.max(context.fruitGoal or 1, (lastPlan.fruitGoal or 18) + extraFloors)
+    context.rocks = math.max(0, math.min(40, (lastPlan.rocks or 18) + extraFloors))
+    context.saws = math.max(1, math.min(8, (lastPlan.saws or 6) + math.floor(extraFloors / 2)))
+    context.rockSpawnChance = math.min(0.7, (lastPlan.rockSpawnChance or 0.56) + extraFloors * 0.02)
+    context.sawSpeedMult = math.min(1.9, (lastPlan.sawSpeedMult or 1.6) + extraFloors * 0.04)
+    context.sawSpinMult = math.min(1.85, (lastPlan.sawSpinMult or 1.55) + extraFloors * 0.035)
+    context.sawStall = math.max(0.12, (lastPlan.sawStall or 0.21) - extraFloors * 0.03)
 
     return context
 end

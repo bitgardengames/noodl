@@ -70,7 +70,7 @@ local Floors = {
     },
     [5] = {
         name = "Ancient Ruins",
-        flavor = "Forgotten walls crumble; whispers cling to the stone.",
+        flavor = "Gears grind beneath the rubble, timing every echoing strike.",
         palette = {
             bgColor    = {0.14, 0.12, 0.08, 1}, -- dim brown haze
             arenaBG    = {0.18, 0.16, 0.12, 1}, -- sandstone
@@ -79,11 +79,11 @@ local Floors = {
             rock       = {0.46, 0.38, 0.28, 1},   -- weathered ochre brick
             sawColor   = {0.7, 0.7, 0.75, 1},   -- pale tarnished steel
         },
-        traits = {"ancientMachinery"},
+        traits = {"ancientMachinery", "echoingStillness"},
     },
     [6] = {
         name = "Crystal Hollows",
-        flavor = "Shards of crystal scatter light in eerie hues.",
+        flavor = "Luminous shards sing, calming blades in shimmering light.",
         palette = {
             bgColor    = {0.06, 0.08, 0.12, 1}, -- sapphire veil
             arenaBG    = {0.09, 0.11, 0.16, 1}, -- cold blue
@@ -92,7 +92,7 @@ local Floors = {
             rock       = {0.45, 0.5, 0.68, 1},   -- frosted indigo crystal
             sawColor   = {0.65, 0.85, 1.0, 1},  -- crystalline edges
         },
-        traits = {"crystallineResonance"},
+        traits = {"crystallineResonance", "glowingSpores"},
     },
     [7] = {
         name = "Bone Pits",
@@ -105,7 +105,7 @@ local Floors = {
             rock       = {0.63, 0.5, 0.4, 1},  -- bleached bone stacks
             sawColor   = {0.76, 0.62, 0.52, 1},  -- aged bronze
         },
-        traits = {"boneHarvest", "restlessEarth"},
+        traits = {"boneHarvest"},
     },
     [8] = {
         name = "The Abyss",
@@ -148,7 +148,7 @@ local Floors = {
     },
     [11] = {
         name = "Ashen Frontier",
-        flavor = "Scorched winds howl across the wastes beyond the keep.",
+        flavor = "Scorched winds whip through charred ossuaries and shattered shale.",
         palette = {
             bgColor    = {0.08, 0.04, 0.03, 1},  -- ember-stained dusk
             arenaBG    = {0.12, 0.06, 0.05, 1},  -- charred earth
@@ -157,11 +157,11 @@ local Floors = {
             rock       = {0.42, 0.28, 0.24, 1},  -- charred copper shale
             sawColor   = {0.95, 0.4, 0.2, 1},    -- cindersteel
         },
-        traits = {"ashenTithe", "glowingSpores"},
+        traits = {"ashenTithe", "boneHarvest"},
     },
     [12] = {
         name = "Spirit Crucible",
-        flavor = "Wails of the lost weave through a glowing astral gale.",
+        flavor = "Wails of the lost weave through astral gusts that thin the stone.",
         palette = {
             bgColor    = {0.04, 0.02, 0.08, 1},  -- ethereal violet
             arenaBG    = {0.09, 0.05, 0.14, 1},  -- twilight bloom
@@ -170,7 +170,7 @@ local Floors = {
             rock       = {0.4, 0.32, 0.52, 1},   -- spectral amethyst shale
             sawColor   = {0.8, 0.65, 1.0, 1},    -- spirit steel
         },
-        traits = {"spectralEchoes", "echoingStillness"},
+        traits = {"spectralEchoes", "glowingSpores"},
     },
     [13] = {
         name = "The Underworld",
