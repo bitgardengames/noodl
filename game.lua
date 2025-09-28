@@ -27,6 +27,7 @@ local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
 local Upgrades = require("upgrades")
+local Localization = require("localization")
 
 local Game = {}
 local TRACK_LENGTH = 120
@@ -233,7 +234,10 @@ local function buildModifierSections(self)
     local sections = {}
 
     if self.activeFloorTraits and #self.activeFloorTraits > 0 then
-        table.insert(sections, { title = "Floor Traits", items = self.activeFloorTraits })
+        table.insert(sections, {
+            title = Localization:get("game.floor_traits.section_title"),
+            items = self.activeFloorTraits,
+        })
     end
 
     if #sections == 0 then
@@ -685,7 +689,10 @@ function Game:drawTransition()
                                                 end
 
                                                 if #visible > 0 then
-                                                        table.insert(entries, { type = "header", title = section.title or "Traits" })
+                                                        table.insert(entries, {
+                                                                type = "header",
+                                                                title = section.title or Localization:get("game.floor_traits.default_title"),
+                                                        })
                                                         for _, trait in ipairs(visible) do
                                                                 table.insert(entries, {
                                                                         type = "trait",
@@ -698,9 +705,14 @@ function Game:drawTransition()
 
                                 local remaining = math.max(0, totalTraits - shownTraits)
                                 if remaining > 0 then
+                                        local suffixKey = (remaining == 1)
+                                                and "game.floor_traits.more_modifiers_one"
+                                                or "game.floor_traits.more_modifiers_other"
                                         table.insert(entries, {
                                                 type = "note",
-                                                text = string.format("+%d more modifier%s", remaining, remaining == 1 and "" or "s"),
+                                                text = Localization:get(suffixKey, {
+                                                        count = remaining,
+                                                }),
                                         })
                                 end
 
@@ -719,7 +731,7 @@ function Game:drawTransition()
                                                 if traitAlpha > 0 then
                                                         love.graphics.setFont(UI.fonts.button)
                                                         love.graphics.setColor(1, 1, 1, traitAlpha)
-                                                        love.graphics.printf(entry.title or "Traits", x, y + traitOffset, width, "center")
+                                                        love.graphics.printf(entry.title or Localization:get("game.floor_traits.default_title"), x, y + traitOffset, width, "center")
                                                 end
                                                 y = y + headerHeight
                                         elseif entry.type == "trait" then
