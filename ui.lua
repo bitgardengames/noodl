@@ -876,9 +876,8 @@ function UI:drawUpgradeIndicators()
     local margin = layout.margin or 24
 
     local screenW = love.graphics.getWidth()
-    local screenH = love.graphics.getHeight()
     local x = screenW - width - margin
-    local y = screenH - margin
+    local y = margin
 
     for _, entry in ipairs(entries) do
         local visibility = clamp01(entry.visibility or 1)
@@ -958,7 +957,7 @@ function UI:drawUpgradeIndicators()
 
         love.graphics.pop()
 
-        y = y - spacing
+        y = y + panelHeight + spacing
     end
 end
 
