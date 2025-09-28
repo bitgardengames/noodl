@@ -1,7 +1,6 @@
 local Rocks = require("rocks")
 local Saws = require("saws")
 local FruitEvents = require("fruitevents")
-local Snake = require("snake")
 
 local FloorTraits = {}
 
@@ -20,16 +19,10 @@ local traits = {
     },
     sunlitSanctuary = {
         name = "Sunlit Sanctuary",
-        desc = "Begin with a crash shield while the grove thins the stones a little.",
-        apply = function(ctx)
-            if ctx.rocks then
-                ctx.rocks = math.max(0, ctx.rocks - 1)
-            end
-
-            Snake:addCrashShields(1)
-
+        desc = "Sunlight keeps growth gentle, easing new rockfalls a touch.",
+        apply = function(_ctx)
             local chance = Rocks:getSpawnChance() or 0.25
-            Rocks.spawnChance = math.max(0.08, chance * 0.75)
+            Rocks.spawnChance = math.max(0.1, chance * 0.8)
         end
     },
     restlessEarth = {
