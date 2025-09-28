@@ -865,6 +865,7 @@ function Game:update(dt)
         end
 
         self:updateEntities(dt)
+        UI:setUpgradeIndicators(Upgrades:getHUDIndicators())
 
         local result = self:handleDeath(dt)
         if result then
