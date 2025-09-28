@@ -5,7 +5,9 @@ local Theme = require("theme")
 local Settings = require("settings")
 local Localization = require("localization")
 
-local SettingsScreen = {}
+local SettingsScreen = {
+    transitionDuration = 0.45,
+}
 
 local options = {
     { type = "action", labelKey = "settings.toggle_fullscreen", action = function()

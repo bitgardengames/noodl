@@ -9,7 +9,9 @@ local drawSnake = require("snakedraw")
 local SnakeUtils = require("snakeutils")
 local Face = require("face")
 
-local AchievementsMenu = {}
+local AchievementsMenu = {
+    transitionDuration = 0.45,
+}
 
 local buttonList = ButtonList.new()
 local iconCache = {}

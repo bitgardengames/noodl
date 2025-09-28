@@ -7,7 +7,8 @@ GameState.current = nil
 GameState.next = nil
 GameState.transitionFrom = nil
 GameState.transitionTime = 0
-GameState.transitionDuration = 1.0
+GameState.defaultTransitionDuration = 1.0
+GameState.transitionDuration = GameState.defaultTransitionDuration
 GameState.transitioning = false
 GameState.transitionDirection = 1 -- 1 = fade out, -1 = fade in
 GameState.pendingData = nil
@@ -52,6 +53,55 @@ local function clamp01(value)
     end
 
     return value
+end
+
+local function parseDuration(value)
+    if type(value) == "number" and value >= 0 then
+        return value
+    end
+end
+
+local function resolveStateDurationPreference(state, direction, otherStateName)
+    if not state then
+        return nil
+    end
+
+    local handler = state.getTransitionDuration
+    if handler then
+        local value = handler(state, direction, otherStateName)
+        local parsed = parseDuration(value)
+        if parsed ~= nil then
+            return parsed
+        end
+    end
+
+    if direction == "in" then
+        local value = parseDuration(state.transitionDurationIn)
+        if value ~= nil then
+            return value
+        end
+    elseif direction == "out" then
+        local value = parseDuration(state.transitionDurationOut)
+        if value ~= nil then
+            return value
+        end
+    end
+
+    return parseDuration(state.transitionDuration)
+end
+
+local function resolveTransitionDuration(self, fromName, toName)
+    local toState = toName and self.states[toName]
+    local fromState = fromName and self.states[fromName]
+
+    local duration = resolveStateDurationPreference(toState, "in", fromName)
+        or resolveStateDurationPreference(fromState, "out", toName)
+
+    if duration ~= nil then
+        return duration
+    end
+
+    return self.defaultTransitionDuration or 0
 end
 
 local function updateTransitionContext(self, data)
@@ -160,6 +210,8 @@ function GameState:switch(stateName, data)
         self.queuedData = data
         return
     end
+
+    self.transitionDuration = resolveTransitionDuration(self, self.current, stateName)
 
     if self.current == nil or self.transitionDuration <= 0 then
         local previous = getCurrentState(self)

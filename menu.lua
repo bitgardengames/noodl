@@ -7,7 +7,9 @@ local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 
-local Menu = {}
+local Menu = {
+    transitionDuration = 0.45,
+}
 
 local buttonList = ButtonList.new()
 local buttons = {}
