@@ -1373,6 +1373,10 @@ function Upgrades:addTag(tag)
     self.runState.tags[tag] = true
 end
 
+local function hudText(key, replacements)
+    return Localization:get("upgrades.hud." .. key, replacements)
+end
+
 function Upgrades:getTakenCount(id)
     if not id then return 0 end
     return self.runState.takenSet[id] or 0
@@ -1400,6 +1404,111 @@ local function clamp(value, min, max)
     if min and value < min then return min end
     if max and value > max then return max end
     return value
+end
+
+function Upgrades:getHUDIndicators()
+    local indicators = {}
+    local state = self.runState
+    if not state then
+        return indicators
+    end
+
+    local function hasUpgrade(id)
+        if not state.takenSet then return false end
+        return (state.takenSet[id] or 0) > 0
+    end
+
+    local stoneStacks = state.counters and state.counters.stonebreakerStacks or 0
+    if stoneStacks > 0 then
+        local label = Localization:get("upgrades.stonebreaker_hymn.name")
+        local current = 0
+        if Rocks.getShatterProgress then
+            current = Rocks:getShatterProgress() or 0
+        end
+
+        local rate = 0
+        if Rocks.getShatterRate then
+            rate = Rocks:getShatterRate() or 0
+        else
+            rate = Rocks.shatterOnFruit or 0
+        end
+
+        local progress = 0
+        if rate and rate > 0 then
+            progress = clamp(current / rate, 0, 1)
+        end
+
+        local statusKey = progress >= 0.999 and "ready" or "charging"
+        local chargeLabel
+        if rate and rate > 0 then
+            chargeLabel = hudText("percent", { percent = math.floor(progress * 100 + 0.5) })
+        end
+
+        table.insert(indicators, {
+            id = "stonebreaker_hymn",
+            label = label,
+            accentColor = {1.0, 0.78, 0.36, 1},
+            stackCount = stoneStacks,
+            charge = progress,
+            chargeLabel = chargeLabel,
+            status = hudText(statusKey),
+            icon = "pickaxe",
+            showBar = true,
+        })
+    end
+
+    local adrenalineTaken = hasUpgrade("adrenaline_surge")
+    local adrenaline = Snake.adrenaline
+    if adrenalineTaken or (adrenaline and adrenaline.active) then
+        local label = Localization:get("upgrades.adrenaline_surge.name")
+        local active = adrenaline and adrenaline.active
+        local duration = (adrenaline and adrenaline.duration) or 0
+        local timer = (adrenaline and math.max(adrenaline.timer or 0, 0)) or 0
+        local charge
+        local chargeLabel
+
+        if active and duration > 0 then
+            charge = clamp(timer / duration, 0, 1)
+            chargeLabel = hudText("seconds", { seconds = string.format("%.1f", timer) })
+        end
+
+        local status = active and hudText("active") or hudText("ready")
+
+        table.insert(indicators, {
+            id = "adrenaline_surge",
+            label = label,
+            accentColor = {1.0, 0.45, 0.45, 1},
+            stackCount = nil,
+            charge = charge,
+            chargeLabel = chargeLabel,
+            status = status,
+            icon = "bolt",
+            showBar = active and charge ~= nil,
+        })
+    end
+
+    local phoenixCharges = 0
+    local phoenixUsed = 0
+    if state.counters then
+        phoenixCharges = state.counters.phoenixEchoCharges or 0
+        phoenixUsed = state.counters.phoenixEchoUsed or 0
+    end
+
+    if phoenixCharges > 0 or phoenixUsed > 0 then
+        local label = Localization:get("upgrades.phoenix_echo.name")
+        table.insert(indicators, {
+            id = "phoenix_echo",
+            label = label,
+            accentColor = {1.0, 0.62, 0.32, 1},
+            stackCount = phoenixCharges,
+            charge = nil,
+            status = nil,
+            icon = "phoenix",
+            showBar = false,
+        })
+    end
+
+    return indicators
 end
 
 function Upgrades:modifyFloorContext(context)

@@ -176,6 +176,15 @@ local english = {
                 legendary = "Legendary",
             },
             momentum_label = "Momentum",
+            hud = {
+                shields = "Crash Shields",
+                ready = "Ready",
+                depleted = "Depleted",
+                charging = "Charging",
+                active = "Active",
+                percent = "${percent}%",
+                seconds = "${seconds}s",
+            },
             quick_fangs = {
                 name = "Quick Fangs",
                 description = "Snake moves 10% faster.",

@@ -1,6 +1,7 @@
 local Score = require("score")
 local Audio = require("audio")
 local Theme = require("theme")
+local Localization = require("localization")
 
 local UI = {}
 
@@ -37,6 +38,57 @@ UI.shields = {
     flashTimer = 0,
     lastDirection = 0,
 }
+
+UI.upgradeIndicators = {
+    items = {},
+    order = {},
+    layout = {
+        width = 252,
+        spacing = 12,
+        baseHeight = 64,
+        iconRadius = 18,
+        barHeight = 10,
+        margin = 24,
+    },
+}
+
+local function clamp01(value)
+    if value < 0 then return 0 end
+    if value > 1 then return 1 end
+    return value
+end
+
+local function lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+local function lightenColor(color, amount)
+    if not color then
+        return {1, 1, 1, 1}
+    end
+
+    local a = color[4] or 1
+    return {
+        color[1] + (1 - color[1]) * amount,
+        color[2] + (1 - color[2]) * amount,
+        color[3] + (1 - color[3]) * amount,
+        a,
+    }
+end
+
+local function darkenColor(color, amount)
+    if not color then
+        return {0, 0, 0, 1}
+    end
+
+    local a = color[4] or 1
+    return {
+        color[1] * amount,
+        color[2] * amount,
+        color[3] * amount,
+        a,
+    }
+end
 
 -- Button states
 UI.buttons = {}
@@ -430,6 +482,32 @@ function UI:update(dt)
         end
     end
 
+    local container = self.upgradeIndicators
+    if container and container.items then
+        local smoothing = math.min(dt * 8, 1)
+        local toRemove = {}
+        for id, item in pairs(container.items) do
+            item.visibility = item.visibility or 0
+            local targetVis = item.targetVisibility or 0
+            item.visibility = lerp(item.visibility, targetVis, smoothing)
+
+            if item.targetProgress ~= nil then
+                item.displayProgress = item.displayProgress or item.targetProgress or 0
+                item.displayProgress = lerp(item.displayProgress, item.targetProgress, smoothing)
+            else
+                item.displayProgress = nil
+            end
+
+            if item.visibility <= 0.01 and targetVis <= 0 then
+                table.insert(toRemove, id)
+            end
+        end
+
+        for _, id in ipairs(toRemove) do
+            container.items[id] = nil
+        end
+    end
+
 end
 
 function UI:setCombo(count, timer, duration)
@@ -517,6 +595,67 @@ function UI:setCrashShields(count, opts)
     end
 end
 
+function UI:setUpgradeIndicators(indicators)
+    local container = self.upgradeIndicators
+    if not container then return end
+
+    local items = container.items
+    if not items then
+        container.items = {}
+        items = container.items
+    end
+
+    local seen = {}
+    container.order = {}
+
+    if indicators then
+        for index, data in ipairs(indicators) do
+            local id = data.id or ("indicator_" .. tostring(index))
+            seen[id] = true
+            container.order[#container.order + 1] = id
+
+            local item = items[id]
+            if not item then
+                item = {
+                    id = id,
+                    visibility = 0,
+                    targetVisibility = 1,
+                    displayProgress = data.charge ~= nil and clamp01(data.charge) or nil,
+                }
+                items[id] = item
+            end
+
+            item.targetVisibility = 1
+            item.label = data.label or id
+            item.stackCount = data.stackCount
+            item.icon = data.icon
+            item.accentColor = data.accentColor or {1, 1, 1, 1}
+            item.status = data.status
+            item.chargeLabel = data.chargeLabel
+            if data.charge ~= nil then
+                item.targetProgress = clamp01(data.charge)
+                if item.displayProgress == nil then
+                    item.displayProgress = item.targetProgress
+                end
+            else
+                item.targetProgress = nil
+                item.displayProgress = nil
+            end
+            if data.showBar ~= nil then
+                item.showBar = data.showBar
+            else
+                item.showBar = data.charge ~= nil
+            end
+        end
+    end
+
+    for id, item in pairs(items) do
+        if not seen[id] then
+            item.targetVisibility = 0
+        end
+    end
+end
+
 local function drawComboIndicator(self)
     local combo = self.combo
     local comboActive = combo and combo.count >= 2 and (combo.duration or 0) > 0
@@ -596,6 +735,228 @@ local function buildShieldPoints(radius)
         -radius * 0.55, radius * 0.85,
         -radius * 0.78, -radius * 0.28,
     }
+end
+
+local function drawIndicatorIcon(icon, accentColor, x, y, radius)
+    local accent = accentColor or {1, 1, 1, 1}
+
+    love.graphics.push("all")
+    love.graphics.translate(x, y)
+
+    love.graphics.setColor(0, 0, 0, 0.3)
+    love.graphics.circle("fill", 3, 4, radius + 3, 28)
+
+    local base = darkenColor(accent, 0.6)
+    love.graphics.setColor(base[1], base[2], base[3], base[4] or 1)
+    love.graphics.circle("fill", 0, 0, radius, 28)
+
+    local detail = lightenColor(accent, 0.12)
+    love.graphics.setColor(detail[1], detail[2], detail[3], detail[4] or 1)
+
+    if icon == "shield" then
+        local shield = buildShieldPoints(radius * 0.9)
+        love.graphics.polygon("fill", shield)
+        local outline = lightenColor(accent, 0.35)
+        love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
+        love.graphics.setLineWidth(2)
+        love.graphics.polygon("line", shield)
+    elseif icon == "bolt" then
+        local bolt = {
+            -radius * 0.28, -radius * 0.92,
+            radius * 0.42, -radius * 0.2,
+            radius * 0.08, -radius * 0.18,
+            radius * 0.48, radius * 0.82,
+            -radius * 0.2, radius * 0.14,
+            radius * 0.05, 0,
+        }
+        love.graphics.polygon("fill", bolt)
+    elseif icon == "pickaxe" then
+        love.graphics.push()
+        love.graphics.rotate(-math.pi / 8)
+        love.graphics.rectangle("fill", -radius * 0.14, -radius * 0.92, radius * 0.28, radius * 1.84, radius * 0.16)
+        love.graphics.pop()
+        local outline = lightenColor(accent, 0.35)
+        love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", 0, 0, radius * 0.95, 28)
+    elseif icon == "phoenix" then
+        local wing = {
+            -radius * 0.88, radius * 0.16,
+            -radius * 0.26, -radius * 0.7,
+            0, -radius * 0.25,
+            radius * 0.26, -radius * 0.7,
+            radius * 0.88, radius * 0.16,
+            0, radius * 0.88,
+        }
+        love.graphics.polygon("fill", wing)
+    else
+        love.graphics.circle("fill", 0, 0, radius * 0.72, 28)
+    end
+
+    love.graphics.pop()
+end
+
+local function buildShieldIndicator(self)
+    local shields = self.shields
+    if not shields then return nil end
+
+    local display = math.max(0, math.floor((shields.display or shields.count or 0) + 0.0001))
+    local count = math.max(0, math.floor((shields.count or 0) + 0.0001))
+    local label = Localization:get("upgrades.hud.shields")
+
+    local accent = {0.55, 0.82, 1.0, 1.0}
+    local statusKey = "ready"
+    if count <= 0 then
+        accent = {0.5, 0.6, 0.7, 1.0}
+        statusKey = "depleted"
+    end
+
+    if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
+        accent = {1.0, 0.55, 0.45, 1.0}
+        statusKey = "depleted"
+    end
+
+    return {
+        id = "__shields",
+        label = label,
+        stackCount = display,
+        icon = "shield",
+        accentColor = accent,
+        status = Localization:get("upgrades.hud." .. statusKey),
+        showBar = false,
+        visibility = 1,
+    }
+end
+
+function UI:drawUpgradeIndicators()
+    local container = self.upgradeIndicators
+    if not container or not container.items then return end
+
+    local orderedIds = {}
+    local seen = {}
+    if container.order then
+        for _, id in ipairs(container.order) do
+            if container.items[id] and not seen[id] then
+                table.insert(orderedIds, id)
+                seen[id] = true
+            end
+        end
+    end
+
+    for id in pairs(container.items) do
+        if not seen[id] then
+            table.insert(orderedIds, id)
+            seen[id] = true
+        end
+    end
+
+    local entries = {}
+    for _, id in ipairs(orderedIds) do
+        local item = container.items[id]
+        if item and clamp01(item.visibility or 0) > 0.01 then
+            table.insert(entries, item)
+        end
+    end
+
+    local shieldEntry = buildShieldIndicator(self)
+    if shieldEntry then
+        table.insert(entries, 1, shieldEntry)
+    end
+
+    if #entries == 0 then
+        return
+    end
+
+    local layout = container.layout or {}
+    local width = layout.width or 252
+    local spacing = layout.spacing or 12
+    local baseHeight = layout.baseHeight or 64
+    local barHeight = layout.barHeight or 10
+    local iconRadius = layout.iconRadius or 18
+    local margin = layout.margin or 24
+
+    local screenW = love.graphics.getWidth()
+    local x = screenW - width - margin
+    local y = margin
+
+    for _, entry in ipairs(entries) do
+        local visibility = clamp01(entry.visibility or 1)
+        local accent = entry.accentColor or Theme.panelBorder or {1, 1, 1, 1}
+        local hasBar = entry.showBar and entry.displayProgress ~= nil
+        local panelHeight = baseHeight + (hasBar and (barHeight + 12) or 0)
+
+        love.graphics.push("all")
+
+        love.graphics.setColor(0, 0, 0, 0.4 * visibility)
+        love.graphics.rectangle("fill", x + 4, y + 6, width, panelHeight, 14, 14)
+
+        local panelColor = Theme.panelColor or {0.16, 0.18, 0.22, 1}
+        love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * (0.95 * visibility))
+        love.graphics.rectangle("fill", x, y, width, panelHeight, 14, 14)
+
+        local border = lightenColor(accent, 0.15)
+        love.graphics.setColor(border[1], border[2], border[3], (border[4] or 1) * visibility)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", x, y, width, panelHeight, 14, 14)
+
+        local iconX = x + iconRadius + 16
+        local iconY = y + iconRadius + 12
+        drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius)
+
+        local textX = iconX + iconRadius + 16
+        local textWidth = width - textX - 16
+
+        UI.setFont("button")
+        love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
+        love.graphics.printf(entry.label or entry.id, textX, y + 12, textWidth, "left")
+
+        if entry.stackCount ~= nil then
+            local stackText = "x" .. tostring(entry.stackCount)
+            UI.setFont("button")
+            local stackColor = lightenColor(accent, 0.3)
+            love.graphics.setColor(stackColor[1], stackColor[2], stackColor[3], (stackColor[4] or 1) * visibility)
+            love.graphics.printf(stackText, textX, y + 12, textWidth, "right")
+        end
+
+        if entry.status then
+            UI.setFont("small")
+            love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75 * visibility)
+            love.graphics.printf(entry.status, textX, y + 38, textWidth, "left")
+        end
+
+        if hasBar then
+            local barX = textX
+            local barY = y + panelHeight - barHeight - 14
+            local barWidth = textWidth
+            local progress = clamp01(entry.displayProgress or 0)
+
+            love.graphics.setColor(0, 0, 0, 0.25 * visibility)
+            love.graphics.rectangle("fill", barX, barY, barWidth, barHeight, 6, 6)
+
+            local fill = lightenColor(accent, 0.05)
+            love.graphics.setColor(fill[1], fill[2], fill[3], (fill[4] or 1) * 0.85 * visibility)
+            love.graphics.rectangle("fill", barX, barY, barWidth * progress, barHeight, 6, 6)
+
+            local outline = lightenColor(accent, 0.3)
+            love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1) * 0.9 * visibility)
+            love.graphics.setLineWidth(1)
+            love.graphics.rectangle("line", barX, barY, barWidth, barHeight, 6, 6)
+
+            if entry.chargeLabel then
+                UI.setFont("small")
+                love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.8 * visibility)
+                love.graphics.printf(entry.chargeLabel, barX, barY - 18, barWidth, "right")
+            end
+        elseif entry.chargeLabel then
+            UI.setFont("small")
+            love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.8 * visibility)
+            love.graphics.printf(entry.chargeLabel, textX, y + panelHeight - 24, textWidth, "right")
+        end
+
+        love.graphics.pop()
+
+        y = y + panelHeight + spacing
+    end
 end
 
 function UI:drawShields()
@@ -750,6 +1111,7 @@ end
 
 function UI:draw()
     self:drawShields()
+    self:drawUpgradeIndicators()
     drawComboIndicator(self)
     -- draw socket grid
     self:drawFruitSockets()
