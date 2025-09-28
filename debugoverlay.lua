@@ -75,6 +75,13 @@ local function formatBool(value)
     return "no"
 end
 
+local function formatDimensions(width, height)
+    if type(width) == "number" and type(height) == "number" then
+        return string.format("%.0f x %.0f", width, height)
+    end
+    return "n/a"
+end
+
 function DebugOverlay:load()
     self.font = love.graphics.newFont(12)
     self.sampleTimer = 0
@@ -129,8 +136,8 @@ function DebugOverlay:collectData()
     sections[#sections + 1] = {
         title = "Screen",
         lines = {
-            string.format("Current: %s", screenWidth and string.format("%.0f x %.0f", screenWidth, screenHeight) or "n/a"),
-            string.format("Target: %s", targetWidth and string.format("%.0f x %.0f", targetWidth, targetHeight) or "n/a"),
+            string.format("Current: %s", formatDimensions(screenWidth, screenHeight)),
+            string.format("Target: %s", formatDimensions(targetWidth, targetHeight)),
             string.format("Smoothing: %.2f", Screen.smoothingSpeed or 0),
             string.format("Snap threshold: %.1f", Screen.snapThreshold or 0),
         }
