@@ -318,6 +318,7 @@ function FruitEvents.handleConsumption(x, y)
             local reward = Score.getJackpotReward and Score:getJackpotReward() or 0
             if reward > 0 and Score.addBonus then
                 Score:addBonus(reward)
+                Audio:playSound("jackpot")
                 FloatingText:add("Jackpot +" .. tostring(reward), x, y - 28, {1, 0.85, 0.2, 1}, 1.2, 55)
                 Particles:spawnBurst(x, y, {
                     count = love.math.random(10, 14),
