@@ -168,9 +168,10 @@ function GameOver:draw()
     local achievementsHeaderSpacing = 8
     local achievementsEntrySpacing = 12
     local achievementsLineSpacing = 4
-    local achievementsHeight = achievementsTopSpacing + lineHeight + achievementsHeaderSpacing
+    local achievementsHeight = 0
 
     if #achievementsList > 0 then
+        achievementsHeight = achievementsTopSpacing + lineHeight + achievementsHeaderSpacing
         for index, ach in ipairs(achievementsList) do
             local title = ach.title or ""
             local _, titleLines = fontSmall:getWrap(title, wrapLimit)
@@ -186,10 +187,6 @@ function GameOver:draw()
                 achievementsHeight = achievementsHeight + achievementsEntrySpacing
             end
         end
-    else
-        local noAchievementsText = Localization:get("gameover.no_achievements")
-        local _, noLines = fontSmall:getWrap(noAchievementsText, wrapLimit)
-        achievementsHeight = achievementsHeight + math.max(1, #noLines) * lineHeight
     end
 
     local headerHeight = lineHeight
@@ -248,14 +245,14 @@ function GameOver:draw()
         end
     end
 
-    local achievementsHeader = Localization:get("gameover.achievements_header")
-    local achievementsColor = Theme.achieveColor or { 1, 1, 1, 1 }
-    textY = textY + achievementsTopSpacing
-    love.graphics.setColor(1, 1, 1, 0.85)
-    love.graphics.printf(achievementsHeader, contentX + padding, textY, wrapLimit, "left")
-    textY = textY + lineHeight + achievementsHeaderSpacing
-
     if #achievementsList > 0 then
+        local achievementsHeader = Localization:get("gameover.achievements_header")
+        local achievementsColor = Theme.achieveColor or { 1, 1, 1, 1 }
+        textY = textY + achievementsTopSpacing
+        love.graphics.setColor(1, 1, 1, 0.85)
+        love.graphics.printf(achievementsHeader, contentX + padding, textY, wrapLimit, "left")
+        textY = textY + lineHeight + achievementsHeaderSpacing
+
         for index, ach in ipairs(achievementsList) do
             local title = ach.title or ach.id or ""
             local description = ach.description or ""
@@ -277,12 +274,6 @@ function GameOver:draw()
                 textY = textY + achievementsEntrySpacing
             end
         end
-    else
-        local noAchievementsText = Localization:get("gameover.no_achievements")
-        love.graphics.setColor(1, 1, 1, 0.75)
-        love.graphics.printf(noAchievementsText, contentX + padding, textY, wrapLimit, "left")
-        local _, noLines = fontSmall:getWrap(noAchievementsText, wrapLimit)
-        textY = textY + math.max(1, #noLines) * lineHeight
     end
 
     -- Buttons
