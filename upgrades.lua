@@ -315,7 +315,7 @@ local pool = {
         id = "quick_fangs",
         name = "Quick Fangs",
         desc = "Snake moves 10% faster.",
-        rarity = "common",
+        rarity = "uncommon",
         allowDuplicates = true,
         maxStacks = 4,
         onAcquire = function(state)
@@ -774,7 +774,7 @@ local pool = {
         id = "gem_maw",
         name = "Gem Maw",
         desc = "Fruits have a 12% chance to erupt into +5 bonus score.",
-        rarity = "uncommon",
+        rarity = "common",
         onAcquire = function(state)
             if Score.addJackpotChance then
                 Score:addJackpotChance(0.12, 5)
