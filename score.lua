@@ -14,8 +14,6 @@ Score.current = 0
 Score.highscores = {}
 Score.saveFile = "scores.lua"
 Score.fruitBonus = 0
-Score.jackpotChance = 0
-Score.jackpotReward = 0
 Score.comboBonusMult = 1
 Score.comboBonusBase = 1
 Score.highScoreGlowDuration = 4
@@ -34,8 +32,6 @@ end
 function Score:load()
         self.current = 0
         self.highscores = {}
-        self.jackpotChance = 0
-        self.jackpotReward = 0
         self.comboBonusBase = 1
         self.comboBonusMult = 1
         self.highScoreGlowTimer = 0
@@ -84,8 +80,6 @@ function Score:reset(mode)
         -- Just reset the current score
         self.current = 0
         self.fruitBonus = 0
-        self.jackpotChance = 0
-        self.jackpotReward = 0
         self.comboBonusBase = 1
         self.comboBonusMult = 1
         self.highScoreGlowTimer = 0
@@ -148,15 +142,6 @@ function Score:addBonus(points)
         end
 end
 
-function Score:addJackpotChance(chance, reward)
-        if chance and chance > 0 then
-                self.jackpotChance = math.min(1, (self.jackpotChance or 0) + chance)
-        end
-        if reward and reward > 0 then
-                self.jackpotReward = (self.jackpotReward or 0) + reward
-        end
-end
-
 local function updateComboBonusValue(self)
         local base = self.comboBonusBase or 1
         if base < 0 then base = 0 end
@@ -188,14 +173,6 @@ function Score:getHighScoreGlowStrength()
 
         local normalized = self.highScoreGlowTimer / self.highScoreGlowDuration
         return math.max(0, math.min(1, normalized))
-end
-
-function Score:getJackpotChance()
-        return self.jackpotChance or 0
-end
-
-function Score:getJackpotReward()
-        return self.jackpotReward or 0
 end
 
 function Score:handleGameOver(cause)

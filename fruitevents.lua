@@ -284,28 +284,6 @@ function FruitEvents.handleConsumption(x, y)
         combo = comboState.count or 0,
     })
 
-    local jackpotChance = Score.getJackpotChance and Score:getJackpotChance() or 0
-    if jackpotChance > 0 then
-        if love.math.random() < jackpotChance then
-            local reward = Score.getJackpotReward and Score:getJackpotReward() or 0
-            if reward > 0 and Score.addBonus then
-                Score:addBonus(reward)
-                FloatingText:add("Jackpot +" .. tostring(reward), x, y - 28, {1, 0.85, 0.2, 1}, 1.2, 55)
-                Particles:spawnBurst(x, y, {
-                    count = love.math.random(10, 14),
-                    speed = 80,
-                    life = 0.5,
-                    size = 4,
-                    color = {1, 0.9, 0.4, 1},
-                    spread = math.pi * 2,
-                })
-                SessionStats:add("runJackpotsTriggered", 1)
-                PlayerStats:add("jackpotsTriggered", 1)
-                Achievements:check("jackpotSpark")
-            end
-        end
-    end
-
     local state = {
         snakeScore = Score:get(),
         snakeApplesEaten = Score:get(),
