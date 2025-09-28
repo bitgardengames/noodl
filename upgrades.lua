@@ -591,7 +591,7 @@ local pool = {
     register({
         id = "pocket_springs",
         name = "Pocket Springs",
-        desc = "Every 4 fruits forge a crash shield charge.",
+        desc = "Every 8 fruits forge a crash shield charge.",
         rarity = "rare",
         tags = {"defense"},
         onAcquire = function(state)
@@ -600,8 +600,8 @@ local pool = {
         handlers = {
             fruitCollected = function(data, state)
                 state.counters.pocketSprings = (state.counters.pocketSprings or 0) + 1
-                if state.counters.pocketSprings >= 4 then
-                    state.counters.pocketSprings = state.counters.pocketSprings - 4
+                if state.counters.pocketSprings >= 8 then
+                    state.counters.pocketSprings = state.counters.pocketSprings - 8
                     Snake:addCrashShields(1)
                     local fx, fy = getEventPosition(data)
                     if FloatingText and fx and fy then
