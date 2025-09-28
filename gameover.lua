@@ -1,5 +1,6 @@
 local Screen = require("screen")
 local SessionStats = require("sessionstats")
+local Achievements = require("achievements")
 local Audio = require("audio")
 local Theme = require("theme")
 local UI = require("ui")
@@ -88,6 +89,21 @@ function GameOver:enter(data)
     stats.totalApples = stats.totalApples or stats.apples or 0
     self.isNewHighScore = (stats.score or 0) > 0 and (stats.score or 0) >= (stats.highScore or 0)
 
+    self.achievementsEarned = {}
+    local runAchievements = SessionStats:get("runAchievements")
+    if type(runAchievements) == "table" then
+        for _, achievementId in ipairs(runAchievements) do
+            local def = Achievements:getDefinition(achievementId)
+            if def then
+                self.achievementsEarned[#self.achievementsEarned + 1] = {
+                    id = achievementId,
+                    title = Localization:get(def.titleKey),
+                    description = Localization:get(def.descriptionKey),
+                }
+            end
+        end
+    end
+
     local sw, sh = Screen:get()
 
     -- Build buttons
@@ -147,6 +163,35 @@ function GameOver:draw()
 
     local statsSpacing = 6
     local statsHeight = #statsLines * lineHeight + math.max(0, #statsLines - 1) * statsSpacing
+    local achievementsList = self.achievementsEarned or {}
+    local achievementsTopSpacing = 28
+    local achievementsHeaderSpacing = 8
+    local achievementsEntrySpacing = 12
+    local achievementsLineSpacing = 4
+    local achievementsHeight = achievementsTopSpacing + lineHeight + achievementsHeaderSpacing
+
+    if #achievementsList > 0 then
+        for index, ach in ipairs(achievementsList) do
+            local title = ach.title or ""
+            local _, titleLines = fontSmall:getWrap(title, wrapLimit)
+            achievementsHeight = achievementsHeight + math.max(1, #titleLines) * lineHeight
+
+            local description = ach.description or ""
+            if description ~= "" then
+                local _, descLines = fontSmall:getWrap(description, wrapLimit)
+                achievementsHeight = achievementsHeight + achievementsLineSpacing + math.max(1, #descLines) * lineHeight
+            end
+
+            if index < #achievementsList then
+                achievementsHeight = achievementsHeight + achievementsEntrySpacing
+            end
+        end
+    else
+        local noAchievementsText = Localization:get("gameover.no_achievements")
+        local _, noLines = fontSmall:getWrap(noAchievementsText, wrapLimit)
+        achievementsHeight = achievementsHeight + math.max(1, #noLines) * lineHeight
+    end
+
     local headerHeight = lineHeight
     local scoreHeight = fontScore:getHeight()
     local badgeHeight = self.isNewHighScore and (fontBadge:getHeight() + 18) or 0
@@ -159,6 +204,7 @@ function GameOver:draw()
         + 16
         + badgeHeight
         + statsHeight
+        + achievementsHeight
 
     local panelY = 120
     love.graphics.setColor(Theme.panelColor)
@@ -200,6 +246,43 @@ function GameOver:draw()
         else
             textY = textY + lineHeight
         end
+    end
+
+    local achievementsHeader = Localization:get("gameover.achievements_header")
+    local achievementsColor = Theme.achieveColor or { 1, 1, 1, 1 }
+    textY = textY + achievementsTopSpacing
+    love.graphics.setColor(1, 1, 1, 0.85)
+    love.graphics.printf(achievementsHeader, contentX + padding, textY, wrapLimit, "left")
+    textY = textY + lineHeight + achievementsHeaderSpacing
+
+    if #achievementsList > 0 then
+        for index, ach in ipairs(achievementsList) do
+            local title = ach.title or ach.id or ""
+            local description = ach.description or ""
+
+            love.graphics.setColor(achievementsColor[1] or 1, achievementsColor[2] or 1, achievementsColor[3] or 1, 0.9)
+            love.graphics.printf(title, contentX + padding, textY, wrapLimit, "left")
+            local _, titleLines = fontSmall:getWrap(title, wrapLimit)
+            textY = textY + math.max(1, #titleLines) * lineHeight
+
+            if description ~= "" then
+                love.graphics.setColor(1, 1, 1, 0.78)
+                textY = textY + achievementsLineSpacing
+                love.graphics.printf(description, contentX + padding, textY, wrapLimit, "left")
+                local _, descLines = fontSmall:getWrap(description, wrapLimit)
+                textY = textY + math.max(1, #descLines) * lineHeight
+            end
+
+            if index < #achievementsList then
+                textY = textY + achievementsEntrySpacing
+            end
+        end
+    else
+        local noAchievementsText = Localization:get("gameover.no_achievements")
+        love.graphics.setColor(1, 1, 1, 0.75)
+        love.graphics.printf(noAchievementsText, contentX + padding, textY, wrapLimit, "left")
+        local _, noLines = fontSmall:getWrap(noAchievementsText, wrapLimit)
+        textY = textY + math.max(1, #noLines) * lineHeight
     end
 
     -- Buttons

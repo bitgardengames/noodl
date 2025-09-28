@@ -1,6 +1,7 @@
 local Audio = require("audio")
 local Localization = require("localization")
 local PlayerStats = require("playerstats")
+local SessionStats = require("sessionstats")
 local Snake
 
 local Achievements = {
@@ -305,6 +306,22 @@ function Achievements:unlock(name)
         self._unlockedLookup[name] = true
     end
 
+    local runAchievements = SessionStats:get("runAchievements")
+    if type(runAchievements) ~= "table" then
+        runAchievements = {}
+    end
+    local alreadyRecorded = false
+    for _, id in ipairs(runAchievements) do
+        if id == name then
+            alreadyRecorded = true
+            break
+        end
+    end
+    if not alreadyRecorded then
+        runAchievements[#runAchievements + 1] = name
+        SessionStats:set("runAchievements", runAchievements)
+    end
+
     table.insert(self.popupQueue, achievement)
 
     if Audio and Audio.playSound then
@@ -599,6 +616,11 @@ function Achievements:getProgressRatio(def)
         return math.min(1, (def.progress or 0) / def.goal)
     end
     return def.unlocked and 1 or 0
+end
+
+function Achievements:getDefinition(id)
+    self:_ensureInitialized()
+    return self.definitions[id]
 end
 
 return Achievements
