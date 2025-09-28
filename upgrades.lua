@@ -5,34 +5,40 @@ local Score = require("score")
 local UI = require("ui")
 local FloatingText = require("floatingtext")
 local Particles = require("particles")
+local Localization = require("localization")
 
 local Upgrades = {}
 local poolById = {}
 
+local function getUpgradeString(id, field)
+    if not id or not field then return nil end
+    return Localization:get("upgrades." .. id .. "." .. field)
+end
+
 local rarities = {
     common = {
         weight = 60,
-        label = "Common",
+        labelKey = "upgrades.rarities.common",
         color = {0.75, 0.82, 0.88, 1},
     },
     uncommon = {
         weight = 28,
-        label = "Uncommon",
+        labelKey = "upgrades.rarities.uncommon",
         color = {0.55, 0.78, 0.58, 1},
     },
     rare = {
         weight = 12,
-        label = "Rare",
+        labelKey = "upgrades.rarities.rare",
         color = {0.76, 0.56, 0.88, 1},
     },
     epic = {
         weight = 2,
-        label = "Epic",
+        labelKey = "upgrades.rarities.epic",
         color = {1, 0.52, 0.28, 1},
     },
     legendary = {
         weight = 0.35,
-        label = "Legendary",
+        labelKey = "upgrades.rarities.legendary",
         color = {1, 0.84, 0.2, 1},
     },
 }
@@ -142,7 +148,7 @@ local function stoneSkinShieldHandler(data, state)
     if not Rocks or not Rocks.shatterNearest then return end
 
     local fx, fy = getEventPosition(data)
-    celebrateUpgrade("Stone Skin!", nil, {
+    celebrateUpgrade(getUpgradeString("stone_skin", "shield_text"), nil, {
         x = fx,
         y = fy,
         color = {0.75, 0.82, 0.88, 1},
@@ -173,6 +179,14 @@ local function register(upgrade)
     upgrade.id = upgrade.id or upgrade.name
     upgrade.rarity = upgrade.rarity or "common"
     upgrade.weight = upgrade.weight or 1
+    if upgrade.name and not upgrade.nameKey then
+        upgrade.nameKey = upgrade.name
+        upgrade.name = nil
+    end
+    if upgrade.desc and not upgrade.descKey then
+        upgrade.descKey = upgrade.desc
+        upgrade.desc = nil
+    end
     poolById[upgrade.id] = upgrade
     return upgrade
 end
@@ -301,7 +315,7 @@ local function handleBulwarkChorusFloorStart(_, state)
 
     if shields > 0 and Snake.addCrashShields then
         Snake:addCrashShields(shields)
-        celebrateUpgrade("Warden's Chorus", nil, {
+        celebrateUpgrade(getUpgradeString("wardens_chorus", "name"), nil, {
             color = {0.7, 0.9, 1.0, 1},
             skipParticles = true,
             textScale = 1.0,
@@ -313,14 +327,14 @@ end
 local pool = {
     register({
         id = "quick_fangs",
-        name = "Quick Fangs",
-        desc = "Snake moves 10% faster.",
+        nameKey = "upgrades.quick_fangs.name",
+        descKey = "upgrades.quick_fangs.description",
         rarity = "uncommon",
         allowDuplicates = true,
         maxStacks = 4,
         onAcquire = function(state)
             Snake:addSpeedMultiplier(1.10)
-            celebrateUpgrade("Quick Fangs", nil, {
+            celebrateUpgrade(getUpgradeString("quick_fangs", "name"), nil, {
                 color = {1, 0.63, 0.42, 1},
                 particleCount = 18,
                 particleSpeed = 150,
@@ -352,7 +366,7 @@ local pool = {
                     local threshold = math.max(1, 4 - stacks)
                     if runState.counters.quickFangsCombo >= threshold then
                         runState.counters.quickFangsCombo = 0
-                        celebrateUpgrade("Fang Rush", nil, {
+                        celebrateUpgrade(getUpgradeString("quick_fangs", "combo_celebration"), nil, {
                             x = fx,
                             y = fy,
                             color = {1, 0.7, 0.45, 1},
@@ -368,8 +382,8 @@ local pool = {
     }),
     register({
         id = "stone_skin",
-        name = "Stone Skin",
-        desc = "Gain a crash shield that shatters rocks and shrugs off a saw clip.",
+        nameKey = "upgrades.stone_skin.name",
+        descKey = "upgrades.stone_skin.description",
         rarity = "uncommon",
         allowDuplicates = true,
         maxStacks = 4,
@@ -382,7 +396,7 @@ local pool = {
                 state.counters.stoneSkinHandlerRegistered = true
                 Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
             end
-            celebrateUpgrade("Stone Skin", nil, {
+            celebrateUpgrade(getUpgradeString("stone_skin", "name"), nil, {
                 color = {0.75, 0.82, 0.88, 1},
                 particleCount = 14,
                 particleSpeed = 90,
@@ -394,8 +408,8 @@ local pool = {
     }),
     register({
         id = "aegis_recycler",
-        name = "Aegis Recycler",
-        desc = "Every 2 broken shields forge a fresh one.",
+        nameKey = "upgrades.aegis_recycler.name",
+        descKey = "upgrades.aegis_recycler.description",
         rarity = "common",
         tags = {"defense"},
         onAcquire = function(state)
@@ -409,7 +423,7 @@ local pool = {
                     Snake:addCrashShields(1)
                     local fx, fy = getEventPosition(data)
                     if FloatingText and fx and fy then
-                        FloatingText:add("Aegis Reforged", fx, fy - 52, {0.6, 0.85, 1, 1}, 1.1, 60)
+                        FloatingText:add(getUpgradeString("aegis_recycler", "reforged"), fx, fy - 52, {0.6, 0.85, 1, 1}, 1.1, 60)
                     end
                     if Particles and fx and fy then
                         Particles:spawnBurst(fx, fy, {
@@ -427,12 +441,12 @@ local pool = {
     }),
     register({
         id = "saw_grease",
-        name = "Saw Grease",
-        desc = "Saws move 20% slower.",
+        nameKey = "upgrades.saw_grease.name",
+        descKey = "upgrades.saw_grease.description",
         rarity = "common",
         onAcquire = function(state)
             state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.8
-            celebrateUpgrade("Saw Grease", nil, {
+            celebrateUpgrade(getUpgradeString("saw_grease", "name"), nil, {
                 color = {0.96, 0.78, 0.4, 1},
                 particleCount = 12,
                 particleSpeed = 80,
@@ -444,8 +458,8 @@ local pool = {
     }),
     register({
         id = "hydraulic_tracks",
-        name = "Hydraulic Tracks",
-        desc = "Fruit retracts saws for 0.5s (+0.5s per stack).",
+        nameKey = "upgrades.hydraulic_tracks.name",
+        descKey = "upgrades.hydraulic_tracks.description",
         rarity = "uncommon",
         allowDuplicates = true,
         maxStacks = 3,
@@ -472,7 +486,7 @@ local pool = {
                 end)
             end
 
-            celebrateUpgrade("Hydraulic Tracks", nil, {
+            celebrateUpgrade(getUpgradeString("hydraulic_tracks", "name"), nil, {
                 color = {0.68, 0.84, 1, 1},
                 particleCount = 14,
                 particleSpeed = 95,
@@ -484,15 +498,15 @@ local pool = {
     }),
     register({
         id = "extra_bite",
-        name = "Extra Bite",
-        desc = "Exit unlocks one fruit earlier.",
+        nameKey = "upgrades.extra_bite.name",
+        descKey = "upgrades.extra_bite.description",
         rarity = "common",
         onAcquire = function(state)
             state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
             if UI.adjustFruitGoal then
                 UI:adjustFruitGoal(-1)
             end
-            celebrateUpgrade("Early Exit", nil, {
+            celebrateUpgrade(getUpgradeString("extra_bite", "celebration"), nil, {
                 color = {1, 0.86, 0.36, 1},
                 particleCount = 10,
                 particleSpeed = 70,
@@ -504,8 +518,8 @@ local pool = {
     }),
     register({
         id = "metronome_totem",
-        name = "Metronome Totem",
-        desc = "Fruit adds +0.35s to the combo timer.",
+        nameKey = "upgrades.metronome_totem.name",
+        descKey = "upgrades.metronome_totem.description",
         rarity = "common",
         tags = {"combo"},
         handlers = {
@@ -515,7 +529,7 @@ local pool = {
                     FruitEvents.boostComboTimer(0.35)
                 end
                 if data and (data.combo or 0) >= 1 then
-                    celebrateUpgrade("+0.35s", data, {
+                    celebrateUpgrade(getUpgradeString("metronome_totem", "timer_bonus"), data, {
                         color = {0.55, 0.78, 0.58, 1},
                         particleCount = 8,
                         particleSpeed = 70,
@@ -530,8 +544,8 @@ local pool = {
     }),
     register({
         id = "adrenaline_surge",
-        name = "Adrenaline Surge",
-        desc = "Snake gains a burst of speed after eating fruit.",
+        nameKey = "upgrades.adrenaline_surge.name",
+        descKey = "upgrades.adrenaline_surge.description",
         rarity = "uncommon",
         tags = {"adrenaline"},
         onAcquire = function(state)
@@ -542,7 +556,8 @@ local pool = {
                 Upgrades:addEventHandler("fruitCollected", function(data, runState)
                     runState.counters.adrenalineFruitCount = (runState.counters.adrenalineFruitCount or 0) + 1
                     local fx, fy = getEventPosition(data)
-                    celebrateUpgrade(runState.counters.adrenalineFruitCount % 2 == 1 and "Adrenaline!" or nil, nil, {
+                    local shout = getUpgradeString("adrenaline_surge", "adrenaline_shout")
+                    celebrateUpgrade(runState.counters.adrenalineFruitCount % 2 == 1 and shout or nil, nil, {
                         x = fx,
                         y = fy,
                         color = {1, 0.42, 0.42, 1},
@@ -556,7 +571,7 @@ local pool = {
                     })
                 end)
             end
-            celebrateUpgrade("Adrenaline Surge", nil, {
+            celebrateUpgrade(getUpgradeString("adrenaline_surge", "name"), nil, {
                 color = {1, 0.42, 0.42, 1},
                 particleCount = 20,
                 particleSpeed = 160,
@@ -568,8 +583,8 @@ local pool = {
     }),
     register({
         id = "stone_whisperer",
-        name = "Stone Whisperer",
-        desc = "Rocks appear far less often after you snack.",
+        nameKey = "upgrades.stone_whisperer.name",
+        descKey = "upgrades.stone_whisperer.description",
         rarity = "rare",
         onAcquire = function(state)
             state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.6
@@ -577,8 +592,8 @@ local pool = {
     }),
     register({
         id = "tail_trainer",
-        name = "Tail Trainer",
-        desc = "Gain an extra segment each time you grow and move 4% faster.",
+        nameKey = "upgrades.tail_trainer.name",
+        descKey = "upgrades.tail_trainer.description",
         rarity = "common",
         allowDuplicates = true,
         maxStacks = 3,
@@ -590,8 +605,8 @@ local pool = {
     }),
     register({
         id = "pocket_springs",
-        name = "Pocket Springs",
-        desc = "Every 8 fruits forge a crash shield charge.",
+        nameKey = "upgrades.pocket_springs.name",
+        descKey = "upgrades.pocket_springs.description",
         rarity = "rare",
         tags = {"defense"},
         onAcquire = function(state)
@@ -605,7 +620,7 @@ local pool = {
                     Snake:addCrashShields(1)
                     local fx, fy = getEventPosition(data)
                     if FloatingText and fx and fy then
-                        FloatingText:add("Pocket Springs", fx, fy - 44, {0.65, 0.92, 1, 1}, 1.0, 52)
+                        FloatingText:add(getUpgradeString("pocket_springs", "name"), fx, fy - 44, {0.65, 0.92, 1, 1}, 1.0, 52)
                     end
                     if Particles and fx and fy then
                         Particles:spawnBurst(fx, fy, {
@@ -623,8 +638,8 @@ local pool = {
     }),
     register({
         id = "mapmakers_compass",
-        name = "Mapmaker's Compass",
-        desc = "Exit unlocks one fruit earlier but rocks spawn 15% more often.",
+        nameKey = "upgrades.mapmakers_compass.name",
+        descKey = "upgrades.mapmakers_compass.description",
         rarity = "uncommon",
         tags = {"economy", "risk"},
         onAcquire = function(state)
@@ -637,8 +652,8 @@ local pool = {
     }),
     register({
         id = "linked_hydraulics",
-        name = "Linked Hydraulics",
-        desc = "Hydraulic Tracks gain +1.5s sink time per stack and +0.5s per second of saw stall.",
+        nameKey = "upgrades.linked_hydraulics.name",
+        descKey = "upgrades.linked_hydraulics.description",
         rarity = "rare",
         condition = function(state)
             return state and state.takenSet and (state.takenSet.hydraulic_tracks or 0) > 0
@@ -658,7 +673,7 @@ local pool = {
                 end)
             end
 
-            celebrateUpgrade("Linked Hydraulics", nil, {
+            celebrateUpgrade(getUpgradeString("linked_hydraulics", "name"), nil, {
                 color = {0.62, 0.84, 1, 1},
                 particleCount = 20,
                 particleSpeed = 140,
@@ -670,8 +685,8 @@ local pool = {
     }),
     register({
         id = "twilight_parade",
-        name = "Twilight Parade",
-        desc = "Fruit at 4+ combo grant +2 bonus score and stall saws 0.8s.",
+        nameKey = "upgrades.twilight_parade.name",
+        descKey = "upgrades.twilight_parade.description",
         rarity = "rare",
         tags = {"combo", "defense", "economy"},
         handlers = {
@@ -685,7 +700,7 @@ local pool = {
                 end
                 local fx, fy = getEventPosition(data)
                 if FloatingText and fx and fy then
-                    FloatingText:add("Twilight Parade +2", fx, fy - 40, {0.85, 0.8, 1, 1}, 1.1, 52)
+                    FloatingText:add(getUpgradeString("twilight_parade", "combo_bonus"), fx, fy - 40, {0.85, 0.8, 1, 1}, 1.1, 52)
                 end
                 if Particles and fx and fy then
                     Particles:spawnBurst(fx, fy, {
@@ -702,8 +717,8 @@ local pool = {
     }),
     register({
         id = "lucky_bite",
-        name = "Lucky Bite",
-        desc = "+1 score every time you eat fruit.",
+        nameKey = "upgrades.lucky_bite.name",
+        descKey = "upgrades.lucky_bite.description",
         rarity = "common",
         allowDuplicates = true,
         maxStacks = 3,
@@ -717,8 +732,8 @@ local pool = {
     }),
     register({
         id = "momentum_memory",
-        name = "Momentum Memory",
-        desc = "Adrenaline bursts last 2 seconds longer.",
+        nameKey = "upgrades.momentum_memory.name",
+        descKey = "upgrades.momentum_memory.description",
         rarity = "uncommon",
         requiresTags = {"adrenaline"},
         onAcquire = function(state)
@@ -728,8 +743,8 @@ local pool = {
     }),
     register({
         id = "molting_reflex",
-        name = "Molting Reflex",
-        desc = "Crash shields trigger a 60% adrenaline surge.",
+        nameKey = "upgrades.molting_reflex.name",
+        descKey = "upgrades.molting_reflex.description",
         rarity = "uncommon",
         requiresTags = {"adrenaline"},
         tags = {"adrenaline", "defense"},
@@ -746,7 +761,7 @@ local pool = {
 
                 local fx, fy = getEventPosition(data)
                 if FloatingText and fx and fy then
-                    FloatingText:add("Molting Reflex", fx, fy - 44, {0.92, 0.98, 0.85, 1}, 1.0, 58)
+                    FloatingText:add(getUpgradeString("molting_reflex", "name"), fx, fy - 44, {0.92, 0.98, 0.85, 1}, 1.0, 58)
                 end
                 if Particles and fx and fy then
                     Particles:spawnBurst(fx, fy, {
@@ -763,8 +778,8 @@ local pool = {
     }),
     register({
         id = "circuit_breaker",
-        name = "Circuit Breaker",
-        desc = "Saw tracks freeze for 1s after each fruit.",
+        nameKey = "upgrades.circuit_breaker.name",
+        descKey = "upgrades.circuit_breaker.description",
         rarity = "uncommon",
         onAcquire = function(state)
             state.effects.sawStall = (state.effects.sawStall or 0) + 1
@@ -772,8 +787,8 @@ local pool = {
     }),
     register({
         id = "stonebreaker_hymn",
-        name = "Stonebreaker Hymn",
-        desc = "Every other fruit shatters the nearest rock. Stacks to every fruit.",
+        nameKey = "upgrades.stonebreaker_hymn.name",
+        descKey = "upgrades.stonebreaker_hymn.description",
         rarity = "rare",
         allowDuplicates = true,
         maxStacks = 2,
@@ -787,8 +802,8 @@ local pool = {
     }),
     register({
         id = "echo_aegis",
-        name = "Echo Aegis",
-        desc = "Crash shields unleash a shockwave that stalls saws.",
+        nameKey = "upgrades.echo_aegis.name",
+        descKey = "upgrades.echo_aegis.description",
         rarity = "uncommon",
         onAcquire = function(state)
             if Snake.addShieldBurst then
@@ -802,8 +817,8 @@ local pool = {
     }),
     register({
         id = "resonant_shell",
-        name = "Resonant Shell",
-        desc = "Gain +0.35s saw stall for every Defense upgrade you've taken.",
+        nameKey = "upgrades.resonant_shell.name",
+        descKey = "upgrades.resonant_shell.description",
         rarity = "rare",
         requiresTags = {"defense"},
         tags = {"defense"},
@@ -820,7 +835,7 @@ local pool = {
                 end)
             end
 
-            celebrateUpgrade("Resonant Shell", nil, {
+            celebrateUpgrade(getUpgradeString("resonant_shell", "name"), nil, {
                 color = {0.8, 0.88, 1, 1},
                 particleCount = 18,
                 particleSpeed = 120,
@@ -832,8 +847,8 @@ local pool = {
     }),
     register({
         id = "wardens_chorus",
-        name = "Warden's Chorus",
-        desc = "Floor starts build crash shield progress from each Defense upgrade.",
+        nameKey = "upgrades.wardens_chorus.name",
+        descKey = "upgrades.wardens_chorus.description",
         rarity = "rare",
         requiresTags = {"defense"},
         tags = {"defense"},
@@ -846,7 +861,7 @@ local pool = {
                 Upgrades:addEventHandler("floorStart", handleBulwarkChorusFloorStart)
             end
 
-            celebrateUpgrade("Warden's Chorus", nil, {
+            celebrateUpgrade(getUpgradeString("wardens_chorus", "name"), nil, {
                 color = {0.66, 0.88, 1, 1},
                 particleCount = 18,
                 particleSpeed = 120,
@@ -858,8 +873,8 @@ local pool = {
     }),
     register({
         id = "gilded_trail",
-        name = "Gilded Trail",
-        desc = "Every 5th fruit grants +3 bonus score.",
+        nameKey = "upgrades.gilded_trail.name",
+        descKey = "upgrades.gilded_trail.description",
         rarity = "common",
         tags = {"economy"},
         onAcquire = function(state)
@@ -873,7 +888,7 @@ local pool = {
                         Score:addBonus(3)
                     end
                     if FloatingText and data and data.x and data.y then
-                        FloatingText:add("Gilded Trail +3", data.x, data.y - 36, {1, 0.88, 0.35, 1}, 1.2, 55)
+                        FloatingText:add(getUpgradeString("gilded_trail", "combo_bonus"), data.x, data.y - 36, {1, 0.88, 0.35, 1}, 1.2, 55)
                     end
                 end
             end,
@@ -881,8 +896,8 @@ local pool = {
     }),
     register({
         id = "momentum_cache",
-        name = "Momentum Cache",
-        desc = "Combo finishers grant +1 bonus per link but saws move 5% faster.",
+        nameKey = "upgrades.momentum_cache.name",
+        descKey = "upgrades.momentum_cache.description",
         rarity = "uncommon",
         tags = {"economy", "risk"},
         onAcquire = function(state)
@@ -892,8 +907,8 @@ local pool = {
     }),
     register({
         id = "aurora_band",
-        name = "Aurora Band",
-        desc = "Combo window +0.35s but exit needs +1 fruit.",
+        nameKey = "upgrades.aurora_band.name",
+        descKey = "upgrades.aurora_band.description",
         rarity = "uncommon",
         tags = {"combo", "risk"},
         onAcquire = function(state)
@@ -906,8 +921,8 @@ local pool = {
     }),
     register({
         id = "caravan_contract",
-        name = "Caravan Contract",
-        desc = "Shops offer +1 card but an extra rock spawns.",
+        nameKey = "upgrades.caravan_contract.name",
+        descKey = "upgrades.caravan_contract.description",
         rarity = "uncommon",
         tags = {"economy", "risk"},
         onAcquire = function(state)
@@ -917,8 +932,8 @@ local pool = {
     }),
     register({
         id = "fresh_supplies",
-        name = "Fresh Supplies",
-        desc = "Discard these cards and restock the shop with new ones.",
+        nameKey = "upgrades.fresh_supplies.name",
+        descKey = "upgrades.fresh_supplies.description",
         rarity = "common",
         tags = {"economy"},
         restockShop = true,
@@ -927,8 +942,8 @@ local pool = {
     }),
     register({
         id = "stone_census",
-        name = "Stone Census",
-        desc = "Each Economy upgrade cuts rock spawn chance by 7% (min 20%).",
+        nameKey = "upgrades.stone_census.name",
+        descKey = "upgrades.stone_census.description",
         rarity = "rare",
         requiresTags = {"economy"},
         tags = {"economy", "defense"},
@@ -946,7 +961,7 @@ local pool = {
                 end)
             end
 
-            celebrateUpgrade("Stone Census", nil, {
+            celebrateUpgrade(getUpgradeString("stone_census", "name"), nil, {
                 color = {0.85, 0.92, 1, 1},
                 particleCount = 16,
                 particleSpeed = 110,
@@ -958,8 +973,8 @@ local pool = {
     }),
     register({
         id = "guild_ledger",
-        name = "Guild Ledger",
-        desc = "Each shop slot cuts rock spawn chance by 1.5%.",
+        nameKey = "upgrades.guild_ledger.name",
+        descKey = "upgrades.guild_ledger.description",
         rarity = "rare",
         requiresTags = {"economy"},
         tags = {"economy", "defense"},
@@ -976,7 +991,7 @@ local pool = {
                 end)
             end
 
-            celebrateUpgrade("Guild Ledger", nil, {
+            celebrateUpgrade(getUpgradeString("guild_ledger", "name"), nil, {
                 color = {1, 0.86, 0.46, 1},
                 particleCount = 16,
                 particleSpeed = 120,
@@ -988,8 +1003,8 @@ local pool = {
     }),
     register({
         id = "venomous_hunger",
-        name = "Venomous Hunger",
-        desc = "Combo rewards are 50% stronger but the exit needs +1 fruit.",
+        nameKey = "upgrades.venomous_hunger.name",
+        descKey = "upgrades.venomous_hunger.description",
         rarity = "uncommon",
         tags = {"risk"},
         onAcquire = function(state)
@@ -1002,8 +1017,8 @@ local pool = {
     }),
     register({
         id = "predators_reflex",
-        name = "Predator's Reflex",
-        desc = "Adrenaline bursts are 25% stronger and trigger at floor start.",
+        nameKey = "upgrades.predators_reflex.name",
+        descKey = "upgrades.predators_reflex.description",
         rarity = "rare",
         requiresTags = {"adrenaline"},
         onAcquire = function(state)
@@ -1021,8 +1036,8 @@ local pool = {
     }),
     register({
         id = "combo_harmonizer",
-        name = "Combo Harmonizer",
-        desc = "Combo window extends 0.12s for every Combo upgrade you own.",
+        nameKey = "upgrades.combo_harmonizer.name",
+        descKey = "upgrades.combo_harmonizer.description",
         rarity = "rare",
         requiresTags = {"combo"},
         tags = {"combo"},
@@ -1039,7 +1054,7 @@ local pool = {
                 end)
             end
 
-            celebrateUpgrade("Combo Harmonizer", nil, {
+            celebrateUpgrade(getUpgradeString("combo_harmonizer", "name"), nil, {
                 color = {0.82, 0.78, 1, 1},
                 particleCount = 18,
                 particleSpeed = 115,
@@ -1051,8 +1066,8 @@ local pool = {
     }),
     register({
         id = "grim_reliquary",
-        name = "Grim Reliquary",
-        desc = "Begin each floor with +1 crash shield, but saws move 10% faster.",
+        nameKey = "upgrades.grim_reliquary.name",
+        descKey = "upgrades.grim_reliquary.description",
         rarity = "rare",
         requiresTags = {"risk"},
         tags = {"defense"},
@@ -1068,8 +1083,8 @@ local pool = {
     }),
     register({
         id = "relentless_pursuit",
-        name = "Relentless Pursuit",
-        desc = "Saws gain 15% speed but stall for +1.5s after fruit.",
+        nameKey = "upgrades.relentless_pursuit.name",
+        descKey = "upgrades.relentless_pursuit.description",
         rarity = "rare",
         onAcquire = function(state)
             state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 1.15
@@ -1078,8 +1093,8 @@ local pool = {
     }),
     register({
         id = "ember_engine",
-        name = "Ember Engine",
-        desc = "First fruit each floor stalls saws for 3s and erupts sparks.",
+        nameKey = "upgrades.ember_engine.name",
+        descKey = "upgrades.ember_engine.description",
         rarity = "rare",
         tags = {"defense"},
         onAcquire = function(state)
@@ -1094,7 +1109,7 @@ local pool = {
                 state.counters.ember_engine_ready = false
                 Saws:stall(3)
                 if data and data.x and data.y then
-                    FloatingText:add("Ember Engine", data.x, data.y - 48, {1, 0.58, 0.2, 1}, 1.2, 55)
+                    FloatingText:add(getUpgradeString("ember_engine", "name"), data.x, data.y - 48, {1, 0.58, 0.2, 1}, 1.2, 55)
                     Particles:spawnBurst(data.x, data.y, {
                         count = 14,
                         speed = 120,
@@ -1110,8 +1125,8 @@ local pool = {
     }),
     register({
         id = "tempest_nectar",
-        name = "Tempest Nectar",
-        desc = "Fruit grant +1 bonus score and stall saws for 0.6s.",
+        nameKey = "upgrades.tempest_nectar.name",
+        descKey = "upgrades.tempest_nectar.description",
         rarity = "rare",
         tags = {"economy", "defense"},
         handlers = {
@@ -1124,7 +1139,7 @@ local pool = {
                 end
                 local fx, fy = getEventPosition(data)
                 if FloatingText and fx and fy then
-                    FloatingText:add("Tempest Nectar +1", fx, fy - 40, {0.8, 0.95, 1, 1}, 1.0, 52)
+                    FloatingText:add(getUpgradeString("tempest_nectar", "combo_bonus"), fx, fy - 40, {0.8, 0.95, 1, 1}, 1.0, 52)
                 end
                 if Particles and fx and fy then
                     Particles:spawnBurst(fx, fy, {
@@ -1141,8 +1156,8 @@ local pool = {
     }),
     register({
         id = "spectral_harvest",
-        name = "Spectral Harvest",
-        desc = "Once per floor, echoes collect the next fruit instantly after you do.",
+        nameKey = "upgrades.spectral_harvest.name",
+        descKey = "upgrades.spectral_harvest.description",
         rarity = "epic",
         tags = {"economy", "combo"},
         onAcquire = function(state)
@@ -1163,7 +1178,7 @@ local pool = {
                 local fx, fy = Fruit:getPosition()
                 if not (fx and fy) then return end
 
-                celebrateUpgrade("Spectral Harvest", nil, {
+                celebrateUpgrade(getUpgradeString("spectral_harvest", "name"), nil, {
                     x = fx,
                     y = fy,
                     color = {0.76, 0.9, 1, 1},
@@ -1180,8 +1195,8 @@ local pool = {
     }),
     register({
         id = "solar_reservoir",
-        name = "Solar Reservoir",
-        desc = "First fruit each floor stalls saws 2s and grants +4 bonus score.",
+        nameKey = "upgrades.solar_reservoir.name",
+        descKey = "upgrades.solar_reservoir.description",
         rarity = "epic",
         tags = {"economy", "defense"},
         onAcquire = function(state)
@@ -1202,7 +1217,7 @@ local pool = {
                 end
                 local fx, fy = getEventPosition(data)
                 if FloatingText and fx and fy then
-                    FloatingText:add("Solar Reservoir +4", fx, fy - 52, {1, 0.86, 0.32, 1}, 1.2, 62)
+                    FloatingText:add(getUpgradeString("solar_reservoir", "combo_bonus"), fx, fy - 52, {1, 0.86, 0.32, 1}, 1.2, 62)
                 end
                 if Particles and fx and fy then
                     Particles:spawnBurst(fx, fy, {
@@ -1219,8 +1234,8 @@ local pool = {
     }),
     register({
         id = "crystal_cache",
-        name = "Crystal Cache",
-        desc = "Crash shields burst into motes worth +2 bonus score.",
+        nameKey = "upgrades.crystal_cache.name",
+        descKey = "upgrades.crystal_cache.description",
         rarity = "rare",
         tags = {"economy", "defense"},
         handlers = {
@@ -1230,7 +1245,7 @@ local pool = {
                 end
                 local fx, fy = getEventPosition(data)
                 if FloatingText and fx and fy then
-                    FloatingText:add("Crystal Cache +2", fx, fy - 60, {0.86, 0.96, 1, 1}, 1.1, 60)
+                    FloatingText:add(getUpgradeString("crystal_cache", "combo_bonus"), fx, fy - 60, {0.86, 0.96, 1, 1}, 1.1, 60)
                 end
                 if Particles and fx and fy then
                     Particles:spawnBurst(fx, fy, {
@@ -1247,8 +1262,8 @@ local pool = {
     }),
     register({
         id = "tectonic_resolve",
-        name = "Tectonic Resolve",
-        desc = "Rock spawns -15%. Begin each floor with +1 crash shield.",
+        nameKey = "upgrades.tectonic_resolve.name",
+        descKey = "upgrades.tectonic_resolve.description",
         rarity = "rare",
         tags = {"defense"},
         onAcquire = function(state)
@@ -1263,8 +1278,8 @@ local pool = {
     }),
     register({
         id = "titanblood_pact",
-        name = "Titanblood Pact",
-        desc = "Gain +3 crash shields and saw stall +2s, but grow by +5 and gain +1 extra growth.",
+        nameKey = "upgrades.titanblood_pact.name",
+        descKey = "upgrades.titanblood_pact.description",
         rarity = "epic",
         tags = {"defense", "risk"},
         weight = 1,
@@ -1279,8 +1294,8 @@ local pool = {
     }),
     register({
         id = "chronospiral_core",
-        name = "Chronospiral Core",
-        desc = "Saws slow by 25% and spin 40% slower, combo rewards +60%, but grow by +4 and gain +1 extra growth.",
+        nameKey = "upgrades.chronospiral_core.name",
+        descKey = "upgrades.chronospiral_core.description",
         rarity = "epic",
         tags = {"combo", "defense", "risk"},
         weight = 1,
@@ -1296,8 +1311,8 @@ local pool = {
     }),
     register({
         id = "phoenix_echo",
-        name = "Phoenix Echo",
-        desc = "Once per run, a fatal crash rewinds the floor instead of ending the run.",
+        nameKey = "upgrades.phoenix_echo.name",
+        descKey = "upgrades.phoenix_echo.description",
         rarity = "epic",
         tags = {"defense", "risk"},
         onAcquire = function(state)
@@ -1306,15 +1321,15 @@ local pool = {
     }),
     register({
         id = "event_horizon",
-        name = "Event Horizon",
-        desc = "Legendary: Colliding with a wall opens a portal that ejects you from the opposite side of the arena.",
+        nameKey = "upgrades.event_horizon.name",
+        descKey = "upgrades.event_horizon.description",
         rarity = "legendary",
         tags = {"defense", "mobility"},
         allowDuplicates = false,
         weight = 1,
         onAcquire = function(state)
             state.effects.wallPortal = true
-            celebrateUpgrade("Event Horizon", nil, {
+            celebrateUpgrade(getUpgradeString("event_horizon", "name"), nil, {
                 color = {1, 0.86, 0.34, 1},
                 particleCount = 32,
                 particleSpeed = 160,
@@ -1432,7 +1447,7 @@ function Upgrades:getComboBonus(comboCount)
         local amount = round(flat)
         if amount ~= 0 then
             bonus = bonus + amount
-            table.insert(breakdown, { label = "Momentum", amount = amount })
+            table.insert(breakdown, { label = Localization:get("upgrades.momentum_label"), amount = amount })
         end
     end
 
@@ -1462,7 +1477,7 @@ function Upgrades:tryFloorReplay(game, cause)
     game.deathCause = nil
 
     local hx, hy = Snake:getHead()
-    celebrateUpgrade("Phoenix Echo", nil, {
+    celebrateUpgrade(getUpgradeString("phoenix_echo", "name"), nil, {
         x = hx,
         y = hy,
         color = {1, 0.62, 0.32, 1},
@@ -1608,13 +1623,27 @@ end
 
 local function decorateCard(upgrade)
     local rarityInfo = getRarityInfo(upgrade.rarity)
+    local name = upgrade.name
+    local description = upgrade.desc
+    local rarityLabel = rarityInfo and rarityInfo.label
+
+    if upgrade.nameKey then
+        name = Localization:get(upgrade.nameKey)
+    end
+    if upgrade.descKey then
+        description = Localization:get(upgrade.descKey)
+    end
+    if rarityInfo and rarityInfo.labelKey then
+        rarityLabel = Localization:get(rarityInfo.labelKey)
+    end
+
     return {
         id = upgrade.id,
-        name = upgrade.name,
-        desc = upgrade.desc,
+        name = name,
+        desc = description,
         rarity = upgrade.rarity,
         rarityColor = rarityInfo.color,
-        rarityLabel = rarityInfo.label,
+        rarityLabel = rarityLabel,
         restockShop = upgrade.restockShop,
         upgrade = upgrade,
     }
