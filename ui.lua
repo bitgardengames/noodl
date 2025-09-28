@@ -124,6 +124,11 @@ function UI.drawButton(id)
         hovered = true
     end
 
+    if hovered and not btn.wasHovered then
+        Audio:playSound("hover")
+    end
+    btn.wasHovered = hovered
+
     -- Animate press depth
     local target = (btn.pressed and 1 or 0)
     btn.anim = btn.anim + (target - btn.anim) * 0.25
@@ -359,7 +364,7 @@ end
 function UI:celebrateGoal()
     self.goalReachedAnim = 0
     self.goalCelebrated = true
-    --Audio:playSound("goal_reached") -- placeholder sound
+    Audio:playSound("goal_reached")
 end
 
 function UI:update(dt)
@@ -443,6 +448,7 @@ function UI:setCombo(count, timer, duration)
     if combo.count >= 2 then
         if combo.count > previous then
             combo.pop = 1.0
+            Audio:playSound("combo_increase")
         end
 
         if combo.count >= 6 then
@@ -459,6 +465,7 @@ function UI:setCombo(count, timer, duration)
     else
         if previous >= 2 then
             combo.pop = 0
+            Audio:playSound("combo_break")
         end
         combo.tagline = nil
     end

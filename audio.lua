@@ -20,7 +20,14 @@ function Audio:load()
     self.sounds.floor_advance = love.audio.newSource("Assets/Sounds/Retro PickUp 18.wav", "static")
     self.sounds.floor_intro = love.audio.newSource("Assets/Sounds/Retro Event Acute 08.wav", "static")
     self.sounds.shop_open = love.audio.newSource("Assets/Sounds/apple.wav", "static")
-    self.sounds.shop_purchase = love.audio.newSource("Assets/Sounds/abs-confirm-1.wav", "static")
+    self.sounds.shop_focus = love.audio.newSource("Assets/Sounds/harp strum 3.wav", "static")
+    self.sounds.shop_card_deal = love.audio.newSource("Assets/Sounds/deal1.ogg", "static")
+    self.sounds.shop_card_select = love.audio.newSource("Assets/Sounds/deal2.ogg", "static")
+    self.sounds.shop_purchase = love.audio.newSource("Assets/Sounds/Coin Dropped on Wood Rattle.wav", "static")
+    self.sounds.goal_reached = love.audio.newSource("Assets/Sounds/power_up.wav", "static")
+    self.sounds.combo_increase = love.audio.newSource("Assets/Sounds/harp strum 3.wav", "static")
+    self.sounds.combo_break = love.audio.newSource("Assets/Sounds/impact2.ogg", "static")
+    self.sounds.jackpot = love.audio.newSource("Assets/Sounds/Coin Slid Along Wood.wav", "static")
 
     -- Music Tracks
     self.musicTracks.menu = love.audio.newSource("Assets/Music/Menu2.ogg", "stream")
@@ -41,7 +48,14 @@ Audio.soundDesignNotes = {
     floor_advance = "Upbeat arpeggio or rising tone to celebrate clearing a floor.",
     floor_intro = "Soft swell or drum hit that sets the tone for the new floor intro card.",
     shop_open = "Friendly bell or door chime that implies entering the shop.",
-    shop_purchase = "Satisfied confirmation click confirming an upgrade purchase.",
+    shop_focus = "Gentle flourish as the cursor glides over a relic choice.",
+    shop_card_deal = "Light card slide as the relic options are dealt onto the table.",
+    shop_card_select = "Subtle flip as you commit to a relic pick.",
+    shop_purchase = "Burst of coins confirming an upgrade purchase.",
+    goal_reached = "Triumphant swell to celebrate filling the fruit goal.",
+    combo_increase = "Short melodic lift that grows as the combo builds.",
+    combo_break = "Snappy thunk signalling a lost streak.",
+    jackpot = "Burst of coins emphasizing a jackpot reward.",
 }
 
 function Audio:applyVolumes()

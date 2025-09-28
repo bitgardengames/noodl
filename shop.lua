@@ -38,6 +38,8 @@ function Shop:start(currentFloor)
             focus = 0,
             fadeOut = 0,
             selectionFlash = nil,
+            revealSoundPlayed = false,
+            selectSoundPlayed = false,
         }
     end
 end
@@ -45,6 +47,10 @@ end
 function Shop:setFocus(index)
     if not self.cards or not index then return end
     if index < 1 or index > #self.cards then return end
+    local previous = self.focusIndex
+    if previous and previous ~= index then
+        Audio:playSound("shop_focus")
+    end
     self.focusIndex = index
     return self.cards[index]
 end
@@ -56,9 +62,7 @@ function Shop:moveFocus(delta)
     local count = #self.cards
     local index = self.focusIndex or 1
     index = ((index - 1 + delta) % count) + 1
-    self.focusIndex = index
-
-    return self.cards[index]
+    return self:setFocus(index)
 end
 
 function Shop:update(dt)
@@ -78,6 +82,11 @@ function Shop:update(dt)
             state.progress = math.min(1, state.progress + dt * 3.2)
         end
 
+        if not state.revealSoundPlayed and self.time >= state.delay then
+            state.revealSoundPlayed = true
+            Audio:playSound("shop_card_deal")
+        end
+
         local card = self.cards and self.cards[i]
         local isSelected = card and self.selected == card
         if isSelected then
@@ -85,6 +94,10 @@ function Shop:update(dt)
             state.selectionClock = (state.selectionClock or 0) + dt
             state.focus = math.min(1, (state.focus or 0) + dt * 3)
             state.fadeOut = math.max(0, (state.fadeOut or 0) - dt * 4)
+            if not state.selectSoundPlayed then
+                state.selectSoundPlayed = true
+                Audio:playSound("shop_card_select")
+            end
         else
             state.selection = math.max(0, (state.selection or 0) - dt * 3)
             if state.selection <= 0.001 then
@@ -99,6 +112,7 @@ function Shop:update(dt)
                 state.fadeOut = math.max(0, (state.fadeOut or 0) - dt * 3)
                 state.focus = math.max(0, (state.focus or 0) - dt * 3)
             end
+            state.selectSoundPlayed = false
         end
 
         if state.selectionFlash then
@@ -118,6 +132,7 @@ function Shop:update(dt)
             local flashDone = not (state and state.selectionFlash)
             if self.selectionTimer >= hold and flashDone then
                 self.selectionComplete = true
+                Audio:playSound("shop_purchase")
             end
         end
     else
@@ -738,8 +753,9 @@ function Shop:pick(i)
     local state = self.cardStates and self.cardStates[i]
     if state then
         state.selectionFlash = 0
+        state.selectSoundPlayed = true
     end
-    Audio:playSound("shop_purchase")
+    Audio:playSound("shop_card_select")
     return true
 end
 
