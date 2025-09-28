@@ -26,7 +26,7 @@ local Floors = {
                         arenaBG     = {0.42, 0.62, 0.35, 1}, -- still bright, grassy playfield
                         arenaBorder = {0.55, 0.75, 0.4, 1},  -- leafy, slightly lighter edge
                         snake       = {0.12, 0.9, 0.48, 1},  -- vivid spring green snake
-                        rock        = {0.68, 0.58, 0.42, 1}, -- warm tan stone
+                        rock        = {0.74, 0.59, 0.38, 1}, -- sun-baked sandstone, pops from grass
                 },
                 traits = {"sunlitSanctuary"},
         },
@@ -38,7 +38,7 @@ local Floors = {
             arenaBG    = {0.12, 0.12, 0.15, 1}, -- slate
             arenaBorder= {0.2, 0.28, 0.42, 1},  -- cool blue edge
             snake      = {0.6, 0.65, 0.7, 1},   -- pale stone
-            rock       = {0.25, 0.28, 0.32, 1}, -- sheen
+            rock       = {0.38, 0.43, 0.52, 1}, -- cool steel-blue highlights
         },
         traits = {"echoingStillness"},
     },
@@ -50,7 +50,7 @@ local Floors = {
             arenaBG    = {0.12, 0.16, 0.2, 1},  -- cave stone
             arenaBorder= {0.45, 0.3, 0.55, 1},  -- glowing purple
             snake      = {0.45, 0.95, 0.75, 1}, -- neon cyan-green
-            rock       = {0.25, 0.2, 0.3, 1},   -- fungus stone
+            rock       = {0.48, 0.32, 0.55, 1}, -- luminous violet slate
             sawColor   = {0.85, 0.6, 0.9, 1},   -- bright fungal pink-pop
         },
         traits = {"glowingSpores"},
@@ -63,7 +63,7 @@ local Floors = {
             arenaBG    = {0.05, 0.12, 0.14, 1},  -- water-stained stone
             arenaBorder= {0.1, 0.28, 0.3, 1},    -- mossy cyan edge
             snake      = {0.35, 0.9, 0.85, 1},   -- luminous aqua
-            rock       = {0.2, 0.35, 0.4, 1},    -- soaked slate
+            rock       = {0.34, 0.55, 0.6, 1},    -- sea-washed teal stone
             sawColor   = {0.5, 0.8, 0.85, 1},    -- oxidized steel
         },
         traits = {"waterloggedCatacombs"},
@@ -76,7 +76,7 @@ local Floors = {
             arenaBG    = {0.18, 0.16, 0.12, 1}, -- sandstone
             arenaBorder= {0.4, 0.38, 0.25, 1},  -- moss overtaking
             snake      = {0.95, 0.85, 0.55, 1}, -- faded gold
-            rock       = {0.3, 0.25, 0.2, 1},   -- collapsed stone
+            rock       = {0.46, 0.38, 0.28, 1},   -- weathered ochre brick
             sawColor   = {0.7, 0.7, 0.75, 1},   -- pale tarnished steel
         },
         traits = {"ancientMachinery"},
@@ -89,7 +89,7 @@ local Floors = {
             arenaBG    = {0.09, 0.11, 0.16, 1}, -- cold blue
             arenaBorder= {0.4, 0.65, 0.9, 1},   -- refracted glow
             snake      = {0.75, 0.9, 1.0, 1},   -- icy shine
-            rock       = {0.3, 0.35, 0.5, 1},   -- tinted crystal gray
+            rock       = {0.45, 0.5, 0.68, 1},   -- frosted indigo crystal
             sawColor   = {0.65, 0.85, 1.0, 1},  -- crystalline edges
         },
         traits = {"crystallineResonance"},
@@ -102,7 +102,7 @@ local Floors = {
             arenaBG    = {0.18, 0.17, 0.16, 1},  -- dusty bone field
             arenaBorder= {0.5, 0.45, 0.38, 1},   -- tarnished bone rim
             snake      = {0.86, 0.84, 0.75, 1},  -- ashen ivory
-            rock       = {0.42, 0.36, 0.32, 1},  -- brittle remains
+            rock       = {0.63, 0.5, 0.4, 1},  -- bleached bone stacks
             sawColor   = {0.76, 0.62, 0.52, 1},  -- aged bronze
         },
         traits = {"boneHarvest", "restlessEarth"},
@@ -115,7 +115,7 @@ local Floors = {
             arenaBG    = {0.05, 0.05, 0.08, 1}, -- void
             arenaBorder= {0.22, 0.12, 0.35, 1}, -- violet rim
             snake      = {0.7, 0.35, 0.85, 1},  -- glowing violet
-            rock       = {0.08, 0.1, 0.14, 1},  -- deep obsidian
+            rock       = {0.18, 0.23, 0.32, 1},  -- cold navy basalt
             sawColor   = {0.55, 0.25, 0.6, 1},  -- eerie violet shimmer
         },
         traits = {"echoingStillness", "restlessEarth"},
@@ -128,7 +128,7 @@ local Floors = {
             arenaBG    = {0.15, 0.04, 0.04, 1}, -- burning tone
             arenaBorder= {0.65, 0.25, 0.25, 1}, -- fiery rim
             snake      = {1.0, 0.55, 0.25, 1},  -- ember orange
-            rock       = {0.35, 0.15, 0.1, 1},  -- brimstone
+            rock       = {0.52, 0.22, 0.16, 1},  -- ember-scarred basalt
             sawColor   = {1.0, 0.25, 0.25, 1},  -- glowing hot red
         },
         traits = {"infernalPressure"},
@@ -141,7 +141,7 @@ local Floors = {
             arenaBG    = {0.07, 0.05, 0.07, 1},  -- polished obsidian
             arenaBorder= {0.45, 0.18, 0.08, 1},  -- smoldering cracks
             snake      = {0.95, 0.45, 0.25, 1},  -- molten ember
-            rock       = {0.22, 0.16, 0.18, 1},  -- volcanic glass
+            rock       = {0.4, 0.24, 0.32, 1},  -- molten plum glass
             sawColor   = {1.0, 0.35, 0.18, 1},   -- forgefire
         },
         traits = {"obsidianResonance", "infernalPressure"},
@@ -154,7 +154,7 @@ local Floors = {
             arenaBG    = {0.12, 0.06, 0.05, 1},  -- charred earth
             arenaBorder= {0.45, 0.2, 0.12, 1},   -- smoldering ridge
             snake      = {0.88, 0.52, 0.28, 1},  -- wind-burnt scales
-            rock       = {0.26, 0.18, 0.15, 1},  -- scorched stone
+            rock       = {0.42, 0.28, 0.24, 1},  -- charred copper shale
             sawColor   = {0.95, 0.4, 0.2, 1},    -- cindersteel
         },
         traits = {"ashenTithe", "glowingSpores"},
@@ -167,7 +167,7 @@ local Floors = {
             arenaBG    = {0.09, 0.05, 0.14, 1},  -- twilight bloom
             arenaBorder= {0.5, 0.35, 0.75, 1},   -- spectral rim
             snake      = {0.7, 0.85, 1.0, 1},    -- ghostlight
-            rock       = {0.2, 0.18, 0.28, 1},   -- phantasmal stone
+            rock       = {0.4, 0.32, 0.52, 1},   -- spectral amethyst shale
             sawColor   = {0.8, 0.65, 1.0, 1},    -- spirit steel
         },
         traits = {"spectralEchoes", "echoingStillness"},
@@ -180,7 +180,7 @@ local Floors = {
             arenaBG    = {0.08, 0.05, 0.08, 1}, -- charcoal
             arenaBorder= {0.3, 0.05, 0.08, 1},  -- blood red
             snake      = {0.9, 0.15, 0.25, 1},  -- crimson glow
-            rock       = {0.18, 0.15, 0.15, 1}, -- ashstone
+            rock       = {0.36, 0.24, 0.26, 1}, -- ember-lit ashstone
             sawColor   = {1.0, 0.1, 0.2, 1},    -- hellsteel
         },
         traits = {"ashenTithe", "infernalPressure"},
@@ -193,7 +193,7 @@ local Floors = {
             arenaBG    = {0.85, 0.88, 0.92, 1},  -- alabaster platform
             arenaBorder= {0.95, 0.78, 0.45, 1},  -- gilded trim
             snake      = {0.98, 0.85, 0.4, 1},   -- auric serpent
-            rock       = {0.75, 0.72, 0.68, 1},  -- polished stone
+            rock       = {0.55, 0.52, 0.48, 1},  -- dusk-touched marble
             sawColor   = {1.0, 0.65, 0.3, 1},    -- radiant brass
         },
         traits = {"divineAscent", "crystallineResonance"},
