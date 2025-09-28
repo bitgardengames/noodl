@@ -75,6 +75,7 @@ function App:load()
     self:registerStates()
     self:loadSubsystems()
     DebugOverlay:load()
+
     GameState:switch("menu")
 end
 
@@ -117,6 +118,7 @@ function App:keypressed(key)
     end
 
     DebugOverlay:keypressed(key)
+
     return self:forwardEvent("keypressed", key)
 end
 
