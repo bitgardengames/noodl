@@ -885,6 +885,8 @@ function UI:drawUpgradeIndicators()
         local hasBar = entry.showBar and entry.displayProgress ~= nil
         local panelHeight = baseHeight + (hasBar and (barHeight + 12) or 0)
 
+        y = y - panelHeight
+
         love.graphics.push("all")
 
         love.graphics.setColor(0, 0, 0, 0.4 * visibility)
