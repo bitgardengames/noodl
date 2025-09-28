@@ -445,12 +445,12 @@ local pool = {
     register({
         id = "hydraulic_tracks",
         name = "Hydraulic Tracks",
-        desc = "Fruit retracts saws for 1.5s (+1.5s per stack).",
+        desc = "Fruit retracts saws for 0.5s (+0.5s per stack).",
         rarity = "uncommon",
         allowDuplicates = true,
         maxStacks = 3,
         onAcquire = function(state)
-            local durationPerStack = 1.5
+            local durationPerStack = 0.5
             state.effects.sawSinkDuration = (state.effects.sawSinkDuration or 0) + durationPerStack
 
             if not state.counters.hydraulicTracksHandlerRegistered then
@@ -638,15 +638,15 @@ local pool = {
     register({
         id = "linked_hydraulics",
         name = "Linked Hydraulics",
-        desc = "Hydraulic Tracks gain +0.75s sink time per stack and +0.25s per second of saw stall.",
+        desc = "Hydraulic Tracks gain +1.5s sink time per stack and +0.5s per second of saw stall.",
         rarity = "rare",
         condition = function(state)
             return state and state.takenSet and (state.takenSet.hydraulic_tracks or 0) > 0
         end,
         tags = {"defense"},
         onAcquire = function(state)
-            state.counters.linkedHydraulicsPerStack = 0.75
-            state.counters.linkedHydraulicsPerStall = 0.25
+            state.counters.linkedHydraulicsPerStack = 1.5
+            state.counters.linkedHydraulicsPerStall = 0.5
             updateLinkedHydraulics(state)
 
             if not state.counters.linkedHydraulicsHandlerRegistered then
