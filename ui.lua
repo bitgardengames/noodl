@@ -448,7 +448,6 @@ function UI:setCombo(count, timer, duration)
     if combo.count >= 2 then
         if combo.count > previous then
             combo.pop = 1.0
-            Audio:playSound("combo_increase")
         end
 
         if combo.count >= 6 then
@@ -465,7 +464,6 @@ function UI:setCombo(count, timer, duration)
     else
         if previous >= 2 then
             combo.pop = 0
-            Audio:playSound("combo_break")
         end
         combo.tagline = nil
     end
