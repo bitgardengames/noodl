@@ -877,7 +877,6 @@ function UI:drawUpgradeIndicators()
     local margin = layout.margin or 24
     local marginX = layout.marginX or margin
     local topMargin = layout.topMargin or layout.marginY or margin
-
     local screenW = love.graphics.getWidth()
     local x = screenW - width - marginX
     local y = topMargin
