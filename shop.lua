@@ -203,15 +203,15 @@ local rarityStyles = {
         },
     },
     rare = {
-        base = {0.24, 0.16, 0.32, 1},
+        base = {0.16, 0.24, 0.34, 1},
         shadowAlpha = 0.30,
         aura = {
-            color = {0.82, 0.64, 0.98, 0.30},
+            color = {0.40, 0.60, 0.92, 0.32},
             radius = 0.82,
             y = 0.36,
         },
         outerGlow = {
-            color = {0.86, 0.72, 1.0, 1},
+            color = {0.48, 0.72, 1.0, 1},
             min = 0.14,
             max = 0.32,
             speed = 1.9,
@@ -219,7 +219,7 @@ local rarityStyles = {
             width = 7,
         },
         innerGlow = {
-            color = {0.94, 0.82, 1.0, 1},
+            color = {0.64, 0.84, 1.0, 1},
             min = 0.16,
             max = 0.36,
             speed = 2.1,
@@ -228,15 +228,15 @@ local rarityStyles = {
         },
     },
     epic = {
-        base = {0.32, 0.14, 0.08, 1},
+        base = {0.26, 0.16, 0.36, 1},
         shadowAlpha = 0.34,
         aura = {
-            color = {1.0, 0.62, 0.36, 0.34},
+            color = {0.82, 0.64, 0.98, 0.34},
             radius = 0.86,
             y = 0.38,
         },
         outerGlow = {
-            color = {1.0, 0.72, 0.48, 1},
+            color = {0.88, 0.72, 1.0, 1},
             min = 0.18,
             max = 0.40,
             speed = 2.2,
@@ -244,7 +244,7 @@ local rarityStyles = {
             width = 8,
         },
         innerGlow = {
-            color = {1.0, 0.82, 0.62, 1},
+            color = {0.96, 0.84, 1.0, 1},
             min = 0.22,
             max = 0.42,
             speed = 2.4,
@@ -253,15 +253,15 @@ local rarityStyles = {
         },
     },
     legendary = {
-        base = {0.38, 0.26, 0.04, 1},
+        base = {0.40, 0.22, 0.08, 1},
         shadowAlpha = 0.42,
         aura = {
-            color = {1.0, 0.86, 0.32, 0.42},
+            color = {1.0, 0.64, 0.28, 0.42},
             radius = 0.92,
             y = 0.4,
         },
         outerGlow = {
-            color = {1.0, 0.9, 0.5, 1},
+            color = {1.0, 0.74, 0.36, 1},
             min = 0.22,
             max = 0.48,
             speed = 2.5,
@@ -269,7 +269,7 @@ local rarityStyles = {
             width = 9,
         },
         innerGlow = {
-            color = {1.0, 0.96, 0.72, 1},
+            color = {1.0, 0.84, 0.52, 1},
             min = 0.26,
             max = 0.5,
             speed = 2.8,

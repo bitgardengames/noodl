@@ -29,17 +29,17 @@ local rarities = {
     rare = {
         weight = 12,
         labelKey = "upgrades.rarities.rare",
-        color = {0.76, 0.56, 0.88, 1},
+        color = {0.54, 0.72, 0.96, 1},
     },
     epic = {
         weight = 2,
         labelKey = "upgrades.rarities.epic",
-        color = {1, 0.52, 0.28, 1},
+        color = {0.76, 0.56, 0.88, 1},
     },
     legendary = {
         weight = 0.35,
         labelKey = "upgrades.rarities.legendary",
-        color = {1, 0.84, 0.2, 1},
+        color = {1, 0.66, 0.32, 1},
     },
 }
 
