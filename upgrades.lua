@@ -764,10 +764,10 @@ local pool = {
     register({
         id = "circuit_breaker",
         name = "Circuit Breaker",
-        desc = "Saw tracks freeze for 2s after each fruit.",
+        desc = "Saw tracks freeze for 1s after each fruit.",
         rarity = "uncommon",
         onAcquire = function(state)
-            state.effects.sawStall = (state.effects.sawStall or 0) + 2
+            state.effects.sawStall = (state.effects.sawStall or 0) + 1
         end,
     }),
     register({
