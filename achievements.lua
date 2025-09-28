@@ -124,7 +124,6 @@ function Achievements:_ensureInitialized()
                 shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0,
                 shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0,
                 shieldSawParries = PlayerStats:get("shieldSawParries") or 0,
-                jackpotsTriggered = PlayerStats:get("jackpotsTriggered") or 0,
             }
         end)
 
@@ -137,7 +136,6 @@ function Achievements:_ensureInitialized()
                 runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0,
                 runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0,
                 runShieldSawParries = SessionStats:get("runShieldSawParries") or 0,
-                runJackpotsTriggered = SessionStats:get("runJackpotsTriggered") or 0,
             }
         end)
 

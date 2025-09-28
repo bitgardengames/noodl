@@ -209,7 +209,6 @@ function DebugOverlay:collectData()
             string.format("Game mode: %s", GameModes:getCurrentName() or "(none)"),
             string.format("Score: %d", Score:get() or 0),
             string.format("High score: %d", Score:getHigh() or 0),
-            string.format("Jackpot chance: %.2f", Score.jackpotChance or 0),
             string.format("Player stats: %d entries", countTableEntries(PlayerStats.data)),
             string.format("UI buttons: %d", countTableEntries(UI.buttons)),
         }

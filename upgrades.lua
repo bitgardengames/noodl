@@ -771,20 +771,6 @@ local pool = {
         end,
     }),
     register({
-        id = "gem_maw",
-        name = "Gem Maw",
-        desc = "Fruits have a 12% chance to erupt into +5 bonus score.",
-        rarity = "common",
-        onAcquire = function(state)
-            if Score.addJackpotChance then
-                Score:addJackpotChance(0.12, 5)
-            else
-                Score.jackpotChance = math.min(1, (Score.jackpotChance or 0) + 0.12)
-                Score.jackpotReward = (Score.jackpotReward or 0) + 5
-            end
-        end,
-    }),
-    register({
         id = "stonebreaker_hymn",
         name = "Stonebreaker Hymn",
         desc = "Every other fruit shatters the nearest rock. Stacks to every fruit.",

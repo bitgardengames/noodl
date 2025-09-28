@@ -308,17 +308,6 @@ local definitions = {
         end,
     },
     {
-        id = "jackpotSpark",
-        titleKey = "achievements_definitions.jackpotSpark.title",
-        descriptionKey = "achievements_definitions.jackpotSpark.description",
-        icon = "Apple",
-        goal = 1,
-        stat = "jackpotsTriggered",
-        category = "skill",
-        categoryOrder = 2,
-        order = 90,
-    },
-    {
         id = "dragonHunter",
         titleKey = "achievements_definitions.dragonHunter.title",
         descriptionKey = "achievements_definitions.dragonHunter.description",

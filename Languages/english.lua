@@ -232,10 +232,6 @@ local english = {
                 title = "Crash-Test Maestro",
                 description = "In one run, shrug off a wall, rock, and saw with crash shields.",
             },
-            jackpotSpark = {
-                title = "Lucky Spark",
-                description = "Trigger a fruit jackpot payout.",
-            },
             dragonHunter = {
                 title = "Dragon Hunter",
                 description = "Collect the legendary Dragonfruit",
