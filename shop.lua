@@ -6,29 +6,36 @@ local Shop = {}
 
 function Shop:start(currentFloor)
     self.floor = currentFloor or 1
+    self.shopkeeperLine = nil
+    self.shopkeeperSubline = nil
+    self.selectionHoldDuration = 1.85
+    self.inputMode = nil
+    self:refreshCards()
+end
+
+function Shop:refreshCards()
     local extraChoices = 0
     if Upgrades.getEffect then
         extraChoices = math.max(0, math.floor(Upgrades:getEffect("shopSlots") or 0))
     end
     extraChoices = math.min(extraChoices, 2)
     self.extraChoices = extraChoices
+
     local cardCount = 3 + extraChoices
     self.cards = Upgrades:getRandom(cardCount, { floor = self.floor }) or {}
+    self.cardStates = {}
     self.selected = nil
     self.selectedIndex = nil
-    self.shopkeeperLine = nil
-    self.shopkeeperSubline = nil
-    self.cardStates = {}
-    self.time = 0
     self.selectionProgress = 0
     self.selectionTimer = 0
-    self.selectionHoldDuration = 1.85
     self.selectionComplete = false
+    self.time = 0
     self.focusIndex = nil
-    self.inputMode = nil
+
     if #self.cards > 0 then
         self:setFocus(1)
     end
+
     for i = 1, #self.cards do
         self.cardStates[i] = {
             progress = 0,
@@ -743,6 +750,12 @@ function Shop:pick(i)
     if self.selected then return false end
     local card = self.cards[i]
     if not card then return false end
+
+    if card.restockShop then
+        Audio:playSound("shop_card_select")
+        self:refreshCards()
+        return true
+    end
 
     Upgrades:acquire(card, { floor = self.floor })
     self.selected = card

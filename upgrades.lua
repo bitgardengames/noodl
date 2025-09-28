@@ -930,6 +930,16 @@ local pool = {
         end,
     }),
     register({
+        id = "fresh_supplies",
+        name = "Fresh Supplies",
+        desc = "Discard these cards and restock the shop with new ones.",
+        rarity = "common",
+        tags = {"economy"},
+        restockShop = true,
+        allowDuplicates = true,
+        weight = 0.6,
+    }),
+    register({
         id = "stone_census",
         name = "Stone Census",
         desc = "Each Economy upgrade cuts rock spawn chance by 7% (min 20%).",
@@ -1619,6 +1629,7 @@ local function decorateCard(upgrade)
         rarity = upgrade.rarity,
         rarityColor = rarityInfo.color,
         rarityLabel = rarityInfo.label,
+        restockShop = upgrade.restockShop,
         upgrade = upgrade,
     }
 end
