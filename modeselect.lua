@@ -7,7 +7,9 @@ local Theme = require("theme")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 
-local ModeSelect = {}
+local ModeSelect = {
+    transitionDuration = 0.45,
+}
 
 local buttonList = ButtonList.new()
 
