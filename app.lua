@@ -92,7 +92,6 @@ function App:update(dt)
     self:resolveAction(action)
     UI:update(dt)
     DebugOverlay:update(dt)
-
 end
 
 function App:draw()

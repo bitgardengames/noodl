@@ -125,8 +125,11 @@ function DebugOverlay:collectData()
     }
 
     if drawStats then
-        sections[#sections].lines[#sections[#sections].lines + 1] = string.format("Draw calls: %d", drawStats.drawcalls)
-        sections[#sections].lines[#sections[#sections].lines + 1] = string.format("Textures: %d", drawStats.textures)
+        local drawCalls = tonumber(drawStats.drawcalls) or 0
+        local textures = tonumber(drawStats.textures) or 0
+
+        sections[#sections].lines[#sections[#sections].lines + 1] = string.format("Draw calls: %d", drawCalls)
+        sections[#sections].lines[#sections[#sections].lines + 1] = string.format("Textures: %d", textures)
         sections[#sections].lines[#sections[#sections].lines + 1] = string.format("GPU memory: %.1f MB", gpuMemory / 1024)
     end
 
