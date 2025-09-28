@@ -18,14 +18,6 @@ local Achievements = {
 
 local DEFAULT_CATEGORY_ORDER = 100
 local DEFAULT_ORDER = 1000
-local META_TOKEN_KEYS = {
-    "orchardSeeds",
-    "sunSigils",
-    "duskDrops",
-    "auricSeeds",
-    "wyrmCores",
-}
-
 local function copyTable(source)
     local target = {}
     if source then
@@ -138,7 +130,7 @@ function Achievements:_ensureInitialized()
 
         self:registerStateProvider(function()
             local SessionStats = require("sessionstats")
-            local state = {
+            return {
                 runApplesEaten = SessionStats:get("applesEaten") or 0,
                 runFloorsCleared = SessionStats:get("floorsCleared") or 0,
                 runDeepestFloor = SessionStats:get("deepestFloorReached") or 0,
@@ -147,20 +139,6 @@ function Achievements:_ensureInitialized()
                 runShieldSawParries = SessionStats:get("runShieldSawParries") or 0,
                 runJackpotsTriggered = SessionStats:get("runJackpotsTriggered") or 0,
             }
-
-            local uniqueMeta = 0
-            for _, key in ipairs(META_TOKEN_KEYS) do
-                local statKey = "fruitMetaGain_" .. key
-                local amount = SessionStats:get(statKey) or 0
-                state[statKey] = amount
-                if amount > 0 then
-                    uniqueMeta = uniqueMeta + 1
-                end
-            end
-
-            state.runMetaUniqueTypes = uniqueMeta
-
-            return state
         end)
 
         self:registerStateProvider(function()

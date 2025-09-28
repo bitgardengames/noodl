@@ -27,7 +27,6 @@ local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
 local Upgrades = require("upgrades")
-local FruitWallet = require("fruitwallet")
 
 local Game = {}
 local TRACK_LENGTH = 120
@@ -325,8 +324,6 @@ function Game:enter()
     self:load()
         Audio:playMusic("game")
         SessionStats:reset()
-        FruitWallet:resetRun()
-        FruitWallet:registerFruits(Fruit:getFruitTypes())
         PlayerStats:add("sessionsPlayed", 1)
         Achievements:checkAll({
                 sessionsPlayed = PlayerStats:get("sessionsPlayed"),
