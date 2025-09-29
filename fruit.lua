@@ -226,6 +226,7 @@ end
 
 function Fruit:checkCollisionWith(x, y, trail, rocks)
     if fading then return false end
+    if active.phase == "inactive" then return false end
 
     local half = HITBOX_SIZE / 2
     if aabb(x - half, y - half, HITBOX_SIZE, HITBOX_SIZE,
@@ -241,12 +242,16 @@ function Fruit:checkCollisionWith(x, y, trail, rocks)
             type = active.type
         }
         fadeTimer = 0
+        active.phase = "inactive"
+        active.alpha = 0
         return true
     end
     return false
 end
 
 local function drawFruit(f)
+    if f.phase == "inactive" then return end
+
     local x, y = f.x, f.y + (f.offsetY or 0)
     local alpha = f.alpha or 1
     local sx, sy = f.scaleX or 1, f.scaleY or 1
