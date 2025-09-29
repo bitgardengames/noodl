@@ -1155,6 +1155,72 @@ local pool = {
         },
     }),
     register({
+        id = "dopamine_rush",
+        nameKey = "upgrades.dopamine_rush.name",
+        descKey = "upgrades.dopamine_rush.description",
+        rarity = "rare",
+        tags = {"combo", "economy"},
+        allowDuplicates = true,
+        maxStacks = 3,
+        onAcquire = function(state)
+            celebrateUpgrade(getUpgradeString("dopamine_rush", "name"), nil, {
+                color = {1, 0.84, 0.38, 1},
+                particleCount = 18,
+                particleSpeed = 130,
+                particleLife = 0.4,
+                particleSpread = math.pi * 2,
+                textOffset = 44,
+                textScale = 1.1,
+            })
+        end,
+        handlers = {
+            fruitCollected = function(data, state)
+                local comboCount = data and data.combo or 0
+                if comboCount < 2 then
+                    return
+                end
+
+                local stacks = 1
+                if state and state.takenSet then
+                    stacks = math.max(1, state.takenSet.dopamine_rush or 1)
+                end
+
+                local links = math.max(0, comboCount - 1)
+                local cappedLinks = math.min(links, 6)
+                local bonus = cappedLinks * stacks
+                if bonus <= 0 then
+                    return
+                end
+
+                if Score and Score.addBonus then
+                    Score:addBonus(bonus)
+                end
+
+                local fx, fy = getEventPosition(data)
+                if FloatingText and fx and fy then
+                    local label = Localization:get("upgrades.dopamine_rush.bonus", { bonus = bonus })
+                    FloatingText:add(label, fx, fy - 60, {1, 0.85, 0.45, 1}, 1.1, 48)
+                end
+                if Particles and fx and fy then
+                    Particles:spawnBurst(fx, fy, {
+                        count = 12 + cappedLinks,
+                        speed = 110 + cappedLinks * 8,
+                        life = 0.5,
+                        size = 4,
+                        color = {1, 0.78, 0.4, 1},
+                        spread = math.pi * 2,
+                        gravity = 24,
+                    })
+                end
+
+                if UI and UI.combo then
+                    UI.combo.tagline = Localization:get("upgrades.dopamine_rush.tagline")
+                    UI.combo.pop = math.max(UI.combo.pop or 0, 0.6)
+                end
+            end,
+        },
+    }),
+    register({
         id = "spectral_harvest",
         nameKey = "upgrades.spectral_harvest.name",
         descKey = "upgrades.spectral_harvest.description",
