@@ -588,7 +588,7 @@ local pool = {
         id = "stone_whisperer",
         nameKey = "upgrades.stone_whisperer.name",
         descKey = "upgrades.stone_whisperer.description",
-        rarity = "rare",
+        rarity = "common",
         onAcquire = function(state)
             state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.6
         end,
