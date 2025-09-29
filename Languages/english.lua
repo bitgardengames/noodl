@@ -296,7 +296,7 @@ local english = {
             },
             stonebreaker_hymn = {
                 name = "Stonebreaker Hymn",
-                description = "Every other fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock.",
+                description = "Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock.",
             },
             echo_aegis = {
                 name = "Echo Aegis",
