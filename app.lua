@@ -130,12 +130,20 @@ function App:joystickreleased(joystick, button)
     return self:forwardEvent("joystickreleased", joystick, button)
 end
 
+function App:joystickaxis(joystick, axis, value)
+    return self:forwardEvent("joystickaxis", joystick, axis, value)
+end
+
 function App:gamepadpressed(joystick, button)
     return self:forwardEvent("gamepadpressed", joystick, button)
 end
 
 function App:gamepadreleased(joystick, button)
     return self:forwardEvent("gamepadreleased", joystick, button)
+end
+
+function App:gamepadaxis(joystick, axis, value)
+    return self:forwardEvent("gamepadaxis", joystick, axis, value)
 end
 
 function App:resize()
