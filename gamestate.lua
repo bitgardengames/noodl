@@ -22,8 +22,10 @@ local transitionBlockedEvents = {
     keypressed = true,
     joystickpressed = true,
     joystickreleased = true,
+    joystickaxis = true,
     gamepadpressed = true,
     gamepadreleased = true,
+    gamepadaxis = true,
 }
 
 -- Easing function: cubic ease-in-out (t in [0,1])

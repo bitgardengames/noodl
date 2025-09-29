@@ -304,6 +304,7 @@ end
 function Game:load()
         self.state = "playing"
         self.floor = 1
+        self.gamepadAxisDirections = { horizontal = nil, vertical = nil }
 
         Screen:update()
         self.screenWidth, self.screenHeight = Screen:get()
@@ -337,6 +338,7 @@ function Game:reset()
         Face:set("idle")
         self.state = "playing"
         self.floor = 1
+        self.gamepadAxisDirections = { horizontal = nil, vertical = nil }
 end
 
 function Game:enter()
@@ -1157,6 +1159,15 @@ function Game:mousereleased(x, y, button)
 end
 
 local map = { dpleft="left", dpright="right", dpup="up", dpdown="down" }
+local ANALOG_DEADZONE = 0.5
+local axisButtonMap = {
+        leftx = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
+        rightx = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
+        lefty = { slot = "vertical", negative = "dpup", positive = "dpdown" },
+        righty = { slot = "vertical", negative = "dpup", positive = "dpdown" },
+        [1] = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
+        [2] = { slot = "vertical", negative = "dpup", positive = "dpdown" },
+}
 local function handleGamepadInput(self, button)
         if self.transitionPhase == "shop" then
                 if Shop:gamepadpressed(nil, button) then
@@ -1187,9 +1198,43 @@ local function handleGamepadInput(self, button)
         end
 end
 
+local function handleGamepadAxisInput(self, axis, value)
+        local config = axisButtonMap[axis]
+        if not config then
+                return
+        end
+
+        local state = self.gamepadAxisDirections
+        if not state then
+                state = { horizontal = nil, vertical = nil }
+                self.gamepadAxisDirections = state
+        end
+
+        local direction
+        if value >= ANALOG_DEADZONE then
+                direction = config.positive
+        elseif value <= -ANALOG_DEADZONE then
+                direction = config.negative
+        else
+                direction = nil
+        end
+
+        if state[config.slot] ~= direction then
+                state[config.slot] = direction
+                if direction then
+                        handleGamepadInput(self, direction)
+                end
+        end
+end
+
 function Game:gamepadpressed(_, button)
         return handleGamepadInput(self, button)
 end
 Game.joystickpressed = Game.gamepadpressed
+
+function Game:gamepadaxis(_, axis, value)
+        return handleGamepadAxisInput(self, axis, value)
+end
+Game.joystickaxis = Game.gamepadaxis
 
 return Game

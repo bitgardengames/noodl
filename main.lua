@@ -36,12 +36,20 @@ function love.joystickreleased(joystick, button)
     App:joystickreleased(joystick, button)
 end
 
+function love.joystickaxis(joystick, axis, value)
+    App:joystickaxis(joystick, axis, value)
+end
+
 function love.gamepadpressed(joystick, button)
     App:gamepadpressed(joystick, button)
 end
 
 function love.gamepadreleased(joystick, button)
     App:gamepadreleased(joystick, button)
+end
+
+function love.gamepadaxis(joystick, axis, value)
+    App:gamepadaxis(joystick, axis, value)
 end
 
 function love.resize(w, h)
