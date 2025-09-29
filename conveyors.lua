@@ -203,7 +203,7 @@ local function drawBelt(belt, colors)
     love.graphics.rectangle("fill", -length / 2, -thickness / 2, length, thickness, radius, radius)
 
     love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.setLineWidth(3)
+    love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", -length / 2, -thickness / 2, length, thickness, radius, radius)
 
     local inset = 4
