@@ -51,6 +51,7 @@ local traits = {
             if ctx.saws then
                 ctx.saws = math.min(8, ctx.saws + 1)
             end
+            ctx.conveyors = math.min(8, math.max(0, (ctx.conveyors or 0) + 1))
             Saws.spinMult = (Saws.spinMult or 1) * 1.1
         end
     },
@@ -193,6 +194,9 @@ function FloorTraits:apply(list, context)
     end
     if ctx.saws then
         ctx.saws = math.max(0, math.min(8, math.floor(ctx.saws + 0.5)))
+    end
+    if ctx.conveyors then
+        ctx.conveyors = math.max(0, math.min(8, math.floor(ctx.conveyors + 0.5)))
     end
     if ctx.fruitGoal then
         ctx.fruitGoal = math.max(1, math.floor(ctx.fruitGoal + 0.5))
