@@ -885,24 +885,24 @@ function UI:drawUpgradeIndicators()
         local hasBar = entry.showBar and entry.displayProgress ~= nil
         local panelHeight = baseHeight + (hasBar and (barHeight + 12) or 0)
 
-        y = y - panelHeight
+        local drawY = y
 
         love.graphics.push("all")
 
         love.graphics.setColor(0, 0, 0, 0.4 * visibility)
-        love.graphics.rectangle("fill", x + 4, y + 6, width, panelHeight, 14, 14)
+        love.graphics.rectangle("fill", x + 4, drawY + 6, width, panelHeight, 14, 14)
 
         local panelColor = Theme.panelColor or {0.16, 0.18, 0.22, 1}
         love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * (0.95 * visibility))
-        love.graphics.rectangle("fill", x, y, width, panelHeight, 14, 14)
+        love.graphics.rectangle("fill", x, drawY, width, panelHeight, 14, 14)
 
         local border = lightenColor(accent, 0.15)
         love.graphics.setColor(border[1], border[2], border[3], (border[4] or 1) * visibility)
         love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", x, y, width, panelHeight, 14, 14)
+        love.graphics.rectangle("line", x, drawY, width, panelHeight, 14, 14)
 
         local iconX = x + iconRadius + 16
-        local iconY = y + iconRadius + 12
+        local iconY = drawY + iconRadius + 12
         drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius)
 
         local textX = iconX + iconRadius + 16
@@ -910,25 +910,25 @@ function UI:drawUpgradeIndicators()
 
         UI.setFont("button")
         love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
-        love.graphics.printf(entry.label or entry.id, textX, y + 12, textWidth, "left")
+        love.graphics.printf(entry.label or entry.id, textX, drawY + 12, textWidth, "left")
 
         if entry.stackCount ~= nil then
             local stackText = "x" .. tostring(entry.stackCount)
             UI.setFont("button")
             local stackColor = lightenColor(accent, 0.3)
             love.graphics.setColor(stackColor[1], stackColor[2], stackColor[3], (stackColor[4] or 1) * visibility)
-            love.graphics.printf(stackText, textX, y + 12, textWidth, "right")
+            love.graphics.printf(stackText, textX, drawY + 12, textWidth, "right")
         end
 
         if entry.status then
             UI.setFont("small")
             love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75 * visibility)
-            love.graphics.printf(entry.status, textX, y + 38, textWidth, "left")
+            love.graphics.printf(entry.status, textX, drawY + 38, textWidth, "left")
         end
 
         if hasBar then
             local barX = textX
-            local barY = y + panelHeight - barHeight - 14
+            local barY = drawY + panelHeight - barHeight - 14
             local barWidth = textWidth
             local progress = clamp01(entry.displayProgress or 0)
 
@@ -952,7 +952,7 @@ function UI:drawUpgradeIndicators()
         elseif entry.chargeLabel then
             UI.setFont("small")
             love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.8 * visibility)
-            love.graphics.printf(entry.chargeLabel, textX, y + panelHeight - 24, textWidth, "right")
+            love.graphics.printf(entry.chargeLabel, textX, drawY + panelHeight - 24, textWidth, "right")
         end
 
         love.graphics.pop()
