@@ -351,6 +351,12 @@ local english = {
                 description = "Fruit grant +1 bonus score and stall saws for 0.6s.",
                 combo_bonus = "Tempest Nectar +1",
             },
+            dopamine_rush = {
+                name = "Dopamine Rush",
+                description = "Combo fruit grant +1 bonus score per link for each stack.",
+                tagline = "Dopamine Rush!",
+                bonus = "Dopamine +${bonus}",
+            },
             spectral_harvest = {
                 name = "Spectral Harvest",
                 description = "Once per floor, echoes collect the next fruit instantly after you do.",
