@@ -14,7 +14,11 @@ function Shop:start(currentFloor)
     self:refreshCards()
 end
 
-function Shop:refreshCards()
+function Shop:refreshCards(options)
+    options = options or {}
+    local initialDelay = options.initialDelay or 0
+
+    self.restocking = nil
     local extraChoices = 0
     if Upgrades.getEffect then
         extraChoices = math.max(0, math.floor(Upgrades:getEffect("shopSlots") or 0))
@@ -43,7 +47,7 @@ function Shop:refreshCards()
     for i = 1, #self.cards do
         self.cardStates[i] = {
             progress = 0,
-            delay = (i - 1) * 0.08,
+            delay = initialDelay + (i - 1) * 0.08,
             selection = 0,
             selectionClock = 0,
             hover = 0,
@@ -56,7 +60,26 @@ function Shop:refreshCards()
     end
 end
 
+function Shop:beginRestock()
+    if self.restocking then return end
+
+    self.restocking = {
+        phase = "fadeOut",
+        timer = 0,
+        fadeDuration = 0.35,
+        delayAfterFade = 0.12,
+        revealDelay = 0.1,
+    }
+
+    self.selected = nil
+    self.selectedIndex = nil
+    self.selectionTimer = 0
+    self.selectionComplete = false
+    self.focusIndex = nil
+end
+
 function Shop:setFocus(index)
+    if self.restocking then return end
     if not self.cards or not index then return end
     if index < 1 or index > #self.cards then return end
     local previous = self.focusIndex
@@ -68,6 +91,7 @@ function Shop:setFocus(index)
 end
 
 function Shop:moveFocus(delta)
+    if self.restocking then return end
     if not delta or delta == 0 then return end
     if not self.cards or #self.cards == 0 then return end
 
@@ -81,6 +105,34 @@ function Shop:update(dt)
     if not dt then return end
     self.time = (self.time or 0) + dt
     if not self.cardStates then return end
+
+    local restock = self.restocking
+    local restockProgress = nil
+    if restock then
+        restock.timer = (restock.timer or 0) + dt
+        if restock.phase == "fadeOut" then
+            local duration = restock.fadeDuration or 0.35
+            if duration <= 0 then
+                restock.progress = 1
+            else
+                restock.progress = math.min(1, restock.timer / duration)
+            end
+            restockProgress = restock.progress
+            if restock.progress >= 1 then
+                restock.phase = "waiting"
+                restock.timer = 0
+            end
+        elseif restock.phase == "waiting" then
+            restockProgress = 1
+            local delay = restock.delayAfterFade or 0
+            if restock.timer >= delay then
+                local revealDelay = restock.revealDelay or 0
+                self.restocking = nil
+                self:refreshCards({ initialDelay = revealDelay })
+                return
+            end
+        end
+    end
 
     self.selectionProgress = self.selectionProgress or 0
     if self.selected then
@@ -119,12 +171,16 @@ function Shop:update(dt)
             else
                 state.selectionClock = (state.selectionClock or 0) + dt
             end
-            if isFocused then
+            if isFocused and not restock then
                 state.hover = math.min(1, (state.hover or 0) + dt * 6)
             else
                 state.hover = math.max(0, (state.hover or 0) - dt * 4)
             end
-            if self.selected then
+            if restock then
+                local fadeTarget = restockProgress or 0
+                state.fadeOut = math.max(fadeTarget, math.min(1, (state.fadeOut or 0) + dt * 3.2))
+                state.focus = math.max(0, (state.focus or 0) - dt * 4)
+            elseif self.selected then
                 state.fadeOut = math.min(1, (state.fadeOut or 0) + dt * 3.2)
                 state.focus = math.max(0, (state.focus or 0) - dt * 4)
             else
@@ -691,6 +747,7 @@ local function pickIndexFromKey(key)
 end
 
 function Shop:keypressed(key)
+    if self.restocking then return end
     if not self.cards or #self.cards == 0 then return end
 
     local index = pickIndexFromKey(key)
@@ -717,6 +774,7 @@ function Shop:keypressed(key)
 end
 
 function Shop:mousepressed(x, y, button)
+    if self.restocking then return end
     if button ~= 1 then return end
     self.inputMode = "mouse"
     for i, card in ipairs(self.cards) do
@@ -729,6 +787,7 @@ function Shop:mousepressed(x, y, button)
 end
 
 function Shop:gamepadpressed(_, button)
+    if self.restocking then return end
     if not self.cards or #self.cards == 0 then return end
 
     self.inputMode = "gamepad"
@@ -748,13 +807,14 @@ end
 Shop.joystickpressed = Shop.gamepadpressed
 
 function Shop:pick(i)
+    if self.restocking then return false end
     if self.selected then return false end
     local card = self.cards[i]
     if not card then return false end
 
     if card.restockShop then
         Audio:playSound("shop_card_select")
-        self:refreshCards()
+        self:beginRestock()
         return true
     end
 
