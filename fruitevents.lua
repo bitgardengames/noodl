@@ -7,6 +7,7 @@ local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 local Rocks = require("rocks")
 local Saws = require("saws")
+local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local UI = require("ui")
 local FloatingText = require("floatingtext")
@@ -251,7 +252,14 @@ function FruitEvents.handleConsumption(x, y)
         Achievements:unlock("dragonHunter")
     end
 
-    Fruit:spawn(Snake:getSegments(), Rocks, safeZone)
+    UI:triggerScorePulse()
+    UI:addFruit(fruitType)
+    local goalReached = UI:isGoalReached()
+
+    local exitAlreadyOpen = Arena and Arena.hasExit and Arena:hasExit()
+    if not exitAlreadyOpen and not goalReached then
+        Fruit:spawn(Snake:getSegments(), Rocks, safeZone)
+    end
 
     if love.math.random() < Rocks:getSpawnChance() then
         local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(Snake:getSegments(), Fruit, Rocks, safeZone)
@@ -261,8 +269,6 @@ function FruitEvents.handleConsumption(x, y)
         end
     end
 
-    UI:triggerScorePulse()
-    UI:addFruit(fruitType)
     Saws:onFruitCollected()
     if Rocks.onFruitCollected then
         Rocks:onFruitCollected(x, y)

@@ -300,6 +300,10 @@ function Arena:getExitCenter()
     return self.exit.x, self.exit.y, r
 end
 
+function Arena:hasExit()
+    return self.exit ~= nil
+end
+
 function Arena:update(dt)
     if self.exit and self.exit.anim < 1 then
         self.exit.anim = math.min(1, self.exit.anim + dt / self.exit.animTime)
