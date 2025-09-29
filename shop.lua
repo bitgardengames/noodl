@@ -667,7 +667,7 @@ function Shop:draw(screenW, screenH)
     end
 
     if self.selected then
-        love.graphics.setFont(UI.fonts.body)
+        love.graphics.setFont(UI.fonts.button)
         love.graphics.setColor(1, 0.88, 0.6, 0.9)
         love.graphics.printf(
             string.format("%s claimed", self.selected.name or "Relic"),
