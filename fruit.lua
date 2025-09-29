@@ -139,6 +139,7 @@ function Fruit:spawn(trail, rocks, safeZone)
     end
 
     active.x, active.y = cx, cy
+    active.spawnX, active.spawnY = cx, cy
     active.col, active.row = col, row
     active.type   = chooseFruitType()
     active.alpha  = 0
@@ -288,6 +289,19 @@ function Fruit:draw()
         drawFruit(fading)
     end
     drawFruit(active)
+end
+
+function Fruit:getVisualFootprint()
+    local radius = HITBOX_SIZE / 2
+    return {
+        x = active.spawnX or active.x,
+        y = active.spawnY or active.y,
+        radius = radius,
+        outline = OUTLINE_SIZE,
+        scaleX = active.scaleX or 1,
+        scaleY = active.scaleY or 1,
+        segments = 32,
+    }
 end
 
 -- Queries

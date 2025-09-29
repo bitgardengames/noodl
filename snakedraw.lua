@@ -74,19 +74,43 @@ local function drawCornerPlugs(trail, radius)
 end
 
 
-local function drawFruitBulges(trail, head, radius)
-  if not trail or radius <= 0 then return end
+local function drawFruitBulges(trail, head, opts)
+  if not trail then return end
+
+  local defaultRadius = (opts and opts.defaultRadius) or 0
+  local drawOutline = opts and opts.drawOutline or false
+  local fallbackOutline = (opts and opts.fallbackOutline) or OUTLINE_SIZE
+  local previousLineWidth
 
   for i = 1, #trail do
     local seg = trail[i]
     if seg and seg.fruitMarker and seg ~= head then
-      local x = seg.fruitMarkerX or (seg.drawX or seg.x)
-      local y = seg.fruitMarkerY or (seg.drawY or seg.y)
+      local info = seg.fruitMarkerData
+      local x = info and info.x or seg.fruitMarkerX or (seg.drawX or seg.x)
+      local y = info and info.y or seg.fruitMarkerY or (seg.drawY or seg.y)
 
       if x and y then
-        love.graphics.circle("fill", x, y, radius)
+        if info and info.radius then
+          local radius = info.radius
+          local sx = info.scaleX or 1
+          local sy = info.scaleY or 1
+          local segments = info.segments or 32
+          if drawOutline and (info.outline or fallbackOutline) > 0 then
+            previousLineWidth = previousLineWidth or love.graphics.getLineWidth()
+            love.graphics.setLineWidth(info.outline or fallbackOutline)
+            love.graphics.ellipse("line", x, y, radius * sx, radius * sy, segments)
+          else
+            love.graphics.ellipse("fill", x, y, radius * sx, radius * sy, segments)
+          end
+        elseif defaultRadius > 0 then
+          love.graphics.circle("fill", x, y, defaultRadius)
+        end
       end
     end
+  end
+
+  if previousLineWidth then
+    love.graphics.setLineWidth(previousLineWidth)
   end
 end
 
@@ -98,7 +122,11 @@ local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
         drawEndcaps(head, tail, half + OUTLINE_SIZE * 0.5)
         drawCornerPlugs(trail, half + OUTLINE_SIZE*0.5)
         local bulgeRadius = half * FRUIT_BULGE_SCALE
-        drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
+        drawFruitBulges(trail, head, {
+          defaultRadius = bulgeRadius + OUTLINE_SIZE * 0.5,
+          drawOutline = true,
+          fallbackOutline = OUTLINE_SIZE,
+        })
 
         -- BODY
         love.graphics.setColor(BODY_R, BODY_G, BODY_B)
@@ -108,7 +136,11 @@ local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
 
         love.graphics.setColor(BODY_R, BODY_G, BODY_B)
         drawCornerPlugs(trail, half)
-        drawFruitBulges(trail, head, bulgeRadius)
+        drawFruitBulges(trail, head, {
+          defaultRadius = bulgeRadius,
+          drawOutline = false,
+          fallbackOutline = OUTLINE_SIZE,
+        })
 end
 
 local function drawSoftGlow(x, y, radius, r, g, b, a)

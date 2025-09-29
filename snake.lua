@@ -746,7 +746,7 @@ function Snake:grow()
     popTimer = POP_DURATION
 end
 
-function Snake:markFruitSegment(fruitX, fruitY)
+function Snake:markFruitSegment(fruitX, fruitY, footprint)
     if not trail or #trail == 0 then
         return
     end
@@ -777,12 +777,26 @@ function Snake:markFruitSegment(fruitX, fruitY)
     local segment = trail[targetIndex]
     if segment then
         segment.fruitMarker = true
+        if footprint then
+            segment.fruitMarkerData = {
+                x = footprint.x or fruitX,
+                y = footprint.y or fruitY,
+                radius = footprint.radius,
+                outline = footprint.outline,
+                scaleX = footprint.scaleX,
+                scaleY = footprint.scaleY,
+                segments = footprint.segments,
+            }
+        else
+            segment.fruitMarkerData = nil
+        end
+
         if fruitX and fruitY then
             segment.fruitMarkerX = fruitX
             segment.fruitMarkerY = fruitY
         else
-            segment.fruitMarkerX = nil
-            segment.fruitMarkerY = nil
+            segment.fruitMarkerX = footprint and footprint.x or nil
+            segment.fruitMarkerY = footprint and footprint.y or nil
         end
     end
 end

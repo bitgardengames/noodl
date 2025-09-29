@@ -223,7 +223,10 @@ function FruitEvents.handleConsumption(x, y)
     local col, row = Fruit:getTile()
 
     Snake:grow()
-    Snake:markFruitSegment(x, y)
+    local footprint = Fruit.getVisualFootprint and Fruit:getVisualFootprint() or nil
+    local markerX = (footprint and footprint.x) or x
+    local markerY = (footprint and footprint.y) or y
+    Snake:markFruitSegment(markerX, markerY, footprint)
 
     Face:set("happy", 2)
     FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40)
