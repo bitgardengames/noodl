@@ -223,7 +223,7 @@ local english = {
             },
             aegis_recycler = {
                 name = "Aegis Recycler",
-                description = "Every 2 broken shields forge a fresh one.",
+                description = "Every two broken crash shields forge a fresh one.",
                 reforged = "Aegis Reforged",
             },
             saw_grease = {
@@ -232,59 +232,59 @@ local english = {
             },
             hydraulic_tracks = {
                 name = "Hydraulic Tracks",
-                description = "Fruit retracts saws for 0.5s (+0.5s per stack).",
+                description = "Each fruit retracts saws for 0.5s plus 0.5s per stack.",
             },
             extra_bite = {
                 name = "Extra Bite",
-                description = "Exit unlocks one fruit earlier.",
+                description = "The exit unlocks one fruit earlier.",
                 celebration = "Early Exit",
             },
             metronome_totem = {
                 name = "Metronome Totem",
-                description = "Fruit adds +0.35s to the combo timer.",
+                description = "Each fruit adds 0.35s to the combo timer.",
                 timer_bonus = "+0.35s",
             },
             adrenaline_surge = {
                 name = "Adrenaline Surge",
-                description = "Snake gains a burst of speed after eating fruit.",
+                description = "Snake surges forward after each fruit.",
                 adrenaline_shout = "Adrenaline!",
             },
             stone_whisperer = {
                 name = "Stone Whisperer",
-                description = "Rocks appear far less often after you snack.",
+                description = "Rocks spawn far less often after eating fruit.",
             },
             tail_trainer = {
                 name = "Tail Trainer",
-                description = "Move 4% faster.",
+                description = "Snake moves 4% faster.",
             },
             deliberate_coil = {
                 name = "Deliberate Coil",
-                description = "Move 15% slower. Exit unlocks one fruit later.",
+                description = "Snake moves 15% slower. The exit unlocks one fruit later.",
             },
             pocket_springs = {
                 name = "Pocket Springs",
-                description = "Every 8 fruits forge a crash shield charge.",
+                description = "Every eight fruits forge a crash shield charge.",
             },
             mapmakers_compass = {
                 name = "Mapmaker's Compass",
-                description = "Exit unlocks one fruit earlier but rocks spawn 15% more often.",
+                description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
             },
             linked_hydraulics = {
                 name = "Linked Hydraulics",
-                description = "Hydraulic Tracks gain +1.5s sink time per stack and +0.5s per second of saw stall.",
+                description = "Hydraulic Tracks gain +1.5s sink time per stack and +0.5s for each second of saw stall duration you have.",
             },
             twilight_parade = {
                 name = "Twilight Parade",
-                description = "Fruit at 4+ combo grant +2 bonus score and stall saws 0.8s.",
+                description = "Fruit at combo 4 or higher grant +2 bonus score and stall saws for 0.8s.",
                 combo_bonus = "Twilight Parade +2",
             },
             lucky_bite = {
                 name = "Lucky Bite",
-                description = "+1 score every time you eat fruit.",
+                description = "Each fruit grants +1 bonus score.",
             },
             momentum_memory = {
                 name = "Momentum Memory",
-                description = "Adrenaline bursts last 2 seconds longer.",
+                description = "Adrenaline bursts last 2s longer.",
             },
             molting_reflex = {
                 name = "Molting Reflex",
@@ -296,7 +296,7 @@ local english = {
             },
             stonebreaker_hymn = {
                 name = "Stonebreaker Hymn",
-                description = "Every other fruit shatters the nearest rock. Stacks to every fruit.",
+                description = "Every other fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock.",
             },
             echo_aegis = {
                 name = "Echo Aegis",
@@ -304,77 +304,77 @@ local english = {
             },
             resonant_shell = {
                 name = "Resonant Shell",
-                description = "Gain +0.35s saw stall for every Defense upgrade you've taken.",
+                description = "Gain +0.35s saw stall duration for each Defense upgrade you own.",
             },
             wardens_chorus = {
                 name = "Warden's Chorus",
-                description = "Floor starts build crash shield progress from each Defense upgrade.",
+                description = "Each Defense upgrade adds crash shield progress at the start of every floor.",
             },
             gilded_trail = {
                 name = "Gilded Trail",
-                description = "Every 5th fruit grants +3 bonus score.",
+                description = "Every fifth fruit grants +3 bonus score.",
                 combo_bonus = "Gilded Trail +3",
             },
             momentum_cache = {
                 name = "Momentum Cache",
-                description = "Combo finishers grant +1 bonus per link but saws move 5% faster.",
+                description = "Combo finishers grant +1 bonus score per link. Saws move 5% faster.",
             },
             aurora_band = {
                 name = "Aurora Band",
-                description = "Combo window +0.35s but exit needs +1 fruit.",
+                description = "Combo window increases by 0.35s. The exit requires +1 fruit.",
             },
             caravan_contract = {
                 name = "Caravan Contract",
-                description = "Shops offer +1 card but an extra rock spawns.",
+                description = "Shops offer +1 card. Each floor spawns an extra rock.",
             },
             fresh_supplies = {
                 name = "Fresh Supplies",
-                description = "Discard these cards and restock the shop with new ones.",
+                description = "Discard the current shop cards and restock with new ones.",
             },
             stone_census = {
                 name = "Stone Census",
-                description = "Each Economy upgrade cuts rock spawn chance by 7% (min 20%).",
+                description = "Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%).",
             },
             guild_ledger = {
                 name = "Guild Ledger",
-                description = "Each shop slot cuts rock spawn chance by 1.5%.",
+                description = "Each shop slot reduces rock spawn chance by 1.5%.",
             },
             venomous_hunger = {
                 name = "Venomous Hunger",
-                description = "Combo rewards are 50% stronger but the exit needs +1 fruit.",
+                description = "Combo rewards are 50% stronger. The exit requires +1 fruit.",
             },
             predators_reflex = {
                 name = "Predator's Reflex",
-                description = "Adrenaline bursts are 25% stronger and trigger at floor start.",
+                description = "Adrenaline bursts are 25% stronger and trigger at the start of each floor.",
             },
             combo_harmonizer = {
                 name = "Combo Harmonizer",
-                description = "Combo window extends 0.12s for every Combo upgrade you own.",
+                description = "Combo window extends by 0.12s for each Combo upgrade you own.",
             },
             grim_reliquary = {
                 name = "Grim Reliquary",
-                description = "Begin each floor with +1 crash shield, but saws move 10% faster.",
+                description = "Begin each floor with +1 crash shield. Saws move 10% faster.",
             },
             relentless_pursuit = {
                 name = "Relentless Pursuit",
-                description = "Saws gain 15% speed but stall for +1.5s after fruit.",
+                description = "Saws move 15% faster. They stall for +1.5s after each fruit.",
             },
             ember_engine = {
                 name = "Ember Engine",
-                description = "First fruit each floor stalls saws for 3s and erupts sparks.",
+                description = "The first fruit each floor stalls saws for 3s and erupts sparks.",
             },
             tempest_nectar = {
                 name = "Tempest Nectar",
-                description = "Fruit grant +1 bonus score and stall saws for 0.6s.",
+                description = "Each fruit grants +1 bonus score and stalls saws for 0.6s.",
                 combo_bonus = "Tempest Nectar +1",
             },
             spectral_harvest = {
                 name = "Spectral Harvest",
-                description = "Once per floor, echoes collect the next fruit instantly after you do.",
+                description = "Once per floor, an echo collects the next fruit immediately after you do.",
             },
             solar_reservoir = {
                 name = "Solar Reservoir",
-                description = "First fruit each floor stalls saws 2s and grants +4 bonus score.",
+                description = "The first fruit each floor stalls saws for 2s and grants +4 bonus score.",
                 combo_bonus = "Solar Reservoir +4",
             },
             crystal_cache = {
@@ -384,15 +384,15 @@ local english = {
             },
             tectonic_resolve = {
                 name = "Tectonic Resolve",
-                description = "Rock spawns -15%. Begin each floor with +1 crash shield.",
+                description = "Rock spawn chance decreases by 15%. Begin each floor with +1 crash shield.",
             },
             titanblood_pact = {
                 name = "Titanblood Pact",
-                description = "Gain +3 crash shields and saw stall +2s, but grow by +5 and gain +1 extra growth.",
+                description = "Gain +3 crash shields and +2s saw stall duration. Grow by +5 and gain +1 extra growth.",
             },
             chronospiral_core = {
                 name = "Chronospiral Core",
-                description = "Saws slow by 25% and spin 40% slower, combo rewards +60%, but grow by +4 and gain +1 extra growth.",
+                description = "Saws move 25% slower and spin 40% slower. Combo rewards increase by 60%. You grow by +4 and gain +1 extra growth.",
             },
             phoenix_echo = {
                 name = "Phoenix Echo",
@@ -410,11 +410,11 @@ local english = {
             },
             zephyr_coils = {
                 name = "Zephyr Coils",
-                description = "Rare: Snake speed +20% but you gain +1 extra growth.",
+                description = "Snake moves 20% faster. You gain +1 extra growth.",
             },
             event_horizon = {
                 name = "Event Horizon",
-                description = "Legendary: Colliding with a wall opens a portal that ejects you from the opposite side of the arena.",
+                description = "Colliding with a wall opens a portal that ejects you from the opposite side of the arena.",
             },
         },
         achievements_definitions = {
