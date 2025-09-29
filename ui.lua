@@ -802,14 +802,14 @@ local function buildShieldIndicator(self)
 
     local display = math.max(0, math.floor((shields.display or shields.count or 0) + 0.0001))
     local count = math.max(0, math.floor((shields.count or 0) + 0.0001))
+
+    if count <= 0 then
+        return nil
+    end
     local label = Localization:get("upgrades.hud.shields")
 
     local accent = {0.55, 0.82, 1.0, 1.0}
     local statusKey = "ready"
-    if count <= 0 then
-        accent = {0.5, 0.6, 0.7, 1.0}
-        statusKey = "depleted"
-    end
 
     if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
         accent = {1.0, 0.55, 0.45, 1.0}
