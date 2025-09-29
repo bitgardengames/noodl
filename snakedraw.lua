@@ -10,7 +10,7 @@ local OUTLINE_SIZE   = 6
 local FRUIT_BULGE_SCALE = 1.25
 
 -- colors (body color reused for patches so they blend)
-local BODY_R, BODY_G, BODY_B = Theme.snakeDefault
+local BODY_R, BODY_G, BODY_B = unpack(Theme.snakeDefault)
 
 local function makeHighlightColor(r, g, b)
   return math.min(1, r * 1.2 + 0.08),
