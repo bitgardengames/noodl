@@ -487,16 +487,33 @@ local function drawProgressionPanel(self, contentWidth, contentX)
     love.graphics.setColor(1, 1, 1, 0.88)
     love.graphics.printf(Localization:get("gameover.meta_progress_title"), contentX, panelY + metaPadding, contentWidth, "center")
 
+    local summaryY = panelY + metaPadding + fontProgressTitle:getHeight() + 20
+    local summaryText
+    if gained > 0 then
+        if apples > 0 then
+            local fruitKey = apples == 1 and "gameover.meta_progress_fruit_singular" or "gameover.meta_progress_fruit_plural"
+            local fruitLabel = Localization:get(fruitKey, { count = apples })
+            summaryText = Localization:get("gameover.meta_progress_gain", {
+                fruit = fruitLabel,
+                points = gained,
+            })
+        else
+            summaryText = Localization:get("gameover.meta_progress_gain_no_fruit", {
+                points = gained,
+            })
+        end
+    else
+        summaryText = Localization:get("gameover.meta_progress_gain_none")
+    end
+
     love.graphics.setFont(fontProgressSmall)
     love.graphics.setColor(1, 1, 1, 0.78)
-    love.graphics.printf(Localization:get("gameover.meta_progress_gain", {
-        fruit = apples,
-        points = gained,
-    }), contentX + metaPadding, panelY + metaPadding + fontProgressTitle:getHeight() + 20, metaWrap, "center")
+    love.graphics.printf(summaryText, contentX + metaPadding, summaryY, metaWrap, "center")
 
     if bonus > 0 then
+        local bonusText = Localization:get("gameover.meta_progress_bonus", { bonus = bonus })
         love.graphics.setColor(1, 1, 1, 0.68)
-        love.graphics.printf(Localization:get("gameover.meta_progress_bonus", { bonus = bonus }), contentX + metaPadding, panelY + metaPadding + fontProgressTitle:getHeight() + 44, metaWrap, "center")
+        love.graphics.printf(bonusText, contentX + metaPadding, summaryY + 24, metaWrap, "center")
     end
 
     local levelColor = Theme.progressColor or { 1, 1, 1, 1 }
