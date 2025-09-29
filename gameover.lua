@@ -33,10 +33,21 @@ local buttonList = ButtonList.new()
 local BUTTON_WIDTH = 250
 local BUTTON_HEIGHT = 50
 local BUTTON_SPACING = 20
+local ACHIEVEMENT_ENTRY_HEIGHT = 68
+local ACHIEVEMENT_ENTRY_SPACING = 10
 
 local function drawBackground(sw, sh)
     love.graphics.setColor(Theme.bgColor)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
+
+    local highlight = Theme.highlightColor or { 1, 1, 1, 0.05 }
+    love.graphics.setColor(highlight[1] or 1, highlight[2] or 1, highlight[3] or 1, (highlight[4] or 0.05) * 1.8)
+    love.graphics.circle("fill", sw / 2, sh * 0.22, sh * 0.95, 96)
+
+    local shadow = Theme.shadowColor or { 0, 0, 0, 0.35 }
+    love.graphics.setColor(shadow[1] or 0, shadow[2] or 0, shadow[3] or 0, (shadow[4] or 0.35) * 0.75)
+    love.graphics.rectangle("fill", 0, sh * 0.72, sw, sh * 0.4)
+    love.graphics.rectangle("fill", -sw * 0.25, sh * 0.45, sw * 1.5, sh * 0.15)
 end
 
 -- All button definitions in one place
@@ -73,6 +84,11 @@ local function drawCenteredPanel(x, y, width, height, radius)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", x, y, width, height, radius, radius)
     love.graphics.setLineWidth(1)
+end
+
+local function drawDivider(x, y, width)
+    love.graphics.setColor(1, 1, 1, 0.1)
+    love.graphics.rectangle("fill", x, y, width, 2, 2, 2)
 end
 
 local function handleButtonAction(_, action)
@@ -184,18 +200,36 @@ function GameOver:enter(data)
     local messageHeight = (#wrappedMessage > 0 and #wrappedMessage or 1) * lineHeight
 
     local achievementsList = self.achievementsEarned or {}
-    local achievementsHeight = (#achievementsList > 0) and (lineHeight + 12) or 0
+    self.maxAchievementDisplay = math.min(#achievementsList, 3)
+    self.achievementOverflow = math.max(0, #achievementsList - (self.maxAchievementDisplay or 0))
+
+    local achievementsHeight = 0
+    if (self.maxAchievementDisplay or 0) > 0 then
+        achievementsHeight = achievementsHeight + lineHeight + 12
+        achievementsHeight = achievementsHeight + (self.maxAchievementDisplay * ACHIEVEMENT_ENTRY_HEIGHT)
+        achievementsHeight = achievementsHeight + math.max(0, self.maxAchievementDisplay - 1) * ACHIEVEMENT_ENTRY_SPACING
+        achievementsHeight = achievementsHeight + 12
+        if (self.achievementOverflow or 0) > 0 then
+            achievementsHeight = achievementsHeight + fontProgressSmall:getHeight()
+        end
+    end
+    self.achievementSectionHeight = achievementsHeight
     local scoreHeight = fontScore:getHeight()
-    local badgeHeight = self.isNewHighScore and (fontBadge:getHeight() + 18) or 0
-    local statRowHeight = 96
+    local baseSpacingAfterMessage = 48
+    local spacingAfterScore = 34
+    local ribbonHeight = 0
+    if self.isNewHighScore then
+        ribbonHeight = (fontBadge:getHeight() + 22) + 20
+    end
+    local statRowHeight = 96 + 36
     local summaryPanelHeight = padding * 2
         + lineHeight
         + 12
         + messageHeight
-        + 28
+        + baseSpacingAfterMessage
         + scoreHeight
-        + 16
-        + badgeHeight
+        + spacingAfterScore
+        + ribbonHeight
         + statRowHeight
         + achievementsHeight
 
@@ -289,6 +323,51 @@ local function drawStatPill(x, y, width, height, label, value)
     love.graphics.printf(value, x + 8, valueY, width - 16, "center")
 end
 
+local function drawHighScoreRibbon(x, y, width)
+    local badgeColor = Theme.achieveColor or { 1, 1, 1, 1 }
+    local badgeHeight = fontBadge:getHeight() + 22
+
+    love.graphics.setColor(badgeColor[1] or 1, badgeColor[2] or 1, badgeColor[3] or 1, 0.18)
+    love.graphics.rectangle("fill", x, y, width, badgeHeight, 16, 16)
+
+    love.graphics.setColor(badgeColor[1] or 1, badgeColor[2] or 1, badgeColor[3] or 1, 0.55)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", x, y, width, badgeHeight, 16, 16)
+    love.graphics.setLineWidth(1)
+
+    love.graphics.setFont(fontBadge)
+    love.graphics.setColor(badgeColor[1] or 1, badgeColor[2] or 1, badgeColor[3] or 1, 0.95)
+    love.graphics.printf(Localization:get("gameover.high_score_badge"), x, y + (badgeHeight - fontBadge:getHeight()) / 2, width, "center")
+
+    return badgeHeight
+end
+
+local function drawAchievementEntry(x, y, width, achievement)
+    if not achievement then
+        return
+    end
+
+    local accent = Theme.achieveColor or { 1, 1, 1, 1 }
+    love.graphics.setColor(1, 1, 1, 0.07)
+    love.graphics.rectangle("fill", x, y, width, ACHIEVEMENT_ENTRY_HEIGHT, 14, 14)
+
+    love.graphics.setColor(accent[1] or 1, accent[2] or 1, accent[3] or 1, 0.25)
+    love.graphics.rectangle("fill", x, y, 6, ACHIEVEMENT_ENTRY_HEIGHT, 14, 0)
+
+    love.graphics.setColor(1, 1, 1, 0.18)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", x, y, width, ACHIEVEMENT_ENTRY_HEIGHT, 14, 14)
+    love.graphics.setLineWidth(1)
+
+    love.graphics.setFont(fontBadge)
+    love.graphics.setColor(accent[1] or 1, accent[2] or 1, accent[3] or 1, 0.95)
+    love.graphics.printf(achievement.title or Localization:get("common.unknown"), x + 18, y + 10, width - 36, "left")
+
+    love.graphics.setFont(fontSmall)
+    love.graphics.setColor(1, 1, 1, 0.78)
+    love.graphics.printf(achievement.description or "", x + 18, y + 10 + fontBadge:getHeight(), width - 36, "left")
+end
+
 local function drawXpSection(self, x, y, width)
     local anim = self.progressionAnimation
     if not anim then
@@ -380,19 +459,20 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
     love.graphics.setColor(1, 1, 1, 0.9)
     love.graphics.printf(messageText, contentX + padding, textY, wrapLimit, "center")
 
-    textY = textY + messageLines * lineHeight + 28
+    textY = textY + messageLines * lineHeight + 20
+    drawDivider(contentX + padding, textY, contentWidth - padding * 2)
+    textY = textY + 28
     love.graphics.setFont(fontScore)
     local progressColor = Theme.progressColor or { 1, 1, 1, 1 }
     love.graphics.setColor(progressColor[1] or 1, progressColor[2] or 1, progressColor[3] or 1, 0.92)
     love.graphics.printf(tostring(stats.score or 0), contentX, textY, contentWidth, "center")
 
-    textY = textY + fontScore:getHeight() + 16
+    textY = textY + fontScore:getHeight() + 12
+    drawDivider(contentX + padding, textY, contentWidth - padding * 2)
+    textY = textY + 22
     if self.isNewHighScore then
-        love.graphics.setFont(fontBadge)
-        local badgeColor = Theme.achieveColor or { 1, 1, 1, 1 }
-        love.graphics.setColor(badgeColor[1] or 1, badgeColor[2] or 1, badgeColor[3] or 1, 0.9)
-        love.graphics.printf(Localization:get("gameover.high_score_badge"), contentX + padding, textY, contentWidth - padding * 2, "center")
-        textY = textY + fontBadge:getHeight() + 18
+        local ribbonHeight = drawHighScoreRibbon(contentX + padding, textY, contentWidth - padding * 2)
+        textY = textY + ribbonHeight + 20
     end
 
     local cardY = textY
@@ -409,16 +489,46 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
     drawStatPill(cardX + cardWidth + cardSpacing, cardY, cardWidth, cardHeight, applesLabel, tostring(stats.apples or 0))
     drawStatPill(cardX + (cardWidth + cardSpacing) * 2, cardY, cardWidth, cardHeight, modeLabel, tostring(self.modeLabel or Localization:get("common.unknown")))
 
-    textY = textY + cardHeight + 12
+    textY = textY + cardHeight + 16
+    drawDivider(contentX + padding, textY, contentWidth - padding * 2)
+    textY = textY + 20
 
     local achievementsList = self.achievementsEarned or {}
-    if #achievementsList > 0 then
+    if #achievementsList > 0 and (self.maxAchievementDisplay or 0) > 0 then
         love.graphics.setFont(fontSmall)
         love.graphics.setColor(1, 1, 1, 0.72)
         local achievementsLabel = getLocalizedOrFallback("gameover.achievements_header", "Achievements")
-        local achievementsText = string.format("%s: %d", achievementsLabel, #achievementsList)
+        local achievementsText = string.format("%s", achievementsLabel)
         love.graphics.printf(achievementsText, contentX + padding, textY, wrapLimit, "center")
-        textY = textY + lineHeight + 12
+        textY = textY + lineHeight + 6
+
+        local entryWidth = contentWidth - padding * 2
+        for index = 1, self.maxAchievementDisplay do
+            local achievement = achievementsList[index]
+            local entryY = textY + (index - 1) * (ACHIEVEMENT_ENTRY_HEIGHT + ACHIEVEMENT_ENTRY_SPACING)
+            drawAchievementEntry(contentX + padding, entryY, entryWidth, achievement)
+        end
+
+        textY = textY + self.maxAchievementDisplay * ACHIEVEMENT_ENTRY_HEIGHT
+        if self.maxAchievementDisplay > 1 then
+            textY = textY + (self.maxAchievementDisplay - 1) * ACHIEVEMENT_ENTRY_SPACING
+        end
+        textY = textY + 14
+
+        if (self.achievementOverflow or 0) > 0 then
+            love.graphics.setFont(fontProgressSmall)
+            love.graphics.setColor(1, 1, 1, 0.65)
+            local overflowText = Localization:get("gameover.achievements_more", { count = self.achievementOverflow })
+            if overflowText == "gameover.achievements_more" then
+                overflowText = string.format("+%d more…", self.achievementOverflow)
+            end
+            love.graphics.printf(overflowText, contentX + padding, textY, wrapLimit, "center")
+            textY = textY + fontProgressSmall:getHeight()
+        end
+
+        textY = textY + 8
+        drawDivider(contentX + padding, textY, contentWidth - padding * 2)
+        textY = textY + 20
     end
 
     if self.progressionAnimation then

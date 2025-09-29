@@ -86,6 +86,7 @@ local english = {
             no_fruit_summary = "No fruit collected this run.",
             fruit_chip = "${label}: +${gained} (Total ${total})",
             achievements_header = "Achievements Earned",
+            achievements_more = "+${count} more achievements",
             no_achievements = "No achievements unlocked this run.",
             tip_prefix = "Tip: ${tip}",
             play_again = "Play Again",
