@@ -19,17 +19,26 @@ function Shop:refreshCards(options)
     local initialDelay = options.initialDelay or 0
 
     self.restocking = nil
-    local extraChoices = 0
+    local baseChoices = 2
+    local upgradeBonus = 0
     if Upgrades.getEffect then
-        extraChoices = math.max(0, math.floor(Upgrades:getEffect("shopSlots") or 0))
+        upgradeBonus = math.max(0, math.floor(Upgrades:getEffect("shopSlots") or 0))
     end
+
+    local metaBonus = 0
     if MetaProgression and MetaProgression.getShopBonusSlots then
-        extraChoices = extraChoices + math.max(0, MetaProgression:getShopBonusSlots() or 0)
+        metaBonus = math.max(0, MetaProgression:getShopBonusSlots() or 0)
     end
-    extraChoices = math.min(extraChoices, 2)
+
+    local extraChoices = upgradeBonus + metaBonus
+
+    self.baseChoices = baseChoices
+    self.upgradeBonusChoices = upgradeBonus
+    self.metaBonusChoices = metaBonus
     self.extraChoices = extraChoices
 
-    local cardCount = 3 + extraChoices
+    local cardCount = baseChoices + extraChoices
+    self.totalChoices = cardCount
     self.cards = Upgrades:getRandom(cardCount, { floor = self.floor }) or {}
     self.cardStates = {}
     self.selected = nil

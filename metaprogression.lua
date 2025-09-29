@@ -31,7 +31,7 @@ local unlockDefinitions = {
     [2] = {
         id = "shop_expansion_1",
         name = "Shop Expansion I",
-        description = "Adds a fourth upgrade card to every visit.",
+        description = "Adds a third upgrade card to every visit.",
         effects = {
             shopExtraChoices = 1,
         },
