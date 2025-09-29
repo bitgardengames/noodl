@@ -674,7 +674,7 @@ function Shop:draw(screenW, screenH)
     local keyHint
     local choices = #self.cards
     if choices > 0 then
-        keyHint = string.format("Press 1-%d or use arrows + Enter to claim a relic", choices)
+        keyHint = "Use arrows + Enter to claim a relic"
     else
         keyHint = "No relics available"
     end
