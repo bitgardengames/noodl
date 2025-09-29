@@ -24,14 +24,17 @@ function Menu:enter()
 
     local sw, sh = Screen:get()
     local centerX = sw / 2
-    local startY = sh / 2 - ((UI.spacing.buttonHeight + UI.spacing.buttonSpacing) * 2.5) + UI.spacing.buttonHeight
 
     local labels = {
         { key = "menu.start_game",   action = "modeselect" },
         { key = "menu.achievements", action = "achievementsmenu" },
+        { key = "menu.progression",  action = "metaprogression" },
         { key = "menu.settings",     action = "settings" },
         { key = "menu.quit",         action = "quit" },
     }
+
+    local totalButtonHeight = #labels * UI.spacing.buttonHeight + math.max(0, #labels - 1) * UI.spacing.buttonSpacing
+    local startY = sh / 2 - totalButtonHeight / 2
 
     local defs = {}
 

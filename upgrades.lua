@@ -6,6 +6,7 @@ local UI = require("ui")
 local FloatingText = require("floatingtext")
 local Particles = require("particles")
 local Localization = require("localization")
+local MetaProgression = require("metaprogression")
 
 local Upgrades = {}
 local poolById = {}
@@ -823,6 +824,7 @@ local pool = {
         rarity = "rare",
         requiresTags = {"defense"},
         tags = {"defense"},
+        unlockTag = "specialist",
         onAcquire = function(state)
             state.counters.resonantShellPerBonus = 0.35
             updateResonantShellBonus(state)
@@ -853,6 +855,7 @@ local pool = {
         rarity = "rare",
         requiresTags = {"defense"},
         tags = {"defense"},
+        unlockTag = "specialist",
         onAcquire = function(state)
             state.counters.bulwarkChorusPerDefense = 0.33
             state.counters.bulwarkChorusProgress = state.counters.bulwarkChorusProgress or 0
@@ -1327,6 +1330,7 @@ local pool = {
         rarity = "rare",
         tags = {"mobility"},
         allowDuplicates = false,
+        unlockTag = "abilities",
         onAcquire = function(state)
             local dash = state.effects.dash or {}
             dash.duration = dash.duration or 0.35
@@ -1361,6 +1365,7 @@ local pool = {
         rarity = "rare",
         tags = {"utility", "defense"},
         allowDuplicates = false,
+        unlockTag = "timekeeper",
         onAcquire = function(state)
             local ability = state.effects.timeSlow or {}
             ability.duration = ability.duration or 1.6
@@ -1406,6 +1411,7 @@ local pool = {
         tags = {"defense", "mobility"},
         allowDuplicates = false,
         weight = 1,
+        unlockTag = "legendary",
         onAcquire = function(state)
             state.effects.wallPortal = true
             celebrateUpgrade(getUpgradeString("event_horizon", "name"), nil, {
@@ -1970,6 +1976,30 @@ function Upgrades:canOffer(upgrade, context, allowTaken)
             if self:hasTag(tag) then
                 return false
             end
+        end
+    end
+
+    local combinedUnlockTags = nil
+    if type(upgrade.unlockTags) == "table" then
+        combinedUnlockTags = {}
+        for _, tag in ipairs(upgrade.unlockTags) do
+            combinedUnlockTags[#combinedUnlockTags + 1] = tag
+        end
+    end
+    if upgrade.unlockTag then
+        combinedUnlockTags = combinedUnlockTags or {}
+        combinedUnlockTags[#combinedUnlockTags + 1] = upgrade.unlockTag
+    end
+
+    if combinedUnlockTags and MetaProgression and MetaProgression.isTagUnlocked then
+        for _, tag in ipairs(combinedUnlockTags) do
+            if tag and not MetaProgression:isTagUnlocked(tag) then
+                return false
+            end
+        end
+    elseif upgrade.unlockTag and MetaProgression and MetaProgression.isTagUnlocked then
+        if not MetaProgression:isTagUnlocked(upgrade.unlockTag) then
+            return false
         end
     end
 

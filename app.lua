@@ -17,6 +17,7 @@ local App = {
         game = "game",
         gameover = "gameover",
         achievementsmenu = "achievementsmenu",
+        metaprogression = "metaprogressionscreen",
         settings = "settingsscreen",
     }
 }
