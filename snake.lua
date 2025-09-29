@@ -34,6 +34,7 @@ Snake.shieldBurst = nil
 Snake.shieldFlashTimer = 0
 Snake.stonebreakerStacks = 0
 Snake.stoneSkinSawGrace = 0
+Snake.dash = nil
 
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
@@ -88,6 +89,7 @@ function Snake:resetModifiers()
     self.shieldFlashTimer = 0
     self.stonebreakerStacks = 0
     self.stoneSkinSawGrace = 0
+    self.dash = nil
     if self.adrenaline then
         self.adrenaline.active = false
         self.adrenaline.timer = 0
@@ -386,6 +388,10 @@ function Snake:load(w, h)
     descendingHole = nil
 end
 
+local function getUpgradesModule()
+    return package.loaded["upgrades"]
+end
+
 function Snake:setReverseControls(state)
     reverseControls = state
 end
@@ -574,6 +580,21 @@ function Snake:update(dt)
     -- base speed with upgrades/modifiers
     local head = trail[1]
     local speed = self:getSpeed()
+
+    if self.dash then
+        if self.dash.cooldownTimer and self.dash.cooldownTimer > 0 then
+            self.dash.cooldownTimer = math.max(0, (self.dash.cooldownTimer or 0) - dt)
+        end
+
+        if self.dash.active then
+            speed = speed * (self.dash.speedMult or 1)
+            self.dash.timer = (self.dash.timer or 0) - dt
+            if self.dash.timer <= 0 then
+                self.dash.active = false
+                self.dash.timer = 0
+            end
+        end
+    end
 
     local hole = descendingHole
     if hole and head then
@@ -774,6 +795,67 @@ function Snake:update(dt)
     return true
 end
 
+function Snake:activateDash()
+    local dash = self.dash
+    if not dash or dash.active then
+        return false
+    end
+
+    if (dash.cooldownTimer or 0) > 0 then
+        return false
+    end
+
+    dash.active = true
+    dash.timer = dash.duration or 0
+    dash.cooldownTimer = dash.cooldown or 0
+
+    if dash.timer <= 0 then
+        dash.active = false
+    end
+
+    local hx, hy = self:getHead()
+    local Upgrades = getUpgradesModule()
+    if Upgrades and Upgrades.notify then
+        Upgrades:notify("dashActivated", {
+            x = hx,
+            y = hy,
+        })
+    end
+
+    return dash.active
+end
+
+function Snake:isDashActive()
+    return self.dash and self.dash.active or false
+end
+
+function Snake:getDashState()
+    if not self.dash then
+        return nil
+    end
+
+    return {
+        active = self.dash.active or false,
+        timer = self.dash.timer or 0,
+        duration = self.dash.duration or 0,
+        cooldown = self.dash.cooldown or 0,
+        cooldownTimer = self.dash.cooldownTimer or 0,
+    }
+end
+
+function Snake:onDashBreakRock(x, y)
+    local dash = self.dash
+    if not dash then return end
+
+    local Upgrades = getUpgradesModule()
+    if Upgrades and Upgrades.notify then
+        Upgrades:notify("dashBreakRock", {
+            x = x,
+            y = y,
+        })
+    end
+end
+
 function Snake:updateReverseState(reversed)
     if reversed ~= self.reverseState then
         self:setReverseControls(reversed)
@@ -885,6 +967,14 @@ function Snake:getStateSnapshot()
         }
     end
 
+    if self.dash then
+        snapshot.dash = {
+            active = self.dash.active or false,
+            timer = self.dash.timer or 0,
+            cooldownTimer = self.dash.cooldownTimer or 0,
+        }
+    end
+
     return snapshot
 end
 
@@ -931,6 +1021,17 @@ function Snake:restoreStateSnapshot(snapshot)
     elseif self.adrenaline then
         self.adrenaline.active = false
         self.adrenaline.timer = 0
+    end
+
+    if snapshot.dash then
+        self.dash = self.dash or {}
+        self.dash.active = snapshot.dash.active or false
+        self.dash.timer = snapshot.dash.timer or 0
+        self.dash.cooldownTimer = snapshot.dash.cooldownTimer or 0
+    elseif self.dash then
+        self.dash.active = false
+        self.dash.timer = 0
+        self.dash.cooldownTimer = math.min(self.dash.cooldown or 0, self.dash.cooldownTimer or 0)
     end
 
     reverseControls = snapshot.reverseControls or false

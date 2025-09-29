@@ -381,6 +381,11 @@ local english = {
                 name = "Phoenix Echo",
                 description = "Once per run, a fatal crash rewinds without resetting the floor.",
             },
+            thunder_dash = {
+                name = "Thunder Dash",
+                description = "Press Space to dash forward, smashing through rocks while briefly speeding up.",
+                activation_text = "Thunder Dash!",
+            },
             zephyr_coils = {
                 name = "Zephyr Coils",
                 description = "Rare: Snake speed +20% but you gain +1 extra growth.",

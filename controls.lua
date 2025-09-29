@@ -13,7 +13,9 @@ function Controls:keypressed(game, key)
         if key == "up" then Snake:setDirection("up")
         elseif key == "down" then Snake:setDirection("down")
         elseif key == "left" then Snake:setDirection("left")
-        elseif key == "right" then Snake:setDirection("right") end
+        elseif key == "right" then Snake:setDirection("right")
+        elseif key == "space" then Snake:activateDash()
+        end
     end
 end
 
