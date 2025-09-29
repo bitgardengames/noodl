@@ -1,4 +1,5 @@
 local PlayerStats = require("playerstats")
+local SessionStats = require("sessionstats")
 local Achievements = require("achievements")
 local GameModes = require("gamemodes")
 local Score = {}
@@ -186,14 +187,17 @@ function Score:handleGameOver(cause)
     local mode = GameModes:getCurrentName()
     self:setHighScore(mode, self.current)
 
+    local runApples = SessionStats:get("applesEaten") or 0
+    local lifetimeApples = PlayerStats:get("totalApplesEaten") or 0
+
     return {
         score       = self.current,
         highScore   = self:getHighScore(mode),
-        apples      = PlayerStats:get("totalApplesEaten") or 0,
+        apples      = runApples,
         mode        = mode,
-        totalApples = PlayerStats:get("totalApplesEaten") or 0,
+        totalApples = lifetimeApples,
         stats = {
-            apples = PlayerStats:get("totalApplesEaten") or 0
+            apples = runApples
         },
         cause = cause or "unknown",
         won = false,
