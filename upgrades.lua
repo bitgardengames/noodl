@@ -1316,6 +1316,16 @@ local pool = {
         tags = {"defense", "risk"},
         onAcquire = function(state)
             state.counters.phoenixEchoCharges = (state.counters.phoenixEchoCharges or 0) + 1
+        end,
+    }),
+    register({
+        id = "zephyr_coils",
+        nameKey = "upgrades.zephyr_coils.name",
+        descKey = "upgrades.zephyr_coils.description",
+        rarity = "rare",
+        tags = {"mobility", "risk"},
+        onAcquire = function(state)
+            Snake:addSpeedMultiplier(1.2)
             Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
         end,
     }),
