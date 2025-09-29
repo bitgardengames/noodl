@@ -7,7 +7,7 @@ local slots = {}
 local nextSlotId = 0
 
 local TRACK_LENGTH = 120
-local BELT_THICKNESS = 28
+local BELT_THICKNESS = 24
 local SPAWN_DURATION = 0.35
 local SETTLE_DURATION = 0.3
 local CHEVRON_SPACING = 22
