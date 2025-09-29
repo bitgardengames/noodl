@@ -74,6 +74,7 @@ local defaultEffects = {
     comboBonusFlat = 0,
     shopSlots = 0,
     wallPortal = false,
+    dash = nil,
 }
 
 local function getEventPosition(data)
@@ -1319,6 +1320,40 @@ local pool = {
         end,
     }),
     register({
+        id = "thunder_dash",
+        nameKey = "upgrades.thunder_dash.name",
+        descKey = "upgrades.thunder_dash.description",
+        rarity = "rare",
+        tags = {"mobility"},
+        allowDuplicates = false,
+        onAcquire = function(state)
+            local dash = state.effects.dash or {}
+            dash.duration = dash.duration or 0.35
+            dash.cooldown = dash.cooldown or 6
+            dash.speedMult = dash.speedMult or 2.4
+            dash.breaksRocks = true
+            state.effects.dash = dash
+
+            if not state.counters.thunderDashHandlerRegistered then
+                state.counters.thunderDashHandlerRegistered = true
+                Upgrades:addEventHandler("dashActivated", function(data)
+                    local label = getUpgradeString("thunder_dash", "activation_text")
+                    celebrateUpgrade(label, data, {
+                        color = {1.0, 0.78, 0.32, 1},
+                        particleCount = 24,
+                        particleSpeed = 160,
+                        particleLife = 0.35,
+                        particleSize = 4,
+                        particleSpread = math.pi * 2,
+                        particleSpeedVariance = 90,
+                        textOffset = 52,
+                        textScale = 1.14,
+                    })
+                end)
+            end
+        end,
+    }),
+    register({
         id = "zephyr_coils",
         nameKey = "upgrades.zephyr_coils.name",
         descKey = "upgrades.zephyr_coils.description",
@@ -1494,6 +1529,49 @@ function Upgrades:getHUDIndicators()
             status = status,
             icon = "bolt",
             showBar = active and charge ~= nil,
+        })
+    end
+
+    local dashState = Snake.getDashState and Snake:getDashState()
+    if dashState then
+        local label = Localization:get("upgrades.thunder_dash.name")
+        local accent = {1.0, 0.78, 0.32, 1}
+        local status
+        local charge
+        local chargeLabel
+        local showBar = false
+
+        if dashState.active and dashState.duration > 0 then
+            local remaining = math.max(dashState.timer or 0, 0)
+            charge = clamp(remaining / dashState.duration, 0, 1)
+            chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remaining) })
+            status = hudText("active")
+            showBar = true
+        else
+            local cooldown = dashState.cooldown or 0
+            local remainingCooldown = math.max(dashState.cooldownTimer or 0, 0)
+            if cooldown > 0 and remainingCooldown > 0 then
+                local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
+                charge = progress
+                chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remainingCooldown) })
+                status = hudText("charging")
+                showBar = true
+            else
+                charge = 1
+                status = hudText("ready")
+            end
+        end
+
+        table.insert(indicators, {
+            id = "thunder_dash",
+            label = label,
+            accentColor = accent,
+            stackCount = nil,
+            charge = charge,
+            chargeLabel = chargeLabel,
+            status = status,
+            icon = "bolt",
+            showBar = showBar,
         })
     end
 
@@ -1727,6 +1805,33 @@ function Upgrades:applyPersistentEffects(rebaseline)
         Snake.adrenaline.duration = duration
         local boost = (effects.adrenaline.boost or 1.5) + (effects.adrenalineBoostBonus or 0)
         Snake.adrenaline.boost = boost
+    end
+
+    if effects.dash then
+        Snake.dash = Snake.dash or {}
+        local dash = Snake.dash
+        local firstSetup = not dash.configured
+        dash.duration = effects.dash.duration or dash.duration or 0
+        dash.cooldown = effects.dash.cooldown or dash.cooldown or 0
+        dash.speedMult = effects.dash.speedMult or dash.speedMult or 1
+        dash.breaksRocks = effects.dash.breaksRocks ~= false
+        dash.configured = true
+        dash.timer = dash.timer or 0
+        dash.cooldownTimer = dash.cooldownTimer or 0
+        dash.active = dash.active or false
+        if firstSetup then
+            dash.active = false
+            dash.timer = 0
+            dash.cooldownTimer = 0
+        else
+            if dash.cooldown and dash.cooldown > 0 then
+                dash.cooldownTimer = math.min(dash.cooldownTimer or 0, dash.cooldown)
+            else
+                dash.cooldownTimer = 0
+            end
+        end
+    else
+        Snake.dash = nil
     end
 end
 

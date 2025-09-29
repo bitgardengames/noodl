@@ -287,39 +287,63 @@ function Movement:update(dt)
 
         for _, rock in ipairs(Rocks:getAll()) do
                 if aabb(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE, rock.x, rock.y, rock.w, rock.h) then
-                        if Snake:consumeCrashShield() then
-                                -- shield absorbed the hit, play feedback and continue
-                                Particles:spawnBurst(rock.x + rock.w/2, rock.y + rock.h/2, {
-                                        count = 8,
-                                        speed = 40,
-                                        speedVariance = 36,
-                                        life = 0.4,
-                                        size = 3,
-                                        color = {0.9, 0.8, 0.5, 1},
+                        if Snake.isDashActive and Snake:isDashActive() then
+                                local centerX = rock.x + rock.w / 2
+                                local centerY = rock.y + rock.h / 2
+                                Rocks:destroy(rock)
+                                Particles:spawnBurst(centerX, centerY, {
+                                        count = 10,
+                                        speed = 120,
+                                        speedVariance = 70,
+                                        life = 0.35,
+                                        size = 4,
+                                        color = {1.0, 0.78, 0.32, 1},
                                         spread = math.pi * 2,
-                                        angleJitter = math.pi * 0.8,
-                                        drag = 2.8,
-                                        gravity = 210,
-                                        scaleMin = 0.55,
-                                        scaleVariance = 0.5,
+                                        angleJitter = math.pi * 0.6,
+                                        drag = 3.0,
+                                        gravity = 180,
+                                        scaleMin = 0.5,
+                                        scaleVariance = 0.6,
                                         fadeTo = 0.05,
                                 })
                                 Audio:playSound("shield_rock")
-                                Rocks:destroy(rock, { spawnFX = false })
-                                -- clear the shattered rock so the next frame doesn't collide again
-                                if Snake.onShieldConsumed then
-                                        local centerX = rock.x + rock.w / 2
-                                        local centerY = rock.y + rock.h / 2
-                                        Snake:onShieldConsumed(centerX, centerY, "rock")
+                                if Snake.onDashBreakRock then
+                                        Snake:onDashBreakRock(centerX, centerY)
                                 end
-                                recordShieldEvent("rock")
                         else
-                                return "dead", "rock"
+                                if Snake:consumeCrashShield() then
+                                        -- shield absorbed the hit, play feedback and continue
+                                        Particles:spawnBurst(rock.x + rock.w/2, rock.y + rock.h/2, {
+                                                count = 8,
+                                                speed = 40,
+                                                speedVariance = 36,
+                                                life = 0.4,
+                                                size = 3,
+                                                color = {0.9, 0.8, 0.5, 1},
+                                                spread = math.pi * 2,
+                                                angleJitter = math.pi * 0.8,
+                                                drag = 2.8,
+                                                gravity = 210,
+                                                scaleMin = 0.55,
+                                                scaleVariance = 0.5,
+                                                fadeTo = 0.05,
+                                        })
+                                        Audio:playSound("shield_rock")
+                                        Rocks:destroy(rock, { spawnFX = false })
+                                        -- clear the shattered rock so the next frame doesn't collide again
+                                        if Snake.onShieldConsumed then
+                                                local centerX = rock.x + rock.w / 2
+                                                local centerY = rock.y + rock.h / 2
+                                                Snake:onShieldConsumed(centerX, centerY, "rock")
+                                        end
+                                        recordShieldEvent("rock")
+                                else
+                                        return "dead", "rock"
+                                end
+                                break
                         end
-                        break
                 end
         end
-
         local sawHit = Saws:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
 
         if sawHit then
