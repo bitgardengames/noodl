@@ -616,6 +616,10 @@ local pool = {
         end,
         handlers = {
             fruitCollected = function(data, state)
+                if not state or not state.takenSet or (state.takenSet.pocket_springs or 0) <= 0 then
+                    return
+                end
+
                 state.counters.pocketSprings = (state.counters.pocketSprings or 0) + 1
                 if state.counters.pocketSprings >= 8 then
                     state.counters.pocketSprings = state.counters.pocketSprings - 8
