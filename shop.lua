@@ -464,13 +464,6 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
     local titleHeight = titleLineCount * titleFont:getHeight() * titleFont:getLineHeight()
     local contentTop = titleY + titleHeight
 
-    if index then
-        love.graphics.setFont(UI.fonts.small)
-        setColor(1, 1, 1, 0.65)
-        love.graphics.printf("[" .. tostring(index) .. "]", x + 18, y + 8, w - 36, "left")
-        setColor(1, 1, 1, 1)
-    end
-
     local descStart
     if card.rarityLabel then
         local rarityFont = UI.fonts.body
