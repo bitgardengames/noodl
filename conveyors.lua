@@ -195,8 +195,24 @@ local function drawBelt(belt, colors)
     -- Shadow
     local shadowAlpha = (colors.shadow[4] or 0.4) * (belt.shadowAlpha or 0)
     if shadowAlpha > 0 then
+        local shadowOffsetX = SHADOW_OFFSET
+        local shadowOffsetY = SHADOW_OFFSET
+
+        if belt.dir == "vertical" then
+            shadowOffsetX = SHADOW_OFFSET
+            shadowOffsetY = -SHADOW_OFFSET
+        end
+
         love.graphics.setColor(colors.shadow[1], colors.shadow[2], colors.shadow[3], shadowAlpha)
-        love.graphics.rectangle("fill", -length / 2, -thickness / 2 + SHADOW_OFFSET, length, thickness, radius, radius)
+        love.graphics.rectangle(
+            "fill",
+            -length / 2 + shadowOffsetX,
+            -thickness / 2 + shadowOffsetY,
+            length,
+            thickness,
+            radius,
+            radius
+        )
     end
 
     love.graphics.setColor(colors.base[1], colors.base[2], colors.base[3], colors.base[4] or 1)
