@@ -42,6 +42,7 @@ function Shop:refreshCards()
             delay = (i - 1) * 0.08,
             selection = 0,
             selectionClock = 0,
+            hover = 0,
             focus = 0,
             fadeOut = 0,
             selectionFlash = nil,
@@ -96,11 +97,13 @@ function Shop:update(dt)
 
         local card = self.cards and self.cards[i]
         local isSelected = card and self.selected == card
+        local isFocused = (self.focusIndex == i) and not self.selected
         if isSelected then
             state.selection = math.min(1, (state.selection or 0) + dt * 4)
             state.selectionClock = (state.selectionClock or 0) + dt
             state.focus = math.min(1, (state.focus or 0) + dt * 3)
             state.fadeOut = math.max(0, (state.fadeOut or 0) - dt * 4)
+            state.hover = math.max(0, (state.hover or 0) - dt * 6)
             if not state.selectSoundPlayed then
                 state.selectSoundPlayed = true
                 Audio:playSound("shop_card_select")
@@ -111,6 +114,11 @@ function Shop:update(dt)
                 state.selectionClock = 0
             else
                 state.selectionClock = (state.selectionClock or 0) + dt
+            end
+            if isFocused then
+                state.hover = math.min(1, (state.hover or 0) + dt * 6)
+            else
+                state.hover = math.max(0, (state.hover or 0) - dt * 4)
             end
             if self.selected then
                 state.fadeOut = math.min(1, (state.fadeOut or 0) + dt * 3.2)
@@ -552,6 +560,13 @@ function Shop:draw(screenW, screenH)
             local appearScaleMin = 0.94
             local appearScaleMax = 1.0
             scale = appearScaleMin + (appearScaleMax - appearScaleMin) * eased
+
+            local hover = state.hover or 0
+            if hover > 0 and not self.selected then
+                local hoverEase = hover * hover * (3 - 2 * hover)
+                scale = scale * (1 + 0.07 * hoverEase)
+                yOffset = yOffset - 8 * hoverEase
+            end
 
             local selection = state.selection or 0
             if selection > 0 then
