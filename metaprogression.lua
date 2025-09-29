@@ -28,15 +28,38 @@ local XP_CURVE_SCALE = 20
 local XP_CURVE_EXPONENT = 1.32
 
 local unlockDefinitions = {
-    [2] = { name = "Concept Art Vault", description = "Placeholder: Sneak peeks at upcoming visuals." },
-    [3] = { name = "Prototype Arena Skins", description = "Placeholder: Alternate palettes in development." },
-    [4] = { name = "Experimental Relic Slot", description = "Placeholder: A future meta upgrade slot." },
-    [5] = { name = "Soundscape Preview", description = "Placeholder: Bonus music and ambience." },
-    [6] = { name = "Movement Variant", description = "Placeholder: New control modifiers." },
-    [7] = { name = "Challenge Track", description = "Placeholder: Weekly challenge modifiers." },
-    [8] = { name = "Friend Leaderboards", description = "Placeholder: Compete with pals in a future update." },
-    [9] = { name = "Cosmetic Trails", description = "Placeholder: Stylish serpent trails." },
-    [10] = { name = "???", description = "Placeholder: A mysterious meta reward." },
+    [2] = {
+        id = "shop_expansion_1",
+        name = "Shop Expansion I",
+        description = "Adds a fourth upgrade card to every visit.",
+        effects = {
+            shopExtraChoices = 1,
+        },
+    },
+    [3] = {
+        id = "specialist_pool",
+        name = "Specialist Contracts",
+        description = "Unlocks rare defensive specialists in the upgrade pool.",
+        unlockTags = { "specialist" },
+    },
+    [4] = {
+        id = "dash_prototype",
+        name = "Thunder Dash Prototype",
+        description = "Unlocks dash ability upgrades in the shop.",
+        unlockTags = { "abilities" },
+    },
+    [5] = {
+        id = "temporal_study",
+        name = "Temporal Study",
+        description = "Unlocks time-bending upgrades that slow the arena.",
+        unlockTags = { "timekeeper" },
+    },
+    [6] = {
+        id = "event_horizon",
+        name = "Event Horizon",
+        description = "Unlocks experimental portal tech—legendary upgrades included.",
+        unlockTags = { "legendary" },
+    },
 }
 
 local milestoneThresholds = {
@@ -157,6 +180,114 @@ function MetaProgression:getProgressForTotal(totalXP)
     end
 
     return level, remaining, xpForNext
+end
+
+function MetaProgression:getTotalXpForLevel(level)
+    level = math.max(1, math.floor(level or 1))
+    local total = 0
+    for lvl = 1, level - 1 do
+        total = total + self:getXpForLevel(lvl)
+    end
+    return total
+end
+
+local CORE_UNLOCK_TAG = "core"
+
+local function accumulateEffects(target, source)
+    if type(source) ~= "table" then
+        return
+    end
+
+    for key, value in pairs(source) do
+        if type(value) == "number" then
+            target[key] = (target[key] or 0) + value
+        else
+            target[key] = value
+        end
+    end
+end
+
+function MetaProgression:_collectUnlockedEffects()
+    self:_ensureLoaded()
+
+    local effects = {
+        shopExtraChoices = 0,
+        tags = { [CORE_UNLOCK_TAG] = true },
+    }
+
+    local currentLevel = self.data.level or 1
+    for level, definition in pairs(unlockDefinitions) do
+        if level <= currentLevel then
+            if definition.effects then
+                accumulateEffects(effects, definition.effects)
+            end
+            if definition.unlockTags then
+                for _, tag in ipairs(definition.unlockTags) do
+                    if tag then
+                        effects.tags[tag] = true
+                    end
+                end
+            end
+        end
+    end
+
+    return effects
+end
+
+function MetaProgression:getShopBonusSlots()
+    local effects = self:_collectUnlockedEffects()
+    return math.floor(effects.shopExtraChoices or 0)
+end
+
+function MetaProgression:getUnlockedTags()
+    local effects = self:_collectUnlockedEffects()
+    return effects.tags or {}
+end
+
+function MetaProgression:isTagUnlocked(tag)
+    if not tag or tag == CORE_UNLOCK_TAG then
+        return true
+    end
+
+    local unlocked = self:getUnlockedTags()
+    return unlocked[tag] == true
+end
+
+function MetaProgression:getUnlockTrack()
+    self:_ensureLoaded()
+
+    local currentTotal = math.max(0, self.data.totalExperience or 0)
+    local currentLevel = math.max(1, self.data.level or 1)
+
+    local track = {}
+    for level, definition in pairs(unlockDefinitions) do
+        local entry = {
+            level = level,
+            id = definition.id,
+            name = definition.name,
+            description = definition.description,
+            unlockTags = definition.unlockTags,
+            effects = definition.effects,
+            unlocked = currentLevel >= level,
+        }
+        entry.totalXpRequired = self:getTotalXpForLevel(level)
+        local remaining = entry.totalXpRequired - currentTotal
+        entry.remainingXp = math.max(0, math.floor(remaining + 0.5))
+        table.insert(track, entry)
+    end
+
+    table.sort(track, function(a, b)
+        if a.level == b.level then
+            return (a.id or "") < (b.id or "")
+        end
+        return a.level < b.level
+    end)
+
+    return track
+end
+
+function MetaProgression:getUnlockDefinitions()
+    return copyTable(unlockDefinitions)
 end
 
 local function buildSnapshot(self, totalXP)

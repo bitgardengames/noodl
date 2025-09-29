@@ -1,6 +1,7 @@
 local UI = require("ui")
 local Upgrades = require("upgrades")
 local Audio = require("audio")
+local MetaProgression = require("metaprogression")
 
 local Shop = {}
 
@@ -17,6 +18,9 @@ function Shop:refreshCards()
     local extraChoices = 0
     if Upgrades.getEffect then
         extraChoices = math.max(0, math.floor(Upgrades:getEffect("shopSlots") or 0))
+    end
+    if MetaProgression and MetaProgression.getShopBonusSlots then
+        extraChoices = extraChoices + math.max(0, MetaProgression:getShopBonusSlots() or 0)
     end
     extraChoices = math.min(extraChoices, 2)
     self.extraChoices = extraChoices
