@@ -240,7 +240,7 @@ function MetaProgression:grantRunPoints(runStats)
     local startTotal = self.data.totalExperience or 0
     local startSnapshot = buildSnapshot(self, startTotal)
 
-    local gainedTotal = math.max(0, gain.total)
+    local gainedTotal = math.max(0, gain.fruitPoints or 0)
     local endTotal = startTotal + gainedTotal
     local endSnapshot = buildSnapshot(self, endTotal)
 
