@@ -669,17 +669,6 @@ function Shop:draw(screenW, screenH)
         renderCard(selectedIndex, self.cards[selectedIndex])
     end
 
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(1, 1, 1, 0.7)
-    local keyHint
-    local choices = #self.cards
-    if choices > 0 then
-        keyHint = "Use arrows + Enter to claim a relic"
-    else
-        keyHint = "No relics available"
-    end
-    love.graphics.printf(keyHint, 0, screenH * 0.82, screenW, "center")
-
     if self.selected then
         love.graphics.setFont(UI.fonts.body)
         love.graphics.setColor(1, 0.88, 0.6, 0.9)
