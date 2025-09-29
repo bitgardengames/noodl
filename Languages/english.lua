@@ -86,6 +86,7 @@ local english = {
             no_achievements = "No achievements unlocked this run.",
             tip_prefix = "Tip: ${tip}",
             play_again = "Play Again",
+            view_run_summary = "Continue",
             quit_to_menu = "Quit to Menu",
             meta_progress_title = "Meta Progression",
             meta_progress_gain = "Banked ${points} meta XP from ${fruit} fruit.",
