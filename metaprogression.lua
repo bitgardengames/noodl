@@ -8,9 +8,24 @@ local DEFAULT_DATA = {
     unlockHistory = {},
 }
 
-local XP_PER_FRUIT = 1
-local SCORE_BONUS_DIVISOR = 600
-local SCORE_BONUS_MAX = 250
+--[[
+    Meta progression tuning notes
+
+    The previous tuning handed out experience very slowly which made the
+    early unlocks feel grindy. Doubling the fruit award while also widening
+    the score bonus band keeps skilled runs feeling rewarding, and the
+    updated level curve makes sure the later levels still ask for commitment
+    without becoming an endless slog.
+]]
+
+local XP_PER_FRUIT = 2
+local SCORE_BONUS_DIVISOR = 450
+local SCORE_BONUS_MAX = 400
+
+local BASE_XP_PER_LEVEL = 130
+local LINEAR_XP_PER_LEVEL = 42
+local XP_CURVE_SCALE = 20
+local XP_CURVE_EXPONENT = 1.32
 
 local unlockDefinitions = {
     [2] = { name = "Concept Art Vault", description = "Placeholder: Sneak peeks at upcoming visuals." },
@@ -25,13 +40,13 @@ local unlockDefinitions = {
 }
 
 local milestoneThresholds = {
-    500,
-    1000,
-    2000,
-    3500,
-    5000,
-    7500,
-    10000,
+    650,
+    1300,
+    2400,
+    3800,
+    5200,
+    7800,
+    10500,
 }
 
 local function copyTable(tbl)
@@ -122,9 +137,10 @@ end
 
 function MetaProgression:getXpForLevel(level)
     level = math.max(1, math.floor(level or 1))
-    local base = 120
-    local linear = 40 * (level - 1)
-    local curve = math.floor((level - 1) ^ 1.35 * 18)
+    local levelIndex = level - 1
+    local base = BASE_XP_PER_LEVEL
+    local linear = LINEAR_XP_PER_LEVEL * levelIndex
+    local curve = math.floor((levelIndex ^ XP_CURVE_EXPONENT) * XP_CURVE_SCALE)
     return base + linear + curve
 end
 
