@@ -242,7 +242,7 @@ local english = {
             },
             tail_trainer = {
                 name = "Tail Trainer",
-                description = "Gain an extra segment each time you grow and move 4% faster.",
+                description = "Move 4% faster.",
             },
             pocket_springs = {
                 name = "Pocket Springs",
@@ -379,7 +379,7 @@ local english = {
             },
             phoenix_echo = {
                 name = "Phoenix Echo",
-                description = "Once per run, a fatal crash rewinds the floor instead of ending the run.",
+                description = "Once per run, a fatal crash rewinds without resetting the floor, but you gain +1 extra growth.",
             },
             event_horizon = {
                 name = "Event Horizon",

@@ -330,6 +330,47 @@ local function buildInitialTrail()
     return t
 end
 
+local function cloneTrail(source)
+    local copy = {}
+    if not source then
+        return copy
+    end
+
+    for i = 1, #source do
+        local seg = source[i]
+        if seg then
+            local segCopy = {}
+            for k, v in pairs(seg) do
+                if type(v) == "table" then
+                    local nested = {}
+                    for nk, nv in pairs(v) do
+                        nested[nk] = nv
+                    end
+                    segCopy[k] = nested
+                else
+                    segCopy[k] = v
+                end
+            end
+            copy[i] = segCopy
+        end
+    end
+
+    return copy
+end
+
+local function cloneHole(hole)
+    if not hole then
+        return nil
+    end
+
+    local copy = {}
+    for k, v in pairs(hole) do
+        copy[k] = v
+    end
+
+    return copy
+end
+
 function Snake:load(w, h)
     screenW, screenH = w, h
     direction = { x = 1, y = 0 }
@@ -812,6 +853,90 @@ function Snake:getSegments()
         }
     end
     return copy
+end
+
+function Snake:getStateSnapshot()
+    local snapshot = {
+        direction = { x = direction.x, y = direction.y },
+        pendingDir = { x = pendingDir.x, y = pendingDir.y },
+        trail = cloneTrail(trail),
+        segmentCount = segmentCount,
+        moveTimer = moveTimer,
+        popTimer = popTimer,
+        descendingHole = cloneHole(descendingHole),
+        crashShields = self.crashShields or 0,
+        shieldFlashTimer = self.shieldFlashTimer or 0,
+        stonebreakerStacks = self.stonebreakerStacks or 0,
+        stoneSkinSawGrace = self.stoneSkinSawGrace or 0,
+        shieldBurst = self.shieldBurst and {
+            rocks = self.shieldBurst.rocks,
+            stall = self.shieldBurst.stall,
+        } or nil,
+        reverseControls = reverseControls,
+        reverseState = self.reverseState or false,
+    }
+
+    if self.adrenaline then
+        snapshot.adrenaline = {
+            active = self.adrenaline.active or false,
+            timer = self.adrenaline.timer or 0,
+            boost = self.adrenaline.boost,
+            duration = self.adrenaline.duration,
+        }
+    end
+
+    return snapshot
+end
+
+local function copyDirectionVector(dir, fallback)
+    dir = dir or fallback or { x = 0, y = 0 }
+    return { x = dir.x or 0, y = dir.y or 0 }
+end
+
+function Snake:restoreStateSnapshot(snapshot)
+    if not snapshot then
+        return
+    end
+
+    direction = copyDirectionVector(snapshot.direction, direction)
+    pendingDir = copyDirectionVector(snapshot.pendingDir, direction)
+
+    trail = cloneTrail(snapshot.trail or trail)
+    segmentCount = snapshot.segmentCount or segmentCount
+    moveTimer = snapshot.moveTimer or 0
+    popTimer = snapshot.popTimer or 0
+    descendingHole = cloneHole(snapshot.descendingHole)
+    isDead = false
+
+    self.crashShields = snapshot.crashShields or 0
+    self.shieldFlashTimer = snapshot.shieldFlashTimer or 0
+    self.stonebreakerStacks = snapshot.stonebreakerStacks or 0
+    self.stoneSkinSawGrace = snapshot.stoneSkinSawGrace or 0
+
+    if snapshot.shieldBurst then
+        self.shieldBurst = {
+            rocks = snapshot.shieldBurst.rocks,
+            stall = snapshot.shieldBurst.stall,
+        }
+    else
+        self.shieldBurst = nil
+    end
+
+    if snapshot.adrenaline then
+        self.adrenaline = self.adrenaline or {}
+        self.adrenaline.active = snapshot.adrenaline.active or false
+        self.adrenaline.timer = snapshot.adrenaline.timer or 0
+        self.adrenaline.boost = snapshot.adrenaline.boost or self.adrenaline.boost
+        self.adrenaline.duration = snapshot.adrenaline.duration or self.adrenaline.duration
+    elseif self.adrenaline then
+        self.adrenaline.active = false
+        self.adrenaline.timer = 0
+    end
+
+    reverseControls = snapshot.reverseControls or false
+    self.reverseState = snapshot.reverseState or false
+
+    UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
 
 function Snake:isDead()
