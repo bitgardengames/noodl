@@ -6,6 +6,7 @@ local Theme = require("theme")
 local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
+local MetaProgression = require("metaprogression")
 
 local GameOver = {}
 
@@ -23,8 +24,12 @@ local fontTitle
 local fontScore
 local fontSmall
 local fontBadge
+local fontProgressTitle
+local fontProgressValue
+local fontProgressSmall
 local stats = {}
 local buttonList = ButtonList.new()
+local progressionPanelHeight = 0
 
 -- Layout constants
 local BUTTON_WIDTH = 250
@@ -42,6 +47,22 @@ local buttonDefs = {
     { id = "goMenu", textKey = "gameover.quit_to_menu", action = "menu" },
 }
 
+local function addCelebration(anim, entry)
+    if not anim or not entry then
+        return
+    end
+
+    anim.celebrations = anim.celebrations or {}
+    entry.timer = 0
+    entry.duration = entry.duration or 4.5
+    table.insert(anim.celebrations, entry)
+
+    local maxVisible = 3
+    while #anim.celebrations > maxVisible do
+        table.remove(anim.celebrations, 1)
+    end
+end
+
 function GameOver:enter(data)
     UI.clearButtons()
 
@@ -57,6 +78,9 @@ function GameOver:enter(data)
     fontScore = love.graphics.newFont(72)
     fontSmall = love.graphics.newFont(20)
     fontBadge = love.graphics.newFont(26)
+    fontProgressTitle = love.graphics.newFont(30)
+    fontProgressValue = love.graphics.newFont(38)
+    fontProgressSmall = love.graphics.newFont(18)
 
     -- Merge default stats with provided stats
     stats = {
@@ -89,6 +113,12 @@ function GameOver:enter(data)
     stats.totalApples = stats.totalApples or stats.apples or 0
     self.isNewHighScore = (stats.score or 0) > 0 and (stats.score or 0) >= (stats.highScore or 0)
 
+    self.summaryStatsLines = {
+        Localization:get("gameover.high_score", { score = stats.highScore }),
+        Localization:get("gameover.apples_eaten", { count = stats.apples }),
+        Localization:get("gameover.mode_label", { mode = self.modeLabel or Localization:get("common.unknown") }),
+    }
+
     self.achievementsEarned = {}
     local runAchievements = SessionStats:get("runAchievements")
     if type(runAchievements) == "table" then
@@ -105,10 +135,123 @@ function GameOver:enter(data)
     end
 
     local sw, sh = Screen:get()
+    local contentWidth = math.min(sw * 0.65, 520)
+    local padding = 24
+    local wrapLimit = contentWidth - padding * 2
+    local messageText = self.deathMessage or Localization:get("gameover.default_message")
+    local _, wrappedMessage = fontSmall:getWrap(messageText, wrapLimit)
+    local lineHeight = fontSmall:getHeight()
+    local messageHeight = (#wrappedMessage > 0 and #wrappedMessage or 1) * lineHeight
+
+    local statsLines = self.summaryStatsLines or {}
+    local statsSpacing = 6
+    local statsHeight = #statsLines * lineHeight + math.max(0, #statsLines - 1) * statsSpacing
+
+    local achievementsList = self.achievementsEarned or {}
+    local achievementsTopSpacing = 28
+    local achievementsHeaderSpacing = 8
+    local achievementsEntrySpacing = 12
+    local achievementsLineSpacing = 4
+    local achievementsHeight = 0
+
+    if #achievementsList > 0 then
+        achievementsHeight = achievementsTopSpacing + lineHeight + achievementsHeaderSpacing
+        for index, ach in ipairs(achievementsList) do
+            local title = ach.title or ""
+            local _, titleLines = fontSmall:getWrap(title, wrapLimit)
+            achievementsHeight = achievementsHeight + math.max(1, #titleLines) * lineHeight
+
+            local description = ach.description or ""
+            if description ~= "" then
+                local _, descLines = fontSmall:getWrap(description, wrapLimit)
+                achievementsHeight = achievementsHeight + achievementsLineSpacing + math.max(1, #descLines) * lineHeight
+            end
+
+            if index < #achievementsList then
+                achievementsHeight = achievementsHeight + achievementsEntrySpacing
+            end
+        end
+    end
+
+    local headerHeight = lineHeight
+    local scoreHeight = fontScore:getHeight()
+    local badgeHeight = self.isNewHighScore and (fontBadge:getHeight() + 18) or 0
+    local summaryPanelHeight = padding * 2
+        + headerHeight
+        + 12
+        + messageHeight
+        + 24
+        + scoreHeight
+        + 16
+        + badgeHeight
+        + statsHeight
+        + achievementsHeight
+
+    self.summaryPanelHeight = summaryPanelHeight
+
+    self.progression = MetaProgression:grantRunPoints({
+        apples = stats.apples or 0,
+        score = stats.score or 0,
+    })
+
+    self.progressionPanelHeight = 0
+    self.progressionAnimation = nil
+
+    if self.progression then
+        local startSnapshot = self.progression.start or { total = 0, level = 1, xpIntoLevel = 0, xpForNext = MetaProgression:getXpForLevel(1) }
+        local resultSnapshot = self.progression.result or startSnapshot
+        local eventCount = math.max(0, self.progression.eventsCount or 0)
+        local baseHeight = 260
+        if eventCount > 0 then
+            self.progressionPanelHeight = baseHeight + (eventCount - 1) * 44
+        else
+            self.progressionPanelHeight = baseHeight
+        end
+        progressionPanelHeight = self.progressionPanelHeight
+
+        local fillSpeed = math.max(60, (self.progression.gained or 0) / 1.2)
+        self.progressionAnimation = {
+            displayedTotal = startSnapshot.total or 0,
+            targetTotal = resultSnapshot.total or (startSnapshot.total or 0),
+            displayedLevel = startSnapshot.level or 1,
+            xpIntoLevel = startSnapshot.xpIntoLevel or 0,
+            xpForLevel = startSnapshot.xpForNext or MetaProgression:getXpForLevel(startSnapshot.level or 1),
+            displayedGained = 0,
+            fillSpeed = fillSpeed,
+            levelFlash = 0,
+            celebrations = {},
+            pendingMilestones = {},
+            levelUnlocks = {},
+        }
+
+        if type(self.progression.milestones) == "table" then
+            for _, milestone in ipairs(self.progression.milestones) do
+                self.progressionAnimation.pendingMilestones[#self.progressionAnimation.pendingMilestones + 1] = {
+                    threshold = milestone.threshold,
+                    triggered = false,
+                }
+            end
+        end
+
+        if type(self.progression.unlocks) == "table" then
+            for _, unlock in ipairs(self.progression.unlocks) do
+                local level = unlock.level
+                self.progressionAnimation.levelUnlocks[level] = self.progressionAnimation.levelUnlocks[level] or {}
+                table.insert(self.progressionAnimation.levelUnlocks[level], {
+                    name = unlock.name,
+                    description = unlock.description,
+                })
+            end
+        end
+    end
 
     -- Build buttons
     local totalButtonHeight = #buttonDefs * BUTTON_HEIGHT + (#buttonDefs - 1) * BUTTON_SPACING
-    local startY = math.max(math.floor(sh * 0.66), math.floor(sh - totalButtonHeight - 50))
+    local panelY = 120
+    local contentBottom = panelY + summaryPanelHeight + (self.progressionPanelHeight or 0) + 60
+    local defaultStartY = math.max(math.floor(sh * 0.66), math.floor(sh - totalButtonHeight - 50))
+    local startY = math.max(defaultStartY, math.floor(contentBottom))
+    startY = math.min(startY, math.floor(sh - totalButtonHeight - 40))
     local centerX = sw / 2 - BUTTON_WIDTH / 2
 
     local defs = {}
@@ -145,7 +288,7 @@ function GameOver:draw()
     love.graphics.printf(Localization:get("gameover.title"), 0, 48, sw, "center")
 
     -- Combined summary panel
-    local statsLines = {
+    local statsLines = self.summaryStatsLines or {
         Localization:get("gameover.high_score", { score = stats.highScore }),
         Localization:get("gameover.apples_eaten", { count = stats.apples }),
         Localization:get("gameover.mode_label", { mode = self.modeLabel or Localization:get("common.unknown") }),
@@ -276,6 +419,120 @@ function GameOver:draw()
         end
     end
 
+    local progressionAnim = self.progressionAnimation
+    if progressionAnim then
+        local metaY = panelY + panelHeight + 24
+        local metaHeight = self.progressionPanelHeight or 260
+        love.graphics.setColor(Theme.panelColor)
+        love.graphics.rectangle("fill", contentX, metaY, contentWidth, metaHeight, 18, 18)
+        love.graphics.setColor(Theme.panelBorder)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", contentX, metaY, contentWidth, metaHeight, 18, 18)
+        love.graphics.setLineWidth(1)
+
+        local metaPadding = 24
+        local metaWrap = contentWidth - metaPadding * 2
+        local apples = (self.progression and self.progression.apples) or 0
+        local gained = math.floor((progressionAnim.displayedGained or 0) + 0.5)
+        local bonus = 0
+        if self.progression and self.progression.breakdown then
+            bonus = math.max(0, self.progression.breakdown.scoreBonus or 0)
+        end
+
+        love.graphics.setFont(fontProgressTitle)
+        love.graphics.setColor(1, 1, 1, 0.92)
+        love.graphics.printf(Localization:get("gameover.meta_progress_title"), contentX, metaY + 20, contentWidth, "center")
+
+        love.graphics.setFont(fontProgressSmall)
+        love.graphics.setColor(1, 1, 1, 0.82)
+        love.graphics.printf(Localization:get("gameover.meta_progress_gain", {
+            fruit = apples,
+            points = gained,
+        }), contentX + metaPadding, metaY + 70, metaWrap, "center")
+
+        if bonus > 0 then
+            love.graphics.setColor(1, 1, 1, 0.65)
+            love.graphics.printf(Localization:get("gameover.meta_progress_bonus", { bonus = bonus }), contentX + metaPadding, metaY + 96, metaWrap, "center")
+        end
+
+        local levelColor = Theme.progressColor or { 1, 1, 1, 1 }
+        local flash = math.max(0, math.min(1, progressionAnim.levelFlash or 0))
+        love.graphics.setFont(fontProgressValue)
+        love.graphics.setColor(levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.78 + 0.2 * flash)
+        local levelText = Localization:get("gameover.meta_progress_level_label", { level = progressionAnim.displayedLevel or 1 })
+        local levelY = metaY + 120
+        love.graphics.printf(levelText, contentX, levelY, contentWidth, "center")
+
+        local barY = levelY + fontProgressValue:getHeight() + 12
+        local barHeight = 26
+        local barWidth = contentWidth - metaPadding * 2
+        local barX = contentX + metaPadding
+        local percent = 0
+        if (progressionAnim.xpForLevel or 0) > 0 then
+            percent = math.min(1, math.max(0, (progressionAnim.xpIntoLevel or 0) / progressionAnim.xpForLevel))
+        end
+
+        love.graphics.setColor(1, 1, 1, 0.18)
+        love.graphics.rectangle("fill", barX, barY, barWidth, barHeight, 12, 12)
+        love.graphics.setColor(levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.92)
+        love.graphics.rectangle("fill", barX, barY, barWidth * percent, barHeight, 12, 12)
+        love.graphics.setColor(1, 1, 1, 0.5)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", barX, barY, barWidth, barHeight, 12, 12)
+        love.graphics.setLineWidth(1)
+
+        local totalLabel = Localization:get("gameover.meta_progress_total_label", {
+            total = math.floor((progressionAnim.displayedTotal or 0) + 0.5),
+        })
+
+        local remainingLabel
+        if (progressionAnim.xpForLevel or 0) <= 0 then
+            remainingLabel = Localization:get("gameover.meta_progress_max_level")
+        else
+            local remaining = math.max(0, math.ceil((progressionAnim.xpForLevel or 0) - (progressionAnim.xpIntoLevel or 0)))
+            remainingLabel = Localization:get("gameover.meta_progress_next", { remaining = remaining })
+        end
+
+        local labelY = barY + barHeight + 12
+        love.graphics.setFont(fontProgressSmall)
+        love.graphics.setColor(1, 1, 1, 0.8)
+        love.graphics.printf(totalLabel, contentX + metaPadding, labelY, metaWrap, "center")
+        labelY = labelY + fontProgressSmall:getHeight() + 4
+        love.graphics.setColor(1, 1, 1, 0.68)
+        love.graphics.printf(remainingLabel, contentX + metaPadding, labelY, metaWrap, "center")
+
+        local eventsY = labelY + fontProgressSmall:getHeight() + 18
+        local celebrations = progressionAnim.celebrations or {}
+        if #celebrations == 0 then
+            love.graphics.setColor(1, 1, 1, 0.55)
+            love.graphics.printf(Localization:get("gameover.meta_progress_no_events"), contentX + metaPadding, eventsY, metaWrap, "center")
+        else
+            for _, event in ipairs(celebrations) do
+                local alpha = 1
+                if event.duration and event.duration > 0 then
+                    local remainingTime = math.max(0, event.duration - (event.timer or 0))
+                    if remainingTime < 0.75 then
+                        alpha = math.max(0, remainingTime / 0.75)
+                    end
+                end
+
+                love.graphics.setFont(fontProgressSmall)
+                local eventColor = event.color or Theme.achieveColor or { 1, 1, 1, 1 }
+                love.graphics.setColor(eventColor[1] or 1, eventColor[2] or 1, eventColor[3] or 1, 0.85 * alpha)
+                love.graphics.printf(event.title or "", contentX + metaPadding, eventsY, metaWrap, "center")
+                eventsY = eventsY + fontProgressSmall:getHeight()
+
+                if event.subtitle and event.subtitle ~= "" then
+                    love.graphics.setColor(1, 1, 1, 0.72 * alpha)
+                    love.graphics.printf(event.subtitle, contentX + metaPadding, eventsY, metaWrap, "center")
+                    eventsY = eventsY + fontProgressSmall:getHeight()
+                end
+
+                eventsY = eventsY + 12
+            end
+        end
+    end
+
     -- Buttons
     for _, btn in buttonList:iter() do
         if btn.textKey then
@@ -288,7 +545,88 @@ function GameOver:draw()
 end
 
 function GameOver:update(dt)
-    -- No animated elements yet, but keep hook for future transitions
+    local anim = self.progressionAnimation
+    if not anim then
+        return
+    end
+
+    local targetTotal = anim.targetTotal or anim.displayedTotal or 0
+    local startTotal = 0
+    if self.progression and self.progression.start then
+        startTotal = self.progression.start.total or 0
+    end
+
+    if (anim.displayedTotal or 0) < targetTotal then
+        local increment = anim.fillSpeed * dt
+        anim.displayedTotal = math.min(targetTotal, (anim.displayedTotal or 0) + increment)
+        anim.displayedGained = math.min((self.progression and self.progression.gained) or 0, anim.displayedTotal - startTotal)
+
+        local previousLevel = anim.displayedLevel or 1
+        local level, xpIntoLevel, xpForNext = MetaProgression:getProgressForTotal(anim.displayedTotal)
+        if level > previousLevel then
+            for levelReached = previousLevel + 1, level do
+                anim.levelFlash = 0.9
+                addCelebration(anim, {
+                    type = "level",
+                    title = Localization:get("gameover.meta_progress_level_up", { level = levelReached }),
+                    subtitle = Localization:get("gameover.meta_progress_level_up_subtitle"),
+                    color = Theme.progressColor or { 1, 1, 1, 1 },
+                    duration = 5.5,
+                })
+                Audio:playSound("goal_reached")
+
+                local unlockList = anim.levelUnlocks[levelReached]
+                if unlockList then
+                    for _, unlock in ipairs(unlockList) do
+                        addCelebration(anim, {
+                            type = "unlock",
+                            title = Localization:get("gameover.meta_progress_unlock_header", { name = unlock.name or "???" }),
+                            subtitle = unlock.description or "",
+                            color = Theme.achieveColor or { 1, 1, 1, 1 },
+                            duration = 6,
+                        })
+                    end
+                end
+            end
+        end
+
+        anim.displayedLevel = level
+        anim.xpIntoLevel = xpIntoLevel
+        anim.xpForLevel = xpForNext
+    else
+        anim.displayedTotal = targetTotal
+        anim.displayedGained = (self.progression and self.progression.gained) or 0
+    end
+
+    if anim.levelFlash then
+        anim.levelFlash = math.max(0, anim.levelFlash - dt)
+    end
+
+    if anim.pendingMilestones then
+        for _, milestone in ipairs(anim.pendingMilestones) do
+            if not milestone.triggered and (anim.displayedTotal or 0) >= (milestone.threshold or 0) then
+                milestone.triggered = true
+                addCelebration(anim, {
+                    type = "milestone",
+                    title = Localization:get("gameover.meta_progress_milestone_header"),
+                    subtitle = Localization:get("gameover.meta_progress_milestone", { threshold = milestone.threshold }),
+                    color = Theme.achieveColor or { 1, 1, 1, 1 },
+                    duration = 6.5,
+                })
+                Audio:playSound("achievement")
+            end
+        end
+    end
+
+    if anim.celebrations then
+        for index = #anim.celebrations, 1, -1 do
+            local event = anim.celebrations[index]
+            event.timer = (event.timer or 0) + dt
+            if event.timer >= (event.duration or 4.5) then
+                table.remove(anim.celebrations, index)
+            end
+        end
+    end
 end
 
 function GameOver:mousepressed(x, y, button)
