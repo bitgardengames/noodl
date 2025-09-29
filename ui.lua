@@ -737,7 +737,7 @@ local function buildShieldPoints(radius)
     }
 end
 
-local function drawIndicatorIcon(icon, accentColor, x, y, radius)
+local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
     local accent = accentColor or {1, 1, 1, 1}
 
     love.graphics.push("all")
@@ -811,6 +811,55 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius)
         love.graphics.circle("fill", 0, 0, radius * 0.72, 28)
     end
 
+    if overlay and overlay.text then
+        local background = overlay.backgroundColor or {0, 0, 0, 0.78}
+        local borderColor = overlay.borderColor or lightenColor(accent, 0.35)
+        local fontKey = overlay.font or "small"
+        local paddingX = overlay.paddingX or 6
+        local paddingY = overlay.paddingY or 2
+        local previousFont = love.graphics.getFont()
+        UI.setFont(fontKey)
+        local font = love.graphics.getFont()
+        local text = tostring(overlay.text)
+        local textWidth = font:getWidth(text)
+        local boxWidth = textWidth + paddingX * 2
+        local boxHeight = font:getHeight() + paddingY * 2
+        local position = overlay.position or "bottomRight"
+        local anchorX, anchorY
+
+        if position == "topLeft" then
+            anchorX = -radius * 0.75
+            anchorY = -radius * 0.75
+        elseif position == "topRight" then
+            anchorX = radius * 0.75
+            anchorY = -radius * 0.75
+        elseif position == "bottomLeft" then
+            anchorX = -radius * 0.75
+            anchorY = radius * 0.75
+        else
+            anchorX = radius * 0.75
+            anchorY = radius * 0.75
+        end
+
+        local boxX = anchorX - boxWidth * 0.5
+        local boxY = anchorY - boxHeight * 0.5
+        local cornerRadius = overlay.cornerRadius or math.min(10, boxHeight * 0.5)
+
+        love.graphics.setColor(background[1], background[2], background[3], background[4] or 1)
+        love.graphics.rectangle("fill", boxX, boxY, boxWidth, boxHeight, cornerRadius, cornerRadius)
+
+        love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
+        love.graphics.setLineWidth(1)
+        love.graphics.rectangle("line", boxX, boxY, boxWidth, boxHeight, cornerRadius, cornerRadius)
+
+        local textColor = overlay.textColor or {1, 1, 1, 1}
+        love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
+        love.graphics.printf(text, boxX, boxY + paddingY - 1, boxWidth, "center")
+        if previousFont then
+            love.graphics.setFont(previousFont)
+        end
+    end
+
     love.graphics.pop()
 end
 
@@ -845,6 +894,11 @@ local function buildShieldIndicator(self)
         stackCount = count,
         icon = "shield",
         accentColor = accent,
+        iconOverlay = {
+            text = count,
+            position = "bottomRight",
+            font = "small",
+        },
         status = Localization:get("upgrades.hud." .. statusKey),
         showBar = false,
         visibility = 1,
@@ -906,7 +960,7 @@ function UI:drawUpgradeIndicators()
         local visibility = clamp01(entry.visibility or 1)
         local accent = entry.accentColor or Theme.panelBorder or {1, 1, 1, 1}
         local hasBar = entry.showBar and entry.displayProgress ~= nil
-        local panelHeight = baseHeight + (hasBar and (barHeight + 8) or 0)
+        local panelHeight = baseHeight + (hasBar and 8 or 0)
 
         local drawY = y
 
@@ -926,7 +980,7 @@ function UI:drawUpgradeIndicators()
 
         local iconX = x + iconRadius + 16
         local iconY = drawY + iconRadius + 12
-        drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius)
+        drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius, entry.iconOverlay)
 
         local textX = iconX + iconRadius + 16
         local textWidth = width - textX - 16
@@ -950,27 +1004,31 @@ function UI:drawUpgradeIndicators()
         end
 
         if hasBar then
-            local barX = textX
-            local barY = drawY + panelHeight - barHeight - 12
-            local barWidth = textWidth
             local progress = clamp01(entry.displayProgress or 0)
+            local iconBarWidth = layout.iconBarWidth or (iconRadius * 1.8)
+            local iconBarHeight = layout.iconBarHeight or math.max(4, math.floor(barHeight))
+            local barX = iconX - iconBarWidth * 0.5
+            local desiredBarY = iconY + iconRadius + 6
+            local maxBarY = drawY + panelHeight - iconBarHeight - 6
+            local barY = math.min(desiredBarY, maxBarY)
 
-            love.graphics.setColor(0, 0, 0, 0.25 * visibility)
-            love.graphics.rectangle("fill", barX, barY, barWidth, barHeight, 6, 6)
+            love.graphics.setColor(0, 0, 0, 0.28 * visibility)
+            love.graphics.rectangle("fill", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
 
             local fill = lightenColor(accent, 0.05)
             love.graphics.setColor(fill[1], fill[2], fill[3], (fill[4] or 1) * 0.85 * visibility)
-            love.graphics.rectangle("fill", barX, barY, barWidth * progress, barHeight, 6, 6)
+            love.graphics.rectangle("fill", barX, barY, iconBarWidth * progress, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
 
             local outline = lightenColor(accent, 0.3)
             love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1) * 0.9 * visibility)
             love.graphics.setLineWidth(1)
-            love.graphics.rectangle("line", barX, barY, barWidth, barHeight, 6, 6)
+            love.graphics.rectangle("line", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
 
             if entry.chargeLabel then
                 UI.setFont("small")
                 love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.8 * visibility)
-                love.graphics.printf(entry.chargeLabel, barX, barY - 18, barWidth, "right")
+                local labelY = barY + iconBarHeight + 4
+                love.graphics.printf(entry.chargeLabel, barX, labelY, iconBarWidth, "center")
             end
         elseif entry.chargeLabel then
             UI.setFont("small")
