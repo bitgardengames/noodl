@@ -821,7 +821,7 @@ local pool = {
         allowDuplicates = true,
         maxStacks = 2,
         onAcquire = function(state)
-            state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.5
+            state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.25
             state.counters.stonebreakerStacks = (state.counters.stonebreakerStacks or 0) + 1
             if Snake.setStonebreakerStacks then
                 Snake:setStonebreakerStacks(state.counters.stonebreakerStacks)
@@ -1892,7 +1892,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
             stacks = state.counters.stonebreakerStacks or 0
         end
         if stacks <= 0 and effects.rockShatter then
-            local perStack = 0.5
+            local perStack = 0.25
             stacks = math.floor(((effects.rockShatter or 0) / perStack) + 0.5)
         end
         Snake:setStonebreakerStacks(stacks)
