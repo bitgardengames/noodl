@@ -75,6 +75,7 @@ local baselinePlan = {
         fruitGoal = 6,
         rocks = 3,
         saws = 1,
+        conveyors = 0,
         rockSpawnChance = 0.22,
         sawSpeedMult = 1.0,
         sawSpinMult = 0.95,
@@ -84,6 +85,7 @@ local baselinePlan = {
         fruitGoal = 7,
         rocks = 4,
         saws = 1,
+        conveyors = 0,
         rockSpawnChance = 0.24,
         sawSpeedMult = 1.05,
         sawSpinMult = 1.0,
@@ -93,6 +95,7 @@ local baselinePlan = {
         fruitGoal = 8,
         rocks = 5,
         saws = 1,
+        conveyors = 0,
         rockSpawnChance = 0.26,
         sawSpeedMult = 1.1,
         sawSpinMult = 1.05,
@@ -102,6 +105,7 @@ local baselinePlan = {
         fruitGoal = 9,
         rocks = 6,
         saws = 2,
+        conveyors = 0,
         rockSpawnChance = 0.29,
         sawSpeedMult = 1.15,
         sawSpinMult = 1.1,
@@ -111,6 +115,7 @@ local baselinePlan = {
         fruitGoal = 10,
         rocks = 7,
         saws = 2,
+        conveyors = 1,
         rockSpawnChance = 0.32,
         sawSpeedMult = 1.2,
         sawSpinMult = 1.15,
@@ -120,6 +125,7 @@ local baselinePlan = {
         fruitGoal = 11,
         rocks = 8,
         saws = 2,
+        conveyors = 1,
         rockSpawnChance = 0.35,
         sawSpeedMult = 1.26,
         sawSpinMult = 1.2,
@@ -129,6 +135,7 @@ local baselinePlan = {
         fruitGoal = 12,
         rocks = 9,
         saws = 3,
+        conveyors = 2,
         rockSpawnChance = 0.38,
         sawSpeedMult = 1.32,
         sawSpinMult = 1.25,
@@ -138,6 +145,7 @@ local baselinePlan = {
         fruitGoal = 13,
         rocks = 11,
         saws = 3,
+        conveyors = 2,
         rockSpawnChance = 0.41,
         sawSpeedMult = 1.38,
         sawSpinMult = 1.3,
@@ -147,6 +155,7 @@ local baselinePlan = {
         fruitGoal = 14,
         rocks = 12,
         saws = 4,
+        conveyors = 3,
         rockSpawnChance = 0.45,
         sawSpeedMult = 1.44,
         sawSpinMult = 1.35,
@@ -156,6 +165,7 @@ local baselinePlan = {
         fruitGoal = 15,
         rocks = 13,
         saws = 4,
+        conveyors = 3,
         rockSpawnChance = 0.49,
         sawSpeedMult = 1.5,
         sawSpinMult = 1.4,
@@ -165,6 +175,7 @@ local baselinePlan = {
         fruitGoal = 16,
         rocks = 14,
         saws = 5,
+        conveyors = 4,
         rockSpawnChance = 0.53,
         sawSpeedMult = 1.56,
         sawSpinMult = 1.45,
@@ -174,6 +185,7 @@ local baselinePlan = {
         fruitGoal = 17,
         rocks = 15,
         saws = 5,
+        conveyors = 4,
         rockSpawnChance = 0.57,
         sawSpeedMult = 1.62,
         sawSpinMult = 1.5,
@@ -183,6 +195,7 @@ local baselinePlan = {
         fruitGoal = 18,
         rocks = 16,
         saws = 6,
+        conveyors = 5,
         rockSpawnChance = 0.6,
         sawSpeedMult = 1.68,
         sawSpinMult = 1.55,
@@ -192,6 +205,7 @@ local baselinePlan = {
         fruitGoal = 19,
         rocks = 18,
         saws = 6,
+        conveyors = 5,
         rockSpawnChance = 0.64,
         sawSpeedMult = 1.74,
         sawSpinMult = 1.6,
@@ -223,6 +237,7 @@ local function buildBaselineFloorContext(floorNum)
     context.fruitGoal = math.max(context.fruitGoal or 1, (lastPlan.fruitGoal or 18) + extraFloors)
     context.rocks = math.max(0, math.min(40, (lastPlan.rocks or 18) + extraFloors))
     context.saws = math.max(1, math.min(8, (lastPlan.saws or 6) + math.floor(extraFloors / 2)))
+    context.conveyors = math.max(0, math.min(8, (lastPlan.conveyors or 5) + math.floor(extraFloors / 2)))
     context.rockSpawnChance = math.min(0.7, (lastPlan.rockSpawnChance or 0.56) + extraFloors * 0.02)
     context.sawSpeedMult = math.min(1.9, (lastPlan.sawSpeedMult or 1.6) + extraFloors * 0.04)
     context.sawSpinMult = math.min(1.85, (lastPlan.sawSpinMult or 1.55) + extraFloors * 0.035)
@@ -941,6 +956,7 @@ function Game:setupFloor(floorNum)
 
     -- difficulty scaling baseline with floor traits
     local traitContext = buildBaselineFloorContext(floorNum)
+    traitContext.conveyors = math.max(0, traitContext.conveyors or 0)
 
     if traitContext.rockSpawnChance then
         Rocks.spawnChance = traitContext.rockSpawnChance
@@ -964,6 +980,11 @@ function Game:setupFloor(floorNum)
     traitContext = adjustedContext or traitContext
 
     traitContext = Upgrades:modifyFloorContext(traitContext)
+    traitContext.conveyors = math.max(0, traitContext.conveyors or 0)
+
+    local numRocks = traitContext.rocks
+    local numSaws = traitContext.saws
+    local numConveyors = math.max(0, math.min(8, math.floor((traitContext.conveyors or 0) + 0.5)))
 
     UI:setFruitGoal(traitContext.fruitGoal)
     UI:setFloorModifiers(appliedTraits)
@@ -979,10 +1000,8 @@ function Game:setupFloor(floorNum)
     else
         traitContext.sawStall = Saws.stallOnFruit or 0
     end
+    traitContext.conveyors = numConveyors
     Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
-
-    local numRocks = traitContext.rocks
-    local numSaws = traitContext.saws
 
     -- Spawn saws FIRST so they reserve their track cells
     local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
@@ -1016,6 +1035,56 @@ function Game:setupFloor(floorNum)
                 if SnakeUtils.trackIsFree(fx, fy, "vertical", TRACK_LENGTH) then
                     Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side)
                     SnakeUtils.occupySawTrack(fx, fy, "vertical", bladeRadius, TRACK_LENGTH, side)
+                    placed = true
+                end
+            end
+        end
+    end
+
+    -- Conveyors fill in around the existing hazards without blocking saw placement
+    local conveyorTrackLength = TRACK_LENGTH
+    local horizontalConveyorPossible = (1 + halfTiles) <= (Arena.cols - halfTiles)
+    local verticalConveyorPossible = (1 + halfTiles) <= (Arena.rows - halfTiles)
+    for _ = 1, numConveyors do
+        local placed = false
+        local attempts = 0
+        local maxAttempts = 60
+
+        while not placed and attempts < maxAttempts do
+            attempts = attempts + 1
+            local dir
+            if horizontalConveyorPossible and verticalConveyorPossible then
+                dir = (love.math.random() < 0.5) and "horizontal" or "vertical"
+            elseif horizontalConveyorPossible then
+                dir = "horizontal"
+            elseif verticalConveyorPossible then
+                dir = "vertical"
+            else
+                break
+            end
+
+            if dir == "horizontal" then
+                local minCol = 1 + halfTiles
+                local maxCol = Arena.cols - halfTiles
+                local col = love.math.random(minCol, maxCol)
+                local row = love.math.random(1, Arena.rows)
+                local fx, fy = Arena:getCenterOfTile(col, row)
+
+                if SnakeUtils.trackIsFree(fx, fy, dir, conveyorTrackLength) then
+                    Conveyors:spawn(fx, fy, dir, conveyorTrackLength)
+                    SnakeUtils.occupyTrack(fx, fy, dir, conveyorTrackLength)
+                    placed = true
+                end
+            else
+                local col = love.math.random(1, Arena.cols)
+                local rowMin = 1 + halfTiles
+                local rowMax = Arena.rows - halfTiles
+                local row = love.math.random(rowMin, rowMax)
+                local fx, fy = Arena:getCenterOfTile(col, row)
+
+                if SnakeUtils.trackIsFree(fx, fy, dir, conveyorTrackLength) then
+                    Conveyors:spawn(fx, fy, dir, conveyorTrackLength)
+                    SnakeUtils.occupyTrack(fx, fy, dir, conveyorTrackLength)
                     placed = true
                 end
             end

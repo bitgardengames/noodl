@@ -118,12 +118,18 @@ function SnakeUtils.trackIsFree(fx, fy, dir, trackLength)
     return true
 end
 
--- Mark every grid cell overlapped by a saw’s track
-function SnakeUtils.occupySawTrack(fx, fy, dir, radius, trackLength, side)
+-- Mark every grid cell overlapped by a hazard track
+function SnakeUtils.occupyTrack(fx, fy, dir, trackLength)
     local cells = SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
     for _, cell in ipairs(cells) do
         SnakeUtils.setOccupied(cell[1], cell[2], true)
     end
+
+    return cells
+end
+
+function SnakeUtils.occupySawTrack(fx, fy, dir, radius, trackLength, side)
+    return SnakeUtils.occupyTrack(fx, fy, dir, trackLength)
 end
 
 -- Safe spawn: just randomize until we find a free cell
