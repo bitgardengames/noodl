@@ -379,7 +379,11 @@ local english = {
             },
             phoenix_echo = {
                 name = "Phoenix Echo",
-                description = "Once per run, a fatal crash rewinds without resetting the floor, but you gain +1 extra growth.",
+                description = "Once per run, a fatal crash rewinds without resetting the floor.",
+            },
+            zephyr_coils = {
+                name = "Zephyr Coils",
+                description = "Rare: Snake speed +20% but you gain +1 extra growth.",
             },
             event_horizon = {
                 name = "Event Horizon",
