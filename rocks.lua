@@ -49,7 +49,7 @@ local function buildRockHighlight(points)
 
     local highlight = {}
     local scaleX, scaleY = 0.78, 0.66
-    local offsetX, offsetY = -ROCK_SIZE * 0.12, -ROCK_SIZE * 0.18
+    local offsetX, offsetY = -ROCK_SIZE * 0.12 + 2, -ROCK_SIZE * 0.18 + 2
 
     for i = 1, #points, 2 do
         local x = points[i] * scaleX + offsetX

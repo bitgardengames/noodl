@@ -121,7 +121,8 @@ local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
 
         -- highlight sheen
         love.graphics.push()
-        love.graphics.translate(0, -math.max(2, thickness * 0.22))
+        local highlightOffset = math.max(2, thickness * 0.22)
+        love.graphics.translate(-highlightOffset, -highlightOffset)
         love.graphics.setColor(HIGHLIGHT_R, HIGHLIGHT_G, HIGHLIGHT_B, HIGHLIGHT_ALPHA)
         love.graphics.setLineWidth(math.max(2, thickness * 0.35))
         drawPolyline(coords)
