@@ -849,30 +849,40 @@ function Game:update(dt)
         end
 
         PauseMenu:update(dt, false)
-        FruitEvents.update(dt)
+
+        local timeScale = 1
+        if Snake.getTimeScale then
+                local scale = Snake:getTimeScale()
+                if scale and scale > 0 then
+                        timeScale = scale
+                end
+        end
+        local scaledDt = dt * timeScale
+
+        FruitEvents.update(scaledDt)
 
         if self.state == "transition" then
-                self:updateTransition(dt)
+                self:updateTransition(scaledDt)
                 return
         end
 
         if self.state == "descending" then
-                self:updateDescending(dt)
+                self:updateDescending(scaledDt)
                 return
         end
 
         if self.mode and self.mode.update then
-                self.mode.update(self, dt)
+                self.mode.update(self, scaledDt)
         end
 
         if self.state == "playing" then
-                self:updateGameplay(dt)
+                self:updateGameplay(scaledDt)
         end
 
-        self:updateEntities(dt)
+        self:updateEntities(scaledDt)
         UI:setUpgradeIndicators(Upgrades:getHUDIndicators())
 
-        local result = self:handleDeath(dt)
+        local result = self:handleDeath(scaledDt)
         if result then
                 return result
         end

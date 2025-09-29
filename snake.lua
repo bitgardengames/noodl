@@ -35,6 +35,7 @@ Snake.shieldFlashTimer = 0
 Snake.stonebreakerStacks = 0
 Snake.stoneSkinSawGrace = 0
 Snake.dash = nil
+Snake.timeDilation = nil
 
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
@@ -90,6 +91,7 @@ function Snake:resetModifiers()
     self.stonebreakerStacks = 0
     self.stoneSkinSawGrace = 0
     self.dash = nil
+    self.timeDilation = nil
     if self.adrenaline then
         self.adrenaline.active = false
         self.adrenaline.timer = 0
@@ -596,6 +598,20 @@ function Snake:update(dt)
         end
     end
 
+    if self.timeDilation then
+        if self.timeDilation.cooldownTimer and self.timeDilation.cooldownTimer > 0 then
+            self.timeDilation.cooldownTimer = math.max(0, (self.timeDilation.cooldownTimer or 0) - dt)
+        end
+
+        if self.timeDilation.active then
+            self.timeDilation.timer = (self.timeDilation.timer or 0) - dt
+            if self.timeDilation.timer <= 0 then
+                self.timeDilation.active = false
+                self.timeDilation.timer = 0
+            end
+        end
+    end
+
     local hole = descendingHole
     if hole and head then
         local dx = hole.x - head.drawX
@@ -856,6 +872,69 @@ function Snake:onDashBreakRock(x, y)
     end
 end
 
+function Snake:activateTimeDilation()
+    local ability = self.timeDilation
+    if not ability or ability.active then
+        return false
+    end
+
+    if (ability.cooldownTimer or 0) > 0 then
+        return false
+    end
+
+    ability.active = true
+    ability.timer = ability.duration or 0
+    ability.cooldownTimer = ability.cooldown or 0
+
+    if ability.timer <= 0 then
+        ability.active = false
+    end
+
+    local hx, hy = self:getHead()
+    local Upgrades = getUpgradesModule()
+    if Upgrades and Upgrades.notify then
+        Upgrades:notify("timeDilationActivated", {
+            x = hx,
+            y = hy,
+        })
+    end
+
+    return ability.active
+end
+
+function Snake:isTimeDilationActive()
+    return self.timeDilation and self.timeDilation.active or false
+end
+
+function Snake:getTimeDilationState()
+    local ability = self.timeDilation
+    if not ability then
+        return nil
+    end
+
+    return {
+        active = ability.active or false,
+        timer = ability.timer or 0,
+        duration = ability.duration or 0,
+        cooldown = ability.cooldown or 0,
+        cooldownTimer = ability.cooldownTimer or 0,
+        timeScale = ability.timeScale or 1,
+    }
+end
+
+function Snake:getTimeScale()
+    local ability = self.timeDilation
+    if ability and ability.active then
+        local scale = ability.timeScale or 1
+        if scale < 0.05 then
+            scale = 0.05
+        end
+        return scale
+    end
+
+    return 1
+end
+
 function Snake:updateReverseState(reversed)
     if reversed ~= self.reverseState then
         self:setReverseControls(reversed)
@@ -975,6 +1054,14 @@ function Snake:getStateSnapshot()
         }
     end
 
+    if self.timeDilation then
+        snapshot.timeDilation = {
+            active = self.timeDilation.active or false,
+            timer = self.timeDilation.timer or 0,
+            cooldownTimer = self.timeDilation.cooldownTimer or 0,
+        }
+    end
+
     return snapshot
 end
 
@@ -1032,6 +1119,21 @@ function Snake:restoreStateSnapshot(snapshot)
         self.dash.active = false
         self.dash.timer = 0
         self.dash.cooldownTimer = math.min(self.dash.cooldown or 0, self.dash.cooldownTimer or 0)
+    end
+
+    if snapshot.timeDilation then
+        self.timeDilation = self.timeDilation or {}
+        self.timeDilation.active = snapshot.timeDilation.active or false
+        self.timeDilation.timer = snapshot.timeDilation.timer or 0
+        self.timeDilation.cooldownTimer = snapshot.timeDilation.cooldownTimer or 0
+    elseif self.timeDilation then
+        self.timeDilation.active = false
+        self.timeDilation.timer = 0
+        if self.timeDilation.cooldown then
+            self.timeDilation.cooldownTimer = math.min(self.timeDilation.cooldownTimer or 0, self.timeDilation.cooldown or 0)
+        else
+            self.timeDilation.cooldownTimer = 0
+        end
     end
 
     reverseControls = snapshot.reverseControls or false

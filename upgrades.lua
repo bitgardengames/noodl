@@ -75,6 +75,7 @@ local defaultEffects = {
     shopSlots = 0,
     wallPortal = false,
     dash = nil,
+    timeSlow = nil,
 }
 
 local function getEventPosition(data)
@@ -1354,6 +1355,39 @@ local pool = {
         end,
     }),
     register({
+        id = "temporal_anchor",
+        nameKey = "upgrades.temporal_anchor.name",
+        descKey = "upgrades.temporal_anchor.description",
+        rarity = "rare",
+        tags = {"utility", "defense"},
+        allowDuplicates = false,
+        onAcquire = function(state)
+            local ability = state.effects.timeSlow or {}
+            ability.duration = ability.duration or 1.6
+            ability.cooldown = ability.cooldown or 8
+            ability.timeScale = ability.timeScale or 0.35
+            state.effects.timeSlow = ability
+
+            if not state.counters.temporalAnchorHandlerRegistered then
+                state.counters.temporalAnchorHandlerRegistered = true
+                Upgrades:addEventHandler("timeDilationActivated", function(data)
+                    local label = getUpgradeString("temporal_anchor", "activation_text")
+                    celebrateUpgrade(label, data, {
+                        color = {0.62, 0.84, 1.0, 1},
+                        particleCount = 26,
+                        particleSpeed = 120,
+                        particleLife = 0.5,
+                        particleSize = 5,
+                        particleSpread = math.pi * 2,
+                        particleSpeedVariance = 70,
+                        textOffset = 60,
+                        textScale = 1.12,
+                    })
+                end)
+            end
+        end,
+    }),
+    register({
         id = "zephyr_coils",
         nameKey = "upgrades.zephyr_coils.name",
         descKey = "upgrades.zephyr_coils.description",
@@ -1571,6 +1605,49 @@ function Upgrades:getHUDIndicators()
             chargeLabel = chargeLabel,
             status = status,
             icon = "bolt",
+            showBar = showBar,
+        })
+    end
+
+    local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState()
+    if timeState then
+        local label = Localization:get("upgrades.temporal_anchor.name")
+        local accent = {0.62, 0.84, 1.0, 1}
+        local status
+        local charge
+        local chargeLabel
+        local showBar = false
+
+        if timeState.active and timeState.duration > 0 then
+            local remaining = math.max(timeState.timer or 0, 0)
+            charge = clamp(remaining / timeState.duration, 0, 1)
+            chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remaining) })
+            status = hudText("active")
+            showBar = true
+        else
+            local cooldown = timeState.cooldown or 0
+            local remainingCooldown = math.max(timeState.cooldownTimer or 0, 0)
+            if cooldown > 0 and remainingCooldown > 0 then
+                local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
+                charge = progress
+                chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remainingCooldown) })
+                status = hudText("charging")
+                showBar = true
+            else
+                charge = 1
+                status = hudText("ready")
+            end
+        end
+
+        table.insert(indicators, {
+            id = "temporal_anchor",
+            label = label,
+            accentColor = accent,
+            stackCount = nil,
+            charge = charge,
+            chargeLabel = chargeLabel,
+            status = status,
+            icon = "hourglass",
             showBar = showBar,
         })
     end
@@ -1832,6 +1909,32 @@ function Upgrades:applyPersistentEffects(rebaseline)
         end
     else
         Snake.dash = nil
+    end
+
+    if effects.timeSlow then
+        Snake.timeDilation = Snake.timeDilation or {}
+        local ability = Snake.timeDilation
+        local firstSetup = not ability.configured
+        ability.duration = effects.timeSlow.duration or ability.duration or 0
+        ability.cooldown = effects.timeSlow.cooldown or ability.cooldown or 0
+        ability.timeScale = effects.timeSlow.timeScale or ability.timeScale or 1
+        ability.configured = true
+        ability.timer = ability.timer or 0
+        ability.cooldownTimer = ability.cooldownTimer or 0
+        ability.active = ability.active or false
+        if firstSetup then
+            ability.active = false
+            ability.timer = 0
+            ability.cooldownTimer = 0
+        else
+            if ability.cooldown and ability.cooldown > 0 then
+                ability.cooldownTimer = math.min(ability.cooldownTimer or 0, ability.cooldown)
+            else
+                ability.cooldownTimer = 0
+            end
+        end
+    else
+        Snake.timeDilation = nil
     end
 end
 

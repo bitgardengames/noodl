@@ -386,6 +386,11 @@ local english = {
                 description = "Press Space to dash forward, smashing through rocks while briefly speeding up.",
                 activation_text = "Thunder Dash!",
             },
+            temporal_anchor = {
+                name = "Temporal Anchor",
+                description = "Press Shift to slow time for a short duration, reducing all movement to 35% speed.",
+                activation_text = "Time Slow!",
+            },
             zephyr_coils = {
                 name = "Zephyr Coils",
                 description = "Rare: Snake speed +20% but you gain +1 extra growth.",
