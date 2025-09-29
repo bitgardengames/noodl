@@ -95,6 +95,15 @@ local FADE_DURATION   = 0.20
 local SHADOW_OFFSET = 3
 local OUTLINE_SIZE = 3
 
+local function getHighlightColor(color)
+    color = color or {1, 1, 1, 1}
+    local r = math.min(1, color[1] * 1.2 + 0.08)
+    local g = math.min(1, color[2] * 1.2 + 0.08)
+    local b = math.min(1, color[3] * 1.2 + 0.08)
+    local a = (color[4] or 1) * 0.75
+    return {r, g, b, a}
+end
+
 -- State
 local active = {
     x = 0, y = 0,
@@ -265,6 +274,19 @@ local function drawFruit(f)
     -- fruit body
     love.graphics.setColor(f.type.color[1], f.type.color[2], f.type.color[3], alpha)
     love.graphics.ellipse("fill", x, y, r * sx, r * sy)
+
+    -- highlight
+    local highlight = getHighlightColor(f.type.color)
+    local hx = x - r * sx * 0.3
+    local hy = y - r * sy * 0.35
+    local hrx = r * sx * 0.55
+    local hry = r * sy * 0.45
+    love.graphics.push()
+    love.graphics.translate(hx, hy)
+    love.graphics.rotate(-0.35)
+    love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * alpha)
+    love.graphics.ellipse("fill", 0, 0, hrx, hry)
+    love.graphics.pop()
 
     -- outline (2–3px black border)
     love.graphics.setLineWidth(OUTLINE_SIZE)

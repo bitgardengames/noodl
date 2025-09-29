@@ -16,6 +16,15 @@ local SINK_OFFSET = 2
 local SINK_DISTANCE = 28
 local SINK_SPEED = 3
 
+local function getHighlightColor(color)
+    color = color or {1, 1, 1, 1}
+    local r = math.min(1, color[1] * 1.2 + 0.08)
+    local g = math.min(1, color[2] * 1.2 + 0.08)
+    local b = math.min(1, color[3] * 1.2 + 0.08)
+    local a = (color[4] or 1) * 0.7
+    return {r, g, b, a}
+end
+
 -- modifiers
 Saws.speedMult = 1.0
 Saws.spinMult = 1.0
@@ -324,6 +333,16 @@ function Saws:draw()
         -- Fill
         love.graphics.setColor(Theme.sawColor)
         love.graphics.polygon("fill", points)
+
+        -- highlight
+        local highlight = getHighlightColor(Theme.sawColor)
+        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+        love.graphics.push()
+        love.graphics.translate(-outer * 0.22, -outer * 0.18)
+        love.graphics.rotate(-0.3)
+        love.graphics.scale(0.7, 0.5)
+        love.graphics.circle("fill", 0, 0, outer)
+        love.graphics.pop()
 
         -- Outline
         love.graphics.setColor(0, 0, 0, 1)

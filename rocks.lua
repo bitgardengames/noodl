@@ -35,6 +35,32 @@ local function generateRockShape(size, seed)
     return points
 end
 
+local function getHighlightColor(color)
+    color = color or {1, 1, 1, 1}
+    local r = math.min(1, color[1] * 1.2 + 0.08)
+    local g = math.min(1, color[2] * 1.2 + 0.08)
+    local b = math.min(1, color[3] * 1.2 + 0.08)
+    local a = (color[4] or 1) * 0.75
+    return {r, g, b, a}
+end
+
+local function buildRockHighlight(points)
+    if not points then return nil end
+
+    local highlight = {}
+    local scaleX, scaleY = 0.78, 0.66
+    local offsetX, offsetY = -ROCK_SIZE * 0.12, -ROCK_SIZE * 0.18
+
+    for i = 1, #points, 2 do
+        local x = points[i] * scaleX + offsetX
+        local y = points[i + 1] * scaleY + offsetY
+        highlight[#highlight + 1] = x
+        highlight[#highlight + 1] = y
+    end
+
+    return highlight
+end
+
 function Rocks:spawn(x, y)
     local col, row = Arena:getTileFromWorld(x, y)
     table.insert(current, {
@@ -47,10 +73,13 @@ function Rocks:spawn(x, y)
         scaleX = 1,
         scaleY = 0,
         offsetY = -40,
-        shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999)),
+        shape = nil,
         col = col,
         row = row,
     })
+    local rock = current[#current]
+    rock.shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999))
+    rock.highlightShape = buildRockHighlight(rock.shape)
 end
 
 function Rocks:getAll()
@@ -252,6 +281,13 @@ function Rocks:draw()
         -- main rock fill
         love.graphics.setColor(Theme.rock)
         love.graphics.polygon("fill", rock.shape)
+
+        -- highlight
+        if rock.highlightShape then
+            local highlight = getHighlightColor(Theme.rock)
+            love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+            love.graphics.polygon("fill", rock.highlightShape)
+        end
 
         -- outline
         love.graphics.setColor(0, 0, 0, 1)
