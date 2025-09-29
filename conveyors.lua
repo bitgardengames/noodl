@@ -221,7 +221,7 @@ local function drawBelt(belt, colors)
     drawChevronStrip(length - inset * 2, innerHeight, belt.patternOffset or 0, colors)
     love.graphics.setStencilTest()
 
-    local rollerRadius = math.min(targetThickness * 0.65, 18)
+    local rollerRadius = math.min(targetThickness * 0.325, 9)
     local rollerOffset = length / 2 - rollerRadius - 3
     local rollerY = (belt.rollerOffset or 0)
 
