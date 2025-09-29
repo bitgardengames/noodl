@@ -1488,13 +1488,11 @@ function Upgrades:getHUDIndicators()
     end
 
     local phoenixCharges = 0
-    local phoenixUsed = 0
     if state.counters then
         phoenixCharges = state.counters.phoenixEchoCharges or 0
-        phoenixUsed = state.counters.phoenixEchoUsed or 0
     end
 
-    if phoenixCharges > 0 or phoenixUsed > 0 then
+    if phoenixCharges > 0 then
         local label = Localization:get("upgrades.phoenix_echo.name")
         table.insert(indicators, {
             id = "phoenix_echo",
