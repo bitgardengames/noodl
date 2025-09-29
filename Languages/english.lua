@@ -256,6 +256,10 @@ local english = {
                 name = "Tail Trainer",
                 description = "Move 4% faster.",
             },
+            deliberate_coil = {
+                name = "Deliberate Coil",
+                description = "Move 15% slower. Exit unlocks one fruit later.",
+            },
             pocket_springs = {
                 name = "Pocket Springs",
                 description = "Every 8 fruits forge a crash shield charge.",
