@@ -606,6 +606,28 @@ local pool = {
         end,
     }),
     register({
+        id = "deliberate_coil",
+        nameKey = "upgrades.deliberate_coil.name",
+        descKey = "upgrades.deliberate_coil.description",
+        rarity = "epic",
+        tags = {"speed", "risk"},
+        onAcquire = function(state)
+            Snake:addSpeedMultiplier(0.85)
+            state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+            if UI.adjustFruitGoal then
+                UI:adjustFruitGoal(1)
+            end
+            celebrateUpgrade(getUpgradeString("deliberate_coil", "name"), nil, {
+                color = {0.76, 0.56, 0.88, 1},
+                particleCount = 16,
+                particleSpeed = 90,
+                particleLife = 0.5,
+                textOffset = 40,
+                textScale = 1.08,
+            })
+        end,
+    }),
+    register({
         id = "pocket_springs",
         nameKey = "upgrades.pocket_springs.name",
         descKey = "upgrades.pocket_springs.description",
