@@ -226,7 +226,7 @@ local english = {
                 reforged = "Aegis Reforged",
             },
             saw_grease = {
-                name = "Saw Grease",
+                name = "Saw Molasses",
                 description = "Saws move 20% slower.",
             },
             hydraulic_tracks = {
