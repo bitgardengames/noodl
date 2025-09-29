@@ -15,6 +15,8 @@ function Controls:keypressed(game, key)
         elseif key == "left" then Snake:setDirection("left")
         elseif key == "right" then Snake:setDirection("right")
         elseif key == "space" then Snake:activateDash()
+        elseif key == "lshift" or key == "rshift" then
+            Snake:activateTimeDilation()
         end
     end
 end

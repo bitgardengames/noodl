@@ -779,6 +779,24 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius)
         love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
         love.graphics.setLineWidth(2)
         love.graphics.circle("line", 0, 0, radius * 0.95, 28)
+    elseif icon == "hourglass" then
+        local bowl = {
+            -radius * 0.7, -radius * 0.78,
+            radius * 0.7, -radius * 0.78,
+            radius * 0.32, -radius * 0.12,
+            radius * 0.32, radius * 0.12,
+            radius * 0.7, radius * 0.78,
+            -radius * 0.7, radius * 0.78,
+            -radius * 0.32, radius * 0.12,
+            -radius * 0.32, -radius * 0.12,
+        }
+        love.graphics.polygon("fill", bowl)
+        love.graphics.setColor(base[1], base[2], base[3], (base[4] or 1) * 0.6)
+        love.graphics.ellipse("fill", 0, -radius * 0.36, radius * 0.4, radius * 0.2, 28)
+        love.graphics.ellipse("fill", 0, radius * 0.36, radius * 0.4, radius * 0.2, 28)
+        love.graphics.setColor(detail[1], detail[2], detail[3], detail[4] or 1)
+        love.graphics.setLineWidth(2)
+        love.graphics.polygon("line", bowl)
     elseif icon == "phoenix" then
         local wing = {
             -radius * 0.88, radius * 0.16,
