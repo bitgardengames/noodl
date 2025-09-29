@@ -1103,13 +1103,8 @@ local pool = {
         tags = {"defense"},
         onAcquire = function(state)
             state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 1.1
-            Snake:addCrashShields(1)
+            state.effects.sawStall = (state.effects.sawStall or 0) + 0.6
         end,
-        handlers = {
-            floorStart = function()
-                Snake:addCrashShields(1)
-            end,
-        },
     }),
     register({
         id = "relentless_pursuit",
@@ -1298,13 +1293,8 @@ local pool = {
         tags = {"defense"},
         onAcquire = function(state)
             state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
-            Snake:addCrashShields(1)
+            state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.25
         end,
-        handlers = {
-            floorStart = function()
-                Snake:addCrashShields(1)
-            end,
-        },
     }),
     register({
         id = "titanblood_pact",

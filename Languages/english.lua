@@ -361,7 +361,7 @@ local english = {
             },
             grim_reliquary = {
                 name = "Grim Reliquary",
-                description = "Begin each floor with +1 crash shield. Saws move 10% faster.",
+                description = "Saw tracks stall for +0.6s after each fruit. Saws move 10% faster.",
             },
             relentless_pursuit = {
                 name = "Relentless Pursuit",
@@ -392,7 +392,7 @@ local english = {
             },
             tectonic_resolve = {
                 name = "Tectonic Resolve",
-                description = "Rock spawn chance decreases by 15%. Begin each floor with +1 crash shield.",
+                description = "Rock spawn chance decreases by 15%. Each fruit has a 25% chance to shatter the nearest rock.",
             },
             titanblood_pact = {
                 name = "Titanblood Pact",
