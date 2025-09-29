@@ -8,7 +8,7 @@ local DEFAULT_DATA = {
     unlockHistory = {},
 }
 
-local XP_PER_FRUIT = 12
+local XP_PER_FRUIT = 1
 local SCORE_BONUS_DIVISOR = 600
 local SCORE_BONUS_MAX = 250
 
