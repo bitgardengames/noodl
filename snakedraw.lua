@@ -12,6 +12,15 @@ local FRUIT_BULGE_SCALE = 1.25
 -- colors (body color reused for patches so they blend)
 local BODY_R, BODY_G, BODY_B = Theme.snakeDefault
 
+local function makeHighlightColor(r, g, b)
+  return math.min(1, r * 1.2 + 0.08),
+         math.min(1, g * 1.2 + 0.08),
+         math.min(1, b * 1.2 + 0.08)
+end
+
+local HIGHLIGHT_R, HIGHLIGHT_G, HIGHLIGHT_B = makeHighlightColor(BODY_R, BODY_G, BODY_B)
+local HIGHLIGHT_ALPHA = 0.75
+
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
 
@@ -109,6 +118,17 @@ local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
         love.graphics.setColor(BODY_R, BODY_G, BODY_B)
         drawCornerPlugs(trail, half)
         drawFruitBulges(trail, head, bulgeRadius)
+
+        -- highlight sheen
+        love.graphics.push()
+        love.graphics.translate(0, -math.max(2, thickness * 0.22))
+        love.graphics.setColor(HIGHLIGHT_R, HIGHLIGHT_G, HIGHLIGHT_B, HIGHLIGHT_ALPHA)
+        love.graphics.setLineWidth(math.max(2, thickness * 0.35))
+        drawPolyline(coords)
+        drawEndcaps(head, tail, half * 0.55)
+        drawCornerPlugs(trail, half * 0.55)
+        drawFruitBulges(trail, head, bulgeRadius * 0.55)
+        love.graphics.pop()
 end
 
 local function drawSoftGlow(x, y, radius, r, g, b, a)
