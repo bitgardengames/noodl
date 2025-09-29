@@ -477,6 +477,11 @@ end
 
 function Game:updateGameplay(dt)
         local fruitX, fruitY = Fruit:getPosition()
+
+        if Upgrades and Upgrades.recordFloorReplaySnapshot then
+                Upgrades:recordFloorReplaySnapshot(self)
+        end
+
         local moveResult, cause = Movement:update(dt)
 
         if moveResult == "dead" then

@@ -599,7 +599,6 @@ local pool = {
         maxStacks = 3,
         tags = {"speed"},
         onAcquire = function(state)
-            Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
             Snake:addSpeedMultiplier(1.04)
         end,
     }),
@@ -1317,6 +1316,7 @@ local pool = {
         tags = {"defense", "risk"},
         onAcquire = function(state)
             state.counters.phoenixEchoCharges = (state.counters.phoenixEchoCharges or 0) + 1
+            Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
         end,
     }),
     register({
@@ -1509,6 +1509,27 @@ function Upgrades:getHUDIndicators()
     return indicators
 end
 
+function Upgrades:recordFloorReplaySnapshot(game)
+    if not game then return end
+
+    local state = self.runState
+    if not state or not state.counters then return end
+
+    local charges = state.counters.phoenixEchoCharges or 0
+    if charges <= 0 then
+        state.counters.phoenixEchoSnapshot = nil
+        return
+    end
+
+    if not Snake.getStateSnapshot then
+        return
+    end
+
+    state.counters.phoenixEchoSnapshot = {
+        snake = Snake:getStateSnapshot(),
+    }
+end
+
 function Upgrades:modifyFloorContext(context)
     if not context then return context end
 
@@ -1574,12 +1595,25 @@ function Upgrades:tryFloorReplay(game, cause)
     state.counters.phoenixEchoUsed = (state.counters.phoenixEchoUsed or 0) + 1
     state.counters.phoenixEchoLastCause = cause
 
+    local snapshot = state.counters.phoenixEchoSnapshot
+    state.counters.phoenixEchoSnapshot = nil
+
     game.transitionPhase = nil
     game.transitionTimer = 0
     game.transitionDuration = 0
     game.shopCloseRequested = nil
+    game.transitionResumePhase = nil
+    game.transitionResumeFadeDuration = nil
 
-    game:setupFloor(game.floor)
+    local restored = false
+    if snapshot and snapshot.snake and Snake.restoreStateSnapshot then
+        Snake:restoreStateSnapshot(snapshot.snake)
+        restored = true
+    else
+        game:setupFloor(game.floor)
+        restored = true
+    end
+
     game.state = "playing"
     game.deathCause = nil
 
@@ -1595,7 +1629,7 @@ function Upgrades:tryFloorReplay(game, cause)
         textScale = 1.22,
     })
 
-    return true
+    return restored
 end
 
 local function captureBaseline(state)
