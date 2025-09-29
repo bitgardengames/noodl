@@ -45,9 +45,9 @@ UI.upgradeIndicators = {
     layout = {
         width = 252,
         spacing = 12,
-        baseHeight = 64,
+        baseHeight = 58,
         iconRadius = 18,
-        barHeight = 10,
+        barHeight = 6,
         margin = 24,
     },
 }
@@ -818,7 +818,12 @@ local function buildShieldIndicator(self)
     local shields = self.shields
     if not shields then return nil end
 
-    local count = math.max(0, math.floor((shields.count or 0) + 0.0001))
+    local rawCount = shields.count
+    if rawCount == nil then
+        rawCount = shields.display
+    end
+
+    local count = math.max(0, math.floor((rawCount or 0) + 0.5))
 
     if count <= 0 then
         return nil
@@ -901,7 +906,7 @@ function UI:drawUpgradeIndicators()
         local visibility = clamp01(entry.visibility or 1)
         local accent = entry.accentColor or Theme.panelBorder or {1, 1, 1, 1}
         local hasBar = entry.showBar and entry.displayProgress ~= nil
-        local panelHeight = baseHeight + (hasBar and (barHeight + 12) or 0)
+        local panelHeight = baseHeight + (hasBar and (barHeight + 8) or 0)
 
         local drawY = y
 
@@ -946,7 +951,7 @@ function UI:drawUpgradeIndicators()
 
         if hasBar then
             local barX = textX
-            local barY = drawY + panelHeight - barHeight - 14
+            local barY = drawY + panelHeight - barHeight - 12
             local barWidth = textWidth
             local progress = clamp01(entry.displayProgress or 0)
 
