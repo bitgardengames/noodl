@@ -800,12 +800,12 @@ local function buildShieldIndicator(self)
     local shields = self.shields
     if not shields then return nil end
 
-    local display = math.max(0, math.floor((shields.display or shields.count or 0) + 0.0001))
     local count = math.max(0, math.floor((shields.count or 0) + 0.0001))
 
     if count <= 0 then
         return nil
     end
+
     local label = Localization:get("upgrades.hud.shields")
 
     local accent = {0.55, 0.82, 1.0, 1.0}
@@ -819,7 +819,7 @@ local function buildShieldIndicator(self)
     return {
         id = "__shields",
         label = label,
-        stackCount = display,
+        stackCount = count,
         icon = "shield",
         accentColor = accent,
         status = Localization:get("upgrades.hud." .. statusKey),
@@ -961,97 +961,6 @@ function UI:drawUpgradeIndicators()
     end
 end
 
-function UI:drawShields()
-    local shields = self.shields
-    if not shields then return end
-
-    local display = math.max(shields.display or shields.count or 0, 0)
-    local count = shields.count or 0
-    local flashTimer = shields.flashTimer or 0
-
-    if count <= 0 and display <= 0.05 and flashTimer <= 0 then
-        return
-    end
-
-    local screenW = love.graphics.getWidth()
-    local baseX = screenW - 24
-    local baseY = 28
-    local spacing = 38
-    local maxIcons = 4
-
-    local iconsToDraw = math.min(maxIcons, math.max(count, math.ceil(display)))
-    if iconsToDraw <= 0 and flashTimer > 0 then
-        iconsToDraw = 1
-    end
-
-    local shakeOffset = 0
-    if shields.shakeTimer and shields.shakeTimer > 0 and shields.shakeDuration > 0 then
-        local t = shields.shakeTimer / shields.shakeDuration
-        shakeOffset = math.sin(love.timer.getTime() * 32) * 4 * t
-    end
-
-    for i = 1, iconsToDraw do
-        local x = baseX - (i - 1) * spacing + shakeOffset
-        local y = baseY
-        local radius = 16
-
-        love.graphics.push("all")
-        love.graphics.translate(x, y)
-
-        local scale = 1
-        if shields.popTimer and shields.popTimer > 0 and shields.popDuration > 0 and i == 1 and shields.lastDirection > 0 then
-            local t = shields.popTimer / shields.popDuration
-            scale = scale + 0.25 * math.sin(t * math.pi)
-        end
-
-        love.graphics.scale(scale, scale)
-
-        local fillColor = {0.55, 0.82, 1.0, 0.92}
-        local borderColor = {0.15, 0.35, 0.6, 1.0}
-
-        if flashTimer > 0 and shields.lastDirection < 0 then
-            local denom = (shields.flashDuration and shields.flashDuration > 0) and shields.flashDuration or 1
-            local strength = math.min(1, flashTimer / denom)
-            fillColor = {1.0, 0.55 + 0.25 * strength, 0.45 + 0.1 * strength, 0.92}
-            borderColor = {0.65, 0.2, 0.2, 1}
-        end
-
-        local shieldPoints = buildShieldPoints(radius)
-        local shadowPoints = buildShieldPoints(radius + 2)
-
-        love.graphics.push()
-        love.graphics.translate(3, 4)
-        love.graphics.setColor(0, 0, 0, 0.35)
-        love.graphics.polygon("fill", shadowPoints)
-        love.graphics.setColor(0, 0, 0, 0.45)
-        love.graphics.setLineWidth(2)
-        love.graphics.polygon("line", shadowPoints)
-        love.graphics.pop()
-
-        love.graphics.setColor(fillColor)
-        love.graphics.polygon("fill", shieldPoints)
-
-        love.graphics.setColor(borderColor)
-        love.graphics.setLineWidth(2)
-        love.graphics.polygon("line", shieldPoints)
-
-        love.graphics.setColor(1, 1, 1, 0.18)
-        love.graphics.setLineWidth(2)
-        love.graphics.line(-radius * 0.45, -radius * 0.1, 0, radius * 0.6)
-        love.graphics.line(0, radius * 0.6, radius * 0.45, -radius * 0.1)
-
-        love.graphics.pop()
-    end
-
-    if count > maxIcons then
-        love.graphics.setFont(UI.fonts.button)
-        love.graphics.setColor(Theme.textColor)
-        love.graphics.printf("x" .. tostring(count), baseX - maxIcons * spacing - 60, baseY - 18, 120, "right")
-    end
-
-    love.graphics.setColor(1, 1, 1, 1)
-end
-
 function UI:drawFruitSockets()
     local baseX, baseY = 20, 60
     local perRow = 10
@@ -1112,7 +1021,6 @@ function UI:drawFruitSockets()
 end
 
 function UI:draw()
-    self:drawShields()
     self:drawUpgradeIndicators()
     drawComboIndicator(self)
     -- draw socket grid
