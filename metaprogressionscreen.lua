@@ -12,11 +12,14 @@ local ProgressionScreen = {
 
 local buttonList = ButtonList.new()
 
-local START_Y = 220
-local CARD_WIDTH = 640
-local CARD_HEIGHT = 108
-local CARD_SPACING = 24
+local START_Y = 248
+local CARD_WIDTH = 720
+local CARD_HEIGHT = 120
+local CARD_SPACING = 32
 local SCROLL_SPEED = 48
+
+local CONTENT_MARGIN = 80
+local MIN_CARD_WIDTH = 360
 
 local scrollOffset = 0
 local minScrollOffset = 0
@@ -107,16 +110,25 @@ local function handleConfirm()
     end
 end
 
+local function getContentWidth(sw)
+    local available = sw - CONTENT_MARGIN * 2
+    if available <= 0 then
+        return MIN_CARD_WIDTH
+    end
+
+    return math.max(MIN_CARD_WIDTH, math.min(CARD_WIDTH, available))
+end
+
 local function drawSummaryPanel(sw)
     if not progressionState then
         return
     end
 
-    local panelWidth = CARD_WIDTH
-    local panelHeight = 160
+    local panelWidth = getContentWidth(sw)
+    local panelHeight = 176
     local panelX = (sw - panelWidth) / 2
     local panelY = 120
-    local padding = 24
+    local padding = 28
 
     local bg = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
     love.graphics.setColor(bg[1], bg[2], bg[3], 0.96)
@@ -153,13 +165,13 @@ local function drawSummaryPanel(sw)
     love.graphics.print(levelText, panelX + padding, panelY + padding)
 
     love.graphics.setFont(UI.fonts.body)
-    love.graphics.print(totalText, panelX + padding, panelY + padding + 34)
-    love.graphics.print(progressLabel, panelX + padding, panelY + padding + 60)
+    love.graphics.print(totalText, panelX + padding, panelY + padding + 36)
+    love.graphics.print(progressLabel, panelX + padding, panelY + padding + 66)
 
     local barX = panelX + padding
-    local barY = panelY + panelHeight - padding - 24
+    local barY = panelY + panelHeight - padding - 28
     local barWidth = panelWidth - padding * 2
-    local barHeight = 18
+    local barHeight = 20
 
     love.graphics.setColor(0, 0, 0, 0.35)
     UI.drawRoundedRect(barX, barY, barWidth, barHeight, 9)
@@ -173,7 +185,8 @@ local function drawSummaryPanel(sw)
 end
 
 local function drawTrack(sw, sh)
-    local listX = (sw - CARD_WIDTH) / 2
+    local cardWidth = getContentWidth(sw)
+    local listX = (sw - cardWidth) / 2
     local clipY = START_Y
     local clipH = viewportHeight
 
@@ -182,7 +195,7 @@ local function drawTrack(sw, sh)
     end
 
     love.graphics.push()
-    love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+    love.graphics.setScissor(listX - 24, clipY - 16, cardWidth + 48, clipH + 32)
 
     for index, entry in ipairs(trackEntries) do
         local y = START_Y + scrollOffset + (index - 1) * (CARD_HEIGHT + CARD_SPACING)
@@ -192,15 +205,15 @@ local function drawTrack(sw, sh)
             local fillAlpha = unlocked and 0.9 or 0.7
 
             love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], fillAlpha)
-            UI.drawRoundedRect(listX, y, CARD_WIDTH, CARD_HEIGHT, 12)
+            UI.drawRoundedRect(listX, y, cardWidth, CARD_HEIGHT, 12)
 
             local borderColor = unlocked and (Theme.achieveColor or {0.55, 0.75, 0.55, 1}) or (Theme.lockedCardColor or {0.5, 0.35, 0.4, 1})
             love.graphics.setColor(borderColor)
             love.graphics.setLineWidth(2)
-            love.graphics.rectangle("line", listX, y, CARD_WIDTH, CARD_HEIGHT, 12, 12)
+            love.graphics.rectangle("line", listX, y, cardWidth, CARD_HEIGHT, 12, 12)
 
-            local textX = listX + 24
-            local textY = y + 20
+            local textX = listX + 32
+            local textY = y + 22
 
             love.graphics.setFont(UI.fonts.button)
             love.graphics.setColor(Theme.textColor)
@@ -208,13 +221,13 @@ local function drawTrack(sw, sh)
             love.graphics.print(header, textX, textY)
 
             love.graphics.setFont(UI.fonts.body)
-            love.graphics.print(entry.name or "", textX, textY + 30)
+            love.graphics.print(entry.name or "", textX, textY + 32)
 
             local desc = entry.description or ""
-            local wrapWidth = CARD_WIDTH - 48
-            love.graphics.printf(desc, textX, textY + 58, wrapWidth)
+            local wrapWidth = cardWidth - 64
+            love.graphics.printf(desc, textX, textY + 60, wrapWidth)
 
-            local statusY = y + CARD_HEIGHT - 32
+            local statusY = y + CARD_HEIGHT - 34
             local statusText
             if unlocked then
                 statusText = Localization:get("metaprogression.status_unlocked")
