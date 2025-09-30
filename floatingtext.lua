@@ -168,13 +168,14 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
     local wobbleFrequency = options.wobbleFrequency or DEFAULTS.wobble.frequency
     local fadeStart = options.fadeStart or DEFAULTS.fadeStart
     local drift
+    local random = love.math.random
 
     if options.drift ~= nil then
         drift = options.drift
     elseif DEFAULTS.drift == 0 then
         drift = 0
     else
-        drift = (love.math.random() * 2 - 1) * DEFAULTS.drift
+        drift = (random() * 2 - 1) * DEFAULTS.drift
     end
 
     local rise = options.riseDistance
@@ -184,9 +185,9 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
     end
 
     local rotationAmplitude = options.rotationAmplitude or DEFAULTS.rotation
-    local rotationDirection = (love.math.random() < 0.5) and -1 or 1
+    local rotationDirection = (random() < 0.5) and -1 or 1
 
-    table.insert(entries, {
+    entries[#entries + 1] = {
         text = text,
         x = x,
         y = y,
@@ -211,7 +212,7 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
         rotation = 0,
         ox = fontWidth / 2,
         oy = fontHeight / 2,
-    })
+    }
 end
 
 function FloatingText:update(dt)
