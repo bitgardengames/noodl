@@ -704,17 +704,7 @@ function UI:setCombo(count, timer, duration)
             combo.pop = 1.0
         end
 
-        if combo.count >= 6 then
-            combo.tagline = "Max streak bonus!"
-        elseif combo.count >= 5 then
-            combo.tagline = "Huge streak bonus!"
-        elseif combo.count >= 4 then
-            combo.tagline = "Bigger streak bonus!"
-        elseif combo.count >= 3 then
-            combo.tagline = "Streak bonus active!"
-        else
-            combo.tagline = nil
-        end
+        combo.tagline = nil
     else
         if previous >= 2 then
             combo.pop = 0
