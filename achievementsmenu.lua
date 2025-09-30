@@ -495,13 +495,14 @@ function AchievementsMenu:draw()
                 cardBase = darkenColor(panelColor, 0.2)
             end
 
+            local accentBorder = Theme.borderColor or panelBorder
             local borderTint
             if unlocked then
-                borderTint = Theme.achieveColor or lightenColor(panelBorder, 0.35)
+                borderTint = lightenColor(accentBorder, 0.2)
             elseif hiddenLocked then
                 borderTint = darkenColor(panelBorder, 0.15)
             else
-                borderTint = Theme.panelBorder or panelBorder
+                borderTint = Theme.panelBorder or accentBorder
             end
 
             love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 0.3) * 0.9)
