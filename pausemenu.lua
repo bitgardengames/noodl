@@ -10,6 +10,7 @@ local alpha = 0
 local fadeSpeed = 4
 
 local ButtonList = require("buttonlist")
+local ANALOG_DEADZONE = 0.35
 local panelBounds = { x = 0, y = 0, w = 0, h = 0 }
 
 local function toggleMusic()
@@ -34,6 +35,68 @@ local baseButtons = {
 }
 
 local buttonList = ButtonList.new()
+local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local analogAxisActions = {
+    horizontal = {
+        negative = function()
+            buttonList:moveFocus(-1)
+        end,
+        positive = function()
+            buttonList:moveFocus(1)
+        end,
+    },
+    vertical = {
+        negative = function()
+            buttonList:moveFocus(-1)
+        end,
+        positive = function()
+            buttonList:moveFocus(1)
+        end,
+    },
+}
+
+local analogAxisMap = {
+    leftx = { slot = "horizontal" },
+    rightx = { slot = "horizontal" },
+    lefty = { slot = "vertical" },
+    righty = { slot = "vertical" },
+    [1] = { slot = "horizontal" },
+    [2] = { slot = "vertical" },
+}
+
+local function resetAnalogAxis()
+    analogAxisDirections.horizontal = nil
+    analogAxisDirections.vertical = nil
+end
+
+local function handleAnalogAxis(axis, value)
+    local mapping = analogAxisMap[axis]
+    if not mapping then
+        return
+    end
+
+    local direction
+    if value >= ANALOG_DEADZONE then
+        direction = "positive"
+    elseif value <= -ANALOG_DEADZONE then
+        direction = "negative"
+    end
+
+    if analogAxisDirections[mapping.slot] == direction then
+        return
+    end
+
+    analogAxisDirections[mapping.slot] = direction
+
+    if direction then
+        local actions = analogAxisActions[mapping.slot]
+        local action = actions and actions[direction]
+        if action then
+            action()
+        end
+    end
+end
 
 local function getToggleLabel(id)
     if id == "pauseToggleMusic" then
@@ -61,6 +124,8 @@ end
 
 function PauseMenu:load(screenWidth, screenHeight)
     UI.clearButtons()
+
+    resetAnalogAxis()
 
     local centerX = screenWidth / 2
     local centerY = screenHeight / 2
@@ -218,5 +283,11 @@ function PauseMenu:gamepadpressed(_, button)
 end
 
 PauseMenu.joystickpressed = PauseMenu.gamepadpressed
+
+function PauseMenu:gamepadaxis(_, axis, value)
+    handleAnalogAxis(axis, value)
+end
+
+PauseMenu.joystickaxis = PauseMenu.gamepadaxis
 
 return PauseMenu

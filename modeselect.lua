@@ -11,11 +11,75 @@ local ModeSelect = {
     transitionDuration = 0.45,
 }
 
+local ANALOG_DEADZONE = 0.35
 local buttonList = ButtonList.new()
+local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local analogAxisActions = {
+    horizontal = {
+        negative = function()
+            buttonList:moveFocus(-1)
+        end,
+        positive = function()
+            buttonList:moveFocus(1)
+        end,
+    },
+    vertical = {
+        negative = function()
+            buttonList:moveFocus(-1)
+        end,
+        positive = function()
+            buttonList:moveFocus(1)
+        end,
+    },
+}
+
+local analogAxisMap = {
+    leftx = { slot = "horizontal" },
+    rightx = { slot = "horizontal" },
+    lefty = { slot = "vertical" },
+    righty = { slot = "vertical" },
+    [1] = { slot = "horizontal" },
+    [2] = { slot = "vertical" },
+}
+
+local function resetAnalogAxis()
+    analogAxisDirections.horizontal = nil
+    analogAxisDirections.vertical = nil
+end
+
+local function handleAnalogAxis(axis, value)
+    local mapping = analogAxisMap[axis]
+    if not mapping then
+        return
+    end
+
+    local direction
+    if value >= ANALOG_DEADZONE then
+        direction = "positive"
+    elseif value <= -ANALOG_DEADZONE then
+        direction = "negative"
+    end
+
+    if analogAxisDirections[mapping.slot] == direction then
+        return
+    end
+
+    analogAxisDirections[mapping.slot] = direction
+
+    if direction then
+        local actions = analogAxisActions[mapping.slot]
+        local action = actions and actions[direction]
+        if action then
+            action()
+        end
+    end
+end
 
 function ModeSelect:enter()
     Screen:update()
     UI.clearButtons()
+    resetAnalogAxis()
 
     local sw, sh = Screen:get()
     local centerX = sw / 2
@@ -189,5 +253,11 @@ function ModeSelect:gamepadpressed(_, button)
 end
 
 ModeSelect.joystickpressed = ModeSelect.gamepadpressed
+
+function ModeSelect:gamepadaxis(_, axis, value)
+    handleAnalogAxis(axis, value)
+end
+
+ModeSelect.joystickaxis = ModeSelect.gamepadaxis
 
 return ModeSelect

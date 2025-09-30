@@ -12,11 +12,74 @@ local Menu = {
     transitionDuration = 0.45,
 }
 
+local ANALOG_DEADZONE = 0.35
 local buttonList = ButtonList.new()
 local buttons = {}
 local t = 0
 local funChallenge = nil
 local funChallengeAnim = 0
+local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local analogAxisActions = {
+    horizontal = {
+        negative = function()
+            buttonList:moveFocus(-1)
+        end,
+        positive = function()
+            buttonList:moveFocus(1)
+        end,
+    },
+    vertical = {
+        negative = function()
+            buttonList:moveFocus(-1)
+        end,
+        positive = function()
+            buttonList:moveFocus(1)
+        end,
+    },
+}
+
+local analogAxisMap = {
+    leftx = { slot = "horizontal" },
+    rightx = { slot = "horizontal" },
+    lefty = { slot = "vertical" },
+    righty = { slot = "vertical" },
+    [1] = { slot = "horizontal" },
+    [2] = { slot = "vertical" },
+}
+
+local function resetAnalogAxis()
+    analogAxisDirections.horizontal = nil
+    analogAxisDirections.vertical = nil
+end
+
+local function handleAnalogAxis(axis, value)
+    local mapping = analogAxisMap[axis]
+    if not mapping then
+        return
+    end
+
+    local direction
+    if value >= ANALOG_DEADZONE then
+        direction = "positive"
+    elseif value <= -ANALOG_DEADZONE then
+        direction = "negative"
+    end
+
+    if analogAxisDirections[mapping.slot] == direction then
+        return
+    end
+
+    analogAxisDirections[mapping.slot] = direction
+
+    if direction then
+        local actions = analogAxisActions[mapping.slot]
+        local action = actions and actions[direction]
+        if action then
+            action()
+        end
+    end
+end
 
 local function setColorWithAlpha(color, alpha)
     local r, g, b, a = 1, 1, 1, alpha or 1
@@ -36,6 +99,7 @@ function Menu:enter()
 
     funChallenge = FunChallenges:getDailyChallenge()
     funChallengeAnim = 0
+    resetAnalogAxis()
 
     local sw, sh = Screen:get()
     local centerX = sw / 2
@@ -308,5 +372,11 @@ function Menu:gamepadpressed(_, button)
 end
 
 Menu.joystickpressed = Menu.gamepadpressed
+
+function Menu:gamepadaxis(_, axis, value)
+    handleAnalogAxis(axis, value)
+end
+
+Menu.joystickaxis = Menu.gamepadaxis
 
 return Menu

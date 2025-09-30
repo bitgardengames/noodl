@@ -5,6 +5,79 @@ local MetaProgression = require("metaprogression")
 
 local Shop = {}
 
+local ANALOG_DEADZONE = 0.35
+local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local function moveFocusAnalog(self, delta)
+    if self.restocking then return end
+    if not self.cards or #self.cards == 0 then return end
+    if self.selected then return end
+
+    self.inputMode = "gamepad"
+    self:moveFocus(delta)
+end
+
+local analogAxisActions = {
+    horizontal = {
+        negative = function(self)
+            moveFocusAnalog(self, -1)
+        end,
+        positive = function(self)
+            moveFocusAnalog(self, 1)
+        end,
+    },
+    vertical = {
+        negative = function(self)
+            moveFocusAnalog(self, -1)
+        end,
+        positive = function(self)
+            moveFocusAnalog(self, 1)
+        end,
+    },
+}
+
+local analogAxisMap = {
+    leftx = { slot = "horizontal" },
+    rightx = { slot = "horizontal" },
+    lefty = { slot = "vertical" },
+    righty = { slot = "vertical" },
+    [1] = { slot = "horizontal" },
+    [2] = { slot = "vertical" },
+}
+
+local function resetAnalogAxis()
+    analogAxisDirections.horizontal = nil
+    analogAxisDirections.vertical = nil
+end
+
+local function handleAnalogAxis(self, axis, value)
+    local mapping = analogAxisMap[axis]
+    if not mapping then
+        return
+    end
+
+    local direction
+    if value >= ANALOG_DEADZONE then
+        direction = "positive"
+    elseif value <= -ANALOG_DEADZONE then
+        direction = "negative"
+    end
+
+    if analogAxisDirections[mapping.slot] == direction then
+        return
+    end
+
+    analogAxisDirections[mapping.slot] = direction
+
+    if direction then
+        local actions = analogAxisActions[mapping.slot]
+        local action = actions and actions[direction]
+        if action then
+            action(self)
+        end
+    end
+end
+
 function Shop:start(currentFloor)
     self.floor = currentFloor or 1
     self.shopkeeperLine = nil
@@ -52,6 +125,8 @@ function Shop:refreshCards(options)
     if #self.cards > 0 then
         self:setFocus(1)
     end
+
+    resetAnalogAxis()
 
     for i = 1, #self.cards do
         self.cardStates[i] = {
@@ -890,6 +965,15 @@ function Shop:gamepadpressed(_, button)
 end
 
 Shop.joystickpressed = Shop.gamepadpressed
+
+function Shop:gamepadaxis(_, axis, value)
+    if self.restocking then return end
+    if not self.cards or #self.cards == 0 then return end
+
+    handleAnalogAxis(self, axis, value)
+end
+
+Shop.joystickaxis = Shop.gamepadaxis
 
 function Shop:pick(i)
     if self.restocking then return false end

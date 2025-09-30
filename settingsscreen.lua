@@ -9,6 +9,7 @@ local SettingsScreen = {
     transitionDuration = 0.45,
 }
 
+local ANALOG_DEADZONE = 0.35
 local options = {
     { type = "action", labelKey = "settings.toggle_fullscreen", action = function()
         love.window.setFullscreen(not love.window.getFullscreen())
@@ -30,10 +31,75 @@ local layout = {
     panel = { x = 0, y = 0, w = 0, h = 0 },
 }
 
+local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local analogAxisActions = {
+    horizontal = {
+        negative = function(self)
+            self:adjustFocused(-1)
+        end,
+        positive = function(self)
+            self:adjustFocused(1)
+        end,
+    },
+    vertical = {
+        negative = function(self)
+            self:moveFocus(-1)
+        end,
+        positive = function(self)
+            self:moveFocus(1)
+        end,
+    },
+}
+
+local analogAxisMap = {
+    leftx = { slot = "horizontal" },
+    rightx = { slot = "horizontal" },
+    lefty = { slot = "vertical" },
+    righty = { slot = "vertical" },
+    [1] = { slot = "horizontal" },
+    [2] = { slot = "vertical" },
+}
+
+local function resetAnalogAxis()
+    analogAxisDirections.horizontal = nil
+    analogAxisDirections.vertical = nil
+end
+
+local function handleAnalogAxis(self, axis, value)
+    local mapping = analogAxisMap[axis]
+    if not mapping then
+        return
+    end
+
+    local direction
+    if value >= ANALOG_DEADZONE then
+        direction = "positive"
+    elseif value <= -ANALOG_DEADZONE then
+        direction = "negative"
+    end
+
+    if analogAxisDirections[mapping.slot] == direction then
+        return
+    end
+
+    analogAxisDirections[mapping.slot] = direction
+
+    if direction then
+        local actions = analogAxisActions[mapping.slot]
+        local action = actions and actions[direction]
+        if action then
+            action(self)
+        end
+    end
+end
+
 function SettingsScreen:enter()
     Screen:update()
     local sw, sh = Screen:get()
     local centerX = sw / 2
+
+    resetAnalogAxis()
 
     local spacing = UI.spacing.buttonSpacing
     local totalHeight = 0
@@ -397,5 +463,11 @@ function SettingsScreen:gamepadpressed(_, button)
 end
 
 SettingsScreen.joystickpressed = SettingsScreen.gamepadpressed
+
+function SettingsScreen:gamepadaxis(_, axis, value)
+    handleAnalogAxis(self, axis, value)
+end
+
+SettingsScreen.joystickaxis = SettingsScreen.gamepadaxis
 
 return SettingsScreen

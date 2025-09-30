@@ -11,6 +11,8 @@ local FunChallenges = require("funchallenges")
 
 local GameOver = {}
 
+local ANALOG_DEADZONE = 0.35
+
 local function pickDeathMessage(cause)
     local deathTable = Localization:getTable("gameover.deaths") or {}
     local entries = deathTable[cause] or deathTable.unknown or {}
@@ -30,6 +32,68 @@ local fontProgressValue
 local fontProgressSmall
 local stats = {}
 local buttonList = ButtonList.new()
+local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local analogAxisActions = {
+    horizontal = {
+        negative = function()
+            buttonList:moveFocus(-1)
+        end,
+        positive = function()
+            buttonList:moveFocus(1)
+        end,
+    },
+    vertical = {
+        negative = function()
+            buttonList:moveFocus(-1)
+        end,
+        positive = function()
+            buttonList:moveFocus(1)
+        end,
+    },
+}
+
+local analogAxisMap = {
+    leftx = { slot = "horizontal" },
+    rightx = { slot = "horizontal" },
+    lefty = { slot = "vertical" },
+    righty = { slot = "vertical" },
+    [1] = { slot = "horizontal" },
+    [2] = { slot = "vertical" },
+}
+
+local function resetAnalogAxis()
+    analogAxisDirections.horizontal = nil
+    analogAxisDirections.vertical = nil
+end
+
+local function handleAnalogAxis(axis, value)
+    local mapping = analogAxisMap[axis]
+    if not mapping then
+        return
+    end
+
+    local direction
+    if value >= ANALOG_DEADZONE then
+        direction = "positive"
+    elseif value <= -ANALOG_DEADZONE then
+        direction = "negative"
+    end
+
+    if analogAxisDirections[mapping.slot] == direction then
+        return
+    end
+
+    analogAxisDirections[mapping.slot] = direction
+
+    if direction then
+        local actions = analogAxisActions[mapping.slot]
+        local action = actions and actions[direction]
+        if action then
+            action()
+        end
+    end
+end
 -- Layout constants
 local BUTTON_WIDTH = UI.spacing.buttonWidth
 local BUTTON_HEIGHT = UI.spacing.buttonHeight
@@ -127,6 +191,7 @@ end
 
 function GameOver:enter(data)
     UI.clearButtons()
+    resetAnalogAxis()
 
     data = data or {cause = "unknown"}
 
@@ -758,5 +823,11 @@ function GameOver:gamepadpressed(_, button)
 end
 
 GameOver.joystickpressed = GameOver.gamepadpressed
+
+function GameOver:gamepadaxis(_, axis, value)
+    handleAnalogAxis(axis, value)
+end
+
+GameOver.joystickaxis = GameOver.gamepadaxis
 
 return GameOver
