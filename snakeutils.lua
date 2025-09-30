@@ -6,7 +6,6 @@ SnakeUtils.SEGMENT_SIZE = 24
 SnakeUtils.SEGMENT_SPACING = SnakeUtils.SEGMENT_SIZE
 SnakeUtils.SPEED = 8 -- cells per second now, not pixels
 SnakeUtils.POP_DURATION = 0.3
-local HANG_FACTOR = 0.6
 
 SnakeUtils.occupied = {}
 
