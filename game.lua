@@ -30,8 +30,8 @@ local Shop = require("shop")
 local Upgrades = require("upgrades")
 local Localization = require("localization")
 local FloorSetup = require("floorsetup")
-local TransitionManager = require("systems.transitionmanager")
-local GameInput = require("systems.gameinput")
+local TransitionManager = require("transitionmanager")
+local GameInput = require("gameinput")
 
 local Game = {}
 
