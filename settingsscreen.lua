@@ -26,23 +26,47 @@ local buttons = {}
 local hoveredIndex = nil
 local sliderDragging = nil
 local focusedIndex = 1
+local layout = {
+    panel = { x = 0, y = 0, w = 0, h = 0 },
+}
 
 function SettingsScreen:enter()
     Screen:update()
     local sw, sh = Screen:get()
     local centerX = sw / 2
-    local totalHeight = (#options) * (UI.spacing.buttonHeight + UI.spacing.buttonSpacing) - UI.spacing.buttonSpacing
-    local startY = sh / 2 - totalHeight / 2
+
+    local spacing = UI.spacing.buttonSpacing
+    local totalHeight = 0
+    for index, opt in ipairs(options) do
+        if index > 1 then
+            totalHeight = totalHeight + spacing
+        end
+        if opt.type == "slider" then
+            totalHeight = totalHeight + UI.spacing.sliderHeight
+        else
+            totalHeight = totalHeight + UI.spacing.buttonHeight
+        end
+    end
+
+    local panelPadding = UI.spacing.panelPadding
+    local panelWidth = UI.spacing.buttonWidth + panelPadding * 2
+    local panelHeight = totalHeight + panelPadding * 2
+    local panelX = centerX - panelWidth / 2
+    local panelY = sh / 2 - panelHeight / 2
+
+    layout.panel = { x = panelX, y = panelY, w = panelWidth, h = panelHeight }
+
+    local startY = panelY + panelPadding
 
     -- reset UI.buttons so we don’t keep stale hitboxes
     UI.clearButtons()
     buttons = {}
 
     for i, opt in ipairs(options) do
-        local x = centerX - UI.spacing.buttonWidth / 2
-        local y = startY + (i - 1) * (UI.spacing.buttonHeight + UI.spacing.buttonSpacing)
+        local x = panelX + panelPadding
+        local y = startY
         local w = UI.spacing.buttonWidth
-        local h = UI.spacing.buttonHeight
+        local h = (opt.type == "slider") and UI.spacing.sliderHeight or UI.spacing.buttonHeight
         local id = "settingsOption" .. i
 
         table.insert(buttons, {
@@ -53,12 +77,29 @@ function SettingsScreen:enter()
             h = h,
             option = opt,
             hovered = false,
+            sliderTrack = nil,
         })
+
+        local entry = buttons[#buttons]
+
+        if opt.type == "slider" then
+            local trackHeight = UI.spacing.sliderTrackHeight
+            local padding = UI.spacing.sliderPadding
+            entry.sliderTrack = {
+                x = x + padding,
+                y = y + h - padding - trackHeight,
+                w = w - padding * 2,
+                h = trackHeight,
+                handleRadius = UI.spacing.sliderHandleRadius,
+            }
+        end
 
         -- register for clickable items (skip sliders, those are custom)
         if opt.type ~= "slider" then
             UI.registerButton(id, x, y, w, h, Localization:get(opt.labelKey))
         end
+
+        startY = startY + h + spacing
     end
 
     if #buttons == 0 then
@@ -88,7 +129,13 @@ function SettingsScreen:update(dt)
         end
 
         if sliderDragging and opt.slider == sliderDragging then
-            local rel = (mx - btn.x) / btn.w
+            local track = btn.sliderTrack
+            local rel
+            if track then
+                rel = (mx - track.x) / track.w
+            else
+                rel = (mx - btn.x) / btn.w
+            end
             Settings[sliderDragging] = math.min(1, math.max(0, rel))
             Settings:save()
             Audio:applyVolumes()
@@ -104,13 +151,15 @@ end
 
 function SettingsScreen:draw()
     local sw, _ = Screen:get()
-    love.graphics.clear(Theme.bgColor)
+    love.graphics.clear(UI.colors.background or Theme.bgColor)
 
-    love.graphics.setFont(UI.fonts.title)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf(Localization:get("settings.title"), 0, 80, sw, "center")
+    local panel = layout.panel
+    UI.drawPanel(panel.x, panel.y, panel.w, panel.h)
 
-    love.graphics.setFont(UI.fonts.body)
+    local titleText = Localization:get("settings.title")
+    local titleHeight = UI.fonts.title:getHeight()
+    local titleY = math.max(UI.spacing.sectionSpacing, panel.y - UI.spacing.sectionSpacing - titleHeight * 0.25)
+    UI.drawLabel(titleText, 0, titleY, sw, "center", { fontKey = "title" })
 
     for index, btn in ipairs(buttons) do
         local opt = btn.option
@@ -126,34 +175,21 @@ function SettingsScreen:draw()
             UI.drawButton(btn.id)
 
         elseif opt.type == "slider" and opt.slider then
-            -- slider UI
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.printf(label, btn.x, btn.y - 20, btn.w, "center")
+            local value = math.min(1, math.max(0, Settings[opt.slider] or 0))
+            local trackX, trackY, trackW, trackH, handleRadius = UI.drawSlider(nil, btn.x, btn.y, btn.w, value, {
+                label = label,
+                focused = isFocused,
+                hovered = btn.hovered,
+                register = false,
+            })
 
-            local trackY = btn.y + btn.h / 2 - 4
-            local trackH = 8
-
-            love.graphics.setColor(0.3, 0.3, 0.3)
-            love.graphics.rectangle("fill", btn.x, trackY, btn.w, trackH, 4, 4)
-
-            local value = Settings[opt.slider]
-            love.graphics.setColor(0.6, 0.8, 1.0)
-            love.graphics.rectangle("fill", btn.x, trackY, btn.w * value, trackH, 4, 4)
-
-            local handleX = btn.x + btn.w * value
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.circle("fill", handleX, trackY + trackH / 2, 10)
-
-            local percentText = string.format("%.0f%%", value * 100)
-            love.graphics.printf(percentText, btn.x + btn.w + 10, btn.y + btn.h / 2 - 8, 50, "left")
-
-            if isFocused then
-                love.graphics.setColor(0.6, 0.8, 1.0, 0.6)
-                love.graphics.setLineWidth(3)
-                love.graphics.rectangle("line", btn.x - 8, trackY - 24, btn.w + 16, trackH + 48, 8, 8)
-                love.graphics.setLineWidth(1)
-                love.graphics.setColor(1, 1, 1)
-            end
+            btn.sliderTrack = {
+                x = trackX,
+                y = trackY,
+                w = trackW,
+                h = trackH,
+                handleRadius = handleRadius,
+            }
 
         elseif opt.type == "cycle" and opt.setting == "language" then
             local current = Settings.language or Localization:getCurrentLanguage()
@@ -164,7 +200,6 @@ function SettingsScreen:draw()
             UI.drawButton(btn.id)
 
         else
-            -- plain button
             UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
             UI.setButtonFocus(btn.id, isFocused)
             UI.drawButton(btn.id)
@@ -176,7 +211,9 @@ function SettingsScreen:updateFocusVisuals()
     for index, btn in ipairs(buttons) do
         local focused = (focusedIndex == index)
         btn.focused = focused
-        UI.setButtonFocus(btn.id, focused)
+        if not btn.option or btn.option.type ~= "slider" then
+            UI.setButtonFocus(btn.id, focused)
+        end
     end
 end
 
@@ -296,13 +333,23 @@ function SettingsScreen:mousepressed(x, y, button)
         end
 
         if opt.slider then
-            local trackY = btn.y + btn.h / 2 - 4
-            local trackH = 8
-            local hoveredSlider = x >= btn.x and x <= btn.x + btn.w and
-                                  y >= trackY and y <= trackY + trackH
+            local track = btn.sliderTrack
+            local hoveredSlider
+            if track then
+                hoveredSlider = x >= track.x and x <= track.x + track.w and
+                                 y >= track.y - (track.h * 0.75) and y <= track.y + track.h * 1.75
+            else
+                hoveredSlider = x >= btn.x and x <= btn.x + btn.w and
+                                 y >= btn.y and y <= btn.y + btn.h
+            end
             if hoveredSlider then
                 sliderDragging = opt.slider
-                local rel = (x - btn.x) / btn.w
+                local rel
+                if track then
+                    rel = (x - track.x) / track.w
+                else
+                    rel = (x - btn.x) / btn.w
+                end
                 Settings[sliderDragging] = math.min(1, math.max(0, rel))
                 Settings:save()
                 Audio:applyVolumes()

@@ -90,6 +90,19 @@ local function darkenColor(color, amount)
     }
 end
 
+local function setColor(color, alphaMultiplier)
+    if not color then
+        love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
+        return
+    end
+
+    local r = color[1] or 1
+    local g = color[2] or 1
+    local b = color[3] or 1
+    local a = color[4] or 1
+    love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
+end
+
 -- Button states
 UI.buttons = {}
 
@@ -112,6 +125,7 @@ end
 -- Fonts
 UI.fonts = {
     title      = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 72),
+    subtitle   = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 32),
     button     = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 24),
     body       = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 16),
     small      = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 12),
@@ -120,15 +134,35 @@ UI.fonts = {
     achieve    = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 16),
 }
 
+UI.colors = {
+    background  = Theme.bgColor,
+    text        = Theme.textColor,
+    subtleText  = {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.7},
+    button      = Theme.buttonColor,
+    buttonHover = Theme.buttonHover or lightenColor(Theme.buttonColor, 0.18),
+    buttonPress = darkenColor(Theme.buttonColor, 0.75),
+    border      = Theme.borderColor,
+    panel       = Theme.panelColor,
+    panelBorder = Theme.panelBorder,
+    shadow      = Theme.shadowColor,
+    highlight   = Theme.highlightColor or {1, 1, 1, 0.08},
+    progress    = Theme.progressColor,
+}
+
 -- Spacing and layout constants
 UI.spacing = {
-    buttonWidth   = 260,
-    buttonHeight  = 56,
-    buttonRadius  = 12,
-    buttonSpacing = 24,
-    panelRadius   = 10,
-    panelPadding  = 16,
-    shadowOffset  = 4,
+    buttonWidth       = 260,
+    buttonHeight      = 56,
+    buttonRadius      = 14,
+    buttonSpacing     = 24,
+    panelRadius       = 16,
+    panelPadding      = 20,
+    shadowOffset      = 6,
+    sectionSpacing    = 28,
+    sliderHeight      = 68,
+    sliderTrackHeight = 10,
+    sliderHandleRadius= 12,
+    sliderPadding     = 22,
 }
 
 -- Utility: set font
@@ -147,6 +181,124 @@ function UI.drawRoundedRect(x, y, w, h, r)
     love.graphics.circle("fill", x + w - r, y + r, r, segments)
     love.graphics.circle("fill", x + r, y + h - r, r, segments)
     love.graphics.circle("fill", x + w - r, y + h - r, r, segments)
+end
+
+function UI.drawPanel(x, y, w, h, opts)
+    opts = opts or {}
+    local radius = opts.radius or UI.spacing.panelRadius
+    local shadowOffset = opts.shadowOffset
+    if shadowOffset == nil then shadowOffset = UI.spacing.shadowOffset end
+
+    if shadowOffset and shadowOffset ~= 0 then
+        setColor(opts.shadowColor or UI.colors.shadow, opts.shadowAlpha or 1)
+        love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h, radius, radius)
+    end
+
+    setColor(opts.fill or UI.colors.panel)
+    love.graphics.rectangle("fill", x, y, w, h, radius, radius)
+
+    if opts.border ~= false then
+        setColor(opts.borderColor or UI.colors.panelBorder)
+        love.graphics.setLineWidth(opts.borderWidth or 2)
+        love.graphics.rectangle("line", x, y, w, h, radius, radius)
+        love.graphics.setLineWidth(1)
+    end
+
+    if opts.focused then
+        local focusRadius = radius + (opts.focusRadiusOffset or 4)
+        local focusPadding = opts.focusPadding or 3
+        setColor(opts.focusColor or UI.colors.border, opts.focusAlpha or 1.1)
+        love.graphics.setLineWidth(opts.focusWidth or 3)
+        love.graphics.rectangle("line", x - focusPadding, y - focusPadding, w + focusPadding * 2, h + focusPadding * 2, focusRadius, focusRadius)
+        love.graphics.setLineWidth(1)
+    end
+end
+
+function UI.drawLabel(text, x, y, width, align, opts)
+    opts = opts or {}
+    local font = opts.font or UI.fonts[opts.fontKey or "body"]
+    if font then
+        love.graphics.setFont(font)
+    end
+
+    local color = opts.color or UI.colors.text
+    setColor(color, opts.alpha or 1)
+
+    if width then
+        love.graphics.printf(text, x, y, width, align or "left")
+    else
+        love.graphics.print(text, x, y)
+    end
+end
+
+function UI.drawSlider(id, x, y, w, value, opts)
+    opts = opts or {}
+    local h = opts.height or UI.spacing.sliderHeight
+    local radius = opts.radius or UI.spacing.buttonRadius
+    local padding = opts.padding or UI.spacing.sliderPadding
+    local trackHeight = opts.trackHeight or UI.spacing.sliderTrackHeight
+    local handleRadius = opts.handleRadius or UI.spacing.sliderHandleRadius
+    local focused = opts.focused
+
+    if opts.register ~= false and id then
+        UI.registerButton(id, x, y, w, h, opts.label)
+    end
+
+    local hovered = opts.hovered
+    local baseFill = opts.fill or UI.colors.button
+    if hovered and not focused then
+        baseFill = opts.hoverFill or UI.colors.buttonHover
+    end
+
+    UI.drawPanel(x, y, w, h, {
+        radius = radius,
+        shadowOffset = opts.shadowOffset,
+        fill = baseFill,
+        borderColor = opts.borderColor or UI.colors.border,
+        focused = focused,
+        focusColor = opts.focusColor or UI.colors.highlight,
+        focusAlpha = opts.focusAlpha,
+    })
+
+    local label = opts.label
+    if label then
+        UI.drawLabel(label, x + padding, y + padding, w - padding * 2, opts.labelAlign or "left", {
+            fontKey = opts.labelFont or "body",
+            color = opts.labelColor or UI.colors.text,
+        })
+    end
+
+    local sliderValue = clamp01(value or 0)
+    local trackX = x + padding
+    local trackW = w - padding * 2
+    local trackY = y + h - padding - trackHeight
+
+    setColor(UI.colors.panel, 0.7)
+    love.graphics.rectangle("fill", trackX, trackY, trackW, trackHeight, trackHeight / 2, trackHeight / 2)
+
+    if sliderValue > 0 then
+        setColor(opts.progressColor or UI.colors.progress)
+        love.graphics.rectangle("fill", trackX, trackY, trackW * sliderValue, trackHeight, trackHeight / 2, trackHeight / 2)
+    end
+
+    local handleX = trackX + trackW * sliderValue
+    local handleY = trackY + trackHeight / 2
+    setColor(opts.handleColor or UI.colors.text)
+    love.graphics.circle("fill", handleX, handleY, handleRadius)
+
+    if opts.showValue ~= false then
+        local valueFont = UI.fonts[opts.valueFont or "small"]
+        if valueFont then
+            love.graphics.setFont(valueFont)
+        end
+        setColor(opts.valueColor or UI.colors.subtleText)
+        local percentText = opts.valueText or string.format("%d%%", math.floor(sliderValue * 100 + 0.5))
+        love.graphics.printf(percentText, trackX, trackY - (valueFont and valueFont:getHeight() or 14) - 6, trackW, "right")
+    end
+
+    love.graphics.setLineWidth(1)
+
+    return trackX, trackY, trackW, trackHeight, handleRadius
 end
 
 -- Easing
@@ -171,15 +323,13 @@ function UI.drawButton(id)
     local s = UI.spacing
 
     local mx, my = love.mouse.getPosition()
-    local hovered = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
-    if btn.focused then
-        hovered = true
-    end
+    local hoveredByMouse = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
+    local displayHover = hoveredByMouse or btn.focused
 
-    if hovered and not btn.wasHovered then
+    if displayHover and not btn.wasHovered then
         Audio:playSound("hover")
     end
-    btn.wasHovered = hovered
+    btn.wasHovered = displayHover
 
     -- Animate press depth
     local target = (btn.pressed and 1 or 0)
@@ -187,31 +337,51 @@ function UI.drawButton(id)
     local yOffset = easeOutQuad(btn.anim) * 4
 
     local radius = s.buttonRadius
-    local SHADOW_OFFSET = 6
+    local shadowOffset = s.shadowOffset
 
-    -- SHADOW
-    love.graphics.setColor(0, 0, 0, 0.25)
-    love.graphics.rectangle("fill", b.x + SHADOW_OFFSET, b.y + SHADOW_OFFSET + yOffset, b.w, b.h, radius, radius)
+    if shadowOffset and shadowOffset ~= 0 then
+        setColor(UI.colors.shadow)
+        love.graphics.rectangle("fill", b.x + shadowOffset, b.y + shadowOffset + yOffset, b.w, b.h, radius, radius)
+    end
 
-    -- OUTLINE
-    love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.setLineWidth(6)
-    love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
+    local fillColor = UI.colors.button
+    if displayHover then
+        fillColor = UI.colors.buttonHover
+    end
+    if btn.pressed then
+        fillColor = UI.colors.buttonPress
+    end
 
-    -- BODY
-    love.graphics.setColor(Theme.buttonColor)
+    setColor(fillColor)
     love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 
-    -- HOVER / PRESS overlay
-    if hovered or btn.pressed then
-        love.graphics.setColor(1, 1, 1, 0.3)
+    if displayHover then
+        setColor(UI.colors.highlight, 1.2)
         love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
     end
 
+    if UI.colors.border then
+        setColor(UI.colors.border)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
+    end
+
+    if btn.focused then
+        local focusRadius = radius + 4
+        local padding = 3
+        local focusColor = UI.colors.border or UI.colors.highlight
+        setColor(focusColor, 1.3)
+        love.graphics.setLineWidth(3)
+        love.graphics.rectangle("line", b.x - padding, b.y + yOffset - padding, b.w + padding * 2, b.h + padding * 2, focusRadius, focusRadius)
+    end
+
+    love.graphics.setLineWidth(1)
+
     -- TEXT
     UI.setFont("button")
-    love.graphics.setColor(Theme.textColor)
-    love.graphics.printf(btn.text, b.x, b.y + yOffset + (b.h / 2) - UI.fonts.button:getHeight() / 2, b.w, "center")
+    setColor(UI.colors.text)
+    local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
+    love.graphics.printf(btn.text or "", b.x, textY, b.w, "center")
 end
 
 -- Hover check
