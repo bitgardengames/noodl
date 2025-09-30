@@ -1123,17 +1123,15 @@ function UI:drawFruitSockets()
                 goalPulse = 1 + 0.3 * (1 - (1 - goalT) * (1 - goalT))
             end
 
-            local wiggle = 1 + 0.05 * math.sin(time * 9 + i * 1.2)
-
             love.graphics.push()
             love.graphics.translate(x, y)
-            love.graphics.scale(scale * goalPulse * wiggle, scale * goalPulse * wiggle)
+            love.graphics.scale(scale * goalPulse, scale * goalPulse)
 
             -- fruit shadow inside socket
             love.graphics.setColor(0, 0, 0, 0.3)
             love.graphics.ellipse("fill", 0, socketRadius * 0.55, socketRadius * 0.8, socketRadius * 0.45, 32)
 
-            local r = socketRadius * 0.92
+            local r = socketRadius * 1.0
             local fruit = socket.type
 
             love.graphics.setColor(fruit.color[1], fruit.color[2], fruit.color[3], 1)
