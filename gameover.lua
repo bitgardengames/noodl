@@ -101,11 +101,6 @@ local BUTTON_SPACING = UI.spacing.buttonSpacing
 local CELEBRATION_ENTRY_HEIGHT = 64
 local CELEBRATION_ENTRY_SPACING = CELEBRATION_ENTRY_HEIGHT + 10
 
-local function easeOutQuad(t)
-    local inv = 1 - t
-    return 1 - inv * inv
-end
-
 local function easeOutBack(t)
     local c1 = 1.70158
     local c3 = c1 + 1

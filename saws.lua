@@ -77,9 +77,9 @@ local function getSawCenter(saw)
     local py = minY + (maxY - minY) * saw.progress
 
     -- Vertical saws should sit centered in their track just like horizontal ones.
-    -- Previously we offset the hub using `HANG_FACTOR`, which made the blade
-    -- appear to jut too far into the arena. Keep the center aligned with the
-    -- track instead so both orientations look consistent.
+    -- Previously the hub was offset vertically, which made the blade appear to
+    -- jut too far into the arena. Keep the center aligned with the track so both
+    -- orientations look consistent.
     return saw.x, py
 end
 
