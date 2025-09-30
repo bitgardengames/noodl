@@ -30,6 +30,8 @@ local Shop = require("shop")
 local Upgrades = require("upgrades")
 local Localization = require("localization")
 local FloorSetup = require("floorsetup")
+local TransitionManager = require("systems.transitionmanager")
+local GameInput = require("systems.gameinput")
 
 local Game = {}
 
@@ -55,19 +57,6 @@ local function buildModifierSections(self)
     end
 
     return sections
-end
-
-local function startTransitionPhase(self, phase, duration, extra)
-    self.state = "transition"
-    self.transitionPhase = phase
-    self.transitionTimer = 0
-    self.transitionDuration = duration or 0
-
-    if extra then
-        for key, value in pairs(extra) do
-            self[key] = value
-        end
-    end
 end
 
 local function drawAdrenalineGlow(self)
@@ -96,45 +85,57 @@ local function drawAdrenalineGlow(self)
 end
 
 function Game:load()
-        self.state = "playing"
-        self.floor = 1
-        self.runTimer = 0
-        self.floorTimer = 0
-        self.gamepadAxisDirections = { horizontal = nil, vertical = nil }
+    self.state = "playing"
+    self.floor = 1
+    self.runTimer = 0
+    self.floorTimer = 0
 
-        Screen:update()
-        self.screenWidth, self.screenHeight = Screen:get()
-        Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
+    Screen:update()
+    self.screenWidth, self.screenHeight = Screen:get()
+    Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
 
-        Score:load()
-        Upgrades:beginRun()
-        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-        Face:set("idle")
+    Score:load()
+    Upgrades:beginRun()
+    GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+    Face:set("idle")
 
-        self.mode = GameModes:get()
-        if self.mode and self.mode.load then
-                self.mode.load(self)
-        end
+    self.transition = TransitionManager.new(self)
+    self.input = GameInput.new(self, self.transition)
+    self.input:resetAxes()
 
-        if Snake.adrenaline then Snake.adrenaline.active = false end -- reset adrenaline state
+    self.mode = GameModes:get()
+    if self.mode and self.mode.load then
+        self.mode.load(self)
+    end
 
-        -- prepare floor 1 immediately for gameplay (theme, spawns, etc.)
-        self:setupFloor(self.floor)
-        self.transitionTraits = buildModifierSections(self)
+    if Snake.adrenaline then
+        Snake.adrenaline.active = false
+    end
 
-        -- first intro: fade-in text for floor 1 only
-        self:startFloorIntro(3.5, {
-                transitionAdvance = false,
-                transitionFloorData = Floors[self.floor] or Floors[1],
-        })
+    self:setupFloor(self.floor)
+    self.transitionTraits = buildModifierSections(self)
+
+    self.transition:startFloorIntro(3.5, {
+        transitionAdvance = false,
+        transitionFloorData = Floors[self.floor] or Floors[1],
+    })
 end
 
 function Game:reset()
-        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-        Face:set("idle")
-        self.state = "playing"
-        self.floor = 1
-        self.gamepadAxisDirections = { horizontal = nil, vertical = nil }
+    GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+    Face:set("idle")
+    self.state = "playing"
+    self.floor = 1
+    self.runTimer = 0
+    self.floorTimer = 0
+
+    if self.transition then
+        self.transition:reset()
+    end
+
+    if self.input then
+        self.input:resetAxes()
+    end
 end
 
 function Game:enter()
@@ -175,108 +176,16 @@ end
 
 -- start a floor transition
 function Game:startFloorTransition(advance, skipFade)
-        Snake:finishDescending()
-        local pendingFloor = advance and (self.floor + 1) or nil
-        local floorData = Floors[pendingFloor or self.floor] or Floors[1]
-
-        if advance then
-                local floorTime = self.floorTimer or 0
-                if floorTime and floorTime > 0 then
-                        SessionStats:add("totalFloorTime", floorTime)
-                        SessionStats:updateMin("fastestFloorClear", floorTime)
-                        SessionStats:updateMax("slowestFloorClear", floorTime)
-                        SessionStats:set("lastFloorClearTime", floorTime)
-                end
-                self.floorTimer = 0
-
-                local currentFloor = self.floor or 1
-                local nextFloor = currentFloor + 1
-                PlayerStats:add("floorsCleared", 1)
-                PlayerStats:updateMax("deepestFloorReached", nextFloor)
-                SessionStats:add("floorsCleared", 1)
-                SessionStats:updateMax("deepestFloorReached", nextFloor)
-                Audio:playSound("floor_advance")
-        end
-
-        startTransitionPhase(self, "fadeout", skipFade and 0 or 1.2, {
-                transitionAdvance = advance,
-                pendingFloor = pendingFloor,
-                transitionFloorData = floorData,
-                floorApplied = false,
-        })
-end
-
-function Game:openShop()
-        Shop:start(self.floor)
-        self.shopCloseRequested = nil
-        startTransitionPhase(self, "shop", 0)
-        Audio:playSound("shop_open")
+    Snake:finishDescending()
+    self.transition:startFloorTransition(advance, skipFade)
 end
 
 function Game:startFloorIntro(duration, extra)
-        extra = extra or {}
-
-        if extra.transitionResumePhase == nil then
-                extra.transitionResumePhase = "fadein"
-        end
-
-        if extra.transitionResumePhase == "fadein" and extra.transitionResumeFadeDuration == nil then
-                extra.transitionResumeFadeDuration = 1.2
-        elseif extra.transitionResumePhase ~= "fadein" then
-                extra.transitionResumeFadeDuration = nil
-        end
-
-        startTransitionPhase(self, "floorintro", duration or 3.5, extra)
-        Audio:playSound("floor_intro")
+    self.transition:startFloorIntro(duration, extra)
 end
 
 function Game:startFadeIn(duration)
-        startTransitionPhase(self, "fadein", duration or 1.2)
-end
-
-function Game:updateTransition(dt)
-        self.transitionTimer = self.transitionTimer + dt
-
-        if self.transitionPhase == "fadeout" then
-                if self.transitionTimer >= self.transitionDuration then
-                        if self.transitionAdvance and not self.floorApplied and self.pendingFloor then
-                                self.floor = self.pendingFloor
-                                self:setupFloor(self.floor)
-                                self.floorApplied = true
-                        end
-
-                        self:openShop()
-                end
-
-        elseif self.transitionPhase == "shop" then
-                Shop:update(dt)
-                if self.shopCloseRequested and Shop:isSelectionComplete() then
-                        self.shopCloseRequested = nil
-                        self:startFloorIntro()
-                end
-
-        elseif self.transitionPhase == "floorintro" then
-                if self.transitionTimer >= self.transitionDuration then
-                        local resumePhase = self.transitionResumePhase or "fadein"
-                        local fadeDuration = self.transitionResumeFadeDuration
-
-                        self.transitionResumePhase = nil
-                        self.transitionResumeFadeDuration = nil
-
-                        if resumePhase == "fadein" then
-                                self:startFadeIn(fadeDuration or 1.2)
-                        else
-                                self.state = "playing"
-                                self.transitionPhase = nil
-                        end
-                end
-
-        elseif self.transitionPhase == "fadein" then
-                if self.transitionTimer >= self.transitionDuration then
-                        self.state = "playing"
-                        self.transitionPhase = nil
-                end
-        end
+    self.transition:startFadeIn(duration)
 end
 
 function Game:updateDescending(dt)
@@ -401,8 +310,17 @@ local function drawInterfaceLayers(self)
 end
 
 function Game:drawTransition()
-        if self.transitionPhase == "fadeout" then
-                local progress = easedProgress(self.transitionTimer, self.transitionDuration)
+        if not (self.transition and self.transition:isActive()) then
+                return
+        end
+
+        local phase = self.transition:getPhase()
+        local timer = self.transition:getTimer() or 0
+        local duration = self.transition:getDuration() or 0
+        local data = self.transition:getData() or {}
+
+        if phase == "fadeout" then
+                local progress = easedProgress(timer, duration)
                 local overlayAlpha = progress * 0.9
                 local scale = 1 - 0.04 * easeOutExpo(progress)
                 local yOffset = 24 * progress
@@ -427,8 +345,8 @@ function Game:drawTransition()
                 return
         end
 
-        if self.transitionPhase == "shop" then
-                local entrance = easeOutBack(clamp01((self.transitionTimer or 0) / 0.6))
+        if phase == "shop" then
+                local entrance = easeOutBack(clamp01(timer / 0.6))
                 local scale = 0.92 + 0.08 * entrance
                 local yOffset = (1 - entrance) * 40
 
@@ -444,11 +362,9 @@ function Game:drawTransition()
                 return
         end
 
-        if self.transitionPhase == "floorintro" then
-                local data = self.transitionFloorData or self.currentFloorData
-                if data then
-                        local timer = self.transitionTimer or 0
-                        local duration = self.transitionDuration or 0
+        if phase == "floorintro" then
+                local floorData = data.transitionFloorData or self.currentFloorData
+                if floorData then
                         local progress = easedProgress(timer, duration)
                         local outroDuration = math.min(0.6, duration > 0 and duration * 0.5 or 0)
                         local outroProgress = 0
@@ -482,11 +398,11 @@ function Game:drawTransition()
                                 love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 - 80 + yOffset)
                                 love.graphics.scale(titleScale, titleScale)
                                 love.graphics.translate(-self.screenWidth / 2, -(self.screenHeight / 2 - 80 + yOffset))
-                                love.graphics.printf(data.name, 0, self.screenHeight / 2 - 80 + yOffset, self.screenWidth, "center")
+                                love.graphics.printf(floorData.name, 0, self.screenHeight / 2 - 80 + yOffset, self.screenWidth, "center")
                                 love.graphics.pop()
                         end
 
-                        if data.flavor and data.flavor ~= "" then
+                        if floorData.flavor and floorData.flavor ~= "" then
                                 local flavorAlpha = fadeAlpha(0.45, 0.4)
                                 if flavorAlpha > 0 then
                                         local flavorProgress = easeOutExpo(clamp01((timer - 0.45) / 0.65))
@@ -495,7 +411,7 @@ function Game:drawTransition()
                                         love.graphics.setColor(1, 1, 1, flavorAlpha)
                                         love.graphics.push()
                                         love.graphics.translate(0, flavorOffset)
-                                        love.graphics.printf(data.flavor, 0, self.screenHeight / 2, self.screenWidth, "center")
+                                        love.graphics.printf(floorData.flavor, 0, self.screenHeight / 2, self.screenWidth, "center")
                                         love.graphics.pop()
                                 end
                         end
@@ -589,8 +505,8 @@ function Game:drawTransition()
                 return
         end
 
-        if self.transitionPhase == "fadein" then
-                local progress = easedProgress(self.transitionTimer, self.transitionDuration)
+        if phase == "fadein" then
+                local progress = easedProgress(timer, duration)
                 local alpha = 1 - progress
                 local scale = 1 + 0.03 * alpha
                 local yOffset = alpha * 20
@@ -696,8 +612,8 @@ function Game:update(dt)
 
         FruitEvents.update(scaledDt)
 
-        if self.state == "transition" then
-                self:updateTransition(scaledDt)
+        if self.transition and self.transition:isActive() then
+                self.transition:update(scaledDt)
                 return
         end
 
@@ -754,7 +670,7 @@ function Game:draw()
         love.graphics.setColor(Theme.bgColor)
         love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 
-        if self.state == "transition" then
+        if self.transition and self.transition:isActive() then
                 self:drawTransition()
                 return
         end
@@ -764,7 +680,7 @@ function Game:draw()
 end
 
 function Game:keypressed(key)
-        if handleShopInput(self, "keypressed", key) then
+        if self.input and self.input:handleShopInput("keypressed", key) then
                 return
         end
 
@@ -777,7 +693,9 @@ function Game:mousepressed(x, y, button)
                 return
         end
 
-        handleShopInput(self, "mousepressed", x, y, button)
+        if self.input then
+                self.input:handleShopInput("mousepressed", x, y, button)
+        end
 end
 
 function Game:mousereleased(x, y, button)
@@ -790,159 +708,22 @@ function Game:mousereleased(x, y, button)
                 return
         end
 
-        return applyPauseMenuSelection(self, selection)
-end
-
-local directionButtonMap = { dpleft = "left", dpright = "right", dpup = "up", dpdown = "down" }
-local ANALOG_DEADZONE = 0.5
-local axisButtonMap = {
-        leftx = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
-        rightx = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
-        lefty = { slot = "vertical", negative = "dpup", positive = "dpdown" },
-        righty = { slot = "vertical", negative = "dpup", positive = "dpdown" },
-        [1] = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
-        [2] = { slot = "vertical", negative = "dpup", positive = "dpdown" },
-}
-
-local buttonAliases = {
-        a = "dash",
-        rightshoulder = "dash",
-        righttrigger = "dash",
-        x = "slow",
-        leftshoulder = "slow",
-        lefttrigger = "slow",
-}
-
-local playingButtonHandlers = {
-        start = function(self)
-                if self.state == "playing" then
-                        self.state = "paused"
-                end
-        end,
-        dash = function(self)
-                if self.state == "playing" then
-                        Controls:keypressed(self, "space")
-                end
-        end,
-        slow = function(self)
-                if self.state == "playing" then
-                        Controls:keypressed(self, "lshift")
-                end
-        end,
-}
-
-local function resolvePlayingAction(button)
-        return buttonAliases[button] or button
-end
-
-local function isShopActive(self)
-        return self.transitionPhase == "shop"
-end
-
-local function handleShopInput(self, methodName, ...)
-        if not isShopActive(self) then
-                return false
-        end
-
-        local handler = Shop[methodName]
-        if not handler then
-                return true
-        end
-
-        local result = handler(Shop, ...)
-        if result then
-                self.shopCloseRequested = true
-        end
-
-        return true
-end
-
-local function applyPauseMenuSelection(self, selection)
-        if selection == "resume" then
-                self.state = "playing"
-        elseif selection == "menu" then
-                Achievements:save()
-                return "menu"
-        end
-end
-
-local function handlePauseMenuInput(self, button)
-        if button == "start" then
-                applyPauseMenuSelection(self, "resume")
-                return
-        end
-
-        local action = PauseMenu:gamepadpressed(nil, button)
-        if action then
-                return applyPauseMenuSelection(self, action)
-        end
-end
-
-local function handlePlayingButton(self, button)
-        local direction = directionButtonMap[button]
-        if direction then
-                Controls:keypressed(self, direction)
-                return
-        end
-
-        local handler = playingButtonHandlers[resolvePlayingAction(button)]
-        if handler then
-                return handler(self)
-        end
-end
-
-local function handleGamepadInput(self, button)
-        if handleShopInput(self, "gamepadpressed", nil, button) then
-                return
-        end
-
-        if self.state == "paused" then
-                return handlePauseMenuInput(self, button)
-        end
-
-        return handlePlayingButton(self, button)
-end
-
-local function handleGamepadAxisInput(self, axis, value)
-        if isShopActive(self) and Shop.gamepadaxis then
-                Shop:gamepadaxis(nil, axis, value)
-        end
-
-        local config = axisButtonMap[axis]
-        if not config then
-                return
-        end
-
-        local state = self.gamepadAxisDirections
-        if not state then
-                state = { horizontal = nil, vertical = nil }
-                self.gamepadAxisDirections = state
-        end
-
-        local direction
-        if value >= ANALOG_DEADZONE then
-                direction = config.positive
-        elseif value <= -ANALOG_DEADZONE then
-                direction = config.negative
-        else
-                direction = nil
-        end
-
-        if state[config.slot] ~= direction then
-                state[config.slot] = direction
-                if direction then
-                        handleGamepadInput(self, direction)
-                end
+        if self.input then
+                return self.input:applyPauseMenuSelection(selection)
         end
 end
 
 function Game:gamepadpressed(_, button)
-        return handleGamepadInput(self, button)
+        if self.input then
+                return self.input:handleGamepadButton(button)
+        end
 end
 Game.joystickpressed = Game.gamepadpressed
 
 function Game:gamepadaxis(_, axis, value)
-        return handleGamepadAxisInput(self, axis, value)
+        if self.input then
+                return self.input:handleGamepadAxis(axis, value)
+        end
 end
 Game.joystickaxis = Game.gamepadaxis
 
