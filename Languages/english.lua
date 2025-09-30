@@ -458,14 +458,6 @@ local english = {
             },
         },
         achievements_definitions = {
-            sessionStarter = {
-                title = "First Steps",
-                description = "Start your first run",
-            },
-            firstApple = {
-                title = "Tasty Beginning",
-                description = "Eat your first apple",
-            },
             appleHoarder = {
                 title = "Apple Hoarder",
                 description = "Eat 100 total apples",
@@ -553,10 +545,6 @@ local english = {
             floorAscendant = {
                 title = "Skyward Survivor",
                 description = "Reach floor 14",
-            },
-            floorTraveler = {
-                title = "Seasoned Descent",
-                description = "Clear 20 floors total",
             },
             floorVoyager = {
                 title = "Underworld Voyager",
