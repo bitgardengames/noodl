@@ -1001,36 +1001,33 @@ function Game:draw()
 end
 
 function Game:keypressed(key)
-        if self.transitionPhase == "shop" then
-                if Shop:keypressed(key) then
-                        self.shopCloseRequested = true
-                end
-        else
-                Controls:keypressed(self, key)
+        if handleShopInput(self, "keypressed", key) then
+                return
         end
+
+        Controls:keypressed(self, key)
 end
 
 function Game:mousepressed(x, y, button)
         if self.state == "paused" then
                 PauseMenu:mousepressed(x, y, button)
-
-        elseif self.transitionPhase == "shop" then
-                if Shop:mousepressed(x, y, button) then
-                        self.shopCloseRequested = true
-                end
+                return
         end
+
+        handleShopInput(self, "mousepressed", x, y, button)
 end
 
 function Game:mousereleased(x, y, button)
-	if self.state == "paused" and button == 1 then
-		local clicked = PauseMenu:mousereleased(x, y, button)
-		if clicked == "resume" then
-			self.state = "playing"
-		elseif clicked == "menu" then
-			Achievements:save()
-			return "menu"
-		end
-	end
+        if self.state ~= "paused" or button ~= 1 then
+                return
+        end
+
+        local selection = PauseMenu:mousereleased(x, y, button)
+        if not selection then
+                return
+        end
+
+        return applyPauseMenuSelection(self, selection)
 end
 
 local directionButtonMap = { dpleft = "left", dpright = "right", dpup = "up", dpdown = "down" }
@@ -1075,18 +1072,46 @@ local function resolvePlayingAction(button)
         return buttonAliases[button] or button
 end
 
+local function isShopActive(self)
+        return self.transitionPhase == "shop"
+end
+
+local function handleShopInput(self, methodName, ...)
+        if not isShopActive(self) then
+                return false
+        end
+
+        local handler = Shop[methodName]
+        if not handler then
+                return true
+        end
+
+        local result = handler(Shop, ...)
+        if result then
+                self.shopCloseRequested = true
+        end
+
+        return true
+end
+
+local function applyPauseMenuSelection(self, selection)
+        if selection == "resume" then
+                self.state = "playing"
+        elseif selection == "menu" then
+                Achievements:save()
+                return "menu"
+        end
+end
+
 local function handlePauseMenuInput(self, button)
         if button == "start" then
-                self.state = "playing"
+                applyPauseMenuSelection(self, "resume")
                 return
         end
 
         local action = PauseMenu:gamepadpressed(nil, button)
-        if action == "resume" then
-                self.state = "playing"
-        elseif action == "menu" then
-                Achievements:save()
-                return "menu"
+        if action then
+                return applyPauseMenuSelection(self, action)
         end
 end
 
@@ -1104,10 +1129,7 @@ local function handlePlayingButton(self, button)
 end
 
 local function handleGamepadInput(self, button)
-        if self.transitionPhase == "shop" then
-                if Shop:gamepadpressed(nil, button) then
-                        self.shopCloseRequested = true
-                end
+        if handleShopInput(self, "gamepadpressed", nil, button) then
                 return
         end
 
@@ -1119,6 +1141,10 @@ local function handleGamepadInput(self, button)
 end
 
 local function handleGamepadAxisInput(self, axis, value)
+        if isShopActive(self) and Shop.gamepadaxis then
+                Shop:gamepadaxis(nil, axis, value)
+        end
+
         local config = axisButtonMap[axis]
         if not config then
                 return
