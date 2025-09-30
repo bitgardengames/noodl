@@ -168,31 +168,25 @@ function Menu:draw()
         local _, descLines = bodyFont:getWrap(descriptionText, panelWidth - padding * 2)
         local descHeight = #descLines * bodyFont:getHeight()
 
+        local statusBar = funChallenge.statusBar
+        local ratio = 0
         local progressText = nil
-        local progressHeight = 0
-        local ratio = funChallenge.ratio or 0
+        local statusBarHeight = 0
         local bonusText = nil
+
+        if statusBar then
+            ratio = math.max(0, math.min(statusBar.ratio or 0, 1))
+            if statusBar.textKey then
+                progressText = Localization:get(statusBar.textKey, statusBar.replacements)
+            end
+            statusBarHeight = 10 + 14
+            if progressText then
+                statusBarHeight = statusBarHeight + progressFont:getHeight() + 6
+            end
+        end
 
         if funChallenge.xpReward and funChallenge.xpReward > 0 then
             bonusText = Localization:get("menu.fun_panel_bonus", { xp = funChallenge.xpReward })
-        end
-
-        if funChallenge.goal and funChallenge.goal > 0 then
-            local replacements = funChallenge.progressReplacements or { current = funChallenge.current, goal = funChallenge.goal }
-            if funChallenge.completed then
-                if funChallenge.completeKey then
-                    progressText = Localization:get(funChallenge.completeKey, replacements)
-                else
-                    progressText = Localization:get("menu.fun_panel_complete", replacements)
-                end
-            else
-                local progressKey = funChallenge.progressKey or "menu.fun_panel_progress"
-                progressText = Localization:get(progressKey, replacements)
-            end
-
-            if progressText then
-                progressHeight = progressFont:getHeight() + 30
-            end
         end
 
         local panelHeight = padding * 2
@@ -202,7 +196,7 @@ function Menu:draw()
             + 10
             + descHeight
             + (bonusText and (progressFont:getHeight() + 10) or 0)
-            + (progressText and progressHeight or 0)
+            + statusBarHeight
 
         setColorWithAlpha(Theme.shadowColor, eased * 0.7)
         love.graphics.rectangle("fill", panelX + 6, panelY + 8, panelWidth, panelHeight, 14, 14)
@@ -240,12 +234,14 @@ function Menu:draw()
             textY = textY + progressFont:getHeight()
         end
 
-        if progressText then
+        if statusBar then
             textY = textY + 10
             love.graphics.setFont(progressFont)
-            love.graphics.print(progressText, textX, textY)
 
-            textY = textY + progressFont:getHeight() + 6
+            if progressText then
+                love.graphics.print(progressText, textX, textY)
+                textY = textY + progressFont:getHeight() + 6
+            end
 
             local barHeight = 14
             local barWidth = panelWidth - padding * 2
@@ -253,8 +249,11 @@ function Menu:draw()
             setColorWithAlpha({0, 0, 0, 0.35}, alpha)
             UI.drawRoundedRect(textX, textY, barWidth, barHeight, 8)
 
-            setColorWithAlpha(Theme.progressColor, alpha)
-            UI.drawRoundedRect(textX, textY, barWidth * ratio, barHeight, 8)
+            local fillWidth = barWidth * ratio
+            if fillWidth > 0 then
+                setColorWithAlpha(Theme.progressColor, alpha)
+                UI.drawRoundedRect(textX, textY, fillWidth, barHeight, 8)
+            end
 
             setColorWithAlpha(Theme.panelBorder, alpha)
             love.graphics.setLineWidth(1.5)

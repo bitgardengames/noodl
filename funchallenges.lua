@@ -124,6 +124,31 @@ local function resolveDescriptionReplacements(challenge, current, goal, context)
     return replacements
 end
 
+local DEFAULT_PROGRESS_KEY = "menu.fun_panel_progress"
+local DEFAULT_COMPLETE_KEY = "menu.fun_panel_complete"
+
+local function buildStatusBar(challenge, completed, current, goal, ratio, replacements)
+    if not goal or goal <= 0 then
+        return nil
+    end
+
+    local textKey
+    if completed then
+        textKey = challenge.completeKey or DEFAULT_COMPLETE_KEY
+    else
+        textKey = challenge.progressKey or DEFAULT_PROGRESS_KEY
+    end
+
+    return {
+        current = current or 0,
+        goal = goal or 0,
+        ratio = ratio or 0,
+        textKey = textKey,
+        replacements = replacements or defaultProgressReplacements(current, goal),
+        completed = completed or false,
+    }
+end
+
 local function clampRatio(current, goal)
     if goal and goal > 0 then
         return math.max(0, math.min(1, current / goal))
@@ -229,6 +254,8 @@ local function evaluateChallenge(self, challenge, context)
 
     local descriptionReplacements = resolveDescriptionReplacements(challenge, current, goal, context)
     local progressReplacements = resolveProgressReplacements(challenge, current, goal, context)
+    local completed = storedComplete or (goal > 0 and current >= goal)
+    local statusBar = buildStatusBar(challenge, completed, current, goal, ratio, progressReplacements)
 
     return {
         id = challenge.id,
@@ -236,14 +263,12 @@ local function evaluateChallenge(self, challenge, context)
         titleKey = challenge.titleKey,
         descriptionKey = challenge.descriptionKey,
         descriptionReplacements = descriptionReplacements,
-        progressKey = challenge.progressKey,
-        progressReplacements = progressReplacements,
-        completeKey = challenge.completeKey,
         goal = goal,
         current = current,
         ratio = ratio,
-        completed = storedComplete or (goal > 0 and current >= goal),
+        completed = completed,
         xpReward = challenge.xpReward or FunChallenges.defaultXpReward,
+        statusBar = statusBar,
     }
 end
 
