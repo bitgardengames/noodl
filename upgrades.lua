@@ -1577,19 +1577,9 @@ function Upgrades:recordFloorReplaySnapshot(game)
     local state = self.runState
     if not state or not state.counters then return end
 
-    local charges = state.counters.phoenixEchoCharges or 0
-    if charges <= 0 then
-        state.counters.phoenixEchoSnapshot = nil
-        return
-    end
-
-    if not Snake.getStateSnapshot then
-        return
-    end
-
-    state.counters.phoenixEchoSnapshot = {
-        snake = Snake:getStateSnapshot(),
-    }
+    -- The phoenix upgrade no longer tracks snake position, so we don't need to
+    -- capture any state here.
+    return
 end
 
 function Upgrades:modifyFloorContext(context)
@@ -1657,9 +1647,6 @@ function Upgrades:tryFloorReplay(game, cause)
     state.counters.phoenixEchoUsed = (state.counters.phoenixEchoUsed or 0) + 1
     state.counters.phoenixEchoLastCause = cause
 
-    local snapshot = state.counters.phoenixEchoSnapshot
-    state.counters.phoenixEchoSnapshot = nil
-
     game.transitionPhase = nil
     game.transitionTimer = 0
     game.transitionDuration = 0
@@ -1668,13 +1655,8 @@ function Upgrades:tryFloorReplay(game, cause)
     game.transitionResumeFadeDuration = nil
 
     local restored = false
-    if snapshot and snapshot.snake and Snake.restoreStateSnapshot then
-        Snake:restoreStateSnapshot(snapshot.snake)
-        restored = true
-    else
-        game:setupFloor(game.floor)
-        restored = true
-    end
+    Snake:resetPosition()
+    restored = true
 
     game.state = "playing"
     game.deathCause = nil
