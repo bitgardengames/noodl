@@ -1,6 +1,7 @@
 local Popup = require("popup")
 local PlayerStats = require("playerstats")
 local Localization = require("localization")
+local UI = require("ui")
 
 local GameModes = {}
 
@@ -8,7 +9,7 @@ local GameModes = {}
 -- Shared assets (preloaded to avoid per-frame GC)
 -------------------------------------------------
 local FONTS = {
-    timer = love.graphics.newFont(24)
+    timer = UI.fonts.timerSmall or UI.fonts.button
 }
 
 -------------------------------------------------

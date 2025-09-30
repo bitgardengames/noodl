@@ -30,12 +30,12 @@ local fontProgressSmall
 local stats = {}
 local buttonList = ButtonList.new()
 -- Layout constants
-local BUTTON_WIDTH = 250
-local BUTTON_HEIGHT = 50
-local BUTTON_SPACING = 20
+local BUTTON_WIDTH = UI.spacing.buttonWidth
+local BUTTON_HEIGHT = UI.spacing.buttonHeight
+local BUTTON_SPACING = UI.spacing.buttonSpacing
 
 local function drawBackground(sw, sh)
-    love.graphics.setColor(Theme.bgColor)
+    love.graphics.setColor(UI.colors.background or Theme.bgColor)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
 end
 
@@ -67,12 +67,13 @@ local function defaultButtonLayout(sw, sh, defs, startY)
 end
 
 local function drawCenteredPanel(x, y, width, height, radius)
-    love.graphics.setColor(Theme.panelColor)
-    love.graphics.rectangle("fill", x, y, width, height, radius, radius)
-    love.graphics.setColor(Theme.panelBorder)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, width, height, radius, radius)
-    love.graphics.setLineWidth(1)
+    UI.drawPanel(x, y, width, height, {
+        radius = radius,
+        shadowOffset = UI.spacing.shadowOffset,
+        fill = Theme.panelColor,
+        borderColor = Theme.panelBorder,
+        borderWidth = 2,
+    })
 end
 
 local function handleButtonAction(_, action)
@@ -120,13 +121,13 @@ function GameOver:enter(data)
     local cause = data.cause or "unknown"
     self.deathMessage = pickDeathMessage(cause)
 
-    fontTitle = love.graphics.newFont(48)
-    fontScore = love.graphics.newFont(72)
-    fontSmall = love.graphics.newFont(20)
-    fontBadge = love.graphics.newFont(26)
-    fontProgressTitle = love.graphics.newFont(30)
-    fontProgressValue = love.graphics.newFont(38)
-    fontProgressSmall = love.graphics.newFont(18)
+    fontTitle = UI.fonts.display or UI.fonts.title
+    fontScore = UI.fonts.title or UI.fonts.display
+    fontSmall = UI.fonts.caption or UI.fonts.body
+    fontBadge = UI.fonts.badge or UI.fonts.button
+    fontProgressTitle = UI.fonts.heading or UI.fonts.subtitle
+    fontProgressValue = UI.fonts.display or UI.fonts.title
+    fontProgressSmall = UI.fonts.caption or UI.fonts.body
 
     -- Merge default stats with provided stats
     stats = {
@@ -264,16 +265,18 @@ local function getLocalizedOrFallback(key, fallback)
 end
 
 local function drawStatPill(x, y, width, height, label, value)
-    love.graphics.setColor(1, 1, 1, 0.08)
-    love.graphics.rectangle("fill", x, y, width, height, 18, 18)
-    love.graphics.setColor(1, 1, 1, 0.24)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, width, height, 18, 18)
-    love.graphics.setLineWidth(1)
+    UI.drawPanel(x, y, width, height, {
+        radius = 18,
+        shadowOffset = 0,
+        fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * 0.7 },
+        borderColor = UI.colors.border or Theme.panelBorder,
+        borderWidth = 2,
+    })
 
-    love.graphics.setFont(fontProgressSmall)
-    love.graphics.setColor(1, 1, 1, 0.75)
-    love.graphics.printf(label, x + 8, y + 14, width - 16, "center")
+    UI.drawLabel(label, x + 8, y + 12, width - 16, "center", {
+        font = fontProgressSmall,
+        color = UI.colors.mutedText or UI.colors.text,
+    })
 
     local displayFont = fontProgressValue
     if displayFont:getWidth(value) > width - 32 then
@@ -283,10 +286,11 @@ local function drawStatPill(x, y, width, height, label, value)
         end
     end
 
-    love.graphics.setFont(displayFont)
-    love.graphics.setColor(1, 1, 1, 0.92)
-    local valueY = y + height / 2 - displayFont:getHeight() / 2 + 10
-    love.graphics.printf(value, x + 8, valueY, width - 16, "center")
+    local valueY = y + height / 2 - displayFont:getHeight() / 2 + 6
+    UI.drawLabel(value, x + 8, valueY, width - 16, "center", {
+        font = displayFont,
+        color = UI.colors.text,
+    })
 end
 
 local function drawXpSection(self, x, y, width)
@@ -296,33 +300,38 @@ local function drawXpSection(self, x, y, width)
     end
 
     local height = math.max(160, self.xpSectionHeight or 0)
-    love.graphics.setColor(1, 1, 1, 0.08)
-    love.graphics.rectangle("fill", x, y, width, height, 18, 18)
-    love.graphics.setColor(1, 1, 1, 0.24)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, width, height, 18, 18)
-    love.graphics.setLineWidth(1)
+    UI.drawPanel(x, y, width, height, {
+        radius = 18,
+        shadowOffset = 0,
+        fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * 0.65 },
+        borderColor = UI.colors.border or Theme.panelBorder,
+        borderWidth = 2,
+    })
 
-    love.graphics.setFont(fontProgressTitle)
-    love.graphics.setColor(1, 1, 1, 0.88)
-    love.graphics.printf(getLocalizedOrFallback("gameover.meta_progress_title", "Experience"), x, y + 18, width, "center")
+    local headerY = y + 18
+    UI.drawLabel(getLocalizedOrFallback("gameover.meta_progress_title", "Experience"), x, headerY, width, "center", {
+        font = fontProgressTitle,
+        color = UI.colors.text,
+    })
 
-    local levelColor = Theme.progressColor or { 1, 1, 1, 1 }
+    local levelColor = Theme.progressColor or UI.colors.progress or UI.colors.text
     local flash = math.max(0, math.min(1, anim.levelFlash or 0))
-    love.graphics.setFont(fontProgressValue)
-    love.graphics.setColor(levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.78 + 0.2 * flash)
     local levelText = Localization:get("gameover.meta_progress_level_label", { level = anim.displayedLevel or 1 })
-    local levelY = y + 60
-    love.graphics.printf(levelText, x, levelY, width, "center")
+    local levelY = headerY + fontProgressTitle:getHeight() + 12
+    UI.drawLabel(levelText, x, levelY, width, "center", {
+        font = fontProgressValue,
+        color = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.78 + 0.2 * flash },
+    })
 
     local gained = math.max(0, math.floor((anim.displayedGained or 0) + 0.5))
-    love.graphics.setFont(fontProgressSmall)
-    love.graphics.setColor(1, 1, 1, 0.78)
     local gainedText = Localization:get("gameover.meta_progress_gain_short", { points = gained })
-    local gainedY = levelY + fontProgressValue:getHeight() + 8
-    love.graphics.printf(gainedText, x, gainedY, width, "center")
+    local gainedY = levelY + fontProgressValue:getHeight() + 6
+    UI.drawLabel(gainedText, x, gainedY, width, "center", {
+        font = fontProgressSmall,
+        color = UI.colors.mutedText or UI.colors.text,
+    })
 
-    local barY = gainedY + fontProgressSmall:getHeight() + 18
+    local barY = gainedY + fontProgressSmall:getHeight() + 16
     local barHeight = 26
     local barWidth = width - 48
     local barX = x + 24
@@ -331,11 +340,17 @@ local function drawXpSection(self, x, y, width)
         percent = math.min(1, math.max(0, (anim.xpIntoLevel or 0) / anim.xpForLevel))
     end
 
-    love.graphics.setColor(1, 1, 1, 0.18)
+    local shadowColor = UI.colors.shadow or { 0, 0, 0, 0.4 }
+    local trackColor = { shadowColor[1], shadowColor[2], shadowColor[3], 0.35 }
+    love.graphics.setColor(trackColor)
     love.graphics.rectangle("fill", barX, barY, barWidth, barHeight, 12, 12)
-    love.graphics.setColor(levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.92)
+
+    local progressColor = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.92 }
+    love.graphics.setColor(progressColor)
     love.graphics.rectangle("fill", barX, barY, barWidth * percent, barHeight, 12, 12)
-    love.graphics.setColor(1, 1, 1, 0.5)
+
+    local outlineSource = UI.colors.highlight or UI.colors.border or { 1, 1, 1, 0.6 }
+    love.graphics.setColor(outlineSource[1], outlineSource[2], outlineSource[3], 0.6)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", barX, barY, barWidth, barHeight, 12, 12)
     love.graphics.setLineWidth(1)
@@ -353,11 +368,16 @@ local function drawXpSection(self, x, y, width)
     end
 
     local labelY = barY + barHeight + 14
-    love.graphics.setColor(1, 1, 1, 0.82)
-    love.graphics.printf(totalLabel, x, labelY, width, "center")
+    UI.drawLabel(totalLabel, x, labelY, width, "center", {
+        font = fontProgressSmall,
+        color = UI.colors.text,
+    })
+
     labelY = labelY + fontProgressSmall:getHeight() + 4
-    love.graphics.setColor(1, 1, 1, 0.7)
-    love.graphics.printf(remainingLabel, x, labelY, width, "center")
+    UI.drawLabel(remainingLabel, x, labelY, width, "center", {
+        font = fontProgressSmall,
+        color = UI.colors.mutedText or UI.colors.text,
+    })
 end
 
 local function drawCombinedPanel(self, contentWidth, contentX, padding)
@@ -365,7 +385,6 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
     local panelY = 120
     drawCenteredPanel(contentX, panelY, contentWidth, panelHeight, 20)
 
-    love.graphics.setFont(fontSmall)
     local messageText = self.deathMessage or Localization:get("gameover.default_message")
     local wrapLimit = contentWidth - padding * 2
     local _, wrappedMessage = fontSmall:getWrap(messageText, wrapLimit)
@@ -373,25 +392,31 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
     local messageLines = math.max(1, #wrappedMessage)
 
     local textY = panelY + padding
-    love.graphics.setColor(1, 1, 1, 0.85)
-    love.graphics.printf(getLocalizedOrFallback("gameover.run_summary_title", "Run Summary"), contentX, textY, contentWidth, "center")
+    UI.drawLabel(getLocalizedOrFallback("gameover.run_summary_title", "Run Summary"), contentX, textY, contentWidth, "center", {
+        font = UI.fonts.heading or fontSmall,
+        color = UI.colors.text,
+    })
 
     textY = textY + lineHeight + 12
-    love.graphics.setColor(1, 1, 1, 0.9)
-    love.graphics.printf(messageText, contentX + padding, textY, wrapLimit, "center")
+    UI.drawLabel(messageText, contentX + padding, textY, wrapLimit, "center", {
+        font = fontSmall,
+        color = UI.colors.mutedText or UI.colors.text,
+    })
 
     textY = textY + messageLines * lineHeight + 28
-    love.graphics.setFont(fontScore)
     local progressColor = Theme.progressColor or { 1, 1, 1, 1 }
-    love.graphics.setColor(progressColor[1] or 1, progressColor[2] or 1, progressColor[3] or 1, 0.92)
-    love.graphics.printf(tostring(stats.score or 0), contentX, textY, contentWidth, "center")
+    UI.drawLabel(tostring(stats.score or 0), contentX, textY, contentWidth, "center", {
+        font = fontScore,
+        color = { progressColor[1] or 1, progressColor[2] or 1, progressColor[3] or 1, 0.92 },
+    })
 
     textY = textY + fontScore:getHeight() + 16
     if self.isNewHighScore then
-        love.graphics.setFont(fontBadge)
         local badgeColor = Theme.achieveColor or { 1, 1, 1, 1 }
-        love.graphics.setColor(badgeColor[1] or 1, badgeColor[2] or 1, badgeColor[3] or 1, 0.9)
-        love.graphics.printf(Localization:get("gameover.high_score_badge"), contentX + padding, textY, contentWidth - padding * 2, "center")
+        UI.drawLabel(Localization:get("gameover.high_score_badge"), contentX + padding, textY, contentWidth - padding * 2, "center", {
+            font = fontBadge,
+            color = { badgeColor[1] or 1, badgeColor[2] or 1, badgeColor[3] or 1, 0.9 },
+        })
         textY = textY + fontBadge:getHeight() + 18
     end
 
@@ -413,11 +438,12 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
 
     local achievementsList = self.achievementsEarned or {}
     if #achievementsList > 0 then
-        love.graphics.setFont(fontSmall)
-        love.graphics.setColor(1, 1, 1, 0.72)
         local achievementsLabel = getLocalizedOrFallback("gameover.achievements_header", "Achievements")
         local achievementsText = string.format("%s: %d", achievementsLabel, #achievementsList)
-        love.graphics.printf(achievementsText, contentX + padding, textY, wrapLimit, "center")
+        UI.drawLabel(achievementsText, contentX + padding, textY, wrapLimit, "center", {
+            font = fontSmall,
+            color = UI.colors.mutedText or UI.colors.text,
+        })
         textY = textY + lineHeight + 12
     end
 
@@ -434,9 +460,10 @@ function GameOver:draw()
     local contentX = (sw - contentWidth) / 2
     local padding = 24
 
-    love.graphics.setFont(fontTitle)
-    love.graphics.setColor(1, 1, 1, 0.95)
-    love.graphics.printf(Localization:get("gameover.title"), 0, 48, sw, "center")
+    UI.drawLabel(Localization:get("gameover.title"), 0, 48, sw, "center", {
+        font = fontTitle,
+        color = UI.colors.text,
+    })
 
     drawCombinedPanel(self, contentWidth, contentX, padding)
 
@@ -446,7 +473,6 @@ function GameOver:draw()
         end
     end
 
-    love.graphics.setColor(1, 1, 1, 1)
     buttonList:draw()
 end
 

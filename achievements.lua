@@ -360,13 +360,8 @@ function Achievements:update(dt)
 end
 
 function Achievements:_getPopupFonts()
-    if not self._popupFonts then
-        self._popupFonts = {
-            title = love.graphics.newFont(18),
-            description = love.graphics.newFont(14),
-        }
-    end
-    return self._popupFonts.title, self._popupFonts.description
+    local UI = require("ui")
+    return UI.fonts.badge or UI.fonts.button, UI.fonts.caption or UI.fonts.body
 end
 
 local function iconPaths(iconName)

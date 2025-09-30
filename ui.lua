@@ -124,14 +124,18 @@ end
 
 -- Fonts
 UI.fonts = {
-    title      = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 72),
-    subtitle   = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 32),
-    button     = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 24),
-    body       = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 16),
-    small      = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 12),
-    timer      = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 42),
-    timerSmall = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 20),
-    achieve    = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 16),
+    title        = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 72),
+    display      = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 64),
+    subtitle     = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 32),
+    heading      = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 28),
+    button       = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 24),
+    body         = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 16),
+    caption      = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 14),
+    small        = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 12),
+    timer        = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 42),
+    timerSmall   = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 20),
+    achieve      = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 18),
+    badge        = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 20),
 }
 
 UI.colors = {
@@ -139,14 +143,17 @@ UI.colors = {
     text        = Theme.textColor,
     subtleText  = {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.7},
     button      = Theme.buttonColor,
-    buttonHover = Theme.buttonHover or lightenColor(Theme.buttonColor, 0.18),
-    buttonPress = darkenColor(Theme.buttonColor, 0.75),
+    buttonHover = Theme.buttonHover or lightenColor(Theme.buttonColor, 0.15),
+    buttonPress = Theme.buttonPress or darkenColor(Theme.buttonColor, 0.65),
     border      = Theme.borderColor,
     panel       = Theme.panelColor,
     panelBorder = Theme.panelBorder,
     shadow      = Theme.shadowColor,
     highlight   = Theme.highlightColor or {1, 1, 1, 0.08},
     progress    = Theme.progressColor,
+    accentText  = Theme.accentTextColor,
+    mutedText   = Theme.mutedTextColor,
+    warning     = Theme.warningColor,
 }
 
 -- Spacing and layout constants
