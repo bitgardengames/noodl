@@ -52,6 +52,32 @@ FunChallenges.challenges = {
         goal = 180,
         progressKey = "menu.fun_daily.apples.progress",
     },
+    {
+        id = "dragonfruit_delight",
+        titleKey = "menu.fun_daily.dragonfruit.title",
+        descriptionKey = "menu.fun_daily.dragonfruit.description",
+        stat = "totalDragonfruitEaten",
+        goal = 12,
+        progressKey = "menu.fun_daily.dragonfruit.progress",
+        completeKey = "menu.fun_daily.dragonfruit.complete",
+    },
+    {
+        id = "combo_conductor",
+        titleKey = "menu.fun_daily.combos.title",
+        descriptionKey = "menu.fun_daily.combos.description",
+        stat = "totalCombosTriggered",
+        goal = 45,
+        progressKey = "menu.fun_daily.combos.progress",
+    },
+    {
+        id = "shield_specialist",
+        titleKey = "menu.fun_daily.shields.title",
+        descriptionKey = "menu.fun_daily.shields.description",
+        stat = "crashShieldsSaved",
+        goal = 20,
+        progressKey = "menu.fun_daily.shields.progress",
+        completeKey = "menu.fun_daily.shields.complete",
+    },
 }
 
 local function getChallengeIndex(count)
@@ -84,6 +110,17 @@ local function resolveDescriptionReplacements(challenge, current, goal)
     return replacements
 end
 
+local function resolveGoal(challenge)
+    if challenge.getGoal then
+        local value = challenge:getGoal()
+        if value ~= nil then
+            return value
+        end
+    end
+
+    return challenge.goal or 0
+end
+
 function FunChallenges:getDailyChallenge()
     local count = #self.challenges
     local index = getChallengeIndex(count)
@@ -103,7 +140,7 @@ function FunChallenges:getDailyChallenge()
         current = PlayerStats:get(challenge.stat) or 0
     end
 
-    local goal = challenge.goal or 0
+    local goal = resolveGoal(challenge)
     local ratio = 0
     if goal > 0 then
         ratio = math.min(1, current / goal)

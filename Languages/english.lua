@@ -37,6 +37,23 @@ local english = {
                     description = "Collect ${goal} apples in total.",
                     progress = "Lifetime apples: ${current}/${goal}",
                 },
+                dragonfruit = {
+                    title = "Dragonfruit Delight",
+                    description = "Collect ${goal} dragonfruit across every run.",
+                    progress = "Dragonfruit snagged: ${current}/${goal}",
+                    complete = "Dragonfruit feast! You've nabbed ${current}.",
+                },
+                combos = {
+                    title = "Combo Conductor",
+                    description = "Trigger ${goal} combos over your lifetime of runs.",
+                    progress = "Combos orchestrated: ${current}/${goal}",
+                },
+                shields = {
+                    title = "Shield Specialist",
+                    description = "Activate ${goal} emergency shields to stay alive.",
+                    progress = "Emergency saves: ${current}/${goal}",
+                    complete = "Shield mastery! ${current} clutch saves.",
+                },
             },
         },
         settings = {
