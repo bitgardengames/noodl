@@ -1,4 +1,5 @@
 local Theme = require("theme")
+local Easing = require("easing")
 
 local GameState = {}
 
@@ -28,34 +29,9 @@ local transitionBlockedEvents = {
     gamepadaxis = true,
 }
 
--- Easing function: cubic ease-in-out (t in [0,1])
-local function easeInOutCubic(t)
-    if t < 0.5 then
-        return 4 * t * t * t
-    else
-        return 1 - math.pow(-2 * t + 2, 3) / 2
-    end
-end
-
--- Returns alpha from 0 to 1 based on eased time
-local function getTransitionAlpha(t, direction)
-    t = math.min(math.max(t, 0), 1)
-    if direction == 1 then
-        return easeInOutCubic(t)
-    else
-        return easeInOutCubic(1 - t)
-    end
-end
-
-local function clamp01(value)
-    if value < 0 then
-        return 0
-    elseif value > 1 then
-        return 1
-    end
-
-    return value
-end
+local clamp01 = Easing.clamp01
+local easeInOutCubic = Easing.easeInOutCubic
+local getTransitionAlpha = Easing.getTransitionAlpha
 
 local function parseDuration(value)
     if type(value) == "number" and value >= 0 then

@@ -5,6 +5,7 @@ local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 local Snake = require("snake")
 local SnakeUtils = require("snakeutils")
+local Easing = require("easing")
 local Face = require("face")
 local Fruit = require("fruit")
 local Rocks = require("rocks")
@@ -34,42 +35,12 @@ local Localization = require("localization")
 local Game = {}
 local TRACK_LENGTH = 120
 
-local function clamp01(value)
-        if value < 0 then return 0 end
-        if value > 1 then return 1 end
-        return value
-end
-
-local function lerp(a, b, t)
-        return a + (b - a) * t
-end
-
-local function easeInOutCubic(t)
-        if t < 0.5 then
-                return 4 * t * t * t
-        end
-        t = (2 * t) - 2
-        return 0.5 * t * t * t + 1
-end
-
-local function easeOutExpo(t)
-        if t >= 1 then return 1 end
-        return 1 - math.pow(2, -10 * t)
-end
-
-local function easeOutBack(t)
-        local c1 = 1.70158
-        local c3 = c1 + 1
-        return 1 + c3 * math.pow(t - 1, 3) + c1 * math.pow(t - 1, 2)
-end
-
-local function easedProgress(timer, duration)
-        if not duration or duration <= 0 then
-                return 1
-        end
-
-        return easeInOutCubic(clamp01(timer / duration))
-end
+local clamp01 = Easing.clamp01
+local lerp = Easing.lerp
+local easeInOutCubic = Easing.easeInOutCubic
+local easeOutExpo = Easing.easeOutExpo
+local easeOutBack = Easing.easeOutBack
+local easedProgress = Easing.easedProgress
 
 local function buildModifierSections(self)
     local sections = {}
