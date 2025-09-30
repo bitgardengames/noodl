@@ -46,6 +46,17 @@ function PlayerStats:updateMax(stat, value)
     end
 end
 
+function PlayerStats:updateMin(stat, value)
+    if value == nil then
+        return
+    end
+
+    if self.data[stat] == nil or value < self.data[stat] then
+        self.data[stat] = value
+        self:save()
+    end
+end
+
 function PlayerStats:set(stat, value)
     self.data[stat] = value
     self:save()
