@@ -96,12 +96,12 @@ function Shop:beginRestock()
             local spinDirection = (random(0, 1) == 0) and -1 or 1
             state.discard = {
                 direction = direction,
-                drift = (random() * 90) + 70,
-                lift = (random() * 110) + 80,
-                wobbleSpeed = (random() * 2.4) + 3.6,
-                wobbleMagnitude = (random() * 26) + 14,
+                drift = (random() * 60) + 40,
+                fallDistance = (random() * 140) + 120,
+                wobbleSpeed = (random() * 1.6) + 2.6,
+                wobbleMagnitude = (random() * 18) + 10,
                 phase = random() * math.pi * 2,
-                spinSpeed = ((random() * 2.2) + 1.6) * spinDirection,
+                spinSpeed = ((random() * 1.8) + 1.2) * spinDirection,
                 clock = 0,
             }
         end
@@ -673,13 +673,15 @@ function Shop:draw(screenW, screenH)
             local fadeT = math.max(0, math.min(1, fadeOut))
             local discardEase = fadeT * fadeT * (3 - 2 * fadeT)
             local clock = discardData.clock or 0
-            local wobble = math.sin(clock * (discardData.wobbleSpeed or 5.2) + (discardData.phase or 0))
-            discardOffsetX = (discardData.drift or 0) * discardEase * (discardData.direction or 1)
-            discardOffsetX = discardOffsetX + wobble * (discardData.wobbleMagnitude or 18) * discardEase
-            discardOffsetY = (discardData.lift or 0) * discardEase
-            discardRotation = (discardData.spinSpeed or 4.4) * clock * discardEase
-            scale = scale * (1 + 0.1 * discardEase)
-            alpha = alpha * (1 - 0.5 * discardEase)
+            local wobble = math.sin(clock * (discardData.wobbleSpeed or 4.2) + (discardData.phase or 0))
+            local horizontalDrift = (discardData.drift or 0) * discardEase * (discardData.direction or 1)
+            discardOffsetX = horizontalDrift + wobble * (discardData.wobbleMagnitude or 14) * discardEase
+            local fallDistance = discardData.fallDistance or 0
+            local fallEase = discardEase * discardEase
+            discardOffsetY = fallDistance * fallEase
+            discardRotation = (discardData.spinSpeed or 3.4) * clock * discardEase
+            scale = scale * (1 + 0.06 * discardEase)
+            alpha = alpha * (1 - 0.65 * discardEase)
         end
 
         if card == self.selected then
@@ -694,8 +696,8 @@ function Shop:draw(screenW, screenH)
             alpha = 1
         else
             if discardData then
-                scale = scale * (1 + 0.05 * fadeEase)
-                alpha = alpha * (1 - 0.5 * fadeEase)
+                scale = scale * (1 + 0.04 * fadeEase)
+                alpha = alpha * (1 - 0.6 * fadeEase)
             else
                 yOffset = yOffset - 32 * fadeEase
                 scale = scale * (1 - 0.2 * fadeEase)
@@ -716,7 +718,7 @@ function Shop:draw(screenW, screenH)
         else
             if discardData then
                 centerX = centerX + discardOffsetX
-                centerY = centerY - discardOffsetY
+                centerY = centerY + discardOffsetY
             else
                 centerY = centerY + 28 * fadeEase
             end
