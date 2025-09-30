@@ -3,7 +3,7 @@ local UI = require("ui")
 local FloatingText = {}
 
 local entries = {}
-local defaultFont = UI.fonts.display or love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 24)
+local defaultFont = UI.fonts.subtitle or UI.fonts.display or love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 24)
 
 local baseColor = UI.colors.accentText or UI.colors.text or { 1, 1, 1, 1 }
 
@@ -11,7 +11,7 @@ local DEFAULTS = {
     color = { baseColor[1], baseColor[2], baseColor[3], 1 },
     duration = 1.0,
     riseSpeed = 30,
-    scale = 1.0,
+    scale = 0.9,
     pop = {
         scale = 1.12,
         duration = 0.18,
