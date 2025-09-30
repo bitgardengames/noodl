@@ -518,12 +518,12 @@ local english = {
             },
             thunder_dash = {
                 name = "Thunder Dash",
-                description = "Press Space to dash forward, smashing through rocks while briefly speeding up.",
+                description = "Press Space (or A/Right Shoulder on a controller) to dash forward, smashing through rocks while briefly speeding up.",
                 activation_text = "Thunder Dash!",
             },
             temporal_anchor = {
                 name = "Temporal Anchor",
-                description = "Press Shift to slow time for a short duration, reducing all movement to 35% speed.",
+                description = "Press Shift (or X/Left Shoulder on a controller) to slow time for a short duration, reducing all movement to 35% speed.",
                 activation_text = "Time Slow!",
             },
             zephyr_coils = {
