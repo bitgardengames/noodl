@@ -23,7 +23,6 @@ UI.combo = {
     timer = 0,
     duration = 0,
     pop = 0,
-    tagline = nil,
 }
 
 UI.shields = {
@@ -432,7 +431,6 @@ function UI:reset()
     self.combo.timer = 0
     self.combo.duration = 0
     self.combo.pop = 0
-    self.combo.tagline = nil
     self.floorModifiers = {}
     self.shields.count = 0
     self.shields.display = 0
@@ -704,12 +702,10 @@ function UI:setCombo(count, timer, duration)
             combo.pop = 1.0
         end
 
-        combo.tagline = nil
     else
         if previous >= 2 then
             combo.pop = 0
         end
-        combo.tagline = nil
     end
 end
 
@@ -865,12 +861,6 @@ local function drawComboIndicator(self)
     UI.setFont("button")
     love.graphics.setColor(Theme.textColor)
     love.graphics.printf(titleText, x, y + 8, width, "center")
-
-    if comboActive and combo.tagline then
-        UI.setFont("small")
-        love.graphics.setColor(1, 0.9, 0.65, 0.9)
-        love.graphics.printf(combo.tagline, x, y + 30, width, "center")
-    end
 
     local barPadding = 18
     local barHeight = 10
