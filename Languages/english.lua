@@ -18,6 +18,26 @@ local english = {
             quit = "Quit",
             version = "v1.0.0",
             title_word = "noodl",
+            fun_panel_header = "Daily Fun Goal",
+            fun_panel_progress = "Progress: ${current}/${goal}",
+            fun_panel_complete = "Goal complete! You're at ${current}.",
+            fun_daily = {
+                combo = {
+                    title = "Combo Crunch",
+                    description = "Reach a ${goal}-fruit combo streak in a single run.",
+                    progress = "Best streak: ${best}/${goal}",
+                    complete = "Combo goal smashed! Best streak: ${best}.",
+                },
+                floors = {
+                    title = "Floor Explorer",
+                    description = "Clear ${goal} floors across all of your runs.",
+                },
+                apples = {
+                    title = "Fruit Sampler",
+                    description = "Collect ${goal} apples in total.",
+                    progress = "Lifetime apples: ${current}/${goal}",
+                },
+            },
         },
         settings = {
             title = "Settings",

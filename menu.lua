@@ -6,6 +6,7 @@ local drawWord = require("drawword")
 local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
+local FunChallenges = require("funchallenges")
 
 local Menu = {
     transitionDuration = 0.45,
@@ -14,6 +15,17 @@ local Menu = {
 local buttonList = ButtonList.new()
 local buttons = {}
 local t = 0
+local funChallenge = nil
+local funChallengeAnim = 0
+
+local function setColorWithAlpha(color, alpha)
+    local r, g, b, a = 1, 1, 1, alpha or 1
+    if color then
+        r, g, b = color[1] or 1, color[2] or 1, color[3] or 1
+        a = (color[4] or 1) * (alpha or 1)
+    end
+    love.graphics.setColor(r, g, b, a)
+end
 
 function Menu:enter()
     t = 0
@@ -21,6 +33,9 @@ function Menu:enter()
 
     Audio:playMusic("menu")
     Screen:update()
+
+    funChallenge = FunChallenges:getDailyChallenge()
+    funChallengeAnim = 0
 
     local sw, sh = Screen:get()
     local centerX = sw / 2
@@ -66,6 +81,10 @@ function Menu:update(dt)
 
     local mx, my = love.mouse.getPosition()
     buttonList:updateHover(mx, my)
+
+    if funChallenge then
+        funChallengeAnim = math.min(funChallengeAnim + dt * 2, 1)
+    end
 
     for i, btn in ipairs(buttons) do
         if btn.hovered then
@@ -129,6 +148,108 @@ function Menu:draw()
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(Theme.textColor)
     love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
+
+    if funChallenge and funChallengeAnim > 0 then
+        local alpha = math.min(1, funChallengeAnim)
+        local eased = alpha * alpha
+        local panelWidth = math.min(480, sw - 72)
+        local padding = UI.spacing.panelPadding or 16
+        local panelX = (sw - panelWidth) / 2
+        local panelY = sh * 0.64
+        local headerFont = UI.fonts.small
+        local titleFont = UI.fonts.button
+        local bodyFont = UI.fonts.body
+        local progressFont = UI.fonts.small
+
+        local headerText = Localization:get("menu.fun_panel_header")
+        local titleText = Localization:get(funChallenge.titleKey, funChallenge.descriptionReplacements)
+        local descriptionText = Localization:get(funChallenge.descriptionKey, funChallenge.descriptionReplacements)
+
+        local _, descLines = bodyFont:getWrap(descriptionText, panelWidth - padding * 2)
+        local descHeight = #descLines * bodyFont:getHeight()
+
+        local progressText = nil
+        local progressHeight = 0
+        local ratio = funChallenge.ratio or 0
+
+        if funChallenge.goal and funChallenge.goal > 0 then
+            local replacements = funChallenge.progressReplacements or { current = funChallenge.current, goal = funChallenge.goal }
+            if funChallenge.completed then
+                if funChallenge.completeKey then
+                    progressText = Localization:get(funChallenge.completeKey, replacements)
+                else
+                    progressText = Localization:get("menu.fun_panel_complete", replacements)
+                end
+            else
+                local progressKey = funChallenge.progressKey or "menu.fun_panel_progress"
+                progressText = Localization:get(progressKey, replacements)
+            end
+
+            if progressText then
+                progressHeight = progressFont:getHeight() + 30
+            end
+        end
+
+        local panelHeight = padding * 2
+            + headerFont:getHeight()
+            + 6
+            + titleFont:getHeight()
+            + 10
+            + descHeight
+            + (progressText and progressHeight or 0)
+
+        setColorWithAlpha(Theme.shadowColor, eased * 0.7)
+        love.graphics.rectangle("fill", panelX + 6, panelY + 8, panelWidth, panelHeight, 14, 14)
+
+        setColorWithAlpha(Theme.panelColor, alpha)
+        UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
+
+        setColorWithAlpha(Theme.panelBorder, alpha)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 14, 14)
+
+        local textX = panelX + padding
+        local textY = panelY + padding
+
+        setColorWithAlpha(Theme.textColor, alpha)
+        love.graphics.setFont(headerFont)
+        love.graphics.print(headerText, textX, textY)
+
+        textY = textY + headerFont:getHeight() + 6
+
+        love.graphics.setFont(titleFont)
+        love.graphics.print(titleText, textX, textY)
+
+        textY = textY + titleFont:getHeight() + 10
+
+        love.graphics.setFont(bodyFont)
+        love.graphics.printf(descriptionText, textX, textY, panelWidth - padding * 2)
+
+        textY = textY + descHeight
+
+        if progressText then
+            textY = textY + 10
+            love.graphics.setFont(progressFont)
+            love.graphics.print(progressText, textX, textY)
+
+            textY = textY + progressFont:getHeight() + 6
+
+            local barHeight = 14
+            local barWidth = panelWidth - padding * 2
+
+            setColorWithAlpha({0, 0, 0, 0.35}, alpha)
+            UI.drawRoundedRect(textX, textY, barWidth, barHeight, 8)
+
+            setColorWithAlpha(Theme.progressColor, alpha)
+            UI.drawRoundedRect(textX, textY, barWidth * ratio, barHeight, 8)
+
+            setColorWithAlpha(Theme.panelBorder, alpha)
+            love.graphics.setLineWidth(1.5)
+            love.graphics.rectangle("line", textX, textY, barWidth, barHeight, 8, 8)
+
+            textY = textY + barHeight
+        end
+    end
 end
 
 function Menu:mousepressed(x, y, button)
