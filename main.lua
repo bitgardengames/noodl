@@ -1,57 +1,28 @@
 local App = require("app")
 
-function love.load()
-    App:load()
+local function forward(method)
+    return function(...)
+        return App[method](App, ...)
+    end
 end
 
-function love.update(dt)
-    App:update(dt)
-end
+local handlers = {
+    load = "load",
+    update = "update",
+    draw = "draw",
+    mousepressed = "mousepressed",
+    mousereleased = "mousereleased",
+    wheelmoved = "wheelmoved",
+    keypressed = "keypressed",
+    joystickpressed = "joystickpressed",
+    joystickreleased = "joystickreleased",
+    joystickaxis = "joystickaxis",
+    gamepadpressed = "gamepadpressed",
+    gamepadreleased = "gamepadreleased",
+    gamepadaxis = "gamepadaxis",
+    resize = "resize",
+}
 
-function love.draw()
-    App:draw()
-end
-
-function love.mousepressed(x, y, button)
-    App:mousepressed(x, y, button)
-end
-
-function love.mousereleased(x, y, button)
-    App:mousereleased(x, y, button)
-end
-
-function love.wheelmoved(dx, dy)
-    App:wheelmoved(dx, dy)
-end
-
-function love.keypressed(key)
-    App:keypressed(key)
-end
-
-function love.joystickpressed(joystick, button)
-    App:joystickpressed(joystick, button)
-end
-
-function love.joystickreleased(joystick, button)
-    App:joystickreleased(joystick, button)
-end
-
-function love.joystickaxis(joystick, axis, value)
-    App:joystickaxis(joystick, axis, value)
-end
-
-function love.gamepadpressed(joystick, button)
-    App:gamepadpressed(joystick, button)
-end
-
-function love.gamepadreleased(joystick, button)
-    App:gamepadreleased(joystick, button)
-end
-
-function love.gamepadaxis(joystick, axis, value)
-    App:gamepadaxis(joystick, axis, value)
-end
-
-function love.resize(w, h)
-    App:resize(w, h)
+for event, method in pairs(handlers) do
+    love[event] = forward(method)
 end
