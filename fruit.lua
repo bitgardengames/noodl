@@ -62,12 +62,6 @@ local fruitTypes = {
         weight = 0.2,
         runRewards = {
             {
-                type = "shield",
-                amount = 1,
-                color = Theme.dragonfruitColor,
-                showLabel = false,
-            },
-            {
                 type = "stallSaws",
                 amount = 1.5,
                 color = {1, 0.4, 1, 1},
