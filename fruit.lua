@@ -17,13 +17,6 @@ local fruitTypes = {
         color = Theme.bananaColor,
         points = 3,
         weight = 20,
-        runRewards = {
-            {
-                type = "comboTime",
-                amount = 0.75,
-                color = {1, 0.92, 0.4, 1},
-            },
-        },
     },
     {
         id = "blueberry",
@@ -31,13 +24,6 @@ local fruitTypes = {
         color = Theme.blueberryColor,
         points = 5,
         weight = 8,
-        runRewards = {
-            {
-                type = "stallSaws",
-                amount = 0.8,
-                color = {0.6, 0.75, 1, 1},
-            },
-        },
     },
     {
         id = "goldenPear",
@@ -45,14 +31,6 @@ local fruitTypes = {
         color = Theme.goldenPearColor,
         points = 10,
         weight = 2,
-        runRewards = {
-            {
-                type = "shield",
-                amount = 1,
-                color = Theme.goldenPearColor,
-                showLabel = false,
-            },
-        },
     },
     {
         id = "dragonfruit",
@@ -60,13 +38,6 @@ local fruitTypes = {
         color = Theme.dragonfruitColor,
         points = 50,
         weight = 0.2,
-        runRewards = {
-            {
-                type = "stallSaws",
-                amount = 1.5,
-                color = {1, 0.4, 1, 1},
-            },
-        },
     },
 }
 
