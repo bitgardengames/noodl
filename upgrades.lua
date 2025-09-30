@@ -1410,11 +1410,28 @@ function Upgrades:getHUDIndicators()
         end
 
         local progress = 0
+        local isReady = false
         if rate and rate > 0 then
-            progress = clamp(current / rate, 0, 1)
+            if rate >= 1 then
+                progress = 1
+                isReady = true
+            else
+                progress = clamp(current / rate, 0, 1)
+                if progress >= 0.999 then
+                    isReady = true
+                end
+            end
         end
 
-        local statusKey = progress >= 0.999 and "ready" or "charging"
+        local statusKey
+        if not rate or rate <= 0 then
+            statusKey = "depleted"
+        elseif isReady then
+            statusKey = "ready"
+        else
+            statusKey = "charging"
+        end
+
         local chargeLabel
         if rate and rate > 0 then
             chargeLabel = hudText("percent", { percent = math.floor(progress * 100 + 0.5) })
