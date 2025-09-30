@@ -1043,60 +1043,132 @@ function UI:drawUpgradeIndicators()
 end
 
 function UI:drawFruitSockets()
+    if self.fruitRequired <= 0 then
+        return
+    end
+
     local baseX, baseY = 20, 60
     local perRow = 10
     local spacing = self.socketSize + 6
+    local rows = math.max(1, math.ceil(self.fruitRequired / perRow))
+    local cols = math.min(self.fruitRequired, perRow)
+    if cols == 0 then cols = 1 end
+
+    local gridWidth = (cols - 1) * spacing + self.socketSize
+    local gridHeight = (rows - 1) * spacing + self.socketSize
+    local paddingX = self.socketSize * 0.75
+    local paddingY = self.socketSize * 0.75
+
+    local panelX = baseX - paddingX
+    local panelY = baseY - paddingY
+    local panelW = gridWidth + paddingX * 2
+    local panelH = gridHeight + paddingY * 2
+
+    -- juicy backdrop for the whole socket grid
+    love.graphics.setColor(0, 0, 0, 0.35)
+    love.graphics.rectangle("fill", panelX + 6, panelY + 8, panelW, panelH, 18, 18)
+
+    local panelColor = lightenColor(Theme.panelColor, 0.2)
+    love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
+    love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 18, 18)
+
+    local borderColor = Theme.panelBorder or Theme.textColor
+    borderColor = lightenColor(borderColor, 0.1)
+    love.graphics.setLineWidth(3)
+    love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
+    love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 18, 18)
+
+    local highlight = Theme.highlightColor or {1, 1, 1, 0.05}
+    love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * 0.75)
+    love.graphics.rectangle("fill", panelX + 4, panelY + 4, panelW - 8, panelH * 0.35, 14, 14)
+
+    local time = love.timer.getTime()
+    local socketRadius = (self.socketSize / 2) - 2
+    local socketFill = lightenColor(Theme.panelColor, 0.45)
+    local socketOutline = lightenColor(Theme.panelBorder or Theme.textColor, 0.2)
 
     for i = 1, self.fruitRequired do
-        local row = math.floor((i-1) / perRow)
-        local col = (i-1) % perRow
-        local x = baseX + col * spacing + self.socketSize/2
-        local y = baseY + row * spacing + self.socketSize/2
+        local row = math.floor((i - 1) / perRow)
+        local col = (i - 1) % perRow
+        local bounce = math.sin(time * 2.2 + row * 0.7 + col * 0.45) * 1.5
+        local x = baseX + col * spacing + self.socketSize / 2
+        local y = baseY + row * spacing + self.socketSize / 2 + bounce
 
-        -- draw empty socket (dark circle)
-		love.graphics.setColor(0, 0, 0, 0.6) -- darker backdrop
-		love.graphics.circle("fill", x, y, (self.socketSize/2) - 2, 32)
-		love.graphics.setColor(0, 0, 0, 1)   -- solid dark outline
-		love.graphics.setLineWidth(2)
-		love.graphics.circle("line", x, y, (self.socketSize/2) - 2, 32)
+        -- socket shadow
+        love.graphics.setColor(0, 0, 0, 0.4)
+        love.graphics.ellipse("fill", x, y + socketRadius * 0.65, socketRadius * 0.95, socketRadius * 0.55, 32)
+
+        -- empty socket base
+        love.graphics.setColor(socketFill[1], socketFill[2], socketFill[3], (socketFill[4] or 1) * 0.9)
+        love.graphics.circle("fill", x, y, socketRadius, 48)
+
+        -- subtle animated rim
+        local rimPulse = 0.35 + 0.25 * math.sin(time * 3.5 + i * 0.7)
+        love.graphics.setColor(socketOutline[1], socketOutline[2], socketOutline[3], (socketOutline[4] or 1) * rimPulse)
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", x, y, socketRadius, 48)
+
+        love.graphics.setColor(1, 1, 1, 0.08)
+        love.graphics.arc("fill", x, y, socketRadius * 1.1, -math.pi * 0.6, -math.pi * 0.1, 24)
 
         -- draw fruit if collected
         local socket = self.fruitSockets[i]
         if socket then
             local t = math.min(socket.anim / self.socketAnimTime, 1)
-            local scale = 0.7 + 0.3 * (1 - (1-t)*(1-t)) -- ease-out pop
+            local scale = 0.75 + 0.25 * (1 - (1 - t) * (1 - t))
 
-			local goalPulse = 1.0
-			if self.goalCelebrated then
-				local t = math.min(self.goalReachedAnim / 0.25, 1)
-				goalPulse = 1 + 0.3 * (1 - (1-t)*(1-t)) -- ease-out pulse
-			end
+            local goalPulse = 1.0
+            if self.goalCelebrated then
+                local goalT = math.min(self.goalReachedAnim / 0.25, 1)
+                goalPulse = 1 + 0.3 * (1 - (1 - goalT) * (1 - goalT))
+            end
+
+            local wiggle = 1 + 0.05 * math.sin(time * 9 + i * 1.2)
 
             love.graphics.push()
             love.graphics.translate(x, y)
-            love.graphics.scale(scale * goalPulse, scale * goalPulse)
+            love.graphics.scale(scale * goalPulse * wiggle, scale * goalPulse * wiggle)
 
-            -- reuse your fruit drawing style, but centered here
-            local r = (self.socketSize/2) - 2
+            -- fruit shadow inside socket
+            love.graphics.setColor(0, 0, 0, 0.3)
+            love.graphics.ellipse("fill", 0, socketRadius * 0.55, socketRadius * 0.8, socketRadius * 0.45, 32)
+
+            local r = socketRadius * 0.92
             local fruit = socket.type
 
-            -- fruit body
-			love.graphics.setColor(fruit.color[1], fruit.color[2], fruit.color[3], 1)
-			love.graphics.circle("fill", 0, 0, r, 32)
+            love.graphics.setColor(fruit.color[1], fruit.color[2], fruit.color[3], 1)
+            love.graphics.circle("fill", 0, 0, r, 32)
 
-            -- outline
-			love.graphics.setColor(0,0,0,1)
-			love.graphics.setLineWidth(3)
-			love.graphics.circle("line", 0, 0, r, 32)
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.setLineWidth(3)
+            love.graphics.circle("line", 0, 0, r, 32)
+
+            -- juicy highlight
+            love.graphics.setColor(1, 1, 1, 0.18)
+            love.graphics.ellipse("fill", -r * 0.15, -r * 0.35, r * 0.5, r * 0.28, 32)
+            love.graphics.setColor(1, 1, 1, 0.28)
+            love.graphics.circle("fill", r * 0.15, -r * 0.35, r * 0.25, 24)
+
+            -- sparkling rim when fruit is fresh
+            if t < 1 then
+                local sparkle = 0.4 + 0.4 * (1 - t)
+                love.graphics.setColor(1, 1, 1, sparkle)
+                love.graphics.circle("line", 0, 0, r + 3, 24)
+            end
 
             -- dragonfruit glow
             if fruit.name == "Dragonfruit" then
-                local pulse = 0.5 + 0.5 * math.sin(love.timer.getTime() * 6.0)
+                local pulse = 0.5 + 0.5 * math.sin(time * 6.0)
                 love.graphics.setColor(1, 0, 1, 0.25 * pulse)
-                love.graphics.circle("line", 0, 0, r + 4*pulse)
+                love.graphics.circle("line", 0, 0, r + 4 * pulse, 32)
             end
 
             love.graphics.pop()
+        else
+            -- idle shimmer in empty sockets
+            local emptyGlow = 0.12 + 0.12 * math.sin(time * 5 + i * 0.9)
+            love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * emptyGlow)
+            love.graphics.circle("line", x, y, socketRadius - 1.5, 32)
         end
     end
 end
