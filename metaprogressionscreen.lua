@@ -22,6 +22,7 @@ local STAT_CARD_SPACING = 16
 local SCROLL_SPEED = 48
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
+local ANALOG_DEADZONE = 0.35
 local TAB_WIDTH = 220
 local TAB_HEIGHT = 52
 local TAB_SPACING = 16
@@ -36,6 +37,7 @@ local heldDpadButton = nil
 local heldDpadAction = nil
 local heldDpadTimer = 0
 local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+local analogAxisDirections = { horizontal = nil, vertical = nil }
 
 local trackEntries = {}
 local statsEntries = {}
@@ -299,6 +301,83 @@ local function dpadScrollDown()
     applyFocusedTab(buttonList:moveFocus(1))
 end
 
+local analogDirections = {
+    dpup = { id = "analog_dpup", repeatable = true, action = dpadScrollUp },
+    dpdown = { id = "analog_dpdown", repeatable = true, action = dpadScrollDown },
+    dpleft = {
+        id = "analog_dpleft",
+        repeatable = false,
+        action = function()
+            applyFocusedTab(buttonList:moveFocus(-1))
+        end,
+    },
+    dpright = {
+        id = "analog_dpright",
+        repeatable = false,
+        action = function()
+            applyFocusedTab(buttonList:moveFocus(1))
+        end,
+    },
+}
+
+local analogAxisMap = {
+    leftx = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
+    rightx = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
+    lefty = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
+    righty = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
+    [1] = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
+    [2] = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
+}
+
+local function activateAnalogDirection(direction)
+    if not direction then
+        return
+    end
+
+    direction.action()
+
+    if direction.repeatable then
+        startHeldDpad(direction.id, direction.action)
+    end
+end
+
+local function resetAnalogDirections()
+    for slot, direction in pairs(analogAxisDirections) do
+        if direction and direction.repeatable then
+            stopHeldDpad(direction.id)
+        end
+        analogAxisDirections[slot] = nil
+    end
+end
+
+local function handleGamepadAxis(axis, value)
+    local mapping = analogAxisMap[axis]
+    if not mapping then
+        return
+    end
+
+    local previous = analogAxisDirections[mapping.slot]
+    local direction
+
+    if value >= ANALOG_DEADZONE then
+        direction = mapping.positive
+    elseif value <= -ANALOG_DEADZONE then
+        direction = mapping.negative
+    end
+
+    if previous == direction then
+        return
+    end
+
+    if previous and previous.repeatable then
+        stopHeldDpad(previous.id)
+    end
+
+    analogAxisDirections[mapping.slot] = direction or nil
+
+    activateAnalogDirection(direction)
+end
+
 local function scrollBy(amount)
     if amount == 0 then
         return
@@ -371,11 +450,13 @@ function ProgressionScreen:enter()
     scrollOffset = 0
     updateScrollBounds(sw, sh)
     resetHeldDpad()
+    resetAnalogDirections()
 end
 
 function ProgressionScreen:leave()
     UI.clearButtons()
     resetHeldDpad()
+    resetAnalogDirections()
 end
 
 function ProgressionScreen:update(dt)
@@ -673,6 +754,12 @@ function ProgressionScreen:gamepadpressed(_, button)
 end
 
 ProgressionScreen.joystickpressed = ProgressionScreen.gamepadpressed
+
+function ProgressionScreen:gamepadaxis(_, axis, value)
+    handleGamepadAxis(axis, value)
+end
+
+ProgressionScreen.joystickaxis = ProgressionScreen.gamepadaxis
 
 function ProgressionScreen:gamepadreleased(_, button)
     if button == "dpup" or button == "dpdown" then
