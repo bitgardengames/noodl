@@ -2,15 +2,141 @@ local UI = require("ui")
 local Upgrades = require("upgrades")
 local Audio = require("audio")
 local MetaProgression = require("metaprogression")
+local Score = require("score")
 
 local Shop = {}
 
+local rarityCostMultipliers = {
+    common = 0.9,
+    uncommon = 1.1,
+    rare = 1.55,
+    epic = 2.1,
+    legendary = 2.8,
+}
+
+local rarityCostBonus = {
+    common = 0,
+    uncommon = 1,
+    rare = 2,
+    epic = 4,
+    legendary = 6,
+}
+
+local MIN_CARD_COST = 3
+
+local function round(value)
+    return math.floor((value or 0) + 0.5)
+end
+
+function Shop:getFruitGoal()
+    local goal
+    if UI and UI.getFruitGoal then
+        goal = UI:getFruitGoal()
+    end
+    goal = goal or self.fruitGoal or 6
+    return math.max(4, goal)
+end
+
+function Shop:getCardCost(card)
+    if not card then return MIN_CARD_COST end
+    local goal = self:getFruitGoal()
+    local base = goal * 0.85
+    local rarity = card.rarity or "common"
+    local mult = rarityCostMultipliers[rarity] or rarityCostMultipliers.common
+    local bonus = rarityCostBonus[rarity] or 0
+    local cost = round(base * mult + bonus)
+    if cost < MIN_CARD_COST then
+        cost = MIN_CARD_COST
+    end
+    return cost
+end
+
+function Shop:updateCardCosts()
+    self.fruitGoal = self:getFruitGoal()
+    if not self.cards then return end
+    for _, card in ipairs(self.cards) do
+        card.cost = self:getCardCost(card)
+        card.purchased = false
+    end
+end
+
+function Shop:getCurrency()
+    if not Score or not Score.getFruitCurrency then
+        return 0
+    end
+    return Score:getFruitCurrency()
+end
+
+function Shop:findFirstAvailableIndex()
+    if not self.cards then return nil end
+    for i, card in ipairs(self.cards) do
+        if card and not card.purchased then
+            return i
+        end
+    end
+    return nil
+end
+
+function Shop:findNextAvailableIndex(startIndex, direction)
+    if not self.cards or #self.cards == 0 then return nil end
+    local count = #self.cards
+    local dir = direction or 1
+    if dir == 0 then dir = 1 end
+    local index = startIndex or 1
+    for _ = 1, count do
+        index = ((index - 1 + dir) % count) + 1
+        local card = self.cards[index]
+        if card and not card.purchased then
+            return index
+        end
+    end
+    return nil
+end
+
+function Shop:focusFirstAvailable()
+    local index = self:findFirstAvailableIndex()
+    if index then
+        self:setFocus(index)
+    else
+        self.focusIndex = nil
+    end
+end
+
+function Shop:ensureValidFocus()
+    if not self.cards or #self.cards == 0 then
+        self.focusIndex = nil
+        return
+    end
+
+    if not self.focusIndex then
+        self:focusFirstAvailable()
+        return
+    end
+
+    local current = self.cards[self.focusIndex]
+    if current and not current.purchased then
+        return
+    end
+
+    local nextIndex = self:findNextAvailableIndex(self.focusIndex, 1)
+    if not nextIndex then
+        nextIndex = self:findNextAvailableIndex(self.focusIndex, -1)
+    end
+
+    if nextIndex then
+        self.focusIndex = nextIndex
+    else
+        self.focusIndex = nil
+    end
+end
+
 function Shop:start(currentFloor)
     self.floor = currentFloor or 1
-    self.shopkeeperLine = nil
-    self.shopkeeperSubline = nil
-    self.selectionHoldDuration = 1.85
+    self.shopkeeperLine = "Spend your fruit score before the next descent."
+    self.shopkeeperSubline = "Buy as many upgrades as you can afford, then press Esc or B to return."
+    self.selectionHoldDuration = 0.75
     self.inputMode = nil
+    self.fruitGoal = self:getFruitGoal()
     self:refreshCards()
 end
 
@@ -40,6 +166,7 @@ function Shop:refreshCards(options)
     local cardCount = baseChoices + extraChoices
     self.totalChoices = cardCount
     self.cards = Upgrades:getRandom(cardCount, { floor = self.floor }) or {}
+    self:updateCardCosts()
     self.cardStates = {}
     self.selected = nil
     self.selectedIndex = nil
@@ -50,7 +177,7 @@ function Shop:refreshCards(options)
     self.focusIndex = nil
 
     if #self.cards > 0 then
-        self:setFocus(1)
+        self:focusFirstAvailable()
     end
 
     for i = 1, #self.cards do
@@ -91,6 +218,18 @@ function Shop:setFocus(index)
     if self.restocking then return end
     if not self.cards or not index then return end
     if index < 1 or index > #self.cards then return end
+    local card = self.cards[index]
+    if not card or card.purchased then
+        local nextIndex = self:findNextAvailableIndex(index, 1)
+        if not nextIndex then
+            nextIndex = self:findNextAvailableIndex(index, -1)
+        end
+        if not nextIndex then
+            self.focusIndex = nil
+            return nil
+        end
+        index = nextIndex
+    end
     local previous = self.focusIndex
     if previous and previous ~= index then
         Audio:playSound("shop_focus")
@@ -104,10 +243,21 @@ function Shop:moveFocus(delta)
     if not delta or delta == 0 then return end
     if not self.cards or #self.cards == 0 then return end
 
-    local count = #self.cards
-    local index = self.focusIndex or 1
-    index = ((index - 1 + delta) % count) + 1
-    return self:setFocus(index)
+    local current = self.focusIndex
+    if not current then
+        current = self:findFirstAvailableIndex()
+        if not current then return end
+    end
+
+    local direction = delta > 0 and 1 or -1
+    local nextIndex = self:findNextAvailableIndex(current, direction)
+    if not nextIndex then
+        nextIndex = self:findNextAvailableIndex(current, -direction)
+    end
+
+    if nextIndex then
+        return self:setFocus(nextIndex)
+    end
 end
 
 function Shop:update(dt)
@@ -223,6 +373,16 @@ function Shop:update(dt)
         self.selectionTimer = 0
         self.selectionComplete = false
         self.selectedIndex = nil
+    end
+
+    if self.selectionComplete and self.selected then
+        self.selected = nil
+        self.selectedIndex = nil
+        self.selectionComplete = false
+        self.selectionTimer = 0
+        if not self.restocking then
+            self:ensureValidFocus()
+        end
     end
 end
 
@@ -399,7 +559,7 @@ local function getAnimatedAlpha(def, time)
     return minAlpha + (maxAlpha - minAlpha) * wave
 end
 
-local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appearanceAlpha)
+local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appearanceAlpha, currency, affordable)
     local fadeAlpha = appearanceAlpha or 1
     local function setColor(r, g, b, a)
         love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
@@ -567,6 +727,52 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
         setColor(0.92, 0.92, 0.92, 1)
     end
     love.graphics.printf(card.desc or "", x + 18, descY, w - 36, "center")
+
+    local panelTop = y + h - 86
+    local panelHeight = 64
+    local cost = card.cost or 0
+    local currentCurrency = currency or 0
+    local canAfford = affordable
+    if canAfford == nil then
+        canAfford = currentCurrency >= cost
+    end
+    local missing = math.max(0, cost - currentCurrency)
+
+    setColor(0, 0, 0, card.purchased and 0.55 or 0.32)
+    love.graphics.rectangle("fill", x + 16, panelTop, w - 32, panelHeight, 12, 12)
+
+    setColor(1, 1, 1, 0.2)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", x + 16, panelTop, w - 32, panelHeight, 12, 12)
+
+    if card.purchased then
+        love.graphics.setFont(UI.fonts.button)
+        setColor(0.82, 0.94, 1.0, 0.95)
+        love.graphics.printf("Purchased", x + 16, panelTop + 16, w - 32, "center")
+    else
+        love.graphics.setFont(UI.fonts.button)
+        if canAfford then
+            setColor(1, 0.88, 0.5, 1)
+        else
+            setColor(1, 0.45, 0.45, 1)
+        end
+        love.graphics.printf(string.format("%d Fruit", cost), x + 16, panelTop + 10, w - 32, "center")
+
+        love.graphics.setFont(UI.fonts.small)
+        if canAfford then
+            setColor(1, 1, 1, 0.75)
+            love.graphics.printf("Hold to buy", x + 16, panelTop + 38, w - 32, "center")
+        else
+            setColor(1, 0.75, 0.75, 0.9)
+            if missing > 0 then
+                love.graphics.printf(string.format("Need %d more", missing), x + 16, panelTop + 38, w - 32, "center")
+            else
+                love.graphics.printf("Hold to buy", x + 16, panelTop + 38, w - 32, "center")
+            end
+        end
+    end
+
+    love.graphics.setLineWidth(4)
 end
 
 function Shop:draw(screenW, screenH)
@@ -587,6 +793,11 @@ function Shop:draw(screenW, screenH)
         love.graphics.setColor(1, 1, 1, 0.7)
         love.graphics.printf(self.shopkeeperSubline, screenW * 0.1, screenH * 0.26, screenW * 0.8, "center")
     end
+
+    local currency = self:getCurrency()
+    love.graphics.setFont(UI.fonts.body)
+    love.graphics.setColor(1, 0.9, 0.45, 1)
+    love.graphics.printf(string.format("Fruit score: %d", currency), screenW * 0.58, screenH * 0.18, screenW * 0.36, "right")
     love.graphics.setColor(1, 1, 1, 1)
 
     local selectionOverlay = self.selectionProgress or 0
@@ -599,7 +810,9 @@ function Shop:draw(screenW, screenH)
 
     local cardWidth, cardHeight = 264, 344
     local spacing = 48
-    local totalWidth = (#self.cards * cardWidth) + math.max(0, (#self.cards - 1)) * spacing
+    local cards = self.cards or {}
+    local cardCount = #cards
+    local totalWidth = (cardCount * cardWidth) + math.max(0, (cardCount - 1)) * spacing
     local startX = (screenW - totalWidth) / 2
     local y = screenH * 0.34
 
@@ -617,8 +830,6 @@ function Shop:draw(screenW, screenH)
             alpha = eased
             yOffset = (1 - eased) * 48
 
-            -- Start cards a touch smaller and ease them up to full size so
-            -- the reveal animation feels like a gentle pop rather than a flat fade.
             local appearScaleMin = 0.94
             local appearScaleMax = 1.0
             scale = appearScaleMin + (appearScaleMax - appearScaleMin) * eased
@@ -647,11 +858,6 @@ function Shop:draw(screenW, screenH)
             yOffset = yOffset + 46 * focusEase
             scale = scale * (1 + 0.35 * focusEase)
             alpha = math.min(1, alpha * (1 + 0.6 * focusEase))
-            -- Make sure the selected card renders at full opacity while it
-            -- animates toward the center. Without this clamp the focus easing
-            -- could leave it slightly translucent until the animation fully
-            -- completes, which felt like a bug. Forcing alpha to 1 keeps the
-            -- spotlighted card crisp for the whole animation.
             alpha = 1
         else
             yOffset = yOffset - 32 * fadeEase
@@ -672,6 +878,13 @@ function Shop:draw(screenW, screenH)
             centerY = centerY + 28 * fadeEase
         end
 
+        local affordable = (currency or 0) >= (card.cost or 0)
+        if card.purchased and card ~= self.selected then
+            alpha = alpha * 0.55
+        elseif not affordable and card ~= self.selected then
+            alpha = alpha * 0.9
+        end
+
         local drawWidth = cardWidth * scale
         local drawHeight = cardHeight * scale
         local drawX = centerX - drawWidth / 2
@@ -688,13 +901,16 @@ function Shop:draw(screenW, screenH)
             (usingFocusNavigation and self.focusIndex == i) or
             (not usingFocusNavigation and mouseHover)
         )
+        if card.purchased and card ~= self.selected then
+            hovered = false
+        end
 
         love.graphics.push()
         love.graphics.translate(centerX, centerY)
         love.graphics.scale(scale, scale)
         love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
         local appearanceAlpha = self.selected == card and 1 or alpha
-        drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, nil, self.selected == card, appearanceAlpha)
+        drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, nil, self.selected == card, appearanceAlpha, currency, affordable)
         love.graphics.pop()
         card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
 
@@ -719,7 +935,7 @@ function Shop:draw(screenW, screenH)
     end
 
     local selectedIndex
-    for i, card in ipairs(self.cards) do
+    for i, card in ipairs(cards) do
         if card == self.selected then
             selectedIndex = i
         else
@@ -728,7 +944,7 @@ function Shop:draw(screenW, screenH)
     end
 
     if selectedIndex then
-        renderCard(selectedIndex, self.cards[selectedIndex])
+        renderCard(selectedIndex, cards[selectedIndex])
     end
 
     if self.selected then
@@ -743,6 +959,16 @@ function Shop:draw(screenW, screenH)
         )
     end
 
+    love.graphics.setFont(UI.fonts.small)
+    love.graphics.setColor(1, 1, 1, 0.65)
+    love.graphics.printf(
+        "Right click, press Esc, or press B to return to the run.",
+        0,
+        screenH * 0.95,
+        screenW,
+        "center"
+    )
+
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setLineWidth(1)
 end
@@ -756,13 +982,21 @@ local function pickIndexFromKey(key)
 end
 
 function Shop:keypressed(key)
+    if key == "escape" or key == "backspace" then
+        self.inputMode = "keyboard"
+        return true
+    end
+
     if self.restocking then return end
-    if not self.cards or #self.cards == 0 then return end
+
+    local cards = self.cards
+    if not cards or #cards == 0 then return end
 
     local index = pickIndexFromKey(key)
     if index then
         self.inputMode = "keyboard"
-        return self:pick(index)
+        self:pick(index)
+        return false
     end
 
     if self.selected then return end
@@ -770,32 +1004,47 @@ function Shop:keypressed(key)
     if key == "left" or key == "up" then
         self.inputMode = "keyboard"
         self:moveFocus(-1)
-        return true
+        return false
     elseif key == "right" or key == "down" then
         self.inputMode = "keyboard"
         self:moveFocus(1)
-        return true
+        return false
     elseif key == "return" or key == "kpenter" or key == "enter" then
         self.inputMode = "keyboard"
-        local focusIndex = self.focusIndex or 1
-        return self:pick(focusIndex)
+        local focusIndex = self.focusIndex or self:findFirstAvailableIndex() or 1
+        self:pick(focusIndex)
+        return false
     end
 end
 
 function Shop:mousepressed(x, y, button)
+    if button == 2 then
+        self.inputMode = "mouse"
+        return true
+    end
+
     if self.restocking then return end
     if button ~= 1 then return end
+
+    if not self.cards or #self.cards == 0 then return end
+
     self.inputMode = "mouse"
     for i, card in ipairs(self.cards) do
         local b = card.bounds
         if b and x >= b.x and x <= b.x + b.w and y >= b.y and y <= b.y + b.h then
             self:setFocus(i)
-            return self:pick(i)
+            self:pick(i)
+            return false
         end
     end
 end
 
 function Shop:gamepadpressed(_, button)
+    if button == "b" or button == "back" then
+        self.inputMode = "gamepad"
+        return true
+    end
+
     if self.restocking then return end
     if not self.cards or #self.cards == 0 then return end
 
@@ -805,11 +1054,14 @@ function Shop:gamepadpressed(_, button)
 
     if button == "dpup" or button == "dpleft" then
         self:moveFocus(-1)
+        return false
     elseif button == "dpdown" or button == "dpright" then
         self:moveFocus(1)
+        return false
     elseif button == "a" or button == "start" then
-        local index = self.focusIndex or 1
-        return self:pick(index)
+        local index = self.focusIndex or self:findFirstAvailableIndex() or 1
+        self:pick(index)
+        return false
     end
 end
 
@@ -818,13 +1070,29 @@ Shop.joystickpressed = Shop.gamepadpressed
 function Shop:pick(i)
     if self.restocking then return false end
     if self.selected then return false end
-    local card = self.cards[i]
-    if not card then return false end
+    local card = self.cards and self.cards[i]
+    if not card or card.purchased then return false end
+
+    local cost = card.cost or self:getCardCost(card)
+    card.cost = cost
+
+    if not Score:spendFruit(cost) then
+        Audio:playSound("shop_focus")
+        return false
+    end
+
+    local state = self.cardStates and self.cardStates[i]
+    if state then
+        state.selectionFlash = 0
+        state.selectSoundPlayed = true
+    end
+
+    card.purchased = true
 
     if card.restockShop then
         Audio:playSound("shop_card_select")
         self:beginRestock()
-        return true
+        return false
     end
 
     Upgrades:acquire(card, { floor = self.floor })
@@ -833,17 +1101,28 @@ function Shop:pick(i)
     self.selectionTimer = 0
     self.selectionComplete = false
 
-    local state = self.cardStates and self.cardStates[i]
-    if state then
-        state.selectionFlash = 0
-        state.selectSoundPlayed = true
-    end
     Audio:playSound("shop_card_select")
-    return true
+
+    local nextIndex = self:findNextAvailableIndex(i, 1) or self:findNextAvailableIndex(i, -1)
+    if self.inputMode ~= "mouse" then
+        if nextIndex then
+            self:setFocus(nextIndex)
+        else
+            self.focusIndex = nil
+        end
+    else
+        if nextIndex then
+            self.focusIndex = nextIndex
+        else
+            self.focusIndex = nil
+        end
+    end
+
+    return false
 end
 
 function Shop:isSelectionComplete()
-    return self.selected ~= nil and self.selectionComplete == true
+    return self.selected == nil and not self.restocking
 end
 
 return Shop
