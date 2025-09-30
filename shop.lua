@@ -65,6 +65,8 @@ function Shop:refreshCards(options)
             selectionFlash = nil,
             revealSoundPlayed = false,
             selectSoundPlayed = false,
+            discardActive = false,
+            discard = nil,
         }
     end
 end
@@ -85,6 +87,25 @@ function Shop:beginRestock()
     self.selectionTimer = 0
     self.selectionComplete = false
     self.focusIndex = nil
+
+    local random = (love and love.math and love.math.random) or math.random
+    if self.cardStates then
+        for _, state in ipairs(self.cardStates) do
+            state.discardActive = true
+            local direction = (random(0, 1) == 0) and -1 or 1
+            local spinDirection = (random(0, 1) == 0) and -1 or 1
+            state.discard = {
+                direction = direction,
+                drift = (random() * 90) + 70,
+                lift = (random() * 110) + 80,
+                wobbleSpeed = (random() * 2.4) + 3.6,
+                wobbleMagnitude = (random() * 26) + 14,
+                phase = random() * math.pi * 2,
+                spinSpeed = ((random() * 2.2) + 1.6) * spinDirection,
+                clock = 0,
+            }
+        end
+    end
 end
 
 function Shop:setFocus(index)
@@ -158,6 +179,10 @@ function Shop:update(dt)
         if not state.revealSoundPlayed and self.time >= state.delay then
             state.revealSoundPlayed = true
             Audio:playSound("shop_card_deal")
+        end
+
+        if state.discardActive and state.discard then
+            state.discard.clock = (state.discard.clock or 0) + dt
         end
 
         local card = self.cards and self.cards[i]
@@ -642,6 +667,20 @@ function Shop:draw(screenW, screenH)
         local fadeOut = state and state.fadeOut or 0
         local focusEase = focus * focus * (3 - 2 * focus)
         local fadeEase = fadeOut * fadeOut * (3 - 2 * fadeOut)
+        local discardData = (state and state.discardActive and state.discard and self.restocking) and state.discard or nil
+        local discardOffsetX, discardOffsetY, discardRotation = 0, 0, 0
+        if discardData then
+            local fadeT = math.max(0, math.min(1, fadeOut))
+            local discardEase = fadeT * fadeT * (3 - 2 * fadeT)
+            local clock = discardData.clock or 0
+            local wobble = math.sin(clock * (discardData.wobbleSpeed or 5.2) + (discardData.phase or 0))
+            discardOffsetX = (discardData.drift or 0) * discardEase * (discardData.direction or 1)
+            discardOffsetX = discardOffsetX + wobble * (discardData.wobbleMagnitude or 18) * discardEase
+            discardOffsetY = (discardData.lift or 0) * discardEase
+            discardRotation = (discardData.spinSpeed or 4.4) * clock * discardEase
+            scale = scale * (1 + 0.1 * discardEase)
+            alpha = alpha * (1 - 0.5 * discardEase)
+        end
 
         if card == self.selected then
             yOffset = yOffset + 46 * focusEase
@@ -654,22 +693,33 @@ function Shop:draw(screenW, screenH)
             -- spotlighted card crisp for the whole animation.
             alpha = 1
         else
-            yOffset = yOffset - 32 * fadeEase
-            scale = scale * (1 - 0.2 * fadeEase)
-            alpha = alpha * (1 - 0.9 * fadeEase)
+            if discardData then
+                scale = scale * (1 + 0.05 * fadeEase)
+                alpha = alpha * (1 - 0.5 * fadeEase)
+            else
+                yOffset = yOffset - 32 * fadeEase
+                scale = scale * (1 - 0.2 * fadeEase)
+                alpha = alpha * (1 - 0.9 * fadeEase)
+            end
         end
 
         alpha = math.max(0, math.min(alpha, 1))
 
         local centerX = baseX + cardWidth / 2
         local centerY = y + cardHeight / 2 - yOffset
+        local originalCenterX, originalCenterY = centerX, centerY
 
         if card == self.selected then
             centerX = centerX + (screenW / 2 - centerX) * focusEase
             local targetY = screenH * 0.48
             centerY = centerY + (targetY - centerY) * focusEase
         else
-            centerY = centerY + 28 * fadeEase
+            if discardData then
+                centerX = centerX + discardOffsetX
+                centerY = centerY - discardOffsetY
+            else
+                centerY = centerY + 28 * fadeEase
+            end
         end
 
         local drawWidth = cardWidth * scale
@@ -691,12 +741,36 @@ function Shop:draw(screenW, screenH)
 
         love.graphics.push()
         love.graphics.translate(centerX, centerY)
+        if discardRotation ~= 0 then
+            love.graphics.rotate(discardRotation)
+        end
         love.graphics.scale(scale, scale)
         love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
         local appearanceAlpha = self.selected == card and 1 or alpha
         drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, nil, self.selected == card, appearanceAlpha)
         love.graphics.pop()
         card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
+
+        if discardData then
+            local offsetX = centerX - originalCenterX
+            local offsetY = centerY - originalCenterY
+            local trailBaseAlpha = math.min(0.5, (state.fadeOut or 0) * 0.7)
+            if trailBaseAlpha > 0.01 then
+                local steps = 3
+                for s = 1, steps do
+                    local t = s / steps
+                    local px = originalCenterX + offsetX * t
+                    local py = originalCenterY + offsetY * t
+                    local sparklePhase = (discardData.clock or 0) * ((discardData.wobbleSpeed or 5.2) * 0.7) + t * math.pi
+                    local sparkle = math.sin(sparklePhase) * 0.5 + 0.5
+                    local alphaStep = trailBaseAlpha * (1 - t) * (0.65 + 0.35 * sparkle)
+                    local radius = (1 - t) * 9 + 4
+                    love.graphics.setColor(1, 0.82, 0.46, alphaStep)
+                    love.graphics.circle("fill", px, py, radius)
+                end
+                love.graphics.setColor(1, 1, 1, 1)
+            end
+        end
 
         if state and state.selectionFlash then
             local flashDuration = 0.75
