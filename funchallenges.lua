@@ -78,6 +78,32 @@ FunChallenges.challenges = {
         progressKey = "menu.fun_daily.shields.progress",
         completeKey = "menu.fun_daily.shields.complete",
     },
+    {
+        id = "shopaholic",
+        titleKey = "menu.fun_daily.shop.title",
+        descriptionKey = "menu.fun_daily.shop.description",
+        stat = "totalUpgradesPurchased",
+        goal = 30,
+        progressKey = "menu.fun_daily.shop.progress",
+        completeKey = "menu.fun_daily.shop.complete",
+    },
+    {
+        id = "legendary_collector",
+        titleKey = "menu.fun_daily.legendary.title",
+        descriptionKey = "menu.fun_daily.legendary.description",
+        stat = "legendaryUpgradesPurchased",
+        goal = 3,
+        progressKey = "menu.fun_daily.legendary.progress",
+        completeKey = "menu.fun_daily.legendary.complete",
+    },
+    {
+        id = "serpentine_marathon",
+        titleKey = "menu.fun_daily.marathon.title",
+        descriptionKey = "menu.fun_daily.marathon.description",
+        stat = "tilesTravelled",
+        goal = 12000,
+        progressKey = "menu.fun_daily.marathon.progress",
+    },
 }
 
 local function getChallengeIndex(count)

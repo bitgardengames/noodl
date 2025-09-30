@@ -7,6 +7,7 @@ local FloatingText = require("floatingtext")
 local Particles = require("particles")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
+local PlayerStats = require("playerstats")
 
 local Upgrades = {}
 local poolById = {}
@@ -2111,6 +2112,13 @@ function Upgrades:acquire(card, context)
 
     state.takenSet[upgrade.id] = (state.takenSet[upgrade.id] or 0) + 1
     table.insert(state.takenOrder, upgrade.id)
+
+    PlayerStats:add("totalUpgradesPurchased", 1)
+    PlayerStats:updateMax("mostUpgradesInRun", #state.takenOrder)
+
+    if upgrade.rarity == "legendary" then
+        PlayerStats:add("legendaryUpgradesPurchased", 1)
+    end
 
     if upgrade.tags then
         for _, tag in ipairs(upgrade.tags) do
