@@ -193,10 +193,8 @@ function Score:handleGameOver(cause)
     local runCombos = SessionStats:get("combosTriggered") or 0
     local runShieldsSaved = SessionStats:get("crashShieldsSaved") or 0
     local runTime = SessionStats:get("timeAlive") or 0
-    local floorsCleared = SessionStats:get("floorsCleared") or 0
     local fastestFloor = SessionStats:get("fastestFloorClear") or 0
     local slowestFloor = SessionStats:get("slowestFloorClear") or 0
-    local totalFloorTime = SessionStats:get("totalFloorTime") or 0
 
     PlayerStats:updateMax("mostApplesInRun", runApples)
     if runTime > 0 then
@@ -215,31 +213,12 @@ function Score:handleGameOver(cause)
         PlayerStats:add("crashShieldsSaved", runShieldsSaved)
         PlayerStats:updateMax("mostShieldsSavedInRun", runShieldsSaved)
     end
-    if floorsCleared > 0 then
-        if totalFloorTime > 0 then
-            local averageFloorTime = totalFloorTime / floorsCleared
-            PlayerStats:set("averageFloorClearTime", averageFloorTime)
-        end
-
-        if fastestFloor > 0 then
-            PlayerStats:updateMin("bestFloorClearTime", fastestFloor)
-        end
-
-        if slowestFloor > 0 then
-            PlayerStats:updateMax("longestFloorClearTime", slowestFloor)
-        end
+    if fastestFloor > 0 then
+        PlayerStats:updateMin("bestFloorClearTime", fastestFloor)
     end
 
-    if runTime > 0 and runApples > 0 then
-        local fruitsPerMinute = runApples / (runTime / 60)
-        PlayerStats:updateMax("bestFruitPerMinute", fruitsPerMinute)
-    end
-
-    local totalTimeAlive = PlayerStats:get("totalTimeAlive")
-    if totalTimeAlive and totalTimeAlive > 0 then
-        local apples = PlayerStats:get("totalApplesEaten") or 0
-        local averageFruitsPerMinute = apples / (totalTimeAlive / 60)
-        PlayerStats:set("averageFruitPerMinute", averageFruitsPerMinute)
+    if slowestFloor > 0 then
+        PlayerStats:updateMax("longestFloorClearTime", slowestFloor)
     end
 
     return {
