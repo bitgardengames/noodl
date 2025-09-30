@@ -52,7 +52,7 @@ local english = {
             },
         },
         metaprogression = {
-            title = "Experience",
+            title = "Progression",
             back_to_menu = "Back to Menu",
             level_label = "Level ${level}",
             total_xp = "Total XP: ${total}",
@@ -61,6 +61,24 @@ local english = {
             card_level = "Level ${level}",
             status_unlocked = "Unlocked",
             status_locked = "Unlocks in ${xp} XP",
+            tabs = {
+                experience = "Experience",
+                stats = "Lifetime Stats",
+            },
+            stats_header = "Lifetime Stats",
+            stats_empty = "Keep playing to build your legacy!",
+            stat_labels = {
+                sessionsPlayed = "Sessions Played",
+                totalApplesEaten = "Apples Collected",
+                totalDragonfruitEaten = "Dragonfruit Collected",
+                floorsCleared = "Floors Cleared",
+                deepestFloorReached = "Deepest Floor Reached",
+                snakeScore = "Best Score",
+                bestComboStreak = "Best Combo Streak",
+                shieldWallBounces = "Shield Wall Bounces",
+                shieldRockBreaks = "Shield Rock Breaks",
+                shieldSawParries = "Shield Saw Parries",
+            },
         },
         pause = {
             title = "Paused",

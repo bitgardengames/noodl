@@ -4,6 +4,7 @@ local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
+local PlayerStats = require("playerstats")
 local Audio = require("audio")
 
 local ProgressionScreen = {
@@ -16,7 +17,13 @@ local START_Y = 220
 local CARD_WIDTH = 640
 local CARD_HEIGHT = 108
 local CARD_SPACING = 24
+local STAT_CARD_HEIGHT = 72
+local STAT_CARD_SPACING = 16
 local SCROLL_SPEED = 48
+local TAB_WIDTH = 220
+local TAB_HEIGHT = 52
+local TAB_SPACING = 16
+local TAB_Y = 120 - TAB_HEIGHT - 16
 
 local scrollOffset = 0
 local minScrollOffset = 0
@@ -24,15 +31,39 @@ local viewportHeight = 0
 local contentHeight = 0
 
 local trackEntries = {}
+local statsEntries = {}
 local progressionState = nil
+local activeTab = "experience"
+
+local tabs = {
+    {
+        id = "experience",
+        action = "tab_experience",
+        labelKey = "metaprogression.tabs.experience",
+    },
+    {
+        id = "stats",
+        action = "tab_stats",
+        labelKey = "metaprogression.tabs.stats",
+    },
+}
+
+local function getActiveList()
+    if activeTab == "stats" then
+        return statsEntries, STAT_CARD_HEIGHT, STAT_CARD_SPACING
+    end
+
+    return trackEntries, CARD_HEIGHT, CARD_SPACING
+end
 
 local function updateScrollBounds(sw, sh)
     local viewportBottom = sh - 140
     viewportHeight = math.max(0, viewportBottom - START_Y)
 
-    local count = #trackEntries
+    local entries, itemHeight, spacing = getActiveList()
+    local count = #entries
     if count > 0 then
-        contentHeight = count * CARD_HEIGHT + math.max(0, count - 1) * CARD_SPACING
+        contentHeight = count * itemHeight + math.max(0, count - 1) * spacing
     else
         contentHeight = 0
     end
@@ -43,6 +74,121 @@ local function updateScrollBounds(sw, sh)
         scrollOffset = minScrollOffset
     elseif scrollOffset > 0 then
         scrollOffset = 0
+    end
+end
+
+local function formatInteger(value)
+    local rounded = math.floor((value or 0) + 0.5)
+    local sign = rounded < 0 and "-" or ""
+    local digits = tostring(math.abs(rounded))
+    local formatted = digits
+    local count
+
+    while true do
+        formatted, count = formatted:gsub("^(%d+)(%d%d%d)", "%1,%2")
+        if count == 0 then
+            break
+        end
+    end
+
+    return sign .. formatted
+end
+
+local function formatStatValue(value)
+    if type(value) == "number" then
+        if math.abs(value - math.floor(value + 0.5)) < 0.0001 then
+            return formatInteger(value)
+        end
+
+        return string.format("%.2f", value)
+    end
+
+    if value == nil then
+        return "0"
+    end
+
+    return tostring(value)
+end
+
+local function prettifyKey(key)
+    if not key or key == "" then
+        return ""
+    end
+
+    local label = key:gsub("(%l)(%u)", "%1 %2")
+    label = label:gsub("_", " ")
+    label = label:gsub("%s+", " ")
+    label = label:gsub("^%l", string.upper)
+    return label
+end
+
+local function buildStatsEntries()
+    statsEntries = {}
+
+    local labelTable = Localization:getTable("metaprogression.stat_labels") or {}
+    local seen = {}
+
+    for key, label in pairs(labelTable) do
+        local value = PlayerStats:get(key)
+        statsEntries[#statsEntries + 1] = {
+            id = key,
+            label = label,
+            value = value,
+            valueText = formatStatValue(value),
+        }
+        seen[key] = true
+    end
+
+    for key, value in pairs(PlayerStats.data or {}) do
+        if not seen[key] then
+            local label = prettifyKey(key)
+            statsEntries[#statsEntries + 1] = {
+                id = key,
+                label = label,
+                value = value,
+                valueText = formatStatValue(value),
+            }
+        end
+    end
+
+    table.sort(statsEntries, function(a, b)
+        if a.label == b.label then
+            return a.id < b.id
+        end
+        return a.label < b.label
+    end)
+end
+
+local function findTab(targetId)
+    for index, tab in ipairs(tabs) do
+        if tab.id == targetId then
+            return tab, index
+        end
+    end
+
+    return nil, nil
+end
+
+local function setActiveTab(tabId)
+    if activeTab == tabId then
+        return
+    end
+
+    activeTab = tabId
+
+    if tabId == "stats" then
+        buildStatsEntries()
+    end
+
+    scrollOffset = 0
+    local sw, sh = Screen:get()
+    if sw and sh then
+        updateScrollBounds(sw, sh)
+    end
+
+    local _, buttonIndex = findTab(tabId)
+    if buttonIndex then
+        buttonList:setFocus(buttonIndex)
     end
 end
 
@@ -70,21 +216,50 @@ function ProgressionScreen:enter()
 
     trackEntries = MetaProgression:getUnlockTrack() or {}
     progressionState = MetaProgression:getState()
+    buildStatsEntries()
 
     local sw, sh = Screen:get()
 
-    buttonList:reset({
-        {
-            id = "progressionBack",
-            x = sw / 2 - UI.spacing.buttonWidth / 2,
-            y = sh - 90,
-            w = UI.spacing.buttonWidth,
-            h = UI.spacing.buttonHeight,
-            textKey = "metaprogression.back_to_menu",
-            text = Localization:get("metaprogression.back_to_menu"),
-            action = "menu",
-        },
-    })
+    local buttons = {}
+    local tabCount = #tabs
+    local totalTabWidth = tabCount * TAB_WIDTH + math.max(0, tabCount - 1) * TAB_SPACING
+    local startX = sw / 2 - totalTabWidth / 2
+
+    for index, tab in ipairs(tabs) do
+        local buttonId = "progressionTab_" .. tab.id
+        tab.buttonId = buttonId
+        local x = startX + (index - 1) * (TAB_WIDTH + TAB_SPACING)
+
+        buttons[#buttons + 1] = {
+            id = buttonId,
+            x = x,
+            y = TAB_Y,
+            w = TAB_WIDTH,
+            h = TAB_HEIGHT,
+            text = Localization:get(tab.labelKey),
+            action = tab.action,
+        }
+    end
+
+    local backButtonY = sh - 90
+
+    buttons[#buttons + 1] = {
+        id = "progressionBack",
+        x = sw / 2 - UI.spacing.buttonWidth / 2,
+        y = backButtonY,
+        w = UI.spacing.buttonWidth,
+        h = UI.spacing.buttonHeight,
+        textKey = "metaprogression.back_to_menu",
+        text = Localization:get("metaprogression.back_to_menu"),
+        action = "menu",
+    }
+
+    buttonList:reset(buttons)
+
+    local _, activeIndex = findTab(activeTab)
+    if activeIndex then
+        buttonList:setFocus(activeIndex)
+    end
 
     scrollOffset = 0
     updateScrollBounds(sw, sh)
@@ -103,7 +278,13 @@ local function handleConfirm()
     local action = buttonList:activateFocused()
     if action then
         Audio:playSound("click")
-        return action
+        if action == "tab_experience" then
+            setActiveTab("experience")
+        elseif action == "tab_stats" then
+            setActiveTab("stats")
+        else
+            return action
+        end
     end
 end
 
@@ -232,6 +413,56 @@ local function drawTrack(sw, sh)
     love.graphics.pop()
 end
 
+local function drawStatsHeader(sw)
+    love.graphics.setFont(UI.fonts.button)
+    love.graphics.setColor(Theme.textColor)
+    love.graphics.printf(Localization:get("metaprogression.stats_header"), 0, 150, sw, "center")
+end
+
+local function drawStatsList(sw, sh)
+    local clipY = START_Y
+    local clipH = viewportHeight
+
+    if clipH <= 0 then
+        return
+    end
+
+    local listX = (sw - CARD_WIDTH) / 2
+
+    love.graphics.push()
+    love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+
+    if #statsEntries == 0 then
+        love.graphics.setFont(UI.fonts.body)
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.printf(Localization:get("metaprogression.stats_empty"), listX, clipY + viewportHeight / 2 - 12, CARD_WIDTH, "center")
+    else
+        for index, entry in ipairs(statsEntries) do
+            local y = START_Y + scrollOffset + (index - 1) * (STAT_CARD_HEIGHT + STAT_CARD_SPACING)
+            if y + STAT_CARD_HEIGHT >= clipY - STAT_CARD_HEIGHT and y <= clipY + clipH + STAT_CARD_HEIGHT then
+                local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+                love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], 0.82)
+                UI.drawRoundedRect(listX, y, CARD_WIDTH, STAT_CARD_HEIGHT, 12)
+
+                local borderColor = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+                love.graphics.setColor(borderColor)
+                love.graphics.setLineWidth(2)
+                love.graphics.rectangle("line", listX, y, CARD_WIDTH, STAT_CARD_HEIGHT, 12, 12)
+
+                love.graphics.setColor(Theme.textColor)
+                love.graphics.setFont(UI.fonts.body)
+                love.graphics.print(entry.label, listX + 24, y + 16)
+
+                love.graphics.setFont(UI.fonts.button)
+                love.graphics.printf(entry.valueText, listX + 24, y + STAT_CARD_HEIGHT - 40, CARD_WIDTH - 48, "right")
+            end
+        end
+    end
+
+    love.graphics.setScissor()
+    love.graphics.pop()
+end
+
 function ProgressionScreen:draw()
     local sw, sh = Screen:get()
 
@@ -242,10 +473,29 @@ function ProgressionScreen:draw()
     love.graphics.setColor(Theme.textColor)
     love.graphics.printf(Localization:get("metaprogression.title"), 0, 48, sw, "center")
 
-    drawSummaryPanel(sw)
-    drawTrack(sw, sh)
+    if activeTab == "experience" then
+        drawSummaryPanel(sw)
+        drawTrack(sw, sh)
+    else
+        drawStatsHeader(sw)
+        drawStatsList(sw, sh)
+    end
 
-    buttonList:draw()
+    buttonList:syncUI()
+
+    for _, tab in ipairs(tabs) do
+        local id = tab.buttonId
+        if id then
+            local button = UI.buttons[id]
+            if button then
+                button.pressed = (activeTab == tab.id)
+            end
+        end
+    end
+
+    for _, button in buttonList:iter() do
+        UI.drawButton(button.id)
+    end
 end
 
 function ProgressionScreen:mousepressed(x, y, button)
@@ -256,7 +506,13 @@ function ProgressionScreen:mousereleased(x, y, button)
     local action = buttonList:mousereleased(x, y, button)
     if action then
         Audio:playSound("click")
-        return action
+        if action == "tab_experience" then
+            setActiveTab("experience")
+        elseif action == "tab_stats" then
+            setActiveTab("stats")
+        else
+            return action
+        end
     end
 end
 
