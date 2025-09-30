@@ -1,5 +1,8 @@
-local Popup = {}
 local Screen = require("screen")
+local Theme = require("theme")
+local UI = require("ui")
+
+local Popup = {}
 
 Popup.active = false
 Popup.text = ""
@@ -10,8 +13,9 @@ Popup.alpha = 0
 Popup.scale = 1
 Popup.offsetY = 0
 
-local padding = 20
-local maxWidth = 600
+local padding = UI.spacing and UI.spacing.panelPadding or 20
+local maxWidth = 560
+local innerSpacing = (UI.spacing and UI.spacing.sectionSpacing or 28) * 0.4
 
 function Popup:show(title, description)
     self.text = title
@@ -55,14 +59,15 @@ function Popup:draw()
     if not self.active then return end
 
     local sw, sh = Screen:get()
-    local fontTitle = love.graphics.newFont(24)
-    local fontDesc = love.graphics.newFont(16)
+    local fontTitle = UI.fonts.heading or UI.fonts.subtitle
+    local fontDesc = UI.fonts.caption or UI.fonts.body
 
     local titleHeight = fontTitle:getHeight()
-    local descHeight = fontDesc:getHeight()
-
-    local boxWidth = maxWidth
-    local boxHeight = padding * 2 + titleHeight + descHeight + 20
+    local boxWidth = math.min(maxWidth, sw - padding * 2)
+    local wrapWidth = boxWidth - padding * 2
+    local _, descLines = fontDesc:getWrap(self.subtext, wrapWidth)
+    local descHeight = (#descLines > 0 and #descLines or 1) * fontDesc:getHeight()
+    local boxHeight = padding * 2 + titleHeight + innerSpacing + descHeight
     local x = sw / 2
     local y = sh * 0.25 + self.offsetY
 
@@ -70,23 +75,20 @@ function Popup:draw()
     love.graphics.translate(x, y)
     love.graphics.scale(self.scale, self.scale)
 
-    -- Background with rounded corners
-    love.graphics.setColor(0, 0, 0, 0.75 * self.alpha)
-    love.graphics.rectangle("fill", -boxWidth/2, 0, boxWidth, boxHeight, 12, 12)
-
-    -- Subtle border glow
-    love.graphics.setColor(1, 1, 1, 0.1 * self.alpha)
-    love.graphics.setLineWidth(3)
-    love.graphics.rectangle("line", -boxWidth/2, 0, boxWidth, boxHeight, 12, 12)
-
-    -- Text
-    love.graphics.setColor(1, 1, 1, self.alpha)
+    UI.drawPanel(-boxWidth / 2, 0, boxWidth, boxHeight, {
+        radius = UI.spacing and UI.spacing.panelRadius or 16,
+        shadowOffset = (UI.spacing and UI.spacing.shadowOffset or 6) * 0.6,
+        fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * self.alpha },
+        borderColor = Theme.panelBorder,
+    })
 
     love.graphics.setFont(fontTitle)
-    love.graphics.printf(self.text, -boxWidth/2 + padding, padding, boxWidth - padding * 2, "center")
+    love.graphics.setColor(UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], self.alpha)
+    love.graphics.printf(self.text, -boxWidth / 2 + padding, padding, wrapWidth, "center")
 
     love.graphics.setFont(fontDesc)
-    love.graphics.printf(self.subtext, -boxWidth/2 + padding, padding + titleHeight + 10, boxWidth - padding * 2, "center")
+    love.graphics.setColor(UI.colors.mutedText[1], UI.colors.mutedText[2], UI.colors.mutedText[3], self.alpha)
+    love.graphics.printf(self.subtext, -boxWidth / 2 + padding, padding + titleHeight + innerSpacing, wrapWidth, "center")
 
     love.graphics.pop()
 end

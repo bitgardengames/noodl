@@ -76,7 +76,7 @@ local function formatBool(value)
 end
 
 function Debug:load()
-    self.font = love.graphics.newFont(12)
+    self.font = UI.fonts.small
     self.sampleTimer = 0
     self.sampleInterval = 0
     self.refreshTimer = 0
