@@ -189,6 +189,20 @@ function Score:handleGameOver(cause)
 
     local runApples = SessionStats:get("applesEaten") or 0
     local lifetimeApples = PlayerStats:get("totalApplesEaten") or 0
+    local runTiles = SessionStats:get("tilesTravelled") or 0
+    local runCombos = SessionStats:get("combosTriggered") or 0
+    local runShieldsSaved = SessionStats:get("crashShieldsSaved") or 0
+
+    PlayerStats:updateMax("mostApplesInRun", runApples)
+    if runTiles > 0 then
+        PlayerStats:add("tilesTravelled", runTiles)
+    end
+    if runCombos > 0 then
+        PlayerStats:add("totalCombosTriggered", runCombos)
+    end
+    if runShieldsSaved > 0 then
+        PlayerStats:add("crashShieldsSaved", runShieldsSaved)
+    end
 
     return {
         score       = self.current,

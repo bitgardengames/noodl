@@ -5,6 +5,7 @@ local Rocks = require("rocks")
 local Saws = require("saws")
 local UI = require("ui")
 local FloatingText = require("floatingtext")
+local SessionStats = require("sessionstats")
 
 local Snake = {}
 
@@ -77,6 +78,7 @@ function Snake:consumeCrashShield()
         if headX and headY then
             FloatingText:add("Shield!", headX, headY - 56, {0.65, 0.9, 1.0, 1}, 0.9, 48)
         end
+        SessionStats:add("crashShieldsSaved", 1)
         return true
     end
     return false
@@ -653,6 +655,9 @@ function Snake:update(dt)
         while moveInterval and moveTimer >= moveInterval do
             moveTimer = moveTimer - moveInterval
             snaps = snaps + 1
+        end
+        if snaps > 0 then
+            SessionStats:add("tilesTravelled", snaps)
         end
         if snaps > 0 then
             -- snap to the nearest grid center

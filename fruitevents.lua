@@ -74,6 +74,9 @@ local function applyComboReward(x, y)
     local comboCount = comboState.count
     comboState.best = math.max(comboState.best or 0, comboCount)
     PlayerStats:updateMax("bestComboStreak", comboState.best or comboCount or 0)
+    if comboCount >= 2 then
+        SessionStats:add("combosTriggered", 1)
+    end
     syncComboToUI()
 
     if comboCount < 2 then
