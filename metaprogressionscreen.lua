@@ -192,6 +192,19 @@ local function setActiveTab(tabId)
     end
 end
 
+local function applyFocusedTab(button)
+    if not button then
+        return
+    end
+
+    local action = button.action or button.id
+    if action == "tab_experience" or action == "progressionTab_experience" then
+        setActiveTab("experience")
+    elseif action == "tab_stats" or action == "progressionTab_stats" then
+        setActiveTab("stats")
+    end
+end
+
 local function scrollBy(amount)
     if amount == 0 then
         return
@@ -523,14 +536,14 @@ end
 function ProgressionScreen:keypressed(key)
     if key == "up" then
         scrollBy(SCROLL_SPEED)
-        buttonList:moveFocus(-1)
+        applyFocusedTab(buttonList:moveFocus(-1))
     elseif key == "down" then
         scrollBy(-SCROLL_SPEED)
-        buttonList:moveFocus(1)
+        applyFocusedTab(buttonList:moveFocus(1))
     elseif key == "left" then
-        buttonList:moveFocus(-1)
+        applyFocusedTab(buttonList:moveFocus(-1))
     elseif key == "right" then
-        buttonList:moveFocus(1)
+        applyFocusedTab(buttonList:moveFocus(1))
     elseif key == "pageup" then
         scrollBy(viewportHeight)
     elseif key == "pagedown" then
@@ -546,14 +559,14 @@ end
 function ProgressionScreen:gamepadpressed(_, button)
     if button == "dpup" then
         scrollBy(SCROLL_SPEED)
-        buttonList:moveFocus(-1)
+        applyFocusedTab(buttonList:moveFocus(-1))
     elseif button == "dpleft" then
-        buttonList:moveFocus(-1)
+        applyFocusedTab(buttonList:moveFocus(-1))
     elseif button == "dpdown" then
         scrollBy(-SCROLL_SPEED)
-        buttonList:moveFocus(1)
+        applyFocusedTab(buttonList:moveFocus(1))
     elseif button == "dpright" then
-        buttonList:moveFocus(1)
+        applyFocusedTab(buttonList:moveFocus(1))
     elseif button == "a" or button == "start" then
         return handleConfirm()
     elseif button == "b" then
