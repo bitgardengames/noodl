@@ -30,6 +30,64 @@ local viewportHeight = 0
 local contentHeight = 0
 local DPAD_SCROLL_AMOUNT = CARD_SPACING
 
+local function clamp01(value)
+    if value < 0 then
+        return 0
+    elseif value > 1 then
+        return 1
+    end
+    return value
+end
+
+local function lightenColor(color, amount)
+    if not color then
+        return {1, 1, 1, 1}
+    end
+
+    amount = clamp01(amount or 0)
+    local r = color[1] or 1
+    local g = color[2] or 1
+    local b = color[3] or 1
+    local a = color[4] or 1
+
+    return {
+        r + (1 - r) * amount,
+        g + (1 - g) * amount,
+        b + (1 - b) * amount,
+        a,
+    }
+end
+
+local function darkenColor(color, amount)
+    if not color then
+        return {0, 0, 0, 1}
+    end
+
+    amount = clamp01(amount or 0)
+    local factor = 1 - amount
+    local a = color[4] or 1
+
+    return {
+        (color[1] or 0) * factor,
+        (color[2] or 0) * factor,
+        (color[3] or 0) * factor,
+        a,
+    }
+end
+
+local function withAlpha(color, alpha)
+    if not color then
+        return {1, 1, 1, alpha or 1}
+    end
+
+    return {
+        color[1] or 1,
+        color[2] or 1,
+        color[3] or 1,
+        alpha or (color[4] or 1),
+    }
+end
+
 local function buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
     local segmentSize = SnakeUtils.SEGMENT_SIZE
     local halfSegment = segmentSize * 0.5
@@ -216,7 +274,8 @@ function AchievementsMenu:draw()
     love.graphics.clear(Theme.bgColor)
 
     love.graphics.setFont(UI.fonts.title)
-    love.graphics.setColor(1, 1, 1)
+    local titleColor = Theme.textColor or {1, 1, 1, 1}
+    love.graphics.setColor(titleColor)
     love.graphics.printf(Localization:get("achievements.title"), 0, 80, sw, "center")
 
     if not displayBlocks or #displayBlocks == 0 then
@@ -230,8 +289,36 @@ function AchievementsMenu:draw()
     local cardWidth = CARD_WIDTH
     local cardHeight = CARD_HEIGHT
     local xCenter = sw / 2
-    local lockedCardColor = Theme.lockedCardColor or {0.12, 0.12, 0.15}
     local categorySpacing = CATEGORY_SPACING
+
+    local listX = xCenter - cardWidth / 2
+    local panelPaddingX = 48
+    local panelPaddingY = 56
+    local viewportBottom = sh - 120
+    local availableHeight = math.max(0, viewportBottom - START_Y)
+    local panelX = listX - panelPaddingX
+    local panelY = START_Y - panelPaddingY
+    local panelWidth = cardWidth + panelPaddingX * 2
+    local panelHeight = availableHeight + panelPaddingY * 2
+    local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+    local panelBorder = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
+    local shadowColor = Theme.shadowColor or {0, 0, 0, 0.35}
+    local highlightColor = Theme.highlightColor or {1, 1, 1, 0.06}
+
+    love.graphics.push("all")
+    love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 0.35) * 0.9)
+    UI.drawRoundedRect(panelX + 10, panelY + 12, panelWidth, panelHeight, 28)
+
+    love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * 0.95)
+    UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 28)
+
+    love.graphics.setColor(panelBorder[1], panelBorder[2], panelBorder[3], panelBorder[4] or 1)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 28, 28)
+
+    love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], highlightColor[4] or 0.08)
+    love.graphics.rectangle("fill", panelX + 16, panelY + 18, panelWidth - 32, 60, 20, 20)
+    love.graphics.pop()
 
     local scissorTop = START_Y - 80
     local scissorBottom = sh - 120
@@ -245,7 +332,7 @@ function AchievementsMenu:draw()
     for _, block in ipairs(displayBlocks) do
         local categoryLabel = Localization:get("achievements.categories." .. block.id)
         love.graphics.setFont(UI.fonts.button)
-        love.graphics.setColor(1, 1, 1, 0.9)
+        love.graphics.setColor(titleColor[1], titleColor[2], titleColor[3], (titleColor[4] or 1) * 0.85)
         love.graphics.printf(categoryLabel, 0, y - 32, sw, "center")
 
         for _, ach in ipairs(block.achievements) do
@@ -261,15 +348,29 @@ function AchievementsMenu:draw()
             local barW = cardWidth - 120
             local cardY = y
 
-            love.graphics.setColor(Theme.shadowColor)
-            UI.drawRoundedRect(x + 4, cardY + 4, cardWidth, cardHeight, 14)
+            local cardBase = unlocked and lightenColor(panelColor, 0.18) or darkenColor(panelColor, 0.08)
+            if hiddenLocked then
+                cardBase = darkenColor(panelColor, 0.2)
+            end
 
-            love.graphics.setColor(unlocked and Theme.achieveColor or lockedCardColor)
-            UI.drawRoundedRect(x, cardY, cardWidth, cardHeight, 14)
+            local borderTint
+            if unlocked then
+                borderTint = Theme.achieveColor or lightenColor(panelBorder, 0.35)
+            elseif hiddenLocked then
+                borderTint = darkenColor(panelBorder, 0.15)
+            else
+                borderTint = Theme.panelBorder or panelBorder
+            end
 
-            love.graphics.setColor(Theme.borderColor)
+            love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 0.3) * 0.9)
+            UI.drawRoundedRect(x + 6, cardY + 8, cardWidth, cardHeight, 18)
+
+            love.graphics.setColor(cardBase)
+            UI.drawRoundedRect(x, cardY, cardWidth, cardHeight, 18)
+
+            love.graphics.setColor(borderTint)
             love.graphics.setLineWidth(2)
-            love.graphics.rectangle("line", x, cardY, cardWidth, cardHeight, 14)
+            love.graphics.rectangle("line", x, cardY, cardWidth, cardHeight, 18, 18)
 
             if icon then
                 local iconX, iconY = x + 16, cardY + 18
@@ -279,8 +380,8 @@ function AchievementsMenu:draw()
                 love.graphics.setColor(tint, tint, tint, 1)
                 love.graphics.draw(icon, iconX, iconY, 0, scaleX, scaleY)
 
-                local r, g, b = unpack(Theme.borderColor)
-                love.graphics.setColor(r * 0.5, g * 0.5, b * 0.5, 1)
+                local iconBorder = hiddenLocked and darkenColor(borderTint, 0.35) or borderTint
+                love.graphics.setColor(iconBorder)
                 love.graphics.setLineWidth(2)
                 love.graphics.rectangle("line", iconX - 2, iconY - 2, 60, 60, 8)
             end
@@ -298,11 +399,12 @@ function AchievementsMenu:draw()
             end
 
             love.graphics.setFont(UI.fonts.achieve)
-            love.graphics.setColor(1, 1, 1)
+            love.graphics.setColor(titleColor)
             love.graphics.printf(titleText, textX, cardY + 10, cardWidth - 110, "left")
 
             love.graphics.setFont(UI.fonts.body)
-            love.graphics.setColor(0.9, 0.9, 0.9)
+            local bodyColor = withAlpha(titleColor, (titleColor[4] or 1) * 0.8)
+            love.graphics.setColor(bodyColor)
             love.graphics.printf(descriptionText, textX, cardY + 38, cardWidth - 110, "left")
 
             if hasProgress then
@@ -311,7 +413,7 @@ function AchievementsMenu:draw()
                 local barX = textX
                 local barY = cardY + cardHeight - 24
 
-                love.graphics.setColor(0.1, 0.1, 0.1, 0.85)
+                love.graphics.setColor(darkenColor(cardBase, 0.45))
                 love.graphics.rectangle("fill", barX, barY, barW, barH, 6)
 
                 love.graphics.setColor(Theme.progressColor)
@@ -320,7 +422,7 @@ function AchievementsMenu:draw()
                 local progressLabel = Achievements:getProgressLabel(ach)
                 if progressLabel then
                     love.graphics.setFont(UI.fonts.small)
-                    love.graphics.setColor(1, 1, 1, 0.9)
+                    love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.9))
                     love.graphics.printf(progressLabel, barX, barY - 18, barW, "right")
                 end
             end
