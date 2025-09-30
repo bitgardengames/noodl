@@ -604,9 +604,17 @@ local english = {
                 title = "Straight-Line Snacker",
                 description = "Collect 3 fruit without turning.",
             },
+            shieldlessWonder = {
+                title = "Shieldless Wonder",
+                description = "Clear 3 floors in a run without triggering a crash shield.",
+            },
             dragonHunter = {
                 title = "Dragon Hunter",
                 description = "Collect the legendary Dragonfruit",
+            },
+            dragonComboFusion = {
+                title = "Dragon Combo Fusion",
+                description = "Eat a dragonfruit and reach an 8-fruit combo in the same run.",
             },
             tokenMenagerie = {
                 title = "Token Menagerie",
