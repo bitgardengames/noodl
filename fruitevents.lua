@@ -117,64 +117,6 @@ local function applyComboReward(x, y)
     })
 end
 
-local function addFloatingText(label, x, y, color, duration, size)
-    if not label or label == "" then return end
-    FloatingText:add(label, x, y, color or Theme.textColor, duration or 1.1, size or 42)
-end
-
-local function applyRunRewards(fruitType, x, y)
-    if not fruitType then return end
-
-    local rewards = fruitType.runRewards or fruitType.runReward
-    if not rewards then return end
-
-    if rewards.type then
-        rewards = { rewards }
-    end
-
-    local offset = 74
-    for _, reward in ipairs(rewards) do
-        local rewardType = reward.type
-        if rewardType == "comboTime" then
-            local amount = reward.amount or reward.duration or 0
-            if amount and amount ~= 0 then
-                FruitEvents.boostComboTimer(amount)
-                if reward.label then
-                    addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
-                    offset = offset + 22
-                end
-            end
-        elseif rewardType == "stallSaws" then
-            local duration = reward.duration or reward.amount or 0
-            if duration and duration > 0 then
-                Saws:stall(duration)
-                if reward.label then
-                    addFloatingText(reward.label, x, y - offset, reward.color or {0.8, 0.9, 1, 1}, reward.duration, reward.size)
-                    offset = offset + 22
-                end
-            end
-        elseif rewardType == "shield" then
-            local shields = math.floor(reward.amount or 0)
-            if shields ~= 0 then
-                Snake:addCrashShields(shields)
-                if reward.label and reward.showLabel ~= false then
-                    addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
-                    offset = offset + 22
-                end
-            end
-        elseif rewardType == "scoreBonus" then
-            local bonus = math.floor(reward.amount or 0)
-            if bonus ~= 0 then
-                Score:addBonus(bonus)
-                if reward.label then
-                    addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
-                    offset = offset + 22
-                end
-            end
-        end
-    end
-end
-
 function FruitEvents.reset()
     comboState.count = 0
     comboState.timer = 0
@@ -255,12 +197,6 @@ function FruitEvents.handleConsumption(x, y)
 
     local safeZone = Snake:getSafeZone(3)
 
-    if name == "Dragonfruit" then
-        PlayerStats:add("totalDragonfruitEaten", 1)
-        SessionStats:add("dragonfruitEaten", 1)
-        Achievements:unlock("dragonHunter")
-    end
-
     UI:triggerScorePulse()
     UI:addFruit(fruitType)
     local goalReached = UI:isGoalReached()
@@ -284,8 +220,6 @@ function FruitEvents.handleConsumption(x, y)
     end
 
     applyComboReward(x, y)
-    applyRunRewards(fruitType, x, y)
-
     if Snake.adrenaline then
         Snake.adrenaline.active = true
         Snake.adrenaline.timer = Snake.adrenaline.duration

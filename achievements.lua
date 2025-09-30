@@ -117,7 +117,6 @@ function Achievements:_ensureInitialized()
             return {
                 totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0,
                 sessionsPlayed = PlayerStats:get("sessionsPlayed") or 0,
-                totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
                 bestScore = PlayerStats:get("snakeScore") or 0,
                 floorsCleared = PlayerStats:get("floorsCleared") or 0,
                 deepestFloorReached = PlayerStats:get("deepestFloorReached") or 0,
@@ -138,7 +137,6 @@ function Achievements:_ensureInitialized()
                 runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0,
                 runShieldSawParries = SessionStats:get("runShieldSawParries") or 0,
                 runCrashShieldsSaved = SessionStats:get("crashShieldsSaved") or 0,
-                runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0,
                 runBestComboStreak = SessionStats:get("bestComboStreak") or 0,
                 fruitWithoutTurning = SessionStats:get("fruitWithoutTurning") or 0,
             }

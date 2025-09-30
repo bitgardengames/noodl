@@ -34,10 +34,6 @@ local Theme = {
 
     -- Fruits / pickups
     appleColor       = {0.90, 0.45, 0.55, 1.0},
-    bananaColor      = {0.90, 0.85, 0.55, 1.0},
-    blueberryColor   = {0.55, 0.65, 0.95, 1.0},
-    goldenPearColor  = {0.95, 0.80, 0.45, 1.0},
-    dragonfruitColor = {0.90, 0.60, 0.80, 1.0},
 
     -- Obstacles
     sawColor         = {0.65, 0.65, 0.70, 1.0},

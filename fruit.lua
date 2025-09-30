@@ -9,64 +9,7 @@ local fruitTypes = {
         name = "Apple",
         color = Theme.appleColor,
         points = 1,
-        weight = 70,
-    },
-    {
-        id = "banana",
-        name = "Banana",
-        color = Theme.bananaColor,
-        points = 3,
-        weight = 20,
-        runRewards = {
-            {
-                type = "comboTime",
-                amount = 0.75,
-                color = {1, 0.92, 0.4, 1},
-            },
-        },
-    },
-    {
-        id = "blueberry",
-        name = "Blueberry",
-        color = Theme.blueberryColor,
-        points = 5,
-        weight = 8,
-        runRewards = {
-            {
-                type = "stallSaws",
-                amount = 0.8,
-                color = {0.6, 0.75, 1, 1},
-            },
-        },
-    },
-    {
-        id = "goldenPear",
-        name = "GoldenPear",
-        color = Theme.goldenPearColor,
-        points = 10,
-        weight = 2,
-        runRewards = {
-            {
-                type = "shield",
-                amount = 1,
-                color = Theme.goldenPearColor,
-                showLabel = false,
-            },
-        },
-    },
-    {
-        id = "dragonfruit",
-        name = "Dragonfruit",
-        color = Theme.dragonfruitColor,
-        points = 50,
-        weight = 0.2,
-        runRewards = {
-            {
-                type = "stallSaws",
-                amount = 1.5,
-                color = {1, 0.4, 1, 1},
-            },
-        },
+        weight = 1,
     },
 }
 
@@ -119,13 +62,6 @@ local function clamp(a, lo, hi) if a < lo then return lo elseif a > hi then retu
 local function easeOutQuad(t)  return 1 - (1 - t)^2 end
 -- Helpers
 local function chooseFruitType()
-    local total = 0
-    for _, f in ipairs(fruitTypes) do total = total + f.weight end
-    local r, sum = love.math.random() * total, 0
-    for _, f in ipairs(fruitTypes) do
-        sum = sum + f.weight
-        if r <= sum then return f end
-    end
     return fruitTypes[1]
 end
 
@@ -295,13 +231,6 @@ local function drawFruit(f)
         love.graphics.circle("fill", x, y, gx)
     end
 
-    -- rare fruit flair
-    if f.type.name == "Dragonfruit" and f == active then
-        local t = (active.timer or 0)
-        local pulse = 0.5 + 0.5 * math.sin(t * 6.0)
-        love.graphics.setColor(1, 0, 1, 0.15 * pulse * alpha)
-        love.graphics.circle("line", x, y, HITBOX_SIZE * 0.8 + pulse * 4)
-    end
 end
 
 function Fruit:draw()

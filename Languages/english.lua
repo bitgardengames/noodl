@@ -38,12 +38,6 @@ local english = {
                     description = "Collect ${goal} apples in a single run.",
                     progress = "Run apples: ${current}/${goal}",
                 },
-                dragonfruit = {
-                    title = "Dragonfruit Delight",
-                    description = "Collect ${goal} dragonfruit in a single run.",
-                    progress = "Dragonfruit snagged: ${current}/${goal}",
-                    complete = "Dragonfruit feast! You've nabbed ${current}.",
-                },
                 combos = {
                     title = "Combo Conductor",
                     description = "Trigger ${goal} combos in a single run.",
@@ -148,7 +142,6 @@ local english = {
             stat_labels = {
                 sessionsPlayed = "Sessions Played",
                 totalApplesEaten = "Apples Collected",
-                totalDragonfruitEaten = "Dragonfruit Collected",
                 floorsCleared = "Floors Cleared",
                 deepestFloorReached = "Deepest Floor Reached",
                 snakeScore = "Best Score",
@@ -607,14 +600,6 @@ local english = {
             shieldlessWonder = {
                 title = "Shieldless Wonder",
                 description = "Clear 3 floors in a run without triggering a crash shield.",
-            },
-            dragonHunter = {
-                title = "Dragon Hunter",
-                description = "Collect the legendary Dragonfruit",
-            },
-            dragonComboFusion = {
-                title = "Dragon Combo Fusion",
-                description = "Eat a dragonfruit and reach an 8-fruit combo in the same run.",
             },
             tokenMenagerie = {
                 title = "Token Menagerie",

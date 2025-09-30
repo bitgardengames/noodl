@@ -307,16 +307,6 @@ FunChallenges.challenges = {
         xpReward = 70,
     },
     {
-        id = "dragonfruit_delight",
-        titleKey = "menu.fun_daily.dragonfruit.title",
-        descriptionKey = "menu.fun_daily.dragonfruit.description",
-        sessionStat = "dragonfruitEaten",
-        goal = 2,
-        progressKey = "menu.fun_daily.dragonfruit.progress",
-        completeKey = "menu.fun_daily.dragonfruit.complete",
-        xpReward = 90,
-    },
-    {
         id = "combo_conductor",
         titleKey = "menu.fun_daily.combos.title",
         descriptionKey = "menu.fun_daily.combos.description",

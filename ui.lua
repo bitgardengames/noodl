@@ -1317,13 +1317,6 @@ function UI:drawFruitSockets()
                 love.graphics.circle("line", 0, 0, r + 3, 24)
             end
 
-            -- dragonfruit glow
-            if fruit.name == "Dragonfruit" then
-                local pulse = 0.5 + 0.5 * math.sin(time * 6.0)
-                love.graphics.setColor(1, 0, 1, 0.25 * pulse)
-                love.graphics.circle("line", 0, 0, r + 4 * pulse, 32)
-            end
-
             love.graphics.pop()
         else
             -- idle shimmer in empty sockets
