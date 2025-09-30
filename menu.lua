@@ -152,10 +152,10 @@ function Menu:draw()
     if funChallenge and funChallengeAnim > 0 then
         local alpha = math.min(1, funChallengeAnim)
         local eased = alpha * alpha
-        local panelWidth = math.min(480, sw - 72)
+        local panelWidth = math.min(420, sw - 72)
         local padding = UI.spacing.panelPadding or 16
-        local panelX = (sw - panelWidth) / 2
-        local panelY = sh * 0.64
+        local panelX = sw - panelWidth - 36
+        local panelY = 36
         local headerFont = UI.fonts.small
         local titleFont = UI.fonts.button
         local bodyFont = UI.fonts.body
@@ -171,6 +171,11 @@ function Menu:draw()
         local progressText = nil
         local progressHeight = 0
         local ratio = funChallenge.ratio or 0
+        local bonusText = nil
+
+        if funChallenge.xpReward and funChallenge.xpReward > 0 then
+            bonusText = Localization:get("menu.fun_panel_bonus", { xp = funChallenge.xpReward })
+        end
 
         if funChallenge.goal and funChallenge.goal > 0 then
             local replacements = funChallenge.progressReplacements or { current = funChallenge.current, goal = funChallenge.goal }
@@ -196,6 +201,7 @@ function Menu:draw()
             + titleFont:getHeight()
             + 10
             + descHeight
+            + (bonusText and (progressFont:getHeight() + 10) or 0)
             + (progressText and progressHeight or 0)
 
         setColorWithAlpha(Theme.shadowColor, eased * 0.7)
@@ -226,6 +232,13 @@ function Menu:draw()
         love.graphics.printf(descriptionText, textX, textY, panelWidth - padding * 2)
 
         textY = textY + descHeight
+
+        if bonusText then
+            textY = textY + 8
+            love.graphics.setFont(progressFont)
+            love.graphics.print(bonusText, textX, textY)
+            textY = textY + progressFont:getHeight()
+        end
 
         if progressText then
             textY = textY + 10

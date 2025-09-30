@@ -7,6 +7,7 @@ local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
+local FunChallenges = require("funchallenges")
 
 local GameOver = {}
 
@@ -200,9 +201,16 @@ function GameOver:enter(data)
         + statRowHeight
         + achievementsHeight
 
+    self.funChallengeResult = FunChallenges:applyRunResults(SessionStats)
+    local challengeBonusXP = 0
+    if self.funChallengeResult then
+        challengeBonusXP = math.max(0, self.funChallengeResult.xpAwarded or 0)
+    end
+
     self.progression = MetaProgression:grantRunPoints({
         apples = stats.apples or 0,
         score = stats.score or 0,
+        bonusXP = challengeBonusXP,
     })
 
     self.xpSectionHeight = 0
@@ -212,6 +220,9 @@ function GameOver:enter(data)
         local startSnapshot = self.progression.start or { total = 0, level = 1, xpIntoLevel = 0, xpForNext = MetaProgression:getXpForLevel(1) }
         local resultSnapshot = self.progression.result or startSnapshot
         local baseHeight = 200
+        if challengeBonusXP > 0 then
+            baseHeight = baseHeight + 28
+        end
         self.xpSectionHeight = baseHeight
         summaryPanelHeight = summaryPanelHeight + self.xpSectionHeight + 12
 
@@ -228,6 +239,7 @@ function GameOver:enter(data)
             celebrations = {},
             pendingMilestones = {},
             levelUnlocks = {},
+            bonusXP = challengeBonusXP,
         }
 
         if type(self.progression.milestones) == "table" then
@@ -368,6 +380,17 @@ local function drawXpSection(self, x, y, width)
     end
 
     local labelY = barY + barHeight + 14
+    local breakdown = self.progression and self.progression.breakdown or {}
+    local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
+    if bonusXP > 0 then
+        local bonusText = Localization:get("gameover.meta_progress_bonus", { bonus = bonusXP })
+        UI.drawLabel(bonusText, x, labelY, width, "center", {
+            font = fontProgressSmall,
+            color = UI.colors.highlight or UI.colors.text,
+        })
+        labelY = labelY + fontProgressSmall:getHeight() + 6
+    end
+
     UI.drawLabel(totalLabel, x, labelY, width, "center", {
         font = fontProgressSmall,
         color = UI.colors.text,
