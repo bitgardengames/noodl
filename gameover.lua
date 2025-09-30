@@ -34,6 +34,20 @@ local buttonList = ButtonList.new()
 local BUTTON_WIDTH = UI.spacing.buttonWidth
 local BUTTON_HEIGHT = UI.spacing.buttonHeight
 local BUTTON_SPACING = UI.spacing.buttonSpacing
+local CELEBRATION_ENTRY_HEIGHT = 64
+local CELEBRATION_ENTRY_SPACING = CELEBRATION_ENTRY_HEIGHT + 10
+
+local function easeOutQuad(t)
+    local inv = 1 - t
+    return 1 - inv * inv
+end
+
+local function easeOutBack(t)
+    local c1 = 1.70158
+    local c3 = c1 + 1
+    local progress = t - 1
+    return 1 + c3 * (progress * progress * progress) + c1 * (progress * progress)
+end
 
 local function drawBackground(sw, sh)
     love.graphics.setColor(UI.colors.background or Theme.bgColor)
@@ -219,10 +233,11 @@ function GameOver:enter(data)
     if self.progression then
         local startSnapshot = self.progression.start or { total = 0, level = 1, xpIntoLevel = 0, xpForNext = MetaProgression:getXpForLevel(1) }
         local resultSnapshot = self.progression.result or startSnapshot
-        local baseHeight = 200
+        local baseHeight = 220
         if challengeBonusXP > 0 then
             baseHeight = baseHeight + 28
         end
+        self.baseXpSectionHeight = baseHeight
         self.xpSectionHeight = baseHeight
         summaryPanelHeight = summaryPanelHeight + self.xpSectionHeight + 12
 
@@ -305,13 +320,89 @@ local function drawStatPill(x, y, width, height, label, value)
     })
 end
 
+local function drawCelebrationsList(anim, x, startY, width)
+    local events = anim and anim.celebrations or {}
+    if not events or #events == 0 then
+        return startY
+    end
+
+    local y = startY
+    local cardWidth = width - 32
+    local now = love.timer.getTime()
+
+    for index, event in ipairs(events) do
+        local timer = math.max(0, event.timer or 0)
+        local appear = math.min(1, timer / 0.35)
+        local appearEase = easeOutBack(appear)
+        local fadeAlpha = 1
+        local duration = event.duration or 4.5
+        if duration > 0 then
+            local fadeStart = math.max(0, duration - 0.65)
+            if timer > fadeStart then
+                local fadeProgress = math.min(1, (timer - fadeStart) / 0.65)
+                fadeAlpha = 1 - fadeProgress
+            end
+        end
+
+        local alpha = math.max(0, fadeAlpha)
+
+        if alpha > 0.01 then
+            local cardX = x + 16
+            local cardY = y
+            local wobble = math.sin(now * 4.2 + index * 0.8) * 2 * alpha
+
+            love.graphics.push()
+            love.graphics.translate(cardX + cardWidth / 2, cardY + CELEBRATION_ENTRY_HEIGHT / 2 + wobble)
+            love.graphics.scale(0.92 + 0.08 * appearEase, 0.92 + 0.08 * appearEase)
+            love.graphics.translate(-(cardX + cardWidth / 2), -(cardY + CELEBRATION_ENTRY_HEIGHT / 2 + wobble))
+
+            love.graphics.setColor(0, 0, 0, 0.35 * alpha)
+            love.graphics.rectangle("fill", cardX + 5, cardY + 6, cardWidth, CELEBRATION_ENTRY_HEIGHT, 16, 16)
+
+            local accent = event.color or Theme.progressColor or { 1, 1, 1, 1 }
+            love.graphics.setColor(accent[1], accent[2], accent[3], 0.22 * alpha)
+            love.graphics.rectangle("fill", cardX, cardY, cardWidth, CELEBRATION_ENTRY_HEIGHT, 16, 16)
+
+            love.graphics.setColor(accent[1], accent[2], accent[3], 0.55 * alpha)
+            love.graphics.setLineWidth(2)
+            love.graphics.rectangle("line", cardX, cardY, cardWidth, CELEBRATION_ENTRY_HEIGHT, 16, 16)
+
+            local shimmer = 0.45 + 0.25 * math.sin(now * 6 + index)
+            love.graphics.setColor(accent[1], accent[2], accent[3], shimmer * 0.18 * alpha)
+            love.graphics.rectangle("line", cardX + 3, cardY + 3, cardWidth - 6, CELEBRATION_ENTRY_HEIGHT - 6, 12, 12)
+
+            UI.drawLabel(event.title or "", cardX + 18, cardY + 12, cardWidth - 36, "left", {
+                font = fontProgressSmall,
+                color = { UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], alpha },
+            })
+
+            if event.subtitle and event.subtitle ~= "" then
+                UI.drawLabel(event.subtitle, cardX + 18, cardY + 32, cardWidth - 36, "left", {
+                    font = fontSmall,
+                    color = { UI.colors.mutedText[1], UI.colors.mutedText[2], UI.colors.mutedText[3], alpha },
+                })
+            end
+
+            love.graphics.pop()
+        end
+
+        y = y + CELEBRATION_ENTRY_SPACING
+    end
+
+    love.graphics.setLineWidth(1)
+    return y
+end
+
 local function drawXpSection(self, x, y, width)
     local anim = self.progressionAnimation
     if not anim then
         return
     end
 
-    local height = math.max(160, self.xpSectionHeight or 0)
+    local baseHeight = self.baseXpSectionHeight or 220
+    local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
+    local targetHeight = baseHeight + celebrationCount * CELEBRATION_ENTRY_SPACING
+    local height = math.max(160, self.xpSectionHeight or targetHeight, targetHeight)
     UI.drawPanel(x, y, width, height, {
         radius = 18,
         shadowOffset = 0,
@@ -334,6 +425,18 @@ local function drawXpSection(self, x, y, width)
         font = fontProgressValue,
         color = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.78 + 0.2 * flash },
     })
+
+    if flash > 0.01 then
+        local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+        love.graphics.setBlendMode("add", "alphamultiply")
+        local centerX = x + width / 2
+        local centerY = levelY + fontProgressValue:getHeight() / 2
+        love.graphics.setColor(levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.24 * flash)
+        love.graphics.circle("fill", centerX, centerY, 48 + flash * 26, 48)
+        love.graphics.setColor(1, 1, 1, 0.12 * flash)
+        love.graphics.circle("line", centerX, centerY, 48 + flash * 18, 48)
+        love.graphics.setBlendMode(prevMode, prevAlphaMode)
+    end
 
     local gained = math.max(0, math.floor((anim.displayedGained or 0) + 0.5))
     local gainedText = Localization:get("gameover.meta_progress_gain_short", { points = gained })
@@ -360,6 +463,21 @@ local function drawXpSection(self, x, y, width)
     local progressColor = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.92 }
     love.graphics.setColor(progressColor)
     love.graphics.rectangle("fill", barX, barY, barWidth * percent, barHeight, 12, 12)
+
+    if percent > 0 then
+        local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+        love.graphics.setBlendMode("add", "alphamultiply")
+        love.graphics.setColor(progressColor[1], progressColor[2], progressColor[3], 0.22 + 0.18 * flash)
+        love.graphics.rectangle("fill", barX, barY, barWidth * percent, barHeight, 12, 12)
+
+        local sweepWidth = 28
+        local sweepPos = (love.timer.getTime() * 80) % (barWidth + sweepWidth) - sweepWidth
+        love.graphics.setScissor(barX, barY, barWidth * percent, barHeight)
+        love.graphics.setColor(1, 1, 1, 0.22 * (0.5 + 0.5 * math.sin(love.timer.getTime() * 4 + percent * math.pi)))
+        love.graphics.rectangle("fill", barX + sweepPos, barY - 4, sweepWidth, barHeight + 8, 10, 10)
+        love.graphics.setScissor()
+        love.graphics.setBlendMode(prevMode, prevAlphaMode)
+    end
 
     local outlineSource = UI.colors.highlight or UI.colors.border or { 1, 1, 1, 0.6 }
     love.graphics.setColor(outlineSource[1], outlineSource[2], outlineSource[3], 0.6)
@@ -401,6 +519,9 @@ local function drawXpSection(self, x, y, width)
         font = fontProgressSmall,
         color = UI.colors.mutedText or UI.colors.text,
     })
+
+    local celebrationStart = labelY + fontProgressSmall:getHeight() + 16
+    drawCelebrationsList(anim, x, celebrationStart, width)
 end
 
 local function drawCombinedPanel(self, contentWidth, contentX, padding)
@@ -582,6 +703,13 @@ function GameOver:update(dt)
             end
         end
     end
+
+    local baseHeight = self.baseXpSectionHeight or 220
+    local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
+    local targetHeight = baseHeight + celebrationCount * CELEBRATION_ENTRY_SPACING
+    self.xpSectionHeight = self.xpSectionHeight or baseHeight
+    local smoothing = math.min(dt * 6, 1)
+    self.xpSectionHeight = self.xpSectionHeight + (targetHeight - self.xpSectionHeight) * smoothing
 end
 
 function GameOver:mousepressed(x, y, button)

@@ -12,6 +12,7 @@ UI.fruitCollected = 0
 UI.fruitRequired = 0
 UI.fruitSockets = {}
 UI.socketAnimTime = 0.25
+UI.socketBounceDuration = 0.65
 UI.socketSize = 26
 UI.goalReachedAnim = 0
 UI.goalCelebrated = false
@@ -50,6 +51,8 @@ UI.upgradeIndicators = {
     },
 }
 
+local BUTTON_POP_DURATION = 0.32
+
 local function clamp01(value)
     if value < 0 then return 0 end
     if value > 1 then return 1 end
@@ -58,6 +61,15 @@ end
 
 local function lerp(a, b, t)
     return a + (b - a) * t
+end
+
+local function approachExp(current, target, dt, speed)
+    if speed <= 0 or dt <= 0 then
+        return target
+    end
+
+    local factor = 1 - math.exp(-speed * dt)
+    return current + (target - current) * factor
 end
 
 local function lightenColor(color, amount)
@@ -104,6 +116,18 @@ end
 -- Button states
 UI.buttons = {}
 
+local function createButtonState()
+    return {
+        pressed = false,
+        anim = 0,
+        hoverAnim = 0,
+        focusAnim = 0,
+        hoverTarget = 0,
+        glow = 0,
+        popProgress = 0,
+    }
+end
+
 function UI.clearButtons()
     UI.buttons = {}
 end
@@ -113,7 +137,7 @@ function UI.setButtonFocus(id, focused)
 
     local btn = UI.buttons[id]
     if not btn then
-        btn = { pressed = false, anim = 0 }
+        btn = createButtonState()
         UI.buttons[id] = btn
     end
 
@@ -313,7 +337,7 @@ end
 
 -- Register a button (once per frame in your draw code)
 function UI.registerButton(id, x, y, w, h, text)
-    UI.buttons[id] = UI.buttons[id] or {pressed = false, anim = 0}
+    UI.buttons[id] = UI.buttons[id] or createButtonState()
     local btn = UI.buttons[id]
     btn.bounds = {x = x, y = y, w = w, h = h}
     btn.text = text
@@ -335,11 +359,24 @@ function UI.drawButton(id)
         Audio:playSound("hover")
     end
     btn.wasHovered = displayHover
+    btn.hoverTarget = displayHover and 1 or 0
 
     -- Animate press depth
-    local target = (btn.pressed and 1 or 0)
-    btn.anim = btn.anim + (target - btn.anim) * 0.25
-    local yOffset = easeOutQuad(btn.anim) * 4
+    local pressAnim = btn.anim or 0
+    local yOffset = easeOutQuad(pressAnim) * 4
+
+    local baseScale = 1 + (btn.popProgress or 0) * 0.08
+    local hoverScale = 1 + (btn.hoverAnim or 0) * 0.02
+    local focusScale = 1 + (btn.focusAnim or 0) * 0.015
+    local totalScale = baseScale * hoverScale * focusScale
+
+    local centerX = b.x + b.w / 2
+    local centerY = b.y + yOffset + b.h / 2
+
+    love.graphics.push()
+    love.graphics.translate(centerX, centerY)
+    love.graphics.scale(totalScale, totalScale)
+    love.graphics.translate(-centerX, -centerY)
 
     local radius = s.buttonRadius
     local shadowOffset = s.shadowOffset
@@ -360,9 +397,13 @@ function UI.drawButton(id)
     setColor(fillColor)
     love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 
-    if displayHover then
-        setColor(UI.colors.highlight, 1.2)
+    local highlightStrength = (btn.hoverAnim or 0) * 0.18 + (btn.popProgress or 0) * 0.22
+    if highlightStrength > 0.001 then
+        local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+        love.graphics.setBlendMode("add", "alphamultiply")
+        love.graphics.setColor(1, 1, 1, 0.12 + 0.18 * highlightStrength)
         love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
+        love.graphics.setBlendMode(prevMode, prevAlphaMode)
     end
 
     if UI.colors.border then
@@ -372,21 +413,40 @@ function UI.drawButton(id)
     end
 
     if btn.focused then
-        local focusRadius = radius + 4
-        local padding = 3
-        local focusColor = UI.colors.border or UI.colors.highlight
-        setColor(focusColor, 1.3)
-        love.graphics.setLineWidth(3)
-        love.graphics.rectangle("line", b.x - padding, b.y + yOffset - padding, b.w + padding * 2, b.h + padding * 2, focusRadius, focusRadius)
+        local focusStrength = btn.focusAnim or 0
+        if focusStrength > 0.01 then
+            local focusRadius = radius + 4
+            local padding = 3
+            local focusColor = UI.colors.border or UI.colors.highlight
+            setColor(focusColor, 0.8 + 0.4 * focusStrength)
+            love.graphics.setLineWidth(3)
+            love.graphics.rectangle("line", b.x - padding, b.y + yOffset - padding, b.w + padding * 2, b.h + padding * 2, focusRadius, focusRadius)
+        end
+    end
+
+    local glowStrength = btn.glow or 0
+    if glowStrength > 0.01 then
+        local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+        love.graphics.setBlendMode("add", "alphamultiply")
+        love.graphics.setColor(1, 1, 1, 0.16 * glowStrength)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", b.x + 2, b.y + yOffset + 2, b.w - 4, b.h - 4, radius - 2, radius - 2)
+        love.graphics.setBlendMode(prevMode, prevAlphaMode)
     end
 
     love.graphics.setLineWidth(1)
 
     -- TEXT
     UI.setFont("button")
-    setColor(UI.colors.text)
+    local textColor = UI.colors.text
+    if displayHover or (btn.focusAnim or 0) > 0.001 then
+        textColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0))
+    end
+    setColor(textColor)
     local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
     love.graphics.printf(btn.text or "", b.x, textY, b.w, "center")
+
+    love.graphics.pop()
 end
 
 -- Hover check
@@ -416,6 +476,8 @@ function UI:mousereleased(x, y, button)
                 btn.pressed = false
                 local b = btn.bounds
                 if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
+                    btn.popTimer = 0
+                    btn.popProgress = 0
                     return id -- valid click
                 end
             end
@@ -581,9 +643,12 @@ end
 
 function UI:addFruit(fruitType)
     self.fruitCollected = math.min(self.fruitCollected + 1, self.fruitRequired)
+    local fruit = fruitType or { name = "Apple", color = { 1, 0, 0 } }
     table.insert(self.fruitSockets, {
-        type = fruitType or {name="Apple", color={1,0,0}}, -- fallback
+        type = fruit,
         anim = 0,
+        wobblePhase = love.math.random() * math.pi * 2,
+        bounceTimer = 0,
     })
 end
 
@@ -591,6 +656,9 @@ function UI:celebrateGoal()
     self.goalReachedAnim = 0
     self.goalCelebrated = true
     Audio:playSound("goal_reached")
+    for _, socket in ipairs(self.fruitSockets) do
+        socket.bounceTimer = 0
+    end
 end
 
 function UI:update(dt)
@@ -605,8 +673,26 @@ function UI:update(dt)
 
     -- Update button animations
     for _, button in pairs(UI.buttons) do
-        local target = (button.pressed and 1 or 0)
-        button.anim = button.anim + (target - button.anim) * 0.25
+        local hoverTarget = button.hoverTarget or 0
+        local focusTarget = button.focused and 1 or 0
+        button.anim = approachExp(button.anim or 0, button.pressed and 1 or 0, dt, 18)
+        button.hoverAnim = approachExp(button.hoverAnim or 0, hoverTarget, dt, 12)
+        button.focusAnim = approachExp(button.focusAnim or 0, focusTarget, dt, 9)
+        local glowTarget = math.max(hoverTarget, focusTarget)
+        button.glow = approachExp(button.glow or 0, glowTarget, dt, 5)
+
+        if button.popTimer ~= nil then
+            button.popTimer = button.popTimer + dt
+            local progress = math.min(1, button.popTimer / BUTTON_POP_DURATION)
+            button.popProgress = math.sin(progress * math.pi) * (1 - progress * 0.45)
+            if progress >= 1 then
+                button.popTimer = nil
+            end
+        else
+            button.popProgress = approachExp(button.popProgress or 0, 0, dt, 10)
+        end
+
+        button.hoverTarget = 0
     end
 
     -- update fruit socket animations
@@ -614,6 +700,18 @@ function UI:update(dt)
         if socket.anim < self.socketAnimTime then
             socket.anim = math.min(socket.anim + dt, self.socketAnimTime)
         end
+
+        if socket.bounceTimer ~= nil then
+            socket.bounceTimer = socket.bounceTimer + dt
+            if socket.bounceTimer >= self.socketBounceDuration then
+                socket.bounceTimer = nil
+            end
+        end
+
+        if socket.wobblePhase == nil then
+            socket.wobblePhase = love.math.random() * math.pi * 2
+        end
+        socket.wobblePhase = socket.wobblePhase + dt * 6.2
     end
 
     if self.goalCelebrated then
@@ -1220,16 +1318,22 @@ function UI:drawFruitSockets()
     local panelW = gridWidth + paddingX * 2
     local panelH = gridHeight + paddingY * 2
 
+    local goalFlash = 0
+    if self.goalCelebrated then
+        local flashProgress = math.min(1, self.goalReachedAnim / 0.65)
+        goalFlash = math.sin(flashProgress * math.pi)
+    end
+
     -- juicy backdrop for the whole socket grid
     love.graphics.setColor(0, 0, 0, 0.35)
     love.graphics.rectangle("fill", panelX + 6, panelY + 8, panelW, panelH, 18, 18)
 
-    local panelColor = lightenColor(Theme.panelColor, 0.2)
+    local panelColor = lightenColor(Theme.panelColor, 0.2 + 0.25 * goalFlash)
     love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
     love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 18, 18)
 
     local borderColor = Theme.panelBorder or Theme.textColor
-    borderColor = lightenColor(borderColor, 0.1)
+    borderColor = lightenColor(borderColor, 0.1 + 0.2 * goalFlash)
     love.graphics.setLineWidth(3)
     love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
     love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 18, 18)
@@ -1237,6 +1341,14 @@ function UI:drawFruitSockets()
     local highlight = Theme.highlightColor or {1, 1, 1, 0.05}
     love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * 0.75)
     love.graphics.rectangle("fill", panelX + 4, panelY + 4, panelW - 8, panelH * 0.35, 14, 14)
+
+    if goalFlash > 0 then
+        local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+        love.graphics.setBlendMode("add", "alphamultiply")
+        love.graphics.setColor(1, 1, 1, 0.16 * goalFlash)
+        love.graphics.rectangle("line", panelX - 4, panelY - 4, panelW + 8, panelH + 8, 22, 22)
+        love.graphics.setBlendMode(prevMode, prevAlphaMode)
+    end
 
     local time = love.timer.getTime()
     local socketRadius = (self.socketSize / 2) - 2
@@ -1275,6 +1387,11 @@ function UI:drawFruitSockets()
         if socket then
             local t = math.min(socket.anim / self.socketAnimTime, 1)
             local scale = 0.75 + 0.25 * (1 - (1 - t) * (1 - t))
+            local bounceScale = 1
+            if socket.bounceTimer ~= nil then
+                local bounceProgress = math.min(1, socket.bounceTimer / self.socketBounceDuration)
+                bounceScale = 1 + math.sin(bounceProgress * math.pi) * 0.22 * (1 - bounceProgress * 0.35)
+            end
 
             local goalPulse = 1.0
             if self.goalCelebrated then
@@ -1284,7 +1401,12 @@ function UI:drawFruitSockets()
 
             love.graphics.push()
             love.graphics.translate(x, y)
-            love.graphics.scale(scale * goalPulse, scale * goalPulse)
+            local wobbleRotation = 0
+            if socket.wobblePhase then
+                wobbleRotation = math.sin(socket.wobblePhase) * 0.08 * (1 - t)
+            end
+            love.graphics.rotate(wobbleRotation)
+            love.graphics.scale(scale * goalPulse * bounceScale, scale * goalPulse * bounceScale)
 
             -- fruit shadow inside socket
             love.graphics.setColor(0, 0, 0, 0.3)
