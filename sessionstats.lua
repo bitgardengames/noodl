@@ -15,6 +15,17 @@ function SessionStats:updateMax(stat, value)
     end
 end
 
+function SessionStats:updateMin(stat, value)
+    if value == nil then
+        return
+    end
+
+    local current = self.data[stat]
+    if current == nil or value < current then
+        self.data[stat] = value
+    end
+end
+
 function SessionStats:set(stat, value)
     self.data[stat] = value
 end

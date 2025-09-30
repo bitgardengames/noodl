@@ -110,6 +110,44 @@ local function formatStatValue(value)
     return tostring(value)
 end
 
+local function formatDuration(seconds)
+    local totalSeconds = math.floor((seconds or 0) + 0.5)
+    if totalSeconds < 0 then
+        totalSeconds = 0
+    end
+
+    local hours = math.floor(totalSeconds / 3600)
+    local minutes = math.floor((totalSeconds % 3600) / 60)
+    local secs = totalSeconds % 60
+
+    if hours > 0 then
+        return string.format("%dh %02dm %02ds", hours, minutes, secs)
+    elseif minutes > 0 then
+        return string.format("%dm %02ds", minutes, secs)
+    end
+
+    return string.format("%ds", secs)
+end
+
+local function formatPerMinute(value)
+    local amount = tonumber(value) or 0
+    if amount < 0 then
+        amount = 0
+    end
+
+    return string.format("%.2f / min", amount)
+end
+
+local statFormatters = {
+    totalTimeAlive = formatDuration,
+    longestRunDuration = formatDuration,
+    bestFloorClearTime = formatDuration,
+    longestFloorClearTime = formatDuration,
+    averageFloorClearTime = formatDuration,
+    bestFruitPerMinute = formatPerMinute,
+    averageFruitPerMinute = formatPerMinute,
+}
+
 local function prettifyKey(key)
     if not key or key == "" then
         return ""
@@ -130,11 +168,12 @@ local function buildStatsEntries()
 
     for key, label in pairs(labelTable) do
         local value = PlayerStats:get(key)
+        local formatter = statFormatters[key]
         statsEntries[#statsEntries + 1] = {
             id = key,
             label = label,
             value = value,
-            valueText = formatStatValue(value),
+            valueText = formatter and formatter(value) or formatStatValue(value),
         }
         seen[key] = true
     end
@@ -142,11 +181,12 @@ local function buildStatsEntries()
     for key, value in pairs(PlayerStats.data or {}) do
         if not seen[key] then
             local label = prettifyKey(key)
+            local formatter = statFormatters[key]
             statsEntries[#statsEntries + 1] = {
                 id = key,
                 label = label,
                 value = value,
-                valueText = formatStatValue(value),
+                valueText = formatter and formatter(value) or formatStatValue(value),
             }
         end
     end

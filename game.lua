@@ -304,6 +304,8 @@ end
 function Game:load()
         self.state = "playing"
         self.floor = 1
+        self.runTimer = 0
+        self.floorTimer = 0
         self.gamepadAxisDirections = { horizontal = nil, vertical = nil }
 
         Screen:update()
@@ -384,6 +386,15 @@ function Game:startFloorTransition(advance, skipFade)
         local floorData = Floors[pendingFloor or self.floor] or Floors[1]
 
         if advance then
+                local floorTime = self.floorTimer or 0
+                if floorTime and floorTime > 0 then
+                        SessionStats:add("totalFloorTime", floorTime)
+                        SessionStats:updateMin("fastestFloorClear", floorTime)
+                        SessionStats:updateMax("slowestFloorClear", floorTime)
+                        SessionStats:set("lastFloorClearTime", floorTime)
+                end
+                self.floorTimer = 0
+
                 local currentFloor = self.floor or 1
                 local nextFloor = currentFloor + 1
                 PlayerStats:add("floorsCleared", 1)
@@ -879,6 +890,16 @@ function Game:update(dt)
         end
         local scaledDt = dt * timeScale
 
+        local isRunActive = (self.state == "playing" or self.state == "descending")
+        if isRunActive then
+                SessionStats:add("timeAlive", scaledDt)
+                self.runTimer = (self.runTimer or 0) + scaledDt
+        end
+
+        if self.state == "playing" then
+                self.floorTimer = (self.floorTimer or 0) + scaledDt
+        end
+
         FruitEvents.update(scaledDt)
 
         if self.state == "transition" then
@@ -912,6 +933,8 @@ function Game:setupFloor(floorNum)
     self.currentFloorData = Floors[floorNum] or Floors[1]
 
     FruitEvents.reset()
+
+    self.floorTimer = 0
 
     if self.currentFloorData.palette then
         for k, v in pairs(self.currentFloorData.palette) do
