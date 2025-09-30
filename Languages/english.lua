@@ -71,6 +71,36 @@ local english = {
                     description = "Slither ${goal} tiles in total.",
                     progress = "Lifetime slither: ${current}/${goal}",
                 },
+                shield_bounce = {
+                    title = "Shield Wall Master",
+                    description = "Bounce off walls with your shield ${goal} times.",
+                    progress = "Wall bounces: ${current}/${goal}",
+                    complete = "Shield walls conquered with ${current} bounces!",
+                },
+                rock_breaker = {
+                    title = "Rock Breaker",
+                    description = "Smash ${goal} rocks with your shield.",
+                    progress = "Rocks shattered: ${current}/${goal}",
+                    complete = "Pulverized ${current} rocks!",
+                },
+                saw_parry = {
+                    title = "Saw Parry Ace",
+                    description = "Deflect ${goal} saws with your shield.",
+                    progress = "Saws parried: ${current}/${goal}",
+                    complete = "Saws sent flying: ${current}!",
+                },
+                time_keeper = {
+                    title = "Time Keeper",
+                    description = "Stay alive for ${goal} minutes across your runs.",
+                    progress = "Lifetime survival: ${current}/${goal}",
+                    complete = "Endurance expert! Survived ${current}.",
+                },
+                streak_pusher = {
+                    title = "Streak Pusher",
+                    description = "Beat your combo streak of ${current} and hit ${goal}.",
+                    progress = "Current best streak: ${current}/${goal}",
+                    complete = "New streak champion at ${current}!",
+                },
             },
         },
         settings = {
