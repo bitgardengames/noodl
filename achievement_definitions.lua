@@ -156,6 +156,18 @@ local definitions = {
         order = 16,
     },
     {
+        id = "straightLineSnacker",
+        titleKey = "achievements_definitions.straightLineSnacker.title",
+        descriptionKey = "achievements_definitions.straightLineSnacker.description",
+        icon = "Apple",
+        goal = 3,
+        stat = "fruitWithoutTurning",
+        category = "skill",
+        categoryOrder = 2,
+        order = 18,
+        hidden = true,
+    },
+    {
         id = "scoreChaser",
         titleKey = "achievements_definitions.scoreChaser.title",
         descriptionKey = "achievements_definitions.scoreChaser.description",

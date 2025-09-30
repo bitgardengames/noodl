@@ -234,6 +234,9 @@ function FruitEvents.handleConsumption(x, y)
     Score:increase(points)
     Audio:playSound("fruit")
     SessionStats:add("applesEaten", 1)
+    if Snake.onFruitCollected then
+        Snake:onFruitCollected()
+    end
 
     Particles:spawnBurst(x, y, {
         count = math.random(6, 8),

@@ -134,6 +134,11 @@ local english = {
                 label = "${current}/${goal}",
                 unlocked = "Completed",
             },
+            hidden = {
+                title = "Hidden Achievement",
+                description = "Unlock this secret to reveal its details.",
+                progress = "Hidden",
+            },
         },
         metaprogression = {
             title = "Progression",
@@ -605,6 +610,10 @@ local english = {
             shieldTriad = {
                 title = "Crash-Test Maestro",
                 description = "In one run, shrug off a wall, rock, and saw with crash shields.",
+            },
+            straightLineSnacker = {
+                title = "Straight-Line Snacker",
+                description = "Collect 3 fruit without turning.",
             },
             dragonHunter = {
                 title = "Dragon Hunter",

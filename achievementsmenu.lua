@@ -179,6 +179,16 @@ function AchievementsMenu:enter()
     iconCache = {}
     displayBlocks = Achievements:getDisplayOrder()
 
+    local function loadIcon(path)
+        local ok, image = pcall(love.graphics.newImage, path)
+        if ok then
+            return image
+        end
+        return nil
+    end
+
+    iconCache.__default = loadIcon("Assets/Achievements/Default.png")
+
     updateScrollBounds(sw, sh)
 
     for _, block in ipairs(displayBlocks) do
@@ -189,8 +199,7 @@ function AchievementsMenu:enter()
                 path = "Assets/Achievements/Default.png"
             end
             if not iconCache[ach.id] then
-                local ok, image = pcall(love.graphics.newImage, path)
-                iconCache[ach.id] = ok and image or nil
+                iconCache[ach.id] = loadIcon(path)
             end
         end
     end
@@ -241,10 +250,13 @@ function AchievementsMenu:draw()
 
         for _, ach in ipairs(block.achievements) do
             local unlocked = ach.unlocked
-            local progress = ach.progress or 0
             local goal = ach.goal or 0
-            local hasProgress = goal > 0
-            local icon = iconCache[ach.id]
+            local hiddenLocked = ach.hidden and not unlocked
+            local hasProgress = (not hiddenLocked) and goal > 0
+            local icon = hiddenLocked and iconCache.__default or iconCache[ach.id]
+            if not icon then
+                icon = iconCache.__default
+            end
             local x = xCenter - cardWidth / 2
             local barW = cardWidth - 120
             local cardY = y
@@ -275,13 +287,23 @@ function AchievementsMenu:draw()
 
             local textX = x + 96
 
+            local titleText
+            local descriptionText
+            if hiddenLocked then
+                titleText = Localization:get("achievements.hidden.title")
+                descriptionText = Localization:get("achievements.hidden.description")
+            else
+                titleText = Localization:get(ach.titleKey)
+                descriptionText = Localization:get(ach.descriptionKey)
+            end
+
             love.graphics.setFont(UI.fonts.achieve)
             love.graphics.setColor(1, 1, 1)
-            love.graphics.printf(Localization:get(ach.titleKey), textX, cardY + 10, cardWidth - 110, "left")
+            love.graphics.printf(titleText, textX, cardY + 10, cardWidth - 110, "left")
 
             love.graphics.setFont(UI.fonts.body)
             love.graphics.setColor(0.9, 0.9, 0.9)
-            love.graphics.printf(Localization:get(ach.descriptionKey), textX, cardY + 38, cardWidth - 110, "left")
+            love.graphics.printf(descriptionText, textX, cardY + 38, cardWidth - 110, "left")
 
             if hasProgress then
                 local ratio = Achievements:getProgressRatio(ach)

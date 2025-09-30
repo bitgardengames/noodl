@@ -18,6 +18,7 @@ local segmentCount = 1
 local reverseControls = false
 local popTimer = 0
 local isDead = false
+local fruitsSinceLastTurn = 0
 
 local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
 local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING
@@ -390,6 +391,7 @@ function Snake:load(w, h)
     self.shieldFlashTimer = 0
     trail = buildInitialTrail()
     descendingHole = nil
+    fruitsSinceLastTurn = 0
 end
 
 local function getUpgradesModule()
@@ -468,8 +470,12 @@ function Snake:setDirectionVector(dx, dy)
         return
     end
 
+    local prevX, prevY = direction.x, direction.y
     direction = { x = nx, y = ny }
     pendingDir = { x = nx, y = ny }
+    if prevX ~= direction.x or prevY ~= direction.y then
+        fruitsSinceLastTurn = 0
+    end
 end
 
 function Snake:getHeadCell()
@@ -621,8 +627,12 @@ function Snake:update(dt)
         local dist = math.sqrt(dx * dx + dy * dy)
         if dist > 1e-4 then
             local nx, ny = dx / dist, dy / dist
+            local prevX, prevY = direction.x, direction.y
             direction = { x = nx, y = ny }
             pendingDir = { x = nx, y = ny }
+            if prevX ~= direction.x or prevY ~= direction.y then
+                fruitsSinceLastTurn = 0
+            end
         end
     end
 
@@ -664,7 +674,11 @@ function Snake:update(dt)
             newX = snapToCenter(newX)
             newY = snapToCenter(newY)
             -- commit queued direction
+            local prevX, prevY = direction.x, direction.y
             direction = { x = pendingDir.x, y = pendingDir.y }
+            if prevX ~= direction.x or prevY ~= direction.y then
+                fruitsSinceLastTurn = 0
+            end
             snappedThisTick = true
         end
     end
@@ -953,6 +967,11 @@ function Snake:grow()
     popTimer = POP_DURATION
 end
 
+function Snake:onFruitCollected()
+    fruitsSinceLastTurn = (fruitsSinceLastTurn or 0) + 1
+    SessionStats:updateMax("fruitWithoutTurning", fruitsSinceLastTurn)
+end
+
 function Snake:markFruitSegment(fruitX, fruitY)
     if not trail or #trail == 0 then
         return
@@ -1040,6 +1059,7 @@ function Snake:getStateSnapshot()
         } or nil,
         reverseControls = reverseControls,
         reverseState = self.reverseState or false,
+        fruitsSinceLastTurn = fruitsSinceLastTurn or 0,
     }
 
     if self.adrenaline then
@@ -1143,6 +1163,7 @@ function Snake:restoreStateSnapshot(snapshot)
 
     reverseControls = snapshot.reverseControls or false
     self.reverseState = snapshot.reverseState or false
+    fruitsSinceLastTurn = snapshot.fruitsSinceLastTurn or fruitsSinceLastTurn or 0
 
     UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
