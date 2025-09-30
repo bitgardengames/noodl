@@ -6,6 +6,9 @@ local Score = require("score")
 
 local Shop = {}
 
+local BASE_COST_MULTIPLIER = 1.15
+local PURCHASE_COST_GROWTH = 0.55
+
 local rarityCostMultipliers = {
     common = 0.9,
     uncommon = 1.1,
@@ -22,7 +25,7 @@ local rarityCostBonus = {
     legendary = 6,
 }
 
-local MIN_CARD_COST = 3
+local MIN_CARD_COST = 4
 
 local function round(value)
     return math.floor((value or 0) + 0.5)
@@ -37,10 +40,22 @@ function Shop:getFruitGoal()
     return math.max(4, goal)
 end
 
+local function applyPurchaseScaling(cost, purchases)
+    if not cost then return MIN_CARD_COST end
+    local purchaseCount = math.max(0, purchases or 0)
+    if purchaseCount == 0 then return cost end
+
+    local scaled = round(cost * (1 + purchaseCount * PURCHASE_COST_GROWTH))
+    if scaled < MIN_CARD_COST then
+        scaled = MIN_CARD_COST
+    end
+    return scaled
+end
+
 function Shop:getCardCost(card)
     if not card then return MIN_CARD_COST end
     local goal = self:getFruitGoal()
-    local base = goal * 0.85
+    local base = goal * BASE_COST_MULTIPLIER
     local rarity = card.rarity or "common"
     local mult = rarityCostMultipliers[rarity] or rarityCostMultipliers.common
     local bonus = rarityCostBonus[rarity] or 0
@@ -55,8 +70,21 @@ function Shop:updateCardCosts()
     self.fruitGoal = self:getFruitGoal()
     if not self.cards then return end
     for _, card in ipairs(self.cards) do
-        card.cost = self:getCardCost(card)
+        local baseCost = self:getCardCost(card)
+        card.baseCost = baseCost
+        card.cost = applyPurchaseScaling(baseCost, self.purchasesMade)
         card.purchased = false
+    end
+end
+
+function Shop:updateRemainingCardCosts()
+    if not self.cards then return end
+    for _, card in ipairs(self.cards) do
+        if card and not card.purchased then
+            local baseCost = card.baseCost or self:getCardCost(card)
+            card.baseCost = baseCost
+            card.cost = applyPurchaseScaling(baseCost, self.purchasesMade)
+        end
     end
 end
 
@@ -145,6 +173,7 @@ function Shop:refreshCards(options)
     local initialDelay = options.initialDelay or 0
 
     self.restocking = nil
+    self.purchasesMade = 0
     local baseChoices = 2
     local upgradeBonus = 0
     if Upgrades.getEffect then
@@ -1088,6 +1117,8 @@ function Shop:pick(i)
     end
 
     card.purchased = true
+    self.purchasesMade = math.max(0, (self.purchasesMade or 0)) + 1
+    self:updateRemainingCardCosts()
 
     if card.restockShop then
         Audio:playSound("shop_card_select")
