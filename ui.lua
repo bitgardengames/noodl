@@ -676,7 +676,11 @@ function UI:update(dt)
         local hoverTarget = button.hoverTarget or 0
         local focusTarget = button.focused and 1 or 0
         button.anim = approachExp(button.anim or 0, button.pressed and 1 or 0, dt, 18)
-        button.hoverAnim = approachExp(button.hoverAnim or 0, hoverTarget, dt, 12)
+        if hoverTarget > 0 then
+            button.hoverAnim = approachExp(button.hoverAnim or 0, hoverTarget, dt, 12)
+        else
+            button.hoverAnim = 0
+        end
         button.focusAnim = approachExp(button.focusAnim or 0, focusTarget, dt, 9)
         local glowTarget = math.max(hoverTarget, focusTarget)
         button.glow = approachExp(button.glow or 0, glowTarget, dt, 5)
