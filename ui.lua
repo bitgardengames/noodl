@@ -1090,29 +1090,32 @@ function UI:drawFruitSockets()
     for i = 1, self.fruitRequired do
         local row = math.floor((i - 1) / perRow)
         local col = (i - 1) % perRow
-        local bounce = math.sin(time * 2.2 + row * 0.7 + col * 0.45) * 1.5
+        local bounce = 0
         local x = baseX + col * spacing + self.socketSize / 2
         local y = baseY + row * spacing + self.socketSize / 2 + bounce
 
         -- socket shadow
         love.graphics.setColor(0, 0, 0, 0.4)
-        love.graphics.ellipse("fill", x, y + socketRadius * 0.65, socketRadius * 0.95, socketRadius * 0.55, 32)
+        local socket = self.fruitSockets[i]
+        local hasFruit = socket ~= nil
+        local radius = hasFruit and socketRadius or socketRadius * 0.8
+        local shadowScale = hasFruit and 1 or 0.85
+        love.graphics.ellipse("fill", x, y + radius * 0.65, radius * 0.95 * shadowScale, radius * 0.55 * shadowScale, 32)
 
         -- empty socket base
         love.graphics.setColor(socketFill[1], socketFill[2], socketFill[3], (socketFill[4] or 1) * 0.9)
-        love.graphics.circle("fill", x, y, socketRadius, 48)
+        love.graphics.circle("fill", x, y, radius, 48)
 
         -- subtle animated rim
         local rimPulse = 0.35 + 0.25 * math.sin(time * 3.5 + i * 0.7)
         love.graphics.setColor(socketOutline[1], socketOutline[2], socketOutline[3], (socketOutline[4] or 1) * rimPulse)
         love.graphics.setLineWidth(2)
-        love.graphics.circle("line", x, y, socketRadius, 48)
+        love.graphics.circle("line", x, y, radius, 48)
 
         love.graphics.setColor(1, 1, 1, 0.08)
-        love.graphics.arc("fill", x, y, socketRadius * 1.1, -math.pi * 0.6, -math.pi * 0.1, 24)
+        love.graphics.arc("fill", x, y, radius * 1.1, -math.pi * 0.6, -math.pi * 0.1, 24)
 
         -- draw fruit if collected
-        local socket = self.fruitSockets[i]
         if socket then
             local t = math.min(socket.anim / self.socketAnimTime, 1)
             local scale = 0.75 + 0.25 * (1 - (1 - t) * (1 - t))
@@ -1129,9 +1132,9 @@ function UI:drawFruitSockets()
 
             -- fruit shadow inside socket
             love.graphics.setColor(0, 0, 0, 0.3)
-            love.graphics.ellipse("fill", 0, socketRadius * 0.55, socketRadius * 0.8, socketRadius * 0.45, 32)
+            love.graphics.ellipse("fill", 0, radius * 0.55, radius * 0.8, radius * 0.45, 32)
 
-            local r = socketRadius * 1.0
+            local r = radius * 1.0
             local fruit = socket.type
 
             love.graphics.setColor(fruit.color[1], fruit.color[2], fruit.color[3], 1)
@@ -1166,7 +1169,7 @@ function UI:drawFruitSockets()
             -- idle shimmer in empty sockets
             local emptyGlow = 0.12 + 0.12 * math.sin(time * 5 + i * 0.9)
             love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * emptyGlow)
-            love.graphics.circle("line", x, y, socketRadius - 1.5, 32)
+            love.graphics.circle("line", x, y, radius - 1.5, 32)
         end
     end
 end
