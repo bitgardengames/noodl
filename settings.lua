@@ -1,47 +1,80 @@
-local Settings = {
+local DEFAULTS = {
     musicVolume = 0.5,
-    sfxVolume   = 1.0,
-    muteMusic   = false,
-    muteSFX     = false,
-    language    = "english",
+    sfxVolume = 1.0,
+    muteMusic = false,
+    muteSFX = false,
+    language = "english",
 }
+
+local Settings = {}
+
+for key, value in pairs(DEFAULTS) do
+    Settings[key] = value
+end
 
 local saveFile = "user_settings.lua"
 
-function Settings:load()
-    if love.filesystem.getInfo(saveFile) then
-        local chunk = love.filesystem.load(saveFile)
-        local loaded = chunk()
-        if type(loaded) == "table" then
-            for k, v in pairs(loaded) do
-                Settings[k] = v
+local function serializeSettings(tbl)
+    local keys = {}
+    for key in pairs(tbl) do
+        if DEFAULTS[key] ~= nil then
+            keys[#keys + 1] = key
+        end
+    end
+
+    table.sort(keys)
+
+    local buffer = {"{\n"}
+    for _, key in ipairs(keys) do
+        local value = tbl[key]
+        local encodedValue
+
+        if type(value) == "string" then
+            encodedValue = string.format("%q", value)
+        elseif type(value) == "boolean" or type(value) == "number" then
+            encodedValue = tostring(value)
+        else
+            local defaultValue = DEFAULTS[key]
+            tbl[key] = defaultValue
+            if type(defaultValue) == "string" then
+                encodedValue = string.format("%q", defaultValue)
+            else
+                encodedValue = tostring(defaultValue)
             end
+        end
+
+        buffer[#buffer + 1] = string.format("    [%q] = %s,\n", key, encodedValue)
+    end
+
+    buffer[#buffer + 1] = "}"
+    return table.concat(buffer)
+end
+
+function Settings:load()
+    if not love.filesystem.getInfo(saveFile) then
+        return
+    end
+
+    local chunkOk, chunk = pcall(love.filesystem.load, saveFile)
+    if not chunkOk or type(chunk) ~= "function" then
+        return
+    end
+
+    local callOk, loaded = pcall(chunk)
+    if not callOk or type(loaded) ~= "table" then
+        return
+    end
+
+    for key, value in pairs(loaded) do
+        if DEFAULTS[key] ~= nil and type(value) == type(DEFAULTS[key]) then
+            Settings[key] = value
         end
     end
 end
 
 function Settings:save()
-    local data = "return " .. table.serialize(Settings)
-    love.filesystem.write(saveFile, data)
-end
-
-function table.serialize(tbl)
-    local str = "{\n"
-    for k, v in pairs(tbl) do
-        local key = string.format("[%q]", k)
-        local value
-
-        if type(v) == "string" then
-            value = string.format("%q", v)
-        elseif type(v) == "boolean" or type(v) == "number" then
-            value = tostring(v)
-        else
-            value = "nil"
-        end
-
-        str = str .. string.format("    %s = %s,\n", key, value)
-    end
-    return str .. "}"
+    local data = "return " .. serializeSettings(Settings)
+    return love.filesystem.write(saveFile, data)
 end
 
 return Settings
