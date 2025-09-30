@@ -13,22 +13,30 @@ local UI = require("ui")
 
 local GameUtils = {}
 
+local function loadCoreSystems(sw, sh)
+    Snake:load(sw, sh)
+    Snake:resetModifiers()
+    PauseMenu:load(sw, sh)
+end
+
+local function resetGameplaySystems()
+    Movement:reset()
+    Score:reset()
+    FloatingText:reset()
+    Particles:reset()
+    Rocks:reset()
+    Conveyors:reset()
+    Saws:reset()
+    UI:reset()
+end
+
 function GameUtils:prepareGame(sw, sh)
-        Snake:load(sw, sh)
-        Snake:resetModifiers()
-        PauseMenu:load(sw, sh)
-        Movement:reset()
-        Score:reset()
-        FloatingText:reset()
-        Particles:reset()
-        Rocks:reset()
-        Conveyors:reset()
-        Saws:reset()
-        UI:reset()
+    loadCoreSystems(sw, sh)
+    resetGameplaySystems()
 
-        --SnakeUtils.initOccupancy()
+    --SnakeUtils.initOccupancy()
 
-        Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
+    Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
 end
 
 return GameUtils
