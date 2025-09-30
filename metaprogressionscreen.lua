@@ -20,6 +20,8 @@ local CARD_SPACING = 24
 local STAT_CARD_HEIGHT = 72
 local STAT_CARD_SPACING = 16
 local SCROLL_SPEED = 48
+local DPAD_REPEAT_INITIAL_DELAY = 0.3
+local DPAD_REPEAT_INTERVAL = 0.1
 local TAB_WIDTH = 220
 local TAB_HEIGHT = 52
 local TAB_SPACING = 16
@@ -29,6 +31,11 @@ local scrollOffset = 0
 local minScrollOffset = 0
 local viewportHeight = 0
 local contentHeight = 0
+
+local heldDpadButton = nil
+local heldDpadAction = nil
+local heldDpadTimer = 0
+local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 
 local trackEntries = {}
 local statsEntries = {}
@@ -47,6 +54,47 @@ local tabs = {
         labelKey = "metaprogression.tabs.stats",
     },
 }
+
+local function resetHeldDpad()
+    heldDpadButton = nil
+    heldDpadAction = nil
+    heldDpadTimer = 0
+    heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+end
+
+local function startHeldDpad(button, action)
+    heldDpadButton = button
+    heldDpadAction = action
+    heldDpadTimer = 0
+    heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+end
+
+local function stopHeldDpad(button)
+    if heldDpadButton ~= button then
+        return
+    end
+
+    resetHeldDpad()
+end
+
+local function updateHeldDpad(dt)
+    if not heldDpadAction then
+        return
+    end
+
+    heldDpadTimer = heldDpadTimer + dt
+
+    local interval = heldDpadInterval
+    while heldDpadTimer >= interval do
+        heldDpadTimer = heldDpadTimer - interval
+        heldDpadAction()
+        heldDpadInterval = DPAD_REPEAT_INTERVAL
+        interval = heldDpadInterval
+        if interval <= 0 then
+            break
+        end
+    end
+end
 
 local function getActiveList()
     if activeTab == "stats" then
@@ -241,6 +289,16 @@ local function applyFocusedTab(button)
     end
 end
 
+local function dpadScrollUp()
+    scrollBy(SCROLL_SPEED)
+    applyFocusedTab(buttonList:moveFocus(-1))
+end
+
+local function dpadScrollDown()
+    scrollBy(-SCROLL_SPEED)
+    applyFocusedTab(buttonList:moveFocus(1))
+end
+
 local function scrollBy(amount)
     if amount == 0 then
         return
@@ -312,15 +370,18 @@ function ProgressionScreen:enter()
 
     scrollOffset = 0
     updateScrollBounds(sw, sh)
+    resetHeldDpad()
 end
 
 function ProgressionScreen:leave()
     UI.clearButtons()
+    resetHeldDpad()
 end
 
 function ProgressionScreen:update(dt)
     local mx, my = love.mouse.getPosition()
     buttonList:updateHover(mx, my)
+    updateHeldDpad(dt)
 end
 
 local function handleConfirm()
@@ -594,13 +655,13 @@ end
 
 function ProgressionScreen:gamepadpressed(_, button)
     if button == "dpup" then
-        scrollBy(SCROLL_SPEED)
-        applyFocusedTab(buttonList:moveFocus(-1))
+        dpadScrollUp()
+        startHeldDpad(button, dpadScrollUp)
     elseif button == "dpleft" then
         applyFocusedTab(buttonList:moveFocus(-1))
     elseif button == "dpdown" then
-        scrollBy(-SCROLL_SPEED)
-        applyFocusedTab(buttonList:moveFocus(1))
+        dpadScrollDown()
+        startHeldDpad(button, dpadScrollDown)
     elseif button == "dpright" then
         applyFocusedTab(buttonList:moveFocus(1))
     elseif button == "a" or button == "start" then
@@ -612,6 +673,14 @@ function ProgressionScreen:gamepadpressed(_, button)
 end
 
 ProgressionScreen.joystickpressed = ProgressionScreen.gamepadpressed
+
+function ProgressionScreen:gamepadreleased(_, button)
+    if button == "dpup" or button == "dpdown" then
+        stopHeldDpad(button)
+    end
+end
+
+ProgressionScreen.joystickreleased = ProgressionScreen.gamepadreleased
 
 function ProgressionScreen:resize()
     local sw, sh = Screen:get()

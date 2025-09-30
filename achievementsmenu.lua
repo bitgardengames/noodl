@@ -24,11 +24,60 @@ local CARD_HEIGHT = 100
 local CATEGORY_SPACING = 40
 local SCROLL_SPEED = 60
 
+local DPAD_REPEAT_INITIAL_DELAY = 0.3
+local DPAD_REPEAT_INTERVAL = 0.1
+
 local scrollOffset = 0
 local minScrollOffset = 0
 local viewportHeight = 0
 local contentHeight = 0
 local DPAD_SCROLL_AMOUNT = CARD_SPACING
+
+local heldDpadButton = nil
+local heldDpadAction = nil
+local heldDpadTimer = 0
+local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+
+local function resetHeldDpad()
+    heldDpadButton = nil
+    heldDpadAction = nil
+    heldDpadTimer = 0
+    heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+end
+
+local function startHeldDpad(button, action)
+    heldDpadButton = button
+    heldDpadAction = action
+    heldDpadTimer = 0
+    heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+end
+
+local function stopHeldDpad(button)
+    if heldDpadButton ~= button then
+        return
+    end
+
+    resetHeldDpad()
+end
+
+local function updateHeldDpad(dt)
+    if not heldDpadAction then
+        return
+    end
+
+    heldDpadTimer = heldDpadTimer + dt
+
+    local interval = heldDpadInterval
+    while heldDpadTimer >= interval do
+        heldDpadTimer = heldDpadTimer - interval
+        heldDpadAction()
+        heldDpadInterval = DPAD_REPEAT_INTERVAL
+        interval = heldDpadInterval
+        if interval <= 0 then
+            break
+        end
+    end
+end
 
 local function clamp01(value)
     if value < 0 then
@@ -210,6 +259,16 @@ local function scrollBy(amount)
     updateScrollBounds(sw, sh)
 end
 
+local function dpadScrollUp()
+    scrollBy(DPAD_SCROLL_AMOUNT)
+    buttonList:moveFocus(-1)
+end
+
+local function dpadScrollDown()
+    scrollBy(-DPAD_SCROLL_AMOUNT)
+    buttonList:moveFocus(1)
+end
+
 function AchievementsMenu:enter()
     Screen:update()
     UI.clearButtons()
@@ -236,6 +295,8 @@ function AchievementsMenu:enter()
 
     iconCache = {}
     displayBlocks = Achievements:getDisplayOrder()
+
+    resetHeldDpad()
 
     local function loadIcon(path)
         local ok, image = pcall(love.graphics.newImage, path)
@@ -267,6 +328,7 @@ function AchievementsMenu:update(dt)
     local mx, my = love.mouse.getPosition()
     buttonList:updateHover(mx, my)
     Face:update(dt)
+    updateHeldDpad(dt)
 end
 
 function AchievementsMenu:draw()
@@ -524,13 +586,13 @@ end
 
 function AchievementsMenu:gamepadpressed(_, button)
     if button == "dpup" then
-        scrollBy(DPAD_SCROLL_AMOUNT)
-        buttonList:moveFocus(-1)
+        dpadScrollUp()
+        startHeldDpad(button, dpadScrollUp)
     elseif button == "dpleft" then
         buttonList:moveFocus(-1)
     elseif button == "dpdown" then
-        scrollBy(-DPAD_SCROLL_AMOUNT)
-        buttonList:moveFocus(1)
+        dpadScrollDown()
+        startHeldDpad(button, dpadScrollDown)
     elseif button == "dpright" then
         buttonList:moveFocus(1)
     elseif button == "leftshoulder" then
@@ -547,5 +609,13 @@ function AchievementsMenu:gamepadpressed(_, button)
 end
 
 AchievementsMenu.joystickpressed = AchievementsMenu.gamepadpressed
+
+function AchievementsMenu:gamepadreleased(_, button)
+    if button == "dpup" or button == "dpdown" then
+        stopHeldDpad(button)
+    end
+end
+
+AchievementsMenu.joystickreleased = AchievementsMenu.gamepadreleased
 
 return AchievementsMenu
