@@ -236,60 +236,59 @@ local function portalThroughWall(headX, headY)
         return newHeadX, newHeadY
 end
 
-function Movement:reset()
-        Snake:resetPosition()
-end
-
-function Movement:update(dt)
-	local alive, cause = Snake:update(dt)
-	if not alive then
-		return "dead", cause or "self"
-	end
-
-	local headX, headY = Snake:getHead()
-
-        if not Arena:isInside(headX, headY) then
-                local portalX, portalY = portalThroughWall(headX, headY)
-                if portalX and portalY then
-                        headX, headY = portalX, portalY
-                        Audio:playSound("wall_portal")
-                elseif Snake:consumeCrashShield() then
-                        local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
-                        headX = reroutedX or headX
-                        headY = reroutedY or headY
-
-                        Particles:spawnBurst(headX, headY, {
-                                count = 12,
-                                speed = 70,
-                                speedVariance = 55,
-                                life = 0.45,
-                                size = 4,
-                                color = {0.55, 0.85, 1, 1},
-                                spread = math.pi * 2,
-                                angleJitter = math.pi * 0.75,
-                                drag = 3.2,
-                                gravity = 180,
-                                scaleMin = 0.5,
-                                scaleVariance = 0.75,
-                                fadeTo = 0,
-                        })
-
-                        Audio:playSound("shield_wall")
-
-                        if Snake.onShieldConsumed then
-                                Snake:onShieldConsumed(headX, headY, "wall")
-                        end
-                        recordShieldEvent("wall")
-                else
-                        return "dead", "wall"
-                end
+local function handleWallCollision(headX, headY)
+        if Arena:isInside(headX, headY) then
+                return headX, headY
         end
 
+        local portalX, portalY = portalThroughWall(headX, headY)
+        if portalX and portalY then
+                Audio:playSound("wall_portal")
+                return portalX, portalY
+        end
+
+        if not Snake:consumeCrashShield() then
+                return headX, headY, "wall"
+        end
+
+        local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
+        headX = reroutedX or headX
+        headY = reroutedY or headY
+
+        Particles:spawnBurst(headX, headY, {
+                count = 12,
+                speed = 70,
+                speedVariance = 55,
+                life = 0.45,
+                size = 4,
+                color = {0.55, 0.85, 1, 1},
+                spread = math.pi * 2,
+                angleJitter = math.pi * 0.75,
+                drag = 3.2,
+                gravity = 180,
+                scaleMin = 0.5,
+                scaleVariance = 0.75,
+                fadeTo = 0,
+        })
+
+        Audio:playSound("shield_wall")
+
+        if Snake.onShieldConsumed then
+                Snake:onShieldConsumed(headX, headY, "wall")
+        end
+
+        recordShieldEvent("wall")
+
+        return headX, headY
+end
+
+local function handleRockCollision(headX, headY)
         for _, rock in ipairs(Rocks:getAll()) do
                 if aabb(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE, rock.x, rock.y, rock.w, rock.h) then
+                        local centerX = rock.x + rock.w / 2
+                        local centerY = rock.y + rock.h / 2
+
                         if Snake.isDashActive and Snake:isDashActive() then
-                                local centerX = rock.x + rock.w / 2
-                                local centerY = rock.y + rock.h / 2
                                 Rocks:destroy(rock)
                                 Particles:spawnBurst(centerX, centerY, {
                                         count = 10,
@@ -311,77 +310,113 @@ function Movement:update(dt)
                                         Snake:onDashBreakRock(centerX, centerY)
                                 end
                         else
-                                if Snake:consumeCrashShield() then
-                                        -- shield absorbed the hit, play feedback and continue
-                                        Particles:spawnBurst(rock.x + rock.w/2, rock.y + rock.h/2, {
-                                                count = 8,
-                                                speed = 40,
-                                                speedVariance = 36,
-                                                life = 0.4,
-                                                size = 3,
-                                                color = {0.9, 0.8, 0.5, 1},
-                                                spread = math.pi * 2,
-                                                angleJitter = math.pi * 0.8,
-                                                drag = 2.8,
-                                                gravity = 210,
-                                                scaleMin = 0.55,
-                                                scaleVariance = 0.5,
-                                                fadeTo = 0.05,
-                                        })
-                                        Audio:playSound("shield_rock")
-                                        Rocks:destroy(rock, { spawnFX = false })
-                                        -- clear the shattered rock so the next frame doesn't collide again
-                                        if Snake.onShieldConsumed then
-                                                local centerX = rock.x + rock.w / 2
-                                                local centerY = rock.y + rock.h / 2
-                                                Snake:onShieldConsumed(centerX, centerY, "rock")
-                                        end
-                                        recordShieldEvent("rock")
-                                else
+                                if not Snake:consumeCrashShield() then
                                         return "dead", "rock"
                                 end
-                                break
+
+                                Particles:spawnBurst(centerX, centerY, {
+                                        count = 8,
+                                        speed = 40,
+                                        speedVariance = 36,
+                                        life = 0.4,
+                                        size = 3,
+                                        color = {0.9, 0.8, 0.5, 1},
+                                        spread = math.pi * 2,
+                                        angleJitter = math.pi * 0.8,
+                                        drag = 2.8,
+                                        gravity = 210,
+                                        scaleMin = 0.55,
+                                        scaleVariance = 0.5,
+                                        fadeTo = 0.05,
+                                })
+                                Audio:playSound("shield_rock")
+                                Rocks:destroy(rock, { spawnFX = false })
+
+                                if Snake.onShieldConsumed then
+                                        Snake:onShieldConsumed(centerX, centerY, "rock")
+                                end
+
+                                recordShieldEvent("rock")
                         end
+
+                        break
                 end
         end
+end
+
+local function handleSawCollision(headX, headY)
         local sawHit = Saws:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+        if not sawHit then
+                return
+        end
 
-        if sawHit then
-                local shielded = Snake:consumeCrashShield()
-                local survivedSaw = shielded
+        local shielded = Snake:consumeCrashShield()
+        local survivedSaw = shielded
 
-                if not survivedSaw and Snake.consumeStoneSkinSawGrace then
-                        survivedSaw = Snake:consumeStoneSkinSawGrace()
-                end
+        if not survivedSaw and Snake.consumeStoneSkinSawGrace then
+                survivedSaw = Snake:consumeStoneSkinSawGrace()
+        end
 
-                if survivedSaw then
-                        Saws:destroy(sawHit)
+        if not survivedSaw then
+                return "dead", "saw"
+        end
 
-                        Particles:spawnBurst(headX, headY, {
-                                count = 8,
-                                speed = 40,
-                                speedVariance = 34,
-                                life = 0.35,
-                                size = 3,
-                                color = {0.9, 0.7, 0.3, 1},
-                                spread = math.pi * 2,
-                                angleJitter = math.pi * 0.9,
-                                drag = 3.0,
-                                gravity = 240,
-                                scaleMin = 0.5,
-                                scaleVariance = 0.6,
-                                fadeTo = 0,
-                        })
-                        Audio:playSound("shield_saw")
-                        if Snake.onShieldConsumed then
-                                Snake:onShieldConsumed(headX, headY, "saw")
-                        end
-                        if shielded then
-                                recordShieldEvent("saw")
-                        end
-                else
-                        return "dead", "saw"
-                end
+        Saws:destroy(sawHit)
+
+        Particles:spawnBurst(headX, headY, {
+                count = 8,
+                speed = 40,
+                speedVariance = 34,
+                life = 0.35,
+                size = 3,
+                color = {0.9, 0.7, 0.3, 1},
+                spread = math.pi * 2,
+                angleJitter = math.pi * 0.9,
+                drag = 3.0,
+                gravity = 240,
+                scaleMin = 0.5,
+                scaleVariance = 0.6,
+                fadeTo = 0,
+        })
+        Audio:playSound("shield_saw")
+
+        if Snake.onShieldConsumed then
+                Snake:onShieldConsumed(headX, headY, "saw")
+        end
+
+        if shielded then
+                recordShieldEvent("saw")
+        end
+
+        return
+end
+
+function Movement:reset()
+        Snake:resetPosition()
+end
+
+function Movement:update(dt)
+        local alive, cause = Snake:update(dt)
+        if not alive then
+                return "dead", cause or "self"
+        end
+
+        local headX, headY = Snake:getHead()
+
+        local wallCause
+        headX, headY, wallCause = handleWallCollision(headX, headY)
+        if wallCause then
+                return "dead", wallCause
+        end
+
+        local state, stateCause = handleRockCollision(headX, headY)
+        if state then
+                return state, stateCause
+        end
+
+        local sawState, sawCause = handleSawCollision(headX, headY)
+        if sawState then
+                return sawState, sawCause
         end
 
         if Fruit:checkCollisionWith(headX, headY) then
