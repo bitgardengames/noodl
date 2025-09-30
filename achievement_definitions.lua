@@ -168,6 +168,26 @@ local definitions = {
         hidden = true,
     },
     {
+        id = "shieldlessWonder",
+        titleKey = "achievements_definitions.shieldlessWonder.title",
+        descriptionKey = "achievements_definitions.shieldlessWonder.description",
+        icon = "Apple",
+        goal = 1,
+        category = "skill",
+        categoryOrder = 2,
+        order = 19,
+        hidden = true,
+        progressFn = function(state)
+            if (state.runFloorsCleared or 0) >= 3 and (state.runCrashShieldsSaved or 0) == 0 then
+                return 1
+            end
+            return 0
+        end,
+        condition = function(state)
+            return (state.runFloorsCleared or 0) >= 3 and (state.runCrashShieldsSaved or 0) == 0
+        end,
+    },
+    {
         id = "scoreChaser",
         titleKey = "achievements_definitions.scoreChaser.title",
         descriptionKey = "achievements_definitions.scoreChaser.description",
@@ -210,6 +230,26 @@ local definitions = {
         category = "skill",
         categoryOrder = 2,
         order = 50,
+    },
+    {
+        id = "dragonComboFusion",
+        titleKey = "achievements_definitions.dragonComboFusion.title",
+        descriptionKey = "achievements_definitions.dragonComboFusion.description",
+        icon = "Apple",
+        goal = 1,
+        category = "skill",
+        categoryOrder = 2,
+        order = 55,
+        hidden = true,
+        progressFn = function(state)
+            if (state.runDragonfruitEaten or 0) > 0 and (state.runBestComboStreak or 0) >= 8 then
+                return 1
+            end
+            return 0
+        end,
+        condition = function(state)
+            return (state.runDragonfruitEaten or 0) > 0 and (state.runBestComboStreak or 0) >= 8
+        end,
     },
     {
         id = "wallRicochet",
