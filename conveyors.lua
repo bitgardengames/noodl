@@ -4,6 +4,7 @@ local Conveyors = {}
 
 local belts = {}
 local slots = {}
+local slotLookup = {}
 local nextSlotId = 0
 
 local TRACK_LENGTH = 120
@@ -46,23 +47,29 @@ local function getPalette()
     }
 end
 
+local function makeSlotKey(x, y, dir)
+    return x .. ":" .. y .. ":" .. dir
+end
+
 local function getSlot(x, y, dir)
     dir = dir or "horizontal"
-    for _, slot in ipairs(slots) do
-        if slot.x == x and slot.y == y and slot.dir == dir then
-            return slot
-        end
+    local key = makeSlotKey(x, y, dir)
+    local slot = slotLookup[key]
+
+    if slot then
+        return slot
     end
 
     nextSlotId = nextSlotId + 1
-    local slot = {
+    slot = {
         id = nextSlotId,
         x = x,
         y = y,
         dir = dir,
     }
 
-    table.insert(slots, slot)
+    slotLookup[key] = slot
+    slots[#slots + 1] = slot
     return slot
 end
 
@@ -72,7 +79,7 @@ function Conveyors:spawn(x, y, dir, length)
 
     local slot = getSlot(x, y, dir)
 
-    table.insert(belts, {
+    belts[#belts + 1] = {
         x = x,
         y = y,
         dir = dir,
@@ -86,7 +93,7 @@ function Conveyors:spawn(x, y, dir, length)
         shadowAlpha = 0,
         patternOffset = 0,
         slotId = slot and slot.id or nil,
-    })
+    }
 end
 
 function Conveyors:getAll()
@@ -96,6 +103,7 @@ end
 function Conveyors:reset()
     belts = {}
     slots = {}
+    slotLookup = {}
     nextSlotId = 0
 end
 

@@ -37,19 +37,22 @@ function Particles:spawnBurst(x, y, options)
     local drag = options.drag or 0
     local gravity = options.gravity or 0
     local fadeTo = options.fadeTo
+    local random = love.math.random
+    local cos = math.cos
+    local sin = math.sin
 
     if count == 0 then
         return
     end
 
     for i = 1, count do
-        local angle = spread * (i / count) + (love.math.random() - 0.5) * angleJitter
-        local velocity = speed + love.math.random() * speedVariance
-        local vx = math.cos(angle) * velocity
-        local vy = math.sin(angle) * velocity
-        local scale = scaleMin + love.math.random() * scaleVariance
+        local angle = spread * (i / count) + (random() - 0.5) * angleJitter
+        local velocity = speed + random() * speedVariance
+        local vx = cos(angle) * velocity
+        local vy = sin(angle) * velocity
+        local scale = scaleMin + random() * scaleVariance
 
-        table.insert(list, {
+        list[#list + 1] = {
             x = x,
             y = y,
             vx = vx,
@@ -62,7 +65,7 @@ function Particles:spawnBurst(x, y, options)
             gravity = gravity,
             fadeTo = fadeTo,
             startAlpha = startAlpha,
-        })
+        }
     end
 end
 
