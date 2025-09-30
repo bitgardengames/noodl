@@ -1321,10 +1321,14 @@ function UI:drawFruitSockets()
             love.graphics.circle("line", 0, 0, r, 32)
 
             -- juicy highlight
-            love.graphics.setColor(1, 1, 1, 0.18)
-            love.graphics.ellipse("fill", -r * 0.15, -r * 0.35, r * 0.5, r * 0.28, 32)
-            love.graphics.setColor(1, 1, 1, 0.28)
-            love.graphics.circle("fill", r * 0.15, -r * 0.35, r * 0.25, 24)
+            local highlightColor = lightenColor(fruit.color, 0.6)
+            local highlightAlpha = (highlightColor[4] or 1) * 0.75
+            love.graphics.push()
+            love.graphics.translate(-r * 0.3, -r * 0.35)
+            love.graphics.rotate(-0.35)
+            love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], highlightAlpha)
+            love.graphics.ellipse("fill", 0, 0, r * 0.55, r * 0.45, 32)
+            love.graphics.pop()
 
             -- sparkling rim when fruit is fresh
             if t < 1 then
