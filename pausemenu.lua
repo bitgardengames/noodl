@@ -1,14 +1,16 @@
 local Audio = require("audio")
 local Settings = require("settings")
 local Localization = require("localization")
+local UI = require("ui")
+local Theme = require("theme")
 
 local PauseMenu = {}
 
-local fontLarge = love.graphics.newFont(32)
 local alpha = 0
 local fadeSpeed = 4
 
 local ButtonList = require("buttonlist")
+local panelBounds = { x = 0, y = 0, w = 0, h = 0 }
 
 local function toggleMusic()
     Audio:playSound("click")
@@ -58,22 +60,41 @@ function PauseMenu:updateButtonLabels()
 end
 
 function PauseMenu:load(screenWidth, screenHeight)
+    UI.clearButtons()
+
     local centerX = screenWidth / 2
     local centerY = screenHeight / 2
-    local spacing = 60
+    local buttonWidth = UI.spacing.buttonWidth
+    local buttonHeight = UI.spacing.buttonHeight
+    local spacing = UI.spacing.buttonSpacing
+    local count = #baseButtons
+
+    local titleHeight = UI.fonts.subtitle:getHeight()
+    local headerSpacing = UI.spacing.sectionSpacing * 0.5
+    local buttonArea = count * buttonHeight + math.max(0, count - 1) * spacing
+    local panelPadding = UI.spacing.panelPadding
+    local panelWidth = buttonWidth + panelPadding * 2
+    local panelHeight = panelPadding + titleHeight + headerSpacing + buttonArea + panelPadding
+
+    local panelX = centerX - panelWidth / 2
+    local panelY = centerY - panelHeight / 2
+
+    panelBounds = { x = panelX, y = panelY, w = panelWidth, h = panelHeight }
 
     local defs = {}
 
-    for i, btn in ipairs(baseButtons) do
+    local startY = panelY + panelPadding + titleHeight + headerSpacing
+
+    for index, btn in ipairs(baseButtons) do
         defs[#defs + 1] = {
             id = btn.id,
             baseText = btn.textKey and Localization:get(btn.textKey) or "",
             text = getToggleLabel(btn.id) or baseText,
             action = btn.action,
-            x = centerX - 100,
-            y = centerY - 40 + (i - 1) * spacing,
-            w = 200,
-            h = 40,
+            x = panelX + panelPadding,
+            y = startY + (index - 1) * (buttonHeight + spacing),
+            w = buttonWidth,
+            h = buttonHeight,
         }
     end
 
@@ -100,12 +121,25 @@ end
 function PauseMenu:draw(screenWidth, screenHeight)
     if alpha <= 0 then return end
 
-    love.graphics.setColor(0, 0, 0, 0.6 * alpha)
+    love.graphics.setColor(0, 0, 0, 0.55 * alpha)
     love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
 
-    love.graphics.setFont(fontLarge)
-    love.graphics.setColor(1, 1, 1, alpha)
-    love.graphics.printf(Localization:get("pause.title"), 0, 120, screenWidth, "center")
+    local panel = panelBounds
+    if panel and panel.w > 0 and panel.h > 0 then
+        local panelFill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * alpha }
+        local panelBorder = { Theme.panelBorder[1], Theme.panelBorder[2], Theme.panelBorder[3], (Theme.panelBorder[4] or 1) * alpha }
+
+        UI.drawPanel(panel.x, panel.y, panel.w, panel.h, {
+            fill = panelFill,
+            borderColor = panelBorder,
+            shadowAlpha = alpha,
+        })
+
+        UI.drawLabel(Localization:get("pause.title"), panel.x, panel.y + UI.spacing.panelPadding, panel.w, "center", {
+            fontKey = "subtitle",
+            alpha = alpha,
+        })
+    end
 
     buttonList:draw()
 end
