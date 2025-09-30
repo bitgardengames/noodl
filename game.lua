@@ -1013,6 +1013,10 @@ local function handleGamepadInput(self, button)
                         Controls:keypressed(self, map[button])
                 elseif button == "start" and self.state == "playing" then
                         self.state = "paused"
+                elseif button == "a" or button == "rightshoulder" or button == "righttrigger" then
+                        Controls:keypressed(self, "space")
+                elseif button == "x" or button == "leftshoulder" or button == "lefttrigger" then
+                        Controls:keypressed(self, "lshift")
                 end
         end
 end
