@@ -54,6 +54,23 @@ local english = {
                     progress = "Emergency saves: ${current}/${goal}",
                     complete = "Shield mastery! ${current} clutch saves.",
                 },
+                shop = {
+                    title = "Upgrade Spree",
+                    description = "Purchase ${goal} upgrades across all runs.",
+                    progress = "Upgrades bought: ${current}/${goal}",
+                    complete = "Your shopping cart is overflowing with ${current} upgrades!",
+                },
+                legendary = {
+                    title = "Legendary Collector",
+                    description = "Add ${goal} legendary upgrades to your collection.",
+                    progress = "Legendary finds: ${current}/${goal}",
+                    complete = "A legendary haul of ${current}!",
+                },
+                marathon = {
+                    title = "Serpentine Marathon",
+                    description = "Slither ${goal} tiles in total.",
+                    progress = "Lifetime slither: ${current}/${goal}",
+                },
             },
         },
         settings = {
@@ -118,6 +135,9 @@ local english = {
                 tilesTravelled = "Tiles Slithered",
                 totalTimeAlive = "Time Alive",
                 longestRunDuration = "Longest Run",
+                totalUpgradesPurchased = "Upgrades Purchased",
+                legendaryUpgradesPurchased = "Legendary Upgrades",
+                mostUpgradesInRun = "Most Upgrades in a Run",
                 bestFloorClearTime = "Fastest Floor Clear",
                 longestFloorClearTime = "Slowest Floor Clear",
                 averageFloorClearTime = "Average Floor Clear",
