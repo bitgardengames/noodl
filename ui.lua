@@ -1,4 +1,3 @@
-local Score = require("score")
 local Audio = require("audio")
 local Theme = require("theme")
 local Localization = require("localization")
