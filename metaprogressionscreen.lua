@@ -129,23 +129,17 @@ local function formatDuration(seconds)
     return string.format("%ds", secs)
 end
 
-local function formatPerMinute(value)
-    local amount = tonumber(value) or 0
-    if amount < 0 then
-        amount = 0
-    end
-
-    return string.format("%.2f / min", amount)
-end
-
 local statFormatters = {
     totalTimeAlive = formatDuration,
     longestRunDuration = formatDuration,
     bestFloorClearTime = formatDuration,
     longestFloorClearTime = formatDuration,
-    averageFloorClearTime = formatDuration,
-    bestFruitPerMinute = formatPerMinute,
-    averageFruitPerMinute = formatPerMinute,
+}
+
+local hiddenStats = {
+    averageFloorClearTime = true,
+    bestFruitPerMinute = true,
+    averageFruitPerMinute = true,
 }
 
 local function prettifyKey(key)
@@ -167,19 +161,21 @@ local function buildStatsEntries()
     local seen = {}
 
     for key, label in pairs(labelTable) do
-        local value = PlayerStats:get(key)
-        local formatter = statFormatters[key]
-        statsEntries[#statsEntries + 1] = {
-            id = key,
-            label = label,
-            value = value,
-            valueText = formatter and formatter(value) or formatStatValue(value),
-        }
-        seen[key] = true
+        if not hiddenStats[key] then
+            local value = PlayerStats:get(key)
+            local formatter = statFormatters[key]
+            statsEntries[#statsEntries + 1] = {
+                id = key,
+                label = label,
+                value = value,
+                valueText = formatter and formatter(value) or formatStatValue(value),
+            }
+            seen[key] = true
+        end
     end
 
     for key, value in pairs(PlayerStats.data or {}) do
-        if not seen[key] then
+        if not seen[key] and not hiddenStats[key] then
             local label = prettifyKey(key)
             local formatter = statFormatters[key]
             statsEntries[#statsEntries + 1] = {
