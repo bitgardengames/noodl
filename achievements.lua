@@ -39,6 +39,7 @@ local function applyDefaults(def)
     def.unlocked = false
     def.progress = 0
     def.popupIcon = def.popupIcon or def.icon
+    def.hidden = def.hidden or false
     return def
 end
 
@@ -136,6 +137,7 @@ function Achievements:_ensureInitialized()
                 runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0,
                 runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0,
                 runShieldSawParries = SessionStats:get("runShieldSawParries") or 0,
+                fruitWithoutTurning = SessionStats:get("fruitWithoutTurning") or 0,
             }
         end)
 
@@ -566,6 +568,10 @@ function Achievements:getProgressLabel(def)
 
     if def.unlocked then
         return Localization:get("achievements.progress.unlocked")
+    end
+
+    if def.hidden and not def.unlocked then
+        return Localization:get("achievements.hidden.progress")
     end
 
     if def.formatProgress then
