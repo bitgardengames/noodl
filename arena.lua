@@ -283,6 +283,7 @@ function Arena:spawnExit()
 
     local x, y = self:getCenterOfTile(chosenCol, chosenRow)
     local size = self.tileSize * 0.75
+    local swirlPhase = love.math.random() * math.pi * 2
     self.exit = {
         x = x, y = y,
         size = size,
@@ -290,6 +291,8 @@ function Arena:spawnExit()
         animTime = 0.4,          -- seconds to open
         col = chosenCol,
         row = chosenRow,
+        time = 0,
+        swirl = swirlPhase,
     }
     Audio:playSound("exit_spawn")
 end
@@ -305,9 +308,16 @@ function Arena:hasExit()
 end
 
 function Arena:update(dt)
-    if self.exit and self.exit.anim < 1 then
+    if not self.exit then
+        return
+    end
+
+    if self.exit.anim < 1 then
         self.exit.anim = math.min(1, self.exit.anim + dt / self.exit.animTime)
     end
+
+    self.exit.time = (self.exit.time or 0) + dt
+    self.exit.swirl = (self.exit.swirl or 0) + dt * 1.8
 end
 
 -- Reset/clear exit when moving to next floor
@@ -335,19 +345,48 @@ end
 function Arena:drawExit()
     if not self.exit then return end
 
-    -- ease-out growth
-    local t = self.exit.anim
-    local eased = 1 - (1 - t) * (1 - t) -- quadratic ease-out
-    local r = (self.exit.size / 1.5) * eased
+    local exit = self.exit
+    local t = exit.anim
+    local eased = 1 - (1 - t) * (1 - t)
+    local radius = (exit.size / 1.5) * eased
+    local cx, cy = exit.x, exit.y
+    local time = exit.time or 0
 
-    -- fill
-    love.graphics.setColor(0.05, 0.05, 0.05, 1)
-    love.graphics.circle("fill", self.exit.x, self.exit.y, r)
+    love.graphics.setColor(0.05, 0.06, 0.08, 1)
+    love.graphics.circle("fill", cx, cy, radius)
 
-    -- outline
+    local innerRadius = radius * (0.68 + 0.06 * math.sin(time * 3.1))
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.circle("fill", cx, cy, innerRadius)
+
+    local glowColor = Theme.progressColor or { 0.45, 0.85, 1.0, 1 }
+    local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+    love.graphics.setBlendMode("add", "alphamultiply")
+    love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], 0.24 * eased)
+    love.graphics.circle("fill", cx, cy, radius * (1.18 + 0.08 * math.sin(time * 2.4)), 48)
+    love.graphics.setColor(1, 1, 1, 0.18 * eased)
+    love.graphics.circle("line", cx, cy, radius * (1.08 + 0.05 * math.sin(time * 4.2)), 48)
+    love.graphics.setBlendMode(prevMode, prevAlphaMode)
+
+    love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], 0.6 * eased)
+    love.graphics.setLineWidth(3)
+    local swirl = exit.swirl or 0
+    love.graphics.arc("line", cx, cy, radius * 0.85, swirl, swirl + math.pi * 0.8, 32)
+    love.graphics.arc("line", cx, cy, radius * 0.55, swirl + math.pi * 1.1, swirl + math.pi * 1.85, 32)
+
+    if t >= 1 then
+        local ripplePeriod = 1.2
+        local ripplePhase = (time % ripplePeriod) / ripplePeriod
+        local rippleAlpha = 0.35 * (1 - ripplePhase)
+        local rippleRadius = radius + ripplePhase * radius * 0.9
+        love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], rippleAlpha)
+        love.graphics.circle("line", cx, cy, rippleRadius, 48)
+    end
+
     love.graphics.setColor(0, 0, 0, 1)
     love.graphics.setLineWidth(2)
-    love.graphics.circle("line", self.exit.x, self.exit.y, r)
+    love.graphics.circle("line", cx, cy, radius)
+    love.graphics.setLineWidth(1)
 end
 
 return Arena

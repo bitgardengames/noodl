@@ -28,6 +28,12 @@ local DEFAULTS = {
         offsetY = 2,
         alpha = 0.35,
     },
+    glow = {
+        color = { baseColor[1], baseColor[2], baseColor[3], 0.55 },
+        frequency = 3.4,
+        magnitude = 0.45,
+    },
+    jitter = 0.8,
 }
 
 local function cloneColor(color)
@@ -86,6 +92,43 @@ local function buildShadow(shadow)
         offsetX = shadow.offsetX or defaults.offsetX,
         offsetY = shadow.offsetY or defaults.offsetY,
         alpha = shadow.alpha == nil and defaults.alpha or shadow.alpha,
+    }
+end
+
+local function buildGlow(glow)
+    if glow == false then
+        return nil
+    end
+
+    local defaults = DEFAULTS.glow
+    if not defaults then
+        return nil
+    end
+
+    if glow == nil then
+        return {
+            color = {
+                defaults.color[1],
+                defaults.color[2],
+                defaults.color[3],
+                defaults.color[4] or 1,
+            },
+            frequency = defaults.frequency,
+            magnitude = defaults.magnitude,
+        }
+    end
+
+    local sourceColor = glow.color or defaults.color
+
+    return {
+        color = {
+            sourceColor[1] or defaults.color[1],
+            sourceColor[2] or defaults.color[2],
+            sourceColor[3] or defaults.color[3],
+            sourceColor[4] == nil and (defaults.color[4] or 1) or sourceColor[4],
+        },
+        frequency = glow.frequency or defaults.frequency,
+        magnitude = glow.magnitude or defaults.magnitude,
     }
 end
 
@@ -148,6 +191,14 @@ function FloatingText:setDefaults(options)
     if options.shadow then
         DEFAULTS.shadow = buildShadow(options.shadow)
     end
+
+    if options.glow ~= nil then
+        DEFAULTS.glow = buildGlow(options.glow)
+    end
+
+    if options.jitter ~= nil then
+        DEFAULTS.jitter = options.jitter
+    end
 end
 
 function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
@@ -186,6 +237,11 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 
     local rotationAmplitude = options.rotationAmplitude or DEFAULTS.rotation
     local rotationDirection = (random() < 0.5) and -1 or 1
+    local glow = buildGlow(options.glow)
+    local jitter = options.jitter
+    if jitter == nil then
+        jitter = DEFAULTS.jitter
+    end
 
     entries[#entries + 1] = {
         text = text,
@@ -206,6 +262,15 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
         rotationAmplitude = rotationAmplitude,
         rotationDirection = rotationDirection,
         shadow = buildShadow(options.shadow),
+        glowColor = glow and glow.color or nil,
+        glowFrequency = glow and glow.frequency or 0,
+        glowMagnitude = glow and glow.magnitude or 0,
+        glowPhase = random() * math.pi * 2,
+        glowAlpha = 0,
+        jitter = jitter or 0,
+        jitterSeed = random() * math.pi * 2,
+        jitterX = 0,
+        jitterY = 0,
         offsetX = 0,
         offsetY = 0,
         scale = baseScale,
@@ -230,6 +295,16 @@ function FloatingText:update(dt)
         entry.offsetY = -entry.riseDistance * easeOutCubic(progress)
         entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * math.sin(entry.wobbleFrequency * entry.timer)
 
+        if entry.jitter and entry.jitter > 0 then
+            local falloff = (1 - progress)
+            local jitterStrength = entry.jitter * falloff * falloff
+            local phase = entry.jitterSeed
+            entry.jitterX = math.sin(entry.timer * 9 + phase) * jitterStrength
+            entry.jitterY = math.cos(entry.timer * 7.4 + phase * 1.3) * jitterStrength * 0.6
+        else
+            entry.jitterX, entry.jitterY = 0, 0
+        end
+
         if entry.popDuration > 0 and entry.timer < entry.popDuration then
             local popProgress = clamp(entry.timer / entry.popDuration, 0, 1)
             entry.scale = lerp(entry.popScale, entry.baseScale, easeOutBack(popProgress))
@@ -241,6 +316,14 @@ function FloatingText:update(dt)
         end
 
         entry.rotation = entry.rotationAmplitude * entry.rotationDirection * math.sin(progress * math.pi)
+
+        if entry.glowMagnitude and entry.glowMagnitude > 0 then
+            local pulse = math.sin(entry.timer * entry.glowFrequency + entry.glowPhase) * 0.5 + 0.5
+            local emphasis = (1 - progress * 0.6)
+            entry.glowAlpha = pulse * entry.glowMagnitude * emphasis
+        else
+            entry.glowAlpha = 0
+        end
 
         if duration > 0 and entry.timer >= duration then
             table.remove(entries, i)
@@ -266,7 +349,7 @@ function FloatingText:draw()
         alpha = clamp(alpha, 0, 1)
 
         love.graphics.push()
-        love.graphics.translate(entry.x + entry.offsetX, entry.y + entry.offsetY)
+        love.graphics.translate(entry.x + entry.offsetX + entry.jitterX, entry.y + entry.offsetY + entry.jitterY)
         love.graphics.rotate(entry.rotation)
         love.graphics.scale(entry.scale)
 
@@ -278,6 +361,14 @@ function FloatingText:draw()
 
         love.graphics.setColor(entry.color[1], entry.color[2], entry.color[3], alpha)
         love.graphics.print(entry.text, -entry.ox, -entry.oy)
+
+        if entry.glowAlpha and entry.glowAlpha > 0 and entry.glowColor then
+            local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+            love.graphics.setBlendMode("add", "alphamultiply")
+            love.graphics.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], alpha * entry.glowAlpha)
+            love.graphics.print(entry.text, -entry.ox, -entry.oy)
+            love.graphics.setBlendMode(prevMode, prevAlphaMode)
+        end
 
         love.graphics.pop()
     end
