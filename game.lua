@@ -977,7 +977,7 @@ function Game:mousereleased(x, y, button)
 	end
 end
 
-local map = { dpleft="left", dpright="right", dpup="up", dpdown="down" }
+local directionButtonMap = { dpleft = "left", dpright = "right", dpup = "up", dpdown = "down" }
 local ANALOG_DEADZONE = 0.5
 local axisButtonMap = {
         leftx = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
@@ -987,6 +987,66 @@ local axisButtonMap = {
         [1] = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
         [2] = { slot = "vertical", negative = "dpup", positive = "dpdown" },
 }
+
+local buttonAliases = {
+        a = "dash",
+        rightshoulder = "dash",
+        righttrigger = "dash",
+        x = "slow",
+        leftshoulder = "slow",
+        lefttrigger = "slow",
+}
+
+local playingButtonHandlers = {
+        start = function(self)
+                if self.state == "playing" then
+                        self.state = "paused"
+                end
+        end,
+        dash = function(self)
+                if self.state == "playing" then
+                        Controls:keypressed(self, "space")
+                end
+        end,
+        slow = function(self)
+                if self.state == "playing" then
+                        Controls:keypressed(self, "lshift")
+                end
+        end,
+}
+
+local function resolvePlayingAction(button)
+        return buttonAliases[button] or button
+end
+
+local function handlePauseMenuInput(self, button)
+        if button == "start" then
+                self.state = "playing"
+                return
+        end
+
+        local action = PauseMenu:gamepadpressed(nil, button)
+        if action == "resume" then
+                self.state = "playing"
+        elseif action == "menu" then
+                Achievements:save()
+                return "menu"
+        end
+end
+
+local function handlePlayingButton(self, button)
+        local direction = directionButtonMap[button]
+        if direction then
+                Controls:keypressed(self, direction)
+                return
+        end
+
+        local handler = playingButtonHandlers[resolvePlayingAction(button)]
+        if handler then
+                return handler(self)
+        end
+end
+
 local function handleGamepadInput(self, button)
         if self.transitionPhase == "shop" then
                 if Shop:gamepadpressed(nil, button) then
@@ -996,29 +1056,10 @@ local function handleGamepadInput(self, button)
         end
 
         if self.state == "paused" then
-                if button == "start" then
-                        self.state = "playing"
-                        return
-                end
-
-                local action = PauseMenu:gamepadpressed(nil, button)
-                if action == "resume" then
-                        self.state = "playing"
-                elseif action == "menu" then
-                        Achievements:save()
-                        return "menu"
-                end
-        else
-                if map[button] then
-                        Controls:keypressed(self, map[button])
-                elseif button == "start" and self.state == "playing" then
-                        self.state = "paused"
-                elseif button == "a" or button == "rightshoulder" or button == "righttrigger" then
-                        Controls:keypressed(self, "space")
-                elseif button == "x" or button == "leftshoulder" or button == "lefttrigger" then
-                        Controls:keypressed(self, "lshift")
-                end
+                return handlePauseMenuInput(self, button)
         end
+
+        return handlePlayingButton(self, button)
 end
 
 local function handleGamepadAxisInput(self, axis, value)
