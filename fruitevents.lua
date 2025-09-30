@@ -73,7 +73,9 @@ local function applyComboReward(x, y)
     comboState.timer = comboState.window
     local comboCount = comboState.count
     comboState.best = math.max(comboState.best or 0, comboCount)
-    PlayerStats:updateMax("bestComboStreak", comboState.best or comboCount or 0)
+    local bestStreak = comboState.best or comboCount or 0
+    PlayerStats:updateMax("bestComboStreak", bestStreak)
+    SessionStats:updateMax("bestComboStreak", bestStreak)
     if comboCount >= 2 then
         SessionStats:add("combosTriggered", 1)
     end
@@ -255,6 +257,7 @@ function FruitEvents.handleConsumption(x, y)
 
     if name == "Dragonfruit" then
         PlayerStats:add("totalDragonfruitEaten", 1)
+        SessionStats:add("dragonfruitEaten", 1)
         Achievements:unlock("dragonHunter")
     end
 

@@ -303,6 +303,7 @@ end
 local function calculateRunGain(runStats)
     local apples = math.max(0, math.floor(runStats.apples or 0))
     local score = math.max(0, math.floor(runStats.score or 0))
+    local bonusXP = math.max(0, math.floor(runStats.bonusXP or 0))
 
     local fruitPoints = apples * XP_PER_FRUIT
     local scoreBonus = 0
@@ -310,11 +311,12 @@ local function calculateRunGain(runStats)
         scoreBonus = math.min(SCORE_BONUS_MAX, math.floor(score / SCORE_BONUS_DIVISOR))
     end
 
-    local total = fruitPoints + scoreBonus
+    local total = fruitPoints + bonusXP
     return {
         apples = apples,
         fruitPoints = fruitPoints,
         scoreBonus = scoreBonus,
+        bonusXP = bonusXP,
         total = total,
     }
 end
@@ -371,7 +373,7 @@ function MetaProgression:grantRunPoints(runStats)
     local startTotal = self.data.totalExperience or 0
     local startSnapshot = buildSnapshot(self, startTotal)
 
-    local gainedTotal = math.max(0, gain.fruitPoints or 0)
+    local gainedTotal = math.max(0, (gain.fruitPoints or 0) + (gain.bonusXP or 0))
     local endTotal = startTotal + gainedTotal
     local endSnapshot = buildSnapshot(self, endTotal)
 

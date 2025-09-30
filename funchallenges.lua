@@ -1,6 +1,8 @@
 local PlayerStats = require("playerstats")
+local SessionStats = require("sessionstats")
 
 local FunChallenges = {}
+FunChallenges.defaultXpReward = 60
 
 local defaultDateProvider = function()
     return os.date("*t")
@@ -86,6 +88,17 @@ local function resolveCurrent(challenge, context)
         return value
     end
 
+    if challenge.sessionStat then
+        local statsSource = context and context.sessionStats
+        if statsSource and type(statsSource.get) == "function" then
+            return statsSource:get(challenge.sessionStat) or 0
+        end
+
+        if SessionStats and SessionStats.get then
+            return SessionStats:get(challenge.sessionStat) or 0
+        end
+    end
+
     if challenge.stat then
         return PlayerStats:get(challenge.stat) or 0
     end
@@ -127,6 +140,57 @@ local function resolveDate(self, override)
     return provider()
 end
 
+local function buildStorageKey(self, challenge, date, suffix)
+    if not challenge or not challenge.id then
+        return nil
+    end
+
+    date = resolveDate(self, date)
+    if not date then
+        return nil
+    end
+
+    local dayValue = (date.year or 0) * 512 + (date.yday or 0)
+    return string.format("funChallenge:%s:%d:%s", challenge.id, dayValue, suffix)
+end
+
+local function getStoredProgress(self, challenge, date)
+    local key = buildStorageKey(self, challenge, date, "progress")
+    if not key then
+        return 0
+    end
+    return PlayerStats:get(key) or 0
+end
+
+local function setStoredProgress(self, challenge, date, value)
+    local key = buildStorageKey(self, challenge, date, "progress")
+    if not key then
+        return
+    end
+
+    value = math.max(0, math.floor(value or 0))
+    PlayerStats:set(key, value)
+end
+
+local function isStoredComplete(self, challenge, date)
+    local key = buildStorageKey(self, challenge, date, "complete")
+    if not key then
+        return false
+    end
+
+    local value = PlayerStats:get(key) or 0
+    return value >= 1
+end
+
+local function setStoredComplete(self, challenge, date, complete)
+    local key = buildStorageKey(self, challenge, date, "complete")
+    if not key then
+        return
+    end
+
+    PlayerStats:set(key, complete and 1 or 0)
+end
+
 local function getChallengeIndex(self, count, date)
     if count <= 0 then
         return nil
@@ -145,7 +209,7 @@ local function getChallengeIndex(self, count, date)
     return index
 end
 
-local function evaluateChallenge(challenge, context)
+local function evaluateChallenge(self, challenge, context)
     if not challenge then
         return nil
     end
@@ -154,6 +218,13 @@ local function evaluateChallenge(challenge, context)
 
     local goal = resolveGoal(challenge, context)
     local current = resolveCurrent(challenge, context)
+    local date = context.date or context.dateOverride
+    local storedProgress = getStoredProgress(self, challenge, date)
+    if storedProgress and storedProgress > (current or 0) then
+        current = storedProgress
+    end
+
+    local storedComplete = isStoredComplete(self, challenge, date)
     local ratio = clampRatio(current, goal)
 
     local descriptionReplacements = resolveDescriptionReplacements(challenge, current, goal, context)
@@ -171,7 +242,8 @@ local function evaluateChallenge(challenge, context)
         goal = goal,
         current = current,
         ratio = ratio,
-        completed = goal > 0 and current >= goal,
+        completed = storedComplete or (goal > 0 and current >= goal),
+        xpReward = challenge.xpReward or FunChallenges.defaultXpReward,
     }
 end
 
@@ -180,7 +252,7 @@ FunChallenges.challenges = {
         id = "combo_crunch",
         titleKey = "menu.fun_daily.combo.title",
         descriptionKey = "menu.fun_daily.combo.description",
-        stat = "bestComboStreak",
+        sessionStat = "bestComboStreak",
         goal = 6,
         progressKey = "menu.fun_daily.combo.progress",
         completeKey = "menu.fun_daily.combo.complete",
@@ -190,107 +262,99 @@ FunChallenges.challenges = {
                 goal = goal or 0,
             }
         end,
+        xpReward = 70,
     },
     {
         id = "floor_explorer",
         titleKey = "menu.fun_daily.floors.title",
         descriptionKey = "menu.fun_daily.floors.description",
-        stat = "floorsCleared",
-        goal = 24,
+        sessionStat = "floorsCleared",
+        goal = 6,
+        xpReward = 80,
     },
     {
         id = "fruit_sampler",
         titleKey = "menu.fun_daily.apples.title",
         descriptionKey = "menu.fun_daily.apples.description",
-        stat = "totalApplesEaten",
-        goal = 180,
+        sessionStat = "applesEaten",
+        goal = 65,
         progressKey = "menu.fun_daily.apples.progress",
+        xpReward = 70,
     },
     {
         id = "dragonfruit_delight",
         titleKey = "menu.fun_daily.dragonfruit.title",
         descriptionKey = "menu.fun_daily.dragonfruit.description",
-        stat = "totalDragonfruitEaten",
-        goal = 12,
+        sessionStat = "dragonfruitEaten",
+        goal = 2,
         progressKey = "menu.fun_daily.dragonfruit.progress",
         completeKey = "menu.fun_daily.dragonfruit.complete",
+        xpReward = 90,
     },
     {
         id = "combo_conductor",
         titleKey = "menu.fun_daily.combos.title",
         descriptionKey = "menu.fun_daily.combos.description",
-        stat = "totalCombosTriggered",
-        goal = 45,
+        sessionStat = "combosTriggered",
+        goal = 12,
         progressKey = "menu.fun_daily.combos.progress",
+        xpReward = 60,
     },
     {
         id = "shield_specialist",
         titleKey = "menu.fun_daily.shields.title",
         descriptionKey = "menu.fun_daily.shields.description",
-        stat = "crashShieldsSaved",
-        goal = 20,
+        sessionStat = "crashShieldsSaved",
+        goal = 4,
         progressKey = "menu.fun_daily.shields.progress",
         completeKey = "menu.fun_daily.shields.complete",
-    },
-    {
-        id = "shopaholic",
-        titleKey = "menu.fun_daily.shop.title",
-        descriptionKey = "menu.fun_daily.shop.description",
-        stat = "totalUpgradesPurchased",
-        goal = 30,
-        progressKey = "menu.fun_daily.shop.progress",
-        completeKey = "menu.fun_daily.shop.complete",
-    },
-    {
-        id = "legendary_collector",
-        titleKey = "menu.fun_daily.legendary.title",
-        descriptionKey = "menu.fun_daily.legendary.description",
-        stat = "legendaryUpgradesPurchased",
-        goal = 3,
-        progressKey = "menu.fun_daily.legendary.progress",
-        completeKey = "menu.fun_daily.legendary.complete",
+        xpReward = 80,
     },
     {
         id = "serpentine_marathon",
         titleKey = "menu.fun_daily.marathon.title",
         descriptionKey = "menu.fun_daily.marathon.description",
-        stat = "tilesTravelled",
-        goal = 12000,
+        sessionStat = "tilesTravelled",
+        goal = 4500,
         progressKey = "menu.fun_daily.marathon.progress",
+        xpReward = 70,
     },
     {
         id = "shield_wall_master",
         titleKey = "menu.fun_daily.shield_bounce.title",
         descriptionKey = "menu.fun_daily.shield_bounce.description",
-        stat = "shieldWallBounces",
-        goal = 18,
+        sessionStat = "runShieldWallBounces",
+        goal = 8,
         progressKey = "menu.fun_daily.shield_bounce.progress",
         completeKey = "menu.fun_daily.shield_bounce.complete",
+        xpReward = 80,
     },
     {
         id = "rock_breaker",
         titleKey = "menu.fun_daily.rock_breaker.title",
         descriptionKey = "menu.fun_daily.rock_breaker.description",
-        stat = "shieldRockBreaks",
-        goal = 15,
+        sessionStat = "runShieldRockBreaks",
+        goal = 5,
         progressKey = "menu.fun_daily.rock_breaker.progress",
         completeKey = "menu.fun_daily.rock_breaker.complete",
+        xpReward = 80,
     },
     {
         id = "saw_parry_ace",
         titleKey = "menu.fun_daily.saw_parry.title",
         descriptionKey = "menu.fun_daily.saw_parry.description",
-        stat = "shieldSawParries",
-        goal = 8,
+        sessionStat = "runShieldSawParries",
+        goal = 3,
         progressKey = "menu.fun_daily.saw_parry.progress",
         completeKey = "menu.fun_daily.saw_parry.complete",
+        xpReward = 90,
     },
     {
         id = "time_keeper",
         titleKey = "menu.fun_daily.time_keeper.title",
         descriptionKey = "menu.fun_daily.time_keeper.description",
-        stat = "totalTimeAlive",
-        goal = 5400,
+        sessionStat = "timeAlive",
+        goal = 900,
         progressKey = "menu.fun_daily.time_keeper.progress",
         progressReplacements = function(self, current, goal)
             local function formatSeconds(seconds)
@@ -311,24 +375,17 @@ FunChallenges.challenges = {
                 current = math.floor((current or 0) / 60),
             }
         end,
+        xpReward = 90,
     },
     {
         id = "streak_pusher",
         titleKey = "menu.fun_daily.streak_pusher.title",
         descriptionKey = "menu.fun_daily.streak_pusher.description",
-        stat = "bestComboStreak",
-        getGoal = function(self)
-            local best = PlayerStats:get(self.stat) or 0
-            return math.max(4, best + 2)
-        end,
+        sessionStat = "fruitWithoutTurning",
+        goal = 10,
         progressKey = "menu.fun_daily.streak_pusher.progress",
         completeKey = "menu.fun_daily.streak_pusher.complete",
-        descriptionReplacements = function(self, current, goal)
-            return {
-                current = current or 0,
-                goal = goal or 0,
-            }
-        end,
+        xpReward = 70,
     },
 }
 
@@ -364,12 +421,12 @@ function FunChallenges:getChallengeById(id, context)
         return nil
     end
 
-    return evaluateChallenge(challenge, context)
+    return evaluateChallenge(self, challenge, context)
 end
 
 function FunChallenges:getChallengeForIndex(index, context)
     local challenge = self.challenges[index]
-    return evaluateChallenge(challenge, context)
+    return evaluateChallenge(self, challenge, context)
 end
 
 function FunChallenges:getDailyChallenge(date, context)
@@ -379,6 +436,8 @@ function FunChallenges:getDailyChallenge(date, context)
         return nil
     end
 
+    context = context or {}
+    context.date = context.date or resolveDate(self, date)
     return self:getChallengeForIndex(index, context)
 end
 
@@ -406,6 +465,10 @@ function FunChallenges:getUpcomingChallenges(amount, options)
             context = sharedContext
         end
 
+        if context then
+            context.date = context.date or resolveDate(self, date)
+        end
+
         local evaluated = self:getChallengeForIndex(currentIndex, context)
         if evaluated then
             results[#results + 1] = evaluated
@@ -413,6 +476,70 @@ function FunChallenges:getUpcomingChallenges(amount, options)
     end
 
     return results
+end
+
+function FunChallenges:applyRunResults(statsSource, options)
+    statsSource = statsSource or SessionStats
+    options = options or {}
+
+    local date = options.date
+    local count = #self.challenges
+    if count == 0 then
+        return nil
+    end
+
+    local index = getChallengeIndex(self, count, date)
+    if not index then
+        return nil
+    end
+
+    local challenge = self.challenges[index]
+    if not challenge then
+        return nil
+    end
+
+    local runValue = callChallengeFunction(challenge, "getRunValue", statsSource, options)
+
+    if runValue == nil then
+        if challenge.sessionStat and statsSource then
+            if type(statsSource.get) == "function" then
+                runValue = statsSource:get(challenge.sessionStat) or 0
+            else
+                runValue = statsSource[challenge.sessionStat] or 0
+            end
+        elseif challenge.stat then
+            runValue = PlayerStats:get(challenge.stat) or 0
+        end
+    end
+
+    runValue = math.max(0, math.floor(runValue or 0))
+
+    local goal = resolveGoal(challenge)
+    local storedProgress = getStoredProgress(self, challenge, date)
+    local best = storedProgress
+    if runValue > best then
+        best = runValue
+        setStoredProgress(self, challenge, date, best)
+    end
+
+    local alreadyCompleted = isStoredComplete(self, challenge, date)
+    local xpAwarded = 0
+    local completedNow = false
+
+    if goal > 0 and runValue >= goal and not alreadyCompleted then
+        setStoredComplete(self, challenge, date, true)
+        xpAwarded = challenge.xpReward or self.defaultXpReward
+        completedNow = true
+    end
+
+    return {
+        challengeId = challenge.id,
+        goal = goal,
+        progress = best,
+        completed = alreadyCompleted or completedNow,
+        completedNow = completedNow,
+        xpAwarded = xpAwarded,
+    }
 end
 
 return FunChallenges
