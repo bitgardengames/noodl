@@ -15,7 +15,6 @@ Score.current = 0
 Score.highscores = {}
 Score.saveFile = "scores.lua"
 Score.fruitBonus = 0
-Score.fruitCurrency = 0
 Score.comboBonusMult = 1
 Score.comboBonusBase = 1
 Score.highScoreGlowDuration = 4
@@ -39,7 +38,6 @@ function Score:load()
         self.highScoreGlowTimer = 0
         self.previousHighScore = 0
         self.runHighScoreTriggered = false
-        self.fruitCurrency = 0
 
         -- Load from file
 	if love.filesystem.getInfo(self.saveFile) then
@@ -83,7 +81,6 @@ function Score:reset(mode)
         -- Just reset the current score
         self.current = 0
         self.fruitBonus = 0
-        self.fruitCurrency = 0
         self.comboBonusBase = 1
         self.comboBonusMult = 1
         self.highScoreGlowTimer = 0
@@ -121,7 +118,6 @@ end
 function Score:increase(points)
     points = points or 1
         self.current = self.current + points + (self.fruitBonus or 0)
-        self.fruitCurrency = (self.fruitCurrency or 0) + points + (self.fruitBonus or 0)
 
         PlayerStats:add("totalApplesEaten", 1)
         updateAchievementChecks(self)
@@ -139,7 +135,6 @@ end
 function Score:addBonus(points)
         if not points or points == 0 then return end
         self.current = self.current + points
-        self.fruitCurrency = (self.fruitCurrency or 0) + points
         updateAchievementChecks(self)
 
         if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
@@ -164,25 +159,6 @@ end
 
 function Score:getComboBonusMultiplier()
         return updateComboBonusValue(self)
-end
-
-function Score:getFruitCurrency()
-        return math.max(0, math.floor(self.fruitCurrency or 0))
-end
-
-function Score:spendFruit(amount)
-        amount = math.floor(amount or 0)
-        if amount <= 0 then
-                return true
-        end
-
-        local current = self.fruitCurrency or 0
-        if current < amount then
-                return false
-        end
-
-        self.fruitCurrency = current - amount
-        return true
 end
 
 function Score:update(dt)
