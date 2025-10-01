@@ -102,6 +102,7 @@ function Game:load()
     self.transition = TransitionManager.new(self)
     self.input = GameInput.new(self, self.transition)
     self.input:resetAxes()
+    Controls:resetAnalog()
 
     self.mode = GameModes:get()
     if self.mode and self.mode.load then
@@ -136,6 +137,7 @@ function Game:reset()
     if self.input then
         self.input:resetAxes()
     end
+    Controls:resetAnalog()
 end
 
 function Game:enter()
@@ -693,6 +695,10 @@ function Game:keypressed(key)
         end
 
         Controls:keypressed(self, key)
+end
+
+function Game:keyreleased(key)
+        Controls:keyreleased(self, key)
 end
 
 function Game:mousepressed(x, y, button)

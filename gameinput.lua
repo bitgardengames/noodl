@@ -127,6 +127,7 @@ function GameInput:handleGamepadAxis(axis, value)
     if state[config.slot] ~= direction then
         state[config.slot] = direction
         if direction then
+
             self:handleGamepadButton(direction)
         end
     end

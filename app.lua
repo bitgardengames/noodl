@@ -123,6 +123,10 @@ function App:keypressed(key)
     return self:forwardEvent("keypressed", key)
 end
 
+function App:keyreleased(key)
+    return self:forwardEvent("keyreleased", key)
+end
+
 function App:joystickpressed(joystick, button)
     return self:forwardEvent("joystickpressed", joystick, button)
 end
