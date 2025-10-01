@@ -230,16 +230,28 @@ local function trimHoleSegments(hole)
         return
     end
 
+    local workingTrail = {}
+    for i = 1, #trail do
+        local seg = trail[i]
+        if not seg then break end
+        workingTrail[i] = {
+            drawX = seg.drawX,
+            drawY = seg.drawY,
+            dirX = seg.dirX,
+            dirY = seg.dirY,
+        }
+    end
+
     local radiusSq = radius * radius
-    local consumed = hole.consumedLength or 0
+    local consumed = 0
     local lastInside = nil
     local removedAny = false
     local i = 1
 
-    while i <= #trail do
-        local seg = trail[i]
-        local x = seg.drawX
-        local y = seg.drawY
+    while i <= #workingTrail do
+        local seg = workingTrail[i]
+        local x = seg and seg.drawX
+        local y = seg and seg.drawY
 
         if not (x and y) then
             break
@@ -251,7 +263,7 @@ local function trimHoleSegments(hole)
             removedAny = true
             lastInside = { x = x, y = y, dirX = seg.dirX, dirY = seg.dirY }
 
-            local nextSeg = trail[i + 1]
+            local nextSeg = workingTrail[i + 1]
             if nextSeg then
                 local nx, ny = nextSeg.drawX, nextSeg.drawY
                 if nx and ny then
@@ -261,13 +273,13 @@ local function trimHoleSegments(hole)
                 end
             end
 
-            table.remove(trail, i)
+            table.remove(workingTrail, i)
         else
             break
         end
     end
 
-    local newHead = trail[1]
+    local newHead = workingTrail[1]
     if removedAny and newHead and lastInside then
         local oldDx = newHead.drawX - lastInside.x
         local oldDy = newHead.drawY - lastInside.y
@@ -293,19 +305,16 @@ local function trimHoleSegments(hole)
 
     hole.consumedLength = consumed
 
-    if hole then
-        local newHead = trail[1]
-        if newHead and newHead.drawX and newHead.drawY then
-            hole.entryPointX = newHead.drawX
-            hole.entryPointY = newHead.drawY
-        elseif lastInside then
-            hole.entryPointX = lastInside.x
-            hole.entryPointY = lastInside.y
-        end
+    if newHead and newHead.drawX and newHead.drawY then
+        hole.entryPointX = newHead.drawX
+        hole.entryPointY = newHead.drawY
+    elseif lastInside then
+        hole.entryPointX = lastInside.x
+        hole.entryPointY = lastInside.y
+    end
 
-        if lastInside and lastInside.dirX and lastInside.dirY then
-            hole.entryDirX, hole.entryDirY = normalizeDirection(lastInside.dirX, lastInside.dirY)
-        end
+    if lastInside and lastInside.dirX and lastInside.dirY then
+        hole.entryDirX, hole.entryDirY = normalizeDirection(lastInside.dirX, lastInside.dirY)
     end
 end
 
