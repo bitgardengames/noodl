@@ -348,6 +348,16 @@ function Game:drawTransition()
                 love.graphics.setColor(1, 1, 1, overlayAlpha * 0.25)
                 local radius = math.sqrt(self.screenWidth * self.screenWidth + self.screenHeight * self.screenHeight)
                 love.graphics.circle("fill", self.screenWidth / 2, self.screenHeight / 2, radius, 64)
+                local time = love.timer and love.timer.getTime and love.timer.getTime() or 0
+                love.graphics.setColor(1, 0.84, 0.48, overlayAlpha * 0.16)
+                local burstRadius = radius * (0.32 + 0.4 * progress)
+                local burstArms = 5
+                love.graphics.setLineWidth(2 + progress * 3)
+                for i = 1, burstArms do
+                        local armAngle = time * 0.45 + (i / burstArms) * math.pi * 2
+                        love.graphics.arc("line", "open", self.screenWidth / 2, self.screenHeight / 2, burstRadius, armAngle, armAngle + math.pi * (0.25 + 0.35 * progress))
+                end
+                love.graphics.setLineWidth(1)
                 love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(1, 1, 1, 1)
                 return
@@ -388,6 +398,17 @@ function Game:drawTransition()
                         end
                         love.graphics.setColor(0, 0, 0, overlayAlpha)
                         love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                        local introTime = love.timer and love.timer.getTime and love.timer.getTime() or 0
+                        love.graphics.push("all")
+                        love.graphics.setBlendMode("add")
+                        love.graphics.setColor(0.32, 0.72, 1, overlayAlpha * 0.12)
+                        local swirlRadius = math.sqrt(self.screenWidth * self.screenWidth + self.screenHeight * self.screenHeight) * (0.22 + 0.25 * progress)
+                        love.graphics.circle("line", self.screenWidth / 2, self.screenHeight / 2 - 80, swirlRadius, 64)
+                        love.graphics.setColor(1, 0.78, 0.35, overlayAlpha * 0.1)
+                        local sweep = introTime * 0.8
+                        love.graphics.arc("line", "open", self.screenWidth / 2, self.screenHeight / 2, swirlRadius * 1.1, sweep, sweep + math.pi * 0.8)
+                        love.graphics.setBlendMode("alpha")
+                        love.graphics.pop()
                         love.graphics.setColor(1, 1, 1, 1)
 
                         local function fadeAlpha(delay, fadeDuration)
@@ -534,6 +555,14 @@ function Game:drawTransition()
                 love.graphics.setColor(1, 1, 1, alpha * 0.2)
                 local radius = math.sqrt(self.screenWidth * self.screenWidth + self.screenHeight * self.screenHeight) * 0.75
                 love.graphics.circle("fill", self.screenWidth / 2, self.screenHeight / 2, radius, 64)
+                local time = love.timer and love.timer.getTime and love.timer.getTime() or 0
+                love.graphics.setColor(0.4, 0.82, 1, alpha * 0.12)
+                local bandHeight = self.screenHeight * 0.08
+                for i = -1, 1 do
+                        local offset = math.sin(time * 1.6 + i * 1.2) * bandHeight * 0.3
+                        local bandY = self.screenHeight / 2 + i * bandHeight * 0.6 + offset
+                        love.graphics.rectangle("fill", 0, bandY - bandHeight * 0.25, self.screenWidth, bandHeight * 0.5)
+                end
                 love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(1, 1, 1, 1)
         end
