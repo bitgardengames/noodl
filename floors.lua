@@ -29,6 +29,11 @@ local Floors = {
                         snake       = {0.12, 0.9, 0.48, 1},  -- vivid spring green snake
                         rock        = {0.74, 0.59, 0.38, 1}, -- sun-baked sandstone, pops from grass
                 },
+                backgroundEffect = {
+                        type = "forestCanopy",
+                        backdropIntensity = 0.65,
+                        arenaIntensity = 0.38,
+                },
                 traits = {"sunlitSanctuary"},
         },
     [2] = {
@@ -40,6 +45,11 @@ local Floors = {
             arenaBorder= {0.2, 0.28, 0.42, 1},  -- cool blue edge
             snake      = {0.6, 0.65, 0.7, 1},   -- pale stone
             rock       = {0.38, 0.43, 0.52, 1}, -- cool steel-blue highlights
+        },
+        backgroundEffect = {
+            type = "echoMist",
+            backdropIntensity = 0.6,
+            arenaIntensity = 0.32,
         },
         traits = {"echoingStillness"},
     },
@@ -56,6 +66,8 @@ local Floors = {
         },
         backgroundEffect = {
             type = "mushroomPulse",
+            backdropIntensity = 0.95,
+            arenaIntensity = 0.62,
         },
         traits = {"glowingSpores"},
     },
@@ -70,6 +82,11 @@ local Floors = {
             rock       = {0.34, 0.55, 0.6, 1},    -- sea-washed teal stone
             sawColor   = {0.5, 0.8, 0.85, 1},    -- oxidized steel
         },
+        backgroundEffect = {
+            type = "tidalCurrent",
+            backdropIntensity = 0.72,
+            arenaIntensity = 0.42,
+        },
         traits = {"waterloggedCatacombs"},
     },
     [5] = {
@@ -82,6 +99,11 @@ local Floors = {
             snake      = {0.95, 0.85, 0.55, 1}, -- faded gold
             rock       = {0.46, 0.38, 0.28, 1},   -- weathered ochre brick
             sawColor   = {0.7, 0.7, 0.75, 1},   -- pale tarnished steel
+        },
+        backgroundEffect = {
+            type = "emberDrift",
+            backdropIntensity = 0.6,
+            arenaIntensity = 0.35,
         },
         traits = {"ancientMachinery", "echoingStillness"},
     },
@@ -96,6 +118,11 @@ local Floors = {
             rock       = {0.45, 0.5, 0.68, 1},   -- frosted indigo crystal
             sawColor   = {0.65, 0.85, 1.0, 1},  -- crystalline edges
         },
+        backgroundEffect = {
+            type = "auroraVeil",
+            backdropIntensity = 0.6,
+            arenaIntensity = 0.4,
+        },
         traits = {"crystallineResonance", "glowingSpores"},
     },
     [7] = {
@@ -108,6 +135,11 @@ local Floors = {
             snake      = {0.86, 0.84, 0.75, 1},  -- ashen ivory
             rock       = {0.63, 0.5, 0.4, 1},  -- bleached bone stacks
             sawColor   = {0.76, 0.62, 0.52, 1},  -- aged bronze
+        },
+        backgroundEffect = {
+            type = "echoMist",
+            backdropIntensity = 0.5,
+            arenaIntensity = 0.28,
         },
         traits = {"boneHarvest"},
     },
@@ -122,6 +154,11 @@ local Floors = {
             rock       = {0.18, 0.23, 0.32, 1},  -- cold navy basalt
             sawColor   = {0.55, 0.25, 0.6, 1},  -- eerie violet shimmer
         },
+        backgroundEffect = {
+            type = "voidPulse",
+            backdropIntensity = 0.68,
+            arenaIntensity = 0.4,
+        },
         traits = {"echoingStillness", "restlessEarth"},
     },
     [9] = {
@@ -134,6 +171,11 @@ local Floors = {
             snake      = {1.0, 0.55, 0.25, 1},  -- ember orange
             rock       = {0.52, 0.22, 0.16, 1},  -- ember-scarred basalt
             sawColor   = {1.0, 0.25, 0.25, 1},  -- glowing hot red
+        },
+        backgroundEffect = {
+            type = "emberDrift",
+            backdropIntensity = 0.65,
+            arenaIntensity = 0.4,
         },
         traits = {"infernalPressure"},
     },
@@ -148,6 +190,11 @@ local Floors = {
             rock       = {0.4, 0.24, 0.32, 1},  -- molten plum glass
             sawColor   = {1.0, 0.35, 0.18, 1},   -- forgefire
         },
+        backgroundEffect = {
+            type = "voidPulse",
+            backdropIntensity = 0.7,
+            arenaIntensity = 0.45,
+        },
         traits = {"obsidianResonance", "infernalPressure"},
     },
     [11] = {
@@ -160,6 +207,11 @@ local Floors = {
             snake      = {0.88, 0.52, 0.28, 1},  -- wind-burnt scales
             rock       = {0.42, 0.28, 0.24, 1},  -- charred copper shale
             sawColor   = {0.95, 0.4, 0.2, 1},    -- cindersteel
+        },
+        backgroundEffect = {
+            type = "emberDrift",
+            backdropIntensity = 0.58,
+            arenaIntensity = 0.34,
         },
         traits = {"ashenTithe", "boneHarvest"},
     },
@@ -174,6 +226,11 @@ local Floors = {
             rock       = {0.4, 0.32, 0.52, 1},   -- spectral amethyst shale
             sawColor   = {0.8, 0.65, 1.0, 1},    -- spirit steel
         },
+        backgroundEffect = {
+            type = "auroraVeil",
+            backdropIntensity = 0.58,
+            arenaIntensity = 0.38,
+        },
         traits = {"spectralEchoes", "glowingSpores"},
     },
     [13] = {
@@ -186,6 +243,11 @@ local Floors = {
             snake      = {0.9, 0.15, 0.25, 1},  -- crimson glow
             rock       = {0.36, 0.24, 0.26, 1}, -- ember-lit ashstone
             sawColor   = {1.0, 0.1, 0.2, 1},    -- hellsteel
+        },
+        backgroundEffect = {
+            type = "voidPulse",
+            backdropIntensity = 0.7,
+            arenaIntensity = 0.44,
         },
         traits = {"ashenTithe", "infernalPressure"},
     },
@@ -200,6 +262,11 @@ local Floors = {
             rock       = {0.62, 0.6, 0.68, 1},   -- pearlescent pillars
             sawColor   = {0.95, 0.7, 0.5, 1},     -- rosy sunlit brass
         },
+        backgroundEffect = {
+            type = "auroraVeil",
+            backdropIntensity = 0.62,
+            arenaIntensity = 0.36,
+        },
         traits = {"divineAscent", "spectralEchoes"},
     },
     [15] = {
@@ -212,6 +279,11 @@ local Floors = {
             snake      = {0.98, 0.85, 0.4, 1},   -- auric serpent
             rock       = {0.55, 0.52, 0.48, 1},  -- dusk-touched marble
             sawColor   = {1.0, 0.65, 0.3, 1},    -- radiant brass
+        },
+        backgroundEffect = {
+            type = "auroraVeil",
+            backdropIntensity = 0.6,
+            arenaIntensity = 0.34,
         },
         traits = {"divineAscent", "crystallineResonance"},
     },

@@ -1,76 +1,10 @@
 local Theme = require("theme")
 local Audio = require("audio")
+local Shaders = require("shaders")
 
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
 
-local mushroomPulseShaderSource = [[
-extern float time;
-extern vec2 resolution;
-extern vec2 origin;
-extern vec4 baseColor;
-extern vec4 accentColor;
-extern vec4 glowColor;
-extern float intensity;
-
-float bloomShape(vec2 p, vec2 center, float sharpness)
-{
-    vec2 diff = p - center;
-    float distSq = dot(diff, diff);
-    return exp(-distSq * sharpness);
-}
-
-vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-{
-    vec2 uv = (screen_coords - origin) / resolution;
-    vec2 centered = uv - vec2(0.5);
-
-    float aspect = resolution.x / max(resolution.y, 0.0001);
-    centered.x *= aspect;
-
-    float dist = length(centered);
-
-    float breathing = sin(time * 0.6) * 0.5 + 0.5;
-    float drift = time * 0.35;
-
-    vec2 offset1 = vec2(cos(drift), sin(drift * 0.8)) * (0.18 + 0.08 * intensity);
-    vec2 offset2 = vec2(cos(drift * 1.3 + 2.2), sin(drift * 0.9 + 1.4)) * (0.26 + 0.1 * intensity);
-    vec2 offset3 = vec2(cos(drift * 0.7 - 1.1), sin(drift * 1.1 - 2.4)) * (0.32 + 0.12 * intensity);
-
-    float sharp1 = 10.0 - intensity * 2.0;
-    float sharp2 = 7.5 - intensity * 1.5;
-    float sharp3 = 5.0 - intensity;
-
-    float bloom1 = bloomShape(centered, offset1, sharp1);
-    float bloom2 = bloomShape(centered, offset2, sharp2);
-    float bloom3 = bloomShape(centered, offset3, sharp3);
-
-    float combinedBloom = bloom1 * (0.55 + 0.25 * intensity);
-    combinedBloom += bloom2 * (0.45 + 0.3 * breathing * intensity);
-    combinedBloom += bloom3 * (0.35 + 0.25 * intensity);
-
-    float petalWave = sin((centered.x + centered.y) * 6.0 + time * 0.5);
-    float waveMix = clamp(petalWave * 0.5 + 0.5, 0.0, 1.0) * (0.25 + 0.35 * intensity);
-
-    vec3 base = baseColor.rgb;
-    vec3 accent = mix(base, accentColor.rgb, 0.7);
-    vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.6);
-
-    float accentMix = clamp(combinedBloom, 0.0, 1.0);
-    float glowMix = clamp(combinedBloom * 0.6 + waveMix, 0.0, 1.0);
-
-    vec3 colorBlend = mix(base, accent, accentMix);
-    colorBlend = mix(colorBlend, glow, glowMix);
-
-    float innerEdge = max(0.12, 0.28 - 0.1 * intensity);
-    float outerEdge = min(0.96, 0.82 + 0.12 * intensity);
-    float vignette = 1.0 - smoothstep(innerEdge, outerEdge, dist + breathing * 0.1 * intensity);
-
-    vec3 finalColor = mix(base, colorBlend, clamp(vignette, 0.0, 1.0));
-
-    return vec4(finalColor, baseColor.a) * color;
-}
-]]
 
 local function getModule(name)
     local loaded = package.loaded[name]
@@ -115,93 +49,6 @@ local function isTileInSafeZone(safeZone, col, row)
     end
 
     return false
-end
-
-local function getColorComponents(color, fallback)
-    color = color or fallback or {0, 0, 0, 1}
-
-    local r = color[1] or 0
-    local g = color[2] or 0
-    local b = color[3] or 0
-    local a = color[4]
-
-    if a == nil then
-        a = 1
-    end
-
-    return {r, g, b, a}
-end
-
-local function selectGlowColor(palette)
-    if palette then
-        return palette.snake or palette.sawColor or palette.rock or palette.arenaBorder
-    end
-
-    return Theme.snakeDefault or Theme.rock or Theme.arenaBorder
-end
-
-local function configureMushroomPulse(effect, palette)
-    if not (effect and effect.shader) then
-        return
-    end
-
-    local base = (palette and palette.bgColor) or Theme.bgColor
-    local accent = (palette and palette.arenaBorder) or Theme.arenaBorder
-    local glow = selectGlowColor(palette)
-
-    effect.shader:sendColor("baseColor", getColorComponents(base, Theme.bgColor))
-    effect.shader:sendColor("accentColor", getColorComponents(accent, Theme.arenaBorder))
-    effect.shader:sendColor("glowColor", getColorComponents(glow, Theme.snakeDefault))
-end
-
-local function ensureMushroomPulseEffect(self)
-    self._backgroundEffects = self._backgroundEffects or {}
-
-    local effect = self._backgroundEffects.mushroomPulse
-    if effect and effect.shader then
-        return effect
-    end
-
-    effect = {
-        type = "mushroomPulse",
-        shader = love.graphics.newShader(mushroomPulseShaderSource),
-        backdropIntensity = 1.0,
-        arenaIntensity = 0.68,
-    }
-
-    self._backgroundEffects.mushroomPulse = effect
-
-    return effect
-end
-
-local function drawMushroomPulse(effect, x, y, w, h, intensity)
-    if not (effect and effect.shader) then
-        return false
-    end
-
-    if w <= 0 or h <= 0 then
-        return false
-    end
-
-    local shader = effect.shader
-
-    if shader.hasUniform and not shader:hasUniform("time") then
-        return false
-    end
-
-    local now = (love.timer and love.timer.getTime and love.timer.getTime()) or 0
-    shader:send("time", now)
-    shader:send("origin", {x, y})
-    shader:send("resolution", {w, h})
-    shader:send("intensity", intensity or 1.0)
-
-    love.graphics.push("all")
-    love.graphics.setShader(shader)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle("fill", x, y, w, h)
-    love.graphics.pop()
-
-    return true
 end
 
 local Arena = {
@@ -273,29 +120,48 @@ end
 
 function Arena:setBackgroundEffect(effectData, palette)
     local effectType
+    local overrides
 
     if type(effectData) == "string" then
         effectType = effectData
     elseif type(effectData) == "table" then
         effectType = effectData.type or effectData.name
+        overrides = effectData
     end
 
-    if effectType == "mushroomPulse" then
-        local effect = ensureMushroomPulseEffect(self)
+    self._backgroundEffects = self._backgroundEffects or {}
 
-        if effect then
-            effect.backdropIntensity = (effectData and effectData.backdropIntensity) or 1.0
-            effect.arenaIntensity = (effectData and effectData.arenaIntensity) or 0.68
-
-            configureMushroomPulse(effect, palette)
-
-            self.activeBackgroundEffect = effect
-        else
-            self.activeBackgroundEffect = nil
-        end
-    else
+    if not effectType or not Shaders.has(effectType) then
         self.activeBackgroundEffect = nil
+        return
     end
+
+    local effect = Shaders.ensure(self._backgroundEffects, effectType)
+    if not effect then
+        self.activeBackgroundEffect = nil
+        return
+    end
+
+    local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(effect)
+
+    effect.backdropIntensity = defaultBackdrop
+    effect.arenaIntensity = defaultArena
+
+    if overrides then
+        if overrides.backdropIntensity then
+            effect.backdropIntensity = overrides.backdropIntensity
+        end
+
+        if overrides.arenaIntensity then
+            effect.arenaIntensity = overrides.arenaIntensity
+        end
+    end
+
+    effect._lastEffectData = overrides
+
+    Shaders.configure(effect, palette, overrides)
+
+    self.activeBackgroundEffect = effect
 end
 
 function Arena:updateBackgroundEffectPalette(palette)
@@ -303,55 +169,45 @@ function Arena:updateBackgroundEffectPalette(palette)
         return
     end
 
-    if self.activeBackgroundEffect.type == "mushroomPulse" then
-        configureMushroomPulse(self.activeBackgroundEffect, palette)
-    end
+    Shaders.configure(self.activeBackgroundEffect, palette, self.activeBackgroundEffect._lastEffectData)
 end
 
 function Arena:drawBackgroundEffect(x, y, w, h, intensity)
-    if not self.activeBackgroundEffect then
+    local effect = self.activeBackgroundEffect
+    if not effect then
         return false
     end
 
-    if self.activeBackgroundEffect.type == "mushroomPulse" then
-        return drawMushroomPulse(
-            self.activeBackgroundEffect,
-            x,
-            y,
-            w,
-            h,
-            intensity or self.activeBackgroundEffect.backdropIntensity or 1.0
-        )
-    end
-
-    return false
+    local drawIntensity = intensity or effect.backdropIntensity or select(1, Shaders.getDefaultIntensities(effect))
+    return Shaders.draw(effect, x, y, w, h, drawIntensity)
 end
 
 function Arena:drawBackdrop(sw, sh)
     love.graphics.setColor(Theme.bgColor)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-    if not self.activeBackgroundEffect then
+    local effect = self.activeBackgroundEffect
+    if not effect then
         love.graphics.setColor(1, 1, 1, 1)
         return false
     end
 
-    if self.activeBackgroundEffect.type == "mushroomPulse" then
-        local drawn = drawMushroomPulse(self.activeBackgroundEffect, 0, 0, sw, sh, self.activeBackgroundEffect.backdropIntensity or 1.0)
-        love.graphics.setColor(1, 1, 1, 1)
-        return drawn
-    end
+    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+    local intensity = effect.backdropIntensity or defaultBackdrop
+    local drawn = Shaders.draw(effect, 0, 0, sw, sh, intensity)
 
     love.graphics.setColor(1, 1, 1, 1)
-    return false
+    return drawn
 end
 
 -- Draws the playfield with a solid fill + simple border
 function Arena:drawBackground()
     local ax, ay, aw, ah = self:getBounds()
 
-    if self.activeBackgroundEffect and self.activeBackgroundEffect.type == "mushroomPulse" then
-        drawMushroomPulse(self.activeBackgroundEffect, ax, ay, aw, ah, self.activeBackgroundEffect.arenaIntensity or 0.68)
+    if self.activeBackgroundEffect then
+        local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(self.activeBackgroundEffect)
+        local intensity = self.activeBackgroundEffect.arenaIntensity or defaultArena
+        Shaders.draw(self.activeBackgroundEffect, ax, ay, aw, ah, intensity)
     end
 
     -- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
