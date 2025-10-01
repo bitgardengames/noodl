@@ -6,6 +6,7 @@ local Saws = require("saws")
 local UI = require("ui")
 local FloatingText = require("floatingtext")
 local SessionStats = require("sessionstats")
+local Theme = require("theme")
 
 local Snake = {}
 
@@ -210,6 +211,14 @@ local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
     return px + t * dx, py + t * dy
 end
 
+local function normalizeDirection(dx, dy)
+    local len = math.sqrt(dx * dx + dy * dy)
+    if len == 0 then
+        return 0, 0
+    end
+    return dx / len, dy / len
+end
+
 local function trimHoleSegments(hole)
     if not hole or not trail or #trail == 0 then
         return
@@ -283,6 +292,97 @@ local function trimHoleSegments(hole)
     end
 
     hole.consumedLength = consumed
+
+    if hole then
+        local newHead = trail[1]
+        if newHead and newHead.drawX and newHead.drawY then
+            hole.entryPointX = newHead.drawX
+            hole.entryPointY = newHead.drawY
+        elseif lastInside then
+            hole.entryPointX = lastInside.x
+            hole.entryPointY = lastInside.y
+        end
+
+        if lastInside and lastInside.dirX and lastInside.dirY then
+            hole.entryDirX, hole.entryDirY = normalizeDirection(lastInside.dirX, lastInside.dirY)
+        end
+    end
+end
+
+local function drawDescendingIntoHole(hole)
+    if not hole then
+        return
+    end
+
+    local consumed = hole.consumedLength or 0
+    local depth = hole.renderDepth or 0
+    if consumed <= 0 and depth <= 0 then
+        return
+    end
+
+    local hx = hole.x or 0
+    local hy = hole.y or 0
+    local entryX = hole.entryPointX or hx
+    local entryY = hole.entryPointY or hy
+
+    local dirX, dirY = hole.entryDirX or 0, hole.entryDirY or 0
+    local dirLen = math.sqrt(dirX * dirX + dirY * dirY)
+    if dirLen <= 1e-4 then
+        dirX = hx - entryX
+        dirY = hy - entryY
+        dirLen = math.sqrt(dirX * dirX + dirY * dirY)
+    end
+
+    if dirLen <= 1e-4 then
+        dirX, dirY = 0, -1
+    else
+        dirX, dirY = dirX / dirLen, dirY / dirLen
+    end
+
+    local toCenterX = hx - entryX
+    local toCenterY = hy - entryY
+    if toCenterX * dirX + toCenterY * dirY < 0 then
+        dirX, dirY = -dirX, -dirY
+    end
+
+    local bodyColor = Theme.snakeDefault or { 1, 1, 1, 1 }
+    local r = bodyColor[1] or 1
+    local g = bodyColor[2] or 1
+    local b = bodyColor[3] or 1
+    local a = bodyColor[4] or 1
+
+    local baseRadius = SEGMENT_SIZE * 0.5
+    local steps = math.max(1, math.min(5, math.floor((consumed + SEGMENT_SPACING * 0.25) / (SEGMENT_SPACING * 0.7)) + 1))
+
+    local perpX, perpY = -dirY, dirX
+    local wobble = 0
+    if hole.time then
+        wobble = math.sin(hole.time * 4.6) * 0.35
+    end
+
+    love.graphics.setLineWidth(2)
+
+    for layer = 0, steps - 1 do
+        local layerT = math.min(1, depth + layer * 0.12)
+        local fade = 1 - layerT
+        local radius = baseRadius * (1 - 0.25 * layer) * (0.7 + 0.3 * fade)
+        radius = math.max(baseRadius * 0.25, radius)
+
+        local lateral = wobble * (0.45 + 0.3 * layer) * fade
+        local px = entryX + (hx - entryX) * layerT + perpX * radius * lateral
+        local py = entryY + (hy - entryY) * layerT + perpY * radius * lateral
+
+        local alpha = a * (0.85 - 0.12 * layer) * (0.65 + 0.35 * fade)
+        love.graphics.setColor(r, g, b, math.max(0, math.min(1, alpha)))
+        love.graphics.circle("fill", px, py, radius)
+
+        local outlineAlpha = 0.25 + 0.35 * (1 - fade)
+        love.graphics.setColor(0, 0, 0, math.max(0, math.min(1, outlineAlpha)))
+        love.graphics.circle("line", px, py, radius)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setLineWidth(1)
 end
 
 local function collectUpgradeVisuals(self)
@@ -448,15 +548,13 @@ function Snake:translate(dx, dy)
     if descendingHole then
         descendingHole.x = (descendingHole.x or 0) + dx
         descendingHole.y = (descendingHole.y or 0) + dy
+        if descendingHole.entryPointX then
+            descendingHole.entryPointX = descendingHole.entryPointX + dx
+        end
+        if descendingHole.entryPointY then
+            descendingHole.entryPointY = descendingHole.entryPointY + dy
+        end
     end
-end
-
-local function normalizeDirection(dx, dy)
-    local len = math.sqrt(dx * dx + dy * dy)
-    if len == 0 then
-        return 0, 0
-    end
-    return dx / len, dy / len
 end
 
 function Snake:setDirectionVector(dx, dy)
@@ -568,6 +666,11 @@ function Snake:drawClipped(hx, hy, hr)
         return headX, headY
     end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals)
 
+    if clipRadius > 0 and descendingHole and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
+        love.graphics.setStencilTest("equal", 1)
+        drawDescendingIntoHole(descendingHole)
+    end
+
     love.graphics.setStencilTest()
     love.graphics.pop()
 end
@@ -576,8 +679,20 @@ function Snake:startDescending(hx, hy, hr)
     descendingHole = {
         x = hx,
         y = hy,
-        radius = hr or 0
+        radius = hr or 0,
+        consumedLength = 0,
+        renderDepth = 0,
+        time = 0,
     }
+
+    local headX, headY = self:getHead()
+    if headX and headY then
+        descendingHole.entryPointX = headX
+        descendingHole.entryPointY = headY
+        local dirX, dirY = normalizeDirection((hx or headX) - headX, (hy or headY) - headY)
+        descendingHole.entryDirX = dirX
+        descendingHole.entryDirY = dirY
+    end
 end
 
 function Snake:finishDescending()
@@ -590,6 +705,30 @@ function Snake:update(dt)
     -- base speed with upgrades/modifiers
     local head = trail[1]
     local speed = self:getSpeed()
+
+    local hole = descendingHole
+    if hole then
+        hole.time = (hole.time or 0) + dt
+
+        if head and head.drawX and head.drawY then
+            hole.entryPointX = head.drawX
+            hole.entryPointY = head.drawY
+
+            local dirX, dirY = normalizeDirection((hole.x or head.drawX) - head.drawX, (hole.y or head.drawY) - head.drawY)
+            if dirX ~= 0 or dirY ~= 0 then
+                hole.entryDirX = dirX
+                hole.entryDirY = dirY
+            end
+        end
+
+        local consumed = hole.consumedLength or 0
+        local totalDepth = math.max(SEGMENT_SPACING * 0.5, (hole.radius or 0) + SEGMENT_SPACING)
+        local targetDepth = math.min(1, consumed / totalDepth)
+        local currentDepth = hole.renderDepth or 0
+        local blend = math.min(1, dt * 10)
+        currentDepth = currentDepth + (targetDepth - currentDepth) * blend
+        hole.renderDepth = currentDepth
+    end
 
     if self.dash then
         if self.dash.cooldownTimer and self.dash.cooldownTimer > 0 then
@@ -620,7 +759,7 @@ function Snake:update(dt)
         end
     end
 
-    local hole = descendingHole
+    hole = descendingHole
     if hole and head then
         local dx = hole.x - head.drawX
         local dy = hole.y - head.drawY
