@@ -425,6 +425,28 @@ local function collectUpgradeVisuals(self)
         }
     end
 
+    if self.timeDilation then
+        visuals = visuals or {}
+        visuals.timeDilation = {
+            active = self.timeDilation.active or false,
+            timer = self.timeDilation.timer or 0,
+            duration = self.timeDilation.duration or 0,
+            cooldown = self.timeDilation.cooldown or 0,
+            cooldownTimer = self.timeDilation.cooldownTimer or 0,
+        }
+    end
+
+    if self.dash then
+        visuals = visuals or {}
+        visuals.dash = {
+            active = self.dash.active or false,
+            timer = self.dash.timer or 0,
+            duration = self.dash.duration or 0,
+            cooldown = self.dash.cooldown or 0,
+            cooldownTimer = self.dash.cooldownTimer or 0,
+        }
+    end
+
     return visuals
 end
 
