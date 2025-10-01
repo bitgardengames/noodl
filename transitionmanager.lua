@@ -3,6 +3,7 @@ local Floors = require("floors")
 local SessionStats = require("sessionstats")
 local PlayerStats = require("playerstats")
 local Shop = require("shop")
+local RogueChoices = require("roguechoices")
 
 local TransitionManager = {}
 TransitionManager.__index = TransitionManager
@@ -28,6 +29,7 @@ function TransitionManager.new(game)
         duration = 0,
         data = {},
         shopCloseRequested = false,
+        decisionCloseRequested = false,
     }, TransitionManager)
 end
 
@@ -37,6 +39,8 @@ function TransitionManager:reset()
     self.duration = 0
     self.data = {}
     self.shopCloseRequested = false
+    self.decisionCloseRequested = false
+    RogueChoices:clearDecision()
 end
 
 function TransitionManager:isActive()
@@ -45,6 +49,10 @@ end
 
 function TransitionManager:isShopActive()
     return self.phase == "shop"
+end
+
+function TransitionManager:isDecisionActive()
+    return self.phase == "decision"
 end
 
 function TransitionManager:getPhase()
@@ -99,6 +107,14 @@ function TransitionManager:openShop()
     Audio:playSound("shop_open")
 end
 
+function TransitionManager:openDecision()
+    self.decisionCloseRequested = false
+    self.phase = "decision"
+    self.timer = 0
+    self.duration = 0
+    Audio:playSound("shop_open")
+end
+
 function TransitionManager:startFloorIntro(duration, extra)
     extra = shallowCopy(extra)
     if not extra.transitionResumePhase then
@@ -145,14 +161,19 @@ function TransitionManager:startFloorTransition(advance, skipFade)
         Audio:playSound("floor_advance")
     end
 
+    local targetFloor = pendingFloor or game.floor
+    local pendingDecision = advance and RogueChoices:shouldOfferDecision(targetFloor)
+
     self:setData({
         transitionAdvance = advance,
         pendingFloor = pendingFloor,
         transitionFloorData = floorData,
         floorApplied = false,
+        pendingDecision = pendingDecision,
     })
 
     self.shopCloseRequested = false
+    self.decisionCloseRequested = false
     self:startPhase("fadeout", skipFade and 0 or 1.2)
 end
 
@@ -167,12 +188,39 @@ function TransitionManager:update(dt)
     if phase == "fadeout" then
         if self.timer >= self.duration then
             local data = self.data
-            if data.transitionAdvance and not data.floorApplied and data.pendingFloor then
+
+            if data.transitionAdvance and data.pendingFloor then
                 self.game.floor = data.pendingFloor
+            end
+
+            if data.pendingDecision and data.transitionAdvance then
+                if RogueChoices:startDecision(self.game, self.game.floor) then
+                    self:openDecision()
+                    return
+                end
+                data.pendingDecision = false
+            end
+
+            if not data.floorApplied then
                 self.game:setupFloor(self.game.floor)
                 data.floorApplied = true
             end
 
+            self:openShop()
+        end
+        return
+    end
+
+    if phase == "decision" then
+        RogueChoices:update(dt)
+        if self.decisionCloseRequested and RogueChoices:isSelectionComplete() then
+            self.decisionCloseRequested = false
+            self.data.pendingDecision = false
+
+            self.game:setupFloor(self.game.floor)
+            self.data.floorApplied = true
+
+            RogueChoices:clearDecision()
             self:openShop()
         end
         return
@@ -228,6 +276,24 @@ function TransitionManager:handleShopInput(methodName, ...)
     local result = handler(Shop, ...)
     if result then
         self.shopCloseRequested = true
+    end
+
+    return true
+end
+
+function TransitionManager:handleDecisionInput(methodName, ...)
+    if not self:isDecisionActive() then
+        return false
+    end
+
+    local handler = RogueChoices[methodName]
+    if not handler then
+        return true
+    end
+
+    local result = handler(RogueChoices, ...)
+    if result == true then
+        self.decisionCloseRequested = true
     end
 
     return true

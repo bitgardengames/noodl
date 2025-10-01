@@ -108,6 +108,10 @@ function App:mousereleased(x, y, button)
     return self:forwardEvent("mousereleased", x, y, button)
 end
 
+function App:mousemoved(x, y, dx, dy)
+    return self:forwardEvent("mousemoved", x, y, dx, dy)
+end
+
 function App:wheelmoved(dx, dy)
     return self:forwardEvent("wheelmoved", dx, dy)
 end

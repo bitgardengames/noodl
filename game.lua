@@ -32,6 +32,7 @@ local Localization = require("localization")
 local FloorSetup = require("floorsetup")
 local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
+local RogueChoices = require("roguechoices")
 
 local Game = {}
 
@@ -44,6 +45,13 @@ local easedProgress = Easing.easedProgress
 
 local function buildModifierSections(self)
     local sections = {}
+
+    if self.activeRunModifiers and #self.activeRunModifiers > 0 then
+        table.insert(sections, {
+            title = Localization:get("game.run_modifiers.section_title"),
+            items = self.activeRunModifiers,
+        })
+    end
 
     if self.activeFloorTraits and #self.activeFloorTraits > 0 then
         table.insert(sections, {
@@ -96,6 +104,7 @@ function Game:load()
 
     Score:load()
     Upgrades:beginRun()
+    RogueChoices:beginRun(self)
     GameUtils:prepareGame(self.screenWidth, self.screenHeight)
     Face:set("idle")
 
@@ -129,6 +138,7 @@ function Game:reset()
     self.runTimer = 0
     self.floorTimer = 0
 
+    RogueChoices:beginRun(self)
     if self.transition then
         self.transition:reset()
     end
@@ -227,6 +237,7 @@ function Game:updateGameplay(dt)
 
         if moveResult == "scored" then
                 FruitEvents.handleConsumption(fruitX, fruitY)
+                RogueChoices:onFruitConsumed(fruitX, fruitY)
 
                 if UI:isGoalReached() then
                         Arena:spawnExit()
@@ -359,6 +370,11 @@ function Game:drawTransition()
                 Shop:draw(self.screenWidth, self.screenHeight)
                 love.graphics.pop()
                 love.graphics.setColor(1, 1, 1, 1)
+                return
+        end
+
+        if phase == "decision" then
+                RogueChoices:draw(self.screenWidth, self.screenHeight)
                 return
         end
 
@@ -654,12 +670,14 @@ function Game:setupFloor(floorNum)
     UI:setFruitGoal(traitContext.fruitGoal)
     UI:setFloorModifiers(appliedTraits)
     self.activeFloorTraits = appliedTraits
+    self.activeRunModifiers = RogueChoices:getActiveSummaries()
     self.transitionTraits = buildModifierSections(self)
 
     Upgrades:applyPersistentEffects(true)
 
     FloorSetup.finalizeContext(traitContext, spawnPlan)
     Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
+    RogueChoices:onFloorStart(self, floorNum, traitContext, spawnPlan)
 
     FloorSetup.spawnHazards(spawnPlan)
 end
@@ -680,6 +698,10 @@ function Game:draw()
 end
 
 function Game:keypressed(key)
+        if self.input and self.input:handleDecisionInput("keypressed", key) then
+                return
+        end
+
         if self.input and self.input:handleShopInput("keypressed", key) then
                 return
         end
@@ -694,7 +716,21 @@ function Game:mousepressed(x, y, button)
         end
 
         if self.input then
+                if self.input:handleDecisionInput("mousepressed", x, y, button) then
+                        return
+                end
+
                 self.input:handleShopInput("mousepressed", x, y, button)
+        end
+end
+
+function Game:mousemoved(x, y, dx, dy)
+        if self.input and self.input:handleDecisionInput("mousemoved", x, y, dx, dy) then
+                return
+        end
+
+        if self.input then
+                self.input:handleShopInput("mousemoved", x, y, dx, dy)
         end
 end
 
