@@ -26,6 +26,17 @@ local function distanceSquared(ax, ay, bx, by)
     return dx * dx + dy * dy
 end
 
+local function getHighlightColor(color)
+    color = color or {1, 1, 1, 1}
+
+    local r = math.min(1, color[1] * 1.2 + 0.08)
+    local g = math.min(1, color[2] * 1.2 + 0.08)
+    local b = math.min(1, color[3] * 1.2 + 0.08)
+    local a = (color[4] or 1) * 0.75
+
+    return {r, g, b, a}
+end
+
 local function isTileInSafeZone(safeZone, col, row)
     if not safeZone then return false end
 
@@ -153,6 +164,27 @@ function Arena:drawBorder()
     love.graphics.setColor(Theme.arenaBorder)
     love.graphics.setLineWidth(thickness)
     love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
+
+    -- Highlight pass for the top + left edges
+    local highlight = getHighlightColor(Theme.arenaBorder)
+    local highlightWidth = math.max(2, thickness * 0.45)
+    local scissorX = math.floor(bx - highlightWidth)
+    local scissorY = math.floor(by - highlightWidth)
+    local scissorW = math.ceil(bw + highlightWidth * 2)
+    local scissorH = math.ceil(bh + highlightWidth * 2)
+
+    love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+    love.graphics.setLineWidth(highlightWidth)
+
+    -- Top edge highlight
+    love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.2))
+    love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
+
+    -- Left edge highlight
+    love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.2), scissorH)
+    love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
+
+    love.graphics.setScissor()
 
     love.graphics.setCanvas()
 
