@@ -401,16 +401,14 @@ function Game:drawTransition()
                         end
                         love.graphics.setColor(0, 0, 0, overlayAlpha)
                         love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-                        local introTime = love.timer and love.timer.getTime and love.timer.getTime() or 0
+
                         love.graphics.push("all")
                         love.graphics.setBlendMode("add")
-                        love.graphics.setColor(0.32, 0.72, 1, overlayAlpha * 0.12)
-                        local swirlRadius = math.sqrt(self.screenWidth * self.screenWidth + self.screenHeight * self.screenHeight) * (0.22 + 0.25 * progress)
-                        love.graphics.circle("line", self.screenWidth / 2, self.screenHeight / 2 - 80, swirlRadius, 64)
-                        love.graphics.setColor(1, 0.78, 0.35, overlayAlpha * 0.1)
-                        local sweep = introTime * 0.8
-                        love.graphics.arc("line", "open", self.screenWidth / 2, self.screenHeight / 2, swirlRadius * 1.1, sweep, sweep + math.pi * 0.8)
-                        love.graphics.setBlendMode("alpha")
+                        local bloomProgress = 0.55 + 0.45 * progress
+                        local bloomIntensity = bloomProgress * (0.45 + 0.55 * outroAlpha)
+                        if Arena.drawBackgroundEffect then
+                                Arena:drawBackgroundEffect(0, 0, self.screenWidth, self.screenHeight, bloomIntensity)
+                        end
                         love.graphics.pop()
                         love.graphics.setColor(1, 1, 1, 1)
 
