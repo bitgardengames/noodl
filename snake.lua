@@ -612,35 +612,63 @@ function Snake:drawClipped(hx, hy, hr)
 
     if clipRadius > 0 then
         local radiusSq = clipRadius * clipRadius
+        local startIndex = 1
 
-        local trimmed = {}
+        while startIndex <= #trail do
+            local seg = trail[startIndex]
+            local x = seg and (seg.drawX or seg.x)
+            local y = seg and (seg.drawY or seg.y)
 
-        for i = 1, #trail do
-            local seg = trail[i]
-            local x = seg.drawX or seg.x
-            local y = seg.drawY or seg.y
+            if not (x and y) then
+                break
+            end
 
-            if x and y then
-                local dx = x - hx
-                local dy = y - hy
-                if dx * dx + dy * dy <= radiusSq then
-                    if i > 1 then
-                        local prev = trail[i - 1]
-                        local px = prev.drawX or prev.x
-                        local py = prev.drawY or prev.y
-                        if px and py then
-                            local ix, iy = findCircleIntersection(px, py, x, y, hx, hy, clipRadius)
-                            if ix and iy then
-                                trimmed[#trimmed + 1] = { drawX = ix, drawY = iy }
-                            end
-                        end
-                    end
-                    renderTrail = trimmed
-                    break
+            local dx = x - hx
+            local dy = y - hy
+            if dx * dx + dy * dy > radiusSq then
+                break
+            end
+
+            startIndex = startIndex + 1
+        end
+
+        if startIndex == 1 then
+            -- Head is still outside the clip region; render entire trail
+            renderTrail = trail
+        elseif startIndex > #trail then
+            -- Entire snake is within the clip; nothing to draw outside
+            renderTrail = {}
+        else
+            local trimmed = {}
+            local prev = trail[startIndex - 1]
+            local curr = trail[startIndex]
+            local px = prev and (prev.drawX or prev.x)
+            local py = prev and (prev.drawY or prev.y)
+            local cx = curr and (curr.drawX or curr.x)
+            local cy = curr and (curr.drawY or curr.y)
+            local ix, iy
+
+            if px and py and cx and cy then
+                ix, iy = findCircleIntersection(px, py, cx, cy, hx, hy, clipRadius)
+            end
+
+            if not (ix and iy) then
+                if descendingHole and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
+                    ix = descendingHole.entryPointX or px
+                    iy = descendingHole.entryPointY or py
+                else
+                    ix, iy = px, py
                 end
             end
 
-            trimmed[#trimmed + 1] = seg
+            if ix and iy then
+                trimmed[#trimmed + 1] = { drawX = ix, drawY = iy }
+            end
+
+            for i = startIndex, #trail do
+                trimmed[#trimmed + 1] = trail[i]
+            end
+
             renderTrail = trimmed
         end
     end
