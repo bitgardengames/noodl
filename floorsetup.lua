@@ -12,7 +12,6 @@ local FloatingText = require("floatingtext")
 local FloorTraits = require("floortraits")
 local FloorPlan = require("floorplan")
 local Upgrades = require("upgrades")
-local RogueChoices = require("roguechoices")
 
 local FloorSetup = {}
 
@@ -258,7 +257,6 @@ function FloorSetup.prepare(floorNum, floorData)
     traitContext = adjustedContext or traitContext
 
     traitContext = Upgrades:modifyFloorContext(traitContext)
-    traitContext = RogueChoices:modifyFloorContext(traitContext, floorNum)
     traitContext.conveyors = math.max(0, traitContext.conveyors or 0)
 
     local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells)

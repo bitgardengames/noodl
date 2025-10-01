@@ -95,10 +95,6 @@ function GameInput:handlePlayingButton(button)
 end
 
 function GameInput:handleGamepadButton(button)
-    if self.transition:handleDecisionInput("gamepadpressed", nil, button) then
-        return
-    end
-
     if self.transition:handleShopInput("gamepadpressed", nil, button) then
         return
     end
@@ -111,10 +107,6 @@ function GameInput:handleGamepadButton(button)
 end
 
 function GameInput:handleGamepadAxis(axis, value)
-    if self.transition:handleDecisionInput("gamepadaxis", axis, value) then
-        return
-    end
-
     if self.transition:isShopActive() and Shop.gamepadaxis then
         Shop:gamepadaxis(nil, axis, value)
     end
@@ -142,10 +134,6 @@ end
 
 function GameInput:handleShopInput(methodName, ...)
     return self.transition:handleShopInput(methodName, ...)
-end
-
-function GameInput:handleDecisionInput(methodName, ...)
-    return self.transition:handleDecisionInput(methodName, ...)
 end
 
 return GameInput
