@@ -96,10 +96,7 @@ function Snake:resetModifiers()
     self.stoneSkinSawGrace = 0
     self.dash = nil
     self.timeDilation = nil
-    if self.adrenaline then
-        self.adrenaline.active = false
-        self.adrenaline.timer = 0
-    end
+    self.adrenaline = nil
     UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
 
