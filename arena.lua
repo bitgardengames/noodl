@@ -166,7 +166,7 @@ function Arena:drawBorder()
     love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
     -- Highlight pass for the top + left edges
-    local highlightShift = 1
+    local highlightShift = 3
     local function appendArcPoints(points, cx, cy, radius, startAngle, endAngle, segments, skipFirst)
         if segments < 1 then
             segments = 1
