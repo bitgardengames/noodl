@@ -166,32 +166,64 @@ function Arena:drawBorder()
     love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
     -- Highlight pass for the top + left edges
+    local function appendArcPoints(points, cx, cy, radius, startAngle, endAngle, segments, skipFirst)
+        if segments < 1 then
+            segments = 1
+        end
+
+        for i = 0, segments do
+            if not (skipFirst and i == 0) then
+                local t = i / segments
+                local angle = startAngle + (endAngle - startAngle) * t
+                points[#points + 1] = cx + math.cos(angle) * radius
+                points[#points + 1] = cy + math.sin(angle) * radius
+            end
+        end
+    end
+
     local highlight = getHighlightColor(Theme.arenaBorder)
     local highlightWidth = math.max(2, thickness * 0.45)
     local highlightOffset = 2
-    local highlightRadius = highlightWidth * 0.5
     local scissorX = math.floor(bx - highlightWidth - highlightOffset)
     local scissorY = math.floor(by - highlightWidth - highlightOffset)
     local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset)
     local scissorH = math.ceil(bh + highlightWidth * 2 + highlightOffset)
+    local outerRadius = radius + highlightOffset
+    local arcSegments = math.max(6, math.floor(outerRadius * 0.75))
+
+    local topPoints = {}
+    topPoints[#topPoints + 1] = bx + bw - radius
+    topPoints[#topPoints + 1] = by - highlightOffset
+    topPoints[#topPoints + 1] = bx + radius
+    topPoints[#topPoints + 1] = by - highlightOffset
+    appendArcPoints(topPoints, bx + radius, by + radius, outerRadius, -math.pi / 2, -math.pi, arcSegments, true)
+
+    local leftPoints = {}
+    leftPoints[#leftPoints + 1] = bx - highlightOffset
+    leftPoints[#leftPoints + 1] = by + radius
+    leftPoints[#leftPoints + 1] = bx - highlightOffset
+    leftPoints[#leftPoints + 1] = by + bh - radius
 
     love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+    local prevLineWidth = love.graphics.getLineWidth()
+    local prevLineStyle = love.graphics.getLineStyle()
+    local prevLineJoin = love.graphics.getLineJoin()
+    love.graphics.setLineStyle("smooth")
+    love.graphics.setLineJoin("round")
+    love.graphics.setLineWidth(highlightWidth)
 
     -- Top edge highlight
     love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.4))
-    local topX = bx - highlightWidth * 0.5 - highlightOffset
-    local topY = by - highlightWidth * 0.5 - highlightOffset
-    local topW = bw + highlightWidth
-    love.graphics.rectangle("fill", topX, topY, topW, highlightWidth, highlightRadius, highlightRadius)
+    love.graphics.line(topPoints)
 
     -- Left edge highlight
     love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.4), scissorH)
-    local leftX = bx - highlightWidth * 0.5 - highlightOffset
-    local leftY = by - highlightWidth * 0.5 - highlightOffset
-    local leftH = bh + highlightWidth
-    love.graphics.rectangle("fill", leftX, leftY, highlightWidth, leftH, highlightRadius, highlightRadius)
+    love.graphics.line(leftPoints)
 
     love.graphics.setScissor()
+    love.graphics.setLineWidth(prevLineWidth)
+    love.graphics.setLineStyle(prevLineStyle)
+    love.graphics.setLineJoin(prevLineJoin)
 
     love.graphics.setCanvas()
 
