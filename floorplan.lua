@@ -141,6 +141,16 @@ local BASELINE_PLAN = {
         sawSpinMult = 1.6,
         sawStall = 0.18,
     },
+    [15] = {
+        fruitGoal = 20,
+        rocks = 19,
+        saws = 6,
+        conveyors = 6,
+        rockSpawnChance = 0.66,
+        sawSpeedMult = 1.78,
+        sawSpinMult = 1.65,
+        sawStall = 0.16,
+    },
 }
 
 function FloorPlan.getBaselinePlan()

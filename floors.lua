@@ -14,6 +14,7 @@
         Ashen Frontier → scorched wastes before the end
         Spirit Crucible → astral winds and wailing phantoms
         The Underworld → final gauntlet of ash and fire
+        Celestial Causeway → shimmer of hope and gilded winds
         Sky Spire → false dawn beyond the pit
 ]]
 
@@ -186,6 +187,19 @@ local Floors = {
         traits = {"ashenTithe", "infernalPressure"},
     },
     [14] = {
+        name = "Celestial Causeway",
+        flavor = "Auroras braid around causeways of marble and sunfire.",
+        palette = {
+            bgColor    = {0.16, 0.18, 0.25, 1},  -- cool nightfall above the abyss
+            arenaBG    = {0.78, 0.82, 0.9, 1},   -- moonlit alabaster path
+            arenaBorder= {0.9, 0.76, 0.55, 1},   -- gilded balustrades
+            snake      = {0.95, 0.72, 0.45, 1},   -- burnished auric scales
+            rock       = {0.62, 0.6, 0.68, 1},   -- pearlescent pillars
+            sawColor   = {0.95, 0.7, 0.5, 1},     -- rosy sunlit brass
+        },
+        traits = {"divineAscent", "spectralEchoes"},
+    },
+    [15] = {
         name = "Sky Spire",
         flavor = "Clouds part to reveal a false dawn of gleaming marble.",
         palette = {
