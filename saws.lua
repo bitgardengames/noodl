@@ -16,6 +16,19 @@ local SINK_OFFSET = 2
 local SINK_DISTANCE = 28
 local SINK_SPEED = 3
 
+local function copyColor(color)
+    if not color then
+        return { 1, 1, 1, 1 }
+    end
+
+    return {
+        color[1] or 1,
+        color[2] or 1,
+        color[3] or 1,
+        color[4] == nil and 1 or color[4],
+    }
+end
+
 local function getHighlightColor(color)
     color = color or {1, 1, 1, 1}
     local r = math.min(1, color[1] * 1.2 + 0.08)
@@ -91,20 +104,41 @@ local function removeSaw(target)
     for index, saw in ipairs(current) do
         if saw == target or index == target then
             local px, py = getSawCenter(saw)
+            local sawColor = Theme.sawColor or {0.85, 0.8, 0.75, 1}
+            local primary = copyColor(sawColor)
+            primary[4] = 1
+            local highlight = getHighlightColor(sawColor)
+
             Particles:spawnBurst(px or saw.x, py or saw.y, {
                 count = 12,
-                speed = 80,
-                speedVariance = 65,
+                speed = 82,
+                speedVariance = 68,
                 life = 0.4,
                 size = 3,
-                color = {0.85, 0.8, 0.75, 1},
+                color = primary,
                 spread = math.pi * 2,
                 angleJitter = math.pi,
-                drag = 3.6,
+                drag = 3.5,
                 gravity = 260,
-                scaleMin = 0.55,
-                scaleVariance = 0.65,
-                fadeTo = 0.05,
+                scaleMin = 0.58,
+                scaleVariance = 0.66,
+                fadeTo = 0.06,
+            })
+
+            Particles:spawnBurst(px or saw.x, py or saw.y, {
+                count = love.math.random(4, 6),
+                speed = 126,
+                speedVariance = 70,
+                life = 0.28,
+                size = 2.1,
+                color = highlight,
+                spread = math.pi * 2,
+                angleJitter = math.pi,
+                drag = 1.4,
+                gravity = 200,
+                scaleMin = 0.4,
+                scaleVariance = 0.32,
+                fadeTo = 0,
             })
 
             table.remove(current, index)
@@ -196,20 +230,41 @@ function Saws:update(dt)
             if progress >= 1 then
                 saw.phase = "squash"
                 saw.timer = 0
+                local sawColor = Theme.sawColor or {0.8, 0.8, 0.8, 1}
+                local primary = copyColor(sawColor)
+                primary[4] = 1
+                local highlight = getHighlightColor(sawColor)
+
                 Particles:spawnBurst(saw.x, saw.y, {
                     count = love.math.random(6, 10),
-                    speed = 60,
-                    speedVariance = 40,
+                    speed = 62,
+                    speedVariance = 44,
                     life = 0.4,
                     size = 3,
-                    color = {0.8, 0.8, 0.8, 1},
+                    color = primary,
                     spread = math.pi * 2,
                     angleJitter = math.pi * 0.8,
-                    drag = 2.4,
-                    gravity = 180,
-                    scaleMin = 0.6,
-                    scaleVariance = 0.55,
+                    drag = 2.5,
+                    gravity = 185,
+                    scaleMin = 0.62,
+                    scaleVariance = 0.56,
                     fadeTo = 0.1,
+                })
+
+                Particles:spawnBurst(saw.x, saw.y, {
+                    count = love.math.random(3, 4),
+                    speed = 118,
+                    speedVariance = 52,
+                    life = 0.27,
+                    size = 2,
+                    color = highlight,
+                    spread = math.pi * 2,
+                    angleJitter = math.pi,
+                    drag = 1.1,
+                    gravity = 150,
+                    scaleMin = 0.38,
+                    scaleVariance = 0.28,
+                    fadeTo = 0,
                 })
             end
 
