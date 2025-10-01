@@ -71,6 +71,38 @@ local function buildRockHighlight(points)
         highlight[#highlight + 1] = y
     end
 
+    local inset = 2
+    if inset > 0 then
+        local count = #highlight / 2
+        if count <= 0 then
+            return highlight
+        end
+
+        local cx, cy = 0, 0
+
+        for i = 1, #highlight, 2 do
+            cx = cx + highlight[i]
+            cy = cy + highlight[i + 1]
+        end
+
+        cx = cx / count
+        cy = cy / count
+
+        for i = 1, #highlight, 2 do
+            local x = highlight[i]
+            local y = highlight[i + 1]
+            local dx = x - cx
+            local dy = y - cy
+            local len = math.sqrt(dx * dx + dy * dy)
+
+            if len > 0 then
+                local scale = math.max(0, (len - inset) / len)
+                highlight[i] = cx + dx * scale
+                highlight[i + 1] = cy + dy * scale
+            end
+        end
+    end
+
     return highlight
 end
 
