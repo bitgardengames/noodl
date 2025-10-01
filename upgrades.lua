@@ -1532,6 +1532,9 @@ function Upgrades:getHUDIndicators()
         local chargeLabel
         local showBar = false
 
+        local chargesRemaining = timeState.floorCharges
+        local maxUses = timeState.maxFloorUses
+
         if timeState.active and timeState.duration > 0 then
             local remaining = math.max(timeState.timer or 0, 0)
             charge = clamp(remaining / timeState.duration, 0, 1)
@@ -1539,17 +1542,24 @@ function Upgrades:getHUDIndicators()
             status = hudText("active")
             showBar = true
         else
-            local cooldown = timeState.cooldown or 0
-            local remainingCooldown = math.max(timeState.cooldownTimer or 0, 0)
-            if cooldown > 0 and remainingCooldown > 0 then
-                local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
-                charge = progress
-                chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remainingCooldown) })
-                status = hudText("charging")
-                showBar = true
+            if maxUses and chargesRemaining ~= nil and chargesRemaining <= 0 then
+                charge = 0
+                status = hudText("depleted")
+                chargeLabel = nil
+                showBar = false
             else
-                charge = 1
-                status = hudText("ready")
+                local cooldown = timeState.cooldown or 0
+                local remainingCooldown = math.max(timeState.cooldownTimer or 0, 0)
+                if cooldown > 0 and remainingCooldown > 0 then
+                    local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
+                    charge = progress
+                    chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remainingCooldown) })
+                    status = hudText("charging")
+                    showBar = true
+                else
+                    charge = 1
+                    status = hudText("ready")
+                end
             end
         end
 
@@ -1828,6 +1838,18 @@ function Upgrades:applyPersistentEffects(rebaseline)
             else
                 ability.cooldownTimer = 0
             end
+        end
+
+        ability.maxFloorUses = 1
+        if firstSetup then
+            ability.floorCharges = ability.maxFloorUses
+        elseif rebaseline then
+            ability.floorCharges = ability.maxFloorUses
+        elseif ability.floorCharges == nil then
+            ability.floorCharges = ability.maxFloorUses
+        else
+            local maxUses = ability.maxFloorUses or ability.floorCharges
+            ability.floorCharges = math.max(0, math.min(ability.floorCharges, maxUses))
         end
     else
         Snake.timeDilation = nil
