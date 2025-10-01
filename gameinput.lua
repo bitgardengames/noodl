@@ -1,4 +1,5 @@
 local Controls = require("controls")
+local Snake = require("snake")
 local PauseMenu = require("pausemenu")
 local Shop = require("shop")
 local Achievements = require("achievements")
@@ -52,13 +53,15 @@ function GameInput.new(game, transition)
     return setmetatable({
         game = game,
         transition = transition,
-        axisState = { horizontal = nil, vertical = nil },
+        axisState = { horizontal = 0, vertical = 0, horizontalDigital = nil, verticalDigital = nil },
     }, GameInput)
 end
 
 function GameInput:resetAxes()
-    self.axisState.horizontal = nil
-    self.axisState.vertical = nil
+    self.axisState.horizontal = 0
+    self.axisState.vertical = 0
+    self.axisState.horizontalDigital = nil
+    self.axisState.verticalDigital = nil
 end
 
 function GameInput:applyPauseMenuSelection(selection)
@@ -117,6 +120,19 @@ function GameInput:handleGamepadAxis(axis, value)
     end
 
     local state = self.axisState
+    local analogValue = 0
+    if value >= ANALOG_DEADZONE then
+        analogValue = (value - ANALOG_DEADZONE) / (1 - ANALOG_DEADZONE)
+    elseif value <= -ANALOG_DEADZONE then
+        analogValue = (value + ANALOG_DEADZONE) / (1 - ANALOG_DEADZONE)
+    end
+
+    if math.abs(analogValue) < 1e-4 then
+        analogValue = 0
+    end
+
+    state[config.slot] = analogValue
+
     local direction
     if value >= ANALOG_DEADZONE then
         direction = config.positive
@@ -124,10 +140,19 @@ function GameInput:handleGamepadAxis(axis, value)
         direction = config.negative
     end
 
-    if state[config.slot] ~= direction then
-        state[config.slot] = direction
+    local digitalKey = config.slot .. "Digital"
+    if state[digitalKey] ~= direction then
+        state[digitalKey] = direction
         if direction then
             self:handleGamepadButton(direction)
+        end
+    end
+
+    if self.game.state == "playing" and not self.transition:isShopActive() then
+        local analogX = state.horizontal or 0
+        local analogY = state.vertical or 0
+        if analogX ~= 0 or analogY ~= 0 then
+            Snake:setAnalogDirection(analogX, analogY)
         end
     end
 end

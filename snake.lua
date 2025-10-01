@@ -14,6 +14,7 @@ local screenW, screenH
 local direction = { x = 1, y = 0 }
 local pendingDir = { x = 1, y = 0 }
 local trail = {}
+local previousHeadX, previousHeadY = nil, nil
 local descendingHole = nil
 local segmentCount = 1
 local reverseControls = false
@@ -28,6 +29,8 @@ local POP_DURATION = SnakeUtils.POP_DURATION
 local SHIELD_FLASH_DURATION = 0.3
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
+local HEAD_RADIUS = SEGMENT_SPACING * 0.5
+local HEAD_RADIUS_SQ = HEAD_RADIUS * HEAD_RADIUS
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
@@ -163,12 +166,32 @@ end
 -- and then use `speed` for position updates. This gives upgrades an immediate effect.
 
 -- helpers
-local function snapToCenter(v)
-    return (math.floor(v / SEGMENT_SPACING) + 0.5) * SEGMENT_SPACING
-end
-
 local function toCell(x, y)
     return math.floor(x / SEGMENT_SPACING + 0.5), math.floor(y / SEGMENT_SPACING + 0.5)
+end
+
+local function distanceSquared(ax, ay, bx, by)
+    local dx = ax - bx
+    local dy = ay - by
+    return dx * dx + dy * dy
+end
+
+local function closestPointOnSegment(px, py, ax, ay, bx, by)
+    local vx = bx - ax
+    local vy = by - ay
+    local lenSq = vx * vx + vy * vy
+    if lenSq <= 1e-6 then
+        return ax, ay
+    end
+
+    local t = ((px - ax) * vx + (py - ay) * vy) / lenSq
+    if t < 0 then
+        t = 0
+    elseif t > 1 then
+        t = 1
+    end
+
+    return ax + vx * t, ay + vy * t
 end
 
 local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
@@ -520,6 +543,8 @@ function Snake:load(w, h)
     trail = buildInitialTrail()
     descendingHole = nil
     fruitsSinceLastTurn = 0
+    local hx, hy = self:getHead()
+    previousHeadX, previousHeadY = hx, hy
 end
 
 local function getUpgradesModule()
@@ -556,6 +581,8 @@ function Snake:setHeadPosition(x, y)
 
     head.drawX = x
     head.drawY = y
+    previousHeadX = x
+    previousHeadY = y
 end
 
 function Snake:translate(dx, dy)
@@ -583,6 +610,11 @@ function Snake:translate(dx, dy)
             descendingHole.entryPointY = descendingHole.entryPointY + dy
         end
     end
+
+    if previousHeadX and previousHeadY then
+        previousHeadX = previousHeadX + dx
+        previousHeadY = previousHeadY + dy
+    end
 end
 
 function Snake:setDirectionVector(dx, dy)
@@ -604,6 +636,24 @@ function Snake:setDirectionVector(dx, dy)
     end
 end
 
+function Snake:setAnalogDirection(dx, dy)
+    if isDead then return end
+
+    dx = dx or 0
+    dy = dy or 0
+
+    local lenSq = dx * dx + dy * dy
+    if lenSq < 0.05 * 0.05 then
+        return
+    end
+
+    self:setDirectionVector(dx, dy)
+end
+
+function Snake:getPreviousHead()
+    return previousHeadX, previousHeadY
+end
+
 function Snake:getHeadCell()
     local hx, hy = self:getHead()
     if not (hx and hy) then
@@ -621,39 +671,52 @@ local function addSafeCellUnique(cells, seen, col, row)
 end
 
 function Snake:getSafeZone(lookahead)
-    local hx, hy = self:getHeadCell()
+    lookahead = lookahead or 0
+
+    local hx, hy = self:getHead()
     if not (hx and hy) then
         return {}
     end
 
-    local dir = self:getDirection()
     local cells = {}
     local seen = {}
 
-    for i = 1, lookahead do
-        local cx = hx + dir.x * i
-        local cy = hy + dir.y * i
-        addSafeCellUnique(cells, seen, cx, cy)
+    local function addWorld(wx, wy)
+        if not (wx and wy) then
+            return
+        end
+        local col, row = toCell(wx, wy)
+        if col and row then
+            addSafeCellUnique(cells, seen, col, row)
+        end
+    end
+
+    local dir = self:getDirection() or { x = 0, y = 0 }
+    local step = SEGMENT_SPACING
+
+    if dir.x ~= 0 or dir.y ~= 0 then
+        for i = 1, lookahead do
+            addWorld(hx + dir.x * step * i, hy + dir.y * step * i)
+        end
     end
 
     local pending = pendingDir
-    if pending and (pending.x ~= dir.x or pending.y ~= dir.y) then
-        -- Immediate turn path (if the queued direction snaps before the next tile)
-        local px, py = hx, hy
-        for i = 1, lookahead do
-            px = px + pending.x
-            py = py + pending.y
-            addSafeCellUnique(cells, seen, px, py)
-        end
+    if pending then
+        local px, py = normalizeDirection(pending.x, pending.y)
+        if px ~= 0 or py ~= 0 then
+            for i = 1, lookahead do
+                addWorld(hx + px * step * i, hy + py * step * i)
+            end
 
-        -- Typical turn path: advance one tile forward, then apply the queued turn
-        local turnCol = hx + dir.x
-        local turnRow = hy + dir.y
-        px, py = turnCol, turnRow
-        for i = 2, lookahead do
-            px = px + pending.x
-            py = py + pending.y
-            addSafeCellUnique(cells, seen, px, py)
+            if dir.x ~= 0 or dir.y ~= 0 then
+                local turnX = hx + dir.x * step
+                local turnY = hy + dir.y * step
+                for _ = 1, lookahead do
+                    turnX = turnX + px * step
+                    turnY = turnY + py * step
+                    addWorld(turnX, turnY)
+                end
+            end
         end
     end
 
@@ -791,7 +854,12 @@ function Snake:update(dt)
 
     -- base speed with upgrades/modifiers
     local head = trail[1]
+    if not head then
+        return false
+    end
+
     local speed = self:getSpeed()
+    previousHeadX, previousHeadY = head.drawX, head.drawY
 
     local hole = descendingHole
     if hole then
@@ -882,48 +950,53 @@ function Snake:update(dt)
         end
     end
 
+    local prevHeadX = previousHeadX or head.drawX
+    local prevHeadY = previousHeadY or head.drawY
+
+    if not hole then
+        local desired = pendingDir
+        if desired then
+            local ndx, ndy = normalizeDirection(desired.x or 0, desired.y or 0)
+            if ndx ~= 0 or ndy ~= 0 then
+                local prevX, prevY = direction.x, direction.y
+                direction = { x = ndx, y = ndy }
+                if prevX ~= direction.x or prevY ~= direction.y then
+                    fruitsSinceLastTurn = 0
+                end
+            end
+        end
+    end
+
+    if pendingDir then
+        pendingDir.x = direction.x
+        pendingDir.y = direction.y
+    else
+        pendingDir = { x = direction.x, y = direction.y }
+    end
+
     local stepX = direction.x * speed * dt
     local stepY = direction.y * speed * dt
-    local newX = head.drawX + stepX
-    local newY = head.drawY + stepY
+    local newX = prevHeadX + stepX
+    local newY = prevHeadY + stepY
 
-    -- advance cell clock, maybe snap & commit queued direction
-    local snappedThisTick = false
-    local moveInterval
-    if speed > 0 and not hole then
-        moveInterval = SEGMENT_SPACING / speed
-    end
+    local dx = newX - prevHeadX
+    local dy = newY - prevHeadY
+    local dist = math.sqrt(dx * dx + dy * dy)
 
     if hole then
         moveTimer = 0
     else
-        moveTimer = moveTimer + dt
-        local snaps = 0
-        while moveInterval and moveTimer >= moveInterval do
-            moveTimer = moveTimer - moveInterval
-            snaps = snaps + 1
-        end
-        if snaps > 0 then
-            SessionStats:add("tilesTravelled", snaps)
-        end
-        if snaps > 0 then
-            -- snap to the nearest grid center
-            newX = snapToCenter(newX)
-            newY = snapToCenter(newY)
-            -- commit queued direction
-            local prevX, prevY = direction.x, direction.y
-            direction = { x = pendingDir.x, y = pendingDir.y }
-            if prevX ~= direction.x or prevY ~= direction.y then
-                fruitsSinceLastTurn = 0
+        if dist > 0 then
+            moveTimer = moveTimer + dist
+            if moveTimer >= SEGMENT_SPACING then
+                local tiles = math.floor(moveTimer / SEGMENT_SPACING)
+                moveTimer = moveTimer - tiles * SEGMENT_SPACING
+                if tiles > 0 then
+                    SessionStats:add("tilesTravelled", tiles)
+                end
             end
-            snappedThisTick = true
         end
     end
-
-    -- spatially uniform sampling along the motion path
-    local dx = newX - head.drawX
-    local dy = newY - head.drawY
-    local dist = math.sqrt(dx*dx + dy*dy)
 
     local nx, ny = 0, 0
     if dist > 0 then
@@ -931,7 +1004,7 @@ function Snake:update(dt)
     end
 
     local remaining = dist
-    local prevX, prevY = head.drawX, head.drawY
+    local prevX, prevY = prevHeadX, prevHeadY
 
     while remaining >= SAMPLE_STEP do
         prevX = prevX + nx * SAMPLE_STEP
@@ -945,10 +1018,11 @@ function Snake:update(dt)
         remaining = remaining - SAMPLE_STEP
     end
 
-    -- final correction: put true head at exact new position
     if trail[1] then
         trail[1].drawX = newX
         trail[1].drawY = newY
+        trail[1].dirX = direction.x
+        trail[1].dirY = direction.y
     end
 
     if hole then
@@ -965,10 +1039,6 @@ function Snake:update(dt)
     if len > 0 then
         tailBeforeX, tailBeforeY = trail[len].drawX, trail[len].drawY
     end
-    local tailBeforeCol, tailBeforeRow
-    if tailBeforeX and tailBeforeY then
-        tailBeforeCol, tailBeforeRow = toCell(tailBeforeX, tailBeforeY)
-    end
 
     local consumedLength = (hole and hole.consumedLength) or 0
     local maxLen = math.max(0, segmentCount * SEGMENT_SPACING - consumedLength)
@@ -980,17 +1050,18 @@ function Snake:update(dt)
 
     local traveled = 0
     for i = 2, #trail do
-        local dx = trail[i-1].drawX - trail[i].drawX
-        local dy = trail[i-1].drawY - trail[i].drawY
-        local segLen = math.sqrt(dx*dx + dy*dy)
+        local segA = trail[i-1]
+        local segB = trail[i]
+        local sx, sy = segA.drawX - segB.drawX, segA.drawY - segB.drawY
+        local segLen = math.sqrt(sx * sx + sy * sy)
 
         if traveled + segLen > maxLen then
             local excess = traveled + segLen - maxLen
             local t = 1 - (excess / segLen)
-            local tailX = trail[i-1].drawX - dx * t
-            local tailY = trail[i-1].drawY - dy * t
+            local tailX = segA.drawX - sx * t
+            local tailY = segA.drawY - sy * t
 
-            for j = #trail, i+1, -1 do
+            for j = #trail, i + 1, -1 do
                 table.remove(trail, j)
             end
 
@@ -1001,59 +1072,65 @@ function Snake:update(dt)
         end
     end
 
-    -- collision with self (grid-cell based, only at snap ticks)
-        if snappedThisTick then
-                local hx, hy = trail[1].drawX, trail[1].drawY
-                local headCol, headRow = toCell(hx, hy)
+    local tailAfterX, tailAfterY = nil, nil
+    if #trail > 0 then
+        tailAfterX = trail[#trail].drawX
+        tailAfterY = trail[#trail].drawY
+    end
 
-		-- Don’t check the first ~1 segment of body behind the head (neck).
-		-- Compute by *distance*, not “skip N nodes”.
-		local guardDist = SEGMENT_SPACING * 1.05  -- about one full cell
-		local walked = 0
+    -- collision with self (continuous)
+    local collidedWithSelf = false
+    local hx, hy = newX, newY
+    local guardDist = SEGMENT_SPACING * 1.05
+    local walked = 0
 
-		local function seglen(i)
-			local dx = trail[i-1].drawX - trail[i].drawX
-			local dy = trail[i-1].drawY - trail[i].drawY
-			return math.sqrt(dx*dx + dy*dy)
-		end
+    for i = 2, #trail do
+        local prevSeg = trail[i-1]
+        local seg = trail[i]
+        local ax, ay = prevSeg.drawX, prevSeg.drawY
+        local bx, by = seg.drawX, seg.drawY
 
-		-- advance 'walked' until we’re past the neck
-		local startIndex = 2
-		while startIndex < #trail and walked < guardDist do
-			walked = walked + seglen(startIndex)
-			startIndex = startIndex + 1
-		end
-
-		-- If tail vacated the head cell this tick, don’t count that as a hit
-		local tailBeforeCol, tailBeforeRow = nil, nil
-		do
-			local len = #trail
-			if len >= 1 then
-				local tbx, tby = trail[len].drawX, trail[len].drawY
-				if tbx and tby then
-					tailBeforeCol, tailBeforeRow = toCell(tbx, tby)
-				end
-			end
-		end
-
-		for i = startIndex, #trail do
-			local cx, cy = toCell(trail[i].drawX, trail[i].drawY)
-
-			-- allow stepping into the tail cell if the tail moved off this tick
-			local tailVacated =
-				(i == #trail) and (tailBeforeCol == headCol and tailBeforeRow == headRow)
-
-			if not tailVacated and cx == headCol and cy == headRow then
-                                if self:consumeCrashShield() then
-                                        -- survived; optional FX here
-                                        self:onShieldConsumed(hx, hy, "self")
-                                else
-                                        isDead = true
-                                        return false, "self"
+        if ax and ay and bx and by then
+            local segDx = ax - bx
+            local segDy = ay - by
+            local segLen = math.sqrt(segDx * segDx + segDy * segDy)
+            if segLen > 0 then
+                walked = walked + segLen
+                if walked > guardDist then
+                    local cx, cy = closestPointOnSegment(hx, hy, ax, ay, bx, by)
+                    local distSq = distanceSquared(hx, hy, cx, cy)
+                    if distSq < HEAD_RADIUS_SQ then
+                        local skip = false
+                        if i == #trail and tailBeforeX and tailBeforeY then
+                            local beforeSq = distanceSquared(hx, hy, tailBeforeX, tailBeforeY)
+                            if beforeSq <= HEAD_RADIUS_SQ then
+                                if tailAfterX and tailAfterY then
+                                    local afterSq = distanceSquared(hx, hy, tailAfterX, tailAfterY)
+                                    if afterSq >= HEAD_RADIUS_SQ then
+                                        skip = true
+                                    end
                                 end
-			end
-		end
-	end
+                            end
+                        end
+
+                        if not skip then
+                            collidedWithSelf = true
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if collidedWithSelf then
+        if self:consumeCrashShield() then
+            self:onShieldConsumed(hx, hy, "self")
+        else
+            isDead = true
+            return false, "self"
+        end
+    end
 
     -- update timers
     if popTimer > 0 then
@@ -1297,6 +1374,7 @@ function Snake:getStateSnapshot()
         direction = { x = direction.x, y = direction.y },
         pendingDir = { x = pendingDir.x, y = pendingDir.y },
         trail = cloneTrail(trail),
+        previousHead = (previousHeadX and previousHeadY) and { x = previousHeadX, y = previousHeadY } or nil,
         segmentCount = segmentCount,
         moveTimer = moveTimer,
         popTimer = popTimer,
@@ -1358,6 +1436,13 @@ function Snake:restoreStateSnapshot(snapshot)
     pendingDir = copyDirectionVector(snapshot.pendingDir, direction)
 
     trail = cloneTrail(snapshot.trail or trail)
+    if snapshot.previousHead then
+        previousHeadX = snapshot.previousHead.x
+        previousHeadY = snapshot.previousHead.y
+    else
+        local hx, hy = self:getHead()
+        previousHeadX, previousHeadY = hx, hy
+    end
     segmentCount = snapshot.segmentCount or segmentCount
     moveTimer = snapshot.moveTimer or 0
     popTimer = snapshot.popTimer or 0
