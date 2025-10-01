@@ -355,7 +355,7 @@ function Arena:drawExit()
     love.graphics.setColor(0.05, 0.06, 0.08, 1)
     love.graphics.circle("fill", cx, cy, radius)
 
-    local innerRadius = radius * (0.68 + 0.06 * math.sin(time * 3.1))
+    local innerRadius = radius * (0.78 + 0.06 * math.sin(time * 3.1))
     love.graphics.setColor(0, 0, 0, 1)
     love.graphics.circle("fill", cx, cy, innerRadius)
 
@@ -364,8 +364,6 @@ function Arena:drawExit()
     love.graphics.setBlendMode("add", "alphamultiply")
     love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], 0.24 * eased)
     love.graphics.circle("fill", cx, cy, radius * (1.18 + 0.08 * math.sin(time * 2.4)), 48)
-    love.graphics.setColor(1, 1, 1, 0.18 * eased)
-    love.graphics.circle("line", cx, cy, radius * (1.08 + 0.05 * math.sin(time * 4.2)), 48)
     love.graphics.setBlendMode(prevMode, prevAlphaMode)
 
     love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], 0.6 * eased)
