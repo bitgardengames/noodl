@@ -210,7 +210,7 @@ function Arena:drawBorder()
     local prevLineStyle = love.graphics.getLineStyle()
     local prevLineJoin = love.graphics.getLineJoin()
     love.graphics.setLineStyle("smooth")
-    love.graphics.setLineJoin("round")
+    love.graphics.setLineJoin("bevel")
     love.graphics.setLineWidth(highlightWidth)
 
     -- Top edge highlight

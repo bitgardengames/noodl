@@ -75,7 +75,7 @@ end
 shapeDrawers.happy = function()
     love.graphics.setColor(0, 0, 0, 1)
     love.graphics.setLineWidth(EYE_RADIUS * 1.1)
-    love.graphics.setLineJoin("round")
+    love.graphics.setLineJoin("bevel")
     drawHappyArc(LEFT_EYE_CENTER_X, 1.0)
     drawHappyArc(RIGHT_EYE_CENTER_X, 1.0)
 end
@@ -83,7 +83,7 @@ end
 shapeDrawers.veryHappy = function()
     love.graphics.setColor(0, 0, 0, 1)
     love.graphics.setLineWidth(EYE_RADIUS * 1.3)
-    love.graphics.setLineJoin("round")
+    love.graphics.setLineJoin("bevel")
     drawHappyArc(LEFT_EYE_CENTER_X, 1.3)
     drawHappyArc(RIGHT_EYE_CENTER_X, 1.3)
 end
@@ -91,7 +91,7 @@ end
 shapeDrawers.sad = function()
     love.graphics.setColor(0, 0, 0, 1)
     love.graphics.setLineWidth(EYE_RADIUS * 0.9)
-    love.graphics.setLineJoin("round")
+    love.graphics.setLineJoin("bevel")
     drawSadArc(LEFT_EYE_CENTER_X, 0.2)
     drawSadArc(RIGHT_EYE_CENTER_X, 0.2)
 end
