@@ -21,7 +21,6 @@ local transitionBlockedEvents = {
     mousepressed = true,
     mousereleased = true,
     keypressed = true,
-    keyreleased = true,
     joystickpressed = true,
     joystickreleased = true,
     joystickaxis = true,

@@ -14,7 +14,6 @@ local handlers = {
     mousereleased = "mousereleased",
     wheelmoved = "wheelmoved",
     keypressed = "keypressed",
-    keyreleased = "keyreleased",
     joystickpressed = "joystickpressed",
     joystickreleased = "joystickreleased",
     joystickaxis = "joystickaxis",
