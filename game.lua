@@ -153,9 +153,17 @@ function Game:enter()
 end
 
 function Game:leave()
-	if self.mode and self.mode.leave then
-		self.mode.leave(self)
-	end
+        if self.mode and self.mode.leave then
+                self.mode.leave(self)
+        end
+
+        if Snake and Snake.resetModifiers then
+                Snake:resetModifiers()
+        end
+
+        if UI and UI.setUpgradeIndicators then
+                UI:setUpgradeIndicators(nil)
+        end
 end
 
 function Game:beginDeath()
