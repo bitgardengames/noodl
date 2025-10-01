@@ -54,6 +54,9 @@ local Floors = {
             rock       = {0.48, 0.32, 0.55, 1}, -- luminous violet slate
             sawColor   = {0.85, 0.6, 0.9, 1},   -- bright fungal pink-pop
         },
+        backgroundEffect = {
+            type = "mushroomPulse",
+        },
         traits = {"glowingSpores"},
     },
     [4] = {

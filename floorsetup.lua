@@ -247,6 +247,7 @@ end
 
 function FloorSetup.prepare(floorNum, floorData)
     applyPalette(floorData and floorData.palette)
+    Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
     resetFloorEntities()
     local safeZone, reservedCells = prepareOccupancy()
 
