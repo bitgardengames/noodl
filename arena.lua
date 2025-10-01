@@ -166,7 +166,7 @@ function Arena:drawBorder()
     love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
     -- Highlight pass for the top + left edges
-    local highlightShift = 2
+    local highlightShift = 3
     local function appendArcPoints(points, cx, cy, radius, startAngle, endAngle, segments, skipFirst)
         if segments < 1 then
             segments = 1
@@ -227,24 +227,30 @@ function Arena:drawBorder()
     love.graphics.setLineJoin(prevLineJoin)
 
     -- Soft caps for highlight ends
-    local capRadius = highlightWidth * 0.65
-    local capAlpha = highlight[4] * 0.6
-    love.graphics.setColor(highlight[1], highlight[2], highlight[3], capAlpha)
     local topCapX = bx + bw - radius - highlightShift
     local topCapY = by - highlightOffset - highlightShift
     local leftCapX = bx - highlightOffset - highlightShift
     local leftCapY = by + bh - radius - highlightShift
-    love.graphics.circle("fill", topCapX, topCapY, capRadius)
-    love.graphics.circle("fill", leftCapX, leftCapY, capRadius)
 
-    -- Feathered outer ring for even softer caps
-    local featherRadius = capRadius * 1.45
-    local featherAlpha = highlight[4] * 0.25
-    if featherAlpha > 0 then
-        love.graphics.setColor(highlight[1], highlight[2], highlight[3], featherAlpha)
-        love.graphics.circle("fill", topCapX, topCapY, featherRadius)
-        love.graphics.circle("fill", leftCapX, leftCapY, featherRadius)
+    local capRadius = highlightWidth * 0.75
+    local featherRadius = capRadius * 1.5
+    local capAlpha = highlight[4] * 0.55
+    local featherAlpha = highlight[4] * 0.22
+
+    local function drawHighlightCap(cx, cy)
+        if capAlpha > 0 then
+            love.graphics.setColor(highlight[1], highlight[2], highlight[3], capAlpha)
+            love.graphics.circle("fill", cx, cy, capRadius)
+        end
+
+        if featherAlpha > 0 then
+            love.graphics.setColor(highlight[1], highlight[2], highlight[3], featherAlpha)
+            love.graphics.circle("fill", cx, cy, featherRadius)
+        end
     end
+
+    drawHighlightCap(topCapX, topCapY)
+    drawHighlightCap(leftCapX, leftCapY)
 
     love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
 
