@@ -109,7 +109,7 @@ local function getColorComponents(color, fallback)
         a = 1
     end
 
-    return r, g, b, a
+    return {r, g, b, a}
 end
 
 local function selectGlowColor(palette)
