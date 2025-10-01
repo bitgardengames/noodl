@@ -185,6 +185,8 @@ function Arena:drawBorder()
     local highlight = getHighlightColor(Theme.arenaBorder)
     local highlightWidth = math.max(1.5, thickness * 0.32)
     local highlightOffset = 2
+    local cornerOffsetX = 2
+    local cornerOffsetY = 2
     local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
     local scissorY = math.floor(by - highlightWidth - highlightOffset - highlightShift)
     local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset + highlightShift * 2)
@@ -197,7 +199,12 @@ function Arena:drawBorder()
     topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
     topPoints[#topPoints + 1] = bx + radius - highlightShift
     topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+    local cornerStartIndex = #topPoints + 1
     appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -math.pi / 2, -math.pi, arcSegments, true)
+    for i = cornerStartIndex, #topPoints, 2 do
+        topPoints[i] = topPoints[i] + cornerOffsetX
+        topPoints[i + 1] = topPoints[i + 1] + cornerOffsetY
+    end
 
     local leftPoints = {}
     leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
@@ -214,7 +221,7 @@ function Arena:drawBorder()
     love.graphics.setLineWidth(highlightWidth)
 
     -- Top edge highlight
-    love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.4))
+    love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.4 + cornerOffsetY))
     love.graphics.line(topPoints)
 
     -- Left edge highlight
