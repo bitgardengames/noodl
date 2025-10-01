@@ -815,6 +815,17 @@ function Snake:update(dt)
         end
     end
 
+    if self.timeDilation and self.timeDilation.active then
+        local scale = self.timeDilation.timeScale or 1
+        if not (scale and scale > 0) then
+            scale = 0.05
+        end
+
+        if scale ~= 1 then
+            speed = speed / scale
+        end
+    end
+
     hole = descendingHole
     if hole and head then
         local dx = hole.x - head.drawX
@@ -1096,12 +1107,25 @@ function Snake:activateTimeDilation()
         return false
     end
 
+    local charges = ability.floorCharges
+    if charges == nil and ability.maxFloorUses then
+        charges = ability.maxFloorUses
+        ability.floorCharges = charges
+    end
+    if charges ~= nil and charges <= 0 then
+        return false
+    end
+
     ability.active = true
     ability.timer = ability.duration or 0
     ability.cooldownTimer = ability.cooldown or 0
 
     if ability.timer <= 0 then
         ability.active = false
+    end
+
+    if ability.active and charges ~= nil then
+        ability.floorCharges = math.max(0, charges - 1)
     end
 
     local hx, hy = self:getHead()
@@ -1133,6 +1157,8 @@ function Snake:getTimeDilationState()
         cooldown = ability.cooldown or 0,
         cooldownTimer = ability.cooldownTimer or 0,
         timeScale = ability.timeScale or 1,
+        floorCharges = ability.floorCharges,
+        maxFloorUses = ability.maxFloorUses,
     }
 end
 
@@ -1279,6 +1305,8 @@ function Snake:getStateSnapshot()
             active = self.timeDilation.active or false,
             timer = self.timeDilation.timer or 0,
             cooldownTimer = self.timeDilation.cooldownTimer or 0,
+            floorCharges = self.timeDilation.floorCharges,
+            maxFloorUses = self.timeDilation.maxFloorUses,
         }
     end
 
@@ -1346,6 +1374,12 @@ function Snake:restoreStateSnapshot(snapshot)
         self.timeDilation.active = snapshot.timeDilation.active or false
         self.timeDilation.timer = snapshot.timeDilation.timer or 0
         self.timeDilation.cooldownTimer = snapshot.timeDilation.cooldownTimer or 0
+        if snapshot.timeDilation.floorCharges ~= nil then
+            self.timeDilation.floorCharges = snapshot.timeDilation.floorCharges
+        end
+        if snapshot.timeDilation.maxFloorUses ~= nil then
+            self.timeDilation.maxFloorUses = snapshot.timeDilation.maxFloorUses
+        end
     elseif self.timeDilation then
         self.timeDilation.active = false
         self.timeDilation.timer = 0
