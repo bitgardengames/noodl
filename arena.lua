@@ -166,6 +166,7 @@ function Arena:drawBorder()
     love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
     -- Highlight pass for the top + left edges
+    local highlightShift = 1
     local function appendArcPoints(points, cx, cy, radius, startAngle, endAngle, segments, skipFirst)
         if segments < 1 then
             segments = 1
@@ -175,8 +176,8 @@ function Arena:drawBorder()
             if not (skipFirst and i == 0) then
                 local t = i / segments
                 local angle = startAngle + (endAngle - startAngle) * t
-                points[#points + 1] = cx + math.cos(angle) * radius
-                points[#points + 1] = cy + math.sin(angle) * radius
+                points[#points + 1] = cx + math.cos(angle) * radius - highlightShift
+                points[#points + 1] = cy + math.sin(angle) * radius - highlightShift
             end
         end
     end
@@ -184,32 +185,32 @@ function Arena:drawBorder()
     local highlight = getHighlightColor(Theme.arenaBorder)
     local highlightWidth = math.max(2, thickness * 0.45)
     local highlightOffset = 2
-    local scissorX = math.floor(bx - highlightWidth - highlightOffset)
-    local scissorY = math.floor(by - highlightWidth - highlightOffset)
-    local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset)
-    local scissorH = math.ceil(bh + highlightWidth * 2 + highlightOffset)
+    local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
+    local scissorY = math.floor(by - highlightWidth - highlightOffset - highlightShift)
+    local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset + highlightShift * 2)
+    local scissorH = math.ceil(bh + highlightWidth * 2 + highlightOffset + highlightShift * 2)
     local outerRadius = radius + highlightOffset
     local arcSegments = math.max(6, math.floor(outerRadius * 0.75))
 
     local topPoints = {}
-    topPoints[#topPoints + 1] = bx + bw - radius
-    topPoints[#topPoints + 1] = by - highlightOffset
-    topPoints[#topPoints + 1] = bx + radius
-    topPoints[#topPoints + 1] = by - highlightOffset
-    appendArcPoints(topPoints, bx + radius, by + radius, outerRadius, -math.pi / 2, -math.pi, arcSegments, true)
+    topPoints[#topPoints + 1] = bx + bw - radius - highlightShift
+    topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+    topPoints[#topPoints + 1] = bx + radius - highlightShift
+    topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+    appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -math.pi / 2, -math.pi, arcSegments, true)
 
     local leftPoints = {}
-    leftPoints[#leftPoints + 1] = bx - highlightOffset
-    leftPoints[#leftPoints + 1] = by + radius
-    leftPoints[#leftPoints + 1] = bx - highlightOffset
-    leftPoints[#leftPoints + 1] = by + bh - radius
+    leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
+    leftPoints[#leftPoints + 1] = by + radius - highlightShift
+    leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
+    leftPoints[#leftPoints + 1] = by + bh - radius - highlightShift
 
     love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
     local prevLineWidth = love.graphics.getLineWidth()
     local prevLineStyle = love.graphics.getLineStyle()
     local prevLineJoin = love.graphics.getLineJoin()
     love.graphics.setLineStyle("smooth")
-    love.graphics.setLineJoin("bevel")
+    love.graphics.setLineJoin("round")
     love.graphics.setLineWidth(highlightWidth)
 
     -- Top edge highlight
@@ -224,6 +225,14 @@ function Arena:drawBorder()
     love.graphics.setLineWidth(prevLineWidth)
     love.graphics.setLineStyle(prevLineStyle)
     love.graphics.setLineJoin(prevLineJoin)
+
+    -- Soft caps for highlight ends
+    local capRadius = highlightWidth * 0.55
+    local capAlpha = highlight[4] * 0.6
+    love.graphics.setColor(highlight[1], highlight[2], highlight[3], capAlpha)
+    love.graphics.circle("fill", bx + bw - radius - highlightShift, by - highlightOffset - highlightShift, capRadius)
+    love.graphics.circle("fill", bx - highlightOffset - highlightShift, by + bh - radius - highlightShift, capRadius)
+    love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
 
     love.graphics.setCanvas()
 
