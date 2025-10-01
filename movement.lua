@@ -13,6 +13,8 @@ local Achievements = require("achievements")
 local Movement = {}
 
 local SEGMENT_SIZE = 24 -- same size as rocks and snake
+local HALF_SEGMENT = SEGMENT_SIZE / 2
+local COLLISION_SAMPLE_STEP = SEGMENT_SIZE * 0.5
 
 local shieldStatMap = {
         wall = {
@@ -59,6 +61,38 @@ end
 local function aabb(ax, ay, aw, ah, bx, by, bw, bh)
         return ax < bx + bw and ax + aw > bx and
                    ay < by + bh and ay + ah > by
+end
+
+local function sampleHeadPath(prevX, prevY, headX, headY, callback)
+        if not callback then
+                return nil
+        end
+
+        local startX = prevX or headX
+        local startY = prevY or headY
+        if not (startX and startY and headX and headY) then
+                return nil
+        end
+
+        local dx = headX - startX
+        local dy = headY - startY
+        local dist = math.sqrt(dx * dx + dy * dy)
+        local steps = 1
+        if dist > 0 then
+                steps = math.max(1, math.ceil(dist / COLLISION_SAMPLE_STEP))
+        end
+
+        for i = 0, steps do
+                local t = steps == 0 and 1 or (i / steps)
+                local sx = startX + dx * t
+                local sy = startY + dy * t
+                local result = callback(sx, sy)
+                if result then
+                        return result, sx, sy
+                end
+        end
+
+        return nil
 end
 
 local function rerouteAlongWall(headX, headY)
@@ -282,73 +316,92 @@ local function handleWallCollision(headX, headY)
         return headX, headY
 end
 
-local function handleRockCollision(headX, headY)
-        for _, rock in ipairs(Rocks:getAll()) do
-                if aabb(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE, rock.x, rock.y, rock.w, rock.h) then
-                        local centerX = rock.x + rock.w / 2
-                        local centerY = rock.y + rock.h / 2
-
-                        if Snake.isDashActive and Snake:isDashActive() then
-                                Rocks:destroy(rock)
-                                Particles:spawnBurst(centerX, centerY, {
-                                        count = 10,
-                                        speed = 120,
-                                        speedVariance = 70,
-                                        life = 0.35,
-                                        size = 4,
-                                        color = {1.0, 0.78, 0.32, 1},
-                                        spread = math.pi * 2,
-                                        angleJitter = math.pi * 0.6,
-                                        drag = 3.0,
-                                        gravity = 180,
-                                        scaleMin = 0.5,
-                                        scaleVariance = 0.6,
-                                        fadeTo = 0.05,
-                                })
-                                Audio:playSound("shield_rock")
-                                if Snake.onDashBreakRock then
-                                        Snake:onDashBreakRock(centerX, centerY)
-                                end
-                        else
-                                if not Snake:consumeCrashShield() then
-                                        return "dead", "rock"
-                                end
-
-                                Particles:spawnBurst(centerX, centerY, {
-                                        count = 8,
-                                        speed = 40,
-                                        speedVariance = 36,
-                                        life = 0.4,
-                                        size = 3,
-                                        color = {0.9, 0.8, 0.5, 1},
-                                        spread = math.pi * 2,
-                                        angleJitter = math.pi * 0.8,
-                                        drag = 2.8,
-                                        gravity = 210,
-                                        scaleMin = 0.55,
-                                        scaleVariance = 0.5,
-                                        fadeTo = 0.05,
-                                })
-                                Audio:playSound("shield_rock")
-                                Rocks:destroy(rock, { spawnFX = false })
-
-                                if Snake.onShieldConsumed then
-                                        Snake:onShieldConsumed(centerX, centerY, "rock")
-                                end
-
-                                recordShieldEvent("rock")
+local function handleRockCollision(prevHeadX, prevHeadY, headX, headY)
+        local function checkAtPoint(px, py)
+                local boxX = px - HALF_SEGMENT
+                local boxY = py - HALF_SEGMENT
+                for _, rock in ipairs(Rocks:getAll()) do
+                        local rx = (rock.x or 0) - (rock.w or SEGMENT_SIZE) / 2
+                        local ry = (rock.y or 0) - (rock.h or SEGMENT_SIZE) / 2
+                        if aabb(boxX, boxY, SEGMENT_SIZE, SEGMENT_SIZE, rx, ry, rock.w, rock.h) then
+                                return rock
                         end
-
-                        break
                 end
+        end
+
+        local rock = sampleHeadPath(prevHeadX, prevHeadY, headX, headY, checkAtPoint)
+        if not rock then
+                return
+        end
+
+        local centerX = rock.x + rock.w / 2
+        local centerY = rock.y + rock.h / 2
+
+        if Snake.isDashActive and Snake:isDashActive() then
+                Rocks:destroy(rock)
+                Particles:spawnBurst(centerX, centerY, {
+                        count = 10,
+                        speed = 120,
+                        speedVariance = 70,
+                        life = 0.35,
+                        size = 4,
+                        color = {1.0, 0.78, 0.32, 1},
+                        spread = math.pi * 2,
+                        angleJitter = math.pi * 0.6,
+                        drag = 3.0,
+                        gravity = 180,
+                        scaleMin = 0.5,
+                        scaleVariance = 0.6,
+                        fadeTo = 0.05,
+                })
+                Audio:playSound("shield_rock")
+                if Snake.onDashBreakRock then
+                        Snake:onDashBreakRock(centerX, centerY)
+                end
+        else
+                if not Snake:consumeCrashShield() then
+                        return "dead", "rock"
+                end
+
+                Particles:spawnBurst(centerX, centerY, {
+                        count = 8,
+                        speed = 40,
+                        speedVariance = 36,
+                        life = 0.4,
+                        size = 3,
+                        color = {0.9, 0.8, 0.5, 1},
+                        spread = math.pi * 2,
+                        angleJitter = math.pi * 0.8,
+                        drag = 2.8,
+                        gravity = 210,
+                        scaleMin = 0.55,
+                        scaleVariance = 0.5,
+                        fadeTo = 0.05,
+                })
+                Audio:playSound("shield_rock")
+                Rocks:destroy(rock, { spawnFX = false })
+
+                if Snake.onShieldConsumed then
+                        Snake:onShieldConsumed(centerX, centerY, "rock")
+                end
+
+                recordShieldEvent("rock")
         end
 end
 
-local function handleSawCollision(headX, headY)
-        local sawHit = Saws:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+local function handleSawCollision(prevHeadX, prevHeadY, headX, headY)
+        local function checkAtPoint(px, py)
+                return Saws:checkCollision(px - HALF_SEGMENT, py - HALF_SEGMENT, SEGMENT_SIZE, SEGMENT_SIZE)
+        end
+
+        local sawHit, sampleX, sampleY = sampleHeadPath(prevHeadX, prevHeadY, headX, headY, checkAtPoint)
+
         if not sawHit then
                 return
         end
+
+        local collisionX = sampleX or headX
+        local collisionY = sampleY or headY
 
         local shielded = Snake:consumeCrashShield()
         local survivedSaw = shielded
@@ -363,7 +416,7 @@ local function handleSawCollision(headX, headY)
 
         Saws:destroy(sawHit)
 
-        Particles:spawnBurst(headX, headY, {
+        Particles:spawnBurst(collisionX, collisionY, {
                 count = 8,
                 speed = 40,
                 speedVariance = 34,
@@ -381,7 +434,7 @@ local function handleSawCollision(headX, headY)
         Audio:playSound("shield_saw")
 
         if Snake.onShieldConsumed then
-                Snake:onShieldConsumed(headX, headY, "saw")
+                Snake:onShieldConsumed(collisionX, collisionY, "saw")
         end
 
         if shielded then
@@ -401,7 +454,9 @@ function Movement:update(dt)
                 return "dead", cause or "self"
         end
 
+        local prevHeadX, prevHeadY = Snake:getPreviousHead()
         local headX, headY = Snake:getHead()
+        local rawHeadX, rawHeadY = headX, headY
 
         local wallCause
         headX, headY, wallCause = handleWallCollision(headX, headY)
@@ -409,17 +464,23 @@ function Movement:update(dt)
                 return "dead", wallCause
         end
 
-        local state, stateCause = handleRockCollision(headX, headY)
+        local state, stateCause = handleRockCollision(prevHeadX, prevHeadY, rawHeadX, rawHeadY)
         if state then
                 return state, stateCause
         end
 
-        local sawState, sawCause = handleSawCollision(headX, headY)
+        local sawState, sawCause = handleSawCollision(prevHeadX, prevHeadY, rawHeadX, rawHeadY)
         if sawState then
                 return sawState, sawCause
         end
 
-        if Fruit:checkCollisionWith(headX, headY) then
+        local fruitHit = sampleHeadPath(prevHeadX, prevHeadY, rawHeadX, rawHeadY, function(px, py)
+                if Fruit:checkCollisionWith(px, py) then
+                        return true
+                end
+        end)
+
+        if fruitHit then
                 return "scored"
         end
 end
