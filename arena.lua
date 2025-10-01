@@ -232,6 +232,8 @@ function Arena:drawBorder()
     local leftCapX = bx - highlightOffset - highlightShift
     local leftCapY = by + bh - radius - highlightShift
 
+    local cornerCapOffset = 2
+
     local capRadius = highlightWidth * 0.75
     local featherRadius = capRadius * 1.5
     local capAlpha = highlight[4] * 0.55
@@ -249,8 +251,8 @@ function Arena:drawBorder()
         end
     end
 
-    drawHighlightCap(topCapX, topCapY)
-    drawHighlightCap(leftCapX, leftCapY)
+    drawHighlightCap(topCapX + cornerCapOffset, topCapY + cornerCapOffset)
+    drawHighlightCap(leftCapX + cornerCapOffset, leftCapY + cornerCapOffset)
 
     love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
 
