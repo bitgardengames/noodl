@@ -166,7 +166,7 @@ function Arena:drawBorder()
     love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
     -- Highlight pass for the top + left edges
-    local highlightShift = 1
+    local highlightShift = 2
     local function appendArcPoints(points, cx, cy, radius, startAngle, endAngle, segments, skipFirst)
         if segments < 1 then
             segments = 1
@@ -183,7 +183,7 @@ function Arena:drawBorder()
     end
 
     local highlight = getHighlightColor(Theme.arenaBorder)
-    local highlightWidth = math.max(2, thickness * 0.45)
+    local highlightWidth = math.max(1.5, thickness * 0.32)
     local highlightOffset = 2
     local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
     local scissorY = math.floor(by - highlightWidth - highlightOffset - highlightShift)
@@ -227,11 +227,25 @@ function Arena:drawBorder()
     love.graphics.setLineJoin(prevLineJoin)
 
     -- Soft caps for highlight ends
-    local capRadius = highlightWidth * 0.55
+    local capRadius = highlightWidth * 0.65
     local capAlpha = highlight[4] * 0.6
     love.graphics.setColor(highlight[1], highlight[2], highlight[3], capAlpha)
-    love.graphics.circle("fill", bx + bw - radius - highlightShift, by - highlightOffset - highlightShift, capRadius)
-    love.graphics.circle("fill", bx - highlightOffset - highlightShift, by + bh - radius - highlightShift, capRadius)
+    local topCapX = bx + bw - radius - highlightShift
+    local topCapY = by - highlightOffset - highlightShift
+    local leftCapX = bx - highlightOffset - highlightShift
+    local leftCapY = by + bh - radius - highlightShift
+    love.graphics.circle("fill", topCapX, topCapY, capRadius)
+    love.graphics.circle("fill", leftCapX, leftCapY, capRadius)
+
+    -- Feathered outer ring for even softer caps
+    local featherRadius = capRadius * 1.45
+    local featherAlpha = highlight[4] * 0.25
+    if featherAlpha > 0 then
+        love.graphics.setColor(highlight[1], highlight[2], highlight[3], featherAlpha)
+        love.graphics.circle("fill", topCapX, topCapY, featherRadius)
+        love.graphics.circle("fill", leftCapX, leftCapY, featherRadius)
+    end
+
     love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
 
     love.graphics.setCanvas()
