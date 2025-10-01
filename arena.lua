@@ -168,21 +168,28 @@ function Arena:drawBorder()
     -- Highlight pass for the top + left edges
     local highlight = getHighlightColor(Theme.arenaBorder)
     local highlightWidth = math.max(2, thickness * 0.45)
-    local scissorX = math.floor(bx - highlightWidth)
-    local scissorY = math.floor(by - highlightWidth)
-    local scissorW = math.ceil(bw + highlightWidth * 2)
-    local scissorH = math.ceil(bh + highlightWidth * 2)
+    local highlightOffset = 2
+    local highlightRadius = highlightWidth * 0.5
+    local scissorX = math.floor(bx - highlightWidth - highlightOffset)
+    local scissorY = math.floor(by - highlightWidth - highlightOffset)
+    local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset)
+    local scissorH = math.ceil(bh + highlightWidth * 2 + highlightOffset)
 
     love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-    love.graphics.setLineWidth(highlightWidth)
 
     -- Top edge highlight
-    love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.2))
-    love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
+    love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.4))
+    local topX = bx - highlightWidth * 0.5 - highlightOffset
+    local topY = by - highlightWidth * 0.5 - highlightOffset
+    local topW = bw + highlightWidth
+    love.graphics.rectangle("fill", topX, topY, topW, highlightWidth, highlightRadius, highlightRadius)
 
     -- Left edge highlight
-    love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.2), scissorH)
-    love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
+    love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.4), scissorH)
+    local leftX = bx - highlightWidth * 0.5 - highlightOffset
+    local leftY = by - highlightWidth * 0.5 - highlightOffset
+    local leftH = bh + highlightWidth
+    love.graphics.rectangle("fill", leftX, leftY, highlightWidth, leftH, highlightRadius, highlightRadius)
 
     love.graphics.setScissor()
 
