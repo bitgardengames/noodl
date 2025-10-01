@@ -218,6 +218,64 @@ local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
   love.graphics.setLineWidth(1)
 end
 
+local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
+  if not data then return end
+
+  local duration = data.duration or 0
+  if duration <= 0 then duration = 1 end
+
+  local timer = math.max(0, data.timer or 0)
+  local cooldown = data.cooldown or 0
+  local cooldownTimer = math.max(0, data.cooldownTimer or 0)
+
+  local readiness
+  if cooldown > 0 then
+    readiness = 1 - math.min(1, cooldownTimer / math.max(0.0001, cooldown))
+  else
+    readiness = data.active and 1 or 0.6
+  end
+
+  local intensity = readiness * 0.35
+  if data.active then
+    intensity = math.max(intensity, 0.45) + 0.45 * math.min(1, timer / duration)
+  end
+
+  if intensity <= 0 then return end
+
+  local time = 0
+  if love and love.timer and love.timer.getTime then
+    time = love.timer.getTime()
+  end
+
+  local baseRadius = SEGMENT_SIZE * (0.95 + 0.35 * intensity)
+
+  drawSoftGlow(hx, hy, baseRadius * 1.55, 0.45, 0.9, 1, 0.3 + 0.45 * intensity)
+
+  love.graphics.push("all")
+
+  love.graphics.setColor(0.4, 0.8, 1, 0.25 + 0.4 * intensity)
+  love.graphics.setLineWidth(2)
+  local wobble = 1 + 0.08 * math.sin(time * 2.2)
+  love.graphics.circle("line", hx, hy, baseRadius * wobble)
+
+  local tickCount = 6
+  local spin = time * (data.active and -1.2 or -0.6)
+  love.graphics.setColor(0.6, 0.95, 1, 0.2 + 0.35 * intensity)
+  for i = 1, tickCount do
+    local angle = spin + (i / tickCount) * math.pi * 2
+    local inner = baseRadius * 0.55
+    local outer = baseRadius * (1.25 + 0.1 * math.sin(time * 3 + i))
+    love.graphics.line(
+      hx + math.cos(angle) * inner,
+      hy + math.sin(angle) * inner,
+      hx + math.cos(angle) * outer,
+      hy + math.sin(angle) * outer
+    )
+  end
+
+  love.graphics.pop()
+end
+
 local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
   if not data or not data.active then return end
 
@@ -245,6 +303,69 @@ local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
 
   love.graphics.setColor(1, 1, 1, 1)
   love.graphics.setLineWidth(1)
+end
+
+local function drawDashStreaks(trail, SEGMENT_SIZE, data)
+  if not data then return end
+  if not trail or #trail < 2 then return end
+
+  local duration = data.duration or 0
+  if duration <= 0 then duration = 1 end
+
+  local timer = math.max(0, data.timer or 0)
+  local cooldown = data.cooldown or 0
+  local cooldownTimer = math.max(0, data.cooldownTimer or 0)
+
+  local intensity = 0
+  if data.active then
+    intensity = math.max(0.35, math.min(1, timer / duration + 0.2))
+  elseif cooldown > 0 then
+    intensity = math.max(0, 1 - cooldownTimer / math.max(0.0001, cooldown)) * 0.45
+  else
+    intensity = 0.3
+  end
+
+  if intensity <= 0 then return end
+
+  local time = 0
+  if love and love.timer and love.timer.getTime then
+    time = love.timer.getTime()
+  end
+
+  local streaks = math.min(#trail - 1, 6)
+  if streaks <= 0 then return end
+
+  love.graphics.push("all")
+  love.graphics.setBlendMode("add")
+
+  for i = 1, streaks do
+    local seg = trail[i]
+    local nextSeg = trail[i + 1]
+    local x1, y1 = ptXY(seg)
+    local x2, y2 = ptXY(nextSeg)
+    if x1 and y1 and x2 and y2 then
+      local fade = (streaks - i + 1) / streaks
+      local wobble = math.sin(time * 8 + i) * SEGMENT_SIZE * 0.05
+      local dirX, dirY = x2 - x1, y2 - y1
+      local length = math.sqrt(dirX * dirX + dirY * dirY)
+      if length > 1e-4 then
+        dirX, dirY = dirX / length, dirY / length
+      end
+      local perpX, perpY = -dirY, dirX
+
+      local offsetX = perpX * wobble
+      local offsetY = perpY * wobble
+
+      love.graphics.setColor(1, 0.76, 0.28, 0.18 + 0.4 * intensity * fade)
+      love.graphics.setLineWidth(SEGMENT_SIZE * (0.35 + 0.12 * intensity * fade))
+      love.graphics.line(x1 + offsetX, y1 + offsetY, x2 + offsetX, y2 + offsetY)
+
+      love.graphics.setColor(1, 0.42, 0.12, 0.15 + 0.25 * intensity * fade)
+      love.graphics.circle("fill", x2 + offsetX * 0.5, y2 + offsetY * 0.5, SEGMENT_SIZE * 0.16 * fade)
+    end
+  end
+
+  love.graphics.pop()
 end
 
 local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
@@ -297,6 +418,10 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   end
 
   if hx and hy and drawFace ~= false then
+    if upgradeVisuals and upgradeVisuals.timeDilation then
+      drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
+    end
+
     if upgradeVisuals and upgradeVisuals.adrenaline then
       drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
     end
@@ -305,6 +430,10 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     Face:draw(hx, hy, faceScale)
 
     drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
+
+    if upgradeVisuals and upgradeVisuals.dash then
+      drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
+    end
 
     if upgradeVisuals and upgradeVisuals.stonebreaker then
       drawStonebreakerAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.stonebreaker)
