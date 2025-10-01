@@ -143,7 +143,9 @@ function GameInput:handleGamepadAxis(axis, value)
     local digitalKey = config.slot .. "Digital"
     if state[digitalKey] ~= direction then
         state[digitalKey] = direction
-        if direction then
+
+        local allowDigital = not (self.game.state == "playing" and not self.transition:isShopActive())
+        if allowDigital and direction then
             self:handleGamepadButton(direction)
         end
     end
