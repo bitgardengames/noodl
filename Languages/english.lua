@@ -288,18 +288,6 @@ local english = {
                 more_modifiers_one = "+${count} more modifier",
                 more_modifiers_other = "+${count} more modifiers",
             },
-            run_modifiers = {
-                section_title = "Run Mutators",
-            },
-            rogue_choices = {
-                title = "Forge Your Path",
-                prompt = "Choose a mutator to shape the next floor.",
-                boons_label = "Boons",
-                drawbacks_label = "Costs",
-                confirm_hint = "Enter or click to commit. Selection is final.",
-                gamepad_hint = "Use left/right or the stick to browse; press A to select.",
-                selection_locked = "Mutator locked in!",
-            },
         },
         gamemodes = {
             unlock_popup = "${mode} Unlocked!",
