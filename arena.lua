@@ -4,6 +4,54 @@ local Audio = require("audio")
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
 
+local mushroomPulseShaderSource = [[
+extern float time;
+extern vec2 resolution;
+extern vec2 origin;
+extern vec4 baseColor;
+extern vec4 accentColor;
+extern vec4 glowColor;
+extern float intensity;
+
+vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+{
+    vec2 uv = (screen_coords - origin) / resolution;
+    vec2 centered = uv - vec2(0.5);
+
+    float aspect = resolution.x / max(resolution.y, 0.0001);
+    centered.x *= aspect;
+
+    float dist = length(centered);
+    float angle = atan(centered.y, centered.x);
+
+    float breathing = sin(time * 0.45) * 0.5 + 0.5;
+    float radial = sin(dist * (8.0 + intensity * 2.5) - time * (0.9 + intensity * 0.35));
+    float bloom = sin(dist * 6.0 + angle * 2.4 - time * (1.2 - intensity * 0.25));
+    float ribbon = sin(angle * 3.5 + time * 0.3 + dist * 4.0);
+
+    float mixAccent = clamp(radial * 0.5 + 0.5, 0.0, 1.0);
+    mixAccent = mixAccent * (0.35 + 0.45 * intensity) + breathing * 0.2 * intensity;
+
+    float mixGlow = clamp(bloom * 0.5 + 0.5, 0.0, 1.0) * (0.2 + 0.55 * intensity);
+    mixGlow += clamp(ribbon * 0.5 + 0.5, 0.0, 1.0) * 0.15 * intensity;
+
+    vec3 base = baseColor.rgb;
+    vec3 accent = mix(base, accentColor.rgb, 0.75);
+    vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.6);
+
+    vec3 colorBlend = mix(base, accent, clamp(mixAccent, 0.0, 1.0));
+    colorBlend = mix(colorBlend, glow, clamp(mixGlow, 0.0, 1.0));
+
+    float innerEdge = max(0.08, 0.25 - 0.12 * intensity);
+    float outerEdge = min(0.98, 0.78 + 0.18 * intensity);
+    float vignette = 1.0 - smoothstep(innerEdge, outerEdge, dist + breathing * 0.1 * intensity);
+
+    vec3 finalColor = mix(base, colorBlend, clamp(vignette, 0.0, 1.0));
+
+    return vec4(finalColor, baseColor.a) * color;
+}
+]]
+
 local function getModule(name)
     local loaded = package.loaded[name]
     if loaded ~= nil then
@@ -49,6 +97,93 @@ local function isTileInSafeZone(safeZone, col, row)
     return false
 end
 
+local function getColorComponents(color, fallback)
+    color = color or fallback or {0, 0, 0, 1}
+
+    local r = color[1] or 0
+    local g = color[2] or 0
+    local b = color[3] or 0
+    local a = color[4]
+
+    if a == nil then
+        a = 1
+    end
+
+    return r, g, b, a
+end
+
+local function selectGlowColor(palette)
+    if palette then
+        return palette.snake or palette.sawColor or palette.rock or palette.arenaBorder
+    end
+
+    return Theme.snakeDefault or Theme.rock or Theme.arenaBorder
+end
+
+local function configureMushroomPulse(effect, palette)
+    if not (effect and effect.shader) then
+        return
+    end
+
+    local base = (palette and palette.bgColor) or Theme.bgColor
+    local accent = (palette and palette.arenaBorder) or Theme.arenaBorder
+    local glow = selectGlowColor(palette)
+
+    effect.shader:sendColor("baseColor", getColorComponents(base, Theme.bgColor))
+    effect.shader:sendColor("accentColor", getColorComponents(accent, Theme.arenaBorder))
+    effect.shader:sendColor("glowColor", getColorComponents(glow, Theme.snakeDefault))
+end
+
+local function ensureMushroomPulseEffect(self)
+    self._backgroundEffects = self._backgroundEffects or {}
+
+    local effect = self._backgroundEffects.mushroomPulse
+    if effect and effect.shader then
+        return effect
+    end
+
+    effect = {
+        type = "mushroomPulse",
+        shader = love.graphics.newShader(mushroomPulseShaderSource),
+        backdropIntensity = 1.0,
+        arenaIntensity = 0.68,
+    }
+
+    self._backgroundEffects.mushroomPulse = effect
+
+    return effect
+end
+
+local function drawMushroomPulse(effect, x, y, w, h, intensity)
+    if not (effect and effect.shader) then
+        return false
+    end
+
+    if w <= 0 or h <= 0 then
+        return false
+    end
+
+    local shader = effect.shader
+
+    if shader.hasUniform and not shader:hasUniform("time") then
+        return false
+    end
+
+    local now = (love.timer and love.timer.getTime and love.timer.getTime()) or 0
+    shader:send("time", now)
+    shader:send("origin", {x, y})
+    shader:send("resolution", {w, h})
+    shader:send("intensity", intensity or 1.0)
+
+    love.graphics.push("all")
+    love.graphics.setShader(shader)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle("fill", x, y, w, h)
+    love.graphics.pop()
+
+    return true
+end
+
 local Arena = {
     x = 0, y = 0,
     width = 792,
@@ -56,7 +191,8 @@ local Arena = {
     tileSize = 24,
     cols = 0,
     rows = 0,
-	exit = nil,
+        exit = nil,
+        activeBackgroundEffect = nil,
 }
 
 function Arena:updateScreenBounds(sw, sh)
@@ -115,6 +251,62 @@ function Arena:getBounds()
     return self.x, self.y, self.width, self.height
 end
 
+function Arena:setBackgroundEffect(effectData, palette)
+    local effectType
+
+    if type(effectData) == "string" then
+        effectType = effectData
+    elseif type(effectData) == "table" then
+        effectType = effectData.type or effectData.name
+    end
+
+    if effectType == "mushroomPulse" then
+        local effect = ensureMushroomPulseEffect(self)
+
+        if effect then
+            effect.backdropIntensity = (effectData and effectData.backdropIntensity) or 1.0
+            effect.arenaIntensity = (effectData and effectData.arenaIntensity) or 0.68
+
+            configureMushroomPulse(effect, palette)
+
+            self.activeBackgroundEffect = effect
+        else
+            self.activeBackgroundEffect = nil
+        end
+    else
+        self.activeBackgroundEffect = nil
+    end
+end
+
+function Arena:updateBackgroundEffectPalette(palette)
+    if not self.activeBackgroundEffect then
+        return
+    end
+
+    if self.activeBackgroundEffect.type == "mushroomPulse" then
+        configureMushroomPulse(self.activeBackgroundEffect, palette)
+    end
+end
+
+function Arena:drawBackdrop(sw, sh)
+    love.graphics.setColor(Theme.bgColor)
+    love.graphics.rectangle("fill", 0, 0, sw, sh)
+
+    if not self.activeBackgroundEffect then
+        love.graphics.setColor(1, 1, 1, 1)
+        return false
+    end
+
+    if self.activeBackgroundEffect.type == "mushroomPulse" then
+        local drawn = drawMushroomPulse(self.activeBackgroundEffect, 0, 0, sw, sh, self.activeBackgroundEffect.backdropIntensity or 1.0)
+        love.graphics.setColor(1, 1, 1, 1)
+        return drawn
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+    return false
+end
+
 -- Draws the playfield with a solid fill + simple border
 function Arena:drawBackground()
     local ax, ay, aw, ah = self:getBounds()
@@ -122,6 +314,10 @@ function Arena:drawBackground()
     -- Solid fill
     love.graphics.setColor(Theme.arenaBG)
     love.graphics.rectangle("fill", ax, ay, aw, ah)
+
+    if self.activeBackgroundEffect and self.activeBackgroundEffect.type == "mushroomPulse" then
+        drawMushroomPulse(self.activeBackgroundEffect, ax, ay, aw, ah, self.activeBackgroundEffect.arenaIntensity or 0.68)
+    end
 
     love.graphics.setColor(1, 1, 1, 1)
 end
