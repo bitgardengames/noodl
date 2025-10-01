@@ -8,6 +8,8 @@ local nextSlotId = 0
 
 local SAW_RADIUS = 24
 local SAW_TEETH = 12
+local HUB_HOLE_RADIUS = 4
+local HUB_HIGHLIGHT_PADDING = 3
 local TRACK_LENGTH = 120 -- how far the saw moves on its track
 local MOVE_SPEED = 60    -- units per second along the track
 local SPAWN_DURATION = 0.3
@@ -392,12 +394,8 @@ function Saws:draw()
         -- highlight
         local highlight = getHighlightColor(Theme.sawColor)
         love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-        love.graphics.push()
-        love.graphics.translate(-outer * 0.22, -outer * 0.18)
-        love.graphics.rotate(-0.3)
-        love.graphics.scale(0.7, 0.5)
-        love.graphics.circle("fill", 0, 0, outer)
-        love.graphics.pop()
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", 0, 0, HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING)
 
         -- Outline
         love.graphics.setColor(0, 0, 0, 1)
@@ -405,7 +403,7 @@ function Saws:draw()
         love.graphics.polygon("line", points)
 
         -- Hub hole
-        love.graphics.circle("fill", 0, 0, 4)
+        love.graphics.circle("fill", 0, 0, HUB_HOLE_RADIUS)
 
         love.graphics.pop()
 
