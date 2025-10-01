@@ -165,18 +165,27 @@ function Shop:beginRestock()
 
     local random = (love and love.math and love.math.random) or math.random
     if self.cardStates then
-        for _, state in ipairs(self.cardStates) do
+        local count = #self.cardStates
+        local centerIndex = (count + 1) / 2
+        for index, state in ipairs(self.cardStates) do
             state.discardActive = true
-            local direction = (random(0, 1) == 0) and -1 or 1
-            local spinDirection = (random(0, 1) == 0) and -1 or 1
+            local spread = index - centerIndex
+            local direction = spread >= 0 and 1 or -1
+            local horizontalDistance = spread * 44 + (random() * 12 - 6)
+            local rotation = spread * 0.16 + (random() * 0.18 - 0.09)
+            local dropDistance = 220 + random() * 90
+            local arcHeight = 26 + random() * 18
+            local swayMagnitude = 12 + random() * 10
+            local swaySpeed = 2.8 + random() * 0.8
             state.discard = {
                 direction = direction,
-                drift = (random() * 60) + 40,
-                fallDistance = (random() * 140) + 120,
-                wobbleSpeed = (random() * 1.6) + 2.6,
-                wobbleMagnitude = (random() * 18) + 10,
-                phase = random() * math.pi * 2,
-                spinSpeed = ((random() * 1.8) + 1.2) * spinDirection,
+                horizontalDistance = horizontalDistance,
+                dropDistance = dropDistance,
+                arcHeight = arcHeight,
+                rotation = rotation,
+                swayMagnitude = swayMagnitude,
+                swaySpeed = swaySpeed,
+                duration = 0.65 + random() * 0.15,
                 clock = 0,
             }
         end
@@ -746,17 +755,19 @@ function Shop:draw(screenW, screenH)
         local discardOffsetX, discardOffsetY, discardRotation = 0, 0, 0
         if discardData then
             local fadeT = math.max(0, math.min(1, fadeOut))
+            local time = discardData.duration and discardData.duration > 0 and math.min(1, (discardData.clock or 0) / discardData.duration) or fadeT
             local discardEase = fadeT * fadeT * (3 - 2 * fadeT)
-            local clock = discardData.clock or 0
-            local wobble = math.sin(clock * (discardData.wobbleSpeed or 4.2) + (discardData.phase or 0))
-            local horizontalDrift = (discardData.drift or 0) * discardEase * (discardData.direction or 1)
-            discardOffsetX = horizontalDrift + wobble * (discardData.wobbleMagnitude or 14) * discardEase
-            local fallDistance = discardData.fallDistance or 0
-            local fallEase = discardEase * discardEase
-            discardOffsetY = fallDistance * fallEase
-            discardRotation = (discardData.spinSpeed or 3.4) * clock * discardEase
-            scale = scale * (1 + 0.06 * discardEase)
-            alpha = alpha * (1 - 0.65 * discardEase)
+            local motionEase = time * time * (3 - 2 * time)
+            local dropEase = discardEase * discardEase
+            local swayClock = (discardData.clock or 0) * (discardData.swaySpeed or 3.2)
+            local sway = math.sin(swayClock) * (discardData.swayMagnitude or 14) * (1 - motionEase)
+            discardOffsetX = ((discardData.horizontalDistance or 0) * motionEase) + sway * (discardData.direction or 1)
+            local dropDistance = discardData.dropDistance or 0
+            local arcHeight = discardData.arcHeight or 0
+            discardOffsetY = dropDistance * dropEase - arcHeight * (1 - motionEase)
+            discardRotation = (discardData.rotation or 0) * dropEase
+            scale = scale * (1 - 0.12 * discardEase)
+            alpha = alpha * (1 - 0.7 * discardEase)
         end
 
         if card == self.selected then
@@ -771,8 +782,8 @@ function Shop:draw(screenW, screenH)
             alpha = 1
         else
             if discardData then
-                scale = scale * (1 + 0.04 * fadeEase)
-                alpha = alpha * (1 - 0.6 * fadeEase)
+                scale = scale * (1 - 0.05 * fadeEase)
+                alpha = alpha * (1 - 0.55 * fadeEase)
             else
                 yOffset = yOffset - 32 * fadeEase
                 scale = scale * (1 - 0.2 * fadeEase)
@@ -827,27 +838,6 @@ function Shop:draw(screenW, screenH)
         drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, nil, self.selected == card, appearanceAlpha)
         love.graphics.pop()
         card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
-
-        if discardData then
-            local offsetX = centerX - originalCenterX
-            local offsetY = centerY - originalCenterY
-            local trailBaseAlpha = math.min(0.5, (state.fadeOut or 0) * 0.7)
-            if trailBaseAlpha > 0.01 then
-                local steps = 3
-                for s = 1, steps do
-                    local t = s / steps
-                    local px = originalCenterX + offsetX * t
-                    local py = originalCenterY + offsetY * t
-                    local sparklePhase = (discardData.clock or 0) * ((discardData.wobbleSpeed or 5.2) * 0.7) + t * math.pi
-                    local sparkle = math.sin(sparklePhase) * 0.5 + 0.5
-                    local alphaStep = trailBaseAlpha * (1 - t) * (0.65 + 0.35 * sparkle)
-                    local radius = (1 - t) * 9 + 4
-                    love.graphics.setColor(1, 0.82, 0.46, alphaStep)
-                    love.graphics.circle("fill", px, py, radius)
-                end
-                love.graphics.setColor(1, 1, 1, 1)
-            end
-        end
 
         if state and state.selectionFlash then
             local flashDuration = 0.75
