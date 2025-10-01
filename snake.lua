@@ -612,18 +612,49 @@ function Snake:getHeadCell()
     return toCell(hx, hy)
 end
 
+local function addSafeCellUnique(cells, seen, col, row)
+    local key = col .. "," .. row
+    if not seen[key] then
+        seen[key] = true
+        cells[#cells + 1] = {col, row}
+    end
+end
+
 function Snake:getSafeZone(lookahead)
     local hx, hy = self:getHeadCell()
     if not (hx and hy) then
         return {}
     end
+
     local dir = self:getDirection()
     local cells = {}
+    local seen = {}
 
     for i = 1, lookahead do
         local cx = hx + dir.x * i
         local cy = hy + dir.y * i
-        table.insert(cells, {cx, cy})
+        addSafeCellUnique(cells, seen, cx, cy)
+    end
+
+    local pending = pendingDir
+    if pending and (pending.x ~= dir.x or pending.y ~= dir.y) then
+        -- Immediate turn path (if the queued direction snaps before the next tile)
+        local px, py = hx, hy
+        for i = 1, lookahead do
+            px = px + pending.x
+            py = py + pending.y
+            addSafeCellUnique(cells, seen, px, py)
+        end
+
+        -- Typical turn path: advance one tile forward, then apply the queued turn
+        local turnCol = hx + dir.x
+        local turnRow = hy + dir.y
+        px, py = turnCol, turnRow
+        for i = 2, lookahead do
+            px = px + pending.x
+            py = py + pending.y
+            addSafeCellUnique(cells, seen, px, py)
+        end
     end
 
     return cells
