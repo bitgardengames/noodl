@@ -291,6 +291,24 @@ local function applyFocusedTab(button)
     end
 end
 
+local function scrollBy(amount)
+    if amount == 0 then
+        return
+    end
+
+    if contentHeight <= viewportHeight then
+        scrollOffset = 0
+        return
+    end
+
+    scrollOffset = scrollOffset + amount
+    if scrollOffset < minScrollOffset then
+        scrollOffset = minScrollOffset
+    elseif scrollOffset > 0 then
+        scrollOffset = 0
+    end
+end
+
 local function dpadScrollUp()
     scrollBy(SCROLL_SPEED)
     applyFocusedTab(buttonList:moveFocus(-1))
@@ -376,24 +394,6 @@ local function handleGamepadAxis(axis, value)
     analogAxisDirections[mapping.slot] = direction or nil
 
     activateAnalogDirection(direction)
-end
-
-local function scrollBy(amount)
-    if amount == 0 then
-        return
-    end
-
-    if contentHeight <= viewportHeight then
-        scrollOffset = 0
-        return
-    end
-
-    scrollOffset = scrollOffset + amount
-    if scrollOffset < minScrollOffset then
-        scrollOffset = minScrollOffset
-    elseif scrollOffset > 0 then
-        scrollOffset = 0
-    end
 end
 
 function ProgressionScreen:enter()
