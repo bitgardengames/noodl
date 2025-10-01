@@ -35,6 +35,19 @@ local function generateRockShape(size, seed)
     return points
 end
 
+local function copyColor(color)
+    if not color then
+        return { 1, 1, 1, 1 }
+    end
+
+    return {
+        color[1] or 1,
+        color[2] or 1,
+        color[3] or 1,
+        color[4] == nil and 1 or color[4],
+    }
+end
+
 local function getHighlightColor(color)
     color = color or {1, 1, 1, 1}
     local r = math.min(1, color[1] * 1.2 + 0.08)
@@ -108,20 +121,41 @@ function Rocks:reset()
 end
 
 local function spawnShatterFX(x, y)
+    local rockColor = Theme.rock or {0.85, 0.75, 0.6, 1}
+    local primary = copyColor(rockColor)
+    primary[4] = 1
+    local highlight = getHighlightColor(rockColor)
+
     Particles:spawnBurst(x, y, {
         count = love.math.random(8, 12),
-        speed = 70,
-        speedVariance = 55,
+        speed = 72,
+        speedVariance = 58,
         life = 0.45,
-        size = 4,
-        color = {0.85, 0.75, 0.6, 1},
+        size = 3.8,
+        color = primary,
         spread = math.pi * 2,
         angleJitter = math.pi * 0.9,
-        drag = 3.0,
+        drag = 3.1,
         gravity = 240,
-        scaleMin = 0.5,
-        scaleVariance = 0.7,
-        fadeTo = 0.05,
+        scaleMin = 0.54,
+        scaleVariance = 0.72,
+        fadeTo = 0.06,
+    })
+
+    Particles:spawnBurst(x, y, {
+        count = love.math.random(3, 5),
+        speed = 112,
+        speedVariance = 60,
+        life = 0.32,
+        size = 2.4,
+        color = highlight,
+        spread = math.pi * 2,
+        angleJitter = math.pi,
+        drag = 1.5,
+        gravity = 190,
+        scaleMin = 0.38,
+        scaleVariance = 0.3,
+        fadeTo = 0,
     })
 end
 
