@@ -350,13 +350,13 @@ end
 function Arena:drawBackground()
     local ax, ay, aw, ah = self:getBounds()
 
-    -- Solid fill
-    love.graphics.setColor(Theme.arenaBG)
-    love.graphics.rectangle("fill", ax, ay, aw, ah)
-
     if self.activeBackgroundEffect and self.activeBackgroundEffect.type == "mushroomPulse" then
         drawMushroomPulse(self.activeBackgroundEffect, ax, ay, aw, ah, self.activeBackgroundEffect.arenaIntensity or 0.68)
     end
+
+    -- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
+    love.graphics.setColor(Theme.arenaBG)
+    love.graphics.rectangle("fill", ax, ay, aw, ah)
 
     love.graphics.setColor(1, 1, 1, 1)
 end
