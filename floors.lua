@@ -1,7 +1,6 @@
 -- floors.lua
 
 --[[
-        Dawnlit Meadow → gentle sunrise over dew-kissed grass
         Verdant Garden → bright, life-filled welcome
         Echoing Caverns → cooler stone, lingering echoes
         Mushroom Grotto → whimsical glow and spores
@@ -21,18 +20,6 @@
 
 local Floors = {
         [1] = {
-                name = "Dawnlit Meadow",
-                flavor = "Dawnlight washes the clearing in a calm, golden glow.",
-                palette = {
-                        bgColor     = {0.32, 0.4, 0.3, 1},  -- soft treeline halo
-                        arenaBG     = {0.58, 0.76, 0.48, 1}, -- dewy grass under sunrise
-                        arenaBorder = {0.78, 0.86, 0.55, 1}, -- pale gold hedgerow
-                        snake       = {0.94, 0.85, 0.45, 1}, -- sun-warmed scales
-                        rock        = {0.82, 0.68, 0.52, 1}, -- honeyed stone
-                },
-                traits = {"lushGrowth"},
-        },
-        [2] = {
                 name = "Verdant Garden",
                 flavor = "The sun is warm, the air sweet with life.",
                 palette = {
@@ -44,7 +31,7 @@ local Floors = {
                 },
                 traits = {"sunlitSanctuary"},
         },
-    [3] = {
+    [2] = {
         name = "Echoing Caverns",
         flavor = "The air cools; faint echoes linger in the dark.",
         palette = {
@@ -56,7 +43,7 @@ local Floors = {
         },
         traits = {"echoingStillness"},
     },
-    [4] = {
+    [3] = {
         name = "Mushroom Grotto",
         flavor = "Bioluminescent fungi glow softly in the damp air.",
         palette = {
@@ -69,7 +56,7 @@ local Floors = {
         },
         traits = {"glowingSpores"},
     },
-    [5] = {
+    [4] = {
         name = "Flooded Catacombs",
         flavor = "Cold water laps at your scales; echoes gurgle through the dark.",
         palette = {
@@ -82,7 +69,7 @@ local Floors = {
         },
         traits = {"waterloggedCatacombs"},
     },
-    [6] = {
+    [5] = {
         name = "Ancient Ruins",
         flavor = "Gears grind beneath the rubble, timing every echoing strike.",
         palette = {
@@ -95,7 +82,7 @@ local Floors = {
         },
         traits = {"ancientMachinery", "echoingStillness"},
     },
-    [7] = {
+    [6] = {
         name = "Crystal Hollows",
         flavor = "Luminous shards sing, calming blades in shimmering light.",
         palette = {
@@ -108,7 +95,7 @@ local Floors = {
         },
         traits = {"crystallineResonance", "glowingSpores"},
     },
-    [8] = {
+    [7] = {
         name = "Bone Pits",
         flavor = "Crunching ivory shards warn you: nothing escapes intact.",
         palette = {
@@ -121,7 +108,7 @@ local Floors = {
         },
         traits = {"boneHarvest"},
     },
-    [9] = {
+    [8] = {
         name = "The Abyss",
         flavor = "The silence is heavy; unseen things stir below.",
         palette = {
@@ -134,7 +121,7 @@ local Floors = {
         },
         traits = {"echoingStillness", "restlessEarth"},
     },
-    [10] = {
+    [9] = {
         name = "Inferno Gates",
         flavor = "Heat rises, and the walls bleed with firelight.",
         palette = {
@@ -147,7 +134,7 @@ local Floors = {
         },
         traits = {"infernalPressure"},
     },
-    [11] = {
+    [10] = {
         name = "Obsidian Keep",
         flavor = "Molten veins pulse beneath mirror-black stone.",
         palette = {
@@ -160,7 +147,7 @@ local Floors = {
         },
         traits = {"obsidianResonance", "infernalPressure"},
     },
-    [12] = {
+    [11] = {
         name = "Ashen Frontier",
         flavor = "Scorched winds whip through charred ossuaries and shattered shale.",
         palette = {
@@ -173,7 +160,7 @@ local Floors = {
         },
         traits = {"ashenTithe", "boneHarvest"},
     },
-    [13] = {
+    [12] = {
         name = "Spirit Crucible",
         flavor = "Wails of the lost weave through astral gusts that thin the stone.",
         palette = {
@@ -186,7 +173,7 @@ local Floors = {
         },
         traits = {"spectralEchoes", "glowingSpores"},
     },
-    [14] = {
+    [13] = {
         name = "The Underworld",
         flavor = "Ash and shadow coil around you; the end awaits.",
         palette = {
@@ -199,7 +186,7 @@ local Floors = {
         },
         traits = {"ashenTithe", "infernalPressure"},
     },
-    [15] = {
+    [14] = {
         name = "Celestial Causeway",
         flavor = "Auroras braid around causeways of marble and sunfire.",
         palette = {
@@ -212,7 +199,7 @@ local Floors = {
         },
         traits = {"divineAscent", "spectralEchoes"},
     },
-    [16] = {
+    [15] = {
         name = "Sky Spire",
         flavor = "Clouds part to reveal a false dawn of gleaming marble.",
         palette = {
