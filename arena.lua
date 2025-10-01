@@ -185,8 +185,8 @@ function Arena:drawBorder()
     local highlight = getHighlightColor(Theme.arenaBorder)
     local highlightWidth = math.max(1.5, thickness * 0.32)
     local highlightOffset = 2
-    local cornerOffsetX = 2
-    local cornerOffsetY = 2
+    local cornerOffsetX = 3
+    local cornerOffsetY = 3
     local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
     local scissorY = math.floor(by - highlightWidth - highlightOffset - highlightShift)
     local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset + highlightShift * 2)
