@@ -197,7 +197,6 @@ local english = {
             fruit_chip = "${label}: +${gained} (Total ${total})",
             achievements_header = "Achievements Earned",
             no_achievements = "No achievements unlocked this run.",
-            tip_prefix = "Tip: ${tip}",
             play_again = "Play Again",
             view_run_summary = "Continue",
             quit_to_menu = "Quit to Menu",
@@ -271,14 +270,6 @@ local english = {
                     "Cosmic forces intervened.",
                     "Snake entered the glitch dimension.",
                 },
-            },
-            tips = {
-                "Corner the apple, not yourself.",
-                "Leave a runway before you sprint for snacks.",
-                "Snaking along the walls can buy you breathing room.",
-                "Give future-you an exit before taking a risky bite.",
-                "Short hops beat long loops when the board gets crowded.",
-                "A quick zigzag can reset your rhythm before doubling back.",
             },
         },
         game = {
