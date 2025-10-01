@@ -4,7 +4,7 @@ local DrawSnake = require("snakedraw")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local UI = require("ui")
-local FloatingText = require("floatingtext")
+local UpgradeVisuals = require("upgradevisuals")
 local SessionStats = require("sessionstats")
 local Theme = require("theme")
 
@@ -65,8 +65,18 @@ function Snake:addCrashShields(n)
     if n and n > 0 then
         local headX, headY = self:getHead()
         if headX and headY then
-            local label = n > 1 and ("Shield +" .. tostring(n)) or "Shield +1"
-            FloatingText:add(label, headX, headY - 52, {0.7, 0.9, 1.0, 1}, 1.0, 42)
+            local extra = math.max(0, math.floor(n - 1))
+            UpgradeVisuals:spawn(headX, headY, {
+                color = {0.68, 0.88, 1.0, 1},
+                badge = "shield",
+                ringCount = math.min(4, 2 + extra),
+                outerRadius = 46 + math.min(18, extra * 6),
+                innerRadius = 14,
+                life = 0.78 + math.min(0.3, extra * 0.08),
+                badgeScale = 1 + math.min(0.35, extra * 0.12),
+                glowAlpha = 0.28,
+                haloAlpha = 0.18,
+            })
         end
     end
 end
@@ -78,7 +88,17 @@ function Snake:consumeCrashShield()
         UI:setCrashShields(self.crashShields)
         local headX, headY = self:getHead()
         if headX and headY then
-            FloatingText:add("Shield!", headX, headY - 56, {0.65, 0.9, 1.0, 1}, 0.9, 48)
+            UpgradeVisuals:spawn(headX, headY, {
+                color = {1, 0.66, 0.4, 1},
+                badge = "shield",
+                ringCount = 3,
+                outerRadius = 44,
+                innerRadius = 12,
+                life = 0.62,
+                badgeScale = 0.95,
+                glowAlpha = 0.24,
+                haloAlpha = 0.18,
+            })
         end
         SessionStats:add("crashShieldsSaved", 1)
         return true

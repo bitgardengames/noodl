@@ -3,7 +3,6 @@ local Rocks = require("rocks")
 local Saws = require("saws")
 local Score = require("score")
 local UI = require("ui")
-local FloatingText = require("floatingtext")
 local Particles = require("particles")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
@@ -26,15 +25,24 @@ local function stoneSkinShieldHandler(data, state)
     if not Rocks or not Rocks.shatterNearest then return end
 
     local fx, fy = getEventPosition(data)
-    celebrateUpgrade(getUpgradeString("stone_skin", "shield_text"), nil, {
+    celebrateUpgrade(nil, nil, {
         x = fx,
         y = fy,
+        skipText = true,
         color = {0.75, 0.82, 0.88, 1},
         particleCount = 16,
         particleSpeed = 100,
         particleLife = 0.42,
-        textOffset = 52,
-        textScale = 1.08,
+        visual = {
+            badge = "shield",
+            outerRadius = 56,
+            innerRadius = 16,
+            ringCount = 3,
+            ringSpacing = 10,
+            life = 0.82,
+            glowAlpha = 0.28,
+            haloAlpha = 0.18,
+        },
     })
     Rocks:shatterNearest(fx or 0, fy or 0, 1)
 end
@@ -193,11 +201,19 @@ local function handleBulwarkChorusFloorStart(_, state)
 
     if shields > 0 and Snake.addCrashShields then
         Snake:addCrashShields(shields)
-        celebrateUpgrade(getUpgradeString("wardens_chorus", "name"), nil, {
+        celebrateUpgrade(nil, nil, {
+            skipText = true,
             color = {0.7, 0.9, 1.0, 1},
             skipParticles = true,
-            textScale = 1.0,
-            textLife = 44,
+            visual = {
+                badge = "shield",
+                outerRadius = 54,
+                innerRadius = 14,
+                ringCount = 3,
+                life = 0.85,
+                glowAlpha = 0.24,
+                haloAlpha = 0.15,
+            },
         })
     end
 end
@@ -300,17 +316,24 @@ local pool = {
                     state.counters.aegisRecycler = state.counters.aegisRecycler - 2
                     Snake:addCrashShields(1)
                     local fx, fy = getEventPosition(data)
-                    if FloatingText and fx and fy then
-                        FloatingText:add(getUpgradeString("aegis_recycler", "reforged"), fx, fy - 52, {0.6, 0.85, 1, 1}, 1.1, 60)
-                    end
-                    if Particles and fx and fy then
-                        Particles:spawnBurst(fx, fy, {
-                            count = 10,
-                            speed = 90,
-                            life = 0.45,
-                            size = 4,
-                            color = {0.55, 0.8, 1, 1},
-                            spread = math.pi * 2,
+                    if fx and fy then
+                        celebrateUpgrade(nil, data, {
+                            x = fx,
+                            y = fy,
+                            skipText = true,
+                            color = {0.6, 0.85, 1, 1},
+                            particleCount = 10,
+                            particleSpeed = 90,
+                            particleLife = 0.45,
+                            visual = {
+                                badge = "shield",
+                                outerRadius = 50,
+                                innerRadius = 14,
+                                ringCount = 3,
+                                life = 0.75,
+                                glowAlpha = 0.26,
+                                haloAlpha = 0.16,
+                            },
                         })
                     end
                 end
@@ -359,6 +382,15 @@ local pool = {
                             particleLife = 0.36,
                             particleSize = 3,
                             particleSpread = math.pi * 2,
+                            visual = {
+                                badge = "spark",
+                                outerRadius = 46,
+                                innerRadius = 12,
+                                ringCount = 2,
+                                life = 0.6,
+                                glowAlpha = 0.22,
+                                haloAlpha = 0.12,
+                            },
                         })
                     end
                 end)
@@ -522,17 +554,24 @@ local pool = {
                     state.counters.pocketSprings = state.counters.pocketSprings - 8
                     Snake:addCrashShields(1)
                     local fx, fy = getEventPosition(data)
-                    if FloatingText and fx and fy then
-                        FloatingText:add(getUpgradeString("pocket_springs", "name"), fx, fy - 44, {0.65, 0.92, 1, 1}, 1.0, 52)
-                    end
-                    if Particles and fx and fy then
-                        Particles:spawnBurst(fx, fy, {
-                            count = 10,
-                            speed = 95,
-                            life = 0.5,
-                            size = 4,
-                            color = {0.6, 0.9, 1, 1},
-                            spread = math.pi * 2,
+                    if fx and fy then
+                        celebrateUpgrade(nil, data, {
+                            x = fx,
+                            y = fy,
+                            skipText = true,
+                            color = {0.65, 0.92, 1, 1},
+                            particleCount = 10,
+                            particleSpeed = 95,
+                            particleLife = 0.5,
+                            visual = {
+                                badge = "shield",
+                                outerRadius = 48,
+                                innerRadius = 14,
+                                ringCount = 3,
+                                life = 0.78,
+                                glowAlpha = 0.24,
+                                haloAlpha = 0.14,
+                            },
                         })
                     end
                 end
@@ -602,17 +641,24 @@ local pool = {
                     Saws:stall(0.8)
                 end
                 local fx, fy = getEventPosition(data)
-                if FloatingText and fx and fy then
-                    FloatingText:add(getUpgradeString("twilight_parade", "combo_bonus"), fx, fy - 40, {0.85, 0.8, 1, 1}, 1.1, 52)
-                end
-                if Particles and fx and fy then
-                    Particles:spawnBurst(fx, fy, {
-                        count = 14,
-                        speed = 110,
-                        life = 0.55,
-                        size = 4,
-                        color = {0.78, 0.72, 1, 1},
-                        spread = math.pi * 2,
+                if fx and fy then
+                    celebrateUpgrade(nil, data, {
+                        x = fx,
+                        y = fy,
+                        skipText = true,
+                        color = {0.85, 0.8, 1, 1},
+                        particleCount = 14,
+                        particleSpeed = 110,
+                        particleLife = 0.55,
+                        visual = {
+                            badge = "burst",
+                            outerRadius = 52,
+                            innerRadius = 16,
+                            ringCount = 3,
+                            life = 0.78,
+                            glowAlpha = 0.25,
+                            haloAlpha = 0.16,
+                        },
                     })
                 end
             end,
@@ -663,17 +709,24 @@ local pool = {
                 Snake.adrenaline.timer = math.max(currentTimer, surgeDuration)
 
                 local fx, fy = getEventPosition(data)
-                if FloatingText and fx and fy then
-                    FloatingText:add(getUpgradeString("molting_reflex", "name"), fx, fy - 44, {0.92, 0.98, 0.85, 1}, 1.0, 58)
-                end
-                if Particles and fx and fy then
-                    Particles:spawnBurst(fx, fy, {
-                        count = 12,
-                        speed = 120,
-                        life = 0.5,
-                        size = 4,
+                if fx and fy then
+                    celebrateUpgrade(nil, data, {
+                        x = fx,
+                        y = fy,
+                        skipText = true,
                         color = {1, 0.72, 0.28, 1},
-                        spread = math.pi * 2,
+                        particleCount = 12,
+                        particleSpeed = 120,
+                        particleLife = 0.5,
+                        visual = {
+                            badge = "spark",
+                            outerRadius = 50,
+                            innerRadius = 14,
+                            ringCount = 3,
+                            life = 0.74,
+                            glowAlpha = 0.28,
+                            haloAlpha = 0.18,
+                        },
                     })
                 end
             end,
@@ -792,8 +845,25 @@ local pool = {
                     if Score.addBonus then
                         Score:addBonus(3)
                     end
-                    if FloatingText and data and data.x and data.y then
-                        FloatingText:add(getUpgradeString("gilded_trail", "combo_bonus"), data.x, data.y - 36, {1, 0.88, 0.35, 1}, 1.2, 55)
+                    if data and data.x and data.y then
+                        celebrateUpgrade(nil, data, {
+                            x = data.x,
+                            y = data.y,
+                            skipText = true,
+                            color = {1, 0.88, 0.35, 1},
+                            particleCount = 10,
+                            particleSpeed = 90,
+                            particleLife = 0.5,
+                            visual = {
+                                badge = "burst",
+                                outerRadius = 46,
+                                innerRadius = 14,
+                                ringCount = 2,
+                                life = 0.76,
+                                glowAlpha = 0.26,
+                                haloAlpha = 0.16,
+                            },
+                        })
                     end
                 end
             end,
@@ -1009,15 +1079,34 @@ local pool = {
                 state.counters.ember_engine_ready = false
                 Saws:stall(3)
                 if data and data.x and data.y then
-                    FloatingText:add(getUpgradeString("ember_engine", "name"), data.x, data.y - 48, {1, 0.58, 0.2, 1}, 1.2, 55)
-                    Particles:spawnBurst(data.x, data.y, {
-                        count = 14,
-                        speed = 120,
-                        life = 0.8,
-                        size = 5,
-                        color = {1, 0.55, 0.2, 1},
-                        spread = math.pi * 2,
-                        gravity = 20,
+                    celebrateUpgrade(nil, data, {
+                        x = data.x,
+                        y = data.y,
+                        skipText = true,
+                        color = {1, 0.58, 0.2, 1},
+                        particleCount = 14,
+                        particleSpeed = 120,
+                        particleLife = 0.8,
+                        particleSize = 5,
+                        particleSpread = math.pi * 2,
+                        particles = {
+                            count = 14,
+                            speed = 120,
+                            life = 0.8,
+                            size = 5,
+                            color = {1, 0.55, 0.2, 1},
+                            spread = math.pi * 2,
+                            gravity = 20,
+                        },
+                        visual = {
+                            badge = "spark",
+                            outerRadius = 54,
+                            innerRadius = 18,
+                            ringCount = 3,
+                            life = 0.9,
+                            glowAlpha = 0.32,
+                            haloAlpha = 0.2,
+                        },
                     })
                 end
             end,
@@ -1038,17 +1127,26 @@ local pool = {
                     Score:addBonus(1)
                 end
                 local fx, fy = getEventPosition(data)
-                if FloatingText and fx and fy then
-                    FloatingText:add(getUpgradeString("tempest_nectar", "combo_bonus"), fx, fy - 40, {0.8, 0.95, 1, 1}, 1.0, 52)
-                end
-                if Particles and fx and fy then
-                    Particles:spawnBurst(fx, fy, {
-                        count = 10,
-                        speed = 90,
-                        life = 0.45,
-                        size = 4,
-                        color = {0.55, 0.82, 1, 1},
-                        spread = math.pi * 2,
+                if fx and fy then
+                    celebrateUpgrade(nil, data, {
+                        x = fx,
+                        y = fy,
+                        skipText = true,
+                        color = {0.8, 0.95, 1, 1},
+                        particleCount = 10,
+                        particleSpeed = 90,
+                        particleLife = 0.45,
+                        particleSize = 4,
+                        particleSpread = math.pi * 2,
+                        visual = {
+                            badge = "burst",
+                            outerRadius = 48,
+                            innerRadius = 14,
+                            ringCount = 3,
+                            life = 0.7,
+                            glowAlpha = 0.24,
+                            haloAlpha = 0.14,
+                        },
                     })
                 end
             end,
@@ -1116,17 +1214,26 @@ local pool = {
                     Score:addBonus(4)
                 end
                 local fx, fy = getEventPosition(data)
-                if FloatingText and fx and fy then
-                    FloatingText:add(getUpgradeString("solar_reservoir", "combo_bonus"), fx, fy - 52, {1, 0.86, 0.32, 1}, 1.2, 62)
-                end
-                if Particles and fx and fy then
-                    Particles:spawnBurst(fx, fy, {
-                        count = 16,
-                        speed = 130,
-                        life = 0.65,
-                        size = 5,
-                        color = {1, 0.74, 0.28, 1},
-                        spread = math.pi * 2,
+                if fx and fy then
+                    celebrateUpgrade(nil, data, {
+                        x = fx,
+                        y = fy,
+                        skipText = true,
+                        color = {1, 0.86, 0.32, 1},
+                        particleCount = 16,
+                        particleSpeed = 130,
+                        particleLife = 0.65,
+                        particleSize = 5,
+                        particleSpread = math.pi * 2,
+                        visual = {
+                            badge = "burst",
+                            outerRadius = 56,
+                            innerRadius = 18,
+                            ringCount = 3,
+                            life = 0.88,
+                            glowAlpha = 0.3,
+                            haloAlpha = 0.18,
+                        },
                     })
                 end
             end,
@@ -1144,17 +1251,26 @@ local pool = {
                     Score:addBonus(2)
                 end
                 local fx, fy = getEventPosition(data)
-                if FloatingText and fx and fy then
-                    FloatingText:add(getUpgradeString("crystal_cache", "combo_bonus"), fx, fy - 60, {0.86, 0.96, 1, 1}, 1.1, 60)
-                end
-                if Particles and fx and fy then
-                    Particles:spawnBurst(fx, fy, {
-                        count = 12,
-                        speed = 115,
-                        life = 0.55,
-                        size = 5,
-                        color = {0.72, 0.92, 1, 1},
-                        spread = math.pi * 2,
+                if fx and fy then
+                    celebrateUpgrade(nil, data, {
+                        x = fx,
+                        y = fy,
+                        skipText = true,
+                        color = {0.86, 0.96, 1, 1},
+                        particleCount = 12,
+                        particleSpeed = 115,
+                        particleLife = 0.55,
+                        particleSize = 5,
+                        particleSpread = math.pi * 2,
+                        visual = {
+                            badge = "burst",
+                            outerRadius = 52,
+                            innerRadius = 16,
+                            ringCount = 3,
+                            life = 0.82,
+                            glowAlpha = 0.28,
+                            haloAlpha = 0.18,
+                        },
                     })
                 end
             end,
