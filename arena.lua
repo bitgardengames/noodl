@@ -13,6 +13,13 @@ extern vec4 accentColor;
 extern vec4 glowColor;
 extern float intensity;
 
+float bloomShape(vec2 p, vec2 center, float sharpness)
+{
+    vec2 diff = p - center;
+    float distSq = dot(diff, diff);
+    return exp(-distSq * sharpness);
+}
+
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 {
     vec2 uv = (screen_coords - origin) / resolution;
@@ -22,28 +29,41 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     centered.x *= aspect;
 
     float dist = length(centered);
-    float angle = atan(centered.y, centered.x);
 
-    float breathing = sin(time * 0.45) * 0.5 + 0.5;
-    float radial = sin(dist * (8.0 + intensity * 2.5) - time * (0.9 + intensity * 0.35));
-    float bloom = sin(dist * 6.0 + angle * 2.4 - time * (1.2 - intensity * 0.25));
-    float ribbon = sin(angle * 3.5 + time * 0.3 + dist * 4.0);
+    float breathing = sin(time * 0.6) * 0.5 + 0.5;
+    float drift = time * 0.35;
 
-    float mixAccent = clamp(radial * 0.5 + 0.5, 0.0, 1.0);
-    mixAccent = mixAccent * (0.35 + 0.45 * intensity) + breathing * 0.2 * intensity;
+    vec2 offset1 = vec2(cos(drift), sin(drift * 0.8)) * (0.18 + 0.08 * intensity);
+    vec2 offset2 = vec2(cos(drift * 1.3 + 2.2), sin(drift * 0.9 + 1.4)) * (0.26 + 0.1 * intensity);
+    vec2 offset3 = vec2(cos(drift * 0.7 - 1.1), sin(drift * 1.1 - 2.4)) * (0.32 + 0.12 * intensity);
 
-    float mixGlow = clamp(bloom * 0.5 + 0.5, 0.0, 1.0) * (0.2 + 0.55 * intensity);
-    mixGlow += clamp(ribbon * 0.5 + 0.5, 0.0, 1.0) * 0.15 * intensity;
+    float sharp1 = 10.0 - intensity * 2.0;
+    float sharp2 = 7.5 - intensity * 1.5;
+    float sharp3 = 5.0 - intensity;
+
+    float bloom1 = bloomShape(centered, offset1, sharp1);
+    float bloom2 = bloomShape(centered, offset2, sharp2);
+    float bloom3 = bloomShape(centered, offset3, sharp3);
+
+    float combinedBloom = bloom1 * (0.55 + 0.25 * intensity);
+    combinedBloom += bloom2 * (0.45 + 0.3 * breathing * intensity);
+    combinedBloom += bloom3 * (0.35 + 0.25 * intensity);
+
+    float petalWave = sin((centered.x + centered.y) * 6.0 + time * 0.5);
+    float waveMix = clamp(petalWave * 0.5 + 0.5, 0.0, 1.0) * (0.25 + 0.35 * intensity);
 
     vec3 base = baseColor.rgb;
-    vec3 accent = mix(base, accentColor.rgb, 0.75);
+    vec3 accent = mix(base, accentColor.rgb, 0.7);
     vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.6);
 
-    vec3 colorBlend = mix(base, accent, clamp(mixAccent, 0.0, 1.0));
-    colorBlend = mix(colorBlend, glow, clamp(mixGlow, 0.0, 1.0));
+    float accentMix = clamp(combinedBloom, 0.0, 1.0);
+    float glowMix = clamp(combinedBloom * 0.6 + waveMix, 0.0, 1.0);
 
-    float innerEdge = max(0.08, 0.25 - 0.12 * intensity);
-    float outerEdge = min(0.98, 0.78 + 0.18 * intensity);
+    vec3 colorBlend = mix(base, accent, accentMix);
+    colorBlend = mix(colorBlend, glow, glowMix);
+
+    float innerEdge = max(0.12, 0.28 - 0.1 * intensity);
+    float outerEdge = min(0.96, 0.82 + 0.12 * intensity);
     float vignette = 1.0 - smoothstep(innerEdge, outerEdge, dist + breathing * 0.1 * intensity);
 
     vec3 finalColor = mix(base, colorBlend, clamp(vignette, 0.0, 1.0));
@@ -286,6 +306,25 @@ function Arena:updateBackgroundEffectPalette(palette)
     if self.activeBackgroundEffect.type == "mushroomPulse" then
         configureMushroomPulse(self.activeBackgroundEffect, palette)
     end
+end
+
+function Arena:drawBackgroundEffect(x, y, w, h, intensity)
+    if not self.activeBackgroundEffect then
+        return false
+    end
+
+    if self.activeBackgroundEffect.type == "mushroomPulse" then
+        return drawMushroomPulse(
+            self.activeBackgroundEffect,
+            x,
+            y,
+            w,
+            h,
+            intensity or self.activeBackgroundEffect.backdropIntensity or 1.0
+        )
+    end
+
+    return false
 end
 
 function Arena:drawBackdrop(sw, sh)
