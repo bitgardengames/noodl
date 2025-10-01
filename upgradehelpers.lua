@@ -2,6 +2,7 @@ local Snake = require("snake")
 local FloatingText = require("floatingtext")
 local Particles = require("particles")
 local Localization = require("localization")
+local UpgradeVisuals = require("upgradevisuals")
 
 local UpgradeHelpers = {}
 
@@ -107,6 +108,51 @@ function UpgradeHelpers.celebrateUpgrade(label, data, options)
         local textScale = options.textScale or 1.05
         local textLife = options.textLife or 56
         FloatingText:add(label, fx, fy - textOffset, textColor, textScale, textLife)
+    end
+
+    if fx and fy and not options.skipVisuals and UpgradeVisuals then
+        local visualOptions
+        if options.visual then
+            visualOptions = deepcopy(options.visual)
+        else
+            visualOptions = {}
+            visualOptions.outerRadius = options.visualRadius or visualOptions.outerRadius
+            visualOptions.innerRadius = options.visualInnerRadius or visualOptions.innerRadius
+            visualOptions.ringCount = options.visualRings or visualOptions.ringCount
+            visualOptions.ringSpacing = options.visualRingSpacing or visualOptions.ringSpacing
+            visualOptions.life = options.visualLife or visualOptions.life
+        end
+
+        if visualOptions then
+            if options.visualBadge and visualOptions.badge == nil then
+                visualOptions.badge = options.visualBadge
+            end
+            if options.visualVariant and visualOptions.variant == nil then
+                visualOptions.variant = options.visualVariant
+            end
+            if options.visualAddBlend ~= nil and visualOptions.addBlend == nil then
+                visualOptions.addBlend = options.visualAddBlend
+            end
+            if options.visualGlowAlpha and visualOptions.glowAlpha == nil then
+                visualOptions.glowAlpha = options.visualGlowAlpha
+            end
+            if options.visualHaloAlpha and visualOptions.haloAlpha == nil then
+                visualOptions.haloAlpha = options.visualHaloAlpha
+            end
+
+            local visualColor = visualOptions.color or options.visualColor or options.color or options.textColor
+            if not visualColor then
+                visualColor = { 1, 1, 1, 1 }
+            end
+
+            visualOptions.color = visualColor
+            visualOptions.outerRadius = visualOptions.outerRadius or 44
+            visualOptions.innerRadius = visualOptions.innerRadius or 12
+            visualOptions.ringCount = visualOptions.ringCount or 2
+            visualOptions.life = visualOptions.life or 0.72
+
+            UpgradeVisuals:spawn(fx, fy, visualOptions)
+        end
     end
 
     if fx and fy and not options.skipParticles and Particles then
