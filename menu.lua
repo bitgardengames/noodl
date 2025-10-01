@@ -7,6 +7,7 @@ local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local FunChallenges = require("funchallenges")
+local Shaders = require("shaders")
 
 local Menu = {
     transitionDuration = 0.45,
@@ -19,6 +20,45 @@ local t = 0
 local funChallenge = nil
 local funChallengeAnim = 0
 local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local BACKGROUND_EFFECT_TYPE = "menuBreeze"
+local backgroundEffectCache = {}
+local backgroundEffect = nil
+
+local function configureBackgroundEffect()
+    local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+    if not effect then
+        backgroundEffect = nil
+        return
+    end
+
+    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+    effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.58
+
+    Shaders.configure(effect, {
+        bgColor = Theme.bgColor,
+        accentColor = Theme.buttonHover,
+        highlightColor = Theme.accentTextColor,
+    })
+
+    backgroundEffect = effect
+end
+
+local function drawBackground(sw, sh)
+    love.graphics.setColor(Theme.bgColor)
+    love.graphics.rectangle("fill", 0, 0, sw, sh)
+
+    if not backgroundEffect then
+        configureBackgroundEffect()
+    end
+
+    if backgroundEffect then
+        local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+        Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+end
 
 local analogAxisActions = {
     horizontal = {
@@ -101,6 +141,8 @@ function Menu:enter()
     funChallengeAnim = 0
     resetAnalogAxis()
 
+    configureBackgroundEffect()
+
     local sw, sh = Screen:get()
     local centerX = sw / 2
 
@@ -169,8 +211,7 @@ end
 function Menu:draw()
     local sw, sh = Screen:get()
 
-    love.graphics.setColor(Theme.bgColor)
-    love.graphics.rectangle("fill", 0, 0, sw, sh)
+    drawBackground(sw, sh)
 
     local baseCellSize = 20
     local baseSpacing = 10

@@ -4,6 +4,7 @@ local UI = require("ui")
 local Theme = require("theme")
 local Settings = require("settings")
 local Localization = require("localization")
+local Shaders = require("shaders")
 
 local SettingsScreen = {
     transitionDuration = 0.45,
@@ -30,6 +31,50 @@ local focusedIndex = 1
 local layout = {
     panel = { x = 0, y = 0, w = 0, h = 0 },
 }
+
+local BACKGROUND_EFFECT_TYPE = "settingsScan"
+local backgroundEffectCache = {}
+local backgroundEffect = nil
+
+local function getBaseColor()
+    return (UI.colors and UI.colors.background) or Theme.bgColor
+end
+
+local function configureBackgroundEffect()
+    local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+    if not effect then
+        backgroundEffect = nil
+        return
+    end
+
+    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+    effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.5
+
+    Shaders.configure(effect, {
+        bgColor = getBaseColor(),
+        accentColor = Theme.borderColor,
+        lineColor = Theme.highlightColor,
+    })
+
+    backgroundEffect = effect
+end
+
+local function drawBackground(sw, sh)
+    local baseColor = getBaseColor()
+    love.graphics.setColor(baseColor)
+    love.graphics.rectangle("fill", 0, 0, sw, sh)
+
+    if not backgroundEffect then
+        configureBackgroundEffect()
+    end
+
+    if backgroundEffect then
+        local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+        Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+end
 
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 
@@ -96,6 +141,7 @@ end
 
 function SettingsScreen:enter()
     Screen:update()
+    configureBackgroundEffect()
     local sw, sh = Screen:get()
     local centerX = sw / 2
 
@@ -216,8 +262,8 @@ function SettingsScreen:update(dt)
 end
 
 function SettingsScreen:draw()
-    local sw, _ = Screen:get()
-    love.graphics.clear(UI.colors.background or Theme.bgColor)
+    local sw, sh = Screen:get()
+    drawBackground(sw, sh)
 
     local panel = layout.panel
     UI.drawPanel(panel.x, panel.y, panel.w, panel.h)

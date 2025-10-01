@@ -8,6 +8,7 @@ local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
 local FunChallenges = require("funchallenges")
+local Shaders = require("shaders")
 
 local GameOver = {}
 
@@ -101,6 +102,29 @@ local BUTTON_SPACING = UI.spacing.buttonSpacing
 local CELEBRATION_ENTRY_HEIGHT = 64
 local CELEBRATION_ENTRY_SPACING = CELEBRATION_ENTRY_HEIGHT + 10
 
+local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
+local backgroundEffectCache = {}
+local backgroundEffect = nil
+
+local function configureBackgroundEffect()
+    local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+    if not effect then
+        backgroundEffect = nil
+        return
+    end
+
+    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+    effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.62
+
+    Shaders.configure(effect, {
+        bgColor = Theme.bgColor,
+        accentColor = Theme.warningColor,
+        pulseColor = Theme.progressColor,
+    })
+
+    backgroundEffect = effect
+end
+
 local function easeOutBack(t)
     local c1 = 1.70158
     local c3 = c1 + 1
@@ -109,8 +133,20 @@ local function easeOutBack(t)
 end
 
 local function drawBackground(sw, sh)
-    love.graphics.setColor(UI.colors.background or Theme.bgColor)
+    local baseColor = (UI.colors and UI.colors.background) or Theme.bgColor
+    love.graphics.setColor(baseColor)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
+
+    if not backgroundEffect then
+        configureBackgroundEffect()
+    end
+
+    if backgroundEffect then
+        local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+        Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- All button definitions in one place
@@ -192,6 +228,8 @@ function GameOver:enter(data)
 
     Audio:playMusic("scorescreen")
     Screen:update()
+
+    configureBackgroundEffect()
 
     local cause = data.cause or "unknown"
     self.deathMessage = pickDeathMessage(cause)

@@ -6,6 +6,7 @@ local UI = require("ui")
 local Theme = require("theme")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
+local Shaders = require("shaders")
 
 local ModeSelect = {
     transitionDuration = 0.45,
@@ -14,6 +15,45 @@ local ModeSelect = {
 local ANALOG_DEADZONE = 0.35
 local buttonList = ButtonList.new()
 local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local BACKGROUND_EFFECT_TYPE = "modeRibbon"
+local backgroundEffectCache = {}
+local backgroundEffect = nil
+
+local function configureBackgroundEffect()
+    local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+    if not effect then
+        backgroundEffect = nil
+        return
+    end
+
+    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+    effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.52
+
+    Shaders.configure(effect, {
+        bgColor = Theme.bgColor,
+        accentColor = Theme.borderColor,
+        edgeColor = Theme.progressColor,
+    })
+
+    backgroundEffect = effect
+end
+
+local function drawBackground(sw, sh)
+    love.graphics.setColor(Theme.bgColor)
+    love.graphics.rectangle("fill", 0, 0, sw, sh)
+
+    if not backgroundEffect then
+        configureBackgroundEffect()
+    end
+
+    if backgroundEffect then
+        local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+        Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+end
 
 local analogAxisActions = {
     horizontal = {
@@ -81,6 +121,8 @@ function ModeSelect:enter()
     UI.clearButtons()
     resetAnalogAxis()
 
+    configureBackgroundEffect()
+
     local sw, sh = Screen:get()
     local centerX = sw / 2
 
@@ -143,8 +185,7 @@ end
 function ModeSelect:draw()
     local sw, sh = Screen:get()
 
-    love.graphics.setColor(Theme.bgColor)
-    love.graphics.rectangle("fill", 0, 0, sw, sh)
+    drawBackground(sw, sh)
 
     love.graphics.setFont(UI.fonts.title)
     love.graphics.setColor(Theme.textColor)
