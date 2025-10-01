@@ -253,10 +253,28 @@ local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
 
   love.graphics.push("all")
 
+  love.graphics.setBlendMode("add")
+  for i = 1, 3 do
+    local ringT = (i - 1) / 2
+    local wobble = math.sin(time * (1.6 + ringT * 0.8)) * SEGMENT_SIZE * 0.06
+    love.graphics.setColor(0.32, 0.74, 1, (0.15 + 0.25 * intensity) * (1 - ringT * 0.35))
+    love.graphics.setLineWidth(1.6 + (3 - i) * 0.9)
+    love.graphics.circle("line", hx, hy, baseRadius * (1.05 + ringT * 0.25) + wobble)
+  end
+
+  love.graphics.setBlendMode("alpha")
   love.graphics.setColor(0.4, 0.8, 1, 0.25 + 0.4 * intensity)
   love.graphics.setLineWidth(2)
   local wobble = 1 + 0.08 * math.sin(time * 2.2)
   love.graphics.circle("line", hx, hy, baseRadius * wobble)
+
+  local dialRotation = time * (data.active and 1.8 or 0.9)
+  love.graphics.setColor(0.26, 0.62, 0.95, 0.2 + 0.25 * intensity)
+  love.graphics.setLineWidth(2.4)
+  for i = 1, 3 do
+    local offset = dialRotation + (i - 1) * (math.pi * 2 / 3)
+    love.graphics.arc("line", "open", hx, hy, baseRadius * 0.75, offset, offset + math.pi / 4)
+  end
 
   local tickCount = 6
   local spin = time * (data.active and -1.2 or -0.6)
@@ -368,6 +386,115 @@ local function drawDashStreaks(trail, SEGMENT_SIZE, data)
   love.graphics.pop()
 end
 
+local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
+  if not data then return end
+
+  local duration = data.duration or 0
+  if duration <= 0 then duration = 1 end
+
+  local timer = math.max(0, data.timer or 0)
+  local cooldown = data.cooldown or 0
+  local cooldownTimer = math.max(0, data.cooldownTimer or 0)
+
+  local readiness
+  if data.active then
+    readiness = math.min(1, timer / duration)
+  elseif cooldown > 0 then
+    readiness = 1 - math.min(1, cooldownTimer / math.max(0.0001, cooldown))
+  else
+    readiness = 1
+  end
+
+  readiness = math.max(0, math.min(1, readiness))
+  local intensity = readiness
+  if data.active then
+    intensity = math.max(intensity, 0.75)
+  end
+
+  if intensity <= 0 then return end
+
+  local time = 0
+  if love and love.timer and love.timer.getTime then
+    time = love.timer.getTime()
+  end
+
+  local baseRadius = SEGMENT_SIZE * (0.85 + 0.3 * intensity)
+  drawSoftGlow(hx, hy, baseRadius * (1.35 + 0.25 * intensity), 1, 0.78, 0.32, 0.25 + 0.35 * intensity)
+
+  local dirX, dirY = 0, -1
+  local head = trail and trail[1]
+  if head and (head.dirX or head.dirY) then
+    dirX = head.dirX or dirX
+    dirY = head.dirY or dirY
+  end
+
+  local nextSeg = trail and trail[2]
+  if head and nextSeg then
+    local hx1, hy1 = ptXY(head)
+    local hx2, hy2 = ptXY(nextSeg)
+    if hx1 and hy1 and hx2 and hy2 then
+      local dx, dy = hx2 - hx1, hy2 - hy1
+      if dx ~= 0 or dy ~= 0 then
+        dirX, dirY = dx, dy
+      end
+    end
+  end
+
+  local length = math.sqrt(dirX * dirX + dirY * dirY)
+  if length > 1e-4 then
+    dirX, dirY = dirX / length, dirY / length
+  end
+
+  local angle
+  if math.atan2 then
+    angle = math.atan2(dirY, dirX)
+  else
+    angle = math.atan(dirY, dirX)
+  end
+
+  love.graphics.push("all")
+  love.graphics.translate(hx, hy)
+  love.graphics.rotate(angle)
+
+  love.graphics.setColor(1, 0.78, 0.26, 0.3 + 0.4 * intensity)
+  love.graphics.setLineWidth(2 + intensity * 2)
+  love.graphics.arc("line", "open", 0, 0, baseRadius, -math.pi * 0.65, math.pi * 0.65)
+
+  love.graphics.setBlendMode("add")
+  local flareRadius = baseRadius * (1.18 + 0.08 * math.sin(time * 5))
+  love.graphics.setColor(1, 0.86, 0.42, 0.22 + 0.35 * intensity)
+  love.graphics.arc("fill", 0, 0, flareRadius, -math.pi * 0.28, math.pi * 0.28)
+
+  if not data.active then
+    local sweep = readiness * math.pi * 2
+    love.graphics.setBlendMode("alpha")
+    love.graphics.setColor(1, 0.62, 0.18, 0.35 + 0.4 * intensity)
+    love.graphics.setLineWidth(3)
+    love.graphics.arc("line", "open", 0, 0, baseRadius * 0.85, -math.pi / 2, -math.pi / 2 + sweep)
+  else
+    local pulse = 0.75 + 0.25 * math.sin(time * 10)
+    love.graphics.setColor(1, 0.95, 0.55, 0.5)
+    love.graphics.polygon("fill",
+      baseRadius * 0.75, 0,
+      baseRadius * (1.35 + 0.15 * pulse), -SEGMENT_SIZE * 0.34 * pulse,
+      baseRadius * (1.35 + 0.15 * pulse), SEGMENT_SIZE * 0.34 * pulse
+    )
+    love.graphics.setBlendMode("alpha")
+  end
+
+  love.graphics.setColor(1, 0.68, 0.2, 0.22 + 0.4 * intensity)
+  local sparks = 6
+  for i = 1, sparks do
+    local offset = time * (data.active and 7 or 3.5) + (i / sparks) * math.pi * 2
+    local inner = baseRadius * 0.5
+    local outer = baseRadius * (1.1 + 0.1 * math.sin(time * 4 + i))
+    love.graphics.setLineWidth(1.25)
+    love.graphics.line(math.cos(offset) * inner, math.sin(offset) * inner, math.cos(offset) * outer, math.sin(offset) * outer)
+  end
+
+  love.graphics.pop()
+end
+
 local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
   if not trail or #trail == 0 then return end
 
@@ -424,6 +551,10 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
 
     if upgradeVisuals and upgradeVisuals.adrenaline then
       drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
+    end
+
+    if upgradeVisuals and upgradeVisuals.dash then
+      drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
     end
 
     local faceScale = 1
