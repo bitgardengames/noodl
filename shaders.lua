@@ -295,12 +295,15 @@ registerEffect({
             float mist = smoothstep(0.0, 1.0, uv.y * 1.1);
             float shimmer = sin((uv.x * 6.0 - uv.y * 1.2) + time * 0.32) * 0.5 + 0.5;
 
-            vec3 base = mix(baseColor.rgb, fogColor.rgb, ceiling * 0.55 + mist * 0.38);
-            float highlight = clamp(shimmer * 0.32 * intensity, 0.0, 1.0);
-            vec3 col = mix(base, glintColor.rgb, highlight * 0.5);
+            vec3 base = mix(baseColor.rgb, fogColor.rgb, ceiling * 0.58 + mist * 0.42);
+            float highlight = clamp((shimmer * 0.34 + 0.12) * intensity, 0.0, 1.0);
+            vec3 col = mix(base, glintColor.rgb, highlight * 0.58);
+
+            float ambient = clamp(0.16 + intensity * 0.28, 0.0, 0.45);
+            col = mix(col, mix(fogColor.rgb, glintColor.rgb, 0.25), ambient);
 
             float depth = smoothstep(0.0, 0.4, uv.y);
-            col = mix(col, baseColor.rgb, depth * 0.12);
+            col = mix(col, baseColor.rgb, depth * 0.08);
 
             return vec4(col, baseColor.a) * color;
         }
@@ -344,12 +347,15 @@ registerEffect({
             float wave = sin((uv.x * 3.6 - uv.y * 1.4) + time * 0.22) * 0.5 + 0.5;
             float shafts = sin((uv.y * 2.4) - time * 0.18) * 0.5 + 0.5;
 
-            vec3 gradient = mix(baseColor.rgb, deepColor.rgb, depth * 0.75);
-            float highlight = clamp((wave * 0.4 + shafts * 0.25) * intensity, 0.0, 1.0);
-            vec3 col = mix(gradient, foamColor.rgb, highlight * 0.35);
+            vec3 gradient = mix(baseColor.rgb, deepColor.rgb, depth * 0.7);
+            float highlight = clamp((wave * 0.45 + shafts * 0.32 + 0.1) * intensity, 0.0, 1.0);
+            vec3 col = mix(gradient, foamColor.rgb, highlight * 0.42);
+
+            float ambient = clamp(0.12 + intensity * 0.3, 0.0, 0.42);
+            col = mix(col, mix(foamColor.rgb, deepColor.rgb, 0.4), ambient);
 
             float vignette = smoothstep(0.42, 1.0, distance(uv, vec2(0.5)));
-            col = mix(col, baseColor.rgb, vignette * 0.4);
+            col = mix(col, baseColor.rgb, vignette * 0.28);
 
             return vec4(col, baseColor.a) * color;
         }
@@ -547,7 +553,7 @@ registerEffect({
             float bloom3 = bloomShape(centered, offset3, sharp3);
 
             float combinedBloom = bloom1 * (0.4 + 0.22 * intensity);
-            combinedBloom += bloom2 * (0.32 + 0.24 * breathing * intensity);
+            combinedBloom += bloom2 * (0.24 + 0.18 * breathing * intensity);
             combinedBloom += bloom3 * (0.24 + 0.2 * intensity);
 
             float petalWave = sin((centered.x + centered.y) * 6.0 + time * 0.5);
