@@ -25,7 +25,7 @@
 local Floors = {
         [1] = {
                 name = "Verdant Garden",
-                flavor = "Noodl arrives for a midnight tasting only to find the table replaced by potted herbs and a note from a secretive critic: 'follow the bouquet.'",
+                flavor = "Noodl bursts into Verdant Garden with a picnic basket only to learn the stewpot eloped with the basil, chasing a wilder seasoning.",
                 palette = {
                         bgColor     = {0.20, 0.28, 0.20, 1}, -- darker forest green backdrop
                         arenaBG     = {0.42, 0.62, 0.35, 1}, -- still bright, grassy playfield
@@ -43,7 +43,7 @@ local Floors = {
         },
     [2] = {
         name = "Echoing Caverns",
-        flavor = "Echoes rehearse polite coughs, hinting the critic sampled the amuse-bouche here and left chasing a more resonant crunch.",
+        flavor = "Echoes in the caverns politely cough that the runaway pot rehearsed its dramatic simmer here before pelting upward humming suspense music.",
         palette = {
             bgColor    = {0.07, 0.09, 0.13, 1}, -- bluish depth
             arenaBG    = {0.12, 0.12, 0.15, 1}, -- slate
@@ -61,7 +61,7 @@ local Floors = {
     },
     [3] = {
         name = "Mushroom Grotto",
-        flavor = "Glowcaps insist the critic bribed them with truffle salt, then drifted onward claiming Noodl's menu needed more suspense.",
+        flavor = "Glowcaps gossip that the pot promised them starring roles in a soup opera, then twirled away claiming Noodl lacked cliffhangers.",
         palette = {
             bgColor    = {0.08, 0.1, 0.16, 1},  -- teal haze
             arenaBG    = {0.12, 0.16, 0.2, 1},  -- cave stone
@@ -81,7 +81,7 @@ local Floors = {
     },
     [4] = {
         name = "Flooded Catacombs",
-        flavor = "Lantern fish spell 'DECARB THE BROTH' before gossiping that the critic chased a rumor of vintage seawater upstairs.",
+        flavor = "Lantern fish spell 'ADD DRAMA' in bubbles, explaining the pot rode a tide elevator upstairs to secure a splashier third act.",
         palette = {
             bgColor    = {0.03, 0.08, 0.1, 1},   -- deep teal void
             arenaBG    = {0.05, 0.12, 0.14, 1},  -- water-stained stone
@@ -100,7 +100,7 @@ local Floors = {
     },
     [5] = {
         name = "Ancient Ruins",
-        flavor = "Clockwork beetles click through a reservation ledger, noting the critic prepaid for 'archaeological plating' and ascended grinning.",
+        flavor = "Clockwork beetles shuffle reservation cards, muttering the pot prepaid for 'ancient umami' before clanking skyward with a sly wink.",
         palette = {
             bgColor    = {0.14, 0.12, 0.08, 1}, -- dim brown haze
             arenaBG    = {0.18, 0.16, 0.12, 1}, -- sandstone
@@ -119,7 +119,7 @@ local Floors = {
     },
     [6] = {
         name = "Crystal Hollows",
-        flavor = "Crystals replay the critic's dramatic flourish—raising a tasting spoon to the heavens before darting toward fresher gossip.",
+        flavor = "Crystals replay the pot practicing award speeches, brandishing a ladle like a trophy before skating away on frozen bravado.",
         palette = {
             bgColor    = {0.06, 0.08, 0.12, 1}, -- sapphire veil
             arenaBG    = {0.09, 0.11, 0.16, 1}, -- cold blue
@@ -138,7 +138,7 @@ local Floors = {
     },
     [7] = {
         name = "Bone Pits",
-        flavor = "Bone choirs rehearse eulogies for underseasoned soup, swearing the critic stormed off to draft a spicier stanza.",
+        flavor = "Bone choirs rehearse eulogies for bland soup, insisting the pot dashed through to workshop a spicier punchline.",
         palette = {
             bgColor    = {0.12, 0.11, 0.1, 1},   -- sepulchral haze
             arenaBG    = {0.18, 0.17, 0.16, 1},  -- dusty bone field
@@ -158,7 +158,7 @@ local Floors = {
     },
     [8] = {
         name = "The Abyss",
-        flavor = "Shadow-fish recall the critic debating umami density with a passing eel before vanishing in a perfectly executed smokescreen.",
+        flavor = "Shadow-fish report the pot argued with an eel about suspenseful umami, then vanished in a melodramatic ink curtain.",
         palette = {
             bgColor    = {0.02, 0.02, 0.05, 1}, -- depth-black
             arenaBG    = {0.05, 0.05, 0.08, 1}, -- void
@@ -178,7 +178,7 @@ local Floors = {
     },
     [9] = {
         name = "Inferno Gates",
-        flavor = "Lava imps gush that the critic judged their reduction 'audacious' and bolted ahead to patent the phrase.",
+        flavor = "Lava imps gush that the pot called their reduction 'audacious,' borrowed the phrase, and bolted ahead to trademark it first.",
         palette = {
             bgColor    = {0.12, 0.03, 0.03, 1}, -- hazy red
             arenaBG    = {0.15, 0.04, 0.04, 1}, -- burning tone
@@ -198,7 +198,7 @@ local Floors = {
     },
     [10] = {
         name = "Obsidian Keep",
-        flavor = "An obsidian steward confides the critic booked the castle foyer for a 'molten digestif reveal' and swept upstairs trailing steam.",
+        flavor = "An obsidian steward confides the pot reserved the foyer for a 'molten cliffhanger reveal' and wafted upstairs in a cloud of suspense.",
         palette = {
             bgColor    = {0.01, 0.01, 0.02, 1},  -- abyssal black
             arenaBG    = {0.07, 0.05, 0.07, 1},  -- polished obsidian
@@ -218,7 +218,7 @@ local Floors = {
     },
     [11] = {
         name = "Ashen Frontier",
-        flavor = "Ashen tumbleweeds roll by with edited menu cards, muttering the critic demanded a smoke course and chased their own punchline.",
+        flavor = "Ashen tumbleweeds tumble past editing cue cards, muttering the pot demanded smokier tension then chased its own dramatic exit.",
         palette = {
             bgColor    = {0.08, 0.04, 0.03, 1},  -- ember-stained dusk
             arenaBG    = {0.12, 0.06, 0.05, 1},  -- charred earth
@@ -238,7 +238,7 @@ local Floors = {
     },
     [12] = {
         name = "Spirit Crucible",
-        flavor = "Choir spirits workshop taglines—'ethereal but approachable?'—after the critic promised to return once dessert achieved transcendence.",
+        flavor = "Choir spirits workshop taglines—'ethereal yet slurpable?'—after the pot vowed to return once dessert achieved transcendental suspense.",
         palette = {
             bgColor    = {0.04, 0.02, 0.08, 1},  -- ethereal violet
             arenaBG    = {0.09, 0.05, 0.14, 1},  -- twilight bloom
@@ -257,7 +257,7 @@ local Floors = {
     },
     [13] = {
         name = "The Underworld",
-        flavor = "An underworld concierge adjusts their monocle and reports the critic upgraded to a penthouse palate with express celestial transit.",
+        flavor = "An underworld concierge polishes a monocle, reporting the pot upgraded to a penthouse cauldron suite with express celestial escape.",
         palette = {
             bgColor    = {0.06, 0.02, 0.04, 1}, -- smoky dark veil
             arenaBG    = {0.08, 0.05, 0.08, 1}, -- charcoal
@@ -277,7 +277,7 @@ local Floors = {
     },
     [14] = {
         name = "Celestial Causeway",
-        flavor = "Celestial stairways align like a tasting flight; maintenance cherubs remark the critic sprinted past muttering about texture contrasts.",
+        flavor = "Celestial stairways align like a tasting flight while cherubs note the pot sprinted past muttering about 'textural tension arcs.'",
         palette = {
             bgColor    = {0.16, 0.18, 0.25, 1},  -- cool nightfall above the abyss
             arenaBG    = {0.78, 0.82, 0.9, 1},   -- moonlit alabaster path
@@ -297,7 +297,7 @@ local Floors = {
     },
     [15] = {
         name = "Sky Spire",
-        flavor = "The Sky Spire elevator hums a bossa nova and shares that the critic insisted on riding solo to workshop a climactic adjective.",
+        flavor = "The Sky Spire elevator hums a bossa nova, sharing that the pot rode solo to brainstorm a climactic adjective nobody could resist.",
         palette = {
             bgColor    = {0.12, 0.12, 0.18, 1},  -- starlit indigo
             arenaBG    = {0.85, 0.88, 0.92, 1},  -- alabaster platform
@@ -317,7 +317,7 @@ local Floors = {
     },
     [16] = {
         name = "Starfall Bastion",
-        flavor = "Star-kite sentries salute Noodl, impressed the critic left a tip in meteorites before dashing off to test refraction pairings.",
+        flavor = "Star-kite sentries salute Noodl, impressed the pot tipped in meteorites before bolting to test dramatic refraction cues.",
         palette = {
             bgColor    = {0.16, 0.17, 0.24, 1},  -- twilight navy mantle
             arenaBG    = {0.78, 0.82, 0.94, 1},  -- moonlit parapets
@@ -337,7 +337,7 @@ local Floors = {
     },
     [17] = {
         name = "Nebula Crown",
-        flavor = "Nebula puffballs arrange into tasting notes—'silky cosmos, needs crunch'—while pointing toward the critic's shimmering escape route.",
+        flavor = "Nebula puffballs arrange tasting notes—'silky cosmos, needs crunch'—while pointing toward the pot's shimmering escape contrail.",
         palette = {
             bgColor    = {0.09, 0.08, 0.16, 1},  -- deep violet firmament
             arenaBG    = {0.34, 0.26, 0.46, 1},  -- dusk-lit bridgework
@@ -356,7 +356,7 @@ local Floors = {
     },
     [18] = {
         name = "Void Throne",
-        flavor = "Void cats demand a dignified bow, then casually mention the critic went ahead to proofread a review in zero gravity.",
+        flavor = "Void cats demand a dignified bow, then casually mention the pot floated ahead to proofread its own heroic zero-gravity review.",
         palette = {
             bgColor    = {0.04, 0.03, 0.08, 1},  -- eventide abyss
             arenaBG    = {0.08, 0.06, 0.12, 1},  -- onyx dais
@@ -376,7 +376,7 @@ local Floors = {
     },
     [19] = {
         name = "Singularity Gate",
-        flavor = "At the Singularity Gate, Noodl intercepts the critic mid-dictation; they surrender a glowing review draft and request a reservation for two.",
+        flavor = "At the Singularity Gate, Noodl corners the pot mid-dictation; it hands over a glowing review draft and requests an encore supper for two.",
         palette = {
             bgColor    = {0.02, 0.02, 0.05, 1},  -- collapsing night
             arenaBG    = {0.05, 0.04, 0.09, 1},  -- gravitic maw
