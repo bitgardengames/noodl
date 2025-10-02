@@ -583,9 +583,17 @@ local english = {
                 title = "Stone Sneeze",
                 description = "Shatter a rock by face-checking it with a crash shield.",
             },
+            rockCrusher = {
+                title = "Rock Crusher",
+                description = "Pulverize 25 rocks with the help of crash shields.",
+            },
             sawParry = {
                 title = "Saw Whisperer",
                 description = "Let a crash shield devour a saw for you.",
+            },
+            sawAnnihilator = {
+                title = "Saw Annihilator",
+                description = "Reduce 25 saws to splinters using crash shields.",
             },
             shieldTriad = {
                 title = "Crash-Test Maestro",
