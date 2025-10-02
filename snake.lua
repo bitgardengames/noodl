@@ -4,6 +4,7 @@ local DrawSnake = require("snakedraw")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local UI = require("ui")
+local Fruit = require("fruit")
 local UpgradeVisuals = require("upgradevisuals")
 local Particles = require("particles")
 local SessionStats = require("sessionstats")
@@ -1430,6 +1431,7 @@ function Snake:loseSegments(count, options)
         return 0
     end
 
+    local exitWasOpen = Arena and Arena.hasExit and Arena:hasExit()
     segmentCount = segmentCount - trimmed
     popTimer = 0
 
@@ -1456,6 +1458,20 @@ function Snake:loseSegments(count, options)
                     table.remove(UI.fruitSockets)
                 end
             end
+        end
+    end
+
+    local fruitGoalLost = false
+    if UI then
+        local collected = UI.fruitCollected or 0
+        local required = UI.fruitRequired or 0
+        fruitGoalLost = required > 0 and collected < required
+    end
+
+    if exitWasOpen and fruitGoalLost and Arena and Arena.resetExit then
+        Arena:resetExit()
+        if Fruit and Fruit.spawn then
+            Fruit:spawn(self:getSegments(), Rocks, self:getSafeZone(3))
         end
     end
 
