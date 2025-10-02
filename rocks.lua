@@ -2,6 +2,7 @@ local Particles = require("particles")
 local Theme = require("theme")
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
+local Audio = require("audio")
 
 local Rocks = {}
 local current = {}
@@ -249,6 +250,7 @@ function Rocks:shatterNearest(x, y, count)
         if not bestIndex then break end
 
         removeRockAt(bestIndex, true)
+        Audio:playSound("rock_shatter")
     end
 end
 
