@@ -397,7 +397,8 @@ end
 
 local function buildCavern(state, rng)
     local palette = state.palette or Theme
-    local rockColor = withAlpha(darken(palette.arenaBorder or palette.rock or Theme.shadowColor, 0.35), 0.55)
+    local baseRockColor = darken(palette.arenaBorder or palette.rock or Theme.shadowColor, 0.35)
+    local rockColor = withAlpha(baseRockColor, 0.55)
     local accentColor = withAlpha(lighten(palette.rock or palette.snake or Theme.snakeDefault, 0.2), 0.35)
 
     local shapes = {
@@ -408,20 +409,83 @@ local function buildCavern(state, rng)
         },
     }
 
-    for _ = 1, 7 do
-        local baseX = rng:random(5, 95) / 100
-        local width = rng:random(4, 8) / 100
-        local depth = rng:random(10, 18) / 100
-        shapes[#shapes + 1] = {
-            type = "polygon",
-            points = {
-                baseX - width * 0.5, 0.06,
-                baseX + width * 0.5, 0.06,
-                baseX, 0.06 + depth,
-            },
-            color = withAlpha(darken(rockColor, rng:random(5, 15) / 100), 0.8),
-        }
+    local function addStalactiteLayer(count, widthRange, depthRange, color, verticalOffset, variance)
+        local placements = {}
+        local attempts = 0
+        local maxAttempts = count * 12
+        local baseY = 0.06 + (verticalOffset or 0)
+        local minGap = 0.01
+
+        while #placements < count and attempts < maxAttempts do
+            attempts = attempts + 1
+
+            local width = rng:random(widthRange[1], widthRange[2]) / 100
+            local depth = rng:random(depthRange[1], depthRange[2]) / 100
+            local baseX = rng:random(7, 93) / 100
+
+            local overlap = false
+            for _, existing in ipairs(placements) do
+                local spacing = (width + existing.width) * 0.5 + minGap
+                if math.abs(baseX - existing.baseX) < spacing then
+                    overlap = true
+                    break
+                end
+            end
+
+            if not overlap then
+                placements[#placements + 1] = {
+                    baseX = baseX,
+                    width = width,
+                    depth = depth,
+                }
+            end
+        end
+
+        table.sort(placements, function(a, b)
+            return a.baseX < b.baseX
+        end)
+
+        for _, stalactite in ipairs(placements) do
+            local stalactiteColor = copyColor(color)
+
+            if variance and variance > 0 then
+                local shadeShift = rng:random(-variance, variance) / 100
+                if shadeShift > 0 then
+                    stalactiteColor = lighten(stalactiteColor, shadeShift)
+                elseif shadeShift < 0 then
+                    stalactiteColor = darken(stalactiteColor, -shadeShift)
+                end
+            end
+
+            shapes[#shapes + 1] = {
+                type = "polygon",
+                points = {
+                    stalactite.baseX - stalactite.width * 0.5, baseY,
+                    stalactite.baseX + stalactite.width * 0.5, baseY,
+                    stalactite.baseX, baseY + stalactite.depth,
+                },
+                color = stalactiteColor,
+            }
+        end
     end
+
+    addStalactiteLayer(
+        6,
+        {3, 6},
+        {8, 14},
+        withAlpha(lighten(baseRockColor, 0.08), 0.35),
+        -0.008,
+        4
+    )
+
+    addStalactiteLayer(
+        5,
+        {5, 9},
+        {14, 22},
+        withAlpha(darken(baseRockColor, 0.05), 0.7),
+        0,
+        6
+    )
 
     shapes[#shapes + 1] = {
         type = "rectangle",
