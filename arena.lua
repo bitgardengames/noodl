@@ -1,6 +1,7 @@
 local Theme = require("theme")
 local Audio = require("audio")
 local Shaders = require("shaders")
+local BackgroundAmbience = require("backgroundambience")
 
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
@@ -186,15 +187,15 @@ function Arena:drawBackdrop(sw, sh)
     love.graphics.setColor(Theme.bgColor)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
 
+    local drawn = false
     local effect = self.activeBackgroundEffect
-    if not effect then
-        love.graphics.setColor(1, 1, 1, 1)
-        return false
+    if effect then
+        local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+        local intensity = effect.backdropIntensity or defaultBackdrop
+        drawn = Shaders.draw(effect, 0, 0, sw, sh, intensity) or false
     end
 
-    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-    local intensity = effect.backdropIntensity or defaultBackdrop
-    local drawn = Shaders.draw(effect, 0, 0, sw, sh, intensity)
+    BackgroundAmbience.draw(self)
 
     love.graphics.setColor(1, 1, 1, 1)
     return drawn

@@ -34,6 +34,7 @@ local Floors = {
                         backdropIntensity = 0.65,
                         arenaIntensity = 0.38,
                 },
+                backgroundTheme = "botanical",
                 traits = {"sunlitSanctuary"},
         },
     [2] = {
@@ -51,6 +52,7 @@ local Floors = {
             backdropIntensity = 0.6,
             arenaIntensity = 0.32,
         },
+        backgroundTheme = "cavern",
         traits = {"echoingStillness"},
     },
     [3] = {
@@ -69,6 +71,8 @@ local Floors = {
             backdropIntensity = 0.95,
             arenaIntensity = 0.62,
         },
+        backgroundTheme = "botanical",
+        backgroundVariant = "fungal",
         traits = {"glowingSpores"},
     },
     [4] = {
@@ -87,6 +91,7 @@ local Floors = {
             backdropIntensity = 0.72,
             arenaIntensity = 0.42,
         },
+        backgroundTheme = "oceanic",
         traits = {"waterloggedCatacombs"},
     },
     [5] = {
@@ -105,6 +110,7 @@ local Floors = {
             backdropIntensity = 0.6,
             arenaIntensity = 0.35,
         },
+        backgroundTheme = "machine",
         traits = {"ancientMachinery", "echoingStillness"},
     },
     [6] = {
@@ -123,6 +129,7 @@ local Floors = {
             backdropIntensity = 0.6,
             arenaIntensity = 0.4,
         },
+        backgroundTheme = "arctic",
         traits = {"crystallineResonance", "glowingSpores"},
     },
     [7] = {
@@ -141,6 +148,8 @@ local Floors = {
             backdropIntensity = 0.5,
             arenaIntensity = 0.28,
         },
+        backgroundTheme = "cavern",
+        backgroundVariant = "bone",
         traits = {"boneHarvest"},
     },
     [8] = {
@@ -159,6 +168,8 @@ local Floors = {
             backdropIntensity = 0.68,
             arenaIntensity = 0.4,
         },
+        backgroundTheme = "oceanic",
+        backgroundVariant = "abyss",
         traits = {"echoingStillness", "restlessEarth"},
     },
     [9] = {
@@ -177,6 +188,8 @@ local Floors = {
             backdropIntensity = 0.65,
             arenaIntensity = 0.4,
         },
+        backgroundTheme = "desert",
+        backgroundVariant = "hell",
         traits = {"infernalPressure"},
     },
     [10] = {
@@ -195,6 +208,8 @@ local Floors = {
             backdropIntensity = 0.7,
             arenaIntensity = 0.45,
         },
+        backgroundTheme = "desert",
+        backgroundVariant = "hell",
         traits = {"obsidianResonance", "infernalPressure"},
     },
     [11] = {
@@ -213,6 +228,8 @@ local Floors = {
             backdropIntensity = 0.58,
             arenaIntensity = 0.34,
         },
+        backgroundTheme = "desert",
+        backgroundVariant = "inferno",
         traits = {"ashenTithe", "boneHarvest"},
     },
     [12] = {
@@ -231,6 +248,7 @@ local Floors = {
             backdropIntensity = 0.58,
             arenaIntensity = 0.38,
         },
+        backgroundTheme = "laboratory",
         traits = {"spectralEchoes", "glowingSpores"},
     },
     [13] = {
@@ -249,6 +267,8 @@ local Floors = {
             backdropIntensity = 0.7,
             arenaIntensity = 0.44,
         },
+        backgroundTheme = "desert",
+        backgroundVariant = "hell",
         traits = {"ashenTithe", "infernalPressure"},
     },
     [14] = {
@@ -267,6 +287,8 @@ local Floors = {
             backdropIntensity = 0.62,
             arenaIntensity = 0.36,
         },
+        backgroundTheme = "urban",
+        backgroundVariant = "celestial",
         traits = {"divineAscent", "spectralEchoes"},
     },
     [15] = {
@@ -285,6 +307,8 @@ local Floors = {
             backdropIntensity = 0.6,
             arenaIntensity = 0.34,
         },
+        backgroundTheme = "urban",
+        backgroundVariant = "celestial",
         traits = {"divineAscent", "crystallineResonance"},
     },
 }
