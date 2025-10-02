@@ -21,7 +21,7 @@ local funChallenge = nil
 local funChallengeAnim = 0
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 
-local BACKGROUND_EFFECT_TYPE = "menuBreeze"
+local BACKGROUND_EFFECT_TYPE = "menuBloom"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
