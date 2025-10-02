@@ -17,6 +17,14 @@ local function getColorComponents(color, fallback)
     return {r, g, b, a}
 end
 
+local function lerp(a, b, t)
+    if not a then
+        return b
+    end
+
+    return a + (b - a) * t
+end
+
 local function shaderHasUniform(shader, name)
     if not shader or not shader.hasUniform then
         return true
@@ -43,6 +51,102 @@ local function sendFloat(shader, name, value)
     end
 end
 
+local WHITE = {1, 1, 1, 1}
+
+local reactiveState = {
+    comboTarget = 0,
+    comboDisplay = 0,
+    comboPulse = 0,
+    eventPulse = 0,
+    eventColor = {1, 1, 1, 1},
+    lastCombo = 0,
+}
+
+local EVENT_COLORS = {
+    combo = {1.0, 0.86, 0.45, 1},
+    comboBoost = {1.0, 0.92, 0.55, 1},
+    shield = {0.7, 0.98, 0.86, 1},
+    stallSaws = {0.65, 0.82, 1.0, 1},
+    score = {1.0, 0.72, 0.36, 1},
+    dragonfruit = {1.0, 0.45, 0.28, 1},
+}
+
+local function assignEventColor(color)
+    local components = getColorComponents(color, WHITE)
+    reactiveState.eventColor[1] = components[1]
+    reactiveState.eventColor[2] = components[2]
+    reactiveState.eventColor[3] = components[3]
+    reactiveState.eventColor[4] = components[4] or 1
+end
+
+function Shaders.notify(event, data)
+    if event == "comboChanged" then
+        local combo = math.max(0, (data and data.combo) or 0)
+        if combo >= 2 then
+            reactiveState.comboTarget = combo
+            if combo > (reactiveState.lastCombo or 0) then
+                reactiveState.comboPulse = math.min(reactiveState.comboPulse + 0.65, 1.4)
+            end
+        else
+            reactiveState.comboTarget = 0
+        end
+
+        reactiveState.lastCombo = combo
+    elseif event == "comboLost" then
+        reactiveState.comboTarget = 0
+        reactiveState.lastCombo = 0
+    elseif event == "specialEvent" then
+        local strength = math.max((data and data.strength) or 0.7, 0)
+        local color = (data and data.color) or EVENT_COLORS[(data and data.type) or ""]
+        reactiveState.eventPulse = math.min(reactiveState.eventPulse + strength, 2.4)
+        if color then
+            assignEventColor(color)
+        end
+    end
+end
+
+function Shaders.update(dt)
+    if not dt or dt <= 0 then
+        return
+    end
+
+    local smoothing = math.min(dt * 6, 1)
+    reactiveState.comboDisplay = lerp(reactiveState.comboDisplay, reactiveState.comboTarget, smoothing)
+    reactiveState.comboPulse = math.max(0, reactiveState.comboPulse - dt * 2.4)
+    reactiveState.eventPulse = math.max(0, reactiveState.eventPulse - dt * 1.8)
+
+    local colorFade = math.min(dt * 2.2, 1)
+    reactiveState.eventColor[1] = lerp(reactiveState.eventColor[1], 1, colorFade)
+    reactiveState.eventColor[2] = lerp(reactiveState.eventColor[2], 1, colorFade)
+    reactiveState.eventColor[3] = lerp(reactiveState.eventColor[3], 1, colorFade)
+    reactiveState.eventColor[4] = 1
+end
+
+local function computeReactiveResponse()
+    local comboValue = reactiveState.comboDisplay or 0
+    local comboStrength = 0
+    if comboValue >= 2 then
+        comboStrength = math.min((comboValue - 1.5) / 6.0, 1.0)
+    end
+
+    local comboPulse = reactiveState.comboPulse or 0
+    local eventPulse = reactiveState.eventPulse or 0
+
+    local boost = comboStrength * 0.45 + comboPulse * 0.3 + eventPulse * 0.55
+    boost = math.max(0, math.min(boost, 1.2))
+
+    local tintBlend = math.min(0.45, eventPulse * 0.4 + comboStrength * 0.25)
+    local eventColor = reactiveState.eventColor or WHITE
+    local tint = {
+        lerp(1, eventColor[1] or 1, tintBlend),
+        lerp(1, eventColor[2] or 1, tintBlend),
+        lerp(1, eventColor[3] or 1, tintBlend),
+        1,
+    }
+
+    return 1 + boost, comboStrength, comboPulse, eventPulse, tint, boost
+end
+
 local function drawShader(effect, x, y, w, h, intensity, sendUniforms)
     if not (effect and effect.shader) then
         return false
@@ -54,6 +158,9 @@ local function drawShader(effect, x, y, w, h, intensity, sendUniforms)
 
     local shader = effect.shader
     local actualIntensity = intensity or 1.0
+
+    local intensityMultiplier, comboStrength, comboPulse, eventPulse, tint, boost = computeReactiveResponse()
+    actualIntensity = actualIntensity * intensityMultiplier
 
     if shaderHasUniform(shader, "origin") then
         shader:send("origin", {x, y})
@@ -73,13 +180,37 @@ local function drawShader(effect, x, y, w, h, intensity, sendUniforms)
         shader:send("intensity", actualIntensity)
     end
 
+    if shaderHasUniform(shader, "comboLevel") then
+        shader:send("comboLevel", reactiveState.comboDisplay or 0)
+    end
+
+    if shaderHasUniform(shader, "comboStrength") then
+        shader:send("comboStrength", comboStrength)
+    end
+
+    if shaderHasUniform(shader, "comboPulse") then
+        shader:send("comboPulse", comboPulse)
+    end
+
+    if shaderHasUniform(shader, "eventPulse") then
+        shader:send("eventPulse", eventPulse)
+    end
+
+    if shaderHasUniform(shader, "reactiveBoost") then
+        shader:send("reactiveBoost", boost)
+    end
+
+    if shaderHasUniform(shader, "eventTint") then
+        shader:sendColor("eventTint", tint)
+    end
+
     if sendUniforms then
         sendUniforms(shader, now, x, y, w, h, actualIntensity)
     end
 
     love.graphics.push("all")
     love.graphics.setShader(shader)
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(tint[1], tint[2], tint[3], tint[4] or 1)
     love.graphics.rectangle("fill", x, y, w, h)
     love.graphics.pop()
 
