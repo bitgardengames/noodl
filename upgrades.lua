@@ -237,29 +237,6 @@ local pool = {
                 textOffset = 46,
                 textScale = 1.18,
             })
-            if not state.counters.quickFangsHandlerRegistered then
-                state.counters.quickFangsHandlerRegistered = true
-                Upgrades:addEventHandler("fruitCollected", function(data, runState)
-                    local fx, fy = getEventPosition(data)
-                    if not fx or not fy then return end
-
-                    local stacks = (runState.takenSet and runState.takenSet.quick_fangs) or 1
-                    runState.counters.quickFangsCombo = (runState.counters.quickFangsCombo or 0) + 1
-                    local threshold = math.max(1, 4 - stacks)
-                    if runState.counters.quickFangsCombo >= threshold then
-                        runState.counters.quickFangsCombo = 0
-                        celebrateUpgrade(getUpgradeString("quick_fangs", "combo_celebration"), nil, {
-                            x = fx,
-                            y = fy,
-                            color = {1, 0.7, 0.45, 1},
-                            skipParticles = true,
-                            textOffset = 36,
-                            textScale = 1 + 0.02 * stacks,
-                            textLife = 48,
-                        })
-                    end
-                end)
-            end
         end,
     }),
     register({
@@ -362,20 +339,6 @@ local pool = {
                     local sinkDuration = (runState.effects and runState.effects.sawSinkDuration) or 0
                     if sinkDuration and sinkDuration > 0 and Saws and Saws.sink then
                         Saws:sink(sinkDuration)
-                        celebrateUpgrade(nil, data, {
-                            skipText = true,
-                            skipParticles = true,
-                            color = {0.68, 0.84, 1, 1},
-                            visual = {
-                                badge = "spark",
-                                outerRadius = 46,
-                                innerRadius = 12,
-                                ringCount = 2,
-                                life = 0.6,
-                                glowAlpha = 0.22,
-                                haloAlpha = 0.12,
-                            },
-                        })
                     end
                 end)
             end
@@ -428,15 +391,6 @@ local pool = {
                 if FruitEvents.boostComboTimer then
                     FruitEvents.boostComboTimer(0.35)
                 end
-                if data and (data.combo or 0) >= 1 then
-                    celebrateUpgrade(getUpgradeString("metronome_totem", "timer_bonus"), data, {
-                        color = {0.55, 0.78, 0.58, 1},
-                        skipParticles = true,
-                        textOffset = 32,
-                        textScale = 0.95,
-                        textLife = 42,
-                    })
-                end
             end,
         },
     }),
@@ -448,24 +402,6 @@ local pool = {
         tags = {"adrenaline"},
         onAcquire = function(state)
             state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
-            state.counters.adrenalineFruitCount = state.counters.adrenalineFruitCount or 0
-            if not state.counters.adrenalineHandlerRegistered then
-                state.counters.adrenalineHandlerRegistered = true
-                Upgrades:addEventHandler("fruitCollected", function(data, runState)
-                    runState.counters.adrenalineFruitCount = (runState.counters.adrenalineFruitCount or 0) + 1
-                    local fx, fy = getEventPosition(data)
-                    local shout = getUpgradeString("adrenaline_surge", "adrenaline_shout")
-                    celebrateUpgrade(runState.counters.adrenalineFruitCount % 2 == 1 and shout or nil, nil, {
-                        x = fx,
-                        y = fy,
-                        color = {1, 0.42, 0.42, 1},
-                        skipParticles = true,
-                        textOffset = 34,
-                        textScale = 1.06,
-                        textLife = 46,
-                    })
-                end)
-            end
             celebrateUpgrade(getUpgradeString("adrenaline_surge", "name"), nil, {
                 color = {1, 0.42, 0.42, 1},
                 particleCount = 20,
@@ -546,27 +482,6 @@ local pool = {
                     state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
                     state.counters.pocketSpringsComplete = true
                     Snake:addCrashShields(1)
-                    local fx, fy = getEventPosition(data)
-                    if fx and fy then
-                        celebrateUpgrade(nil, data, {
-                            x = fx,
-                            y = fy,
-                            skipText = true,
-                            color = {0.65, 0.92, 1, 1},
-                            particleCount = 10,
-                            particleSpeed = 95,
-                            particleLife = 0.5,
-                            visual = {
-                                badge = "shield",
-                                outerRadius = 48,
-                                innerRadius = 14,
-                                ringCount = 3,
-                                life = 0.78,
-                                glowAlpha = 0.24,
-                                haloAlpha = 0.14,
-                            },
-                        })
-                    end
                 end
             end,
         },
@@ -632,27 +547,6 @@ local pool = {
                 end
                 if Saws and Saws.stall then
                     Saws:stall(0.8)
-                end
-                local fx, fy = getEventPosition(data)
-                if fx and fy then
-                    celebrateUpgrade(nil, data, {
-                        x = fx,
-                        y = fy,
-                        skipText = true,
-                        color = {0.85, 0.8, 1, 1},
-                        particleCount = 14,
-                        particleSpeed = 110,
-                        particleLife = 0.55,
-                        visual = {
-                            badge = "burst",
-                            outerRadius = 52,
-                            innerRadius = 16,
-                            ringCount = 3,
-                            life = 0.78,
-                            glowAlpha = 0.25,
-                            haloAlpha = 0.16,
-                        },
-                    })
                 end
             end,
         },
@@ -878,24 +772,6 @@ local pool = {
                     if Score.addBonus then
                         Score:addBonus(3)
                     end
-                    if data and data.x and data.y then
-                        celebrateUpgrade(nil, data, {
-                            x = data.x,
-                            y = data.y,
-                            skipText = true,
-                            skipParticles = true,
-                            color = {1, 0.88, 0.35, 1},
-                            visual = {
-                                badge = "burst",
-                                outerRadius = 46,
-                                innerRadius = 14,
-                                ringCount = 2,
-                                life = 0.76,
-                                glowAlpha = 0.26,
-                                haloAlpha = 0.16,
-                            },
-                        })
-                    end
                 end
             end,
         },
@@ -1105,37 +981,6 @@ local pool = {
                 if not state.counters.ember_engine_ready then return end
                 state.counters.ember_engine_ready = false
                 Saws:stall(3)
-                if data and data.x and data.y then
-                    celebrateUpgrade(nil, data, {
-                        x = data.x,
-                        y = data.y,
-                        skipText = true,
-                        color = {1, 0.58, 0.2, 1},
-                        particleCount = 14,
-                        particleSpeed = 120,
-                        particleLife = 0.8,
-                        particleSize = 5,
-                        particleSpread = math.pi * 2,
-                        particles = {
-                            count = 14,
-                            speed = 120,
-                            life = 0.8,
-                            size = 5,
-                            color = {1, 0.55, 0.2, 1},
-                            spread = math.pi * 2,
-                            gravity = 20,
-                        },
-                        visual = {
-                            badge = "spark",
-                            outerRadius = 54,
-                            innerRadius = 18,
-                            ringCount = 3,
-                            life = 0.9,
-                            glowAlpha = 0.32,
-                            haloAlpha = 0.2,
-                        },
-                    })
-                end
             end,
         },
     }),
@@ -1152,29 +997,6 @@ local pool = {
                 end
                 if Score.addBonus then
                     Score:addBonus(1)
-                end
-                local fx, fy = getEventPosition(data)
-                if fx and fy then
-                    celebrateUpgrade(nil, data, {
-                        x = fx,
-                        y = fy,
-                        skipText = true,
-                        color = {0.8, 0.95, 1, 1},
-                        particleCount = 10,
-                        particleSpeed = 90,
-                        particleLife = 0.45,
-                        particleSize = 4,
-                        particleSpread = math.pi * 2,
-                        visual = {
-                            badge = "burst",
-                            outerRadius = 48,
-                            innerRadius = 14,
-                            ringCount = 3,
-                            life = 0.7,
-                            glowAlpha = 0.24,
-                            haloAlpha = 0.14,
-                        },
-                    })
                 end
             end,
         },
@@ -1203,17 +1025,6 @@ local pool = {
                 local fx, fy = Fruit:getPosition()
                 if not (fx and fy) then return end
 
-                celebrateUpgrade(getUpgradeString("spectral_harvest", "name"), nil, {
-                    x = fx,
-                    y = fy,
-                    color = {0.76, 0.9, 1, 1},
-                    particleCount = 18,
-                    particleSpeed = 120,
-                    particleLife = 0.55,
-                    textOffset = 56,
-                    textScale = 1.14,
-                })
-
                 FruitEvents.handleConsumption(fx, fy)
             end,
         },
@@ -1239,29 +1050,6 @@ local pool = {
                 end
                 if Score.addBonus then
                     Score:addBonus(4)
-                end
-                local fx, fy = getEventPosition(data)
-                if fx and fy then
-                    celebrateUpgrade(nil, data, {
-                        x = fx,
-                        y = fy,
-                        skipText = true,
-                        color = {1, 0.86, 0.32, 1},
-                        particleCount = 16,
-                        particleSpeed = 130,
-                        particleLife = 0.65,
-                        particleSize = 5,
-                        particleSpread = math.pi * 2,
-                        visual = {
-                            badge = "burst",
-                            outerRadius = 56,
-                            innerRadius = 18,
-                            ringCount = 3,
-                            life = 0.88,
-                            glowAlpha = 0.3,
-                            haloAlpha = 0.18,
-                        },
-                    })
                 end
             end,
         },
