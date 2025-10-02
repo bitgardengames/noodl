@@ -7,6 +7,7 @@ local UI = require("ui")
 local UpgradeVisuals = require("upgradevisuals")
 local Particles = require("particles")
 local SessionStats = require("sessionstats")
+local Score = require("score")
 local Theme = require("theme")
 
 local Snake = {}
@@ -367,6 +368,75 @@ local function trimHoleSegments(hole)
 
     if lastInside and lastInside.dirX and lastInside.dirY then
         hole.entryDirX, hole.entryDirY = normalizeDirection(lastInside.dirX, lastInside.dirY)
+    end
+end
+
+local function trimTrailToSegmentLimit()
+    if not trail or #trail == 0 then
+        return
+    end
+
+    local consumedLength = (descendingHole and descendingHole.consumedLength) or 0
+    local maxLen = math.max(0, segmentCount * SEGMENT_SPACING - consumedLength)
+
+    if maxLen <= 0 then
+        local head = trail[1]
+        trail = {}
+        if head then
+            trail[1] = {
+                drawX = head.drawX,
+                drawY = head.drawY,
+                dirX = head.dirX,
+                dirY = head.dirY,
+            }
+        end
+        return
+    end
+
+    local traveled = 0
+    local i = 2
+    while i <= #trail do
+        local prev = trail[i - 1]
+        local seg = trail[i]
+        local px, py = prev and (prev.drawX or prev.x), prev and (prev.drawY or prev.y)
+        local sx, sy = seg and (seg.drawX or seg.x), seg and (seg.drawY or seg.y)
+
+        if not (px and py and sx and sy) then
+            for j = #trail, i, -1 do
+                table.remove(trail, j)
+            end
+            break
+        end
+
+        local dx = px - sx
+        local dy = py - sy
+        local segLen = math.sqrt(dx * dx + dy * dy)
+
+        if segLen <= 0 then
+            table.remove(trail, i)
+        else
+            if traveled + segLen > maxLen then
+                local excess = traveled + segLen - maxLen
+                local t = 1 - (excess / segLen)
+                local tailX = px - dx * t
+                local tailY = py - dy * t
+
+                for j = #trail, i + 1, -1 do
+                    table.remove(trail, j)
+                end
+
+                seg.drawX = tailX
+                seg.drawY = tailY
+                if not seg.dirX or not seg.dirY then
+                    seg.dirX = direction.x
+                    seg.dirY = direction.y
+                end
+                break
+            else
+                traveled = traveled + segLen
+                i = i + 1
+            end
+        end
     end
 end
 
@@ -1272,6 +1342,95 @@ function Snake:grow()
     local bonus = self.extraGrowth or 0
     segmentCount = segmentCount + 1 + bonus
     popTimer = POP_DURATION
+end
+
+function Snake:getSegmentCount()
+    return segmentCount
+end
+
+function Snake:loseSegments(count, options)
+    count = math.floor(count or 0)
+    if count <= 0 then
+        return 0
+    end
+
+    local available = math.max(0, (segmentCount or 1) - 1)
+    local trimmed = math.min(count, available)
+    if trimmed <= 0 then
+        return 0
+    end
+
+    segmentCount = segmentCount - trimmed
+    popTimer = 0
+
+    trimTrailToSegmentLimit()
+
+    local tail = trail[#trail]
+    local tailX = tail and tail.drawX
+    local tailY = tail and tail.drawY
+
+    if (not options) or options.updateFruit ~= false then
+        if UI and UI.removeFruit then
+            UI:removeFruit(trimmed)
+        elseif UI then
+            UI.fruitCollected = math.max(0, (UI.fruitCollected or 0) - trimmed)
+            if type(UI.fruitSockets) == "table" then
+                for _ = 1, math.min(trimmed, #UI.fruitSockets) do
+                    table.remove(UI.fruitSockets)
+                end
+            end
+        end
+    end
+
+    if SessionStats and SessionStats.get and SessionStats.set then
+        local apples = SessionStats:get("applesEaten") or 0
+        apples = math.max(0, apples - trimmed)
+        SessionStats:set("applesEaten", apples)
+    end
+
+    if Score and Score.addBonus and Score.get then
+        local currentScore = Score:get() or 0
+        local deduction = math.min(currentScore, trimmed)
+        if deduction > 0 then
+            Score:addBonus(-deduction)
+        end
+    end
+
+    if (not options) or options.spawnParticles ~= false then
+        local burstColor = {1, 0.8, 0.4, 1}
+        if options and options.cause == "saw" then
+            burstColor = {1, 0.6, 0.3, 1}
+        end
+
+        if Particles and Particles.spawnBurst and tailX and tailY then
+            Particles:spawnBurst(tailX, tailY, {
+                count = math.min(10, 4 + trimmed),
+                speed = 120,
+                speedVariance = 46,
+                life = 0.42,
+                size = 4,
+                color = burstColor,
+                spread = math.pi * 2,
+                drag = 3.1,
+                gravity = 220,
+                fadeTo = 0,
+            })
+        end
+    end
+
+    return trimmed
+end
+
+function Snake:chopTailBySaw()
+    local available = math.max(0, (segmentCount or 1) - 1)
+    if available <= 0 then
+        return 0
+    end
+
+    local loss = math.floor(math.max(1, available * 0.2))
+    loss = math.min(loss, available)
+
+    return self:loseSegments(loss, { cause = "saw" })
 end
 
 function Snake:onFruitCollected()

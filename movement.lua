@@ -384,6 +384,10 @@ local function handleSawCollision(headX, headY)
                 Snake:onShieldConsumed(headX, headY, "saw")
         end
 
+        if Snake.chopTailBySaw then
+                Snake:chopTailBySaw()
+        end
+
         if shielded then
                 recordShieldEvent("saw")
         end
