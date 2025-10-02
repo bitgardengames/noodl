@@ -136,12 +136,12 @@ function ModeSelect:enter()
     local sw, sh = Screen:get()
     local centerX = sw / 2
 
-    local cardWidth = math.min(720, sw - 160)
-    local buttonWidth = cardWidth - 64
-    local buttonHeight = 72
-    local cardPaddingX = 32
-    local cardPaddingY = 32
-    local extraContentHeight = 96
+    local cardWidth = math.min(640, sw - 220)
+    local buttonWidth = cardWidth - 56
+    local buttonHeight = 64
+    local cardPaddingX = 28
+    local cardPaddingY = 28
+    local extraContentHeight = 84
     local cardHeight = cardPaddingY * 2 + extraContentHeight + buttonHeight
     local spacing = 26
     local x = centerX - cardWidth / 2 + cardPaddingX
@@ -178,7 +178,7 @@ function ModeSelect:enter()
                 h = cardHeight,
                 paddingX = cardPaddingX,
                 paddingY = cardPaddingY,
-                radius = 36,
+                radius = 30,
             },
         }
 
