@@ -319,6 +319,11 @@ end
 function Game:updateDescending(dt)
     Snake:update(dt)
 
+    -- Keep saw blades animating while the snake descends into the exit hole
+    if Saws and Saws.update then
+        Saws:update(dt)
+    end
+
     local segments = Snake:getSegments()
     local tail = segments[#segments]
     if not tail then
