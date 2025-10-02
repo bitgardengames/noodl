@@ -94,8 +94,8 @@ end
 -- Forest canopy shimmer for lush floors
 registerEffect({
     type = "forestCanopy",
-    backdropIntensity = 0.75,
-    arenaIntensity = 0.45,
+    backdropIntensity = 0.65,
+    arenaIntensity = 0.38,
     source = [[
         extern float time;
         extern vec2 resolution;
@@ -105,20 +105,47 @@ registerEffect({
         extern vec4 accentColor;
         extern float intensity;
 
+        float hash(vec2 p)
+        {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        }
+
+        vec2 hash2(vec2 p)
+        {
+            return vec2(hash(p), hash(p + 19.19));
+        }
+
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         {
             vec2 uv = (screen_coords - origin) / resolution;
             uv = clamp(uv, 0.0, 1.0);
 
-            float sway = sin((uv.x - 0.5) * 5.5 + time * 0.15) * 0.25 + 0.5;
-            float rays = sin((uv.y * 1.8 + time * 0.1) + cos(uv.x * 6.0)) * 0.3 + 0.5;
-            float mixRay = clamp((sway * 0.6 + rays * 0.4) * intensity, 0.0, 1.0);
+            vec3 col = baseColor.rgb;
 
-            float canopy = smoothstep(0.0, 1.0, 1.0 - uv.y);
-            float vignette = 1.0 - smoothstep(0.4, 0.95, distance(uv, vec2(0.5)));
+            float canopyLight = smoothstep(0.35, 0.0, uv.y);
+            col = mix(col, lightColor.rgb, canopyLight * 0.3 * intensity);
 
-            vec3 col = mix(baseColor.rgb, lightColor.rgb, mixRay * canopy);
-            col = mix(col, accentColor.rgb, mixRay * 0.2);
+            for (int i = 0; i < 3; ++i)
+            {
+                float fi = float(i);
+                float density = 3.0 + fi * 2.2;
+                float speed = 0.05 + fi * 0.035;
+                float size = 0.22 - fi * 0.05;
+                float layerStrength = 0.22 + fi * 0.1;
+
+                vec2 grid = (uv + vec2(0.0, time * speed)) * density;
+                vec2 cell = floor(grid);
+                vec2 cellUV = fract(grid);
+                vec2 rand = hash2(cell + fi * 17.0);
+
+                float d = distance(cellUV, rand);
+                float particle = exp(-d * d / (size * size + 1e-5));
+
+                vec3 glowColor = mix(lightColor.rgb, accentColor.rgb, 0.35 + fi * 0.25);
+                col = mix(col, glowColor, clamp(particle * layerStrength * intensity, 0.0, 1.0));
+            }
+
+            float vignette = smoothstep(0.95, 0.45, distance(uv, vec2(0.5)));
             col = mix(baseColor.rgb, col, clamp(vignette, 0.0, 1.0));
 
             return vec4(col, baseColor.a) * color;
