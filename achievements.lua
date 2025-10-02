@@ -50,6 +50,30 @@ function Achievements:registerStateProvider(provider)
     end
 end
 
+function Achievements:registerUnlockListener(listener)
+    if type(listener) ~= "function" then
+        return
+    end
+
+    self:_ensureInitialized()
+
+    self._unlockListeners = self._unlockListeners or {}
+    table.insert(self._unlockListeners, listener)
+end
+
+function Achievements:_notifyUnlockListeners(id, achievement)
+    if not self._unlockListeners then
+        return
+    end
+
+    for _, listener in ipairs(self._unlockListeners) do
+        local ok, err = pcall(listener, id, achievement)
+        if not ok then
+            print("[achievements] unlock listener failed for", tostring(id), err)
+        end
+    end
+end
+
 function Achievements:_addDefinition(rawDef)
     local def = applyDefaults(copyTable(rawDef))
     self.definitions[def.id] = def
@@ -337,6 +361,8 @@ function Achievements:unlock(name)
     end
 
     self:save()
+
+    self:_notifyUnlockListeners(name, achievement)
 end
 
 function Achievements:check(key, state)

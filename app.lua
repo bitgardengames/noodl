@@ -4,12 +4,14 @@ local Settings = require("settings")
 local Display = require("display")
 local Audio = require("audio")
 local Achievements = require("achievements")
+local MetaProgression = require("metaprogression")
 local Score = require("score")
 local PlayerStats = require("playerstats")
 local GameModes = require("gamemodes")
 local UI = require("ui")
 local Localization = require("localization")
 local Theme = require("theme")
+local SnakeCosmetics = require("snakecosmetics")
 
 local App = {
     stateModules = {
@@ -45,6 +47,11 @@ function App:loadSubsystems()
     Score:load()
     PlayerStats:load()
     GameModes:loadUnlocks()
+
+    local metaState = MetaProgression:getState() or {}
+    SnakeCosmetics:load({
+        metaLevel = metaState.level or 1,
+    })
 end
 
 function App:resolveAction(action)
