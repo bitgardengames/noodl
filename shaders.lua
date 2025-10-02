@@ -372,8 +372,8 @@ registerEffect({
 -- Mushroom pulse shader (existing behaviour)
 registerEffect({
     type = "mushroomPulse",
-    backdropIntensity = 1.0,
-    arenaIntensity = 0.68,
+    backdropIntensity = 0.78,
+    arenaIntensity = 0.5,
     source = [[
         extern float time;
         extern vec2 resolution;
@@ -407,27 +407,27 @@ registerEffect({
             vec2 offset2 = vec2(cos(drift * 1.3 + 2.2), sin(drift * 0.9 + 1.4)) * (0.26 + 0.1 * intensity);
             vec2 offset3 = vec2(cos(drift * 0.7 - 1.1), sin(drift * 1.1 - 2.4)) * (0.32 + 0.12 * intensity);
 
-            float sharp1 = 9.2 - intensity * 1.8;
-            float sharp2 = 6.8 - intensity * 1.35;
-            float sharp3 = 4.6 - intensity * 0.9;
+            float sharp1 = 8.4 - intensity * 1.6;
+            float sharp2 = 6.1 - intensity * 1.2;
+            float sharp3 = 4.1 - intensity * 0.8;
 
             float bloom1 = bloomShape(centered, offset1, sharp1);
             float bloom2 = bloomShape(centered, offset2, sharp2);
             float bloom3 = bloomShape(centered, offset3, sharp3);
 
-            float combinedBloom = bloom1 * (0.55 + 0.25 * intensity);
-            combinedBloom += bloom2 * (0.45 + 0.3 * breathing * intensity);
-            combinedBloom += bloom3 * (0.35 + 0.25 * intensity);
+            float combinedBloom = bloom1 * (0.4 + 0.22 * intensity);
+            combinedBloom += bloom2 * (0.32 + 0.24 * breathing * intensity);
+            combinedBloom += bloom3 * (0.24 + 0.2 * intensity);
 
             float petalWave = sin((centered.x + centered.y) * 6.0 + time * 0.5);
-            float waveMix = clamp(petalWave * 0.5 + 0.5, 0.0, 1.0) * (0.25 + 0.35 * intensity);
+            float waveMix = clamp(petalWave * 0.5 + 0.5, 0.0, 1.0) * (0.18 + 0.28 * intensity);
 
             vec3 base = baseColor.rgb;
-            vec3 accent = mix(base, accentColor.rgb, 0.7);
-            vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.6);
+            vec3 accent = mix(base, accentColor.rgb, 0.55);
+            vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.45);
 
-            float accentMix = clamp(combinedBloom, 0.0, 1.0);
-            float glowMix = clamp(combinedBloom * 0.6 + waveMix, 0.0, 1.0);
+            float accentMix = clamp(combinedBloom * 0.85, 0.0, 1.0);
+            float glowMix = clamp(combinedBloom * 0.48 + waveMix * 0.85, 0.0, 1.0);
 
             vec3 colorBlend = mix(base, accent, accentMix);
             colorBlend = mix(colorBlend, glow, glowMix);
@@ -436,7 +436,7 @@ registerEffect({
             float outerEdge = min(0.96, 0.82 + 0.12 * intensity);
             float vignette = 1.0 - smoothstep(innerEdge, outerEdge, dist + breathing * 0.1 * intensity);
 
-            float finalMix = clamp(vignette * 0.92 + 0.08, 0.0, 1.0);
+            float finalMix = clamp(vignette * 0.82 + 0.12, 0.0, 1.0);
             vec3 finalColor = mix(base, colorBlend, finalMix);
 
             return vec4(finalColor, baseColor.a) * color;
