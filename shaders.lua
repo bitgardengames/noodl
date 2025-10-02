@@ -550,6 +550,68 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
+-- Soft bloom for a calm, floral main menu ambiance
+registerEffect({
+    type = "menuBloom",
+    backdropIntensity = 0.64,
+    arenaIntensity = 0.38,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 petalColor;
+        extern vec4 highlightColor;
+        extern float intensity;
+
+        float hash(vec2 p)
+        {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        }
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            vec2 centered = uv - 0.5;
+            float dist = length(centered);
+
+            float pulse = sin(time * 0.35) * 0.5 + 0.5;
+            float bloom = 1.0 - smoothstep(0.12, 0.58, dist + pulse * 0.06);
+
+            float angle = atan(centered.y, centered.x);
+            float petals = cos(angle * 6.0 + time * 0.12);
+            float petalMask = clamp(1.0 - smoothstep(0.1, 0.46, dist + petals * 0.05), 0.0, 1.0);
+
+            float drift = sin((uv.x + uv.y * 0.6) * 4.2 - time * 0.25) * 0.5 + 0.5;
+            float gradient = smoothstep(-0.08, 0.72, uv.y + drift * 0.08);
+
+            float sparkleSeed = hash(floor(uv * vec2(24.0, 16.0)) + floor(time * 0.5));
+            float sparkle = smoothstep(0.72, 1.0, sparkleSeed) * bloom * 0.35;
+
+            vec3 col = mix(baseColor.rgb, petalColor.rgb, (bloom * 0.6 + petalMask * 0.35) * intensity);
+            col = mix(col, highlightColor.rgb, clamp(bloom * 0.3 + gradient * 0.2 + sparkle * 0.5, 0.0, 1.0) * intensity);
+            col = mix(baseColor.rgb, col, 0.85);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
+        local petal = getColorComponents(palette and (palette.accentColor or palette.buttonHover), Theme.buttonHover)
+        local highlight = getColorComponents(palette and (palette.highlightColor or palette.accentTextColor), Theme.accentTextColor)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "petalColor", petal)
+        sendColor(shader, "highlightColor", highlight)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
 -- Directional ribbons for mode selection energy
 registerEffect({
     type = "modeRibbon",
