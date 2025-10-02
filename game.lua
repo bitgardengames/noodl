@@ -617,6 +617,11 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 - 80 + yOffset)
         love.graphics.scale(titleScale, titleScale)
         love.graphics.translate(-self.screenWidth / 2, -(self.screenHeight / 2 - 80 + yOffset))
+        local stripPadding = 12
+        local stripHeight = UI.fonts.title:getHeight() + stripPadding * 2
+        local stripY = self.screenHeight / 2 - 80 + yOffset - stripPadding
+        love.graphics.setColor(0, 0, 0, 0.6 * nameAlpha)
+        love.graphics.rectangle("fill", 0, stripY, self.screenWidth, stripHeight)
         local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
         love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * nameAlpha)
         love.graphics.printf(floorData.name, 2, self.screenHeight / 2 - 78 + yOffset, self.screenWidth, "center")
@@ -633,6 +638,11 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
             love.graphics.setFont(UI.fonts.button)
             love.graphics.push()
             love.graphics.translate(0, flavorOffset)
+            local flavorPadding = 10
+            local flavorHeight = UI.fonts.button:getHeight() + flavorPadding * 2
+            local flavorY = self.screenHeight / 2 - flavorPadding
+            love.graphics.setColor(0, 0, 0, 0.55 * flavorAlpha)
+            love.graphics.rectangle("fill", 0, flavorY, self.screenWidth, flavorHeight)
             local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
             love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * flavorAlpha)
             love.graphics.printf(floorData.flavor, 2, self.screenHeight / 2 + 2, self.screenWidth, "center")
