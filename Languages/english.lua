@@ -104,9 +104,11 @@ local english = {
         },
         modeselect = {
             title = "Select Game Mode",
+            tagline = "Find the vibe for your next run.",
             locked_prefix = "Locked — ${description}",
             back_to_menu = "Back to Menu",
             high_score = "High Score: ${score}",
+            launch_button = "Play ${mode}",
         },
         achievements = {
             title = "Achievements",
