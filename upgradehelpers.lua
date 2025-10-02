@@ -18,12 +18,12 @@ UpgradeHelpers.rarities = {
         color = {0.75, 0.82, 0.88, 1},
     },
     uncommon = {
-        weight = 28,
+        weight = 32,
         labelKey = "upgrades.rarities.uncommon",
         color = {0.55, 0.78, 0.58, 1},
     },
     rare = {
-        weight = 12,
+        weight = 8,
         labelKey = "upgrades.rarities.rare",
         color = {0.54, 0.72, 0.96, 1},
     },
