@@ -18,6 +18,8 @@ local defaultEffects = UpgradeHelpers.defaultEffects
 local celebrateUpgrade = UpgradeHelpers.celebrateUpgrade
 local getEventPosition = UpgradeHelpers.getEventPosition
 
+local POCKET_SPRINGS_FRUIT_TARGET = 30
+
 local function stoneSkinShieldHandler(data, state)
     if not state then return end
     if (state.takenSet and (state.takenSet["stone_skin"] or 0) <= 0) then return end
@@ -541,7 +543,10 @@ local pool = {
         rarity = "rare",
         tags = {"defense"},
         onAcquire = function(state)
-            state.counters.pocketSprings = state.counters.pocketSprings or 0
+            state.counters.pocketSpringsFruit = state.counters.pocketSpringsFruit or 0
+            if state.counters.pocketSpringsComplete == nil then
+                state.counters.pocketSpringsComplete = false
+            end
         end,
         handlers = {
             fruitCollected = function(data, state)
@@ -549,9 +554,14 @@ local pool = {
                     return
                 end
 
-                state.counters.pocketSprings = (state.counters.pocketSprings or 0) + 1
-                if state.counters.pocketSprings >= 8 then
-                    state.counters.pocketSprings = state.counters.pocketSprings - 8
+                if state.counters.pocketSpringsComplete then
+                    return
+                end
+
+                state.counters.pocketSpringsFruit = (state.counters.pocketSpringsFruit or 0) + 1
+                if state.counters.pocketSpringsFruit >= POCKET_SPRINGS_FRUIT_TARGET then
+                    state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
+                    state.counters.pocketSpringsComplete = true
                     Snake:addCrashShields(1)
                     local fx, fy = getEventPosition(data)
                     if fx and fy then

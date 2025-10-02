@@ -372,7 +372,7 @@ local english = {
             },
             pocket_springs = {
                 name = "Pocket Springs",
-                description = "Every eight fruits forge a crash shield charge.",
+                description = "After collecting thirty fruit, forge a single crash shield charge.",
             },
             mapmakers_compass = {
                 name = "Mapmaker's Compass",
