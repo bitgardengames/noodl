@@ -145,50 +145,28 @@ function Snake:addShieldBurst(config)
 end
 
 function Snake:onShieldConsumed(x, y, cause)
+    local burstTriggered = false
+    local burstRocks = 0
+    local burstStall = 0
+
     if self.shieldBurst then
-        local triggeredBurst = false
         local rocksToBreak = math.floor(self.shieldBurst.rocks or 0)
         if rocksToBreak > 0 and Rocks and Rocks.shatterNearest then
             Rocks:shatterNearest(x or 0, y or 0, rocksToBreak)
-            triggeredBurst = true
+            burstTriggered = true
+            burstRocks = rocksToBreak
         end
 
         local stallDuration = self.shieldBurst.stall or 0
         if stallDuration > 0 and Saws and Saws.stall then
             Saws:stall(stallDuration)
-            triggeredBurst = true
+            burstTriggered = true
+            burstStall = stallDuration
         end
+    end
 
-        if triggeredBurst and x and y then
-            UpgradeVisuals:spawn(x, y, {
-                color = {0.72, 0.9, 1, 1},
-                glowColor = {0.58, 0.78, 1, 1},
-                haloColor = {0.46, 0.66, 1, 0.22},
-                badge = "burst",
-                badgeScale = 1.08,
-                ringCount = 4,
-                ringSpacing = 14,
-                ringWidth = 5,
-                innerRadius = 18,
-                outerRadius = 86,
-                life = 0.58,
-                glowAlpha = 0.28,
-                haloAlpha = 0.2,
-            })
-
-            if Particles and Particles.spawnBurst then
-                Particles:spawnBurst(x, y, {
-                    count = 22,
-                    speed = 140,
-                    speedVariance = 70,
-                    life = 0.52,
-                    size = 7,
-                    color = {0.58, 0.82, 1, 0.9},
-                    drag = 3.2,
-                    fadeTo = 0,
-                })
-            end
-        end
+    if burstTriggered and (not x or not y) and self.getHead then
+        x, y = self:getHead()
     end
 
     local Upgrades = package.loaded["upgrades"]
@@ -197,7 +175,41 @@ function Snake:onShieldConsumed(x, y, cause)
             x = x,
             y = y,
             cause = cause or "unknown",
+            burstTriggered = burstTriggered,
+            burst = burstTriggered and {
+                rocks = burstRocks,
+                stall = burstStall,
+            } or nil,
         })
+    elseif burstTriggered and x and y then
+        UpgradeVisuals:spawn(x, y, {
+            color = {0.72, 0.9, 1, 1},
+            glowColor = {0.58, 0.78, 1, 1},
+            haloColor = {0.46, 0.66, 1, 0.22},
+            badge = "burst",
+            badgeScale = 1.08,
+            ringCount = 4,
+            ringSpacing = 14,
+            ringWidth = 5,
+            innerRadius = 18,
+            outerRadius = 86,
+            life = 0.58,
+            glowAlpha = 0.28,
+            haloAlpha = 0.2,
+        })
+
+        if Particles and Particles.spawnBurst then
+            Particles:spawnBurst(x, y, {
+                count = 22,
+                speed = 140,
+                speedVariance = 70,
+                life = 0.52,
+                size = 7,
+                color = {0.58, 0.82, 1, 0.9},
+                drag = 3.2,
+                fadeTo = 0,
+            })
+        end
     end
 end
 
