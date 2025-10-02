@@ -191,6 +191,7 @@ local english = {
                 shieldWallBounces = "Shield Wall Bounces",
                 shieldRockBreaks = "Shield Rock Breaks",
                 shieldSawParries = "Shield Saw Parries",
+                funChallengesCompleted = "Daily Fun Goals Completed",
             },
         },
         pause = {
@@ -694,6 +695,18 @@ local english = {
             metaMilestone7 = {
                 title = "Meta Milestone VII",
                 description = "Earn 10,500 lifetime XP.",
+            },
+            dailyFunDabbler = {
+                title = "Daily Dabbler",
+                description = "Complete 1 daily fun challenge.",
+            },
+            dailyFunRegular = {
+                title = "Daily Regular",
+                description = "Complete 10 daily fun challenges.",
+            },
+            dailyFunChampion = {
+                title = "Daily Champion",
+                description = "Complete 30 daily fun challenges.",
             },
         },
     },

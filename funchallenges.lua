@@ -1,6 +1,26 @@
 local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 
+local AchievementsModule
+
+local function getAchievements()
+    if AchievementsModule == nil then
+        local ok, module = pcall(require, "achievements")
+        if ok then
+            AchievementsModule = module
+        else
+            print("[FunChallenges] Failed to require achievements:", module)
+            AchievementsModule = false
+        end
+    end
+
+    if AchievementsModule then
+        return AchievementsModule
+    end
+
+    return nil
+end
+
 local FunChallenges = {}
 FunChallenges.defaultXpReward = 60
 
@@ -582,6 +602,18 @@ function FunChallenges:applyRunResults(statsSource, options)
         setStoredComplete(self, challenge, date, true)
         xpAwarded = challenge.xpReward or self.defaultXpReward
         completedNow = true
+
+        PlayerStats:add("funChallengesCompleted", 1)
+
+        local achievements = getAchievements()
+        if achievements and achievements.checkAll then
+            local ok, err = pcall(function()
+                achievements:checkAll()
+            end)
+            if not ok then
+                print("[FunChallenges] Failed to update achievements after daily challenge completion:", err)
+            end
+        end
     end
 
     return {
