@@ -1,5 +1,5 @@
 local Face = require("face")
-local Theme = require("theme")
+local SnakeCosmetics = require("snakecosmetics")
 
 local unpack = unpack
 
@@ -8,9 +8,6 @@ local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3
 local OUTLINE_SIZE   = 6
 local FRUIT_BULGE_SCALE = 1.25
-
--- colors (body color reused for patches so they blend)
-local BODY_R, BODY_G, BODY_B = unpack(Theme.snakeDefault)
 
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
@@ -91,24 +88,28 @@ local function drawFruitBulges(trail, head, radius)
 end
 
 local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
-        -- OUTLINE
-        love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.setLineWidth(thickness + OUTLINE_SIZE)
-        drawPolyline(coords)
-        drawEndcaps(head, tail, half + OUTLINE_SIZE * 0.5)
-        drawCornerPlugs(trail, half + OUTLINE_SIZE*0.5)
-        local bulgeRadius = half * FRUIT_BULGE_SCALE
-        drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
+  local bodyColor = SnakeCosmetics:getBodyColor()
+  local outlineColor = SnakeCosmetics:getOutlineColor()
+  local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
+  local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
+  -- OUTLINE
+  love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+  love.graphics.setLineWidth(thickness + OUTLINE_SIZE)
+  drawPolyline(coords)
+  drawEndcaps(head, tail, half + OUTLINE_SIZE * 0.5)
+  drawCornerPlugs(trail, half + OUTLINE_SIZE*0.5)
+  local bulgeRadius = half * FRUIT_BULGE_SCALE
+  drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
 
-        -- BODY
-        love.graphics.setColor(BODY_R, BODY_G, BODY_B)
-        love.graphics.setLineWidth(thickness)
-        drawPolyline(coords)
-        drawEndcaps(head, tail, half)
+  -- BODY
+  love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+  love.graphics.setLineWidth(thickness)
+  drawPolyline(coords)
+  drawEndcaps(head, tail, half)
 
-        love.graphics.setColor(BODY_R, BODY_G, BODY_B)
-        drawCornerPlugs(trail, half)
-        drawFruitBulges(trail, head, bulgeRadius)
+  love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+  drawCornerPlugs(trail, half)
+  drawFruitBulges(trail, head, bulgeRadius)
 
 end
 

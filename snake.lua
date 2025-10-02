@@ -8,7 +8,7 @@ local UpgradeVisuals = require("upgradevisuals")
 local Particles = require("particles")
 local SessionStats = require("sessionstats")
 local Score = require("score")
-local Theme = require("theme")
+local SnakeCosmetics = require("snakecosmetics")
 
 local Snake = {}
 
@@ -553,7 +553,7 @@ local function drawDescendingIntoHole(hole)
         dirX, dirY = -dirX, -dirY
     end
 
-    local bodyColor = Theme.snakeDefault or { 1, 1, 1, 1 }
+    local bodyColor = SnakeCosmetics:getBodyColor() or { 1, 1, 1, 1 }
     local r = bodyColor[1] or 1
     local g = bodyColor[2] or 1
     local b = bodyColor[3] or 1
