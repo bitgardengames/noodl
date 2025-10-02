@@ -22,6 +22,9 @@ local reverseControls = false
 local popTimer = 0
 local isDead = false
 local fruitsSinceLastTurn = 0
+local severedPieces = {}
+
+local SEVERED_TAIL_LIFE = 0.9
 
 local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
 local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING
@@ -270,6 +273,50 @@ local function normalizeDirection(dx, dy)
         return 0, 0
     end
     return dx / len, dy / len
+end
+
+local function closestPointOnSegment(px, py, ax, ay, bx, by)
+    if not (px and py and ax and ay and bx and by) then
+        return nil, nil, math.huge, 0
+    end
+
+    local abx = bx - ax
+    local aby = by - ay
+    local abLenSq = abx * abx + aby * aby
+    if abLenSq <= 1e-6 then
+        local dx = px - ax
+        local dy = py - ay
+        return ax, ay, dx * dx + dy * dy, 0
+    end
+
+    local apx = px - ax
+    local apy = py - ay
+    local t = (apx * abx + apy * aby) / abLenSq
+    if t < 0 then
+        t = 0
+    elseif t > 1 then
+        t = 1
+    end
+
+    local cx = ax + abx * t
+    local cy = ay + aby * t
+    local dx = px - cx
+    local dy = py - cy
+
+    return cx, cy, dx * dx + dy * dy, t
+end
+
+local function copySegmentData(segment)
+    if not segment then
+        return nil
+    end
+
+    local copy = {}
+    for key, value in pairs(segment) do
+        copy[key] = value
+    end
+
+    return copy
 end
 
 local function trimHoleSegments(hole)
@@ -645,6 +692,7 @@ function Snake:load(w, h)
     trail = buildInitialTrail()
     descendingHole = nil
     fruitsSinceLastTurn = 0
+    severedPieces = {}
 end
 
 local function getUpgradesModule()
@@ -1189,6 +1237,18 @@ function Snake:update(dt)
         self.shieldFlashTimer = math.max(0, self.shieldFlashTimer - dt)
     end
 
+    if severedPieces and #severedPieces > 0 then
+        for index = #severedPieces, 1, -1 do
+            local piece = severedPieces[index]
+            if piece then
+                piece.timer = (piece.timer or 0) - dt
+                if piece.timer <= 0 then
+                    table.remove(severedPieces, index)
+                end
+            end
+        end
+    end
+
     return true
 end
 
@@ -1363,7 +1423,14 @@ function Snake:loseSegments(count, options)
     segmentCount = segmentCount - trimmed
     popTimer = 0
 
-    trimTrailToSegmentLimit()
+    local shouldTrimTrail = true
+    if options and options.trimTrail == false then
+        shouldTrimTrail = false
+    end
+
+    if shouldTrimTrail then
+        trimTrailToSegmentLimit()
+    end
 
     local tail = trail[#trail]
     local tailX = tail and tail.drawX
@@ -1433,6 +1500,234 @@ function Snake:chopTailBySaw()
     return self:loseSegments(loss, { cause = "saw" })
 end
 
+local function isSawActive(saw)
+    if not saw then
+        return false
+    end
+
+    return not ((saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0)
+end
+
+local function getSawCenterPosition(saw)
+    if not (Saws and Saws.getCenter) then
+        return nil, nil
+    end
+
+    return Saws:getCenter(saw)
+end
+
+local function addSeveredTrail(pieceTrail, segmentEstimate)
+    if not pieceTrail or #pieceTrail <= 1 then
+        return
+    end
+
+    severedPieces = severedPieces or {}
+    table.insert(severedPieces, {
+        trail = pieceTrail,
+        timer = SEVERED_TAIL_LIFE,
+        segmentCount = math.max(1, segmentEstimate or #pieceTrail),
+    })
+end
+
+local function spawnSawCutParticles(x, y, count)
+    if not (Particles and Particles.spawnBurst and x and y) then
+        return
+    end
+
+    Particles:spawnBurst(x, y, {
+        count = math.min(12, 5 + (count or 0)),
+        speed = 120,
+        speedVariance = 60,
+        life = 0.42,
+        size = 4,
+        color = {1, 0.6, 0.3, 1},
+        spread = math.pi * 2,
+        drag = 3.0,
+        gravity = 220,
+        fadeTo = 0,
+    })
+end
+
+function Snake:handleSawBodyCut(context)
+    if not context then
+        return false
+    end
+
+    local available = math.max(0, (segmentCount or 1) - 1)
+    if available <= 0 then
+        return false
+    end
+
+    local index = context.index or 2
+    if index <= 1 or index > #trail then
+        return false
+    end
+
+    local previousIndex = index - 1
+    local previousSegment = trail[previousIndex]
+    if not previousSegment then
+        return false
+    end
+
+    local cutX = context.cutX
+    local cutY = context.cutY
+    if not (cutX and cutY) then
+        return false
+    end
+
+    local totalLength = (segmentCount or 1) * SEGMENT_SPACING
+    local cutDistance = math.max(0, context.cutDistance or 0)
+    if cutDistance <= SEGMENT_SPACING then
+        return false
+    end
+
+    local tailDistance = 0
+    do
+        local prevCutX, prevCutY = cutX, cutY
+        for i = index, #trail do
+            local seg = trail[i]
+            local sx = seg and (seg.drawX or seg.x)
+            local sy = seg and (seg.drawY or seg.y)
+            if sx and sy and prevCutX and prevCutY then
+                local ddx = sx - prevCutX
+                local ddy = sy - prevCutY
+                tailDistance = tailDistance + math.sqrt(ddx * ddx + ddy * ddy)
+                prevCutX, prevCutY = sx, sy
+            end
+        end
+    end
+
+    local rawSegments = tailDistance / SEGMENT_SPACING
+    local lostSegments = math.max(1, math.floor(rawSegments + 0.25))
+    if lostSegments > available then
+        lostSegments = available
+    end
+    if lostSegments <= 0 then
+        return false
+    end
+
+    if (totalLength - lostSegments * SEGMENT_SPACING) < cutDistance and lostSegments > 1 then
+        local adjusted = totalLength - (lostSegments - 1) * SEGMENT_SPACING
+        if adjusted >= cutDistance then
+            lostSegments = lostSegments - 1
+        end
+    end
+
+    local newTail = copySegmentData(previousSegment) or {}
+    newTail.drawX = cutX
+    newTail.drawY = cutY
+    if previousSegment.x and previousSegment.y then
+        newTail.x = cutX
+        newTail.y = cutY
+    end
+
+    local dirX, dirY = normalizeDirection(cutX - (previousSegment.drawX or previousSegment.x or cutX), cutY - (previousSegment.drawY or previousSegment.y or cutY))
+    if (dirX == 0 and dirY == 0) and previousSegment then
+        dirX = previousSegment.dirX or 0
+        dirY = previousSegment.dirY or 0
+    end
+    newTail.dirX = dirX
+    newTail.dirY = dirY
+    newTail.fruitMarker = nil
+    newTail.fruitMarkerX = nil
+    newTail.fruitMarkerY = nil
+
+    local severedTrail = {}
+    severedTrail[1] = copySegmentData(newTail)
+
+    for i = index, #trail do
+        local segCopy = copySegmentData(trail[i])
+        if segCopy then
+            table.insert(severedTrail, segCopy)
+        end
+    end
+
+    for i = #trail, previousIndex + 1, -1 do
+        table.remove(trail, i)
+    end
+
+    table.insert(trail, newTail)
+
+    addSeveredTrail(severedTrail, lostSegments + 1)
+    spawnSawCutParticles(cutX, cutY, lostSegments)
+
+    self:loseSegments(lostSegments, { cause = "saw", trimTrail = false })
+
+    return true
+end
+
+function Snake:checkSawBodyCollision()
+    if isDead then
+        return false
+    end
+
+    if not (trail and #trail > 2) then
+        return false
+    end
+
+    if not (Saws and Saws.getAll) then
+        return false
+    end
+
+    local saws = Saws:getAll()
+    if not (saws and #saws > 0) then
+        return false
+    end
+
+    local head = trail[1]
+    local headX = head and (head.drawX or head.x)
+    local headY = head and (head.drawY or head.y)
+    if not (headX and headY) then
+        return false
+    end
+
+    local guardDistance = SEGMENT_SPACING * 0.9
+    local bodyRadius = SEGMENT_SIZE * 0.5
+
+    for _, saw in ipairs(saws) do
+        if isSawActive(saw) then
+            local sx, sy = getSawCenterPosition(saw)
+            if sx and sy then
+                local travelled = 0
+                local prevX, prevY = headX, headY
+
+                for index = 2, #trail do
+                    local segment = trail[index]
+                    local cx = segment and (segment.drawX or segment.x)
+                    local cy = segment and (segment.drawY or segment.y)
+                    if cx and cy then
+                        local dx = cx - prevX
+                        local dy = cy - prevY
+                        local segLen = math.sqrt(dx * dx + dy * dy)
+                        if segLen > 1e-6 then
+                            local closestX, closestY, distSq, t = closestPointOnSegment(sx, sy, prevX, prevY, cx, cy)
+                            local along = travelled + segLen * (t or 0)
+                            if along > guardDistance then
+                                local combined = (saw.radius or 0) + bodyRadius
+                                if distSq <= combined * combined then
+                                    local handled = self:handleSawBodyCut({
+                                        index = index,
+                                        cutX = closestX,
+                                        cutY = closestY,
+                                        cutDistance = along,
+                                    })
+                                    if handled then
+                                        return true
+                                    end
+                                end
+                            end
+                        end
+                        travelled = travelled + segLen
+                        prevX, prevY = cx, cy
+                    end
+                end
+            end
+        end
+    end
+
+    return false
+end
+
 function Snake:onFruitCollected()
     fruitsSinceLastTurn = (fruitsSinceLastTurn or 0) + 1
     SessionStats:updateMax("fruitWithoutTurning", fruitsSinceLastTurn)
@@ -1482,6 +1777,24 @@ end
 function Snake:draw()
     if not isDead then
         local upgradeVisuals = collectUpgradeVisuals(self)
+
+        if severedPieces and #severedPieces > 0 then
+            for _, piece in ipairs(severedPieces) do
+                local trailData = piece and piece.trail
+                if trailData and #trailData > 1 then
+                    local function getPieceHead()
+                        local headSeg = trailData[1]
+                        if not headSeg then
+                            return nil, nil
+                        end
+                        return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
+                    end
+
+                    DrawSnake(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, false)
+                end
+            end
+        end
+
         DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
             return self:getHead()
         end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals)
@@ -1638,6 +1951,7 @@ function Snake:restoreStateSnapshot(snapshot)
     reverseControls = snapshot.reverseControls or false
     self.reverseState = snapshot.reverseState or false
     fruitsSinceLastTurn = snapshot.fruitsSinceLastTurn or fruitsSinceLastTurn or 0
+    severedPieces = {}
 
     UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end

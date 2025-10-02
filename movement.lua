@@ -423,6 +423,10 @@ function Movement:update(dt)
                 return sawState, sawCause
         end
 
+        if Snake.checkSawBodyCollision then
+                Snake:checkSawBodyCollision()
+        end
+
         if Fruit:checkCollisionWith(headX, headY) then
                 return "scored"
         end
