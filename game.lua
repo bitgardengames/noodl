@@ -41,6 +41,28 @@ local easeOutExpo = Easing.easeOutExpo
 local easeOutBack = Easing.easeOutBack
 local easedProgress = Easing.easedProgress
 
+local RUN_ACTIVE_STATES = {
+    playing = true,
+    descending = true,
+}
+
+local ENTITY_UPDATE_ORDER = {
+    Face,
+    Popup,
+    Fruit,
+    Rocks,
+    Conveyors,
+    Saws,
+    Arena,
+    Particles,
+    UpgradeVisuals,
+    Achievements,
+    FloatingText,
+    Score,
+}
+
+local MAX_TRANSITION_TRAITS = 4
+
 local function callMode(self, methodName, ...)
     local mode = self.mode
     if not mode then
@@ -52,6 +74,95 @@ local function callMode(self, methodName, ...)
         return handler(self, ...)
     end
 end
+
+local function getScaledDeltaTime(dt)
+    if not (Snake.getTimeScale and dt) then
+        return dt
+    end
+
+    local scale = Snake:getTimeScale()
+    if scale and scale > 0 then
+        return dt * scale
+    end
+
+    return dt
+end
+
+local function updateRunTimers(self, dt)
+    if RUN_ACTIVE_STATES[self.state] then
+        SessionStats:add("timeAlive", dt)
+        self.runTimer = (self.runTimer or 0) + dt
+    end
+
+    if self.state == "playing" then
+        self.floorTimer = (self.floorTimer or 0) + dt
+    end
+end
+
+local function updateSystems(systems, dt)
+    for _, system in ipairs(systems) do
+        local updater = system.update
+        if updater then
+            updater(system, dt)
+        end
+    end
+end
+
+local function drawShadowedText(font, text, x, y, width, align, alpha)
+    if alpha <= 0 then
+        return
+    end
+
+    love.graphics.setFont(font)
+    local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+    local shadowAlpha = (shadow[4] or 1) * alpha
+    love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
+    love.graphics.printf(text, x + 2, y + 2, width, align)
+
+    love.graphics.setColor(1, 1, 1, alpha)
+    love.graphics.printf(text, x, y, width, align)
+end
+
+local function buildTraitEntries(sections, maxTraits)
+    local entries = {}
+    local totalTraits, shownTraits = 0, 0
+
+    for _, section in ipairs(sections) do
+        local traits = section.items
+        if traits and #traits > 0 then
+            local addedHeader = false
+
+            for _, trait in ipairs(traits) do
+                totalTraits = totalTraits + 1
+
+                if shownTraits < maxTraits then
+                    if not addedHeader then
+                        table.insert(entries, {
+                            type = "header",
+                            title = section.title or Localization:get("game.floor_traits.default_title"),
+                        })
+                        addedHeader = true
+                    end
+
+                    table.insert(entries, {
+                        type = "trait",
+                        name = trait.name,
+                    })
+                    shownTraits = shownTraits + 1
+                end
+            end
+        end
+    end
+
+    return entries, totalTraits, shownTraits
+end
+
+local STATE_UPDATERS = {
+    descending = function(self, dt)
+        self:updateDescending(dt)
+        return true
+    end,
+}
 
 local function buildModifierSections(self)
     local sections = {}
@@ -259,18 +370,7 @@ function Game:updateGameplay(dt)
 end
 
 function Game:updateEntities(dt)
-    Face:update(dt)
-    Popup:update(dt)
-    Fruit:update(dt)
-    Rocks:update(dt)
-    Conveyors:update(dt)
-    Saws:update(dt)
-    Arena:update(dt)
-    Particles:update(dt)
-    UpgradeVisuals:update(dt)
-    Achievements:update(dt)
-    FloatingText:update(dt)
-    Score:update(dt)
+    updateSystems(ENTITY_UPDATE_ORDER, dt)
 end
 
 function Game:handleDeath(dt)
@@ -390,35 +490,9 @@ local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
         return
     end
 
-    local entries = {}
-    local maxTraits = 4
-    local totalTraits = 0
-    local shownTraits = 0
-
-    for _, section in ipairs(sections) do
-        if section.items and #section.items > 0 then
-            local visible = {}
-            for _, trait in ipairs(section.items) do
-                totalTraits = totalTraits + 1
-                if shownTraits < maxTraits then
-                    table.insert(visible, trait)
-                    shownTraits = shownTraits + 1
-                end
-            end
-
-            if #visible > 0 then
-                table.insert(entries, {
-                    type = "header",
-                    title = section.title or Localization:get("game.floor_traits.default_title"),
-                })
-                for _, trait in ipairs(visible) do
-                    table.insert(entries, {
-                        type = "trait",
-                        name = trait.name,
-                    })
-                end
-            end
-        end
+    local entries, totalTraits, shownTraits = buildTraitEntries(sections, MAX_TRANSITION_TRAITS)
+    if #entries == 0 then
+        return
     end
 
     local remaining = math.max(0, totalTraits - shownTraits)
@@ -438,45 +512,48 @@ local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
     local width = self.screenWidth * 0.45
     local x = (self.screenWidth - width) / 2
     local index = 0
+    local buttonFont = UI.fonts.button
+    local bodyFont = UI.fonts.body
 
     for _, entry in ipairs(entries) do
         index = index + 1
-        local traitAlpha = fadeAlpha(0.9 + (index - 1) * 0.22, 0.4)
-        local traitOffset = (1 - easeOutExpo(clamp01((timer - (0.9 + (index - 1) * 0.22)) / 0.55))) * 16 * outroAlpha
+        local offsetDelay = 0.9 + (index - 1) * 0.22
+        local traitAlpha = fadeAlpha(offsetDelay, 0.4)
+        local traitOffset = (1 - easeOutExpo(clamp01((timer - offsetDelay) / 0.55))) * 16 * outroAlpha
 
         if entry.type == "header" then
-            local headerHeight = UI.fonts.button:getHeight() + 4
-            if traitAlpha > 0 then
-                love.graphics.setFont(UI.fonts.button)
-                local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-                love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * traitAlpha)
-                love.graphics.printf(entry.title or Localization:get("game.floor_traits.default_title"), x + 2, y + traitOffset + 2, width, "center")
-                love.graphics.setColor(1, 1, 1, traitAlpha)
-                love.graphics.printf(entry.title or Localization:get("game.floor_traits.default_title"), x, y + traitOffset, width, "center")
-            end
-            y = y + headerHeight
+            drawShadowedText(
+                buttonFont,
+                entry.title or Localization:get("game.floor_traits.default_title"),
+                x,
+                y + traitOffset,
+                width,
+                "center",
+                traitAlpha
+            )
+            y = y + buttonFont:getHeight() + 4
         elseif entry.type == "trait" then
-            local lineHeight = UI.fonts.button:getHeight()
-            if traitAlpha > 0 then
-                love.graphics.setFont(UI.fonts.button)
-                local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-                love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * traitAlpha)
-                love.graphics.printf("• " .. (entry.name or ""), x + 2, y + traitOffset + 2, width, "center")
-                love.graphics.setColor(1, 1, 1, traitAlpha)
-                love.graphics.printf("• " .. (entry.name or ""), x, y + traitOffset, width, "center")
-            end
-            y = y + lineHeight + 6
+            drawShadowedText(
+                buttonFont,
+                "• " .. (entry.name or ""),
+                x,
+                y + traitOffset,
+                width,
+                "center",
+                traitAlpha
+            )
+            y = y + buttonFont:getHeight() + 6
         elseif entry.type == "note" then
-            local noteHeight = UI.fonts.body:getHeight()
-            if traitAlpha > 0 then
-                love.graphics.setFont(UI.fonts.body)
-                local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-                love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * traitAlpha)
-                love.graphics.printf(entry.text or "", x + 2, y + traitOffset + 2, width, "center")
-                love.graphics.setColor(1, 1, 1, traitAlpha)
-                love.graphics.printf(entry.text or "", x, y + traitOffset, width, "center")
-            end
-            y = y + noteHeight
+            drawShadowedText(
+                bodyFont,
+                entry.text or "",
+                x,
+                y + traitOffset,
+                width,
+                "center",
+                traitAlpha
+            )
+            y = y + bodyFont:getHeight()
         end
     end
 end
@@ -668,24 +745,9 @@ function Game:update(dt)
 
     PauseMenu:update(dt, false)
 
-    local timeScale = 1
-    if Snake.getTimeScale then
-        local scale = Snake:getTimeScale()
-        if scale and scale > 0 then
-            timeScale = scale
-        end
-    end
-    local scaledDt = dt * timeScale
+    local scaledDt = getScaledDeltaTime(dt)
 
-    local isRunActive = (self.state == "playing" or self.state == "descending")
-    if isRunActive then
-        SessionStats:add("timeAlive", scaledDt)
-        self.runTimer = (self.runTimer or 0) + scaledDt
-    end
-
-    if self.state == "playing" then
-        self.floorTimer = (self.floorTimer or 0) + scaledDt
-    end
+    updateRunTimers(self, scaledDt)
 
     FruitEvents.update(scaledDt)
 
@@ -694,8 +756,8 @@ function Game:update(dt)
         return
     end
 
-    if self.state == "descending" then
-        self:updateDescending(scaledDt)
+    local stateHandler = STATE_UPDATERS[self.state]
+    if stateHandler and stateHandler(self, scaledDt) then
         return
     end
 
