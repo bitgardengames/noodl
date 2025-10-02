@@ -8,6 +8,7 @@ local Localization = require("localization")
 local drawSnake = require("snakedraw")
 local SnakeUtils = require("snakeutils")
 local Face = require("face")
+local Shaders = require("shaders")
 
 local AchievementsMenu = {
     transitionDuration = 0.45,
@@ -39,6 +40,45 @@ local heldDpadAction = nil
 local heldDpadTimer = 0
 local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local BACKGROUND_EFFECT_TYPE = "achievementGlimmer"
+local backgroundEffectCache = {}
+local backgroundEffect = nil
+
+local function configureBackgroundEffect()
+    local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+    if not effect then
+        backgroundEffect = nil
+        return
+    end
+
+    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+    effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.56
+
+    Shaders.configure(effect, {
+        bgColor = Theme.bgColor,
+        accentColor = Theme.achieveColor,
+        sparkleColor = Theme.accentTextColor,
+    })
+
+    backgroundEffect = effect
+end
+
+local function drawBackground(sw, sh)
+    love.graphics.setColor(Theme.bgColor)
+    love.graphics.rectangle("fill", 0, 0, sw, sh)
+
+    if not backgroundEffect then
+        configureBackgroundEffect()
+    end
+
+    if backgroundEffect then
+        local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+        Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+end
 
 local function resetHeldDpad()
     heldDpadButton = nil
@@ -354,6 +394,8 @@ function AchievementsMenu:enter()
 
     local sw, sh = Screen:get()
 
+    configureBackgroundEffect()
+
     scrollOffset = 0
     minScrollOffset = 0
     resetAnalogDirections()
@@ -413,7 +455,7 @@ end
 
 function AchievementsMenu:draw()
     local sw, sh = Screen:get()
-    love.graphics.clear(Theme.bgColor)
+    drawBackground(sw, sh)
 
     love.graphics.setFont(UI.fonts.title)
     local titleColor = Theme.textColor or {1, 1, 1, 1}

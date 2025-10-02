@@ -473,6 +473,309 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
+-- Gentle aurora for main menu ambiance
+registerEffect({
+    type = "menuBreeze",
+    backdropIntensity = 0.58,
+    arenaIntensity = 0.36,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 accentColor;
+        extern vec4 highlightColor;
+        extern float intensity;
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            float wave = sin((uv.x + uv.y) * 5.0 + time * 0.2);
+            float drift = sin(uv.x * 8.0 - time * 0.12);
+            float ribbon = smoothstep(0.15, 0.85, uv.y + wave * 0.05);
+            float sparkle = sin((uv.x * 10.0 + uv.y * 6.0) + time * 0.6);
+            sparkle = clamp(sparkle * 0.5 + 0.5, 0.0, 1.0);
+            sparkle = smoothstep(0.6, 1.0, sparkle);
+
+            float accentMix = clamp(0.35 + wave * 0.12 + drift * 0.08 + ribbon * 0.25, 0.0, 1.0);
+
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix * intensity);
+            col = mix(col, highlightColor.rgb, sparkle * 0.18 * intensity);
+            col = mix(baseColor.rgb, col, 0.8);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
+        local accent = getColorComponents(palette and (palette.accentColor or palette.primary), Theme.buttonHover)
+        local highlight = getColorComponents(palette and (palette.highlightColor or palette.secondary), Theme.accentTextColor)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "accentColor", accent)
+        sendColor(shader, "highlightColor", highlight)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
+-- Directional ribbons for mode selection energy
+registerEffect({
+    type = "modeRibbon",
+    backdropIntensity = 0.52,
+    arenaIntensity = 0.34,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 accentColor;
+        extern vec4 edgeColor;
+        extern float intensity;
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            float diag = sin((uv.x - uv.y) * 6.0 + time * 0.4);
+            float sweep = sin(uv.y * 9.0 + time * 0.7);
+            float stripes = abs(sin((uv.x + uv.y * 0.5) * 12.0 - time * 0.3));
+            float ribbon = clamp(diag * 0.5 + 0.5, 0.0, 1.0);
+            float stripeGlow = smoothstep(0.55, 0.95, 1.0 - stripes);
+
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, (0.25 + ribbon * 0.45 + sweep * 0.15) * intensity);
+            col = mix(col, edgeColor.rgb, stripeGlow * 0.28 * intensity);
+            col = mix(baseColor.rgb, col, 0.82);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
+        local accent = getColorComponents(palette and (palette.accentColor or palette.primary), Theme.borderColor)
+        local edge = getColorComponents(palette and (palette.edgeColor or palette.secondary), Theme.progressColor)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "accentColor", accent)
+        sendColor(shader, "edgeColor", edge)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
+-- Sparkle field for achievements showcase
+registerEffect({
+    type = "achievementGlimmer",
+    backdropIntensity = 0.56,
+    arenaIntensity = 0.32,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 accentColor;
+        extern vec4 sparkleColor;
+        extern float intensity;
+
+        float hash(vec2 p)
+        {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        }
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            float drift = sin(uv.y * 3.0 + time * 0.18);
+            float pulse = sin((uv.x * 6.0 + uv.y * 4.0) - time * 0.24);
+
+            float sparkle = 0.0;
+            vec2 grid = floor(uv * vec2(18.0, 10.0));
+            float n = hash(grid + floor(time * 0.5));
+            float sparklePhase = fract(time * 0.6 + n);
+            sparkle = smoothstep(0.85, 1.0, 1.0 - sparklePhase);
+            sparkle *= smoothstep(0.0, 1.0, pulse * 0.5 + 0.5);
+
+            float accentMix = clamp(0.3 + drift * 0.18 + pulse * 0.12, 0.0, 1.0);
+
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix * intensity);
+            col = col + sparkleColor.rgb * sparkle * 0.35 * intensity;
+            col = mix(baseColor.rgb, col, 0.88);
+            col = clamp(col, 0.0, 1.0);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
+        local accent = getColorComponents(palette and (palette.accentColor or palette.primary), Theme.achieveColor)
+        local sparkle = getColorComponents(palette and (palette.sparkleColor or palette.secondary), Theme.accentTextColor)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "accentColor", accent)
+        sendColor(shader, "sparkleColor", sparkle)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
+-- Flowing orbitals for metaprogression overview
+registerEffect({
+    type = "metaFlux",
+    backdropIntensity = 0.6,
+    arenaIntensity = 0.38,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 primaryColor;
+        extern vec4 secondaryColor;
+        extern float intensity;
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+            vec2 centered = uv - vec2(0.5);
+
+            float radius = length(centered);
+            float angle = atan(centered.y, centered.x);
+
+            float wave = sin(angle * 4.0 + time * 0.25);
+            float pulse = sin(radius * 9.0 - time * 0.35);
+            float halo = smoothstep(0.0, 0.8, 1.0 - radius);
+
+            float primaryMix = clamp(0.28 + wave * 0.18 + halo * 0.3, 0.0, 1.0);
+            float secondaryMix = clamp(pulse * 0.5 + 0.5, 0.0, 1.0) * 0.35;
+
+            vec3 col = mix(baseColor.rgb, primaryColor.rgb, primaryMix * intensity);
+            col = mix(col, secondaryColor.rgb, secondaryMix * intensity);
+            col = mix(baseColor.rgb, col, 0.85);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
+        local primary = getColorComponents(palette and (palette.primaryColor or palette.accentColor), Theme.progressColor)
+        local secondary = getColorComponents(palette and (palette.secondaryColor or palette.highlightColor), Theme.accentTextColor)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "primaryColor", primary)
+        sendColor(shader, "secondaryColor", secondary)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
+-- Soft scanlines for settings clarity
+registerEffect({
+    type = "settingsScan",
+    backdropIntensity = 0.5,
+    arenaIntensity = 0.3,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 accentColor;
+        extern vec4 lineColor;
+        extern float intensity;
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            float scan = sin((uv.y * 12.0) + time * 0.8);
+            float lines = smoothstep(0.2, 0.8, scan * 0.5 + 0.5);
+            float shimmer = sin((uv.x + uv.y) * 8.0 - time * 0.25);
+            shimmer = clamp(shimmer * 0.5 + 0.5, 0.0, 1.0);
+
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, (0.2 + lines * 0.35) * intensity);
+            col = mix(col, lineColor.rgb, shimmer * 0.18 * intensity);
+            col = mix(baseColor.rgb, col, 0.82);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
+        local accent = getColorComponents(palette and (palette.accentColor or palette.primary), Theme.borderColor)
+        local lines = getColorComponents(palette and (palette.lineColor or palette.secondary), Theme.progressColor)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "accentColor", accent)
+        sendColor(shader, "lineColor", lines)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
+-- Radiant afterglow for game over reflection
+registerEffect({
+    type = "afterglowPulse",
+    backdropIntensity = 0.62,
+    arenaIntensity = 0.4,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 accentColor;
+        extern vec4 pulseColor;
+        extern float intensity;
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+            vec2 centered = uv - vec2(0.5);
+
+            float dist = length(centered);
+            float pulse = sin(time * 0.6 - dist * 9.0) * 0.5 + 0.5;
+            float ring = smoothstep(0.18, 0.5, dist) - smoothstep(0.5, 0.85, dist);
+            ring = clamp(ring, 0.0, 1.0);
+            float fade = smoothstep(1.0, 0.0, dist);
+
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, (0.28 + pulse * 0.4 + ring * 0.25) * intensity);
+            col = mix(col, pulseColor.rgb, ring * 0.6 * intensity);
+            col = mix(baseColor.rgb, col, fade);
+            col = clamp(col, 0.0, 1.0);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
+        local accent = getColorComponents(palette and (palette.accentColor or palette.primary), Theme.warningColor)
+        local pulse = getColorComponents(palette and (palette.pulseColor or palette.secondary), Theme.progressColor)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "accentColor", accent)
+        sendColor(shader, "pulseColor", pulse)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
 local function createEffect(def)
     local shader = love.graphics.newShader(def.source)
 

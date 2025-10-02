@@ -6,6 +6,7 @@ local Localization = require("localization")
 local MetaProgression = require("metaprogression")
 local PlayerStats = require("playerstats")
 local Audio = require("audio")
+local Shaders = require("shaders")
 
 local ProgressionScreen = {
     transitionDuration = 0.45,
@@ -56,6 +57,45 @@ local tabs = {
         labelKey = "metaprogression.tabs.stats",
     },
 }
+
+local BACKGROUND_EFFECT_TYPE = "metaFlux"
+local backgroundEffectCache = {}
+local backgroundEffect = nil
+
+local function configureBackgroundEffect()
+    local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+    if not effect then
+        backgroundEffect = nil
+        return
+    end
+
+    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+    effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.6
+
+    Shaders.configure(effect, {
+        bgColor = Theme.bgColor,
+        primaryColor = Theme.progressColor,
+        secondaryColor = Theme.accentTextColor,
+    })
+
+    backgroundEffect = effect
+end
+
+local function drawBackground(sw, sh)
+    love.graphics.setColor(Theme.bgColor or {0, 0, 0, 1})
+    love.graphics.rectangle("fill", 0, 0, sw, sh)
+
+    if not backgroundEffect then
+        configureBackgroundEffect()
+    end
+
+    if backgroundEffect then
+        local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+        Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+end
 
 local function resetHeldDpad()
     heldDpadButton = nil
@@ -400,6 +440,8 @@ function ProgressionScreen:enter()
     Screen:update()
     UI.clearButtons()
 
+    configureBackgroundEffect()
+
     trackEntries = MetaProgression:getUnlockTrack() or {}
     progressionState = MetaProgression:getState()
     buildStatsEntries()
@@ -657,8 +699,7 @@ end
 function ProgressionScreen:draw()
     local sw, sh = Screen:get()
 
-    love.graphics.setColor(Theme.bgColor or {0, 0, 0, 1})
-    love.graphics.rectangle("fill", 0, 0, sw, sh)
+    drawBackground(sw, sh)
 
     love.graphics.setFont(UI.fonts.title)
     love.graphics.setColor(Theme.textColor)
