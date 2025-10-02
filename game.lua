@@ -423,11 +423,14 @@ function Game:drawTransition()
                                 local titleScale = 0.9 + 0.1 * titleProgress
                                 local yOffset = (1 - titleProgress) * 36 * outroAlpha
                                 love.graphics.setFont(UI.fonts.title)
-                                love.graphics.setColor(1, 1, 1, nameAlpha)
                                 love.graphics.push()
                                 love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 - 80 + yOffset)
                                 love.graphics.scale(titleScale, titleScale)
                                 love.graphics.translate(-self.screenWidth / 2, -(self.screenHeight / 2 - 80 + yOffset))
+                                local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
+                                love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * nameAlpha)
+                                love.graphics.printf(floorData.name, 2, self.screenHeight / 2 - 78 + yOffset, self.screenWidth, "center")
+                                love.graphics.setColor(1, 1, 1, nameAlpha)
                                 love.graphics.printf(floorData.name, 0, self.screenHeight / 2 - 80 + yOffset, self.screenWidth, "center")
                                 love.graphics.pop()
                         end
@@ -438,9 +441,12 @@ function Game:drawTransition()
                                         local flavorProgress = easeOutExpo(clamp01((timer - 0.45) / 0.65))
                                         local flavorOffset = (1 - flavorProgress) * 24 * outroAlpha
                                         love.graphics.setFont(UI.fonts.button)
-                                        love.graphics.setColor(1, 1, 1, flavorAlpha)
                                         love.graphics.push()
                                         love.graphics.translate(0, flavorOffset)
+                                        local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
+                                        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * flavorAlpha)
+                                        love.graphics.printf(floorData.flavor, 2, self.screenHeight / 2 + 2, self.screenWidth, "center")
+                                        love.graphics.setColor(1, 1, 1, flavorAlpha)
                                         love.graphics.printf(floorData.flavor, 0, self.screenHeight / 2, self.screenWidth, "center")
                                         love.graphics.pop()
                                 end
@@ -506,6 +512,9 @@ function Game:drawTransition()
                                                 local headerHeight = UI.fonts.button:getHeight() + 4
                                                 if traitAlpha > 0 then
                                                         love.graphics.setFont(UI.fonts.button)
+                                                        local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
+                                                        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * traitAlpha)
+                                                        love.graphics.printf(entry.title or Localization:get("game.floor_traits.default_title"), x + 2, y + traitOffset + 2, width, "center")
                                                         love.graphics.setColor(1, 1, 1, traitAlpha)
                                                         love.graphics.printf(entry.title or Localization:get("game.floor_traits.default_title"), x, y + traitOffset, width, "center")
                                                 end
@@ -514,6 +523,9 @@ function Game:drawTransition()
                                                 local lineHeight = UI.fonts.button:getHeight()
                                                 if traitAlpha > 0 then
                                                         love.graphics.setFont(UI.fonts.button)
+                                                        local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
+                                                        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * traitAlpha)
+                                                        love.graphics.printf("• " .. (entry.name or ""), x + 2, y + traitOffset + 2, width, "center")
                                                         love.graphics.setColor(1, 1, 1, traitAlpha)
                                                         love.graphics.printf("• " .. (entry.name or ""), x, y + traitOffset, width, "center")
                                                 end
@@ -522,6 +534,9 @@ function Game:drawTransition()
                                                 local noteHeight = UI.fonts.body:getHeight()
                                                 if traitAlpha > 0 then
                                                         love.graphics.setFont(UI.fonts.body)
+                                                        local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
+                                                        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * traitAlpha)
+                                                        love.graphics.printf(entry.text or "", x + 2, y + traitOffset + 2, width, "center")
                                                         love.graphics.setColor(1, 1, 1, traitAlpha)
                                                         love.graphics.printf(entry.text or "", x, y + traitOffset, width, "center")
                                                 end

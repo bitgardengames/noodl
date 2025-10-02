@@ -316,8 +316,10 @@ function Menu:draw()
         local textX = panelX + padding
         local textY = panelY + padding
 
-        setColorWithAlpha(Theme.textColor, alpha)
         love.graphics.setFont(headerFont)
+        setColorWithAlpha(Theme.shadowColor, alpha)
+        love.graphics.print(headerText, textX + 2, textY + 2)
+        setColorWithAlpha(Theme.textColor, alpha)
         love.graphics.print(headerText, textX, textY)
 
         textY = textY + headerFont:getHeight() + 6
