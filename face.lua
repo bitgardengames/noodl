@@ -10,9 +10,9 @@ local EYE_RADIUS = 2
 local EYELID_WIDTH = 4
 local EYELID_HEIGHT = 1
 
-local shapeDrawers = {}
-
 local PI = math.pi
+
+local shapeDrawers = {}
 
 local function drawHappyArc(cx, lift)
     love.graphics.arc("line", cx, EYE_CENTER_Y + lift, EYE_RADIUS, PI, 2 * PI)
@@ -54,75 +54,60 @@ local function drawAngryEye(cx, isLeft)
     end
 end
 
-shapeDrawers.idle = function()
-    love.graphics.setColor(0, 0, 0, 1)
+local function registerDrawer(name, drawer, options)
+    shapeDrawers[name] = function()
+        if not (options and options.skipColor) then
+            love.graphics.setColor(0, 0, 0, 1)
+        end
+        drawer()
+    end
+end
+
+registerDrawer("idle", function()
     -- Explicitly provide a generous segment count so the filled circles stay
     -- visually round even after any scaling applied to the snake sprite.
     local circleSegments = 24
     love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
     love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
-end
+end)
 
-shapeDrawers.blink = function()
-    love.graphics.setColor(0, 0, 0, 1)
+registerDrawer("blink", function()
     local leftX = LEFT_EYE_CENTER_X - EYELID_WIDTH / 2
     local rightX = RIGHT_EYE_CENTER_X - EYELID_WIDTH / 2
     local top = EYE_CENTER_Y - EYELID_HEIGHT / 2
     love.graphics.rectangle("fill", leftX, top, EYELID_WIDTH, EYELID_HEIGHT)
     love.graphics.rectangle("fill", rightX, top, EYELID_WIDTH, EYELID_HEIGHT)
-end
+end)
 
-shapeDrawers.happy = function()
-    love.graphics.setColor(0, 0, 0, 1)
+registerDrawer("happy", function()
     love.graphics.setLineWidth(EYE_RADIUS * 1.1)
     love.graphics.setLineJoin("bevel")
     drawHappyArc(LEFT_EYE_CENTER_X, 1.0)
     drawHappyArc(RIGHT_EYE_CENTER_X, 1.0)
-end
+end)
 
-shapeDrawers.veryHappy = function()
-    love.graphics.setColor(0, 0, 0, 1)
+registerDrawer("veryHappy", function()
     love.graphics.setLineWidth(EYE_RADIUS * 1.3)
     love.graphics.setLineJoin("bevel")
     drawHappyArc(LEFT_EYE_CENTER_X, 1.3)
     drawHappyArc(RIGHT_EYE_CENTER_X, 1.3)
-end
+end)
 
-shapeDrawers.sad = function()
-    love.graphics.setColor(0, 0, 0, 1)
+registerDrawer("sad", function()
     love.graphics.setLineWidth(EYE_RADIUS * 0.9)
     love.graphics.setLineJoin("bevel")
     drawSadArc(LEFT_EYE_CENTER_X, 0.2)
     drawSadArc(RIGHT_EYE_CENTER_X, 0.2)
-end
+end)
 
-shapeDrawers.angry = function()
-    love.graphics.setColor(0, 0, 0, 1)
+registerDrawer("angry", function()
     drawAngryEye(LEFT_EYE_CENTER_X, true)
     drawAngryEye(RIGHT_EYE_CENTER_X, false)
-end
+end)
 
-shapeDrawers.blank = function()
+registerDrawer("blank", function()
     -- intentionally empty: blank face has no visible eyes
-end
-
-local shapeDrawers = {}
-
-shapeDrawers.idle = function()
-    love.graphics.setColor(0, 0, 0, 1)
-    local circleSegments = 24
-    love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
-    love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
-end
-
-shapeDrawers.blink = function()
-    love.graphics.setColor(0, 0, 0, 1)
-    local leftX = LEFT_EYE_CENTER_X - EYELID_WIDTH / 2
-    local rightX = RIGHT_EYE_CENTER_X - EYELID_WIDTH / 2
-    local top = EYE_CENTER_Y - EYELID_HEIGHT / 2
-    love.graphics.rectangle("fill", leftX, top, EYELID_WIDTH, EYELID_HEIGHT)
-    love.graphics.rectangle("fill", rightX, top, EYELID_WIDTH, EYELID_HEIGHT)
-end
+end, { skipColor = true })
 
 Face.state = "idle"
 Face.timer = 0

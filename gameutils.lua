@@ -1,5 +1,4 @@
 local Snake = require("snake")
-local SnakeUtils = require("snakeutils")
 local Fruit = require("fruit")
 local PauseMenu = require("pausemenu")
 local Movement = require("movement")
@@ -20,23 +19,27 @@ local function loadCoreSystems(sw, sh)
     PauseMenu:load(sw, sh)
 end
 
+local GAMEPLAY_SYSTEMS = {
+    Movement,
+    Score,
+    FloatingText,
+    Particles,
+    UpgradeVisuals,
+    Rocks,
+    Conveyors,
+    Saws,
+    UI,
+}
+
 local function resetGameplaySystems()
-    Movement:reset()
-    Score:reset()
-    FloatingText:reset()
-    Particles:reset()
-    UpgradeVisuals:reset()
-    Rocks:reset()
-    Conveyors:reset()
-    Saws:reset()
-    UI:reset()
+    for _, system in ipairs(GAMEPLAY_SYSTEMS) do
+        system:reset()
+    end
 end
 
 function GameUtils:prepareGame(sw, sh)
     loadCoreSystems(sw, sh)
     resetGameplaySystems()
-
-    --SnakeUtils.initOccupancy()
 
     Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
 end
