@@ -571,11 +571,17 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
     end
 
     local progress = easedProgress(timer, duration)
+    local awaitingInput = data.transitionAwaitInput
+    local introConfirmed = data.transitionIntroConfirmed
     local outroDuration = math.min(0.6, duration > 0 and duration * 0.5 or 0)
     local outroProgress = 0
     if outroDuration > 0 then
         local outroStart = math.max(0, duration - outroDuration)
-        outroProgress = clamp01((timer - outroStart) / outroDuration)
+        local outroTimer = timer
+        if awaitingInput and not introConfirmed then
+            outroTimer = math.min(outroTimer, outroStart)
+        end
+        outroProgress = clamp01((outroTimer - outroStart) / outroDuration)
     end
     local outroAlpha = 1 - outroProgress
 
