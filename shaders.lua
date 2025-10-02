@@ -407,9 +407,9 @@ registerEffect({
             vec2 offset2 = vec2(cos(drift * 1.3 + 2.2), sin(drift * 0.9 + 1.4)) * (0.26 + 0.1 * intensity);
             vec2 offset3 = vec2(cos(drift * 0.7 - 1.1), sin(drift * 1.1 - 2.4)) * (0.32 + 0.12 * intensity);
 
-            float sharp1 = 10.0 - intensity * 2.0;
-            float sharp2 = 7.5 - intensity * 1.5;
-            float sharp3 = 5.0 - intensity;
+            float sharp1 = 9.2 - intensity * 1.8;
+            float sharp2 = 6.8 - intensity * 1.35;
+            float sharp3 = 4.6 - intensity * 0.9;
 
             float bloom1 = bloomShape(centered, offset1, sharp1);
             float bloom2 = bloomShape(centered, offset2, sharp2);
@@ -436,7 +436,8 @@ registerEffect({
             float outerEdge = min(0.96, 0.82 + 0.12 * intensity);
             float vignette = 1.0 - smoothstep(innerEdge, outerEdge, dist + breathing * 0.1 * intensity);
 
-            vec3 finalColor = mix(base, colorBlend, clamp(vignette, 0.0, 1.0));
+            float finalMix = clamp(vignette * 0.92 + 0.08, 0.0, 1.0);
+            vec3 finalColor = mix(base, colorBlend, finalMix);
 
             return vec4(finalColor, baseColor.a) * color;
         }
