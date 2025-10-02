@@ -98,6 +98,23 @@ local function getSawCenter(saw)
     return saw.x, py
 end
 
+local function getSawCollisionCenter(saw)
+    local px, py = getSawCenter(saw)
+    if not (px and py) then
+        return px, py
+    end
+
+    local sinkOffset = SINK_OFFSET + (saw.sinkProgress or 0) * SINK_DISTANCE
+    if saw.dir == "horizontal" then
+        py = py + sinkOffset
+    else
+        local sinkDir = (saw.side == "left") and -1 or 1
+        px = px + sinkDir * sinkOffset
+    end
+
+    return px, py
+end
+
 local function removeSaw(target)
     if not target then
         return
@@ -184,6 +201,10 @@ end
 
 function Saws:getCenter(saw)
     return getSawCenter(saw)
+end
+
+function Saws:getCollisionCenter(saw)
+    return getSawCollisionCenter(saw)
 end
 
 function Saws:reset()
@@ -468,7 +489,7 @@ end
 function Saws:checkCollision(x, y, w, h)
     for _, saw in ipairs(self:getAll()) do
         if not ((saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0) then
-            local px, py = getSawCenter(saw)
+            local px, py = getSawCollisionCenter(saw)
 
             -- Circle vs AABB
             local closestX = math.max(x, math.min(px, x + w))

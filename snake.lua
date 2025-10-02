@@ -1521,11 +1521,11 @@ local function isSawActive(saw)
 end
 
 local function getSawCenterPosition(saw)
-    if not (Saws and Saws.getCenter) then
+    if not (Saws and Saws.getCollisionCenter) then
         return nil, nil
     end
 
-    return Saws:getCenter(saw)
+    return Saws:getCollisionCenter(saw)
 end
 
 local function addSeveredTrail(pieceTrail, segmentEstimate)
