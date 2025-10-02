@@ -831,11 +831,11 @@ function Shop:draw(screenW, screenH)
         else
             if discardData then
                 scale = scale * (1 - 0.05 * fadeEase)
-                alpha = alpha * (1 - 0.55 * fadeEase)
+                alpha = alpha * math.max(0, 1 - fadeEase)
             else
                 yOffset = yOffset - 32 * fadeEase
                 scale = scale * (1 - 0.2 * fadeEase)
-                alpha = alpha * (1 - 0.9 * fadeEase)
+                alpha = alpha * math.max(0, 1 - fadeEase)
             end
         end
 
