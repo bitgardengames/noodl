@@ -1532,7 +1532,7 @@ function Upgrades:getHUDIndicators()
                 progress = 1
                 isReady = true
             else
-                progress = clamp(current / rate, 0, 1)
+                progress = clamp(current, 0, 1)
                 if progress >= 0.999 then
                     isReady = true
                 end
