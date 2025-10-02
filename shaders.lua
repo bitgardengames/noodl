@@ -612,6 +612,77 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
+-- Shimmering highlights for the shop screen
+registerEffect({
+    type = "shopGlimmer",
+    backdropIntensity = 0.68,
+    arenaIntensity = 0.42,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 accentColor;
+        extern vec4 glowColor;
+        extern float intensity;
+
+        float hash(vec2 p)
+        {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        }
+
+        float shimmer(vec2 uv, float t)
+        {
+            vec2 grid = floor(uv * vec2(16.0, 9.0));
+            float cell = hash(grid + floor(t * 0.7));
+            float pulse = fract(t * 0.9 + cell);
+            return smoothstep(0.8, 1.0, 1.0 - pulse);
+        }
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+            vec2 centered = uv - vec2(0.5);
+
+            float radius = length(centered);
+            float angle = atan(centered.y, centered.x);
+
+            float radialWave = sin(radius * 14.0 - time * 0.9);
+            float angularWave = sin(angle * 6.0 + time * 0.6);
+            float mixWave = radialWave * 0.35 + angularWave * 0.45;
+
+            float innerGlow = smoothstep(0.0, 0.65, 1.0 - radius);
+            float band = clamp(mixWave * 0.5 + 0.5, 0.0, 1.0);
+
+            float drift = sin((uv.x + uv.y) * 6.0 - time * 0.25) * 0.5 + 0.5;
+            float highlight = shimmer(uv + vec2(time * 0.04, -time * 0.02), time);
+
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, band * intensity);
+            col = mix(col, glowColor.rgb, (innerGlow * 0.4 + drift * 0.25) * intensity);
+            col += glowColor.rgb * highlight * 0.25 * intensity;
+
+            col = mix(baseColor.rgb, col, 0.85);
+            col = clamp(col, 0.0, 1.0);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
+        local accent = getColorComponents(palette and (palette.accentColor or palette.edgeColor), Theme.borderColor)
+        local glow = getColorComponents(palette and (palette.glowColor or palette.highlightColor), Theme.accentTextColor)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "accentColor", accent)
+        sendColor(shader, "glowColor", glow)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
 -- Directional ribbons for mode selection energy
 registerEffect({
     type = "modeRibbon",

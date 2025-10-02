@@ -2,11 +2,59 @@ local UI = require("ui")
 local Upgrades = require("upgrades")
 local Audio = require("audio")
 local MetaProgression = require("metaprogression")
+local Theme = require("theme")
+local Floors = require("floors")
+local Shaders = require("shaders")
 
 local Shop = {}
 
 local ANALOG_DEADZONE = 0.35
 local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local BACKGROUND_EFFECT_TYPE = "shopGlimmer"
+local backgroundEffectCache = {}
+local backgroundEffect = nil
+local backgroundEffectFloor = nil
+
+local function configureBackgroundEffectForFloor(floorIndex)
+    local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+    if not effect then
+        backgroundEffect = nil
+        backgroundEffectFloor = nil
+        return
+    end
+
+    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+    effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.68
+
+    local floorDef = Floors and Floors[floorIndex] or nil
+    local palette = floorDef and floorDef.palette or nil
+
+    Shaders.configure(effect, {
+        bgColor = palette and palette.bgColor or Theme.bgColor,
+        accentColor = palette and (palette.arenaBorder or palette.rock) or Theme.borderColor,
+        glowColor = palette and (palette.snake or palette.sawColor) or Theme.accentTextColor,
+    })
+
+    backgroundEffect = effect
+    backgroundEffectFloor = floorIndex
+end
+
+local function drawBackground(self, screenW, screenH)
+    love.graphics.setColor(Theme.bgColor or {0, 0, 0, 1})
+    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+
+    if not backgroundEffect or backgroundEffectFloor ~= self.floor then
+        configureBackgroundEffectForFloor(self.floor or 1)
+    end
+
+    if backgroundEffect then
+        local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+        Shaders.draw(backgroundEffect, 0, 0, screenW, screenH, intensity)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+end
 
 local function moveFocusAnalog(self, delta)
     if self.restocking then return end
@@ -85,6 +133,8 @@ function Shop:start(currentFloor)
     self.selectionHoldDuration = 1.85
     self.inputMode = nil
     self:refreshCards()
+
+    configureBackgroundEffectForFloor(self.floor)
 end
 
 function Shop:refreshCards(options)
@@ -679,10 +729,8 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
 end
 
 function Shop:draw(screenW, screenH)
-    love.graphics.setColor(0.07, 0.08, 0.11, 0.92)
-    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+    drawBackground(self, screenW, screenH)
 
-    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setFont(UI.fonts.title)
     love.graphics.printf("Choose an Upgrade", 0, screenH * 0.15, screenW, "center")
 
