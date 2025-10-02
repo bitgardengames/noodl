@@ -652,6 +652,36 @@ function UI:addFruit(fruitType)
     })
 end
 
+function UI:removeFruit(count)
+    count = math.floor(count or 0)
+    if count <= 0 then
+        return 0
+    end
+
+    local removed = 0
+    self.fruitCollected = math.max(0, self.fruitCollected or 0)
+
+    for _ = 1, count do
+        if (self.fruitCollected or 0) <= 0 then
+            break
+        end
+
+        self.fruitCollected = self.fruitCollected - 1
+        removed = removed + 1
+
+        if type(self.fruitSockets) == "table" and #self.fruitSockets > 0 then
+            table.remove(self.fruitSockets)
+        end
+    end
+
+    if (self.fruitCollected or 0) < (self.fruitRequired or 0) then
+        self.goalCelebrated = false
+        self.goalReachedAnim = 0
+    end
+
+    return removed
+end
+
 function UI:celebrateGoal()
     self.goalReachedAnim = 0
     self.goalCelebrated = true
