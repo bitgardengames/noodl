@@ -956,11 +956,6 @@ function BackgroundAmbience.configure(floorData)
         return
     end
 
-    local shapesEnabled = false
-    if floorData and floorData.name then
-        shapesEnabled = floorData.name:lower() == "echoing caverns"
-    end
-
     BackgroundAmbience.current = {
         theme = theme,
         variant = variant or floorData.backgroundVariant,
@@ -968,7 +963,7 @@ function BackgroundAmbience.configure(floorData)
         seed = computeSeed(floorData),
         shapes = nil,
         bounds = nil,
-        shapesEnabled = shapesEnabled,
+        shapesEnabled = false,
     }
 end
 
