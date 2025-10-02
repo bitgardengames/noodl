@@ -285,6 +285,9 @@ local english = {
                 more_modifiers_one = "+${count} more modifier",
                 more_modifiers_other = "+${count} more modifiers",
             },
+            floor_intro = {
+                prompt = "Press any key to descend",
+            },
         },
         gamemodes = {
             unlock_popup = "${mode} Unlocked!",
