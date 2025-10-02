@@ -1038,7 +1038,7 @@ function Snake:update(dt)
         end
 
         if scale ~= 1 then
-            speed = speed / scale
+            speed = speed * scale
         end
     end
 
