@@ -3,7 +3,6 @@ local Rocks = require("rocks")
 local Saws = require("saws")
 local Score = require("score")
 local UI = require("ui")
-local Particles = require("particles")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
 local PlayerStats = require("playerstats")
@@ -245,19 +244,6 @@ local pool = {
                     if not fx or not fy then return end
 
                     local stacks = (runState.takenSet and runState.takenSet.quick_fangs) or 1
-                    if Particles then
-                        Particles:spawnBurst(fx, fy, {
-                            count = math.min(6 + stacks * 3, 24),
-                            speed = 140 + stacks * 12,
-                            life = 0.32,
-                            size = 3,
-                            color = {1, 0.55, 0.35, 1},
-                            spread = math.pi * 1.2,
-                            angleJitter = 0.4,
-                            speedVariance = 50,
-                        })
-                    end
-
                     runState.counters.quickFangsCombo = (runState.counters.quickFangsCombo or 0) + 1
                     local threshold = math.max(1, 4 - stacks)
                     if runState.counters.quickFangsCombo >= threshold then
@@ -378,12 +364,8 @@ local pool = {
                         Saws:sink(sinkDuration)
                         celebrateUpgrade(nil, data, {
                             skipText = true,
+                            skipParticles = true,
                             color = {0.68, 0.84, 1, 1},
-                            particleCount = 12,
-                            particleSpeed = 90,
-                            particleLife = 0.36,
-                            particleSize = 3,
-                            particleSpread = math.pi * 2,
                             visual = {
                                 badge = "spark",
                                 outerRadius = 46,
@@ -443,9 +425,7 @@ local pool = {
                 if data and (data.combo or 0) >= 1 then
                     celebrateUpgrade(getUpgradeString("metronome_totem", "timer_bonus"), data, {
                         color = {0.55, 0.78, 0.58, 1},
-                        particleCount = 8,
-                        particleSpeed = 70,
-                        particleLife = 0.35,
+                        skipParticles = true,
                         textOffset = 32,
                         textScale = 0.95,
                         textLife = 42,
@@ -473,10 +453,7 @@ local pool = {
                         x = fx,
                         y = fy,
                         color = {1, 0.42, 0.42, 1},
-                        particleCount = 16,
-                        particleSpeed = 150,
-                        particleLife = 0.34,
-                        particleSpread = math.pi * 2,
+                        skipParticles = true,
                         textOffset = 34,
                         textScale = 1.06,
                         textLife = 46,
@@ -860,10 +837,8 @@ local pool = {
                             x = data.x,
                             y = data.y,
                             skipText = true,
+                            skipParticles = true,
                             color = {1, 0.88, 0.35, 1},
-                            particleCount = 10,
-                            particleSpeed = 90,
-                            particleLife = 0.5,
                             visual = {
                                 badge = "burst",
                                 outerRadius = 46,
