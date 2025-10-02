@@ -1,10 +1,10 @@
 local Theme = {
     -- Arena
-    arenaBG      = {0.12, 0.12, 0.15, 1.0},
+    arenaBG      = {0.18, 0.18, 0.22, 1.0},
     arenaBorder  = {0.35, 0.30, 0.50, 1.0},
 
     -- General background / chrome
-    bgColor        = {0.08, 0.08, 0.10, 1.0},
+    bgColor        = {0.12, 0.12, 0.14, 1.0},
     shadowColor    = {0.0, 0.0, 0.0, 0.45},
     highlightColor = {1.0, 1.0, 1.0, 0.06},
 
