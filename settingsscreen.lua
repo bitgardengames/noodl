@@ -5,6 +5,7 @@ local Theme = require("theme")
 local Settings = require("settings")
 local Localization = require("localization")
 local Shaders = require("shaders")
+local Display = require("display")
 
 local SettingsScreen = {
     transitionDuration = 0.45,
@@ -12,10 +13,8 @@ local SettingsScreen = {
 
 local ANALOG_DEADZONE = 0.35
 local options = {
-    { type = "action", labelKey = "settings.toggle_fullscreen", action = function()
-        love.window.setFullscreen(not love.window.getFullscreen())
-        Settings:save()
-    end },
+    { type = "cycle", labelKey = "settings.display_mode", setting = "displayMode" },
+    { type = "cycle", labelKey = "settings.windowed_resolution", setting = "resolution" },
     { type = "toggle", labelKey = "settings.toggle_music", toggle = "muteMusic" },
     { type = "toggle", labelKey = "settings.toggle_sfx", toggle = "muteSFX" },
     { type = "slider", labelKey = "settings.music_volume", slider = "musicVolume" },
@@ -35,6 +34,62 @@ local layout = {
 local BACKGROUND_EFFECT_TYPE = "settingsScan"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
+
+local displayModeLabels = {
+    fullscreen = "settings.display_mode_fullscreen",
+    windowed = "settings.display_mode_windowed",
+}
+
+local function getDisplayModeLabel()
+    local mode = Settings.displayMode == "windowed" and "windowed" or "fullscreen"
+    local key = displayModeLabels[mode] or displayModeLabels.fullscreen
+    return Localization:get(key)
+end
+
+local function getResolutionLabel()
+    return Display.getResolutionLabel(Localization, Settings.resolution)
+end
+
+local function getCycleStateLabel(setting)
+    if setting == "language" then
+        local current = Settings.language or Localization:getCurrentLanguage()
+        return Localization:getLanguageName(current)
+    elseif setting == "displayMode" then
+        return getDisplayModeLabel()
+    elseif setting == "resolution" then
+        return getResolutionLabel()
+    end
+end
+
+local function cycleLanguage(delta)
+    local languages = Localization:getAvailableLanguages()
+    if #languages == 0 then
+        return Settings.language or Localization:getCurrentLanguage()
+    end
+
+    local current = Settings.language or Localization:getCurrentLanguage()
+    local index = 1
+    for i, code in ipairs(languages) do
+        if code == current then
+            index = i
+            break
+        end
+    end
+
+    local count = #languages
+    local step = delta or 1
+    local newIndex = ((index - 1 + step) % count) + 1
+    return languages[newIndex]
+end
+
+local function refreshLayout(self)
+    local prevIndex = focusedIndex
+    Screen:update(0, true)
+    self:enter()
+    if prevIndex and buttons[prevIndex] then
+        self:setFocus(prevIndex)
+    end
+end
 
 local function getBaseColor()
     return (UI.colors and UI.colors.background) or Theme.bgColor
@@ -303,10 +358,11 @@ function SettingsScreen:draw()
                 handleRadius = handleRadius,
             }
 
-        elseif opt.type == "cycle" and opt.setting == "language" then
-            local current = Settings.language or Localization:getCurrentLanguage()
-            local state = Localization:getLanguageName(current)
-            label = string.format("%s: %s", label, state)
+        elseif opt.type == "cycle" and opt.setting then
+            local state = getCycleStateLabel(opt.setting)
+            if state then
+                label = string.format("%s: %s", label, state)
+            end
             UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
             UI.setButtonFocus(btn.id, isFocused)
             UI.drawButton(btn.id)
@@ -354,6 +410,39 @@ function SettingsScreen:getFocusedOption()
     return buttons[focusedIndex]
 end
 
+function SettingsScreen:cycleSetting(setting, delta)
+    delta = delta or 1
+
+    if setting == "language" then
+        local nextLang = cycleLanguage(delta)
+        Settings.language = nextLang
+        Settings:save()
+        Localization:setLanguage(nextLang)
+        Audio:playSound("click")
+        refreshLayout(self)
+    elseif setting == "displayMode" then
+        local nextMode = Display.cycleDisplayMode(Settings.displayMode, delta)
+        if nextMode ~= Settings.displayMode then
+            Settings.displayMode = nextMode
+            Settings:save()
+            Display.apply(Settings)
+            Audio:playSound("click")
+            refreshLayout(self)
+        end
+    elseif setting == "resolution" then
+        local nextResolution = Display.cycleResolution(Settings.resolution, delta)
+        if nextResolution ~= Settings.resolution then
+            Settings.resolution = nextResolution
+            Settings:save()
+            if Settings.displayMode == "windowed" then
+                Display.apply(Settings)
+            end
+            Audio:playSound("click")
+            refreshLayout(self)
+        end
+    end
+end
+
 function SettingsScreen:adjustFocused(delta)
     local btn = self:getFocusedOption()
     if not btn or delta == 0 then return end
@@ -368,15 +457,8 @@ function SettingsScreen:adjustFocused(delta)
             Settings:save()
             Audio:applyVolumes()
         end
-    elseif opt.type == "cycle" and opt.setting == "language" then
-        local prevIndex = focusedIndex
-        local nextLang = Localization:cycleLanguage(Settings.language)
-        Settings.language = nextLang
-        Settings:save()
-        Localization:setLanguage(nextLang)
-        Audio:playSound("click")
-        self:enter()
-        self:setFocus(prevIndex)
+    elseif opt.type == "cycle" and opt.setting then
+        self:cycleSetting(opt.setting, delta)
     end
 end
 
@@ -399,15 +481,8 @@ function SettingsScreen:activateFocused()
         else
             return opt.action
         end
-    elseif opt.type == "cycle" and opt.setting == "language" then
-        local prevIndex = focusedIndex
-        local nextLang = Localization:cycleLanguage(Settings.language)
-        Settings.language = nextLang
-        Settings:save()
-        Localization:setLanguage(nextLang)
-        Audio:playSound("click")
-        self:enter()
-        self:setFocus(prevIndex)
+    elseif opt.type == "cycle" and opt.setting then
+        self:cycleSetting(opt.setting, 1)
     end
 
     return nil
@@ -422,14 +497,8 @@ function SettingsScreen:mousepressed(x, y, button)
         if btn.id and btn.id == id then
             self:setFocus(i)
 
-            if opt.type == "cycle" and opt.setting == "language" then
-                local prevIndex = i
-                local nextLang = Localization:cycleLanguage(Settings.language)
-                Settings.language = nextLang
-                Settings:save()
-                Localization:setLanguage(nextLang)
-                self:enter()
-                self:setFocus(prevIndex)
+            if opt.type == "cycle" and opt.setting then
+                self:cycleSetting(opt.setting, 1)
                 return nil
             elseif opt.action then
                 if type(opt.action) == "function" then

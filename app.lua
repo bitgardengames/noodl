@@ -1,6 +1,7 @@
 local GameState = require("gamestate")
 local Screen = require("screen")
 local Settings = require("settings")
+local Display = require("display")
 local Audio = require("audio")
 local Achievements = require("achievements")
 local Score = require("score")
@@ -38,7 +39,6 @@ end
 
 function App:loadSubsystems()
     Screen:update()
-    Settings:load()
     Localization:setLanguage(Settings.language)
     Audio:load()
     Achievements:load()
@@ -71,7 +71,8 @@ function App:resolveAction(action)
 end
 
 function App:load()
-    love.window.setMode(0, 0, {fullscreen = true, fullscreentype = "desktop"})
+    Settings:load()
+    Display.apply(Settings)
 
     self:registerStates()
     self:loadSubsystems()

@@ -4,6 +4,8 @@ local DEFAULTS = {
     muteMusic = false,
     muteSFX = false,
     language = "english",
+    displayMode = "fullscreen",
+    resolution = "1280x720",
 }
 
 local Settings = {}
@@ -52,6 +54,10 @@ end
 
 function Settings:load()
     if not love.filesystem.getInfo(saveFile) then
+        local Display = require("display")
+        if Display.ensure then
+            Display.ensure(Settings)
+        end
         return
     end
 
@@ -68,6 +74,13 @@ function Settings:load()
     for key, value in pairs(loaded) do
         if DEFAULTS[key] ~= nil and type(value) == type(DEFAULTS[key]) then
             Settings[key] = value
+        end
+    end
+
+    local Display = require("display")
+    if Display.ensure then
+        if Display.ensure(Settings) then
+            Settings:save()
         end
     end
 end
