@@ -20,6 +20,10 @@ local TRACK_LENGTH = 120
 local DEFAULT_SAW_RADIUS = 16
 
 local function applyPalette(palette)
+    if Theme.reset then
+        Theme.reset()
+    end
+
     if not palette then
         return
     end
