@@ -1764,7 +1764,11 @@ function Upgrades:applyPersistentEffects(rebaseline)
             ability.timer = 0
             ability.cooldownTimer = 0
         else
-            if ability.cooldown and ability.cooldown > 0 then
+            if rebaseline then
+                ability.active = false
+                ability.timer = 0
+                ability.cooldownTimer = 0
+            elseif ability.cooldown and ability.cooldown > 0 then
                 ability.cooldownTimer = math.min(ability.cooldownTimer or 0, ability.cooldown)
             else
                 ability.cooldownTimer = 0
@@ -1772,9 +1776,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
         end
 
         ability.maxFloorUses = 1
-        if firstSetup then
-            ability.floorCharges = ability.maxFloorUses
-        elseif rebaseline then
+        if firstSetup or rebaseline then
             ability.floorCharges = ability.maxFloorUses
         elseif ability.floorCharges == nil then
             ability.floorCharges = ability.maxFloorUses
