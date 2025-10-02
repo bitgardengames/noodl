@@ -90,6 +90,21 @@ local english = {
                     progress = "No-turn chain: ${current}/${goal}",
                     complete = "Smooth operator! Chain hit ${current}.",
                 },
+                floor_conqueror = {
+                    title = "Floor Conqueror",
+                    description = "Clear ${goal} floors in a single run.",
+                },
+                apple_hoarder = {
+                    title = "Apple Hoarder",
+                    description = "Collect ${goal} apples in a single run.",
+                    progress = "Run apples: ${current}/${goal}",
+                },
+                streak_perfectionist = {
+                    title = "Streak Perfectionist",
+                    description = "Collect ${goal} fruit without turning in a single run.",
+                    progress = "No-turn chain: ${current}/${goal}",
+                    complete = "Flawless flow! Chain reached ${current}.",
+                },
             },
         },
         settings = {

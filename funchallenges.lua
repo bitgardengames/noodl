@@ -412,6 +412,33 @@ FunChallenges.challenges = {
         completeKey = "menu.fun_daily.streak_pusher.complete",
         xpReward = 70,
     },
+    {
+        id = "floor_conqueror",
+        titleKey = "menu.fun_daily.floor_conqueror.title",
+        descriptionKey = "menu.fun_daily.floor_conqueror.description",
+        sessionStat = "floorsCleared",
+        goal = 10,
+        xpReward = 100,
+    },
+    {
+        id = "apple_hoarder",
+        titleKey = "menu.fun_daily.apple_hoarder.title",
+        descriptionKey = "menu.fun_daily.apple_hoarder.description",
+        sessionStat = "applesEaten",
+        goal = 90,
+        progressKey = "menu.fun_daily.apple_hoarder.progress",
+        xpReward = 90,
+    },
+    {
+        id = "streak_perfectionist",
+        titleKey = "menu.fun_daily.streak_perfectionist.title",
+        descriptionKey = "menu.fun_daily.streak_perfectionist.description",
+        sessionStat = "fruitWithoutTurning",
+        goal = 15,
+        progressKey = "menu.fun_daily.streak_perfectionist.progress",
+        completeKey = "menu.fun_daily.streak_perfectionist.complete",
+        xpReward = 90,
+    },
 }
 
 FunChallenges.lookup = buildChallengeLookup(FunChallenges.challenges)
