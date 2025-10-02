@@ -22,6 +22,7 @@ local Arena = require("arena")
 local UI = require("ui")
 local Theme = require("theme")
 local FruitEvents = require("fruitevents")
+local Shaders = require("shaders")
 local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
@@ -750,6 +751,7 @@ function Game:update(dt)
     updateRunTimers(self, scaledDt)
 
     FruitEvents.update(scaledDt)
+    Shaders.update(scaledDt)
 
     if self.transition and self.transition:isActive() then
         self.transition:update(scaledDt)

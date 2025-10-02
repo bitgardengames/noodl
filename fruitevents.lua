@@ -15,6 +15,7 @@ local Particles = require("particles")
 local Theme = require("theme")
 local Achievements = require("achievements")
 local Upgrades = require("upgrades")
+local Shaders = require("shaders")
 
 local FruitEvents = {}
 
@@ -79,6 +80,11 @@ local function applyComboReward(x, y)
     if comboCount >= 2 then
         SessionStats:add("combosTriggered", 1)
     end
+    Shaders.notify("comboChanged", {
+        combo = comboCount,
+        timer = comboState.timer or 0,
+        window = comboState.window or DEFAULT_COMBO_WINDOW,
+    })
     syncComboToUI()
 
     if comboCount < 2 then
@@ -102,6 +108,11 @@ local function applyComboReward(x, y)
 
         local summary = string.format("Combo Bonus +%d", totalBonus)
         FloatingText:add(summary, x, y - 74, {1, 0.95, 0.6, 1}, 1.3, 48)
+        Shaders.notify("specialEvent", {
+            type = "combo",
+            strength = 0.55,
+            color = {1, 0.9, 0.5, 1},
+        })
     end
 
     Particles:spawnBurst(x, y, {
@@ -143,6 +154,11 @@ local function applyRunRewards(fruitType, x, y)
                     addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
                     offset = offset + 22
                 end
+                Shaders.notify("specialEvent", {
+                    type = "comboBoost",
+                    strength = 0.35,
+                    color = reward.color,
+                })
             end
         elseif rewardType == "stallSaws" then
             local duration = reward.duration or reward.amount or 0
@@ -152,6 +168,11 @@ local function applyRunRewards(fruitType, x, y)
                     addFloatingText(reward.label, x, y - offset, reward.color or {0.8, 0.9, 1, 1}, reward.duration, reward.size)
                     offset = offset + 22
                 end
+                Shaders.notify("specialEvent", {
+                    type = "stallSaws",
+                    strength = 0.5,
+                    color = reward.color or {0.72, 0.85, 1, 1},
+                })
             end
         elseif rewardType == "shield" then
             local shields = math.floor(reward.amount or 0)
@@ -161,6 +182,11 @@ local function applyRunRewards(fruitType, x, y)
                     addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
                     offset = offset + 22
                 end
+                Shaders.notify("specialEvent", {
+                    type = "shield",
+                    strength = 0.65,
+                    color = reward.color or {0.72, 1, 0.82, 1},
+                })
             end
         elseif rewardType == "scoreBonus" then
             local bonus = math.floor(reward.amount or 0)
@@ -170,6 +196,11 @@ local function applyRunRewards(fruitType, x, y)
                     addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
                     offset = offset + 22
                 end
+                Shaders.notify("specialEvent", {
+                    type = "score",
+                    strength = 0.45,
+                    color = reward.color or {1, 0.78, 0.45, 1},
+                })
             end
         end
     end
@@ -183,6 +214,7 @@ function FruitEvents.reset()
     comboState.window = DEFAULT_COMBO_WINDOW
     comboState.best = 0
     syncComboToUI()
+    Shaders.notify("comboLost", { reason = "reset" })
 end
 
 function FruitEvents:getComboWindow()
@@ -205,6 +237,7 @@ function FruitEvents.update(dt)
 
         if comboState.timer == 0 then
             comboState.count = 0
+            Shaders.notify("comboLost", { reason = "timeout" })
         end
 
         syncComboToUI()
@@ -220,6 +253,12 @@ function FruitEvents.boostComboTimer(amount)
     updateComboWindow()
     comboState.timer = math.min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
     syncComboToUI()
+    if (comboState.count or 0) >= 2 then
+        Shaders.notify("specialEvent", {
+            type = "comboBoost",
+            strength = 0.3,
+        })
+    end
 end
 
 function FruitEvents.handleConsumption(x, y)
@@ -250,6 +289,10 @@ function FruitEvents.handleConsumption(x, y)
         PlayerStats:add("totalDragonfruitEaten", 1)
         SessionStats:add("dragonfruitEaten", 1)
         Achievements:unlock("dragonHunter")
+        Shaders.notify("specialEvent", {
+            type = "dragonfruit",
+            strength = 0.9,
+        })
     end
 
     UI:triggerScorePulse()
