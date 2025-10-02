@@ -25,7 +25,7 @@
 local Floors = {
         [1] = {
                 name = "Verdant Garden",
-                flavor = "Noodl arrives clutching an overdue library tome and finds the librarian's trail replaced by leaflets warning that late fees now involve thunderstorms.",
+                flavor = "Noodl, serpent sentinel of the Sky Orchard, feels it shudder; the Heart-root far below is starving, and only fresh fruit pulses can keep it awake.",
                 palette = {
                         bgColor     = {0.20, 0.28, 0.20, 1}, -- darker forest green backdrop
                         arenaBG     = {0.42, 0.62, 0.35, 1}, -- still bright, grassy playfield
@@ -43,7 +43,7 @@ local Floors = {
         },
     [2] = {
         name = "Echoing Caverns",
-        flavor = "Echoes rehearse stern whispers, hinting the librarian just dashed deeper while muttering about an impending audit spiral.",
+        flavor = "Echoes chase Noodl deeper, repeating the Heart-root's fading thrum and urging every fruit to be carried before the rhythm stops.",
         palette = {
             bgColor    = {0.07, 0.09, 0.13, 1}, -- bluish depth
             arenaBG    = {0.12, 0.12, 0.15, 1}, -- slate
@@ -61,7 +61,7 @@ local Floors = {
     },
     [3] = {
         name = "Mushroom Grotto",
-        flavor = "Glowcaps insist the librarian tried hiding inside a mushroom cap until Noodl's overdue book began vibrating ominously.",
+        flavor = "Glowcaps blink a warning: the hollow storm is close behind, and fruitlight is the only beacon bright enough to outshine it.",
         palette = {
             bgColor    = {0.08, 0.1, 0.16, 1},  -- teal haze
             arenaBG    = {0.12, 0.16, 0.2, 1},  -- cave stone
@@ -81,7 +81,7 @@ local Floors = {
     },
     [4] = {
         name = "Flooded Catacombs",
-        flavor = "Lantern fish spell out late notices in bubbles, gossiping that the librarian fled upstairs before tidal invoices arrived.",
+        flavor = "Flooded arches trade rumors that the Heart-room is drowning in shadow, counting on Noodl to ferry enough fruit to relight the pumps.",
         palette = {
             bgColor    = {0.03, 0.08, 0.1, 1},   -- deep teal void
             arenaBG    = {0.05, 0.12, 0.14, 1},  -- water-stained stone
@@ -100,7 +100,7 @@ local Floors = {
     },
     [5] = {
         name = "Ancient Ruins",
-        flavor = "Clockwork beetles etch Noodl's skyrocketing fine in sandstone, insisting only the librarian's signature can halt the countdown.",
+        flavor = "Clockwork reliefs spin up ancient conduits, hungry for fruit-charge to unlock the sealed descent before the orchard tears free.",
         palette = {
             bgColor    = {0.14, 0.12, 0.08, 1}, -- dim brown haze
             arenaBG    = {0.18, 0.16, 0.12, 1}, -- sandstone
@@ -119,7 +119,7 @@ local Floors = {
     },
     [6] = {
         name = "Crystal Hollows",
-        flavor = "Crystals replay the librarian's dramatic sprint, projecting holograms of overdue notices now sealed with binding glitter.",
+        flavor = "Crystal prisms fracture the last sunlight, storing it in fruit seeds; if Noodl falters, the orchard's tether will snap.",
         palette = {
             bgColor    = {0.06, 0.08, 0.12, 1}, -- sapphire veil
             arenaBG    = {0.09, 0.11, 0.16, 1}, -- cold blue
@@ -138,7 +138,7 @@ local Floors = {
     },
     [7] = {
         name = "Bone Pits",
-        flavor = "Bone choirs rehearse fainting politely because the library's debt collector is rumored to be a stormcloud wielding paperwork.",
+        flavor = "Bone wind chimes tally the roots already gone, promising that fruitlight is the only oath the abyss still honors.",
         palette = {
             bgColor    = {0.12, 0.11, 0.1, 1},   -- sepulchral haze
             arenaBG    = {0.18, 0.17, 0.16, 1},  -- dusty bone field
@@ -158,7 +158,7 @@ local Floors = {
     },
     [8] = {
         name = "The Abyss",
-        flavor = "Shadow-fish practice speeches for the debt collector, urging Noodl to hurry before lightning learns how to fill forms.",
+        flavor = "Shadows curl like vines severed from home, and even the abyss watches to see if Noodl's satchel of fruit still glows.",
         palette = {
             bgColor    = {0.02, 0.02, 0.05, 1}, -- depth-black
             arenaBG    = {0.05, 0.05, 0.08, 1}, -- void
@@ -178,7 +178,7 @@ local Floors = {
     },
     [9] = {
         name = "Inferno Gates",
-        flavor = "Lava imps gossip that the librarian borrowed fireproof roller skates to stay ahead of the cosmic auditor closing in.",
+        flavor = "Inferno vents roar awake, smelling the hollow storm rising; only burning through with fruit-fueled gates will keep it from the orchard.",
         palette = {
             bgColor    = {0.12, 0.03, 0.03, 1}, -- hazy red
             arenaBG    = {0.15, 0.04, 0.04, 1}, -- burning tone
@@ -198,7 +198,7 @@ local Floors = {
     },
     [10] = {
         name = "Obsidian Keep",
-        flavor = "An obsidian steward confides the castle clocks are rewinding themselves to dodge interest on Noodl's growing late fee.",
+        flavor = "An obsidian chamber calibrates the Heart's armor, demanding fruit sparks before it seals the way for good.",
         palette = {
             bgColor    = {0.01, 0.01, 0.02, 1},  -- abyssal black
             arenaBG    = {0.07, 0.05, 0.07, 1},  -- polished obsidian
@@ -218,7 +218,7 @@ local Floors = {
     },
     [11] = {
         name = "Ashen Frontier",
-        flavor = "Ashen tumbleweeds roll past carrying subpoenas, muttering they'll probably land on Noodl if the librarian keeps running.",
+        flavor = "Ash storms whisper that the hollow storm is almost here, measuring how many fruit pulses Noodl can spare for the failing beacons.",
         palette = {
             bgColor    = {0.08, 0.04, 0.03, 1},  -- ember-stained dusk
             arenaBG    = {0.12, 0.06, 0.05, 1},  -- charred earth
@@ -238,7 +238,7 @@ local Floors = {
     },
     [12] = {
         name = "Spirit Crucible",
-        flavor = "Choir spirits workshop pep songs, though one keeps asking what happens when a heroic serpent declares bankruptcy.",
+        flavor = "Spirits cradle cracked root-lines, feeding on fruitlight as they steady the passage toward the Heart's ember.",
         palette = {
             bgColor    = {0.04, 0.02, 0.08, 1},  -- ethereal violet
             arenaBG    = {0.09, 0.05, 0.14, 1},  -- twilight bloom
@@ -257,7 +257,7 @@ local Floors = {
     },
     [13] = {
         name = "The Underworld",
-        flavor = "An underworld concierge offers Noodl a panic bell, explaining the auditor now travels with a personal entrance theme.",
+        flavor = "Underworld stewards lay out a path to the Heart, muttering that without a last surge of fruit the orchard will fall through the sky.",
         palette = {
             bgColor    = {0.06, 0.02, 0.04, 1}, -- smoky dark veil
             arenaBG    = {0.08, 0.05, 0.08, 1}, -- charcoal
@@ -277,7 +277,7 @@ local Floors = {
     },
     [14] = {
         name = "Celestial Causeway",
-        flavor = "Celestial stairways align into velvet ropes as cherubs warn the auditor is moments away and the overdue tome is humming in a minor key.",
+        flavor = "Celestial bridges tremble, streaming pleas upward; Noodl's collected fruit must ignite the guiding stars before they sputter out.",
         palette = {
             bgColor    = {0.16, 0.18, 0.25, 1},  -- cool nightfall above the abyss
             arenaBG    = {0.78, 0.82, 0.9, 1},   -- moonlit alabaster path
@@ -297,7 +297,7 @@ local Floors = {
     },
     [15] = {
         name = "Sky Spire",
-        flavor = "The Sky Spire elevator hums bossa nova, assuring Noodl the librarian is just above frantically drafting apologies on windshields.",
+        flavor = "The Sky Spire hums the Heart-root's lullaby in reverse, buying seconds while Noodl shoulders more fruit toward the breach.",
         palette = {
             bgColor    = {0.12, 0.12, 0.18, 1},  -- starlit indigo
             arenaBG    = {0.85, 0.88, 0.92, 1},  -- alabaster platform
@@ -317,7 +317,7 @@ local Floors = {
     },
     [16] = {
         name = "Starfall Bastion",
-        flavor = "Star-kite sentries salute Noodl, reporting the librarian paused only to negotiate reduced lightning per minute.",
+        flavor = "Starfall ramparts crackle as the hollow storm slams closer, and each fruit becomes a shield tile between the orchard and the void.",
         palette = {
             bgColor    = {0.16, 0.17, 0.24, 1},  -- twilight navy mantle
             arenaBG    = {0.78, 0.82, 0.94, 1},  -- moonlit parapets
@@ -337,7 +337,7 @@ local Floors = {
     },
     [17] = {
         name = "Nebula Crown",
-        flavor = "Nebula puffballs assemble flashcards labeled 'Pleading Face,' urging Noodl to rehearse before the confrontation.",
+        flavor = "Nebula crowns unravel into warning flares, asking Noodl to weave the fruitlight into a final thread that can reach the Heart.",
         palette = {
             bgColor    = {0.09, 0.08, 0.16, 1},  -- deep violet firmament
             arenaBG    = {0.34, 0.26, 0.46, 1},  -- dusk-lit bridgework
@@ -356,7 +356,7 @@ local Floors = {
     },
     [18] = {
         name = "Void Throne",
-        flavor = "Void cats demand practiced curtsies, casually noting the auditor waits beyond the throne with a cosmic calculator.",
+        flavor = "Void courtiers drift aside, sensing the Heart through Noodl's satchel and preparing the throne for whichever light arrives first.",
         palette = {
             bgColor    = {0.04, 0.03, 0.08, 1},  -- eventide abyss
             arenaBG    = {0.08, 0.06, 0.12, 1},  -- onyx dais
@@ -376,7 +376,7 @@ local Floors = {
     },
     [19] = {
         name = "Singularity Gate",
-        flavor = "At the Singularity Gate, Noodl corners the librarian with the book just as the stormcloud auditor arrives, and together they shout, 'Extension, please!'",
+        flavor = "At the Singularity Gate, Noodl pours the fruitlight into the starving Heart-root just as the hollow storm breaks—and the orchard breathes again.",
         palette = {
             bgColor    = {0.02, 0.02, 0.05, 1},  -- collapsing night
             arenaBG    = {0.05, 0.04, 0.09, 1},  -- gravitic maw
