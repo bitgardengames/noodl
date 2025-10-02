@@ -398,7 +398,9 @@ end
 local function buildCavern(state, rng)
     local palette = state.palette or Theme
     local baseRockColor = darken(palette.arenaBorder or palette.rock or Theme.shadowColor, 0.35)
-    local rockColor = withAlpha(baseRockColor, 0.55)
+    local rockColor = copyColor(baseRockColor)
+    rockColor[4] = 1
+
     local accentColor = withAlpha(lighten(palette.rock or palette.snake or Theme.snakeDefault, 0.2), 0.35)
 
     local shapes = {
@@ -473,7 +475,7 @@ local function buildCavern(state, rng)
         6,
         {3, 6},
         {8, 14},
-        withAlpha(lighten(baseRockColor, 0.08), 0.35),
+        lighten(baseRockColor, 0.08),
         -0.008,
         4
     )
@@ -482,28 +484,10 @@ local function buildCavern(state, rng)
         5,
         {5, 9},
         {14, 22},
-        withAlpha(darken(baseRockColor, 0.05), 0.7),
+        darken(baseRockColor, 0.05),
         0,
         6
     )
-
-    shapes[#shapes + 1] = {
-        type = "rectangle",
-        x = 0.02,
-        y = 0.2,
-        w = 0.06,
-        h = 0.68,
-        color = withAlpha(rockColor, 0.5),
-    }
-
-    shapes[#shapes + 1] = {
-        type = "rectangle",
-        x = 0.92,
-        y = 0.22,
-        w = 0.06,
-        h = 0.66,
-        color = withAlpha(rockColor, 0.45),
-    }
 
     for _ = 1, 4 do
         local startX = rng:random(8, 92) / 100
