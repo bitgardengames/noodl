@@ -1430,7 +1430,7 @@ function UI:drawFruitSockets()
             local highlightColor = lightenColor(fruit.color, 0.6)
             local highlightAlpha = (highlightColor[4] or 1) * 0.75
             love.graphics.push()
-            love.graphics.translate(-r * 0.3, -r * 0.35)
+            love.graphics.translate(-r * 0.3 + 1, -r * 0.35)
             love.graphics.rotate(-0.35)
             love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], highlightAlpha)
             love.graphics.ellipse("fill", 0, 0, r * 0.55, r * 0.45, 32)
