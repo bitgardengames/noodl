@@ -819,11 +819,11 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
--- Shimmering highlights for the shop screen
+-- Soft morning light for the shop screen
 registerEffect({
     type = "shopGlimmer",
-    backdropIntensity = 0.68,
-    arenaIntensity = 0.42,
+    backdropIntensity = 0.54,
+    arenaIntensity = 0.32,
     source = [[
         extern float time;
         extern vec2 resolution;
@@ -833,19 +833,6 @@ registerEffect({
         extern vec4 glowColor;
         extern float intensity;
 
-        float hash(vec2 p)
-        {
-            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-        }
-
-        float shimmer(vec2 uv, float t)
-        {
-            vec2 grid = floor(uv * vec2(16.0, 9.0));
-            float cell = hash(grid + floor(t * 0.7));
-            float pulse = fract(t * 0.9 + cell);
-            return smoothstep(0.8, 1.0, 1.0 - pulse);
-        }
-
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         {
             vec2 uv = (screen_coords - origin) / resolution;
@@ -853,23 +840,23 @@ registerEffect({
             vec2 centered = uv - vec2(0.5);
 
             float radius = length(centered);
-            float angle = atan(centered.y, centered.x);
 
-            float radialWave = sin(radius * 14.0 - time * 0.9);
-            float angularWave = sin(angle * 6.0 + time * 0.6);
-            float mixWave = radialWave * 0.35 + angularWave * 0.45;
+            float gentleWave = sin(time * 0.35 + radius * 6.0) * 0.5 + 0.5;
+            float sweep = smoothstep(-0.1, 0.45, uv.x + sin(time * 0.25) * 0.08);
+            float vertical = smoothstep(0.05, 0.75, uv.y);
 
-            float innerGlow = smoothstep(0.0, 0.65, 1.0 - radius);
-            float band = clamp(mixWave * 0.5 + 0.5, 0.0, 1.0);
+            float accentMix = clamp((gentleWave * 0.35 + sweep * 0.45) * intensity, 0.0, 1.0);
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix);
 
-            float drift = sin((uv.x + uv.y) * 6.0 - time * 0.25) * 0.5 + 0.5;
-            float highlight = shimmer(uv + vec2(time * 0.04, -time * 0.02), time);
+            float glow = exp(-radius * radius * 3.0);
+            float breathe = sin(time * 0.2) * 0.5 + 0.5;
+            float glowAmount = (glow * 0.4 + vertical * 0.2) * (0.4 + breathe * 0.3) * intensity;
+            col = mix(col, glowColor.rgb, clamp(glowAmount, 0.0, 1.0));
 
-            vec3 col = mix(baseColor.rgb, accentColor.rgb, band * intensity);
-            col = mix(col, glowColor.rgb, (innerGlow * 0.4 + drift * 0.25) * intensity);
-            col += glowColor.rgb * highlight * 0.25 * intensity;
+            float subtleGrain = sin((uv.x + uv.y) * 18.0 + time * 0.1) * 0.5 + 0.5;
+            col = mix(col, baseColor.rgb, 0.2 * (1.0 - subtleGrain));
 
-            col = mix(baseColor.rgb, col, 0.85);
+            col = mix(baseColor.rgb, col, 0.75);
             col = clamp(col, 0.0, 1.0);
 
             return vec4(col, baseColor.a) * color;
@@ -1094,11 +1081,11 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
--- Radiant afterglow for game over reflection
+-- Gentle afterglow for game over reflection
 registerEffect({
     type = "afterglowPulse",
-    backdropIntensity = 0.62,
-    arenaIntensity = 0.4,
+    backdropIntensity = 0.52,
+    arenaIntensity = 0.3,
     source = [[
         extern float time;
         extern vec2 resolution;
@@ -1115,28 +1102,24 @@ registerEffect({
             vec2 centered = uv - vec2(0.5);
 
             float dist = length(centered);
-            float angle = atan(centered.y, centered.x);
-            float wave = sin(dist * 18.0 - time * 2.4) * 0.5 + 0.5;
-            float swirl = sin(angle * 6.0 - time * 0.9) * 0.5 + 0.5;
-            float ripple = sin(dist * 32.0 + time * 4.2) * 0.5 + 0.5;
+            float fade = smoothstep(0.95, 0.15, dist);
 
-            float halo = smoothstep(0.18, 0.0, abs(dist - 0.34));
-            float innerGlow = exp(-dist * dist * 3.6);
-            float outerFade = smoothstep(1.1, 0.35, dist);
+            float breathe = sin(time * 0.25) * 0.5 + 0.5;
 
-            vec3 col = baseColor.rgb;
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, fade * 0.35 * intensity);
 
-            float blendAmount = clamp((halo * 0.75 + wave * 0.35 + swirl * 0.25) * intensity, 0.0, 1.0);
-            vec3 accentBlend = mix(accentColor.rgb, pulseColor.rgb, ripple);
-            col = mix(col, accentBlend, blendAmount);
+            float glow = exp(-dist * dist * 2.4);
+            float outerGlow = smoothstep(0.5, 0.1, dist);
+            float glowAmount = (glow * 0.55 + outerGlow * 0.25) * (0.45 + breathe * 0.35) * intensity;
+            col = mix(col, pulseColor.rgb, clamp(glowAmount, 0.0, 1.0));
 
-            float scan = sin(uv.y * 60.0 - time * 4.0) * 0.5 + 0.5;
-            col += pulseColor.rgb * (scan * 0.08 + innerGlow * 0.22) * intensity;
+            float gentleSweep = smoothstep(-0.2, 0.7, dot(centered, normalize(vec2(0.4, 1.0))) + sin(time * 0.3) * 0.1);
+            col = mix(col, accentColor.rgb, gentleSweep * 0.25 * intensity);
 
-            float spark = smoothstep(0.0, 0.4, 0.4 - dist) * (sin(time * 5.0 + dist * 28.0) * 0.5 + 0.5);
-            col = mix(col, accentColor.rgb, clamp(spark * 0.18 * intensity, 0.0, 1.0));
+            float grain = sin((uv.x * 10.0 + uv.y * 8.0) + time * 0.15) * 0.5 + 0.5;
+            col = mix(col, baseColor.rgb, 0.18 * (1.0 - grain));
 
-            col = mix(baseColor.rgb, col, clamp(outerFade, 0.0, 1.0));
+            col = mix(baseColor.rgb, col, clamp(fade, 0.0, 1.0));
             col = clamp(col, 0.0, 1.0);
 
             return vec4(col, baseColor.a) * color;
