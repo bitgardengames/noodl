@@ -94,7 +94,11 @@ local english = {
         },
         settings = {
             title = "Settings",
-            toggle_fullscreen = "Toggle Fullscreen",
+            display_mode = "Display Mode",
+            display_mode_fullscreen = "Fullscreen",
+            display_mode_windowed = "Windowed",
+            windowed_resolution = "Windowed Resolution",
+            resolution_note_steam_deck = "Steam Deck",
             toggle_music = "Toggle Music",
             toggle_sfx = "Toggle Sound FX",
             music_volume = "Music Volume",
