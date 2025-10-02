@@ -164,12 +164,12 @@ registerEffect({
             float mist = smoothstep(0.0, 1.0, uv.y * 1.1);
             float shimmer = sin((uv.x * 6.0 - uv.y * 1.2) + time * 0.32) * 0.5 + 0.5;
 
-            vec3 base = mix(baseColor.rgb, fogColor.rgb, ceiling * 0.5 + mist * 0.35);
-            float highlight = clamp(shimmer * 0.28 * intensity, 0.0, 1.0);
-            vec3 col = mix(base, glintColor.rgb, highlight * 0.4);
+            vec3 base = mix(baseColor.rgb, fogColor.rgb, ceiling * 0.55 + mist * 0.38);
+            float highlight = clamp(shimmer * 0.32 * intensity, 0.0, 1.0);
+            vec3 col = mix(base, glintColor.rgb, highlight * 0.5);
 
             float depth = smoothstep(0.0, 0.4, uv.y);
-            col = mix(col, baseColor.rgb, depth * 0.2);
+            col = mix(col, baseColor.rgb, depth * 0.12);
 
             return vec4(col, baseColor.a) * color;
         }
