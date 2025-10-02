@@ -376,18 +376,48 @@ local function buildBotanical(state, rng)
     end
 
     if state.variant == "fungal" then
-        local sporeColor = withAlpha(lighten(palette.sawColor or palette.snake or Theme.snakeDefault, 0.35), 0.45)
-        for _ = 1, 3 do
-            local baseX = rng:random() * 0.7 + 0.15
-            local baseY = rng:random(70, 85) / 100
+        local stalkColor = withAlpha(mix(palette.rock or palette.arenaBorder or Theme.shadowColor, palette.arenaBorder or palette.bgColor, 0.35), 0.6)
+        local capColor = withAlpha(lighten(palette.sawColor or palette.snake or Theme.snakeDefault, 0.18), 0.55)
+        local glowColor = withAlpha(lighten(palette.sawColor or palette.snake or Theme.snakeDefault, 0.35), 0.35)
+
+        local mushroomCount = rng:random(3, 5)
+        for _ = 1, mushroomCount do
+            local centerX = rng:random() * 0.7 + 0.15
+            local baseY = rng:random(72, 88) / 100
+            local stalkHeight = rng:random(22, 36) / 100
+            local stalkWidth = rng:random(4, 8) / 100
+            local capRx = rng:random(14, 24) / 100
+            local capRy = rng:random(7, 12) / 100
+            local stalkTop = baseY - stalkHeight
+
+            shapes[#shapes + 1] = {
+                type = "rectangle",
+                x = centerX - stalkWidth / 2,
+                y = math.max(0, stalkTop),
+                w = stalkWidth,
+                h = stalkHeight,
+                color = stalkColor,
+                sway = { axis = "both", amplitude = rng:random(2, 6) / 1000, speed = rng:random(6, 12) / 10, phase = rng:random() * TWO_PI },
+            }
+
+            local capCenterY = math.max(0, stalkTop) + capRy
             shapes[#shapes + 1] = {
                 type = "ellipse",
-                x = baseX,
-                y = baseY,
-                rx = rng:random(12, 18) / 100,
-                ry = rng:random(7, 11) / 100,
-                color = sporeColor,
-                sway = { axis = "y", amplitude = rng:random(3, 8) / 1000, speed = rng:random(10, 18) / 10, phase = rng:random() * TWO_PI },
+                x = centerX,
+                y = capCenterY,
+                rx = capRx,
+                ry = capRy,
+                color = capColor,
+                sway = { axis = "both", amplitude = rng:random(3, 7) / 1000, speed = rng:random(8, 16) / 10, phase = rng:random() * TWO_PI },
+            }
+
+            shapes[#shapes + 1] = {
+                type = "ellipse",
+                x = centerX,
+                y = capCenterY - capRy * rng:random(25, 45) / 100,
+                rx = capRx * rng:random(45, 65) / 100,
+                ry = capRy * rng:random(35, 55) / 100,
+                color = glowColor,
             }
         end
     end
