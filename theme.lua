@@ -44,4 +44,34 @@ local Theme = {
     rock             = {0.30, 0.30, 0.35, 1.0},
 }
 
+local function copyTable(value)
+    if type(value) ~= "table" then
+        return value
+    end
+
+    local copy = {}
+    for key, item in pairs(value) do
+        copy[key] = item
+    end
+
+    return copy
+end
+
+local defaults = {}
+for key, value in pairs(Theme) do
+    defaults[key] = copyTable(value)
+end
+
+function Theme.reset()
+    for key in pairs(Theme) do
+        if key ~= "reset" then
+            Theme[key] = nil
+        end
+    end
+
+    for key, value in pairs(defaults) do
+        Theme[key] = copyTable(value)
+    end
+end
+
 return Theme
