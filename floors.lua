@@ -34,9 +34,9 @@ local Floors = {
                         rock        = {0.74, 0.59, 0.38, 1}, -- sun-baked sandstone, pops from grass
                 },
                 backgroundEffect = {
-                        type = "forestCanopy",
-                        backdropIntensity = 0.65,
-                        arenaIntensity = 0.38,
+                        type = "softCanopy",
+                        backdropIntensity = 0.55,
+                        arenaIntensity = 0.32,
                 },
                 backgroundTheme = "botanical",
                 traits = {"sunlitSanctuary"},
@@ -52,9 +52,9 @@ local Floors = {
             rock       = {0.38, 0.43, 0.52, 1}, -- cool steel-blue highlights
         },
         backgroundEffect = {
-            type = "echoMist",
-            backdropIntensity = 0.6,
-            arenaIntensity = 0.32,
+            type = "softCavern",
+            backdropIntensity = 0.52,
+            arenaIntensity = 0.3,
         },
         backgroundTheme = "cavern",
         traits = {"echoingStillness"},
@@ -91,9 +91,9 @@ local Floors = {
             sawColor   = {0.5, 0.8, 0.85, 1},    -- oxidized steel
         },
         backgroundEffect = {
-            type = "tidalCurrent",
-            backdropIntensity = 0.72,
-            arenaIntensity = 0.42,
+            type = "softCurrent",
+            backdropIntensity = 0.6,
+            arenaIntensity = 0.36,
         },
         backgroundTheme = "oceanic",
         traits = {"waterloggedCatacombs"},

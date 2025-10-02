@@ -91,6 +91,153 @@ local effectDefinitions = {}
 local function registerEffect(def)
     effectDefinitions[def.type] = def
 end
+
+-- Gentle canopy gradient for relaxed botanical floors
+registerEffect({
+    type = "softCanopy",
+    backdropIntensity = 0.52,
+    arenaIntensity = 0.3,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 canopyColor;
+        extern vec4 glowColor;
+        extern float intensity;
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            float sway = sin((uv.x + time * 0.05) * 3.2) * 0.04;
+            float canopy = smoothstep(0.18, 0.82, uv.y + sway);
+            float lightBands = sin((uv.x * 5.0 + uv.y * 1.2) + time * 0.25) * 0.5 + 0.5;
+
+            vec3 base = mix(baseColor.rgb, canopyColor.rgb, canopy * 0.65);
+            float highlight = clamp(lightBands * 0.35 * intensity, 0.0, 1.0);
+            vec3 col = mix(base, glowColor.rgb, highlight * 0.5);
+
+            float vignette = smoothstep(0.45, 0.98, distance(uv, vec2(0.5)));
+            col = mix(col, baseColor.rgb, vignette * 0.45);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+        local canopy = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
+        local glow = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "canopyColor", canopy)
+        sendColor(shader, "glowColor", glow)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
+
+-- Soft cavern haze with muted glints
+registerEffect({
+    type = "softCavern",
+    backdropIntensity = 0.48,
+    arenaIntensity = 0.28,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 fogColor;
+        extern vec4 glintColor;
+        extern float intensity;
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            float ceiling = smoothstep(0.1, 0.7, uv.y + sin((uv.x * 3.5) + time * 0.18) * 0.04);
+            float mist = smoothstep(0.0, 1.0, uv.y * 1.1);
+            float shimmer = sin((uv.x * 6.0 - uv.y * 1.2) + time * 0.32) * 0.5 + 0.5;
+
+            vec3 base = mix(baseColor.rgb, fogColor.rgb, ceiling * 0.5 + mist * 0.35);
+            float highlight = clamp(shimmer * 0.28 * intensity, 0.0, 1.0);
+            vec3 col = mix(base, glintColor.rgb, highlight * 0.4);
+
+            float depth = smoothstep(0.0, 0.4, uv.y);
+            col = mix(col, baseColor.rgb, depth * 0.2);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+        local fog = getColorComponents(palette and (palette.arenaBG or palette.rock), Theme.arenaBG)
+        local glint = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "fogColor", fog)
+        sendColor(shader, "glintColor", glint)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
+
+-- Gentle tidal drift for calmer aquatic stages
+registerEffect({
+    type = "softCurrent",
+    backdropIntensity = 0.56,
+    arenaIntensity = 0.32,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 deepColor;
+        extern vec4 foamColor;
+        extern float intensity;
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            float depth = smoothstep(0.0, 1.0, uv.y);
+            float wave = sin((uv.x * 3.6 - uv.y * 1.4) + time * 0.22) * 0.5 + 0.5;
+            float shafts = sin((uv.y * 2.4) - time * 0.18) * 0.5 + 0.5;
+
+            vec3 gradient = mix(baseColor.rgb, deepColor.rgb, depth * 0.75);
+            float highlight = clamp((wave * 0.4 + shafts * 0.25) * intensity, 0.0, 1.0);
+            vec3 col = mix(gradient, foamColor.rgb, highlight * 0.35);
+
+            float vignette = smoothstep(0.42, 1.0, distance(uv, vec2(0.5)));
+            col = mix(col, baseColor.rgb, vignette * 0.4);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+        local deep = getColorComponents(palette and (palette.arenaBG or palette.rock), Theme.arenaBG)
+        local foam = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "deepColor", deep)
+        sendColor(shader, "foamColor", foam)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
 -- Forest canopy shimmer for lush floors
 registerEffect({
     type = "forestCanopy",
