@@ -1,3 +1,5 @@
+local Settings = require("settings")
+
 local Death = {
   particles = {},
   shakeTime = 0,
@@ -63,6 +65,10 @@ end
 
 -- call this before drawing game elements
 function Death:applyShake()
+  if Settings.screenShake == false then
+    return
+  end
+
   if self.shakeTime > 0 then
     local intensity = self.shakeIntensity * (self.shakeTime / 0.4) -- fade out
     local dx = love.math.random(-intensity, intensity)

@@ -111,6 +111,30 @@ function App:draw()
     love.graphics.setColor(1, 1, 1, 1)
 
     GameState:draw()
+
+    if Settings.showFPS and love.timer and love.timer.getFPS then
+        local fps = love.timer.getFPS()
+        local label = string.format("FPS: %d", fps)
+        local padding = 6
+
+        if UI.setFont then
+            UI.setFont("caption")
+        end
+
+        local font = love.graphics.getFont()
+        local textWidth = font and font:getWidth(label) or 0
+        local textHeight = font and font:getHeight() or 14
+        local boxWidth = textWidth + padding * 2
+        local boxHeight = textHeight + padding * 2
+        local x = 12
+        local y = 12
+
+        love.graphics.setColor(0, 0, 0, 0.6)
+        love.graphics.rectangle("fill", x, y, boxWidth, boxHeight, 6, 6)
+        love.graphics.setColor(1, 1, 1, 0.95)
+        love.graphics.print(label, x + padding, y + padding)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
 end
 
 function App:mousepressed(x, y, button)
