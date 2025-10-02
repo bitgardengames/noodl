@@ -66,8 +66,9 @@ local function prepareOccupancy()
     end
 
     local reservedCells = SnakeUtils.reserveCells(reservedCandidates)
+    local reservedSafeZone = SnakeUtils.reserveCells(safeZone)
 
-    return safeZone, reservedCells
+    return safeZone, reservedCells, reservedSafeZone
 end
 
 local function applyBaselineHazardTraits(traitContext)
@@ -232,7 +233,7 @@ local function spawnRocks(numRocks, safeZone)
     end
 end
 
-local function buildSpawnPlan(traitContext, safeZone, reservedCells)
+local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone)
     local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
 
     return {
@@ -243,6 +244,7 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells)
         bladeRadius = DEFAULT_SAW_RADIUS,
         safeZone = safeZone,
         reservedCells = reservedCells,
+        reservedSafeZone = reservedSafeZone,
     }
 end
 
@@ -251,7 +253,7 @@ function FloorSetup.prepare(floorNum, floorData)
     Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
     BackgroundAmbience.configure(floorData)
     resetFloorEntities()
-    local safeZone, reservedCells = prepareOccupancy()
+    local safeZone, reservedCells, reservedSafeZone = prepareOccupancy()
 
     local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
     applyBaselineHazardTraits(traitContext)
@@ -262,7 +264,7 @@ function FloorSetup.prepare(floorNum, floorData)
     traitContext = Upgrades:modifyFloorContext(traitContext)
     traitContext.conveyors = math.max(0, traitContext.conveyors or 0)
 
-    local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells)
+    local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone)
 
     return {
         traitContext = traitContext,
@@ -280,6 +282,7 @@ function FloorSetup.spawnHazards(spawnPlan)
     spawnConveyors(spawnPlan.numConveyors or 0, spawnPlan.halfTiles)
     spawnRocks(spawnPlan.numRocks or 0, spawnPlan.safeZone)
     Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
+    SnakeUtils.releaseCells(spawnPlan.reservedSafeZone)
     SnakeUtils.releaseCells(spawnPlan.reservedCells)
 end
 
