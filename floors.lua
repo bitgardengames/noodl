@@ -106,9 +106,9 @@ local Floors = {
             sawColor   = {0.7, 0.7, 0.75, 1},   -- pale tarnished steel
         },
         backgroundEffect = {
-            type = "emberDrift",
-            backdropIntensity = 0.6,
-            arenaIntensity = 0.35,
+            type = "ruinMotes",
+            backdropIntensity = 0.58,
+            arenaIntensity = 0.32,
         },
         backgroundTheme = "machine",
         traits = {"ancientMachinery", "echoingStillness"},

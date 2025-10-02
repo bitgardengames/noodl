@@ -409,6 +409,60 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
+-- Dust motes and faint machinery glow for ancient ruins
+registerEffect({
+    type = "ruinMotes",
+    backdropIntensity = 0.6,
+    arenaIntensity = 0.34,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 dustColor;
+        extern vec4 highlightColor;
+        extern float intensity;
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            float vertical = smoothstep(0.0, 1.0, uv.y);
+
+            float sweep = sin((uv.y + time * 0.08) * 6.0);
+            float drift = sin((uv.x * 3.0 + uv.y * 0.5) + time * 0.35);
+            float motes = smoothstep(0.35, 0.85, sweep * 0.4 + drift * 0.2 + 0.5);
+
+            float cross = sin((uv.x * 11.0 - time * 0.4)) * sin((uv.y * 9.0 + time * 0.28));
+            float sparkle = smoothstep(0.6, 0.94, cross * 0.5 + 0.5);
+
+            float dustAmount = clamp((motes * 0.6 + sparkle * 0.4) * intensity, 0.0, 1.0);
+
+            vec3 col = mix(baseColor.rgb, dustColor.rgb, vertical * 0.3 + dustAmount * 0.25);
+            col = mix(col, highlightColor.rgb, dustAmount * 0.2);
+
+            float vignette = smoothstep(0.4, 0.95, distance(uv, vec2(0.5)));
+            col = mix(col, baseColor.rgb, vignette * 0.55);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+        local dust = getColorComponents(palette and (palette.rock or palette.arenaBorder), Theme.rock)
+        local highlight = getColorComponents(palette and (palette.snake or palette.sawColor), Theme.snakeDefault)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "dustColor", dust)
+        sendColor(shader, "highlightColor", highlight)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
 -- Aurora veil for crystalline and celestial floors
 registerEffect({
     type = "auroraVeil",
