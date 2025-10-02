@@ -968,14 +968,28 @@ registerEffect({
             vec2 centered = uv - vec2(0.5);
 
             float dist = length(centered);
-            float pulse = sin(time * 0.6 - dist * 9.0) * 0.5 + 0.5;
-            float ring = smoothstep(0.18, 0.5, dist) - smoothstep(0.5, 0.85, dist);
-            ring = clamp(ring, 0.0, 1.0);
-            float fade = smoothstep(1.0, 0.0, dist);
+            float angle = atan(centered.y, centered.x);
+            float wave = sin(dist * 18.0 - time * 2.4) * 0.5 + 0.5;
+            float swirl = sin(angle * 6.0 - time * 0.9) * 0.5 + 0.5;
+            float ripple = sin(dist * 32.0 + time * 4.2) * 0.5 + 0.5;
 
-            vec3 col = mix(baseColor.rgb, accentColor.rgb, (0.28 + pulse * 0.4 + ring * 0.25) * intensity);
-            col = mix(col, pulseColor.rgb, ring * 0.6 * intensity);
-            col = mix(baseColor.rgb, col, fade);
+            float halo = smoothstep(0.18, 0.0, abs(dist - 0.34));
+            float innerGlow = exp(-dist * dist * 3.6);
+            float outerFade = smoothstep(1.1, 0.35, dist);
+
+            vec3 col = baseColor.rgb;
+
+            float blendAmount = clamp((halo * 0.75 + wave * 0.35 + swirl * 0.25) * intensity, 0.0, 1.0);
+            vec3 accentBlend = mix(accentColor.rgb, pulseColor.rgb, ripple);
+            col = mix(col, accentBlend, blendAmount);
+
+            float scan = sin(uv.y * 60.0 - time * 4.0) * 0.5 + 0.5;
+            col += pulseColor.rgb * (scan * 0.08 + innerGlow * 0.22) * intensity;
+
+            float spark = smoothstep(0.0, 0.4, 0.4 - dist) * (sin(time * 5.0 + dist * 28.0) * 0.5 + 0.5);
+            col = mix(col, accentColor.rgb, clamp(spark * 0.18 * intensity, 0.0, 1.0));
+
+            col = mix(baseColor.rgb, col, clamp(outerFade, 0.0, 1.0));
             col = clamp(col, 0.0, 1.0);
 
             return vec4(col, baseColor.a) * color;
