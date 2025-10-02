@@ -371,8 +371,8 @@ local english = {
                 description = "Snake moves 15% slower. The exit unlocks one fruit later.",
             },
             pocket_springs = {
-                name = "Pocket Springs",
-                description = "After collecting thirty fruit, forge a single crash shield charge.",
+                name = "Aegis Winder",
+                description = "After collecting twenty-five fruit, forge a single crash shield charge.",
             },
             mapmakers_compass = {
                 name = "Mapmaker's Compass",
