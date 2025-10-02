@@ -42,6 +42,15 @@ local function getHighlightColor(color)
     return {r, g, b, a}
 end
 
+local function getShadowColor(color)
+    color = color or {1, 1, 1, 1}
+    local r = math.max(0, color[1] * 0.55)
+    local g = math.max(0, color[2] * 0.55)
+    local b = math.max(0, color[3] * 0.55)
+    local a = (color[4] or 1) * 0.85
+    return {r, g, b, a}
+end
+
 -- modifiers
 Saws.speedMult = 1.0
 Saws.spinMult = 1.0
@@ -514,6 +523,10 @@ function Saws:draw()
         local outer = saw.radius
         local inner = saw.radius * 0.8
         local step = math.pi / teeth
+        local sawColor = Theme.sawColor or {0.8, 0.8, 0.8, 1}
+        local baseColor = copyColor(sawColor)
+        local highlight = getHighlightColor(sawColor)
+        local shadow = getShadowColor(sawColor)
 
         for i = 0, (teeth * 2) - 1 do
             local r = (i % 2 == 0) and outer or inner
@@ -522,15 +535,46 @@ function Saws:draw()
             table.insert(points, math.sin(angle) * r)
         end
 
-        -- Fill
-        love.graphics.setColor(Theme.sawColor)
+        -- Fill base blade
+        love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], baseColor[4])
         love.graphics.polygon("fill", points)
 
-        -- highlight
-        local highlight = getHighlightColor(Theme.sawColor)
+        -- Tooth accents
+        local toothAngle = (math.pi * 2) / teeth
+        for i = 0, teeth - 1 do
+            local startAngle = i * toothAngle
+            local midAngle = startAngle + toothAngle * 0.5
+            local endAngle = startAngle + toothAngle
+
+            local accentPoints = {
+                math.cos(startAngle) * inner, math.sin(startAngle) * inner,
+                math.cos(midAngle) * outer, math.sin(midAngle) * outer,
+                math.cos(endAngle) * inner, math.sin(endAngle) * inner,
+            }
+
+            local accentColor = (i % 2 == 0) and highlight or shadow
+            love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], accentColor[4])
+            love.graphics.polygon("fill", accentPoints)
+        end
+
+        -- Subtle rim
+        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4])
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", 0, 0, outer - 2)
+
+        -- Inner hub shading
+        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] * 0.8)
+        love.graphics.circle("fill", 0, 0, inner * 0.92)
+
         love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
         love.graphics.setLineWidth(2)
         love.graphics.circle("line", 0, 0, HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING)
+
+        -- Glint across blade
+        local glintColor = copyColor(highlight)
+        glintColor[4] = (glintColor[4] or 1) * 0.55
+        love.graphics.setColor(glintColor[1], glintColor[2], glintColor[3], glintColor[4])
+        love.graphics.arc("fill", "pie", 0, 0, outer, -0.4, 0.5)
 
         -- Outline
         love.graphics.setColor(0, 0, 0, 1)
