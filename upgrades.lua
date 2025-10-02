@@ -1300,7 +1300,7 @@ local pool = {
             for _ = 1, 5 do
                 Snake:grow()
             end
-            Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
+            Snake.extraGrowth = (Snake.extraGrowth or 0) + 2
         end,
     }),
     register({

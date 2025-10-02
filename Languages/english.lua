@@ -497,7 +497,7 @@ local english = {
             },
             titanblood_pact = {
                 name = "Titanblood Pact",
-                description = "Gain +3 crash shields and +2s saw stall duration. Grow by +5 and gain +1 extra growth.",
+                description = "Gain +3 crash shields and +2s saw stall duration. Grow by +5 and gain +2 extra growth.",
             },
             chronospiral_core = {
                 name = "Chronospiral Core",
