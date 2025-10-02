@@ -9,6 +9,7 @@ local GameModes = require("gamemodes")
 local UI = require("ui")
 local Localization = require("localization")
 local DebugOverlay = require("debugoverlay")
+local Theme = require("theme")
 
 local App = {
     stateModules = {
@@ -96,6 +97,14 @@ function App:update(dt)
 end
 
 function App:draw()
+    local bg = Theme.bgColor or {0, 0, 0, 1}
+    local r = bg[1] or 0
+    local g = bg[2] or 0
+    local b = bg[3] or 0
+    local a = bg[4] or 1
+    love.graphics.clear(r, g, b, a)
+    love.graphics.setColor(1, 1, 1, 1)
+
     GameState:draw()
     DebugOverlay:draw()
 end
