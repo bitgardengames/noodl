@@ -6,6 +6,9 @@ local DEFAULTS = {
     language = "english",
     displayMode = "fullscreen",
     resolution = "1280x720",
+    vsync = true,
+    screenShake = true,
+    showFPS = false,
 }
 
 local Settings = {}

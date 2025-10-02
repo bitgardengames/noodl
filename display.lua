@@ -94,6 +94,11 @@ function Display.ensure(settings)
         changed = true
     end
 
+    if type(settings.vsync) ~= "boolean" then
+        settings.vsync = true
+        changed = true
+    end
+
     return changed
 end
 
@@ -118,6 +123,12 @@ function Display.apply(settings)
         flags.fullscreen = false
         flags.fullscreentype = nil
         flags.resizable = true
+    end
+
+    if settings.vsync == false then
+        flags.vsync = 0
+    else
+        flags.vsync = 1
     end
 
     love.window.setMode(width, height, flags)

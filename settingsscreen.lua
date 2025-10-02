@@ -12,13 +12,25 @@ local SettingsScreen = {
 }
 
 local ANALOG_DEADZONE = 0.35
+
+local function applyAudioVolumes()
+    Audio:applyVolumes()
+end
+
+local function applyDisplaySettings()
+    Display.apply(Settings)
+end
+
 local options = {
     { type = "cycle", labelKey = "settings.display_mode", setting = "displayMode" },
     { type = "cycle", labelKey = "settings.windowed_resolution", setting = "resolution" },
-    { type = "toggle", labelKey = "settings.toggle_music", toggle = "muteMusic" },
-    { type = "toggle", labelKey = "settings.toggle_sfx", toggle = "muteSFX" },
-    { type = "slider", labelKey = "settings.music_volume", slider = "musicVolume" },
-    { type = "slider", labelKey = "settings.sfx_volume", slider = "sfxVolume" },
+    { type = "toggle", labelKey = "settings.toggle_vsync", toggle = "vsync", onChanged = applyDisplaySettings },
+    { type = "toggle", labelKey = "settings.toggle_music", toggle = "muteMusic", onChanged = applyAudioVolumes, invertStateLabel = true },
+    { type = "toggle", labelKey = "settings.toggle_sfx", toggle = "muteSFX", onChanged = applyAudioVolumes, invertStateLabel = true },
+    { type = "slider", labelKey = "settings.music_volume", slider = "musicVolume", onChanged = applyAudioVolumes },
+    { type = "slider", labelKey = "settings.sfx_volume", slider = "sfxVolume", onChanged = applyAudioVolumes },
+    { type = "toggle", labelKey = "settings.toggle_screen_shake", toggle = "screenShake" },
+    { type = "toggle", labelKey = "settings.toggle_fps_counter", toggle = "showFPS" },
     { type = "cycle", labelKey = "settings.language", setting = "language" },
     { type = "action", labelKey = "settings.back", action = "menu" }
 }
@@ -305,7 +317,9 @@ function SettingsScreen:update(dt)
             end
             Settings[sliderDragging] = math.min(1, math.max(0, rel))
             Settings:save()
-            Audio:applyVolumes()
+            if opt.onChanged then
+                opt.onChanged(Settings, opt)
+            end
         end
     end
 
@@ -334,8 +348,11 @@ function SettingsScreen:draw()
         local isFocused = (focusedIndex == index)
 
         if opt.type == "toggle" and opt.toggle then
-            local isMuted = Settings[opt.toggle]
-            local state = isMuted and Localization:get("common.off") or Localization:get("common.on")
+            local enabled = not not Settings[opt.toggle]
+            if opt.invertStateLabel then
+                enabled = not enabled
+            end
+            local state = enabled and Localization:get("common.on") or Localization:get("common.off")
             label = string.format("%s: %s", label, state)
             UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
             UI.setButtonFocus(btn.id, isFocused)
@@ -455,7 +472,9 @@ function SettingsScreen:adjustFocused(delta)
         if math.abs(newValue - value) > 1e-4 then
             Settings[opt.slider] = newValue
             Settings:save()
-            Audio:applyVolumes()
+            if opt.onChanged then
+                opt.onChanged(Settings, opt)
+            end
         end
     elseif opt.type == "cycle" and opt.setting then
         self:cycleSetting(opt.setting, delta)
@@ -470,7 +489,9 @@ function SettingsScreen:activateFocused()
     if opt.type == "toggle" and opt.toggle then
         Settings[opt.toggle] = not Settings[opt.toggle]
         Settings:save()
-        Audio:applyVolumes()
+        if opt.onChanged then
+            opt.onChanged(Settings, opt)
+        end
         Audio:playSound("click")
         return nil
     elseif opt.type == "action" then
@@ -509,7 +530,9 @@ function SettingsScreen:mousepressed(x, y, button)
             elseif opt.toggle then
                 Settings[opt.toggle] = not Settings[opt.toggle]
                 Settings:save()
-                Audio:applyVolumes()
+                if opt.onChanged then
+                    opt.onChanged(Settings, opt)
+                end
             end
         end
 
@@ -533,7 +556,9 @@ function SettingsScreen:mousepressed(x, y, button)
                 end
                 Settings[sliderDragging] = math.min(1, math.max(0, rel))
                 Settings:save()
-                Audio:applyVolumes()
+                if opt.onChanged then
+                    opt.onChanged(Settings, opt)
+                end
                 self:setFocus(i)
             end
         end
