@@ -633,6 +633,28 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 
     drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
 
+    if data.transitionAwaitInput then
+        local introDuration = data.transitionIntroDuration or duration or 0
+        local promptDelay = data.transitionIntroPromptDelay or 0
+        local promptStart = introDuration + promptDelay
+        local promptProgress = clamp01((timer - promptStart) / 0.45)
+        local promptAlpha = promptProgress * outroAlpha
+
+        if promptAlpha > 0 then
+            local promptText = Localization:get("game.floor_intro.prompt")
+            if promptText and promptText ~= "" then
+                local promptFont = UI.fonts.body
+                love.graphics.setFont(promptFont)
+                local y = self.screenHeight - promptFont:getHeight() * 2.2
+                local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+                love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * promptAlpha)
+                love.graphics.printf(promptText, 2, y + 2, self.screenWidth, "center")
+                love.graphics.setColor(1, 1, 1, promptAlpha)
+                love.graphics.printf(promptText, 0, y, self.screenWidth, "center")
+            end
+        end
+    end
+
     love.graphics.setColor(1, 1, 1, 1)
 
     return true
@@ -828,10 +850,18 @@ function Game:keypressed(key)
         return
     end
 
+    if self.transition and self.transition:confirmFloorIntro() then
+        return
+    end
+
     Controls:keypressed(self, key)
 end
 
 function Game:mousepressed(x, y, button)
+    if self.transition and self.transition:confirmFloorIntro() then
+        return
+    end
+
     if self.state == "paused" then
         PauseMenu:mousepressed(x, y, button)
         return
@@ -858,6 +888,10 @@ function Game:mousereleased(x, y, button)
 end
 
 function Game:gamepadpressed(_, button)
+    if self.transition and self.transition:confirmFloorIntro() then
+        return
+    end
+
     if self.input then
         return self.input:handleGamepadButton(button)
     end

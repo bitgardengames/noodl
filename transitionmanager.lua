@@ -111,8 +111,30 @@ function TransitionManager:startFloorIntro(duration, extra)
         extra.transitionResumeFadeDuration = nil
     end
 
+    self.data.transitionIntroConfirmed = nil
+    self.data.transitionIntroReady = nil
+
     self:mergeData(extra)
-    self:startPhase("floorintro", duration or 3.5)
+
+    local data = self.data
+    local introDuration = duration or data.transitionIntroDuration or 3.5
+    data.transitionIntroDuration = introDuration
+
+    if extra.transitionAwaitInput ~= nil then
+        data.transitionAwaitInput = extra.transitionAwaitInput and true or false
+    else
+        data.transitionAwaitInput = true
+    end
+
+    if extra.transitionIntroPromptDelay ~= nil then
+        data.transitionIntroPromptDelay = extra.transitionIntroPromptDelay or 0
+    else
+        data.transitionIntroPromptDelay = 0.35
+    end
+
+    data.transitionIntroConfirmed = nil
+
+    self:startPhase("floorintro", introDuration)
     Audio:playSound("floor_intro")
 end
 
@@ -190,18 +212,15 @@ function TransitionManager:update(dt)
     if phase == "floorintro" then
         if self.timer >= self.duration then
             local data = self.data
-            local resumePhase = data.transitionResumePhase or "fadein"
-            local fadeDuration = data.transitionResumeFadeDuration
 
-            data.transitionResumePhase = nil
-            data.transitionResumeFadeDuration = nil
-
-            if resumePhase == "fadein" then
-                self:startFadeIn(fadeDuration)
-            else
-                self.game.state = "playing"
-                self:clearPhase()
+            if data.transitionAwaitInput then
+                data.transitionIntroReady = true
+                if not data.transitionIntroConfirmed then
+                    return
+                end
             end
+
+            self:completeFloorIntro()
         end
         return
     end
@@ -228,6 +247,47 @@ function TransitionManager:handleShopInput(methodName, ...)
     local result = handler(Shop, ...)
     if result then
         self.shopCloseRequested = true
+    end
+
+    return true
+end
+
+function TransitionManager:completeFloorIntro()
+    local data = self.data
+    local resumePhase = data.transitionResumePhase or "fadein"
+    local fadeDuration = data.transitionResumeFadeDuration
+
+    data.transitionIntroConfirmed = nil
+    data.transitionIntroReady = nil
+    data.transitionAwaitInput = nil
+    data.transitionIntroPromptDelay = nil
+    data.transitionIntroDuration = nil
+
+    data.transitionResumePhase = nil
+    data.transitionResumeFadeDuration = nil
+
+    if resumePhase == "fadein" then
+        self:startFadeIn(fadeDuration)
+    else
+        self.game.state = "playing"
+        self:clearPhase()
+    end
+end
+
+function TransitionManager:confirmFloorIntro()
+    if self.phase ~= "floorintro" then
+        return false
+    end
+
+    local data = self.data
+    if not data.transitionAwaitInput then
+        return false
+    end
+
+    data.transitionIntroConfirmed = true
+
+    if self.timer >= self.duration then
+        self:completeFloorIntro()
     end
 
     return true
