@@ -5,6 +5,7 @@ local Rocks = require("rocks")
 local Saws = require("saws")
 local UI = require("ui")
 local UpgradeVisuals = require("upgradevisuals")
+local Particles = require("particles")
 local SessionStats = require("sessionstats")
 local Theme = require("theme")
 
@@ -141,14 +142,48 @@ end
 
 function Snake:onShieldConsumed(x, y, cause)
     if self.shieldBurst then
+        local triggeredBurst = false
         local rocksToBreak = math.floor(self.shieldBurst.rocks or 0)
         if rocksToBreak > 0 and Rocks and Rocks.shatterNearest then
             Rocks:shatterNearest(x or 0, y or 0, rocksToBreak)
+            triggeredBurst = true
         end
 
         local stallDuration = self.shieldBurst.stall or 0
         if stallDuration > 0 and Saws and Saws.stall then
             Saws:stall(stallDuration)
+            triggeredBurst = true
+        end
+
+        if triggeredBurst and x and y then
+            UpgradeVisuals:spawn(x, y, {
+                color = {0.72, 0.9, 1, 1},
+                glowColor = {0.58, 0.78, 1, 1},
+                haloColor = {0.46, 0.66, 1, 0.22},
+                badge = "burst",
+                badgeScale = 1.08,
+                ringCount = 4,
+                ringSpacing = 14,
+                ringWidth = 5,
+                innerRadius = 18,
+                outerRadius = 86,
+                life = 0.58,
+                glowAlpha = 0.28,
+                haloAlpha = 0.2,
+            })
+
+            if Particles and Particles.spawnBurst then
+                Particles:spawnBurst(x, y, {
+                    count = 22,
+                    speed = 140,
+                    speedVariance = 70,
+                    life = 0.52,
+                    size = 7,
+                    color = {0.58, 0.82, 1, 0.9},
+                    drag = 3.2,
+                    fadeTo = 0,
+                })
+            end
         end
     end
 
