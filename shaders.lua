@@ -878,6 +878,47 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
+-- Simple gradient wash for mode selection
+registerEffect({
+    type = "modeGradient",
+    backdropIntensity = 0.46,
+    arenaIntensity = 0.28,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 accentColor;
+        extern float intensity;
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            float vertical = smoothstep(0.0, 1.0, uv.y);
+            float wave = sin((uv.x + time * 0.18) * 2.6) * 0.5 + 0.5;
+            float mixAmount = clamp(vertical * 0.55 + wave * 0.25, 0.0, 1.0) * intensity;
+
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, mixAmount);
+            col = mix(baseColor.rgb, col, 0.82);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
+        local accent = getColorComponents(palette and (palette.accentColor or palette.primary), Theme.progressColor)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "accentColor", accent)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
 -- Directional ribbons for mode selection energy
 registerEffect({
     type = "modeRibbon",
