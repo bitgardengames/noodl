@@ -18,7 +18,7 @@ local defaultEffects = UpgradeHelpers.defaultEffects
 local celebrateUpgrade = UpgradeHelpers.celebrateUpgrade
 local getEventPosition = UpgradeHelpers.getEventPosition
 
-local POCKET_SPRINGS_FRUIT_TARGET = 30
+local POCKET_SPRINGS_FRUIT_TARGET = 25
 
 local function stoneSkinShieldHandler(data, state)
     if not state then return end
