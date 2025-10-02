@@ -538,10 +538,21 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     love.graphics.draw(snakeCanvas, 0, 0)
   elseif hx and hy then
     -- fallback: draw a simple disk when only the head is visible
-    love.graphics.setColor(0, 0, 0, 1)
+    local bodyColor = SnakeCosmetics:getBodyColor()
+    local outlineColor = SnakeCosmetics:getOutlineColor()
+    local outlineR = outlineColor[1] or 0
+    local outlineG = outlineColor[2] or 0
+    local outlineB = outlineColor[3] or 0
+    local outlineA = outlineColor[4] or 1
+    local bodyR = bodyColor[1] or 1
+    local bodyG = bodyColor[2] or 1
+    local bodyB = bodyColor[3] or 1
+    local bodyA = bodyColor[4] or 1
+
+    love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
     love.graphics.setLineWidth(OUTLINE_SIZE)
     love.graphics.circle("line", hx, hy, half + OUTLINE_SIZE * 0.5)
-    love.graphics.setColor(BODY_R, BODY_G, BODY_B)
+    love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
     love.graphics.circle("fill", hx, hy, half)
   end
 
