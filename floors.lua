@@ -16,6 +16,10 @@
         The Underworld → final gauntlet of ash and fire
         Celestial Causeway → shimmer of hope and gilded winds
         Sky Spire → false dawn beyond the pit
+        Starfall Bastion → starlit bulwark bracing the astral gale
+        Nebula Crown → drifting halos frame the precipice of nothing
+        Void Throne → silence condenses into obsidian dominion
+        Singularity Gate → all light bends toward the final horizon
 ]]
 
 local Floors = {
@@ -310,6 +314,85 @@ local Floors = {
         backgroundTheme = "urban",
         backgroundVariant = "celestial",
         traits = {"divineAscent", "crystallineResonance"},
+    },
+    [16] = {
+        name = "Starfall Bastion",
+        flavor = "A radiant bulwark gleams as astral winds hammer the ramparts.",
+        palette = {
+            bgColor    = {0.16, 0.17, 0.24, 1},  -- twilight navy mantle
+            arenaBG    = {0.78, 0.82, 0.94, 1},  -- moonlit parapets
+            arenaBorder= {0.96, 0.74, 0.52, 1},  -- gilded battlements
+            snake      = {0.98, 0.82, 0.48, 1},  -- auric champion
+            rock       = {0.58, 0.56, 0.64, 1},  -- polished starlit stone
+            sawColor   = {0.98, 0.68, 0.4, 1},   -- cometforged brass
+        },
+        backgroundEffect = {
+            type = "auroraVeil",
+            backdropIntensity = 0.64,
+            arenaIntensity = 0.34,
+        },
+        backgroundTheme = "urban",
+        backgroundVariant = "celestial",
+        traits = {"spectralEchoes", "divineAscent"},
+    },
+    [17] = {
+        name = "Nebula Crown",
+        flavor = "Haloed vapor drifts between fractured spans of cosmic marble.",
+        palette = {
+            bgColor    = {0.09, 0.08, 0.16, 1},  -- deep violet firmament
+            arenaBG    = {0.34, 0.26, 0.46, 1},  -- dusk-lit bridgework
+            arenaBorder= {0.76, 0.48, 0.82, 1},  -- luminous nebular trim
+            snake      = {0.85, 0.68, 0.98, 1},  -- starlit wyrm
+            rock       = {0.42, 0.32, 0.55, 1},  -- amethyst span
+            sawColor   = {0.92, 0.58, 0.85, 1},   -- prismatic edge
+        },
+        backgroundEffect = {
+            type = "auroraVeil",
+            backdropIntensity = 0.7,
+            arenaIntensity = 0.42,
+        },
+        backgroundTheme = "laboratory",
+        traits = {"spectralEchoes", "glowingSpores"},
+    },
+    [18] = {
+        name = "Void Throne",
+        flavor = "Gravity bows; obsidian sigils hum with sovereign silence.",
+        palette = {
+            bgColor    = {0.04, 0.03, 0.08, 1},  -- eventide abyss
+            arenaBG    = {0.08, 0.06, 0.12, 1},  -- onyx dais
+            arenaBorder= {0.35, 0.12, 0.32, 1},  -- royal voidstone
+            snake      = {0.78, 0.42, 0.88, 1},  -- imperial amaranth
+            rock       = {0.24, 0.2, 0.32, 1},   -- sigiled basalt
+            sawColor   = {0.68, 0.28, 0.6, 1},    -- shadowed corona
+        },
+        backgroundEffect = {
+            type = "voidPulse",
+            backdropIntensity = 0.72,
+            arenaIntensity = 0.46,
+        },
+        backgroundTheme = "desert",
+        backgroundVariant = "hell",
+        traits = {"obsidianResonance", "infernalPressure"},
+    },
+    [19] = {
+        name = "Singularity Gate",
+        flavor = "Light spirals inward as the final horizon swallows the sky.",
+        palette = {
+            bgColor    = {0.02, 0.02, 0.05, 1},  -- collapsing night
+            arenaBG    = {0.05, 0.04, 0.09, 1},  -- gravitic maw
+            arenaBorder= {0.58, 0.26, 0.62, 1},  -- eventide flare
+            snake      = {0.88, 0.48, 0.98, 1},   -- horizonflare serpent
+            rock       = {0.26, 0.22, 0.4, 1},   -- warped obsidian
+            sawColor   = {0.98, 0.52, 0.72, 1},   -- collapsing corona
+        },
+        backgroundEffect = {
+            type = "voidPulse",
+            backdropIntensity = 0.78,
+            arenaIntensity = 0.5,
+        },
+        backgroundTheme = "oceanic",
+        backgroundVariant = "abyss",
+        traits = {"obsidianResonance", "ashenTithe"},
     },
 }
 
