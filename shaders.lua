@@ -57,7 +57,9 @@ local reactiveState = {
     comboTarget = 0,
     comboDisplay = 0,
     comboPulse = 0,
+    comboPulseTarget = 0,
     eventPulse = 0,
+    eventPulseTarget = 0,
     eventColor = {1, 1, 1, 1},
     lastCombo = 0,
 }
@@ -85,7 +87,7 @@ function Shaders.notify(event, data)
         if combo >= 2 then
             reactiveState.comboTarget = combo
             if combo > (reactiveState.lastCombo or 0) then
-                reactiveState.comboPulse = math.min(reactiveState.comboPulse + 0.35, 0.9)
+                reactiveState.comboPulseTarget = math.min((reactiveState.comboPulseTarget or 0) + 0.35, 0.9)
             end
         else
             reactiveState.comboTarget = 0
@@ -94,11 +96,12 @@ function Shaders.notify(event, data)
         reactiveState.lastCombo = combo
     elseif event == "comboLost" then
         reactiveState.comboTarget = 0
+        reactiveState.comboPulseTarget = 0
         reactiveState.lastCombo = 0
     elseif event == "specialEvent" then
         local strength = math.max((data and data.strength) or 0.7, 0)
         local color = (data and data.color) or EVENT_COLORS[(data and data.type) or ""]
-        reactiveState.eventPulse = math.min(reactiveState.eventPulse + strength * 0.6, 1.5)
+        reactiveState.eventPulseTarget = math.min((reactiveState.eventPulseTarget or 0) + strength * 0.6, 1.5)
         if color then
             assignEventColor(color)
         end
@@ -110,12 +113,16 @@ function Shaders.update(dt)
         return
     end
 
-    local smoothing = math.min(dt * 6, 1)
+    local smoothing = math.min(dt * 4.2, 1)
     reactiveState.comboDisplay = lerp(reactiveState.comboDisplay, reactiveState.comboTarget, smoothing)
-    reactiveState.comboPulse = math.max(0, reactiveState.comboPulse - dt * 2.6)
-    reactiveState.eventPulse = math.max(0, reactiveState.eventPulse - dt * 2.1)
+    reactiveState.comboPulseTarget = math.max(0, (reactiveState.comboPulseTarget or 0) - dt * 1.35)
+    reactiveState.eventPulseTarget = math.max(0, (reactiveState.eventPulseTarget or 0) - dt * 1.1)
 
-    local colorFade = math.min(dt * 2.2, 1)
+    local pulseSmoothing = math.min(dt * 6.5, 1)
+    reactiveState.comboPulse = lerp(reactiveState.comboPulse, reactiveState.comboPulseTarget or 0, pulseSmoothing)
+    reactiveState.eventPulse = lerp(reactiveState.eventPulse, reactiveState.eventPulseTarget or 0, pulseSmoothing)
+
+    local colorFade = math.min(dt * 1.6, 1)
     reactiveState.eventColor[1] = lerp(reactiveState.eventColor[1], 1, colorFade)
     reactiveState.eventColor[2] = lerp(reactiveState.eventColor[2], 1, colorFade)
     reactiveState.eventColor[3] = lerp(reactiveState.eventColor[3], 1, colorFade)
