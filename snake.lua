@@ -45,9 +45,27 @@ Snake.stoneSkinSawGrace = 0
 Snake.dash = nil
 Snake.timeDilation = nil
 
+local function resolveTimeDilationScale(ability)
+    if ability and ability.active then
+        local scale = ability.timeScale or 1
+        if not (scale and scale > 0) then
+            scale = 0.05
+        end
+        return scale
+    end
+
+    return 1
+end
+
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
-    return (self.baseSpeed or 1) * (self.speedMult or 1)
+    local speed = (self.baseSpeed or 1) * (self.speedMult or 1)
+    local scale = resolveTimeDilationScale(self.timeDilation)
+    if scale ~= 1 then
+        speed = speed * scale
+    end
+
+    return speed
 end
 
 function Snake:addSpeedMultiplier(mult)
@@ -1031,17 +1049,6 @@ function Snake:update(dt)
         end
     end
 
-    if self.timeDilation and self.timeDilation.active then
-        local scale = self.timeDilation.timeScale or 1
-        if not (scale and scale > 0) then
-            scale = 0.05
-        end
-
-        if scale ~= 1 then
-            speed = speed * scale
-        end
-    end
-
     hole = descendingHole
     if hole and head then
         local dx = hole.x - head.drawX
@@ -1384,23 +1391,14 @@ function Snake:getTimeDilationState()
         duration = ability.duration or 0,
         cooldown = ability.cooldown or 0,
         cooldownTimer = ability.cooldownTimer or 0,
-        timeScale = ability.timeScale or 1,
+        timeScale = resolveTimeDilationScale(ability),
         floorCharges = ability.floorCharges,
         maxFloorUses = ability.maxFloorUses,
     }
 end
 
 function Snake:getTimeScale()
-    local ability = self.timeDilation
-    if ability and ability.active then
-        local scale = ability.timeScale or 1
-        if scale < 0.05 then
-            scale = 0.05
-        end
-        return scale
-    end
-
-    return 1
+    return resolveTimeDilationScale(self.timeDilation)
 end
 
 function Snake:updateReverseState(reversed)
