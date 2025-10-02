@@ -556,14 +556,6 @@ function Game:drawTransition()
                 love.graphics.setColor(1, 1, 1, alpha * 0.2)
                 local radius = math.sqrt(self.screenWidth * self.screenWidth + self.screenHeight * self.screenHeight) * 0.75
                 love.graphics.circle("fill", self.screenWidth / 2, self.screenHeight / 2, radius, 64)
-                local time = love.timer and love.timer.getTime and love.timer.getTime() or 0
-                love.graphics.setColor(0.4, 0.82, 1, alpha * 0.12)
-                local bandHeight = self.screenHeight * 0.08
-                for i = -1, 1 do
-                        local offset = math.sin(time * 1.6 + i * 1.2) * bandHeight * 0.3
-                        local bandY = self.screenHeight / 2 + i * bandHeight * 0.6 + offset
-                        love.graphics.rectangle("fill", 0, bandY - bandHeight * 0.25, self.screenWidth, bandHeight * 0.5)
-                end
                 love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(1, 1, 1, 1)
         end
