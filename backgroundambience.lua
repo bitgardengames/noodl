@@ -909,7 +909,8 @@ function BackgroundAmbience.draw(arena)
         return
     end
 
-    local x, y, w, h = arena:getBounds()
+    local screenWidth, screenHeight = love.graphics.getDimensions()
+    local x, y, w, h = 0, 0, screenWidth, screenHeight
     local bounds = state.bounds or {}
 
     if not state.shapes or not bounds or bounds.w ~= w or bounds.h ~= h or bounds.x ~= x or bounds.y ~= y then
