@@ -663,18 +663,25 @@ registerEffect({
             vec2 uv = (screen_coords - origin) / resolution;
             uv = clamp(uv, 0.0, 1.0);
 
-            float drift = time * 0.12;
-            float trail = fract(uv.y + drift);
-            float sparks = sin((uv.x + trail * 2.5) * 12.0);
-            float flicker = sin((uv.x * 10.0) + time * 0.4);
-            float motes = clamp(sin((uv.y + time * 0.3) * 6.0 + uv.x * 2.0) * 0.2 + 0.5, 0.0, 1.0);
-            float ember = clamp((sparks * 0.2 + flicker * 0.1 + motes) * intensity, 0.0, 1.0);
+            float rise = smoothstep(0.05, 0.95, uv.y);
+            float drift = time * 0.08;
+            float scroll = fract(uv.y + drift);
+            float ribbons = sin((uv.x * 3.5 + scroll * 3.0) - time * 0.45);
+            float shimmer = sin((uv.x * 6.0 - uv.y * 1.5) + time * 0.6);
+            float glowBand = smoothstep(0.1, 0.85, uv.y);
 
-            vec3 col = mix(baseColor.rgb, emberColor.rgb, ember * 0.6);
-            col = mix(col, glowColor.rgb, ember * 0.3);
+            float ember = rise * 0.55 + ribbons * 0.18 + shimmer * 0.12;
+            ember = clamp(ember * (0.55 + intensity * 0.45), 0.0, 1.0);
 
-            float vignette = 1.0 - smoothstep(0.45, 0.95, distance(uv, vec2(0.5)));
-            col = mix(baseColor.rgb, col, vignette);
+            vec3 baseWarm = mix(baseColor.rgb, emberColor.rgb, rise * 0.35);
+            vec3 emberGlow = mix(emberColor.rgb, glowColor.rgb, clamp(ember * 0.6 + glowBand * 0.25, 0.0, 1.0));
+            vec3 col = mix(baseWarm, emberGlow, clamp(ember * 0.65 + glowBand * 0.25, 0.0, 1.0));
+
+            float haze = smoothstep(0.2, 0.95, glowBand);
+            col = mix(col, glowColor.rgb, haze * 0.12);
+
+            float vignette = smoothstep(0.25, 0.8, distance(uv, vec2(0.5)));
+            col = mix(col, baseColor.rgb, vignette * 0.4);
 
             return vec4(col, baseColor.a) * color;
         }
