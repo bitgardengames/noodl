@@ -3,6 +3,7 @@ local Localization = require("localization")
 local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 local Snake
+local MetaProgression
 
 local Achievements = {
     definitions = {},
@@ -161,6 +162,32 @@ function Achievements:_ensureInitialized()
                     return { snakeLength = length }
                 end
             end
+            return nil
+        end)
+
+        self:registerStateProvider(function()
+            if not MetaProgression then
+                local ok, module = pcall(require, "metaprogression")
+                if ok then
+                    MetaProgression = module
+                else
+                    print("[achievements] failed to require metaprogression:", module)
+                    return nil
+                end
+            end
+
+            if MetaProgression and MetaProgression.getState then
+                local ok, state = pcall(MetaProgression.getState, MetaProgression)
+                if ok and type(state) == "table" then
+                    return {
+                        totalMetaExperience = state.totalExperience or 0,
+                        metaLevel = state.level or 0,
+                    }
+                elseif not ok then
+                    print("[achievements] failed to query metaprogression state:", state)
+                end
+            end
+
             return nil
         end)
 

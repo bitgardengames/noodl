@@ -643,6 +643,34 @@ local english = {
                 title = "Seasoned Runner",
                 description = "Play 20 total runs",
             },
+            metaMilestone1 = {
+                title = "Meta Milestone I",
+                description = "Earn 650 lifetime XP.",
+            },
+            metaMilestone2 = {
+                title = "Meta Milestone II",
+                description = "Earn 1,300 lifetime XP.",
+            },
+            metaMilestone3 = {
+                title = "Meta Milestone III",
+                description = "Earn 2,400 lifetime XP.",
+            },
+            metaMilestone4 = {
+                title = "Meta Milestone IV",
+                description = "Earn 3,800 lifetime XP.",
+            },
+            metaMilestone5 = {
+                title = "Meta Milestone V",
+                description = "Earn 5,200 lifetime XP.",
+            },
+            metaMilestone6 = {
+                title = "Meta Milestone VI",
+                description = "Earn 7,800 lifetime XP.",
+            },
+            metaMilestone7 = {
+                title = "Meta Milestone VII",
+                description = "Earn 10,500 lifetime XP.",
+            },
         },
     },
 }
