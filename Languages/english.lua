@@ -378,7 +378,7 @@ local english = {
             },
             pocket_springs = {
                 name = "Aegis Winder",
-                description = "After collecting twenty-five fruit, forge a single crash shield charge.",
+                description = "After collecting twenty fruit, forge a single crash shield charge.",
             },
             mapmakers_compass = {
                 name = "Mapmaker's Compass",
