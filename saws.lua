@@ -1,3 +1,5 @@
+local Arena = require("arena")
+local SnakeUtils = require("snakeutils")
 local Particles = require("particles")
 local Theme = require("theme")
 
@@ -49,6 +51,106 @@ local stallTimer = 0
 local sinkTimer = 0
 local sinkAutoRaise = false
 local sinkActive = false
+
+local function getTileSize()
+    return Arena and Arena.tileSize or SnakeUtils.SEGMENT_SIZE or 24
+end
+
+local function clampRow(row)
+    if not Arena or (Arena.rows or 0) <= 0 then
+        return row
+    end
+
+    return math.max(1, math.min(Arena.rows, row))
+end
+
+local function clampCol(col)
+    if not Arena or (Arena.cols or 0) <= 0 then
+        return col
+    end
+
+    return math.max(1, math.min(Arena.cols, col))
+end
+
+local function addCell(target, seen, col, row)
+    if not (col and row) then
+        return
+    end
+
+    col = clampCol(col)
+    row = clampRow(row)
+
+    local key = tostring(col) .. ":" .. tostring(row)
+    if seen[key] then
+        return
+    end
+
+    seen[key] = true
+    target[#target + 1] = { col, row }
+end
+
+local function buildCollisionCellsForSaw(saw)
+    if not saw then
+        return nil
+    end
+
+    local trackCells = SnakeUtils.getTrackCells(saw.x, saw.y, saw.dir, TRACK_LENGTH) or {}
+    if #trackCells == 0 then
+        return nil
+    end
+
+    local tileSize = getTileSize()
+    local reach = math.max(0, math.ceil(((saw.radius or SAW_RADIUS) + SINK_OFFSET) / (tileSize > 0 and tileSize or 1)))
+
+    local cells = {}
+    local seen = {}
+
+    if saw.dir == "horizontal" then
+        for _, cell in ipairs(trackCells) do
+            local col, row = cell[1], cell[2]
+            for offset = 0, reach do
+                addCell(cells, seen, col, row - offset)
+            end
+        end
+    else
+        local dir = 1
+        if saw.side == "left" or saw.side == nil then
+            dir = -1
+        end
+
+        for _, cell in ipairs(trackCells) do
+            local col, row = cell[1], cell[2]
+            for offset = 0, reach do
+                addCell(cells, seen, col + offset * dir, row)
+            end
+        end
+    end
+
+    return cells
+end
+
+local function overlapsCollisionCell(saw, x, y, w, h)
+    local cells = saw and saw.collisionCells
+    if not (cells and #cells > 0) then
+        return true
+    end
+
+    if not (Arena and Arena.getTilePosition) then
+        return true
+    end
+
+    local tileSize = getTileSize()
+
+    for _, cell in ipairs(cells) do
+        local col, row = cell[1], cell[2]
+        local cellX, cellY = Arena:getTilePosition(col, row)
+        if x < cellX + tileSize and x + w > cellX and y < cellY + tileSize and y + h > cellY then
+            return true
+        end
+    end
+
+    return false
+end
 
 local function getMoveSpeed()
     return MOVE_SPEED * (Saws.speedMult or 1)
@@ -192,7 +294,11 @@ function Saws:spawn(x, y, radius, teeth, dir, side)
 
         sinkProgress = sinkActive and 1 or 0,
         sinkTarget = sinkActive and 1 or 0,
+        collisionCells = nil,
     })
+
+    local saw = current[#current]
+    saw.collisionCells = buildCollisionCellsForSaw(saw)
 end
 
 function Saws:getAll()
@@ -237,6 +343,10 @@ function Saws:update(dt)
     end
 
     for _, saw in ipairs(current) do
+        if not saw.collisionCells then
+            saw.collisionCells = buildCollisionCellsForSaw(saw)
+        end
+
         saw.timer = saw.timer + dt
         saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (math.pi * 2)
 
@@ -488,7 +598,7 @@ end
 
 function Saws:checkCollision(x, y, w, h)
     for _, saw in ipairs(self:getAll()) do
-        if not ((saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0) then
+        if not ((saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0) and overlapsCollisionCell(saw, x, y, w, h) then
             local px, py = getSawCollisionCenter(saw)
 
             -- Circle vs AABB
