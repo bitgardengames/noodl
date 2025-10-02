@@ -36,28 +36,6 @@ Achievements:registerStateProvider(function()
     }
 end)
 
-local function copyColor(color)
-    if not color then
-        return { 1, 1, 1, 1 }
-    end
-
-    return {
-        color[1] or 1,
-        color[2] or 1,
-        color[3] or 1,
-        color[4] == nil and 1 or color[4],
-    }
-end
-
-local function getHighlightColor(color)
-    color = color or { 1, 1, 1, 1 }
-    local r = math.min(1, (color[1] or 1) * 1.2 + 0.08)
-    local g = math.min(1, (color[2] or 1) * 1.2 + 0.08)
-    local b = math.min(1, (color[3] or 1) * 1.2 + 0.08)
-    local a = (color[4] or 1) * 0.75
-    return { r, g, b, a }
-end
-
 local function getUpgradeEffect(name)
     if Upgrades and Upgrades.getEffect then
         return Upgrades:getEffect(name)
@@ -261,43 +239,6 @@ function FruitEvents.handleConsumption(x, y)
     if Snake.onFruitCollected then
         Snake:onFruitCollected()
     end
-
-    local fruitColor = fruitType and fruitType.color or Theme.appleColor
-    local primary = copyColor(fruitColor)
-    primary[4] = 1
-    local highlight = getHighlightColor(fruitColor)
-
-    Particles:spawnBurst(x, y, {
-        count = love.math.random(7, 10),
-        speed = 56,
-        speedVariance = 42,
-        life = 0.42,
-        size = 3.4,
-        color = primary,
-        spread = math.pi * 2,
-        angleJitter = math.pi,
-        drag = 2.4,
-        gravity = 210,
-        scaleMin = 0.55,
-        scaleVariance = 0.5,
-        fadeTo = 0.08,
-    })
-
-    Particles:spawnBurst(x, y, {
-        count = love.math.random(3, 5),
-        speed = 96,
-        speedVariance = 54,
-        life = 0.3,
-        size = 2.2,
-        color = highlight,
-        spread = math.pi * 2,
-        angleJitter = math.pi,
-        drag = 1.2,
-        gravity = 150,
-        scaleMin = 0.4,
-        scaleVariance = 0.35,
-        fadeTo = 0,
-    })
 
     if col and row then
         SnakeUtils.setOccupied(col, row, false)
