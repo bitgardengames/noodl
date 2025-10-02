@@ -606,18 +606,25 @@ function UI:drawFloorModifiers()
 
     local textY = y + topPadding
     for sectionIndex, section in ipairs(measuredSections) do
-        love.graphics.setColor(Theme.textColor)
         UI.setFont("button")
         local title = section.title or "Floor Traits"
+        local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
+        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] or 1)
+        love.graphics.printf(title, x + 18, textY + 2, width - 32, "left")
+        love.graphics.setColor(Theme.textColor)
         love.graphics.printf(title, x + 16, textY, width - 32, "left")
         textY = textY + UI.fonts.button:getHeight() + spacing
 
         UI.setFont("body")
         for entryIndex, info in ipairs(section.entries) do
             local trait = info.trait
+            love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] or 1)
+            love.graphics.printf(trait.name, x + 18, textY + 2, width - 32, "left")
             love.graphics.setColor(Theme.textColor)
             love.graphics.printf(trait.name, x + 16, textY, width - 32, "left")
             textY = textY + lineHeight
+            love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * 0.75)
+            love.graphics.printf(trait.desc, x + 18, textY + 2, width - 32, "left")
             love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75)
             love.graphics.printf(trait.desc, x + 16, textY, width - 32, "left")
             textY = textY + info.descHeight
