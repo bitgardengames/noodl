@@ -757,6 +757,46 @@ local pool = {
                 Snake.shieldBurst.stall = (Snake.shieldBurst.stall or 0) + 1.5
             end
         end,
+        handlers = {
+            shieldConsumed = function(data)
+                if not data or not data.burstTriggered then return end
+
+                local fx, fy = getEventPosition(data)
+                if not (fx and fy) then return end
+
+                celebrateUpgrade(nil, data, {
+                    x = fx,
+                    y = fy,
+                    skipText = true,
+                    color = {0.72, 0.9, 1, 1},
+                    visual = {
+                        color = {0.72, 0.9, 1, 1},
+                        glowColor = {0.58, 0.78, 1, 1},
+                        haloColor = {0.46, 0.66, 1, 0.22},
+                        badge = "burst",
+                        badgeScale = 1.08,
+                        ringCount = 4,
+                        ringSpacing = 14,
+                        ringWidth = 5,
+                        innerRadius = 18,
+                        outerRadius = 86,
+                        life = 0.58,
+                        glowAlpha = 0.28,
+                        haloAlpha = 0.2,
+                    },
+                    particles = {
+                        count = 22,
+                        speed = 140,
+                        speedVariance = 70,
+                        life = 0.52,
+                        size = 7,
+                        color = {0.58, 0.82, 1, 0.9},
+                        drag = 3.2,
+                        fadeTo = 0,
+                    },
+                })
+            end,
+        },
     }),
     register({
         id = "resonant_shell",
