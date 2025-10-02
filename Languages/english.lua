@@ -356,7 +356,7 @@ local english = {
             },
             metronome_totem = {
                 name = "Metronome Totem",
-                description = "Each fruit adds 0.35s to the combo timer.",
+                description = "Each fruit adds 0.35s to the combo timer. The exit requires +1 fruit.",
                 timer_bonus = "+0.35s",
             },
             adrenaline_surge = {
@@ -436,7 +436,7 @@ local english = {
             },
             aurora_band = {
                 name = "Aurora Band",
-                description = "Combo window increases by 0.35s. The exit requires +1 fruit.",
+                description = "Combo window increases by 0.35s.",
             },
             caravan_contract = {
                 name = "Caravan Contract",

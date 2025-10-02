@@ -416,6 +416,12 @@ local pool = {
         descKey = "upgrades.metronome_totem.description",
         rarity = "common",
         tags = {"combo"},
+        onAcquire = function(state)
+            state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+            if UI.adjustFruitGoal then
+                UI:adjustFruitGoal(1)
+            end
+        end,
         handlers = {
             fruitCollected = function(data)
                 local FruitEvents = require("fruitevents")
@@ -913,10 +919,6 @@ local pool = {
         tags = {"combo", "risk"},
         onAcquire = function(state)
             state.effects.comboWindowBonus = (state.effects.comboWindowBonus or 0) + 0.35
-            state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
-            if UI.adjustFruitGoal then
-                UI:adjustFruitGoal(1)
-            end
         end,
     }),
     register({
