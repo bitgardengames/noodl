@@ -8,7 +8,6 @@ local PlayerStats = require("playerstats")
 local GameModes = require("gamemodes")
 local UI = require("ui")
 local Localization = require("localization")
-local DebugOverlay = require("debugoverlay")
 local Theme = require("theme")
 
 local App = {
@@ -76,7 +75,6 @@ function App:load()
 
     self:registerStates()
     self:loadSubsystems()
-    DebugOverlay:load()
 
     GameState:switch("menu")
 end
@@ -93,7 +91,6 @@ function App:update(dt)
     local action = GameState:update(dt)
     self:resolveAction(action)
     UI:update(dt)
-    DebugOverlay:update(dt)
 end
 
 function App:draw()
@@ -106,7 +103,6 @@ function App:draw()
     love.graphics.setColor(1, 1, 1, 1)
 
     GameState:draw()
-    DebugOverlay:draw()
 end
 
 function App:mousepressed(x, y, button)
@@ -126,8 +122,6 @@ function App:keypressed(key)
         local time = os.date("%Y-%m-%d_%H-%M-%S")
         love.graphics.captureScreenshot("screenshot_" .. time .. ".png")
     end
-
-    DebugOverlay:keypressed(key)
 
     return self:forwardEvent("keypressed", key)
 end
