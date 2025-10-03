@@ -21,6 +21,42 @@ local SKIN_DEFINITIONS = {
         order = 0,
     },
     {
+        id = "neon_frenzy",
+        name = "Neon Frenzy",
+        description = "A riot of glowstick colors harvested from party eels.",
+        colors = {
+            body = {0.18, 0.95, 0.72, 1.0},
+            outline = {0.02, 0.10, 0.08, 1.0},
+            glow = {0.45, 1.00, 0.82, 0.88},
+        },
+        unlock = { default = true },
+        order = 10,
+    },
+    {
+        id = "solar_flare",
+        name = "Solar Flare",
+        description = "Basked in reactor light until it took on a stellar sheen.",
+        colors = {
+            body = {0.98, 0.60, 0.18, 1.0},
+            outline = {0.28, 0.08, 0.00, 1.0},
+            glow = {1.00, 0.78, 0.32, 0.90},
+        },
+        unlock = { default = true },
+        order = 15,
+    },
+    {
+        id = "prismatic_tide",
+        name = "Prismatic Tide",
+        description = "Reflective scales tuned to the beat of the abyssal currents.",
+        colors = {
+            body = {0.32, 0.58, 0.95, 1.0},
+            outline = {0.06, 0.16, 0.35, 1.0},
+            glow = {0.52, 0.86, 1.00, 0.88},
+        },
+        unlock = { default = true },
+        order = 18,
+    },
+    {
         id = "emberforge",
         name = "Emberforge Alloy",
         description = "Forged from repurposed saw cores. Unlocks at metaprogression level 3.",
@@ -70,13 +106,26 @@ local SKIN_DEFINITIONS = {
     },
 }
 
-local DEFAULT_STATE = {
-    selectedSkin = DEFAULT_SKIN_ID,
-    unlocked = {
-        [DEFAULT_SKIN_ID] = true,
-    },
-    unlockHistory = {},
-}
+local function buildDefaultState()
+    local unlocked = {}
+
+    for _, definition in ipairs(SKIN_DEFINITIONS) do
+        local unlock = definition.unlock or {}
+        if unlock.default then
+            unlocked[definition.id] = true
+        end
+    end
+
+    unlocked[DEFAULT_SKIN_ID] = true
+
+    return {
+        selectedSkin = DEFAULT_SKIN_ID,
+        unlocked = unlocked,
+        unlockHistory = {},
+    }
+end
+
+local DEFAULT_STATE = buildDefaultState()
 
 local function copyTable(source)
     if type(source) ~= "table" then
