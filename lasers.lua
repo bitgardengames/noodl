@@ -17,6 +17,9 @@ local WALL_INSET = 6
 local BEAM_PULSE_SPEED = 7.2
 local BEAM_GLOW_EXPANSION = 8
 local BASE_GLOW_RADIUS = 18
+local IMPACT_RING_SPEED = 1.85
+local IMPACT_RING_RANGE = 16
+local IMPACT_FLARE_RADIUS = 12
 
 local function getTime()
     if love and love.timer and love.timer.getTime then
@@ -239,6 +242,7 @@ function Lasers:spawn(x, y, dir, length, options)
         isFiring = false,
         flashTimer = 0,
         burnAlpha = 0,
+        randomOffset = love.math.random() * math.pi * 2,
     }
 
     beam.fireCooldown = love.math.random() * (maxCooldown - minCooldown) + minCooldown
@@ -415,6 +419,16 @@ local function drawBeam(beam)
             love.graphics.rectangle("fill", centerX - highlightThickness * 0.5, y, highlightThickness, h, 3, 3)
         end
 
+        local edgeThickness = math.max(1, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.22)
+        love.graphics.setColor(1, 0.65, 0.45, 0.35 + 0.25 * flicker)
+        if beam.dir == "horizontal" then
+            love.graphics.rectangle("fill", x, y + h - edgeThickness, w, edgeThickness, 3, 3)
+            love.graphics.rectangle("fill", x, y, w, edgeThickness, 3, 3)
+        else
+            love.graphics.rectangle("fill", x + w - edgeThickness, y, edgeThickness, h, 3, 3)
+            love.graphics.rectangle("fill", x, y, edgeThickness, h, 3, 3)
+        end
+
         local length = (beam.dir == "horizontal") and w or h
         local pulseSpacing = math.max(24, length / 6)
         local pulseSize = pulseSpacing * 0.55
@@ -428,6 +442,15 @@ local function drawBeam(beam)
                     love.graphics.rectangle("fill", x + segmentStart, y + h * 0.15, segmentEnd - segmentStart, h * 0.7, 3, 3)
                 end
             end
+
+            local sparkCount = math.max(2, math.floor(w / 96))
+            love.graphics.setColor(1, 0.92, 0.75, 0.4 + 0.35 * flicker)
+            for i = 0, sparkCount do
+                local offset = (i / math.max(1, sparkCount)) * w
+                local sway = math.sin(t * 6 + offset * 0.04 + (beam.randomOffset or 0)) * (h * 0.12)
+                local sparkWidth = math.max(3, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.4)
+                love.graphics.rectangle("fill", x + offset - sparkWidth * 0.5, y + h * 0.5 + sway - edgeThickness, sparkWidth, edgeThickness * 2, 3, 3)
+            end
         else
             for start = -travel, h, pulseSpacing do
                 local segmentStart = math.max(0, start)
@@ -435,6 +458,15 @@ local function drawBeam(beam)
                 if segmentEnd > segmentStart then
                     love.graphics.rectangle("fill", x + w * 0.15, y + segmentStart, w * 0.7, segmentEnd - segmentStart, 3, 3)
                 end
+            end
+
+            local sparkCount = math.max(2, math.floor(h / 96))
+            love.graphics.setColor(1, 0.92, 0.75, 0.4 + 0.35 * flicker)
+            for i = 0, sparkCount do
+                local offset = (i / math.max(1, sparkCount)) * h
+                local sway = math.sin(t * 6 + offset * 0.04 + (beam.randomOffset or 0)) * (w * 0.12)
+                local sparkHeight = math.max(3, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.4)
+                love.graphics.rectangle("fill", x + w * 0.5 + sway - edgeThickness, y + offset - sparkHeight * 0.5, edgeThickness * 2, sparkHeight, 3, 3)
             end
         end
     elseif beam.state == "charging" then
@@ -471,6 +503,59 @@ local function drawBeam(beam)
                 love.graphics.rectangle("fill", x + 1, stripeY, w - 2, 6, 2, 2)
             end
         end
+
+        local resonance = math.sin(t * 4 + (beam.randomOffset or 0)) * 0.5 + 0.5
+        local shimmer = 0.2 + 0.4 * progress
+        love.graphics.setColor(rim[1], rim[2], rim[3], shimmer * (0.3 + resonance * 0.5))
+        if beam.dir == "horizontal" then
+            love.graphics.rectangle("fill", x, y + h * 0.3, w, h * 0.1, 2, 2)
+            love.graphics.rectangle("fill", x, y + h * 0.6, w, h * 0.1, 2, 2)
+        else
+            love.graphics.rectangle("fill", x + w * 0.3, y, w * 0.1, h, 2, 2)
+            love.graphics.rectangle("fill", x + w * 0.6, y, w * 0.1, h, 2, 2)
+        end
+    end
+end
+
+local function drawImpactEffect(beam)
+    if beam.state ~= "firing" then
+        return
+    end
+
+    if not (beam.impactX and beam.impactY) then
+        return
+    end
+
+    local palette = beam.firePalette or getFirePalette(DEFAULT_FIRE_COLOR)
+    local core = palette.core or DEFAULT_FIRE_COLOR
+    local rim = palette.rim or core
+    local t = getTime()
+    local offset = beam.randomOffset or 0
+    local flicker = 0.75 + 0.25 * math.sin(t * 10 + offset)
+    local baseRadius = (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.8
+
+    love.graphics.setColor(core[1], core[2], core[3], 0.35 + 0.4 * flicker)
+    love.graphics.circle("fill", beam.impactX, beam.impactY, baseRadius + math.sin(t * 8 + offset) * 1.5)
+
+    local pulse = math.fmod(t * IMPACT_RING_SPEED + offset, 1)
+    if pulse < 0 then
+        pulse = pulse + 1
+    end
+
+    local pulseRadius = IMPACT_FLARE_RADIUS + pulse * IMPACT_RING_RANGE
+    local pulseAlpha = math.max(0, 0.55 * (1 - pulse))
+    love.graphics.setColor(rim[1], rim[2], rim[3], pulseAlpha)
+    love.graphics.setLineWidth(2)
+    love.graphics.circle("line", beam.impactX, beam.impactY, pulseRadius)
+
+    love.graphics.setColor(1, 0.95, 0.75, 0.45 * flicker)
+    local sparkLength = IMPACT_FLARE_RADIUS * 1.3
+    local spokes = 6
+    for i = 0, spokes - 1 do
+        local angle = offset + (i / spokes) * (math.pi * 2)
+        local dx = math.cos(angle) * sparkLength
+        local dy = math.sin(angle) * sparkLength
+        love.graphics.line(beam.impactX - dx * 0.35, beam.impactY - dy * 0.35, beam.impactX + dx, beam.impactY + dy)
     end
 end
 
@@ -506,6 +591,23 @@ local function drawEmitterBase(beam)
     local slitThickness = math.max(3, tileSize * 0.18)
     local cx = beam.x or 0
     local cy = beam.y or 0
+    local spin = (t * 2.5 + (beam.randomOffset or 0)) % (math.pi * 2)
+    local ringRadius = tileSize * 0.45 + math.sin(t * 3.5 + (beam.randomOffset or 0)) * (tileSize * 0.05)
+    love.graphics.setLineWidth(2)
+    love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.3 + flash * 0.4 + highlightBoost * 0.3)
+    for i = 0, 2 do
+        local angle = spin + i * (math.pi * 2 / 3)
+        love.graphics.arc("line", "open", cx, cy, ringRadius, angle - 0.35, angle + 0.35, 16)
+    end
+
+    if beam.state == "charging" then
+        local chargeLift = (math.sin(t * 6 + (beam.randomOffset or 0)) * 0.5 + 0.5) * tileSize * 0.08
+        love.graphics.setColor(1, 0.4, 0.32, 0.45 + flash * 0.4)
+        love.graphics.circle("line", cx, cy, ringRadius * 0.65 + chargeLift)
+    elseif beam.state == "firing" then
+        love.graphics.setColor(1, 0.55, 0.4, 0.35 + flash * 0.45)
+        love.graphics.circle("line", cx, cy, ringRadius * 0.8)
+    end
     if beam.dir == "horizontal" then
         local dir = beam.facing or 1
         local front = cx + dir * (tileSize * 0.32)
@@ -531,6 +633,10 @@ function Lasers:draw()
 
     for _, beam in ipairs(emitters) do
         drawBeam(beam)
+    end
+
+    for _, beam in ipairs(emitters) do
+        drawImpactEffect(beam)
     end
 
     for _, beam in ipairs(emitters) do
