@@ -662,7 +662,7 @@ registerEffect({
             float petalWave = sin((centered.x + centered.y) * 6.0 + time * 0.5);
             float waveMix = clamp(petalWave * 0.5 + 0.5, 0.0, 1.0) * (0.18 + 0.28 * intensity);
 
-            vec3 base = mix(baseColor.rgb, softColor.rgb, clamp(0.35 + intensity * 0.25 + centered.y * 0.2, 0.0, 1.0));
+            vec3 base = mix(baseColor.rgb, softColor.rgb, clamp(0.45 + intensity * 0.25 + centered.y * 0.2, 0.0, 1.0));
             vec3 accent = mix(base, accentColor.rgb, 0.65);
             vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.58);
             vec3 spores = mix(glowColor.rgb, sporeColor.rgb, 0.6);
@@ -690,8 +690,13 @@ registerEffect({
             float outerEdge = min(0.96, 0.84 + 0.12 * intensity);
             float vignette = 1.0 - smoothstep(innerEdge, outerEdge, dist + breathing * 0.08 * intensity);
 
-            float finalMix = clamp(vignette * 0.78 + 0.16, 0.0, 1.0);
-            vec3 finalColor = mix(baseColor.rgb, colorBlend, finalMix);
+            float ambientPulse = sin(time * 0.22 + centered.y * 3.0) * 0.5 + 0.5;
+            vec3 tintedBase = mix(baseColor.rgb, softColor.rgb, 0.35 + ambientPulse * 0.2);
+            tintedBase = mix(tintedBase, sporeColor.rgb, 0.18 + 0.22 * ambientPulse);
+            tintedBase = mix(tintedBase, accentColor.rgb, 0.08 + 0.08 * intensity);
+
+            float finalMix = clamp(vignette * 0.78 + 0.22, 0.0, 1.0);
+            vec3 finalColor = mix(tintedBase, colorBlend, finalMix);
 
             return vec4(finalColor, baseColor.a) * color;
         }
