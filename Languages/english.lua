@@ -442,6 +442,11 @@ local english = {
                 description = "Fruit at combo 4 or higher grant +2 bonus score and stall saws for 0.8s.",
                 combo_bonus = "Twilight Parade +2",
             },
+            chromatic_pantry = {
+                name = "Chromatic Pantry",
+                description = "Collecting a different fruit than last time grants +1 bonus score and stalls saws for 0.5s.",
+                celebration = "Chromatic Bonus",
+            },
             lucky_bite = {
                 name = "Lucky Bite",
                 description = "Each fruit grants +1 bonus score.",
@@ -566,6 +571,11 @@ local english = {
                 name = "Thunder Dash",
                 description = "Press Space (or A/Right Shoulder on a controller) to dash forward, smashing through rocks while briefly speeding up.",
                 activation_text = "Thunder Dash!",
+            },
+            sparkstep_relay = {
+                name = "Sparkstep Relay",
+                description = "Dashing shatters the nearest rock and stalls saws for 0.6s.",
+                activation_text = "Sparkstep!",
             },
             temporal_anchor = {
                 name = "Temporal Anchor",

@@ -552,6 +552,54 @@ local pool = {
         },
     }),
     register({
+        id = "chromatic_pantry",
+        nameKey = "upgrades.chromatic_pantry.name",
+        descKey = "upgrades.chromatic_pantry.description",
+        rarity = "uncommon",
+        tags = {"economy", "defense"},
+        onAcquire = function(state)
+            state.counters.chromaticPantryLastFruit = nil
+        end,
+        handlers = {
+            fruitCollected = function(data, state)
+                if not data then return end
+
+                local last = state.counters.chromaticPantryLastFruit
+                local current = data.name or (data.fruitType and data.fruitType.id)
+
+                if current and last and current ~= last then
+                    if Score.addBonus then
+                        Score:addBonus(1)
+                    end
+                    if Saws and Saws.stall then
+                        Saws:stall(0.5)
+                    end
+                    celebrateUpgrade(getUpgradeString("chromatic_pantry", "celebration"), data, {
+                        color = {0.98, 0.72, 0.94, 1},
+                        particleCount = 14,
+                        particleSpeed = 100,
+                        particleLife = 0.4,
+                        textOffset = 48,
+                        textScale = 1.08,
+                        visual = {
+                            badge = "spark",
+                            outerRadius = 52,
+                            innerRadius = 16,
+                            ringCount = 3,
+                            life = 0.7,
+                            glowAlpha = 0.3,
+                            haloAlpha = 0.2,
+                        },
+                    })
+                end
+
+                if current then
+                    state.counters.chromaticPantryLastFruit = current
+                end
+            end,
+        },
+    }),
+    register({
         id = "lucky_bite",
         nameKey = "upgrades.lucky_bite.name",
         descKey = "upgrades.lucky_bite.description",
@@ -1179,6 +1227,42 @@ local pool = {
                 end)
             end
         end,
+    }),
+    register({
+        id = "sparkstep_relay",
+        nameKey = "upgrades.sparkstep_relay.name",
+        descKey = "upgrades.sparkstep_relay.description",
+        rarity = "rare",
+        requiresTags = {"mobility"},
+        tags = {"mobility", "defense"},
+        handlers = {
+            dashActivated = function(data)
+                local fx, fy = getEventPosition(data)
+                if Rocks and Rocks.shatterNearest then
+                    Rocks:shatterNearest(fx or 0, fy or 0, 1)
+                end
+                if Saws and Saws.stall then
+                    Saws:stall(0.6)
+                end
+                celebrateUpgrade(getUpgradeString("sparkstep_relay", "activation_text"), data, {
+                    color = {1.0, 0.78, 0.36, 1},
+                    particleCount = 20,
+                    particleSpeed = 150,
+                    particleLife = 0.36,
+                    textOffset = 56,
+                    textScale = 1.16,
+                    visual = {
+                        badge = "bolt",
+                        outerRadius = 54,
+                        innerRadius = 18,
+                        ringCount = 3,
+                        life = 0.6,
+                        glowAlpha = 0.32,
+                        haloAlpha = 0.22,
+                    },
+                })
+            end,
+        },
     }),
     register({
         id = "temporal_anchor",
