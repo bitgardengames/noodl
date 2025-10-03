@@ -814,6 +814,40 @@ local pool = {
         },
     }),
     register({
+        id = "mirror_mantle",
+        nameKey = "upgrades.mirror_mantle.name",
+        descKey = "upgrades.mirror_mantle.description",
+        rarity = "rare",
+        tags = {"defense", "combo"},
+        handlers = {
+            shieldConsumed = function(data)
+                if Score.addBonus then
+                    Score:addBonus(3)
+                end
+                if Saws and Saws.stall then
+                    Saws:stall(1)
+                end
+                celebrateUpgrade(getUpgradeString("mirror_mantle", "activation_text"), data, {
+                    color = {0.82, 0.74, 1, 1},
+                    particleCount = 18,
+                    particleSpeed = 140,
+                    particleLife = 0.5,
+                    textOffset = 50,
+                    textScale = 1.14,
+                    visual = {
+                        badge = "shield",
+                        outerRadius = 60,
+                        innerRadius = 18,
+                        ringCount = 4,
+                        life = 0.7,
+                        glowAlpha = 0.3,
+                        haloAlpha = 0.22,
+                    },
+                })
+            end,
+        },
+    }),
+    register({
         id = "resonant_shell",
         nameKey = "upgrades.resonant_shell.name",
         descKey = "upgrades.resonant_shell.description",
@@ -911,6 +945,58 @@ local pool = {
         onAcquire = function(state)
             state.effects.comboWindowBonus = (state.effects.comboWindowBonus or 0) + 0.35
         end,
+    }),
+    register({
+        id = "tempo_turbine",
+        nameKey = "upgrades.tempo_turbine.name",
+        descKey = "upgrades.tempo_turbine.description",
+        rarity = "uncommon",
+        tags = {"combo", "economy"},
+        onAcquire = function(state)
+            state.counters.tempoTurbineCharge = state.counters.tempoTurbineCharge or 0
+        end,
+        handlers = {
+            fruitCollected = function(data, state)
+                if not data then return end
+
+                local combo = data.combo or 0
+                if combo < 2 then
+                    state.counters.tempoTurbineCharge = 0
+                    return
+                end
+
+                local charge = (state.counters.tempoTurbineCharge or 0) + 1
+                local threshold = 3
+                if charge >= threshold then
+                    charge = 0
+                    if Score.addBonus then
+                        Score:addBonus(2)
+                    end
+                    if Saws and Saws.stall then
+                        Saws:stall(0.7)
+                    end
+                    celebrateUpgrade(getUpgradeString("tempo_turbine", "activation_text"), data, {
+                        color = {0.56, 0.84, 0.98, 1},
+                        particleCount = 16,
+                        particleSpeed = 150,
+                        particleLife = 0.46,
+                        textOffset = 48,
+                        textScale = 1.12,
+                        visual = {
+                            badge = "spark",
+                            outerRadius = 54,
+                            innerRadius = 16,
+                            ringCount = 3,
+                            life = 0.66,
+                            glowAlpha = 0.26,
+                            haloAlpha = 0.18,
+                        },
+                    })
+                end
+
+                state.counters.tempoTurbineCharge = charge
+            end,
+        },
     }),
     register({
         id = "caravan_contract",
@@ -1016,6 +1102,61 @@ local pool = {
                 })
             end,
         },
+    }),
+    register({
+        id = "verdant_bonds",
+        nameKey = "upgrades.verdant_bonds.name",
+        descKey = "upgrades.verdant_bonds.description",
+        rarity = "uncommon",
+        tags = {"economy", "defense"},
+        allowDuplicates = true,
+        maxStacks = 3,
+        onAcquire = function(state)
+            state.counters.verdantBondsShields = (state.counters.verdantBondsShields or 0) + 1
+            if not state.counters.verdantBondsHandlerRegistered then
+                state.counters.verdantBondsHandlerRegistered = true
+                Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
+                    if not runState then return end
+                    if not runState.takenSet or (runState.takenSet.verdant_bonds or 0) <= 0 then return end
+                    if not data or not data.upgrade then return end
+
+                    local upgradeTags = data.upgrade.tags
+                    local hasEconomy = false
+                    if upgradeTags then
+                        for _, tag in ipairs(upgradeTags) do
+                            if tag == "economy" then
+                                hasEconomy = true
+                                break
+                            end
+                        end
+                    end
+
+                    if not hasEconomy then return end
+
+                    local shields = runState.counters.verdantBondsShields or 1
+                    if Snake and Snake.addCrashShields then
+                        Snake:addCrashShields(shields)
+                    end
+                    celebrateUpgrade(getUpgradeString("verdant_bonds", "activation_text"), data, {
+                        color = {0.58, 0.88, 0.64, 1},
+                        particleCount = 14,
+                        particleSpeed = 120,
+                        particleLife = 0.48,
+                        textOffset = 46,
+                        textScale = 1.1,
+                        visual = {
+                            badge = "shield",
+                            outerRadius = 52,
+                            innerRadius = 16,
+                            ringCount = 3,
+                            life = 0.68,
+                            glowAlpha = 0.26,
+                            haloAlpha = 0.18,
+                        },
+                    })
+                end)
+            end
+        end,
     }),
     register({
         id = "fresh_supplies",
