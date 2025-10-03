@@ -446,6 +446,10 @@ local function handleLaserCollision(headX, headY)
                 Snake:onShieldConsumed(headX, headY, "laser")
         end
 
+        if Snake.chopTailByLaser then
+                Snake:chopTailByLaser()
+        end
+
         if shielded then
                 recordShieldEvent("laser")
         end
