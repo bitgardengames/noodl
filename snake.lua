@@ -1809,6 +1809,7 @@ function Snake:checkSawBodyCollision()
         if isSawActive(saw) then
             local sx, sy = getSawCenterPosition(saw)
             if sx and sy then
+                local sawRadius = (saw.collisionRadius or saw.radius or 0)
                 local travelled = 0
                 local prevX, prevY = headX, headY
 
@@ -1820,11 +1821,18 @@ function Snake:checkSawBodyCollision()
                         local dx = cx - prevX
                         local dy = cy - prevY
                         local segLen = math.sqrt(dx * dx + dy * dy)
-                        if segLen > 1e-6 then
+                        local minX = math.min(prevX, cx) - bodyRadius
+                        local minY = math.min(prevY, cy) - bodyRadius
+                        local maxX = math.max(prevX, cx) + bodyRadius
+                        local maxY = math.max(prevY, cy) + bodyRadius
+                        local width = maxX - minX
+                        local height = maxY - minY
+
+                        if segLen > 1e-6 and (not (Saws and Saws.isCollisionCandidate) or Saws:isCollisionCandidate(saw, minX, minY, width, height)) then
                             local closestX, closestY, distSq, t = closestPointOnSegment(sx, sy, prevX, prevY, cx, cy)
                             local along = travelled + segLen * (t or 0)
                             if along > guardDistance then
-                                local combined = (saw.radius or 0) + bodyRadius
+                                local combined = sawRadius + bodyRadius
                                 if distSq <= combined * combined then
                                     local handled = self:handleSawBodyCut({
                                         index = index,
@@ -1838,6 +1846,7 @@ function Snake:checkSawBodyCollision()
                                 end
                             end
                         end
+
                         travelled = travelled + segLen
                         prevX, prevY = cx, cy
                     end
