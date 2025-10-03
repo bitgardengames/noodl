@@ -469,17 +469,6 @@ local definitions = {
         categoryOrder = 3,
         order = 10,
     },
-    {
-        id = "dragonfruitDevotee",
-        titleKey = "achievements_definitions.dragonfruitDevotee.title",
-        descriptionKey = "achievements_definitions.dragonfruitDevotee.description",
-        icon = "Apple",
-        goal = 10,
-        stat = "totalDragonfruitEaten",
-        category = "collection",
-        categoryOrder = 3,
-        order = 20,
-    },
 }
 
 return definitions
