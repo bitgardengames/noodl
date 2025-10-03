@@ -1042,6 +1042,8 @@ function Snake:drawClipped(hx, hy, hr)
         love.graphics.setStencilTest("equal", 0)
     end
 
+    local shouldDrawFace = descendingHole == nil
+
     DrawSnake(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
         if headX and headY and clipRadius > 0 then
             local dx = headX - hx
@@ -1051,7 +1053,7 @@ function Snake:drawClipped(hx, hy, hr)
             end
         end
         return headX, headY
-    end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals)
+    end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
 
     debugDrawCollisionSpace(trail, headX, headY)
 
@@ -1963,9 +1965,11 @@ function Snake:draw()
             end
         end
 
+        local shouldDrawFace = descendingHole == nil
+
         DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
             return self:getHead()
-        end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals)
+        end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
 
         local headX, headY = self:getHead()
         debugDrawCollisionSpace(trail, headX, headY)
