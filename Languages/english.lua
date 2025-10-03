@@ -685,6 +685,10 @@ local english = {
                 title = "Dragon Hunter",
                 description = "Collect the legendary Dragonfruit",
             },
+            dragonConnoisseur = {
+                title = "Dragon Connoisseur",
+                description = "Collect 10 total dragonfruit",
+            },
             dragonComboFusion = {
                 title = "Dragon Combo Fusion",
                 description = "Eat a dragonfruit and reach an 8-fruit combo in the same run.",
