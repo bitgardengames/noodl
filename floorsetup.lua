@@ -14,7 +14,6 @@ local FloatingText = require("floatingtext")
 local FloorTraits = require("floortraits")
 local FloorPlan = require("floorplan")
 local Upgrades = require("upgrades")
-local GameModes = require("gamemodes")
 
 local FloorSetup = {}
 
@@ -80,6 +79,7 @@ end
 
 local function applyBaselineHazardTraits(traitContext)
     traitContext.conveyors = math.max(0, traitContext.conveyors or 0)
+    traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
 
     if traitContext.rockSpawnChance then
         Rocks.spawnChance = traitContext.rockSpawnChance
@@ -100,7 +100,7 @@ local function applyBaselineHazardTraits(traitContext)
     end
 end
 
-local function finalizeTraitContext(traitContext, numConveyors)
+local function finalizeTraitContext(traitContext, spawnPlan)
     traitContext.rockSpawnChance = Rocks:getSpawnChance()
     traitContext.sawSpeedMult = Saws.speedMult
     traitContext.sawSpinMult = Saws.spinMult
@@ -111,7 +111,8 @@ local function finalizeTraitContext(traitContext, numConveyors)
         traitContext.sawStall = Saws.stallOnFruit or 0
     end
 
-    traitContext.conveyors = numConveyors
+    traitContext.conveyors = spawnPlan.numConveyors or 0
+    traitContext.laserCount = spawnPlan.laserCount or #(spawnPlan.lasers or {})
 end
 
 local function trySpawnHorizontalSaw(halfTiles, bladeRadius)
@@ -250,40 +251,48 @@ local function spawnRocks(numRocks, safeZone)
     end
 end
 
-local function shouldSpawnChaosLasers(floorData, modeName)
-    if modeName ~= "chaos" then
-        return false
-    end
-
+local function getAmbientLaserPreference(floorData)
     if not floorData then
-        return false
+        return 0
     end
 
     if floorData.backgroundTheme == "machine" then
-        return true
+        return 2
     end
 
     if type(floorData.name) == "string" and floorData.name:lower():find("machin") then
-        return true
+        return 2
     end
 
     if type(floorData.traits) == "table" then
         for _, trait in ipairs(floorData.traits) do
             if trait == "ancientMachinery" then
-                return true
+                return 2
             end
         end
     end
 
-    return false
+    return 0
 end
 
-local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData, modeName)
-    if not shouldSpawnChaosLasers(floorData, modeName) then
-        return {}
+local function getDesiredLaserCount(traitContext, floorData)
+    local baseline = 0
+
+    if traitContext then
+        baseline = math.max(0, math.floor((traitContext.laserCount or 0) + 0.5))
     end
 
-    local desired = math.max(1, math.floor((traitContext.laserCount or 2) + 0.5))
+    local ambient = getAmbientLaserPreference(floorData)
+
+    return math.max(baseline, ambient)
+end
+
+local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
+    local desired = getDesiredLaserCount(traitContext, floorData)
+
+    if desired <= 0 then
+        return {}, 0
+    end
     local plan = {}
     local attempts = 0
     local maxAttempts = desired * 40
@@ -335,23 +344,24 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData, m
         end
     end
 
-    return plan
+    return plan, desired
 end
 
-local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, floorData, modeName)
+local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, floorData)
     local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
-    local laserPlan = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData, modeName)
+    local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
 
     return {
         numRocks = traitContext.rocks,
         numSaws = traitContext.saws,
-        numConveyors = math.max(0, math.min(8, math.floor((traitContext.conveyors or 0) + 0.5))),
+        numConveyors = 0,
         halfTiles = halfTiles,
         bladeRadius = DEFAULT_SAW_RADIUS,
         safeZone = safeZone,
         reservedCells = reservedCells,
         reservedSafeZone = reservedSafeZone,
         lasers = laserPlan,
+        laserCount = desiredLasers,
     }
 end
 
@@ -370,9 +380,9 @@ function FloorSetup.prepare(floorNum, floorData)
 
     traitContext = Upgrades:modifyFloorContext(traitContext)
     traitContext.conveyors = math.max(0, traitContext.conveyors or 0)
+    traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
 
-    local modeName = GameModes and GameModes.getCurrentName and GameModes:getCurrentName()
-    local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, floorData, modeName)
+    local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, floorData)
 
     return {
         traitContext = traitContext,
@@ -382,12 +392,11 @@ function FloorSetup.prepare(floorNum, floorData)
 end
 
 function FloorSetup.finalizeContext(traitContext, spawnPlan)
-    finalizeTraitContext(traitContext, spawnPlan.numConveyors)
+    finalizeTraitContext(traitContext, spawnPlan)
 end
 
 function FloorSetup.spawnHazards(spawnPlan)
     spawnSaws(spawnPlan.numSaws or 0, spawnPlan.halfTiles, spawnPlan.bladeRadius)
-    spawnConveyors(spawnPlan.numConveyors or 0, spawnPlan.halfTiles)
     spawnLasers(spawnPlan.lasers or {})
     spawnRocks(spawnPlan.numRocks or 0, spawnPlan.safeZone)
     Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
