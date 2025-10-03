@@ -296,7 +296,9 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
     local plan = {}
     local attempts = 0
     local maxAttempts = desired * 40
-    local sweepRange = math.max(24, (Arena.tileSize or 24) * 1.5)
+    local sweepRange = 0
+    local totalCols = math.max(1, Arena.cols or 1)
+    local totalRows = math.max(1, Arena.rows or 1)
 
     while #plan < desired and attempts < maxAttempts do
         attempts = attempts + 1
@@ -307,29 +309,51 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
 
         local fx, fy
         if dir == "horizontal" then
-            local minRow = 1 + halfTiles
-            local maxRow = Arena.rows - halfTiles
-            local minCol = 1 + halfTiles
-            local maxCol = Arena.cols - halfTiles
-            if maxRow >= minRow and maxCol >= minCol then
-                local row = love.math.random(minRow, maxRow)
-                local col = love.math.random(minCol, maxCol)
-                fx, fy = Arena:getCenterOfTile(col, row)
+            local row = (love.math.random() < 0.5) and 1 or totalRows
+            local minCol = math.max(1 + halfTiles, 1)
+            local maxCol = totalCols - halfTiles
+
+            if maxCol < minCol then
+                local fallback = math.floor(totalCols / 2 + 0.5)
+                minCol = math.max(1, math.min(totalCols, fallback))
+                maxCol = minCol
+            else
+                minCol = math.max(1, math.min(totalCols, minCol))
+                maxCol = math.max(minCol, math.min(totalCols, maxCol))
             end
+
+            local col = love.math.random(minCol, maxCol)
+            fx, fy = Arena:getCenterOfTile(col, row)
         else
-            local minCol = 1 + halfTiles
-            local maxCol = Arena.cols - halfTiles
-            local minRow = 1 + halfTiles
-            local maxRow = Arena.rows - halfTiles
-            if maxCol >= minCol and maxRow >= minRow then
-                local col = love.math.random(minCol, maxCol)
-                local row = love.math.random(minRow, maxRow)
-                fx, fy = Arena:getCenterOfTile(col, row)
+            local col = (love.math.random() < 0.5) and 1 or totalCols
+            local minRow = math.max(1 + halfTiles, 1)
+            local maxRow = totalRows - halfTiles
+
+            if maxRow < minRow then
+                local fallback = math.floor(totalRows / 2 + 0.5)
+                minRow = math.max(1, math.min(totalRows, fallback))
+                maxRow = minRow
+            else
+                minRow = math.max(1, math.min(totalRows, minRow))
+                maxRow = math.max(minRow, math.min(totalRows, maxRow))
             end
+
+            local row = love.math.random(minRow, maxRow)
+            fx, fy = Arena:getCenterOfTile(col, row)
         end
 
         if fx and SnakeUtils.trackIsFree(fx, fy, dir, trackLength) then
             SnakeUtils.occupyTrack(fx, fy, dir, trackLength)
+            local fireDuration = 1.1 + love.math.random() * 0.8
+            local fireCooldownMin = 3.5 + love.math.random() * 1.5
+            local fireCooldownMax = fireCooldownMin + 2.0 + love.math.random() * 2.0
+            local fireLength
+            if dir == "horizontal" then
+                fireLength = Arena.width + (Arena.tileSize or 24)
+            else
+                fireLength = Arena.height + (Arena.tileSize or 24)
+            end
+            local fireColor = {1, 0.12 + love.math.random() * 0.15, 0.15, 1}
             plan[#plan + 1] = {
                 x = fx,
                 y = fy,
@@ -337,8 +361,14 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
                 length = trackLength,
                 options = {
                     sweepRange = sweepRange,
-                    speed = 1.1 + love.math.random() * 0.6,
-                    phase = love.math.random() * math.pi * 2,
+                    speed = 0,
+                    phase = 0,
+                    fireDuration = fireDuration,
+                    fireCooldownMin = fireCooldownMin,
+                    fireCooldownMax = fireCooldownMax,
+                    fireLength = fireLength,
+                    fireThickness = 28,
+                    fireColor = fireColor,
                 },
             }
         end

@@ -1,4 +1,5 @@
 local Theme = require("theme")
+local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 
 local Lasers = {}
@@ -10,6 +11,8 @@ local DEFAULT_THICKNESS = 18
 local DEFAULT_SWEEP_RANGE = 42
 local DEFAULT_SWEEP_SPEED = 1.35 -- radians per second for sweep oscillation
 local FLASH_DECAY = 3.8
+
+local DEFAULT_FIRE_COLOR = {1, 0.16, 0.16, 1}
 
 local function copyColor(color, alpha)
     local r = 1
@@ -36,6 +39,24 @@ local function getPalette()
     rim[2] = math.min(1, rim[2] * 1.1 + 0.03)
     rim[3] = math.min(1, rim[3] * 1.05 + 0.02)
     rim[4] = 0.95
+
+    return {
+        glow = glow,
+        core = core,
+        rim = rim,
+    }
+end
+
+local function getFirePalette(color)
+    local base = copyColor(color or DEFAULT_FIRE_COLOR)
+    local glow = copyColor(base, (base[4] or 1) * 0.65)
+    local core = copyColor(base, 0.95)
+    local rim = copyColor(base, 1.0)
+
+    rim[1] = math.min(1, rim[1] * 1.1)
+    rim[2] = math.min(1, rim[2] * 0.7)
+    rim[3] = math.min(1, rim[3] * 0.7)
+    rim[4] = 1.0
 
     return {
         glow = glow,
@@ -96,13 +117,51 @@ function Lasers:spawn(x, y, dir, length, options)
         dir = dir,
         length = getTrackLength(length),
         thickness = options.thickness or DEFAULT_THICKNESS,
-        sweepRange = options.sweepRange or DEFAULT_SWEEP_RANGE,
-        speed = options.speed or DEFAULT_SWEEP_SPEED,
-        phase = options.phase or love.math.random() * math.pi * 2,
+        sweepRange = (options.sweepRange ~= nil) and options.sweepRange or DEFAULT_SWEEP_RANGE,
+        speed = (options.speed ~= nil) and options.speed or DEFAULT_SWEEP_SPEED,
+        phase = (options.phase ~= nil) and options.phase or love.math.random() * math.pi * 2,
         offset = 0,
         timer = 0,
         flashTimer = 0,
     }
+
+    beam.baseLength = beam.length
+    beam.baseThickness = beam.thickness
+
+    local fireLength
+    if options.fireLength and options.fireLength > 0 then
+        fireLength = options.fireLength
+    elseif dir == "horizontal" then
+        fireLength = Arena.width + (Arena.tileSize or 24)
+    else
+        fireLength = Arena.height + (Arena.tileSize or 24)
+    end
+
+    beam.fireLength = fireLength
+    beam.fireThickness = math.max(beam.thickness, options.fireThickness or (beam.thickness + 6))
+    beam.fireDuration = math.max(0.35, options.fireDuration or 1.2)
+
+    local minCooldown = options.fireCooldownMin or 4.0
+    local maxCooldown = options.fireCooldownMax or (minCooldown + 3.0)
+    if maxCooldown < minCooldown then
+        maxCooldown = minCooldown
+    end
+
+    beam.fireCooldownMin = minCooldown
+    beam.fireCooldownMax = maxCooldown
+    beam.fireCooldown = love.math.random() * (maxCooldown - minCooldown) + minCooldown
+    beam.fireTimer = 0
+    beam.isFiring = false
+
+    if options.fireColor or options.firePalette then
+        if options.firePalette then
+            beam.firePalette = options.firePalette
+        else
+            beam.firePalette = getFirePalette(options.fireColor)
+        end
+    else
+        beam.firePalette = getFirePalette(DEFAULT_FIRE_COLOR)
+    end
 
     SnakeUtils.occupyTrack(x, y, dir, beam.length)
     beams[#beams + 1] = beam
@@ -115,7 +174,38 @@ function Lasers:update(dt)
     end
 
     for _, beam in ipairs(beams) do
-        updateOffset(beam, dt)
+        if not beam.isFiring and (beam.sweepRange or 0) > 0 then
+            updateOffset(beam, dt)
+        else
+            beam.offset = 0
+        end
+
+        if beam.isFiring then
+            beam.fireTimer = (beam.fireTimer or 0) - dt
+            if beam.fireTimer <= 0 then
+                beam.isFiring = false
+                beam.length = beam.baseLength or beam.length
+                beam.thickness = beam.baseThickness or beam.thickness
+
+                local minCooldown = beam.fireCooldownMin or 0
+                local maxCooldown = beam.fireCooldownMax or minCooldown
+                if maxCooldown < minCooldown then
+                    maxCooldown = minCooldown
+                end
+
+                beam.fireCooldown = love.math.random() * (maxCooldown - minCooldown) + minCooldown
+            end
+        elseif beam.fireCooldown then
+            beam.fireCooldown = beam.fireCooldown - dt
+            if beam.fireCooldown <= 0 then
+                beam.isFiring = true
+                beam.fireTimer = beam.fireDuration or 1.0
+                beam.length = beam.fireLength or beam.length
+                beam.thickness = math.max(beam.fireThickness or beam.thickness, beam.thickness)
+                beam.flashTimer = math.max(beam.flashTimer or 0, 1)
+                beam.fireCooldown = nil
+            end
+        end
 
         if beam.flashTimer and beam.flashTimer > 0 then
             beam.flashTimer = math.max(0, beam.flashTimer - dt * FLASH_DECAY)
@@ -160,13 +250,17 @@ function Lasers:draw()
         return
     end
 
-    local palette = getPalette()
+    local basePalette = getPalette()
     love.graphics.push("all")
     love.graphics.setLineWidth(2)
 
     for _, beam in ipairs(beams) do
         local bx, by, bw, bh = calculateBounds(beam)
         if bx then
+            local palette = basePalette
+            if beam.isFiring and beam.firePalette then
+                palette = beam.firePalette
+            end
             local flash = math.min(1, beam.flashTimer or 0)
             local glowAlpha = (palette.glow[4] or 0.4) + flash * 0.35
             love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], glowAlpha)
