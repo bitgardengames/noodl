@@ -3,6 +3,7 @@ local Audio = require("audio")
 local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Saws = require("saws")
+local Lasers = require("lasers")
 local Arena = require("arena")
 local Particles = require("particles")
 local Upgrades = require("upgrades")
@@ -26,6 +27,11 @@ local shieldStatMap = {
                 achievements = { "rockShatter" },
         },
         saw = {
+                lifetime = "shieldSawParries",
+                run = "runShieldSawParries",
+                achievements = { "sawParry" },
+        },
+        laser = {
                 lifetime = "shieldSawParries",
                 run = "runShieldSawParries",
                 achievements = { "sawParry" },
@@ -395,6 +401,58 @@ local function handleSawCollision(headX, headY)
         return
 end
 
+local function handleLaserCollision(headX, headY)
+        if not Lasers or not Lasers.checkCollision then
+                return
+        end
+
+        local laserHit = Lasers:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+        if not laserHit then
+                return
+        end
+
+        local shielded = Snake:consumeCrashShield()
+        local survived = shielded
+
+        if not survived and Snake.consumeStoneSkinSawGrace then
+                survived = Snake:consumeStoneSkinSawGrace()
+        end
+
+        if not survived then
+                return "dead", "laser"
+        end
+
+        Lasers:onShieldedHit(laserHit)
+
+        Particles:spawnBurst(headX, headY, {
+                count = 10,
+                speed = 80,
+                speedVariance = 30,
+                life = 0.25,
+                size = 2.5,
+                color = {1.0, 0.55, 0.25, 1},
+                spread = math.pi * 2,
+                angleJitter = math.pi,
+                drag = 3.4,
+                gravity = 120,
+                scaleMin = 0.45,
+                scaleVariance = 0.4,
+                fadeTo = 0,
+        })
+
+        Audio:playSound("shield_saw")
+
+        if Snake.onShieldConsumed then
+                Snake:onShieldConsumed(headX, headY, "laser")
+        end
+
+        if shielded then
+                recordShieldEvent("laser")
+        end
+
+        return
+end
+
 function Movement:reset()
         Snake:resetPosition()
 end
@@ -416,6 +474,11 @@ function Movement:update(dt)
         local state, stateCause = handleRockCollision(headX, headY)
         if state then
                 return state, stateCause
+        end
+
+        local laserState, laserCause = handleLaserCollision(headX, headY)
+        if laserState then
+                return laserState, laserCause
         end
 
         local sawState, sawCause = handleSawCollision(headX, headY)

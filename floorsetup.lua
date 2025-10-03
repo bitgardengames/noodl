@@ -7,12 +7,14 @@ local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Conveyors = require("conveyors")
 local Saws = require("saws")
+local Lasers = require("lasers")
 local Movement = require("movement")
 local Particles = require("particles")
 local FloatingText = require("floatingtext")
 local FloorTraits = require("floortraits")
 local FloorPlan = require("floorplan")
 local Upgrades = require("upgrades")
+local GameModes = require("gamemodes")
 
 local FloorSetup = {}
 
@@ -41,6 +43,7 @@ local function resetFloorEntities()
     Rocks:reset()
     Conveyors:reset()
     Saws:reset()
+    Lasers:reset()
 end
 
 local function prepareOccupancy()
@@ -159,6 +162,16 @@ local function spawnSaws(numSaws, halfTiles, bladeRadius)
     end
 end
 
+local function spawnLasers(laserPlan)
+    if not (laserPlan and #laserPlan > 0) then
+        return
+    end
+
+    for _, plan in ipairs(laserPlan) do
+        Lasers:spawn(plan.x, plan.y, plan.dir, plan.length, plan.options)
+    end
+end
+
 local function chooseConveyorDirection(horizontalPossible, verticalPossible)
     if horizontalPossible and verticalPossible then
         return (love.math.random() < 0.5) and "horizontal" or "vertical"
@@ -237,8 +250,97 @@ local function spawnRocks(numRocks, safeZone)
     end
 end
 
-local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone)
+local function shouldSpawnChaosLasers(floorData, modeName)
+    if modeName ~= "chaos" then
+        return false
+    end
+
+    if not floorData then
+        return false
+    end
+
+    if floorData.backgroundTheme == "machine" then
+        return true
+    end
+
+    if type(floorData.name) == "string" and floorData.name:lower():find("machin") then
+        return true
+    end
+
+    if type(floorData.traits) == "table" then
+        for _, trait in ipairs(floorData.traits) do
+            if trait == "ancientMachinery" then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData, modeName)
+    if not shouldSpawnChaosLasers(floorData, modeName) then
+        return {}
+    end
+
+    local desired = math.max(1, math.floor((traitContext.laserCount or 2) + 0.5))
+    local plan = {}
+    local attempts = 0
+    local maxAttempts = desired * 40
+    local sweepRange = math.max(24, (Arena.tileSize or 24) * 1.5)
+
+    while #plan < desired and attempts < maxAttempts do
+        attempts = attempts + 1
+        local dir = (#plan % 2 == 0) and "horizontal" or "vertical"
+        if love.math.random() < 0.5 then
+            dir = (dir == "horizontal") and "vertical" or "horizontal"
+        end
+
+        local fx, fy
+        if dir == "horizontal" then
+            local minRow = 1 + halfTiles
+            local maxRow = Arena.rows - halfTiles
+            local minCol = 1 + halfTiles
+            local maxCol = Arena.cols - halfTiles
+            if maxRow >= minRow and maxCol >= minCol then
+                local row = love.math.random(minRow, maxRow)
+                local col = love.math.random(minCol, maxCol)
+                fx, fy = Arena:getCenterOfTile(col, row)
+            end
+        else
+            local minCol = 1 + halfTiles
+            local maxCol = Arena.cols - halfTiles
+            local minRow = 1 + halfTiles
+            local maxRow = Arena.rows - halfTiles
+            if maxCol >= minCol and maxRow >= minRow then
+                local col = love.math.random(minCol, maxCol)
+                local row = love.math.random(minRow, maxRow)
+                fx, fy = Arena:getCenterOfTile(col, row)
+            end
+        end
+
+        if fx and SnakeUtils.trackIsFree(fx, fy, dir, trackLength) then
+            SnakeUtils.occupyTrack(fx, fy, dir, trackLength)
+            plan[#plan + 1] = {
+                x = fx,
+                y = fy,
+                dir = dir,
+                length = trackLength,
+                options = {
+                    sweepRange = sweepRange,
+                    speed = 1.1 + love.math.random() * 0.6,
+                    phase = love.math.random() * math.pi * 2,
+                },
+            }
+        end
+    end
+
+    return plan
+end
+
+local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, floorData, modeName)
     local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
+    local laserPlan = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData, modeName)
 
     return {
         numRocks = traitContext.rocks,
@@ -249,6 +351,7 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
         safeZone = safeZone,
         reservedCells = reservedCells,
         reservedSafeZone = reservedSafeZone,
+        lasers = laserPlan,
     }
 end
 
@@ -268,7 +371,8 @@ function FloorSetup.prepare(floorNum, floorData)
     traitContext = Upgrades:modifyFloorContext(traitContext)
     traitContext.conveyors = math.max(0, traitContext.conveyors or 0)
 
-    local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone)
+    local modeName = GameModes and GameModes.getCurrentName and GameModes:getCurrentName()
+    local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, floorData, modeName)
 
     return {
         traitContext = traitContext,
@@ -284,6 +388,7 @@ end
 function FloorSetup.spawnHazards(spawnPlan)
     spawnSaws(spawnPlan.numSaws or 0, spawnPlan.halfTiles, spawnPlan.bladeRadius)
     spawnConveyors(spawnPlan.numConveyors or 0, spawnPlan.halfTiles)
+    spawnLasers(spawnPlan.lasers or {})
     spawnRocks(spawnPlan.numRocks or 0, spawnPlan.safeZone)
     Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
     SnakeUtils.releaseCells(spawnPlan.reservedSafeZone)
