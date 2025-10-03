@@ -356,6 +356,29 @@ FunChallenges.challenges = {
         xpReward = 80,
     },
     {
+        id = "shield_triad",
+        titleKey = "menu.fun_daily.shield_triad.title",
+        descriptionKey = "menu.fun_daily.shield_triad.description",
+        goal = 3,
+        progressKey = "menu.fun_daily.shield_triad.progress",
+        completeKey = "menu.fun_daily.shield_triad.complete",
+        getValue = function(self, context)
+            local statsSource = context and context.sessionStats
+            if statsSource and type(statsSource.get) == "function" then
+                local wall = statsSource:get("runShieldWallBounces") or 0
+                local rock = statsSource:get("runShieldRockBreaks") or 0
+                local saw = statsSource:get("runShieldSawParries") or 0
+                return (wall > 0 and 1 or 0) + (rock > 0 and 1 or 0) + (saw > 0 and 1 or 0)
+            end
+
+            local wall = SessionStats and SessionStats.get and SessionStats:get("runShieldWallBounces") or 0
+            local rock = SessionStats and SessionStats.get and SessionStats:get("runShieldRockBreaks") or 0
+            local saw = SessionStats and SessionStats.get and SessionStats:get("runShieldSawParries") or 0
+            return (wall > 0 and 1 or 0) + (rock > 0 and 1 or 0) + (saw > 0 and 1 or 0)
+        end,
+        xpReward = 85,
+    },
+    {
         id = "serpentine_marathon",
         titleKey = "menu.fun_daily.marathon.title",
         descriptionKey = "menu.fun_daily.marathon.description",
@@ -423,6 +446,33 @@ FunChallenges.challenges = {
         xpReward = 90,
     },
     {
+        id = "floor_tourist",
+        titleKey = "menu.fun_daily.floor_tourist.title",
+        descriptionKey = "menu.fun_daily.floor_tourist.description",
+        sessionStat = "totalFloorTime",
+        goal = 720,
+        progressKey = "menu.fun_daily.floor_tourist.progress",
+        progressReplacements = function(self, current, goal)
+            local function formatSeconds(seconds)
+                seconds = math.max(0, math.floor(seconds or 0))
+                local minutes = math.floor(seconds / 60)
+                local secs = seconds % 60
+                return string.format("%d:%02d", minutes, secs)
+            end
+
+            return {
+                current = formatSeconds(current),
+                goal = formatSeconds(goal),
+            }
+        end,
+        descriptionReplacements = function(self, current, goal)
+            return {
+                goal = math.floor((goal or 0) / 60),
+            }
+        end,
+        xpReward = 85,
+    },
+    {
         id = "streak_pusher",
         titleKey = "menu.fun_daily.streak_pusher.title",
         descriptionKey = "menu.fun_daily.streak_pusher.description",
@@ -439,6 +489,22 @@ FunChallenges.challenges = {
         sessionStat = "floorsCleared",
         goal = 10,
         xpReward = 100,
+    },
+    {
+        id = "depth_delver",
+        titleKey = "menu.fun_daily.depth_delver.title",
+        descriptionKey = "menu.fun_daily.depth_delver.description",
+        sessionStat = "deepestFloorReached",
+        goal = 12,
+        progressKey = "menu.fun_daily.depth_delver.progress",
+        completeKey = "menu.fun_daily.depth_delver.complete",
+        progressReplacements = function(self, current, goal)
+            return {
+                current = math.max(1, math.floor(current or 1)),
+                goal = goal or 0,
+            }
+        end,
+        xpReward = 110,
     },
     {
         id = "apple_hoarder",
