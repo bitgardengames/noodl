@@ -38,6 +38,13 @@ function Easing.easeOutBack(t)
     return 1 + c3 * math.pow(t - 1, 3) + c1 * math.pow(t - 1, 2)
 end
 
+function Easing.easeInBack(t)
+    local c1 = 1.70158
+    local c3 = c1 + 1
+
+    return c3 * math.pow(t, 3) - c1 * math.pow(t, 2)
+end
+
 function Easing.easedProgress(timer, duration)
     if not duration or duration <= 0 then
         return 1

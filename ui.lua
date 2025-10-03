@@ -1,6 +1,7 @@
 local Audio = require("audio")
 local Theme = require("theme")
 local Localization = require("localization")
+local Easing = require("easing")
 
 local UI = {}
 
@@ -12,6 +13,7 @@ UI.fruitCollected = 0
 UI.fruitRequired = 0
 UI.fruitSockets = {}
 UI.socketAnimTime = 0.25
+UI.socketRemoveTime = 0.18
 UI.socketBounceDuration = 0.65
 UI.socketSize = 26
 UI.goalReachedAnim = 0
@@ -534,10 +536,6 @@ function UI:getFruitGoal(required)
     return self.fruitRequired
 end
 
-function UI:addFruit()
-    self.fruitCollected = math.min(self.fruitCollected + 1, self.fruitRequired)
-end
-
 function UI:setFloorModifiers(modifiers)
     if type(modifiers) == "table" then
         self.floorModifiers = modifiers
@@ -654,8 +652,13 @@ function UI:addFruit(fruitType)
     table.insert(self.fruitSockets, {
         type = fruit,
         anim = 0,
+        state = "appearing",
         wobblePhase = love.math.random() * math.pi * 2,
         bounceTimer = 0,
+        removeTimer = 0,
+        celebrationGlow = nil,
+        celebrationDelay = nil,
+        pendingCelebration = nil,
     })
 end
 
@@ -666,6 +669,7 @@ function UI:removeFruit(count)
     end
 
     local removed = 0
+    local removalStagger = 0
     self.fruitCollected = math.max(0, self.fruitCollected or 0)
 
     for _ = 1, count do
@@ -677,7 +681,40 @@ function UI:removeFruit(count)
         removed = removed + 1
 
         if type(self.fruitSockets) == "table" and #self.fruitSockets > 0 then
-            table.remove(self.fruitSockets)
+            local marked = false
+            for i = #self.fruitSockets, 1, -1 do
+                local socket = self.fruitSockets[i]
+                if socket and socket.state ~= "removing" then
+                    socket.state = "removing"
+                    socket.removeTimer = 0
+                    socket.removeDelay = removalStagger
+                    socket.anim = math.min(socket.anim or self.socketAnimTime, self.socketAnimTime)
+                    socket.bounceTimer = nil
+                    socket.celebrationGlow = nil
+                    socket.celebrationDelay = nil
+                    socket.pendingCelebration = nil
+                    socket.wobblePhase = socket.wobblePhase or love.math.random() * math.pi * 2
+                    marked = true
+                    removalStagger = removalStagger + 0.05
+                    break
+                end
+            end
+
+            if not marked then
+                local last = self.fruitSockets[#self.fruitSockets]
+                if last then
+                    last.state = "removing"
+                    last.removeTimer = 0
+                    last.removeDelay = removalStagger
+                    last.anim = math.min(last.anim or self.socketAnimTime, self.socketAnimTime)
+                    last.bounceTimer = nil
+                    last.celebrationGlow = nil
+                    last.celebrationDelay = nil
+                    last.pendingCelebration = nil
+                    last.wobblePhase = last.wobblePhase or love.math.random() * math.pi * 2
+                    removalStagger = removalStagger + 0.05
+                end
+            end
         end
     end
 
@@ -693,8 +730,13 @@ function UI:celebrateGoal()
     self.goalReachedAnim = 0
     self.goalCelebrated = true
     Audio:playSound("goal_reached")
-    for _, socket in ipairs(self.fruitSockets) do
-        socket.bounceTimer = 0
+    for index, socket in ipairs(self.fruitSockets) do
+        if socket.state ~= "removing" then
+            socket.bounceTimer = nil
+            socket.pendingCelebration = true
+            socket.celebrationDelay = (index - 1) * 0.05
+            socket.celebrationGlow = nil
+        end
     end
 end
 
@@ -737,9 +779,49 @@ function UI:update(dt)
     end
 
     -- update fruit socket animations
-    for _, socket in ipairs(self.fruitSockets) do
-        if socket.anim < self.socketAnimTime then
-            socket.anim = math.min(socket.anim + dt, self.socketAnimTime)
+    for i = #self.fruitSockets, 1, -1 do
+        local socket = self.fruitSockets[i]
+        local removeSocket = false
+
+        socket.anim = socket.anim or 0
+        socket.removeTimer = socket.removeTimer or 0
+
+        if socket.state == "removing" then
+            socket.removeTimer = socket.removeTimer + dt
+            local delay = socket.removeDelay or 0
+            if socket.removeTimer >= delay then
+                local removalDuration = self.socketRemoveTime > 0 and self.socketRemoveTime or self.socketAnimTime
+                local removalSpeed = self.socketAnimTime / (removalDuration > 0 and removalDuration or 1)
+                socket.anim = math.max(0, socket.anim - dt * removalSpeed)
+                if socket.anim <= 0.001 then
+                    removeSocket = true
+                end
+            end
+        else
+            if socket.anim < self.socketAnimTime then
+                socket.anim = math.min(socket.anim + dt, self.socketAnimTime)
+            elseif socket.state == "appearing" then
+                socket.state = "idle"
+            end
+        end
+
+        if socket.pendingCelebration and socket.state ~= "removing" then
+            if not self.goalCelebrated then
+                socket.pendingCelebration = nil
+                socket.celebrationDelay = nil
+            else
+                socket.celebrationDelay = (socket.celebrationDelay or 0) - dt
+                if (socket.celebrationDelay or 0) <= 0 then
+                    socket.pendingCelebration = nil
+                    socket.celebrationDelay = nil
+                    socket.celebrationGlow = 1
+                    socket.bounceTimer = 0
+                end
+            end
+        elseif socket.state == "removing" then
+            socket.pendingCelebration = nil
+            socket.celebrationDelay = nil
+            socket.celebrationGlow = nil
         end
 
         if socket.bounceTimer ~= nil then
@@ -749,10 +831,22 @@ function UI:update(dt)
             end
         end
 
+        if socket.celebrationGlow then
+            socket.celebrationGlow = socket.celebrationGlow - dt * 1.8
+            if socket.celebrationGlow <= 0.01 then
+                socket.celebrationGlow = nil
+            end
+        end
+
         if socket.wobblePhase == nil then
             socket.wobblePhase = love.math.random() * math.pi * 2
         end
-        socket.wobblePhase = socket.wobblePhase + dt * 6.2
+        local wobbleSpeed = socket.state == "removing" and 5.0 or 6.2
+        socket.wobblePhase = socket.wobblePhase + dt * wobbleSpeed
+
+        if removeSocket then
+            table.remove(self.fruitSockets, i)
+        end
     end
 
     if self.goalCelebrated then
@@ -1357,14 +1451,34 @@ function UI:drawFruitSockets()
     local panelW = gridWidth + paddingX * 2
     local panelH = gridHeight + paddingY * 2
 
+    local goalFlash = 0
+    if self.goalCelebrated then
+        local flashT = clamp01(self.goalReachedAnim / 0.7)
+        goalFlash = math.pow(1 - flashT, 1.4)
+    end
+
     -- backdrop styled like the floor traits card
     local panelColor = Theme.panelColor
+    if goalFlash > 0 then
+        panelColor = lightenColor(panelColor, 0.25 * goalFlash)
+    end
     love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
     love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
 
-    love.graphics.setColor(0, 0, 0, 1)
+    local borderColor = Theme.panelBorder or Theme.textColor or {0, 0, 0, 1}
+    if goalFlash > 0 then
+        borderColor = lightenColor(borderColor, 0.4 * goalFlash)
+    end
+    love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
     love.graphics.setLineWidth(3)
     love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 12, 12)
+
+    if goalFlash > 0 then
+        love.graphics.setColor(1, 1, 1, 0.18 * goalFlash)
+        love.graphics.setLineWidth(6 * goalFlash + 1.5)
+        love.graphics.rectangle("line", panelX - 4 * goalFlash, panelY - 4 * goalFlash, panelW + 8 * goalFlash, panelH + 8 * goalFlash, 14 + 8 * goalFlash, 14 + 8 * goalFlash)
+        love.graphics.setLineWidth(3)
+    end
 
     local highlight = Theme.highlightColor or {1, 1, 1, 0.05}
 
@@ -1381,11 +1495,13 @@ function UI:drawFruitSockets()
         local y = baseY + row * spacing + self.socketSize / 2 + bounce
 
         -- socket shadow
-        love.graphics.setColor(0, 0, 0, 0.4)
         local socket = self.fruitSockets[i]
         local hasFruit = socket ~= nil
+        local appear = hasFruit and clamp01(socket.anim / self.socketAnimTime) or 0
         local radius = hasFruit and socketRadius or socketRadius * 0.8
-        local shadowScale = hasFruit and 1 or 0.85
+        local shadowScale = hasFruit and (0.75 + 0.25 * appear) or 0.85
+        local shadowAlpha = hasFruit and (0.45 * math.max(appear, 0.2)) or 0.4
+        love.graphics.setColor(0, 0, 0, shadowAlpha)
         love.graphics.ellipse("fill", x, y + radius * 0.65, radius * 0.95 * shadowScale, radius * 0.55 * shadowScale, 32)
 
         -- empty socket base
@@ -1398,23 +1514,42 @@ function UI:drawFruitSockets()
         love.graphics.setLineWidth(2)
         love.graphics.circle("line", x, y, radius, 48)
 
-        love.graphics.setColor(1, 1, 1, 0.08)
+        love.graphics.setColor(1, 1, 1, 0.08 * (hasFruit and appear or 1))
         love.graphics.arc("fill", x, y, radius * 1.1, -math.pi * 0.6, -math.pi * 0.1, 24)
 
         -- draw fruit if collected
         if socket then
-            local t = math.min(socket.anim / self.socketAnimTime, 1)
-            local scale = 0.75 + 0.25 * (1 - (1 - t) * (1 - t))
+            local t = clamp01(socket.anim / self.socketAnimTime)
+            local appearEase
+            if socket.state == "removing" then
+                appearEase = 1 - Easing.easeInBack(1 - t)
+            else
+                appearEase = Easing.easeOutBack(t)
+            end
+            appearEase = math.max(0, appearEase)
+
+            local scale = math.min(1.18, appearEase)
             local bounceScale = 1
             if socket.bounceTimer ~= nil then
-                local bounceProgress = math.min(1, socket.bounceTimer / self.socketBounceDuration)
-                bounceScale = 1 + math.sin(bounceProgress * math.pi) * 0.22 * (1 - bounceProgress * 0.35)
+                local bounceProgress = clamp01(socket.bounceTimer / self.socketBounceDuration)
+                bounceScale = 1 + math.sin(bounceProgress * math.pi) * 0.24 * (1 - bounceProgress * 0.4)
             end
 
-            local goalPulse = 1.0
+            local celebrationWave = 0
             if self.goalCelebrated then
-                local goalT = math.min(self.goalReachedAnim / 0.25, 1)
-                goalPulse = 1 + 0.3 * (1 - (1 - goalT) * (1 - goalT))
+                local waveTime = self.goalReachedAnim or 0
+                local waveFade = math.max(0, 1 - clamp01(waveTime / 0.9))
+                celebrationWave = math.sin(waveTime * 12 - i * 0.35) * 0.05 * waveFade
+            end
+
+            local goalPulse = 1 + (socket.celebrationGlow or 0) * 0.22 + celebrationWave
+            goalPulse = math.max(0.85, goalPulse)
+
+            local visibility = t
+            if socket.state == "removing" then
+                visibility = visibility * visibility
+            else
+                visibility = math.pow(visibility, 0.85)
             end
 
             love.graphics.push()
@@ -1427,22 +1562,23 @@ function UI:drawFruitSockets()
             love.graphics.scale(scale * goalPulse * bounceScale, scale * goalPulse * bounceScale)
 
             -- fruit shadow inside socket
-            love.graphics.setColor(0, 0, 0, 0.3)
+            love.graphics.setColor(0, 0, 0, 0.3 * visibility)
             love.graphics.ellipse("fill", 0, radius * 0.55, radius * 0.8, radius * 0.45, 32)
 
-            local r = radius * 1.0
+            local r = radius
             local fruit = socket.type
 
-            love.graphics.setColor(fruit.color[1], fruit.color[2], fruit.color[3], 1)
+            local fruitAlpha = (fruit.color[4] or 1) * visibility
+            love.graphics.setColor(fruit.color[1], fruit.color[2], fruit.color[3], fruitAlpha)
             love.graphics.circle("fill", 0, 0, r, 32)
 
-            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.setColor(0, 0, 0, math.max(0.2, visibility))
             love.graphics.setLineWidth(3)
             love.graphics.circle("line", 0, 0, r, 32)
 
             -- juicy highlight
             local highlightColor = lightenColor(fruit.color, 0.6)
-            local highlightAlpha = (highlightColor[4] or 1) * 0.75
+            local highlightAlpha = (highlightColor[4] or 1) * 0.75 * visibility
             love.graphics.push()
             love.graphics.translate(-r * 0.3 + 1, -r * 0.35)
             love.graphics.rotate(-0.35)
@@ -1451,16 +1587,32 @@ function UI:drawFruitSockets()
             love.graphics.pop()
 
             -- sparkling rim when fruit is fresh
-            if t < 1 then
-                local sparkle = 0.4 + 0.4 * (1 - t)
-                love.graphics.setColor(1, 1, 1, sparkle)
+            if t < 1 and socket.state ~= "removing" then
+                local sparkle = 0.25 + 0.55 * (1 - t)
+                love.graphics.setColor(1, 1, 1, sparkle * visibility)
+                love.graphics.setLineWidth(2)
                 love.graphics.circle("line", 0, 0, r + 3, 24)
+                love.graphics.setLineWidth(3)
+            end
+
+            if socket.celebrationGlow then
+                local glow = socket.celebrationGlow
+                local sparkleRadius = r + 4 + glow * 4
+                love.graphics.setLineWidth(2)
+                love.graphics.setColor(1, 1, 1, 0.18 * glow * visibility)
+                love.graphics.circle("line", 0, 0, sparkleRadius, 28)
+                love.graphics.setLineWidth(3)
+                local barWidth = 3 + glow * 2
+                local barLength = sparkleRadius * 1.1
+                love.graphics.setColor(1, 1, 1, 0.12 * glow * visibility)
+                love.graphics.rectangle("fill", -barWidth * 0.5, -barLength, barWidth, barLength * 2, barWidth * 0.4, barWidth * 0.4)
+                love.graphics.rectangle("fill", -barLength, -barWidth * 0.5, barLength * 2, barWidth, barWidth * 0.4, barWidth * 0.4)
             end
 
             -- dragonfruit glow
             if fruit.name == "Dragonfruit" then
                 local pulse = 0.5 + 0.5 * math.sin(time * 6.0)
-                love.graphics.setColor(1, 0, 1, 0.25 * pulse)
+                love.graphics.setColor(1, 0, 1, 0.25 * pulse * visibility)
                 love.graphics.circle("line", 0, 0, r + 4 * pulse, 32)
             end
 
@@ -1468,6 +1620,9 @@ function UI:drawFruitSockets()
         else
             -- idle shimmer in empty sockets
             local emptyGlow = 0.12 + 0.12 * math.sin(time * 5 + i * 0.9)
+            if goalFlash > 0 then
+                emptyGlow = emptyGlow + 0.08 * goalFlash
+            end
             love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * emptyGlow)
             love.graphics.circle("line", x, y, radius - 1.5, 32)
         end
