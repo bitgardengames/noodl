@@ -1357,37 +1357,16 @@ function UI:drawFruitSockets()
     local panelW = gridWidth + paddingX * 2
     local panelH = gridHeight + paddingY * 2
 
-    local goalFlash = 0
-    if self.goalCelebrated then
-        local flashProgress = math.min(1, self.goalReachedAnim / 0.65)
-        goalFlash = math.sin(flashProgress * math.pi)
-    end
-
-    -- juicy backdrop for the whole socket grid
-    love.graphics.setColor(0, 0, 0, 0.35)
-    love.graphics.rectangle("fill", panelX + 6, panelY + 8, panelW, panelH, 18, 18)
-
-    local panelColor = lightenColor(Theme.panelColor, 0.2 + 0.25 * goalFlash)
+    -- backdrop styled like the floor traits card
+    local panelColor = Theme.panelColor
     love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
-    love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 18, 18)
+    love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
 
-    local borderColor = Theme.panelBorder or Theme.textColor
-    borderColor = lightenColor(borderColor, 0.1 + 0.2 * goalFlash)
+    love.graphics.setColor(0, 0, 0, 1)
     love.graphics.setLineWidth(3)
-    love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
-    love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 18, 18)
+    love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 12, 12)
 
     local highlight = Theme.highlightColor or {1, 1, 1, 0.05}
-    love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * 0.75)
-    love.graphics.rectangle("fill", panelX + 4, panelY + 4, panelW - 8, panelH * 0.35, 14, 14)
-
-    if goalFlash > 0 then
-        local prevMode, prevAlphaMode = love.graphics.getBlendMode()
-        love.graphics.setBlendMode("add", "alphamultiply")
-        love.graphics.setColor(1, 1, 1, 0.16 * goalFlash)
-        love.graphics.rectangle("line", panelX - 4, panelY - 4, panelW + 8, panelH + 8, 22, 22)
-        love.graphics.setBlendMode(prevMode, prevAlphaMode)
-    end
 
     local time = love.timer.getTime()
     local socketRadius = (self.socketSize / 2) - 2
@@ -1501,13 +1480,13 @@ function UI:drawFruitSockets()
     local font = love.graphics.getFont()
     local textHeight = font:getHeight()
     local padding = 12
-    local textY = panelY + panelH - padding - textHeight
+    local textY = panelY + panelH + padding
     love.graphics.setColor(Theme.textColor)
     love.graphics.printf(
         collected .. " / " .. required,
-        panelX + padding,
+        panelX,
         textY,
-        panelW - padding * 2,
+        panelW,
         "right"
     )
 end
