@@ -789,7 +789,7 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         if promptAlpha > 0 then
             local promptText = Localization:get("game.floor_intro.prompt")
             if promptText and promptText ~= "" then
-                local promptFont = UI.fonts.prompt or UI.fonts.body
+                local promptFont = UI.fonts.body
                 love.graphics.setFont(promptFont)
                 local y = self.screenHeight - promptFont:getHeight() * 2.2
                 local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }

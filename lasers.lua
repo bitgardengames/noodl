@@ -16,7 +16,6 @@ local BURN_FADE_RATE = 0.55
 local WALL_INSET = 6
 local BEAM_PULSE_SPEED = 7.2
 local BEAM_GLOW_EXPANSION = 8
-local WARNING_DECAY_RATE = 1.65
 local BASE_GLOW_RADIUS = 18
 local IMPACT_RING_SPEED = 1.85
 local IMPACT_RING_RANGE = 16
@@ -244,7 +243,6 @@ function Lasers:spawn(x, y, dir, length, options)
         flashTimer = 0,
         burnAlpha = 0,
         randomOffset = love.math.random() * math.pi * 2,
-        warningIntensity = 0,
     }
 
     beam.fireCooldown = love.math.random() * (maxCooldown - minCooldown) + minCooldown
@@ -266,14 +264,6 @@ function Lasers:update(dt)
 
         if beam.state == "charging" then
             beam.chargeTimer = (beam.chargeTimer or beam.chargeDuration) - dt
-            local duration = beam.chargeDuration or DEFAULT_CHARGE_DURATION
-            local remaining = clamp(beam.chargeTimer or 0, 0, duration)
-            if duration <= 0 then
-                beam.warningIntensity = 1
-            else
-                local progress = clamp(1 - (remaining / duration), 0, 1)
-                beam.warningIntensity = math.max(beam.warningIntensity or 0, math.pow(progress, 0.85))
-            end
             if beam.chargeTimer <= 0 then
                 beam.state = "firing"
                 beam.isFiring = true
@@ -281,12 +271,10 @@ function Lasers:update(dt)
                 beam.chargeTimer = nil
                 beam.flashTimer = math.max(beam.flashTimer or 0, 0.75)
                 beam.burnAlpha = 0.92
-                beam.warningIntensity = 1
             end
         elseif beam.state == "firing" then
             beam.fireTimer = (beam.fireTimer or beam.fireDuration) - dt
             beam.burnAlpha = 0.92
-            beam.warningIntensity = 1
             if beam.fireTimer <= 0 then
                 beam.state = "cooldown"
                 beam.isFiring = false
@@ -297,7 +285,6 @@ function Lasers:update(dt)
                 end
                 beam.fireCooldown = love.math.random() * (maxCooldown - minCooldown) + minCooldown
                 beam.fireTimer = nil
-                beam.warningIntensity = math.max(beam.warningIntensity or 0, 0.85)
             end
         else
             if beam.fireCooldown then
@@ -305,22 +292,16 @@ function Lasers:update(dt)
                 if beam.fireCooldown <= 0 then
                     beam.state = "charging"
                     beam.chargeTimer = beam.chargeDuration
-                    beam.warningIntensity = math.max(beam.warningIntensity or 0, 0.1)
                     beam.fireCooldown = nil
                 end
             else
                 beam.state = "charging"
                 beam.chargeTimer = beam.chargeDuration
-                beam.warningIntensity = math.max(beam.warningIntensity or 0, 0.1)
             end
         end
 
         if beam.state ~= "firing" then
             beam.burnAlpha = math.max(0, (beam.burnAlpha or 0) - dt * BURN_FADE_RATE)
-        end
-
-        if beam.state ~= "charging" and beam.state ~= "firing" then
-            beam.warningIntensity = math.max(0, (beam.warningIntensity or 0) - dt * WARNING_DECAY_RATE)
         end
 
         if beam.flashTimer and beam.flashTimer > 0 then
@@ -413,15 +394,6 @@ local function drawBeam(beam)
 
     local t = getTime()
     local facingSign = beam.facing or 1
-    local warningIntensity = clamp(beam.warningIntensity or 0, 0, 1)
-
-    if warningIntensity > 0 then
-        local pulse = 0.6 + 0.4 * math.sin(t * 5.8 + (beam.randomOffset or 0))
-        local preGlowAlpha = (palette.glow[4] or 0.5) * 0.35 * warningIntensity * pulse
-        local expansion = BEAM_GLOW_EXPANSION * (0.45 + warningIntensity * 1.15)
-        love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], preGlowAlpha)
-        love.graphics.rectangle("fill", x - expansion, y - expansion, w + expansion * 2, h + expansion * 2, 6, 6)
-    end
 
     if beam.state == "firing" then
         local flicker = 0.82 + 0.18 * math.sin(t * 11 + (beam.beamStartX or 0) * 0.05 + (beam.beamStartY or 0) * 0.05)
@@ -501,14 +473,13 @@ local function drawBeam(beam)
         local duration = beam.chargeDuration or DEFAULT_CHARGE_DURATION
         local remaining = clamp(beam.chargeTimer or 0, 0, duration)
         local progress = (duration <= 0) and 1 or (1 - remaining / duration)
-        local ramp = math.max(progress, warningIntensity)
-        local alpha = 0.18 + 0.55 * ramp
-        love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], alpha * 0.5)
-        love.graphics.rectangle("fill", x - 4, y - 4, w + 8, h + 8, 6, 6)
-        love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], alpha * 0.9)
+        local alpha = 0.15 + 0.45 * progress
+        love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], alpha * 0.45)
+        love.graphics.rectangle("fill", x - 3, y - 3, w + 6, h + 6, 6, 6)
+        love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], alpha * 0.85)
         love.graphics.rectangle("fill", x - 1, y - 1, w + 2, h + 2, 4, 4)
 
-        love.graphics.setColor(1, 0.95, 0.65, 0.25 + 0.45 * ramp)
+        love.graphics.setColor(1, 0.95, 0.65, 0.25 + 0.35 * progress)
         if beam.dir == "horizontal" then
             local bandHeight = math.max(1.2, h * 0.25)
             love.graphics.rectangle("fill", x, y + h * 0.5 - bandHeight * 0.5, w, bandHeight, 2, 2)
@@ -521,7 +492,7 @@ local function drawBeam(beam)
         local rim = palette.rim or palette.core
         for i = 0, stripes - 1 do
             local offset = (progress + i / stripes) % 1
-            local stripeAlpha = math.max(0, (0.55 - i * 0.08) * (0.35 + ramp * 0.7))
+            local stripeAlpha = math.max(0, (0.55 - i * 0.08) * (0.35 + progress * 0.65))
             if beam.dir == "horizontal" then
                 local stripeX = x + (w - 6) * offset
                 love.graphics.setColor(rim[1], rim[2], rim[3], stripeAlpha)
@@ -534,24 +505,14 @@ local function drawBeam(beam)
         end
 
         local resonance = math.sin(t * 4 + (beam.randomOffset or 0)) * 0.5 + 0.5
-        local shimmer = 0.2 + 0.5 * ramp
-        love.graphics.setColor(rim[1], rim[2], rim[3], shimmer * (0.35 + resonance * 0.5))
+        local shimmer = 0.2 + 0.4 * progress
+        love.graphics.setColor(rim[1], rim[2], rim[3], shimmer * (0.3 + resonance * 0.5))
         if beam.dir == "horizontal" then
             love.graphics.rectangle("fill", x, y + h * 0.3, w, h * 0.1, 2, 2)
             love.graphics.rectangle("fill", x, y + h * 0.6, w, h * 0.1, 2, 2)
         else
             love.graphics.rectangle("fill", x + w * 0.3, y, w * 0.1, h, 2, 2)
             love.graphics.rectangle("fill", x + w * 0.6, y, w * 0.1, h, 2, 2)
-        end
-    elseif warningIntensity > 0 then
-        local settle = warningIntensity
-        love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], 0.2 * settle)
-        love.graphics.rectangle("fill", x - 1, y - 1, w + 2, h + 2, 4, 4)
-        love.graphics.setColor(1, 0.8, 0.55, 0.25 * settle)
-        if beam.dir == "horizontal" then
-            love.graphics.rectangle("fill", x, y + h * 0.4, w, h * 0.2, 2, 2)
-        else
-            love.graphics.rectangle("fill", x + w * 0.4, y, w * 0.2, h, 2, 2)
         end
     end
 end
@@ -605,8 +566,7 @@ local function drawEmitterBase(beam)
     local bx = (beam.x or 0) - half
     local by = (beam.y or 0) - half
     local flash = clamp(beam.flashTimer or 0, 0, 1)
-    local warningIntensity = clamp(beam.warningIntensity or 0, 0, 1)
-    local highlightBoost = warningIntensity * 0.4 + ((beam.state == "firing") and 0.15 or 0)
+    local highlightBoost = (beam.state == "firing") and 0.25 or ((beam.state == "charging") and 0.15 or 0)
 
     local t = getTime()
     local pulse = 0.25 + 0.25 * math.sin(t * 5.5 + (beam.x or 0) * 0.03 + (beam.y or 0) * 0.03)
@@ -620,11 +580,11 @@ local function drawEmitterBase(beam)
     love.graphics.setColor(0, 0, 0, 0.45 + flash * 0.25)
     love.graphics.rectangle("line", bx, by, tileSize, tileSize, 6, 6)
 
-    local accentAlpha = (accentColor[4] or 0.8) + flash * 0.2 + highlightBoost * 0.8
+    local accentAlpha = (accentColor[4] or 0.8) + flash * 0.2 + highlightBoost
     love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], math.min(1, accentAlpha))
     love.graphics.rectangle("line", bx + 2, by + 2, tileSize - 4, tileSize - 4, 4, 4)
 
-    love.graphics.setColor(1, 1, 1, 0.18 + highlightBoost * 0.35 + flash * 0.2)
+    love.graphics.setColor(1, 1, 1, 0.18 + highlightBoost * 0.4 + flash * 0.2)
     love.graphics.rectangle("fill", bx + 3, by + 3, tileSize - 6, tileSize * 0.2, 3, 3)
 
     local slitLength = tileSize * 0.55
@@ -642,14 +602,11 @@ local function drawEmitterBase(beam)
 
     if beam.state == "charging" then
         local chargeLift = (math.sin(t * 6 + (beam.randomOffset or 0)) * 0.5 + 0.5) * tileSize * 0.08
-        love.graphics.setColor(1, 0.4, 0.32, 0.35 + warningIntensity * 0.5 + flash * 0.35)
+        love.graphics.setColor(1, 0.4, 0.32, 0.45 + flash * 0.4)
         love.graphics.circle("line", cx, cy, ringRadius * 0.65 + chargeLift)
     elseif beam.state == "firing" then
         love.graphics.setColor(1, 0.55, 0.4, 0.35 + flash * 0.45)
         love.graphics.circle("line", cx, cy, ringRadius * 0.8)
-    elseif warningIntensity > 0 then
-        love.graphics.setColor(1, 0.42, 0.32, 0.22 * warningIntensity)
-        love.graphics.circle("line", cx, cy, ringRadius * 0.65)
     end
     if beam.dir == "horizontal" then
         local dir = beam.facing or 1

@@ -1,6 +1,5 @@
 local Face = require("face")
 local SnakeCosmetics = require("snakecosmetics")
-local SnakeUtils = require("snakeutils")
 
 local unpack = unpack
 
@@ -202,76 +201,19 @@ local function applySkinGlow(trail, head, radius, config)
 end
 
 -- polyline coords {x1,y1,x2,y2,...}
-local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING or 1
-
-local function snapToCenter(v)
-  return (math.floor(v / SEGMENT_SPACING) + 0.5) * SEGMENT_SPACING
-end
-
-local function isHorizontal(dirX, dirY)
-  return math.abs(dirX or 0) > math.abs(dirY or 0)
-end
-
-local function isVertical(dirX, dirY)
-  return math.abs(dirY or 0) > math.abs(dirX or 0)
-end
-
 local function buildCoords(trail)
   local coords = {}
   local lastx, lasty
-
   for i = 1, #trail do
-    local seg = trail[i]
-    local x, y = ptXY(seg)
+    local x, y = ptXY(trail[i])
     if x and y then
-      x = snapToCenter(x)
-      y = snapToCenter(y)
-
-      if lastx and lasty then
-        local prevSeg = trail[i - 1]
-        if prevSeg then
-          local dirX = prevSeg.dirX or 0
-          local dirY = prevSeg.dirY or 0
-          if isHorizontal(dirX, dirY) then
-            y = lasty
-          elseif isVertical(dirX, dirY) then
-            x = lastx
-          end
-        end
-
-        local dx = x - lastx
-        local dy = y - lasty
-        if math.abs(dx) > 1e-3 and math.abs(dy) > 1e-3 then
-          local cornerX, cornerY
-          local nextDirX = seg and seg.dirX or 0
-          local nextDirY = seg and seg.dirY or 0
-
-          if isHorizontal(nextDirX, nextDirY) then
-            cornerX, cornerY = x, lasty
-          elseif isVertical(nextDirX, nextDirY) then
-            cornerX, cornerY = lastx, y
-          elseif math.abs(dx) >= math.abs(dy) then
-            cornerX, cornerY = x, lasty
-          else
-            cornerX, cornerY = lastx, y
-          end
-
-          if cornerX and cornerY then
-            coords[#coords + 1] = cornerX
-            coords[#coords + 1] = cornerY
-            lastx, lasty = cornerX, cornerY
-          end
-        end
-      end
-
-      if not (lastx and lasty and math.abs(x - lastx) < 1e-3 and math.abs(y - lasty) < 1e-3) then
+      if not (lastx and lasty and x == lastx and y == lasty) then
         coords[#coords+1] = x
         coords[#coords+1] = y
         lastx, lasty = x, y
       end
     end
   end
-
   return coords
 end
 
