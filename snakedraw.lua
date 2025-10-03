@@ -21,6 +21,7 @@ local overlayShaderSources = {
     extern float speed;
     extern float angle;
     extern float intensity;
+    extern float overlayBlend;
     extern vec4 colorA;
     extern vec4 colorB;
     extern vec4 bodyColor;
@@ -37,7 +38,7 @@ local overlayShaderSources = {
       float c = cos(angle);
       float s = sin(angle);
       float stripe = sin((uv.x * c + uv.y * s) * frequency + time * speed) * 0.5 + 0.5;
-      float blend = clamp(stripe * intensity, 0.0, 1.0);
+      float blend = clamp(stripe * intensity, 0.0, 1.0) * clamp(overlayBlend, 0.0, 1.0);
       vec3 mixCol = mix(colorA.rgb, colorB.rgb, stripe);
       vec3 result = mix(bodyColor.rgb, mixCol, blend);
       float alpha = mask * bodyColor.a;
@@ -48,6 +49,7 @@ local overlayShaderSources = {
     extern float time;
     extern float speed;
     extern float intensity;
+    extern float overlayBlend;
     extern vec4 colorA;
     extern vec4 colorB;
     extern vec4 colorC;
@@ -71,7 +73,7 @@ local overlayShaderSources = {
       layer = mix(layer, colorC.rgb, clamp(radial * 0.5 + 0.5, 0.0, 1.0) * 0.6);
       layer += shimmer * 0.12 * colorC.rgb;
 
-      float blend = clamp(intensity, 0.0, 1.0);
+      float blend = clamp(intensity, 0.0, 1.0) * clamp(overlayBlend, 0.0, 1.0);
       vec3 result = mix(bodyColor.rgb, layer, blend);
       float alpha = mask * bodyColor.a;
       return vec4(result, alpha) * color;
@@ -143,6 +145,7 @@ local function applyOverlay(maskCanvas, bodyColor, config)
 
   shader:send("time", time)
   shader:send("intensity", config.intensity or 0.5)
+  shader:send("overlayBlend", math.max(0, math.min(1, config.overlayBlend or config.opacity or 1)))
   shader:send("colorA", primary)
   shader:send("colorB", secondary)
   shader:send("bodyColor", baseColor)
@@ -158,8 +161,8 @@ local function applyOverlay(maskCanvas, bodyColor, config)
 
   love.graphics.push("all")
   love.graphics.setShader(shader)
-  love.graphics.setBlendMode(config.blendMode or "alpha")
-  love.graphics.setColor(1, 1, 1, config.opacity or 1)
+  love.graphics.setBlendMode(config.blendMode or "replace")
+  love.graphics.setColor(1, 1, 1, 1)
   love.graphics.draw(maskCanvas, 0, 0)
   love.graphics.pop()
 
