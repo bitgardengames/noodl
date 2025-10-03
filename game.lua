@@ -608,48 +608,91 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
     end
 
     local nameAlpha = fadeAlpha(0.0, 0.45)
+    local titleParams
     if nameAlpha > 0 then
         local titleProgress = easeOutBack(clamp01((timer - 0.1) / 0.6))
         local titleScale = 0.9 + 0.1 * titleProgress
         local yOffset = (1 - titleProgress) * 36 * outroAlpha
-        love.graphics.setFont(UI.fonts.title)
-        love.graphics.push()
-        love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 - 80 + yOffset)
-        love.graphics.scale(titleScale, titleScale)
-        love.graphics.translate(-self.screenWidth / 2, -(self.screenHeight / 2 - 80 + yOffset))
-        local stripPadding = 12
-        local stripHeight = UI.fonts.title:getHeight() + stripPadding * 2
-        local stripY = self.screenHeight / 2 - 80 + yOffset - stripPadding
-        love.graphics.setColor(0, 0, 0, 0.6 * nameAlpha)
-        love.graphics.rectangle("fill", 0, stripY, self.screenWidth, stripHeight)
-        local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * nameAlpha)
-        love.graphics.printf(floorData.name, 2, self.screenHeight / 2 - 78 + yOffset, self.screenWidth, "center")
-        love.graphics.setColor(1, 1, 1, nameAlpha)
-        love.graphics.printf(floorData.name, 0, self.screenHeight / 2 - 80 + yOffset, self.screenWidth, "center")
-        love.graphics.pop()
+        local centerY = self.screenHeight / 2 - 80 + yOffset
+        titleParams = {
+            alpha = nameAlpha,
+            scale = titleScale,
+            centerY = centerY,
+            padding = 12,
+        }
     end
 
+    local flavorParams
+    local flavorAlpha = 0
     if floorData.flavor and floorData.flavor ~= "" then
-        local flavorAlpha = fadeAlpha(0.45, 0.4)
+        flavorAlpha = fadeAlpha(0.45, 0.4)
         if flavorAlpha > 0 then
             local flavorProgress = easeOutExpo(clamp01((timer - 0.45) / 0.65))
             local flavorOffset = (1 - flavorProgress) * 24 * outroAlpha
-            love.graphics.setFont(UI.fonts.button)
-            love.graphics.push()
-            love.graphics.translate(0, flavorOffset)
             local flavorPadding = 10
             local flavorHeight = UI.fonts.button:getHeight() + flavorPadding * 2
-            local flavorY = self.screenHeight / 2 - flavorPadding
-            love.graphics.setColor(0, 0, 0, 0.55 * flavorAlpha)
-            love.graphics.rectangle("fill", 0, flavorY, self.screenWidth, flavorHeight)
-            local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-            love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * flavorAlpha)
-            love.graphics.printf(floorData.flavor, 2, self.screenHeight / 2 + 2, self.screenWidth, "center")
-            love.graphics.setColor(1, 1, 1, flavorAlpha)
-            love.graphics.printf(floorData.flavor, 0, self.screenHeight / 2, self.screenWidth, "center")
-            love.graphics.pop()
+            flavorParams = {
+                alpha = flavorAlpha,
+                offset = flavorOffset,
+                padding = flavorPadding,
+                height = flavorHeight,
+                y = self.screenHeight / 2 - flavorPadding + flavorOffset,
+            }
         end
+    end
+
+    if titleParams or flavorParams then
+        local top = math.huge
+        local bottom = -math.huge
+        local backdropAlpha = 0
+
+        if titleParams then
+            local titleHeight = (UI.fonts.title:getHeight() + titleParams.padding * 2) * titleParams.scale
+            local titleTop = titleParams.centerY - titleParams.padding * titleParams.scale
+            local titleBottom = titleTop + titleHeight
+            top = math.min(top, titleTop)
+            bottom = math.max(bottom, titleBottom)
+            backdropAlpha = math.max(backdropAlpha, 0.6 * titleParams.alpha)
+        end
+
+        if flavorParams then
+            local flavorTop = flavorParams.y
+            local flavorBottom = flavorTop + flavorParams.height
+            top = math.min(top, flavorTop)
+            bottom = math.max(bottom, flavorBottom)
+            backdropAlpha = math.max(backdropAlpha, 0.55 * flavorParams.alpha)
+        end
+
+        if top < bottom and backdropAlpha > 0 then
+            love.graphics.setColor(0, 0, 0, backdropAlpha)
+            love.graphics.rectangle("fill", 0, top, self.screenWidth, bottom - top)
+        end
+    end
+
+    if titleParams then
+        love.graphics.setFont(UI.fonts.title)
+        love.graphics.push()
+        love.graphics.translate(self.screenWidth / 2, titleParams.centerY)
+        love.graphics.scale(titleParams.scale, titleParams.scale)
+        love.graphics.translate(-self.screenWidth / 2, -titleParams.centerY)
+        local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * titleParams.alpha)
+        love.graphics.printf(floorData.name, 2, titleParams.centerY + 2, self.screenWidth, "center")
+        love.graphics.setColor(1, 1, 1, titleParams.alpha)
+        love.graphics.printf(floorData.name, 0, titleParams.centerY, self.screenWidth, "center")
+        love.graphics.pop()
+    end
+
+    if flavorParams then
+        love.graphics.setFont(UI.fonts.button)
+        love.graphics.push()
+        love.graphics.translate(0, flavorParams.offset)
+        local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * flavorParams.alpha)
+        love.graphics.printf(floorData.flavor, 2, self.screenHeight / 2 + 2, self.screenWidth, "center")
+        love.graphics.setColor(1, 1, 1, flavorParams.alpha)
+        love.graphics.printf(floorData.flavor, 0, self.screenHeight / 2, self.screenWidth, "center")
+        love.graphics.pop()
     end
 
     drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
