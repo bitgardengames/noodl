@@ -1985,10 +1985,32 @@ function Upgrades:applyPersistentEffects(rebaseline)
     end
 end
 
-local function calculateWeight(upgrade)
+local SHOP_PITY_MAX = 4
+local SHOP_PITY_RARITY_BONUS = {
+    rare = 0.18,
+    epic = 0.3,
+    legendary = 0.45,
+}
+
+local SHOP_PITY_RARITY_RANK = {
+    common = 1,
+    uncommon = 2,
+    rare = 3,
+    epic = 4,
+    legendary = 5,
+}
+
+local function calculateWeight(upgrade, pityLevel)
     local rarityInfo = getRarityInfo(upgrade.rarity)
     local rarityWeight = rarityInfo.weight or 1
-    return rarityWeight * (upgrade.weight or 1)
+    local weight = rarityWeight * (upgrade.weight or 1)
+
+    local bonus = SHOP_PITY_RARITY_BONUS[upgrade.rarity]
+    if bonus and pityLevel and pityLevel > 0 then
+        weight = weight * (1 + math.min(pityLevel, SHOP_PITY_MAX) * bonus)
+    end
+
+    return weight
 end
 
 function Upgrades:canOffer(upgrade, context, allowTaken)
@@ -2080,6 +2102,12 @@ local function decorateCard(upgrade)
 end
 
 function Upgrades:getRandom(n, context)
+    local state = self.runState or newRunState()
+    local pityLevel = 0
+    if state and state.counters then
+        pityLevel = math.min(state.counters.shopBadLuck or 0, SHOP_PITY_MAX)
+    end
+
     local available = {}
     for _, upgrade in ipairs(pool) do
         if self:canOffer(upgrade, context, false) then
@@ -2101,7 +2129,7 @@ function Upgrades:getRandom(n, context)
         local totalWeight = 0
         local weights = {}
         for i, upgrade in ipairs(available) do
-            local weight = calculateWeight(upgrade)
+            local weight = calculateWeight(upgrade, pityLevel)
             totalWeight = totalWeight + weight
             weights[i] = weight
         end
@@ -2123,6 +2151,23 @@ function Upgrades:getRandom(n, context)
         table.insert(cards, decorateCard(choice))
         table.remove(available, chosenIndex)
         if #available == 0 then break end
+    end
+
+    if state and state.counters then
+        local bestRank = 0
+        for _, card in ipairs(cards) do
+            local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
+            if rank > bestRank then
+                bestRank = rank
+            end
+        end
+
+        if bestRank >= (SHOP_PITY_RARITY_RANK.rare or 0) then
+            state.counters.shopBadLuck = 0
+        else
+            local counter = (state.counters.shopBadLuck or 0) + 1
+            state.counters.shopBadLuck = math.min(counter, SHOP_PITY_MAX)
+        end
     end
 
     return cards

@@ -23,17 +23,17 @@ UpgradeHelpers.rarities = {
         color = {0.55, 0.78, 0.58, 1},
     },
     rare = {
-        weight = 8,
+        weight = 10,
         labelKey = "upgrades.rarities.rare",
         color = {0.54, 0.72, 0.96, 1},
     },
     epic = {
-        weight = 2,
+        weight = 2.8,
         labelKey = "upgrades.rarities.epic",
         color = {0.76, 0.56, 0.88, 1},
     },
     legendary = {
-        weight = 0.35,
+        weight = 0.5,
         labelKey = "upgrades.rarities.legendary",
         color = {1, 0.66, 0.32, 1},
     },
