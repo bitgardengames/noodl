@@ -1463,10 +1463,15 @@ function UI:drawFruitSockets()
     if goalFlash > 0 then
         panelColor = lightenColor(panelColor, 0.25 * goalFlash)
     end
+
+    local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+    love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * 0.6)
+    love.graphics.rectangle("fill", panelX + 3, panelY + 4, panelW, panelH, 12, 12)
+
     love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
     love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
 
-    local borderColor = Theme.panelBorder or Theme.textColor or {0, 0, 0, 1}
+    local borderColor = Theme.panelBorder or {0, 0, 0, 1}
     if goalFlash > 0 then
         borderColor = lightenColor(borderColor, 0.4 * goalFlash)
     end
@@ -1637,6 +1642,15 @@ function UI:drawFruitSockets()
     local textHeight = font:getHeight()
     local padding = 12
     local textY = panelY + panelH + padding
+    local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
+    love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 1))
+    love.graphics.printf(
+        collected .. " / " .. required,
+        panelX + 2,
+        textY + 2,
+        panelW,
+        "right"
+    )
     love.graphics.setColor(Theme.textColor)
     love.graphics.printf(
         collected .. " / " .. required,
