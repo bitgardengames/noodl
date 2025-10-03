@@ -14,6 +14,17 @@ local DEFAULT_FIRE_DURATION = 1.2
 local DEFAULT_CHARGE_DURATION = 0.9
 local BURN_FADE_RATE = 0.55
 local WALL_INSET = 6
+local BEAM_PULSE_SPEED = 7.2
+local BEAM_GLOW_EXPANSION = 8
+local BASE_GLOW_RADIUS = 18
+
+local function getTime()
+    if love and love.timer and love.timer.getTime then
+        return love.timer.getTime()
+    end
+
+    return 0
+end
 
 local function copyColor(color, alpha)
     local r = 1
@@ -362,6 +373,8 @@ local function drawBurnMark(beam)
     love.graphics.circle("fill", beam.impactX, beam.impactY, radius)
     love.graphics.setColor(0.1, 0.05, 0.05, 0.7 * alpha)
     love.graphics.circle("fill", beam.impactX, beam.impactY, radius * 0.55)
+    love.graphics.setColor(0.95, 0.25, 0.2, 0.18 * alpha)
+    love.graphics.circle("line", beam.impactX, beam.impactY, radius * 0.9)
 end
 
 local function drawBeam(beam)
@@ -375,20 +388,89 @@ local function drawBeam(beam)
         return
     end
 
+    local t = getTime()
+    local facingSign = beam.facing or 1
+
     if beam.state == "firing" then
-        love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], (palette.glow[4] or 0.5))
-        love.graphics.rectangle("fill", x - 4, y - 4, w + 8, h + 8, 6, 6)
-        love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], (palette.core[4] or 0.9))
+        local flicker = 0.82 + 0.18 * math.sin(t * 11 + (beam.beamStartX or 0) * 0.05 + (beam.beamStartY or 0) * 0.05)
+        local glowAlpha = (palette.glow[4] or 0.5) * flicker
+        love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], glowAlpha)
+        love.graphics.rectangle("fill", x - BEAM_GLOW_EXPANSION, y - BEAM_GLOW_EXPANSION, w + BEAM_GLOW_EXPANSION * 2, h + BEAM_GLOW_EXPANSION * 2, 7, 7)
+
+        local innerGlowAlpha = math.min(1, (palette.core[4] or 0.9) * (0.85 + 0.15 * flicker))
+        love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], innerGlowAlpha)
+        love.graphics.rectangle("fill", x - 2, y - 2, w + 4, h + 4, 6, 6)
+
+        local rim = palette.rim or palette.core
+        love.graphics.setColor(rim[1], rim[2], rim[3], (rim[4] or 1))
         love.graphics.rectangle("fill", x, y, w, h, 4, 4)
+
+        local highlightThickness = math.max(1.5, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.35)
+        love.graphics.setColor(1, 0.97, 0.75, 0.55)
+        if beam.dir == "horizontal" then
+            local centerY = y + h * 0.5
+            love.graphics.rectangle("fill", x, centerY - highlightThickness * 0.5, w, highlightThickness, 3, 3)
+        else
+            local centerX = x + w * 0.5
+            love.graphics.rectangle("fill", centerX - highlightThickness * 0.5, y, highlightThickness, h, 3, 3)
+        end
+
+        local length = (beam.dir == "horizontal") and w or h
+        local pulseSpacing = math.max(24, length / 6)
+        local pulseSize = pulseSpacing * 0.55
+        local travel = (t * BEAM_PULSE_SPEED * 45 * facingSign) % pulseSpacing
+        love.graphics.setColor(1, 0.8, 0.45, 0.25 + 0.35 * flicker)
+        if beam.dir == "horizontal" then
+            for start = -travel, w, pulseSpacing do
+                local segmentStart = math.max(0, start)
+                local segmentEnd = math.min(w, start + pulseSize)
+                if segmentEnd > segmentStart then
+                    love.graphics.rectangle("fill", x + segmentStart, y + h * 0.15, segmentEnd - segmentStart, h * 0.7, 3, 3)
+                end
+            end
+        else
+            for start = -travel, h, pulseSpacing do
+                local segmentStart = math.max(0, start)
+                local segmentEnd = math.min(h, start + pulseSize)
+                if segmentEnd > segmentStart then
+                    love.graphics.rectangle("fill", x + w * 0.15, y + segmentStart, w * 0.7, segmentEnd - segmentStart, 3, 3)
+                end
+            end
+        end
     elseif beam.state == "charging" then
         local duration = beam.chargeDuration or DEFAULT_CHARGE_DURATION
         local remaining = clamp(beam.chargeTimer or 0, 0, duration)
         local progress = (duration <= 0) and 1 or (1 - remaining / duration)
         local alpha = 0.15 + 0.45 * progress
-        love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], alpha * 0.6)
+        love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], alpha * 0.45)
         love.graphics.rectangle("fill", x - 3, y - 3, w + 6, h + 6, 6, 6)
-        love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], alpha)
-        love.graphics.rectangle("fill", x, y, w, h, 4, 4)
+        love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], alpha * 0.85)
+        love.graphics.rectangle("fill", x - 1, y - 1, w + 2, h + 2, 4, 4)
+
+        love.graphics.setColor(1, 0.95, 0.65, 0.25 + 0.35 * progress)
+        if beam.dir == "horizontal" then
+            local bandHeight = math.max(1.2, h * 0.25)
+            love.graphics.rectangle("fill", x, y + h * 0.5 - bandHeight * 0.5, w, bandHeight, 2, 2)
+        else
+            local bandWidth = math.max(1.2, w * 0.25)
+            love.graphics.rectangle("fill", x + w * 0.5 - bandWidth * 0.5, y, bandWidth, h, 2, 2)
+        end
+
+        local stripes = 4
+        local rim = palette.rim or palette.core
+        for i = 0, stripes - 1 do
+            local offset = (progress + i / stripes) % 1
+            local stripeAlpha = math.max(0, (0.55 - i * 0.08) * (0.35 + progress * 0.65))
+            if beam.dir == "horizontal" then
+                local stripeX = x + (w - 6) * offset
+                love.graphics.setColor(rim[1], rim[2], rim[3], stripeAlpha)
+                love.graphics.rectangle("fill", stripeX, y + 1, 6, h - 2, 2, 2)
+            else
+                local stripeY = y + (h - 6) * offset
+                love.graphics.setColor(rim[1], rim[2], rim[3], stripeAlpha)
+                love.graphics.rectangle("fill", x + 1, stripeY, w - 2, 6, 2, 2)
+            end
+        end
     end
 end
 
@@ -401,6 +483,12 @@ local function drawEmitterBase(beam)
     local flash = clamp(beam.flashTimer or 0, 0, 1)
     local highlightBoost = (beam.state == "firing") and 0.25 or ((beam.state == "charging") and 0.15 or 0)
 
+    local t = getTime()
+    local pulse = 0.25 + 0.25 * math.sin(t * 5.5 + (beam.x or 0) * 0.03 + (beam.y or 0) * 0.03)
+    local glowAlpha = 0.35 + flash * 0.45 + highlightBoost * 0.6 + pulse * 0.4
+    love.graphics.setColor(1, 0.32, 0.25, math.min(0.75, glowAlpha))
+    love.graphics.circle("fill", beam.x or 0, beam.y or 0, BASE_GLOW_RADIUS + tileSize * 0.15)
+
     love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], (baseColor[4] or 1) + flash * 0.1)
     love.graphics.rectangle("fill", bx, by, tileSize, tileSize, 6, 6)
 
@@ -410,6 +498,9 @@ local function drawEmitterBase(beam)
     local accentAlpha = (accentColor[4] or 0.8) + flash * 0.2 + highlightBoost
     love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], math.min(1, accentAlpha))
     love.graphics.rectangle("line", bx + 2, by + 2, tileSize - 4, tileSize - 4, 4, 4)
+
+    love.graphics.setColor(1, 1, 1, 0.18 + highlightBoost * 0.4 + flash * 0.2)
+    love.graphics.rectangle("fill", bx + 3, by + 3, tileSize - 6, tileSize * 0.2, 3, 3)
 
     local slitLength = tileSize * 0.55
     local slitThickness = math.max(3, tileSize * 0.18)
