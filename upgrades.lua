@@ -152,6 +152,23 @@ local function updateGuildLedger(state)
     state.effects.rockSpawnFlat = (state.effects.rockSpawnFlat or 0) - previous + newBonus
 end
 
+local function updateMarketPulse(state)
+    if not state then return end
+
+    local perSlot = state.counters and state.counters.marketPulsePerSlot or 0
+    if perSlot == 0 then return end
+
+    local slots = 0
+    if state.effects then
+        slots = state.effects.shopSlots or 0
+    end
+
+    local previous = state.counters.marketPulseBonus or 0
+    local newBonus = perSlot * slots
+    state.counters.marketPulseBonus = newBonus
+    state.effects.comboBonusFlat = (state.effects.comboBonusFlat or 0) - previous + newBonus
+end
+
 local function updateComboHarmonizer(state)
     if not state then return end
 
@@ -184,6 +201,56 @@ local function updateStoneCensus(state)
     state.counters.stoneCensusMult = newMult
     effects.rockSpawnMult = effects.rockSpawnMult * newMult
     state.effects = effects
+end
+
+local function handleArtisanCatalogFloorStart(_, state)
+    if not state then return end
+    if not state.takenSet or (state.takenSet.artisan_catalog or 0) <= 0 then return end
+
+    state.counters = state.counters or {}
+    state.counters.artisanCatalogPurchases = 0
+end
+
+local function handleArtisanCatalogPurchase(data, state)
+    if not state then return end
+    if not state.takenSet or (state.takenSet.artisan_catalog or 0) <= 0 then return end
+
+    state.counters = state.counters or {}
+    local purchases = state.counters.artisanCatalogPurchases or 0
+    local copies = state.takenSet.artisan_catalog or 0
+
+    if purchases <= 0 and copies > 0 then
+        if Snake and Snake.addCrashShields then
+            Snake:addCrashShields(copies)
+        end
+        if Saws and Saws.stall then
+            Saws:stall(0.9 * copies)
+        end
+        if Score and Score.addBonus then
+            Score:addBonus(2 * copies)
+        end
+
+        celebrateUpgrade(getUpgradeString("artisan_catalog", "trigger"), data, {
+            color = {1.0, 0.78, 0.42, 1},
+            particleCount = 20,
+            particleSpeed = 130,
+            particleLife = 0.45,
+            particleSize = 6,
+            particleSpread = math.pi * 2,
+            visual = {
+                badge = "shield",
+                outerRadius = 72,
+                innerRadius = 20,
+                ringCount = 3,
+                ringSpacing = 12,
+                life = 0.62,
+                glowAlpha = 0.26,
+                haloAlpha = 0.18,
+            },
+        })
+    end
+
+    state.counters.artisanCatalogPurchases = purchases + 1
 end
 
 local function handleBulwarkChorusFloorStart(_, state)
@@ -857,6 +924,35 @@ local pool = {
         end,
     }),
     register({
+        id = "market_pulse",
+        nameKey = "upgrades.market_pulse.name",
+        descKey = "upgrades.market_pulse.description",
+        rarity = "uncommon",
+        tags = {"economy", "combo"},
+        onAcquire = function(state)
+            state.counters.marketPulsePerSlot = 0.25
+            updateMarketPulse(state)
+
+            if not state.counters.marketPulseHandlerRegistered then
+                state.counters.marketPulseHandlerRegistered = true
+                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+                    if not runState then return end
+                    if not runState.takenSet or (runState.takenSet.market_pulse or 0) <= 0 then return end
+                    updateMarketPulse(runState)
+                end)
+            end
+
+            celebrateUpgrade(getUpgradeString("market_pulse", "name"), nil, {
+                color = {0.6, 0.88, 0.96, 1},
+                particleCount = 18,
+                particleSpeed = 120,
+                particleLife = 0.42,
+                textOffset = 44,
+                textScale = 1.1,
+            })
+        end,
+    }),
+    register({
         id = "fresh_supplies",
         nameKey = "upgrades.fresh_supplies.name",
         descKey = "upgrades.fresh_supplies.description",
@@ -926,6 +1022,22 @@ local pool = {
                 textScale = 1.1,
             })
         end,
+    }),
+    register({
+        id = "artisan_catalog",
+        nameKey = "upgrades.artisan_catalog.name",
+        descKey = "upgrades.artisan_catalog.description",
+        rarity = "rare",
+        tags = {"economy", "defense"},
+        onAcquire = function(state)
+            state.counters.artisanCatalogPurchases = state.counters.artisanCatalogPurchases or 0
+        end,
+        handlers = {
+            floorStart = handleArtisanCatalogFloorStart,
+            upgradeAcquired = function(data, runState)
+                handleArtisanCatalogPurchase(data, runState)
+            end,
+        },
     }),
     register({
         id = "venomous_hunger",
