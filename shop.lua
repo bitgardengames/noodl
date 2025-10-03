@@ -8,6 +8,8 @@ local Shaders = require("shaders")
 
 local Shop = {}
 
+local random = (love and love.math and love.math.random) or math.random
+
 local ANALOG_DEADZONE = 0.35
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 
@@ -180,6 +182,20 @@ function Shop:refreshCards(options)
     resetAnalogAxis()
 
     for i = 1, #self.cards do
+        local startRotation = (random() - 0.5) * 0.7
+        local spin = (random() - 0.5) * 0.3
+        local startOffsetX = (random() - 0.5) * 240
+        local startOffsetY = 140 + random() * 120
+        local swingX = (random() - 0.5) * 60
+        local waveY = 32 + random() * 26
+        local startScale = 0.82 + random() * 0.08
+        local overshoot = 0.06 + random() * 0.05
+        local driftMagnitude = 6 + random() * 6
+        local driftSpeed = 0.6 + random() * 0.5
+        local driftTilt = 0.01 + random() * 0.02
+        local driftPhase = random() * math.pi * 2
+        local driftOffset = random() * math.pi * 2
+
         self.cardStates[i] = {
             progress = 0,
             delay = initialDelay + (i - 1) * 0.08,
@@ -193,6 +209,24 @@ function Shop:refreshCards(options)
             selectSoundPlayed = false,
             discardActive = false,
             discard = nil,
+            reveal = {
+                startOffsetX = startOffsetX,
+                startOffsetY = startOffsetY,
+                startRotation = startRotation,
+                spin = spin,
+                swingX = swingX,
+                waveY = waveY,
+                startScale = startScale,
+                overshoot = overshoot,
+            },
+            drift = {
+                magnitude = driftMagnitude,
+                speed = driftSpeed,
+                tilt = driftTilt,
+                swayOffset = driftPhase,
+                rollOffset = driftOffset,
+            },
+            idleClock = random() * math.pi * 2,
         }
     end
 end
@@ -214,7 +248,6 @@ function Shop:beginRestock()
     self.selectionComplete = false
     self.focusIndex = nil
 
-    local random = (love and love.math and love.math.random) or math.random
     if self.cardStates then
         local count = #self.cardStates
         local centerIndex = (count + 1) / 2
@@ -309,6 +342,14 @@ function Shop:update(dt)
     for i, state in ipairs(self.cardStates) do
         if self.time >= state.delay and state.progress < 1 then
             state.progress = math.min(1, state.progress + dt * 3.2)
+        end
+
+        local drift = state.drift
+        if drift then
+            local speed = drift.speed or 1
+            state.idleClock = (state.idleClock or 0) + dt * speed
+        else
+            state.idleClock = (state.idleClock or 0) + dt * 0.8
         end
 
         if not state.revealSoundPlayed and self.time >= state.delay then
@@ -656,9 +697,14 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
 
             Shaders.configure(effect, palette, effectData)
 
-            withTransformedScissor(x, y, w, h, function()
-                shaderDrawn = Shaders.draw(effect, x, y, w, h, shaderConfig.intensity or 1.0) or shaderDrawn
-            end)
+            local shaderIntensity = (shaderConfig.intensity or 1.0) * fadeAlpha
+            if shaderIntensity > 0 and fadeAlpha > 0 then
+                withTransformedScissor(x, y, w, h, function()
+                    love.graphics.setColor(1, 1, 1, fadeAlpha)
+                    shaderDrawn = Shaders.draw(effect, x, y, w, h, shaderIntensity) or shaderDrawn
+                    love.graphics.setColor(1, 1, 1, 1)
+                end)
+            end
         end
     end
 
@@ -852,18 +898,36 @@ function Shop:draw(screenW, screenH)
         local alpha = 1
         local scale = 1
         local yOffset = 0
+        local rotationOffset = 0
+        local revealOffsetX = 0
+        local progress = 0
+        local revealEase = 0
         local state = self.cardStates and self.cardStates[i]
         if state then
-            local progress = state.progress or 0
-            local eased = progress * progress * (3 - 2 * progress)
-            alpha = eased
-            yOffset = (1 - eased) * 48
+            progress = state.progress or 0
+            revealEase = progress * progress * (3 - 2 * progress)
+            local bounce = math.sin(revealEase * math.pi)
+            local settle = 1 - revealEase
+            local settleCurve = settle * settle
 
-            -- Start cards a touch smaller and ease them up to full size so
-            -- the reveal animation feels like a gentle pop rather than a flat fade.
-            local appearScaleMin = 0.94
-            local appearScaleMax = 1.0
-            scale = appearScaleMin + (appearScaleMax - appearScaleMin) * eased
+            alpha = revealEase
+            yOffset = (1 - revealEase) * 48
+
+            local reveal = state.reveal
+            local appearScaleMin = (reveal and reveal.startScale) or 0.94
+            local overshoot = (reveal and reveal.overshoot) or 0
+
+            if reveal then
+                revealOffsetX = (reveal.startOffsetX or 0) * settleCurve + (reveal.swingX or 0) * bounce
+                local drop = (reveal.startOffsetY or 0) * settleCurve
+                local wave = (reveal.waveY or 0) * bounce
+                yOffset = yOffset - drop + wave
+                rotationOffset = rotationOffset + (reveal.startRotation or 0) * settleCurve
+                    + (reveal.spin or 0) * bounce
+            end
+
+            local baseScale = appearScaleMin + (1 - appearScaleMin) * revealEase
+            scale = baseScale + overshoot * bounce * (1 - revealEase)
 
             local hover = state.hover or 0
             if hover > 0 and not self.selected then
@@ -926,7 +990,7 @@ function Shop:draw(screenW, screenH)
 
         alpha = math.max(0, math.min(alpha, 1))
 
-        local centerX = baseX + cardWidth / 2
+        local centerX = baseX + cardWidth / 2 + revealOffsetX
         local centerY = y + cardHeight / 2 - yOffset
         local originalCenterX, originalCenterY = centerX, centerY
 
@@ -942,6 +1006,33 @@ function Shop:draw(screenW, screenH)
                 centerY = centerY + 28 * fadeEase
             end
         end
+
+        local idleOffsetX, idleOffsetY = 0, 0
+        local idleRotation = 0
+        if state then
+            local drift = state.drift
+            if drift then
+                local idleStrength = math.max(0, math.min(1, revealEase))
+                idleStrength = idleStrength * math.max(0, 1 - (state.fadeOut or 0))
+                if card == self.selected then
+                    idleStrength = idleStrength * math.max(0, 1 - focusEase)
+                end
+
+                if idleStrength > 0.001 then
+                    local idleClock = state.idleClock or 0
+                    local sway = math.sin(idleClock + (drift.swayOffset or 0))
+                    local sway2 = math.sin(idleClock * 0.7 + (drift.rollOffset or 0))
+                    idleOffsetY = sway * (drift.magnitude or 4) * idleStrength
+                    idleOffsetX = sway2 * (drift.magnitude or 4) * 0.55 * idleStrength
+                    idleRotation = math.sin(idleClock * 0.9 + (drift.rollOffset or 0) * 1.3)
+                        * (drift.tilt or 0.015) * idleStrength
+                end
+            end
+        end
+
+        centerX = centerX + idleOffsetX
+        centerY = centerY + idleOffsetY
+        rotationOffset = rotationOffset + idleRotation
 
         local drawWidth = cardWidth * scale
         local drawHeight = cardHeight * scale
@@ -962,8 +1053,9 @@ function Shop:draw(screenW, screenH)
 
         love.graphics.push()
         love.graphics.translate(centerX, centerY)
-        if discardRotation ~= 0 then
-            love.graphics.rotate(discardRotation)
+        local totalRotation = discardRotation + rotationOffset
+        if totalRotation ~= 0 then
+            love.graphics.rotate(totalRotation)
         end
         love.graphics.scale(scale, scale)
         love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
