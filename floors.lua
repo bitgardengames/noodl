@@ -29,7 +29,7 @@ local Floors = {
                 palette = {
                         bgColor     = {0.24, 0.32, 0.24, 1}, -- brighter forest green backdrop
                         arenaBG     = {0.46, 0.66, 0.39, 1}, -- still bright, grassy playfield
-                        arenaBorder = {0.55, 0.75, 0.4, 1},  -- leafy, slightly lighter edge
+                        arenaBorder = {0.52, 0.38, 0.24, 1},  -- warm soil rim to break up the greens
                         snake       = {0.12, 0.9, 0.48, 1},  -- vivid spring green snake
                         rock        = {0.74, 0.59, 0.38, 1}, -- sun-baked sandstone, pops from grass
                 },
