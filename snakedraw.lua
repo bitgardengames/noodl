@@ -11,6 +11,7 @@ local FRUIT_BULGE_SCALE = 1.25
 
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
+local snakeOverlayCanvas = nil
 
 local overlayShaderSources = {
   stripes = [[
@@ -116,12 +117,12 @@ end
 
 local function applyOverlay(canvas, config)
   if not (canvas and config and config.type) then
-    return
+    return false
   end
 
   local shader = safeResolveShader(config.type)
   if not shader then
-    return
+    return false
   end
 
   local time = 0
@@ -154,6 +155,8 @@ local function applyOverlay(canvas, config)
   love.graphics.setColor(1, 1, 1, config.opacity or 1)
   love.graphics.draw(canvas, 0, 0)
   love.graphics.pop()
+
+  return true
 end
 
 -- helper: prefer drawX/drawY, fallback to x/y
@@ -716,10 +719,27 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
 
     -- snake
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.draw(snakeCanvas, 0, 0)
+    local drewOverlay = false
+    if overlayEffect then
+      if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= ww or snakeOverlayCanvas:getHeight() ~= hh then
+        snakeOverlayCanvas = love.graphics.newCanvas(ww, hh)
+      end
 
-    applyOverlay(snakeCanvas, overlayEffect)
+      love.graphics.setCanvas(snakeOverlayCanvas)
+      love.graphics.clear(0, 0, 0, 0)
+      love.graphics.setColor(1,1,1,1)
+      love.graphics.draw(snakeCanvas, 0, 0)
+      drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
+      love.graphics.setCanvas()
+    end
+
+    love.graphics.setColor(1,1,1,1)
+    if drewOverlay then
+      love.graphics.draw(snakeOverlayCanvas, 0, 0)
+    else
+      love.graphics.draw(snakeCanvas, 0, 0)
+    end
+
     applySkinGlow(trail, head, half, glowEffect)
   elseif hx and hy then
     -- fallback: draw a simple disk when only the head is visible
