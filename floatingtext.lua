@@ -3,7 +3,14 @@ local UI = require("ui")
 local FloatingText = {}
 
 local entries = {}
-local defaultFont = UI.fonts.subtitle or UI.fonts.display or love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 24)
+
+local lg = love and love.graphics
+local lm = love and love.math
+local random = (lm and lm.random) or math.random
+local sin, cos = math.sin, math.cos
+local max = math.max
+
+local defaultFont = UI.fonts.subtitle or UI.fonts.display or (lg and lg.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 24))
 
 local baseColor = UI.colors.accentText or UI.colors.text or { 1, 1, 1, 1 }
 
@@ -132,73 +139,36 @@ local function buildGlow(glow)
     }
 end
 
-function FloatingText:setDefaultFont(font)
-    assert(font ~= nil, "FloatingText:setDefaultFont requires a font")
-    defaultFont = font
+local function resolveFade(duration, fadeStart)
+    if duration <= 0 then
+        return nil, nil
+    end
+
+    local startTime = duration * clamp(fadeStart, 0, 0.99)
+    local fadeDuration = max(duration - startTime, 0.001)
+
+    return startTime, fadeDuration
 end
 
-function FloatingText:setDefaults(options)
-    assert(type(options) == "table", "FloatingText:setDefaults expects a table")
-
-    if options.color then
-        DEFAULTS.color = cloneColor(options.color)
-    end
-
-    if options.duration then
-        DEFAULTS.duration = math.max(0.01, options.duration)
-    end
-
-    if options.riseSpeed then
-        DEFAULTS.riseSpeed = options.riseSpeed
-    end
-
-    if options.scale then
-        DEFAULTS.scale = options.scale
-    end
-
-    if options.pop then
-        if options.pop.scale then
-            DEFAULTS.pop.scale = math.max(0, options.pop.scale)
-        end
-
-        if options.pop.duration then
-            DEFAULTS.pop.duration = math.max(0, options.pop.duration)
-        end
-    end
-
-    if options.wobble then
-        if options.wobble.magnitude then
-            DEFAULTS.wobble.magnitude = options.wobble.magnitude
-        end
-
-        if options.wobble.frequency then
-            DEFAULTS.wobble.frequency = options.wobble.frequency
-        end
-    end
-
+local function resolveDrift(options)
     if options.drift ~= nil then
-        DEFAULTS.drift = options.drift
+        return options.drift
     end
 
-    if options.fadeStart then
-        DEFAULTS.fadeStart = clamp(options.fadeStart, 0, 0.95)
+    if DEFAULTS.drift == 0 then
+        return 0
     end
 
-    if options.rotation then
-        DEFAULTS.rotation = options.rotation
+    return (random() * 2 - 1) * DEFAULTS.drift
+end
+
+local function resolveRiseDuration(duration, riseSpeed, options)
+    if options.riseDistance ~= nil then
+        return options.riseDistance
     end
 
-    if options.shadow then
-        DEFAULTS.shadow = buildShadow(options.shadow)
-    end
-
-    if options.glow ~= nil then
-        DEFAULTS.glow = buildGlow(options.glow)
-    end
-
-    if options.jitter ~= nil then
-        DEFAULTS.jitter = options.jitter
-    end
+    local speed = riseSpeed or DEFAULTS.riseSpeed
+    return speed * max(duration, 0.05)
 end
 
 function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
@@ -218,29 +188,23 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
     local wobbleMagnitude = options.wobbleMagnitude or DEFAULTS.wobble.magnitude
     local wobbleFrequency = options.wobbleFrequency or DEFAULTS.wobble.frequency
     local fadeStart = options.fadeStart or DEFAULTS.fadeStart
-    local drift
-    local random = love.math.random
-
-    if options.drift ~= nil then
-        drift = options.drift
-    elseif DEFAULTS.drift == 0 then
-        drift = 0
-    else
-        drift = (random() * 2 - 1) * DEFAULTS.drift
-    end
-
-    local rise = options.riseDistance
-    if rise == nil then
-        local speed = riseSpeed or DEFAULTS.riseSpeed
-        rise = speed * math.max(entryDuration, 0.05)
-    end
-
+    local drift = resolveDrift(options)
+    local rise = resolveRiseDuration(entryDuration, riseSpeed, options)
     local rotationAmplitude = options.rotationAmplitude or DEFAULTS.rotation
     local rotationDirection = (random() < 0.5) and -1 or 1
     local glow = buildGlow(options.glow)
     local jitter = options.jitter
     if jitter == nil then
         jitter = DEFAULTS.jitter
+    end
+
+    local fadeStartTime, fadeDuration = resolveFade(entryDuration, fadeStart)
+    local glowColor, glowFrequency, glowMagnitude, hasGlow
+    if glow then
+        glowColor = glow.color
+        glowFrequency = glow.frequency
+        glowMagnitude = glow.magnitude
+        hasGlow = glowMagnitude and glowMagnitude > 0
     end
 
     entries[#entries + 1] = {
@@ -258,16 +222,20 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
         wobbleMagnitude = wobbleMagnitude,
         wobbleFrequency = wobbleFrequency,
         fadeStart = clamp(fadeStart, 0, 0.99),
+        fadeStartTime = fadeStartTime,
+        fadeDuration = fadeDuration,
         drift = drift,
         rotationAmplitude = rotationAmplitude,
         rotationDirection = rotationDirection,
         shadow = buildShadow(options.shadow),
-        glowColor = glow and glow.color or nil,
-        glowFrequency = glow and glow.frequency or 0,
-        glowMagnitude = glow and glow.magnitude or 0,
+        glowColor = glowColor,
+        glowFrequency = glowFrequency or 0,
+        glowMagnitude = glowMagnitude or 0,
+        hasGlow = hasGlow,
         glowPhase = random() * math.pi * 2,
         glowAlpha = 0,
         jitter = jitter or 0,
+        hasJitter = (jitter or 0) > 0,
         jitterSeed = random() * math.pi * 2,
         jitterX = 0,
         jitterY = 0,
@@ -295,12 +263,12 @@ function FloatingText:update(dt)
         entry.offsetY = -entry.riseDistance * easeOutCubic(progress)
         entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * math.sin(entry.wobbleFrequency * entry.timer)
 
-        if entry.jitter and entry.jitter > 0 then
+        if entry.hasJitter then
             local falloff = (1 - progress)
             local jitterStrength = entry.jitter * falloff * falloff
             local phase = entry.jitterSeed
-            entry.jitterX = math.sin(entry.timer * 9 + phase) * jitterStrength
-            entry.jitterY = math.cos(entry.timer * 7.4 + phase * 1.3) * jitterStrength * 0.6
+            entry.jitterX = sin(entry.timer * 9 + phase) * jitterStrength
+            entry.jitterY = cos(entry.timer * 7.4 + phase * 1.3) * jitterStrength * 0.6
         else
             entry.jitterX, entry.jitterY = 0, 0
         end
@@ -311,14 +279,14 @@ function FloatingText:update(dt)
         else
             local settleDuration = math.max(duration - entry.popDuration, 0.001)
             local settleProgress = clamp((entry.timer - entry.popDuration) / settleDuration, 0, 1)
-            local pulse = math.sin(entry.timer * 6) * (1 - settleProgress) * 0.04
+            local pulse = sin(entry.timer * 6) * (1 - settleProgress) * 0.04
             entry.scale = entry.baseScale * (1 + pulse)
         end
 
-        entry.rotation = entry.rotationAmplitude * entry.rotationDirection * math.sin(progress * math.pi)
+        entry.rotation = entry.rotationAmplitude * entry.rotationDirection * sin(progress * math.pi)
 
-        if entry.glowMagnitude and entry.glowMagnitude > 0 then
-            local pulse = math.sin(entry.timer * entry.glowFrequency + entry.glowPhase) * 0.5 + 0.5
+        if entry.hasGlow then
+            local pulse = sin(entry.timer * entry.glowFrequency + entry.glowPhase) * 0.5 + 0.5
             local emphasis = (1 - progress * 0.6)
             entry.glowAlpha = pulse * entry.glowMagnitude * emphasis
         else
@@ -333,55 +301,44 @@ end
 
 function FloatingText:draw()
     for _, entry in ipairs(entries) do
-        love.graphics.setFont(entry.font)
+        lg.setFont(entry.font)
 
         local alpha = entry.color[4] or 1
-        if entry.duration > 0 then
-            local fadeStartTime = entry.duration * entry.fadeStart
-
-            if entry.timer >= fadeStartTime then
-                local fadeDuration = math.max(entry.duration - fadeStartTime, 0.001)
-                local fadeProgress = clamp((entry.timer - fadeStartTime) / fadeDuration, 0, 1)
+        if entry.duration > 0 and entry.fadeStartTime then
+            if entry.timer >= entry.fadeStartTime then
+                local fadeProgress = clamp((entry.timer - entry.fadeStartTime) / entry.fadeDuration, 0, 1)
                 alpha = alpha * (1 - easeInCubic(fadeProgress))
             end
         end
 
         alpha = clamp(alpha, 0, 1)
 
-        love.graphics.push()
-        love.graphics.translate(entry.x + entry.offsetX + entry.jitterX, entry.y + entry.offsetY + entry.jitterY)
-        love.graphics.rotate(entry.rotation)
-        love.graphics.scale(entry.scale)
+        lg.push()
+        lg.translate(entry.x + entry.offsetX + entry.jitterX, entry.y + entry.offsetY + entry.jitterY)
+        lg.rotate(entry.rotation)
+        lg.scale(entry.scale)
 
         local shadow = entry.shadow
         if shadow.alpha > 0 then
-            love.graphics.setColor(0, 0, 0, shadow.alpha * alpha)
-            love.graphics.print(entry.text, -entry.ox + shadow.offsetX, -entry.oy + shadow.offsetY)
+            lg.setColor(0, 0, 0, shadow.alpha * alpha)
+            lg.print(entry.text, -entry.ox + shadow.offsetX, -entry.oy + shadow.offsetY)
         end
 
-        love.graphics.setColor(entry.color[1], entry.color[2], entry.color[3], alpha)
-        love.graphics.print(entry.text, -entry.ox, -entry.oy)
+        lg.setColor(entry.color[1], entry.color[2], entry.color[3], alpha)
+        lg.print(entry.text, -entry.ox, -entry.oy)
 
         if entry.glowAlpha and entry.glowAlpha > 0 and entry.glowColor then
-            local prevMode, prevAlphaMode = love.graphics.getBlendMode()
-            love.graphics.setBlendMode("add", "alphamultiply")
-            love.graphics.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], alpha * entry.glowAlpha)
-            love.graphics.print(entry.text, -entry.ox, -entry.oy)
-            love.graphics.setBlendMode(prevMode, prevAlphaMode)
+            local prevMode, prevAlphaMode = lg.getBlendMode()
+            lg.setBlendMode("add", "alphamultiply")
+            lg.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], alpha * entry.glowAlpha)
+            lg.print(entry.text, -entry.ox, -entry.oy)
+            lg.setBlendMode(prevMode, prevAlphaMode)
         end
 
-        love.graphics.pop()
+        lg.pop()
     end
 
-    love.graphics.setColor(1, 1, 1, 1)
-end
-
-function FloatingText:isEmpty()
-    return #entries == 0
-end
-
-function FloatingText:count()
-    return #entries
+    lg.setColor(1, 1, 1, 1)
 end
 
 function FloatingText:reset()

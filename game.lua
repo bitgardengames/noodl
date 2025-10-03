@@ -79,70 +79,123 @@ local function callMode(self, methodName, ...)
     end
 end
 
-local function canManageMouseVisibility()
-    if not love or not love.mouse or not love.mouse.setVisible then
+local cachedMouseInterface
+local mouseSupportChecked = false
+
+local function isCursorSupported(mouse)
+    local checker = mouse and mouse.isCursorSupported
+    if not checker then
+        return true
+    end
+
+    local ok, supported = pcall(checker)
+    if not ok then
         return false
     end
 
-    if love.mouse.isCursorSupported then
-        local supported = love.mouse.isCursorSupported()
-        if supported == false then
-            return false
+    if supported == nil then
+        return true
+    end
+
+    return supported and true or false
+end
+
+local function getMouseInterface()
+    if mouseSupportChecked then
+        return cachedMouseInterface
+    end
+
+    mouseSupportChecked = true
+
+    if not love or not love.mouse then
+        cachedMouseInterface = nil
+        return nil
+    end
+
+    local mouse = love.mouse
+    if not mouse.setVisible or not isCursorSupported(mouse) then
+        cachedMouseInterface = nil
+        return nil
+    end
+
+    cachedMouseInterface = mouse
+    return cachedMouseInterface
+end
+
+local function getMouseVisibility(mouse)
+    if mouse and mouse.isVisible then
+        local ok, visible = pcall(mouse.isVisible)
+        if ok and visible ~= nil then
+            return visible and true or false
         end
     end
 
     return true
 end
 
+local function resolveMouseVisibilityTarget(self)
+    if not InputMode:isMouseActive() then
+        return nil
+    end
+
+    local transition = self.transition
+    local inShop = transition and transition:isShopActive()
+    if inShop then
+        return true
+    end
+
+    if RUN_ACTIVE_STATES[self.state] == true then
+        return false
+    end
+
+    return nil
+end
+
 function Game:releaseMouseVisibility()
-    if not self.mouseCursorManaged then
+    local state = self.mouseCursorState
+    if not state then
         return
     end
 
-    if canManageMouseVisibility() then
-        local restore = self.mouseCursorOriginalVisible
+    local mouse = state.interface or getMouseInterface()
+    if mouse and mouse.setVisible then
+        local restore = state.originalVisible
         if restore == nil then
             restore = true
         end
-        love.mouse.setVisible(restore and true or false)
+        mouse.setVisible(restore and true or false)
     end
 
-    self.mouseCursorManaged = false
-    self.mouseCursorOriginalVisible = nil
-    self.mouseCursorCurrentVisible = nil
+    self.mouseCursorState = nil
 end
 
 function Game:updateMouseVisibility()
-    if not canManageMouseVisibility() then
+    local mouse = getMouseInterface()
+    if not mouse then
         self:releaseMouseVisibility()
         return
     end
 
-    local usingMouse = InputMode:isMouseActive()
-    local transition = self.transition
-    local inShop = transition and transition:isShopActive()
-    local isGameplayState = RUN_ACTIVE_STATES[self.state] == true
-    local shouldManage = usingMouse and (inShop or isGameplayState)
-
-    if not shouldManage then
+    local targetVisible = resolveMouseVisibilityTarget(self)
+    if targetVisible == nil then
         self:releaseMouseVisibility()
         return
     end
 
-    if not self.mouseCursorManaged then
-        local currentVisible = true
-        if love.mouse.isVisible then
-            currentVisible = love.mouse.isVisible()
-        end
-        self.mouseCursorManaged = true
-        self.mouseCursorOriginalVisible = currentVisible
-        self.mouseCursorCurrentVisible = currentVisible
+    local state = self.mouseCursorState
+    if not state then
+        local currentVisible = getMouseVisibility(mouse)
+        state = {
+            interface = mouse,
+            originalVisible = currentVisible,
+            currentVisible = currentVisible,
+        }
+        self.mouseCursorState = state
     end
 
-    local targetVisible = inShop
-    if self.mouseCursorCurrentVisible ~= targetVisible then
-        love.mouse.setVisible(targetVisible)
-        self.mouseCursorCurrentVisible = targetVisible
+    if state.currentVisible ~= targetVisible then
+        mouse.setVisible(targetVisible and true or false)
+        state.currentVisible = targetVisible
     end
 end
 
@@ -317,9 +370,7 @@ function Game:load()
     self.runTimer = 0
     self.floorTimer = 0
 
-    self.mouseCursorManaged = false
-    self.mouseCursorOriginalVisible = nil
-    self.mouseCursorCurrentVisible = nil
+    self.mouseCursorState = nil
 
     Screen:update()
     self.screenWidth, self.screenHeight = Screen:get()
@@ -357,6 +408,8 @@ function Game:reset()
     self.floor = 1
     self.runTimer = 0
     self.floorTimer = 0
+
+    self.mouseCursorState = nil
 
     if self.transition then
         self.transition:reset()
