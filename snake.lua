@@ -1586,7 +1586,7 @@ function Snake:loseSegments(count, options)
 
     if (not options) or options.spawnParticles ~= false then
         local burstColor = {1, 0.8, 0.4, 1}
-        if options and options.cause == "saw" then
+        if options and (options.cause == "saw" or options.cause == "laser") then
             burstColor = {1, 0.6, 0.3, 1}
         end
 
@@ -1609,7 +1609,7 @@ function Snake:loseSegments(count, options)
     return trimmed
 end
 
-function Snake:chopTailBySaw()
+local function chopTailByHazard(cause)
     local available = math.max(0, (segmentCount or 1) - 1)
     if available <= 0 then
         return 0
@@ -1618,7 +1618,15 @@ function Snake:chopTailBySaw()
     local loss = math.floor(math.max(1, available * 0.2))
     loss = math.min(loss, available)
 
-    return self:loseSegments(loss, { cause = "saw" })
+    return Snake:loseSegments(loss, { cause = cause })
+end
+
+function Snake:chopTailBySaw()
+    return chopTailByHazard("saw")
+end
+
+function Snake:chopTailByLaser()
+    return chopTailByHazard("laser")
 end
 
 local function isSawActive(saw)
