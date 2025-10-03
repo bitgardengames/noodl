@@ -34,7 +34,7 @@ local overlayShaderSources = {
       float c = cos(angle);
       float s = sin(angle);
       float stripe = sin((uv.x * c + uv.y * s) * frequency + time * speed) * 0.5 + 0.5;
-      float blend = clamp(stripe * intensity * mask, 0.0, 1.0);
+      float blend = clamp(stripe * intensity, 0.0, 1.0);
       vec3 mixCol = mix(colorA.rgb, colorB.rgb, stripe);
       vec3 result = mix(base.rgb, mixCol, blend);
       return vec4(result, base.a) * color;
@@ -66,7 +66,7 @@ local overlayShaderSources = {
       layer = mix(layer, colorC.rgb, clamp(radial * 0.5 + 0.5, 0.0, 1.0) * 0.6);
       layer += shimmer * 0.12 * colorC.rgb;
 
-      float blend = clamp(intensity * mask, 0.0, 1.0);
+      float blend = clamp(intensity, 0.0, 1.0);
       vec3 result = mix(base.rgb, layer, blend);
       return vec4(result, base.a) * color;
     }
