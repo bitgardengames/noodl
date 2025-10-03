@@ -162,6 +162,8 @@ local function ptXY(p)
   return (p.drawX or p.x), (p.drawY or p.y)
 end
 
+local drawSoftGlow
+
 local function applySkinGlow(trail, head, radius, config)
   if not config then
     return
@@ -290,7 +292,7 @@ local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
 
 end
 
-local function drawSoftGlow(x, y, radius, r, g, b, a)
+drawSoftGlow = function(x, y, radius, r, g, b, a)
   if radius <= 0 then return end
 
   love.graphics.push("all")
