@@ -524,7 +524,7 @@ function Saws:draw()
         local highlight = getHighlightColor(Theme.sawColor)
         love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
         love.graphics.setLineWidth(2)
-        love.graphics.circle("line", 0, 0, HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING)
+        love.graphics.circle("line", 0, 0, HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1)
 
         -- Outline
         love.graphics.setColor(0, 0, 0, 1)
