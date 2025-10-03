@@ -20,6 +20,8 @@ local SQUASH_DURATION = 0.15
 local SINK_OFFSET = 2
 local SINK_DISTANCE = 28
 local SINK_SPEED = 3
+local HIT_FLASH_DURATION = 0.18
+local HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
 
 local function copyColor(color)
     if not color then
@@ -291,6 +293,7 @@ function Saws:spawn(x, y, radius, teeth, dir, side)
         sinkProgress = sinkActive and 1 or 0,
         sinkTarget = sinkActive and 1 or 0,
         collisionCells = nil,
+        hitFlashTimer = 0,
     })
 
     local saw = current[#current]
@@ -355,6 +358,8 @@ function Saws:update(dt)
         elseif saw.sinkProgress > 1 then
             saw.sinkProgress = 1
         end
+
+        saw.hitFlashTimer = math.max(0, (saw.hitFlashTimer or 0) - dt)
 
         if saw.phase == "drop" then
             local progress = math.min(saw.timer / SPAWN_DURATION, 1)
@@ -521,11 +526,16 @@ function Saws:draw()
         end
 
         -- Fill
-        love.graphics.setColor(Theme.sawColor)
+        local baseColor = Theme.sawColor or {0.8, 0.8, 0.8, 1}
+        if saw.hitFlashTimer and saw.hitFlashTimer > 0 then
+            baseColor = HIT_FLASH_COLOR
+        end
+
+        love.graphics.setColor(baseColor)
         love.graphics.polygon("fill", points)
 
         -- highlight
-        local highlight = getHighlightColor(Theme.sawColor)
+        local highlight = getHighlightColor(baseColor)
         love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
         love.graphics.setLineWidth(2)
         love.graphics.circle("line", 0, 0, HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1)
@@ -639,6 +649,7 @@ function Saws:checkCollision(x, y, w, h)
             local dy = py - closestY
             local collisionRadius = saw.collisionRadius or saw.radius
             if dx * dx + dy * dy < collisionRadius * collisionRadius then
+                saw.hitFlashTimer = math.max(saw.hitFlashTimer or 0, HIT_FLASH_DURATION)
                 return saw
             end
         end
