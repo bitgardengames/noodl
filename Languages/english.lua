@@ -500,6 +500,11 @@ local english = {
                 name = "Market Pulse",
                 description = "Combo finishers grant +0.25 bonus score per shop slot you own.",
             },
+            mercantile_echo = {
+                name = "Mercantile Echo",
+                description = "The first time you acquire an upgrade with a new tag, gain +0.15s saw stall and +1 bonus score.",
+                activation_text = "Echo Dividend",
+            },
             fresh_supplies = {
                 name = "Fresh Supplies",
                 description = "Discard the current shop cards and restock with new ones.",
@@ -560,6 +565,11 @@ local english = {
                 description = "Crash shields burst into motes worth +2 bonus score.",
                 combo_bonus = "Crystal Cache +2",
             },
+            radiant_dividend = {
+                name = "Radiant Dividend",
+                description = "Broken crash shields store up to 3 dividends. Cash them out on your next fruit for +2 bonus score and 0.4s saw stall per dividend.",
+                cashout_text = "Radiant Cashout",
+            },
             tectonic_resolve = {
                 name = "Tectonic Resolve",
                 description = "Rock spawn chance decreases by 15%. Each fruit has a 25% chance to shatter the nearest rock.",
@@ -585,6 +595,11 @@ local english = {
                 name = "Sparkstep Relay",
                 description = "Dashing shatters the nearest rock and stalls saws for 0.6s.",
                 activation_text = "Sparkstep!",
+            },
+            stormchaser_rig = {
+                name = "Stormchaser Rig",
+                description = "Dashing primes your next fruit to grant +2 bonus score and stall saws for 0.7s.",
+                activation_text = "Stormchaser Bonus",
             },
             temporal_anchor = {
                 name = "Temporal Anchor",

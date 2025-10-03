@@ -953,6 +953,71 @@ local pool = {
         end,
     }),
     register({
+        id = "mercantile_echo",
+        nameKey = "upgrades.mercantile_echo.name",
+        descKey = "upgrades.mercantile_echo.description",
+        rarity = "rare",
+        tags = {"economy"},
+        allowDuplicates = false,
+        onAcquire = function(state)
+            local seen = state.counters.mercantileEchoSeenTags or {}
+            if state.tags then
+                for tag, owned in pairs(state.tags) do
+                    if owned then
+                        seen[tag] = true
+                    end
+                end
+            end
+            state.counters.mercantileEchoSeenTags = seen
+            state.counters.mercantileEchoStacks = state.counters.mercantileEchoStacks or 0
+        end,
+        handlers = {
+            upgradeAcquired = function(data, state)
+                if not state or not state.counters or not data or not data.upgrade then return end
+                local upgradeTags = data.upgrade.tags
+                if not upgradeTags or #upgradeTags == 0 then return end
+
+                local seen = state.counters.mercantileEchoSeenTags or {}
+                local gained = false
+                for _, tag in ipairs(upgradeTags) do
+                    if tag and not seen[tag] then
+                        seen[tag] = true
+                        gained = true
+                    end
+                end
+
+                state.counters.mercantileEchoSeenTags = seen
+                if not gained then return end
+
+                state.counters.mercantileEchoStacks = (state.counters.mercantileEchoStacks or 0) + 1
+                local bonusPerTag = 0.15
+                state.effects.sawStall = (state.effects.sawStall or 0) + bonusPerTag
+                if Score.addBonus then
+                    Score:addBonus(1)
+                end
+
+                celebrateUpgrade(getUpgradeString("mercantile_echo", "activation_text"), data, {
+                    color = {0.94, 0.82, 0.42, 1},
+                    particleCount = 14,
+                    particleSpeed = 110,
+                    particleLife = 0.44,
+                    particleSpread = math.pi * 2,
+                    textOffset = 54,
+                    textScale = 1.1,
+                    visual = {
+                        badge = "spark",
+                        outerRadius = 50,
+                        innerRadius = 16,
+                        ringCount = 3,
+                        life = 0.7,
+                        glowAlpha = 0.28,
+                        haloAlpha = 0.2,
+                    },
+                })
+            end,
+        },
+    }),
+    register({
         id = "fresh_supplies",
         nameKey = "upgrades.fresh_supplies.name",
         descKey = "upgrades.fresh_supplies.description",
@@ -1252,6 +1317,55 @@ local pool = {
         },
     }),
     register({
+        id = "radiant_dividend",
+        nameKey = "upgrades.radiant_dividend.name",
+        descKey = "upgrades.radiant_dividend.description",
+        rarity = "uncommon",
+        tags = {"defense", "economy"},
+        onAcquire = function(state)
+            state.counters.radiantDividendStacks = state.counters.radiantDividendStacks or 0
+        end,
+        handlers = {
+            shieldConsumed = function(_, state)
+                if not state or not state.counters then return end
+                local stacks = (state.counters.radiantDividendStacks or 0) + 1
+                state.counters.radiantDividendStacks = math.min(3, stacks)
+            end,
+            fruitCollected = function(data, state)
+                if not state or not state.counters then return end
+                local stacks = state.counters.radiantDividendStacks or 0
+                if stacks <= 0 then return end
+
+                state.counters.radiantDividendStacks = 0
+                if Score.addBonus then
+                    Score:addBonus(2 * stacks)
+                end
+                if Saws and Saws.stall then
+                    Saws:stall(0.4 * stacks)
+                end
+                celebrateUpgrade(getUpgradeString("radiant_dividend", "cashout_text"), data, {
+                    color = {1.0, 0.84, 0.46, 1},
+                    particleCount = 18,
+                    particleSpeed = 120,
+                    particleLife = 0.48,
+                    particleSize = 5,
+                    particleSpread = math.pi * 2,
+                    textOffset = 56,
+                    textScale = 1.12,
+                    visual = {
+                        badge = "burst",
+                        outerRadius = 54,
+                        innerRadius = 18,
+                        ringCount = 3,
+                        life = 0.72,
+                        glowAlpha = 0.28,
+                        haloAlpha = 0.2,
+                    },
+                })
+            end,
+        },
+    }),
+    register({
         id = "tectonic_resolve",
         nameKey = "upgrades.tectonic_resolve.name",
         descKey = "upgrades.tectonic_resolve.description",
@@ -1371,6 +1485,51 @@ local pool = {
                         life = 0.6,
                         glowAlpha = 0.32,
                         haloAlpha = 0.22,
+                    },
+                })
+            end,
+        },
+    }),
+    register({
+        id = "stormchaser_rig",
+        nameKey = "upgrades.stormchaser_rig.name",
+        descKey = "upgrades.stormchaser_rig.description",
+        rarity = "rare",
+        tags = {"mobility", "economy"},
+        onAcquire = function(state)
+            state.counters.stormchaserRigPrimed = false
+        end,
+        handlers = {
+            dashActivated = function(_, state)
+                if not state or not state.counters then return end
+                state.counters.stormchaserRigPrimed = true
+            end,
+            fruitCollected = function(data, state)
+                if not state or not state.counters or not state.counters.stormchaserRigPrimed then return end
+                state.counters.stormchaserRigPrimed = false
+                if Score.addBonus then
+                    Score:addBonus(2)
+                end
+                if Saws and Saws.stall then
+                    Saws:stall(0.7)
+                end
+                celebrateUpgrade(getUpgradeString("stormchaser_rig", "activation_text"), data, {
+                    color = {0.88, 0.94, 1.0, 1},
+                    particleCount = 16,
+                    particleSpeed = 140,
+                    particleLife = 0.4,
+                    particleSize = 4,
+                    particleSpread = math.pi * 2,
+                    textOffset = 58,
+                    textScale = 1.14,
+                    visual = {
+                        badge = "bolt",
+                        outerRadius = 56,
+                        innerRadius = 18,
+                        ringCount = 3,
+                        life = 0.68,
+                        glowAlpha = 0.32,
+                        haloAlpha = 0.24,
                     },
                 })
             end,
