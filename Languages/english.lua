@@ -471,6 +471,11 @@ local english = {
                 name = "Echo Aegis",
                 description = "Crash shields unleash a shockwave that stalls saws.",
             },
+            mirror_mantle = {
+                name = "Mirror Mantle",
+                description = "Breaking a crash shield grants +3 bonus score and stalls saws for 1s.",
+                activation_text = "Mirrored Rebound",
+            },
             resonant_shell = {
                 name = "Resonant Shell",
                 description = "Gain +0.35s saw stall duration for each Defense upgrade you own.",
@@ -492,6 +497,11 @@ local english = {
                 name = "Aurora Band",
                 description = "Combo window increases by 0.35s.",
             },
+            tempo_turbine = {
+                name = "Tempo Turbine",
+                description = "Combos of 2+ fruits build charge; every third combo fruit stalls saws for 0.7s and grants +2 bonus score.",
+                activation_text = "Turbine Surge",
+            },
             caravan_contract = {
                 name = "Caravan Contract",
                 description = "Shops offer +1 card. Each floor spawns an extra rock.",
@@ -504,6 +514,11 @@ local english = {
                 name = "Mercantile Echo",
                 description = "The first time you acquire an upgrade with a new tag, gain +0.15s saw stall and +1 bonus score.",
                 activation_text = "Echo Dividend",
+            },
+            verdant_bonds = {
+                name = "Verdant Bonds",
+                description = "Buying an Economy upgrade grants crash shields equal to Verdant Bonds stacks.",
+                activation_text = "Verdant Growth",
             },
             fresh_supplies = {
                 name = "Fresh Supplies",
