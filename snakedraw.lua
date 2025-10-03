@@ -711,7 +711,11 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     local drewOverlay = false
     if overlayEffect then
       if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= ww or snakeOverlayCanvas:getHeight() ~= hh then
-        snakeOverlayCanvas = love.graphics.newCanvas(ww, hh)
+        local msaa = snakeCanvas and snakeCanvas.getMSAA and snakeCanvas:getMSAA() or 0
+        snakeOverlayCanvas = love.graphics.newCanvas(ww, hh, msaa > 0 and {msaa = msaa} or nil)
+      elseif snakeOverlayCanvas.getMSAA and snakeCanvas and snakeCanvas.getMSAA and snakeOverlayCanvas:getMSAA() ~= snakeCanvas:getMSAA() then
+        local msaa = snakeCanvas:getMSAA()
+        snakeOverlayCanvas = love.graphics.newCanvas(ww, hh, msaa > 0 and {msaa = msaa} or nil)
       end
 
       love.graphics.setCanvas(snakeOverlayCanvas)
