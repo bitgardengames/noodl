@@ -1637,6 +1637,33 @@ local function getSawCenterPosition(saw)
     return Saws:getCollisionCenter(saw)
 end
 
+local function isSawCutPointExposed(saw, sx, sy, px, py)
+    if not (saw and sx and sy and px and py) then
+        return true
+    end
+
+    local tolerance = 1.0
+    local nx, ny
+
+    if saw.dir == "horizontal" then
+        -- Horizontal saws sit in the floor and only the top half (negative Y)
+        -- should be able to slice the snake.
+        nx, ny = 0, -1
+    else
+        -- For vertical saws, the exposed side depends on which wall the blade
+        -- is mounted to. The sink direction indicates which side is hidden in
+        -- the track, so flip it to get the exposed normal.
+        local sinkDir = (saw.side == "left") and -1 or 1
+        nx, ny = -sinkDir, 0
+    end
+
+    local dx = px - sx
+    local dy = py - sy
+    local projection = dx * nx + dy * ny
+
+    return projection >= -tolerance
+end
+
 local function addSeveredTrail(pieceTrail, segmentEstimate)
     if not pieceTrail or #pieceTrail <= 1 then
         return
@@ -1833,7 +1860,7 @@ function Snake:checkSawBodyCollision()
                             local along = travelled + segLen * (t or 0)
                             if along > guardDistance then
                                 local combined = sawRadius + bodyRadius
-                                if distSq <= combined * combined then
+                                if distSq <= combined * combined and isSawCutPointExposed(saw, sx, sy, closestX, closestY) then
                                     local handled = self:handleSawBodyCut({
                                         index = index,
                                         cutX = closestX,
