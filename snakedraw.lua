@@ -156,6 +156,12 @@ local function applyOverlay(canvas, config)
   love.graphics.pop()
 end
 
+-- helper: prefer drawX/drawY, fallback to x/y
+local function ptXY(p)
+  if not p then return nil, nil end
+  return (p.drawX or p.x), (p.drawY or p.y)
+end
+
 local function applySkinGlow(trail, head, radius, config)
   if not config then
     return
@@ -187,12 +193,6 @@ local function applySkinGlow(trail, head, radius, config)
     local hx, hy = ptXY(head)
     drawGlowAt(hx, hy)
   end
-end
-
--- helper: prefer drawX/drawY, fallback to x/y
-local function ptXY(p)
-  if not p then return nil, nil end
-  return (p.drawX or p.x), (p.drawY or p.y)
 end
 
 -- polyline coords {x1,y1,x2,y2,...}
