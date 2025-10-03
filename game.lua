@@ -35,6 +35,7 @@ local Localization = require("localization")
 local FloorSetup = require("floorsetup")
 local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
+local InputMode = require("inputmode")
 
 local Game = {}
 
@@ -75,6 +76,73 @@ local function callMode(self, methodName, ...)
     local handler = mode[methodName]
     if handler then
         return handler(self, ...)
+    end
+end
+
+local function canManageMouseVisibility()
+    if not love or not love.mouse or not love.mouse.setVisible then
+        return false
+    end
+
+    if love.mouse.isCursorSupported then
+        local supported = love.mouse.isCursorSupported()
+        if supported == false then
+            return false
+        end
+    end
+
+    return true
+end
+
+function Game:releaseMouseVisibility()
+    if not self.mouseCursorManaged then
+        return
+    end
+
+    if canManageMouseVisibility() then
+        local restore = self.mouseCursorOriginalVisible
+        if restore == nil then
+            restore = true
+        end
+        love.mouse.setVisible(restore and true or false)
+    end
+
+    self.mouseCursorManaged = false
+    self.mouseCursorOriginalVisible = nil
+    self.mouseCursorCurrentVisible = nil
+end
+
+function Game:updateMouseVisibility()
+    if not canManageMouseVisibility() then
+        self:releaseMouseVisibility()
+        return
+    end
+
+    local usingMouse = InputMode:isMouseActive()
+    local transition = self.transition
+    local inShop = transition and transition:isShopActive()
+    local isGameplayState = RUN_ACTIVE_STATES[self.state] == true
+    local shouldManage = usingMouse and (inShop or isGameplayState)
+
+    if not shouldManage then
+        self:releaseMouseVisibility()
+        return
+    end
+
+    if not self.mouseCursorManaged then
+        local currentVisible = true
+        if love.mouse.isVisible then
+            currentVisible = love.mouse.isVisible()
+        end
+        self.mouseCursorManaged = true
+        self.mouseCursorOriginalVisible = currentVisible
+        self.mouseCursorCurrentVisible = currentVisible
+    end
+
+    local targetVisible = inShop
+    if self.mouseCursorCurrentVisible ~= targetVisible then
+        love.mouse.setVisible(targetVisible)
+        self.mouseCursorCurrentVisible = targetVisible
     end
 end
 
@@ -215,6 +283,10 @@ function Game:load()
     self.runTimer = 0
     self.floorTimer = 0
 
+    self.mouseCursorManaged = false
+    self.mouseCursorOriginalVisible = nil
+    self.mouseCursorCurrentVisible = nil
+
     Screen:update()
     self.screenWidth, self.screenHeight = Screen:get()
     Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
@@ -265,10 +337,6 @@ function Game:enter()
     UI.clearButtons()
     self:load()
 
-    if love.mouse and love.mouse.setVisible then
-        love.mouse.setVisible(false)
-    end
-
     Audio:playMusic("game")
     SessionStats:reset()
     PlayerStats:add("sessionsPlayed", 1)
@@ -278,14 +346,14 @@ function Game:enter()
     })
 
     callMode(self, "enter")
+
+    self:updateMouseVisibility()
 end
 
 function Game:leave()
     callMode(self, "leave")
 
-    if love.mouse and love.mouse.setVisible then
-        love.mouse.setVisible(true)
-    end
+    self:releaseMouseVisibility()
 
     if Snake and Snake.resetModifiers then
         Snake:resetModifiers()
@@ -836,6 +904,8 @@ function Game:drawDescending()
 end
 
 function Game:update(dt)
+    self:updateMouseVisibility()
+
     if self.state == "paused" then
         PauseMenu:update(dt, true)
         return

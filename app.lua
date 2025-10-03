@@ -12,6 +12,7 @@ local UI = require("ui")
 local Localization = require("localization")
 local Theme = require("theme")
 local SnakeCosmetics = require("snakecosmetics")
+local InputMode = require("inputmode")
 
 local App = {
     stateModules = {
@@ -138,18 +139,27 @@ function App:draw()
 end
 
 function App:mousepressed(x, y, button)
+    InputMode:noteMouse()
     return self:forwardEvent("mousepressed", x, y, button)
 end
 
 function App:mousereleased(x, y, button)
+    InputMode:noteMouse()
     return self:forwardEvent("mousereleased", x, y, button)
 end
 
+function App:mousemoved(x, y, dx, dy, istouch)
+    InputMode:noteMouse()
+    return self:forwardEvent("mousemoved", x, y, dx, dy, istouch)
+end
+
 function App:wheelmoved(dx, dy)
+    InputMode:noteMouse()
     return self:forwardEvent("wheelmoved", dx, dy)
 end
 
 function App:keypressed(key)
+    InputMode:noteKeyboard()
     if key == "printscreen" then
         local time = os.date("%Y-%m-%d_%H-%M-%S")
         love.graphics.captureScreenshot("screenshot_" .. time .. ".png")
@@ -159,6 +169,7 @@ function App:keypressed(key)
 end
 
 function App:joystickpressed(joystick, button)
+    InputMode:noteGamepad()
     return self:forwardEvent("joystickpressed", joystick, button)
 end
 
@@ -167,10 +178,12 @@ function App:joystickreleased(joystick, button)
 end
 
 function App:joystickaxis(joystick, axis, value)
+    InputMode:noteGamepadAxis(value)
     return self:forwardEvent("joystickaxis", joystick, axis, value)
 end
 
 function App:gamepadpressed(joystick, button)
+    InputMode:noteGamepad()
     return self:forwardEvent("gamepadpressed", joystick, button)
 end
 
@@ -179,6 +192,7 @@ function App:gamepadreleased(joystick, button)
 end
 
 function App:gamepadaxis(joystick, axis, value)
+    InputMode:noteGamepadAxis(value)
     return self:forwardEvent("gamepadaxis", joystick, axis, value)
 end
 
