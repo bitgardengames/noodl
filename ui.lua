@@ -1342,7 +1342,7 @@ function UI:drawFruitSockets()
         return
     end
 
-    local baseX, baseY = 20, 60
+    local baseX, baseY = 60, 60
     local perRow = 10
     local spacing = self.socketSize + 6
     local rows = math.max(1, math.ceil(self.fruitRequired / perRow))
@@ -1495,6 +1495,23 @@ function UI:drawFruitSockets()
             love.graphics.circle("line", x, y, radius - 1.5, 32)
         end
     end
+
+    -- draw fruit counter text anchored to the socket panel
+    local collected = tostring(self.fruitCollected)
+    local required  = tostring(self.fruitRequired)
+    UI.setFont("button")
+    local font = love.graphics.getFont()
+    local textHeight = font:getHeight()
+    local padding = 12
+    local textY = panelY + panelH - padding - textHeight
+    love.graphics.setColor(Theme.textColor)
+    love.graphics.printf(
+        collected .. " / " .. required,
+        panelX + padding,
+        textY,
+        panelW - padding * 2,
+        "right"
+    )
 end
 
 function UI:draw()
@@ -1502,20 +1519,6 @@ function UI:draw()
     drawComboIndicator(self)
     -- draw socket grid
     self:drawFruitSockets()
-
-    -- fruit counter text (small, under sockets)
-    if self.fruitRequired > 0 then
-        local collected = tostring(self.fruitCollected)
-        local required  = tostring(self.fruitRequired)
-
-        UI.setFont("button")
-        love.graphics.setColor(Theme.textColor)
-        love.graphics.printf(
-            collected .. " / " .. required,
-            20, 20,                     -- x, y (just above sockets)
-            200, "left"
-        )
-    end
 
     self:drawFloorModifiers()
 end
