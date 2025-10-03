@@ -544,6 +544,39 @@ function Saws:draw()
 
         -- Reset stencil
         love.graphics.setStencilTest()
+
+        -- Debug visualization for the saw's collision space
+        local cx, cy = getSawCollisionCenter(saw)
+        if cx and cy then
+            love.graphics.setColor(1, 0, 0, 0.12)
+            love.graphics.circle("fill", cx, cy, saw.radius)
+            love.graphics.setColor(1, 0, 0, 0.45)
+            love.graphics.setLineWidth(2)
+            love.graphics.circle("line", cx, cy, saw.radius)
+        end
+
+        if saw.collisionCells and Arena and Arena.getTilePosition then
+            local tileSize = getTileSize()
+            if tileSize and tileSize > 0 then
+                love.graphics.setColor(1, 0, 0, 0.08)
+                for _, cell in ipairs(saw.collisionCells) do
+                    local col, row = cell[1], cell[2]
+                    local cellX, cellY = Arena:getTilePosition(col, row)
+                    love.graphics.rectangle("fill", cellX, cellY, tileSize, tileSize)
+                end
+
+                love.graphics.setColor(1, 0, 0, 0.35)
+                love.graphics.setLineWidth(1)
+                for _, cell in ipairs(saw.collisionCells) do
+                    local col, row = cell[1], cell[2]
+                    local cellX, cellY = Arena:getTilePosition(col, row)
+                    love.graphics.rectangle("line", cellX, cellY, tileSize, tileSize)
+                end
+            end
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setLineWidth(1)
     end
 end
 
