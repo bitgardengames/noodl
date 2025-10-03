@@ -4,6 +4,8 @@ local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
+local SnakeCosmetics = require("snakecosmetics")
+local Achievements = require("achievements")
 local PlayerStats = require("playerstats")
 local Audio = require("audio")
 local Shaders = require("shaders")
@@ -20,6 +22,10 @@ local CARD_HEIGHT = 108
 local CARD_SPACING = 24
 local STAT_CARD_HEIGHT = 72
 local STAT_CARD_SPACING = 16
+local COSMETIC_CARD_HEIGHT = 148
+local COSMETIC_CARD_SPACING = 24
+local COSMETIC_PREVIEW_WIDTH = 128
+local COSMETIC_PREVIEW_HEIGHT = 40
 local SCROLL_SPEED = 48
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
@@ -42,14 +48,23 @@ local analogAxisDirections = { horizontal = nil, vertical = nil }
 
 local trackEntries = {}
 local statsEntries = {}
+local cosmeticsEntries = {}
 local progressionState = nil
 local activeTab = "experience"
+local cosmeticsFocusIndex = nil
+local hoveredCosmeticIndex = nil
+local pressedCosmeticIndex = nil
 
 local tabs = {
     {
         id = "experience",
         action = "tab_experience",
         labelKey = "metaprogression.tabs.experience",
+    },
+    {
+        id = "cosmetics",
+        action = "tab_cosmetics",
+        labelKey = "metaprogression.tabs.cosmetics",
     },
     {
         id = "stats",
@@ -139,6 +154,10 @@ local function updateHeldDpad(dt)
 end
 
 local function getActiveList()
+    if activeTab == "cosmetics" then
+        return cosmeticsEntries, COSMETIC_CARD_HEIGHT, COSMETIC_CARD_SPACING
+    end
+
     if activeTab == "stats" then
         return statsEntries, STAT_CARD_HEIGHT, STAT_CARD_SPACING
     end
@@ -285,6 +304,258 @@ local function buildStatsEntries()
     end)
 end
 
+local function clampColorComponent(value)
+    if value < 0 then
+        return 0
+    elseif value > 1 then
+        return 1
+    end
+    return value
+end
+
+local function lightenColor(color, amount)
+    if type(color) ~= "table" then
+        return {1, 1, 1, 1}
+    end
+
+    amount = clampColorComponent(amount or 0)
+
+    local r = clampColorComponent((color[1] or 0) + (1 - (color[1] or 0)) * amount)
+    local g = clampColorComponent((color[2] or 0) + (1 - (color[2] or 0)) * amount)
+    local b = clampColorComponent((color[3] or 0) + (1 - (color[3] or 0)) * amount)
+    local a = clampColorComponent(color[4] or 1)
+
+    return {r, g, b, a}
+end
+
+local function darkenColor(color, amount)
+    if type(color) ~= "table" then
+        return {0, 0, 0, 1}
+    end
+
+    amount = clampColorComponent(amount or 0)
+
+    local scale = 1 - amount
+    local r = clampColorComponent((color[1] or 0) * scale)
+    local g = clampColorComponent((color[2] or 0) * scale)
+    local b = clampColorComponent((color[3] or 0) * scale)
+    local a = clampColorComponent(color[4] or 1)
+
+    return {r, g, b, a}
+end
+
+local function resolveAchievementName(id)
+    if not id or not Achievements or not Achievements.getDefinition then
+        return prettifyKey(id)
+    end
+
+    local definition = Achievements:getDefinition(id)
+    if not definition then
+        return prettifyKey(id)
+    end
+
+    if definition.titleKey then
+        local title = Localization:get(definition.titleKey)
+        if title and title ~= definition.titleKey then
+            return title
+        end
+    end
+
+    if definition.title and definition.title ~= "" then
+        return definition.title
+    end
+
+    if definition.nameKey then
+        local name = Localization:get(definition.nameKey)
+        if name and name ~= definition.nameKey then
+            return name
+        end
+    end
+
+    if definition.name and definition.name ~= "" then
+        return definition.name
+    end
+
+    return prettifyKey(id)
+end
+
+local function getSkinRequirementText(skin)
+    local unlock = skin and skin.unlock or {}
+
+    if unlock.level then
+        return Localization:get("metaprogression.cosmetics.locked_level", { level = unlock.level })
+    elseif unlock.achievement then
+        local achievementName = resolveAchievementName(unlock.achievement)
+        return Localization:get("metaprogression.cosmetics.locked_achievement", {
+            name = achievementName,
+        })
+    end
+
+    return Localization:get("metaprogression.cosmetics.locked_generic")
+end
+
+local function resolveSkinStatus(skin)
+    if not skin then
+        return "", "", Theme.textColor
+    end
+
+    if skin.selected then
+        return Localization:get("metaprogression.cosmetics.equipped"), nil, Theme.accentTextColor or Theme.textColor
+    end
+
+    if skin.unlocked then
+        return Localization:get("metaprogression.status_unlocked"), Localization:get("metaprogression.cosmetics.equip_hint"), Theme.progressColor or Theme.textColor
+    end
+
+    return Localization:get("metaprogression.cosmetics.locked_label"), getSkinRequirementText(skin), Theme.lockedCardColor or Theme.warningColor or Theme.textColor
+end
+
+local function buildCosmeticsEntries()
+    cosmeticsEntries = {}
+    hoveredCosmeticIndex = nil
+    pressedCosmeticIndex = nil
+    cosmeticsFocusIndex = nil
+
+    if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
+        return
+    end
+
+    local skins = SnakeCosmetics:getSkins() or {}
+    local selectedIndex
+
+    for _, skin in ipairs(skins) do
+        local entry = {
+            id = skin.id,
+            skin = skin,
+        }
+        entry.statusLabel, entry.detailText, entry.statusColor = resolveSkinStatus(skin)
+        cosmeticsEntries[#cosmeticsEntries + 1] = entry
+
+        if skin.selected then
+            selectedIndex = #cosmeticsEntries
+        end
+    end
+
+    if selectedIndex then
+        cosmeticsFocusIndex = selectedIndex
+    elseif #cosmeticsEntries > 0 then
+        cosmeticsFocusIndex = 1
+    end
+end
+
+local function updateCosmeticsLayout(sw)
+    if not sw then
+        sw = select(1, Screen:get())
+    end
+
+    if not sw then
+        return
+    end
+
+    local listX = (sw - CARD_WIDTH) / 2
+
+    for index, entry in ipairs(cosmeticsEntries) do
+        local y = START_Y + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
+        entry.bounds = {
+            x = listX,
+            y = y,
+            w = CARD_WIDTH,
+            h = COSMETIC_CARD_HEIGHT,
+        }
+    end
+end
+
+local function ensureCosmeticVisible(index)
+    if activeTab ~= "cosmetics" or not index then
+        return
+    end
+
+    if viewportHeight <= 0 then
+        return
+    end
+
+    local itemHeight = COSMETIC_CARD_HEIGHT
+    local spacing = COSMETIC_CARD_SPACING
+    local top = START_Y + scrollOffset + (index - 1) * (itemHeight + spacing)
+    local bottom = top + itemHeight
+    local viewportTop = START_Y
+    local viewportBottom = START_Y + viewportHeight
+
+    if top < viewportTop then
+        scrollOffset = scrollOffset + (viewportTop - top)
+    elseif bottom > viewportBottom then
+        scrollOffset = scrollOffset - (bottom - viewportBottom)
+    end
+
+    if scrollOffset < minScrollOffset then
+        scrollOffset = minScrollOffset
+    elseif scrollOffset > 0 then
+        scrollOffset = 0
+    end
+
+    updateCosmeticsLayout()
+end
+
+local function setCosmeticsFocus(index, playSound)
+    if not index or not cosmeticsEntries[index] then
+        return
+    end
+
+    if cosmeticsFocusIndex ~= index and playSound then
+        Audio:playSound("hover")
+    end
+
+    cosmeticsFocusIndex = index
+    ensureCosmeticVisible(index)
+end
+
+local function moveCosmeticsFocus(delta)
+    if not delta or delta == 0 or #cosmeticsEntries == 0 then
+        return
+    end
+
+    local index = cosmeticsFocusIndex or 1
+    index = math.max(1, math.min(#cosmeticsEntries, index + delta))
+    setCosmeticsFocus(index, true)
+end
+
+local function activateCosmetic(index)
+    local entry = index and cosmeticsEntries[index]
+    if not entry or not entry.skin then
+        return false
+    end
+
+    if not entry.skin.unlocked then
+        return false
+    end
+
+    if not SnakeCosmetics or not SnakeCosmetics.setActiveSkin then
+        return false
+    end
+
+    local skinId = entry.skin.id
+    local changed = SnakeCosmetics:setActiveSkin(skinId)
+    if changed then
+        buildCosmeticsEntries()
+        local newIndex
+        for idx, cosmetic in ipairs(cosmeticsEntries) do
+            if cosmetic.skin and cosmetic.skin.id == skinId then
+                newIndex = idx
+                break
+            end
+        end
+        if newIndex then
+            setCosmeticsFocus(newIndex)
+        end
+        local sw, sh = Screen:get()
+        if sw and sh then
+            updateScrollBounds(sw, sh)
+        end
+    end
+
+    return changed
+end
+
 local function findTab(targetId)
     for index, tab in ipairs(tabs) do
         if tab.id == targetId then
@@ -304,6 +575,11 @@ local function setActiveTab(tabId)
 
     if tabId == "stats" then
         buildStatsEntries()
+    elseif tabId == "cosmetics" then
+        buildCosmeticsEntries()
+    else
+        hoveredCosmeticIndex = nil
+        pressedCosmeticIndex = nil
     end
 
     scrollOffset = 0
@@ -316,6 +592,10 @@ local function setActiveTab(tabId)
     if buttonIndex then
         buttonList:setFocus(buttonIndex)
     end
+
+    if tabId == "cosmetics" and cosmeticsFocusIndex then
+        ensureCosmeticVisible(cosmeticsFocusIndex)
+    end
 end
 
 local function applyFocusedTab(button)
@@ -326,6 +606,8 @@ local function applyFocusedTab(button)
     local action = button.action or button.id
     if action == "tab_experience" or action == "progressionTab_experience" then
         setActiveTab("experience")
+    elseif action == "tab_cosmetics" or action == "progressionTab_cosmetics" then
+        setActiveTab("cosmetics")
     elseif action == "tab_stats" or action == "progressionTab_stats" then
         setActiveTab("stats")
     end
@@ -350,13 +632,21 @@ local function scrollBy(amount)
 end
 
 local function dpadScrollUp()
-    scrollBy(SCROLL_SPEED)
-    applyFocusedTab(buttonList:moveFocus(-1))
+    if activeTab == "cosmetics" then
+        moveCosmeticsFocus(-1)
+    else
+        scrollBy(SCROLL_SPEED)
+        applyFocusedTab(buttonList:moveFocus(-1))
+    end
 end
 
 local function dpadScrollDown()
-    scrollBy(-SCROLL_SPEED)
-    applyFocusedTab(buttonList:moveFocus(1))
+    if activeTab == "cosmetics" then
+        moveCosmeticsFocus(1)
+    else
+        scrollBy(-SCROLL_SPEED)
+        applyFocusedTab(buttonList:moveFocus(1))
+    end
 end
 
 local analogDirections = {
@@ -446,6 +736,18 @@ function ProgressionScreen:enter()
     progressionState = MetaProgression:getState()
     buildStatsEntries()
 
+    if SnakeCosmetics and SnakeCosmetics.load then
+        local metaLevel = progressionState and progressionState.level or nil
+        local ok, err = pcall(function()
+            SnakeCosmetics:load({ metaLevel = metaLevel })
+        end)
+        if not ok then
+            print("[metaprogressionscreen] failed to load cosmetics:", err)
+        end
+    end
+
+    buildCosmeticsEntries()
+
     local sw, sh = Screen:get()
 
     local buttons = {}
@@ -504,6 +806,25 @@ end
 function ProgressionScreen:update(dt)
     local mx, my = love.mouse.getPosition()
     buttonList:updateHover(mx, my)
+
+    if activeTab == "cosmetics" then
+        local sw = select(1, Screen:get())
+        updateCosmeticsLayout(sw)
+
+        hoveredCosmeticIndex = nil
+        for index, entry in ipairs(cosmeticsEntries) do
+            local bounds = entry.bounds
+            if bounds and UI.isHovered(bounds.x, bounds.y, bounds.w, bounds.h, mx, my) then
+                hoveredCosmeticIndex = index
+                break
+            end
+        end
+
+        if hoveredCosmeticIndex and hoveredCosmeticIndex ~= cosmeticsFocusIndex then
+            cosmeticsFocusIndex = hoveredCosmeticIndex
+        end
+    end
+
     updateHeldDpad(dt)
 end
 
@@ -513,6 +834,8 @@ local function handleConfirm()
         Audio:playSound("click")
         if action == "tab_experience" then
             setActiveTab("experience")
+        elseif action == "tab_cosmetics" then
+            setActiveTab("cosmetics")
         elseif action == "tab_stats" then
             setActiveTab("stats")
         else
@@ -646,6 +969,131 @@ local function drawTrack(sw, sh)
     love.graphics.pop()
 end
 
+local function drawCosmeticsHeader(sw)
+    love.graphics.setFont(UI.fonts.button)
+    love.graphics.setColor(Theme.textColor)
+    love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, 150, sw, "center")
+end
+
+local function drawCosmeticsList(sw, sh)
+    local clipY = START_Y
+    local clipH = viewportHeight
+
+    if clipH <= 0 then
+        return
+    end
+
+    updateCosmeticsLayout(sw)
+
+    local listX = (sw - CARD_WIDTH) / 2
+
+    love.graphics.push()
+    love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+
+    for index, entry in ipairs(cosmeticsEntries) do
+        local y = START_Y + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
+        entry.bounds = entry.bounds or {}
+        entry.bounds.x = listX
+        entry.bounds.y = y
+        entry.bounds.w = CARD_WIDTH
+        entry.bounds.h = COSMETIC_CARD_HEIGHT
+
+        if y + COSMETIC_CARD_HEIGHT >= clipY - COSMETIC_CARD_HEIGHT and y <= clipY + clipH + COSMETIC_CARD_HEIGHT then
+            local skin = entry.skin or {}
+            local unlocked = skin.unlocked
+            local selected = skin.selected
+            local isFocused = (index == cosmeticsFocusIndex)
+            local isHovered = (index == hoveredCosmeticIndex)
+
+            local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+            local fillColor
+            if selected then
+                fillColor = lightenColor(basePanel, 0.28)
+            elseif unlocked then
+                fillColor = lightenColor(basePanel, 0.14)
+            else
+                fillColor = darkenColor(basePanel, 0.25)
+            end
+
+            if isFocused or isHovered then
+                fillColor = lightenColor(fillColor, 0.06)
+            end
+
+            love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.92)
+            UI.drawRoundedRect(listX, y, CARD_WIDTH, COSMETIC_CARD_HEIGHT, 14)
+
+            local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
+            if selected then
+                borderColor = Theme.accentTextColor or borderColor
+            elseif unlocked then
+                borderColor = Theme.progressColor or borderColor
+            elseif Theme.lockedCardColor then
+                borderColor = Theme.lockedCardColor
+            end
+
+            love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
+            love.graphics.setLineWidth(isFocused and 3 or 2)
+            love.graphics.rectangle("line", listX, y, CARD_WIDTH, COSMETIC_CARD_HEIGHT, 14, 14)
+
+            if isFocused then
+                local highlight = Theme.highlightColor or {1, 1, 1, 0.08}
+                love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.08) + 0.04)
+                UI.drawRoundedRect(listX + 6, y + 6, CARD_WIDTH - 12, COSMETIC_CARD_HEIGHT - 12, 12)
+            end
+
+            local skinColors = skin.colors or {}
+            local bodyColor = skinColors.body or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
+            local outlineColor = skinColors.outline or {0.05, 0.15, 0.12, 1}
+            local glowColor = skinColors.glow or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
+
+            local previewX = listX + 28
+            local previewY = y + (COSMETIC_CARD_HEIGHT - COSMETIC_PREVIEW_HEIGHT) / 2
+            local previewW = COSMETIC_PREVIEW_WIDTH
+            local previewH = COSMETIC_PREVIEW_HEIGHT
+
+            if unlocked then
+                love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], (glowColor[4] or 1) * 0.45)
+                love.graphics.setLineWidth(6)
+                love.graphics.rectangle("line", previewX - 6, previewY - 6, previewW + 12, previewH + 12, previewH / 2 + 6, previewH / 2 + 6)
+            end
+
+            love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], bodyColor[4] or 1)
+            UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewH / 2)
+
+            love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 1)
+            love.graphics.setLineWidth(3)
+            love.graphics.rectangle("line", previewX, previewY, previewW, previewH, previewH / 2, previewH / 2)
+
+            love.graphics.setLineWidth(1)
+
+            local textX = previewX + previewW + 24
+            local textWidth = CARD_WIDTH - (textX - listX) - 28
+
+            love.graphics.setFont(UI.fonts.button)
+            love.graphics.setColor(Theme.textColor)
+            love.graphics.printf(skin.name or skin.id or "", textX, y + 20, textWidth, "left")
+
+            love.graphics.setFont(UI.fonts.body)
+            love.graphics.setColor(Theme.mutedTextColor or Theme.textColor)
+            love.graphics.printf(skin.description or "", textX, y + 52, textWidth, "left")
+
+            local statusColor = entry.statusColor or Theme.textColor
+            love.graphics.setFont(UI.fonts.caption)
+            love.graphics.setColor(statusColor[1], statusColor[2], statusColor[3], statusColor[4] or 1)
+            love.graphics.printf(entry.statusLabel or "", textX, y + COSMETIC_CARD_HEIGHT - 40, textWidth, "left")
+
+            if entry.detailText and entry.detailText ~= "" then
+                love.graphics.setFont(UI.fonts.small)
+                love.graphics.setColor(Theme.mutedTextColor or Theme.textColor)
+                love.graphics.printf(entry.detailText, textX, y + COSMETIC_CARD_HEIGHT - 24, textWidth, "left")
+            end
+        end
+    end
+
+    love.graphics.setScissor()
+    love.graphics.pop()
+end
+
 local function drawStatsHeader(sw)
     love.graphics.setFont(UI.fonts.button)
     love.graphics.setColor(Theme.textColor)
@@ -708,6 +1156,9 @@ function ProgressionScreen:draw()
     if activeTab == "experience" then
         drawSummaryPanel(sw)
         drawTrack(sw, sh)
+    elseif activeTab == "cosmetics" then
+        drawCosmeticsHeader(sw)
+        drawCosmeticsList(sw, sh)
     else
         drawStatsHeader(sw)
         drawStatsList(sw, sh)
@@ -732,6 +1183,21 @@ end
 
 function ProgressionScreen:mousepressed(x, y, button)
     buttonList:mousepressed(x, y, button)
+
+    if activeTab == "cosmetics" and button == 1 then
+        local sw = select(1, Screen:get())
+        updateCosmeticsLayout(sw)
+
+        pressedCosmeticIndex = nil
+        for index, entry in ipairs(cosmeticsEntries) do
+            local bounds = entry.bounds
+            if bounds and UI.isHovered(bounds.x, bounds.y, bounds.w, bounds.h, x, y) then
+                pressedCosmeticIndex = index
+                setCosmeticsFocus(index)
+                break
+            end
+        end
+    end
 end
 
 function ProgressionScreen:mousereleased(x, y, button)
@@ -740,12 +1206,40 @@ function ProgressionScreen:mousereleased(x, y, button)
         Audio:playSound("click")
         if action == "tab_experience" then
             setActiveTab("experience")
+        elseif action == "tab_cosmetics" then
+            setActiveTab("cosmetics")
         elseif action == "tab_stats" then
             setActiveTab("stats")
         else
             return action
         end
+        return
     end
+
+    if activeTab ~= "cosmetics" or button ~= 1 then
+        pressedCosmeticIndex = nil
+        return
+    end
+
+    local sw = select(1, Screen:get())
+    updateCosmeticsLayout(sw)
+
+    local releasedIndex
+    for index, entry in ipairs(cosmeticsEntries) do
+        local bounds = entry.bounds
+        if bounds and UI.isHovered(bounds.x, bounds.y, bounds.w, bounds.h, x, y) then
+            releasedIndex = index
+            break
+        end
+    end
+
+    if releasedIndex and releasedIndex == pressedCosmeticIndex then
+        setCosmeticsFocus(releasedIndex)
+        local changed = activateCosmetic(releasedIndex)
+        Audio:playSound(changed and "click" or "hover")
+    end
+
+    pressedCosmeticIndex = nil
 end
 
 function ProgressionScreen:wheelmoved(_, dy)
@@ -753,6 +1247,16 @@ function ProgressionScreen:wheelmoved(_, dy)
 end
 
 function ProgressionScreen:keypressed(key)
+    if activeTab == "cosmetics" then
+        if key == "up" then
+            moveCosmeticsFocus(-1)
+            return
+        elseif key == "down" then
+            moveCosmeticsFocus(1)
+            return
+        end
+    end
+
     if key == "up" then
         scrollBy(SCROLL_SPEED)
         applyFocusedTab(buttonList:moveFocus(-1))
@@ -771,6 +1275,11 @@ function ProgressionScreen:keypressed(key)
         Audio:playSound("click")
         return "menu"
     elseif key == "return" or key == "kpenter" or key == "space" then
+        if activeTab == "cosmetics" and cosmeticsFocusIndex then
+            local changed = activateCosmetic(cosmeticsFocusIndex)
+            Audio:playSound(changed and "click" or "hover")
+            return
+        end
         return handleConfirm()
     end
 end
@@ -787,6 +1296,11 @@ function ProgressionScreen:gamepadpressed(_, button)
     elseif button == "dpright" then
         applyFocusedTab(buttonList:moveFocus(1))
     elseif button == "a" or button == "start" then
+        if activeTab == "cosmetics" and cosmeticsFocusIndex then
+            local changed = activateCosmetic(cosmeticsFocusIndex)
+            Audio:playSound(changed and "click" or "hover")
+            return
+        end
         return handleConfirm()
     elseif button == "b" then
         Audio:playSound("click")

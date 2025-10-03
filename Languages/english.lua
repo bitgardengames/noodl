@@ -165,7 +165,17 @@ local english = {
             status_locked = "Unlocks in ${xp} XP",
             tabs = {
                 experience = "Experience",
+                cosmetics = "Cosmetics",
                 stats = "Lifetime Stats",
+            },
+            cosmetics = {
+                header = "Snake Skins",
+                locked_label = "Locked",
+                locked_level = "Reach level ${level} to unlock.",
+                locked_achievement = "Unlock achievement: ${name}.",
+                locked_generic = "Discover this skin by progressing further.",
+                equip_hint = "Click or press Enter to equip.",
+                equipped = "Equipped",
             },
             stats_header = "Lifetime Stats",
             stats_empty = "Keep playing to build your legacy!",
