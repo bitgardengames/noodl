@@ -400,7 +400,7 @@ local english = {
             },
             extra_bite = {
                 name = "Extra Bite",
-                description = "The exit unlocks one fruit earlier.",
+                description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
                 celebration = "Early Exit",
             },
             metronome_totem = {
@@ -431,7 +431,7 @@ local english = {
             },
             mapmakers_compass = {
                 name = "Mapmaker's Compass",
-                description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
+                description = "The exit unlocks one fruit earlier.",
             },
             linked_hydraulics = {
                 name = "Linked Hydraulics",
