@@ -1,0 +1,646 @@
+local Arena = require("arena")
+local SnakeUtils = require("snakeutils")
+local Particles = require("particles")
+local Theme = require("theme")
+
+local Saws = {}
+local current = {}
+local slots = {}
+local nextSlotId = 0
+
+local SAW_RADIUS = 24
+local COLLISION_RADIUS_MULT = 0.7 -- keep the visual size but ease up on collision tightness
+local SAW_TEETH = 12
+local HUB_HOLE_RADIUS = 4
+local HUB_HIGHLIGHT_PADDING = 3
+local TRACK_LENGTH = 120 -- how far the saw moves on its track
+local MOVE_SPEED = 60    -- units per second along the track
+local SPAWN_DURATION = 0.3
+local SQUASH_DURATION = 0.15
+local SINK_OFFSET = 2
+local SINK_DISTANCE = 28
+local SINK_SPEED = 3
+local HIT_FLASH_DURATION = 0.18
+local HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
+
+local function copyColor(color)
+    if not color then
+        return { 1, 1, 1, 1 }
+    end
+
+    return {
+        color[1] or 1,
+        color[2] or 1,
+        color[3] or 1,
+        color[4] == nil and 1 or color[4],
+    }
+end
+
+local function getHighlightColor(color)
+    color = color or {1, 1, 1, 1}
+    local r = math.min(1, color[1] * 1.2 + 0.08)
+    local g = math.min(1, color[2] * 1.2 + 0.08)
+    local b = math.min(1, color[3] * 1.2 + 0.08)
+    local a = (color[4] or 1) * 0.7
+    return {r, g, b, a}
+end
+
+-- modifiers
+Saws.speedMult = 1.0
+Saws.spinMult = 1.0
+Saws.stallOnFruit = 0
+
+local stallTimer = 0
+local sinkTimer = 0
+local sinkAutoRaise = false
+local sinkActive = false
+
+local function getTileSize()
+    return Arena and Arena.tileSize or SnakeUtils.SEGMENT_SIZE or 24
+end
+
+local function clampRow(row)
+    if not Arena or (Arena.rows or 0) <= 0 then
+        return row
+    end
+
+    return math.max(1, math.min(Arena.rows, row))
+end
+
+local function clampCol(col)
+    if not Arena or (Arena.cols or 0) <= 0 then
+        return col
+    end
+
+    return math.max(1, math.min(Arena.cols, col))
+end
+
+local function addCell(target, seen, col, row)
+    if not (col and row) then
+        return
+    end
+
+    col = clampCol(col)
+    row = clampRow(row)
+
+    local key = tostring(col) .. ":" .. tostring(row)
+    if seen[key] then
+        return
+    end
+
+    seen[key] = true
+    target[#target + 1] = { col, row }
+end
+
+local function buildCollisionCellsForSaw(saw)
+    if not saw then
+        return nil
+    end
+
+    local trackCells = SnakeUtils.getSawTrackCells(saw.x, saw.y, saw.dir) or {}
+    if #trackCells == 0 then
+        return nil
+    end
+
+    local cells = {}
+    local seen = {}
+
+    -- Limit collision coverage to the track cell and the adjacent cell the blade
+    -- actually occupies so the hazard doesn't spill into neighboring tiles.
+    if saw.dir == "horizontal" then
+        for _, cell in ipairs(trackCells) do
+            local col, row = cell[1], cell[2]
+            addCell(cells, seen, col, row)
+            addCell(cells, seen, col, row + 1)
+        end
+    else
+        local offsetDir = (saw.side == "left") and -1 or 1
+
+        for _, cell in ipairs(trackCells) do
+            local col, row = cell[1], cell[2]
+            addCell(cells, seen, col, row)
+            addCell(cells, seen, col + offsetDir, row)
+        end
+    end
+
+    return cells
+end
+
+local function overlapsCollisionCell(saw, x, y, w, h)
+    local cells = saw and saw.collisionCells
+    if not (cells and #cells > 0) then
+        return true
+    end
+
+    if not (Arena and Arena.getTilePosition) then
+        return true
+    end
+
+    local tileSize = getTileSize()
+
+    for _, cell in ipairs(cells) do
+        local col, row = cell[1], cell[2]
+        local cellX, cellY = Arena:getTilePosition(col, row)
+        if x < cellX + tileSize and x + w > cellX and y < cellY + tileSize and y + h > cellY then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function isCollisionCandidate(saw, x, y, w, h)
+    if not (saw and x and y and w and h) then
+        return false
+    end
+
+    if (saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0 then
+        return false
+    end
+
+    return overlapsCollisionCell(saw, x, y, w, h)
+end
+
+local function getMoveSpeed()
+    return MOVE_SPEED * (Saws.speedMult or 1)
+end
+
+local function getOrCreateSlot(x, y, dir)
+    dir = dir or "horizontal"
+
+    for _, slot in ipairs(slots) do
+        if slot.x == x and slot.y == y and slot.dir == dir then
+            return slot
+        end
+    end
+
+    nextSlotId = nextSlotId + 1
+    local slot = {
+        id = nextSlotId,
+        x = x,
+        y = y,
+        dir = dir,
+    }
+
+    table.insert(slots, slot)
+    return slot
+end
+
+local function getSawCenter(saw)
+    if not saw then
+        return nil, nil
+    end
+
+    if saw.dir == "horizontal" then
+        local minX = saw.x - TRACK_LENGTH/2 + saw.radius
+        local maxX = saw.x + TRACK_LENGTH/2 - saw.radius
+        local px = minX + (maxX - minX) * saw.progress
+        return px, saw.y
+    end
+
+    local minY = saw.y - TRACK_LENGTH/2 + saw.radius
+    local maxY = saw.y + TRACK_LENGTH/2 - saw.radius
+    local py = minY + (maxY - minY) * saw.progress
+
+    -- Vertical saws should sit centered in their track just like horizontal ones.
+    -- Previously the hub was offset vertically, which made the blade appear to
+    -- jut too far into the arena. Keep the center aligned with the track so both
+    -- orientations look consistent.
+    return saw.x, py
+end
+
+local function getSawCollisionCenter(saw)
+    local px, py = getSawCenter(saw)
+    if not (px and py) then
+        return px, py
+    end
+
+    local sinkOffset = SINK_OFFSET + (saw.sinkProgress or 0) * SINK_DISTANCE
+    if saw.dir == "horizontal" then
+        py = py + sinkOffset
+    else
+        local sinkDir = (saw.side == "left") and -1 or 1
+        px = px + sinkDir * sinkOffset
+    end
+
+    return px, py
+end
+
+local function removeSaw(target)
+    if not target then
+        return
+    end
+
+    for index, saw in ipairs(current) do
+        if saw == target or index == target then
+            local px, py = getSawCenter(saw)
+            local sawColor = Theme.sawColor or {0.85, 0.8, 0.75, 1}
+            local primary = copyColor(sawColor)
+            primary[4] = 1
+            local highlight = getHighlightColor(sawColor)
+
+            Particles:spawnBurst(px or saw.x, py or saw.y, {
+                count = 12,
+                speed = 82,
+                speedVariance = 68,
+                life = 0.4,
+                size = 3,
+                color = primary,
+                spread = math.pi * 2,
+                angleJitter = math.pi,
+                drag = 3.5,
+                gravity = 260,
+                scaleMin = 0.58,
+                scaleVariance = 0.66,
+                fadeTo = 0.06,
+            })
+
+            Particles:spawnBurst(px or saw.x, py or saw.y, {
+                count = love.math.random(4, 6),
+                speed = 126,
+                speedVariance = 70,
+                life = 0.28,
+                size = 2.1,
+                color = highlight,
+                spread = math.pi * 2,
+                angleJitter = math.pi,
+                drag = 1.4,
+                gravity = 200,
+                scaleMin = 0.4,
+                scaleVariance = 0.32,
+                fadeTo = 0,
+            })
+
+            table.remove(current, index)
+            break
+        end
+    end
+end
+
+-- Easing similar to Rocks
+-- Spawn a saw on a track
+function Saws:spawn(x, y, radius, teeth, dir, side)
+    local slot = getOrCreateSlot(x, y, dir)
+
+    table.insert(current, {
+        x = x,
+        y = y,
+        radius = radius or SAW_RADIUS,
+        collisionRadius = (radius or SAW_RADIUS) * COLLISION_RADIUS_MULT,
+        teeth = teeth or SAW_TEETH,
+        rotation = 0,
+        timer = 0,
+        phase = "drop",
+        scaleX = 1,
+        scaleY = 0,
+        offsetY = -40,
+
+        -- movement
+        dir = dir or "horizontal",
+        side = side,
+        progress = 0,
+        direction = 1,
+        slotId = slot and slot.id or nil,
+
+        sinkProgress = sinkActive and 1 or 0,
+        sinkTarget = sinkActive and 1 or 0,
+        collisionCells = nil,
+        hitFlashTimer = 0,
+    })
+
+    local saw = current[#current]
+    saw.collisionCells = buildCollisionCellsForSaw(saw)
+end
+
+function Saws:getAll()
+    return current
+end
+
+function Saws:getCenter(saw)
+    return getSawCenter(saw)
+end
+
+function Saws:getCollisionCenter(saw)
+    return getSawCollisionCenter(saw)
+end
+
+function Saws:reset()
+    current = {}
+    slots = {}
+    nextSlotId = 0
+    self.speedMult = 1.0
+    self.spinMult = 1.0
+    self.stallOnFruit = 0
+    stallTimer = 0
+    sinkTimer = 0
+    sinkAutoRaise = false
+    sinkActive = false
+end
+
+function Saws:destroy(target)
+    removeSaw(target)
+end
+
+function Saws:update(dt)
+    if stallTimer > 0 then
+        stallTimer = math.max(0, stallTimer - dt)
+    end
+
+    if sinkAutoRaise and sinkTimer > 0 then
+        sinkTimer = math.max(0, sinkTimer - dt)
+        if sinkTimer <= 0 then
+            self:unsink()
+        end
+    end
+
+    for _, saw in ipairs(current) do
+        if not saw.collisionCells then
+            saw.collisionCells = buildCollisionCellsForSaw(saw)
+        end
+
+        saw.collisionRadius = (saw.radius or SAW_RADIUS) * COLLISION_RADIUS_MULT
+
+        saw.timer = saw.timer + dt
+        saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (math.pi * 2)
+
+        local sinkDirection = (saw.sinkTarget or 0) > 0 and 1 or -1
+        saw.sinkProgress = saw.sinkProgress + sinkDirection * dt * SINK_SPEED
+        if saw.sinkProgress < 0 then
+            saw.sinkProgress = 0
+        elseif saw.sinkProgress > 1 then
+            saw.sinkProgress = 1
+        end
+
+        saw.hitFlashTimer = math.max(0, (saw.hitFlashTimer or 0) - dt)
+
+        if saw.phase == "drop" then
+            local progress = math.min(saw.timer / SPAWN_DURATION, 1)
+            saw.offsetY = -40 * (1 - progress)
+            saw.scaleY = progress
+            saw.scaleX = progress
+
+            if progress >= 1 then
+                saw.phase = "squash"
+                saw.timer = 0
+                local sawColor = Theme.sawColor or {0.8, 0.8, 0.8, 1}
+                local primary = copyColor(sawColor)
+                primary[4] = 1
+                local highlight = getHighlightColor(sawColor)
+
+                Particles:spawnBurst(saw.x, saw.y, {
+                    count = love.math.random(6, 10),
+                    speed = 62,
+                    speedVariance = 44,
+                    life = 0.4,
+                    size = 3,
+                    color = primary,
+                    spread = math.pi * 2,
+                    angleJitter = math.pi * 0.8,
+                    drag = 2.5,
+                    gravity = 185,
+                    scaleMin = 0.62,
+                    scaleVariance = 0.56,
+                    fadeTo = 0.1,
+                })
+
+                Particles:spawnBurst(saw.x, saw.y, {
+                    count = love.math.random(3, 4),
+                    speed = 118,
+                    speedVariance = 52,
+                    life = 0.27,
+                    size = 2,
+                    color = highlight,
+                    spread = math.pi * 2,
+                    angleJitter = math.pi,
+                    drag = 1.1,
+                    gravity = 150,
+                    scaleMin = 0.38,
+                    scaleVariance = 0.28,
+                    fadeTo = 0,
+                })
+            end
+
+        elseif saw.phase == "squash" then
+            local progress = math.min(saw.timer / SQUASH_DURATION, 1)
+            saw.scaleX = 1 + 0.3 * (1 - progress)
+            saw.scaleY = 1 - 0.3 * (1 - progress)
+            saw.offsetY = 0
+
+            if progress >= 1 then
+                saw.phase = "done"
+                saw.scaleX = 1
+                saw.scaleY = 1
+                saw.offsetY = 0
+            end
+        elseif saw.phase == "done" then
+            if stallTimer <= 0 then
+                -- Move along the track
+                local delta = (getMoveSpeed() * dt) / TRACK_LENGTH
+                saw.progress = saw.progress + delta * saw.direction
+
+                if saw.progress > 1 then
+                    saw.progress = 1
+                    saw.direction = -1
+                elseif saw.progress < 0 then
+                    saw.progress = 0
+                    saw.direction = 1
+                end
+            end
+        end
+    end
+end
+
+function Saws:draw()
+    if #slots > 0 then
+        love.graphics.setColor(0, 0, 0, 1)
+        for _, slot in ipairs(slots) do
+            if slot.dir == "horizontal" then
+                love.graphics.rectangle("fill", slot.x - TRACK_LENGTH/2, slot.y - 5, TRACK_LENGTH, 10, 6, 6)
+            else
+                love.graphics.rectangle("fill", slot.x - 5, slot.y - TRACK_LENGTH/2, 10, TRACK_LENGTH, 6, 6)
+            end
+        end
+    end
+
+    for _, saw in ipairs(current) do
+        local px, py = getSawCenter(saw)
+
+        -- Stencil: clip saw into the track (adjust direction for left/right mounted saws)
+        love.graphics.stencil(function()
+            if saw.dir == "horizontal" then
+                love.graphics.rectangle("fill",
+                    saw.x - TRACK_LENGTH/2 - saw.radius,
+                    saw.y - 999 + SINK_OFFSET,
+                    TRACK_LENGTH + saw.radius * 2,
+                    999)
+            else
+                -- For vertical saws, choose stencil side based on saw.side
+                local height = TRACK_LENGTH + saw.radius * 2
+                local top = saw.y - TRACK_LENGTH/2 - saw.radius
+                if saw.side == "left" then
+                    -- allow rightwards area (blade peeking into arena)
+                    love.graphics.rectangle("fill",
+                        saw.x,
+                        top,
+                        999,
+                        height)
+                elseif saw.side == "right" then
+                    -- allow leftwards area (default)
+                    love.graphics.rectangle("fill",
+                        saw.x - 999,
+                        top,
+                        999,
+                        height)
+                else
+                    -- centered/default: cover left side as before (keeps backward compatibility)
+                    love.graphics.rectangle("fill",
+                        saw.x - 999,
+                        top,
+                        999,
+                        height)
+                end
+            end
+        end, "replace", 1)
+
+        love.graphics.setStencilTest("equal", 1)
+
+        -- Saw blade
+        love.graphics.push()
+        local sinkOffset = (saw.sinkProgress or 0) * SINK_DISTANCE
+        local offsetX, offsetY = 0, 0
+
+        if saw.dir == "horizontal" then
+            offsetY = SINK_OFFSET + sinkOffset
+        else
+            local sinkDir = (saw.side == "left") and -1 or 1
+            offsetX = sinkDir * (SINK_OFFSET + sinkOffset)
+        end
+
+        love.graphics.translate((px or saw.x) + offsetX, (py or saw.y) + offsetY)
+
+        -- apply spinning rotation
+        love.graphics.rotate(saw.rotation)
+
+        local sinkScale = 1 - 0.1 * (saw.sinkProgress or 0)
+        love.graphics.scale(sinkScale, sinkScale)
+
+        local points = {}
+        local teeth = saw.teeth or 8
+        local outer = saw.radius
+        local inner = saw.radius * 0.8
+        local step = math.pi / teeth
+
+        for i = 0, (teeth * 2) - 1 do
+            local r = (i % 2 == 0) and outer or inner
+            local angle = i * step
+            table.insert(points, math.cos(angle) * r)
+            table.insert(points, math.sin(angle) * r)
+        end
+
+        -- Fill
+        local baseColor = Theme.sawColor or {0.8, 0.8, 0.8, 1}
+        if saw.hitFlashTimer and saw.hitFlashTimer > 0 then
+            baseColor = HIT_FLASH_COLOR
+        end
+
+        love.graphics.setColor(baseColor)
+        love.graphics.polygon("fill", points)
+
+        -- highlight
+        local highlight = getHighlightColor(baseColor)
+        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", 0, 0, HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1)
+
+        -- Outline
+        love.graphics.setColor(0, 0, 0, 1)
+        love.graphics.setLineWidth(3)
+        love.graphics.polygon("line", points)
+
+        -- Hub hole
+        love.graphics.circle("fill", 0, 0, HUB_HOLE_RADIUS)
+
+        love.graphics.pop()
+
+        -- Reset stencil
+        love.graphics.setStencilTest()
+
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setLineWidth(1)
+    end
+end
+
+function Saws:stall(duration)
+    if not duration or duration <= 0 then
+        return
+    end
+
+    stallTimer = (stallTimer or 0) + duration
+end
+
+function Saws:sink(duration)
+    for _, saw in ipairs(self:getAll()) do
+        saw.sinkTarget = 1
+    end
+
+    sinkActive = true
+
+    if duration and duration > 0 then
+        sinkTimer = math.max(sinkTimer, duration)
+        sinkAutoRaise = true
+    else
+        sinkTimer = 0
+        sinkAutoRaise = false
+    end
+end
+
+function Saws:unsink()
+    for _, saw in ipairs(self:getAll()) do
+        saw.sinkTarget = 0
+    end
+
+    sinkTimer = 0
+    sinkAutoRaise = false
+    sinkActive = false
+end
+
+function Saws:setStallOnFruit(duration)
+    self.stallOnFruit = duration or 0
+end
+
+function Saws:getStallOnFruit()
+    return self.stallOnFruit or 0
+end
+
+function Saws:onFruitCollected()
+    local duration = self:getStallOnFruit()
+    if duration > 0 then
+        self:stall(duration)
+    end
+end
+
+function Saws:isCollisionCandidate(saw, x, y, w, h)
+    return isCollisionCandidate(saw, x, y, w, h)
+end
+
+function Saws:checkCollision(x, y, w, h)
+    for _, saw in ipairs(self:getAll()) do
+        if isCollisionCandidate(saw, x, y, w, h) then
+            local px, py = getSawCollisionCenter(saw)
+
+            -- Circle vs AABB
+            local closestX = math.max(x, math.min(px, x + w))
+            local closestY = math.max(y, math.min(py, y + h))
+            local dx = px - closestX
+            local dy = py - closestY
+            local collisionRadius = saw.collisionRadius or saw.radius
+            if dx * dx + dy * dy < collisionRadius * collisionRadius then
+                saw.hitFlashTimer = math.max(saw.hitFlashTimer or 0, HIT_FLASH_DURATION)
+                return saw
+            end
+        end
+    end
+    return nil
+end
+
+return Saws

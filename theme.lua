@@ -1,0 +1,77 @@
+local Theme = {
+    -- Arena
+    arenaBG      = {0.18, 0.18, 0.22, 1.0},
+    arenaBorder  = {0.35, 0.30, 0.50, 1.0},
+
+    -- General background / chrome
+    bgColor        = {0.12, 0.12, 0.14, 1.0},
+    shadowColor    = {0.0, 0.0, 0.0, 0.45},
+    highlightColor = {1.0, 1.0, 1.0, 0.06},
+
+    -- Buttons
+    buttonColor     = {0.40, 0.35, 0.55, 1.0},
+    buttonHover     = {0.55, 0.48, 0.70, 1.0},
+    buttonPress     = {0.28, 0.24, 0.40, 1.0},
+    borderColor     = {0.30, 0.55, 0.45, 1.0},
+
+    -- Panels
+    panelColor      = {0.18, 0.18, 0.22, 0.92},
+    panelBorder     = {0.35, 0.30, 0.50, 1.0},
+
+    -- Text
+    textColor       = {0.88, 0.88, 0.92, 1.0},
+    mutedTextColor  = {0.70, 0.72, 0.78, 1.0},
+    accentTextColor = {0.95, 0.76, 0.48, 1.0},
+
+    -- State / feedback colours
+    lockedCardColor = {0.50, 0.35, 0.40, 1.0},
+    achieveColor    = {0.80, 0.45, 0.65, 1.0},
+    progressColor   = {0.55, 0.75, 0.55, 1.0},
+    warningColor    = {0.92, 0.55, 0.40, 1.0},
+
+    -- Gameplay
+    snakeDefault    = {0.45, 0.85, 0.70, 1.0},
+
+    -- Fruits / pickups
+    appleColor       = {0.90, 0.45, 0.55, 1.0},
+    bananaColor      = {0.90, 0.85, 0.55, 1.0},
+    blueberryColor   = {0.55, 0.65, 0.95, 1.0},
+    goldenPearColor  = {0.95, 0.80, 0.45, 1.0},
+    dragonfruitColor = {0.90, 0.60, 0.80, 1.0},
+
+    -- Obstacles
+    sawColor         = {0.65, 0.65, 0.70, 1.0},
+    rock             = {0.30, 0.30, 0.35, 1.0},
+}
+
+local function copyTable(value)
+    if type(value) ~= "table" then
+        return value
+    end
+
+    local copy = {}
+    for key, item in pairs(value) do
+        copy[key] = item
+    end
+
+    return copy
+end
+
+local defaults = {}
+for key, value in pairs(Theme) do
+    defaults[key] = copyTable(value)
+end
+
+function Theme.reset()
+    for key in pairs(Theme) do
+        if key ~= "reset" then
+            Theme[key] = nil
+        end
+    end
+
+    for key, value in pairs(defaults) do
+        Theme[key] = copyTable(value)
+    end
+end
+
+return Theme
