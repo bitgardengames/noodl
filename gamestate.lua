@@ -178,10 +178,6 @@ local function callCurrentState(self, methodName, ...)
     end
 end
 
-local function shouldBlockDuringTransition(eventName)
-    return transitionBlockedEvents[eventName]
-end
-
 function GameState:switch(stateName, data)
     if self.transitioning then
         self.queuedState = stateName
@@ -412,47 +408,8 @@ function GameState:draw()
     end
 end
 
-function GameState:getTransitionContext()
-    if not self.transitionContext then
-        local fromName, toName
-        if self.transitionDirection == 1 then
-            fromName = self.current
-            toName = self.next
-        else
-            fromName = self.transitionFrom
-            toName = self.current
-        end
-
-        updateTransitionContext(self, {
-            transitioning = self.transitioning,
-            direction = self.transitionDirection,
-            progress = self.transitioning and self.transitionTime or 1,
-            duration = self.transitionDuration,
-            time = self.transitioning and (self.transitionTime * self.transitionDuration) or 0,
-            from = fromName,
-            to = toName,
-        })
-    end
-
-    return self.transitionContext
-end
-
-function GameState:isTransitioning()
-    return self.transitioning == true
-end
-
-function GameState:getTransitionProgress()
-    local context = self:getTransitionContext()
-    return context and context.progress or 1
-end
-
-function GameState:getTransitionAlpha()
-    local context = self:getTransitionContext()
-    return context and context.alpha or 0
-end
-
 function GameState:dispatch(eventName, ...)
-    if self.transitioning and shouldBlockDuringTransition(eventName) then
+    if self.transitioning and transitionBlockedEvents[eventName] then
         return
     end
 
