@@ -33,7 +33,8 @@ local SEVERED_TAIL_LIFE = 0.9
 
 local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
 local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING
-local moveTimer = 0
+-- distance travelled since last grid snap (in world units)
+local moveProgress = 0
 local POP_DURATION = SnakeUtils.POP_DURATION
 local SHIELD_FLASH_DURATION = 0.3
 -- keep polyline spacing stable for rendering
@@ -811,7 +812,7 @@ function Snake:load(w, h)
     segmentCount = 1
     reverseControls = false
     popTimer = 0
-    moveTimer = 0
+    moveProgress = 0
     isDead = false
     self.reverseState = false
     self.shieldFlashTimer = 0
@@ -1179,18 +1180,15 @@ function Snake:update(dt)
 
     -- advance cell clock, maybe snap & commit queued direction
     local snappedThisTick = false
-    local moveInterval
-    if speed > 0 and not hole then
-        moveInterval = SEGMENT_SPACING / speed
-    end
-
     if hole then
-        moveTimer = 0
+        moveProgress = 0
     else
-        moveTimer = moveTimer + dt
+        local stepDistance = speed * dt
+        moveProgress = moveProgress + stepDistance
         local snaps = 0
-        while moveInterval and moveTimer >= moveInterval do
-            moveTimer = moveTimer - moveInterval
+        local segmentLength = SEGMENT_SPACING
+        while moveProgress >= segmentLength do
+            moveProgress = moveProgress - segmentLength
             snaps = snaps + 1
         end
         if snaps > 0 then
@@ -1959,7 +1957,8 @@ function Snake:getStateSnapshot()
         pendingDir = { x = pendingDir.x, y = pendingDir.y },
         trail = cloneTrail(trail),
         segmentCount = segmentCount,
-        moveTimer = moveTimer,
+        moveTimer = moveProgress,
+        moveProgress = moveProgress,
         popTimer = popTimer,
         descendingHole = cloneHole(descendingHole),
         crashShields = self.crashShields or 0,
@@ -2020,7 +2019,7 @@ function Snake:restoreStateSnapshot(snapshot)
 
     trail = cloneTrail(snapshot.trail or trail)
     segmentCount = snapshot.segmentCount or segmentCount
-    moveTimer = snapshot.moveTimer or 0
+    moveProgress = snapshot.moveProgress or snapshot.moveTimer or 0
     popTimer = snapshot.popTimer or 0
     descendingHole = cloneHole(snapshot.descendingHole)
     isDead = false
