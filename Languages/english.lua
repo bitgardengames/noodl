@@ -55,6 +55,12 @@ local english = {
                     progress = "Emergency saves: ${current}/${goal}",
                     complete = "Shield mastery! ${current} clutch saves.",
                 },
+                shield_triad = {
+                    title = "Shield Triad",
+                    description = "Pull off all three shield maneuvers in a single run.",
+                    progress = "Shield feats: ${current}/${goal}",
+                    complete = "Shield trifecta! ${current} maneuvers mastered.",
+                },
                 marathon = {
                     title = "Serpentine Marathon",
                     description = "Slither ${goal} tiles in a single run.",
@@ -84,6 +90,11 @@ local english = {
                     progress = "Run survival: ${current}/${goal}",
                     complete = "Endurance expert! Survived ${current} minutes.",
                 },
+                floor_tourist = {
+                    title = "Floor Tourist",
+                    description = "Spend ${goal} minutes exploring floors in a single run.",
+                    progress = "Floor time: ${current}/${goal}",
+                },
                 streak_pusher = {
                     title = "Streak Pusher",
                     description = "Collect ${goal} fruit without turning in a single run.",
@@ -93,6 +104,12 @@ local english = {
                 floor_conqueror = {
                     title = "Floor Conqueror",
                     description = "Clear ${goal} floors in a single run.",
+                },
+                depth_delver = {
+                    title = "Depth Delver",
+                    description = "Reach floor ${goal} in a single run.",
+                    progress = "Deepest floor: ${current}/${goal}",
+                    complete = "Depth conquered! Reached floor ${current}.",
                 },
                 apple_hoarder = {
                     title = "Apple Hoarder",
