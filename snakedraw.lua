@@ -12,6 +12,8 @@ local OUTLINE_SIZE   = 6
 local snakeCanvas = nil
 local snakeOverlayCanvas = nil
 local snakeMaskCanvas = nil
+local snakeBodyCanvas = nil
+local snakeOutlineCanvas = nil
 
 local overlayShaderSources = {
   stripes = [[
@@ -425,17 +427,42 @@ local function renderSnakeToCanvas(trail, head, half, thickness)
   drawCapsuleTrail(trail, half)
   love.graphics.pop()
 
-  -- composite final base snake
+  -- render outline separately for later compositing
+  if snakeOutlineCanvas then
+    love.graphics.setCanvas(snakeOutlineCanvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.push("all")
+    love.graphics.setBlendMode("replace")
+    love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+    drawCapsuleTrail(trail, half + OUTLINE_SIZE * 0.5)
+    love.graphics.pop()
+  end
+
+  -- render flat body fill for shading passes
+  if snakeBodyCanvas then
+    love.graphics.setCanvas(snakeBodyCanvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.push("all")
+    love.graphics.setBlendMode("replace")
+    love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+    love.graphics.draw(snakeMaskCanvas, 0, 0)
+    love.graphics.pop()
+  end
+
+  -- composite final base snake for non-overlay rendering / shadows
   love.graphics.setCanvas(snakeCanvas)
   love.graphics.clear(0, 0, 0, 0)
-  love.graphics.push("all")
-  love.graphics.setBlendMode("replace")
-  love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-  drawCapsuleTrail(trail, half + OUTLINE_SIZE * 0.5)
-  love.graphics.pop()
-
-  love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-  love.graphics.draw(snakeMaskCanvas, 0, 0)
+  if snakeOutlineCanvas then
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(snakeOutlineCanvas, 0, 0)
+  end
+  if snakeBodyCanvas then
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(snakeBodyCanvas, 0, 0)
+  else
+    love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+    love.graphics.draw(snakeMaskCanvas, 0, 0)
+  end
 
   love.graphics.setCanvas()
 
@@ -855,6 +882,8 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
 
     local canvasMsaa = snakeCanvas and snakeCanvas.getMSAA and snakeCanvas:getMSAA() or 0
     snakeMaskCanvas = ensureCanvas(snakeMaskCanvas, ww, hh, canvasMsaa)
+    snakeBodyCanvas = ensureCanvas(snakeBodyCanvas, ww, hh, canvasMsaa)
+    snakeOutlineCanvas = ensureCanvas(snakeOutlineCanvas, ww, hh, canvasMsaa)
 
     if overlayEffect then
       snakeOverlayCanvas = ensureCanvas(snakeOverlayCanvas, ww, hh, canvasMsaa)
@@ -869,17 +898,23 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     -- snake base
     love.graphics.setColor(1,1,1,1)
     local drewOverlay = false
-    if overlayEffect and snakeOverlayCanvas then
+    if overlayEffect and snakeOverlayCanvas and snakeBodyCanvas then
       love.graphics.setCanvas(snakeOverlayCanvas)
       love.graphics.clear(0, 0, 0, 0)
+      love.graphics.push("all")
+      love.graphics.setBlendMode("replace")
       love.graphics.setColor(1,1,1,1)
-      love.graphics.draw(snakeCanvas, 0, 0)
+      love.graphics.draw(snakeBodyCanvas, 0, 0)
+      love.graphics.pop()
       drewOverlay = applyOverlay(snakeMaskCanvas, bodyColor, overlayEffect)
       love.graphics.setCanvas()
     end
 
     if drewOverlay then
       love.graphics.draw(snakeOverlayCanvas, 0, 0)
+      if snakeOutlineCanvas then
+        love.graphics.draw(snakeOutlineCanvas, 0, 0)
+      end
     else
       love.graphics.draw(snakeCanvas, 0, 0)
     end
