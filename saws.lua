@@ -97,7 +97,7 @@ local function buildCollisionCellsForSaw(saw)
         return nil
     end
 
-    local trackCells = SnakeUtils.getTrackCells(saw.x, saw.y, saw.dir, TRACK_LENGTH) or {}
+    local trackCells = SnakeUtils.getSawTrackCells(saw.x, saw.y, saw.dir) or {}
     if #trackCells == 0 then
         return nil
     end
