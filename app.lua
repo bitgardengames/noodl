@@ -16,24 +16,22 @@ local InputMode = require("inputmode")
 
 local App = {
     stateModules = {
-        menu = "menu",
-        modeselect = "modeselect",
-        game = "game",
-        gameover = "gameover",
-        achievementsmenu = "achievementsmenu",
-        metaprogression = "metaprogressionscreen",
-        settings = "settingsscreen",
+        menu = require("menu"),
+        modeselect = require("modeselect"),
+        game = require("game"),
+        gameover = require("gameover"),
+        achievementsmenu = require("achievementsmenu"),
+        metaprogression = require("metaprogressionscreen"),
+        settings = require("settingsscreen"),
     }
 }
 
 function App:registerStates()
-    for key in pairs(GameState.states) do
-        GameState.states[key] = nil
+    local states = {}
+    for stateName, module in pairs(self.stateModules) do
+        states[stateName] = module
     end
-
-    for stateName, modulePath in pairs(self.stateModules) do
-        GameState.states[stateName] = require(modulePath)
-    end
+    GameState.states = states
 end
 
 function App:loadSubsystems()
