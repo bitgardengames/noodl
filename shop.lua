@@ -2,62 +2,11 @@ local UI = require("ui")
 local Upgrades = require("upgrades")
 local Audio = require("audio")
 local MetaProgression = require("metaprogression")
-local Theme = require("theme")
-local Floors = require("floors")
-local Shaders = require("shaders")
 
 local Shop = {}
 
-local random = (love and love.math and love.math.random) or math.random
-
 local ANALOG_DEADZONE = 0.35
 local analogAxisDirections = { horizontal = nil, vertical = nil }
-
-local BACKGROUND_EFFECT_TYPE = "shopGlimmer"
-local backgroundEffectCache = {}
-local backgroundEffect = nil
-local backgroundEffectFloor = nil
-local cardEffectCache = {}
-
-local function configureBackgroundEffectForFloor(floorIndex)
-    local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-    if not effect then
-        backgroundEffect = nil
-        backgroundEffectFloor = nil
-        return
-    end
-
-    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-    effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.68
-
-    local floorDef = Floors and Floors[floorIndex] or nil
-    local palette = floorDef and floorDef.palette or nil
-
-    Shaders.configure(effect, {
-        bgColor = palette and palette.bgColor or Theme.bgColor,
-        accentColor = palette and (palette.arenaBorder or palette.rock) or Theme.borderColor,
-        glowColor = palette and (palette.snake or palette.sawColor) or Theme.accentTextColor,
-    })
-
-    backgroundEffect = effect
-    backgroundEffectFloor = floorIndex
-end
-
-local function drawBackground(self, screenW, screenH)
-    love.graphics.setColor(Theme.bgColor or {0, 0, 0, 1})
-    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-
-    if not backgroundEffect or backgroundEffectFloor ~= self.floor then
-        configureBackgroundEffectForFloor(self.floor or 1)
-    end
-
-    if backgroundEffect then
-        local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-        Shaders.draw(backgroundEffect, 0, 0, screenW, screenH, intensity)
-    end
-
-    love.graphics.setColor(1, 1, 1, 1)
-end
 
 local function moveFocusAnalog(self, delta)
     if self.restocking then return end
@@ -136,8 +85,6 @@ function Shop:start(currentFloor)
     self.selectionHoldDuration = 1.85
     self.inputMode = nil
     self:refreshCards()
-
-    configureBackgroundEffectForFloor(self.floor)
 end
 
 function Shop:refreshCards(options)
@@ -182,20 +129,6 @@ function Shop:refreshCards(options)
     resetAnalogAxis()
 
     for i = 1, #self.cards do
-        local startRotation = (random() - 0.5) * 0.7
-        local spin = (random() - 0.5) * 0.3
-        local startOffsetX = (random() - 0.5) * 240
-        local startOffsetY = 140 + random() * 120
-        local swingX = (random() - 0.5) * 60
-        local waveY = 32 + random() * 26
-        local startScale = 0.82 + random() * 0.08
-        local overshoot = 0.06 + random() * 0.05
-        local driftMagnitude = 6 + random() * 6
-        local driftSpeed = 0.6 + random() * 0.5
-        local driftTilt = 0.01 + random() * 0.02
-        local driftPhase = random() * math.pi * 2
-        local driftOffset = random() * math.pi * 2
-
         self.cardStates[i] = {
             progress = 0,
             delay = initialDelay + (i - 1) * 0.08,
@@ -209,24 +142,6 @@ function Shop:refreshCards(options)
             selectSoundPlayed = false,
             discardActive = false,
             discard = nil,
-            reveal = {
-                startOffsetX = startOffsetX,
-                startOffsetY = startOffsetY,
-                startRotation = startRotation,
-                spin = spin,
-                swingX = swingX,
-                waveY = waveY,
-                startScale = startScale,
-                overshoot = overshoot,
-            },
-            drift = {
-                magnitude = driftMagnitude,
-                speed = driftSpeed,
-                tilt = driftTilt,
-                swayOffset = driftPhase,
-                rollOffset = driftOffset,
-            },
-            idleClock = random() * math.pi * 2,
         }
     end
 end
@@ -248,6 +163,7 @@ function Shop:beginRestock()
     self.selectionComplete = false
     self.focusIndex = nil
 
+    local random = (love and love.math and love.math.random) or math.random
     if self.cardStates then
         local count = #self.cardStates
         local centerIndex = (count + 1) / 2
@@ -342,14 +258,6 @@ function Shop:update(dt)
     for i, state in ipairs(self.cardStates) do
         if self.time >= state.delay and state.progress < 1 then
             state.progress = math.min(1, state.progress + dt * 3.2)
-        end
-
-        local drift = state.drift
-        if drift then
-            local speed = drift.speed or 1
-            state.idleClock = (state.idleClock or 0) + dt * speed
-        else
-            state.idleClock = (state.idleClock or 0) + dt * 0.8
         end
 
         if not state.revealSoundPlayed and self.time >= state.delay then
@@ -504,10 +412,6 @@ local rarityStyles = {
             inset = 8,
             width = 3,
         },
-        shaderEffect = {
-            type = "cardHologram",
-            intensity = 0.65,
-        },
     },
     epic = {
         base = {0.26, 0.16, 0.36, 1},
@@ -532,10 +436,6 @@ local rarityStyles = {
             speed = 2.4,
             inset = 8,
             width = 3,
-        },
-        shaderEffect = {
-            type = "cardHologram",
-            intensity = 0.9,
         },
     },
     legendary = {
@@ -562,50 +462,8 @@ local rarityStyles = {
             inset = 8,
             width = 3,
         },
-        shaderEffect = {
-            type = "cardHologram",
-            intensity = 1.1,
-        },
     },
 }
-
-local function normalizedHash(value)
-    if value == nil then
-        return 0
-    end
-
-    local str = tostring(value)
-    local hash = 0
-    for i = 1, #str do
-        hash = (hash * 131 + str:byte(i)) % 1000003
-    end
-
-    return hash / 1000003
-end
-
-local function buildCardShaderPalette(style, card)
-    if not style then return nil end
-
-    local accent = (style.aura and style.aura.color) or (style.outerGlow and style.outerGlow.color)
-    local sparkle = (card and card.rarityColor) or (style.innerGlow and style.innerGlow.color)
-    local rim = (card and card.rarityColor) or accent or {1, 1, 1, 1}
-
-    return {
-        baseColor = style.base,
-        accentColor = accent,
-        sparkleColor = sparkle,
-        rimColor = rim,
-    }
-end
-
-local function buildCardShaderData(card, index)
-    local seed = normalizedHash((card and card.id) or (card and card.name) or (card and card.rarity) or index or "")
-
-    return {
-        parallax = (seed - 0.5) * 1.2,
-        scanOffset = seed * 2.0,
-    }
-end
 
 local function applyColor(setColorFn, color, overrideAlpha)
     if not color then return end
@@ -673,47 +531,8 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
         love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
     end
 
-    local shaderDrawn = false
-    local shaderConfig = style.shaderEffect
-
-    if shaderConfig and shaderConfig.type then
-        local effect = Shaders.ensure(cardEffectCache, shaderConfig.type)
-        if effect then
-            local palette = shaderConfig.palette
-            if type(palette) == "function" then
-                palette = palette(style, card, index)
-            end
-            if palette == nil then
-                palette = buildCardShaderPalette(style, card)
-            end
-
-            local effectData = shaderConfig.effectData
-            if type(effectData) == "function" then
-                effectData = effectData(style, card, index)
-            end
-            if effectData == nil then
-                effectData = buildCardShaderData(card, index)
-            end
-
-            Shaders.configure(effect, palette, effectData)
-
-            local shaderIntensity = (shaderConfig.intensity or 1.0) * fadeAlpha
-            if shaderIntensity > 0 and fadeAlpha > 0 then
-                withTransformedScissor(x, y, w, h, function()
-                    love.graphics.setColor(1, 1, 1, fadeAlpha)
-                    shaderDrawn = Shaders.draw(effect, x, y, w, h, shaderIntensity) or shaderDrawn
-                    love.graphics.setColor(1, 1, 1, 1)
-                end)
-            end
-        end
-    end
-
-    if not shaderDrawn then
-        applyColor(setColor, style.base)
-        love.graphics.rectangle("fill", x, y, w, h, 12, 12)
-    end
-
-    setColor(1, 1, 1, 1)
+    applyColor(setColor, style.base)
+    love.graphics.rectangle("fill", x, y, w, h, 12, 12)
 
     local currentTime = (love.timer and love.timer.getTime and love.timer.getTime()) or 0
 
@@ -860,8 +679,10 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
 end
 
 function Shop:draw(screenW, screenH)
-    drawBackground(self, screenW, screenH)
+    love.graphics.setColor(0.07, 0.08, 0.11, 0.92)
+    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
+    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setFont(UI.fonts.title)
     love.graphics.printf("Choose an Upgrade", 0, screenH * 0.15, screenW, "center")
 
@@ -898,36 +719,18 @@ function Shop:draw(screenW, screenH)
         local alpha = 1
         local scale = 1
         local yOffset = 0
-        local rotationOffset = 0
-        local revealOffsetX = 0
-        local progress = 0
-        local revealEase = 0
         local state = self.cardStates and self.cardStates[i]
         if state then
-            progress = state.progress or 0
-            revealEase = progress * progress * (3 - 2 * progress)
-            local bounce = math.sin(revealEase * math.pi)
-            local settle = 1 - revealEase
-            local settleCurve = settle * settle
+            local progress = state.progress or 0
+            local eased = progress * progress * (3 - 2 * progress)
+            alpha = eased
+            yOffset = (1 - eased) * 48
 
-            alpha = revealEase
-            yOffset = (1 - revealEase) * 48
-
-            local reveal = state.reveal
-            local appearScaleMin = (reveal and reveal.startScale) or 0.94
-            local overshoot = (reveal and reveal.overshoot) or 0
-
-            if reveal then
-                revealOffsetX = (reveal.startOffsetX or 0) * settleCurve + (reveal.swingX or 0) * bounce
-                local drop = (reveal.startOffsetY or 0) * settleCurve
-                local wave = (reveal.waveY or 0) * bounce
-                yOffset = yOffset - drop + wave
-                rotationOffset = rotationOffset + (reveal.startRotation or 0) * settleCurve
-                    + (reveal.spin or 0) * bounce
-            end
-
-            local baseScale = appearScaleMin + (1 - appearScaleMin) * revealEase
-            scale = baseScale + overshoot * bounce * (1 - revealEase)
+            -- Start cards a touch smaller and ease them up to full size so
+            -- the reveal animation feels like a gentle pop rather than a flat fade.
+            local appearScaleMin = 0.94
+            local appearScaleMax = 1.0
+            scale = appearScaleMin + (appearScaleMax - appearScaleMin) * eased
 
             local hover = state.hover or 0
             if hover > 0 and not self.selected then
@@ -980,17 +783,17 @@ function Shop:draw(screenW, screenH)
         else
             if discardData then
                 scale = scale * (1 - 0.05 * fadeEase)
-                alpha = alpha * math.max(0, 1 - fadeEase)
+                alpha = alpha * (1 - 0.55 * fadeEase)
             else
                 yOffset = yOffset - 32 * fadeEase
                 scale = scale * (1 - 0.2 * fadeEase)
-                alpha = alpha * math.max(0, 1 - fadeEase)
+                alpha = alpha * (1 - 0.9 * fadeEase)
             end
         end
 
         alpha = math.max(0, math.min(alpha, 1))
 
-        local centerX = baseX + cardWidth / 2 + revealOffsetX
+        local centerX = baseX + cardWidth / 2
         local centerY = y + cardHeight / 2 - yOffset
         local originalCenterX, originalCenterY = centerX, centerY
 
@@ -1006,33 +809,6 @@ function Shop:draw(screenW, screenH)
                 centerY = centerY + 28 * fadeEase
             end
         end
-
-        local idleOffsetX, idleOffsetY = 0, 0
-        local idleRotation = 0
-        if state then
-            local drift = state.drift
-            if drift then
-                local idleStrength = math.max(0, math.min(1, revealEase))
-                idleStrength = idleStrength * math.max(0, 1 - (state.fadeOut or 0))
-                if card == self.selected then
-                    idleStrength = idleStrength * math.max(0, 1 - focusEase)
-                end
-
-                if idleStrength > 0.001 then
-                    local idleClock = state.idleClock or 0
-                    local sway = math.sin(idleClock + (drift.swayOffset or 0))
-                    local sway2 = math.sin(idleClock * 0.7 + (drift.rollOffset or 0))
-                    idleOffsetY = sway * (drift.magnitude or 4) * idleStrength
-                    idleOffsetX = sway2 * (drift.magnitude or 4) * 0.55 * idleStrength
-                    idleRotation = math.sin(idleClock * 0.9 + (drift.rollOffset or 0) * 1.3)
-                        * (drift.tilt or 0.015) * idleStrength
-                end
-            end
-        end
-
-        centerX = centerX + idleOffsetX
-        centerY = centerY + idleOffsetY
-        rotationOffset = rotationOffset + idleRotation
 
         local drawWidth = cardWidth * scale
         local drawHeight = cardHeight * scale
@@ -1053,9 +829,8 @@ function Shop:draw(screenW, screenH)
 
         love.graphics.push()
         love.graphics.translate(centerX, centerY)
-        local totalRotation = discardRotation + rotationOffset
-        if totalRotation ~= 0 then
-            love.graphics.rotate(totalRotation)
+        if discardRotation ~= 0 then
+            love.graphics.rotate(discardRotation)
         end
         love.graphics.scale(scale, scale)
         love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
