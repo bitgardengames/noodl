@@ -11,10 +11,10 @@ This note explores how to extend the existing saw blade motif—constructed from
 
 ## Hazard Library
 
-### Conveyor Belt
+### Rolling Drum
 
-* **Silhouette:** A low, wide rounded rectangle matches the existing saw track "slit" footprint so it can slot into familiar floor sockets. Two slightly inset circles at either end read as rollers and push the outline past a plain bar.
-* **Materials:** Fill the body with the arena's darkest track tone, then add a slim inner highlight to suggest polished rubber. Rollers reuse the saw hub gray so they feel like part of the same machine family while still separating from the belt via a thin outline ring.
-* **Animation:** Mask a repeating chevron strip across the belt interior. Scroll it slowly (≈12–16 px/s) opposite the snake's forward direction to imply mechanical motion even when the player is idle. Keep contrast gentle—just a 10–15 % value shift—so the pattern reads as texture rather than noise.
-* **Depth Cues:** Drop a faint shadow beneath the belt and give the rollers a tiny vertical offset during spawn to mimic settling weight. Optional sparks or dust motes can emit when rocks collide to sell friction without cluttering the main loop.
-* **Gameplay Hooks:** The moving surface can subtly tug the snake or falling fruit along its axis, or act as a timed transport lane when paired with saw blades and crushers for layered trap setups.
+* **Silhouette:** Start with a stout cylinder made from stacked circles to echo the saw hub language, then inset triangular teeth along its midline. The result feels like a chunky steamroller that still shares DNA with existing hazards.
+* **Materials:** Use the arena's darker metal tone for the outer rim and a lighter hub for the core. Highlight the teeth tips with a warm accent so they pop even when the drum is partially obscured.
+* **Animation:** Rotate the drum on a slow loop (≈10–12 rpm) with eased-in, eased-out speed bursts when it accelerates toward the player. A subtle wobble on the axle sells weight without demanding complex rigging.
+* **Depth Cues:** Cast an elongated shadow ahead of the drum to imply a looming presence. Let a thin dust trail or scattering sparks kick off when it smashes rocks to reinforce impact.
+* **Gameplay Hooks:** The drum can roll along predefined tracks, forcing players to time crossings, or pause to telegraph a crushing slam that clears fruit but threatens the snake.

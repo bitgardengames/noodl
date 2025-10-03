@@ -16,7 +16,7 @@ These notes outline subtle background motifs that can help differentiate each fl
 - Subtle shimmering mineral veins drawn as faint diagonal streaks that catch light when the player nears a combo threshold.
 
 ### Machine / Factory Floor
-- Thin horizontal conveyor belts in the distance with slow-moving box silhouettes.
+- Thin horizontal supply rails in the distance with slow-moving box silhouettes.
 - Rotating cog outlines partially occluded behind grates, using alternating light/dark wedges.
 - Vertical cable bundles hanging from above, swaying very slightly to imply energy flow.
 - Soft glows from recessed indicator panels that pulse gently when multipliers increase.
