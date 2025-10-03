@@ -4,6 +4,7 @@ local Audio = require("audio")
 local MetaProgression = require("metaprogression")
 local Theme = require("theme")
 local Shaders = require("shaders")
+local SnakeActor = require("snakeactor")
 
 local Shop = {}
 
@@ -127,7 +128,20 @@ function Shop:start(currentFloor)
     self.shopkeeperSubline = nil
     self.selectionHoldDuration = 1.85
     self.inputMode = nil
+    self.time = 0
     configureBackgroundEffect()
+    self.snakeActor = SnakeActor:new({
+        segmentCount = 18,
+        speed = 115,
+        wiggleAmplitude = 14,
+        wiggleFrequency = 1.25,
+        wiggleStride = 0.85,
+        radiusX = 260,
+        radiusY = 110,
+        defaultPathPoints = 36,
+    })
+    self.snakeActorAnchorX = nil
+    self.snakeActorAnchorY = nil
     self:refreshCards()
 end
 
@@ -261,6 +275,9 @@ end
 
 function Shop:update(dt)
     if not dt then return end
+    if self.snakeActor then
+        self.snakeActor:update(dt)
+    end
     self.time = (self.time or 0) + dt
     if not self.cardStates then return end
 
@@ -726,6 +743,23 @@ function Shop:draw(screenW, screenH)
     drawBackground(screenW, screenH)
     love.graphics.setFont(UI.fonts.title)
     love.graphics.printf("Choose an Upgrade", 0, screenH * 0.15, screenW, "center")
+
+    local snake = self.snakeActor
+    if snake then
+        local anchorX = screenW * 0.5
+        local anchorY = screenH * 0.68
+        if self.snakeActorAnchorX ~= anchorX or self.snakeActorAnchorY ~= anchorY then
+            snake:setOffset(anchorX, anchorY)
+            self.snakeActorAnchorX = anchorX
+            self.snakeActorAnchorY = anchorY
+        end
+
+        local bobOffset = math.sin((self.time or 0) * 0.8) * 6
+        love.graphics.push()
+        love.graphics.translate(0, bobOffset)
+        snake:draw()
+        love.graphics.pop()
+    end
 
     if self.shopkeeperLine then
         love.graphics.setFont(UI.fonts.body)
