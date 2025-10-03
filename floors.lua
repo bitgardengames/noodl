@@ -18,6 +18,7 @@
         Sky Spire → false dawn beyond the pit
         Starfall Bastion → starlit bulwark bracing the astral gale
         Nebula Crown → drifting halos frame the precipice of nothing
+        Eventide Observatory → mirrored constellations bargain for devotion
         Void Throne → silence condenses into obsidian dominion
         Singularity Gate → all light bends toward the final horizon
 ]]
@@ -337,7 +338,7 @@ local Floors = {
     },
     [17] = {
         name = "Nebula Crown",
-        flavor = "Nebula vines drip cosmic jam. Noodl drifts farther, dizzy and full.",
+        flavor = "Nebula vines drip cosmic jam. Lenses in the mist hint at home, yet Noodl drifts farther, dizzy and full.",
         palette = {
             bgColor    = {0.14, 0.13, 0.21, 1},  -- deep violet firmament
             arenaBG    = {0.42, 0.34, 0.54, 1},  -- dusk-lit bridgework
@@ -355,8 +356,27 @@ local Floors = {
         traits = {"spectralEchoes", "glowingSpores"},
     },
     [18] = {
+        name = "Eventide Observatory",
+        flavor = "Crystal orreries map a path back. Noodl samples their luminous fruit instead, promising just one more taste.",
+        palette = {
+            bgColor    = {0.1, 0.1, 0.18, 1},   -- midnight indigo vault
+            arenaBG    = {0.16, 0.2, 0.3, 1},   -- mirrored starsteel
+            arenaBorder= {0.58, 0.52, 0.85, 1}, -- prismatic lenswork
+            snake      = {0.82, 0.9, 1.0, 1},   -- argent trailblazer
+            rock       = {0.38, 0.4, 0.6, 1},   -- star-brushed stone
+            sawColor   = {0.92, 0.72, 1.0, 1},  -- refracted glass edge
+        },
+        backgroundEffect = {
+            type = "auroraVeil",
+            backdropIntensity = 0.7,
+            arenaIntensity = 0.4,
+        },
+        backgroundTheme = "laboratory",
+        traits = {"spectralEchoes", "crystallineResonance"},
+    },
+    [19] = {
         name = "Void Throne",
-        flavor = "A silent court sets out obsidian fruit. Noodl bows only to hunger.",
+        flavor = "A silent court sets out obsidian fruit and a glint of the way home. Noodl bows only to hunger.",
         palette = {
             bgColor    = {0.1, 0.08, 0.14, 1},  -- eventide abyss
             arenaBG    = {0.14, 0.12, 0.18, 1},  -- onyx dais
@@ -374,9 +394,9 @@ local Floors = {
         backgroundVariant = "hell",
         traits = {"obsidianResonance", "infernalPressure"},
     },
-    [19] = {
+    [20] = {
         name = "Singularity Gate",
-        flavor = "Gravity hoards the final harvest. Noodl leans in, torn between one last bite and the path home.",
+        flavor = "Gravity hoards the final harvest. Reflections of home collapse inward, yet Noodl leans in, torn between one last bite and the path back.",
         palette = {
             bgColor    = {0.08, 0.08, 0.12, 1},  -- collapsing night
             arenaBG    = {0.12, 0.1, 0.16, 1},  -- gravitic maw
