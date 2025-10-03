@@ -99,30 +99,24 @@ local function buildCollisionCellsForSaw(saw)
         return nil
     end
 
-    local tileSize = getTileSize()
-    local reach = math.max(0, math.ceil(((saw.radius or SAW_RADIUS) + SINK_OFFSET) / (tileSize > 0 and tileSize or 1)))
-
     local cells = {}
     local seen = {}
 
+    -- Limit collision coverage to the track cell and the adjacent cell the blade
+    -- actually occupies so the hazard doesn't spill into neighboring tiles.
     if saw.dir == "horizontal" then
         for _, cell in ipairs(trackCells) do
             local col, row = cell[1], cell[2]
-            for offset = 0, reach do
-                addCell(cells, seen, col, row - offset)
-            end
+            addCell(cells, seen, col, row)
+            addCell(cells, seen, col, row + 1)
         end
     else
-        local dir = 1
-        if saw.side == "left" or saw.side == nil then
-            dir = -1
-        end
+        local offsetDir = (saw.side == "left") and -1 or 1
 
         for _, cell in ipairs(trackCells) do
             local col, row = cell[1], cell[2]
-            for offset = 0, reach do
-                addCell(cells, seen, col + offset * dir, row)
-            end
+            addCell(cells, seen, col, row)
+            addCell(cells, seen, col + offsetDir, row)
         end
     end
 
