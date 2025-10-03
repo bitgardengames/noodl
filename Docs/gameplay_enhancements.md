@@ -3,7 +3,7 @@
 This document captures potential levers for increasing tension, moment-to-moment fun, and long-term engagement without discarding the current floor-by-floor hazard ramp.
 
 ## Layered Encounter Modifiers
-- **Rotating mutators:** Inject temporary rules like double-speed conveyors or mirrored controls for a single floor to create surprise spikes layered atop the baseline hazard plan.
+- **Rotating mutators:** Inject temporary rules like double-speed saws or mirrored controls for a single floor to create surprise spikes layered atop the baseline hazard plan.
 - **Branching encounters:** Offer optional doors or portal nodes that swap in variant hazard packs, letting players trade safety for rewards and refreshing decision points each session.
 
 ## Fruit and Combo System Extensions
@@ -12,7 +12,7 @@ This document captures potential levers for increasing tension, moment-to-moment
 - **High-stakes fruit variants:** Introduce rare fruit that promises large payouts but spawns near dangerous saw clusters or requires carrying through a gauntlet before it matures.
 
 ## Mid-Run Goals and Meta Progression
-- **Dynamic objectives:** Surface rotating mini-challenges (avoid conveyor hits for two floors, rescue trapped fruit) that tap into the achievement framework for on-the-run rewards.
+- **Dynamic objectives:** Surface rotating mini-challenges (avoid laser sweeps for two floors, rescue trapped fruit) that tap into the achievement framework for on-the-run rewards.
 - **Milestone-based unlocks:** Tie new cosmetics or upgrade rarities to cumulative feats—such as total perfect floors or combo streak lengths—to encourage repeated runs.
 - **Synergy scouting:** Track recently unlocked upgrades and suggest loadout pairings during downtime screens to keep players chasing fresh build experiments.
 

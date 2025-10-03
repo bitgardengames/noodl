@@ -195,9 +195,6 @@ function FloorTraits:apply(list, context)
     if ctx.saws then
         ctx.saws = math.max(0, math.min(8, math.floor(ctx.saws + 0.5)))
     end
-    if ctx.conveyors then
-        ctx.conveyors = math.max(0, math.min(8, math.floor(ctx.conveyors + 0.5)))
-    end
     if ctx.laserCount then
         ctx.laserCount = math.max(0, math.min(6, math.floor(ctx.laserCount + 0.5)))
     end

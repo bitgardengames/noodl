@@ -5,7 +5,6 @@ local Movement = require("movement")
 local Score = require("score")
 local FloatingText = require("floatingtext")
 local Rocks = require("rocks")
-local Conveyors = require("conveyors")
 local Saws = require("saws")
 local Particles = require("particles")
 local UpgradeVisuals = require("upgradevisuals")
@@ -26,7 +25,6 @@ local GAMEPLAY_SYSTEMS = {
     Particles,
     UpgradeVisuals,
     Rocks,
-    Conveyors,
     Saws,
     UI,
 }

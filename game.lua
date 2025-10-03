@@ -9,7 +9,6 @@ local Easing = require("easing")
 local Face = require("face")
 local Fruit = require("fruit")
 local Rocks = require("rocks")
-local Conveyors = require("conveyors")
 local Popup = require("popup")
 local Score = require("score")
 local PauseMenu = require("pausemenu")
@@ -54,7 +53,6 @@ local ENTITY_UPDATE_ORDER = {
     Popup,
     Fruit,
     Rocks,
-    Conveyors,
     Lasers,
     Saws,
     Arena,
@@ -569,7 +567,6 @@ local function drawPlayfieldLayers(self, stateOverride)
 
     Fruit:draw()
     Rocks:draw()
-    Conveyors:draw()
     Saws:draw()
     Lasers:draw()
     Arena:drawExit()

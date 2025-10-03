@@ -4,7 +4,6 @@ local SnakeUtils = require("snakeutils")
 local Arena = require("arena")
 local Fruit = require("fruit")
 local Rocks = require("rocks")
-local Conveyors = require("conveyors")
 local Saws = require("saws")
 local Lasers = require("lasers")
 local Movement = require("movement")
@@ -39,7 +38,6 @@ local function resetFloorEntities()
     FloatingText:reset()
     Particles:reset()
     Rocks:reset()
-    Conveyors:reset()
     Saws:reset()
     Lasers:reset()
 end
@@ -77,7 +75,6 @@ local function prepareOccupancy()
 end
 
 local function applyBaselineHazardTraits(traitContext)
-    traitContext.conveyors = math.max(0, traitContext.conveyors or 0)
     traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
 
     if traitContext.rockSpawnChance then
@@ -110,7 +107,6 @@ local function finalizeTraitContext(traitContext, spawnPlan)
         traitContext.sawStall = Saws.stallOnFruit or 0
     end
 
-    traitContext.conveyors = spawnPlan.numConveyors or 0
     traitContext.laserCount = spawnPlan.laserCount or #(spawnPlan.lasers or {})
 end
 
@@ -169,73 +165,6 @@ local function spawnLasers(laserPlan)
 
     for _, plan in ipairs(laserPlan) do
         Lasers:spawn(plan.x, plan.y, plan.dir, plan.length, plan.options)
-    end
-end
-
-local function chooseConveyorDirection(horizontalPossible, verticalPossible)
-    if horizontalPossible and verticalPossible then
-        return (love.math.random() < 0.5) and "horizontal" or "vertical"
-    elseif horizontalPossible then
-        return "horizontal"
-    elseif verticalPossible then
-        return "vertical"
-    end
-end
-
-local function trySpawnConveyor(dir, halfTiles, conveyorTrackLength)
-    if not dir then
-        return false
-    end
-
-    if dir == "horizontal" then
-        local minCol = 1 + halfTiles
-        local maxCol = Arena.cols - halfTiles
-        local col = love.math.random(minCol, maxCol)
-        local row = love.math.random(1, Arena.rows)
-        local fx, fy = Arena:getCenterOfTile(col, row)
-
-        if SnakeUtils.trackIsFree(fx, fy, dir, conveyorTrackLength) then
-            Conveyors:spawn(fx, fy, dir, conveyorTrackLength)
-            SnakeUtils.occupyTrack(fx, fy, dir, conveyorTrackLength)
-            return true
-        end
-    else
-        local col = love.math.random(1, Arena.cols)
-        local rowMin = 1 + halfTiles
-        local rowMax = Arena.rows - halfTiles
-        local row = love.math.random(rowMin, rowMax)
-        local fx, fy = Arena:getCenterOfTile(col, row)
-
-        if SnakeUtils.trackIsFree(fx, fy, dir, conveyorTrackLength) then
-            Conveyors:spawn(fx, fy, dir, conveyorTrackLength)
-            SnakeUtils.occupyTrack(fx, fy, dir, conveyorTrackLength)
-            return true
-        end
-    end
-
-    return false
-end
-
-local function spawnConveyors(numConveyors, halfTiles)
-    local conveyorTrackLength = TRACK_LENGTH
-    local horizontalPossible = (1 + halfTiles) <= (Arena.cols - halfTiles)
-    local verticalPossible = (1 + halfTiles) <= (Arena.rows - halfTiles)
-
-    for _ = 1, numConveyors do
-        local placed = false
-        local attempts = 0
-        local maxAttempts = 60
-
-        while not placed and attempts < maxAttempts do
-            attempts = attempts + 1
-            local dir = chooseConveyorDirection(horizontalPossible, verticalPossible)
-
-            if not dir then
-                break
-            end
-
-            placed = trySpawnConveyor(dir, halfTiles, conveyorTrackLength)
-        end
     end
 end
 
@@ -375,7 +304,6 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
     return {
         numRocks = traitContext.rocks,
         numSaws = traitContext.saws,
-        numConveyors = 0,
         halfTiles = halfTiles,
         bladeRadius = DEFAULT_SAW_RADIUS,
         safeZone = safeZone,
@@ -399,7 +327,6 @@ function FloorSetup.prepare(floorNum, floorData)
     traitContext = adjustedContext or traitContext
 
     traitContext = Upgrades:modifyFloorContext(traitContext)
-    traitContext.conveyors = math.max(0, traitContext.conveyors or 0)
     traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
 
     local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, floorData)
