@@ -174,29 +174,45 @@ local function applySkinGlow(trail, head, radius, config)
 
   local color = resolveColor(config.color, SnakeCosmetics:getGlowColor())
   local intensity = config.intensity or 0.5
-  local step = math.max(1, math.floor(config.step or 2))
   local radiusMultiplier = config.radiusMultiplier or 1.4
+  local step = config.step and math.max(1, math.floor(config.step)) or nil
+  local glowRadius = radius * radiusMultiplier
+  local glowAlpha = (color[4] or 1) * intensity
 
-  local function drawGlowAt(x, y)
-    if not (x and y) then
-      return
-    end
-    drawSoftGlow(x, y, radius * radiusMultiplier, color[1], color[2], color[3], (color[4] or 1) * intensity)
+  if glowRadius <= 0 or glowAlpha <= 0 then
+    return
   end
 
+  local hx, hy = ptXY(head)
+
+  love.graphics.push("all")
+  love.graphics.setBlendMode(config.blendMode or "add")
+  love.graphics.setColor(color[1], color[2], color[3], glowAlpha)
+
   if trail and #trail > 0 then
+    drawCapsuleTrail(trail, glowRadius)
+  end
+
+  if hx and hy then
+    love.graphics.circle("fill", hx, hy, glowRadius)
+  end
+
+  love.graphics.pop()
+
+  if hx and hy then
+    drawSoftGlow(hx, hy, glowRadius * 1.05, color[1], color[2], color[3], glowAlpha * 0.75)
+  end
+
+  if trail and #trail > 0 and step then
     for i = 1, #trail, step do
       local seg = trail[i]
       if seg and seg ~= head then
         local x, y = ptXY(seg)
-        drawGlowAt(x, y)
+        if x and y then
+          drawSoftGlow(x, y, glowRadius * 0.85, color[1], color[2], color[3], glowAlpha * 0.5)
+        end
       end
     end
-  end
-
-  if head then
-    local hx, hy = ptXY(head)
-    drawGlowAt(hx, hy)
   end
 end
 
