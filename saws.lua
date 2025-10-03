@@ -9,6 +9,7 @@ local slots = {}
 local nextSlotId = 0
 
 local SAW_RADIUS = 24
+local COLLISION_RADIUS_MULT = 0.88 -- keep the visual size but ease up on collision tightness
 local SAW_TEETH = 12
 local HUB_HOLE_RADIUS = 4
 local HUB_HIGHLIGHT_PADDING = 3
@@ -271,6 +272,7 @@ function Saws:spawn(x, y, radius, teeth, dir, side)
         x = x,
         y = y,
         radius = radius or SAW_RADIUS,
+        collisionRadius = (radius or SAW_RADIUS) * COLLISION_RADIUS_MULT,
         teeth = teeth or SAW_TEETH,
         rotation = 0,
         timer = 0,
@@ -340,6 +342,8 @@ function Saws:update(dt)
         if not saw.collisionCells then
             saw.collisionCells = buildCollisionCellsForSaw(saw)
         end
+
+        saw.collisionRadius = (saw.radius or SAW_RADIUS) * COLLISION_RADIUS_MULT
 
         saw.timer = saw.timer + dt
         saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (math.pi * 2)
@@ -633,7 +637,8 @@ function Saws:checkCollision(x, y, w, h)
             local closestY = math.max(y, math.min(py, y + h))
             local dx = px - closestX
             local dy = py - closestY
-            if dx * dx + dy * dy < saw.radius * saw.radius then
+            local collisionRadius = saw.collisionRadius or saw.radius
+            if dx * dx + dy * dy < collisionRadius * collisionRadius then
                 return saw
             end
         end
