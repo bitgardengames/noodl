@@ -7,13 +7,11 @@ local unpack = unpack
 local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3
 local OUTLINE_SIZE   = 6
+local FRUIT_BULGE_SCALE = 1.25
 
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
 local snakeOverlayCanvas = nil
-local snakeMaskCanvas = nil
-local snakeBodyCanvas = nil
-local snakeOutlineCanvas = nil
 
 local overlayShaderSources = {
   stripes = [[
@@ -22,46 +20,41 @@ local overlayShaderSources = {
     extern float speed;
     extern float angle;
     extern float intensity;
-    extern float overlayBlend;
     extern vec4 colorA;
     extern vec4 colorB;
-    extern vec4 bodyColor;
 
     vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     {
-      vec4 maskSample = Texel(tex, texture_coords);
-      float mask = maskSample.a;
+      vec4 base = Texel(tex, texture_coords);
+      float mask = base.a;
       if (mask <= 0.0) {
-        return vec4(0.0);
+        return base * color;
       }
 
       vec2 uv = texture_coords - vec2(0.5);
       float c = cos(angle);
       float s = sin(angle);
       float stripe = sin((uv.x * c + uv.y * s) * frequency + time * speed) * 0.5 + 0.5;
-      float blend = clamp(stripe * intensity, 0.0, 1.0) * clamp(overlayBlend, 0.0, 1.0);
+      float blend = clamp(stripe * intensity, 0.0, 1.0);
       vec3 mixCol = mix(colorA.rgb, colorB.rgb, stripe);
-      vec3 result = mix(bodyColor.rgb, mixCol, blend);
-      float alpha = mask * bodyColor.a;
-      return vec4(result, alpha) * color;
+      vec3 result = mix(base.rgb, mixCol, blend);
+      return vec4(result, base.a) * color;
     }
   ]],
   holo = [[
     extern float time;
     extern float speed;
     extern float intensity;
-    extern float overlayBlend;
     extern vec4 colorA;
     extern vec4 colorB;
     extern vec4 colorC;
-    extern vec4 bodyColor;
 
     vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     {
-      vec4 maskSample = Texel(tex, texture_coords);
-      float mask = maskSample.a;
+      vec4 base = Texel(tex, texture_coords);
+      float mask = base.a;
       if (mask <= 0.0) {
-        return vec4(0.0);
+        return base * color;
       }
 
       vec2 uv = texture_coords - vec2(0.5);
@@ -74,10 +67,9 @@ local overlayShaderSources = {
       layer = mix(layer, colorC.rgb, clamp(radial * 0.5 + 0.5, 0.0, 1.0) * 0.6);
       layer += shimmer * 0.12 * colorC.rgb;
 
-      float blend = clamp(intensity, 0.0, 1.0) * clamp(overlayBlend, 0.0, 1.0);
-      vec3 result = mix(bodyColor.rgb, layer, blend);
-      float alpha = mask * bodyColor.a;
-      return vec4(result, alpha) * color;
+      float blend = clamp(intensity, 0.0, 1.0);
+      vec3 result = mix(base.rgb, layer, blend);
+      return vec4(result, base.a) * color;
     }
   ]],
 }
@@ -123,8 +115,8 @@ local function resolveColor(color, fallback)
   return {1, 1, 1, 1}
 end
 
-local function applyOverlay(maskCanvas, bodyColor, config)
-  if not (maskCanvas and config and config.type) then
+local function applyOverlay(canvas, config)
+  if not (canvas and config and config.type) then
     return false
   end
 
@@ -142,14 +134,11 @@ local function applyOverlay(maskCanvas, bodyColor, config)
   local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor())
   local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor())
   local tertiary = resolveColor(colors.tertiary or secondary)
-  local baseColor = resolveColor(bodyColor or SnakeCosmetics:getBodyColor())
 
   shader:send("time", time)
   shader:send("intensity", config.intensity or 0.5)
-  shader:send("overlayBlend", math.max(0, math.min(1, config.overlayBlend or config.opacity or 1)))
   shader:send("colorA", primary)
   shader:send("colorB", secondary)
-  shader:send("bodyColor", baseColor)
 
   if config.type == "stripes" then
     shader:send("frequency", config.frequency or 18)
@@ -162,9 +151,9 @@ local function applyOverlay(maskCanvas, bodyColor, config)
 
   love.graphics.push("all")
   love.graphics.setShader(shader)
-  love.graphics.setBlendMode(config.blendMode or "replace")
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.draw(maskCanvas, 0, 0)
+  love.graphics.setBlendMode(config.blendMode or "alpha")
+  love.graphics.setColor(1, 1, 1, config.opacity or 1)
+  love.graphics.draw(canvas, 0, 0)
   love.graphics.pop()
 
   return true
@@ -178,191 +167,6 @@ end
 
 local drawSoftGlow
 
-local function buildRoundedTrailPoints(trail, radius)
-  local positions = {}
-  for i = 1, #trail do
-    local x, y = ptXY(trail[i])
-    if x and y then
-      local last = positions[#positions]
-      if not last or math.abs(last.x - x) > 1e-3 or math.abs(last.y - y) > 1e-3 then
-        positions[#positions + 1] = {x = x, y = y}
-      end
-    end
-  end
-
-  local count = #positions
-  if count == 0 then
-    return {}
-  end
-
-  local rounded = {}
-  local lastX, lastY
-  local function addPoint(x, y)
-    if not x or not y then return end
-    if not lastX or math.abs(lastX - x) > 1e-3 or math.abs(lastY - y) > 1e-3 then
-      rounded[#rounded + 1] = x
-      rounded[#rounded + 1] = y
-      lastX, lastY = x, y
-    end
-  end
-
-  addPoint(positions[1].x, positions[1].y)
-
-  if count == 1 then
-    return rounded
-  end
-
-  for i = 2, count - 1 do
-    local prev = positions[i - 1]
-    local curr = positions[i]
-    local nextPos = positions[i + 1]
-
-    local dirInX = curr.x - prev.x
-    local dirInY = curr.y - prev.y
-    local lenIn = math.sqrt(dirInX * dirInX + dirInY * dirInY)
-    if lenIn == 0 then
-      addPoint(curr.x, curr.y)
-    else
-      dirInX, dirInY = dirInX / lenIn, dirInY / lenIn
-
-      local dirOutX = nextPos.x - curr.x
-      local dirOutY = nextPos.y - curr.y
-      local lenOut = math.sqrt(dirOutX * dirOutX + dirOutY * dirOutY)
-      if lenOut == 0 then
-        addPoint(curr.x, curr.y)
-      else
-        dirOutX, dirOutY = dirOutX / lenOut, dirOutY / lenOut
-
-        local dot = dirInX * dirOutX + dirInY * dirOutY
-        if dot > 0.995 or dot < -0.995 then
-          addPoint(curr.x, curr.y)
-        else
-          local cornerRadius = math.min(radius, lenIn * 0.5, lenOut * 0.5)
-          if cornerRadius <= 0 then
-            addPoint(curr.x, curr.y)
-          else
-            local entryX = curr.x - dirInX * cornerRadius
-            local entryY = curr.y - dirInY * cornerRadius
-            local exitX = curr.x + dirOutX * cornerRadius
-            local exitY = curr.y + dirOutY * cornerRadius
-
-            local centerX, centerY
-            if math.abs(dirInX) > math.abs(dirInY) then
-              centerX = entryX
-              centerY = exitY
-            else
-              centerX = exitX
-              centerY = entryY
-            end
-
-            addPoint(entryX, entryY)
-
-            local startAngle
-            if math.atan2 then
-              startAngle = math.atan2(entryY - centerY, entryX - centerX)
-            else
-              startAngle = math.atan(entryY - centerY, entryX - centerX)
-            end
-
-            local endAngle
-            if math.atan2 then
-              endAngle = math.atan2(exitY - centerY, exitX - centerX)
-            else
-              endAngle = math.atan(exitY - centerY, exitX - centerX)
-            end
-
-            local angleDiff = endAngle - startAngle
-            if angleDiff > math.pi then
-              angleDiff = angleDiff - math.pi * 2
-            elseif angleDiff < -math.pi then
-              angleDiff = angleDiff + math.pi * 2
-            end
-
-            local steps = 3
-            for step = 1, steps do
-              local t = step / steps
-              local angle = startAngle + angleDiff * t
-              local px = centerX + math.cos(angle) * cornerRadius
-              local py = centerY + math.sin(angle) * cornerRadius
-              addPoint(px, py)
-            end
-          end
-        end
-      end
-    end
-  end
-
-  addPoint(positions[count].x, positions[count].y)
-
-  return rounded
-end
-
-local function drawCapsuleTrail(trail, radius)
-  if not trail or #trail == 0 or radius <= 0 then
-    return
-  end
-
-  local points = buildRoundedTrailPoints(trail, radius)
-  local count = #points
-  if count < 2 then
-    return
-  end
-
-  local previousWidth = love.graphics.getLineWidth()
-  local getLineJoin = love.graphics.getLineJoin
-  local previousJoin = getLineJoin and getLineJoin()
-  local getLineStyle = love.graphics.getLineStyle
-  local previousStyle = getLineStyle and getLineStyle()
-
-  love.graphics.setLineWidth(radius * 2)
-
-  local setLineStyle = love.graphics.setLineStyle
-  if setLineStyle then
-    pcall(setLineStyle, "smooth")
-  end
-
-  local setLineJoin = love.graphics.setLineJoin
-  if setLineJoin then
-    local ok = pcall(setLineJoin, "miter")
-    if not ok then
-      pcall(setLineJoin, "bevel")
-    end
-  end
-
-  if count >= 4 then
-    love.graphics.line(unpack(points))
-    local startX, startY = points[1], points[2]
-    local endX, endY = points[count - 1], points[count]
-    love.graphics.circle("fill", startX, startY, radius)
-    love.graphics.circle("fill", endX, endY, radius)
-  elseif count == 2 then
-    love.graphics.circle("fill", points[1], points[2], radius)
-  end
-
-  love.graphics.setLineWidth(previousWidth)
-  if previousJoin and setLineJoin then
-    pcall(setLineJoin, previousJoin)
-  end
-  if previousStyle and setLineStyle then
-    pcall(setLineStyle, previousStyle)
-  end
-end
-
-local function ensureCanvas(canvas, width, height, msaa)
-  if canvas and canvas:getWidth() == width and canvas:getHeight() == height then
-    local currentMsaa = canvas.getMSAA and canvas:getMSAA() or 0
-    local targetMsaa = (msaa and msaa > 0) and msaa or 0
-    if currentMsaa ~= targetMsaa then
-      local settings = targetMsaa > 0 and {msaa = targetMsaa} or nil
-      return love.graphics.newCanvas(width, height, settings)
-    end
-    return canvas
-  end
-
-  local settings = (msaa and msaa > 0) and {msaa = msaa} or nil
-  return love.graphics.newCanvas(width, height, settings)
-end
-
 local function applySkinGlow(trail, head, radius, config)
   if not config then
     return
@@ -370,103 +174,125 @@ local function applySkinGlow(trail, head, radius, config)
 
   local color = resolveColor(config.color, SnakeCosmetics:getGlowColor())
   local intensity = config.intensity or 0.5
+  local step = math.max(1, math.floor(config.step or 2))
   local radiusMultiplier = config.radiusMultiplier or 1.4
-  local step = config.step and math.max(1, math.floor(config.step)) or nil
-  local glowRadius = radius * radiusMultiplier
-  local glowAlpha = (color[4] or 1) * intensity
 
-  if glowRadius <= 0 or glowAlpha <= 0 then
-    return
+  local function drawGlowAt(x, y)
+    if not (x and y) then
+      return
+    end
+    drawSoftGlow(x, y, radius * radiusMultiplier, color[1], color[2], color[3], (color[4] or 1) * intensity)
   end
-
-  local hx, hy = ptXY(head)
-
-  love.graphics.push("all")
-  love.graphics.setBlendMode(config.blendMode or "add")
-  love.graphics.setColor(color[1], color[2], color[3], glowAlpha)
 
   if trail and #trail > 0 then
-    drawCapsuleTrail(trail, glowRadius)
-  end
-
-  if hx and hy then
-    love.graphics.circle("fill", hx, hy, glowRadius)
-  end
-
-  love.graphics.pop()
-
-  if hx and hy then
-    drawSoftGlow(hx, hy, glowRadius * 1.05, color[1], color[2], color[3], glowAlpha * 0.75)
-  end
-
-  if trail and #trail > 0 and step then
     for i = 1, #trail, step do
       local seg = trail[i]
       if seg and seg ~= head then
         local x, y = ptXY(seg)
-        if x and y then
-          drawSoftGlow(x, y, glowRadius * 0.85, color[1], color[2], color[3], glowAlpha * 0.5)
+        drawGlowAt(x, y)
+      end
+    end
+  end
+
+  if head then
+    local hx, hy = ptXY(head)
+    drawGlowAt(hx, hy)
+  end
+end
+
+-- polyline coords {x1,y1,x2,y2,...}
+local function buildCoords(trail)
+  local coords = {}
+  local lastx, lasty
+  for i = 1, #trail do
+    local x, y = ptXY(trail[i])
+    if x and y then
+      if not (lastx and lasty and x == lastx and y == lasty) then
+        coords[#coords+1] = x
+        coords[#coords+1] = y
+        lastx, lasty = x, y
+      end
+    end
+  end
+  return coords
+end
+
+local function drawPolyline(coords)
+  if #coords >= 4 then
+    love.graphics.line(unpack(coords))
+  end
+end
+
+local function drawEndcaps(head, tail, radius)
+  local hx, hy = ptXY(head)
+  local tx, ty = ptXY(tail)
+  if hx and hy then love.graphics.circle("fill", hx, hy, radius) end
+  if tx and ty then love.graphics.circle("fill", tx, ty, radius) end
+end
+
+-- draw a body-colored "plug" circle at each corner
+local function drawCornerPlugs(trail, radius)
+  for i = 2, #trail-1 do
+    local x0,y0 = ptXY(trail[i-1])
+    local x1,y1 = ptXY(trail[i])
+    local x2,y2 = ptXY(trail[i+1])
+    if x0 and y0 and x1 and y1 and x2 and y2 then
+      -- Only bother if it's actually a turn (angle change > tiny threshold)
+      local ux,uy = x1-x0, y1-y0
+      local vx,vy = x2-x1, y2-y1
+      local ul = math.sqrt(ux*ux + uy*uy)
+      local vl = math.sqrt(vx*vx + vy*vy)
+      if ul > 1e-3 and vl > 1e-3 then
+        local dot = (ux*vx + uy*vy) / (ul*vl)
+        if dot < 0.999 then -- not perfectly straight
+          love.graphics.circle("fill", x1, y1, radius)
         end
       end
     end
   end
 end
 
-local function renderSnakeToCanvas(trail, head, half, thickness)
+
+local function drawFruitBulges(trail, head, radius)
+  if not trail or radius <= 0 then return end
+
+  for i = 1, #trail do
+    local seg = trail[i]
+    if seg and seg.fruitMarker and seg ~= head then
+      local x = seg.fruitMarkerX or (seg.drawX or seg.x)
+      local y = seg.fruitMarkerY or (seg.drawY or seg.y)
+
+      if x and y then
+        love.graphics.circle("fill", x, y, radius)
+      end
+    end
+  end
+end
+
+local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
   local bodyColor = SnakeCosmetics:getBodyColor()
   local outlineColor = SnakeCosmetics:getOutlineColor()
   local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
   local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
+  -- OUTLINE
+  love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+  love.graphics.setLineWidth(thickness + OUTLINE_SIZE)
+  drawPolyline(coords)
+  drawEndcaps(head, tail, half + OUTLINE_SIZE * 0.5)
+  drawCornerPlugs(trail, half + OUTLINE_SIZE*0.5)
+  local bulgeRadius = half * FRUIT_BULGE_SCALE
+  drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
 
-  -- build body mask for overlays and clean fills
-  love.graphics.setCanvas(snakeMaskCanvas)
-  love.graphics.clear(0, 0, 0, 0)
-  love.graphics.push("all")
-  love.graphics.setBlendMode("replace")
-  love.graphics.setColor(1, 1, 1, 1)
-  drawCapsuleTrail(trail, half)
-  love.graphics.pop()
+  -- BODY
+  love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+  love.graphics.setLineWidth(thickness)
+  drawPolyline(coords)
+  drawEndcaps(head, tail, half)
 
-  -- render outline separately for later compositing
-  if snakeOutlineCanvas then
-    love.graphics.setCanvas(snakeOutlineCanvas)
-    love.graphics.clear(0, 0, 0, 0)
-    love.graphics.push("all")
-    love.graphics.setBlendMode("replace")
-    love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-    drawCapsuleTrail(trail, half + OUTLINE_SIZE * 0.5)
-    love.graphics.pop()
-  end
+  love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+  drawCornerPlugs(trail, half)
+  drawFruitBulges(trail, head, bulgeRadius)
 
-  -- render flat body fill for shading passes
-  if snakeBodyCanvas then
-    love.graphics.setCanvas(snakeBodyCanvas)
-    love.graphics.clear(0, 0, 0, 0)
-    love.graphics.push("all")
-    love.graphics.setBlendMode("replace")
-    love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-    love.graphics.draw(snakeMaskCanvas, 0, 0)
-    love.graphics.pop()
-  end
-
-  -- composite final base snake for non-overlay rendering / shadows
-  love.graphics.setCanvas(snakeCanvas)
-  love.graphics.clear(0, 0, 0, 0)
-  if snakeOutlineCanvas then
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(snakeOutlineCanvas, 0, 0)
-  end
-  if snakeBodyCanvas then
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(snakeBodyCanvas, 0, 0)
-  else
-    love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-    love.graphics.draw(snakeMaskCanvas, 0, 0)
-  end
-
-  love.graphics.setCanvas()
-
-  return bodyColor
 end
 
 drawSoftGlow = function(x, y, radius, r, g, b, a)
@@ -853,14 +679,17 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 end
 
 local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
+  if not trail or #trail == 0 then return end
+
   local thickness = SEGMENT_SIZE * 0.8
   local half      = thickness / 2
 
   local overlayEffect = SnakeCosmetics:getOverlayEffect()
   local glowEffect = SnakeCosmetics:getGlowEffect()
 
-  local trailCount = (trail and #trail) or 0
-  local head = trail and trail[1]
+  local coords = buildCoords(trail)
+  local head = trail[1]
+  local tail = trail[#trail]
 
   love.graphics.setLineStyle("smooth")
   love.graphics.setLineJoin("bevel") -- or "bevel" if you prefer fewer spikes
@@ -869,52 +698,44 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   if getHead then
     hx, hy = getHead()
   end
-  if not (hx and hy) and head then
+  if not (hx and hy) then
     hx, hy = ptXY(head)
   end
 
-  if trailCount > 0 then
-    -- render into canvases once
+  if #coords >= 4 then
+    -- render into a canvas once
     local ww, hh = love.graphics.getDimensions()
     if not snakeCanvas or snakeCanvas:getWidth() ~= ww or snakeCanvas:getHeight() ~= hh then
       snakeCanvas = love.graphics.newCanvas(ww, hh, {msaa = 8})
     end
 
-    local canvasMsaa = snakeCanvas and snakeCanvas.getMSAA and snakeCanvas:getMSAA() or 0
-    snakeMaskCanvas = ensureCanvas(snakeMaskCanvas, ww, hh, canvasMsaa)
-    snakeBodyCanvas = ensureCanvas(snakeBodyCanvas, ww, hh, canvasMsaa)
-    snakeOutlineCanvas = ensureCanvas(snakeOutlineCanvas, ww, hh, canvasMsaa)
-
-    if overlayEffect then
-      snakeOverlayCanvas = ensureCanvas(snakeOverlayCanvas, ww, hh, canvasMsaa)
-    end
-
-    local bodyColor = renderSnakeToCanvas(trail, head, half, thickness)
+    love.graphics.setCanvas(snakeCanvas)
+    love.graphics.clear(0,0,0,0)
+    renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
+    love.graphics.setCanvas()
 
     -- single-pass drop shadow
     love.graphics.setColor(0,0,0,0.25)
     love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
 
-    -- snake base
-    love.graphics.setColor(1,1,1,1)
+    -- snake
     local drewOverlay = false
-    if overlayEffect and snakeOverlayCanvas and snakeBodyCanvas then
+    if overlayEffect then
+      if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= ww or snakeOverlayCanvas:getHeight() ~= hh then
+        snakeOverlayCanvas = love.graphics.newCanvas(ww, hh)
+      end
+
       love.graphics.setCanvas(snakeOverlayCanvas)
       love.graphics.clear(0, 0, 0, 0)
-      love.graphics.push("all")
-      love.graphics.setBlendMode("replace")
       love.graphics.setColor(1,1,1,1)
-      love.graphics.draw(snakeBodyCanvas, 0, 0)
-      love.graphics.pop()
-      drewOverlay = applyOverlay(snakeMaskCanvas, bodyColor, overlayEffect)
+      love.graphics.draw(snakeCanvas, 0, 0)
+      drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
       love.graphics.setCanvas()
     end
 
+    love.graphics.setColor(1,1,1,1)
     if drewOverlay then
       love.graphics.draw(snakeOverlayCanvas, 0, 0)
-      if snakeOutlineCanvas then
-        love.graphics.draw(snakeOutlineCanvas, 0, 0)
-      end
     else
       love.graphics.draw(snakeCanvas, 0, 0)
     end
