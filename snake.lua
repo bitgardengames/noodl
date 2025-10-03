@@ -530,7 +530,13 @@ local function debugDrawCollisionSpace(trailData, headX, headY)
 
         if #coords >= 4 then
             love.graphics.setLineCap("round")
-            love.graphics.setLineJoin("round")
+            local setLineJoin = love.graphics.setLineJoin
+            if setLineJoin then
+                local ok = pcall(setLineJoin, "round")
+                if not ok then
+                    setLineJoin("bevel")
+                end
+            end
 
             love.graphics.setColor(1, 0, 0, 0.12)
             love.graphics.setLineWidth(SEGMENT_SIZE)
