@@ -34,40 +34,56 @@ local function cellWithinBounds(col, row)
     return col >= 1 and col <= Arena.cols and row >= 1 and row <= Arena.rows
 end
 
--- Reserve a collection of cells and return the subset that we actually marked.
-function SnakeUtils.reserveCells(cells)
-    if not cells then return {} end
+local function normalizeCell(col, row)
+    if not col or not row then
+        return nil
+    end
 
-    local reserved = {}
+    col = math.floor(col + 0.5)
+    row = math.floor(row + 0.5)
+
+    if not cellWithinBounds(col, row) then
+        return nil
+    end
+
+    return col, row
+end
+
+local function forEachNormalizedCell(cells, callback)
+    if not cells then
+        return
+    end
 
     for _, cell in ipairs(cells) do
-        local col, row = cell[1], cell[2]
-        if col and row then
-            col = math.floor(col + 0.5)
-            row = math.floor(row + 0.5)
-            if cellWithinBounds(col, row) and not SnakeUtils.isOccupied(col, row) then
-                SnakeUtils.setOccupied(col, row, true)
-                reserved[#reserved + 1] = {col, row}
-            end
+        local col, row = normalizeCell(cell[1], cell[2])
+        if col then
+            callback(col, row)
         end
     end
+end
+
+local function markCells(cells, value)
+    forEachNormalizedCell(cells, function(col, row)
+        SnakeUtils.setOccupied(col, row, value)
+    end)
+end
+
+-- Reserve a collection of cells and return the subset that we actually marked.
+function SnakeUtils.reserveCells(cells)
+    local reserved = {}
+
+    forEachNormalizedCell(cells, function(col, row)
+        if not SnakeUtils.isOccupied(col, row) then
+            SnakeUtils.setOccupied(col, row, true)
+            reserved[#reserved + 1] = {col, row}
+        end
+    end)
 
     return reserved
 end
 
 function SnakeUtils.releaseCells(cells)
-    if not cells then return end
-
-    for _, cell in ipairs(cells) do
-        local col, row = cell[1], cell[2]
-        if col and row then
-            col = math.floor(col + 0.5)
-            row = math.floor(row + 0.5)
-            if cellWithinBounds(col, row) then
-                SnakeUtils.setOccupied(col, row, false)
-            end
-        end
-    end
+    markCells(cells, false)
 end
 
 function SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
@@ -138,55 +154,39 @@ function SnakeUtils.getSawTrackCells(fx, fy, dir)
     return cells
 end
 
-function SnakeUtils.trackIsFree(fx, fy, dir, trackLength)
-    local cells = SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
-    if #cells == 0 then
+local function cellsAreFree(cells)
+    if not cells or #cells == 0 then
         return false
     end
 
     for _, cell in ipairs(cells) do
-        local col, row = cell[1], cell[2]
-        if SnakeUtils.isOccupied(col, row) then
+        if SnakeUtils.isOccupied(cell[1], cell[2]) then
             return false
         end
     end
 
     return true
+end
+
+function SnakeUtils.trackIsFree(fx, fy, dir, trackLength)
+    return cellsAreFree(SnakeUtils.getTrackCells(fx, fy, dir, trackLength))
 end
 
 -- Mark every grid cell overlapped by a hazard track
 function SnakeUtils.occupyTrack(fx, fy, dir, trackLength)
     local cells = SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
-    for _, cell in ipairs(cells) do
-        SnakeUtils.setOccupied(cell[1], cell[2], true)
-    end
-
+    markCells(cells, true)
     return cells
 end
 
-function SnakeUtils.occupySawTrack(fx, fy, dir, radius, trackLength, side)
+function SnakeUtils.occupySawTrack(fx, fy, dir)
     local cells = SnakeUtils.getSawTrackCells(fx, fy, dir)
-    for _, cell in ipairs(cells) do
-        SnakeUtils.setOccupied(cell[1], cell[2], true)
-    end
-
+    markCells(cells, true)
     return cells
 end
 
 function SnakeUtils.sawTrackIsFree(fx, fy, dir)
-    local cells = SnakeUtils.getSawTrackCells(fx, fy, dir)
-    if #cells == 0 then
-        return false
-    end
-
-    for _, cell in ipairs(cells) do
-        local col, row = cell[1], cell[2]
-        if SnakeUtils.isOccupied(col, row) then
-            return false
-        end
-    end
-
-    return true
+    return cellsAreFree(SnakeUtils.getSawTrackCells(fx, fy, dir))
 end
 
 -- Safe spawn: just randomize until we find a free cell
