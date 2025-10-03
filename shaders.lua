@@ -663,12 +663,16 @@ registerEffect({
             vec3 base = baseColor.rgb;
             vec3 accent = mix(base, accentColor.rgb, 0.55);
             vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.45);
+            vec3 spores = mix(accentColor.rgb, glowColor.rgb, 0.72);
 
-            float accentMix = clamp(combinedBloom * 0.85, 0.0, 1.0);
-            float glowMix = clamp(combinedBloom * 0.48 + waveMix * 0.85, 0.0, 1.0);
+            float chromaWave = sin((centered.x - centered.y) * 5.0 + time * 0.7) * 0.5 + 0.5;
+
+            float accentMix = clamp(combinedBloom * 0.88 + waveMix * 0.15, 0.0, 1.0);
+            float glowMix = clamp(combinedBloom * 0.5 + waveMix * 0.9, 0.0, 1.0);
 
             vec3 colorBlend = mix(base, accent, accentMix);
             colorBlend = mix(colorBlend, glow, glowMix);
+            colorBlend = mix(colorBlend, spores, chromaWave * (0.22 + intensity * 0.35));
 
             float innerEdge = max(0.12, 0.28 - 0.1 * intensity);
             float outerEdge = min(0.96, 0.82 + 0.12 * intensity);
