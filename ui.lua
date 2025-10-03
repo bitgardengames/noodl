@@ -1169,21 +1169,24 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
         love.graphics.setLineWidth(2)
         love.graphics.circle("line", 0, 0, radius * 0.95, 28)
     elseif icon == "hourglass" then
-        local bowl = {
-            radius * 0.68, -radius * 0.78,
-            0, -radius * 0.16,
-            -radius * 0.68, -radius * 0.78,
-            -radius * 0.68, radius * 0.78,
-            0, radius * 0.16,
-            radius * 0.68, radius * 0.78,
+        local frame = {
+            -radius * 0.72, -radius * 0.8,
+            radius * 0.72, -radius * 0.8,
+            radius * 0.32, 0,
+            radius * 0.72, radius * 0.8,
+            -radius * 0.72, radius * 0.8,
+            -radius * 0.32, 0,
         }
-        love.graphics.polygon("fill", bowl)
+        love.graphics.polygon("fill", frame)
         love.graphics.setColor(base[1], base[2], base[3], (base[4] or 1) * 0.6)
-        love.graphics.ellipse("fill", 0, -radius * 0.36, radius * 0.4, radius * 0.2, 28)
-        love.graphics.ellipse("fill", 0, radius * 0.36, radius * 0.4, radius * 0.2, 28)
+        love.graphics.ellipse("fill", 0, -radius * 0.48, radius * 0.48, radius * 0.18, 28)
+        love.graphics.ellipse("fill", 0, radius * 0.48, radius * 0.48, radius * 0.18, 28)
+        love.graphics.rectangle("fill", -radius * 0.18, -radius * 0.08, radius * 0.36, radius * 0.16)
         love.graphics.setColor(detail[1], detail[2], detail[3], detail[4] or 1)
         love.graphics.setLineWidth(2)
-        love.graphics.polygon("line", bowl)
+        love.graphics.polygon("line", frame)
+        love.graphics.ellipse("line", 0, -radius * 0.48, radius * 0.48, radius * 0.18, 28)
+        love.graphics.ellipse("line", 0, radius * 0.48, radius * 0.48, radius * 0.18, 28)
     elseif icon == "phoenix" then
         local wing = {
             -radius * 0.88, radius * 0.16,
