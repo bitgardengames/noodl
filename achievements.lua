@@ -646,10 +646,15 @@ function Achievements:getProgressLabel(def)
 end
 
 function Achievements:getProgressRatio(def)
+    if def.unlocked then
+        return 1
+    end
+
     if def.goal and def.goal > 0 then
         return math.min(1, (def.progress or 0) / def.goal)
     end
-    return def.unlocked and 1 or 0
+
+    return 0
 end
 
 function Achievements:getDefinition(id)
