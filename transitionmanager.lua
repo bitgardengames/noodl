@@ -3,6 +3,7 @@ local Floors = require("floors")
 local SessionStats = require("sessionstats")
 local PlayerStats = require("playerstats")
 local Shop = require("shop")
+local SnakeActor = require("snakeactor")
 
 local TransitionManager = {}
 TransitionManager.__index = TransitionManager
@@ -136,6 +137,37 @@ function TransitionManager:startFloorIntro(duration, extra)
 
     self:startPhase("floorintro", introDuration)
     Audio:playSound("floor_intro")
+
+    local width = (self.game and self.game.screenWidth) or (love.graphics and love.graphics.getWidth and love.graphics.getWidth()) or 0
+    local height = (self.game and self.game.screenHeight) or (love.graphics and love.graphics.getHeight and love.graphics.getHeight()) or 0
+    local anchorX = width * 0.5
+    local anchorY = height * 0.58
+    local path = {
+        { -280, -130 },
+        { -160, -210 },
+        { 0, -235 },
+        { 160, -210 },
+        { 280, -130 },
+        { 220, 40 },
+        { 0, 140 },
+        { -220, 40 },
+    }
+
+    local snake = SnakeActor:new({
+        segmentCount = 20,
+        speed = 140,
+        wiggleAmplitude = 16,
+        wiggleFrequency = 1.3,
+        wiggleStride = 0.9,
+        path = path,
+        loop = true,
+        offsetX = anchorX,
+        offsetY = anchorY,
+    })
+
+    data.transitionSnake = snake
+    data.transitionSnakeAnchorX = anchorX
+    data.transitionSnakeAnchorY = anchorY
 end
 
 function TransitionManager:startFadeIn(duration)
@@ -210,6 +242,10 @@ function TransitionManager:update(dt)
     end
 
     if phase == "floorintro" then
+        local snake = self.data.transitionSnake
+        if snake then
+            snake:update(dt)
+        end
         if self.timer >= self.duration then
             local data = self.data
 
@@ -256,6 +292,10 @@ function TransitionManager:completeFloorIntro()
     local data = self.data
     local resumePhase = data.transitionResumePhase or "fadein"
     local fadeDuration = data.transitionResumeFadeDuration
+
+    data.transitionSnake = nil
+    data.transitionSnakeAnchorX = nil
+    data.transitionSnakeAnchorY = nil
 
     data.transitionIntroConfirmed = nil
     data.transitionIntroReady = nil

@@ -770,6 +770,30 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         return alpha * outroAlpha
     end
 
+    local snake = data.transitionSnake
+    if snake then
+        local anchorX = self.screenWidth * 0.5
+        local anchorY = self.screenHeight * 0.58
+        if data.transitionSnakeAnchorX ~= anchorX or data.transitionSnakeAnchorY ~= anchorY then
+            snake:setOffset(anchorX, anchorY)
+            data.transitionSnakeAnchorX = anchorX
+            data.transitionSnakeAnchorY = anchorY
+        end
+
+        local introEase = easeOutBack(clamp01((timer - 0.05) / 0.7))
+        local snakeScale = 0.92 + 0.08 * introEase
+        local outroScale = 0.96 + 0.04 * outroAlpha
+        snakeScale = snakeScale * outroScale
+        local verticalDrift = math.sin(timer * 0.8) * 6 * outroAlpha
+
+        love.graphics.push()
+        love.graphics.translate(anchorX, anchorY + verticalDrift)
+        love.graphics.scale(snakeScale, snakeScale)
+        love.graphics.translate(-anchorX, -anchorY)
+        snake:draw()
+        love.graphics.pop()
+    end
+
     local nameAlpha = fadeAlpha(0.0, 0.45)
     local titleParams
     if nameAlpha > 0 then
