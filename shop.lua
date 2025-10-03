@@ -10,6 +10,47 @@ local Shop = {}
 local ANALOG_DEADZONE = 0.35
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 
+local function setCursorVisibility(self, visible)
+    if not love.mouse or not love.mouse.setVisible then
+        return
+    end
+
+    if self.cursorVisible == visible then
+        return
+    end
+
+    love.mouse.setVisible(visible)
+    self.cursorVisible = visible
+end
+
+local function setInputMode(self, mode)
+    if self.inputMode == mode then
+        return
+    end
+
+    self.inputMode = mode
+
+    if mode == "mouse" then
+        setCursorVisibility(self, true)
+    elseif mode == "gamepad" or mode == "keyboard" then
+        setCursorVisibility(self, false)
+    end
+end
+
+local function trackMouseMovement(self, mx, my)
+    if not mx or not my then
+        return
+    end
+
+    if self.lastMouseX and self.lastMouseY then
+        if self.lastMouseX ~= mx or self.lastMouseY ~= my then
+            setInputMode(self, "mouse")
+        end
+    end
+
+    self.lastMouseX, self.lastMouseY = mx, my
+end
+
 local BACKGROUND_EFFECT_TYPE = "shopGlimmer"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
@@ -56,7 +97,7 @@ local function moveFocusAnalog(self, delta)
     if not self.cards or #self.cards == 0 then return end
     if self.selected then return end
 
-    self.inputMode = "gamepad"
+    setInputMode(self, "gamepad")
     self:moveFocus(delta)
 end
 
@@ -127,6 +168,9 @@ function Shop:start(currentFloor)
     self.shopkeeperSubline = nil
     self.selectionHoldDuration = 1.85
     self.inputMode = nil
+    self.cursorVisible = nil
+    self.lastMouseX, self.lastMouseY = nil, nil
+    setCursorVisibility(self, false)
     configureBackgroundEffect()
     self:refreshCards()
 end
@@ -165,6 +209,7 @@ function Shop:refreshCards(options)
     self.selectionComplete = false
     self.time = 0
     self.focusIndex = nil
+    self.lastMouseX, self.lastMouseY = nil, nil
 
     if #self.cards > 0 then
         self:setFocus(1)
@@ -754,6 +799,7 @@ function Shop:draw(screenW, screenH)
     local y = screenH * 0.34
 
     local mx, my = love.mouse.getPosition()
+    trackMouseMovement(self, mx, my)
 
     local function renderCard(i, card)
         local baseX = startX + (i - 1) * (cardWidth + spacing)
@@ -943,22 +989,22 @@ function Shop:keypressed(key)
 
     local index = pickIndexFromKey(key)
     if index then
-        self.inputMode = "keyboard"
+        setInputMode(self, "keyboard")
         return self:pick(index)
     end
 
     if self.selected then return end
 
     if key == "left" or key == "up" then
-        self.inputMode = "keyboard"
+        setInputMode(self, "keyboard")
         self:moveFocus(-1)
         return true
     elseif key == "right" or key == "down" then
-        self.inputMode = "keyboard"
+        setInputMode(self, "keyboard")
         self:moveFocus(1)
         return true
     elseif key == "return" or key == "kpenter" or key == "enter" then
-        self.inputMode = "keyboard"
+        setInputMode(self, "keyboard")
         local focusIndex = self.focusIndex or 1
         return self:pick(focusIndex)
     end
@@ -967,7 +1013,7 @@ end
 function Shop:mousepressed(x, y, button)
     if self.restocking then return end
     if button ~= 1 then return end
-    self.inputMode = "mouse"
+    setInputMode(self, "mouse")
     for i, card in ipairs(self.cards) do
         local b = card.bounds
         if b and x >= b.x and x <= b.x + b.w and y >= b.y and y <= b.y + b.h then
@@ -981,7 +1027,7 @@ function Shop:gamepadpressed(_, button)
     if self.restocking then return end
     if not self.cards or #self.cards == 0 then return end
 
-    self.inputMode = "gamepad"
+    setInputMode(self, "gamepad")
 
     if self.selected then return end
 
@@ -1035,6 +1081,12 @@ end
 
 function Shop:isSelectionComplete()
     return self.selected ~= nil and self.selectionComplete == true
+end
+
+function Shop:onClosed()
+    self.inputMode = nil
+    self.lastMouseX, self.lastMouseY = nil, nil
+    setCursorVisibility(self, false)
 end
 
 return Shop

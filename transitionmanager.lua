@@ -100,6 +100,10 @@ function TransitionManager:openShop()
 end
 
 function TransitionManager:startFloorIntro(duration, extra)
+    if self.phase == "shop" and Shop.onClosed then
+        Shop:onClosed()
+    end
+
     extra = shallowCopy(extra)
     if not extra.transitionResumePhase then
         extra.transitionResumePhase = "fadein"
