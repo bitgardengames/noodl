@@ -325,16 +325,22 @@ local function renderSnakeToCanvas(trail, head, half, thickness)
   -- build body mask for overlays and clean fills
   love.graphics.setCanvas(snakeMaskCanvas)
   love.graphics.clear(0, 0, 0, 0)
+  love.graphics.push("all")
+  love.graphics.setBlendMode("replace")
   love.graphics.setColor(1, 1, 1, 1)
   drawCapsuleTrail(trail, half)
   drawFruitBulges(trail, head, bulgeRadius)
+  love.graphics.pop()
 
   -- composite final base snake
   love.graphics.setCanvas(snakeCanvas)
   love.graphics.clear(0, 0, 0, 0)
+  love.graphics.push("all")
+  love.graphics.setBlendMode("replace")
   love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
   drawCapsuleTrail(trail, half + OUTLINE_SIZE * 0.5)
   drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
+  love.graphics.pop()
 
   love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
   love.graphics.draw(snakeMaskCanvas, 0, 0)
