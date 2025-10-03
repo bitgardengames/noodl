@@ -12,6 +12,7 @@ local FRUIT_BULGE_SCALE = 1.25
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
 local snakeOverlayCanvas = nil
+local snakeMaskCanvas = nil
 
 local overlayShaderSources = {
   stripes = [[
@@ -22,13 +23,19 @@ local overlayShaderSources = {
     extern float intensity;
     extern vec4 colorA;
     extern vec4 colorB;
+    extern Image baseTex;
 
     vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     {
-      vec4 base = Texel(tex, texture_coords);
-      float mask = base.a;
+      float mask = Texel(tex, texture_coords).a;
       if (mask <= 0.0) {
-        return base * color;
+        return vec4(0.0);
+      }
+
+      vec4 base = Texel(baseTex, texture_coords);
+      float alpha = mask * base.a;
+      if (alpha <= 0.0) {
+        return vec4(0.0);
       }
 
       vec2 uv = texture_coords - vec2(0.5);
@@ -38,7 +45,7 @@ local overlayShaderSources = {
       float blend = clamp(stripe * intensity, 0.0, 1.0);
       vec3 mixCol = mix(colorA.rgb, colorB.rgb, stripe);
       vec3 result = mix(base.rgb, mixCol, blend);
-      return vec4(result, base.a) * color;
+      return vec4(result, alpha) * color;
     }
   ]],
   holo = [[
@@ -48,13 +55,19 @@ local overlayShaderSources = {
     extern vec4 colorA;
     extern vec4 colorB;
     extern vec4 colorC;
+    extern Image baseTex;
 
     vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     {
-      vec4 base = Texel(tex, texture_coords);
-      float mask = base.a;
+      float mask = Texel(tex, texture_coords).a;
       if (mask <= 0.0) {
-        return base * color;
+        return vec4(0.0);
+      }
+
+      vec4 base = Texel(baseTex, texture_coords);
+      float alpha = mask * base.a;
+      if (alpha <= 0.0) {
+        return vec4(0.0);
       }
 
       vec2 uv = texture_coords - vec2(0.5);
@@ -69,7 +82,7 @@ local overlayShaderSources = {
 
       float blend = clamp(intensity, 0.0, 1.0);
       vec3 result = mix(base.rgb, layer, blend);
-      return vec4(result, base.a) * color;
+      return vec4(result, alpha) * color;
     }
   ]],
 }
@@ -115,8 +128,8 @@ local function resolveColor(color, fallback)
   return {1, 1, 1, 1}
 end
 
-local function applyOverlay(canvas, config)
-  if not (canvas and config and config.type) then
+local function applyOverlay(maskCanvas, baseCanvas, config)
+  if not (maskCanvas and baseCanvas and config and config.type) then
     return false
   end
 
@@ -139,6 +152,7 @@ local function applyOverlay(canvas, config)
   shader:send("intensity", config.intensity or 0.5)
   shader:send("colorA", primary)
   shader:send("colorB", secondary)
+  shader:send("baseTex", baseCanvas)
 
   if config.type == "stripes" then
     shader:send("frequency", config.frequency or 18)
@@ -153,7 +167,7 @@ local function applyOverlay(canvas, config)
   love.graphics.setShader(shader)
   love.graphics.setBlendMode(config.blendMode or "alpha")
   love.graphics.setColor(1, 1, 1, config.opacity or 1)
-  love.graphics.draw(canvas, 0, 0)
+  love.graphics.draw(maskCanvas, 0, 0)
   love.graphics.pop()
 
   return true
@@ -202,6 +216,21 @@ local function drawCapsuleTrail(trail, radius)
       love.graphics.circle("fill", x, y, radius)
     end
   end
+end
+
+local function ensureCanvas(canvas, width, height, msaa)
+  if canvas and canvas:getWidth() == width and canvas:getHeight() == height then
+    local currentMsaa = canvas.getMSAA and canvas:getMSAA() or 0
+    local targetMsaa = (msaa and msaa > 0) and msaa or 0
+    if currentMsaa ~= targetMsaa then
+      local settings = targetMsaa > 0 and {msaa = targetMsaa} or nil
+      return love.graphics.newCanvas(width, height, settings)
+    end
+    return canvas
+  end
+
+  local settings = (msaa and msaa > 0) and {msaa = msaa} or nil
+  return love.graphics.newCanvas(width, height, settings)
 end
 
 local function applySkinGlow(trail, head, radius, config)
@@ -274,17 +303,26 @@ local function renderSnakeToCanvas(trail, head, half, thickness)
   local outlineColor = SnakeCosmetics:getOutlineColor()
   local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
   local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
-  -- OUTLINE
-  love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-  drawCapsuleTrail(trail, half + OUTLINE_SIZE * 0.5)
   local bulgeRadius = half * FRUIT_BULGE_SCALE
-  drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
 
-  -- BODY
-  love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+  -- build body mask for overlays and clean fills
+  love.graphics.setCanvas(snakeMaskCanvas)
+  love.graphics.clear(0, 0, 0, 0)
+  love.graphics.setColor(1, 1, 1, 1)
   drawCapsuleTrail(trail, half)
   drawFruitBulges(trail, head, bulgeRadius)
 
+  -- composite final base snake
+  love.graphics.setCanvas(snakeCanvas)
+  love.graphics.clear(0, 0, 0, 0)
+  love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+  drawCapsuleTrail(trail, half + OUTLINE_SIZE * 0.5)
+  drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
+
+  love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+  love.graphics.draw(snakeMaskCanvas, 0, 0)
+
+  love.graphics.setCanvas()
 end
 
 drawSoftGlow = function(x, y, radius, r, g, b, a)
@@ -692,41 +730,37 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   end
 
   if trailCount > 0 then
-    -- render into a canvas once
+    -- render into canvases once
     local ww, hh = love.graphics.getDimensions()
     if not snakeCanvas or snakeCanvas:getWidth() ~= ww or snakeCanvas:getHeight() ~= hh then
       snakeCanvas = love.graphics.newCanvas(ww, hh, {msaa = 8})
     end
 
-    love.graphics.setCanvas(snakeCanvas)
-    love.graphics.clear(0,0,0,0)
+    local canvasMsaa = snakeCanvas and snakeCanvas.getMSAA and snakeCanvas:getMSAA() or 0
+    snakeMaskCanvas = ensureCanvas(snakeMaskCanvas, ww, hh, canvasMsaa)
+
+    if overlayEffect then
+      snakeOverlayCanvas = ensureCanvas(snakeOverlayCanvas, ww, hh, canvasMsaa)
+    end
+
     renderSnakeToCanvas(trail, head, half, thickness)
-    love.graphics.setCanvas()
 
     -- single-pass drop shadow
     love.graphics.setColor(0,0,0,0.25)
     love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
 
-    -- snake
+    -- snake base
+    love.graphics.setColor(1,1,1,1)
     local drewOverlay = false
-    if overlayEffect then
-      if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= ww or snakeOverlayCanvas:getHeight() ~= hh then
-        local msaa = snakeCanvas and snakeCanvas.getMSAA and snakeCanvas:getMSAA() or 0
-        snakeOverlayCanvas = love.graphics.newCanvas(ww, hh, msaa > 0 and {msaa = msaa} or nil)
-      elseif snakeOverlayCanvas.getMSAA and snakeCanvas and snakeCanvas.getMSAA and snakeOverlayCanvas:getMSAA() ~= snakeCanvas:getMSAA() then
-        local msaa = snakeCanvas:getMSAA()
-        snakeOverlayCanvas = love.graphics.newCanvas(ww, hh, msaa > 0 and {msaa = msaa} or nil)
-      end
-
+    if overlayEffect and snakeOverlayCanvas then
       love.graphics.setCanvas(snakeOverlayCanvas)
       love.graphics.clear(0, 0, 0, 0)
       love.graphics.setColor(1,1,1,1)
       love.graphics.draw(snakeCanvas, 0, 0)
-      drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
+      drewOverlay = applyOverlay(snakeMaskCanvas, snakeCanvas, overlayEffect)
       love.graphics.setCanvas()
     end
 
-    love.graphics.setColor(1,1,1,1)
     if drewOverlay then
       love.graphics.draw(snakeOverlayCanvas, 0, 0)
     else
