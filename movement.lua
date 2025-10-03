@@ -317,6 +317,7 @@ local function handleRockCollision(headX, headY)
                                 end
                         else
                                 if not Snake:consumeCrashShield() then
+                                        Rocks:triggerHitFlash(rock)
                                         return "dead", "rock"
                                 end
 

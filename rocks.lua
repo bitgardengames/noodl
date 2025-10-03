@@ -15,6 +15,8 @@ local ROCK_SIZE = 24
 local SPAWN_DURATION = 0.3
 local SQUASH_DURATION = 0.15
 local SHADOW_OFFSET = 3
+local HIT_FLASH_DURATION = 0.18
+local HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
 
 -- smoother, rounder “stone” generator
 local function generateRockShape(size, seed)
@@ -229,6 +231,22 @@ function Rocks:destroy(target, opts)
     return nil
 end
 
+function Rocks:triggerHitFlash(target)
+    if not target then
+        return
+    end
+
+    if type(target) == "number" then
+        local rock = current[target]
+        if rock then
+            rock.hitFlashTimer = math.max(rock.hitFlashTimer or 0, HIT_FLASH_DURATION)
+        end
+        return
+    end
+
+    target.hitFlashTimer = math.max(target.hitFlashTimer or 0, HIT_FLASH_DURATION)
+end
+
 function Rocks:shatterNearest(x, y, count)
     count = count or 1
     if count <= 0 or #current == 0 then return end
@@ -290,6 +308,10 @@ function Rocks:update(dt)
     for _, rock in ipairs(current) do
         rock.timer = rock.timer + dt
 
+        if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
+            rock.hitFlashTimer = math.max(0, rock.hitFlashTimer - dt)
+        end
+
         if rock.phase == "drop" then
             local progress = math.min(rock.timer / SPAWN_DURATION, 1)
             rock.offsetY = -40 * (1 - progress)
@@ -347,12 +369,17 @@ function Rocks:draw()
         love.graphics.pop()
 
         -- main rock fill
-        love.graphics.setColor(Theme.rock)
+        local baseColor = Theme.rock
+        if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
+            baseColor = HIT_FLASH_COLOR
+        end
+
+        love.graphics.setColor(baseColor)
         love.graphics.polygon("fill", rock.shape)
 
         -- highlight
         if rock.highlightShape then
-            local highlight = getHighlightColor(Theme.rock)
+            local highlight = getHighlightColor(baseColor)
             love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
             love.graphics.polygon("fill", rock.highlightShape)
         end
