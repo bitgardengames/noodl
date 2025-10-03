@@ -7,7 +7,6 @@ local unpack = unpack
 local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3
 local OUTLINE_SIZE   = 6
-local FRUIT_BULGE_SCALE = 1.25
 
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
@@ -177,61 +176,173 @@ end
 
 local drawSoftGlow
 
+local function buildRoundedTrailPoints(trail, radius)
+  local positions = {}
+  for i = 1, #trail do
+    local x, y = ptXY(trail[i])
+    if x and y then
+      local last = positions[#positions]
+      if not last or math.abs(last.x - x) > 1e-3 or math.abs(last.y - y) > 1e-3 then
+        positions[#positions + 1] = {x = x, y = y}
+      end
+    end
+  end
+
+  local count = #positions
+  if count == 0 then
+    return {}
+  end
+
+  local rounded = {}
+  local lastX, lastY
+  local function addPoint(x, y)
+    if not x or not y then return end
+    if not lastX or math.abs(lastX - x) > 1e-3 or math.abs(lastY - y) > 1e-3 then
+      rounded[#rounded + 1] = x
+      rounded[#rounded + 1] = y
+      lastX, lastY = x, y
+    end
+  end
+
+  addPoint(positions[1].x, positions[1].y)
+
+  if count == 1 then
+    return rounded
+  end
+
+  for i = 2, count - 1 do
+    local prev = positions[i - 1]
+    local curr = positions[i]
+    local nextPos = positions[i + 1]
+
+    local dirInX = curr.x - prev.x
+    local dirInY = curr.y - prev.y
+    local lenIn = math.sqrt(dirInX * dirInX + dirInY * dirInY)
+    if lenIn == 0 then
+      addPoint(curr.x, curr.y)
+    else
+      dirInX, dirInY = dirInX / lenIn, dirInY / lenIn
+
+      local dirOutX = nextPos.x - curr.x
+      local dirOutY = nextPos.y - curr.y
+      local lenOut = math.sqrt(dirOutX * dirOutX + dirOutY * dirOutY)
+      if lenOut == 0 then
+        addPoint(curr.x, curr.y)
+      else
+        dirOutX, dirOutY = dirOutX / lenOut, dirOutY / lenOut
+
+        local dot = dirInX * dirOutX + dirInY * dirOutY
+        if dot > 0.995 or dot < -0.995 then
+          addPoint(curr.x, curr.y)
+        else
+          local cornerRadius = math.min(radius, lenIn * 0.5, lenOut * 0.5)
+          if cornerRadius <= 0 then
+            addPoint(curr.x, curr.y)
+          else
+            local entryX = curr.x - dirInX * cornerRadius
+            local entryY = curr.y - dirInY * cornerRadius
+            local exitX = curr.x + dirOutX * cornerRadius
+            local exitY = curr.y + dirOutY * cornerRadius
+
+            local centerX, centerY
+            if math.abs(dirInX) > math.abs(dirInY) then
+              centerX = entryX
+              centerY = exitY
+            else
+              centerX = exitX
+              centerY = entryY
+            end
+
+            addPoint(entryX, entryY)
+
+            local startAngle
+            if math.atan2 then
+              startAngle = math.atan2(entryY - centerY, entryX - centerX)
+            else
+              startAngle = math.atan(entryY - centerY, entryX - centerX)
+            end
+
+            local endAngle
+            if math.atan2 then
+              endAngle = math.atan2(exitY - centerY, exitX - centerX)
+            else
+              endAngle = math.atan(exitY - centerY, exitX - centerX)
+            end
+
+            local angleDiff = endAngle - startAngle
+            if angleDiff > math.pi then
+              angleDiff = angleDiff - math.pi * 2
+            elseif angleDiff < -math.pi then
+              angleDiff = angleDiff + math.pi * 2
+            end
+
+            local steps = 3
+            for step = 1, steps do
+              local t = step / steps
+              local angle = startAngle + angleDiff * t
+              local px = centerX + math.cos(angle) * cornerRadius
+              local py = centerY + math.sin(angle) * cornerRadius
+              addPoint(px, py)
+            end
+          end
+        end
+      end
+    end
+  end
+
+  addPoint(positions[count].x, positions[count].y)
+
+  return rounded
+end
+
 local function drawCapsuleTrail(trail, radius)
   if not trail or #trail == 0 or radius <= 0 then
+    return
+  end
+
+  local points = buildRoundedTrailPoints(trail, radius)
+  local count = #points
+  if count < 2 then
     return
   end
 
   local previousWidth = love.graphics.getLineWidth()
   local getLineJoin = love.graphics.getLineJoin
   local previousJoin = getLineJoin and getLineJoin()
+  local getLineStyle = love.graphics.getLineStyle
+  local previousStyle = getLineStyle and getLineStyle()
+
   love.graphics.setLineWidth(radius * 2)
+
+  local setLineStyle = love.graphics.setLineStyle
+  if setLineStyle then
+    pcall(setLineStyle, "smooth")
+  end
 
   local setLineJoin = love.graphics.setLineJoin
   if setLineJoin then
-    local ok = pcall(setLineJoin, "bevel")
-    if not ok then
-      pcall(setLineJoin, "miter")
-    end
-  end
-
-  local segmentPoints = {}
-  local function flush()
-    local count = #segmentPoints
-    if count >= 4 then
-      love.graphics.line(unpack(segmentPoints))
-      for i = 1, count, 2 do
-        local px, py = segmentPoints[i], segmentPoints[i + 1]
-        if px and py then
-          love.graphics.circle("fill", px, py, radius)
-        end
-      end
-    elseif count == 2 then
-      love.graphics.circle("fill", segmentPoints[1], segmentPoints[2], radius)
-    end
-    for i = count, 1, -1 do
-      segmentPoints[i] = nil
-    end
-  end
-
-  for i = 1, #trail do
-    local x, y = ptXY(trail[i])
-    if x and y then
-      segmentPoints[#segmentPoints + 1] = x
-      segmentPoints[#segmentPoints + 1] = y
-    else
-      flush()
-    end
-  end
-
-  flush()
-
-  love.graphics.setLineWidth(previousWidth)
-  if previousJoin and setLineJoin then
-    local ok = pcall(setLineJoin, previousJoin)
+    local ok = pcall(setLineJoin, "miter")
     if not ok then
       pcall(setLineJoin, "bevel")
     end
+  end
+
+  if count >= 4 then
+    love.graphics.line(unpack(points))
+    local startX, startY = points[1], points[2]
+    local endX, endY = points[count - 1], points[count]
+    love.graphics.circle("fill", startX, startY, radius)
+    love.graphics.circle("fill", endX, endY, radius)
+  elseif count == 2 then
+    love.graphics.circle("fill", points[1], points[2], radius)
+  end
+
+  love.graphics.setLineWidth(previousWidth)
+  if previousJoin and setLineJoin then
+    pcall(setLineJoin, previousJoin)
+  end
+  if previousStyle and setLineStyle then
+    pcall(setLineStyle, previousStyle)
   end
 end
 
@@ -299,28 +410,11 @@ local function applySkinGlow(trail, head, radius, config)
   end
 end
 
-local function drawFruitBulges(trail, head, radius)
-  if not trail or radius <= 0 then return end
-
-  for i = 1, #trail do
-    local seg = trail[i]
-    if seg and seg.fruitMarker and seg ~= head then
-      local x = seg.fruitMarkerX or (seg.drawX or seg.x)
-      local y = seg.fruitMarkerY or (seg.drawY or seg.y)
-
-      if x and y then
-        love.graphics.circle("fill", x, y, radius)
-      end
-    end
-  end
-end
-
 local function renderSnakeToCanvas(trail, head, half, thickness)
   local bodyColor = SnakeCosmetics:getBodyColor()
   local outlineColor = SnakeCosmetics:getOutlineColor()
   local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
   local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
-  local bulgeRadius = half * FRUIT_BULGE_SCALE
 
   -- build body mask for overlays and clean fills
   love.graphics.setCanvas(snakeMaskCanvas)
@@ -329,7 +423,6 @@ local function renderSnakeToCanvas(trail, head, half, thickness)
   love.graphics.setBlendMode("replace")
   love.graphics.setColor(1, 1, 1, 1)
   drawCapsuleTrail(trail, half)
-  drawFruitBulges(trail, head, bulgeRadius)
   love.graphics.pop()
 
   -- composite final base snake
@@ -339,7 +432,6 @@ local function renderSnakeToCanvas(trail, head, half, thickness)
   love.graphics.setBlendMode("replace")
   love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
   drawCapsuleTrail(trail, half + OUTLINE_SIZE * 0.5)
-  drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
   love.graphics.pop()
 
   love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
