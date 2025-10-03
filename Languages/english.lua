@@ -496,6 +496,10 @@ local english = {
                 name = "Caravan Contract",
                 description = "Shops offer +1 card. Each floor spawns an extra rock.",
             },
+            market_pulse = {
+                name = "Market Pulse",
+                description = "Combo finishers grant +0.25 bonus score per shop slot you own.",
+            },
             fresh_supplies = {
                 name = "Fresh Supplies",
                 description = "Discard the current shop cards and restock with new ones.",
@@ -507,6 +511,11 @@ local english = {
             guild_ledger = {
                 name = "Guild Ledger",
                 description = "Each shop slot reduces rock spawn chance by 1.5%.",
+            },
+            artisan_catalog = {
+                name = "Artisan Catalog",
+                description = "The first upgrade you buy each floor grants +1 crash shield, +2 bonus score, and stalls saws for 0.9s. Effects stack with additional copies.",
+                trigger = "Patron's Favor",
             },
             venomous_hunger = {
                 name = "Venomous Hunger",
