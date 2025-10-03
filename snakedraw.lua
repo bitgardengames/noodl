@@ -200,59 +200,6 @@ local function applySkinGlow(trail, head, radius, config)
   end
 end
 
--- polyline coords {x1,y1,x2,y2,...}
-local function buildCoords(trail)
-  local coords = {}
-  local lastx, lasty
-  for i = 1, #trail do
-    local x, y = ptXY(trail[i])
-    if x and y then
-      if not (lastx and lasty and x == lastx and y == lasty) then
-        coords[#coords+1] = x
-        coords[#coords+1] = y
-        lastx, lasty = x, y
-      end
-    end
-  end
-  return coords
-end
-
-local function drawPolyline(coords)
-  if #coords >= 4 then
-    love.graphics.line(unpack(coords))
-  end
-end
-
-local function drawEndcaps(head, tail, radius)
-  local hx, hy = ptXY(head)
-  local tx, ty = ptXY(tail)
-  if hx and hy then love.graphics.circle("fill", hx, hy, radius) end
-  if tx and ty then love.graphics.circle("fill", tx, ty, radius) end
-end
-
--- draw a body-colored "plug" circle at each corner
-local function drawCornerPlugs(trail, radius)
-  for i = 2, #trail-1 do
-    local x0,y0 = ptXY(trail[i-1])
-    local x1,y1 = ptXY(trail[i])
-    local x2,y2 = ptXY(trail[i+1])
-    if x0 and y0 and x1 and y1 and x2 and y2 then
-      -- Only bother if it's actually a turn (angle change > tiny threshold)
-      local ux,uy = x1-x0, y1-y0
-      local vx,vy = x2-x1, y2-y1
-      local ul = math.sqrt(ux*ux + uy*uy)
-      local vl = math.sqrt(vx*vx + vy*vy)
-      if ul > 1e-3 and vl > 1e-3 then
-        local dot = (ux*vx + uy*vy) / (ul*vl)
-        if dot < 0.999 then -- not perfectly straight
-          love.graphics.circle("fill", x1, y1, radius)
-        end
-      end
-    end
-  end
-end
-
-
 local function drawFruitBulges(trail, head, radius)
   if not trail or radius <= 0 then return end
 
@@ -269,28 +216,57 @@ local function drawFruitBulges(trail, head, radius)
   end
 end
 
-local function renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
+local function drawCapsuleTrail(trail, radius)
+  if not trail or #trail == 0 or radius <= 0 then
+    return
+  end
+
+  for i = 1, #trail - 1 do
+    local a = trail[i]
+    local b = trail[i + 1]
+    local x1, y1 = ptXY(a)
+    local x2, y2 = ptXY(b)
+    if x1 and y1 and x2 and y2 then
+      local dx, dy = x2 - x1, y2 - y1
+      local length = math.sqrt(dx * dx + dy * dy)
+      if length > 1e-4 then
+        local angle
+        if math.atan2 then
+          angle = math.atan2(dy, dx)
+        else
+          angle = math.atan(dy, dx)
+        end
+        love.graphics.push()
+        love.graphics.translate(x1, y1)
+        love.graphics.rotate(angle)
+        love.graphics.rectangle("fill", 0, -radius, length, radius * 2)
+        love.graphics.pop()
+      end
+    end
+  end
+
+  for i = 1, #trail do
+    local x, y = ptXY(trail[i])
+    if x and y then
+      love.graphics.circle("fill", x, y, radius)
+    end
+  end
+end
+
+local function renderSnakeToCanvas(trail, head, half, thickness)
   local bodyColor = SnakeCosmetics:getBodyColor()
   local outlineColor = SnakeCosmetics:getOutlineColor()
   local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
   local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
   -- OUTLINE
   love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-  love.graphics.setLineWidth(thickness + OUTLINE_SIZE)
-  drawPolyline(coords)
-  drawEndcaps(head, tail, half + OUTLINE_SIZE * 0.5)
-  drawCornerPlugs(trail, half + OUTLINE_SIZE*0.5)
+  drawCapsuleTrail(trail, half + OUTLINE_SIZE * 0.5)
   local bulgeRadius = half * FRUIT_BULGE_SCALE
   drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE * 0.5)
 
   -- BODY
   love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-  love.graphics.setLineWidth(thickness)
-  drawPolyline(coords)
-  drawEndcaps(head, tail, half)
-
-  love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-  drawCornerPlugs(trail, half)
+  drawCapsuleTrail(trail, half)
   drawFruitBulges(trail, head, bulgeRadius)
 
 end
@@ -679,17 +655,14 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 end
 
 local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
-  if not trail or #trail == 0 then return end
-
   local thickness = SEGMENT_SIZE * 0.8
   local half      = thickness / 2
 
   local overlayEffect = SnakeCosmetics:getOverlayEffect()
   local glowEffect = SnakeCosmetics:getGlowEffect()
 
-  local coords = buildCoords(trail)
-  local head = trail[1]
-  local tail = trail[#trail]
+  local trailCount = (trail and #trail) or 0
+  local head = trail and trail[1]
 
   love.graphics.setLineStyle("smooth")
   love.graphics.setLineJoin("bevel") -- or "bevel" if you prefer fewer spikes
@@ -698,11 +671,11 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   if getHead then
     hx, hy = getHead()
   end
-  if not (hx and hy) then
+  if not (hx and hy) and head then
     hx, hy = ptXY(head)
   end
 
-  if #coords >= 4 then
+  if trailCount > 0 then
     -- render into a canvas once
     local ww, hh = love.graphics.getDimensions()
     if not snakeCanvas or snakeCanvas:getWidth() ~= ww or snakeCanvas:getHeight() ~= hh then
@@ -711,7 +684,7 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
 
     love.graphics.setCanvas(snakeCanvas)
     love.graphics.clear(0,0,0,0)
-    renderSnakeToCanvas(trail, coords, head, tail, half, thickness)
+    renderSnakeToCanvas(trail, head, half, thickness)
     love.graphics.setCanvas()
 
     -- single-pass drop shadow
