@@ -265,6 +265,10 @@ function Game:enter()
     UI.clearButtons()
     self:load()
 
+    if love.mouse and love.mouse.setVisible then
+        love.mouse.setVisible(false)
+    end
+
     Audio:playMusic("game")
     SessionStats:reset()
     PlayerStats:add("sessionsPlayed", 1)
@@ -278,6 +282,10 @@ end
 
 function Game:leave()
     callMode(self, "leave")
+
+    if love.mouse and love.mouse.setVisible then
+        love.mouse.setVisible(true)
+    end
 
     if Snake and Snake.resetModifiers then
         Snake:resetModifiers()
