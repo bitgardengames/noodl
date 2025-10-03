@@ -29,6 +29,13 @@ local SKIN_DEFINITIONS = {
             outline = {0.02, 0.10, 0.08, 1.0},
             glow = {0.45, 1.00, 0.82, 0.88},
         },
+        effects = {
+            glow = {
+                intensity = 0.6,
+                radiusMultiplier = 1.25,
+                step = 2,
+            },
+        },
         unlock = { default = true },
         order = 10,
     },
@@ -77,6 +84,25 @@ local SKIN_DEFINITIONS = {
             outline = {0.08, 0.12, 0.28, 1.0},
             glow = {0.60, 0.85, 1.00, 0.80},
         },
+        effects = {
+            overlay = {
+                type = "stripes",
+                frequency = 24,
+                speed = 0.8,
+                angle = 65,
+                intensity = 0.55,
+                opacity = 0.75,
+                colors = {
+                    primary = {0.36, 0.88, 0.96, 0.85},
+                    secondary = {0.76, 0.58, 1.00, 0.95},
+                },
+            },
+            glow = {
+                intensity = 0.55,
+                radiusMultiplier = 1.45,
+                color = {0.60, 0.85, 1.00, 1.0},
+            },
+        },
         unlock = { level = 6 },
         order = 30,
     },
@@ -88,6 +114,13 @@ local SKIN_DEFINITIONS = {
             body = {0.95, 0.58, 0.28, 1.0},
             outline = {0.35, 0.12, 0.05, 1.0},
             glow = {1.00, 0.78, 0.35, 0.82},
+        },
+        effects = {
+            glow = {
+                intensity = 0.45,
+                radiusMultiplier = 1.3,
+                color = {1.00, 0.78, 0.35, 1.0},
+            },
         },
         unlock = { achievement = "appleTycoon" },
         order = 40,
@@ -101,8 +134,122 @@ local SKIN_DEFINITIONS = {
             outline = {0.06, 0.12, 0.28, 1.0},
             glow = {0.52, 0.72, 1.00, 0.78},
         },
+        effects = {
+            overlay = {
+                type = "holo",
+                speed = 1.1,
+                intensity = 0.65,
+                opacity = 0.85,
+                colors = {
+                    primary = {0.20, 0.35, 0.75, 1.0},
+                    secondary = {0.38, 0.78, 1.00, 1.0},
+                    tertiary = {0.76, 0.46, 1.00, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.6,
+                radiusMultiplier = 1.6,
+                color = {0.36, 0.62, 1.00, 1.0},
+                step = 3,
+            },
+        },
         unlock = { achievement = "floorAscendant" },
         order = 50,
+    },
+    {
+        id = "ion_storm",
+        name = "Ion Storm",
+        description = "Charged scales hum with contained lightning. Unlocks at metaprogression level 9.",
+        colors = {
+            body = {0.24, 0.36, 0.94, 1.0},
+            outline = {0.04, 0.05, 0.22, 1.0},
+            glow = {0.58, 0.82, 1.00, 0.9},
+        },
+        effects = {
+            overlay = {
+                type = "stripes",
+                frequency = 32,
+                speed = 1.6,
+                angle = -25,
+                intensity = 0.7,
+                opacity = 0.9,
+                colors = {
+                    primary = {0.32, 0.85, 1.00, 1.0},
+                    secondary = {0.82, 0.45, 1.00, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.75,
+                radiusMultiplier = 1.55,
+                color = {0.62, 0.88, 1.00, 1.0},
+                step = 2,
+            },
+        },
+        unlock = { level = 9 },
+        order = 60,
+    },
+    {
+        id = "luminous_bloom",
+        name = "Luminous Bloom",
+        description = "Bioluminescent petals trail with every turn. Unlock the Meta Milestone 5 achievement to claim it.",
+        colors = {
+            body = {0.52, 0.16, 0.58, 1.0},
+            outline = {0.14, 0.03, 0.18, 1.0},
+            glow = {0.96, 0.54, 0.88, 0.9},
+        },
+        effects = {
+            overlay = {
+                type = "holo",
+                speed = 0.85,
+                intensity = 0.58,
+                opacity = 0.8,
+                colors = {
+                    primary = {0.52, 0.16, 0.58, 1.0},
+                    secondary = {0.94, 0.48, 0.88, 1.0},
+                    tertiary = {0.68, 0.94, 0.78, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.65,
+                radiusMultiplier = 1.5,
+                color = {0.94, 0.48, 0.88, 1.0},
+                step = 2,
+            },
+        },
+        unlock = { achievement = "metaMilestone5" },
+        order = 70,
+    },
+    {
+        id = "void_wisp",
+        name = "Void Wisp",
+        description = "An afterimage from beyond the grid. Unlock the Floor Abyss achievement to claim it.",
+        colors = {
+            body = {0.08, 0.12, 0.18, 1.0},
+            outline = {0.00, 0.00, 0.00, 1.0},
+            glow = {0.62, 0.32, 1.00, 0.92},
+        },
+        effects = {
+            overlay = {
+                type = "stripes",
+                frequency = 18,
+                speed = -0.9,
+                angle = 40,
+                intensity = 0.5,
+                opacity = 0.7,
+                colors = {
+                    primary = {0.18, 0.18, 0.32, 1.0},
+                    secondary = {0.62, 0.32, 1.00, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.8,
+                radiusMultiplier = 1.75,
+                color = {0.62, 0.32, 1.00, 1.0},
+                step = 3,
+            },
+        },
+        unlock = { achievement = "floorAbyss" },
+        order = 80,
     },
 }
 
@@ -552,7 +699,30 @@ end
 function SnakeCosmetics:getGlowColor()
     local skin = self:getActiveSkin()
     local palette = skin and skin.colors or {}
+    local effects = skin and skin.effects or {}
+    local glowEffect = effects.glow or {}
+    if glowEffect.color then
+        return resolveColor(glowEffect.color)
+    end
     return resolveColor(palette.glow, self:getBodyColor())
+end
+
+function SnakeCosmetics:getGlowEffect()
+    local skin = self:getActiveSkin()
+    local effects = skin and skin.effects or {}
+    if effects.glow then
+        return copyTable(effects.glow)
+    end
+    return nil
+end
+
+function SnakeCosmetics:getOverlayEffect()
+    local skin = self:getActiveSkin()
+    local effects = skin and skin.effects or {}
+    if effects.overlay then
+        return copyTable(effects.overlay)
+    end
+    return nil
 end
 
 function SnakeCosmetics:getUnlockHistory()

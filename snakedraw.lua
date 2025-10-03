@@ -12,6 +12,183 @@ local FRUIT_BULGE_SCALE = 1.25
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
 
+local overlayShaderSources = {
+  stripes = [[
+    extern float time;
+    extern float frequency;
+    extern float speed;
+    extern float angle;
+    extern float intensity;
+    extern vec4 colorA;
+    extern vec4 colorB;
+
+    vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+    {
+      vec4 base = Texel(tex, texture_coords);
+      float mask = base.a;
+      if (mask <= 0.0) {
+        return base * color;
+      }
+
+      vec2 uv = texture_coords - vec2(0.5);
+      float c = cos(angle);
+      float s = sin(angle);
+      float stripe = sin((uv.x * c + uv.y * s) * frequency + time * speed) * 0.5 + 0.5;
+      float blend = clamp(stripe * intensity * mask, 0.0, 1.0);
+      vec3 mixCol = mix(colorA.rgb, colorB.rgb, stripe);
+      vec3 result = mix(base.rgb, mixCol, blend);
+      return vec4(result, base.a) * color;
+    }
+  ]],
+  holo = [[
+    extern float time;
+    extern float speed;
+    extern float intensity;
+    extern vec4 colorA;
+    extern vec4 colorB;
+    extern vec4 colorC;
+
+    vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+    {
+      vec4 base = Texel(tex, texture_coords);
+      float mask = base.a;
+      if (mask <= 0.0) {
+        return base * color;
+      }
+
+      vec2 uv = texture_coords - vec2(0.5);
+      float wave = sin((uv.x + uv.y) * 10.0 + time * speed);
+      float radial = sin(length(uv * vec2(1.4, 1.0)) * 12.0 - time * (speed * 0.6 + 0.2));
+      float shimmer = sin((uv.x - uv.y) * 16.0 + time * speed * 1.8);
+
+      float baseMix = clamp(0.5 + 0.5 * wave, 0.0, 1.0);
+      vec3 layer = mix(colorA.rgb, colorB.rgb, baseMix);
+      layer = mix(layer, colorC.rgb, clamp(radial * 0.5 + 0.5, 0.0, 1.0) * 0.6);
+      layer += shimmer * 0.12 * colorC.rgb;
+
+      float blend = clamp(intensity * mask, 0.0, 1.0);
+      vec3 result = mix(base.rgb, layer, blend);
+      return vec4(result, base.a) * color;
+    }
+  ]],
+}
+
+local overlayShaderCache = {}
+
+local function safeResolveShader(typeId)
+  if overlayShaderCache[typeId] ~= nil then
+    return overlayShaderCache[typeId]
+  end
+
+  local source = overlayShaderSources[typeId]
+  if not source then
+    overlayShaderCache[typeId] = false
+    return nil
+  end
+
+  local ok, shader = pcall(love.graphics.newShader, source)
+  if not ok then
+    print("[snakedraw] failed to build overlay shader", typeId, shader)
+    overlayShaderCache[typeId] = false
+    return nil
+  end
+
+  overlayShaderCache[typeId] = shader
+  return shader
+end
+
+local function resolveColor(color, fallback)
+  if type(color) == "table" then
+    return {
+      color[1] or 0,
+      color[2] or 0,
+      color[3] or 0,
+      color[4] or 1,
+    }
+  end
+
+  if fallback then
+    return resolveColor(fallback)
+  end
+
+  return {1, 1, 1, 1}
+end
+
+local function applyOverlay(canvas, config)
+  if not (canvas and config and config.type) then
+    return
+  end
+
+  local shader = safeResolveShader(config.type)
+  if not shader then
+    return
+  end
+
+  local time = 0
+  if love and love.timer and love.timer.getTime then
+    time = love.timer.getTime()
+  end
+
+  local colors = config.colors or {}
+  local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor())
+  local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor())
+  local tertiary = resolveColor(colors.tertiary or secondary)
+
+  shader:send("time", time)
+  shader:send("intensity", config.intensity or 0.5)
+  shader:send("colorA", primary)
+  shader:send("colorB", secondary)
+
+  if config.type == "stripes" then
+    shader:send("frequency", config.frequency or 18)
+    shader:send("speed", config.speed or 0.6)
+    shader:send("angle", math.rad(config.angle or 45))
+  elseif config.type == "holo" then
+    shader:send("speed", config.speed or 1.0)
+    shader:send("colorC", tertiary)
+  end
+
+  love.graphics.push("all")
+  love.graphics.setShader(shader)
+  love.graphics.setBlendMode(config.blendMode or "alpha")
+  love.graphics.setColor(1, 1, 1, config.opacity or 1)
+  love.graphics.draw(canvas, 0, 0)
+  love.graphics.pop()
+end
+
+local function applySkinGlow(trail, head, radius, config)
+  if not config then
+    return
+  end
+
+  local color = resolveColor(config.color, SnakeCosmetics:getGlowColor())
+  local intensity = config.intensity or 0.5
+  local step = math.max(1, math.floor(config.step or 2))
+  local radiusMultiplier = config.radiusMultiplier or 1.4
+
+  local function drawGlowAt(x, y)
+    if not (x and y) then
+      return
+    end
+    drawSoftGlow(x, y, radius * radiusMultiplier, color[1], color[2], color[3], (color[4] or 1) * intensity)
+  end
+
+  if trail and #trail > 0 then
+    for i = 1, #trail, step do
+      local seg = trail[i]
+      if seg and seg ~= head then
+        local x, y = ptXY(seg)
+        drawGlowAt(x, y)
+      end
+    end
+  end
+
+  if head then
+    local hx, hy = ptXY(head)
+    drawGlowAt(hx, hy)
+  end
+end
+
 -- helper: prefer drawX/drawY, fallback to x/y
 local function ptXY(p)
   if not p then return nil, nil end
@@ -502,6 +679,9 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   local thickness = SEGMENT_SIZE * 0.8
   local half      = thickness / 2
 
+  local overlayEffect = SnakeCosmetics:getOverlayEffect()
+  local glowEffect = SnakeCosmetics:getGlowEffect()
+
   local coords = buildCoords(trail)
   local head = trail[1]
   local tail = trail[#trail]
@@ -536,6 +716,9 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     -- snake
     love.graphics.setColor(1,1,1,1)
     love.graphics.draw(snakeCanvas, 0, 0)
+
+    applyOverlay(snakeCanvas, overlayEffect)
+    applySkinGlow(trail, head, half, glowEffect)
   elseif hx and hy then
     -- fallback: draw a simple disk when only the head is visible
     local bodyColor = SnakeCosmetics:getBodyColor()
@@ -554,6 +737,8 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     love.graphics.circle("line", hx, hy, half + OUTLINE_SIZE * 0.5)
     love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
     love.graphics.circle("fill", hx, hy, half)
+
+    applySkinGlow(trail, head, half, glowEffect)
   end
 
   if hx and hy and drawFace ~= false then
