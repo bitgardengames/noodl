@@ -1,18 +1,19 @@
 local Theme = require("theme")
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
+local Rocks = require("rocks")
 
 local Lasers = {}
 
-local beams = {}
+local emitters = {}
 
-local TRACK_LENGTH = 120
-local DEFAULT_THICKNESS = 18
-local DEFAULT_SWEEP_RANGE = 42
-local DEFAULT_SWEEP_SPEED = 1.35 -- radians per second for sweep oscillation
 local FLASH_DECAY = 3.8
-
 local DEFAULT_FIRE_COLOR = {1, 0.16, 0.16, 1}
+local DEFAULT_BEAM_THICKNESS = 6
+local DEFAULT_FIRE_DURATION = 1.2
+local DEFAULT_CHARGE_DURATION = 0.9
+local BURN_FADE_RATE = 0.55
+local WALL_INSET = 6
 
 local function copyColor(color, alpha)
     local r = 1
@@ -28,23 +29,6 @@ local function copyColor(color, alpha)
     end
 
     return { r, g, b, a }
-end
-
-local function getPalette()
-    local accent = Theme.laserColor or Theme.sawColor or {1, 0.38, 0.18, 0.9}
-    local glow = copyColor(accent, (accent[4] or 1) * 0.45)
-    local core = copyColor(accent, 0.9)
-    local rim = copyColor(accent, 1.0)
-    rim[1] = math.min(1, rim[1] * 1.15 + 0.05)
-    rim[2] = math.min(1, rim[2] * 1.1 + 0.03)
-    rim[3] = math.min(1, rim[3] * 1.05 + 0.02)
-    rim[4] = 0.95
-
-    return {
-        glow = glow,
-        core = core,
-        rim = rim,
-    }
 end
 
 local function getFirePalette(color)
@@ -65,106 +49,193 @@ local function getFirePalette(color)
     }
 end
 
-local function calculateBounds(beam)
+local function getEmitterColors()
+    local body = Theme.laserBaseColor or {0.18, 0.19, 0.24, 0.95}
+    local accent = copyColor(Theme.laserColor or {1, 0.32, 0.26, 1})
+    accent[4] = 0.85
+    return body, accent
+end
+
+local function releaseOccupancy(beam)
     if not beam then
         return
     end
 
-    local offset = beam.offset or 0
-    local halfLength = (beam.length or TRACK_LENGTH) * 0.5
-    local thickness = math.max(6, beam.thickness or DEFAULT_THICKNESS)
-
-    if beam.dir == "vertical" then
-        local cx = (beam.x or 0) + offset
-        local cy = beam.y or 0
-        return cx - thickness * 0.5, cy - halfLength, thickness, halfLength * 2
+    if beam.col and beam.row then
+        SnakeUtils.setOccupied(beam.col, beam.row, false)
     end
-
-    local cx = beam.x or 0
-    local cy = (beam.y or 0) + offset
-    return cx - halfLength, cy - thickness * 0.5, halfLength * 2, thickness
 end
 
-local function updateOffset(beam, dt)
-    beam.timer = (beam.timer or 0) + dt * (beam.speed or DEFAULT_SWEEP_SPEED)
-    local phase = beam.phase or 0
-    local range = beam.sweepRange or DEFAULT_SWEEP_RANGE
-    beam.offset = math.sin(beam.timer + phase) * range
+local function getFacingFromPosition(dir, col, row)
+    if dir == "vertical" then
+        local midpoint = math.floor((Arena.rows or 1) / 2)
+        if row and row > midpoint then
+            return -1
+        end
+    else
+        local midpoint = math.floor((Arena.cols or 1) / 2)
+        if col and col > midpoint then
+            return -1
+        end
+    end
+
+    return 1
 end
 
-local function getTrackLength(length)
-    if length and length > 0 then
-        return length
+local function clamp(value, minimum, maximum)
+    if minimum and value < minimum then
+        return minimum
     end
-    return TRACK_LENGTH
+    if maximum and value > maximum then
+        return maximum
+    end
+    return value
+end
+
+local function computeBeamTarget(beam)
+    local tileSize = Arena.tileSize or 24
+    local facing = beam.facing or 1
+    local inset = math.max(2, tileSize * 0.5 - 4)
+    local startX = beam.x or 0
+    local startY = beam.y or 0
+    local endX, endY
+    local rocks = Rocks:getAll() or {}
+    local bestDistance = math.huge
+    local hitRock
+
+    if beam.dir == "horizontal" then
+        startX = startX + facing * inset
+        endY = startY
+
+        local wallX
+        if facing > 0 then
+            wallX = (Arena.x or 0) + (Arena.width or 0) - WALL_INSET
+        else
+            wallX = (Arena.x or 0) + WALL_INSET
+        end
+
+        endX = wallX
+
+        for _, rock in ipairs(rocks) do
+            if rock.row == beam.row then
+                local delta = (rock.x - (beam.x or 0)) * facing
+                if delta and delta > 0 and delta < bestDistance then
+                    bestDistance = delta
+                    hitRock = rock
+                end
+            end
+        end
+
+        if hitRock then
+            local edge = tileSize * 0.5 - 2
+            endX = hitRock.x - facing * edge
+        end
+    else
+        startY = startY + facing * inset
+        endX = startX
+
+        local wallY
+        if facing > 0 then
+            wallY = (Arena.y or 0) + (Arena.height or 0) - WALL_INSET
+        else
+            wallY = (Arena.y or 0) + WALL_INSET
+        end
+
+        endY = wallY
+
+        for _, rock in ipairs(rocks) do
+            if rock.col == beam.col then
+                local delta = (rock.y - (beam.y or 0)) * facing
+                if delta and delta > 0 and delta < bestDistance then
+                    bestDistance = delta
+                    hitRock = rock
+                end
+            end
+        end
+
+        if hitRock then
+            local edge = tileSize * 0.5 - 2
+            endY = hitRock.y - facing * edge
+        end
+    end
+
+    if beam.dir == "horizontal" then
+        local minX = math.min(startX, endX)
+        local width = math.max(0, math.abs(endX - startX))
+        local thickness = beam.beamThickness or DEFAULT_BEAM_THICKNESS
+        beam.beamRect = {minX, startY - thickness * 0.5, width, thickness}
+    else
+        local minY = math.min(startY, endY)
+        local height = math.max(0, math.abs(endY - startY))
+        local thickness = beam.beamThickness or DEFAULT_BEAM_THICKNESS
+        beam.beamRect = {startX - thickness * 0.5, minY, thickness, height}
+    end
+
+    beam.beamStartX = startX
+    beam.beamStartY = startY
+    beam.beamEndX = endX
+    beam.beamEndY = endY or startY
+    beam.impactX = endX
+    beam.impactY = endY or startY
+    beam.targetRock = hitRock
 end
 
 function Lasers:reset()
-    beams = {}
+    for _, beam in ipairs(emitters) do
+        releaseOccupancy(beam)
+    end
+    emitters = {}
 end
 
 function Lasers:getAll()
-    return beams
+    return emitters
 end
 
 function Lasers:spawn(x, y, dir, length, options)
     dir = dir or "horizontal"
     options = options or {}
 
-    local beam = {
-        x = x,
-        y = y,
-        dir = dir,
-        length = getTrackLength(length),
-        thickness = options.thickness or DEFAULT_THICKNESS,
-        sweepRange = (options.sweepRange ~= nil) and options.sweepRange or DEFAULT_SWEEP_RANGE,
-        speed = (options.speed ~= nil) and options.speed or DEFAULT_SWEEP_SPEED,
-        phase = (options.phase ~= nil) and options.phase or love.math.random() * math.pi * 2,
-        offset = 0,
-        timer = 0,
-        flashTimer = 0,
-    }
-
-    beam.baseLength = beam.length
-    beam.baseThickness = beam.thickness
-
-    local fireLength
-    if options.fireLength and options.fireLength > 0 then
-        fireLength = options.fireLength
-    elseif dir == "horizontal" then
-        fireLength = Arena.width + (Arena.tileSize or 24)
-    else
-        fireLength = Arena.height + (Arena.tileSize or 24)
+    local col, row = Arena:getTileFromWorld(x, y)
+    local facing = options.facing
+    if facing == nil then
+        facing = getFacingFromPosition(dir, col, row)
     end
 
-    beam.fireLength = fireLength
-    beam.fireThickness = math.max(beam.thickness, options.fireThickness or (beam.thickness + 6))
-    beam.fireDuration = math.max(0.35, options.fireDuration or 1.2)
+    facing = (facing >= 0) and 1 or -1
 
-    local minCooldown = options.fireCooldownMin or 4.0
+    local fireDuration = math.max(0.2, options.fireDuration or DEFAULT_FIRE_DURATION)
+    local chargeDuration = math.max(0.25, options.chargeDuration or DEFAULT_CHARGE_DURATION)
+    local minCooldown = options.fireCooldownMin or 3.5
     local maxCooldown = options.fireCooldownMax or (minCooldown + 3.0)
     if maxCooldown < minCooldown then
         maxCooldown = minCooldown
     end
 
-    beam.fireCooldownMin = minCooldown
-    beam.fireCooldownMax = maxCooldown
+    local beam = {
+        x = x,
+        y = y,
+        col = col,
+        row = row,
+        dir = dir,
+        facing = facing,
+        beamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS,
+        fireDuration = fireDuration,
+        chargeDuration = chargeDuration,
+        fireCooldownMin = minCooldown,
+        fireCooldownMax = maxCooldown,
+        firePalette = options.firePalette or getFirePalette(options.fireColor),
+        state = "cooldown",
+        isFiring = false,
+        flashTimer = 0,
+        burnAlpha = 0,
+    }
+
     beam.fireCooldown = love.math.random() * (maxCooldown - minCooldown) + minCooldown
-    beam.fireTimer = 0
-    beam.isFiring = false
 
-    if options.fireColor or options.firePalette then
-        if options.firePalette then
-            beam.firePalette = options.firePalette
-        else
-            beam.firePalette = getFirePalette(options.fireColor)
-        end
-    else
-        beam.firePalette = getFirePalette(DEFAULT_FIRE_COLOR)
-    end
+    SnakeUtils.setOccupied(col, row, true)
 
-    SnakeUtils.occupyTrack(x, y, dir, beam.length)
-    beams[#beams + 1] = beam
+    computeBeamTarget(beam)
+    emitters[#emitters + 1] = beam
     return beam
 end
 
@@ -173,38 +244,49 @@ function Lasers:update(dt)
         return
     end
 
-    for _, beam in ipairs(beams) do
-        if not beam.isFiring and (beam.sweepRange or 0) > 0 then
-            updateOffset(beam, dt)
-        else
-            beam.offset = 0
-        end
+    for _, beam in ipairs(emitters) do
+        computeBeamTarget(beam)
 
-        if beam.isFiring then
-            beam.fireTimer = (beam.fireTimer or 0) - dt
+        if beam.state == "charging" then
+            beam.chargeTimer = (beam.chargeTimer or beam.chargeDuration) - dt
+            if beam.chargeTimer <= 0 then
+                beam.state = "firing"
+                beam.isFiring = true
+                beam.fireTimer = beam.fireDuration
+                beam.chargeTimer = nil
+                beam.flashTimer = math.max(beam.flashTimer or 0, 0.75)
+                beam.burnAlpha = 0.92
+            end
+        elseif beam.state == "firing" then
+            beam.fireTimer = (beam.fireTimer or beam.fireDuration) - dt
+            beam.burnAlpha = 0.92
             if beam.fireTimer <= 0 then
+                beam.state = "cooldown"
                 beam.isFiring = false
-                beam.length = beam.baseLength or beam.length
-                beam.thickness = beam.baseThickness or beam.thickness
-
                 local minCooldown = beam.fireCooldownMin or 0
                 local maxCooldown = beam.fireCooldownMax or minCooldown
                 if maxCooldown < minCooldown then
                     maxCooldown = minCooldown
                 end
-
                 beam.fireCooldown = love.math.random() * (maxCooldown - minCooldown) + minCooldown
+                beam.fireTimer = nil
             end
-        elseif beam.fireCooldown then
-            beam.fireCooldown = beam.fireCooldown - dt
-            if beam.fireCooldown <= 0 then
-                beam.isFiring = true
-                beam.fireTimer = beam.fireDuration or 1.0
-                beam.length = beam.fireLength or beam.length
-                beam.thickness = math.max(beam.fireThickness or beam.thickness, beam.thickness)
-                beam.flashTimer = math.max(beam.flashTimer or 0, 1)
-                beam.fireCooldown = nil
+        else
+            if beam.fireCooldown then
+                beam.fireCooldown = beam.fireCooldown - dt
+                if beam.fireCooldown <= 0 then
+                    beam.state = "charging"
+                    beam.chargeTimer = beam.chargeDuration
+                    beam.fireCooldown = nil
+                end
+            else
+                beam.state = "charging"
+                beam.chargeTimer = beam.chargeDuration
             end
+        end
+
+        if beam.state ~= "firing" then
+            beam.burnAlpha = math.max(0, (beam.burnAlpha or 0) - dt * BURN_FADE_RATE)
         end
 
         if beam.flashTimer and beam.flashTimer > 0 then
@@ -225,16 +307,36 @@ local function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh)
     return ax < bx + bw and ax + aw > bx and ay < by + bh and ay + ah > by
 end
 
+local function baseBounds(beam)
+    if not beam then
+        return
+    end
+
+    local size = Arena.tileSize or 24
+    local half = size * 0.5
+    local bx = (beam.x or 0) - half
+    local by = (beam.y or 0) - half
+    return bx, by, size, size
+end
+
 function Lasers:checkCollision(x, y, w, h)
     if not (x and y and w and h) then
         return nil
     end
 
-    for _, beam in ipairs(beams) do
-        local bx, by, bw, bh = calculateBounds(beam)
+    for _, beam in ipairs(emitters) do
+        local bx, by, bw, bh = baseBounds(beam)
         if bx and rectsOverlap(bx, by, bw, bh, x, y, w, h) then
             beam.flashTimer = math.max(beam.flashTimer or 0, 1)
             return beam
+        end
+
+        if beam.state == "firing" and beam.beamRect then
+            local rx, ry, rw, rh = beam.beamRect[1], beam.beamRect[2], beam.beamRect[3], beam.beamRect[4]
+            if rw and rh and rw > 0 and rh > 0 and rectsOverlap(rx, ry, rw, rh, x, y, w, h) then
+                beam.flashTimer = math.max(beam.flashTimer or 0, 1)
+                return beam
+            end
         end
     end
 
@@ -242,38 +344,106 @@ function Lasers:checkCollision(x, y, w, h)
 end
 
 function Lasers:getBounds(beam)
-    return calculateBounds(beam)
+    return baseBounds(beam)
 end
 
-function Lasers:draw()
-    if #beams == 0 then
+local function drawBurnMark(beam)
+    if not (beam and beam.impactX and beam.impactY) then
         return
     end
 
-    local basePalette = getPalette()
+    local alpha = clamp(beam.burnAlpha or 0, 0, 1)
+    if alpha <= 0 then
+        return
+    end
+
+    local radius = math.max(3, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.8)
+    love.graphics.setColor(0, 0, 0, 0.5 * alpha)
+    love.graphics.circle("fill", beam.impactX, beam.impactY, radius)
+    love.graphics.setColor(0.1, 0.05, 0.05, 0.7 * alpha)
+    love.graphics.circle("fill", beam.impactX, beam.impactY, radius * 0.55)
+end
+
+local function drawBeam(beam)
+    if not beam.beamRect then
+        return
+    end
+
+    local palette = beam.firePalette or getFirePalette(DEFAULT_FIRE_COLOR)
+    local x, y, w, h = beam.beamRect[1], beam.beamRect[2], beam.beamRect[3], beam.beamRect[4]
+    if not (x and y and w and h) then
+        return
+    end
+
+    if beam.state == "firing" then
+        love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], (palette.glow[4] or 0.5))
+        love.graphics.rectangle("fill", x - 4, y - 4, w + 8, h + 8, 6, 6)
+        love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], (palette.core[4] or 0.9))
+        love.graphics.rectangle("fill", x, y, w, h, 4, 4)
+    elseif beam.state == "charging" then
+        local duration = beam.chargeDuration or DEFAULT_CHARGE_DURATION
+        local remaining = clamp(beam.chargeTimer or 0, 0, duration)
+        local progress = (duration <= 0) and 1 or (1 - remaining / duration)
+        local alpha = 0.15 + 0.45 * progress
+        love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], alpha * 0.6)
+        love.graphics.rectangle("fill", x - 3, y - 3, w + 6, h + 6, 6, 6)
+        love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], alpha)
+        love.graphics.rectangle("fill", x, y, w, h, 4, 4)
+    end
+end
+
+local function drawEmitterBase(beam)
+    local baseColor, accentColor = getEmitterColors()
+    local tileSize = Arena.tileSize or 24
+    local half = tileSize * 0.5
+    local bx = (beam.x or 0) - half
+    local by = (beam.y or 0) - half
+    local flash = clamp(beam.flashTimer or 0, 0, 1)
+    local highlightBoost = (beam.state == "firing") and 0.25 or ((beam.state == "charging") and 0.15 or 0)
+
+    love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], (baseColor[4] or 1) + flash * 0.1)
+    love.graphics.rectangle("fill", bx, by, tileSize, tileSize, 6, 6)
+
+    love.graphics.setColor(0, 0, 0, 0.45 + flash * 0.25)
+    love.graphics.rectangle("line", bx, by, tileSize, tileSize, 6, 6)
+
+    local accentAlpha = (accentColor[4] or 0.8) + flash * 0.2 + highlightBoost
+    love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], math.min(1, accentAlpha))
+    love.graphics.rectangle("line", bx + 2, by + 2, tileSize - 4, tileSize - 4, 4, 4)
+
+    local slitLength = tileSize * 0.55
+    local slitThickness = math.max(3, tileSize * 0.18)
+    local cx = beam.x or 0
+    local cy = beam.y or 0
+    if beam.dir == "horizontal" then
+        local dir = beam.facing or 1
+        local front = cx + dir * (tileSize * 0.32)
+        love.graphics.rectangle("fill", front - slitThickness * 0.5, cy - slitLength * 0.5, slitThickness, slitLength, 3, 3)
+    else
+        local dir = beam.facing or 1
+        local front = cy + dir * (tileSize * 0.32)
+        love.graphics.rectangle("fill", cx - slitLength * 0.5, front - slitThickness * 0.5, slitLength, slitThickness, 3, 3)
+    end
+end
+
+function Lasers:draw()
+    if #emitters == 0 then
+        return
+    end
+
     love.graphics.push("all")
     love.graphics.setLineWidth(2)
 
-    for _, beam in ipairs(beams) do
-        local bx, by, bw, bh = calculateBounds(beam)
-        if bx then
-            local palette = basePalette
-            if beam.isFiring and beam.firePalette then
-                palette = beam.firePalette
-            end
-            local flash = math.min(1, beam.flashTimer or 0)
-            local glowAlpha = (palette.glow[4] or 0.4) + flash * 0.35
-            love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], glowAlpha)
-            love.graphics.rectangle("fill", bx - 6, by - 6, bw + 12, bh + 12, 6, 6)
+    for _, beam in ipairs(emitters) do
+        drawBurnMark(beam)
+    end
 
-            local coreAlpha = (palette.core[4] or 0.9) + flash * 0.1
-            love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], coreAlpha)
-            love.graphics.rectangle("fill", bx, by, bw, bh, 4, 4)
+    for _, beam in ipairs(emitters) do
+        drawBeam(beam)
+    end
 
-            local rimAlpha = (palette.rim[4] or 0.95) + flash * 0.05
-            love.graphics.setColor(palette.rim[1], palette.rim[2], palette.rim[3], rimAlpha)
-            love.graphics.rectangle("line", bx, by, bw, bh, 4, 4)
-        end
+    for _, beam in ipairs(emitters) do
+        drawEmitterBase(beam)
     end
 
     love.graphics.pop()

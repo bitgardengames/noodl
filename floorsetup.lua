@@ -296,7 +296,6 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
     local plan = {}
     local attempts = 0
     local maxAttempts = desired * 40
-    local sweepRange = 0
     local totalCols = math.max(1, Arena.cols or 1)
     local totalRows = math.max(1, Arena.rows or 1)
 
@@ -307,70 +306,63 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
             dir = (dir == "horizontal") and "vertical" or "horizontal"
         end
 
-        local fx, fy
+        local col, row, facing
         if dir == "horizontal" then
-            local row = (love.math.random() < 0.5) and 1 or totalRows
-            local minCol = math.max(1 + halfTiles, 1)
-            local maxCol = totalCols - halfTiles
+            facing = (love.math.random() < 0.5) and 1 or -1
+            col = (facing > 0) and 1 or totalCols
+            local rowMin = 2
+            local rowMax = totalRows - 1
 
-            if maxCol < minCol then
-                local fallback = math.floor(totalCols / 2 + 0.5)
-                minCol = math.max(1, math.min(totalCols, fallback))
-                maxCol = minCol
-            else
-                minCol = math.max(1, math.min(totalCols, minCol))
-                maxCol = math.max(minCol, math.min(totalCols, maxCol))
-            end
-
-            local col = love.math.random(minCol, maxCol)
-            fx, fy = Arena:getCenterOfTile(col, row)
-        else
-            local col = (love.math.random() < 0.5) and 1 or totalCols
-            local minRow = math.max(1 + halfTiles, 1)
-            local maxRow = totalRows - halfTiles
-
-            if maxRow < minRow then
+            if rowMax < rowMin then
                 local fallback = math.floor(totalRows / 2 + 0.5)
-                minRow = math.max(1, math.min(totalRows, fallback))
-                maxRow = minRow
-            else
-                minRow = math.max(1, math.min(totalRows, minRow))
-                maxRow = math.max(minRow, math.min(totalRows, maxRow))
+                rowMin = fallback
+                rowMax = fallback
             end
 
-            local row = love.math.random(minRow, maxRow)
-            fx, fy = Arena:getCenterOfTile(col, row)
+            rowMin = math.max(1, math.min(totalRows, rowMin))
+            rowMax = math.max(rowMin, math.min(totalRows, rowMax))
+            row = love.math.random(rowMin, rowMax)
+        else
+            facing = (love.math.random() < 0.5) and 1 or -1
+            row = (facing > 0) and 1 or totalRows
+            local colMin = 2
+            local colMax = totalCols - 1
+
+            if colMax < colMin then
+                local fallback = math.floor(totalCols / 2 + 0.5)
+                colMin = fallback
+                colMax = fallback
+            end
+
+            colMin = math.max(1, math.min(totalCols, colMin))
+            colMax = math.max(colMin, math.min(totalCols, colMax))
+            col = love.math.random(colMin, colMax)
         end
 
-        if fx and SnakeUtils.trackIsFree(fx, fy, dir, trackLength) then
-            SnakeUtils.occupyTrack(fx, fy, dir, trackLength)
-            local fireDuration = 1.1 + love.math.random() * 0.8
+        if col and row and not SnakeUtils.isOccupied(col, row) then
+            local fx, fy = Arena:getCenterOfTile(col, row)
+            local fireDuration = 0.9 + love.math.random() * 0.6
             local fireCooldownMin = 3.5 + love.math.random() * 1.5
             local fireCooldownMax = fireCooldownMin + 2.0 + love.math.random() * 2.0
-            local fireLength
-            if dir == "horizontal" then
-                fireLength = Arena.width + (Arena.tileSize or 24)
-            else
-                fireLength = Arena.height + (Arena.tileSize or 24)
-            end
+            local chargeDuration = 0.8 + love.math.random() * 0.4
             local fireColor = {1, 0.12 + love.math.random() * 0.15, 0.15, 1}
+
             plan[#plan + 1] = {
                 x = fx,
                 y = fy,
                 dir = dir,
                 length = trackLength,
                 options = {
-                    sweepRange = sweepRange,
-                    speed = 0,
-                    phase = 0,
+                    facing = facing,
                     fireDuration = fireDuration,
                     fireCooldownMin = fireCooldownMin,
                     fireCooldownMax = fireCooldownMax,
-                    fireLength = fireLength,
-                    fireThickness = 28,
+                    chargeDuration = chargeDuration,
                     fireColor = fireColor,
                 },
             }
+
+            SnakeUtils.setOccupied(col, row, true)
         end
     end
 
