@@ -167,6 +167,43 @@ end
 
 local drawSoftGlow
 
+local function drawCapsuleTrail(trail, radius)
+  if not trail or #trail == 0 or radius <= 0 then
+    return
+  end
+
+  for i = 1, #trail - 1 do
+    local a = trail[i]
+    local b = trail[i + 1]
+    local x1, y1 = ptXY(a)
+    local x2, y2 = ptXY(b)
+    if x1 and y1 and x2 and y2 then
+      local dx, dy = x2 - x1, y2 - y1
+      local length = math.sqrt(dx * dx + dy * dy)
+      if length > 1e-4 then
+        local angle
+        if math.atan2 then
+          angle = math.atan2(dy, dx)
+        else
+          angle = math.atan(dy, dx)
+        end
+        love.graphics.push()
+        love.graphics.translate(x1, y1)
+        love.graphics.rotate(angle)
+        love.graphics.rectangle("fill", 0, -radius, length, radius * 2)
+        love.graphics.pop()
+      end
+    end
+  end
+
+  for i = 1, #trail do
+    local x, y = ptXY(trail[i])
+    if x and y then
+      love.graphics.circle("fill", x, y, radius)
+    end
+  end
+end
+
 local function applySkinGlow(trail, head, radius, config)
   if not config then
     return
@@ -228,43 +265,6 @@ local function drawFruitBulges(trail, head, radius)
       if x and y then
         love.graphics.circle("fill", x, y, radius)
       end
-    end
-  end
-end
-
-local function drawCapsuleTrail(trail, radius)
-  if not trail or #trail == 0 or radius <= 0 then
-    return
-  end
-
-  for i = 1, #trail - 1 do
-    local a = trail[i]
-    local b = trail[i + 1]
-    local x1, y1 = ptXY(a)
-    local x2, y2 = ptXY(b)
-    if x1 and y1 and x2 and y2 then
-      local dx, dy = x2 - x1, y2 - y1
-      local length = math.sqrt(dx * dx + dy * dy)
-      if length > 1e-4 then
-        local angle
-        if math.atan2 then
-          angle = math.atan2(dy, dx)
-        else
-          angle = math.atan(dy, dx)
-        end
-        love.graphics.push()
-        love.graphics.translate(x1, y1)
-        love.graphics.rotate(angle)
-        love.graphics.rectangle("fill", 0, -radius, length, radius * 2)
-        love.graphics.pop()
-      end
-    end
-  end
-
-  for i = 1, #trail do
-    local x, y = ptXY(trail[i])
-    if x and y then
-      love.graphics.circle("fill", x, y, radius)
     end
   end
 end
