@@ -483,8 +483,8 @@ local function drawPlayfieldLayers(self, stateOverride)
     Fruit:draw()
     Rocks:draw()
     Conveyors:draw()
-    Lasers:draw()
     Saws:draw()
+    Lasers:draw()
     Arena:drawExit()
 
     if renderState == "descending" then
