@@ -12,6 +12,7 @@ local SettingsScreen = {
 }
 
 local ANALOG_DEADZONE = 0.35
+local SCROLL_SPEED = 60
 
 local function applyAudioVolumes()
     Audio:applyVolumes()
@@ -39,6 +40,10 @@ local buttons = {}
 local hoveredIndex = nil
 local sliderDragging = nil
 local focusedIndex = 1
+local scrollOffset = 0
+local minScrollOffset = 0
+local viewportHeight = 0
+local contentHeight = 0
 local layout = {
     panel = { x = 0, y = 0, w = 0, h = 0 },
 }
@@ -100,6 +105,103 @@ local function refreshLayout(self)
     self:enter()
     if prevIndex and buttons[prevIndex] then
         self:setFocus(prevIndex)
+    end
+end
+
+local function clampScroll(offset)
+    if offset < minScrollOffset then
+        return minScrollOffset
+    elseif offset > 0 then
+        return 0
+    end
+
+    return offset
+end
+
+function SettingsScreen:updateButtonPositions()
+    local offset = scrollOffset
+    for _, btn in ipairs(buttons) do
+        local baseY = btn.baseY or btn.y or 0
+        btn.y = baseY + offset
+        if btn.sliderTrack and btn.sliderTrack.baseY then
+            btn.sliderTrack.y = btn.sliderTrack.baseY + offset
+        end
+    end
+end
+
+function SettingsScreen:updateScrollBounds()
+    local panel = layout.panel
+    local panelPadding = UI.spacing.panelPadding
+    viewportHeight = math.max(0, (panel and panel.h or 0) - panelPadding * 2)
+    minScrollOffset = math.min(0, viewportHeight - contentHeight)
+    scrollOffset = clampScroll(scrollOffset)
+    self:updateButtonPositions()
+end
+
+function SettingsScreen:setScroll(offset)
+    local newOffset = clampScroll(offset)
+    if math.abs(newOffset - scrollOffset) > 1e-4 then
+        scrollOffset = newOffset
+        self:updateButtonPositions()
+    end
+end
+
+function SettingsScreen:scrollBy(amount)
+    if not amount or amount == 0 then return end
+    self:setScroll(scrollOffset + amount)
+end
+
+function SettingsScreen:isOptionVisible(btn)
+    local panel = layout.panel
+    if not panel then
+        return true
+    end
+
+    if viewportHeight <= 0 then
+        return true
+    end
+
+    local panelPadding = UI.spacing.panelPadding
+    local viewportTop = panel.y + panelPadding
+    local viewportBottom = viewportTop + viewportHeight
+
+    local top = btn.y or 0
+    local bottom = top + (btn.h or 0)
+    if btn.option and btn.option.type == "slider" and btn.sliderTrack then
+        local trackTop = btn.sliderTrack.y or top
+        local trackBottom = trackTop + (btn.sliderTrack.h or 0)
+        if btn.sliderTrack.handleRadius then
+            trackTop = trackTop - btn.sliderTrack.handleRadius
+            trackBottom = trackBottom + btn.sliderTrack.handleRadius
+        end
+        top = math.min(top, trackTop)
+        bottom = math.max(bottom, trackBottom)
+    end
+
+    return bottom > viewportTop and top < viewportBottom
+end
+
+function SettingsScreen:ensureFocusVisible()
+    if not focusedIndex then return end
+    local panel = layout.panel
+    if not panel or viewportHeight <= 0 then return end
+
+    self:updateButtonPositions()
+
+    local btn = buttons[focusedIndex]
+    if not btn then return end
+
+    local panelPadding = UI.spacing.panelPadding
+    local viewportTop = panel.y + panelPadding
+    local viewportBottom = viewportTop + viewportHeight
+
+    local top = btn.y
+    local bottom = top + btn.h
+
+    if top < viewportTop then
+        self:setScroll(scrollOffset + (viewportTop - top))
+    elseif bottom > viewportBottom then
+        self:setScroll(scrollOffset - (bottom - viewportBottom))
     end
 end
 
@@ -230,16 +332,23 @@ function SettingsScreen:enter()
     local panelPadding = UI.spacing.panelPadding
     local panelWidth = UI.spacing.buttonWidth + panelPadding * 2
     local panelHeight = totalHeight + panelPadding * 2
+    local maxPanelHeight = math.max(panelPadding * 2 + UI.spacing.buttonHeight, sh - UI.spacing.sectionSpacing * 2)
+    if panelHeight > maxPanelHeight then
+        panelHeight = maxPanelHeight
+    end
     local panelX = centerX - panelWidth / 2
     local panelY = sh / 2 - panelHeight / 2
 
     layout.panel = { x = panelX, y = panelY, w = panelWidth, h = panelHeight }
+    contentHeight = totalHeight
 
     local startY = panelY + panelPadding
 
     -- reset UI.buttons so we don’t keep stale hitboxes
     UI.clearButtons()
     buttons = {}
+    scrollOffset = 0
+    minScrollOffset = 0
 
     for i, opt in ipairs(options) do
         local x = panelX + panelPadding
@@ -257,6 +366,7 @@ function SettingsScreen:enter()
             option = opt,
             hovered = false,
             sliderTrack = nil,
+            baseY = y,
         })
 
         local entry = buttons[#buttons]
@@ -270,6 +380,7 @@ function SettingsScreen:enter()
                 w = w - padding * 2,
                 h = trackHeight,
                 handleRadius = UI.spacing.sliderHandleRadius,
+                baseY = y + h - padding - trackHeight,
             }
         end
 
@@ -280,6 +391,9 @@ function SettingsScreen:enter()
 
         startY = startY + h + spacing
     end
+
+    contentHeight = totalHeight
+    self:updateScrollBounds()
 
     if #buttons == 0 then
         focusedIndex = nil
@@ -300,10 +414,18 @@ function SettingsScreen:update(dt)
     local mx, my = love.mouse.getPosition()
     hoveredIndex = nil
 
+    self:updateButtonPositions()
+
     for i, btn in ipairs(buttons) do
         local opt = btn.option
-        btn.hovered = UI.isHovered(btn.x, btn.y, btn.w, btn.h, mx, my)
-        if btn.hovered then
+        local visible = self:isOptionVisible(btn)
+        local hovered = false
+        if visible then
+            hovered = UI.isHovered(btn.x, btn.y, btn.w, btn.h, mx, my)
+        end
+
+        btn.hovered = hovered
+        if hovered then
             hoveredIndex = i
         end
 
@@ -342,10 +464,33 @@ function SettingsScreen:draw()
     local titleY = math.max(UI.spacing.sectionSpacing, panel.y - UI.spacing.sectionSpacing - titleHeight * 0.25)
     UI.drawLabel(titleText, 0, titleY, sw, "center", { fontKey = "title" })
 
+    self:updateButtonPositions()
+
+    local panelPadding = UI.spacing.panelPadding
+    local viewportX = panel.x + panelPadding
+    local viewportY = panel.y + panelPadding
+    local viewportW = panel.w - panelPadding * 2
+    local viewportH = math.max(0, viewportHeight)
+
+    local prevScissorX, prevScissorY, prevScissorW, prevScissorH = love.graphics.getScissor()
+    local appliedScissor = false
+    if viewportW > 0 and viewportH > 0 then
+        love.graphics.setScissor(viewportX, viewportY, viewportW, viewportH)
+        appliedScissor = true
+    end
+
     for index, btn in ipairs(buttons) do
         local opt = btn.option
         local label = Localization:get(opt.labelKey)
         local isFocused = (focusedIndex == index)
+        local visible = self:isOptionVisible(btn)
+
+        if not visible then
+            local state = UI.buttons[btn.id]
+            if state then
+                state.bounds = nil
+            end
+        end
 
         if opt.type == "toggle" and opt.toggle then
             local enabled = not not Settings[opt.toggle]
@@ -354,41 +499,90 @@ function SettingsScreen:draw()
             end
             local state = enabled and Localization:get("common.on") or Localization:get("common.off")
             label = string.format("%s: %s", label, state)
-            UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
-            UI.setButtonFocus(btn.id, isFocused)
-            UI.drawButton(btn.id)
+            if visible then
+                UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
+                UI.setButtonFocus(btn.id, isFocused)
+                UI.drawButton(btn.id)
+            end
 
         elseif opt.type == "slider" and opt.slider then
             local value = math.min(1, math.max(0, Settings[opt.slider] or 0))
-            local trackX, trackY, trackW, trackH, handleRadius = UI.drawSlider(nil, btn.x, btn.y, btn.w, value, {
-                label = label,
-                focused = isFocused,
-                hovered = btn.hovered,
-                register = false,
-            })
+            if visible then
+                local trackX, trackY, trackW, trackH, handleRadius = UI.drawSlider(nil, btn.x, btn.y, btn.w, value, {
+                    label = label,
+                    focused = isFocused,
+                    hovered = btn.hovered,
+                    register = false,
+                })
 
-            btn.sliderTrack = {
-                x = trackX,
-                y = trackY,
-                w = trackW,
-                h = trackH,
-                handleRadius = handleRadius,
-            }
+                btn.sliderTrack = btn.sliderTrack or {}
+                btn.sliderTrack.x = trackX
+                btn.sliderTrack.y = trackY
+                btn.sliderTrack.w = trackW
+                btn.sliderTrack.h = trackH
+                btn.sliderTrack.handleRadius = handleRadius
+                btn.sliderTrack.baseY = trackY - scrollOffset
+            else
+                local track = btn.sliderTrack
+                if track and track.baseY then
+                    track.y = track.baseY + scrollOffset
+                end
+            end
 
         elseif opt.type == "cycle" and opt.setting then
             local state = getCycleStateLabel(opt.setting)
             if state then
                 label = string.format("%s: %s", label, state)
             end
-            UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
-            UI.setButtonFocus(btn.id, isFocused)
-            UI.drawButton(btn.id)
+            if visible then
+                UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
+                UI.setButtonFocus(btn.id, isFocused)
+                UI.drawButton(btn.id)
+            end
 
         else
-            UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
-            UI.setButtonFocus(btn.id, isFocused)
-            UI.drawButton(btn.id)
+            if visible then
+                UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
+                UI.setButtonFocus(btn.id, isFocused)
+                UI.drawButton(btn.id)
+            end
         end
+    end
+
+    if appliedScissor then
+        if prevScissorX then
+            love.graphics.setScissor(prevScissorX, prevScissorY, prevScissorW, prevScissorH)
+        else
+            love.graphics.setScissor()
+        end
+    end
+
+    if contentHeight > viewportHeight and viewportHeight > 0 then
+        local trackWidth = 6
+        local trackRadius = trackWidth / 2
+        local trackX = panel.x + panel.w - trackWidth - panelPadding * 0.5
+        local trackY = viewportY
+        local trackHeight = viewportHeight
+
+        local scrollRange = contentHeight - viewportHeight
+        local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
+        scrollProgress = math.max(0, math.min(1, scrollProgress))
+
+        local minThumbHeight = 32
+        local thumbHeight = math.max(minThumbHeight, trackHeight * (viewportHeight / contentHeight))
+        thumbHeight = math.min(thumbHeight, trackHeight)
+        local thumbY = trackY + (trackHeight - thumbHeight) * scrollProgress
+
+        local trackColor = Theme.panelBorder or UI.colors.panelBorder or {1, 1, 1, 0.4}
+        local thumbColor = Theme.highlightColor or UI.colors.highlight or {1, 1, 1, 0.8}
+
+        love.graphics.setColor(trackColor[1] or 1, trackColor[2] or 1, trackColor[3] or 1, (trackColor[4] or 1) * 0.4)
+        love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
+
+        local thumbAlpha = math.min(1, (thumbColor[4] or 1) * 1.2)
+        love.graphics.setColor(thumbColor[1] or 1, thumbColor[2] or 1, thumbColor[3] or 1, thumbAlpha)
+        love.graphics.rectangle("fill", trackX, thumbY, trackWidth, thumbHeight, trackRadius)
+        love.graphics.setColor(1, 1, 1, 1)
     end
 end
 
@@ -411,6 +605,7 @@ function SettingsScreen:setFocus(index)
     local count = #buttons
     index = math.max(1, math.min(index or focusedIndex or 1, count))
     focusedIndex = index
+    self:ensureFocusVisible()
     self:updateFocusVisuals()
 end
 
@@ -510,10 +705,16 @@ function SettingsScreen:activateFocused()
 end
 
 function SettingsScreen:mousepressed(x, y, button)
+    self:updateButtonPositions()
     local id = UI:mousepressed(x, y, button)
 
     for i, btn in ipairs(buttons) do
         local opt = btn.option
+        local visible = self:isOptionVisible(btn)
+
+        if not visible then
+            goto continue
+        end
 
         if btn.id and btn.id == id then
             self:setFocus(i)
@@ -562,6 +763,8 @@ function SettingsScreen:mousepressed(x, y, button)
                 self:setFocus(i)
             end
         end
+
+        ::continue::
     end
 end
 
@@ -609,5 +812,13 @@ function SettingsScreen:gamepadaxis(_, axis, value)
 end
 
 SettingsScreen.joystickaxis = SettingsScreen.gamepadaxis
+
+function SettingsScreen:wheelmoved(_, dy)
+    if dy == 0 then
+        return
+    end
+
+    self:scrollBy(dy * SCROLL_SPEED)
+end
 
 return SettingsScreen
