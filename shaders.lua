@@ -154,7 +154,7 @@ local function computeReactiveResponse()
     return 1 + boost, comboStrength, comboPulse, eventPulse, tint, boost
 end
 
-local function drawShader(effect, x, y, w, h, intensity, sendUniforms)
+local function drawShader(effect, x, y, w, h, intensity, sendUniforms, drawOptions)
     if not (effect and effect.shader) then
         return false
     end
@@ -215,10 +215,21 @@ local function drawShader(effect, x, y, w, h, intensity, sendUniforms)
         sendUniforms(shader, now, x, y, w, h, actualIntensity)
     end
 
+    local radiusX, radiusY = 0, 0
+    if drawOptions then
+        if drawOptions.radiusX or drawOptions.radiusY then
+            radiusX = drawOptions.radiusX or drawOptions.radius or 0
+            radiusY = drawOptions.radiusY or drawOptions.radius or 0
+        elseif drawOptions.radius then
+            radiusX = drawOptions.radius
+            radiusY = drawOptions.radius
+        end
+    end
+
     love.graphics.push("all")
     love.graphics.setShader(shader)
     love.graphics.setColor(tint[1], tint[2], tint[3], tint[4] or 1)
-    love.graphics.rectangle("fill", x, y, w, h)
+    love.graphics.rectangle("fill", x, y, w, h, radiusX, radiusY)
     love.graphics.pop()
 
     return true
@@ -461,6 +472,89 @@ registerEffect({
     end,
     draw = function(effect, x, y, w, h, intensity)
         return drawShader(effect, x, y, w, h, intensity)
+    end,
+})
+
+-- Holographic overlay for high-rarity shop cards
+registerEffect({
+    type = "cardHologram",
+    backdropIntensity = 1.0,
+    arenaIntensity = 1.0,
+    source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 baseColor;
+        extern vec4 accentColor;
+        extern vec4 sparkleColor;
+        extern vec4 rimColor;
+        extern float intensity;
+        extern float parallax;
+        extern float scanOffset;
+
+        float hash(vec2 p)
+        {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        }
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = (screen_coords - origin) / resolution;
+            uv = clamp(uv, 0.0, 1.0);
+
+            vec2 centered = uv - 0.5;
+            float radius = length(centered * vec2(1.15, 1.0));
+            float angle = atan(centered.y, centered.x);
+
+            float prism = sin(angle * 9.0 + time * 0.75 + parallax * 1.5) * 0.5 + 0.5;
+            float bands = sin((uv.y + parallax * 0.2) * 14.0 + time * 0.9 + uv.x * 7.0);
+            float holo = clamp(0.35 + prism * 0.45 + bands * 0.2, 0.0, 1.0);
+
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, holo * intensity);
+
+            float sweep = smoothstep(-0.25, 0.85, uv.y + sin(time * 0.6 + parallax * 0.3) * 0.1);
+            float shimmer = sin((uv.x + uv.y) * 18.0 + time * 2.4);
+            float sparkleMix = clamp(sweep * 0.35 + (shimmer * 0.15 + 0.15), 0.0, 1.0);
+            col = mix(col, sparkleColor.rgb, sparkleMix * intensity);
+
+            vec2 grid = floor((uv + vec2(time * 0.05, scanOffset)) * vec2(18.0, 26.0));
+            float sparkSeed = hash(grid + floor(time * 1.2));
+            float spark = smoothstep(0.7, 1.0, sparkSeed) * (1.0 - radius) * intensity;
+            col += sparkleColor.rgb * spark * 0.4;
+
+            float scan = sin((uv.y + scanOffset - time * 0.8) * 20.0) * 0.5 + 0.5;
+            col += sparkleColor.rgb * scan * 0.08 * intensity;
+
+            float rim = smoothstep(0.55, 0.95, 1.0 - radius);
+            col = mix(col, rimColor.rgb, rim * (0.3 + 0.4 * intensity));
+
+            col = mix(baseColor.rgb, col, 0.82);
+            col = clamp(col, 0.0, 1.0);
+
+            return vec4(col, baseColor.a) * color;
+        }
+    ]],
+    configure = function(effect, palette, effectData)
+        local shader = effect.shader
+
+        local base = getColorComponents(palette and (palette.baseColor or palette.bgColor), Theme.bgColor)
+        local accent = getColorComponents(palette and (palette.accentColor or palette.primary), Theme.buttonHover)
+        local sparkle = getColorComponents(palette and (palette.sparkleColor or palette.highlightColor), Theme.accentTextColor)
+        local rim = getColorComponents(palette and (palette.rimColor or palette.edgeColor), Theme.borderColor)
+
+        sendColor(shader, "baseColor", base)
+        sendColor(shader, "accentColor", accent)
+        sendColor(shader, "sparkleColor", sparkle)
+        sendColor(shader, "rimColor", rim)
+
+        local parallax = effectData and effectData.parallax or 0
+        local scanOffset = effectData and effectData.scanOffset or 0
+
+        sendFloat(shader, "parallax", parallax)
+        sendFloat(shader, "scanOffset", scanOffset)
+    end,
+    draw = function(effect, x, y, w, h, intensity)
+        return drawShader(effect, x, y, w, h, intensity, nil, { radius = 12 })
     end,
 })
 -- Cool cavern mist and echoing shimmer
