@@ -1609,16 +1609,27 @@ function Snake:loseSegments(count, options)
     return trimmed
 end
 
-function Snake:chopTailBySaw()
+local function chopTailLossAmount()
     local available = math.max(0, (segmentCount or 1) - 1)
     if available <= 0 then
         return 0
     end
 
     local loss = math.floor(math.max(1, available * 0.2))
-    loss = math.min(loss, available)
+    return math.min(loss, available)
+end
 
-    return self:loseSegments(loss, { cause = "saw" })
+function Snake:chopTailByHazard(cause)
+    local loss = chopTailLossAmount()
+    if loss <= 0 then
+        return 0
+    end
+
+    return self:loseSegments(loss, { cause = cause or "saw" })
+end
+
+function Snake:chopTailBySaw()
+    return self:chopTailByHazard("saw")
 end
 
 local function isSawActive(saw)
