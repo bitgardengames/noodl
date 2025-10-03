@@ -26,14 +26,10 @@ local App = {
     }
 }
 
-local function clearStates()
+function App:registerStates()
     for key in pairs(GameState.states) do
         GameState.states[key] = nil
     end
-end
-
-function App:registerStates()
-    clearStates()
 
     for stateName, modulePath in pairs(self.stateModules) do
         GameState.states[stateName] = require(modulePath)
@@ -138,26 +134,6 @@ function App:draw()
     end
 end
 
-function App:mousepressed(x, y, button)
-    InputMode:noteMouse()
-    return self:forwardEvent("mousepressed", x, y, button)
-end
-
-function App:mousereleased(x, y, button)
-    InputMode:noteMouse()
-    return self:forwardEvent("mousereleased", x, y, button)
-end
-
-function App:mousemoved(x, y, dx, dy, istouch)
-    InputMode:noteMouse()
-    return self:forwardEvent("mousemoved", x, y, dx, dy, istouch)
-end
-
-function App:wheelmoved(dx, dy)
-    InputMode:noteMouse()
-    return self:forwardEvent("wheelmoved", dx, dy)
-end
-
 function App:keypressed(key)
     InputMode:noteKeyboard()
     if key == "printscreen" then
@@ -168,36 +144,57 @@ function App:keypressed(key)
     return self:forwardEvent("keypressed", key)
 end
 
-function App:joystickpressed(joystick, button)
-    InputMode:noteGamepad()
-    return self:forwardEvent("joystickpressed", joystick, button)
-end
-
-function App:joystickreleased(joystick, button)
-    return self:forwardEvent("joystickreleased", joystick, button)
-end
-
-function App:joystickaxis(joystick, axis, value)
-    InputMode:noteGamepadAxis(value)
-    return self:forwardEvent("joystickaxis", joystick, axis, value)
-end
-
-function App:gamepadpressed(joystick, button)
-    InputMode:noteGamepad()
-    return self:forwardEvent("gamepadpressed", joystick, button)
-end
-
-function App:gamepadreleased(joystick, button)
-    return self:forwardEvent("gamepadreleased", joystick, button)
-end
-
-function App:gamepadaxis(joystick, axis, value)
-    InputMode:noteGamepadAxis(value)
-    return self:forwardEvent("gamepadaxis", joystick, axis, value)
-end
-
 function App:resize()
     Screen:update()
+end
+
+local function createEventForwarder(eventName, preHook)
+    return function(self, ...)
+        if preHook then
+            preHook(...)
+        end
+        return self:forwardEvent(eventName, ...)
+    end
+end
+
+local eventForwarders = {
+    mousepressed = function()
+        InputMode:noteMouse()
+    end,
+    mousereleased = function()
+        InputMode:noteMouse()
+    end,
+    mousemoved = function()
+        InputMode:noteMouse()
+    end,
+    wheelmoved = function()
+        InputMode:noteMouse()
+    end,
+    joystickpressed = function()
+        InputMode:noteGamepad()
+    end,
+    joystickaxis = function(_, _, value)
+        InputMode:noteGamepadAxis(value)
+    end,
+    gamepadpressed = function()
+        InputMode:noteGamepad()
+    end,
+    gamepadaxis = function(_, _, value)
+        InputMode:noteGamepadAxis(value)
+    end,
+}
+
+local passthroughEvents = {
+    joystickreleased = true,
+    gamepadreleased = true,
+}
+
+for eventName, hook in pairs(eventForwarders) do
+    App[eventName] = createEventForwarder(eventName, hook)
+end
+
+for eventName in pairs(passthroughEvents) do
+    App[eventName] = createEventForwarder(eventName)
 end
 
 return App
