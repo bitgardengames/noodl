@@ -182,35 +182,41 @@ local function drawCapsuleTrail(trail, radius)
     return
   end
 
-  for i = 1, #trail - 1 do
-    local a = trail[i]
-    local b = trail[i + 1]
-    local x1, y1 = ptXY(a)
-    local x2, y2 = ptXY(b)
-    if x1 and y1 and x2 and y2 then
-      local dx, dy = x2 - x1, y2 - y1
-      local length = math.sqrt(dx * dx + dy * dy)
-      if length > 1e-4 then
-        local angle
-        if math.atan2 then
-          angle = math.atan2(dy, dx)
-        else
-          angle = math.atan(dy, dx)
-        end
-        love.graphics.push()
-        love.graphics.translate(x1, y1)
-        love.graphics.rotate(angle)
-        love.graphics.rectangle("fill", 0, -radius, length, radius * 2)
-        love.graphics.pop()
-      end
+  local previousWidth = love.graphics.getLineWidth()
+  local previousJoin = love.graphics.getLineJoin and love.graphics.getLineJoin()
+  love.graphics.setLineWidth(radius * 2)
+  if love.graphics.setLineJoin then
+    love.graphics.setLineJoin("round")
+  end
+
+  local segmentPoints = {}
+  local function flush()
+    local count = #segmentPoints
+    if count >= 4 then
+      love.graphics.line(unpack(segmentPoints))
+    elseif count == 2 then
+      love.graphics.circle("fill", segmentPoints[1], segmentPoints[2], radius)
+    end
+    for i = count, 1, -1 do
+      segmentPoints[i] = nil
     end
   end
 
   for i = 1, #trail do
     local x, y = ptXY(trail[i])
     if x and y then
-      love.graphics.circle("fill", x, y, radius)
+      segmentPoints[#segmentPoints + 1] = x
+      segmentPoints[#segmentPoints + 1] = y
+    else
+      flush()
     end
+  end
+
+  flush()
+
+  love.graphics.setLineWidth(previousWidth)
+  if previousJoin and love.graphics.setLineJoin then
+    love.graphics.setLineJoin(previousJoin)
   end
 end
 
