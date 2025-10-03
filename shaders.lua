@@ -619,6 +619,8 @@ registerEffect({
         extern vec4 baseColor;
         extern vec4 accentColor;
         extern vec4 glowColor;
+        extern vec4 softColor;
+        extern vec4 sporeColor;
         extern float intensity;
 
         float bloomShape(vec2 p, vec2 center, float sharpness)
@@ -660,26 +662,36 @@ registerEffect({
             float petalWave = sin((centered.x + centered.y) * 6.0 + time * 0.5);
             float waveMix = clamp(petalWave * 0.5 + 0.5, 0.0, 1.0) * (0.18 + 0.28 * intensity);
 
-            vec3 base = baseColor.rgb;
-            vec3 accent = mix(base, accentColor.rgb, 0.55);
-            vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.45);
-            vec3 spores = mix(accentColor.rgb, glowColor.rgb, 0.72);
+            vec3 base = mix(baseColor.rgb, softColor.rgb, clamp(0.35 + intensity * 0.25 + centered.y * 0.2, 0.0, 1.0));
+            vec3 accent = mix(base, accentColor.rgb, 0.65);
+            vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.58);
+            vec3 spores = mix(glowColor.rgb, sporeColor.rgb, 0.6);
+            vec3 aura = mix(softColor.rgb, sporeColor.rgb, 0.45);
 
+            float underglow = smoothstep(-0.55, 0.2, centered.y + sin(time * 0.2) * 0.1);
+            base = mix(base, aura, underglow * (0.18 + intensity * 0.1));
+
+            float swirl = sin(centered.x * 3.5 - centered.y * 4.0 + time * 0.25) * 0.5 + 0.5;
+            float shimmer = sin(length(centered) * 9.0 - time * 0.9) * 0.5 + 0.5;
             float chromaWave = sin((centered.x - centered.y) * 5.0 + time * 0.7) * 0.5 + 0.5;
+            float verticalGlow = smoothstep(-0.4, 0.5, centered.y + sin(time * 0.18) * 0.12);
 
-            float accentMix = clamp(combinedBloom * 0.88 + waveMix * 0.15, 0.0, 1.0);
-            float glowMix = clamp(combinedBloom * 0.5 + waveMix * 0.9, 0.0, 1.0);
+            float accentMix = clamp(combinedBloom * (0.7 + 0.25 * intensity) + waveMix * 0.2, 0.0, 1.0);
+            float glowMix = clamp(combinedBloom * 0.45 + waveMix * (0.6 + 0.2 * intensity) + swirl * 0.2, 0.0, 1.0);
+            float auraMix = clamp((swirl * 0.4 + chromaWave * 0.3) * (0.32 + 0.45 * intensity), 0.0, 1.0);
+            float sporeMix = clamp((shimmer * 0.55 + verticalGlow * 0.3) * (0.25 + 0.5 * intensity), 0.0, 1.0);
 
             vec3 colorBlend = mix(base, accent, accentMix);
             colorBlend = mix(colorBlend, glow, glowMix);
-            colorBlend = mix(colorBlend, spores, chromaWave * (0.22 + intensity * 0.35));
+            colorBlend = mix(colorBlend, aura, auraMix);
+            colorBlend = mix(colorBlend, spores, mix(sporeMix, chromaWave, 0.35));
 
-            float innerEdge = max(0.12, 0.28 - 0.1 * intensity);
-            float outerEdge = min(0.96, 0.82 + 0.12 * intensity);
-            float vignette = 1.0 - smoothstep(innerEdge, outerEdge, dist + breathing * 0.1 * intensity);
+            float innerEdge = max(0.12, 0.3 - 0.1 * intensity);
+            float outerEdge = min(0.96, 0.84 + 0.12 * intensity);
+            float vignette = 1.0 - smoothstep(innerEdge, outerEdge, dist + breathing * 0.08 * intensity);
 
-            float finalMix = clamp(vignette * 0.82 + 0.12, 0.0, 1.0);
-            vec3 finalColor = mix(base, colorBlend, finalMix);
+            float finalMix = clamp(vignette * 0.78 + 0.16, 0.0, 1.0);
+            vec3 finalColor = mix(baseColor.rgb, colorBlend, finalMix);
 
             return vec4(finalColor, baseColor.a) * color;
         }
@@ -688,12 +700,16 @@ registerEffect({
         local shader = effect.shader
 
         local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+        local soft = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
         local accent = getColorComponents(palette and palette.arenaBorder, Theme.arenaBorder)
-        local glow = getColorComponents(palette and (palette.snake or palette.sawColor), Theme.snakeDefault)
+        local glow = getColorComponents(palette and (palette.sawColor or palette.snake), Theme.sawColor)
+        local spore = getColorComponents(palette and (palette.snake or palette.sawColor), Theme.snakeDefault)
 
         sendColor(shader, "baseColor", base)
         sendColor(shader, "accentColor", accent)
         sendColor(shader, "glowColor", glow)
+        sendColor(shader, "softColor", soft)
+        sendColor(shader, "sporeColor", spore)
     end,
     draw = function(effect, x, y, w, h, intensity)
         return drawShader(effect, x, y, w, h, intensity)
