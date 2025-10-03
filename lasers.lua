@@ -243,6 +243,7 @@ function Lasers:spawn(x, y, dir, length, options)
         flashTimer = 0,
         burnAlpha = 0,
         baseGlow = 0,
+        telegraphStrength = 0,
         randomOffset = love.math.random() * math.pi * 2,
     }
 
@@ -262,8 +263,6 @@ function Lasers:update(dt)
 
     for _, beam in ipairs(emitters) do
         computeBeamTarget(beam)
-
-        local previousState = beam.state
 
         if beam.state == "charging" then
             beam.chargeTimer = (beam.chargeTimer or beam.chargeDuration) - dt
@@ -304,20 +303,19 @@ function Lasers:update(dt)
         end
 
         local targetGlow = 0
+        local telegraphStrength = beam.telegraphStrength or 0
         if beam.state == "charging" then
             local duration = math.max(beam.chargeDuration or 0, 0.01)
             local timer = clamp(beam.chargeTimer or duration, 0, duration)
             local progress = 1 - (timer / duration)
-            targetGlow = 0.35 + 0.65 * progress
-        elseif beam.state == "firing" then
-            targetGlow = 1.1
+            progress = clamp(progress, 0, 1)
+            telegraphStrength = progress * progress
+            targetGlow = telegraphStrength
         else
-            if previousState == "firing" then
-                targetGlow = 0.45
-            else
-                targetGlow = 0
-            end
+            telegraphStrength = math.max(0, telegraphStrength - dt * 3.6)
+            targetGlow = 0
         end
+        beam.telegraphStrength = telegraphStrength
 
         local glow = beam.baseGlow or 0
         local glowApproach = dt * 3.2
@@ -594,28 +592,33 @@ local function drawEmitterBase(beam)
     local bx = (beam.x or 0) - half
     local by = (beam.y or 0) - half
     local flash = clamp(beam.flashTimer or 0, 0, 1)
-    local telegraph = clamp(beam.baseGlow or 0, 0, 1.1)
-    local highlightBoost = (beam.state == "firing") and 0.25 or 0
-    highlightBoost = highlightBoost + telegraph * 0.35
+    local telegraph = clamp(beam.telegraphStrength or 0, 0, 1)
+    local baseGlow = clamp(beam.baseGlow or 0, 0, 1)
+    local highlightBoost = (beam.state == "firing") and 0.28 or 0
+    highlightBoost = highlightBoost + telegraph * 0.4
 
     local t = getTime()
-    local pulse = 0.25 + 0.25 * math.sin(t * 5.5 + (beam.x or 0) * 0.03 + (beam.y or 0) * 0.03)
-    local glowAlpha = 0.22 + telegraph * 0.55 + flash * 0.35 + highlightBoost * 0.35 + pulse * 0.35
+    local pulseStrength = telegraph > 0 and (telegraph * (0.6 + telegraph * 0.4)) or 0
+    local pulse = 0
+    if pulseStrength > 0 then
+        pulse = (0.18 + 0.25 * math.sin(t * 5.5 + (beam.x or 0) * 0.03 + (beam.y or 0) * 0.03)) * pulseStrength
+    end
+    local glowAlpha = 0.16 + baseGlow * 0.6 + flash * 0.35 + highlightBoost * 0.35 + pulse * 0.4
     love.graphics.setColor(1, 0.32, 0.25, math.min(0.85, glowAlpha))
-    local glowRadius = BASE_GLOW_RADIUS + tileSize * 0.15 + telegraph * (tileSize * 0.18)
+    local glowRadius = BASE_GLOW_RADIUS + tileSize * 0.1 + baseGlow * (tileSize * 0.22)
     love.graphics.circle("fill", beam.x or 0, beam.y or 0, glowRadius)
 
     love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], (baseColor[4] or 1) + flash * 0.1)
     love.graphics.rectangle("fill", bx, by, tileSize, tileSize, 6, 6)
 
-    love.graphics.setColor(0, 0, 0, 0.45 + flash * 0.25 + telegraph * 0.1)
+    love.graphics.setColor(0, 0, 0, 0.45 + flash * 0.25 + telegraph * 0.15)
     love.graphics.rectangle("line", bx, by, tileSize, tileSize, 6, 6)
 
-    local accentAlpha = (accentColor[4] or 0.8) + flash * 0.2 + highlightBoost + telegraph * 0.2
+    local accentAlpha = (accentColor[4] or 0.8) + flash * 0.2 + highlightBoost
     love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], math.min(1, accentAlpha))
     love.graphics.rectangle("line", bx + 2, by + 2, tileSize - 4, tileSize - 4, 4, 4)
 
-    love.graphics.setColor(1, 1, 1, 0.18 + highlightBoost * 0.4 + flash * 0.2 + telegraph * 0.2)
+    love.graphics.setColor(1, 1, 1, 0.16 + highlightBoost * 0.45 + flash * 0.2 + telegraph * 0.25)
     love.graphics.rectangle("fill", bx + 3, by + 3, tileSize - 6, tileSize * 0.2, 3, 3)
 
     local slitLength = tileSize * 0.55
@@ -625,7 +628,7 @@ local function drawEmitterBase(beam)
     local spin = (t * 2.5 + (beam.randomOffset or 0)) % (math.pi * 2)
     local ringRadius = tileSize * 0.45 + math.sin(t * 3.5 + (beam.randomOffset or 0)) * (tileSize * 0.05)
     love.graphics.setLineWidth(2)
-    love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.3 + flash * 0.4 + highlightBoost * 0.3 + telegraph * 0.2)
+    love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.28 + flash * 0.4 + highlightBoost * 0.35 + telegraph * 0.25)
     for i = 0, 2 do
         local angle = spin + i * (math.pi * 2 / 3)
         love.graphics.arc("line", "open", cx, cy, ringRadius, angle - 0.35, angle + 0.35, 16)
@@ -633,10 +636,10 @@ local function drawEmitterBase(beam)
 
     if beam.state == "charging" then
         local chargeLift = (math.sin(t * 6 + (beam.randomOffset or 0)) * 0.5 + 0.5) * tileSize * 0.08
-        love.graphics.setColor(1, 0.4, 0.32, 0.35 + flash * 0.4 + telegraph * 0.35)
+        love.graphics.setColor(1, 0.4, 0.32, 0.35 + flash * 0.35 + telegraph * 0.55)
         love.graphics.circle("line", cx, cy, ringRadius * 0.65 + chargeLift)
     elseif beam.state == "firing" then
-        love.graphics.setColor(1, 0.55, 0.4, 0.35 + flash * 0.45 + telegraph * 0.3)
+        love.graphics.setColor(1, 0.55, 0.4, 0.35 + flash * 0.45 + telegraph * 0.25)
         love.graphics.circle("line", cx, cy, ringRadius * 0.8)
     end
     if beam.dir == "horizontal" then
