@@ -1076,14 +1076,12 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
         love.graphics.circle("line", 0, 0, radius * 0.95, 28)
     elseif icon == "hourglass" then
         local bowl = {
-            radius * 0.7, -radius * 0.78,
-            radius * 0.32, -radius * 0.12,
-            radius * 0.32, radius * 0.12,
-            radius * 0.7, radius * 0.78,
-            -radius * 0.7, radius * 0.78,
-            -radius * 0.32, radius * 0.12,
-            -radius * 0.32, -radius * 0.12,
-            -radius * 0.7, -radius * 0.78,
+            radius * 0.68, -radius * 0.78,
+            0, -radius * 0.16,
+            -radius * 0.68, -radius * 0.78,
+            -radius * 0.68, radius * 0.78,
+            0, radius * 0.16,
+            radius * 0.68, radius * 0.78,
         }
         love.graphics.polygon("fill", bowl)
         love.graphics.setColor(base[1], base[2], base[3], (base[4] or 1) * 0.6)
