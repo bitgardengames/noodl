@@ -382,7 +382,7 @@ local english = {
             },
             stone_skin = {
                 name = "Stone Skin",
-                description = "Gain a crash shield that shatters rocks and shrugs off a saw clip.",
+                description = "Gain a crash shield that shatters rocks and shrugs off a saw or laser clip.",
                 shield_text = "Stone Skin!",
             },
             aegis_recycler = {
