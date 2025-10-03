@@ -71,42 +71,45 @@ local function applySwayOffset(sway, axisLength, time)
     return shift * axisLength
 end
 
-local function drawPolygon(shape, bounds, time)
-    local points = {}
+local function computeSwayOffsets(sway, bounds, time)
+    if not sway then
+        return 0, 0
+    end
+
+    local axis = sway.axis or "both"
     local offsetX = 0
     local offsetY = 0
 
-    if shape.sway then
-        if shape.sway.axis == "x" or shape.sway.axis == "both" then
-            offsetX = applySwayOffset(shape.sway, bounds.w, time)
-        end
-        if shape.sway.axis == "y" or shape.sway.axis == "both" then
-            offsetY = applySwayOffset(shape.sway, bounds.h, time)
-        end
+    if axis == "x" or axis == "both" then
+        offsetX = applySwayOffset(sway, bounds.w, time)
     end
 
-    for i = 1, #shape.points, 2 do
-        local nx, ny = shape.points[i], shape.points[i + 1]
-        points[#points + 1] = bounds.x + nx * bounds.w + offsetX
-        points[#points + 1] = bounds.y + ny * bounds.h + offsetY
+    if axis == "y" or axis == "both" then
+        offsetY = applySwayOffset(sway, bounds.h, time)
     end
 
+    return offsetX, offsetY
+end
+
+local function normalizePoints(points, bounds, offsetX, offsetY)
+    local transformed = {}
+    for i = 1, #points, 2 do
+        local nx, ny = points[i], points[i + 1]
+        transformed[#transformed + 1] = bounds.x + nx * bounds.w + offsetX
+        transformed[#transformed + 1] = bounds.y + ny * bounds.h + offsetY
+    end
+
+    return transformed
+end
+
+local function drawPolygon(shape, bounds, time)
+    local offsetX, offsetY = computeSwayOffsets(shape.sway, bounds, time)
+    local points = normalizePoints(shape.points, bounds, offsetX, offsetY)
     love.graphics.polygon(shape.mode or "fill", points)
 end
 
 local function drawRectangle(shape, bounds, time)
-    local offsetX = 0
-    local offsetY = 0
-
-    if shape.sway then
-        if shape.sway.axis == "x" or shape.sway.axis == "both" then
-            offsetX = applySwayOffset(shape.sway, bounds.w, time)
-        end
-        if shape.sway.axis == "y" or shape.sway.axis == "both" then
-            offsetY = applySwayOffset(shape.sway, bounds.h, time)
-        end
-    end
-
+    local offsetX, offsetY = computeSwayOffsets(shape.sway, bounds, time)
     love.graphics.rectangle(
         shape.mode or "fill",
         bounds.x + shape.x * bounds.w + offsetX,
@@ -117,18 +120,7 @@ local function drawRectangle(shape, bounds, time)
 end
 
 local function drawCircle(shape, bounds, time)
-    local offsetX = 0
-    local offsetY = 0
-
-    if shape.sway then
-        if shape.sway.axis == "x" or shape.sway.axis == "both" then
-            offsetX = applySwayOffset(shape.sway, bounds.w, time)
-        end
-        if shape.sway.axis == "y" or shape.sway.axis == "both" then
-            offsetY = applySwayOffset(shape.sway, bounds.h, time)
-        end
-    end
-
+    local offsetX, offsetY = computeSwayOffsets(shape.sway, bounds, time)
     local radiusAxis = math.min(bounds.w, bounds.h)
 
     love.graphics.circle(
@@ -140,18 +132,7 @@ local function drawCircle(shape, bounds, time)
 end
 
 local function drawEllipse(shape, bounds, time)
-    local offsetX = 0
-    local offsetY = 0
-
-    if shape.sway then
-        if shape.sway.axis == "x" or shape.sway.axis == "both" then
-            offsetX = applySwayOffset(shape.sway, bounds.w, time)
-        end
-        if shape.sway.axis == "y" or shape.sway.axis == "both" then
-            offsetY = applySwayOffset(shape.sway, bounds.h, time)
-        end
-    end
-
+    local offsetX, offsetY = computeSwayOffsets(shape.sway, bounds, time)
     love.graphics.ellipse(
         shape.mode or "fill",
         bounds.x + shape.x * bounds.w + offsetX,
@@ -163,29 +144,11 @@ local function drawEllipse(shape, bounds, time)
 end
 
 local function drawPolyline(shape, bounds, time)
-    local points = {}
-    local offsetX = 0
-    local offsetY = 0
-
-    if shape.sway then
-        if shape.sway.axis == "x" or shape.sway.axis == "both" then
-            offsetX = applySwayOffset(shape.sway, bounds.w, time)
-        end
-        if shape.sway.axis == "y" or shape.sway.axis == "both" then
-            offsetY = applySwayOffset(shape.sway, bounds.h, time)
-        end
-    end
-
-    for i = 1, #shape.points, 2 do
-        local nx, ny = shape.points[i], shape.points[i + 1]
-        points[#points + 1] = bounds.x + nx * bounds.w + offsetX
-        points[#points + 1] = bounds.y + ny * bounds.h + offsetY
-    end
-
+    local offsetX, offsetY = computeSwayOffsets(shape.sway, bounds, time)
+    local points = normalizePoints(shape.points, bounds, offsetX, offsetY)
     if shape.lineWidth then
         love.graphics.setLineWidth(shape.lineWidth * bounds.h)
     end
-
     love.graphics.setLineJoin(shape.lineJoin or "miter")
     love.graphics.line(points)
 end
@@ -963,7 +926,6 @@ function BackgroundAmbience.configure(floorData)
         seed = computeSeed(floorData),
         shapes = nil,
         bounds = nil,
-        shapesEnabled = false,
     }
 end
 
@@ -985,10 +947,6 @@ end
 function BackgroundAmbience.draw(arena)
     local state = BackgroundAmbience.current
     if not state then
-        return
-    end
-
-    if not state.shapesEnabled then
         return
     end
 
@@ -1015,9 +973,6 @@ function BackgroundAmbience.draw(arena)
 
         local handler = drawHandlers[shape.type]
         if handler then
-            if shape.lineWidth then
-                love.graphics.setLineWidth(shape.lineWidth * drawBounds.h)
-            end
             handler(shape, drawBounds, time)
         end
     end
