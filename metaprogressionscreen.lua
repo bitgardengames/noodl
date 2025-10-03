@@ -165,6 +165,14 @@ local function getActiveList()
     return trackEntries, CARD_HEIGHT, CARD_SPACING
 end
 
+local function getScrollPadding()
+    if activeTab == "cosmetics" then
+        return COSMETIC_CARD_SPACING
+    end
+
+    return 0
+end
+
 local function updateScrollBounds(sw, sh)
     local viewportBottom = sh - 140
     viewportHeight = math.max(0, viewportBottom - START_Y)
@@ -175,6 +183,11 @@ local function updateScrollBounds(sw, sh)
         contentHeight = count * itemHeight + math.max(0, count - 1) * spacing
     else
         contentHeight = 0
+    end
+
+    local bottomPadding = getScrollPadding()
+    if bottomPadding > 0 and contentHeight > 0 then
+        contentHeight = contentHeight + bottomPadding
     end
 
     minScrollOffset = math.min(0, viewportHeight - contentHeight)
@@ -479,7 +492,8 @@ local function ensureCosmeticVisible(index)
     local top = START_Y + scrollOffset + (index - 1) * (itemHeight + spacing)
     local bottom = top + itemHeight
     local viewportTop = START_Y
-    local viewportBottom = START_Y + viewportHeight
+    local bottomPadding = getScrollPadding()
+    local viewportBottom = START_Y + math.max(0, viewportHeight - bottomPadding)
 
     if top < viewportTop then
         scrollOffset = scrollOffset + (viewportTop - top)
