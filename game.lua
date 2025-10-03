@@ -26,6 +26,7 @@ local Shaders = require("shaders")
 local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
+local Lasers = require("lasers")
 local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
@@ -53,6 +54,7 @@ local ENTITY_UPDATE_ORDER = {
     Fruit,
     Rocks,
     Conveyors,
+    Lasers,
     Saws,
     Arena,
     Particles,
@@ -405,6 +407,7 @@ local function drawPlayfieldLayers(self, stateOverride)
     Fruit:draw()
     Rocks:draw()
     Conveyors:draw()
+    Lasers:draw()
     Saws:draw()
     Arena:drawExit()
 
