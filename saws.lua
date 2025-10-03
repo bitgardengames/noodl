@@ -149,6 +149,18 @@ local function overlapsCollisionCell(saw, x, y, w, h)
     return false
 end
 
+local function isCollisionCandidate(saw, x, y, w, h)
+    if not (saw and x and y and w and h) then
+        return false
+    end
+
+    if (saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0 then
+        return false
+    end
+
+    return overlapsCollisionCell(saw, x, y, w, h)
+end
+
 local function getMoveSpeed()
     return MOVE_SPEED * (Saws.speedMult or 1)
 end
@@ -637,9 +649,13 @@ function Saws:onFruitCollected()
     end
 end
 
+function Saws:isCollisionCandidate(saw, x, y, w, h)
+    return isCollisionCandidate(saw, x, y, w, h)
+end
+
 function Saws:checkCollision(x, y, w, h)
     for _, saw in ipairs(self:getAll()) do
-        if not ((saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0) and overlapsCollisionCell(saw, x, y, w, h) then
+        if isCollisionCandidate(saw, x, y, w, h) then
             local px, py = getSawCollisionCenter(saw)
 
             -- Circle vs AABB
