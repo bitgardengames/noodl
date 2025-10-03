@@ -101,6 +101,43 @@ function SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
     return cells
 end
 
+local SAW_TRACK_OFFSETS = {-2, -1, 0, 1, 2}
+
+function SnakeUtils.getSawTrackCells(fx, fy, dir)
+    local centerCol, centerRow = Arena:getTileFromWorld(fx, fy)
+    local cells = {}
+
+    if dir == "horizontal" then
+        if centerRow < 1 or centerRow > Arena.rows then
+            return {}
+        end
+
+        for _, offset in ipairs(SAW_TRACK_OFFSETS) do
+            local col = centerCol + offset
+            if col < 1 or col > Arena.cols then
+                return {}
+            end
+
+            cells[#cells + 1] = {col, centerRow}
+        end
+    else
+        if centerCol < 1 or centerCol > Arena.cols then
+            return {}
+        end
+
+        for _, offset in ipairs(SAW_TRACK_OFFSETS) do
+            local row = centerRow + offset
+            if row < 1 or row > Arena.rows then
+                return {}
+            end
+
+            cells[#cells + 1] = {centerCol, row}
+        end
+    end
+
+    return cells
+end
+
 function SnakeUtils.trackIsFree(fx, fy, dir, trackLength)
     local cells = SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
     if #cells == 0 then
@@ -128,7 +165,28 @@ function SnakeUtils.occupyTrack(fx, fy, dir, trackLength)
 end
 
 function SnakeUtils.occupySawTrack(fx, fy, dir, radius, trackLength, side)
-    return SnakeUtils.occupyTrack(fx, fy, dir, trackLength)
+    local cells = SnakeUtils.getSawTrackCells(fx, fy, dir)
+    for _, cell in ipairs(cells) do
+        SnakeUtils.setOccupied(cell[1], cell[2], true)
+    end
+
+    return cells
+end
+
+function SnakeUtils.sawTrackIsFree(fx, fy, dir)
+    local cells = SnakeUtils.getSawTrackCells(fx, fy, dir)
+    if #cells == 0 then
+        return false
+    end
+
+    for _, cell in ipairs(cells) do
+        local col, row = cell[1], cell[2]
+        if SnakeUtils.isOccupied(col, row) then
+            return false
+        end
+    end
+
+    return true
 end
 
 -- Safe spawn: just randomize until we find a free cell

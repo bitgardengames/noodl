@@ -120,7 +120,7 @@ local function trySpawnHorizontalSaw(halfTiles, bladeRadius)
     local col = love.math.random(1 + halfTiles, Arena.cols - halfTiles)
     local fx, fy = Arena:getCenterOfTile(col, row)
 
-    if SnakeUtils.trackIsFree(fx, fy, "horizontal", TRACK_LENGTH) then
+    if SnakeUtils.sawTrackIsFree(fx, fy, "horizontal") then
         Saws:spawn(fx, fy, bladeRadius, 8, "horizontal")
         SnakeUtils.occupySawTrack(fx, fy, "horizontal", bladeRadius, TRACK_LENGTH)
         return true
@@ -135,7 +135,7 @@ local function trySpawnVerticalSaw(halfTiles, bladeRadius)
     local row = love.math.random(1 + halfTiles, Arena.rows - halfTiles)
     local fx, fy = Arena:getCenterOfTile(col, row)
 
-    if SnakeUtils.trackIsFree(fx, fy, "vertical", TRACK_LENGTH) then
+    if SnakeUtils.sawTrackIsFree(fx, fy, "vertical") then
         Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side)
         SnakeUtils.occupySawTrack(fx, fy, "vertical", bladeRadius, TRACK_LENGTH, side)
         return true
