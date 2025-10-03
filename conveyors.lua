@@ -77,23 +77,9 @@ function Conveyors:spawn(x, y, dir, length)
     dir = dir or "horizontal"
     length = length or TRACK_LENGTH
 
-    local slot = getSlot(x, y, dir)
-
-    belts[#belts + 1] = {
-        x = x,
-        y = y,
-        dir = dir,
-        length = length,
-        thickness = BELT_THICKNESS,
-        spawnTimer = 0,
-        phase = "drop",
-        spawnProgress = 0,
-        dropOffset = -36,
-        rollerOffset = 0,
-        shadowAlpha = 0,
-        patternOffset = 0,
-        slotId = slot and slot.id or nil,
-    }
+    -- Temporarily disable conveyor belt spawning by not creating new belt entries.
+    -- Keep slot allocation intact in case other systems rely on slot bookkeeping.
+    getSlot(x, y, dir)
 end
 
 function Conveyors:getAll()
