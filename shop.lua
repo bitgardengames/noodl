@@ -2,11 +2,54 @@ local UI = require("ui")
 local Upgrades = require("upgrades")
 local Audio = require("audio")
 local MetaProgression = require("metaprogression")
+local Theme = require("theme")
+local Shaders = require("shaders")
 
 local Shop = {}
 
 local ANALOG_DEADZONE = 0.35
 local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local BACKGROUND_EFFECT_TYPE = "shopGlimmer"
+local backgroundEffectCache = {}
+local backgroundEffect = nil
+
+local function configureBackgroundEffect()
+    local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+    if not effect then
+        backgroundEffect = nil
+        return
+    end
+
+    local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+    effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.54
+
+    Shaders.configure(effect, {
+        bgColor = Theme.bgColor,
+        accentColor = Theme.buttonHover,
+        glowColor = Theme.accentTextColor,
+    })
+
+    backgroundEffect = effect
+end
+
+local function drawBackground(screenW, screenH)
+    love.graphics.setColor(0.07, 0.08, 0.11, 1)
+    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+
+    if not backgroundEffect then
+        configureBackgroundEffect()
+    end
+
+    if backgroundEffect then
+        local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+        Shaders.draw(backgroundEffect, 0, 0, screenW, screenH, intensity)
+    end
+
+    love.graphics.setColor(0.07, 0.08, 0.11, 0.28)
+    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+    love.graphics.setColor(1, 1, 1, 1)
+end
 
 local function moveFocusAnalog(self, delta)
     if self.restocking then return end
@@ -84,6 +127,7 @@ function Shop:start(currentFloor)
     self.shopkeeperSubline = nil
     self.selectionHoldDuration = 1.85
     self.inputMode = nil
+    configureBackgroundEffect()
     self:refreshCards()
 end
 
@@ -679,10 +723,7 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
 end
 
 function Shop:draw(screenW, screenH)
-    love.graphics.setColor(0.07, 0.08, 0.11, 0.92)
-    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-
-    love.graphics.setColor(1, 1, 1, 1)
+    drawBackground(screenW, screenH)
     love.graphics.setFont(UI.fonts.title)
     love.graphics.printf("Choose an Upgrade", 0, screenH * 0.15, screenW, "center")
 
