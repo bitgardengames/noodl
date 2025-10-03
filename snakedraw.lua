@@ -186,7 +186,10 @@ local function drawCapsuleTrail(trail, radius)
   local previousJoin = love.graphics.getLineJoin and love.graphics.getLineJoin()
   love.graphics.setLineWidth(radius * 2)
   if love.graphics.setLineJoin then
-    love.graphics.setLineJoin("round")
+    local ok = pcall(love.graphics.setLineJoin, "round")
+    if not ok then
+      love.graphics.setLineJoin("bevel")
+    end
   end
 
   local segmentPoints = {}
@@ -216,7 +219,10 @@ local function drawCapsuleTrail(trail, radius)
 
   love.graphics.setLineWidth(previousWidth)
   if previousJoin and love.graphics.setLineJoin then
-    love.graphics.setLineJoin(previousJoin)
+    local ok = pcall(love.graphics.setLineJoin, previousJoin)
+    if not ok then
+      love.graphics.setLineJoin("bevel")
+    end
   end
 end
 
