@@ -154,6 +154,7 @@ UI.fonts = {
     heading      = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 28),
     button       = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 24),
     body         = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 16),
+    prompt       = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 20),
     caption      = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 14),
     small        = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 12),
     timer        = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 42),
