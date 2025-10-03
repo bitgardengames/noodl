@@ -15,6 +15,7 @@ local BACKGROUND_EFFECT_TYPE = "shopGlimmer"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 local backgroundEffectFloor = nil
+local cardEffectCache = {}
 
 local function configureBackgroundEffectForFloor(floorIndex)
     local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
@@ -462,6 +463,10 @@ local rarityStyles = {
             inset = 8,
             width = 3,
         },
+        shaderEffect = {
+            type = "cardHologram",
+            intensity = 0.65,
+        },
     },
     epic = {
         base = {0.26, 0.16, 0.36, 1},
@@ -486,6 +491,10 @@ local rarityStyles = {
             speed = 2.4,
             inset = 8,
             width = 3,
+        },
+        shaderEffect = {
+            type = "cardHologram",
+            intensity = 0.9,
         },
     },
     legendary = {
@@ -512,8 +521,50 @@ local rarityStyles = {
             inset = 8,
             width = 3,
         },
+        shaderEffect = {
+            type = "cardHologram",
+            intensity = 1.1,
+        },
     },
 }
+
+local function normalizedHash(value)
+    if value == nil then
+        return 0
+    end
+
+    local str = tostring(value)
+    local hash = 0
+    for i = 1, #str do
+        hash = (hash * 131 + str:byte(i)) % 1000003
+    end
+
+    return hash / 1000003
+end
+
+local function buildCardShaderPalette(style, card)
+    if not style then return nil end
+
+    local accent = (style.aura and style.aura.color) or (style.outerGlow and style.outerGlow.color)
+    local sparkle = (card and card.rarityColor) or (style.innerGlow and style.innerGlow.color)
+    local rim = (card and card.rarityColor) or accent or {1, 1, 1, 1}
+
+    return {
+        baseColor = style.base,
+        accentColor = accent,
+        sparkleColor = sparkle,
+        rimColor = rim,
+    }
+end
+
+local function buildCardShaderData(card, index)
+    local seed = normalizedHash((card and card.id) or (card and card.name) or (card and card.rarity) or index or "")
+
+    return {
+        parallax = (seed - 0.5) * 1.2,
+        scanOffset = seed * 2.0,
+    }
+end
 
 local function applyColor(setColorFn, color, overrideAlpha)
     if not color then return end
@@ -581,8 +632,42 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
         love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
     end
 
-    applyColor(setColor, style.base)
-    love.graphics.rectangle("fill", x, y, w, h, 12, 12)
+    local shaderDrawn = false
+    local shaderConfig = style.shaderEffect
+
+    if shaderConfig and shaderConfig.type then
+        local effect = Shaders.ensure(cardEffectCache, shaderConfig.type)
+        if effect then
+            local palette = shaderConfig.palette
+            if type(palette) == "function" then
+                palette = palette(style, card, index)
+            end
+            if palette == nil then
+                palette = buildCardShaderPalette(style, card)
+            end
+
+            local effectData = shaderConfig.effectData
+            if type(effectData) == "function" then
+                effectData = effectData(style, card, index)
+            end
+            if effectData == nil then
+                effectData = buildCardShaderData(card, index)
+            end
+
+            Shaders.configure(effect, palette, effectData)
+
+            withTransformedScissor(x, y, w, h, function()
+                shaderDrawn = Shaders.draw(effect, x, y, w, h, shaderConfig.intensity or 1.0) or shaderDrawn
+            end)
+        end
+    end
+
+    if not shaderDrawn then
+        applyColor(setColor, style.base)
+        love.graphics.rectangle("fill", x, y, w, h, 12, 12)
+    end
+
+    setColor(1, 1, 1, 1)
 
     local currentTime = (love.timer and love.timer.getTime and love.timer.getTime()) or 0
 
