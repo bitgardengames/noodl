@@ -743,6 +743,9 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         end
 
         if top < bottom and backdropAlpha > 0 then
+            local bandPadding = 4
+            top = top - bandPadding
+            bottom = bottom + bandPadding
             love.graphics.setColor(0, 0, 0, backdropAlpha)
             love.graphics.rectangle("fill", 0, top, self.screenWidth, bottom - top)
         end
