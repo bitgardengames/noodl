@@ -146,6 +146,20 @@ function Game:updateMouseVisibility()
     end
 end
 
+function Game:isTransitionActive()
+    local transition = self.transition
+    return transition ~= nil and transition:isActive()
+end
+
+function Game:confirmTransitionIntro()
+    local transition = self.transition
+    if not transition then
+        return false
+    end
+
+    return transition:confirmFloorIntro() and true or false
+end
+
 local function getScaledDeltaTime(dt)
     if not (Snake.getTimeScale and dt) then
         return dt
@@ -177,6 +191,26 @@ local function updateSystems(systems, dt)
             updater(system, dt)
         end
     end
+end
+
+local function updateGlobalSystems(dt)
+    FruitEvents.update(dt)
+    Shaders.update(dt)
+end
+
+local function handlePauseMenu(game, dt)
+    local paused = game.state == "paused"
+    PauseMenu:update(dt, paused)
+    return paused
+end
+
+local function forwardShopInput(game, eventName, ...)
+    local input = game.input
+    if not input or not input.handleShopInput then
+        return false
+    end
+
+    return input:handleShopInput(eventName, ...)
 end
 
 local function drawShadowedText(font, text, x, y, width, align, alpha)
@@ -807,7 +841,7 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 end
 
 function Game:drawTransition()
-    if not (self.transition and self.transition:isActive()) then
+    if not self:isTransitionActive() then
         return
     end
 
@@ -909,21 +943,17 @@ end
 function Game:update(dt)
     self:updateMouseVisibility()
 
-    if self.state == "paused" then
-        PauseMenu:update(dt, true)
+    if handlePauseMenu(self, dt) then
         return
     end
-
-    PauseMenu:update(dt, false)
 
     local scaledDt = getScaledDeltaTime(dt)
 
     updateRunTimers(self, scaledDt)
 
-    FruitEvents.update(scaledDt)
-    Shaders.update(scaledDt)
+    updateGlobalSystems(scaledDt)
 
-    if self.transition and self.transition:isActive() then
+    if self:isTransitionActive() then
         self.transition:update(scaledDt)
         return
     end
@@ -984,7 +1014,7 @@ function Game:draw()
         love.graphics.setColor(1, 1, 1, 1)
     end
 
-    if self.transition and self.transition:isActive() then
+    if self:isTransitionActive() then
         self:drawTransition()
         return
     end
@@ -994,11 +1024,11 @@ function Game:draw()
 end
 
 function Game:keypressed(key)
-    if self.input and self.input:handleShopInput("keypressed", key) then
+    if forwardShopInput(self, "keypressed", key) then
         return
     end
 
-    if self.transition and self.transition:confirmFloorIntro() then
+    if self:confirmTransitionIntro() then
         return
     end
 
@@ -1006,7 +1036,7 @@ function Game:keypressed(key)
 end
 
 function Game:mousepressed(x, y, button)
-    if self.transition and self.transition:confirmFloorIntro() then
+    if self:confirmTransitionIntro() then
         return
     end
 
@@ -1015,9 +1045,7 @@ function Game:mousepressed(x, y, button)
         return
     end
 
-    if self.input then
-        self.input:handleShopInput("mousepressed", x, y, button)
-    end
+    forwardShopInput(self, "mousepressed", x, y, button)
 end
 
 function Game:mousereleased(x, y, button)
@@ -1036,7 +1064,7 @@ function Game:mousereleased(x, y, button)
 end
 
 function Game:gamepadpressed(_, button)
-    if self.transition and self.transition:confirmFloorIntro() then
+    if self:confirmTransitionIntro() then
         return
     end
 
