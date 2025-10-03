@@ -427,6 +427,7 @@ local pool = {
         rarity = "common",
         onAcquire = function(state)
             state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
+            state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
             if UI.adjustFruitGoal then
                 UI:adjustFruitGoal(-1)
             end
@@ -561,7 +562,6 @@ local pool = {
         tags = {"economy", "risk"},
         onAcquire = function(state)
             state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
-            state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
             if UI.adjustFruitGoal then
                 UI:adjustFruitGoal(-1)
             end
