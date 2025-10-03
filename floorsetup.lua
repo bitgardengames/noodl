@@ -122,7 +122,7 @@ local function trySpawnHorizontalSaw(halfTiles, bladeRadius)
 
     if SnakeUtils.sawTrackIsFree(fx, fy, "horizontal") then
         Saws:spawn(fx, fy, bladeRadius, 8, "horizontal")
-        SnakeUtils.occupySawTrack(fx, fy, "horizontal", bladeRadius, TRACK_LENGTH)
+        SnakeUtils.occupySawTrack(fx, fy, "horizontal")
         return true
     end
 
@@ -137,7 +137,7 @@ local function trySpawnVerticalSaw(halfTiles, bladeRadius)
 
     if SnakeUtils.sawTrackIsFree(fx, fy, "vertical") then
         Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side)
-        SnakeUtils.occupySawTrack(fx, fy, "vertical", bladeRadius, TRACK_LENGTH, side)
+        SnakeUtils.occupySawTrack(fx, fy, "vertical")
         return true
     end
 
