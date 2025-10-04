@@ -55,7 +55,7 @@ local function drawWord(word, ox, oy, cellSize, spacing)
 
       -- The menu draws the face manually so it sits at the end of the word.
       -- Disable the built-in face rendering here to avoid double faces.
-      drawSnake(letterTrail, #letterTrail, cellSize, nil, nil, nil, nil, nil, false)
+      drawSnake(letterTrail, cellSize, nil, nil, nil, nil, nil, false)
 
       for _, p in ipairs(letterTrail) do table.insert(fullTrail, p) end
 

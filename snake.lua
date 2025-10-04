@@ -1003,7 +1003,7 @@ function Snake:drawClipped(hx, hy, hr)
 
     local shouldDrawFace = descendingHole == nil
 
-    DrawSnake(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
+    DrawSnake(renderTrail, SEGMENT_SIZE, popTimer, function()
         if headX and headY and clipRadius > 0 then
             local dx = headX - hx
             local dy = headY - hy
@@ -1919,14 +1919,14 @@ function Snake:draw()
                         return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
                     end
 
-                    DrawSnake(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, false)
+                    DrawSnake(trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, false)
                 end
             end
         end
 
         local shouldDrawFace = descendingHole == nil
 
-        DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
+        DrawSnake(trail, SEGMENT_SIZE, popTimer, function()
             return self:getHead()
         end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
 
