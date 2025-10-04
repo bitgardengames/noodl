@@ -84,10 +84,6 @@ function Arena:getCenterOfTile(col, row)
     return x + self.tileSize / 2, y + self.tileSize / 2
 end
 
-function Arena:getRandomWorldPosition()
-    return self:getCenterOfTile(self:getRandomTile())
-end
-
 function Arena:getTileFromWorld(x, y)
     local col = math.floor((x - self.x) / self.tileSize) + 1
     local row = math.floor((y - self.y) / self.tileSize) + 1
@@ -162,14 +158,6 @@ function Arena:setBackgroundEffect(effectData, palette)
     Shaders.configure(effect, palette, overrides)
 
     self.activeBackgroundEffect = effect
-end
-
-function Arena:updateBackgroundEffectPalette(palette)
-    if not self.activeBackgroundEffect then
-        return
-    end
-
-    Shaders.configure(self.activeBackgroundEffect, palette, self.activeBackgroundEffect._lastEffectData)
 end
 
 function Arena:drawBackgroundEffect(x, y, w, h, intensity)
@@ -359,18 +347,6 @@ function Arena:drawBorder()
     -- Final draw
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(self.borderCanvas, 0, 0)
-end
-
-function Arena:drawGrid()
-    local ax, ay, aw, ah = self:getBounds()
-    love.graphics.setColor(1, 1, 1, 0.03) -- very faint
-    local step = self.tileSize * 2
-    for x = ax, ax + aw, step do
-        love.graphics.line(x, ay, x, ay + ah)
-    end
-    for y = ay, ay + ah, step do
-        love.graphics.line(ax, y, ax + aw, y)
-    end
 end
 
 -- Spawn an exit at a random valid tile

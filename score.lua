@@ -100,12 +100,8 @@ function Score:get()
 	return self.current
 end
 
-function Score:getHigh()
-	return self:getHighScore(GameModes:getCurrentName())
-end
-
 function Score:getHighScore(mode)
-	return self.highscores[mode] or 0
+        return self.highscores[mode] or 0
 end
 
 function Score:setHighScore(mode, score)

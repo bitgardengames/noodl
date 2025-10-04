@@ -19,10 +19,6 @@ local function isMouseSupported()
     return supported and love.mouse.setVisible ~= nil
 end
 
-function InputMode:isMouseSupported()
-    return isMouseSupported()
-end
-
 function InputMode:noteMouse()
     if isMouseSupported() then
         self.lastDevice = "mouse"

@@ -483,23 +483,6 @@ function SnakeCosmetics:isSkinUnlocked(id)
     return self.state.unlocked[id] == true
 end
 
-function SnakeCosmetics:unlockSkin(id, context)
-    self:_ensureLoaded()
-
-    if not self._skinsById[id] then
-        return false
-    end
-
-    local changed = self:_unlockSkinInternal(id, context)
-
-    if changed then
-        self:_validateSelection()
-        self:_save()
-    end
-
-    return changed
-end
-
 function SnakeCosmetics:_registerAchievementListener()
     if self._achievementListenerRegistered then
         return
@@ -723,11 +706,6 @@ function SnakeCosmetics:getOverlayEffect()
         return copyTable(effects.overlay)
     end
     return nil
-end
-
-function SnakeCosmetics:getUnlockHistory()
-    self:_ensureLoaded()
-    return copyTable(self.state.unlockHistory or {})
 end
 
 return SnakeCosmetics

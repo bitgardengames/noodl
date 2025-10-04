@@ -75,25 +75,4 @@ function Screen:getHeight()
     return self.height
 end
 
-function Screen:getTarget()
-    return self.targetWidth, self.targetHeight
-end
-
-function Screen:center()
-    return self.cx, self.cy
-end
-
-function Screen:setSmoothingSpeed(speed)
-    self.smoothingSpeed = math.max(speed or 0, 0)
-end
-
-function Screen:setSnapThreshold(threshold)
-    if threshold == nil then
-        self.snapThreshold = 0
-        return
-    end
-
-    self.snapThreshold = math.max(threshold, 0)
-end
-
 return Screen

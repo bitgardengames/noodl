@@ -286,10 +286,6 @@ function MetaProgression:getUnlockTrack()
     return track
 end
 
-function MetaProgression:getUnlockDefinitions()
-    return copyTable(unlockDefinitions)
-end
-
 local function buildSnapshot(self, totalXP)
     local level, xpIntoLevel, xpForNext = self:getProgressForTotal(totalXP)
     return {
