@@ -220,7 +220,7 @@ function Arena:drawBorder()
     local ax, ay, aw, ah = self:getBounds()
 
     -- Match snake style
-    local thickness    = 18       -- border thickness
+    local thickness    = 20       -- border thickness
     local outlineSize  = 6        -- black outline thickness
     local shadowOffset = 3
     local radius       = thickness / 2
