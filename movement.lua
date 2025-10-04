@@ -392,6 +392,10 @@ local function handleRockCollision(headX, headY)
 end
 
 local function handleSawCollision(headX, headY)
+        if Snake:isHazardGraceActive() then
+                return
+        end
+
         local sawHit = Saws:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
         if not sawHit then
                 return
@@ -431,6 +435,8 @@ local function handleSawCollision(headX, headY)
                 Snake:onShieldConsumed(headX, headY, "saw")
         end
 
+        Snake:beginHazardGrace()
+
         if Snake.chopTailBySaw then
                 Snake:chopTailBySaw()
         end
@@ -444,6 +450,10 @@ end
 
 local function handleLaserCollision(headX, headY)
         if not Lasers or not Lasers.checkCollision then
+                return
+        end
+
+        if Snake:isHazardGraceActive() then
                 return
         end
 
@@ -492,6 +502,8 @@ local function handleLaserCollision(headX, headY)
         elseif Snake.chopTailBySaw then
                 Snake:chopTailBySaw()
         end
+
+        Snake:beginHazardGrace()
 
         if shielded then
                 recordShieldEvent("laser")

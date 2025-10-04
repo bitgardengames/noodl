@@ -82,6 +82,7 @@ local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING
 local moveProgress = 0
 local POP_DURATION = SnakeUtils.POP_DURATION
 local SHIELD_FLASH_DURATION = 0.3
+local HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after surviving certain hazards
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
 -- movement baseline + modifiers
@@ -95,6 +96,7 @@ Snake.stonebreakerStacks = 0
 Snake.stoneSkinSawGrace = 0
 Snake.dash = nil
 Snake.timeDilation = nil
+Snake.hazardGraceTimer = 0
 
 local function resolveTimeDilationScale(ability)
     if ability and ability.active then
@@ -197,6 +199,7 @@ function Snake:resetModifiers()
     self.dash = nil
     self.timeDilation = nil
     self.adrenaline = nil
+    self.hazardGraceTimer = 0
     UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
 
@@ -301,6 +304,22 @@ function Snake:consumeStoneSkinSawGrace()
         return true
     end
     return false
+end
+
+function Snake:isHazardGraceActive()
+    return (self.hazardGraceTimer or 0) > 0
+end
+
+function Snake:beginHazardGrace(duration)
+    local grace = duration or HAZARD_GRACE_DURATION
+    if not (grace and grace > 0) then
+        return
+    end
+
+    local current = self.hazardGraceTimer or 0
+    if grace > current then
+        self.hazardGraceTimer = grace
+    end
 end
 
 -- >>> Small integration note:
@@ -776,6 +795,7 @@ function Snake:load(w, h)
     isDead = false
     self.reverseState = false
     self.shieldFlashTimer = 0
+    self.hazardGraceTimer = 0
     trail = buildInitialTrail()
     descendingHole = nil
     fruitsSinceLastTurn = 0
@@ -1250,7 +1270,7 @@ function Snake:update(dt)
     end
 
     -- collision with self (grid-cell based, only at snap ticks)
-        if snappedThisTick then
+        if snappedThisTick and not self:isHazardGraceActive() then
                 local hx, hy = trail[1].drawX, trail[1].drawY
                 local headCol, headRow = toCell(hx, hy)
 
@@ -1291,17 +1311,19 @@ function Snake:update(dt)
 			local tailVacated =
 				(i == #trail) and (tailBeforeCol == headCol and tailBeforeRow == headRow)
 
-			if not tailVacated and cx == headCol and cy == headRow then
+                        if not tailVacated and cx == headCol and cy == headRow then
                                 if self:consumeCrashShield() then
                                         -- survived; optional FX here
                                         self:onShieldConsumed(hx, hy, "self")
+                                        self:beginHazardGrace()
                                 else
                                         isDead = true
                                         return false, "self"
                                 end
-			end
-		end
-	end
+                        end
+                end
+        end
+    end
 
     -- update timers
     if popTimer > 0 then
@@ -1310,6 +1332,10 @@ function Snake:update(dt)
 
     if self.shieldFlashTimer and self.shieldFlashTimer > 0 then
         self.shieldFlashTimer = math.max(0, self.shieldFlashTimer - dt)
+    end
+
+    if self.hazardGraceTimer and self.hazardGraceTimer > 0 then
+        self.hazardGraceTimer = math.max(0, self.hazardGraceTimer - dt)
     end
 
     if severedPieces and #severedPieces > 0 then
@@ -1964,6 +1990,7 @@ function Snake:getStateSnapshot()
         shieldFlashTimer = self.shieldFlashTimer or 0,
         stonebreakerStacks = self.stonebreakerStacks or 0,
         stoneSkinSawGrace = self.stoneSkinSawGrace or 0,
+        hazardGraceTimer = self.hazardGraceTimer or 0,
         shieldBurst = self.shieldBurst and {
             rocks = self.shieldBurst.rocks,
             stall = self.shieldBurst.stall,
@@ -2027,6 +2054,7 @@ function Snake:restoreStateSnapshot(snapshot)
     self.shieldFlashTimer = snapshot.shieldFlashTimer or 0
     self.stonebreakerStacks = snapshot.stonebreakerStacks or 0
     self.stoneSkinSawGrace = snapshot.stoneSkinSawGrace or 0
+    self.hazardGraceTimer = snapshot.hazardGraceTimer or 0
 
     if snapshot.shieldBurst then
         self.shieldBurst = {
