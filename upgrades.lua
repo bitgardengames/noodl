@@ -1,6 +1,7 @@
 local Snake = require("snake")
 local Rocks = require("rocks")
 local Saws = require("saws")
+local Lasers = require("lasers")
 local Score = require("score")
 local UI = require("ui")
 local Localization = require("localization")
@@ -2055,6 +2056,11 @@ function Upgrades:modifyFloorContext(context)
         saws = math.floor(saws + 0.5)
         context.saws = clamp(saws, 0)
     end
+    if effects.laserSpawnBonus and context.laserCount then
+        local lasers = context.laserCount + effects.laserSpawnBonus
+        lasers = math.floor(lasers + 0.5)
+        context.laserCount = clamp(lasers, 0)
+    end
 
     return context
 end
@@ -2150,6 +2156,14 @@ local function captureBaseline(state)
     else
         baseline.comboBonusMult = Score.comboBonusMult or 1
     end
+    if Lasers then
+        baseline.laserChargeMult = Lasers.chargeDurationMult or 1
+        baseline.laserChargeFlat = Lasers.chargeDurationFlat or 0
+        baseline.laserFireMult = Lasers.fireDurationMult or 1
+        baseline.laserFireFlat = Lasers.fireDurationFlat or 0
+        baseline.laserCooldownMult = Lasers.cooldownMult or 1
+        baseline.laserCooldownFlat = Lasers.cooldownFlat or 0
+    end
 end
 
 local function ensureBaseline(state)
@@ -2205,6 +2219,18 @@ function Upgrades:applyPersistentEffects(rebaseline)
         Score:setComboBonusMultiplier(comboMult)
     else
         Score.comboBonusMult = comboMult
+    end
+
+    if Lasers then
+        Lasers.chargeDurationMult = (base.laserChargeMult or 1) * (effects.laserChargeMult or 1)
+        Lasers.chargeDurationFlat = (base.laserChargeFlat or 0) + (effects.laserChargeFlat or 0)
+        Lasers.fireDurationMult = (base.laserFireMult or 1) * (effects.laserFireMult or 1)
+        Lasers.fireDurationFlat = (base.laserFireFlat or 0) + (effects.laserFireFlat or 0)
+        Lasers.cooldownMult = (base.laserCooldownMult or 1) * (effects.laserCooldownMult or 1)
+        Lasers.cooldownFlat = (base.laserCooldownFlat or 0) + (effects.laserCooldownFlat or 0)
+        if Lasers.applyTimingModifiers then
+            Lasers:applyTimingModifiers()
+        end
     end
 
     if effects.adrenaline then

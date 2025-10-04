@@ -7,6 +7,13 @@ local Lasers = {}
 
 local emitters = {}
 
+Lasers.fireDurationMult = 1
+Lasers.fireDurationFlat = 0
+Lasers.chargeDurationMult = 1
+Lasers.chargeDurationFlat = 0
+Lasers.cooldownMult = 1
+Lasers.cooldownFlat = 0
+
 local FLASH_DECAY = 3.8
 local DEFAULT_FIRE_COLOR = {1, 0.16, 0.16, 1}
 local DEFAULT_BEAM_THICKNESS = 6
@@ -104,6 +111,108 @@ local function clamp(value, minimum, maximum)
         return maximum
     end
     return value
+end
+
+local function applyDurationModifiers(base, mult, flat, minimum)
+    if not base then
+        return nil
+    end
+
+    mult = mult or 1
+    flat = flat or 0
+    local value = base * mult + flat
+    if minimum then
+        value = math.max(minimum, value)
+    end
+
+    return value
+end
+
+local function computeCooldownBounds(baseMin, baseMax)
+    local mult = Lasers.cooldownMult or 1
+    local flat = Lasers.cooldownFlat or 0
+
+    local minValue = (baseMin or 0) * mult + flat
+    minValue = math.max(0, minValue)
+
+    local maxBase = baseMax or baseMin or 0
+    local maxValue = maxBase * mult + flat
+    if maxValue < minValue then
+        maxValue = minValue
+    end
+
+    return minValue, maxValue
+end
+
+local function recalcBeamTiming(beam, isInitial)
+    if not beam then
+        return
+    end
+
+    local baseFire = beam.baseFireDuration or DEFAULT_FIRE_DURATION
+    local baseCharge = beam.baseChargeDuration or DEFAULT_CHARGE_DURATION
+    local baseMin = beam.baseCooldownMin or 3.5
+    local baseMax = beam.baseCooldownMax or (baseMin + 3.0)
+
+    local oldFire = beam.fireDuration or baseFire
+    local oldCharge = beam.chargeDuration or baseCharge
+    local oldCooldownDuration = beam.cooldownDuration or (beam.fireCooldown or baseMin)
+    local remainingCooldown = beam.fireCooldown
+
+    local newFire = applyDurationModifiers(baseFire, Lasers.fireDurationMult, Lasers.fireDurationFlat, 0.1)
+    local newCharge = applyDurationModifiers(baseCharge, Lasers.chargeDurationMult, Lasers.chargeDurationFlat, 0.05)
+    local newMin, newMax = computeCooldownBounds(baseMin, baseMax)
+
+    beam.fireDuration = newFire
+    beam.chargeDuration = newCharge
+    beam.fireCooldownMin = newMin
+    beam.fireCooldownMax = newMax
+
+    local roll = beam.cooldownRoll
+    if roll == nil or isInitial then
+        roll = love.math.random()
+        beam.cooldownRoll = roll
+    end
+
+    local duration = newMin + (newMax - newMin) * roll
+    duration = math.max(newMin, duration)
+
+    beam.cooldownDuration = duration
+
+    if isInitial then
+        beam.fireCooldown = duration
+        beam.fireTimer = nil
+        beam.chargeTimer = nil
+        return
+    end
+
+    if beam.state == "firing" and beam.fireTimer then
+        local progress = 0
+        if oldFire and oldFire > 0 then
+            progress = clamp(1 - (beam.fireTimer / oldFire), 0, 1)
+        end
+        beam.fireTimer = newFire * (1 - progress)
+    elseif beam.fireTimer and beam.fireTimer > newFire then
+        beam.fireTimer = newFire
+    end
+
+    if beam.state == "charging" and beam.chargeTimer then
+        local progress = 0
+        if oldCharge and oldCharge > 0 then
+            progress = clamp(1 - (beam.chargeTimer / oldCharge), 0, 1)
+        end
+        beam.chargeTimer = newCharge * (1 - progress)
+    elseif beam.chargeTimer and beam.chargeTimer > newCharge then
+        beam.chargeTimer = newCharge
+    end
+
+    if remainingCooldown then
+        local progress = 0
+        if oldCooldownDuration and oldCooldownDuration > 0 then
+            progress = clamp(1 - (remainingCooldown / oldCooldownDuration), 0, 1)
+        end
+        beam.fireCooldown = duration * (1 - progress)
+    end
 end
 
 local function computeBeamTarget(beam)
@@ -217,14 +326,6 @@ function Lasers:spawn(x, y, dir, length, options)
 
     facing = (facing >= 0) and 1 or -1
 
-    local fireDuration = math.max(0.2, options.fireDuration or DEFAULT_FIRE_DURATION)
-    local chargeDuration = math.max(0.25, options.chargeDuration or DEFAULT_CHARGE_DURATION)
-    local minCooldown = options.fireCooldownMin or 3.5
-    local maxCooldown = options.fireCooldownMax or (minCooldown + 3.0)
-    if maxCooldown < minCooldown then
-        maxCooldown = minCooldown
-    end
-
     local beam = {
         x = x,
         y = y,
@@ -233,10 +334,6 @@ function Lasers:spawn(x, y, dir, length, options)
         dir = dir,
         facing = facing,
         beamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS,
-        fireDuration = fireDuration,
-        chargeDuration = chargeDuration,
-        fireCooldownMin = minCooldown,
-        fireCooldownMax = maxCooldown,
         firePalette = options.firePalette or getFirePalette(options.fireColor),
         state = "cooldown",
         isFiring = false,
@@ -247,7 +344,15 @@ function Lasers:spawn(x, y, dir, length, options)
         randomOffset = love.math.random() * math.pi * 2,
     }
 
-    beam.fireCooldown = love.math.random() * (maxCooldown - minCooldown) + minCooldown
+    beam.baseFireDuration = math.max(0.2, options.fireDuration or DEFAULT_FIRE_DURATION)
+    beam.baseChargeDuration = math.max(0.25, options.chargeDuration or DEFAULT_CHARGE_DURATION)
+    beam.baseCooldownMin = options.fireCooldownMin or 3.5
+    beam.baseCooldownMax = options.fireCooldownMax or (beam.baseCooldownMin + 3.0)
+    if beam.baseCooldownMax < beam.baseCooldownMin then
+        beam.baseCooldownMax = beam.baseCooldownMin
+    end
+
+    recalcBeamTiming(beam, true)
 
     SnakeUtils.setOccupied(col, row, true)
 
@@ -280,12 +385,15 @@ function Lasers:update(dt)
             if beam.fireTimer <= 0 then
                 beam.state = "cooldown"
                 beam.isFiring = false
+                beam.cooldownRoll = love.math.random()
                 local minCooldown = beam.fireCooldownMin or 0
                 local maxCooldown = beam.fireCooldownMax or minCooldown
                 if maxCooldown < minCooldown then
                     maxCooldown = minCooldown
                 end
-                beam.fireCooldown = love.math.random() * (maxCooldown - minCooldown) + minCooldown
+                local duration = minCooldown + (maxCooldown - minCooldown) * (beam.cooldownRoll or 0)
+                beam.cooldownDuration = duration
+                beam.fireCooldown = duration
                 beam.fireTimer = nil
             end
         else
@@ -358,6 +466,12 @@ local function baseBounds(beam)
     local bx = (beam.x or 0) - half
     local by = (beam.y or 0) - half
     return bx, by, size, size
+end
+
+function Lasers:applyTimingModifiers()
+    for _, beam in ipairs(emitters) do
+        recalcBeamTiming(beam, false)
+    end
 end
 
 function Lasers:checkCollision(x, y, w, h)
