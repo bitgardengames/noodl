@@ -764,47 +764,6 @@ local function buildInitialTrail()
     return t
 end
 
-local function cloneTrail(source)
-    local copy = {}
-    if not source then
-        return copy
-    end
-
-    for i = 1, #source do
-        local seg = source[i]
-        if seg then
-            local segCopy = {}
-            for k, v in pairs(seg) do
-                if type(v) == "table" then
-                    local nested = {}
-                    for nk, nv in pairs(v) do
-                        nested[nk] = nv
-                    end
-                    segCopy[k] = nested
-                else
-                    segCopy[k] = v
-                end
-            end
-            copy[i] = segCopy
-        end
-    end
-
-    return copy
-end
-
-local function cloneHole(hole)
-    if not hole then
-        return nil
-    end
-
-    local copy = {}
-    for k, v in pairs(hole) do
-        copy[k] = v
-    end
-
-    return copy
-end
-
 function Snake:load(w, h)
     screenW, screenH = w, h
     direction = { x = 1, y = 0 }
@@ -1976,14 +1935,6 @@ function Snake:draw()
     end
 end
 
-function Snake:setCollisionDebugEnabled(state)
-    DEBUG_DRAW_COLLISION_SPACE = not not state
-end
-
-function Snake:isCollisionDebugEnabled()
-    return DEBUG_DRAW_COLLISION_SPACE
-end
-
 function Snake:resetPosition()
     self:load(screenW, screenH)
 end
@@ -2000,144 +1951,6 @@ function Snake:getSegments()
         }
     end
     return copy
-end
-
-function Snake:getStateSnapshot()
-    local snapshot = {
-        direction = { x = direction.x, y = direction.y },
-        pendingDir = { x = pendingDir.x, y = pendingDir.y },
-        trail = cloneTrail(trail),
-        segmentCount = segmentCount,
-        moveTimer = moveProgress,
-        moveProgress = moveProgress,
-        popTimer = popTimer,
-        descendingHole = cloneHole(descendingHole),
-        crashShields = self.crashShields or 0,
-        shieldFlashTimer = self.shieldFlashTimer or 0,
-        stonebreakerStacks = self.stonebreakerStacks or 0,
-        stoneSkinSawGrace = self.stoneSkinSawGrace or 0,
-        shieldBurst = self.shieldBurst and {
-            rocks = self.shieldBurst.rocks,
-            stall = self.shieldBurst.stall,
-        } or nil,
-        reverseControls = reverseControls,
-        reverseState = self.reverseState or false,
-        fruitsSinceLastTurn = fruitsSinceLastTurn or 0,
-    }
-
-    if self.adrenaline then
-        snapshot.adrenaline = {
-            active = self.adrenaline.active or false,
-            timer = self.adrenaline.timer or 0,
-            boost = self.adrenaline.boost,
-            duration = self.adrenaline.duration,
-        }
-    end
-
-    if self.dash then
-        snapshot.dash = {
-            active = self.dash.active or false,
-            timer = self.dash.timer or 0,
-            cooldownTimer = self.dash.cooldownTimer or 0,
-        }
-    end
-
-    if self.timeDilation then
-        snapshot.timeDilation = {
-            active = self.timeDilation.active or false,
-            timer = self.timeDilation.timer or 0,
-            cooldownTimer = self.timeDilation.cooldownTimer or 0,
-            floorCharges = self.timeDilation.floorCharges,
-            maxFloorUses = self.timeDilation.maxFloorUses,
-        }
-    end
-
-    return snapshot
-end
-
-local function copyDirectionVector(dir, fallback)
-    dir = dir or fallback or { x = 0, y = 0 }
-    return { x = dir.x or 0, y = dir.y or 0 }
-end
-
-function Snake:restoreStateSnapshot(snapshot)
-    if not snapshot then
-        return
-    end
-
-    direction = copyDirectionVector(snapshot.direction, direction)
-    pendingDir = copyDirectionVector(snapshot.pendingDir, direction)
-
-    trail = cloneTrail(snapshot.trail or trail)
-    segmentCount = snapshot.segmentCount or segmentCount
-    moveProgress = snapshot.moveProgress or snapshot.moveTimer or 0
-    popTimer = snapshot.popTimer or 0
-    descendingHole = cloneHole(snapshot.descendingHole)
-    isDead = false
-
-    self.crashShields = snapshot.crashShields or 0
-    self.shieldFlashTimer = snapshot.shieldFlashTimer or 0
-    self.stonebreakerStacks = snapshot.stonebreakerStacks or 0
-    self.stoneSkinSawGrace = snapshot.stoneSkinSawGrace or 0
-
-    if snapshot.shieldBurst then
-        self.shieldBurst = {
-            rocks = snapshot.shieldBurst.rocks,
-            stall = snapshot.shieldBurst.stall,
-        }
-    else
-        self.shieldBurst = nil
-    end
-
-    if snapshot.adrenaline then
-        self.adrenaline = self.adrenaline or {}
-        self.adrenaline.active = snapshot.adrenaline.active or false
-        self.adrenaline.timer = snapshot.adrenaline.timer or 0
-        self.adrenaline.boost = snapshot.adrenaline.boost or self.adrenaline.boost
-        self.adrenaline.duration = snapshot.adrenaline.duration or self.adrenaline.duration
-    elseif self.adrenaline then
-        self.adrenaline.active = false
-        self.adrenaline.timer = 0
-    end
-
-    if snapshot.dash then
-        self.dash = self.dash or {}
-        self.dash.active = snapshot.dash.active or false
-        self.dash.timer = snapshot.dash.timer or 0
-        self.dash.cooldownTimer = snapshot.dash.cooldownTimer or 0
-    elseif self.dash then
-        self.dash.active = false
-        self.dash.timer = 0
-        self.dash.cooldownTimer = math.min(self.dash.cooldown or 0, self.dash.cooldownTimer or 0)
-    end
-
-    if snapshot.timeDilation then
-        self.timeDilation = self.timeDilation or {}
-        self.timeDilation.active = snapshot.timeDilation.active or false
-        self.timeDilation.timer = snapshot.timeDilation.timer or 0
-        self.timeDilation.cooldownTimer = snapshot.timeDilation.cooldownTimer or 0
-        if snapshot.timeDilation.floorCharges ~= nil then
-            self.timeDilation.floorCharges = snapshot.timeDilation.floorCharges
-        end
-        if snapshot.timeDilation.maxFloorUses ~= nil then
-            self.timeDilation.maxFloorUses = snapshot.timeDilation.maxFloorUses
-        end
-    elseif self.timeDilation then
-        self.timeDilation.active = false
-        self.timeDilation.timer = 0
-        if self.timeDilation.cooldown then
-            self.timeDilation.cooldownTimer = math.min(self.timeDilation.cooldownTimer or 0, self.timeDilation.cooldown or 0)
-        else
-            self.timeDilation.cooldownTimer = 0
-        end
-    end
-
-    reverseControls = snapshot.reverseControls or false
-    self.reverseState = snapshot.reverseState or false
-    fruitsSinceLastTurn = snapshot.fruitsSinceLastTurn or fruitsSinceLastTurn or 0
-    severedPieces = {}
-
-    UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
 
 function Snake:isDead()
