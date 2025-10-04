@@ -10,6 +10,7 @@ local Particles = require("particles")
 local SessionStats = require("sessionstats")
 local Score = require("score")
 local SnakeCosmetics = require("snakecosmetics")
+local FloatingText = require("floatingtext")
 
 local Snake = {}
 
@@ -28,6 +29,49 @@ local popTimer = 0
 local isDead = false
 local fruitsSinceLastTurn = 0
 local severedPieces = {}
+local developerAssistEnabled = false
+
+local function announceDeveloperAssistChange(enabled)
+    if not (FloatingText and FloatingText.add) then
+        return
+    end
+
+    local message = enabled and "DEV ASSIST ENABLED" or "DEV ASSIST DISABLED"
+    local hx, hy = Snake:getHead and Snake:getHead()
+    if not (hx and hy) then
+        hx = (screenW or 0) * 0.5
+        hy = (screenH or 0) * 0.45
+    end
+
+    hy = (hy or 0) - 80
+
+    local font = UI and UI.fonts and (UI.fonts.prompt or UI.fonts.button)
+    local color
+    if enabled then
+        color = {0.72, 0.94, 1.0, 1}
+    else
+        color = {1.0, 0.7, 0.68, 1}
+    end
+
+    local options = {
+        scale = 1.1,
+        popScaleFactor = 1.28,
+        popDuration = 0.28,
+        wobbleMagnitude = 0.12,
+        glow = {
+            color = {color[1], color[2], color[3], 0.45},
+            magnitude = 0.35,
+            frequency = 3.2,
+        },
+        shadow = {
+            color = {0, 0, 0, 0.65},
+            offset = {0, 2},
+            blur = 1.5,
+        },
+    }
+
+    FloatingText:add(message, hx, hy, color, 1.6, nil, font, options)
+end
 
 local SEVERED_TAIL_LIFE = 0.9
 
@@ -111,6 +155,12 @@ function Snake:addCrashShields(n)
 end
 
 function Snake:consumeCrashShield()
+    if developerAssistEnabled then
+        self.shieldFlashTimer = SHIELD_FLASH_DURATION
+        UI:setCrashShields(self.crashShields or 0, { silent = true })
+        return true
+    end
+
     if (self.crashShields or 0) > 0 then
         self.crashShields = self.crashShields - 1
         self.shieldFlashTimer = SHIELD_FLASH_DURATION
@@ -2142,6 +2192,25 @@ end
 
 function Snake:isDead()
     return isDead
+end
+
+function Snake:setDeveloperAssist(state)
+    local newState = not not state
+    if developerAssistEnabled == newState then
+        return developerAssistEnabled
+    end
+
+    developerAssistEnabled = newState
+    announceDeveloperAssistChange(newState)
+    return developerAssistEnabled
+end
+
+function Snake:toggleDeveloperAssist()
+    return self:setDeveloperAssist(not developerAssistEnabled)
+end
+
+function Snake:isDeveloperAssistEnabled()
+    return developerAssistEnabled
 end
 
 function Snake:getLength()

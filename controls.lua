@@ -24,6 +24,11 @@ local gameplayKeyHandlers = {
     rshift = function()
         Snake:activateTimeDilation()
     end,
+    f1 = function()
+        if Snake.toggleDeveloperAssist then
+            Snake:toggleDeveloperAssist()
+        end
+    end,
 }
 
 local function togglePause(game)
