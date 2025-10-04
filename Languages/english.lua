@@ -374,6 +374,7 @@ local english = {
                 active = "Active",
                 percent = "${percent}%",
                 seconds = "${seconds}s",
+                progress = "${current} / ${target}",
             },
             quick_fangs = {
                 name = "Quick Fangs",

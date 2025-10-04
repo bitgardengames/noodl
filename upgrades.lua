@@ -1878,6 +1878,33 @@ function Upgrades:getHUDIndicators()
         })
     end
 
+    if hasUpgrade("pocket_springs") then
+        local counters = state.counters or {}
+        local complete = counters.pocketSpringsComplete
+        if not complete then
+            local collected = math.min(counters.pocketSpringsFruit or 0, POCKET_SPRINGS_FRUIT_TARGET)
+            local progress = 0
+            if POCKET_SPRINGS_FRUIT_TARGET > 0 then
+                progress = clamp(collected / POCKET_SPRINGS_FRUIT_TARGET, 0, 1)
+            end
+
+            table.insert(indicators, {
+                id = "pocket_springs",
+                label = Localization:get("upgrades.pocket_springs.name"),
+                accentColor = {0.58, 0.82, 1.0, 1.0},
+                stackCount = nil,
+                charge = progress,
+                chargeLabel = hudText("progress", {
+                    current = tostring(collected),
+                    target = tostring(POCKET_SPRINGS_FRUIT_TARGET),
+                }),
+                status = hudText("charging"),
+                icon = "shield",
+                showBar = true,
+            })
+        end
+    end
+
     local adrenalineTaken = hasUpgrade("adrenaline_surge")
     local adrenaline = Snake.adrenaline
     if adrenalineTaken or (adrenaline and adrenaline.active) then
