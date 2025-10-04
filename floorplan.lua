@@ -1,4 +1,30 @@
+local Floors = require("floors")
+
 local FloorPlan = {}
+
+local FINAL_FLOOR = #Floors
+local BASE_LASER_CAP = 3
+
+local function getLaserCap(floorIndex)
+    floorIndex = floorIndex or 1
+
+    if FINAL_FLOOR > 0 and floorIndex < FINAL_FLOOR then
+        return BASE_LASER_CAP
+    end
+
+    return nil
+end
+
+local function applyLaserCap(context)
+    if not context then
+        return
+    end
+
+    local cap = getLaserCap(context.floor)
+    if cap and context.laserCount ~= nil then
+        context.laserCount = math.min(cap, context.laserCount)
+    end
+end
 
 local BASELINE_PLAN = {
     [1] = {
@@ -125,7 +151,7 @@ local BASELINE_PLAN = {
         fruitGoal = 18,
         rocks = 16,
         saws = 6,
-        laserCount = 4,
+        laserCount = 3,
         rockSpawnChance = 0.54,
         sawSpeedMult = 1.8,
         sawSpinMult = 1.72,
@@ -135,7 +161,7 @@ local BASELINE_PLAN = {
         fruitGoal = 19,
         rocks = 17,
         saws = 7,
-        laserCount = 4,
+        laserCount = 3,
         rockSpawnChance = 0.56,
         sawSpeedMult = 1.84,
         sawSpinMult = 1.76,
@@ -145,7 +171,7 @@ local BASELINE_PLAN = {
         fruitGoal = 21,
         rocks = 19,
         saws = 7,
-        laserCount = 4,
+        laserCount = 3,
         rockSpawnChance = 0.58,
         sawSpeedMult = 1.88,
         sawSpinMult = 1.8,
@@ -171,6 +197,7 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
         for key, value in pairs(plan) do
             context[key] = value
         end
+        applyLaserCap(context)
         return context
     end
 
@@ -188,6 +215,7 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
     context.rocks = math.max(0, math.min(40, (lastPlan.rocks or 19) + extraFloors))
     context.saws = math.max(1, math.min(8, (lastPlan.saws or 7) + math.floor(extraFloors / 3)))
     context.laserCount = math.max(0, math.min(6, (lastPlan.laserCount or 4) + math.floor(extraFloors / 4)))
+    applyLaserCap(context)
     context.rockSpawnChance = math.min(0.68, (lastPlan.rockSpawnChance or 0.58) + extraFloors * 0.015)
     context.sawSpeedMult = math.min(1.95, (lastPlan.sawSpeedMult or 1.88) + extraFloors * 0.03)
     context.sawSpinMult = math.min(1.88, (lastPlan.sawSpinMult or 1.8) + extraFloors * 0.025)
@@ -195,5 +223,7 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
 
     return context
 end
+
+FloorPlan.getLaserCap = getLaserCap
 
 return FloorPlan
