@@ -423,7 +423,7 @@ local function handleLaserCollision(headX, headY)
                 return "dead", "laser"
         end
 
-        Lasers:onShieldedHit(laserHit)
+        Lasers:onShieldedHit(laserHit, headX, headY)
 
         Particles:spawnBurst(headX, headY, {
                 count = 10,
