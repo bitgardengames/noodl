@@ -782,7 +782,8 @@ local function drawEmitterBase(beam)
     love.graphics.rectangle("line", bx + 2, by + 2, tileSize - 4, tileSize - 4, 4, 4)
 
     love.graphics.setColor(1, 1, 1, 0.16 + highlightBoost * 0.45 + flash * 0.2 + telegraph * 0.25)
-    love.graphics.rectangle("fill", bx + 3, by + 3, tileSize - 6, tileSize * 0.2, 3, 3)
+    local highlightWidth = math.min(tileSize * 0.45, tileSize - 6)
+    love.graphics.rectangle("fill", bx + 3, by + 3, highlightWidth, tileSize * 0.2, 3, 3)
 
     local slitLength = tileSize * 0.55
     local slitThickness = math.max(3, tileSize * 0.18)
