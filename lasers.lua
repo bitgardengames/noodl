@@ -311,11 +311,7 @@ function Lasers:reset()
     emitters = {}
 end
 
-function Lasers:getAll()
-    return emitters
-end
-
-function Lasers:spawn(x, y, dir, length, options)
+function Lasers:spawn(x, y, dir, options)
     dir = dir or "horizontal"
     options = options or {}
 
@@ -337,7 +333,6 @@ function Lasers:spawn(x, y, dir, length, options)
         beamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS,
         firePalette = options.firePalette or getFirePalette(options.fireColor),
         state = "cooldown",
-        isFiring = false,
         flashTimer = 0,
         burnAlpha = 0,
         baseGlow = 0,
@@ -374,7 +369,6 @@ function Lasers:update(dt)
             beam.chargeTimer = (beam.chargeTimer or beam.chargeDuration) - dt
             if beam.chargeTimer <= 0 then
                 beam.state = "firing"
-                beam.isFiring = true
                 beam.fireTimer = beam.fireDuration
                 beam.chargeTimer = nil
                 beam.flashTimer = math.max(beam.flashTimer or 0, 0.75)
@@ -386,7 +380,6 @@ function Lasers:update(dt)
             beam.burnAlpha = 0.92
             if beam.fireTimer <= 0 then
                 beam.state = "cooldown"
-                beam.isFiring = false
                 beam.cooldownRoll = love.math.random()
                 local minCooldown = beam.fireCooldownMin or 0
                 local maxCooldown = beam.fireCooldownMax or minCooldown
@@ -505,10 +498,6 @@ function Lasers:checkCollision(x, y, w, h)
     end
 
     return nil
-end
-
-function Lasers:getBounds(beam)
-    return baseBounds(beam)
 end
 
 local function drawBurnMark(beam)
