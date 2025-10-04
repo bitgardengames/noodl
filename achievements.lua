@@ -147,7 +147,7 @@ function Achievements:_ensureInitialized()
                 floorsCleared = PlayerStats:get("floorsCleared") or 0,
                 deepestFloorReached = PlayerStats:get("deepestFloorReached") or 0,
                 bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
-                funChallengesCompleted = PlayerStats:get("funChallengesCompleted") or 0,
+                dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0,
                 shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0,
                 shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0,
                 shieldSawParries = PlayerStats:get("shieldSawParries") or 0,

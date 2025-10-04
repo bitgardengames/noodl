@@ -7,7 +7,7 @@ local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
-local FunChallenges = require("funchallenges")
+local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 
 local GameOver = {}
@@ -313,10 +313,10 @@ function GameOver:enter(data)
         + statRowHeight
         + achievementsHeight
 
-    self.funChallengeResult = FunChallenges:applyRunResults(SessionStats)
+    self.dailyChallengeResult = DailyChallenges:applyRunResults(SessionStats)
     local challengeBonusXP = 0
-    if self.funChallengeResult then
-        challengeBonusXP = math.max(0, self.funChallengeResult.xpAwarded or 0)
+    if self.dailyChallengeResult then
+        challengeBonusXP = math.max(0, self.dailyChallengeResult.xpAwarded or 0)
     end
 
     self.progression = MetaProgression:grantRunPoints({

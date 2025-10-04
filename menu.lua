@@ -6,7 +6,7 @@ local drawWord = require("drawword")
 local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
-local FunChallenges = require("funchallenges")
+local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local SnakeActor = require("snakeactor")
 
@@ -18,8 +18,8 @@ local ANALOG_DEADZONE = 0.35
 local buttonList = ButtonList.new()
 local buttons = {}
 local t = 0
-local funChallenge = nil
-local funChallengeAnim = 0
+local dailyChallenge = nil
+local dailyChallengeAnim = 0
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 
 local noodlActor = nil
@@ -219,8 +219,8 @@ function Menu:enter()
     Audio:playMusic("menu")
     Screen:update()
 
-    funChallenge = FunChallenges:getDailyChallenge()
-    funChallengeAnim = 0
+    dailyChallenge = DailyChallenges:getDailyChallenge()
+    dailyChallengeAnim = 0
     resetAnalogAxis()
 
     configureBackgroundEffect()
@@ -272,8 +272,8 @@ function Menu:update(dt)
     local mx, my = love.mouse.getPosition()
     buttonList:updateHover(mx, my)
 
-    if funChallenge then
-        funChallengeAnim = math.min(funChallengeAnim + dt * 2, 1)
+    if dailyChallenge then
+        dailyChallengeAnim = math.min(dailyChallengeAnim + dt * 2, 1)
     end
 
     if noodlActor then
@@ -355,8 +355,8 @@ function Menu:draw()
     love.graphics.setColor(Theme.textColor)
     love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
 
-    if funChallenge and funChallengeAnim > 0 then
-        local alpha = math.min(1, funChallengeAnim)
+    if dailyChallenge and dailyChallengeAnim > 0 then
+        local alpha = math.min(1, dailyChallengeAnim)
         local eased = alpha * alpha
         local panelWidth = math.min(420, sw - 72)
         local padding = UI.spacing.panelPadding or 16
@@ -367,14 +367,14 @@ function Menu:draw()
         local bodyFont = UI.fonts.body
         local progressFont = UI.fonts.small
 
-        local headerText = Localization:get("menu.fun_panel_header")
-        local titleText = Localization:get(funChallenge.titleKey, funChallenge.descriptionReplacements)
-        local descriptionText = Localization:get(funChallenge.descriptionKey, funChallenge.descriptionReplacements)
+        local headerText = Localization:get("menu.daily_panel_header")
+        local titleText = Localization:get(dailyChallenge.titleKey, dailyChallenge.descriptionReplacements)
+        local descriptionText = Localization:get(dailyChallenge.descriptionKey, dailyChallenge.descriptionReplacements)
 
         local _, descLines = bodyFont:getWrap(descriptionText, panelWidth - padding * 2)
         local descHeight = #descLines * bodyFont:getHeight()
 
-        local statusBar = funChallenge.statusBar
+        local statusBar = dailyChallenge.statusBar
         local ratio = 0
         local progressText = nil
         local statusBarHeight = 0
@@ -391,8 +391,8 @@ function Menu:draw()
             end
         end
 
-        if funChallenge.xpReward and funChallenge.xpReward > 0 then
-            bonusText = Localization:get("menu.fun_panel_bonus", { xp = funChallenge.xpReward })
+        if dailyChallenge.xpReward and dailyChallenge.xpReward > 0 then
+            bonusText = Localization:get("menu.daily_panel_bonus", { xp = dailyChallenge.xpReward })
         end
 
         local panelHeight = padding * 2
