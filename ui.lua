@@ -1639,7 +1639,6 @@ function UI:drawFruitSockets()
     local required  = tostring(self.fruitRequired)
     UI.setFont("button")
     local font = love.graphics.getFont()
-    local textHeight = font:getHeight()
     local padding = 12
     local textY = panelY + panelH + padding
     local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
