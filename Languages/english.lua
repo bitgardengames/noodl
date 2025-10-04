@@ -18,11 +18,11 @@ local english = {
             quit = "Quit",
             version = "v1.0.0",
             title_word = "noodl",
-            fun_panel_header = "Daily Fun Goal",
-            fun_panel_progress = "Progress: ${current}/${goal}",
-            fun_panel_complete = "Goal complete! You're at ${current}.",
-            fun_panel_bonus = "Bonus XP: +${xp}",
-            fun_daily = {
+            daily_panel_header = "Daily Challenge",
+            daily_panel_progress = "Progress: ${current}/${goal}",
+            daily_panel_complete = "Challenge complete! You're at ${current}.",
+            daily_panel_bonus = "Bonus XP: +${xp}",
+            daily = {
                 combo = {
                     title = "Combo Crunch",
                     description = "Reach a ${goal}-fruit combo streak in a single run.",
@@ -221,7 +221,7 @@ local english = {
                 shieldWallBounces = "Shield Wall Bounces",
                 shieldRockBreaks = "Shield Rock Breaks",
                 shieldSawParries = "Shield Saw Parries",
-                funChallengesCompleted = "Daily Fun Goals Completed",
+                dailyChallengesCompleted = "Daily Challenges Completed",
             },
         },
         pause = {
@@ -788,15 +788,15 @@ local english = {
             },
             dailyFunDabbler = {
                 title = "Daily Dabbler",
-                description = "Complete 1 daily fun challenge.",
+                description = "Complete 1 daily challenge.",
             },
             dailyFunRegular = {
                 title = "Daily Regular",
-                description = "Complete 10 daily fun challenges.",
+                description = "Complete 10 daily challenges.",
             },
             dailyFunChampion = {
                 title = "Daily Champion",
-                description = "Complete 30 daily fun challenges.",
+                description = "Complete 30 daily challenges.",
             },
         },
     },

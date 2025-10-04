@@ -9,7 +9,7 @@ local function getAchievements()
         if ok then
             AchievementsModule = module
         else
-            print("[FunChallenges] Failed to require achievements:", module)
+            print("[DailyChallenges] Failed to require achievements:", module)
             AchievementsModule = false
         end
     end
@@ -21,8 +21,8 @@ local function getAchievements()
     return nil
 end
 
-local FunChallenges = {}
-FunChallenges.defaultXpReward = 60
+local DailyChallenges = {}
+DailyChallenges.defaultXpReward = 60
 
 local defaultDateProvider = function()
     return os.date("*t")
@@ -76,7 +76,7 @@ local function callChallengeFunction(challenge, key, ...)
 
     local ok, result = pcall(fn, challenge, ...)
     if not ok then
-        print(string.format("[FunChallenges] Failed to call %s for '%s': %s", key, challenge.id or "<unknown>", result))
+        print(string.format("[DailyChallenges] Failed to call %s for '%s': %s", key, challenge.id or "<unknown>", result))
         return nil
     end
 
@@ -144,8 +144,8 @@ local function resolveDescriptionReplacements(challenge, current, goal, context)
     return replacements
 end
 
-local DEFAULT_PROGRESS_KEY = "menu.fun_panel_progress"
-local DEFAULT_COMPLETE_KEY = "menu.fun_panel_complete"
+local DEFAULT_PROGRESS_KEY = "menu.daily_panel_progress"
+local DEFAULT_COMPLETE_KEY = "menu.daily_panel_complete"
 
 local function buildStatusBar(challenge, completed, current, goal, ratio, replacements)
     if not goal or goal <= 0 then
@@ -196,7 +196,7 @@ local function buildStorageKey(self, challenge, date, suffix)
     end
 
     local dayValue = (date.year or 0) * 512 + (date.yday or 0)
-    return string.format("funChallenge:%s:%d:%s", challenge.id, dayValue, suffix)
+    return string.format("dailyChallenge:%s:%d:%s", challenge.id, dayValue, suffix)
 end
 
 local function getStoredProgress(self, challenge, date)
@@ -287,20 +287,20 @@ local function evaluateChallenge(self, challenge, context)
         current = current,
         ratio = ratio,
         completed = completed,
-        xpReward = challenge.xpReward or FunChallenges.defaultXpReward,
+        xpReward = challenge.xpReward or DailyChallenges.defaultXpReward,
         statusBar = statusBar,
     }
 end
 
-FunChallenges.challenges = {
+DailyChallenges.challenges = {
     {
         id = "combo_crunch",
-        titleKey = "menu.fun_daily.combo.title",
-        descriptionKey = "menu.fun_daily.combo.description",
+        titleKey = "menu.daily.combo.title",
+        descriptionKey = "menu.daily.combo.description",
         sessionStat = "bestComboStreak",
-        goal = 6,
-        progressKey = "menu.fun_daily.combo.progress",
-        completeKey = "menu.fun_daily.combo.complete",
+        goal = 5,
+        progressKey = "menu.daily.combo.progress",
+        completeKey = "menu.daily.combo.complete",
         progressReplacements = function(self, current, goal)
             return {
                 best = current or 0,
@@ -311,57 +311,57 @@ FunChallenges.challenges = {
     },
     {
         id = "floor_explorer",
-        titleKey = "menu.fun_daily.floors.title",
-        descriptionKey = "menu.fun_daily.floors.description",
+        titleKey = "menu.daily.floors.title",
+        descriptionKey = "menu.daily.floors.description",
         sessionStat = "floorsCleared",
-        goal = 6,
+        goal = 5,
         xpReward = 80,
     },
     {
         id = "fruit_sampler",
-        titleKey = "menu.fun_daily.apples.title",
-        descriptionKey = "menu.fun_daily.apples.description",
+        titleKey = "menu.daily.apples.title",
+        descriptionKey = "menu.daily.apples.description",
         sessionStat = "applesEaten",
-        goal = 65,
-        progressKey = "menu.fun_daily.apples.progress",
+        goal = 45,
+        progressKey = "menu.daily.apples.progress",
         xpReward = 70,
     },
     {
         id = "dragonfruit_delight",
-        titleKey = "menu.fun_daily.dragonfruit.title",
-        descriptionKey = "menu.fun_daily.dragonfruit.description",
+        titleKey = "menu.daily.dragonfruit.title",
+        descriptionKey = "menu.daily.dragonfruit.description",
         sessionStat = "dragonfruitEaten",
-        goal = 2,
-        progressKey = "menu.fun_daily.dragonfruit.progress",
-        completeKey = "menu.fun_daily.dragonfruit.complete",
+        goal = 1,
+        progressKey = "menu.daily.dragonfruit.progress",
+        completeKey = "menu.daily.dragonfruit.complete",
         xpReward = 90,
     },
     {
         id = "combo_conductor",
-        titleKey = "menu.fun_daily.combos.title",
-        descriptionKey = "menu.fun_daily.combos.description",
+        titleKey = "menu.daily.combos.title",
+        descriptionKey = "menu.daily.combos.description",
         sessionStat = "combosTriggered",
-        goal = 12,
-        progressKey = "menu.fun_daily.combos.progress",
+        goal = 8,
+        progressKey = "menu.daily.combos.progress",
         xpReward = 60,
     },
     {
         id = "shield_specialist",
-        titleKey = "menu.fun_daily.shields.title",
-        descriptionKey = "menu.fun_daily.shields.description",
+        titleKey = "menu.daily.shields.title",
+        descriptionKey = "menu.daily.shields.description",
         sessionStat = "crashShieldsSaved",
-        goal = 4,
-        progressKey = "menu.fun_daily.shields.progress",
-        completeKey = "menu.fun_daily.shields.complete",
+        goal = 3,
+        progressKey = "menu.daily.shields.progress",
+        completeKey = "menu.daily.shields.complete",
         xpReward = 80,
     },
     {
         id = "shield_triad",
-        titleKey = "menu.fun_daily.shield_triad.title",
-        descriptionKey = "menu.fun_daily.shield_triad.description",
+        titleKey = "menu.daily.shield_triad.title",
+        descriptionKey = "menu.daily.shield_triad.description",
         goal = 3,
-        progressKey = "menu.fun_daily.shield_triad.progress",
-        completeKey = "menu.fun_daily.shield_triad.complete",
+        progressKey = "menu.daily.shield_triad.progress",
+        completeKey = "menu.daily.shield_triad.complete",
         getValue = function(self, context)
             local statsSource = context and context.sessionStats
             if statsSource and type(statsSource.get) == "function" then
@@ -380,50 +380,50 @@ FunChallenges.challenges = {
     },
     {
         id = "serpentine_marathon",
-        titleKey = "menu.fun_daily.marathon.title",
-        descriptionKey = "menu.fun_daily.marathon.description",
+        titleKey = "menu.daily.marathon.title",
+        descriptionKey = "menu.daily.marathon.description",
         sessionStat = "tilesTravelled",
-        goal = 4500,
-        progressKey = "menu.fun_daily.marathon.progress",
+        goal = 3000,
+        progressKey = "menu.daily.marathon.progress",
         xpReward = 70,
     },
     {
         id = "shield_wall_master",
-        titleKey = "menu.fun_daily.shield_bounce.title",
-        descriptionKey = "menu.fun_daily.shield_bounce.description",
+        titleKey = "menu.daily.shield_bounce.title",
+        descriptionKey = "menu.daily.shield_bounce.description",
         sessionStat = "runShieldWallBounces",
-        goal = 8,
-        progressKey = "menu.fun_daily.shield_bounce.progress",
-        completeKey = "menu.fun_daily.shield_bounce.complete",
+        goal = 5,
+        progressKey = "menu.daily.shield_bounce.progress",
+        completeKey = "menu.daily.shield_bounce.complete",
         xpReward = 80,
     },
     {
         id = "rock_breaker",
-        titleKey = "menu.fun_daily.rock_breaker.title",
-        descriptionKey = "menu.fun_daily.rock_breaker.description",
+        titleKey = "menu.daily.rock_breaker.title",
+        descriptionKey = "menu.daily.rock_breaker.description",
         sessionStat = "runShieldRockBreaks",
-        goal = 5,
-        progressKey = "menu.fun_daily.rock_breaker.progress",
-        completeKey = "menu.fun_daily.rock_breaker.complete",
+        goal = 4,
+        progressKey = "menu.daily.rock_breaker.progress",
+        completeKey = "menu.daily.rock_breaker.complete",
         xpReward = 80,
     },
     {
         id = "saw_parry_ace",
-        titleKey = "menu.fun_daily.saw_parry.title",
-        descriptionKey = "menu.fun_daily.saw_parry.description",
+        titleKey = "menu.daily.saw_parry.title",
+        descriptionKey = "menu.daily.saw_parry.description",
         sessionStat = "runShieldSawParries",
-        goal = 3,
-        progressKey = "menu.fun_daily.saw_parry.progress",
-        completeKey = "menu.fun_daily.saw_parry.complete",
+        goal = 2,
+        progressKey = "menu.daily.saw_parry.progress",
+        completeKey = "menu.daily.saw_parry.complete",
         xpReward = 90,
     },
     {
         id = "time_keeper",
-        titleKey = "menu.fun_daily.time_keeper.title",
-        descriptionKey = "menu.fun_daily.time_keeper.description",
+        titleKey = "menu.daily.time_keeper.title",
+        descriptionKey = "menu.daily.time_keeper.description",
         sessionStat = "timeAlive",
-        goal = 900,
-        progressKey = "menu.fun_daily.time_keeper.progress",
+        goal = 600,
+        progressKey = "menu.daily.time_keeper.progress",
         progressReplacements = function(self, current, goal)
             local function formatSeconds(seconds)
                 seconds = math.max(0, math.floor(seconds or 0))
@@ -447,11 +447,11 @@ FunChallenges.challenges = {
     },
     {
         id = "floor_tourist",
-        titleKey = "menu.fun_daily.floor_tourist.title",
-        descriptionKey = "menu.fun_daily.floor_tourist.description",
+        titleKey = "menu.daily.floor_tourist.title",
+        descriptionKey = "menu.daily.floor_tourist.description",
         sessionStat = "totalFloorTime",
-        goal = 720,
-        progressKey = "menu.fun_daily.floor_tourist.progress",
+        goal = 480,
+        progressKey = "menu.daily.floor_tourist.progress",
         progressReplacements = function(self, current, goal)
             local function formatSeconds(seconds)
                 seconds = math.max(0, math.floor(seconds or 0))
@@ -474,30 +474,30 @@ FunChallenges.challenges = {
     },
     {
         id = "streak_pusher",
-        titleKey = "menu.fun_daily.streak_pusher.title",
-        descriptionKey = "menu.fun_daily.streak_pusher.description",
+        titleKey = "menu.daily.streak_pusher.title",
+        descriptionKey = "menu.daily.streak_pusher.description",
         sessionStat = "fruitWithoutTurning",
-        goal = 10,
-        progressKey = "menu.fun_daily.streak_pusher.progress",
-        completeKey = "menu.fun_daily.streak_pusher.complete",
+        goal = 8,
+        progressKey = "menu.daily.streak_pusher.progress",
+        completeKey = "menu.daily.streak_pusher.complete",
         xpReward = 70,
     },
     {
         id = "floor_conqueror",
-        titleKey = "menu.fun_daily.floor_conqueror.title",
-        descriptionKey = "menu.fun_daily.floor_conqueror.description",
+        titleKey = "menu.daily.floor_conqueror.title",
+        descriptionKey = "menu.daily.floor_conqueror.description",
         sessionStat = "floorsCleared",
-        goal = 10,
+        goal = 8,
         xpReward = 100,
     },
     {
         id = "depth_delver",
-        titleKey = "menu.fun_daily.depth_delver.title",
-        descriptionKey = "menu.fun_daily.depth_delver.description",
+        titleKey = "menu.daily.depth_delver.title",
+        descriptionKey = "menu.daily.depth_delver.description",
         sessionStat = "deepestFloorReached",
-        goal = 12,
-        progressKey = "menu.fun_daily.depth_delver.progress",
-        completeKey = "menu.fun_daily.depth_delver.complete",
+        goal = 10,
+        progressKey = "menu.daily.depth_delver.progress",
+        completeKey = "menu.daily.depth_delver.complete",
         progressReplacements = function(self, current, goal)
             return {
                 current = math.max(1, math.floor(current or 1)),
@@ -508,28 +508,28 @@ FunChallenges.challenges = {
     },
     {
         id = "apple_hoarder",
-        titleKey = "menu.fun_daily.apple_hoarder.title",
-        descriptionKey = "menu.fun_daily.apple_hoarder.description",
+        titleKey = "menu.daily.apple_hoarder.title",
+        descriptionKey = "menu.daily.apple_hoarder.description",
         sessionStat = "applesEaten",
-        goal = 90,
-        progressKey = "menu.fun_daily.apple_hoarder.progress",
+        goal = 70,
+        progressKey = "menu.daily.apple_hoarder.progress",
         xpReward = 90,
     },
     {
         id = "streak_perfectionist",
-        titleKey = "menu.fun_daily.streak_perfectionist.title",
-        descriptionKey = "menu.fun_daily.streak_perfectionist.description",
+        titleKey = "menu.daily.streak_perfectionist.title",
+        descriptionKey = "menu.daily.streak_perfectionist.description",
         sessionStat = "fruitWithoutTurning",
-        goal = 15,
-        progressKey = "menu.fun_daily.streak_perfectionist.progress",
-        completeKey = "menu.fun_daily.streak_perfectionist.complete",
+        goal = 12,
+        progressKey = "menu.daily.streak_perfectionist.progress",
+        completeKey = "menu.daily.streak_perfectionist.complete",
         xpReward = 90,
     },
 }
 
-FunChallenges.lookup = buildChallengeLookup(FunChallenges.challenges)
+DailyChallenges.lookup = buildChallengeLookup(DailyChallenges.challenges)
 
-function FunChallenges:setDateProvider(provider)
+function DailyChallenges:setDateProvider(provider)
     if type(provider) == "function" then
         self._dateProvider = provider
     else
@@ -537,7 +537,7 @@ function FunChallenges:setDateProvider(provider)
     end
 end
 
-function FunChallenges:setDailyOffset(offset)
+function DailyChallenges:setDailyOffset(offset)
     if type(offset) == "number" then
         self._dailyOffset = math.floor(offset)
     else
@@ -545,11 +545,11 @@ function FunChallenges:setDailyOffset(offset)
     end
 end
 
-function FunChallenges:getChallengeIndex(date)
+function DailyChallenges:getChallengeIndex(date)
     return getChallengeIndex(self, #self.challenges, date)
 end
 
-function FunChallenges:getChallengeById(id, context)
+function DailyChallenges:getChallengeById(id, context)
     if not id then
         return nil
     end
@@ -562,12 +562,12 @@ function FunChallenges:getChallengeById(id, context)
     return evaluateChallenge(self, challenge, context)
 end
 
-function FunChallenges:getChallengeForIndex(index, context)
+function DailyChallenges:getChallengeForIndex(index, context)
     local challenge = self.challenges[index]
     return evaluateChallenge(self, challenge, context)
 end
 
-function FunChallenges:getDailyChallenge(date, context)
+function DailyChallenges:getDailyChallenge(date, context)
     local count = #self.challenges
     local index = getChallengeIndex(self, count, date)
     if not index then
@@ -579,7 +579,7 @@ function FunChallenges:getDailyChallenge(date, context)
     return self:getChallengeForIndex(index, context)
 end
 
-function FunChallenges:getUpcomingChallenges(amount, options)
+function DailyChallenges:getUpcomingChallenges(amount, options)
     amount = math.max(0, math.floor(amount or 0))
     if amount == 0 or #self.challenges == 0 then
         return {}
@@ -616,7 +616,7 @@ function FunChallenges:getUpcomingChallenges(amount, options)
     return results
 end
 
-function FunChallenges:applyRunResults(statsSource, options)
+function DailyChallenges:applyRunResults(statsSource, options)
     statsSource = statsSource or SessionStats
     options = options or {}
 
@@ -669,7 +669,7 @@ function FunChallenges:applyRunResults(statsSource, options)
         xpAwarded = challenge.xpReward or self.defaultXpReward
         completedNow = true
 
-        PlayerStats:add("funChallengesCompleted", 1)
+        PlayerStats:add("dailyChallengesCompleted", 1)
 
         local achievements = getAchievements()
         if achievements and achievements.checkAll then
@@ -677,7 +677,7 @@ function FunChallenges:applyRunResults(statsSource, options)
                 achievements:checkAll()
             end)
             if not ok then
-                print("[FunChallenges] Failed to update achievements after daily challenge completion:", err)
+                print("[DailyChallenges] Failed to update achievements after daily challenge completion:", err)
             end
         end
     end
@@ -692,4 +692,4 @@ function FunChallenges:applyRunResults(statsSource, options)
     }
 end
 
-return FunChallenges
+return DailyChallenges
