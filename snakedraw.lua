@@ -678,7 +678,7 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
   love.graphics.pop()
 end
 
-local function drawSnake(trail, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
+local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
   if not trail or #trail == 0 then return end
 
   local thickness = SEGMENT_SIZE * 0.8

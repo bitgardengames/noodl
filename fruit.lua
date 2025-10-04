@@ -289,4 +289,18 @@ function Fruit:getTypeName() return lastCollectedType.name or "Apple" end
 function Fruit:getType()     return lastCollectedType end
 function Fruit:getTile()     return active.col, active.row end
 
+function Fruit:getFruitTypes()
+    return fruitTypes
+end
+
+function Fruit:getFruitTypeById(id)
+    if not id then return nil end
+    for _, info in ipairs(fruitTypes) do
+        if info.id == id then
+            return info
+        end
+    end
+    return nil
+end
+
 return Fruit

@@ -221,6 +221,7 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
         popDuration = popDuration,
         wobbleMagnitude = wobbleMagnitude,
         wobbleFrequency = wobbleFrequency,
+        fadeStart = clamp(fadeStart, 0, 0.99),
         fadeStartTime = fadeStartTime,
         fadeDuration = fadeDuration,
         drift = drift,

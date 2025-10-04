@@ -514,6 +514,7 @@ function SnakeActor:draw()
 
     DrawSnake(
         self.trail,
+        self.segmentCount,
         self.segmentSize,
         self.popTimer,
         getHead,

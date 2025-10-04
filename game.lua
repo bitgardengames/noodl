@@ -399,6 +399,25 @@ function Game:load()
     })
 end
 
+function Game:reset()
+    GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+    Face:set("idle")
+    self.state = "playing"
+    self.floor = 1
+    self.runTimer = 0
+    self.floorTimer = 0
+
+    self.mouseCursorState = nil
+
+    if self.transition then
+        self.transition:reset()
+    end
+
+    if self.input then
+        self.input:resetAxes()
+    end
+end
+
 function Game:enter()
     UI.clearButtons()
     self:load()
@@ -450,6 +469,14 @@ end
 function Game:startFloorTransition(advance, skipFade)
     Snake:finishDescending()
     self.transition:startFloorTransition(advance, skipFade)
+end
+
+function Game:startFloorIntro(duration, extra)
+    self.transition:startFloorIntro(duration, extra)
+end
+
+function Game:startFadeIn(duration)
+    self.transition:startFadeIn(duration)
 end
 
 function Game:updateDescending(dt)
@@ -536,6 +563,8 @@ local function drawPlayfieldLayers(self, stateOverride)
     local renderState = stateOverride or self.state
 
     Arena:drawBackground()
+    Death:applyShake()
+
     Fruit:draw()
     Rocks:draw()
     Saws:draw()
@@ -561,6 +590,7 @@ local function drawInterfaceLayers(self)
 
     drawAdrenalineGlow(self)
 
+    Death:drawFlash(self.screenWidth, self.screenHeight)
     PauseMenu:draw(self.screenWidth, self.screenHeight)
     UI:draw()
     Achievements:draw()

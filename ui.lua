@@ -488,6 +488,23 @@ function UI:mousereleased(x, y, button)
     end
 end
 
+-- Score pulse logic
+function UI:reset()
+    scorePulse = 1.0
+    pulseTimer = 0
+    self.combo.count = 0
+    self.combo.timer = 0
+    self.combo.duration = 0
+    self.combo.pop = 0
+    self.floorModifiers = {}
+    self.shields.count = 0
+    self.shields.display = 0
+    self.shields.popTimer = 0
+    self.shields.shakeTimer = 0
+    self.shields.flashTimer = 0
+    self.shields.lastDirection = 0
+end
+
 function UI:triggerScorePulse()
     scorePulse = 1.2
     pulseTimer = 0
@@ -514,6 +531,10 @@ function UI:adjustFruitGoal(delta)
             table.remove(self.fruitSockets)
         end
     end
+end
+
+function UI:getFruitGoal(required)
+    return self.fruitRequired
 end
 
 function UI:setFloorModifiers(modifiers)
@@ -920,6 +941,10 @@ function UI:setCombo(count, timer, duration)
             combo.pop = 0
         end
     end
+end
+
+function UI:getCrashShields()
+    return (self.shields and self.shields.count) or 0
 end
 
 function UI:setCrashShields(count, opts)
