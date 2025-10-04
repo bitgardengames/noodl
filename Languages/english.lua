@@ -314,6 +314,12 @@ local english = {
                     "A molten wake isn't a good place to swim.",
                     "The floor decided to exhale… loudly.",
                 },
+                laser = {
+                    "You got carved up by a laser sweep.",
+                    "Note to self: don't stand in the light show.",
+                    "The beam didn't come to dance.",
+                    "Snake tried to limbo under a laser and failed.",
+                },
                 unknown = {
                     "Mysterious demise...",
                     "The void has claimed you.",
