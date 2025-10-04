@@ -43,9 +43,9 @@ end
 local DEFAULTS = {
     segmentCount = 14,
     speed = 110,
-    wiggleAmplitude = SEGMENT_SIZE * 0.18,
-    wiggleFrequency = 1.45,
-    wiggleStride = 0.85,
+    wiggleAmplitude = 0,
+    wiggleFrequency = 0,
+    wiggleStride = 0,
     loop = true,
     defaultPathPoints = 28,
 }
@@ -307,12 +307,9 @@ function SnakeActor:new(options)
 
     actor.segmentCount = math.max(1, math.floor(options.segmentCount or options.length or DEFAULTS.segmentCount))
     actor.speed = options.speed or DEFAULTS.speed
-    actor.wiggleAmplitude = options.wiggleAmplitude
-    if actor.wiggleAmplitude == nil then
-        actor.wiggleAmplitude = DEFAULTS.wiggleAmplitude
-    end
-    actor.wiggleFrequency = options.wiggleFrequency or DEFAULTS.wiggleFrequency
-    actor.wiggleStride = options.wiggleStride or DEFAULTS.wiggleStride
+    actor.wiggleAmplitude = 0
+    actor.wiggleFrequency = 0
+    actor.wiggleStride = 0
     actor.drawFace = options.drawFace ~= false
     actor.popTimer = options.popTimer or 0
     actor.shieldCount = options.shieldCount or 0
@@ -425,15 +422,9 @@ function SnakeActor:setSpeed(speed)
 end
 
 function SnakeActor:setWiggle(amplitude, frequency, stride)
-    if amplitude ~= nil then
-        self.wiggleAmplitude = amplitude
-    end
-    if frequency ~= nil then
-        self.wiggleFrequency = frequency
-    end
-    if stride ~= nil then
-        self.wiggleStride = stride
-    end
+    self.wiggleAmplitude = 0
+    self.wiggleFrequency = 0
+    self.wiggleStride = 0
 end
 
 function SnakeActor:getHead()

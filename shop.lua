@@ -133,9 +133,6 @@ function Shop:start(currentFloor)
     self.snakeActor = SnakeActor:new({
         segmentCount = 18,
         speed = 115,
-        wiggleAmplitude = 14,
-        wiggleFrequency = 1.25,
-        wiggleStride = 0.85,
         radiusX = 260,
         radiusY = 110,
         defaultPathPoints = 36,

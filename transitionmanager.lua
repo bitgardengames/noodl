@@ -156,9 +156,6 @@ function TransitionManager:startFloorIntro(duration, extra)
     local snake = SnakeActor:new({
         segmentCount = 20,
         speed = 140,
-        wiggleAmplitude = 16,
-        wiggleFrequency = 1.3,
-        wiggleStride = 0.9,
         path = path,
         loop = true,
         offsetX = anchorX,
