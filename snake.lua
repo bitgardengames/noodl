@@ -16,8 +16,6 @@ local Snake = {}
 
 local unpack = table.unpack or unpack
 
-local DEBUG_DRAW_COLLISION_SPACE = false
-
 local screenW, screenH
 local direction = { x = 1, y = 0 }
 local pendingDir = { x = 1, y = 0 }
@@ -505,97 +503,6 @@ local function trimHoleSegments(hole)
     if lastInside and lastInside.dirX and lastInside.dirY then
         hole.entryDirX, hole.entryDirY = normalizeDirection(lastInside.dirX, lastInside.dirY)
     end
-end
-
-local function debugDrawCollisionSpace(trailData, headX, headY)
-    if not DEBUG_DRAW_COLLISION_SPACE then
-        return
-    end
-
-    if not (love and love.graphics) then
-        return
-    end
-
-    love.graphics.push("all")
-
-    if headX and headY then
-        love.graphics.setColor(1, 0, 0, 0.12)
-        love.graphics.rectangle("fill", headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
-        love.graphics.setColor(1, 0, 0, 0.45)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
-    end
-
-    if trailData and #trailData > 1 then
-        local guardDistance = SEGMENT_SPACING * 0.9
-        local traveled = 0
-        local coords = {}
-
-        local first = trailData[1]
-        local prevX = first and (first.drawX or first.x)
-        local prevY = first and (first.drawY or first.y)
-
-        if prevX and prevY then
-            for index = 2, #trailData do
-                local segment = trailData[index]
-                local currX = segment and (segment.drawX or segment.x)
-                local currY = segment and (segment.drawY or segment.y)
-
-                if not (currX and currY) then
-                    break
-                end
-
-                local dx = currX - prevX
-                local dy = currY - prevY
-                local segLen = math.sqrt(dx * dx + dy * dy)
-
-                if segLen > 1e-6 then
-                    local remainingGuard = guardDistance - traveled
-                    if remainingGuard < 0 then
-                        remainingGuard = 0
-                    end
-
-                    if remainingGuard < segLen then
-                        local startT = remainingGuard / segLen
-                        local startX = prevX + dx * startT
-                        local startY = prevY + dy * startT
-
-                        if #coords == 0 then
-                            coords[#coords + 1] = startX
-                            coords[#coords + 1] = startY
-                        elseif startT > 0 then
-                            coords[#coords + 1] = startX
-                            coords[#coords + 1] = startY
-                        end
-
-                        coords[#coords + 1] = currX
-                        coords[#coords + 1] = currY
-                    end
-
-                    traveled = traveled + segLen
-                else
-                    traveled = traveled + segLen
-                end
-
-                prevX, prevY = currX, currY
-            end
-        end
-
-        if #coords >= 4 then
-            love.graphics.setLineCap("round")
-            love.graphics.setLineJoin("round")
-
-            love.graphics.setColor(1, 0, 0, 0.12)
-            love.graphics.setLineWidth(SEGMENT_SIZE)
-            love.graphics.line(unpack(coords))
-
-            love.graphics.setColor(1, 0, 0, 0.45)
-            love.graphics.setLineWidth(2)
-            love.graphics.line(unpack(coords))
-        end
-    end
-
-    love.graphics.pop()
 end
 
 local function trimTrailToSegmentLimit()
@@ -1107,8 +1014,6 @@ function Snake:drawClipped(hx, hy, hr)
         end
         return headX, headY
     end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
-
-    debugDrawCollisionSpace(trail, headX, headY)
 
     if clipRadius > 0 and descendingHole and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
         love.graphics.setStencilTest("equal", 1)
@@ -2024,17 +1929,7 @@ function Snake:draw()
             return self:getHead()
         end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
 
-        local headX, headY = self:getHead()
-        debugDrawCollisionSpace(trail, headX, headY)
     end
-end
-
-function Snake:setCollisionDebugEnabled(state)
-    DEBUG_DRAW_COLLISION_SPACE = not not state
-end
-
-function Snake:isCollisionDebugEnabled()
-    return DEBUG_DRAW_COLLISION_SPACE
 end
 
 function Snake:resetPosition()
