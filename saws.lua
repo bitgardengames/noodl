@@ -316,10 +316,6 @@ function Saws:getAll()
     return current
 end
 
-function Saws:getCenter(saw)
-    return getSawCenter(saw)
-end
-
 function Saws:getCollisionCenter(saw)
     return getSawCollisionCenter(saw)
 end
