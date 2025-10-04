@@ -463,9 +463,16 @@ local function baseBounds(beam)
 
     local size = Arena.tileSize or 24
     local half = size * 0.5
-    local bx = (beam.x or 0) - half
-    local by = (beam.y or 0) - half
-    return bx, by, size, size
+    local margin = math.max(2, size * 0.22)
+    if margin > half then
+        margin = half
+    end
+
+    local width = size - margin * 2
+    local height = width
+    local bx = (beam.x or 0) - width * 0.5
+    local by = (beam.y or 0) - height * 0.5
+    return bx, by, width, height
 end
 
 function Lasers:applyTimingModifiers()
