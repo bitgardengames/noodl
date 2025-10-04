@@ -1323,7 +1323,6 @@ function Snake:update(dt)
                         end
                 end
         end
-    end
 
     -- update timers
     if popTimer > 0 then
