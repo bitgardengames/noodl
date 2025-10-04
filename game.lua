@@ -536,8 +536,6 @@ local function drawPlayfieldLayers(self, stateOverride)
     local renderState = stateOverride or self.state
 
     Arena:drawBackground()
-    Death:applyShake()
-
     Fruit:draw()
     Rocks:draw()
     Saws:draw()
@@ -563,7 +561,6 @@ local function drawInterfaceLayers(self)
 
     drawAdrenalineGlow(self)
 
-    Death:drawFlash(self.screenWidth, self.screenHeight)
     PauseMenu:draw(self.screenWidth, self.screenHeight)
     UI:draw()
     Achievements:draw()
