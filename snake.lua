@@ -37,7 +37,10 @@ local function announceDeveloperAssistChange(enabled)
     end
 
     local message = enabled and "DEV ASSIST ENABLED" or "DEV ASSIST DISABLED"
-    local hx, hy = Snake:getHead and Snake:getHead()
+    local hx, hy
+    if Snake.getHead then
+        hx, hy = Snake:getHead()
+    end
     if not (hx and hy) then
         hx = (screenW or 0) * 0.5
         hy = (screenH or 0) * 0.45
