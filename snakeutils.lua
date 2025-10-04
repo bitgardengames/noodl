@@ -239,12 +239,9 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone)
     local rockList = (rocks and rocks.getAll and rocks:getAll()) or {}
     local safeCells = safeZone or {}
 
-    -- Use Love's RNG so fruit/rock spawning shares the game's seeded randomness.
-    local random = (love and love.math and love.math.random) or math.random
-
     for _ = 1, maxAttempts do
-        local col = random(1, cols)
-        local row = random(1, rows)
+        local col = love.math.random(1, cols)
+        local row = love.math.random(1, rows)
         local cx, cy = Arena:getCenterOfTile(col, row)
 
         local blocked = false
