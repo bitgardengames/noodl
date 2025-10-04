@@ -42,6 +42,41 @@ local function resetFloorEntities()
     Lasers:reset()
 end
 
+local function getCenterSpawnCell()
+    local cols = Arena.cols or 1
+    local rows = Arena.rows or 1
+    if cols < 1 then cols = 1 end
+    if rows < 1 then rows = 1 end
+
+    local midCol = math.floor(cols / 2)
+    local midRow = math.floor(rows / 2)
+    return midCol, midRow
+end
+
+local function sawPlacementThreatensSpawn(col, row, dir)
+    if not (col and row and dir) then
+        return false
+    end
+
+    local midCol, midRow = getCenterSpawnCell()
+
+    if dir == "horizontal" then
+        if math.abs(col - midCol) <= 2 then
+            return true
+        end
+
+        if math.abs(row - midRow) <= 1 then
+            return true
+        end
+    else
+        if math.abs(row - midRow) <= 2 then
+            return true
+        end
+    end
+
+    return false
+end
+
 local function prepareOccupancy()
     SnakeUtils.initOccupancy()
 
@@ -51,6 +86,7 @@ local function prepareOccupancy()
     end
 
     local safeZone = Snake:getSafeZone(3)
+    local rockSafeZone = Snake:getSafeZone(5)
     local headCol, headRow = Snake:getHeadCell()
     local reservedCandidates = {}
 
@@ -68,10 +104,16 @@ local function prepareOccupancy()
         end
     end
 
+    if rockSafeZone then
+        for _, cell in ipairs(rockSafeZone) do
+            reservedCandidates[#reservedCandidates + 1] = { cell[1], cell[2] }
+        end
+    end
+
     local reservedCells = SnakeUtils.reserveCells(reservedCandidates)
     local reservedSafeZone = SnakeUtils.reserveCells(safeZone)
 
-    return safeZone, reservedCells, reservedSafeZone
+    return safeZone, reservedCells, reservedSafeZone, rockSafeZone
 end
 
 local function applyBaselineHazardTraits(traitContext)
@@ -115,6 +157,10 @@ local function trySpawnHorizontalSaw(halfTiles, bladeRadius)
     local col = love.math.random(1 + halfTiles, Arena.cols - halfTiles)
     local fx, fy = Arena:getCenterOfTile(col, row)
 
+    if sawPlacementThreatensSpawn(col, row, "horizontal") then
+        return false
+    end
+
     if SnakeUtils.sawTrackIsFree(fx, fy, "horizontal") then
         Saws:spawn(fx, fy, bladeRadius, 8, "horizontal")
         SnakeUtils.occupySawTrack(fx, fy, "horizontal")
@@ -129,6 +175,10 @@ local function trySpawnVerticalSaw(halfTiles, bladeRadius)
     local col = (side == "left") and 1 or Arena.cols
     local row = love.math.random(1 + halfTiles, Arena.rows - halfTiles)
     local fx, fy = Arena:getCenterOfTile(col, row)
+
+    if sawPlacementThreatensSpawn(col, row, "vertical") then
+        return false
+    end
 
     if SnakeUtils.sawTrackIsFree(fx, fy, "vertical") then
         Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side)
@@ -297,7 +347,7 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
     return plan, desired
 end
 
-local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, floorData)
+local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, floorData)
     local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
     local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
 
@@ -309,6 +359,7 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
         safeZone = safeZone,
         reservedCells = reservedCells,
         reservedSafeZone = reservedSafeZone,
+        rockSafeZone = rockSafeZone,
         lasers = laserPlan,
         laserCount = desiredLasers,
     }
@@ -318,7 +369,7 @@ function FloorSetup.prepare(floorNum, floorData)
     applyPalette(floorData and floorData.palette)
     Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
     resetFloorEntities()
-    local safeZone, reservedCells, reservedSafeZone = prepareOccupancy()
+    local safeZone, reservedCells, reservedSafeZone, rockSafeZone = prepareOccupancy()
 
     local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
     applyBaselineHazardTraits(traitContext)
@@ -329,7 +380,7 @@ function FloorSetup.prepare(floorNum, floorData)
     traitContext = Upgrades:modifyFloorContext(traitContext)
     traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
 
-    local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, floorData)
+    local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, floorData)
 
     return {
         traitContext = traitContext,
@@ -345,7 +396,7 @@ end
 function FloorSetup.spawnHazards(spawnPlan)
     spawnSaws(spawnPlan.numSaws or 0, spawnPlan.halfTiles, spawnPlan.bladeRadius)
     spawnLasers(spawnPlan.lasers or {})
-    spawnRocks(spawnPlan.numRocks or 0, spawnPlan.safeZone)
+    spawnRocks(spawnPlan.numRocks or 0, spawnPlan.rockSafeZone or spawnPlan.safeZone)
     Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
     SnakeUtils.releaseCells(spawnPlan.reservedSafeZone)
     SnakeUtils.releaseCells(spawnPlan.reservedCells)
