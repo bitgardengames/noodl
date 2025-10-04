@@ -587,11 +587,6 @@ local english = {
                 description = "Crash shields burst into motes worth +2 bonus score.",
                 combo_bonus = "Crystal Cache +2",
             },
-            radiant_dividend = {
-                name = "Radiant Dividend",
-                description = "Broken crash shields store up to 3 dividends. Cash them out on your next fruit for +2 bonus score and 0.4s saw stall per dividend.",
-                cashout_text = "Radiant Cashout",
-            },
             tectonic_resolve = {
                 name = "Tectonic Resolve",
                 description = "Rock spawn chance decreases by 15%. Each fruit has a 25% chance to shatter the nearest rock.",
