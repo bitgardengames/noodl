@@ -642,23 +642,6 @@ local pool = {
                     if Saws and Saws.stall then
                         Saws:stall(0.5)
                     end
-                    celebrateUpgrade(getUpgradeString("chromatic_pantry", "celebration"), data, {
-                        color = {0.98, 0.72, 0.94, 1},
-                        particleCount = 14,
-                        particleSpeed = 100,
-                        particleLife = 0.4,
-                        textOffset = 48,
-                        textScale = 1.08,
-                        visual = {
-                            badge = "spark",
-                            outerRadius = 52,
-                            innerRadius = 16,
-                            ringCount = 3,
-                            life = 0.7,
-                            glowAlpha = 0.3,
-                            haloAlpha = 0.2,
-                        },
-                    })
                 end
 
                 if current then
