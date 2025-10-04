@@ -1442,55 +1442,6 @@ local pool = {
         },
     }),
     register({
-        id = "radiant_dividend",
-        nameKey = "upgrades.radiant_dividend.name",
-        descKey = "upgrades.radiant_dividend.description",
-        rarity = "uncommon",
-        tags = {"defense", "economy"},
-        onAcquire = function(state)
-            state.counters.radiantDividendStacks = state.counters.radiantDividendStacks or 0
-        end,
-        handlers = {
-            shieldConsumed = function(_, state)
-                if not state or not state.counters then return end
-                local stacks = (state.counters.radiantDividendStacks or 0) + 1
-                state.counters.radiantDividendStacks = math.min(3, stacks)
-            end,
-            fruitCollected = function(data, state)
-                if not state or not state.counters then return end
-                local stacks = state.counters.radiantDividendStacks or 0
-                if stacks <= 0 then return end
-
-                state.counters.radiantDividendStacks = 0
-                if Score.addBonus then
-                    Score:addBonus(2 * stacks)
-                end
-                if Saws and Saws.stall then
-                    Saws:stall(0.4 * stacks)
-                end
-                celebrateUpgrade(getUpgradeString("radiant_dividend", "cashout_text"), data, {
-                    color = {1.0, 0.84, 0.46, 1},
-                    particleCount = 18,
-                    particleSpeed = 120,
-                    particleLife = 0.48,
-                    particleSize = 5,
-                    particleSpread = math.pi * 2,
-                    textOffset = 56,
-                    textScale = 1.12,
-                    visual = {
-                        badge = "burst",
-                        outerRadius = 54,
-                        innerRadius = 18,
-                        ringCount = 3,
-                        life = 0.72,
-                        glowAlpha = 0.28,
-                        haloAlpha = 0.2,
-                    },
-                })
-            end,
-        },
-    }),
-    register({
         id = "tectonic_resolve",
         nameKey = "upgrades.tectonic_resolve.name",
         descKey = "upgrades.tectonic_resolve.description",
