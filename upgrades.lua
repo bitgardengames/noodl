@@ -1825,18 +1825,9 @@ function Upgrades:beginRun()
     self.runState = newRunState()
 end
 
-function Upgrades:getRunState()
-    return self.runState
-end
-
 function Upgrades:getEffect(name)
     if not name then return nil end
     return self.runState.effects[name]
-end
-
-function Upgrades:getUpgradeById(id)
-    if not id then return nil end
-    return poolById[id]
 end
 
 function Upgrades:hasTag(tag)

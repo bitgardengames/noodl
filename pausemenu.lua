@@ -230,10 +230,6 @@ function PauseMenu:mousereleased(x, y, button)
     return action
 end
 
-function PauseMenu:getAlpha()
-    return alpha
-end
-
 local function handleActionResult(action, entry)
     if type(action) == "function" then
         action()

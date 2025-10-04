@@ -121,30 +121,4 @@ function Localization:getAvailableLanguages()
     return self._languageOrder
 end
 
-function Localization:reloadLanguages()
-    self._languages = {}
-    self._languageOrder = nil
-    self._currentStrings = {}
-    self._fallbackStrings = {}
-end
-
-function Localization:cycleLanguage(current)
-    local languages = self:getAvailableLanguages()
-    if #languages == 0 then
-        return current or self._fallbackCode
-    end
-
-    local code = current or self:getCurrentLanguage()
-    local index = 1
-    for i, lang in ipairs(languages) do
-        if lang == code then
-            index = i
-            break
-        end
-    end
-
-    local nextIndex = index % #languages + 1
-    return languages[nextIndex]
-end
-
 return Localization

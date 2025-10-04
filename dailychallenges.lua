@@ -51,19 +51,6 @@ local function mergeReplacements(base, extra)
     return base
 end
 
-local function buildChallengeLookup(list)
-    local lookup = {}
-
-    for index, challenge in ipairs(list) do
-        challenge.index = index
-        if challenge.id and not lookup[challenge.id] then
-            lookup[challenge.id] = challenge
-        end
-    end
-
-    return lookup
-end
-
 local function callChallengeFunction(challenge, key, ...)
     if not challenge then
         return nil
@@ -527,43 +514,13 @@ DailyChallenges.challenges = {
     },
 }
 
-DailyChallenges.lookup = buildChallengeLookup(DailyChallenges.challenges)
-
-function DailyChallenges:setDateProvider(provider)
-    if type(provider) == "function" then
-        self._dateProvider = provider
-    else
-        self._dateProvider = nil
-    end
-end
-
-function DailyChallenges:setDailyOffset(offset)
-    if type(offset) == "number" then
-        self._dailyOffset = math.floor(offset)
-    else
-        self._dailyOffset = nil
-    end
-end
-
-function DailyChallenges:getChallengeIndex(date)
-    return getChallengeIndex(self, #self.challenges, date)
-end
-
-function DailyChallenges:getChallengeById(id, context)
-    if not id then
-        return nil
-    end
-
-    local challenge = self.lookup[id]
+function DailyChallenges:getChallengeForIndex(index, context)
+    local challenge = self.challenges[index]
     if not challenge then
         return nil
     end
 
-    return evaluateChallenge(self, challenge, context)
-end
-
-function DailyChallenges:getChallengeForIndex(index, context)
-    local challenge = self.challenges[index]
+    challenge.index = index
     return evaluateChallenge(self, challenge, context)
 end
 
@@ -577,43 +534,6 @@ function DailyChallenges:getDailyChallenge(date, context)
     context = context or {}
     context.date = context.date or resolveDate(self, date)
     return self:getChallengeForIndex(index, context)
-end
-
-function DailyChallenges:getUpcomingChallenges(amount, options)
-    amount = math.max(0, math.floor(amount or 0))
-    if amount == 0 or #self.challenges == 0 then
-        return {}
-    end
-
-    local results = {}
-    local date = options and options.date
-    local sharedContext = options and options.context
-    local contextBuilder = options and options.contextBuilder
-    local index = getChallengeIndex(self, #self.challenges, date)
-    if not index then
-        return results
-    end
-
-    for i = 0, amount - 1 do
-        local currentIndex = ((index + i - 1) % #self.challenges) + 1
-        local context
-        if contextBuilder then
-            context = contextBuilder(currentIndex, self.challenges[currentIndex])
-        else
-            context = sharedContext
-        end
-
-        if context then
-            context.date = context.date or resolveDate(self, date)
-        end
-
-        local evaluated = self:getChallengeForIndex(currentIndex, context)
-        if evaluated then
-            results[#results + 1] = evaluated
-        end
-    end
-
-    return results
 end
 
 function DailyChallenges:applyRunResults(statsSource, options)

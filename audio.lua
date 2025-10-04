@@ -119,11 +119,4 @@ function Audio:playMusic(trackName)
     end
 end
 
-function Audio:stopMusic()
-    if self.currentMusic then
-        self.currentMusic:stop()
-        self.currentMusic = nil
-    end
-end
-
 return Audio

@@ -533,10 +533,6 @@ function UI:adjustFruitGoal(delta)
     end
 end
 
-function UI:getFruitGoal(required)
-    return self.fruitRequired
-end
-
 function UI:setFloorModifiers(modifiers)
     if type(modifiers) == "table" then
         self.floorModifiers = modifiers
@@ -941,10 +937,6 @@ function UI:setCombo(count, timer, duration)
             combo.pop = 0
         end
     end
-end
-
-function UI:getCrashShields()
-    return (self.shields and self.shields.count) or 0
 end
 
 function UI:setCrashShields(count, opts)
