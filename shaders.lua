@@ -39,12 +39,6 @@ local function sendColor(shader, name, color)
     end
 end
 
-local function sendVec2(shader, name, value)
-    if shaderHasUniform(shader, name) then
-        shader:send(name, value)
-    end
-end
-
 local function sendFloat(shader, name, value)
     if shaderHasUniform(shader, name) then
         shader:send(name, value)
