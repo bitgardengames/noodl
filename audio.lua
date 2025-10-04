@@ -29,6 +29,7 @@ local SOUND_DEFINITIONS = {
     shield_rock = "Assets/Sounds/Rotate Stone 03.wav",
     shield_saw = "Assets/Sounds/Arcane Wind Chime Gust.wav",
     rock_shatter = "Assets/Sounds/Activate Plinth 03.wav",
+    laser_fire = "Assets/Sounds/LASRBeam_Plasma Loop_01.wav",
 }
 
 local MUSIC_DEFINITIONS = {
