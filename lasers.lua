@@ -422,11 +422,22 @@ function Lasers:update(dt)
                     maxCooldown = minCooldown
                 end
                 local duration = minCooldown + (maxCooldown - minCooldown) * (beam.cooldownRoll or 0)
+                local pending = beam.pendingCooldownBonus or 0
+                if pending ~= 0 then
+                    duration = duration + pending
+                    beam.pendingCooldownBonus = nil
+                end
                 beam.cooldownDuration = duration
                 beam.fireCooldown = duration
                 beam.fireTimer = nil
             end
         else
+            local pending = beam.pendingCooldownBonus
+            if pending and pending ~= 0 and beam.fireCooldown then
+                beam.fireCooldown = beam.fireCooldown + pending
+                beam.cooldownDuration = (beam.cooldownDuration or 0) + pending
+                beam.pendingCooldownBonus = nil
+            end
             if beam.fireCooldown then
                 beam.fireCooldown = beam.fireCooldown - dt
                 if beam.fireCooldown <= 0 then

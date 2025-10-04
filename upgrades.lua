@@ -94,6 +94,43 @@ local function mirroredScalesLaserHandler(data, state)
     })
 end
 
+local function prismLockCooldownHandler(data, state)
+    if not (data and state) then return end
+
+    local stacks = (state.takenSet and state.takenSet.prism_lock) or 0
+    if stacks <= 0 then return end
+
+    local perStack = state.counters and state.counters.prismLockCooldown or 0
+    if perStack <= 0 then return end
+
+    local beam = data.beam
+    if not beam then return end
+
+    local bonus = perStack * stacks
+    if bonus <= 0 then return end
+
+    beam.pendingCooldownBonus = (beam.pendingCooldownBonus or 0) + bonus
+
+    celebrateUpgrade(getUpgradeString("prism_lock", "activation_text"), data, {
+        color = {0.82, 0.92, 1, 1},
+        textOffset = 52,
+        textScale = 1.16,
+        particleCount = 14 + stacks * 2,
+        particleSpeed = 130,
+        particleLife = 0.5,
+        visual = {
+            badge = "spark",
+            outerRadius = 60,
+            innerRadius = 18,
+            ringCount = 3,
+            ringSpacing = 12,
+            life = 0.72,
+            glowAlpha = 0.3,
+            haloAlpha = 0.22,
+        },
+    })
+end
+
 local function newRunState()
     return {
         takenOrder = {},
@@ -149,13 +186,24 @@ local function updateResonantShellBonus(state)
     if not state then return end
 
     local perBonus = state.counters and state.counters.resonantShellPerBonus or 0
-    if perBonus <= 0 then return end
+    local perCharge = state.counters and state.counters.resonantShellPerCharge or 0
+    if perBonus <= 0 and perCharge <= 0 then return end
 
-    local previous = state.counters.resonantShellBonus or 0
     local defenseCount = countUpgradesWithTag(state, "defense")
-    local newBonus = perBonus * defenseCount
-    state.counters.resonantShellBonus = newBonus
-    state.effects.sawStall = (state.effects.sawStall or 0) - previous + newBonus
+
+    if perBonus > 0 then
+        local previous = state.counters.resonantShellBonus or 0
+        local newBonus = perBonus * defenseCount
+        state.counters.resonantShellBonus = newBonus
+        state.effects.sawStall = (state.effects.sawStall or 0) - previous + newBonus
+    end
+
+    if perCharge > 0 then
+        local previousCharge = state.counters.resonantShellChargeBonus or 0
+        local newCharge = perCharge * defenseCount
+        state.counters.resonantShellChargeBonus = newCharge
+        state.effects.laserChargeFlat = (state.effects.laserChargeFlat or 0) - previousCharge + newCharge
+    end
 end
 
 local function updateLinkedHydraulics(state)
@@ -893,6 +941,18 @@ local pool = {
         end,
     }),
     register({
+        id = "diffraction_barrier",
+        nameKey = "upgrades.diffraction_barrier.name",
+        descKey = "upgrades.diffraction_barrier.description",
+        rarity = "uncommon",
+        tags = {"defense"},
+        onAcquire = function(state)
+            state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 1.25
+            state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.8
+            state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) + 0.5
+        end,
+    }),
+    register({
         id = "resonant_shell",
         nameKey = "upgrades.resonant_shell.name",
         descKey = "upgrades.resonant_shell.description",
@@ -902,6 +962,7 @@ local pool = {
         unlockTag = "specialist",
         onAcquire = function(state)
             state.counters.resonantShellPerBonus = 0.35
+            state.counters.resonantShellPerCharge = 0.08
             updateResonantShellBonus(state)
 
             if not state.counters.resonantShellHandlerRegistered then
@@ -921,6 +982,21 @@ local pool = {
                 textOffset = 48,
                 textScale = 1.12,
             })
+        end,
+    }),
+    register({
+        id = "prism_lock",
+        nameKey = "upgrades.prism_lock.name",
+        descKey = "upgrades.prism_lock.description",
+        rarity = "rare",
+        tags = {"defense", "utility"},
+        onAcquire = function(state)
+            state.counters = state.counters or {}
+            state.counters.prismLockCooldown = 1.1
+            if not state.counters.prismLockHandler then
+                state.counters.prismLockHandler = true
+                Upgrades:addEventHandler("laserShielded", prismLockCooldownHandler)
+            end
         end,
     }),
     register({

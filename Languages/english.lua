@@ -488,9 +488,18 @@ local english = {
                 description = "Blocking a laser makes it fire back the other way after a quick recharge and grants +2 bonus score (+1 per additional copy).",
                 activation_text = "Laser Ricochet",
             },
+            diffraction_barrier = {
+                name = "Diffraction Barrier",
+                description = "Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s.",
+            },
             resonant_shell = {
                 name = "Resonant Shell",
-                description = "Gain +0.35s saw stall duration for each Defense upgrade you own.",
+                description = "Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own.",
+            },
+            prism_lock = {
+                name = "Prism Lock",
+                description = "Blocking a laser adds +1.1s to its cooldown per stack.",
+                activation_text = "Prism Lockdown",
             },
             wardens_chorus = {
                 name = "Warden's Chorus",
