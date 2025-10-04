@@ -206,11 +206,10 @@ local function removeRockAt(index, spawnFX)
         spawnShatterFX(rock.x, rock.y)
     end
 
-    return rock
 end
 
 function Rocks:destroy(target, opts)
-    if not target then return nil end
+    if not target then return end
 
     opts = opts or {}
     local spawnFX = opts.spawnFX
@@ -218,29 +217,16 @@ function Rocks:destroy(target, opts)
         spawnFX = true
     end
 
-    if type(target) == "number" then
-        return removeRockAt(target, spawnFX)
-    end
-
     for index, rock in ipairs(current) do
         if rock == target then
-            return removeRockAt(index, spawnFX)
+            removeRockAt(index, spawnFX)
+            return
         end
     end
-
-    return nil
 end
 
 function Rocks:triggerHitFlash(target)
     if not target then
-        return
-    end
-
-    if type(target) == "number" then
-        local rock = current[target]
-        if rock then
-            rock.hitFlashTimer = math.max(rock.hitFlashTimer or 0, HIT_FLASH_DURATION)
-        end
         return
     end
 
