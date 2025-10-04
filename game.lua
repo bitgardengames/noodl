@@ -1071,6 +1071,11 @@ function Game:setupFloor(floorNum)
 
     Upgrades:applyPersistentEffects(true)
 
+    if Snake.adrenaline then
+        Snake.adrenaline.active = false
+        Snake.adrenaline.timer = 0
+    end
+
     FloorSetup.finalizeContext(traitContext, spawnPlan)
     Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
 
