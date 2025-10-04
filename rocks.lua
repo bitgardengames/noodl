@@ -20,17 +20,22 @@ local HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
 
 -- smoother, rounder “stone” generator
 local function generateRockShape(size, seed)
-    love.math.setRandomSeed(seed or love.timer.getTime() * 1000)
+    local rng
+    if seed then
+        rng = love.math.newRandomGenerator(seed)
+    else
+        rng = love.math.newRandomGenerator(love.timer.getTime() * 1000)
+    end
 
     local points = {}
-    local sides = love.math.random(12, 16) -- more segments = rounder
+    local sides = rng:random(12, 16) -- more segments = rounder
     local step = (math.pi * 2) / sides
     local baseRadius = size * 0.45
 
     for i = 1, sides do
         local angle = step * i
         -- slight wobble so it’s lumpy, but no sharp spikes
-        local r = baseRadius * (0.9 + love.math.random() * 0.2)
+        local r = baseRadius * (0.9 + rng:random() * 0.2)
         table.insert(points, math.cos(angle) * r)
         table.insert(points, math.sin(angle) * r)
     end
