@@ -240,7 +240,7 @@ local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, t
     local scissorH = trackHeight + outlinePad * 2
     love.graphics.setScissor(scissorX, scissorY, scissorW, scissorH)
 
-    drawSnake(trail, #trail, segmentSize, nil, nil, nil, nil, nil)
+    drawSnake(trail, segmentSize, nil, nil, nil, nil, nil)
 
     local head = trail[#trail]
     if head then
