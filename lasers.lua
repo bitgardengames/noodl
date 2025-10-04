@@ -2,6 +2,7 @@ local Theme = require("theme")
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local Rocks = require("rocks")
+local Audio = require("audio")
 
 local Lasers = {}
 
@@ -378,6 +379,7 @@ function Lasers:update(dt)
                 beam.chargeTimer = nil
                 beam.flashTimer = math.max(beam.flashTimer or 0, 0.75)
                 beam.burnAlpha = 0.92
+                Audio:playSound("laser_fire")
             end
         elseif beam.state == "firing" then
             beam.fireTimer = (beam.fireTimer or beam.fireDuration) - dt
