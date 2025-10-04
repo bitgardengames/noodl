@@ -379,6 +379,11 @@ function FloorSetup.prepare(floorNum, floorData)
     traitContext = Upgrades:modifyFloorContext(traitContext)
     traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
 
+    local cap = FloorPlan.getLaserCap and FloorPlan.getLaserCap(traitContext.floor)
+    if cap and traitContext.laserCount ~= nil then
+        traitContext.laserCount = math.min(cap, traitContext.laserCount)
+    end
+
     local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, floorData)
 
     return {

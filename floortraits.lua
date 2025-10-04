@@ -1,6 +1,7 @@
 local Rocks = require("rocks")
 local Saws = require("saws")
 local FruitEvents = require("fruitevents")
+local FloorPlan = require("floorplan")
 
 local FloorTraits = {}
 
@@ -195,8 +196,10 @@ function FloorTraits:apply(list, context)
     if ctx.saws then
         ctx.saws = math.max(0, math.min(8, math.floor(ctx.saws + 0.5)))
     end
-    if ctx.laserCount then
-        ctx.laserCount = math.max(0, math.min(6, math.floor(ctx.laserCount + 0.5)))
+    if ctx.laserCount ~= nil then
+        local cap = FloorPlan.getLaserCap and FloorPlan.getLaserCap(ctx.floor)
+        local maxLasers = cap or 6
+        ctx.laserCount = math.max(0, math.min(maxLasers, math.floor(ctx.laserCount + 0.5)))
     end
     if ctx.fruitGoal then
         ctx.fruitGoal = math.max(1, math.floor(ctx.fruitGoal + 0.5))
