@@ -717,10 +717,13 @@ local function drawEmitterBase(beam)
     if pulseStrength > 0 then
         pulse = (0.18 + 0.25 * math.sin(t * 5.5 + (beam.x or 0) * 0.03 + (beam.y or 0) * 0.03)) * pulseStrength
     end
-    local glowAlpha = 0.16 + baseGlow * 0.6 + flash * 0.35 + highlightBoost * 0.35 + pulse * 0.4
-    love.graphics.setColor(1, 0.32, 0.25, math.min(0.85, glowAlpha))
-    local glowRadius = BASE_GLOW_RADIUS + tileSize * 0.1 + baseGlow * (tileSize * 0.22)
-    love.graphics.circle("fill", beam.x or 0, beam.y or 0, glowRadius)
+    local showPrimeRing = (telegraph > 0) or (beam.state == "firing")
+    if showPrimeRing then
+        local glowAlpha = 0.16 + baseGlow * 0.6 + flash * 0.35 + highlightBoost * 0.35 + pulse * 0.4
+        love.graphics.setColor(1, 0.32, 0.25, math.min(0.85, glowAlpha))
+        local glowRadius = BASE_GLOW_RADIUS + tileSize * 0.1 + baseGlow * (tileSize * 0.22)
+        love.graphics.circle("fill", beam.x or 0, beam.y or 0, glowRadius)
+    end
 
     love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], (baseColor[4] or 1) + flash * 0.1)
     love.graphics.rectangle("fill", bx, by, tileSize, tileSize, 6, 6)
@@ -739,22 +742,24 @@ local function drawEmitterBase(beam)
     local slitThickness = math.max(3, tileSize * 0.18)
     local cx = beam.x or 0
     local cy = beam.y or 0
-    local spin = (t * 2.5 + (beam.randomOffset or 0)) % (math.pi * 2)
-    local ringRadius = tileSize * 0.45 + math.sin(t * 3.5 + (beam.randomOffset or 0)) * (tileSize * 0.05)
-    love.graphics.setLineWidth(2)
-    love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.28 + flash * 0.4 + highlightBoost * 0.35 + telegraph * 0.25)
-    for i = 0, 2 do
-        local angle = spin + i * (math.pi * 2 / 3)
-        love.graphics.arc("line", "open", cx, cy, ringRadius, angle - 0.35, angle + 0.35, 16)
-    end
+    if showPrimeRing then
+        local spin = (t * 2.5 + (beam.randomOffset or 0)) % (math.pi * 2)
+        local ringRadius = tileSize * 0.45 + math.sin(t * 3.5 + (beam.randomOffset or 0)) * (tileSize * 0.05)
+        love.graphics.setLineWidth(2)
+        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.28 + flash * 0.4 + highlightBoost * 0.35 + telegraph * 0.25)
+        for i = 0, 2 do
+            local angle = spin + i * (math.pi * 2 / 3)
+            love.graphics.arc("line", "open", cx, cy, ringRadius, angle - 0.35, angle + 0.35, 16)
+        end
 
-    if beam.state == "charging" then
-        local chargeLift = (math.sin(t * 6 + (beam.randomOffset or 0)) * 0.5 + 0.5) * tileSize * 0.08
-        love.graphics.setColor(1, 0.4, 0.32, 0.35 + flash * 0.35 + telegraph * 0.55)
-        love.graphics.circle("line", cx, cy, ringRadius * 0.65 + chargeLift)
-    elseif beam.state == "firing" then
-        love.graphics.setColor(1, 0.55, 0.4, 0.35 + flash * 0.45 + telegraph * 0.25)
-        love.graphics.circle("line", cx, cy, ringRadius * 0.8)
+        if beam.state == "charging" then
+            local chargeLift = (math.sin(t * 6 + (beam.randomOffset or 0)) * 0.5 + 0.5) * tileSize * 0.08
+            love.graphics.setColor(1, 0.4, 0.32, 0.35 + flash * 0.35 + telegraph * 0.55)
+            love.graphics.circle("line", cx, cy, ringRadius * 0.65 + chargeLift)
+        elseif beam.state == "firing" then
+            love.graphics.setColor(1, 0.55, 0.4, 0.35 + flash * 0.45 + telegraph * 0.25)
+            love.graphics.circle("line", cx, cy, ringRadius * 0.8)
+        end
     end
     if beam.dir == "horizontal" then
         local dir = beam.facing or 1
