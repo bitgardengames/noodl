@@ -67,6 +67,39 @@ local function aabb(ax, ay, aw, ah, bx, by, bw, bh)
                    ay < by + bh and ay + ah > by
 end
 
+local function pushAwayFromCorner(clampedX, clampedY, left, right, top, bottom)
+        local detectionMargin = math.max(2, (Arena.tileSize or 0) * 0.15)
+        local nudgeAmount = math.max(2, (Arena.tileSize or 0) * 0.25)
+
+        local nearLeft = clampedX - left <= detectionMargin
+        local nearRight = right - clampedX <= detectionMargin
+        local nearTop = clampedY - top <= detectionMargin
+        local nearBottom = bottom - clampedY <= detectionMargin
+
+        if not ((nearLeft or nearRight) and (nearTop or nearBottom)) then
+                return nil, nil, clampedX, clampedY
+        end
+
+        local dirX = 0
+        if nearLeft then
+                dirX = 1
+        elseif nearRight then
+                dirX = -1
+        end
+
+        local dirY = 0
+        if nearTop then
+                dirY = 1
+        elseif nearBottom then
+                dirY = -1
+        end
+
+        local adjustedX = math.max(left + nudgeAmount, math.min(right - nudgeAmount, clampedX + dirX * nudgeAmount))
+        local adjustedY = math.max(top + nudgeAmount, math.min(bottom - nudgeAmount, clampedY + dirY * nudgeAmount))
+
+        return dirX, dirY, adjustedX, adjustedY
+end
+
 local function rerouteAlongWall(headX, headY)
         local ax, ay, aw, ah = Arena:getBounds()
         local inset = Arena.tileSize / 2
@@ -119,6 +152,13 @@ local function rerouteAlongWall(headX, headY)
                 else
                         newDirX = newDirX > 0 and 1 or -1
                 end
+        end
+
+        local cornerDirX, cornerDirY
+        cornerDirX, cornerDirY, clampedX, clampedY = pushAwayFromCorner(clampedX, clampedY, left, right, top, bottom)
+        if cornerDirX and cornerDirY then
+                newDirX = cornerDirX
+                newDirY = cornerDirY
         end
 
         Snake:setHeadPosition(clampedX, clampedY)
