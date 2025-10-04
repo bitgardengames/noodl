@@ -87,6 +87,42 @@ local function appendSegment(segments, ax, ay, bx, by)
     return length
 end
 
+local function nearlyEqual(a, b, epsilon)
+    epsilon = epsilon or 0.0001
+    return math.abs(a - b) <= epsilon
+end
+
+local function pushPoint(points, x, y)
+    local last = points[#points]
+    if not last or not (nearlyEqual(last[1], x) and nearlyEqual(last[2], y)) then
+        points[#points + 1] = { x, y }
+    end
+end
+
+local function appendOrthogonalSegments(accumulatedPoints, segments, ax, ay, bx, by)
+    if nearlyEqual(ax, bx) and nearlyEqual(ay, by) then
+        return 0
+    end
+
+    if nearlyEqual(ax, bx) or nearlyEqual(ay, by) then
+        pushPoint(accumulatedPoints, ax, ay)
+        pushPoint(accumulatedPoints, bx, by)
+        return appendSegment(segments, ax, ay, bx, by)
+    end
+
+    local horizontalFirst = math.abs(bx - ax) >= math.abs(by - ay)
+    local midX, midY
+    if horizontalFirst then
+        midX, midY = bx, ay
+    else
+        midX, midY = ax, by
+    end
+
+    local total = appendOrthogonalSegments(accumulatedPoints, segments, ax, ay, midX, midY)
+    total = total + appendOrthogonalSegments(accumulatedPoints, segments, midX, midY, bx, by)
+    return total
+end
+
 local function buildPath(points, options)
     options = options or {}
     local offsetX = options.offsetX or 0
@@ -102,25 +138,31 @@ local function buildPath(points, options)
     local segments = {}
     local totalLength = 0
 
+    local expanded = {}
+
     for i = 1, #resolved - 1 do
         local ax, ay = resolved[i][1], resolved[i][2]
         local bx, by = resolved[i + 1][1], resolved[i + 1][2]
-        totalLength = totalLength + appendSegment(segments, ax, ay, bx, by)
+        totalLength = totalLength + appendOrthogonalSegments(expanded, segments, ax, ay, bx, by)
     end
 
     if loop and #resolved >= 2 then
         local ax, ay = resolved[#resolved][1], resolved[#resolved][2]
         local bx, by = resolved[1][1], resolved[1][2]
-        totalLength = totalLength + appendSegment(segments, ax, ay, bx, by)
+        totalLength = totalLength + appendOrthogonalSegments(expanded, segments, ax, ay, bx, by)
+    end
+
+    if #expanded == 0 then
+        expanded = resolved
     end
 
     local originX, originY = 0, 0
-    if resolved[1] then
-        originX, originY = resolved[1][1], resolved[1][2]
+    if expanded[1] then
+        originX, originY = expanded[1][1], expanded[1][2]
     end
 
     return {
-        points = resolved,
+        points = expanded,
         segments = segments,
         length = totalLength,
         loop = loop,
@@ -136,16 +178,43 @@ local function buildDefaultLoop(options)
     local cy = options.y or options.anchorY or 0
     local radiusX = options.radiusX or options.radius or SEGMENT_SIZE * 6.5
     local radiusY = options.radiusY or (radiusX * 0.55)
-    local pointCount = math.max(8, options.defaultPathPoints or DEFAULTS.defaultPathPoints)
+    local desiredSegments = math.max(4, options.defaultPathPoints or DEFAULTS.defaultPathPoints)
+
+    local perSide = math.max(1, math.floor(desiredSegments / 4))
+    local remainder = desiredSegments - perSide * 4
+    local steps = { perSide, perSide, perSide, perSide }
+    for i = 1, remainder do
+        local index = ((i - 1) % 4) + 1
+        steps[index] = steps[index] + 1
+    end
+
+    local left = cx - radiusX
+    local right = cx + radiusX
+    local top = cy - radiusY
+    local bottom = cy + radiusY
 
     local points = {}
-    for i = 1, pointCount do
-        local angle = (i - 1) / pointCount * math.pi * 2
-        points[i] = {
-            cx + math.cos(angle) * radiusX,
-            cy + math.sin(angle) * radiusY,
-        }
+    local currentX, currentY = left, top
+    points[#points + 1] = { currentX, currentY }
+
+    local function addAlong(dx, dy, count)
+        if count <= 0 then
+            return
+        end
+
+        local stepX = dx / count
+        local stepY = dy / count
+        for _ = 1, count do
+            currentX = currentX + stepX
+            currentY = currentY + stepY
+            points[#points + 1] = { currentX, currentY }
+        end
     end
+
+    addAlong(right - left, 0, steps[1])
+    addAlong(0, bottom - top, steps[2])
+    addAlong(left - right, 0, steps[3])
+    addAlong(0, top - bottom, steps[4])
 
     return points
 end
