@@ -304,6 +304,41 @@ local function computeBeamTarget(beam)
     beam.targetRock = hitRock
 end
 
+function Lasers:reflectBeam(beam, options)
+    if not beam then
+        return nil
+    end
+
+    options = options or {}
+
+    local facing = beam.facing or 1
+    beam.facing = -(facing >= 0 and 1 or -1)
+
+    computeBeamTarget(beam)
+
+    local baseCharge = beam.chargeDuration or beam.baseChargeDuration or DEFAULT_CHARGE_DURATION
+    local factor = options.chargeFactor or 0.45
+    if factor < 0.05 then
+        factor = 0.05
+    elseif factor > 1 then
+        factor = 1
+    end
+
+    local chargeTime = math.max(0.12, baseCharge * factor)
+
+    beam.state = "charging"
+    beam.chargeTimer = chargeTime
+    beam.fireTimer = nil
+    beam.fireCooldown = nil
+    beam.cooldownRoll = love.math.random()
+    beam.cooldownDuration = chargeTime
+    beam.telegraphStrength = 0
+    beam.flashTimer = math.max(beam.flashTimer or 0, 0.9)
+    beam.burnAlpha = 0.92
+
+    return chargeTime
+end
+
 function Lasers:reset()
     for _, beam in ipairs(emitters) do
         releaseOccupancy(beam)
@@ -439,12 +474,25 @@ function Lasers:update(dt)
     end
 end
 
-function Lasers:onShieldedHit(beam)
+function Lasers:onShieldedHit(beam, hitX, hitY)
     if not beam then
         return
     end
 
     beam.flashTimer = math.max(beam.flashTimer or 0, 1)
+
+    local Upgrades = package.loaded["upgrades"]
+    if Upgrades and Upgrades.notify then
+        Upgrades:notify("laserShielded", {
+            beam = beam,
+            x = hitX,
+            y = hitY,
+            emitterX = beam.x,
+            emitterY = beam.y,
+            impactX = beam.impactX,
+            impactY = beam.impactY,
+        })
+    end
 end
 
 local function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh)

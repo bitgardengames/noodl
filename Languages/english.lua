@@ -483,6 +483,11 @@ local english = {
                 description = "Breaking a crash shield grants +3 bonus score and stalls saws for 1s.",
                 activation_text = "Mirrored Rebound",
             },
+            mirrored_scales = {
+                name = "Mirrored Scales",
+                description = "Blocking a laser makes it fire back the other way after a quick recharge and grants +2 bonus score (+1 per additional copy).",
+                activation_text = "Laser Ricochet",
+            },
             resonant_shell = {
                 name = "Resonant Shell",
                 description = "Gain +0.35s saw stall duration for each Defense upgrade you own.",
