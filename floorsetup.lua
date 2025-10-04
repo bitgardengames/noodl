@@ -214,7 +214,7 @@ local function spawnLasers(laserPlan)
     end
 
     for _, plan in ipairs(laserPlan) do
-        Lasers:spawn(plan.x, plan.y, plan.dir, plan.length, plan.options)
+        Lasers:spawn(plan.x, plan.y, plan.dir, plan.options)
     end
 end
 
@@ -329,7 +329,6 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
                 x = fx,
                 y = fy,
                 dir = dir,
-                length = trackLength,
                 options = {
                     facing = facing,
                     fireDuration = fireDuration,
