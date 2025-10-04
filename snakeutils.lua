@@ -292,42 +292,4 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone)
     return nil, nil, nil, nil
 end
 
--- SnakeUtils.lua (add somewhere near the bottom)
-
-local DEBUG_OCCUPANCY = true
-
-function SnakeUtils.debugDrawOccupancy(grid, tileSize)
-    if not DEBUG_OCCUPANCY or not grid then return end
-
-    local ax, ay = Arena:getBounds()
-
-    love.graphics.push()
-    love.graphics.setColor(1, 0, 0, 0.25) -- semi-transparent red
-
-    for col = 1, #grid do
-        for row = 1, #grid[col] do
-            if grid[col][row] then
-                local x = ax + (col - 1) * tileSize
-                local y = ay + (row - 1) * tileSize
-                love.graphics.rectangle("fill", x, y, tileSize, tileSize)
-            end
-        end
-    end
-
-    love.graphics.pop()
-end
-
-function SnakeUtils.debugDrawGrid(tileSize)
-    local ax, ay, aw, ah = Arena:getBounds()
-    local cols, rows = Arena.cols, Arena.rows
-
-    love.graphics.setColor(0, 1, 0, 0.2) -- faint green grid
-    for col = 0, cols do
-        love.graphics.line(ax + col * tileSize, ay, ax + col * tileSize, ay + ah)
-    end
-    for row = 0, rows do
-        love.graphics.line(ax, ay + row * tileSize, ax + aw, ay + row * tileSize)
-    end
-end
-
 return SnakeUtils
