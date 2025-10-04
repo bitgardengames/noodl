@@ -123,8 +123,6 @@ end
 
 function Shop:start(currentFloor)
     self.floor = currentFloor or 1
-    self.shopkeeperLine = nil
-    self.shopkeeperSubline = nil
     self.selectionHoldDuration = 1.85
     self.inputMode = nil
     self.time = 0
@@ -150,13 +148,8 @@ function Shop:refreshCards(options)
 
     local extraChoices = upgradeBonus + metaBonus
 
-    self.baseChoices = baseChoices
-    self.upgradeBonusChoices = upgradeBonus
-    self.metaBonusChoices = metaBonus
-    self.extraChoices = extraChoices
 
     local cardCount = baseChoices + extraChoices
-    self.totalChoices = cardCount
     self.cards = Upgrades:getRandom(cardCount, { floor = self.floor }) or {}
     self.cardStates = {}
     self.selected = nil
@@ -553,7 +546,7 @@ local function getAnimatedAlpha(def, time)
     return minAlpha + (maxAlpha - minAlpha) * wave
 end
 
-local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appearanceAlpha)
+local function drawCard(card, x, y, w, h, hovered, isSelected, appearanceAlpha)
     local fadeAlpha = appearanceAlpha or 1
     local function setColor(r, g, b, a)
         love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
@@ -728,16 +721,6 @@ function Shop:draw(screenW, screenH)
     love.graphics.setFont(UI.fonts.title)
     love.graphics.printf("Choose an Upgrade", 0, screenH * 0.15, screenW, "center")
 
-    if self.shopkeeperLine then
-        love.graphics.setFont(UI.fonts.body)
-        love.graphics.setColor(1, 0.92, 0.8, 1)
-        love.graphics.printf(self.shopkeeperLine, screenW * 0.1, screenH * 0.22, screenW * 0.8, "center")
-    end
-    if self.shopkeeperSubline then
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(1, 1, 1, 0.7)
-        love.graphics.printf(self.shopkeeperSubline, screenW * 0.1, screenH * 0.26, screenW * 0.8, "center")
-    end
     love.graphics.setColor(1, 1, 1, 1)
 
     local selectionOverlay = self.selectionProgress or 0
@@ -877,7 +860,7 @@ function Shop:draw(screenW, screenH)
         love.graphics.scale(scale, scale)
         love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
         local appearanceAlpha = self.selected == card and 1 or alpha
-        drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, nil, self.selected == card, appearanceAlpha)
+        drawCard(card, 0, 0, cardWidth, cardHeight, hovered, self.selected == card, appearanceAlpha)
         love.graphics.pop()
         card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
 
