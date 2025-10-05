@@ -1082,7 +1082,7 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
--- Soft morning light for the shop screen
+-- Radiant fabric of light for the shop screen
 registerEffect({
     type = "shopGlimmer",
     backdropIntensity = 0.54,
@@ -1096,6 +1096,25 @@ registerEffect({
         extern vec4 glowColor;
         extern float intensity;
 
+        float hash(vec2 p)
+        {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        }
+
+        float noise(vec2 p)
+        {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            f = f * f * (3.0 - 2.0 * f);
+
+            float a = hash(i);
+            float b = hash(i + vec2(1.0, 0.0));
+            float c = hash(i + vec2(0.0, 1.0));
+            float d = hash(i + vec2(1.0, 1.0));
+
+            return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+        }
+
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         {
             vec2 uv = (screen_coords - origin) / resolution;
@@ -1104,22 +1123,28 @@ registerEffect({
 
             float radius = length(centered);
 
-            float gentleWave = sin(time * 0.35 + radius * 6.0) * 0.5 + 0.5;
-            float sweep = smoothstep(-0.1, 0.45, uv.x + sin(time * 0.25) * 0.08);
-            float vertical = smoothstep(0.05, 0.75, uv.y);
+            float ribbonFlow = sin((uv.x * 3.2 + uv.y * 2.6) - time * 0.45);
+            float swirl = sin(atan(centered.y, centered.x) * 4.0 - time * 0.28 + radius * 3.5);
+            float drift = noise(uv * 3.5 + time * 0.1);
 
-            float accentMix = clamp((gentleWave * 0.35 + sweep * 0.45) * intensity, 0.0, 1.0);
+            float ribbonLayer = clamp(ribbonFlow * 0.45 + swirl * 0.3 + drift * 0.6, -1.0, 1.0) * 0.5 + 0.5;
+            float halo = exp(-radius * radius * 4.0);
+            float verticalGlow = smoothstep(0.15, 0.95, uv.y + sin(time * 0.16 + uv.x * 1.4) * 0.05);
+
+            float accentMix = clamp((ribbonLayer * 0.6 + halo * 0.25 + verticalGlow * 0.2) * intensity, 0.0, 1.0);
             vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix);
 
-            float glow = exp(-radius * radius * 3.0);
-            float breathe = sin(time * 0.2) * 0.5 + 0.5;
-            float glowAmount = (glow * 0.4 + vertical * 0.2) * (0.4 + breathe * 0.3) * intensity;
-            col = mix(col, glowColor.rgb, clamp(glowAmount, 0.0, 1.0));
+            float sparkleField = noise(uv * 12.0 + time * 0.6);
+            float sparkle = smoothstep(0.72, 1.0, sparkleField) * (0.35 + 0.25 * intensity);
 
-            float subtleGrain = sin((uv.x + uv.y) * 18.0 + time * 0.1) * 0.5 + 0.5;
-            col = mix(col, baseColor.rgb, 0.2 * (1.0 - subtleGrain));
+            float glowPulse = sin(time * 0.22) * 0.5 + 0.5;
+            float glowAmount = clamp((halo * (0.55 + glowPulse * 0.35) + verticalGlow * 0.3 + sparkle * 0.5) * intensity, 0.0, 1.0);
+            col = mix(col, glowColor.rgb, glowAmount);
 
-            col = mix(baseColor.rgb, col, 0.75);
+            float weave = noise(uv * vec2(22.0, 18.0) + vec2(0.0, time * 0.35));
+            col = mix(col, baseColor.rgb, (0.18 + 0.1 * (1.0 - ribbonLayer)) * (1.0 - weave));
+
+            col = mix(baseColor.rgb, col, 0.82);
             col = clamp(col, 0.0, 1.0);
 
             return vec4(col, baseColor.a) * color;
