@@ -362,13 +362,21 @@ registerEffect({
             float depth = smoothstep(0.0, 1.0, uv.y);
             float wave = sin((uv.x * 3.6 - uv.y * 1.4) + time * 0.22) * 0.5 + 0.5;
             float shafts = sin((uv.y * 2.4) - time * 0.18) * 0.5 + 0.5;
+            float causticA = sin((uv.x * 7.2 + uv.y * 2.8) + time * 0.35) * 0.5 + 0.5;
+            float causticB = sin((uv.x * 5.1 - uv.y * 5.4) - time * 0.28) * 0.5 + 0.5;
+            float caustics = clamp((causticA * 0.6 + causticB * 0.4), 0.0, 1.0);
 
             vec3 gradient = mix(baseColor.rgb, deepColor.rgb, depth * 0.7);
-            float highlight = clamp((wave * 0.45 + shafts * 0.32 + 0.1) * intensity, 0.0, 1.0);
+            float highlight = clamp((wave * 0.38 + shafts * 0.26 + caustics * 0.36 + 0.12) * intensity, 0.0, 1.0);
             vec3 col = mix(gradient, foamColor.rgb, highlight * 0.42);
 
             float ambient = clamp(0.12 + intensity * 0.3, 0.0, 0.42);
-            col = mix(col, mix(foamColor.rgb, deepColor.rgb, 0.4), ambient);
+            vec3 undertow = mix(foamColor.rgb, deepColor.rgb, 0.58);
+            col = mix(col, undertow, ambient * 0.9);
+
+            float seam = 1.0 - smoothstep(0.0, 0.18, abs(uv.y - 0.4));
+            vec3 seamColor = mix(foamColor.rgb, baseColor.rgb, 0.35);
+            col = mix(col, seamColor, seam * caustics * 0.24 * intensity);
 
             float vignette = smoothstep(0.42, 1.0, distance(uv, vec2(0.5)));
             col = mix(col, baseColor.rgb, vignette * 0.28);
