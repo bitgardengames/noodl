@@ -142,7 +142,7 @@ local function getHeartBasePoints()
     local minX, maxX = math.huge, -math.huge
     local minY, maxY = math.huge, -math.huge
 
-    for i = 0, segments do
+    for i = 0, segments - 1 do
         local t = (i / segments) * (2 * math.pi)
         local sinT = math.sin(t)
         local cosT = math.cos(t)
