@@ -134,11 +134,14 @@ local function drawHeartShape(x, y, size)
     love.graphics.circle("fill", x + quarter, y - quarter, radius, 16)
     love.graphics.polygon("fill", x - half, y - quarter, x, y + half, x + half, y - quarter)
 
-    love.graphics.setLineWidth(2)
+    local r, g, b, a = love.graphics.getColor()
+    love.graphics.setColor(0, 0, 0, a)
+    love.graphics.setLineWidth(3)
     love.graphics.circle("line", x - quarter, y - quarter, radius, 16)
     love.graphics.circle("line", x + quarter, y - quarter, radius, 16)
     love.graphics.polygon("line", x - half, y - quarter, x, y + half, x + half, y - quarter)
     love.graphics.setLineWidth(1)
+    love.graphics.setColor(r, g, b, a)
 end
 
 -- Button states
