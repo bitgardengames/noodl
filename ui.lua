@@ -132,6 +132,7 @@ end
 local heartBasePoints
 local heartVertexBuffer = {}
 local heartTriangles
+local heartMesh
 
 local function getHeartBasePoints()
     if heartBasePoints then
@@ -197,22 +198,59 @@ local function getHeartTriangles()
     return heartTriangles
 end
 
+local function getHeartMesh()
+    if heartMesh ~= nil then
+        return heartMesh
+    end
+
+    if not love.graphics or not love.graphics.newMesh then
+        heartMesh = false
+        return heartMesh
+    end
+
+    local triangles = getHeartTriangles()
+    local vertices = {}
+
+    for i = 1, #triangles do
+        local triangle = triangles[i]
+        for j = 1, #triangle, 2 do
+            local vx = triangle[j]
+            local vy = triangle[j + 1]
+            vertices[#vertices + 1] = { vx, vy, 0, 0, 1, 1, 1, 1 }
+        end
+    end
+
+    heartMesh = love.graphics.newMesh(vertices, "triangles", "static")
+    return heartMesh
+end
+
+local function drawHeartGeometry(x, y, size)
+    love.graphics.push()
+    love.graphics.translate(x, y)
+    love.graphics.scale(size, size)
+
+    local mesh = getHeartMesh()
+    if mesh then
+        love.graphics.draw(mesh)
+    else
+        local triangles = getHeartTriangles()
+        for i = 1, #triangles do
+            love.graphics.polygon("fill", triangles[i])
+        end
+    end
+
+    love.graphics.pop()
+end
+
 local function drawHeartShape(x, y, size)
     local basePoints = getHeartBasePoints()
-    local triangles = getHeartTriangles()
     local count = #basePoints
 
     local r, g, b, a = love.graphics.getColor()
 
     love.graphics.setColor(r, g, b, a)
 
-    love.graphics.push()
-    love.graphics.translate(x, y)
-    love.graphics.scale(size, size)
-    for i = 1, #triangles do
-        love.graphics.polygon("fill", triangles[i])
-    end
-    love.graphics.pop()
+    drawHeartGeometry(x, y, size)
 
     for i = 1, count, 2 do
         heartVertexBuffer[i] = x + basePoints[i] * size
@@ -224,6 +262,12 @@ local function drawHeartShape(x, y, size)
     end
 
     -- top-left highlight for a juicy look similar to fruits
+    love.graphics.stencil(function()
+        drawHeartGeometry(x, y, size)
+    end, "replace", 1)
+
+    love.graphics.setStencilTest("greater", 0)
+
     local highlight = lightenColor({r, g, b, a}, 0.6)
     local hx = x - size * 0.18
     local hy = y - size * 0.28
@@ -235,6 +279,8 @@ local function drawHeartShape(x, y, size)
     love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * 0.75)
     love.graphics.ellipse("fill", 0, 0, hrx, hry)
     love.graphics.pop()
+
+    love.graphics.setStencilTest()
 
     love.graphics.setColor(0, 0, 0, a)
     love.graphics.setLineWidth(3)
