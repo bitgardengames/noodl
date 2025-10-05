@@ -131,6 +131,7 @@ end
 
 local heartBasePoints
 local heartVertexBuffer = {}
+local heartTriangles
 
 local function getHeartBasePoints()
     if heartBasePoints then
@@ -176,9 +177,42 @@ local function getHeartBasePoints()
     return points
 end
 
+local function getHeartTriangles()
+    if heartTriangles then
+        return heartTriangles
+    end
+
+    if not love.math or not love.math.triangulate then
+        heartTriangles = { getHeartBasePoints() }
+        return heartTriangles
+    end
+
+    local basePoints = getHeartBasePoints()
+    local coords = {}
+    for i = 1, #basePoints do
+        coords[i] = basePoints[i]
+    end
+
+    heartTriangles = love.math.triangulate(coords)
+    return heartTriangles
+end
+
 local function drawHeartShape(x, y, size)
     local basePoints = getHeartBasePoints()
+    local triangles = getHeartTriangles()
     local count = #basePoints
+
+    local r, g, b, a = love.graphics.getColor()
+
+    love.graphics.setColor(r, g, b, a)
+
+    love.graphics.push()
+    love.graphics.translate(x, y)
+    love.graphics.scale(size, size)
+    for i = 1, #triangles do
+        love.graphics.polygon("fill", triangles[i])
+    end
+    love.graphics.pop()
 
     for i = 1, count, 2 do
         heartVertexBuffer[i] = x + basePoints[i] * size
@@ -188,11 +222,6 @@ local function drawHeartShape(x, y, size)
     for i = count + 1, #heartVertexBuffer do
         heartVertexBuffer[i] = nil
     end
-
-    local r, g, b, a = love.graphics.getColor()
-
-    love.graphics.setColor(r, g, b, a)
-    love.graphics.polygon("fill", heartVertexBuffer)
 
     -- top-left highlight for a juicy look similar to fruits
     local highlight = lightenColor({r, g, b, a}, 0.6)
