@@ -6,7 +6,13 @@ local Audio = require("audio")
 
 local Lasers = {}
 
+local LASERS_ENABLED = false
+
 local emitters = {}
+
+function Lasers:isEnabled()
+    return LASERS_ENABLED
+end
 
 Lasers.fireDurationMult = 1
 Lasers.fireDurationFlat = 0
@@ -305,6 +311,10 @@ local function computeBeamTarget(beam)
 end
 
 function Lasers:reflectBeam(beam, options)
+    if not LASERS_ENABLED then
+        return nil
+    end
+
     if not beam then
         return nil
     end
@@ -344,9 +354,17 @@ function Lasers:reset()
         releaseOccupancy(beam)
     end
     emitters = {}
+
+    if not LASERS_ENABLED then
+        return
+    end
 end
 
 function Lasers:spawn(x, y, dir, options)
+    if not LASERS_ENABLED then
+        return
+    end
+
     dir = dir or "horizontal"
     options = options or {}
 
@@ -393,6 +411,10 @@ function Lasers:spawn(x, y, dir, options)
 end
 
 function Lasers:update(dt)
+    if not LASERS_ENABLED then
+        return
+    end
+
     if dt <= 0 then
         return
     end
@@ -486,6 +508,10 @@ function Lasers:update(dt)
 end
 
 function Lasers:onShieldedHit(beam, hitX, hitY)
+    if not LASERS_ENABLED then
+        return
+    end
+
     if not beam then
         return
     end
@@ -530,12 +556,20 @@ local function baseBounds(beam)
 end
 
 function Lasers:applyTimingModifiers()
+    if not LASERS_ENABLED then
+        return
+    end
+
     for _, beam in ipairs(emitters) do
         recalcBeamTiming(beam, false)
     end
 end
 
 function Lasers:checkCollision(x, y, w, h)
+    if not LASERS_ENABLED then
+        return nil
+    end
+
     if not (x and y and w and h) then
         return nil
     end
@@ -831,6 +865,10 @@ local function drawEmitterBase(beam)
 end
 
 function Lasers:draw()
+    if not LASERS_ENABLED then
+        return
+    end
+
     if #emitters == 0 then
         return
     end
