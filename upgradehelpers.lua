@@ -13,27 +13,27 @@ end
 
 UpgradeHelpers.rarities = {
     common = {
-        weight = 60,
+        weight = 46,
         labelKey = "upgrades.rarities.common",
         color = {0.75, 0.82, 0.88, 1},
     },
     uncommon = {
-        weight = 32,
+        weight = 30,
         labelKey = "upgrades.rarities.uncommon",
         color = {0.55, 0.78, 0.58, 1},
     },
     rare = {
-        weight = 10,
+        weight = 16,
         labelKey = "upgrades.rarities.rare",
         color = {0.54, 0.72, 0.96, 1},
     },
     epic = {
-        weight = 2.8,
+        weight = 5.2,
         labelKey = "upgrades.rarities.epic",
         color = {0.76, 0.56, 0.88, 1},
     },
     legendary = {
-        weight = 0.5,
+        weight = 1.4,
         labelKey = "upgrades.rarities.legendary",
         color = {1, 0.66, 0.32, 1},
     },

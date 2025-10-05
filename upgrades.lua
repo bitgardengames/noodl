@@ -2588,12 +2588,14 @@ function Upgrades:applyPersistentEffects(rebaseline)
     end
 end
 
-local SHOP_PITY_MAX = 4
+local SHOP_PITY_MAX = 5
 local SHOP_PITY_RARITY_BONUS = {
-    rare = 0.18,
-    epic = 0.3,
-    legendary = 0.45,
+    rare = 0.24,
+    epic = 0.4,
+    legendary = 0.65,
 }
+
+local LEGENDARY_PITY_THRESHOLD = 5
 
 local SHOP_PITY_RARITY_RANK = {
     common = 1,
@@ -2770,6 +2772,62 @@ function Upgrades:getRandom(n, context)
         else
             local counter = (state.counters.shopBadLuck or 0) + 1
             state.counters.shopBadLuck = math.min(counter, SHOP_PITY_MAX)
+        end
+
+        local legendaryUnlocked = MetaProgression and MetaProgression.isTagUnlocked and MetaProgression:isTagUnlocked("legendary")
+        if legendaryUnlocked then
+            local hasLegendary = false
+            for _, card in ipairs(cards) do
+                if card.rarity == "legendary" then
+                    hasLegendary = true
+                    break
+                end
+            end
+
+            if hasLegendary then
+                state.counters.legendaryBadLuck = 0
+            else
+                local legendaryCounter = (state.counters.legendaryBadLuck or 0) + 1
+                if legendaryCounter >= LEGENDARY_PITY_THRESHOLD then
+                    local legendaryChoices = {}
+                    for _, upgrade in ipairs(pool) do
+                        if upgrade.rarity == "legendary" and self:canOffer(upgrade, context, false) then
+                            table.insert(legendaryChoices, decorateCard(upgrade))
+                        end
+                    end
+                    if #legendaryChoices == 0 then
+                        for _, upgrade in ipairs(pool) do
+                            if upgrade.rarity == "legendary" and self:canOffer(upgrade, context, true) then
+                                table.insert(legendaryChoices, decorateCard(upgrade))
+                            end
+                        end
+                    end
+
+                    if #legendaryChoices > 0 then
+                        local replacementIndex
+                        local lowestRank
+                        for index, card in ipairs(cards) do
+                            local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
+                            if not replacementIndex or rank < lowestRank then
+                                replacementIndex = index
+                                lowestRank = rank
+                            end
+                        end
+
+                        if replacementIndex then
+                            cards[replacementIndex] = legendaryChoices[love.math.random(1, #legendaryChoices)]
+                        else
+                            table.insert(cards, legendaryChoices[love.math.random(1, #legendaryChoices)])
+                        end
+
+                        legendaryCounter = 0
+                    end
+                end
+
+                state.counters.legendaryBadLuck = math.min(legendaryCounter, LEGENDARY_PITY_THRESHOLD)
+            end
+        else
+            state.counters.legendaryBadLuck = nil
         end
     end
 
