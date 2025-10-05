@@ -76,39 +76,6 @@ local function aabb(ax, ay, aw, ah, bx, by, bw, bh)
                    ay < by + bh and ay + ah > by
 end
 
-local function pushAwayFromCorner(clampedX, clampedY, left, right, top, bottom)
-        local detectionMargin = math.max(2, (Arena.tileSize or 0) * 0.15)
-        local nudgeAmount = math.max(2, (Arena.tileSize or 0) * 0.25)
-
-        local nearLeft = clampedX - left <= detectionMargin
-        local nearRight = right - clampedX <= detectionMargin
-        local nearTop = clampedY - top <= detectionMargin
-        local nearBottom = bottom - clampedY <= detectionMargin
-
-        if not ((nearLeft or nearRight) and (nearTop or nearBottom)) then
-                return nil, nil, clampedX, clampedY
-        end
-
-        local dirX = 0
-        if nearLeft then
-                dirX = 1
-        elseif nearRight then
-                dirX = -1
-        end
-
-        local dirY = 0
-        if nearTop then
-                dirY = 1
-        elseif nearBottom then
-                dirY = -1
-        end
-
-        local adjustedX = math.max(left + nudgeAmount, math.min(right - nudgeAmount, clampedX + dirX * nudgeAmount))
-        local adjustedY = math.max(top + nudgeAmount, math.min(bottom - nudgeAmount, clampedY + dirY * nudgeAmount))
-
-        return dirX, dirY, adjustedX, adjustedY
-end
-
 local function rerouteAlongWall(headX, headY)
         local ax, ay, aw, ah = Arena:getBounds()
         local inset = Arena.tileSize / 2
@@ -120,60 +87,158 @@ local function rerouteAlongWall(headX, headY)
         local clampedX = math.max(left + 1, math.min(right - 1, headX or left))
         local clampedY = math.max(top + 1, math.min(bottom - 1, headY or top))
 
-        local distances = {
-                left = math.abs((headX or clampedX) - left),
-                right = math.abs((headX or clampedX) - right),
-                top = math.abs((headY or clampedY) - top),
-                bottom = math.abs((headY or clampedY) - bottom),
-        }
-
-        local side = "left"
-        local minDist = distances.left
-        for key, value in pairs(distances) do
-                if value < minDist then
-                        minDist = value
-                        side = key
-                end
-        end
+        local hitLeft = (headX or clampedX) <= left
+        local hitRight = (headX or clampedX) >= right
+        local hitTop = (headY or clampedY) <= top
+        local hitBottom = (headY or clampedY) >= bottom
 
         local dir = Snake:getDirection() or { x = 0, y = 0 }
         local newDirX, newDirY = dir.x or 0, dir.y or 0
-        local centerX = ax + aw / 2
-        local centerY = ay + ah / 2
 
-        local function towardCenter(delta)
-                if delta < 0 then return 1 end
-                if delta > 0 then return -1 end
-                return 1
+        local function fallbackVertical()
+                if dir.y and dir.y ~= 0 then
+                        return dir.y > 0 and 1 or -1
+                end
+                local centerY = ay + ah / 2
+                if clampedY <= centerY then
+                        return 1
+                end
+                return -1
         end
 
-        if side == "left" or side == "right" then
-                newDirX = 0
-                if newDirY == 0 then
-                        newDirY = towardCenter(clampedY - centerY)
+        local function fallbackHorizontal()
+                if dir.x and dir.x ~= 0 then
+                        return dir.x > 0 and 1 or -1
+                end
+                local centerX = ax + aw / 2
+                if clampedX <= centerX then
+                        return 1
+                end
+                return -1
+        end
+
+        local collidedHorizontal = hitLeft or hitRight
+        local collidedVertical = hitTop or hitBottom
+        local horizontalDominant = math.abs(dir.x or 0) >= math.abs(dir.y or 0)
+
+        if collidedHorizontal and collidedVertical then
+                if horizontalDominant then
+                        newDirX = 0
+                        local slide = fallbackVertical()
+                        if hitTop and slide < 0 then
+                                slide = 1
+                        elseif hitBottom and slide > 0 then
+                                slide = -1
+                        end
+                        newDirY = slide
                 else
-                        newDirY = newDirY > 0 and 1 or -1
+                        newDirY = 0
+                        local slide = fallbackHorizontal()
+                        if hitLeft and slide < 0 then
+                                slide = 1
+                        elseif hitRight and slide > 0 then
+                                slide = -1
+                        end
+                        newDirX = slide
                 end
         else
-                newDirY = 0
-                if newDirX == 0 then
-                        newDirX = towardCenter(clampedX - centerX)
-                else
-                        newDirX = newDirX > 0 and 1 or -1
+                if collidedHorizontal then
+                        newDirX = 0
+                        local slide = fallbackVertical()
+                        if hitTop and slide < 0 then
+                                slide = 1
+                        elseif hitBottom and slide > 0 then
+                                slide = -1
+                        end
+                        newDirY = slide
+                end
+
+                if collidedVertical then
+                        newDirY = 0
+                        local slide = fallbackHorizontal()
+                        if hitLeft and slide < 0 then
+                                slide = 1
+                        elseif hitRight and slide > 0 then
+                                slide = -1
+                        end
+                        newDirX = slide
                 end
         end
 
-        local cornerDirX, cornerDirY
-        cornerDirX, cornerDirY, clampedX, clampedY = pushAwayFromCorner(clampedX, clampedY, left, right, top, bottom)
-        if cornerDirX and cornerDirY then
-                newDirX = cornerDirX
-                newDirY = cornerDirY
+        if newDirX == 0 and newDirY == 0 then
+                if hitLeft and not hitRight then
+                        newDirX = 1
+                elseif hitRight and not hitLeft then
+                        newDirX = -1
+                elseif hitTop and not hitBottom then
+                        newDirY = 1
+                elseif hitBottom and not hitTop then
+                        newDirY = -1
+                else
+                        if dir.x and dir.x ~= 0 then
+                                newDirX = dir.x > 0 and 1 or -1
+                        elseif dir.y and dir.y ~= 0 then
+                                newDirY = dir.y > 0 and 1 or -1
+                        else
+                                newDirY = 1
+                        end
+                end
         end
 
         Snake:setHeadPosition(clampedX, clampedY)
         Snake:setDirectionVector(newDirX, newDirY)
 
         return Snake:getHead()
+end
+
+local function calculateRockBounceDirection(dx, dy)
+        dx = dx or 0
+        dy = dy or 0
+
+        local dir = Snake.getDirection and Snake:getDirection() or { x = 0, y = 0 }
+        local absDx = math.abs(dx)
+        local absDy = math.abs(dy)
+
+        local function normalizeSign(value, fallback)
+                if value > 0 then
+                        return 1
+                elseif value < 0 then
+                        return -1
+                end
+                if fallback and fallback ~= 0 then
+                        return fallback > 0 and 1 or -1
+                end
+                return 0
+        end
+
+        if absDx > absDy then
+                local vertical = normalizeSign(dy, dir.y)
+                if vertical == 0 then
+                        vertical = 1
+                end
+                return 0, vertical
+        elseif absDy > absDx then
+                local horizontal = normalizeSign(dx, dir.x)
+                if horizontal == 0 then
+                        horizontal = 1
+                end
+                return horizontal, 0
+        end
+
+        local dominantX = math.abs(dir.x or 0) >= math.abs(dir.y or 0)
+        if dominantX then
+                local vertical = normalizeSign(dir.y or 0, 1)
+                if vertical == 0 then
+                        vertical = 1
+                end
+                return 0, vertical
+        end
+
+        local horizontal = normalizeSign(dir.x or 0, 1)
+        if horizontal == 0 then
+                horizontal = 1
+        end
+        return horizontal, 0
 end
 
 local function clamp(value, min, max)
@@ -409,6 +474,14 @@ local function handleRockCollision(headX, headY)
 
                                 if not shielded then
                                         return "hit", "rock", context
+                                end
+
+                                local bounceDirX, bounceDirY = calculateRockBounceDirection(dx, dy)
+                                if bounceDirX ~= 0 or bounceDirY ~= 0 then
+                                        context.pushX = bounceDirX * pushDist
+                                        context.pushY = bounceDirY * pushDist
+                                        context.dirX = bounceDirX
+                                        context.dirY = bounceDirY
                                 end
 
                                 context.damage = 0
