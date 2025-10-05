@@ -400,14 +400,6 @@ local english = {
                 description = "Every two broken crash shields forge a fresh one.",
                 reforged = "Aegis Reforged",
             },
-            saw_grease = {
-                name = "Saw Molasses",
-                description = "Saws move 20% slower.",
-            },
-            hydraulic_tracks = {
-                name = "Hydraulic Tracks",
-                description = "Each fruit retracts saws for 0.5s plus 0.5s per stack.",
-            },
             extra_bite = {
                 name = "Extra Bite",
                 description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
@@ -443,20 +435,6 @@ local english = {
                 name = "Mapmaker's Compass",
                 description = "The exit unlocks one fruit earlier.",
             },
-            linked_hydraulics = {
-                name = "Linked Hydraulics",
-                description = "Hydraulic Tracks gain +1.5s sink time per stack and +0.5s for each second of saw stall duration you have.",
-            },
-            twilight_parade = {
-                name = "Twilight Parade",
-                description = "Fruit at combo 4 or higher grant +2 bonus score and stall saws for 0.8s.",
-                combo_bonus = "Twilight Parade +2",
-            },
-            chromatic_pantry = {
-                name = "Chromatic Pantry",
-                description = "Collecting a different fruit than last time grants +1 bonus score and stalls saws for 0.5s.",
-                celebration = "Chromatic Bonus",
-            },
             lucky_bite = {
                 name = "Lucky Bite",
                 description = "Each fruit grants +1 bonus score.",
@@ -486,6 +464,11 @@ local english = {
                 description = "Breaking a crash shield grants +3 bonus score and stalls saws for 1s.",
                 activation_text = "Mirrored Rebound",
             },
+            arc_conductor = {
+                name = "Arc Conductor",
+                description = "Blocking a laser overloads dart launchers, jamming them briefly and granting +1 bonus score (+1 per additional copy).",
+                activation_text = "Arc Feedback",
+            },
             mirrored_scales = {
                 name = "Mirrored Scales",
                 description = "Blocking a laser makes it fire back the other way after a quick recharge and grants +2 bonus score (+1 per additional copy).",
@@ -498,6 +481,11 @@ local english = {
             resonant_shell = {
                 name = "Resonant Shell",
                 description = "Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own.",
+            },
+            scarlet_censer = {
+                name = "Scarlet Censer",
+                description = "Each floor, dart strikes on your shield restore health or forge a crash shield up to your copies while jamming dart launchers.",
+                activation_text = "Scarlet Reprieve",
             },
             prism_lock = {
                 name = "Prism Lock",
@@ -513,9 +501,16 @@ local english = {
                 description = "Every fifth fruit grants +3 bonus score.",
                 combo_bonus = "Gilded Trail +3",
             },
-            momentum_cache = {
-                name = "Momentum Cache",
-                description = "Combo finishers grant +1 bonus score per link. Saws move 5% faster.",
+            rattle_gambit = {
+                name = "Rattle Gambit",
+                description = "Collect five fruit in a row without losing a shield to jam darts for a moment and gain +2 bonus score (+1 per additional copy).",
+                activation_text = "Gambit Rattle",
+            },
+            pulse_bloom = {
+                name = "Pulse Bloom",
+                description = "Harvest a handful of distinct fruit to restore 1 health; if you're already full, forge a crash shield instead.",
+                heal_text = "Blooming Vitality",
+                shield_text = "Blooming Guard",
             },
             aurora_band = {
                 name = "Aurora Band",
@@ -575,20 +570,12 @@ local english = {
             },
             grim_reliquary = {
                 name = "Grim Reliquary",
-                description = "Saw tracks stall for +0.6s after each fruit. Saws move 10% faster.",
+                description = "Dart impacts against your shield store souls; cash them in for a heal or crash shield while jamming dart launchers.",
+                activation_text = "Reliquary Unbound",
             },
-            relentless_pursuit = {
-                name = "Relentless Pursuit",
-                description = "Saws move 15% faster. They stall for +1.5s after each fruit.",
-            },
-            ember_engine = {
-                name = "Ember Engine",
-                description = "The first fruit each floor stalls saws for 3s and erupts sparks.",
-            },
-            tempest_nectar = {
-                name = "Tempest Nectar",
-                description = "Each fruit grants +1 bonus score and stalls saws for 0.6s.",
-                combo_bonus = "Tempest Nectar +1",
+            abyssal_catalyst = {
+                name = "Abyssal Catalyst",
+                description = "+1 max health and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
             },
             spectral_harvest = {
                 name = "Spectral Harvest",
