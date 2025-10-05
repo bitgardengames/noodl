@@ -46,11 +46,11 @@ local Floors = {
         name = "Echoing Caverns",
         flavor = "Echoes promise sweeter bites deeper in. Noodl slithers on, belly rumbling.",
         palette = {
-            bgColor    = {0.09, 0.11, 0.2, 1},   -- deeper indigo backdrop
-            arenaBG    = {0.14, 0.18, 0.3, 1},   -- cooler slate with teal tint
-            arenaBorder= {0.38, 0.36, 0.68, 1},  -- luminous violet-blue edge
-            snake      = {0.32, 0.78, 0.92, 1},  -- crisp glacial teal body
-            rock       = {0.28, 0.46, 0.66, 1},  -- saturated steel-blue highlights
+            bgColor    = {0.07, 0.09, 0.14, 1},   -- dim midnight backdrop
+            arenaBG    = {0.12, 0.16, 0.24, 1},   -- misty navy floor
+            arenaBorder= {0.47, 0.33, 0.58, 1},   -- humming amethyst rim
+            snake      = {0.78, 0.86, 0.98, 1},   -- moonlit frost scales
+            rock       = {0.36, 0.52, 0.62, 1},   -- cool slate with silver luster
         },
         backgroundEffect = {
             type = "softCavern",
