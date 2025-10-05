@@ -22,7 +22,6 @@ local pendingDir = { x = 1, y = 0 }
 local trail = {}
 local descendingHole = nil
 local segmentCount = 1
-local reverseControls = false
 local popTimer = 0
 local isDead = false
 local fruitsSinceLastTurn = 0
@@ -748,11 +747,9 @@ function Snake:load(w, h)
     direction = { x = 1, y = 0 }
     pendingDir = { x = 1, y = 0 }
     segmentCount = 1
-    reverseControls = false
     popTimer = 0
     moveProgress = 0
     isDead = false
-    self.reverseState = false
     self.shieldFlashTimer = 0
     self.hazardGraceTimer = 0
     trail = buildInitialTrail()
@@ -765,13 +762,9 @@ local function getUpgradesModule()
     return package.loaded["upgrades"]
 end
 
-function Snake:setReverseControls(state)
-    reverseControls = state
-end
-
 function Snake:setDirection(name)
     if not isDead then
-        pendingDir = SnakeUtils.calculateDirection(direction, name, reverseControls)
+        pendingDir = SnakeUtils.calculateDirection(direction, name)
     end
 end
 

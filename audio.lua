@@ -69,24 +69,6 @@ function Audio:load()
     self:applyVolumes()
 end
 
-Audio.soundDesignNotes = {
-    death = "Short, heavy failure sting with a crunchy impact to sell the snake's demise.",
-    exit_spawn = "Gentle magical chime that signals the exit portal appearing nearby.",
-    exit_enter = "Deep whoosh or portal suction to reinforce diving into the exit.",
-    floor_advance = "Upbeat arpeggio or rising tone to celebrate clearing a floor.",
-    floor_intro = "Soft swell or drum hit that sets the tone for the new floor intro card.",
-    shop_open = "Friendly bell or door chime that implies entering the shop.",
-    shop_focus = "Gentle flourish as the cursor glides over a relic choice.",
-    shop_card_deal = "Light card slide as the relic options are dealt onto the table.",
-    shop_card_select = "Subtle flip as you commit to a relic pick.",
-    shop_purchase = "Burst of coins confirming an upgrade purchase.",
-    goal_reached = "Triumphant swell to celebrate filling the fruit goal.",
-    wall_portal = "Gentle shimmer hinting at slipping through the arena wall.",
-    shield_wall = "Firm magical rebound when a shield saves you from the arena edge.",
-    shield_rock = "Crunchy crack as the shield pulverizes a rock.",
-    shield_saw = "Arcane whoosh to sell deflecting a spinning saw.",
-}
-
 function Audio:applyVolumes()
     for _, track in pairs(self.musicTracks) do
         track:setVolume(Settings.muteMusic and 0 or Settings.musicVolume)
