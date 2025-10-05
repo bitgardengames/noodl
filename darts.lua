@@ -42,6 +42,14 @@ local function getLauncherColors()
     return body, accent
 end
 
+local function getDartColors(accent)
+    local shaft = Theme.dartShaftColor or {0.82, 0.84, 0.88, 1}
+    local highlight = Theme.dartHighlightColor or {1, 1, 1, 0.65}
+    local fletching = Theme.dartFletchingColor or {0.24, 0.26, 0.32, 0.95}
+    local tip = Theme.dartTipColor or {accent[1], accent[2], accent[3], 1}
+    return shaft, highlight, fletching, tip
+end
+
 local function getArenaLimits(dir, facing)
     local ax, ay, aw, ah = Arena:getBounds()
     local inset = (Arena.tileSize or 24) * 0.5
@@ -405,26 +413,44 @@ local function drawTelegraph(launcher, bodyColor, accentColor)
 
     love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], glowAlpha)
 
+    local tipAdvance = 12
+    local shaftLength = 18
+    local shaftThickness = DART_THICKNESS * 0.6
+
     if launcher.dir == "horizontal" then
         local dir = launcher.dirX >= 0 and 1 or -1
-        local tipX = launcher.startX - dir * (1 - progress) * 8
-        local startX = tipX - dir * 8
-        local endX = tipX + dir * 4
-        local rectX = math.min(startX, endX)
-        local rectW = math.abs(endX - startX)
-        love.graphics.rectangle("fill", rectX, launcher.y - DART_THICKNESS * 0.5, rectW, DART_THICKNESS)
+        local tipX = launcher.startX - dir * (1 - progress) * tipAdvance
+        local baseX = tipX - dir * shaftLength
+        local shaftX = math.min(baseX, tipX)
+        local shaftW = math.abs(tipX - baseX)
+
+        love.graphics.rectangle("fill", shaftX, launcher.y - shaftThickness * 0.5, shaftW, shaftThickness)
+
+        love.graphics.polygon("fill",
+            tipX, launcher.y,
+            tipX - dir * 8, launcher.y - DART_THICKNESS * 0.8,
+            tipX - dir * 8, launcher.y + DART_THICKNESS * 0.8
+        )
     else
         local dir = launcher.dirY >= 0 and 1 or -1
-        local tipY = launcher.startY - dir * (1 - progress) * 8
-        local startY = tipY - dir * 8
-        local endY = tipY + dir * 4
-        local rectY = math.min(startY, endY)
-        local rectH = math.abs(endY - startY)
-        love.graphics.rectangle("fill", launcher.x - DART_THICKNESS * 0.5, rectY, DART_THICKNESS, rectH)
+        local tipY = launcher.startY - dir * (1 - progress) * tipAdvance
+        local baseY = tipY - dir * shaftLength
+        local shaftY = math.min(baseY, tipY)
+        local shaftH = math.abs(tipY - baseY)
+
+        love.graphics.rectangle("fill", launcher.x - shaftThickness * 0.5, shaftY, shaftThickness, shaftH)
+
+        love.graphics.polygon("fill",
+            launcher.x, tipY,
+            launcher.x - DART_THICKNESS * 0.8, tipY - dir * 8,
+            launcher.x + DART_THICKNESS * 0.8, tipY - dir * 8
+        )
     end
 
-    love.graphics.setColor(1, 1, 1, glowAlpha * 0.6)
-    love.graphics.circle("fill", launcher.holeX, launcher.holeY, HOLE_RADIUS * clamp01(progress * 0.8))
+    love.graphics.setColor(1, 1, 1, glowAlpha * 0.5)
+    love.graphics.circle("line", launcher.holeX, launcher.holeY, HOLE_RADIUS * clamp01(progress * 0.75))
+    love.graphics.setColor(1, 1, 1, glowAlpha * 0.35)
+    love.graphics.circle("fill", launcher.holeX, launcher.holeY, HOLE_RADIUS * clamp01(progress * 0.4))
 end
 
 local function drawProjectile(launcher, accentColor)
@@ -434,54 +460,94 @@ local function drawProjectile(launcher, accentColor)
     end
 
     local dirX, dirY = projectile.dirX, projectile.dirY
-    love.graphics.setColor(accentColor)
+    local shaftColor, highlightColor, fletchingColor, tipColor = getDartColors(accentColor)
+    local shaftThickness = DART_THICKNESS * 0.75
+    local tipLength = 12
+    local fletchingSize = 6
 
     if dirX ~= 0 then
-        local left = math.min(projectile.baseX, projectile.tipX)
-        local width = math.abs(projectile.tipX - projectile.baseX)
-        love.graphics.rectangle("fill", left, projectile.tipY - DART_THICKNESS * 0.5, width, DART_THICKNESS)
-
-        local tipWidth = 10
-        local tipHeight = DART_THICKNESS * 0.75
-        if dirX > 0 then
-            love.graphics.polygon("fill",
-                projectile.tipX + 2, projectile.tipY,
-                projectile.tipX - tipWidth, projectile.tipY - tipHeight,
-                projectile.tipX - tipWidth, projectile.tipY + tipHeight
-            )
+        local dir = dirX >= 0 and 1 or -1
+        local baseX = projectile.baseX
+        local tipX = projectile.tipX
+        local shaftEndX = tipX - dir * tipLength
+        if dir > 0 then
+            shaftEndX = math.max(shaftEndX, baseX)
         else
-            love.graphics.polygon("fill",
-                projectile.tipX - 2, projectile.tipY,
-                projectile.tipX + tipWidth, projectile.tipY - tipHeight,
-                projectile.tipX + tipWidth, projectile.tipY + tipHeight
-            )
+            shaftEndX = math.min(shaftEndX, baseX)
         end
+
+        local shaftX = math.min(baseX, shaftEndX)
+        local shaftW = math.abs(shaftEndX - baseX)
+
+        love.graphics.setColor(shaftColor)
+        if shaftW > 0 then
+            love.graphics.rectangle("fill", shaftX, projectile.tipY - shaftThickness * 0.5, shaftW, shaftThickness)
+
+            love.graphics.setColor(highlightColor)
+            love.graphics.rectangle("fill", shaftX, projectile.tipY - shaftThickness * 0.5, shaftW, shaftThickness * 0.35)
+        end
+
+        love.graphics.setColor(fletchingColor)
+        local fletchX = baseX - dir * 2
+        love.graphics.polygon("fill",
+            fletchX, projectile.tipY,
+            fletchX - dir * fletchingSize, projectile.tipY - DART_THICKNESS * 0.9,
+            fletchX - dir * fletchingSize, projectile.tipY + DART_THICKNESS * 0.9
+        )
+
+        love.graphics.setColor(tipColor)
+        love.graphics.polygon("fill",
+            tipX + dir * 2, projectile.tipY,
+            tipX - dir * tipLength, projectile.tipY - DART_THICKNESS,
+            tipX - dir * tipLength, projectile.tipY + DART_THICKNESS
+        )
     else
         local top = math.min(projectile.baseY, projectile.tipY)
         local height = math.abs(projectile.tipY - projectile.baseY)
-        love.graphics.rectangle("fill", projectile.tipX - DART_THICKNESS * 0.5, top, DART_THICKNESS, height)
-
-        local tipWidth = DART_THICKNESS * 0.75
-        local tipHeight = 10
-        if dirY > 0 then
-            love.graphics.polygon("fill",
-                projectile.tipX, projectile.tipY + 2,
-                projectile.tipX - tipWidth, projectile.tipY - tipHeight,
-                projectile.tipX + tipWidth, projectile.tipY - tipHeight
-            )
+        local dir = dirY >= 0 and 1 or -1
+        local baseY = projectile.baseY
+        local tipY = projectile.tipY
+        local shaftEndY = tipY - dir * tipLength
+        if dir > 0 then
+            shaftEndY = math.max(shaftEndY, baseY)
         else
-            love.graphics.polygon("fill",
-                projectile.tipX, projectile.tipY - 2,
-                projectile.tipX - tipWidth, projectile.tipY + tipHeight,
-                projectile.tipX + tipWidth, projectile.tipY + tipHeight
-            )
+            shaftEndY = math.min(shaftEndY, baseY)
         end
+
+        local shaftY = math.min(baseY, shaftEndY)
+        local shaftH = math.abs(shaftEndY - baseY)
+
+        love.graphics.setColor(shaftColor)
+        if shaftH > 0 then
+            love.graphics.rectangle("fill", projectile.tipX - shaftThickness * 0.5, shaftY, shaftThickness, shaftH)
+
+            love.graphics.setColor(highlightColor)
+            love.graphics.rectangle("fill", projectile.tipX - shaftThickness * 0.5, shaftY, shaftThickness * 0.35, shaftH)
+        end
+
+        love.graphics.setColor(fletchingColor)
+        local fletchY = baseY - dir * 2
+        love.graphics.polygon("fill",
+            projectile.tipX, fletchY,
+            projectile.tipX - DART_THICKNESS * 0.9, fletchY - dir * fletchingSize,
+            projectile.tipX + DART_THICKNESS * 0.9, fletchY - dir * fletchingSize
+        )
+
+        love.graphics.setColor(tipColor)
+        love.graphics.polygon("fill",
+            projectile.tipX, tipY + dir * 2,
+            projectile.tipX - DART_THICKNESS, tipY - dir * tipLength,
+            projectile.tipX + DART_THICKNESS, tipY - dir * tipLength
+        )
     end
 end
 
 local function drawHole(launcher, bodyColor)
     love.graphics.setColor(bodyColor)
     love.graphics.circle("fill", launcher.holeX, launcher.holeY, HOLE_RADIUS)
+
+    love.graphics.setColor(1, 1, 1, 0.15)
+    love.graphics.circle("fill", launcher.holeX - launcher.dirX * 2, launcher.holeY - launcher.dirY * 2, HOLE_RADIUS * 0.6)
 
     love.graphics.setColor(0, 0, 0, 0.75)
     love.graphics.setLineWidth(3)
