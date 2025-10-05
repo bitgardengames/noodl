@@ -194,6 +194,19 @@ local function drawHeartShape(x, y, size)
     love.graphics.setColor(r, g, b, a)
     love.graphics.polygon("fill", heartVertexBuffer)
 
+    -- top-left highlight for a juicy look similar to fruits
+    local highlight = lightenColor({r, g, b, a}, 0.6)
+    local hx = x - size * 0.18
+    local hy = y - size * 0.28
+    local hrx = size * 0.46
+    local hry = size * 0.34
+    love.graphics.push()
+    love.graphics.translate(hx, hy)
+    love.graphics.rotate(-0.35)
+    love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * 0.75)
+    love.graphics.ellipse("fill", 0, 0, hrx, hry)
+    love.graphics.pop()
+
     love.graphics.setColor(0, 0, 0, a)
     love.graphics.setLineWidth(3)
     love.graphics.polygon("line", heartVertexBuffer)
