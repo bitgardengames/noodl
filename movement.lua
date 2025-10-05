@@ -191,54 +191,122 @@ local function rerouteAlongWall(headX, headY)
         return Snake:getHead()
 end
 
-local function calculateRockBounceDirection(dx, dy)
-        dx = dx or 0
-        dy = dy or 0
+local function rerouteAroundRock(headX, headY, rock)
+        if not rock then
+                return 0, 0
+        end
+
+        local headSize = SEGMENT_SIZE
+        local headCenterX = (headX or 0) + headSize / 2
+        local headCenterY = (headY or 0) + headSize / 2
+        local rockCenterX = (rock.x or 0) + (rock.w or headSize) / 2
+        local rockCenterY = (rock.y or 0) + (rock.h or headSize) / 2
 
         local dir = Snake.getDirection and Snake:getDirection() or { x = 0, y = 0 }
+
+        local dx = headCenterX - rockCenterX
+        local dy = headCenterY - rockCenterY
         local absDx = math.abs(dx)
         local absDy = math.abs(dy)
 
-        local function normalizeSign(value, fallback)
-                if value > 0 then
+        local function fallbackVertical()
+                if dir.y and dir.y ~= 0 then
+                        return dir.y > 0 and 1 or -1
+                end
+                if headCenterY <= rockCenterY then
                         return 1
-                elseif value < 0 then
-                        return -1
                 end
-                if fallback and fallback ~= 0 then
-                        return fallback > 0 and 1 or -1
-                end
-                return 0
+                return -1
         end
 
-        if absDx > absDy then
-                local vertical = normalizeSign(dy, dir.y)
-                if vertical == 0 then
-                        vertical = 1
+        local function fallbackHorizontal()
+                if dir.x and dir.x ~= 0 then
+                        return dir.x > 0 and 1 or -1
                 end
-                return 0, vertical
-        elseif absDy > absDx then
-                local horizontal = normalizeSign(dx, dir.x)
-                if horizontal == 0 then
-                        horizontal = 1
+                if headCenterX <= rockCenterX then
+                        return 1
                 end
-                return horizontal, 0
+                return -1
         end
 
-        local dominantX = math.abs(dir.x or 0) >= math.abs(dir.y or 0)
-        if dominantX then
-                local vertical = normalizeSign(dir.y or 0, 1)
-                if vertical == 0 then
-                        vertical = 1
+        local hitLeft = absDx >= absDy and headCenterX <= rockCenterX
+        local hitRight = absDx >= absDy and headCenterX >= rockCenterX
+        local hitTop = absDy >= absDx and headCenterY <= rockCenterY
+        local hitBottom = absDy >= absDx and headCenterY >= rockCenterY
+
+        local collidedHorizontal = hitLeft or hitRight
+        local collidedVertical = hitTop or hitBottom
+        local horizontalDominant = math.abs(dir.x or 0) >= math.abs(dir.y or 0)
+
+        local newDirX, newDirY = dir.x or 0, dir.y or 0
+
+        if collidedHorizontal and collidedVertical then
+                if horizontalDominant then
+                        newDirX = 0
+                        local slide = fallbackVertical()
+                        if hitTop and slide < 0 then
+                                slide = 1
+                        elseif hitBottom and slide > 0 then
+                                slide = -1
+                        end
+                        newDirY = slide
+                else
+                        newDirY = 0
+                        local slide = fallbackHorizontal()
+                        if hitLeft and slide < 0 then
+                                slide = 1
+                        elseif hitRight and slide > 0 then
+                                slide = -1
+                        end
+                        newDirX = slide
                 end
-                return 0, vertical
+        else
+                if collidedHorizontal then
+                        newDirX = 0
+                        local slide = fallbackVertical()
+                        if hitTop and slide < 0 then
+                                slide = 1
+                        elseif hitBottom and slide > 0 then
+                                slide = -1
+                        end
+                        newDirY = slide
+                end
+
+                if collidedVertical then
+                        newDirY = 0
+                        local slide = fallbackHorizontal()
+                        if hitLeft and slide < 0 then
+                                slide = 1
+                        elseif hitRight and slide > 0 then
+                                slide = -1
+                        end
+                        newDirX = slide
+                end
         end
 
-        local horizontal = normalizeSign(dir.x or 0, 1)
-        if horizontal == 0 then
-                horizontal = 1
+        if newDirX == 0 and newDirY == 0 then
+                if hitLeft and not hitRight then
+                        newDirX = 1
+                elseif hitRight and not hitLeft then
+                        newDirX = -1
+                elseif hitTop and not hitBottom then
+                        newDirY = 1
+                elseif hitBottom and not hitTop then
+                        newDirY = -1
+                else
+                        if dir.x and dir.x ~= 0 then
+                                newDirX = dir.x > 0 and 1 or -1
+                        elseif dir.y and dir.y ~= 0 then
+                                newDirY = dir.y > 0 and 1 or -1
+                        else
+                                newDirY = 1
+                        end
+                end
         end
-        return horizontal, 0
+
+        Snake:setDirectionVector(newDirX, newDirY)
+
+        return newDirX, newDirY
 end
 
 local function clamp(value, min, max)
@@ -452,8 +520,10 @@ local function handleRockCollision(headX, headY)
                                         Snake:onDashBreakRock(centerX, centerY)
                                 end
                         else
-                                local dx = (headX or centerX) - centerX
-                                local dy = (headY or centerY) - centerY
+                                local headCenterX = (headX or centerX) + SEGMENT_SIZE / 2
+                                local headCenterY = (headY or centerY) + SEGMENT_SIZE / 2
+                                local dx = headCenterX - centerX
+                                local dy = headCenterY - centerY
                                 local dist = math.sqrt(dx * dx + dy * dy)
                                 local pushDist = SEGMENT_SIZE * 1.1
                                 local pushX, pushY = 0, 0
@@ -476,12 +546,15 @@ local function handleRockCollision(headX, headY)
                                         return "hit", "rock", context
                                 end
 
-                                local bounceDirX, bounceDirY = calculateRockBounceDirection(dx, dy)
-                                if bounceDirX ~= 0 or bounceDirY ~= 0 then
-                                        context.pushX = bounceDirX * pushDist
-                                        context.pushY = bounceDirY * pushDist
-                                        context.dirX = bounceDirX
-                                        context.dirY = bounceDirY
+                                local rerouteDirX, rerouteDirY = rerouteAroundRock(headX, headY, rock)
+                                if rerouteDirX ~= 0 or rerouteDirY ~= 0 then
+                                        context.pushX = rerouteDirX * pushDist
+                                        context.pushY = rerouteDirY * pushDist
+                                        context.dirX = rerouteDirX
+                                        context.dirY = rerouteDirY
+                                else
+                                        context.pushX = pushX
+                                        context.pushY = pushY
                                 end
 
                                 context.damage = 0
