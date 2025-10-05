@@ -800,10 +800,11 @@ registerEffect({
 
             float rise = smoothstep(0.05, 0.95, uv.y);
             float drift = time * 0.08;
-            float scroll = fract(uv.y + drift);
+            float scroll = uv.y + drift;
             float ribbons = sin((uv.x * 3.5 + scroll * 3.0) - time * 0.45);
             float shimmer = sin((uv.x * 6.0 - uv.y * 1.5) + time * 0.6);
-            float glowBand = smoothstep(0.1, 0.85, uv.y);
+            float sway = sin(time * 0.1) * 0.12;
+            float glowBand = smoothstep(0.1 + sway, 0.85 + sway, uv.y);
 
             float ember = rise * 0.55 + ribbons * 0.18 + shimmer * 0.12;
             ember = clamp(ember * (0.55 + intensity * 0.45), 0.0, 1.0);
