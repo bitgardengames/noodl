@@ -137,6 +137,7 @@ local english = {
             music_volume = "Music Volume",
             sfx_volume = "SFX Volume",
             toggle_screen_shake = "Screen Shake",
+            toggle_blood = "Blood Effects",
             toggle_fps_counter = "FPS Counter",
             language = "Language",
             back = "Back",

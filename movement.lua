@@ -609,6 +609,7 @@ local function handleSawCollision(headX, headY)
 
         if not survivedSaw then
                 local pushX, pushY = 0, 0
+                local normalX, normalY = 0, -1
                 if Saws.getCollisionCenter then
                         local sx, sy = Saws:getCollisionCenter(sawHit)
                         if sx and sy then
@@ -617,10 +618,19 @@ local function handleSawCollision(headX, headY)
                                 local dist = math.sqrt(dx * dx + dy * dy)
                                 local pushDist = SEGMENT_SIZE
                                 if dist > 1e-4 then
-                                        pushX = (dx / dist) * pushDist
-                                        pushY = (dy / dist) * pushDist
+                                        normalX = dx / dist
+                                        normalY = dy / dist
+                                        pushX = normalX * pushDist
+                                        pushY = normalY * pushDist
                                 end
                         end
+                end
+
+                if Particles and Particles.spawnBlood then
+                        Particles:spawnBlood(headX, headY, {
+                                dirX = normalX,
+                                dirY = normalY,
+                        })
                 end
 
                 return "hit", "saw", {
@@ -772,6 +782,15 @@ local function handleDartCollision(headX, headY)
         end
 
         if not survived then
+                if Particles and Particles.spawnBlood then
+                        local impactX = dartHit.x or headX
+                        local impactY = dartHit.y or headY
+                        Particles:spawnBlood(impactX, impactY, {
+                                dirX = dartHit.dirX or 0,
+                                dirY = dartHit.dirY or 0,
+                        })
+                end
+
                 local pushDist = SEGMENT_SIZE
                 local pushX = -(dartHit.dirX or 0) * pushDist
                 local pushY = -(dartHit.dirY or 0) * pushDist
