@@ -613,99 +613,102 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
--- Mushroom pulse shader (existing behaviour)
+-- Luminescent spores and cap halos for Mushroom Grotto
 registerEffect({
     type = "mushroomPulse",
-    backdropIntensity = 0.78,
-    arenaIntensity = 0.5,
+    backdropIntensity = 0.92,
+    arenaIntensity = 0.58,
     source = [[
         extern float time;
         extern vec2 resolution;
         extern vec2 origin;
         extern vec4 baseColor;
-        extern vec4 accentColor;
+        extern vec4 cavernColor;
+        extern vec4 capColor;
         extern vec4 glowColor;
-        extern vec4 softColor;
         extern vec4 sporeColor;
         extern float intensity;
 
-        float bloomShape(vec2 p, vec2 center, float sharpness)
+        float capGlow(vec2 uv, vec2 center, vec2 scale, float sharpness)
         {
-            vec2 diff = p - center;
-            float distSq = dot(diff, diff);
-            return exp(-distSq * sharpness);
+            vec2 diff = (uv - center) * scale;
+            float d = dot(diff, diff);
+            return exp(-d * sharpness);
+        }
+
+        float sporeTrail(vec2 uv, vec2 dir, float speed, float phase)
+        {
+            vec2 n = normalize(dir);
+            float wave = sin(dot(uv, n) * 12.0 + time * speed + phase);
+            return wave * 0.5 + 0.5;
         }
 
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         {
             vec2 uv = (screen_coords - origin) / resolution;
-            vec2 centered = uv - vec2(0.5);
+            uv = clamp(uv, 0.0, 1.0);
 
+            vec2 centered = uv - vec2(0.5);
             float aspect = resolution.x / max(resolution.y, 0.0001);
             centered.x *= aspect;
 
-            float dist = length(centered);
+            float grottoRise = smoothstep(-0.4, 1.1, centered.y + 0.15 * sin(time * 0.18 + centered.x * 2.4));
+            float mycelium = smoothstep(-0.6, 0.2, centered.y + 0.05 * sin(time * 0.25 + centered.x * 6.0));
 
-            float breathing = sin(time * 0.35) * 0.5 + 0.5;
-            float slowDrift = time * 0.25;
+            vec3 cave = mix(baseColor.rgb, cavernColor.rgb, grottoRise);
 
-            vec2 offset1 = vec2(cos(slowDrift * 0.8), sin(slowDrift * 0.6)) * (0.16 + 0.08 * intensity);
-            vec2 offset2 = vec2(cos(slowDrift * 1.2 + 1.7), sin(slowDrift * 0.9 + 0.9)) * (0.24 + 0.1 * intensity);
-            vec2 offset3 = vec2(cos(slowDrift * 0.5 - 2.2), sin(slowDrift * 0.7 - 1.4)) * (0.31 + 0.12 * intensity);
+            float drift = time * 0.3;
+            vec2 capA = vec2(0.32 + 0.05 * sin(drift * 0.7), 0.62 + 0.04 * sin(drift * 0.5));
+            vec2 capB = vec2(0.68 + 0.07 * sin(drift * 0.9 + 1.1), 0.57 + 0.05 * sin(drift * 0.6 + 0.9));
+            vec2 capC = vec2(0.48 + 0.05 * sin(drift * 0.8 - 2.1), 0.74 + 0.06 * sin(drift * 0.4 - 1.4));
 
-            float bloom1 = bloomShape(centered, offset1, 7.2 - intensity * 1.3);
-            float bloom2 = bloomShape(centered, offset2, 5.8 - intensity * 1.0);
-            float bloom3 = bloomShape(centered, offset3, 4.0 - intensity * 0.7);
+            float haloA = capGlow(uv, capA, vec2(3.6, 6.0), 3.2);
+            float haloB = capGlow(uv, capB, vec2(4.2, 5.4), 2.9);
+            float haloC = capGlow(uv, capC, vec2(3.8, 6.8), 3.4);
 
-            float combinedBloom = bloom1 * (0.5 + 0.18 * intensity);
-            combinedBloom += bloom2 * (0.32 + 0.16 * breathing * intensity);
-            combinedBloom += bloom3 * (0.28 + 0.18 * intensity);
+            float haloBlend = clamp(haloA * (0.45 + intensity * 0.3) + haloB * (0.4 + intensity * 0.25) + haloC * (0.36 + intensity * 0.3), 0.0, 1.2);
 
-            float waveFold = sin((centered.x - centered.y) * 3.8 + time * 0.3) * 0.5 + 0.5;
-            float shimmer = sin(dist * 6.5 - time * 0.4) * 0.5 + 0.5;
-            float verticalVeil = smoothstep(-0.55, 0.45, centered.y + sin(time * 0.18) * 0.12);
+            vec3 caps = mix(cave, capColor.rgb, clamp(haloBlend * (0.65 + intensity * 0.25), 0.0, 1.0));
+            vec3 glow = mix(capColor.rgb, glowColor.rgb, clamp(haloBlend * (0.35 + intensity * 0.5), 0.0, 1.0));
 
-            vec3 dusk = mix(baseColor.rgb, softColor.rgb, clamp(0.16 + centered.y * 0.18 + intensity * 0.1, 0.0, 0.6));
-            vec3 cavern = mix(dusk, accentColor.rgb, 0.18 + intensity * 0.24);
-            vec3 spores = mix(glowColor.rgb, sporeColor.rgb, 0.6);
-            vec3 bloomTint = mix(cavern, spores, clamp(combinedBloom * (0.55 + 0.25 * intensity), 0.0, 1.0));
+            vec2 swirlDir1 = normalize(vec2(0.8, 0.6));
+            vec2 swirlDir2 = normalize(vec2(-0.7, 0.5));
+            float sporesA = sporeTrail(centered, swirlDir1, 1.4, 0.8);
+            float sporesB = sporeTrail(centered + vec2(0.1, 0.05), swirlDir2, 1.1, -1.2);
+            float sporesC = sporeTrail(centered + vec2(-0.08, -0.02), swirlDir1 * vec2(-1.0, 1.0), 1.7, 2.6);
 
-            float chromaWeave = clamp(waveFold * 0.65 + shimmer * 0.35, 0.0, 1.0);
-            vec3 aurora = mix(sporeColor.rgb, accentColor.rgb, chromaWeave);
-            aurora = mix(aurora, glowColor.rgb, 0.35 + 0.25 * verticalVeil);
+            float sporeVeil = clamp((sporesA * 0.35 + sporesB * 0.32 + sporesC * 0.28) * (0.7 + intensity * 0.45), 0.0, 1.0);
+            vec3 sporeTint = mix(glowColor.rgb, sporeColor.rgb, clamp(0.25 + sporesB * 0.5, 0.0, 1.0));
 
-            float auraMix = clamp((1.0 - smoothstep(0.15, 0.75, dist)) * (0.55 + 0.35 * intensity), 0.0, 1.0);
-            float glowMix = clamp(combinedBloom * (0.65 + 0.25 * intensity) + breathing * 0.2, 0.0, 1.0);
-            float veilMix = clamp(verticalVeil * (0.25 + 0.35 * intensity), 0.0, 1.0);
+            float pulse = sin(time * 0.6 + haloBlend * 4.0) * 0.5 + 0.5;
+            float myceliumGlow = clamp(mycelium * (0.3 + intensity * 0.5), 0.0, 0.6);
 
-            vec3 layered = mix(cavern, aurora, auraMix);
-            layered = mix(layered, bloomTint, glowMix);
-            layered = mix(layered, spores, veilMix * 0.6);
+            vec3 layered = cave;
+            layered = mix(layered, caps, clamp(haloBlend, 0.0, 1.0));
+            layered = mix(layered, glow, clamp(pulse * haloBlend, 0.0, 0.8));
+            layered = mix(layered, sporeTint, sporeVeil * 0.6);
+            layered = mix(layered, glowColor.rgb, myceliumGlow);
 
-            float rim = smoothstep(0.45, 0.98, dist + breathing * 0.05);
-            float vignette = mix(1.0, 0.32, rim);
+            float vignette = smoothstep(0.2, 0.85, length(centered));
+            layered = mix(layered, cave, clamp(vignette, 0.0, 0.8));
 
-            float pulse = sin(time * 0.22 + dist * 3.2) * 0.5 + 0.5;
-            vec3 finalColor = mix(layered, layered * (0.7 + 0.3 * pulse), 0.45);
-            finalColor *= vignette;
-
-            return vec4(finalColor, baseColor.a) * color;
+            return vec4(layered, baseColor.a) * color;
         }
     ]],
     configure = function(effect, palette)
         local shader = effect.shader
 
         local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
-        local soft = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
-        local accent = getColorComponents(palette and palette.arenaBorder, Theme.arenaBorder)
+        local cavern = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
+        local caps = getColorComponents(palette and palette.arenaBorder, Theme.arenaBorder)
         local glow = getColorComponents(palette and (palette.sawColor or palette.snake), Theme.sawColor)
-        local spore = getColorComponents(palette and (palette.snake or palette.sawColor), Theme.snakeDefault)
+        local spores = getColorComponents(palette and (palette.snake or palette.sawColor), Theme.snakeDefault)
 
         sendColor(shader, "baseColor", base)
-        sendColor(shader, "accentColor", accent)
+        sendColor(shader, "cavernColor", cavern)
+        sendColor(shader, "capColor", caps)
         sendColor(shader, "glowColor", glow)
-        sendColor(shader, "softColor", soft)
-        sendColor(shader, "sporeColor", spore)
+        sendColor(shader, "sporeColor", spores)
     end,
     draw = function(effect, x, y, w, h, intensity)
         return drawShader(effect, x, y, w, h, intensity)
