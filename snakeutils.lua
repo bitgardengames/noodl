@@ -209,9 +209,8 @@ function SnakeUtils.aabb(ax, ay, asize, bx, by, bsize)
 end
 
 -- handle input direction
-function SnakeUtils.calculateDirection(current, input, reverse)
+function SnakeUtils.calculateDirection(current, input)
     local nd = SnakeUtils.directions[input]
-    if reverse and nd then nd = { x = -nd.x, y = -nd.y } end
     if nd and not (nd.x == -current.x and nd.y == -current.y) then
         return nd
     end

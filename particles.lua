@@ -125,12 +125,4 @@ function Particles:reset()
     self.list = {}
 end
 
-function Particles:isEmpty()
-    return #self.list == 0
-end
-
-function Particles:count()
-    return #self.list
-end
-
 return Particles
