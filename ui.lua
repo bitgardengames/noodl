@@ -28,6 +28,16 @@ UI.combo = {
     pop = 0,
 }
 
+UI.health = {
+    current = 0,
+    max = 0,
+    display = 0,
+    flashDuration = 0.45,
+    flashTimer = 0,
+    shakeDuration = 0.3,
+    shakeTimer = 0,
+}
+
 UI.shields = {
     count = 0,
     display = 0,
@@ -113,6 +123,22 @@ local function setColor(color, alphaMultiplier)
     local b = color[3] or 1
     local a = color[4] or 1
     love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
+end
+
+local function drawHeartShape(x, y, size)
+    local half = size * 0.5
+    local quarter = size * 0.25
+    local radius = size * 0.32
+
+    love.graphics.circle("fill", x - quarter, y - quarter, radius, 16)
+    love.graphics.circle("fill", x + quarter, y - quarter, radius, 16)
+    love.graphics.polygon("fill", x - half, y - quarter, x, y + half, x + half, y - quarter)
+
+    love.graphics.setLineWidth(2)
+    love.graphics.circle("line", x - quarter, y - quarter, radius, 16)
+    love.graphics.circle("line", x + quarter, y - quarter, radius, 16)
+    love.graphics.polygon("line", x - half, y - quarter, x, y + half, x + half, y - quarter)
+    love.graphics.setLineWidth(1)
 end
 
 -- Button states
@@ -886,6 +912,30 @@ function UI:update(dt)
         end
     end
 
+    local health = self.health
+    if health then
+        if health.display == nil then
+            health.display = health.current or 0
+        end
+
+        local target = health.current or 0
+        local currentDisplay = health.display or 0
+        local diff = target - currentDisplay
+        if math.abs(diff) > 0.01 then
+            health.display = currentDisplay + diff * math.min(dt * 8, 1)
+        else
+            health.display = target
+        end
+
+        if health.flashTimer and health.flashTimer > 0 then
+            health.flashTimer = math.max(0, health.flashTimer - dt)
+        end
+
+        if health.shakeTimer and health.shakeTimer > 0 then
+            health.shakeTimer = math.max(0, health.shakeTimer - dt)
+        end
+    end
+
     local container = self.upgradeIndicators
     if container and container.items then
         local smoothing = math.min(dt * 8, 1)
@@ -936,6 +986,43 @@ function UI:setCombo(count, timer, duration)
         if previous >= 2 then
             combo.pop = 0
         end
+    end
+end
+
+function UI:setHealth(current, max, opts)
+    local health = self.health
+    if not health then return end
+
+    if max ~= nil then
+        health.max = math.max(0, math.floor((max or 0) + 0.0001))
+    end
+
+    local cap = health.max
+    local desired = math.floor((current or 0) + 0.0001)
+    if cap and cap > 0 then
+        desired = math.min(desired, cap)
+    end
+    current = math.max(0, desired)
+
+    local previous = health.current or current
+    health.current = current
+
+    if opts and opts.immediate then
+        health.display = current
+        health.flashTimer = 0
+        health.shakeTimer = 0
+    end
+
+    if health.display == nil then
+        health.display = current
+    end
+
+    if current < previous then
+        health.flashTimer = health.flashDuration or 0.45
+        health.shakeTimer = health.shakeDuration or 0.3
+    elseif current > previous then
+        health.flashTimer = 0
+        health.shakeTimer = 0
     end
 end
 
@@ -1422,6 +1509,61 @@ function UI:drawUpgradeIndicators()
     end
 end
 
+function UI:drawHealth()
+    local health = self.health
+    if not health then return end
+
+    local maxHealth = math.max(0, math.floor((health.max or 0) + 0.0001))
+    if maxHealth <= 0 then
+        return
+    end
+
+    local display = health.display or health.current or 0
+    local spacing = 38
+    local size = 26
+    local originX = 48
+    local originY = 48
+
+    local flashStrength = 0
+    if health.flashTimer and health.flashDuration and health.flashDuration > 0 then
+        flashStrength = math.max(0, math.min(1, health.flashTimer / health.flashDuration))
+    end
+
+    local shakeX, shakeY = 0, 0
+    if health.shakeTimer and health.shakeDuration and health.shakeDuration > 0 then
+        local factor = math.max(0, math.min(1, health.shakeTimer / health.shakeDuration))
+        local magnitude = 3.5 * factor
+        shakeX = love.math.random(-magnitude, magnitude)
+        shakeY = love.math.random(-magnitude, magnitude)
+    end
+
+    love.graphics.push()
+    love.graphics.translate(shakeX, shakeY)
+
+    for i = 1, maxHealth do
+        local cx = originX + (i - 1) * spacing
+        local cy = originY
+        local filled = display + 0.001 >= i
+        local baseColor
+        if filled then
+            baseColor = {0.98, 0.36, 0.42, 0.95}
+        else
+            baseColor = {0.35, 0.38, 0.48, 0.55}
+        end
+
+        local alpha = baseColor[4] or 1
+        if not filled and flashStrength > 0 then
+            alpha = math.min(1, alpha + flashStrength * 0.5)
+        end
+
+        love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], alpha)
+        drawHeartShape(cx, cy, size)
+    end
+
+    love.graphics.pop()
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 function UI:drawFruitSockets()
     if self.fruitRequired <= 0 then
         return
@@ -1653,6 +1795,7 @@ function UI:drawFruitSockets()
 end
 
 function UI:draw()
+    self:drawHealth()
     self:drawUpgradeIndicators()
     drawComboIndicator(self)
     -- draw socket grid
