@@ -1569,7 +1569,10 @@ function UI:drawFruitSockets()
         return
     end
 
-    local baseX, baseY = 60, 60
+    -- Position the fruit sockets so they do not overlap with the health hearts that
+    -- render at roughly (48, 48). Give the sockets a little extra padding below the
+    -- hearts so both elements remain readable even when health is low.
+    local baseX, baseY = 60, 104
     local perRow = 10
     local spacing = self.socketSize + 6
     local rows = math.max(1, math.ceil(self.fruitRequired / perRow))
