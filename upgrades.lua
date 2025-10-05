@@ -43,13 +43,20 @@ local function adjustMaxHealth(delta)
     end
 
     local game = getGameInstance()
-    if not (game and game.maxHealth ~= nil) then
+    if not game then
+        return false
+    end
+
+    if game.adjustMaxHealth then
+        return game:adjustMaxHealth(delta, { immediate = true })
+    end
+
+    if game.maxHealth == nil then
         return false
     end
 
     local newMax = math.max(1, (game.maxHealth or 0) + delta)
     game.maxHealth = newMax
-
     if game.health == nil then
         game.health = newMax
     else

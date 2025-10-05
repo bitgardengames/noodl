@@ -342,6 +342,10 @@ local english = {
                 prompt = "Press any key to descend",
                 heal_section_title = "Floor Rest",
                 heal_note = "Recovered ${amount} health.",
+                shield_note = "Forged ${amount} crash shield(s).",
+            },
+            health = {
+                critical_surge = "Second Wind!",
             },
         },
         gamemodes = {
