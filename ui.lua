@@ -36,6 +36,7 @@ UI.health = {
     flashTimer = 0,
     shakeDuration = 0.3,
     shakeTimer = 0,
+    heartStates = {},
 }
 
 UI.shields = {
@@ -64,6 +65,8 @@ UI.upgradeIndicators = {
 }
 
 local BUTTON_POP_DURATION = 0.32
+local HEART_GAIN_DURATION = 0.42
+local HEART_LOSS_DURATION = 0.5
 
 local function clamp01(value)
     if value < 0 then return 0 end
@@ -125,24 +128,77 @@ local function setColor(color, alphaMultiplier)
     love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
 end
 
+local heartBasePoints
+local heartVertexBuffer = {}
+
+local function getHeartBasePoints()
+    if heartBasePoints then
+        return heartBasePoints
+    end
+
+    local segments = 72
+    local rawPoints = {}
+    local minX, maxX = math.huge, -math.huge
+    local minY, maxY = math.huge, -math.huge
+
+    for i = 0, segments do
+        local t = (i / segments) * (2 * math.pi)
+        local sinT = math.sin(t)
+        local cosT = math.cos(t)
+        local x = 16 * sinT * sinT * sinT
+        local y = -(13 * cosT - 5 * math.cos(2 * t) - 2 * math.cos(3 * t) - math.cos(4 * t))
+
+        rawPoints[#rawPoints + 1] = { x, y }
+
+        if x < minX then minX = x end
+        if x > maxX then maxX = x end
+        if y < minY then minY = y end
+        if y > maxY then maxY = y end
+    end
+
+    local height = maxY - minY
+    if height == 0 then
+        height = 1
+    end
+
+    local centerX = (minX + maxX) * 0.5
+    local centerY = (minY + maxY) * 0.5
+
+    local points = {}
+    for i = 1, #rawPoints do
+        local rx, ry = rawPoints[i][1], rawPoints[i][2]
+        points[#points + 1] = (rx - centerX) / height
+        points[#points + 1] = (ry - centerY) / height
+    end
+
+    heartBasePoints = points
+    return points
+end
+
 local function drawHeartShape(x, y, size)
-    local half = size * 0.5
-    local quarter = size * 0.25
-    local radius = size * 0.32
+    local basePoints = getHeartBasePoints()
+    local count = #basePoints
+
+    for i = 1, count, 2 do
+        heartVertexBuffer[i] = x + basePoints[i] * size
+        heartVertexBuffer[i + 1] = y + basePoints[i + 1] * size
+    end
+
+    for i = count + 1, #heartVertexBuffer do
+        heartVertexBuffer[i] = nil
+    end
 
     local r, g, b, a = love.graphics.getColor()
 
+    love.graphics.setColor(r, g, b, a)
+    love.graphics.polygon("fill", heartVertexBuffer)
+
     love.graphics.setColor(0, 0, 0, a)
     love.graphics.setLineWidth(3)
-    love.graphics.circle("line", x - quarter, y - quarter, radius, 16)
-    love.graphics.circle("line", x + quarter, y - quarter, radius, 16)
-    love.graphics.polygon("line", x - half, y - quarter, x, y + half, x + half, y - quarter)
+    love.graphics.polygon("line", heartVertexBuffer)
     love.graphics.setLineWidth(1)
 
     love.graphics.setColor(r, g, b, a)
-    love.graphics.circle("fill", x - quarter, y - quarter, radius, 16)
-    love.graphics.circle("fill", x + quarter, y - quarter, radius, 16)
-    love.graphics.polygon("fill", x - half, y - quarter, x, y + half, x + half, y - quarter)
 end
 
 -- Button states
@@ -938,6 +994,24 @@ function UI:update(dt)
         if health.shakeTimer and health.shakeTimer > 0 then
             health.shakeTimer = math.max(0, health.shakeTimer - dt)
         end
+
+        if health.heartStates then
+            for _, state in ipairs(health.heartStates) do
+                if state.gainTimer then
+                    state.gainTimer = state.gainTimer + dt
+                    if state.gainTimer >= HEART_GAIN_DURATION then
+                        state.gainTimer = nil
+                    end
+                end
+
+                if state.lossTimer then
+                    state.lossTimer = state.lossTimer + dt
+                    if state.lossTimer >= HEART_LOSS_DURATION then
+                        state.lossTimer = nil
+                    end
+                end
+            end
+        end
     end
 
     local container = self.upgradeIndicators
@@ -997,6 +1071,8 @@ function UI:setHealth(current, max, opts)
     local health = self.health
     if not health then return end
 
+    health.heartStates = health.heartStates or {}
+
     if max ~= nil then
         health.max = math.max(0, math.floor((max or 0) + 0.0001))
     end
@@ -1011,10 +1087,23 @@ function UI:setHealth(current, max, opts)
     local previous = health.current or current
     health.current = current
 
+    local states = health.heartStates
+    local maxHearts = math.max(health.max or 0, current)
+    for i = 1, maxHearts do
+        states[i] = states[i] or {}
+    end
+    for i = maxHearts + 1, #states do
+        states[i] = nil
+    end
+
     if opts and opts.immediate then
         health.display = current
         health.flashTimer = 0
         health.shakeTimer = 0
+        for _, state in ipairs(states) do
+            state.gainTimer = nil
+            state.lossTimer = nil
+        end
     end
 
     if health.display == nil then
@@ -1024,9 +1113,23 @@ function UI:setHealth(current, max, opts)
     if current < previous then
         health.flashTimer = health.flashDuration or 0.45
         health.shakeTimer = health.shakeDuration or 0.3
+        for i = current + 1, math.min(previous, #states) do
+            local state = states[i]
+            if state then
+                state.lossTimer = 0
+                state.gainTimer = nil
+            end
+        end
     elseif current > previous then
         health.flashTimer = 0
         health.shakeTimer = 0
+        for i = previous + 1, math.min(current, #states) do
+            local state = states[i]
+            if state then
+                state.gainTimer = 0
+                state.lossTimer = nil
+            end
+        end
     end
 end
 
@@ -1544,24 +1647,52 @@ function UI:drawHealth()
     love.graphics.push()
     love.graphics.translate(shakeX, shakeY)
 
+    local states = health.heartStates or {}
+    local fullColor = {0.98, 0.36, 0.42, 0.95}
+    local emptyColor = {0.35, 0.38, 0.48, 0.55}
+
     for i = 1, maxHealth do
         local cx = originX + (i - 1) * spacing
         local cy = originY
-        local filled = display + 0.001 >= i
-        local baseColor
-        if filled then
-            baseColor = {0.98, 0.36, 0.42, 0.95}
-        else
-            baseColor = {0.35, 0.38, 0.48, 0.55}
-        end
+        local fillAmount = clamp01(display - (i - 1))
+        local r = emptyColor[1] + (fullColor[1] - emptyColor[1]) * fillAmount
+        local g = emptyColor[2] + (fullColor[2] - emptyColor[2]) * fillAmount
+        local b = emptyColor[3] + (fullColor[3] - emptyColor[3]) * fillAmount
+        local alpha = (emptyColor[4] or 1) + ((fullColor[4] or 1) - (emptyColor[4] or 1)) * fillAmount
 
-        local alpha = baseColor[4] or 1
-        if not filled and flashStrength > 0 then
+        if fillAmount < 0.999 and flashStrength > 0 then
             alpha = math.min(1, alpha + flashStrength * 0.5)
         end
 
-        love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], alpha)
-        drawHeartShape(cx, cy, size)
+        local scale = 1
+        local yOffset = 0
+        local state = states[i]
+
+        if state and state.gainTimer then
+            local progress = clamp01(state.gainTimer / HEART_GAIN_DURATION)
+            local pulse = math.sin(progress * math.pi)
+            local emphasis = (1 - progress * 0.6) * pulse
+            scale = scale + 0.24 * emphasis
+            yOffset = yOffset - 2.5 * emphasis
+            local highlight = math.max(0, emphasis * 0.45)
+            r = r + (1 - r) * highlight
+            g = g + (1 - g) * highlight * 0.85
+            b = b + (1 - b) * highlight * 0.7
+            alpha = math.min(1, alpha + highlight * 0.35)
+        elseif state and state.lossTimer then
+            local progress = clamp01(state.lossTimer / HEART_LOSS_DURATION)
+            local drop = Easing.easeInOutCubic(progress)
+            scale = math.max(0.55, scale - 0.2 * drop)
+            yOffset = yOffset + 4.2 * drop
+            local fade = 0.55 * drop
+            r = r * (1 - fade)
+            g = g * (1 - fade * 0.9)
+            b = b * (1 - fade * 0.9)
+            alpha = math.max(0, alpha * (1 - 0.65 * drop))
+        end
+
+        love.graphics.setColor(r, g, b, alpha)
+        drawHeartShape(cx, cy + yOffset, size * scale)
     end
 
     love.graphics.pop()
