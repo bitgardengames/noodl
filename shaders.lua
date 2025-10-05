@@ -646,66 +646,48 @@ registerEffect({
 
             float dist = length(centered);
 
-            float breathing = sin(time * 0.6) * 0.5 + 0.5;
-            float drift = time * 0.35;
+            float breathing = sin(time * 0.35) * 0.5 + 0.5;
+            float slowDrift = time * 0.25;
 
-            vec2 offset1 = vec2(cos(drift), sin(drift * 0.8)) * (0.18 + 0.08 * intensity);
-            vec2 offset2 = vec2(cos(drift * 1.3 + 2.2), sin(drift * 0.9 + 1.4)) * (0.26 + 0.1 * intensity);
-            vec2 offset3 = vec2(cos(drift * 0.7 - 1.1), sin(drift * 1.1 - 2.4)) * (0.32 + 0.12 * intensity);
+            vec2 offset1 = vec2(cos(slowDrift * 0.8), sin(slowDrift * 0.6)) * (0.16 + 0.08 * intensity);
+            vec2 offset2 = vec2(cos(slowDrift * 1.2 + 1.7), sin(slowDrift * 0.9 + 0.9)) * (0.24 + 0.1 * intensity);
+            vec2 offset3 = vec2(cos(slowDrift * 0.5 - 2.2), sin(slowDrift * 0.7 - 1.4)) * (0.31 + 0.12 * intensity);
 
-            float sharp1 = 8.4 - intensity * 1.6;
-            float sharp2 = 6.1 - intensity * 1.2;
-            float sharp3 = 4.1 - intensity * 0.8;
+            float bloom1 = bloomShape(centered, offset1, 7.2 - intensity * 1.3);
+            float bloom2 = bloomShape(centered, offset2, 5.8 - intensity * 1.0);
+            float bloom3 = bloomShape(centered, offset3, 4.0 - intensity * 0.7);
 
-            float bloom1 = bloomShape(centered, offset1, sharp1);
-            float bloom2 = bloomShape(centered, offset2, sharp2);
-            float bloom3 = bloomShape(centered, offset3, sharp3);
+            float combinedBloom = bloom1 * (0.5 + 0.18 * intensity);
+            combinedBloom += bloom2 * (0.32 + 0.16 * breathing * intensity);
+            combinedBloom += bloom3 * (0.28 + 0.18 * intensity);
 
-            float combinedBloom = bloom1 * (0.4 + 0.22 * intensity);
-            combinedBloom += bloom2 * (0.24 + 0.18 * breathing * intensity);
-            combinedBloom += bloom3 * (0.24 + 0.2 * intensity);
+            float waveFold = sin((centered.x - centered.y) * 3.8 + time * 0.3) * 0.5 + 0.5;
+            float shimmer = sin(dist * 6.5 - time * 0.4) * 0.5 + 0.5;
+            float verticalVeil = smoothstep(-0.55, 0.45, centered.y + sin(time * 0.18) * 0.12);
 
-            float petalWave = sin((centered.x + centered.y) * 6.0 + time * 0.5);
-            float waveMix = clamp(petalWave * 0.5 + 0.5, 0.0, 1.0) * (0.18 + 0.28 * intensity);
+            vec3 dusk = mix(baseColor.rgb, softColor.rgb, clamp(0.16 + centered.y * 0.18 + intensity * 0.1, 0.0, 0.6));
+            vec3 cavern = mix(dusk, accentColor.rgb, 0.18 + intensity * 0.24);
+            vec3 spores = mix(glowColor.rgb, sporeColor.rgb, 0.6);
+            vec3 bloomTint = mix(cavern, spores, clamp(combinedBloom * (0.55 + 0.25 * intensity), 0.0, 1.0));
 
-            vec3 base = mix(baseColor.rgb, softColor.rgb, clamp(0.28 + intensity * 0.18 + centered.y * 0.15, 0.0, 1.0));
-            vec3 fungalGlow = mix(accentColor.rgb, sporeColor.rgb, 0.4);
-            base = mix(base, fungalGlow, 0.26 + 0.24 * intensity);
-            vec3 accent = mix(base, accentColor.rgb, 0.72);
-            vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.46);
-            vec3 spores = mix(glowColor.rgb, sporeColor.rgb, 0.52);
-            vec3 aura = mix(softColor.rgb, sporeColor.rgb, 0.32);
+            float chromaWeave = clamp(waveFold * 0.65 + shimmer * 0.35, 0.0, 1.0);
+            vec3 aurora = mix(sporeColor.rgb, accentColor.rgb, chromaWeave);
+            aurora = mix(aurora, glowColor.rgb, 0.35 + 0.25 * verticalVeil);
 
-            float underglow = smoothstep(-0.55, 0.2, centered.y + sin(time * 0.2) * 0.1);
-            base = mix(base, aura, underglow * (0.18 + intensity * 0.1));
+            float auraMix = clamp((1.0 - smoothstep(0.15, 0.75, dist)) * (0.55 + 0.35 * intensity), 0.0, 1.0);
+            float glowMix = clamp(combinedBloom * (0.65 + 0.25 * intensity) + breathing * 0.2, 0.0, 1.0);
+            float veilMix = clamp(verticalVeil * (0.25 + 0.35 * intensity), 0.0, 1.0);
 
-            float swirl = sin(centered.x * 3.5 - centered.y * 4.0 + time * 0.25) * 0.5 + 0.5;
-            float shimmer = sin(length(centered) * 9.0 - time * 0.9) * 0.5 + 0.5;
-            float chromaWave = sin((centered.x - centered.y) * 5.0 + time * 0.7) * 0.5 + 0.5;
-            float verticalGlow = smoothstep(-0.4, 0.5, centered.y + sin(time * 0.18) * 0.12);
+            vec3 layered = mix(cavern, aurora, auraMix);
+            layered = mix(layered, bloomTint, glowMix);
+            layered = mix(layered, spores, veilMix * 0.6);
 
-            float accentMix = clamp(combinedBloom * (0.7 + 0.25 * intensity) + waveMix * 0.2, 0.0, 1.0);
-            float glowMix = clamp(combinedBloom * 0.45 + waveMix * (0.6 + 0.2 * intensity) + swirl * 0.2, 0.0, 1.0);
-            float auraMix = clamp((swirl * 0.4 + chromaWave * 0.3) * (0.32 + 0.45 * intensity), 0.0, 1.0);
-            float sporeMix = clamp((shimmer * 0.55 + verticalGlow * 0.3) * (0.25 + 0.5 * intensity), 0.0, 1.0);
+            float rim = smoothstep(0.45, 0.98, dist + breathing * 0.05);
+            float vignette = mix(1.0, 0.32, rim);
 
-            vec3 colorBlend = mix(base, accent, accentMix);
-            colorBlend = mix(colorBlend, glow, glowMix);
-            colorBlend = mix(colorBlend, aura, auraMix);
-            colorBlend = mix(colorBlend, spores, mix(sporeMix, chromaWave, 0.35));
-
-            float innerEdge = max(0.12, 0.3 - 0.1 * intensity);
-            float outerEdge = min(0.96, 0.84 + 0.12 * intensity);
-            float vignette = 1.0 - smoothstep(innerEdge, outerEdge, dist + breathing * 0.08 * intensity);
-
-            float ambientPulse = sin(time * 0.22 + centered.y * 3.0) * 0.5 + 0.5;
-            vec3 tintedBase = mix(baseColor.rgb, softColor.rgb, 0.18 + ambientPulse * 0.12);
-            tintedBase = mix(tintedBase, sporeColor.rgb, 0.34 + 0.28 * ambientPulse + 0.18 * intensity);
-            tintedBase = mix(tintedBase, accentColor.rgb, 0.3 + 0.22 * intensity);
-            tintedBase = mix(tintedBase, glowColor.rgb, 0.08 + 0.16 * ambientPulse);
-
-            float finalMix = clamp(vignette * (0.72 + 0.06 * intensity) + 0.08, 0.0, 1.0);
-            vec3 finalColor = mix(tintedBase, colorBlend, finalMix);
+            float pulse = sin(time * 0.22 + dist * 3.2) * 0.5 + 0.5;
+            vec3 finalColor = mix(layered, layered * (0.7 + 0.3 * pulse), 0.45);
+            finalColor *= vignette;
 
             return vec4(finalColor, baseColor.a) * color;
         }
