@@ -1277,6 +1277,14 @@ registerEffect({
             vec2 uv = (screen_coords - origin) / resolution;
             uv = clamp(uv, 0.0, 1.0);
 
+            vec2 baseUv = uv;
+            float breath = sin(time * 0.42) * 0.5 + 0.5;
+            breath = breath * breath * (3.0 - 2.0 * breath);
+            float pixelBlend = breath * 0.55 * intensity;
+            vec2 pixelDensity = mix(vec2(120.0, 72.0), vec2(36.0, 22.0), breath);
+            vec2 pixelatedUv = floor(baseUv * pixelDensity) / pixelDensity;
+            uv = mix(baseUv, pixelatedUv, pixelBlend);
+
             float drift = sin(uv.y * 3.0 + time * 0.18);
             float pulse = sin((uv.x * 6.0 + uv.y * 4.0) - time * 0.24);
 
