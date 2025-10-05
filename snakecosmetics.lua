@@ -251,6 +251,100 @@ local SKIN_DEFINITIONS = {
         unlock = { achievement = "floorAbyss" },
         order = 80,
     },
+    {
+        id = "chrono_carapace",
+        name = "Chrono Carapace",
+        description = "Temporal plating gleaned from time-locked relics. Unlocks at metaprogression level 12.",
+        colors = {
+            body = {0.58, 0.72, 0.95, 1.0},
+            outline = {0.12, 0.18, 0.32, 1.0},
+            glow = {0.76, 0.92, 1.00, 0.88},
+        },
+        effects = {
+            overlay = {
+                type = "stripes",
+                frequency = 28,
+                speed = 1.2,
+                angle = 15,
+                intensity = 0.6,
+                opacity = 0.85,
+                colors = {
+                    primary = {0.46, 0.70, 1.00, 0.95},
+                    secondary = {0.88, 0.78, 1.00, 0.9},
+                },
+            },
+            glow = {
+                intensity = 0.7,
+                radiusMultiplier = 1.6,
+                color = {0.70, 0.88, 1.00, 1.0},
+                step = 2,
+            },
+        },
+        unlock = { level = 12 },
+        order = 90,
+    },
+    {
+        id = "gilded_siren",
+        name = "Gilded Siren",
+        description = "Goldleaf fins that shimmer with every high score. Unlock the Score Legend achievement to claim it.",
+        colors = {
+            body = {0.96, 0.78, 0.42, 1.0},
+            outline = {0.36, 0.20, 0.05, 1.0},
+            glow = {1.00, 0.88, 0.52, 0.86},
+        },
+        effects = {
+            overlay = {
+                type = "holo",
+                speed = 0.75,
+                intensity = 0.62,
+                opacity = 0.8,
+                colors = {
+                    primary = {0.96, 0.78, 0.42, 1.0},
+                    secondary = {1.00, 0.92, 0.68, 1.0},
+                    tertiary = {0.88, 0.54, 0.24, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.68,
+                radiusMultiplier = 1.55,
+                color = {1.00, 0.90, 0.60, 1.0},
+                step = 3,
+            },
+        },
+        unlock = { achievement = "scoreLegend" },
+        order = 100,
+    },
+    {
+        id = "abyssal_constellation",
+        name = "Abyssal Constellation",
+        description = "Star-mapped scales that mirror the deepest currents. Unlock the Meta Milestone 7 achievement to claim it.",
+        colors = {
+            body = {0.14, 0.18, 0.34, 1.0},
+            outline = {0.04, 0.06, 0.14, 1.0},
+            glow = {0.54, 0.78, 1.00, 0.9},
+        },
+        effects = {
+            overlay = {
+                type = "holo",
+                speed = 1.05,
+                intensity = 0.68,
+                opacity = 0.82,
+                colors = {
+                    primary = {0.24, 0.32, 0.62, 1.0},
+                    secondary = {0.52, 0.70, 1.00, 1.0},
+                    tertiary = {0.84, 0.64, 1.00, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.72,
+                radiusMultiplier = 1.7,
+                color = {0.58, 0.82, 1.00, 1.0},
+                step = 2,
+            },
+        },
+        unlock = { achievement = "metaMilestone7" },
+        order = 110,
+    },
 }
 
 local function buildDefaultState()
