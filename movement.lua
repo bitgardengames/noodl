@@ -387,25 +387,31 @@ local function handleRockCollision(headX, headY)
                                         Snake:onDashBreakRock(centerX, centerY)
                                 end
                         else
-                                if not Snake:consumeCrashShield() then
-                                        Rocks:triggerHitFlash(rock)
-                                        local dx = (headX or centerX) - centerX
-                                        local dy = (headY or centerY) - centerY
-                                        local dist = math.sqrt(dx * dx + dy * dy)
-                                        local pushDist = SEGMENT_SIZE * 1.1
-                                        local pushX, pushY = 0, 0
-                                        if dist > 1e-4 then
-                                                pushX = (dx / dist) * pushDist
-                                                pushY = (dy / dist) * pushDist
-                                        end
-
-                                        return "hit", "rock", {
-                                                pushX = pushX,
-                                                pushY = pushY,
-                                                grace = DAMAGE_GRACE,
-                                                shake = 0.35,
-                                        }
+                                local dx = (headX or centerX) - centerX
+                                local dy = (headY or centerY) - centerY
+                                local dist = math.sqrt(dx * dx + dy * dy)
+                                local pushDist = SEGMENT_SIZE * 1.1
+                                local pushX, pushY = 0, 0
+                                if dist > 1e-4 then
+                                        pushX = (dx / dist) * pushDist
+                                        pushY = (dy / dist) * pushDist
                                 end
+
+                                local context = {
+                                        pushX = pushX,
+                                        pushY = pushY,
+                                        grace = DAMAGE_GRACE,
+                                        shake = 0.35,
+                                }
+
+                                local shielded = Snake:consumeCrashShield()
+                                Rocks:triggerHitFlash(rock)
+
+                                if not shielded then
+                                        return "hit", "rock", context
+                                end
+
+                                context.damage = 0
 
                                 Particles:spawnBurst(centerX, centerY, {
                                         count = 8,
@@ -423,13 +429,14 @@ local function handleRockCollision(headX, headY)
                                         fadeTo = 0.05,
                                 })
                                 Audio:playSound("shield_rock")
-                                Rocks:destroy(rock, { spawnFX = false })
 
                                 if Snake.onShieldConsumed then
                                         Snake:onShieldConsumed(centerX, centerY, "rock")
                                 end
 
                                 recordShieldEvent("rock")
+
+                                return "hit", "rock", context
                         end
 
                         break
