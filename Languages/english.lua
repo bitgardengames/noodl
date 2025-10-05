@@ -340,6 +340,8 @@ local english = {
             },
             floor_intro = {
                 prompt = "Press any key to descend",
+                heal_section_title = "Floor Rest",
+                heal_note = "Recovered ${amount} health.",
             },
         },
         gamemodes = {
