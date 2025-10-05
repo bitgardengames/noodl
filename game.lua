@@ -386,6 +386,9 @@ function Game:load()
     self.input:resetAxes()
 
     self.mode = GameModes:get()
+    self.maxHealth = (self.mode and self.mode.maxHealth) or 3
+    self.health = self.maxHealth
+    UI:setHealth(self.health, self.maxHealth, { immediate = true })
     callMode(self, "load")
 
     if Snake.adrenaline then
@@ -454,10 +457,43 @@ end
 function Game:beginDeath()
     if self.state ~= "dying" then
         self.state = "dying"
+        self.health = 0
+        UI:setHealth(self.health, self.maxHealth, { immediate = true })
+        if Snake and Snake.setDead then
+            Snake:setDead(true)
+        end
         local trail = Snake:getSegments()
         Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
         Audio:playSound("death")
     end
+end
+
+function Game:applyDamage(amount, cause, context)
+    amount = amount or 1
+
+    if self.health == nil then
+        return false
+    end
+
+    local previous = self.health or 0
+    local updated = math.max(0, previous - amount)
+
+    if Snake and Snake.onDamageTaken then
+        Snake:onDamageTaken(cause, context)
+    end
+
+    self.health = updated
+    UI:setHealth(updated, self.maxHealth)
+
+    if updated <= 0 then
+        return false
+    end
+
+    if context and context.shake and self.Effects and self.Effects.shake then
+        self.Effects:shake(context.shake)
+    end
+
+    return true
 end
 
 function Game:startDescending(holeX, holeY, holeRadius)
@@ -512,10 +548,25 @@ function Game:updateGameplay(dt)
         Upgrades:recordFloorReplaySnapshot(self)
     end
 
-    local moveResult, cause = Movement:update(dt)
+    local moveResult, cause, context = Movement:update(dt)
 
-    if moveResult == "dead" then
+    if moveResult == "hit" then
+        local damage = (context and context.damage) or 1
+        local survived = self:applyDamage(damage, cause, context)
+        if not survived then
+            if Upgrades.tryFloorReplay and Upgrades:tryFloorReplay(self, cause) then
+                self.health = math.max(1, self.maxHealth or 1)
+                UI:setHealth(self.health, self.maxHealth, { immediate = true })
+                return
+            end
+            self.deathCause = cause
+            self:beginDeath()
+        end
+        return
+    elseif moveResult == "dead" then
         if Upgrades.tryFloorReplay and Upgrades:tryFloorReplay(self, cause) then
+            self.health = math.max(1, self.maxHealth or 1)
+            UI:setHealth(self.health, self.maxHealth, { immediate = true })
             return
         end
         self.deathCause = cause

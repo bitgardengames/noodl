@@ -82,6 +82,7 @@ local moveProgress = 0
 local POP_DURATION = SnakeUtils.POP_DURATION
 local SHIELD_FLASH_DURATION = 0.3
 local HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after surviving certain hazards
+local DAMAGE_FLASH_DURATION = 0.45
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
 -- movement baseline + modifiers
@@ -319,6 +320,37 @@ function Snake:beginHazardGrace(duration)
     if grace > current then
         self.hazardGraceTimer = grace
     end
+end
+
+function Snake:onDamageTaken(cause, info)
+    info = info or {}
+
+    local pushX = info.pushX or 0
+    local pushY = info.pushY or 0
+    local translated = false
+
+    if pushX ~= 0 or pushY ~= 0 then
+        self:translate(pushX, pushY)
+        translated = true
+    end
+
+    if info.snapX and info.snapY and not translated then
+        self:setHeadPosition(info.snapX, info.snapY)
+    end
+
+    local dirX = info.dirX
+    local dirY = info.dirY
+    if (dirX and dirX ~= 0) or (dirY and dirY ~= 0) then
+        self:setDirectionVector(dirX or 0, dirY or 0)
+    end
+
+    local grace = info.grace or (HAZARD_GRACE_DURATION * 2)
+    if grace and grace > 0 then
+        self:beginHazardGrace(grace)
+    end
+
+    self.shieldFlashTimer = SHIELD_FLASH_DURATION
+    self.damageFlashTimer = DAMAGE_FLASH_DURATION
 end
 
 -- >>> Small integration note:
@@ -752,6 +784,7 @@ function Snake:load(w, h)
     isDead = false
     self.shieldFlashTimer = 0
     self.hazardGraceTimer = 0
+    self.damageFlashTimer = 0
     trail = buildInitialTrail()
     descendingHole = nil
     fruitsSinceLastTurn = 0
@@ -766,6 +799,10 @@ function Snake:setDirection(name)
     if not isDead then
         pendingDir = SnakeUtils.calculateDirection(direction, name)
     end
+end
+
+function Snake:setDead(state)
+    isDead = not not state
 end
 
 function Snake:getDirection()
@@ -1021,7 +1058,7 @@ function Snake:finishDescending()
 end
 
 function Snake:update(dt)
-    if isDead then return false end
+    if isDead then return false, "dead", { fatal = true } end
 
     -- base speed with upgrades/modifiers
     local head = trail[1]
@@ -1269,8 +1306,17 @@ function Snake:update(dt)
                                         self:onShieldConsumed(hx, hy, "self")
                                         self:beginHazardGrace()
                                 else
-                                        isDead = true
-                                        return false, "self"
+                                        local pushX = -(direction.x or 0) * SEGMENT_SPACING
+                                        local pushY = -(direction.y or 0) * SEGMENT_SPACING
+                                        local context = {
+                                            pushX = pushX,
+                                            pushY = pushY,
+                                            dirX = -(direction.x or 0),
+                                            dirY = -(direction.y or 0),
+                                            grace = HAZARD_GRACE_DURATION * 2,
+                                            shake = 0.28,
+                                        }
+                                        return false, "self", context
                                 end
                         end
                 end
@@ -1287,6 +1333,10 @@ function Snake:update(dt)
 
     if self.hazardGraceTimer and self.hazardGraceTimer > 0 then
         self.hazardGraceTimer = math.max(0, self.hazardGraceTimer - dt)
+    end
+
+    if self.damageFlashTimer and self.damageFlashTimer > 0 then
+        self.damageFlashTimer = math.max(0, self.damageFlashTimer - dt)
     end
 
     if severedPieces and #severedPieces > 0 then

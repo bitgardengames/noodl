@@ -16,6 +16,8 @@ local Achievements = require("achievements")
 local Movement = {}
 
 local SEGMENT_SIZE = 24 -- same size as rocks and snake
+local DAMAGE_GRACE = 0.35
+local WALL_GRACE = 0.25
 
 local shieldStatMap = {
         wall = {
@@ -300,8 +302,30 @@ local function handleWallCollision(headX, headY)
                 return portalX, portalY
         end
 
+        local ax, ay, aw, ah = Arena:getBounds()
+        local inset = Arena.tileSize / 2
+        local left = ax + inset
+        local right = ax + aw - inset
+        local top = ay + inset
+        local bottom = ay + ah - inset
+
         if not Snake:consumeCrashShield() then
-                return headX, headY, "wall"
+                local safeX = clamp(headX, left, right)
+                local safeY = clamp(headY, top, bottom)
+                local dir = Snake.getDirection and Snake:getDirection() or { x = 0, y = 0 }
+                local pushX = safeX - headX
+                local pushY = safeY - headY
+
+                return safeX, safeY, "wall", {
+                        pushX = pushX,
+                        pushY = pushY,
+                        snapX = safeX,
+                        snapY = safeY,
+                        dirX = -(dir.x or 0),
+                        dirY = -(dir.y or 0),
+                        grace = WALL_GRACE,
+                        shake = 0.2,
+                }
         end
 
         local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
@@ -365,7 +389,22 @@ local function handleRockCollision(headX, headY)
                         else
                                 if not Snake:consumeCrashShield() then
                                         Rocks:triggerHitFlash(rock)
-                                        return "dead", "rock"
+                                        local dx = (headX or centerX) - centerX
+                                        local dy = (headY or centerY) - centerY
+                                        local dist = math.sqrt(dx * dx + dy * dy)
+                                        local pushDist = SEGMENT_SIZE * 1.1
+                                        local pushX, pushY = 0, 0
+                                        if dist > 1e-4 then
+                                                pushX = (dx / dist) * pushDist
+                                                pushY = (dy / dist) * pushDist
+                                        end
+
+                                        return "hit", "rock", {
+                                                pushX = pushX,
+                                                pushY = pushY,
+                                                grace = DAMAGE_GRACE,
+                                                shake = 0.35,
+                                        }
                                 end
 
                                 Particles:spawnBurst(centerX, centerY, {
@@ -416,7 +455,27 @@ local function handleSawCollision(headX, headY)
         end
 
         if not survivedSaw then
-                return "dead", "saw"
+                local pushX, pushY = 0, 0
+                if Saws.getCollisionCenter then
+                        local sx, sy = Saws:getCollisionCenter(sawHit)
+                        if sx and sy then
+                                local dx = (headX or sx) - sx
+                                local dy = (headY or sy) - sy
+                                local dist = math.sqrt(dx * dx + dy * dy)
+                                local pushDist = SEGMENT_SIZE
+                                if dist > 1e-4 then
+                                        pushX = (dx / dist) * pushDist
+                                        pushY = (dy / dist) * pushDist
+                                end
+                        end
+                end
+
+                return "hit", "saw", {
+                        pushX = pushX,
+                        pushY = pushY,
+                        grace = DAMAGE_GRACE,
+                        shake = 0.4,
+                }
         end
 
         Saws:destroy(sawHit)
@@ -477,7 +536,26 @@ local function handleLaserCollision(headX, headY)
         end
 
         if not survived then
-                return "dead", "laser"
+                local pushX, pushY = 0, 0
+                if laserHit then
+                        local lx = laserHit.impactX or laserHit.x or headX
+                        local ly = laserHit.impactY or laserHit.y or headY
+                        local dx = (headX or lx) - lx
+                        local dy = (headY or ly) - ly
+                        local dist = math.sqrt(dx * dx + dy * dy)
+                        local pushDist = SEGMENT_SIZE
+                        if dist > 1e-4 then
+                                pushX = (dx / dist) * pushDist
+                                pushY = (dy / dist) * pushDist
+                        end
+                end
+
+                return "hit", "laser", {
+                        pushX = pushX,
+                        pushY = pushY,
+                        grace = DAMAGE_GRACE,
+                        shake = 0.32,
+                }
         end
 
         Lasers:onShieldedHit(laserHit, headX, headY)
@@ -541,7 +619,16 @@ local function handleDartCollision(headX, headY)
         end
 
         if not survived then
-                return "dead", "dart"
+                local pushDist = SEGMENT_SIZE
+                local pushX = -(dartHit.dirX or 0) * pushDist
+                local pushY = -(dartHit.dirY or 0) * pushDist
+
+                return "hit", "dart", {
+                        pushX = pushX,
+                        pushY = pushY,
+                        grace = DAMAGE_GRACE,
+                        shake = 0.3,
+                }
         end
 
         Darts:onShieldedHit(dartHit, headX, headY)
@@ -588,37 +675,40 @@ function Movement:reset()
 end
 
 function Movement:update(dt)
-        local alive, cause = Snake:update(dt)
+        local alive, cause, context = Snake:update(dt)
         if not alive then
-                return "dead", cause or "self"
+                if context and context.fatal then
+                        return "dead", cause or "self", context
+                end
+                return "hit", cause or "self", context
         end
 
         local headX, headY = Snake:getHead()
 
-        local wallCause
-        headX, headY, wallCause = handleWallCollision(headX, headY)
+        local wallCause, wallContext
+        headX, headY, wallCause, wallContext = handleWallCollision(headX, headY)
         if wallCause then
-                return "dead", wallCause
+                return "hit", wallCause, wallContext
         end
 
-        local state, stateCause = handleRockCollision(headX, headY)
+        local state, stateCause, stateContext = handleRockCollision(headX, headY)
         if state then
-                return state, stateCause
+                return state, stateCause, stateContext
         end
 
-        local laserState, laserCause = handleLaserCollision(headX, headY)
+        local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
         if laserState then
-                return laserState, laserCause
+                return laserState, laserCause, laserContext
         end
 
-        local dartState, dartCause = handleDartCollision(headX, headY)
+        local dartState, dartCause, dartContext = handleDartCollision(headX, headY)
         if dartState then
-                return dartState, dartCause
+                return dartState, dartCause, dartContext
         end
 
-        local sawState, sawCause = handleSawCollision(headX, headY)
+        local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
         if sawState then
-                return sawState, sawCause
+                return sawState, sawCause, sawContext
         end
 
         if Snake.checkSawBodyCollision then

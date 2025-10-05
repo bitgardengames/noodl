@@ -31,6 +31,7 @@ GameModes.available = {
         unlocked = true,
         unlockCondition = nil,
         unlockDescription = nil,
+        maxHealth = 3,
 
         load = function(game)
             game.timer = nil
@@ -50,6 +51,7 @@ GameModes.available = {
             value = 25,
         },
         unlockDescriptionKey = "gamemodes.hardcore.unlock_description",
+        maxHealth = 1,
 
         load = function(game)
             if game.Effects and game.Effects.shake then
@@ -71,6 +73,7 @@ GameModes.available = {
             value = 50,
         },
         unlockDescriptionKey = "gamemodes.timed.unlock_description",
+        maxHealth = 3,
 
         load = function(game)
             game.timer = game.mode.timeLimit
@@ -108,6 +111,7 @@ GameModes.available = {
         timeLimit = nil,
         unlocked = true,
         daily = true,
+        maxHealth = 3,
 
         load = function(game)
             game.effects = GameModes:getDailyModifiers()
