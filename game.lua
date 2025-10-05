@@ -37,6 +37,7 @@ local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
 local InputMode = require("inputmode")
 local HealthSystem = require("healthsystem")
+local TalentTree = require("talenttree")
 
 local Game = {}
 
@@ -513,14 +514,26 @@ function Game:load()
     self.input = GameInput.new(self, self.transition)
     self.input:resetAxes()
 
+    local talentEffects = TalentTree and TalentTree.getAggregatedEffects and TalentTree:getAggregatedEffects()
+
     self.mode = GameModes:get()
     local startingMax = (self.mode and self.mode.maxHealth) or 3
+    if talentEffects and talentEffects.maxHealthBonus then
+        startingMax = startingMax + talentEffects.maxHealthBonus
+    end
+
     self.maxHealth = clampToInt(startingMax)
     if self.maxHealth <= 0 then
         self.maxHealth = 1
     end
 
     self.healthSystem = HealthSystem.new(self.maxHealth)
+    self.health = self.maxHealth
+
+    if TalentTree and TalentTree.applyRunModifiers then
+        TalentTree:applyRunModifiers(self, talentEffects)
+    end
+
     self.healthCriticalReady = true
     self:syncHealth({ immediate = true })
     callMode(self, "load")

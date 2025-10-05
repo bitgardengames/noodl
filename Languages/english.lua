@@ -15,6 +15,7 @@ local english = {
             settings = "Settings",
             achievements = "Achievements",
             progression = "Progression",
+            talents = "Talents",
             quit = "Quit",
             version = "v1.0.0",
             title_word = "noodl",
@@ -170,6 +171,15 @@ local english = {
                 description = "Unlock this secret to reveal its details.",
                 progress = "Hidden",
             },
+        },
+        talents = {
+            title = "Talent Forge",
+            subtitle = "Choose one talent per tier to shape your run.",
+            loadout = "Active loadout:",
+            loadout_empty = "Active loadout: balanced.",
+            selected = "Selected",
+            back = "Back to Menu",
+            hint = "Use arrows, mouse, or gamepad to navigate. Enter/A selects, Esc/B returns.",
         },
         metaprogression = {
             title = "Progression",

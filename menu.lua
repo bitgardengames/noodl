@@ -234,6 +234,7 @@ function Menu:enter()
         { key = "menu.start_game",   action = "modeselect" },
         { key = "menu.achievements", action = "achievementsmenu" },
         { key = "menu.progression",  action = "metaprogression" },
+        { key = "menu.talents",      action = "talenttree" },
         { key = "menu.settings",     action = "settings" },
         { key = "menu.quit",         action = "quit" },
     }
