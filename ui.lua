@@ -37,6 +37,7 @@ UI.health = {
     shakeDuration = 0.3,
     shakeTimer = 0,
     heartStates = {},
+    criticalPulse = 0,
 }
 
 UI.shields = {
@@ -1012,6 +1013,11 @@ function UI:update(dt)
                 end
             end
         end
+
+        if health.criticalPulse and health.criticalPulse > 0 then
+            local decay = dt * 0.6
+            health.criticalPulse = math.max(0, health.criticalPulse - decay)
+        end
     end
 
     local container = self.upgradeIndicators
@@ -1100,6 +1106,7 @@ function UI:setHealth(current, max, opts)
         health.display = current
         health.flashTimer = 0
         health.shakeTimer = 0
+        health.criticalPulse = 0
         for _, state in ipairs(states) do
             state.gainTimer = nil
             state.lossTimer = nil
@@ -1130,6 +1137,24 @@ function UI:setHealth(current, max, opts)
                 state.lossTimer = nil
             end
         end
+    end
+end
+
+function UI:triggerHealthCritical()
+    local health = self.health
+    if not health then return end
+
+    health.criticalPulse = math.max(health.criticalPulse or 0, 1)
+    health.flashTimer = math.max(health.flashTimer or 0, (health.flashDuration or 0.45) * 1.15)
+    health.shakeTimer = math.max(health.shakeTimer or 0, (health.shakeDuration or 0.3) * 1.4)
+end
+
+function UI:calmHealthCritical()
+    local health = self.health
+    if not health then return end
+
+    if health.criticalPulse and health.criticalPulse > 0.2 then
+        health.criticalPulse = 0.2
     end
 end
 
@@ -1636,6 +1661,12 @@ function UI:drawHealth()
         flashStrength = math.max(0, math.min(1, health.flashTimer / health.flashDuration))
     end
 
+    local criticalPulse = math.max(0, math.min(1.2, health.criticalPulse or 0))
+    local criticalTime = 0
+    if criticalPulse > 0 and love.timer and love.timer.getTime then
+        criticalTime = love.timer.getTime()
+    end
+
     local shakeX, shakeY = 0, 0
     if health.shakeTimer and health.shakeDuration and health.shakeDuration > 0 then
         local factor = math.max(0, math.min(1, health.shakeTimer / health.shakeDuration))
@@ -1689,6 +1720,18 @@ function UI:drawHealth()
             g = g * (1 - fade * 0.9)
             b = b * (1 - fade * 0.9)
             alpha = math.max(0, alpha * (1 - 0.65 * drop))
+        elseif criticalPulse > 0 then
+            local wave = 0.5
+            if criticalTime ~= 0 then
+                wave = 0.5 + 0.5 * math.sin(criticalTime * 7.2 + i * 0.35)
+            end
+            local highlight = criticalPulse * wave
+            scale = scale + 0.08 * highlight
+            yOffset = yOffset + math.sin((criticalTime or 0) * 4.8 + i * 0.6) * highlight * 1.1
+            r = r + (1 - r) * highlight * 0.75
+            g = g * (1 - 0.35 * highlight)
+            b = b * (1 - 0.45 * highlight)
+            alpha = math.min(1, alpha + 0.25 * highlight)
         end
 
         love.graphics.setColor(r, g, b, alpha)
