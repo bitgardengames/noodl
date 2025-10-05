@@ -283,9 +283,23 @@ local function drawHeartShape(x, y, size)
     love.graphics.setStencilTest()
 
     love.graphics.setColor(0, 0, 0, a)
+
+    local previousLineJoin = love.graphics.getLineJoin and love.graphics.getLineJoin() or nil
+    if love.graphics.setLineJoin then
+        love.graphics.setLineJoin("bevel")
+    end
+
     love.graphics.setLineWidth(3)
     love.graphics.polygon("line", heartVertexBuffer)
     love.graphics.setLineWidth(1)
+
+    if love.graphics.setLineJoin then
+        if previousLineJoin ~= nil then
+            love.graphics.setLineJoin(previousLineJoin)
+        else
+            love.graphics.setLineJoin("miter")
+        end
+    end
 
     love.graphics.setColor(r, g, b, a)
 end
