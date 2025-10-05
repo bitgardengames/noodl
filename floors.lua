@@ -145,7 +145,7 @@ local Floors = {
             arenaBG    = {0.18, 0.14, 0.11, 1},  -- soot-stained earth
             arenaBorder= {0.82, 0.68, 0.46, 1},   -- polished bone rim
             snake      = {0.95, 0.9, 0.78, 1},    -- sun-bleached ivory
-            rock       = {0.38, 0.31, 0.28, 1},   -- charred husk fragments
+            rock       = {0.62, 0.52, 0.46, 1},   -- sun-bleached splinters that pop against the pit
             sawColor   = {0.62, 0.82, 0.78, 1},   -- necrotic teal glint
         },
         backgroundEffect = {
@@ -165,7 +165,7 @@ local Floors = {
             arenaBG    = {0.12, 0.12, 0.16, 1}, -- softened void
             arenaBorder= {0.22, 0.12, 0.35, 1}, -- violet rim
             snake      = {0.7, 0.35, 0.85, 1},  -- glowing violet
-            rock       = {0.18, 0.23, 0.32, 1},  -- cold navy basalt
+            rock       = {0.38, 0.45, 0.65, 1},  -- luminous abyssal shale distinct from the void floor
             sawColor   = {0.55, 0.25, 0.6, 1},  -- eerie violet shimmer
         },
         backgroundEffect = {
@@ -185,7 +185,7 @@ local Floors = {
             arenaBG    = {0.18, 0.06, 0.08, 1}, -- smoldered ember glow
             arenaBorder= {0.78, 0.28, 0.16, 1}, -- molten rim
             snake      = {0.98, 0.6, 0.18, 1},  -- searing amber
-            rock       = {0.18, 0.18, 0.2, 1},  -- charcoal slag
+            rock       = {0.62, 0.36, 0.28, 1},  -- ember-etched boulders lit by the fires
             sawColor   = {1.0, 0.32, 0.22, 1},  -- incandescent flare
         },
         backgroundEffect = {
@@ -225,7 +225,7 @@ local Floors = {
             arenaBG    = {0.16, 0.09, 0.15, 1},  -- embered plumplain
             arenaBorder= {0.5, 0.28, 0.16, 1},   -- molten shale ridge
             snake      = {0.72, 0.78, 0.58, 1},  -- sage ember scales
-            rock       = {0.36, 0.26, 0.34, 1},  -- volcanic heather stone
+            rock       = {0.55, 0.38, 0.5, 1},  -- rose-tinted pumice cutting through the ash haze
             sawColor   = {0.88, 0.52, 0.32, 1},  -- burnished sparksteel
         },
         backgroundEffect = {
@@ -245,7 +245,7 @@ local Floors = {
             arenaBG    = {0.16, 0.1, 0.2, 1},  -- twilight bloom
             arenaBorder= {0.5, 0.35, 0.75, 1},   -- spectral rim
             snake      = {0.7, 0.85, 1.0, 1},    -- ghostlight
-            rock       = {0.4, 0.32, 0.52, 1},   -- spectral amethyst shale
+            rock       = {0.64, 0.52, 0.78, 1},   -- brightened spiritstone facets
             sawColor   = {0.8, 0.65, 1.0, 1},    -- spirit steel
         },
         backgroundEffect = {
@@ -264,7 +264,7 @@ local Floors = {
             arenaBG    = {0.14, 0.1, 0.14, 1}, -- charcoal
             arenaBorder= {0.3, 0.05, 0.08, 1},  -- blood red
             snake      = {0.9, 0.15, 0.25, 1},  -- crimson glow
-            rock       = {0.36, 0.24, 0.26, 1}, -- ember-lit ashstone
+            rock       = {0.58, 0.32, 0.34, 1}, -- glowing cinderstone chunks against the dark arena
             sawColor   = {1.0, 0.1, 0.2, 1},    -- hellsteel
         },
         backgroundEffect = {
@@ -284,7 +284,7 @@ local Floors = {
             arenaBG    = {0.82, 0.86, 0.92, 1},   -- moonlit alabaster path
             arenaBorder= {0.9, 0.76, 0.55, 1},   -- gilded balustrades
             snake      = {0.95, 0.72, 0.45, 1},   -- burnished auric scales
-            rock       = {0.62, 0.6, 0.68, 1},   -- pearlescent pillars
+            rock       = {0.36, 0.38, 0.64, 1},   -- indigo-limned plinths silhouetted on the alabaster bridge
             sawColor   = {0.95, 0.7, 0.5, 1},     -- rosy sunlit brass
         },
         backgroundEffect = {
@@ -324,7 +324,7 @@ local Floors = {
             arenaBG    = {0.82, 0.86, 0.96, 1},  -- moonlit parapets
             arenaBorder= {0.96, 0.74, 0.52, 1},  -- gilded battlements
             snake      = {0.98, 0.82, 0.48, 1},  -- auric champion
-            rock       = {0.58, 0.56, 0.64, 1},  -- polished starlit stone
+            rock       = {0.42, 0.4, 0.68, 1},  -- dusk-lacquered bastion stones
             sawColor   = {0.98, 0.68, 0.4, 1},   -- cometforged brass
         },
         backgroundEffect = {
@@ -344,7 +344,7 @@ local Floors = {
             arenaBG    = {0.42, 0.34, 0.54, 1},  -- dusk-lit bridgework
             arenaBorder= {0.76, 0.48, 0.82, 1},  -- luminous nebular trim
             snake      = {0.85, 0.68, 0.98, 1},  -- starlit wyrm
-            rock       = {0.42, 0.32, 0.55, 1},  -- amethyst span
+            rock       = {0.78, 0.6, 0.88, 1},  -- radiant nebulite braces easily seen in the dusk glow
             sawColor   = {0.92, 0.58, 0.85, 1},   -- prismatic edge
         },
         backgroundEffect = {
@@ -382,7 +382,7 @@ local Floors = {
             arenaBG    = {0.14, 0.12, 0.18, 1},  -- onyx dais
             arenaBorder= {0.35, 0.12, 0.32, 1},  -- royal voidstone
             snake      = {0.78, 0.42, 0.88, 1},  -- imperial amaranth
-            rock       = {0.24, 0.2, 0.32, 1},   -- sigiled basalt
+            rock       = {0.46, 0.3, 0.54, 1},   -- royal obsidian studded with arcane gloss
             sawColor   = {0.68, 0.28, 0.6, 1},    -- shadowed corona
         },
         backgroundEffect = {
@@ -402,7 +402,7 @@ local Floors = {
             arenaBG    = {0.12, 0.1, 0.16, 1},  -- gravitic maw
             arenaBorder= {0.58, 0.26, 0.62, 1},  -- eventide flare
             snake      = {0.88, 0.48, 0.98, 1},   -- horizonflare serpent
-            rock       = {0.26, 0.22, 0.4, 1},   -- warped obsidian
+            rock       = {0.52, 0.38, 0.72, 1},   -- event-horizon geodes glowing above the void
             sawColor   = {0.98, 0.52, 0.72, 1},   -- collapsing corona
         },
         backgroundEffect = {
