@@ -31,6 +31,7 @@ local options = {
     { type = "slider", labelKey = "settings.music_volume", slider = "musicVolume", onChanged = applyAudioVolumes },
     { type = "slider", labelKey = "settings.sfx_volume", slider = "sfxVolume", onChanged = applyAudioVolumes },
     { type = "toggle", labelKey = "settings.toggle_screen_shake", toggle = "screenShake" },
+    { type = "toggle", labelKey = "settings.toggle_blood", toggle = "bloodEnabled" },
     { type = "toggle", labelKey = "settings.toggle_fps_counter", toggle = "showFPS" },
     { type = "cycle", labelKey = "settings.language", setting = "language" },
     { type = "action", labelKey = "settings.back", action = "menu" }

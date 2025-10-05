@@ -8,6 +8,7 @@ local DEFAULTS = {
     resolution = "1280x720",
     vsync = true,
     screenShake = true,
+    bloodEnabled = true,
     showFPS = false,
 }
 
