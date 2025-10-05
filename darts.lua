@@ -176,6 +176,27 @@ local function triggerImpact(launcher, hitX, hitY)
     scheduleCooldown(launcher)
 end
 
+local function jamLauncher(launcher, duration)
+    if not (launcher and duration and duration > 0) then
+        return
+    end
+
+    if launcher.state == "firing" then
+        local projectile = launcher.projectile
+        triggerImpact(launcher, projectile and projectile.tipX, projectile and projectile.tipY)
+    end
+
+    if launcher.state == "telegraph" then
+        launcher.telegraphTimer = (launcher.telegraphTimer or 0) + duration
+    elseif launcher.state == "cooldown" then
+        launcher.cooldownTimer = (launcher.cooldownTimer or 0) + duration
+    else
+        if launcher.cooldownTimer then
+            launcher.cooldownTimer = launcher.cooldownTimer + duration
+        end
+    end
+end
+
 local function getRockCollision(projectile, newTipX, newTipY)
     local rocks = Rocks:getAll()
     if not (rocks and #rocks > 0) then
@@ -665,6 +686,16 @@ function Darts:onShieldedHit(hit, hitX, hitY)
     end
 
     triggerImpact(launcher, hitX or hit.x, hitY or hit.y)
+end
+
+function Darts:addGlobalJam(duration)
+    if not duration or duration <= 0 then
+        return
+    end
+
+    for _, launcher in ipairs(launchers) do
+        jamLauncher(launcher, duration)
+    end
 end
 
 return Darts

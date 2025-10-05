@@ -2,6 +2,8 @@ local Snake = require("snake")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
+local Darts = require("darts")
+local GameState = require("gamestate")
 local Score = require("score")
 local UI = require("ui")
 local Localization = require("localization")
@@ -19,6 +21,47 @@ local celebrateUpgrade = UpgradeHelpers.celebrateUpgrade
 local getEventPosition = UpgradeHelpers.getEventPosition
 
 local POCKET_SPRINGS_FRUIT_TARGET = 20
+
+local function getGameInstance()
+    if GameState and GameState.states then
+        return GameState.states.game
+    end
+end
+
+local function tryRestoreHealth(amount, context)
+    local game = getGameInstance()
+    if not (game and game.restoreHealth) then
+        return 0
+    end
+
+    return game:restoreHealth(amount, context)
+end
+
+local function adjustMaxHealth(delta)
+    if not delta or delta == 0 then
+        return false
+    end
+
+    local game = getGameInstance()
+    if not (game and game.maxHealth ~= nil) then
+        return false
+    end
+
+    local newMax = math.max(1, (game.maxHealth or 0) + delta)
+    game.maxHealth = newMax
+
+    if game.health == nil then
+        game.health = newMax
+    else
+        game.health = math.min(game.health, newMax)
+    end
+
+    if UI and UI.setHealth then
+        UI:setHealth(game.health or newMax, newMax, { immediate = true })
+    end
+
+    return true
+end
 
 local function stoneSkinShieldHandler(data, state)
     if not state then return end
@@ -131,6 +174,170 @@ local function prismLockCooldownHandler(data, state)
     })
 end
 
+local function arcConductorLaserHandler(data, state)
+    if not (data and state) then return end
+
+    local stacks = (state.takenSet and state.takenSet.arc_conductor) or 0
+    if stacks <= 0 then return end
+
+    local baseDuration = state.counters and state.counters.arcConductorBase or 0
+    if baseDuration <= 0 then return end
+
+    local duration = baseDuration + 0.4 * math.max(0, stacks - 1)
+    if duration > 0 and Darts and Darts.addGlobalJam then
+        Darts:addGlobalJam(duration)
+    end
+
+    if Score and Score.addBonus then
+        local bonus = 1 + math.max(0, stacks - 1)
+        Score:addBonus(bonus)
+    end
+
+    celebrateUpgrade(getUpgradeString("arc_conductor", "activation_text"), data, {
+        color = {0.68, 0.88, 1.0, 1},
+        textOffset = 52,
+        textScale = 1.12,
+        particleCount = 18 + stacks * 2,
+        particleSpeed = 140,
+        particleLife = 0.46,
+    })
+end
+
+local function resetScarletCenserCharges(state)
+    if not state then return end
+    local counters = state.counters or {}
+    local stacks = (state.takenSet and state.takenSet.scarlet_censer) or 0
+    if stacks <= 0 then
+        counters.scarletCenserCharges = 0
+    else
+        counters.scarletCenserCharges = stacks
+    end
+    state.counters = counters
+end
+
+local function scarletCenserShieldHandler(data, state)
+    if not (data and state) then return end
+    if data.cause ~= "dart" then return end
+
+    local stacks = (state.takenSet and state.takenSet.scarlet_censer) or 0
+    if stacks <= 0 then return end
+
+    local counters = state.counters or {}
+    local charges = counters.scarletCenserCharges or stacks
+    if charges <= 0 then return end
+
+    charges = charges - 1
+    counters.scarletCenserCharges = charges
+    state.counters = counters
+
+    local restored = tryRestoreHealth(1, { immediate = true })
+    if restored <= 0 and Snake and Snake.addCrashShields then
+        Snake:addCrashShields(1)
+    end
+
+    if Darts and Darts.addGlobalJam then
+        local duration = 0.8 + 0.3 * math.max(0, stacks - 1)
+        Darts:addGlobalJam(duration)
+    end
+
+    celebrateUpgrade(getUpgradeString("scarlet_censer", "activation_text"), data, {
+        color = {1.0, 0.58, 0.64, 1},
+        textOffset = 50,
+        textScale = 1.1,
+        particleCount = 16 + stacks * 2,
+        particleSpeed = 130,
+        particleLife = 0.42,
+    })
+end
+
+local function scarletCenserFloorStart(_, state)
+    if not state then return end
+    resetScarletCenserCharges(state)
+end
+
+local function grimReliquaryShieldHandler(data, state)
+    if not (data and state) then return end
+    if data.cause ~= "dart" then return end
+
+    local stacks = (state.takenSet and state.takenSet.grim_reliquary) or 0
+    if stacks <= 0 then return end
+
+    local counters = state.counters or {}
+    local souls = (counters.grimReliquarySouls or 0) + 1
+    local threshold = math.max(1, 3 - math.max(0, stacks - 1))
+
+    if souls >= threshold then
+        souls = souls - threshold
+
+        local restored = tryRestoreHealth(1, { immediate = true })
+        if restored <= 0 and Snake and Snake.addCrashShields then
+            Snake:addCrashShields(1)
+        end
+
+        if Darts and Darts.addGlobalJam then
+            local duration = 0.6 + 0.2 * math.max(0, stacks - 1)
+            Darts:addGlobalJam(duration)
+        end
+
+        celebrateUpgrade(getUpgradeString("grim_reliquary", "activation_text"), data, {
+            color = {0.86, 0.74, 1, 1},
+            textOffset = 54,
+            textScale = 1.14,
+            particleCount = 20 + stacks * 2,
+            particleSpeed = 150,
+            particleLife = 0.48,
+        })
+    end
+
+    counters.grimReliquarySouls = souls
+    state.counters = counters
+end
+
+local function rattleGambitFruitHandler(data, state)
+    if not (data and state) then return end
+
+    local stacks = (state.takenSet and state.takenSet.rattle_gambit) or 0
+    if stacks <= 0 then return end
+
+    local counters = state.counters or {}
+    local chain = (counters.rattleGambitChain or 0) + 1
+    counters.rattleGambitChain = chain
+    state.counters = counters
+
+    local threshold = math.max(3, 5 - math.max(0, stacks - 1))
+    if chain < threshold then
+        return
+    end
+
+    counters.rattleGambitChain = 0
+
+    if Darts and Darts.addGlobalJam then
+        local duration = 0.5 + 0.15 * math.max(0, stacks - 1)
+        Darts:addGlobalJam(duration)
+    end
+
+    if Score and Score.addBonus then
+        local bonus = 2 + stacks
+        Score:addBonus(bonus)
+    end
+
+    celebrateUpgrade(getUpgradeString("rattle_gambit", "activation_text"), data, {
+        color = {0.88, 0.92, 1, 1},
+        textOffset = 48,
+        textScale = 1.1,
+        particleCount = 14 + stacks * 2,
+        particleSpeed = 125,
+        particleLife = 0.4,
+    })
+end
+
+local function rattleGambitShieldReset(_, state)
+    if not state then return end
+    if state.counters then
+        state.counters.rattleGambitChain = 0
+    end
+end
+
 local function newRunState()
     return {
         takenOrder = {},
@@ -204,29 +411,6 @@ local function updateResonantShellBonus(state)
         state.counters.resonantShellChargeBonus = newCharge
         state.effects.laserChargeFlat = (state.effects.laserChargeFlat or 0) - previousCharge + newCharge
     end
-end
-
-local function updateLinkedHydraulics(state)
-    if not state then return end
-
-    local perStack = state.counters and state.counters.linkedHydraulicsPerStack or 0
-    local perStall = state.counters and state.counters.linkedHydraulicsPerStall or 0
-    if perStack <= 0 and perStall <= 0 then return end
-
-    local stacks = 0
-    if state.takenSet then
-        stacks = state.takenSet.hydraulic_tracks or 0
-    end
-
-    local stall = 0
-    if state.effects then
-        stall = state.effects.sawStall or 0
-    end
-
-    local previous = state.counters.linkedHydraulicsBonus or 0
-    local newBonus = stacks * perStack + stall * perStall
-    state.counters.linkedHydraulicsBonus = newBonus
-    state.effects.sawSinkDuration = (state.effects.sawSinkDuration or 0) - previous + newBonus
 end
 
 local function updateGuildLedger(state)
@@ -467,54 +651,6 @@ local pool = {
         },
     }),
     register({
-        id = "saw_grease",
-        nameKey = "upgrades.saw_grease.name",
-        descKey = "upgrades.saw_grease.description",
-        rarity = "common",
-        onAcquire = function(state)
-            state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.8
-            celebrateUpgrade(getUpgradeString("saw_grease", "name"), nil, {
-                color = {0.96, 0.78, 0.4, 1},
-                particleCount = 12,
-                particleSpeed = 80,
-                particleLife = 0.4,
-                textOffset = 40,
-                textScale = 1.08,
-            })
-        end,
-    }),
-    register({
-        id = "hydraulic_tracks",
-        nameKey = "upgrades.hydraulic_tracks.name",
-        descKey = "upgrades.hydraulic_tracks.description",
-        rarity = "uncommon",
-        allowDuplicates = true,
-        maxStacks = 3,
-        onAcquire = function(state)
-            local durationPerStack = 0.5
-            state.effects.sawSinkDuration = (state.effects.sawSinkDuration or 0) + durationPerStack
-
-            if not state.counters.hydraulicTracksHandlerRegistered then
-                state.counters.hydraulicTracksHandlerRegistered = true
-                Upgrades:addEventHandler("fruitCollected", function(data, runState)
-                    local sinkDuration = (runState.effects and runState.effects.sawSinkDuration) or 0
-                    if sinkDuration and sinkDuration > 0 and Saws and Saws.sink then
-                        Saws:sink(sinkDuration)
-                    end
-                end)
-            end
-
-            celebrateUpgrade(getUpgradeString("hydraulic_tracks", "name"), nil, {
-                color = {0.68, 0.84, 1, 1},
-                particleCount = 14,
-                particleSpeed = 95,
-                particleLife = 0.42,
-                textOffset = 44,
-                textScale = 1.1,
-            })
-        end,
-    }),
-    register({
         id = "extra_bite",
         nameKey = "upgrades.extra_bite.name",
         descKey = "upgrades.extra_bite.description",
@@ -660,88 +796,6 @@ local pool = {
                 UI:adjustFruitGoal(-1)
             end
         end,
-    }),
-    register({
-        id = "linked_hydraulics",
-        nameKey = "upgrades.linked_hydraulics.name",
-        descKey = "upgrades.linked_hydraulics.description",
-        rarity = "uncommon",
-        condition = function(state)
-            return state and state.takenSet and (state.takenSet.hydraulic_tracks or 0) > 0
-        end,
-        tags = {"defense"},
-        onAcquire = function(state)
-            state.counters.linkedHydraulicsPerStack = 1.5
-            state.counters.linkedHydraulicsPerStall = 0.5
-            updateLinkedHydraulics(state)
-
-            if not state.counters.linkedHydraulicsHandlerRegistered then
-                state.counters.linkedHydraulicsHandlerRegistered = true
-                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
-                    if not runState then return end
-                    if not runState.takenSet or (runState.takenSet.linked_hydraulics or 0) <= 0 then return end
-                    updateLinkedHydraulics(runState)
-                end)
-            end
-
-            celebrateUpgrade(getUpgradeString("linked_hydraulics", "name"), nil, {
-                color = {0.62, 0.84, 1, 1},
-                particleCount = 20,
-                particleSpeed = 140,
-                particleLife = 0.46,
-                textOffset = 44,
-                textScale = 1.14,
-            })
-        end,
-    }),
-    register({
-        id = "twilight_parade",
-        nameKey = "upgrades.twilight_parade.name",
-        descKey = "upgrades.twilight_parade.description",
-        rarity = "uncommon",
-        tags = {"combo", "defense", "economy"},
-        handlers = {
-            fruitCollected = function(data)
-                if not data or (data.combo or 0) < 4 then return end
-                if Score.addBonus then
-                    Score:addBonus(2)
-                end
-                if Saws and Saws.stall then
-                    Saws:stall(0.8)
-                end
-            end,
-        },
-    }),
-    register({
-        id = "chromatic_pantry",
-        nameKey = "upgrades.chromatic_pantry.name",
-        descKey = "upgrades.chromatic_pantry.description",
-        rarity = "uncommon",
-        tags = {"economy", "defense"},
-        onAcquire = function(state)
-            state.counters.chromaticPantryLastFruit = nil
-        end,
-        handlers = {
-            fruitCollected = function(data, state)
-                if not data then return end
-
-                local last = state.counters.chromaticPantryLastFruit
-                local current = data.name or (data.fruitType and data.fruitType.id)
-
-                if current and last and current ~= last then
-                    if Score.addBonus then
-                        Score:addBonus(1)
-                    end
-                    if Saws and Saws.stall then
-                        Saws:stall(0.5)
-                    end
-                end
-
-                if current then
-                    state.counters.chromaticPantryLastFruit = current
-                end
-            end,
-        },
     }),
     register({
         id = "lucky_bite",
@@ -925,6 +979,32 @@ local pool = {
         },
     }),
     register({
+        id = "arc_conductor",
+        nameKey = "upgrades.arc_conductor.name",
+        descKey = "upgrades.arc_conductor.description",
+        rarity = "uncommon",
+        allowDuplicates = true,
+        maxStacks = 3,
+        tags = {"defense", "utility"},
+        onAcquire = function(state)
+            state.counters.arcConductorBase = state.counters.arcConductorBase or 1.2
+
+            if not state.counters.arcConductorHandlerRegistered then
+                state.counters.arcConductorHandlerRegistered = true
+                Upgrades:addEventHandler("laserShielded", arcConductorLaserHandler)
+            end
+
+            celebrateUpgrade(getUpgradeString("arc_conductor", "name"), nil, {
+                color = {0.68, 0.88, 1.0, 1},
+                particleCount = 16,
+                particleSpeed = 120,
+                particleLife = 0.44,
+                textOffset = 46,
+                textScale = 1.1,
+            })
+        end,
+    }),
+    register({
         id = "mirrored_scales",
         nameKey = "upgrades.mirrored_scales.name",
         descKey = "upgrades.mirrored_scales.description",
@@ -981,6 +1061,37 @@ local pool = {
                 particleLife = 0.48,
                 textOffset = 48,
                 textScale = 1.12,
+            })
+        end,
+    }),
+    register({
+        id = "scarlet_censer",
+        nameKey = "upgrades.scarlet_censer.name",
+        descKey = "upgrades.scarlet_censer.description",
+        rarity = "uncommon",
+        allowDuplicates = true,
+        maxStacks = 2,
+        tags = {"defense", "utility"},
+        onAcquire = function(state)
+            resetScarletCenserCharges(state)
+
+            if (state.counters.scarletCenserCharges or 0) <= 0 then
+                state.counters.scarletCenserCharges = 1
+            end
+
+            if not state.counters.scarletCenserHandlersRegistered then
+                state.counters.scarletCenserHandlersRegistered = true
+                Upgrades:addEventHandler("shieldConsumed", scarletCenserShieldHandler)
+                Upgrades:addEventHandler("floorStart", scarletCenserFloorStart)
+            end
+
+            celebrateUpgrade(getUpgradeString("scarlet_censer", "name"), nil, {
+                color = {1.0, 0.58, 0.64, 1},
+                particleCount = 14,
+                particleSpeed = 115,
+                particleLife = 0.4,
+                textOffset = 44,
+                textScale = 1.08,
             })
         end,
     }),
@@ -1047,15 +1158,81 @@ local pool = {
         },
     }),
     register({
-        id = "momentum_cache",
-        nameKey = "upgrades.momentum_cache.name",
-        descKey = "upgrades.momentum_cache.description",
-        rarity = "uncommon",
-        tags = {"economy", "risk"},
+        id = "rattle_gambit",
+        nameKey = "upgrades.rattle_gambit.name",
+        descKey = "upgrades.rattle_gambit.description",
+        rarity = "common",
+        allowDuplicates = true,
+        maxStacks = 3,
+        tags = {"combo", "utility"},
         onAcquire = function(state)
-            state.effects.comboBonusFlat = (state.effects.comboBonusFlat or 0) + 1
-            state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 1.05
+            state.counters.rattleGambitChain = state.counters.rattleGambitChain or 0
+
+            if not state.counters.rattleGambitHandlersRegistered then
+                state.counters.rattleGambitHandlersRegistered = true
+                Upgrades:addEventHandler("fruitCollected", rattleGambitFruitHandler)
+                Upgrades:addEventHandler("shieldConsumed", rattleGambitShieldReset)
+            end
         end,
+    }),
+    register({
+        id = "pulse_bloom",
+        nameKey = "upgrades.pulse_bloom.name",
+        descKey = "upgrades.pulse_bloom.description",
+        rarity = "rare",
+        tags = {"defense", "economy"},
+        allowDuplicates = true,
+        maxStacks = 2,
+        onAcquire = function(state)
+            state.counters.pulseBloomSeen = {}
+            state.counters.pulseBloomUnique = 0
+        end,
+        handlers = {
+            fruitCollected = function(data, state)
+                if not (data and state) then return end
+
+                local stacks = (state.takenSet and state.takenSet.pulse_bloom) or 0
+                if stacks <= 0 then return end
+
+                local fruitId = data.name or (data.fruitType and data.fruitType.id)
+                if not fruitId then return end
+
+                local seen = state.counters.pulseBloomSeen or {}
+                if not seen[fruitId] then
+                    seen[fruitId] = true
+                    state.counters.pulseBloomUnique = (state.counters.pulseBloomUnique or 0) + 1
+                    state.counters.pulseBloomSeen = seen
+                end
+
+                local threshold = math.max(1, 3 - math.max(0, stacks - 1))
+                if (state.counters.pulseBloomUnique or 0) < threshold then
+                    return
+                end
+
+                state.counters.pulseBloomUnique = 0
+                state.counters.pulseBloomSeen = {}
+
+                local restored = tryRestoreHealth(1, { immediate = true })
+                local labelKey
+                if restored > 0 then
+                    labelKey = "heal_text"
+                elseif Snake and Snake.addCrashShields then
+                    Snake:addCrashShields(1)
+                    labelKey = "shield_text"
+                end
+
+                if labelKey then
+                    celebrateUpgrade(getUpgradeString("pulse_bloom", labelKey), data, {
+                        color = {0.76, 0.94, 0.82, 1},
+                        textOffset = 50,
+                        textScale = 1.12,
+                        particleCount = 20 + stacks * 2,
+                        particleSpeed = 120,
+                        particleLife = 0.44,
+                    })
+                end
+            end,
+        },
     }),
     register({
         id = "aurora_band",
@@ -1434,59 +1611,63 @@ local pool = {
         nameKey = "upgrades.grim_reliquary.name",
         descKey = "upgrades.grim_reliquary.description",
         rarity = "rare",
-        requiresTags = {"risk"},
         tags = {"defense"},
         onAcquire = function(state)
-            state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 1.1
-            state.effects.sawStall = (state.effects.sawStall or 0) + 0.6
+            state.counters.grimReliquarySouls = state.counters.grimReliquarySouls or 0
+
+            if not state.counters.grimReliquaryHandlerRegistered then
+                state.counters.grimReliquaryHandlerRegistered = true
+                Upgrades:addEventHandler("shieldConsumed", grimReliquaryShieldHandler)
+            end
         end,
     }),
     register({
-        id = "relentless_pursuit",
-        nameKey = "upgrades.relentless_pursuit.name",
-        descKey = "upgrades.relentless_pursuit.description",
-        rarity = "uncommon",
+        id = "abyssal_catalyst",
+        nameKey = "upgrades.abyssal_catalyst.name",
+        descKey = "upgrades.abyssal_catalyst.description",
+        rarity = "epic",
+        allowDuplicates = false,
+        tags = {"defense", "risk"},
         onAcquire = function(state)
-            state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 1.15
-            state.effects.sawStall = (state.effects.sawStall or 0) + 1.5
-        end,
-    }),
-    register({
-        id = "ember_engine",
-        nameKey = "upgrades.ember_engine.name",
-        descKey = "upgrades.ember_engine.description",
-        rarity = "rare",
-        tags = {"defense"},
-        onAcquire = function(state)
-            state.counters.ember_engine_ready = false
-        end,
-        handlers = {
-            floorStart = function(_, state)
-                state.counters.ember_engine_ready = true
-            end,
-            fruitCollected = function(data, state)
-                if not state.counters.ember_engine_ready then return end
-                state.counters.ember_engine_ready = false
-                Saws:stall(3)
-            end,
-        },
-    }),
-    register({
-        id = "tempest_nectar",
-        nameKey = "upgrades.tempest_nectar.name",
-        descKey = "upgrades.tempest_nectar.description",
-        rarity = "rare",
-        tags = {"economy", "defense"},
-        handlers = {
-            fruitCollected = function(data)
-                if Saws and Saws.stall then
-                    Saws:stall(0.6)
+            state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 0.85
+            state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.9
+            state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) - 0.5
+            state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.2
+
+            state.counters.pendingMaxHealthDelta = state.counters.pendingMaxHealthDelta or 0
+            if state.counters.pendingMaxHealthDelta ~= 0 then
+                if adjustMaxHealth(state.counters.pendingMaxHealthDelta) then
+                    state.counters.pendingMaxHealthDelta = 0
                 end
-                if Score.addBonus then
-                    Score:addBonus(1)
-                end
-            end,
-        },
+            end
+
+            if not adjustMaxHealth(1) then
+                state.counters.pendingMaxHealthDelta = (state.counters.pendingMaxHealthDelta or 0) + 1
+            end
+
+            if not state.counters.maxHealthHandlerRegistered then
+                state.counters.maxHealthHandlerRegistered = true
+                Upgrades:addEventHandler("floorStart", function(_, runState)
+                    if not runState or not runState.counters then return end
+
+                    local pending = runState.counters.pendingMaxHealthDelta or 0
+                    if pending == 0 then return end
+
+                    if adjustMaxHealth(pending) then
+                        runState.counters.pendingMaxHealthDelta = 0
+                    end
+                end)
+            end
+
+            celebrateUpgrade(getUpgradeString("abyssal_catalyst", "name"), nil, {
+                color = {0.62, 0.58, 0.94, 1},
+                particleCount = 22,
+                particleSpeed = 150,
+                particleLife = 0.5,
+                textOffset = 48,
+                textScale = 1.14,
+            })
+        end,
     }),
     register({
         id = "spectral_harvest",
