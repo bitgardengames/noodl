@@ -396,7 +396,9 @@ function Game:load()
     end
 
     self:setupFloor(self.floor)
-    self.transitionTraits = buildModifierSections(self)
+    if self.transitionTraits == nil then
+        self.transitionTraits = buildModifierSections(self)
+    end
 
     self.transition:startFloorIntro(3.5, {
         transitionAdvance = false,
@@ -494,6 +496,30 @@ function Game:applyDamage(amount, cause, context)
     end
 
     return true
+end
+
+function Game:restoreHealth(amount, context)
+    if self.health == nil then
+        return 0
+    end
+
+    amount = math.max(0, math.floor((amount or 0) + 0.0001))
+    if amount <= 0 then
+        return 0
+    end
+
+    local previous = self.health or 0
+    local cap = self.maxHealth or previous
+    local updated = math.min(cap, previous + amount)
+
+    if updated == previous then
+        return 0
+    end
+
+    self.health = updated
+    UI:setHealth(updated, self.maxHealth, context)
+
+    return updated - previous
 end
 
 function Game:startDescending(holeX, holeY, holeRadius)
@@ -1137,10 +1163,39 @@ function Game:setupFloor(floorNum)
     local appliedTraits = setup.appliedTraits
     local spawnPlan = setup.spawnPlan
 
+    local healAmount = traitContext and traitContext.floorHeal
+    if healAmount == nil and self.mode and self.mode.floorHeal ~= nil then
+        healAmount = self.mode.floorHeal
+    end
+    if healAmount == nil then
+        healAmount = 1
+    end
+    healAmount = tonumber(healAmount) or 0
+
+    local restoredHealth = 0
+    if self.health and self.maxHealth and self.health < self.maxHealth then
+        restoredHealth = self:restoreHealth(healAmount, { source = "floorIntro" })
+    end
+
     UI:setFruitGoal(traitContext.fruitGoal)
     UI:setFloorModifiers(appliedTraits)
     self.activeFloorTraits = appliedTraits
     self.transitionTraits = buildModifierSections(self)
+
+    if restoredHealth and restoredHealth > 0 then
+        local healSectionTitle = Localization:get("game.floor_intro.heal_section_title")
+        local healText = Localization:get("game.floor_intro.heal_note", {
+            amount = restoredHealth,
+        })
+
+        self.transitionTraits = self.transitionTraits or {}
+        table.insert(self.transitionTraits, {
+            title = healSectionTitle,
+            items = {
+                { name = healText },
+            },
+        })
+    end
 
     Upgrades:applyPersistentEffects(true)
 
