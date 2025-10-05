@@ -1337,9 +1337,19 @@ function Game:setupFloor(floorNum)
 
     local restoredHealth, forgedShields = 0, 0
     if healAmount > 0 then
+        local overflowToShields = true
+        local system = self:_ensureHealthSystem()
+        if system then
+            local current = system:getCurrent() or 0
+            local max = system:getMax() or 0
+            if max > 0 and current >= max then
+                overflowToShields = false
+            end
+        end
+
         local restored, forged = self:restoreHealth(healAmount, {
             source = "floorIntro",
-            overflowToShields = true,
+            overflowToShields = overflowToShields,
         })
         restoredHealth = restored or 0
         forgedShields = forged or 0
