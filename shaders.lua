@@ -1278,7 +1278,7 @@ registerEffect({
             uv = clamp(uv, 0.0, 1.0);
 
             vec2 baseUv = uv;
-            float breath = sin(time * 0.42) * 0.5 + 0.5;
+            float breath = sin(time * 0.24) * 0.5 + 0.5;
             breath = breath * breath * (3.0 - 2.0 * breath);
             float pixelBlend = breath * 0.55 * intensity;
             vec2 pixelDensity = mix(vec2(120.0, 72.0), vec2(36.0, 22.0), breath);
@@ -1290,9 +1290,11 @@ registerEffect({
 
             float sparkle = 0.0;
             vec2 grid = floor(uv * vec2(18.0, 10.0));
-            float n = hash(grid + floor(time * 0.5));
-            float sparklePhase = fract(time * 0.6 + n);
-            sparkle = smoothstep(0.85, 1.0, 1.0 - sparklePhase);
+            float n = hash(grid + floor(time * 0.35));
+            float sparklePhase = fract(time * 0.28 + n);
+            float sparkleFadeIn = smoothstep(0.0, 0.35, sparklePhase);
+            float sparkleFadeOut = 1.0 - smoothstep(0.55, 0.9, sparklePhase);
+            sparkle = clamp(sparkleFadeIn * sparkleFadeOut, 0.0, 1.0);
             sparkle *= smoothstep(0.0, 1.0, pulse * 0.5 + 0.5);
 
             float accentMix = clamp(0.3 + drift * 0.18 + pulse * 0.12, 0.0, 1.0);
