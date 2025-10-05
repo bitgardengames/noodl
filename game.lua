@@ -26,6 +26,7 @@ local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
 local Lasers = require("lasers")
+local Darts = require("darts")
 local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
@@ -54,6 +55,7 @@ local ENTITY_UPDATE_ORDER = {
     Fruit,
     Rocks,
     Lasers,
+    Darts,
     Saws,
     Arena,
     Particles,
@@ -567,8 +569,9 @@ local function drawPlayfieldLayers(self, stateOverride)
 
     Fruit:draw()
     Rocks:draw()
-    Saws:draw()
     Lasers:draw()
+    Darts:draw()
+    Saws:draw()
     Arena:drawExit()
 
     if renderState == "descending" then

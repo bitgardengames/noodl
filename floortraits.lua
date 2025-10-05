@@ -201,6 +201,11 @@ function FloorTraits:apply(list, context)
         local maxLasers = cap or 6
         ctx.laserCount = math.max(0, math.min(maxLasers, math.floor(ctx.laserCount + 0.5)))
     end
+    if ctx.dartCount ~= nil then
+        local cap = FloorPlan.getDartCap and FloorPlan.getDartCap(ctx.floor)
+        local maxDarts = cap or 6
+        ctx.dartCount = math.max(0, math.min(maxDarts, math.floor(ctx.dartCount + 0.5)))
+    end
     if ctx.fruitGoal then
         ctx.fruitGoal = math.max(1, math.floor(ctx.fruitGoal + 0.5))
     end

@@ -4,7 +4,9 @@ local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
+local Darts = require("darts")
 local Arena = require("arena")
+local Theme = require("theme")
 local Particles = require("particles")
 local Upgrades = require("upgrades")
 local PlayerStats = require("playerstats")
@@ -32,6 +34,11 @@ local shieldStatMap = {
                 achievements = { "sawParry" },
         },
         laser = {
+                lifetime = "shieldSawParries",
+                run = "runShieldSawParries",
+                achievements = { "sawParry" },
+        },
+        dart = {
                 lifetime = "shieldSawParries",
                 run = "runShieldSawParries",
                 achievements = { "sawParry" },
@@ -512,6 +519,70 @@ local function handleLaserCollision(headX, headY)
         return
 end
 
+local function handleDartCollision(headX, headY)
+        if not Darts or not Darts.checkCollision then
+                return
+        end
+
+        if Snake:isHazardGraceActive() then
+                return
+        end
+
+        local dartHit = Darts:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+        if not dartHit then
+                return
+        end
+
+        local shielded = Snake:consumeCrashShield()
+        local survived = shielded
+
+        if not survived and Snake.consumeStoneSkinSawGrace then
+                survived = Snake:consumeStoneSkinSawGrace()
+        end
+
+        if not survived then
+                return "dead", "dart"
+        end
+
+        Darts:onShieldedHit(dartHit, headX, headY)
+
+        Particles:spawnBurst(headX, headY, {
+                count = 9,
+                speed = 88,
+                speedVariance = 36,
+                life = 0.28,
+                size = 2.6,
+                color = Theme and Theme.laserColor or {1.0, 0.5, 0.3, 1},
+                spread = math.pi * 2,
+                angleJitter = math.pi,
+                drag = 3.1,
+                gravity = 120,
+                scaleMin = 0.42,
+                scaleVariance = 0.36,
+                fadeTo = 0,
+        })
+
+        Audio:playSound("shield_saw")
+
+        if Snake.onShieldConsumed then
+                Snake:onShieldConsumed(headX, headY, "dart")
+        end
+
+        if Snake.chopTailByHazard then
+                Snake:chopTailByHazard("dart")
+        elseif Snake.chopTailBySaw then
+                Snake:chopTailBySaw()
+        end
+
+        Snake:beginHazardGrace()
+
+        if shielded then
+                recordShieldEvent("dart")
+        end
+
+        return
+end
+
 function Movement:reset()
         Snake:resetPosition()
 end
@@ -538,6 +609,11 @@ function Movement:update(dt)
         local laserState, laserCause = handleLaserCollision(headX, headY)
         if laserState then
                 return laserState, laserCause
+        end
+
+        local dartState, dartCause = handleDartCollision(headX, headY)
+        if dartState then
+                return dartState, dartCause
         end
 
         local sawState, sawCause = handleSawCollision(headX, headY)

@@ -6,6 +6,7 @@ local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
+local Darts = require("darts")
 local Movement = require("movement")
 local Particles = require("particles")
 local FloatingText = require("floatingtext")
@@ -40,6 +41,7 @@ local function resetFloorEntities()
     Rocks:reset()
     Saws:reset()
     Lasers:reset()
+    Darts:reset()
 end
 
 local function getCenterSpawnCell()
@@ -118,6 +120,7 @@ end
 
 local function applyBaselineHazardTraits(traitContext)
     traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
+    traitContext.dartCount = math.max(0, traitContext.dartCount or 0)
 
     if traitContext.rockSpawnChance then
         Rocks.spawnChance = traitContext.rockSpawnChance
@@ -150,6 +153,7 @@ local function finalizeTraitContext(traitContext, spawnPlan)
     end
 
     traitContext.laserCount = spawnPlan.laserCount or #(spawnPlan.lasers or {})
+    traitContext.dartCount = spawnPlan.dartCount or #(spawnPlan.darts or {})
 end
 
 local function trySpawnHorizontalSaw(halfTiles, bladeRadius)
@@ -215,6 +219,16 @@ local function spawnLasers(laserPlan)
 
     for _, plan in ipairs(laserPlan) do
         Lasers:spawn(plan.x, plan.y, plan.dir, plan.options)
+    end
+end
+
+local function spawnDarts(dartPlan)
+    if not (dartPlan and #dartPlan > 0) then
+        return
+    end
+
+    for _, plan in ipairs(dartPlan) do
+        Darts:spawn(plan.x, plan.y, plan.dir, plan.options)
     end
 end
 
@@ -346,9 +360,90 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
     return plan, desired
 end
 
+local function getDesiredDartCount(traitContext)
+    if not traitContext then
+        return 0
+    end
+
+    return math.max(0, math.floor((traitContext.dartCount or 0) + 0.5))
+end
+
+local function buildDartPlan(traitContext)
+    local desired = getDesiredDartCount(traitContext)
+
+    if desired <= 0 then
+        return {}, 0
+    end
+
+    local plan = {}
+    local attempts = 0
+    local maxAttempts = desired * 40
+    local totalCols = math.max(1, Arena.cols or 1)
+    local totalRows = math.max(1, Arena.rows or 1)
+
+    while #plan < desired and attempts < maxAttempts do
+        attempts = attempts + 1
+        local dir = (love.math.random() < 0.5) and "horizontal" or "vertical"
+        local facing = (love.math.random() < 0.5) and 1 or -1
+        local col, row
+
+        if dir == "horizontal" then
+            col = (facing > 0) and 1 or totalCols
+            local rowMin = 2
+            local rowMax = totalRows - 1
+            if rowMax < rowMin then
+                local fallback = math.floor(totalRows / 2 + 0.5)
+                rowMin = fallback
+                rowMax = fallback
+            end
+            rowMin = math.max(1, math.min(totalRows, rowMin))
+            rowMax = math.max(rowMin, math.min(totalRows, rowMax))
+            row = love.math.random(rowMin, rowMax)
+        else
+            row = (facing > 0) and 1 or totalRows
+            local colMin = 2
+            local colMax = totalCols - 1
+            if colMax < colMin then
+                local fallback = math.floor(totalCols / 2 + 0.5)
+                colMin = fallback
+                colMax = fallback
+            end
+            colMin = math.max(1, math.min(totalCols, colMin))
+            colMax = math.max(colMin, math.min(totalCols, colMax))
+            col = love.math.random(colMin, colMax)
+        end
+
+        if col and row and not SnakeUtils.isOccupied(col, row) then
+            local fx, fy = Arena:getCenterOfTile(col, row)
+            local telegraph = 0.7 + love.math.random() * 0.3
+            local cooldownMin = 3.0 + love.math.random() * 1.4
+            local cooldownMax = cooldownMin + 1.8 + love.math.random() * 1.6
+            local fireSpeed = 420 + love.math.random() * 120
+
+            plan[#plan + 1] = {
+                x = fx,
+                y = fy,
+                dir = dir,
+                options = {
+                    facing = facing,
+                    telegraphDuration = telegraph,
+                    cooldownMin = cooldownMin,
+                    cooldownMax = cooldownMax,
+                    fireSpeed = fireSpeed,
+                },
+            }
+
+            SnakeUtils.setOccupied(col, row, true)
+        end
+    end
+
+    return plan, desired
+end
+
 local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, floorData)
     local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
     local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
+    local dartPlan, desiredDarts = buildDartPlan(traitContext)
 
     return {
         numRocks = traitContext.rocks,
@@ -361,6 +456,8 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
         rockSafeZone = rockSafeZone,
         lasers = laserPlan,
         laserCount = desiredLasers,
+        darts = dartPlan,
+        dartCount = desiredDarts,
     }
 end
 
@@ -378,10 +475,16 @@ function FloorSetup.prepare(floorNum, floorData)
 
     traitContext = Upgrades:modifyFloorContext(traitContext)
     traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
+    traitContext.dartCount = math.max(0, traitContext.dartCount or 0)
 
     local cap = FloorPlan.getLaserCap and FloorPlan.getLaserCap(traitContext.floor)
     if cap and traitContext.laserCount ~= nil then
         traitContext.laserCount = math.min(cap, traitContext.laserCount)
+    end
+
+    local dartCap = FloorPlan.getDartCap and FloorPlan.getDartCap(traitContext.floor)
+    if dartCap and traitContext.dartCount ~= nil then
+        traitContext.dartCount = math.min(dartCap, traitContext.dartCount)
     end
 
     local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, floorData)
@@ -400,6 +503,7 @@ end
 function FloorSetup.spawnHazards(spawnPlan)
     spawnSaws(spawnPlan.numSaws or 0, spawnPlan.halfTiles, spawnPlan.bladeRadius)
     spawnLasers(spawnPlan.lasers or {})
+    spawnDarts(spawnPlan.darts or {})
     spawnRocks(spawnPlan.numRocks or 0, spawnPlan.rockSafeZone or spawnPlan.safeZone)
     Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
     SnakeUtils.releaseCells(spawnPlan.reservedSafeZone)
