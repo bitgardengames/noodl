@@ -19,7 +19,7 @@ local FLASH_DECAY = 3.8
 local DEFAULT_FIRE_COLOR = {1, 0.16, 0.16, 1}
 local DEFAULT_BEAM_THICKNESS = 4.5
 local DEFAULT_FIRE_DURATION = 1.2
-local DEFAULT_CHARGE_DURATION = 0.9
+local DEFAULT_CHARGE_DURATION = 1.2
 local BURN_FADE_RATE = 0.55
 local WALL_INSET = 6
 local BEAM_PULSE_SPEED = 7.2
@@ -152,8 +152,8 @@ local function recalcBeamTiming(beam, isInitial)
 
     local baseFire = beam.baseFireDuration or DEFAULT_FIRE_DURATION
     local baseCharge = beam.baseChargeDuration or DEFAULT_CHARGE_DURATION
-    local baseMin = beam.baseCooldownMin or 3.5
-    local baseMax = beam.baseCooldownMax or (baseMin + 3.0)
+    local baseMin = beam.baseCooldownMin or 4.2
+    local baseMax = beam.baseCooldownMax or (baseMin + 3.4)
 
     local oldFire = beam.fireDuration or baseFire
     local oldCharge = beam.chargeDuration or baseCharge
@@ -377,8 +377,8 @@ function Lasers:spawn(x, y, dir, options)
 
     beam.baseFireDuration = math.max(0.2, options.fireDuration or DEFAULT_FIRE_DURATION)
     beam.baseChargeDuration = math.max(0.25, options.chargeDuration or DEFAULT_CHARGE_DURATION)
-    beam.baseCooldownMin = options.fireCooldownMin or 3.5
-    beam.baseCooldownMax = options.fireCooldownMax or (beam.baseCooldownMin + 3.0)
+    beam.baseCooldownMin = options.fireCooldownMin or 4.2
+    beam.baseCooldownMax = options.fireCooldownMax or (beam.baseCooldownMin + 3.4)
     if beam.baseCooldownMax < beam.baseCooldownMin then
         beam.baseCooldownMax = beam.baseCooldownMin
     end
