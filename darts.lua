@@ -7,7 +7,13 @@ local Particles = require("particles")
 
 local Darts = {}
 
+local DARTS_ENABLED = false
+
 local launchers = {}
+
+function Darts:isEnabled()
+    return DARTS_ENABLED
+end
 
 local DEFAULT_TELEGRAPH_DURATION = 1.15
 local DEFAULT_COOLDOWN_MIN = 4.0
@@ -334,9 +340,17 @@ function Darts:reset()
     end
 
     launchers = {}
+
+    if not DARTS_ENABLED then
+        return
+    end
 end
 
 function Darts:spawn(x, y, dir, options)
+    if not DARTS_ENABLED then
+        return
+    end
+
     dir = dir or "horizontal"
     options = options or {}
 
@@ -393,6 +407,10 @@ function Darts:spawn(x, y, dir, options)
 end
 
 function Darts:update(dt)
+    if not DARTS_ENABLED then
+        return
+    end
+
     if dt <= 0 then
         return
     end
@@ -570,6 +588,10 @@ local function drawImpact(launcher, accentColor)
 end
 
 function Darts:draw()
+    if not DARTS_ENABLED then
+        return
+    end
+
     local bodyColor, accentColor = getLauncherColors()
 
     for _, launcher in ipairs(launchers) do
@@ -609,6 +631,10 @@ local function overlapsProjectile(launcher, x, y, w, h)
 end
 
 function Darts:checkCollision(x, y, w, h)
+    if not DARTS_ENABLED then
+        return nil
+    end
+
     for _, launcher in ipairs(launchers) do
         if launcher.state == "firing" and overlapsProjectile(launcher, x, y, w, h) then
             return {
@@ -625,6 +651,10 @@ function Darts:checkCollision(x, y, w, h)
 end
 
 function Darts:onShieldedHit(hit, hitX, hitY)
+    if not DARTS_ENABLED then
+        return
+    end
+
     if not hit then
         return
     end
