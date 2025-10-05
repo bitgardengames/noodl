@@ -668,13 +668,13 @@ registerEffect({
             float petalWave = sin((centered.x + centered.y) * 6.0 + time * 0.5);
             float waveMix = clamp(petalWave * 0.5 + 0.5, 0.0, 1.0) * (0.18 + 0.28 * intensity);
 
-            vec3 base = mix(baseColor.rgb, softColor.rgb, clamp(0.45 + intensity * 0.25 + centered.y * 0.2, 0.0, 1.0));
-            vec3 fungalGlow = mix(accentColor.rgb, sporeColor.rgb, 0.55);
-            base = mix(base, fungalGlow, 0.18 + 0.22 * intensity);
-            vec3 accent = mix(base, accentColor.rgb, 0.65);
-            vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.58);
-            vec3 spores = mix(glowColor.rgb, sporeColor.rgb, 0.6);
-            vec3 aura = mix(softColor.rgb, sporeColor.rgb, 0.45);
+            vec3 base = mix(baseColor.rgb, softColor.rgb, clamp(0.28 + intensity * 0.18 + centered.y * 0.15, 0.0, 1.0));
+            vec3 fungalGlow = mix(accentColor.rgb, sporeColor.rgb, 0.4);
+            base = mix(base, fungalGlow, 0.26 + 0.24 * intensity);
+            vec3 accent = mix(base, accentColor.rgb, 0.72);
+            vec3 glow = mix(accentColor.rgb, glowColor.rgb, 0.46);
+            vec3 spores = mix(glowColor.rgb, sporeColor.rgb, 0.52);
+            vec3 aura = mix(softColor.rgb, sporeColor.rgb, 0.32);
 
             float underglow = smoothstep(-0.55, 0.2, centered.y + sin(time * 0.2) * 0.1);
             base = mix(base, aura, underglow * (0.18 + intensity * 0.1));
@@ -699,12 +699,12 @@ registerEffect({
             float vignette = 1.0 - smoothstep(innerEdge, outerEdge, dist + breathing * 0.08 * intensity);
 
             float ambientPulse = sin(time * 0.22 + centered.y * 3.0) * 0.5 + 0.5;
-            vec3 tintedBase = mix(baseColor.rgb, softColor.rgb, 0.25 + ambientPulse * 0.2);
-            tintedBase = mix(tintedBase, sporeColor.rgb, 0.28 + 0.25 * ambientPulse + 0.15 * intensity);
-            tintedBase = mix(tintedBase, accentColor.rgb, 0.22 + 0.18 * intensity);
-            tintedBase = mix(tintedBase, glowColor.rgb, 0.14 + 0.22 * ambientPulse);
+            vec3 tintedBase = mix(baseColor.rgb, softColor.rgb, 0.18 + ambientPulse * 0.12);
+            tintedBase = mix(tintedBase, sporeColor.rgb, 0.34 + 0.28 * ambientPulse + 0.18 * intensity);
+            tintedBase = mix(tintedBase, accentColor.rgb, 0.3 + 0.22 * intensity);
+            tintedBase = mix(tintedBase, glowColor.rgb, 0.08 + 0.16 * ambientPulse);
 
-            float finalMix = clamp(vignette * (0.82 + 0.08 * intensity) + 0.16, 0.0, 1.0);
+            float finalMix = clamp(vignette * (0.72 + 0.06 * intensity) + 0.08, 0.0, 1.0);
             vec3 finalColor = mix(tintedBase, colorBlend, finalMix);
 
             return vec4(finalColor, baseColor.a) * color;
