@@ -205,7 +205,7 @@ local function applySkinGlow(trail, head, radius, config)
     if not (x and y) then
       return
     end
-    drawSoftGlow(x, y, radius * radiusMultiplier, color[1], color[2], color[3], (color[4] or 1) * intensity)
+    drawSoftGlow(x, y, radius * radiusMultiplier, color[1], color[2], color[3], (color[4] or 1) * intensity, "alpha")
   end
 
   if trail and #trail > 0 then
@@ -381,17 +381,35 @@ local function renderSnakeToCanvas(trail, coords, head, half)
 
 end
 
-drawSoftGlow = function(x, y, radius, r, g, b, a)
+drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
   if radius <= 0 then return end
 
+  local colorR = r or 0
+  local colorG = g or 0
+  local colorB = b or 0
+  local colorA = a or 1
+  local mode = blendMode or "add"
+
   love.graphics.push("all")
-  love.graphics.setBlendMode("add")
+
+  if mode == "alpha" then
+    love.graphics.setBlendMode("alpha", "premultiplied")
+  else
+    love.graphics.setBlendMode("add")
+  end
 
   local layers = 4
   for i = 1, layers do
     local t = (i - 1) / (layers - 1)
     local fade = (1 - t)
-    love.graphics.setColor(r, g, b, (a or 1) * fade * fade)
+    local layerAlpha = colorA * fade * fade
+
+    if mode == "alpha" then
+      love.graphics.setColor(colorR * layerAlpha, colorG * layerAlpha, colorB * layerAlpha, layerAlpha)
+    else
+      love.graphics.setColor(colorR, colorG, colorB, layerAlpha)
+    end
+
     love.graphics.circle("fill", x, y, radius * (0.55 + 0.35 * t))
   end
 
