@@ -19,12 +19,17 @@ local tiers = {
         description = "Choose how the snake's core pace trades against hazard cadence.",
         options = {
             {
-                id = "balanced_circuit",
-                name = "Balanced Circuit",
-                description = "Maintain the classic noodl tempo with no modifiers.",
-                bonuses = { "Run behaves exactly as classic" },
-                penalties = {},
-                effects = {},
+                id = "phase_clutch",
+                name = "Phase Clutch",
+                description = "Let the coils slip just enough to strafe faster while trimming growth to stay nimble.",
+                bonuses = { "Snake speed x1.10", "Fruit growth -1 segment" },
+                penalties = { "Rock spawn x1.10", "Laser cooldown x0.95" },
+                effects = {
+                    snakeSpeedMultiplier = 1.10,
+                    extraGrowth = -1,
+                    rockSpawnMultiplier = 1.10,
+                    laserCooldownMultiplier = 0.95,
+                },
                 default = true,
             },
             {
@@ -61,12 +66,16 @@ local tiers = {
         description = "Decide how you respond when arena threats spin up.",
         options = {
             {
-                id = "baseline_response",
-                name = "Baseline Response",
-                description = "Keep the standard hazard behaviors with no adjustments.",
-                bonuses = { "No change to hazard cadence" },
-                penalties = {},
-                effects = {},
+                id = "harmonic_deflector",
+                name = "Harmonic Deflector",
+                description = "Tune counterwaves so saws drift and lasers linger, sacrificing fruit bounty.",
+                bonuses = { "Saw speed x0.90", "Laser charge x1.50" },
+                penalties = { "Fruit bonus -0.2" },
+                effects = {
+                    sawSpeedMultiplier = 0.90,
+                    laserChargeMultiplier = 1.50,
+                    fruitBonus = -0.2,
+                },
                 default = true,
             },
             {
@@ -102,12 +111,16 @@ local tiers = {
         description = "Shape how support flows between floors and hazards react.",
         options = {
             {
-                id = "steady_commerce",
-                name = "Steady Commerce",
-                description = "Keep the vendor network unchanged and hazards steady.",
-                bonuses = { "Shop stock remains unchanged" },
-                penalties = {},
-                effects = {},
+                id = "relay_crates",
+                name = "Relay Crates",
+                description = "Freight caches goose fruit values and calm saw crews, but convoy drag slows the serpent.",
+                bonuses = { "Fruit bonus +0.4", "Saw speed x0.92" },
+                penalties = { "Snake speed x0.94" },
+                effects = {
+                    fruitBonus = 0.4,
+                    sawSpeedMultiplier = 0.92,
+                    snakeSpeedMultiplier = 0.94,
+                },
                 default = true,
             },
             {
@@ -143,12 +156,16 @@ local tiers = {
         description = "Define how your scoring engine trades with escalating hazards.",
         options = {
             {
-                id = "balanced_momentum",
-                name = "Balanced Momentum",
-                description = "Hold the stock scoring profile from classic runs.",
-                bonuses = { "No change to scoring flow" },
-                penalties = {},
-                effects = {},
+                id = "momentum_battery",
+                name = "Momentum Battery",
+                description = "Bank surplus motion into combo charge while hauling extra hull through the arena.",
+                bonuses = { "Combo multiplier x1.20", "Extra growth +1" },
+                penalties = { "Rock spawn x1.15" },
+                effects = {
+                    comboMultiplier = 1.20,
+                    extraGrowth = 1,
+                    rockSpawnMultiplier = 1.15,
+                },
                 default = true,
             },
             {
