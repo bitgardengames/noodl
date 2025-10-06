@@ -258,12 +258,15 @@ registerEffect({
             float canopy = smoothstep(0.18, 0.82, uv.y + sway);
             float lightBands = sin((uv.x * 5.0 + uv.y * 1.2) + time * 0.25) * 0.5 + 0.5;
 
-            vec3 base = mix(baseColor.rgb, canopyColor.rgb, canopy * 0.65);
-            float highlight = clamp(lightBands * 0.35 * intensity, 0.0, 1.0);
-            vec3 col = mix(base, glowColor.rgb, highlight * 0.5);
+            vec3 canopyBase = mix(baseColor.rgb, canopyColor.rgb, canopy * 0.5);
+            vec3 soil = mix(baseColor.rgb, glowColor.rgb, 0.35);
+            vec3 base = mix(canopyBase, soil, smoothstep(0.2, 0.9, uv.y) * 0.4);
+            float highlight = clamp(lightBands * (0.22 + intensity * 0.16), 0.0, 1.0);
+            vec3 col = mix(base, glowColor.rgb, highlight * 0.45);
+            col = mix(col, soil, 0.18);
 
             float vignette = smoothstep(0.45, 0.98, distance(uv, vec2(0.5)));
-            col = mix(col, baseColor.rgb, vignette * 0.45);
+            col = mix(col, baseColor.rgb, vignette * 0.35);
 
             return vec4(col, baseColor.a) * color;
         }
