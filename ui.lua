@@ -68,6 +68,7 @@ UI.upgradeIndicators = {
 local BUTTON_POP_DURATION = 0.32
 local HEART_GAIN_DURATION = 0.42
 local HEART_LOSS_DURATION = 0.5
+local HEART_OUTLINE_SIZE = 3
 
 local function clamp01(value)
     if value < 0 then return 0 end
@@ -130,7 +131,6 @@ local function setColor(color, alphaMultiplier)
 end
 
 local heartBasePoints
-local heartVertexBuffer = {}
 local heartTriangles
 local heartMesh
 
@@ -243,23 +243,20 @@ local function drawHeartGeometry(x, y, size)
 end
 
 local function drawHeartShape(x, y, size)
-    local basePoints = getHeartBasePoints()
-    local count = #basePoints
+    if size <= 0 then
+        return
+    end
 
     local r, g, b, a = love.graphics.getColor()
 
+    local outlineSize = math.max(0, size + HEART_OUTLINE_SIZE)
+    if outlineSize > size then
+        love.graphics.setColor(0, 0, 0, a)
+        drawHeartGeometry(x, y, outlineSize)
+    end
+
     love.graphics.setColor(r, g, b, a)
-
     drawHeartGeometry(x, y, size)
-
-    for i = 1, count, 2 do
-        heartVertexBuffer[i] = x + basePoints[i] * size
-        heartVertexBuffer[i + 1] = y + basePoints[i + 1] * size
-    end
-
-    for i = count + 1, #heartVertexBuffer do
-        heartVertexBuffer[i] = nil
-    end
 
     -- top-left highlight for a juicy look similar to fruits
     love.graphics.stencil(function()
@@ -281,25 +278,6 @@ local function drawHeartShape(x, y, size)
     love.graphics.pop()
 
     love.graphics.setStencilTest()
-
-    love.graphics.setColor(0, 0, 0, a)
-
-    local previousLineJoin = love.graphics.getLineJoin and love.graphics.getLineJoin() or nil
-    if love.graphics.setLineJoin then
-        love.graphics.setLineJoin("bevel")
-    end
-
-    love.graphics.setLineWidth(3)
-    love.graphics.polygon("line", heartVertexBuffer)
-    love.graphics.setLineWidth(1)
-
-    if love.graphics.setLineJoin then
-        if previousLineJoin ~= nil then
-            love.graphics.setLineJoin(previousLineJoin)
-        else
-            love.graphics.setLineJoin("miter")
-        end
-    end
 
     love.graphics.setColor(r, g, b, a)
 end
