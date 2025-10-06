@@ -49,7 +49,7 @@ local layout = {
     panel = { x = 0, y = 0, w = 0, h = 0 },
 }
 
-local BACKGROUND_EFFECT_TYPE = "settingsScan"
+local BACKGROUND_EFFECT_TYPE = "settingsBlueprint"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 

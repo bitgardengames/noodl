@@ -41,7 +41,7 @@ local heldDpadTimer = 0
 local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 
-local BACKGROUND_EFFECT_TYPE = "achievementGlimmer"
+local BACKGROUND_EFFECT_TYPE = "achievementRadiance"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
