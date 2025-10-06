@@ -362,7 +362,7 @@ local function buildSmoothedCoords(coords, radius)
   return smoothed
 end
 
-local function drawSnakeStroke(path, radius, skipStartCap)
+local function drawSnakeStroke(path, radius)
   if not path or radius <= 0 or #path < 2 then
     return
   end
@@ -378,7 +378,7 @@ local function drawSnakeStroke(path, radius, skipStartCap)
   local firstX, firstY = path[1], path[2]
   local lastX, lastY = path[#path - 1], path[#path]
 
-  if not skipStartCap and firstX and firstY then
+  if firstX and firstY then
     love.graphics.circle("fill", firstX, firstY, radius)
   end
 
@@ -404,11 +404,11 @@ local function renderSnakeToCanvas(trail, coords, head, half)
   end
 
   love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-  drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, true)
+  drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE)
   drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
 
   love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-  drawSnakeStroke(bodyCoords, half, true)
+  drawSnakeStroke(bodyCoords, half)
   drawFruitBulges(trail, head, bulgeRadius)
 
   love.graphics.pop()
