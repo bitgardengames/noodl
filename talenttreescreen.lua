@@ -894,7 +894,7 @@ local function refreshSummaryLayout()
     if #loadoutLines == 0 then
         local fallback = Localization:get("talents.no_modifiers")
         if fallback == "talents.no_modifiers" then
-            fallback = "No stat modifiers active."
+            fallback = "No stat modifiers active"
         end
         loadoutLines[#loadoutLines + 1] = buildLine(fallback, UI.colors.subtleText)
     end
@@ -1299,7 +1299,7 @@ function TalentTreeScreen:draw()
     else
         local fallback = Localization:get("talents.loadout_empty")
         if fallback == "talents.loadout_empty" then
-            fallback = "Active loadout: balanced."
+            fallback = "Active loadout: balanced"
         end
         UI.drawLabel(fallback, summaryX, summaryY, summaryWidth, "left", {
             fontKey = "prompt",
