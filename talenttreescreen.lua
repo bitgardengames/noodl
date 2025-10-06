@@ -34,6 +34,13 @@ local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.12
 local ANALOG_DEADZONE = 0.35
 local FOOTER_BUTTON_SPACING = 18
+local SUMMARY_COLUMN_MIN_WIDTH = 260
+local SUMMARY_COLUMN_GAP = 28
+local SUMMARY_TWO_COLUMN_MIN_WIDTH = SUMMARY_COLUMN_MIN_WIDTH * 2 + SUMMARY_COLUMN_GAP
+local SUMMARY_SECTION_SPACING = 10
+local SUMMARY_LINE_SPACING = 2
+local SUMMARY_HEADING_SPACING = 6
+local SUMMARY_BOTTOM_SPACING = 18
 
 local tiers = {}
 local selections = {}
@@ -53,9 +60,38 @@ local layout = {
     contentX = 0,
     contentY = 0,
     contentW = 0,
+    summaryHeight = 0,
+    summaryOffset = 0,
 }
 local tierMetrics = {}
 local tierLayout = {}
+local summaryLayout = {
+    height = 0,
+    hasContent = false,
+    lines = {},
+    picks = {},
+    twoColumn = false,
+    columnWidth = 0,
+    headingHeight = 0,
+    contentHeight = 0,
+    lineHeight = 0,
+}
+
+local function selectionsMatchDefaults()
+    if not tiers or #tiers == 0 then
+        return true
+    end
+
+    local defaults = TalentTree:getDefaultSelections() or {}
+    for _, tier in ipairs(tiers) do
+        local defaultId = defaults[tier.id]
+        if selections[tier.id] ~= defaultId then
+            return false
+        end
+    end
+
+    return true
+end
 
 local heldDpadButton = nil
 local heldDpadAction = nil
@@ -512,6 +548,7 @@ local function rebuildButtons()
         id = "talent_reset",
         type = "reset",
         label = resetLabel,
+        baseLabel = resetLabel,
         x = 0,
         y = 0,
         w = UI.spacing.buttonWidth,
@@ -544,11 +581,19 @@ local function updateLayout()
     layout.panelX = math.floor((sw - layout.panelW) / 2)
     layout.panelY = PANEL_TOP
     layout.panelH = math.max(420, sh - PANEL_TOP - PANEL_BOTTOM_MARGIN)
+    refreshSummaryLayout()
+
+    layout.summaryHeight = summaryLayout.height or 0
+    if layout.summaryHeight < 0 then
+        layout.summaryHeight = 0
+    end
+
+    layout.summaryOffset = layout.summaryHeight > 0 and (layout.summaryHeight + SUMMARY_BOTTOM_SPACING) or 0
     layout.contentX = layout.panelX + PANEL_PADDING
-    layout.contentY = layout.panelY + PANEL_PADDING
+    layout.contentY = layout.panelY + PANEL_PADDING + layout.summaryOffset
     layout.contentW = layout.panelW - PANEL_PADDING * 2
 
-    viewportHeight = math.max(0, layout.panelH - PANEL_PADDING * 2)
+    viewportHeight = math.max(0, layout.panelH - PANEL_PADDING * 2 - layout.summaryOffset)
 
     local yCursor = CONTENT_TOP_PADDING
     for tierIndex, tier in ipairs(tiers) do
@@ -634,7 +679,16 @@ local function updateLayout()
     end
 
     if resetButton then
-        UI.registerButton(resetButton.id, resetButton.x, resetButton.y, resetButton.w, resetButton.h, resetButton.label)
+        local usingDefaults = selectionsMatchDefaults()
+        resetButton.disabled = usingDefaults or nil
+        local baseLabel = resetButton.baseLabel or resetButton.label
+        local appliedLabel = Localization:get("talents.reset_applied")
+        if appliedLabel == "talents.reset_applied" then
+            appliedLabel = "Defaults applied"
+        end
+        local displayLabel = usingDefaults and appliedLabel or baseLabel
+        resetButton.label = displayLabel
+        UI.registerButton(resetButton.id, resetButton.x, resetButton.y, resetButton.w, resetButton.h, displayLabel)
         if resetIndex then
             UI.setButtonFocus(resetButton.id, focusedIndex == resetIndex)
         end
@@ -770,6 +824,131 @@ local function getSummaryLines()
     end
 
     return lines
+end
+
+local function getSelectionSummaryLines()
+    local lines = {}
+    if not tiers or #tiers == 0 then
+        return lines
+    end
+
+    local defaults = TalentTree:getDefaultSelections() or {}
+    local defaultShort = Localization:get("talents.default_short")
+    if defaultShort == "talents.default_short" then
+        defaultShort = "Default"
+    end
+
+    local customShort = Localization:get("talents.custom_short")
+    if customShort == "talents.custom_short" then
+        customShort = "Custom pick"
+    end
+
+    local noneSelected = Localization:get("talents.none_selected")
+    if noneSelected == "talents.none_selected" then
+        noneSelected = "Not selected"
+    end
+
+    for _, tier in ipairs(tiers) do
+        local selectionId = selections and selections[tier.id] or nil
+        local optionName
+        if tier.options then
+            for _, option in ipairs(tier.options) do
+                if option.id == selectionId then
+                    optionName = option.name
+                    break
+                end
+            end
+        end
+
+        local defaultId = defaults[tier.id]
+        local isDefault = (selectionId == defaultId)
+
+        if not optionName then
+            if tier.options then
+                for _, option in ipairs(tier.options) do
+                    if option.id == defaultId then
+                        optionName = option.name
+                        isDefault = true
+                        break
+                    end
+                end
+            end
+        end
+
+        optionName = optionName or noneSelected
+
+        local tierName = tier.name or tier.id or "Tier"
+        local descriptor = isDefault and defaultShort or customShort
+        local text = string.format("%s (%s, %s)", optionName, tierName, descriptor)
+        local color = isDefault and UI.colors.subtleText or Theme.accentTextColor
+        lines[#lines + 1] = buildLine(text, color)
+    end
+
+    return lines
+end
+
+local function refreshSummaryLayout()
+    local loadoutLines = getSummaryLines()
+    local picks = getSelectionSummaryLines()
+
+    if #loadoutLines == 0 then
+        local fallback = Localization:get("talents.no_modifiers")
+        if fallback == "talents.no_modifiers" then
+            fallback = "No stat modifiers active."
+        end
+        loadoutLines[#loadoutLines + 1] = buildLine(fallback, UI.colors.subtleText)
+    end
+
+    summaryLayout.lines = loadoutLines
+    summaryLayout.picks = picks
+    summaryLayout.hasContent = (#loadoutLines > 0 or #picks > 0)
+    summaryLayout.headingHeight = UI.fonts.prompt:getHeight()
+    summaryLayout.lineHeight = UI.fonts.body:getHeight()
+    summaryLayout.lineSpacing = SUMMARY_LINE_SPACING
+    summaryLayout.headingSpacing = SUMMARY_HEADING_SPACING
+
+    local availableWidth = layout.panelW - PANEL_PADDING * 2
+    if availableWidth < 0 then
+        availableWidth = 0
+    end
+
+    if not summaryLayout.hasContent then
+        summaryLayout.twoColumn = false
+        summaryLayout.columnWidth = availableWidth
+        summaryLayout.contentHeight = 0
+        summaryLayout.height = summaryLayout.headingHeight
+        return
+    end
+
+    local function columnHeight(count)
+        if count <= 0 then
+            return 0
+        end
+        return count * (summaryLayout.lineHeight + summaryLayout.lineSpacing)
+    end
+
+    local leftHeight = columnHeight(#summaryLayout.lines)
+    local rightHeight = columnHeight(#summaryLayout.picks)
+
+    if (#summaryLayout.lines > 0 and #summaryLayout.picks > 0 and availableWidth >= SUMMARY_TWO_COLUMN_MIN_WIDTH) then
+        summaryLayout.twoColumn = true
+        local columnWidth = math.floor((availableWidth - SUMMARY_COLUMN_GAP) / 2)
+        columnWidth = math.max(SUMMARY_COLUMN_MIN_WIDTH, columnWidth)
+        summaryLayout.columnWidth = columnWidth
+        summaryLayout.contentHeight = math.max(leftHeight, rightHeight)
+    else
+        summaryLayout.twoColumn = false
+        summaryLayout.columnWidth = availableWidth
+        summaryLayout.contentHeight = leftHeight + rightHeight
+        if #summaryLayout.lines > 0 and #summaryLayout.picks > 0 then
+            summaryLayout.contentHeight = summaryLayout.contentHeight + SUMMARY_SECTION_SPACING
+        end
+    end
+
+    summaryLayout.height = summaryLayout.headingHeight
+    if summaryLayout.contentHeight > 0 then
+        summaryLayout.height = summaryLayout.height + summaryLayout.headingSpacing + summaryLayout.contentHeight
+    end
 end
 
 local function drawOptionCard(button)
@@ -942,15 +1121,20 @@ local function activateButton(button)
         Audio:playSound("click")
         return { state = "menu" }
     elseif button.type == "reset" then
+        if button.disabled then
+            return nil
+        end
         Audio:playSound("click")
         selections = TalentTree:resetToDefaults() or selections
         updateFocusVisuals()
+        updateLayout()
         return nil
     elseif button.type == "option" then
         local tierId = button.tier.id
         if selections[tierId] ~= button.option.id then
             selections[tierId] = button.option.id
             TalentTree:setSelection(tierId, button.option.id)
+            updateLayout()
         end
         Audio:playSound("click")
         return nil
@@ -1039,26 +1223,85 @@ function TalentTreeScreen:draw()
         color = UI.colors.subtleText,
     })
 
-    local summaryLines = getSummaryLines()
-    if #summaryLines > 0 then
-        local summaryY = layout.panelY + 12
-        local summaryX = layout.panelX + PANEL_PADDING
-        UI.drawLabel(Localization:get("talents.loadout") ~= "talents.loadout" and Localization:get("talents.loadout") or "Active loadout:", summaryX, summaryY, layout.panelW - PANEL_PADDING * 2, "left", {
+    local summaryHeading = Localization:get("talents.loadout")
+    if summaryHeading == "talents.loadout" then
+        summaryHeading = "Active loadout:"
+    end
+
+    local summaryX = layout.panelX + PANEL_PADDING
+    local summaryY = layout.panelY + PANEL_PADDING
+    local summaryWidth = layout.panelW - PANEL_PADDING * 2
+
+    if summaryLayout.hasContent then
+        UI.drawLabel(summaryHeading, summaryX, summaryY, summaryWidth, "left", {
             fontKey = "prompt",
             color = Theme.accentTextColor,
         })
-        summaryY = summaryY + UI.fonts.prompt:getHeight() + 4
-        for _, line in ipairs(summaryLines) do
-            if line and line.text and line.text ~= "" then
-                UI.drawLabel("• " .. line.text, summaryX, summaryY, layout.panelW - PANEL_PADDING * 2, "left", {
-                    fontKey = "body",
-                    color = line.color or Theme.textColor,
-                })
-                summaryY = summaryY + UI.fonts.body:getHeight() + 2
+
+        if summaryLayout.contentHeight > 0 then
+            local contentY = summaryY + summaryLayout.headingHeight + summaryLayout.headingSpacing
+            local lineHeight = summaryLayout.lineHeight
+            local lineSpacing = summaryLayout.lineSpacing
+
+            if summaryLayout.twoColumn then
+                local columnWidth = summaryLayout.columnWidth
+                local leftY = contentY
+                for _, line in ipairs(summaryLayout.lines or {}) do
+                    if line and line.text and line.text ~= "" then
+                        UI.drawLabel("• " .. line.text, summaryX, leftY, columnWidth, "left", {
+                            fontKey = "body",
+                            color = line.color or Theme.textColor,
+                        })
+                        leftY = leftY + lineHeight + lineSpacing
+                    end
+                end
+
+                local rightX = summaryX + columnWidth + SUMMARY_COLUMN_GAP
+                local rightY = contentY
+                for _, line in ipairs(summaryLayout.picks or {}) do
+                    if line and line.text and line.text ~= "" then
+                        UI.drawLabel("• " .. line.text, rightX, rightY, columnWidth, "left", {
+                            fontKey = "body",
+                            color = line.color or Theme.textColor,
+                        })
+                        rightY = rightY + lineHeight + lineSpacing
+                    end
+                end
+            else
+                local columnWidth = summaryLayout.columnWidth
+                local columnY = contentY
+
+                for _, line in ipairs(summaryLayout.lines or {}) do
+                    if line and line.text and line.text ~= "" then
+                        UI.drawLabel("• " .. line.text, summaryX, columnY, columnWidth, "left", {
+                            fontKey = "body",
+                            color = line.color or Theme.textColor,
+                        })
+                        columnY = columnY + lineHeight + lineSpacing
+                    end
+                end
+
+                if (#summaryLayout.lines or 0) > 0 and (#summaryLayout.picks or 0) > 0 then
+                    columnY = columnY + SUMMARY_SECTION_SPACING
+                end
+
+                for _, line in ipairs(summaryLayout.picks or {}) do
+                    if line and line.text and line.text ~= "" then
+                        UI.drawLabel("• " .. line.text, summaryX, columnY, columnWidth, "left", {
+                            fontKey = "body",
+                            color = line.color or Theme.textColor,
+                        })
+                        columnY = columnY + lineHeight + lineSpacing
+                    end
+                end
             end
         end
     else
-        UI.drawLabel(Localization:get("talents.loadout_empty") ~= "talents.loadout_empty" and Localization:get("talents.loadout_empty") or "Active loadout: balanced.", layout.panelX + PANEL_PADDING, layout.panelY + 12, layout.panelW - PANEL_PADDING * 2, "left", {
+        local fallback = Localization:get("talents.loadout_empty")
+        if fallback == "talents.loadout_empty" then
+            fallback = "Active loadout: balanced."
+        end
+        UI.drawLabel(fallback, summaryX, summaryY, summaryWidth, "left", {
             fontKey = "prompt",
             color = Theme.accentTextColor,
         })
