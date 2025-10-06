@@ -316,6 +316,17 @@ local function drawSnakeStroke(path, radius)
 
   love.graphics.setLineWidth(radius * 2)
   love.graphics.line(path)
+
+  local firstX, firstY = path[1], path[2]
+  local lastX, lastY = path[#path - 1], path[#path]
+
+  if firstX and firstY then
+    love.graphics.circle("fill", firstX, firstY, radius)
+  end
+
+  if lastX and lastY then
+    love.graphics.circle("fill", lastX, lastY, radius)
+  end
 end
 
 local function renderSnakeToCanvas(trail, coords, head, half)
