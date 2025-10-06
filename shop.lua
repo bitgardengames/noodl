@@ -520,11 +520,6 @@ local rarityStyles = {
     legendary = {
         base = {0.46, 0.28, 0.06, 1},
         shadowAlpha = 0.46,
-        aura = {
-            color = {1.0, 0.72, 0.28, 0.5},
-            radius = 0.96,
-            y = 0.38,
-        },
         outerGlow = {
             color = {1.0, 0.82, 0.34, 1},
             min = 0.26,
@@ -540,16 +535,6 @@ local rarityStyles = {
             speed = 3.0,
             inset = 8,
             width = 3,
-        },
-        flare = {
-            color = {1.0, 0.78, 0.32, 0.48},
-            radius = 0.5,
-        },
-        stripes = {
-            color = {0.92, 0.52, 0.16, 0.22},
-            spacing = 46,
-            width = 24,
-            angle = -math.pi / 10,
         },
         sparkles = {
             color = {1.0, 0.92, 0.64, 0.95},
