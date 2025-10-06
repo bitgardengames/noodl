@@ -40,6 +40,37 @@ local SKIN_DEFINITIONS = {
         order = 10,
     },
     {
+        id = "candy_cane",
+        name = "Candy Cane Coil",
+        description = "Festive stripes that twirl with every holiday dash.",
+        colors = {
+            body = {0.88, 0.14, 0.22, 1.0},
+            outline = {0.28, 0.04, 0.07, 1.0},
+            glow = {0.98, 0.72, 0.78, 0.86},
+        },
+        effects = {
+            overlay = {
+                type = "stripes",
+                intensity = 0.78,
+                frequency = 22,
+                speed = 0.9,
+                angle = 52,
+                colors = {
+                    primary = {0.95, 0.95, 0.95, 1.0},
+                    secondary = {0.86, 0.12, 0.26, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.52,
+                radiusMultiplier = 1.35,
+                color = {0.98, 0.72, 0.78, 1.0},
+                step = 2,
+            },
+        },
+        unlock = { default = true },
+        order = 12,
+    },
+    {
         id = "solar_flare",
         name = "Solar Flare",
         description = "Basked in reactor light until it took on a stellar sheen.",
