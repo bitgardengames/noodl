@@ -243,7 +243,6 @@ local function applySkinGlow(trail, head, radius, config)
   end
 
   local intensity = config.intensity or 0.5
-  local step = math.max(1, math.floor(config.step or 2))
   local radiusMultiplier = config.radiusMultiplier or 1.4
 
   local function drawGlowAt(x, y)
@@ -251,16 +250,6 @@ local function applySkinGlow(trail, head, radius, config)
       return
     end
     drawSoftGlow(x, y, radius * radiusMultiplier, color[1], color[2], color[3], (color[4] or 1) * intensity, "alpha")
-  end
-
-  if trail and #trail > 0 then
-    for i = 1, #trail, step do
-      local seg = trail[i]
-      if seg and seg ~= head then
-        local x, y = ptXY(seg)
-        drawGlowAt(x, y)
-      end
-    end
   end
 
   if head then
