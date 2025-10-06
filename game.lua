@@ -77,7 +77,19 @@ local function clampToInt(value)
     return math.max(0, math.floor(value + 0.0001))
 end
 
+function Game:usesHealth()
+    if self.usesHealthSystem == nil then
+        return true
+    end
+
+    return self.usesHealthSystem
+end
+
 function Game:_ensureHealthSystem()
+    if not self:usesHealth() then
+        return nil
+    end
+
     if self.healthSystem then
         return self.healthSystem
     end
@@ -96,6 +108,14 @@ function Game:_ensureHealthSystem()
 end
 
 function Game:syncHealth(opts)
+    if not self:usesHealth() then
+        self.health = nil
+        if UI and UI.setHealth then
+            UI:setHealth(0, 0, opts)
+        end
+        return
+    end
+
     local system = self.healthSystem
     if system then
         self.health = system:getCurrent()
@@ -107,6 +127,10 @@ function Game:syncHealth(opts)
 end
 
 function Game:setMaxHealth(max, opts)
+    if not self:usesHealth() then
+        return false
+    end
+
     max = clampToInt(max)
     if max <= 0 then
         max = 1
@@ -125,6 +149,10 @@ function Game:setMaxHealth(max, opts)
 end
 
 function Game:adjustMaxHealth(delta, opts)
+    if not self:usesHealth() then
+        return false
+    end
+
     if not delta or delta == 0 then
         return false
     end
@@ -517,25 +545,46 @@ function Game:load()
     local talentEffects = TalentTree and TalentTree.getAggregatedEffects and TalentTree:getAggregatedEffects()
 
     self.mode = GameModes:get()
-    local startingMax = (self.mode and self.mode.maxHealth) or 3
-    if talentEffects and talentEffects.maxHealthBonus then
-        startingMax = startingMax + talentEffects.maxHealthBonus
+    self.singleTouchDeath = (self.mode and self.mode.singleTouchDeath) or false
+    if self.mode and self.mode.usesHealthSystem ~= nil then
+        self.usesHealthSystem = self.mode.usesHealthSystem
+    else
+        self.usesHealthSystem = true
     end
 
-    self.maxHealth = clampToInt(startingMax)
-    if self.maxHealth <= 0 then
-        self.maxHealth = 1
-    end
+    if self:usesHealth() then
+        local startingMax = (self.mode and self.mode.maxHealth) or 3
+        if talentEffects and talentEffects.maxHealthBonus then
+            startingMax = startingMax + talentEffects.maxHealthBonus
+        end
 
-    self.healthSystem = HealthSystem.new(self.maxHealth)
-    self.health = self.maxHealth
+        self.maxHealth = clampToInt(startingMax)
+        if self.maxHealth <= 0 then
+            self.maxHealth = 1
+        end
+
+        self.healthSystem = HealthSystem.new(self.maxHealth)
+        self.health = self.maxHealth
+    else
+        self.maxHealth = 0
+        self.healthSystem = nil
+        self.health = nil
+    end
 
     if TalentTree and TalentTree.applyRunModifiers then
         TalentTree:applyRunModifiers(self, talentEffects)
     end
 
-    self.healthCriticalReady = true
-    self:syncHealth({ immediate = true })
+    if self:usesHealth() then
+        self.healthCriticalReady = true
+        self:syncHealth({ immediate = true })
+    else
+        self.healthCriticalReady = false
+        self.health = nil
+        if UI and UI.setHealth then
+            UI:setHealth(0, 0, { immediate = true })
+        end
+    end
     callMode(self, "load")
 
     if Snake.adrenaline then
@@ -632,14 +681,24 @@ function Game:applyDamage(amount, cause, context)
         return true
     end
 
+    if Snake and Snake.onDamageTaken then
+        Snake:onDamageTaken(cause, context)
+    end
+
+    if self.singleTouchDeath or not self:usesHealth() then
+        if context and context.shake and self.Effects and self.Effects.shake then
+            self.Effects:shake(context.shake)
+        end
+        return false
+    end
+
     local system = self:_ensureHealthSystem()
+    if not system then
+        return false
+    end
 
     if self.health == nil then
         self.health = system:getCurrent()
-    end
-
-    if Snake and Snake.onDamageTaken then
-        Snake:onDamageTaken(cause, context)
     end
 
     local _, updated, alive = system:damage(amount)
@@ -661,6 +720,10 @@ function Game:applyDamage(amount, cause, context)
 end
 
 function Game:restoreHealth(amount, context)
+    if not self:usesHealth() then
+        return 0, 0
+    end
+
     local system = self:_ensureHealthSystem()
 
     amount = clampToInt(amount or 0)
@@ -750,26 +813,38 @@ function Game:updateGameplay(dt)
         local damage = (context and context.damage) or 1
         local survived = self:applyDamage(damage, cause, context)
         if not survived then
-            if Upgrades.tryFloorReplay and Upgrades:tryFloorReplay(self, cause) then
+            local replayTriggered = false
+            if self:usesHealth() and Upgrades.tryFloorReplay then
+                replayTriggered = Upgrades:tryFloorReplay(self, cause)
+            end
+            if replayTriggered then
                 local system = self:_ensureHealthSystem()
-                local resetValue = math.max(1, self.maxHealth or 1)
-                system:setCurrent(resetValue)
-                self.healthCriticalReady = true
-                self:syncHealth({ immediate = true })
-                return
+                if system then
+                    local resetValue = math.max(1, self.maxHealth or 1)
+                    system:setCurrent(resetValue)
+                    self.healthCriticalReady = true
+                    self:syncHealth({ immediate = true })
+                    return
+                end
             end
             self.deathCause = cause
             self:beginDeath()
         end
         return
     elseif moveResult == "dead" then
-        if Upgrades.tryFloorReplay and Upgrades:tryFloorReplay(self, cause) then
+        local replayTriggered = false
+        if self:usesHealth() and Upgrades.tryFloorReplay then
+            replayTriggered = Upgrades:tryFloorReplay(self, cause)
+        end
+        if replayTriggered then
             local system = self:_ensureHealthSystem()
-            local resetValue = math.max(1, self.maxHealth or 1)
-            system:setCurrent(resetValue)
-            self.healthCriticalReady = true
-            self:syncHealth({ immediate = true })
-            return
+            if system then
+                local resetValue = math.max(1, self.maxHealth or 1)
+                system:setCurrent(resetValue)
+                self.healthCriticalReady = true
+                self:syncHealth({ immediate = true })
+                return
+            end
         end
         self.deathCause = cause
         self:beginDeath()
@@ -1349,7 +1424,7 @@ function Game:setupFloor(floorNum)
     healAmount = tonumber(healAmount) or 0
 
     local restoredHealth, forgedShields = 0, 0
-    if healAmount > 0 then
+    if healAmount > 0 and self:usesHealth() then
         local overflowToShields = true
         local system = self:_ensureHealthSystem()
         if system then
