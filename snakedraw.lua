@@ -233,43 +233,89 @@ local function drawFruitBulges(trail, head, radius)
   end
 end
 
-local function drawCapsuleSegment(mode, x1, y1, x2, y2, radius)
-  if not (x1 and y1 and x2 and y2) then return end
+local function addPoint(list, x, y)
+  if not (x and y) then return end
 
-  local dx, dy = x2 - x1, y2 - y1
-  local length = math.sqrt(dx * dx + dy * dy)
-  if length <= 1e-3 then
-    love.graphics.circle(mode, x1, y1, radius)
-    return
+  local n = #list
+  if n >= 2 then
+    local lastX = list[n - 1]
+    local lastY = list[n]
+    if math.abs(lastX - x) < 1e-4 and math.abs(lastY - y) < 1e-4 then
+      return
+    end
   end
 
-  local angle
-  if math.atan2 then
-    angle = math.atan2(dy, dx)
-  else
-    angle = math.atan(dy, dx)
-  end
-
-  love.graphics.push()
-  love.graphics.translate(x1, y1)
-  love.graphics.rotate(angle)
-  love.graphics.rectangle(mode, 0, -radius, length, radius * 2, radius, radius)
-  love.graphics.pop()
+  list[#list + 1] = x
+  list[#list + 1] = y
 end
 
-local function drawCapsuleChain(coords, radius)
-  if #coords < 2 then
+local function buildSmoothedCoords(coords, radius)
+  if radius <= 0 or #coords <= 4 then
+    return coords
+  end
+
+  local smoothed = {}
+  local smoothSteps = 4
+  local maxSmooth = radius * 1.5
+
+  addPoint(smoothed, coords[1], coords[2])
+
+  for i = 3, #coords - 3, 2 do
+    local x, y = coords[i], coords[i + 1]
+    local px, py = coords[i - 2], coords[i - 1]
+    local nx, ny = coords[i + 2], coords[i + 3]
+
+    if not (px and py and nx and ny) then
+      addPoint(smoothed, x, y)
+    else
+      local prevDx, prevDy = x - px, y - py
+      local nextDx, nextDy = nx - x, ny - y
+      local prevLen = math.sqrt(prevDx * prevDx + prevDy * prevDy)
+      local nextLen = math.sqrt(nextDx * nextDx + nextDy * nextDy)
+
+      if prevLen < 1e-3 or nextLen < 1e-3 then
+        addPoint(smoothed, x, y)
+      else
+        local entryDist = math.min(prevLen * 0.5, maxSmooth)
+        local exitDist = math.min(nextLen * 0.5, maxSmooth)
+
+        local entryX = x - prevDx / prevLen * entryDist
+        local entryY = y - prevDy / prevLen * entryDist
+        local exitX = x + nextDx / nextLen * exitDist
+        local exitY = y + nextDy / nextLen * exitDist
+
+        addPoint(smoothed, entryX, entryY)
+
+        for step = 1, smoothSteps - 1 do
+          local t = step / smoothSteps
+          local inv = 1 - t
+          local qx = inv * inv * entryX + 2 * inv * t * x + t * t * exitX
+          local qy = inv * inv * entryY + 2 * inv * t * y + t * t * exitY
+          addPoint(smoothed, qx, qy)
+        end
+
+        addPoint(smoothed, exitX, exitY)
+      end
+    end
+  end
+
+  addPoint(smoothed, coords[#coords - 1], coords[#coords])
+
+  return smoothed
+end
+
+local function drawSnakeStroke(path, radius)
+  if not path or radius <= 0 or #path < 2 then
     return
   end
 
-  if #coords == 2 then
-    love.graphics.circle("fill", coords[1], coords[2], radius)
+  if #path == 2 then
+    love.graphics.circle("fill", path[1], path[2], radius)
     return
   end
 
-  for i = 1, #coords - 2, 2 do
-    drawCapsuleSegment("fill", coords[i], coords[i + 1], coords[i + 2], coords[i + 3], radius)
-  end
+  love.graphics.setLineWidth(radius * 2)
+  love.graphics.line(path)
 end
 
 local function renderSnakeToCanvas(trail, coords, head, half)
@@ -279,13 +325,24 @@ local function renderSnakeToCanvas(trail, coords, head, half)
   local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
   local bulgeRadius = half * FRUIT_BULGE_SCALE
 
+  local outlineCoords = buildSmoothedCoords(coords, half + OUTLINE_SIZE)
+  local bodyCoords = buildSmoothedCoords(coords, half)
+
+  love.graphics.push("all")
+  love.graphics.setLineStyle("smooth")
+  if love.graphics.setLineCap then
+    love.graphics.setLineCap("round")
+  end
+
   love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-  drawCapsuleChain(coords, half + OUTLINE_SIZE)
+  drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE)
   drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
 
   love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-  drawCapsuleChain(coords, half)
+  drawSnakeStroke(bodyCoords, half)
   drawFruitBulges(trail, head, bulgeRadius)
+
+  love.graphics.pop()
 
 end
 
