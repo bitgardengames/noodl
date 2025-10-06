@@ -366,18 +366,8 @@ local english = {
             },
             hardcore = {
                 label = "Hardcore",
-                description = "Faster speed, tighter reflexes required.",
+                description = "Faster speed and zero margin for error — one hit ends the run.",
                 unlock_description = "Score 25 in Classic mode.",
-            },
-            timed = {
-                label = "Timed",
-                description = "60 seconds. Eat as many apples as you can.",
-                unlock_description = "Eat 50 apples total.",
-                timer_label = "Time: ${seconds}",
-            },
-            daily = {
-                label = "Daily Challenge",
-                description = "A new challenge each day — random effects, one shot.",
             },
         },
         upgrades = {

@@ -8,10 +8,6 @@ local GameModes = {}
 -------------------------------------------------
 -- Shared assets (preloaded to avoid per-frame GC)
 -------------------------------------------------
-local FONTS = {
-    timer = UI.fonts.timerSmall or UI.fonts.button
-}
-
 -------------------------------------------------
 -- Internal constants
 -------------------------------------------------
@@ -59,67 +55,9 @@ GameModes.available = {
             end
         end,
     },
-
-    timed = {
-        labelKey = "gamemodes.timed.label",
-        descriptionKey = "gamemodes.timed.description",
-        speed = 0.06,
-        timed = true,
-        timeLimit = 60,
-        unlocked = false,
-        unlockCondition = {
-            type = "playerStat",
-            stat = "totalApplesEaten",
-            value = 50,
-        },
-        unlockDescriptionKey = "gamemodes.timed.unlock_description",
-        maxHealth = 3,
-
-        load = function(game)
-            game.timer = game.mode.timeLimit
-            game.timerExpired = false
-        end,
-
-        update = function(game, dt)
-            if game.timer and not game.timerExpired then
-                game.timer = game.timer - dt
-                if game.timer <= 0 then
-                    game.timer = 0
-                    game.timerExpired = true
-                    game.dead = true
-                end
-            end
-        end,
-
-        draw = function(game)
-            if game.timer and not game.gameOver then
-                local timeLeft = math.ceil(game.timer)
-                love.graphics.setColor(1, 1, 1, 0.9)
-                love.graphics.setFont(FONTS.timer)
-                local label = Localization:get("gamemodes.timed.timer_label", { seconds = timeLeft })
-                love.graphics.printf(label, 0, 16, love.graphics.getWidth(), "center")
-                love.graphics.setColor(1, 1, 1, 1) -- reset color
-            end
-        end,
-    },
-
-    daily = {
-        labelKey = "gamemodes.daily.label",
-        descriptionKey = "gamemodes.daily.description",
-        speed = 0.06,
-        timed = false,
-        timeLimit = nil,
-        unlocked = true,
-        daily = true,
-        maxHealth = 3,
-
-        load = function(game)
-            game.effects = GameModes:getDailyModifiers()
-        end,
-    },
 }
 
-GameModes.modeList = { "classic", "hardcore", "timed", "daily" }
+GameModes.modeList = { "classic", "hardcore" }
 GameModes.current = "classic"
 GameModes.unlockData = {}
 
@@ -138,37 +76,6 @@ end
 
 function GameModes:getCurrentName()
     return self.current
-end
-
--------------------------------------------------
--- Daily challenge utilities
--------------------------------------------------
-function GameModes:getDailySeed()
-    return tonumber(os.date("%Y%m%d"))
-end
-
-function GameModes:getDailyModifiers()
-    local seed = self:getDailySeed()
-    love.math.setRandomSeed(seed)
-
-    local possibleEffects = {
-        "reverseControls",
-        "scoreMultiplier",
-        "slowTime",
-        "speedBoost",
-    }
-
-    local chosen = {}
-    local count = 2 + love.math.random(0, 2) -- 2–4 effects
-
-    for i = 1, count do
-        if #possibleEffects == 0 then break end
-        local index = love.math.random(1, #possibleEffects)
-        table.insert(chosen, possibleEffects[index])
-        table.remove(possibleEffects, index)
-    end
-
-    return chosen
 end
 
 -------------------------------------------------
