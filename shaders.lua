@@ -974,11 +974,11 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
--- Gentle aurora for main menu ambiance
+-- Constellation swirl for main menu focus
 registerEffect({
-    type = "menuBreeze",
-    backdropIntensity = 0.58,
-    arenaIntensity = 0.36,
+    type = "menuConstellation",
+    backdropIntensity = 0.62,
+    arenaIntensity = 0.4,
     source = [[
         extern float time;
         extern vec2 resolution;
@@ -988,23 +988,39 @@ registerEffect({
         extern vec4 highlightColor;
         extern float intensity;
 
+        float hash(vec2 p)
+        {
+            return fract(sin(dot(p, vec2(41.0, 289.0))) * 43758.5453);
+        }
+
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         {
             vec2 uv = (screen_coords - origin) / resolution;
             uv = clamp(uv, 0.0, 1.0);
+            vec2 centered = uv - vec2(0.5);
 
-            float wave = sin((uv.x + uv.y) * 5.0 + time * 0.2);
-            float drift = sin(uv.x * 8.0 - time * 0.12);
-            float ribbon = smoothstep(0.15, 0.85, uv.y + wave * 0.05);
-            float sparkle = sin((uv.x * 10.0 + uv.y * 6.0) + time * 0.6);
-            sparkle = clamp(sparkle * 0.5 + 0.5, 0.0, 1.0);
-            sparkle = smoothstep(0.6, 1.0, sparkle);
+            float dist = length(centered);
+            float angle = atan(centered.y, centered.x);
+            float spiral = sin(angle * 3.5 + dist * 8.0 - time * 0.32);
+            float innerGlow = exp(-dist * dist * 3.2);
+            float horizon = smoothstep(0.85, 0.15, dist);
 
-            float accentMix = clamp(0.35 + wave * 0.12 + drift * 0.08 + ribbon * 0.25, 0.0, 1.0);
+            float accentMix = clamp(0.28 + spiral * 0.18 + innerGlow * 0.45, 0.0, 1.0) * intensity;
+            float highlightMix = clamp(innerGlow * 0.6 + horizon * 0.25, 0.0, 1.0) * 0.55 * intensity;
 
-            vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix * intensity);
-            col = mix(col, highlightColor.rgb, sparkle * 0.18 * intensity);
-            col = mix(baseColor.rgb, col, 0.8);
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix);
+            col = mix(col, highlightColor.rgb, highlightMix);
+
+            vec2 starUv = uv * vec2(26.0, 14.0);
+            vec2 cell = floor(starUv);
+            float starSeed = hash(cell);
+            float sparklePhase = fract(time * 0.22 + starSeed);
+            float sparkle = smoothstep(0.85, 1.0, sin((sparklePhase * 6.283) + starSeed * 8.0)) * 0.5 + 0.5;
+            float twinkle = sparkle * smoothstep(0.78, 1.0, hash(cell + 1.0));
+            col += highlightColor.rgb * twinkle * 0.18 * intensity;
+
+            col = mix(baseColor.rgb, col, 0.86);
+            col = clamp(col, 0.0, 1.0);
 
             return vec4(col, baseColor.a) * color;
         }
@@ -1018,68 +1034,6 @@ registerEffect({
 
         sendColor(shader, "baseColor", base)
         sendColor(shader, "accentColor", accent)
-        sendColor(shader, "highlightColor", highlight)
-    end,
-    draw = function(effect, x, y, w, h, intensity)
-        return drawShader(effect, x, y, w, h, intensity)
-    end,
-})
--- Soft bloom for a calm, floral main menu ambiance
-registerEffect({
-    type = "menuBloom",
-    backdropIntensity = 0.64,
-    arenaIntensity = 0.38,
-    source = [[
-        extern float time;
-        extern vec2 resolution;
-        extern vec2 origin;
-        extern vec4 baseColor;
-        extern vec4 petalColor;
-        extern vec4 highlightColor;
-        extern float intensity;
-
-        float hash(vec2 p)
-        {
-            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-        }
-
-        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-        {
-            vec2 uv = (screen_coords - origin) / resolution;
-            uv = clamp(uv, 0.0, 1.0);
-
-            vec2 centered = uv - 0.5;
-            float dist = length(centered);
-
-            float pulse = sin(time * 0.35) * 0.5 + 0.5;
-            float bloom = 1.0 - smoothstep(0.12, 0.58, dist + pulse * 0.06);
-
-            float angle = atan(centered.y, centered.x);
-            float petals = cos(angle * 6.0 + time * 0.12);
-            float petalMask = clamp(1.0 - smoothstep(0.1, 0.46, dist + petals * 0.05), 0.0, 1.0);
-
-            float drift = sin((uv.x + uv.y * 0.6) * 4.2 - time * 0.25) * 0.5 + 0.5;
-            float gradient = smoothstep(-0.08, 0.72, uv.y + drift * 0.08);
-
-            float sparkleSeed = hash(floor(uv * vec2(24.0, 16.0)) + floor(time * 0.5));
-            float sparkle = smoothstep(0.72, 1.0, sparkleSeed) * bloom * 0.35;
-
-            vec3 col = mix(baseColor.rgb, petalColor.rgb, (bloom * 0.6 + petalMask * 0.35) * intensity);
-            col = mix(col, highlightColor.rgb, clamp(bloom * 0.3 + gradient * 0.2 + sparkle * 0.5, 0.0, 1.0) * intensity);
-            col = mix(baseColor.rgb, col, 0.85);
-
-            return vec4(col, baseColor.a) * color;
-        }
-    ]],
-    configure = function(effect, palette)
-        local shader = effect.shader
-
-        local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
-        local petal = getColorComponents(palette and (palette.accentColor or palette.buttonHover), Theme.buttonHover)
-        local highlight = getColorComponents(palette and (palette.highlightColor or palette.accentTextColor), Theme.accentTextColor)
-
-        sendColor(shader, "baseColor", base)
-        sendColor(shader, "petalColor", petal)
         sendColor(shader, "highlightColor", highlight)
     end,
     draw = function(effect, x, y, w, h, intensity)
@@ -1257,23 +1211,23 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
--- Sparkle field for achievements showcase
+-- Prismatic beams for achievements showcase
 registerEffect({
-    type = "achievementGlimmer",
-    backdropIntensity = 0.56,
-    arenaIntensity = 0.32,
+    type = "achievementRadiance",
+    backdropIntensity = 0.58,
+    arenaIntensity = 0.34,
     source = [[
         extern float time;
         extern vec2 resolution;
         extern vec2 origin;
         extern vec4 baseColor;
         extern vec4 accentColor;
-        extern vec4 sparkleColor;
+        extern vec4 flareColor;
         extern float intensity;
 
         float hash(vec2 p)
         {
-            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
         }
 
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
@@ -1281,31 +1235,25 @@ registerEffect({
             vec2 uv = (screen_coords - origin) / resolution;
             uv = clamp(uv, 0.0, 1.0);
 
-            vec2 baseUv = uv;
-            float breath = sin(time * 0.24) * 0.5 + 0.5;
-            breath = breath * breath * (3.0 - 2.0 * breath);
-            float pixelBlend = breath * 0.55 * intensity;
-            vec2 pixelDensity = mix(vec2(120.0, 72.0), vec2(36.0, 22.0), breath);
-            vec2 pixelatedUv = floor(baseUv * pixelDensity) / pixelDensity;
-            uv = mix(baseUv, pixelatedUv, pixelBlend);
+            float cascade = sin(uv.y * 5.0 + time * 0.35) * 0.5 + 0.5;
+            float ribbon = sin((uv.x - uv.y * 0.25) * 8.0 - time * 0.45);
+            float beam = smoothstep(0.25, 0.92, 1.0 - abs(ribbon));
+            float offset = (uv.x - 0.5) * 3.0;
+            float spotlight = exp(-(offset * offset)) * (0.45 + cascade * 0.35);
 
-            float drift = sin(uv.y * 3.0 + time * 0.18);
-            float pulse = sin((uv.x * 6.0 + uv.y * 4.0) - time * 0.24);
+            vec2 sparkleCell = floor(uv * vec2(18.0, 12.0));
+            float sparkleSeed = hash(sparkleCell + floor(time * 0.3));
+            float sparklePhase = fract(time * 0.28 + sparkleSeed);
+            float sparkle = smoothstep(0.65, 1.0, sparkleSeed) * smoothstep(0.0, 0.4, sparklePhase) * (1.0 - smoothstep(0.6, 1.0, sparklePhase));
 
-            float sparkle = 0.0;
-            vec2 grid = floor(uv * vec2(18.0, 10.0));
-            float n = hash(grid + floor(time * 0.35));
-            float sparklePhase = fract(time * 0.28 + n);
-            float sparkleFadeIn = smoothstep(0.0, 0.35, sparklePhase);
-            float sparkleFadeOut = 1.0 - smoothstep(0.55, 0.9, sparklePhase);
-            sparkle = clamp(sparkleFadeIn * sparkleFadeOut, 0.0, 1.0);
-            sparkle *= smoothstep(0.0, 1.0, pulse * 0.5 + 0.5);
+            float accentMix = clamp(0.25 + cascade * 0.25 + beam * 0.35, 0.0, 1.0) * intensity;
+            float flareMix = clamp(spotlight * 0.8 + beam * 0.2, 0.0, 1.0) * 0.6 * intensity;
 
-            float accentMix = clamp(0.3 + drift * 0.18 + pulse * 0.12, 0.0, 1.0);
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix);
+            col = mix(col, flareColor.rgb, flareMix);
+            col += flareColor.rgb * sparkle * 0.45 * intensity;
 
-            vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix * intensity);
-            col = col + sparkleColor.rgb * sparkle * 0.35 * intensity;
-            col = mix(baseColor.rgb, col, 0.88);
+            col = mix(baseColor.rgb, col, 0.9);
             col = clamp(col, 0.0, 1.0);
 
             return vec4(col, baseColor.a) * color;
@@ -1316,11 +1264,11 @@ registerEffect({
 
         local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
         local accent = getColorComponents(palette and (palette.accentColor or palette.primary), Theme.achieveColor)
-        local sparkle = getColorComponents(palette and (palette.sparkleColor or palette.secondary), Theme.accentTextColor)
+        local flare = getColorComponents(palette and (palette.flareColor or palette.secondary), Theme.accentTextColor)
 
         sendColor(shader, "baseColor", base)
         sendColor(shader, "accentColor", accent)
-        sendColor(shader, "sparkleColor", sparkle)
+        sendColor(shader, "flareColor", flare)
     end,
     draw = function(effect, x, y, w, h, intensity)
         return drawShader(effect, x, y, w, h, intensity)
@@ -1378,33 +1326,53 @@ registerEffect({
         return drawShader(effect, x, y, w, h, intensity)
     end,
 })
--- Soft scanlines for settings clarity
+-- Blueprint grid for settings clarity
 registerEffect({
-    type = "settingsScan",
-    backdropIntensity = 0.5,
-    arenaIntensity = 0.3,
+    type = "settingsBlueprint",
+    backdropIntensity = 0.52,
+    arenaIntensity = 0.32,
     source = [[
         extern float time;
         extern vec2 resolution;
         extern vec2 origin;
         extern vec4 baseColor;
         extern vec4 accentColor;
-        extern vec4 lineColor;
+        extern vec4 highlightColor;
         extern float intensity;
+
+        float gridLine(float v, float thickness)
+        {
+            return 1.0 - smoothstep(0.0, thickness, min(v, 1.0 - v));
+        }
 
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         {
             vec2 uv = (screen_coords - origin) / resolution;
             uv = clamp(uv, 0.0, 1.0);
 
-            float scan = sin((uv.y * 12.0) + time * 0.8);
-            float lines = smoothstep(0.2, 0.8, scan * 0.5 + 0.5);
-            float shimmer = sin((uv.x + uv.y) * 8.0 - time * 0.25);
-            shimmer = clamp(shimmer * 0.5 + 0.5, 0.0, 1.0);
+            vec2 fineUv = fract(uv * vec2(32.0, 18.0));
+            float fineLines = gridLine(fineUv.x, 0.015) + gridLine(fineUv.y, 0.015);
+            fineLines = clamp(fineLines, 0.0, 1.0);
 
-            vec3 col = mix(baseColor.rgb, accentColor.rgb, (0.2 + lines * 0.35) * intensity);
-            col = mix(col, lineColor.rgb, shimmer * 0.18 * intensity);
-            col = mix(baseColor.rgb, col, 0.82);
+            vec2 majorUv = fract(uv * vec2(8.0, 4.5));
+            float majorLines = gridLine(majorUv.x, 0.035) + gridLine(majorUv.y, 0.035);
+            majorLines = clamp(majorLines, 0.0, 1.0);
+
+            float sweepPos = fract(time * 0.18);
+            float sweep = smoothstep(sweepPos - 0.18, sweepPos, uv.y) * (1.0 - smoothstep(sweepPos, sweepPos + 0.22, uv.y));
+            float sweepGlow = sweep * (0.6 + fineLines * 0.4);
+
+            float accentMix = clamp(0.2 + fineLines * 0.35 + majorLines * 0.4, 0.0, 1.0) * intensity;
+            float highlightMix = clamp(sweepGlow, 0.0, 1.0) * 0.7 * intensity;
+
+            vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix);
+            col = mix(col, highlightColor.rgb, highlightMix);
+
+            float flicker = sin((uv.x + uv.y * 1.2) * 6.0 + time * 0.6) * 0.5 + 0.5;
+            col = mix(col, baseColor.rgb, 0.12 * (1.0 - flicker));
+
+            col = mix(baseColor.rgb, col, 0.85);
+            col = clamp(col, 0.0, 1.0);
 
             return vec4(col, baseColor.a) * color;
         }
@@ -1414,11 +1382,11 @@ registerEffect({
 
         local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
         local accent = getColorComponents(palette and (palette.accentColor or palette.primary), Theme.borderColor)
-        local lines = getColorComponents(palette and (palette.lineColor or palette.secondary), Theme.progressColor)
+        local highlight = getColorComponents(palette and (palette.highlightColor or palette.secondary), Theme.progressColor)
 
         sendColor(shader, "baseColor", base)
         sendColor(shader, "accentColor", accent)
-        sendColor(shader, "lineColor", lines)
+        sendColor(shader, "highlightColor", highlight)
     end,
     draw = function(effect, x, y, w, h, intensity)
         return drawShader(effect, x, y, w, h, intensity)

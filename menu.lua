@@ -103,7 +103,7 @@ local function startNoodlPass()
     end
 end
 
-local BACKGROUND_EFFECT_TYPE = "menuBloom"
+local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
