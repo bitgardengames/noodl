@@ -53,10 +53,8 @@ local function drawLogo(image, width, height)
 
     local maxWidth = width * 0.5
     local maxHeight = height * 0.5
-    local scale = math.min(maxWidth / imgWidth, maxHeight / imgHeight)
-    if scale > 1.75 then
-        scale = 1.75
-    elseif scale <= 0 then
+    local scale = math.min(maxWidth / imgWidth, maxHeight / imgHeight, 1)
+    if scale <= 0 then
         scale = 1
     end
 
