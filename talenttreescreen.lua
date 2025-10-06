@@ -33,6 +33,7 @@ local SCROLL_SPEED = 60
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.12
 local ANALOG_DEADZONE = 0.35
+local FOOTER_BUTTON_SPACING = 18
 
 local tiers = {}
 local selections = {}
@@ -326,6 +327,14 @@ local function findOptionButton(tierIndex, optionIndex)
     end
 end
 
+local function findButtonByType(buttonType)
+    for index, button in ipairs(buttons) do
+        if button.type == buttonType then
+            return button, index
+        end
+    end
+end
+
 local function moveFocusHorizontal(delta)
     if not delta or delta == 0 then
         return
@@ -333,6 +342,24 @@ local function moveFocusHorizontal(delta)
 
     local current = buttons[focusedIndex]
     if not current then
+        return
+    end
+
+    if current.type == "back" or current.type == "reset" then
+        local targetType
+        if delta > 0 and current.type == "reset" then
+            targetType = "back"
+        elseif delta < 0 and current.type == "back" then
+            targetType = "reset"
+        end
+
+        if targetType then
+            local _, index = findButtonByType(targetType)
+            if index then
+                setFocus(index, { skipScroll = true })
+            end
+        end
+
         return
     end
 
@@ -373,7 +400,7 @@ local function moveFocusVertical(delta)
         return
     end
 
-    if current.type == "back" then
+    if current.type == "back" or current.type == "reset" then
         if delta < 0 then
             local lastTier = #tiers
             if lastTier > 0 then
@@ -394,6 +421,11 @@ local function moveFocusVertical(delta)
                     setFocus(index)
                 end
             end
+        elseif delta > 0 and current.type == "reset" then
+            local _, backIndex = findButtonByType("back")
+            if backIndex then
+                setFocus(backIndex, { skipScroll = true })
+            end
         end
         return
     end
@@ -404,11 +436,16 @@ local function moveFocusVertical(delta)
     end
 
     if targetTierIndex > #tiers then
-        for index, button in ipairs(buttons) do
-            if button.type == "back" then
-                setFocus(index)
-                return
-            end
+        local _, resetIndex = findButtonByType("reset")
+        if resetIndex then
+            setFocus(resetIndex, { skipScroll = true })
+            return
+        end
+
+        local _, backIndex = findButtonByType("back")
+        if backIndex then
+            setFocus(backIndex, { skipScroll = true })
+            return
         end
         return
     end
@@ -465,6 +502,21 @@ local function rebuildButtons()
             }
         end
     end
+
+    local resetLabel = Localization:get("talents.reset")
+    if resetLabel == "talents.reset" then
+        resetLabel = "Reset to defaults"
+    end
+
+    buttons[#buttons + 1] = {
+        id = "talent_reset",
+        type = "reset",
+        label = resetLabel,
+        x = 0,
+        y = 0,
+        w = UI.spacing.buttonWidth,
+        h = UI.spacing.buttonHeight,
+    }
 
     local backLabel = Localization:get("talents.back")
     if backLabel == "talents.back" then
@@ -548,51 +600,123 @@ local function updateLayout()
     minScrollOffset = math.min(0, viewportHeight - contentHeight)
     clampScroll()
 
-    local backButton = buttons[#buttons]
-    if backButton and backButton.type == "back" then
-        backButton.w = math.min(UI.spacing.buttonWidth * 1.4, layout.panelW - PANEL_PADDING * 2)
-        backButton.h = UI.spacing.buttonHeight
-        backButton.x = layout.panelX + (layout.panelW - backButton.w) / 2
-        backButton.y = layout.panelY + layout.panelH - PANEL_PADDING - backButton.h
+    local resetButton, resetIndex = findButtonByType("reset")
+    local backButton, backIndex = findButtonByType("back")
+    local footerBottom = layout.panelY + layout.panelH - PANEL_PADDING
+    local buttonHeight = UI.spacing.buttonHeight
+
+    if resetButton and backButton then
+        local availableWidth = layout.panelW - PANEL_PADDING * 2
+        local spacing = FOOTER_BUTTON_SPACING
+        local buttonWidth = math.min(UI.spacing.buttonWidth * 1.2, (availableWidth - spacing) / 2)
+
+        resetButton.w = buttonWidth
+        resetButton.h = buttonHeight
+        resetButton.x = layout.panelX + PANEL_PADDING
+        resetButton.y = footerBottom - buttonHeight
+
+        backButton.w = buttonWidth
+        backButton.h = buttonHeight
+        backButton.x = layout.panelX + layout.panelW - PANEL_PADDING - buttonWidth
+        backButton.y = resetButton.y
+    elseif resetButton then
+        local buttonWidth = math.min(UI.spacing.buttonWidth * 1.4, layout.panelW - PANEL_PADDING * 2)
+        resetButton.w = buttonWidth
+        resetButton.h = buttonHeight
+        resetButton.x = layout.panelX + (layout.panelW - buttonWidth) / 2
+        resetButton.y = footerBottom - buttonHeight
+    elseif backButton then
+        local buttonWidth = math.min(UI.spacing.buttonWidth * 1.4, layout.panelW - PANEL_PADDING * 2)
+        backButton.w = buttonWidth
+        backButton.h = buttonHeight
+        backButton.x = layout.panelX + (layout.panelW - buttonWidth) / 2
+        backButton.y = footerBottom - buttonHeight
+    end
+
+    if resetButton then
+        UI.registerButton(resetButton.id, resetButton.x, resetButton.y, resetButton.w, resetButton.h, resetButton.label)
+        if resetIndex then
+            UI.setButtonFocus(resetButton.id, focusedIndex == resetIndex)
+        end
+    end
+
+    if backButton then
         UI.registerButton(backButton.id, backButton.x, backButton.y, backButton.w, backButton.h, backButton.label)
-        UI.setButtonFocus(backButton.id, focusedIndex == #buttons)
+        if backIndex then
+            UI.setButtonFocus(backButton.id, focusedIndex == backIndex)
+        end
     end
 end
 
-local function formatSignedLine(label, value, fmt, suffix)
-    local amount = value or 0
-    if math.abs(amount) <= 0.01 then
+local function buildLine(text, color)
+    if not text or text == "" then
         return nil
     end
 
-    local format = fmt or "%+g"
+    return { text = text, color = color }
+end
+
+local function getOrientationColor(amount, orientation)
+    orientation = orientation or 1
+    if orientation < 0 then
+        if amount <= 0 then
+            return Theme.progressColor
+        else
+            return Theme.warningColor
+        end
+    end
+
+    if amount >= 0 then
+        return Theme.progressColor
+    else
+        return Theme.warningColor
+    end
+end
+
+local function formatSignedLine(label, value, opts)
+    opts = opts or {}
+    local amount = value or 0
+    local epsilon = opts.epsilon or 0.01
+    if math.abs(amount) <= epsilon then
+        return nil
+    end
+
+    local format = opts.format or "%+g"
     local formatted = string.format(format, amount)
+    local suffix = opts.suffix
     if suffix and suffix ~= "" then
         formatted = formatted .. suffix
     end
 
-    return string.format("%s %s", label, formatted)
+    local color = getOrientationColor(amount, opts.orientation)
+    return buildLine(string.format("%s %s", label, formatted), color)
 end
 
-local function formatMultiplierLine(label, multiplier, moreDescriptor, lessDescriptor)
+local function formatMultiplierLine(label, multiplier, opts)
+    opts = opts or {}
     multiplier = multiplier or 1
-    if math.abs(multiplier - 1) <= 0.01 then
+    local epsilon = opts.epsilon or 0.01
+    if math.abs(multiplier - 1) <= epsilon then
         return nil
     end
 
     local descriptor
     if multiplier > 1 then
-        descriptor = moreDescriptor or "higher"
+        descriptor = opts.moreDescriptor or "higher"
     else
-        descriptor = lessDescriptor or "lower"
+        descriptor = opts.lessDescriptor or "lower"
     end
 
-    return string.format("%s x%.2f (%s)", label, multiplier, descriptor)
+    local color = getOrientationColor(multiplier - 1, opts.orientation)
+    local format = opts.format or "x%.2f"
+    local multiplierText = string.format(format, multiplier)
+    local text = string.format("%s %s (%s)", label, multiplierText, descriptor)
+    return buildLine(text, color)
 end
 
-local function appendLine(lines, text)
-    if text and text ~= "" then
-        lines[#lines + 1] = text
+local function appendLine(lines, entry)
+    if entry then
+        lines[#lines + 1] = entry
     end
 end
 
@@ -602,23 +726,46 @@ local function getSummaryLines()
 
     appendLine(lines, formatSignedLine("Max health", effects.maxHealthBonus))
     appendLine(lines, formatSignedLine("Crash shields", effects.startingCrashShields))
-    appendLine(lines, formatSignedLine("Fruit bonus", effects.fruitBonus, "%+0.1f"))
-    appendLine(lines, formatMultiplierLine("Combo multiplier", effects.comboMultiplier, "stronger", "weaker"))
-    appendLine(lines, formatMultiplierLine("Snake speed", effects.snakeSpeedMultiplier, "faster", "slower"))
-    appendLine(lines, formatSignedLine("Extra growth", effects.extraGrowth, "%+0.1f"))
-    appendLine(lines, formatMultiplierLine("Rock spawn", effects.rockSpawnMultiplier, "more frequent", "less frequent"))
-    appendLine(lines, formatMultiplierLine("Saw speed", effects.sawSpeedMultiplier, "faster", "slower"))
-    appendLine(lines, formatMultiplierLine("Laser cooldown", effects.laserCooldownMultiplier, "longer cycle", "faster cycle"))
-    appendLine(lines, formatMultiplierLine("Laser charge", effects.laserChargeMultiplier, "longer telegraph", "quicker telegraph"))
-    appendLine(lines, formatSignedLine("Saw stall on fruit", effects.sawStallOnFruit, "%+0.1f", "s"))
+    appendLine(lines, formatSignedLine("Fruit bonus", effects.fruitBonus, { format = "%+0.1f" }))
+    appendLine(lines, formatMultiplierLine("Combo multiplier", effects.comboMultiplier, {
+        moreDescriptor = "stronger",
+        lessDescriptor = "weaker",
+    }))
+    appendLine(lines, formatMultiplierLine("Snake speed", effects.snakeSpeedMultiplier, {
+        moreDescriptor = "faster",
+        lessDescriptor = "slower",
+    }))
+    appendLine(lines, formatSignedLine("Extra growth", effects.extraGrowth, { format = "%+0.1f" }))
+    appendLine(lines, formatMultiplierLine("Rock spawn", effects.rockSpawnMultiplier, {
+        moreDescriptor = "more frequent",
+        lessDescriptor = "less frequent",
+        orientation = -1,
+    }))
+    appendLine(lines, formatMultiplierLine("Saw speed", effects.sawSpeedMultiplier, {
+        moreDescriptor = "faster",
+        lessDescriptor = "slower",
+        orientation = -1,
+    }))
+    appendLine(lines, formatMultiplierLine("Laser cooldown", effects.laserCooldownMultiplier, {
+        moreDescriptor = "longer cycle",
+        lessDescriptor = "faster cycle",
+    }))
+    appendLine(lines, formatMultiplierLine("Laser charge", effects.laserChargeMultiplier, {
+        moreDescriptor = "longer telegraph",
+        lessDescriptor = "quicker telegraph",
+    }))
+    appendLine(lines, formatSignedLine("Saw stall on fruit", effects.sawStallOnFruit, {
+        format = "%+0.1f",
+        suffix = "s",
+    }))
 
     if math.abs(effects.extraShopChoices or 0) > 0.01 then
         local raw = effects.extraShopChoices
         local rounded = raw >= 0 and math.floor(raw + 0.0001) or math.ceil(raw - 0.0001)
         if rounded ~= 0 then
-            appendLine(lines, string.format("Shop choices %+d", rounded))
+            appendLine(lines, buildLine(string.format("Shop choices %+d", rounded), getOrientationColor(raw, 1)))
         else
-            appendLine(lines, string.format("Shop choices %+0.1f", raw))
+            appendLine(lines, buildLine(string.format("Shop choices %+0.1f", raw), getOrientationColor(raw, 1)))
         end
     end
 
@@ -629,6 +776,7 @@ local function drawOptionCard(button)
     local option = button.option
     local tier = button.tier
     local selected = selections[tier.id] == option.id
+    local isDefaultOption = option.default
 
     local fill = UI.colors.panel
     if selected then
@@ -714,6 +862,14 @@ local function drawOptionCard(button)
         if tagText == "talents.selected" then
             tagText = "Selected"
         end
+        if isDefaultOption then
+            local defaultShort = Localization:get("talents.default_short")
+            if defaultShort == "talents.default_short" then
+                defaultShort = "Default"
+            end
+            tagText = string.format("%s • %s", tagText, defaultShort)
+        end
+
         local tagWidth = UI.fonts.caption:getWidth(tagText) + 16
         local tagHeight = UI.fonts.caption:getHeight() + 6
         local tagX = button.x + button.w - tagWidth - padding
@@ -727,6 +883,25 @@ local function drawOptionCard(button)
         UI.drawLabel(tagText, tagX, tagY + 3, tagWidth, "center", {
             fontKey = "caption",
             color = Theme.textColor,
+        })
+    elseif isDefaultOption then
+        local defaultText = Localization:get("talents.default")
+        if defaultText == "talents.default" then
+            defaultText = "Default pick"
+        end
+        local tagWidth = UI.fonts.caption:getWidth(defaultText) + 14
+        local tagHeight = UI.fonts.caption:getHeight() + 4
+        local tagX = button.x + button.w - tagWidth - padding
+        local tagY = button.y + padding
+        UI.drawPanel(tagX, tagY, tagWidth, tagHeight, {
+            fill = { Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.12 },
+            borderColor = { Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.28 },
+            shadowOffset = 0,
+            radius = 10,
+        })
+        UI.drawLabel(defaultText, tagX, tagY + 2, tagWidth, "center", {
+            fontKey = "caption",
+            color = UI.colors.subtleText,
         })
     end
 end
@@ -766,6 +941,11 @@ local function activateButton(button)
     if button.type == "back" then
         Audio:playSound("click")
         return { state = "menu" }
+    elseif button.type == "reset" then
+        Audio:playSound("click")
+        selections = TalentTree:resetToDefaults() or selections
+        updateFocusVisuals()
+        return nil
     elseif button.type == "option" then
         local tierId = button.tier.id
         if selections[tierId] ~= button.option.id then
@@ -813,7 +993,7 @@ function TalentTreeScreen:update(dt)
             if UI.isHovered(button.x, button.y, button.w, button.h, mx, my) then
                 hoveredIndex = index
             end
-        elseif button.type == "back" then
+        elseif button.type == "back" or button.type == "reset" then
             if UI.isHovered(button.x, button.y, button.w, button.h, mx, my) then
                 hoveredIndex = index
             end
@@ -869,11 +1049,13 @@ function TalentTreeScreen:draw()
         })
         summaryY = summaryY + UI.fonts.prompt:getHeight() + 4
         for _, line in ipairs(summaryLines) do
-            UI.drawLabel("• " .. line, summaryX, summaryY, layout.panelW - PANEL_PADDING * 2, "left", {
-                fontKey = "body",
-                color = Theme.textColor,
-            })
-            summaryY = summaryY + UI.fonts.body:getHeight() + 2
+            if line and line.text and line.text ~= "" then
+                UI.drawLabel("• " .. line.text, summaryX, summaryY, layout.panelW - PANEL_PADDING * 2, "left", {
+                    fontKey = "body",
+                    color = line.color or Theme.textColor,
+                })
+                summaryY = summaryY + UI.fonts.body:getHeight() + 2
+            end
         end
     else
         UI.drawLabel(Localization:get("talents.loadout_empty") ~= "talents.loadout_empty" and Localization:get("talents.loadout_empty") or "Active loadout: balanced.", layout.panelX + PANEL_PADDING, layout.panelY + 12, layout.panelW - PANEL_PADDING * 2, "left", {
@@ -910,9 +1092,13 @@ function TalentTreeScreen:draw()
         color = UI.colors.subtleText,
     })
 
-    local backButton = buttons[#buttons]
-    if backButton and backButton.type == "back" then
-        UI.registerButton(backButton.id, backButton.x, backButton.y, backButton.w, backButton.h, backButton.label)
+    local resetButton = select(1, findButtonByType("reset"))
+    if resetButton then
+        UI.drawButton(resetButton.id)
+    end
+
+    local backButton = select(1, findButtonByType("back"))
+    if backButton then
         UI.drawButton(backButton.id)
     end
 end
@@ -1064,7 +1250,7 @@ function TalentTreeScreen:mousemoved(x, y)
             if UI.isHovered(button.x, button.y, button.w, button.h, x, y) then
                 hoveredIndex = index
             end
-        elseif button.type == "back" then
+        elseif button.type == "back" or button.type == "reset" then
             if UI.isHovered(button.x, button.y, button.w, button.h, x, y) then
                 hoveredIndex = index
             end

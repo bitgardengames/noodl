@@ -236,6 +236,24 @@ local function findOption(tier, optionId)
     end
 end
 
+local function findDefaultOptionId(tier)
+    if not tier or not tier.options then
+        return nil
+    end
+
+    for _, option in ipairs(tier.options) do
+        if option.default then
+            return option.id
+        end
+    end
+
+    if tier.options[1] then
+        return tier.options[1].id
+    end
+
+    return nil
+end
+
 local function ensureDefaults(state)
     state.selections = state.selections or {}
 
@@ -248,17 +266,7 @@ local function ensureDefaults(state)
             end
         end
 
-        local fallback
-        for _, option in ipairs(tier.options) do
-            if option.default then
-                fallback = option.id
-                break
-            end
-        end
-
-        if not fallback and tier.options and tier.options[1] then
-            fallback = tier.options[1].id
-        end
+        local fallback = findDefaultOptionId(tier)
 
         if fallback then
             state.selections[tier.id] = fallback
@@ -364,8 +372,57 @@ function TalentTree:setSelection(tierId, optionId)
 
     self.state.selections[tierId] = optionId
     ensureDefaults(self.state)
+    self._lastAppliedEffects = nil
     self:_save()
     return true
+end
+
+function TalentTree:getTier(tierId)
+    return findTier(tierId)
+end
+
+function TalentTree:getOption(tierId, optionId)
+    local tier = findTier(tierId)
+    return findOption(tier, optionId)
+end
+
+function TalentTree:getDefaultSelections()
+    local defaults = {}
+
+    for _, tier in ipairs(tiers) do
+        local fallback = findDefaultOptionId(tier)
+        if fallback then
+            defaults[tier.id] = fallback
+        end
+    end
+
+    return defaults
+end
+
+function TalentTree:isDefaultSelection(tierId, optionId)
+    if not tierId or not optionId then
+        return false
+    end
+
+    local tier = findTier(tierId)
+    if not tier then
+        return false
+    end
+
+    local defaultId = findDefaultOptionId(tier)
+    return defaultId == optionId
+end
+
+function TalentTree:resetToDefaults()
+    self:_ensureLoaded()
+
+    local defaults = self:getDefaultSelections()
+    self.state.selections = copyTable(defaults)
+    ensureDefaults(self.state)
+    self._lastAppliedEffects = nil
+    self:_save()
+
+    return copyTable(self.state.selections)
 end
 
 local function createEffectAccumulator()
