@@ -167,12 +167,36 @@ end
 
 local drawSoftGlow
 
+local function clamp01(value)
+  if value < 0 then return 0 end
+  if value > 1 then return 1 end
+  return value
+end
+
 local function applySkinGlow(trail, head, radius, config)
   if not config then
     return
   end
 
   local color = resolveColor(config.color, SnakeCosmetics:getGlowColor())
+  local bodyColor = SnakeCosmetics:getBodyColor()
+  local bodyR = bodyColor[1] or 0
+  local bodyG = bodyColor[2] or 0
+  local bodyB = bodyColor[3] or 0
+
+  local matchBody = config.matchBody
+  if matchBody == nil then
+    matchBody = true
+  end
+
+  if matchBody then
+    local blend = clamp01(config.bodyBlend or 1)
+    local inv = 1 - blend
+    color[1] = (color[1] or 0) * inv + bodyR * blend
+    color[2] = (color[2] or 0) * inv + bodyG * blend
+    color[3] = (color[3] or 0) * inv + bodyB * blend
+  end
+
   local intensity = config.intensity or 0.5
   local step = math.max(1, math.floor(config.step or 2))
   local radiusMultiplier = config.radiusMultiplier or 1.4
