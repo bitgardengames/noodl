@@ -12,10 +12,16 @@ local TalentTreeScreen = {
 
 local unpack = table.unpack or unpack
 
-local CARD_WIDTH = 300
-local CARD_HEIGHT = 172
+local CARD_WIDTH = 340
+local CARD_MIN_HEIGHT = 212
 local CARD_SPACING = 26
-local HEADER_HEIGHT = 60
+local CARD_PADDING = 20
+local CARD_HEADING_SPACING = 6
+local CARD_DESC_LIST_SPACING = 10
+local CARD_LIST_SECTION_SPACING = 8
+local CARD_LIST_ITEM_SPACING = 6
+local CARD_TAG_OFFSET = 6
+local HEADER_SPACING = 6
 local OPTION_FOOTER_SPACING = 36
 local TIER_SPACING = 68
 local PANEL_PADDING = 38
@@ -47,6 +53,8 @@ local layout = {
     contentY = 0,
     contentW = 0,
 }
+local tierMetrics = {}
+local tierLayout = {}
 
 local heldDpadButton = nil
 local heldDpadAction = nil
@@ -131,6 +139,119 @@ local function updateHeldDpad(dt)
             break
         end
     end
+end
+
+local function measureOptionMetrics(option)
+    option = option or {}
+
+    local headingFont = UI.fonts.heading
+    local bodyFont = UI.fonts.body
+    local captionFont = UI.fonts.caption
+    local availableWidth = CARD_WIDTH - CARD_PADDING * 2
+
+    local headingHeight = headingFont:getHeight()
+    local totalHeight = CARD_PADDING + headingHeight
+
+    local description = option.description or ""
+    local descHeight = 0
+    if description ~= "" then
+        local _, wrapped = bodyFont:getWrap(description, availableWidth)
+        local lines = math.max(1, #wrapped)
+        descHeight = lines * bodyFont:getHeight()
+        totalHeight = totalHeight + CARD_HEADING_SPACING + descHeight
+    end
+
+    local bonusHeights = {}
+    local penaltyHeights = {}
+    local hasBonuses = option.bonuses and #option.bonuses > 0
+    local hasPenalties = option.penalties and #option.penalties > 0
+    local listSpacing = 0
+
+    if hasBonuses or hasPenalties then
+        if descHeight > 0 then
+            listSpacing = CARD_DESC_LIST_SPACING
+        else
+            listSpacing = CARD_LIST_SECTION_SPACING
+        end
+        totalHeight = totalHeight + listSpacing
+    end
+
+    if hasBonuses then
+        for index, bonus in ipairs(option.bonuses) do
+            local text = "• " .. bonus
+            local _, wrapped = bodyFont:getWrap(text, availableWidth)
+            local lines = math.max(1, #wrapped)
+            local height = lines * bodyFont:getHeight()
+            bonusHeights[index] = height
+            totalHeight = totalHeight + height
+            if index < #option.bonuses then
+                totalHeight = totalHeight + CARD_LIST_ITEM_SPACING
+            end
+        end
+    end
+
+    if hasPenalties then
+        if hasBonuses then
+            totalHeight = totalHeight + CARD_LIST_SECTION_SPACING
+        end
+
+        for index, penalty in ipairs(option.penalties) do
+            local text = "• " .. penalty
+            local _, wrapped = bodyFont:getWrap(text, availableWidth)
+            local lines = math.max(1, #wrapped)
+            local height = lines * bodyFont:getHeight()
+            penaltyHeights[index] = height
+            totalHeight = totalHeight + height
+            if index < #option.penalties then
+                totalHeight = totalHeight + CARD_LIST_ITEM_SPACING
+            end
+        end
+    end
+
+    totalHeight = totalHeight + CARD_PADDING + captionFont:getHeight() + CARD_TAG_OFFSET
+
+    local metrics = {
+        height = math.max(totalHeight, CARD_MIN_HEIGHT),
+        descHeight = descHeight,
+        bonusHeights = bonusHeights,
+        penaltyHeights = penaltyHeights,
+        hasBonuses = hasBonuses,
+        hasPenalties = hasPenalties,
+        listStartSpacing = listSpacing,
+        availableWidth = availableWidth,
+    }
+
+    return metrics
+end
+
+local function rebuildTierMetrics()
+    tierMetrics = {}
+
+    for tierIndex, tier in ipairs(tiers) do
+        local metrics = { options = {}, cardHeight = CARD_MIN_HEIGHT }
+        for optionIndex, option in ipairs(tier.options or {}) do
+            local optionMetrics = measureOptionMetrics(option)
+            metrics.options[optionIndex] = optionMetrics
+            if optionMetrics.height > (metrics.cardHeight or CARD_MIN_HEIGHT) then
+                metrics.cardHeight = optionMetrics.height
+            end
+        end
+        tierMetrics[tierIndex] = metrics
+    end
+end
+
+local function getTierHeaderHeight(tier, contentWidth)
+    local headingHeight = UI.fonts.heading:getHeight()
+    local height = headingHeight
+
+    local description = tier and tier.description or ""
+    if description ~= "" and contentWidth > 0 then
+        local _, wrapped = UI.fonts.body:getWrap(description, contentWidth)
+        local lines = math.max(1, #wrapped)
+        height = height + HEADER_SPACING + lines * UI.fonts.body:getHeight()
+    end
+
+    return height
 end
 
 local function updateFocusVisuals()
@@ -324,6 +445,7 @@ local function rebuildButtons()
     tiers = TalentTree:getTiers() or {}
     selections = TalentTree:getSelections() or {}
     buttons = {}
+    tierLayout = {}
 
     for tierIndex, tier in ipairs(tiers) do
         for optionIndex, option in ipairs(tier.options or {}) do
@@ -337,7 +459,7 @@ local function rebuildButtons()
                 x = 0,
                 y = 0,
                 w = CARD_WIDTH,
-                h = CARD_HEIGHT,
+                h = CARD_MIN_HEIGHT,
                 contentY = 0,
                 contentBottom = 0,
             }
@@ -359,6 +481,7 @@ local function rebuildButtons()
         h = UI.spacing.buttonHeight,
     }
 
+    rebuildTierMetrics()
     focusFirstSelectable()
 end
 
@@ -377,8 +500,18 @@ local function updateLayout()
 
     local yCursor = CONTENT_TOP_PADDING
     for tierIndex, tier in ipairs(tiers) do
-        local optionStart = yCursor + HEADER_HEIGHT
-        local tierHeight = HEADER_HEIGHT + CARD_HEIGHT + OPTION_FOOTER_SPACING
+        local tierMetric = tierMetrics[tierIndex] or { cardHeight = CARD_MIN_HEIGHT, options = {} }
+        local headerHeight = getTierHeaderHeight(tier, layout.contentW)
+        local cardHeight = tierMetric.cardHeight or CARD_MIN_HEIGHT
+        local optionStart = yCursor + headerHeight
+        local tierHeight = headerHeight + cardHeight + OPTION_FOOTER_SPACING
+
+        tierLayout[tierIndex] = {
+            top = yCursor,
+            headerHeight = headerHeight,
+            optionStart = optionStart,
+            cardHeight = cardHeight,
+        }
 
         local optionCount = #tier.options
         local totalWidth = optionCount * CARD_WIDTH + math.max(0, optionCount - 1) * CARD_SPACING
@@ -387,10 +520,12 @@ local function updateLayout()
         for optionIndex = 1, optionCount do
             local button, index = findOptionButton(tierIndex, optionIndex)
             if button and index then
+                local optionMetrics = tierMetric.options and tierMetric.options[optionIndex] or nil
                 button.w = CARD_WIDTH
-                button.h = CARD_HEIGHT
+                button.h = cardHeight
                 button.contentY = optionStart
-                button.contentBottom = optionStart + CARD_HEIGHT
+                button.contentBottom = optionStart + cardHeight
+                button.metrics = optionMetrics
                 button.x = startX + (optionIndex - 1) * (CARD_WIDTH + CARD_SPACING)
                 button.y = layout.contentY + scrollOffset + optionStart
                 button.visible = button.y + button.h >= layout.contentY and button.y <= layout.contentY + viewportHeight
@@ -399,6 +534,10 @@ local function updateLayout()
         end
 
         yCursor = yCursor + tierHeight + TIER_SPACING
+    end
+
+    for idx = #tiers + 1, #tierLayout do
+        tierLayout[idx] = nil
     end
 
     if #tiers > 0 then
@@ -452,6 +591,30 @@ local function getSummaryLines()
         lines[#lines + 1] = string.format("Rock spawn x%.2f", effects.rockSpawnMultiplier)
     end
 
+    if math.abs((effects.sawSpeedMultiplier or 1) - 1) > 0.01 then
+        lines[#lines + 1] = string.format("Saw speed x%.2f", effects.sawSpeedMultiplier)
+    end
+
+    if math.abs((effects.laserCooldownMultiplier or 1) - 1) > 0.01 then
+        lines[#lines + 1] = string.format("Laser cooldown x%.2f", effects.laserCooldownMultiplier)
+    end
+
+    if math.abs((effects.laserChargeMultiplier or 1) - 1) > 0.01 then
+        lines[#lines + 1] = string.format("Laser charge x%.2f", effects.laserChargeMultiplier)
+    end
+
+    if math.abs(effects.sawStallOnFruit or 0) > 0.01 then
+        lines[#lines + 1] = string.format("Saw stall on fruit %+0.1fs", effects.sawStallOnFruit)
+    end
+
+    if math.abs(effects.extraShopChoices or 0) > 0.01 then
+        local raw = effects.extraShopChoices
+        local rounded = raw >= 0 and math.floor(raw + 0.0001) or math.ceil(raw - 0.0001)
+        if rounded ~= 0 then
+            lines[#lines + 1] = string.format("Shop choices %+d", rounded)
+        end
+    end
+
     return lines
 end
 
@@ -480,38 +643,62 @@ local function drawOptionCard(button)
         shadowOffset = 6,
     })
 
-    local padding = 18
-    UI.drawLabel(option.name, button.x + padding, button.y + padding - 2, button.w - padding * 2, "left", {
+    local padding = CARD_PADDING
+    local metrics = button.metrics or measureOptionMetrics(option)
+    local contentWidth = button.w - padding * 2
+    local headingHeight = UI.fonts.heading:getHeight()
+
+    UI.drawLabel(option.name, button.x + padding, button.y + padding, contentWidth, "left", {
         fontKey = "heading",
         color = Theme.textColor,
     })
 
-    local descY = button.y + padding + UI.fonts.heading:getHeight() - 4
-    UI.drawLabel(option.description or "", button.x + padding, descY, button.w - padding * 2, "left", {
-        fontKey = "body",
-        color = UI.colors.subtleText,
-    })
+    local description = option.description or ""
+    local listY
+    if description ~= "" then
+        local descY = button.y + padding + headingHeight + CARD_HEADING_SPACING
+        UI.drawLabel(description, button.x + padding, descY, contentWidth, "left", {
+            fontKey = "body",
+            color = UI.colors.subtleText,
+        })
+        listY = descY + (metrics and metrics.descHeight or UI.fonts.body:getHeight())
+    else
+        listY = button.y + padding + headingHeight
+    end
 
-    local listY = descY + UI.fonts.body:getHeight() + 8
-    local listFont = UI.fonts.small
+    if metrics and (metrics.hasBonuses or metrics.hasPenalties) then
+        listY = listY + (metrics.listStartSpacing or 0)
+    end
 
     if option.bonuses and #option.bonuses > 0 then
-        for _, bonus in ipairs(option.bonuses) do
-            UI.drawLabel("• " .. bonus, button.x + padding, listY, button.w - padding * 2, "left", {
+        for index, bonus in ipairs(option.bonuses) do
+            UI.drawLabel("• " .. bonus, button.x + padding, listY, contentWidth, "left", {
                 fontKey = "body",
                 color = Theme.progressColor,
             })
-            listY = listY + listFont:getHeight() + 4
+            local lineHeight = metrics and metrics.bonusHeights and metrics.bonusHeights[index] or UI.fonts.body:getHeight()
+            listY = listY + lineHeight
+            if index < #option.bonuses then
+                listY = listY + CARD_LIST_ITEM_SPACING
+            end
         end
     end
 
     if option.penalties and #option.penalties > 0 then
-        for _, penalty in ipairs(option.penalties) do
-            UI.drawLabel("• " .. penalty, button.x + padding, listY, button.w - padding * 2, "left", {
+        if option.bonuses and #option.bonuses > 0 then
+            listY = listY + CARD_LIST_SECTION_SPACING
+        end
+
+        for index, penalty in ipairs(option.penalties) do
+            UI.drawLabel("• " .. penalty, button.x + padding, listY, contentWidth, "left", {
                 fontKey = "body",
                 color = Theme.warningColor,
             })
-            listY = listY + listFont:getHeight() + 4
+            local lineHeight = metrics and metrics.penaltyHeights and metrics.penaltyHeights[index] or UI.fonts.body:getHeight()
+            listY = listY + lineHeight
+            if index < #option.penalties then
+                listY = listY + CARD_LIST_ITEM_SPACING
+            end
         end
     end
 
@@ -523,7 +710,7 @@ local function drawOptionCard(button)
         local tagWidth = UI.fonts.caption:getWidth(tagText) + 16
         local tagHeight = UI.fonts.caption:getHeight() + 6
         local tagX = button.x + button.w - tagWidth - padding
-        local tagY = button.y + button.h - tagHeight - padding + 6
+        local tagY = button.y + button.h - tagHeight - padding + CARD_TAG_OFFSET
         UI.drawPanel(tagX, tagY, tagWidth, tagHeight, {
             fill = { Theme.progressColor[1], Theme.progressColor[2], Theme.progressColor[3], 0.4 },
             borderColor = Theme.progressColor,
@@ -538,19 +725,22 @@ local function drawOptionCard(button)
 end
 
 local function drawTier(tierIndex, tier)
-    local tierTop = layout.contentY + scrollOffset + CONTENT_TOP_PADDING + (tierIndex - 1) * (HEADER_HEIGHT + CARD_HEIGHT + OPTION_FOOTER_SPACING + TIER_SPACING)
+    local info = tierLayout[tierIndex]
+    local tierTop = layout.contentY + scrollOffset + (info and info.top or CONTENT_TOP_PADDING)
     local titleY = tierTop
-    local descY = titleY + UI.fonts.heading:getHeight() + 4
-
     UI.drawLabel(tier.name, layout.contentX, titleY, layout.contentW, "left", {
         fontKey = "heading",
         color = Theme.accentTextColor,
     })
 
-    UI.drawLabel(tier.description or "", layout.contentX, descY, layout.contentW, "left", {
-        fontKey = "body",
-        color = UI.colors.subtleText,
-    })
+    local description = tier.description or ""
+    if description ~= "" then
+        local descY = titleY + UI.fonts.heading:getHeight() + HEADER_SPACING
+        UI.drawLabel(description, layout.contentX, descY, layout.contentW, "left", {
+            fontKey = "body",
+            color = UI.colors.subtleText,
+        })
+    end
 
     for optionIndex = 1, #tier.options do
         local button = select(1, findOptionButton(tierIndex, optionIndex))

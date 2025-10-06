@@ -1,6 +1,8 @@
 local Snake = require("snake")
 local Score = require("score")
 local Rocks = require("rocks")
+local Saws = require("saws")
+local Lasers = require("lasers")
 
 local TalentTree = {}
 
@@ -12,155 +14,167 @@ local DEFAULT_STATE = {
 
 local tiers = {
     {
-        id = "foundation",
-        name = "Tier I — Foundation",
-        description = "Set your baseline defenses and scoring expectations.",
+        id = "engine",
+        name = "Tier I — Engine Tuning",
+        description = "Choose how the snake's core pace trades against hazard cadence.",
         options = {
             {
-                id = "balanced_protocol",
-                name = "Balanced Protocol",
-                description = "Maintain the classic noodl experience with no modifiers.",
+                id = "balanced_circuit",
+                name = "Balanced Circuit",
+                description = "Maintain the classic noodl tempo with no modifiers.",
                 bonuses = { "Run behaves exactly as classic" },
                 penalties = {},
                 effects = {},
                 default = true,
             },
             {
-                id = "adaptive_plating",
-                name = "Adaptive Plating",
-                description = "Lean into survivability by thickening your hull.",
-                bonuses = { "+1 max health" },
-                penalties = { "Fruit bonus -0.4" },
+                id = "flux_overdrive",
+                name = "Flux Overdrive",
+                description = "Redline the coils for blistering speed while hazards keep pace.",
+                bonuses = { "Snake speed x1.20" },
+                penalties = { "Rock spawn x1.25", "Saw speed x1.15", "Laser cooldown x0.85" },
                 effects = {
-                    maxHealthBonus = 1,
-                    fruitBonus = -0.4,
-                },
-            },
-            {
-                id = "glass_cannon",
-                name = "Glass Cannon",
-                description = "Strip armor for a higher scoring ceiling.",
-                bonuses = { "+1.5 fruit bonus" },
-                penalties = { "-1 max health" },
-                effects = {
-                    maxHealthBonus = -1,
-                    fruitBonus = 1.5,
-                },
-            },
-        },
-    },
-    {
-        id = "mobility",
-        name = "Tier II — Mobility",
-        description = "Tune how aggressively your snake moves across the arena.",
-        options = {
-            {
-                id = "baseline_flow",
-                name = "Baseline Flow",
-                description = "Keep your acceleration curve identical to classic noodl.",
-                bonuses = { "No change to movement" },
-                penalties = {},
-                effects = {},
-                default = true,
-            },
-            {
-                id = "velocity_drive",
-                name = "Velocity Drive",
-                description = "Hit the throttle and weave between hazards.",
-                bonuses = { "Snake speed x1.18" },
-                penalties = { "Rock spawns x1.25" },
-                effects = {
-                    snakeSpeedMultiplier = 1.18,
+                    snakeSpeedMultiplier = 1.20,
                     rockSpawnMultiplier = 1.25,
+                    sawSpeedMultiplier = 1.15,
+                    laserCooldownMultiplier = 0.85,
                 },
             },
             {
-                id = "shield_dash",
-                name = "Shield Dash",
-                description = "Start with an extra shield and a slight pace boost.",
-                bonuses = { "+1 crash shield", "Snake speed x1.05" },
-                penalties = { "Fruit bonus -0.2" },
+                id = "cryo_stabilizers",
+                name = "Cryo Stabilizers",
+                description = "Dial back thrust to stretch every hazard window.",
+                bonuses = { "Rock spawn x0.80", "Laser cooldown x1.30", "Saw speed x0.85" },
+                penalties = { "Snake speed x0.90" },
                 effects = {
+                    snakeSpeedMultiplier = 0.90,
+                    rockSpawnMultiplier = 0.80,
+                    laserCooldownMultiplier = 1.30,
+                    sawSpeedMultiplier = 0.85,
+                },
+            },
+        },
+    },
+    {
+        id = "protocols",
+        name = "Tier II — Hazard Protocols",
+        description = "Decide how you respond when arena threats spin up.",
+        options = {
+            {
+                id = "baseline_response",
+                name = "Baseline Response",
+                description = "Keep the standard hazard behaviors with no adjustments.",
+                bonuses = { "No change to hazard cadence" },
+                penalties = {},
+                effects = {},
+                default = true,
+            },
+            {
+                id = "pulse_scrambler",
+                name = "Pulse Scrambler",
+                description = "Harvest fruit to jam arena systems and earn breathing room.",
+                bonuses = { "Fruit pickups stall saws for 1.8s", "Laser charge x1.35" },
+                penalties = { "Snake speed x0.95" },
+                effects = {
+                    snakeSpeedMultiplier = 0.95,
+                    sawStallOnFruit = 1.8,
+                    laserChargeMultiplier = 1.35,
+                },
+            },
+            {
+                id = "danger_link",
+                name = "Danger Link",
+                description = "Invite extra pressure for a more aggressive toolkit.",
+                bonuses = { "Snake speed x1.08", "+1 crash shield" },
+                penalties = { "Laser cooldown x0.80", "Rock spawn x1.30" },
+                effects = {
+                    snakeSpeedMultiplier = 1.08,
                     startingCrashShields = 1,
+                    laserCooldownMultiplier = 0.80,
+                    rockSpawnMultiplier = 1.30,
+                },
+            },
+        },
+    },
+    {
+        id = "logistics",
+        name = "Tier III — Supply Lines",
+        description = "Shape how support flows between floors and hazards react.",
+        options = {
+            {
+                id = "steady_commerce",
+                name = "Steady Commerce",
+                description = "Keep the vendor network unchanged and hazards steady.",
+                bonuses = { "Shop stock remains unchanged" },
+                penalties = {},
+                effects = {},
+                default = true,
+            },
+            {
+                id = "smugglers_map",
+                name = "Smuggler's Map",
+                description = "Unlock an extra shop card by tolerating hotter hazards.",
+                bonuses = { "+1 shop choice", "Snake speed x1.05" },
+                penalties = { "Rock spawn x1.15", "Laser cooldown x0.90" },
+                effects = {
+                    extraShopChoices = 1,
                     snakeSpeedMultiplier = 1.05,
-                    fruitBonus = -0.2,
-                },
-            },
-        },
-    },
-    {
-        id = "control",
-        name = "Tier III — Control",
-        description = "Decide how you want hazards and combos to scale.",
-        options = {
-            {
-                id = "stabilizers",
-                name = "Field Stabilizers",
-                description = "Preserve the baseline hazard cadence from classic runs.",
-                bonuses = { "No change to hazard pacing" },
-                penalties = {},
-                effects = {},
-                default = true,
-            },
-            {
-                id = "hazard_training",
-                name = "Hazard Training",
-                description = "Invite more danger to learn faster reactions.",
-                bonuses = { "+1 crash shield" },
-                penalties = { "Rock spawns x1.35" },
-                effects = {
-                    startingCrashShields = 1,
-                    rockSpawnMultiplier = 1.35,
+                    rockSpawnMultiplier = 1.15,
+                    laserCooldownMultiplier = 0.90,
                 },
             },
             {
-                id = "precision_combo",
-                name = "Precision Combo",
-                description = "Chase big combo bonuses by tightening execution.",
-                bonuses = { "Combo multiplier x1.35" },
-                penalties = { "Snake speed x0.96" },
-                effects = {
-                    comboMultiplier = 1.35,
-                    snakeSpeedMultiplier = 0.96,
-                },
-            },
-        },
-    },
-    {
-        id = "harvest",
-        name = "Tier IV — Harvest",
-        description = "Shape long-term growth and resource flow.",
-        options = {
-            {
-                id = "balanced_harvest",
-                name = "Balanced Harvest",
-                description = "Maintain the familiar balance between growth and scoring.",
-                bonuses = { "No change to fruit rewards" },
-                penalties = {},
-                effects = {},
-                default = true,
-            },
-            {
-                id = "lean_frame",
-                name = "Lean Frame",
-                description = "Stay trim for sharper dodges at the cost of points.",
-                bonuses = { "Extra growth -1" },
+                id = "salvage_network",
+                name = "Salvage Network",
+                description = "Convert hazard salvage into protection at the cost of profit.",
+                bonuses = { "+1 crash shield", "Saw speed x0.90" },
                 penalties = { "Fruit bonus -0.3" },
                 effects = {
-                    extraGrowth = -1,
+                    startingCrashShields = 1,
+                    sawSpeedMultiplier = 0.90,
                     fruitBonus = -0.3,
                 },
             },
+        },
+    },
+    {
+        id = "momentum",
+        name = "Tier IV — Momentum Planning",
+        description = "Define how your scoring engine trades with escalating hazards.",
+        options = {
             {
-                id = "score_pipeline",
-                name = "Score Pipeline",
-                description = "Sacrifice resilience for explosive scoring runs.",
-                bonuses = { "Combo multiplier x1.45", "Fruit bonus +0.6" },
-                penalties = { "-1 max health" },
+                id = "balanced_momentum",
+                name = "Balanced Momentum",
+                description = "Hold the stock scoring profile from classic runs.",
+                bonuses = { "No change to scoring flow" },
+                penalties = {},
+                effects = {},
+                default = true,
+            },
+            {
+                id = "combo_reactor",
+                name = "Combo Reactor",
+                description = "Feed the reactor more risk for explosive point output.",
+                bonuses = { "Combo multiplier x1.40", "Fruit bonus +0.5" },
+                penalties = { "Laser cooldown x0.85", "Rock spawn x1.20" },
                 effects = {
-                    comboMultiplier = 1.45,
-                    fruitBonus = 0.6,
-                    maxHealthBonus = -1,
+                    comboMultiplier = 1.40,
+                    fruitBonus = 0.5,
+                    laserCooldownMultiplier = 0.85,
+                    rockSpawnMultiplier = 1.20,
+                },
+            },
+            {
+                id = "hazard_ward",
+                name = "Hazard Ward",
+                description = "Slow the hazard pulse in exchange for leaner rewards.",
+                bonuses = { "Laser cooldown x1.35", "Saw speed x0.85" },
+                penalties = { "Snake speed x0.92", "Fruit bonus -0.2" },
+                effects = {
+                    laserCooldownMultiplier = 1.35,
+                    sawSpeedMultiplier = 0.85,
+                    snakeSpeedMultiplier = 0.92,
+                    fruitBonus = -0.2,
                 },
             },
         },
@@ -345,6 +359,11 @@ local function createEffectAccumulator()
         startingCrashShields = 0,
         extraGrowth = 0,
         rockSpawnMultiplier = 1,
+        sawSpeedMultiplier = 1,
+        laserCooldownMultiplier = 1,
+        laserChargeMultiplier = 1,
+        sawStallOnFruit = 0,
+        extraShopChoices = 0,
     }
 end
 
@@ -379,6 +398,26 @@ local function accumulateEffects(accumulator, effects)
 
     if effects.rockSpawnMultiplier then
         accumulator.rockSpawnMultiplier = (accumulator.rockSpawnMultiplier or 1) * effects.rockSpawnMultiplier
+    end
+
+    if effects.sawSpeedMultiplier then
+        accumulator.sawSpeedMultiplier = (accumulator.sawSpeedMultiplier or 1) * effects.sawSpeedMultiplier
+    end
+
+    if effects.laserCooldownMultiplier then
+        accumulator.laserCooldownMultiplier = (accumulator.laserCooldownMultiplier or 1) * effects.laserCooldownMultiplier
+    end
+
+    if effects.laserChargeMultiplier then
+        accumulator.laserChargeMultiplier = (accumulator.laserChargeMultiplier or 1) * effects.laserChargeMultiplier
+    end
+
+    if effects.sawStallOnFruit then
+        accumulator.sawStallOnFruit = (accumulator.sawStallOnFruit or 0) + effects.sawStallOnFruit
+    end
+
+    if effects.extraShopChoices then
+        accumulator.extraShopChoices = (accumulator.extraShopChoices or 0) + effects.extraShopChoices
     end
 
     return accumulator
@@ -429,6 +468,8 @@ function TalentTree:applyRunModifiers(game, effects)
         return nil
     end
 
+    self._lastAppliedEffects = copyTable(effects)
+
     if game then
         game.talentEffects = copyTable(effects)
         game.health = game.maxHealth
@@ -469,15 +510,96 @@ function TalentTree:applyRunModifiers(game, effects)
         end
     end
 
-    if Rocks and effects.rockSpawnMultiplier and not approximatelyEqual(effects.rockSpawnMultiplier, 1) then
-        local multiplier = effects.rockSpawnMultiplier
-        if multiplier < 0 then
-            multiplier = 0
-        end
-        Rocks.spawnChance = clamp((Rocks.spawnChance or 0.25) * multiplier, 0)
+    return effects
+end
+
+function TalentTree:applyFloorContextModifiers(traitContext, effects)
+    effects = effects or self._lastAppliedEffects or self:getAggregatedEffects()
+    if not effects then
+        return traitContext
     end
 
-    return effects
+    traitContext = traitContext or {}
+
+    if Rocks then
+        local current = traitContext.rockSpawnChance
+        if current == nil then
+            current = Rocks.spawnChance or 0.25
+        end
+
+        if not approximatelyEqual(effects.rockSpawnMultiplier, 1) then
+            local multiplier = effects.rockSpawnMultiplier or 1
+            if multiplier < 0 then
+                multiplier = 0
+            end
+            current = clamp((current or 0.25) * multiplier, 0)
+        end
+
+        traitContext.rockSpawnChance = current
+        Rocks.spawnChance = current
+    end
+
+    if Saws then
+        local currentSpeed = traitContext.sawSpeedMult
+        if currentSpeed == nil then
+            currentSpeed = Saws.speedMult or 1
+        end
+
+        if not approximatelyEqual(effects.sawSpeedMultiplier, 1) then
+            currentSpeed = (currentSpeed or 1) * effects.sawSpeedMultiplier
+        end
+
+        traitContext.sawSpeedMult = currentSpeed
+        Saws.speedMult = currentSpeed
+
+        local stall = traitContext.sawStall
+        if stall == nil then
+            if Saws.getStallOnFruit then
+                stall = Saws:getStallOnFruit()
+            else
+                stall = Saws.stallOnFruit or 0
+            end
+        end
+
+        if effects.sawStallOnFruit and effects.sawStallOnFruit ~= 0 then
+            stall = (stall or 0) + effects.sawStallOnFruit
+        end
+
+        traitContext.sawStall = stall
+        if Saws.setStallOnFruit then
+            Saws:setStallOnFruit(stall)
+        else
+            Saws.stallOnFruit = stall
+        end
+    end
+
+    if Lasers then
+        local cooldown = traitContext.laserCooldownMult
+        if cooldown == nil then
+            cooldown = Lasers.cooldownMult or 1
+        end
+
+        if not approximatelyEqual(effects.laserCooldownMultiplier, 1) then
+            cooldown = (cooldown or 1) * effects.laserCooldownMultiplier
+        end
+
+        traitContext.laserCooldownMult = cooldown
+        Lasers.cooldownMult = cooldown
+
+        local charge = traitContext.laserChargeMult
+        if charge == nil then
+            charge = Lasers.chargeDurationMult or 1
+        end
+
+        if not approximatelyEqual(effects.laserChargeMultiplier, 1) then
+            charge = (charge or 1) * effects.laserChargeMultiplier
+        end
+
+        traitContext.laserChargeMult = charge
+        Lasers.chargeDurationMult = charge
+    end
+
+    return traitContext
 end
 
 return TalentTree

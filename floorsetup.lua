@@ -7,6 +7,7 @@ local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
 local Darts = require("darts")
+local TalentTree = require("talenttree")
 local Movement = require("movement")
 local Particles = require("particles")
 local FloatingText = require("floatingtext")
@@ -474,6 +475,10 @@ function FloorSetup.prepare(floorNum, floorData)
     traitContext = adjustedContext or traitContext
 
     traitContext = Upgrades:modifyFloorContext(traitContext)
+
+    if TalentTree and TalentTree.applyFloorContextModifiers then
+        traitContext = TalentTree:applyFloorContextModifiers(traitContext)
+    end
     traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
     traitContext.dartCount = math.max(0, traitContext.dartCount or 0)
 
