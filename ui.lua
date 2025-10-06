@@ -265,7 +265,10 @@ local function drawHeartOutline(x, y, size, thickness)
 
     love.graphics.setLineWidth(thickness)
     if love.graphics.setLineJoin then
-        love.graphics.setLineJoin("round")
+        local ok = pcall(love.graphics.setLineJoin, "round")
+        if not ok then
+            pcall(love.graphics.setLineJoin, "bevel")
+        end
     end
     if love.graphics.setLineStyle then
         love.graphics.setLineStyle("smooth")
