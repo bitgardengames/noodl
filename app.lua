@@ -16,6 +16,7 @@ local InputMode = require("inputmode")
 
 local App = {
     stateModules = {
+        splash = require("splashscreen"),
         menu = require("menu"),
         modeselect = require("modeselect"),
         game = require("game"),
@@ -80,7 +81,7 @@ function App:load()
     self:registerStates()
     self:loadSubsystems()
 
-    GameState:switch("menu")
+    GameState:switch("splash")
 end
 
 function App:forwardEvent(eventName, ...)
