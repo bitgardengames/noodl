@@ -1773,18 +1773,54 @@ end
 
 function UI:drawHealth()
     local health = self.health
-    if not health then return end
+    if not health then
+        self.healthPanelBounds = nil
+        return
+    end
 
     local maxHealth = math.max(0, math.floor((health.max or 0) + 0.0001))
     if maxHealth <= 0 then
+        self.healthPanelBounds = nil
         return
     end
 
     local display = health.display or health.current or 0
     local spacing = 38
     local size = 26
-    local originX = 48
-    local originY = 48
+
+    local panelPaddingX = 28
+    local panelPaddingY = 12
+    local headerHeight = 16
+    local bodyHeight = size
+    local panelX = 20
+    local panelY = 20
+    local panelW = (maxHealth > 0 and (maxHealth - 1) * spacing + size or size) + panelPaddingX * 2
+    local panelH = headerHeight + bodyHeight + panelPaddingY * 2
+
+    local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
+    love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 1) * 0.55)
+    love.graphics.rectangle("fill", panelX + 3, panelY + 4, panelW, panelH, 16, 16)
+
+    local panelColor = Theme.panelColor or {0.16, 0.18, 0.22, 1}
+    love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
+    love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 16, 16)
+
+    local borderColor = Theme.panelBorder or {0, 0, 0, 1}
+    love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 16, 16)
+    love.graphics.setLineWidth(1)
+
+    love.graphics.setColor(1, 1, 1, 0.04)
+    love.graphics.rectangle("fill", panelX, panelY, panelW, math.max(12, panelH * 0.35), 16, 16)
+
+    UI.setFont("caption")
+    local labelColor = Theme.mutedTextColor or Theme.textColor
+    love.graphics.setColor(labelColor[1], labelColor[2], labelColor[3], (labelColor[4] or 1) * 0.85)
+    love.graphics.printf("HEALTH", panelX + panelPaddingX, panelY + 6, panelW - panelPaddingX * 2, "left")
+
+    local originX = panelX + panelPaddingX
+    local originY = panelY + panelPaddingY + headerHeight
 
     local flashStrength = 0
     if health.flashTimer and health.flashDuration and health.flashDuration > 0 then
@@ -1864,22 +1900,37 @@ function UI:drawHealth()
             alpha = math.min(1, alpha + 0.25 * highlight)
         end
 
+        local shadowAlpha = (shadowColor[4] or 1) * (0.45 + 0.25 * fillAmount)
+        local shadowOffsetX = 2 + size * scale * 0.08
+        local shadowOffsetY = 3 + size * scale * 0.12
+        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
+        drawHeartGeometry(cx + shadowOffsetX, cy + yOffset + shadowOffsetY, size * scale)
+
         love.graphics.setColor(r, g, b, alpha)
         drawHeartShape(cx, cy + yOffset, size * scale)
     end
 
     love.graphics.pop()
     love.graphics.setColor(1, 1, 1, 1)
+
+    self.healthPanelBounds = {
+        x = panelX,
+        y = panelY,
+        w = panelW,
+        h = panelH,
+    }
 end
 
 function UI:drawFruitSockets()
     if self.fruitRequired <= 0 then
+        self.fruitPanelBounds = nil
         return
     end
 
-    -- Position the fruit sockets so they do not overlap with the health hearts that
-    -- render at roughly (48, 48). Give the sockets a little extra padding below the
-    -- hearts so both elements remain readable even when health is low.
+    -- Position the fruit sockets so they live directly beneath the health panel while
+    -- keeping both elements readable even when health is low.
+    local headerHeight = 22
+    local paddingOffsetY = 8
     local baseX, baseY = 60, 104
     local perRow = 10
     local spacing = self.socketSize + 6
@@ -1890,12 +1941,30 @@ function UI:drawFruitSockets()
     local gridWidth = (cols - 1) * spacing + self.socketSize
     local gridHeight = (rows - 1) * spacing + self.socketSize
     local paddingX = self.socketSize * 0.75
-    local paddingY = self.socketSize * 0.75
+    local paddingY = self.socketSize * 0.75 + paddingOffsetY
 
     local panelX = baseX - paddingX
     local panelY = baseY - paddingY
+
+    local healthBounds = self.healthPanelBounds
+    if healthBounds then
+        panelX = healthBounds.x
+        panelY = healthBounds.y + healthBounds.h + 16
+    end
+
     local panelW = gridWidth + paddingX * 2
-    local panelH = gridHeight + paddingY * 2
+    local panelH = headerHeight + gridHeight + paddingY * 2
+
+    if healthBounds and panelW < healthBounds.w then
+        panelW = healthBounds.w
+    end
+
+    local innerWidth = panelW - paddingX * 2
+    local innerHeight = panelH - paddingY * 2 - headerHeight
+    local baseOffsetX = math.max(0, (innerWidth - gridWidth) * 0.5)
+    local baseOffsetY = math.max(0, (innerHeight - gridHeight) * 0.5)
+    baseX = panelX + paddingX + baseOffsetX
+    baseY = panelY + paddingY + headerHeight + baseOffsetY
 
     local goalFlash = 0
     if self.goalCelebrated then
@@ -1930,6 +1999,15 @@ function UI:drawFruitSockets()
         love.graphics.rectangle("line", panelX - 4 * goalFlash, panelY - 4 * goalFlash, panelW + 8 * goalFlash, panelH + 8 * goalFlash, 14 + 8 * goalFlash, 14 + 8 * goalFlash)
         love.graphics.setLineWidth(3)
     end
+
+    love.graphics.setColor(1, 1, 1, 0.05)
+    local headerHighlightHeight = headerHeight + math.max(6, paddingOffsetY * 0.75)
+    love.graphics.rectangle("fill", panelX, panelY, panelW, headerHighlightHeight, 12, 12)
+
+    UI.setFont("caption")
+    local headerColor = Theme.mutedTextColor or Theme.textColor
+    love.graphics.setColor(headerColor[1], headerColor[2], headerColor[3], (headerColor[4] or 1) * 0.8)
+    love.graphics.printf("FRUITS", panelX + paddingX, panelY + 6, panelW - paddingX * 2, "left")
 
     local highlight = Theme.highlightColor or {1, 1, 1, 0.05}
 
@@ -2103,6 +2181,13 @@ function UI:drawFruitSockets()
         panelW,
         "right"
     )
+
+    self.fruitPanelBounds = {
+        x = panelX,
+        y = panelY,
+        w = panelW,
+        h = panelH,
+    }
 end
 
 function UI:draw()
