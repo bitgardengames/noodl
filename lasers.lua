@@ -6,7 +6,7 @@ local Audio = require("audio")
 
 local Lasers = {}
 
-local LASERS_ENABLED = false
+local LASERS_ENABLED = true
 
 local emitters = {}
 

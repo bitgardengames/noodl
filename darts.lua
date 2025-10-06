@@ -7,7 +7,7 @@ local Particles = require("particles")
 
 local Darts = {}
 
-local DARTS_ENABLED = false
+local DARTS_ENABLED = true
 
 local launchers = {}
 
