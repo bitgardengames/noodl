@@ -72,15 +72,6 @@ local tiers = {
                     sawStallOnFruit = 2.0,
                 },
             },
-            {
-                id = "danger_link",
-                name = "Crash Shield",
-                description = "",
-                bonuses = { "+1 crash shield" },
-                effects = {
-                    startingCrashShields = 1,
-                },
-            },
         },
     },
     {
@@ -162,11 +153,10 @@ local tiers = {
                 id = "reinforced_scales",
                 name = "Thick Scales",
                 description = "",
-                bonuses = { "+1 health", "+1 crash shield" },
+                bonuses = { "+1 health" },
                 penalties = { "-5% snake speed" },
                 effects = {
                     maxHealthBonus = 1,
-                    startingCrashShields = 1,
                     snakeSpeedMultiplier = 0.95,
                 },
                 default = true,
@@ -431,7 +421,6 @@ local function createEffectAccumulator()
         fruitBonus = 0,
         snakeSpeedMultiplier = 1,
         comboMultiplier = 1,
-        startingCrashShields = 0,
         extraGrowth = 0,
         rockSpawnMultiplier = 1,
         sawSpeedMultiplier = 1,
@@ -461,10 +450,6 @@ local function accumulateEffects(accumulator, effects)
 
     if effects.comboMultiplier then
         accumulator.comboMultiplier = (accumulator.comboMultiplier or 1) * effects.comboMultiplier
-    end
-
-    if effects.startingCrashShields then
-        accumulator.startingCrashShields = (accumulator.startingCrashShields or 0) + effects.startingCrashShields
     end
 
     if effects.extraGrowth then
@@ -560,10 +545,6 @@ function TalentTree:applyRunModifiers(game, effects)
         if effects.snakeSpeedMultiplier > 0 then
             Snake:addSpeedMultiplier(effects.snakeSpeedMultiplier)
         end
-    end
-
-    if Snake and effects.startingCrashShields and effects.startingCrashShields ~= 0 and Snake.addCrashShields then
-        Snake:addCrashShields(effects.startingCrashShields)
     end
 
     if Snake then

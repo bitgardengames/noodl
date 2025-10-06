@@ -354,9 +354,6 @@ local english = {
                 heal_note = "Recovered ${amount} health.",
                 shield_note = "Forged ${amount} crash shield(s).",
             },
-            health = {
-                critical_surge = "Second Wind!",
-            },
         },
         gamemodes = {
             unlock_popup = "${mode} Unlocked!",

@@ -184,44 +184,7 @@ function Game:triggerCriticalHealth(cause, context)
         self.Effects:shake(0.22)
     end
 
-    if Snake then
-        Snake.adrenaline = Snake.adrenaline or {}
-        local adrenaline = Snake.adrenaline
-        adrenaline.duration = adrenaline.duration or 2.4
-        adrenaline.boost = adrenaline.boost or 1.25
-        adrenaline.active = true
-        local surgeDuration = math.max(adrenaline.duration * 0.55, 1.2)
-        local currentTimer = adrenaline.timer or 0
-        adrenaline.timer = math.max(currentTimer, surgeDuration)
-
-        if Snake.getHead and FloatingText and FloatingText.add then
-            local hx, hy = Snake:getHead()
-            if hx and hy then
-                local label = Localization:get("game.health.critical_surge")
-                local font = UI and UI.fonts and (UI.fonts.prompt or UI.fonts.button)
-                FloatingText:add(label, hx, hy - 72, {0.98, 0.84, 0.36, 1}, 1.25, nil, font, {
-                    scale = 1.05,
-                    popScaleFactor = 1.3,
-                    popDuration = 0.32,
-                    wobbleMagnitude = 0.18,
-                    glow = {
-                        color = {0.95, 0.65, 0.18, 0.55},
-                        magnitude = 0.32,
-                        frequency = 4.6,
-                    },
-                    shadow = {
-                        color = {0, 0, 0, 0.65},
-                        offset = {0, 2},
-                        blur = 1.8,
-                    },
-                })
-            end
-        end
-    end
-
-    if SessionStats and SessionStats.add then
-        SessionStats:add("criticalSurges", 1)
-    end
+    -- No additional surge effects when second wind is disabled.
 end
 
 local function callMode(self, methodName, ...)

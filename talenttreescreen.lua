@@ -779,7 +779,6 @@ local function getSummaryLines()
     local lines = {}
 
     appendLine(lines, formatSignedLine("Max health", effects.maxHealthBonus))
-    appendLine(lines, formatSignedLine("Crash shields", effects.startingCrashShields))
     appendLine(lines, formatSignedLine("Fruit bonus", effects.fruitBonus, { format = "%+0.1f" }))
     appendLine(lines, formatMultiplierLine("Combo multiplier", effects.comboMultiplier, {
         moreDescriptor = "stronger",
