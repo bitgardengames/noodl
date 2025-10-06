@@ -77,6 +77,8 @@ local summaryLayout = {
     lineHeight = 0,
 }
 
+local refreshSummaryLayout
+
 local function selectionsMatchDefaults()
     if not tiers or #tiers == 0 then
         return true
@@ -886,7 +888,7 @@ local function getSelectionSummaryLines()
     return lines
 end
 
-local function refreshSummaryLayout()
+refreshSummaryLayout = function()
     local loadoutLines = getSummaryLines()
     local picks = getSelectionSummaryLines()
 
