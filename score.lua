@@ -217,7 +217,7 @@ function Score:handleGameOver(cause)
         PlayerStats:updateMax("longestFloorClearTime", slowestFloor)
     end
 
-    return {
+    local result = {
         score       = self.current,
         highScore   = self:getHighScore(mode),
         apples      = runApples,
@@ -229,6 +229,10 @@ function Score:handleGameOver(cause)
         cause = cause or "unknown",
         won = false,
     }
+
+    GameModes:checkUnlocks(result, mode)
+
+    return result
 end
 
 return Score
