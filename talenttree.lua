@@ -15,14 +15,14 @@ local DEFAULT_STATE = {
 local tiers = {
     {
         id = "engine",
-        name = "Tier I — Engine Tuning",
-        description = "Choose how the snake's core pace trades against hazard cadence.",
+        name = "Tier I — Pace",
+        description = "Pick how fast the arena ticks.",
         options = {
             {
                 id = "phase_clutch",
-                name = "Phase Clutch",
-                description = "Let the coils slip just enough to keep the serpent moving briskly.",
-                bonuses = { "Snake speed x1.10" },
+                name = "Quick Coils",
+                description = "",
+                bonuses = { "+10% snake speed" },
                 effects = {
                     snakeSpeedMultiplier = 1.10,
                 },
@@ -30,18 +30,18 @@ local tiers = {
             },
             {
                 id = "flux_overdrive",
-                name = "Flux Overdrive",
-                description = "Push the throttle on arena emitters for quicker laser cycles.",
-                bonuses = { "Laser cooldown x0.85" },
+                name = "Hot Lasers",
+                description = "",
+                bonuses = { "-15% laser cooldown" },
                 effects = {
                     laserCooldownMultiplier = 0.85,
                 },
             },
             {
                 id = "cryo_stabilizers",
-                name = "Cryo Stabilizers",
-                description = "Dial back the feed to slow down fresh rock drops.",
-                bonuses = { "Rock spawn x0.80" },
+                name = "Calm Rocks",
+                description = "",
+                bonuses = { "15% fewer rocks" },
                 effects = {
                     rockSpawnMultiplier = 0.80,
                 },
@@ -50,14 +50,14 @@ local tiers = {
     },
     {
         id = "protocols",
-        name = "Tier II — Hazard Protocols",
-        description = "Decide how you respond when arena threats spin up.",
+        name = "Tier II — Hazards",
+        description = "Choose your safety net.",
         options = {
             {
                 id = "harmonic_deflector",
-                name = "Harmonic Deflector",
-                description = "Retune the saw harmonics so blades glide more slowly.",
-                bonuses = { "Saw speed x0.85" },
+                name = "Slow Saws",
+                description = "",
+                bonuses = { "-15% saw speed" },
                 effects = {
                     sawSpeedMultiplier = 0.85,
                 },
@@ -65,17 +65,17 @@ local tiers = {
             },
             {
                 id = "pulse_scrambler",
-                name = "Pulse Scrambler",
-                description = "Harvest fruit to jam arena systems and earn breathing room.",
-                bonuses = { "Fruit pickups stall saws for 2.0s" },
+                name = "Fruit Stall",
+                description = "",
+                bonuses = { "Fruit pauses saws 2.0s" },
                 effects = {
                     sawStallOnFruit = 2.0,
                 },
             },
             {
                 id = "danger_link",
-                name = "Danger Link",
-                description = "Link into hazard telemetry to receive a crash shield.",
+                name = "Crash Shield",
+                description = "",
                 bonuses = { "+1 crash shield" },
                 effects = {
                     startingCrashShields = 1,
@@ -85,14 +85,14 @@ local tiers = {
     },
     {
         id = "logistics",
-        name = "Tier III — Supply Lines",
-        description = "Shape how support flows between floors and hazards react.",
+        name = "Tier III — Support",
+        description = "Boost your economy.",
         options = {
             {
                 id = "relay_crates",
-                name = "Relay Crates",
-                description = "Freight caches deliver richer produce for a bigger haul.",
-                bonuses = { "Fruit bonus +0.5" },
+                name = "Fruit Bonus",
+                description = "",
+                bonuses = { "+0.5 fruit per pickup" },
                 effects = {
                     fruitBonus = 0.5,
                 },
@@ -100,18 +100,18 @@ local tiers = {
             },
             {
                 id = "smugglers_map",
-                name = "Smuggler's Map",
-                description = "Unlock an extra shop card for more purchase options.",
-                bonuses = { "+1 shop choice" },
+                name = "Shop Scout",
+                description = "",
+                bonuses = { "+1 shop card" },
                 effects = {
                     extraShopChoices = 1,
                 },
             },
             {
                 id = "salvage_network",
-                name = "Salvage Network",
-                description = "Convert hazard salvage into calmer saw patrols.",
-                bonuses = { "Saw speed x0.90" },
+                name = "Saw Sink",
+                description = "",
+                bonuses = { "-10% saw speed" },
                 effects = {
                     sawSpeedMultiplier = 0.90,
                 },
@@ -120,14 +120,14 @@ local tiers = {
     },
     {
         id = "momentum",
-        name = "Tier IV — Momentum Planning",
-        description = "Define how your scoring engine trades with escalating hazards.",
+        name = "Tier IV — Momentum",
+        description = "Dial in scoring.",
         options = {
             {
                 id = "momentum_battery",
-                name = "Momentum Battery",
-                description = "Bank surplus motion into a steady combo boost.",
-                bonuses = { "Combo multiplier x1.20" },
+                name = "Combo Boost",
+                description = "",
+                bonuses = { "+20% combo multiplier" },
                 effects = {
                     comboMultiplier = 1.20,
                 },
@@ -135,18 +135,18 @@ local tiers = {
             },
             {
                 id = "combo_reactor",
-                name = "Combo Reactor",
-                description = "Feed the reactor for explosive point output.",
-                bonuses = { "Fruit bonus +0.6" },
+                name = "Fruit Reactor",
+                description = "",
+                bonuses = { "+0.6 fruit per pickup" },
                 effects = {
                     fruitBonus = 0.6,
                 },
             },
             {
                 id = "hazard_ward",
-                name = "Hazard Ward",
-                description = "Slow the hazard pulse for longer breathing windows.",
-                bonuses = { "Laser cooldown x1.35" },
+                name = "Laser Break",
+                description = "",
+                bonuses = { "+35% laser cooldown" },
                 effects = {
                     laserCooldownMultiplier = 1.35,
                 },
@@ -155,15 +155,15 @@ local tiers = {
     },
     {
         id = "safeguards",
-        name = "Tier V — Safeguard Doctrine",
-        description = "Tune the run's fail-safes and contingencies for the long haul.",
+        name = "Tier V — Safety",
+        description = "Lock in survivability.",
         options = {
             {
                 id = "reinforced_scales",
-                name = "Reinforced Scales",
-                description = "Layer composite plating for extra protection, accepting a slight loss in glide.",
-                bonuses = { "Max health +1", "+1 crash shield" },
-                penalties = { "Snake speed x0.95" },
+                name = "Thick Scales",
+                description = "",
+                bonuses = { "+1 health", "+1 crash shield" },
+                penalties = { "-5% snake speed" },
                 effects = {
                     maxHealthBonus = 1,
                     startingCrashShields = 1,
@@ -173,10 +173,10 @@ local tiers = {
             },
             {
                 id = "phase_inductor",
-                name = "Phase Inductor",
-                description = "Spool a phase core for aggressive maneuvers and razor-thin laser windows.",
-                bonuses = { "Snake speed x1.08", "Laser charge x0.85" },
-                penalties = { "Laser cooldown x0.90" },
+                name = "Phase Dash",
+                description = "",
+                bonuses = { "+8% snake speed", "-15% laser charge" },
+                penalties = { "-10% laser cooldown" },
                 effects = {
                     snakeSpeedMultiplier = 1.08,
                     laserChargeMultiplier = 0.85,
@@ -185,10 +185,10 @@ local tiers = {
             },
             {
                 id = "resupply_manifest",
-                name = "Resupply Manifest",
-                description = "Lean on logistics for richer hauls while trimming the market spread.",
-                bonuses = { "Fruit bonus +0.4", "+1 extra growth" },
-                penalties = { "Shop choices -1" },
+                name = "Deep Stores",
+                description = "",
+                bonuses = { "+0.4 fruit per pickup", "+1 growth" },
+                penalties = { "-1 shop card" },
                 effects = {
                     fruitBonus = 0.4,
                     extraGrowth = 1,
