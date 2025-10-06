@@ -68,7 +68,7 @@ UI.upgradeIndicators = {
 local BUTTON_POP_DURATION = 0.32
 local HEART_GAIN_DURATION = 0.42
 local HEART_LOSS_DURATION = 0.5
-local HEART_OUTLINE_SIZE = 3
+local HEART_OUTLINE_SIZE = 5
 
 local function clamp01(value)
     if value < 0 then return 0 end
@@ -254,9 +254,22 @@ local function drawHeartOutline(x, y, size, thickness)
         coords[i] = nil
     end
 
+    local firstX, firstY
     for i = 1, #basePoints, 2 do
-        coords[#coords + 1] = x + basePoints[i] * size
-        coords[#coords + 1] = y + basePoints[i + 1] * size
+        local px = x + basePoints[i] * size
+        local py = y + basePoints[i + 1] * size
+
+        if not firstX then
+            firstX, firstY = px, py
+        end
+
+        coords[#coords + 1] = px
+        coords[#coords + 1] = py
+    end
+
+    if firstX then
+        coords[#coords + 1] = firstX
+        coords[#coords + 1] = firstY
     end
 
     local previousWidth = love.graphics.getLineWidth()
