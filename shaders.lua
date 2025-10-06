@@ -977,8 +977,8 @@ registerEffect({
 -- Constellation swirl for main menu focus
 registerEffect({
     type = "menuConstellation",
-    backdropIntensity = 0.62,
-    arenaIntensity = 0.4,
+    backdropIntensity = 0.46,
+    arenaIntensity = 0.32,
     source = [[
         extern float time;
         extern vec2 resolution;
@@ -988,11 +988,6 @@ registerEffect({
         extern vec4 highlightColor;
         extern float intensity;
 
-        float hash(vec2 p)
-        {
-            return fract(sin(dot(p, vec2(41.0, 289.0))) * 43758.5453);
-        }
-
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         {
             vec2 uv = (screen_coords - origin) / resolution;
@@ -1000,26 +995,20 @@ registerEffect({
             vec2 centered = uv - vec2(0.5);
 
             float dist = length(centered);
-            float angle = atan(centered.y, centered.x);
-            float spiral = sin(angle * 3.5 + dist * 8.0 - time * 0.32);
-            float innerGlow = exp(-dist * dist * 3.2);
-            float horizon = smoothstep(0.85, 0.15, dist);
+            float softVignette = smoothstep(0.8, 0.2, dist);
+            float vertical = smoothstep(0.0, 1.0, uv.y);
+            float drift = sin(time * 0.12 + uv.y * 2.2) * 0.5 + 0.5;
 
-            float accentMix = clamp(0.28 + spiral * 0.18 + innerGlow * 0.45, 0.0, 1.0) * intensity;
-            float highlightMix = clamp(innerGlow * 0.6 + horizon * 0.25, 0.0, 1.0) * 0.55 * intensity;
+            float accentMix = clamp(0.18 + vertical * 0.25 + drift * 0.15, 0.0, 1.0) * intensity;
+            float highlightMix = clamp(softVignette * 0.35 + (1.0 - vertical) * 0.1, 0.0, 1.0) * 0.6 * intensity;
 
             vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix);
             col = mix(col, highlightColor.rgb, highlightMix);
 
-            vec2 starUv = uv * vec2(26.0, 14.0);
-            vec2 cell = floor(starUv);
-            float starSeed = hash(cell);
-            float sparklePhase = fract(time * 0.22 + starSeed);
-            float sparkle = smoothstep(0.85, 1.0, sin((sparklePhase * 6.283) + starSeed * 8.0)) * 0.5 + 0.5;
-            float twinkle = sparkle * smoothstep(0.78, 1.0, hash(cell + 1.0));
-            col += highlightColor.rgb * twinkle * 0.18 * intensity;
+            float calmPulse = sin(time * 0.05) * 0.5 + 0.5;
+            col = mix(col, baseColor.rgb, 0.12 * calmPulse);
 
-            col = mix(baseColor.rgb, col, 0.86);
+            col = mix(baseColor.rgb, col, 0.85);
             col = clamp(col, 0.0, 1.0);
 
             return vec4(col, baseColor.a) * color;
@@ -1214,8 +1203,8 @@ registerEffect({
 -- Prismatic beams for achievements showcase
 registerEffect({
     type = "achievementRadiance",
-    backdropIntensity = 0.58,
-    arenaIntensity = 0.34,
+    backdropIntensity = 0.48,
+    arenaIntensity = 0.3,
     source = [[
         extern float time;
         extern vec2 resolution;
@@ -1225,35 +1214,25 @@ registerEffect({
         extern vec4 flareColor;
         extern float intensity;
 
-        float hash(vec2 p)
-        {
-            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-        }
-
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         {
             vec2 uv = (screen_coords - origin) / resolution;
             uv = clamp(uv, 0.0, 1.0);
 
-            float cascade = sin(uv.y * 5.0 + time * 0.35) * 0.5 + 0.5;
-            float ribbon = sin((uv.x - uv.y * 0.25) * 8.0 - time * 0.45);
-            float beam = smoothstep(0.25, 0.92, 1.0 - abs(ribbon));
-            float offset = (uv.x - 0.5) * 3.0;
-            float spotlight = exp(-(offset * offset)) * (0.45 + cascade * 0.35);
+            float gentleRise = smoothstep(0.0, 1.0, uv.y);
+            float shimmer = sin(time * 0.1 + uv.x * 2.0) * 0.5 + 0.5;
+            float centerGlow = exp(-pow((uv.x - 0.5) * 2.2, 2.0));
 
-            vec2 sparkleCell = floor(uv * vec2(18.0, 12.0));
-            float sparkleSeed = hash(sparkleCell + floor(time * 0.3));
-            float sparklePhase = fract(time * 0.28 + sparkleSeed);
-            float sparkle = smoothstep(0.65, 1.0, sparkleSeed) * smoothstep(0.0, 0.4, sparklePhase) * (1.0 - smoothstep(0.6, 1.0, sparklePhase));
-
-            float accentMix = clamp(0.25 + cascade * 0.25 + beam * 0.35, 0.0, 1.0) * intensity;
-            float flareMix = clamp(spotlight * 0.8 + beam * 0.2, 0.0, 1.0) * 0.6 * intensity;
+            float accentMix = clamp(0.2 + gentleRise * 0.35 + shimmer * 0.1, 0.0, 1.0) * intensity;
+            float flareMix = clamp(centerGlow * 0.6 + gentleRise * 0.15, 0.0, 1.0) * 0.55 * intensity;
 
             vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix);
             col = mix(col, flareColor.rgb, flareMix);
-            col += flareColor.rgb * sparkle * 0.45 * intensity;
 
-            col = mix(baseColor.rgb, col, 0.9);
+            float calmWave = sin(time * 0.07) * 0.5 + 0.5;
+            col = mix(col, baseColor.rgb, 0.1 * (1.0 - calmWave));
+
+            col = mix(baseColor.rgb, col, 0.88);
             col = clamp(col, 0.0, 1.0);
 
             return vec4(col, baseColor.a) * color;
@@ -1329,8 +1308,8 @@ registerEffect({
 -- Blueprint grid for settings clarity
 registerEffect({
     type = "settingsBlueprint",
-    backdropIntensity = 0.52,
-    arenaIntensity = 0.32,
+    backdropIntensity = 0.44,
+    arenaIntensity = 0.28,
     source = [[
         extern float time;
         extern vec2 resolution;
@@ -1340,38 +1319,25 @@ registerEffect({
         extern vec4 highlightColor;
         extern float intensity;
 
-        float gridLine(float v, float thickness)
-        {
-            return 1.0 - smoothstep(0.0, thickness, min(v, 1.0 - v));
-        }
-
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         {
             vec2 uv = (screen_coords - origin) / resolution;
             uv = clamp(uv, 0.0, 1.0);
 
-            vec2 fineUv = fract(uv * vec2(32.0, 18.0));
-            float fineLines = gridLine(fineUv.x, 0.015) + gridLine(fineUv.y, 0.015);
-            fineLines = clamp(fineLines, 0.0, 1.0);
+            float vertical = smoothstep(0.0, 1.0, uv.y);
+            float horizontal = smoothstep(1.0, 0.0, uv.y);
+            float slowWave = sin(time * 0.08 + uv.x * 1.5) * 0.5 + 0.5;
 
-            vec2 majorUv = fract(uv * vec2(8.0, 4.5));
-            float majorLines = gridLine(majorUv.x, 0.035) + gridLine(majorUv.y, 0.035);
-            majorLines = clamp(majorLines, 0.0, 1.0);
-
-            float sweepPos = fract(time * 0.18);
-            float sweep = smoothstep(sweepPos - 0.18, sweepPos, uv.y) * (1.0 - smoothstep(sweepPos, sweepPos + 0.22, uv.y));
-            float sweepGlow = sweep * (0.6 + fineLines * 0.4);
-
-            float accentMix = clamp(0.2 + fineLines * 0.35 + majorLines * 0.4, 0.0, 1.0) * intensity;
-            float highlightMix = clamp(sweepGlow, 0.0, 1.0) * 0.7 * intensity;
+            float accentMix = clamp(0.16 + vertical * 0.3 + slowWave * 0.12, 0.0, 1.0) * intensity;
+            float highlightMix = clamp(0.1 + horizontal * 0.25, 0.0, 1.0) * 0.5 * intensity;
 
             vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix);
             col = mix(col, highlightColor.rgb, highlightMix);
 
-            float flicker = sin((uv.x + uv.y * 1.2) * 6.0 + time * 0.6) * 0.5 + 0.5;
-            col = mix(col, baseColor.rgb, 0.12 * (1.0 - flicker));
+            float softVignette = smoothstep(0.9, 0.3, length(uv - vec2(0.5)));
+            col = mix(col, baseColor.rgb, 0.18 * softVignette);
 
-            col = mix(baseColor.rgb, col, 0.85);
+            col = mix(baseColor.rgb, col, 0.82);
             col = clamp(col, 0.0, 1.0);
 
             return vec4(col, baseColor.a) * color;
