@@ -1317,13 +1317,14 @@ function Game:drawDescending()
     love.graphics.setColor(0.05, 0.05, 0.05, 1)
     love.graphics.circle("fill", hx, hy, hr)
 
-    Snake:drawClipped(hx, hy, hr)
-
     love.graphics.setColor(0, 0, 0, 1)
     local previousLineWidth = love.graphics.getLineWidth()
     love.graphics.setLineWidth(2)
     love.graphics.circle("line", hx, hy, hr)
     love.graphics.setLineWidth(previousLineWidth)
+
+    Snake:drawClipped(hx, hy, hr)
+
     love.graphics.setColor(1, 1, 1, 1)
 end
 
