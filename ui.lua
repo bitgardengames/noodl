@@ -68,7 +68,7 @@ UI.upgradeIndicators = {
 local BUTTON_POP_DURATION = 0.32
 local HEART_GAIN_DURATION = 0.42
 local HEART_LOSS_DURATION = 0.5
-local HEART_OUTLINE_SIZE = 5
+local HEART_OUTLINE_SIZE = 6
 
 local function clamp01(value)
     if value < 0 then return 0 end
@@ -278,7 +278,7 @@ local function drawHeartOutline(x, y, size, thickness)
 
     love.graphics.setLineWidth(thickness)
     if love.graphics.setLineJoin then
-        love.graphics.setLineJoin("round")
+        love.graphics.setLineJoin("bevel")
     end
     if love.graphics.setLineStyle then
         love.graphics.setLineStyle("smooth")
