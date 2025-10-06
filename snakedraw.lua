@@ -13,6 +13,8 @@ local FRUIT_BULGE_SCALE = 1.25
 local snakeCanvas = nil
 local snakeOverlayCanvas = nil
 
+local applyOverlay
+
 local overlayShaderSources = {
   stripes = [[
     extern float time;
@@ -158,7 +160,7 @@ local function resolveColor(color, fallback)
   return {1, 1, 1, 1}
 end
 
-local function applyOverlay(canvas, config)
+applyOverlay = function(canvas, config)
   if not (canvas and config and config.type) then
     return false
   end
