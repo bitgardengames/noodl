@@ -345,6 +345,132 @@ local SKIN_DEFINITIONS = {
         unlock = { achievement = "metaMilestone7" },
         order = 110,
     },
+    {
+        id = "crystalline_mire",
+        name = "Crystalline Mire",
+        description = "Speleotherm scales harvested from luminous caverns. Unlock the Daily Fun Champion achievement to claim it.",
+        colors = {
+            body = {0.26, 0.58, 0.48, 1.0},
+            outline = {0.05, 0.16, 0.14, 1.0},
+            glow = {0.60, 0.92, 0.68, 0.86},
+        },
+        effects = {
+            overlay = {
+                type = "stripes",
+                frequency = 20,
+                speed = -0.6,
+                angle = 32,
+                intensity = 0.52,
+                opacity = 0.78,
+                colors = {
+                    primary = {0.24, 0.72, 0.58, 1.0},
+                    secondary = {0.62, 0.92, 0.54, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.6,
+                radiusMultiplier = 1.48,
+                color = {0.62, 0.92, 0.70, 1.0},
+                step = 2,
+            },
+        },
+        unlock = { achievement = "dailyFunChampion" },
+        order = 120,
+    },
+    {
+        id = "obsidian_ritual",
+        name = "Obsidian Ritual",
+        description = "Scales quenched in volcanic rites. Unlock the Apple Eternal achievement to claim it.",
+        colors = {
+            body = {0.18, 0.10, 0.16, 1.0},
+            outline = {0.02, 0.01, 0.04, 1.0},
+            glow = {0.94, 0.38, 0.32, 0.88},
+        },
+        effects = {
+            overlay = {
+                type = "holo",
+                speed = 0.9,
+                intensity = 0.66,
+                opacity = 0.82,
+                colors = {
+                    primary = {0.32, 0.14, 0.28, 1.0},
+                    secondary = {0.94, 0.38, 0.32, 1.0},
+                    tertiary = {0.98, 0.78, 0.38, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.7,
+                radiusMultiplier = 1.62,
+                color = {0.96, 0.46, 0.42, 1.0},
+                step = 3,
+            },
+        },
+        unlock = { achievement = "appleEternal" },
+        order = 130,
+    },
+    {
+        id = "midnight_mechanica",
+        name = "Midnight Mechanica",
+        description = "Clockwork plating salvaged from rogue automatons. Unlock the Rock Crusher achievement to claim it.",
+        colors = {
+            body = {0.18, 0.20, 0.28, 1.0},
+            outline = {0.05, 0.06, 0.10, 1.0},
+            glow = {0.80, 0.72, 0.46, 0.9},
+        },
+        effects = {
+            overlay = {
+                type = "stripes",
+                frequency = 26,
+                speed = 1.4,
+                angle = -18,
+                intensity = 0.58,
+                opacity = 0.84,
+                colors = {
+                    primary = {0.42, 0.46, 0.62, 1.0},
+                    secondary = {0.88, 0.78, 0.48, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.68,
+                radiusMultiplier = 1.52,
+                color = {0.90, 0.82, 0.58, 1.0},
+                step = 1,
+            },
+        },
+        unlock = { achievement = "rockCrusher" },
+        order = 140,
+    },
+    {
+        id = "tidal_resonance",
+        name = "Tidal Resonance",
+        description = "Harmonic fins tuned to echo clearing streaks. Unlock the Combo Inferno achievement to claim it.",
+        colors = {
+            body = {0.20, 0.44, 0.82, 1.0},
+            outline = {0.04, 0.12, 0.26, 1.0},
+            glow = {0.46, 0.88, 1.00, 0.88},
+        },
+        effects = {
+            overlay = {
+                type = "holo",
+                speed = 1.6,
+                intensity = 0.72,
+                opacity = 0.86,
+                colors = {
+                    primary = {0.20, 0.62, 0.94, 1.0},
+                    secondary = {0.40, 0.90, 1.00, 1.0},
+                    tertiary = {0.76, 0.52, 1.00, 1.0},
+                },
+            },
+            glow = {
+                intensity = 0.74,
+                radiusMultiplier = 1.68,
+                color = {0.52, 0.92, 1.00, 1.0},
+                step = 2,
+            },
+        },
+        unlock = { achievement = "comboInferno" },
+        order = 150,
+    },
 }
 
 local function buildDefaultState()
