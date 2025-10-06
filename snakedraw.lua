@@ -98,6 +98,49 @@ local function safeResolveShader(typeId)
   return shader
 end
 
+local function ensureSnakeCanvas(width, height)
+  if not snakeCanvas or snakeCanvas:getWidth() ~= width or snakeCanvas:getHeight() ~= height then
+    snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
+  end
+  return snakeCanvas
+end
+
+local function ensureSnakeOverlayCanvas(width, height)
+  if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= width or snakeOverlayCanvas:getHeight() ~= height then
+    snakeOverlayCanvas = love.graphics.newCanvas(width, height)
+  end
+  return snakeOverlayCanvas
+end
+
+local function presentSnakeCanvas(overlayEffect, width, height)
+  if not snakeCanvas then
+    return false
+  end
+
+  love.graphics.setColor(0, 0, 0, 0.25)
+  love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
+
+  local drewOverlay = false
+  if overlayEffect then
+    local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
+    love.graphics.setCanvas(overlayCanvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(snakeCanvas, 0, 0)
+    drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
+    love.graphics.setCanvas()
+  end
+
+  love.graphics.setColor(1, 1, 1, 1)
+  if drewOverlay then
+    love.graphics.draw(snakeOverlayCanvas, 0, 0)
+  else
+    love.graphics.draw(snakeCanvas, 0, 0)
+  end
+
+  return drewOverlay
+end
+
 local function resolveColor(color, fallback)
   if type(color) == "table" then
     return {
@@ -808,41 +851,13 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   if #coords >= 4 then
     -- render into a canvas once
     local ww, hh = love.graphics.getDimensions()
-    if not snakeCanvas or snakeCanvas:getWidth() ~= ww or snakeCanvas:getHeight() ~= hh then
-      snakeCanvas = love.graphics.newCanvas(ww, hh, {msaa = 8})
-    end
+    ensureSnakeCanvas(ww, hh)
 
     love.graphics.setCanvas(snakeCanvas)
     love.graphics.clear(0,0,0,0)
     renderSnakeToCanvas(trail, coords, head, half)
     love.graphics.setCanvas()
-
-    -- single-pass drop shadow
-    love.graphics.setColor(0,0,0,0.25)
-    love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
-
-    -- snake
-    local drewOverlay = false
-    if overlayEffect then
-      if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= ww or snakeOverlayCanvas:getHeight() ~= hh then
-        snakeOverlayCanvas = love.graphics.newCanvas(ww, hh)
-      end
-
-      love.graphics.setCanvas(snakeOverlayCanvas)
-      love.graphics.clear(0, 0, 0, 0)
-      love.graphics.setColor(1,1,1,1)
-      love.graphics.draw(snakeCanvas, 0, 0)
-      drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
-      love.graphics.setCanvas()
-    end
-
-    love.graphics.setColor(1,1,1,1)
-    if drewOverlay then
-      love.graphics.draw(snakeOverlayCanvas, 0, 0)
-    else
-      love.graphics.draw(snakeCanvas, 0, 0)
-    end
-
+    presentSnakeCanvas(overlayEffect, ww, hh)
     applySkinGlow(trail, head, half, glowEffect)
   elseif hx and hy then
     -- fallback: draw a simple disk when only the head is visible
@@ -857,11 +872,18 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     local bodyB = bodyColor[3] or 1
     local bodyA = bodyColor[4] or 1
 
+    local ww, hh = love.graphics.getDimensions()
+    ensureSnakeCanvas(ww, hh)
+
+    love.graphics.setCanvas(snakeCanvas)
+    love.graphics.clear(0, 0, 0, 0)
     love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
     love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
     love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
     love.graphics.circle("fill", hx, hy, half)
+    love.graphics.setCanvas()
 
+    presentSnakeCanvas(overlayEffect, ww, hh)
     applySkinGlow(trail, head, half, glowEffect)
   end
 
