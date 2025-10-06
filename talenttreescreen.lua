@@ -559,59 +559,66 @@ local function updateLayout()
     end
 end
 
+local function formatSignedLine(label, value, fmt, suffix)
+    local amount = value or 0
+    if math.abs(amount) <= 0.01 then
+        return nil
+    end
+
+    local format = fmt or "%+g"
+    local formatted = string.format(format, amount)
+    if suffix and suffix ~= "" then
+        formatted = formatted .. suffix
+    end
+
+    return string.format("%s %s", label, formatted)
+end
+
+local function formatMultiplierLine(label, multiplier, moreDescriptor, lessDescriptor)
+    multiplier = multiplier or 1
+    if math.abs(multiplier - 1) <= 0.01 then
+        return nil
+    end
+
+    local descriptor
+    if multiplier > 1 then
+        descriptor = moreDescriptor or "higher"
+    else
+        descriptor = lessDescriptor or "lower"
+    end
+
+    return string.format("%s x%.2f (%s)", label, multiplier, descriptor)
+end
+
+local function appendLine(lines, text)
+    if text and text ~= "" then
+        lines[#lines + 1] = text
+    end
+end
+
 local function getSummaryLines()
     local effects = TalentTree:calculateEffects(selections)
     local lines = {}
 
-    if math.abs(effects.maxHealthBonus or 0) > 0.01 then
-        lines[#lines + 1] = string.format("Max health %+g", effects.maxHealthBonus)
-    end
-
-    if math.abs(effects.startingCrashShields or 0) > 0.01 then
-        lines[#lines + 1] = string.format("Crash shields %+g", effects.startingCrashShields)
-    end
-
-    if math.abs((effects.fruitBonus or 0)) > 0.01 then
-        lines[#lines + 1] = string.format("Fruit bonus %+0.1f", effects.fruitBonus)
-    end
-
-    if math.abs((effects.comboMultiplier or 1) - 1) > 0.01 then
-        lines[#lines + 1] = string.format("Combo multiplier x%.2f", effects.comboMultiplier)
-    end
-
-    if math.abs((effects.snakeSpeedMultiplier or 1) - 1) > 0.01 then
-        lines[#lines + 1] = string.format("Snake speed x%.2f", effects.snakeSpeedMultiplier)
-    end
-
-    if math.abs((effects.extraGrowth or 0)) > 0.01 then
-        lines[#lines + 1] = string.format("Extra growth %+0.1f", effects.extraGrowth)
-    end
-
-    if math.abs((effects.rockSpawnMultiplier or 1) - 1) > 0.01 then
-        lines[#lines + 1] = string.format("Rock spawn x%.2f", effects.rockSpawnMultiplier)
-    end
-
-    if math.abs((effects.sawSpeedMultiplier or 1) - 1) > 0.01 then
-        lines[#lines + 1] = string.format("Saw speed x%.2f", effects.sawSpeedMultiplier)
-    end
-
-    if math.abs((effects.laserCooldownMultiplier or 1) - 1) > 0.01 then
-        lines[#lines + 1] = string.format("Laser cooldown x%.2f", effects.laserCooldownMultiplier)
-    end
-
-    if math.abs((effects.laserChargeMultiplier or 1) - 1) > 0.01 then
-        lines[#lines + 1] = string.format("Laser charge x%.2f", effects.laserChargeMultiplier)
-    end
-
-    if math.abs(effects.sawStallOnFruit or 0) > 0.01 then
-        lines[#lines + 1] = string.format("Saw stall on fruit %+0.1fs", effects.sawStallOnFruit)
-    end
+    appendLine(lines, formatSignedLine("Max health", effects.maxHealthBonus))
+    appendLine(lines, formatSignedLine("Crash shields", effects.startingCrashShields))
+    appendLine(lines, formatSignedLine("Fruit bonus", effects.fruitBonus, "%+0.1f"))
+    appendLine(lines, formatMultiplierLine("Combo multiplier", effects.comboMultiplier, "stronger", "weaker"))
+    appendLine(lines, formatMultiplierLine("Snake speed", effects.snakeSpeedMultiplier, "faster", "slower"))
+    appendLine(lines, formatSignedLine("Extra growth", effects.extraGrowth, "%+0.1f"))
+    appendLine(lines, formatMultiplierLine("Rock spawn", effects.rockSpawnMultiplier, "more frequent", "less frequent"))
+    appendLine(lines, formatMultiplierLine("Saw speed", effects.sawSpeedMultiplier, "faster", "slower"))
+    appendLine(lines, formatMultiplierLine("Laser cooldown", effects.laserCooldownMultiplier, "longer cycle", "faster cycle"))
+    appendLine(lines, formatMultiplierLine("Laser charge", effects.laserChargeMultiplier, "longer telegraph", "quicker telegraph"))
+    appendLine(lines, formatSignedLine("Saw stall on fruit", effects.sawStallOnFruit, "%+0.1f", "s"))
 
     if math.abs(effects.extraShopChoices or 0) > 0.01 then
         local raw = effects.extraShopChoices
         local rounded = raw >= 0 and math.floor(raw + 0.0001) or math.ceil(raw - 0.0001)
         if rounded ~= 0 then
-            lines[#lines + 1] = string.format("Shop choices %+d", rounded)
+            appendLine(lines, string.format("Shop choices %+d", rounded))
+        else
+            appendLine(lines, string.format("Shop choices %+0.1f", raw))
         end
     end
 

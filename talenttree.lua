@@ -153,6 +153,50 @@ local tiers = {
             },
         },
     },
+    {
+        id = "safeguards",
+        name = "Tier V — Safeguard Doctrine",
+        description = "Tune the run's fail-safes and contingencies for the long haul.",
+        options = {
+            {
+                id = "reinforced_scales",
+                name = "Reinforced Scales",
+                description = "Layer composite plating for extra protection, accepting a slight loss in glide.",
+                bonuses = { "Max health +1", "+1 crash shield" },
+                penalties = { "Snake speed x0.95" },
+                effects = {
+                    maxHealthBonus = 1,
+                    startingCrashShields = 1,
+                    snakeSpeedMultiplier = 0.95,
+                },
+                default = true,
+            },
+            {
+                id = "phase_inductor",
+                name = "Phase Inductor",
+                description = "Spool a phase core for aggressive maneuvers and razor-thin laser windows.",
+                bonuses = { "Snake speed x1.08", "Laser charge x0.85" },
+                penalties = { "Laser cooldown x0.90" },
+                effects = {
+                    snakeSpeedMultiplier = 1.08,
+                    laserChargeMultiplier = 0.85,
+                    laserCooldownMultiplier = 0.90,
+                },
+            },
+            {
+                id = "resupply_manifest",
+                name = "Resupply Manifest",
+                description = "Lean on logistics for richer hauls while trimming the market spread.",
+                bonuses = { "Fruit bonus +0.4", "+1 extra growth" },
+                penalties = { "Shop choices -1" },
+                effects = {
+                    fruitBonus = 0.4,
+                    extraGrowth = 1,
+                    extraShopChoices = -1,
+                },
+            },
+        },
+    },
 }
 
 local function copyTable(source)
