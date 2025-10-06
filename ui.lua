@@ -1790,10 +1790,16 @@ function UI:drawHealth()
 
     local panelPaddingX = 28
     local panelPaddingY = 12
-    local headerHeight = 16
+    local headerHeight = 0
     local bodyHeight = size
     local panelX = 20
     local panelY = 20
+
+    local fruitBounds = self.fruitPanelBounds
+    if fruitBounds then
+        panelX = fruitBounds.x
+        panelY = fruitBounds.y + fruitBounds.h + 16
+    end
     local panelW = (maxHealth > 0 and (maxHealth - 1) * spacing + size or size) + panelPaddingX * 2
     local panelH = headerHeight + bodyHeight + panelPaddingY * 2
 
@@ -1813,11 +1819,6 @@ function UI:drawHealth()
 
     love.graphics.setColor(1, 1, 1, 0.04)
     love.graphics.rectangle("fill", panelX, panelY, panelW, math.max(12, panelH * 0.35), 16, 16)
-
-    UI.setFont("caption")
-    local labelColor = Theme.mutedTextColor or Theme.textColor
-    love.graphics.setColor(labelColor[1], labelColor[2], labelColor[3], (labelColor[4] or 1) * 0.85)
-    love.graphics.printf("HEALTH", panelX + panelPaddingX, panelY + 6, panelW - panelPaddingX * 2, "left")
 
     local originX = panelX + panelPaddingX
     local originY = panelY + panelPaddingY + headerHeight
@@ -1927,11 +1928,10 @@ function UI:drawFruitSockets()
         return
     end
 
-    -- Position the fruit sockets so they live directly beneath the health panel while
-    -- keeping both elements readable even when health is low.
-    local headerHeight = 22
+    -- Position the fruit sockets near the top-left corner.
+    local headerHeight = 0
     local paddingOffsetY = 8
-    local baseX, baseY = 60, 104
+    local baseX, baseY = 20, 20
     local perRow = 10
     local spacing = self.socketSize + 6
     local rows = math.max(1, math.ceil(self.fruitRequired / perRow))
@@ -1943,21 +1943,11 @@ function UI:drawFruitSockets()
     local paddingX = self.socketSize * 0.75
     local paddingY = self.socketSize * 0.75 + paddingOffsetY
 
-    local panelX = baseX - paddingX
-    local panelY = baseY - paddingY
-
-    local healthBounds = self.healthPanelBounds
-    if healthBounds then
-        panelX = healthBounds.x
-        panelY = healthBounds.y + healthBounds.h + 16
-    end
+    local panelX = 20
+    local panelY = 20
 
     local panelW = gridWidth + paddingX * 2
     local panelH = headerHeight + gridHeight + paddingY * 2
-
-    if healthBounds and panelW < healthBounds.w then
-        panelW = healthBounds.w
-    end
 
     local innerWidth = panelW - paddingX * 2
     local innerHeight = panelH - paddingY * 2 - headerHeight
@@ -2000,14 +1990,11 @@ function UI:drawFruitSockets()
         love.graphics.setLineWidth(3)
     end
 
-    love.graphics.setColor(1, 1, 1, 0.05)
-    local headerHighlightHeight = headerHeight + math.max(6, paddingOffsetY * 0.75)
-    love.graphics.rectangle("fill", panelX, panelY, panelW, headerHighlightHeight, 12, 12)
-
-    UI.setFont("caption")
-    local headerColor = Theme.mutedTextColor or Theme.textColor
-    love.graphics.setColor(headerColor[1], headerColor[2], headerColor[3], (headerColor[4] or 1) * 0.8)
-    love.graphics.printf("FRUITS", panelX + paddingX, panelY + 6, panelW - paddingX * 2, "left")
+    if headerHeight > 0 then
+        love.graphics.setColor(1, 1, 1, 0.05)
+        local headerHighlightHeight = headerHeight + math.max(6, paddingOffsetY * 0.75)
+        love.graphics.rectangle("fill", panelX, panelY, panelW, headerHighlightHeight, 12, 12)
+    end
 
     local highlight = Theme.highlightColor or {1, 1, 1, 0.05}
 
@@ -2191,11 +2178,11 @@ function UI:drawFruitSockets()
 end
 
 function UI:draw()
+    -- draw socket grid
+    self:drawFruitSockets()
     self:drawHealth()
     self:drawUpgradeIndicators()
     drawComboIndicator(self)
-    -- draw socket grid
-    self:drawFruitSockets()
 
     self:drawFloorModifiers()
 end
