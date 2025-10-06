@@ -28,6 +28,8 @@ GameModes.available = {
         unlockCondition = nil,
         unlockDescription = nil,
         maxHealth = 3,
+        usesHealthSystem = true,
+        singleTouchDeath = false,
 
         load = function(game)
             game.timer = nil
@@ -48,6 +50,8 @@ GameModes.available = {
         },
         unlockDescriptionKey = "gamemodes.hardcore.unlock_description",
         maxHealth = 1,
+        usesHealthSystem = false,
+        singleTouchDeath = true,
 
         load = function(game)
             if game.Effects and game.Effects.shake then
