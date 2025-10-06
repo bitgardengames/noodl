@@ -133,6 +133,7 @@ end
 local heartBasePoints
 local heartTriangles
 local heartMesh
+local heartOutlinePoints = {}
 
 local function getHeartBasePoints()
     if heartBasePoints then
@@ -242,6 +243,45 @@ local function drawHeartGeometry(x, y, size)
     love.graphics.pop()
 end
 
+local function drawHeartOutline(x, y, size, thickness)
+    if thickness <= 0 then
+        return
+    end
+
+    local basePoints = getHeartBasePoints()
+    local coords = heartOutlinePoints
+    for i = 1, #coords do
+        coords[i] = nil
+    end
+
+    for i = 1, #basePoints, 2 do
+        coords[#coords + 1] = x + basePoints[i] * size
+        coords[#coords + 1] = y + basePoints[i + 1] * size
+    end
+
+    local previousWidth = love.graphics.getLineWidth()
+    local previousJoin = love.graphics.getLineJoin and love.graphics.getLineJoin()
+    local previousStyle = love.graphics.getLineStyle and love.graphics.getLineStyle()
+
+    love.graphics.setLineWidth(thickness)
+    if love.graphics.setLineJoin then
+        love.graphics.setLineJoin("round")
+    end
+    if love.graphics.setLineStyle then
+        love.graphics.setLineStyle("smooth")
+    end
+
+    love.graphics.polygon("line", coords)
+
+    love.graphics.setLineWidth(previousWidth)
+    if love.graphics.setLineJoin and previousJoin then
+        love.graphics.setLineJoin(previousJoin)
+    end
+    if love.graphics.setLineStyle and previousStyle then
+        love.graphics.setLineStyle(previousStyle)
+    end
+end
+
 local function drawHeartShape(x, y, size)
     if size <= 0 then
         return
@@ -249,11 +289,8 @@ local function drawHeartShape(x, y, size)
 
     local r, g, b, a = love.graphics.getColor()
 
-    local outlineSize = math.max(0, size + HEART_OUTLINE_SIZE)
-    if outlineSize > size then
-        love.graphics.setColor(0, 0, 0, a)
-        drawHeartGeometry(x, y, outlineSize)
-    end
+    love.graphics.setColor(0, 0, 0, a)
+    drawHeartOutline(x, y, size, HEART_OUTLINE_SIZE)
 
     love.graphics.setColor(r, g, b, a)
     drawHeartGeometry(x, y, size)
