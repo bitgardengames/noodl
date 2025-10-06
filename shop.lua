@@ -138,7 +138,7 @@ function Shop:refreshCards(options)
     local initialDelay = options.initialDelay or 0
 
     self.restocking = nil
-    local baseChoices = 2
+    local baseChoices = 3
     local upgradeBonus = 0
     if Upgrades.getEffect then
         upgradeBonus = math.max(0, math.floor(Upgrades:getEffect("shopSlots") or 0))
