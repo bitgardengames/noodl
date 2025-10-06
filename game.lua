@@ -863,9 +863,13 @@ local function drawPlayfieldLayers(self, stateOverride)
     Lasers:draw()
     Darts:draw()
     Saws:draw()
-    Arena:drawExit()
 
-    if renderState == "descending" then
+    local isDescending = (renderState == "descending")
+    if not isDescending then
+        Arena:drawExit()
+    end
+
+    if isDescending then
         self:drawDescending()
     elseif renderState == "dying" then
         Death:draw()
@@ -1307,6 +1311,8 @@ function Game:drawStateTransition(direction, progress, eased, alpha)
 end
 
 function Game:drawDescending()
+    Arena:drawExit()
+
     if not self.hole then
         Snake:draw()
         return
