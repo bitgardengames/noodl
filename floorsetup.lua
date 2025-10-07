@@ -14,6 +14,7 @@ local FloatingText = require("floatingtext")
 local FloorTraits = require("floortraits")
 local FloorPlan = require("floorplan")
 local Upgrades = require("upgrades")
+local FloorLayouts = require("floorlayouts")
 
 local FloorSetup = {}
 
@@ -617,6 +618,7 @@ function FloorSetup.prepare(floorNum, floorData)
     end
 
     local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
+    spawnPlan = FloorLayouts.apply(floorData and floorData.layout, spawnPlan)
 
     return {
         traitContext = traitContext,
@@ -629,7 +631,26 @@ function FloorSetup.finalizeContext(traitContext, spawnPlan)
     finalizeTraitContext(traitContext, spawnPlan)
 end
 
+local function spawnLayoutRocks(staticRocks)
+    if not (staticRocks and #staticRocks > 0) then
+        return
+    end
+
+    for _, cell in ipairs(staticRocks) do
+        local col = math.floor((cell[1] or 0) + 0.5)
+        local row = math.floor((cell[2] or 0) + 0.5)
+        if col >= 1 and col <= (Arena.cols or col) and row >= 1 and row <= (Arena.rows or row) then
+            local fx, fy = Arena:getCenterOfTile(col, row)
+            if fx and fy then
+                Rocks:spawn(fx, fy, "small")
+                SnakeUtils.setOccupied(col, row, true)
+            end
+        end
+    end
+end
+
 function FloorSetup.spawnHazards(spawnPlan)
+    spawnLayoutRocks(spawnPlan.staticRocks)
     spawnSaws(spawnPlan.numSaws or 0, spawnPlan.halfTiles, spawnPlan.bladeRadius, spawnPlan.spawnSafeCells)
     spawnLasers(spawnPlan.lasers or {})
     spawnDarts(spawnPlan.darts or {})

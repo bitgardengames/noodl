@@ -1,418 +1,391 @@
--- floors.lua
+local paletteMoods = {
+    calm = {
+        bg = {0.14, 0.19, 0.17, 1},
+        arena = {0.28, 0.45, 0.34, 1},
+        border = {0.36, 0.52, 0.38, 1},
+        snake = {0.21, 0.82, 0.62, 1},
+        rock = {0.56, 0.42, 0.3, 1},
+        highlight = {0.74, 0.88, 0.68, 1},
+    },
+    curious = {
+        bg = {0.18, 0.17, 0.14, 1},
+        arena = {0.36, 0.32, 0.22, 1},
+        border = {0.52, 0.44, 0.28, 1},
+        snake = {0.94, 0.65, 0.32, 1},
+        rock = {0.62, 0.48, 0.28, 1},
+        highlight = {0.98, 0.78, 0.46, 1},
+    },
+    tense = {
+        bg = {0.09, 0.11, 0.18, 1},
+        arena = {0.18, 0.22, 0.3, 1},
+        border = {0.32, 0.42, 0.56, 1},
+        snake = {0.62, 0.78, 0.92, 1},
+        rock = {0.42, 0.48, 0.62, 1},
+        highlight = {0.78, 0.84, 0.98, 1},
+    },
+    dire = {
+        bg = {0.11, 0.08, 0.12, 1},
+        arena = {0.2, 0.12, 0.16, 1},
+        border = {0.45, 0.2, 0.24, 1},
+        snake = {0.94, 0.42, 0.36, 1},
+        rock = {0.52, 0.32, 0.32, 1},
+        highlight = {0.98, 0.62, 0.42, 1},
+    },
+    triumphant = {
+        bg = {0.16, 0.2, 0.24, 1},
+        arena = {0.58, 0.68, 0.78, 1},
+        border = {0.82, 0.74, 0.52, 1},
+        snake = {0.86, 0.78, 0.52, 1},
+        rock = {0.52, 0.52, 0.64, 1},
+        highlight = {0.94, 0.86, 0.64, 1},
+    },
+}
 
---[[
-        Verdant Garden → bright, life-filled welcome
-        Echoing Caverns → cooler stone, lingering echoes
-        Mushroom Grotto → whimsical glow and spores
-        Flooded Catacombs → damp stone and muffled waves
-        Ancient Ruins → mysterious decay and hidden machines
-        Crystal Hollows → eerie, refracted calm
-        Bone Pits → brittle remains underfoot
-        The Abyss → oppressive darkness and pressure
-        Inferno Gates → searing heat and rising danger
-        Obsidian Keep → molten veins beneath black stone
-        Ashen Frontier → scorched wastes before the end
-        Spirit Crucible → astral winds and wailing phantoms
-        The Underworld → final gauntlet of ash and fire
-        Celestial Causeway → shimmer of hope and gilded winds
-        Sky Spire → false dawn beyond the pit
-        Starfall Bastion → starlit bulwark bracing the astral gale
-        Nebula Crown → drifting halos frame the precipice of nothing
-        Eventide Observatory → mirrored constellations bargain for devotion
-        Void Throne → silence condenses into obsidian dominion
-        Singularity Gate → all light bends toward the final horizon
-]]
+local function mixColor(a, b, t)
+    if not a and not b then
+        return {1, 1, 1, 1}
+    end
+
+    a = a or b
+    b = b or a
+    t = math.max(0, math.min(1, t or 0))
+
+    local ar, ag, ab, aa = a[1] or 0, a[2] or 0, a[3] or 0, a[4] or 1
+    local br, bg, bb, ba = b[1] or 0, b[2] or 0, b[3] or 0, b[4] or 1
+
+    return {
+        ar + (br - ar) * t,
+        ag + (bg - ag) * t,
+        ab + (bb - ab) * t,
+        aa + (ba - aa) * t,
+    }
+end
+
+local function makePalette(spec)
+    spec = spec or {}
+    local base = paletteMoods[spec.base or "calm"] or paletteMoods.calm
+    local accent = paletteMoods[spec.accent or spec.base or "calm"] or base
+    local highlight = paletteMoods[spec.highlight or spec.accent or spec.base or "calm"] or accent
+
+    return {
+        bgColor = mixColor(base.bg, accent.bg, spec.baseBlend or 0.3),
+        arenaBG = mixColor(base.arena, accent.arena, spec.arenaBlend or 0.55),
+        arenaBorder = mixColor(base.border, highlight.border or highlight.arena, spec.borderBlend or 0.45),
+        snake = spec.snake or highlight.snake or base.snake,
+        rock = mixColor(base.rock, accent.rock, spec.rockBlend or 0.5),
+        sawColor = spec.sawColor or {0.98, 0.4, 0.24, 1},
+    }
+end
 
 local Floors = {
-        [1] = {
-                name = "Verdant Garden",
-                flavor = "Noodl snacks on backyard fruit, meaning to head home soon. Curiosity pulls them down the hole.",
-                palette = {
-                        bgColor     = {0.24, 0.32, 0.24, 1}, -- brighter forest green backdrop
-                        arenaBG     = {0.46, 0.66, 0.39, 1}, -- still bright, grassy playfield
-                        arenaBorder = {0.52, 0.38, 0.24, 1},  -- warm soil rim to break up the greens
-                        snake       = {0.12, 0.9, 0.48, 1},  -- vivid spring green snake
-                        rock        = {0.74, 0.59, 0.38, 1}, -- sun-baked sandstone, pops from grass
-                },
-                backgroundEffect = {
-                        type = "softCanopy",
-                        backdropIntensity = 0.55,
-                        arenaIntensity = 0.32,
-                },
-                backgroundTheme = "botanical",
-                traits = {"sunlitSanctuary"},
+    [1] = {
+        name = "Grove Threshold",
+        flavor = "Warm moss cushions each step as the elder keeps the path bright.",
+        palette = makePalette({ base = "calm", accent = "curious" }),
+        backgroundEffect = { type = "softCanopy", backdropIntensity = 0.6, arenaIntensity = 0.38 },
+        backgroundTheme = "botanical",
+        traits = { "sunlitSanctuary" },
+        layout = { type = "open", safeRadius = 5 },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.elder", key = "game.story.floor1.line1", duration = 4.2 },
+            },
         },
+    },
     [2] = {
-        name = "Echoing Caverns",
-        flavor = "Echoes promise sweeter bites deeper in. Noodl slithers on, belly rumbling.",
-        palette = {
-            bgColor    = {0.07, 0.09, 0.14, 1},   -- dim midnight backdrop
-            arenaBG    = {0.12, 0.16, 0.24, 1},   -- misty navy floor
-            arenaBorder= {0.47, 0.33, 0.58, 1},   -- humming amethyst rim
-            snake      = {0.78, 0.86, 0.98, 1},   -- moonlit frost scales
-            rock       = {0.36, 0.52, 0.62, 1},   -- cool slate with silver luster
+        name = "Amber Switchback",
+        flavor = "Gentle roots guide a winding trail still touched by sunlight.",
+        palette = makePalette({ base = "calm", accent = "curious", arenaBlend = 0.4 }),
+        backgroundEffect = { type = "softCanopy", backdropIntensity = 0.58, arenaIntensity = 0.36 },
+        backgroundTheme = "botanical",
+        layout = { type = "open", safeRadius = 4 },
+        traits = { "sunlitSanctuary", "glowingSpores" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.elder", key = "game.story.floor2.line1", duration = 4.2 },
+            },
         },
-        backgroundEffect = {
-            type = "softCavern",
-            backdropIntensity = 0.52,
-            arenaIntensity = 0.3,
-        },
-        backgroundTheme = "cavern",
-        traits = {"echoingStillness"},
     },
     [3] = {
-        name = "Mushroom Grotto",
-        flavor = "Glowshrooms taste like candy, so Noodl loads up. Home already feels far away.",
-        palette = {
-            bgColor    = {0.12, 0.14, 0.2, 1},  -- teal haze
-            arenaBG    = {0.18, 0.22, 0.26, 1},  -- cave stone
-            arenaBorder= {0.45, 0.3, 0.55, 1},  -- glowing purple
-            snake      = {0.45, 0.95, 0.75, 1}, -- neon cyan-green
-            rock       = {0.48, 0.32, 0.55, 1}, -- luminous violet slate
-            sawColor   = {0.85, 0.6, 0.9, 1},   -- bright fungal pink-pop
+        name = "Twilight Descent",
+        flavor = "Soft echoes replace birdsong as the grove thins behind you.",
+        palette = makePalette({ base = "curious", accent = "tense", arenaBlend = 0.4 }),
+        backgroundEffect = { type = "softCavern", backdropIntensity = 0.5, arenaIntensity = 0.32 },
+        backgroundTheme = "cavern",
+        layout = { type = "open", safeRadius = 3 },
+        traits = { "echoingStillness" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.elder", key = "game.story.floor3.line1", duration = 4.2 },
+            },
         },
-        backgroundEffect = {
-            type = "mushroomPulse",
-            backdropIntensity = 0.95,
-            arenaIntensity = 0.62,
-        },
-        backgroundTheme = "botanical",
-        backgroundVariant = "fungal",
-        traits = {"glowingSpores"},
     },
     [4] = {
-        name = "Flooded Catacombs",
-        flavor = "Brackish fruit floats past, irresistible. Noodl swims after, forgetting the exit.",
-        palette = {
-            bgColor    = {0.03, 0.07, 0.11, 1},   -- abyssal tide
-            arenaBG    = {0.06, 0.13, 0.18, 1},   -- drowned slate floor
-            arenaBorder= {0.16, 0.39, 0.44, 1},   -- oxidized copper rim
-            snake      = {0.82, 0.94, 0.58, 1},   -- bioluminescent kelp
-            rock       = {0.24, 0.47, 0.55, 1},   -- wave-worn teal shale
-            sawColor   = {0.91, 0.77, 0.46, 1},   -- tarnished lantern brass
+        name = "Echo Ducts",
+        flavor = "Stone corridors tighten, repeating every slip in rising tension.",
+        palette = makePalette({ base = "tense", accent = "curious" }),
+        backgroundEffect = { type = "softCavern", backdropIntensity = 0.52, arenaIntensity = 0.34 },
+        backgroundTheme = "cavern",
+        layout = { type = "corridor", width = 11 },
+        traits = { "echoingStillness", "restlessEarth" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.elder", key = "game.story.floor4.line1", duration = 4.2 },
+            },
         },
-        backgroundEffect = {
-            type = "softCurrent",
-            backdropIntensity = 0.6,
-            arenaIntensity = 0.36,
-        },
-        backgroundTheme = "oceanic",
-        traits = {"waterloggedCatacombs"},
     },
     [5] = {
-        name = "Ancient Ruins",
-        flavor = "Dusty altars drip nectar. Noodl licks them clean and creeps farther in.",
-        palette = {
-            bgColor    = {0.14, 0.12, 0.08, 1}, -- shadowed nave
-            arenaBG    = {0.21, 0.18, 0.12, 1}, -- sunken sandstone
-            arenaBorder= {0.46, 0.40, 0.22, 1},  -- lichen-lit carvings
-            snake      = {0.98, 0.88, 0.48, 1}, -- gleaming relic gold
-            rock       = {0.52, 0.38, 0.20, 1},   -- baked umber blocks
-            sawColor   = {0.78, 0.74, 0.62, 1},   -- polished bronze gears
+        name = "Floodcarrier Span",
+        flavor = "Mist curls around worn bridges where currents tug at focus.",
+        palette = makePalette({ base = "tense", accent = "curious", arenaBlend = 0.45 }),
+        backgroundEffect = { type = "softCurrent", backdropIntensity = 0.62, arenaIntensity = 0.38 },
+        backgroundTheme = "oceanic",
+        layout = { type = "corridor", width = 9 },
+        traits = { "waterloggedCatacombs" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.noodl", key = "game.story.floor5.line1", duration = 4.2 },
+            },
         },
-        backgroundEffect = {
-            type = "ruinMotes",
-            backdropIntensity = 0.58,
-            arenaIntensity = 0.32,
-        },
-        backgroundTheme = "machine",
-        traits = {"ancientMachinery", "echoingStillness"},
     },
     [6] = {
-        name = "Crystal Hollows",
-        flavor = "Cold crystals trap syrupy dew. Hunger beats the chill, and Noodl keeps chasing it.",
-        palette = {
-            bgColor    = {0.11, 0.13, 0.17, 1}, -- sapphire veil
-            arenaBG    = {0.15, 0.17, 0.22, 1}, -- cold blue
-            arenaBorder= {0.4, 0.65, 0.9, 1},   -- refracted glow
-            snake      = {0.75, 0.9, 1.0, 1},   -- icy shine
-            rock       = {0.45, 0.5, 0.68, 1},   -- frosted indigo crystal
-            sawColor   = {0.65, 0.85, 1.0, 1},  -- crystalline edges
+        name = "Crystal Verge",
+        flavor = "Prisms catch stray light, refracting every movement into alarms.",
+        palette = makePalette({ base = "tense", accent = "triumphant", arenaBlend = 0.35 }),
+        backgroundEffect = { type = "auroraVeil", backdropIntensity = 0.58, arenaIntensity = 0.36 },
+        backgroundTheme = "laboratory",
+        layout = { type = "split", padding = 6 },
+        traits = { "crystallineResonance" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.whisper", key = "game.story.floor6.line1", duration = 4.2 },
+            },
         },
-        backgroundEffect = {
-            type = "auroraVeil",
-            backdropIntensity = 0.6,
-            arenaIntensity = 0.4,
-        },
-        backgroundTheme = "arctic",
-        traits = {"crystallineResonance", "glowingSpores"},
     },
     [7] = {
-        name = "Bone Pits",
-        flavor = "Old bones guard shriveled berries. Noodl crunches through, ignoring the warning creaks.",
-        palette = {
-            bgColor    = {0.08, 0.07, 0.09, 1},   -- midnight ossuary
-            arenaBG    = {0.18, 0.14, 0.11, 1},  -- soot-stained earth
-            arenaBorder= {0.82, 0.68, 0.46, 1},   -- polished bone rim
-            snake      = {0.95, 0.9, 0.78, 1},    -- sun-bleached ivory
-            rock       = {0.62, 0.52, 0.46, 1},   -- sun-bleached splinters that pop against the pit
-            sawColor   = {0.62, 0.82, 0.78, 1},   -- necrotic teal glint
+        name = "Crossroads Market",
+        flavor = "Lanterns swing above a plaza where allies and risks barter.",
+        palette = makePalette({ base = "curious", accent = "tense" }),
+        backgroundEffect = { type = "softCanopy", backdropIntensity = 0.5, arenaIntensity = 0.34 },
+        backgroundTheme = "urban",
+        layout = { type = "split", padding = 5 },
+        traits = { "lushGrowth" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.trader", key = "game.story.floor7.line1", duration = 4.2 },
+            },
+            choice = {
+                id = "crossroads_path",
+                title = "game.story.choices.crossroads.title",
+                prompt = "game.story.choices.crossroads.prompt",
+                options = {
+                    {
+                        id = "ally_support",
+                        nameKey = "game.story.choices.crossroads.ally_name",
+                        descriptionKey = "game.story.choices.crossroads.ally_desc",
+                        effects = {
+                            fruitGoalDelta = -2,
+                            sawStallAdd = 0.3,
+                            extraTrait = {
+                                nameKey = "game.story.choices.crossroads.ally_trait_name",
+                                descKey = "game.story.choices.crossroads.ally_trait_desc",
+                            },
+                        },
+                    },
+                    {
+                        id = "hazard_toll",
+                        nameKey = "game.story.choices.crossroads.hazard_name",
+                        descriptionKey = "game.story.choices.crossroads.hazard_desc",
+                        effects = {
+                            sawsDelta = 1,
+                            rockSpawnDelta = 0.08,
+                            extraTrait = {
+                                nameKey = "game.story.choices.crossroads.hazard_trait_name",
+                                descKey = "game.story.choices.crossroads.hazard_trait_desc",
+                            },
+                        },
+                    },
+                },
+            },
         },
-        backgroundEffect = {
-            type = "echoMist",
-            backdropIntensity = 0.5,
-            arenaIntensity = 0.28,
-        },
-        backgroundTheme = "cavern",
-        backgroundVariant = "bone",
-        traits = {"boneHarvest"},
     },
     [8] = {
-        name = "The Abyss",
-        flavor = "A dark draft smells of ripe treasure. Noodl dives, certain one more snack lies below.",
-        palette = {
-            bgColor    = {0.08, 0.08, 0.12, 1}, -- depth-black
-            arenaBG    = {0.12, 0.12, 0.16, 1}, -- softened void
-            arenaBorder= {0.22, 0.12, 0.35, 1}, -- violet rim
-            snake      = {0.7, 0.35, 0.85, 1},  -- glowing violet
-            rock       = {0.38, 0.45, 0.65, 1},  -- luminous abyssal shale distinct from the void floor
-            sawColor   = {0.55, 0.25, 0.6, 1},  -- eerie violet shimmer
+        name = "Mistbound Gallery",
+        flavor = "Wind sculptures sway, offering guidance or demand.",
+        palette = makePalette({ base = "tense", accent = "curious" }),
+        backgroundEffect = { type = "softCurrent", backdropIntensity = 0.6, arenaIntensity = 0.36 },
+        backgroundTheme = "urban",
+        layout = { type = "corridor", width = 10 },
+        traits = { "glowingSpores" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.noodl", key = "game.story.floor8.line1", duration = 4.0 },
+                { speakerKey = "game.story.speakers.mira", key = "game.story.floor8.ally", duration = 3.6, when = { choiceEquals = { crossroads_path = "ally_support" } } },
+                { speakerKey = "game.story.speakers.broker", key = "game.story.floor8.hazard", duration = 3.6, when = { choiceEquals = { crossroads_path = "hazard_toll" } } },
+            },
+            choice = {
+                id = "glimmer_pact",
+                title = "game.story.choices.glimmer.title",
+                prompt = "game.story.choices.glimmer.prompt",
+                options = {
+                    {
+                        id = "bloomward",
+                        nameKey = "game.story.choices.glimmer.bloom_name",
+                        descriptionKey = "game.story.choices.glimmer.bloom_desc",
+                        effects = {
+                            fruitGoalDelta = -1,
+                            rockSpawnMultiplier = 0.82,
+                            extraTrait = {
+                                nameKey = "game.story.choices.glimmer.bloom_trait_name",
+                                descKey = "game.story.choices.glimmer.bloom_trait_desc",
+                            },
+                        },
+                    },
+                    {
+                        id = "shadow_toll",
+                        nameKey = "game.story.choices.glimmer.shadow_name",
+                        descriptionKey = "game.story.choices.glimmer.shadow_desc",
+                        effects = {
+                            sawsDelta = 1,
+                            sawSpeedMultiplier = 1.12,
+                            extraTrait = {
+                                nameKey = "game.story.choices.glimmer.shadow_trait_name",
+                                descKey = "game.story.choices.glimmer.shadow_trait_desc",
+                            },
+                        },
+                    },
+                },
+            },
         },
-        backgroundEffect = {
-            type = "voidPulse",
-            backdropIntensity = 0.68,
-            arenaIntensity = 0.4,
-        },
-        backgroundTheme = "oceanic",
-        backgroundVariant = "abyss",
-        traits = {"echoingStillness", "restlessEarth"},
     },
     [9] = {
-        name = "Inferno Gates",
-        flavor = "Heat sears the fruit skins, caramel sweet. Noodl risks a scorch for another bite.",
-        palette = {
-            bgColor    = {0.14, 0.05, 0.06, 1}, -- smoke-stained dusk
-            arenaBG    = {0.18, 0.06, 0.08, 1}, -- smoldered ember glow
-            arenaBorder= {0.78, 0.28, 0.16, 1}, -- molten rim
-            snake      = {0.98, 0.6, 0.18, 1},  -- searing amber
-            rock       = {0.62, 0.36, 0.28, 1},  -- ember-etched boulders lit by the fires
-            sawColor   = {1.0, 0.32, 0.22, 1},  -- incandescent flare
+        name = "Veil of Mirrors",
+        flavor = "Reflections split the arena, daring you to choose a shine or storm.",
+        palette = makePalette({ base = "tense", accent = "dire", arenaBlend = 0.4 }),
+        backgroundEffect = { type = "auroraVeil", backdropIntensity = 0.64, arenaIntensity = 0.38 },
+        backgroundTheme = "laboratory",
+        layout = { type = "split", padding = 6 },
+        traits = { "boneHarvest" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.noodl", key = "game.story.floor9.line1", duration = 3.8 },
+                { speakerKey = "game.story.speakers.tinkerer", key = "game.story.floor9.bloom", duration = 3.4, when = { choiceEquals = { glimmer_pact = "bloomward" } } },
+                { speakerKey = "game.story.speakers.tinkerer", key = "game.story.floor9.shadow", duration = 3.4, when = { choiceEquals = { glimmer_pact = "shadow_toll" } } },
+            },
+            choice = {
+                id = "astral_alignment",
+                title = "game.story.choices.astral.title",
+                prompt = "game.story.choices.astral.prompt",
+                options = {
+                    {
+                        id = "resonant_path",
+                        nameKey = "game.story.choices.astral.resonant_name",
+                        descriptionKey = "game.story.choices.astral.resonant_desc",
+                        effects = {
+                            sawsDelta = -1,
+                            sawStallAdd = 0.25,
+                            extraTrait = {
+                                nameKey = "game.story.choices.astral.resonant_trait_name",
+                                descKey = "game.story.choices.astral.resonant_trait_desc",
+                            },
+                        },
+                    },
+                    {
+                        id = "tempest_path",
+                        nameKey = "game.story.choices.astral.tempest_name",
+                        descriptionKey = "game.story.choices.astral.tempest_desc",
+                        effects = {
+                            sawSpeedMultiplier = 1.18,
+                            rocksDelta = 2,
+                            extraTrait = {
+                                nameKey = "game.story.choices.astral.tempest_trait_name",
+                                descKey = "game.story.choices.astral.tempest_trait_desc",
+                            },
+                        },
+                    },
+                },
+            },
         },
-        backgroundEffect = {
-            type = "emberDrift",
-            backdropIntensity = 0.65,
-            arenaIntensity = 0.4,
-        },
-        backgroundTheme = "desert",
-        backgroundVariant = "hell",
-        traits = {"infernalPressure"},
     },
     [10] = {
-        name = "Obsidian Keep",
-        flavor = "Molten pits spit sugared sparks. Noodl edges past, eyes only on the feast.",
-        palette = {
-            bgColor    = {0.08, 0.06, 0.08, 1},  -- abyssal black
-            arenaBG    = {0.14, 0.11, 0.14, 1},  -- polished obsidian
-            arenaBorder= {0.45, 0.18, 0.08, 1},  -- smoldering cracks
-            snake      = {0.95, 0.45, 0.25, 1},  -- molten ember
-            rock       = {0.4, 0.24, 0.32, 1},  -- molten plum glass
-            sawColor   = {1.0, 0.35, 0.18, 1},   -- forgefire
-        },
-        backgroundEffect = {
-            type = "voidPulse",
-            backdropIntensity = 0.7,
-            arenaIntensity = 0.45,
-        },
+        name = "Ember Maw",
+        flavor = "Heat presses close; every choice now glows on the blade edges.",
+        palette = makePalette({ base = "dire", accent = "tense" }),
+        backgroundEffect = { type = "emberDrift", backdropIntensity = 0.64, arenaIntensity = 0.4 },
         backgroundTheme = "desert",
-        backgroundVariant = "hell",
-        traits = {"obsidianResonance", "infernalPressure"},
+        layout = { type = "corridor", width = 9 },
+        traits = { "infernalPressure" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.elder", key = "game.story.floor10.line1", duration = 4.0 },
+                { speakerKey = "game.story.speakers.mira", key = "game.story.floor10.ally", duration = 3.6, when = { choiceEquals = { crossroads_path = "ally_support" } } },
+                { speakerKey = "game.story.speakers.broker", key = "game.story.floor10.hazard", duration = 3.6, when = { choiceEquals = { crossroads_path = "hazard_toll" } } },
+            },
+        },
     },
     [11] = {
-        name = "Ashen Frontier",
-        flavor = "Ash storms hide bitter seeds that taste perfect. Turning back feels impossible now.",
-        palette = {
-            bgColor    = {0.11, 0.07, 0.12, 1},  -- soot-stained dusk
-            arenaBG    = {0.16, 0.09, 0.15, 1},  -- embered plumplain
-            arenaBorder= {0.5, 0.28, 0.16, 1},   -- molten shale ridge
-            snake      = {0.72, 0.78, 0.58, 1},  -- sage ember scales
-            rock       = {0.55, 0.38, 0.5, 1},  -- rose-tinted pumice cutting through the ash haze
-            sawColor   = {0.88, 0.52, 0.32, 1},  -- burnished sparksteel
+        name = "Spectral Relay",
+        flavor = "Phantoms pace your stride, mirroring every borrowed boon.",
+        palette = makePalette({ base = "tense", accent = "dire" }),
+        backgroundEffect = { type = "auroraVeil", backdropIntensity = 0.66, arenaIntensity = 0.42 },
+        backgroundTheme = "laboratory",
+        layout = { type = "split", padding = 5 },
+        traits = { "spectralEchoes" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.tinkerer", key = "game.story.floor11.bloom", duration = 3.6, when = { choiceEquals = { glimmer_pact = "bloomward" } } },
+                { speakerKey = "game.story.speakers.tinkerer", key = "game.story.floor11.shadow", duration = 3.6, when = { choiceEquals = { glimmer_pact = "shadow_toll" } } },
+                { speakerKey = "game.story.speakers.specter", key = "game.story.floor11.resonant", duration = 3.6, when = { choiceEquals = { astral_alignment = "resonant_path" } } },
+                { speakerKey = "game.story.speakers.specter", key = "game.story.floor11.tempest", duration = 3.6, when = { choiceEquals = { astral_alignment = "tempest_path" } } },
+            },
         },
-        backgroundEffect = {
-            type = "emberDrift",
-            backdropIntensity = 0.58,
-            arenaIntensity = 0.34,
-        },
-        backgroundTheme = "desert",
-        backgroundVariant = "inferno",
-        traits = {"ashenTithe", "boneHarvest"},
     },
     [12] = {
-        name = "Spirit Crucible",
-        flavor = "Whispers offer ethereal pulp for a toll. Noodl trades caution for flavor.",
-        palette = {
-            bgColor    = {0.1, 0.08, 0.14, 1},  -- ethereal violet
-            arenaBG    = {0.16, 0.1, 0.2, 1},  -- twilight bloom
-            arenaBorder= {0.5, 0.35, 0.75, 1},   -- spectral rim
-            snake      = {0.7, 0.85, 1.0, 1},    -- ghostlight
-            rock       = {0.64, 0.52, 0.78, 1},   -- brightened spiritstone facets
-            sawColor   = {0.8, 0.65, 1.0, 1},    -- spirit steel
+        name = "Storm of Paths",
+        flavor = "Every prior choice collides in a single roaring conduit.",
+        palette = makePalette({ base = "dire", accent = "tense" }),
+        backgroundEffect = { type = "voidPulse", backdropIntensity = 0.7, arenaIntensity = 0.46 },
+        backgroundTheme = "desert",
+        layout = { type = "corridor", width = 8 },
+        traits = { "obsidianResonance" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.elder", key = "game.story.floor12.line1", duration = 4.0 },
+            },
         },
-        backgroundEffect = {
-            type = "auroraVeil",
-            backdropIntensity = 0.58,
-            arenaIntensity = 0.38,
-        },
-        backgroundTheme = "laboratory",
-        traits = {"spectralEchoes", "glowingSpores"},
     },
     [13] = {
-        name = "The Underworld",
-        flavor = "Lava markets fry fruit to smoky bliss. Noodl devours, unaware how far home is.",
-        palette = {
-            bgColor    = {0.12, 0.08, 0.1, 1}, -- smoky dark veil
-            arenaBG    = {0.14, 0.1, 0.14, 1}, -- charcoal
-            arenaBorder= {0.3, 0.05, 0.08, 1},  -- blood red
-            snake      = {0.9, 0.15, 0.25, 1},  -- crimson glow
-            rock       = {0.58, 0.32, 0.34, 1}, -- glowing cinderstone chunks against the dark arena
-            sawColor   = {1.0, 0.1, 0.2, 1},    -- hellsteel
+        name = "Heart of the Blight",
+        flavor = "Cleansing nodes flare underfoot; purging them steadies the world.",
+        palette = makePalette({ base = "dire", accent = "triumphant", arenaBlend = 0.48 }),
+        backgroundEffect = { type = "voidPulse", backdropIntensity = 0.72, arenaIntensity = 0.48 },
+        backgroundTheme = "laboratory",
+        layout = { type = "boss", radius = 7 },
+        traits = { "cleansingNodes", "ashenTithe" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.elder", key = "game.story.floor13.line1", duration = 4.2 },
+                { speakerKey = "game.story.speakers.specter", key = "game.story.floor13.resonant", duration = 3.6, when = { choiceEquals = { astral_alignment = "resonant_path" } } },
+            },
         },
-        backgroundEffect = {
-            type = "voidPulse",
-            backdropIntensity = 0.7,
-            arenaIntensity = 0.44,
-        },
-        backgroundTheme = "desert",
-        backgroundVariant = "hell",
-        traits = {"ashenTithe", "infernalPressure"},
     },
     [14] = {
-        name = "Celestial Causeway",
-        flavor = "A sudden breeze carries airy petals. Noodl chases the scent across thin bridges.",
-        palette = {
-            bgColor    = {0.2, 0.22, 0.29, 1},  -- cool nightfall above the abyss
-            arenaBG    = {0.82, 0.86, 0.92, 1},   -- moonlit alabaster path
-            arenaBorder= {0.9, 0.76, 0.55, 1},   -- gilded balustrades
-            snake      = {0.95, 0.72, 0.45, 1},   -- burnished auric scales
-            rock       = {0.36, 0.38, 0.64, 1},   -- indigo-limned plinths silhouetted on the alabaster bridge
-            sawColor   = {0.95, 0.7, 0.5, 1},     -- rosy sunlit brass
+        name = "Homeward Chorus",
+        flavor = "The grove sings back, changed by every step you claimed.",
+        palette = makePalette({ base = "triumphant", accent = "calm", arenaBlend = 0.4 }),
+        backgroundEffect = { type = "auroraVeil", backdropIntensity = 0.62, arenaIntensity = 0.34 },
+        backgroundTheme = "botanical",
+        layout = { type = "open", safeRadius = 6 },
+        traits = { "sunlitSanctuary", "lushGrowth" },
+        story = {
+            lines = {
+                { speakerKey = "game.story.speakers.elder", key = "game.story.floor14.line1", duration = 4.0 },
+                { speakerKey = "game.story.speakers.mira", key = "game.story.floor14.ally", duration = 3.6, when = { choiceEquals = { crossroads_path = "ally_support" } } },
+                { speakerKey = "game.story.speakers.broker", key = "game.story.floor14.hazard", duration = 3.6, when = { choiceEquals = { crossroads_path = "hazard_toll" } } },
+                { speakerKey = "game.story.speakers.tinkerer", key = "game.story.floor14.glimmer", duration = 3.4, when = { choiceTaken = { "bloomward", "shadow_toll" } } },
+                { speakerKey = "game.story.speakers.specter", key = "game.story.floor14.astral", duration = 3.4, when = { choiceTaken = { "resonant_path", "tempest_path" } } },
+            },
         },
-        backgroundEffect = {
-            type = "auroraVeil",
-            backdropIntensity = 0.62,
-            arenaIntensity = 0.36,
-        },
-        backgroundTheme = "urban",
-        backgroundVariant = "celestial",
-        traits = {"divineAscent", "spectralEchoes"},
-    },
-    [15] = {
-        name = "Sky Spire",
-        flavor = "Sky banquets glimmer above yawning clouds. Noodl climbs, stomach louder than fear.",
-        palette = {
-            bgColor    = {0.16, 0.16, 0.22, 1},  -- starlit indigo
-            arenaBG    = {0.88, 0.91, 0.94, 1},  -- alabaster platform
-            arenaBorder= {0.95, 0.78, 0.45, 1},  -- gilded trim
-            snake      = {0.98, 0.85, 0.4, 1},   -- auric serpent
-            rock       = {0.55, 0.52, 0.48, 1},  -- dusk-touched marble
-            sawColor   = {1.0, 0.65, 0.3, 1},    -- radiant brass
-        },
-        backgroundEffect = {
-            type = "auroraVeil",
-            backdropIntensity = 0.6,
-            arenaIntensity = 0.34,
-        },
-        backgroundTheme = "urban",
-        backgroundVariant = "celestial",
-        traits = {"divineAscent", "crystallineResonance"},
-    },
-    [16] = {
-        name = "Starfall Bastion",
-        flavor = "Falling stars sear trails of candied light. Noodl weaves through guards to taste them.",
-        palette = {
-            bgColor    = {0.2, 0.21, 0.28, 1},  -- twilight navy mantle
-            arenaBG    = {0.82, 0.86, 0.96, 1},  -- moonlit parapets
-            arenaBorder= {0.96, 0.74, 0.52, 1},  -- gilded battlements
-            snake      = {0.98, 0.82, 0.48, 1},  -- auric champion
-            rock       = {0.42, 0.4, 0.68, 1},  -- dusk-lacquered bastion stones
-            sawColor   = {0.98, 0.68, 0.4, 1},   -- cometforged brass
-        },
-        backgroundEffect = {
-            type = "auroraVeil",
-            backdropIntensity = 0.64,
-            arenaIntensity = 0.34,
-        },
-        backgroundTheme = "urban",
-        backgroundVariant = "celestial",
-        traits = {"spectralEchoes", "divineAscent"},
-    },
-    [17] = {
-        name = "Nebula Crown",
-        flavor = "Nebula vines drip cosmic jam. Lenses in the mist hint at home, yet Noodl drifts farther, dizzy and full.",
-        palette = {
-            bgColor    = {0.14, 0.13, 0.21, 1},  -- deep violet firmament
-            arenaBG    = {0.42, 0.34, 0.54, 1},  -- dusk-lit bridgework
-            arenaBorder= {0.76, 0.48, 0.82, 1},  -- luminous nebular trim
-            snake      = {0.85, 0.68, 0.98, 1},  -- starlit wyrm
-            rock       = {0.78, 0.6, 0.88, 1},  -- radiant nebulite braces easily seen in the dusk glow
-            sawColor   = {0.92, 0.58, 0.85, 1},   -- prismatic edge
-        },
-        backgroundEffect = {
-            type = "auroraVeil",
-            backdropIntensity = 0.7,
-            arenaIntensity = 0.42,
-        },
-        backgroundTheme = "laboratory",
-        traits = {"spectralEchoes", "glowingSpores"},
-    },
-    [18] = {
-        name = "Eventide Observatory",
-        flavor = "Crystal orreries map a path back. Noodl samples their luminous fruit instead, promising just one more taste.",
-        palette = {
-            bgColor    = {0.1, 0.1, 0.18, 1},   -- midnight indigo vault
-            arenaBG    = {0.16, 0.2, 0.3, 1},   -- mirrored starsteel
-            arenaBorder= {0.58, 0.52, 0.85, 1}, -- prismatic lenswork
-            snake      = {0.82, 0.9, 1.0, 1},   -- argent trailblazer
-            rock       = {0.38, 0.4, 0.6, 1},   -- star-brushed stone
-            sawColor   = {0.92, 0.72, 1.0, 1},  -- refracted glass edge
-        },
-        backgroundEffect = {
-            type = "auroraVeil",
-            backdropIntensity = 0.7,
-            arenaIntensity = 0.4,
-        },
-        backgroundTheme = "laboratory",
-        traits = {"spectralEchoes", "crystallineResonance"},
-    },
-    [19] = {
-        name = "Void Throne",
-        flavor = "A silent court sets out obsidian fruit and a glint of the way home. Noodl bows only to hunger.",
-        palette = {
-            bgColor    = {0.1, 0.08, 0.14, 1},  -- eventide abyss
-            arenaBG    = {0.14, 0.12, 0.18, 1},  -- onyx dais
-            arenaBorder= {0.35, 0.12, 0.32, 1},  -- royal voidstone
-            snake      = {0.78, 0.42, 0.88, 1},  -- imperial amaranth
-            rock       = {0.46, 0.3, 0.54, 1},   -- royal obsidian studded with arcane gloss
-            sawColor   = {0.68, 0.28, 0.6, 1},    -- shadowed corona
-        },
-        backgroundEffect = {
-            type = "voidPulse",
-            backdropIntensity = 0.72,
-            arenaIntensity = 0.46,
-        },
-        backgroundTheme = "desert",
-        backgroundVariant = "hell",
-        traits = {"obsidianResonance", "infernalPressure"},
-    },
-    [20] = {
-        name = "Singularity Gate",
-        flavor = "Gravity hoards the final harvest. Reflections of home collapse inward, yet Noodl leans in, torn between one last bite and the path back.",
-        palette = {
-            bgColor    = {0.08, 0.08, 0.12, 1},  -- collapsing night
-            arenaBG    = {0.12, 0.1, 0.16, 1},  -- gravitic maw
-            arenaBorder= {0.58, 0.26, 0.62, 1},  -- eventide flare
-            snake      = {0.88, 0.48, 0.98, 1},   -- horizonflare serpent
-            rock       = {0.52, 0.38, 0.72, 1},   -- event-horizon geodes glowing above the void
-            sawColor   = {0.98, 0.52, 0.72, 1},   -- collapsing corona
-        },
-        backgroundEffect = {
-            type = "voidPulse",
-            backdropIntensity = 0.78,
-            arenaIntensity = 0.5,
-        },
-        backgroundTheme = "oceanic",
-        backgroundVariant = "abyss",
-        traits = {"obsidianResonance", "ashenTithe"},
     },
 }
 

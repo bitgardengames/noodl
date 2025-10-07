@@ -33,6 +33,7 @@ local Shop = require("shop")
 local Upgrades = require("upgrades")
 local Localization = require("localization")
 local FloorSetup = require("floorsetup")
+local FloorStory = require("floorstory")
 local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
 local InputMode = require("inputmode")
@@ -75,6 +76,559 @@ local function clampToInt(value)
     end
 
     return math.max(0, math.floor(value + 0.0001))
+end
+
+local function isAdvanceKey(key)
+    return key == "return" or key == "kpenter" or key == "space"
+end
+
+local function isSkipKey(key)
+    return key == "escape"
+end
+
+function Game:isFloorIntroActive()
+    local transition = self.transition
+    return transition ~= nil and transition:getPhase() == "floorintro"
+end
+
+function Game:updateFloorReadyFlag()
+    local spawnReady = self.floorSpawnReady and true or false
+    local storyReady = self.storyResolved ~= false
+    self.floorReady = spawnReady and storyReady
+end
+
+function Game:initializeFloorStory(storyState)
+    if not storyState then
+        self.currentFloorStory = nil
+        self.storyResolved = true
+        self:updateFloorReadyFlag()
+        return
+    end
+
+    local lines = storyState.lines or {}
+    local choice = storyState.choice
+
+    if choice and choice.options then
+        choice.selection = choice.selection or 1
+        if choice.selected then
+            for index, option in ipairs(choice.options) do
+                if option.id == choice.selected then
+                    choice.selection = index
+                    break
+                end
+            end
+        end
+    end
+
+    local story = {
+        lines = lines,
+        choice = choice,
+        index = (#lines > 0) and 1 or (#lines + 1),
+        timer = 0,
+        showChoice = (#lines == 0),
+        resolved = false,
+        choiceSelection = (choice and choice.selection) or 1,
+    }
+
+    if #lines == 0 and (not choice or choice.selected) then
+        story.resolved = true
+        self.storyResolved = true
+    else
+        self.storyResolved = false
+    end
+
+    self.currentFloorStory = story
+    self:updateFloorReadyFlag()
+end
+
+local function clampChance(value)
+    if value == nil then
+        return nil
+    end
+    if value < 0 then
+        return 0
+    end
+    if value > 0.85 then
+        return 0.85
+    end
+    return value
+end
+
+local function applyChoiceEffects(pending, option)
+    if not (pending and option and option.effects) then
+        return
+    end
+
+    local effects = option.effects
+    local ctx = pending.traitContext or {}
+    local spawnPlan = pending.spawnPlan or {}
+
+    if effects.fruitGoalDelta then
+        ctx.fruitGoal = math.max(1, (ctx.fruitGoal or 0) + effects.fruitGoalDelta)
+    end
+
+    if effects.rocksDelta then
+        local newRocks = math.max(0, (ctx.rocks or 0) + effects.rocksDelta)
+        ctx.rocks = newRocks
+        spawnPlan.numRocks = math.max(0, (spawnPlan.numRocks or 0) + effects.rocksDelta)
+    end
+
+    if effects.sawsDelta then
+        local newSaws = math.max(0, (ctx.saws or 0) + effects.sawsDelta)
+        ctx.saws = newSaws
+        spawnPlan.numSaws = math.max(0, (spawnPlan.numSaws or 0) + effects.sawsDelta)
+    end
+
+    if effects.rockSpawnMultiplier then
+        ctx.rockSpawnChance = clampChance((ctx.rockSpawnChance or 0) * effects.rockSpawnMultiplier)
+    end
+
+    if effects.rockSpawnDelta then
+        ctx.rockSpawnChance = clampChance((ctx.rockSpawnChance or 0) + effects.rockSpawnDelta)
+    end
+
+    if effects.sawSpeedMultiplier then
+        ctx.sawSpeedMult = (ctx.sawSpeedMult or 1) * effects.sawSpeedMultiplier
+    end
+
+    if effects.sawSpeedDelta then
+        ctx.sawSpeedMult = (ctx.sawSpeedMult or 1) + effects.sawSpeedDelta
+    end
+
+    if effects.sawStallAdd then
+        ctx.sawStall = (ctx.sawStall or 0) + effects.sawStallAdd
+    end
+
+    if effects.extraTrait then
+        pending.appliedTraits = pending.appliedTraits or {}
+        local extra = effects.extraTrait
+        local name = extra.name
+        local desc = extra.desc
+        if extra.nameKey then
+            name = Localization:get(extra.nameKey)
+        end
+        if extra.descKey then
+            desc = Localization:get(extra.descKey)
+        end
+
+        table.insert(pending.appliedTraits, {
+            name = name,
+            desc = desc,
+        })
+    end
+end
+
+local function drawStoryDialoguePanel(self, story, alpha)
+    if not story or story.index > #story.lines then
+        return
+    end
+
+    local line = story.lines[story.index]
+    if not line or not line.text or line.text == "" then
+        return
+    end
+
+    local panelWidth = math.min(self.screenWidth * 0.72, 640)
+    local padding = (UI.spacing and UI.spacing.panelPadding or 24)
+    local bodyFont = UI.fonts.body
+    local speakerFont = UI.fonts.caption or bodyFont
+    local wrapWidth = panelWidth - padding * 2
+
+    love.graphics.setFont(bodyFont)
+    local _, wrapped = bodyFont:getWrap(line.text, wrapWidth)
+    local bodyHeight = math.max(1, #wrapped) * bodyFont:getHeight()
+
+    local speakerHeight = 0
+    if line.speaker and line.speaker ~= "" then
+        speakerHeight = speakerFont:getHeight() + 6
+    end
+
+    local panelHeight = padding * 2 + bodyHeight + speakerHeight
+    local x = (self.screenWidth - panelWidth) / 2
+    local y = self.screenHeight * 0.64 - panelHeight / 2
+
+    UI.drawPanel(x, y, panelWidth, panelHeight, {
+        radius = UI.spacing and UI.spacing.panelRadius or 18,
+        fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * alpha },
+        borderColor = Theme.panelBorder,
+        shadowAlpha = (Theme.shadowColor and Theme.shadowColor[4]) or 0.6,
+    })
+
+    local textColor = UI.colors and UI.colors.text or { 1, 1, 1, 1 }
+    local mutedColor = UI.colors and UI.colors.mutedText or { 0.8, 0.85, 0.9, 1 }
+
+    local cursorY = y + padding
+    if line.speaker and line.speaker ~= "" then
+        love.graphics.setFont(speakerFont)
+        love.graphics.setColor(mutedColor[1], mutedColor[2], mutedColor[3], alpha)
+        love.graphics.printf(line.speaker, x + padding, cursorY, wrapWidth, "left")
+        cursorY = cursorY + speakerHeight
+    end
+
+    love.graphics.setFont(bodyFont)
+    love.graphics.setColor(textColor[1], textColor[2], textColor[3], alpha)
+    love.graphics.printf(line.text, x + padding, cursorY, wrapWidth, "left")
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+local function drawStoryChoicePanels(self, story, alpha)
+    if not story or not story.showChoice then
+        if story and story.choice then
+            story.choice.hotspots = nil
+        end
+        return
+    end
+
+    local choice = story.choice
+    if not (choice and choice.options and #choice.options > 0) then
+        return
+    end
+
+    local options = choice.options
+    local total = #options
+    local spacing = 28
+    local padding = (UI.spacing and UI.spacing.panelPadding or 20)
+    local panelWidth = math.min(320, (self.screenWidth - spacing * (total + 1)) / total)
+    local nameFont = UI.fonts.button or UI.fonts.body
+    local descFont = UI.fonts.body or UI.fonts.caption
+    local titleText = choice.title and Localization:get(choice.title) or nil
+    local promptText = choice.prompt and Localization:get(choice.prompt) or nil
+
+    local topY = self.screenHeight * 0.7
+    if titleText and titleText ~= "" then
+        love.graphics.setFont(UI.fonts.subtitle or UI.fonts.body)
+        local titleColor = UI.colors and (UI.colors.accentText or UI.colors.text) or { 0.95, 0.76, 0.48, 1 }
+        love.graphics.setColor(titleColor[1], titleColor[2], titleColor[3], alpha)
+        love.graphics.printf(titleText, 0, topY - 160, self.screenWidth, "center")
+    end
+
+    if promptText and promptText ~= "" then
+        love.graphics.setFont(UI.fonts.caption or UI.fonts.body)
+        local mutedColor = UI.colors and UI.colors.mutedText or { 0.8, 0.85, 0.9, 1 }
+        love.graphics.setColor(mutedColor[1], mutedColor[2], mutedColor[3], alpha)
+        love.graphics.printf(promptText, 0, topY - 122, self.screenWidth, "center")
+    end
+
+    local totalWidth = panelWidth * total + spacing * (total - 1)
+    local startX = (self.screenWidth - totalWidth) / 2
+    local baseY = topY - 90
+
+    choice.hotspots = {}
+
+    for index, option in ipairs(options) do
+        local name = option.name or (option.nameKey and Localization:get(option.nameKey)) or ""
+        local desc = option.description or (option.descriptionKey and Localization:get(option.descriptionKey)) or ""
+        local wrapWidth = panelWidth - padding * 2
+
+        love.graphics.setFont(descFont)
+        local _, descLines = descFont:getWrap(desc, wrapWidth)
+        local descHeight = math.max(1, #descLines) * descFont:getHeight()
+
+        love.graphics.setFont(nameFont)
+        local nameHeight = nameFont:getHeight()
+        local panelHeight = padding * 2 + nameHeight + 12 + descHeight
+
+        local x = startX + (index - 1) * (panelWidth + spacing)
+        local y = baseY
+
+        local isSelected = (story.choiceSelection or 1) == index and not choice.selected
+        local isLocked = choice.selected == option.id
+
+        local fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * alpha }
+        local border = Theme.panelBorder
+        if isLocked then
+            border = UI.colors and UI.colors.progress or { 0.35, 0.82, 0.65, 1 }
+        elseif isSelected then
+            border = UI.colors and UI.colors.warning or { 0.98, 0.6, 0.3, 1 }
+        end
+
+        UI.drawPanel(x, y, panelWidth, panelHeight, {
+            radius = UI.spacing and UI.spacing.panelRadius or 16,
+            fill = fill,
+            borderColor = border,
+        })
+
+        love.graphics.setFont(nameFont)
+        local textColor = UI.colors and UI.colors.text or { 1, 1, 1, 1 }
+        love.graphics.setColor(textColor[1], textColor[2], textColor[3], alpha)
+        love.graphics.printf(name, x + padding, y + padding, wrapWidth, "left")
+
+        love.graphics.setFont(descFont)
+        local mutedColor = UI.colors and UI.colors.mutedText or { 0.8, 0.85, 0.9, 1 }
+        love.graphics.setColor(mutedColor[1], mutedColor[2], mutedColor[3], alpha)
+        love.graphics.printf(desc, x + padding, y + padding + nameHeight + 8, wrapWidth, "left")
+
+        if isLocked then
+            love.graphics.setFont(UI.fonts.caption or UI.fonts.body)
+            local lockColor = UI.colors and UI.colors.progress or { 0.35, 0.82, 0.65, 1 }
+            love.graphics.setColor(lockColor[1], lockColor[2], lockColor[3], alpha)
+            love.graphics.printf(Localization:get("common.yes"), x, y + panelHeight - padding - descFont:getHeight(), panelWidth, "center")
+        end
+
+        choice.hotspots[index] = { x = x, y = y, w = panelWidth, h = panelHeight }
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+end
+
+function Game:finalizeFloorSetup()
+    local pending = self.pendingFloorSetup
+    if not pending then
+        self.floorSpawnReady = true
+        self:updateFloorReadyFlag()
+        return
+    end
+
+    FloorSetup.finalizeContext(pending.traitContext, pending.spawnPlan)
+
+    self.activeFloorTraits = pending.appliedTraits or {}
+    UI:setFloorModifiers(self.activeFloorTraits)
+    UI:setFruitGoal(pending.traitContext.fruitGoal)
+
+    self.transitionTraits = buildModifierSections(self)
+
+    if pending.restNotes and #pending.restNotes > 0 then
+        self.transitionTraits = self.transitionTraits or {}
+        local items = {}
+        local sectionTitle = pending.restNotes[1].title
+        for _, note in ipairs(pending.restNotes) do
+            sectionTitle = note.title or sectionTitle
+            table.insert(items, { name = note.text })
+        end
+
+        table.insert(self.transitionTraits, {
+            title = sectionTitle,
+            items = items,
+        })
+    end
+
+    Upgrades:notify("floorStart", { floor = pending.floor or self.floor, context = pending.traitContext })
+    FloorSetup.spawnHazards(pending.spawnPlan)
+
+    self.pendingFloorSetup = nil
+    self.floorSpawnReady = true
+    self:updateFloorReadyFlag()
+end
+
+function Game:updateFloorStory(dt)
+    if not self:isFloorIntroActive() then
+        return
+    end
+
+    local story = self.currentFloorStory
+    if not story or story.resolved then
+        self.storyResolved = true
+        self:updateFloorReadyFlag()
+        return
+    end
+
+    if story.index <= #story.lines then
+        local current = story.lines[story.index]
+        local duration = (current and current.duration) or 4
+        story.timer = story.timer + dt
+        if story.timer >= duration then
+            self:advanceFloorStoryLine(false)
+        end
+    else
+        if story.choice and not story.choice.selected then
+            story.showChoice = true
+        else
+            story.resolved = true
+            self.storyResolved = true
+            self:updateFloorReadyFlag()
+        end
+    end
+end
+
+function Game:advanceFloorStoryLine(manual)
+    local story = self.currentFloorStory
+    if not story or story.resolved then
+        return
+    end
+
+    if story.index <= #story.lines then
+        story.index = story.index + 1
+        story.timer = 0
+        if story.index > #story.lines then
+            if story.choice and not story.choice.selected then
+                story.showChoice = true
+            else
+                story.resolved = true
+                self.storyResolved = true
+                self:updateFloorReadyFlag()
+            end
+        end
+    else
+        if story.choice and not story.choice.selected then
+            story.showChoice = true
+        else
+            story.resolved = true
+            self.storyResolved = true
+            self:updateFloorReadyFlag()
+        end
+    end
+end
+
+function Game:skipFloorStory()
+    local story = self.currentFloorStory
+    if not story or story.resolved then
+        return
+    end
+
+    story.index = #story.lines + 1
+    story.timer = 0
+    if story.choice and not story.choice.selected then
+        story.showChoice = true
+    else
+        story.resolved = true
+        self.storyResolved = true
+        self:updateFloorReadyFlag()
+    end
+end
+
+function Game:moveStoryChoice(direction)
+    local story = self.currentFloorStory
+    if not story or not story.choice or story.choice.selected then
+        return
+    end
+
+    local total = #story.choice.options
+    if total <= 0 then
+        return
+    end
+
+    local index = story.choiceSelection or 1
+    index = index + direction
+    if index < 1 then
+        index = total
+    elseif index > total then
+        index = 1
+    end
+
+    story.choiceSelection = index
+end
+
+function Game:applyStoryChoice(choice, option)
+    if not (choice and option) then
+        return
+    end
+
+    applyChoiceEffects(self.pendingFloorSetup, option)
+    choice.selected = option.id
+    self.storyResolved = true
+    self.currentFloorStory.resolved = true
+    self.currentFloorStory.showChoice = false
+
+    FloorStory:selectChoice(choice.id, option.id)
+
+    self.activeFloorTraits = self.pendingFloorSetup.appliedTraits or {}
+    self:finalizeFloorSetup()
+end
+
+function Game:selectStoryChoice()
+    local story = self.currentFloorStory
+    if not story or not story.choice or story.choice.selected then
+        return
+    end
+
+    local index = story.choiceSelection or 1
+    local option = story.choice.options[index]
+    if not option then
+        return
+    end
+
+    self:applyStoryChoice(story.choice, option)
+    self:updateFloorReadyFlag()
+end
+
+function Game:handleStoryInput(action, ...)
+    if not self:isFloorIntroActive() then
+        return false
+    end
+
+    local story = self.currentFloorStory
+    if not story then
+        return false
+    end
+
+    if action == "keypressed" then
+        local key = ...
+        if story.index <= #story.lines then
+            if isAdvanceKey(key) then
+                self:advanceFloorStoryLine(true)
+                return true
+            elseif isSkipKey(key) then
+                self:skipFloorStory()
+                return true
+            end
+        elseif story.showChoice and not (story.choice and story.choice.selected) then
+            if key == "left" or key == "a" or key == "h" then
+                self:moveStoryChoice(-1)
+                return true
+            elseif key == "right" or key == "d" or key == "l" then
+                self:moveStoryChoice(1)
+                return true
+            elseif isAdvanceKey(key) then
+                self:selectStoryChoice()
+                return true
+            end
+        elseif not story.choice then
+            if isAdvanceKey(key) then
+                story.resolved = true
+                self.storyResolved = true
+                self:updateFloorReadyFlag()
+                return true
+            end
+        end
+    elseif action == "mousepressed" then
+        local x, y, button = ...
+        if button ~= 1 then
+            return false
+        end
+
+        if story.index <= #story.lines then
+            self:advanceFloorStoryLine(true)
+            return true
+        end
+
+        if story.showChoice and story.choice and not story.choice.selected and story.choice.hotspots then
+            for index, bounds in ipairs(story.choice.hotspots) do
+                local bx, by, bw, bh = bounds.x, bounds.y, bounds.w, bounds.h
+                if x >= bx and x <= bx + bw and y >= by and y <= by + bh then
+                    story.choiceSelection = index
+                    self:selectStoryChoice()
+                    return true
+                end
+            end
+        end
+    elseif action == "gamepadpressed" then
+        local button = ...
+        if story.index <= #story.lines then
+            if button == "a" or button == "start" or button == "b" then
+                self:advanceFloorStoryLine(true)
+                return true
+            end
+        elseif story.showChoice and story.choice and not story.choice.selected then
+            if button == "dpleft" or button == "leftshoulder" then
+                self:moveStoryChoice(-1)
+                return true
+            elseif button == "dpright" or button == "rightshoulder" then
+                self:moveStoryChoice(1)
+                return true
+            elseif button == "a" or button == "start" then
+                self:selectStoryChoice()
+                return true
+            end
+        elseif not story.choice then
+            if button == "a" or button == "start" or button == "b" then
+                story.resolved = true
+                self.storyResolved = true
+                self:updateFloorReadyFlag()
+                return true
+            end
+        end
+    end
+
+    return false
 end
 
 function Game:usesHealth()
@@ -330,6 +884,10 @@ function Game:confirmTransitionIntro()
         return false
     end
 
+    if self:isFloorIntroActive() and not (self.floorReady or (self.currentFloorStory == nil and self.floorSpawnReady)) then
+        return false
+    end
+
     return transition:confirmFloorIntro() and true or false
 end
 
@@ -490,6 +1048,13 @@ function Game:load()
     self.runTimer = 0
     self.floorTimer = 0
 
+    FloorStory:reset()
+    self.currentFloorStory = nil
+    self.pendingFloorSetup = nil
+    self.floorSpawnReady = false
+    self.storyResolved = true
+    self.floorReady = false
+
     self.mouseCursorState = nil
 
     Screen:update()
@@ -574,6 +1139,13 @@ function Game:reset()
     self.floorTimer = 0
 
     self.mouseCursorState = nil
+
+    FloorStory:reset()
+    self.currentFloorStory = nil
+    self.pendingFloorSetup = nil
+    self.floorSpawnReady = false
+    self.storyResolved = true
+    self.floorReady = false
 
     if self.healthSystem then
         self.healthSystem:reset(self.maxHealth)
@@ -1202,6 +1774,9 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         love.graphics.pop()
     end
 
+    drawStoryDialoguePanel(self, self.currentFloorStory, outroAlpha)
+    drawStoryChoicePanels(self, self.currentFloorStory, outroAlpha)
+
     drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
 
     if data.transitionAwaitInput then
@@ -1210,6 +1785,10 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         local promptStart = introDuration + promptDelay
         local promptProgress = clamp01((timer - promptStart) / 0.45)
         local promptAlpha = promptProgress * outroAlpha
+
+        if not self.floorReady then
+            promptAlpha = 0
+        end
 
         if promptAlpha > 0 then
             local promptText = Localization:get("game.floor_intro.prompt")
@@ -1349,6 +1928,7 @@ function Game:update(dt)
 
     if self:isTransitionActive() then
         self.transition:update(scaledDt)
+        self:updateFloorStory(scaledDt)
         return
     end
 
@@ -1378,11 +1958,14 @@ function Game:setupFloor(floorNum)
     FruitEvents.reset()
 
     self.floorTimer = 0
+    self.floorSpawnReady = false
+    self.storyResolved = false
+    self.floorReady = false
 
     local setup = FloorSetup.prepare(floorNum, self.currentFloorData)
-    local traitContext = setup.traitContext
-    local appliedTraits = setup.appliedTraits
-    local spawnPlan = setup.spawnPlan
+    local traitContext = setup.traitContext or {}
+    local appliedTraits = setup.appliedTraits or {}
+    local spawnPlan = setup.spawnPlan or {}
 
     local healAmount = traitContext and traitContext.floorHeal
     if healAmount == nil and self.mode and self.mode.floorHeal ~= nil then
@@ -1413,11 +1996,6 @@ function Game:setupFloor(floorNum)
         forgedShields = forged or 0
     end
 
-    UI:setFruitGoal(traitContext.fruitGoal)
-    UI:setFloorModifiers(appliedTraits)
-    self.activeFloorTraits = appliedTraits
-    self.transitionTraits = buildModifierSections(self)
-
     local restNotes = {}
     if restoredHealth and restoredHealth > 0 then
         local healSectionTitle = Localization:get("game.floor_intro.heal_section_title")
@@ -1435,21 +2013,6 @@ function Game:setupFloor(floorNum)
         table.insert(restNotes, { title = healSectionTitle, text = shieldText })
     end
 
-    if #restNotes > 0 then
-        self.transitionTraits = self.transitionTraits or {}
-        local items = {}
-        local sectionTitle = restNotes[1].title
-        for _, note in ipairs(restNotes) do
-            sectionTitle = note.title or sectionTitle
-            table.insert(items, { name = note.text })
-        end
-
-        table.insert(self.transitionTraits, {
-            title = sectionTitle,
-            items = items,
-        })
-    end
-
     Upgrades:applyPersistentEffects(true)
 
     if Snake.adrenaline then
@@ -1457,10 +2020,24 @@ function Game:setupFloor(floorNum)
         Snake.adrenaline.timer = 0
     end
 
-    FloorSetup.finalizeContext(traitContext, spawnPlan)
-    Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
+    self.pendingFloorSetup = {
+        floor = floorNum,
+        traitContext = traitContext,
+        appliedTraits = appliedTraits,
+        spawnPlan = spawnPlan,
+        restNotes = restNotes,
+    }
 
-    FloorSetup.spawnHazards(spawnPlan)
+    self.activeFloorTraits = appliedTraits
+    self.transitionTraits = buildModifierSections(self)
+    UI:setFloorModifiers(appliedTraits)
+
+    local storyState = FloorStory:startFloor(floorNum, self.currentFloorData)
+    self:initializeFloorStory(storyState)
+
+    if not (storyState and storyState.choice and not storyState.choice.selected) then
+        self:finalizeFloorSetup()
+    end
 end
 
 function Game:draw()
@@ -1488,6 +2065,10 @@ function Game:keypressed(key)
         return
     end
 
+    if self:handleStoryInput("keypressed", key) then
+        return
+    end
+
     if self:confirmTransitionIntro() then
         return
     end
@@ -1496,6 +2077,10 @@ function Game:keypressed(key)
 end
 
 function Game:mousepressed(x, y, button)
+    if self:handleStoryInput("mousepressed", x, y, button) then
+        return
+    end
+
     if self:confirmTransitionIntro() then
         return
     end
@@ -1524,6 +2109,10 @@ function Game:mousereleased(x, y, button)
 end
 
 function Game:gamepadpressed(_, button)
+    if self:handleStoryInput("gamepadpressed", button) then
+        return
+    end
+
     if self:confirmTransitionIntro() then
         return
     end
