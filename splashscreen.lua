@@ -3,7 +3,7 @@ local Screen = require("screen")
 local SplashScreen = {
     transitionDurationIn = 0.25,
     transitionDurationOut = 0.25,
-    displayDuration = 1.75,
+    displayDuration = 2,
     backgroundColor = { 0.04, 0.04, 0.05, 1 },
 }
 
@@ -84,7 +84,7 @@ function SplashScreen:update(dt)
 
     self.timer = self.timer + (dt or 0)
 
-    if self.timer >= (self.displayDuration or 1.25) then
+    if self.timer >= self.displayDuration then
         return "menu"
     end
 end
