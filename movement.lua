@@ -445,17 +445,18 @@ local function handleWallCollision(headX, headY)
         if not Snake:consumeCrashShield() then
                 local safeX = clamp(headX, left, right)
                 local safeY = clamp(headY, top, bottom)
+                local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY)
+                local clampedX = reroutedX or safeX
+                local clampedY = reroutedY or safeY
                 local dir = Snake.getDirection and Snake:getDirection() or { x = 0, y = 0 }
-                local pushX = safeX - headX
-                local pushY = safeY - headY
 
-                return safeX, safeY, "wall", {
-                        pushX = pushX,
-                        pushY = pushY,
-                        snapX = safeX,
-                        snapY = safeY,
-                        dirX = -(dir.x or 0),
-                        dirY = -(dir.y or 0),
+                return clampedX, clampedY, "wall", {
+                        pushX = 0,
+                        pushY = 0,
+                        snapX = clampedX,
+                        snapY = clampedY,
+                        dirX = dir.x or 0,
+                        dirY = dir.y or 0,
                         grace = WALL_GRACE,
                         shake = 0.2,
                 }
@@ -543,6 +544,12 @@ local function handleRockCollision(headX, headY)
                                 Rocks:triggerHitFlash(rock)
 
                                 if not shielded then
+                                        local rerouteDirX, rerouteDirY = rerouteAroundRock(headX, headY, rock)
+                                        if rerouteDirX ~= 0 or rerouteDirY ~= 0 then
+                                                context.dirX = rerouteDirX
+                                                context.dirY = rerouteDirY
+                                        end
+
                                         return "hit", "rock", context
                                 end
 
