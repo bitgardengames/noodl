@@ -19,8 +19,6 @@ UI.socketSize = 26
 UI.goalReachedAnim = 0
 UI.goalCelebrated = false
 
-UI.floorModifiers = {}
-
 UI.combo = {
     count = 0,
     timer = 0,
@@ -713,7 +711,6 @@ function UI:reset()
     self.combo.timer = 0
     self.combo.duration = 0
     self.combo.pop = 0
-    self.floorModifiers = {}
     self.shields.count = 0
     self.shields.display = 0
     self.shields.popTimer = 0
@@ -750,114 +747,6 @@ function UI:adjustFruitGoal(delta)
     end
 end
 
-function UI:setFloorModifiers(modifiers)
-    if type(modifiers) == "table" then
-        self.floorModifiers = modifiers
-    else
-        self.floorModifiers = {}
-    end
-end
-
-local function collectModifierSections(self)
-    local sections = {}
-    if self.floorModifiers and #self.floorModifiers > 0 then
-        table.insert(sections, { title = "Floor Traits", items = self.floorModifiers })
-    end
-    return sections
-end
-
-function UI:drawFloorModifiers()
-    local sections = collectModifierSections(self)
-    if not sections or #sections == 0 then return end
-
-    local margin = 20
-    local width = 280
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local x = screenW - width - margin
-
-    local lineHeight = UI.fonts.body:getHeight()
-    local spacing = 12
-    local wrapWidth = width - 32
-    local topPadding = 20
-    local bottomPadding = 28
-
-    local totalHeight = topPadding + bottomPadding
-    local measuredSections = {}
-    UI.setFont("body")
-
-    for _, section in ipairs(sections) do
-        local entries = {}
-        local sectionHeight = UI.fonts.button:getHeight() + spacing
-        if section.items then
-            for _, trait in ipairs(section.items) do
-                local _, wrapped = UI.fonts.body:getWrap(trait.desc or "", wrapWidth)
-                local descLines = math.max(1, #wrapped)
-                local descHeight = descLines * lineHeight
-                table.insert(entries, { trait = trait, descHeight = descHeight })
-                sectionHeight = sectionHeight + lineHeight + descHeight + spacing
-            end
-        end
-        if #entries > 0 then
-            sectionHeight = sectionHeight - spacing
-        end
-        totalHeight = totalHeight + sectionHeight
-        table.insert(measuredSections, { title = section.title, entries = entries, height = sectionHeight })
-    end
-
-    local height = totalHeight
-
-    local minY = margin
-    local y = math.max(minY, screenH - height - margin)
-
-    local shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or 6
-    if shadowOffset ~= 0 then
-        local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
-        local shadowAlpha = shadowColor[4] or 1
-        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
-        love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, width, height, 12, 12)
-    end
-
-    love.graphics.setColor(Theme.panelColor)
-    love.graphics.rectangle("fill", x, y, width, height, 12, 12)
-
-    love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.setLineWidth(3)
-    love.graphics.rectangle("line", x, y, width, height, 12, 12)
-
-    local textY = y + topPadding
-    for sectionIndex, section in ipairs(measuredSections) do
-        UI.setFont("button")
-        local title = section.title or "Floor Traits"
-        local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
-        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] or 1)
-        love.graphics.printf(title, x + 18, textY + 2, width - 32, "left")
-        love.graphics.setColor(Theme.textColor)
-        love.graphics.printf(title, x + 16, textY, width - 32, "left")
-        textY = textY + UI.fonts.button:getHeight() + spacing
-
-        UI.setFont("body")
-        for entryIndex, info in ipairs(section.entries) do
-            local trait = info.trait
-            love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] or 1)
-            love.graphics.printf(trait.name, x + 18, textY + 2, width - 32, "left")
-            love.graphics.setColor(Theme.textColor)
-            love.graphics.printf(trait.name, x + 16, textY, width - 32, "left")
-            textY = textY + lineHeight
-            love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * 0.75)
-            love.graphics.printf(trait.desc, x + 18, textY + 2, width - 32, "left")
-            love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75)
-            love.graphics.printf(trait.desc, x + 16, textY, width - 32, "left")
-            textY = textY + info.descHeight
-            if entryIndex < #section.entries then
-                textY = textY + spacing
-            end
-        end
-
-        if sectionIndex < #measuredSections then
-            textY = textY + spacing
-        end
-    end
-end
 
 function UI:isGoalReached()
 	if self.fruitCollected >= self.fruitRequired then
@@ -1976,7 +1865,7 @@ function UI:drawFruitSockets()
         goalFlash = math.pow(1 - flashT, 1.4)
     end
 
-    -- backdrop styled like the floor traits card
+    -- backdrop styled like the HUD panel card
     local shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or 6
     if shadowOffset ~= 0 then
         local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
@@ -2193,8 +2082,6 @@ function UI:draw()
     self:drawHealth()
     self:drawUpgradeIndicators()
     drawComboIndicator(self)
-
-    self:drawFloorModifiers()
 end
 
 return UI

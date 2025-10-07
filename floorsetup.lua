@@ -11,7 +11,6 @@ local TalentTree = require("talenttree")
 local Movement = require("movement")
 local Particles = require("particles")
 local FloatingText = require("floatingtext")
-local FloorTraits = require("floortraits")
 local FloorPlan = require("floorplan")
 local Upgrades = require("upgrades")
 
@@ -354,14 +353,6 @@ local function getAmbientLaserPreference(floorData)
         return 2
     end
 
-    if type(floorData.traits) == "table" then
-        for _, trait in ipairs(floorData.traits) do
-            if trait == "ancientMachinery" then
-                return 2
-            end
-        end
-    end
-
     return 0
 end
 
@@ -595,9 +586,6 @@ function FloorSetup.prepare(floorNum, floorData)
     local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
     applyBaselineHazardTraits(traitContext)
 
-    local adjustedContext, appliedTraits = FloorTraits:apply(floorData and floorData.traits, traitContext)
-    traitContext = adjustedContext or traitContext
-
     traitContext = Upgrades:modifyFloorContext(traitContext)
 
     if TalentTree and TalentTree.applyFloorContextModifiers then
@@ -620,7 +608,6 @@ function FloorSetup.prepare(floorNum, floorData)
 
     return {
         traitContext = traitContext,
-        appliedTraits = appliedTraits or {},
         spawnPlan = spawnPlan,
     }
 end
