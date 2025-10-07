@@ -1862,6 +1862,7 @@ function UI:drawHealth()
     local states = health.heartStates or {}
     local fullColor = {0.98, 0.36, 0.42, 0.95}
     local emptyColor = {0.35, 0.38, 0.48, 0.55}
+    local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
 
     for i = 1, maxHealth do
         local cx = originX + (i - 1) * spacing
