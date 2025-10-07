@@ -496,16 +496,6 @@ local rarityStyles = {
             inset = 8,
             width = 3,
         },
-        flare = {
-            color = {1.0, 0.88, 1.0, 0.42},
-            radius = 0.42,
-        },
-        stripes = {
-            color = {0.72, 0.32, 0.96, 0.28},
-            spacing = 40,
-            width = 18,
-            angle = -math.pi / 8,
-        },
         sparkles = {
             color = {0.98, 0.88, 1.0, 0.9},
             radius = 8,
