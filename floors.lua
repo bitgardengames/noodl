@@ -85,7 +85,6 @@ local Floors = {
         backgroundEffect = { type = "softCanopy", backdropIntensity = 0.6, arenaIntensity = 0.38 },
         backgroundTheme = "botanical",
         traits = { "sunlitSanctuary" },
-        layout = { type = "open", safeRadius = 5 },
         story = {
             lines = {
                 { speakerKey = "game.story.speakers.elder", key = "game.story.floor1.line1", duration = 4.2 },
@@ -98,7 +97,6 @@ local Floors = {
         palette = makePalette({ base = "calm", accent = "curious", arenaBlend = 0.4 }),
         backgroundEffect = { type = "softCanopy", backdropIntensity = 0.58, arenaIntensity = 0.36 },
         backgroundTheme = "botanical",
-        layout = { type = "open", safeRadius = 4 },
         traits = { "sunlitSanctuary", "glowingSpores" },
         story = {
             lines = {
@@ -112,7 +110,6 @@ local Floors = {
         palette = makePalette({ base = "curious", accent = "tense", arenaBlend = 0.4 }),
         backgroundEffect = { type = "softCavern", backdropIntensity = 0.5, arenaIntensity = 0.32 },
         backgroundTheme = "cavern",
-        layout = { type = "open", safeRadius = 3 },
         traits = { "echoingStillness" },
         story = {
             lines = {
@@ -122,11 +119,10 @@ local Floors = {
     },
     [4] = {
         name = "Echo Ducts",
-        flavor = "Stone corridors tighten, repeating every slip in rising tension.",
+        flavor = "Stone echoes crowd in without walls, reacting to every slip in rising tension.",
         palette = makePalette({ base = "tense", accent = "curious" }),
         backgroundEffect = { type = "softCavern", backdropIntensity = 0.52, arenaIntensity = 0.34 },
         backgroundTheme = "cavern",
-        layout = { type = "corridor", width = 11 },
         traits = { "echoingStillness", "restlessEarth" },
         story = {
             lines = {
@@ -136,11 +132,10 @@ local Floors = {
     },
     [5] = {
         name = "Floodcarrier Span",
-        flavor = "Mist curls around worn bridges where currents tug at focus.",
+        flavor = "Mist curls around open spans where currents tug at focus.",
         palette = makePalette({ base = "tense", accent = "curious", arenaBlend = 0.45 }),
         backgroundEffect = { type = "softCurrent", backdropIntensity = 0.62, arenaIntensity = 0.38 },
         backgroundTheme = "oceanic",
-        layout = { type = "corridor", width = 9 },
         traits = { "waterloggedCatacombs" },
         story = {
             lines = {
@@ -154,7 +149,6 @@ local Floors = {
         palette = makePalette({ base = "tense", accent = "triumphant", arenaBlend = 0.35 }),
         backgroundEffect = { type = "auroraVeil", backdropIntensity = 0.58, arenaIntensity = 0.36 },
         backgroundTheme = "laboratory",
-        layout = { type = "split", padding = 6 },
         traits = { "crystallineResonance" },
         story = {
             lines = {
@@ -163,13 +157,13 @@ local Floors = {
         },
     },
     [7] = {
-        name = "Crossroads Market",
-        flavor = "Lanterns swing above a plaza where allies and risks barter.",
-        palette = makePalette({ base = "curious", accent = "tense" }),
+        name = "Sentinel Confluence",
+        flavor = "Ancient pylons ignite, calling forth twin guardians to halt your climb.",
+        palette = makePalette({ base = "curious", accent = "dire", highlight = "tense" }),
         backgroundEffect = { type = "softCanopy", backdropIntensity = 0.5, arenaIntensity = 0.34 },
         backgroundTheme = "urban",
-        layout = { type = "split", padding = 5 },
-        traits = { "lushGrowth" },
+        layout = { type = "boss", radius = 6 },
+        traits = { "guardianConvergence" },
         story = {
             lines = {
                 { speakerKey = "game.story.speakers.trader", key = "game.story.floor7.line1", duration = 4.2 },
@@ -215,7 +209,6 @@ local Floors = {
         palette = makePalette({ base = "tense", accent = "curious" }),
         backgroundEffect = { type = "softCurrent", backdropIntensity = 0.6, arenaIntensity = 0.36 },
         backgroundTheme = "urban",
-        layout = { type = "corridor", width = 10 },
         traits = { "glowingSpores" },
         story = {
             lines = {
@@ -260,11 +253,10 @@ local Floors = {
     },
     [9] = {
         name = "Veil of Mirrors",
-        flavor = "Reflections split the arena, daring you to choose a shine or storm.",
+        flavor = "Reflections swirl freely, daring you to choose which shimmer to trust.",
         palette = makePalette({ base = "tense", accent = "dire", arenaBlend = 0.4 }),
         backgroundEffect = { type = "auroraVeil", backdropIntensity = 0.64, arenaIntensity = 0.38 },
         backgroundTheme = "laboratory",
-        layout = { type = "split", padding = 6 },
         traits = { "boneHarvest" },
         story = {
             lines = {
@@ -313,7 +305,6 @@ local Floors = {
         palette = makePalette({ base = "dire", accent = "tense" }),
         backgroundEffect = { type = "emberDrift", backdropIntensity = 0.64, arenaIntensity = 0.4 },
         backgroundTheme = "desert",
-        layout = { type = "corridor", width = 9 },
         traits = { "infernalPressure" },
         story = {
             lines = {
@@ -329,7 +320,6 @@ local Floors = {
         palette = makePalette({ base = "tense", accent = "dire" }),
         backgroundEffect = { type = "auroraVeil", backdropIntensity = 0.66, arenaIntensity = 0.42 },
         backgroundTheme = "laboratory",
-        layout = { type = "split", padding = 5 },
         traits = { "spectralEchoes" },
         story = {
             lines = {
@@ -346,7 +336,6 @@ local Floors = {
         palette = makePalette({ base = "dire", accent = "tense" }),
         backgroundEffect = { type = "voidPulse", backdropIntensity = 0.7, arenaIntensity = 0.46 },
         backgroundTheme = "desert",
-        layout = { type = "corridor", width = 8 },
         traits = { "obsidianResonance" },
         story = {
             lines = {
@@ -361,7 +350,7 @@ local Floors = {
         backgroundEffect = { type = "voidPulse", backdropIntensity = 0.72, arenaIntensity = 0.48 },
         backgroundTheme = "laboratory",
         layout = { type = "boss", radius = 7 },
-        traits = { "cleansingNodes", "ashenTithe" },
+        traits = { "cleansingNodes", "ashenTithe", "blightOvermind" },
         story = {
             lines = {
                 { speakerKey = "game.story.speakers.elder", key = "game.story.floor13.line1", duration = 4.2 },
@@ -375,7 +364,6 @@ local Floors = {
         palette = makePalette({ base = "triumphant", accent = "calm", arenaBlend = 0.4 }),
         backgroundEffect = { type = "auroraVeil", backdropIntensity = 0.62, arenaIntensity = 0.34 },
         backgroundTheme = "botanical",
-        layout = { type = "open", safeRadius = 6 },
         traits = { "sunlitSanctuary", "lushGrowth" },
         story = {
             lines = {
