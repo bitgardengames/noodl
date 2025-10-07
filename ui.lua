@@ -1800,7 +1800,11 @@ function UI:drawHealth()
         panelX = fruitBounds.x
         panelY = fruitBounds.y + fruitBounds.h + 16
     end
-    local panelW = (maxHealth > 0 and (maxHealth - 1) * spacing + size or size) + panelPaddingX * 2
+    local heartsWidth = (maxHealth > 0 and (maxHealth - 1) * spacing + size or size)
+    local panelW = heartsWidth + panelPaddingX * 2
+    if fruitBounds then
+        panelW = math.max(panelW, fruitBounds.w)
+    end
     local panelH = headerHeight + bodyHeight + panelPaddingY * 2
 
     local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
@@ -1820,7 +1824,8 @@ function UI:drawHealth()
     love.graphics.setColor(1, 1, 1, 0.04)
     love.graphics.rectangle("fill", panelX, panelY, panelW, math.max(12, panelH * 0.35), 16, 16)
 
-    local originX = panelX + panelPaddingX
+    local innerWidth = panelW - panelPaddingX * 2
+    local originX = panelX + panelPaddingX + math.max(0, (innerWidth - heartsWidth) * 0.5)
     local originY = panelY + panelPaddingY + headerHeight
 
     local flashStrength = 0
