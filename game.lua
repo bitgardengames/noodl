@@ -218,13 +218,10 @@ local function drawFeedbackOverlay(self)
 
         love.graphics.push("all")
         love.graphics.setBlendMode("add")
-        love.graphics.setColor(0.98, 0.78, 0.32, 0.24 * intensity)
-        love.graphics.rectangle("fill", -8, -8, screenW + 16, screenH + 16)
-
         local radius = math.sqrt(screenW * screenW + screenH * screenH)
-        love.graphics.setColor(1, 0.92, 0.6, 0.42 * intensity)
-        love.graphics.setLineWidth(4 + intensity * 10)
-        love.graphics.circle("line", screenW * 0.5, screenH * 0.5, radius * (0.58 + expansion * 0.32), 64)
+        love.graphics.setColor(1, 0.9, 0.5, 0.22 * intensity)
+        love.graphics.setLineWidth(2 + intensity * 6)
+        love.graphics.circle("line", screenW * 0.5, screenH * 0.5, radius * (0.6 + expansion * 0.26), 64)
         love.graphics.pop()
     end
 
