@@ -392,7 +392,10 @@ function Game:finalizeFloorSetup()
         local sectionTitle = pending.restNotes[1].title
         for _, note in ipairs(pending.restNotes) do
             sectionTitle = note.title or sectionTitle
-            table.insert(items, { name = note.text })
+            table.insert(items, {
+                type = "note",
+                text = note.text,
+            })
         end
 
         table.insert(self.transitionTraits, {
@@ -980,10 +983,18 @@ local function buildTraitEntries(sections, maxTraits)
                         addedHeader = true
                     end
 
-                    table.insert(entries, {
-                        type = "trait",
-                        name = trait.name,
-                    })
+                    local entryType = trait.type or trait.entryType or "trait"
+                    if entryType == "note" then
+                        table.insert(entries, {
+                            type = "note",
+                            text = trait.text or trait.name,
+                        })
+                    else
+                        table.insert(entries, {
+                            type = "trait",
+                            name = trait.name or trait.text,
+                        })
+                    end
                     shownTraits = shownTraits + 1
                 end
             end
@@ -1616,7 +1627,7 @@ local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
             y = y + buttonFont:getHeight() + 4
         elseif entry.type == "trait" then
             drawShadowedText(
-                buttonFont,
+                bodyFont,
                 "• " .. (entry.name or ""),
                 x,
                 y + traitOffset,
@@ -1624,7 +1635,7 @@ local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
                 "center",
                 traitAlpha
             )
-            y = y + buttonFont:getHeight() + 6
+            y = y + bodyFont:getHeight() + 4
         elseif entry.type == "note" then
             drawShadowedText(
                 bodyFont,
@@ -1635,7 +1646,7 @@ local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
                 "center",
                 traitAlpha
             )
-            y = y + bodyFont:getHeight()
+            y = y + bodyFont:getHeight() + 2
         end
     end
 end
