@@ -1984,6 +1984,8 @@ function UI:drawFruitSockets()
     local socketFill = lightenColor(Theme.panelColor, 0.45)
     local socketOutline = lightenColor(Theme.panelBorder or Theme.textColor, 0.2)
 
+    local highlightColor = (UI.colors and UI.colors.highlight) or Theme.highlightColor or {1, 1, 1, 0.08}
+
     for i = 1, self.fruitRequired do
         local row = math.floor((i - 1) / perRow)
         local col = (i - 1) % perRow
@@ -2120,7 +2122,12 @@ function UI:drawFruitSockets()
             if goalFlash > 0 then
                 emptyGlow = emptyGlow + 0.08 * goalFlash
             end
-            love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * emptyGlow)
+            love.graphics.setColor(
+                highlightColor[1],
+                highlightColor[2],
+                highlightColor[3],
+                (highlightColor[4] or 1) * emptyGlow
+            )
             love.graphics.circle("line", x, y, radius - 1.5, 32)
         end
     end
