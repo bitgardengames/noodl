@@ -1705,8 +1705,8 @@ function UI:drawHealth()
     local panelH = headerHeight + bodyHeight + panelPaddingY * 2
 
     local shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or 6
+    local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
     if shadowOffset ~= 0 then
-        local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
         local shadowAlpha = shadowColor[4] or 1
         love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
         love.graphics.rectangle("fill", panelX + shadowOffset, panelY + shadowOffset, panelW, panelH, 12, 12)
