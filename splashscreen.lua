@@ -3,7 +3,7 @@ local Screen = require("screen")
 local SplashScreen = {
     transitionDurationIn = 0.25,
     transitionDurationOut = 0.25,
-    displayDuration = 1.35,
+    displayDuration = 1.75,
     backgroundColor = { 0.04, 0.04, 0.05, 1 },
 }
 
