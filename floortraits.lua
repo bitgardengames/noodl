@@ -185,7 +185,7 @@ local traits = {
     },
     guardianConvergence = {
         name = "Guardian Convergence",
-        desc = "Twin sentinels awaken, flooding the arena with blades and darts.",
+        desc = "Twin sentinels awaken; collect fruit to charge up and ram their shields while blades and darts fly.",
         apply = function(ctx)
             if ctx.fruitGoal then
                 ctx.fruitGoal = math.max(1, ctx.fruitGoal + 2)
@@ -203,6 +203,19 @@ local traits = {
 
             Saws.speedMult = (Saws.speedMult or 1) * 1.15
             Saws.spinMult = (Saws.spinMult or 1) * 1.2
+
+            ctx.bossFight = {
+                id = "sentinelConfluence",
+                guardians = 2,
+                guardianHealth = 3,
+                empowerDuration = 6,
+            }
+
+            local goalPerGuardian = (ctx.bossFight.guardianHealth or 3)
+            local requiredHits = goalPerGuardian * (ctx.bossFight.guardians or 1)
+            if requiredHits > 0 then
+                ctx.fruitGoal = math.max(1, requiredHits)
+            end
         end
     },
     blightOvermind = {
