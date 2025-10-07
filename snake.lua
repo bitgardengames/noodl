@@ -891,6 +891,13 @@ function Snake:setDirectionVector(dx, dy)
     local prevX, prevY = direction.x, direction.y
     direction = { x = nx, y = ny }
     pendingDir = { x = nx, y = ny }
+
+    local head = trail and trail[1]
+    if head then
+        head.dirX = nx
+        head.dirY = ny
+    end
+
     if prevX ~= direction.x or prevY ~= direction.y then
         fruitsSinceLastTurn = 0
     end
