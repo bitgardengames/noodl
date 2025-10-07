@@ -416,7 +416,8 @@ local english = {
             },
             tail_trainer = {
                 name = "Tail Trainer",
-                description = "Snake moves 4% faster.",
+                description = "While Snake is length 10+, consecutive fruits unleash a tail lash that shatters rocks, stalls saws, and grants bonus score. Triggers faster with more copies.",
+                activation_text = "Tail Lash!",
             },
             deliberate_coil = {
                 name = "Deliberate Coil",
@@ -428,7 +429,11 @@ local english = {
             },
             mapmakers_compass = {
                 name = "Mapmaker's Compass",
-                description = "The exit unlocks one fruit earlier.",
+                description = "At each floor start, reduce the most common hazard spawn. If none remain, gain bonus score and stall the saws instead.",
+                activation_text = "Adjusted Route",
+                rocks_text = "Thinned Rocks",
+                saws_text = "Sparse Saws",
+                lasers_text = "Scattered Lasers",
             },
             lucky_bite = {
                 name = "Lucky Bite",
