@@ -16,6 +16,7 @@ local Theme = require("theme")
 local Achievements = require("achievements")
 local Upgrades = require("upgrades")
 local Shaders = require("shaders")
+local SentinelBoss = require("sentinelboss")
 
 local FruitEvents = {}
 
@@ -291,12 +292,22 @@ function FruitEvents.handleConsumption(x, y)
         })
     end
 
+    local bossOverride = SentinelBoss and SentinelBoss:onFruitCollected({
+        fruitType = fruitType,
+        x = x,
+        y = y,
+        points = points,
+    })
+    local skipProgress = bossOverride and bossOverride.skipProgress
+
     UI:triggerScorePulse()
-    UI:addFruit(fruitType)
+    if not skipProgress then
+        UI:addFruit(fruitType)
+    end
     local goalReached = UI:isGoalReached()
 
     local exitAlreadyOpen = Arena and Arena.hasExit and Arena:hasExit()
-    if not exitAlreadyOpen and not goalReached then
+    if not exitAlreadyOpen and (not goalReached or skipProgress) then
         Fruit:spawn(Snake:getSegments(), Rocks, safeZone)
     end
 

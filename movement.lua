@@ -12,6 +12,7 @@ local Upgrades = require("upgrades")
 local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 local Achievements = require("achievements")
+local SentinelBoss = require("sentinelboss")
 
 local Movement = {}
 
@@ -888,6 +889,11 @@ function Movement:update(dt)
         local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
         if sawState then
                 return sawState, sawCause, sawContext
+        end
+
+        local bossState, bossCause, bossContext = SentinelBoss:checkCollision(headX, headY)
+        if bossState then
+                return bossState, bossCause, bossContext
         end
 
         if Snake.checkSawBodyCollision then

@@ -39,6 +39,7 @@ local GameInput = require("gameinput")
 local InputMode = require("inputmode")
 local HealthSystem = require("healthsystem")
 local TalentTree = require("talenttree")
+local SentinelBoss = require("sentinelboss")
 
 local Game = {}
 
@@ -59,6 +60,7 @@ local ENTITY_UPDATE_ORDER = {
     Rocks,
     Lasers,
     Darts,
+    SentinelBoss,
     Saws,
     Arena,
     Particles,
@@ -406,6 +408,12 @@ function Game:finalizeFloorSetup()
 
     Upgrades:notify("floorStart", { floor = pending.floor or self.floor, context = pending.traitContext })
     FloorSetup.spawnHazards(pending.spawnPlan)
+
+    if pending.traitContext and pending.traitContext.bossFight then
+        SentinelBoss:beginFight(pending.traitContext.bossFight)
+    else
+        SentinelBoss:deactivate()
+    end
 
     self.pendingFloorSetup = nil
     self.floorSpawnReady = true
@@ -1446,6 +1454,7 @@ local function drawPlayfieldLayers(self, stateOverride)
     Lasers:draw()
     Darts:draw()
     Saws:draw()
+    SentinelBoss:draw()
 
     local isDescending = (renderState == "descending")
     if not isDescending then
@@ -1967,6 +1976,7 @@ function Game:setupFloor(floorNum)
     self.currentFloorData = Floors[floorNum] or Floors[1]
 
     FruitEvents.reset()
+    SentinelBoss:reset()
 
     self.floorTimer = 0
     self.floorSpawnReady = false
