@@ -9,15 +9,25 @@ local SplashScreen = {
 
 local logoImage = nil
 
+local function loadImage(path)
+    if not path then
+        return nil
+    end
+
+    local ok, image = pcall(love.graphics.newImage, path)
+    if ok then
+        return image
+    end
+
+    return nil
+end
+
 local function ensureLogo()
     if logoImage or not love or not love.graphics then
         return logoImage
     end
 
-    local ok, image = pcall(love.graphics.newImage, "Assets/BitGarden.png")
-    if ok then
-        logoImage = image
-    end
+    logoImage = loadImage("Assets/SplashLogo.png") or loadImage("Assets/BitGarden.png")
 
     return logoImage
 end
