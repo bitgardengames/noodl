@@ -170,68 +170,6 @@ local traits = {
             Saws:setStallOnFruit(math.max(currentStall, 1.0))
         end
     },
-<<<<<<< Updated upstream
-    guardianConvergence = {
-        name = "Guardian Convergence",
-        desc = "Twin sentinels awaken; collect fruit to charge up and ram their shields while blades and darts fly.",
-        apply = function(ctx)
-            if ctx.fruitGoal then
-                ctx.fruitGoal = math.max(1, ctx.fruitGoal + 2)
-            end
-
-            if ctx.saws then
-                ctx.saws = math.min(8, (ctx.saws or 0) + 2)
-            end
-
-            ctx.dartCount = math.max(0, (ctx.dartCount or 0) + 2)
-            ctx.laserCount = math.max(0, (ctx.laserCount or 0) + 1)
-
-            local chance = Rocks:getSpawnChance() or 0.25
-            Rocks.spawnChance = math.max(0.12, chance * 0.75)
-
-            Saws.speedMult = (Saws.speedMult or 1) * 1.15
-            Saws.spinMult = (Saws.spinMult or 1) * 1.2
-
-            ctx.bossFight = {
-                id = "sentinelConfluence",
-                guardians = 2,
-                guardianHealth = 3,
-                empowerDuration = 6,
-            }
-
-            local goalPerGuardian = (ctx.bossFight.guardianHealth or 3)
-            local requiredHits = goalPerGuardian * (ctx.bossFight.guardians or 1)
-            if requiredHits > 0 then
-                ctx.fruitGoal = math.max(1, requiredHits)
-            end
-        end
-    },
-    blightOvermind = {
-        name = "Blight Overmind",
-        desc = "The heart of the blight summons searing beams and relentless saws.",
-        apply = function(ctx)
-            if ctx.fruitGoal then
-                ctx.fruitGoal = math.max(1, ctx.fruitGoal + 3)
-            end
-
-            if ctx.saws then
-                ctx.saws = math.min(8, (ctx.saws or 0) + 1)
-            end
-
-            ctx.laserCount = math.max(0, (ctx.laserCount or 0) + 2)
-            ctx.dartCount = math.max(0, (ctx.dartCount or 0) + 1)
-
-            Rocks:addShatterOnFruit(1.25)
-
-            Saws.speedMult = (Saws.speedMult or 1) * 1.2
-            Saws.spinMult = (Saws.spinMult or 1) * 1.25
-
-            local currentStall = Saws:getStallOnFruit()
-            Saws:setStallOnFruit(math.max(currentStall, 0.6))
-        end
-    },
-=======
->>>>>>> Stashed changes
 }
 
 function FloorTraits:apply(list, context)
