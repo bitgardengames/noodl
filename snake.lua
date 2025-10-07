@@ -349,6 +349,99 @@ function Snake:onDamageTaken(cause, info)
         self:beginHazardGrace(grace)
     end
 
+    local headX, headY = self:getHead()
+    if headX and headY then
+        local centerX = headX + SEGMENT_SIZE * 0.5
+        local centerY = headY + SEGMENT_SIZE * 0.5
+
+        local burstDirX, burstDirY = 0, -1
+        local pushMag = math.sqrt(pushX * pushX + pushY * pushY)
+        if pushMag > 1e-4 then
+            burstDirX = pushX / pushMag
+            burstDirY = pushY / pushMag
+        elseif dirX and dirY and (dirX ~= 0 or dirY ~= 0) then
+            local dirMag = math.sqrt(dirX * dirX + dirY * dirY)
+            if dirMag > 1e-4 then
+                burstDirX = -dirX / dirMag
+                burstDirY = -dirY / dirMag
+            end
+        else
+            local faceX = direction and direction.x or 0
+            local faceY = direction and direction.y or -1
+            local faceMag = math.sqrt(faceX * faceX + faceY * faceY)
+            if faceMag > 1e-4 then
+                burstDirX = -faceX / faceMag
+                burstDirY = -faceY / faceMag
+            end
+        end
+
+        if Particles and Particles.spawnBurst then
+            Particles:spawnBurst(centerX, centerY, {
+                count = 16,
+                speed = 170,
+                speedVariance = 90,
+                life = 0.48,
+                size = 5,
+                color = {1, 0.46, 0.32, 1},
+                spread = math.pi * 2,
+                angleJitter = math.pi,
+                drag = 3.2,
+                gravity = 280,
+                fadeTo = 0.05,
+            })
+        end
+
+        local shielded = info.damage ~= nil and info.damage <= 0
+        if Particles and Particles.spawnBlood and not shielded then
+            Particles:spawnBlood(centerX, centerY, {
+                dirX = burstDirX,
+                dirY = burstDirY,
+                spread = math.pi * 0.65,
+                count = 10,
+                dropletCount = 6,
+                speed = 210,
+                speedVariance = 80,
+                life = 0.5,
+                size = 3.6,
+                gravity = 340,
+                fadeTo = 0.06,
+            })
+        end
+
+        if FloatingText and FloatingText.add then
+            local inflicted = info.inflictedDamage or info.damage
+            local label
+            if shielded then
+                label = "SHIELD!"
+            elseif inflicted and inflicted > 0 then
+                label = string.format("-%d", inflicted)
+            else
+                label = "HIT!"
+            end
+
+            local options = {
+                scale = 1.08,
+                popScaleFactor = 1.45,
+                popDuration = 0.24,
+                wobbleMagnitude = 0.2,
+                wobbleFrequency = 4.6,
+                shadow = {
+                    color = {0, 0, 0, 0.6},
+                    offset = {0, 3},
+                    blur = 1.6,
+                },
+                glow = {
+                    color = {1, 0.42, 0.32, 0.45},
+                    magnitude = 0.35,
+                    frequency = 5.2,
+                },
+                jitter = 2.4,
+            }
+
+            FloatingText:add(label, centerX, centerY - 30, {1, 0.78, 0.68, 1}, 0.9, 36, nil, options)
+        end
+    end
+
     self.shieldFlashTimer = SHIELD_FLASH_DURATION
     self.damageFlashTimer = DAMAGE_FLASH_DURATION
 end

@@ -67,6 +67,129 @@ local ENTITY_UPDATE_ORDER = {
     Score,
 }
 
+local function resetFeedbackState(self)
+    self.feedback = {
+        impactTimer = 0,
+        impactDuration = 0.36,
+        impactPeak = 0,
+        surgeTimer = 0,
+        surgeDuration = 0.78,
+        surgePeak = 0,
+        panicTimer = 0,
+        panicDuration = 2.6,
+        dangerLevel = 0,
+        dangerPulseTimer = 0,
+        panicBurst = 0,
+    }
+end
+
+local function ensureFeedbackState(self)
+    if not self.feedback then
+        resetFeedbackState(self)
+    end
+
+    return self.feedback
+end
+
+local function updateFeedbackState(self, dt)
+    if not dt or dt <= 0 then
+        return
+    end
+
+    local state = ensureFeedbackState(self)
+
+    state.impactTimer = math.max(0, (state.impactTimer or 0) - dt)
+    state.surgeTimer = math.max(0, (state.surgeTimer or 0) - dt)
+    state.panicTimer = math.max(0, (state.panicTimer or 0) - dt)
+    state.dangerPulseTimer = (state.dangerPulseTimer or 0) + dt
+
+    local targetDanger = 0
+    if self.healthSystem and self.healthSystem.isCritical and self.healthSystem:isCritical() then
+        targetDanger = 1
+    elseif (state.panicTimer or 0) > 0 and (state.panicDuration or 0) > 0 then
+        targetDanger = math.max(0, math.min(1, (state.panicTimer or 0) / state.panicDuration))
+    end
+
+    local smoothing = math.min(dt * 4.5, 1)
+    state.dangerLevel = (state.dangerLevel or 0) + (targetDanger - (state.dangerLevel or 0)) * smoothing
+
+    local impactDecay = math.min(dt * 2.6, 1)
+    state.impactPeak = math.max(0, (state.impactPeak or 0) - impactDecay)
+
+    local surgeDecay = math.min(dt * 1.8, 1)
+    state.surgePeak = math.max(0, (state.surgePeak or 0) - surgeDecay)
+
+    state.panicBurst = math.max(0, (state.panicBurst or 0) - dt * 0.9)
+end
+
+local function drawFeedbackOverlay(self)
+    local state = self.feedback
+    if not state then
+        return
+    end
+
+    local screenW = self.screenWidth or love.graphics.getWidth()
+    local screenH = self.screenHeight or love.graphics.getHeight()
+
+    local impactTimer = state.impactTimer or 0
+    local impactDuration = state.impactDuration or 1
+    local impactPeak = state.impactPeak or 0
+
+    if impactTimer > 0 and impactPeak > 0 then
+        local progress = math.max(0, math.min(1, impactTimer / impactDuration))
+        local intensity = impactPeak * (progress ^ 0.7)
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("add")
+        love.graphics.setColor(1, 1, 1, 0.22 * intensity)
+        love.graphics.rectangle("fill", -12, -12, screenW + 24, screenH + 24)
+
+        love.graphics.setColor(1, 0.78, 0.45, 0.32 * intensity)
+        local inset = 10 + intensity * 8
+        love.graphics.setLineWidth(3 + intensity * 6)
+        love.graphics.rectangle("line", inset, inset, screenW - inset * 2, screenH - inset * 2, 28, 28)
+        love.graphics.pop()
+    end
+
+    local surgeTimer = state.surgeTimer or 0
+    local surgeDuration = state.surgeDuration or 1
+    local surgePeak = state.surgePeak or 0
+    if surgeTimer > 0 and surgePeak > 0 then
+        local progress = math.max(0, math.min(1, surgeTimer / surgeDuration))
+        local intensity = surgePeak * (progress ^ 0.8)
+        local expansion = 1 - progress
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("add")
+        love.graphics.setColor(0.98, 0.78, 0.32, 0.24 * intensity)
+        love.graphics.rectangle("fill", -8, -8, screenW + 16, screenH + 16)
+
+        local radius = math.sqrt(screenW * screenW + screenH * screenH)
+        love.graphics.setColor(1, 0.92, 0.6, 0.42 * intensity)
+        love.graphics.setLineWidth(4 + intensity * 10)
+        love.graphics.circle("line", screenW * 0.5, screenH * 0.5, radius * (0.58 + expansion * 0.32), 64)
+        love.graphics.pop()
+    end
+
+    local baseDanger = state.dangerLevel or 0
+    local burst = state.panicBurst or 0
+    local danger = math.max(baseDanger, burst * 0.7)
+    if danger > 0 then
+        local pulseTimer = state.dangerPulseTimer or 0
+        local pulse = 0.5 + 0.5 * math.sin(pulseTimer * (4.6 + danger * 3.2))
+        love.graphics.push("all")
+        love.graphics.setColor(0.45, 0.03, 0.08, 0.4 * danger + 0.22 * pulse * danger)
+        love.graphics.rectangle("fill", -14, -14, screenW + 28, screenH + 28)
+
+        local outlineAlpha = math.min(0.78, 0.35 + danger * 0.45 + burst * 0.35)
+        love.graphics.setColor(0.95, 0.1, 0.22, outlineAlpha)
+        local thickness = 16 + danger * 28
+        love.graphics.setLineWidth(thickness)
+        love.graphics.rectangle("line", thickness * 0.5, thickness * 0.5, screenW - thickness, screenH - thickness, 32, 32)
+        love.graphics.pop()
+    end
+end
+
 local function clampToInt(value)
     if value == nil then
         return 0
@@ -182,7 +305,59 @@ function Game:triggerCriticalHealth(cause, context)
         self.Effects:shake(0.22)
     end
 
+    self:triggerPanicFeedback(1.1)
+
     -- No additional surge effects when second wind is disabled.
+end
+
+function Game:triggerImpactFeedback(strength)
+    local state = ensureFeedbackState(self)
+    strength = math.max(strength or 0, 0)
+
+    local duration = 0.28 + strength * 0.24
+    state.impactDuration = duration
+    state.impactTimer = duration
+
+    local spike = 0.55 + strength * 0.65
+    state.impactPeak = math.min(1.25, math.max(state.impactPeak or 0, spike))
+    state.panicBurst = math.min(1.35, (state.panicBurst or 0) + 0.35 + strength * 0.4)
+
+    if Shaders and Shaders.notify then
+        Shaders.notify("specialEvent", {
+            type = "danger",
+            strength = math.min(1.2, 0.45 + strength * 0.55),
+        })
+    end
+end
+
+function Game:triggerPanicFeedback(strength)
+    local state = ensureFeedbackState(self)
+    strength = math.max(strength or 0, 0)
+
+    local baseDuration = state.panicDuration or 2.6
+    local duration = baseDuration * (0.55 + strength * 0.5)
+    state.panicTimer = math.max(state.panicTimer or 0, duration)
+    state.panicBurst = math.min(1.5, (state.panicBurst or 0) + 0.5 + strength * 0.5)
+    state.dangerPulseTimer = 0
+end
+
+function Game:triggerSurgeFeedback(strength)
+    local state = ensureFeedbackState(self)
+    strength = math.max(strength or 0, 0)
+
+    local duration = 0.65 + strength * 0.35
+    state.surgeDuration = duration
+    state.surgeTimer = duration
+
+    local spike = 0.4 + strength * 0.6
+    state.surgePeak = math.min(1.1, math.max(state.surgePeak or 0, spike))
+
+    if Shaders and Shaders.notify then
+        Shaders.notify("specialEvent", {
+            type = "tension",
+            strength = math.min(1.0, 0.3 + strength * 0.45),
+        })
+    end
 end
 
 local function callMode(self, methodName, ...)
@@ -452,6 +627,8 @@ function Game:load()
     self.input = GameInput.new(self, self.transition)
     self.input:resetAxes()
 
+    resetFeedbackState(self)
+
     local talentEffects = TalentTree and TalentTree.getAggregatedEffects and TalentTree:getAggregatedEffects()
 
     self.mode = GameModes:get()
@@ -518,6 +695,8 @@ function Game:reset()
     self.floorTimer = 0
 
     self.mouseCursorState = nil
+
+    resetFeedbackState(self)
 
     if self.healthSystem then
         self.healthSystem:reset(self.maxHealth)
@@ -588,9 +767,17 @@ function Game:applyDamage(amount, cause, context)
         return true
     end
 
+    if context then
+        context.inflictedDamage = amount
+    end
+
+    local impactStrength = math.max(0.35, ((context and context.shake) or 0) + amount * 0.12)
+
     if Snake and Snake.onDamageTaken then
         Snake:onDamageTaken(cause, context)
     end
+
+    self:triggerImpactFeedback(impactStrength)
 
     if self.singleTouchDeath or not self:usesHealth() then
         if context and context.shake and self.Effects and self.Effects.shake then
@@ -761,9 +948,18 @@ function Game:updateGameplay(dt)
     if moveResult == "scored" then
         FruitEvents.handleConsumption(fruitX, fruitY)
 
-        if UI:isGoalReached() then
+        local goalReached = UI:isGoalReached()
+        if goalReached then
             Arena:spawnExit()
         end
+
+        local comboCount = FruitEvents.getComboCount and FruitEvents.getComboCount() or 0
+        local surgeStrength = 0.45 + math.min(comboCount, 6) * 0.08
+        if goalReached then
+            surgeStrength = surgeStrength + 0.25
+        end
+
+        self:triggerSurgeFeedback(surgeStrength)
     end
 
     local snakeX, snakeY = Snake:getHead()
@@ -873,6 +1069,8 @@ local function drawInterfaceLayers(self)
     FloatingText:draw()
 
     drawAdrenalineGlow(self)
+
+    drawFeedbackOverlay(self)
 
     Death:drawFlash(self.screenWidth, self.screenHeight)
     PauseMenu:draw(self.screenWidth, self.screenHeight)
@@ -1252,11 +1450,12 @@ end
 function Game:update(dt)
     self:updateMouseVisibility()
 
+    local scaledDt = getScaledDeltaTime(dt)
+    updateFeedbackState(self, scaledDt)
+
     if handlePauseMenu(self, dt) then
         return
     end
-
-    local scaledDt = getScaledDeltaTime(dt)
 
     updateRunTimers(self, scaledDt)
 
