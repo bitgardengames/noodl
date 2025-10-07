@@ -780,16 +780,62 @@ function Shop:draw(screenW, screenH)
         love.graphics.setColor(1, 1, 1, 1)
     end
 
+    local cardCount = #self.cards
     local cardWidth, cardHeight = 264, 344
-    local spacing = 48
-    local totalWidth = (#self.cards * cardWidth) + math.max(0, (#self.cards - 1)) * spacing
+    local baseSpacing = 48
+    local minSpacing = 28
+    local marginX = math.max(60, screenW * 0.05)
+    local availableWidth = math.max(cardWidth, screenW - marginX * 2)
+    local columns = math.min(cardCount, math.max(1, math.floor((availableWidth + minSpacing) / (cardWidth + minSpacing))))
+
+    while columns > 1 do
+        local widthNeeded = columns * cardWidth + (columns - 1) * minSpacing
+        if widthNeeded <= availableWidth then
+            break
+        end
+        columns = columns - 1
+    end
+
+    columns = math.max(1, columns)
+    local rows = math.max(1, math.ceil(cardCount / columns))
+
+    local spacing = 0
+    if columns > 1 then
+        local calculated = (availableWidth - columns * cardWidth) / (columns - 1)
+        spacing = math.max(minSpacing, math.min(baseSpacing, calculated))
+    end
+
+    local totalWidth = columns * cardWidth + math.max(0, (columns - 1)) * spacing
     local startX = (screenW - totalWidth) / 2
-    local y = screenH * 0.34
+
+    local rowSpacing = 72
+    local minRowSpacing = 40
+    local topPadding = screenH * 0.24
+    local bottomPadding = screenH * 0.12
+    local totalHeight = rows * cardHeight + math.max(0, (rows - 1)) * rowSpacing
+    local availableHeight = screenH - topPadding - bottomPadding
+    if rows > 1 and totalHeight > availableHeight then
+        local adjustableRows = rows - 1
+        if adjustableRows > 0 then
+            local excess = totalHeight - availableHeight
+            local reduction = excess / adjustableRows
+            rowSpacing = math.max(minRowSpacing, rowSpacing - reduction)
+            totalHeight = rows * cardHeight + math.max(0, (rows - 1)) * rowSpacing
+        end
+    end
+
+    local preferredTop = screenH * 0.34
+    local centeredTop = (screenH - totalHeight) / 2
+    local startY = math.max(topPadding, math.min(preferredTop, centeredTop))
+    local layoutCenterY = startY + totalHeight / 2
 
     local mx, my = love.mouse.getPosition()
 
     local function renderCard(i, card)
-        local baseX = startX + (i - 1) * (cardWidth + spacing)
+        local columnIndex = ((i - 1) % columns)
+        local rowIndex = math.floor((i - 1) / columns)
+        local baseX = startX + columnIndex * (cardWidth + spacing)
+        local baseY = startY + rowIndex * (cardHeight + rowSpacing)
         local alpha = 1
         local scale = 1
         local yOffset = 0
@@ -868,12 +914,12 @@ function Shop:draw(screenW, screenH)
         alpha = math.max(0, math.min(alpha, 1))
 
         local centerX = baseX + cardWidth / 2
-        local centerY = y + cardHeight / 2 - yOffset
+        local centerY = baseY + cardHeight / 2 - yOffset
         local originalCenterX, originalCenterY = centerX, centerY
 
         if card == self.selected then
             centerX = centerX + (screenW / 2 - centerX) * focusEase
-            local targetY = screenH * 0.48
+            local targetY = layoutCenterY
             centerY = centerY + (targetY - centerY) * focusEase
         else
             if discardData then
