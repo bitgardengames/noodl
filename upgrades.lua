@@ -571,6 +571,201 @@ local function handleBulwarkChorusFloorStart(_, state)
     end
 end
 
+local function tailTrainerFruitHandler(data, state)
+    if not (state and data) then return end
+
+    local stacks = (state.takenSet and state.takenSet.tail_trainer) or 0
+    if stacks <= 0 then return end
+
+    local length = 0
+    if Snake and Snake.getLength then
+        length = Snake:getLength() or 0
+    end
+
+    local minLength = 10 + math.max(0, stacks - 1) * 2
+    if length < minLength then
+        state.counters.tailTrainerProgress = 0
+        return
+    end
+
+    local progress = (state.counters.tailTrainerProgress or 0) + 1
+    local threshold = math.max(2, 5 - math.min(stacks, 3))
+
+    if progress >= threshold then
+        progress = 0
+
+        if Rocks and Rocks.shatterNearest then
+            Rocks:shatterNearest(data.x or 0, data.y or 0, 1)
+        end
+
+        if Saws and Saws.stall then
+            Saws:stall(0.4 + 0.2 * stacks)
+        end
+
+        if Score and Score.addBonus then
+            Score:addBonus(2 + stacks)
+        end
+
+        local label = getUpgradeString("tail_trainer", "activation_text") or getUpgradeString("tail_trainer", "name")
+        celebrateUpgrade(label, data, {
+            color = {0.92, 0.78, 0.54, 1},
+            textOffset = 48,
+            textScale = 1.1,
+            particleCount = 14 + stacks * 2,
+            particleSpeed = 130,
+            particleLife = 0.42,
+            visual = {
+                badge = "spark",
+                outerRadius = 52,
+                innerRadius = 16,
+                ringCount = 3,
+                life = 0.62,
+                glowAlpha = 0.24,
+                haloAlpha = 0.18,
+            },
+        })
+    end
+
+    state.counters.tailTrainerProgress = progress
+end
+
+local mapmakersCompassHazards = {
+    {
+        key = "laserCount",
+        effectKey = "laserSpawnBonus",
+        labelKey = "lasers_text",
+        color = {0.72, 0.9, 1.0, 1},
+        priority = 3,
+    },
+    {
+        key = "saws",
+        effectKey = "sawSpawnBonus",
+        labelKey = "saws_text",
+        color = {1.0, 0.78, 0.42, 1},
+        priority = 2,
+    },
+    {
+        key = "rocks",
+        effectKey = "rockSpawnBonus",
+        labelKey = "rocks_text",
+        color = {0.72, 0.86, 1.0, 1},
+        priority = 1,
+    },
+}
+
+local function clearMapmakersCompass(state)
+    if not state then return end
+    local counters = state.counters
+    if not counters then return end
+
+    local applied = counters.mapmakersCompassApplied
+    if not applied then return end
+
+    state.effects = state.effects or {}
+
+    for effectKey, delta in pairs(applied) do
+        if delta ~= 0 then
+            state.effects[effectKey] = (state.effects[effectKey] or 0) - delta
+        end
+    end
+
+    counters.mapmakersCompassApplied = {}
+end
+
+local function applyMapmakersCompass(state, context, options)
+    if not state then return end
+    state.effects = state.effects or {}
+    state.counters = state.counters or {}
+
+    clearMapmakersCompass(state)
+
+    local stacks = (state.takenSet and state.takenSet.mapmakers_compass) or 0
+    if stacks <= 0 then
+        return
+    end
+
+    state.counters.mapmakersCompassApplied = state.counters.mapmakersCompassApplied or {}
+    state.counters.mapmakersCompassTarget = nil
+    state.counters.mapmakersCompassReduction = nil
+
+    if context == nil then
+        return
+    end
+
+    state.counters.mapmakersCompassLastContext = context
+
+    local candidates = {}
+    for _, entry in ipairs(mapmakersCompassHazards) do
+        local value = context[entry.key] or 0
+        table.insert(candidates, { info = entry, value = value })
+    end
+
+    table.sort(candidates, function(a, b)
+        if a.value == b.value then
+            return (a.info.priority or 0) < (b.info.priority or 0)
+        end
+        return (a.value or 0) > (b.value or 0)
+    end)
+
+    local chosen
+    for _, candidate in ipairs(candidates) do
+        if candidate.value and candidate.value > 0 then
+            chosen = candidate.info
+            break
+        end
+    end
+
+    local applied = state.counters.mapmakersCompassApplied
+    local celebrate = options and options.celebrate
+    local eventData = options and options.eventData
+
+    if not chosen then
+        if Score and Score.addBonus then
+            Score:addBonus(2 + stacks)
+        end
+
+        if Saws and Saws.stall then
+            Saws:stall(0.6 + 0.1 * stacks)
+        end
+
+        if celebrate then
+            local label = getUpgradeString("mapmakers_compass", "activation_text") or getUpgradeString("mapmakers_compass", "name")
+            celebrateUpgrade(label, eventData, {
+                color = {0.92, 0.82, 0.6, 1},
+                textOffset = 46,
+                textScale = 1.08,
+            })
+        end
+
+        return
+    end
+
+    local reduction = 1 + math.floor((stacks - 1) * 0.5)
+    local delta = -reduction
+    local effectKey = chosen.effectKey
+    state.effects[effectKey] = (state.effects[effectKey] or 0) + delta
+    applied[effectKey] = delta
+    state.counters.mapmakersCompassTarget = chosen.key
+    state.counters.mapmakersCompassReduction = reduction
+
+    if celebrate then
+        local label = getUpgradeString("mapmakers_compass", chosen.labelKey or "activation_text") or getUpgradeString("mapmakers_compass", "name")
+        celebrateUpgrade(label, eventData, {
+            color = chosen.color or {0.72, 0.86, 1.0, 1},
+            textOffset = 46,
+            textScale = 1.08,
+        })
+    end
+end
+
+local function mapmakersCompassFloorStart(data, state)
+    if not (data and state) then return end
+    if not state.takenSet or (state.takenSet.mapmakers_compass or 0) <= 0 then return end
+
+    local context = data.context
+    applyMapmakersCompass(state, context, { celebrate = true, eventData = data })
+end
+
 local pool = {
     register({
         id = "quick_fangs",
@@ -733,9 +928,14 @@ local pool = {
         rarity = "common",
         allowDuplicates = true,
         maxStacks = 3,
-        tags = {"speed"},
+        tags = {"defense", "utility"},
         onAcquire = function(state)
-            Snake:addSpeedMultiplier(1.04)
+            state.counters.tailTrainerProgress = state.counters.tailTrainerProgress or 0
+
+            if not state.counters.tailTrainerHandlersRegistered then
+                state.counters.tailTrainerHandlersRegistered = true
+                Upgrades:addEventHandler("fruitCollected", tailTrainerFruitHandler)
+            end
         end,
     }),
     register({
@@ -796,11 +996,19 @@ local pool = {
         nameKey = "upgrades.mapmakers_compass.name",
         descKey = "upgrades.mapmakers_compass.description",
         rarity = "uncommon",
-        tags = {"economy", "risk"},
+        tags = {"defense", "utility"},
         onAcquire = function(state)
-            state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
-            if UI.adjustFruitGoal then
-                UI:adjustFruitGoal(-1)
+            state.effects = state.effects or {}
+            state.counters = state.counters or {}
+            state.counters.mapmakersCompassApplied = state.counters.mapmakersCompassApplied or {}
+
+            if not state.counters.mapmakersCompassHandlerRegistered then
+                state.counters.mapmakersCompassHandlerRegistered = true
+                Upgrades:addEventHandler("floorStart", mapmakersCompassFloorStart)
+            end
+
+            if state.counters.mapmakersCompassLastContext then
+                applyMapmakersCompass(state, state.counters.mapmakersCompassLastContext, { celebrate = false })
             end
         end,
     }),
