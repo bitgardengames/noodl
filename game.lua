@@ -47,6 +47,62 @@ local easeOutBack = Easing.easeOutBack
 local easeInOutCubic = Easing.easeInOutCubic
 local easedProgress = Easing.easedProgress
 
+local floorTitlePixelateShader
+do
+    local shaderSource = [[
+        extern vec2 canvasSize;
+        extern float pixelSize;
+        extern float dissolve;
+        extern float time;
+
+        float hash21(vec2 p)
+        {
+            p = fract(p * vec2(0.1031, 0.11369));
+            p += dot(p, p + 19.19);
+            return fract((p.x + p.y) * p.x * p.y);
+        }
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+            vec2 uv = texture_coords * canvasSize;
+            float size = max(1.0, pixelSize);
+            vec2 blockIndex = floor(uv / size);
+            vec2 blockCenter = (blockIndex + 0.5) * size;
+            vec2 sampleCoords = blockCenter / canvasSize;
+            vec4 base = Texel(tex, sampleCoords) * color;
+
+            float anim = sin(time * 6.0 + hash21(blockIndex) * 6.28318) * 0.12;
+            float threshold = clamp(1.0 - dissolve + anim, 0.0, 1.0);
+            float noise = hash21(blockIndex + floor(time * 7.0));
+            float visibility = smoothstep(0.0, 0.45, threshold - noise);
+
+            float anger = clamp(dissolve * 0.65, 0.0, 1.0);
+            vec3 angerColor = vec3(0.92, 0.28, 0.28);
+            base.rgb = mix(base.rgb, angerColor, anger);
+            base.rgb *= visibility;
+            base.a *= visibility;
+
+            return base;
+        }
+    ]]
+    local ok, shader = pcall(love.graphics.newShader, shaderSource)
+    if ok then
+        floorTitlePixelateShader = shader
+    end
+end
+
+local function ensureTransitionTitleCanvas(self)
+    local width = math.max(1, math.ceil(self.screenWidth or love.graphics.getWidth() or 1))
+    local height = math.max(1, math.ceil(self.screenHeight or love.graphics.getHeight() or 1))
+    local canvas = self.transitionTitleCanvas
+    if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
+        canvas = love.graphics.newCanvas(width, height)
+        canvas:setFilter("nearest", "nearest")
+        self.transitionTitleCanvas = canvas
+    end
+    return canvas
+end
+
 local RUN_ACTIVE_STATES = {
     playing = true,
     descending = true,
@@ -1320,17 +1376,47 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
     end
 
     if titleParams then
-        love.graphics.setFont(UI.fonts.title)
-        love.graphics.push()
-        love.graphics.translate(self.screenWidth / 2, titleParams.centerY)
-        love.graphics.scale(titleParams.scale, titleParams.scale)
-        love.graphics.translate(-self.screenWidth / 2, -titleParams.centerY)
-        local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * titleParams.alpha)
-        love.graphics.printf(floorData.name, 2, titleParams.centerY + 2, self.screenWidth, "center")
-        love.graphics.setColor(1, 1, 1, titleParams.alpha)
-        love.graphics.printf(floorData.name, 0, titleParams.centerY, self.screenWidth, "center")
-        love.graphics.pop()
+        local function drawFloorTitleText()
+            love.graphics.setFont(UI.fonts.title)
+            love.graphics.push()
+            love.graphics.translate(self.screenWidth / 2, titleParams.centerY)
+            love.graphics.scale(titleParams.scale, titleParams.scale)
+            love.graphics.translate(-self.screenWidth / 2, -titleParams.centerY)
+            local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+            love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * titleParams.alpha)
+            love.graphics.printf(floorData.name, 2, titleParams.centerY + 2, self.screenWidth, "center")
+            love.graphics.setColor(1, 1, 1, titleParams.alpha)
+            love.graphics.printf(floorData.name, 0, titleParams.centerY, self.screenWidth, "center")
+            love.graphics.pop()
+        end
+
+        local pixelateStrength = 0
+        if floorTitlePixelateShader and outroProgress > 0 and (titleParams.alpha or 0) > 0 then
+            pixelateStrength = clamp01(outroProgress ^ 1.2)
+        end
+
+        if floorTitlePixelateShader and pixelateStrength > 0.01 then
+            local canvas = ensureTransitionTitleCanvas(self)
+
+            love.graphics.push("all")
+            love.graphics.setCanvas(canvas)
+            love.graphics.clear(0, 0, 0, 0)
+            love.graphics.origin()
+            drawFloorTitleText()
+            love.graphics.pop()
+
+            love.graphics.push("all")
+            love.graphics.setShader(floorTitlePixelateShader)
+            floorTitlePixelateShader:send("canvasSize", {canvas:getWidth(), canvas:getHeight()})
+            floorTitlePixelateShader:send("pixelSize", 1.0 + pixelateStrength * 22.0)
+            floorTitlePixelateShader:send("dissolve", clamp01(pixelateStrength * 1.1))
+            floorTitlePixelateShader:send("time", timer or 0)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(canvas, 0, 0)
+            love.graphics.pop()
+        else
+            drawFloorTitleText()
+        end
     end
 
     if flavorParams then

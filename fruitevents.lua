@@ -110,7 +110,7 @@ local function applyComboReward(x, y)
         FloatingText:add(summary, x, y - 74, {1, 0.95, 0.6, 1}, 1.3, 48)
         Shaders.notify("specialEvent", {
             type = "combo",
-            strength = 0.55,
+            strength = 0.38,
             color = {1, 0.9, 0.5, 1},
         })
     end
@@ -156,7 +156,7 @@ local function applyRunRewards(fruitType, x, y)
                 end
                 Shaders.notify("specialEvent", {
                     type = "comboBoost",
-                    strength = 0.35,
+                    strength = 0.24,
                     color = reward.color,
                 })
             end
@@ -170,7 +170,7 @@ local function applyRunRewards(fruitType, x, y)
                 end
                 Shaders.notify("specialEvent", {
                     type = "stallSaws",
-                    strength = 0.5,
+                    strength = 0.36,
                     color = reward.color or {0.72, 0.85, 1, 1},
                 })
             end
@@ -184,7 +184,7 @@ local function applyRunRewards(fruitType, x, y)
                 end
                 Shaders.notify("specialEvent", {
                     type = "shield",
-                    strength = 0.65,
+                    strength = 0.48,
                     color = reward.color or {0.72, 1, 0.82, 1},
                 })
             end
@@ -198,7 +198,7 @@ local function applyRunRewards(fruitType, x, y)
                 end
                 Shaders.notify("specialEvent", {
                     type = "score",
-                    strength = 0.45,
+                    strength = 0.32,
                     color = reward.color or {1, 0.78, 0.45, 1},
                 })
             end
@@ -252,7 +252,7 @@ function FruitEvents.boostComboTimer(amount)
     if (comboState.count or 0) >= 2 then
         Shaders.notify("specialEvent", {
             type = "comboBoost",
-            strength = 0.3,
+            strength = 0.22,
         })
     end
 end
@@ -324,6 +324,14 @@ function FruitEvents.handleConsumption(x, y)
 
     applyComboReward(x, y)
     applyRunRewards(fruitType, x, y)
+
+    if Arena and Arena.triggerBorderFlare then
+        local comboCount = FruitEvents.getComboCount and FruitEvents.getComboCount() or 0
+        local baseStrength = 0.45
+        local comboBoost = math.min(comboCount, 5) * 0.08
+        local duration = 0.8 + math.min(comboCount, 4) * 0.05
+        Arena:triggerBorderFlare(baseStrength + comboBoost, duration)
+    end
 
     if Snake.adrenaline then
         Snake.adrenaline.active = true

@@ -39,6 +39,10 @@ local function getHighlightColor(color)
     return {r, g, b, a}
 end
 
+local function mixChannel(base, target, amount)
+    return base + (target - base) * amount
+end
+
 local function isTileInSafeZone(safeZone, col, row)
     if not safeZone then return false end
 
@@ -60,6 +64,9 @@ local Arena = {
     rows = 0,
         exit = nil,
         activeBackgroundEffect = nil,
+    borderFlare = 0,
+    borderFlareTimer = 0,
+    borderFlareDuration = 0.85,
 }
 
 function Arena:updateScreenBounds(sw, sh)
@@ -214,11 +221,17 @@ function Arena:drawBorder()
     local radius       = thickness / 2
 
     -- Expand the border rect outward so it doesn’t bleed inside
-	local correction = (thickness / 2) + 3   -- negative = pull inward, positive = push outward
-	local ox = correction
-	local oy = correction
-	local bx, by = ax - ox, ay - oy
-	local bw, bh = aw + ox * 2, ah + oy * 2
+    local correction = (thickness / 2) + 3   -- negative = pull inward, positive = push outward
+    local ox = correction
+    local oy = correction
+    local bx, by = ax - ox, ay - oy
+    local bw, bh = aw + ox * 2, ah + oy * 2
+
+    local borderFlare = math.max(0, math.min(1.2, self.borderFlare or 0))
+    local flarePulse = 0
+    if borderFlare > 0 then
+        flarePulse = (math.sin((self.borderFlareTimer or 0) * 9.0) + 1) * 0.5
+    end
 
     -- Create/reuse MSAA canvas
     if not self.borderCanvas or
@@ -238,7 +251,20 @@ function Arena:drawBorder()
     love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
     -- Fill (arena border color)
-    love.graphics.setColor(Theme.arenaBorder)
+    local borderColor = Theme.arenaBorder
+    if borderFlare > 0 and borderColor then
+        local mixAmount = math.min(0.45, 0.32 * borderFlare + 0.18 * flarePulse * borderFlare)
+        local r = mixChannel(borderColor[1] or 1, 0.96, mixAmount)
+        local g = mixChannel(borderColor[2] or 1, 0.24, mixAmount * 1.05)
+        local b = mixChannel(borderColor[3] or 1, 0.18, mixAmount * 1.1)
+        love.graphics.setColor(r, g, b, borderColor[4] or 1)
+    else
+        if borderColor then
+            love.graphics.setColor(borderColor)
+        else
+            love.graphics.setColor(1, 1, 1, 1)
+        end
+    end
     love.graphics.setLineWidth(thickness)
     love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
@@ -260,7 +286,13 @@ function Arena:drawBorder()
     end
 
     local highlight = getHighlightColor(Theme.arenaBorder)
-    local highlightWidth = math.max(1.5, thickness * 0.32)
+    if borderFlare > 0 then
+        highlight[1] = math.min(1, mixChannel(highlight[1], 0.98, 0.5 * borderFlare))
+        highlight[2] = math.max(0, mixChannel(highlight[2], 0.22, 0.65 * borderFlare))
+        highlight[3] = math.max(0, mixChannel(highlight[3], 0.18, 0.7 * borderFlare))
+        highlight[4] = math.min(1, highlight[4] * (1 + 0.85 * borderFlare))
+    end
+    local highlightWidth = math.max(1.5, thickness * (0.32 + 0.18 * borderFlare))
     local highlightOffset = 2
     local cornerOffsetX = 3
     local cornerOffsetY = 3
@@ -310,6 +342,22 @@ function Arena:drawBorder()
     love.graphics.setLineStyle(prevLineStyle)
     love.graphics.setLineJoin(prevLineJoin)
 
+    if borderFlare > 0.01 then
+        local glowStrength = borderFlare
+        local glowAlpha = 0.28 * glowStrength + 0.16 * flarePulse * glowStrength
+        local emberAlpha = 0.18 * glowStrength
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("add")
+        love.graphics.setLineWidth(thickness + outlineSize * (1.05 + 0.25 * glowStrength))
+        love.graphics.setColor(0.96, 0.32, 0.24, glowAlpha)
+        love.graphics.rectangle("line", bx, by, bw, bh, radius + 4 + glowStrength * 3.0, radius + 4 + glowStrength * 3.0)
+        love.graphics.setLineWidth(math.max(2, thickness * 0.55))
+        love.graphics.setColor(0.55, 0.08, 0.06, emberAlpha)
+        love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
+        love.graphics.pop()
+    end
+
     -- Soft caps for highlight ends
     local topCapX = bx + bw - radius - highlightShift
     local topCapY = by - highlightOffset - highlightShift
@@ -318,8 +366,8 @@ function Arena:drawBorder()
 
     local capRadius = highlightWidth * 0.75
     local featherRadius = capRadius * 1.5
-    local capAlpha = highlight[4] * 0.55
-    local featherAlpha = highlight[4] * 0.22
+    local capAlpha = highlight[4] * (0.55 + 0.25 * borderFlare)
+    local featherAlpha = highlight[4] * (0.22 + 0.18 * borderFlare)
 
     local function drawHighlightCap(cx, cy)
         if capAlpha > 0 then
@@ -478,6 +526,20 @@ function Arena:hasExit()
 end
 
 function Arena:update(dt)
+    if dt and dt > 0 then
+        local flare = self.borderFlare or 0
+        if flare > 0 then
+            local duration = math.max(0.35, self.borderFlareDuration or 0.85)
+            local decay = dt / duration
+            flare = math.max(0, flare - decay)
+            self.borderFlare = flare
+            self.borderFlareTimer = (self.borderFlareTimer or 0) + dt
+        else
+            self.borderFlare = 0
+            self.borderFlareTimer = 0
+        end
+    end
+
     if not self.exit then
         return
     end
@@ -544,6 +606,23 @@ function Arena:drawExit()
     love.graphics.setLineWidth(2)
     love.graphics.circle("line", cx, cy, radius * 0.96, 48)
     love.graphics.setLineWidth(1)
+end
+
+function Arena:triggerBorderFlare(strength, duration)
+    local amount = math.max(0, strength or 0)
+    if amount <= 0 then
+        return
+    end
+
+    local existing = self.borderFlare or 0
+    self.borderFlare = math.min(1.2, existing + amount)
+    self.borderFlareTimer = 0
+
+    if duration and duration > 0 then
+        self.borderFlareDuration = duration
+    elseif not self.borderFlareDuration or self.borderFlareDuration <= 0 then
+        self.borderFlareDuration = 0.85
+    end
 end
 
 return Arena
