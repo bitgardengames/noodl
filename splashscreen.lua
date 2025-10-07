@@ -27,7 +27,7 @@ local function ensureLogo()
         return logoImage
     end
 
-    logoImage = loadImage("Assets/SplashLogo.png") or loadImage("Assets/BitGarden.png")
+    logoImage = loadImage("Assets/SplashLogo.png")
 
     return logoImage
 end
