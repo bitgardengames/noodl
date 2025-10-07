@@ -35,6 +35,9 @@ end
 
 local function resetFloorEntities()
     Arena:resetExit()
+    if Arena.clearSpawnDebugData then
+        Arena:clearSpawnDebugData()
+    end
     Movement:reset()
     FloatingText:reset()
     Particles:reset()
@@ -614,6 +617,18 @@ function FloorSetup.prepare(floorNum, floorData)
     end
 
     local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
+
+    if Arena.setSpawnDebugData then
+        Arena:setSpawnDebugData({
+            safeZone = safeZone,
+            rockSafeZone = rockSafeZone,
+            spawnBuffer = spawnBuffer,
+            spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
+            reservedCells = reservedCells,
+            reservedSafeZone = reservedSafeZone,
+            reservedSpawnBuffer = reservedSpawnBuffer,
+        })
+    end
 
     return {
         traitContext = traitContext,

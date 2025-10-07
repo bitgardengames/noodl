@@ -39,6 +39,76 @@ local function getHighlightColor(color)
     return {r, g, b, a}
 end
 
+local function normalizeCellCoordinate(value)
+    if value == nil then
+        return nil
+    end
+
+    return math.floor(value + 0.5)
+end
+
+local function drawSpawnDebugOverlay(self)
+    local debugData = self._spawnDebugData
+    if not debugData then
+        return
+    end
+
+    local Snake = getModule("snake")
+    if not (Snake and Snake.isDeveloperAssistEnabled and Snake:isDeveloperAssistEnabled()) then
+        return
+    end
+
+    if not (love and love.graphics) then
+        return
+    end
+
+    local function drawCells(cells, fillColor, outlineColor)
+        if not (cells and #cells > 0) then
+            return
+        end
+
+        local tileSize = self.tileSize or 24
+        local radius = math.min(8, tileSize * 0.35)
+
+        if fillColor then
+            love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.22)
+            for _, cell in ipairs(cells) do
+                local col = normalizeCellCoordinate(cell[1])
+                local row = normalizeCellCoordinate(cell[2])
+                if col and row and col >= 1 and col <= self.cols and row >= 1 and row <= self.rows then
+                    local x, y = self:getTilePosition(col, row)
+                    love.graphics.rectangle("fill", x, y, tileSize, tileSize, radius, radius)
+                end
+            end
+        end
+
+        if outlineColor then
+            love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 0.4)
+            for _, cell in ipairs(cells) do
+                local col = normalizeCellCoordinate(cell[1])
+                local row = normalizeCellCoordinate(cell[2])
+                if col and row and col >= 1 and col <= self.cols and row >= 1 and row <= self.rows then
+                    local x, y = self:getTilePosition(col, row)
+                    love.graphics.rectangle("line", x + 1, y + 1, tileSize - 2, tileSize - 2, radius, radius)
+                end
+            end
+        end
+    end
+
+    love.graphics.push("all")
+    love.graphics.setLineWidth(1.25)
+    love.graphics.setBlendMode("alpha")
+
+    drawCells(debugData.spawnSafeCells, {0.95, 0.34, 0.32, 0.24})
+    drawCells(debugData.spawnBuffer, {1.0, 0.64, 0.26, 0.28})
+    drawCells(debugData.safeZone, {0.22, 0.68, 1.0, 0.35}, {0.92, 0.98, 1.0, 0.75})
+    drawCells(debugData.rockSafeZone, {0.64, 0.36, 0.88, 0.2})
+    drawCells(debugData.reservedCells, nil, {1.0, 1.0, 1.0, 0.35})
+    drawCells(debugData.reservedSpawnBuffer, nil, {1.0, 0.86, 0.38, 0.45})
+
+    love.graphics.pop()
+end
+
 local function mixChannel(base, target, amount)
     return base + (target - base) * amount
 end
@@ -68,6 +138,27 @@ local Arena = {
     borderFlareTimer = 0,
     borderFlareDuration = 0.85,
 }
+
+function Arena:setSpawnDebugData(data)
+    if not data then
+        self._spawnDebugData = nil
+        return
+    end
+
+    self._spawnDebugData = {
+        safeZone = data.safeZone,
+        rockSafeZone = data.rockSafeZone,
+        spawnBuffer = data.spawnBuffer,
+        spawnSafeCells = data.spawnSafeCells,
+        reservedCells = data.reservedCells,
+        reservedSafeZone = data.reservedSafeZone,
+        reservedSpawnBuffer = data.reservedSpawnBuffer,
+    }
+end
+
+function Arena:clearSpawnDebugData()
+    self._spawnDebugData = nil
+end
 
 function Arena:updateScreenBounds(sw, sh)
     self.x = math.floor((sw - self.width) / 2)
@@ -206,6 +297,8 @@ function Arena:drawBackground()
     -- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
     love.graphics.setColor(Theme.arenaBG)
     love.graphics.rectangle("fill", ax, ay, aw, ah)
+
+    drawSpawnDebugOverlay(self)
 
     love.graphics.setColor(1, 1, 1, 1)
 end
