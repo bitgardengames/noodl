@@ -40,7 +40,6 @@ local Floors = {
                         arenaIntensity = 0.32,
                 },
                 backgroundTheme = "botanical",
-                traits = {"sunlitSanctuary"},
         },
     [2] = {
         name = "Echoing Caverns",
@@ -58,7 +57,6 @@ local Floors = {
             arenaIntensity = 0.3,
         },
         backgroundTheme = "cavern",
-        traits = {"echoingStillness"},
     },
     [3] = {
         name = "Mushroom Grotto",
@@ -78,7 +76,6 @@ local Floors = {
         },
         backgroundTheme = "botanical",
         backgroundVariant = "fungal",
-        traits = {"glowingSpores"},
     },
     [4] = {
         name = "Flooded Catacombs",
@@ -97,7 +94,6 @@ local Floors = {
             arenaIntensity = 0.36,
         },
         backgroundTheme = "oceanic",
-        traits = {"waterloggedCatacombs"},
     },
     [5] = {
         name = "Ancient Ruins",
@@ -116,7 +112,6 @@ local Floors = {
             arenaIntensity = 0.32,
         },
         backgroundTheme = "machine",
-        traits = {"ancientMachinery", "echoingStillness"},
     },
     [6] = {
         name = "Crystal Hollows",
@@ -135,7 +130,6 @@ local Floors = {
             arenaIntensity = 0.4,
         },
         backgroundTheme = "arctic",
-        traits = {"crystallineResonance", "glowingSpores"},
     },
     [7] = {
         name = "Bone Pits",
@@ -155,7 +149,6 @@ local Floors = {
         },
         backgroundTheme = "cavern",
         backgroundVariant = "bone",
-        traits = {"boneHarvest"},
     },
     [8] = {
         name = "The Abyss",
@@ -175,7 +168,6 @@ local Floors = {
         },
         backgroundTheme = "oceanic",
         backgroundVariant = "abyss",
-        traits = {"echoingStillness", "restlessEarth"},
     },
     [9] = {
         name = "Inferno Gates",
@@ -195,7 +187,6 @@ local Floors = {
         },
         backgroundTheme = "desert",
         backgroundVariant = "hell",
-        traits = {"infernalPressure"},
     },
     [10] = {
         name = "Obsidian Keep",
@@ -215,7 +206,6 @@ local Floors = {
         },
         backgroundTheme = "desert",
         backgroundVariant = "hell",
-        traits = {"obsidianResonance", "infernalPressure"},
     },
     [11] = {
         name = "Ashen Frontier",
@@ -235,7 +225,6 @@ local Floors = {
         },
         backgroundTheme = "desert",
         backgroundVariant = "inferno",
-        traits = {"ashenTithe", "boneHarvest"},
     },
     [12] = {
         name = "Spirit Crucible",
@@ -254,7 +243,6 @@ local Floors = {
             arenaIntensity = 0.38,
         },
         backgroundTheme = "laboratory",
-        traits = {"spectralEchoes", "glowingSpores"},
     },
     [13] = {
         name = "The Underworld",
@@ -274,7 +262,6 @@ local Floors = {
         },
         backgroundTheme = "desert",
         backgroundVariant = "hell",
-        traits = {"ashenTithe", "infernalPressure"},
     },
     [14] = {
         name = "Celestial Causeway",
@@ -294,7 +281,6 @@ local Floors = {
         },
         backgroundTheme = "urban",
         backgroundVariant = "celestial",
-        traits = {"divineAscent", "spectralEchoes"},
     },
     [15] = {
         name = "Sky Spire",
@@ -314,7 +300,6 @@ local Floors = {
         },
         backgroundTheme = "urban",
         backgroundVariant = "celestial",
-        traits = {"divineAscent", "crystallineResonance"},
     },
     [16] = {
         name = "Starfall Bastion",
@@ -334,7 +319,6 @@ local Floors = {
         },
         backgroundTheme = "urban",
         backgroundVariant = "celestial",
-        traits = {"spectralEchoes", "divineAscent"},
     },
     [17] = {
         name = "Nebula Crown",
@@ -353,7 +337,6 @@ local Floors = {
             arenaIntensity = 0.42,
         },
         backgroundTheme = "laboratory",
-        traits = {"spectralEchoes", "glowingSpores"},
     },
     [18] = {
         name = "Eventide Observatory",
@@ -372,7 +355,6 @@ local Floors = {
             arenaIntensity = 0.4,
         },
         backgroundTheme = "laboratory",
-        traits = {"spectralEchoes", "crystallineResonance"},
     },
     [19] = {
         name = "Void Throne",
@@ -392,7 +374,6 @@ local Floors = {
         },
         backgroundTheme = "desert",
         backgroundVariant = "hell",
-        traits = {"obsidianResonance", "infernalPressure"},
     },
     [20] = {
         name = "Singularity Gate",
@@ -412,7 +393,6 @@ local Floors = {
         },
         backgroundTheme = "oceanic",
         backgroundVariant = "abyss",
-        traits = {"obsidianResonance", "ashenTithe"},
     },
 }
 

@@ -342,12 +342,6 @@ local english = {
             },
         },
         game = {
-            floor_traits = {
-                section_title = "Floor Traits",
-                default_title = "Traits",
-                more_modifiers_one = "+${count} more modifier",
-                more_modifiers_other = "+${count} more modifiers",
-            },
             floor_intro = {
                 prompt = "Press any key to descend",
                 heal_section_title = "Floor Rest",

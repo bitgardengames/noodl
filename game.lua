@@ -67,8 +67,6 @@ local ENTITY_UPDATE_ORDER = {
     Score,
 }
 
-local MAX_TRANSITION_TRAITS = 4
-
 local function clampToInt(value)
     if value == nil then
         return 0
@@ -401,63 +399,12 @@ local function drawShadowedText(font, text, x, y, width, align, alpha)
     love.graphics.printf(text, x, y, width, align)
 end
 
-local function buildTraitEntries(sections, maxTraits)
-    local entries = {}
-    local totalTraits, shownTraits = 0, 0
-
-    for _, section in ipairs(sections) do
-        local traits = section.items
-        if traits and #traits > 0 then
-            local addedHeader = false
-
-            for _, trait in ipairs(traits) do
-                totalTraits = totalTraits + 1
-
-                if shownTraits < maxTraits then
-                    if not addedHeader then
-                        table.insert(entries, {
-                            type = "header",
-                            title = section.title or Localization:get("game.floor_traits.default_title"),
-                        })
-                        addedHeader = true
-                    end
-
-                    table.insert(entries, {
-                        type = "trait",
-                        name = trait.name,
-                    })
-                    shownTraits = shownTraits + 1
-                end
-            end
-        end
-    end
-
-    return entries, totalTraits, shownTraits
-end
-
 local STATE_UPDATERS = {
     descending = function(self, dt)
         self:updateDescending(dt)
         return true
     end,
 }
-
-local function buildModifierSections(self)
-    local sections = {}
-
-    if self.activeFloorTraits and #self.activeFloorTraits > 0 then
-        table.insert(sections, {
-            title = Localization:get("game.floor_traits.section_title"),
-            items = self.activeFloorTraits,
-        })
-    end
-
-    if #sections == 0 then
-        return nil
-    end
-
-    return sections
-end
 
 local function drawAdrenalineGlow(self)
     local glowStrength = Score:getHighScoreGlowStrength()
@@ -555,9 +502,6 @@ function Game:load()
     end
 
     self:setupFloor(self.floor)
-    if self.transitionTraits == nil then
-        self.transitionTraits = buildModifierSections(self)
-    end
 
     self.transition:startFloorIntro(3.5, {
         transitionAdvance = false,
@@ -994,76 +938,47 @@ local function drawTransitionShop(self, timer)
     return true
 end
 
-local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
-    local sections = self.transitionTraits or buildModifierSections(self)
-    if not (sections and #sections > 0) then
+local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
+    local notes = self.transitionNotes
+    if not (notes and #notes > 0) then
         return
-    end
-
-    local entries, totalTraits, shownTraits = buildTraitEntries(sections, MAX_TRANSITION_TRAITS)
-    if #entries == 0 then
-        return
-    end
-
-    local remaining = math.max(0, totalTraits - shownTraits)
-    if remaining > 0 then
-        local suffixKey = (remaining == 1)
-            and "game.floor_traits.more_modifiers_one"
-            or "game.floor_traits.more_modifiers_other"
-        table.insert(entries, {
-            type = "note",
-            text = Localization:get(suffixKey, {
-                count = remaining,
-            }),
-        })
     end
 
     local y = self.screenHeight / 2 + 64
     local width = self.screenWidth * 0.45
     local x = (self.screenWidth - width) / 2
-    local index = 0
     local buttonFont = UI.fonts.button
     local bodyFont = UI.fonts.body
 
-    for _, entry in ipairs(entries) do
-        index = index + 1
+    for index, note in ipairs(notes) do
         local offsetDelay = 0.9 + (index - 1) * 0.22
-        local traitAlpha = fadeAlpha(offsetDelay, 0.4)
-        local traitOffset = (1 - easeOutExpo(clamp01((timer - offsetDelay) / 0.55))) * 16 * outroAlpha
+        local noteAlpha = fadeAlpha(offsetDelay, 0.4)
+        local noteOffset = (1 - easeOutExpo(clamp01((timer - offsetDelay) / 0.55))) * 16 * outroAlpha
 
-        if entry.type == "header" then
+        if note.title and note.title ~= "" then
             drawShadowedText(
                 buttonFont,
-                entry.title or Localization:get("game.floor_traits.default_title"),
+                note.title,
                 x,
-                y + traitOffset,
+                y + noteOffset,
                 width,
                 "center",
-                traitAlpha
-            )
-            y = y + buttonFont:getHeight() + 4
-        elseif entry.type == "trait" then
-            drawShadowedText(
-                buttonFont,
-                "• " .. (entry.name or ""),
-                x,
-                y + traitOffset,
-                width,
-                "center",
-                traitAlpha
+                noteAlpha
             )
             y = y + buttonFont:getHeight() + 6
-        elseif entry.type == "note" then
+        end
+
+        if note.text and note.text ~= "" then
             drawShadowedText(
                 bodyFont,
-                entry.text or "",
+                note.text,
                 x,
-                y + traitOffset,
+                y + noteOffset,
                 width,
                 "center",
-                traitAlpha
+                noteAlpha
             )
-            y = y + bodyFont:getHeight()
+            y = y + bodyFont:getHeight() + 10
         end
     end
 end
@@ -1202,7 +1117,7 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         love.graphics.pop()
     end
 
-    drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
+    drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
 
     if data.transitionAwaitInput then
         local introDuration = data.transitionIntroDuration or duration or 0
@@ -1381,7 +1296,6 @@ function Game:setupFloor(floorNum)
 
     local setup = FloorSetup.prepare(floorNum, self.currentFloorData)
     local traitContext = setup.traitContext
-    local appliedTraits = setup.appliedTraits
     local spawnPlan = setup.spawnPlan
 
     local healAmount = traitContext and traitContext.floorHeal
@@ -1414,9 +1328,6 @@ function Game:setupFloor(floorNum)
     end
 
     UI:setFruitGoal(traitContext.fruitGoal)
-    UI:setFloorModifiers(appliedTraits)
-    self.activeFloorTraits = appliedTraits
-    self.transitionTraits = buildModifierSections(self)
 
     local restNotes = {}
     if restoredHealth and restoredHealth > 0 then
@@ -1436,18 +1347,15 @@ function Game:setupFloor(floorNum)
     end
 
     if #restNotes > 0 then
-        self.transitionTraits = self.transitionTraits or {}
-        local items = {}
-        local sectionTitle = restNotes[1].title
+        self.transitionNotes = {}
         for _, note in ipairs(restNotes) do
-            sectionTitle = note.title or sectionTitle
-            table.insert(items, { name = note.text })
+            table.insert(self.transitionNotes, {
+                title = note.title,
+                text = note.text,
+            })
         end
-
-        table.insert(self.transitionTraits, {
-            title = sectionTitle,
-            items = items,
-        })
+    else
+        self.transitionNotes = nil
     end
 
     Upgrades:applyPersistentEffects(true)
