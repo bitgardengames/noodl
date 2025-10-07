@@ -47,6 +47,30 @@ local function markStaticCells(cells)
     end
 end
 
+local function dedupeCells(cells)
+    if not cells or #cells == 0 then
+        return cells
+    end
+
+    local unique = {}
+    local seen = {}
+    local cols = Arena.cols or 1
+    local rows = Arena.rows or 1
+
+    for _, cell in ipairs(cells) do
+        local col = clamp(math.floor((cell[1] or 0) + 0.5), 1, cols)
+        local row = clamp(math.floor((cell[2] or 0) + 0.5), 1, rows)
+        local key = col .. "," .. row
+
+        if not seen[key] then
+            seen[key] = true
+            unique[#unique + 1] = { col, row }
+        end
+    end
+
+    return unique
+end
+
 local function buildOpenLayout(layout)
     local safeRadius = layout and layout.safeRadius or 4
     local cols = Arena.cols or 1
@@ -177,9 +201,10 @@ function FloorLayouts.apply(layoutSpec, spawnPlan)
     end
 
     if info.staticRocks then
-        spawnPlan.staticRocks = info.staticRocks
+        local uniqueStatic = dedupeCells(info.staticRocks)
+        spawnPlan.staticRocks = uniqueStatic
         if spawnPlan.numRocks then
-            local remaining = (spawnPlan.numRocks or 0) - #info.staticRocks
+            local remaining = (spawnPlan.numRocks or 0) - #(uniqueStatic or {})
             if remaining < 0 then
                 remaining = 0
             end
