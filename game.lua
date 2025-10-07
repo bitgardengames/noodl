@@ -1111,7 +1111,7 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         return alpha * outroAlpha
     end
 
-    local nameAlpha = fadeAlpha(0.0, 0.45)
+    local nameAlpha = fadeAlpha(0.0, 0.35)
     local titleParams
     if nameAlpha > 0 then
         local titleProgress = easeOutBack(clamp01((timer - 0.1) / 0.6))
@@ -1129,9 +1129,9 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
     local flavorParams
     local flavorAlpha = 0
     if floorData.flavor and floorData.flavor ~= "" then
-        flavorAlpha = fadeAlpha(0.45, 0.4)
+        flavorAlpha = fadeAlpha(0.4, 0.32)
         if flavorAlpha > 0 then
-            local flavorProgress = easeOutExpo(clamp01((timer - 0.45) / 0.65))
+            local flavorProgress = easeOutExpo(clamp01((timer - 0.4) / 0.55))
             local flavorOffset = (1 - flavorProgress) * 24 * outroAlpha
             local flavorPadding = 10
             local flavorHeight = UI.fonts.button:getHeight() + flavorPadding * 2
