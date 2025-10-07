@@ -200,10 +200,9 @@ local function rerouteAlongWall(headX, headY)
                 end
         end
 
-        Snake:setHeadPosition(clampedX, clampedY)
         Movement:applyForcedDirection(newDirX, newDirY)
 
-        return Snake:getHead()
+        return clampedX, clampedY
 end
 
 local function rerouteAroundRock(headX, headY, rock)
@@ -463,6 +462,9 @@ local function handleWallCollision(headX, headY)
                 local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY)
                 local clampedX = reroutedX or safeX
                 local clampedY = reroutedY or safeY
+                if Snake and Snake.setHeadPosition then
+                        Snake:setHeadPosition(clampedX, clampedY)
+                end
                 local dir = Snake.getDirection and Snake:getDirection() or { x = 0, y = 0 }
 
                 return clampedX, clampedY, "wall", {
@@ -478,8 +480,12 @@ local function handleWallCollision(headX, headY)
         end
 
         local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
-        headX = reroutedX or headX
-        headY = reroutedY or headY
+        local clampedX = reroutedX or clamp(headX, left, right)
+        local clampedY = reroutedY or clamp(headY, top, bottom)
+        if Snake and Snake.setHeadPosition then
+                Snake:setHeadPosition(clampedX, clampedY)
+        end
+        headX, headY = clampedX, clampedY
 
         Particles:spawnBurst(headX, headY, {
                 count = 12,
