@@ -65,6 +65,8 @@ local EVENT_COLORS = {
     stallSaws = {0.65, 0.82, 1.0, 1},
     score = {1.0, 0.72, 0.36, 1},
     dragonfruit = {1.0, 0.45, 0.28, 1},
+    danger = {1.0, 0.38, 0.38, 1},
+    tension = {1.0, 0.67, 0.35, 1},
 }
 
 local function assignEventColor(color)
