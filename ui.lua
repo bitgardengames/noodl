@@ -809,6 +809,14 @@ function UI:drawFloorModifiers()
     local minY = margin
     local y = math.max(minY, screenH - height - margin)
 
+    local shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or 6
+    if shadowOffset ~= 0 then
+        local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
+        local shadowAlpha = shadowColor[4] or 1
+        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
+        love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, width, height, 12, 12)
+    end
+
     love.graphics.setColor(Theme.panelColor)
     love.graphics.rectangle("fill", x, y, width, height, 12, 12)
 
@@ -1807,7 +1815,13 @@ function UI:drawHealth()
     end
     local panelH = headerHeight + bodyHeight + panelPaddingY * 2
 
-    local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
+    local shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or 6
+    if shadowOffset ~= 0 then
+        local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
+        local shadowAlpha = shadowColor[4] or 1
+        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
+        love.graphics.rectangle("fill", panelX + shadowOffset, panelY + shadowOffset, panelW, panelH, 12, 12)
+    end
 
     local panelColor = Theme.panelColor or {0.16, 0.18, 0.22, 1}
     love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
@@ -1963,6 +1977,14 @@ function UI:drawFruitSockets()
     end
 
     -- backdrop styled like the floor traits card
+    local shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or 6
+    if shadowOffset ~= 0 then
+        local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
+        local shadowAlpha = shadowColor[4] or 1
+        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
+        love.graphics.rectangle("fill", panelX + shadowOffset, panelY + shadowOffset, panelW, panelH, 12, 12)
+    end
+
     local panelColor = Theme.panelColor
     if goalFlash > 0 then
         panelColor = lightenColor(panelColor, 0.25 * goalFlash)
