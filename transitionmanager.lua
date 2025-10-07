@@ -117,7 +117,7 @@ function TransitionManager:startFloorIntro(duration, extra)
     self:mergeData(extra)
 
     local data = self.data
-    local introDuration = duration or data.transitionIntroDuration or 3.5
+    local introDuration = duration or data.transitionIntroDuration or 2.8
     data.transitionIntroDuration = introDuration
 
     if extra.transitionAwaitInput ~= nil then
@@ -129,7 +129,7 @@ function TransitionManager:startFloorIntro(duration, extra)
     if extra.transitionIntroPromptDelay ~= nil then
         data.transitionIntroPromptDelay = extra.transitionIntroPromptDelay or 0
     else
-        data.transitionIntroPromptDelay = 0.35
+        data.transitionIntroPromptDelay = 0.25
     end
 
     data.transitionIntroConfirmed = nil
