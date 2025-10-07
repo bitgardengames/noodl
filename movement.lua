@@ -15,6 +15,21 @@ local Achievements = require("achievements")
 
 local Movement = {}
 
+function Movement:applyForcedDirection(dirX, dirY)
+        if not (Snake and Snake.setDirectionVector) then
+                return
+        end
+
+        dirX = dirX or 0
+        dirY = dirY or 0
+
+        if dirX == 0 and dirY == 0 then
+                return
+        end
+
+        Snake:setDirectionVector(dirX, dirY)
+end
+
 local SEGMENT_SIZE = 24 -- same size as rocks and snake
 local DAMAGE_GRACE = 0.35
 local WALL_GRACE = 0.25
@@ -186,7 +201,7 @@ local function rerouteAlongWall(headX, headY)
         end
 
         Snake:setHeadPosition(clampedX, clampedY)
-        Snake:setDirectionVector(newDirX, newDirY)
+        Movement:applyForcedDirection(newDirX, newDirY)
 
         return Snake:getHead()
 end
@@ -304,7 +319,7 @@ local function rerouteAroundRock(headX, headY, rock)
                 end
         end
 
-        Snake:setDirectionVector(newDirX, newDirY)
+        Movement:applyForcedDirection(newDirX, newDirY)
 
         return newDirX, newDirY
 end
