@@ -1808,25 +1808,20 @@ function UI:drawHealth()
     local panelH = headerHeight + bodyHeight + panelPaddingY * 2
 
     local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
-    love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 1) * 0.55)
-    love.graphics.rectangle("fill", panelX + 3, panelY + 4, panelW, panelH, 16, 16)
 
     local panelColor = Theme.panelColor or {0.16, 0.18, 0.22, 1}
     love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
-    love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 16, 16)
+    love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
 
     local borderColor = Theme.panelBorder or {0, 0, 0, 1}
     love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 16, 16)
+    love.graphics.setLineWidth(3)
+    love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 12, 12)
     love.graphics.setLineWidth(1)
-
-    love.graphics.setColor(1, 1, 1, 0.04)
-    love.graphics.rectangle("fill", panelX, panelY, panelW, math.max(12, panelH * 0.35), 16, 16)
 
     local innerWidth = panelW - panelPaddingX * 2
     local originX = panelX + panelPaddingX + math.max(0, (innerWidth - heartsWidth) * 0.5)
-    local originY = panelY + panelPaddingY + headerHeight
+    local originY = panelY + panelPaddingY + headerHeight + size * 0.5
 
     local flashStrength = 0
     if health.flashTimer and health.flashDuration and health.flashDuration > 0 then
@@ -1973,10 +1968,6 @@ function UI:drawFruitSockets()
         panelColor = lightenColor(panelColor, 0.25 * goalFlash)
     end
 
-    local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-    love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * 0.6)
-    love.graphics.rectangle("fill", panelX + 3, panelY + 4, panelW, panelH, 12, 12)
-
     love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
     love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
 
@@ -1987,21 +1978,6 @@ function UI:drawFruitSockets()
     love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
     love.graphics.setLineWidth(3)
     love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 12, 12)
-
-    if goalFlash > 0 then
-        love.graphics.setColor(1, 1, 1, 0.18 * goalFlash)
-        love.graphics.setLineWidth(6 * goalFlash + 1.5)
-        love.graphics.rectangle("line", panelX - 4 * goalFlash, panelY - 4 * goalFlash, panelW + 8 * goalFlash, panelH + 8 * goalFlash, 14 + 8 * goalFlash, 14 + 8 * goalFlash)
-        love.graphics.setLineWidth(3)
-    end
-
-    if headerHeight > 0 then
-        love.graphics.setColor(1, 1, 1, 0.05)
-        local headerHighlightHeight = headerHeight + math.max(6, paddingOffsetY * 0.75)
-        love.graphics.rectangle("fill", panelX, panelY, panelW, headerHighlightHeight, 12, 12)
-    end
-
-    local highlight = Theme.highlightColor or {1, 1, 1, 0.05}
 
     local time = love.timer.getTime()
     local socketRadius = (self.socketSize / 2) - 2
