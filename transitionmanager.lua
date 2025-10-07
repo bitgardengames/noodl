@@ -102,7 +102,7 @@ end
 function TransitionManager:startFloorIntro(duration, extra)
     extra = shallowCopy(extra)
     if not extra.transitionResumePhase then
-        extra.transitionResumePhase = "fadein"
+        extra.transitionResumePhase = "playing"
     end
 
     if extra.transitionResumePhase == "fadein" and not extra.transitionResumeFadeDuration then

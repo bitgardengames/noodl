@@ -44,6 +44,7 @@ local Game = {}
 local clamp01 = Easing.clamp01
 local easeOutExpo = Easing.easeOutExpo
 local easeOutBack = Easing.easeOutBack
+local easeInOutCubic = Easing.easeInOutCubic
 local easedProgress = Easing.easedProgress
 
 local RUN_ACTIVE_STATES = {
@@ -1187,6 +1188,10 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         return
     end
 
+    if not duration or duration <= 0 then
+        duration = data.transitionIntroDuration or 0
+    end
+
     local progress = easedProgress(timer, duration)
     local awaitingInput = data.transitionAwaitInput
     local introConfirmed = data.transitionIntroConfirmed
@@ -1202,9 +1207,33 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
     end
     local outroAlpha = 1 - outroProgress
 
+    local revealWindow = math.min(1.1, math.max(0.45, duration * 0.35))
+    if revealWindow > duration then
+        revealWindow = duration
+    end
+    local revealStart = math.max(0, duration - revealWindow)
+    local revealProgress = 0
+    if revealWindow > 0 then
+        revealProgress = clamp01((timer - revealStart) / revealWindow)
+    elseif duration <= 0 and timer > 0 then
+        revealProgress = 1
+    end
+    local revealEase = easeInOutCubic(revealProgress)
+
+    if timer >= revealStart then
+        love.graphics.push("all")
+        local scale = 1.03 - 0.03 * revealEase
+        local yOffset = (1 - revealEase) * 24
+        love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 + yOffset)
+        love.graphics.scale(scale, scale)
+        love.graphics.translate(-self.screenWidth / 2, -self.screenHeight / 2)
+        drawPlayfieldLayers(self, "playing")
+        love.graphics.pop()
+    end
+
     local overlayAlpha = math.min(0.75, progress * 0.85)
-    if outroProgress > 0 then
-        overlayAlpha = overlayAlpha + (1 - overlayAlpha) * outroProgress
+    if overlayAlpha > 0 then
+        overlayAlpha = overlayAlpha * (1 - revealEase)
     end
     love.graphics.setColor(0, 0, 0, overlayAlpha)
     love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
@@ -1212,7 +1241,8 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
     love.graphics.push("all")
     love.graphics.setBlendMode("add")
     local bloomProgress = 0.55 + 0.45 * progress
-    local bloomIntensity = bloomProgress * (0.45 + 0.55 * outroAlpha)
+    local bloomFade = math.max(0, 1 - revealEase)
+    local bloomIntensity = bloomProgress * (0.45 + 0.55 * outroAlpha) * bloomFade
     if Arena.drawBackgroundEffect then
         Arena:drawBackgroundEffect(0, 0, self.screenWidth, self.screenHeight, bloomIntensity)
     end
