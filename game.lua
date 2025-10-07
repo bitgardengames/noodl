@@ -33,7 +33,6 @@ local Shop = require("shop")
 local Upgrades = require("upgrades")
 local Localization = require("localization")
 local FloorSetup = require("floorsetup")
-local FloorStory = require("floorstory")
 local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
 local InputMode = require("inputmode")
@@ -80,6 +79,7 @@ local function clampToInt(value)
     return math.max(0, math.floor(value + 0.0001))
 end
 
+<<<<<<< Updated upstream
 local function isAdvanceKey(key)
     return key == "return" or key == "kpenter" or key == "space"
 end
@@ -642,6 +642,8 @@ function Game:handleStoryInput(action, ...)
     return false
 end
 
+=======
+>>>>>>> Stashed changes
 function Game:usesHealth()
     if self.usesHealthSystem == nil then
         return true
@@ -895,10 +897,6 @@ function Game:confirmTransitionIntro()
         return false
     end
 
-    if self:isFloorIntroActive() and not (self.floorReady or (self.currentFloorStory == nil and self.floorSpawnReady)) then
-        return false
-    end
-
     return transition:confirmFloorIntro() and true or false
 end
 
@@ -991,18 +989,10 @@ local function buildTraitEntries(sections, maxTraits)
                         addedHeader = true
                     end
 
-                    local entryType = trait.type or trait.entryType or "trait"
-                    if entryType == "note" then
-                        table.insert(entries, {
-                            type = "note",
-                            text = trait.text or trait.name,
-                        })
-                    else
-                        table.insert(entries, {
-                            type = "trait",
-                            name = trait.name or trait.text,
-                        })
-                    end
+                    table.insert(entries, {
+                        type = "trait",
+                        name = trait.name,
+                    })
                     shownTraits = shownTraits + 1
                 end
             end
@@ -1019,7 +1009,7 @@ local STATE_UPDATERS = {
     end,
 }
 
-function Game:buildModifierSections()
+local function buildModifierSections(self)
     local sections = {}
 
     if self.activeFloorTraits and #self.activeFloorTraits > 0 then
@@ -1066,13 +1056,6 @@ function Game:load()
     self.floor = 1
     self.runTimer = 0
     self.floorTimer = 0
-
-    FloorStory:reset()
-    self.currentFloorStory = nil
-    self.pendingFloorSetup = nil
-    self.floorSpawnReady = false
-    self.storyResolved = true
-    self.floorReady = false
 
     self.mouseCursorState = nil
 
@@ -1140,7 +1123,7 @@ function Game:load()
 
     self:setupFloor(self.floor)
     if self.transitionTraits == nil then
-        self.transitionTraits = self:buildModifierSections()
+        self.transitionTraits = buildModifierSections(self)
     end
 
     self.transition:startFloorIntro(3.5, {
@@ -1158,13 +1141,6 @@ function Game:reset()
     self.floorTimer = 0
 
     self.mouseCursorState = nil
-
-    FloorStory:reset()
-    self.currentFloorStory = nil
-    self.pendingFloorSetup = nil
-    self.floorSpawnReady = false
-    self.storyResolved = true
-    self.floorReady = false
 
     if self.healthSystem then
         self.healthSystem:reset(self.maxHealth)
@@ -1587,7 +1563,7 @@ local function drawTransitionShop(self, timer)
 end
 
 local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
-    local sections = self.transitionTraits or self:buildModifierSections()
+    local sections = self.transitionTraits or buildModifierSections(self)
     if not (sections and #sections > 0) then
         return
     end
@@ -1636,7 +1612,7 @@ local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
             y = y + buttonFont:getHeight() + 4
         elseif entry.type == "trait" then
             drawShadowedText(
-                bodyFont,
+                buttonFont,
                 "• " .. (entry.name or ""),
                 x,
                 y + traitOffset,
@@ -1644,7 +1620,7 @@ local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
                 "center",
                 traitAlpha
             )
-            y = y + bodyFont:getHeight() + 4
+            y = y + buttonFont:getHeight() + 6
         elseif entry.type == "note" then
             drawShadowedText(
                 bodyFont,
@@ -1655,7 +1631,7 @@ local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
                 "center",
                 traitAlpha
             )
-            y = y + bodyFont:getHeight() + 2
+            y = y + bodyFont:getHeight()
         end
     end
 end
@@ -1794,9 +1770,6 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         love.graphics.pop()
     end
 
-    drawStoryDialoguePanel(self, self.currentFloorStory, outroAlpha)
-    drawStoryChoicePanels(self, self.currentFloorStory, outroAlpha)
-
     drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
 
     if data.transitionAwaitInput then
@@ -1805,10 +1778,6 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         local promptStart = introDuration + promptDelay
         local promptProgress = clamp01((timer - promptStart) / 0.45)
         local promptAlpha = promptProgress * outroAlpha
-
-        if not self.floorReady then
-            promptAlpha = 0
-        end
 
         if promptAlpha > 0 then
             local promptText = Localization:get("game.floor_intro.prompt")
@@ -1948,7 +1917,6 @@ function Game:update(dt)
 
     if self:isTransitionActive() then
         self.transition:update(scaledDt)
-        self:updateFloorStory(scaledDt)
         return
     end
 
@@ -1979,14 +1947,11 @@ function Game:setupFloor(floorNum)
     SentinelBoss:reset()
 
     self.floorTimer = 0
-    self.floorSpawnReady = false
-    self.storyResolved = false
-    self.floorReady = false
 
     local setup = FloorSetup.prepare(floorNum, self.currentFloorData)
-    local traitContext = setup.traitContext or {}
-    local appliedTraits = setup.appliedTraits or {}
-    local spawnPlan = setup.spawnPlan or {}
+    local traitContext = setup.traitContext
+    local appliedTraits = setup.appliedTraits
+    local spawnPlan = setup.spawnPlan
 
     local healAmount = traitContext and traitContext.floorHeal
     if healAmount == nil and self.mode and self.mode.floorHeal ~= nil then
@@ -2017,6 +1982,11 @@ function Game:setupFloor(floorNum)
         forgedShields = forged or 0
     end
 
+    UI:setFruitGoal(traitContext.fruitGoal)
+    UI:setFloorModifiers(appliedTraits)
+    self.activeFloorTraits = appliedTraits
+    self.transitionTraits = buildModifierSections(self)
+
     local restNotes = {}
     if restoredHealth and restoredHealth > 0 then
         local healSectionTitle = Localization:get("game.floor_intro.heal_section_title")
@@ -2034,6 +2004,21 @@ function Game:setupFloor(floorNum)
         table.insert(restNotes, { title = healSectionTitle, text = shieldText })
     end
 
+    if #restNotes > 0 then
+        self.transitionTraits = self.transitionTraits or {}
+        local items = {}
+        local sectionTitle = restNotes[1].title
+        for _, note in ipairs(restNotes) do
+            sectionTitle = note.title or sectionTitle
+            table.insert(items, { name = note.text })
+        end
+
+        table.insert(self.transitionTraits, {
+            title = sectionTitle,
+            items = items,
+        })
+    end
+
     Upgrades:applyPersistentEffects(true)
 
     if Snake.adrenaline then
@@ -2041,24 +2026,10 @@ function Game:setupFloor(floorNum)
         Snake.adrenaline.timer = 0
     end
 
-    self.pendingFloorSetup = {
-        floor = floorNum,
-        traitContext = traitContext,
-        appliedTraits = appliedTraits,
-        spawnPlan = spawnPlan,
-        restNotes = restNotes,
-    }
+    FloorSetup.finalizeContext(traitContext, spawnPlan)
+    Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
 
-    self.activeFloorTraits = appliedTraits
-    self.transitionTraits = self:buildModifierSections()
-    UI:setFloorModifiers(appliedTraits)
-
-    local storyState = FloorStory:startFloor(floorNum, self.currentFloorData)
-    self:initializeFloorStory(storyState)
-
-    if not (storyState and storyState.choice and not storyState.choice.selected) then
-        self:finalizeFloorSetup()
-    end
+    FloorSetup.spawnHazards(spawnPlan)
 end
 
 function Game:draw()
@@ -2086,10 +2057,6 @@ function Game:keypressed(key)
         return
     end
 
-    if self:handleStoryInput("keypressed", key) then
-        return
-    end
-
     if self:confirmTransitionIntro() then
         return
     end
@@ -2098,10 +2065,6 @@ function Game:keypressed(key)
 end
 
 function Game:mousepressed(x, y, button)
-    if self:handleStoryInput("mousepressed", x, y, button) then
-        return
-    end
-
     if self:confirmTransitionIntro() then
         return
     end
@@ -2130,10 +2093,6 @@ function Game:mousereleased(x, y, button)
 end
 
 function Game:gamepadpressed(_, button)
-    if self:handleStoryInput("gamepadpressed", button) then
-        return
-    end
-
     if self:confirmTransitionIntro() then
         return
     end

@@ -137,19 +137,6 @@ local traits = {
             Saws.spinMult = (Saws.spinMult or 1) * 1.3
         end
     },
-    cleansingNodes = {
-        name = "Cleansing Nodes",
-        desc = "Fruit pulses shatter extra rocks while slowing saws.",
-        apply = function(ctx)
-            if ctx.saws then
-                ctx.saws = math.max(0, ctx.saws - 1)
-            end
-
-            Rocks:addShatterOnFruit(1)
-
-            Saws.speedMult = (Saws.speedMult or 1) * 0.9
-        end
-    },
     spectralEchoes = {
         name = "Spectral Echoes",
         desc = "Combo window extends while phantoms thin the stone.",
@@ -183,6 +170,7 @@ local traits = {
             Saws:setStallOnFruit(math.max(currentStall, 1.0))
         end
     },
+<<<<<<< Updated upstream
     guardianConvergence = {
         name = "Guardian Convergence",
         desc = "Twin sentinels awaken; collect fruit to charge up and ram their shields while blades and darts fly.",
@@ -242,6 +230,8 @@ local traits = {
             Saws:setStallOnFruit(math.max(currentStall, 0.6))
         end
     },
+=======
+>>>>>>> Stashed changes
 }
 
 function FloorTraits:apply(list, context)
