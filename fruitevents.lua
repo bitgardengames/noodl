@@ -327,9 +327,9 @@ function FruitEvents.handleConsumption(x, y)
 
     if Arena and Arena.triggerBorderFlare then
         local comboCount = FruitEvents.getComboCount and FruitEvents.getComboCount() or 0
-        local baseStrength = 0.45
-        local comboBoost = math.min(comboCount, 5) * 0.08
-        local duration = 0.8 + math.min(comboCount, 4) * 0.05
+        local baseStrength = 0.12
+        local comboBoost = math.min(comboCount, 5) * 0.02
+        local duration = 0.55 + math.min(comboCount, 4) * 0.03
         Arena:triggerBorderFlare(baseStrength + comboBoost, duration)
     end
 
