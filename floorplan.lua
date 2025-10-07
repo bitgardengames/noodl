@@ -5,6 +5,31 @@ local FloorPlan = {}
 local FINAL_FLOOR = #Floors
 local BASE_LASER_CAP = 3
 local BASE_DART_CAP = 4
+local MAX_LASER_COUNT = 5
+local LASER_GROWTH_SPAN = 8
+local LASER_GROWTH_EXPONENT = 1.35
+
+local function computeLaserProgression(baseLaser, extraFloors, maxLasers)
+    baseLaser = baseLaser or 0
+    extraFloors = math.max(0, extraFloors or 0)
+    maxLasers = maxLasers or MAX_LASER_COUNT
+
+    local available = math.max(0, maxLasers - baseLaser)
+    if available <= 0 then
+        return math.min(maxLasers, baseLaser)
+    end
+
+    local maxFloors = available * LASER_GROWTH_SPAN
+    if maxFloors <= 0 then
+        return math.min(maxLasers, baseLaser)
+    end
+
+    local normalized = math.min(1, extraFloors / maxFloors)
+    local eased = normalized ^ LASER_GROWTH_EXPONENT
+    local additional = math.floor(eased * available + 1e-6)
+
+    return math.min(maxLasers, baseLaser + additional)
+end
 
 local function getLaserCap(floorIndex)
     floorIndex = floorIndex or 1
@@ -253,7 +278,7 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
     context.rocks = math.max(0, math.min(40, (lastPlan.rocks or 19) + extraFloors))
     context.saws = math.max(1, math.min(8, (lastPlan.saws or 7) + math.floor(extraFloors / 3)))
     local baseLaser = lastPlan.laserCount or 0
-    context.laserCount = math.max(0, math.min(5, baseLaser + math.floor(extraFloors / 6)))
+    context.laserCount = computeLaserProgression(baseLaser, extraFloors, MAX_LASER_COUNT)
     local baseDarts = math.min(2, lastPlan.dartCount or 0)
     context.dartCount = baseDarts
     applyLaserCap(context)
