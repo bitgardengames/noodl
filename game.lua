@@ -384,7 +384,7 @@ function Game:finalizeFloorSetup()
     UI:setFloorModifiers(self.activeFloorTraits)
     UI:setFruitGoal(pending.traitContext.fruitGoal)
 
-    self.transitionTraits = buildModifierSections(self)
+    self.transitionTraits = self:buildModifierSections()
 
     if pending.restNotes and #pending.restNotes > 0 then
         self.transitionTraits = self.transitionTraits or {}
@@ -1000,7 +1000,7 @@ local STATE_UPDATERS = {
     end,
 }
 
-local function buildModifierSections(self)
+function Game:buildModifierSections()
     local sections = {}
 
     if self.activeFloorTraits and #self.activeFloorTraits > 0 then
@@ -1121,7 +1121,7 @@ function Game:load()
 
     self:setupFloor(self.floor)
     if self.transitionTraits == nil then
-        self.transitionTraits = buildModifierSections(self)
+        self.transitionTraits = self:buildModifierSections()
     end
 
     self.transition:startFloorIntro(3.5, {
@@ -1567,7 +1567,7 @@ local function drawTransitionShop(self, timer)
 end
 
 local function drawTraitEntries(self, timer, outroAlpha, fadeAlpha)
-    local sections = self.transitionTraits or buildModifierSections(self)
+    local sections = self.transitionTraits or self:buildModifierSections()
     if not (sections and #sections > 0) then
         return
     end
@@ -2029,7 +2029,7 @@ function Game:setupFloor(floorNum)
     }
 
     self.activeFloorTraits = appliedTraits
-    self.transitionTraits = buildModifierSections(self)
+    self.transitionTraits = self:buildModifierSections()
     UI:setFloorModifiers(appliedTraits)
 
     local storyState = FloorStory:startFloor(floorNum, self.currentFloorData)
