@@ -225,7 +225,8 @@ SnakeUtils.directions = {
 }
 
 -- safer apple spawn (grid aware)
-function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone)
+function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
+    opts = opts or {}
     local maxAttempts = 200
     local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
     local cols, rows = Arena.cols, Arena.rows
@@ -237,6 +238,30 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone)
     end
     local rockList = (rocks and rocks.getAll and rocks:getAll()) or {}
     local safeCells = safeZone or {}
+
+    local avoidFront = not not opts.avoidFrontOfSnake
+    local frontCol, frontRow
+
+    if avoidFront and trail[1] then
+        local head = trail[1]
+        local dirX, dirY = head.dirX, head.dirY
+
+        if (dirX == nil or dirY == nil) and opts.direction then
+            dirX = opts.direction.x
+            dirY = opts.direction.y
+        end
+
+        if dirX and dirY then
+            local headCol, headRow = Arena:getTileFromWorld(head.drawX, head.drawY)
+            if headCol and headRow then
+                local aheadCol = headCol + dirX
+                local aheadRow = headRow + dirY
+                if cellWithinBounds(aheadCol, aheadRow) then
+                    frontCol, frontRow = aheadCol, aheadRow
+                end
+            end
+        end
+    end
 
     for _ = 1, maxAttempts do
         local col = love.math.random(1, cols)
@@ -281,6 +306,10 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone)
                     break
                 end
             end
+        end
+
+        if not blocked and frontCol and frontRow and col == frontCol and row == frontRow then
+            blocked = true
         end
 
         if not blocked then

@@ -301,7 +301,16 @@ function FruitEvents.handleConsumption(x, y)
     end
 
     if love.math.random() < Rocks:getSpawnChance() then
-        local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(Snake:getSegments(), Fruit, Rocks, safeZone)
+        local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(
+            Snake:getSegments(),
+            Fruit,
+            Rocks,
+            safeZone,
+            {
+                avoidFrontOfSnake = true,
+                direction = Snake:getDirection(),
+            }
+        )
         if fx then
             Rocks:spawn(fx, fy, "small")
             SnakeUtils.setOccupied(tileCol, tileRow, true)
