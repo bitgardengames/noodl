@@ -1197,8 +1197,15 @@ local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
 
     for index, note in ipairs(notes) do
         local offsetDelay = 0.9 + (index - 1) * 0.22
-        local noteAlpha = fadeAlpha(offsetDelay, 0.4)
-        local noteOffset = (1 - easeOutExpo(clamp01((timer - offsetDelay) / 0.55))) * 16 * outroAlpha
+        local noteAlpha
+        local noteOffset = 0
+
+        if fadeAlpha then
+            noteAlpha = fadeAlpha(offsetDelay, 0.4)
+            noteOffset = (1 - easeOutExpo(clamp01((timer - offsetDelay) / 0.55))) * 16 * (outroAlpha or 1)
+        else
+            noteAlpha = outroAlpha or 1
+        end
 
         if note.title and note.title ~= "" then
             drawShadowedText(
@@ -1234,215 +1241,42 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         return
     end
 
-    if not duration or duration <= 0 then
-        duration = data.transitionIntroDuration or 0
-    end
+    love.graphics.setColor(1, 1, 1, 1)
+    drawPlayfieldLayers(self, "playing")
 
-    local progress = easedProgress(timer, duration)
-    local awaitingInput = data.transitionAwaitInput
-    local introConfirmed = data.transitionIntroConfirmed
-    local outroDuration = math.min(0.6, duration > 0 and duration * 0.5 or 0)
-    local outroProgress = 0
-    if outroDuration > 0 then
-        local outroStart = math.max(0, duration - outroDuration)
-        local outroTimer = timer
-        if awaitingInput and not introConfirmed then
-            outroTimer = math.min(outroTimer, outroStart)
-        end
-        outroProgress = clamp01((outroTimer - outroStart) / outroDuration)
-    end
-    local outroAlpha = 1 - outroProgress
-
-    local revealWindow = math.min(1.35, math.max(0.6, duration * 0.55))
-    if revealWindow > duration then
-        revealWindow = duration
-    end
-    local revealStart = math.max(0, duration - revealWindow)
-    local revealProgress = 0
-    if revealWindow > 0 then
-        revealProgress = clamp01((timer - revealStart) / revealWindow)
-    elseif duration <= 0 and timer > 0 then
-        revealProgress = 1
-    end
-    local revealEase = easeInOutCubic(revealProgress)
-
-    local leadInDuration = math.max(0.3, revealStart)
-    local leadInProgress = 0
-    if leadInDuration > 0 then
-        leadInProgress = clamp01(timer / leadInDuration)
-    end
-    local playfieldEase = math.max(revealEase, easeInOutCubic(leadInProgress) * 0.85)
-
-    if playfieldEase > 0 then
-        love.graphics.push("all")
-        local yOffset = (1 - playfieldEase) * 28
-        love.graphics.translate(0, yOffset)
-        love.graphics.setColor(1, 1, 1, playfieldEase * outroAlpha)
-        drawPlayfieldLayers(self, "playing")
-        love.graphics.pop()
-    end
-
-    local overlayEase = 1 - playfieldEase
-    local overlayAlpha = math.min(0.78, progress * 0.9) * overlayEase
-    love.graphics.setColor(0, 0, 0, overlayAlpha)
+    love.graphics.setColor(0, 0, 0, 0.75)
     love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 
-    love.graphics.push("all")
-    love.graphics.setBlendMode("add")
-    local bloomProgress = 0.55 + 0.45 * progress
-    local bloomFade = math.max(0, overlayEase)
-    local bloomIntensity = bloomProgress * (0.45 + 0.55 * outroAlpha) * bloomFade
-    if Arena.drawBackgroundEffect then
-        Arena:drawBackgroundEffect(0, 0, self.screenWidth, self.screenHeight, bloomIntensity)
-    end
-    love.graphics.pop()
+    local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+
+    love.graphics.setFont(UI.fonts.title)
+    local titleY = self.screenHeight / 2 - 90
+    love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] or 0.5)
+    love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth, "center")
     love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth, "center")
 
-    local function layeredAlpha(delay, fadeDuration, easeFunc)
-        local alpha = clamp01((timer - delay) / (fadeDuration or 0.35))
-        if easeFunc then
-            alpha = easeFunc(alpha)
-        end
-        alpha = alpha * progress
-        alpha = alpha * outroAlpha
-        return alpha * clamp01(playfieldEase * 1.05)
-    end
-
-    local nameAlpha = layeredAlpha(0.05, 0.4, easeInOutCubic)
-    local titleParams
-    if nameAlpha > 0 then
-        local titleProgress = easeOutBack(clamp01((timer - 0.1) / 0.6))
-        local yOffset = (1 - titleProgress) * 36 * outroAlpha
-        local centerY = self.screenHeight / 2 - 80 + yOffset
-        titleParams = {
-            alpha = nameAlpha,
-            centerY = centerY,
-            padding = 12,
-        }
-    end
-
-    local flavorParams
-    local flavorAlpha = 0
     if floorData.flavor and floorData.flavor ~= "" then
-        flavorAlpha = layeredAlpha(0.45, 0.38, easeOutExpo)
-        if flavorAlpha > 0 then
-            local flavorProgress = easeOutExpo(clamp01((timer - 0.4) / 0.55))
-            local flavorOffset = (1 - flavorProgress) * 24 * outroAlpha
-            local flavorPadding = 10
-            local flavorHeight = UI.fonts.button:getHeight() + flavorPadding * 2
-            flavorParams = {
-                alpha = flavorAlpha,
-                offset = flavorOffset,
-                padding = flavorPadding,
-                height = flavorHeight,
-                y = self.screenHeight / 2 - flavorPadding + flavorOffset,
-            }
-        end
-    end
-
-    if titleParams or flavorParams then
-        local top = math.huge
-        local bottom = -math.huge
-        local backdropAlpha = 0
-
-        if titleParams then
-            local titleHeight = UI.fonts.title:getHeight() + titleParams.padding * 2
-            local titleTop = titleParams.centerY - titleParams.padding
-            local titleBottom = titleTop + titleHeight
-            top = math.min(top, titleTop)
-            bottom = math.max(bottom, titleBottom)
-            backdropAlpha = math.max(backdropAlpha, 0.6 * titleParams.alpha)
-        end
-
-        if flavorParams then
-            local flavorTop = flavorParams.y
-            local flavorBottom = flavorTop + flavorParams.height
-            top = math.min(top, flavorTop)
-            bottom = math.max(bottom, flavorBottom)
-            backdropAlpha = math.max(backdropAlpha, 0.55 * flavorParams.alpha)
-        end
-
-        if top < bottom and backdropAlpha > 0 then
-            local bandPadding = 4
-            top = top - bandPadding
-            bottom = bottom + bandPadding
-            love.graphics.setColor(0, 0, 0, backdropAlpha)
-            love.graphics.rectangle("fill", 0, top, self.screenWidth, bottom - top)
-        end
-    end
-
-    if titleParams then
-        local function drawFloorTitleText()
-            love.graphics.setFont(UI.fonts.title)
-            local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-            love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * titleParams.alpha)
-            love.graphics.printf(floorData.name, 2, titleParams.centerY + 2, self.screenWidth, "center")
-            love.graphics.setColor(1, 1, 1, titleParams.alpha)
-            love.graphics.printf(floorData.name, 0, titleParams.centerY, self.screenWidth, "center")
-        end
-
-        local pixelateStrength = 0
-        if floorTitlePixelateShader and outroProgress > 0 and (titleParams.alpha or 0) > 0 then
-            pixelateStrength = clamp01(outroProgress ^ 1.2)
-        end
-
-        if floorTitlePixelateShader and pixelateStrength > 0.01 then
-            local canvas = ensureTransitionTitleCanvas(self)
-
-            love.graphics.push("all")
-            love.graphics.setCanvas(canvas)
-            love.graphics.clear(0, 0, 0, 0)
-            love.graphics.origin()
-            drawFloorTitleText()
-            love.graphics.pop()
-
-            love.graphics.push("all")
-            love.graphics.setShader(floorTitlePixelateShader)
-            floorTitlePixelateShader:send("canvasSize", {canvas:getWidth(), canvas:getHeight()})
-            floorTitlePixelateShader:send("pixelSize", 1.0 + pixelateStrength * 22.0)
-            floorTitlePixelateShader:send("dissolve", clamp01(pixelateStrength * 1.1))
-            floorTitlePixelateShader:send("time", timer or 0)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(canvas, 0, 0)
-            love.graphics.pop()
-        else
-            drawFloorTitleText()
-        end
-    end
-
-    if flavorParams then
         love.graphics.setFont(UI.fonts.button)
-        love.graphics.push()
-        love.graphics.translate(0, flavorParams.offset)
-        local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * flavorParams.alpha)
-        love.graphics.printf(floorData.flavor, 2, self.screenHeight / 2 + 2, self.screenWidth, "center")
-        love.graphics.setColor(1, 1, 1, flavorParams.alpha)
-        love.graphics.printf(floorData.flavor, 0, self.screenHeight / 2, self.screenWidth, "center")
-        love.graphics.pop()
+        local flavorY = titleY + UI.fonts.title:getHeight() + 32
+        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] or 0.5)
+        love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth, "center")
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth, "center")
     end
 
-    drawTransitionNotes(self, timer, outroAlpha, layeredAlpha)
+    drawTransitionNotes(self, 999, 1, nil)
 
     if data.transitionAwaitInput then
-        local introDuration = data.transitionIntroDuration or duration or 0
-        local promptDelay = data.transitionIntroPromptDelay or 0
-        local promptStart = introDuration + promptDelay
-        local promptProgress = clamp01((timer - promptStart) / 0.45)
-        local promptAlpha = promptProgress * outroAlpha
-
-        if promptAlpha > 0 then
-            local promptText = Localization:get("game.floor_intro.prompt")
-            if promptText and promptText ~= "" then
-                local promptFont = UI.fonts.prompt or UI.fonts.body
-                love.graphics.setFont(promptFont)
-                local y = self.screenHeight - promptFont:getHeight() * 2.2
-                local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-                love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * promptAlpha)
-                love.graphics.printf(promptText, 2, y + 2, self.screenWidth, "center")
-                love.graphics.setColor(1, 1, 1, promptAlpha)
-                love.graphics.printf(promptText, 0, y, self.screenWidth, "center")
-            end
+        local promptText = Localization:get("game.floor_intro.prompt")
+        if promptText and promptText ~= "" then
+            local promptFont = UI.fonts.prompt or UI.fonts.body
+            love.graphics.setFont(promptFont)
+            local y = self.screenHeight - promptFont:getHeight() * 2.2
+            love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] or 0.5)
+            love.graphics.printf(promptText, 2, y + 2, self.screenWidth, "center")
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf(promptText, 0, y, self.screenWidth, "center")
         end
     end
 
