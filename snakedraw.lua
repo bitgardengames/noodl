@@ -854,13 +854,18 @@ local function buildSmoothedCoords(coords, radius)
   return smoothed
 end
 
-local function drawSnakeStroke(path, radius)
+local function drawSnakeStroke(path, radius, options)
   if not path or radius <= 0 or #path < 2 then
     return
   end
 
   if #path == 2 then
-    love.graphics.circle("fill", path[1], path[2], radius)
+    if options and options.sharpCorners then
+      local x, y = path[1], path[2]
+      love.graphics.rectangle("fill", x - radius, y - radius, radius * 2, radius * 2)
+    else
+      love.graphics.circle("fill", path[1], path[2], radius)
+    end
     return
   end
 
@@ -870,37 +875,60 @@ local function drawSnakeStroke(path, radius)
   local firstX, firstY = path[1], path[2]
   local lastX, lastY = path[#path - 1], path[#path]
 
-  if firstX and firstY then
+  if firstX and firstY and not (options and options.sharpCorners) then
     love.graphics.circle("fill", firstX, firstY, radius)
   end
 
-  if lastX and lastY then
+  if lastX and lastY and not (options and options.sharpCorners) then
     love.graphics.circle("fill", lastX, lastY, radius)
   end
 end
 
-local function renderSnakeToCanvas(trail, coords, head, half)
+local function renderSnakeToCanvas(trail, coords, head, half, options)
   local bodyColor = SnakeCosmetics:getBodyColor()
   local outlineColor = SnakeCosmetics:getOutlineColor()
   local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
   local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
   local bulgeRadius = half * FRUIT_BULGE_SCALE
 
-  local outlineCoords = buildSmoothedCoords(coords, half + OUTLINE_SIZE)
-  local bodyCoords = buildSmoothedCoords(coords, half)
+  local sharpCorners = options and options.sharpCorners
+
+  local outlineCoords
+  local bodyCoords
+
+  if sharpCorners then
+    outlineCoords = coords
+    bodyCoords = coords
+  else
+    outlineCoords = buildSmoothedCoords(coords, half + OUTLINE_SIZE)
+    bodyCoords = buildSmoothedCoords(coords, half)
+  end
 
   love.graphics.push("all")
-  love.graphics.setLineStyle("smooth")
-  if love.graphics.setLineCap then
-    love.graphics.setLineCap("round")
+  if sharpCorners then
+    love.graphics.setLineStyle("rough")
+    if love.graphics.setLineCap then
+      love.graphics.setLineCap("butt")
+    end
+    if love.graphics.setLineJoin then
+      love.graphics.setLineJoin("miter")
+    end
+  else
+    love.graphics.setLineStyle("smooth")
+    if love.graphics.setLineCap then
+      love.graphics.setLineCap("round")
+    end
+    if love.graphics.setLineJoin then
+      love.graphics.setLineJoin("bevel")
+    end
   end
 
   love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-  drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE)
+  drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
   drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
 
   love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-  drawSnakeStroke(bodyCoords, half)
+  drawSnakeStroke(bodyCoords, half, options)
   drawFruitBulges(trail, head, bulgeRadius)
 
   love.graphics.pop()
@@ -1309,6 +1337,16 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 end
 
 local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
+  local options
+  if type(drawFace) == "table" then
+    options = drawFace
+    drawFace = options.drawFace
+  end
+
+  if drawFace == nil then
+    drawFace = true
+  end
+
   if not trail or #trail == 0 then return end
 
   local thickness = SEGMENT_SIZE * 0.8
@@ -1337,7 +1375,7 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
 
     love.graphics.setCanvas(snakeCanvas)
     love.graphics.clear(0,0,0,0)
-    renderSnakeToCanvas(trail, coords, head, half)
+    renderSnakeToCanvas(trail, coords, head, half, options)
     love.graphics.setCanvas()
     presentSnakeCanvas(overlayEffect, ww, hh)
   elseif hx and hy then
