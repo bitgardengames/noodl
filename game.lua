@@ -1511,7 +1511,11 @@ function Game:drawTransition()
 end
 
 function Game:drawStateTransition(direction, progress, eased, alpha)
-    local isFloorTransition = (self.state == "transition")
+    local isFloorTransition = false
+    if self.transition and self.transition:isActive() then
+        local phase = self.transition:getPhase()
+        isFloorTransition = phase ~= nil
+    end
 
     if direction == "out" and not isFloorTransition then
         return nil
@@ -1579,8 +1583,14 @@ function Game:update(dt)
 
     updateGlobalSystems(scaledDt)
 
-    if self:isTransitionActive() then
-        self.transition:update(scaledDt)
+    local transition = self.transition
+    local transitionBlocking = false
+    if transition and transition:isActive() then
+        transition:update(scaledDt)
+        transitionBlocking = transition.isGameplayBlocked and transition:isGameplayBlocked()
+    end
+
+    if transitionBlocking then
         return
     end
 
