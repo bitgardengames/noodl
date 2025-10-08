@@ -48,6 +48,10 @@ function TransitionManager:isGameplayBlocked()
 
     if phase == "floorintro" then
         local data = self.data or {}
+        local duration = self.duration or 0
+        if self.timer < duration then
+            return true
+        end
         return data.transitionAwaitInput and not data.transitionIntroConfirmed
     end
 
