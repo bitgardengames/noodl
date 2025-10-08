@@ -19,6 +19,7 @@ local iconCache = {}
 local displayBlocks = {}
 
 local START_Y = 180
+local SUMMARY_HEIGHT = 96
 local CARD_SPACING = 120
 local CARD_WIDTH = 600
 local CARD_HEIGHT = 100
@@ -179,6 +180,11 @@ local function withAlpha(color, alpha)
     }
 end
 
+local function toPercent(value)
+    value = clamp01(value or 0)
+    return math.floor(value * 100 + 0.5)
+end
+
 local function buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
     local segmentSize = SnakeUtils.SEGMENT_SIZE
     local halfSegment = segmentSize * 0.5
@@ -263,10 +269,11 @@ end
 
 local function updateScrollBounds(sw, sh)
     local viewportBottom = sh - 120
-    viewportHeight = math.max(0, viewportBottom - START_Y)
+    local listTop = START_Y + SUMMARY_HEIGHT
+    viewportHeight = math.max(0, viewportBottom - listTop)
 
-    local y = START_Y
-    local maxBottom = START_Y
+    local y = listTop
+    local maxBottom = listTop
 
     if displayBlocks then
         for _, block in ipairs(displayBlocks) do
@@ -280,7 +287,7 @@ local function updateScrollBounds(sw, sh)
         end
     end
 
-    contentHeight = math.max(0, maxBottom - START_Y)
+    contentHeight = math.max(0, maxBottom - listTop)
     minScrollOffset = math.min(0, viewportHeight - contentHeight)
 
     if scrollOffset < minScrollOffset then
@@ -468,7 +475,8 @@ function AchievementsMenu:draw()
 
     updateScrollBounds(sw, sh)
 
-    local startY = START_Y
+    local summaryOffset = SUMMARY_HEIGHT
+    local startY = START_Y + summaryOffset
     local spacing = CARD_SPACING
     local cardWidth = CARD_WIDTH
     local cardHeight = CARD_HEIGHT
@@ -479,11 +487,11 @@ function AchievementsMenu:draw()
     local panelPaddingX = 48
     local panelPaddingY = 56
     local viewportBottom = sh - 120
-    local availableHeight = math.max(0, viewportBottom - START_Y)
+    local scrollViewportHeight = math.max(0, viewportBottom - startY)
     local panelX = listX - panelPaddingX
     local panelY = START_Y - panelPaddingY
     local panelWidth = cardWidth + panelPaddingX * 2
-    local panelHeight = availableHeight + panelPaddingY * 2
+    local panelHeight = scrollViewportHeight + panelPaddingY * 2 + summaryOffset
     local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
     local panelBorder = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
     local shadowColor = Theme.shadowColor or {0, 0, 0, 0.35}
@@ -501,10 +509,51 @@ function AchievementsMenu:draw()
     love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 28, 28)
 
     love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], highlightColor[4] or 0.08)
-    love.graphics.rectangle("fill", panelX + 16, panelY + 18, panelWidth - 32, 60, 20, 20)
+    local summaryBackgroundHeight = summaryOffset + 28
+    love.graphics.rectangle("fill", panelX + 16, panelY + 18, panelWidth - 32, summaryBackgroundHeight, 20, 20)
+
+    local totals = Achievements:getTotals()
+    local unlockedLabel = Localization:get("achievements.summary.unlocked", {
+        unlocked = totals.unlocked,
+        total = totals.total,
+    })
+    local completionPercent = toPercent(totals.completion)
+    local completionLabel = Localization:get("achievements.summary.completion", {
+        percent = completionPercent,
+    })
+    local summaryHint = Localization:get("achievements.summary.hint")
+
+    local summaryTextX = panelX + 32
+    local summaryTextY = panelY + 32
+    local summaryTextWidth = panelWidth - 64
+
+    love.graphics.setFont(UI.fonts.achieve)
+    love.graphics.setColor(titleColor)
+    love.graphics.printf(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left")
+
+    love.graphics.setFont(UI.fonts.body)
+    love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.85))
+    love.graphics.printf(completionLabel, summaryTextX, summaryTextY + 32, summaryTextWidth, "left")
+
+    love.graphics.setFont(UI.fonts.small)
+    love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.65))
+    love.graphics.printf(summaryHint, summaryTextX, summaryTextY + 58, summaryTextWidth, "left")
+
+    local progressBarY = summaryTextY + summaryOffset - 22
+    local progressBarHeight = 12
+    love.graphics.setColor(darkenColor(panelColor, 0.4))
+    love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, progressBarHeight, 6, 6)
+
+    love.graphics.setColor(Theme.progressColor or {0.6, 0.9, 0.4, 1})
+    love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), progressBarHeight, 6, 6)
+
+    love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.15))
+    local dividerY = panelY + summaryOffset + 12
+    love.graphics.setLineWidth(1)
+    love.graphics.line(summaryTextX, dividerY, summaryTextX + summaryTextWidth, dividerY)
     love.graphics.pop()
 
-    local scissorTop = START_Y - 80
+    local scissorTop = START_Y + summaryOffset - 80
     local scissorBottom = sh - 120
     local scissorHeight = math.max(0, scissorBottom - scissorTop)
     love.graphics.setScissor(0, scissorTop, sw, scissorHeight)
