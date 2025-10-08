@@ -48,6 +48,11 @@ local easeOutBack = Easing.easeOutBack
 local easeInOutCubic = Easing.easeInOutCubic
 local easedProgress = Easing.easedProgress
 
+local function easeOutCubic(t)
+    local inv = 1 - t
+    return 1 - inv * inv * inv
+end
+
 local floorTitlePixelateShader
 do
     local shaderSource = [[
@@ -125,6 +130,20 @@ local ENTITY_UPDATE_ORDER = {
     Score,
 }
 
+local function cloneColor(color, fallback)
+    local source = color or fallback
+    if not source then
+        return nil
+    end
+
+    return {
+        source[1] or 1,
+        source[2] or 1,
+        source[3] or 1,
+        source[4] == nil and 1 or source[4],
+    }
+end
+
 local function resetFeedbackState(self)
     self.feedback = {
         impactTimer = 0,
@@ -138,7 +157,10 @@ local function resetFeedbackState(self)
         dangerLevel = 0,
         dangerPulseTimer = 0,
         panicBurst = 0,
+        impactRipple = nil,
+        surgeRipple = nil,
     }
+    self.hitStop = nil
 end
 
 local function ensureFeedbackState(self)
@@ -160,6 +182,14 @@ local function updateFeedbackState(self, dt)
     state.surgeTimer = math.max(0, (state.surgeTimer or 0) - dt)
     state.panicTimer = math.max(0, (state.panicTimer or 0) - dt)
     state.dangerPulseTimer = (state.dangerPulseTimer or 0) + dt
+
+    if (state.impactTimer or 0) <= 0 then
+        state.impactRipple = nil
+    end
+
+    if (state.surgeTimer or 0) <= 0 then
+        state.surgeRipple = nil
+    end
 
     local targetDanger = 0
     if self.healthSystem and self.healthSystem.isCritical and self.healthSystem:isCritical() then
@@ -196,6 +226,7 @@ local function drawFeedbackOverlay(self)
     if impactTimer > 0 and impactPeak > 0 then
         local progress = math.max(0, math.min(1, impactTimer / impactDuration))
         local intensity = impactPeak * (progress ^ 0.7)
+        local age = 1 - progress
 
         love.graphics.push("all")
         love.graphics.setBlendMode("add")
@@ -206,6 +237,24 @@ local function drawFeedbackOverlay(self)
         local inset = 10 + intensity * 8
         love.graphics.setLineWidth(3 + intensity * 6)
         love.graphics.rectangle("line", inset, inset, screenW - inset * 2, screenH - inset * 2, 28, 28)
+
+        local ripple = state.impactRipple
+        if ripple then
+            local rx = ripple.x or screenW * 0.5
+            local ry = ripple.y or screenH * 0.5
+            local baseRadius = ripple.baseRadius or 52
+            local color = ripple.color or { 1, 0.42, 0.32, 1 }
+            local ringRadius = baseRadius + easeOutExpo(age) * (140 + intensity * 80)
+            local fillRadius = baseRadius * (0.55 + age * 0.6)
+
+            love.graphics.setLineWidth(2.5 + intensity * 4)
+            love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.55 * intensity)
+            love.graphics.circle("line", rx, ry, ringRadius, 64)
+
+            love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.22 * intensity)
+            love.graphics.circle("fill", rx, ry, fillRadius, 48)
+        end
+
         love.graphics.pop()
     end
 
@@ -223,6 +272,22 @@ local function drawFeedbackOverlay(self)
         love.graphics.setColor(1, 0.9, 0.5, 0.22 * intensity)
         love.graphics.setLineWidth(2 + intensity * 6)
         love.graphics.circle("line", screenW * 0.5, screenH * 0.5, radius * (0.6 + expansion * 0.26), 64)
+        local ripple = state.surgeRipple
+        if ripple then
+            local rx = ripple.x or screenW * 0.5
+            local ry = ripple.y or screenH * 0.5
+            local baseRadius = ripple.baseRadius or 48
+            local color = ripple.color or { 1, 0.9, 0.55, 1 }
+            local eased = easeOutCubic(1 - progress)
+            local ringRadius = baseRadius + eased * (160 + intensity * 90)
+            love.graphics.setLineWidth(2 + intensity * 4)
+            love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.35 * intensity)
+            love.graphics.circle("line", rx, ry, ringRadius, 72)
+
+            love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.18 * intensity)
+            love.graphics.circle("fill", rx, ry, baseRadius * (0.4 + eased * 0.6), 48)
+        end
+
         love.graphics.pop()
     end
 
@@ -365,7 +430,43 @@ function Game:triggerCriticalHealth(cause, context)
     -- No additional surge effects when second wind is disabled.
 end
 
-function Game:triggerImpactFeedback(strength)
+local function resolveFeedbackPosition(self, options)
+    if not options then
+        options = {}
+    end
+
+    local x = options.hitX or options.x or options.headX or options.snakeX
+    local y = options.hitY or options.y or options.headY or options.snakeY
+
+    if not (x and y) and Snake and Snake.getHead then
+        x, y = Snake:getHead()
+    end
+
+    if not (x and y) then
+        local w = self.screenWidth or love.graphics.getWidth() or 0
+        local h = self.screenHeight or love.graphics.getHeight() or 0
+        x = w * 0.5
+        y = h * 0.5
+    end
+
+    return x, y
+end
+
+function Game:applyHitStop(intensity, duration)
+    intensity = math.max(intensity or 0, 0)
+    duration = math.max(duration or 0, 0)
+
+    if intensity <= 0 or duration <= 0 then
+        return
+    end
+
+    local state = ensureHitStopState(self)
+    state.timer = math.max(state.timer or 0, duration)
+    state.duration = math.max(state.duration or 0, duration)
+    state.intensity = math.min(0.95, math.max(state.intensity or 0, intensity))
+end
+
+function Game:triggerImpactFeedback(strength, options)
     local state = ensureFeedbackState(self)
     strength = math.max(strength or 0, 0)
 
@@ -376,6 +477,18 @@ function Game:triggerImpactFeedback(strength)
     local spike = 0.55 + strength * 0.65
     state.impactPeak = math.min(1.25, math.max(state.impactPeak or 0, spike))
     state.panicBurst = math.min(1.35, (state.panicBurst or 0) + 0.35 + strength * 0.4)
+
+    local impactRipple = state.impactRipple or {}
+    local rx, ry = resolveFeedbackPosition(self, options)
+    impactRipple.x = rx
+    impactRipple.y = ry
+    impactRipple.baseRadius = (options and options.radius) or impactRipple.baseRadius or 54
+    impactRipple.color = cloneColor(options and options.color, { 1, 0.42, 0.32, 1 })
+    state.impactRipple = impactRipple
+
+    local hitStopStrength = 0.3 + strength * 0.35
+    local hitStopDuration = 0.08 + strength * 0.08
+    self:applyHitStop(hitStopStrength, hitStopDuration)
 
     if Shaders and Shaders.notify then
         Shaders.notify("specialEvent", {
@@ -396,8 +509,23 @@ function Game:triggerPanicFeedback(strength)
     state.dangerPulseTimer = 0
 end
 
-function Game:triggerSurgeFeedback(strength)
+function Game:triggerSurgeFeedback(strength, options)
+    local state = ensureFeedbackState(self)
     strength = math.max(strength or 0, 0)
+
+    local duration = 0.6 + strength * 0.4
+    state.surgeDuration = duration
+    state.surgeTimer = duration
+    local surgeSpike = 0.45 + strength * 0.55
+    state.surgePeak = math.min(1.15, math.max(state.surgePeak or 0, surgeSpike))
+
+    local ripple = state.surgeRipple or {}
+    local rx, ry = resolveFeedbackPosition(self, options)
+    ripple.x = rx
+    ripple.y = ry
+    ripple.baseRadius = (options and options.radius) or ripple.baseRadius or 48
+    ripple.color = cloneColor(options and options.color, { 1, 0.9, 0.55, 1 })
+    state.surgeRipple = ripple
 
     if Shaders and Shaders.notify then
         Shaders.notify("specialEvent", {
@@ -471,6 +599,49 @@ local function getMouseVisibility(mouse)
     end
 
     return true
+end
+
+local function ensureHitStopState(self)
+    if not self.hitStop then
+        self.hitStop = {
+            timer = 0,
+            duration = 0,
+            intensity = 0,
+        }
+    end
+
+    return self.hitStop
+end
+
+local function updateHitStopState(self, dt)
+    local state = self.hitStop
+    if not state then
+        return
+    end
+
+    state.timer = math.max(0, (state.timer or 0) - (dt or 0))
+    if state.timer <= 0 then
+        self.hitStop = nil
+    end
+end
+
+local function resolveHitStopScale(self)
+    local state = self.hitStop
+    if not state then
+        return 1
+    end
+
+    local timer = state.timer or 0
+    local duration = state.duration or 0
+    local intensity = state.intensity or 0
+
+    if timer <= 0 or duration <= 0 or intensity <= 0 then
+        return 1
+    end
+
+    local progress = math.max(0, math.min(1, timer / duration))
+    local slow = 1 - easeOutCubic(progress) * math.min(intensity, 0.95)
+    return math.max(0.1, slow)
 end
 
 local function resolveMouseVisibilityTarget(self)
@@ -553,17 +724,22 @@ function Game:confirmTransitionIntro()
     return transition:confirmFloorIntro() and true or false
 end
 
-local function getScaledDeltaTime(dt)
-    if not (Snake.getTimeScale and dt) then
+local function getScaledDeltaTime(self, dt)
+    if not dt then
         return dt
     end
 
-    local scale = Snake:getTimeScale()
-    if scale and scale > 0 then
-        return dt * scale
+    local scale = 1
+    if Snake and Snake.getTimeScale then
+        local snakeScale = Snake:getTimeScale()
+        if snakeScale and snakeScale > 0 then
+            scale = snakeScale
+        end
     end
 
-    return dt
+    scale = scale * resolveHitStopScale(self)
+
+    return dt * scale
 end
 
 local function updateRunTimers(self, dt)
@@ -824,7 +1000,7 @@ function Game:applyDamage(amount, cause, context)
         Snake:onDamageTaken(cause, context)
     end
 
-    self:triggerImpactFeedback(impactStrength)
+    self:triggerImpactFeedback(impactStrength, context)
 
     if self.singleTouchDeath or not self:usesHealth() then
         if Settings.screenShake ~= false and context and context.shake and self.Effects and self.Effects.shake then
@@ -1006,7 +1182,7 @@ function Game:updateGameplay(dt)
             surgeStrength = surgeStrength + 0.25
         end
 
-        self:triggerSurgeFeedback(surgeStrength)
+        self:triggerSurgeFeedback(surgeStrength, { x = fruitX, y = fruitY })
     end
 
     local snakeX, snakeY = Snake:getHead()
@@ -1392,8 +1568,9 @@ end
 function Game:update(dt)
     self:updateMouseVisibility()
 
-    local scaledDt = getScaledDeltaTime(dt)
+    local scaledDt = getScaledDeltaTime(self, dt)
     updateFeedbackState(self, scaledDt)
+    updateHitStopState(self, dt)
 
     if handlePauseMenu(self, dt) then
         return
