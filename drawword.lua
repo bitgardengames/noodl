@@ -15,20 +15,60 @@ local drawSnake = require("snakedraw")
   }
 }]]
 
+local function expandLetter(points)
+  local expanded = {}
+  if not points or #points == 0 then
+    return expanded
+  end
+
+  local function addPoint(x, y)
+    local last = expanded[#expanded]
+    if not last or last[1] ~= x or last[2] ~= y then
+      expanded[#expanded + 1] = {x, y}
+    end
+  end
+
+  addPoint(points[1][1], points[1][2])
+
+  for i = 2, #points do
+    local prev = points[i - 1]
+    local curr = points[i]
+    local dx = curr[1] - prev[1]
+    local dy = curr[2] - prev[2]
+
+    assert(dx == 0 or dy == 0, "Letter paths must use axis-aligned segments")
+
+    local stepX = dx > 0 and 1 or (dx < 0 and -1 or 0)
+    local stepY = dy > 0 and 1 or (dy < 0 and -1 or 0)
+
+    local x, y = prev[1], prev[2]
+    while x ~= curr[1] or y ~= curr[2] do
+      if stepX ~= 0 then
+        x = x + stepX
+      else
+        y = y + stepY
+      end
+      addPoint(x, y)
+    end
+  end
+
+  return expanded
+end
+
 local letters = {
-	n = {
-		{0,2}, {0,0},{2,0},{2,2}
-	},
-	o = {
-		{0,0}, {2,0}, {2,2}, {0,2}, {0,0}
-	},
-	d = {
-		{0,0}, {2,0}, {2,2}, {0,2}, {0,0},
-		{2,0}, {2,-2}
-	},
-	l = {
-		{0,-2}, {0,2}
-	}
+  n = expandLetter({
+    {0, 2}, {0, 0}, {2, 0}, {2, 2}
+  }),
+  o = expandLetter({
+    {0, 0}, {2, 0}, {2, 2}, {0, 2}, {0, 0}
+  }),
+  d = expandLetter({
+    {0, 0}, {2, 0}, {2, 2}, {0, 2}, {0, 0},
+    {2, 0}, {2, -2}
+  }),
+  l = expandLetter({
+    {0, -2}, {0, 2}
+  })
 }
 
 local function drawWord(word, ox, oy, cellSize, spacing)
