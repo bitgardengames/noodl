@@ -1493,13 +1493,10 @@ function Game:drawTransition()
     elseif phase == "fadein" then
         local progress = easedProgress(timer, duration)
         local alpha = 1 - progress
-        local scale = 1 + 0.03 * alpha
         local yOffset = alpha * 20
 
         love.graphics.push()
-        love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 + yOffset)
-        love.graphics.scale(scale, scale)
-        love.graphics.translate(-self.screenWidth / 2, -self.screenHeight / 2)
+        love.graphics.translate(0, yOffset)
         drawPlayfieldLayers(self, "playing")
         love.graphics.pop()
 
