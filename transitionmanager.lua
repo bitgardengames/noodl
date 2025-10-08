@@ -31,12 +31,61 @@ function TransitionManager.new(game)
     }, TransitionManager)
 end
 
+local function getResumeState(self)
+    local data = self.data or {}
+    local resume = data.transitionResumePhase
+    if resume == nil or resume == "fadein" then
+        return "playing"
+    end
+    return resume
+end
+
+function TransitionManager:isGameplayBlocked()
+    local phase = self.phase
+    if not phase then
+        return false
+    end
+
+    if phase == "floorintro" then
+        local data = self.data or {}
+        return data.transitionAwaitInput and not data.transitionIntroConfirmed
+    end
+
+    if phase == "fadein" then
+        return false
+    end
+
+    return true
+end
+
+function TransitionManager:updateGameplayState()
+    local game = self.game
+    if not game then
+        return
+    end
+
+    local phase = self.phase
+    if not phase then
+        if game.state == "transition" then
+            game.state = getResumeState(self)
+        end
+        return
+    end
+
+    if self:isGameplayBlocked() then
+        game.state = "transition"
+    else
+        game.state = getResumeState(self)
+    end
+end
+
 function TransitionManager:reset()
     self.phase = nil
     self.timer = 0
     self.duration = 0
     self.data = {}
     self.shopCloseRequested = false
+    self:updateGameplayState()
 end
 
 function TransitionManager:isActive()
@@ -78,16 +127,17 @@ function TransitionManager:mergeData(values)
 end
 
 function TransitionManager:startPhase(phase, duration)
-    self.game.state = "transition"
     self.phase = phase
     self.timer = 0
     self.duration = duration or 0
+    self:updateGameplayState()
 end
 
 function TransitionManager:clearPhase()
     self.phase = nil
     self.timer = 0
     self.duration = 0
+    self:updateGameplayState()
 end
 
 function TransitionManager:openShop()
@@ -97,6 +147,7 @@ function TransitionManager:openShop()
     self.timer = 0
     self.duration = 0
     Audio:playSound("shop_open")
+    self:updateGameplayState()
 end
 
 function TransitionManager:startFloorIntro(duration, extra)
@@ -120,10 +171,15 @@ function TransitionManager:startFloorIntro(duration, extra)
     local introDuration = duration or data.transitionIntroDuration or 2.8
     data.transitionIntroDuration = introDuration
 
+    local defaultAwaitInput = true
+    if data.transitionAdvance == false then
+        defaultAwaitInput = false
+    end
+
     if extra.transitionAwaitInput ~= nil then
         data.transitionAwaitInput = extra.transitionAwaitInput and true or false
     else
-        data.transitionAwaitInput = true
+        data.transitionAwaitInput = defaultAwaitInput
     end
 
     if extra.transitionIntroPromptDelay ~= nil then
@@ -136,7 +192,6 @@ function TransitionManager:startFloorIntro(duration, extra)
 
     self:startPhase("floorintro", introDuration)
     Audio:playSound("floor_intro")
-
 end
 
 function TransitionManager:startFadeIn(duration)
@@ -286,6 +341,8 @@ function TransitionManager:confirmFloorIntro()
     end
 
     data.transitionIntroConfirmed = true
+
+    self:updateGameplayState()
 
     if self.timer >= self.duration then
         self:completeFloorIntro()
