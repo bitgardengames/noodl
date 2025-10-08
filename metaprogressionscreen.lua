@@ -20,8 +20,14 @@ local START_Y = 220
 local CARD_WIDTH = 640
 local CARD_HEIGHT = 108
 local CARD_SPACING = 24
-local STAT_CARD_HEIGHT = 72
+local STAT_CARD_HEIGHT = 84
 local STAT_CARD_SPACING = 16
+local STAT_CARD_SHADOW_OFFSET = 6
+local STATS_SUMMARY_CARD_WIDTH = 216
+local STATS_SUMMARY_CARD_HEIGHT = 96
+local STATS_SUMMARY_CARD_SPACING = 20
+local STATS_SUMMARY_SHADOW_OFFSET = 6
+local STATS_SUMMARY_SPACING = 32
 local COSMETIC_CARD_HEIGHT = 148
 local COSMETIC_CARD_SPACING = 24
 local COSMETIC_PREVIEW_WIDTH = 128
@@ -37,6 +43,7 @@ local TAB_Y = 120 - TAB_HEIGHT - 16
 
 local scrollOffset = 0
 local minScrollOffset = 0
+local viewportTop = START_Y
 local viewportHeight = 0
 local contentHeight = 0
 
@@ -48,6 +55,8 @@ local analogAxisDirections = { horizontal = nil, vertical = nil }
 
 local trackEntries = {}
 local statsEntries = {}
+local statsHighlights = {}
+local statsSummaryHeight = 0
 local cosmeticsEntries = {}
 local progressionState = nil
 local activeTab = "experience"
@@ -175,7 +184,16 @@ end
 
 local function updateScrollBounds(sw, sh)
     local viewportBottom = sh - 140
-    viewportHeight = math.max(0, viewportBottom - START_Y)
+    local topOffset = 0
+    if activeTab == "stats" then
+        topOffset = statsSummaryHeight
+        if topOffset > 0 then
+            topOffset = topOffset + STATS_SUMMARY_SPACING
+        end
+    end
+
+    viewportTop = START_Y + topOffset
+    viewportHeight = math.max(0, viewportBottom - viewportTop)
 
     local entries, itemHeight, spacing = getActiveList()
     local count = #entries
@@ -264,6 +282,92 @@ local hiddenStats = {
     averageFruitPerMinute = true,
 }
 
+local highlightStatOrder = {
+    "snakeScore",
+    "floorsCleared",
+    "totalApplesEaten",
+    "totalTimeAlive",
+}
+
+local statBadgeOverrides = {
+    totalApplesEaten = "lifetime",
+    totalDragonfruitEaten = "lifetime",
+    totalTimeAlive = "lifetime",
+    snakeScore = "record",
+    bestComboStreak = "record",
+    deepestFloorReached = "record",
+    longestRunDuration = "record",
+    longestFloorClearTime = "record",
+    bestFloorClearTime = "record",
+    mostApplesInRun = "record",
+    mostTilesTravelledInRun = "record",
+    mostCombosInRun = "record",
+    mostShieldsSavedInRun = "record",
+    floorsCleared = "progress",
+    sessionsPlayed = "progress",
+    dailyChallengesCompleted = "progress",
+    crashShieldsSaved = "progress",
+}
+
+local badgeLabelCache = {}
+
+local function resolveBadgeLabel(kind)
+    if not kind or kind == "" then
+        return nil
+    end
+
+    if badgeLabelCache[kind] then
+        return badgeLabelCache[kind]
+    end
+
+    local key = "metaprogression.stats_badges." .. kind
+    local label = Localization:get(key)
+    if label == key then
+        label = kind:gsub("_", " ")
+        label = label:gsub("%s+", " ")
+        label = label:gsub("^%l", string.upper)
+    end
+
+    badgeLabelCache[kind] = label
+    return label
+end
+
+local function determineStatBadgeKind(key)
+    if not key or key == "" then
+        return nil
+    end
+
+    local override = statBadgeOverrides[key]
+    if override then
+        return override
+    end
+
+    local lower = key:lower()
+    if lower:find("total", 1, true) or lower:find("lifetime", 1, true) then
+        return "lifetime"
+    elseif lower:find("average", 1, true) or lower:find("avg", 1, true) then
+        return "average"
+    elseif lower:find("best", 1, true) or lower:find("most", 1, true) or lower:find("longest", 1, true)
+        or lower:find("fastest", 1, true) or lower:find("highest", 1, true) or lower:find("deepest", 1, true) then
+        return "record"
+    elseif lower:find("run", 1, true) or lower:find("floor", 1, true) or lower:find("session", 1, true)
+        or lower:find("combo", 1, true) then
+        return "progress"
+    end
+
+    return nil
+end
+
+local function determineStatBadge(key)
+    local kind = determineStatBadgeKind(key)
+    if not kind then
+        return nil, nil
+    end
+
+    local label = resolveBadgeLabel(kind)
+    return kind, label
+end
+
 local function prettifyKey(key)
     if not key or key == "" then
         return ""
@@ -286,11 +390,14 @@ local function buildStatsEntries()
         if not hiddenStats[key] then
             local value = PlayerStats:get(key)
             local formatter = statFormatters[key]
+            local badgeKind, badgeLabel = determineStatBadge(key)
             statsEntries[#statsEntries + 1] = {
                 id = key,
                 label = label,
                 value = value,
                 valueText = formatter and formatter(value) or formatStatValue(value),
+                badgeKind = badgeKind,
+                badgeLabel = badgeLabel,
             }
             seen[key] = true
         end
@@ -300,11 +407,14 @@ local function buildStatsEntries()
         if not seen[key] and not hiddenStats[key] then
             local label = prettifyKey(key)
             local formatter = statFormatters[key]
+            local badgeKind, badgeLabel = determineStatBadge(key)
             statsEntries[#statsEntries + 1] = {
                 id = key,
                 label = label,
                 value = value,
                 valueText = formatter and formatter(value) or formatStatValue(value),
+                badgeKind = badgeKind,
+                badgeLabel = badgeLabel,
             }
         end
     end
@@ -315,6 +425,44 @@ local function buildStatsEntries()
         end
         return a.label < b.label
     end)
+
+    local function buildStatsHighlights()
+        statsHighlights = {}
+        statsSummaryHeight = 0
+
+        if #statsEntries == 0 then
+            return
+        end
+
+        local used = {}
+
+        for _, statId in ipairs(highlightStatOrder) do
+            for _, entry in ipairs(statsEntries) do
+                if entry.id == statId and not used[entry] then
+                    statsHighlights[#statsHighlights + 1] = entry
+                    used[entry] = true
+                    break
+                end
+            end
+        end
+
+        local desired = math.min(4, #statsEntries)
+        local index = 1
+        while #statsHighlights < desired and index <= #statsEntries do
+            local candidate = statsEntries[index]
+            if not used[candidate] then
+                statsHighlights[#statsHighlights + 1] = candidate
+                used[candidate] = true
+            end
+            index = index + 1
+        end
+
+        if #statsHighlights > 0 then
+            statsSummaryHeight = STATS_SUMMARY_CARD_HEIGHT + STATS_SUMMARY_SHADOW_OFFSET
+        end
+    end
+
+    buildStatsHighlights()
 end
 
 local function clampColorComponent(value)
@@ -355,6 +503,19 @@ local function darkenColor(color, amount)
     local a = clampColorComponent(color[4] or 1)
 
     return {r, g, b, a}
+end
+
+local function getBadgeColor(kind)
+    local progressColor = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
+    if kind == "record" then
+        return Theme.accentTextColor or progressColor
+    elseif kind == "average" then
+        return Theme.mutedTextColor or lightenColor(progressColor, 0.35)
+    elseif kind == "progress" then
+        return lightenColor(progressColor, 0.18)
+    end
+
+    return progressColor
 end
 
 local function resolveAchievementName(id)
@@ -1112,10 +1273,70 @@ local function drawStatsHeader(sw)
     love.graphics.setFont(UI.fonts.button)
     love.graphics.setColor(Theme.textColor)
     love.graphics.printf(Localization:get("metaprogression.stats_header"), 0, 150, sw, "center")
+
+    local subheader = Localization:get("metaprogression.stats_subheader")
+    if subheader and subheader ~= "metaprogression.stats_subheader" then
+        local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
+        love.graphics.setFont(UI.fonts.caption)
+        love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
+        love.graphics.printf(subheader, 0, 190, sw, "center")
+    end
+end
+
+local function drawStatsSummary(sw)
+    if #statsHighlights == 0 then
+        return
+    end
+
+    local totalWidth = #statsHighlights * STATS_SUMMARY_CARD_WIDTH + math.max(0, #statsHighlights - 1) * STATS_SUMMARY_CARD_SPACING
+    local startX = sw / 2 - totalWidth / 2
+    local cardY = START_Y
+    local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
+    local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
+    local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
+
+    for index, entry in ipairs(statsHighlights) do
+        local cardX = startX + (index - 1) * (STATS_SUMMARY_CARD_WIDTH + STATS_SUMMARY_CARD_SPACING)
+        local fillColor = lightenColor(basePanel, 0.20 + 0.05 * ((index - 1) % 2))
+
+        love.graphics.setColor(0, 0, 0, 0.28)
+        UI.drawRoundedRect(cardX + 4, cardY + STATS_SUMMARY_SHADOW_OFFSET, STATS_SUMMARY_CARD_WIDTH, STATS_SUMMARY_CARD_HEIGHT, 14)
+
+        love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.96)
+        UI.drawRoundedRect(cardX, cardY, STATS_SUMMARY_CARD_WIDTH, STATS_SUMMARY_CARD_HEIGHT, 14)
+
+        love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.22)
+        love.graphics.rectangle("fill", cardX, cardY, STATS_SUMMARY_CARD_WIDTH, 6, 14, 14)
+
+        love.graphics.setFont(UI.fonts.caption)
+        love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
+        love.graphics.printf(entry.label or "", cardX + 20, cardY + 18, STATS_SUMMARY_CARD_WIDTH - 40, "left")
+
+        love.graphics.setFont(UI.fonts.heading)
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.printf(entry.valueText or "0", cardX + 20, cardY + 42, STATS_SUMMARY_CARD_WIDTH - 40, "left")
+
+        if entry.badgeLabel then
+            local badgeColor = getBadgeColor(entry.badgeKind)
+            love.graphics.setFont(UI.fonts.small)
+            local badgeText = entry.badgeLabel
+            local textWidth = UI.fonts.small:getWidth(badgeText)
+            local badgeHeight = UI.fonts.small:getHeight() + 10
+            local badgeWidth = textWidth + 24
+            local badgeX = cardX + 20
+            local badgeY = cardY + STATS_SUMMARY_CARD_HEIGHT - badgeHeight - 18
+
+            love.graphics.setColor(badgeColor[1], badgeColor[2], badgeColor[3], (badgeColor[4] or 1) * 0.2)
+            UI.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
+
+            love.graphics.setColor(badgeColor[1], badgeColor[2], badgeColor[3], badgeColor[4] or 1)
+            love.graphics.printf(badgeText, badgeX, badgeY + 4, badgeWidth, "center")
+        end
+    end
 end
 
 local function drawStatsList(sw, sh)
-    local clipY = START_Y
+    local clipY = viewportTop
     local clipH = viewportHeight
 
     if clipH <= 0 then
@@ -1132,24 +1353,66 @@ local function drawStatsList(sw, sh)
         love.graphics.setColor(Theme.textColor)
         love.graphics.printf(Localization:get("metaprogression.stats_empty"), listX, clipY + viewportHeight / 2 - 12, CARD_WIDTH, "center")
     else
+        local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
+        local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
+
         for index, entry in ipairs(statsEntries) do
-            local y = START_Y + scrollOffset + (index - 1) * (STAT_CARD_HEIGHT + STAT_CARD_SPACING)
+            local y = viewportTop + scrollOffset + (index - 1) * (STAT_CARD_HEIGHT + STAT_CARD_SPACING)
             if y + STAT_CARD_HEIGHT >= clipY - STAT_CARD_HEIGHT and y <= clipY + clipH + STAT_CARD_HEIGHT then
-                local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-                love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], 0.82)
+                local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
+                local tintOffset = ((index % 2) == 0) and 0.08 or 0.04
+                local fillColor = lightenColor(basePanel, 0.16 + tintOffset)
+
+                love.graphics.setColor(0, 0, 0, 0.26)
+                UI.drawRoundedRect(listX + 4, y + STAT_CARD_SHADOW_OFFSET, CARD_WIDTH, STAT_CARD_HEIGHT, 12)
+
+                love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.95)
                 UI.drawRoundedRect(listX, y, CARD_WIDTH, STAT_CARD_HEIGHT, 12)
 
-                local borderColor = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-                love.graphics.setColor(borderColor)
+                local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
+                love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1) * 0.8)
                 love.graphics.setLineWidth(2)
                 love.graphics.rectangle("line", listX, y, CARD_WIDTH, STAT_CARD_HEIGHT, 12, 12)
+                love.graphics.setLineWidth(1)
 
+                love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.18)
+                love.graphics.rectangle("fill", listX + 20, y + STAT_CARD_HEIGHT - 8, CARD_WIDTH - 40, 4, 2, 2)
+
+                local indicatorColor = Theme.accentTextColor or accent
+                love.graphics.setColor(indicatorColor[1], indicatorColor[2], indicatorColor[3], (indicatorColor[4] or 1) * 0.9)
+                love.graphics.circle("fill", listX + 34, y + STAT_CARD_HEIGHT / 2, 10, 24)
+                love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 1)
+                love.graphics.circle("fill", listX + 34, y + STAT_CARD_HEIGHT / 2, 4, 24)
+
+                local valueAreaX = listX + CARD_WIDTH * 0.54
+                local valueAreaWidth = CARD_WIDTH - (valueAreaX - listX) - 32
+                local labelX = listX + 58
+                local labelWidth = valueAreaX - labelX - 16
+
+                love.graphics.setFont(UI.fonts.caption)
+                love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
+                love.graphics.printf(entry.label, labelX, y + 14, labelWidth, "left")
+
+                love.graphics.setFont(UI.fonts.subtitle)
                 love.graphics.setColor(Theme.textColor)
-                love.graphics.setFont(UI.fonts.body)
-                love.graphics.print(entry.label, listX + 24, y + 16)
+                love.graphics.printf(entry.valueText, valueAreaX, y + 30, valueAreaWidth, "right")
 
-                love.graphics.setFont(UI.fonts.button)
-                love.graphics.printf(entry.valueText, listX + 24, y + STAT_CARD_HEIGHT - 40, CARD_WIDTH - 48, "right")
+                if entry.badgeLabel then
+                    local badgeColor = getBadgeColor(entry.badgeKind)
+                    love.graphics.setFont(UI.fonts.small)
+                    local badgeText = entry.badgeLabel
+                    local textWidth = UI.fonts.small:getWidth(badgeText)
+                    local badgeHeight = UI.fonts.small:getHeight() + 10
+                    local badgeWidth = textWidth + 28
+                    local badgeX = labelX
+                    local badgeY = y + STAT_CARD_HEIGHT - badgeHeight - 12
+
+                    love.graphics.setColor(badgeColor[1], badgeColor[2], badgeColor[3], (badgeColor[4] or 1) * 0.18)
+                    UI.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
+
+                    love.graphics.setColor(badgeColor[1], badgeColor[2], badgeColor[3], badgeColor[4] or 1)
+                    love.graphics.printf(badgeText, badgeX, badgeY + 4, badgeWidth, "center")
+                end
             end
         end
     end
@@ -1175,6 +1438,7 @@ function ProgressionScreen:draw()
         drawCosmeticsList(sw, sh)
     else
         drawStatsHeader(sw)
+        drawStatsSummary(sw)
         drawStatsList(sw, sh)
     end
 
