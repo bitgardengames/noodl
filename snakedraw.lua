@@ -879,15 +879,23 @@ local function drawSnakeStroke(path, radius)
   end
 end
 
-local function renderSnakeToCanvas(trail, coords, head, half)
+local function renderSnakeToCanvas(trail, coords, head, half, sharpCorners)
   local bodyColor = SnakeCosmetics:getBodyColor()
   local outlineColor = SnakeCosmetics:getOutlineColor()
   local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
   local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
   local bulgeRadius = half * FRUIT_BULGE_SCALE
 
-  local outlineCoords = buildSmoothedCoords(coords, half + OUTLINE_SIZE)
-  local bodyCoords = buildSmoothedCoords(coords, half)
+  local outlineCoords
+  local bodyCoords
+
+  if sharpCorners then
+    outlineCoords = coords
+    bodyCoords = coords
+  else
+    outlineCoords = buildSmoothedCoords(coords, half + OUTLINE_SIZE)
+    bodyCoords = buildSmoothedCoords(coords, half)
+  end
 
   love.graphics.push("all")
   love.graphics.setLineStyle("smooth")
@@ -1308,8 +1316,25 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
   love.graphics.pop()
 end
 
-local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
+local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace, options)
   if not trail or #trail == 0 then return end
+
+  if type(drawFace) == "table" and options == nil then
+    options = drawFace
+    drawFace = nil
+  end
+
+  options = options or {}
+
+  if drawFace == nil then
+    drawFace = options.drawFace
+  end
+
+  if drawFace == nil then
+    drawFace = true
+  end
+
+  local sharpCorners = not not options.sharpCorners
 
   local thickness = SEGMENT_SIZE * 0.8
   local half      = thickness / 2
@@ -1320,7 +1345,13 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   local head = trail[1]
 
   love.graphics.setLineStyle("smooth")
-  love.graphics.setLineJoin("bevel") -- or "bevel" if you prefer fewer spikes
+  if love.graphics.setLineJoin then
+    if sharpCorners then
+      love.graphics.setLineJoin("miter")
+    else
+      love.graphics.setLineJoin("bevel") -- or "bevel" if you prefer fewer spikes
+    end
+  end
 
   local hx, hy
   if getHead then
@@ -1337,7 +1368,7 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
 
     love.graphics.setCanvas(snakeCanvas)
     love.graphics.clear(0,0,0,0)
-    renderSnakeToCanvas(trail, coords, head, half)
+    renderSnakeToCanvas(trail, coords, head, half, sharpCorners)
     love.graphics.setCanvas()
     presentSnakeCanvas(overlayEffect, ww, hh)
   elseif hx and hy then
