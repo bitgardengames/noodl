@@ -887,8 +887,6 @@ local function drawCornerCaps(path, radius, options)
     return
   end
 
-  local size = radius * 2
-
   for pointIndex = startIndex, endIndex do
     local prevIndex = pointIndex - 1
     local nextIndex = pointIndex + 1
@@ -929,7 +927,7 @@ local function drawCornerCaps(path, radius, options)
       if lenSq1 > 1e-6 and lenSq2 > 1e-6 then
         local dot = dx1 * dx2 + dy1 * dy2
         if math.abs(dot) < 1e-4 then
-          love.graphics.rectangle("fill", x - radius, y - radius, size, size)
+          love.graphics.circle("fill", x, y, radius)
         end
       end
     end
@@ -957,11 +955,13 @@ local function drawSnakeStroke(path, radius, options)
   local firstX, firstY = path[1], path[2]
   local lastX, lastY = path[#path - 1], path[#path]
 
-  if firstX and firstY and not (options and options.sharpCorners) then
+  local useRoundCaps = not (options and options.sharpCorners) or (options and options.cornerCaps)
+
+  if firstX and firstY and useRoundCaps then
     love.graphics.circle("fill", firstX, firstY, radius)
   end
 
-  if lastX and lastY and not (options and options.sharpCorners) then
+  if lastX and lastY and useRoundCaps then
     love.graphics.circle("fill", lastX, lastY, radius)
   end
 
