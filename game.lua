@@ -399,25 +399,6 @@ end
 function Game:triggerSurgeFeedback(strength)
     strength = math.max(strength or 0, 0)
 
-    if Settings.screenShake == false then
-        if Shaders and Shaders.notify then
-            Shaders.notify("specialEvent", {
-                type = "tension",
-                strength = math.min(1.0, 0.3 + strength * 0.45),
-            })
-        end
-        return
-    end
-
-    local state = ensureFeedbackState(self)
-
-    local duration = 0.65 + strength * 0.35
-    state.surgeDuration = duration
-    state.surgeTimer = duration
-
-    local spike = 0.4 + strength * 0.6
-    state.surgePeak = math.min(1.1, math.max(state.surgePeak or 0, spike))
-
     if Shaders and Shaders.notify then
         Shaders.notify("specialEvent", {
             type = "tension",
