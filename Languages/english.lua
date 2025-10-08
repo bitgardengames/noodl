@@ -215,7 +215,14 @@ local english = {
                 equipped = "Equipped",
             },
             stats_header = "Lifetime Stats",
+            stats_subheader = "Review your best runs and lifetime milestones.",
             stats_empty = "Keep playing to build your legacy!",
+            stats_badges = {
+                lifetime = "Lifetime",
+                record = "Personal Best",
+                average = "Average",
+                progress = "Progress",
+            },
             stat_labels = {
                 sessionsPlayed = "Sessions Played",
                 totalApplesEaten = "Apples Collected",
