@@ -380,12 +380,14 @@ function Arena:drawBorder()
 
     local highlight = getHighlightColor(Theme.arenaBorder)
     if borderFlare > 0 then
-        highlight[1] = math.min(1, mixChannel(highlight[1], 0.98, 0.5 * borderFlare))
-        highlight[2] = math.max(0, mixChannel(highlight[2], 0.22, 0.65 * borderFlare))
-        highlight[3] = math.max(0, mixChannel(highlight[3], 0.18, 0.7 * borderFlare))
-        highlight[4] = math.min(1, highlight[4] * (1 + 0.85 * borderFlare))
+        -- Ease the flare towards a softer pastel tint instead of a harsh glow.
+        -- This keeps the pickup celebration visible while avoiding a sharp contrast.
+        highlight[1] = math.min(1, mixChannel(highlight[1], 0.97, 0.35 * borderFlare))
+        highlight[2] = math.max(0, mixChannel(highlight[2], 0.3, 0.48 * borderFlare))
+        highlight[3] = math.max(0, mixChannel(highlight[3], 0.25, 0.52 * borderFlare))
+        highlight[4] = math.min(1, highlight[4] * (1 + 0.45 * borderFlare))
     end
-    local highlightWidth = math.max(1.5, thickness * (0.32 + 0.18 * borderFlare))
+    local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
     local highlightOffset = 2
     local cornerOffsetX = 3
     local cornerOffsetY = 3
@@ -457,10 +459,10 @@ function Arena:drawBorder()
     local leftCapX = bx - highlightOffset - highlightShift
     local leftCapY = by + bh - radius - highlightShift
 
-    local capRadius = highlightWidth * 0.75
-    local featherRadius = capRadius * 1.5
-    local capAlpha = highlight[4] * (0.55 + 0.25 * borderFlare)
-    local featherAlpha = highlight[4] * (0.22 + 0.18 * borderFlare)
+    local capRadius = highlightWidth * 0.7
+    local featherRadius = capRadius * (1.9 + 0.35 * borderFlare)
+    local capAlpha = highlight[4] * (0.4 + 0.22 * borderFlare)
+    local featherAlpha = highlight[4] * (0.18 + 0.16 * borderFlare)
 
     local function drawHighlightCap(cx, cy)
         if capAlpha > 0 then
