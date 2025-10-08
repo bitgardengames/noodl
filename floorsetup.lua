@@ -352,16 +352,30 @@ local function spawnRocks(numRocks, safeZone)
     end
 end
 
-local function getAmbientLaserPreference(floorData)
+local function getAmbientLaserPreference(traitContext, floorData)
     if not floorData then
         return 0
     end
 
-    if floorData.backgroundTheme == "machine" then
-        return 2
+    local floorIndex = traitContext and traitContext.floor
+
+    local function isMachineThemed()
+        if floorData.backgroundTheme == "machine" then
+            return true
+        end
+
+        if type(floorData.name) == "string" and floorData.name:lower():find("machin") then
+            return true
+        end
+
+        return false
     end
 
-    if type(floorData.name) == "string" and floorData.name:lower():find("machin") then
+    if isMachineThemed() then
+        if floorIndex and floorIndex <= 5 then
+            return 1
+        end
+
         return 2
     end
 
@@ -375,7 +389,7 @@ local function getDesiredLaserCount(traitContext, floorData)
         baseline = math.max(0, math.floor((traitContext.laserCount or 0) + 0.5))
     end
 
-    local ambient = getAmbientLaserPreference(floorData)
+    local ambient = getAmbientLaserPreference(traitContext, floorData)
 
     return math.max(baseline, ambient)
 end
