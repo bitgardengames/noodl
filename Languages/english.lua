@@ -170,6 +170,11 @@ local english = {
                 label = "${current}/${goal}",
                 unlocked = "Completed",
             },
+            summary = {
+                unlocked = "${unlocked}/${total} unlocked",
+                completion = "${percent}% complete",
+                hint = "Keep slithering to discover new achievements.",
+            },
             hidden = {
                 title = "Hidden Achievement",
                 description = "Unlock this secret to reveal its details.",

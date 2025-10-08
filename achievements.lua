@@ -657,6 +657,37 @@ function Achievements:getProgressRatio(def)
     return 0
 end
 
+function Achievements:getTotals()
+    self:_ensureInitialized()
+
+    local total = #self.definitionOrder
+    local unlocked = 0
+    local completion = 0
+
+    if total == 0 then
+        return {
+            total = 0,
+            unlocked = 0,
+            completion = 0,
+        }
+    end
+
+    for _, id in ipairs(self.definitionOrder) do
+        local def = self.definitions[id]
+        if def and def.unlocked then
+            unlocked = unlocked + 1
+        end
+    end
+
+    completion = unlocked / total
+
+    return {
+        total = total,
+        unlocked = unlocked,
+        completion = completion,
+    }
+end
+
 function Achievements:getDefinition(id)
     self:_ensureInitialized()
     return self.definitions[id]
