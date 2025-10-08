@@ -97,7 +97,8 @@ local function drawWord(word, ox, oy, cellSize, spacing)
       -- Disable the built-in face rendering here to avoid double faces.
       drawSnake(letterTrail, #letterTrail, cellSize, nil, nil, nil, nil, nil, {
         drawFace = false,
-        sharpCorners = true
+        sharpCorners = true,
+        cornerCaps = true
       })
 
       for _, p in ipairs(letterTrail) do table.insert(fullTrail, p) end
