@@ -1436,7 +1436,7 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         love.graphics.pop()
     end
 
-    drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
+    drawTransitionNotes(self, timer, outroAlpha, layeredAlpha)
 
     if data.transitionAwaitInput then
         local introDuration = data.transitionIntroDuration or duration or 0
