@@ -854,6 +854,88 @@ local function buildSmoothedCoords(coords, radius)
   return smoothed
 end
 
+local function drawCornerCaps(path, radius, options)
+  if not (options and options.cornerCaps) then
+    return
+  end
+
+  if not path or radius <= 0 then
+    return
+  end
+
+  local coordCount = #path
+  if coordCount < 6 then
+    return
+  end
+
+  local pointCount = math.floor(coordCount / 2)
+  if pointCount < 3 then
+    return
+  end
+
+  local firstX, firstY = path[1], path[2]
+  local lastX, lastY = path[coordCount - 1], path[coordCount]
+  local closed = false
+  if firstX and firstY and lastX and lastY then
+    closed = math.abs(firstX - lastX) < 1e-4 and math.abs(firstY - lastY) < 1e-4
+  end
+
+  local startIndex = closed and 1 or 2
+  local endIndex = closed and (pointCount - 1) or (pointCount - 1)
+
+  if startIndex > endIndex then
+    return
+  end
+
+  local size = radius * 2
+
+  for pointIndex = startIndex, endIndex do
+    local prevIndex = pointIndex - 1
+    local nextIndex = pointIndex + 1
+
+    if closed then
+      if prevIndex < 1 then
+        prevIndex = pointCount - 1
+      end
+      if nextIndex > pointCount then
+        nextIndex = 2
+      end
+    end
+
+    local px, py
+    if prevIndex >= 1 and prevIndex <= pointCount then
+      px = path[prevIndex * 2 - 1]
+      py = path[prevIndex * 2]
+    end
+
+    local nx, ny
+    if nextIndex >= 1 and nextIndex <= pointCount then
+      nx = path[nextIndex * 2 - 1]
+      ny = path[nextIndex * 2]
+    end
+
+    local x = path[pointIndex * 2 - 1]
+    local y = path[pointIndex * 2]
+
+    if px and py and nx and ny and x and y then
+      local dx1 = x - px
+      local dy1 = y - py
+      local dx2 = nx - x
+      local dy2 = ny - y
+
+      local lenSq1 = dx1 * dx1 + dy1 * dy1
+      local lenSq2 = dx2 * dx2 + dy2 * dy2
+
+      if lenSq1 > 1e-6 and lenSq2 > 1e-6 then
+        local dot = dx1 * dx2 + dy1 * dy2
+        if math.abs(dot) < 1e-4 then
+          love.graphics.rectangle("fill", x - radius, y - radius, size, size)
+        end
+      end
+    end
+  end
+end
+
 local function drawSnakeStroke(path, radius, options)
   if not path or radius <= 0 or #path < 2 then
     return
@@ -881,6 +963,10 @@ local function drawSnakeStroke(path, radius, options)
 
   if lastX and lastY and not (options and options.sharpCorners) then
     love.graphics.circle("fill", lastX, lastY, radius)
+  end
+
+  if options and options.sharpCorners then
+    drawCornerCaps(path, radius, options)
   end
 end
 
