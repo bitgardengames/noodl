@@ -1319,12 +1319,10 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
     local titleParams
     if nameAlpha > 0 then
         local titleProgress = easeOutBack(clamp01((timer - 0.1) / 0.6))
-        local titleScale = 0.9 + 0.1 * titleProgress
         local yOffset = (1 - titleProgress) * 36 * outroAlpha
         local centerY = self.screenHeight / 2 - 80 + yOffset
         titleParams = {
             alpha = nameAlpha,
-            scale = titleScale,
             centerY = centerY,
             padding = 12,
         }
@@ -1355,8 +1353,8 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
         local backdropAlpha = 0
 
         if titleParams then
-            local titleHeight = (UI.fonts.title:getHeight() + titleParams.padding * 2) * titleParams.scale
-            local titleTop = titleParams.centerY - titleParams.padding * titleParams.scale
+            local titleHeight = UI.fonts.title:getHeight() + titleParams.padding * 2
+            local titleTop = titleParams.centerY - titleParams.padding
             local titleBottom = titleTop + titleHeight
             top = math.min(top, titleTop)
             bottom = math.max(bottom, titleBottom)
@@ -1383,16 +1381,11 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
     if titleParams then
         local function drawFloorTitleText()
             love.graphics.setFont(UI.fonts.title)
-            love.graphics.push()
-            love.graphics.translate(self.screenWidth / 2, titleParams.centerY)
-            love.graphics.scale(titleParams.scale, titleParams.scale)
-            love.graphics.translate(-self.screenWidth / 2, -titleParams.centerY)
             local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
             love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * titleParams.alpha)
             love.graphics.printf(floorData.name, 2, titleParams.centerY + 2, self.screenWidth, "center")
             love.graphics.setColor(1, 1, 1, titleParams.alpha)
             love.graphics.printf(floorData.name, 0, titleParams.centerY, self.screenWidth, "center")
-            love.graphics.pop()
         end
 
         local pixelateStrength = 0
