@@ -74,36 +74,32 @@ local letters = {
 local function drawWord(word, ox, oy, cellSize, spacing)
   local x = ox
   local fullTrail = {}
-
-  local letterCount = 0
-  for i = 1, #word do
-    if letters[word:sub(i, i)] then
-      letterCount = letterCount + 1
-    end
-  end
-
-  local drawnLetters = 0
   for i = 1, #word do
     local ch = word:sub(i,i)
     local def = letters[ch]
     if def then
-      drawnLetters = drawnLetters + 1
-      local letterTrail = {}
       for _, pt in ipairs(def) do
-        table.insert(letterTrail, {x = x + pt[1] * cellSize, y = oy + pt[2] * cellSize})
+        table.insert(fullTrail, {x = x + pt[1] * cellSize, y = oy + pt[2] * cellSize})
       end
-
-      -- The menu draws the face manually so it sits at the end of the word.
-      -- Disable the built-in face rendering here to avoid double faces.
-      drawSnake(letterTrail, #letterTrail, cellSize, nil, nil, nil, nil, nil, {
-        drawFace = false
-      })
-
-      for _, p in ipairs(letterTrail) do table.insert(fullTrail, p) end
 
       x = x + (3 * cellSize) + spacing
     end
   end
+
+  if #fullTrail > 0 then
+    local snakeTrail = {}
+    for i = #fullTrail, 1, -1 do
+      local pt = fullTrail[i]
+      snakeTrail[#snakeTrail + 1] = pt
+    end
+
+    -- The menu draws the face manually so it sits at the end of the word.
+    -- Disable the built-in face rendering here to avoid double faces.
+    drawSnake(snakeTrail, #snakeTrail, cellSize, nil, nil, nil, nil, nil, {
+      drawFace = false
+    })
+  end
+
   return fullTrail
 end
 
