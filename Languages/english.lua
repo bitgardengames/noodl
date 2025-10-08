@@ -127,6 +127,10 @@ local english = {
         },
         settings = {
             title = "Settings",
+            section_display = "Display",
+            section_audio = "Audio",
+            section_gameplay = "Gameplay",
+            section_interface = "Interface",
             display_mode = "Display Mode",
             display_mode_fullscreen = "Fullscreen",
             display_mode_windowed = "Windowed",

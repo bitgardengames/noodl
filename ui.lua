@@ -398,18 +398,20 @@ UI.colors = {
 
 -- Spacing and layout constants
 UI.spacing = {
-    buttonWidth       = 260,
-    buttonHeight      = 56,
-    buttonRadius      = 14,
-    buttonSpacing     = 24,
-    panelRadius       = 16,
-    panelPadding      = 20,
-    shadowOffset      = 6,
-    sectionSpacing    = 28,
-    sliderHeight      = 68,
-    sliderTrackHeight = 10,
-    sliderHandleRadius= 12,
-    sliderPadding     = 22,
+    buttonWidth         = 260,
+    buttonHeight        = 56,
+    buttonRadius        = 14,
+    buttonSpacing       = 24,
+    panelRadius         = 16,
+    panelPadding        = 20,
+    shadowOffset        = 6,
+    sectionSpacing      = 28,
+    sectionHeaderHeight = UI.fonts.heading:getHeight() + 8,
+    sectionHeaderSpacing= 16,
+    sliderHeight        = 68,
+    sliderTrackHeight   = 10,
+    sliderHandleRadius  = 12,
+    sliderPadding       = 22,
 }
 
 -- Utility: set font
