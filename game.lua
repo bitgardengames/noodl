@@ -1282,11 +1282,8 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 
     if playfieldEase > 0 then
         love.graphics.push("all")
-        local scale = 1.05 - 0.05 * playfieldEase
         local yOffset = (1 - playfieldEase) * 28
-        love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 + yOffset)
-        love.graphics.scale(scale, scale)
-        love.graphics.translate(-self.screenWidth / 2, -self.screenHeight / 2)
+        love.graphics.translate(0, yOffset)
         love.graphics.setColor(1, 1, 1, playfieldEase * outroAlpha)
         drawPlayfieldLayers(self, "playing")
         love.graphics.pop()
