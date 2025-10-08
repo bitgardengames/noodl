@@ -22,6 +22,7 @@ local UI = require("ui")
 local Theme = require("theme")
 local FruitEvents = require("fruitevents")
 local Shaders = require("shaders")
+local Settings = require("settings")
 local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
@@ -355,7 +356,7 @@ function Game:triggerCriticalHealth(cause, context)
         UI:triggerHealthCritical()
     end
 
-    if self.Effects and self.Effects.shake then
+    if Settings.screenShake ~= false and self.Effects and self.Effects.shake then
         self.Effects:shake(0.22)
     end
 
@@ -396,8 +397,19 @@ function Game:triggerPanicFeedback(strength)
 end
 
 function Game:triggerSurgeFeedback(strength)
-    local state = ensureFeedbackState(self)
     strength = math.max(strength or 0, 0)
+
+    if Settings.screenShake == false then
+        if Shaders and Shaders.notify then
+            Shaders.notify("specialEvent", {
+                type = "tension",
+                strength = math.min(1.0, 0.3 + strength * 0.45),
+            })
+        end
+        return
+    end
+
+    local state = ensureFeedbackState(self)
 
     local duration = 0.65 + strength * 0.35
     state.surgeDuration = duration
@@ -834,7 +846,7 @@ function Game:applyDamage(amount, cause, context)
     self:triggerImpactFeedback(impactStrength)
 
     if self.singleTouchDeath or not self:usesHealth() then
-        if context and context.shake and self.Effects and self.Effects.shake then
+        if Settings.screenShake ~= false and context and context.shake and self.Effects and self.Effects.shake then
             self.Effects:shake(context.shake)
         end
         return false
@@ -856,7 +868,7 @@ function Game:applyDamage(amount, cause, context)
         return false
     end
 
-    if context and context.shake and self.Effects and self.Effects.shake then
+    if Settings.screenShake ~= false and context and context.shake and self.Effects and self.Effects.shake then
         self.Effects:shake(context.shake)
     end
 

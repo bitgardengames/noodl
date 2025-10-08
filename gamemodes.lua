@@ -2,6 +2,7 @@ local Popup = require("popup")
 local PlayerStats = require("playerstats")
 local Localization = require("localization")
 local UI = require("ui")
+local Settings = require("settings")
 
 local GameModes = {}
 
@@ -54,7 +55,7 @@ GameModes.available = {
         singleTouchDeath = true,
 
         load = function(game)
-            if game.Effects and game.Effects.shake then
+            if Settings.screenShake ~= false and game.Effects and game.Effects.shake then
                 game.Effects:shake(0.3)
             end
         end,
