@@ -241,9 +241,9 @@ function DevScreen:draw()
 
     love.graphics.setColor(1, 1, 1, 1)
 
-    local appleRadius = frameSize * 0.28
-    local appleCenterX = frameX + frameSize / 2 - appleRadius * 0.2
-    local appleCenterY = frameY + frameSize / 2 + appleRadius * 0.1
+    local appleRadius = frameSize * 0.32
+    local appleCenterX = frameX + frameSize / 2
+    local appleCenterY = frameY + frameSize / 2
     drawDevApple(appleCenterX, appleCenterY, appleRadius)
 
     local numberLabel = "100"
@@ -254,7 +254,7 @@ function DevScreen:draw()
     end
     local labelWidth = labelFont and labelFont:getWidth(numberLabel) or 0
     local labelHeight = labelFont and labelFont:getHeight() or 0
-    local textMargin = math.max(18, frameSize * 0.07)
+    local textMargin = math.max(10, frameSize * 0.04)
     local textX = frameX + textMargin
     local textY = frameY + frameSize - labelHeight - textMargin
     local shadowOffset = math.max(3, labelHeight * 0.08)
