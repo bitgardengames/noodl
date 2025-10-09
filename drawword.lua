@@ -71,15 +71,6 @@ local letters = {
   })
 }
 
-local function normalize(dx, dy)
-  local lenSq = dx * dx + dy * dy
-  if lenSq > 1e-6 then
-    local invLen = 1 / math.sqrt(lenSq)
-    return dx * invLen, dy * invLen
-  end
-  return 0, 0
-end
-
 local function drawWord(word, ox, oy, cellSize, spacing)
   local x = ox
   local fullTrail = {}
@@ -108,24 +99,11 @@ local function drawWord(word, ox, oy, cellSize, spacing)
       local snakeTrail = {}
       for index = #letterPoints, 1, -1 do
         local point = letterPoints[index]
-        local dirX, dirY = 0, 0
-
-        local prev = letterPoints[index - 1]
-        local nextPoint = letterPoints[index + 1]
-
-        if prev then
-          dirX, dirY = normalize(point.x - prev.x, point.y - prev.y)
-        elseif nextPoint then
-          dirX, dirY = normalize(nextPoint.x - point.x, nextPoint.y - point.y)
-        end
-
         snakeTrail[#snakeTrail + 1] = {
           x = point.x,
           y = point.y,
           drawX = point.x,
           drawY = point.y,
-          dirX = dirX,
-          dirY = dirY
         }
       end
 
