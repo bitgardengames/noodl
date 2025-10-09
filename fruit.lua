@@ -38,7 +38,6 @@ local fruitTypes = {
         color = Theme.dragonfruitColor,
         points = 50,
         weight = 0.2,
-        collectFx = true,
     },
 }
 
@@ -63,9 +62,7 @@ local IDLE_SPARKLE_MAX_DELAY = 1.15
 local IDLE_SPARKLE_DURATION = 0.85
 local IDLE_SPARKLE_SPIN = 1.2
 
--- Fade-out when collected
 local FADE_DURATION   = 0.20
-local COLLECT_FX_DURATION = 0.45
 
 -- Fruit styling
 local SHADOW_OFFSET = 3
@@ -94,7 +91,6 @@ local active = {
 local fading = nil
 local fadeTimer = 0
 local lastCollectedType = fruitTypes[1]
-local collectFx = {}
 local idleSparkles = {}
 
 local function copyColor(color)
@@ -184,15 +180,6 @@ function Fruit:update(dt)
         fading.scaleX = 1 - 0.2 * e
         fading.scaleY = 1 - 0.2 * e
         if p >= 1 then fading = nil end
-    end
-
-    for i = #collectFx, 1, -1 do
-        local fx = collectFx[i]
-        fx.timer = fx.timer + dt
-        fx.rotation = fx.rotation + dt * fx.spin
-        if fx.timer >= fx.duration then
-            table.remove(collectFx, i)
-        end
     end
 
     for i = #idleSparkles, 1, -1 do
@@ -307,19 +294,6 @@ function Fruit:checkCollisionWith(x, y, trail, rocks)
         idleSparkles = {}
 
         local fxColor = getHighlightColor(active.type.color)
-        if active.type.collectFx then
-            collectFx[#collectFx + 1] = {
-                x = active.x,
-                y = active.y,
-                color = fxColor,
-                timer = 0,
-                duration = COLLECT_FX_DURATION,
-                rotation = love.math.random() * math.pi * 2,
-                spin = love.math.random() * 1.4 + 0.6,
-                spokes = love.math.random(5, 7),
-            }
-        end
-
         Particles:spawnBurst(active.x, active.y, {
             count = love.math.random(10, 14),
             speed = 120,
@@ -423,47 +397,11 @@ local function drawFruit(f)
     end
 end
 
-local function drawCollectFx()
-    if #collectFx == 0 then return end
-
-    local lg = love.graphics
-    for _, fx in ipairs(collectFx) do
-        local progress = clamp(fx.timer / fx.duration, 0, 1)
-        local fade = 1 - progress
-        local eased = easeOutQuad(progress)
-        local alpha = fade * fade
-
-        local radius = HITBOX_SIZE * 0.5 + eased * 22
-        local inner = radius * 0.45
-
-        lg.setColor(fx.color[1], fx.color[2], fx.color[3], 0.18 * alpha)
-        lg.circle("fill", fx.x, fx.y, radius * 0.9)
-
-        lg.setLineWidth(3)
-        lg.setColor(fx.color[1], fx.color[2], fx.color[3], 0.7 * alpha)
-        lg.circle("line", fx.x, fx.y, radius)
-
-        lg.setColor(1, 1, 1, 0.55 * alpha)
-        for i = 1, fx.spokes do
-            local angle = fx.rotation + (i - 1) * (math.pi * 2 / fx.spokes)
-            local sx = fx.x + math.cos(angle) * inner
-            local sy = fx.y + math.sin(angle) * inner
-            local ex = fx.x + math.cos(angle) * (inner + 10 + eased * 18)
-            local ey = fx.y + math.sin(angle) * (inner + 10 + eased * 18)
-            lg.line(sx, sy, ex, ey)
-        end
-    end
-
-    lg.setLineWidth(1)
-    lg.setColor(1, 1, 1, 1)
-end
-
 function Fruit:draw()
     if fading and fading.alpha > 0 then
         drawFruit(fading)
     end
     drawFruit(active)
-    drawCollectFx()
 end
 
 -- Queries
