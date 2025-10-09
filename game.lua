@@ -43,9 +43,6 @@ local Game = {}
 
 local clamp01 = Easing.clamp01
 local easeOutExpo = Easing.easeOutExpo
-local easeOutBack = Easing.easeOutBack
-local easeInOutCubic = Easing.easeInOutCubic
-local easedProgress = Easing.easedProgress
 
 local function easeOutCubic(t)
     local inv = 1 - t
@@ -1073,56 +1070,28 @@ local function drawInterfaceLayers(self)
 end
 
 local function drawTransitionFadeOut(self, timer, duration)
-    local progress = easedProgress(timer, duration)
-    local overlayAlpha = progress * 0.9
-    local scale = 1 - 0.04 * easeOutExpo(progress)
-    local yOffset = 24 * progress
+    drawPlayfieldLayers(self)
+    drawInterfaceLayers(self)
 
-    love.graphics.push()
-    love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 + yOffset)
-    love.graphics.scale(scale, scale)
-    love.graphics.translate(-self.screenWidth / 2, -self.screenHeight / 2)
-    love.graphics.setColor(Theme.bgColor)
-    love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-    love.graphics.pop()
-
-    love.graphics.setColor(0, 0, 0, overlayAlpha)
-    love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-
-    love.graphics.setBlendMode("add")
-    love.graphics.setColor(1, 1, 1, overlayAlpha * 0.25)
-    local radius = math.sqrt(self.screenWidth * self.screenWidth + self.screenHeight * self.screenHeight)
-    love.graphics.circle("fill", self.screenWidth / 2, self.screenHeight / 2, radius, 64)
-    local time = love.timer and love.timer.getTime and love.timer.getTime() or 0
-    love.graphics.setColor(1, 0.84, 0.48, overlayAlpha * 0.16)
-    local burstRadius = radius * (0.32 + 0.4 * progress)
-    local burstArms = 5
-    love.graphics.setLineWidth(2 + progress * 3)
-    for i = 1, burstArms do
-        local armAngle = time * 0.45 + (i / burstArms) * math.pi * 2
-        love.graphics.arc("line", "open", self.screenWidth / 2, self.screenHeight / 2, burstRadius, armAngle, armAngle + math.pi * (0.25 + 0.35 * progress))
+    local progress
+    if not duration or duration <= 0 then
+        progress = 1
+    else
+        progress = clamp01(timer / duration)
     end
-    love.graphics.setLineWidth(1)
-    love.graphics.setBlendMode("alpha")
+
+    love.graphics.setColor(0, 0, 0, progress)
+    love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
     love.graphics.setColor(1, 1, 1, 1)
 
     return true
 end
 
-local function drawTransitionShop(self, timer)
-    local entrance = easeOutBack(clamp01(timer / 0.6))
-    local scale = 0.92 + 0.08 * entrance
-    local yOffset = (1 - entrance) * 40
-
-    love.graphics.setColor(0, 0, 0, 0.9)
+local function drawTransitionShop(self, _)
+    love.graphics.setColor(0, 0, 0, 0.85)
     love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-    love.graphics.push()
-    love.graphics.translate(self.screenWidth / 2, self.screenHeight / 2 + yOffset)
-    love.graphics.scale(scale, scale)
-    love.graphics.translate(-self.screenWidth / 2, -self.screenHeight / 2)
-    Shop:draw(self.screenWidth, self.screenHeight)
-    love.graphics.pop()
     love.graphics.setColor(1, 1, 1, 1)
+    Shop:draw(self.screenWidth, self.screenHeight)
 
     return true
 end
@@ -1252,24 +1221,19 @@ function Game:drawTransition()
             return
         end
     elseif phase == "fadein" then
-        local progress = easedProgress(timer, duration)
-        local alpha = 1 - progress
-        local yOffset = alpha * 20
-
-        love.graphics.push()
-        love.graphics.translate(0, yOffset)
         drawPlayfieldLayers(self, "playing")
-        love.graphics.pop()
-
         drawInterfaceLayers(self)
 
-        love.graphics.setColor(0, 0, 0, alpha * 0.85)
+        local progress
+        if not duration or duration <= 0 then
+            progress = 1
+        else
+            progress = clamp01(timer / duration)
+        end
+
+        local alpha = 1 - progress
+        love.graphics.setColor(0, 0, 0, alpha)
         love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-        love.graphics.setBlendMode("add")
-        love.graphics.setColor(1, 1, 1, alpha * 0.2)
-        local radius = math.sqrt(self.screenWidth * self.screenWidth + self.screenHeight * self.screenHeight) * 0.75
-        love.graphics.circle("fill", self.screenWidth / 2, self.screenHeight / 2, radius, 64)
-        love.graphics.setBlendMode("alpha")
         love.graphics.setColor(1, 1, 1, 1)
     end
 end
