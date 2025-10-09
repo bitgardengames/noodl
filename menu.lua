@@ -9,6 +9,8 @@ local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 
+local HIDE_MENU_FOR_SCREENSHOT = true
+
 local Menu = {
     transitionDuration = 0.45,
 }
@@ -248,22 +250,24 @@ function Menu:draw()
         Face:draw(head.x, head.y, wordScale)
     end
 
-    for _, btn in ipairs(buttons) do
-        if btn.labelKey then
-            btn.text = Localization:get(btn.labelKey)
-        end
+    if not HIDE_MENU_FOR_SCREENSHOT then
+        for _, btn in ipairs(buttons) do
+            if btn.labelKey then
+                btn.text = Localization:get(btn.labelKey)
+            end
 
-        if btn.alpha > 0 then
-            UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
+            if btn.alpha > 0 then
+                UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
 
-            love.graphics.push()
-            love.graphics.translate(btn.x + btn.w / 2, btn.y + btn.h / 2 + btn.offsetY)
-            love.graphics.scale(btn.scale)
-            love.graphics.translate(-(btn.x + btn.w / 2), -(btn.y + btn.h / 2))
+                love.graphics.push()
+                love.graphics.translate(btn.x + btn.w / 2, btn.y + btn.h / 2 + btn.offsetY)
+                love.graphics.scale(btn.scale)
+                love.graphics.translate(-(btn.x + btn.w / 2), -(btn.y + btn.h / 2))
 
-            UI.drawButton(btn.id)
+                UI.drawButton(btn.id)
 
-            love.graphics.pop()
+                love.graphics.pop()
+            end
         end
     end
 
@@ -271,7 +275,7 @@ function Menu:draw()
     love.graphics.setColor(Theme.textColor)
     love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
 
-    if dailyChallenge and dailyChallengeAnim > 0 then
+    if not HIDE_MENU_FOR_SCREENSHOT and dailyChallenge and dailyChallengeAnim > 0 then
         local alpha = math.min(1, dailyChallengeAnim)
         local eased = alpha * alpha
         local panelWidth = math.min(420, sw - 72)
