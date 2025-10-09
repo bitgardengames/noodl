@@ -26,18 +26,6 @@ UI.combo = {
     pop = 0,
 }
 
-UI.health = {
-    current = 0,
-    max = 0,
-    display = 0,
-    flashDuration = 0.45,
-    flashTimer = 0,
-    shakeDuration = 0.3,
-    shakeTimer = 0,
-    heartStates = {},
-    criticalPulse = 0,
-}
-
 UI.shields = {
     count = 0,
     display = 0,
@@ -64,9 +52,6 @@ UI.upgradeIndicators = {
 }
 
 local BUTTON_POP_DURATION = 0.32
-local HEART_GAIN_DURATION = 0.42
-local HEART_LOSS_DURATION = 0.5
-local HEART_OUTLINE_SIZE = 6
 
 local function clamp01(value)
     if value < 0 then return 0 end
@@ -1002,53 +987,6 @@ function UI:update(dt)
         end
     end
 
-    local health = self.health
-    if health then
-        if health.display == nil then
-            health.display = health.current or 0
-        end
-
-        local target = health.current or 0
-        local currentDisplay = health.display or 0
-        local diff = target - currentDisplay
-        if math.abs(diff) > 0.01 then
-            health.display = currentDisplay + diff * math.min(dt * 8, 1)
-        else
-            health.display = target
-        end
-
-        if health.flashTimer and health.flashTimer > 0 then
-            health.flashTimer = math.max(0, health.flashTimer - dt)
-        end
-
-        if health.shakeTimer and health.shakeTimer > 0 then
-            health.shakeTimer = math.max(0, health.shakeTimer - dt)
-        end
-
-        if health.heartStates then
-            for _, state in ipairs(health.heartStates) do
-                if state.gainTimer then
-                    state.gainTimer = state.gainTimer + dt
-                    if state.gainTimer >= HEART_GAIN_DURATION then
-                        state.gainTimer = nil
-                    end
-                end
-
-                if state.lossTimer then
-                    state.lossTimer = state.lossTimer + dt
-                    if state.lossTimer >= HEART_LOSS_DURATION then
-                        state.lossTimer = nil
-                    end
-                end
-            end
-        end
-
-        if health.criticalPulse and health.criticalPulse > 0 then
-            local decay = dt * 0.6
-            health.criticalPulse = math.max(0, health.criticalPulse - decay)
-        end
-    end
-
     local container = self.upgradeIndicators
     if container and container.items then
         local smoothing = math.min(dt * 8, 1)
@@ -1102,90 +1040,6 @@ function UI:setCombo(count, timer, duration)
     end
 end
 
-function UI:setHealth(current, max, opts)
-    local health = self.health
-    if not health then return end
-
-    health.heartStates = health.heartStates or {}
-
-    if max ~= nil then
-        health.max = math.max(0, math.floor((max or 0) + 0.0001))
-    end
-
-    local cap = health.max
-    local desired = math.floor((current or 0) + 0.0001)
-    if cap and cap > 0 then
-        desired = math.min(desired, cap)
-    end
-    current = math.max(0, desired)
-
-    local previous = health.current or current
-    health.current = current
-
-    local states = health.heartStates
-    local maxHearts = math.max(health.max or 0, current)
-    for i = 1, maxHearts do
-        states[i] = states[i] or {}
-    end
-    for i = maxHearts + 1, #states do
-        states[i] = nil
-    end
-
-    if opts and opts.immediate then
-        health.display = current
-        health.flashTimer = 0
-        health.shakeTimer = 0
-        health.criticalPulse = 0
-        for _, state in ipairs(states) do
-            state.gainTimer = nil
-            state.lossTimer = nil
-        end
-    end
-
-    if health.display == nil then
-        health.display = current
-    end
-
-    if current < previous then
-        health.flashTimer = health.flashDuration or 0.45
-        health.shakeTimer = health.shakeDuration or 0.3
-        for i = current + 1, math.min(previous, #states) do
-            local state = states[i]
-            if state then
-                state.lossTimer = 0
-                state.gainTimer = nil
-            end
-        end
-    elseif current > previous then
-        health.flashTimer = 0
-        health.shakeTimer = 0
-        for i = previous + 1, math.min(current, #states) do
-            local state = states[i]
-            if state then
-                state.gainTimer = 0
-                state.lossTimer = nil
-            end
-        end
-    end
-end
-
-function UI:triggerHealthCritical()
-    local health = self.health
-    if not health then return end
-
-    health.criticalPulse = math.max(health.criticalPulse or 0, 1)
-    health.flashTimer = math.max(health.flashTimer or 0, (health.flashDuration or 0.45) * 1.15)
-    health.shakeTimer = math.max(health.shakeTimer or 0, (health.shakeDuration or 0.3) * 1.4)
-end
-
-function UI:calmHealthCritical()
-    local health = self.health
-    if not health then return end
-
-    if health.criticalPulse and health.criticalPulse > 0.2 then
-        health.criticalPulse = 0.2
-    end
-end
 
 function UI:setCrashShields(count, opts)
     local shields = self.shields
@@ -1670,162 +1524,6 @@ function UI:drawUpgradeIndicators()
     end
 end
 
-function UI:drawHealth()
-    local health = self.health
-    if not health then
-        self.healthPanelBounds = nil
-        return
-    end
-
-    local maxHealth = math.max(0, math.floor((health.max or 0) + 0.0001))
-    if maxHealth <= 0 then
-        self.healthPanelBounds = nil
-        return
-    end
-
-    local display = health.display or health.current or 0
-    local spacing = 38
-    local size = 26
-
-    local panelPaddingX = 28
-    local panelPaddingY = 12
-    local headerHeight = 0
-    local bodyHeight = size
-    local panelX = 20
-    local panelY = 20
-
-    local fruitBounds = self.fruitPanelBounds
-    if fruitBounds then
-        panelX = fruitBounds.x
-        panelY = fruitBounds.y + fruitBounds.h + 16
-    end
-    local heartsWidth = (maxHealth > 0 and (maxHealth - 1) * spacing + size or size)
-    local panelW = heartsWidth + panelPaddingX * 2
-    if fruitBounds then
-        panelW = math.max(panelW, fruitBounds.w)
-    end
-    local panelH = headerHeight + bodyHeight + panelPaddingY * 2
-
-    local shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or 6
-    local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
-    if shadowOffset ~= 0 then
-        local shadowAlpha = shadowColor[4] or 1
-        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
-        love.graphics.rectangle("fill", panelX + shadowOffset, panelY + shadowOffset, panelW, panelH, 12, 12)
-    end
-
-    local panelColor = Theme.panelColor or {0.16, 0.18, 0.22, 1}
-    love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
-    love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
-
-    local borderColor = Theme.panelBorder or {0, 0, 0, 1}
-    love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
-    love.graphics.setLineWidth(3)
-    love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 12, 12)
-    love.graphics.setLineWidth(1)
-
-    local innerWidth = panelW - panelPaddingX * 2
-    local originX = panelX + panelPaddingX + math.max(0, (innerWidth - heartsWidth) * 0.5)
-    local originY = panelY + panelPaddingY + headerHeight + size * 0.5
-
-    local flashStrength = 0
-    if health.flashTimer and health.flashDuration and health.flashDuration > 0 then
-        flashStrength = math.max(0, math.min(1, health.flashTimer / health.flashDuration))
-    end
-
-    local criticalPulse = math.max(0, math.min(1.2, health.criticalPulse or 0))
-    local criticalTime = 0
-    if criticalPulse > 0 and love.timer and love.timer.getTime then
-        criticalTime = love.timer.getTime()
-    end
-
-    local shakeX, shakeY = 0, 0
-    if health.shakeTimer and health.shakeDuration and health.shakeDuration > 0 then
-        local factor = math.max(0, math.min(1, health.shakeTimer / health.shakeDuration))
-        local magnitude = 3.5 * factor
-        shakeX = love.math.random(-magnitude, magnitude)
-        shakeY = love.math.random(-magnitude, magnitude)
-    end
-
-    love.graphics.push()
-    love.graphics.translate(shakeX, shakeY)
-
-    local states = health.heartStates or {}
-    local fullColor = {0.98, 0.36, 0.42, 0.95}
-    local emptyColor = {0.35, 0.38, 0.48, 0.55}
-
-    for i = 1, maxHealth do
-        local cx = originX + (i - 1) * spacing
-        local cy = originY
-        local fillAmount = clamp01(display - (i - 1))
-        local r = emptyColor[1] + (fullColor[1] - emptyColor[1]) * fillAmount
-        local g = emptyColor[2] + (fullColor[2] - emptyColor[2]) * fillAmount
-        local b = emptyColor[3] + (fullColor[3] - emptyColor[3]) * fillAmount
-        local alpha = (emptyColor[4] or 1) + ((fullColor[4] or 1) - (emptyColor[4] or 1)) * fillAmount
-
-        if fillAmount < 0.999 and flashStrength > 0 then
-            alpha = math.min(1, alpha + flashStrength * 0.5)
-        end
-
-        local scale = 1
-        local yOffset = 0
-        local state = states[i]
-
-        if state and state.gainTimer then
-            local progress = clamp01(state.gainTimer / HEART_GAIN_DURATION)
-            local pulse = math.sin(progress * math.pi)
-            local emphasis = (1 - progress * 0.6) * pulse
-            scale = scale + 0.24 * emphasis
-            yOffset = yOffset - 2.5 * emphasis
-            local highlight = math.max(0, emphasis * 0.45)
-            r = r + (1 - r) * highlight
-            g = g + (1 - g) * highlight * 0.85
-            b = b + (1 - b) * highlight * 0.7
-            alpha = math.min(1, alpha + highlight * 0.35)
-        elseif state and state.lossTimer then
-            local progress = clamp01(state.lossTimer / HEART_LOSS_DURATION)
-            local drop = Easing.easeInOutCubic(progress)
-            scale = math.max(0.55, scale - 0.2 * drop)
-            yOffset = yOffset + 4.2 * drop
-            local fade = 0.55 * drop
-            r = r * (1 - fade)
-            g = g * (1 - fade * 0.9)
-            b = b * (1 - fade * 0.9)
-            alpha = math.max(0, alpha * (1 - 0.65 * drop))
-        elseif criticalPulse > 0 then
-            local wave = 0.5
-            if criticalTime ~= 0 then
-                wave = 0.5 + 0.5 * math.sin(criticalTime * 7.2 + i * 0.35)
-            end
-            local highlight = criticalPulse * wave
-            scale = scale + 0.08 * highlight
-            yOffset = yOffset + math.sin((criticalTime or 0) * 4.8 + i * 0.6) * highlight * 1.1
-            r = r + (1 - r) * highlight * 0.75
-            g = g * (1 - 0.35 * highlight)
-            b = b * (1 - 0.45 * highlight)
-            alpha = math.min(1, alpha + 0.25 * highlight)
-        end
-
-        local shadowAlpha = (shadowColor[4] or 1) * (0.45 + 0.25 * fillAmount)
-        local shadowOffsetX = 2 + size * scale * 0.08
-        local shadowOffsetY = 3 + size * scale * 0.12
-        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
-        drawHeartGeometry(cx + shadowOffsetX, cy + yOffset + shadowOffsetY, size * scale)
-
-        love.graphics.setColor(r, g, b, alpha)
-        drawHeartShape(cx, cy + yOffset, size * scale)
-    end
-
-    love.graphics.pop()
-    love.graphics.setColor(1, 1, 1, 1)
-
-    self.healthPanelBounds = {
-        x = panelX,
-        y = panelY,
-        w = panelW,
-        h = panelH,
-    }
-end
 
 function UI:drawFruitSockets()
     if self.fruitRequired <= 0 then
@@ -2081,7 +1779,6 @@ end
 function UI:draw()
     -- draw socket grid
     self:drawFruitSockets()
-    self:drawHealth()
     self:drawUpgradeIndicators()
     drawComboIndicator(self)
 end

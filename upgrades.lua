@@ -28,46 +28,18 @@ local function getGameInstance()
     end
 end
 
-local function tryRestoreHealth(amount, context)
-    local game = getGameInstance()
-    if not (game and game.restoreHealth) then
+local function grantCrashShields(amount)
+    amount = math.max(0, math.floor((amount or 0) + 0.0001))
+    if amount <= 0 then
         return 0
     end
 
-    return game:restoreHealth(amount, context)
-end
-
-local function adjustMaxHealth(delta)
-    if not delta or delta == 0 then
-        return false
+    if Snake and Snake.addCrashShields then
+        Snake:addCrashShields(amount)
+        return amount
     end
 
-    local game = getGameInstance()
-    if not game then
-        return false
-    end
-
-    if game.adjustMaxHealth then
-        return game:adjustMaxHealth(delta, { immediate = true })
-    end
-
-    if game.maxHealth == nil then
-        return false
-    end
-
-    local newMax = math.max(1, (game.maxHealth or 0) + delta)
-    game.maxHealth = newMax
-    if game.health == nil then
-        game.health = newMax
-    else
-        game.health = math.min(game.health, newMax)
-    end
-
-    if UI and UI.setHealth then
-        UI:setHealth(game.health or newMax, newMax, { immediate = true })
-    end
-
-    return true
+    return 0
 end
 
 local function stoneSkinShieldHandler(data, state)
@@ -237,10 +209,7 @@ local function scarletCenserShieldHandler(data, state)
     counters.scarletCenserCharges = charges
     state.counters = counters
 
-    local restored = tryRestoreHealth(1, { immediate = true })
-    if restored <= 0 and Snake and Snake.addCrashShields then
-        Snake:addCrashShields(1)
-    end
+    grantCrashShields(1)
 
     if Darts and Darts.addGlobalJam then
         local duration = 0.8 + 0.3 * math.max(0, stacks - 1)
@@ -276,10 +245,7 @@ local function grimReliquaryShieldHandler(data, state)
     if souls >= threshold then
         souls = souls - threshold
 
-        local restored = tryRestoreHealth(1, { immediate = true })
-        if restored <= 0 and Snake and Snake.addCrashShields then
-            Snake:addCrashShields(1)
-        end
+        grantCrashShields(1)
 
         if Darts and Darts.addGlobalJam then
             local duration = 0.6 + 0.2 * math.max(0, stacks - 1)
@@ -1427,25 +1393,16 @@ local pool = {
                 state.counters.pulseBloomUnique = 0
                 state.counters.pulseBloomSeen = {}
 
-                local restored = tryRestoreHealth(1, { immediate = true })
-                local labelKey
-                if restored > 0 then
-                    labelKey = "heal_text"
-                elseif Snake and Snake.addCrashShields then
-                    Snake:addCrashShields(1)
-                    labelKey = "shield_text"
-                end
+                grantCrashShields(1)
 
-                if labelKey then
-                    celebrateUpgrade(getUpgradeString("pulse_bloom", labelKey), data, {
-                        color = {0.76, 0.94, 0.82, 1},
-                        textOffset = 50,
-                        textScale = 1.12,
-                        particleCount = 20 + stacks * 2,
-                        particleSpeed = 120,
-                        particleLife = 0.44,
-                    })
-                end
+                celebrateUpgrade(getUpgradeString("pulse_bloom", "shield_text"), data, {
+                    color = {0.76, 0.94, 0.82, 1},
+                    textOffset = 50,
+                    textScale = 1.12,
+                    particleCount = 20 + stacks * 2,
+                    particleSpeed = 120,
+                    particleLife = 0.44,
+                })
             end,
         },
     }),
@@ -1849,30 +1806,7 @@ local pool = {
             state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) - 0.5
             state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.2
 
-            state.counters.pendingMaxHealthDelta = state.counters.pendingMaxHealthDelta or 0
-            if state.counters.pendingMaxHealthDelta ~= 0 then
-                if adjustMaxHealth(state.counters.pendingMaxHealthDelta) then
-                    state.counters.pendingMaxHealthDelta = 0
-                end
-            end
-
-            if not adjustMaxHealth(1) then
-                state.counters.pendingMaxHealthDelta = (state.counters.pendingMaxHealthDelta or 0) + 1
-            end
-
-            if not state.counters.maxHealthHandlerRegistered then
-                state.counters.maxHealthHandlerRegistered = true
-                Upgrades:addEventHandler("floorStart", function(_, runState)
-                    if not runState or not runState.counters then return end
-
-                    local pending = runState.counters.pendingMaxHealthDelta or 0
-                    if pending == 0 then return end
-
-                    if adjustMaxHealth(pending) then
-                        runState.counters.pendingMaxHealthDelta = 0
-                    end
-                end)
-            end
+            grantCrashShields(1)
 
             celebrateUpgrade(getUpgradeString("abyssal_catalyst", "name"), nil, {
                 color = {0.62, 0.58, 0.94, 1},

@@ -28,9 +28,7 @@ GameModes.available = {
         unlocked = true,
         unlockCondition = nil,
         unlockDescription = nil,
-        maxHealth = 3,
-        usesHealthSystem = true,
-        singleTouchDeath = false,
+        singleTouchDeath = true,
 
         load = function(game)
             game.timer = nil
@@ -50,8 +48,6 @@ GameModes.available = {
             value = 25,
         },
         unlockDescriptionKey = "gamemodes.hardcore.unlock_description",
-        maxHealth = 1,
-        usesHealthSystem = false,
         singleTouchDeath = true,
 
         load = function(game)

@@ -28,7 +28,7 @@
 | Momentum Memory | Uncommon | Adrenaline bursts last 2s longer. | Requires tags: adrenaline |
 | Quick Fangs | Uncommon | Snake moves 10% faster. | Up to 4 stacks |
 | Resonant Shell | Uncommon | Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own. | Tags: defense; Requires tags: defense; Unlock tag: specialist |
-| Scarlet Censer | Uncommon | Each floor, dart strikes on your shield restore health or forge a crash shield up to your copies while jamming dart launchers. | Tags: defense, utility; Up to 2 stacks |
+| Scarlet Censer | Uncommon | Each floor, dart strikes on your shield forge crash shields while jamming dart launchers. | Tags: defense, utility; Up to 2 stacks |
 | Stone Skin | Uncommon | Gain a crash shield that shatters rocks and shrugs off a saw or laser hit. | Up to 4 stacks |
 | Tempo Turbine | Uncommon | Combos of 2+ fruits build charge; every third combo fruit stalls saws for 0.7s and grants +2 bonus score. | Tags: combo, economy |
 | Venomous Hunger | Uncommon | Combo rewards are 50% stronger. The exit requires +1 fruit. | Tags: risk |
@@ -40,7 +40,7 @@
 | Mirrored Scales | Rare | Blocking a laser makes it fire back the other way after a quick recharge and grants +2 bonus score (+1 per additional copy). | Tags: defense, economy |
 | Predator's Reflex | Rare | Adrenaline bursts are 25% stronger and trigger at the start of each floor. | Requires tags: adrenaline |
 | Prism Lock | Rare | Blocking a laser adds +1.1s to its cooldown per stack. | Tags: defense, utility |
-| Pulse Bloom | Rare | Harvest a handful of distinct fruit to restore 1 health; if you're already full, forge a crash shield instead. | Tags: defense, economy; Up to 2 stacks |
+| Pulse Bloom | Rare | Harvest a handful of distinct fruit to forge a crash shield. | Tags: defense, economy; Up to 2 stacks |
 | Sparkstep Relay | Rare | Dashing shatters the nearest rock and stalls saws for 0.6s. | Tags: mobility, defense; Requires tags: mobility |
 | Stone Census | Rare | Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%). | Tags: economy, defense; Requires tags: economy |
 | Stonebreaker Hymn | Rare | Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock. | Up to 2 stacks |
@@ -50,7 +50,7 @@
 | Thunder Dash | Rare | Press Space (or A/Right Shoulder on a controller) to dash forward, smashing through rocks while briefly speeding up. | Tags: mobility; Unlock tag: abilities |
 | Warden's Chorus | Rare | Each Defense upgrade adds crash shield progress at the start of every floor. | Tags: defense; Requires tags: defense; Unlock tag: specialist |
 | Zephyr Coils | Rare | Snake moves 20% faster. You gain +1 extra growth. | Tags: mobility, risk |
-| Abyssal Catalyst | Epic | +1 max health and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns. | Tags: defense, risk |
+| Abyssal Catalyst | Epic | Instantly gain a crash shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns. | Tags: defense, risk |
 | Chronospiral Core | Epic | Saws move 25% slower and spin 40% slower. Combo rewards increase by 60%. You grow by +4 and gain +1 extra growth. | Tags: combo, defense, risk; Weight: 1 |
 | Deliberate Coil | Epic | Snake moves 15% slower. The exit unlocks one fruit later. | Tags: speed, risk |
 | Phoenix Echo | Epic | Once per run, a fatal crash rewinds without resetting the floor. | Tags: defense, risk |

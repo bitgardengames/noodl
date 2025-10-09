@@ -37,7 +37,6 @@ local FloorSetup = require("floorsetup")
 local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
 local InputMode = require("inputmode")
-local HealthSystem = require("healthsystem")
 local TalentTree = require("talenttree")
 
 local Game = {}
@@ -192,9 +191,7 @@ local function updateFeedbackState(self, dt)
     end
 
     local targetDanger = 0
-    if self.healthSystem and self.healthSystem.isCritical and self.healthSystem:isCritical() then
-        targetDanger = 1
-    elseif (state.panicTimer or 0) > 0 and (state.panicDuration or 0) > 0 then
+    if (state.panicTimer or 0) > 0 and (state.panicDuration or 0) > 0 then
         targetDanger = math.max(0, math.min(1, (state.panicTimer or 0) / state.panicDuration))
     end
 
@@ -308,126 +305,6 @@ local function drawFeedbackOverlay(self)
         love.graphics.rectangle("line", thickness * 0.5, thickness * 0.5, screenW - thickness, screenH - thickness, 32, 32)
         love.graphics.pop()
     end
-end
-
-local function clampToInt(value)
-    if value == nil then
-        return 0
-    end
-
-    return math.max(0, math.floor(value + 0.0001))
-end
-
-function Game:usesHealth()
-    if self.usesHealthSystem == nil then
-        return true
-    end
-
-    return self.usesHealthSystem
-end
-
-function Game:_ensureHealthSystem()
-    if not self:usesHealth() then
-        return nil
-    end
-
-    if self.healthSystem then
-        return self.healthSystem
-    end
-
-    local maxHealth = clampToInt(self.maxHealth or 0)
-    if maxHealth <= 0 then
-        maxHealth = 1
-    end
-
-    self.healthSystem = HealthSystem.new(maxHealth)
-    if self.health ~= nil then
-        self.healthSystem:setCurrent(self.health)
-    end
-
-    return self.healthSystem
-end
-
-function Game:syncHealth(opts)
-    if not self:usesHealth() then
-        self.health = nil
-        if UI and UI.setHealth then
-            UI:setHealth(0, 0, opts)
-        end
-        return
-    end
-
-    local system = self.healthSystem
-    if system then
-        self.health = system:getCurrent()
-    end
-
-    if UI and UI.setHealth then
-        UI:setHealth(self.health or 0, self.maxHealth, opts)
-    end
-end
-
-function Game:setMaxHealth(max, opts)
-    if not self:usesHealth() then
-        return false
-    end
-
-    max = clampToInt(max)
-    if max <= 0 then
-        max = 1
-    end
-
-    self.maxHealth = max
-    local system = self:_ensureHealthSystem()
-    system:setMax(max)
-    self:syncHealth(opts)
-
-    if system:getCurrent() > (system.criticalThreshold or 1) then
-        self.healthCriticalReady = true
-    end
-
-    return true
-end
-
-function Game:adjustMaxHealth(delta, opts)
-    if not self:usesHealth() then
-        return false
-    end
-
-    if not delta or delta == 0 then
-        return false
-    end
-
-    local newMax = clampToInt((self.maxHealth or 0) + delta)
-    if newMax <= 0 then
-        newMax = 1
-    end
-
-    return self:setMaxHealth(newMax, opts)
-end
-
-function Game:triggerCriticalHealth(cause, context)
-    if not (self.healthSystem and self.healthSystem:isCritical()) then
-        return
-    end
-
-    if not self.healthCriticalReady then
-        return
-    end
-
-    self.healthCriticalReady = false
-
-    if UI and UI.triggerHealthCritical then
-        UI:triggerHealthCritical()
-    end
-
-    if Settings.screenShake ~= false and self.Effects and self.Effects.shake then
-        self.Effects:shake(0.22)
-    end
-
-    self:triggerPanicFeedback(1.1)
-
-    -- No additional surge effects when second wind is disabled.
 end
 
 local function resolveFeedbackPosition(self, options)
@@ -861,45 +738,14 @@ function Game:load()
     local talentEffects = TalentTree and TalentTree.getAggregatedEffects and TalentTree:getAggregatedEffects()
 
     self.mode = GameModes:get()
-    self.singleTouchDeath = (self.mode and self.mode.singleTouchDeath) or false
-    if self.mode and self.mode.usesHealthSystem ~= nil then
-        self.usesHealthSystem = self.mode.usesHealthSystem
+    if self.mode and self.mode.singleTouchDeath ~= nil then
+        self.singleTouchDeath = self.mode.singleTouchDeath and true or false
     else
-        self.usesHealthSystem = true
-    end
-
-    if self:usesHealth() then
-        local startingMax = (self.mode and self.mode.maxHealth) or 3
-        if talentEffects and talentEffects.maxHealthBonus then
-            startingMax = startingMax + talentEffects.maxHealthBonus
-        end
-
-        self.maxHealth = clampToInt(startingMax)
-        if self.maxHealth <= 0 then
-            self.maxHealth = 1
-        end
-
-        self.healthSystem = HealthSystem.new(self.maxHealth)
-        self.health = self.maxHealth
-    else
-        self.maxHealth = 0
-        self.healthSystem = nil
-        self.health = nil
+        self.singleTouchDeath = true
     end
 
     if TalentTree and TalentTree.applyRunModifiers then
         TalentTree:applyRunModifiers(self, talentEffects)
-    end
-
-    if self:usesHealth() then
-        self.healthCriticalReady = true
-        self:syncHealth({ immediate = true })
-    else
-        self.healthCriticalReady = false
-        self.health = nil
-        if UI and UI.setHealth then
-            UI:setHealth(0, 0, { immediate = true })
-        end
     end
     callMode(self, "load")
 
@@ -926,12 +772,6 @@ function Game:reset()
     self.mouseCursorState = nil
 
     resetFeedbackState(self)
-
-    if self.healthSystem then
-        self.healthSystem:reset(self.maxHealth)
-        self.healthCriticalReady = true
-        self:syncHealth({ immediate = true })
-    end
 
     if self.transition then
         self.transition:reset()
@@ -976,11 +816,6 @@ end
 function Game:beginDeath()
     if self.state ~= "dying" then
         self.state = "dying"
-        if self.healthSystem then
-            self.healthSystem:setCurrent(0)
-        end
-        self.health = 0
-        UI:setHealth(self.health, self.maxHealth, { immediate = true })
         if Snake and Snake.setDead then
             Snake:setDead(true)
         end
@@ -991,16 +826,20 @@ function Game:beginDeath()
 end
 
 function Game:applyDamage(amount, cause, context)
-    amount = clampToInt(amount or 1)
-    if amount <= 0 then
-        return true
+    local inflicted = math.floor((amount or 0) + 0.0001)
+    if inflicted < 0 then
+        inflicted = 0
     end
 
     if context then
-        context.inflictedDamage = amount
+        context.inflictedDamage = inflicted
     end
 
-    local impactStrength = math.max(0.35, ((context and context.shake) or 0) + amount * 0.12)
+    if inflicted <= 0 then
+        return true
+    end
+
+    local impactStrength = math.max(0.35, ((context and context.shake) or 0) + inflicted * 0.12)
 
     if Snake and Snake.onDamageTaken then
         Snake:onDamageTaken(cause, context)
@@ -1008,74 +847,11 @@ function Game:applyDamage(amount, cause, context)
 
     self:triggerImpactFeedback(impactStrength, context)
 
-    if self.singleTouchDeath or not self:usesHealth() then
-        if Settings.screenShake ~= false and context and context.shake and self.Effects and self.Effects.shake then
-            self.Effects:shake(context.shake)
-        end
-        return false
-    end
-
-    local system = self:_ensureHealthSystem()
-    if not system then
-        return false
-    end
-
-    if self.health == nil then
-        self.health = system:getCurrent()
-    end
-
-    local _, updated, alive = system:damage(amount)
-    self:syncHealth()
-
-    if not alive or updated <= 0 then
-        return false
-    end
-
     if Settings.screenShake ~= false and context and context.shake and self.Effects and self.Effects.shake then
         self.Effects:shake(context.shake)
     end
 
-    if system:isCritical() then
-        self:triggerCriticalHealth(cause, context)
-    end
-
-    return true
-end
-
-function Game:restoreHealth(amount, context)
-    if not self:usesHealth() then
-        return 0, 0
-    end
-
-    local system = self:_ensureHealthSystem()
-
-    amount = clampToInt(amount or 0)
-    if amount <= 0 then
-        return 0, 0
-    end
-
-    local restored, overflow = system:heal(amount)
-    if restored <= 0 and overflow <= 0 then
-        return 0, 0
-    end
-
-    self:syncHealth(context)
-
-    if system:getCurrent() > (system.criticalThreshold or 1) then
-        self.healthCriticalReady = true
-        if UI and UI.calmHealthCritical then
-            UI:calmHealthCritical()
-        end
-    end
-
-    local forged = 0
-    if overflow > 0 and context and context.overflowToShields and Snake and Snake.addCrashShields then
-        forged = overflow
-        Snake:addCrashShields(forged)
-        context.crashShieldsForged = forged
-    end
-
-    return restored, forged
+    return false
 end
 
 function Game:startDescending(holeX, holeY, holeRadius)
@@ -1137,18 +913,11 @@ function Game:updateGameplay(dt)
         local survived = self:applyDamage(damage, cause, context)
         if not survived then
             local replayTriggered = false
-            if self:usesHealth() and Upgrades.tryFloorReplay then
+            if Upgrades and Upgrades.tryFloorReplay then
                 replayTriggered = Upgrades:tryFloorReplay(self, cause)
             end
             if replayTriggered then
-                local system = self:_ensureHealthSystem()
-                if system then
-                    local resetValue = math.max(1, self.maxHealth or 1)
-                    system:setCurrent(resetValue)
-                    self.healthCriticalReady = true
-                    self:syncHealth({ immediate = true })
-                    return
-                end
+                return
             end
             self.deathCause = cause
             self:beginDeath()
@@ -1156,18 +925,11 @@ function Game:updateGameplay(dt)
         return
     elseif moveResult == "dead" then
         local replayTriggered = false
-        if self:usesHealth() and Upgrades.tryFloorReplay then
+        if Upgrades and Upgrades.tryFloorReplay then
             replayTriggered = Upgrades:tryFloorReplay(self, cause)
         end
         if replayTriggered then
-            local system = self:_ensureHealthSystem()
-            if system then
-                local resetValue = math.max(1, self.maxHealth or 1)
-                system:setCurrent(resetValue)
-                self.healthCriticalReady = true
-                self:syncHealth({ immediate = true })
-                return
-            end
+            return
         end
         self.deathCause = cause
         self:beginDeath()
@@ -1628,65 +1390,9 @@ function Game:setupFloor(floorNum)
     local traitContext = setup.traitContext
     local spawnPlan = setup.spawnPlan
 
-    local healAmount = traitContext and traitContext.floorHeal
-    if healAmount == nil and self.mode and self.mode.floorHeal ~= nil then
-        healAmount = self.mode.floorHeal
-    end
-    if healAmount == nil then
-        healAmount = 1
-    end
-    healAmount = tonumber(healAmount) or 0
-
-    local restoredHealth, forgedShields = 0, 0
-    if healAmount > 0 and self:usesHealth() then
-        local overflowToShields = true
-        local system = self:_ensureHealthSystem()
-        if system then
-            local current = system:getCurrent() or 0
-            local max = system:getMax() or 0
-            if max > 0 and current >= max then
-                overflowToShields = false
-            end
-        end
-
-        local restored, forged = self:restoreHealth(healAmount, {
-            source = "floorIntro",
-            overflowToShields = overflowToShields,
-        })
-        restoredHealth = restored or 0
-        forgedShields = forged or 0
-    end
-
     UI:setFruitGoal(traitContext.fruitGoal)
 
-    local restNotes = {}
-    if restoredHealth and restoredHealth > 0 then
-        local healSectionTitle = Localization:get("game.floor_intro.heal_section_title")
-        local healText = Localization:get("game.floor_intro.heal_note", {
-            amount = restoredHealth,
-        })
-        table.insert(restNotes, { title = healSectionTitle, text = healText })
-    end
-
-    if forgedShields and forgedShields > 0 then
-        local healSectionTitle = Localization:get("game.floor_intro.heal_section_title")
-        local shieldText = Localization:get("game.floor_intro.shield_note", {
-            amount = forgedShields,
-        })
-        table.insert(restNotes, { title = healSectionTitle, text = shieldText })
-    end
-
-    if #restNotes > 0 then
-        self.transitionNotes = {}
-        for _, note in ipairs(restNotes) do
-            table.insert(self.transitionNotes, {
-                title = note.title,
-                text = note.text,
-            })
-        end
-    else
-        self.transitionNotes = nil
-    end
+    self.transitionNotes = nil
 
     Upgrades:applyPersistentEffects(true)
 

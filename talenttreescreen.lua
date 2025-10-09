@@ -780,7 +780,7 @@ local function getSummaryLines()
     local effects = TalentTree:calculateEffects(selections)
     local lines = {}
 
-    appendLine(lines, formatSignedLine("Max health", effects.maxHealthBonus))
+    appendLine(lines, formatSignedLine("Crash shields", effects.crashShieldBonus))
     appendLine(lines, formatSignedLine("Fruit bonus", effects.fruitBonus, { format = "%+0.1f" }))
     appendLine(lines, formatMultiplierLine("Combo multiplier", effects.comboMultiplier, {
         moreDescriptor = "stronger",

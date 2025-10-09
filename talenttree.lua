@@ -204,10 +204,10 @@ local tiers = {
                 id = "reinforced_scales",
                 name = "Thick Scales",
                 description = "Stack plating to survive mistakes, even if it slows you down.",
-                bonuses = { "+1 health" },
+                bonuses = { "+1 crash shield" },
                 penalties = { "-6% snake speed" },
                 effects = {
-                    maxHealthBonus = 1,
+                    crashShieldBonus = 1,
                     snakeSpeedMultiplier = 0.94,
                 },
                 default = true,
@@ -241,10 +241,10 @@ local tiers = {
                 id = "last_resort",
                 name = "Last Resort",
                 description = "Burn the future for an extra life and faster markets right now.",
-                bonuses = { "+1 health", "+1 shop card" },
+                bonuses = { "+1 crash shield", "+1 shop card" },
                 penalties = { "-0.4 fruit per pickup" },
                 effects = {
-                    maxHealthBonus = 1,
+                    crashShieldBonus = 1,
                     extraShopChoices = 1,
                     fruitBonus = -0.4,
                 },
@@ -304,10 +304,10 @@ local tiers = {
                 id = "stalwart_core",
                 name = "Stalwart Core",
                 description = "Tank through chaos with heavy plating and tighter combos.",
-                bonuses = { "+1 health", "-15% saw speed" },
+                bonuses = { "+1 crash shield", "-15% saw speed" },
                 penalties = { "+10% laser cooldown" },
                 effects = {
-                    maxHealthBonus = 1,
+                    crashShieldBonus = 1,
                     sawSpeedMultiplier = 0.85,
                     laserCooldownMultiplier = 1.10,
                 },
@@ -582,7 +582,7 @@ end
 
 local function createEffectAccumulator()
     return {
-        maxHealthBonus = 0,
+        crashShieldBonus = 0,
         fruitBonus = 0,
         snakeSpeedMultiplier = 1,
         comboMultiplier = 1,
@@ -601,8 +601,8 @@ local function accumulateEffects(accumulator, effects)
         return accumulator
     end
 
-    if effects.maxHealthBonus then
-        accumulator.maxHealthBonus = (accumulator.maxHealthBonus or 0) + effects.maxHealthBonus
+    if effects.crashShieldBonus then
+        accumulator.crashShieldBonus = (accumulator.crashShieldBonus or 0) + effects.crashShieldBonus
     end
 
     if effects.fruitBonus then
@@ -697,13 +697,11 @@ function TalentTree:applyRunModifiers(game, effects)
 
     if game then
         game.talentEffects = copyTable(effects)
-        game.health = game.maxHealth
-        if game.healthSystem and game.healthSystem.setMax then
-            game.healthSystem:setMax(game.maxHealth)
-            if game.healthSystem.setCurrent then
-                game.healthSystem:setCurrent(game.maxHealth)
-            end
-        end
+    end
+
+    local shieldBonus = effects.crashShieldBonus or 0
+    if shieldBonus > 0 and Snake and Snake.addCrashShields then
+        Snake:addCrashShields(shieldBonus)
     end
 
     if Snake and Snake.addSpeedMultiplier and not approximatelyEqual(effects.snakeSpeedMultiplier, 1) then
