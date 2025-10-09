@@ -678,6 +678,10 @@ local english = {
                 title = "Endless Appetite",
                 description = "Eat 2,500 total apples",
             },
+            appleInfinite = {
+                title = "Infinite Appetite",
+                description = "Eat 5,000 total apples",
+            },
             fullBelly = {
                 title = "Full Belly",
                 description = "Reach a snake length of 50",
