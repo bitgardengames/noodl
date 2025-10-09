@@ -152,6 +152,174 @@ local function easeOutBack(t)
     return 1 + c3 * (progress * progress * progress) + c1 * (progress * progress)
 end
 
+local function clamp(value, minimum, maximum)
+    if value < minimum then
+        return minimum
+    elseif value > maximum then
+        return maximum
+    end
+    return value
+end
+
+local function easeOutQuad(t)
+    local inv = 1 - t
+    return 1 - inv * inv
+end
+
+local function copyColor(color)
+    if type(color) ~= "table" then
+        return { 1, 1, 1, 1 }
+    end
+
+    return {
+        color[1] or 1,
+        color[2] or 1,
+        color[3] or 1,
+        color[4] == nil and 1 or color[4],
+    }
+end
+
+local function lightenColor(color, factor)
+    factor = factor or 0.35
+    local r = color[1] or 1
+    local g = color[2] or 1
+    local b = color[3] or 1
+    local a = color[4] == nil and 1 or color[4]
+    return {
+        r + (1 - r) * factor,
+        g + (1 - g) * factor,
+        b + (1 - b) * factor,
+        a * (0.65 + factor * 0.35),
+    }
+end
+
+local function randomRange(minimum, maximum)
+    return minimum + (maximum - minimum) * love.math.random()
+end
+
+local function spawnFruitAnimation(anim)
+    if not anim or not anim.barMetrics then
+        return false
+    end
+
+    local metrics = anim.barMetrics
+    local palette = anim.fruitPalette or { Theme.appleColor }
+    local color = copyColor(palette[love.math.random(#palette)] or Theme.appleColor)
+
+    local startX = metrics.x + metrics.width * randomRange(0.15, 0.85)
+    local startY = metrics.y - randomRange(42, 84)
+    local endX = metrics.x + metrics.width * randomRange(0.20, 0.80)
+    local endY = metrics.y + metrics.height * randomRange(0.20, 0.80)
+    local controlX = (startX + endX) / 2 + randomRange(-metrics.width * 0.25, metrics.width * 0.25)
+    local controlY = math.min(startY, endY) - randomRange(46, 92)
+
+    local fruit = {
+        timer = 0,
+        duration = randomRange(0.55, 0.85),
+        startX = startX,
+        startY = startY,
+        controlX = controlX,
+        controlY = controlY,
+        endX = endX,
+        endY = endY,
+        scale = randomRange(0.52, 0.72),
+        wobbleSeed = love.math.random() * math.pi * 2,
+        wobbleSpeed = randomRange(4.5, 6.5),
+        color = color,
+    }
+
+    anim.fruitAnimations = anim.fruitAnimations or {}
+    table.insert(anim.fruitAnimations, fruit)
+    anim.fruitRemaining = math.max(0, (anim.fruitRemaining or 0) - 1)
+
+    return true
+end
+
+local function updateFruitAnimations(anim, dt)
+    if not anim or (anim.fruitTotal or 0) <= 0 then
+        return
+    end
+
+    anim.fruitSpawnTimer = (anim.fruitSpawnTimer or 0) + dt
+    local interval = anim.fruitSpawnInterval or 0.08
+
+    if anim.barMetrics then
+        while (anim.fruitRemaining or 0) > 0 and anim.fruitSpawnTimer >= interval do
+            if not spawnFruitAnimation(anim) then
+                break
+            end
+            anim.fruitSpawnTimer = anim.fruitSpawnTimer - interval
+            interval = anim.fruitSpawnInterval or interval
+        end
+    end
+
+    local active = anim.fruitAnimations or {}
+    for index = #active, 1, -1 do
+        local fruit = active[index]
+        fruit.timer = (fruit.timer or 0) + dt
+        local duration = fruit.duration or 0.6
+        if duration <= 0 then
+            table.remove(active, index)
+        else
+            local progress = clamp(fruit.timer / duration, 0, 1)
+            fruit.progress = progress
+            if progress >= 1 then
+                fruit.fade = (fruit.fade or 0) + dt
+                if fruit.fade >= 0.25 then
+                    table.remove(active, index)
+                end
+            end
+        end
+    end
+end
+
+local function drawFruitAnimations(anim)
+    local fruits = anim and anim.fruitAnimations
+    if not fruits or #fruits == 0 then
+        return
+    end
+
+    for _, fruit in ipairs(fruits) do
+        local progress = clamp(fruit.progress or 0, 0, 1)
+        local eased = easeOutQuad(progress)
+        local inv = 1 - eased
+        local x = inv * inv * (fruit.startX or 0)
+            + 2 * inv * eased * (fruit.controlX or 0)
+            + eased * eased * (fruit.endX or 0)
+        local y = inv * inv * (fruit.startY or 0)
+            + 2 * inv * eased * (fruit.controlY or 0)
+            + eased * eased * (fruit.endY or 0)
+
+        local wobble = math.sin((fruit.wobbleSeed or 0) + (fruit.wobbleSpeed or 5.2) * eased)
+        local radius = 12 * (fruit.scale or 0.6) * (0.95 + wobble * 0.04)
+        local fadeMul = 1
+        if fruit.fade then
+            fadeMul = clamp(1 - fruit.fade / 0.25, 0, 1)
+        end
+
+        local color = fruit.color or Theme.appleColor
+        local highlight = lightenColor(color, 0.42)
+
+        love.graphics.setColor(0, 0, 0, 0.25 * fadeMul)
+        love.graphics.ellipse("fill", x + 3, y + 3 + wobble * 3, radius * 1.05, radius * 0.9, 30)
+
+        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * fadeMul)
+        love.graphics.circle("fill", x, y + wobble * 2, radius, 30)
+
+        love.graphics.setColor(0, 0, 0, 0.85 * fadeMul)
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", x, y + wobble * 2, radius, 30)
+
+        love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.7) * fadeMul)
+        love.graphics.circle("fill", x - radius * 0.35, y + wobble * 2 - radius * 0.45, radius * 0.45, 24)
+
+        love.graphics.setLineWidth(1)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setLineWidth(1)
+end
+
 local function drawBackground(sw, sh)
     local baseColor = (UI.colors and UI.colors.background) or Theme.bgColor
     love.graphics.setColor(baseColor)
@@ -484,6 +652,35 @@ function GameOver:enter(data)
             bonusXP = challengeBonusXP,
         }
 
+        local applesCollected = math.max(0, stats.apples or 0)
+        local fruitPoints = 0
+        if self.progression and self.progression.breakdown then
+            fruitPoints = math.max(0, self.progression.breakdown.fruitPoints or 0)
+        end
+        local xpPerFruit = 0
+        if applesCollected > 0 and fruitPoints > 0 then
+            xpPerFruit = fruitPoints / applesCollected
+        end
+        local spawnInterval = 0.08
+        if xpPerFruit > 0 and fillSpeed > 0 then
+            spawnInterval = clamp(xpPerFruit / fillSpeed, 0.03, 0.16)
+        end
+
+        self.progressionAnimation.fruitTotal = applesCollected
+        self.progressionAnimation.fruitRemaining = applesCollected
+        self.progressionAnimation.fruitAnimations = {}
+        self.progressionAnimation.fruitSpawnTimer = 0
+        self.progressionAnimation.fruitSpawnInterval = spawnInterval
+        self.progressionAnimation.fruitPalette = {
+            Theme.appleColor,
+            Theme.bananaColor,
+            Theme.blueberryColor,
+            Theme.goldenPearColor,
+            Theme.dragonfruitColor,
+        }
+        self.progressionAnimation.fruitXpPer = xpPerFruit
+        self.progressionAnimation.fruitPoints = fruitPoints
+
         if type(self.progression.milestones) == "table" then
             for _, milestone in ipairs(self.progression.milestones) do
                 self.progressionAnimation.pendingMilestones[#self.progressionAnimation.pendingMilestones + 1] = {
@@ -683,6 +880,11 @@ local function drawXpSection(self, x, y, width)
     local barHeight = 26
     local barWidth = width - 48
     local barX = x + 24
+    anim.barMetrics = anim.barMetrics or {}
+    anim.barMetrics.x = barX
+    anim.barMetrics.y = barY
+    anim.barMetrics.width = barWidth
+    anim.barMetrics.height = barHeight
     local percent = 0
     if (anim.xpForLevel or 0) > 0 then
         percent = math.min(1, math.max(0, (anim.xpIntoLevel or 0) / anim.xpForLevel))
@@ -717,6 +919,8 @@ local function drawXpSection(self, x, y, width)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", barX, barY, barWidth, barHeight, 12, 12)
     love.graphics.setLineWidth(1)
+
+    drawFruitAnimations(anim)
 
     local totalLabel = Localization:get("gameover.meta_progress_total_label", {
         total = math.floor((anim.displayedTotal or 0) + 0.5),
@@ -976,6 +1180,8 @@ function GameOver:update(dt)
             end
         end
     end
+
+    updateFruitAnimations(anim, dt)
 
     local baseHeight = self.baseXpSectionHeight or 220
     local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
