@@ -55,6 +55,8 @@ local viewportHeight = 0
 local contentHeight = 0
 local layout = {
     panel = { x = 0, y = 0, w = 0, h = 0 },
+    title = { y = 0, height = 0 },
+    margins = { top = 0, bottom = 0 },
 }
 
 local function isButtonFocusable(btn)
@@ -349,6 +351,8 @@ function SettingsScreen:enter()
     local spacing = UI.spacing.buttonSpacing
     local headerHeight = UI.spacing.sectionHeaderHeight
     local headerSpacing = UI.spacing.sectionHeaderSpacing
+    local titleFont = UI.fonts.title
+    local titleHeight = (titleFont and titleFont:getHeight()) or 0
     local totalHeight = 0
     for index, opt in ipairs(options) do
         local height
@@ -372,14 +376,59 @@ function SettingsScreen:enter()
     local panelPadding = UI.spacing.panelPadding
     local panelWidth = UI.spacing.buttonWidth + panelPadding * 2
     local panelHeight = totalHeight + panelPadding * 2
-    local maxPanelHeight = math.max(panelPadding * 2 + UI.spacing.buttonHeight, sh - UI.spacing.sectionSpacing * 2)
-    if panelHeight > maxPanelHeight then
-        panelHeight = maxPanelHeight
+    local minPanelHeight = panelPadding * 2 + UI.spacing.buttonHeight
+    local desiredTopMargin = UI.spacing.sectionSpacing + titleHeight + UI.spacing.sectionSpacing
+    local desiredBottomMargin = UI.spacing.sectionSpacing + UI.spacing.buttonHeight + UI.spacing.sectionSpacing
+    local desiredMaxPanelHeight = sh - desiredTopMargin - desiredBottomMargin
+    local generalMaxPanelHeight = sh - UI.spacing.sectionSpacing * 2
+
+    local safeDesiredMax = math.max(0, desiredMaxPanelHeight)
+    local safeGeneralMax = math.max(0, generalMaxPanelHeight)
+    local maxPanelHeight = math.min(panelHeight, safeDesiredMax, safeGeneralMax)
+    if maxPanelHeight < minPanelHeight then
+        if safeGeneralMax >= minPanelHeight then
+            maxPanelHeight = minPanelHeight
+        elseif safeGeneralMax > 0 then
+            maxPanelHeight = safeGeneralMax
+        else
+            maxPanelHeight = minPanelHeight
+        end
     end
+
+    panelHeight = maxPanelHeight
+
     local panelX = centerX - panelWidth / 2
-    local panelY = sh / 2 - panelHeight / 2
+
+    local minPanelY = desiredTopMargin
+    local maxPanelY = sh - desiredBottomMargin - panelHeight
+    local panelY
+    if maxPanelY >= minPanelY then
+        panelY = minPanelY + (maxPanelY - minPanelY) * 0.5
+    else
+        local centeredY = sh / 2 - panelHeight / 2
+        local minAllowedY = UI.spacing.sectionSpacing
+        local maxAllowedY = sh - panelHeight - UI.spacing.sectionSpacing
+        if maxAllowedY < minAllowedY then
+            maxAllowedY = minAllowedY
+        end
+        if centeredY < minAllowedY then
+            panelY = minAllowedY
+        elseif centeredY > maxAllowedY then
+            panelY = maxAllowedY
+        else
+            panelY = centeredY
+        end
+    end
 
     layout.panel = { x = panelX, y = panelY, w = panelWidth, h = panelHeight }
+    layout.title = {
+        height = titleHeight,
+        y = math.max(UI.spacing.sectionSpacing, panelY - UI.spacing.sectionSpacing - titleHeight * 0.25),
+    }
+    layout.margins = {
+        top = panelY,
+        bottom = sh - (panelY + panelHeight),
+    }
     contentHeight = totalHeight
 
     local startY = panelY + panelPadding
@@ -518,8 +567,8 @@ function SettingsScreen:draw()
     UI.drawPanel(panel.x, panel.y, panel.w, panel.h)
 
     local titleText = Localization:get("settings.title")
-    local titleHeight = UI.fonts.title:getHeight()
-    local titleY = math.max(UI.spacing.sectionSpacing, panel.y - UI.spacing.sectionSpacing - titleHeight * 0.25)
+    local titleLayout = layout.title or {}
+    local titleY = titleLayout.y or math.max(UI.spacing.sectionSpacing, panel.y - UI.spacing.sectionSpacing - (titleLayout.height or 0) * 0.25)
     UI.drawLabel(titleText, 0, titleY, sw, "center", { fontKey = "title" })
 
     self:updateButtonPositions()
