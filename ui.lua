@@ -19,6 +19,9 @@ UI.socketSize = 26
 UI.goalReachedAnim = 0
 UI.goalCelebrated = false
 
+local FRUIT_SOCKET_WOBBLE_AMPLITUDE = 0.05
+local FRUIT_SOCKET_BOUNCE_SCALE = 0.18
+
 UI.combo = {
     count = 0,
     timer = 0,
@@ -1767,7 +1770,7 @@ function UI:drawFruitSockets()
             local bounceScale = 1
             if socket.bounceTimer ~= nil then
                 local bounceProgress = clamp01(socket.bounceTimer / self.socketBounceDuration)
-                bounceScale = 1 + math.sin(bounceProgress * math.pi) * 0.24 * (1 - bounceProgress * 0.4)
+                bounceScale = 1 + math.sin(bounceProgress * math.pi) * FRUIT_SOCKET_BOUNCE_SCALE * (1 - bounceProgress * 0.4)
             end
 
             local celebrationWave = 0
@@ -1791,7 +1794,7 @@ function UI:drawFruitSockets()
             love.graphics.translate(x, y)
             local wobbleRotation = 0
             if socket.wobblePhase then
-                wobbleRotation = math.sin(socket.wobblePhase) * 0.08 * (1 - t)
+                wobbleRotation = math.sin(socket.wobblePhase) * FRUIT_SOCKET_WOBBLE_AMPLITUDE * (1 - t)
             end
             love.graphics.rotate(wobbleRotation)
             love.graphics.scale(scale * goalPulse * bounceScale, scale * goalPulse * bounceScale)
