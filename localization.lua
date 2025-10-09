@@ -103,11 +103,9 @@ end
 
 local function scanLanguages()
     local items = {}
-    if love and love.filesystem and love.filesystem.getDirectoryItems then
-        for _, item in ipairs(love.filesystem.getDirectoryItems("Languages")) do
-            if item:match("%.lua$") then
-                items[#items + 1] = item:gsub("%.lua$", "")
-            end
+    for _, item in ipairs(love.filesystem.getDirectoryItems("Languages")) do
+        if item:match("%.lua$") then
+            items[#items + 1] = item:gsub("%.lua$", "")
         end
     end
     table.sort(items)

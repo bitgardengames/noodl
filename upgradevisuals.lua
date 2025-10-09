@@ -5,7 +5,7 @@ local max = math.max
 local pi = math.pi
 local cos = math.cos
 local sin = math.sin
-local random = love and love.math and love.math.random or math.random
+local random = love.math.random
 
 local function clamp01(value)
     if value <= 0 then

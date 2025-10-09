@@ -411,10 +411,6 @@ local function round(value)
 end
 
 local function buildFonts(scale)
-    if not (love and love.graphics and love.graphics.newFont) then
-        return
-    end
-
     for key, def in pairs(fontDefinitions) do
         local size = round(def.size * scale)
         if def.min then
