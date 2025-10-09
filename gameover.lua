@@ -101,6 +101,9 @@ local BUTTON_HEIGHT = UI.spacing.buttonHeight
 local BUTTON_SPACING = UI.spacing.buttonSpacing
 local CELEBRATION_ENTRY_HEIGHT = 64
 local CELEBRATION_ENTRY_SPACING = CELEBRATION_ENTRY_HEIGHT + 10
+local STAT_CARD_HEIGHT = 96
+local STAT_CARD_SPACING = 18
+local STAT_CARD_MIN_WIDTH = 160
 
 local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
 local backgroundEffectCache = {}
@@ -155,6 +158,54 @@ local buttonDefs = {
     { id = "goMenu", textKey = "gameover.quit_to_menu", action = "menu" },
 }
 
+local function calculateStatLayout(contentWidth, padding, count)
+    local totalCards = math.max(0, count or 0)
+    local availableWidth = math.max(0, contentWidth - padding * 2)
+    local maxColumns = math.min(totalCards, 3)
+    local columns = math.max(1, maxColumns)
+
+    if totalCards == 0 then
+        return {
+            columns = 0,
+            rows = 0,
+            cardWidth = 0,
+            height = 0,
+            spacing = STAT_CARD_SPACING,
+            availableWidth = availableWidth,
+        }
+    end
+
+    while columns > 1 do
+        local tentativeWidth = (availableWidth - STAT_CARD_SPACING * (columns - 1)) / columns
+        if tentativeWidth >= STAT_CARD_MIN_WIDTH then
+            break
+        end
+        columns = columns - 1
+    end
+
+    local cardWidth
+    if columns <= 1 then
+        columns = 1
+        cardWidth = availableWidth
+    else
+        cardWidth = (availableWidth - STAT_CARD_SPACING * (columns - 1)) / columns
+    end
+
+    cardWidth = math.max(0, cardWidth)
+
+    local rows = math.ceil(totalCards / columns)
+    local height = rows * STAT_CARD_HEIGHT + math.max(0, rows - 1) * STAT_CARD_SPACING
+
+    return {
+        columns = columns,
+        rows = rows,
+        cardWidth = cardWidth,
+        height = height,
+        spacing = STAT_CARD_SPACING,
+        availableWidth = availableWidth,
+    }
+end
+
 local function defaultButtonLayout(sw, sh, defs, startY)
     local list = {}
     local centerX = sw / 2 - BUTTON_WIDTH / 2
@@ -188,6 +239,87 @@ end
 
 local function handleButtonAction(_, action)
     return action
+end
+
+function GameOver:updateLayoutMetrics()
+    if not fontSmall or not fontScore then
+        return false
+    end
+
+    local sw = select(1, Screen:get())
+    local padding = 24
+    local margin = 24
+    local maxAllowed = math.max(40, sw - margin)
+    local safeMaxWidth = math.max(80, sw - margin * 2)
+    safeMaxWidth = math.min(safeMaxWidth, maxAllowed)
+    local preferredWidth = math.min(sw * 0.72, 640)
+    local minWidth = math.min(320, safeMaxWidth)
+    local contentWidth = math.max(minWidth, math.min(preferredWidth, safeMaxWidth))
+    local wrapLimit = math.max(0, contentWidth - padding * 2)
+
+    local messageText = self.deathMessage or Localization:get("gameover.default_message")
+    local _, wrappedMessage = fontSmall:getWrap(messageText, wrapLimit)
+    local messageLines = math.max(1, #wrappedMessage)
+    local messageHeight = messageLines * fontSmall:getHeight()
+
+    local headerFont = UI.fonts.heading or fontSmall
+    local headerHeight = headerFont:getHeight()
+    local scoreHeight = fontScore:getHeight()
+    local badgeHeight = self.isNewHighScore and (fontBadge:getHeight() + 18) or 0
+    local achievementsHeight = (#(self.achievementsEarned or {}) > 0) and (fontSmall:getHeight() + 12) or 0
+
+    local statCards = 3
+    local statLayout = calculateStatLayout(contentWidth, padding, statCards)
+
+    local xpHeight = 0
+    if self.progressionAnimation then
+        local celebrations = (self.progressionAnimation.celebrations and #self.progressionAnimation.celebrations) or 0
+        local baseHeight = self.baseXpSectionHeight or self.xpSectionHeight or 0
+        local targetHeight = baseHeight + celebrations * CELEBRATION_ENTRY_SPACING
+        local xpContentHeight = math.max(160, baseHeight, targetHeight)
+        xpHeight = xpContentHeight + 12
+    end
+
+    local summaryPanelHeight = padding * 2
+        + headerHeight + 12
+        + messageHeight + 28
+        + scoreHeight + 16
+        + badgeHeight
+        + statLayout.height + 12
+        + achievementsHeight
+        + xpHeight
+
+    summaryPanelHeight = math.floor(summaryPanelHeight + 0.5)
+    contentWidth = math.floor(contentWidth + 0.5)
+    wrapLimit = math.floor(wrapLimit + 0.5)
+
+    local layoutChanged = false
+    if not self.summaryPanelHeight or math.abs(self.summaryPanelHeight - summaryPanelHeight) >= 1 then
+        layoutChanged = true
+    end
+    if not self.contentWidth or math.abs(self.contentWidth - contentWidth) >= 1 then
+        layoutChanged = true
+    end
+    if not self.wrapLimit or math.abs(self.wrapLimit - wrapLimit) >= 1 then
+        layoutChanged = true
+    end
+
+    if not self.statLayout
+        or self.statLayout.columns ~= statLayout.columns
+        or self.statLayout.rows ~= statLayout.rows
+        or math.abs((self.statLayout.cardWidth or 0) - (statLayout.cardWidth or 0)) >= 1
+    then
+        layoutChanged = true
+    end
+
+    self.summaryPanelHeight = summaryPanelHeight
+    self.contentWidth = contentWidth
+    self.contentPadding = padding
+    self.wrapLimit = wrapLimit
+    self.messageLines = messageLines
+    self.statLayout = statLayout
+
+    return layoutChanged
 end
 
 function GameOver:updateButtonLayout()
@@ -288,31 +420,6 @@ function GameOver:enter(data)
         end
     end
 
-    local sw, sh = Screen:get()
-    local contentWidth = math.min(sw * 0.65, 520)
-    local padding = 24
-    local wrapLimit = contentWidth - padding * 2
-    local messageText = self.deathMessage or Localization:get("gameover.default_message")
-    local _, wrappedMessage = fontSmall:getWrap(messageText, wrapLimit)
-    local lineHeight = fontSmall:getHeight()
-    local messageHeight = (#wrappedMessage > 0 and #wrappedMessage or 1) * lineHeight
-
-    local achievementsList = self.achievementsEarned or {}
-    local achievementsHeight = (#achievementsList > 0) and (lineHeight + 12) or 0
-    local scoreHeight = fontScore:getHeight()
-    local badgeHeight = self.isNewHighScore and (fontBadge:getHeight() + 18) or 0
-    local statRowHeight = 96
-    local summaryPanelHeight = padding * 2
-        + lineHeight
-        + 12
-        + messageHeight
-        + 28
-        + scoreHeight
-        + 16
-        + badgeHeight
-        + statRowHeight
-        + achievementsHeight
-
     self.dailyChallengeResult = DailyChallenges:applyRunResults(SessionStats)
     local challengeBonusXP = 0
     if self.dailyChallengeResult then
@@ -337,7 +444,6 @@ function GameOver:enter(data)
         end
         self.baseXpSectionHeight = baseHeight
         self.xpSectionHeight = baseHeight
-        summaryPanelHeight = summaryPanelHeight + self.xpSectionHeight + 12
 
         local fillSpeed = math.max(60, (self.progression.gained or 0) / 1.2)
         self.progressionAnimation = {
@@ -376,7 +482,7 @@ function GameOver:enter(data)
         end
     end
 
-    self.summaryPanelHeight = summaryPanelHeight
+    self:updateLayoutMetrics()
     self:updateButtonLayout()
 
 end
@@ -628,18 +734,18 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
     drawCenteredPanel(contentX, panelY, contentWidth, panelHeight, 20)
 
     local messageText = self.deathMessage or Localization:get("gameover.default_message")
-    local wrapLimit = contentWidth - padding * 2
-    local _, wrappedMessage = fontSmall:getWrap(messageText, wrapLimit)
+    local wrapLimit = self.wrapLimit or (contentWidth - padding * 2)
     local lineHeight = fontSmall:getHeight()
-    local messageLines = math.max(1, #wrappedMessage)
+    local messageLines = math.max(1, self.messageLines or 1)
+    local headerFont = UI.fonts.heading or fontSmall
 
     local textY = panelY + padding
     UI.drawLabel(getLocalizedOrFallback("gameover.run_summary_title", "Run Summary"), contentX, textY, contentWidth, "center", {
-        font = UI.fonts.heading or fontSmall,
+        font = headerFont,
         color = UI.colors.text,
     })
 
-    textY = textY + lineHeight + 12
+    textY = textY + headerFont:getHeight() + 12
     UI.drawLabel(messageText, contentX + padding, textY, wrapLimit, "center", {
         font = fontSmall,
         color = UI.colors.mutedText or UI.colors.text,
@@ -663,20 +769,42 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
     end
 
     local cardY = textY
-    local cardHeight = 96
-    local cardSpacing = 18
-    local cardWidth = (contentWidth - padding * 2 - cardSpacing * 2) / 3
-    local cardX = contentX + padding
-
     local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
     local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Apples")
     local modeLabel = getLocalizedOrFallback("gameover.stats_mode_label", "Mode")
+    local statLayout = self.statLayout or calculateStatLayout(contentWidth, padding, 3)
+    local availableWidth = statLayout.availableWidth or (contentWidth - padding * 2)
+    local cardIndex = 1
+    local statCards = {
+        { label = bestLabel, value = tostring(stats.highScore or 0) },
+        { label = applesLabel, value = tostring(stats.apples or 0) },
+        { label = modeLabel, value = tostring(self.modeLabel or Localization:get("common.unknown")) },
+    }
 
-    drawStatPill(cardX, cardY, cardWidth, cardHeight, bestLabel, tostring(stats.highScore or 0))
-    drawStatPill(cardX + cardWidth + cardSpacing, cardY, cardWidth, cardHeight, applesLabel, tostring(stats.apples or 0))
-    drawStatPill(cardX + (cardWidth + cardSpacing) * 2, cardY, cardWidth, cardHeight, modeLabel, tostring(self.modeLabel or Localization:get("common.unknown")))
+    for row = 1, math.max(1, statLayout.rows or 1) do
+        local itemsInRow = math.min(statLayout.columns or 1, #statCards - (row - 1) * (statLayout.columns or 1))
+        if itemsInRow <= 0 then
+            break
+        end
 
-    textY = textY + cardHeight + 12
+        local rowWidth = itemsInRow * (statLayout.cardWidth or 0) + math.max(0, itemsInRow - 1) * (statLayout.spacing or STAT_CARD_SPACING)
+        local rowOffset = math.max(0, (availableWidth - rowWidth) / 2)
+        local baseX = contentX + padding + rowOffset
+        local rowY = cardY + (row - 1) * (STAT_CARD_HEIGHT + (statLayout.spacing or STAT_CARD_SPACING))
+
+        for col = 0, itemsInRow - 1 do
+            local card = statCards[cardIndex]
+            if not card then
+                break
+            end
+
+            local cardX = baseX + col * ((statLayout.cardWidth or 0) + (statLayout.spacing or STAT_CARD_SPACING))
+            drawStatPill(cardX, rowY, statLayout.cardWidth or 0, STAT_CARD_HEIGHT, card.label, card.value)
+            cardIndex = cardIndex + 1
+        end
+    end
+
+    textY = textY + (statLayout.height or STAT_CARD_HEIGHT) + 12
 
     local achievementsList = self.achievementsEarned or {}
     if #achievementsList > 0 then
@@ -696,11 +824,22 @@ end
 
 function GameOver:draw()
     local sw, sh = Screen:get()
+    local layoutChanged = self:updateLayoutMetrics()
+    if layoutChanged then
+        self:updateButtonLayout()
+    end
     drawBackground(sw, sh)
 
-    local contentWidth = math.min(sw * 0.65, 520)
+    local margin = 24
+    local fallbackMaxAllowed = math.max(40, sw - margin)
+    local fallbackSafe = math.max(80, sw - margin * 2)
+    fallbackSafe = math.min(fallbackSafe, fallbackMaxAllowed)
+    local fallbackPreferred = math.min(sw * 0.72, 640)
+    local fallbackMin = math.min(320, fallbackSafe)
+    local computedWidth = math.max(fallbackMin, math.min(fallbackPreferred, fallbackSafe))
+    local contentWidth = self.contentWidth or computedWidth
     local contentX = (sw - contentWidth) / 2
-    local padding = 24
+    local padding = self.contentPadding or 24
 
     UI.drawLabel(Localization:get("gameover.title"), 0, 48, sw, "center", {
         font = fontTitle,
@@ -721,6 +860,10 @@ end
 function GameOver:update(dt)
     local anim = self.progressionAnimation
     if not anim then
+        local layoutChanged = self:updateLayoutMetrics()
+        if layoutChanged then
+            self:updateButtonLayout()
+        end
         return
     end
 
@@ -808,6 +951,11 @@ function GameOver:update(dt)
     self.xpSectionHeight = self.xpSectionHeight or baseHeight
     local smoothing = math.min(dt * 6, 1)
     self.xpSectionHeight = self.xpSectionHeight + (targetHeight - self.xpSectionHeight) * smoothing
+
+    local layoutChanged = self:updateLayoutMetrics()
+    if layoutChanged then
+        self:updateButtonLayout()
+    end
 end
 
 function GameOver:mousepressed(x, y, button)
