@@ -13,9 +13,7 @@ Popup.alpha = 0
 Popup.scale = 1
 Popup.offsetY = 0
 
-local padding = UI.spacing and UI.spacing.panelPadding or 20
-local maxWidth = 560
-local innerSpacing = (UI.spacing and UI.spacing.sectionSpacing or 28) * 0.4
+local BASE_MAX_WIDTH = 560
 
 function Popup:show(title, description)
     self.text = title
@@ -59,11 +57,16 @@ function Popup:draw()
     if not self.active then return end
 
     local sw, sh = Screen:get()
+    local spacing = UI.spacing or {}
+    local padding = spacing.panelPadding or (UI.scaled and UI.scaled(20, 12) or 20)
+    local innerSpacing = (spacing.sectionSpacing or 28) * 0.4
+    local scaledMaxWidth = UI.scaled and UI.scaled(BASE_MAX_WIDTH, 360) or BASE_MAX_WIDTH
+    local maxWidth = math.min(scaledMaxWidth, sw - padding * 2)
     local fontTitle = UI.fonts.heading or UI.fonts.subtitle
     local fontDesc = UI.fonts.caption or UI.fonts.body
 
     local titleHeight = fontTitle:getHeight()
-    local boxWidth = math.min(maxWidth, sw - padding * 2)
+    local boxWidth = maxWidth
     local wrapWidth = boxWidth - padding * 2
     local _, descLines = fontDesc:getWrap(self.subtext, wrapWidth)
     local descHeight = (#descLines > 0 and #descLines or 1) * fontDesc:getHeight()

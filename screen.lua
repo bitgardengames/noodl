@@ -1,3 +1,5 @@
+local UI = require("ui")
+
 local Screen = {
     width = nil,
     height = nil,
@@ -35,6 +37,10 @@ end
 function Screen:update(dt, instant)
     local actualWidth, actualHeight = love.graphics.getDimensions()
     self.targetWidth, self.targetHeight = actualWidth, actualHeight
+
+    if UI and UI.refreshLayout then
+        UI.refreshLayout(actualWidth, actualHeight)
+    end
 
     if shouldSnapImmediately(self, dt, instant) then
         self.width, self.height = actualWidth, actualHeight
