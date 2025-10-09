@@ -256,7 +256,7 @@ function DevScreen:draw()
     local appleCenterY = frameY + frameSize / 2
     drawDevApple(appleCenterX, appleCenterY, appleRadius)
 
-    local numberLabel = "100"
+    local numberLabel = "500"
     local previousFont = love.graphics.getFont()
     local labelFont = UI.fonts.display or UI.fonts.heading or UI.fonts.body or previousFont
     if labelFont then
