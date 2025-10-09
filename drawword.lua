@@ -71,15 +71,6 @@ local letters = {
   })
 }
 
-local function normalize(dx, dy)
-  local lenSq = dx * dx + dy * dy
-  if lenSq > 1e-6 then
-    local invLen = 1 / math.sqrt(lenSq)
-    return dx * invLen, dy * invLen
-  end
-  return 0, 0
-end
-
 local function drawWord(word, ox, oy, cellSize, spacing)
   local x = ox
   local fullTrail = {}
@@ -97,45 +88,18 @@ local function drawWord(word, ox, oy, cellSize, spacing)
     local def = letters[ch]
     if def then
       drawnLetters = drawnLetters + 1
-      local letterPoints = {}
-      for index, pt in ipairs(def) do
+      local letterTrail = {}
+      for _, pt in ipairs(def) do
         local px = x + pt[1] * cellSize
         local py = oy + pt[2] * cellSize
-        letterPoints[index] = { x = px, y = py }
-        fullTrail[#fullTrail + 1] = { x = px, y = py }
-      end
-
-      local snakeTrail = {}
-      for index = #letterPoints, 1, -1 do
-        local point = letterPoints[index]
-        local dirX, dirY = 0, 0
-
-        local prev = letterPoints[index - 1]
-        local nextPoint = letterPoints[index + 1]
-
-        if prev then
-          dirX, dirY = normalize(point.x - prev.x, point.y - prev.y)
-        elseif nextPoint then
-          dirX, dirY = normalize(nextPoint.x - point.x, nextPoint.y - point.y)
-        end
-
-        snakeTrail[#snakeTrail + 1] = {
-          x = point.x,
-          y = point.y,
-          drawX = point.x,
-          drawY = point.y,
-          dirX = dirX,
-          dirY = dirY
-        }
+        local segment = { x = px, y = py }
+        letterTrail[#letterTrail + 1] = segment
+        fullTrail[#fullTrail + 1] = segment
       end
 
       -- The menu draws the face manually so it sits at the end of the word.
       -- Disable the built-in face rendering here to avoid double faces.
-      drawSnake(snakeTrail, #snakeTrail, cellSize, nil, nil, nil, nil, nil, {
-        drawFace = false,
-        sharpCorners = true,
-        cornerCaps = true,
-      })
+      drawSnake(letterTrail, #letterTrail, cellSize, nil, nil, nil, nil, nil, false)
 
       x = x + (3 * cellSize) + spacing
     end
