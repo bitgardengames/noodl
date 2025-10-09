@@ -851,6 +851,91 @@ local function buildSmoothedCoords(coords, radius)
   return smoothed
 end
 
+local function buildTrimmedCornerSegments(path, radius)
+  if not path or radius <= 0 or #path < 6 then
+    return nil
+  end
+
+  local pointCount = math.floor(#path / 2)
+  if pointCount < 3 then
+    return nil
+  end
+
+  local xs, ys = {}, {}
+  for i = 1, pointCount do
+    xs[i] = path[i * 2 - 1]
+    ys[i] = path[i * 2]
+  end
+
+  local entryShiftX, entryShiftY = {}, {}
+  local exitShiftX, exitShiftY = {}, {}
+
+  for i = 1, pointCount do
+    if i > 1 then
+      local dx = xs[i] - xs[i - 1]
+      local dy = ys[i] - ys[i - 1]
+      local len = math.sqrt(dx * dx + dy * dy)
+      if len > 1e-3 then
+        local offset = math.min(radius, len * 0.5)
+        entryShiftX[i] = dx / len * offset
+        entryShiftY[i] = dy / len * offset
+      else
+        entryShiftX[i], entryShiftY[i] = 0, 0
+      end
+    else
+      entryShiftX[i], entryShiftY[i] = 0, 0
+    end
+
+    if i < pointCount then
+      local dx = xs[i + 1] - xs[i]
+      local dy = ys[i + 1] - ys[i]
+      local len = math.sqrt(dx * dx + dy * dy)
+      if len > 1e-3 then
+        local offset = math.min(radius, len * 0.5)
+        exitShiftX[i] = dx / len * offset
+        exitShiftY[i] = dy / len * offset
+      else
+        exitShiftX[i], exitShiftY[i] = 0, 0
+      end
+    else
+      exitShiftX[i], exitShiftY[i] = 0, 0
+    end
+  end
+
+  local segments = {}
+
+  for i = 1, pointCount - 1 do
+    local startX = xs[i]
+    local startY = ys[i]
+    if i > 1 then
+      startX = startX + (exitShiftX[i] or 0)
+      startY = startY + (exitShiftY[i] or 0)
+    end
+
+    local endX = xs[i + 1]
+    local endY = ys[i + 1]
+    if i < pointCount - 1 then
+      endX = endX - (entryShiftX[i + 1] or 0)
+      endY = endY - (entryShiftY[i + 1] or 0)
+    end
+
+    local dx = endX - startX
+    local dy = endY - startY
+    if dx * dx + dy * dy > 1e-6 then
+      segments[#segments + 1] = startX
+      segments[#segments + 1] = startY
+      segments[#segments + 1] = endX
+      segments[#segments + 1] = endY
+    end
+  end
+
+  if #segments == 0 then
+    return nil
+  end
+
+  return segments
+end
+
 local function drawCornerCaps(path, radius, options)
   if not (options and options.cornerCaps) then
     return
@@ -947,7 +1032,26 @@ local function drawSnakeStroke(path, radius, options)
   end
 
   love.graphics.setLineWidth(radius * 2)
-  love.graphics.line(path)
+  local drewSegments = false
+
+  if options and options.sharpCorners and options.cornerCaps then
+    local trimmedSegments = buildTrimmedCornerSegments(path, radius)
+    if trimmedSegments then
+      for i = 1, #trimmedSegments, 4 do
+        love.graphics.line(
+          trimmedSegments[i],
+          trimmedSegments[i + 1],
+          trimmedSegments[i + 2],
+          trimmedSegments[i + 3]
+        )
+      end
+      drewSegments = #trimmedSegments > 0
+    end
+  end
+
+  if not drewSegments then
+    love.graphics.line(path)
+  end
 
   local firstX, firstY = path[1], path[2]
   local lastX, lastY = path[#path - 1], path[#path]
