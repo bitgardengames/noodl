@@ -237,7 +237,8 @@ function Menu:enter()
     }
 
     local totalButtonHeight = #labels * UI.spacing.buttonHeight + math.max(0, #labels - 1) * UI.spacing.buttonSpacing
-    local startY = sh / 2 - totalButtonHeight / 2
+    -- Shift the buttons down a bit so the title has breathing room.
+    local startY = sh / 2 - totalButtonHeight / 2 + sh * 0.08
 
     local defs = {}
 
