@@ -28,6 +28,7 @@ local SCROLL_SPEED = 60
 local BASE_PANEL_PADDING_X = 48
 local BASE_PANEL_PADDING_Y = 56
 local MIN_SCROLLBAR_INSET = 16
+local SCROLLBAR_TRACK_WIDTH = (SnakeUtils.SEGMENT_SIZE or 24) + 12
 
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
@@ -239,8 +240,33 @@ local function computeLayout(sw, sh)
     layout.cardWidth = CARD_WIDTH * widthScale
     layout.panelPaddingX = BASE_PANEL_PADDING_X * widthScale
     layout.panelWidth = basePanelWidth * widthScale
-    layout.listX = (sw - layout.cardWidth) * 0.5
-    layout.panelX = layout.listX - layout.panelPaddingX
+
+    local panelPaddingX = layout.panelPaddingX
+    local scrollbarGap = math.max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
+    local maxTotalWidth = sw - 24
+    local totalWidth = layout.panelWidth + scrollbarGap + SCROLLBAR_TRACK_WIDTH
+    if totalWidth > maxTotalWidth and basePanelWidth > 0 then
+        local availableForPanel = math.max(0, maxTotalWidth - scrollbarGap - SCROLLBAR_TRACK_WIDTH)
+        if availableForPanel < layout.panelWidth then
+            local adjustedScale = availableForPanel / basePanelWidth
+            if adjustedScale < widthScale then
+                widthScale = math.max(0.5, adjustedScale)
+                layout.widthScale = widthScale
+                layout.cardWidth = CARD_WIDTH * widthScale
+                layout.panelPaddingX = BASE_PANEL_PADDING_X * widthScale
+                layout.panelWidth = basePanelWidth * widthScale
+                panelPaddingX = layout.panelPaddingX
+                scrollbarGap = math.max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
+                totalWidth = layout.panelWidth + scrollbarGap + SCROLLBAR_TRACK_WIDTH
+            end
+        end
+    end
+
+    local panelX = (sw - totalWidth) * 0.5
+    local maxPanelX = sw - totalWidth - 12
+    panelX = math.max(12, math.min(panelX, maxPanelX))
+    layout.panelX = panelX
+    layout.listX = panelX + panelPaddingX
 
     local titleFont = UI.fonts.title
     local titleFontHeight = titleFont:getHeight()
@@ -251,10 +277,20 @@ local function computeLayout(sw, sh)
     local desiredPanelTop = titleY + titleFontHeight + topSpacing
     local panelTop = math.max(96, math.min(START_Y, desiredPanelTop))
 
+    layout.panelPaddingY = BASE_PANEL_PADDING_Y
+
+    local panelPaddingY = layout.panelPaddingY
+    local panelY = panelTop - panelPaddingY
+    local titleClearance = titleY + titleFontHeight + math.max(24, sh * 0.03)
+    if panelY < titleClearance then
+        local adjustment = titleClearance - panelY
+        panelTop = panelTop + adjustment
+        panelY = panelY + adjustment
+    end
+
     layout.panelTop = panelTop
     layout.summaryOffset = SUMMARY_HEIGHT
-    layout.panelPaddingY = BASE_PANEL_PADDING_Y
-    layout.panelY = panelTop - layout.panelPaddingY
+    layout.panelY = panelY
 
     local bottomMargin = math.max(80, math.min(120, sh * 0.16))
     layout.bottomMargin = bottomMargin
@@ -263,7 +299,7 @@ local function computeLayout(sw, sh)
     layout.viewportBottom = sh - bottomMargin
     layout.viewportHeight = math.max(0, layout.viewportBottom - layout.startY)
 
-    layout.panelHeight = layout.viewportHeight + layout.panelPaddingY * 2 + layout.summaryOffset
+    layout.panelHeight = layout.viewportHeight + panelPaddingY * 2 + layout.summaryOffset
     layout.scissorTop = math.max(0, layout.startY - 80)
     layout.scissorBottom = layout.viewportBottom
     layout.scissorHeight = math.max(0, layout.scissorBottom - layout.scissorTop)
@@ -758,11 +794,10 @@ function AchievementsMenu:draw()
     love.graphics.setScissor()
 
     if contentHeight > viewportHeight then
-        local segmentSize = SnakeUtils.SEGMENT_SIZE
-        local trackWidth = segmentSize + 12
+        local trackWidth = SCROLLBAR_TRACK_WIDTH
         local trackInset = math.max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
-        local trackX = panelX + panelWidth - trackInset - trackWidth
-        local trackY = scissorTop
+        local trackX = panelX + panelWidth + trackInset
+        local trackY = startY
         local trackHeight = viewportHeight
 
         local scrollRange = -minScrollOffset
