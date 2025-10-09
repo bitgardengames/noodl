@@ -29,6 +29,51 @@ local function resetAnalogAxis()
     analogAxisDirections.vertical = nil
 end
 
+local function getHighlightColor(color)
+    color = color or {1, 1, 1, 1}
+    local r = math.min(1, color[1] * 1.2 + 0.08)
+    local g = math.min(1, color[2] * 1.2 + 0.08)
+    local b = math.min(1, color[3] * 1.2 + 0.08)
+    local a = (color[4] or 1) * 0.75
+    return {r, g, b, a}
+end
+
+local function drawDevApple(cx, cy, radius)
+    local appleColor = Theme.appleColor or {0.9, 0.45, 0.55, 1}
+    local highlight = getHighlightColor(appleColor)
+
+    local shadowAlpha = 0.28
+    love.graphics.setColor(0, 0, 0, shadowAlpha)
+    love.graphics.ellipse("fill", cx + 10, cy + 12, radius * 1.05, radius * 0.85, 48)
+
+    love.graphics.setColor(appleColor)
+    love.graphics.ellipse("fill", cx, cy, radius, radius * 0.92, 64)
+
+    -- highlight
+    love.graphics.push()
+    love.graphics.translate(cx - radius * 0.35, cy - radius * 0.4)
+    love.graphics.rotate(-0.35)
+    love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+    love.graphics.ellipse("fill", 0, 0, radius * 0.55, radius * 0.45, 48)
+    love.graphics.pop()
+
+    -- stem
+    local stemHeight = radius * 0.9
+    love.graphics.setColor(0.28, 0.18, 0.05, 1)
+    love.graphics.setLineWidth(math.max(2, radius * 0.12))
+    love.graphics.line(cx - radius * 0.1, cy - radius * 0.65, cx + radius * 0.05, cy - stemHeight)
+    love.graphics.setLineWidth(1)
+
+    -- leaf
+    love.graphics.setColor(0.35, 0.6, 0.2, 1)
+    love.graphics.push()
+    love.graphics.translate(cx + radius * 0.05, cy - stemHeight + radius * 0.1)
+    love.graphics.rotate(0.6)
+    love.graphics.scale(radius * 0.2, radius * 0.35)
+    love.graphics.ellipse("fill", 0, 0, 1, 0.55, 32)
+    love.graphics.pop()
+end
+
 function DevScreen:updateLayout()
     local sw, sh = Screen:get()
     layout.screen.w = sw
@@ -193,17 +238,41 @@ function DevScreen:draw()
 
     local shadowColor = Theme.shadowColor or {0, 0, 0, 0.45}
     love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 1) * 0.9)
-    love.graphics.rectangle("fill", frameX + 6, frameY + 8, frameSize, frameSize, 16, 16)
+    love.graphics.rectangle("fill", frameX + 6, frameY + 8, frameSize, frameSize)
 
-    love.graphics.setColor(0.10, 0.10, 0.14, 1.0)
-    love.graphics.rectangle("fill", frameX, frameY, frameSize, frameSize, 16, 16)
+    love.graphics.setColor(0.16, 0.16, 0.22, 1.0)
+    love.graphics.rectangle("fill", frameX, frameY, frameSize, frameSize)
 
     love.graphics.setLineWidth(4)
     love.graphics.setColor(Theme.accentTextColor)
-    love.graphics.rectangle("line", frameX - 6, frameY - 6, frameSize + 12, frameSize + 12, 18, 18)
+    love.graphics.rectangle("line", frameX - 6, frameY - 6, frameSize + 12, frameSize + 12)
     love.graphics.setLineWidth(1)
 
     love.graphics.setColor(1, 1, 1, 1)
+
+    local appleRadius = frameSize * 0.28
+    local appleCenterX = frameX + frameSize / 2 - appleRadius * 0.2
+    local appleCenterY = frameY + frameSize / 2 + appleRadius * 0.1
+    drawDevApple(appleCenterX, appleCenterY, appleRadius)
+
+    local numberLabel = "100"
+    local previousFont = love.graphics.getFont()
+    local labelFont = UI.fonts.heading or UI.fonts.body or previousFont
+    if labelFont then
+        love.graphics.setFont(labelFont)
+    end
+    local labelWidth = labelFont and labelFont:getWidth(numberLabel) or 0
+    local labelHeight = labelFont and labelFont:getHeight() or 0
+    local textPadding = appleRadius * 0.35
+    local textX = math.min(frameX + frameSize - labelWidth - 16, appleCenterX + appleRadius + textPadding)
+    local textY = appleCenterY - labelHeight / 2
+    love.graphics.setColor(Theme.accentTextColor)
+    love.graphics.print(numberLabel, textX, textY)
+
+    love.graphics.setColor(1, 1, 1, 1)
+    if previousFont then
+        love.graphics.setFont(previousFont)
+    end
 
     for _, btn in ipairs(buttons) do
         if btn.labelKey then
