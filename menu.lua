@@ -34,11 +34,7 @@ local NOODL_SPEED = 140
 local NOODL_SEGMENTS = 16
 
 local function randomFloat()
-    local rng = (love and love.math and love.math.random) or math.random
-    if rng then
-        return rng()
-    end
-    return 0.5
+    return love.math.random()
 end
 
 local function randomDelay(minDelay, maxDelay)

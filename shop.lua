@@ -222,7 +222,7 @@ function Shop:beginRestock()
     self.selectionComplete = false
     self.focusIndex = nil
 
-    local random = (love and love.math and love.math.random) or math.random
+    local random = love.math.random
     if self.cardStates then
         local count = #self.cardStates
         local centerIndex = (count + 1) / 2

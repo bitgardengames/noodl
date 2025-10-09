@@ -58,10 +58,6 @@ local function drawSpawnDebugOverlay(self)
         return
     end
 
-    if not (love and love.graphics) then
-        return
-    end
-
     local function drawCells(cells, fillColor, outlineColor)
         if not (cells and #cells > 0) then
             return

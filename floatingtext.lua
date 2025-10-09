@@ -4,13 +4,13 @@ local FloatingText = {}
 
 local entries = {}
 
-local lg = love and love.graphics
-local lm = love and love.math
-local random = (lm and lm.random) or math.random
+local lg = love.graphics
+local lm = love.math
+local random = lm.random
 local sin, cos = math.sin, math.cos
 local max = math.max
 
-local defaultFont = UI.fonts.subtitle or UI.fonts.display or (lg and lg.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 24))
+local defaultFont = UI.fonts.subtitle or UI.fonts.display or lg.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 24)
 
 local baseColor = UI.colors.accentText or UI.colors.text or { 1, 1, 1, 1 }
 

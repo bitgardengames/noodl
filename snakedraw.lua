@@ -636,10 +636,7 @@ applyOverlay = function(canvas, config)
     return false
   end
 
-  local time = 0
-  if love and love.timer and love.timer.getTime then
-    time = love.timer.getTime()
-  end
+  local time = love.timer.getTime()
 
   local colors = config.colors or {}
   local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor())
@@ -1063,10 +1060,7 @@ local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTi
   end
 
   local baseRadius = SEGMENT_SIZE * (0.95 + 0.06 * math.max(0, (shieldCount or 1) - 1))
-  local time = 0
-  if love and love.timer and love.timer.getTime then
-    time = love.timer.getTime()
-  end
+  local time = love.timer.getTime()
 
   local pulse = 1 + 0.08 * math.sin(time * 6)
   local alpha = 0.35 + 0.1 * math.sin(time * 5)
@@ -1105,10 +1099,7 @@ local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
     if progress > 1 then progress = 1 end
   end
 
-  local time = 0
-  if love and love.timer and love.timer.getTime then
-    time = love.timer.getTime()
-  end
+  local time = love.timer.getTime()
 
   local baseRadius = SEGMENT_SIZE * (1.05 + 0.04 * math.min(stacks, 3))
   local baseAlpha = 0.18 + 0.08 * math.min(stacks, 3)
@@ -1169,10 +1160,7 @@ local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
 
   if intensity <= 0 then return end
 
-  local time = 0
-  if love and love.timer and love.timer.getTime then
-    time = love.timer.getTime()
-  end
+  local time = love.timer.getTime()
 
   local baseRadius = SEGMENT_SIZE * (0.95 + 0.35 * intensity)
 
@@ -1230,10 +1218,7 @@ local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
   if timer < 0 then timer = 0 end
   local intensity = math.min(1, timer / duration)
 
-  local time = 0
-  if love and love.timer and love.timer.getTime then
-    time = love.timer.getTime()
-  end
+  local time = love.timer.getTime()
 
   local pulse = 0.9 + 0.1 * math.sin(time * 6)
   local radius = SEGMENT_SIZE * (0.6 + 0.35 * intensity) * pulse
@@ -1272,10 +1257,7 @@ local function drawDashStreaks(trail, SEGMENT_SIZE, data)
 
   if intensity <= 0 then return end
 
-  local time = 0
-  if love and love.timer and love.timer.getTime then
-    time = love.timer.getTime()
-  end
+  local time = love.timer.getTime()
 
   local streaks = math.min(#trail - 1, 6)
   if streaks <= 0 then return end
@@ -1340,10 +1322,7 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 
   if intensity <= 0 then return end
 
-  local time = 0
-  if love and love.timer and love.timer.getTime then
-    time = love.timer.getTime()
-  end
+  local time = love.timer.getTime()
 
   local baseRadius = SEGMENT_SIZE * (0.85 + 0.3 * intensity)
   drawSoftGlow(hx, hy, baseRadius * (1.35 + 0.25 * intensity), 1, 0.78, 0.32, 0.25 + 0.35 * intensity)

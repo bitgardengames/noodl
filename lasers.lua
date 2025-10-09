@@ -36,11 +36,7 @@ local IMPACT_RING_RANGE = 16
 local IMPACT_FLARE_RADIUS = 12
 
 local function getTime()
-    if love and love.timer and love.timer.getTime then
-        return love.timer.getTime()
-    end
-
-    return 0
+    return love.timer.getTime()
 end
 
 local function copyColor(color, alpha)

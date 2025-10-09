@@ -26,11 +26,7 @@ local TELEGRAPH_PULSE_SPEED = 6.4
 local IMPACT_RING_LIFE = 0.32
 
 local function getTime()
-    if love and love.timer and love.timer.getTime then
-        return love.timer.getTime()
-    end
-
-    return 0
+    return love.timer.getTime()
 end
 
 local function clamp01(value)
