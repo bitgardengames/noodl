@@ -1,4 +1,3 @@
-local Theme = require("theme")
 local Easing = require("easing")
 
 local GameState = {}
@@ -30,7 +29,6 @@ local transitionBlockedEvents = {
 }
 
 local clamp01 = Easing.clamp01
-local easeInOutCubic = Easing.easeInOutCubic
 local getTransitionAlpha = Easing.getTransitionAlpha
 
 local function parseDuration(value)
@@ -115,10 +113,8 @@ local function updateTransitionContext(self, data)
     context.time = data.time or (progress * context.duration)
 
     if context.direction ~= 0 and context.transitioning then
-        context.eased = easeInOutCubic(progress)
         context.alpha = getTransitionAlpha(progress, context.direction)
     else
-        context.eased = progress
         context.alpha = 0
     end
 
@@ -126,42 +122,6 @@ local function updateTransitionContext(self, data)
     context.to = data.to
 
     return context
-end
-
-local function getTransitionFillColor(state, directionName, context)
-    if not state then
-        return nil
-    end
-
-    if state.getTransitionFillColor then
-        local color = state:getTransitionFillColor(directionName, context)
-        if color then
-            return color
-        end
-    end
-
-    if state.getBackgroundColor then
-        local color = state:getBackgroundColor()
-        if color then
-            return color
-        end
-    end
-
-    if state.backgroundColor then
-        return state.backgroundColor
-    end
-
-    return Theme and Theme.bgColor
-end
-
-local function unpackColor(color)
-    if type(color) == "table" then
-        if color.r then
-            return color.r, color.g, color.b, color.a or 1
-        else
-            return color[1], color[2], color[3], color[4] or 1
-        end
-    end
 end
 
 local function getCurrentState(self)
@@ -345,67 +305,26 @@ function GameState:update(dt)
 end
 
 function GameState:draw()
-    local handledTransitionDraw = false
-    local skipOverlay = false
+    callCurrentState(self, "draw")
+
+    if not self.transitioning then
+        return
+    end
+
     local context = self.transitionContext
+    local progress = math.min(math.max(self.transitionTime, 0), 1)
+    local alpha = (context and context.alpha) or getTransitionAlpha(progress, self.transitionDirection)
 
-    if self.transitioning then
-        local directionName = (context and context.directionName) or (self.transitionDirection == 1 and "out" or "in")
-        local stateName = self.transitionDirection == 1 and self.transitionFrom or self.current
-        local state = stateName and self.states[stateName]
-
-        if state then
-            local progress = (context and context.progress) or math.min(math.max(self.transitionTime, 0), 1)
-            local eased = (context and context.eased) or easeInOutCubic(progress)
-            local alpha = (context and context.alpha) or getTransitionAlpha(progress, self.transitionDirection)
-
-            if state.drawStateTransition then
-                local override = state:drawStateTransition(directionName, progress, eased, alpha, context)
-
-                if override ~= nil then
-                    if type(override) == "table" then
-                        skipOverlay = override.skipOverlay == true
-                        handledTransitionDraw = override.handled ~= false
-                    else
-                        handledTransitionDraw = override and true or false
-                    end
-                end
-            end
-
-            if not handledTransitionDraw and state.draw then
-                handledTransitionDraw = true
-                state:draw()
-            end
-        end
+    if alpha <= 0 then
+        return
     end
 
-    if not handledTransitionDraw then
-        callCurrentState(self, "draw")
-    end
+    local width = love.graphics.getWidth()
+    local height = love.graphics.getHeight()
 
-    -- Simple eased fade overlay using the transition fill colour
-    if self.transitioning and not skipOverlay then
-        local width = love.graphics.getWidth()
-        local height = love.graphics.getHeight()
-        local alpha = (context and context.alpha) or getTransitionAlpha(self.transitionTime, self.transitionDirection)
-        local directionName = (context and context.directionName) or (self.transitionDirection == 1 and "out" or "in")
-
-        local accentState
-        if self.transitionDirection == 1 then
-            accentState = self.transitionFrom and self.states[self.transitionFrom]
-        else
-            accentState = self.current and self.states[self.current]
-        end
-
-        local accentColor = getTransitionFillColor(accentState, directionName, context)
-        local r, g, b, a = unpackColor(accentColor)
-        r, g, b, a = r or 0.15, g or 0.08, b or 0.2, a or 1
-
-        love.graphics.setColor(r, g, b, alpha)
-        love.graphics.rectangle("fill", 0, 0, width, height)
-
-        love.graphics.setColor(1, 1, 1, 1)
-    end
+    love.graphics.setColor(0, 0, 0, alpha)
+    love.graphics.rectangle("fill", 0, 0, width, height)
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 function GameState:dispatch(eventName, ...)

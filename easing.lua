@@ -57,10 +57,10 @@ function Easing.getTransitionAlpha(t, direction)
     t = Easing.clamp01(t)
 
     if direction == 1 then
-        return Easing.easeInOutCubic(t)
+        return t
     end
 
-    return Easing.easeInOutCubic(1 - t)
+    return 1 - t
 end
 
 return Easing
