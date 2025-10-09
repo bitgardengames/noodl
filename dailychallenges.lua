@@ -22,7 +22,7 @@ local function getAchievements()
 end
 
 local DailyChallenges = {}
-DailyChallenges.defaultXpReward = 60
+DailyChallenges.defaultXpReward = 120
 
 local defaultDateProvider = function()
     return os.date("*t")
