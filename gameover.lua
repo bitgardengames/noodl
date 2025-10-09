@@ -12,7 +12,7 @@ local Shaders = require("shaders")
 
 local GameOver = {}
 
-local unpack = table.unpack or unpack
+local unpack = unpack
 
 local ANALOG_DEADZONE = 0.35
 
