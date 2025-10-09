@@ -227,7 +227,7 @@ function Menu:enter()
     local centerX = sw / 2
 
     local labels = {
-        { key = "menu.start_game",   action = "modeselect" },
+        { key = "menu.start_game",   action = "game" },
         { key = "menu.achievements", action = "achievementsmenu" },
         { key = "menu.progression",  action = "metaprogression" },
         { key = "menu.talents",      action = "talenttree" },

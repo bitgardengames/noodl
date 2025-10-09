@@ -155,14 +155,6 @@ local english = {
             frame_label = "Icon Canvas (256 x 256)",
             back_to_menu = "Back to Menu",
         },
-        modeselect = {
-            title = "Select Game Mode",
-            tagline = "Find the vibe for your next run.",
-            locked_prefix = "Locked — ${description}",
-            back_to_menu = "Back to Menu",
-            high_score = "High Score: ${score}",
-            launch_button = "Play ${mode}",
-        },
         achievements = {
             title = "Achievements",
             back_to_menu = "Back to Menu",
@@ -275,10 +267,9 @@ local english = {
             default_message = "You died.",
             run_summary_title = "Run Summary",
             high_score_badge = "New Personal Best!",
-            mode_label = "Mode: ${mode}",
             stats_best_label = "Best",
             stats_apples_label = "Apples",
-            stats_mode_label = "Mode",
+            stats_total_label = "Lifetime Apples",
             total_apples_collected = "Lifetime Apples: ${count}",
             fruit_summary_title = "Fruit Spoils",
             no_fruit_summary = "No fruit collected this run.",
@@ -372,18 +363,6 @@ local english = {
                 heal_section_title = "Floor Rest",
                 heal_note = "Forged ${amount} crash shield(s).",
                 shield_note = "Forged ${amount} crash shield(s).",
-            },
-        },
-        gamemodes = {
-            unlock_popup = "${mode} Unlocked!",
-            classic = {
-                label = "Classic",
-                description = "Traditional Snake — steady pace, no pressure.",
-            },
-            hardcore = {
-                label = "Hardcore",
-                description = "Faster speed and zero margin for error — one hit ends the run.",
-                unlock_description = "Score 25 in Classic mode.",
             },
         },
         upgrades = {

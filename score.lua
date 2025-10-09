@@ -1,18 +1,16 @@
 local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 local Achievements = require("achievements")
-local GameModes = require("gamemodes")
 local Score = {}
 
 Achievements:registerStateProvider(function()
     return {
         snakeScore = Score.current or 0,
-        currentMode = GameModes:getCurrentName(),
     }
 end)
 
 Score.current = 0
-Score.highscores = {}
+Score.highscore = 0
 Score.saveFile = "scores.lua"
 Score.fruitBonus = 0
 Score.comboBonusMult = 1
@@ -26,13 +24,12 @@ local function updateAchievementChecks(self)
         Achievements:checkAll({
                 totalApplesEaten = PlayerStats:get("totalApplesEaten"),
                 snakeScore = self.current,
-                currentMode = GameModes:getCurrentName(),
         })
 end
 
 function Score:load()
         self.current = 0
-        self.highscores = {}
+        self.highscore = 0
         self.comboBonusBase = 1
         self.comboBonusMult = 1
         self.highScoreGlowTimer = 0
@@ -40,40 +37,45 @@ function Score:load()
         self.runHighScoreTriggered = false
 
         -- Load from file
-	if love.filesystem.getInfo(self.saveFile) then
-		local chunk = love.filesystem.load(self.saveFile)
-		local ok, saved = pcall(chunk)
-		if ok and type(saved) == "table" then
-			self.highscores = saved
-		end
-	end
+        if love.filesystem.getInfo(self.saveFile) then
+                local chunk = love.filesystem.load(self.saveFile)
+                local ok, saved = pcall(chunk)
+                if ok and type(saved) == "table" then
+                        if type(saved.highscore) == "number" then
+                                self.highscore = saved.highscore
+                        else
+                                local highest = 0
+                                for _, value in pairs(saved) do
+                                        if type(value) == "number" and value > highest then
+                                                highest = value
+                                        end
+                                end
+                                self.highscore = highest
+                        end
+                elseif ok and type(saved) == "number" then
+                        self.highscore = saved
+                end
+        end
 
-	-- Legacy compatibility
-	if love.filesystem.getInfo("highscore_snake.txt") then
-		local contents = love.filesystem.read("highscore_snake.txt")
-		local legacy = tonumber(contents)
-		if legacy then
-			local classicScore = self.highscores["classic"] or 0
-			if legacy > classicScore then
-				self.highscores["classic"] = legacy
-				self:save()
-			end
-			love.filesystem.remove("highscore_snake.txt")
-		end
-	end
+        -- Legacy compatibility
+        if love.filesystem.getInfo("highscore_snake.txt") then
+                local contents = love.filesystem.read("highscore_snake.txt")
+                local legacy = tonumber(contents)
+                if legacy then
+                        if legacy > self.highscore then
+                                self.highscore = legacy
+                                self:save()
+                        end
+                        love.filesystem.remove("highscore_snake.txt")
+                end
+        end
 end
 
 function Score:save()
-	local lines = { "return {\n" }
-
-	for mode, score in pairs(self.highscores) do
-		if type(score) == "number" then
-			table.insert(lines, string.format("    [%q] = %d,\n", mode, score))
-		end
-	end
-
-	table.insert(lines, "}\n")
-	love.filesystem.write(self.saveFile, table.concat(lines))
+        local lines = { "return {\n" }
+        table.insert(lines, string.format("    highscore = %d,\n", math.max(0, self.highscore or 0)))
+        table.insert(lines, "}\n")
+        love.filesystem.write(self.saveFile, table.concat(lines))
 end
 
 function Score:reset(mode)
@@ -85,30 +87,27 @@ function Score:reset(mode)
         self.comboBonusMult = 1
         self.highScoreGlowTimer = 0
         self.runHighScoreTriggered = false
-        self.previousHighScore = self:getHighScore(GameModes:getCurrentName())
-        elseif mode == "all" then
-                self.highscores = {}
-                self.previousHighScore = 0
-                self:save()
-        elseif self.highscores[mode] then
-                self.highscores[mode] = nil
-                self:save()
-	end
+        self.previousHighScore = self:getHighScore()
+    elseif mode == "all" then
+        self.highscore = 0
+        self.previousHighScore = 0
+        self:save()
+    end
 end
 
 function Score:get()
-	return self.current
+        return self.current
 end
 
-function Score:getHighScore(mode)
-        return self.highscores[mode] or 0
+function Score:getHighScore()
+        return self.highscore or 0
 end
 
-function Score:setHighScore(mode, score)
-	if score > (self.highscores[mode] or 0) then
-		self.highscores[mode] = score
-		self:save()
-	end
+function Score:setHighScore(score)
+        if score > (self.highscore or 0) then
+                self.highscore = score
+                self:save()
+        end
 end
 
 function Score:increase(points)
@@ -180,8 +179,7 @@ function Score:handleGameOver(cause)
         snakeScore = self.current,
     })
 
-    local mode = GameModes:getCurrentName()
-    self:setHighScore(mode, self.current)
+    self:setHighScore(self.current)
 
     local runApples = SessionStats:get("applesEaten") or 0
     local lifetimeApples = PlayerStats:get("totalApplesEaten") or 0
@@ -219,9 +217,8 @@ function Score:handleGameOver(cause)
 
     local result = {
         score       = self.current,
-        highScore   = self:getHighScore(mode),
+        highScore   = self:getHighScore(),
         apples      = runApples,
-        mode        = mode,
         totalApples = lifetimeApples,
         stats = {
             apples = runApples
@@ -229,8 +226,6 @@ function Score:handleGameOver(cause)
         cause = cause or "unknown",
         won = false,
     }
-
-    GameModes:checkUnlocks(result, mode)
 
     return result
 end

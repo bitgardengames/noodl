@@ -23,7 +23,6 @@ local Theme = require("theme")
 local FruitEvents = require("fruitevents")
 local Shaders = require("shaders")
 local Settings = require("settings")
-local GameModes = require("gamemodes")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
 local Lasers = require("lasers")
@@ -411,18 +410,6 @@ function Game:triggerSurgeFeedback(strength, options)
     end
 end
 
-local function callMode(self, methodName, ...)
-    local mode = self.mode
-    if not mode then
-        return
-    end
-
-    local handler = mode[methodName]
-    if handler then
-        return handler(self, ...)
-    end
-end
-
 local cachedMouseInterface
 local mouseSupportChecked = false
 
@@ -734,17 +721,11 @@ function Game:load()
 
     local talentEffects = TalentTree and TalentTree.getAggregatedEffects and TalentTree:getAggregatedEffects()
 
-    self.mode = GameModes:get()
-    if self.mode and self.mode.singleTouchDeath ~= nil then
-        self.singleTouchDeath = self.mode.singleTouchDeath and true or false
-    else
-        self.singleTouchDeath = true
-    end
+    self.singleTouchDeath = true
 
     if TalentTree and TalentTree.applyRunModifiers then
         TalentTree:applyRunModifiers(self, talentEffects)
     end
-    callMode(self, "load")
 
     if Snake.adrenaline then
         Snake.adrenaline.active = false
@@ -791,14 +772,10 @@ function Game:enter()
         sessionsPlayed = PlayerStats:get("sessionsPlayed"),
     })
 
-    callMode(self, "enter")
-
     self:updateMouseVisibility()
 end
 
 function Game:leave()
-    callMode(self, "leave")
-
     self:releaseMouseVisibility()
 
     if Snake and Snake.resetModifiers then
@@ -1059,8 +1036,6 @@ local function drawInterfaceLayers(self)
     UI:draw()
     drawDeveloperAssistBadge(self)
     Achievements:draw()
-
-    callMode(self, "draw", self.screenWidth, self.screenHeight)
 end
 
 local function drawTransitionFadeOut(self, timer, duration)
@@ -1321,8 +1296,6 @@ function Game:update(dt)
     if stateHandler and stateHandler(self, scaledDt) then
         return
     end
-
-    callMode(self, "update", scaledDt)
 
     if self.state == "playing" then
         self:updateGameplay(scaledDt)

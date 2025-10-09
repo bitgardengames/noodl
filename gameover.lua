@@ -632,7 +632,6 @@ function GameOver:enter(data)
         score       = 0,
         highScore   = 0,
         apples      = SessionStats:get("applesEaten"),
-        mode        = "classic",
         totalApples = "?",
     }
     for k, v in pairs(data.stats or {}) do
@@ -641,18 +640,7 @@ function GameOver:enter(data)
     if data.score then stats.score = data.score end
     if data.highScore then stats.highScore = data.highScore end
     if data.apples then stats.apples = data.apples end
-    if data.mode then stats.mode = data.mode end
     if data.totalApples then stats.totalApples = data.totalApples end
-
-    local modeID = stats.mode
-    local localizedMode = modeID and Localization:get("gamemodes." .. modeID .. ".label") or nil
-    if localizedMode and localizedMode ~= ("gamemodes." .. tostring(modeID) .. ".label") then
-        self.modeLabel = localizedMode
-    elseif type(modeID) == "string" and modeID ~= "" then
-        self.modeLabel = modeID:sub(1, 1):upper() .. modeID:sub(2)
-    else
-        self.modeLabel = Localization:get("common.unknown")
-    end
 
     stats.highScore = stats.highScore or 0
     stats.totalApples = stats.totalApples or stats.apples or 0
@@ -1118,14 +1106,14 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
     local cardY = textY
     local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
     local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Apples")
-    local modeLabel = getLocalizedOrFallback("gameover.stats_mode_label", "Mode")
+    local totalLabel = getLocalizedOrFallback("gameover.stats_total_label", "Lifetime Apples")
     local statLayout = self.statLayout or calculateStatLayout(contentWidth, padding, 3)
     local availableWidth = statLayout.availableWidth or (contentWidth - padding * 2)
     local cardIndex = 1
     local statCards = {
         { label = bestLabel, value = tostring(stats.highScore or 0) },
         { label = applesLabel, value = tostring(stats.apples or 0) },
-        { label = modeLabel, value = tostring(self.modeLabel or Localization:get("common.unknown")) },
+        { label = totalLabel, value = tostring(stats.totalApples or 0) },
     }
 
     local statSpacing = statLayout.spacing or getStatCardSpacing()
