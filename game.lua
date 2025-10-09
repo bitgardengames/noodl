@@ -947,6 +947,8 @@ function Game:updateGameplay(dt)
             surgeStrength = surgeStrength + 0.25
         end
 
+        surgeStrength = surgeStrength * 0.6
+
         self:triggerSurgeFeedback(surgeStrength, { x = fruitX, y = fruitY })
     end
 
