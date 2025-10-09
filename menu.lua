@@ -8,7 +8,6 @@ local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
-local SnakeActor = require("snakeactor")
 
 local Menu = {
     transitionDuration = 0.45,
@@ -21,83 +20,6 @@ local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
 local analogAxisDirections = { horizontal = nil, vertical = nil }
-
-local noodlActor = nil
-local noodlPassTimer = 0
-local noodlPassDuration = 0
-local noodlNextPass = 0
-
-local NOODL_MIN_DELAY = 12
-local NOODL_MAX_DELAY = 26
-local INITIAL_NOODL_DELAY_RANGE = { 6, 14 }
-local NOODL_SPEED = 140
-local NOODL_SEGMENTS = 16
-
-local function randomFloat()
-    return love.math.random()
-end
-
-local function randomDelay(minDelay, maxDelay)
-    minDelay = minDelay or NOODL_MIN_DELAY
-    maxDelay = maxDelay or NOODL_MAX_DELAY
-    if maxDelay <= minDelay then
-        return minDelay
-    end
-    return minDelay + randomFloat() * (maxDelay - minDelay)
-end
-
-local function scheduleNextNoodlPass(range)
-    noodlActor = nil
-    noodlPassTimer = 0
-    noodlPassDuration = 0
-
-    local minDelay = range and range[1] or NOODL_MIN_DELAY
-    local maxDelay = range and range[2] or NOODL_MAX_DELAY
-    noodlNextPass = randomDelay(minDelay, maxDelay)
-end
-
-local function buildNoodlPath(sw, sh)
-    local padding = math.max(sw, sh) * 0.18 + 180
-    local midY = sh * 0.72
-    local crest = midY - sh * 0.08
-    local trough = midY + sh * 0.06
-
-    return {
-        { -padding, midY },
-        { sw * 0.18, crest },
-        { sw * 0.45, trough },
-        { sw * 0.72, crest - sh * 0.02 },
-        { sw + padding, midY + sh * 0.03 },
-        { sw + padding * 0.65, -padding * 0.15 },
-        { sw * 0.5, -padding * 0.45 },
-        { -padding * 0.55, -padding * 0.25 },
-    }
-end
-
-local function startNoodlPass()
-    local sw, sh = Screen:get()
-    local path = buildNoodlPath(sw, sh)
-
-    noodlActor = SnakeActor:new({
-        path = path,
-        loop = true,
-        speed = NOODL_SPEED,
-        segmentCount = NOODL_SEGMENTS,
-    })
-
-    noodlPassTimer = 0
-    local pathLength = noodlActor.path and noodlActor.path.length or 0
-    local bodyLength = (noodlActor.segmentCount - 1) * noodlActor.segmentSpacing
-    if noodlActor.speed and noodlActor.speed > 0 then
-        noodlPassDuration = (pathLength + bodyLength) / noodlActor.speed
-    else
-        noodlPassDuration = 10
-    end
-
-    if noodlPassDuration <= 0 then
-        noodlPassDuration = 10
-    end
-end
 
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
@@ -221,8 +143,6 @@ function Menu:enter()
 
     configureBackgroundEffect()
 
-    scheduleNextNoodlPass(INITIAL_NOODL_DELAY_RANGE)
-
     local sw, sh = Screen:get()
     local centerX = sw / 2
 
@@ -275,19 +195,6 @@ function Menu:update(dt)
         dailyChallengeAnim = math.min(dailyChallengeAnim + dt * 2, 1)
     end
 
-    if noodlActor then
-        noodlActor:update(dt)
-        noodlPassTimer = noodlPassTimer + dt
-        if noodlPassDuration > 0 and noodlPassTimer >= noodlPassDuration then
-            scheduleNextNoodlPass()
-        end
-    else
-        noodlNextPass = math.max(0, (noodlNextPass or 0) - dt)
-        if noodlNextPass <= 0 then
-            startNoodlPass()
-        end
-    end
-
     for i, btn in ipairs(buttons) do
         if btn.hovered then
             btn.scale = math.min((btn.scale or 1) + dt * 5, 1.1)
@@ -308,10 +215,6 @@ function Menu:draw()
     local sw, sh = Screen:get()
 
     drawBackground(sw, sh)
-
-    if noodlActor then
-        noodlActor:draw()
-    end
 
     local baseCellSize = 20
     local baseSpacing = 10
