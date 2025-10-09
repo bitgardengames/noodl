@@ -41,25 +41,35 @@ end
 local function drawDevApple(cx, cy, radius)
     local appleColor = Theme.appleColor or {0.9, 0.45, 0.55, 1}
     local highlight = getHighlightColor(appleColor)
+    local borderWidth = math.max(4, radius * 0.22)
+    local appleRadiusX = radius
+    local appleRadiusY = radius * 0.92
 
     local shadowAlpha = 0.3
     love.graphics.setColor(0, 0, 0, shadowAlpha)
-    love.graphics.ellipse("fill", cx + radius * 0.16, cy + radius * 0.18, radius * 1.05, radius * 0.85, 48)
+    love.graphics.ellipse(
+        "fill",
+        cx + appleRadiusX * 0.16,
+        cy + appleRadiusX * 0.18,
+        appleRadiusX + borderWidth * 0.5,
+        appleRadiusY + borderWidth * 0.5,
+        48
+    )
 
     love.graphics.setColor(appleColor[1], appleColor[2], appleColor[3], appleColor[4] or 1)
-    love.graphics.ellipse("fill", cx, cy, radius, radius * 0.92, 64)
+    love.graphics.ellipse("fill", cx, cy, appleRadiusX, appleRadiusY, 64)
 
     love.graphics.push()
-    love.graphics.translate(cx - radius * 0.3, cy - radius * 0.35)
+    love.graphics.translate(cx - appleRadiusX * 0.3, cy - appleRadiusX * 0.35)
     love.graphics.rotate(-0.35)
     local highlightAlpha = (highlight[4] or 1) * 0.85
     love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
     love.graphics.ellipse("fill", 0, 0, radius * 0.55, radius * 0.45, 48)
     love.graphics.pop()
 
-    love.graphics.setLineWidth(math.max(4, radius * 0.22))
+    love.graphics.setLineWidth(borderWidth)
     love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.ellipse("line", cx, cy, radius, radius * 0.92, 64)
+    love.graphics.ellipse("line", cx, cy, appleRadiusX, appleRadiusY, 64)
     love.graphics.setLineWidth(1)
 
     love.graphics.setColor(1, 1, 1, 1)
@@ -255,9 +265,9 @@ function DevScreen:draw()
     local labelWidth = labelFont and labelFont:getWidth(numberLabel) or 0
     local labelHeight = labelFont and labelFont:getHeight() or 0
     local textMargin = math.max(10, frameSize * 0.04)
-    local textX = frameX + textMargin
+    local textX = frameX + textMargin - 5
     local textOffsetY = math.max(6, frameSize * 0.02)
-    local textY = frameY + frameSize - labelHeight - textMargin + textOffsetY
+    local textY = frameY + frameSize - labelHeight - textMargin + textOffsetY + 5
     local shadowOffset = math.max(3, labelHeight * 0.08)
     love.graphics.setColor(0, 0, 0, 0.55)
     love.graphics.print(numberLabel, textX + shadowOffset, textY + shadowOffset)
