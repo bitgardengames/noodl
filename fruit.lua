@@ -38,6 +38,7 @@ local fruitTypes = {
         color = Theme.dragonfruitColor,
         points = 50,
         weight = 0.2,
+        collectFx = true,
     },
 }
 
@@ -306,16 +307,18 @@ function Fruit:checkCollisionWith(x, y, trail, rocks)
         idleSparkles = {}
 
         local fxColor = getHighlightColor(active.type.color)
-        collectFx[#collectFx + 1] = {
-            x = active.x,
-            y = active.y,
-            color = fxColor,
-            timer = 0,
-            duration = COLLECT_FX_DURATION,
-            rotation = love.math.random() * math.pi * 2,
-            spin = love.math.random() * 1.4 + 0.6,
-            spokes = love.math.random(5, 7),
-        }
+        if active.type.collectFx then
+            collectFx[#collectFx + 1] = {
+                x = active.x,
+                y = active.y,
+                color = fxColor,
+                timer = 0,
+                duration = COLLECT_FX_DURATION,
+                rotation = love.math.random() * math.pi * 2,
+                spin = love.math.random() * 1.4 + 0.6,
+                spokes = love.math.random(5, 7),
+            }
+        end
 
         Particles:spawnBurst(active.x, active.y, {
             count = love.math.random(10, 14),
