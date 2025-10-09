@@ -1136,7 +1136,9 @@ function Snake:drawClipped(hx, hy, hr)
 
     local shouldDrawFace = descendingHole == nil
 
-    DrawSnake(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
+    local renderSegmentCount = math.min(segmentCount or 0, #renderTrail)
+
+    DrawSnake(renderTrail, renderSegmentCount, SEGMENT_SIZE, popTimer, function()
         if headX and headY and clipRadius > 0 then
             local dx = headX - hx
             local dy = headY - hy
