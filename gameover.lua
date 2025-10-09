@@ -206,23 +206,27 @@ local function spawnFruitAnimation(anim)
     local palette = anim.fruitPalette or { Theme.appleColor }
     local color = copyColor(palette[love.math.random(#palette)] or Theme.appleColor)
 
-    local startX = metrics.x + metrics.width * randomRange(0.15, 0.85)
-    local startY = metrics.y - randomRange(42, 84)
+    local launchX = metrics.x + metrics.width * 0.5
+    local launchY = metrics.y - math.max(metrics.height * 2.2, 72)
+
     local endX = metrics.x + metrics.width * randomRange(0.20, 0.80)
     local endY = metrics.y + metrics.height * randomRange(0.20, 0.80)
-    local controlX = (startX + endX) / 2 + randomRange(-metrics.width * 0.25, metrics.width * 0.25)
-    local controlY = math.min(startY, endY) - randomRange(46, 92)
+    local controlX = (launchX + endX) / 2 + randomRange(-metrics.width * 0.18, metrics.width * 0.18)
+    local apexLift = math.max(metrics.height * 1.35, 64)
+    local controlY = math.min(launchY, endY) - randomRange(apexLift * 0.75, apexLift * 1.15)
 
     local fruit = {
         timer = 0,
         duration = randomRange(0.55, 0.85),
-        startX = startX,
-        startY = startY,
+        startX = launchX,
+        startY = launchY,
         controlX = controlX,
         controlY = controlY,
         endX = endX,
         endY = endY,
-        scale = randomRange(0.52, 0.72),
+        scaleStart = randomRange(0.42, 0.52),
+        scalePeak = randomRange(0.68, 0.82),
+        scaleEnd = randomRange(0.50, 0.64),
         wobbleSeed = love.math.random() * math.pi * 2,
         wobbleSpeed = randomRange(4.5, 6.5),
         color = color,
@@ -263,12 +267,51 @@ local function updateFruitAnimations(anim, dt)
         else
             local progress = clamp(fruit.timer / duration, 0, 1)
             fruit.progress = progress
+
             if progress >= 1 then
+                if not fruit.landed then
+                    fruit.landed = true
+                    fruit.fade = 0
+                    fruit.landingTimer = 0
+                    fruit.splashTimer = 0
+                    fruit.splashDuration = fruit.splashDuration or 0.35
+
+                    local xpPer = anim.fruitXpPer or 0
+                    if xpPer > 0 then
+                        local pending = anim.pendingFruitXp or 0
+                        local delivered = anim.fruitDelivered or 0
+                        local remaining = math.max(0, (anim.fruitPoints or 0) - delivered - pending)
+                        local grant = math.min(remaining, xpPer)
+                        anim.pendingFruitXp = pending + grant
+                    end
+
+                    anim.barPulse = math.min(1.5, (anim.barPulse or 0) + 0.45)
+                    anim.barSplashes = anim.barSplashes or {}
+                    anim.barSplashes[#anim.barSplashes + 1] = {
+                        x = fruit.endX,
+                        color = fruit.color,
+                        timer = 0,
+                        duration = 0.35,
+                    }
+                end
+
+                fruit.landingTimer = (fruit.landingTimer or 0) + dt
+                fruit.splashTimer = (fruit.splashTimer or 0) + dt
                 fruit.fade = (fruit.fade or 0) + dt
-                if fruit.fade >= 0.25 then
+
+                if fruit.fade >= 0.35 then
                     table.remove(active, index)
                 end
             end
+        end
+    end
+
+    local splashes = anim.barSplashes or {}
+    for index = #splashes, 1, -1 do
+        local splash = splashes[index]
+        splash.timer = (splash.timer or 0) + dt
+        if splash.timer >= (splash.duration or 0.35) then
+            table.remove(splashes, index)
         end
     end
 end
@@ -283,35 +326,52 @@ local function drawFruitAnimations(anim)
         local progress = clamp(fruit.progress or 0, 0, 1)
         local eased = easeOutQuad(progress)
         local inv = 1 - eased
-        local x = inv * inv * (fruit.startX or 0)
+        local pathX = inv * inv * (fruit.startX or 0)
             + 2 * inv * eased * (fruit.controlX or 0)
             + eased * eased * (fruit.endX or 0)
-        local y = inv * inv * (fruit.startY or 0)
+        local pathY = inv * inv * (fruit.startY or 0)
             + 2 * inv * eased * (fruit.controlY or 0)
             + eased * eased * (fruit.endY or 0)
 
         local wobble = math.sin((fruit.wobbleSeed or 0) + (fruit.wobbleSpeed or 5.2) * eased)
-        local radius = 12 * (fruit.scale or 0.6) * (0.95 + wobble * 0.04)
+        local wobbleMul = 0.95 + wobble * 0.04
+
+        local scaleStart = fruit.scaleStart or 0.5
+        local scalePeak = fruit.scalePeak or (scaleStart * 1.35)
+        local scaleEnd = fruit.scaleEnd or (scaleStart * 0.95)
+        local scale
+        if progress < 0.5 then
+            local t = clamp(progress / 0.5, 0, 1)
+            scale = scaleStart + (scalePeak - scaleStart) * easeOutBack(t)
+        else
+            local t = clamp((progress - 0.5) / 0.5, 0, 1)
+            scale = scalePeak + (scaleEnd - scalePeak) * easeOutQuad(t)
+        end
+
+        local radius = 12 * scale * wobbleMul
         local fadeMul = 1
         if fruit.fade then
-            fadeMul = clamp(1 - fruit.fade / 0.25, 0, 1)
+            fadeMul = clamp(1 - fruit.fade / 0.35, 0, 1)
         end
 
         local color = fruit.color or Theme.appleColor
         local highlight = lightenColor(color, 0.42)
 
-        love.graphics.setColor(0, 0, 0, 0.25 * fadeMul)
-        love.graphics.ellipse("fill", x + 3, y + 3 + wobble * 3, radius * 1.05, radius * 0.9, 30)
+        local drawFruit = not fruit.landed or (fruit.splashTimer or 0) < 0.08
+        if drawFruit and fadeMul > 0 then
+            love.graphics.setColor(0, 0, 0, 0.25 * fadeMul)
+            love.graphics.ellipse("fill", pathX + 3, pathY + 3 + wobble * 3, radius * 1.05, radius * 0.9, 30)
 
-        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * fadeMul)
-        love.graphics.circle("fill", x, y + wobble * 2, radius, 30)
+            love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * fadeMul)
+            love.graphics.circle("fill", pathX, pathY + wobble * 2, radius, 30)
 
-        love.graphics.setColor(0, 0, 0, 0.85 * fadeMul)
-        love.graphics.setLineWidth(2)
-        love.graphics.circle("line", x, y + wobble * 2, radius, 30)
+            love.graphics.setColor(0, 0, 0, 0.85 * fadeMul)
+            love.graphics.setLineWidth(2)
+            love.graphics.circle("line", pathX, pathY + wobble * 2, radius, 30)
 
-        love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.7) * fadeMul)
-        love.graphics.circle("fill", x - radius * 0.35, y + wobble * 2 - radius * 0.45, radius * 0.45, 24)
+            love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.7) * fadeMul)
+            love.graphics.circle("fill", pathX - radius * 0.35, pathY + wobble * 2 - radius * 0.45, radius * 0.45, 24)
+        end
 
         love.graphics.setLineWidth(1)
     end
@@ -650,6 +710,10 @@ function GameOver:enter(data)
             pendingMilestones = {},
             levelUnlocks = {},
             bonusXP = challengeBonusXP,
+            barPulse = 0,
+            barSplashes = {},
+            pendingFruitXp = 0,
+            fruitDelivered = 0,
         }
 
         local applesCollected = math.max(0, stats.apples or 0)
@@ -896,22 +960,70 @@ local function drawXpSection(self, x, y, width)
     love.graphics.rectangle("fill", barX, barY, barWidth, barHeight, 12, 12)
 
     local progressColor = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.92 }
-    love.graphics.setColor(progressColor)
-    love.graphics.rectangle("fill", barX, barY, barWidth * percent, barHeight, 12, 12)
+    local fillWidth = barWidth * percent
+    local pulse = clamp(anim.barPulse or 0, 0, 1)
+    local pulseExpand = pulse * 6
+
+    if fillWidth > 0 then
+        local prevScissor = { love.graphics.getScissor() }
+        if pulse > 0 then
+            love.graphics.setScissor(barX, barY - pulseExpand / 2, fillWidth, barHeight + pulseExpand)
+        end
+        love.graphics.setColor(progressColor)
+        love.graphics.rectangle("fill", barX, barY, fillWidth, barHeight, 12, 12)
+        if pulse > 0 then
+            love.graphics.setScissor(table.unpack(prevScissor))
+        end
+    end
 
     if percent > 0 then
         local prevMode, prevAlphaMode = love.graphics.getBlendMode()
         love.graphics.setBlendMode("add", "alphamultiply")
         love.graphics.setColor(progressColor[1], progressColor[2], progressColor[3], 0.22 + 0.18 * flash)
-        love.graphics.rectangle("fill", barX, barY, barWidth * percent, barHeight, 12, 12)
+        love.graphics.rectangle("fill", barX, barY, fillWidth, barHeight, 12, 12)
+
+        if pulse > 0 then
+            local prevScissor = { love.graphics.getScissor() }
+            love.graphics.setScissor(barX, barY, fillWidth, barHeight)
+            love.graphics.setColor(1, 1, 1, 0.16 * pulse)
+            love.graphics.rectangle("fill", barX - pulseExpand / 2, barY - pulseExpand / 2, fillWidth + pulseExpand, barHeight + pulseExpand, 10, 10)
+            love.graphics.setScissor(table.unpack(prevScissor))
+        end
 
         local sweepWidth = 28
         local sweepPos = (love.timer.getTime() * 80) % (barWidth + sweepWidth) - sweepWidth
-        love.graphics.setScissor(barX, barY, barWidth * percent, barHeight)
+        local prevScissor = { love.graphics.getScissor() }
+        love.graphics.setScissor(barX, barY, fillWidth, barHeight)
         love.graphics.setColor(1, 1, 1, 0.22 * (0.5 + 0.5 * math.sin(love.timer.getTime() * 4 + percent * math.pi)))
         love.graphics.rectangle("fill", barX + sweepPos, barY - 4, sweepWidth, barHeight + 8, 10, 10)
-        love.graphics.setScissor()
+        love.graphics.setScissor(table.unpack(prevScissor))
         love.graphics.setBlendMode(prevMode, prevAlphaMode)
+    end
+
+    local splashes = anim.barSplashes or {}
+    if anim.barMetrics and splashes and #splashes > 0 then
+        local prevScissor = { love.graphics.getScissor() }
+        love.graphics.setScissor(barX, barY, barWidth, barHeight)
+        for _, splash in ipairs(splashes) do
+            local splashProgress = clamp((splash.timer or 0) / (splash.duration or 0.35), 0, 1)
+            local splashFade = clamp(1 - splashProgress, 0, 1)
+            if splashFade > 0.01 then
+                local splashColor = splash.color or progressColor
+                local splashHighlight = lightenColor(splashColor, 0.45)
+                local centerX = clamp(splash.x or (barX + fillWidth), barX + 8, barX + barWidth - 8)
+                local centerY = barY + barHeight / 2
+                local radiusX = (barHeight / 2) * (1.05 + splashProgress * 0.9)
+                local radiusY = (barHeight / 2) * (0.42 + splashProgress * 0.4)
+
+                love.graphics.setColor(splashColor[1], splashColor[2], splashColor[3], 0.32 * splashFade)
+                love.graphics.ellipse("fill", centerX, centerY, radiusX, radiusY, 32)
+
+                love.graphics.setColor(splashHighlight[1], splashHighlight[2], splashHighlight[3], 0.55 * splashFade)
+                love.graphics.setLineWidth(2)
+                love.graphics.ellipse("line", centerX, centerY, radiusX, radiusY, 32)
+            end
+        end
+        love.graphics.setScissor(table.unpack(prevScissor))
     end
 
     local outlineSource = UI.colors.highlight or UI.colors.border or { 1, 1, 1, 0.6 }
@@ -1109,47 +1221,76 @@ function GameOver:update(dt)
         startTotal = self.progression.start.total or 0
     end
 
-    if (anim.displayedTotal or 0) < targetTotal then
-        local increment = anim.fillSpeed * dt
-        anim.displayedTotal = math.min(targetTotal, (anim.displayedTotal or 0) + increment)
-        anim.displayedGained = math.min((self.progression and self.progression.gained) or 0, anim.displayedTotal - startTotal)
+    local previousTotal = anim.displayedTotal or startTotal
+    local fruitPoints = math.max(0, anim.fruitPoints or 0)
+    local deliveredFruit = math.max(0, anim.fruitDelivered or 0)
+    local pendingFruit = math.max(0, anim.pendingFruitXp or 0)
+    local allowedTarget = targetTotal
 
-        local previousLevel = anim.displayedLevel or 1
-        local level, xpIntoLevel, xpForNext = MetaProgression:getProgressForTotal(anim.displayedTotal)
-        if level > previousLevel then
-            for levelReached = previousLevel + 1, level do
-                anim.levelFlash = 0.9
-                addCelebration(anim, {
-                    type = "level",
-                    title = Localization:get("gameover.meta_progress_level_up", { level = levelReached }),
-                    subtitle = Localization:get("gameover.meta_progress_level_up_subtitle"),
-                    color = Theme.progressColor or { 1, 1, 1, 1 },
-                    duration = 5.5,
-                })
-                Audio:playSound("goal_reached")
+    if fruitPoints > 0 and deliveredFruit < fruitPoints then
+        local gatedTarget = startTotal + math.min(fruitPoints, deliveredFruit + pendingFruit)
+        allowedTarget = math.min(allowedTarget, gatedTarget)
+    end
 
-                local unlockList = anim.levelUnlocks[levelReached]
-                if unlockList then
-                    for _, unlock in ipairs(unlockList) do
-                        addCelebration(anim, {
-                            type = "unlock",
-                            title = Localization:get("gameover.meta_progress_unlock_header", { name = unlock.name or "???" }),
-                            subtitle = unlock.description or "",
-                            color = Theme.achieveColor or { 1, 1, 1, 1 },
-                            duration = 6,
-                        })
-                    end
+    local newTotal = previousTotal
+    if previousTotal < allowedTarget then
+        local increment = math.min(anim.fillSpeed * dt, allowedTarget - previousTotal)
+        newTotal = previousTotal + increment
+
+        if fruitPoints > 0 and deliveredFruit < fruitPoints then
+            local newDelivered = math.min(fruitPoints, deliveredFruit + increment)
+            local used = newDelivered - deliveredFruit
+            anim.fruitDelivered = newDelivered
+            anim.pendingFruitXp = math.max(0, pendingFruit - used)
+        end
+    elseif previousTotal < targetTotal then
+        newTotal = math.min(targetTotal, previousTotal)
+    else
+        newTotal = targetTotal
+    end
+
+    anim.displayedTotal = newTotal
+    if newTotal >= targetTotal - 1e-6 then
+        anim.displayedTotal = targetTotal
+        anim.displayedGained = (self.progression and self.progression.gained) or 0
+        anim.pendingFruitXp = 0
+        anim.fruitDelivered = fruitPoints
+    else
+        anim.displayedGained = math.min((self.progression and self.progression.gained) or 0, newTotal - startTotal)
+    end
+
+    local previousLevel = anim.displayedLevel or 1
+    local level, xpIntoLevel, xpForNext = MetaProgression:getProgressForTotal(anim.displayedTotal)
+    if level > previousLevel then
+        for levelReached = previousLevel + 1, level do
+            anim.levelFlash = 0.9
+            addCelebration(anim, {
+                type = "level",
+                title = Localization:get("gameover.meta_progress_level_up", { level = levelReached }),
+                subtitle = Localization:get("gameover.meta_progress_level_up_subtitle"),
+                color = Theme.progressColor or { 1, 1, 1, 1 },
+                duration = 5.5,
+            })
+            Audio:playSound("goal_reached")
+
+            local unlockList = anim.levelUnlocks[levelReached]
+            if unlockList then
+                for _, unlock in ipairs(unlockList) do
+                    addCelebration(anim, {
+                        type = "unlock",
+                        title = Localization:get("gameover.meta_progress_unlock_header", { name = unlock.name or "???" }),
+                        subtitle = unlock.description or "",
+                        color = Theme.achieveColor or { 1, 1, 1, 1 },
+                        duration = 6,
+                    })
                 end
             end
         end
-
-        anim.displayedLevel = level
-        anim.xpIntoLevel = xpIntoLevel
-        anim.xpForLevel = xpForNext
-    else
-        anim.displayedTotal = targetTotal
-        anim.displayedGained = (self.progression and self.progression.gained) or 0
     end
+
+    anim.displayedLevel = level
+    anim.xpIntoLevel = xpIntoLevel
+    anim.xpForLevel = xpForNext
 
     if anim.levelFlash then
         anim.levelFlash = math.max(0, anim.levelFlash - dt)
@@ -1182,6 +1323,10 @@ function GameOver:update(dt)
     end
 
     updateFruitAnimations(anim, dt)
+
+    if anim.barPulse then
+        anim.barPulse = math.max(0, anim.barPulse - dt * 2.4)
+    end
 
     local baseHeight = self.baseXpSectionHeight or 220
     local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
