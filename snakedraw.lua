@@ -6,7 +6,7 @@ local unpack = unpack
 -- tweakables
 local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3
-local OUTLINE_SIZE   = 6
+local OUTLINE_SIZE   = 3
 local FRUIT_BULGE_SCALE = 1.25
 
 -- Canvas for single-pass shadow
@@ -747,39 +747,6 @@ end
 
 local drawSoftGlow
 
-local function applySkinGlow(trail, head, radius, config)
-  if not config or radius <= 0 then
-    return
-  end
-
-  local color = resolveColor(config.color, SnakeCosmetics:getGlowColor())
-  local intensity = config.intensity or 0.5
-  local step = math.max(1, math.floor(config.step or 2))
-  local radiusMultiplier = config.radiusMultiplier or 1.4
-
-  local function drawGlowAt(x, y)
-    if not (x and y) then
-      return
-    end
-    drawSoftGlow(x, y, radius * radiusMultiplier, color[1], color[2], color[3], (color[4] or 1) * intensity)
-  end
-
-  if trail and #trail > 0 then
-    for i = 1, #trail, step do
-      local seg = trail[i]
-      if seg and seg ~= head then
-        local x, y = ptXY(seg)
-        drawGlowAt(x, y)
-      end
-    end
-  end
-
-  if head then
-    local hx, hy = ptXY(head)
-    drawGlowAt(hx, hy)
-  end
-end
-
 -- polyline coords {x1,y1,x2,y2,...}
 local function buildCoords(trail)
   local coords = {}
@@ -1451,7 +1418,6 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   local half      = thickness / 2
 
   local overlayEffect = SnakeCosmetics:getOverlayEffect()
-  local glowEffect = SnakeCosmetics:getGlowEffect()
 
   local coords = buildCoords(trail)
   local head = trail[1]
@@ -1496,16 +1462,13 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
     love.graphics.setCanvas(snakeCanvas)
     love.graphics.clear(0, 0, 0, 0)
     love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-    love.graphics.setLineWidth(OUTLINE_SIZE)
-    love.graphics.circle("line", hx, hy, half + OUTLINE_SIZE * 0.5)
+    love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
     love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
     love.graphics.circle("fill", hx, hy, half)
     love.graphics.setCanvas()
 
     presentSnakeCanvas(overlayEffect, ww, hh)
   end
-
-  applySkinGlow(trail, head, half, glowEffect)
 
   if hx and hy and drawFace ~= false then
     if upgradeVisuals and upgradeVisuals.timeDilation then
