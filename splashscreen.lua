@@ -71,7 +71,11 @@ local function drawLogo(image, width, height)
     local drawWidth = imgWidth * scale
     local drawHeight = imgHeight * scale
     local x = (width - drawWidth) * 0.5
-    local y = (height - drawHeight) * 0.5
+    local y = (height - drawHeight) * 0.5 - 20
+
+    if y < 0 then
+        y = 0
+    end
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(image, x, y, 0, scale, scale)
