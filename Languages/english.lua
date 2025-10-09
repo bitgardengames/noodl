@@ -253,6 +253,7 @@ local english = {
         },
         pause = {
             title = "Paused",
+            floor_label = "Floor ${number}: ${name}",
             resume = "Resume",
             toggle_music = "Music: ${state}",
             toggle_sfx = "Sound FX: ${state}",

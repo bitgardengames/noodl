@@ -9,6 +9,8 @@ local PauseMenu = {}
 local alpha = 0
 local fadeSpeed = 4
 
+local currentFloorLabel = nil
+
 local ButtonList = require("buttonlist")
 local ANALOG_DEADZONE = 0.35
 local panelBounds = { x = 0, y = 0, w = 0, h = 0 }
@@ -169,7 +171,23 @@ function PauseMenu:load(screenWidth, screenHeight)
     alpha = 0
 end
 
-function PauseMenu:update(dt, isPaused)
+local function refreshFloorLabel(floorNumber, floorName)
+    if not floorNumber then
+        return
+    end
+
+    local resolvedName = floorName
+    if not resolvedName or resolvedName == "" then
+        resolvedName = Localization:get("common.unknown")
+    end
+
+    currentFloorLabel = Localization:get("pause.floor_label", {
+        number = floorNumber,
+        name = resolvedName,
+    })
+end
+
+function PauseMenu:update(dt, isPaused, floorNumber, floorName)
     if isPaused then
         alpha = math.min(alpha + dt * fadeSpeed, 1)
     else
@@ -181,6 +199,10 @@ function PauseMenu:update(dt, isPaused)
         buttonList:updateHover(mx, my)
     end
 
+    if floorNumber then
+        refreshFloorLabel(floorNumber, floorName)
+    end
+
     self:updateButtonLabels()
 end
 
@@ -189,6 +211,13 @@ function PauseMenu:draw(screenWidth, screenHeight)
 
     love.graphics.setColor(0, 0, 0, 0.55 * alpha)
     love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
+
+    if currentFloorLabel then
+        UI.drawLabel(currentFloorLabel, 0, UI.spacing.panelPadding, screenWidth, "center", {
+            fontKey = "subtitle",
+            alpha = alpha,
+        })
+    end
 
     local panel = panelBounds
     if panel and panel.w > 0 and panel.h > 0 then

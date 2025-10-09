@@ -769,7 +769,11 @@ end
 
 local function handlePauseMenu(game, dt)
     local paused = game.state == "paused"
-    PauseMenu:update(dt, paused)
+    local floorName = nil
+    if game.currentFloorData then
+        floorName = game.currentFloorData.name
+    end
+    PauseMenu:update(dt, paused, game.floor, floorName)
     return paused
 end
 
