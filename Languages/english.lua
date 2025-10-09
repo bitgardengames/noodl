@@ -362,7 +362,7 @@ local english = {
             floor_intro = {
                 prompt = "Press any key to descend",
                 heal_section_title = "Floor Rest",
-                heal_note = "Recovered ${amount} health.",
+                heal_note = "Forged ${amount} crash shield(s).",
                 shield_note = "Forged ${amount} crash shield(s).",
             },
         },
@@ -501,7 +501,7 @@ local english = {
             },
             scarlet_censer = {
                 name = "Scarlet Censer",
-                description = "Each floor, dart strikes on your shield restore health or forge a crash shield up to your copies while jamming dart launchers.",
+                description = "Each floor, dart strikes on your shield forge crash shields while jamming dart launchers.",
                 activation_text = "Scarlet Reprieve",
             },
             prism_lock = {
@@ -525,7 +525,7 @@ local english = {
             },
             pulse_bloom = {
                 name = "Pulse Bloom",
-                description = "Harvest a handful of distinct fruit to restore 1 health; if you're already full, forge a crash shield instead.",
+                description = "Harvest a handful of distinct fruit to forge a crash shield.",
                 heal_text = "Blooming Vitality",
                 shield_text = "Blooming Guard",
             },
@@ -587,12 +587,12 @@ local english = {
             },
             grim_reliquary = {
                 name = "Grim Reliquary",
-                description = "Dart impacts against your shield store souls; cash them in for a heal or crash shield while jamming dart launchers.",
+                description = "Dart impacts against your shield store souls; cash them in to forge crash shields while jamming dart launchers.",
                 activation_text = "Reliquary Unbound",
             },
             abyssal_catalyst = {
                 name = "Abyssal Catalyst",
-                description = "+1 max health and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
+                description = "Instantly gain a crash shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
             },
             spectral_harvest = {
                 name = "Spectral Harvest",
