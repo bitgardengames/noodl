@@ -132,7 +132,9 @@ local function drawWord(word, ox, oy, cellSize, spacing)
       -- The menu draws the face manually so it sits at the end of the word.
       -- Disable the built-in face rendering here to avoid double faces.
       drawSnake(snakeTrail, #snakeTrail, cellSize, nil, nil, nil, nil, nil, {
-        drawFace = false
+        drawFace = false,
+        sharpCorners = true,
+        cornerCaps = true,
       })
 
       x = x + (3 * cellSize) + spacing
