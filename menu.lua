@@ -245,7 +245,7 @@ function Menu:draw()
     local scaledMinX = (minX or 0) * finalScale
 
     local ox = (sw - scaledWidth) / 2 - scaledMinX
-    local oy = sh * 0.2
+    local oy = sh * 0.28
 
     local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
 
