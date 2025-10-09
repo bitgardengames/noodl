@@ -19,7 +19,14 @@ local iconCache = {}
 local displayBlocks = {}
 
 local START_Y = 180
-local SUMMARY_HEIGHT = 96
+local SUMMARY_SPACING_TITLE_COMPLETION = 32
+local SUMMARY_SPACING_COMPLETION_HINT = 26
+local SUMMARY_SPACING_HINT_BAR = 16
+local SUMMARY_PROGRESS_BAR_HEIGHT = 12
+local SUMMARY_PANEL_TOP_PADDING_MIN = 12
+local SUMMARY_PANEL_BOTTOM_PADDING_MIN = 24
+local SUMMARY_PANEL_GAP_MIN = 24
+local SUMMARY_HIGHLIGHT_INSET = 16
 local CARD_SPACING = 120
 local CARD_WIDTH = 600
 local CARD_HEIGHT = 100
@@ -276,38 +283,75 @@ local function computeLayout(sw, sh)
 
     local topSpacing = math.max(28, sh * 0.045)
     local desiredPanelTop = titleY + titleFontHeight + topSpacing
-    local panelTop = math.max(96, math.min(START_Y, desiredPanelTop))
+    local containerTop = math.max(96, math.min(START_Y, desiredPanelTop))
 
     layout.panelPaddingY = BASE_PANEL_PADDING_Y
 
     local panelPaddingY = layout.panelPaddingY
-    local panelY = panelTop - panelPaddingY
+    local summaryInsetX = math.max(28, layout.panelPaddingX * 0.75)
+    layout.summaryInsetX = summaryInsetX
+
+    local summaryTopPadding = math.max(SUMMARY_PANEL_TOP_PADDING_MIN, panelPaddingY * 0.24)
+    local summaryBottomPadding = math.max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, panelPaddingY * 0.45)
+
+    local summaryPanel = {
+        x = panelX,
+        y = containerTop,
+        width = layout.panelWidth,
+        topPadding = summaryTopPadding,
+        bottomPadding = summaryBottomPadding,
+    }
+
+    local spacingTitleCompletion = SUMMARY_SPACING_TITLE_COMPLETION
+    local spacingCompletionHint = SUMMARY_SPACING_COMPLETION_HINT
+    local spacingHintBar = SUMMARY_SPACING_HINT_BAR
+    local progressHeight = SUMMARY_PROGRESS_BAR_HEIGHT
+
+    layout.summarySpacing = {
+        titleToCompletion = spacingTitleCompletion,
+        completionToHint = spacingCompletionHint,
+        hintToBar = spacingHintBar,
+    }
+    layout.summaryProgressHeight = progressHeight
+
+    local summaryContentHeight = spacingTitleCompletion + spacingCompletionHint + spacingHintBar + progressHeight
+    local summaryHeight = summaryTopPadding + summaryContentHeight + summaryBottomPadding
+
+    summaryPanel.height = summaryHeight
+    layout.summaryPanel = summaryPanel
+
+    layout.summaryTextX = panelX + summaryInsetX
+    layout.summaryTextWidth = layout.panelWidth - summaryInsetX * 2
+    layout.summaryTextY = summaryPanel.y + summaryTopPadding
+    layout.summaryProgressY = layout.summaryTextY + spacingTitleCompletion + spacingCompletionHint + spacingHintBar
+
     local titleClearance = titleY + titleFontHeight + math.max(24, sh * 0.03)
-    if panelY < titleClearance then
-        local adjustment = titleClearance - panelY
-        panelTop = panelTop + adjustment
-        panelY = panelY + adjustment
+    local summaryTop = summaryPanel.y - summaryTopPadding
+    if summaryTop < titleClearance then
+        local adjustment = titleClearance - summaryTop
+        summaryPanel.y = summaryPanel.y + adjustment
+        layout.summaryTextY = layout.summaryTextY + adjustment
+        layout.summaryProgressY = layout.summaryProgressY + adjustment
     end
 
-    layout.panelTop = panelTop
-    layout.summaryOffset = SUMMARY_HEIGHT
-    layout.panelY = panelY
+    local panelGap = math.max(SUMMARY_PANEL_GAP_MIN, panelPaddingY * 0.35)
+    layout.panelGap = panelGap
+
+    local listPanelY = summaryPanel.y + summaryPanel.height + panelGap
+    layout.panelY = listPanelY
 
     local bottomMargin = math.max(80, math.min(120, sh * 0.16))
     bottomMargin = math.max(bottomMargin, FOOTER_RESERVE)
     layout.bottomMargin = bottomMargin
 
-    layout.startY = panelTop + layout.summaryOffset
     layout.viewportBottom = sh - bottomMargin
+    layout.startY = listPanelY + panelPaddingY
     layout.viewportHeight = math.max(0, layout.viewportBottom - layout.startY)
 
-    layout.panelHeight = layout.viewportHeight + panelPaddingY * 2 + layout.summaryOffset
+    layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
     layout.scissorTop = math.max(0, layout.startY - 12)
     layout.scissorBottom = layout.viewportBottom
     layout.scissorHeight = math.max(0, layout.scissorBottom - layout.scissorTop)
-
-    layout.summaryInsetX = math.max(28, layout.panelPaddingX * 0.75)
-    layout.summaryInsetY = math.max(24, layout.panelPaddingY * 0.55)
 
     return layout
 end
@@ -603,7 +647,6 @@ function AchievementsMenu:draw()
     love.graphics.setColor(titleColor)
     love.graphics.printf(Localization:get("achievements.title"), 0, layout.titleY, sw, "center")
 
-    local summaryOffset = layout.summaryOffset
     local startY = layout.startY
     local spacing = CARD_SPACING
     local cardWidth = layout.cardWidth
@@ -621,21 +664,36 @@ function AchievementsMenu:draw()
     local panelBorder = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
     local shadowColor = Theme.shadowColor or {0, 0, 0, 0.35}
     local highlightColor = Theme.highlightColor or {1, 1, 1, 0.06}
+    local summaryPanel = layout.summaryPanel
+    local summaryTextX = layout.summaryTextX
+    local summaryTextY = layout.summaryTextY
+    local summaryTextWidth = layout.summaryTextWidth
+    local summarySpacing = layout.summarySpacing
+    local summaryProgressHeight = layout.summaryProgressHeight
 
     love.graphics.push("all")
-    love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 0.35) * 0.9)
-    UI.drawRoundedRect(panelX + 10, panelY + 12, panelWidth, panelHeight, 28)
+    love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 0.35) * 0.85)
+    UI.drawRoundedRect(summaryPanel.x + 10, summaryPanel.y + 12, summaryPanel.width, summaryPanel.height, 24)
 
     love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * 0.95)
-    UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 28)
+    UI.drawRoundedRect(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, 24)
 
     love.graphics.setColor(panelBorder[1], panelBorder[2], panelBorder[3], panelBorder[4] or 1)
     love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 28, 28)
+    love.graphics.rectangle("line", summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, 24, 24)
 
-    love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], highlightColor[4] or 0.08)
-    local summaryBackgroundHeight = summaryOffset + 28
-    love.graphics.rectangle("fill", panelX + 16, panelY + 18, panelWidth - 32, summaryBackgroundHeight, 20, 20)
+    local highlightInsetX = math.min(summaryPanel.width * 0.25, math.max(SUMMARY_HIGHLIGHT_INSET, panelPaddingX * 0.45))
+    local highlightInsetTop = math.max(SUMMARY_HIGHLIGHT_INSET * 0.75, summaryPanel.topPadding * 0.6)
+    local highlightInsetBottom = math.max(SUMMARY_HIGHLIGHT_INSET * 0.75, summaryPanel.bottomPadding * 0.5)
+    local highlightX = summaryPanel.x + highlightInsetX
+    local highlightY = summaryPanel.y + highlightInsetTop
+    local highlightW = math.max(0, summaryPanel.width - highlightInsetX * 2)
+    local highlightH = math.max(0, summaryPanel.height - highlightInsetTop - highlightInsetBottom)
+    if highlightW > 0 and highlightH > 0 then
+        love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 0.08) * 1.1)
+        love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, 18, 18)
+    end
+    love.graphics.pop()
 
     local totals = Achievements:getTotals()
     local unlockedLabel = Localization:get("achievements.summary.unlocked", {
@@ -648,34 +706,41 @@ function AchievementsMenu:draw()
     })
     local summaryHint = Localization:get("achievements.summary.hint")
 
-    local summaryTextX = panelX + layout.summaryInsetX
-    local summaryTextY = panelY + layout.summaryInsetY
-    local summaryTextWidth = panelWidth - layout.summaryInsetX * 2
+    local achieveFont = UI.fonts.achieve
+    local bodyFont = UI.fonts.body
+    local smallFont = UI.fonts.small
 
-    love.graphics.setFont(UI.fonts.achieve)
+    love.graphics.setFont(achieveFont)
     love.graphics.setColor(titleColor)
     love.graphics.printf(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left")
 
-    love.graphics.setFont(UI.fonts.body)
+    local completionY = summaryTextY + summarySpacing.titleToCompletion
+    love.graphics.setFont(bodyFont)
     love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.85))
-    love.graphics.printf(completionLabel, summaryTextX, summaryTextY + 32, summaryTextWidth, "left")
+    love.graphics.printf(completionLabel, summaryTextX, completionY, summaryTextWidth, "left")
 
-    love.graphics.setFont(UI.fonts.small)
+    local hintY = summaryTextY + summarySpacing.titleToCompletion + summarySpacing.completionToHint
+    love.graphics.setFont(smallFont)
     love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.65))
-    love.graphics.printf(summaryHint, summaryTextX, summaryTextY + 58, summaryTextWidth, "left")
+    love.graphics.printf(summaryHint, summaryTextX, hintY, summaryTextWidth, "left")
 
-    local progressBarY = summaryTextY + summaryOffset - 22
-    local progressBarHeight = 12
+    local progressBarY = layout.summaryProgressY
     love.graphics.setColor(darkenColor(panelColor, 0.4))
-    love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, progressBarHeight, 6, 6)
+    love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, summaryProgressHeight, 6, 6)
 
     love.graphics.setColor(Theme.progressColor or {0.6, 0.9, 0.4, 1})
-    love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), progressBarHeight, 6, 6)
+    love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
 
-    love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.15))
-    local dividerY = panelY + summaryOffset + 12
-    love.graphics.setLineWidth(1)
-    love.graphics.line(summaryTextX, dividerY, summaryTextX + summaryTextWidth, dividerY)
+    love.graphics.push("all")
+    love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 0.35) * 0.9)
+    UI.drawRoundedRect(panelX + 10, panelY + 12, panelWidth, panelHeight, 28)
+
+    love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * 0.95)
+    UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 28)
+
+    love.graphics.setColor(panelBorder[1], panelBorder[2], panelBorder[3], panelBorder[4] or 1)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 28, 28)
     love.graphics.pop()
 
     local scissorTop = layout.scissorTop
