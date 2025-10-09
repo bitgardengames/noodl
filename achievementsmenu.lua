@@ -36,7 +36,6 @@ local BASE_PANEL_PADDING_X = 48
 local BASE_PANEL_PADDING_Y = 56
 local MIN_SCROLLBAR_INSET = 16
 local SCROLLBAR_TRACK_WIDTH = (SnakeUtils.SEGMENT_SIZE or 24) + 12
-local FOOTER_RESERVE = (UI.spacing.buttonHeight or 0) + (UI.spacing.buttonSpacing or 0) + 48
 
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
@@ -340,8 +339,9 @@ local function computeLayout(sw, sh)
     local listPanelY = summaryPanel.y + summaryPanel.height + panelGap
     layout.panelY = listPanelY
 
+    local footerReserve = (UI.spacing.buttonHeight or 0) + (UI.spacing.buttonSpacing or 0) + ((UI.scaled and UI.scaled(48, 32)) or 48)
     local bottomMargin = math.max(80, math.min(120, sh * 0.16))
-    bottomMargin = math.max(bottomMargin, FOOTER_RESERVE)
+    bottomMargin = math.max(bottomMargin, footerReserve)
     layout.bottomMargin = bottomMargin
 
     layout.viewportBottom = sh - bottomMargin

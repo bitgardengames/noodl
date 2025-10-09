@@ -41,15 +41,75 @@ UI.shields = {
 UI.upgradeIndicators = {
     items = {},
     order = {},
-    layout = {
-        width = 252,
-        spacing = 12,
-        baseHeight = 58,
-        iconRadius = 18,
-        barHeight = 6,
-        margin = 24,
-    },
+    layout = {},
 }
+
+local BASE_SCREEN_WIDTH = 1920
+local BASE_SCREEN_HEIGHT = 1080
+local MIN_LAYOUT_SCALE = 0.6
+local MAX_LAYOUT_SCALE = 1.5
+
+local fontDefinitions = {
+    title = { path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 72, min = 28 },
+    display = { path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 64, min = 24 },
+    subtitle = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 32, min = 18 },
+    heading = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 28, min = 16 },
+    button = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 24, min = 14 },
+    body = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 16, min = 12 },
+    prompt = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12 },
+    caption = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 14, min = 10 },
+    small = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 12, min = 9 },
+    timer = { path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 42, min = 24 },
+    timerSmall = { path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 20, min = 12 },
+    achieve = { path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 18, min = 12 },
+    badge = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12 },
+}
+
+local baseSpacing = {
+    buttonWidth = 260,
+    buttonHeight = 56,
+    buttonRadius = 14,
+    buttonSpacing = 24,
+    panelRadius = 16,
+    panelPadding = 20,
+    shadowOffset = 6,
+    sectionSpacing = 28,
+    sectionHeaderSpacing = 16,
+    sliderHeight = 68,
+    sliderTrackHeight = 10,
+    sliderHandleRadius = 12,
+    sliderPadding = 22,
+}
+
+local spacingMinimums = {
+    buttonWidth = 180,
+    buttonHeight = 44,
+    buttonRadius = 8,
+    buttonSpacing = 16,
+    panelRadius = 12,
+    panelPadding = 14,
+    shadowOffset = 2,
+    sectionSpacing = 18,
+    sectionHeaderSpacing = 10,
+    sliderHeight = 48,
+    sliderTrackHeight = 4,
+    sliderHandleRadius = 10,
+    sliderPadding = 14,
+}
+
+local baseUpgradeLayout = {
+    width = 252,
+    spacing = 12,
+    baseHeight = 58,
+    iconRadius = 18,
+    barHeight = 6,
+    margin = 24,
+}
+
+local baseSocketSize = 26
+local baseSectionHeaderPadding = 8
+
+UI.fonts = {}
 
 local BUTTON_POP_DURATION = 0.32
 
@@ -346,22 +406,109 @@ function UI.setButtonFocus(id, focused)
     btn.focused = focused or nil
 end
 
--- Fonts
-UI.fonts = {
-    title        = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 72),
-    display      = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 64),
-    subtitle     = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 32),
-    heading      = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 28),
-    button       = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 24),
-    body         = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 16),
-    prompt       = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 20),
-    caption      = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 14),
-    small        = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 12),
-    timer        = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 42),
-    timerSmall   = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 20),
-    achieve      = love.graphics.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 18),
-    badge        = love.graphics.newFont("Assets/Fonts/Comfortaa-SemiBold.ttf", 20),
-}
+local function round(value)
+    return math.floor(value + 0.5)
+end
+
+local function buildFonts(scale)
+    if not (love and love.graphics and love.graphics.newFont) then
+        return
+    end
+
+    for key, def in pairs(fontDefinitions) do
+        local size = round(def.size * scale)
+        if def.min then
+            size = math.max(def.min, size)
+        end
+        UI.fonts[key] = love.graphics.newFont(def.path, size)
+    end
+end
+
+UI.spacing = {}
+UI.layoutScale = nil
+
+local function scaledSpacingValue(key, scale)
+    local baseValue = baseSpacing[key] or 0
+    local minValue = spacingMinimums[key] or 0
+    local value = round(baseValue * scale)
+    if minValue > 0 then
+        value = math.max(minValue, value)
+    end
+    return value
+end
+
+local function applySpacing(scale)
+    for key in pairs(baseSpacing) do
+        UI.spacing[key] = scaledSpacingValue(key, scale)
+    end
+
+    local headerPadding = round(baseSectionHeaderPadding * scale)
+    if baseSectionHeaderPadding > 0 then
+        headerPadding = math.max(4, headerPadding)
+    end
+
+    local headingFont = UI.fonts.heading
+    if headingFont and headingFont.getHeight then
+        UI.spacing.sectionHeaderHeight = headingFont:getHeight() + headerPadding
+    else
+        local fallbackHeight = round((fontDefinitions.heading.size + baseSectionHeaderPadding) * scale)
+        fallbackHeight = math.max(headerPadding * 2, fallbackHeight)
+        UI.spacing.sectionHeaderHeight = fallbackHeight
+    end
+end
+
+local function applyUpgradeLayout(scale)
+    local layout = UI.upgradeIndicators.layout
+    layout.width = math.max(160, round(baseUpgradeLayout.width * scale))
+    layout.spacing = math.max(8, round(baseUpgradeLayout.spacing * scale))
+    layout.baseHeight = math.max(42, round(baseUpgradeLayout.baseHeight * scale))
+    layout.iconRadius = math.max(12, round(baseUpgradeLayout.iconRadius * scale))
+    layout.barHeight = math.max(4, round(baseUpgradeLayout.barHeight * scale))
+    layout.margin = math.max(16, round(baseUpgradeLayout.margin * scale))
+end
+
+local function applySocketSize(scale)
+    UI.socketSize = math.max(18, round(baseSocketSize * scale))
+end
+
+function UI.getScale()
+    return UI.layoutScale or 1
+end
+
+function UI.scaled(value, minValue)
+    local result = (value or 0) * UI.getScale()
+    if minValue then
+        result = math.max(minValue, result)
+    end
+    return round(result)
+end
+
+function UI.refreshLayout(sw, sh)
+    if not sw or not sh or sw <= 0 or sh <= 0 then
+        return
+    end
+
+    local widthScale = sw / BASE_SCREEN_WIDTH
+    local heightScale = sh / BASE_SCREEN_HEIGHT
+    local scale = math.min(widthScale, heightScale)
+    if MIN_LAYOUT_SCALE then
+        scale = math.max(MIN_LAYOUT_SCALE, scale)
+    end
+    if MAX_LAYOUT_SCALE then
+        scale = math.min(MAX_LAYOUT_SCALE, scale)
+    end
+
+    if UI.layoutScale and math.abs(scale - UI.layoutScale) < 0.01 then
+        return
+    end
+
+    UI.layoutScale = scale
+
+    buildFonts(scale)
+    applySpacing(scale)
+    applyUpgradeLayout(scale)
+    applySocketSize(scale)
+end
 
 UI.colors = {
     background  = Theme.bgColor,
@@ -379,24 +526,6 @@ UI.colors = {
     accentText  = Theme.accentTextColor,
     mutedText   = Theme.mutedTextColor,
     warning     = Theme.warningColor,
-}
-
--- Spacing and layout constants
-UI.spacing = {
-    buttonWidth         = 260,
-    buttonHeight        = 56,
-    buttonRadius        = 14,
-    buttonSpacing       = 24,
-    panelRadius         = 16,
-    panelPadding        = 20,
-    shadowOffset        = 6,
-    sectionSpacing      = 28,
-    sectionHeaderHeight = UI.fonts.heading:getHeight() + 8,
-    sectionHeaderSpacing= 16,
-    sliderHeight        = 68,
-    sliderTrackHeight   = 10,
-    sliderHandleRadius  = 12,
-    sliderPadding       = 22,
 }
 
 -- Utility: set font
@@ -1782,5 +1911,7 @@ function UI:draw()
     self:drawUpgradeIndicators()
     drawComboIndicator(self)
 end
+
+UI.refreshLayout(BASE_SCREEN_WIDTH, BASE_SCREEN_HEIGHT)
 
 return UI

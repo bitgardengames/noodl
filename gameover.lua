@@ -96,14 +96,31 @@ local function handleAnalogAxis(axis, value)
     end
 end
 -- Layout constants
-local BUTTON_WIDTH = UI.spacing.buttonWidth
-local BUTTON_HEIGHT = UI.spacing.buttonHeight
-local BUTTON_SPACING = UI.spacing.buttonSpacing
-local CELEBRATION_ENTRY_HEIGHT = 64
-local CELEBRATION_ENTRY_SPACING = CELEBRATION_ENTRY_HEIGHT + 10
-local STAT_CARD_HEIGHT = 96
-local STAT_CARD_SPACING = 18
-local STAT_CARD_MIN_WIDTH = 160
+local function getButtonMetrics()
+    local spacing = UI.spacing or {}
+    return spacing.buttonWidth or 260, spacing.buttonHeight or 56, spacing.buttonSpacing or 24
+end
+
+local function getCelebrationEntryHeight()
+    return (UI.scaled and UI.scaled(64, 48)) or 64
+end
+
+local function getCelebrationEntrySpacing()
+    local gap = (UI.scaled and UI.scaled(10, 6)) or 10
+    return getCelebrationEntryHeight() + gap
+end
+
+local function getStatCardHeight()
+    return (UI.scaled and UI.scaled(96, 72)) or 96
+end
+
+local function getStatCardSpacing()
+    return (UI.scaled and UI.scaled(18, 12)) or 18
+end
+
+local function getStatCardMinWidth()
+    return (UI.scaled and UI.scaled(160, 120)) or 160
+end
 
 local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
 local backgroundEffectCache = {}
@@ -163,6 +180,9 @@ local function calculateStatLayout(contentWidth, padding, count)
     local availableWidth = math.max(0, contentWidth - padding * 2)
     local maxColumns = math.min(totalCards, 3)
     local columns = math.max(1, maxColumns)
+    local statCardSpacing = getStatCardSpacing()
+    local statCardMinWidth = getStatCardMinWidth()
+    local statCardHeight = getStatCardHeight()
 
     if totalCards == 0 then
         return {
@@ -170,14 +190,14 @@ local function calculateStatLayout(contentWidth, padding, count)
             rows = 0,
             cardWidth = 0,
             height = 0,
-            spacing = STAT_CARD_SPACING,
+            spacing = statCardSpacing,
             availableWidth = availableWidth,
         }
     end
 
     while columns > 1 do
-        local tentativeWidth = (availableWidth - STAT_CARD_SPACING * (columns - 1)) / columns
-        if tentativeWidth >= STAT_CARD_MIN_WIDTH then
+        local tentativeWidth = (availableWidth - statCardSpacing * (columns - 1)) / columns
+        if tentativeWidth >= statCardMinWidth then
             break
         end
         columns = columns - 1
@@ -188,30 +208,31 @@ local function calculateStatLayout(contentWidth, padding, count)
         columns = 1
         cardWidth = availableWidth
     else
-        cardWidth = (availableWidth - STAT_CARD_SPACING * (columns - 1)) / columns
+        cardWidth = (availableWidth - statCardSpacing * (columns - 1)) / columns
     end
 
     cardWidth = math.max(0, cardWidth)
 
     local rows = math.ceil(totalCards / columns)
-    local height = rows * STAT_CARD_HEIGHT + math.max(0, rows - 1) * STAT_CARD_SPACING
+    local height = rows * statCardHeight + math.max(0, rows - 1) * statCardSpacing
 
     return {
         columns = columns,
         rows = rows,
         cardWidth = cardWidth,
         height = height,
-        spacing = STAT_CARD_SPACING,
+        spacing = statCardSpacing,
         availableWidth = availableWidth,
     }
 end
 
 local function defaultButtonLayout(sw, sh, defs, startY)
     local list = {}
-    local centerX = sw / 2 - BUTTON_WIDTH / 2
+    local buttonWidth, buttonHeight, buttonSpacing = getButtonMetrics()
+    local centerX = sw / 2 - buttonWidth / 2
 
     for i, def in ipairs(defs) do
-        local y = startY + (i - 1) * (BUTTON_HEIGHT + BUTTON_SPACING)
+        local y = startY + (i - 1) * (buttonHeight + buttonSpacing)
         list[#list + 1] = {
             id = def.id,
             textKey = def.textKey,
@@ -219,8 +240,8 @@ local function defaultButtonLayout(sw, sh, defs, startY)
             action = def.action,
             x = centerX,
             y = y,
-            w = BUTTON_WIDTH,
-            h = BUTTON_HEIGHT,
+            w = buttonWidth,
+            h = buttonHeight,
         }
     end
 
@@ -275,7 +296,8 @@ function GameOver:updateLayoutMetrics()
     if self.progressionAnimation then
         local celebrations = (self.progressionAnimation.celebrations and #self.progressionAnimation.celebrations) or 0
         local baseHeight = self.baseXpSectionHeight or self.xpSectionHeight or 0
-        local targetHeight = baseHeight + celebrations * CELEBRATION_ENTRY_SPACING
+        local celebrationSpacing = getCelebrationEntrySpacing()
+        local targetHeight = baseHeight + celebrations * celebrationSpacing
         local xpContentHeight = math.max(160, baseHeight, targetHeight)
         xpHeight = xpContentHeight + 12
     end
@@ -324,7 +346,8 @@ end
 
 function GameOver:updateButtonLayout()
     local sw, sh = Screen:get()
-    local totalButtonHeight = #buttonDefs * BUTTON_HEIGHT + (#buttonDefs - 1) * BUTTON_SPACING
+    local _, buttonHeight, buttonSpacing = getButtonMetrics()
+    local totalButtonHeight = #buttonDefs * buttonHeight + (#buttonDefs - 1) * buttonSpacing
     local panelY = 120
     local panelHeight = self.summaryPanelHeight or 0
     local contentBottom = panelY + panelHeight + 60
@@ -534,6 +557,11 @@ local function drawCelebrationsList(anim, x, startY, width)
     local cardWidth = width - 32
     local now = love.timer.getTime()
 
+    local celebrationHeight = getCelebrationEntryHeight()
+    local celebrationSpacing = getCelebrationEntrySpacing()
+    local outerRadius = (UI.scaled and UI.scaled(16, 12)) or 16
+    local innerRadius = (UI.scaled and UI.scaled(12, 8)) or 12
+
     for index, event in ipairs(events) do
         local timer = math.max(0, event.timer or 0)
         local appear = math.min(1, timer / 0.35)
@@ -556,24 +584,24 @@ local function drawCelebrationsList(anim, x, startY, width)
             local wobble = math.sin(now * 4.2 + index * 0.8) * 2 * alpha
 
             love.graphics.push()
-            love.graphics.translate(cardX + cardWidth / 2, cardY + CELEBRATION_ENTRY_HEIGHT / 2 + wobble)
+            love.graphics.translate(cardX + cardWidth / 2, cardY + celebrationHeight / 2 + wobble)
             love.graphics.scale(0.92 + 0.08 * appearEase, 0.92 + 0.08 * appearEase)
-            love.graphics.translate(-(cardX + cardWidth / 2), -(cardY + CELEBRATION_ENTRY_HEIGHT / 2 + wobble))
+            love.graphics.translate(-(cardX + cardWidth / 2), -(cardY + celebrationHeight / 2 + wobble))
 
             love.graphics.setColor(0, 0, 0, 0.35 * alpha)
-            love.graphics.rectangle("fill", cardX + 5, cardY + 6, cardWidth, CELEBRATION_ENTRY_HEIGHT, 16, 16)
+            love.graphics.rectangle("fill", cardX + 5, cardY + 6, cardWidth, celebrationHeight, outerRadius, outerRadius)
 
             local accent = event.color or Theme.progressColor or { 1, 1, 1, 1 }
             love.graphics.setColor(accent[1], accent[2], accent[3], 0.22 * alpha)
-            love.graphics.rectangle("fill", cardX, cardY, cardWidth, CELEBRATION_ENTRY_HEIGHT, 16, 16)
+            love.graphics.rectangle("fill", cardX, cardY, cardWidth, celebrationHeight, outerRadius, outerRadius)
 
             love.graphics.setColor(accent[1], accent[2], accent[3], 0.55 * alpha)
             love.graphics.setLineWidth(2)
-            love.graphics.rectangle("line", cardX, cardY, cardWidth, CELEBRATION_ENTRY_HEIGHT, 16, 16)
+            love.graphics.rectangle("line", cardX, cardY, cardWidth, celebrationHeight, outerRadius, outerRadius)
 
             local shimmer = 0.45 + 0.25 * math.sin(now * 6 + index)
             love.graphics.setColor(accent[1], accent[2], accent[3], shimmer * 0.18 * alpha)
-            love.graphics.rectangle("line", cardX + 3, cardY + 3, cardWidth - 6, CELEBRATION_ENTRY_HEIGHT - 6, 12, 12)
+            love.graphics.rectangle("line", cardX + 3, cardY + 3, cardWidth - 6, celebrationHeight - 6, innerRadius, innerRadius)
 
             UI.drawLabel(event.title or "", cardX + 18, cardY + 12, cardWidth - 36, "left", {
                 font = fontProgressSmall,
@@ -590,7 +618,7 @@ local function drawCelebrationsList(anim, x, startY, width)
             love.graphics.pop()
         end
 
-        y = y + CELEBRATION_ENTRY_SPACING
+        y = y + celebrationSpacing
     end
 
     love.graphics.setLineWidth(1)
@@ -605,7 +633,8 @@ local function drawXpSection(self, x, y, width)
 
     local baseHeight = self.baseXpSectionHeight or 220
     local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
-    local targetHeight = baseHeight + celebrationCount * CELEBRATION_ENTRY_SPACING
+    local celebrationSpacing = getCelebrationEntrySpacing()
+    local targetHeight = baseHeight + celebrationCount * celebrationSpacing
     local height = math.max(160, self.xpSectionHeight or targetHeight, targetHeight)
     UI.drawPanel(x, y, width, height, {
         radius = 18,
@@ -781,16 +810,19 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
         { label = modeLabel, value = tostring(self.modeLabel or Localization:get("common.unknown")) },
     }
 
+    local statSpacing = statLayout.spacing or getStatCardSpacing()
+    local statCardHeight = getStatCardHeight()
+
     for row = 1, math.max(1, statLayout.rows or 1) do
         local itemsInRow = math.min(statLayout.columns or 1, #statCards - (row - 1) * (statLayout.columns or 1))
         if itemsInRow <= 0 then
             break
         end
 
-        local rowWidth = itemsInRow * (statLayout.cardWidth or 0) + math.max(0, itemsInRow - 1) * (statLayout.spacing or STAT_CARD_SPACING)
+        local rowWidth = itemsInRow * (statLayout.cardWidth or 0) + math.max(0, itemsInRow - 1) * statSpacing
         local rowOffset = math.max(0, (availableWidth - rowWidth) / 2)
         local baseX = contentX + padding + rowOffset
-        local rowY = cardY + (row - 1) * (STAT_CARD_HEIGHT + (statLayout.spacing or STAT_CARD_SPACING))
+        local rowY = cardY + (row - 1) * (statCardHeight + statSpacing)
 
         for col = 0, itemsInRow - 1 do
             local card = statCards[cardIndex]
@@ -798,13 +830,13 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
                 break
             end
 
-            local cardX = baseX + col * ((statLayout.cardWidth or 0) + (statLayout.spacing or STAT_CARD_SPACING))
-            drawStatPill(cardX, rowY, statLayout.cardWidth or 0, STAT_CARD_HEIGHT, card.label, card.value)
+            local cardX = baseX + col * ((statLayout.cardWidth or 0) + statSpacing)
+            drawStatPill(cardX, rowY, statLayout.cardWidth or 0, statCardHeight, card.label, card.value)
             cardIndex = cardIndex + 1
         end
     end
 
-    textY = textY + (statLayout.height or STAT_CARD_HEIGHT) + 12
+    textY = textY + (statLayout.height or statCardHeight) + 12
 
     local achievementsList = self.achievementsEarned or {}
     if #achievementsList > 0 then
@@ -947,7 +979,8 @@ function GameOver:update(dt)
 
     local baseHeight = self.baseXpSectionHeight or 220
     local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
-    local targetHeight = baseHeight + celebrationCount * CELEBRATION_ENTRY_SPACING
+    local celebrationSpacing = getCelebrationEntrySpacing()
+    local targetHeight = baseHeight + celebrationCount * celebrationSpacing
     self.xpSectionHeight = self.xpSectionHeight or baseHeight
     local smoothing = math.min(dt * 6, 1)
     self.xpSectionHeight = self.xpSectionHeight + (targetHeight - self.xpSectionHeight) * smoothing
