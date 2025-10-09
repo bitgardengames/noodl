@@ -941,15 +941,7 @@ function Game:updateGameplay(dt)
             Arena:spawnExit()
         end
 
-        local comboCount = FruitEvents.getComboCount and FruitEvents.getComboCount() or 0
-        local surgeStrength = 0.45 + math.min(comboCount, 6) * 0.08
-        if goalReached then
-            surgeStrength = surgeStrength + 0.25
-        end
-
-        surgeStrength = surgeStrength * 0.6
-
-        self:triggerSurgeFeedback(surgeStrength, { x = fruitX, y = fruitY })
+        -- Removed surge feedback when collecting fruit to eliminate the outward ring effect.
     end
 
     local snakeX, snakeY = Snake:getHead()
