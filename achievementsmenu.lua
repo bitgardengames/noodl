@@ -31,6 +31,9 @@ local CARD_SPACING = 120
 local CARD_WIDTH = 600
 local CARD_HEIGHT = 100
 local CATEGORY_SPACING = 40
+-- Allow extra headroom in the scroll scissor so the category headers drawn
+-- slightly above the first card remain visible when at the top of the list.
+local SCROLL_SCISSOR_TOP_PADDING = 64
 local SCROLL_SPEED = 60
 local BASE_PANEL_PADDING_X = 48
 local BASE_PANEL_PADDING_Y = 56
@@ -349,7 +352,7 @@ local function computeLayout(sw, sh)
     layout.viewportHeight = math.max(0, layout.viewportBottom - layout.startY)
 
     layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
-    layout.scissorTop = math.max(0, layout.startY - 12)
+    layout.scissorTop = math.max(0, layout.startY - SCROLL_SCISSOR_TOP_PADDING)
     layout.scissorBottom = layout.viewportBottom
     layout.scissorHeight = math.max(0, layout.scissorBottom - layout.scissorTop)
 
