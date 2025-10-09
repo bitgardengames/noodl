@@ -851,11 +851,7 @@ local function buildSmoothedCoords(coords, radius)
   return smoothed
 end
 
-local function drawCornerCaps(path, radius, options)
-  if not (options and options.cornerCaps) then
-    return
-  end
-
+local function drawCornerCaps(path, radius)
   if not path or radius <= 0 then
     return
   end
@@ -870,60 +866,29 @@ local function drawCornerCaps(path, radius, options)
     return
   end
 
-  local firstX, firstY = path[1], path[2]
-  local lastX, lastY = path[coordCount - 1], path[coordCount]
-  local closed = false
-  if firstX and firstY and lastX and lastY then
-    closed = math.abs(firstX - lastX) < 1e-4 and math.abs(firstY - lastY) < 1e-4
-  end
-
-  local startIndex = closed and 1 or 2
-  local endIndex = closed and (pointCount - 1) or (pointCount - 1)
-
-  if startIndex > endIndex then
-    return
-  end
-
-  for pointIndex = startIndex, endIndex do
-    local prevIndex = pointIndex - 1
-    local nextIndex = pointIndex + 1
-
-    if closed then
-      if prevIndex < 1 then
-        prevIndex = pointCount - 1
-      end
-      if nextIndex > pointCount then
-        nextIndex = 2
-      end
-    end
-
-    local px, py
-    if prevIndex >= 1 and prevIndex <= pointCount then
-      px = path[prevIndex * 2 - 1]
-      py = path[prevIndex * 2]
-    end
-
-    local nx, ny
-    if nextIndex >= 1 and nextIndex <= pointCount then
-      nx = path[nextIndex * 2 - 1]
-      ny = path[nextIndex * 2]
-    end
-
+  for pointIndex = 2, pointCount - 1 do
+    local px = path[(pointIndex - 1) * 2 - 1]
+    local py = path[(pointIndex - 1) * 2]
     local x = path[pointIndex * 2 - 1]
     local y = path[pointIndex * 2]
+    local nx = path[(pointIndex + 1) * 2 - 1]
+    local ny = path[(pointIndex + 1) * 2]
 
-    if px and py and nx and ny and x and y then
+    if px and py and x and y and nx and ny then
       local dx1 = x - px
       local dy1 = y - py
       local dx2 = nx - x
       local dy2 = ny - y
 
-      local lenSq1 = dx1 * dx1 + dy1 * dy1
-      local lenSq2 = dx2 * dx2 + dy2 * dy2
+      local len1 = math.sqrt(dx1 * dx1 + dy1 * dy1)
+      local len2 = math.sqrt(dx2 * dx2 + dy2 * dy2)
 
-      if lenSq1 > 1e-6 and lenSq2 > 1e-6 then
-        local dot = dx1 * dx2 + dy1 * dy2
-        if math.abs(dot) < 1e-4 then
+      if len1 > 1e-6 and len2 > 1e-6 then
+        local dot = (dx1 * dx2 + dy1 * dy2) / (len1 * len2)
+        if dot > 1 then dot = 1 end
+        if dot < -1 then dot = -1 end
+
+        if math.abs(dot - 1) > 1e-3 then
           love.graphics.circle("fill", x, y, radius)
         end
       end
@@ -952,7 +917,7 @@ local function drawSnakeStroke(path, radius, options)
   local firstX, firstY = path[1], path[2]
   local lastX, lastY = path[#path - 1], path[#path]
 
-  local useRoundCaps = not (options and options.sharpCorners) or (options and options.cornerCaps)
+  local useRoundCaps = not (options and options.sharpCorners)
 
   if firstX and firstY and useRoundCaps then
     love.graphics.circle("fill", firstX, firstY, radius)
@@ -962,9 +927,7 @@ local function drawSnakeStroke(path, radius, options)
     love.graphics.circle("fill", lastX, lastY, radius)
   end
 
-  if options and options.sharpCorners then
-    drawCornerCaps(path, radius, options)
-  end
+  drawCornerCaps(path, radius)
 end
 
 local function renderSnakeToCanvas(trail, coords, head, half, options)
@@ -976,16 +939,8 @@ local function renderSnakeToCanvas(trail, coords, head, half, options)
 
   local sharpCorners = options and options.sharpCorners
 
-  local outlineCoords
-  local bodyCoords
-
-  if sharpCorners then
-    outlineCoords = coords
-    bodyCoords = coords
-  else
-    outlineCoords = buildSmoothedCoords(coords, half + OUTLINE_SIZE)
-    bodyCoords = buildSmoothedCoords(coords, half)
-  end
+  local outlineCoords = coords
+  local bodyCoords = coords
 
   love.graphics.push("all")
   if sharpCorners then
