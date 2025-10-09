@@ -452,6 +452,8 @@ local function resolveFeedbackPosition(self, options)
     return x, y
 end
 
+local ensureHitStopState
+
 function Game:applyHitStop(intensity, duration)
     intensity = math.max(intensity or 0, 0)
     duration = math.max(duration or 0, 0)
@@ -601,7 +603,7 @@ local function getMouseVisibility(mouse)
     return true
 end
 
-local function ensureHitStopState(self)
+ensureHitStopState = function(self)
     if not self.hitStop then
         self.hitStop = {
             timer = 0,
