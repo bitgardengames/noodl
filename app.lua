@@ -25,6 +25,7 @@ local App = {
         metaprogression = require("metaprogressionscreen"),
         talenttree = require("talenttreescreen"),
         settings = require("settingsscreen"),
+        dev = require("devscreen"),
     }
 }
 

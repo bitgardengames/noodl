@@ -16,6 +16,7 @@ local english = {
             achievements = "Achievements",
             progression = "Progression",
             talents = "Talents",
+            dev_page = "Dev Page",
             quit = "Quit",
             version = "v1.0.0",
             title_word = "noodl",
@@ -146,6 +147,13 @@ local english = {
             toggle_fps_counter = "FPS Counter",
             language = "Language",
             back = "Back",
+        },
+        dev = {
+            title = "Developer Playground",
+            subtitle = "Achievement Icon Preview",
+            description = "Drop artwork into the frame to see how it fits the achievement canvas.",
+            frame_label = "Icon Canvas (256 x 256)",
+            back_to_menu = "Back to Menu",
         },
         modeselect = {
             title = "Select Game Mode",

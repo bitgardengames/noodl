@@ -1,0 +1,260 @@
+local Audio = require("audio")
+local ButtonList = require("buttonlist")
+local Screen = require("screen")
+local Theme = require("theme")
+local UI = require("ui")
+local Localization = require("localization")
+
+local DevScreen = {
+    transitionDuration = 0.35,
+}
+
+local ANALOG_DEADZONE = 0.35
+
+local buttonList = ButtonList.new()
+local buttons = {}
+
+local layout = {
+    panel = { x = 0, y = 0, w = 0, h = 0, padding = 0 },
+    button = { x = 0, y = 0 },
+    contentX = 0,
+    contentWidth = 0,
+    screen = { w = 0, h = 0 },
+}
+
+local analogAxisDirections = { horizontal = nil, vertical = nil }
+
+local function resetAnalogAxis()
+    analogAxisDirections.horizontal = nil
+    analogAxisDirections.vertical = nil
+end
+
+function DevScreen:updateLayout()
+    local sw, sh = Screen:get()
+    layout.screen.w = sw
+    layout.screen.h = sh
+
+    local spacing = UI.spacing
+    local panelPadding = spacing.panelPadding or 20
+    local frameSize = 256
+    local horizontalMargin = math.max(140, sw * 0.18)
+
+    local minPanelWidth = frameSize + panelPadding * 2 + 160
+    local panelWidth = math.max(minPanelWidth, math.min(780, sw - horizontalMargin))
+    panelWidth = math.min(panelWidth, sw - 60)
+
+    local minPanelHeight = frameSize + panelPadding * 2 + spacing.buttonHeight + 220
+    local panelHeight = math.max(minPanelHeight, math.min(640, sh - 160))
+    panelHeight = math.min(panelHeight, sh - 60)
+
+    local panelX = (sw - panelWidth) / 2
+    local panelY = (sh - panelHeight) / 2
+
+    layout.panel.x = panelX
+    layout.panel.y = panelY
+    layout.panel.w = panelWidth
+    layout.panel.h = panelHeight
+    layout.panel.padding = panelPadding
+
+    layout.contentX = panelX + panelPadding
+    layout.contentWidth = panelWidth - panelPadding * 2
+
+    local buttonX = panelX + (panelWidth - spacing.buttonWidth) / 2
+    local buttonY = panelY + panelHeight - panelPadding - spacing.buttonHeight
+
+    layout.button.x = buttonX
+    layout.button.y = buttonY
+
+    buttons = buttonList:reset({
+        {
+            id = "devBackButton",
+            x = buttonX,
+            y = buttonY,
+            w = spacing.buttonWidth,
+            h = spacing.buttonHeight,
+            labelKey = "dev.back_to_menu",
+            action = "menu",
+        },
+    })
+end
+
+function DevScreen:enter()
+    UI.clearButtons()
+    self:updateLayout()
+    resetAnalogAxis()
+end
+
+local function handleAnalogAxis(axis, value)
+    if axis ~= "leftx" and axis ~= "lefty" and axis ~= "rightx" and axis ~= "righty" then
+        return
+    end
+
+    local axisType = (axis == "lefty" or axis == "righty") and "vertical" or "horizontal"
+    local direction
+    if value > ANALOG_DEADZONE then
+        direction = "positive"
+    elseif value < -ANALOG_DEADZONE then
+        direction = "negative"
+    end
+
+    if not direction then
+        analogAxisDirections[axisType] = nil
+        return
+    end
+
+    if analogAxisDirections[axisType] == direction then
+        return
+    end
+
+    analogAxisDirections[axisType] = direction
+
+    local delta = direction == "positive" and 1 or -1
+    buttonList:moveFocus(delta)
+end
+
+local function handleConfirm()
+    local action = buttonList:activateFocused()
+    if action then
+        Audio:playSound("click")
+    end
+    return action
+end
+
+function DevScreen:update(dt)
+    local sw, sh = Screen:get()
+    if sw ~= layout.screen.w or sh ~= layout.screen.h then
+        self:updateLayout()
+    end
+
+    local mx, my = love.mouse.getPosition()
+    buttonList:updateHover(mx, my)
+end
+
+function DevScreen:draw()
+    local sw, sh = Screen:get()
+    love.graphics.setColor(0.05, 0.05, 0.08, 1.0)
+    love.graphics.rectangle("fill", 0, 0, sw, sh)
+
+    local panel = layout.panel
+    local contentX = layout.contentX
+    local contentWidth = layout.contentWidth
+    local buttonPos = layout.button
+
+    UI.drawPanel(panel.x, panel.y, panel.w, panel.h, {
+        fill = {0.12, 0.12, 0.16, 0.96},
+        borderColor = Theme.panelBorder,
+        shadowOffset = UI.spacing.shadowOffset or 8,
+    })
+
+    local headingFont = UI.fonts.heading
+    local bodyFont = UI.fonts.body
+    local smallFont = UI.fonts.small
+
+    local headingHeight = headingFont and headingFont:getHeight() or 32
+    local bodyHeight = bodyFont and bodyFont:getHeight() or 20
+    local smallHeight = smallFont and smallFont:getHeight() or 14
+
+    local y = panel.y + panel.padding
+
+    UI.drawLabel(Localization:get("dev.title"), contentX, y, contentWidth, "left", {
+        fontKey = "heading",
+        color = Theme.accentTextColor,
+    })
+
+    y = y + headingHeight + 12
+
+    UI.drawLabel(Localization:get("dev.subtitle"), contentX, y, contentWidth, "left", {
+        fontKey = "body",
+        color = Theme.textColor,
+    })
+
+    y = y + bodyHeight + 10
+
+    UI.drawLabel(Localization:get("dev.description"), contentX, y, contentWidth, "left", {
+        fontKey = "small",
+        color = Theme.mutedTextColor,
+    })
+
+    y = y + smallHeight + 36
+
+    local frameSize = 256
+    local frameX = panel.x + (panel.w - frameSize) / 2
+    local maxFrameY = buttonPos.y - frameSize - 48
+    local minFrameY = panel.y + panel.padding + 110
+    local frameY = math.max(minFrameY, math.min(y, maxFrameY))
+
+    local frameLabel = Localization:get("dev.frame_label")
+    if frameLabel and frameLabel ~= "dev.frame_label" then
+        UI.drawLabel(frameLabel, frameX, frameY - smallHeight - 10, frameSize, "center", {
+            fontKey = "small",
+            color = Theme.mutedTextColor,
+        })
+    end
+
+    local shadowColor = Theme.shadowColor or {0, 0, 0, 0.45}
+    love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 1) * 0.9)
+    love.graphics.rectangle("fill", frameX + 6, frameY + 8, frameSize, frameSize, 16, 16)
+
+    love.graphics.setColor(0.10, 0.10, 0.14, 1.0)
+    love.graphics.rectangle("fill", frameX, frameY, frameSize, frameSize, 16, 16)
+
+    love.graphics.setLineWidth(4)
+    love.graphics.setColor(Theme.accentTextColor)
+    love.graphics.rectangle("line", frameX - 6, frameY - 6, frameSize + 12, frameSize + 12, 18, 18)
+    love.graphics.setLineWidth(1)
+
+    love.graphics.setColor(1, 1, 1, 1)
+
+    for _, btn in ipairs(buttons) do
+        if btn.labelKey then
+            btn.text = Localization:get(btn.labelKey)
+        end
+        UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
+        UI.drawButton(btn.id)
+    end
+end
+
+function DevScreen:mousepressed(x, y, button)
+    buttonList:mousepressed(x, y, button)
+end
+
+function DevScreen:mousereleased(x, y, button)
+    local action = buttonList:mousereleased(x, y, button)
+    if action then
+        return action
+    end
+end
+
+function DevScreen:keypressed(key)
+    if key == "up" or key == "left" then
+        buttonList:moveFocus(-1)
+    elseif key == "down" or key == "right" then
+        buttonList:moveFocus(1)
+    elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
+        return handleConfirm()
+    elseif key == "escape" or key == "backspace" then
+        return "menu"
+    end
+end
+
+function DevScreen:gamepadpressed(_, button)
+    if button == "dpup" or button == "dpleft" then
+        buttonList:moveFocus(-1)
+    elseif button == "dpdown" or button == "dpright" then
+        buttonList:moveFocus(1)
+    elseif button == "a" or button == "start" then
+        return handleConfirm()
+    elseif button == "b" then
+        return "menu"
+    end
+end
+
+DevScreen.joystickpressed = DevScreen.gamepadpressed
+
+function DevScreen:gamepadaxis(_, axis, value)
+    handleAnalogAxis(axis, value)
+end
+
+DevScreen.joystickaxis = DevScreen.gamepadaxis
+
+return DevScreen
