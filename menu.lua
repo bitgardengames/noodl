@@ -2,7 +2,7 @@ local Audio = require("audio")
 local Screen = require("screen")
 local UI = require("ui")
 local Theme = require("theme")
-local drawWord = require("drawword")
+local DrawWord = require("drawword")
 local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
@@ -218,16 +218,30 @@ function Menu:draw()
 
     local baseCellSize = 20
     local baseSpacing = 10
-    local wordScale = 1.5
+    local maxWordWidth = 920
+    local maxWordHeight = 430
+
+    local word = Localization:get("menu.title_word")
+    local baseWidth, baseHeight, minX, minY = DrawWord.getBounds(word, baseCellSize, baseSpacing)
+
+    local wordScale = 1
+    if baseWidth > 0 and baseHeight > 0 then
+        wordScale = math.min(maxWordWidth / baseWidth, maxWordHeight / baseHeight)
+    elseif baseWidth > 0 then
+        wordScale = maxWordWidth / baseWidth
+    elseif baseHeight > 0 then
+        wordScale = maxWordHeight / baseHeight
+    end
 
     local cellSize = baseCellSize * wordScale
-    local word = Localization:get("menu.title_word")
     local spacing = baseSpacing * wordScale
-    local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-    local ox = (sw - wordWidth) / 2
+    local scaledWidth = baseWidth * wordScale
+    local scaledMinX = (minX or 0) * wordScale
+
+    local ox = (sw - scaledWidth) / 2 - scaledMinX
     local oy = sh * 0.2
 
-    local trail = drawWord(word, ox, oy, cellSize, spacing)
+    local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
 
     if trail and #trail > 0 then
         local head = trail[#trail]
