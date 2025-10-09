@@ -1,20 +1,60 @@
 local drawSnake = require("snakedraw")
 
 local letters = {
-	n = {
-		{0,2}, {0,0},{2,0},{2,2}
-	},
-	o = {
-		{0,0}, {2,0}, {2,2}, {0,2}, {0,0}
-	},
-	d = {
-		{0,0}, {2,0}, {2,2}, {0,2}, {0,0},
-		{2,0}, {2,-2}
-	},
-	l = {
-		{0,-2}, {0,2}
-	}
+        n = {
+                {0,2}, {0,0},{2,0},{2,2}
+        },
+        o = {
+                {0,0}, {2,0}, {2,2}, {0,2}, {0,0}
+        },
+        d = {
+                {0,0}, {2,0}, {2,2}, {0,2}, {0,0},
+                {2,0}, {2,-2}
+        },
+        l = {
+                {0,-2}, {0,2}
+        }
 }
+
+local function getWordBounds(word, cellSize, spacing)
+  local x = 0
+  local minX, minY = math.huge, math.huge
+  local maxX, maxY = -math.huge, -math.huge
+  local hasLetter = false
+
+  for i = 1, #word do
+    local ch = word:sub(i, i)
+    local def = letters[ch]
+    if def then
+      hasLetter = true
+      for _, pt in ipairs(def) do
+        local px = x + (pt[1] or 0) * cellSize
+        local py = (pt[2] or 0) * cellSize
+
+        if px < minX then
+          minX = px
+        end
+        if px > maxX then
+          maxX = px
+        end
+        if py < minY then
+          minY = py
+        end
+        if py > maxY then
+          maxY = py
+        end
+      end
+
+      x = x + (3 * cellSize) + spacing
+    end
+  end
+
+  if not hasLetter then
+    return 0, 0, 0, 0
+  end
+
+  return (maxX - minX), (maxY - minY), minX, minY
+end
 
 local function drawWord(word, ox, oy, cellSize, spacing)
   local x = ox
@@ -64,4 +104,7 @@ local function drawWord(word, ox, oy, cellSize, spacing)
   return fullTrail
 end
 
-return drawWord
+return {
+  draw = drawWord,
+  getBounds = getWordBounds,
+}
