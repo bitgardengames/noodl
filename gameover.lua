@@ -211,11 +211,11 @@ local function spawnFruitAnimation(anim)
     local launchX = metrics.x + metrics.width * 0.5
     local launchY = metrics.y - math.max(metrics.height * 2.2, 72)
 
-    local endX = metrics.x + metrics.width * randomRange(0.20, 0.80)
-    local endY = metrics.y + metrics.height * randomRange(0.20, 0.80)
-    local controlX = (launchX + endX) / 2 + randomRange(-metrics.width * 0.18, metrics.width * 0.18)
+    local endX = metrics.x + metrics.width * 0.5
+    local endY = metrics.y + metrics.height * 0.5
     local apexLift = math.max(metrics.height * 1.35, 64)
-    local controlY = math.min(launchY, endY) - randomRange(apexLift * 0.75, apexLift * 1.15)
+    local controlX = (launchX + endX) / 2
+    local controlY = math.min(launchY, endY) - apexLift
 
     local fruit = {
         timer = 0,
