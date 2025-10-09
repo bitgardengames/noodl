@@ -256,7 +256,8 @@ function DevScreen:draw()
     local labelHeight = labelFont and labelFont:getHeight() or 0
     local textMargin = math.max(10, frameSize * 0.04)
     local textX = frameX + textMargin
-    local textY = frameY + frameSize - labelHeight - textMargin
+    local textOffsetY = math.max(6, frameSize * 0.02)
+    local textY = frameY + frameSize - labelHeight - textMargin + textOffsetY
     local shadowOffset = math.max(3, labelHeight * 0.08)
     love.graphics.setColor(0, 0, 0, 0.55)
     love.graphics.print(numberLabel, textX + shadowOffset, textY + shadowOffset)
