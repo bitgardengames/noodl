@@ -11,6 +11,8 @@ local Shaders = require("shaders")
 
 local HIDE_MENU_FOR_SCREENSHOT = true
 
+local TITLE_SCALE_ADJUSTMENT = 0.92
+
 local Menu = {
     transitionDuration = 0.45,
 }
@@ -235,10 +237,12 @@ function Menu:draw()
         wordScale = maxWordHeight / baseHeight
     end
 
-    local cellSize = baseCellSize * wordScale
-    local spacing = baseSpacing * wordScale
-    local scaledWidth = baseWidth * wordScale
-    local scaledMinX = (minX or 0) * wordScale
+    local finalScale = wordScale * TITLE_SCALE_ADJUSTMENT
+
+    local cellSize = baseCellSize * finalScale
+    local spacing = baseSpacing * finalScale
+    local scaledWidth = baseWidth * finalScale
+    local scaledMinX = (minX or 0) * finalScale
 
     local ox = (sw - scaledWidth) / 2 - scaledMinX
     local oy = sh * 0.2
@@ -247,7 +251,7 @@ function Menu:draw()
 
     if trail and #trail > 0 then
         local head = trail[#trail]
-        Face:draw(head.x, head.y, wordScale)
+        Face:draw(head.x, head.y, finalScale)
     end
 
     if not HIDE_MENU_FOR_SCREENSHOT then
