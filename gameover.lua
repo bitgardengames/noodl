@@ -12,6 +12,8 @@ local Shaders = require("shaders")
 
 local GameOver = {}
 
+local unpack = table.unpack or unpack
+
 local ANALOG_DEADZONE = 0.35
 
 local function pickDeathMessage(cause)
@@ -972,7 +974,7 @@ local function drawXpSection(self, x, y, width)
         love.graphics.setColor(progressColor)
         love.graphics.rectangle("fill", barX, barY, fillWidth, barHeight, 12, 12)
         if pulse > 0 then
-            love.graphics.setScissor(table.unpack(prevScissor))
+            love.graphics.setScissor(unpack(prevScissor))
         end
     end
 
@@ -987,7 +989,7 @@ local function drawXpSection(self, x, y, width)
             love.graphics.setScissor(barX, barY, fillWidth, barHeight)
             love.graphics.setColor(1, 1, 1, 0.16 * pulse)
             love.graphics.rectangle("fill", barX - pulseExpand / 2, barY - pulseExpand / 2, fillWidth + pulseExpand, barHeight + pulseExpand, 10, 10)
-            love.graphics.setScissor(table.unpack(prevScissor))
+            love.graphics.setScissor(unpack(prevScissor))
         end
 
         local sweepWidth = 28
@@ -996,7 +998,7 @@ local function drawXpSection(self, x, y, width)
         love.graphics.setScissor(barX, barY, fillWidth, barHeight)
         love.graphics.setColor(1, 1, 1, 0.22 * (0.5 + 0.5 * math.sin(love.timer.getTime() * 4 + percent * math.pi)))
         love.graphics.rectangle("fill", barX + sweepPos, barY - 4, sweepWidth, barHeight + 8, 10, 10)
-        love.graphics.setScissor(table.unpack(prevScissor))
+        love.graphics.setScissor(unpack(prevScissor))
         love.graphics.setBlendMode(prevMode, prevAlphaMode)
     end
 
@@ -1023,7 +1025,7 @@ local function drawXpSection(self, x, y, width)
                 love.graphics.ellipse("line", centerX, centerY, radiusX, radiusY, 32)
             end
         end
-        love.graphics.setScissor(table.unpack(prevScissor))
+        love.graphics.setScissor(unpack(prevScissor))
     end
 
     local outlineSource = UI.colors.highlight or UI.colors.border or { 1, 1, 1, 0.6 }
