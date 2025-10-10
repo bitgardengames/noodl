@@ -20,6 +20,7 @@ local CARD_HEADING_SPACING = 6
 local CARD_DESC_LIST_SPACING = 10
 local CARD_LIST_SECTION_SPACING = 8
 local CARD_LIST_ITEM_SPACING = 6
+local CARD_SECTION_HEADING_SPACING = 4
 local CARD_TAG_OFFSET = 6
 local HEADER_SPACING = 6
 local OPTION_FOOTER_SPACING = 36
@@ -205,6 +206,8 @@ local function measureOptionMetrics(option)
     local hasBonuses = option.bonuses and #option.bonuses > 0
     local hasPenalties = option.penalties and #option.penalties > 0
     local listSpacing = 0
+    local bonusHeadingHeight = 0
+    local penaltyHeadingHeight = 0
 
     if hasBonuses or hasPenalties then
         if descHeight > 0 then
@@ -216,6 +219,8 @@ local function measureOptionMetrics(option)
     end
 
     if hasBonuses then
+        bonusHeadingHeight = captionFont:getHeight()
+        totalHeight = totalHeight + bonusHeadingHeight + CARD_SECTION_HEADING_SPACING
         for index, bonus in ipairs(option.bonuses) do
             local text = "• " .. bonus
             local _, wrapped = bodyFont:getWrap(text, availableWidth)
@@ -233,6 +238,9 @@ local function measureOptionMetrics(option)
         if hasBonuses then
             totalHeight = totalHeight + CARD_LIST_SECTION_SPACING
         end
+
+        penaltyHeadingHeight = captionFont:getHeight()
+        totalHeight = totalHeight + penaltyHeadingHeight + CARD_SECTION_HEADING_SPACING
 
         for index, penalty in ipairs(option.penalties) do
             local text = "• " .. penalty
@@ -257,6 +265,8 @@ local function measureOptionMetrics(option)
         hasBonuses = hasBonuses,
         hasPenalties = hasPenalties,
         listStartSpacing = listSpacing,
+        bonusHeadingHeight = bonusHeadingHeight,
+        penaltyHeadingHeight = penaltyHeadingHeight,
         availableWidth = availableWidth,
     }
 
@@ -1006,6 +1016,17 @@ local function drawOptionCard(button)
     end
 
     if option.bonuses and #option.bonuses > 0 then
+        local heading = Localization:get("talents.bonuses_heading")
+        if heading == "talents.bonuses_heading" then
+            heading = "Bonuses"
+        end
+        local headingHeight = metrics and metrics.bonusHeadingHeight or UI.fonts.caption:getHeight()
+        UI.drawLabel(heading, button.x + padding, listY, contentWidth, "left", {
+            fontKey = "caption",
+            color = Theme.progressColor,
+        })
+        listY = listY + headingHeight + CARD_SECTION_HEADING_SPACING
+
         for index, bonus in ipairs(option.bonuses) do
             UI.drawLabel("• " .. bonus, button.x + padding, listY, contentWidth, "left", {
                 fontKey = "body",
@@ -1023,6 +1044,17 @@ local function drawOptionCard(button)
         if option.bonuses and #option.bonuses > 0 then
             listY = listY + CARD_LIST_SECTION_SPACING
         end
+
+        local heading = Localization:get("talents.penalties_heading")
+        if heading == "talents.penalties_heading" then
+            heading = "Tradeoffs"
+        end
+        local headingHeight = metrics and metrics.penaltyHeadingHeight or UI.fonts.caption:getHeight()
+        UI.drawLabel(heading, button.x + padding, listY, contentWidth, "left", {
+            fontKey = "caption",
+            color = Theme.warningColor,
+        })
+        listY = listY + headingHeight + CARD_SECTION_HEADING_SPACING
 
         for index, penalty in ipairs(option.penalties) do
             UI.drawLabel("• " .. penalty, button.x + padding, listY, contentWidth, "left", {

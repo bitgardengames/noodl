@@ -9,6 +9,7 @@ local drawSnake = require("snakedraw")
 local SnakeUtils = require("snakeutils")
 local Face = require("face")
 local Shaders = require("shaders")
+local SnakeCosmetics = require("snakecosmetics")
 
 local AchievementsMenu = {
     transitionDuration = 0.45,
@@ -17,6 +18,7 @@ local AchievementsMenu = {
 local buttonList = ButtonList.new()
 local iconCache = {}
 local displayBlocks = {}
+local achievementRewardText = {}
 
 local START_Y = 180
 local SUMMARY_SPACING_TITLE_COMPLETION = 32
@@ -29,7 +31,7 @@ local SUMMARY_PANEL_GAP_MIN = 24
 local SUMMARY_HIGHLIGHT_INSET = 16
 local CARD_SPACING = 120
 local CARD_WIDTH = 600
-local CARD_HEIGHT = 100
+local CARD_HEIGHT = 128
 local CATEGORY_SPACING = 40
 -- Allow extra headroom in the scroll scissor so the category headers drawn
 -- slightly above the first card remain visible when at the top of the list.
@@ -192,6 +194,104 @@ local function withAlpha(color, alpha)
         color[3] or 1,
         alpha or (color[4] or 1),
     }
+end
+
+local function joinWithConjunction(items)
+    local count = #items
+    if count == 0 then
+        return ""
+    elseif count == 1 then
+        return items[1]
+    elseif count == 2 then
+        local conj = Localization:get("common.and")
+        if conj == "common.and" then
+            conj = "and"
+        end
+        return string.format("%s %s %s", items[1], conj, items[2])
+    end
+
+    local conj = Localization:get("common.and")
+    if conj == "common.and" then
+        conj = "and"
+    end
+
+    local buffer = {}
+    for index = 1, count - 1 do
+        buffer[index] = items[index]
+    end
+
+    return string.format("%s, %s %s", table.concat(buffer, ", "), conj, items[count])
+end
+
+local function formatAchievementRewards(rewards)
+    local formatted = {}
+    for _, reward in ipairs(rewards or {}) do
+        if reward.type == "cosmetic" then
+            local label = Localization:get("achievements.rewards.cosmetic_skin", { name = reward.name })
+            if label == "achievements.rewards.cosmetic_skin" then
+                label = string.format("%s snake skin", reward.name or Localization:get("common.unknown"))
+            end
+            formatted[#formatted + 1] = label
+        elseif reward.label then
+            formatted[#formatted + 1] = reward.label
+        elseif reward.name then
+            formatted[#formatted + 1] = reward.name
+        end
+    end
+
+    if #formatted == 0 then
+        return nil
+    end
+
+    local headingKey = (#formatted > 1) and "achievements.rewards.multiple" or "achievements.rewards.single"
+    local heading = Localization:get(headingKey)
+    if heading == headingKey then
+        heading = (#formatted > 1) and "Rewards" or "Reward"
+    end
+
+    return string.format("%s: %s", heading, joinWithConjunction(formatted))
+end
+
+local function rebuildAchievementRewards()
+    achievementRewardText = {}
+
+    if not SnakeCosmetics or not SnakeCosmetics.getSkins then
+        return
+    end
+
+    local ok, skins = pcall(SnakeCosmetics.getSkins, SnakeCosmetics)
+    if not ok then
+        print("[achievementsmenu] failed to query cosmetics:", skins)
+        return
+    end
+
+    local grouped = {}
+    for _, skin in ipairs(skins or {}) do
+        local unlock = skin.unlock or {}
+        if unlock.achievement and skin.name then
+            local list = grouped[unlock.achievement]
+            if not list then
+                list = {}
+                grouped[unlock.achievement] = list
+            end
+            list[#list + 1] = { type = "cosmetic", name = skin.name }
+        end
+    end
+
+    for id, rewards in pairs(grouped) do
+        local label = formatAchievementRewards(rewards)
+        if label then
+            achievementRewardText[id] = label
+        end
+    end
+end
+
+local function getAchievementRewardLabel(achievement)
+    if not achievement then
+        return nil
+    end
+
+    return achievementRewardText[achievement.id]
 end
 
 local function toPercent(value)
@@ -597,6 +697,7 @@ function AchievementsMenu:enter()
 
     iconCache = {}
     displayBlocks = Achievements:getDisplayOrder()
+    rebuildAchievementRewards()
 
     resetHeldDpad()
 
@@ -832,13 +933,27 @@ function AchievementsMenu:draw()
             love.graphics.setFont(UI.fonts.body)
             local bodyColor = withAlpha(titleColor, (titleColor[4] or 1) * 0.8)
             love.graphics.setColor(bodyColor)
-            love.graphics.printf(descriptionText, textX, cardY + 38, cardWidth - 110, "left")
+            local textWidth = cardWidth - 110
+            love.graphics.printf(descriptionText, textX, cardY + 38, textWidth, "left")
+
+            local rewardText = nil
+            if not hiddenLocked then
+                rewardText = getAchievementRewardLabel(ach)
+            end
+
+            local barH = 12
+            local barX = textX
+            local barY = cardY + cardHeight - 24
+
+            if rewardText and rewardText ~= "" then
+                love.graphics.setFont(UI.fonts.small)
+                love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.72))
+                local rewardY = barY - (hasProgress and 36 or 24)
+                love.graphics.printf(rewardText, textX, rewardY, textWidth, "left")
+            end
 
             if hasProgress then
                 local ratio = Achievements:getProgressRatio(ach)
-                local barH = 12
-                local barX = textX
-                local barY = cardY + cardHeight - 24
 
                 love.graphics.setColor(darkenColor(cardBase, 0.45))
                 love.graphics.rectangle("fill", barX, barY, barW, barH, 6)

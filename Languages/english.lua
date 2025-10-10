@@ -9,6 +9,7 @@ local english = {
             unknown = "???",
             yes = "Yes",
             no = "No",
+            and = "and",
         },
         menu = {
             start_game = "Start Game",
@@ -180,6 +181,11 @@ local english = {
                 description = "Unlock this secret to reveal its details.",
                 progress = "Hidden",
             },
+            rewards = {
+                single = "Reward",
+                multiple = "Rewards",
+                cosmetic_skin = "${name} snake skin",
+            },
         },
         talents = {
             title = "Talent Forge",
@@ -189,6 +195,8 @@ local english = {
             selected = "Selected",
             back = "Back to Menu",
             hint = "Use arrows, mouse, or gamepad to navigate. Enter/A selects, Esc/B returns.",
+            bonuses_heading = "Bonuses",
+            penalties_heading = "Tradeoffs",
         },
         metaprogression = {
             title = "Progression",
@@ -200,6 +208,21 @@ local english = {
             card_level = "Level ${level}",
             status_unlocked = "Unlocked",
             status_locked = "Unlocks in ${xp} XP",
+            requirements = {
+                single = "Requirement",
+                multiple = "Requirements",
+                total_xp = "Reach ${xp} total XP",
+            },
+            rewards = {
+                single = "Reward",
+                multiple = "Rewards",
+                shop_extra_choice = "+${count} shop card option(s)",
+                unlock_tag = "Unlocks ${name}",
+                unlock_tag_specialist = "Specialist upgrade contracts",
+                unlock_tag_abilities = "Dash ability upgrades",
+                unlock_tag_timekeeper = "Time-bending research upgrades",
+                unlock_tag_legendary = "Legendary experimental upgrades",
+            },
             tabs = {
                 experience = "Experience",
                 cosmetics = "Cosmetics",
