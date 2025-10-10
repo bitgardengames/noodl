@@ -9,7 +9,7 @@ local english = {
             unknown = "???",
             yes = "Yes",
             no = "No",
-            and = "and",
+            ["and"] = "and",
         },
         menu = {
             start_game = "Start Game",
