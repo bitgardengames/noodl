@@ -277,9 +277,11 @@ local statFormatters = {
 }
 
 local hiddenStats = {
-	averageFloorClearTime = true,
-	bestFruitPerMinute = true,
-	averageFruitPerMinute = true,
+        averageFloorClearTime = true,
+        bestFruitPerMinute = true,
+        averageFruitPerMinute = true,
+        dailyChallengesCompleted = true,
+        mostUpgradesInRun = true,
 }
 
 local highlightStatOrder = {
