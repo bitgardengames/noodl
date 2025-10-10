@@ -2,16 +2,12 @@ local Audio = require("audio")
 local Screen = require("screen")
 local UI = require("ui")
 local Theme = require("theme")
-local DrawWord = require("drawword")
+local drawWord = require("drawword")
 local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
-
-local HIDE_MENU_FOR_SCREENSHOT = true
-
-local TITLE_SCALE_ADJUSTMENT = 0.92
 
 local Menu = {
     transitionDuration = 0.45,
@@ -222,56 +218,38 @@ function Menu:draw()
 
     local baseCellSize = 20
     local baseSpacing = 10
-    local maxWordWidth = 920
-    local maxWordHeight = 430
+    local wordScale = 1.5
 
+    local cellSize = baseCellSize * wordScale
     local word = Localization:get("menu.title_word")
-    local baseWidth, baseHeight, minX, minY = DrawWord.getBounds(word, baseCellSize, baseSpacing)
+    local spacing = baseSpacing * wordScale
+    local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+    local ox = (sw - wordWidth) / 2
+    local oy = sh * 0.2
 
-    local wordScale = 1
-    if baseWidth > 0 and baseHeight > 0 then
-        wordScale = math.min(maxWordWidth / baseWidth, maxWordHeight / baseHeight)
-    elseif baseWidth > 0 then
-        wordScale = maxWordWidth / baseWidth
-    elseif baseHeight > 0 then
-        wordScale = maxWordHeight / baseHeight
-    end
-
-    local finalScale = wordScale * TITLE_SCALE_ADJUSTMENT
-
-    local cellSize = baseCellSize * finalScale
-    local spacing = baseSpacing * finalScale
-    local scaledWidth = baseWidth * finalScale
-    local scaledMinX = (minX or 0) * finalScale
-
-    local ox = (sw - scaledWidth) / 2 - scaledMinX
-    local oy = sh * 0.28
-
-    local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
+    local trail = drawWord(word, ox, oy, cellSize, spacing)
 
     if trail and #trail > 0 then
         local head = trail[#trail]
-        Face:draw(head.x, head.y, finalScale)
+        Face:draw(head.x, head.y, wordScale)
     end
 
-    if not HIDE_MENU_FOR_SCREENSHOT then
-        for _, btn in ipairs(buttons) do
-            if btn.labelKey then
-                btn.text = Localization:get(btn.labelKey)
-            end
+    for _, btn in ipairs(buttons) do
+        if btn.labelKey then
+            btn.text = Localization:get(btn.labelKey)
+        end
 
-            if btn.alpha > 0 then
-                UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
+        if btn.alpha > 0 then
+            UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
 
-                love.graphics.push()
-                love.graphics.translate(btn.x + btn.w / 2, btn.y + btn.h / 2 + btn.offsetY)
-                love.graphics.scale(btn.scale)
-                love.graphics.translate(-(btn.x + btn.w / 2), -(btn.y + btn.h / 2))
+            love.graphics.push()
+            love.graphics.translate(btn.x + btn.w / 2, btn.y + btn.h / 2 + btn.offsetY)
+            love.graphics.scale(btn.scale)
+            love.graphics.translate(-(btn.x + btn.w / 2), -(btn.y + btn.h / 2))
 
-                UI.drawButton(btn.id)
+            UI.drawButton(btn.id)
 
-                love.graphics.pop()
-            end
+            love.graphics.pop()
         end
     end
 
@@ -279,7 +257,7 @@ function Menu:draw()
     love.graphics.setColor(Theme.textColor)
     love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
 
-    if not HIDE_MENU_FOR_SCREENSHOT and dailyChallenge and dailyChallengeAnim > 0 then
+    if dailyChallenge and dailyChallengeAnim > 0 then
         local alpha = math.min(1, dailyChallengeAnim)
         local eased = alpha * alpha
         local panelWidth = math.min(420, sw - 72)

@@ -1,5 +1,20 @@
 local drawSnake = require("snakedraw")
 
+--[[local letters = {
+  n = {
+    {0,0}, {0,3}, {1,3}, {1,0}, {2,0}, {2,3}
+  },
+  o = {
+    {0,0}, {2,0}, {2,3}, {0,3}, {0,0}
+  },
+  d = {
+    {0,3}, {0,0}, {1,0}, {2,1}, {2,2}, {1,3}, {0,3}
+  },
+  l = {
+    {0,0}, {0,3}
+  }
+}]]
+
 local letters = {
 	n = {
 		{0,2}, {0,0},{2,0},{2,2}
@@ -33,30 +48,16 @@ local function drawWord(word, ox, oy, cellSize, spacing)
     local def = letters[ch]
     if def then
       drawnLetters = drawnLetters + 1
-      local letterPoints = {}
-      for index, pt in ipairs(def) do
-        local px = x + pt[1] * cellSize
-        local py = oy + pt[2] * cellSize
-        letterPoints[index] = { x = px, y = py }
-        fullTrail[#fullTrail + 1] = { x = px, y = py }
-      end
-
-      local snakeTrail = {}
-      for index = #letterPoints, 1, -1 do
-        local point = letterPoints[index]
-        snakeTrail[#snakeTrail + 1] = {
-          x = point.x,
-          y = point.y,
-          drawX = point.x,
-          drawY = point.y,
-        }
+      local letterTrail = {}
+      for _, pt in ipairs(def) do
+        table.insert(letterTrail, {x = x + pt[1] * cellSize, y = oy + pt[2] * cellSize})
       end
 
       -- The menu draws the face manually so it sits at the end of the word.
       -- Disable the built-in face rendering here to avoid double faces.
-      drawSnake(snakeTrail, #snakeTrail, cellSize, nil, nil, nil, nil, nil, {
-        drawFace = false,
-      })
+      drawSnake(letterTrail, #letterTrail, cellSize, nil, nil, nil, nil, nil, false)
+
+      for _, p in ipairs(letterTrail) do table.insert(fullTrail, p) end
 
       x = x + (3 * cellSize) + spacing
     end
