@@ -872,11 +872,14 @@ function Game:triggerVictory()
 
         local floorData = Floors[currentFloor] or {}
         local floorName = floorData.name or string.format("Floor %d", currentFloor)
-        local endingMessage = string.format("Stuffed with cosmic snacks from %s, Noodl wriggles back toward the garden to share the feast.", floorName)
+        local endingMessage = Localization:get("gameover.victory_story_body", { floor = floorName })
+        if endingMessage == "gameover.victory_story_body" then
+                endingMessage = Floors.victoryMessage or string.format("With the festival feast safely reclaimed from %s, Noodl rockets home to start the parade.", floorName)
+        end
 
         local storyTitle = Localization:get("gameover.victory_story_title")
         if storyTitle == "gameover.victory_story_title" then
-                storyTitle = "Noodl's Grand Feast"
+                storyTitle = Floors.storyTitle or "Noodl's Grand Feast"
         end
 
         local result = Score:handleRunClear({
