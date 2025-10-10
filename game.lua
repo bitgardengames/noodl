@@ -733,10 +733,11 @@ function Game:load(options)
 
         self:setupFloor(self.floor)
 
-        self.transition:startFloorIntro(3.5, {
-                transitionAdvance = false,
-                transitionFloorData = Floors[self.floor] or Floors[1],
-        })
+       self.transition:startFloorIntro(3.5, {
+               transitionAdvance = false,
+               transitionAwaitInput = true,
+               transitionFloorData = Floors[self.floor] or Floors[1],
+       })
 end
 
 function Game:reset()
