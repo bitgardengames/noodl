@@ -550,7 +550,7 @@ function UI.drawPanel(x, y, w, h, opts)
 
     if shadowOffset and shadowOffset ~= 0 then
         setColor(opts.shadowColor or UI.colors.shadow, opts.shadowAlpha or 1)
-        love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h, radius, radius)
+        love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h)
     end
 
     setColor(opts.fill or UI.colors.panel)
@@ -713,7 +713,7 @@ function UI.drawButton(id)
 
     if shadowOffset and shadowOffset ~= 0 then
         setColor(UI.colors.shadow)
-        love.graphics.rectangle("fill", b.x + shadowOffset, b.y + shadowOffset + yOffset, b.w, b.h, radius, radius)
+        love.graphics.rectangle("fill", b.x + shadowOffset, b.y + shadowOffset + yOffset, b.w, b.h)
     end
 
     local fillColor = UI.colors.button
@@ -1693,10 +1693,10 @@ function UI:drawFruitSockets()
     -- backdrop styled like the HUD panel card
     local shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or 6
     if shadowOffset ~= 0 then
-        local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
+        local shadowColor = Theme.shadowColor or {0, 0, 0, 0.25}
         local shadowAlpha = shadowColor[4] or 1
         love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
-        love.graphics.rectangle("fill", panelX + shadowOffset, panelY + shadowOffset, panelW, panelH, 12, 12)
+        love.graphics.rectangle("fill", panelX + shadowOffset, panelY + shadowOffset, panelW, panelH)
     end
 
     local panelColor = Theme.panelColor
