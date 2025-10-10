@@ -635,7 +635,19 @@ local function trimHoleSegments(hole)
 		end
 	end
 
-	hole.consumedLength = consumed
+        hole.consumedLength = consumed
+
+        local totalLength = math.max(0, (segmentCount or 0) * SEGMENT_SPACING)
+        if totalLength <= 1e-4 then
+                hole.fullyConsumed = true
+        else
+                local epsilon = SEGMENT_SPACING * 0.1
+                if consumed >= totalLength - epsilon then
+                        hole.fullyConsumed = true
+                else
+                        hole.fullyConsumed = false
+                end
+        end
 
 	if newHead and newHead.drawX and newHead.drawY then
 		hole.entryPointX = newHead.drawX
@@ -1147,18 +1159,21 @@ function Snake:drawClipped(hx, hy, hr)
 		love.graphics.setStencilTest("equal", 0)
 	end
 
-	local shouldDrawFace = descendingHole == nil
+        local shouldDrawFace = descendingHole == nil
+        local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
-	DrawSnake(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
-		if headX and headY and clipRadius > 0 then
-			local dx = headX - hx
-			local dy = headY - hy
-			if dx * dx + dy * dy < clipRadius * clipRadius then
-				return nil, nil
-			end
-		end
-		return headX, headY
-	end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
+        if not hideDescendingBody then
+                DrawSnake(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
+                        if headX and headY and clipRadius > 0 then
+                                local dx = headX - hx
+                                local dy = headY - hy
+                                if dx * dx + dy * dy < clipRadius * clipRadius then
+                                        return nil, nil
+                                end
+                        end
+                        return headX, headY
+                end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
+        end
 
 	if clipRadius > 0 and descendingHole and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
 		love.graphics.setStencilTest("equal", 1)
@@ -1170,14 +1185,15 @@ function Snake:drawClipped(hx, hy, hr)
 end
 
 function Snake:startDescending(hx, hy, hr)
-	descendingHole = {
-		x = hx,
-		y = hy,
-		radius = hr or 0,
-		consumedLength = 0,
-		renderDepth = 0,
-		time = 0,
-	}
+        descendingHole = {
+                x = hx,
+                y = hy,
+                radius = hr or 0,
+                consumedLength = 0,
+                renderDepth = 0,
+                time = 0,
+                fullyConsumed = false,
+        }
 
 	local headX, headY = self:getHead()
 	if headX and headY then
@@ -2071,11 +2087,14 @@ function Snake:draw()
 			end
 		end
 
-		local shouldDrawFace = descendingHole == nil
+                local shouldDrawFace = descendingHole == nil
+                local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
-		DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
-			return self:getHead()
-		end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
+                if not hideDescendingBody then
+                        DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
+                                return self:getHead()
+                        end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
+                end
 
 	end
 end
