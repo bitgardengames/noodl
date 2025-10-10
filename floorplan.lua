@@ -8,6 +8,7 @@ local BASE_DART_CAP = 4
 local MAX_LASER_COUNT = 5
 local LASER_GROWTH_SPAN = 8
 local LASER_GROWTH_EXPONENT = 1.35
+local EXTRA_FLOOR_FRUIT_STEP = 6
 
 local function computeLaserProgression(baseLaser, extraFloors, maxLasers)
 	baseLaser = baseLaser or 0
@@ -74,8 +75,8 @@ local function applyDartCap(context)
 end
 
 local BASELINE_PLAN = {
-	[1] = {
-		fruitGoal = 6,
+        [1] = {
+                fruitGoal = 12,
 		rocks = 4,
 		saws = 1,
 		laserCount = 0,
@@ -85,8 +86,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.0,
 		sawStall = 0.9,
 	},
-	[2] = {
-		fruitGoal = 7,
+        [2] = {
+                fruitGoal = 18,
 		rocks = 5,
 		saws = 1,
 		laserCount = 0,
@@ -96,8 +97,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.06,
 		sawStall = 0.84,
 	},
-	[3] = {
-		fruitGoal = 8,
+        [3] = {
+                fruitGoal = 24,
 		rocks = 6,
 		saws = 2,
 		laserCount = 0,
@@ -107,8 +108,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.12,
 		sawStall = 0.78,
 	},
-	[4] = {
-		fruitGoal = 9,
+        [4] = {
+                fruitGoal = 30,
 		rocks = 7,
 		saws = 2,
 		laserCount = 0,
@@ -118,8 +119,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.18,
 		sawStall = 0.72,
 	},
-	[5] = {
-		fruitGoal = 10,
+        [5] = {
+                fruitGoal = 36,
 		rocks = 8,
 		saws = 3,
 		laserCount = 0,
@@ -129,8 +130,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.24,
 		sawStall = 0.66,
 	},
-	[6] = {
-		fruitGoal = 11,
+        [6] = {
+                fruitGoal = 42,
 		rocks = 9,
 		saws = 3,
 		laserCount = 0,
@@ -140,8 +141,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.3,
 		sawStall = 0.6,
 	},
-	[7] = {
-		fruitGoal = 12,
+        [7] = {
+                fruitGoal = 48,
 		rocks = 10,
 		saws = 4,
 		laserCount = 0,
@@ -151,8 +152,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.36,
 		sawStall = 0.54,
 	},
-	[8] = {
-		fruitGoal = 13,
+        [8] = {
+                fruitGoal = 54,
 		rocks = 11,
 		saws = 4,
 		laserCount = 0,
@@ -162,8 +163,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.42,
 		sawStall = 0.48,
 	},
-	[9] = {
-		fruitGoal = 14,
+        [9] = {
+                fruitGoal = 60,
 		rocks = 12,
 		saws = 4,
 		laserCount = 0,
@@ -173,8 +174,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.48,
 		sawStall = 0.44,
 	},
-	[10] = {
-		fruitGoal = 15,
+        [10] = {
+                fruitGoal = 66,
 		rocks = 13,
 		saws = 5,
 		laserCount = 0,
@@ -184,8 +185,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.54,
 		sawStall = 0.4,
 	},
-	[11] = {
-		fruitGoal = 16,
+        [11] = {
+                fruitGoal = 72,
 		rocks = 14,
 		saws = 5,
 		laserCount = 0,
@@ -195,8 +196,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.6,
 		sawStall = 0.36,
 	},
-	[12] = {
-		fruitGoal = 17,
+        [12] = {
+                fruitGoal = 78,
 		rocks = 15,
 		saws = 6,
 		laserCount = 0,
@@ -206,8 +207,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.66,
 		sawStall = 0.32,
 	},
-	[13] = {
-		fruitGoal = 18,
+        [13] = {
+                fruitGoal = 84,
 		rocks = 16,
 		saws = 6,
 		laserCount = 1,
@@ -217,8 +218,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.72,
 		sawStall = 0.28,
 	},
-	[14] = {
-		fruitGoal = 19,
+        [14] = {
+                fruitGoal = 90,
 		rocks = 17,
 		saws = 7,
 		laserCount = 1,
@@ -228,8 +229,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.76,
 		sawStall = 0.24,
 	},
-	[15] = {
-		fruitGoal = 21,
+        [15] = {
+                fruitGoal = 100,
 		rocks = 19,
 		saws = 7,
 		laserCount = 2,
@@ -274,7 +275,8 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
 		context[key] = value
 	end
 
-	context.fruitGoal = math.max(context.fruitGoal or 1, (lastPlan.fruitGoal or 21) + extraFloors)
+        local lastFruitGoal = lastPlan.fruitGoal or (EXTRA_FLOOR_FRUIT_STEP * lastIndex)
+        context.fruitGoal = math.max(context.fruitGoal or 1, lastFruitGoal + extraFloors * EXTRA_FLOOR_FRUIT_STEP)
 	context.rocks = math.max(0, math.min(40, (lastPlan.rocks or 19) + extraFloors))
 	context.saws = math.max(1, math.min(8, (lastPlan.saws or 7) + math.floor(extraFloors / 3)))
 	local baseLaser = lastPlan.laserCount or 0

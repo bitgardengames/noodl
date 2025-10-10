@@ -8,6 +8,7 @@ local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
+local PlayerStats = require("playerstats")
 
 local Menu = {
 	transitionDuration = 0.45,
@@ -91,6 +92,29 @@ local analogAxisMap = {
 local function resetAnalogAxis()
 	analogAxisDirections.horizontal = nil
 	analogAxisDirections.vertical = nil
+end
+
+local function prepareStartAction(action)
+        if type(action) ~= "string" then
+                return action
+        end
+
+        if action ~= "game" then
+                return action
+        end
+
+        local deepest = PlayerStats:get("deepestFloorReached") or 0
+        if deepest <= 1 then
+                return action
+        end
+
+        return {
+                state = "floorselect",
+                data = {
+                        highestFloor = deepest,
+                        defaultFloor = deepest,
+                },
+        }
 end
 
 local function handleAnalogAxis(axis, value)
@@ -381,16 +405,16 @@ end
 function Menu:mousereleased(x, y, button)
 	local action = buttonList:mousereleased(x, y, button)
 	if action then
-		return action
+		return prepareStartAction(action)
 	end
 end
 
 local function handleMenuConfirm()
-	local action = buttonList:activateFocused()
-	if action then
-		Audio:playSound("click")
-	end
-	return action
+        local action = buttonList:activateFocused()
+        if action then
+                Audio:playSound("click")
+                return prepareStartAction(action)
+        end
 end
 
 function Menu:keypressed(key)

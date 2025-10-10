@@ -126,6 +126,14 @@ local english = {
 				},
 			},
 		},
+		floor_select = {
+			title = "Choose a Floor",
+			subtitle = "Jump back into any unlocked layer of the descent.",
+			instruction = "Select a floor to begin your next run.",
+			highest_label = "Deepest reached: Floor ${floor}",
+			button_label = "Floor ${floor}: ${name}",
+			description_fallback = "A mystery of fruit and danger lies ahead.",
+		},
 		shop = {
 			title = "Choose an Upgrade",
 		},
