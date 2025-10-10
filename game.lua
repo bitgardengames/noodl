@@ -36,8 +36,6 @@ local FloorSetup = require("floorsetup")
 local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
 local InputMode = require("inputmode")
-local TalentTree = require("talenttree")
-
 local Game = {}
 
 local clamp01 = Easing.clamp01
@@ -719,13 +717,7 @@ function Game:load()
 
     resetFeedbackState(self)
 
-    local talentEffects = TalentTree and TalentTree.getAggregatedEffects and TalentTree:getAggregatedEffects()
-
     self.singleTouchDeath = true
-
-    if TalentTree and TalentTree.applyRunModifiers then
-        TalentTree:applyRunModifiers(self, talentEffects)
-    end
 
     if Snake.adrenaline then
         Snake.adrenaline.active = false
