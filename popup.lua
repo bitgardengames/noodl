@@ -68,8 +68,16 @@ function Popup:draw()
     local titleHeight = fontTitle:getHeight()
     local boxWidth = maxWidth
     local wrapWidth = boxWidth - padding * 2
-    local _, descLines = fontDesc:getWrap(self.subtext, wrapWidth)
-    local descHeight = (#descLines > 0 and #descLines or 1) * fontDesc:getHeight()
+
+    local hasSubtext = self.subtext and self.subtext:match("%S")
+    local descHeight = 0
+    if hasSubtext then
+        local _, descLines = fontDesc:getWrap(self.subtext, wrapWidth)
+        descHeight = (#descLines > 0 and #descLines or 1) * fontDesc:getHeight()
+    else
+        innerSpacing = 0
+    end
+
     local boxHeight = padding * 2 + titleHeight + innerSpacing + descHeight
     local x = sw / 2
     local y = sh * 0.25 + self.offsetY
@@ -78,20 +86,26 @@ function Popup:draw()
     love.graphics.translate(x, y)
     love.graphics.scale(self.scale, self.scale)
 
+    local panelColor = Theme.panelColor or {1, 1, 1, 1}
     UI.drawPanel(-boxWidth / 2, 0, boxWidth, boxHeight, {
         radius = UI.spacing and UI.spacing.panelRadius or 16,
         shadowOffset = (UI.spacing and UI.spacing.shadowOffset or 6) * 0.6,
-        fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * self.alpha },
+        fill = { panelColor[1] or 1, panelColor[2] or 1, panelColor[3] or 1, (panelColor[4] or 1) * self.alpha },
         borderColor = Theme.panelBorder,
     })
 
+    local colors = UI.colors or {}
+    local textColor = colors.text or {1, 1, 1, 1}
     love.graphics.setFont(fontTitle)
-    love.graphics.setColor(UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], self.alpha)
+    love.graphics.setColor(textColor[1] or 1, textColor[2] or 1, textColor[3] or 1, (textColor[4] or 1) * self.alpha)
     love.graphics.printf(self.text, -boxWidth / 2 + padding, padding, wrapWidth, "center")
 
-    love.graphics.setFont(fontDesc)
-    love.graphics.setColor(UI.colors.mutedText[1], UI.colors.mutedText[2], UI.colors.mutedText[3], self.alpha)
-    love.graphics.printf(self.subtext, -boxWidth / 2 + padding, padding + titleHeight + innerSpacing, wrapWidth, "center")
+    if hasSubtext then
+        local mutedText = colors.mutedText or textColor
+        love.graphics.setFont(fontDesc)
+        love.graphics.setColor(mutedText[1] or 1, mutedText[2] or 1, mutedText[3] or 1, (mutedText[4] or 1) * self.alpha)
+        love.graphics.printf(self.subtext, -boxWidth / 2 + padding, padding + titleHeight + innerSpacing, wrapWidth, "center")
+    end
 
     love.graphics.pop()
 end

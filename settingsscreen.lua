@@ -869,6 +869,25 @@ function SettingsScreen:adjustFocused(delta)
                 opt.onChanged(Settings, opt)
             end
         end
+    elseif opt.type == "toggle" and opt.toggle then
+        local current = not not Settings[opt.toggle]
+        local target
+        if delta < 0 then
+            target = false
+        elseif delta > 0 then
+            target = true
+        else
+            target = current
+        end
+
+        if target ~= current then
+            Settings[opt.toggle] = target
+            Settings:save()
+            if opt.onChanged then
+                opt.onChanged(Settings, opt)
+            end
+            Audio:playSound("click")
+        end
     elseif opt.type == "cycle" and opt.setting then
         self:cycleSetting(opt.setting, delta)
     end
