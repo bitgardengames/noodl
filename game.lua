@@ -1183,53 +1183,103 @@ local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
 end
 
 local function drawTransitionFloorIntro(self, timer, duration, data)
-	local floorData = data.transitionFloorData or self.currentFloorData
-	if not floorData then
-		return
-	end
+        local floorData = data.transitionFloorData or self.currentFloorData
+        if not floorData then
+                return
+        end
 
-	love.graphics.setColor(1, 1, 1, 1)
-	drawPlayfieldLayers(self, "playing")
+        love.graphics.setColor(1, 1, 1, 1)
+        drawPlayfieldLayers(self, "playing")
 
-	love.graphics.setColor(0, 0, 0, 0.75)
-	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+        local totalDuration = duration or 0
+        local progress = totalDuration > 0 and clamp01(timer / totalDuration) or 1
+        local awaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
+        local visualProgress = progress
+        if awaitingConfirm then
+                visualProgress = math.min(visualProgress, 0.7)
+        end
 
-	local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+        local appearProgress = math.min(1, visualProgress / 0.35)
+        local appear = easeOutCubic(appearProgress)
+        local dissolveProgress = visualProgress > 0.55 and clamp01((visualProgress - 0.55) / 0.45) or 0
+        if awaitingConfirm then
+                dissolveProgress = 0
+        end
+        local overlayAlpha = 0.8 * (1 - 0.55 * dissolveProgress)
+        local highlightAlpha = appear * (1 - dissolveProgress)
 
-	love.graphics.setFont(UI.fonts.title)
-	local titleY = self.screenHeight / 2 - 90
-	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] or 0.5)
-	love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth, "center")
-	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth, "center")
+        love.graphics.setColor(0, 0, 0, overlayAlpha)
+        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 
-	if floorData.flavor and floorData.flavor ~= "" then
-		love.graphics.setFont(UI.fonts.button)
-		local flavorY = titleY + UI.fonts.title:getHeight() + 32
-		love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] or 0.5)
-		love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth, "center")
-		love.graphics.setColor(1, 1, 1, 1)
-		love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth, "center")
-	end
+        local canvas = ensureTransitionTitleCanvas(self)
+        local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+        local titleOffset = (1 - appear) * 36
 
-	drawTransitionNotes(self, 999, 1, nil)
+        love.graphics.push("all")
+        love.graphics.setCanvas(canvas)
+        love.graphics.clear(0, 0, 0, 0)
+        love.graphics.origin()
+        love.graphics.setBlendMode("alpha")
 
-	if data.transitionAwaitInput then
-		local promptText = Localization:get("game.floor_intro.prompt")
-		if promptText and promptText ~= "" then
-			local promptFont = UI.fonts.prompt or UI.fonts.body
-			love.graphics.setFont(promptFont)
-			local y = self.screenHeight - promptFont:getHeight() * 2.2
-			love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4] or 0.5)
-			love.graphics.printf(promptText, 2, y + 2, self.screenWidth, "center")
-			love.graphics.setColor(1, 1, 1, 1)
-			love.graphics.printf(promptText, 0, y, self.screenWidth, "center")
-		end
-	end
+        love.graphics.setFont(UI.fonts.title)
+        local titleY = self.screenHeight / 2 - 90 + titleOffset
+        local shadowAlpha = (shadow[4] or 0.5) * highlightAlpha
+        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
+        love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth, "center")
+        love.graphics.setColor(1, 1, 1, highlightAlpha)
+        love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth, "center")
 
-	love.graphics.setColor(1, 1, 1, 1)
+        if floorData.flavor and floorData.flavor ~= "" then
+                love.graphics.setFont(UI.fonts.button)
+                local flavorY = titleY + UI.fonts.title:getHeight() + 32
+                local flavorAlpha = highlightAlpha * 0.95
+                love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * flavorAlpha)
+                love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth, "center")
+                love.graphics.setColor(1, 1, 1, flavorAlpha)
+                love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth, "center")
+        end
 
-	return true
+        if data.transitionAwaitInput then
+                local promptText = Localization:get("game.floor_intro.prompt")
+                if promptText and promptText ~= "" then
+                        local promptFont = UI.fonts.prompt or UI.fonts.body
+                        love.graphics.setFont(promptFont)
+                        local promptFade = 1 - clamp01((visualProgress - 0.8) / 0.2)
+                        local promptAlpha = highlightAlpha * promptFade
+                        local y = self.screenHeight - promptFont:getHeight() * 2.2
+                        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * promptAlpha)
+                        love.graphics.printf(promptText, 2, y + 2, self.screenWidth, "center")
+                        love.graphics.setColor(1, 1, 1, promptAlpha)
+                        love.graphics.printf(promptText, 0, y, self.screenWidth, "center")
+                end
+        end
+
+        love.graphics.setCanvas()
+        love.graphics.pop()
+
+        love.graphics.push("all")
+        love.graphics.setColor(1, 1, 1, 1)
+        local shader = floorTitlePixelateShader
+        if shader then
+                shader:send("canvasSize", { canvas:getWidth(), canvas:getHeight() })
+                shader:send("pixelSize", 1 + dissolveProgress * 28)
+                shader:send("dissolve", dissolveProgress)
+                if love.timer and love.timer.getTime then
+                        shader:send("time", love.timer.getTime())
+                else
+                        shader:send("time", timer)
+                end
+                love.graphics.setShader(shader)
+        end
+
+        love.graphics.draw(canvas, 0, 0)
+        love.graphics.pop()
+
+        drawTransitionNotes(self, 999, 1, nil)
+
+        love.graphics.setColor(1, 1, 1, 1)
+
+        return true
 end
 
 function Game:drawTransition()
