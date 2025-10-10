@@ -127,6 +127,9 @@ local english = {
                 },
             },
         },
+        shop = {
+            title = "Choose an Upgrade",
+        },
         settings = {
             title = "Settings",
             section_display = "Display",
@@ -197,6 +200,13 @@ local english = {
             hint = "Use arrows, mouse, or gamepad to navigate. Enter/A selects, Esc/B returns.",
             bonuses_heading = "Bonuses",
             penalties_heading = "Tradeoffs",
+            reset = "Reset to defaults",
+            reset_applied = "Defaults applied",
+            default_short = "Default",
+            custom_short = "Custom pick",
+            none_selected = "Not selected",
+            no_modifiers = "No stat modifiers active.",
+            default = "Default pick",
         },
         metaprogression = {
             title = "Progression",
