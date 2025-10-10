@@ -1,4 +1,5 @@
 local UI = require("ui")
+local Localization = require("localization")
 local Upgrades = require("upgrades")
 local Audio = require("audio")
 local MetaProgression = require("metaprogression")
@@ -757,20 +758,43 @@ end
 
 function Shop:draw(screenW, screenH)
     drawBackground(screenW, screenH)
-    love.graphics.setFont(UI.fonts.title)
-    love.graphics.printf("Choose an Upgrade", 0, screenH * 0.15, screenW, "center")
+    local textAreaWidth = screenW * 0.8
+    local textAreaX = (screenW - textAreaWidth) / 2
+    local currentY = screenH * 0.12
 
-    if self.shopkeeperLine then
+    love.graphics.setFont(UI.fonts.title)
+    local titleText = Localization:get("shop.title")
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf(titleText, textAreaX, currentY, textAreaWidth, "center")
+
+    local function advanceY(text, font, spacing)
+        if not text or text == "" then
+            return 0
+        end
+        local wrapWidth = textAreaWidth
+        local _, lines = font:getWrap(text, wrapWidth)
+        local lineCount = math.max(1, #lines)
+        return lineCount * font:getHeight() * font:getLineHeight() + (spacing or 0)
+    end
+
+    currentY = currentY + advanceY(titleText, UI.fonts.title, 16)
+
+    if self.shopkeeperLine and self.shopkeeperLine ~= "" then
         love.graphics.setFont(UI.fonts.body)
         love.graphics.setColor(1, 0.92, 0.8, 1)
-        love.graphics.printf(self.shopkeeperLine, screenW * 0.1, screenH * 0.22, screenW * 0.8, "center")
+        love.graphics.printf(self.shopkeeperLine, textAreaX, currentY, textAreaWidth, "center")
+        currentY = currentY + advanceY(self.shopkeeperLine, UI.fonts.body, 10)
     end
-    if self.shopkeeperSubline then
+
+    if self.shopkeeperSubline and self.shopkeeperSubline ~= "" then
         love.graphics.setFont(UI.fonts.small)
         love.graphics.setColor(1, 1, 1, 0.7)
-        love.graphics.printf(self.shopkeeperSubline, screenW * 0.1, screenH * 0.26, screenW * 0.8, "center")
+        love.graphics.printf(self.shopkeeperSubline, textAreaX, currentY, textAreaWidth, "center")
+        currentY = currentY + advanceY(self.shopkeeperSubline, UI.fonts.small, 18)
     end
+
     love.graphics.setColor(1, 1, 1, 1)
+    local headerBottom = currentY
 
     local selectionOverlay = self.selectionProgress or 0
     if selectionOverlay > 0 then
@@ -810,10 +834,18 @@ function Shop:draw(screenW, screenH)
 
     local rowSpacing = 72
     local minRowSpacing = 40
-    local topPadding = screenH * 0.24
     local bottomPadding = screenH * 0.12
-    local totalHeight = rows * cardHeight + math.max(0, (rows - 1)) * rowSpacing
+    local minTopPadding = screenH * 0.24
+    local topPadding = math.max(minTopPadding, headerBottom + 24)
     local availableHeight = screenH - topPadding - bottomPadding
+    if availableHeight < 0 then
+        local reduction = math.min(topPadding - minTopPadding, -availableHeight)
+        if reduction > 0 then
+            topPadding = topPadding - reduction
+        end
+        availableHeight = math.max(0, screenH - topPadding - bottomPadding)
+    end
+    local totalHeight = rows * cardHeight + math.max(0, (rows - 1)) * rowSpacing
     if rows > 1 and totalHeight > availableHeight then
         local adjustableRows = rows - 1
         if adjustableRows > 0 then
