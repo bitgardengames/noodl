@@ -10,7 +10,7 @@ local MetaProgression = require("metaprogression")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 
-local GameOver = {}
+local GameOver = { isVictory = false }
 
 local unpack = unpack
 
@@ -129,22 +129,34 @@ local backgroundEffectCache = {}
 local backgroundEffect = nil
 
 local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
+        local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+        if not effect then
+                backgroundEffect = nil
+                return
+        end
 
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.62
+        local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+        if GameOver.isVictory then
+                effect.backdropIntensity = 0.72
+        else
+                effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.62
+        end
 
-	Shaders.configure(effect, {
-		bgColor = Theme.bgColor,
-		accentColor = Theme.warningColor,
-		pulseColor = Theme.progressColor,
-	})
+        local accent = Theme.warningColor
+        local pulse = Theme.progressColor
 
-	backgroundEffect = effect
+        if GameOver.isVictory then
+                accent = Theme.progressColor
+                pulse = Theme.accentTextColor or Theme.progressColor
+        end
+
+        Shaders.configure(effect, {
+                bgColor = Theme.bgColor,
+                accentColor = accent,
+                pulseColor = pulse,
+        })
+
+        backgroundEffect = effect
 end
 
 local function easeOutBack(t)
@@ -606,22 +618,35 @@ local function addCelebration(anim, entry)
 end
 
 function GameOver:enter(data)
-	UI.clearButtons()
-	resetAnalogAxis()
+        UI.clearButtons()
+        resetAnalogAxis()
 
-	data = data or {cause = "unknown"}
+        data = data or {cause = "unknown"}
 
-	Audio:playMusic("scorescreen")
-	Screen:update()
+        self.isVictory = data.won == true
+        self.customTitle = type(data.storyTitle) == "string" and data.storyTitle or nil
+        GameOver.isVictory = self.isVictory
 
-	configureBackgroundEffect()
+        Audio:playMusic("scorescreen")
+        Screen:update()
 
-	local cause = data.cause or "unknown"
-	self.deathMessage = pickDeathMessage(cause)
+        local cause = data.cause or "unknown"
+        if self.isVictory then
+                local defaultVictory = Localization:get("gameover.victory_message")
+                if defaultVictory == "gameover.victory_message" then
+                        defaultVictory = "Noodl wriggles home with a belly full of snacks."
+                end
+                self.deathMessage = data.endingMessage or defaultVictory
+        else
+                self.deathMessage = pickDeathMessage(cause)
+        end
+        self.summaryMessage = self.deathMessage
 
-	fontTitle = UI.fonts.display or UI.fonts.title
-	fontScore = UI.fonts.title or UI.fonts.display
-	fontSmall = UI.fonts.caption or UI.fonts.body
+        configureBackgroundEffect()
+
+        fontTitle = UI.fonts.display or UI.fonts.title
+        fontScore = UI.fonts.title or UI.fonts.display
+        fontSmall = UI.fonts.caption or UI.fonts.body
 	fontBadge = UI.fonts.badge or UI.fonts.button
 	fontProgressTitle = UI.fonts.heading or UI.fonts.subtitle
 	fontProgressValue = UI.fonts.display or UI.fonts.title
@@ -1179,10 +1204,14 @@ function GameOver:draw()
 	local contentX = (sw - contentWidth) / 2
 	local padding = self.contentPadding or 24
 
-	UI.drawLabel(Localization:get("gameover.title"), 0, 48, sw, "center", {
-		font = fontTitle,
-		color = UI.colors.text,
-	})
+        local titleKey = self.isVictory and "gameover.victory_title" or "gameover.title"
+        local fallbackTitle = self.isVictory and "Noodl's Grand Feast" or "Game Over"
+        local titleText = self.customTitle or getLocalizedOrFallback(titleKey, fallbackTitle)
+
+        UI.drawLabel(titleText, 0, 48, sw, "center", {
+                font = fontTitle,
+                color = UI.colors.text,
+        })
 
 	drawCombinedPanel(self, contentWidth, contentX, padding)
 

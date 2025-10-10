@@ -24,9 +24,9 @@
 ]]
 
 local Floors = {
-		[1] = {
-				name = "Verdant Garden",
-				flavor = "Noodl snacks on backyard fruit, meaning to head home soon. Curiosity pulls them down the hole.",
+               [1] = {
+                               name = "Verdant Garden",
+                               flavor = "Noodl chases picnic fruit into a secret burrow, giggling at the accidental adventure.",
 				palette = {
 						bgColor     = {0.24, 0.32, 0.24, 1}, -- brighter forest green backdrop
 						arenaBG     = {0.46, 0.66, 0.39, 1}, -- still bright, grassy playfield
@@ -41,9 +41,9 @@ local Floors = {
 				},
 				backgroundTheme = "botanical",
 		},
-	[2] = {
-		name = "Echoing Caverns",
-		flavor = "Echoes promise sweeter bites deeper in. Noodl slithers on, belly rumbling.",
+       [2] = {
+               name = "Echoing Caverns",
+               flavor = "Playful echoes promise berries ahead, so Noodl follows the snack-scented breeze.",
 		palette = {
 			bgColor    = {0.07, 0.09, 0.14, 1},   -- dim midnight backdrop
 			arenaBG    = {0.12, 0.16, 0.24, 1},   -- misty navy floor
@@ -58,9 +58,9 @@ local Floors = {
 		},
 		backgroundTheme = "cavern",
 	},
-	[3] = {
-		name = "Mushroom Grotto",
-		flavor = "Glowshrooms taste like candy, so Noodl loads up. Home already feels far away.",
+       [3] = {
+               name = "Mushroom Grotto",
+               flavor = "Glowing caps taste like candy floss; Noodl twirls between them for another bite.",
 		palette = {
 			bgColor    = {0.12, 0.14, 0.2, 1},  -- teal haze
 			arenaBG    = {0.18, 0.22, 0.26, 1},  -- cave stone
@@ -77,9 +77,9 @@ local Floors = {
 		backgroundTheme = "botanical",
 		backgroundVariant = "fungal",
 	},
-	[4] = {
-		name = "Flooded Catacombs",
-		flavor = "Brackish fruit floats past, irresistible. Noodl swims after, forgetting the exit.",
+       [4] = {
+               name = "Flooded Catacombs",
+               flavor = "Floating citrus bob through flooded halls and Noodl paddles happily after them.",
 		palette = {
 			bgColor    = {0.03, 0.07, 0.11, 1},   -- abyssal tide
 			arenaBG    = {0.06, 0.13, 0.18, 1},   -- drowned slate floor
@@ -95,9 +95,9 @@ local Floors = {
 		},
 		backgroundTheme = "oceanic",
 	},
-	[5] = {
-		name = "Ancient Ruins",
-		flavor = "Dusty altars drip nectar. Noodl licks them clean and creeps farther in.",
+       [5] = {
+               name = "Ancient Ruins",
+               flavor = "Sticky altar syrup coats Noodl's nose while puzzles of crumbling stone lead onward.",
 		palette = {
 			bgColor    = {0.14, 0.12, 0.08, 1}, -- shadowed nave
 			arenaBG    = {0.21, 0.18, 0.12, 1}, -- sunken sandstone
@@ -113,9 +113,9 @@ local Floors = {
 		},
 		backgroundTheme = "machine",
 	},
-	[6] = {
-		name = "Crystal Hollows",
-		flavor = "Cold crystals trap syrupy dew. Hunger beats the chill, and Noodl keeps chasing it.",
+       [6] = {
+               name = "Crystal Hollows",
+               flavor = "Cold prisms drip sugary dew, and Noodl hums a tune while collecting every sparkle.",
 		palette = {
 			bgColor    = {0.11, 0.13, 0.17, 1}, -- sapphire veil
 			arenaBG    = {0.15, 0.17, 0.22, 1}, -- cold blue
@@ -131,9 +131,9 @@ local Floors = {
 		},
 		backgroundTheme = "arctic",
 	},
-	[7] = {
-		name = "Bone Pits",
-		flavor = "Old bones guard shriveled berries. Noodl crunches through, ignoring the warning creaks.",
+       [7] = {
+               name = "Bone Pits",
+               flavor = "Rattling rib-cages hide chewy dried fruit, perfect for a fearless, fun-loving snake.",
 		palette = {
 			bgColor    = {0.08, 0.07, 0.09, 1},   -- midnight ossuary
 			arenaBG    = {0.18, 0.14, 0.11, 1},  -- soot-stained earth
@@ -150,9 +150,9 @@ local Floors = {
 		backgroundTheme = "cavern",
 		backgroundVariant = "bone",
 	},
-	[8] = {
-		name = "The Abyss",
-		flavor = "A dark draft smells of ripe treasure. Noodl dives, certain one more snack lies below.",
+       [8] = {
+               name = "The Abyss",
+               flavor = "Low tides thrum with violet jellyfish snacks, daring Noodl into the chasm.",
 		palette = {
 			bgColor    = {0.08, 0.08, 0.12, 1}, -- depth-black
 			arenaBG    = {0.12, 0.12, 0.16, 1}, -- softened void
@@ -169,9 +169,9 @@ local Floors = {
 		backgroundTheme = "oceanic",
 		backgroundVariant = "abyss",
 	},
-	[9] = {
-		name = "Inferno Gates",
-		flavor = "Heat sears the fruit skins, caramel sweet. Noodl risks a scorch for another bite.",
+       [9] = {
+               name = "Inferno Gates",
+               flavor = "Caramelized peppers pop like candy, and Noodl dances between sparks to taste them.",
 		palette = {
 			bgColor    = {0.14, 0.05, 0.06, 1}, -- smoke-stained dusk
 			arenaBG    = {0.18, 0.06, 0.08, 1}, -- smoldered ember glow
@@ -188,9 +188,9 @@ local Floors = {
 		backgroundTheme = "desert",
 		backgroundVariant = "hell",
 	},
-	[10] = {
-		name = "Obsidian Keep",
-		flavor = "Molten pits spit sugared sparks. Noodl edges past, eyes only on the feast.",
+       [10] = {
+               name = "Obsidian Keep",
+               flavor = "Guardians forgot the molten honeycomb, so Noodl raids the glowing hoard.",
 		palette = {
 			bgColor    = {0.08, 0.06, 0.08, 1},  -- abyssal black
 			arenaBG    = {0.14, 0.11, 0.14, 1},  -- polished obsidian
@@ -207,9 +207,9 @@ local Floors = {
 		backgroundTheme = "desert",
 		backgroundVariant = "hell",
 	},
-	[11] = {
-		name = "Ashen Frontier",
-		flavor = "Ash storms hide bitter seeds that taste perfect. Turning back feels impossible now.",
+       [11] = {
+               name = "Ashen Frontier",
+               flavor = "Soot storms swirl around smoky seed brittle, and Noodl bounds through the gusts.",
 		palette = {
 			bgColor    = {0.11, 0.07, 0.12, 1},  -- soot-stained dusk
 			arenaBG    = {0.16, 0.09, 0.15, 1},  -- embered plumplain
@@ -226,9 +226,9 @@ local Floors = {
 		backgroundTheme = "desert",
 		backgroundVariant = "inferno",
 	},
-	[12] = {
-		name = "Spirit Crucible",
-		flavor = "Whispers offer ethereal pulp for a toll. Noodl trades caution for flavor.",
+       [12] = {
+               name = "Spirit Crucible",
+               flavor = "Friendly phantoms trade misty sorbet for jokes, keeping Noodl grinning in the glow.",
 		palette = {
 			bgColor    = {0.1, 0.08, 0.14, 1},  -- ethereal violet
 			arenaBG    = {0.16, 0.1, 0.2, 1},  -- twilight bloom
@@ -244,9 +244,9 @@ local Floors = {
 		},
 		backgroundTheme = "laboratory",
 	},
-	[13] = {
-		name = "The Underworld",
-		flavor = "Lava markets fry fruit to smoky bliss. Noodl devours, unaware how far home is.",
+       [13] = {
+               name = "The Underworld",
+               flavor = "Lava chefs flambé exotic fruit, and Noodl samples every sizzling skewer.",
 		palette = {
 			bgColor    = {0.12, 0.08, 0.1, 1}, -- smoky dark veil
 			arenaBG    = {0.14, 0.1, 0.14, 1}, -- charcoal
@@ -263,9 +263,9 @@ local Floors = {
 		backgroundTheme = "desert",
 		backgroundVariant = "hell",
 	},
-	[14] = {
-		name = "Celestial Causeway",
-		flavor = "A sudden breeze carries airy petals. Noodl chases the scent across thin bridges.",
+       [14] = {
+               name = "Celestial Causeway",
+               flavor = "Breezy bridges drip star syrup, guiding Noodl upward on sugar-sparkled winds.",
 		palette = {
 			bgColor    = {0.2, 0.22, 0.29, 1},  -- cool nightfall above the abyss
 			arenaBG    = {0.82, 0.86, 0.92, 1},   -- moonlit alabaster path
@@ -282,17 +282,17 @@ local Floors = {
 		backgroundTheme = "urban",
 		backgroundVariant = "celestial",
 	},
-	[15] = {
-		name = "Sky Spire",
-		flavor = "Sky banquets glimmer above yawning clouds. Noodl climbs, stomach louder than fear.",
-		palette = {
-			bgColor    = {0.16, 0.16, 0.22, 1},  -- starlit indigo
-			arenaBG    = {0.88, 0.91, 0.94, 1},  -- alabaster platform
-			arenaBorder= {0.95, 0.78, 0.45, 1},  -- gilded trim
-			snake      = {0.98, 0.85, 0.4, 1},   -- auric serpent
-			rock       = {0.55, 0.52, 0.48, 1},  -- dusk-touched marble
-			sawColor   = {1.0, 0.65, 0.3, 1},    -- radiant brass
-		},
+       [15] = {
+               name = "Sky Spire",
+               flavor = "Warm sunrise custard wafts from lofty terraces, pulling Noodl along laughing.",
+                palette = {
+                        bgColor    = {0.22, 0.17, 0.24, 1},  -- sunrise violet sky
+                        arenaBG    = {0.96, 0.9, 0.82, 1},   -- peach-lit terrace
+                        arenaBorder= {0.98, 0.64, 0.48, 1},  -- glowing copper filigree
+                        snake      = {0.98, 0.76, 0.54, 1},  -- marmalade shimmer
+                        rock       = {0.58, 0.46, 0.52, 1},  -- rosy marble pylons
+                        sawColor   = {1.0, 0.58, 0.4, 1},    -- amber sunburst
+                },
 		backgroundEffect = {
 			type = "auroraVeil",
 			backdropIntensity = 0.6,
@@ -301,17 +301,17 @@ local Floors = {
 		backgroundTheme = "urban",
 		backgroundVariant = "celestial",
 	},
-	[16] = {
-		name = "Starfall Bastion",
-		flavor = "Falling stars sear trails of candied light. Noodl weaves through guards to taste them.",
-		palette = {
-			bgColor    = {0.2, 0.21, 0.28, 1},  -- twilight navy mantle
-			arenaBG    = {0.82, 0.86, 0.96, 1},  -- moonlit parapets
-			arenaBorder= {0.96, 0.74, 0.52, 1},  -- gilded battlements
-			snake      = {0.98, 0.82, 0.48, 1},  -- auric champion
-			rock       = {0.42, 0.4, 0.68, 1},  -- dusk-lacquered bastion stones
-			sawColor   = {0.98, 0.68, 0.4, 1},   -- cometforged brass
-		},
+       [16] = {
+               name = "Starfall Bastion",
+               flavor = "Meteor crumbs rain into golden bowls; Noodl vaults battlements for the crunchy treats.",
+                palette = {
+                        bgColor    = {0.14, 0.17, 0.28, 1},  -- deep midnight ramparts
+                        arenaBG    = {0.74, 0.8, 0.94, 1},   -- starlit stonework
+                        arenaBorder= {0.92, 0.62, 0.42, 1},  -- molten brass crenels
+                        snake      = {0.98, 0.78, 0.42, 1},  -- toasted comet glaze
+                        rock       = {0.32, 0.36, 0.62, 1},  -- cobalt bulwark bricks
+                        sawColor   = {0.96, 0.64, 0.42, 1},  -- shooting-star arcs
+                },
 		backgroundEffect = {
 			type = "auroraVeil",
 			backdropIntensity = 0.64,
@@ -320,9 +320,9 @@ local Floors = {
 		backgroundTheme = "urban",
 		backgroundVariant = "celestial",
 	},
-	[17] = {
-		name = "Nebula Crown",
-		flavor = "Nebula vines drip cosmic jam. Lenses in the mist hint at home, yet Noodl drifts farther, dizzy and full.",
+       [17] = {
+               name = "Nebula Crown",
+               flavor = "Weightless vines offer cosmic jam, letting Noodl bounce with joy between constellations.",
 		palette = {
 			bgColor    = {0.14, 0.13, 0.21, 1},  -- deep violet firmament
 			arenaBG    = {0.42, 0.34, 0.54, 1},  -- dusk-lit bridgework
@@ -338,9 +338,9 @@ local Floors = {
 		},
 		backgroundTheme = "laboratory",
 	},
-	[18] = {
-		name = "Eventide Observatory",
-		flavor = "Crystal orreries map a path back. Noodl samples their luminous fruit instead, promising just one more taste.",
+       [18] = {
+               name = "Eventide Observatory",
+               flavor = "Clockwork telescopes grind out frosted fruit tarts, and Noodl licks the gears clean.",
 		palette = {
 			bgColor    = {0.1, 0.1, 0.18, 1},   -- midnight indigo vault
 			arenaBG    = {0.16, 0.2, 0.3, 1},   -- mirrored starsteel
@@ -356,9 +356,9 @@ local Floors = {
 		},
 		backgroundTheme = "laboratory",
 	},
-	[19] = {
-		name = "Void Throne",
-		flavor = "A silent court sets out obsidian fruit and a glint of the way home. Noodl bows only to hunger.",
+       [19] = {
+               name = "Void Throne",
+               flavor = "Silent courtiers serve shimmering grape orbs; Noodl thanks them with a polite tail wag.",
 		palette = {
 			bgColor    = {0.1, 0.08, 0.14, 1},  -- eventide abyss
 			arenaBG    = {0.14, 0.12, 0.18, 1},  -- onyx dais
@@ -375,9 +375,9 @@ local Floors = {
 		backgroundTheme = "desert",
 		backgroundVariant = "hell",
 	},
-	[20] = {
-		name = "Singularity Gate",
-		flavor = "Gravity hoards the final harvest. Reflections of home collapse inward, yet Noodl leans in, torn between one last bite and the path back.",
+       [20] = {
+               name = "Singularity Gate",
+               flavor = "A final swirl of gravity tugs at a perfect snack, and Noodl grabs it before racing home.",
 		palette = {
 			bgColor    = {0.08, 0.08, 0.12, 1},  -- collapsing night
 			arenaBG    = {0.12, 0.1, 0.16, 1},  -- gravitic maw
