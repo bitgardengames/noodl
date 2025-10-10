@@ -21,7 +21,6 @@ local App = {
         gameover = require("gameover"),
         achievementsmenu = require("achievementsmenu"),
         metaprogression = require("metaprogressionscreen"),
-        talenttree = require("talenttreescreen"),
         settings = require("settingsscreen"),
         dev = require("devscreen"),
     }

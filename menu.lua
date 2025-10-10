@@ -150,7 +150,6 @@ function Menu:enter()
         { key = "menu.start_game",   action = "game" },
         { key = "menu.achievements", action = "achievementsmenu" },
         { key = "menu.progression",  action = "metaprogression" },
-        { key = "menu.talents",      action = "talenttree" },
         { key = "menu.dev_page",     action = "dev" },
         { key = "menu.settings",     action = "settings" },
         { key = "menu.quit",         action = "quit" },

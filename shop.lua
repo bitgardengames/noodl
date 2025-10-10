@@ -5,8 +5,6 @@ local Audio = require("audio")
 local MetaProgression = require("metaprogression")
 local Theme = require("theme")
 local Shaders = require("shaders")
-local TalentTree = require("talenttree")
-
 local Shop = {}
 
 local ANALOG_DEADZONE = 0.35
@@ -150,24 +148,11 @@ function Shop:refreshCards(options)
         metaBonus = math.max(0, MetaProgression:getShopBonusSlots() or 0)
     end
 
-    local talentBonus = 0
-    if TalentTree and TalentTree.getAggregatedEffects then
-        local effects = TalentTree:getAggregatedEffects()
-        if effects and effects.extraShopChoices then
-            if effects.extraShopChoices >= 0 then
-                talentBonus = math.floor(effects.extraShopChoices + 0.0001)
-            else
-                talentBonus = math.ceil(effects.extraShopChoices - 0.0001)
-            end
-        end
-    end
-
-    local extraChoices = upgradeBonus + metaBonus + talentBonus
+    local extraChoices = upgradeBonus + metaBonus
 
     self.baseChoices = baseChoices
     self.upgradeBonusChoices = upgradeBonus
     self.metaBonusChoices = metaBonus
-    self.talentBonusChoices = talentBonus
     self.extraChoices = extraChoices
 
     local cardCount = baseChoices + extraChoices
