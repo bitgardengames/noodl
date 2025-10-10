@@ -283,6 +283,8 @@ local english = {
 		},
 		gameover = {
 			title = "Game Over",
+			victory_story_title = "Starlit Harvest Parade",
+			victory_story_body = "With every reclaimed treat tucked safely in the hamper, Noodl races home to ignite the Starlit Harvest.",
 			final_score = "Final Score: ${score}",
 			high_score = "High Score: ${score}",
 			apples_eaten = "Apples Eaten: ${count}",
