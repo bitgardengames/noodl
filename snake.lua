@@ -1175,7 +1175,7 @@ function Snake:drawClipped(hx, hy, hr)
                 end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
         end
 
-	if clipRadius > 0 and descendingHole and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
+	if clipRadius > 0 and descendingHole and not hideDescendingBody and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
 		love.graphics.setStencilTest("equal", 1)
 		drawDescendingIntoHole(descendingHole)
 	end

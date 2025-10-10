@@ -1023,7 +1023,9 @@ local function drawPlayfieldLayers(self, stateOverride)
 	Saws:draw()
 
 	local isDescending = (renderState == "descending")
-	if not isDescending then
+	local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
+
+	if not isDescending and not shouldDrawExitAfterSnake then
 		Arena:drawExit()
 	end
 
@@ -1033,6 +1035,10 @@ local function drawPlayfieldLayers(self, stateOverride)
 		Death:draw()
 	elseif renderState ~= "gameover" then
 		Snake:draw()
+	end
+
+	if shouldDrawExitAfterSnake then
+		Arena:drawExit()
 	end
 
 	Particles:draw()
@@ -1302,23 +1308,33 @@ function Game:drawStateTransition(direction, progress, eased, alpha)
 end
 
 function Game:drawDescending()
-	Arena:drawExit()
-
 	if not self.hole then
 		Snake:draw()
+		Arena:drawExit()
 		return
 	end
 
-	local hx, hy, hr = self.hole.x, self.hole.y, self.hole.radius
+	local hx = self.hole.x
+	local hy = self.hole.y
+	local hr = self.hole.radius or 0
 
-	love.graphics.setColor(0.05, 0.05, 0.05, 1)
-	love.graphics.circle("fill", hx, hy, hr)
+	Arena:drawExit()
 
-	love.graphics.setColor(0, 0, 0, 1)
-	local previousLineWidth = love.graphics.getLineWidth()
-	love.graphics.setLineWidth(2)
-	love.graphics.circle("line", hx, hy, hr)
-	love.graphics.setLineWidth(previousLineWidth)
+	local coverRadius = hr * 0.92
+	if coverRadius <= 0 then
+		coverRadius = hr
+	end
+
+	if coverRadius > 0 then
+		love.graphics.setColor(0.05, 0.05, 0.05, 1)
+		love.graphics.circle("fill", hx, hy, coverRadius)
+
+		love.graphics.setColor(0, 0, 0, 1)
+		local previousLineWidth = love.graphics.getLineWidth()
+		love.graphics.setLineWidth(2)
+		love.graphics.circle("line", hx, hy, coverRadius)
+		love.graphics.setLineWidth(previousLineWidth)
+	end
 
 	Snake:drawClipped(hx, hy, hr)
 
