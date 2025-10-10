@@ -838,12 +838,62 @@ end
 
 -- start a floor transition
 function Game:startFloorTransition(advance, skipFade)
-	Snake:finishDescending()
-	self.transition:startFloorTransition(advance, skipFade)
+        Snake:finishDescending()
+        self.transition:startFloorTransition(advance, skipFade)
+end
+
+function Game:triggerVictory()
+        if self.state == "victory" then
+                return
+        end
+
+        Snake:finishDescending()
+        if Arena and Arena.resetExit then
+                Arena:resetExit()
+        end
+
+        local floorTime = self.floorTimer or 0
+        if floorTime and floorTime > 0 then
+                SessionStats:add("totalFloorTime", floorTime)
+                SessionStats:updateMin("fastestFloorClear", floorTime)
+                SessionStats:updateMax("slowestFloorClear", floorTime)
+                SessionStats:set("lastFloorClearTime", floorTime)
+        end
+        self.floorTimer = 0
+
+        local currentFloor = self.floor or 1
+        local nextFloor = currentFloor + 1
+        PlayerStats:add("floorsCleared", 1)
+        PlayerStats:updateMax("deepestFloorReached", nextFloor)
+        SessionStats:add("floorsCleared", 1)
+        SessionStats:updateMax("deepestFloorReached", nextFloor)
+
+        Audio:playSound("floor_advance")
+
+        local floorData = Floors[currentFloor] or {}
+        local floorName = floorData.name or string.format("Floor %d", currentFloor)
+        local endingMessage = string.format("Stuffed with cosmic snacks from %s, Noodl wriggles back toward the garden to share the feast.", floorName)
+
+        local storyTitle = Localization:get("gameover.victory_story_title")
+        if storyTitle == "gameover.victory_story_title" then
+                storyTitle = "Noodl's Grand Feast"
+        end
+
+        local result = Score:handleRunClear({
+                endingMessage = endingMessage,
+                storyTitle = storyTitle,
+        })
+
+        Achievements:save()
+
+        self.victoryResult = result
+        self.victoryTimer = 0
+        self.victoryDelay = 1.2
+        self.state = "victory"
 end
 
 function Game:startFloorIntro(duration, extra)
-	self.transition:startFloorIntro(duration, extra)
+        self.transition:startFloorIntro(duration, extra)
 end
 
 function Game:startFadeIn(duration)
@@ -868,10 +918,15 @@ function Game:updateDescending(dt)
 
 	local dx, dy = tail.drawX - self.hole.x, tail.drawY - self.hole.y
 	local dist = math.sqrt(dx * dx + dy * dy)
-	if dist < self.hole.radius then
-		Snake:finishDescending()
-		self:startFloorTransition(true)
-	end
+        if dist < self.hole.radius then
+                local finalFloor = #Floors
+                if (self.floor or 1) >= finalFloor then
+                        self:triggerVictory()
+                else
+                        Snake:finishDescending()
+                        self:startFloorTransition(true)
+                end
+        end
 end
 
 function Game:updateGameplay(dt)
@@ -1274,13 +1329,25 @@ function Game:update(dt)
 	updateFeedbackState(self, scaledDt)
 	updateHitStopState(self, dt)
 
-	if handlePauseMenu(self, dt) then
-		return
-	end
+        if handlePauseMenu(self, dt) then
+                return
+        end
 
-	updateRunTimers(self, scaledDt)
+        if self.state == "victory" then
+                local delay = self.victoryDelay or 0
+                self.victoryTimer = (self.victoryTimer or 0) + scaledDt
 
-	updateGlobalSystems(scaledDt)
+                if self.victoryTimer >= delay then
+                        local summary = self.victoryResult or Score:handleRunClear()
+                        return { state = "gameover", data = summary }
+                end
+
+                return
+        end
+
+        updateRunTimers(self, scaledDt)
+
+        updateGlobalSystems(scaledDt)
 
 	local transition = self.transition
 	local transitionBlocking = false

@@ -171,12 +171,16 @@ function Score:getHighScoreGlowStrength()
 		return math.max(0, math.min(1, normalized))
 end
 
-function Score:handleGameOver(cause)
-	PlayerStats:updateMax("snakeScore", self.current)
+local function finalizeRunResult(self, options)
+        options = options or {}
+        local cause = options.cause or "unknown"
+        local won = options.won or false
 
-	Achievements:checkAll({
-		bestScore = PlayerStats:get("snakeScore"),
-		snakeScore = self.current,
+        PlayerStats:updateMax("snakeScore", self.current)
+
+        Achievements:checkAll({
+                bestScore = PlayerStats:get("snakeScore"),
+                snakeScore = self.current,
 	})
 
 	self:setHighScore(self.current)
@@ -215,19 +219,38 @@ function Score:handleGameOver(cause)
 		PlayerStats:updateMax("longestFloorClearTime", slowestFloor)
 	end
 
-	local result = {
-		score       = self.current,
-		highScore   = self:getHighScore(),
-		apples      = runApples,
-		totalApples = lifetimeApples,
-		stats = {
-			apples = runApples
-		},
-		cause = cause or "unknown",
-		won = false,
-	}
+        local result = {
+                score       = self.current,
+                highScore   = self:getHighScore(),
+                apples      = runApples,
+                totalApples = lifetimeApples,
+                stats = {
+                        apples = runApples
+                },
+                cause = cause,
+                won = won,
+        }
 
-	return result
+        if options.endingMessage then
+                result.endingMessage = options.endingMessage
+        end
+
+        if options.storyTitle then
+                result.storyTitle = options.storyTitle
+        end
+
+        return result
+end
+
+function Score:handleGameOver(cause)
+        return finalizeRunResult(self, { cause = cause or "unknown", won = false })
+end
+
+function Score:handleRunClear(options)
+        options = options or {}
+        options.cause = options.cause or "victory"
+        options.won = true
+        return finalizeRunResult(self, options)
 end
 
 return Score
