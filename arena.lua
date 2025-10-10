@@ -387,9 +387,9 @@ function Arena:drawBorder()
         end
 
         local highlightAlpha = highlight[4] or 0
+        local highlightOffset = 2
         if highlightAlpha > 0 then
                 local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
-                local highlightOffset = 2
                 local cornerOffsetX = 3
                 local cornerOffsetY = 3
                 local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
