@@ -205,124 +205,6 @@ local function rerouteAlongWall(headX, headY)
 		return clampedX, clampedY
 end
 
-local function rerouteAroundRock(headX, headY, rock)
-		if not rock then
-				return 0, 0
-		end
-
-		local headSize = SEGMENT_SIZE
-		local headCenterX = (headX or 0) + headSize / 2
-		local headCenterY = (headY or 0) + headSize / 2
-		local rockCenterX = (rock.x or 0) + (rock.w or headSize) / 2
-		local rockCenterY = (rock.y or 0) + (rock.h or headSize) / 2
-
-		local dir = Snake.getDirection and Snake:getDirection() or { x = 0, y = 0 }
-
-		local dx = headCenterX - rockCenterX
-		local dy = headCenterY - rockCenterY
-		local absDx = math.abs(dx)
-		local absDy = math.abs(dy)
-
-		local function fallbackVertical()
-				if dir.y and dir.y ~= 0 then
-						return dir.y > 0 and 1 or -1
-				end
-				if headCenterY <= rockCenterY then
-						return 1
-				end
-				return -1
-		end
-
-		local function fallbackHorizontal()
-				if dir.x and dir.x ~= 0 then
-						return dir.x > 0 and 1 or -1
-				end
-				if headCenterX <= rockCenterX then
-						return 1
-				end
-				return -1
-		end
-
-		local hitLeft = absDx >= absDy and headCenterX <= rockCenterX
-		local hitRight = absDx >= absDy and headCenterX >= rockCenterX
-		local hitTop = absDy >= absDx and headCenterY <= rockCenterY
-		local hitBottom = absDy >= absDx and headCenterY >= rockCenterY
-
-		local collidedHorizontal = hitLeft or hitRight
-		local collidedVertical = hitTop or hitBottom
-		local horizontalDominant = math.abs(dir.x or 0) >= math.abs(dir.y or 0)
-
-		local newDirX, newDirY = dir.x or 0, dir.y or 0
-
-		if collidedHorizontal and collidedVertical then
-				if horizontalDominant then
-						newDirX = 0
-						local slide = fallbackVertical()
-						if hitTop and slide < 0 then
-								slide = 1
-						elseif hitBottom and slide > 0 then
-								slide = -1
-						end
-						newDirY = slide
-				else
-						newDirY = 0
-						local slide = fallbackHorizontal()
-						if hitLeft and slide < 0 then
-								slide = 1
-						elseif hitRight and slide > 0 then
-								slide = -1
-						end
-						newDirX = slide
-				end
-		else
-				if collidedHorizontal then
-						newDirX = 0
-						local slide = fallbackVertical()
-						if hitTop and slide < 0 then
-								slide = 1
-						elseif hitBottom and slide > 0 then
-								slide = -1
-						end
-						newDirY = slide
-				end
-
-				if collidedVertical then
-						newDirY = 0
-						local slide = fallbackHorizontal()
-						if hitLeft and slide < 0 then
-								slide = 1
-						elseif hitRight and slide > 0 then
-								slide = -1
-						end
-						newDirX = slide
-				end
-		end
-
-		if newDirX == 0 and newDirY == 0 then
-				if hitLeft and not hitRight then
-						newDirX = 1
-				elseif hitRight and not hitLeft then
-						newDirX = -1
-				elseif hitTop and not hitBottom then
-						newDirY = 1
-				elseif hitBottom and not hitTop then
-						newDirY = -1
-				else
-						if dir.x and dir.x ~= 0 then
-								newDirX = dir.x > 0 and 1 or -1
-						elseif dir.y and dir.y ~= 0 then
-								newDirY = dir.y > 0 and 1 or -1
-						else
-								newDirY = 1
-						end
-				end
-		end
-
-		Movement:applyForcedDirection(newDirX, newDirY)
-
-		return newDirX, newDirY
-end
-
 local function clamp(value, min, max)
 		if min and value < min then
 				return min
@@ -541,77 +423,49 @@ local function handleRockCollision(headX, headY)
 								if Snake.onDashBreakRock then
 										Snake:onDashBreakRock(centerX, centerY)
 								end
-						else
-								local headCenterX = (headX or centerX) + SEGMENT_SIZE / 2
-								local headCenterY = (headY or centerY) + SEGMENT_SIZE / 2
-								local dx = headCenterX - centerX
-								local dy = headCenterY - centerY
-								local dist = math.sqrt(dx * dx + dy * dy)
-								local pushDist = SEGMENT_SIZE * 1.1
-								local pushX, pushY = 0, 0
-								if dist > 1e-4 then
-										pushX = (dx / dist) * pushDist
-										pushY = (dy / dist) * pushDist
-								end
+                                                else
+                                                                local context = {
+                                                                                pushX = 0,
+                                                                                pushY = 0,
+                                                                                grace = DAMAGE_GRACE,
+                                                                                shake = 0.35,
+                                                                }
 
-								local context = {
-										pushX = pushX,
-										pushY = pushY,
-										grace = DAMAGE_GRACE,
-										shake = 0.35,
-								}
+                                                                local shielded = Snake:consumeCrashShield()
 
-								local shielded = Snake:consumeCrashShield()
-								Rocks:triggerHitFlash(rock)
+                                                                if not shielded then
+                                                                                Rocks:triggerHitFlash(rock)
+                                                                                return "hit", "rock", context
+                                                                end
 
-								if not shielded then
-										local rerouteDirX, rerouteDirY = rerouteAroundRock(headX, headY, rock)
-										if rerouteDirX ~= 0 or rerouteDirY ~= 0 then
-												context.dirX = rerouteDirX
-												context.dirY = rerouteDirY
-										end
+                                                                Rocks:destroy(rock)
+                                                                context.damage = 0
 
-										return "hit", "rock", context
-								end
+                                                                Particles:spawnBurst(centerX, centerY, {
+                                                                                count = 8,
+                                                                                speed = 40,
+                                                                                speedVariance = 36,
+                                                                                life = 0.4,
+                                                                                size = 3,
+                                                                                color = {0.9, 0.8, 0.5, 1},
+                                                                                spread = math.pi * 2,
+                                                                                angleJitter = math.pi * 0.8,
+                                                                                drag = 2.8,
+                                                                                gravity = 210,
+                                                                                scaleMin = 0.55,
+                                                                                scaleVariance = 0.5,
+                                                                                fadeTo = 0.05,
+                                                                })
+                                                                Audio:playSound("shield_rock")
 
-								local rerouteDirX, rerouteDirY = rerouteAroundRock(headX, headY, rock)
-								if rerouteDirX ~= 0 or rerouteDirY ~= 0 then
-										context.pushX = rerouteDirX * pushDist
-										context.pushY = rerouteDirY * pushDist
-										context.dirX = rerouteDirX
-										context.dirY = rerouteDirY
-								else
-										context.pushX = pushX
-										context.pushY = pushY
-								end
+                                                                if Snake.onShieldConsumed then
+                                                                                Snake:onShieldConsumed(centerX, centerY, "rock")
+                                                                end
 
-								context.damage = 0
+                                                                recordShieldEvent("rock")
 
-								Particles:spawnBurst(centerX, centerY, {
-										count = 8,
-										speed = 40,
-										speedVariance = 36,
-										life = 0.4,
-										size = 3,
-										color = {0.9, 0.8, 0.5, 1},
-										spread = math.pi * 2,
-										angleJitter = math.pi * 0.8,
-										drag = 2.8,
-										gravity = 210,
-										scaleMin = 0.55,
-										scaleVariance = 0.5,
-										fadeTo = 0.05,
-								})
-								Audio:playSound("shield_rock")
-
-								if Snake.onShieldConsumed then
-										Snake:onShieldConsumed(centerX, centerY, "rock")
-								end
-
-								recordShieldEvent("rock")
-
-								return "hit", "rock", context
-						end
+                                                                return "hit", "rock", context
+                                                end
 
 						break
 				end
