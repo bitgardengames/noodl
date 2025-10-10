@@ -35,7 +35,6 @@ local Localization = require("localization")
 local FloorSetup = require("floorsetup")
 local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
-local InputMode = require("inputmode")
 local Game = {}
 
 local clamp01 = Easing.clamp01
@@ -506,15 +505,15 @@ local function resolveHitStopScale(self)
 end
 
 local function resolveMouseVisibilityTarget(self)
-	if not InputMode:isMouseActive() then
-		return nil
-	end
+        if not getMouseInterface() then
+                return nil
+        end
 
-	local transition = self.transition
-	local inShop = transition and transition:isShopActive()
-	if inShop then
-		return true
-	end
+        local transition = self.transition
+        local inShop = transition and transition:isShopActive()
+        if inShop then
+                return true
+        end
 
 	if RUN_ACTIVE_STATES[self.state] == true then
 		return false
