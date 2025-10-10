@@ -13,33 +13,33 @@ local UI = require("ui")
 local GameUtils = {}
 
 local function loadCoreSystems(sw, sh)
-    Snake:load(sw, sh)
-    Snake:resetModifiers()
-    PauseMenu:load(sw, sh)
+	Snake:load(sw, sh)
+	Snake:resetModifiers()
+	PauseMenu:load(sw, sh)
 end
 
 local GAMEPLAY_SYSTEMS = {
-    Movement,
-    Score,
-    FloatingText,
-    Particles,
-    UpgradeVisuals,
-    Rocks,
-    Saws,
-    UI,
+	Movement,
+	Score,
+	FloatingText,
+	Particles,
+	UpgradeVisuals,
+	Rocks,
+	Saws,
+	UI,
 }
 
 local function resetGameplaySystems()
-    for _, system in ipairs(GAMEPLAY_SYSTEMS) do
-        system:reset()
-    end
+	for _, system in ipairs(GAMEPLAY_SYSTEMS) do
+		system:reset()
+	end
 end
 
 function GameUtils:prepareGame(sw, sh)
-    loadCoreSystems(sw, sh)
-    resetGameplaySystems()
+	loadCoreSystems(sw, sh)
+	resetGameplaySystems()
 
-    Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
+	Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
 end
 
 return GameUtils
