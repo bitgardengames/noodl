@@ -263,7 +263,6 @@ function Menu:draw()
         local panelWidth = math.min(420, sw - 72)
         local padding = UI.spacing.panelPadding or 16
         local panelX = sw - panelWidth - 36
-        local panelY = 36
         local headerFont = UI.fonts.small
         local titleFont = UI.fonts.button
         local bodyFont = UI.fonts.body
@@ -305,6 +304,8 @@ function Menu:draw()
             + descHeight
             + (bonusText and (progressFont:getHeight() + 10) or 0)
             + statusBarHeight
+
+        local panelY = math.max(36, sh - panelHeight - 36)
 
         setColorWithAlpha(Theme.shadowColor, eased * 0.7)
         love.graphics.rectangle("fill", panelX + 6, panelY + 8, panelWidth, panelHeight, 14, 14)
