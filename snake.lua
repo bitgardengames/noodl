@@ -408,38 +408,40 @@ function Snake:onDamageTaken(cause, info)
 			})
 		end
 
-		if FloatingText and FloatingText.add then
-			local inflicted = info.inflictedDamage or info.damage
-			local label
-			if shielded then
-				label = "SHIELD!"
-			elseif inflicted and inflicted > 0 then
-				label = string.format("-%d", inflicted)
-			else
-				label = "HIT!"
-			end
+                if FloatingText and FloatingText.add then
+                        local inflicted = info.inflictedDamage or info.damage
+                        local label
+                        if shielded then
+                                label = "SHIELD!"
+                        elseif inflicted and inflicted > 0 then
+                                label = nil
+                        else
+                                label = "HIT!"
+                        end
 
-			local options = {
-				scale = 1.08,
-				popScaleFactor = 1.45,
-				popDuration = 0.24,
-				wobbleMagnitude = 0.2,
-				wobbleFrequency = 4.6,
-				shadow = {
-					color = {0, 0, 0, 0.6},
-					offset = {0, 3},
-					blur = 1.6,
-				},
-				glow = {
-					color = {1, 0.42, 0.32, 0.45},
-					magnitude = 0.35,
-					frequency = 5.2,
-				},
-				jitter = 2.4,
-			}
+                        if label then
+                                local options = {
+                                        scale = 1.08,
+                                        popScaleFactor = 1.45,
+                                        popDuration = 0.24,
+                                        wobbleMagnitude = 0.2,
+                                        wobbleFrequency = 4.6,
+                                        shadow = {
+                                                color = {0, 0, 0, 0.6},
+                                                offset = {0, 3},
+                                                blur = 1.6,
+                                        },
+                                        glow = {
+                                                color = {1, 0.42, 0.32, 0.45},
+                                                magnitude = 0.35,
+                                                frequency = 5.2,
+                                        },
+                                        jitter = 2.4,
+                                }
 
-			FloatingText:add(label, centerX, centerY - 30, {1, 0.78, 0.68, 1}, 0.9, 36, nil, options)
-		end
+                                FloatingText:add(label, centerX, centerY - 30, {1, 0.78, 0.68, 1}, 0.9, 36, nil, options)
+                        end
+                end
 	end
 
 	self.shieldFlashTimer = SHIELD_FLASH_DURATION
