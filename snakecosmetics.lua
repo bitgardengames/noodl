@@ -21,25 +21,6 @@ local SKIN_DEFINITIONS = {
         order = 0,
     },
     {
-        id = "neon_frenzy",
-        name = "Neon Frenzy",
-        description = "A riot of glowstick colors harvested from party eels.",
-        colors = {
-            body = {0.18, 0.95, 0.72, 1.0},
-            outline = {0.02, 0.10, 0.08, 1.0},
-            glow = {0.45, 1.00, 0.82, 0.88},
-        },
-        effects = {
-            glow = {
-                intensity = 0.6,
-                radiusMultiplier = 1.25,
-                step = 2,
-            },
-        },
-        unlock = { default = true },
-        order = 10,
-    },
-    {
         id = "candy_cane",
         name = "Candy Cane Coil",
         description = "Festive stripes that twirl with every holiday dash.",
