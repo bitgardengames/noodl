@@ -18,7 +18,7 @@ local buttonList = ButtonList.new()
 
 local START_Y = 220
 local CARD_WIDTH = 640
-local CARD_HEIGHT = 108
+local CARD_HEIGHT = 148
 local CARD_SPACING = 24
 local STAT_CARD_HEIGHT = 84
 local STAT_CARD_SPACING = 16
@@ -505,6 +505,123 @@ local function darkenColor(color, amount)
     return {r, g, b, a}
 end
 
+local function withAlpha(color, alpha)
+    if type(color) ~= "table" then
+        return {1, 1, 1, clampColorComponent(alpha or 1)}
+    end
+
+    return {
+        clampColorComponent(color[1] or 1),
+        clampColorComponent(color[2] or 1),
+        clampColorComponent(color[3] or 1),
+        clampColorComponent(alpha or color[4] or 1),
+    }
+end
+
+local function getRequirementHeading(count)
+    local key = (count and count > 1) and "metaprogression.requirements.multiple" or "metaprogression.requirements.single"
+    local heading = Localization:get(key)
+    if heading == key then
+        heading = (count and count > 1) and "Requirements" or "Requirement"
+    end
+    return heading
+end
+
+local function getRewardHeading(count)
+    local key = (count and count > 1) and "metaprogression.rewards.multiple" or "metaprogression.rewards.single"
+    local heading = Localization:get(key)
+    if heading == key then
+        heading = (count and count > 1) and "Rewards" or "Reward"
+    end
+    return heading
+end
+
+local function roundNearest(value)
+    value = value or 0
+    if value >= 0 then
+        return math.floor(value + 0.5)
+    end
+    return math.ceil(value - 0.5)
+end
+
+local function formatShopChoice(amount)
+    if not amount or amount == 0 then
+        return nil
+    end
+
+    local label = Localization:get("metaprogression.rewards.shop_extra_choice", { count = amount })
+    if label == "metaprogression.rewards.shop_extra_choice" then
+        local rounded = roundNearest(amount)
+        local noun = (math.abs(rounded) == 1) and "shop card option" or "shop card options"
+        label = string.format("%+d %s", rounded, noun)
+    end
+    return label
+end
+
+local function describeUnlockTag(tag)
+    if not tag then
+        return nil
+    end
+
+    local nameKey = "metaprogression.rewards.unlock_tag_" .. tag
+    local name = Localization:get(nameKey)
+    if name == nameKey then
+        name = tag:gsub("_", " ")
+        name = name:gsub("^%l", string.upper)
+    end
+
+    local label = Localization:get("metaprogression.rewards.unlock_tag", { name = name })
+    if label == "metaprogression.rewards.unlock_tag" then
+        label = string.format("Unlocks %s", name)
+    end
+    return label
+end
+
+local function annotateTrackEntry(entry)
+    if not entry then
+        return
+    end
+
+    local requirements = {}
+    local totalXp = math.max(0, math.floor((entry.totalXpRequired or 0) + 0.5))
+    if totalXp > 0 then
+        local requirement = Localization:get("metaprogression.requirements.total_xp", { xp = totalXp })
+        if requirement == "metaprogression.requirements.total_xp" then
+            requirement = string.format("Reach %d total XP", totalXp)
+        end
+        requirements[#requirements + 1] = requirement
+    end
+
+    local rewards = {}
+    local effects = entry.effects or {}
+    if effects.shopExtraChoices and effects.shopExtraChoices ~= 0 then
+        local reward = formatShopChoice(effects.shopExtraChoices)
+        if reward then
+            rewards[#rewards + 1] = reward
+        end
+    end
+
+    if type(entry.unlockTags) == "table" then
+        for _, tag in ipairs(entry.unlockTags) do
+            local reward = describeUnlockTag(tag)
+            if reward then
+                rewards[#rewards + 1] = reward
+            end
+        end
+    end
+
+    entry.requirements = requirements
+    entry.rewards = rewards
+    entry.requirementHeading = getRequirementHeading(#requirements)
+    entry.rewardHeading = getRewardHeading(#rewards)
+end
+
+local function annotateTrackEntries()
+    for _, entry in ipairs(trackEntries or {}) do
+        annotateTrackEntry(entry)
+    end
+end
+
 local function getBadgeColor(kind)
     local progressColor = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
     if kind == "record" then
@@ -908,6 +1025,7 @@ function ProgressionScreen:enter()
     configureBackgroundEffect()
 
     trackEntries = MetaProgression:getUnlockTrack() or {}
+    annotateTrackEntries()
     progressionState = MetaProgression:getState()
     buildStatsEntries()
 
@@ -1124,9 +1242,62 @@ local function drawTrack(sw, sh)
 
             local desc = entry.description or ""
             local wrapWidth = CARD_WIDTH - 48
-            love.graphics.printf(desc, textX, textY + 58, wrapWidth)
+            local descY = textY + 58
+            local descHeight = 0
+            if desc ~= "" then
+                local _, wrapped = UI.fonts.body:getWrap(desc, wrapWidth)
+                local lineCount = math.max(1, #wrapped)
+                descHeight = lineCount * UI.fonts.body:getHeight()
+                love.graphics.printf(desc, textX, descY, wrapWidth)
+            end
 
-            local statusY = y + CARD_HEIGHT - 32
+            local infoY = descY + descHeight
+            local yCursor = infoY + 6
+            local requirements = entry.requirements or {}
+            local rewards = entry.rewards or {}
+            local smallFont = UI.fonts.small
+            local lineHeight = smallFont:getHeight()
+
+            if (#requirements > 0) or (#rewards > 0) then
+                love.graphics.setFont(smallFont)
+
+                if #requirements > 0 then
+                    local heading = entry.requirementHeading or getRequirementHeading(#requirements)
+                    local accent = Theme.accentTextColor or Theme.textColor
+                    love.graphics.setColor(withAlpha(accent, 0.9))
+                    love.graphics.print(heading .. ":", textX, yCursor)
+                    yCursor = yCursor + lineHeight
+
+                    love.graphics.setColor(withAlpha(Theme.textColor, 0.85))
+                    for _, line in ipairs(requirements) do
+                        love.graphics.printf("• " .. line, textX, yCursor, wrapWidth, "left")
+                        yCursor = yCursor + lineHeight
+                    end
+                end
+
+                if #rewards > 0 then
+                    if #requirements > 0 then
+                        yCursor = yCursor + 4
+                    end
+
+                    local heading = entry.rewardHeading or getRewardHeading(#rewards)
+                    local rewardColor = Theme.progressColor or Theme.textColor
+                    love.graphics.setColor(withAlpha(rewardColor, 0.95))
+                    love.graphics.print(heading .. ":", textX, yCursor)
+                    yCursor = yCursor + lineHeight
+
+                    love.graphics.setColor(withAlpha(rewardColor, 0.9))
+                    for _, line in ipairs(rewards) do
+                        love.graphics.printf("• " .. line, textX, yCursor, wrapWidth, "left")
+                        yCursor = yCursor + lineHeight
+                    end
+                end
+            else
+                yCursor = infoY
+            end
+
+            local statusBaseline = y + CARD_HEIGHT - 32
+            local statusY = math.max(statusBaseline, yCursor + 6)
             local statusText
             if unlocked then
                 statusText = Localization:get("metaprogression.status_unlocked")
