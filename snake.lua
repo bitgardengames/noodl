@@ -768,6 +768,13 @@ local function drawDescendingIntoHole(hole)
 
 	local steps = math.max(2, math.min(7, math.floor((consumed + SEGMENT_SPACING * 0.4) / (SEGMENT_SPACING * 0.55)) + 2))
 
+	local totalLength = (segmentCount or 0) * SEGMENT_SPACING
+	local completion = 0
+	if totalLength > 1e-4 then
+		completion = math.min(1, consumed / totalLength)
+	end
+	local globalVisibility = math.max(0, 1 - completion)
+
 	local perpX, perpY = -dirY, dirX
 	local wobble = 0
 	if hole.time then
@@ -779,37 +786,41 @@ local function drawDescendingIntoHole(hole)
 	for layer = 0, steps - 1 do
 		local layerFrac = (layer + 0.6) / steps
 		local layerDepth = math.min(1, renderDepth * (0.35 + 0.65 * layerFrac))
-		local fade = 1 - layerDepth
+		local depthFade = 1 - layerDepth
+		local visibility = depthFade * depthFade * globalVisibility
+
+		if visibility <= 1e-3 then
+			break
+		end
 
 		local radius = baseRadius * (0.9 - 0.55 * layerDepth)
 		radius = math.max(baseRadius * 0.2, radius)
 
 		local sink = holeRadius * 0.35 * layerDepth
-		local lateral = wobble * (0.4 + 0.25 * layerFrac) * fade
+		local lateral = wobble * (0.4 + 0.25 * layerFrac) * depthFade
 		local px = entryX + (hx - entryX) * layerDepth + dirX * sink + perpX * radius * lateral
 		local py = entryY + (hy - entryY) * layerDepth + dirY * sink + perpY * radius * lateral
 
-		local shade = 0.35 + 0.65 * fade
+		local shade = 0.25 + 0.7 * visibility
 		local shadeR = r * shade
 		local shadeG = g * shade
 		local shadeB = b * shade
-		local alpha = a * (0.55 + 0.45 * fade)
+		local alpha = a * (0.2 + 0.8 * visibility)
 		love.graphics.setColor(shadeR, shadeG, shadeB, math.max(0, math.min(1, alpha)))
 		love.graphics.circle("fill", px, py, radius)
 
-		local outlineAlpha = 0.25 + 0.45 * (1 - fade)
+		local outlineAlpha = 0.15 + 0.5 * visibility
 		love.graphics.setColor(0, 0, 0, math.max(0, math.min(1, outlineAlpha)))
 		love.graphics.circle("line", px, py, radius)
 
 		if layer == 0 then
-			local highlight = 0.45 * fade
+			local highlight = 0.45 * math.min(1, depthFade * 1.1) * globalVisibility
 			if highlight > 0 then
 				love.graphics.setColor(r, g, b, highlight)
 				love.graphics.circle("line", px, py, radius * 0.75)
 			end
 		end
 	end
-
 	local coverAlpha = math.max(depth, renderDepth) * 0.55
 	love.graphics.setColor(0, 0, 0, coverAlpha)
 	love.graphics.circle("fill", hx, hy, holeRadius * (0.38 + 0.22 * renderDepth))
