@@ -492,11 +492,20 @@ local function drawAdrenalineGlow(self)
 	love.graphics.pop()
 end
 
-function Game:load()
-	self.state = "playing"
-	self.floor = 1
-	self.runTimer = 0
-	self.floorTimer = 0
+function Game:load(options)
+        options = options or {}
+
+        local requestedFloor = math.max(1, math.floor(options.startFloor or 1))
+        local totalFloors = #Floors
+        if totalFloors > 0 then
+                requestedFloor = math.min(requestedFloor, totalFloors)
+        end
+
+        self.state = "playing"
+        self.startFloor = requestedFloor
+        self.floor = requestedFloor
+        self.runTimer = 0
+        self.floorTimer = 0
 
 	self.mouseCursorState = nil
 
@@ -529,7 +538,7 @@ function Game:load()
 		Snake.adrenaline.active = false
 	end
 
-	self:setupFloor(self.floor)
+        self:setupFloor(self.floor)
 	if self.transitionTraits == nil then
 		self.transitionTraits = buildModifierSections(self)
 	end
@@ -541,12 +550,12 @@ function Game:load()
 end
 
 function Game:reset()
-	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-	Face:set("idle")
-	self.state = "playing"
-	self.floor = 1
-	self.runTimer = 0
-	self.floorTimer = 0
+        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+        Face:set("idle")
+        self.state = "playing"
+        self.floor = self.startFloor or 1
+        self.runTimer = 0
+        self.floorTimer = 0
 
 	self.mouseCursorState = nil
 
@@ -565,12 +574,12 @@ function Game:reset()
 	end
 end
 
-function Game:enter()
-	UI.clearButtons()
-	self:load()
+function Game:enter(data)
+        UI.clearButtons()
+        self:load(data)
 
-	Audio:playMusic("game")
-	SessionStats:reset()
+        Audio:playMusic("game")
+        SessionStats:reset()
 	PlayerStats:add("sessionsPlayed", 1)
 
 	Achievements:checkAll({
