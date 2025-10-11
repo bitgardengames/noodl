@@ -28,38 +28,90 @@ local XP_CURVE_SCALE = 20
 local XP_CURVE_EXPONENT = 1.32
 
 local unlockDefinitions = {
-	[2] = {
-		id = "shop_expansion_1",
-		name = "Shop Expansion I",
-		description = "Adds a third upgrade card to every visit.",
-		effects = {
-			shopExtraChoices = 1,
-		},
-	},
-	[3] = {
-		id = "specialist_pool",
-		name = "Specialist Contracts",
-		description = "Unlocks rare defensive specialists in the upgrade pool.",
-		unlockTags = { "specialist" },
-	},
-	[4] = {
-		id = "dash_prototype",
-		name = "Thunder Dash Prototype",
-		description = "Unlocks dash ability upgrades in the shop.",
-		unlockTags = { "abilities" },
-	},
-	[5] = {
-		id = "temporal_study",
-		name = "Temporal Study",
-		description = "Unlocks time-bending upgrades that slow the arena.",
-		unlockTags = { "timekeeper" },
-	},
-	[6] = {
-		id = "event_horizon",
-		name = "Event Horizon",
-		description = "Unlocks experimental portal tech—legendary upgrades included.",
-		unlockTags = { "legendary" },
-	},
+        [2] = {
+                id = "shop_expansion_1",
+                name = "Shop Expansion I",
+                description = "Adds a third upgrade card to every visit.",
+                effects = {
+                        shopExtraChoices = 1,
+                },
+        },
+        [3] = {
+                id = "specialist_pool",
+                name = "Specialist Contracts",
+                description = "Unlocks rare defensive specialists in the upgrade pool.",
+                unlockTags = { "specialist" },
+        },
+        [4] = {
+                id = "dash_prototype",
+                name = "Thunder Dash Prototype",
+                description = "Unlocks dash ability upgrades in the shop.",
+                unlockTags = { "abilities" },
+        },
+        [5] = {
+                id = "temporal_study",
+                name = "Temporal Study",
+                description = "Unlocks time-bending upgrades that slow the arena.",
+                unlockTags = { "timekeeper" },
+        },
+        [6] = {
+                id = "event_horizon",
+                name = "Event Horizon",
+                description = "Unlocks experimental portal tech—legendary upgrades included.",
+                unlockTags = { "legendary" },
+        },
+        [7] = {
+                id = "combo_research",
+                name = "Combo Research Initiative",
+                description = "Unlocks advanced combo support upgrades in the shop.",
+                unlockTags = { "combo_mastery" },
+        },
+        [8] = {
+                id = "reliquary_clearance",
+                name = "Reliquary Clearance",
+                description = "Unlocks the Grim Reliquary defensive relic in the upgrade pool.",
+                unlockTags = { "reliquary_clearance" },
+        },
+        [9] = {
+                id = "ion_storm_scales",
+                name = "Ion Storm Scales",
+                description = "Unlocks the Ion Storm snake skin for your handler profile.",
+        },
+        [10] = {
+                id = "stormrunner_certification",
+                name = "Stormrunner Certification",
+                description = "Unlocks dash-synergy upgrades like Sparkstep Relay in the shop.",
+                unlockTags = { "stormtech" },
+        },
+        [11] = {
+                id = "precision_coils",
+                name = "Precision Coil Prototypes",
+                description = "Unlocks the deliberate coil speed regulator upgrade.",
+                unlockTags = { "speedcraft" },
+        },
+        [12] = {
+                id = "chrono_carapace_scales",
+                name = "Chrono Carapace Scales",
+                description = "Unlocks the Chrono Carapace snake skin and artisan supply contracts in the shop.",
+                unlockTags = { "artisan_alliance" },
+        },
+        [13] = {
+                id = "abyssal_protocols",
+                name = "Abyssal Protocols",
+                description = "Unlocks abyssal relic upgrades including the Abyssal Catalyst.",
+                unlockTags = { "abyssal_protocols" },
+        },
+        [14] = {
+                id = "venom_lab_access",
+                name = "Venom Lab Access",
+                description = "Unlocks the Venomous Hunger combo experiment in the shop.",
+                unlockTags = { "venom_lab" },
+        },
+        [15] = {
+                id = "midnight_circuit_scales",
+                name = "Midnight Circuit Scales",
+                description = "Unlocks the Midnight Circuit snake skin for your handler profile.",
+        },
 }
 
 local milestoneThresholds = {
