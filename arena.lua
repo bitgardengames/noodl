@@ -130,9 +130,10 @@ local Arena = {
 	rows = 0,
 		exit = nil,
 		activeBackgroundEffect = nil,
-	borderFlare = 0,
-	borderFlareTimer = 0,
-	borderFlareDuration = 0.85,
+        borderFlare = 0,
+        borderFlareStrength = 0,
+        borderFlareTimer = 0,
+        borderFlareDuration = 1.05,
 }
 
 function Arena:setSpawnDebugData(data)
@@ -626,19 +627,36 @@ function Arena:hasExit()
 end
 
 function Arena:update(dt)
-	if dt and dt > 0 then
-		local flare = self.borderFlare or 0
-		if flare > 0 then
-			local duration = math.max(0.35, self.borderFlareDuration or 0.85)
-			local decay = dt / duration
-			flare = math.max(0, flare - decay)
-			self.borderFlare = flare
-			self.borderFlareTimer = (self.borderFlareTimer or 0) + dt
-		else
-			self.borderFlare = 0
-			self.borderFlareTimer = 0
-		end
-	end
+        if dt and dt > 0 then
+                local baseStrength = self.borderFlareStrength
+
+                if not (baseStrength and baseStrength > 0) then
+                        baseStrength = self.borderFlare or 0
+                        if baseStrength > 0 then
+                                self.borderFlareStrength = baseStrength
+                        end
+                end
+
+                if baseStrength and baseStrength > 0 then
+                        local duration = math.max(0.35, self.borderFlareDuration or 1.05)
+                        local timer = math.min(duration, (self.borderFlareTimer or 0) + dt)
+                        local progress = math.min(1, timer / duration)
+                        local fade = 1 - (progress * progress * (3 - 2 * progress))
+
+                        self.borderFlare = math.max(0, baseStrength * fade)
+                        self.borderFlareTimer = timer
+
+                        if progress >= 1 then
+                                self.borderFlare = 0
+                                self.borderFlareStrength = 0
+                                self.borderFlareTimer = 0
+                        end
+                else
+                        self.borderFlare = 0
+                        self.borderFlareStrength = 0
+                        self.borderFlareTimer = 0
+                end
+        end
 
 	if not self.exit then
 		return
@@ -714,15 +732,17 @@ function Arena:triggerBorderFlare(strength, duration)
 		return
 	end
 
-	local existing = self.borderFlare or 0
-	self.borderFlare = math.min(1.2, existing + amount)
-	self.borderFlareTimer = 0
+        local existing = self.borderFlare or 0
+        local newStrength = math.min(1.2, existing + amount)
+        self.borderFlare = newStrength
+        self.borderFlareStrength = newStrength
+        self.borderFlareTimer = 0
 
 	if duration and duration > 0 then
 		self.borderFlareDuration = duration
-	elseif not self.borderFlareDuration or self.borderFlareDuration <= 0 then
-		self.borderFlareDuration = 0.85
-	end
+        elseif not self.borderFlareDuration or self.borderFlareDuration <= 0 then
+                self.borderFlareDuration = 1.05
+        end
 end
 
 return Arena
