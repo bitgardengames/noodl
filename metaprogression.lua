@@ -22,9 +22,9 @@ local XP_PER_FRUIT = 2
 local SCORE_BONUS_DIVISOR = 450
 local SCORE_BONUS_MAX = 400
 
-local BASE_XP_PER_LEVEL = 130
-local LINEAR_XP_PER_LEVEL = 42
-local XP_CURVE_SCALE = 20
+local BASE_XP_PER_LEVEL = 65
+local LINEAR_XP_PER_LEVEL = 21
+local XP_CURVE_SCALE = 10
 local XP_CURVE_EXPONENT = 1.32
 
 local unlockDefinitions = {
