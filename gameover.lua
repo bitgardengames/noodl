@@ -208,13 +208,22 @@ local function lightenColor(color, factor)
 end
 
 local function randomRange(minimum, maximum)
-	return minimum + (maximum - minimum) * love.math.random()
+        return minimum + (maximum - minimum) * love.math.random()
+end
+
+local function approachExp(current, target, dt, speed)
+        if speed <= 0 then
+                return target
+        end
+
+        local factor = 1 - math.exp(-speed * dt)
+        return current + (target - current) * factor
 end
 
 local function spawnFruitAnimation(anim)
-	if not anim or not anim.barMetrics then
-		return false
-	end
+        if not anim or not anim.barMetrics then
+                return false
+        end
 
 	local metrics = anim.barMetrics
 	local palette = anim.fruitPalette or { Theme.appleColor }
@@ -712,24 +721,25 @@ function GameOver:enter(data)
 		self.xpSectionHeight = baseHeight
 
 		local fillSpeed = math.max(60, (self.progression.gained or 0) / 1.2)
-		self.progressionAnimation = {
-			displayedTotal = startSnapshot.total or 0,
-			targetTotal = resultSnapshot.total or (startSnapshot.total or 0),
-			displayedLevel = startSnapshot.level or 1,
-			xpIntoLevel = startSnapshot.xpIntoLevel or 0,
+                self.progressionAnimation = {
+                        displayedTotal = startSnapshot.total or 0,
+                        targetTotal = resultSnapshot.total or (startSnapshot.total or 0),
+                        displayedLevel = startSnapshot.level or 1,
+                        xpIntoLevel = startSnapshot.xpIntoLevel or 0,
 			xpForLevel = startSnapshot.xpForNext or MetaProgression:getXpForLevel(startSnapshot.level or 1),
 			displayedGained = 0,
 			fillSpeed = fillSpeed,
 			levelFlash = 0,
 			celebrations = {},
 			pendingMilestones = {},
-			levelUnlocks = {},
-			bonusXP = challengeBonusXP,
-			barPulse = 0,
-			barSplashes = {},
-			pendingFruitXp = 0,
-			fruitDelivered = 0,
-		}
+                        levelUnlocks = {},
+                        bonusXP = challengeBonusXP,
+                        barPulse = 0,
+                        barSplashes = {},
+                        pendingFruitXp = 0,
+                        fruitDelivered = 0,
+                        fillEaseSpeed = clamp(fillSpeed / 12, 6, 16),
+                }
 
 		local applesCollected = math.max(0, stats.apples or 0)
 		local fruitPoints = 0
@@ -758,9 +768,15 @@ function GameOver:enter(data)
 			Theme.dragonfruitColor,
 		}
 		self.progressionAnimation.fruitXpPer = xpPerFruit
-		self.progressionAnimation.fruitPoints = fruitPoints
+                self.progressionAnimation.fruitPoints = fruitPoints
 
-		if type(self.progression.milestones) == "table" then
+                if (self.progressionAnimation.xpForLevel or 0) > 0 then
+                        self.progressionAnimation.visualPercent = clamp((self.progressionAnimation.xpIntoLevel or 0) / self.progressionAnimation.xpForLevel, 0, 1)
+                else
+                        self.progressionAnimation.visualPercent = 0
+                end
+
+                if type(self.progression.milestones) == "table" then
 			for _, milestone in ipairs(self.progression.milestones) do
 				self.progressionAnimation.pendingMilestones[#self.progressionAnimation.pendingMilestones + 1] = {
 					threshold = milestone.threshold,
@@ -957,21 +973,18 @@ local function drawXpSection(self, x, y, width)
 
 	local barY = gainedY + fontProgressSmall:getHeight() + 16
 	local barHeight = 26
-	local barWidth = width - 48
-	local barX = x + 24
-	anim.barMetrics = anim.barMetrics or {}
-	anim.barMetrics.x = barX
-	anim.barMetrics.y = barY
-	anim.barMetrics.width = barWidth
-	anim.barMetrics.height = barHeight
-	local percent = 0
-	if (anim.xpForLevel or 0) > 0 then
-		percent = math.min(1, math.max(0, (anim.xpIntoLevel or 0) / anim.xpForLevel))
-	end
+        local barWidth = width - 48
+        local barX = x + 24
+        anim.barMetrics = anim.barMetrics or {}
+        anim.barMetrics.x = barX
+        anim.barMetrics.y = barY
+        anim.barMetrics.width = barWidth
+        anim.barMetrics.height = barHeight
+        local percent = math.min(1, math.max(0, anim.visualPercent or 0))
 
-	local shadowColor = UI.colors.shadow or { 0, 0, 0, 0.4 }
-	local trackColor = { shadowColor[1], shadowColor[2], shadowColor[3], 0.35 }
-	love.graphics.setColor(trackColor)
+        local shadowColor = UI.colors.shadow or { 0, 0, 0, 0.4 }
+        local trackColor = { shadowColor[1], shadowColor[2], shadowColor[3], 0.35 }
+        love.graphics.setColor(trackColor)
 	love.graphics.rectangle("fill", barX, barY, barWidth, barHeight, 12, 12)
 
 	local progressColor = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.92 }
@@ -1307,13 +1320,24 @@ function GameOver:update(dt)
 		end
 	end
 
-	anim.displayedLevel = level
-	anim.xpIntoLevel = xpIntoLevel
-	anim.xpForLevel = xpForNext
+        anim.displayedLevel = level
+        anim.xpIntoLevel = xpIntoLevel
+        anim.xpForLevel = xpForNext
 
-	if anim.levelFlash then
-		anim.levelFlash = math.max(0, anim.levelFlash - dt)
-	end
+        local targetPercent = 0
+        if (anim.xpForLevel or 0) > 0 then
+                targetPercent = clamp((anim.xpIntoLevel or 0) / anim.xpForLevel, 0, 1)
+        end
+        local easeSpeed = anim.fillEaseSpeed or 9
+        if not anim.visualPercent then
+                anim.visualPercent = targetPercent
+        else
+                anim.visualPercent = approachExp(anim.visualPercent, targetPercent, dt, easeSpeed)
+        end
+
+        if anim.levelFlash then
+                anim.levelFlash = math.max(0, anim.levelFlash - dt)
+        end
 
 	if anim.pendingMilestones then
 		for _, milestone in ipairs(anim.pendingMilestones) do
