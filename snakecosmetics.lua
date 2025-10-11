@@ -275,11 +275,11 @@ local SKIN_DEFINITIONS = {
 		unlock = { achievement = "floorAbyss" },
 		order = 80,
 	},
-	{
-		id = "chrono_carapace",
-		name = "Chrono Carapace",
-		description = "Temporal plating gleaned from time-locked relics. Unlocks at metaprogression level 12.",
-		colors = {
+        {
+                id = "chrono_carapace",
+                name = "Chrono Carapace",
+                description = "Temporal plating gleaned from time-locked relics. Unlocks at metaprogression level 12.",
+                colors = {
 			body = {0.58, 0.72, 0.95, 1.0},
 			outline = {0.12, 0.18, 0.32, 1.0},
 			glow = {0.76, 0.92, 1.00, 0.88},
@@ -306,14 +306,48 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = { level = 12 },
-		order = 90,
-	},
-	{
-		id = "gilded_siren",
-		name = "Gilded Siren",
-		description = "Goldleaf fins that shimmer with every high score. Unlock the Score Legend achievement to claim it.",
-		colors = {
+                unlock = { level = 12 },
+                order = 90,
+        },
+        {
+                id = "midnight_circuit",
+                name = "Midnight Circuit",
+                description = "Quantum filaments hum with midnight energy. Unlocks at metaprogression level 15.",
+                colors = {
+                        body = {0.16, 0.20, 0.44, 1.0},
+                        outline = {0.04, 0.06, 0.16, 1.0},
+                        glow = {0.48, 0.82, 1.00, 0.88},
+                },
+                effects = {
+                        overlay = {
+                                type = "ionStorm",
+                                intensity = 0.62,
+                                opacity = 0.85,
+                                boltFrequency = 6.2,
+                                flashFrequency = 4.0,
+                                haze = 0.4,
+                                turbulence = 1.1,
+                                colors = {
+                                        primary = {0.24, 0.58, 0.98, 1.0},
+                                        secondary = {0.56, 0.32, 0.92, 1.0},
+                                        tertiary = {0.32, 0.86, 0.96, 1.0},
+                                },
+                        },
+                        glow = {
+                                intensity = 0.68,
+                                radiusMultiplier = 1.6,
+                                color = {0.44, 0.80, 1.00, 1.0},
+                                step = 2,
+                        },
+                },
+                unlock = { level = 15 },
+                order = 95,
+        },
+        {
+                id = "gilded_siren",
+                name = "Gilded Siren",
+                description = "Goldleaf fins that shimmer with every high score. Unlock the Score Legend achievement to claim it.",
+                colors = {
 			body = {0.96, 0.78, 0.42, 1.0},
 			outline = {0.36, 0.20, 0.05, 1.0},
 			glow = {1.00, 0.88, 0.52, 0.86},
