@@ -699,11 +699,11 @@ end
 
 -- Draw button (render only)
 function UI.drawButton(id)
-	local btn = UI.buttons[id]
-	if not btn or not btn.bounds then return end
+        local btn = UI.buttons[id]
+        if not btn or not btn.bounds then return end
 
-	local b = btn.bounds
-	local s = UI.spacing
+        local b = btn.bounds
+        local s = UI.spacing
 
 	local mx, my = love.mouse.getPosition()
 	local hoveredByMouse = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
@@ -740,13 +740,14 @@ function UI.drawButton(id)
 		love.graphics.rectangle("fill", b.x + shadowOffset, b.y + shadowOffset + yOffset, b.w, b.h, radius, radius)
 	end
 
-	local fillColor = UI.colors.button
-	if displayHover then
-		fillColor = UI.colors.buttonHover
-	end
-	if btn.pressed then
-		fillColor = UI.colors.buttonPress
-	end
+        local fillColor = UI.colors.button
+        local isToggled = btn.toggled
+        if displayHover then
+                fillColor = UI.colors.buttonHover
+        end
+        if btn.pressed or isToggled then
+                fillColor = UI.colors.buttonPress
+        end
 
 	setColor(fillColor)
 	love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
@@ -766,12 +767,12 @@ function UI.drawButton(id)
 		love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 	end
 
-	if btn.focused then
-		local focusStrength = btn.focusAnim or 0
-		if focusStrength > 0.01 then
-			local focusRadius = radius + 4
-			local padding = 3
-			local focusColor = UI.colors.border or UI.colors.highlight
+        if btn.focused then
+                local focusStrength = btn.focusAnim or 0
+                if focusStrength > 0.01 then
+                        local focusRadius = radius + 4
+                        local padding = 3
+                        local focusColor = UI.colors.border or UI.colors.highlight
 			setColor(focusColor, 0.8 + 0.4 * focusStrength)
 			love.graphics.setLineWidth(3)
 			love.graphics.rectangle("line", b.x - padding, b.y + yOffset - padding, b.w + padding * 2, b.h + padding * 2, focusRadius, focusRadius)
@@ -793,9 +794,9 @@ function UI.drawButton(id)
 	-- TEXT
 	UI.setFont("button")
 	local textColor = UI.colors.text
-	if displayHover or (btn.focusAnim or 0) > 0.001 then
-		textColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0))
-	end
+        if displayHover or (btn.focusAnim or 0) > 0.001 or isToggled then
+                textColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0))
+        end
 	setColor(textColor)
 	local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
 	love.graphics.printf(btn.text or "", b.x, textY, b.w, "center")

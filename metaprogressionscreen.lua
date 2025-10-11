@@ -40,7 +40,8 @@ local TAB_HEIGHT = 52
 local TAB_SPACING = 16
 local TAB_Y = 160
 local TAB_BOTTOM = TAB_Y + TAB_HEIGHT
-local DEFAULT_LIST_TOP = TAB_BOTTOM + 24
+local TAB_CONTENT_GAP = 48
+local DEFAULT_LIST_TOP = TAB_BOTTOM + TAB_CONTENT_GAP
 local SUMMARY_CONTENT_HEIGHT = 160
 local EXPERIENCE_SUMMARY_TOP = DEFAULT_LIST_TOP
 local EXPERIENCE_LIST_GAP = 24
@@ -1402,9 +1403,10 @@ local function drawTrack(sw, sh)
 end
 
 local function drawCosmeticsHeader(sw)
+        local headerY = TAB_BOTTOM + 28
         love.graphics.setFont(UI.fonts.button)
         love.graphics.setColor(Theme.textColor)
-        love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, 150, sw, "center")
+        love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, headerY, sw, "center")
 
         if cosmeticsSummary.total > 0 then
                 local summaryText = Localization:get("metaprogression.cosmetics.progress", {
@@ -1414,14 +1416,14 @@ local function drawCosmeticsHeader(sw)
                 local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
                 love.graphics.setFont(UI.fonts.caption)
                 love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-                love.graphics.printf(summaryText, 0, 188, sw, "center")
+                love.graphics.printf(summaryText, 0, headerY + 38, sw, "center")
 
                 if cosmeticsSummary.newUnlocks and cosmeticsSummary.newUnlocks > 0 then
                         local key = (cosmeticsSummary.newUnlocks == 1) and "metaprogression.cosmetics.new_summary_single" or "metaprogression.cosmetics.new_summary_multiple"
                         local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor
                         love.graphics.setFont(UI.fonts.small)
                         love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.92)
-                        love.graphics.printf(Localization:get(key, { count = cosmeticsSummary.newUnlocks }), 0, 210, sw, "center")
+                        love.graphics.printf(Localization:get(key, { count = cosmeticsSummary.newUnlocks }), 0, headerY + 60, sw, "center")
                 end
         end
 end
@@ -1623,17 +1625,18 @@ local function drawCosmeticsList(sw, sh)
 end
 
 local function drawStatsHeader(sw)
-	love.graphics.setFont(UI.fonts.button)
-	love.graphics.setColor(Theme.textColor)
-	love.graphics.printf(Localization:get("metaprogression.stats_header"), 0, 150, sw, "center")
+        local headerY = TAB_BOTTOM + 28
+        love.graphics.setFont(UI.fonts.button)
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.printf(Localization:get("metaprogression.stats_header"), 0, headerY, sw, "center")
 
-	local subheader = Localization:get("metaprogression.stats_subheader")
-	if subheader and subheader ~= "metaprogression.stats_subheader" then
-		local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
-		love.graphics.setFont(UI.fonts.caption)
-		love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-		love.graphics.printf(subheader, 0, 190, sw, "center")
-	end
+        local subheader = Localization:get("metaprogression.stats_subheader")
+        if subheader and subheader ~= "metaprogression.stats_subheader" then
+                local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
+                love.graphics.setFont(UI.fonts.caption)
+                love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
+                love.graphics.printf(subheader, 0, headerY + 40, sw, "center")
+        end
 end
 
 local function drawStatsSummary(sw)
@@ -1777,15 +1780,15 @@ function ProgressionScreen:draw()
 
 	buttonList:syncUI()
 
-	for _, tab in ipairs(tabs) do
-		local id = tab.buttonId
-		if id then
-			local button = UI.buttons[id]
-			if button then
-				button.pressed = (activeTab == tab.id)
-			end
-		end
-	end
+        for _, tab in ipairs(tabs) do
+                local id = tab.buttonId
+                if id then
+                        local button = UI.buttons[id]
+                        if button then
+                                button.toggled = (activeTab == tab.id) or nil
+                        end
+                end
+        end
 
 	for _, button in buttonList:iter() do
 		UI.drawButton(button.id)
