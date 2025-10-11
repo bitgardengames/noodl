@@ -75,8 +75,8 @@ local function applyDartCap(context)
 end
 
 local BASELINE_PLAN = {
-        [1] = {
-                fruitGoal = 12,
+       [1] = {
+               fruitGoal = 10,
 		rocks = 4,
 		saws = 1,
 		laserCount = 0,
@@ -86,8 +86,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.0,
                 sawStall = 0,
 	},
-        [2] = {
-                fruitGoal = 16,
+       [2] = {
+               fruitGoal = 13,
 		rocks = 5,
 		saws = 1,
 		laserCount = 0,
@@ -97,8 +97,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.06,
                 sawStall = 0,
 	},
-        [3] = {
-                fruitGoal = 20,
+       [3] = {
+               fruitGoal = 16,
 		rocks = 6,
 		saws = 2,
 		laserCount = 0,
@@ -108,8 +108,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.12,
                 sawStall = 0,
 	},
-        [4] = {
-                fruitGoal = 24,
+       [4] = {
+               fruitGoal = 19,
 		rocks = 7,
 		saws = 2,
 		laserCount = 0,
@@ -119,8 +119,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.18,
                 sawStall = 0,
 	},
-        [5] = {
-                fruitGoal = 28,
+       [5] = {
+               fruitGoal = 22,
 		rocks = 8,
 		saws = 3,
 		laserCount = 0,
@@ -130,8 +130,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.24,
                 sawStall = 0,
 	},
-        [6] = {
-                fruitGoal = 32,
+       [6] = {
+               fruitGoal = 25,
 		rocks = 9,
 		saws = 3,
 		laserCount = 0,
@@ -141,8 +141,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.3,
                 sawStall = 0,
 	},
-        [7] = {
-                fruitGoal = 35,
+       [7] = {
+               fruitGoal = 28,
 		rocks = 10,
 		saws = 4,
 		laserCount = 0,
@@ -152,8 +152,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.36,
                 sawStall = 0,
 	},
-        [8] = {
-                fruitGoal = 38,
+       [8] = {
+               fruitGoal = 31,
 		rocks = 11,
 		saws = 4,
 		laserCount = 0,
@@ -163,8 +163,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.42,
                 sawStall = 0,
 	},
-        [9] = {
-                fruitGoal = 41,
+       [9] = {
+               fruitGoal = 34,
 		rocks = 12,
 		saws = 4,
 		laserCount = 0,
@@ -174,8 +174,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.48,
                 sawStall = 0,
 	},
-        [10] = {
-                fruitGoal = 44,
+       [10] = {
+               fruitGoal = 37,
 		rocks = 13,
 		saws = 5,
 		laserCount = 0,
@@ -185,8 +185,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.54,
                 sawStall = 0,
 	},
-        [11] = {
-                fruitGoal = 47,
+       [11] = {
+               fruitGoal = 40,
 		rocks = 14,
 		saws = 5,
 		laserCount = 0,
@@ -196,8 +196,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.6,
                 sawStall = 0,
 	},
-        [12] = {
-                fruitGoal = 50,
+       [12] = {
+               fruitGoal = 43,
 		rocks = 15,
 		saws = 6,
 		laserCount = 0,
@@ -207,8 +207,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.66,
                 sawStall = 0,
 	},
-        [13] = {
-                fruitGoal = 52,
+       [13] = {
+               fruitGoal = 46,
 		rocks = 16,
 		saws = 6,
 		laserCount = 1,
@@ -218,8 +218,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.72,
                 sawStall = 0,
 	},
-        [14] = {
-                fruitGoal = 54,
+       [14] = {
+               fruitGoal = 49,
 		rocks = 17,
 		saws = 7,
 		laserCount = 1,
@@ -229,8 +229,8 @@ local BASELINE_PLAN = {
 		sawSpinMult = 1.76,
                 sawStall = 0,
 	},
-        [15] = {
-                fruitGoal = 56,
+       [15] = {
+               fruitGoal = 52,
 		rocks = 19,
 		saws = 7,
 		laserCount = 2,
