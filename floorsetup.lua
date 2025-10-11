@@ -334,15 +334,16 @@ end
 local function spawnRocks(numRocks, safeZone)
 	for _ = 1, numRocks do
 		local fx, fy = SnakeUtils.getSafeSpawn(
-			Snake:getSegments(),
-			Fruit,
-			Rocks,
-			safeZone,
-			{
-				avoidFrontOfSnake = true,
-				direction = Snake:getDirection(),
-			}
-		)
+                        Snake:getSegments(),
+                        Fruit,
+                        Rocks,
+                        safeZone,
+                        {
+                                avoidFrontOfSnake = true,
+                                direction = Snake:getDirection(),
+                                frontBuffer = 5,
+                        }
+                )
 		if fx then
 			Rocks:spawn(fx, fy, "small")
 			local col, row = Arena:getTileFromWorld(fx, fy)
