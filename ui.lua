@@ -316,26 +316,18 @@ local function drawHeartOutline(x, y, size, thickness)
 	end
 
 	local previousWidth = love.graphics.getLineWidth()
-	local previousJoin = love.graphics.getLineJoin and love.graphics.getLineJoin()
-	local previousStyle = love.graphics.getLineStyle and love.graphics.getLineStyle()
+        local previousJoin = love.graphics.getLineJoin()
+        local previousStyle = love.graphics.getLineStyle()
 
-	love.graphics.setLineWidth(thickness)
-	if love.graphics.setLineJoin then
-		love.graphics.setLineJoin("bevel")
-	end
-	if love.graphics.setLineStyle then
-		love.graphics.setLineStyle("smooth")
-	end
+        love.graphics.setLineWidth(thickness)
+        love.graphics.setLineJoin("bevel")
+        love.graphics.setLineStyle("smooth")
 
-	love.graphics.polygon("line", coords)
+        love.graphics.polygon("line", coords)
 
-	love.graphics.setLineWidth(previousWidth)
-	if love.graphics.setLineJoin and previousJoin then
-		love.graphics.setLineJoin(previousJoin)
-	end
-	if love.graphics.setLineStyle and previousStyle then
-		love.graphics.setLineStyle(previousStyle)
-	end
+        love.graphics.setLineWidth(previousWidth)
+        love.graphics.setLineJoin(previousJoin)
+        love.graphics.setLineStyle(previousStyle)
 end
 
 local function drawHeartShape(x, y, size)
