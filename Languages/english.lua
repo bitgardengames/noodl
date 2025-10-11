@@ -97,12 +97,6 @@ local english = {
 					description = "Spend ${goal} minutes exploring floors in a single run.",
 					progress = "Floor time: ${current}/${goal}",
 				},
-				streak_pusher = {
-					title = "Streak Pusher",
-					description = "Collect ${goal} fruit without turning in a single run.",
-					progress = "No-turn chain: ${current}/${goal}",
-					complete = "Smooth operator! Chain hit ${current}.",
-				},
 				floor_conqueror = {
 					title = "Floor Conqueror",
 					description = "Clear ${goal} floors in a single run.",
