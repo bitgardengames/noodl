@@ -60,12 +60,12 @@ function ButtonList:updateFocusVisuals()
 	end
 end
 
-function ButtonList:setFocus(index, source)
+function ButtonList:setFocus(index, source, skipNonMouseHistory)
         if not index or not self.buttons[index] then return end
 
         self.focusIndex = index
         self.focusSource = source or "programmatic"
-        if self.focusSource ~= "mouse" then
+        if self.focusSource ~= "mouse" and not skipNonMouseHistory then
                 self.lastNonMouseFocusIndex = index
         end
         self:updateFocusVisuals()
@@ -81,15 +81,15 @@ function ButtonList:clearFocus()
 end
 
 function ButtonList:focusFirst()
-	for index, button in ipairs(self.buttons) do
-		if isSelectable(button) then
-			return self:setFocus(index)
-		end
-	end
+        for index, button in ipairs(self.buttons) do
+                if isSelectable(button) then
+                        return self:setFocus(index, nil, true)
+                end
+        end
 
-	if #self.buttons > 0 then
-		return self:setFocus(1)
-	end
+        if #self.buttons > 0 then
+                return self:setFocus(1, nil, true)
+        end
 end
 
 function ButtonList:moveFocus(delta)
