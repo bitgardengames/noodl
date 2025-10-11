@@ -8,7 +8,7 @@ local BASE_DART_CAP = 4
 local MAX_LASER_COUNT = 5
 local LASER_GROWTH_SPAN = 8
 local LASER_GROWTH_EXPONENT = 1.35
-local EXTRA_FLOOR_FRUIT_STEP = 4
+local EXTRA_FLOOR_FRUIT_STEP = 3
 
 local function computeLaserProgression(baseLaser, extraFloors, maxLasers)
 	baseLaser = baseLaser or 0
@@ -142,7 +142,7 @@ local BASELINE_PLAN = {
 		sawStall = 0.6,
 	},
         [7] = {
-                fruitGoal = 36,
+                fruitGoal = 35,
 		rocks = 10,
 		saws = 4,
 		laserCount = 0,
@@ -153,7 +153,7 @@ local BASELINE_PLAN = {
 		sawStall = 0.54,
 	},
         [8] = {
-                fruitGoal = 40,
+                fruitGoal = 38,
 		rocks = 11,
 		saws = 4,
 		laserCount = 0,
@@ -164,7 +164,7 @@ local BASELINE_PLAN = {
 		sawStall = 0.48,
 	},
         [9] = {
-                fruitGoal = 44,
+                fruitGoal = 41,
 		rocks = 12,
 		saws = 4,
 		laserCount = 0,
@@ -175,7 +175,7 @@ local BASELINE_PLAN = {
 		sawStall = 0.44,
 	},
         [10] = {
-                fruitGoal = 48,
+                fruitGoal = 44,
 		rocks = 13,
 		saws = 5,
 		laserCount = 0,
@@ -186,7 +186,7 @@ local BASELINE_PLAN = {
 		sawStall = 0.4,
 	},
         [11] = {
-                fruitGoal = 52,
+                fruitGoal = 47,
 		rocks = 14,
 		saws = 5,
 		laserCount = 0,
@@ -197,7 +197,7 @@ local BASELINE_PLAN = {
 		sawStall = 0.36,
 	},
         [12] = {
-                fruitGoal = 56,
+                fruitGoal = 50,
 		rocks = 15,
 		saws = 6,
 		laserCount = 0,
@@ -208,7 +208,7 @@ local BASELINE_PLAN = {
 		sawStall = 0.32,
 	},
         [13] = {
-                fruitGoal = 60,
+                fruitGoal = 52,
 		rocks = 16,
 		saws = 6,
 		laserCount = 1,
@@ -219,7 +219,7 @@ local BASELINE_PLAN = {
 		sawStall = 0.28,
 	},
         [14] = {
-                fruitGoal = 64,
+                fruitGoal = 54,
 		rocks = 17,
 		saws = 7,
 		laserCount = 1,
@@ -230,7 +230,7 @@ local BASELINE_PLAN = {
 		sawStall = 0.24,
 	},
         [15] = {
-                fruitGoal = 68,
+                fruitGoal = 56,
 		rocks = 19,
 		saws = 7,
 		laserCount = 2,
