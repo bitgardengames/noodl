@@ -38,7 +38,11 @@ function ButtonList:reset(definitions)
 		self.buttons[#self.buttons + 1] = button
 	end
 
-	self:focusFirst()
+        self:focusFirst()
+        -- Avoid treating the initial focus as a non-mouse selection so that
+        -- the UI can clear focus when the cursor leaves the buttons before any
+        -- keyboard/controller input has occurred.
+        self.lastNonMouseFocusIndex = nil
 
 	return self.buttons
 end
