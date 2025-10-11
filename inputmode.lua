@@ -3,20 +3,13 @@ local InputMode = {
 }
 
 local function isMouseSupported()
-	if not love or not love.mouse then
-		return false
-	end
+        local supported = love.mouse.isCursorSupported()
 
-	local supported = true
-	if love.mouse.isCursorSupported then
-		supported = love.mouse.isCursorSupported()
-	end
+        if supported == nil then
+                supported = true
+        end
 
-	if supported == nil then
-		supported = true
-	end
-
-	return supported and love.mouse.setVisible ~= nil
+        return supported
 end
 
 function InputMode:noteMouse()
