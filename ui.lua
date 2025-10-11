@@ -643,12 +643,34 @@ function UI.drawSlider(id, x, y, w, value, opts)
 		focusAlpha = opts.focusAlpha,
 	})
 
+	local labelHeight = 0
 	local label = opts.label
 	if label then
+		local labelFontKey = opts.labelFont or "body"
+		local labelFont = UI.fonts[labelFontKey]
+		if labelFont then
+			love.graphics.setFont(labelFont)
+			labelHeight = labelFont:getHeight()
+		end
+
 		UI.drawLabel(label, x + padding, y + padding, w - padding * 2, opts.labelAlign or "left", {
-			fontKey = opts.labelFont or "body",
+			fontKey = labelFontKey,
 			color = opts.labelColor or UI.colors.text,
 		})
+	end
+
+	local description = opts.description
+	if description and description ~= "" then
+		local descFontKey = opts.descriptionFontKey or "small"
+		local descFont = UI.fonts[descFontKey]
+		if descFont then
+			love.graphics.setFont(descFont)
+		end
+
+		local descSpacing = opts.descriptionSpacing or 6
+		setColor(opts.descriptionColor or UI.colors.subtleText)
+		local descY = y + padding + labelHeight + descSpacing
+		love.graphics.printf(description, x + padding, descY, w - padding * 2, opts.descriptionAlign or "left")
 	end
 
 	local sliderValue = clamp01(value or 0)
@@ -689,6 +711,148 @@ local function easeOutQuad(t)
 	return t * (2 - t)
 end
 
+local function drawSettingsOptionButton(btn, bounds, opts, yOffset, displayHover)
+	local s = UI.spacing
+	local radius = opts.radius or s.buttonRadius
+	local shadowOffset = opts.shadowOffset
+	if shadowOffset == nil then shadowOffset = s.shadowOffset end
+
+	local fillColor = opts.fill or UI.colors.button
+	if btn.pressed then
+		fillColor = UI.colors.buttonPress
+	elseif displayHover then
+		fillColor = lightenColor(fillColor, 0.12 + 0.08 * (btn.hoverAnim or 0))
+	end
+
+	local highlightAlpha = 0.1 + (btn.hoverAnim or 0) * 0.15 + (btn.popProgress or 0) * 0.2
+
+	UI.drawPanel(bounds.x, bounds.y + yOffset, bounds.w, bounds.h, {
+		radius = radius,
+		shadowOffset = shadowOffset,
+		fill = fillColor,
+		borderColor = opts.borderColor or UI.colors.border,
+		highlightAlpha = highlightAlpha,
+		focused = btn.focused,
+		focusColor = opts.focusColor or UI.colors.highlight,
+		focusAlpha = opts.focusAlpha or (0.9 + (btn.focusAnim or 0) * 0.3),
+		focusPadding = opts.focusPadding or 3,
+		focusRadiusOffset = opts.focusRadiusOffset or 4,
+	})
+
+	local padding = opts.padding or math.max(16, math.floor((s.buttonSpacing or 12) * 0.6))
+	local textX = bounds.x + padding
+	local textWidth = bounds.w - padding * 2
+
+	local labelText = opts.label or btn.text or ""
+	local labelFontKey = opts.labelFontKey or "button"
+	local labelFont = UI.fonts[labelFontKey] or UI.fonts.button
+	if labelFont then
+		love.graphics.setFont(labelFont)
+	end
+	local labelHeight = labelFont and labelFont:getHeight() or 0
+
+	local labelColor = opts.labelColor or UI.colors.text
+	if displayHover or (btn.focusAnim or 0) > 0.01 then
+		labelColor = lightenColor(labelColor, 0.15 + 0.1 * (btn.focusAnim or 0))
+	end
+	setColor(labelColor)
+
+	local stateText = opts.state
+	local stateFontKey = opts.stateFontKey or "prompt"
+	local stateFont = UI.fonts[stateFontKey] or UI.fonts.body
+	local stateWidth = 0
+	local stateHeight = labelHeight
+	if stateText and stateText ~= "" and stateFont then
+		love.graphics.setFont(stateFont)
+		stateWidth = stateFont:getWidth(stateText)
+		stateHeight = stateFont:getHeight()
+	end
+
+	local maxStateWidth = math.min(textWidth * 0.55, stateWidth + 48)
+	local labelWidth = textWidth
+	if stateText and stateText ~= "" then
+		labelWidth = textWidth - maxStateWidth
+		if labelWidth < textWidth * 0.45 then
+			labelWidth = math.max(textWidth * 0.45, textWidth - 160)
+		end
+	end
+
+	love.graphics.printf(labelText, textX, bounds.y + yOffset + padding, labelWidth, opts.labelAlign or "left")
+
+	if stateText and stateText ~= "" then
+		local stateRegionWidth = textWidth - labelWidth
+		local stateX = textX + labelWidth
+		local arrowSize = 0
+		local arrowSpacing = 0
+		if opts.showCycleHint then
+			arrowSize = opts.cycleHintSize or math.max(6, math.floor(stateHeight * 0.45))
+			arrowSpacing = opts.cycleHintSpacing or math.max(6, math.floor(arrowSize * 0.7))
+		end
+
+		local usableWidth = stateRegionWidth
+		if usableWidth < stateWidth + arrowSize * 2 + arrowSpacing * 2 then
+			usableWidth = stateWidth + arrowSize * 2 + arrowSpacing * 2
+		end
+		local stateTextWidth = usableWidth - (arrowSize * 2 + arrowSpacing * 2)
+		if not opts.showCycleHint then
+			stateTextWidth = usableWidth
+		end
+
+		setColor(opts.stateColor or UI.colors.accentText or UI.colors.highlight or UI.colors.text)
+		if stateFont then
+			love.graphics.setFont(stateFont)
+		end
+
+		local stateY = bounds.y + yOffset + padding
+		local textDrawX = stateX + arrowSpacing + arrowSize
+		if not opts.showCycleHint then
+			textDrawX = stateX
+		end
+		love.graphics.printf(stateText, textDrawX, stateY, stateTextWidth, "right")
+
+		if opts.showCycleHint then
+			local centerY = stateY + stateHeight * 0.5
+			local leftX = stateX + arrowSpacing
+			love.graphics.polygon("fill",
+				leftX + arrowSize, centerY,
+				leftX, centerY - arrowSize * 0.6,
+				leftX, centerY + arrowSize * 0.6
+			)
+
+			local rightX = stateX + usableWidth - arrowSpacing
+			love.graphics.polygon("fill",
+				rightX - arrowSize, centerY,
+				rightX, centerY - arrowSize * 0.6,
+				rightX, centerY + arrowSize * 0.6
+			)
+		end
+	end
+
+	local description = opts.description
+	if description and description ~= "" then
+		local descFontKey = opts.descriptionFontKey or "small"
+		local descFont = UI.fonts[descFontKey]
+		if descFont then
+			love.graphics.setFont(descFont)
+		end
+		setColor(opts.descriptionColor or UI.colors.subtleText)
+		local descSpacing = opts.descriptionSpacing or 6
+		local descY = bounds.y + yOffset + padding + labelHeight + descSpacing
+		love.graphics.printf(description, textX, descY, textWidth, opts.descriptionAlign or "left")
+	end
+
+	local glowStrength = btn.glow or 0
+	if glowStrength > 0.01 then
+		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+		love.graphics.setBlendMode("add", "alphamultiply")
+		love.graphics.setColor(1, 1, 1, 0.16 * glowStrength)
+		love.graphics.setLineWidth(2)
+		love.graphics.rectangle("line", bounds.x + 2, bounds.y + yOffset + 2, bounds.w - 4, bounds.h - 4, radius - 2, radius - 2)
+		love.graphics.setLineWidth(1)
+		love.graphics.setBlendMode(prevMode, prevAlphaMode)
+	end
+end
+
 -- Register a button (once per frame in your draw code)
 function UI.registerButton(id, x, y, w, h, text)
 	UI.buttons[id] = UI.buttons[id] or createButtonState()
@@ -698,7 +862,8 @@ function UI.registerButton(id, x, y, w, h, text)
 end
 
 -- Draw button (render only)
-function UI.drawButton(id)
+function UI.drawButton(id, opts)
+	opts = opts or {}
 	local btn = UI.buttons[id]
 	if not btn or not btn.bounds then return end
 
@@ -735,70 +900,74 @@ function UI.drawButton(id)
 	local radius = s.buttonRadius
 	local shadowOffset = s.shadowOffset
 
-	if shadowOffset and shadowOffset ~= 0 then
-		setColor(UI.colors.shadow)
-		love.graphics.rectangle("fill", b.x + shadowOffset, b.y + shadowOffset + yOffset, b.w, b.h, radius, radius)
-	end
-
-	local fillColor = UI.colors.button
-	if displayHover then
-		fillColor = UI.colors.buttonHover
-	end
-	if btn.pressed then
-		fillColor = UI.colors.buttonPress
-	end
-
-	setColor(fillColor)
-	love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
-
-	local highlightStrength = (btn.hoverAnim or 0) * 0.18 + (btn.popProgress or 0) * 0.22
-	if highlightStrength > 0.001 then
-		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
-		love.graphics.setBlendMode("add", "alphamultiply")
-		love.graphics.setColor(1, 1, 1, 0.12 + 0.18 * highlightStrength)
-		love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
-		love.graphics.setBlendMode(prevMode, prevAlphaMode)
-	end
-
-	if UI.colors.border then
-		setColor(UI.colors.border)
-		love.graphics.setLineWidth(2)
-		love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
-	end
-
-	if btn.focused then
-		local focusStrength = btn.focusAnim or 0
-		if focusStrength > 0.01 then
-			local focusRadius = radius + 4
-			local padding = 3
-			local focusColor = UI.colors.border or UI.colors.highlight
-			setColor(focusColor, 0.8 + 0.4 * focusStrength)
-			love.graphics.setLineWidth(3)
-			love.graphics.rectangle("line", b.x - padding, b.y + yOffset - padding, b.w + padding * 2, b.h + padding * 2, focusRadius, focusRadius)
+	if opts.style == "settingsOption" then
+		drawSettingsOptionButton(btn, b, opts, yOffset, displayHover)
+		love.graphics.setLineWidth(1)
+	else
+		if shadowOffset and shadowOffset ~= 0 then
+			setColor(UI.colors.shadow)
+			love.graphics.rectangle("fill", b.x + shadowOffset, b.y + shadowOffset + yOffset, b.w, b.h, radius, radius)
 		end
-	end
 
-	local glowStrength = btn.glow or 0
-	if glowStrength > 0.01 then
-		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
-		love.graphics.setBlendMode("add", "alphamultiply")
-		love.graphics.setColor(1, 1, 1, 0.16 * glowStrength)
-		love.graphics.setLineWidth(2)
-		love.graphics.rectangle("line", b.x + 2, b.y + yOffset + 2, b.w - 4, b.h - 4, radius - 2, radius - 2)
-		love.graphics.setBlendMode(prevMode, prevAlphaMode)
-	end
+		local fillColor = opts.fill or UI.colors.button
+		if displayHover then
+			fillColor = opts.hoverFill or UI.colors.buttonHover
+		end
+		if btn.pressed then
+			fillColor = opts.pressFill or UI.colors.buttonPress
+		end
 
-	love.graphics.setLineWidth(1)
+		setColor(fillColor)
+		love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 
-	-- TEXT
-	UI.setFont("button")
-	local textColor = UI.colors.text
-	if displayHover or (btn.focusAnim or 0) > 0.001 then
-		textColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0))
+		local highlightStrength = (btn.hoverAnim or 0) * 0.18 + (btn.popProgress or 0) * 0.22
+		if highlightStrength > 0.001 then
+			local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+			love.graphics.setBlendMode("add", "alphamultiply")
+			love.graphics.setColor(1, 1, 1, 0.12 + 0.18 * highlightStrength)
+			love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
+			love.graphics.setBlendMode(prevMode, prevAlphaMode)
+		end
+
+		if UI.colors.border then
+			setColor(UI.colors.border)
+			love.graphics.setLineWidth(2)
+			love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
+		end
+
+		if btn.focused then
+			local focusStrength = btn.focusAnim or 0
+			if focusStrength > 0.01 then
+				local focusRadius = radius + 4
+				local padding = 3
+				local focusColor = UI.colors.border or UI.colors.highlight
+				setColor(focusColor, 0.8 + 0.4 * focusStrength)
+				love.graphics.setLineWidth(3)
+				love.graphics.rectangle("line", b.x - padding, b.y + yOffset - padding, b.w + padding * 2, b.h + padding * 2, focusRadius, focusRadius)
+			end
+		end
+
+		local glowStrength = btn.glow or 0
+		if glowStrength > 0.01 then
+			local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+			love.graphics.setBlendMode("add", "alphamultiply")
+			love.graphics.setColor(1, 1, 1, 0.16 * glowStrength)
+			love.graphics.setLineWidth(2)
+			love.graphics.rectangle("line", b.x + 2, b.y + yOffset + 2, b.w - 4, b.h - 4, radius - 2, radius - 2)
+			love.graphics.setBlendMode(prevMode, prevAlphaMode)
+		end
+
+		love.graphics.setLineWidth(1)
+
+		UI.setFont("button")
+		local textColor = opts.textColor or UI.colors.text
+		if displayHover or (btn.focusAnim or 0) > 0.001 then
+			textColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0))
+		end
+		setColor(textColor)
+		local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
+		love.graphics.printf(btn.text or "", b.x, textY, b.w, opts.textAlign or "center")
 	end
-	setColor(textColor)
-	local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
-	love.graphics.printf(btn.text or "", b.x, textY, b.w, "center")
 
 	love.graphics.pop()
 end
