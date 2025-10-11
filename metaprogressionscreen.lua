@@ -1227,7 +1227,7 @@ local function drawSummaryPanel(sw)
         local border = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
 
         drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-                accentHeight = WINDOW_ACCENT_HEIGHT,
+                accentHeight = 0,
                 accentInsetY = WINDOW_PADDING_Y * 0.5,
                 accentAlpha = 0.32,
         })
@@ -1299,7 +1299,7 @@ local function drawTrack(sw, sh)
         local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
         local frameHeight = clipH + WINDOW_PADDING_Y * 2
         drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-                accentHeight = WINDOW_ACCENT_HEIGHT,
+                accentHeight = 0,
                 accentInsetY = WINDOW_PADDING_Y * 0.5,
                 accentAlpha = 0.18,
         })
@@ -1453,7 +1453,7 @@ local function drawCosmeticsList(sw, sh)
         local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
         local frameHeight = clipH + WINDOW_PADDING_Y * 2
         drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-                accentHeight = WINDOW_ACCENT_HEIGHT,
+                accentHeight = 0,
                 accentInsetY = WINDOW_PADDING_Y * 0.5,
                 accentAlpha = 0.24,
         })
@@ -1658,7 +1658,7 @@ local function drawStatsSummary(sw)
         local frameX = sw / 2 - frameWidth / 2
         local frameY = viewportTop - WINDOW_PADDING_Y
         drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-                accentHeight = WINDOW_ACCENT_HEIGHT,
+                accentHeight = 0,
                 accentInsetY = WINDOW_PADDING_Y * 0.35,
                 accentAlpha = 0.26,
         })
@@ -1707,7 +1707,7 @@ local function drawStatsList(sw, sh)
         local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
         local frameHeight = clipH + WINDOW_PADDING_Y * 2
         drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-                accentHeight = WINDOW_ACCENT_HEIGHT,
+                accentHeight = 0,
                 accentInsetY = WINDOW_PADDING_Y * 0.5,
                 accentAlpha = 0.18,
         })
