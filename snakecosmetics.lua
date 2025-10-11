@@ -561,11 +561,12 @@ local function buildDefaultState()
 
 	unlocked[DEFAULT_SKIN_ID] = true
 
-	return {
-		selectedSkin = DEFAULT_SKIN_ID,
-		unlocked = unlocked,
-		unlockHistory = {},
-	}
+        return {
+                selectedSkin = DEFAULT_SKIN_ID,
+                unlocked = unlocked,
+                unlockHistory = {},
+                recentUnlocks = {},
+        }
 end
 
 local DEFAULT_STATE = buildDefaultState()
@@ -701,13 +702,14 @@ function SnakeCosmetics:_ensureLoaded()
 		end
 	end
 
-	self.state.unlocked = self.state.unlocked or {}
-	self.state.unlocked[DEFAULT_SKIN_ID] = true
-	self.state.unlockHistory = self.state.unlockHistory or {}
+        self.state.unlocked = self.state.unlocked or {}
+        self.state.unlocked[DEFAULT_SKIN_ID] = true
+        self.state.unlockHistory = self.state.unlockHistory or {}
+        self.state.recentUnlocks = self.state.recentUnlocks or {}
 
-	self:_validateSelection()
+        self:_validateSelection()
 
-	self._loaded = true
+        self._loaded = true
 end
 
 function SnakeCosmetics:_validateSelection()
@@ -728,14 +730,15 @@ function SnakeCosmetics:_save()
 		return
 	end
 
-	local snapshot = {
-		selectedSkin = self.state.selectedSkin,
-		unlocked = copyTable(self.state.unlocked),
-		unlockHistory = copyTable(self.state.unlockHistory or {}),
-	}
+        local snapshot = {
+                selectedSkin = self.state.selectedSkin,
+                unlocked = copyTable(self.state.unlocked),
+                unlockHistory = copyTable(self.state.unlockHistory or {}),
+                recentUnlocks = copyTable(self.state.recentUnlocks or {}),
+        }
 
-	local serialized = "return " .. serialize(snapshot, 0) .. "\n"
-	love.filesystem.write(SAVE_FILE, serialized)
+        local serialized = "return " .. serialize(snapshot, 0) .. "\n"
+        love.filesystem.write(SAVE_FILE, serialized)
 end
 
 function SnakeCosmetics:_recordUnlock(id, context)
@@ -765,13 +768,15 @@ function SnakeCosmetics:_unlockSkinInternal(id, context)
 		return false
 	end
 
-	if self.state.unlocked[id] then
-		return false
-	end
+        if self.state.unlocked[id] then
+                return false
+        end
 
-	self.state.unlocked[id] = true
-	self:_recordUnlock(id, context)
-	return true
+        self.state.unlocked[id] = true
+        self.state.recentUnlocks = self.state.recentUnlocks or {}
+        self.state.recentUnlocks[id] = true
+        self:_recordUnlock(id, context)
+        return true
 end
 
 function SnakeCosmetics:isSkinUnlocked(id)
@@ -904,16 +909,47 @@ function SnakeCosmetics:load(context)
 end
 
 function SnakeCosmetics:getSkins()
-	self:_ensureLoaded()
+        self:_ensureLoaded()
 
-	local list = {}
-	for _, skin in ipairs(self._orderedSkins or {}) do
-		local entry = copyTable(skin)
-		entry.unlocked = self.state.unlocked[skin.id] == true
-		entry.selected = (self.state.selectedSkin == skin.id)
-		list[#list + 1] = entry
-	end
-	return list
+        local list = {}
+        local recentUnlocks = self.state.recentUnlocks or {}
+        for _, skin in ipairs(self._orderedSkins or {}) do
+                local entry = copyTable(skin)
+                entry.unlocked = self.state.unlocked[skin.id] == true
+                entry.selected = (self.state.selectedSkin == skin.id)
+                entry.justUnlocked = recentUnlocks[skin.id] == true
+                list[#list + 1] = entry
+        end
+        return list
+end
+
+function SnakeCosmetics:clearRecentUnlocks(ids)
+        self:_ensureLoaded()
+
+        local changed = false
+        if type(ids) == "table" then
+                for key, value in pairs(ids) do
+                        local id
+                        if type(key) == "number" then
+                                id = value
+                        else
+                                id = key
+                        end
+                        if id and self.state.recentUnlocks[id] then
+                                self.state.recentUnlocks[id] = nil
+                                changed = true
+                        end
+                end
+        else
+                for id in pairs(self.state.recentUnlocks or {}) do
+                        self.state.recentUnlocks[id] = nil
+                        changed = true
+                end
+        end
+
+        if changed then
+                self:_save()
+        end
 end
 
 function SnakeCosmetics:getActiveSkinId()

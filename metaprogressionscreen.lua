@@ -58,6 +58,7 @@ local statsEntries = {}
 local statsHighlights = {}
 local statsSummaryHeight = 0
 local cosmeticsEntries = {}
+local cosmeticsSummary = { unlocked = 0, total = 0, newUnlocks = 0 }
 local progressionState = nil
 local activeTab = "experience"
 local cosmeticsFocusIndex = nil
@@ -704,36 +705,54 @@ local function resolveSkinStatus(skin)
 end
 
 local function buildCosmeticsEntries()
-	cosmeticsEntries = {}
-	hoveredCosmeticIndex = nil
-	pressedCosmeticIndex = nil
-	cosmeticsFocusIndex = nil
+        cosmeticsEntries = {}
+        hoveredCosmeticIndex = nil
+        pressedCosmeticIndex = nil
+        cosmeticsFocusIndex = nil
+        cosmeticsSummary.unlocked = 0
+        cosmeticsSummary.total = 0
+        cosmeticsSummary.newUnlocks = 0
 
-	if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
-		return
-	end
+        if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
+                return
+        end
 
-	local skins = SnakeCosmetics:getSkins() or {}
-	local selectedIndex
+        local skins = SnakeCosmetics:getSkins() or {}
+        local selectedIndex
+        local recentlyUnlockedIds = {}
 
-	for _, skin in ipairs(skins) do
-		local entry = {
-			id = skin.id,
-			skin = skin,
-		}
-		entry.statusLabel, entry.detailText, entry.statusColor = resolveSkinStatus(skin)
-		cosmeticsEntries[#cosmeticsEntries + 1] = entry
+        for _, skin in ipairs(skins) do
+                cosmeticsSummary.total = cosmeticsSummary.total + 1
+                if skin.unlocked then
+                        cosmeticsSummary.unlocked = cosmeticsSummary.unlocked + 1
+                end
+                if skin.justUnlocked then
+                        cosmeticsSummary.newUnlocks = cosmeticsSummary.newUnlocks + 1
+                        recentlyUnlockedIds[#recentlyUnlockedIds + 1] = skin.id
+                end
 
-		if skin.selected then
-			selectedIndex = #cosmeticsEntries
-		end
-	end
+                local entry = {
+                        id = skin.id,
+                        skin = skin,
+                        justUnlocked = skin.justUnlocked,
+                }
+                entry.statusLabel, entry.detailText, entry.statusColor = resolveSkinStatus(skin)
+                cosmeticsEntries[#cosmeticsEntries + 1] = entry
 
-	if selectedIndex then
-		cosmeticsFocusIndex = selectedIndex
-	elseif #cosmeticsEntries > 0 then
-		cosmeticsFocusIndex = 1
-	end
+                if skin.selected then
+                        selectedIndex = #cosmeticsEntries
+                end
+        end
+
+        if cosmeticsSummary.newUnlocks > 0 and SnakeCosmetics and SnakeCosmetics.clearRecentUnlocks then
+                SnakeCosmetics:clearRecentUnlocks(recentlyUnlockedIds)
+        end
+
+        if selectedIndex then
+                cosmeticsFocusIndex = selectedIndex
+        elseif #cosmeticsEntries > 0 then
+                cosmeticsFocusIndex = 1
+        end
 end
 
 local function updateCosmeticsLayout(sw)
@@ -1318,9 +1337,28 @@ local function drawTrack(sw, sh)
 end
 
 local function drawCosmeticsHeader(sw)
-	love.graphics.setFont(UI.fonts.button)
-	love.graphics.setColor(Theme.textColor)
-	love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, 150, sw, "center")
+        love.graphics.setFont(UI.fonts.button)
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, 150, sw, "center")
+
+        if cosmeticsSummary.total > 0 then
+                local summaryText = Localization:get("metaprogression.cosmetics.progress", {
+                        unlocked = cosmeticsSummary.unlocked or 0,
+                        total = cosmeticsSummary.total or 0,
+                })
+                local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
+                love.graphics.setFont(UI.fonts.caption)
+                love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
+                love.graphics.printf(summaryText, 0, 188, sw, "center")
+
+                if cosmeticsSummary.newUnlocks and cosmeticsSummary.newUnlocks > 0 then
+                        local key = (cosmeticsSummary.newUnlocks == 1) and "metaprogression.cosmetics.new_summary_single" or "metaprogression.cosmetics.new_summary_multiple"
+                        local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor
+                        love.graphics.setFont(UI.fonts.small)
+                        love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.92)
+                        love.graphics.printf(Localization:get(key, { count = cosmeticsSummary.newUnlocks }), 0, 210, sw, "center")
+                end
+        end
 end
 
 local function drawCosmeticsList(sw, sh)
@@ -1347,11 +1385,12 @@ local function drawCosmeticsList(sw, sh)
 		entry.bounds.h = COSMETIC_CARD_HEIGHT
 
 		if y + COSMETIC_CARD_HEIGHT >= clipY - COSMETIC_CARD_HEIGHT and y <= clipY + clipH + COSMETIC_CARD_HEIGHT then
-			local skin = entry.skin or {}
-			local unlocked = skin.unlocked
-			local selected = skin.selected
-			local isFocused = (index == cosmeticsFocusIndex)
-			local isHovered = (index == hoveredCosmeticIndex)
+                        local skin = entry.skin or {}
+                        local unlocked = skin.unlocked
+                        local selected = skin.selected
+                        local isFocused = (index == cosmeticsFocusIndex)
+                        local isHovered = (index == hoveredCosmeticIndex)
+                        local isNew = entry.justUnlocked
 
 			local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
 			local fillColor
@@ -1363,61 +1402,125 @@ local function drawCosmeticsList(sw, sh)
 				fillColor = darkenColor(basePanel, 0.25)
 			end
 
-			if isFocused or isHovered then
-				fillColor = lightenColor(fillColor, 0.06)
-			end
+                        if isFocused or isHovered then
+                                fillColor = lightenColor(fillColor, 0.06)
+                        end
+
+                        if isNew then
+                                fillColor = lightenColor(fillColor, 0.08)
+                        end
 
 			love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.92)
 			UI.drawRoundedRect(listX, y, CARD_WIDTH, COSMETIC_CARD_HEIGHT, 14)
 
-			local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
-			if selected then
-				borderColor = Theme.accentTextColor or borderColor
-			elseif unlocked then
-				borderColor = Theme.progressColor or borderColor
-			elseif Theme.lockedCardColor then
-				borderColor = Theme.lockedCardColor
-			end
+                        local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
+                        if selected then
+                                borderColor = Theme.accentTextColor or borderColor
+                        elseif unlocked then
+                                borderColor = Theme.progressColor or borderColor
+                        elseif Theme.lockedCardColor then
+                                borderColor = Theme.lockedCardColor
+                        end
 
-			love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
-			love.graphics.setLineWidth(isFocused and 3 or 2)
-			love.graphics.rectangle("line", listX, y, CARD_WIDTH, COSMETIC_CARD_HEIGHT, 14, 14)
+                        if isNew then
+                                borderColor = lightenColor(borderColor, 0.12)
+                        end
 
-			if isFocused then
+                        love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
+                        love.graphics.setLineWidth(isFocused and 3 or 2)
+                        love.graphics.rectangle("line", listX, y, CARD_WIDTH, COSMETIC_CARD_HEIGHT, 14, 14)
+
+                        if isFocused then
 				local highlight = Theme.highlightColor or {1, 1, 1, 0.08}
 				love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.08) + 0.04)
 				UI.drawRoundedRect(listX + 6, y + 6, CARD_WIDTH - 12, COSMETIC_CARD_HEIGHT - 12, 12)
 			end
 
-			local skinColors = skin.colors or {}
-			local bodyColor = skinColors.body or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
-			local outlineColor = skinColors.outline or {0.05, 0.15, 0.12, 1}
-			local glowColor = skinColors.glow or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
+                        local skinColors = skin.colors or {}
+                        local bodyColor = skinColors.body or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
+                        local outlineColor = skinColors.outline or {0.05, 0.15, 0.12, 1}
+                        local glowColor = skinColors.glow or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
+
+                        if not unlocked then
+                                bodyColor = darkenColor(bodyColor, 0.25)
+                                outlineColor = darkenColor(outlineColor, 0.2)
+                                glowColor = darkenColor(glowColor, 0.3)
+                        end
 
 			local previewX = listX + 28
 			local previewY = y + (COSMETIC_CARD_HEIGHT - COSMETIC_PREVIEW_HEIGHT) / 2
 			local previewW = COSMETIC_PREVIEW_WIDTH
 			local previewH = COSMETIC_PREVIEW_HEIGHT
 
-			if unlocked then
-				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], (glowColor[4] or 1) * 0.45)
-				love.graphics.setLineWidth(6)
-				love.graphics.rectangle("line", previewX - 6, previewY - 6, previewW + 12, previewH + 12, previewH / 2 + 6, previewH / 2 + 6)
-			end
+                        if unlocked then
+                                love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], (glowColor[4] or 1) * 0.45)
+                                love.graphics.setLineWidth(6)
+                                love.graphics.rectangle("line", previewX - 6, previewY - 6, previewW + 12, previewH + 12, previewH / 2 + 6, previewH / 2 + 6)
+                        end
 
 			love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], bodyColor[4] or 1)
 			UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewH / 2)
 
-			love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 1)
-			love.graphics.setLineWidth(3)
-			love.graphics.rectangle("line", previewX, previewY, previewW, previewH, previewH / 2, previewH / 2)
+                        love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 1)
+                        love.graphics.setLineWidth(3)
+                        love.graphics.rectangle("line", previewX, previewY, previewW, previewH, previewH / 2, previewH / 2)
 
-			love.graphics.setLineWidth(1)
+                        love.graphics.setLineWidth(1)
 
-			local textX = previewX + previewW + 24
-			local textWidth = CARD_WIDTH - (textX - listX) - 28
+                        if not unlocked then
+                                local overlayColor = withAlpha(Theme.bgColor or {0, 0, 0, 1}, 0.25)
+                                love.graphics.setColor(overlayColor[1], overlayColor[2], overlayColor[3], overlayColor[4] or 1)
+                                UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewH / 2)
 
-			love.graphics.setFont(UI.fonts.button)
+                                local lockColor = Theme.lockedCardColor or {0.5, 0.35, 0.4, 1}
+                                love.graphics.setColor(lockColor[1], lockColor[2], lockColor[3], (lockColor[4] or 1) * 0.85)
+                                local lockWidth = math.min(28, previewW * 0.6)
+                                local lockHeight = 16
+                                local lockX = previewX + (previewW - lockWidth) / 2
+                                local lockY = previewY + (previewH - lockHeight) / 2 + 4
+                                UI.drawRoundedRect(lockX, lockY, lockWidth, lockHeight, 4)
+
+                                local shackleWidth = lockWidth * 0.72
+                                local shackleHeight = 10
+                                local shackleX = previewX + (previewW - shackleWidth) / 2
+                                local shackleY = lockY - shackleHeight + 6
+                                love.graphics.rectangle("fill", shackleX, shackleY, shackleWidth, 4, 2, 2)
+                                love.graphics.rectangle("fill", shackleX, shackleY, 4, shackleHeight, 2, 2)
+                                love.graphics.rectangle("fill", shackleX + shackleWidth - 4, shackleY, 4, shackleHeight, 2, 2)
+
+                                local keyholeWidth = math.max(4, lockWidth * 0.18)
+                                local keyholeHeight = math.max(6, lockHeight * 0.45)
+                                local keyholeX = previewX + previewW / 2 - keyholeWidth / 2
+                                local keyholeY = lockY + lockHeight / 2 - keyholeHeight / 2
+                                local keyholeColor = Theme.bgColor or {0, 0, 0, 1}
+                                love.graphics.setColor(keyholeColor[1], keyholeColor[2], keyholeColor[3], (keyholeColor[4] or 1) * 0.9)
+                                love.graphics.rectangle("fill", keyholeX, keyholeY, keyholeWidth, keyholeHeight, 2, 2)
+                        end
+
+                        if isNew then
+                                local badgeText = Localization:get("metaprogression.cosmetics.new_badge")
+                                local badgeFont = UI.fonts.caption
+                                love.graphics.setFont(badgeFont)
+                                local textWidth = badgeFont:getWidth(badgeText)
+                                local paddingX = 18
+                                local paddingY = 6
+                                local badgeWidth = textWidth + paddingX
+                                local badgeHeight = badgeFont:getHeight() + paddingY
+                                local badgeX = listX + CARD_WIDTH - badgeWidth - 24
+                                local badgeY = y - badgeHeight / 2
+                                local accent = Theme.progressColor or Theme.accentTextColor or {1, 1, 1, 1}
+                                love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.95)
+                                UI.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
+
+                                local badgeTextColor = Theme.bgColor or {0, 0, 0, 1}
+                                love.graphics.setColor(badgeTextColor[1], badgeTextColor[2], badgeTextColor[3], badgeTextColor[4] or 1)
+                                love.graphics.printf(badgeText, badgeX, badgeY + paddingY / 2, badgeWidth, "center")
+                        end
+
+                        local textX = previewX + previewW + 24
+                        local textWidth = CARD_WIDTH - (textX - listX) - 28
+
+                        love.graphics.setFont(UI.fonts.button)
 			love.graphics.setColor(Theme.textColor)
 			love.graphics.printf(skin.name or skin.id or "", textX, y + 20, textWidth, "left")
 
