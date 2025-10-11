@@ -1635,18 +1635,7 @@ local function drawCosmeticsList(sw, sh)
 end
 
 local function drawStatsHeader(sw)
-        local headerY = TAB_BOTTOM + 28
-        love.graphics.setFont(UI.fonts.button)
-        love.graphics.setColor(Theme.textColor)
-        love.graphics.printf(Localization:get("metaprogression.stats_header"), 0, headerY, sw, "center")
-
-        local subheader = Localization:get("metaprogression.stats_subheader")
-        if subheader and subheader ~= "metaprogression.stats_subheader" then
-                local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
-                love.graphics.setFont(UI.fonts.caption)
-                love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-                love.graphics.printf(subheader, 0, headerY + 40, sw, "center")
-        end
+        -- Intentionally left blank: the stats header and subheader have been removed.
 end
 
 local function drawStatsSummary(sw)
