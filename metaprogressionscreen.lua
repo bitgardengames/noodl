@@ -16,10 +16,9 @@ local ProgressionScreen = {
 
 local buttonList = ButtonList.new()
 
-local START_Y = 220
 local CARD_WIDTH = 640
-local CARD_HEIGHT = 148
 local CARD_SPACING = 24
+local TRACK_CARD_MIN_HEIGHT = 188
 local STAT_CARD_HEIGHT = 72
 local STAT_CARD_SPACING = 16
 local STAT_CARD_SHADOW_OFFSET = 6
@@ -40,6 +39,12 @@ local TAB_WIDTH = 220
 local TAB_HEIGHT = 52
 local TAB_SPACING = 16
 local TAB_Y = 160
+local TAB_BOTTOM = TAB_Y + TAB_HEIGHT
+local DEFAULT_LIST_TOP = TAB_BOTTOM + 24
+local SUMMARY_CONTENT_HEIGHT = 160
+local EXPERIENCE_SUMMARY_TOP = DEFAULT_LIST_TOP
+local EXPERIENCE_LIST_GAP = 24
+local EXPERIENCE_LIST_TOP = EXPERIENCE_SUMMARY_TOP + SUMMARY_CONTENT_HEIGHT + WINDOW_PADDING_Y + EXPERIENCE_LIST_GAP
 local WINDOW_CORNER_RADIUS = 18
 local WINDOW_SHADOW_OFFSET = 10
 local WINDOW_PADDING_X = 28
@@ -48,7 +53,7 @@ local WINDOW_ACCENT_HEIGHT = 8
 
 local scrollOffset = 0
 local minScrollOffset = 0
-local viewportTop = START_Y
+local viewportTop = DEFAULT_LIST_TOP
 local viewportHeight = 0
 local contentHeight = 0
 
@@ -59,6 +64,7 @@ local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 
 local trackEntries = {}
+local trackContentHeight = 0
 local statsEntries = {}
 local statsHighlights = {}
 local statsSummaryHeight = 0
@@ -128,17 +134,26 @@ local function drawBackground(sw, sh)
 end
 
 local function resetHeldDpad()
-	heldDpadButton = nil
-	heldDpadAction = nil
-	heldDpadTimer = 0
-	heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+        heldDpadButton = nil
+        heldDpadAction = nil
+        heldDpadTimer = 0
+        heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+end
+
+local function getListTop(tab)
+        tab = tab or activeTab
+        if tab == "experience" then
+                return EXPERIENCE_LIST_TOP
+        end
+
+        return DEFAULT_LIST_TOP
 end
 
 local function startHeldDpad(button, action)
-	heldDpadButton = button
-	heldDpadAction = action
-	heldDpadTimer = 0
-	heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+        heldDpadButton = button
+        heldDpadAction = action
+        heldDpadTimer = 0
+        heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 end
 
 local function stopHeldDpad(button)
@@ -177,7 +192,7 @@ local function getActiveList()
 		return statsEntries, STAT_CARD_HEIGHT, STAT_CARD_SPACING
 	end
 
-	return trackEntries, CARD_HEIGHT, CARD_SPACING
+        return trackEntries, TRACK_CARD_MIN_HEIGHT, CARD_SPACING
 end
 
 local function getScrollPadding()
@@ -198,21 +213,26 @@ local function updateScrollBounds(sw, sh)
 		end
 	end
 
-	viewportTop = START_Y + topOffset
-	viewportHeight = math.max(0, viewportBottom - viewportTop)
+        local baseTop = getListTop()
+        viewportTop = baseTop + topOffset
+        viewportHeight = math.max(0, viewportBottom - viewportTop)
 
-	local entries, itemHeight, spacing = getActiveList()
-	local count = #entries
-	if count > 0 then
-		contentHeight = count * itemHeight + math.max(0, count - 1) * spacing
-	else
-		contentHeight = 0
-	end
+        if activeTab == "experience" then
+                contentHeight = trackContentHeight
+        else
+                local entries, itemHeight, spacing = getActiveList()
+                local count = #entries
+                if count > 0 then
+                        contentHeight = count * itemHeight + math.max(0, count - 1) * spacing
+                else
+                        contentHeight = 0
+                end
+        end
 
-	local bottomPadding = getScrollPadding()
-	if bottomPadding > 0 and contentHeight > 0 then
-		contentHeight = contentHeight + bottomPadding
-	end
+        local bottomPadding = getScrollPadding()
+        if bottomPadding > 0 and contentHeight > 0 then
+                contentHeight = contentHeight + bottomPadding
+        end
 
 	minScrollOffset = math.min(0, viewportHeight - contentHeight)
 
@@ -508,20 +528,11 @@ local function drawWindowFrame(x, y, width, height, options)
         love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function getRequirementHeading(count)
-        local key = (count and count > 1) and "metaprogression.requirements.multiple" or "metaprogression.requirements.single"
-        local heading = Localization:get(key)
-	if heading == key then
-		heading = (count and count > 1) and "Requirements" or "Requirement"
-	end
-	return heading
-end
-
 local function getRewardHeading(count)
-	local key = (count and count > 1) and "metaprogression.rewards.multiple" or "metaprogression.rewards.single"
-	local heading = Localization:get(key)
-	if heading == key then
-		heading = (count and count > 1) and "Rewards" or "Reward"
+        local key = (count and count > 1) and "metaprogression.rewards.multiple" or "metaprogression.rewards.single"
+        local heading = Localization:get(key)
+        if heading == key then
+                heading = (count and count > 1) and "Rewards" or "Reward"
 	end
 	return heading
 end
@@ -568,21 +579,21 @@ local function describeUnlockTag(tag)
 end
 
 local function annotateTrackEntry(entry)
-	if not entry then
-		return
-	end
+        if not entry then
+                return
+        end
 
-	local requirements = {}
-	local totalXp = math.max(0, math.floor((entry.totalXpRequired or 0) + 0.5))
-	if totalXp > 0 then
-		local requirement = Localization:get("metaprogression.requirements.total_xp", { xp = totalXp })
-		if requirement == "metaprogression.requirements.total_xp" then
-			requirement = string.format("Reach %d total XP", totalXp)
-		end
-		requirements[#requirements + 1] = requirement
-	end
+        local xpGoalText
+        local totalXp = math.max(0, math.floor((entry.totalXpRequired or 0) + 0.5))
+        if totalXp > 0 then
+                local requirement = Localization:get("metaprogression.requirements.total_xp", { xp = totalXp })
+                if requirement == "metaprogression.requirements.total_xp" then
+                        requirement = string.format("Reach %d total XP", totalXp)
+                end
+                xpGoalText = requirement
+        end
 
-	local rewards = {}
+        local rewards = {}
 	local effects = entry.effects or {}
 	if effects.shopExtraChoices and effects.shopExtraChoices ~= 0 then
 		local reward = formatShopChoice(effects.shopExtraChoices)
@@ -600,16 +611,72 @@ local function annotateTrackEntry(entry)
 		end
 	end
 
-	entry.requirements = requirements
-	entry.rewards = rewards
-	entry.requirementHeading = getRequirementHeading(#requirements)
-	entry.rewardHeading = getRewardHeading(#rewards)
+        entry.xpGoalText = xpGoalText
+        entry.rewards = rewards
+        entry.rewardHeading = getRewardHeading(#rewards)
+end
+
+local function measureTrackEntryHeight(entry)
+        if not entry then
+                return TRACK_CARD_MIN_HEIGHT
+        end
+
+        local wrapWidth = CARD_WIDTH - 48
+        local desc = entry.description or ""
+        local bodyFont = UI.fonts.body
+        local descHeight = 0
+        if desc ~= "" then
+                local _, wrapped = bodyFont:getWrap(desc, wrapWidth)
+                local lineCount = math.max(1, #wrapped)
+                descHeight = lineCount * bodyFont:getHeight()
+        end
+
+        local xpLineHeight = 0
+        if entry.xpGoalText and entry.xpGoalText ~= "" then
+                xpLineHeight = UI.fonts.caption:getHeight()
+        end
+
+        local rewards = entry.rewards or {}
+        local rewardBlockHeight = 0
+        if #rewards > 0 then
+                local smallFont = UI.fonts.small
+                rewardBlockHeight = 6 + (#rewards + 1) * smallFont:getHeight()
+        end
+
+        local textY = 20
+        local descY = textY + 58
+        if xpLineHeight > 0 then
+                descY = textY + 54 + xpLineHeight + 8
+        end
+
+        local yCursor = descY + descHeight + rewardBlockHeight
+        local requiredHeight = yCursor + 38
+
+        return math.max(TRACK_CARD_MIN_HEIGHT, math.ceil(requiredHeight))
+end
+
+local function recalculateTrackLayout()
+        local offset = 0
+        trackContentHeight = 0
+
+        for _, entry in ipairs(trackEntries or {}) do
+                local height = measureTrackEntryHeight(entry)
+                entry.cardHeight = height
+                entry.offset = offset
+                offset = offset + height + CARD_SPACING
+        end
+
+        if offset > 0 then
+                trackContentHeight = offset - CARD_SPACING
+        end
 end
 
 local function annotateTrackEntries()
-	for _, entry in ipairs(trackEntries or {}) do
-		annotateTrackEntry(entry)
-	end
+        for _, entry in ipairs(trackEntries or {}) do
+                annotateTrackEntry(entry)
+        end
+
+        recalculateTrackLayout()
 end
 
 local function resolveAchievementName(id)
@@ -738,15 +805,16 @@ local function updateCosmeticsLayout(sw)
 		return
 	end
 
-	local listX = (sw - CARD_WIDTH) / 2
+        local listX = (sw - CARD_WIDTH) / 2
+        local listTop = getListTop("cosmetics")
 
-	for index, entry in ipairs(cosmeticsEntries) do
-		local y = START_Y + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
-		entry.bounds = {
-			x = listX,
-			y = y,
-			w = CARD_WIDTH,
-			h = COSMETIC_CARD_HEIGHT,
+        for index, entry in ipairs(cosmeticsEntries) do
+                local y = listTop + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
+                entry.bounds = {
+                        x = listX,
+                        y = y,
+                        w = CARD_WIDTH,
+                        h = COSMETIC_CARD_HEIGHT,
 		}
 	end
 end
@@ -762,11 +830,12 @@ local function ensureCosmeticVisible(index)
 
 	local itemHeight = COSMETIC_CARD_HEIGHT
 	local spacing = COSMETIC_CARD_SPACING
-	local top = START_Y + scrollOffset + (index - 1) * (itemHeight + spacing)
-	local bottom = top + itemHeight
-	local viewportTop = START_Y
-	local bottomPadding = getScrollPadding()
-	local viewportBottom = START_Y + math.max(0, viewportHeight - bottomPadding)
+        local listTop = getListTop("cosmetics")
+        local top = listTop + scrollOffset + (index - 1) * (itemHeight + spacing)
+        local bottom = top + itemHeight
+        local viewportTop = getListTop("cosmetics")
+        local bottomPadding = getScrollPadding()
+        local viewportBottom = viewportTop + math.max(0, viewportHeight - bottomPadding)
 
 	if top < viewportTop then
 		scrollOffset = scrollOffset + (viewportTop - top)
@@ -1138,13 +1207,13 @@ local function drawSummaryPanel(sw)
         end
 
         local contentWidth = CARD_WIDTH
-        local contentHeight = 160
+        local contentHeight = SUMMARY_CONTENT_HEIGHT
         local frameWidth = contentWidth + WINDOW_PADDING_X * 2
         local frameHeight = contentHeight + WINDOW_PADDING_Y * 2
         local frameX = (sw - frameWidth) / 2
-        local frameY = 120 - WINDOW_PADDING_Y
+        local frameY = EXPERIENCE_SUMMARY_TOP - WINDOW_PADDING_Y
         local panelX = frameX + WINDOW_PADDING_X
-        local panelY = frameY + WINDOW_PADDING_Y
+        local panelY = EXPERIENCE_SUMMARY_TOP
         local padding = 24
         local border = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
 
@@ -1183,6 +1252,14 @@ local function drawSummaryPanel(sw)
         love.graphics.print(totalText, panelX + padding, panelY + padding + 34)
         love.graphics.print(progressLabel, panelX + padding, panelY + padding + 60)
 
+        if xpForNext > 0 then
+                local progressText = string.format("%s / %s XP", formatInteger(xpIntoLevel), formatInteger(xpForNext))
+                love.graphics.setFont(UI.fonts.caption)
+                local muted = Theme.mutedTextColor or withAlpha(Theme.textColor, 0.85)
+                love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 0.85)
+                love.graphics.print(progressText, panelX + padding, panelY + padding + 88)
+        end
+
         local barX = panelX + padding
         local barY = panelY + contentHeight - padding - 24
         local barWidth = contentWidth - padding * 2
@@ -1201,7 +1278,7 @@ end
 
 local function drawTrack(sw, sh)
         local listX = (sw - CARD_WIDTH) / 2
-        local clipY = START_Y
+        local clipY = getListTop("experience")
         local clipH = viewportHeight
 
         if clipH <= 0 then
@@ -1222,101 +1299,103 @@ local function drawTrack(sw, sh)
         love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
 
         for index, entry in ipairs(trackEntries) do
-                local y = START_Y + scrollOffset + (index - 1) * (CARD_HEIGHT + CARD_SPACING)
-		if y + CARD_HEIGHT >= clipY - CARD_HEIGHT and y <= clipY + clipH + CARD_HEIGHT then
-			local unlocked = entry.unlocked
-			local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-			local fillAlpha = unlocked and 0.9 or 0.7
+                local cardHeight = entry.cardHeight or TRACK_CARD_MIN_HEIGHT
+                local offset = entry.offset or ((index - 1) * (TRACK_CARD_MIN_HEIGHT + CARD_SPACING))
+                local y = clipY + scrollOffset + offset
+                local visibleThreshold = math.max(cardHeight, TRACK_CARD_MIN_HEIGHT)
+                if y + cardHeight >= clipY - visibleThreshold and y <= clipY + clipH + visibleThreshold then
+                        local unlocked = entry.unlocked
+                        local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+                        local fillAlpha = unlocked and 0.9 or 0.7
 
-			love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], fillAlpha)
-			UI.drawRoundedRect(listX, y, CARD_WIDTH, CARD_HEIGHT, 12)
+                        love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], fillAlpha)
+                        UI.drawRoundedRect(listX, y, CARD_WIDTH, cardHeight, 12)
 
-			local borderColor = unlocked and (Theme.achieveColor or {0.55, 0.75, 0.55, 1}) or (Theme.lockedCardColor or {0.5, 0.35, 0.4, 1})
-			love.graphics.setColor(borderColor)
-			love.graphics.setLineWidth(2)
-			love.graphics.rectangle("line", listX, y, CARD_WIDTH, CARD_HEIGHT, 12, 12)
+                        local borderColor = unlocked and (Theme.achieveColor or {0.55, 0.75, 0.55, 1}) or (Theme.lockedCardColor or {0.5, 0.35, 0.4, 1})
+                        love.graphics.setColor(borderColor)
+                        love.graphics.setLineWidth(2)
+                        love.graphics.rectangle("line", listX, y, CARD_WIDTH, cardHeight, 12, 12)
 
-			local textX = listX + 24
-			local textY = y + 20
+                        local textX = listX + 24
+                        local textY = y + 20
 
-			love.graphics.setFont(UI.fonts.button)
+                        love.graphics.setFont(UI.fonts.button)
 			love.graphics.setColor(Theme.textColor)
 			local header = Localization:get("metaprogression.card_level", { level = entry.level or 0 })
 			love.graphics.print(header, textX, textY)
 
-			love.graphics.setFont(UI.fonts.body)
-			love.graphics.print(entry.name or "", textX, textY + 30)
+                        love.graphics.setFont(UI.fonts.body)
+                        love.graphics.print(entry.name or "", textX, textY + 30)
 
-			local desc = entry.description or ""
-			local wrapWidth = CARD_WIDTH - 48
-			local descY = textY + 58
-			local descHeight = 0
-			if desc ~= "" then
-				local _, wrapped = UI.fonts.body:getWrap(desc, wrapWidth)
-				local lineCount = math.max(1, #wrapped)
-				descHeight = lineCount * UI.fonts.body:getHeight()
-				love.graphics.printf(desc, textX, descY, wrapWidth)
-			end
+                        local wrapWidth = CARD_WIDTH - 48
+                        local xpLineHeight = 0
+                        local xpLineY = textY + 54
+                        if entry.xpGoalText and entry.xpGoalText ~= "" then
+                                local xpFont = UI.fonts.caption
+                                xpLineHeight = xpFont:getHeight()
+                                local xpColor = Theme.progressColor or Theme.accentTextColor or Theme.textColor
+                                if unlocked then
+                                        xpColor = Theme.mutedTextColor or withAlpha(Theme.textColor, 0.8)
+                                end
+                                love.graphics.setFont(xpFont)
+                                love.graphics.setColor(withAlpha(xpColor, unlocked and 0.85 or 1))
+                                love.graphics.printf(entry.xpGoalText, textX, xpLineY, wrapWidth, "left")
+                        end
 
-			local infoY = descY + descHeight
-			local yCursor = infoY + 6
-			local requirements = entry.requirements or {}
-			local rewards = entry.rewards or {}
-			local smallFont = UI.fonts.small
-			local lineHeight = smallFont:getHeight()
+                        love.graphics.setColor(Theme.textColor)
 
-			if (#requirements > 0) or (#rewards > 0) then
-				love.graphics.setFont(smallFont)
+                        local desc = entry.description or ""
+                        local descY = textY + 58
+                        if xpLineHeight > 0 then
+                                descY = xpLineY + xpLineHeight + 8
+                        end
+                        local descHeight = 0
+                        if desc ~= "" then
+                                local _, wrapped = UI.fonts.body:getWrap(desc, wrapWidth)
+                                local lineCount = math.max(1, #wrapped)
+                                descHeight = lineCount * UI.fonts.body:getHeight()
+                                love.graphics.setColor(Theme.textColor)
+                                love.graphics.setFont(UI.fonts.body)
+                                love.graphics.printf(desc, textX, descY, wrapWidth)
+                        end
 
-				if #requirements > 0 then
-					local heading = entry.requirementHeading or getRequirementHeading(#requirements)
-					local accent = Theme.accentTextColor or Theme.textColor
-					love.graphics.setColor(withAlpha(accent, 0.9))
-					love.graphics.print(heading .. ":", textX, yCursor)
-					yCursor = yCursor + lineHeight
+                        local infoY = descY + descHeight
+                        local yCursor = infoY
+                        local rewards = entry.rewards or {}
+                        local smallFont = UI.fonts.small
+                        local lineHeight = smallFont:getHeight()
 
-					love.graphics.setColor(withAlpha(Theme.textColor, 0.85))
-					for _, line in ipairs(requirements) do
-						love.graphics.printf("• " .. line, textX, yCursor, wrapWidth, "left")
-						yCursor = yCursor + lineHeight
-					end
-				end
+                        if #rewards > 0 then
+                                yCursor = yCursor + 6
+                                love.graphics.setFont(smallFont)
 
-				if #rewards > 0 then
-					if #requirements > 0 then
-						yCursor = yCursor + 4
-					end
+                                local heading = entry.rewardHeading or getRewardHeading(#rewards)
+                                local rewardColor = Theme.progressColor or Theme.textColor
+                                love.graphics.setColor(withAlpha(rewardColor, 0.95))
+                                love.graphics.print(heading .. ":", textX, yCursor)
+                                yCursor = yCursor + lineHeight
 
-					local heading = entry.rewardHeading or getRewardHeading(#rewards)
-					local rewardColor = Theme.progressColor or Theme.textColor
-					love.graphics.setColor(withAlpha(rewardColor, 0.95))
-					love.graphics.print(heading .. ":", textX, yCursor)
-					yCursor = yCursor + lineHeight
+                                love.graphics.setColor(withAlpha(rewardColor, 0.9))
+                                for _, line in ipairs(rewards) do
+                                        love.graphics.printf("• " .. line, textX, yCursor, wrapWidth, "left")
+                                        yCursor = yCursor + lineHeight
+                                end
+                        end
 
-					love.graphics.setColor(withAlpha(rewardColor, 0.9))
-					for _, line in ipairs(rewards) do
-						love.graphics.printf("• " .. line, textX, yCursor, wrapWidth, "left")
-						yCursor = yCursor + lineHeight
-					end
-				end
-			else
-				yCursor = infoY
-			end
-
-			local statusBaseline = y + CARD_HEIGHT - 32
-			local statusY = math.max(statusBaseline, yCursor + 6)
-			local statusText
-			if unlocked then
-				statusText = Localization:get("metaprogression.status_unlocked")
-			else
+                        local statusBaseline = y + cardHeight - 32
+                        local statusY = math.max(statusBaseline, yCursor + 6)
+                        local statusText
+                        if unlocked then
+                                statusText = Localization:get("metaprogression.status_unlocked")
+                        else
 				statusText = Localization:get("metaprogression.status_locked", { xp = entry.remainingXp or 0 })
 			end
 
-			love.graphics.setFont(UI.fonts.small)
-			love.graphics.setColor(borderColor)
-			love.graphics.print(statusText, textX, statusY)
-		end
-	end
+                        love.graphics.setFont(UI.fonts.small)
+                        love.graphics.setColor(borderColor)
+                        love.graphics.print(statusText, textX, statusY)
+                end
+        end
 
 	love.graphics.setScissor()
 	love.graphics.pop()
@@ -1348,7 +1427,7 @@ local function drawCosmeticsHeader(sw)
 end
 
 local function drawCosmeticsList(sw, sh)
-        local clipY = START_Y
+        local clipY = getListTop("cosmetics")
         local clipH = viewportHeight
 
         if clipH <= 0 then
@@ -1372,8 +1451,10 @@ local function drawCosmeticsList(sw, sh)
         love.graphics.push()
         love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
 
+        local listTop = clipY
+
         for index, entry in ipairs(cosmeticsEntries) do
-		local y = START_Y + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
+                local y = listTop + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
 		entry.bounds = entry.bounds or {}
 		entry.bounds.x = listX
 		entry.bounds.y = y
@@ -1564,7 +1645,7 @@ local function drawStatsSummary(sw)
         local frameWidth = totalWidth + WINDOW_PADDING_X * 2
         local frameHeight = STATS_SUMMARY_CARD_HEIGHT + WINDOW_PADDING_Y * 2
         local frameX = sw / 2 - frameWidth / 2
-        local frameY = START_Y - WINDOW_PADDING_Y
+        local frameY = viewportTop - WINDOW_PADDING_Y
         drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
                 accentHeight = WINDOW_ACCENT_HEIGHT,
                 accentInsetY = WINDOW_PADDING_Y * 0.35,
