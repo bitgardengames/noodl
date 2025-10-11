@@ -20,7 +20,7 @@ local START_Y = 220
 local CARD_WIDTH = 640
 local CARD_HEIGHT = 148
 local CARD_SPACING = 24
-local STAT_CARD_HEIGHT = 84
+local STAT_CARD_HEIGHT = 72
 local STAT_CARD_SPACING = 16
 local STAT_CARD_SHADOW_OFFSET = 6
 local STATS_SUMMARY_CARD_WIDTH = 216
@@ -39,7 +39,7 @@ local ANALOG_DEADZONE = 0.35
 local TAB_WIDTH = 220
 local TAB_HEIGHT = 52
 local TAB_SPACING = 16
-local TAB_Y = 120 - TAB_HEIGHT - 16
+local TAB_Y = 160
 
 local scrollOffset = 0
 local minScrollOffset = 0
@@ -285,91 +285,32 @@ local hiddenStats = {
         mostUpgradesInRun = true,
 }
 
+local function isHiddenStat(key)
+        if not key or key == "" then
+                return true
+        end
+
+        if hiddenStats[key] then
+                return true
+        end
+
+        if type(key) ~= "string" then
+                return true
+        end
+
+        if key:find("^dailyChallenge:") or key:find("^funChallenge:") then
+                return true
+        end
+
+        return false
+end
+
 local highlightStatOrder = {
 	"snakeScore",
 	"floorsCleared",
 	"totalApplesEaten",
 	"totalTimeAlive",
 }
-
-local statBadgeOverrides = {
-	totalApplesEaten = "lifetime",
-	totalDragonfruitEaten = "lifetime",
-	totalTimeAlive = "lifetime",
-	snakeScore = "record",
-	bestComboStreak = "record",
-	deepestFloorReached = "record",
-	longestRunDuration = "record",
-	longestFloorClearTime = "record",
-	bestFloorClearTime = "record",
-	mostApplesInRun = "record",
-	mostTilesTravelledInRun = "record",
-	mostCombosInRun = "record",
-	mostShieldsSavedInRun = "record",
-	floorsCleared = "progress",
-	sessionsPlayed = "progress",
-	dailyChallengesCompleted = "progress",
-	crashShieldsSaved = "progress",
-}
-
-local badgeLabelCache = {}
-
-local function resolveBadgeLabel(kind)
-	if not kind or kind == "" then
-		return nil
-	end
-
-	if badgeLabelCache[kind] then
-		return badgeLabelCache[kind]
-	end
-
-	local key = "metaprogression.stats_badges." .. kind
-	local label = Localization:get(key)
-	if label == key then
-		label = kind:gsub("_", " ")
-		label = label:gsub("%s+", " ")
-		label = label:gsub("^%l", string.upper)
-	end
-
-	badgeLabelCache[kind] = label
-	return label
-end
-
-local function determineStatBadgeKind(key)
-	if not key or key == "" then
-		return nil
-	end
-
-	local override = statBadgeOverrides[key]
-	if override then
-		return override
-	end
-
-	local lower = key:lower()
-	if lower:find("total", 1, true) or lower:find("lifetime", 1, true) then
-		return "lifetime"
-	elseif lower:find("average", 1, true) or lower:find("avg", 1, true) then
-		return "average"
-	elseif lower:find("best", 1, true) or lower:find("most", 1, true) or lower:find("longest", 1, true)
-		or lower:find("fastest", 1, true) or lower:find("highest", 1, true) or lower:find("deepest", 1, true) then
-		return "record"
-	elseif lower:find("run", 1, true) or lower:find("floor", 1, true) or lower:find("session", 1, true)
-		or lower:find("combo", 1, true) then
-		return "progress"
-	end
-
-	return nil
-end
-
-local function determineStatBadge(key)
-	local kind = determineStatBadgeKind(key)
-	if not kind then
-		return nil, nil
-	end
-
-	local label = resolveBadgeLabel(kind)
-	return kind, label
-end
 
 local function prettifyKey(key)
 	if not key or key == "" then
@@ -389,38 +330,32 @@ local function buildStatsEntries()
 	local labelTable = Localization:getTable("metaprogression.stat_labels") or {}
 	local seen = {}
 
-	for key, label in pairs(labelTable) do
-		if not hiddenStats[key] then
-			local value = PlayerStats:get(key)
-			local formatter = statFormatters[key]
-			local badgeKind, badgeLabel = determineStatBadge(key)
-			statsEntries[#statsEntries + 1] = {
-				id = key,
-				label = label,
-				value = value,
-				valueText = formatter and formatter(value) or formatStatValue(value),
-				badgeKind = badgeKind,
-				badgeLabel = badgeLabel,
-			}
-			seen[key] = true
-		end
-	end
+        for key, label in pairs(labelTable) do
+                if not isHiddenStat(key) then
+                        local value = PlayerStats:get(key)
+                        local formatter = statFormatters[key]
+                        statsEntries[#statsEntries + 1] = {
+                                id = key,
+                                label = label,
+                                value = value,
+                                valueText = formatter and formatter(value) or formatStatValue(value),
+                        }
+                        seen[key] = true
+                end
+        end
 
-	for key, value in pairs(PlayerStats.data or {}) do
-		if not seen[key] and not hiddenStats[key] then
-			local label = prettifyKey(key)
-			local formatter = statFormatters[key]
-			local badgeKind, badgeLabel = determineStatBadge(key)
-			statsEntries[#statsEntries + 1] = {
-				id = key,
-				label = label,
-				value = value,
-				valueText = formatter and formatter(value) or formatStatValue(value),
-				badgeKind = badgeKind,
-				badgeLabel = badgeLabel,
-			}
-		end
-	end
+        for key, value in pairs(PlayerStats.data or {}) do
+                if not seen[key] and not isHiddenStat(key) then
+                        local label = prettifyKey(key)
+                        local formatter = statFormatters[key]
+                        statsEntries[#statsEntries + 1] = {
+                                id = key,
+                                label = label,
+                                value = value,
+                                valueText = formatter and formatter(value) or formatStatValue(value),
+                        }
+                end
+        end
 
 	table.sort(statsEntries, function(a, b)
 		if a.label == b.label then
@@ -623,19 +558,6 @@ local function annotateTrackEntries()
 	for _, entry in ipairs(trackEntries or {}) do
 		annotateTrackEntry(entry)
 	end
-end
-
-local function getBadgeColor(kind)
-	local progressColor = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
-	if kind == "record" then
-		return Theme.accentTextColor or progressColor
-	elseif kind == "average" then
-		return Theme.mutedTextColor or lightenColor(progressColor, 0.35)
-	elseif kind == "progress" then
-		return lightenColor(progressColor, 0.18)
-	end
-
-	return progressColor
 end
 
 local function resolveAchievementName(id)
@@ -1567,9 +1489,9 @@ local function drawStatsSummary(sw)
 	local totalWidth = #statsHighlights * STATS_SUMMARY_CARD_WIDTH + math.max(0, #statsHighlights - 1) * STATS_SUMMARY_CARD_SPACING
 	local startX = sw / 2 - totalWidth / 2
 	local cardY = START_Y
-	local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
-	local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
-	local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
+        local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
+        local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
+        local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
 
 	for index, entry in ipairs(statsHighlights) do
 		local cardX = startX + (index - 1) * (STATS_SUMMARY_CARD_WIDTH + STATS_SUMMARY_CARD_SPACING)
@@ -1588,27 +1510,10 @@ local function drawStatsSummary(sw)
 		love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
 		love.graphics.printf(entry.label or "", cardX + 20, cardY + 18, STATS_SUMMARY_CARD_WIDTH - 40, "left")
 
-		love.graphics.setFont(UI.fonts.heading)
-		love.graphics.setColor(Theme.textColor)
-		love.graphics.printf(entry.valueText or "0", cardX + 20, cardY + 42, STATS_SUMMARY_CARD_WIDTH - 40, "left")
-
-		if entry.badgeLabel then
-			local badgeColor = getBadgeColor(entry.badgeKind)
-			love.graphics.setFont(UI.fonts.small)
-			local badgeText = entry.badgeLabel
-			local textWidth = UI.fonts.small:getWidth(badgeText)
-			local badgeHeight = UI.fonts.small:getHeight() + 10
-			local badgeWidth = textWidth + 24
-			local badgeX = cardX + 20
-			local badgeY = cardY + STATS_SUMMARY_CARD_HEIGHT - badgeHeight - 18
-
-			love.graphics.setColor(badgeColor[1], badgeColor[2], badgeColor[3], (badgeColor[4] or 1) * 0.2)
-			UI.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
-
-			love.graphics.setColor(badgeColor[1], badgeColor[2], badgeColor[3], badgeColor[4] or 1)
-			love.graphics.printf(badgeText, badgeX, badgeY + 4, badgeWidth, "center")
-		end
-	end
+                love.graphics.setFont(UI.fonts.heading)
+                love.graphics.setColor(Theme.textColor)
+                love.graphics.printf(entry.valueText or "0", cardX + 20, cardY + 42, STATS_SUMMARY_CARD_WIDTH - 40, "left")
+        end
 end
 
 local function drawStatsList(sw, sh)
@@ -1651,47 +1556,24 @@ local function drawStatsList(sw, sh)
 				love.graphics.rectangle("line", listX, y, CARD_WIDTH, STAT_CARD_HEIGHT, 12, 12)
 				love.graphics.setLineWidth(1)
 
-				love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.18)
-				love.graphics.rectangle("fill", listX + 20, y + STAT_CARD_HEIGHT - 8, CARD_WIDTH - 40, 4, 2, 2)
+                                love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.18)
+                                love.graphics.rectangle("fill", listX + 20, y + STAT_CARD_HEIGHT - 8, CARD_WIDTH - 40, 4, 2, 2)
 
-				local indicatorColor = Theme.accentTextColor or accent
-				love.graphics.setColor(indicatorColor[1], indicatorColor[2], indicatorColor[3], (indicatorColor[4] or 1) * 0.9)
-				love.graphics.circle("fill", listX + 34, y + STAT_CARD_HEIGHT / 2, 10, 24)
-				love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 1)
-				love.graphics.circle("fill", listX + 34, y + STAT_CARD_HEIGHT / 2, 4, 24)
-
-				local valueAreaX = listX + CARD_WIDTH * 0.54
-				local valueAreaWidth = CARD_WIDTH - (valueAreaX - listX) - 32
-				local labelX = listX + 58
-				local labelWidth = valueAreaX - labelX - 16
+                                local labelX = listX + 32
+                                local valueAreaX = listX + CARD_WIDTH * 0.55
+                                local valueAreaWidth = CARD_WIDTH - (valueAreaX - listX) - 32
+                                local labelWidth = valueAreaX - labelX - 16
 
 				love.graphics.setFont(UI.fonts.caption)
 				love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-				love.graphics.printf(entry.label, labelX, y + 14, labelWidth, "left")
+                                love.graphics.printf(entry.label, labelX, y + 12, labelWidth, "left")
 
-				love.graphics.setFont(UI.fonts.subtitle)
-				love.graphics.setColor(Theme.textColor)
-				love.graphics.printf(entry.valueText, valueAreaX, y + 30, valueAreaWidth, "right")
-
-				if entry.badgeLabel then
-					local badgeColor = getBadgeColor(entry.badgeKind)
-					love.graphics.setFont(UI.fonts.small)
-					local badgeText = entry.badgeLabel
-					local textWidth = UI.fonts.small:getWidth(badgeText)
-					local badgeHeight = UI.fonts.small:getHeight() + 10
-					local badgeWidth = textWidth + 28
-					local badgeX = labelX
-					local badgeY = y + STAT_CARD_HEIGHT - badgeHeight - 12
-
-					love.graphics.setColor(badgeColor[1], badgeColor[2], badgeColor[3], (badgeColor[4] or 1) * 0.18)
-					UI.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
-
-					love.graphics.setColor(badgeColor[1], badgeColor[2], badgeColor[3], badgeColor[4] or 1)
-					love.graphics.printf(badgeText, badgeX, badgeY + 4, badgeWidth, "center")
-				end
-			end
-		end
-	end
+                                love.graphics.setFont(UI.fonts.subtitle)
+                                love.graphics.setColor(Theme.textColor)
+                                love.graphics.printf(entry.valueText, valueAreaX, y + 26, valueAreaWidth, "right")
+                        end
+                end
+        end
 
 	love.graphics.setScissor()
 	love.graphics.pop()
