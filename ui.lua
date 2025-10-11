@@ -530,16 +530,10 @@ function UI.setFont(font)
 end
 
 -- Utility: draw rounded rectangle
-function UI.drawRoundedRect(x, y, w, h, r)
-	r = r or UI.spacing.buttonRadius
-	local segments = 8
-	love.graphics.rectangle("fill", x + r, y, w - 2 * r, h)
-	love.graphics.rectangle("fill", x, y + r, r, h - 2 * r)
-	love.graphics.rectangle("fill", x + w - r, y + r, r, h - 2 * r)
-	love.graphics.circle("fill", x + r, y + r, r, segments)
-	love.graphics.circle("fill", x + w - r, y + r, r, segments)
-	love.graphics.circle("fill", x + r, y + h - r, r, segments)
-	love.graphics.circle("fill", x + w - r, y + h - r, r, segments)
+function UI.drawRoundedRect(x, y, w, h, r, segments)
+        local radius = r or UI.spacing.buttonRadius
+        radius = math.min(radius, w / 2, h / 2)
+        love.graphics.rectangle("fill", x, y, w, h, radius, radius, segments)
 end
 
 function UI.drawPanel(x, y, w, h, opts)
