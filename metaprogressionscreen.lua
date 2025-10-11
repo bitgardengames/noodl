@@ -1582,8 +1582,19 @@ local function drawCosmeticsList(sw, sh)
                                 local previousLineJoin = love.graphics.getLineJoin and love.graphics.getLineJoin()
                                 local previousLineCap = love.graphics.getLineCap and love.graphics.getLineCap()
                                 love.graphics.setLineWidth(postWidth)
-                                if love.graphics.setLineJoin then
-                                        love.graphics.setLineJoin("round")
+                                local lineJoinChanged = false
+                                local function trySetLineJoin(mode)
+                                        if love.graphics.setLineJoin then
+                                                local ok = pcall(love.graphics.setLineJoin, mode)
+                                                if ok then
+                                                        lineJoinChanged = true
+                                                        return true
+                                                end
+                                        end
+                                        return false
+                                end
+                                if not trySetLineJoin("round") then
+                                        trySetLineJoin("bevel")
                                 end
                                 if love.graphics.setLineCap then
                                         love.graphics.setLineCap("round")
@@ -1592,7 +1603,7 @@ local function drawCosmeticsList(sw, sh)
                                 local arcCenterY = postY + postWidth / 2
                                 love.graphics.arc("line", "open", arcCenterX, arcCenterY, shackleWidth / 2, math.pi, 0, 28)
                                 love.graphics.setLineWidth(previousLineWidth)
-                                if love.graphics.setLineJoin and previousLineJoin then
+                                if love.graphics.setLineJoin and previousLineJoin and lineJoinChanged then
                                         love.graphics.setLineJoin(previousLineJoin)
                                 end
                                 if love.graphics.setLineCap and previousLineCap then
