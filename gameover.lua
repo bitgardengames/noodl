@@ -57,17 +57,25 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-	leftx = { slot = "horizontal" },
-	rightx = { slot = "horizontal" },
-	lefty = { slot = "vertical" },
-	righty = { slot = "vertical" },
-	[1] = { slot = "horizontal" },
-	[2] = { slot = "vertical" },
+        leftx = { slot = "horizontal" },
+        rightx = { slot = "horizontal" },
+        lefty = { slot = "vertical" },
+        righty = { slot = "vertical" },
+        [1] = { slot = "horizontal" },
+        [2] = { slot = "vertical" },
 }
 
 local function resetAnalogAxis()
-	analogAxisDirections.horizontal = nil
-	analogAxisDirections.vertical = nil
+        analogAxisDirections.horizontal = nil
+        analogAxisDirections.vertical = nil
+end
+
+local function getDayUnit(count)
+        if count == 1 then
+                return Localization:get("common.day_unit_singular")
+        end
+
+        return Localization:get("common.day_unit_plural")
 end
 
 local function handleAnalogAxis(axis, value)
@@ -695,16 +703,64 @@ function GameOver:enter(data)
 		end
 	end
 
-	self.dailyChallengeResult = DailyChallenges:applyRunResults(SessionStats)
-	local challengeBonusXP = 0
-	if self.dailyChallengeResult then
-		challengeBonusXP = math.max(0, self.dailyChallengeResult.xpAwarded or 0)
-	end
+        self.dailyChallengeResult = DailyChallenges:applyRunResults(SessionStats)
+        local challengeBonusXP = 0
+        if self.dailyChallengeResult then
+                challengeBonusXP = math.max(0, self.dailyChallengeResult.xpAwarded or 0)
+        end
 
-	self.progression = MetaProgression:grantRunPoints({
-		apples = stats.apples or 0,
-		score = stats.score or 0,
-		bonusXP = challengeBonusXP,
+        self.dailyStreakMessage = nil
+        self.dailyStreakColor = nil
+        if self.dailyChallengeResult and self.dailyChallengeResult.streakInfo then
+                local info = self.dailyChallengeResult.streakInfo
+                local streak = math.max(0, info.current or 0)
+                local best = math.max(streak, info.best or 0)
+
+                if streak > 0 then
+                        local replacements = {
+                                streak = streak,
+                                unit = getDayUnit(streak),
+                                best = best,
+                                bestUnit = getDayUnit(best),
+                        }
+
+                        local messageKey
+                        if self.dailyChallengeResult.completedNow then
+                                if info.wasNewBest then
+                                        messageKey = "gameover.daily_streak_new_best"
+                                else
+                                        messageKey = "gameover.daily_streak_extended"
+                                end
+                        elseif info.alreadyCompleted then
+                                messageKey = "gameover.daily_streak_already_complete"
+                        elseif info.needsCompletion then
+                                messageKey = "gameover.daily_streak_needs_completion"
+                        else
+                                messageKey = "gameover.daily_streak_status"
+                        end
+
+                        self.dailyStreakMessage = Localization:get(messageKey, replacements)
+
+                        if self.dailyChallengeResult.completedNow then
+                                if info.wasNewBest then
+                                        self.dailyStreakColor = Theme.accentTextColor or UI.colors.accentText or UI.colors.highlight
+                                else
+                                        self.dailyStreakColor = Theme.progressColor or UI.colors.progress or UI.colors.highlight
+                                end
+                        elseif info.alreadyCompleted then
+                                self.dailyStreakColor = UI.colors.mutedText or Theme.mutedTextColor or UI.colors.text
+                        elseif info.needsCompletion then
+                                self.dailyStreakColor = Theme.warningColor or UI.colors.warning or UI.colors.highlight
+                        else
+                                self.dailyStreakColor = UI.colors.highlight or UI.colors.text
+                        end
+                end
+        end
+
+        self.progression = MetaProgression:grantRunPoints({
+                apples = stats.apples or 0,
+                score = stats.score or 0,
+                bonusXP = challengeBonusXP,
 	})
 
 	self.xpSectionHeight = 0
@@ -1077,19 +1133,27 @@ local function drawXpSection(self, x, y, width)
 	local labelY = barY + barHeight + 14
 	local breakdown = self.progression and self.progression.breakdown or {}
 	local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
-	if bonusXP > 0 then
-		local bonusText = Localization:get("gameover.meta_progress_bonus", { bonus = bonusXP })
-		UI.drawLabel(bonusText, x, labelY, width, "center", {
-			font = fontProgressSmall,
-			color = UI.colors.highlight or UI.colors.text,
-		})
-		labelY = labelY + fontProgressSmall:getHeight() + 6
-	end
+        if bonusXP > 0 then
+                local bonusText = Localization:get("gameover.meta_progress_bonus", { bonus = bonusXP })
+                UI.drawLabel(bonusText, x, labelY, width, "center", {
+                        font = fontProgressSmall,
+                        color = UI.colors.highlight or UI.colors.text,
+                })
+                labelY = labelY + fontProgressSmall:getHeight() + 6
+        end
 
-	UI.drawLabel(totalLabel, x, labelY, width, "center", {
-		font = fontProgressSmall,
-		color = UI.colors.text,
-	})
+        if self.dailyStreakMessage then
+                UI.drawLabel(self.dailyStreakMessage, x, labelY, width, "center", {
+                        font = fontProgressSmall,
+                        color = self.dailyStreakColor or UI.colors.highlight or UI.colors.text,
+                })
+                labelY = labelY + fontProgressSmall:getHeight() + 6
+        end
+
+        UI.drawLabel(totalLabel, x, labelY, width, "center", {
+                font = fontProgressSmall,
+                color = UI.colors.text,
+        })
 
 	labelY = labelY + fontProgressSmall:getHeight() + 4
 	UI.drawLabel(remainingLabel, x, labelY, width, "center", {

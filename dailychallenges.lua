@@ -173,17 +173,17 @@ local function resolveDate(self, override)
 end
 
 local function buildStorageKey(self, challenge, date, suffix)
-	if not challenge or not challenge.id then
-		return nil
-	end
+        if not challenge or not challenge.id then
+                return nil
+        end
 
-	date = resolveDate(self, date)
-	if not date then
-		return nil
-	end
+        date = resolveDate(self, date)
+        if not date then
+                return nil
+        end
 
-	local dayValue = (date.year or 0) * 512 + (date.yday or 0)
-	return string.format("dailyChallenge:%s:%d:%s", challenge.id, dayValue, suffix)
+        local dayValue = (date.year or 0) * 512 + (date.yday or 0)
+        return string.format("dailyChallenge:%s:%d:%s", challenge.id, dayValue, suffix)
 end
 
 local function getStoredProgress(self, challenge, date)
@@ -526,20 +526,29 @@ function DailyChallenges:getDailyChallenge(date, context)
 	return self:getChallengeForIndex(index, context)
 end
 
+local function getDayValue(date)
+        if not date then
+                return nil
+        end
+
+        return (date.year or 0) * 512 + (date.yday or 0)
+end
+
 function DailyChallenges:applyRunResults(statsSource, options)
-	statsSource = statsSource or SessionStats
-	options = options or {}
+        statsSource = statsSource or SessionStats
+        options = options or {}
 
-	local date = options.date
-	local count = #self.challenges
-	if count == 0 then
-		return nil
-	end
+        local date = options.date
+        local resolvedDate = resolveDate(self, date)
+        local count = #self.challenges
+        if count == 0 then
+                return nil
+        end
 
-	local index = getChallengeIndex(self, count, date)
-	if not index then
-		return nil
-	end
+        local index = getChallengeIndex(self, count, resolvedDate)
+        if not index then
+                return nil
+        end
 
 	local challenge = self.challenges[index]
 	if not challenge then
@@ -563,43 +572,107 @@ function DailyChallenges:applyRunResults(statsSource, options)
 	runValue = math.max(0, math.floor(runValue or 0))
 
 	local goal = resolveGoal(challenge)
-	local storedProgress = getStoredProgress(self, challenge, date)
-	local best = storedProgress
-	if runValue > best then
-		best = runValue
-		setStoredProgress(self, challenge, date, best)
-	end
+        local storedProgress = getStoredProgress(self, challenge, resolvedDate)
+        local best = storedProgress
+        if runValue > best then
+                best = runValue
+                setStoredProgress(self, challenge, resolvedDate, best)
+        end
 
-	local alreadyCompleted = isStoredComplete(self, challenge, date)
-	local xpAwarded = 0
-	local completedNow = false
+        local alreadyCompleted = isStoredComplete(self, challenge, resolvedDate)
+        local xpAwarded = 0
+        local completedNow = false
+        local streakInfo = nil
 
-	if goal > 0 and runValue >= goal and not alreadyCompleted then
-		setStoredComplete(self, challenge, date, true)
-		xpAwarded = challenge.xpReward or self.defaultXpReward
-		completedNow = true
+        local previousStreak = PlayerStats:get("dailyChallengeStreak") or 0
+        local previousBest = PlayerStats:get("dailyChallengeBestStreak") or 0
+        local lastCompletionDay = PlayerStats:get("dailyChallengeLastCompletionDay") or 0
+        local dayValue = getDayValue(resolvedDate)
 
-		PlayerStats:add("dailyChallengesCompleted", 1)
+        if goal > 0 and runValue >= goal and not alreadyCompleted then
+                setStoredComplete(self, challenge, resolvedDate, true)
+                xpAwarded = challenge.xpReward or self.defaultXpReward
+                completedNow = true
 
-		local achievements = getAchievements()
-		if achievements and achievements.checkAll then
+                PlayerStats:add("dailyChallengesCompleted", 1)
+
+                local newStreak = previousStreak
+                if dayValue then
+                        if lastCompletionDay > 0 then
+                                if lastCompletionDay == dayValue then
+                                        newStreak = math.max(previousStreak, 1)
+                                elseif lastCompletionDay == dayValue - 1 then
+                                        newStreak = math.max(previousStreak, 0) + 1
+                                else
+                                        newStreak = 1
+                                end
+                        else
+                                newStreak = 1
+                        end
+
+                        PlayerStats:set("dailyChallengeLastCompletionDay", dayValue)
+                else
+                        newStreak = math.max(previousStreak, 1)
+                end
+
+                if newStreak <= 0 then
+                        newStreak = 1
+                end
+
+                PlayerStats:set("dailyChallengeStreak", newStreak)
+
+                local bestStreak = previousBest
+                if newStreak > bestStreak then
+                        bestStreak = newStreak
+                        PlayerStats:set("dailyChallengeBestStreak", bestStreak)
+                end
+
+                streakInfo = {
+                        current = newStreak,
+                        best = bestStreak,
+                        wasNewBest = newStreak > previousBest,
+                        continued = (lastCompletionDay > 0 and dayValue and (dayValue - lastCompletionDay) == 1) or false,
+                        dayValue = dayValue,
+                }
+
+                local achievements = getAchievements()
+                if achievements and achievements.checkAll then
 			local ok, err = pcall(function()
 				achievements:checkAll()
 			end)
-			if not ok then
-				print("[DailyChallenges] Failed to update achievements after daily challenge completion:", err)
-			end
-		end
-	end
+                        if not ok then
+                                print("[DailyChallenges] Failed to update achievements after daily challenge completion:", err)
+                        end
+                end
+        elseif alreadyCompleted then
+                local currentStreak = math.max(previousStreak, 0)
+                local bestStreak = math.max(previousBest, currentStreak)
+                streakInfo = {
+                        current = currentStreak,
+                        best = bestStreak,
+                        alreadyCompleted = true,
+                        dayValue = dayValue,
+                }
+        elseif previousStreak > 0 then
+                local currentStreak = math.max(previousStreak, 0)
+                local bestStreak = math.max(previousBest, currentStreak)
+                streakInfo = {
+                        current = currentStreak,
+                        best = bestStreak,
+                        needsCompletion = (dayValue ~= nil and lastCompletionDay ~= dayValue),
+                        dayValue = dayValue,
+                }
+        end
 
-	return {
-		challengeId = challenge.id,
-		goal = goal,
-		progress = best,
-		completed = alreadyCompleted or completedNow,
-		completedNow = completedNow,
-		xpAwarded = xpAwarded,
-	}
+        return {
+                challengeId = challenge.id,
+                goal = goal,
+                progress = best,
+                completed = alreadyCompleted or completedNow,
+                completedNow = completedNow,
+                xpAwarded = xpAwarded,
+                streakInfo = streakInfo,
+        }
 end
 
 return DailyChallenges
