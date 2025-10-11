@@ -390,11 +390,12 @@ local function computeLayout(sw, sh)
 	layout.panelPaddingY = BASE_PANEL_PADDING_Y
 
 	local panelPaddingY = layout.panelPaddingY
-	local summaryInsetX = math.max(28, layout.panelPaddingX * 0.75)
-	layout.summaryInsetX = summaryInsetX
+        local summaryInsetX = math.max(28, panelPaddingX)
+        layout.summaryInsetX = summaryInsetX
 
-	local summaryTopPadding = math.max(SUMMARY_PANEL_TOP_PADDING_MIN, panelPaddingY * 0.24)
-	local summaryBottomPadding = math.max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, panelPaddingY * 0.45)
+        local summaryVerticalPadding = math.max(SUMMARY_PANEL_TOP_PADDING_MIN, panelPaddingY * 0.35)
+        local summaryTopPadding = summaryVerticalPadding
+        local summaryBottomPadding = math.max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, summaryVerticalPadding)
 
 	local summaryPanel = {
 		x = panelX,
@@ -786,7 +787,7 @@ function AchievementsMenu:draw()
                 shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
         })
 
-        local highlightInsetX = math.min(summaryPanel.width * 0.25, math.max(SUMMARY_HIGHLIGHT_INSET, panelPaddingX * 0.45))
+        local highlightInsetX = math.min(summaryPanel.width * 0.25, math.max(SUMMARY_HIGHLIGHT_INSET, layout.summaryInsetX * 0.75))
         local highlightInsetTop = math.max(SUMMARY_HIGHLIGHT_INSET * 0.75, summaryPanel.topPadding * 0.6)
         local highlightInsetBottom = math.max(SUMMARY_HIGHLIGHT_INSET * 0.75, summaryPanel.bottomPadding * 0.5)
         local highlightX = summaryPanel.x + highlightInsetX
@@ -816,12 +817,12 @@ function AchievementsMenu:draw()
 
 	love.graphics.setFont(achieveFont)
 	love.graphics.setColor(titleColor)
-	love.graphics.printf(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left")
+        love.graphics.printf(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left")
 
-	local completionY = summaryTextY + summarySpacing.titleToCompletion
-	love.graphics.setFont(bodyFont)
-	love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.85))
-	love.graphics.printf(completionLabel, summaryTextX, completionY, summaryTextWidth, "left")
+        local completionY = summaryTextY + summarySpacing.titleToCompletion
+        love.graphics.setFont(bodyFont)
+        love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.85))
+        love.graphics.printf(completionLabel, summaryTextX, completionY, summaryTextWidth, "right")
 
 	local hintY = summaryTextY + summarySpacing.titleToCompletion + summarySpacing.completionToHint
 	love.graphics.setFont(smallFont)
