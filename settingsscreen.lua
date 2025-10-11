@@ -373,8 +373,18 @@ function SettingsScreen:enter()
 		end
 	end
 
-	local panelPadding = UI.spacing.panelPadding
-	local panelWidth = UI.spacing.buttonWidth + panelPadding * 2
+        local panelPadding = UI.spacing.panelPadding
+        local baseSelectionWidth = UI.spacing.buttonWidth
+        local availableWidth = sw - UI.spacing.sectionSpacing * 2 - panelPadding * 2
+        local selectionWidth = baseSelectionWidth
+
+        if availableWidth > baseSelectionWidth then
+                selectionWidth = math.min(baseSelectionWidth * 1.35, availableWidth)
+        elseif availableWidth > 0 then
+                selectionWidth = availableWidth
+        end
+
+        local panelWidth = selectionWidth + panelPadding * 2
 	local panelHeight = totalHeight + panelPadding * 2
 	local minPanelHeight = panelPadding * 2 + UI.spacing.buttonHeight
 	local desiredTopMargin = UI.spacing.sectionSpacing + titleHeight + UI.spacing.sectionSpacing
@@ -442,7 +452,7 @@ function SettingsScreen:enter()
 	for i, opt in ipairs(options) do
 		local x = panelX + panelPadding
 		local y = startY
-		local w = UI.spacing.buttonWidth
+                local w = selectionWidth
 		local spacingAfter = spacing
 		local h
 
