@@ -12,12 +12,14 @@ local function isSelectable(button)
 end
 
 function ButtonList.new()
-	return setmetatable({buttons = {}, focusIndex = nil}, ButtonList)
+        return setmetatable({buttons = {}, focusIndex = nil, focusSource = nil, lastNonMouseFocusIndex = nil}, ButtonList)
 end
 
 function ButtonList:reset(definitions)
-	self.buttons = {}
-	self.focusIndex = nil
+        self.buttons = {}
+        self.focusIndex = nil
+        self.focusSource = nil
+        self.lastNonMouseFocusIndex = nil
 
 	for index, definition in ipairs(definitions or {}) do
 		local button = {}
@@ -54,13 +56,24 @@ function ButtonList:updateFocusVisuals()
 	end
 end
 
-function ButtonList:setFocus(index)
-	if not index or not self.buttons[index] then return end
+function ButtonList:setFocus(index, source)
+        if not index or not self.buttons[index] then return end
 
-	self.focusIndex = index
-	self:updateFocusVisuals()
+        self.focusIndex = index
+        self.focusSource = source or "programmatic"
+        if self.focusSource ~= "mouse" then
+                self.lastNonMouseFocusIndex = index
+        end
+        self:updateFocusVisuals()
 
-	return self.buttons[index]
+        return self.buttons[index]
+end
+
+function ButtonList:clearFocus()
+        self.focusIndex = nil
+        self.focusSource = nil
+        self.lastNonMouseFocusIndex = nil
+        self:updateFocusVisuals()
 end
 
 function ButtonList:focusFirst()
@@ -118,13 +131,21 @@ function ButtonList:updateHover(mx, my)
 		end
 	end
 
-	if hoveredIndex then
-		self:setFocus(hoveredIndex)
-	else
-		self:updateFocusVisuals()
-	end
+        if hoveredIndex then
+                self:setFocus(hoveredIndex, "mouse")
+        else
+                if self.focusSource == "mouse" then
+                        if self.lastNonMouseFocusIndex and self.buttons[self.lastNonMouseFocusIndex] then
+                                self:setFocus(self.lastNonMouseFocusIndex)
+                        else
+                                self:clearFocus()
+                        end
+                else
+                        self:updateFocusVisuals()
+                end
+        end
 
-	return hovered
+        return hovered
 end
 
 function ButtonList:mousepressed(x, y, button)
