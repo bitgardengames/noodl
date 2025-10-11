@@ -1227,12 +1227,24 @@ local function drawSummaryPanel(sw)
         local panelY = EXPERIENCE_SUMMARY_TOP
         local padding = 24
         local border = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+        local accentColor = Theme.progressColor or Theme.accentTextColor or {0.6, 0.8, 0.6, 1}
+        local mutedColor = withAlpha(Theme.mutedTextColor or Theme.textColor, 0.85)
 
         drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
                 accentHeight = 0,
                 accentInsetY = WINDOW_PADDING_Y * 0.5,
                 accentAlpha = 0.32,
         })
+
+        local glow = withAlpha(lightenColor(accentColor, 0.45), 0.22)
+        local secondaryGlow = withAlpha(lightenColor(accentColor, 0.25), 0.12)
+        love.graphics.setColor(secondaryGlow)
+        love.graphics.ellipse("fill", panelX + contentWidth * 0.7, panelY + contentHeight * 0.55, contentWidth * 0.35, contentHeight * 0.55)
+        love.graphics.setColor(glow)
+        love.graphics.ellipse("fill", panelX + contentWidth * 0.38, panelY + contentHeight * 0.2, contentWidth * 0.28, contentHeight * 0.32)
+
+        love.graphics.setColor(1, 1, 1, 0.06)
+        love.graphics.rectangle("fill", panelX + 16, panelY + 12, contentWidth - 32, contentHeight * 0.32)
 
         local levelText = Localization:get("metaprogression.level_label", { level = progressionState.level or 1 })
         local totalText = Localization:get("metaprogression.total_xp", { total = progressionState.totalExperience or 0 })
@@ -1242,49 +1254,132 @@ local function drawSummaryPanel(sw)
         local xpForNext = progressionState.xpForNext or 0
         local progressRatio = 1
 
-	if xpForNext <= 0 then
-		progressLabel = Localization:get("metaprogression.max_level")
-		progressRatio = 1
-	else
-		local remaining = math.max(0, xpForNext - xpIntoLevel)
-		progressLabel = Localization:get("metaprogression.next_unlock", { remaining = remaining })
-		if xpForNext > 0 then
-			progressRatio = math.min(1, math.max(0, xpIntoLevel / xpForNext))
-		else
-			progressRatio = 0
-		end
-	end
+        if xpForNext <= 0 then
+                progressLabel = Localization:get("metaprogression.max_level")
+                progressRatio = 1
+        else
+                local remaining = math.max(0, xpForNext - xpIntoLevel)
+                progressLabel = Localization:get("metaprogression.next_unlock", { remaining = remaining })
+                if xpForNext > 0 then
+                        progressRatio = math.min(1, math.max(0, xpIntoLevel / xpForNext))
+                else
+                        progressRatio = 0
+                end
+        end
+
+        local circleRadius = 52
+        local circleCenterX = panelX + padding + circleRadius
+        local circleCenterY = panelY + contentHeight / 2
+        local outerRadius = circleRadius + 8
+
+        love.graphics.setColor(withAlpha(darkenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.15), 0.92))
+        love.graphics.circle("fill", circleCenterX, circleCenterY, outerRadius)
+
+        local arcEndAngle = -math.pi / 2 + (math.pi * 2) * progressRatio
+
+        love.graphics.setColor(withAlpha(glow, 1))
+        love.graphics.setLineWidth(8)
+        love.graphics.arc("line", "open", circleCenterX, circleCenterY, outerRadius, -math.pi / 2, arcEndAngle)
+        love.graphics.setLineWidth(1)
+
+        love.graphics.setColor(withAlpha(lightenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.18), 0.96))
+        love.graphics.circle("fill", circleCenterX, circleCenterY, circleRadius)
+
+        love.graphics.setColor(withAlpha(border, 0.85))
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", circleCenterX, circleCenterY, circleRadius)
+        love.graphics.setLineWidth(1)
+
+        local levelValue = formatInteger(progressionState.level or 1)
+        love.graphics.setFont(UI.fonts.timer)
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.printf(levelValue, circleCenterX - circleRadius, circleCenterY - UI.fonts.timer:getHeight() / 2 - 4, circleRadius * 2, "center")
+
+        local infoX = circleCenterX + circleRadius + padding
+        local infoY = panelY + padding
 
         love.graphics.setFont(UI.fonts.button)
         love.graphics.setColor(Theme.textColor)
-        love.graphics.print(levelText, panelX + padding, panelY + padding)
+        love.graphics.print(levelText, infoX, infoY)
+        infoY = infoY + UI.fonts.button:getHeight() + 6
+
+        love.graphics.setFont(UI.fonts.heading)
+        love.graphics.setColor(withAlpha(Theme.textColor, 0.95))
+        love.graphics.print(totalText, infoX, infoY)
+        infoY = infoY + UI.fonts.heading:getHeight() + 4
 
         love.graphics.setFont(UI.fonts.body)
-        love.graphics.print(totalText, panelX + padding, panelY + padding + 34)
-        love.graphics.print(progressLabel, panelX + padding, panelY + padding + 60)
+        love.graphics.setColor(withAlpha(accentColor, 0.95))
+        love.graphics.print(progressLabel, infoX, infoY)
+        infoY = infoY + UI.fonts.body:getHeight() + 6
 
         if xpForNext > 0 then
                 local progressText = string.format("%s / %s XP", formatInteger(xpIntoLevel), formatInteger(xpForNext))
                 love.graphics.setFont(UI.fonts.caption)
-                local muted = Theme.mutedTextColor or withAlpha(Theme.textColor, 0.85)
-                love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 0.85)
-                love.graphics.print(progressText, panelX + padding, panelY + padding + 88)
+                love.graphics.setColor(mutedColor)
+                love.graphics.print(progressText, infoX, infoY)
+        else
+                love.graphics.setFont(UI.fonts.caption)
+                love.graphics.setColor(mutedColor)
+                love.graphics.print(Localization:get("metaprogression.max_level"), infoX, infoY)
         end
 
-        local barX = panelX + padding
+        local barX = infoX
         local barY = panelY + contentHeight - padding - 24
-        local barWidth = contentWidth - padding * 2
+        local barWidth = contentWidth - (barX - panelX) - padding
         local barHeight = 18
+        local barRadius = math.min(9, barHeight / 2)
 
-        love.graphics.setColor(0, 0, 0, 0.35)
-        UI.drawRoundedRect(barX, barY, barWidth, barHeight, 9)
+        local function drawRoundedSegment(x, y, width, height, radius)
+                if width <= 0 or height <= 0 then
+                        return
+                end
 
-	love.graphics.setColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
-	UI.drawRoundedRect(barX, barY, barWidth * progressRatio, barHeight, 9)
+                local clampedRadius = math.min(radius or 0, width / 2, height / 2)
+                UI.drawRoundedRect(x, y, width, height, clampedRadius)
+        end
 
-	love.graphics.setColor(border)
-	love.graphics.setLineWidth(1.5)
-	love.graphics.rectangle("line", barX, barY, barWidth, barHeight, 9, 9)
+        love.graphics.setColor(withAlpha(darkenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.35), 0.92))
+        drawRoundedSegment(barX, barY, barWidth, barHeight, barRadius)
+
+        local fillWidth = math.max(0, barWidth * progressRatio)
+        if fillWidth > 0 then
+                local fillColor = withAlpha(lightenColor(accentColor, 0.2), 0.95)
+                love.graphics.setColor(fillColor)
+                drawRoundedSegment(barX, barY, fillWidth, barHeight, barRadius)
+
+                love.graphics.setColor(withAlpha(lightenColor(fillColor, 0.25), 0.55))
+                drawRoundedSegment(barX, barY, fillWidth, barHeight * 0.55, barRadius)
+        end
+
+        love.graphics.setColor(withAlpha(border, 0.9))
+        love.graphics.setLineWidth(1.6)
+        love.graphics.rectangle("line", barX, barY, barWidth, barHeight, barRadius, barRadius)
+        love.graphics.setLineWidth(1)
+
+        if xpForNext > 0 then
+                local percent = math.floor(progressRatio * 100 + 0.5)
+                local badgeText = string.format("%d%%", percent)
+                love.graphics.setFont(UI.fonts.caption)
+                local badgePaddingX = 12
+                local badgePaddingY = 6
+                local badgeWidth = UI.fonts.caption:getWidth(badgeText) + badgePaddingX * 2
+                local badgeHeight = UI.fonts.caption:getHeight() + badgePaddingY * 2
+                local badgeX = barX + barWidth - badgeWidth
+                local badgeY = barY - badgeHeight - 6
+
+                love.graphics.setColor(withAlpha(lightenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.12), 0.9))
+                UI.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
+
+                love.graphics.setColor(withAlpha(accentColor, 0.95))
+                love.graphics.printf(badgeText, badgeX, badgeY + badgePaddingY - 2, badgeWidth, "center")
+
+                love.graphics.setColor(withAlpha(glow, 0.7))
+                love.graphics.circle("fill", badgeX + badgeWidth * 0.25, badgeY + badgeHeight * 0.35, 3)
+                love.graphics.circle("fill", badgeX + badgeWidth * 0.72, badgeY + badgeHeight * 0.65, 2)
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function drawTrack(sw, sh)
