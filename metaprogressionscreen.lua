@@ -1572,32 +1572,21 @@ local function drawCosmeticsList(sw, sh)
                                 local shackleWidth = lockWidth * 0.72
                                 local postWidth = math.max(3, lockWidth * 0.16)
                                 local postHeight = math.max(lockHeight * 0.7, lockHeight - 5)
-                                local postRadius = postWidth / 2
                                 local shackleX = previewX + (previewW - shackleWidth) / 2
                                 local postY = lockY - postHeight
-                                love.graphics.rectangle("fill", shackleX, postY, postWidth, postHeight, postRadius, postRadius)
-                                love.graphics.rectangle("fill", shackleX + shackleWidth - postWidth, postY, postWidth, postHeight, postRadius, postRadius)
 
-                                local previousLineWidth = love.graphics.getLineWidth()
-                                local previousLineJoin = love.graphics.getLineJoin and love.graphics.getLineJoin()
-                                local previousLineCap = love.graphics.getLineCap and love.graphics.getLineCap()
-                                love.graphics.setLineWidth(postWidth)
-                                if love.graphics.setLineJoin then
-                                        love.graphics.setLineJoin("round")
-                                end
-                                if love.graphics.setLineCap then
-                                        love.graphics.setLineCap("round")
-                                end
-                                local arcCenterX = previewX + previewW / 2
-                                local arcCenterY = postY + postWidth / 2
-                                love.graphics.arc("line", "open", arcCenterX, arcCenterY, shackleWidth / 2, math.pi, 0, 28)
-                                love.graphics.setLineWidth(previousLineWidth)
-                                if love.graphics.setLineJoin and previousLineJoin then
-                                        love.graphics.setLineJoin(previousLineJoin)
-                                end
-                                if love.graphics.setLineCap and previousLineCap then
-                                        love.graphics.setLineCap(previousLineCap)
-                                end
+                                -- vertical posts
+                                love.graphics.rectangle("fill", shackleX, postY, postWidth, postHeight)
+                                love.graphics.rectangle("fill", shackleX + shackleWidth - postWidth, postY, postWidth, postHeight)
+
+                                -- straight top bar with rounded corners similar to the snake styling
+                                local topCenterY = postY
+                                local topRectX = shackleX + postWidth / 2
+                                local topRectWidth = shackleWidth - postWidth
+                                local topRectY = topCenterY - postWidth / 2
+                                love.graphics.rectangle("fill", topRectX, topRectY, topRectWidth, postWidth)
+                                love.graphics.circle("fill", topRectX, topCenterY, postWidth / 2)
+                                love.graphics.circle("fill", topRectX + topRectWidth, topCenterY, postWidth / 2)
 
                                 local keyholeWidth = math.max(4, lockWidth * 0.18)
                                 local keyholeHeight = math.max(6, lockHeight * 0.45)
