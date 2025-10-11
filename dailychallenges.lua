@@ -458,26 +458,16 @@ DailyChallenges.challenges = {
 			}
 		end,
 		xpReward = 85,
-	},
-	{
-		id = "streak_pusher",
-		titleKey = "menu.daily.streak_pusher.title",
-		descriptionKey = "menu.daily.streak_pusher.description",
-		sessionStat = "fruitWithoutTurning",
-		goal = 8,
-		progressKey = "menu.daily.streak_pusher.progress",
-		completeKey = "menu.daily.streak_pusher.complete",
-		xpReward = 70,
-	},
-	{
-		id = "floor_conqueror",
-		titleKey = "menu.daily.floor_conqueror.title",
-		descriptionKey = "menu.daily.floor_conqueror.description",
-		sessionStat = "floorsCleared",
-		goal = 8,
-		xpReward = 100,
-	},
-	{
+		},
+		{
+			id = "floor_conqueror",
+			titleKey = "menu.daily.floor_conqueror.title",
+			descriptionKey = "menu.daily.floor_conqueror.description",
+			sessionStat = "floorsCleared",
+			goal = 8,
+			xpReward = 100,
+		},
+		{
 		id = "depth_delver",
 		titleKey = "menu.daily.depth_delver.title",
 		descriptionKey = "menu.daily.depth_delver.description",
