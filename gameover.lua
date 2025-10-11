@@ -540,8 +540,8 @@ function GameOver:updateLayoutMetrics()
 	local badgeHeight = self.isNewHighScore and (fontBadge:getHeight() + 18) or 0
 	local achievementsHeight = (#(self.achievementsEarned or {}) > 0) and (fontSmall:getHeight() + 12) or 0
 
-	local statCards = 3
-	local statLayout = calculateStatLayout(contentWidth, padding, statCards)
+        local statCards = 2
+        local statLayout = calculateStatLayout(contentWidth, padding, statCards)
 
 	local xpHeight = 0
 	if self.progressionAnimation then
@@ -1141,18 +1141,16 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
 		textY = textY + fontBadge:getHeight() + 18
 	end
 
-	local cardY = textY
-	local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
-	local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Apples")
-	local totalLabel = getLocalizedOrFallback("gameover.stats_total_label", "Lifetime Apples")
-	local statLayout = self.statLayout or calculateStatLayout(contentWidth, padding, 3)
-	local availableWidth = statLayout.availableWidth or (contentWidth - padding * 2)
-	local cardIndex = 1
-	local statCards = {
-		{ label = bestLabel, value = tostring(stats.highScore or 0) },
-		{ label = applesLabel, value = tostring(stats.apples or 0) },
-		{ label = totalLabel, value = tostring(stats.totalApples or 0) },
-	}
+        local cardY = textY
+        local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
+        local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Apples")
+        local statLayout = self.statLayout or calculateStatLayout(contentWidth, padding, 2)
+        local availableWidth = statLayout.availableWidth or (contentWidth - padding * 2)
+        local cardIndex = 1
+        local statCards = {
+                { label = bestLabel, value = tostring(stats.highScore or 0) },
+                { label = applesLabel, value = tostring(stats.apples or 0) },
+        }
 
 	local statSpacing = statLayout.spacing or getStatCardSpacing()
 	local statCardHeight = getStatCardHeight()
