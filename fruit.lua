@@ -242,15 +242,15 @@ function Fruit:update(dt)
 		active.scaleY = 1 - k
 		active.shadow = 1.0
 		active.alpha  = 1.0
-		if t >= 1 then
-			active.phase = "idle"
-			active.timer = 0
-			active.scaleX, active.scaleY = 1, 1
-			active.shadow = 1.0
-			active.idleTimer = love.math.random() * math.pi * 2
-			active.sparkleTimer = love.math.random(IDLE_SPARKLE_MIN_DELAY, IDLE_SPARKLE_MAX_DELAY)
-		end
-	end
+                if t >= 1 then
+                        active.phase = "idle"
+                        active.timer = 0
+                        active.scaleX, active.scaleY = 1, 1
+                        active.shadow = 1.0
+                        -- Intentionally keep active.idleTimer unchanged so the bob animation stays continuous
+                        active.sparkleTimer = love.math.random(IDLE_SPARKLE_MIN_DELAY, IDLE_SPARKLE_MAX_DELAY)
+                end
+        end
 
 	if active.phase == "idle" or active.phase == "wobble" then
 		active.idleTimer = (active.idleTimer or 0) + dt
