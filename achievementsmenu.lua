@@ -775,22 +775,22 @@ function AchievementsMenu:draw()
 	local summarySpacing = layout.summarySpacing
 	local summaryProgressHeight = layout.summaryProgressHeight
 
-	love.graphics.push("all")
-	love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 0.35) * 0.85)
-	UI.drawRoundedRect(summaryPanel.x + 10, summaryPanel.y + 12, summaryPanel.width, summaryPanel.height, 24)
+        love.graphics.push("all")
+        UI.drawPanel(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, {
+                radius = 24,
+                fill = panelColor,
+                alpha = 0.95,
+                borderColor = panelBorder,
+                borderWidth = 2,
+                highlight = false,
+                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
+        })
 
-	love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * 0.95)
-	UI.drawRoundedRect(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, 24)
-
-	love.graphics.setColor(panelBorder[1], panelBorder[2], panelBorder[3], panelBorder[4] or 1)
-	love.graphics.setLineWidth(2)
-	love.graphics.rectangle("line", summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, 24, 24)
-
-	local highlightInsetX = math.min(summaryPanel.width * 0.25, math.max(SUMMARY_HIGHLIGHT_INSET, panelPaddingX * 0.45))
-	local highlightInsetTop = math.max(SUMMARY_HIGHLIGHT_INSET * 0.75, summaryPanel.topPadding * 0.6)
-	local highlightInsetBottom = math.max(SUMMARY_HIGHLIGHT_INSET * 0.75, summaryPanel.bottomPadding * 0.5)
-	local highlightX = summaryPanel.x + highlightInsetX
-	local highlightY = summaryPanel.y + highlightInsetTop
+        local highlightInsetX = math.min(summaryPanel.width * 0.25, math.max(SUMMARY_HIGHLIGHT_INSET, panelPaddingX * 0.45))
+        local highlightInsetTop = math.max(SUMMARY_HIGHLIGHT_INSET * 0.75, summaryPanel.topPadding * 0.6)
+        local highlightInsetBottom = math.max(SUMMARY_HIGHLIGHT_INSET * 0.75, summaryPanel.bottomPadding * 0.5)
+        local highlightX = summaryPanel.x + highlightInsetX
+        local highlightY = summaryPanel.y + highlightInsetTop
 	local highlightW = math.max(0, summaryPanel.width - highlightInsetX * 2)
 	local highlightH = math.max(0, summaryPanel.height - highlightInsetTop - highlightInsetBottom)
 	if highlightW > 0 and highlightH > 0 then
@@ -835,17 +835,17 @@ function AchievementsMenu:draw()
 	love.graphics.setColor(Theme.progressColor or {0.6, 0.9, 0.4, 1})
 	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
 
-	love.graphics.push("all")
-	love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 0.35) * 0.9)
-	UI.drawRoundedRect(panelX + 10, panelY + 12, panelWidth, panelHeight, 28)
-
-	love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * 0.95)
-	UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 28)
-
-	love.graphics.setColor(panelBorder[1], panelBorder[2], panelBorder[3], panelBorder[4] or 1)
-	love.graphics.setLineWidth(2)
-	love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 28, 28)
-	love.graphics.pop()
+        love.graphics.push("all")
+        UI.drawPanel(panelX, panelY, panelWidth, panelHeight, {
+                radius = 28,
+                fill = panelColor,
+                alpha = 0.95,
+                borderColor = panelBorder,
+                borderWidth = 2,
+                highlight = false,
+                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
+        })
+        love.graphics.pop()
 
 	local scissorTop = layout.scissorTop
 	local scissorBottom = layout.scissorBottom
@@ -890,15 +890,16 @@ function AchievementsMenu:draw()
 				borderTint = Theme.panelBorder or accentBorder
 			end
 
-			love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 0.3) * 0.9)
-			UI.drawRoundedRect(x + 6, cardY + 8, cardWidth, cardHeight, 18)
-
-			love.graphics.setColor(cardBase)
-			UI.drawRoundedRect(x, cardY, cardWidth, cardHeight, 18)
-
-			love.graphics.setColor(borderTint)
-			love.graphics.setLineWidth(2)
-			love.graphics.rectangle("line", x, cardY, cardWidth, cardHeight, 18, 18)
+                        love.graphics.push("all")
+                        UI.drawPanel(x, cardY, cardWidth, cardHeight, {
+                                radius = 18,
+                                fill = cardBase,
+                                borderColor = borderTint,
+                                borderWidth = 2,
+                                highlight = false,
+                                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
+                        })
+                        love.graphics.pop()
 
 			if icon then
 				local iconX, iconY = x + 16, cardY + 18
