@@ -1152,10 +1152,10 @@ function ProgressionScreen:enter()
 
 	buttonList:reset(buttons)
 
-	local _, activeIndex = findTab(activeTab)
-	if activeIndex then
-		buttonList:setFocus(activeIndex)
-	end
+        local _, activeIndex = findTab(activeTab)
+        if activeIndex then
+                buttonList:setFocus(activeIndex, nil, true)
+        end
 
 	scrollOffset = 0
 	updateScrollBounds(sw, sh)

@@ -211,7 +211,7 @@ local function buildButtons(sw, sh)
 
         for index, btn in ipairs(buttons) do
                 if btn.floor == defaultFloor then
-                        buttonList:setFocus(index)
+                        buttonList:setFocus(index, nil, true)
                         break
                 end
         end
