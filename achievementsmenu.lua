@@ -21,9 +21,7 @@ local displayBlocks = {}
 local achievementRewardText = {}
 
 local START_Y = 180
-local SUMMARY_SPACING_TITLE_COMPLETION = 32
-local SUMMARY_SPACING_COMPLETION_HINT = 26
-local SUMMARY_SPACING_HINT_BAR = 16
+local SUMMARY_SPACING_TEXT_PROGRESS = 32
 local SUMMARY_PROGRESS_BAR_HEIGHT = 12
 local SUMMARY_PANEL_TOP_PADDING_MIN = 12
 local SUMMARY_PANEL_BOTTOM_PADDING_MIN = 24
@@ -407,14 +405,12 @@ local function computeLayout(sw, sh)
 
         local progressHeight = SUMMARY_PROGRESS_BAR_HEIGHT
         local summaryLineHeight = UI.fonts.achieve:getHeight()
-        local summaryHintSpacing = SUMMARY_SPACING_TITLE_COMPLETION
-        local summaryHintHeight = UI.fonts.small:getHeight()
-        local summaryCompletionSpacing = SUMMARY_SPACING_COMPLETION_HINT
+        local summaryProgressSpacing = SUMMARY_SPACING_TEXT_PROGRESS
 
         layout.summaryLineHeight = summaryLineHeight
         layout.summaryProgressHeight = progressHeight
 
-        local summaryContentHeight = summaryLineHeight + summaryHintSpacing + summaryHintHeight + summaryCompletionSpacing + SUMMARY_SPACING_HINT_BAR + progressHeight
+        local summaryContentHeight = summaryLineHeight + summaryProgressSpacing + progressHeight
         local summaryHeight = summaryTopPadding + summaryContentHeight + summaryBottomPadding
 
         summaryPanel.height = summaryHeight
@@ -423,8 +419,7 @@ local function computeLayout(sw, sh)
         layout.summaryTextX = panelX + summaryInsetX
         layout.summaryTextWidth = layout.panelWidth - summaryInsetX * 2
         layout.summaryTextY = summaryPanel.y + summaryTopPadding
-        layout.summaryHintY = layout.summaryTextY + summaryLineHeight + summaryHintSpacing
-        layout.summaryProgressY = layout.summaryHintY + summaryHintHeight + summaryCompletionSpacing + SUMMARY_SPACING_HINT_BAR
+        layout.summaryProgressY = layout.summaryTextY + summaryLineHeight + summaryProgressSpacing
 
         local highlightInsetX = math.max(SUMMARY_HIGHLIGHT_INSET, summaryInsetX * 0.6)
         local highlightInsetY = math.max(SUMMARY_HIGHLIGHT_INSET, math.min(summaryTopPadding, summaryBottomPadding) * 0.75)
@@ -815,20 +810,12 @@ function AchievementsMenu:draw()
 	local completionLabel = Localization:get("achievements.summary.completion", {
 		percent = completionPercent,
 	})
-        local summaryHint = Localization:get("achievements.summary.hint")
-
         local achieveFont = UI.fonts.achieve
-        local smallFont = UI.fonts.small
 
         love.graphics.setFont(achieveFont)
         love.graphics.setColor(titleColor)
         love.graphics.printf(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left")
         love.graphics.printf(completionLabel, summaryTextX, summaryTextY, summaryTextWidth, "right")
-
-        local hintY = layout.summaryHintY or (summaryTextY + summaryLineHeight + SUMMARY_SPACING_TITLE_COMPLETION)
-        love.graphics.setFont(smallFont)
-        love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.65))
-        love.graphics.printf(summaryHint, summaryTextX, hintY, summaryTextWidth, "left")
 
         local progressBarY = layout.summaryProgressY
 	love.graphics.setColor(darkenColor(panelColor, 0.4))
