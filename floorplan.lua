@@ -84,7 +84,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.24,
 		sawSpeedMult = 1.08,
 		sawSpinMult = 1.0,
-		sawStall = 0.9,
+                sawStall = 0,
 	},
         [2] = {
                 fruitGoal = 16,
@@ -95,7 +95,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.26,
 		sawSpeedMult = 1.14,
 		sawSpinMult = 1.06,
-		sawStall = 0.84,
+                sawStall = 0,
 	},
         [3] = {
                 fruitGoal = 20,
@@ -106,7 +106,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.28,
 		sawSpeedMult = 1.2,
 		sawSpinMult = 1.12,
-		sawStall = 0.78,
+                sawStall = 0,
 	},
         [4] = {
                 fruitGoal = 24,
@@ -117,7 +117,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.3,
 		sawSpeedMult = 1.26,
 		sawSpinMult = 1.18,
-		sawStall = 0.72,
+                sawStall = 0,
 	},
         [5] = {
                 fruitGoal = 28,
@@ -128,7 +128,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.33,
 		sawSpeedMult = 1.32,
 		sawSpinMult = 1.24,
-		sawStall = 0.66,
+                sawStall = 0,
 	},
         [6] = {
                 fruitGoal = 32,
@@ -139,7 +139,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.36,
 		sawSpeedMult = 1.38,
 		sawSpinMult = 1.3,
-		sawStall = 0.6,
+                sawStall = 0,
 	},
         [7] = {
                 fruitGoal = 35,
@@ -150,7 +150,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.39,
 		sawSpeedMult = 1.44,
 		sawSpinMult = 1.36,
-		sawStall = 0.54,
+                sawStall = 0,
 	},
         [8] = {
                 fruitGoal = 38,
@@ -161,7 +161,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.42,
 		sawSpeedMult = 1.5,
 		sawSpinMult = 1.42,
-		sawStall = 0.48,
+                sawStall = 0,
 	},
         [9] = {
                 fruitGoal = 41,
@@ -172,7 +172,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.45,
 		sawSpeedMult = 1.56,
 		sawSpinMult = 1.48,
-		sawStall = 0.44,
+                sawStall = 0,
 	},
         [10] = {
                 fruitGoal = 44,
@@ -183,7 +183,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.48,
 		sawSpeedMult = 1.62,
 		sawSpinMult = 1.54,
-		sawStall = 0.4,
+                sawStall = 0,
 	},
         [11] = {
                 fruitGoal = 47,
@@ -194,7 +194,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.5,
 		sawSpeedMult = 1.68,
 		sawSpinMult = 1.6,
-		sawStall = 0.36,
+                sawStall = 0,
 	},
         [12] = {
                 fruitGoal = 50,
@@ -205,7 +205,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.52,
 		sawSpeedMult = 1.74,
 		sawSpinMult = 1.66,
-		sawStall = 0.32,
+                sawStall = 0,
 	},
         [13] = {
                 fruitGoal = 52,
@@ -216,7 +216,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.54,
 		sawSpeedMult = 1.8,
 		sawSpinMult = 1.72,
-		sawStall = 0.28,
+                sawStall = 0,
 	},
         [14] = {
                 fruitGoal = 54,
@@ -227,7 +227,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.56,
 		sawSpeedMult = 1.84,
 		sawSpinMult = 1.76,
-		sawStall = 0.24,
+                sawStall = 0,
 	},
         [15] = {
                 fruitGoal = 56,
@@ -238,7 +238,7 @@ local BASELINE_PLAN = {
 		rockSpawnChance = 0.58,
 		sawSpeedMult = 1.88,
 		sawSpinMult = 1.8,
-		sawStall = 0.2,
+                sawStall = 0,
 	},
 }
 
@@ -288,7 +288,7 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
 	context.rockSpawnChance = math.min(0.68, (lastPlan.rockSpawnChance or 0.58) + extraFloors * 0.015)
 	context.sawSpeedMult = math.min(1.95, (lastPlan.sawSpeedMult or 1.88) + extraFloors * 0.03)
 	context.sawSpinMult = math.min(1.88, (lastPlan.sawSpinMult or 1.8) + extraFloors * 0.025)
-	context.sawStall = math.max(0.14, (lastPlan.sawStall or 0.2) - extraFloors * 0.02)
+        context.sawStall = 0
 
 	return context
 end
