@@ -492,7 +492,8 @@ local function drawWindowFrame(x, y, width, height, options)
         local panelColor = options.baseColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
         local borderColor = options.borderColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
         local accentColor = options.accentColor or Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
-        local shadowAlpha = options.shadowAlpha or 0.32
+        local shadowColor = options.shadowColor or Theme.shadowColor or {0, 0, 0, 0.45}
+        local shadowAlpha = options.shadowAlpha
         local baseAlpha = options.baseAlpha or 0.94
         local borderAlpha = options.borderAlpha or 0.85
         local accentAlpha = options.accentAlpha or 0.28
@@ -500,7 +501,7 @@ local function drawWindowFrame(x, y, width, height, options)
         local accentInsetX = options.accentInsetX or (WINDOW_PADDING_X * 0.6)
         local accentInsetY = options.accentInsetY or (WINDOW_PADDING_Y * 0.35)
 
-        love.graphics.setColor(0, 0, 0, shadowAlpha)
+        love.graphics.setColor(withAlpha(shadowColor, shadowAlpha))
         UI.drawRoundedRect(x + 4, y + WINDOW_SHADOW_OFFSET, width, height, WINDOW_CORNER_RADIUS + 2)
 
         local fill = withAlpha(panelColor, baseAlpha)
