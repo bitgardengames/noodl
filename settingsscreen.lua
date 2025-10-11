@@ -54,95 +54,10 @@ local minScrollOffset = 0
 local viewportHeight = 0
 local contentHeight = 0
 local layout = {
-        panel = { x = 0, y = 0, w = 0, h = 0 },
-        title = { y = 0, height = 0 },
-        margins = { top = 0, bottom = 0 },
-        panelPadding = nil,
-        cardPadding = nil,
-        cardSpacing = nil,
+	panel = { x = 0, y = 0, w = 0, h = 0 },
+	title = { y = 0, height = 0 },
+	margins = { top = 0, bottom = 0 },
 }
-
-local function clamp01(value)
-        if value < 0 then return 0 end
-        if value > 1 then return 1 end
-        return value
-end
-
-local scratchColor = { 0, 0, 0, 1 }
-
-local function mixColors(base, accent, amount)
-        if not base then
-                return accent
-        end
-        if not accent then
-                return base
-        end
-
-        local t = clamp01(amount or 0)
-        local br, bg, bb, ba = base[1] or 0, base[2] or 0, base[3] or 0, base[4] or 1
-        local ar, ag, ab, aa = accent[1] or 0, accent[2] or 0, accent[3] or 0, accent[4] or 1
-
-        scratchColor[1] = br + (ar - br) * t
-        scratchColor[2] = bg + (ag - bg) * t
-        scratchColor[3] = bb + (ab - bb) * t
-        scratchColor[4] = ba + (aa - ba) * t
-
-        return scratchColor
-end
-
-local function drawSettingCard(btn, label, valueText)
-        local padding = btn.padding or layout.cardPadding or 18
-        local state = btn.id and UI.buttons[btn.id]
-        local displayHover = btn.hovered or btn.focused
-        if state then
-                if displayHover and not state.wasHovered then
-                        Audio:playSound("hover")
-                end
-                state.wasHovered = displayHover and true or false
-                state.hoverTarget = displayHover and 1 or 0
-        end
-
-        local hoverAmount = 0
-        local focusAmount = 0
-        local glowAmount = 0
-        if state then
-                hoverAmount = state.hoverAnim or 0
-                focusAmount = state.focusAnim or 0
-                glowAmount = state.glow or 0
-        end
-
-        local baseFill = UI.colors.panel or Theme.panelColor
-        local accentFill = UI.colors.buttonHover or UI.colors.highlight
-        local mixAmount = math.max(hoverAmount, focusAmount * 0.6, glowAmount * 0.5)
-        local fill = mixColors(baseFill, accentFill, mixAmount * 0.5)
-
-        UI.drawPanel(btn.x, btn.y, btn.w, btn.h, {
-                radius = UI.spacing.buttonRadius + 4,
-                shadowOffset = math.max(2, math.floor((UI.spacing.shadowOffset or 6) * 0.6)),
-                fill = fill,
-                borderColor = UI.colors.panelBorder or UI.colors.border,
-                focused = btn.focused,
-                focusAlpha = 1,
-                focusColor = Theme.highlightColor or UI.colors.highlight,
-        })
-
-        local labelFont = UI.fonts.button
-        local labelHeight = (labelFont and labelFont:getHeight()) or 0
-        local labelY = btn.y + math.max(0, (btn.h - labelHeight) * 0.5)
-        UI.drawLabel(label, btn.x + padding, labelY, btn.w - padding * 2, "left", {
-                fontKey = "button",
-        })
-
-        if valueText and valueText ~= "" then
-                local valueFont = UI.fonts.body
-                local valueHeight = (valueFont and valueFont:getHeight()) or 0
-                local valueY = btn.y + math.max(0, (btn.h - valueHeight) * 0.5)
-                UI.drawLabel(valueText, btn.x + padding, valueY, btn.w - padding * 2, "right", {
-                        fontKey = "body",
-                        color = UI.colors.subtleText,
-                })
-        end
-end
 
 local function isButtonFocusable(btn)
 	return btn and btn.focusable ~= false
@@ -247,12 +162,12 @@ function SettingsScreen:updateButtonPositions()
 end
 
 function SettingsScreen:updateScrollBounds()
-        local panel = layout.panel
-        local panelPadding = layout.panelPadding or UI.spacing.panelPadding
-        viewportHeight = math.max(0, (panel and panel.h or 0) - panelPadding * 2)
-        minScrollOffset = math.min(0, viewportHeight - contentHeight)
-        scrollOffset = clampScroll(scrollOffset)
-        self:updateButtonPositions()
+	local panel = layout.panel
+	local panelPadding = UI.spacing.panelPadding
+	viewportHeight = math.max(0, (panel and panel.h or 0) - panelPadding * 2)
+	minScrollOffset = math.min(0, viewportHeight - contentHeight)
+	scrollOffset = clampScroll(scrollOffset)
+	self:updateButtonPositions()
 end
 
 function SettingsScreen:setScroll(offset)
@@ -269,18 +184,18 @@ function SettingsScreen:scrollBy(amount)
 end
 
 function SettingsScreen:isOptionVisible(btn)
-        local panel = layout.panel
-        if not panel then
-                return true
-        end
+	local panel = layout.panel
+	if not panel then
+		return true
+	end
 
-        if viewportHeight <= 0 then
-                return true
-        end
+	if viewportHeight <= 0 then
+		return true
+	end
 
-        local panelPadding = layout.panelPadding or UI.spacing.panelPadding
-        local viewportTop = panel.y + panelPadding
-        local viewportBottom = viewportTop + viewportHeight
+	local panelPadding = UI.spacing.panelPadding
+	local viewportTop = panel.y + panelPadding
+	local viewportBottom = viewportTop + viewportHeight
 
 	local top = btn.y or 0
 	local bottom = top + (btn.h or 0)
@@ -299,18 +214,18 @@ function SettingsScreen:isOptionVisible(btn)
 end
 
 function SettingsScreen:ensureFocusVisible()
-        if not focusedIndex then return end
-        local panel = layout.panel
-        if not panel or viewportHeight <= 0 then return end
+	if not focusedIndex then return end
+	local panel = layout.panel
+	if not panel or viewportHeight <= 0 then return end
 
-        self:updateButtonPositions()
+	self:updateButtonPositions()
 
 	local btn = buttons[focusedIndex]
 	if not btn then return end
 
-        local panelPadding = layout.panelPadding or UI.spacing.panelPadding
-        local viewportTop = panel.y + panelPadding
-        local viewportBottom = viewportTop + viewportHeight
+	local panelPadding = UI.spacing.panelPadding
+	local viewportTop = panel.y + panelPadding
+	local viewportBottom = viewportTop + viewportHeight
 
 	local top = btn.y
 	local bottom = top + btn.h
@@ -433,50 +348,45 @@ function SettingsScreen:enter()
 
 	resetAnalogAxis()
 
-        local scale = (UI.getScale and UI.getScale()) or 1
-        local spacing = math.max(UI.spacing.buttonSpacing, math.floor(30 * scale))
-        local headerHeight = UI.spacing.sectionHeaderHeight
-        local headerSpacing = math.max(UI.spacing.sectionHeaderSpacing, math.floor(spacing * 0.6))
-        local panelPadding = math.max(UI.spacing.panelPadding, math.floor(26 * scale))
-        local cardPadding = math.max(16, math.floor(panelPadding * 0.7))
-        local titleFont = UI.fonts.title
-        local titleHeight = (titleFont and titleFont:getHeight()) or 0
-        local totalHeight = 0
-        for index, opt in ipairs(options) do
-                local height
-                local spacingAfter = spacing
+	local spacing = UI.spacing.buttonSpacing
+	local headerHeight = UI.spacing.sectionHeaderHeight
+	local headerSpacing = UI.spacing.sectionHeaderSpacing
+	local titleFont = UI.fonts.title
+	local titleHeight = (titleFont and titleFont:getHeight()) or 0
+	local totalHeight = 0
+	for index, opt in ipairs(options) do
+		local height
+		local spacingAfter = spacing
 
-                if opt.type == "slider" then
-                        height = UI.spacing.sliderHeight
-                elseif opt.type == "header" then
-                        height = headerHeight
-                        spacingAfter = headerSpacing
-                else
-                        height = UI.spacing.buttonHeight
-                end
+		if opt.type == "slider" then
+			height = UI.spacing.sliderHeight
+		elseif opt.type == "header" then
+			height = headerHeight
+			spacingAfter = headerSpacing
+		else
+			height = UI.spacing.buttonHeight
+		end
 
-                totalHeight = totalHeight + height
-                if index < #options then
-                        totalHeight = totalHeight + spacingAfter
-                end
-        end
+		totalHeight = totalHeight + height
+		if index < #options then
+			totalHeight = totalHeight + spacingAfter
+		end
+	end
 
+        local panelPadding = UI.spacing.panelPadding
         local baseSelectionWidth = UI.spacing.buttonWidth
-        local maxPanelWidth = sw - UI.spacing.sectionSpacing * 2
-        local availableWidth = math.max(0, maxPanelWidth - panelPadding * 2)
-        local preferredContentWidth = math.max(baseSelectionWidth * 1.6, sw * 0.58)
-        local selectionWidth = math.min(availableWidth, preferredContentWidth)
-        if selectionWidth <= 0 then
-                selectionWidth = math.max(baseSelectionWidth, availableWidth)
+        local availableWidth = sw - UI.spacing.sectionSpacing * 2 - panelPadding * 2
+        local selectionWidth = baseSelectionWidth
+
+        if availableWidth > baseSelectionWidth then
+                selectionWidth = math.min(baseSelectionWidth * 1.35, availableWidth)
+        elseif availableWidth > 0 then
+                selectionWidth = availableWidth
         end
 
         local panelWidth = selectionWidth + panelPadding * 2
-        if panelWidth > maxPanelWidth then
-                panelWidth = maxPanelWidth
-                selectionWidth = math.max(0, panelWidth - panelPadding * 2)
-        end
-        local panelHeight = totalHeight + panelPadding * 2
-        local minPanelHeight = panelPadding * 2 + UI.spacing.buttonHeight
+	local panelHeight = totalHeight + panelPadding * 2
+	local minPanelHeight = panelPadding * 2 + UI.spacing.buttonHeight
 	local desiredTopMargin = UI.spacing.sectionSpacing + titleHeight + UI.spacing.sectionSpacing
 	local desiredBottomMargin = UI.spacing.sectionSpacing + UI.spacing.buttonHeight + UI.spacing.sectionSpacing
 	local desiredMaxPanelHeight = sh - desiredTopMargin - desiredBottomMargin
@@ -520,21 +430,18 @@ function SettingsScreen:enter()
 		end
 	end
 
-        layout.panel = { x = panelX, y = panelY, w = panelWidth, h = panelHeight }
-        layout.title = {
-                height = titleHeight,
-                y = math.max(UI.spacing.sectionSpacing, panelY - UI.spacing.sectionSpacing - titleHeight * 0.25),
-        }
-        layout.margins = {
-                top = panelY,
-                bottom = sh - (panelY + panelHeight),
-        }
-        layout.panelPadding = panelPadding
-        layout.cardPadding = cardPadding
-        layout.cardSpacing = spacing
-        contentHeight = totalHeight
+	layout.panel = { x = panelX, y = panelY, w = panelWidth, h = panelHeight }
+	layout.title = {
+		height = titleHeight,
+		y = math.max(UI.spacing.sectionSpacing, panelY - UI.spacing.sectionSpacing - titleHeight * 0.25),
+	}
+	layout.margins = {
+		top = panelY,
+		bottom = sh - (panelY + panelHeight),
+	}
+	contentHeight = totalHeight
 
-        local startY = panelY + panelPadding
+	local startY = panelY + panelPadding
 
 	-- reset UI.buttons so we don’t keep stale hitboxes
 	UI.clearButtons()
@@ -546,49 +453,47 @@ function SettingsScreen:enter()
 		local x = panelX + panelPadding
 		local y = startY
                 local w = selectionWidth
-                local spacingAfter = spacing
-                local h
+		local spacingAfter = spacing
+		local h
 
-                if opt.type == "slider" then
-                        h = UI.spacing.sliderHeight
-                elseif opt.type == "header" then
-                        h = headerHeight
-                        spacingAfter = headerSpacing
-                else
-                        h = UI.spacing.buttonHeight
-                end
+		if opt.type == "slider" then
+			h = UI.spacing.sliderHeight
+		elseif opt.type == "header" then
+			h = headerHeight
+			spacingAfter = headerSpacing
+		else
+			h = UI.spacing.buttonHeight
+		end
 
-                local id = "settingsOption" .. i
+		local id = "settingsOption" .. i
 
-                table.insert(buttons, {
-                        id = id,
-                        x = x,
-                        y = y,
-                        w = w,
-                        h = h,
-                        option = opt,
-                        hovered = false,
-                        sliderTrack = nil,
-                        baseY = y,
-                        focusable = opt.type ~= "header",
-                        padding = cardPadding,
-                })
+		table.insert(buttons, {
+			id = id,
+			x = x,
+			y = y,
+			w = w,
+			h = h,
+			option = opt,
+			hovered = false,
+			sliderTrack = nil,
+			baseY = y,
+			focusable = opt.type ~= "header",
+		})
 
-                local entry = buttons[#buttons]
+		local entry = buttons[#buttons]
 
-                if opt.type == "slider" then
-                        local trackHeight = UI.spacing.sliderTrackHeight
-                        local padding = math.max(UI.spacing.sliderPadding, math.floor(cardPadding * 0.9))
-                        entry.sliderTrack = {
-                                x = x + padding,
-                                y = y + h - padding - trackHeight,
-                                w = w - padding * 2,
-                                h = trackHeight,
-                                handleRadius = UI.spacing.sliderHandleRadius,
-                                baseY = y + h - padding - trackHeight,
-                        }
-                        entry.sliderPadding = padding
-                end
+		if opt.type == "slider" then
+			local trackHeight = UI.spacing.sliderTrackHeight
+			local padding = UI.spacing.sliderPadding
+			entry.sliderTrack = {
+				x = x + padding,
+				y = y + h - padding - trackHeight,
+				w = w - padding * 2,
+				h = trackHeight,
+				handleRadius = UI.spacing.sliderHandleRadius,
+				baseY = y + h - padding - trackHeight,
+			}
+		end
 
 		-- register for clickable items (skip sliders and static headers)
 		if opt.type ~= "slider" and opt.type ~= "header" then
@@ -678,11 +583,11 @@ function SettingsScreen:draw()
 
 	self:updateButtonPositions()
 
-        local panelPadding = layout.panelPadding or UI.spacing.panelPadding
-        local viewportX = panel.x + panelPadding
-        local viewportY = panel.y + panelPadding
-        local viewportW = panel.w - panelPadding * 2
-        local viewportH = math.max(0, viewportHeight)
+	local panelPadding = UI.spacing.panelPadding
+	local viewportX = panel.x + panelPadding
+	local viewportY = panel.y + panelPadding
+	local viewportW = panel.w - panelPadding * 2
+	local viewportH = math.max(0, viewportHeight)
 
 	local prevScissorX, prevScissorY, prevScissorW, prevScissorH = love.graphics.getScissor()
 	local appliedScissor = false
@@ -691,55 +596,45 @@ function SettingsScreen:draw()
 		appliedScissor = true
 	end
 
-        for index, btn in ipairs(buttons) do
-                local opt = btn.option
-                local label = Localization:get(opt.labelKey)
-                local isFocused = (focusedIndex == index)
-                local visible = self:isOptionVisible(btn)
+	for index, btn in ipairs(buttons) do
+		local opt = btn.option
+		local label = Localization:get(opt.labelKey)
+		local isFocused = (focusedIndex == index)
+		local visible = self:isOptionVisible(btn)
 
-                if not visible then
-                        local state = UI.buttons[btn.id]
-                        if state then
-                                state.bounds = nil
-                                state.hoverTarget = 0
-                                state.wasHovered = false
-                        end
-                end
+		if not visible then
+			local state = UI.buttons[btn.id]
+			if state then
+				state.bounds = nil
+			end
+		end
 
-                if opt.type == "toggle" and opt.toggle then
-                        local enabled = not not Settings[opt.toggle]
-                        if opt.invertStateLabel then
-                                enabled = not enabled
-                        end
-                        local valueText = enabled and Localization:get("common.on") or Localization:get("common.off")
-                        if visible then
-                                UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, string.format("%s: %s", label, valueText))
-                                UI.setButtonFocus(btn.id, isFocused)
-                                drawSettingCard(btn, label, valueText)
-                        end
+		if opt.type == "toggle" and opt.toggle then
+			local enabled = not not Settings[opt.toggle]
+			if opt.invertStateLabel then
+				enabled = not enabled
+			end
+			local state = enabled and Localization:get("common.on") or Localization:get("common.off")
+			label = string.format("%s: %s", label, state)
+			if visible then
+				UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
+				UI.setButtonFocus(btn.id, isFocused)
+				UI.drawButton(btn.id)
+			end
 
-                elseif opt.type == "slider" and opt.slider then
-                        local value = math.min(1, math.max(0, Settings[opt.slider] or 0))
-                        if visible then
-                                local trackX, trackY, trackW, trackH, handleRadius = UI.drawSlider(nil, btn.x, btn.y, btn.w, value, {
-                                        label = label,
-                                        focused = isFocused,
-                                        hovered = btn.hovered,
-                                        register = false,
-                                        height = btn.h,
-                                        padding = btn.sliderPadding or btn.padding or layout.cardPadding,
-                                        radius = UI.spacing.buttonRadius + 4,
-                                        shadowOffset = math.max(2, math.floor((UI.spacing.shadowOffset or 6) * 0.6)),
-                                        fill = UI.colors.panel,
-                                        borderColor = UI.colors.panelBorder or UI.colors.border,
-                                        focusColor = Theme.highlightColor or UI.colors.highlight,
-                                        labelFont = "button",
-                                        valueFont = "body",
-                                })
+		elseif opt.type == "slider" and opt.slider then
+			local value = math.min(1, math.max(0, Settings[opt.slider] or 0))
+			if visible then
+				local trackX, trackY, trackW, trackH, handleRadius = UI.drawSlider(nil, btn.x, btn.y, btn.w, value, {
+					label = label,
+					focused = isFocused,
+					hovered = btn.hovered,
+					register = false,
+				})
 
-                                btn.sliderTrack = btn.sliderTrack or {}
-                                btn.sliderTrack.x = trackX
-                                btn.sliderTrack.y = trackY
+				btn.sliderTrack = btn.sliderTrack or {}
+				btn.sliderTrack.x = trackX
+				btn.sliderTrack.y = trackY
 				btn.sliderTrack.w = trackW
 				btn.sliderTrack.h = trackH
 				btn.sliderTrack.handleRadius = handleRadius
@@ -751,52 +646,44 @@ function SettingsScreen:draw()
 				end
 			end
 
-                elseif opt.type == "header" then
-                        if visible then
-                                local font = UI.fonts.heading
-                                local fontHeight = font and font:getHeight() or 0
-                                local padding = layout.cardPadding or 0
-                                local textX = btn.x + padding
-                                local textWidth = math.max(0, btn.w - padding * 2)
-                                local textY = btn.y + math.max(0, (btn.h - fontHeight) * 0.5)
-                                UI.drawLabel(label, textX, textY, textWidth, "left", {
-                                        font = font,
-                                        color = UI.colors.subtleText,
-                                })
+		elseif opt.type == "header" then
+			if visible then
+				local font = UI.fonts.heading
+				local fontHeight = font and font:getHeight() or 0
+				local textY = btn.y + math.max(0, (btn.h - fontHeight) * 0.5)
+				UI.drawLabel(label, btn.x, textY, btn.w, "left", {
+					font = font,
+					color = UI.colors.subtleText,
+				})
 
-                                if fontHeight > 0 then
-                                        local lineY = math.min(btn.y + btn.h - 3, textY + fontHeight + 4)
-                                        local lineColor = UI.colors.highlight or {1, 1, 1, 0.4}
-                                        love.graphics.setColor(lineColor[1] or 1, lineColor[2] or 1, lineColor[3] or 1, (lineColor[4] or 1) * 0.45)
-                                        love.graphics.rectangle("fill", textX, lineY, textWidth, 2)
-                                        love.graphics.setColor(1, 1, 1, 1)
-                                end
-                        end
+				if fontHeight > 0 then
+					local lineY = math.min(btn.y + btn.h - 3, textY + fontHeight + 4)
+					local lineColor = UI.colors.highlight or {1, 1, 1, 0.4}
+					love.graphics.setColor(lineColor[1] or 1, lineColor[2] or 1, lineColor[3] or 1, (lineColor[4] or 1) * 0.45)
+					love.graphics.rectangle("fill", btn.x, lineY, btn.w, 2)
+					love.graphics.setColor(1, 1, 1, 1)
+				end
+			end
 
-                elseif opt.type == "cycle" and opt.setting then
-                        local state = getCycleStateLabel(opt.setting)
-                        local valueText = state or ""
-                        if visible then
-                                local buttonText = state and string.format("%s: %s", label, state) or label
-                                UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, buttonText)
-                                UI.setButtonFocus(btn.id, isFocused)
-                                drawSettingCard(btn, label, valueText)
-                        end
+		elseif opt.type == "cycle" and opt.setting then
+			local state = getCycleStateLabel(opt.setting)
+			if state then
+				label = string.format("%s: %s", label, state)
+			end
+			if visible then
+				UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
+				UI.setButtonFocus(btn.id, isFocused)
+				UI.drawButton(btn.id)
+			end
 
-                elseif opt.type == "action" then
-                        if visible then
-                                UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
-                                UI.setButtonFocus(btn.id, isFocused)
-                                drawSettingCard(btn, label, "›")
-                        end
-                else
-                        if visible then
-                                UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
-                                UI.setButtonFocus(btn.id, isFocused)
-                                drawSettingCard(btn, label, "")
-                        end
-                end
-        end
+		else
+			if visible then
+				UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
+				UI.setButtonFocus(btn.id, isFocused)
+				UI.drawButton(btn.id)
+			end
+		end
+	end
 
 	if appliedScissor then
 		if prevScissorX then
@@ -809,7 +696,7 @@ function SettingsScreen:draw()
 	if contentHeight > viewportHeight and viewportHeight > 0 then
 		local trackWidth = 6
 		local trackRadius = trackWidth / 2
-                local trackX = panel.x + panel.w - trackWidth - panelPadding * 0.5
+		local trackX = panel.x + panel.w - trackWidth - panelPadding * 0.5
 		local trackY = viewportY
 		local trackHeight = viewportHeight
 
