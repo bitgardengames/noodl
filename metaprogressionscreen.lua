@@ -40,6 +40,11 @@ local TAB_WIDTH = 220
 local TAB_HEIGHT = 52
 local TAB_SPACING = 16
 local TAB_Y = 160
+local WINDOW_CORNER_RADIUS = 18
+local WINDOW_SHADOW_OFFSET = 10
+local WINDOW_PADDING_X = 28
+local WINDOW_PADDING_Y = 24
+local WINDOW_ACCENT_HEIGHT = 8
 
 local scrollOffset = 0
 local minScrollOffset = 0
@@ -444,21 +449,68 @@ local function darkenColor(color, amount)
 end
 
 local function withAlpha(color, alpha)
-	if type(color) ~= "table" then
-		return {1, 1, 1, clampColorComponent(alpha or 1)}
-	end
+        if type(color) ~= "table" then
+                return {1, 1, 1, clampColorComponent(alpha or 1)}
+        end
 
-	return {
-		clampColorComponent(color[1] or 1),
-		clampColorComponent(color[2] or 1),
-		clampColorComponent(color[3] or 1),
-		clampColorComponent(alpha or color[4] or 1),
-	}
+        return {
+                clampColorComponent(color[1] or 1),
+                clampColorComponent(color[2] or 1),
+                clampColorComponent(color[3] or 1),
+                clampColorComponent(alpha or color[4] or 1),
+        }
+end
+
+local function drawWindowFrame(x, y, width, height, options)
+        options = options or {}
+
+        if not width or not height or width <= 0 or height <= 0 then
+                return
+        end
+
+        local panelColor = options.baseColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
+        local borderColor = options.borderColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+        local accentColor = options.accentColor or Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
+        local shadowAlpha = options.shadowAlpha or 0.32
+        local baseAlpha = options.baseAlpha or 0.94
+        local borderAlpha = options.borderAlpha or 0.85
+        local accentAlpha = options.accentAlpha or 0.28
+        local accentHeight = options.accentHeight or WINDOW_ACCENT_HEIGHT
+        local accentInsetX = options.accentInsetX or (WINDOW_PADDING_X * 0.6)
+        local accentInsetY = options.accentInsetY or (WINDOW_PADDING_Y * 0.35)
+
+        love.graphics.setColor(0, 0, 0, shadowAlpha)
+        UI.drawRoundedRect(x + 4, y + WINDOW_SHADOW_OFFSET, width, height, WINDOW_CORNER_RADIUS + 2)
+
+        local fill = withAlpha(panelColor, baseAlpha)
+        love.graphics.setColor(fill)
+        UI.drawRoundedRect(x, y, width, height, WINDOW_CORNER_RADIUS)
+
+        if accentHeight and accentHeight > 0 then
+                local accentWidth = math.max(0, width - accentInsetX * 2)
+                if accentWidth > 0 and height - accentInsetY * 2 > 0 then
+                        local accentY = y + accentInsetY
+                        local accentX = x + accentInsetX
+                        love.graphics.setColor(withAlpha(accentColor, accentAlpha))
+                        UI.drawRoundedRect(accentX, accentY, accentWidth, math.min(accentHeight, height - accentInsetY * 2), math.max(4, accentHeight / 2))
+                end
+        end
+
+        love.graphics.setColor(withAlpha(borderColor, borderAlpha))
+        love.graphics.setLineWidth(options.borderWidth or 2)
+        love.graphics.rectangle("line", x, y, width, height, WINDOW_CORNER_RADIUS, WINDOW_CORNER_RADIUS)
+        love.graphics.setLineWidth(1)
+
+        if options.overlay then
+                options.overlay(x, y, width, height)
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function getRequirementHeading(count)
-	local key = (count and count > 1) and "metaprogression.requirements.multiple" or "metaprogression.requirements.single"
-	local heading = Localization:get(key)
+        local key = (count and count > 1) and "metaprogression.requirements.multiple" or "metaprogression.requirements.single"
+        local heading = Localization:get(key)
 	if heading == key then
 		heading = (count and count > 1) and "Requirements" or "Requirement"
 	end
@@ -1081,32 +1133,34 @@ local function handleConfirm()
 end
 
 local function drawSummaryPanel(sw)
-	if not progressionState then
-		return
-	end
+        if not progressionState then
+                return
+        end
 
-	local panelWidth = CARD_WIDTH
-	local panelHeight = 160
-	local panelX = (sw - panelWidth) / 2
-	local panelY = 120
-	local padding = 24
+        local contentWidth = CARD_WIDTH
+        local contentHeight = 160
+        local frameWidth = contentWidth + WINDOW_PADDING_X * 2
+        local frameHeight = contentHeight + WINDOW_PADDING_Y * 2
+        local frameX = (sw - frameWidth) / 2
+        local frameY = 120 - WINDOW_PADDING_Y
+        local panelX = frameX + WINDOW_PADDING_X
+        local panelY = frameY + WINDOW_PADDING_Y
+        local padding = 24
+        local border = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
 
-	local bg = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-	love.graphics.setColor(bg[1], bg[2], bg[3], 0.96)
-	UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
+        drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
+                accentHeight = WINDOW_ACCENT_HEIGHT,
+                accentInsetY = WINDOW_PADDING_Y * 0.5,
+                accentAlpha = 0.32,
+        })
 
-	local border = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-	love.graphics.setColor(border)
-	love.graphics.setLineWidth(2)
-	love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 14, 14)
+        local levelText = Localization:get("metaprogression.level_label", { level = progressionState.level or 1 })
+        local totalText = Localization:get("metaprogression.total_xp", { total = progressionState.totalExperience or 0 })
 
-	local levelText = Localization:get("metaprogression.level_label", { level = progressionState.level or 1 })
-	local totalText = Localization:get("metaprogression.total_xp", { total = progressionState.totalExperience or 0 })
-
-	local progressLabel
-	local xpIntoLevel = progressionState.xpIntoLevel or 0
-	local xpForNext = progressionState.xpForNext or 0
-	local progressRatio = 1
+        local progressLabel
+        local xpIntoLevel = progressionState.xpIntoLevel or 0
+        local xpForNext = progressionState.xpForNext or 0
+        local progressRatio = 1
 
 	if xpForNext <= 0 then
 		progressLabel = Localization:get("metaprogression.max_level")
@@ -1121,21 +1175,21 @@ local function drawSummaryPanel(sw)
 		end
 	end
 
-	love.graphics.setFont(UI.fonts.button)
-	love.graphics.setColor(Theme.textColor)
-	love.graphics.print(levelText, panelX + padding, panelY + padding)
+        love.graphics.setFont(UI.fonts.button)
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.print(levelText, panelX + padding, panelY + padding)
 
-	love.graphics.setFont(UI.fonts.body)
-	love.graphics.print(totalText, panelX + padding, panelY + padding + 34)
-	love.graphics.print(progressLabel, panelX + padding, panelY + padding + 60)
+        love.graphics.setFont(UI.fonts.body)
+        love.graphics.print(totalText, panelX + padding, panelY + padding + 34)
+        love.graphics.print(progressLabel, panelX + padding, panelY + padding + 60)
 
-	local barX = panelX + padding
-	local barY = panelY + panelHeight - padding - 24
-	local barWidth = panelWidth - padding * 2
-	local barHeight = 18
+        local barX = panelX + padding
+        local barY = panelY + contentHeight - padding - 24
+        local barWidth = contentWidth - padding * 2
+        local barHeight = 18
 
-	love.graphics.setColor(0, 0, 0, 0.35)
-	UI.drawRoundedRect(barX, barY, barWidth, barHeight, 9)
+        love.graphics.setColor(0, 0, 0, 0.35)
+        UI.drawRoundedRect(barX, barY, barWidth, barHeight, 9)
 
 	love.graphics.setColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
 	UI.drawRoundedRect(barX, barY, barWidth * progressRatio, barHeight, 9)
@@ -1146,19 +1200,29 @@ local function drawSummaryPanel(sw)
 end
 
 local function drawTrack(sw, sh)
-	local listX = (sw - CARD_WIDTH) / 2
-	local clipY = START_Y
-	local clipH = viewportHeight
+        local listX = (sw - CARD_WIDTH) / 2
+        local clipY = START_Y
+        local clipH = viewportHeight
 
-	if clipH <= 0 then
-		return
-	end
+        if clipH <= 0 then
+                return
+        end
 
-	love.graphics.push()
-	love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+        local frameX = listX - WINDOW_PADDING_X
+        local frameY = clipY - WINDOW_PADDING_Y
+        local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
+        local frameHeight = clipH + WINDOW_PADDING_Y * 2
+        drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
+                accentHeight = WINDOW_ACCENT_HEIGHT,
+                accentInsetY = WINDOW_PADDING_Y * 0.5,
+                accentAlpha = 0.18,
+        })
 
-	for index, entry in ipairs(trackEntries) do
-		local y = START_Y + scrollOffset + (index - 1) * (CARD_HEIGHT + CARD_SPACING)
+        love.graphics.push()
+        love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+
+        for index, entry in ipairs(trackEntries) do
+                local y = START_Y + scrollOffset + (index - 1) * (CARD_HEIGHT + CARD_SPACING)
 		if y + CARD_HEIGHT >= clipY - CARD_HEIGHT and y <= clipY + clipH + CARD_HEIGHT then
 			local unlocked = entry.unlocked
 			local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
@@ -1284,21 +1348,31 @@ local function drawCosmeticsHeader(sw)
 end
 
 local function drawCosmeticsList(sw, sh)
-	local clipY = START_Y
-	local clipH = viewportHeight
+        local clipY = START_Y
+        local clipH = viewportHeight
 
-	if clipH <= 0 then
-		return
-	end
+        if clipH <= 0 then
+                return
+        end
 
-	updateCosmeticsLayout(sw)
+        updateCosmeticsLayout(sw)
 
-	local listX = (sw - CARD_WIDTH) / 2
+        local listX = (sw - CARD_WIDTH) / 2
 
-	love.graphics.push()
-	love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+        local frameX = listX - WINDOW_PADDING_X
+        local frameY = clipY - WINDOW_PADDING_Y
+        local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
+        local frameHeight = clipH + WINDOW_PADDING_Y * 2
+        drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
+                accentHeight = WINDOW_ACCENT_HEIGHT,
+                accentInsetY = WINDOW_PADDING_Y * 0.5,
+                accentAlpha = 0.24,
+        })
 
-	for index, entry in ipairs(cosmeticsEntries) do
+        love.graphics.push()
+        love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+
+        for index, entry in ipairs(cosmeticsEntries) do
 		local y = START_Y + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
 		entry.bounds = entry.bounds or {}
 		entry.bounds.x = listX
@@ -1482,18 +1556,28 @@ local function drawStatsHeader(sw)
 end
 
 local function drawStatsSummary(sw)
-	if #statsHighlights == 0 then
-		return
-	end
+        if #statsHighlights == 0 then
+                return
+        end
 
-	local totalWidth = #statsHighlights * STATS_SUMMARY_CARD_WIDTH + math.max(0, #statsHighlights - 1) * STATS_SUMMARY_CARD_SPACING
-	local startX = sw / 2 - totalWidth / 2
-	local cardY = START_Y
+        local totalWidth = #statsHighlights * STATS_SUMMARY_CARD_WIDTH + math.max(0, #statsHighlights - 1) * STATS_SUMMARY_CARD_SPACING
+        local frameWidth = totalWidth + WINDOW_PADDING_X * 2
+        local frameHeight = STATS_SUMMARY_CARD_HEIGHT + WINDOW_PADDING_Y * 2
+        local frameX = sw / 2 - frameWidth / 2
+        local frameY = START_Y - WINDOW_PADDING_Y
+        drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
+                accentHeight = WINDOW_ACCENT_HEIGHT,
+                accentInsetY = WINDOW_PADDING_Y * 0.35,
+                accentAlpha = 0.26,
+        })
+
+        local startX = frameX + WINDOW_PADDING_X
+        local cardY = frameY + WINDOW_PADDING_Y
         local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
         local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
         local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
 
-	for index, entry in ipairs(statsHighlights) do
+        for index, entry in ipairs(statsHighlights) do
 		local cardX = startX + (index - 1) * (STATS_SUMMARY_CARD_WIDTH + STATS_SUMMARY_CARD_SPACING)
 		local fillColor = lightenColor(basePanel, 0.20 + 0.05 * ((index - 1) % 2))
 
@@ -1517,19 +1601,29 @@ local function drawStatsSummary(sw)
 end
 
 local function drawStatsList(sw, sh)
-	local clipY = viewportTop
-	local clipH = viewportHeight
+        local clipY = viewportTop
+        local clipH = viewportHeight
 
-	if clipH <= 0 then
-		return
-	end
+        if clipH <= 0 then
+                return
+        end
 
-	local listX = (sw - CARD_WIDTH) / 2
+        local listX = (sw - CARD_WIDTH) / 2
 
-	love.graphics.push()
-	love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+        local frameX = listX - WINDOW_PADDING_X
+        local frameY = clipY - WINDOW_PADDING_Y
+        local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
+        local frameHeight = clipH + WINDOW_PADDING_Y * 2
+        drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
+                accentHeight = WINDOW_ACCENT_HEIGHT,
+                accentInsetY = WINDOW_PADDING_Y * 0.5,
+                accentAlpha = 0.18,
+        })
 
-	if #statsEntries == 0 then
+        love.graphics.push()
+        love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+
+        if #statsEntries == 0 then
 		love.graphics.setFont(UI.fonts.body)
 		love.graphics.setColor(Theme.textColor)
 		love.graphics.printf(Localization:get("metaprogression.stats_empty"), listX, clipY + viewportHeight / 2 - 12, CARD_WIDTH, "center")
