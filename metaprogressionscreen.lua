@@ -931,7 +931,7 @@ local function findTab(targetId)
 	return nil, nil
 end
 
-local function setActiveTab(tabId)
+local function setActiveTab(tabId, focusOptions)
 	if activeTab == tabId then
 		return
 	end
@@ -955,7 +955,9 @@ local function setActiveTab(tabId)
 
 	local _, buttonIndex = findTab(tabId)
 	if buttonIndex then
-		buttonList:setFocus(buttonIndex)
+		local focusSource = focusOptions and focusOptions.focusSource
+		local skipHistory = focusOptions and focusOptions.skipFocusHistory
+		buttonList:setFocus(buttonIndex, focusSource, skipHistory)
 	end
 
 	if tabId == "cosmetics" and cosmeticsFocusIndex then
@@ -1827,16 +1829,17 @@ function ProgressionScreen:mousereleased(x, y, button)
 	if action then
 		Audio:playSound("click")
 		if action == "tab_experience" then
-			setActiveTab("experience")
+			setActiveTab("experience", { focusSource = "mouse", skipFocusHistory = true })
 		elseif action == "tab_cosmetics" then
-			setActiveTab("cosmetics")
+			setActiveTab("cosmetics", { focusSource = "mouse", skipFocusHistory = true })
 		elseif action == "tab_stats" then
-			setActiveTab("stats")
+			setActiveTab("stats", { focusSource = "mouse", skipFocusHistory = true })
 		else
 			return action
 		end
 		return
 	end
+
 
 	if activeTab ~= "cosmetics" or button ~= 1 then
 		pressedCosmeticIndex = nil

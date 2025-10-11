@@ -49,6 +49,8 @@ local buttons = {}
 local hoveredIndex = nil
 local sliderDragging = nil
 local focusedIndex = 1
+local focusSource = nil
+local lastNonMouseFocusIndex = nil
 local scrollOffset = 0
 local minScrollOffset = 0
 local viewportHeight = 0
@@ -124,20 +126,30 @@ local function cycleLanguage(delta)
 end
 
 local function refreshLayout(self)
-	local prevButton = focusedIndex and buttons[focusedIndex]
-	local prevId = prevButton and prevButton.id
-	local prevScroll = scrollOffset
-	Screen:update(0, true)
-	self:enter()
-	self:setScroll(prevScroll)
-	if prevId then
-		for index, btn in ipairs(buttons) do
-			if btn.id == prevId and btn.focusable ~= false then
-				self:setFocus(index)
-				return
-			end
-		end
-	end
+        local prevButton = focusedIndex and buttons[focusedIndex]
+        local prevId = prevButton and prevButton.id
+        local prevScroll = scrollOffset
+        local prevFocusSource = focusSource
+        local prevLastNonMouse = lastNonMouseFocusIndex
+        Screen:update(0, true)
+        self:enter()
+        lastNonMouseFocusIndex = prevLastNonMouse
+        if lastNonMouseFocusIndex and (lastNonMouseFocusIndex < 1 or lastNonMouseFocusIndex > #buttons) then
+                lastNonMouseFocusIndex = nil
+        end
+        self:setScroll(prevScroll)
+        if prevId then
+                for index, btn in ipairs(buttons) do
+                        if btn.id == prevId and btn.focusable ~= false then
+                                if prevFocusSource == "mouse" then
+                                        self:setFocus(index, nil, "mouse", true)
+                                else
+                                        self:setFocus(index)
+                                end
+                                return
+                        end
+                end
+        end
 end
 
 local function clampScroll(offset)
@@ -444,10 +456,12 @@ function SettingsScreen:enter()
 	local startY = panelY + panelPadding
 
 	-- reset UI.buttons so we don’t keep stale hitboxes
-	UI.clearButtons()
-	buttons = {}
-	scrollOffset = 0
-	minScrollOffset = 0
+        UI.clearButtons()
+        buttons = {}
+        scrollOffset = 0
+        minScrollOffset = 0
+        focusSource = nil
+        lastNonMouseFocusIndex = nil
 
 	for i, opt in ipairs(options) do
 		local x = panelX + panelPadding
@@ -509,17 +523,17 @@ function SettingsScreen:enter()
 	contentHeight = totalHeight
 	self:updateScrollBounds()
 
-	if #buttons == 0 then
-		focusedIndex = nil
-	else
-		local initialIndex = focusedIndex
-		if not initialIndex or not buttons[initialIndex] then
-			initialIndex = findFirstFocusableIndex()
-		end
-		self:setFocus(initialIndex)
-	end
+        if #buttons == 0 then
+                self:clearFocus()
+        else
+                local initialIndex = focusedIndex
+                if not initialIndex or not buttons[initialIndex] then
+                        initialIndex = findFirstFocusableIndex()
+                end
+                self:setFocus(initialIndex, nil, nil, true)
+        end
 
-	self:updateFocusVisuals()
+        self:updateFocusVisuals()
 end
 
 function SettingsScreen:leave()
@@ -562,11 +576,19 @@ function SettingsScreen:update(dt)
 		end
 	end
 
-	if hoveredIndex then
-		self:setFocus(hoveredIndex)
-	else
-		self:updateFocusVisuals()
-	end
+        if hoveredIndex then
+                self:setFocus(hoveredIndex, nil, "mouse", true)
+        else
+                if focusSource == "mouse" then
+                        if lastNonMouseFocusIndex and buttons[lastNonMouseFocusIndex] and isButtonFocusable(buttons[lastNonMouseFocusIndex]) then
+                                self:setFocus(lastNonMouseFocusIndex)
+                        else
+                                self:clearFocus()
+                        end
+                else
+                        self:updateFocusVisuals()
+                end
+        end
 end
 
 function SettingsScreen:draw()
@@ -761,51 +783,60 @@ function SettingsScreen:findNextFocusable(startIndex, delta)
 	return nil
 end
 
-function SettingsScreen:setFocus(index, direction)
-	if #buttons == 0 then
-		focusedIndex = nil
-		return
-	end
+function SettingsScreen:clearFocus()
+        focusedIndex = nil
+        focusSource = nil
+        lastNonMouseFocusIndex = nil
+        self:updateFocusVisuals()
+end
 
-	local count = #buttons
-	if not index then
-		index = findFirstFocusableIndex()
-		if not index then
-			focusedIndex = nil
-			self:updateFocusVisuals()
-			return
-		end
-	else
-		index = math.max(1, math.min(index, count))
-	end
+function SettingsScreen:setFocus(index, direction, source, skipNonMouseHistory)
+        if #buttons == 0 then
+                self:clearFocus()
+                return
+        end
 
-	if not isButtonFocusable(buttons[index]) then
-		local searchDir = direction
-		if not searchDir then
-			if focusedIndex and index < focusedIndex then
-				searchDir = -1
-			else
-				searchDir = 1
-			end
-		end
+        local count = #buttons
+        if not index then
+                index = findFirstFocusableIndex()
+                if not index then
+                        self:clearFocus()
+                        return
+                end
+        else
+                index = math.max(1, math.min(index, count))
+        end
 
-		local nextIndex = self:findNextFocusable(index, searchDir)
-		if not nextIndex then
-			nextIndex = self:findNextFocusable(index, -searchDir)
-		end
+        if not isButtonFocusable(buttons[index]) then
+                local searchDir = direction
+                if not searchDir then
+                        if focusedIndex and index < focusedIndex then
+                                searchDir = -1
+                        else
+                                searchDir = 1
+                        end
+                end
 
-		if not nextIndex then
-			focusedIndex = nil
-			self:updateFocusVisuals()
-			return
-		end
+                local nextIndex = self:findNextFocusable(index, searchDir)
+                if not nextIndex then
+                        nextIndex = self:findNextFocusable(index, -(searchDir or 1))
+                end
 
-		index = nextIndex
-	end
+                if not nextIndex then
+                        self:clearFocus()
+                        return
+                end
 
-	focusedIndex = index
-	self:ensureFocusVisible()
-	self:updateFocusVisuals()
+                index = nextIndex
+        end
+
+        focusedIndex = index
+        focusSource = source or "programmatic"
+        if focusSource ~= "mouse" and not skipNonMouseHistory then
+                lastNonMouseFocusIndex = index
+        end
+        self:ensureFocusVisible()
+        self:updateFocusVisuals()
 end
 
 function SettingsScreen:moveFocus(delta)
@@ -944,8 +975,8 @@ function SettingsScreen:mousepressed(x, y, button)
 			goto continue
 		end
 
-		if canHover and btn.id and btn.id == id then
-			self:setFocus(i)
+                if canHover and btn.id and btn.id == id then
+                        self:setFocus(i, nil, "mouse", true)
 
 			if opt.type == "cycle" and opt.setting then
 				self:cycleSetting(opt.setting, 1)
@@ -988,7 +1019,7 @@ function SettingsScreen:mousepressed(x, y, button)
 				if opt.onChanged then
 					opt.onChanged(Settings, opt)
 				end
-				self:setFocus(i)
+                                self:setFocus(i, nil, "mouse", true)
 			end
 		end
 
