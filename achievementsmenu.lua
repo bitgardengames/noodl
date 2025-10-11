@@ -27,9 +27,9 @@ local SUMMARY_PANEL_TOP_PADDING_MIN = 12
 local SUMMARY_PANEL_BOTTOM_PADDING_MIN = 24
 local SUMMARY_PANEL_GAP_MIN = 24
 local SUMMARY_HIGHLIGHT_INSET = 16
-local CARD_SPACING = 120
+local CARD_SPACING = 140
 local CARD_WIDTH = 600
-local CARD_HEIGHT = 128
+local CARD_HEIGHT = 118
 local CATEGORY_SPACING = 40
 -- Allow extra headroom in the scroll scissor so the category headers drawn
 -- slightly above the first card remain visible when at the top of the list.
