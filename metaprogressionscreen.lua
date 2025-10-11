@@ -1562,11 +1562,13 @@ local function drawCosmeticsList(sw, sh)
                                 UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewH / 2)
 
                                 local lockColor = Theme.lockedCardColor or {0.5, 0.35, 0.4, 1}
+                                local shackleColor = lightenColor(lockColor, 0.1)
+                                local bodyColor = darkenColor(lockColor, 0.12)
                                 local lockWidth = math.min(28, previewW * 0.6)
                                 local lockHeight = 16
                                 local lockX = previewX + (previewW - lockWidth) / 2
                                 local lockY = previewY + (previewH - lockHeight) / 2 + 4
-                                local shackleWidth = lockWidth * 0.72
+                                local shackleWidth = lockWidth * 0.64
                                 local postWidth = math.max(3, lockWidth * 0.16)
                                 local postHeight = math.max(lockHeight * 0.7, lockHeight - 5)
                                 local shackleX = previewX + (previewW - shackleWidth) / 2
@@ -1577,7 +1579,7 @@ local function drawCosmeticsList(sw, sh)
                                 local topRectY = topCenterY - postWidth / 2
 
                                 -- subtle drop shadow behind the lock to make it pop from the overlay
-                                local shadowOffsetX, shadowOffsetY = 0, 2
+                                local shadowOffsetX, shadowOffsetY = 2, 3
                                 local shadowColor = withAlpha(Theme.shadowColor or {0, 0, 0, 1}, 0.28)
                                 love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowColor[4] or 1)
                                 UI.drawRoundedRect(lockX + shadowOffsetX, lockY + shadowOffsetY, lockWidth, lockHeight, 4)
@@ -1587,10 +1589,11 @@ local function drawCosmeticsList(sw, sh)
                                 love.graphics.circle("fill", topRectX + shadowOffsetX, topCenterY + shadowOffsetY, postWidth / 2)
                                 love.graphics.circle("fill", topRectX + topRectWidth + shadowOffsetX, topCenterY + shadowOffsetY, postWidth / 2)
 
-                                love.graphics.setColor(lockColor[1], lockColor[2], lockColor[3], (lockColor[4] or 1) * 0.85)
+                                love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], (bodyColor[4] or 1) * 0.9)
                                 UI.drawRoundedRect(lockX, lockY, lockWidth, lockHeight, 4)
 
                                 -- vertical posts
+                                love.graphics.setColor(shackleColor[1], shackleColor[2], shackleColor[3], shackleColor[4] or 1)
                                 love.graphics.rectangle("fill", shackleX, postY, postWidth, postHeight)
                                 love.graphics.rectangle("fill", shackleX + shackleWidth - postWidth, postY, postWidth, postHeight)
 
