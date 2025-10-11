@@ -945,11 +945,9 @@ local function renderSnakeToCanvas(trail, coords, head, half, options)
   love.graphics.push("all")
   if sharpCorners then
         love.graphics.setLineStyle("rough")
-        love.graphics.setLineCap("butt")
         love.graphics.setLineJoin("miter")
   else
         love.graphics.setLineStyle("smooth")
-        love.graphics.setLineCap("round")
         love.graphics.setLineJoin("bevel")
   end
 
