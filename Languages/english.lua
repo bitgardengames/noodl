@@ -281,8 +281,8 @@ local english = {
 		},
 		gameover = {
 			title = "Game Over",
-                        victory_story_title = "Harvest Restored",
-                        victory_story_body = "With every treat back in the hamper, Noodl heads home to restart the Starlit Harvest.",
+victory_story_title = "Trail Complete",
+victory_story_body = "Pip helps carry the gathered fruit home, and the orchard feast is safe again.",
 			final_score = "Final Score: ${score}",
 			high_score = "High Score: ${score}",
 			apples_eaten = "Apples Eaten: ${count}",
