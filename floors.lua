@@ -1,32 +1,32 @@
 -- floors.lua
 
 --[[
-                Verdant Garden → Lanterns swing and the chase begins.
-                Echoing Caverns → Echoes guide Noodl deeper underground.
-                Luminous Grotto → Glowcaps point to dropped treats.
-                Tideglass Vault → Waves send the hamper goods back.
-                Sunken Reliquary → Old lifts share hidden syrup.
-                Crystal Hollows → Frosty light quickens the run.
-                Amber Wildwood → Fireflies pass food and cheers.
-                Tempest Peaks → Thunder bridges return the salt.
-                Emberlight Bazaar → Market cooks fuel the pursuit.
-                Obsidian Keep → Molten guards decide to help.
-                Verdigris Frontier → Winds pack herbs for the feast.
-                Auric Loom → Weavers tie the harvest tight.
-                Starforge Depths → Smiths polish tools for serving.
-                Celestial Causeway → Lanterns line the path ahead.
-                Solar Spire → Sun ovens warm the custards.
-                Starfall Bastion → Wardens toss sugar to the basket.
-                Nebula Crown → Gardens shake loose stardust jam.
-                Eventide Observatory → Stargazers steady the route.
-                Eclipse Court → Twilight calms the loaded basket.
-                Singularity Gate → The wisp stops and gives back the haul.
+Garden Gate → Pip spills fruit through the opening grove.
+Moonwell Caves → Echoed hops and pears mark the chase.
+Glowcap Den → Mushrooms point to the dropped jars.
+Tide Vault → Tides roll citrus toward the basket.
+Rusted Hoist → Old lifts cough up sweet stores.
+Crystal Run → Frozen light chills Pip's stashed apples.
+Firefly Grove → Lantern bugs rally around Noodl.
+Storm Ledge → Thunder shakes snacks loose.
+Ember Market → Cooks toss fuel for the sprint.
+Molten Keep → Lava guards return honeyed figs.
+Wind Steppe → Gusts bundle herbs for pickup.
+Ribbon Loom → Ribbons mark the gathered treats.
+Forge Pit → Sparks shine on reclaimed tools.
+Skywalk → High lanterns reveal every peach.
+Sun Tower → Warm custards steady the climb.
+Star Ward → Watchers slow Pip with sugar.
+Drift Garden → Floating beds shed stardust jam.
+Night Observatory → Charts keep the chase on track.
+Dusk Court → Calm light readies the final dash.
+Promise Gate → Pip returns the orchard stash.
 ]]
 
 local Floors = {
-               [1] = {
-                               name = "Verdant Garden",
-              flavor = "Lanterns swing as a star-wisp grabs the harvest basket. Noodl starts the chase.",
+      [1] = {
+name = "Garden Gate",
+flavor = "Pip bolts through the garden, spilling orchard fruit behind. Noodl surges after the trail.",
                                 palette = {
                                                 bgColor     = {0.24, 0.32, 0.24, 1},
                                                 arenaBG     = {0.46, 0.66, 0.39, 1},
@@ -42,8 +42,8 @@ local Floors = {
                                 backgroundTheme = "botanical",
                 },
        [2] = {
-               name = "Echoing Caverns",
-              flavor = "Moonlit pools repeat the wisp's laugh. Noodl follows the echoes deeper.",
+name = "Moonwell Caves",
+flavor = "Moonlit pools mirror Pip's hops while stray pears drift into Noodl's basket.",
                 palette = {
                         bgColor    = {0.07, 0.09, 0.14, 1},
                         arenaBG    = {0.13, 0.17, 0.25, 1},
@@ -59,8 +59,8 @@ local Floors = {
                 backgroundTheme = "cavern",
         },
        [3] = {
-               name = "Luminous Grotto",
-              flavor = "Glowcaps blink to show where the wisp ran. Noodl collects the fallen jars.",
+name = "Glowcap Den",
+flavor = "Blinking mushrooms outline fresh fruit drops, and Noodl scoops each jar in stride.",
                 palette = {
                         bgColor    = {0.12, 0.14, 0.2, 1},
                         arenaBG    = {0.18, 0.22, 0.26, 1},
@@ -78,8 +78,8 @@ local Floors = {
                 backgroundVariant = "fungal",
         },
        [4] = {
-               name = "Tideglass Vault",
-              flavor = "Tide spirits roll citrus pearls toward Noodl. The chase splashes through the vault.",
+name = "Tide Vault",
+flavor = "Slow waves roll shining citrus along the tiles as Noodl pushes deeper underground.",
                 palette = {
                         bgColor    = {0.03, 0.07, 0.11, 1},
                         arenaBG    = {0.08, 0.15, 0.2, 1},
@@ -96,8 +96,8 @@ local Floors = {
                 backgroundTheme = "oceanic",
         },
        [5] = {
-               name = "Sunken Reliquary",
-              flavor = "Old lifts rise with stored syrup. Noodl keeps climbing after the wisp.",
+name = "Rusted Hoist",
+flavor = "Ancient lifts cough up stashed syrup, giving Noodl fuel to keep chasing.",
                 palette = {
                         bgColor    = {0.14, 0.12, 0.08, 1},
                         arenaBG    = {0.23, 0.19, 0.12, 1},
@@ -114,8 +114,8 @@ local Floors = {
                 backgroundTheme = "machine",
         },
        [6] = {
-               name = "Crystal Hollows",
-              flavor = "Cold crystals light the tunnel. Noodl speeds up through the clear glow.",
+name = "Crystal Run",
+flavor = "Frosted crystals light the tunnel and chill Pip's apple stash for Noodl to reclaim.",
                 palette = {
                         bgColor    = {0.11, 0.13, 0.17, 1},
                         arenaBG    = {0.15, 0.18, 0.24, 1},
@@ -132,8 +132,8 @@ local Floors = {
                 backgroundTheme = "arctic",
         },
        [7] = {
-               name = "Amber Wildwood",
-              flavor = "Fireflies pass warm snacks to Noodl. Their cheers push the chase onward.",
+name = "Firefly Grove",
+flavor = "Fireflies relay sweet rolls from the branches, cheering Noodl to keep moving.",
                 palette = {
                         bgColor    = {0.1, 0.08, 0.05, 1},
                         arenaBG    = {0.21, 0.15, 0.09, 1},
@@ -150,8 +150,8 @@ local Floors = {
                 backgroundTheme = "botanical",
         },
        [8] = {
-               name = "Tempest Peaks",
-              flavor = "Wind bridges boom with thunder. Storm herders return salt jars as Noodl hurries by.",
+name = "Storm Ledge",
+flavor = "Thunder bridges shake loose salty snacks that Noodl snatches mid-sprint.",
                 palette = {
                         bgColor    = {0.08, 0.1, 0.16, 1},
                         arenaBG    = {0.14, 0.18, 0.24, 1},
@@ -168,8 +168,8 @@ local Floors = {
                 backgroundTheme = "arctic",
         },
        [9] = {
-               name = "Emberlight Bazaar",
-              flavor = "Market cooks roast comet peppers for strength. Noodl accepts each gift and keeps running.",
+name = "Ember Market",
+flavor = "Stall cooks toss peppered fruit bites to Noodl as Pip darts through the aisles.",
                 palette = {
                         bgColor    = {0.16, 0.08, 0.05, 1},
                         arenaBG    = {0.24, 0.12, 0.07, 1},
@@ -186,8 +186,8 @@ local Floors = {
                 backgroundTheme = "desert",
         },
        [10] = {
-               name = "Obsidian Keep",
-              flavor = "Molten guards watch the ember honey. A quick song wins their help for Noodl.",
+name = "Molten Keep",
+flavor = "Lava guards melt their doubts and slide honeyed figs back into Noodl's pack.",
                 palette = {
                         bgColor    = {0.08, 0.06, 0.08, 1},
                         arenaBG    = {0.14, 0.11, 0.14, 1},
@@ -205,8 +205,8 @@ local Floors = {
                 backgroundVariant = "hell",
         },
        [11] = {
-               name = "Verdigris Frontier",
-              flavor = "Winds push loose herbs into neat bundles. Noodl secures them before moving on.",
+name = "Wind Steppe",
+flavor = "Steady gusts herd loose herbs into bundles that Noodl stacks while staying on Pip's tail.",
                 palette = {
                         bgColor    = {0.09, 0.1, 0.12, 1},
                         arenaBG    = {0.14, 0.18, 0.2, 1},
@@ -223,8 +223,8 @@ local Floors = {
                 backgroundTheme = "botanical",
         },
        [12] = {
-               name = "Auric Loom",
-              flavor = "Spirit weavers tie the gathered treats with bright ribbons. Noodl keeps after the wisp.",
+name = "Ribbon Loom",
+flavor = "Cloud weavers knot recovered treats in ribbon, leaving a bright path for Noodl.",
                 palette = {
                         bgColor    = {0.12, 0.09, 0.16, 1},
                         arenaBG    = {0.18, 0.12, 0.22, 1},
@@ -241,8 +241,8 @@ local Floors = {
                 backgroundTheme = "laboratory",
         },
        [13] = {
-               name = "Starforge Depths",
-              flavor = "Meteor smiths polish serving tools for the feast. Noodl adds them to the basket and runs on.",
+name = "Forge Pit",
+flavor = "Meteor sparks polish serving tools while Pip loses more fruit to Noodl's basket.",
                 palette = {
                         bgColor    = {0.1, 0.08, 0.12, 1},
                         arenaBG    = {0.16, 0.12, 0.18, 1},
@@ -259,8 +259,8 @@ local Floors = {
                 backgroundTheme = "machine",
         },
        [14] = {
-               name = "Celestial Causeway",
-              flavor = "Caretakers tilt lanterns to light the parade path. Noodl follows the bright road ahead.",
+name = "Skywalk",
+flavor = "Lanterns line the high road, showing every peach Pip dropped across the bridge.",
                 palette = {
                         bgColor    = {0.18, 0.2, 0.28, 1},
                         arenaBG    = {0.88, 0.94, 1.0, 1},
@@ -278,8 +278,8 @@ local Floors = {
                 backgroundVariant = "celestial",
         },
        [15] = {
-               name = "Solar Spire",
-              flavor = "Sun ovens warm the custards waiting inside. Noodl steadies each jar for the climb.",
+name = "Sun Tower",
+flavor = "Solar ovens warm custards that Noodl balances carefully during the climb.",
                 palette = {
                         bgColor    = {0.24, 0.18, 0.26, 1},
                         arenaBG    = {0.98, 0.88, 0.78, 1},
@@ -297,8 +297,8 @@ local Floors = {
                 backgroundVariant = "celestial",
         },
        [16] = {
-               name = "Starfall Bastion",
-              flavor = "Wardens toss sugar crystals into ready bowls. Noodl shields the basket and keeps moving.",
+name = "Star Ward",
+flavor = "Watchers fling sugar crystals toward Noodl, slowing Pip's escape.",
                 palette = {
                         bgColor    = {0.1, 0.12, 0.2, 1},
                         arenaBG    = {0.54, 0.62, 0.84, 1},
@@ -316,8 +316,8 @@ local Floors = {
                 backgroundVariant = "celestial",
         },
        [17] = {
-               name = "Nebula Crown",
-              flavor = "Floating gardens shake stardust jam into jars. Noodl slips through the weightless vines.",
+name = "Drift Garden",
+flavor = "Floating planters shake loose stardust jam that Noodl tucks away.",
                 palette = {
                         bgColor    = {0.12, 0.11, 0.2, 1},
                         arenaBG    = {0.38, 0.28, 0.52, 1},
@@ -334,8 +334,8 @@ local Floors = {
                 backgroundTheme = "laboratory",
         },
        [18] = {
-               name = "Eventide Observatory",
-              flavor = "Stargazers chart a safe route for the chase. They hand Noodl a steady spoon for balance.",
+name = "Night Observatory",
+flavor = "Chart keepers slide maps and melon slices to help Noodl track the runaway sprite.",
                 palette = {
                         bgColor    = {0.1, 0.1, 0.18, 1},
                         arenaBG    = {0.16, 0.21, 0.32, 1},
@@ -352,8 +352,8 @@ local Floors = {
                 backgroundTheme = "laboratory",
         },
        [19] = {
-               name = "Eclipse Court",
-              flavor = "Twilight envoys calm the filled basket with soft light. Noodl takes a breath before the last sprint.",
+name = "Dusk Court",
+flavor = "Soft light calms the loaded basket while Noodl readies for the last push.",
                 palette = {
                         bgColor    = {0.1, 0.08, 0.14, 1},
                         arenaBG    = {0.16, 0.12, 0.2, 1},
@@ -370,8 +370,8 @@ local Floors = {
                 backgroundTheme = "laboratory",
         },
        [20] = {
-               name = "Singularity Gate",
-              flavor = "The wisp finally stops and gives back the basket. Noodl turns toward home with every treat safe.",
+name = "Promise Gate",
+flavor = "Pip finally yields the fruit stash, and Noodl turns home with the orchard saved.",
                 palette = {
                         bgColor    = {0.08, 0.08, 0.12, 1},
                         arenaBG    = {0.12, 0.1, 0.18, 1},
@@ -390,7 +390,7 @@ local Floors = {
         },
 }
 
-Floors.storyTitle = "Harvest Restored"
-Floors.victoryMessage = "With the harvest basket full again, Noodl rushes home to relight the festival."
+Floors.storyTitle = "Trail Complete"
+Floors.victoryMessage = "With Pip pitching in, Noodl hauls the fruit home for a fresh orchard feast."
 
 return Floors
