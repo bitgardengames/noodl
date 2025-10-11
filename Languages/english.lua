@@ -133,7 +133,6 @@ local english = {
 		},
 		settings = {
 			title = "Settings",
-			subtitle = "Fine-tune how Noodl looks, sounds, and plays.",
 			section_display = "Display",
 			section_audio = "Audio",
 			section_gameplay = "Gameplay",
@@ -153,19 +152,6 @@ local english = {
 			toggle_fps_counter = "FPS Counter",
 			language = "Language",
 			back = "Back",
-			descriptions = {
-				display_mode = "Switch between an immersive fullscreen view or a resizable window.",
-				windowed_resolution = "Choose the pixel dimensions used when playing in windowed mode.",
-				toggle_vsync = "Synchronize the game's refresh with your monitor to reduce tearing.",
-				toggle_music = "Mute or unmute the soundtrack without changing its volume slider.",
-				toggle_sfx = "Toggle sound effects like slithers, impacts, and interface clicks.",
-				music_volume = "Adjust how loud the soundtrack plays when music is enabled.",
-				sfx_volume = "Control the volume of gameplay and interface sound effects.",
-				toggle_screen_shake = "Let the camera jostle during big moments or keep it steady.",
-				toggle_blood = "Show stylized blood effects when hazards or enemies are hit.",
-				toggle_fps_counter = "Display a small frames-per-second counter in the corner.",
-				language = "Select which language is used for menus, popups, and subtitles.",
-			},
 		},
 		dev = {
 			title = "Developer Playground",

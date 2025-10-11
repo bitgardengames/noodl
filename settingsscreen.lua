@@ -24,23 +24,23 @@ end
 
 local options = {
 	{ type = "header", labelKey = "settings.section_display" },
-	{ type = "cycle", labelKey = "settings.display_mode", setting = "displayMode", descriptionKey = "settings.descriptions.display_mode" },
-	{ type = "cycle", labelKey = "settings.windowed_resolution", setting = "resolution", descriptionKey = "settings.descriptions.windowed_resolution" },
-	{ type = "toggle", labelKey = "settings.toggle_vsync", toggle = "vsync", onChanged = applyDisplaySettings, descriptionKey = "settings.descriptions.toggle_vsync" },
+	{ type = "cycle", labelKey = "settings.display_mode", setting = "displayMode" },
+	{ type = "cycle", labelKey = "settings.windowed_resolution", setting = "resolution" },
+	{ type = "toggle", labelKey = "settings.toggle_vsync", toggle = "vsync", onChanged = applyDisplaySettings },
 
 	{ type = "header", labelKey = "settings.section_audio" },
-	{ type = "toggle", labelKey = "settings.toggle_music", toggle = "muteMusic", onChanged = applyAudioVolumes, invertStateLabel = true, descriptionKey = "settings.descriptions.toggle_music" },
-	{ type = "toggle", labelKey = "settings.toggle_sfx", toggle = "muteSFX", onChanged = applyAudioVolumes, invertStateLabel = true, descriptionKey = "settings.descriptions.toggle_sfx" },
-	{ type = "slider", labelKey = "settings.music_volume", slider = "musicVolume", onChanged = applyAudioVolumes, descriptionKey = "settings.descriptions.music_volume" },
-	{ type = "slider", labelKey = "settings.sfx_volume", slider = "sfxVolume", onChanged = applyAudioVolumes, descriptionKey = "settings.descriptions.sfx_volume" },
+	{ type = "toggle", labelKey = "settings.toggle_music", toggle = "muteMusic", onChanged = applyAudioVolumes, invertStateLabel = true },
+	{ type = "toggle", labelKey = "settings.toggle_sfx", toggle = "muteSFX", onChanged = applyAudioVolumes, invertStateLabel = true },
+	{ type = "slider", labelKey = "settings.music_volume", slider = "musicVolume", onChanged = applyAudioVolumes },
+	{ type = "slider", labelKey = "settings.sfx_volume", slider = "sfxVolume", onChanged = applyAudioVolumes },
 
 	{ type = "header", labelKey = "settings.section_gameplay" },
-	{ type = "toggle", labelKey = "settings.toggle_screen_shake", toggle = "screenShake", descriptionKey = "settings.descriptions.toggle_screen_shake" },
-	{ type = "toggle", labelKey = "settings.toggle_blood", toggle = "bloodEnabled", descriptionKey = "settings.descriptions.toggle_blood" },
+	{ type = "toggle", labelKey = "settings.toggle_screen_shake", toggle = "screenShake" },
+	{ type = "toggle", labelKey = "settings.toggle_blood", toggle = "bloodEnabled" },
 
 	{ type = "header", labelKey = "settings.section_interface" },
-	{ type = "toggle", labelKey = "settings.toggle_fps_counter", toggle = "showFPS", descriptionKey = "settings.descriptions.toggle_fps_counter" },
-	{ type = "cycle", labelKey = "settings.language", setting = "language", descriptionKey = "settings.descriptions.language" },
+	{ type = "toggle", labelKey = "settings.toggle_fps_counter", toggle = "showFPS" },
+	{ type = "cycle", labelKey = "settings.language", setting = "language" },
 
 	{ type = "action", labelKey = "settings.back", action = "menu" }
 }
@@ -54,45 +54,10 @@ local minScrollOffset = 0
 local viewportHeight = 0
 local contentHeight = 0
 local layout = {
-        panel = { x = 0, y = 0, w = 0, h = 0 },
-        title = { y = 0, height = 0 },
-        margins = { top = 0, bottom = 0 },
+	panel = { x = 0, y = 0, w = 0, h = 0 },
+	title = { y = 0, height = 0 },
+	margins = { top = 0, bottom = 0 },
 }
-
-local function getOptionDescription(opt)
-        if not opt or not opt.descriptionKey then
-                return nil
-        end
-
-        local text = Localization:get(opt.descriptionKey)
-        if text and text ~= opt.descriptionKey then
-                return text
-        end
-
-        return nil
-end
-
-local function getOptionHeight(opt)
-        local spacing = UI.spacing
-        local baseHeight
-
-        if opt.type == "slider" then
-                baseHeight = spacing.sliderHeight
-        elseif opt.type == "header" then
-                baseHeight = spacing.sectionHeaderHeight
-        else
-                baseHeight = spacing.buttonHeight
-        end
-
-        if opt.descriptionKey then
-                local descFont = UI.fonts.small
-                local descHeight = (descFont and descFont:getHeight()) or 0
-                local extraPadding = math.max(6, math.floor((spacing.buttonSpacing or 12) * 0.35))
-                baseHeight = baseHeight + descHeight + extraPadding
-        end
-
-        return baseHeight
-end
 
 local function isButtonFocusable(btn)
 	return btn and btn.focusable ~= false
@@ -270,13 +235,13 @@ function SettingsScreen:ensureFocusVisible()
 	elseif bottom > viewportBottom then
 		self:setScroll(scrollOffset - (bottom - viewportBottom))
 	end
-	end
+end
 
-	local function getBaseColor()
+local function getBaseColor()
 	return (UI.colors and UI.colors.background) or Theme.bgColor
-	end
+end
 
-	local function configureBackgroundEffect()
+local function configureBackgroundEffect()
 	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
 	if not effect then
 		backgroundEffect = nil
@@ -293,9 +258,9 @@ function SettingsScreen:ensureFocusVisible()
 	})
 
 	backgroundEffect = effect
-	end
+end
 
-	local function drawBackground(sw, sh)
+local function drawBackground(sw, sh)
 	local baseColor = getBaseColor()
 	love.graphics.setColor(baseColor)
 	love.graphics.rectangle("fill", 0, 0, sw, sh)
@@ -310,11 +275,11 @@ function SettingsScreen:ensureFocusVisible()
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)
-	end
+end
 
-	local analogAxisDirections = { horizontal = nil, vertical = nil }
+local analogAxisDirections = { horizontal = nil, vertical = nil }
 
-	local analogAxisActions = {
+local analogAxisActions = {
 	horizontal = {
 		negative = function(self)
 			self:adjustFocused(-1)
@@ -331,23 +296,23 @@ function SettingsScreen:ensureFocusVisible()
 			self:moveFocus(1)
 		end,
 	},
-	}
+}
 
-	local analogAxisMap = {
+local analogAxisMap = {
 	leftx = { slot = "horizontal" },
 	rightx = { slot = "horizontal" },
 	lefty = { slot = "vertical" },
 	righty = { slot = "vertical" },
 	[1] = { slot = "horizontal" },
 	[2] = { slot = "vertical" },
-	}
+}
 
-	local function resetAnalogAxis()
+local function resetAnalogAxis()
 	analogAxisDirections.horizontal = nil
 	analogAxisDirections.vertical = nil
-	end
+end
 
-	local function handleAnalogAxis(self, axis, value)
+local function handleAnalogAxis(self, axis, value)
 	local mapping = analogAxisMap[axis]
 	if not mapping then
 		return
@@ -388,34 +353,31 @@ function SettingsScreen:enter()
 	local headerSpacing = UI.spacing.sectionHeaderSpacing
 	local titleFont = UI.fonts.title
 	local titleHeight = (titleFont and titleFont:getHeight()) or 0
-	local subtitleText = Localization:get("settings.subtitle")
-	local subtitleFont = UI.fonts.subtitle
-	local subtitleHeight = (subtitleFont and subtitleFont:getHeight()) or 0
-	local hasSubtitle = subtitleText and subtitleText ~= "" and subtitleText ~= "settings.subtitle"
-	if not hasSubtitle then
-	subtitleHeight = 0
-	end
-	local subtitleSpacing = hasSubtitle and math.max(8, math.floor((UI.spacing.sectionHeaderSpacing or 12) * 0.75)) or 0
-
 	local totalHeight = 0
 	for index, opt in ipairs(options) do
-	local height = getOptionHeight(opt)
-	local spacingAfter = spacing
-	if opt.type == "header" then
-	spacingAfter = headerSpacing
-	end
+		local height
+		local spacingAfter = spacing
 
-	totalHeight = totalHeight + height
-	if index < #options then
-	totalHeight = totalHeight + spacingAfter
-	end
+		if opt.type == "slider" then
+			height = UI.spacing.sliderHeight
+		elseif opt.type == "header" then
+			height = headerHeight
+			spacingAfter = headerSpacing
+		else
+			height = UI.spacing.buttonHeight
+		end
+
+		totalHeight = totalHeight + height
+		if index < #options then
+			totalHeight = totalHeight + spacingAfter
+		end
 	end
 
 	local panelPadding = UI.spacing.panelPadding
 	local panelWidth = UI.spacing.buttonWidth + panelPadding * 2
 	local panelHeight = totalHeight + panelPadding * 2
 	local minPanelHeight = panelPadding * 2 + UI.spacing.buttonHeight
-	local desiredTopMargin = UI.spacing.sectionSpacing + titleHeight + subtitleSpacing + subtitleHeight + UI.spacing.sectionSpacing
+	local desiredTopMargin = UI.spacing.sectionSpacing + titleHeight + UI.spacing.sectionSpacing
 	local desiredBottomMargin = UI.spacing.sectionSpacing + UI.spacing.buttonHeight + UI.spacing.sectionSpacing
 	local desiredMaxPanelHeight = sh - desiredTopMargin - desiredBottomMargin
 	local generalMaxPanelHeight = sh - UI.spacing.sectionSpacing * 2
@@ -462,17 +424,7 @@ function SettingsScreen:enter()
 	layout.title = {
 		height = titleHeight,
 		y = math.max(UI.spacing.sectionSpacing, panelY - UI.spacing.sectionSpacing - titleHeight * 0.25),
-		subtitleHeight = subtitleHeight,
-		subtitleSpacing = subtitleSpacing,
 	}
-	if hasSubtitle then
-		layout.subtitle = {
-			height = subtitleHeight,
-			spacing = subtitleSpacing,
-		}
-	else
-		layout.subtitle = nil
-	end
 	layout.margins = {
 		top = panelY,
 		bottom = sh - (panelY + panelHeight),
@@ -481,7 +433,7 @@ function SettingsScreen:enter()
 
 	local startY = panelY + panelPadding
 
-	-- reset UI.buttons so we don't keep stale hitboxes
+	-- reset UI.buttons so we don’t keep stale hitboxes
 	UI.clearButtons()
 	buttons = {}
 	scrollOffset = 0
@@ -492,10 +444,15 @@ function SettingsScreen:enter()
 		local y = startY
 		local w = UI.spacing.buttonWidth
 		local spacingAfter = spacing
-		local h = getOptionHeight(opt)
+		local h
 
-		if opt.type == "header" then
+		if opt.type == "slider" then
+			h = UI.spacing.sliderHeight
+		elseif opt.type == "header" then
+			h = headerHeight
 			spacingAfter = headerSpacing
+		else
+			h = UI.spacing.buttonHeight
 		end
 
 		local id = "settingsOption" .. i
@@ -614,17 +571,6 @@ function SettingsScreen:draw()
 	local titleY = titleLayout.y or math.max(UI.spacing.sectionSpacing, panel.y - UI.spacing.sectionSpacing - (titleLayout.height or 0) * 0.25)
 	UI.drawLabel(titleText, 0, titleY, sw, "center", { fontKey = "title" })
 
-	local subtitleText = Localization:get("settings.subtitle")
-	if subtitleText and subtitleText ~= "" and subtitleText ~= "settings.subtitle" then
-		local subtitleLayout = layout.subtitle or {}
-		local subtitleSpacing = subtitleLayout.spacing or math.max(8, math.floor((UI.spacing.sectionHeaderSpacing or 12) * 0.5))
-		local subtitleY = titleY + (titleLayout.height or 0) + subtitleSpacing
-		UI.drawLabel(subtitleText, 0, subtitleY, sw, "center", {
-			fontKey = "subtitle",
-			color = UI.colors.subtleText,
-		})
-	end
-
 	self:updateButtonPositions()
 
 	local panelPadding = UI.spacing.panelPadding
@@ -642,8 +588,7 @@ function SettingsScreen:draw()
 
 	for index, btn in ipairs(buttons) do
 		local opt = btn.option
-		local baseLabel = Localization:get(opt.labelKey)
-		local description = getOptionDescription(opt)
+		local label = Localization:get(opt.labelKey)
 		local isFocused = (focusedIndex == index)
 		local visible = self:isOptionVisible(btn)
 
@@ -659,29 +604,22 @@ function SettingsScreen:draw()
 			if opt.invertStateLabel then
 				enabled = not enabled
 			end
-			local stateText = enabled and Localization:get("common.on") or Localization:get("common.off")
-			local accessibleLabel = string.format("%s: %s", baseLabel, stateText)
+			local state = enabled and Localization:get("common.on") or Localization:get("common.off")
+			label = string.format("%s: %s", label, state)
 			if visible then
-				UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, accessibleLabel)
+				UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
 				UI.setButtonFocus(btn.id, isFocused)
-				UI.drawButton(btn.id, {
-					style = "settingsOption",
-					label = baseLabel,
-					state = stateText,
-					description = description,
-					stateColor = enabled and (UI.colors.accentText or UI.colors.highlight or UI.colors.text) or (UI.colors.subtleText or UI.colors.text),
-				})
+				UI.drawButton(btn.id)
 			end
 
 		elseif opt.type == "slider" and opt.slider then
 			local value = math.min(1, math.max(0, Settings[opt.slider] or 0))
 			if visible then
 				local trackX, trackY, trackW, trackH, handleRadius = UI.drawSlider(nil, btn.x, btn.y, btn.w, value, {
-					label = baseLabel,
+					label = label,
 					focused = isFocused,
 					hovered = btn.hovered,
 					register = false,
-					description = description,
 				})
 
 				btn.sliderTrack = btn.sliderTrack or {}
@@ -703,7 +641,7 @@ function SettingsScreen:draw()
 				local font = UI.fonts.heading
 				local fontHeight = font and font:getHeight() or 0
 				local textY = btn.y + math.max(0, (btn.h - fontHeight) * 0.5)
-				UI.drawLabel(baseLabel, btn.x, textY, btn.w, "left", {
+				UI.drawLabel(label, btn.x, textY, btn.w, "left", {
 					font = font,
 					color = UI.colors.subtleText,
 				})
@@ -719,26 +657,18 @@ function SettingsScreen:draw()
 
 		elseif opt.type == "cycle" and opt.setting then
 			local state = getCycleStateLabel(opt.setting)
-			local accessibleLabel = baseLabel
 			if state then
-				accessibleLabel = string.format("%s: %s", baseLabel, state)
+				label = string.format("%s: %s", label, state)
 			end
 			if visible then
-				UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, accessibleLabel)
+				UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
 				UI.setButtonFocus(btn.id, isFocused)
-				UI.drawButton(btn.id, {
-					style = "settingsOption",
-					label = baseLabel,
-					state = state,
-					description = description,
-					stateColor = UI.colors.accentText or UI.colors.highlight or UI.colors.text,
-					showCycleHint = true,
-				})
+				UI.drawButton(btn.id)
 			end
 
 		else
 			if visible then
-				UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, baseLabel)
+				UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, label)
 				UI.setButtonFocus(btn.id, isFocused)
 				UI.drawButton(btn.id)
 			end
