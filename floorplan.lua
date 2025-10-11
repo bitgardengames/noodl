@@ -8,7 +8,7 @@ local BASE_DART_CAP = 4
 local MAX_LASER_COUNT = 5
 local LASER_GROWTH_SPAN = 8
 local LASER_GROWTH_EXPONENT = 1.35
-local EXTRA_FLOOR_FRUIT_STEP = 3
+local EXTRA_FLOOR_FRUIT_STEP = 2
 
 local function computeLaserProgression(baseLaser, extraFloors, maxLasers)
 	baseLaser = baseLaser or 0
