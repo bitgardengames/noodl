@@ -397,36 +397,38 @@ local function computeLayout(sw, sh)
         local summaryTopPadding = summaryVerticalPadding
         local summaryBottomPadding = math.max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, summaryVerticalPadding)
 
-	local summaryPanel = {
-		x = panelX,
-		y = containerTop,
-		width = layout.panelWidth,
-		topPadding = summaryTopPadding,
-		bottomPadding = summaryBottomPadding,
-	}
+        local summaryPanel = {
+                x = panelX,
+                y = containerTop,
+                width = layout.panelWidth,
+                topPadding = summaryTopPadding,
+                bottomPadding = summaryBottomPadding,
+        }
 
-	local spacingTitleCompletion = SUMMARY_SPACING_TITLE_COMPLETION
-	local spacingCompletionHint = SUMMARY_SPACING_COMPLETION_HINT
-	local spacingHintBar = SUMMARY_SPACING_HINT_BAR
-	local progressHeight = SUMMARY_PROGRESS_BAR_HEIGHT
+        local progressHeight = SUMMARY_PROGRESS_BAR_HEIGHT
+        local summaryLineHeight = UI.fonts.achieve:getHeight()
+        local summaryHintSpacing = SUMMARY_SPACING_TITLE_COMPLETION
+        local summaryHintHeight = UI.fonts.small:getHeight()
+        local summaryCompletionSpacing = SUMMARY_SPACING_COMPLETION_HINT
 
-	layout.summarySpacing = {
-		titleToCompletion = spacingTitleCompletion,
-		completionToHint = spacingCompletionHint,
-		hintToBar = spacingHintBar,
-	}
-	layout.summaryProgressHeight = progressHeight
+        layout.summaryLineHeight = summaryLineHeight
+        layout.summaryProgressHeight = progressHeight
 
-	local summaryContentHeight = spacingTitleCompletion + spacingCompletionHint + spacingHintBar + progressHeight
-	local summaryHeight = summaryTopPadding + summaryContentHeight + summaryBottomPadding
+        local summaryContentHeight = summaryLineHeight + summaryHintSpacing + summaryHintHeight + summaryCompletionSpacing + SUMMARY_SPACING_HINT_BAR + progressHeight
+        local summaryHeight = summaryTopPadding + summaryContentHeight + summaryBottomPadding
 
-	summaryPanel.height = summaryHeight
-	layout.summaryPanel = summaryPanel
+        summaryPanel.height = summaryHeight
+        layout.summaryPanel = summaryPanel
 
-	layout.summaryTextX = panelX + summaryInsetX
-	layout.summaryTextWidth = layout.panelWidth - summaryInsetX * 2
-	layout.summaryTextY = summaryPanel.y + summaryTopPadding
-	layout.summaryProgressY = layout.summaryTextY + spacingTitleCompletion + spacingCompletionHint + spacingHintBar
+        layout.summaryTextX = panelX + summaryInsetX
+        layout.summaryTextWidth = layout.panelWidth - summaryInsetX * 2
+        layout.summaryTextY = summaryPanel.y + summaryTopPadding
+        layout.summaryHintY = layout.summaryTextY + summaryLineHeight + summaryHintSpacing
+        layout.summaryProgressY = layout.summaryHintY + summaryHintHeight + summaryCompletionSpacing + SUMMARY_SPACING_HINT_BAR
+
+        local highlightInsetX = math.max(SUMMARY_HIGHLIGHT_INSET, summaryInsetX * 0.6)
+        local highlightInsetY = math.max(SUMMARY_HIGHLIGHT_INSET, math.min(summaryTopPadding, summaryBottomPadding) * 0.75)
+        layout.summaryHighlightInset = { x = highlightInsetX, y = highlightInsetY }
 
 	local titleClearance = titleY + titleFontHeight + math.max(24, sh * 0.03)
 	local summaryTop = summaryPanel.y - summaryTopPadding
@@ -769,12 +771,12 @@ function AchievementsMenu:draw()
 	local panelBorder = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
 	local shadowColor = Theme.shadowColor or {0, 0, 0, 0.35}
 	local highlightColor = Theme.highlightColor or {1, 1, 1, 0.06}
-	local summaryPanel = layout.summaryPanel
-	local summaryTextX = layout.summaryTextX
-	local summaryTextY = layout.summaryTextY
-	local summaryTextWidth = layout.summaryTextWidth
-	local summarySpacing = layout.summarySpacing
-	local summaryProgressHeight = layout.summaryProgressHeight
+        local summaryPanel = layout.summaryPanel
+        local summaryTextX = layout.summaryTextX
+        local summaryTextY = layout.summaryTextY
+        local summaryTextWidth = layout.summaryTextWidth
+        local summaryProgressHeight = layout.summaryProgressHeight
+        local summaryLineHeight = layout.summaryLineHeight or UI.fonts.achieve:getHeight()
 
         love.graphics.push("all")
         UI.drawPanel(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, {
@@ -787,18 +789,22 @@ function AchievementsMenu:draw()
                 shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
         })
 
-        local highlightInsetX = math.min(summaryPanel.width * 0.25, math.max(SUMMARY_HIGHLIGHT_INSET, layout.summaryInsetX * 0.75))
-        local highlightInsetTop = math.max(SUMMARY_HIGHLIGHT_INSET * 0.75, summaryPanel.topPadding * 0.6)
-        local highlightInsetBottom = math.max(SUMMARY_HIGHLIGHT_INSET * 0.75, summaryPanel.bottomPadding * 0.5)
+        local highlightInset = layout.summaryHighlightInset or { x = SUMMARY_HIGHLIGHT_INSET, y = SUMMARY_HIGHLIGHT_INSET }
+        local highlightInsetX = math.min(summaryPanel.width * 0.25, highlightInset.x or SUMMARY_HIGHLIGHT_INSET)
+        local highlightInsetY = highlightInset.y or SUMMARY_HIGHLIGHT_INSET
+        local maxHighlightInsetX = math.max(0, (summaryPanel.width - 2) * 0.5)
+        local maxHighlightInsetY = math.max(0, (summaryPanel.height - 2) * 0.5)
+        highlightInsetX = math.max(0, math.min(highlightInsetX, maxHighlightInsetX))
+        highlightInsetY = math.max(0, math.min(highlightInsetY, maxHighlightInsetY))
         local highlightX = summaryPanel.x + highlightInsetX
-        local highlightY = summaryPanel.y + highlightInsetTop
-	local highlightW = math.max(0, summaryPanel.width - highlightInsetX * 2)
-	local highlightH = math.max(0, summaryPanel.height - highlightInsetTop - highlightInsetBottom)
-	if highlightW > 0 and highlightH > 0 then
-		love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 0.08) * 1.1)
-		love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, 18, 18)
-	end
-	love.graphics.pop()
+        local highlightY = summaryPanel.y + highlightInsetY
+        local highlightW = math.max(0, summaryPanel.width - highlightInsetX * 2)
+        local highlightH = math.max(0, summaryPanel.height - highlightInsetY * 2)
+        if highlightW > 0 and highlightH > 0 then
+                love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 0.08) * 1.1)
+                love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, 18, 18)
+        end
+        love.graphics.pop()
 
 	local totals = Achievements:getTotals()
 	local unlockedLabel = Localization:get("achievements.summary.unlocked", {
@@ -809,27 +815,22 @@ function AchievementsMenu:draw()
 	local completionLabel = Localization:get("achievements.summary.completion", {
 		percent = completionPercent,
 	})
-	local summaryHint = Localization:get("achievements.summary.hint")
+        local summaryHint = Localization:get("achievements.summary.hint")
 
-	local achieveFont = UI.fonts.achieve
-	local bodyFont = UI.fonts.body
-	local smallFont = UI.fonts.small
+        local achieveFont = UI.fonts.achieve
+        local smallFont = UI.fonts.small
 
-	love.graphics.setFont(achieveFont)
-	love.graphics.setColor(titleColor)
+        love.graphics.setFont(achieveFont)
+        love.graphics.setColor(titleColor)
         love.graphics.printf(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left")
+        love.graphics.printf(completionLabel, summaryTextX, summaryTextY, summaryTextWidth, "right")
 
-        local completionY = summaryTextY + summarySpacing.titleToCompletion
-        love.graphics.setFont(bodyFont)
-        love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.85))
-        love.graphics.printf(completionLabel, summaryTextX, completionY, summaryTextWidth, "right")
+        local hintY = layout.summaryHintY or (summaryTextY + summaryLineHeight + SUMMARY_SPACING_TITLE_COMPLETION)
+        love.graphics.setFont(smallFont)
+        love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.65))
+        love.graphics.printf(summaryHint, summaryTextX, hintY, summaryTextWidth, "left")
 
-	local hintY = summaryTextY + summarySpacing.titleToCompletion + summarySpacing.completionToHint
-	love.graphics.setFont(smallFont)
-	love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.65))
-	love.graphics.printf(summaryHint, summaryTextX, hintY, summaryTextWidth, "left")
-
-	local progressBarY = layout.summaryProgressY
+        local progressBarY = layout.summaryProgressY
 	love.graphics.setColor(darkenColor(panelColor, 0.4))
 	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, summaryProgressHeight, 6, 6)
 
