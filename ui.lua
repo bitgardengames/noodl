@@ -553,24 +553,48 @@ function UI.drawPanel(x, y, w, h, opts)
 		love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h, radius, radius)
 	end
 
-	setColor(opts.fill or UI.colors.panel)
-	love.graphics.rectangle("fill", x, y, w, h, radius, radius)
+        local alphaMultiplier = opts.alpha or 1
+        local fillColor = opts.fill or UI.colors.panel or UI.colors.button
+        setColor(fillColor, alphaMultiplier)
+        love.graphics.rectangle("fill", x, y, w, h, radius, radius)
 
-	if opts.border ~= false then
-		setColor(opts.borderColor or UI.colors.panelBorder)
-		love.graphics.setLineWidth(opts.borderWidth or 2)
-		love.graphics.rectangle("line", x, y, w, h, radius, radius)
-		love.graphics.setLineWidth(1)
-	end
+        if opts.highlight ~= false then
+                local highlightAlpha = opts.highlightAlpha
+                if highlightAlpha == nil then
+                        highlightAlpha = 0.12
+                end
+                highlightAlpha = highlightAlpha * alphaMultiplier
+                if highlightAlpha > 0 then
+                        local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+                        love.graphics.setBlendMode("add", "alphamultiply")
+                        local highlightColor = opts.highlightColor or {1, 1, 1, 1}
+                        local hr = highlightColor[1] or 1
+                        local hg = highlightColor[2] or 1
+                        local hb = highlightColor[3] or 1
+                        local ha = (highlightColor[4] or 1) * highlightAlpha
+                        love.graphics.setColor(hr, hg, hb, ha)
+                        love.graphics.rectangle("fill", x, y, w, h, radius, radius)
+                        love.graphics.setBlendMode(prevMode, prevAlphaMode)
+                end
+        end
 
-	if opts.focused then
-		local focusRadius = radius + (opts.focusRadiusOffset or 4)
-		local focusPadding = opts.focusPadding or 3
-		setColor(opts.focusColor or UI.colors.border, opts.focusAlpha or 1.1)
-		love.graphics.setLineWidth(opts.focusWidth or 3)
-		love.graphics.rectangle("line", x - focusPadding, y - focusPadding, w + focusPadding * 2, h + focusPadding * 2, focusRadius, focusRadius)
-		love.graphics.setLineWidth(1)
-	end
+        if opts.border ~= false then
+                local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
+                setColor(borderColor, alphaMultiplier)
+                love.graphics.setLineWidth(opts.borderWidth or 2)
+                love.graphics.rectangle("line", x, y, w, h, radius, radius)
+                love.graphics.setLineWidth(1)
+        end
+
+        if opts.focused then
+                local focusRadius = radius + (opts.focusRadiusOffset or 4)
+                local focusPadding = opts.focusPadding or 3
+                local focusColor = opts.focusColor or UI.colors.border or UI.colors.highlight
+                setColor(focusColor, opts.focusAlpha or 1.1)
+                love.graphics.setLineWidth(opts.focusWidth or 3)
+                love.graphics.rectangle("line", x - focusPadding, y - focusPadding, w + focusPadding * 2, h + focusPadding * 2, focusRadius, focusRadius)
+                love.graphics.setLineWidth(1)
+        end
 end
 
 function UI.drawLabel(text, x, y, width, align, opts)
