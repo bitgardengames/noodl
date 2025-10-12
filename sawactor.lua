@@ -184,11 +184,14 @@ function SawActor:draw(x, y, scale)
         local highlightRadiusLocal = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
         local highlightRadiusWorld = highlightRadiusLocal * drawScale * sinkScale
         local hideHubHighlight = false
+        local occlusionDepth = sinkOffset
 
         if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
-                if sinkOffset < highlightRadiusWorld then
+                if occlusionDepth < highlightRadiusWorld then
                         hideHubHighlight = true
                 end
+        elseif occlusionDepth > highlightRadiusWorld then
+                hideHubHighlight = true
         end
 
         if not hideHubHighlight then
