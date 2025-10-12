@@ -1636,9 +1636,22 @@ function UI:drawUpgradeIndicators()
                 end
                 local textWidth = math.max(60, width - (textX - x) - 14 - reservedWidth)
 
-                UI.setFont("button")
-                love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
-                love.graphics.printf(entry.label or entry.id, textX, drawY + 12, textWidth, "left")
+                local showLabel = true
+                local labelText = entry.label
+                if entry.hideLabel then
+                        showLabel = false
+                elseif not labelText or labelText == "" then
+                        labelText = entry.id or ""
+                        if labelText == "" then
+                                showLabel = false
+                        end
+                end
+
+                if showLabel then
+                        UI.setFont("button")
+                        love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
+                        love.graphics.printf(labelText, textX, drawY + 12, textWidth, "left")
+                end
 
                 if stackMetrics then
                         local stackText = stackMetrics.text
@@ -1670,11 +1683,12 @@ function UI:drawUpgradeIndicators()
                         love.graphics.printf(stackText, pillX, textY, pillW, "center")
                 end
 
-		if entry.status then
-			UI.setFont("small")
-			love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75 * visibility)
-			love.graphics.printf(entry.status, textX, drawY + 38, textWidth, "left")
-		end
+                if entry.status then
+                        UI.setFont("small")
+                        love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75 * visibility)
+                        local statusY = showLabel and (drawY + 38) or (drawY + 20)
+                        love.graphics.printf(entry.status, textX, statusY, textWidth, "left")
+                end
 
 		if hasBar then
 			local progress = clamp01(entry.displayProgress or 0)

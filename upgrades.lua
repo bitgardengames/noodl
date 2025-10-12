@@ -2326,10 +2326,11 @@ function Upgrades:getHUDIndicators()
 
 		local status = active and hudText("active") or hudText("ready")
 
-		table.insert(indicators, {
-			id = "adrenaline_surge",
-			label = label,
-			accentColor = {1.0, 0.45, 0.45, 1},
+                table.insert(indicators, {
+                        id = "adrenaline_surge",
+                        label = label,
+                        hideLabel = true,
+                        accentColor = {1.0, 0.45, 0.45, 1},
 			stackCount = nil,
 			charge = charge,
 			chargeLabel = chargeLabel,
@@ -2369,10 +2370,11 @@ function Upgrades:getHUDIndicators()
 			end
 		end
 
-		table.insert(indicators, {
-			id = "thunder_dash",
-			label = label,
-			accentColor = accent,
+                table.insert(indicators, {
+                        id = "thunder_dash",
+                        label = label,
+                        hideLabel = true,
+                        accentColor = accent,
 			stackCount = nil,
 			charge = charge,
 			chargeLabel = chargeLabel,
@@ -2422,10 +2424,11 @@ function Upgrades:getHUDIndicators()
 			end
 		end
 
-		table.insert(indicators, {
-			id = "temporal_anchor",
-			label = label,
-			accentColor = accent,
+                table.insert(indicators, {
+                        id = "temporal_anchor",
+                        label = label,
+                        hideLabel = true,
+                        accentColor = accent,
 			stackCount = nil,
 			charge = charge,
 			chargeLabel = chargeLabel,
