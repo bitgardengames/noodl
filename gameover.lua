@@ -132,6 +132,26 @@ local function getStatCardMinWidth()
 	return (UI.scaled and UI.scaled(160, 120)) or 160
 end
 
+local function getSectionPadding()
+	return (UI.scaled and UI.scaled(20, 14)) or 20
+end
+
+local function getSectionSpacing()
+	return (UI.scaled and UI.scaled(22, 16)) or 22
+end
+
+local function getSectionInnerSpacing()
+	return (UI.scaled and UI.scaled(12, 8)) or 12
+end
+
+local function getSectionSmallSpacing()
+	return (UI.scaled and UI.scaled(8, 5)) or 8
+end
+
+local function getSectionHeaderSpacing()
+	return (UI.scaled and UI.scaled(18, 14)) or 18
+end
+
 local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
@@ -557,6 +577,31 @@ local function drawCenteredPanel(x, y, width, height, radius)
 	})
 end
 
+local function drawInsetPanel(x, y, width, height, options)
+	if width <= 0 or height <= 0 then
+		return
+	end
+
+	options = options or {}
+	local radius = options.radius or 16
+	local lightenFactor = options.lighten or 0.12
+	local baseAlpha = options.alpha or 0.88
+	local borderAlpha = options.borderAlpha or 0.65
+	local borderWidth = options.borderWidth or 1
+
+	local baseColor = Theme.panelColor or { 0.18, 0.18, 0.22, 1 }
+	local fillColor = withAlpha(lightenColor(baseColor, lightenFactor), baseAlpha)
+	local borderColor = withAlpha(Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }, borderAlpha)
+
+	UI.drawPanel(x, y, width, height, {
+		radius = radius,
+		shadowOffset = 0,
+		fill = fillColor,
+		borderColor = borderColor,
+		borderWidth = borderWidth,
+	})
+end
+
 local function handleButtonAction(_, action)
 	return action
 end
@@ -575,40 +620,117 @@ function GameOver:updateLayoutMetrics()
 	local preferredWidth = math.min(sw * 0.72, 640)
 	local minWidth = math.min(320, safeMaxWidth)
 	local contentWidth = math.max(minWidth, math.min(preferredWidth, safeMaxWidth))
-	local wrapLimit = math.max(0, contentWidth - padding * 2)
+	local innerWidth = contentWidth - padding * 2
+
+	local sectionPadding = getSectionPadding()
+	local sectionSpacing = getSectionSpacing()
+	local innerSpacing = getSectionInnerSpacing()
+	local smallSpacing = getSectionSmallSpacing()
+	local headerSpacing = getSectionHeaderSpacing()
+
+	local wrapLimit = math.max(0, innerWidth - sectionPadding * 2)
 
 	local messageText = self.deathMessage or Localization:get("gameover.default_message")
 	local _, wrappedMessage = fontSmall:getWrap(messageText, wrapLimit)
 	local messageLines = math.max(1, #wrappedMessage)
 	local messageHeight = messageLines * fontSmall:getHeight()
+	local messagePanelHeight = math.floor(messageHeight + sectionPadding * 2 + 0.5)
 
 	local headerFont = UI.fonts.heading or fontSmall
 	local headerHeight = headerFont:getHeight()
-	local scoreHeight = fontScore:getHeight()
-	local badgeHeight = self.isNewHighScore and (fontBadge:getHeight() + 18) or 0
-	local achievementsHeight = (#(self.achievementsEarned or {}) > 0) and (fontSmall:getHeight() + 12) or 0
 
-        local statCards = 2
-        local statLayout = calculateStatLayout(contentWidth, padding, statCards)
+	local scoreHeaderHeight = fontProgressSmall:getHeight()
+	local scoreNumberHeight = fontScore:getHeight()
+	local badgeHeight = 0
+	if self.isNewHighScore then
+		badgeHeight = fontBadge:getHeight() + smallSpacing
+	end
+	local scorePanelHeight = sectionPadding * 2 + scoreHeaderHeight + innerSpacing + scoreNumberHeight + badgeHeight
+	scorePanelHeight = math.floor(scorePanelHeight + 0.5)
 
-	local xpHeight = 0
+	local statCards = 2
+	local statLayout = calculateStatLayout(innerWidth, sectionPadding, statCards)
+	local statHeaderHeight = fontProgressSmall:getHeight()
+	local statPanelHeight = sectionPadding * 2 + statHeaderHeight
+	if (statLayout.height or 0) > 0 then
+		statPanelHeight = statPanelHeight + innerSpacing + statLayout.height
+	end
+	statPanelHeight = math.floor(statPanelHeight + 0.5)
+
+	local achievementsList = self.achievementsEarned or {}
+	local achievementsPanelHeight = 0
+	local achievementsLayout = nil
+	if #achievementsList > 0 then
+		local headerHeightAchievements = fontProgressSmall:getHeight()
+		local textWidth = math.max(0, innerWidth - sectionPadding * 2)
+		local totalHeight = headerHeightAchievements
+		local entrySpacing = innerSpacing
+		local entryGap = smallSpacing
+		achievementsLayout = {
+			entries = {},
+			headerHeight = headerHeightAchievements,
+			entrySpacing = entrySpacing,
+			entryGap = entryGap,
+			textWidth = textWidth,
+		}
+
+		for index, achievement in ipairs(achievementsList) do
+			totalHeight = totalHeight + entrySpacing
+			totalHeight = totalHeight + fontSmall:getHeight()
+
+			local description = achievement.description or ""
+			local descriptionLines = 0
+			if description ~= "" then
+				if textWidth > 0 then
+					local _, wrapped = fontProgressSmall:getWrap(description, textWidth)
+					if wrapped and #wrapped > 0 then
+						descriptionLines = #wrapped
+					else
+						descriptionLines = 1
+					end
+				else
+					descriptionLines = 1
+				end
+			end
+
+			totalHeight = totalHeight + descriptionLines * fontProgressSmall:getHeight()
+
+			achievementsLayout.entries[#achievementsLayout.entries + 1] = {
+				title = achievement.title or "",
+				description = description,
+				descriptionLines = descriptionLines,
+			}
+
+			if index < #achievementsList then
+				totalHeight = totalHeight + entryGap
+			end
+		end
+
+		achievementsPanelHeight = sectionPadding * 2 + totalHeight
+		achievementsPanelHeight = math.floor(achievementsPanelHeight + 0.5)
+		achievementsLayout.height = achievementsPanelHeight
+	end
+
+	local xpPanelHeight = 0
 	if self.progressionAnimation then
 		local celebrations = (self.progressionAnimation.celebrations and #self.progressionAnimation.celebrations) or 0
 		local baseHeight = self.baseXpSectionHeight or self.xpSectionHeight or 0
 		local celebrationSpacing = getCelebrationEntrySpacing()
 		local targetHeight = baseHeight + celebrations * celebrationSpacing
 		local xpContentHeight = math.max(160, baseHeight, targetHeight)
-		xpHeight = xpContentHeight + 12
+		xpPanelHeight = math.floor(xpContentHeight + 0.5)
 	end
 
-	local summaryPanelHeight = padding * 2
-		+ headerHeight + 12
-		+ messageHeight + 28
-		+ scoreHeight + 16
-		+ badgeHeight
-		+ statLayout.height + 12
-		+ achievementsHeight
-		+ xpHeight
+	local summaryPanelHeight = padding * 2 + headerHeight
+	summaryPanelHeight = summaryPanelHeight + headerSpacing + messagePanelHeight
+	summaryPanelHeight = summaryPanelHeight + sectionSpacing + scorePanelHeight
+	summaryPanelHeight = summaryPanelHeight + sectionSpacing + statPanelHeight
+	if achievementsPanelHeight > 0 then
+		summaryPanelHeight = summaryPanelHeight + sectionSpacing + achievementsPanelHeight
+	end
+	if xpPanelHeight > 0 then
+		summaryPanelHeight = summaryPanelHeight + sectionSpacing + xpPanelHeight
+	end
 
 	summaryPanelHeight = math.floor(summaryPanelHeight + 0.5)
 	contentWidth = math.floor(contentWidth + 0.5)
@@ -633,14 +755,53 @@ function GameOver:updateLayoutMetrics()
 		layoutChanged = true
 	end
 
+	if not self.messagePanelHeight or math.abs(self.messagePanelHeight - messagePanelHeight) >= 1 then
+		layoutChanged = true
+	end
+	if not self.scorePanelHeight or math.abs(self.scorePanelHeight - scorePanelHeight) >= 1 then
+		layoutChanged = true
+	end
+	if not self.statPanelHeight or math.abs(self.statPanelHeight - statPanelHeight) >= 1 then
+		layoutChanged = true
+	end
+
+	local previousAchievementsCount = (self.achievementsLayout and #self.achievementsLayout.entries) or 0
+	local newAchievementsCount = (achievementsLayout and #achievementsLayout.entries) or 0
+	if previousAchievementsCount ~= newAchievementsCount then
+		layoutChanged = true
+	end
+
+	local previousAchievementsHeight = (self.achievementsLayout and self.achievementsLayout.height) or 0
+	if math.abs(previousAchievementsHeight - achievementsPanelHeight) >= 1 then
+		layoutChanged = true
+	end
+
+	if not self.xpPanelHeight or math.abs(self.xpPanelHeight - xpPanelHeight) >= 1 then
+		layoutChanged = true
+	end
+
 	self.summaryPanelHeight = summaryPanelHeight
 	self.contentWidth = contentWidth
 	self.contentPadding = padding
 	self.wrapLimit = wrapLimit
 	self.messageLines = messageLines
+	self.messagePanelHeight = messagePanelHeight
+	self.scorePanelHeight = scorePanelHeight
+	self.statPanelHeight = statPanelHeight
+	self.xpPanelHeight = xpPanelHeight
+	self.sectionPaddingValue = sectionPadding
+	self.sectionSpacingValue = sectionSpacing
+	self.sectionInnerSpacingValue = innerSpacing
+	self.sectionSmallSpacingValue = smallSpacing
+	self.sectionHeaderSpacingValue = headerSpacing
+	self.innerContentWidth = innerWidth
 	self.statLayout = statLayout
+	self.achievementsPanelHeight = achievementsPanelHeight
+	self.achievementsLayout = achievementsLayout
 
 	return layoutChanged
+end
+
 end
 
 function GameOver:updateButtonLayout()
@@ -1191,93 +1352,168 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding)
 	local panelY = 120
 	drawCenteredPanel(contentX, panelY, contentWidth, panelHeight, 20)
 
-	local messageText = self.deathMessage or Localization:get("gameover.default_message")
-	local wrapLimit = self.wrapLimit or (contentWidth - padding * 2)
-	local lineHeight = fontSmall:getHeight()
-	local messageLines = math.max(1, self.messageLines or 1)
-	local headerFont = UI.fonts.heading or fontSmall
+	local innerWidth = self.innerContentWidth or (contentWidth - padding * 2)
+	local innerX = contentX + padding
 
-	local textY = panelY + padding
-	UI.drawLabel(getLocalizedOrFallback("gameover.run_summary_title", "Run Summary"), contentX, textY, contentWidth, "center", {
+	local sectionPadding = self.sectionPaddingValue or getSectionPadding()
+	local sectionSpacing = self.sectionSpacingValue or getSectionSpacing()
+	local innerSpacing = self.sectionInnerSpacingValue or getSectionInnerSpacing()
+	local smallSpacing = self.sectionSmallSpacingValue or getSectionSmallSpacing()
+	local headerSpacing = self.sectionHeaderSpacingValue or getSectionHeaderSpacing()
+
+	local headerFont = UI.fonts.heading or fontSmall
+	local titleY = panelY + padding
+	UI.drawLabel(getLocalizedOrFallback("gameover.run_summary_title", "Run Summary"), contentX, titleY, contentWidth, "center", {
 		font = headerFont,
 		color = UI.colors.text,
 	})
 
-	textY = textY + headerFont:getHeight() + 12
-	UI.drawLabel(messageText, contentX + padding, textY, wrapLimit, "center", {
-		font = fontSmall,
-		color = UI.colors.mutedText or UI.colors.text,
-	})
+	local currentY = titleY + headerFont:getHeight() + headerSpacing
 
-	textY = textY + messageLines * lineHeight + 28
-	local progressColor = Theme.progressColor or { 1, 1, 1, 1 }
-	UI.drawLabel(tostring(stats.score or 0), contentX, textY, contentWidth, "center", {
-		font = fontScore,
-		color = { progressColor[1] or 1, progressColor[2] or 1, progressColor[3] or 1, 0.92 },
-	})
-
-	textY = textY + fontScore:getHeight() + 16
-	if self.isNewHighScore then
-		local badgeColor = Theme.achieveColor or { 1, 1, 1, 1 }
-		UI.drawLabel(Localization:get("gameover.high_score_badge"), contentX + padding, textY, contentWidth - padding * 2, "center", {
-			font = fontBadge,
-			color = { badgeColor[1] or 1, badgeColor[2] or 1, badgeColor[3] or 1, 0.9 },
-		})
-		textY = textY + fontBadge:getHeight() + 18
-	end
-
-        local cardY = textY
-        local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
-        local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Apples")
-        local statLayout = self.statLayout or calculateStatLayout(contentWidth, padding, 2)
-        local availableWidth = statLayout.availableWidth or (contentWidth - padding * 2)
-        local cardIndex = 1
-        local statCards = {
-                { label = bestLabel, value = tostring(stats.highScore or 0) },
-                { label = applesLabel, value = tostring(stats.apples or 0) },
-        }
-
-	local statSpacing = statLayout.spacing or getStatCardSpacing()
-	local statCardHeight = getStatCardHeight()
-
-	for row = 1, math.max(1, statLayout.rows or 1) do
-		local itemsInRow = math.min(statLayout.columns or 1, #statCards - (row - 1) * (statLayout.columns or 1))
-		if itemsInRow <= 0 then
-			break
-		end
-
-		local rowWidth = itemsInRow * (statLayout.cardWidth or 0) + math.max(0, itemsInRow - 1) * statSpacing
-		local rowOffset = math.max(0, (availableWidth - rowWidth) / 2)
-		local baseX = contentX + padding + rowOffset
-		local rowY = cardY + (row - 1) * (statCardHeight + statSpacing)
-
-		for col = 0, itemsInRow - 1 do
-			local card = statCards[cardIndex]
-			if not card then
-				break
-			end
-
-			local cardX = baseX + col * ((statLayout.cardWidth or 0) + statSpacing)
-			drawStatPill(cardX, rowY, statLayout.cardWidth or 0, statCardHeight, card.label, card.value)
-			cardIndex = cardIndex + 1
-		end
-	end
-
-	textY = textY + (statLayout.height or statCardHeight) + 12
-
-	local achievementsList = self.achievementsEarned or {}
-	if #achievementsList > 0 then
-		local achievementsLabel = getLocalizedOrFallback("gameover.achievements_header", "Achievements")
-		local achievementsText = string.format("%s: %d", achievementsLabel, #achievementsList)
-		UI.drawLabel(achievementsText, contentX + padding, textY, wrapLimit, "center", {
+	local wrapLimit = self.wrapLimit or math.max(0, innerWidth - sectionPadding * 2)
+	local messageText = self.deathMessage or Localization:get("gameover.default_message")
+	local messagePanelHeight = self.messagePanelHeight or 0
+	if messagePanelHeight > 0 then
+		drawInsetPanel(innerX, currentY, innerWidth, messagePanelHeight)
+		UI.drawLabel(messageText, innerX + sectionPadding, currentY + sectionPadding, wrapLimit, "center", {
 			font = fontSmall,
 			color = UI.colors.mutedText or UI.colors.text,
 		})
-		textY = textY + lineHeight + 12
+		currentY = currentY + messagePanelHeight
+	end
+
+	local scorePanelHeight = self.scorePanelHeight or 0
+	if scorePanelHeight > 0 then
+		currentY = currentY + sectionSpacing
+
+		drawInsetPanel(innerX, currentY, innerWidth, scorePanelHeight, { radius = 18 })
+
+		local scoreLabel = getLocalizedOrFallback("gameover.score_label", "Score")
+		local labelY = currentY + sectionPadding
+		UI.drawLabel(scoreLabel, innerX + sectionPadding, labelY, innerWidth - sectionPadding * 2, "center", {
+			font = fontProgressSmall,
+			color = UI.colors.mutedText or UI.colors.text,
+		})
+
+		local valueY = labelY + fontProgressSmall:getHeight() + innerSpacing
+		local progressColor = Theme.progressColor or { 1, 1, 1, 1 }
+		UI.drawLabel(tostring(stats.score or 0), innerX, valueY, innerWidth, "center", {
+			font = fontScore,
+			color = { progressColor[1] or 1, progressColor[2] or 1, progressColor[3] or 1, 0.92 },
+		})
+
+		if self.isNewHighScore then
+			local badgeColor = Theme.achieveColor or { 1, 1, 1, 1 }
+			local badgeY = valueY + fontScore:getHeight() + smallSpacing
+			UI.drawLabel(Localization:get("gameover.high_score_badge"), innerX + sectionPadding, badgeY, innerWidth - sectionPadding * 2, "center", {
+				font = fontBadge,
+				color = { badgeColor[1] or 1, badgeColor[2] or 1, badgeColor[3] or 1, 0.9 },
+			})
+		end
+
+		currentY = currentY + scorePanelHeight
+	end
+
+	local statPanelHeight = self.statPanelHeight or 0
+	if statPanelHeight > 0 then
+		currentY = currentY + sectionSpacing
+
+		drawInsetPanel(innerX, currentY, innerWidth, statPanelHeight, { radius = 18 })
+
+		local statsHeader = getLocalizedOrFallback("gameover.stats_header", "Highlights")
+		local statsY = currentY + sectionPadding
+		UI.drawLabel(statsHeader, innerX + sectionPadding, statsY, innerWidth - sectionPadding * 2, "left", {
+			font = fontProgressSmall,
+			color = UI.colors.mutedText or UI.colors.text,
+		})
+
+		statsY = statsY + fontProgressSmall:getHeight() + innerSpacing
+
+		local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
+		local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Apples")
+		local statCards = {
+			{ label = bestLabel, value = tostring(stats.highScore or 0) },
+			{ label = applesLabel, value = tostring(stats.apples or 0) },
+		}
+
+		local statLayout = self.statLayout or calculateStatLayout(innerWidth, sectionPadding, #statCards)
+		local availableWidth = statLayout.availableWidth or (innerWidth - sectionPadding * 2)
+		local statSpacing = statLayout.spacing or getStatCardSpacing()
+		local statCardHeight = getStatCardHeight()
+		local cardIndex = 1
+
+		for row = 1, math.max(1, statLayout.rows or 1) do
+			local itemsInRow = math.min(statLayout.columns or 1, #statCards - (row - 1) * (statLayout.columns or 1))
+			if itemsInRow <= 0 then
+				break
+			end
+
+			local rowWidth = itemsInRow * (statLayout.cardWidth or 0) + math.max(0, itemsInRow - 1) * statSpacing
+			local rowOffset = math.max(0, (availableWidth - rowWidth) / 2)
+			local baseX = innerX + sectionPadding + rowOffset
+			local rowY = statsY + (row - 1) * (statCardHeight + statSpacing)
+
+			for col = 0, itemsInRow - 1 do
+				local card = statCards[cardIndex]
+				if not card then
+					break
+				end
+
+				local cardX = baseX + col * ((statLayout.cardWidth or 0) + statSpacing)
+				drawStatPill(cardX, rowY, statLayout.cardWidth or 0, statCardHeight, card.label, card.value)
+				cardIndex = cardIndex + 1
+			end
+		end
+
+		currentY = currentY + statPanelHeight
+	end
+
+	local achievementsLayout = self.achievementsLayout
+	local achievementsHeight = self.achievementsPanelHeight or (achievementsLayout and achievementsLayout.height) or 0
+	if achievementsLayout and achievementsHeight > 0 and #achievementsLayout.entries > 0 then
+		currentY = currentY + sectionSpacing
+
+		drawInsetPanel(innerX, currentY, innerWidth, achievementsHeight, { radius = 18 })
+
+		local achievementsLabel = getLocalizedOrFallback("gameover.achievements_header", "Achievements")
+		local achievementsHeader = string.format("%s (%d)", achievementsLabel, #achievementsLayout.entries)
+		local textX = innerX + sectionPadding
+		local textWidth = innerWidth - sectionPadding * 2
+		local entryY = currentY + sectionPadding
+
+		UI.drawLabel(achievementsHeader, textX, entryY, textWidth, "left", {
+			font = fontProgressSmall,
+			color = UI.colors.text,
+		})
+
+		entryY = entryY + fontProgressSmall:getHeight() + innerSpacing
+
+		for index, entry in ipairs(achievementsLayout.entries) do
+			UI.drawLabel(entry.title or "", textX, entryY, textWidth, "left", {
+				font = fontSmall,
+				color = UI.colors.highlight or UI.colors.text,
+			})
+			entryY = entryY + fontSmall:getHeight()
+
+			if entry.description and entry.description ~= "" then
+				UI.drawLabel(entry.description, textX, entryY, textWidth, "left", {
+					font = fontProgressSmall,
+					color = UI.colors.mutedText or UI.colors.text,
+				})
+				entryY = entryY + (entry.descriptionLines or 0) * fontProgressSmall:getHeight()
+			end
+
+			if index < #achievementsLayout.entries then
+				entryY = entryY + smallSpacing
+			end
+		end
+
+		currentY = currentY + achievementsHeight
 	end
 
 	if self.progressionAnimation then
-		drawXpSection(self, contentX + padding, textY, contentWidth - padding * 2)
+		currentY = currentY + sectionSpacing
+		drawXpSection(self, innerX, currentY, innerWidth)
 	end
 end
 
