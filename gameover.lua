@@ -371,23 +371,7 @@ local function updateFruitAnimations(anim, dt)
 						anim.pendingFruitXp = pending + grant
 					end
 
-					anim.barPulse = math.min(1.5, (anim.barPulse or 0) + 0.45)
-                                        anim.barSplashes = anim.barSplashes or {}
-                                        if metrics and metrics.style == "radial" then
-                                                anim.barSplashes[#anim.barSplashes + 1] = {
-                                                        angle = fruit.splashAngle or clamp(anim.visualPercent or 0, 0, 1),
-                                                        color = fruit.color,
-                                                        timer = 0,
-                                                        duration = 0.45,
-                                                }
-                                        else
-                                                anim.barSplashes[#anim.barSplashes + 1] = {
-                                                        x = fruit.endX,
-                                                        color = fruit.color,
-                                                        timer = 0,
-                                                        duration = 0.35,
-                                                }
-                                        end
+                                        anim.barPulse = math.min(1.5, (anim.barPulse or 0) + 0.45)
                                 end
 
                                 fruit.landingTimer = (fruit.landingTimer or 0) + dt
@@ -401,14 +385,6 @@ local function updateFruitAnimations(anim, dt)
 		end
 	end
 
-	local splashes = anim.barSplashes or {}
-	for index = #splashes, 1, -1 do
-		local splash = splashes[index]
-		splash.timer = (splash.timer or 0) + dt
-		if splash.timer >= (splash.duration or 0.35) then
-			table.remove(splashes, index)
-		end
-	end
 end
 
 local function drawFruitAnimations(anim)
@@ -855,7 +831,6 @@ function GameOver:enter(data)
                         levelUnlocks = {},
                         bonusXP = challengeBonusXP,
                         barPulse = 0,
-                        barSplashes = {},
                         pendingFruitXp = 0,
                         fruitDelivered = 0,
                         fillEaseSpeed = clamp(fillSpeed / 12, 6, 16),
@@ -1137,30 +1112,6 @@ local function drawXpSection(self, x, y, width)
                 love.graphics.setColor(ringColor[1], ringColor[2], ringColor[3], 0.24 + 0.18 * flash)
                 love.graphics.arc("line", "open", centerX, centerY, ringRadius * (scale + 0.08 + pulse * 0.06), startAngle, endAngle, 96)
                 love.graphics.setBlendMode(prevMode, prevAlphaMode)
-        end
-
-        local splashes = anim.barSplashes or {}
-        if anim.barMetrics and splashes and #splashes > 0 then
-                for _, splash in ipairs(splashes) do
-                        local splashProgress = clamp((splash.timer or 0) / (splash.duration or 0.45), 0, 1)
-                        local splashFade = clamp(1 - splashProgress, 0, 1)
-                        if splashFade > 0.01 then
-                                local splashAngle = startAngle + (splash.angle or percent) * math.pi * 2
-                                local spread = 0.22 + 0.18 * (1 - splashProgress)
-                                local splashRadius = ringRadius * (1 + 0.12 * splashProgress)
-                                local splashWidth = ringThickness * (0.65 + 0.45 * splashProgress)
-                                local splashColor = splash.color or ringColor
-                                local highlight = lightenColor(splashColor, 0.45)
-
-                                love.graphics.setColor(splashColor[1], splashColor[2], splashColor[3], 0.32 * splashFade)
-                                love.graphics.setLineWidth(splashWidth)
-                                love.graphics.arc("line", "open", centerX, centerY, splashRadius, splashAngle - spread, splashAngle + spread, 48)
-
-                                love.graphics.setColor(highlight[1], highlight[2], highlight[3], 0.45 * splashFade)
-                                love.graphics.setLineWidth(splashWidth * 0.55)
-                                love.graphics.arc("line", "open", centerX, centerY, splashRadius * 0.96, splashAngle - spread * 0.6, splashAngle + spread * 0.6, 48)
-                        end
-                end
         end
 
         love.graphics.setColor(withAlpha(lightenColor(panelColor, 0.18), 0.94))
