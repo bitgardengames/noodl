@@ -802,8 +802,6 @@ function GameOver:updateLayoutMetrics()
 	return layoutChanged
 end
 
-end
-
 function GameOver:updateButtonLayout()
 	local sw, sh = Screen:get()
 	local _, buttonHeight, buttonSpacing = getButtonMetrics()
