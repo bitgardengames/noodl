@@ -15,7 +15,7 @@ local Upgrades = require("upgrades")
 
 local FloorSetup = {}
 
-local TRACK_LENGTH = 120
+local TRACK_LENGTH = 160
 local DEFAULT_SAW_RADIUS = 16
 
 local function applyPalette(palette)
