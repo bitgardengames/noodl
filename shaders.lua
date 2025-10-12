@@ -1001,7 +1001,7 @@ registerEffect({
 		return drawShader(effect, x, y, w, h, intensity)
 	end,
 })
--- Velvet indigo gradient with gentle grain for the main menu
+-- Velvet indigo gradient backdrop for the main menu
 registerEffect({
         type = "menuConstellation",
         backdropIntensity = 0.46,
@@ -1013,27 +1013,7 @@ registerEffect({
                 extern vec4 topColor;
                 extern vec4 bottomColor;
                 extern float vignetteIntensity;
-                extern float noiseAmount;
                 extern float intensity;
-
-                float hash(vec2 p)
-                {
-                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-                }
-
-                float noise(vec2 p)
-                {
-                        vec2 i = floor(p);
-                        vec2 f = fract(p);
-                        f = f * f * (3.0 - 2.0 * f);
-
-                        float a = hash(i);
-                        float b = hash(i + vec2(1.0, 0.0));
-                        float c = hash(i + vec2(0.0, 1.0));
-                        float d = hash(i + vec2(1.0, 1.0));
-
-                        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-                }
 
                 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
                 {
@@ -1051,11 +1031,6 @@ registerEffect({
                         float vignetteMix = clamp(vignette * vignetteIntensity, 0.0, 1.0);
                         col = mix(col, col * 0.82, vignetteMix);
 
-                        float grainStrength = noiseAmount * mix(0.8, 1.2, clamp(intensity, 0.0, 1.0));
-                        float grain = noise(uv * resolution.xy + time * 15.0);
-                        grain = grain * 2.0 - 1.0;
-                        col += grain * grainStrength;
-
                         col = clamp(col, 0.0, 1.0);
 
                         float alpha = mix(topColor.a, bottomColor.a, gradient);
@@ -1071,7 +1046,6 @@ registerEffect({
                 sendColor(shader, "topColor", top)
                 sendColor(shader, "bottomColor", bottom)
                 sendFloat(shader, "vignetteIntensity", 0.55)
-                sendFloat(shader, "noiseAmount", 0.08)
         end,
         draw = function(effect, x, y, w, h, intensity)
                 return drawShader(effect, x, y, w, h, intensity)
