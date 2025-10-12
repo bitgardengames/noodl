@@ -181,16 +181,30 @@ function SawActor:draw(x, y, scale)
         love.graphics.setColor(baseColor)
         love.graphics.polygon("fill", points)
 
-        local highlight = getHighlightColor(baseColor)
-        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-        love.graphics.setLineWidth(2)
-        love.graphics.circle("line", 0, 0, HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1)
+        local highlightRadiusLocal = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
+        local highlightRadiusWorld = highlightRadiusLocal * drawScale * sinkScale
+        local hideHubHighlight = false
+
+        if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
+                if sinkOffset < highlightRadiusWorld then
+                        hideHubHighlight = true
+                end
+        end
+
+        if not hideHubHighlight then
+                local highlight = getHighlightColor(baseColor)
+                love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+                love.graphics.setLineWidth(2)
+                love.graphics.circle("line", 0, 0, highlightRadiusLocal)
+        end
 
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.setLineWidth(3)
         love.graphics.polygon("line", points)
 
-        love.graphics.circle("fill", 0, 0, HUB_HOLE_RADIUS)
+        if not hideHubHighlight then
+                love.graphics.circle("fill", 0, 0, HUB_HOLE_RADIUS)
+        end
 
         love.graphics.pop()
 
