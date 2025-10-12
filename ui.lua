@@ -1335,13 +1335,9 @@ local function drawComboIndicator(self)
 		love.graphics.setColor(0, 0, 0, 0.25)
 		love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth, barHeight, 6, 6)
 
-		local glow = 0.5 + 0.5 * math.sin(love.timer.getTime() * 6)
-		love.graphics.setColor(1, 0.78, 0.3, 0.85)
-		love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
-
-		love.graphics.setColor(1, 0.95, 0.75, 0.4 + glow * 0.2)
-		love.graphics.rectangle("line", x + barPadding - 2, comboBarY - 2, barWidth + 4, barHeight + 4, 8, 8)
-	end
+                love.graphics.setColor(1, 0.78, 0.3, 0.85)
+                love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
+        end
 
 	love.graphics.pop()
 end
