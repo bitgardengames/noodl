@@ -98,7 +98,7 @@ local spacingMinimums = {
 }
 
 local baseUpgradeLayout = {
-	width = 252,
+        width = 208,
 	spacing = 12,
 	baseHeight = 58,
 	iconRadius = 18,
@@ -1439,24 +1439,30 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		local boxWidth = textWidth + paddingX * 2
 		local boxHeight = font:getHeight() + paddingY * 2
 		local position = overlay.position or "bottomRight"
-		local anchorX, anchorY
+                local anchorX, anchorY
 
-		if position == "topLeft" then
-			anchorX = -radius * 0.75
-			anchorY = -radius * 0.75
-		elseif position == "topRight" then
-			anchorX = radius * 0.75
-			anchorY = -radius * 0.75
-		elseif position == "bottomLeft" then
-			anchorX = -radius * 0.75
-			anchorY = radius * 0.75
-		else
-			anchorX = radius * 0.75
-			anchorY = radius * 0.75
-		end
+                if position == "topLeft" then
+                        anchorX = -radius * 0.75
+                        anchorY = -radius * 0.75
+                elseif position == "topRight" then
+                        anchorX = radius * 0.75
+                        anchorY = -radius * 0.75
+                elseif position == "bottomLeft" then
+                        anchorX = -radius * 0.75
+                        anchorY = radius * 0.75
+                elseif position == "center" then
+                        anchorX = 0
+                        anchorY = 0
+                else
+                        anchorX = radius * 0.75
+                        anchorY = radius * 0.75
+                end
 
-		local boxX = anchorX - boxWidth * 0.5
-		local boxY = anchorY - boxHeight * 0.5
+                anchorX = anchorX + (overlay.offsetX or 0)
+                anchorY = anchorY + (overlay.offsetY or 0)
+
+                local boxX = anchorX - boxWidth * 0.5
+                local boxY = anchorY - boxHeight * 0.5
 		local cornerRadius = overlay.cornerRadius or math.min(10, boxHeight * 0.5)
 
 		love.graphics.setColor(background[1], background[2], background[3], background[4] or 1)
@@ -1467,8 +1473,9 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.rectangle("line", boxX, boxY, boxWidth, boxHeight, cornerRadius, cornerRadius)
 
 		local textColor = overlay.textColor or {1, 1, 1, 1}
-		love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
-		love.graphics.printf(text, boxX, boxY + paddingY - 1, boxWidth, "center")
+                love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
+                local textY = boxY + (boxHeight - font:getHeight()) * 0.5
+                love.graphics.printf(text, boxX, textY, boxWidth, "center")
 		if previousFont then
 			love.graphics.setFont(previousFont)
 		end
@@ -1495,24 +1502,31 @@ local function buildShieldIndicator(self)
 	local label = Localization:get("upgrades.hud.shields")
 
 	local accent = {0.55, 0.82, 1.0, 1.0}
-	local statusKey = "ready"
+        local statusKey = "ready"
 
-	if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
-		accent = {1.0, 0.55, 0.45, 1.0}
-		statusKey = "depleted"
-	end
+        if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
+                accent = {1.0, 0.55, 0.45, 1.0}
+                statusKey = "depleted"
+        end
 
-	return {
-		id = "__shields",
-		label = label,
-		stackCount = count,
-		icon = "shield",
-		accentColor = accent,
-		iconOverlay = {
-			text = count,
-			position = "bottomRight",
-			font = "small",
-		},
+        local overlayBackground = lightenColor(accent, 0.1)
+        overlayBackground[4] = 0.92
+
+        return {
+                id = "__shields",
+                label = label,
+                stackCount = count,
+                icon = "shield",
+                accentColor = accent,
+                iconOverlay = {
+                        text = count,
+                        position = "center",
+                        font = "badge",
+                        paddingX = 8,
+                        paddingY = 4,
+                        backgroundColor = overlayBackground,
+                        textColor = Theme.textColor,
+                },
 		status = Localization:get("upgrades.hud." .. statusKey),
 		showBar = false,
 		visibility = 1,
@@ -1592,24 +1606,69 @@ function UI:drawUpgradeIndicators()
 		love.graphics.setLineWidth(2)
 		love.graphics.rectangle("line", x, drawY, width, panelHeight, 14, 14)
 
-		local iconX = x + iconRadius + 16
-		local iconY = drawY + iconRadius + 12
-		drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius, entry.iconOverlay)
+                local iconX = x + iconRadius + 14
+                local iconY = drawY + iconRadius + 12
+                drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius, entry.iconOverlay)
 
-		local textX = iconX + iconRadius + 16
-		local textWidth = width - textX - 16
+                local textX = iconX + iconRadius + 12
+                local reservedWidth = 0
+                local stackMetrics
+                if entry.stackCount ~= nil then
+                        local stackText = "x" .. tostring(entry.stackCount)
+                        local stackFont = UI.fonts and UI.fonts.badge or nil
+                        if not stackFont then
+                                stackFont = love.graphics.getFont()
+                        end
+                        local textW = stackFont:getWidth(stackText)
+                        local textH = stackFont:getHeight()
+                        local paddingX = 10
+                        local paddingY = 4
+                        local pillW = textW + paddingX * 2
+                        reservedWidth = pillW + 8
+                        stackMetrics = {
+                                text = stackText,
+                                textWidth = textW,
+                                textHeight = textH,
+                                paddingX = paddingX,
+                                paddingY = paddingY,
+                                pillWidth = pillW,
+                        }
+                end
+                local textWidth = math.max(60, width - (textX - x) - 14 - reservedWidth)
 
-		UI.setFont("button")
-		love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
-		love.graphics.printf(entry.label or entry.id, textX, drawY + 12, textWidth, "left")
+                UI.setFont("button")
+                love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
+                love.graphics.printf(entry.label or entry.id, textX, drawY + 12, textWidth, "left")
 
-		if entry.stackCount ~= nil then
-			local stackText = "x" .. tostring(entry.stackCount)
-			UI.setFont("button")
-			local stackColor = lightenColor(accent, 0.3)
-			love.graphics.setColor(stackColor[1], stackColor[2], stackColor[3], (stackColor[4] or 1) * visibility)
-			love.graphics.printf(stackText, textX, drawY + 12, textWidth, "right")
-		end
+                if stackMetrics then
+                        local stackText = stackMetrics.text
+                        UI.setFont("badge")
+                        local textW = stackMetrics.textWidth
+                        local textH = stackMetrics.textHeight
+                        local paddingX = stackMetrics.paddingX
+                        local paddingY = stackMetrics.paddingY
+                        local pillW = stackMetrics.pillWidth
+                        local pillH = textH + paddingY * 2
+                        local pillX = x + width - pillW - 14
+                        local pillY = drawY + 10
+                        local cornerRadius = pillH * 0.5
+
+                        love.graphics.setColor(0, 0, 0, 0.25 * visibility)
+                        love.graphics.rectangle("fill", pillX + 2, pillY + 3, pillW, pillH, cornerRadius, cornerRadius)
+
+                        local pillColor = lightenColor(accent, 0.12)
+                        love.graphics.setColor(pillColor[1], pillColor[2], pillColor[3], (pillColor[4] or 1) * visibility)
+                        love.graphics.rectangle("fill", pillX, pillY, pillW, pillH, cornerRadius, cornerRadius)
+
+                        local outline = lightenColor(accent, 0.32)
+                        love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1) * visibility)
+                        love.graphics.setLineWidth(1)
+                        love.graphics.rectangle("line", pillX, pillY, pillW, pillH, cornerRadius, cornerRadius)
+
+                        love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
+                        local textY = pillY + (pillH - textH) * 0.5
+                        love.graphics.printf(stackText, pillX, textY, pillW, "center")
+                end
 
 		if entry.status then
 			UI.setFont("small")
