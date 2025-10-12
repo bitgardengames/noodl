@@ -1001,7 +1001,7 @@ registerEffect({
 		return drawShader(effect, x, y, w, h, intensity)
 	end,
 })
--- Retro arcade inspired gradient for the main menu
+-- Velvet indigo gradient with gentle grain for the main menu
 registerEffect({
         type = "menuConstellation",
         backdropIntensity = 0.46,
@@ -1010,57 +1010,68 @@ registerEffect({
                 extern float time;
                 extern vec2 resolution;
                 extern vec2 origin;
-                extern vec4 leftColor;
-                extern vec4 rightColor;
-                extern vec4 scanTint;
+                extern vec4 topColor;
+                extern vec4 bottomColor;
+                extern float vignetteIntensity;
+                extern float noiseAmount;
                 extern float intensity;
+
+                float hash(vec2 p)
+                {
+                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+                }
+
+                float noise(vec2 p)
+                {
+                        vec2 i = floor(p);
+                        vec2 f = fract(p);
+                        f = f * f * (3.0 - 2.0 * f);
+
+                        float a = hash(i);
+                        float b = hash(i + vec2(1.0, 0.0));
+                        float c = hash(i + vec2(0.0, 1.0));
+                        float d = hash(i + vec2(1.0, 1.0));
+
+                        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+                }
 
                 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
                 {
                         vec2 uv = (screen_coords - origin) / resolution;
                         uv = clamp(uv, 0.0, 1.0);
 
-                        float gradient = smoothstep(0.0, 1.0, uv.x);
-                        vec3 col = mix(leftColor.rgb, rightColor.rgb, gradient);
+                        float gradient = smoothstep(0.0, 1.0, uv.y);
+                        vec3 col = mix(topColor.rgb, bottomColor.rgb, gradient);
 
-                       float pixelX = uv.x * resolution.x;
-                       float primaryScan = 0.5 + 0.5 * sin((pixelX + time * 8.0) * 3.14159);
-                       float fineScan = 0.5 + 0.5 * sin((pixelX * 2.0 + time * 28.0) * 3.14159);
+                        float energy = mix(0.94, 1.08, clamp(intensity, 0.0, 1.2) * 0.6);
+                        col *= energy;
 
-                        float scanShade = mix(0.78, 1.0, primaryScan);
-                        float fineShade = mix(0.88, 1.0, fineScan);
-                        float scanStrength = clamp(intensity, 0.0, 1.5);
-                        float combinedShade = mix(1.0, mix(scanShade, fineShade, 0.5), scanStrength * 0.65);
-                        col *= combinedShade;
+                        vec2 centered = uv - vec2(0.5);
+                        float vignette = smoothstep(0.45, 0.92, length(centered));
+                        float vignetteMix = clamp(vignette * vignetteIntensity, 0.0, 1.0);
+                        col = mix(col, col * 0.82, vignetteMix);
 
-                        float refresh = 1.0 + sin(time * 5.5) * 0.015 * scanStrength;
-                        col *= refresh;
-
-                        float jitter = sin((uv.x + uv.y * 1.35 + time * 0.85) * 45.0);
-                        col += scanTint.rgb * jitter * 0.006 * scanStrength;
-
-                        float glow = sin((uv.x * 6.0 + time * 0.6)) * 0.025;
-                        col += scanTint.rgb * glow * scanStrength;
-
-                        float vignette = smoothstep(0.45, 0.92, distance(uv, vec2(0.5)));
-                        col = mix(col, col * 0.78, vignette);
+                        float grainStrength = noiseAmount * mix(0.8, 1.2, clamp(intensity, 0.0, 1.0));
+                        float grain = noise(uv * resolution.xy + time * 15.0);
+                        grain = grain * 2.0 - 1.0;
+                        col += grain * grainStrength;
 
                         col = clamp(col, 0.0, 1.0);
 
-                        float alpha = mix(leftColor.a, rightColor.a, gradient);
+                        float alpha = mix(topColor.a, bottomColor.a, gradient);
                         return vec4(col, alpha) * color;
                 }
         ]],
         configure = function(effect)
                 local shader = effect.shader
 
-                local left = {4 / 255, 42 / 255, 43 / 255, 1}
-                local right = {4 / 255, 104 / 255, 101 / 255, 1}
-                local tint = {80 / 255, 214 / 255, 207 / 255, 1}
+                local top = {0x0E / 255, 0x0E / 255, 0x10 / 255, 1}
+                local bottom = {0x28 / 255, 0x2A / 255, 0x3A / 255, 1}
 
-                sendColor(shader, "leftColor", left)
-                sendColor(shader, "rightColor", right)
-                sendColor(shader, "scanTint", tint)
+                sendColor(shader, "topColor", top)
+                sendColor(shader, "bottomColor", bottom)
+                sendFloat(shader, "vignetteIntensity", 0.55)
+                sendFloat(shader, "noiseAmount", 0.08)
         end,
         draw = function(effect, x, y, w, h, intensity)
                 return drawShader(effect, x, y, w, h, intensity)
