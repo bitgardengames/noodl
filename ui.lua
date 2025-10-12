@@ -1611,77 +1611,9 @@ function UI:drawUpgradeIndicators()
                 drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius, entry.iconOverlay)
 
                 local textX = iconX + iconRadius + 12
-                local reservedWidth = 0
-                local stackMetrics
-                if entry.stackCount ~= nil then
-                        local stackText = "x" .. tostring(entry.stackCount)
-                        local stackFont = UI.fonts and UI.fonts.badge or nil
-                        if not stackFont then
-                                stackFont = love.graphics.getFont()
-                        end
-                        local textW = stackFont:getWidth(stackText)
-                        local textH = stackFont:getHeight()
-                        local paddingX = 10
-                        local paddingY = 4
-                        local pillW = textW + paddingX * 2
-                        reservedWidth = pillW + 8
-                        stackMetrics = {
-                                text = stackText,
-                                textWidth = textW,
-                                textHeight = textH,
-                                paddingX = paddingX,
-                                paddingY = paddingY,
-                                pillWidth = pillW,
-                        }
-                end
-                local textWidth = math.max(60, width - (textX - x) - 14 - reservedWidth)
+                local textWidth = math.max(60, width - (textX - x) - 14)
 
-                local showLabel = true
-                local labelText = entry.label
-                if entry.hideLabel then
-                        showLabel = false
-                elseif not labelText or labelText == "" then
-                        labelText = entry.id or ""
-                        if labelText == "" then
-                                showLabel = false
-                        end
-                end
-
-                if showLabel then
-                        UI.setFont("button")
-                        love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
-                        love.graphics.printf(labelText, textX, drawY + 12, textWidth, "left")
-                end
-
-                if stackMetrics then
-                        local stackText = stackMetrics.text
-                        UI.setFont("badge")
-                        local textW = stackMetrics.textWidth
-                        local textH = stackMetrics.textHeight
-                        local paddingX = stackMetrics.paddingX
-                        local paddingY = stackMetrics.paddingY
-                        local pillW = stackMetrics.pillWidth
-                        local pillH = textH + paddingY * 2
-                        local pillX = x + width - pillW - 14
-                        local pillY = drawY + 10
-                        local cornerRadius = pillH * 0.5
-
-                        love.graphics.setColor(0, 0, 0, 0.25 * visibility)
-                        love.graphics.rectangle("fill", pillX + 2, pillY + 3, pillW, pillH, cornerRadius, cornerRadius)
-
-                        local pillColor = lightenColor(accent, 0.12)
-                        love.graphics.setColor(pillColor[1], pillColor[2], pillColor[3], (pillColor[4] or 1) * visibility)
-                        love.graphics.rectangle("fill", pillX, pillY, pillW, pillH, cornerRadius, cornerRadius)
-
-                        local outline = lightenColor(accent, 0.32)
-                        love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1) * visibility)
-                        love.graphics.setLineWidth(1)
-                        love.graphics.rectangle("line", pillX, pillY, pillW, pillH, cornerRadius, cornerRadius)
-
-                        love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
-                        local textY = pillY + (pillH - textH) * 0.5
-                        love.graphics.printf(stackText, pillX, textY, pillW, "center")
-                end
+                local showLabel = false
 
                 if entry.status then
                         UI.setFont("small")
