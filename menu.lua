@@ -273,16 +273,17 @@ function Menu:draw()
                 end
 
                 local desiredTrackLengthWorld = wordWidth + cellSize
-                local desiredTrackLengthBase = desiredTrackLengthWorld / sawScale
-                if not titleSaw.trackLength or titleSaw.trackLength < desiredTrackLengthBase then
-                        titleSaw.trackLength = desiredTrackLengthBase
+                local shortenedTrackLengthWorld = math.max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 80)
+                local targetTrackLengthBase = shortenedTrackLengthWorld / sawScale
+                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
+                        titleSaw.trackLength = targetTrackLengthBase
                 end
 
-                local trackLengthWorld = (titleSaw.trackLength or desiredTrackLengthBase) * sawScale
+                local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
                 local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
                 local slotThicknessWorld = slotThicknessBase * sawScale
 
-                local targetLeft = ox
+                local targetLeft = ox - 14
                 local targetBottom = oy - 24
 
                 local sawX = targetLeft + trackLengthWorld / 2
