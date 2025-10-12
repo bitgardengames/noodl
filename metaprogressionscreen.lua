@@ -1586,8 +1586,8 @@ local function drawCosmeticsList(sw, sh)
                                 local lockColor = Theme.lockedCardColor or {0.5, 0.35, 0.4, 1}
                                 local shackleColor = lightenColor(lockColor, 0.1)
                                 local bodyColor = darkenColor(lockColor, 0.12)
-                                local lockWidth = math.min(28, previewW * 0.6)
-                                local lockHeight = 16
+                                local lockWidth = math.min(36, previewW * 0.72)
+                                local lockHeight = 20
                                 local lockX = previewX + (previewW - lockWidth) / 2
                                 local lockY = previewY + (previewH - lockHeight) / 2 + 4
                                 local shackleWidth = lockWidth * 0.64
@@ -1624,8 +1624,8 @@ local function drawCosmeticsList(sw, sh)
                                 love.graphics.circle("fill", topRectX, topCenterY, postWidth / 2)
                                 love.graphics.circle("fill", topRectX + topRectWidth, topCenterY, postWidth / 2)
 
-                                local keyholeWidth = math.max(4, lockWidth * 0.18)
-                                local keyholeHeight = math.max(6, lockHeight * 0.45)
+                                local keyholeWidth = math.max(5, lockWidth * 0.18)
+                                local keyholeHeight = math.max(8, lockHeight * 0.45)
                                 local keyholeX = previewX + previewW / 2 - keyholeWidth / 2
                                 local keyholeY = lockY + lockHeight / 2 - keyholeHeight / 2
                                 local keyholeColor = Theme.bgColor or {0, 0, 0, 1}
