@@ -403,36 +403,6 @@ local function updateGuildLedger(state)
 	state.effects.rockSpawnFlat = (state.effects.rockSpawnFlat or 0) - previous + newBonus
 end
 
-local function updateMarketPulse(state)
-	if not state then return end
-
-	local perSlot = state.counters and state.counters.marketPulsePerSlot or 0
-	if perSlot == 0 then return end
-
-	local slots = 0
-	if state.effects then
-		slots = state.effects.shopSlots or 0
-	end
-
-	local previous = state.counters.marketPulseBonus or 0
-	local newBonus = perSlot * slots
-	state.counters.marketPulseBonus = newBonus
-	state.effects.comboBonusFlat = (state.effects.comboBonusFlat or 0) - previous + newBonus
-end
-
-local function updateComboHarmonizer(state)
-	if not state then return end
-
-	local perCombo = state.counters and state.counters.comboHarmonizerPerTag or 0
-	if perCombo == 0 then return end
-
-	local previous = state.counters.comboHarmonizerBonus or 0
-	local comboCount = countUpgradesWithTag(state, "combo")
-	local newBonus = perCombo * comboCount
-	state.counters.comboHarmonizerBonus = newBonus
-	state.effects.comboWindowBonus = (state.effects.comboWindowBonus or 0) - previous + newBonus
-end
-
 local function updateStoneCensus(state)
 	if not state then return end
 
@@ -838,27 +808,6 @@ local pool = {
 				textScale = 1.04,
 			})
 		end,
-	}),
-	register({
-		id = "metronome_totem",
-		nameKey = "upgrades.metronome_totem.name",
-		descKey = "upgrades.metronome_totem.description",
-		rarity = "common",
-		tags = {"combo"},
-		onAcquire = function(state)
-			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
-			if UI.adjustFruitGoal then
-				UI:adjustFruitGoal(1)
-			end
-		end,
-		handlers = {
-			fruitCollected = function(data)
-				local FruitEvents = require("fruitevents")
-				if FruitEvents.boostComboTimer then
-					FruitEvents.boostComboTimer(0.35)
-				end
-			end,
-		},
 	}),
 	register({
 		id = "adrenaline_surge",
@@ -1320,26 +1269,6 @@ local pool = {
 		end,
 	}),
 	register({
-		id = "gilded_trail",
-		nameKey = "upgrades.gilded_trail.name",
-		descKey = "upgrades.gilded_trail.description",
-		rarity = "common",
-		tags = {"economy"},
-		onAcquire = function(state)
-			state.counters.gildedTrail = state.counters.gildedTrail or 0
-		end,
-		handlers = {
-			fruitCollected = function(data, state)
-				state.counters.gildedTrail = (state.counters.gildedTrail or 0) + 1
-				if state.counters.gildedTrail % 5 == 0 then
-					if Score.addBonus then
-						Score:addBonus(3)
-					end
-				end
-			end,
-		},
-	}),
-	register({
 		id = "rattle_gambit",
 		nameKey = "upgrades.rattle_gambit.name",
 		descKey = "upgrades.rattle_gambit.description",
@@ -1408,16 +1337,6 @@ local pool = {
 		},
 	}),
 	register({
-		id = "aurora_band",
-		nameKey = "upgrades.aurora_band.name",
-		descKey = "upgrades.aurora_band.description",
-		rarity = "uncommon",
-		tags = {"combo", "risk"},
-		onAcquire = function(state)
-			state.effects.comboWindowBonus = (state.effects.comboWindowBonus or 0) + 0.35
-		end,
-	}),
-	register({
 		id = "tempo_turbine",
 		nameKey = "upgrades.tempo_turbine.name",
 		descKey = "upgrades.tempo_turbine.description",
@@ -1480,35 +1399,7 @@ local pool = {
 			state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
 		end,
 	}),
-	register({
-		id = "market_pulse",
-		nameKey = "upgrades.market_pulse.name",
-		descKey = "upgrades.market_pulse.description",
-		rarity = "uncommon",
-		tags = {"economy", "combo"},
-		onAcquire = function(state)
-			state.counters.marketPulsePerSlot = 0.25
-			updateMarketPulse(state)
 
-			if not state.counters.marketPulseHandlerRegistered then
-				state.counters.marketPulseHandlerRegistered = true
-				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
-					if not runState then return end
-					if not runState.takenSet or (runState.takenSet.market_pulse or 0) <= 0 then return end
-					updateMarketPulse(runState)
-				end)
-			end
-
-			celebrateUpgrade(getUpgradeString("market_pulse", "name"), nil, {
-				color = {0.6, 0.88, 0.96, 1},
-				particleCount = 18,
-				particleSpeed = 120,
-				particleLife = 0.42,
-				textOffset = 44,
-				textScale = 1.1,
-			})
-		end,
-	}),
 	register({
 		id = "mercantile_echo",
 		nameKey = "upgrades.mercantile_echo.name",
@@ -1751,37 +1642,7 @@ local pool = {
 			end,
 		},
 	}),
-	register({
-		id = "combo_harmonizer",
-		nameKey = "upgrades.combo_harmonizer.name",
-		descKey = "upgrades.combo_harmonizer.description",
-		rarity = "uncommon",
-                requiresTags = {"combo"},
-                tags = {"combo"},
-                unlockTag = "combo_mastery",
-		onAcquire = function(state)
-			state.counters.comboHarmonizerPerTag = 0.12
-			updateComboHarmonizer(state)
 
-			if not state.counters.comboHarmonizerHandlerRegistered then
-				state.counters.comboHarmonizerHandlerRegistered = true
-				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
-					if not runState then return end
-					if not runState.takenSet or (runState.takenSet.combo_harmonizer or 0) <= 0 then return end
-					updateComboHarmonizer(runState)
-				end)
-			end
-
-			celebrateUpgrade(getUpgradeString("combo_harmonizer", "name"), nil, {
-				color = {0.82, 0.78, 1, 1},
-				particleCount = 18,
-				particleSpeed = 115,
-				particleLife = 0.45,
-				textOffset = 44,
-				textScale = 1.12,
-			})
-		end,
-	}),
 	register({
 		id = "grim_reliquary",
 		nameKey = "upgrades.grim_reliquary.name",
@@ -1877,43 +1738,7 @@ local pool = {
 			end,
 		},
 	}),
-	register({
-		id = "crystal_cache",
-		nameKey = "upgrades.crystal_cache.name",
-		descKey = "upgrades.crystal_cache.description",
-		rarity = "uncommon",
-		tags = {"economy", "defense"},
-		handlers = {
-			shieldConsumed = function(data)
-				if Score.addBonus then
-					Score:addBonus(2)
-				end
-				local fx, fy = getEventPosition(data)
-				if fx and fy then
-					celebrateUpgrade(nil, data, {
-						x = fx,
-						y = fy,
-						skipText = true,
-						color = {0.86, 0.96, 1, 1},
-						particleCount = 12,
-						particleSpeed = 115,
-						particleLife = 0.55,
-						particleSize = 5,
-						particleSpread = math.pi * 2,
-						visual = {
-							badge = "burst",
-							outerRadius = 52,
-							innerRadius = 16,
-							ringCount = 3,
-							life = 0.82,
-							glowAlpha = 0.28,
-							haloAlpha = 0.18,
-						},
-					})
-				end
-			end,
-		},
-	}),
+
 	register({
 		id = "tectonic_resolve",
 		nameKey = "upgrades.tectonic_resolve.name",
