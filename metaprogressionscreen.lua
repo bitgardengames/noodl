@@ -659,7 +659,7 @@ local function measureTrackEntryHeight(entry)
         end
 
         local yCursor = descY + descHeight + rewardBlockHeight
-        local requiredHeight = yCursor + 38
+        local requiredHeight = yCursor + 12
 
         return math.max(TRACK_CARD_MIN_HEIGHT, math.ceil(requiredHeight))
 end
@@ -1488,18 +1488,6 @@ local function drawTrack(sw, sh)
                                 end
                         end
 
-                        local statusBaseline = y + cardHeight - 32
-                        local statusY = math.max(statusBaseline, yCursor + 6)
-                        local statusText
-                        if unlocked then
-                                statusText = Localization:get("metaprogression.status_unlocked")
-                        else
-				statusText = Localization:get("metaprogression.status_locked", { xp = entry.remainingXp or 0 })
-			end
-
-                        love.graphics.setFont(UI.fonts.small)
-                        love.graphics.setColor(borderColor)
-                        love.graphics.print(statusText, textX, statusY)
                 end
         end
 
