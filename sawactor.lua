@@ -179,7 +179,19 @@ function SawActor:draw(x, y, scale)
         end
 
         love.graphics.setColor(baseColor)
-        love.graphics.polygon("fill", points)
+
+        local triangles = nil
+        if teeth and teeth >= 3 then
+                triangles = love.math.triangulate(points)
+        end
+
+        if triangles and #triangles > 0 then
+                for _, triangle in ipairs(triangles) do
+                        love.graphics.polygon("fill", triangle)
+                end
+        else
+                love.graphics.polygon("fill", points)
+        end
 
         local highlightRadiusLocal = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
         local highlightRadiusWorld = highlightRadiusLocal * drawScale * sinkScale
