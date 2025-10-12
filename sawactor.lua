@@ -186,11 +186,15 @@ function SawActor:draw(x, y, scale)
         local hideHubHighlight = false
         local occlusionDepth = sinkOffset
 
+        -- When the saw is partially embedded in a wall/track the stencil clips the
+        -- hub highlight, which leaves a thin grey arc poking past the blade edge.
+        -- Hide the highlight (and hub hole) whenever the occlusion plane reaches
+        -- or crosses the highlight radius so the sliver never appears.
         if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
-                if occlusionDepth < highlightRadiusWorld then
+                if occlusionDepth <= highlightRadiusWorld then
                         hideHubHighlight = true
                 end
-        elseif occlusionDepth > highlightRadiusWorld then
+        elseif occlusionDepth >= highlightRadiusWorld then
                 hideHubHighlight = true
         end
 
