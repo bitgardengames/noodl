@@ -559,13 +559,6 @@ function Saws:draw()
                         hideHubHighlight = true
                 end
 
-                if not hideHubHighlight then
-                        local highlight = getHighlightColor(baseColor)
-                        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-                        love.graphics.setLineWidth(2)
-                        love.graphics.circle("line", 0, 0, highlightRadius)
-                end
-
                 -- Outline
                 love.graphics.setColor(0, 0, 0, 1)
                 love.graphics.setLineWidth(3)

@@ -20,15 +20,6 @@ local STENCIL_EXTENT = 999
 local SINK_OFFSET = 2
 local SINK_DISTANCE = 28
 
-local function getHighlightColor(color)
-        color = color or { 1, 1, 1, 1 }
-        local r = math.min(1, color[1] * 1.2 + 0.08)
-        local g = math.min(1, color[2] * 1.2 + 0.08)
-        local b = math.min(1, color[3] * 1.2 + 0.08)
-        local a = (color[4] or 1) * 0.7
-        return { r, g, b, a }
-end
-
 function SawActor.new(options)
         local actor = setmetatable({}, SawActor)
         options = options or {}
@@ -192,13 +183,6 @@ function SawActor:draw(x, y, scale)
                 end
         elseif occlusionDepth > highlightRadiusWorld then
                 hideHubHighlight = true
-        end
-
-        if not hideHubHighlight then
-                local highlight = getHighlightColor(baseColor)
-                love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-                love.graphics.setLineWidth(2)
-                love.graphics.circle("line", 0, 0, highlightRadiusLocal)
         end
 
         love.graphics.setColor(0, 0, 0, 1)
