@@ -1001,60 +1001,70 @@ registerEffect({
 		return drawShader(effect, x, y, w, h, intensity)
 	end,
 })
--- Constellation swirl for main menu focus
+-- Retro arcade inspired gradient for the main menu
 registerEffect({
-	type = "menuConstellation",
-	backdropIntensity = 0.46,
-	arenaIntensity = 0.32,
-	source = [[
-		extern float time;
-		extern vec2 resolution;
-		extern vec2 origin;
-		extern vec4 baseColor;
-		extern vec4 accentColor;
-		extern vec4 highlightColor;
-		extern float intensity;
+        type = "menuConstellation",
+        backdropIntensity = 0.46,
+        arenaIntensity = 0.32,
+        source = [[
+                extern float time;
+                extern vec2 resolution;
+                extern vec2 origin;
+                extern vec4 leftColor;
+                extern vec4 rightColor;
+                extern vec4 scanTint;
+                extern float intensity;
 
-		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-		{
-			vec2 uv = (screen_coords - origin) / resolution;
-			uv = clamp(uv, 0.0, 1.0);
-			vec2 centered = uv - vec2(0.5);
+                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+                {
+                        vec2 uv = (screen_coords - origin) / resolution;
+                        uv = clamp(uv, 0.0, 1.0);
 
-			float dist = length(centered);
-			float softVignette = smoothstep(0.8, 0.2, dist);
-			float vertical = smoothstep(0.0, 1.0, uv.y);
-			float drift = sin(time * 0.12 + uv.y * 2.2) * 0.5 + 0.5;
+                        float gradient = smoothstep(0.0, 1.0, uv.x);
+                        vec3 col = mix(leftColor.rgb, rightColor.rgb, gradient);
 
-			float accentMix = clamp(0.18 + vertical * 0.25 + drift * 0.15, 0.0, 1.0) * intensity;
-			float highlightMix = clamp(softVignette * 0.35 + (1.0 - vertical) * 0.1, 0.0, 1.0) * 0.6 * intensity;
+                        float pixelY = uv.y * resolution.y;
+                        float primaryScan = 0.5 + 0.5 * sin((pixelY + time * 25.0) * 3.14159);
+                        float fineScan = 0.5 + 0.5 * sin((pixelY * 2.0 + time * 90.0) * 3.14159);
 
-			vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix);
-			col = mix(col, highlightColor.rgb, highlightMix);
+                        float scanShade = mix(0.78, 1.0, primaryScan);
+                        float fineShade = mix(0.88, 1.0, fineScan);
+                        float scanStrength = clamp(intensity, 0.0, 1.5);
+                        float combinedShade = mix(1.0, mix(scanShade, fineShade, 0.5), scanStrength * 0.65);
+                        col *= combinedShade;
 
-			float calmPulse = sin(time * 0.05) * 0.5 + 0.5;
-			col = mix(col, baseColor.rgb, 0.12 * calmPulse);
+                        float refresh = 1.0 + sin(time * 5.5) * 0.015 * scanStrength;
+                        col *= refresh;
 
-			col = mix(baseColor.rgb, col, 0.85);
-			col = clamp(col, 0.0, 1.0);
+                        float jitter = sin((uv.x + uv.y * 1.35 + time * 0.85) * 45.0);
+                        col += scanTint.rgb * jitter * 0.006 * scanStrength;
 
-			return vec4(col, baseColor.a) * color;
-		}
-	]],
-	configure = function(effect, palette)
-		local shader = effect.shader
+                        float glow = sin((uv.x * 6.0 + time * 0.6)) * 0.025;
+                        col += scanTint.rgb * glow * scanStrength;
 
-		local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
-		local accent = getColorComponents(palette and (palette.accentColor or palette.primary), Theme.buttonHover)
-		local highlight = getColorComponents(palette and (palette.highlightColor or palette.secondary), Theme.accentTextColor)
+                        float vignette = smoothstep(0.45, 0.92, distance(uv, vec2(0.5)));
+                        col = mix(col, col * 0.78, vignette);
 
-		sendColor(shader, "baseColor", base)
-		sendColor(shader, "accentColor", accent)
-		sendColor(shader, "highlightColor", highlight)
-	end,
-	draw = function(effect, x, y, w, h, intensity)
-		return drawShader(effect, x, y, w, h, intensity)
-	end,
+                        col = clamp(col, 0.0, 1.0);
+
+                        float alpha = mix(leftColor.a, rightColor.a, gradient);
+                        return vec4(col, alpha) * color;
+                }
+        ]],
+        configure = function(effect)
+                local shader = effect.shader
+
+                local left = {4 / 255, 42 / 255, 43 / 255, 1}
+                local right = {4 / 255, 104 / 255, 101 / 255, 1}
+                local tint = {80 / 255, 214 / 255, 207 / 255, 1}
+
+                sendColor(shader, "leftColor", left)
+                sendColor(shader, "rightColor", right)
+                sendColor(shader, "scanTint", tint)
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
 })
 -- Radiant fabric of light for the shop screen
 registerEffect({
