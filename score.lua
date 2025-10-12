@@ -117,10 +117,10 @@ function Score:increase(points)
 		PlayerStats:add("totalApplesEaten", 1)
 		updateAchievementChecks(self)
 
-		if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
-				self.runHighScoreTriggered = true
-				self.highScoreGlowTimer = self.highScoreGlowDuration
-		end
+                if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
+                                self.runHighScoreTriggered = true
+                                self.highScoreGlowTimer = 0
+                end
 end
 
 function Score:addFruitBonus(amount)
@@ -132,10 +132,10 @@ function Score:addBonus(points)
 		self.current = self.current + points
 		updateAchievementChecks(self)
 
-		if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
-				self.runHighScoreTriggered = true
-				self.highScoreGlowTimer = self.highScoreGlowDuration
-		end
+                if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
+                                self.runHighScoreTriggered = true
+                                self.highScoreGlowTimer = 0
+                end
 end
 
 local function updateComboBonusValue(self)
