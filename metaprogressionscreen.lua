@@ -537,20 +537,11 @@ local function drawWindowFrame(x, y, width, height, options)
         love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function getRewardHeading(count)
-        local key = (count and count > 1) and "metaprogression.rewards.multiple" or "metaprogression.rewards.single"
-        local heading = Localization:get(key)
-        if heading == key then
-                heading = (count and count > 1) and "Rewards" or "Reward"
-	end
-	return heading
-end
-
 local function roundNearest(value)
-	value = value or 0
-	if value >= 0 then
-		return math.floor(value + 0.5)
-	end
+        value = value or 0
+        if value >= 0 then
+                return math.floor(value + 0.5)
+        end
 	return math.ceil(value - 0.5)
 end
 
@@ -592,21 +583,11 @@ local function annotateTrackEntry(entry)
                 return
         end
 
-        local xpGoalText
-        local totalXp = math.max(0, math.floor((entry.totalXpRequired or 0) + 0.5))
-        if totalXp > 0 then
-                local requirement = Localization:get("metaprogression.requirements.total_xp", { xp = totalXp })
-                if requirement == "metaprogression.requirements.total_xp" then
-                        requirement = string.format("Reach %d total XP", totalXp)
-                end
-                xpGoalText = requirement
-        end
-
         local rewards = {}
-	local effects = entry.effects or {}
-	if effects.shopExtraChoices and effects.shopExtraChoices ~= 0 then
-		local reward = formatShopChoice(effects.shopExtraChoices)
-		if reward then
+        local effects = entry.effects or {}
+        if effects.shopExtraChoices and effects.shopExtraChoices ~= 0 then
+                local reward = formatShopChoice(effects.shopExtraChoices)
+                if reward then
 			rewards[#rewards + 1] = reward
 		end
 	end
@@ -620,9 +601,7 @@ local function annotateTrackEntry(entry)
 		end
 	end
 
-        entry.xpGoalText = xpGoalText
         entry.rewards = rewards
-        entry.rewardHeading = getRewardHeading(#rewards)
 end
 
 local function measureTrackEntryHeight(entry)
@@ -640,23 +619,15 @@ local function measureTrackEntryHeight(entry)
                 descHeight = lineCount * bodyFont:getHeight()
         end
 
-        local xpLineHeight = 0
-        if entry.xpGoalText and entry.xpGoalText ~= "" then
-                xpLineHeight = UI.fonts.caption:getHeight()
-        end
-
         local rewards = entry.rewards or {}
         local rewardBlockHeight = 0
         if #rewards > 0 then
                 local smallFont = UI.fonts.small
-                rewardBlockHeight = 6 + (#rewards + 1) * smallFont:getHeight()
+                rewardBlockHeight = 6 + #rewards * smallFont:getHeight()
         end
 
         local textY = 20
         local descY = textY + 58
-        if xpLineHeight > 0 then
-                descY = textY + 54 + xpLineHeight + 8
-        end
 
         local yCursor = descY + descHeight + rewardBlockHeight
         local requiredHeight = yCursor + 12
@@ -1237,14 +1208,6 @@ local function drawSummaryPanel(sw)
         })
 
         local glow = withAlpha(lightenColor(accentColor, 0.45), 0.22)
-        local secondaryGlow = withAlpha(lightenColor(accentColor, 0.25), 0.12)
-        love.graphics.setColor(secondaryGlow)
-        love.graphics.ellipse("fill", panelX + contentWidth * 0.7, panelY + contentHeight * 0.55, contentWidth * 0.35, contentHeight * 0.55)
-        love.graphics.setColor(glow)
-        love.graphics.ellipse("fill", panelX + contentWidth * 0.38, panelY + contentHeight * 0.2, contentWidth * 0.28, contentHeight * 0.32)
-
-        love.graphics.setColor(1, 1, 1, 0.06)
-        love.graphics.rectangle("fill", panelX + 16, panelY + 12, contentWidth - 32, contentHeight * 0.32)
 
         local levelText = Localization:get("metaprogression.level_label", { level = progressionState.level or 1 })
         local totalText = Localization:get("metaprogression.total_xp", { total = progressionState.totalExperience or 0 })
@@ -1434,27 +1397,10 @@ local function drawTrack(sw, sh)
                         love.graphics.print(entry.name or "", textX, textY + 30)
 
                         local wrapWidth = CARD_WIDTH - 48
-                        local xpLineHeight = 0
-                        local xpLineY = textY + 54
-                        if entry.xpGoalText and entry.xpGoalText ~= "" then
-                                local xpFont = UI.fonts.caption
-                                xpLineHeight = xpFont:getHeight()
-                                local xpColor = Theme.progressColor or Theme.accentTextColor or Theme.textColor
-                                if unlocked then
-                                        xpColor = Theme.mutedTextColor or withAlpha(Theme.textColor, 0.8)
-                                end
-                                love.graphics.setFont(xpFont)
-                                love.graphics.setColor(withAlpha(xpColor, unlocked and 0.85 or 1))
-                                love.graphics.printf(entry.xpGoalText, textX, xpLineY, wrapWidth, "left")
-                        end
-
                         love.graphics.setColor(Theme.textColor)
 
                         local desc = entry.description or ""
                         local descY = textY + 58
-                        if xpLineHeight > 0 then
-                                descY = xpLineY + xpLineHeight + 8
-                        end
                         local descHeight = 0
                         if desc ~= "" then
                                 local _, wrapped = UI.fonts.body:getWrap(desc, wrapWidth)
@@ -1466,25 +1412,18 @@ local function drawTrack(sw, sh)
                         end
 
                         local infoY = descY + descHeight
-                        local yCursor = infoY
                         local rewards = entry.rewards or {}
                         local smallFont = UI.fonts.small
                         local lineHeight = smallFont:getHeight()
 
                         if #rewards > 0 then
-                                yCursor = yCursor + 6
+                                infoY = infoY + 6
                                 love.graphics.setFont(smallFont)
-
-                                local heading = entry.rewardHeading or getRewardHeading(#rewards)
                                 local rewardColor = Theme.progressColor or Theme.textColor
-                                love.graphics.setColor(withAlpha(rewardColor, 0.95))
-                                love.graphics.print(heading .. ":", textX, yCursor)
-                                yCursor = yCursor + lineHeight
-
                                 love.graphics.setColor(withAlpha(rewardColor, 0.9))
                                 for _, line in ipairs(rewards) do
-                                        love.graphics.printf("• " .. line, textX, yCursor, wrapWidth, "left")
-                                        yCursor = yCursor + lineHeight
+                                        love.graphics.printf("• " .. line, textX, infoY, wrapWidth, "left")
+                                        infoY = infoY + lineHeight
                                 end
                         end
 
