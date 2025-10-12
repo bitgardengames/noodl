@@ -689,11 +689,11 @@ function Game:load(options)
 
         self:setupFloor(self.floor)
 
-       self.transition:startFloorIntro(3.5, {
-               transitionAdvance = false,
-               transitionAwaitInput = true,
-               transitionFloorData = Floors[self.floor] or Floors[1],
-       })
+	self.transition:startFloorIntro(2.8, {
+		transitionAdvance = false,
+		transitionAwaitInput = true,
+		transitionFloorData = Floors[self.floor] or Floors[1],
+	})
 end
 
 function Game:reset()
@@ -1155,9 +1155,9 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
                 visualProgress = math.min(visualProgress, 0.7)
         end
 
-        local appearProgress = math.min(1, visualProgress / 0.35)
+        local appearProgress = math.min(1, visualProgress / 0.28)
         local appear = easeOutCubic(appearProgress)
-        local dissolveProgress = visualProgress > 0.55 and clamp01((visualProgress - 0.55) / 0.45) or 0
+        local dissolveProgress = visualProgress > 0.48 and clamp01((visualProgress - 0.48) / 0.4) or 0
         if awaitingConfirm then
                 dissolveProgress = 0
         end
@@ -1200,7 +1200,7 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
                 if promptText and promptText ~= "" then
                         local promptFont = UI.fonts.prompt or UI.fonts.body
                         love.graphics.setFont(promptFont)
-                        local promptFade = 1 - clamp01((visualProgress - 0.8) / 0.2)
+                        local promptFade = 1 - clamp01((visualProgress - 0.72) / 0.18)
                         local promptAlpha = highlightAlpha * promptFade
                         local y = self.screenHeight - promptFont:getHeight() * 2.2
                         love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * promptAlpha)

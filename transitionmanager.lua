@@ -161,7 +161,7 @@ function TransitionManager:startFloorIntro(duration, extra)
 	end
 
 	if extra.transitionResumePhase == "fadein" and not extra.transitionResumeFadeDuration then
-		extra.transitionResumeFadeDuration = 1.2
+		extra.transitionResumeFadeDuration = 0.9
 	elseif extra.transitionResumePhase ~= "fadein" then
 		extra.transitionResumeFadeDuration = nil
 	end
@@ -172,7 +172,7 @@ function TransitionManager:startFloorIntro(duration, extra)
 	self:mergeData(extra)
 
 	local data = self.data
-	local introDuration = duration or data.transitionIntroDuration or 2.8
+	local introDuration = duration or data.transitionIntroDuration or 2.2
 	data.transitionIntroDuration = introDuration
 
 	local defaultAwaitInput = true
@@ -189,7 +189,7 @@ function TransitionManager:startFloorIntro(duration, extra)
 	if extra.transitionIntroPromptDelay ~= nil then
 		data.transitionIntroPromptDelay = extra.transitionIntroPromptDelay or 0
 	else
-		data.transitionIntroPromptDelay = 0.25
+		data.transitionIntroPromptDelay = 0.18
 	end
 
 	data.transitionIntroConfirmed = nil
@@ -199,7 +199,7 @@ function TransitionManager:startFloorIntro(duration, extra)
 end
 
 function TransitionManager:startFadeIn(duration)
-	self:startPhase("fadein", duration or 1.2)
+	self:startPhase("fadein", duration or 0.9)
 end
 
 function TransitionManager:startFloorTransition(advance, skipFade)
