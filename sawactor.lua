@@ -161,7 +161,9 @@ function SawActor:draw(x, y, scale)
         love.graphics.scale(drawScale * sinkScale, drawScale * sinkScale)
 
         local points = {}
-        local teeth = self.teeth or DEFAULT_TEETH
+        local baseTeeth = self.teeth or DEFAULT_TEETH
+        local scaleFactor = math.max(1, drawScale * sinkScale)
+        local teeth = math.max(3, math.floor(baseTeeth * scaleFactor + 0.5))
         local outer = self.radius or DEFAULT_RADIUS
         local inner = outer * 0.8
         local step = math.pi / teeth
