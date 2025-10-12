@@ -520,18 +520,31 @@ function Saws:draw()
 		local sinkScale = 1 - 0.1 * (saw.sinkProgress or 0)
 		love.graphics.scale(sinkScale, sinkScale)
 
-		local points = {}
-		local teeth = saw.teeth or 8
-		local outer = saw.radius
-		local inner = saw.radius * 0.8
-		local step = math.pi / teeth
+                local points = {}
+                local teeth = saw.teeth or 8
+                local outer = saw.radius
+                local inner = saw.radius * 0.8
+                local step = math.pi / teeth
+                local firstX, firstY = nil, nil
 
-		for i = 0, (teeth * 2) - 1 do
-			local r = (i % 2 == 0) and outer or inner
-			local angle = i * step
-			table.insert(points, math.cos(angle) * r)
-			table.insert(points, math.sin(angle) * r)
-		end
+                for i = 0, (teeth * 2) - 1 do
+                        local r = (i % 2 == 0) and outer or inner
+                        local angle = i * step
+                        local px = math.cos(angle) * r
+                        local py = math.sin(angle) * r
+
+                        table.insert(points, px)
+                        table.insert(points, py)
+
+                        if not firstX then
+                                firstX, firstY = px, py
+                        end
+                end
+
+                if firstX and firstY then
+                        table.insert(points, firstX)
+                        table.insert(points, firstY)
+                end
 
 		-- Fill
 		local baseColor = Theme.sawColor or {0.8, 0.8, 0.8, 1}

@@ -165,12 +165,25 @@ function SawActor:draw(x, y, scale)
         local outer = self.radius or DEFAULT_RADIUS
         local inner = outer * 0.8
         local step = math.pi / teeth
+        local firstX, firstY = nil, nil
 
         for i = 0, (teeth * 2) - 1 do
                 local r = (i % 2 == 0) and outer or inner
                 local angle = i * step
-                points[#points + 1] = math.cos(angle) * r
-                points[#points + 1] = math.sin(angle) * r
+                local px = math.cos(angle) * r
+                local py = math.sin(angle) * r
+
+                points[#points + 1] = px
+                points[#points + 1] = py
+
+                if not firstX then
+                        firstX, firstY = px, py
+                end
+        end
+
+        if firstX and firstY then
+                points[#points + 1] = firstX
+                points[#points + 1] = firstY
         end
 
         local baseColor = Theme.sawColor or { 0.8, 0.8, 0.8, 1 }
