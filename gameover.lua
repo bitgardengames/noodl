@@ -202,17 +202,39 @@ local function copyColor(color)
 end
 
 local function lightenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r + (1 - r) * factor,
-		g + (1 - g) * factor,
-		b + (1 - b) * factor,
-		a * (0.65 + factor * 0.35),
-	}
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r + (1 - r) * factor,
+                g + (1 - g) * factor,
+                b + (1 - b) * factor,
+                a * (0.65 + factor * 0.35),
+        }
+end
+
+local function darkenColor(color, factor)
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r * (1 - factor),
+                g * (1 - factor),
+                b * (1 - factor),
+                a,
+        }
+end
+
+local function withAlpha(color, alpha)
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return { r, g, b, a * alpha }
 end
 
 local function randomRange(minimum, maximum)
@@ -233,41 +255,72 @@ local function spawnFruitAnimation(anim)
                 return false
         end
 
-	local metrics = anim.barMetrics
-	local palette = anim.fruitPalette or { Theme.appleColor }
-	local color = copyColor(palette[love.math.random(#palette)] or Theme.appleColor)
+        local metrics = anim.barMetrics
+        local palette = anim.fruitPalette or { Theme.appleColor }
+        local color = copyColor(palette[love.math.random(#palette)] or Theme.appleColor)
 
-	local launchX = metrics.x + metrics.width * 0.5
-	local launchY = metrics.y - math.max(metrics.height * 2.2, 72)
+        local fruit
+        if metrics.style == "radial" then
+                local centerX = metrics.centerX or 0
+                local centerY = metrics.centerY or 0
+                local radius = metrics.outerRadius or metrics.radius or 56
+                local launchOffsetX = randomRange(-radius * 0.6, radius * 0.6)
+                local launchLift = math.max(radius * 0.8, 54)
+                local launchX = centerX + launchOffsetX
+                local launchY = centerY - radius - launchLift
+                local controlX = (launchX + centerX) / 2 + randomRange(-radius * 0.25, radius * 0.25)
+                local controlY = math.min(launchY, centerY) - math.max(radius * 0.75, 48)
 
-	local endX = metrics.x + metrics.width * 0.5
-	local endY = metrics.y + metrics.height * 0.5
-	local apexLift = math.max(metrics.height * 1.35, 64)
-	local controlX = (launchX + endX) / 2
-	local controlY = math.min(launchY, endY) - apexLift
+                fruit = {
+                        timer = 0,
+                        duration = randomRange(0.55, 0.85),
+                        startX = launchX,
+                        startY = launchY,
+                        controlX = controlX,
+                        controlY = controlY,
+                        endX = centerX,
+                        endY = centerY,
+                        scaleStart = randomRange(0.42, 0.52),
+                        scalePeak = randomRange(0.68, 0.82),
+                        scaleEnd = randomRange(0.50, 0.64),
+                        wobbleSeed = love.math.random() * math.pi * 2,
+                        wobbleSpeed = randomRange(4.5, 6.5),
+                        color = color,
+                        splashAngle = clamp(anim.visualPercent or 0, 0, 1),
+                }
+        else
+                local launchX = metrics.x + metrics.width * 0.5
+                local launchY = metrics.y - math.max(metrics.height * 2.2, 72)
 
-	local fruit = {
-		timer = 0,
-		duration = randomRange(0.55, 0.85),
-		startX = launchX,
-		startY = launchY,
-		controlX = controlX,
-		controlY = controlY,
-		endX = endX,
-		endY = endY,
-		scaleStart = randomRange(0.42, 0.52),
-		scalePeak = randomRange(0.68, 0.82),
-		scaleEnd = randomRange(0.50, 0.64),
-		wobbleSeed = love.math.random() * math.pi * 2,
-		wobbleSpeed = randomRange(4.5, 6.5),
-		color = color,
-	}
+                local endX = metrics.x + metrics.width * 0.5
+                local endY = metrics.y + metrics.height * 0.5
+                local apexLift = math.max(metrics.height * 1.35, 64)
+                local controlX = (launchX + endX) / 2
+                local controlY = math.min(launchY, endY) - apexLift
 
-	anim.fruitAnimations = anim.fruitAnimations or {}
-	table.insert(anim.fruitAnimations, fruit)
-	anim.fruitRemaining = math.max(0, (anim.fruitRemaining or 0) - 1)
+                fruit = {
+                        timer = 0,
+                        duration = randomRange(0.55, 0.85),
+                        startX = launchX,
+                        startY = launchY,
+                        controlX = controlX,
+                        controlY = controlY,
+                        endX = endX,
+                        endY = endY,
+                        scaleStart = randomRange(0.42, 0.52),
+                        scalePeak = randomRange(0.68, 0.82),
+                        scaleEnd = randomRange(0.50, 0.64),
+                        wobbleSeed = love.math.random() * math.pi * 2,
+                        wobbleSpeed = randomRange(4.5, 6.5),
+                        color = color,
+                }
+        end
 
-	return true
+        anim.fruitAnimations = anim.fruitAnimations or {}
+        table.insert(anim.fruitAnimations, fruit)
+        anim.fruitRemaining = math.max(0, (anim.fruitRemaining or 0) - 1)
+
+        return true
 end
 
 local function updateFruitAnimations(anim, dt)
@@ -278,10 +331,12 @@ local function updateFruitAnimations(anim, dt)
 	anim.fruitSpawnTimer = (anim.fruitSpawnTimer or 0) + dt
 	local interval = anim.fruitSpawnInterval or 0.08
 
-	if anim.barMetrics then
-		while (anim.fruitRemaining or 0) > 0 and anim.fruitSpawnTimer >= interval do
-			if not spawnFruitAnimation(anim) then
-				break
+        local metrics = anim.barMetrics
+
+        if metrics then
+                while (anim.fruitRemaining or 0) > 0 and anim.fruitSpawnTimer >= interval do
+                        if not spawnFruitAnimation(anim) then
+                                break
 			end
 			anim.fruitSpawnTimer = anim.fruitSpawnTimer - interval
 			interval = anim.fruitSpawnInterval or interval
@@ -317,16 +372,25 @@ local function updateFruitAnimations(anim, dt)
 					end
 
 					anim.barPulse = math.min(1.5, (anim.barPulse or 0) + 0.45)
-					anim.barSplashes = anim.barSplashes or {}
-					anim.barSplashes[#anim.barSplashes + 1] = {
-						x = fruit.endX,
-						color = fruit.color,
-						timer = 0,
-						duration = 0.35,
-					}
-				end
+                                        anim.barSplashes = anim.barSplashes or {}
+                                        if metrics and metrics.style == "radial" then
+                                                anim.barSplashes[#anim.barSplashes + 1] = {
+                                                        angle = fruit.splashAngle or clamp(anim.visualPercent or 0, 0, 1),
+                                                        color = fruit.color,
+                                                        timer = 0,
+                                                        duration = 0.45,
+                                                }
+                                        else
+                                                anim.barSplashes[#anim.barSplashes + 1] = {
+                                                        x = fruit.endX,
+                                                        color = fruit.color,
+                                                        timer = 0,
+                                                        duration = 0.35,
+                                                }
+                                        end
+                                end
 
-				fruit.landingTimer = (fruit.landingTimer or 0) + dt
+                                fruit.landingTimer = (fruit.landingTimer or 0) + dt
 				fruit.splashTimer = (fruit.splashTimer or 0) + dt
 				fruit.fade = (fruit.fade or 0) + dt
 
@@ -1027,110 +1091,116 @@ local function drawXpSection(self, x, y, width)
 		color = UI.colors.mutedText or UI.colors.text,
 	})
 
-	local barY = gainedY + fontProgressSmall:getHeight() + 16
-	local barHeight = 26
-        local barWidth = width - 48
-        local barX = x + 24
+        local ringTop = gainedY + fontProgressSmall:getHeight() + 18
+        local centerX = x + width / 2
+        local maxRadius = math.max(48, math.min(74, (width / 2) - 24))
+        local ringThickness = math.max(14, math.min(24, maxRadius * 0.42))
+        local ringRadius = maxRadius - ringThickness * 0.25
+        local innerRadius = math.max(32, ringRadius - ringThickness * 0.6)
+        local outerRadius = ringRadius + ringThickness * 0.45
+        local centerY = ringTop + ringRadius
+        local percent = clamp(anim.visualPercent or 0, 0, 1)
+        local pulse = clamp(anim.barPulse or 0, 0, 1)
+
         anim.barMetrics = anim.barMetrics or {}
-        anim.barMetrics.x = barX
-        anim.barMetrics.y = barY
-        anim.barMetrics.width = barWidth
-        anim.barMetrics.height = barHeight
-        local percent = math.min(1, math.max(0, anim.visualPercent or 0))
+        anim.barMetrics.style = "radial"
+        anim.barMetrics.centerX = centerX
+        anim.barMetrics.centerY = centerY
+        anim.barMetrics.radius = ringRadius
+        anim.barMetrics.innerRadius = innerRadius
+        anim.barMetrics.outerRadius = outerRadius
+        anim.barMetrics.thickness = ringThickness
 
-        local shadowColor = UI.colors.shadow or { 0, 0, 0, 0.4 }
-        local trackColor = { shadowColor[1], shadowColor[2], shadowColor[3], 0.35 }
+        local panelColor = Theme.panelColor or { 0.18, 0.18, 0.22, 1 }
+        local trackColor = withAlpha(darkenColor(panelColor, 0.2), 0.85)
+        local ringColor = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.9 }
+
         love.graphics.setColor(trackColor)
-	love.graphics.rectangle("fill", barX, barY, barWidth, barHeight, 12, 12)
+        love.graphics.circle("fill", centerX, centerY, outerRadius)
 
-	local progressColor = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.92 }
-	local fillWidth = barWidth * percent
-	local pulse = clamp(anim.barPulse or 0, 0, 1)
-	local pulseExpand = pulse * 6
+        local startAngle = -math.pi / 2
+        love.graphics.setColor(withAlpha(lightenColor(panelColor, 0.12), 0.88))
+        love.graphics.setLineWidth(ringThickness)
+        love.graphics.arc("line", "open", centerX, centerY, ringRadius, startAngle, startAngle + math.pi * 2, 96)
 
-	if fillWidth > 0 then
-		local prevScissor = { love.graphics.getScissor() }
-		if pulse > 0 then
-			love.graphics.setScissor(barX, barY - pulseExpand / 2, fillWidth, barHeight + pulseExpand)
-		end
-		love.graphics.setColor(progressColor)
-		love.graphics.rectangle("fill", barX, barY, fillWidth, barHeight, 12, 12)
-		if pulse > 0 then
-			love.graphics.setScissor(unpack(prevScissor))
-		end
-	end
+        if percent > 0 then
+                local endAngle = startAngle + percent * math.pi * 2
+                local scale = 1 + pulse * 0.04
+                local widthMul = 1 + pulse * 0.45
 
-	if percent > 0 then
-		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
-		love.graphics.setBlendMode("add", "alphamultiply")
-		love.graphics.setColor(progressColor[1], progressColor[2], progressColor[3], 0.22 + 0.18 * flash)
-		love.graphics.rectangle("fill", barX, barY, fillWidth, barHeight, 12, 12)
+                love.graphics.setColor(ringColor)
+                love.graphics.setLineWidth(ringThickness * widthMul)
+                love.graphics.arc("line", "open", centerX, centerY, ringRadius * scale, startAngle, endAngle, 96)
 
-		if pulse > 0 then
-			local prevScissor = { love.graphics.getScissor() }
-			love.graphics.setScissor(barX, barY, fillWidth, barHeight)
-			love.graphics.setColor(1, 1, 1, 0.16 * pulse)
-			love.graphics.rectangle("fill", barX - pulseExpand / 2, barY - pulseExpand / 2, fillWidth + pulseExpand, barHeight + pulseExpand, 10, 10)
-			love.graphics.setScissor(unpack(prevScissor))
-		end
+                local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+                love.graphics.setBlendMode("add", "alphamultiply")
+                love.graphics.setColor(ringColor[1], ringColor[2], ringColor[3], 0.24 + 0.18 * flash)
+                love.graphics.arc("line", "open", centerX, centerY, ringRadius * (scale + 0.08 + pulse * 0.06), startAngle, endAngle, 96)
+                love.graphics.setBlendMode(prevMode, prevAlphaMode)
+        end
 
-		local sweepWidth = 28
-		local sweepPos = (love.timer.getTime() * 80) % (barWidth + sweepWidth) - sweepWidth
-		local prevScissor = { love.graphics.getScissor() }
-		love.graphics.setScissor(barX, barY, fillWidth, barHeight)
-		love.graphics.setColor(1, 1, 1, 0.22 * (0.5 + 0.5 * math.sin(love.timer.getTime() * 4 + percent * math.pi)))
-		love.graphics.rectangle("fill", barX + sweepPos, barY - 4, sweepWidth, barHeight + 8, 10, 10)
-		love.graphics.setScissor(unpack(prevScissor))
-		love.graphics.setBlendMode(prevMode, prevAlphaMode)
-	end
+        local splashes = anim.barSplashes or {}
+        if anim.barMetrics and splashes and #splashes > 0 then
+                for _, splash in ipairs(splashes) do
+                        local splashProgress = clamp((splash.timer or 0) / (splash.duration or 0.45), 0, 1)
+                        local splashFade = clamp(1 - splashProgress, 0, 1)
+                        if splashFade > 0.01 then
+                                local splashAngle = startAngle + (splash.angle or percent) * math.pi * 2
+                                local spread = 0.22 + 0.18 * (1 - splashProgress)
+                                local splashRadius = ringRadius * (1 + 0.12 * splashProgress)
+                                local splashWidth = ringThickness * (0.65 + 0.45 * splashProgress)
+                                local splashColor = splash.color or ringColor
+                                local highlight = lightenColor(splashColor, 0.45)
 
-	local splashes = anim.barSplashes or {}
-	if anim.barMetrics and splashes and #splashes > 0 then
-		local prevScissor = { love.graphics.getScissor() }
-		love.graphics.setScissor(barX, barY, barWidth, barHeight)
-		for _, splash in ipairs(splashes) do
-			local splashProgress = clamp((splash.timer or 0) / (splash.duration or 0.35), 0, 1)
-			local splashFade = clamp(1 - splashProgress, 0, 1)
-			if splashFade > 0.01 then
-				local splashColor = splash.color or progressColor
-				local splashHighlight = lightenColor(splashColor, 0.45)
-				local centerX = clamp(splash.x or (barX + fillWidth), barX + 8, barX + barWidth - 8)
-				local centerY = barY + barHeight / 2
-				local radiusX = (barHeight / 2) * (1.05 + splashProgress * 0.9)
-				local radiusY = (barHeight / 2) * (0.42 + splashProgress * 0.4)
+                                love.graphics.setColor(splashColor[1], splashColor[2], splashColor[3], 0.32 * splashFade)
+                                love.graphics.setLineWidth(splashWidth)
+                                love.graphics.arc("line", "open", centerX, centerY, splashRadius, splashAngle - spread, splashAngle + spread, 48)
 
-				love.graphics.setColor(splashColor[1], splashColor[2], splashColor[3], 0.32 * splashFade)
-				love.graphics.ellipse("fill", centerX, centerY, radiusX, radiusY, 32)
+                                love.graphics.setColor(highlight[1], highlight[2], highlight[3], 0.45 * splashFade)
+                                love.graphics.setLineWidth(splashWidth * 0.55)
+                                love.graphics.arc("line", "open", centerX, centerY, splashRadius * 0.96, splashAngle - spread * 0.6, splashAngle + spread * 0.6, 48)
+                        end
+                end
+        end
 
-				love.graphics.setColor(splashHighlight[1], splashHighlight[2], splashHighlight[3], 0.55 * splashFade)
-				love.graphics.setLineWidth(2)
-				love.graphics.ellipse("line", centerX, centerY, radiusX, radiusY, 32)
-			end
-		end
-		love.graphics.setScissor(unpack(prevScissor))
-	end
+        love.graphics.setColor(withAlpha(lightenColor(panelColor, 0.18), 0.94))
+        love.graphics.circle("fill", centerX, centerY, innerRadius)
 
-	local outlineSource = UI.colors.highlight or UI.colors.border or { 1, 1, 1, 0.6 }
-	love.graphics.setColor(outlineSource[1], outlineSource[2], outlineSource[3], 0.6)
-	love.graphics.setLineWidth(2)
-	love.graphics.rectangle("line", barX, barY, barWidth, barHeight, 12, 12)
-	love.graphics.setLineWidth(1)
+        drawFruitAnimations(anim)
 
-	drawFruitAnimations(anim)
+        love.graphics.setColor(withAlpha(Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }, 0.85))
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", centerX, centerY, innerRadius, 96)
+        love.graphics.setLineWidth(1)
 
-	local totalLabel = Localization:get("gameover.meta_progress_total_label", {
-		total = math.floor((anim.displayedTotal or 0) + 0.5),
-	})
+        if flash > 0.01 then
+                local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+                love.graphics.setBlendMode("add", "alphamultiply")
+                love.graphics.setColor(ringColor[1], ringColor[2], ringColor[3], 0.26 * flash)
+                love.graphics.circle("line", centerX, centerY, outerRadius + flash * 22, 96)
+                love.graphics.setColor(1, 1, 1, 0.14 * flash)
+                love.graphics.circle("fill", centerX, centerY, innerRadius + flash * 14, 96)
+                love.graphics.setBlendMode(prevMode, prevAlphaMode)
+        end
 
-	local remainingLabel
-	if (anim.xpForLevel or 0) <= 0 then
-		remainingLabel = Localization:get("gameover.meta_progress_max_level")
-	else
-		local remaining = math.max(0, math.ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
-		remainingLabel = Localization:get("gameover.meta_progress_next", { remaining = remaining })
-	end
+        love.graphics.setFont(fontProgressValue)
+        love.graphics.setColor(Theme.textColor or UI.colors.text)
+        local levelValue = tostring(anim.displayedLevel or 1)
+        love.graphics.printf(levelValue, centerX - innerRadius, centerY - fontProgressValue:getHeight() / 2 - 4, innerRadius * 2, "center")
 
-	local labelY = barY + barHeight + 14
+        local totalLabel = Localization:get("gameover.meta_progress_total_label", {
+                total = math.floor((anim.displayedTotal or 0) + 0.5),
+        })
+
+        local remainingLabel
+        if (anim.xpForLevel or 0) <= 0 then
+                remainingLabel = Localization:get("gameover.meta_progress_max_level")
+        else
+                local remaining = math.max(0, math.ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
+                remainingLabel = Localization:get("gameover.meta_progress_next", { remaining = remaining })
+        end
+
+        local labelY = centerY + outerRadius + 18
 	local breakdown = self.progression and self.progression.breakdown or {}
 	local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
         if bonusXP > 0 then
