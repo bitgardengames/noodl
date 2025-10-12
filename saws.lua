@@ -549,12 +549,14 @@ function Saws:draw()
                 -- the highlight (and hub hole) in that situation.
                 local highlightRadius = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
                 local hideHubHighlight = false
+                local occlusionDepth = SINK_OFFSET + sinkOffset
 
                 if saw.dir == "vertical" and (saw.side == "left" or saw.side == "right") then
-                        local hiddenDepth = SINK_OFFSET + sinkOffset
-                        if hiddenDepth < highlightRadius then
+                        if occlusionDepth < highlightRadius then
                                 hideHubHighlight = true
                         end
+                elseif occlusionDepth > highlightRadius then
+                        hideHubHighlight = true
                 end
 
                 if not hideHubHighlight then
