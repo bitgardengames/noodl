@@ -552,10 +552,10 @@ function Saws:draw()
                 local occlusionDepth = SINK_OFFSET + sinkOffset
 
                 if saw.dir == "vertical" and (saw.side == "left" or saw.side == "right") then
-                        if occlusionDepth >= highlightRadius then
+                        if occlusionDepth < highlightRadius then
                                 hideHubHighlight = true
                         end
-                elseif occlusionDepth >= highlightRadius then
+                elseif occlusionDepth > highlightRadius then
                         hideHubHighlight = true
                 end
 
