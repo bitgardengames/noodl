@@ -184,18 +184,37 @@ function SawActor:draw(x, y, scale)
         local highlightRadiusLocal = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
         local highlightRadiusWorld = highlightRadiusLocal * drawScale * sinkScale
         local hideHubHighlight = false
-        local occlusionDepth = sinkOffset
+
+        local worldCenterX = (px or x) + offsetX
+        local worldCenterY = (py or y) + offsetY
+        local signedDistanceToPlane = math.huge
+        local occlusionPenetration = 0
+
+        if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
+                if self.side == "left" then
+                        signedDistanceToPlane = worldCenterX - x
+                        occlusionPenetration = math.max(0, x - worldCenterX)
+                else
+                        signedDistanceToPlane = x - worldCenterX
+                        occlusionPenetration = math.max(0, worldCenterX - x)
+                end
+        else
+                local planeY = y + sinkBase
+                signedDistanceToPlane = planeY - worldCenterY
+                occlusionPenetration = math.max(0, sinkOffset - sinkBase)
+        end
 
         -- When the saw is partially embedded in a wall/track the stencil clips the
         -- hub highlight, which leaves a thin grey arc poking past the blade edge.
         -- Hide the highlight (and hub hole) whenever the occlusion plane reaches
         -- or crosses the highlight radius so the sliver never appears.
-        if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
-                if occlusionDepth <= highlightRadiusWorld then
+        if occlusionPenetration > 0 then
+                hideHubHighlight = true
+        else
+                local planeClearance = signedDistanceToPlane
+                if planeClearance <= highlightRadiusWorld then
                         hideHubHighlight = true
                 end
-        elseif occlusionDepth >= highlightRadiusWorld then
-                hideHubHighlight = true
         end
 
         if not hideHubHighlight then
