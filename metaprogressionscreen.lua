@@ -1588,6 +1588,7 @@ local function drawCosmeticsList(sw, sh)
                                 local bodyColor = darkenColor(lockColor, 0.12)
                                 local lockWidth = math.min(60, previewW * 0.78)
                                 local lockHeight = math.max(30, previewH * 0.74)
+                                local lockBodyHeight = lockHeight + 10
                                 local lockX = previewX + (previewW - lockWidth) / 2
                                 local lockY = previewY + (previewH - lockHeight) / 2 + 2
                                 local shackleWidth = lockWidth * 0.68
@@ -1604,7 +1605,7 @@ local function drawCosmeticsList(sw, sh)
                                 local shadowOffsetX, shadowOffsetY = 3, 4
                                 local shadowColor = withAlpha(Theme.shadowColor or {0, 0, 0, 1}, 0.28)
                                 love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowColor[4] or 1)
-                                UI.drawRoundedRect(lockX + shadowOffsetX, lockY + shadowOffsetY, lockWidth, lockHeight, 4)
+                                UI.drawRoundedRect(lockX + shadowOffsetX, lockY + shadowOffsetY, lockWidth, lockBodyHeight, 4)
                                 love.graphics.rectangle("fill", shackleX + shadowOffsetX, postY + shadowOffsetY, postWidth, postHeight)
                                 love.graphics.rectangle("fill", shackleX + shackleWidth - postWidth + shadowOffsetX, postY + shadowOffsetY, postWidth, postHeight)
                                 love.graphics.rectangle("fill", topRectX + shadowOffsetX, topRectY + shadowOffsetY, topRectWidth, postWidth)
@@ -1612,7 +1613,7 @@ local function drawCosmeticsList(sw, sh)
                                 love.graphics.circle("fill", topRectX + topRectWidth + shadowOffsetX, topCenterY + shadowOffsetY, postWidth / 2)
 
                                 love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], (bodyColor[4] or 1) * 0.9)
-                                UI.drawRoundedRect(lockX, lockY, lockWidth, lockHeight, 4)
+                                UI.drawRoundedRect(lockX, lockY, lockWidth, lockBodyHeight, 4)
 
                                 -- vertical posts
                                 love.graphics.setColor(shackleColor[1], shackleColor[2], shackleColor[3], shackleColor[4] or 1)
@@ -1624,7 +1625,7 @@ local function drawCosmeticsList(sw, sh)
                                 love.graphics.circle("fill", topRectX, topCenterY, postWidth / 2)
                                 love.graphics.circle("fill", topRectX + topRectWidth, topCenterY, postWidth / 2)
 
-                                local keyholeWidth = math.max(5, lockWidth * 0.16)
+                                local keyholeWidth = math.max(5, lockWidth * 0.16 - 4)
                                 local keyholeHeight = math.max(9, lockHeight * 0.44)
                                 local keyholeX = previewX + previewW / 2 - keyholeWidth / 2
                                 local keyholeY = lockY + lockHeight / 2 - keyholeHeight / 2
