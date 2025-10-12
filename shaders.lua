@@ -1071,7 +1071,7 @@ registerEffect({
                 sendFloat(shader, "accentStrength", 0.52)
                 sendFloat(shader, "textureStrength", 0.085)
                 sendFloat(shader, "bandCenter", 0.55)
-                sendFloat(shader, "bandWidth", 0.22)
+                sendFloat(shader, "bandWidth", 0.32)
         end,
         draw = function(effect, x, y, w, h, intensity)
                 return drawShader(effect, x, y, w, h, intensity)
