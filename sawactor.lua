@@ -233,6 +233,10 @@ function SawActor:draw(x, y, scale)
         love.graphics.setLineWidth(1)
 end
 
+function SawActor:getSlotThickness()
+        return TRACK_SLOT_THICKNESS
+end
+
 function SawActor:setSinkProgress(progress)
         self.sinkProgress = clampProgress(progress)
 end
