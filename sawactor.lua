@@ -10,6 +10,15 @@ local HUB_HIGHLIGHT_PADDING = 3
 local HIT_FLASH_DURATION = 0.18
 local HIT_FLASH_COLOR = { 0.95, 0.08, 0.12, 1 }
 local DEFAULT_SPIN_SPEED = 5
+local DEFAULT_TRACK_LENGTH = 120
+local DEFAULT_MOVE_SPEED = 60
+local DEFAULT_DIRECTION = 1
+local DEFAULT_ORIENTATION = "horizontal"
+local TRACK_SLOT_THICKNESS = 10
+local TRACK_SLOT_RADIUS = 6
+local STENCIL_EXTENT = 999
+local SINK_OFFSET = 2
+local SINK_DISTANCE = 28
 
 local function getHighlightColor(color)
         color = color or { 1, 1, 1, 1 }
@@ -22,11 +31,23 @@ end
 
 function SawActor.new(options)
         local actor = setmetatable({}, SawActor)
-        actor.radius = options and options.radius or DEFAULT_RADIUS
-        actor.teeth = options and options.teeth or DEFAULT_TEETH
-        actor.rotation = options and options.rotation or 0
-        actor.spinSpeed = options and options.spinSpeed or DEFAULT_SPIN_SPEED
+        options = options or {}
+
+        actor.radius = options.radius or DEFAULT_RADIUS
+        actor.teeth = options.teeth or DEFAULT_TEETH
+        actor.rotation = options.rotation or 0
+        actor.spinSpeed = options.spinSpeed or DEFAULT_SPIN_SPEED
+        actor.trackLength = options.trackLength or DEFAULT_TRACK_LENGTH
+        actor.moveSpeed = options.moveSpeed or DEFAULT_MOVE_SPEED
+        actor.dir = options.dir or DEFAULT_ORIENTATION
+        actor.side = options.side
+        actor.progress = math.max(0, math.min(1, options.progress or 0))
+        actor.moveDirection = options.moveDirection or DEFAULT_DIRECTION
+        actor.sinkProgress = math.max(0, math.min(1, options.sinkProgress or 0))
+        actor.sinkOffset = options.sinkOffset or SINK_OFFSET
+        actor.sinkDistance = options.sinkDistance or SINK_DISTANCE
         actor.hitFlashTimer = 0
+
         return actor
 end
 
@@ -36,6 +57,21 @@ function SawActor:update(dt)
         end
 
         self.rotation = (self.rotation + dt * self.spinSpeed) % (math.pi * 2)
+
+        local trackLength = math.max(0.0001, self.trackLength or DEFAULT_TRACK_LENGTH)
+        if self.moveSpeed ~= 0 then
+                local direction = self.moveDirection or DEFAULT_DIRECTION
+                local delta = (dt * self.moveSpeed) / trackLength
+                self.progress = (self.progress or 0) + delta * direction
+
+                if self.progress >= 1 then
+                        self.progress = 1
+                        self.moveDirection = -math.abs(direction)
+                elseif self.progress <= 0 then
+                        self.progress = 0
+                        self.moveDirection = math.abs(direction)
+                end
+        end
 
         if self.hitFlashTimer > 0 then
                 self.hitFlashTimer = math.max(0, self.hitFlashTimer - dt)
@@ -50,23 +86,84 @@ function SawActor:triggerHitFlash(duration)
         end
 end
 
+local function clampProgress(value)
+        return math.max(0, math.min(1, value or 0))
+end
+
+local function getSawCenter(actor, x, y, radius, trackLength)
+        if actor.dir == "vertical" then
+                local minY = y - trackLength / 2 + radius
+                local maxY = y + trackLength / 2 - radius
+                local py = minY + (maxY - minY) * clampProgress(actor.progress)
+                return x, py
+        end
+
+        local minX = x - trackLength / 2 + radius
+        local maxX = x + trackLength / 2 - radius
+        local px = minX + (maxX - minX) * clampProgress(actor.progress)
+        return px, y
+end
+
 function SawActor:draw(x, y, scale)
         if not (x and y) then
                 return
         end
 
-        local radius = self.radius or DEFAULT_RADIUS
-        local teeth = self.teeth or DEFAULT_TEETH
         local drawScale = scale or 1
+        local radius = (self.radius or DEFAULT_RADIUS) * drawScale
+        local trackLength = (self.trackLength or DEFAULT_TRACK_LENGTH) * drawScale
+        local slotThickness = TRACK_SLOT_THICKNESS * drawScale
+        local slotRadius = TRACK_SLOT_RADIUS * drawScale
+
+        love.graphics.setColor(0, 0, 0, 1)
+        if self.dir == "vertical" then
+                love.graphics.rectangle("fill", x - slotThickness / 2, y - trackLength / 2, slotThickness, trackLength, slotRadius, slotRadius)
+        else
+                love.graphics.rectangle("fill", x - trackLength / 2, y - slotThickness / 2, trackLength, slotThickness, slotRadius, slotRadius)
+        end
+
+        love.graphics.stencil(function()
+                if self.dir == "vertical" then
+                        local height = trackLength + radius * 2
+                        local top = y - trackLength / 2 - radius
+                        if self.side == "left" then
+                                love.graphics.rectangle("fill", x, top, STENCIL_EXTENT, height)
+                        elseif self.side == "right" then
+                                love.graphics.rectangle("fill", x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
+                        else
+                                love.graphics.rectangle("fill", x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
+                        end
+                else
+                        love.graphics.rectangle("fill", x - trackLength / 2 - radius, y - STENCIL_EXTENT + (self.sinkOffset or SINK_OFFSET) * drawScale, trackLength + radius * 2, STENCIL_EXTENT)
+                end
+        end, "replace", 1)
+
+        love.graphics.setStencilTest("equal", 1)
+
+        local px, py = getSawCenter(self, x, y, radius, trackLength)
+        local sinkProgress = clampProgress(self.sinkProgress)
+        local sinkDistance = (self.sinkDistance or SINK_DISTANCE) * drawScale
+        local sinkBase = (self.sinkOffset or SINK_OFFSET) * drawScale
+        local sinkOffset = sinkBase + sinkDistance * sinkProgress
+        local offsetX, offsetY = 0, 0
+
+        if self.dir == "vertical" then
+                local sinkDir = (self.side == "left") and -1 or 1
+                offsetX = sinkDir * sinkOffset
+        else
+                offsetY = sinkOffset
+        end
 
         love.graphics.push()
-        love.graphics.translate(x, y)
+        love.graphics.translate((px or x) + offsetX, (py or y) + offsetY)
         love.graphics.rotate(self.rotation or 0)
-        love.graphics.scale(drawScale, drawScale)
+        local sinkScale = 1 - 0.1 * sinkProgress
+        love.graphics.scale(drawScale * sinkScale, drawScale * sinkScale)
 
         local points = {}
-        local outer = radius
-        local inner = radius * 0.8
+        local teeth = self.teeth or DEFAULT_TEETH
+        local outer = self.radius or DEFAULT_RADIUS
+        local inner = outer * 0.8
         local step = math.pi / teeth
 
         for i = 0, (teeth * 2) - 1 do
@@ -97,8 +194,14 @@ function SawActor:draw(x, y, scale)
 
         love.graphics.pop()
 
+        love.graphics.setStencilTest()
+
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.setLineWidth(1)
+end
+
+function SawActor:setSinkProgress(progress)
+        self.sinkProgress = clampProgress(progress)
 end
 
 return SawActor
