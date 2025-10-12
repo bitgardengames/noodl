@@ -1586,13 +1586,13 @@ local function drawCosmeticsList(sw, sh)
                                 local lockColor = Theme.lockedCardColor or {0.5, 0.35, 0.4, 1}
                                 local shackleColor = lightenColor(lockColor, 0.1)
                                 local bodyColor = darkenColor(lockColor, 0.12)
-                                local lockWidth = math.min(36, previewW * 0.72)
-                                local lockHeight = 20
+                                local lockWidth = math.min(60, previewW * 0.78)
+                                local lockHeight = math.max(28, previewH * 0.68)
                                 local lockX = previewX + (previewW - lockWidth) / 2
-                                local lockY = previewY + (previewH - lockHeight) / 2 + 4
-                                local shackleWidth = lockWidth * 0.64
+                                local lockY = previewY + (previewH - lockHeight) / 2 + 2
+                                local shackleWidth = lockWidth * 0.68
                                 local postWidth = math.max(3, lockWidth * 0.16)
-                                local postHeight = math.max(lockHeight * 0.7, lockHeight - 5)
+                                local postHeight = math.max(lockHeight * 0.75, lockHeight - 3)
                                 local shackleX = previewX + (previewW - shackleWidth) / 2
                                 local postY = lockY - postHeight
                                 local topCenterY = postY
@@ -1601,7 +1601,7 @@ local function drawCosmeticsList(sw, sh)
                                 local topRectY = topCenterY - postWidth / 2
 
                                 -- subtle drop shadow behind the lock to make it pop from the overlay
-                                local shadowOffsetX, shadowOffsetY = 2, 3
+                                local shadowOffsetX, shadowOffsetY = 3, 4
                                 local shadowColor = withAlpha(Theme.shadowColor or {0, 0, 0, 1}, 0.28)
                                 love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowColor[4] or 1)
                                 UI.drawRoundedRect(lockX + shadowOffsetX, lockY + shadowOffsetY, lockWidth, lockHeight, 4)
@@ -1624,8 +1624,8 @@ local function drawCosmeticsList(sw, sh)
                                 love.graphics.circle("fill", topRectX, topCenterY, postWidth / 2)
                                 love.graphics.circle("fill", topRectX + topRectWidth, topCenterY, postWidth / 2)
 
-                                local keyholeWidth = math.max(5, lockWidth * 0.18)
-                                local keyholeHeight = math.max(8, lockHeight * 0.45)
+                                local keyholeWidth = math.max(6, lockWidth * 0.2)
+                                local keyholeHeight = math.max(10, lockHeight * 0.48)
                                 local keyholeX = previewX + previewW / 2 - keyholeWidth / 2
                                 local keyholeY = lockY + lockHeight / 2 - keyholeHeight / 2
                                 local keyholeColor = Theme.bgColor or {0, 0, 0, 1}
