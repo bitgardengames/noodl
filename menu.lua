@@ -9,6 +9,7 @@ local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local PlayerStats = require("playerstats")
+local SawActor = require("sawactor")
 
 local Menu = {
 	transitionDuration = 0.45,
@@ -21,6 +22,7 @@ local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
 local analogAxisDirections = { horizontal = nil, vertical = nil }
+local titleSaw = SawActor.new()
 
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
@@ -217,33 +219,37 @@ function Menu:enter()
 end
 
 function Menu:update(dt)
-	t = t + dt
+        t = t + dt
 
-	local mx, my = love.mouse.getPosition()
-	buttonList:updateHover(mx, my)
+        local mx, my = love.mouse.getPosition()
+        buttonList:updateHover(mx, my)
 
 	if dailyChallenge then
 		dailyChallengeAnim = math.min(dailyChallengeAnim + dt * 2, 1)
 	end
 
-	for i, btn in ipairs(buttons) do
-		if btn.hovered then
-			btn.scale = math.min((btn.scale or 1) + dt * 5, 1.1)
-		else
-			btn.scale = math.max((btn.scale or 1) - dt * 5, 1.0)
-		end
+        for i, btn in ipairs(buttons) do
+                if btn.hovered then
+                        btn.scale = math.min((btn.scale or 1) + dt * 5, 1.1)
+                else
+                        btn.scale = math.max((btn.scale or 1) - dt * 5, 1.0)
+                end
 
-		local appearDelay = (i - 1) * 0.08
-		local appearTime = math.min((t - appearDelay) * 3, 1)
-		btn.alpha = math.max(0, math.min(appearTime, 1))
-		btn.offsetY = (1 - btn.alpha) * 50
-	end
+                local appearDelay = (i - 1) * 0.08
+                local appearTime = math.min((t - appearDelay) * 3, 1)
+                btn.alpha = math.max(0, math.min(appearTime, 1))
+                btn.offsetY = (1 - btn.alpha) * 50
+        end
 
-	Face:update(dt)
+        if titleSaw then
+                titleSaw:update(dt)
+        end
+
+        Face:update(dt)
 end
 
 function Menu:draw()
-	local sw, sh = Screen:get()
+        local sw, sh = Screen:get()
 
 	drawBackground(sw, sh)
 
@@ -252,13 +258,27 @@ function Menu:draw()
 	local wordScale = 1.5
 
 	local cellSize = baseCellSize * wordScale
-	local word = Localization:get("menu.title_word")
-	local spacing = baseSpacing * wordScale
-	local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-	local ox = (sw - wordWidth) / 2
-	local oy = sh * 0.2
+        local word = Localization:get("menu.title_word")
+        local spacing = baseSpacing * wordScale
+        local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+        local ox = (sw - wordWidth) / 2
+        local oy = sh * 0.2
 
-	local trail = drawWord(word, ox, oy, cellSize, spacing)
+        if titleSaw then
+                local sawRadius = titleSaw.radius or 1
+                local wordHeight = cellSize * 3
+                local sawScale = wordHeight / (2 * sawRadius)
+                if sawScale <= 0 then
+                        sawScale = 1
+                end
+
+                local sawX = ox + wordWidth / 2
+                local sawY = oy - (sawRadius * sawScale) - spacing * 0.5
+
+                titleSaw:draw(sawX, sawY, sawScale)
+        end
+
+        local trail = drawWord(word, ox, oy, cellSize, spacing)
 
 	if trail and #trail > 0 then
 		local head = trail[#trail]
