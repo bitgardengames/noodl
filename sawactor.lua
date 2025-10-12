@@ -191,7 +191,7 @@ function SawActor:draw(x, y, scale)
         -- Hide the highlight (and hub hole) whenever the occlusion plane reaches
         -- or crosses the highlight radius so the sliver never appears.
         if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
-                if occlusionDepth <= highlightRadiusWorld then
+                if occlusionDepth >= highlightRadiusWorld then
                         hideHubHighlight = true
                 end
         elseif occlusionDepth >= highlightRadiusWorld then
