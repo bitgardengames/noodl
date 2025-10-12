@@ -1023,9 +1023,9 @@ registerEffect({
                         float gradient = smoothstep(0.0, 1.0, uv.x);
                         vec3 col = mix(leftColor.rgb, rightColor.rgb, gradient);
 
-                        float pixelY = uv.y * resolution.y;
-                        float primaryScan = 0.5 + 0.5 * sin((pixelY + time * 25.0) * 3.14159);
-                        float fineScan = 0.5 + 0.5 * sin((pixelY * 2.0 + time * 90.0) * 3.14159);
+                       float pixelX = uv.x * resolution.x;
+                       float primaryScan = 0.5 + 0.5 * sin((pixelX + time * 8.0) * 3.14159);
+                       float fineScan = 0.5 + 0.5 * sin((pixelX * 2.0 + time * 28.0) * 3.14159);
 
                         float scanShade = mix(0.78, 1.0, primaryScan);
                         float fineShade = mix(0.88, 1.0, fineScan);
