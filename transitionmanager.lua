@@ -247,18 +247,17 @@ function TransitionManager:update(dt)
 	local phase = self.phase
 
 	if phase == "fadeout" then
-                if self.timer >= self.duration then
-                        local data = self.data
-                        if data.transitionAdvance and not data.floorApplied and data.pendingFloor then
-                                self.game.floor = data.pendingFloor
-                                self.game:setupFloor(self.game.floor)
-                                data.floorApplied = true
-                                data.transitionFloorData = self.game.currentFloorData or data.transitionFloorData
-                        end
+		if self.timer >= self.duration then
+			local data = self.data
+			if data.transitionAdvance and not data.floorApplied and data.pendingFloor then
+				self.game.floor = data.pendingFloor
+				self.game:setupFloor(self.game.floor)
+				data.floorApplied = true
+			end
 
-                        self:openShop()
-                end
-                return
+			self:openShop()
+		end
+		return
 	end
 
 	if phase == "shop" then

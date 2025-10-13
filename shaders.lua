@@ -1355,10 +1355,10 @@ registerEffect({
 })
 -- Blueprint grid for settings clarity
 registerEffect({
-        type = "settingsBlueprint",
-        backdropIntensity = 0.44,
-        arenaIntensity = 0.28,
-        source = [[
+	type = "settingsBlueprint",
+	backdropIntensity = 0.44,
+	arenaIntensity = 0.28,
+	source = [[
 		extern float time;
 		extern vec2 resolution;
 		extern vec2 origin;
@@ -1401,75 +1401,10 @@ registerEffect({
 		sendColor(shader, "baseColor", base)
 		sendColor(shader, "accentColor", accent)
 		sendColor(shader, "highlightColor", highlight)
-        end,
-        draw = function(effect, x, y, w, h, intensity)
-                return drawShader(effect, x, y, w, h, intensity)
-        end,
-})
-
--- Sugary pastel swirls with sparkling sprinkles
-registerEffect({
-        type = "candyCascade",
-        backdropIntensity = 0.82,
-        arenaIntensity = 0.48,
-        source = [[
-                extern float time;
-                extern vec2 resolution;
-                extern vec2 origin;
-                extern vec4 baseColor;
-                extern vec4 frostingColor;
-                extern vec4 accentColor;
-                extern vec4 sprinkleColor;
-                extern float intensity;
-
-                float hash(vec2 p)
-                {
-                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-                }
-
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
-
-                        float ribbon = sin((uv.y * 6.2 + time * 0.6) + uv.x * 1.6) * 0.5 + 0.5;
-                        float swirl = sin((uv.x * 8.0 + uv.y * 3.5) + time * 0.45) * 0.5 + 0.5;
-                        float drizzle = sin((uv.y * 10.0 - time * 0.8) + uv.x * 2.4) * 0.5 + 0.5;
-
-                        vec3 frosting = mix(baseColor.rgb, frostingColor.rgb, 0.55 + swirl * 0.25);
-                        vec3 ribbonColor = mix(frostingColor.rgb, accentColor.rgb, ribbon * 0.65);
-                        vec3 base = mix(frosting, ribbonColor, 0.42 + drizzle * 0.18);
-
-                        vec2 sprinkleCell = floor((uv + time * 0.05) * vec2(24.0, 32.0));
-                        float sparkle = step(0.82, hash(sprinkleCell));
-                        float sparklePulse = sin(time * 3.5 + sprinkleCell.x + sprinkleCell.y) * 0.5 + 0.5;
-                        float sprinkleMix = sparkle * (0.35 + 0.45 * sparklePulse) * (0.4 + intensity * 0.6);
-
-                        vec3 col = mix(base, sprinkleColor.rgb, clamp(sprinkleMix, 0.0, 1.0));
-
-                        float vignette = smoothstep(0.35, 1.05, length(uv - vec2(0.5)) * 1.15);
-                        col = mix(col, baseColor.rgb, vignette * 0.25);
-
-                        col = clamp(col, 0.0, 1.0);
-                        return vec4(col, baseColor.a) * color;
-                }
-        ]],
-        configure = function(effect, palette)
-                local shader = effect.shader
-
-                local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
-                local frosting = getColorComponents(palette and (palette.arenaBG or palette.frostingColor), Theme.arenaBG)
-                local accent = getColorComponents(palette and (palette.arenaBorder or palette.accentColor or palette.snake), Theme.arenaBorder)
-                local sprinkles = getColorComponents(palette and (palette.sprinkleColor or palette.highlightColor or palette.snake), Theme.snake)
-
-                sendColor(shader, "baseColor", base)
-                sendColor(shader, "frostingColor", frosting)
-                sendColor(shader, "accentColor", accent)
-                sendColor(shader, "sprinkleColor", sprinkles)
-        end,
-        draw = function(effect, x, y, w, h, intensity)
-                return drawShader(effect, x, y, w, h, intensity)
-        end,
+	end,
+	draw = function(effect, x, y, w, h, intensity)
+		return drawShader(effect, x, y, w, h, intensity)
+	end,
 })
 -- Gentle afterglow for game over reflection
 registerEffect({
