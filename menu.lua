@@ -33,10 +33,11 @@ local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
-local BACKDROP_BOX_WIDTH = 600
-local BACKDROP_BOX_HEIGHT = 900
-local BACKDROP_BOX_LINE_WIDTH = 12
-local BACKDROP_BOX_PADDING = 80
+local BACKDROP_ELLIPSE_WIDTH = 1280
+local BACKDROP_ELLIPSE_HEIGHT = 720
+local BACKDROP_ELLIPSE_LINE_WIDTH = 12
+local BACKDROP_ELLIPSE_PADDING = 80
+local BACKDROP_ELLIPSE_SEGMENTS = 128
 
 local DEFAULT_WORD_SCALE = 3 * 0.9
 local TITLE_SCALE_MARGIN = 0.96
@@ -62,6 +63,51 @@ local function configureBackgroundEffect()
 	backgroundEffect = effect
 end
 
+local function getEllipseMetrics(sw, sh)
+        local widthScale = math.min(1, sw / BACKDROP_ELLIPSE_WIDTH)
+        local heightScale = math.min(1, sh / BACKDROP_ELLIPSE_HEIGHT)
+        local scale = math.min(widthScale, heightScale)
+        local ellipseWidth = BACKDROP_ELLIPSE_WIDTH * scale
+        local ellipseHeight = BACKDROP_ELLIPSE_HEIGHT * scale
+
+        return {
+                centerX = sw * 0.5,
+                centerY = sh * 0.5,
+                width = ellipseWidth,
+                height = ellipseHeight,
+                radiusX = ellipseWidth * 0.5,
+                radiusY = ellipseHeight * 0.5,
+        }
+end
+
+local function computeEllipseSpanLimits(centerY, radiusX, radiusY, topY, bottomY)
+        if not centerY or not radiusX or not radiusY or radiusX <= 0 or radiusY <= 0 then
+                return 0, 0
+        end
+
+        local spanTop = math.min(topY, bottomY)
+        local spanBottom = math.max(topY, bottomY)
+        local minHalfWidth = radiusX
+        local sampleCount = 6
+
+        for i = 0, sampleCount do
+                local sampleY = spanTop + (spanBottom - spanTop) * (i / sampleCount)
+                local dy = sampleY - centerY
+                if math.abs(dy) >= radiusY then
+                        return 0, 0
+                end
+
+                local normalized = dy / radiusY
+                local halfWidth = radiusX * math.sqrt(math.max(0, 1 - normalized * normalized))
+                if halfWidth < minHalfWidth then
+                        minHalfWidth = halfWidth
+                end
+        end
+
+        local width = math.max(minHalfWidth * 2, 0)
+        return width, minHalfWidth
+end
+
 local function drawBackground(sw, sh)
         love.graphics.setColor(Theme.bgColor)
         love.graphics.rectangle("fill", 0, 0, sw, sh)
@@ -70,25 +116,29 @@ local function drawBackground(sw, sh)
                 configureBackgroundEffect()
         end
 
-        local boxX = (sw - BACKDROP_BOX_WIDTH) / 2
-        local boxY = (sh - BACKDROP_BOX_HEIGHT) / 2
+        local metrics = getEllipseMetrics(sw, sh)
+        local centerX = metrics.centerX
+        local centerY = metrics.centerY
+        local radiusX = metrics.radiusX
+        local radiusY = metrics.radiusY
+        local ellipseX = centerX - radiusX
+        local ellipseY = centerY - radiusY
 
         if backgroundEffect then
+                love.graphics.stencil(function()
+                        love.graphics.ellipse("fill", centerX, centerY, radiusX, radiusY, BACKDROP_ELLIPSE_SEGMENTS)
+                end, "replace", 1)
+                love.graphics.setStencilTest("greater", 0)
                 local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-                Shaders.draw(backgroundEffect, boxX, boxY, BACKDROP_BOX_WIDTH, BACKDROP_BOX_HEIGHT, intensity)
+                Shaders.draw(backgroundEffect, ellipseX, ellipseY, metrics.width, metrics.height, intensity)
+                love.graphics.setStencilTest()
         end
 
-        if BACKDROP_BOX_LINE_WIDTH > 0 then
-                local halfLineWidth = BACKDROP_BOX_LINE_WIDTH / 2
+        if BACKDROP_ELLIPSE_LINE_WIDTH > 0 then
+                local halfLineWidth = BACKDROP_ELLIPSE_LINE_WIDTH / 2
                 love.graphics.setColor(Theme.buttonHover)
-                love.graphics.setLineWidth(BACKDROP_BOX_LINE_WIDTH)
-                love.graphics.rectangle(
-                        "line",
-                        boxX - halfLineWidth,
-                        boxY - halfLineWidth,
-                        BACKDROP_BOX_WIDTH + BACKDROP_BOX_LINE_WIDTH,
-                        BACKDROP_BOX_HEIGHT + BACKDROP_BOX_LINE_WIDTH
-                )
+                love.graphics.setLineWidth(BACKDROP_ELLIPSE_LINE_WIDTH)
+                love.graphics.ellipse("line", centerX, centerY, radiusX, radiusY, BACKDROP_ELLIPSE_SEGMENTS)
                 love.graphics.setLineWidth(1)
         end
 
@@ -96,95 +146,150 @@ local function drawBackground(sw, sh)
 end
 
 local function computeTitleLayout(sw, sh)
-	local baseCellSize = 20
-	local baseSpacing = 10
-	local word = Localization:get("menu.title_word") or ""
+        local baseCellSize = 20
+        local baseSpacing = 10
+        local word = Localization:get("menu.title_word") or ""
 
-	local letterCount = 0
-	if drawWord.getBounds then
-		for i = 1, #word do
-			local ch = word:sub(i, i):lower()
-			local charBounds = drawWord.getBounds(ch)
-			local charMin = charBounds and charBounds.minY or 0
-			local charMax = charBounds and charBounds.maxY or 0
-			if charMax ~= charMin then
-				letterCount = letterCount + 1
-			end
-		end
-	end
+        local letterCount = 0
+        if drawWord.getBounds then
+                for i = 1, #word do
+                        local ch = word:sub(i, i):lower()
+                        local charBounds = drawWord.getBounds(ch)
+                        local charMin = charBounds and charBounds.minY or 0
+                        local charMax = charBounds and charBounds.maxY or 0
+                        if charMax ~= charMin then
+                                letterCount = letterCount + 1
+                        end
+                end
+        end
 
-	if letterCount == 0 then
-		letterCount = math.max(#word, 1)
-	end
+        if letterCount == 0 then
+                letterCount = math.max(#word, 1)
+        end
 
-	local bounds = drawWord.getBounds and drawWord.getBounds(word)
-	local minRow = bounds and bounds.minY or 0
-	local maxRow = bounds and bounds.maxY or 3
+        local bounds = drawWord.getBounds and drawWord.getBounds(word)
+        local minRow = bounds and bounds.minY or 0
+        local maxRow = bounds and bounds.maxY or 3
 
-	local baseWordWidth
-	if letterCount <= 1 then
-		baseWordWidth = 3 * baseCellSize
-	else
-		baseWordWidth = (letterCount * (3 * baseCellSize + baseSpacing)) - baseSpacing - (baseCellSize * 3)
-	end
-	baseWordWidth = math.max(baseWordWidth, 1)
+        local baseWordWidth
+        if letterCount <= 1 then
+                baseWordWidth = 3 * baseCellSize
+        else
+                baseWordWidth = (letterCount * (3 * baseCellSize + baseSpacing)) - baseSpacing - (baseCellSize * 3)
+        end
+        baseWordWidth = math.max(baseWordWidth, 1)
 
-	local baseWordHeight = math.max((maxRow - minRow) * baseCellSize, baseCellSize)
+        local baseWordHeight = math.max((maxRow - minRow) * baseCellSize, baseCellSize)
 
-	local backdropX = (sw - BACKDROP_BOX_WIDTH) / 2
-	local backdropY = (sh - BACKDROP_BOX_HEIGHT) / 2
-	local availableWidth = math.max(BACKDROP_BOX_WIDTH - 2 * BACKDROP_BOX_PADDING, baseCellSize)
-	local availableHeight = math.max(BACKDROP_BOX_HEIGHT - 2 * BACKDROP_BOX_PADDING, baseCellSize)
-	local backdropInnerLeft = backdropX + BACKDROP_BOX_PADDING
-	local backdropInnerRight = backdropInnerLeft + availableWidth
-	local backdropInnerTop = backdropY + BACKDROP_BOX_PADDING
+        local metrics = getEllipseMetrics(sw, sh)
+        local ellipseCenterX = metrics.centerX
+        local ellipseCenterY = metrics.centerY
+        local ellipseRadiusX = metrics.radiusX
+        local ellipseRadiusY = metrics.radiusY
 
-	local scaleWidth = availableWidth / baseWordWidth
-	local scaleHeight = availableHeight / math.max(baseWordHeight, 1)
-	local targetScale = math.min(scaleWidth, scaleHeight)
-	local wordScale = math.max(targetScale * TITLE_SCALE_MARGIN, MIN_WORD_SCALE)
-	local scaleFactor = wordScale / (DEFAULT_WORD_SCALE ~= 0 and DEFAULT_WORD_SCALE or 1)
+        local innerRadiusX = math.max(ellipseRadiusX - BACKDROP_ELLIPSE_PADDING, baseCellSize * 0.5)
+        local innerRadiusY = math.max(ellipseRadiusY - BACKDROP_ELLIPSE_PADDING, baseCellSize * 0.5)
+        local availableWidth = math.max(innerRadiusX * 2, baseCellSize)
+        local availableHeight = math.max(innerRadiusY * 2, baseCellSize)
+        local backdropInnerLeft = ellipseCenterX - availableWidth / 2
+        local backdropInnerTop = ellipseCenterY - availableHeight / 2
+        local backdropInnerRight = backdropInnerLeft + availableWidth
+        local backdropInnerBottom = backdropInnerTop + availableHeight
 
-	local cellSize = baseCellSize * wordScale
-	local spacing = baseSpacing * wordScale
+        local scaleWidth = availableWidth / baseWordWidth
+        local scaleHeight = availableHeight / math.max(baseWordHeight, 1)
+        local targetScale = math.min(scaleWidth, scaleHeight)
 
-	local wordWidth
-	if letterCount <= 1 then
-		wordWidth = 3 * cellSize
-	else
-		wordWidth = (letterCount * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-	end
-	local ox = backdropInnerLeft + (availableWidth - wordWidth) / 2
+        local function finalizeLayout(wordScale)
+                local scaleFactor = wordScale / (DEFAULT_WORD_SCALE ~= 0 and DEFAULT_WORD_SCALE or 1)
+                local cellSize = baseCellSize * wordScale
+                local spacing = baseSpacing * wordScale
 
-	local wordHeight = math.max((maxRow - minRow) * cellSize, cellSize)
-	local availableTop = backdropInnerTop
-	local targetCenterY = availableTop + availableHeight * TITLE_WORD_VERTICAL_FRACTION
-	local minCenterY = availableTop + wordHeight / 2
-	local maxCenterY = availableTop + availableHeight - wordHeight / 2
-	targetCenterY = math.max(minCenterY, math.min(targetCenterY, maxCenterY))
+                local wordWidth
+                if letterCount <= 1 then
+                        wordWidth = 3 * cellSize
+                else
+                        wordWidth = (letterCount * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+                end
 
-	local targetTop = targetCenterY - wordHeight / 2
-	local oy = targetTop - minRow * cellSize
+                local ox = backdropInnerLeft + (availableWidth - wordWidth) / 2
 
-	return {
-		word = word,
-		letterCount = letterCount,
-		minRow = minRow,
-		maxRow = maxRow,
-		cellSize = cellSize,
-		spacing = spacing,
-		wordScale = wordScale,
-		scaleFactor = scaleFactor,
-		wordWidth = wordWidth,
-		wordHeight = wordHeight,
-		availableWidth = availableWidth,
-		availableHeight = availableHeight,
-		backdropInnerLeft = backdropInnerLeft,
-		backdropInnerRight = backdropInnerRight,
-		backdropInnerTop = backdropInnerTop,
-		ox = ox,
-		oy = oy,
-	}
+                local wordHeight = math.max((maxRow - minRow) * cellSize, cellSize)
+                local availableTop = backdropInnerTop
+                local targetCenterY = availableTop + availableHeight * TITLE_WORD_VERTICAL_FRACTION
+                local minCenterY = availableTop + wordHeight / 2
+                local maxCenterY = availableTop + availableHeight - wordHeight / 2
+                targetCenterY = math.max(minCenterY, math.min(targetCenterY, maxCenterY))
+
+                local targetTop = targetCenterY - wordHeight / 2
+                local oy = targetTop - minRow * cellSize
+
+                return {
+                        word = word,
+                        letterCount = letterCount,
+                        minRow = minRow,
+                        maxRow = maxRow,
+                        cellSize = cellSize,
+                        spacing = spacing,
+                        wordScale = wordScale,
+                        scaleFactor = scaleFactor,
+                        wordWidth = wordWidth,
+                        wordHeight = wordHeight,
+                        wordTop = targetTop,
+                        wordBottom = targetTop + wordHeight,
+                        availableWidth = availableWidth,
+                        availableHeight = availableHeight,
+                        backdropInnerLeft = backdropInnerLeft,
+                        backdropInnerRight = backdropInnerRight,
+                        backdropInnerTop = backdropInnerTop,
+                        backdropInnerBottom = backdropInnerBottom,
+                        ellipseCenterX = ellipseCenterX,
+                        ellipseCenterY = ellipseCenterY,
+                        outerEllipseRadiusX = ellipseRadiusX,
+                        outerEllipseRadiusY = ellipseRadiusY,
+                        innerRadiusX = innerRadiusX,
+                        innerRadiusY = innerRadiusY,
+                        ox = ox,
+                        oy = oy,
+                }
+        end
+
+        local initialScale = math.max(targetScale * TITLE_SCALE_MARGIN, MIN_WORD_SCALE)
+        local layout = finalizeLayout(initialScale)
+
+        local safeWidth, safeHalfWidth = computeEllipseSpanLimits(
+                ellipseCenterY,
+                innerRadiusX,
+                innerRadiusY,
+                layout.wordTop,
+                layout.wordBottom
+        )
+
+        if safeWidth > 0 and layout.wordWidth > safeWidth then
+                local adjustedScale = layout.wordScale * safeWidth / layout.wordWidth
+                layout = finalizeLayout(adjustedScale)
+
+                safeWidth, safeHalfWidth = computeEllipseSpanLimits(
+                        ellipseCenterY,
+                        innerRadiusX,
+                        innerRadiusY,
+                        layout.wordTop,
+                        layout.wordBottom
+                )
+
+                if safeWidth > 0 and layout.wordWidth > safeWidth then
+                        local fallbackScale = layout.wordScale
+                        if safeHalfWidth and safeHalfWidth > 0 then
+                                fallbackScale = math.max(
+                                        MIN_WORD_SCALE,
+                                        layout.wordScale * (safeHalfWidth * 2) / math.max(layout.wordWidth, 1)
+                                )
+                        end
+                        layout = finalizeLayout(fallbackScale)
+                end
+        end
+
+        return layout
 end
 
 local function drawTitleWord(layout)
@@ -458,6 +563,12 @@ function Menu:draw()
         local availableWidth = layout.availableWidth
         local backdropInnerLeft = layout.backdropInnerLeft
         local backdropInnerRight = layout.backdropInnerRight
+        local backdropInnerTop = layout.backdropInnerTop
+        local backdropInnerBottom = layout.backdropInnerBottom
+        local ellipseCenterX = layout.ellipseCenterX
+        local ellipseCenterY = layout.ellipseCenterY
+        local innerRadiusX = layout.innerRadiusX
+        local innerRadiusY = layout.innerRadiusY
         local ox = layout.ox
         local oy = layout.oy
 
@@ -469,21 +580,16 @@ function Menu:draw()
                 end
                 sawScale = sawScale * TITLE_SAW_SCALE_FACTOR
 
+                local sawRadiusWorld = sawRadius * sawScale
+
                 local desiredTrackLengthWorld = math.min(wordWidth + cellSize, availableWidth)
                 local shortenedTrackLengthWorld = math.max(
-                        2 * sawRadius * sawScale,
+                        2 * sawRadiusWorld,
                         desiredTrackLengthWorld - 90 * scaleFactor
                 )
                 local rightTrackShortening = 73 * scaleFactor
-                shortenedTrackLengthWorld = math.max(2 * sawRadius * sawScale, shortenedTrackLengthWorld - rightTrackShortening)
-                local maxTrackWorld = availableWidth
-                local targetTrackLengthWorld = math.min(shortenedTrackLengthWorld, maxTrackWorld)
-                local targetTrackLengthBase = targetTrackLengthWorld / sawScale
-                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
-                        titleSaw.trackLength = targetTrackLengthBase
-                end
+                shortenedTrackLengthWorld = math.max(2 * sawRadiusWorld, shortenedTrackLengthWorld - rightTrackShortening)
 
-                local trackLengthWorld = math.min((titleSaw.trackLength or targetTrackLengthBase) * sawScale, maxTrackWorld)
                 local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
                 local slotThicknessWorld = slotThicknessBase * sawScale
 
@@ -491,12 +597,63 @@ function Menu:draw()
                 local gapAboveWord = math.max(8 * scaleFactor, slotThicknessWorld * 0.35)
                 local targetBottom = oy - gapAboveWord
 
-                local clampedTrackLeft = math.max(backdropInnerLeft, targetLeft)
-                if clampedTrackLeft + trackLengthWorld > backdropInnerRight then
-                        clampedTrackLeft = backdropInnerRight - trackLengthWorld
-                end
-                local sawX = clampedTrackLeft + trackLengthWorld / 2 - 8 * scaleFactor
+                local minSawCenterY = backdropInnerTop + sawRadiusWorld
+                local maxSawCenterY = backdropInnerBottom - sawRadiusWorld
                 local sawY = targetBottom - slotThicknessWorld / 2 - 40 * scaleFactor
+                if minSawCenterY and maxSawCenterY then
+                        sawY = math.max(minSawCenterY, math.min(sawY, maxSawCenterY))
+                end
+
+                local sawTop = sawY - sawRadiusWorld
+                local sawBottom = sawY + sawRadiusWorld
+                local safeWidth, safeHalfWidth = computeEllipseSpanLimits(
+                        ellipseCenterY,
+                        innerRadiusX,
+                        innerRadiusY,
+                        sawTop,
+                        sawBottom
+                )
+
+                local maxTrackWorld = availableWidth
+                if safeWidth and safeWidth > 0 then
+                        maxTrackWorld = math.min(maxTrackWorld, safeWidth)
+                end
+                maxTrackWorld = math.max(maxTrackWorld, 2 * sawRadiusWorld)
+
+                local targetTrackLengthWorld = math.min(shortenedTrackLengthWorld, maxTrackWorld)
+                local targetTrackLengthBase = targetTrackLengthWorld / sawScale
+                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
+                        titleSaw.trackLength = targetTrackLengthBase
+                end
+
+                local trackLengthWorld = math.min((titleSaw.trackLength or targetTrackLengthBase) * sawScale, maxTrackWorld)
+                trackLengthWorld = math.max(trackLengthWorld, 2 * sawRadiusWorld)
+
+                local targetTrackCenter = targetLeft + trackLengthWorld / 2
+                local trackMin = backdropInnerLeft + trackLengthWorld / 2
+                local trackMax = backdropInnerRight - trackLengthWorld / 2
+
+                if safeHalfWidth and safeHalfWidth > 0 then
+                        local allowedTrackOffset = math.max(0, safeHalfWidth - trackLengthWorld / 2)
+                        local allowedSawOffset = math.max(0, safeHalfWidth - sawRadiusWorld)
+                        trackMin = math.max(trackMin, ellipseCenterX - allowedTrackOffset)
+                        trackMax = math.min(trackMax, ellipseCenterX + allowedTrackOffset)
+                        trackMin = math.max(trackMin, ellipseCenterX - allowedSawOffset + 8 * scaleFactor)
+                        trackMax = math.min(trackMax, ellipseCenterX + allowedSawOffset + 8 * scaleFactor)
+                end
+
+                if trackMin > trackMax then
+                        local mid = (trackMin + trackMax) / 2
+                        trackMin = mid
+                        trackMax = mid
+                end
+
+                local clampedTrackCenter = math.max(trackMin, math.min(targetTrackCenter, trackMax))
+                local clampedTrackLeft = clampedTrackCenter - trackLengthWorld / 2
+                clampedTrackLeft = math.max(backdropInnerLeft, math.min(clampedTrackLeft, backdropInnerRight - trackLengthWorld))
+                clampedTrackCenter = clampedTrackLeft + trackLengthWorld / 2
+
+                local sawX = clampedTrackCenter - 8 * scaleFactor
 
                 titleSaw:draw(sawX, sawY, sawScale)
         end
