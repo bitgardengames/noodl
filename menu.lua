@@ -10,6 +10,7 @@ local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local PlayerStats = require("playerstats")
 local drawSnake = require("snakedraw")
+local SnakeUtils = require("snakeutils")
 
 local Menu = {
 	transitionDuration = 0.45,
@@ -295,6 +296,7 @@ local function computeTitleSnake(layout)
 
         local cellSize = layout.cellSize or 1
         local scaleFactor = layout.scaleFactor or 1
+        local segmentSize = (SnakeUtils and SnakeUtils.SEGMENT_SIZE) or 24
 
         local innerLeft = layout.backdropInnerLeft or layout.backdropCenterX or 0
         local innerRight = layout.backdropInnerRight or innerLeft
@@ -339,7 +341,7 @@ local function computeTitleSnake(layout)
         local baseline = areaTop + verticalSpan * 0.5
         baseline = math.max(clampInnerTop, math.min(clampInnerBottom, baseline))
 
-        local sampleSpacing = math.max(cellSize * 0.5, 12)
+        local sampleSpacing = math.max(segmentSize * 0.5, 12)
         local sampleCount = math.max(32, math.floor(usableWidth / sampleSpacing))
 
         if sampleCount < 2 then
@@ -380,11 +382,6 @@ local function computeTitleSnake(layout)
                         drawY = pt.y,
                 }
         end
-
-        local baseSegment = cellSize * 1.1
-        local minSegment = 18 * scaleFactor
-        local maxSegment = cellSize * 1.6
-        local segmentSize = math.max(minSegment, math.min(maxSegment, baseSegment))
 
         return {
                 trail = trail,
