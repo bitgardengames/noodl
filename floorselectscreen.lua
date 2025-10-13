@@ -27,6 +27,8 @@ local analogAxisDirections = { horizontal = nil, vertical = nil }
 local layout = {
         startX = 0,
         startY = 0,
+        gridX = 0,
+        gridY = 0,
         gridWidth = 0,
         gridHeight = 0,
         sectionSpacing = 0,
@@ -35,6 +37,73 @@ local layout = {
         lastWidth = 0,
         lastHeight = 0,
 }
+
+local function copyColor(color, fallback)
+        if type(color) ~= "table" then
+                color = fallback
+        end
+
+        local result = {
+                (color and color[1]) or 1,
+                (color and color[2]) or 1,
+                (color and color[3]) or 1,
+                (color and color[4]) or 1,
+        }
+
+        return result
+end
+
+local function lightenColor(color, amount)
+        local c = copyColor(color, { 1, 1, 1, 1 })
+        amount = math.max(0, math.min(amount or 0.2, 1))
+
+        for i = 1, 3 do
+                c[i] = math.max(0, math.min(c[i] + (1 - c[i]) * amount, 1))
+        end
+
+        return c
+end
+
+local function darkenColor(color, amount)
+        local c = copyColor(color, { 0, 0, 0, 1 })
+        amount = math.max(0, math.min(amount or 0.2, 1))
+
+        for i = 1, 3 do
+                c[i] = math.max(0, math.min(c[i] * (1 - amount), 1))
+        end
+
+        return c
+end
+
+local function withAlpha(color, alpha)
+        local c = copyColor(color, { 1, 1, 1, 1 })
+        c[4] = alpha or c[4]
+        return c
+end
+
+local function prettifyTag(value)
+        if not value or value == "" then
+                return nil
+        end
+
+        value = tostring(value):gsub("_", " ")
+        return (value:gsub("(%a)(%w*)", function(first, rest)
+                return first:upper() .. rest:lower()
+        end))
+end
+
+local function getFloorAccent(floorData)
+        if not floorData then
+                return Theme.accentTextColor or UI.colors.highlight or { 1, 1, 1, 1 }
+        end
+
+        local palette = floorData.palette
+        if type(palette) ~= "table" then
+                return Theme.accentTextColor or UI.colors.highlight or { 1, 1, 1, 1 }
+        end
+
+        return palette.snake or palette.arenaBorder or palette.arenaBG or Theme.accentTextColor or UI.colors.highlight or { 1, 1, 1, 1 }
+end
 
 local function configureBackgroundEffect()
         local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
@@ -218,6 +287,8 @@ local function buildButtons(sw, sh)
 
         layout.startX = startX
         layout.startY = startY
+        layout.gridX = startX
+        layout.gridY = startY
         layout.gridWidth = buttonWidth * columns + gapX * (columns - 1)
         layout.gridHeight = gridHeight
         layout.sectionSpacing = sectionSpacing
@@ -273,11 +344,79 @@ local function drawHeading(sw, sh)
         UI.drawLabel(subtitle, sw * 0.15, subtitleY, sw * 0.7, "center", { fontKey = "body", color = UI.colors.subtleText })
 
         local highestY = subtitleY + subtitleHeight + 8
-        UI.drawLabel(highestText, sw * 0.2, highestY, sw * 0.6, "center", { fontKey = "body", color = UI.colors.text })
+        local highlightColor = UI.colors.accentText or Theme.accentTextColor or UI.colors.text
+        UI.drawLabel(highestText, sw * 0.2, highestY, sw * 0.6, "center", { fontKey = "body", color = highlightColor })
 
         local instruction = Localization:get("floor_select.instruction")
         local instructionY = layout.startY - layout.sectionSpacing * 1.5
         UI.drawLabel(instruction, sw * 0.15, instructionY, sw * 0.7, "center", { fontKey = "body", color = UI.colors.subtleText })
+end
+
+local function drawGridBackdrop(sw, sh)
+        if layout.gridWidth <= 0 or layout.gridHeight <= 0 then
+                return
+        end
+
+        local focused = buttonList:getFocused()
+        local focusFloor = focused and focused.floor
+        if type(focusFloor) ~= "number" then
+                focusFloor = defaultFloor
+        end
+
+        local floorData = Floors[focusFloor] or Floors[defaultFloor] or {}
+        local accent = getFloorAccent(floorData)
+        local panelFill = lightenColor(Theme.panelColor or UI.colors.panel, 0.08)
+
+        local margin = math.max(28, math.floor(sw * 0.045))
+        local paddingX = math.max(UI.spacing.panelPadding or 20, math.floor(layout.gridWidth * 0.06))
+        local paddingY = math.max(UI.spacing.panelPadding or 20, math.floor((layout.sectionSpacing or 24) * 1.1))
+
+        local width = layout.gridWidth + paddingX * 2
+        width = math.min(width, sw - margin * 2)
+        local x = math.floor((sw - width) / 2)
+
+        local height = layout.gridHeight + paddingY * 2
+        local y = layout.gridY - paddingY
+        local minY = math.floor(sh * 0.18)
+        if y < minY then
+                y = minY
+        end
+
+        UI.drawPanel(x, y, width, height, {
+                fill = panelFill,
+                borderColor = withAlpha(darkenColor(accent, 0.35), 0.9),
+                highlightColor = withAlpha(lightenColor(accent, 0.35), 0.55),
+        })
+
+        love.graphics.setColor(accent[1] or 1, accent[2] or 1, accent[3] or 1, 0.25)
+        local underlinePadding = math.max(20, math.floor(width * 0.045))
+        love.graphics.rectangle("fill", x + underlinePadding, y + 14, width - underlinePadding * 2, 3, 2, 2)
+        love.graphics.setColor(1, 1, 1, 1)
+end
+
+local function drawPaletteSwatches(centerX, y, availableWidth, colors)
+        if not colors or #colors == 0 then
+                return 0
+        end
+
+        local swatchSize = math.max(16, math.min(28, math.floor(availableWidth / (#colors * 2.6))))
+        local gap = math.max(10, math.floor(swatchSize * 0.6))
+        local totalWidth = #colors * swatchSize + (#colors - 1) * gap
+        local startX = centerX - totalWidth / 2
+
+        for index, color in ipairs(colors) do
+                local x = startX + (index - 1) * (swatchSize + gap)
+                love.graphics.setColor(color[1] or 1, color[2] or 1, color[3] or 1, color[4] or 1)
+                love.graphics.rectangle("fill", x, y, swatchSize, swatchSize, swatchSize * 0.25, swatchSize * 0.25)
+                love.graphics.setColor(1, 1, 1, 0.18)
+                love.graphics.setLineWidth(2)
+                love.graphics.rectangle("line", x, y, swatchSize, swatchSize, swatchSize * 0.25, swatchSize * 0.25)
+        end
+
+        love.graphics.setLineWidth(1)
+        love.graphics.setColor(1, 1, 1, 1)
+
+        return swatchSize
 end
 
 local function drawButtons()
@@ -300,21 +439,124 @@ local function drawDescription(sw)
 
         local floorData = Floors[focusFloor] or {}
         local description = floorData.flavor or Localization:get("floor_select.description_fallback")
+        local floorName = floorData.name or Localization:get("common.unknown")
         local padding = math.max(60, math.floor(sw * 0.12))
         local width = sw - padding * 2
+        if width <= 0 then
+                return
+        end
+
         local sectionSpacing = layout.sectionSpacing or 24
-        local baseY = layout.backY - sectionSpacing * 2
+        local panelPadding = math.max(UI.spacing.panelPadding or 20, math.floor(sectionSpacing * 0.9))
+        local innerWidth = width - panelPadding * 2
 
         local bodyFont = UI.fonts.body
         local descHeight = 0
-        if bodyFont then
-                local _, lines = bodyFont:getWrap(description, width)
-                descHeight = #lines * bodyFont:getHeight()
+        if bodyFont and innerWidth > 0 then
+                local _, lines = bodyFont:getWrap(description, innerWidth)
+                descHeight = math.max(1, #lines) * bodyFont:getHeight()
+        else
+                descHeight = math.max(layout.buttonHeight or 56, 60)
         end
 
+        local nameFont = UI.fonts.heading
+        local nameHeight = nameFont and nameFont:getHeight() or 32
+
+        local theme = prettifyTag(floorData.backgroundTheme)
+        local variant = prettifyTag(floorData.backgroundVariant)
+        local themeText
+        if theme or variant then
+                local combined = theme or variant or ""
+                if theme and variant then
+                        combined = theme .. " • " .. variant
+                end
+                themeText = Localization:get("floor_select.atmosphere_label", { theme = combined })
+        end
+
+        local themeFont = UI.fonts.caption
+        local themeHeight = themeText and ((themeFont and themeFont:getHeight()) or 16) or 0
+
+        local palette = floorData.palette
+        local swatches = {}
+        if type(palette) == "table" then
+                local keys = { "snake", "arenaBG", "arenaBorder" }
+                for _, key in ipairs(keys) do
+                        local color = palette[key]
+                        if type(color) == "table" then
+                                swatches[#swatches + 1] = copyColor(color)
+                        end
+                end
+        end
+
+        local hasSwatches = #swatches > 0
+        local swatchLabelHeight = hasSwatches and ((UI.fonts.caption and UI.fonts.caption:getHeight()) or 14) or 0
+        local swatchSpacing = hasSwatches and 12 or 0
+        local estimatedSwatchSize = hasSwatches and math.max(16, math.min(28, math.floor(innerWidth / (#swatches * 2.6)))) or 0
+
+        local innerHeight = nameHeight + 12 + descHeight
+        if themeText then
+                innerHeight = innerHeight + themeHeight + 8
+        end
+        if hasSwatches then
+                innerHeight = innerHeight + 16 + swatchLabelHeight + swatchSpacing + estimatedSwatchSize
+        end
+
+        local panelHeight = innerHeight + panelPadding * 2
         local minY = layout.startY + layout.gridHeight + sectionSpacing
-        local y = math.max(minY, baseY - descHeight)
-        UI.drawLabel(description, padding, y, width, "center", { fontKey = "body", color = UI.colors.subtleText })
+        local baseY = (layout.backY or (minY + panelHeight + sectionSpacing)) - sectionSpacing * 2
+        local maxY = (layout.backY or (minY + panelHeight + sectionSpacing)) - sectionSpacing - panelHeight
+        local y = math.max(minY, math.min(baseY, maxY))
+
+        local accent = getFloorAccent(floorData)
+        UI.drawPanel(padding, y, width, panelHeight, {
+                fill = lightenColor(Theme.panelColor or UI.colors.panel, 0.05),
+                borderColor = withAlpha(darkenColor(accent, 0.25), 0.95),
+                highlightColor = withAlpha(lightenColor(accent, 0.4), 0.4),
+        })
+
+        love.graphics.setColor(accent[1] or 1, accent[2] or 1, accent[3] or 1, 0.35)
+        love.graphics.rectangle("fill", padding + panelPadding, y + 8, width - panelPadding * 2, 2, 2, 2)
+        love.graphics.setColor(1, 1, 1, 1)
+
+        local textX = padding + panelPadding
+        local textWidth = width - panelPadding * 2
+        local cursorY = y + panelPadding
+
+        UI.drawLabel(floorName, textX, cursorY, textWidth, "center", { fontKey = "heading", color = UI.colors.text })
+        cursorY = cursorY + nameHeight + 8
+
+        if themeText then
+                UI.drawLabel(themeText, textX, cursorY, textWidth, "center", { fontKey = "caption", color = withAlpha(lightenColor(accent, 0.2), 0.9) })
+                cursorY = cursorY + themeHeight + 6
+        end
+
+        UI.drawLabel(description, textX, cursorY, textWidth, "center", { fontKey = "body", color = UI.colors.subtleText })
+        cursorY = cursorY + descHeight + 12
+
+        if hasSwatches then
+                local paletteLabel = Localization:get("floor_select.palette_label")
+                UI.drawLabel(paletteLabel, textX, cursorY, textWidth, "center", { fontKey = "caption", color = UI.colors.subtleText })
+                cursorY = cursorY + swatchLabelHeight + 4
+                cursorY = cursorY + drawPaletteSwatches(padding + width / 2, cursorY + swatchSpacing, textWidth, swatches) + 6
+        end
+end
+
+local function drawStartHint(sw)
+        if not layout.backY or layout.backY <= 0 then
+                return
+        end
+
+        local hint = Localization:get("floor_select.start_hint")
+        local captionFont = UI.fonts.caption
+        local captionHeight = (captionFont and captionFont:getHeight()) or 16
+        local spacing = layout.sectionSpacing or 24
+        local y = layout.backY - captionHeight - spacing * 0.6
+        local minY = layout.startY + layout.gridHeight + spacing
+        if y < minY then
+                y = layout.backY - captionHeight - 6
+        end
+
+        UI.drawLabel(hint, sw * 0.2, y, sw * 0.6, "center", { fontKey = "caption", color = UI.colors.subtleText })
 end
 
 function FloorSelect:draw()
@@ -322,8 +564,10 @@ function FloorSelect:draw()
         drawBackground(sw, sh)
 
         drawHeading(sw, sh)
+        drawGridBackdrop(sw, sh)
         drawButtons()
         drawDescription(sw)
+        drawStartHint(sw)
 end
 
 function FloorSelect:mousepressed(x, y, button)
