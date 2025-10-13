@@ -3,7 +3,7 @@ local Face = {}
 local FACE_WIDTH = 14
 local FACE_HEIGHT = 11
 
-local LEFT_EYE_CENTER_X = 1.5
+local LEFT_EYE_CENTER_X = 2.5
 local RIGHT_EYE_CENTER_X = 11.5
 local EYE_CENTER_Y = 1.5
 local EYE_RADIUS = 2
