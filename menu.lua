@@ -2,11 +2,14 @@ local Audio = require("audio")
 local Screen = require("screen")
 local UI = require("ui")
 local Theme = require("theme")
+local drawWord = require("drawword")
+local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local PlayerStats = require("playerstats")
+local SawActor = require("sawactor")
 
 local Menu = {
 	transitionDuration = 0.45,
@@ -21,15 +24,23 @@ local dailyChallenge = nil
 local dailyChallengeAnim = 0
 local SHOW_DAILY_CHALLENGE_CARD = false
 local analogAxisDirections = { horizontal = nil, vertical = nil }
+local titleSaw = SawActor.new()
+
+local TITLE_SAW_SCALE_FACTOR = 0.729 -- make the title saw 10% smaller than before
+
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
-local BACKDROP_BOX_WIDTH = 1438
-local BACKDROP_BOX_HEIGHT = 810
-local BACKDROP_BOX_LINE_WIDTH = 8
-local BACKDROP_BOX_PADDING_X = 48
-local BACKDROP_BOX_PADDING_Y = 16
+local BACKDROP_BOX_WIDTH = 748
+local BACKDROP_BOX_HEIGHT = 896
+local BACKDROP_BOX_LINE_WIDTH = 12
+local BACKDROP_BOX_PADDING = 80
+
+local DEFAULT_WORD_SCALE = 3 * 0.9
+local TITLE_SCALE_MARGIN = 0.96
+local MIN_WORD_SCALE = 0.1
+local TITLE_WORD_VERTICAL_FRACTION = 1 / 3
 
 local function configureBackgroundEffect()
 	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
@@ -271,6 +282,11 @@ function Menu:update(dt)
                 btn.offsetY = (1 - btn.alpha) * 50
         end
 
+        if titleSaw then
+                titleSaw:update(dt)
+        end
+
+        Face:update(dt)
 end
 
 function Menu:draw()
@@ -278,10 +294,117 @@ function Menu:draw()
 
         drawBackground(sw, sh)
 
-        for _, btn in ipairs(buttons) do
-                if btn.labelKey then
-                        btn.text = Localization:get(btn.labelKey)
+        local baseCellSize = 20
+        local baseSpacing = 10
+        local word = Localization:get("menu.title_word") or ""
+
+        local letterCount = 0
+        if drawWord.getBounds then
+                for i = 1, #word do
+                        local ch = word:sub(i, i):lower()
+                        local charBounds = drawWord.getBounds(ch)
+                        local charMin = charBounds and charBounds.minY or 0
+                        local charMax = charBounds and charBounds.maxY or 0
+                        if charMax ~= charMin then
+                                letterCount = letterCount + 1
+                        end
                 end
+        end
+
+        if letterCount == 0 then
+                letterCount = math.max(#word, 1)
+        end
+
+        local bounds = drawWord.getBounds and drawWord.getBounds(word)
+        local minRow = bounds and bounds.minY or 0
+        local maxRow = bounds and bounds.maxY or 3
+
+        local baseWordWidth
+        if letterCount <= 1 then
+                baseWordWidth = 3 * baseCellSize
+        else
+                baseWordWidth = (letterCount * (3 * baseCellSize + baseSpacing)) - baseSpacing - (baseCellSize * 3)
+        end
+        baseWordWidth = math.max(baseWordWidth, 1)
+
+        local baseWordHeight = math.max((maxRow - minRow) * baseCellSize, baseCellSize)
+
+        local backdropY = (sh - BACKDROP_BOX_HEIGHT) / 2
+        local availableWidth = math.max(BACKDROP_BOX_WIDTH - 2 * BACKDROP_BOX_PADDING, baseCellSize)
+        local availableHeight = math.max(BACKDROP_BOX_HEIGHT - 2 * BACKDROP_BOX_PADDING, baseCellSize)
+
+        local scaleWidth = availableWidth / baseWordWidth
+        local scaleHeight = availableHeight / math.max(baseWordHeight, 1)
+        local targetScale = math.min(scaleWidth, scaleHeight)
+        local wordScale = math.max(targetScale * TITLE_SCALE_MARGIN, MIN_WORD_SCALE)
+        local scaleFactor = wordScale / (DEFAULT_WORD_SCALE ~= 0 and DEFAULT_WORD_SCALE or 1)
+
+        local cellSize = baseCellSize * wordScale
+        local spacing = baseSpacing * wordScale
+
+        local wordWidth
+        if letterCount <= 1 then
+                wordWidth = 3 * cellSize
+        else
+                wordWidth = (letterCount * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+        end
+        local ox = (sw - wordWidth) / 2
+
+        local wordHeight = math.max((maxRow - minRow) * cellSize, cellSize)
+        local backdropInnerTop = backdropY + BACKDROP_BOX_PADDING
+        local targetCenterY = backdropInnerTop + availableHeight * TITLE_WORD_VERTICAL_FRACTION
+        local minCenterY = backdropInnerTop + wordHeight / 2
+        local maxCenterY = backdropInnerTop + availableHeight - wordHeight / 2
+        targetCenterY = math.max(minCenterY, math.min(targetCenterY, maxCenterY))
+
+        local targetTop = targetCenterY - wordHeight / 2
+        local oy = targetTop - minRow * cellSize
+
+        if titleSaw then
+                local sawRadius = titleSaw.radius or 1
+                local sawScale = wordHeight / (2 * sawRadius)
+                if sawScale <= 0 then
+                        sawScale = 1
+                end
+                sawScale = sawScale * TITLE_SAW_SCALE_FACTOR
+
+                local desiredTrackLengthWorld = wordWidth + cellSize
+                local shortenedTrackLengthWorld = math.max(
+                        2 * sawRadius * sawScale,
+                        desiredTrackLengthWorld - 90 * scaleFactor
+                )
+                local rightTrackShortening = 73 * scaleFactor
+                shortenedTrackLengthWorld = math.max(2 * sawRadius * sawScale, shortenedTrackLengthWorld - rightTrackShortening)
+                local targetTrackLengthBase = shortenedTrackLengthWorld / sawScale
+                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
+                        titleSaw.trackLength = targetTrackLengthBase
+                end
+
+                local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
+                local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
+                local slotThicknessWorld = slotThicknessBase * sawScale
+
+                local targetLeft = ox - 15 * scaleFactor
+                local gapAboveWord = math.max(8 * scaleFactor, slotThicknessWorld * 0.35)
+                local targetBottom = oy - gapAboveWord
+
+                local sawX = targetLeft + trackLengthWorld / 2 - 8 * scaleFactor
+                local sawY = targetBottom - slotThicknessWorld / 2 - 40 * scaleFactor
+
+                titleSaw:draw(sawX, sawY, sawScale)
+        end
+
+        local trail = drawWord(word, ox, oy, cellSize, spacing)
+
+	if trail and #trail > 0 then
+		local head = trail[#trail]
+		Face:draw(head.x, head.y, wordScale)
+	end
+
+	for _, btn in ipairs(buttons) do
+		if btn.labelKey then
+			btn.text = Localization:get(btn.labelKey)
+		end
 
 		if btn.alpha > 0 then
 			UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
