@@ -173,7 +173,7 @@ local function drawShader(effect, x, y, w, h, intensity, sendUniforms, drawOptio
 		shader:send("resolution", {w, h})
 	end
 
-	local now = (love.timer and love.timer.getTime and love.timer.getTime()) or 0
+        local now = love.timer.getTime()
 
 	if shaderHasUniform(shader, "time") then
 		shader:send("time", now)

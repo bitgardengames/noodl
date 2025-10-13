@@ -580,8 +580,8 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
 	local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
 	local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
 
-	if isSelected then
-		local glowClock = love.timer and love.timer.getTime and love.timer.getTime() or 0
+        if isSelected then
+                local glowClock = love.timer.getTime()
 		local pulse = 0.35 + 0.25 * (math.sin(glowClock * 5) * 0.5 + 0.5)
 		setColor(1, 0.9, 0.45, pulse)
 		love.graphics.setLineWidth(10)
@@ -597,7 +597,7 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
 	applyColor(setColor, style.base)
 	love.graphics.rectangle("fill", x, y, w, h, 12, 12)
 
-	local currentTime = (love.timer and love.timer.getTime and love.timer.getTime()) or 0
+        local currentTime = love.timer.getTime()
 
 	if style.aura then
 		withTransformedScissor(x, y, w, h, function()
@@ -645,7 +645,7 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
 
 	if style.sparkles and style.sparkles.positions then
 		withTransformedScissor(x, y, w, h, function()
-			local time = (love.timer and love.timer.getTime and love.timer.getTime()) or 0
+                        local time = love.timer.getTime()
 			for i, pos in ipairs(style.sparkles.positions) do
 				local px, py, scale = pos[1], pos[2], pos[3] or 1
 				local pulse = 0.6 + 0.4 * math.sin(time * (style.sparkles.speed or 1.8) + i * 0.9)
