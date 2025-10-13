@@ -18,6 +18,7 @@ local Menu = {
 local ANALOG_DEADZONE = 0.35
 local buttonList = ButtonList.new()
 local buttons = {}
+local SHOW_MENU_BUTTONS = false
 local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
@@ -165,23 +166,29 @@ local function setColorWithAlpha(color, alpha)
 end
 
 function Menu:enter()
-	t = 0
-	UI.clearButtons()
+        t = 0
+        UI.clearButtons()
 
-	Audio:playMusic("menu")
+        Audio:playMusic("menu")
 	Screen:update()
 
 	dailyChallenge = DailyChallenges:getDailyChallenge()
 	dailyChallengeAnim = 0
-	resetAnalogAxis()
+        resetAnalogAxis()
 
-	configureBackgroundEffect()
+        configureBackgroundEffect()
 
-	local sw, sh = Screen:get()
-	local centerX = sw / 2
+        buttons = buttonList:reset({})
 
-	local labels = {
-		{ key = "menu.start_game",   action = "game" },
+        if not SHOW_MENU_BUTTONS then
+                return
+        end
+
+        local sw, sh = Screen:get()
+        local centerX = sw / 2
+
+        local labels = {
+                { key = "menu.start_game",   action = "game" },
 		{ key = "menu.achievements", action = "achievementsmenu" },
 		{ key = "menu.progression",  action = "metaprogression" },
 		{ key = "menu.dev_page",     action = "dev" },
@@ -251,22 +258,22 @@ end
 function Menu:draw()
         local sw, sh = Screen:get()
 
-	drawBackground(sw, sh)
+        drawBackground(sw, sh)
 
-	local baseCellSize = 20
-	local baseSpacing = 10
-	local wordScale = 1.5
+        local baseCellSize = 20
+        local baseSpacing = 10
+        local wordScale = 1.5
 
-	local cellSize = baseCellSize * wordScale
+        local cellSize = baseCellSize * wordScale
         local word = Localization:get("menu.title_word")
         local spacing = baseSpacing * wordScale
         local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
         local ox = (sw - wordWidth) / 2
-        local oy = sh * 0.2
+        local wordHeight = cellSize * 3
+        local oy = (sh - wordHeight) / 2
 
         if titleSaw then
                 local sawRadius = titleSaw.radius or 1
-                local wordHeight = cellSize * 3
                 local sawScale = wordHeight / (2 * sawRadius)
                 if sawScale <= 0 then
                         sawScale = 1
@@ -284,7 +291,8 @@ function Menu:draw()
                 local slotThicknessWorld = slotThicknessBase * sawScale
 
                 local targetLeft = ox - 15
-                local targetBottom = oy - 30
+                local gapAboveWord = math.max(8, slotThicknessWorld * 0.35)
+                local targetBottom = oy - gapAboveWord
 
                 local sawX = targetLeft + trackLengthWorld / 2
                 local sawY = targetBottom - slotThicknessWorld / 2
