@@ -290,8 +290,14 @@ function Menu:draw()
         local spacing = baseSpacing * wordScale
         local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
         local ox = (sw - wordWidth) / 2
-        local wordHeight = cellSize * 3
-        local oy = (sh - wordHeight) / 2
+
+        local bounds = drawWord.getBounds and drawWord.getBounds(word)
+        local minRow = bounds and bounds.minY or 0
+        local maxRow = bounds and bounds.maxY or 3
+        local wordHeight = math.max((maxRow - minRow) * cellSize, cellSize)
+        local backdropCenterY = sh / 2
+        local targetTop = backdropCenterY - wordHeight / 2
+        local oy = targetTop - minRow * cellSize
 
         if titleSaw then
                 local sawRadius = titleSaw.radius or 1
