@@ -2,15 +2,12 @@ local Audio = require("audio")
 local Screen = require("screen")
 local UI = require("ui")
 local Theme = require("theme")
-local drawWord = require("drawword")
 local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local PlayerStats = require("playerstats")
-local drawSnake = require("snakedraw")
-local SnakeUtils = require("snakeutils")
 
 local Menu = {
 	transitionDuration = 0.45,
@@ -19,27 +16,17 @@ local Menu = {
 local ANALOG_DEADZONE = 0.35
 local buttonList = ButtonList.new()
 local buttons = {}
-local SHOW_MENU_BUTTONS = false
+local SHOW_MENU_BUTTONS = true
 local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
 local SHOW_DAILY_CHALLENGE_CARD = false
 local analogAxisDirections = { horizontal = nil, vertical = nil }
-local LOGO_EXPORT_KEY = "f6"
-
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
-
-local BACKDROP_RECT_WIDTH = 1280
-local BACKDROP_RECT_HEIGHT = 720
-local BACKDROP_RECT_LINE_WIDTH = 12
-local BACKDROP_RECT_PADDING = 80
-
-local DEFAULT_WORD_SCALE = 3 * 0.9
-local TITLE_SCALE_MARGIN = 0.96
-local MIN_WORD_SCALE = 0.1
-local TITLE_WORD_VERTICAL_FRACTION = 1 / 3
+local TITLE_VERTICAL_FRACTION = 1 / 3
+local TITLE_SUBTITLE_SPACING = 18
 
 local function configureBackgroundEffect()
 	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
@@ -60,47 +47,6 @@ local function configureBackgroundEffect()
 	backgroundEffect = effect
 end
 
-local function getBackdropMetrics(sw, sh)
-        local widthScale = math.min(1, sw / BACKDROP_RECT_WIDTH)
-        local heightScale = math.min(1, sh / BACKDROP_RECT_HEIGHT)
-        local scale = math.min(widthScale, heightScale)
-        local rectWidth = BACKDROP_RECT_WIDTH * scale
-        local rectHeight = BACKDROP_RECT_HEIGHT * scale
-
-        return {
-                centerX = sw * 0.5,
-                centerY = sh * 0.5,
-                width = rectWidth,
-                height = rectHeight,
-                halfWidth = rectWidth * 0.5,
-                halfHeight = rectHeight * 0.5,
-        }
-end
-
-local function computeRectSpanLimits(centerY, halfWidth, halfHeight, topY, bottomY)
-        if not centerY or not halfWidth or not halfHeight or halfWidth <= 0 or halfHeight <= 0 then
-                return 0, 0
-        end
-
-        local spanTop = math.min(topY, bottomY)
-        local spanBottom = math.max(topY, bottomY)
-        local rectTop = centerY - halfHeight
-        local rectBottom = centerY + halfHeight
-
-        if spanBottom <= rectTop or spanTop >= rectBottom then
-                return 0, 0
-        end
-
-        local clampedTop = math.max(spanTop, rectTop)
-        local clampedBottom = math.min(spanBottom, rectBottom)
-        if clampedTop >= clampedBottom then
-                return 0, 0
-        end
-
-        local width = math.max(halfWidth * 2, 0)
-        return width, halfWidth
-end
-
 local function drawBackground(sw, sh)
         love.graphics.setColor(Theme.bgColor)
         love.graphics.rectangle("fill", 0, 0, sw, sh)
@@ -109,373 +55,47 @@ local function drawBackground(sw, sh)
                 configureBackgroundEffect()
         end
 
-        local metrics = getBackdropMetrics(sw, sh)
-        local centerX = metrics.centerX
-        local centerY = metrics.centerY
-        local halfWidth = metrics.halfWidth
-        local halfHeight = metrics.halfHeight
-        local rectX = centerX - halfWidth
-        local rectY = centerY - halfHeight
-
         if backgroundEffect then
-                love.graphics.stencil(function()
-                        love.graphics.rectangle("fill", rectX, rectY, metrics.width, metrics.height)
-                end, "replace", 1)
-                love.graphics.setStencilTest("greater", 0)
+                love.graphics.setColor(1, 1, 1, 1)
                 local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-                Shaders.draw(backgroundEffect, rectX, rectY, metrics.width, metrics.height, intensity)
-                love.graphics.setStencilTest()
-        end
-
-        if BACKDROP_RECT_LINE_WIDTH > 0 then
-                love.graphics.setColor(Theme.buttonHover)
-                love.graphics.setLineWidth(BACKDROP_RECT_LINE_WIDTH)
-                local halfLine = BACKDROP_RECT_LINE_WIDTH * 0.5
-                love.graphics.rectangle(
-                        "line",
-                        rectX - halfLine,
-                        rectY - halfLine,
-                        metrics.width + BACKDROP_RECT_LINE_WIDTH,
-                        metrics.height + BACKDROP_RECT_LINE_WIDTH
-                )
-                love.graphics.setLineWidth(1)
+                Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
         end
 
         love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function computeTitleLayout(sw, sh)
-        local baseCellSize = 20
-        local baseSpacing = 10
-        local word = Localization:get("menu.title_word") or ""
+local function drawTitleText(sw, sh)
+        local titleWord = Localization:get("menu.title_word") or ""
+        local authorText = Localization:get("menu.title_author") or "sawactor"
 
-        local letterCount = 0
-        if drawWord.getBounds then
-                for i = 1, #word do
-                        local ch = word:sub(i, i):lower()
-                        local charBounds = drawWord.getBounds(ch)
-                        local charMin = charBounds and charBounds.minY or 0
-                        local charMax = charBounds and charBounds.maxY or 0
-                        if charMax ~= charMin then
-                                letterCount = letterCount + 1
-                        end
-                end
+        local titleFont = UI.fonts.title or love.graphics.getFont()
+        local subtitleFont = UI.fonts.subtitle or titleFont
+        local centerX = sw * 0.5
+        local previousFont = love.graphics.getFont()
+
+        love.graphics.setFont(titleFont)
+        local titleWidth = titleFont:getWidth(titleWord)
+        local titleHeight = titleFont:getHeight()
+        local titleY = sh * TITLE_VERTICAL_FRACTION - titleHeight * 0.5
+
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.print(titleWord, centerX - titleWidth * 0.5, titleY)
+
+        if authorText and #authorText > 0 then
+                love.graphics.setFont(subtitleFont)
+                local subtitleWidth = subtitleFont:getWidth(authorText)
+                local subtitleHeight = subtitleFont:getHeight()
+                local subtitleY = titleY - subtitleHeight - TITLE_SUBTITLE_SPACING
+                subtitleY = math.max(20, subtitleY)
+
+                love.graphics.setColor(Theme.accentTextColor or Theme.textColor)
+                love.graphics.print(authorText, centerX - subtitleWidth * 0.5, subtitleY)
         end
 
-        if letterCount == 0 then
-                letterCount = math.max(#word, 1)
-        end
-
-        local bounds = drawWord.getBounds and drawWord.getBounds(word)
-        local minRow = bounds and bounds.minY or 0
-        local maxRow = bounds and bounds.maxY or 3
-
-        local baseWordWidth
-        if letterCount <= 1 then
-                baseWordWidth = 3 * baseCellSize
-        else
-                baseWordWidth = (letterCount * (3 * baseCellSize + baseSpacing)) - baseSpacing - (baseCellSize * 3)
-        end
-        baseWordWidth = math.max(baseWordWidth, 1)
-
-        local baseWordHeight = math.max((maxRow - minRow) * baseCellSize, baseCellSize)
-
-        local metrics = getBackdropMetrics(sw, sh)
-        local backdropCenterX = metrics.centerX
-        local backdropCenterY = metrics.centerY
-        local backdropHalfWidth = metrics.halfWidth
-        local backdropHalfHeight = metrics.halfHeight
-
-        local innerHalfWidth = math.max(backdropHalfWidth - BACKDROP_RECT_PADDING, baseCellSize * 0.5)
-        local innerHalfHeight = math.max(backdropHalfHeight - BACKDROP_RECT_PADDING, baseCellSize * 0.5)
-        local availableWidth = math.max(innerHalfWidth * 2, baseCellSize)
-        local availableHeight = math.max(innerHalfHeight * 2, baseCellSize)
-        local backdropInnerLeft = backdropCenterX - availableWidth / 2
-        local backdropInnerTop = backdropCenterY - availableHeight / 2
-        local backdropInnerRight = backdropInnerLeft + availableWidth
-        local backdropInnerBottom = backdropInnerTop + availableHeight
-
-        local scaleWidth = availableWidth / baseWordWidth
-        local scaleHeight = availableHeight / math.max(baseWordHeight, 1)
-        local targetScale = math.min(scaleWidth, scaleHeight)
-
-        local function finalizeLayout(wordScale)
-                local scaleFactor = wordScale / (DEFAULT_WORD_SCALE ~= 0 and DEFAULT_WORD_SCALE or 1)
-                local cellSize = baseCellSize * wordScale
-                local spacing = baseSpacing * wordScale
-
-                local wordWidth
-                if letterCount <= 1 then
-                        wordWidth = 3 * cellSize
-                else
-                        wordWidth = (letterCount * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-                end
-
-                local ox = backdropInnerLeft + (availableWidth - wordWidth) / 2
-
-                local wordHeight = math.max((maxRow - minRow) * cellSize, cellSize)
-                local availableTop = backdropInnerTop
-                local targetCenterY = availableTop + availableHeight * TITLE_WORD_VERTICAL_FRACTION
-                local minCenterY = availableTop + wordHeight / 2
-                local maxCenterY = availableTop + availableHeight - wordHeight / 2
-                targetCenterY = math.max(minCenterY, math.min(targetCenterY, maxCenterY))
-
-                local targetTop = targetCenterY - wordHeight / 2
-                local oy = targetTop - minRow * cellSize
-
-                return {
-                        word = word,
-                        letterCount = letterCount,
-                        minRow = minRow,
-                        maxRow = maxRow,
-                        cellSize = cellSize,
-                        spacing = spacing,
-                        wordScale = wordScale,
-                        scaleFactor = scaleFactor,
-                        wordWidth = wordWidth,
-                        wordHeight = wordHeight,
-                        wordTop = targetTop,
-                        wordBottom = targetTop + wordHeight,
-                        availableWidth = availableWidth,
-                        availableHeight = availableHeight,
-                        backdropInnerLeft = backdropInnerLeft,
-                        backdropInnerRight = backdropInnerRight,
-                        backdropInnerTop = backdropInnerTop,
-                        backdropInnerBottom = backdropInnerBottom,
-                        backdropCenterX = backdropCenterX,
-                        backdropCenterY = backdropCenterY,
-                        innerHalfWidth = innerHalfWidth,
-                        innerHalfHeight = innerHalfHeight,
-                        ox = ox,
-                        oy = oy,
-                }
-        end
-
-        local initialScale = math.max(targetScale * TITLE_SCALE_MARGIN, MIN_WORD_SCALE)
-        local layout = finalizeLayout(initialScale)
-
-        local safeWidth, safeHalfWidth = computeRectSpanLimits(
-                backdropCenterY,
-                innerHalfWidth,
-                innerHalfHeight,
-                layout.wordTop,
-                layout.wordBottom
-        )
-
-        if safeWidth > 0 and layout.wordWidth > safeWidth then
-                local adjustedScale = layout.wordScale * safeWidth / layout.wordWidth
-                layout = finalizeLayout(adjustedScale)
-
-                safeWidth, safeHalfWidth = computeRectSpanLimits(
-                        backdropCenterY,
-                        innerHalfWidth,
-                        innerHalfHeight,
-                        layout.wordTop,
-                        layout.wordBottom
-                )
-
-                if safeWidth > 0 and layout.wordWidth > safeWidth then
-                        local fallbackScale = layout.wordScale
-                        if safeHalfWidth and safeHalfWidth > 0 then
-                                fallbackScale = math.max(
-                                        MIN_WORD_SCALE,
-                                        layout.wordScale * (safeHalfWidth * 2) / math.max(layout.wordWidth, 1)
-                                )
-                        end
-                        layout = finalizeLayout(fallbackScale)
-                end
-        end
-
-        return layout
-end
-
-local function computeTitleSnake(layout)
-        if not layout then
-                return nil
-        end
-
-        local cellSize = layout.cellSize or 1
-        local scaleFactor = layout.scaleFactor or 1
-        local segmentSize = (SnakeUtils and SnakeUtils.SEGMENT_SIZE) or 24
-
-        local innerLeft = layout.backdropInnerLeft or layout.backdropCenterX or 0
-        local innerRight = layout.backdropInnerRight or innerLeft
-        local innerTop = layout.backdropInnerTop or ((layout.backdropCenterY or 0) - (layout.innerHalfHeight or 0))
-        local innerBottom = layout.backdropInnerBottom or ((layout.backdropCenterY or 0) + (layout.innerHalfHeight or 0))
-
-        local horizontalPadding = math.max(cellSize * 0.6, 40 * scaleFactor)
-        local left = innerLeft + horizontalPadding
-        local right = innerRight - horizontalPadding
-        local usableWidth = right - left
-
-        if not (usableWidth and usableWidth > cellSize * 1.5) then
-                return nil
-        end
-
-        if not innerTop or not innerBottom then
-                return nil
-        end
-
-        local verticalPadding = math.max(cellSize * 0.8, 48 * scaleFactor)
-        local areaTop = innerTop + verticalPadding
-        local areaBottom = innerBottom - verticalPadding
-
-        if areaBottom <= areaTop then
-                local mid = (innerTop + innerBottom) * 0.5
-                local halfHeight = math.max(cellSize * 0.6, (innerBottom - innerTop) * 0.2)
-                areaTop = mid - halfHeight
-                areaBottom = mid + halfHeight
-        end
-
-        if areaBottom <= areaTop then
-                return nil
-        end
-
-        local verticalSpan = areaBottom - areaTop
-        local clampInnerTop = areaTop + cellSize * 0.3
-        local clampInnerBottom = areaBottom - cellSize * 0.3
-        if clampInnerTop > clampInnerBottom then
-                clampInnerTop, clampInnerBottom = clampInnerBottom, clampInnerTop
-        end
-
-        local baseline = areaTop + verticalSpan * 0.5
-        baseline = math.max(clampInnerTop, math.min(clampInnerBottom, baseline))
-
-        local sampleSpacing = math.max(segmentSize * 0.5, 12)
-        local sampleCount = math.max(32, math.floor(usableWidth / sampleSpacing))
-
-        if sampleCount < 2 then
-                return nil
-        end
-
-        local minX, maxX, minY, maxY
-        local basePoints = {}
-
-        for i = 0, sampleCount do
-                local t = i / sampleCount
-                local x = left + usableWidth * t
-                local y = baseline
-
-                basePoints[#basePoints + 1] = { x = x, y = y }
-
-                if not minX or x < minX then
-                        minX = x
-                end
-                if not maxX or x > maxX then
-                        maxX = x
-                end
-                if not minY or y < minY then
-                        minY = y
-                end
-                if not maxY or y > maxY then
-                        maxY = y
-                end
-        end
-
-        local trail = {}
-        for i = #basePoints, 1, -1 do
-                local pt = basePoints[i]
-                trail[#trail + 1] = {
-                        x = pt.x,
-                        y = pt.y,
-                        drawX = pt.x,
-                        drawY = pt.y,
-                }
-        end
-
-        return {
-                trail = trail,
-                segmentSize = segmentSize,
-                bounds = (minX and minY and maxX and maxY) and {
-                        minX = minX,
-                        maxX = maxX,
-                        minY = minY,
-                        maxY = maxY,
-                } or nil,
-        }
-end
-
-local function exportTitleLogo()
-        local sw, sh = Screen:get()
-        if not sw or not sh then
-                sw, sh = love.graphics.getDimensions()
-        end
-
-        local layout = computeTitleLayout(sw, sh)
-        if not layout then
-                return
-        end
-
-        local snakeLayout = computeTitleSnake(layout)
-        if not (snakeLayout and snakeLayout.trail and snakeLayout.bounds) then
-                return
-        end
-
-        local bounds = snakeLayout.bounds
-        local segmentSize = snakeLayout.segmentSize or layout.cellSize or 24
-        local bodyThickness = segmentSize * 0.8
-        local padding = bodyThickness * 0.75 + math.max(6, segmentSize * 0.3)
-
-        local contentMinX = bounds.minX - padding
-        local contentMaxX = bounds.maxX + padding
-        local contentMinY = bounds.minY - padding
-        local contentMaxY = bounds.maxY + padding
-
-        local marginX = math.ceil(math.max(segmentSize * 0.75, layout.cellSize or segmentSize))
-        local marginY = math.ceil(math.max(segmentSize * 0.75, layout.cellSize or segmentSize))
-
-        local canvasWidth = math.max(1, math.ceil((contentMaxX - contentMinX) + marginX * 2))
-        local canvasHeight = math.max(1, math.ceil((contentMaxY - contentMinY) + marginY * 2))
-
-        local canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
-        local previousCanvas = { love.graphics.getCanvas() }
-
-        love.graphics.setCanvas(canvas)
-        love.graphics.push("all")
-        love.graphics.clear(0, 0, 0, 0)
-        love.graphics.origin()
         love.graphics.setColor(1, 1, 1, 1)
-
-        if snakeLayout and snakeLayout.trail and #snakeLayout.trail > 1 then
-                local offsetSnakeTrail = {}
-                local offsetX = marginX - contentMinX
-                local offsetY = marginY - contentMinY
-
-                for i = 1, #snakeLayout.trail do
-                        local segment = snakeLayout.trail[i]
-                        local sx = (segment.x or segment.drawX or 0) + offsetX
-                        local sy = (segment.y or segment.drawY or 0) + offsetY
-                        local dx = (segment.drawX or segment.x or 0) + offsetX
-                        local dy = (segment.drawY or segment.y or 0) + offsetY
-                        offsetSnakeTrail[i] = {
-                                x = sx,
-                                y = sy,
-                                drawX = dx,
-                                drawY = dy,
-                        }
-                end
-
-                drawSnake(offsetSnakeTrail, #offsetSnakeTrail, snakeLayout.segmentSize, nil, nil, nil, nil, nil, {
-                        drawFace = true,
-                })
+        if previousFont then
+                love.graphics.setFont(previousFont)
         end
-
-        love.graphics.pop()
-
-	if previousCanvas[1] ~= nil then
-		love.graphics.setCanvas(previousCanvas)
-	else
-		love.graphics.setCanvas()
-	end
-
-	local imageData = canvas:newImageData()
-	local timestamp = os.date("%Y%m%d_%H%M%S")
-	local filename = string.format("logo_%s.png", timestamp)
-	imageData:encode("png", filename)
-
-	canvas:release()
-
-	print(("Saved logo screenshot to %s"):format(filename))
 end
 
 local function getDayUnit(count)
@@ -671,25 +291,18 @@ end
 
 function Menu:draw()
         local sw, sh = Screen:get()
+        if not sw or not sh then
+                sw, sh = love.graphics.getDimensions()
+        end
 
         drawBackground(sw, sh)
 
-        local layout = computeTitleLayout(sw, sh)
-        if not layout then
-                return
-        end
-
-        local bannerSnake = computeTitleSnake(layout)
-        if bannerSnake and bannerSnake.trail and #bannerSnake.trail > 1 then
-                drawSnake(bannerSnake.trail, #bannerSnake.trail, bannerSnake.segmentSize, nil, nil, nil, nil, nil, {
-                        drawFace = true,
-                })
-        end
+        drawTitleText(sw, sh)
 
         for _, btn in ipairs(buttons) do
                 if btn.labelKey then
-			btn.text = Localization:get(btn.labelKey)
-		end
+                        btn.text = Localization:get(btn.labelKey)
+                end
 
 		if btn.alpha > 0 then
 			UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
@@ -902,11 +515,9 @@ function Menu:keypressed(key)
 		buttonList:moveFocus(1)
 	elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
 		return handleMenuConfirm()
-	elseif key == LOGO_EXPORT_KEY then
-		exportTitleLogo()
-	elseif key == "escape" or key == "backspace" then
-		return "quit"
-	end
+        elseif key == "escape" or key == "backspace" then
+                return "quit"
+        end
 end
 
 function Menu:gamepadpressed(_, button)
