@@ -1,22 +1,24 @@
 local drawSnake = require("snakedraw")
 
+local DrawWord = {}
+
 local letters = {
-	n = {
-		{0,2}, {0,0},{2,0},{2,2}
-	},
-	o = {
-		{0,0}, {2,0}, {2,2}, {0,2}, {0,0}
-	},
-	d = {
-		{0,0}, {2,0}, {2,2}, {0,2}, {0,0},
-		{2,0}, {2,-2}
-	},
-	l = {
-		{0,-2}, {0,2}
-	}
+        n = {
+                {0,2}, {0,0},{2,0},{2,2}
+        },
+        o = {
+                {0,0}, {2,0}, {2,2}, {0,2}, {0,0}
+        },
+        d = {
+                {0,0}, {2,0}, {2,2}, {0,2}, {0,0},
+                {2,0}, {2,-2}
+        },
+        l = {
+                {0,-2}, {0,2}
+        }
 }
 
-local function drawWord(word, ox, oy, cellSize, spacing)
+function DrawWord.draw(word, ox, oy, cellSize, spacing)
   local x = ox
   local fullTrail = {}
 
@@ -64,4 +66,4 @@ local function drawWord(word, ox, oy, cellSize, spacing)
   return fullTrail
 end
 
-return drawWord
+return DrawWord
