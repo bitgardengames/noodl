@@ -25,6 +25,8 @@ local dailyChallengeAnim = 0
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 local titleSaw = SawActor.new()
 
+local TITLE_SAW_SCALE_FACTOR = 0.81 -- shrink the title saw slightly (10% smaller than previous size)
+
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
@@ -305,7 +307,7 @@ function Menu:draw()
                 if sawScale <= 0 then
                         sawScale = 1
                 end
-                sawScale = sawScale * 0.9
+                sawScale = sawScale * TITLE_SAW_SCALE_FACTOR
 
                 local desiredTrackLengthWorld = wordWidth + cellSize
                 local shortenedTrackLengthWorld = math.max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 90)
