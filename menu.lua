@@ -2,12 +2,14 @@ local Audio = require("audio")
 local Screen = require("screen")
 local UI = require("ui")
 local Theme = require("theme")
+local drawWord = require("drawword")
 local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local PlayerStats = require("playerstats")
+local SawActor = require("sawactor")
 
 local Menu = {
 	transitionDuration = 0.45,
@@ -16,17 +18,15 @@ local Menu = {
 local ANALOG_DEADZONE = 0.35
 local buttonList = ButtonList.new()
 local buttons = {}
-local SHOW_MENU_BUTTONS = true
 local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
-local SHOW_DAILY_CHALLENGE_CARD = false
 local analogAxisDirections = { horizontal = nil, vertical = nil }
+local titleSaw = SawActor.new()
+
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
-local TITLE_VERTICAL_FRACTION = 1 / 3
-local TITLE_SUBTITLE_SPACING = 18
 
 local function configureBackgroundEffect()
 	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
@@ -48,54 +48,19 @@ local function configureBackgroundEffect()
 end
 
 local function drawBackground(sw, sh)
-        love.graphics.setColor(Theme.bgColor)
-        love.graphics.rectangle("fill", 0, 0, sw, sh)
+	love.graphics.setColor(Theme.bgColor)
+	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-        if not backgroundEffect then
-                configureBackgroundEffect()
-        end
+	if not backgroundEffect then
+		configureBackgroundEffect()
+	end
 
-        if backgroundEffect then
-                love.graphics.setColor(1, 1, 1, 1)
-                local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-                Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-        end
+	if backgroundEffect then
+		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
+	end
 
-        love.graphics.setColor(1, 1, 1, 1)
-end
-
-local function drawTitleText(sw, sh)
-        local titleWord = Localization:get("menu.title_word") or ""
-        local authorText = Localization:get("menu.title_author") or "sawactor"
-
-        local titleFont = UI.fonts.title or love.graphics.getFont()
-        local subtitleFont = UI.fonts.subtitle or titleFont
-        local centerX = sw * 0.5
-        local previousFont = love.graphics.getFont()
-
-        love.graphics.setFont(titleFont)
-        local titleWidth = titleFont:getWidth(titleWord)
-        local titleHeight = titleFont:getHeight()
-        local titleY = sh * TITLE_VERTICAL_FRACTION - titleHeight * 0.5
-
-        love.graphics.setColor(Theme.textColor)
-        love.graphics.print(titleWord, centerX - titleWidth * 0.5, titleY)
-
-        if authorText and #authorText > 0 then
-                love.graphics.setFont(subtitleFont)
-                local subtitleWidth = subtitleFont:getWidth(authorText)
-                local subtitleHeight = subtitleFont:getHeight()
-                local subtitleY = titleY - subtitleHeight - TITLE_SUBTITLE_SPACING
-                subtitleY = math.max(20, subtitleY)
-
-                love.graphics.setColor(Theme.accentTextColor or Theme.textColor)
-                love.graphics.print(authorText, centerX - subtitleWidth * 0.5, subtitleY)
-        end
-
-        love.graphics.setColor(1, 1, 1, 1)
-        if previousFont then
-                love.graphics.setFont(previousFont)
-        end
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function getDayUnit(count)
@@ -200,33 +165,23 @@ local function setColorWithAlpha(color, alpha)
 end
 
 function Menu:enter()
-        t = 0
-        UI.clearButtons()
+	t = 0
+	UI.clearButtons()
 
-        Audio:playMusic("menu")
+	Audio:playMusic("menu")
 	Screen:update()
 
-	if SHOW_DAILY_CHALLENGE_CARD then
-		dailyChallenge = DailyChallenges:getDailyChallenge()
-	else
-		dailyChallenge = nil
-	end
+	dailyChallenge = DailyChallenges:getDailyChallenge()
 	dailyChallengeAnim = 0
-        resetAnalogAxis()
+	resetAnalogAxis()
 
-        configureBackgroundEffect()
+	configureBackgroundEffect()
 
-        buttons = buttonList:reset({})
+	local sw, sh = Screen:get()
+	local centerX = sw / 2
 
-        if not SHOW_MENU_BUTTONS then
-                return
-        end
-
-        local sw, sh = Screen:get()
-        local centerX = sw / 2
-
-        local labels = {
-                { key = "menu.start_game",   action = "game" },
+	local labels = {
+		{ key = "menu.start_game",   action = "game" },
 		{ key = "menu.achievements", action = "achievementsmenu" },
 		{ key = "menu.progression",  action = "metaprogression" },
 		{ key = "menu.dev_page",     action = "dev" },
@@ -269,7 +224,7 @@ function Menu:update(dt)
         local mx, my = love.mouse.getPosition()
         buttonList:updateHover(mx, my)
 
-	if SHOW_DAILY_CHALLENGE_CARD and dailyChallenge then
+	if dailyChallenge then
 		dailyChallengeAnim = math.min(dailyChallengeAnim + dt * 2, 1)
 	end
 
@@ -286,23 +241,68 @@ function Menu:update(dt)
                 btn.offsetY = (1 - btn.alpha) * 50
         end
 
+        if titleSaw then
+                titleSaw:update(dt)
+        end
+
         Face:update(dt)
 end
 
 function Menu:draw()
         local sw, sh = Screen:get()
-        if not sw or not sh then
-                sw, sh = love.graphics.getDimensions()
+
+	drawBackground(sw, sh)
+
+	local baseCellSize = 20
+	local baseSpacing = 10
+	local wordScale = 1.5
+
+	local cellSize = baseCellSize * wordScale
+        local word = Localization:get("menu.title_word")
+        local spacing = baseSpacing * wordScale
+        local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+        local ox = (sw - wordWidth) / 2
+        local oy = sh * 0.2
+
+        if titleSaw then
+                local sawRadius = titleSaw.radius or 1
+                local wordHeight = cellSize * 3
+                local sawScale = wordHeight / (2 * sawRadius)
+                if sawScale <= 0 then
+                        sawScale = 1
+                end
+
+                local desiredTrackLengthWorld = wordWidth + cellSize
+                local shortenedTrackLengthWorld = math.max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 90)
+                local targetTrackLengthBase = shortenedTrackLengthWorld / sawScale
+                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
+                        titleSaw.trackLength = targetTrackLengthBase
+                end
+
+                local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
+                local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
+                local slotThicknessWorld = slotThicknessBase * sawScale
+
+                local targetLeft = ox - 15
+                local targetBottom = oy - 30
+
+                local sawX = targetLeft + trackLengthWorld / 2
+                local sawY = targetBottom - slotThicknessWorld / 2
+
+                titleSaw:draw(sawX, sawY, sawScale)
         end
 
-        drawBackground(sw, sh)
+        local trail = drawWord(word, ox, oy, cellSize, spacing)
 
-        drawTitleText(sw, sh)
+	if trail and #trail > 0 then
+		local head = trail[#trail]
+		Face:draw(head.x, head.y, wordScale)
+	end
 
-        for _, btn in ipairs(buttons) do
-                if btn.labelKey then
-                        btn.text = Localization:get(btn.labelKey)
-                end
+	for _, btn in ipairs(buttons) do
+		if btn.labelKey then
+			btn.text = Localization:get(btn.labelKey)
+		end
 
 		if btn.alpha > 0 then
 			UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
@@ -322,7 +322,7 @@ function Menu:draw()
 	love.graphics.setColor(Theme.textColor)
 	love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
 
-	if SHOW_DAILY_CHALLENGE_CARD and dailyChallenge and dailyChallengeAnim > 0 then
+        if dailyChallenge and dailyChallengeAnim > 0 then
                 local alpha = math.min(1, dailyChallengeAnim)
                 local eased = alpha * alpha
                 local panelWidth = math.min(420, sw - 72)
@@ -515,9 +515,9 @@ function Menu:keypressed(key)
 		buttonList:moveFocus(1)
 	elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
 		return handleMenuConfirm()
-        elseif key == "escape" or key == "backspace" then
-                return "quit"
-        end
+	elseif key == "escape" or key == "backspace" then
+		return "quit"
+	end
 end
 
 function Menu:gamepadpressed(_, button)

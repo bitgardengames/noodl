@@ -5,9 +5,8 @@ local unpack = unpack
 
 -- tweakables
 local POP_DURATION   = 0.25
-local BASE_SHADOW_OFFSET = 3
-local BASE_OUTLINE_SIZE  = 3
-local BASE_SEGMENT_SIZE  = 24
+local SHADOW_OFFSET  = 3
+local OUTLINE_SIZE   = 3
 local FRUIT_BULGE_SCALE = 1.25
 
 -- Canvas for single-pass shadow
@@ -545,25 +544,6 @@ local overlayShaderSources = {
 
 local overlayShaderCache = {}
 
-local unpack = table.unpack or unpack
-
-local function pushCanvas()
-  return { love.graphics.getCanvas() }
-end
-
-local function popCanvas(previous)
-  if not previous then
-        love.graphics.setCanvas()
-        return
-  end
-
-  if previous[1] ~= nil then
-        love.graphics.setCanvas(unpack(previous))
-  else
-        love.graphics.setCanvas()
-  end
-end
-
 local function safeResolveShader(typeId)
   if overlayShaderCache[typeId] ~= nil then
 	return overlayShaderCache[typeId]
@@ -600,25 +580,23 @@ local function ensureSnakeOverlayCanvas(width, height)
   return snakeOverlayCanvas
 end
 
-local function presentSnakeCanvas(overlayEffect, width, height, shadowOffset)
+local function presentSnakeCanvas(overlayEffect, width, height)
   if not snakeCanvas then
-        return false
+	return false
   end
 
   love.graphics.setColor(0, 0, 0, 0.25)
-  local offset = shadowOffset or BASE_SHADOW_OFFSET
-  love.graphics.draw(snakeCanvas, offset, offset)
+  love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
 
   local drewOverlay = false
   if overlayEffect then
-        local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
-        local previousCanvas = pushCanvas()
-        love.graphics.setCanvas(overlayCanvas)
-        love.graphics.clear(0, 0, 0, 0)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(snakeCanvas, 0, 0)
-        drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
-        popCanvas(previousCanvas)
+	local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
+	love.graphics.setCanvas(overlayCanvas)
+	love.graphics.clear(0, 0, 0, 0)
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.draw(snakeCanvas, 0, 0)
+	drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
+	love.graphics.setCanvas()
   end
 
   love.graphics.setColor(1, 1, 1, 1)
@@ -952,7 +930,7 @@ local function drawSnakeStroke(path, radius, options)
   drawCornerCaps(path, radius)
 end
 
-local function renderSnakeToCanvas(trail, coords, head, half, options, outlineSize)
+local function renderSnakeToCanvas(trail, coords, head, half, options)
   local bodyColor = SnakeCosmetics:getBodyColor()
   local outlineColor = SnakeCosmetics:getOutlineColor()
   local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
@@ -973,11 +951,9 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, outlineSi
         love.graphics.setLineJoin("bevel")
   end
 
-  local outlineThickness = outlineSize or BASE_OUTLINE_SIZE
-
   love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-  drawSnakeStroke(outlineCoords, half + outlineThickness, options)
-  drawFruitBulges(trail, head, bulgeRadius + outlineThickness)
+  drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+  drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
 
   love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
   drawSnakeStroke(bodyCoords, half, options)
@@ -1385,13 +1361,6 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
 
   local thickness = SEGMENT_SIZE * 0.8
   local half      = thickness / 2
-  local baseSize = BASE_SEGMENT_SIZE > 0 and BASE_SEGMENT_SIZE or 1
-  local sizeScale = (SEGMENT_SIZE and SEGMENT_SIZE / baseSize) or 1
-  if not (sizeScale and sizeScale > 0) then
-        sizeScale = 1
-  end
-  local outlineSize = BASE_OUTLINE_SIZE * sizeScale
-  local shadowOffset = BASE_SHADOW_OFFSET * sizeScale
 
   local overlayEffect = SnakeCosmetics:getOverlayEffect()
 
@@ -1410,21 +1379,20 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   end
 
   if #coords >= 4 then
-        -- render into a canvas once
-        local ww, hh = love.graphics.getDimensions()
-        ensureSnakeCanvas(ww, hh)
+	-- render into a canvas once
+	local ww, hh = love.graphics.getDimensions()
+	ensureSnakeCanvas(ww, hh)
 
-        local previousCanvas = pushCanvas()
-        love.graphics.setCanvas(snakeCanvas)
-        love.graphics.clear(0,0,0,0)
-        renderSnakeToCanvas(trail, coords, head, half, options, outlineSize)
-        popCanvas(previousCanvas)
-        presentSnakeCanvas(overlayEffect, ww, hh, shadowOffset)
+	love.graphics.setCanvas(snakeCanvas)
+	love.graphics.clear(0,0,0,0)
+	renderSnakeToCanvas(trail, coords, head, half, options)
+	love.graphics.setCanvas()
+	presentSnakeCanvas(overlayEffect, ww, hh)
   elseif hx and hy then
-        -- fallback: draw a simple disk when only the head is visible
-        local bodyColor = SnakeCosmetics:getBodyColor()
-        local outlineColor = SnakeCosmetics:getOutlineColor()
-        local outlineR = outlineColor[1] or 0
+	-- fallback: draw a simple disk when only the head is visible
+	local bodyColor = SnakeCosmetics:getBodyColor()
+	local outlineColor = SnakeCosmetics:getOutlineColor()
+	local outlineR = outlineColor[1] or 0
 	local outlineG = outlineColor[2] or 0
 	local outlineB = outlineColor[3] or 0
 	local outlineA = outlineColor[4] or 1
@@ -1433,19 +1401,18 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
 	local bodyB = bodyColor[3] or 1
 	local bodyA = bodyColor[4] or 1
 
-        local ww, hh = love.graphics.getDimensions()
-        ensureSnakeCanvas(ww, hh)
+	local ww, hh = love.graphics.getDimensions()
+	ensureSnakeCanvas(ww, hh)
 
-        local previousCanvas = pushCanvas()
-        love.graphics.setCanvas(snakeCanvas)
-        love.graphics.clear(0, 0, 0, 0)
-        love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-        love.graphics.circle("fill", hx, hy, half + outlineSize)
-        love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-        love.graphics.circle("fill", hx, hy, half)
-        popCanvas(previousCanvas)
+	love.graphics.setCanvas(snakeCanvas)
+	love.graphics.clear(0, 0, 0, 0)
+	love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+	love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+	love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+	love.graphics.circle("fill", hx, hy, half)
+	love.graphics.setCanvas()
 
-        presentSnakeCanvas(overlayEffect, ww, hh, shadowOffset)
+	presentSnakeCanvas(overlayEffect, ww, hh)
   end
 
   if hx and hy and drawFace ~= false then
@@ -1461,8 +1428,8 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
 	  drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
 	end
 
-        local faceScale = sizeScale or 1
-        Face:draw(hx, hy, faceScale)
+	local faceScale = 1
+	Face:draw(hx, hy, faceScale)
 
 	drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
 
