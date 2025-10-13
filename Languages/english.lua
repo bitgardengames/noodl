@@ -22,6 +22,7 @@ local english = {
 			quit = "Quit",
 			version = "v1.0.0",
 			title_word = "noodl",
+			title_author = "sawactor",
 			daily_panel_header = "Daily Challenge",
                         daily_panel_progress = "Progress: ${current}/${goal}",
                         daily_panel_complete = "Challenge complete! You're at ${current}.",
