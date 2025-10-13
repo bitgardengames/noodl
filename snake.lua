@@ -1,6 +1,6 @@
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
-local DrawSnake = require("snakedraw")
+local SnakeDraw = require("snakedraw")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local UI = require("ui")
@@ -1163,7 +1163,7 @@ function Snake:drawClipped(hx, hy, hr)
         local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
         if not hideDescendingBody then
-                DrawSnake(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
+                SnakeDraw.run(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
                         if headX and headY and clipRadius > 0 then
                                 local dx = headX - hx
                                 local dy = headY - hy
@@ -2082,7 +2082,7 @@ function Snake:draw()
 						return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
 					end
 
-					DrawSnake(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, false)
+                                   SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, false)
 				end
 			end
 		end
@@ -2091,7 +2091,7 @@ function Snake:draw()
                 local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
                 if not hideDescendingBody then
-                        DrawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
+                        SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
                                 return self:getHead()
                         end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
                 end
