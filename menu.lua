@@ -33,7 +33,7 @@ local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
-local BACKDROP_RECT_WIDTH = 1280
+local BACKDROP_RECT_WIDTH = 1920
 local BACKDROP_RECT_HEIGHT = 720
 local BACKDROP_RECT_LINE_WIDTH = 12
 local BACKDROP_RECT_PADDING = 80
@@ -132,7 +132,14 @@ local function drawBackground(sw, sh)
         if BACKDROP_RECT_LINE_WIDTH > 0 then
                 love.graphics.setColor(Theme.buttonHover)
                 love.graphics.setLineWidth(BACKDROP_RECT_LINE_WIDTH)
-                love.graphics.rectangle("line", rectX, rectY, metrics.width, metrics.height)
+                local halfLine = BACKDROP_RECT_LINE_WIDTH * 0.5
+                love.graphics.rectangle(
+                        "line",
+                        rectX - halfLine,
+                        rectY - halfLine,
+                        metrics.width + BACKDROP_RECT_LINE_WIDTH,
+                        metrics.height + BACKDROP_RECT_LINE_WIDTH
+                )
                 love.graphics.setLineWidth(1)
         end
 
