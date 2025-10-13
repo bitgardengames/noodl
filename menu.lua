@@ -32,15 +32,17 @@ local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
-local BACKDROP_BOX_WIDTH = 748
-local BACKDROP_BOX_HEIGHT = 896
-local BACKDROP_BOX_LINE_WIDTH = 12
-local BACKDROP_BOX_PADDING = 80
+local BACKDROP_BOX_WIDTH = 462
+local BACKDROP_BOX_HEIGHT = 174
+local BACKDROP_BOX_LINE_WIDTH = 8
+local BACKDROP_BOX_PADDING_X = 48
+local BACKDROP_BOX_PADDING_Y = 16
 
 local DEFAULT_WORD_SCALE = 3 * 0.9
 local TITLE_SCALE_MARGIN = 0.96
 local MIN_WORD_SCALE = 0.1
-local TITLE_WORD_VERTICAL_FRACTION = 1 / 3
+local TITLE_WORD_VERTICAL_FRACTION = 0.58
+local TITLE_SAW_VERTICAL_OFFSET = 8
 
 local function configureBackgroundEffect()
 	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
@@ -329,9 +331,10 @@ function Menu:draw()
 
         local baseWordHeight = math.max((maxRow - minRow) * baseCellSize, baseCellSize)
 
+        local backdropX = (sw - BACKDROP_BOX_WIDTH) / 2
         local backdropY = (sh - BACKDROP_BOX_HEIGHT) / 2
-        local availableWidth = math.max(BACKDROP_BOX_WIDTH - 2 * BACKDROP_BOX_PADDING, baseCellSize)
-        local availableHeight = math.max(BACKDROP_BOX_HEIGHT - 2 * BACKDROP_BOX_PADDING, baseCellSize)
+        local availableWidth = math.max(BACKDROP_BOX_WIDTH - 2 * BACKDROP_BOX_PADDING_X, baseCellSize)
+        local availableHeight = math.max(BACKDROP_BOX_HEIGHT - 2 * BACKDROP_BOX_PADDING_Y, baseCellSize)
 
         local scaleWidth = availableWidth / baseWordWidth
         local scaleHeight = availableHeight / math.max(baseWordHeight, 1)
@@ -351,7 +354,7 @@ function Menu:draw()
         local ox = (sw - wordWidth) / 2
 
         local wordHeight = math.max((maxRow - minRow) * cellSize, cellSize)
-        local backdropInnerTop = backdropY + BACKDROP_BOX_PADDING
+        local backdropInnerTop = backdropY + BACKDROP_BOX_PADDING_Y
         local targetCenterY = backdropInnerTop + availableHeight * TITLE_WORD_VERTICAL_FRACTION
         local minCenterY = backdropInnerTop + wordHeight / 2
         local maxCenterY = backdropInnerTop + availableHeight - wordHeight / 2
@@ -389,7 +392,32 @@ function Menu:draw()
                 local targetBottom = oy - gapAboveWord
 
                 local sawX = targetLeft + trackLengthWorld / 2 - 8 * scaleFactor
-                local sawY = targetBottom - slotThicknessWorld / 2 - 40 * scaleFactor
+                local sawY = targetBottom - slotThicknessWorld / 2 - TITLE_SAW_VERTICAL_OFFSET * scaleFactor
+
+                local innerLeft = backdropX + BACKDROP_BOX_PADDING_X
+                local innerRight = innerLeft + availableWidth
+                local halfTrack = trackLengthWorld / 2
+                if halfTrack > 0 then
+                        local minSawX = innerLeft + halfTrack
+                        local maxSawX = innerRight - halfTrack
+                        if minSawX <= maxSawX then
+                                sawX = math.max(minSawX, math.min(sawX, maxSawX))
+                        else
+                                sawX = innerLeft + availableWidth / 2
+                        end
+                end
+
+                local sawRadiusWorld = sawRadius * sawScale
+                local sinkOffsetWorld = ((titleSaw.sinkOffset ~= nil and titleSaw.sinkOffset) or 2) * sawScale
+                local topLimit = backdropY + BACKDROP_BOX_PADDING_Y
+                local bottomLimit = backdropY + BACKDROP_BOX_HEIGHT - BACKDROP_BOX_PADDING_Y
+                local minSawY = topLimit + sawRadiusWorld - sinkOffsetWorld
+                local maxSawY = bottomLimit - sawRadiusWorld - sinkOffsetWorld
+                if minSawY <= maxSawY then
+                        sawY = math.max(minSawY, math.min(sawY, maxSawY))
+                else
+                        sawY = topLimit + (bottomLimit - topLimit) / 2
+                end
 
                 titleSaw:draw(sawX, sawY, sawScale)
         end
