@@ -32,8 +32,8 @@ local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
-local BACKDROP_BOX_WIDTH = 748
-local BACKDROP_BOX_HEIGHT = 896
+local BACKDROP_BOX_WIDTH = 600
+local BACKDROP_BOX_HEIGHT = 900
 local BACKDROP_BOX_LINE_WIDTH = 12
 local BACKDROP_BOX_PADDING = 80
 
@@ -329,9 +329,12 @@ function Menu:draw()
 
         local baseWordHeight = math.max((maxRow - minRow) * baseCellSize, baseCellSize)
 
+        local backdropX = (sw - BACKDROP_BOX_WIDTH) / 2
         local backdropY = (sh - BACKDROP_BOX_HEIGHT) / 2
         local availableWidth = math.max(BACKDROP_BOX_WIDTH - 2 * BACKDROP_BOX_PADDING, baseCellSize)
         local availableHeight = math.max(BACKDROP_BOX_HEIGHT - 2 * BACKDROP_BOX_PADDING, baseCellSize)
+        local backdropInnerLeft = backdropX + BACKDROP_BOX_PADDING
+        local backdropInnerRight = backdropInnerLeft + availableWidth
 
         local scaleWidth = availableWidth / baseWordWidth
         local scaleHeight = availableHeight / math.max(baseWordHeight, 1)
@@ -348,7 +351,7 @@ function Menu:draw()
         else
                 wordWidth = (letterCount * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
         end
-        local ox = (sw - wordWidth) / 2
+        local ox = backdropInnerLeft + (availableWidth - wordWidth) / 2
 
         local wordHeight = math.max((maxRow - minRow) * cellSize, cellSize)
         local backdropInnerTop = backdropY + BACKDROP_BOX_PADDING
@@ -368,19 +371,21 @@ function Menu:draw()
                 end
                 sawScale = sawScale * TITLE_SAW_SCALE_FACTOR
 
-                local desiredTrackLengthWorld = wordWidth + cellSize
+                local desiredTrackLengthWorld = math.min(wordWidth + cellSize, availableWidth)
                 local shortenedTrackLengthWorld = math.max(
                         2 * sawRadius * sawScale,
                         desiredTrackLengthWorld - 90 * scaleFactor
                 )
                 local rightTrackShortening = 73 * scaleFactor
                 shortenedTrackLengthWorld = math.max(2 * sawRadius * sawScale, shortenedTrackLengthWorld - rightTrackShortening)
-                local targetTrackLengthBase = shortenedTrackLengthWorld / sawScale
+                local maxTrackWorld = availableWidth
+                local targetTrackLengthWorld = math.min(shortenedTrackLengthWorld, maxTrackWorld)
+                local targetTrackLengthBase = targetTrackLengthWorld / sawScale
                 if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
                         titleSaw.trackLength = targetTrackLengthBase
                 end
 
-                local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
+                local trackLengthWorld = math.min((titleSaw.trackLength or targetTrackLengthBase) * sawScale, maxTrackWorld)
                 local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
                 local slotThicknessWorld = slotThicknessBase * sawScale
 
@@ -388,7 +393,11 @@ function Menu:draw()
                 local gapAboveWord = math.max(8 * scaleFactor, slotThicknessWorld * 0.35)
                 local targetBottom = oy - gapAboveWord
 
-                local sawX = targetLeft + trackLengthWorld / 2 - 8 * scaleFactor
+                local clampedTrackLeft = math.max(backdropInnerLeft, targetLeft)
+                if clampedTrackLeft + trackLengthWorld > backdropInnerRight then
+                        clampedTrackLeft = backdropInnerRight - trackLengthWorld
+                end
+                local sawX = clampedTrackLeft + trackLengthWorld / 2 - 8 * scaleFactor
                 local sawY = targetBottom - slotThicknessWorld / 2 - 40 * scaleFactor
 
                 titleSaw:draw(sawX, sawY, sawScale)
