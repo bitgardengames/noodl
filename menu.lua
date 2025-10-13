@@ -10,6 +10,7 @@ local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local PlayerStats = require("playerstats")
 local SawActor = require("sawactor")
+local drawSnake = require("snakedraw")
 
 local Menu = {
 	transitionDuration = 0.45,
@@ -291,11 +292,147 @@ local function computeTitleLayout(sw, sh)
         return layout
 end
 
+local function computeTitleSnake(layout)
+        if not layout then
+                return nil
+        end
+
+        local cellSize = layout.cellSize or 1
+        local scaleFactor = layout.scaleFactor or 1
+
+        local innerLeft = layout.backdropInnerLeft or layout.backdropCenterX or 0
+        local innerRight = layout.backdropInnerRight or innerLeft
+        local innerTop = layout.backdropInnerTop or ((layout.backdropCenterY or 0) - (layout.innerHalfHeight or 0))
+        local innerBottom = layout.backdropInnerBottom or ((layout.backdropCenterY or 0) + (layout.innerHalfHeight or 0))
+
+        local horizontalPadding = math.max(cellSize * 0.6, 40 * scaleFactor)
+        local left = innerLeft + horizontalPadding
+        local right = innerRight - horizontalPadding
+        local usableWidth = right - left
+
+        if not (usableWidth and usableWidth > cellSize * 1.5) then
+                return nil
+        end
+
+        local aboveTitlePadding = math.max(cellSize * 0.8, 34 * scaleFactor)
+        local titleBuffer = math.max(cellSize * 0.7, 26 * scaleFactor)
+
+        local areaTop = innerTop + aboveTitlePadding
+        local areaBottom = (layout.wordTop or innerBottom) - titleBuffer
+
+        if innerBottom then
+                areaBottom = math.min(areaBottom, innerBottom - math.max(cellSize * 0.3, 6))
+        end
+
+        if areaBottom <= areaTop then
+                local relaxedPadding = math.max(cellSize * 0.35, 12)
+                areaTop = innerTop + relaxedPadding
+                areaBottom = (layout.wordTop or areaTop) - relaxedPadding
+        end
+
+        if not (areaBottom and areaTop) or areaBottom <= areaTop then
+                return nil
+        end
+
+        local verticalSpan = areaBottom - areaTop
+        local baseline = areaTop + verticalSpan * 0.5
+        local amplitude = verticalSpan * 0.5
+
+        if amplitude <= 0 then
+                amplitude = cellSize * 0.4
+        end
+
+        amplitude = math.max(amplitude, cellSize * 0.35)
+        amplitude = math.min(amplitude, cellSize * 1.8)
+
+        local sampleSpacing = math.max(cellSize * 0.5, 12)
+        local sampleCount = math.max(32, math.floor(usableWidth / sampleSpacing))
+
+        if sampleCount < 2 then
+                return nil
+        end
+
+        local undulationCount = 1.6 + math.min(1.2, usableWidth / 520)
+        local headDrop = amplitude * 0.35
+        local tailLift = amplitude * 0.25
+
+        local minX, maxX, minY, maxY
+        local basePoints = {}
+
+        for i = 0, sampleCount do
+                local t = i / sampleCount
+                local x = left + usableWidth * t
+
+                local primary = math.sin(t * math.pi * undulationCount)
+                local secondary = math.sin(t * math.pi * undulationCount * 2) * 0.18
+                local y = baseline + (primary + secondary) * amplitude
+
+                local easeHead = t * t
+                local easeTail = (1 - t) * (1 - t)
+                y = y + easeHead * headDrop
+                y = y - easeTail * tailLift
+
+                local clampTop = areaTop + cellSize * 0.3
+                local clampBottom = areaBottom - cellSize * 0.3
+                if clampTop > clampBottom then
+                        clampTop, clampBottom = clampBottom, clampTop
+                end
+                if clampTop and y < clampTop then
+                        y = clampTop
+                end
+                if clampBottom and y > clampBottom then
+                        y = clampBottom
+                end
+
+                basePoints[#basePoints + 1] = { x = x, y = y }
+
+                if not minX or x < minX then
+                        minX = x
+                end
+                if not maxX or x > maxX then
+                        maxX = x
+                end
+                if not minY or y < minY then
+                        minY = y
+                end
+                if not maxY or y > maxY then
+                        maxY = y
+                end
+        end
+
+        local trail = {}
+        for i = #basePoints, 1, -1 do
+                local pt = basePoints[i]
+                trail[#trail + 1] = {
+                        x = pt.x,
+                        y = pt.y,
+                        drawX = pt.x,
+                        drawY = pt.y,
+                }
+        end
+
+        local baseSegment = cellSize * 1.1
+        local minSegment = 18 * scaleFactor
+        local maxSegment = cellSize * 1.6
+        local segmentSize = math.max(minSegment, math.min(maxSegment, baseSegment))
+
+        return {
+                trail = trail,
+                segmentSize = segmentSize,
+                bounds = (minX and minY and maxX and maxY) and {
+                        minX = minX,
+                        maxX = maxX,
+                        minY = minY,
+                        maxY = maxY,
+                } or nil,
+        }
+end
+
 local function drawTitleWord(layout)
-	local trail = drawWord(layout.word, layout.ox, layout.oy, layout.cellSize, layout.spacing)
-	if trail and #trail > 0 then
-		local head = trail[#trail]
-		Face:draw(head.x, head.y, layout.wordScale)
+        local trail = drawWord(layout.word, layout.ox, layout.oy, layout.cellSize, layout.spacing)
+        if trail and #trail > 0 then
+                local head = trail[#trail]
+                Face:draw(head.x, head.y, layout.wordScale)
 	end
 	return trail
 end
@@ -311,31 +448,84 @@ local function exportTitleLogo()
 		return
 	end
 
-	local marginX = math.ceil(math.max(layout.cellSize * 0.75, layout.wordScale * 8))
-	local marginY = math.ceil(math.max(layout.cellSize * 0.75, layout.wordScale * 8))
-	local canvasWidth = math.max(1, math.ceil(layout.wordWidth + marginX * 2))
-	local canvasHeight = math.max(1, math.ceil(layout.wordHeight + marginY * 2))
+        local snakeLayout = computeTitleSnake(layout)
 
-	local canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
-	local previousCanvas = { love.graphics.getCanvas() }
+        local wordLeft = layout.ox or 0
+        local wordRight = wordLeft + (layout.wordWidth or 0)
+        local wordTop = layout.wordTop or 0
+        local wordBottom = layout.wordBottom or (wordTop + (layout.wordHeight or 0))
 
-	love.graphics.setCanvas(canvas)
-	love.graphics.push("all")
-	love.graphics.clear(0, 0, 0, 0)
-	love.graphics.origin()
-	love.graphics.setColor(1, 1, 1, 1)
+        local contentMinX = wordLeft
+        local contentMaxX = wordRight
+        local contentMinY = wordTop
+        local contentMaxY = wordBottom
+        local snakePadding = 0
 
-	local exportLayout = {
-		word = layout.word,
-		cellSize = layout.cellSize,
-		spacing = layout.spacing,
-		wordScale = layout.wordScale,
-		ox = marginX,
-		oy = marginY - layout.minRow * layout.cellSize,
-	}
-	drawTitleWord(exportLayout)
+        if snakeLayout and snakeLayout.bounds then
+                local bounds = snakeLayout.bounds
+                local segmentSize = snakeLayout.segmentSize or layout.cellSize
+                local bodyThickness = (segmentSize or 0) * 0.8
+                local padding = bodyThickness * 0.5 + math.max(6, (segmentSize or 0) * 0.3)
+                contentMinX = math.min(contentMinX, bounds.minX - padding)
+                contentMaxX = math.max(contentMaxX, bounds.maxX + padding)
+                contentMinY = math.min(contentMinY, bounds.minY - padding)
+                contentMaxY = math.max(contentMaxY, bounds.maxY + padding)
+                snakePadding = padding
+        end
 
-	love.graphics.pop()
+        local marginX = math.ceil(math.max(layout.cellSize * 0.75, layout.wordScale * 8, snakePadding * 0.75))
+        local marginY = math.ceil(math.max(layout.cellSize * 0.75, layout.wordScale * 8, snakePadding))
+
+        local canvasWidth = math.max(1, math.ceil((contentMaxX - contentMinX) + marginX * 2))
+        local canvasHeight = math.max(1, math.ceil((contentMaxY - contentMinY) + marginY * 2))
+
+        local canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
+        local previousCanvas = { love.graphics.getCanvas() }
+
+        love.graphics.setCanvas(canvas)
+        love.graphics.push("all")
+        love.graphics.clear(0, 0, 0, 0)
+        love.graphics.origin()
+        love.graphics.setColor(1, 1, 1, 1)
+
+        if snakeLayout and snakeLayout.trail and #snakeLayout.trail > 1 then
+                local offsetSnakeTrail = {}
+                local offsetX = marginX - contentMinX
+                local offsetY = marginY - contentMinY
+
+                for i = 1, #snakeLayout.trail do
+                        local segment = snakeLayout.trail[i]
+                        local sx = (segment.x or segment.drawX or 0) + offsetX
+                        local sy = (segment.y or segment.drawY or 0) + offsetY
+                        local dx = (segment.drawX or segment.x or 0) + offsetX
+                        local dy = (segment.drawY or segment.y or 0) + offsetY
+                        offsetSnakeTrail[i] = {
+                                x = sx,
+                                y = sy,
+                                drawX = dx,
+                                drawY = dy,
+                        }
+                end
+
+                drawSnake(offsetSnakeTrail, #offsetSnakeTrail, snakeLayout.segmentSize, nil, nil, nil, nil, nil, {
+                        drawFace = true,
+                })
+        end
+
+        local exportOffsetX = marginX - contentMinX
+        local exportOffsetY = marginY - contentMinY
+
+        local exportLayout = {
+                word = layout.word,
+                cellSize = layout.cellSize,
+                spacing = layout.spacing,
+                wordScale = layout.wordScale,
+                ox = layout.ox + exportOffsetX,
+                oy = layout.oy + exportOffsetY,
+        }
+        drawTitleWord(exportLayout)
+
+        love.graphics.pop()
 
 	if previousCanvas[1] ~= nil then
 		love.graphics.setCanvas(previousCanvas)
@@ -657,10 +847,17 @@ function Menu:draw()
                 titleSaw:draw(sawX, sawY, sawScale)
         end
 
+        local bannerSnake = computeTitleSnake(layout)
+        if bannerSnake and bannerSnake.trail and #bannerSnake.trail > 1 then
+                drawSnake(bannerSnake.trail, #bannerSnake.trail, bannerSnake.segmentSize, nil, nil, nil, nil, nil, {
+                        drawFace = true,
+                })
+        end
+
         drawTitleWord(layout)
 
-	for _, btn in ipairs(buttons) do
-		if btn.labelKey then
+        for _, btn in ipairs(buttons) do
+                if btn.labelKey then
 			btn.text = Localization:get(btn.labelKey)
 		end
 
