@@ -327,7 +327,11 @@ function Arena:drawBorder()
 	if not self.borderCanvas or
 	   self.borderCanvas:getWidth() ~= love.graphics.getWidth() or
 	   self.borderCanvas:getHeight() ~= love.graphics.getHeight() then
-		self.borderCanvas = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight(), {msaa = 8})
+            self.borderCanvas = love.graphics.newCanvas(
+                    love.graphics.getWidth(),
+                    love.graphics.getHeight(),
+                    {msaa = 8, stencil = true}
+            )
 	end
 
 	love.graphics.setCanvas(self.borderCanvas)
