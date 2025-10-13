@@ -12,7 +12,7 @@ local DEFAULT_START_SCALE = 0.8
 local DEFAULT_START_OFFSET = -30
 local BASE_MAX_WIDTH = 560
 
-function Popup.new(config)
+local function createInstance(config)
         config = config or {}
 
         local instance = {
@@ -31,6 +31,10 @@ function Popup.new(config)
         }
 
         return setmetatable(instance, Popup)
+end
+
+function Popup.new(config)
+        return createInstance(config)
 end
 
 function Popup:configure(options)
@@ -194,4 +198,14 @@ function Popup:draw()
         love.graphics.pop()
 end
 
-return Popup.new()
+local defaultPopup = createInstance()
+
+function defaultPopup:new(config)
+        return createInstance(config)
+end
+
+function defaultPopup:getPrototype()
+        return Popup
+end
+
+return defaultPopup
