@@ -111,6 +111,118 @@ local function resetFeedbackState(self)
 	self.hitStop = nil
 end
 
+local function ensurePixelationShader(self)
+	if self._pixelationShader then
+		return self._pixelationShader
+	end
+
+	local source = [[
+		extern vec2 screenSize;
+		extern float pixelSize;
+		extern float blend;
+
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			float size = max(pixelSize, 1.0);
+			vec2 pixelCoord = floor((texture_coords * screenSize) / size) * size + size * 0.5;
+			vec2 sampleCoords = pixelCoord / screenSize;
+			vec4 pixelated = Texel(tex, sampleCoords);
+			vec4 original = Texel(tex, texture_coords);
+			float mixAmount = clamp(blend, 0.0, 1.0);
+			return mix(original, pixelated, mixAmount) * color;
+		}
+	]]
+
+	local shader = love.graphics.newShader(source)
+	self._pixelationShader = shader
+	return shader
+end
+
+local function ensurePixelationCanvas(self)
+	local width = math.max(1, math.floor(self.screenWidth or love.graphics.getWidth() or 1))
+	local height = math.max(1, math.floor(self.screenHeight or love.graphics.getHeight() or 1))
+
+	local canvas = self._pixelationCanvas
+	if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
+		canvas = love.graphics.newCanvas(width, height)
+		canvas:setFilter("nearest", "nearest")
+		self._pixelationCanvas = canvas
+	end
+
+	return canvas
+end
+
+local function beginPixelationPass(self)
+	if not (self.pixelationEffect and self.pixelationEffect.type == "pixelate") then
+		return nil
+	end
+
+	local canvas = ensurePixelationCanvas(self)
+	if not canvas then
+		return nil
+	end
+
+	love.graphics.push("all")
+	love.graphics.setCanvas(canvas)
+	love.graphics.clear(0, 0, 0, 0)
+	love.graphics.origin()
+
+	return canvas
+end
+
+local function finishPixelationPass(self, canvas)
+	if not canvas then
+		return
+	end
+
+	love.graphics.pop()
+
+	local shader = ensurePixelationShader(self)
+	local effect = self.pixelationEffect or {}
+	local pixelSize = math.max(1, math.floor(effect.pixelSize or effect.size or 4))
+	local blend = effect.blend
+	if blend == nil then
+		blend = 1
+	end
+
+	shader:send("screenSize", {canvas:getWidth(), canvas:getHeight()})
+	shader:send("pixelSize", pixelSize)
+	shader:send("blend", math.max(0, math.min(1, blend)))
+
+	love.graphics.clear()
+	love.graphics.setShader(shader)
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.draw(canvas, 0, 0)
+	love.graphics.setShader()
+end
+
+local function applyFloorScreenEffects(self, floorData)
+	self.pixelationEffect = nil
+
+	if not floorData then
+		return
+	end
+
+	local effect = floorData.screenEffect
+	if type(effect) ~= "table" then
+		return
+	end
+
+	if effect.type == "pixelate" then
+		local pixelSize = math.max(1, math.floor(effect.pixelSize or effect.size or 4))
+		local blend = effect.blend
+		if blend == nil then
+			blend = 1
+		end
+
+		self.pixelationEffect = {
+			type = "pixelate",
+			pixelSize = pixelSize,
+			blend = math.max(0, math.min(1, blend)),
+		}
+	end
+end
+
 local function ensureFeedbackState(self)
 	if not self.feedback then
 		resetFeedbackState(self)
@@ -687,12 +799,14 @@ function Game:load(options)
 		Snake.adrenaline.active = false
 	end
 
-        self:setupFloor(self.floor)
+	self.floorOverrides = {}
+
+	self:setupFloor(self.floor)
 
 	self.transition:startFloorIntro(2.8, {
 		transitionAdvance = false,
 		transitionAwaitInput = true,
-		transitionFloorData = Floors[self.floor] or Floors[1],
+		transitionFloorData = self.currentFloorData or (Floors[self.floor] or Floors[1]),
 	})
 end
 
@@ -710,11 +824,13 @@ function Game:reset()
 
 	if self.transition then
 		self.transition:reset()
-	end
+        end
 
 	if self.input then
 		self.input:resetAxes()
-	end
+        end
+
+	self.floorOverrides = {}
 end
 
 function Game:enter(data)
@@ -1392,13 +1508,45 @@ function Game:update(dt)
 end
 
 function Game:setupFloor(floorNum)
-	self.currentFloorData = Floors[floorNum] or Floors[1]
+        self.floorOverrides = self.floorOverrides or {}
 
-	FruitEvents.reset()
+        local overrideFlag = self.floorOverrides[floorNum]
+        if overrideFlag == nil then
+                if Floors.shouldTriggerEasterEgg and Floors:shouldTriggerEasterEgg(floorNum) then
+                        overrideFlag = true
+                else
+                        overrideFlag = false
+                end
+                self.floorOverrides[floorNum] = overrideFlag
+        end
 
-	self.floorTimer = 0
+        local floorData
+        local usedEasterEgg = false
 
-	local setup = FloorSetup.prepare(floorNum, self.currentFloorData)
+        if overrideFlag and Floors.buildEasterEggFloor then
+                local special = Floors:buildEasterEggFloor(floorNum)
+                if special then
+                        floorData = special
+                        usedEasterEgg = true
+                else
+                        self.floorOverrides[floorNum] = false
+                end
+        end
+
+        if not floorData then
+                floorData = Floors[floorNum] or Floors[1]
+        end
+
+        self.currentFloorData = floorData
+        self.isEasterEggFloor = usedEasterEgg
+
+        applyFloorScreenEffects(self, floorData)
+
+        FruitEvents.reset()
+
+        self.floorTimer = 0
+
+        local setup = FloorSetup.prepare(floorNum, self.currentFloorData)
 	local traitContext = setup.traitContext
 	local spawnPlan = setup.spawnPlan
 
@@ -1420,23 +1568,28 @@ function Game:setupFloor(floorNum)
 end
 
 function Game:draw()
-	love.graphics.clear()
+        local pixelCanvas = beginPixelationPass(self)
 
-	if Arena.drawBackdrop then
-		Arena:drawBackdrop(self.screenWidth, self.screenHeight)
-	else
-		love.graphics.setColor(Theme.bgColor)
-		love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-		love.graphics.setColor(1, 1, 1, 1)
-	end
+        love.graphics.clear()
 
-	if self:isTransitionActive() then
-		self:drawTransition()
-		return
-	end
+        if Arena.drawBackdrop then
+                Arena:drawBackdrop(self.screenWidth, self.screenHeight)
+        else
+                love.graphics.setColor(Theme.bgColor)
+                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+                love.graphics.setColor(1, 1, 1, 1)
+        end
 
-	drawPlayfieldLayers(self)
-	drawInterfaceLayers(self)
+        if self:isTransitionActive() then
+                self:drawTransition()
+                finishPixelationPass(self, pixelCanvas)
+                return
+        end
+
+        drawPlayfieldLayers(self)
+        drawInterfaceLayers(self)
+
+        finishPixelationPass(self, pixelCanvas)
 end
 
 function Game:keypressed(key)
