@@ -43,6 +43,7 @@ local TITLE_SCALE_MARGIN = 0.96
 local MIN_WORD_SCALE = 0.1
 local TITLE_WORD_VERTICAL_FRACTION = 0.58
 local TITLE_SAW_VERTICAL_OFFSET = 16
+local TITLE_SAW_PIXEL_RAISE = 8
 
 local function configureBackgroundEffect()
 	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
@@ -392,7 +393,7 @@ function Menu:draw()
                 local targetBottom = oy - gapAboveWord
 
                 local sawX = targetLeft + trackLengthWorld / 2 - 8 * scaleFactor
-                local sawY = targetBottom - slotThicknessWorld / 2 - TITLE_SAW_VERTICAL_OFFSET * scaleFactor
+                local sawY = targetBottom - slotThicknessWorld / 2 - TITLE_SAW_VERTICAL_OFFSET * scaleFactor - TITLE_SAW_PIXEL_RAISE
 
                 local innerLeft = backdropX + BACKDROP_BOX_PADDING_X
                 local innerRight = innerLeft + availableWidth
