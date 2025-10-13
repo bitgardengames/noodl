@@ -33,11 +33,10 @@ local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
-local BACKDROP_ELLIPSE_WIDTH = 1280
-local BACKDROP_ELLIPSE_HEIGHT = 720
-local BACKDROP_ELLIPSE_LINE_WIDTH = 12
-local BACKDROP_ELLIPSE_PADDING = 80
-local BACKDROP_ELLIPSE_SEGMENTS = 128
+local BACKDROP_RECT_WIDTH = 1280
+local BACKDROP_RECT_HEIGHT = 720
+local BACKDROP_RECT_LINE_WIDTH = 12
+local BACKDROP_RECT_PADDING = 80
 
 local DEFAULT_WORD_SCALE = 3 * 0.9
 local TITLE_SCALE_MARGIN = 0.96
@@ -63,49 +62,45 @@ local function configureBackgroundEffect()
 	backgroundEffect = effect
 end
 
-local function getEllipseMetrics(sw, sh)
-        local widthScale = math.min(1, sw / BACKDROP_ELLIPSE_WIDTH)
-        local heightScale = math.min(1, sh / BACKDROP_ELLIPSE_HEIGHT)
+local function getBackdropMetrics(sw, sh)
+        local widthScale = math.min(1, sw / BACKDROP_RECT_WIDTH)
+        local heightScale = math.min(1, sh / BACKDROP_RECT_HEIGHT)
         local scale = math.min(widthScale, heightScale)
-        local ellipseWidth = BACKDROP_ELLIPSE_WIDTH * scale
-        local ellipseHeight = BACKDROP_ELLIPSE_HEIGHT * scale
+        local rectWidth = BACKDROP_RECT_WIDTH * scale
+        local rectHeight = BACKDROP_RECT_HEIGHT * scale
 
         return {
                 centerX = sw * 0.5,
                 centerY = sh * 0.5,
-                width = ellipseWidth,
-                height = ellipseHeight,
-                radiusX = ellipseWidth * 0.5,
-                radiusY = ellipseHeight * 0.5,
+                width = rectWidth,
+                height = rectHeight,
+                halfWidth = rectWidth * 0.5,
+                halfHeight = rectHeight * 0.5,
         }
 end
 
-local function computeEllipseSpanLimits(centerY, radiusX, radiusY, topY, bottomY)
-        if not centerY or not radiusX or not radiusY or radiusX <= 0 or radiusY <= 0 then
+local function computeRectSpanLimits(centerY, halfWidth, halfHeight, topY, bottomY)
+        if not centerY or not halfWidth or not halfHeight or halfWidth <= 0 or halfHeight <= 0 then
                 return 0, 0
         end
 
         local spanTop = math.min(topY, bottomY)
         local spanBottom = math.max(topY, bottomY)
-        local minHalfWidth = radiusX
-        local sampleCount = 6
+        local rectTop = centerY - halfHeight
+        local rectBottom = centerY + halfHeight
 
-        for i = 0, sampleCount do
-                local sampleY = spanTop + (spanBottom - spanTop) * (i / sampleCount)
-                local dy = sampleY - centerY
-                if math.abs(dy) >= radiusY then
-                        return 0, 0
-                end
-
-                local normalized = dy / radiusY
-                local halfWidth = radiusX * math.sqrt(math.max(0, 1 - normalized * normalized))
-                if halfWidth < minHalfWidth then
-                        minHalfWidth = halfWidth
-                end
+        if spanBottom <= rectTop or spanTop >= rectBottom then
+                return 0, 0
         end
 
-        local width = math.max(minHalfWidth * 2, 0)
-        return width, minHalfWidth
+        local clampedTop = math.max(spanTop, rectTop)
+        local clampedBottom = math.min(spanBottom, rectBottom)
+        if clampedTop >= clampedBottom then
+                return 0, 0
+        end
+
+        local width = math.max(halfWidth * 2, 0)
+        return width, halfWidth
 end
 
 local function drawBackground(sw, sh)
@@ -116,29 +111,28 @@ local function drawBackground(sw, sh)
                 configureBackgroundEffect()
         end
 
-        local metrics = getEllipseMetrics(sw, sh)
+        local metrics = getBackdropMetrics(sw, sh)
         local centerX = metrics.centerX
         local centerY = metrics.centerY
-        local radiusX = metrics.radiusX
-        local radiusY = metrics.radiusY
-        local ellipseX = centerX - radiusX
-        local ellipseY = centerY - radiusY
+        local halfWidth = metrics.halfWidth
+        local halfHeight = metrics.halfHeight
+        local rectX = centerX - halfWidth
+        local rectY = centerY - halfHeight
 
         if backgroundEffect then
                 love.graphics.stencil(function()
-                        love.graphics.ellipse("fill", centerX, centerY, radiusX, radiusY, BACKDROP_ELLIPSE_SEGMENTS)
+                        love.graphics.rectangle("fill", rectX, rectY, metrics.width, metrics.height)
                 end, "replace", 1)
                 love.graphics.setStencilTest("greater", 0)
                 local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-                Shaders.draw(backgroundEffect, ellipseX, ellipseY, metrics.width, metrics.height, intensity)
+                Shaders.draw(backgroundEffect, rectX, rectY, metrics.width, metrics.height, intensity)
                 love.graphics.setStencilTest()
         end
 
-        if BACKDROP_ELLIPSE_LINE_WIDTH > 0 then
-                local halfLineWidth = BACKDROP_ELLIPSE_LINE_WIDTH / 2
+        if BACKDROP_RECT_LINE_WIDTH > 0 then
                 love.graphics.setColor(Theme.buttonHover)
-                love.graphics.setLineWidth(BACKDROP_ELLIPSE_LINE_WIDTH)
-                love.graphics.ellipse("line", centerX, centerY, radiusX, radiusY, BACKDROP_ELLIPSE_SEGMENTS)
+                love.graphics.setLineWidth(BACKDROP_RECT_LINE_WIDTH)
+                love.graphics.rectangle("line", rectX, rectY, metrics.width, metrics.height)
                 love.graphics.setLineWidth(1)
         end
 
@@ -181,18 +175,18 @@ local function computeTitleLayout(sw, sh)
 
         local baseWordHeight = math.max((maxRow - minRow) * baseCellSize, baseCellSize)
 
-        local metrics = getEllipseMetrics(sw, sh)
-        local ellipseCenterX = metrics.centerX
-        local ellipseCenterY = metrics.centerY
-        local ellipseRadiusX = metrics.radiusX
-        local ellipseRadiusY = metrics.radiusY
+        local metrics = getBackdropMetrics(sw, sh)
+        local backdropCenterX = metrics.centerX
+        local backdropCenterY = metrics.centerY
+        local backdropHalfWidth = metrics.halfWidth
+        local backdropHalfHeight = metrics.halfHeight
 
-        local innerRadiusX = math.max(ellipseRadiusX - BACKDROP_ELLIPSE_PADDING, baseCellSize * 0.5)
-        local innerRadiusY = math.max(ellipseRadiusY - BACKDROP_ELLIPSE_PADDING, baseCellSize * 0.5)
-        local availableWidth = math.max(innerRadiusX * 2, baseCellSize)
-        local availableHeight = math.max(innerRadiusY * 2, baseCellSize)
-        local backdropInnerLeft = ellipseCenterX - availableWidth / 2
-        local backdropInnerTop = ellipseCenterY - availableHeight / 2
+        local innerHalfWidth = math.max(backdropHalfWidth - BACKDROP_RECT_PADDING, baseCellSize * 0.5)
+        local innerHalfHeight = math.max(backdropHalfHeight - BACKDROP_RECT_PADDING, baseCellSize * 0.5)
+        local availableWidth = math.max(innerHalfWidth * 2, baseCellSize)
+        local availableHeight = math.max(innerHalfHeight * 2, baseCellSize)
+        local backdropInnerLeft = backdropCenterX - availableWidth / 2
+        local backdropInnerTop = backdropCenterY - availableHeight / 2
         local backdropInnerRight = backdropInnerLeft + availableWidth
         local backdropInnerBottom = backdropInnerTop + availableHeight
 
@@ -243,12 +237,10 @@ local function computeTitleLayout(sw, sh)
                         backdropInnerRight = backdropInnerRight,
                         backdropInnerTop = backdropInnerTop,
                         backdropInnerBottom = backdropInnerBottom,
-                        ellipseCenterX = ellipseCenterX,
-                        ellipseCenterY = ellipseCenterY,
-                        outerEllipseRadiusX = ellipseRadiusX,
-                        outerEllipseRadiusY = ellipseRadiusY,
-                        innerRadiusX = innerRadiusX,
-                        innerRadiusY = innerRadiusY,
+                        backdropCenterX = backdropCenterX,
+                        backdropCenterY = backdropCenterY,
+                        innerHalfWidth = innerHalfWidth,
+                        innerHalfHeight = innerHalfHeight,
                         ox = ox,
                         oy = oy,
                 }
@@ -257,10 +249,10 @@ local function computeTitleLayout(sw, sh)
         local initialScale = math.max(targetScale * TITLE_SCALE_MARGIN, MIN_WORD_SCALE)
         local layout = finalizeLayout(initialScale)
 
-        local safeWidth, safeHalfWidth = computeEllipseSpanLimits(
-                ellipseCenterY,
-                innerRadiusX,
-                innerRadiusY,
+        local safeWidth, safeHalfWidth = computeRectSpanLimits(
+                backdropCenterY,
+                innerHalfWidth,
+                innerHalfHeight,
                 layout.wordTop,
                 layout.wordBottom
         )
@@ -269,10 +261,10 @@ local function computeTitleLayout(sw, sh)
                 local adjustedScale = layout.wordScale * safeWidth / layout.wordWidth
                 layout = finalizeLayout(adjustedScale)
 
-                safeWidth, safeHalfWidth = computeEllipseSpanLimits(
-                        ellipseCenterY,
-                        innerRadiusX,
-                        innerRadiusY,
+                safeWidth, safeHalfWidth = computeRectSpanLimits(
+                        backdropCenterY,
+                        innerHalfWidth,
+                        innerHalfHeight,
                         layout.wordTop,
                         layout.wordBottom
                 )
@@ -565,10 +557,10 @@ function Menu:draw()
         local backdropInnerRight = layout.backdropInnerRight
         local backdropInnerTop = layout.backdropInnerTop
         local backdropInnerBottom = layout.backdropInnerBottom
-        local ellipseCenterX = layout.ellipseCenterX
-        local ellipseCenterY = layout.ellipseCenterY
-        local innerRadiusX = layout.innerRadiusX
-        local innerRadiusY = layout.innerRadiusY
+        local backdropCenterX = layout.backdropCenterX
+        local backdropCenterY = layout.backdropCenterY
+        local innerHalfWidth = layout.innerHalfWidth
+        local innerHalfHeight = layout.innerHalfHeight
         local ox = layout.ox
         local oy = layout.oy
 
@@ -606,10 +598,10 @@ function Menu:draw()
 
                 local sawTop = sawY - sawRadiusWorld
                 local sawBottom = sawY + sawRadiusWorld
-                local safeWidth, safeHalfWidth = computeEllipseSpanLimits(
-                        ellipseCenterY,
-                        innerRadiusX,
-                        innerRadiusY,
+                local safeWidth, safeHalfWidth = computeRectSpanLimits(
+                        backdropCenterY,
+                        innerHalfWidth,
+                        innerHalfHeight,
                         sawTop,
                         sawBottom
                 )
@@ -636,10 +628,10 @@ function Menu:draw()
                 if safeHalfWidth and safeHalfWidth > 0 then
                         local allowedTrackOffset = math.max(0, safeHalfWidth - trackLengthWorld / 2)
                         local allowedSawOffset = math.max(0, safeHalfWidth - sawRadiusWorld)
-                        trackMin = math.max(trackMin, ellipseCenterX - allowedTrackOffset)
-                        trackMax = math.min(trackMax, ellipseCenterX + allowedTrackOffset)
-                        trackMin = math.max(trackMin, ellipseCenterX - allowedSawOffset + 8 * scaleFactor)
-                        trackMax = math.min(trackMax, ellipseCenterX + allowedSawOffset + 8 * scaleFactor)
+                        trackMin = math.max(trackMin, backdropCenterX - allowedTrackOffset)
+                        trackMax = math.min(trackMax, backdropCenterX + allowedTrackOffset)
+                        trackMin = math.max(trackMin, backdropCenterX - allowedSawOffset + 8 * scaleFactor)
+                        trackMax = math.min(trackMax, backdropCenterX + allowedSawOffset + 8 * scaleFactor)
                 end
 
                 if trackMin > trackMax then
