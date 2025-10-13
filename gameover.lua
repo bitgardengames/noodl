@@ -149,7 +149,58 @@ local function getSectionSmallSpacing()
 end
 
 local function getSectionHeaderSpacing()
-	return (UI.scaled and UI.scaled(18, 14)) or 18
+        return (UI.scaled and UI.scaled(18, 14)) or 18
+end
+
+local function measureXpPanelHeight(self, width, celebrationCount)
+        if not self or not self.progressionAnimation then
+                return 0
+        end
+
+        width = math.max(0, width or 0)
+        if width <= 0 then
+                return 0
+        end
+
+        local titleHeight = fontProgressTitle and fontProgressTitle:getHeight() or 0
+        local levelHeight = fontProgressValue and fontProgressValue:getHeight() or 0
+        local smallHeight = fontProgressSmall and fontProgressSmall:getHeight() or 0
+
+        local height = 18
+        height = height + titleHeight
+        height = height + 12 + levelHeight
+        height = height + 6 + smallHeight
+        height = height + 18
+
+        local maxRadius = math.max(48, math.min(74, (width / 2) - 24))
+        local ringThickness = math.max(14, math.min(24, maxRadius * 0.42))
+        local ringRadius = math.max(32, maxRadius - ringThickness * 0.25)
+        local outerRadius = ringRadius + ringThickness * 0.45
+
+        height = height + ringRadius + outerRadius
+        height = height + 18
+
+        local breakdown = (self.progression and self.progression.breakdown) or {}
+        local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
+        if bonusXP > 0 then
+                height = height + smallHeight + 6
+        end
+
+        if self.dailyStreakMessage then
+                height = height + smallHeight + 6
+        end
+
+        height = height + smallHeight
+        height = height + 4
+        height = height + smallHeight
+        height = height + 16
+
+        local count = math.max(0, celebrationCount or 0)
+        if count > 0 then
+                height = height + count * getCelebrationEntrySpacing()
+        end
+
+        return math.max(160, height)
 end
 
 local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
@@ -708,13 +759,6 @@ function GameOver:updateLayoutMetrics()
         local xpPanelHeight = 0
         local xpLayout = nil
         if self.progressionAnimation then
-                local celebrations = (self.progressionAnimation.celebrations and #self.progressionAnimation.celebrations) or 0
-                local baseHeight = self.baseXpSectionHeight or self.xpSectionHeight or 0
-                local celebrationSpacing = getCelebrationEntrySpacing()
-                local targetHeight = baseHeight + celebrations * celebrationSpacing
-                local xpContentHeight = math.max(160, baseHeight, targetHeight)
-                xpPanelHeight = math.floor(xpContentHeight + 0.5)
-
                 local availableWidth = math.max(0, innerWidth - sectionPadding * 2)
                 if availableWidth > 0 then
                         local preferredWidth = availableWidth * 0.85
@@ -723,10 +767,25 @@ function GameOver:updateLayoutMetrics()
                         local xpWidth = math.max(minWidth, math.min(maxWidth, preferredWidth))
                         xpWidth = math.floor(xpWidth + 0.5)
                         local offset = math.floor(math.max(0, (availableWidth - xpWidth) / 2) + 0.5)
+
+                        local celebrations = (self.progressionAnimation.celebrations and #self.progressionAnimation.celebrations) or 0
+                        local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
+                        local targetHeight = measureXpPanelHeight(self, xpWidth, celebrations)
+
                         xpLayout = {
                                 width = xpWidth,
                                 offset = offset,
                         }
+
+                        self.baseXpSectionHeight = baseHeight
+                        if not self.xpSectionHeight then
+                                self.xpSectionHeight = baseHeight
+                        else
+                                self.xpSectionHeight = math.max(self.xpSectionHeight, baseHeight)
+                        end
+
+                        local animatedHeight = self.xpSectionHeight or targetHeight
+                        xpPanelHeight = math.floor(math.max(targetHeight, animatedHeight) + 0.5)
                 end
         end
 
@@ -1169,22 +1228,17 @@ function GameOver:enter(data)
 		bonusXP = challengeBonusXP,
 	})
 
-	self.xpSectionHeight = 0
-	self.progressionAnimation = nil
+        self.xpSectionHeight = nil
+        self.baseXpSectionHeight = nil
+        self.progressionAnimation = nil
 
-	if self.progression then
-		local startSnapshot = self.progression.start or { total = 0, level = 1, xpIntoLevel = 0, xpForNext = MetaProgression:getXpForLevel(1) }
-		local resultSnapshot = self.progression.result or startSnapshot
-		local baseHeight = 220
-		if challengeBonusXP > 0 then
-			baseHeight = baseHeight + 28
-		end
-		self.baseXpSectionHeight = baseHeight
-		self.xpSectionHeight = baseHeight
+        if self.progression then
+                local startSnapshot = self.progression.start or { total = 0, level = 1, xpIntoLevel = 0, xpForNext = MetaProgression:getXpForLevel(1) }
+                local resultSnapshot = self.progression.result or startSnapshot
 
-		local fillSpeed = math.max(60, (self.progression.gained or 0) / 1.2)
-		self.progressionAnimation = {
-			displayedTotal = startSnapshot.total or 0,
+                local fillSpeed = math.max(60, (self.progression.gained or 0) / 1.2)
+                self.progressionAnimation = {
+                        displayedTotal = startSnapshot.total or 0,
 			targetTotal = resultSnapshot.total or (startSnapshot.total or 0),
 			displayedLevel = startSnapshot.level or 1,
 			xpIntoLevel = startSnapshot.xpIntoLevel or 0,
@@ -1384,15 +1438,16 @@ local function drawXpSection(self, x, y, width)
 		return
 	end
 
-	local baseHeight = self.baseXpSectionHeight or 220
-	local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
-	local celebrationSpacing = getCelebrationEntrySpacing()
-	local targetHeight = baseHeight + celebrationCount * celebrationSpacing
-	local height = math.max(160, self.xpSectionHeight or targetHeight, targetHeight)
-	UI.drawPanel(x, y, width, height, {
-		radius = 18,
-		shadowOffset = 0,
-		fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * 0.65 },
+        local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
+        local baseHeight = self.baseXpSectionHeight or measureXpPanelHeight(self, width, 0)
+        local targetHeight = measureXpPanelHeight(self, width, celebrationCount)
+        self.baseXpSectionHeight = self.baseXpSectionHeight or baseHeight
+        local animatedHeight = self.xpSectionHeight or targetHeight
+        local height = math.max(160, baseHeight, targetHeight, animatedHeight)
+        UI.drawPanel(x, y, width, height, {
+                radius = 18,
+                shadowOffset = 0,
+                fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * 0.65 },
 		borderColor = UI.colors.border or Theme.panelBorder,
 		borderWidth = 2,
 	})
@@ -1938,18 +1993,25 @@ function GameOver:update(dt)
 		anim.barPulse = math.max(0, anim.barPulse - dt * 2.4)
 	end
 
-	local baseHeight = self.baseXpSectionHeight or 220
-	local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
-	local celebrationSpacing = getCelebrationEntrySpacing()
-	local targetHeight = baseHeight + celebrationCount * celebrationSpacing
-	self.xpSectionHeight = self.xpSectionHeight or baseHeight
-	local smoothing = math.min(dt * 6, 1)
-	self.xpSectionHeight = self.xpSectionHeight + (targetHeight - self.xpSectionHeight) * smoothing
+        local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
+        local xpWidth = (self.xpLayout and self.xpLayout.width) or 0
+        if xpWidth <= 0 then
+                local innerWidth = self.innerContentWidth or 0
+                local sectionPadding = self.sectionPaddingValue or getSectionPadding()
+                xpWidth = math.max(0, innerWidth - sectionPadding * 2)
+        end
 
-	local layoutChanged = self:updateLayoutMetrics()
-	if layoutChanged then
-		self:updateButtonLayout()
-	end
+        local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
+        local targetHeight = measureXpPanelHeight(self, xpWidth, celebrationCount)
+        self.baseXpSectionHeight = baseHeight
+        self.xpSectionHeight = self.xpSectionHeight or baseHeight
+        local smoothing = math.min(dt * 6, 1)
+        self.xpSectionHeight = self.xpSectionHeight + (targetHeight - self.xpSectionHeight) * smoothing
+
+        local layoutChanged = self:updateLayoutMetrics()
+        if layoutChanged then
+                self:updateButtonLayout()
+        end
 end
 
 function GameOver:mousepressed(x, y, button)
