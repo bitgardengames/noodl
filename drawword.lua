@@ -16,7 +16,9 @@ local letters = {
 	}
 }
 
-local function drawWord(word, ox, oy, cellSize, spacing)
+local drawWord = {}
+
+local function draw(word, ox, oy, cellSize, spacing)
   local x = ox
   local fullTrail = {}
 
@@ -89,6 +91,11 @@ local function getBounds(word)
   }
 end
 
+drawWord.draw = draw
 drawWord.getBounds = getBounds
 
-return drawWord
+return setmetatable(drawWord, {
+  __call = function(self, ...)
+    return self.draw(...)
+  end,
+})
