@@ -42,7 +42,7 @@ local DEFAULT_WORD_SCALE = 3 * 0.9
 local TITLE_SCALE_MARGIN = 0.96
 local MIN_WORD_SCALE = 0.1
 local TITLE_WORD_VERTICAL_FRACTION = 0.58
-local TITLE_SAW_VERTICAL_OFFSET = 8
+local TITLE_SAW_VERTICAL_OFFSET = 16
 
 local function configureBackgroundEffect()
 	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
