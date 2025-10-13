@@ -283,7 +283,7 @@ function Menu:draw()
 
         local baseCellSize = 20
         local baseSpacing = 10
-        local wordScale = 3
+        local wordScale = 3 * 0.9
 
         local cellSize = baseCellSize * wordScale
         local word = Localization:get("menu.title_word")
