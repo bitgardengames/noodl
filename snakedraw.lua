@@ -1461,8 +1461,8 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
 	  drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
 	end
 
-	local faceScale = 1
-	Face:draw(hx, hy, faceScale)
+        local faceScale = sizeScale or 1
+        Face:draw(hx, hy, faceScale)
 
 	drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
 

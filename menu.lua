@@ -330,12 +330,14 @@ local function computeTitleSnake(layout)
         end
 
         local verticalSpan = areaBottom - areaTop
-        local baseline = areaTop + verticalSpan * 0.5
-        local amplitude = math.min(verticalSpan * 0.35, math.max(cellSize * 0.5, 48 * scaleFactor))
-
-        if amplitude <= 0 then
-                amplitude = math.max(cellSize * 0.4, 18 * scaleFactor)
+        local clampInnerTop = areaTop + cellSize * 0.3
+        local clampInnerBottom = areaBottom - cellSize * 0.3
+        if clampInnerTop > clampInnerBottom then
+                clampInnerTop, clampInnerBottom = clampInnerBottom, clampInnerTop
         end
+
+        local baseline = areaTop + verticalSpan * 0.5
+        baseline = math.max(clampInnerTop, math.min(clampInnerBottom, baseline))
 
         local sampleSpacing = math.max(cellSize * 0.5, 12)
         local sampleCount = math.max(32, math.floor(usableWidth / sampleSpacing))
@@ -344,37 +346,13 @@ local function computeTitleSnake(layout)
                 return nil
         end
 
-        local undulationCount = 2 + math.min(1.0, usableWidth / 520)
-        local headDrop = amplitude * 0.2
-        local tailLift = amplitude * 0.15
-
         local minX, maxX, minY, maxY
         local basePoints = {}
 
         for i = 0, sampleCount do
                 local t = i / sampleCount
                 local x = left + usableWidth * t
-
-                local primary = math.sin(t * math.pi * undulationCount)
-                local secondary = math.sin(t * math.pi * undulationCount * 2) * 0.18
-                local y = baseline + (primary + secondary) * amplitude
-
-                local easeHead = t * t
-                local easeTail = (1 - t) * (1 - t)
-                y = y + easeHead * headDrop
-                y = y - easeTail * tailLift
-
-                local clampTop = areaTop + cellSize * 0.3
-                local clampBottom = areaBottom - cellSize * 0.3
-                if clampTop > clampBottom then
-                        clampTop, clampBottom = clampBottom, clampTop
-                end
-                if clampTop and y < clampTop then
-                        y = clampTop
-                end
-                if clampBottom and y > clampBottom then
-                        y = clampBottom
-                end
+                local y = baseline
 
                 basePoints[#basePoints + 1] = { x = x, y = y }
 
