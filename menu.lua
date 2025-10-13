@@ -25,7 +25,7 @@ local dailyChallengeAnim = 0
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 local titleSaw = SawActor.new()
 
-local TITLE_SAW_SCALE_FACTOR = 0.81 -- shrink the title saw slightly (10% smaller than previous size)
+local TITLE_SAW_SCALE_FACTOR = 0.729 -- make the title saw 10% smaller than before
 
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
