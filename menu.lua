@@ -2,7 +2,7 @@ local Audio = require("audio")
 local Screen = require("screen")
 local UI = require("ui")
 local Theme = require("theme")
-local drawWord = require("drawword")
+local DrawWord = require("drawword")
 local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
@@ -292,7 +292,7 @@ function Menu:draw()
                 titleSaw:draw(sawX, sawY, sawScale)
         end
 
-        local trail = drawWord(word, ox, oy, cellSize, spacing)
+        local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
 
 	if trail and #trail > 0 then
 		local head = trail[#trail]
