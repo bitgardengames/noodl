@@ -1,4 +1,5 @@
 local UI = require("ui")
+local Easing = require("easing")
 
 local FloatingText = {}
 
@@ -9,6 +10,12 @@ local lm = love.math
 local random = lm.random
 local sin, cos = math.sin, math.cos
 local max = math.max
+
+local clamp = Easing.clamp
+local lerp = Easing.lerp
+local easeOutCubic = Easing.easeOutCubic
+local easeInCubic = Easing.easeInCubic
+local easeOutBack = Easing.easeOutBack
 
 local defaultFont = UI.fonts.subtitle or UI.fonts.display or lg.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 24)
 
@@ -52,36 +59,6 @@ local function cloneColor(color)
 		source[3] or DEFAULTS.color[3],
 		source[4] == nil and DEFAULTS.color[4] or source[4],
 	}
-end
-
-local function clamp(value, minValue, maxValue)
-	if value < minValue then
-		return minValue
-	end
-	if value > maxValue then
-		return maxValue
-	end
-	return value
-end
-
-local function lerp(a, b, t)
-	return a + (b - a) * t
-end
-
-local function easeOutCubic(t)
-	local inv = 1 - t
-	return 1 - inv * inv * inv
-end
-
-local function easeInCubic(t)
-	return t * t * t
-end
-
-local function easeOutBack(t)
-	local c1 = 1.70158
-	local c3 = c1 + 1
-	local progress = t - 1
-	return 1 + c3 * (progress * progress * progress) + c1 * (progress * progress)
 end
 
 local function buildShadow(shadow)
