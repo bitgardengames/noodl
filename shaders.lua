@@ -1013,11 +1013,13 @@ registerEffect({
                 extern vec4 topColor;
                 extern vec4 bottomColor;
                 extern vec4 accentColor;
+                extern vec4 tintColor;
                 extern float vignetteIntensity;
                 extern float accentStrength;
                 extern float textureStrength;
                 extern float bandCenter;
                 extern float bandWidth;
+                extern float tintStrength;
                 extern float intensity;
 
                 float hash(vec2 p)
@@ -1042,7 +1044,10 @@ registerEffect({
                         vec2 centered = uv - vec2(0.5);
                         float vignette = smoothstep(0.45, 0.92, length(centered));
                         float vignetteMix = clamp(vignette * vignetteIntensity, 0.0, 1.0);
-                        col = mix(col, col * 0.78, vignetteMix);
+                        col = mix(col, col * 0.72, vignetteMix);
+
+                        float tintBlend = tintStrength * (0.35 + 0.65 * (1.0 - gradient));
+                        col = mix(col, tintColor.rgb, clamp(tintBlend, 0.0, 1.0));
 
                         float noise = hash(uv * resolution.xy + time * 15.0);
                         float grain = noise * 2.0 - 1.0;
@@ -1060,18 +1065,21 @@ registerEffect({
         configure = function(effect)
                 local shader = effect.shader
 
-                local top = {0x1A / 255, 0x0F / 255, 0x1E / 255, 1}
-                local bottom = {0x05 / 255, 0x05 / 255, 0x05 / 255, 1}
+                local top = {0x1A / 255, 0x0D / 255, 0x1D / 255, 1}
+                local bottom = {0x05 / 255, 0x05 / 255, 0x09 / 255, 1}
                 local accent = {0xFF / 255, 0x2D / 255, 0xAA / 255, 1}
+                local tint = {0x0E / 255, 0x13 / 255, 0x20 / 255, 1}
 
                 sendColor(shader, "topColor", top)
                 sendColor(shader, "bottomColor", bottom)
                 sendColor(shader, "accentColor", accent)
-                sendFloat(shader, "vignetteIntensity", 0.66)
+                sendColor(shader, "tintColor", tint)
+                sendFloat(shader, "vignetteIntensity", 0.82)
                 sendFloat(shader, "accentStrength", 0.64)
                 sendFloat(shader, "textureStrength", 0.085)
                 sendFloat(shader, "bandCenter", 0.55)
                 sendFloat(shader, "bandWidth", 0.42)
+                sendFloat(shader, "tintStrength", 0.18)
         end,
         draw = function(effect, x, y, w, h, intensity)
                 return drawShader(effect, x, y, w, h, intensity)
