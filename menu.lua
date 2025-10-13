@@ -324,8 +324,8 @@ function Menu:draw()
                 local gapAboveWord = math.max(8, slotThicknessWorld * 0.35)
                 local targetBottom = oy - gapAboveWord
 
-                local sawX = targetLeft + trackLengthWorld / 2
-                local sawY = targetBottom - slotThicknessWorld / 2
+                local sawX = targetLeft + trackLengthWorld / 2 - 8
+                local sawY = targetBottom - slotThicknessWorld / 2 - 30
 
                 titleSaw:draw(sawX, sawY, sawScale)
         end
