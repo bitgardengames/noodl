@@ -35,6 +35,7 @@ local Localization = require("localization")
 local FloorSetup = require("floorsetup")
 local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
+local ModuleUtil = require("moduleutil")
 local Game = {}
 
 local clamp01 = Easing.clamp01
@@ -62,21 +63,21 @@ local RUN_ACTIVE_STATES = {
 	descending = true,
 }
 
-local ENTITY_UPDATE_ORDER = {
-	Face,
-	Popup,
-	Fruit,
-	Rocks,
-	Lasers,
+local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
+        Face,
+        Popup,
+        Fruit,
+        Rocks,
+        Lasers,
 	Darts,
 	Saws,
 	Arena,
 	Particles,
-	UpgradeVisuals,
-	Achievements,
-	FloatingText,
-	Score,
-}
+        UpgradeVisuals,
+        Achievements,
+        FloatingText,
+        Score,
+})
 
 local function cloneColor(color, fallback)
 	local source = color or fallback
@@ -570,12 +571,7 @@ local function updateRunTimers(self, dt)
 end
 
 local function updateSystems(systems, dt)
-	for _, system in ipairs(systems) do
-		local updater = system.update
-		if updater then
-			updater(system, dt)
-		end
-	end
+        ModuleUtil.runHook(systems, "update", dt)
 end
 
 local function updateGlobalSystems(dt)

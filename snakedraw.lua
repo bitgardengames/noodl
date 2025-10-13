@@ -1,5 +1,8 @@
 local Face = require("face")
 local SnakeCosmetics = require("snakecosmetics")
+local ModuleUtil = require("moduleutil")
+
+local SnakeDraw = ModuleUtil.create("SnakeDraw")
 
 local unpack = unpack
 
@@ -1346,7 +1349,7 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
   love.graphics.pop()
 end
 
-local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
+function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
   local options
   if type(drawFace) == "table" then
 	options = drawFace
@@ -1455,4 +1458,4 @@ local function drawSnake(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, s
   love.graphics.setColor(1, 1, 1, 1)
 end
 
-return drawSnake
+return SnakeDraw

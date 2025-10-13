@@ -9,6 +9,7 @@ local Saws = require("saws")
 local Particles = require("particles")
 local UpgradeVisuals = require("upgradevisuals")
 local UI = require("ui")
+local ModuleUtil = require("moduleutil")
 
 local GameUtils = {}
 
@@ -18,28 +19,39 @@ local function loadCoreSystems(sw, sh)
 	PauseMenu:load(sw, sh)
 end
 
-local GAMEPLAY_SYSTEMS = {
-	Movement,
-	Score,
-	FloatingText,
-	Particles,
-	UpgradeVisuals,
-	Rocks,
-	Saws,
-	UI,
-}
+local GAMEPLAY_SYSTEMS = ModuleUtil.prepareSystems({
+        Movement,
+        Score,
+        FloatingText,
+        Particles,
+        UpgradeVisuals,
+        Rocks,
+        Saws,
+        UI,
+})
+
+local function loadGameplaySystems(context)
+        ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "load", context)
+end
 
 local function resetGameplaySystems()
-	for _, system in ipairs(GAMEPLAY_SYSTEMS) do
-		system:reset()
-	end
+        ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "reset")
 end
 
 function GameUtils:prepareGame(sw, sh)
-	loadCoreSystems(sw, sh)
-	resetGameplaySystems()
+        loadCoreSystems(sw, sh)
+        local context = {
+                screenWidth = sw,
+                screenHeight = sh,
+        }
+        loadGameplaySystems(context)
+        resetGameplaySystems()
 
-	Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
+        Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
+end
+
+function GameUtils:getGameplaySystems()
+        return GAMEPLAY_SYSTEMS
 end
 
 return GameUtils

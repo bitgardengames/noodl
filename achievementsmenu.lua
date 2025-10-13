@@ -5,7 +5,7 @@ local Theme = require("theme")
 local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
-local drawSnake = require("snakedraw")
+local SnakeDraw = require("snakedraw")
 local SnakeUtils = require("snakeutils")
 local Face = require("face")
 local Shaders = require("shaders")
@@ -515,7 +515,7 @@ local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, t
 	love.graphics.setScissor(scissorX, scissorY, scissorW, scissorH)
 
 	love.graphics.setColor(1, 1, 1, 1)
-	drawSnake(trail, #trail, segmentSize, nil, nil, nil, nil, nil)
+        SnakeDraw.run(trail, #trail, segmentSize, nil, nil, nil, nil, nil)
 
 	local head = trail[#trail]
 	if head then

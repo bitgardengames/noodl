@@ -1,4 +1,4 @@
-local drawSnake = require("snakedraw")
+local SnakeDraw = require("snakedraw")
 
 local DrawWord = {}
 
@@ -56,9 +56,9 @@ function DrawWord.draw(word, ox, oy, cellSize, spacing)
 
 	  -- The menu draws the face manually so it sits at the end of the word.
 	  -- Disable the built-in face rendering here to avoid double faces.
-	  drawSnake(snakeTrail, #snakeTrail, cellSize, nil, nil, nil, nil, nil, {
-		drawFace = false,
-	  })
+          SnakeDraw.run(snakeTrail, #snakeTrail, cellSize, nil, nil, nil, nil, nil, {
+                drawFace = false,
+          })
 
 	  x = x + (3 * cellSize) + spacing
 	end
