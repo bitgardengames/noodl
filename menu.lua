@@ -22,6 +22,7 @@ local SHOW_MENU_BUTTONS = false
 local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
+local SHOW_DAILY_CHALLENGE_CARD = false
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 local titleSaw = SawActor.new()
 
@@ -200,7 +201,11 @@ function Menu:enter()
         Audio:playMusic("menu")
 	Screen:update()
 
-	dailyChallenge = DailyChallenges:getDailyChallenge()
+	if SHOW_DAILY_CHALLENGE_CARD then
+		dailyChallenge = DailyChallenges:getDailyChallenge()
+	else
+		dailyChallenge = nil
+	end
 	dailyChallengeAnim = 0
         resetAnalogAxis()
 
@@ -259,7 +264,7 @@ function Menu:update(dt)
         local mx, my = love.mouse.getPosition()
         buttonList:updateHover(mx, my)
 
-	if dailyChallenge then
+	if SHOW_DAILY_CHALLENGE_CARD and dailyChallenge then
 		dailyChallengeAnim = math.min(dailyChallengeAnim + dt * 2, 1)
 	end
 
@@ -412,7 +417,7 @@ function Menu:draw()
 	love.graphics.setColor(Theme.textColor)
 	love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
 
-        if dailyChallenge and dailyChallengeAnim > 0 then
+	if SHOW_DAILY_CHALLENGE_CARD and dailyChallenge and dailyChallengeAnim > 0 then
                 local alpha = math.min(1, dailyChallengeAnim)
                 local eased = alpha * alpha
                 local panelWidth = math.min(420, sw - 72)
