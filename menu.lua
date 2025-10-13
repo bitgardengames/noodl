@@ -32,14 +32,15 @@ local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
-local BACKDROP_BOX_WIDTH = 1232
-local BACKDROP_BOX_HEIGHT = 706
+local BACKDROP_BOX_WIDTH = 748
+local BACKDROP_BOX_HEIGHT = 896
 local BACKDROP_BOX_LINE_WIDTH = 12
 local BACKDROP_BOX_PADDING = 80
 
 local DEFAULT_WORD_SCALE = 3 * 0.9
 local TITLE_SCALE_MARGIN = 0.96
 local MIN_WORD_SCALE = 0.1
+local TITLE_WORD_VERTICAL_FRACTION = 1 / 3
 
 local function configureBackgroundEffect()
 	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
@@ -328,6 +329,7 @@ function Menu:draw()
 
         local baseWordHeight = math.max((maxRow - minRow) * baseCellSize, baseCellSize)
 
+        local backdropY = (sh - BACKDROP_BOX_HEIGHT) / 2
         local availableWidth = math.max(BACKDROP_BOX_WIDTH - 2 * BACKDROP_BOX_PADDING, baseCellSize)
         local availableHeight = math.max(BACKDROP_BOX_HEIGHT - 2 * BACKDROP_BOX_PADDING, baseCellSize)
 
@@ -349,8 +351,13 @@ function Menu:draw()
         local ox = (sw - wordWidth) / 2
 
         local wordHeight = math.max((maxRow - minRow) * cellSize, cellSize)
-        local backdropCenterY = sh / 2
-        local targetTop = backdropCenterY - wordHeight / 2
+        local backdropInnerTop = backdropY + BACKDROP_BOX_PADDING
+        local targetCenterY = backdropInnerTop + availableHeight * TITLE_WORD_VERTICAL_FRACTION
+        local minCenterY = backdropInnerTop + wordHeight / 2
+        local maxCenterY = backdropInnerTop + availableHeight - wordHeight / 2
+        targetCenterY = math.max(minCenterY, math.min(targetCenterY, maxCenterY))
+
+        local targetTop = targetCenterY - wordHeight / 2
         local oy = targetTop - minRow * cellSize
 
         if titleSaw then
