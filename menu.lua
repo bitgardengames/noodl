@@ -27,6 +27,7 @@ local analogAxisDirections = { horizontal = nil, vertical = nil }
 local titleSaw = SawActor.new()
 
 local TITLE_SAW_SCALE_FACTOR = 0.729 -- make the title saw 10% smaller than before
+local LOGO_EXPORT_KEY = "f6"
 
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
@@ -92,6 +93,160 @@ local function drawBackground(sw, sh)
         end
 
         love.graphics.setColor(1, 1, 1, 1)
+end
+
+local function computeTitleLayout(sw, sh)
+	local baseCellSize = 20
+	local baseSpacing = 10
+	local word = Localization:get("menu.title_word") or ""
+
+	local letterCount = 0
+	if drawWord.getBounds then
+		for i = 1, #word do
+			local ch = word:sub(i, i):lower()
+			local charBounds = drawWord.getBounds(ch)
+			local charMin = charBounds and charBounds.minY or 0
+			local charMax = charBounds and charBounds.maxY or 0
+			if charMax ~= charMin then
+				letterCount = letterCount + 1
+			end
+		end
+	end
+
+	if letterCount == 0 then
+		letterCount = math.max(#word, 1)
+	end
+
+	local bounds = drawWord.getBounds and drawWord.getBounds(word)
+	local minRow = bounds and bounds.minY or 0
+	local maxRow = bounds and bounds.maxY or 3
+
+	local baseWordWidth
+	if letterCount <= 1 then
+		baseWordWidth = 3 * baseCellSize
+	else
+		baseWordWidth = (letterCount * (3 * baseCellSize + baseSpacing)) - baseSpacing - (baseCellSize * 3)
+	end
+	baseWordWidth = math.max(baseWordWidth, 1)
+
+	local baseWordHeight = math.max((maxRow - minRow) * baseCellSize, baseCellSize)
+
+	local backdropX = (sw - BACKDROP_BOX_WIDTH) / 2
+	local backdropY = (sh - BACKDROP_BOX_HEIGHT) / 2
+	local availableWidth = math.max(BACKDROP_BOX_WIDTH - 2 * BACKDROP_BOX_PADDING, baseCellSize)
+	local availableHeight = math.max(BACKDROP_BOX_HEIGHT - 2 * BACKDROP_BOX_PADDING, baseCellSize)
+	local backdropInnerLeft = backdropX + BACKDROP_BOX_PADDING
+	local backdropInnerRight = backdropInnerLeft + availableWidth
+	local backdropInnerTop = backdropY + BACKDROP_BOX_PADDING
+
+	local scaleWidth = availableWidth / baseWordWidth
+	local scaleHeight = availableHeight / math.max(baseWordHeight, 1)
+	local targetScale = math.min(scaleWidth, scaleHeight)
+	local wordScale = math.max(targetScale * TITLE_SCALE_MARGIN, MIN_WORD_SCALE)
+	local scaleFactor = wordScale / (DEFAULT_WORD_SCALE ~= 0 and DEFAULT_WORD_SCALE or 1)
+
+	local cellSize = baseCellSize * wordScale
+	local spacing = baseSpacing * wordScale
+
+	local wordWidth
+	if letterCount <= 1 then
+		wordWidth = 3 * cellSize
+	else
+		wordWidth = (letterCount * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+	end
+	local ox = backdropInnerLeft + (availableWidth - wordWidth) / 2
+
+	local wordHeight = math.max((maxRow - minRow) * cellSize, cellSize)
+	local availableTop = backdropInnerTop
+	local targetCenterY = availableTop + availableHeight * TITLE_WORD_VERTICAL_FRACTION
+	local minCenterY = availableTop + wordHeight / 2
+	local maxCenterY = availableTop + availableHeight - wordHeight / 2
+	targetCenterY = math.max(minCenterY, math.min(targetCenterY, maxCenterY))
+
+	local targetTop = targetCenterY - wordHeight / 2
+	local oy = targetTop - minRow * cellSize
+
+	return {
+		word = word,
+		letterCount = letterCount,
+		minRow = minRow,
+		maxRow = maxRow,
+		cellSize = cellSize,
+		spacing = spacing,
+		wordScale = wordScale,
+		scaleFactor = scaleFactor,
+		wordWidth = wordWidth,
+		wordHeight = wordHeight,
+		availableWidth = availableWidth,
+		availableHeight = availableHeight,
+		backdropInnerLeft = backdropInnerLeft,
+		backdropInnerRight = backdropInnerRight,
+		backdropInnerTop = backdropInnerTop,
+		ox = ox,
+		oy = oy,
+	}
+end
+
+local function drawTitleWord(layout)
+	local trail = drawWord(layout.word, layout.ox, layout.oy, layout.cellSize, layout.spacing)
+	if trail and #trail > 0 then
+		local head = trail[#trail]
+		Face:draw(head.x, head.y, layout.wordScale)
+	end
+	return trail
+end
+
+local function exportTitleLogo()
+	local sw, sh = Screen:get()
+	if not sw or not sh then
+		sw, sh = love.graphics.getDimensions()
+	end
+
+	local layout = computeTitleLayout(sw, sh)
+	if not layout or layout.word == "" then
+		return
+	end
+
+	local marginX = math.ceil(math.max(layout.cellSize * 0.75, layout.wordScale * 8))
+	local marginY = math.ceil(math.max(layout.cellSize * 0.75, layout.wordScale * 8))
+	local canvasWidth = math.max(1, math.ceil(layout.wordWidth + marginX * 2))
+	local canvasHeight = math.max(1, math.ceil(layout.wordHeight + marginY * 2))
+
+	local canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
+	local previousCanvas = { love.graphics.getCanvas() }
+
+	love.graphics.setCanvas(canvas)
+	love.graphics.push("all")
+	love.graphics.clear(0, 0, 0, 0)
+	love.graphics.origin()
+	love.graphics.setColor(1, 1, 1, 1)
+
+	local exportLayout = {
+		word = layout.word,
+		cellSize = layout.cellSize,
+		spacing = layout.spacing,
+		wordScale = layout.wordScale,
+		ox = marginX,
+		oy = marginY - layout.minRow * layout.cellSize,
+	}
+	drawTitleWord(exportLayout)
+
+	love.graphics.pop()
+
+	if previousCanvas[1] ~= nil then
+		love.graphics.setCanvas(previousCanvas)
+	else
+		love.graphics.setCanvas()
+	end
+
+	local imageData = canvas:newImageData()
+	local timestamp = os.date("%Y%m%d_%H%M%S")
+	local filename = string.format("logo_%s.png", timestamp)
+	imageData:encode("png", filename)
+
+	canvas:release()
+
+	print(("Saved logo screenshot to %s"):format(filename))
 end
 
 local function getDayUnit(count)
@@ -294,74 +449,17 @@ function Menu:draw()
 
         drawBackground(sw, sh)
 
-        local baseCellSize = 20
-        local baseSpacing = 10
-        local word = Localization:get("menu.title_word") or ""
-
-        local letterCount = 0
-        if drawWord.getBounds then
-                for i = 1, #word do
-                        local ch = word:sub(i, i):lower()
-                        local charBounds = drawWord.getBounds(ch)
-                        local charMin = charBounds and charBounds.minY or 0
-                        local charMax = charBounds and charBounds.maxY or 0
-                        if charMax ~= charMin then
-                                letterCount = letterCount + 1
-                        end
-                end
-        end
-
-        if letterCount == 0 then
-                letterCount = math.max(#word, 1)
-        end
-
-        local bounds = drawWord.getBounds and drawWord.getBounds(word)
-        local minRow = bounds and bounds.minY or 0
-        local maxRow = bounds and bounds.maxY or 3
-
-        local baseWordWidth
-        if letterCount <= 1 then
-                baseWordWidth = 3 * baseCellSize
-        else
-                baseWordWidth = (letterCount * (3 * baseCellSize + baseSpacing)) - baseSpacing - (baseCellSize * 3)
-        end
-        baseWordWidth = math.max(baseWordWidth, 1)
-
-        local baseWordHeight = math.max((maxRow - minRow) * baseCellSize, baseCellSize)
-
-        local backdropX = (sw - BACKDROP_BOX_WIDTH) / 2
-        local backdropY = (sh - BACKDROP_BOX_HEIGHT) / 2
-        local availableWidth = math.max(BACKDROP_BOX_WIDTH - 2 * BACKDROP_BOX_PADDING, baseCellSize)
-        local availableHeight = math.max(BACKDROP_BOX_HEIGHT - 2 * BACKDROP_BOX_PADDING, baseCellSize)
-        local backdropInnerLeft = backdropX + BACKDROP_BOX_PADDING
-        local backdropInnerRight = backdropInnerLeft + availableWidth
-
-        local scaleWidth = availableWidth / baseWordWidth
-        local scaleHeight = availableHeight / math.max(baseWordHeight, 1)
-        local targetScale = math.min(scaleWidth, scaleHeight)
-        local wordScale = math.max(targetScale * TITLE_SCALE_MARGIN, MIN_WORD_SCALE)
-        local scaleFactor = wordScale / (DEFAULT_WORD_SCALE ~= 0 and DEFAULT_WORD_SCALE or 1)
-
-        local cellSize = baseCellSize * wordScale
-        local spacing = baseSpacing * wordScale
-
-        local wordWidth
-        if letterCount <= 1 then
-                wordWidth = 3 * cellSize
-        else
-                wordWidth = (letterCount * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-        end
-        local ox = backdropInnerLeft + (availableWidth - wordWidth) / 2
-
-        local wordHeight = math.max((maxRow - minRow) * cellSize, cellSize)
-        local backdropInnerTop = backdropY + BACKDROP_BOX_PADDING
-        local targetCenterY = backdropInnerTop + availableHeight * TITLE_WORD_VERTICAL_FRACTION
-        local minCenterY = backdropInnerTop + wordHeight / 2
-        local maxCenterY = backdropInnerTop + availableHeight - wordHeight / 2
-        targetCenterY = math.max(minCenterY, math.min(targetCenterY, maxCenterY))
-
-        local targetTop = targetCenterY - wordHeight / 2
-        local oy = targetTop - minRow * cellSize
+        local layout = computeTitleLayout(sw, sh)
+        local cellSize = layout.cellSize
+        local wordScale = layout.wordScale
+        local scaleFactor = layout.scaleFactor
+        local wordWidth = layout.wordWidth
+        local wordHeight = layout.wordHeight
+        local availableWidth = layout.availableWidth
+        local backdropInnerLeft = layout.backdropInnerLeft
+        local backdropInnerRight = layout.backdropInnerRight
+        local ox = layout.ox
+        local oy = layout.oy
 
         if titleSaw then
                 local sawRadius = titleSaw.radius or 1
@@ -403,12 +501,7 @@ function Menu:draw()
                 titleSaw:draw(sawX, sawY, sawScale)
         end
 
-        local trail = drawWord(word, ox, oy, cellSize, spacing)
-
-	if trail and #trail > 0 then
-		local head = trail[#trail]
-		Face:draw(head.x, head.y, wordScale)
-	end
+        drawTitleWord(layout)
 
 	for _, btn in ipairs(buttons) do
 		if btn.labelKey then
@@ -626,6 +719,8 @@ function Menu:keypressed(key)
 		buttonList:moveFocus(1)
 	elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
 		return handleMenuConfirm()
+	elseif key == LOGO_EXPORT_KEY then
+		exportTitleLogo()
 	elseif key == "escape" or key == "backspace" then
 		return "quit"
 	end
