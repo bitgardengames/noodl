@@ -10,9 +10,11 @@ local Localization = require("localization")
 local MetaProgression = require("metaprogression")
 local PlayerStats = require("playerstats")
 local UpgradeHelpers = require("upgradehelpers")
+local DataSchemas = require("dataschemas")
 
 local Upgrades = {}
 local poolById = {}
+local upgradeSchema = DataSchemas.upgradeDefinition
 local getUpgradeString = UpgradeHelpers.getUpgradeString
 local rarities = UpgradeHelpers.rarities
 local deepcopy = UpgradeHelpers.deepcopy
@@ -20,7 +22,92 @@ local defaultEffects = UpgradeHelpers.defaultEffects
 local celebrateUpgrade = UpgradeHelpers.celebrateUpgrade
 local getEventPosition = UpgradeHelpers.getEventPosition
 
+local RunState = {}
+RunState.__index = RunState
+
+function RunState.new(defaults)
+        local state = {
+                takenOrder = {},
+                takenSet = {},
+                tags = {},
+                counters = {},
+                handlers = {},
+                effects = deepcopy(defaults or defaultEffects),
+                baseline = {},
+        }
+
+        return setmetatable(state, RunState)
+end
+
+function RunState:getStacks(id)
+        if not id then
+                return 0
+        end
+
+        return self.takenSet[id] or 0
+end
+
+function RunState:addStacks(id, amount)
+        if not id then
+                return
+        end
+
+        amount = amount or 1
+        self.takenSet[id] = (self.takenSet[id] or 0) + amount
+end
+
+function RunState:hasUpgrade(id)
+        return self:getStacks(id) > 0
+end
+
+function RunState:addHandler(event, handler)
+        if not event or type(handler) ~= "function" then
+                return
+        end
+
+        local handlers = self.handlers[event]
+        if not handlers then
+                handlers = {}
+                self.handlers[event] = handlers
+        end
+
+        table.insert(handlers, handler)
+end
+
+function RunState:notify(event, data)
+        local handlers = self.handlers[event]
+        if not handlers then
+                return
+        end
+
+        for _, fn in ipairs(handlers) do
+                fn(data, self)
+        end
+end
+
+function RunState:resetEffects(defaults)
+        self.effects = deepcopy(defaults or defaultEffects)
+end
+
 local POCKET_SPRINGS_FRUIT_TARGET = 20
+
+local function getStacks(state, id)
+        if not state or not id then
+                return 0
+        end
+
+        local method = state.getStacks
+        if type(method) == "function" then
+                return method(state, id)
+        end
+
+        local takenSet = state.takenSet
+        if not takenSet then
+                return 0
+        end
+
+        return takenSet[id] or 0
+end
 
 local function getGameInstance()
 	if GameState and GameState.states then
@@ -44,7 +131,7 @@ end
 
 local function stoneSkinShieldHandler(data, state)
 	if not state then return end
-	if (state.takenSet and (state.takenSet["stone_skin"] or 0) <= 0) then return end
+	if getStacks(state, "stone_skin") <= 0 then return end
 	if not data or data.cause ~= "rock" then return end
 	if not Rocks or not Rocks.shatterNearest then return end
 
@@ -83,7 +170,7 @@ end
 local function mirroredScalesLaserHandler(data, state)
 	if not (state and data) then return end
 
-	local stacks = (state.takenSet and state.takenSet.mirrored_scales) or 0
+	local stacks = getStacks(state, "mirrored_scales")
 	if stacks <= 0 then return end
 
 	local beam = data.beam
@@ -119,7 +206,7 @@ end
 local function prismLockCooldownHandler(data, state)
 	if not (data and state) then return end
 
-	local stacks = (state.takenSet and state.takenSet.prism_lock) or 0
+	local stacks = getStacks(state, "prism_lock")
 	if stacks <= 0 then return end
 
 	local perStack = state.counters and state.counters.prismLockCooldown or 0
@@ -156,7 +243,7 @@ end
 local function arcConductorLaserHandler(data, state)
 	if not (data and state) then return end
 
-	local stacks = (state.takenSet and state.takenSet.arc_conductor) or 0
+	local stacks = getStacks(state, "arc_conductor")
 	if stacks <= 0 then return end
 
 	local baseDuration = state.counters and state.counters.arcConductorBase or 0
@@ -185,7 +272,7 @@ end
 local function resetScarletCenserCharges(state)
 	if not state then return end
 	local counters = state.counters or {}
-	local stacks = (state.takenSet and state.takenSet.scarlet_censer) or 0
+	local stacks = getStacks(state, "scarlet_censer")
 	if stacks <= 0 then
 		counters.scarletCenserCharges = 0
 	else
@@ -198,7 +285,7 @@ local function scarletCenserShieldHandler(data, state)
 	if not (data and state) then return end
 	if data.cause ~= "dart" then return end
 
-	local stacks = (state.takenSet and state.takenSet.scarlet_censer) or 0
+	local stacks = getStacks(state, "scarlet_censer")
 	if stacks <= 0 then return end
 
 	local counters = state.counters or {}
@@ -235,7 +322,7 @@ local function grimReliquaryShieldHandler(data, state)
 	if not (data and state) then return end
 	if data.cause ~= "dart" then return end
 
-	local stacks = (state.takenSet and state.takenSet.grim_reliquary) or 0
+	local stacks = getStacks(state, "grim_reliquary")
 	if stacks <= 0 then return end
 
 	local counters = state.counters or {}
@@ -269,7 +356,7 @@ end
 local function rattleGambitFruitHandler(data, state)
 	if not (data and state) then return end
 
-	local stacks = (state.takenSet and state.takenSet.rattle_gambit) or 0
+	local stacks = getStacks(state, "rattle_gambit")
 	if stacks <= 0 then return end
 
 	local counters = state.counters or {}
@@ -312,33 +399,41 @@ local function rattleGambitShieldReset(_, state)
 end
 
 local function newRunState()
-	return {
-		takenOrder = {},
-		takenSet = {},
-		tags = {},
-		counters = {},
-		handlers = {},
-		effects = deepcopy(defaultEffects),
-		baseline = {},
-	}
+        return RunState.new(defaultEffects)
 end
 
 Upgrades.runState = newRunState()
 
+local function normalizeUpgradeDefinition(upgrade)
+        if type(upgrade) ~= "table" then
+                error("upgrade definition must be a table")
+        end
+
+        if upgrade.id == nil and upgrade.name ~= nil then
+                upgrade.id = upgrade.name
+        end
+
+        if upgrade.name and not upgrade.nameKey then
+                upgrade.nameKey = upgrade.name
+                upgrade.name = nil
+        end
+
+        if upgrade.desc and not upgrade.descKey then
+                upgrade.descKey = upgrade.desc
+                upgrade.desc = nil
+        end
+
+        DataSchemas.applyDefaults(upgradeSchema, upgrade)
+        local context = string.format("upgrade '%s'", tostring(upgrade.id or "?"))
+        DataSchemas.validate(upgradeSchema, upgrade, context)
+
+        return upgrade
+end
+
 local function register(upgrade)
-	upgrade.id = upgrade.id or upgrade.name
-	upgrade.rarity = upgrade.rarity or "common"
-	upgrade.weight = upgrade.weight or 1
-	if upgrade.name and not upgrade.nameKey then
-		upgrade.nameKey = upgrade.name
-		upgrade.name = nil
-	end
-	if upgrade.desc and not upgrade.descKey then
-		upgrade.descKey = upgrade.desc
-		upgrade.desc = nil
-	end
-	poolById[upgrade.id] = upgrade
-	return upgrade
+        normalizeUpgradeDefinition(upgrade)
+        poolById[upgrade.id] = upgrade
+        return upgrade
 end
 
 local function countUpgradesWithTag(state, tag)
@@ -426,7 +521,7 @@ end
 
 local function handleArtisanCatalogFloorStart(_, state)
 	if not state then return end
-	if not state.takenSet or (state.takenSet.artisan_catalog or 0) <= 0 then return end
+	if getStacks(state, "artisan_catalog") <= 0 then return end
 
 	state.counters = state.counters or {}
 	state.counters.artisanCatalogPurchases = 0
@@ -434,11 +529,11 @@ end
 
 local function handleArtisanCatalogPurchase(data, state)
 	if not state then return end
-	if not state.takenSet or (state.takenSet.artisan_catalog or 0) <= 0 then return end
+	if getStacks(state, "artisan_catalog") <= 0 then return end
 
 	state.counters = state.counters or {}
 	local purchases = state.counters.artisanCatalogPurchases or 0
-	local copies = state.takenSet.artisan_catalog or 0
+	local copies = getStacks(state, "artisan_catalog")
 
 	if purchases <= 0 and copies > 0 then
 		if Snake and Snake.addCrashShields then
@@ -476,7 +571,7 @@ end
 
 local function handleBulwarkChorusFloorStart(_, state)
 	if not state or not state.counters then return end
-	if not state.takenSet or (state.takenSet.wardens_chorus or 0) <= 0 then return end
+	if getStacks(state, "wardens_chorus") <= 0 then return end
 
 	local perDefense = state.counters.bulwarkChorusPerDefense or 0
 	if perDefense <= 0 then return end
@@ -510,7 +605,7 @@ end
 local function tailTrainerFruitHandler(data, state)
 	if not (state and data) then return end
 
-	local stacks = (state.takenSet and state.takenSet.tail_trainer) or 0
+	local stacks = getStacks(state, "tail_trainer")
 	if stacks <= 0 then return end
 
 	local length = 0
@@ -615,7 +710,7 @@ local function applyMapmakersCompass(state, context, options)
 
 	clearMapmakersCompass(state)
 
-	local stacks = (state.takenSet and state.takenSet.mapmakers_compass) or 0
+	local stacks = getStacks(state, "mapmakers_compass")
 	if stacks <= 0 then
 		return
 	end
@@ -696,7 +791,7 @@ end
 
 local function mapmakersCompassFloorStart(data, state)
 	if not (data and state) then return end
-	if not state.takenSet or (state.takenSet.mapmakers_compass or 0) <= 0 then return end
+	if getStacks(state, "mapmakers_compass") <= 0 then return end
 
 	local context = data.context
 	applyMapmakersCompass(state, context, { celebrate = true, eventData = data })
@@ -890,7 +985,7 @@ local pool = {
 		end,
 		handlers = {
 			fruitCollected = function(data, state)
-				if not state or not state.takenSet or (state.takenSet.pocket_springs or 0) <= 0 then
+				if getStacks(state, "pocket_springs") <= 0 then
 					return
 				end
 
@@ -1180,7 +1275,7 @@ local pool = {
 				state.counters.resonantShellHandlerRegistered = true
 				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
 					if not runState then return end
-					if not runState.takenSet or (runState.takenSet.resonant_shell or 0) <= 0 then return end
+					if getStacks(runState, "resonant_shell") <= 0 then return end
 					updateResonantShellBonus(runState)
 				end)
 			end
@@ -1302,7 +1397,7 @@ local pool = {
 			fruitCollected = function(data, state)
 				if not (data and state) then return end
 
-				local stacks = (state.takenSet and state.takenSet.pulse_bloom) or 0
+				local stacks = getStacks(state, "pulse_bloom")
 				if stacks <= 0 then return end
 
 				local fruitId = data.name or (data.fruitType and data.fruitType.id)
@@ -1479,7 +1574,7 @@ local pool = {
 				state.counters.verdantBondsHandlerRegistered = true
 				Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
 					if not runState then return end
-					if not runState.takenSet or (runState.takenSet.verdant_bonds or 0) <= 0 then return end
+					if getStacks(runState, "verdant_bonds") <= 0 then return end
 					if not data or not data.upgrade then return end
 
 					local upgradeTags = data.upgrade.tags
@@ -1546,7 +1641,7 @@ local pool = {
 				state.counters.stoneCensusHandlerRegistered = true
 				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
 					if not runState then return end
-					if not runState.takenSet or (runState.takenSet.stone_census or 0) <= 0 then return end
+					if getStacks(runState, "stone_census") <= 0 then return end
 					updateStoneCensus(runState)
 				end)
 			end
@@ -1576,7 +1671,7 @@ local pool = {
 				state.counters.guildLedgerHandlerRegistered = true
 				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
 					if not runState then return end
-					if not runState.takenSet or (runState.takenSet.guild_ledger or 0) <= 0 then return end
+					if getStacks(runState, "guild_ledger") <= 0 then return end
 					updateGuildLedger(runState)
 				end)
 			end
@@ -2012,25 +2107,42 @@ end
 
 function Upgrades:getTakenCount(id)
 	if not id then return 0 end
-	return self.runState.takenSet[id] or 0
+	return getStacks(self.runState, id)
 end
 
 function Upgrades:addEventHandler(event, handler)
-	if not event or type(handler) ~= "function" then return end
-	local handlers = self.runState.handlers[event]
-	if not handlers then
-		handlers = {}
-		self.runState.handlers[event] = handlers
-	end
-	table.insert(handlers, handler)
+        if not event or type(handler) ~= "function" then return end
+        local state = self.runState
+        if state and state.addHandler then
+                state:addHandler(event, handler)
+                return
+        end
+
+        local handlers = state and state.handlers and state.handlers[event]
+        if not handlers then
+                handlers = {}
+                if state and state.handlers then
+                        state.handlers[event] = handlers
+                end
+        end
+
+        table.insert(handlers, handler)
 end
 
 function Upgrades:notify(event, data)
-	local handlers = self.runState.handlers[event]
-	if not handlers then return end
-	for _, handler in ipairs(handlers) do
-		handler(data, self.runState)
-	end
+        local state = self.runState
+        if not state then return end
+
+        if state.notify then
+                state:notify(event, data)
+                return
+        end
+
+        local handlers = state.handlers and state.handlers[event]
+        if not handlers then return end
+        for _, handler in ipairs(handlers) do
+                handler(data, state)
+        end
 end
 
 local function clamp(value, min, max)
@@ -2046,10 +2158,9 @@ function Upgrades:getHUDIndicators()
 		return indicators
 	end
 
-	local function hasUpgrade(id)
-		if not state.takenSet then return false end
-		return (state.takenSet[id] or 0) > 0
-	end
+        local function hasUpgrade(id)
+                return getStacks(state, id) > 0
+        end
 
 	local stoneStacks = state.counters and state.counters.stonebreakerStacks or 0
 	if stoneStacks > 0 then
@@ -2819,10 +2930,15 @@ end
 function Upgrades:acquire(card, context)
 	if not card or not card.upgrade then return end
 
-	local upgrade = card.upgrade
-	local state = self.runState
+        local upgrade = card.upgrade
+        local state = self.runState
 
-	state.takenSet[upgrade.id] = (state.takenSet[upgrade.id] or 0) + 1
+        if state and state.addStacks then
+                state:addStacks(upgrade.id, 1)
+        else
+                local currentStacks = getStacks(state, upgrade.id)
+                state.takenSet[upgrade.id] = currentStacks + 1
+        end
 	table.insert(state.takenOrder, upgrade.id)
 
 	PlayerStats:add("totalUpgradesPurchased", 1)
