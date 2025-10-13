@@ -304,14 +304,14 @@ function FruitEvents.handleConsumption(x, y)
 		local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(
 			Snake:getSegments(),
 			Fruit,
-                        Rocks,
-                        safeZone,
-                        {
-                                avoidFrontOfSnake = true,
-                                direction = Snake:getDirection(),
-                                frontBuffer = 5,
-                        }
-                )
+			Rocks,
+			safeZone,
+			{
+				avoidFrontOfSnake = true,
+				direction = Snake:getDirection(),
+				frontBuffer = 5,
+			}
+		)
 		if fx then
 			Rocks:spawn(fx, fy, "small")
 			SnakeUtils.setOccupied(tileCol, tileRow, true)

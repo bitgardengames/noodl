@@ -542,39 +542,39 @@ function Saws:draw()
 		love.graphics.setColor(baseColor)
 		love.graphics.polygon("fill", points)
 
-                -- Determine whether the hub highlight should be visible. When the saw
-                -- is mounted in a wall (vertical with an explicit side) the hub sits
-                -- mostly inside the track. If the track clips through the hub we end
-                -- up with a stray grey arc poking out of the blade edge. Skip drawing
-                -- the highlight (and hub hole) in that situation.
-                local highlightRadius = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
-                local hideHubHighlight = false
-                local occlusionDepth = SINK_OFFSET + sinkOffset
+		-- Determine whether the hub highlight should be visible. When the saw
+		-- is mounted in a wall (vertical with an explicit side) the hub sits
+		-- mostly inside the track. If the track clips through the hub we end
+		-- up with a stray grey arc poking out of the blade edge. Skip drawing
+		-- the highlight (and hub hole) in that situation.
+		local highlightRadius = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
+		local hideHubHighlight = false
+		local occlusionDepth = SINK_OFFSET + sinkOffset
 
-                if saw.dir == "vertical" and (saw.side == "left" or saw.side == "right") then
-                        if occlusionDepth < highlightRadius then
-                                hideHubHighlight = true
-                        end
-                elseif occlusionDepth > highlightRadius then
-                        hideHubHighlight = true
-                end
+		if saw.dir == "vertical" and (saw.side == "left" or saw.side == "right") then
+			if occlusionDepth < highlightRadius then
+				hideHubHighlight = true
+			end
+		elseif occlusionDepth > highlightRadius then
+			hideHubHighlight = true
+		end
 
-                if not hideHubHighlight then
-                        local highlight = getHighlightColor(baseColor)
-                        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-                        love.graphics.setLineWidth(2)
-                        love.graphics.circle("line", 0, 0, highlightRadius)
-                end
+		if not hideHubHighlight then
+			local highlight = getHighlightColor(baseColor)
+			love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+			love.graphics.setLineWidth(2)
+			love.graphics.circle("line", 0, 0, highlightRadius)
+		end
 
-                -- Outline
-                love.graphics.setColor(0, 0, 0, 1)
-                love.graphics.setLineWidth(3)
-                love.graphics.polygon("line", points)
+		-- Outline
+		love.graphics.setColor(0, 0, 0, 1)
+		love.graphics.setLineWidth(3)
+		love.graphics.polygon("line", points)
 
-                if not hideHubHighlight then
-                        -- Hub hole
-                        love.graphics.circle("fill", 0, 0, HUB_HOLE_RADIUS)
-                end
+		if not hideHubHighlight then
+			-- Hub hole
+			love.graphics.circle("fill", 0, 0, HUB_HOLE_RADIUS)
+		end
 
 		love.graphics.pop()
 

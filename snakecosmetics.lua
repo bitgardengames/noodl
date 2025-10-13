@@ -275,11 +275,11 @@ local SKIN_DEFINITIONS = {
 		unlock = { achievement = "floorAbyss" },
 		order = 80,
 	},
-        {
-                id = "chrono_carapace",
-                name = "Chrono Carapace",
-                description = "Temporal plating gleaned from time-locked relics. Unlocks at metaprogression level 12.",
-                colors = {
+	{
+		id = "chrono_carapace",
+		name = "Chrono Carapace",
+		description = "Temporal plating gleaned from time-locked relics. Unlocks at metaprogression level 12.",
+		colors = {
 			body = {0.58, 0.72, 0.95, 1.0},
 			outline = {0.12, 0.18, 0.32, 1.0},
 			glow = {0.76, 0.92, 1.00, 0.88},
@@ -306,48 +306,48 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-                unlock = { level = 12 },
-                order = 90,
-        },
-        {
-                id = "midnight_circuit",
-                name = "Midnight Circuit",
-                description = "Quantum filaments hum with midnight energy. Unlocks at metaprogression level 15.",
-                colors = {
-                        body = {0.16, 0.20, 0.44, 1.0},
-                        outline = {0.04, 0.06, 0.16, 1.0},
-                        glow = {0.48, 0.82, 1.00, 0.88},
-                },
-                effects = {
-                        overlay = {
-                                type = "ionStorm",
-                                intensity = 0.62,
-                                opacity = 0.85,
-                                boltFrequency = 6.2,
-                                flashFrequency = 4.0,
-                                haze = 0.4,
-                                turbulence = 1.1,
-                                colors = {
-                                        primary = {0.24, 0.58, 0.98, 1.0},
-                                        secondary = {0.56, 0.32, 0.92, 1.0},
-                                        tertiary = {0.32, 0.86, 0.96, 1.0},
-                                },
-                        },
-                        glow = {
-                                intensity = 0.68,
-                                radiusMultiplier = 1.6,
-                                color = {0.44, 0.80, 1.00, 1.0},
-                                step = 2,
-                        },
-                },
-                unlock = { level = 15 },
-                order = 95,
-        },
-        {
-                id = "gilded_siren",
-                name = "Gilded Siren",
-                description = "Goldleaf fins that shimmer with every high score. Unlock the Score Legend achievement to claim it.",
-                colors = {
+		unlock = { level = 12 },
+		order = 90,
+	},
+	{
+		id = "midnight_circuit",
+		name = "Midnight Circuit",
+		description = "Quantum filaments hum with midnight energy. Unlocks at metaprogression level 15.",
+		colors = {
+			body = {0.16, 0.20, 0.44, 1.0},
+			outline = {0.04, 0.06, 0.16, 1.0},
+			glow = {0.48, 0.82, 1.00, 0.88},
+		},
+		effects = {
+			overlay = {
+				type = "ionStorm",
+				intensity = 0.62,
+				opacity = 0.85,
+				boltFrequency = 6.2,
+				flashFrequency = 4.0,
+				haze = 0.4,
+				turbulence = 1.1,
+				colors = {
+					primary = {0.24, 0.58, 0.98, 1.0},
+					secondary = {0.56, 0.32, 0.92, 1.0},
+					tertiary = {0.32, 0.86, 0.96, 1.0},
+				},
+			},
+			glow = {
+				intensity = 0.68,
+				radiusMultiplier = 1.6,
+				color = {0.44, 0.80, 1.00, 1.0},
+				step = 2,
+			},
+		},
+		unlock = { level = 15 },
+		order = 95,
+	},
+	{
+		id = "gilded_siren",
+		name = "Gilded Siren",
+		description = "Goldleaf fins that shimmer with every high score. Unlock the Score Legend achievement to claim it.",
+		colors = {
 			body = {0.96, 0.78, 0.42, 1.0},
 			outline = {0.36, 0.20, 0.05, 1.0},
 			glow = {1.00, 0.88, 0.52, 0.86},
@@ -561,12 +561,12 @@ local function buildDefaultState()
 
 	unlocked[DEFAULT_SKIN_ID] = true
 
-        return {
-                selectedSkin = DEFAULT_SKIN_ID,
-                unlocked = unlocked,
-                unlockHistory = {},
-                recentUnlocks = {},
-        }
+	return {
+		selectedSkin = DEFAULT_SKIN_ID,
+		unlocked = unlocked,
+		unlockHistory = {},
+		recentUnlocks = {},
+	}
 end
 
 local DEFAULT_STATE = buildDefaultState()
@@ -702,14 +702,14 @@ function SnakeCosmetics:_ensureLoaded()
 		end
 	end
 
-        self.state.unlocked = self.state.unlocked or {}
-        self.state.unlocked[DEFAULT_SKIN_ID] = true
-        self.state.unlockHistory = self.state.unlockHistory or {}
-        self.state.recentUnlocks = self.state.recentUnlocks or {}
+	self.state.unlocked = self.state.unlocked or {}
+	self.state.unlocked[DEFAULT_SKIN_ID] = true
+	self.state.unlockHistory = self.state.unlockHistory or {}
+	self.state.recentUnlocks = self.state.recentUnlocks or {}
 
-        self:_validateSelection()
+	self:_validateSelection()
 
-        self._loaded = true
+	self._loaded = true
 end
 
 function SnakeCosmetics:_validateSelection()
@@ -730,15 +730,15 @@ function SnakeCosmetics:_save()
 		return
 	end
 
-        local snapshot = {
-                selectedSkin = self.state.selectedSkin,
-                unlocked = copyTable(self.state.unlocked),
-                unlockHistory = copyTable(self.state.unlockHistory or {}),
-                recentUnlocks = copyTable(self.state.recentUnlocks or {}),
-        }
+	local snapshot = {
+		selectedSkin = self.state.selectedSkin,
+		unlocked = copyTable(self.state.unlocked),
+		unlockHistory = copyTable(self.state.unlockHistory or {}),
+		recentUnlocks = copyTable(self.state.recentUnlocks or {}),
+	}
 
-        local serialized = "return " .. serialize(snapshot, 0) .. "\n"
-        love.filesystem.write(SAVE_FILE, serialized)
+	local serialized = "return " .. serialize(snapshot, 0) .. "\n"
+	love.filesystem.write(SAVE_FILE, serialized)
 end
 
 function SnakeCosmetics:_recordUnlock(id, context)
@@ -768,15 +768,15 @@ function SnakeCosmetics:_unlockSkinInternal(id, context)
 		return false
 	end
 
-        if self.state.unlocked[id] then
-                return false
-        end
+	if self.state.unlocked[id] then
+		return false
+	end
 
-        self.state.unlocked[id] = true
-        self.state.recentUnlocks = self.state.recentUnlocks or {}
-        self.state.recentUnlocks[id] = true
-        self:_recordUnlock(id, context)
-        return true
+	self.state.unlocked[id] = true
+	self.state.recentUnlocks = self.state.recentUnlocks or {}
+	self.state.recentUnlocks[id] = true
+	self:_recordUnlock(id, context)
+	return true
 end
 
 function SnakeCosmetics:isSkinUnlocked(id)
@@ -909,47 +909,47 @@ function SnakeCosmetics:load(context)
 end
 
 function SnakeCosmetics:getSkins()
-        self:_ensureLoaded()
+	self:_ensureLoaded()
 
-        local list = {}
-        local recentUnlocks = self.state.recentUnlocks or {}
-        for _, skin in ipairs(self._orderedSkins or {}) do
-                local entry = copyTable(skin)
-                entry.unlocked = self.state.unlocked[skin.id] == true
-                entry.selected = (self.state.selectedSkin == skin.id)
-                entry.justUnlocked = recentUnlocks[skin.id] == true
-                list[#list + 1] = entry
-        end
-        return list
+	local list = {}
+	local recentUnlocks = self.state.recentUnlocks or {}
+	for _, skin in ipairs(self._orderedSkins or {}) do
+		local entry = copyTable(skin)
+		entry.unlocked = self.state.unlocked[skin.id] == true
+		entry.selected = (self.state.selectedSkin == skin.id)
+		entry.justUnlocked = recentUnlocks[skin.id] == true
+		list[#list + 1] = entry
+	end
+	return list
 end
 
 function SnakeCosmetics:clearRecentUnlocks(ids)
-        self:_ensureLoaded()
+	self:_ensureLoaded()
 
-        local changed = false
-        if type(ids) == "table" then
-                for key, value in pairs(ids) do
-                        local id
-                        if type(key) == "number" then
-                                id = value
-                        else
-                                id = key
-                        end
-                        if id and self.state.recentUnlocks[id] then
-                                self.state.recentUnlocks[id] = nil
-                                changed = true
-                        end
-                end
-        else
-                for id in pairs(self.state.recentUnlocks or {}) do
-                        self.state.recentUnlocks[id] = nil
-                        changed = true
-                end
-        end
+	local changed = false
+	if type(ids) == "table" then
+		for key, value in pairs(ids) do
+			local id
+			if type(key) == "number" then
+				id = value
+			else
+				id = key
+			end
+			if id and self.state.recentUnlocks[id] then
+				self.state.recentUnlocks[id] = nil
+				changed = true
+			end
+		end
+	else
+		for id in pairs(self.state.recentUnlocks or {}) do
+			self.state.recentUnlocks[id] = nil
+			changed = true
+		end
+	end
 
-        if changed then
-                self:_save()
-        end
+	if changed then
+		self:_save()
+	end
 end
 
 function SnakeCosmetics:getActiveSkinId()

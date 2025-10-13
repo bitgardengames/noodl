@@ -344,28 +344,28 @@ function TransitionManager:confirmFloorIntro()
 		return false
 	end
 
-        data.transitionIntroConfirmed = true
+	data.transitionIntroConfirmed = true
 
-        local duration = self.duration or 0
-        if duration > 0 and self.timer < duration then
-                -- Keep only a brief dissolve after the player confirms the intro.
-                local minRemaining = 0.3
-                local targetTimer = duration - minRemaining
-                if targetTimer < 0 then
-                        targetTimer = 0
-                end
-                if targetTimer > self.timer then
-                        self.timer = targetTimer
-                end
-        end
+	local duration = self.duration or 0
+	if duration > 0 and self.timer < duration then
+		-- Keep only a brief dissolve after the player confirms the intro.
+		local minRemaining = 0.3
+		local targetTimer = duration - minRemaining
+		if targetTimer < 0 then
+			targetTimer = 0
+		end
+		if targetTimer > self.timer then
+			self.timer = targetTimer
+		end
+	end
 
-        self:updateGameplayState()
+	self:updateGameplayState()
 
-        if self.timer >= self.duration then
-                self:completeFloorIntro()
-        end
+	if self.timer >= self.duration then
+		self:completeFloorIntro()
+	end
 
-        return true
+	return true
 end
 
 return TransitionManager

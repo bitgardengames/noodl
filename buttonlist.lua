@@ -12,14 +12,14 @@ local function isSelectable(button)
 end
 
 function ButtonList.new()
-        return setmetatable({buttons = {}, focusIndex = nil, focusSource = nil, lastNonMouseFocusIndex = nil}, ButtonList)
+	return setmetatable({buttons = {}, focusIndex = nil, focusSource = nil, lastNonMouseFocusIndex = nil}, ButtonList)
 end
 
 function ButtonList:reset(definitions)
-        self.buttons = {}
-        self.focusIndex = nil
-        self.focusSource = nil
-        self.lastNonMouseFocusIndex = nil
+	self.buttons = {}
+	self.focusIndex = nil
+	self.focusSource = nil
+	self.lastNonMouseFocusIndex = nil
 
 	for index, definition in ipairs(definitions or {}) do
 		local button = {}
@@ -38,11 +38,11 @@ function ButtonList:reset(definitions)
 		self.buttons[#self.buttons + 1] = button
 	end
 
-        self:focusFirst()
-        -- Avoid treating the initial focus as a non-mouse selection so that
-        -- the UI can clear focus when the cursor leaves the buttons before any
-        -- keyboard/controller input has occurred.
-        self.lastNonMouseFocusIndex = nil
+	self:focusFirst()
+	-- Avoid treating the initial focus as a non-mouse selection so that
+	-- the UI can clear focus when the cursor leaves the buttons before any
+	-- keyboard/controller input has occurred.
+	self.lastNonMouseFocusIndex = nil
 
 	return self.buttons
 end
@@ -61,35 +61,35 @@ function ButtonList:updateFocusVisuals()
 end
 
 function ButtonList:setFocus(index, source, skipNonMouseHistory)
-        if not index or not self.buttons[index] then return end
+	if not index or not self.buttons[index] then return end
 
-        self.focusIndex = index
-        self.focusSource = source or "programmatic"
-        if self.focusSource ~= "mouse" and not skipNonMouseHistory then
-                self.lastNonMouseFocusIndex = index
-        end
-        self:updateFocusVisuals()
+	self.focusIndex = index
+	self.focusSource = source or "programmatic"
+	if self.focusSource ~= "mouse" and not skipNonMouseHistory then
+		self.lastNonMouseFocusIndex = index
+	end
+	self:updateFocusVisuals()
 
-        return self.buttons[index]
+	return self.buttons[index]
 end
 
 function ButtonList:clearFocus()
-        self.focusIndex = nil
-        self.focusSource = nil
-        self.lastNonMouseFocusIndex = nil
-        self:updateFocusVisuals()
+	self.focusIndex = nil
+	self.focusSource = nil
+	self.lastNonMouseFocusIndex = nil
+	self:updateFocusVisuals()
 end
 
 function ButtonList:focusFirst()
-        for index, button in ipairs(self.buttons) do
-                if isSelectable(button) then
-                        return self:setFocus(index, nil, true)
-                end
-        end
+	for index, button in ipairs(self.buttons) do
+		if isSelectable(button) then
+			return self:setFocus(index, nil, true)
+		end
+	end
 
-        if #self.buttons > 0 then
-                return self:setFocus(1, nil, true)
-        end
+	if #self.buttons > 0 then
+		return self:setFocus(1, nil, true)
+	end
 end
 
 function ButtonList:moveFocus(delta)
@@ -135,21 +135,21 @@ function ButtonList:updateHover(mx, my)
 		end
 	end
 
-        if hoveredIndex then
-                self:setFocus(hoveredIndex, "mouse")
-        else
-                if self.focusSource == "mouse" then
-                        if self.lastNonMouseFocusIndex and self.buttons[self.lastNonMouseFocusIndex] then
-                                self:setFocus(self.lastNonMouseFocusIndex)
-                        else
-                                self:clearFocus()
-                        end
-                else
-                        self:updateFocusVisuals()
-                end
-        end
+	if hoveredIndex then
+		self:setFocus(hoveredIndex, "mouse")
+	else
+		if self.focusSource == "mouse" then
+			if self.lastNonMouseFocusIndex and self.buttons[self.lastNonMouseFocusIndex] then
+				self:setFocus(self.lastNonMouseFocusIndex)
+			else
+				self:clearFocus()
+			end
+		else
+			self:updateFocusVisuals()
+		end
+	end
 
-        return hovered
+	return hovered
 end
 
 function ButtonList:mousepressed(x, y, button)

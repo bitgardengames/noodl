@@ -1,34 +1,34 @@
 local Easing = {}
 
 function Easing.clamp(value, minValue, maxValue)
-        if minValue > maxValue then
-                minValue, maxValue = maxValue, minValue
-        end
+	if minValue > maxValue then
+		minValue, maxValue = maxValue, minValue
+	end
 
-        if value < minValue then
-                return minValue
-        elseif value > maxValue then
-                return maxValue
-        end
+	if value < minValue then
+		return minValue
+	elseif value > maxValue then
+		return maxValue
+	end
 
-        return value
+	return value
 end
 
 function Easing.clamp01(value)
-        return Easing.clamp(value, 0, 1)
+	return Easing.clamp(value, 0, 1)
 end
 
 function Easing.lerp(a, b, t)
-        return a + (b - a) * t
+	return a + (b - a) * t
 end
 
 function Easing.easeOutCubic(t)
-        local inv = 1 - t
-        return 1 - inv * inv * inv
+	local inv = 1 - t
+	return 1 - inv * inv * inv
 end
 
 function Easing.easeInCubic(t)
-        return t * t * t
+	return t * t * t
 end
 
 function Easing.easeInOutCubic(t)

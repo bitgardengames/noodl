@@ -26,87 +26,87 @@ local RunState = {}
 RunState.__index = RunState
 
 function RunState.new(defaults)
-        local state = {
-                takenOrder = {},
-                takenSet = {},
-                tags = {},
-                counters = {},
-                handlers = {},
-                effects = deepcopy(defaults or defaultEffects),
-                baseline = {},
-        }
+	local state = {
+		takenOrder = {},
+		takenSet = {},
+		tags = {},
+		counters = {},
+		handlers = {},
+		effects = deepcopy(defaults or defaultEffects),
+		baseline = {},
+	}
 
-        return setmetatable(state, RunState)
+	return setmetatable(state, RunState)
 end
 
 function RunState:getStacks(id)
-        if not id then
-                return 0
-        end
+	if not id then
+		return 0
+	end
 
-        return self.takenSet[id] or 0
+	return self.takenSet[id] or 0
 end
 
 function RunState:addStacks(id, amount)
-        if not id then
-                return
-        end
+	if not id then
+		return
+	end
 
-        amount = amount or 1
-        self.takenSet[id] = (self.takenSet[id] or 0) + amount
+	amount = amount or 1
+	self.takenSet[id] = (self.takenSet[id] or 0) + amount
 end
 
 function RunState:hasUpgrade(id)
-        return self:getStacks(id) > 0
+	return self:getStacks(id) > 0
 end
 
 function RunState:addHandler(event, handler)
-        if not event or type(handler) ~= "function" then
-                return
-        end
+	if not event or type(handler) ~= "function" then
+		return
+	end
 
-        local handlers = self.handlers[event]
-        if not handlers then
-                handlers = {}
-                self.handlers[event] = handlers
-        end
+	local handlers = self.handlers[event]
+	if not handlers then
+		handlers = {}
+		self.handlers[event] = handlers
+	end
 
-        table.insert(handlers, handler)
+	table.insert(handlers, handler)
 end
 
 function RunState:notify(event, data)
-        local handlers = self.handlers[event]
-        if not handlers then
-                return
-        end
+	local handlers = self.handlers[event]
+	if not handlers then
+		return
+	end
 
-        for _, fn in ipairs(handlers) do
-                fn(data, self)
-        end
+	for _, fn in ipairs(handlers) do
+		fn(data, self)
+	end
 end
 
 function RunState:resetEffects(defaults)
-        self.effects = deepcopy(defaults or defaultEffects)
+	self.effects = deepcopy(defaults or defaultEffects)
 end
 
 local POCKET_SPRINGS_FRUIT_TARGET = 20
 
 local function getStacks(state, id)
-        if not state or not id then
-                return 0
-        end
+	if not state or not id then
+		return 0
+	end
 
-        local method = state.getStacks
-        if type(method) == "function" then
-                return method(state, id)
-        end
+	local method = state.getStacks
+	if type(method) == "function" then
+		return method(state, id)
+	end
 
-        local takenSet = state.takenSet
-        if not takenSet then
-                return 0
-        end
+	local takenSet = state.takenSet
+	if not takenSet then
+		return 0
+	end
 
-        return takenSet[id] or 0
+	return takenSet[id] or 0
 end
 
 local function getGameInstance()
@@ -399,41 +399,41 @@ local function rattleGambitShieldReset(_, state)
 end
 
 local function newRunState()
-        return RunState.new(defaultEffects)
+	return RunState.new(defaultEffects)
 end
 
 Upgrades.runState = newRunState()
 
 local function normalizeUpgradeDefinition(upgrade)
-        if type(upgrade) ~= "table" then
-                error("upgrade definition must be a table")
-        end
+	if type(upgrade) ~= "table" then
+		error("upgrade definition must be a table")
+	end
 
-        if upgrade.id == nil and upgrade.name ~= nil then
-                upgrade.id = upgrade.name
-        end
+	if upgrade.id == nil and upgrade.name ~= nil then
+		upgrade.id = upgrade.name
+	end
 
-        if upgrade.name and not upgrade.nameKey then
-                upgrade.nameKey = upgrade.name
-                upgrade.name = nil
-        end
+	if upgrade.name and not upgrade.nameKey then
+		upgrade.nameKey = upgrade.name
+		upgrade.name = nil
+	end
 
-        if upgrade.desc and not upgrade.descKey then
-                upgrade.descKey = upgrade.desc
-                upgrade.desc = nil
-        end
+	if upgrade.desc and not upgrade.descKey then
+		upgrade.descKey = upgrade.desc
+		upgrade.desc = nil
+	end
 
-        DataSchemas.applyDefaults(upgradeSchema, upgrade)
-        local context = string.format("upgrade '%s'", tostring(upgrade.id or "?"))
-        DataSchemas.validate(upgradeSchema, upgrade, context)
+	DataSchemas.applyDefaults(upgradeSchema, upgrade)
+	local context = string.format("upgrade '%s'", tostring(upgrade.id or "?"))
+	DataSchemas.validate(upgradeSchema, upgrade, context)
 
-        return upgrade
+	return upgrade
 end
 
 local function register(upgrade)
-        normalizeUpgradeDefinition(upgrade)
-        poolById[upgrade.id] = upgrade
-        return upgrade
+	normalizeUpgradeDefinition(upgrade)
+	poolById[upgrade.id] = upgrade
+	return upgrade
 end
 
 local function countUpgradesWithTag(state, tag)
@@ -952,9 +952,9 @@ local pool = {
 		id = "deliberate_coil",
 		nameKey = "upgrades.deliberate_coil.name",
 		descKey = "upgrades.deliberate_coil.description",
-                rarity = "epic",
-                tags = {"speed", "risk"},
-                unlockTag = "speedcraft",
+		rarity = "epic",
+		tags = {"speed", "risk"},
+		unlockTag = "speedcraft",
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(0.85)
 			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
@@ -1690,9 +1690,9 @@ local pool = {
 		id = "artisan_catalog",
 		nameKey = "upgrades.artisan_catalog.name",
 		descKey = "upgrades.artisan_catalog.description",
-                rarity = "rare",
-                tags = {"economy", "defense"},
-                unlockTag = "artisan_alliance",
+		rarity = "rare",
+		tags = {"economy", "defense"},
+		unlockTag = "artisan_alliance",
 		onAcquire = function(state)
 			state.counters.artisanCatalogPurchases = state.counters.artisanCatalogPurchases or 0
 		end,
@@ -1707,9 +1707,9 @@ local pool = {
 		id = "venomous_hunger",
 		nameKey = "upgrades.venomous_hunger.name",
 		descKey = "upgrades.venomous_hunger.description",
-                rarity = "uncommon",
-                tags = {"risk"},
-                unlockTag = "venom_lab",
+		rarity = "uncommon",
+		tags = {"risk"},
+		unlockTag = "venom_lab",
 		onAcquire = function(state)
 			state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.5
 			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
@@ -1742,9 +1742,9 @@ local pool = {
 		id = "grim_reliquary",
 		nameKey = "upgrades.grim_reliquary.name",
 		descKey = "upgrades.grim_reliquary.description",
-                rarity = "rare",
-                tags = {"defense"},
-                unlockTag = "reliquary_clearance",
+		rarity = "rare",
+		tags = {"defense"},
+		unlockTag = "reliquary_clearance",
 		onAcquire = function(state)
 			state.counters.grimReliquarySouls = state.counters.grimReliquarySouls or 0
 
@@ -1759,9 +1759,9 @@ local pool = {
 		nameKey = "upgrades.abyssal_catalyst.name",
 		descKey = "upgrades.abyssal_catalyst.description",
 		rarity = "epic",
-                allowDuplicates = false,
-                tags = {"defense", "risk"},
-                unlockTag = "abyssal_protocols",
+		allowDuplicates = false,
+		tags = {"defense", "risk"},
+		unlockTag = "abyssal_protocols",
 		onAcquire = function(state)
 			state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 0.85
 			state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.9
@@ -1849,9 +1849,9 @@ local pool = {
 		id = "titanblood_pact",
 		nameKey = "upgrades.titanblood_pact.name",
 		descKey = "upgrades.titanblood_pact.description",
-                rarity = "epic",
-                tags = {"defense", "risk"},
-                unlockTag = "abyssal_protocols",
+		rarity = "epic",
+		tags = {"defense", "risk"},
+		unlockTag = "abyssal_protocols",
 		weight = 1,
 		onAcquire = function(state)
 			Snake:addCrashShields(3)
@@ -1867,9 +1867,9 @@ local pool = {
 		nameKey = "upgrades.chronospiral_core.name",
 		descKey = "upgrades.chronospiral_core.description",
 		rarity = "epic",
-                tags = {"combo", "defense", "risk"},
-                weight = 1,
-                unlockTag = "combo_mastery",
+		tags = {"combo", "defense", "risk"},
+		weight = 1,
+		unlockTag = "combo_mastery",
 		onAcquire = function(state)
 			state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.75
 			state.effects.sawSpinMult = (state.effects.sawSpinMult or 1) * 0.6
@@ -1884,10 +1884,10 @@ local pool = {
 		id = "phoenix_echo",
 		nameKey = "upgrades.phoenix_echo.name",
 		descKey = "upgrades.phoenix_echo.description",
-                rarity = "epic",
-                tags = {"defense", "risk"},
-                unlockTag = "abyssal_protocols",
-                onAcquire = function(state)
+		rarity = "epic",
+		tags = {"defense", "risk"},
+		unlockTag = "abyssal_protocols",
+		onAcquire = function(state)
 			state.counters.phoenixEchoCharges = (state.counters.phoenixEchoCharges or 0) + 1
 		end,
 	}),
@@ -1931,9 +1931,9 @@ local pool = {
 		nameKey = "upgrades.sparkstep_relay.name",
 		descKey = "upgrades.sparkstep_relay.description",
 		rarity = "rare",
-                requiresTags = {"mobility"},
-                tags = {"mobility", "defense"},
-                unlockTag = "stormtech",
+		requiresTags = {"mobility"},
+		tags = {"mobility", "defense"},
+		unlockTag = "stormtech",
 		handlers = {
 			dashActivated = function(data)
 				local fx, fy = getEventPosition(data)
@@ -1967,9 +1967,9 @@ local pool = {
 		id = "stormchaser_rig",
 		nameKey = "upgrades.stormchaser_rig.name",
 		descKey = "upgrades.stormchaser_rig.description",
-                rarity = "rare",
-                tags = {"mobility", "economy"},
-                unlockTag = "stormtech",
+		rarity = "rare",
+		tags = {"mobility", "economy"},
+		unlockTag = "stormtech",
 		onAcquire = function(state)
 			state.counters.stormchaserRigPrimed = false
 		end,
@@ -2047,9 +2047,9 @@ local pool = {
 		id = "zephyr_coils",
 		nameKey = "upgrades.zephyr_coils.name",
 		descKey = "upgrades.zephyr_coils.description",
-                rarity = "rare",
-                tags = {"mobility", "risk"},
-                unlockTag = "stormtech",
+		rarity = "rare",
+		tags = {"mobility", "risk"},
+		unlockTag = "stormtech",
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(1.2)
 			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
@@ -2111,38 +2111,38 @@ function Upgrades:getTakenCount(id)
 end
 
 function Upgrades:addEventHandler(event, handler)
-        if not event or type(handler) ~= "function" then return end
-        local state = self.runState
-        if state and state.addHandler then
-                state:addHandler(event, handler)
-                return
-        end
+	if not event or type(handler) ~= "function" then return end
+	local state = self.runState
+	if state and state.addHandler then
+		state:addHandler(event, handler)
+		return
+	end
 
-        local handlers = state and state.handlers and state.handlers[event]
-        if not handlers then
-                handlers = {}
-                if state and state.handlers then
-                        state.handlers[event] = handlers
-                end
-        end
+	local handlers = state and state.handlers and state.handlers[event]
+	if not handlers then
+		handlers = {}
+		if state and state.handlers then
+			state.handlers[event] = handlers
+		end
+	end
 
-        table.insert(handlers, handler)
+	table.insert(handlers, handler)
 end
 
 function Upgrades:notify(event, data)
-        local state = self.runState
-        if not state then return end
+	local state = self.runState
+	if not state then return end
 
-        if state.notify then
-                state:notify(event, data)
-                return
-        end
+	if state.notify then
+		state:notify(event, data)
+		return
+	end
 
-        local handlers = state.handlers and state.handlers[event]
-        if not handlers then return end
-        for _, handler in ipairs(handlers) do
-                handler(data, state)
-        end
+	local handlers = state.handlers and state.handlers[event]
+	if not handlers then return end
+	for _, handler in ipairs(handlers) do
+		handler(data, state)
+	end
 end
 
 local function clamp(value, min, max)
@@ -2158,9 +2158,9 @@ function Upgrades:getHUDIndicators()
 		return indicators
 	end
 
-        local function hasUpgrade(id)
-                return getStacks(state, id) > 0
-        end
+	local function hasUpgrade(id)
+		return getStacks(state, id) > 0
+	end
 
 	local stoneStacks = state.counters and state.counters.stonebreakerStacks or 0
 	if stoneStacks > 0 then
@@ -2262,11 +2262,11 @@ function Upgrades:getHUDIndicators()
 
 		local status = active and hudText("active") or hudText("ready")
 
-                table.insert(indicators, {
-                        id = "adrenaline_surge",
-                        label = label,
-                        hideLabel = true,
-                        accentColor = {1.0, 0.45, 0.45, 1},
+		table.insert(indicators, {
+			id = "adrenaline_surge",
+			label = label,
+			hideLabel = true,
+			accentColor = {1.0, 0.45, 0.45, 1},
 			stackCount = nil,
 			charge = charge,
 			chargeLabel = chargeLabel,
@@ -2306,11 +2306,11 @@ function Upgrades:getHUDIndicators()
 			end
 		end
 
-                table.insert(indicators, {
-                        id = "thunder_dash",
-                        label = label,
-                        hideLabel = true,
-                        accentColor = accent,
+		table.insert(indicators, {
+			id = "thunder_dash",
+			label = label,
+			hideLabel = true,
+			accentColor = accent,
 			stackCount = nil,
 			charge = charge,
 			chargeLabel = chargeLabel,
@@ -2360,11 +2360,11 @@ function Upgrades:getHUDIndicators()
 			end
 		end
 
-                table.insert(indicators, {
-                        id = "temporal_anchor",
-                        label = label,
-                        hideLabel = true,
-                        accentColor = accent,
+		table.insert(indicators, {
+			id = "temporal_anchor",
+			label = label,
+			hideLabel = true,
+			accentColor = accent,
 			stackCount = nil,
 			charge = charge,
 			chargeLabel = chargeLabel,
@@ -2930,15 +2930,15 @@ end
 function Upgrades:acquire(card, context)
 	if not card or not card.upgrade then return end
 
-        local upgrade = card.upgrade
-        local state = self.runState
+	local upgrade = card.upgrade
+	local state = self.runState
 
-        if state and state.addStacks then
-                state:addStacks(upgrade.id, 1)
-        else
-                local currentStacks = getStacks(state, upgrade.id)
-                state.takenSet[upgrade.id] = currentStacks + 1
-        end
+	if state and state.addStacks then
+		state:addStacks(upgrade.id, 1)
+	else
+		local currentStacks = getStacks(state, upgrade.id)
+		state.takenSet[upgrade.id] = currentStacks + 1
+	end
 	table.insert(state.takenOrder, upgrade.id)
 
 	PlayerStats:add("totalUpgradesPurchased", 1)

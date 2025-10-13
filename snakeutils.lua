@@ -203,9 +203,9 @@ function SnakeUtils.aabb(ax, ay, asize, bx, by, bsize)
 	end
 
 	return ax < bx + bsize and
-		   ax + asize > bx and
-		   ay < by + bsize and
-		   ay + asize > by
+			ax + asize > bx and
+			ay < by + bsize and
+			ay + asize > by
 end
 
 -- handle input direction
@@ -239,45 +239,45 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 	local rockList = (rocks and rocks.getAll and rocks:getAll()) or {}
 	local safeCells = safeZone or {}
 
-        local avoidFront = not not opts.avoidFrontOfSnake
-        local frontCells
-        local frontLookup
+	local avoidFront = not not opts.avoidFrontOfSnake
+	local frontCells
+	local frontLookup
 
-        if avoidFront and trail[1] then
-                local head = trail[1]
-                local dirX, dirY = head.dirX, head.dirY
+	if avoidFront and trail[1] then
+		local head = trail[1]
+		local dirX, dirY = head.dirX, head.dirY
 
-                if (dirX == nil or dirY == nil) and opts.direction then
-                        dirX = opts.direction.x
-                        dirY = opts.direction.y
-                end
+		if (dirX == nil or dirY == nil) and opts.direction then
+			dirX = opts.direction.x
+			dirY = opts.direction.y
+		end
 
-                if dirX and dirY then
-                        local headCol, headRow = Arena:getTileFromWorld(head.drawX, head.drawY)
-                        if headCol and headRow then
-                                local buffer = math.max(1, math.floor(opts.frontBuffer or 1))
-                                for i = 1, buffer do
-                                        local aheadCol = headCol + dirX * i
-                                        local aheadRow = headRow + dirY * i
+		if dirX and dirY then
+			local headCol, headRow = Arena:getTileFromWorld(head.drawX, head.drawY)
+			if headCol and headRow then
+				local buffer = math.max(1, math.floor(opts.frontBuffer or 1))
+				for i = 1, buffer do
+					local aheadCol = headCol + dirX * i
+					local aheadRow = headRow + dirY * i
 
-                                        if cellWithinBounds(aheadCol, aheadRow) then
-                                                if not frontCells then
-                                                        frontCells = {}
-                                                        frontLookup = {}
-                                                end
+					if cellWithinBounds(aheadCol, aheadRow) then
+						if not frontCells then
+							frontCells = {}
+							frontLookup = {}
+						end
 
-                                                local key = aheadCol .. "," .. aheadRow
-                                                if not frontLookup[key] then
-                                                        frontLookup[key] = true
-                                                        frontCells[#frontCells + 1] = { aheadCol, aheadRow }
-                                                end
-                                        else
-                                                break
-                                        end
-                                end
-                        end
-                end
-        end
+						local key = aheadCol .. "," .. aheadRow
+						if not frontLookup[key] then
+							frontLookup[key] = true
+							frontCells[#frontCells + 1] = { aheadCol, aheadRow }
+						end
+					else
+						break
+					end
+				end
+			end
+		end
+	end
 
 	for _ = 1, maxAttempts do
 		local col = love.math.random(1, cols)
@@ -324,20 +324,20 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 			end
 		end
 
-                if not blocked and frontCells then
-                        for i = 1, #frontCells do
-                                local cell = frontCells[i]
-                                if cell[1] == col and cell[2] == row then
-                                        blocked = true
-                                        break
-                                end
-                        end
-                end
+		if not blocked and frontCells then
+			for i = 1, #frontCells do
+				local cell = frontCells[i]
+				if cell[1] == col and cell[2] == row then
+					blocked = true
+					break
+				end
+			end
+		end
 
-                if not blocked then
-                        return cx, cy, col, row
-                end
-        end
+		if not blocked then
+			return cx, cy, col, row
+		end
+	end
 
 	return nil, nil, nil, nil
 end

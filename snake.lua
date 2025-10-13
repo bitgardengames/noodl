@@ -408,40 +408,40 @@ function Snake:onDamageTaken(cause, info)
 			})
 		end
 
-                if FloatingText and FloatingText.add then
-                        local inflicted = info.inflictedDamage or info.damage
-                        local label
-                        if shielded then
-                                label = "SHIELD!"
-                        elseif inflicted and inflicted > 0 then
-                                label = nil
-                        else
-                                label = "HIT!"
-                        end
+		if FloatingText and FloatingText.add then
+			local inflicted = info.inflictedDamage or info.damage
+			local label
+			if shielded then
+				label = "SHIELD!"
+			elseif inflicted and inflicted > 0 then
+				label = nil
+			else
+				label = "HIT!"
+			end
 
-                        if label then
-                                local options = {
-                                        scale = 1.08,
-                                        popScaleFactor = 1.45,
-                                        popDuration = 0.24,
-                                        wobbleMagnitude = 0.2,
-                                        wobbleFrequency = 4.6,
-                                        shadow = {
-                                                color = {0, 0, 0, 0.6},
-                                                offset = {0, 3},
-                                                blur = 1.6,
-                                        },
-                                        glow = {
-                                                color = {1, 0.42, 0.32, 0.45},
-                                                magnitude = 0.35,
-                                                frequency = 5.2,
-                                        },
-                                        jitter = 2.4,
-                                }
+			if label then
+				local options = {
+					scale = 1.08,
+					popScaleFactor = 1.45,
+					popDuration = 0.24,
+					wobbleMagnitude = 0.2,
+					wobbleFrequency = 4.6,
+					shadow = {
+						color = {0, 0, 0, 0.6},
+						offset = {0, 3},
+						blur = 1.6,
+					},
+					glow = {
+						color = {1, 0.42, 0.32, 0.45},
+						magnitude = 0.35,
+						frequency = 5.2,
+					},
+					jitter = 2.4,
+				}
 
-                                FloatingText:add(label, centerX, centerY - 30, {1, 0.78, 0.68, 1}, 0.9, 36, nil, options)
-                        end
-                end
+				FloatingText:add(label, centerX, centerY - 30, {1, 0.78, 0.68, 1}, 0.9, 36, nil, options)
+			end
+		end
 	end
 
 	self.shieldFlashTimer = SHIELD_FLASH_DURATION
@@ -635,19 +635,19 @@ local function trimHoleSegments(hole)
 		end
 	end
 
-        hole.consumedLength = consumed
+	hole.consumedLength = consumed
 
-        local totalLength = math.max(0, (segmentCount or 0) * SEGMENT_SPACING)
-        if totalLength <= 1e-4 then
-                hole.fullyConsumed = true
-        else
-                local epsilon = SEGMENT_SPACING * 0.1
-                if consumed >= totalLength - epsilon then
-                        hole.fullyConsumed = true
-                else
-                        hole.fullyConsumed = false
-                end
-        end
+	local totalLength = math.max(0, (segmentCount or 0) * SEGMENT_SPACING)
+	if totalLength <= 1e-4 then
+		hole.fullyConsumed = true
+	else
+		local epsilon = SEGMENT_SPACING * 0.1
+		if consumed >= totalLength - epsilon then
+			hole.fullyConsumed = true
+		else
+			hole.fullyConsumed = false
+		end
+	end
 
 	if newHead and newHead.drawX and newHead.drawY then
 		hole.entryPointX = newHead.drawX
@@ -1159,21 +1159,21 @@ function Snake:drawClipped(hx, hy, hr)
 		love.graphics.setStencilTest("equal", 0)
 	end
 
-        local shouldDrawFace = descendingHole == nil
-        local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
+	local shouldDrawFace = descendingHole == nil
+	local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
-        if not hideDescendingBody then
-                SnakeDraw.run(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
-                        if headX and headY and clipRadius > 0 then
-                                local dx = headX - hx
-                                local dy = headY - hy
-                                if dx * dx + dy * dy < clipRadius * clipRadius then
-                                        return nil, nil
-                                end
-                        end
-                        return headX, headY
-                end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
-        end
+	if not hideDescendingBody then
+		SnakeDraw.run(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
+			if headX and headY and clipRadius > 0 then
+				local dx = headX - hx
+				local dy = headY - hy
+				if dx * dx + dy * dy < clipRadius * clipRadius then
+					return nil, nil
+				end
+			end
+			return headX, headY
+		end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
+	end
 
 	if clipRadius > 0 and descendingHole and not hideDescendingBody and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
 		love.graphics.setStencilTest("equal", 1)
@@ -1185,15 +1185,15 @@ function Snake:drawClipped(hx, hy, hr)
 end
 
 function Snake:startDescending(hx, hy, hr)
-        descendingHole = {
-                x = hx,
-                y = hy,
-                radius = hr or 0,
-                consumedLength = 0,
-                renderDepth = 0,
-                time = 0,
-                fullyConsumed = false,
-        }
+	descendingHole = {
+		x = hx,
+		y = hy,
+		radius = hr or 0,
+		consumedLength = 0,
+		renderDepth = 0,
+		time = 0,
+		fullyConsumed = false,
+	}
 
 	local headX, headY = self:getHead()
 	if headX and headY then
@@ -2082,19 +2082,19 @@ function Snake:draw()
 						return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
 					end
 
-                                   SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, false)
+					SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, false)
 				end
 			end
 		end
 
-                local shouldDrawFace = descendingHole == nil
-                local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
+		local shouldDrawFace = descendingHole == nil
+		local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
-                if not hideDescendingBody then
-                        SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
-                                return self:getHead()
-                        end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
-                end
+		if not hideDescendingBody then
+			SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
+				return self:getHead()
+			end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
+		end
 
 	end
 end

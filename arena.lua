@@ -130,10 +130,10 @@ local Arena = {
 	rows = 0,
 		exit = nil,
 		activeBackgroundEffect = nil,
-        borderFlare = 0,
-        borderFlareStrength = 0,
-        borderFlareTimer = 0,
-        borderFlareDuration = 1.05,
+	borderFlare = 0,
+	borderFlareStrength = 0,
+	borderFlareTimer = 0,
+	borderFlareDuration = 1.05,
 }
 
 function Arena:setSpawnDebugData(data)
@@ -171,7 +171,7 @@ end
 
 function Arena:getTilePosition(col, row)
 	return self.x + (col - 1) * self.tileSize,
-		   self.y + (row - 1) * self.tileSize
+			self.y + (row - 1) * self.tileSize
 end
 
 function Arena:getCenterOfTile(col, row)
@@ -194,9 +194,9 @@ function Arena:isInside(x, y)
 	local inset = self.tileSize / 2
 
 	return x >= (self.x + inset) and
-		   x <= (self.x + self.width  - inset) and
-		   y >= (self.y + inset) and
-		   y <= (self.y + self.height - inset)
+			x <= (self.x + self.width  - inset) and
+			y >= (self.y + inset) and
+			y <= (self.y + self.height - inset)
 end
 
 function Arena:getRandomTile()
@@ -325,8 +325,8 @@ function Arena:drawBorder()
 
 	-- Create/reuse MSAA canvas
 	if not self.borderCanvas or
-	   self.borderCanvas:getWidth() ~= love.graphics.getWidth() or
-	   self.borderCanvas:getHeight() ~= love.graphics.getHeight() then
+		self.borderCanvas:getWidth() ~= love.graphics.getWidth() or
+		self.borderCanvas:getHeight() ~= love.graphics.getHeight() then
 		self.borderCanvas = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight(), {msaa = 8})
 	end
 
@@ -375,72 +375,72 @@ function Arena:drawBorder()
 		end
 	end
 
-        local highlight = getHighlightColor(Theme.arenaBorder)
-        -- Disable the glossy highlight along the top-left edge.
-        highlight[4] = 0
-        if borderFlare > 0 then
-                -- Ease the flare towards a softer pastel tint instead of a harsh glow.
-                -- This keeps the pickup celebration visible while avoiding a sharp contrast.
-                highlight[1] = math.min(1, mixChannel(highlight[1], 0.97, 0.35 * borderFlare))
-                highlight[2] = math.max(0, mixChannel(highlight[2], 0.3, 0.48 * borderFlare))
-                highlight[3] = math.max(0, mixChannel(highlight[3], 0.25, 0.52 * borderFlare))
-                highlight[4] = math.min(1, highlight[4] * (1 + 0.45 * borderFlare))
-        end
+	local highlight = getHighlightColor(Theme.arenaBorder)
+	-- Disable the glossy highlight along the top-left edge.
+	highlight[4] = 0
+	if borderFlare > 0 then
+		-- Ease the flare towards a softer pastel tint instead of a harsh glow.
+		-- This keeps the pickup celebration visible while avoiding a sharp contrast.
+		highlight[1] = math.min(1, mixChannel(highlight[1], 0.97, 0.35 * borderFlare))
+		highlight[2] = math.max(0, mixChannel(highlight[2], 0.3, 0.48 * borderFlare))
+		highlight[3] = math.max(0, mixChannel(highlight[3], 0.25, 0.52 * borderFlare))
+		highlight[4] = math.min(1, highlight[4] * (1 + 0.45 * borderFlare))
+	end
 
-        local highlightAlpha = highlight[4] or 0
-        local highlightOffset = 2
-        if highlightAlpha > 0 then
-                local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
-                local cornerOffsetX = 3
-                local cornerOffsetY = 3
-                local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
-                local scissorY = math.floor(by - highlightWidth - highlightOffset - highlightShift)
-                local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset + highlightShift * 2)
-                local scissorH = math.ceil(bh + highlightWidth * 2 + highlightOffset + highlightShift * 2)
-                local outerRadius = radius + highlightOffset
-                local arcSegments = math.max(6, math.floor(outerRadius * 0.75))
+	local highlightAlpha = highlight[4] or 0
+	local highlightOffset = 2
+	if highlightAlpha > 0 then
+		local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
+		local cornerOffsetX = 3
+		local cornerOffsetY = 3
+		local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
+		local scissorY = math.floor(by - highlightWidth - highlightOffset - highlightShift)
+		local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset + highlightShift * 2)
+		local scissorH = math.ceil(bh + highlightWidth * 2 + highlightOffset + highlightShift * 2)
+		local outerRadius = radius + highlightOffset
+		local arcSegments = math.max(6, math.floor(outerRadius * 0.75))
 
-                local topPoints = {}
-                topPoints[#topPoints + 1] = bx + bw - radius - highlightShift
-                topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
-                topPoints[#topPoints + 1] = bx + radius - highlightShift
-                topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
-                local cornerStartIndex = #topPoints + 1
-                appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -math.pi / 2, -math.pi, arcSegments, true)
-                for i = cornerStartIndex, #topPoints, 2 do
-                        topPoints[i] = topPoints[i] + cornerOffsetX
-                        topPoints[i + 1] = topPoints[i + 1] + cornerOffsetY
-                end
+		local topPoints = {}
+		topPoints[#topPoints + 1] = bx + bw - radius - highlightShift
+		topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+		topPoints[#topPoints + 1] = bx + radius - highlightShift
+		topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+		local cornerStartIndex = #topPoints + 1
+		appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -math.pi / 2, -math.pi, arcSegments, true)
+		for i = cornerStartIndex, #topPoints, 2 do
+			topPoints[i] = topPoints[i] + cornerOffsetX
+			topPoints[i + 1] = topPoints[i + 1] + cornerOffsetY
+		end
 
-                local leftPoints = {}
-                leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
-                leftPoints[#leftPoints + 1] = by + radius - highlightShift
-                leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
-                leftPoints[#leftPoints + 1] = by + bh - radius - highlightShift
+		local leftPoints = {}
+		leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
+		leftPoints[#leftPoints + 1] = by + radius - highlightShift
+		leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
+		leftPoints[#leftPoints + 1] = by + bh - radius - highlightShift
 
-                love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
-                local prevLineWidth = love.graphics.getLineWidth()
-                local prevLineStyle = love.graphics.getLineStyle()
-                local prevLineJoin = love.graphics.getLineJoin()
-                love.graphics.setLineStyle("smooth")
-                love.graphics.setLineJoin("bevel")
-                love.graphics.setLineWidth(highlightWidth)
+		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
+		local prevLineWidth = love.graphics.getLineWidth()
+		local prevLineStyle = love.graphics.getLineStyle()
+		local prevLineJoin = love.graphics.getLineJoin()
+		love.graphics.setLineStyle("smooth")
+		love.graphics.setLineJoin("bevel")
+		love.graphics.setLineWidth(highlightWidth)
 
-                -- Top edge highlight
-                love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.4 + cornerOffsetY))
-                love.graphics.line(topPoints)
+		-- Top edge highlight
+		love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.4 + cornerOffsetY))
+		love.graphics.line(topPoints)
 
-                -- Left edge highlight
-                love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.4), scissorH)
-                love.graphics.line(leftPoints)
+		-- Left edge highlight
+		love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.4), scissorH)
+		love.graphics.line(leftPoints)
 
-                love.graphics.setScissor()
-                love.graphics.setLineWidth(prevLineWidth)
-                love.graphics.setLineStyle(prevLineStyle)
-                love.graphics.setLineJoin(prevLineJoin)
-        end
+		love.graphics.setScissor()
+		love.graphics.setLineWidth(prevLineWidth)
+		love.graphics.setLineStyle(prevLineStyle)
+		love.graphics.setLineJoin(prevLineJoin)
+	end
 
-        if borderFlare > 0.01 then
+	if borderFlare > 0.01 then
 		local glowStrength = borderFlare
 		local glowAlpha = 0.28 * glowStrength + 0.16 * flarePulse * glowStrength
 		local emberAlpha = 0.18 * glowStrength
@@ -462,30 +462,30 @@ function Arena:drawBorder()
 	local leftCapX = bx - highlightOffset - highlightShift
 	local leftCapY = by + bh - radius - highlightShift
 
-        if highlightAlpha > 0 then
-                local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
-                local capRadius = highlightWidth * 0.7
-                local featherRadius = capRadius * (1.9 + 0.35 * borderFlare)
-                local capAlpha = highlightAlpha * (0.4 + 0.22 * borderFlare)
-                local featherAlpha = highlightAlpha * (0.18 + 0.16 * borderFlare)
+	if highlightAlpha > 0 then
+		local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
+		local capRadius = highlightWidth * 0.7
+		local featherRadius = capRadius * (1.9 + 0.35 * borderFlare)
+		local capAlpha = highlightAlpha * (0.4 + 0.22 * borderFlare)
+		local featherAlpha = highlightAlpha * (0.18 + 0.16 * borderFlare)
 
-                local function drawHighlightCap(cx, cy)
-                        if capAlpha > 0 then
-                                love.graphics.setColor(highlight[1], highlight[2], highlight[3], capAlpha)
-                                love.graphics.circle("fill", cx, cy, capRadius)
-                        end
+		local function drawHighlightCap(cx, cy)
+			if capAlpha > 0 then
+				love.graphics.setColor(highlight[1], highlight[2], highlight[3], capAlpha)
+				love.graphics.circle("fill", cx, cy, capRadius)
+			end
 
-                        if featherAlpha > 0 then
-                                love.graphics.setColor(highlight[1], highlight[2], highlight[3], featherAlpha)
-                                love.graphics.circle("fill", cx, cy, featherRadius)
-                        end
-                end
+			if featherAlpha > 0 then
+				love.graphics.setColor(highlight[1], highlight[2], highlight[3], featherAlpha)
+				love.graphics.circle("fill", cx, cy, featherRadius)
+			end
+		end
 
-                drawHighlightCap(topCapX, topCapY)
-                drawHighlightCap(leftCapX, leftCapY)
+		drawHighlightCap(topCapX, topCapY)
+		drawHighlightCap(leftCapX, leftCapY)
 
-                love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
-        end
+		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
+	end
 
 	love.graphics.setCanvas()
 
@@ -627,36 +627,36 @@ function Arena:hasExit()
 end
 
 function Arena:update(dt)
-        if dt and dt > 0 then
-                local baseStrength = self.borderFlareStrength
+	if dt and dt > 0 then
+		local baseStrength = self.borderFlareStrength
 
-                if not (baseStrength and baseStrength > 0) then
-                        baseStrength = self.borderFlare or 0
-                        if baseStrength > 0 then
-                                self.borderFlareStrength = baseStrength
-                        end
-                end
+		if not (baseStrength and baseStrength > 0) then
+			baseStrength = self.borderFlare or 0
+			if baseStrength > 0 then
+				self.borderFlareStrength = baseStrength
+			end
+		end
 
-                if baseStrength and baseStrength > 0 then
-                        local duration = math.max(0.35, self.borderFlareDuration or 1.05)
-                        local timer = math.min(duration, (self.borderFlareTimer or 0) + dt)
-                        local progress = math.min(1, timer / duration)
-                        local fade = 1 - (progress * progress * (3 - 2 * progress))
+		if baseStrength and baseStrength > 0 then
+			local duration = math.max(0.35, self.borderFlareDuration or 1.05)
+			local timer = math.min(duration, (self.borderFlareTimer or 0) + dt)
+			local progress = math.min(1, timer / duration)
+			local fade = 1 - (progress * progress * (3 - 2 * progress))
 
-                        self.borderFlare = math.max(0, baseStrength * fade)
-                        self.borderFlareTimer = timer
+			self.borderFlare = math.max(0, baseStrength * fade)
+			self.borderFlareTimer = timer
 
-                        if progress >= 1 then
-                                self.borderFlare = 0
-                                self.borderFlareStrength = 0
-                                self.borderFlareTimer = 0
-                        end
-                else
-                        self.borderFlare = 0
-                        self.borderFlareStrength = 0
-                        self.borderFlareTimer = 0
-                end
-        end
+			if progress >= 1 then
+				self.borderFlare = 0
+				self.borderFlareStrength = 0
+				self.borderFlareTimer = 0
+			end
+		else
+			self.borderFlare = 0
+			self.borderFlareStrength = 0
+			self.borderFlareTimer = 0
+		end
+	end
 
 	if not self.exit then
 		return
@@ -732,17 +732,17 @@ function Arena:triggerBorderFlare(strength, duration)
 		return
 	end
 
-        local existing = self.borderFlare or 0
-        local newStrength = math.min(1.2, existing + amount)
-        self.borderFlare = newStrength
-        self.borderFlareStrength = newStrength
-        self.borderFlareTimer = 0
+	local existing = self.borderFlare or 0
+	local newStrength = math.min(1.2, existing + amount)
+	self.borderFlare = newStrength
+	self.borderFlareStrength = newStrength
+	self.borderFlareTimer = 0
 
 	if duration and duration > 0 then
 		self.borderFlareDuration = duration
-        elseif not self.borderFlareDuration or self.borderFlareDuration <= 0 then
-                self.borderFlareDuration = 1.05
-        end
+	elseif not self.borderFlareDuration or self.borderFlareDuration <= 0 then
+		self.borderFlareDuration = 1.05
+	end
 end
 
 return Arena
