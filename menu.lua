@@ -29,8 +29,8 @@ local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
-local BACKDROP_BOX_WIDTH = 1232
-local BACKDROP_BOX_HEIGHT = 706
+local BACKDROP_BOX_WIDTH = 920
+local BACKDROP_BOX_HEIGHT = 430
 local BACKDROP_BOX_LINE_WIDTH = 12
 
 local function configureBackgroundEffect()
