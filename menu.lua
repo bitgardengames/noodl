@@ -9,7 +9,6 @@ local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local PlayerStats = require("playerstats")
-local SawActor = require("sawactor")
 local drawSnake = require("snakedraw")
 
 local Menu = {
@@ -25,9 +24,6 @@ local dailyChallenge = nil
 local dailyChallengeAnim = 0
 local SHOW_DAILY_CHALLENGE_CARD = false
 local analogAxisDirections = { horizontal = nil, vertical = nil }
-local titleSaw = SawActor.new()
-
-local TITLE_SAW_SCALE_FACTOR = 0.729 -- make the title saw 10% smaller than before
 local LOGO_EXPORT_KEY = "f6"
 
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
@@ -314,36 +310,32 @@ local function computeTitleSnake(layout)
                 return nil
         end
 
-        local aboveTitlePadding = math.max(cellSize * 0.8, 34 * scaleFactor)
-        local titleBuffer = math.max(cellSize * 0.7, 26 * scaleFactor)
+        if not innerTop or not innerBottom then
+                return nil
+        end
 
-        local areaTop = innerTop + aboveTitlePadding
-        local areaBottom = (layout.wordTop or innerBottom) - titleBuffer
+        local verticalPadding = math.max(cellSize * 0.8, 48 * scaleFactor)
+        local areaTop = innerTop + verticalPadding
+        local areaBottom = innerBottom - verticalPadding
 
-        if innerBottom then
-                areaBottom = math.min(areaBottom, innerBottom - math.max(cellSize * 0.3, 6))
+        if areaBottom <= areaTop then
+                local mid = (innerTop + innerBottom) * 0.5
+                local halfHeight = math.max(cellSize * 0.6, (innerBottom - innerTop) * 0.2)
+                areaTop = mid - halfHeight
+                areaBottom = mid + halfHeight
         end
 
         if areaBottom <= areaTop then
-                local relaxedPadding = math.max(cellSize * 0.35, 12)
-                areaTop = innerTop + relaxedPadding
-                areaBottom = (layout.wordTop or areaTop) - relaxedPadding
-        end
-
-        if not (areaBottom and areaTop) or areaBottom <= areaTop then
                 return nil
         end
 
         local verticalSpan = areaBottom - areaTop
         local baseline = areaTop + verticalSpan * 0.5
-        local amplitude = verticalSpan * 0.5
+        local amplitude = math.min(verticalSpan * 0.35, math.max(cellSize * 0.5, 48 * scaleFactor))
 
         if amplitude <= 0 then
-                amplitude = cellSize * 0.4
+                amplitude = math.max(cellSize * 0.4, 18 * scaleFactor)
         end
-
-        amplitude = math.max(amplitude, cellSize * 0.35)
-        amplitude = math.min(amplitude, cellSize * 1.8)
 
         local sampleSpacing = math.max(cellSize * 0.5, 12)
         local sampleCount = math.max(32, math.floor(usableWidth / sampleSpacing))
@@ -352,9 +344,9 @@ local function computeTitleSnake(layout)
                 return nil
         end
 
-        local undulationCount = 1.6 + math.min(1.2, usableWidth / 520)
-        local headDrop = amplitude * 0.35
-        local tailLift = amplitude * 0.25
+        local undulationCount = 2 + math.min(1.0, usableWidth / 520)
+        local headDrop = amplitude * 0.2
+        local tailLift = amplitude * 0.15
 
         local minX, maxX, minY, maxY
         local basePoints = {}
@@ -428,53 +420,34 @@ local function computeTitleSnake(layout)
         }
 end
 
-local function drawTitleWord(layout)
-        local trail = drawWord(layout.word, layout.ox, layout.oy, layout.cellSize, layout.spacing)
-        if trail and #trail > 0 then
-                local head = trail[#trail]
-                Face:draw(head.x, head.y, layout.wordScale)
-	end
-	return trail
-end
-
 local function exportTitleLogo()
-	local sw, sh = Screen:get()
-	if not sw or not sh then
-		sw, sh = love.graphics.getDimensions()
-	end
-
-	local layout = computeTitleLayout(sw, sh)
-	if not layout or layout.word == "" then
-		return
-	end
-
-        local snakeLayout = computeTitleSnake(layout)
-
-        local wordLeft = layout.ox or 0
-        local wordRight = wordLeft + (layout.wordWidth or 0)
-        local wordTop = layout.wordTop or 0
-        local wordBottom = layout.wordBottom or (wordTop + (layout.wordHeight or 0))
-
-        local contentMinX = wordLeft
-        local contentMaxX = wordRight
-        local contentMinY = wordTop
-        local contentMaxY = wordBottom
-        local snakePadding = 0
-
-        if snakeLayout and snakeLayout.bounds then
-                local bounds = snakeLayout.bounds
-                local segmentSize = snakeLayout.segmentSize or layout.cellSize
-                local bodyThickness = (segmentSize or 0) * 0.8
-                local padding = bodyThickness * 0.5 + math.max(6, (segmentSize or 0) * 0.3)
-                contentMinX = math.min(contentMinX, bounds.minX - padding)
-                contentMaxX = math.max(contentMaxX, bounds.maxX + padding)
-                contentMinY = math.min(contentMinY, bounds.minY - padding)
-                contentMaxY = math.max(contentMaxY, bounds.maxY + padding)
-                snakePadding = padding
+        local sw, sh = Screen:get()
+        if not sw or not sh then
+                sw, sh = love.graphics.getDimensions()
         end
 
-        local marginX = math.ceil(math.max(layout.cellSize * 0.75, layout.wordScale * 8, snakePadding * 0.75))
-        local marginY = math.ceil(math.max(layout.cellSize * 0.75, layout.wordScale * 8, snakePadding))
+        local layout = computeTitleLayout(sw, sh)
+        if not layout then
+                return
+        end
+
+        local snakeLayout = computeTitleSnake(layout)
+        if not (snakeLayout and snakeLayout.trail and snakeLayout.bounds) then
+                return
+        end
+
+        local bounds = snakeLayout.bounds
+        local segmentSize = snakeLayout.segmentSize or layout.cellSize or 24
+        local bodyThickness = segmentSize * 0.8
+        local padding = bodyThickness * 0.75 + math.max(6, segmentSize * 0.3)
+
+        local contentMinX = bounds.minX - padding
+        local contentMaxX = bounds.maxX + padding
+        local contentMinY = bounds.minY - padding
+        local contentMaxY = bounds.maxY + padding
+
+        local marginX = math.ceil(math.max(segmentSize * 0.75, layout.cellSize or segmentSize))
+        local marginY = math.ceil(math.max(segmentSize * 0.75, layout.cellSize or segmentSize))
 
         local canvasWidth = math.max(1, math.ceil((contentMaxX - contentMinX) + marginX * 2))
         local canvasHeight = math.max(1, math.ceil((contentMaxY - contentMinY) + marginY * 2))
@@ -511,19 +484,6 @@ local function exportTitleLogo()
                         drawFace = true,
                 })
         end
-
-        local exportOffsetX = marginX - contentMinX
-        local exportOffsetY = marginY - contentMinY
-
-        local exportLayout = {
-                word = layout.word,
-                cellSize = layout.cellSize,
-                spacing = layout.spacing,
-                wordScale = layout.wordScale,
-                ox = layout.ox + exportOffsetX,
-                oy = layout.oy + exportOffsetY,
-        }
-        drawTitleWord(exportLayout)
 
         love.graphics.pop()
 
@@ -731,10 +691,6 @@ function Menu:update(dt)
                 btn.offsetY = (1 - btn.alpha) * 50
         end
 
-        if titleSaw then
-                titleSaw:update(dt)
-        end
-
         Face:update(dt)
 end
 
@@ -744,107 +700,8 @@ function Menu:draw()
         drawBackground(sw, sh)
 
         local layout = computeTitleLayout(sw, sh)
-        local cellSize = layout.cellSize
-        local wordScale = layout.wordScale
-        local scaleFactor = layout.scaleFactor
-        local wordWidth = layout.wordWidth
-        local wordHeight = layout.wordHeight
-        local availableWidth = layout.availableWidth
-        local backdropInnerLeft = layout.backdropInnerLeft
-        local backdropInnerRight = layout.backdropInnerRight
-        local backdropInnerTop = layout.backdropInnerTop
-        local backdropInnerBottom = layout.backdropInnerBottom
-        local backdropCenterX = layout.backdropCenterX
-        local backdropCenterY = layout.backdropCenterY
-        local innerHalfWidth = layout.innerHalfWidth
-        local innerHalfHeight = layout.innerHalfHeight
-        local ox = layout.ox
-        local oy = layout.oy
-
-        if titleSaw then
-                local sawRadius = titleSaw.radius or 1
-                local sawScale = wordHeight / (2 * sawRadius)
-                if sawScale <= 0 then
-                        sawScale = 1
-                end
-                sawScale = sawScale * TITLE_SAW_SCALE_FACTOR
-
-                local sawRadiusWorld = sawRadius * sawScale
-
-                local desiredTrackLengthWorld = math.min(wordWidth + cellSize, availableWidth)
-                local shortenedTrackLengthWorld = math.max(
-                        2 * sawRadiusWorld,
-                        desiredTrackLengthWorld - 90 * scaleFactor
-                )
-                local rightTrackShortening = 73 * scaleFactor
-                shortenedTrackLengthWorld = math.max(2 * sawRadiusWorld, shortenedTrackLengthWorld - rightTrackShortening)
-
-                local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
-                local slotThicknessWorld = slotThicknessBase * sawScale
-
-                local targetLeft = ox - 15 * scaleFactor
-                local gapAboveWord = math.max(8 * scaleFactor, slotThicknessWorld * 0.35)
-                local targetBottom = oy - gapAboveWord
-
-                local minSawCenterY = backdropInnerTop + sawRadiusWorld
-                local maxSawCenterY = backdropInnerBottom - sawRadiusWorld
-                local sawY = targetBottom - slotThicknessWorld / 2 - 40 * scaleFactor
-                if minSawCenterY and maxSawCenterY then
-                        sawY = math.max(minSawCenterY, math.min(sawY, maxSawCenterY))
-                end
-
-                local sawTop = sawY - sawRadiusWorld
-                local sawBottom = sawY + sawRadiusWorld
-                local safeWidth, safeHalfWidth = computeRectSpanLimits(
-                        backdropCenterY,
-                        innerHalfWidth,
-                        innerHalfHeight,
-                        sawTop,
-                        sawBottom
-                )
-
-                local maxTrackWorld = availableWidth
-                if safeWidth and safeWidth > 0 then
-                        maxTrackWorld = math.min(maxTrackWorld, safeWidth)
-                end
-                maxTrackWorld = math.max(maxTrackWorld, 2 * sawRadiusWorld)
-
-                local targetTrackLengthWorld = math.min(shortenedTrackLengthWorld, maxTrackWorld)
-                local targetTrackLengthBase = targetTrackLengthWorld / sawScale
-                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
-                        titleSaw.trackLength = targetTrackLengthBase
-                end
-
-                local trackLengthWorld = math.min((titleSaw.trackLength or targetTrackLengthBase) * sawScale, maxTrackWorld)
-                trackLengthWorld = math.max(trackLengthWorld, 2 * sawRadiusWorld)
-
-                local targetTrackCenter = targetLeft + trackLengthWorld / 2
-                local trackMin = backdropInnerLeft + trackLengthWorld / 2
-                local trackMax = backdropInnerRight - trackLengthWorld / 2
-
-                if safeHalfWidth and safeHalfWidth > 0 then
-                        local allowedTrackOffset = math.max(0, safeHalfWidth - trackLengthWorld / 2)
-                        local allowedSawOffset = math.max(0, safeHalfWidth - sawRadiusWorld)
-                        trackMin = math.max(trackMin, backdropCenterX - allowedTrackOffset)
-                        trackMax = math.min(trackMax, backdropCenterX + allowedTrackOffset)
-                        trackMin = math.max(trackMin, backdropCenterX - allowedSawOffset + 8 * scaleFactor)
-                        trackMax = math.min(trackMax, backdropCenterX + allowedSawOffset + 8 * scaleFactor)
-                end
-
-                if trackMin > trackMax then
-                        local mid = (trackMin + trackMax) / 2
-                        trackMin = mid
-                        trackMax = mid
-                end
-
-                local clampedTrackCenter = math.max(trackMin, math.min(targetTrackCenter, trackMax))
-                local clampedTrackLeft = clampedTrackCenter - trackLengthWorld / 2
-                clampedTrackLeft = math.max(backdropInnerLeft, math.min(clampedTrackLeft, backdropInnerRight - trackLengthWorld))
-                clampedTrackCenter = clampedTrackLeft + trackLengthWorld / 2
-
-                local sawX = clampedTrackCenter - 8 * scaleFactor
-
-                titleSaw:draw(sawX, sawY, sawScale)
+        if not layout then
+                return
         end
 
         local bannerSnake = computeTitleSnake(layout)
@@ -853,8 +710,6 @@ function Menu:draw()
                         drawFace = true,
                 })
         end
-
-        drawTitleWord(layout)
 
         for _, btn in ipairs(buttons) do
                 if btn.labelKey then
