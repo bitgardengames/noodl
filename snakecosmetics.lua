@@ -1006,9 +1006,7 @@ function SnakeCosmetics:getBodyColor()
 end
 
 function SnakeCosmetics:getOutlineColor()
-	local skin = self:getActiveSkin()
-	local palette = skin and skin.colors or {}
-	return resolveColor(palette.outline, { 0, 0, 0, 1 })
+        return { 0, 0, 0, 1 }
 end
 
 function SnakeCosmetics:getGlowColor()
