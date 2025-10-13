@@ -1003,79 +1003,79 @@ registerEffect({
 })
 -- Neon hazard backdrop for the main menu
 registerEffect({
-        type = "menuConstellation",
-        backdropIntensity = 0.46,
-        arenaIntensity = 0.32,
-        source = [[
-                extern float time;
-                extern vec2 resolution;
-                extern vec2 origin;
-                extern vec4 topColor;
-                extern vec4 bottomColor;
-                extern vec4 accentColor;
-                extern float vignetteIntensity;
-                extern float accentStrength;
-                extern float textureStrength;
-                extern float bandCenter;
-                extern float bandWidth;
-                extern float intensity;
+	type = "menuConstellation",
+	backdropIntensity = 0.46,
+	arenaIntensity = 0.32,
+	source = [[
+		extern float time;
+		extern vec2 resolution;
+		extern vec2 origin;
+		extern vec4 topColor;
+		extern vec4 bottomColor;
+		extern vec4 accentColor;
+		extern float vignetteIntensity;
+		extern float accentStrength;
+		extern float textureStrength;
+		extern float bandCenter;
+		extern float bandWidth;
+		extern float intensity;
 
-                float hash(vec2 p)
-                {
-                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-                }
+		float hash(vec2 p)
+		{
+			return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+		}
 
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			vec2 uv = (screen_coords - origin) / resolution;
+			uv = clamp(uv, 0.0, 1.0);
 
-                        float gradient = smoothstep(0.0, 1.0, uv.y);
-                        vec3 col = mix(topColor.rgb, bottomColor.rgb, gradient);
+			float gradient = smoothstep(0.0, 1.0, uv.y);
+			vec3 col = mix(topColor.rgb, bottomColor.rgb, gradient);
 
-                        float bandOffset = (uv.y - bandCenter) / max(bandWidth, 0.001);
-                        float bandGlow = exp(-bandOffset * bandOffset);
-                        float ripple = sin(time * 0.6 + uv.x * 6.0) * 0.5 + 0.5;
-                        float glow = clamp(bandGlow * (0.35 + ripple * 0.25) * accentStrength * intensity, 0.0, 1.0);
-                        col = mix(col, accentColor.rgb, glow);
+			float bandOffset = (uv.y - bandCenter) / max(bandWidth, 0.001);
+			float bandGlow = exp(-bandOffset * bandOffset);
+			float ripple = sin(time * 0.6 + uv.x * 6.0) * 0.5 + 0.5;
+			float glow = clamp(bandGlow * (0.35 + ripple * 0.25) * accentStrength * intensity, 0.0, 1.0);
+			col = mix(col, accentColor.rgb, glow);
 
-                        vec2 centered = uv - vec2(0.5);
-                        float vignette = smoothstep(0.45, 0.92, length(centered));
-                        float vignetteMix = clamp(vignette * vignetteIntensity, 0.0, 1.0);
-                        col = mix(col, col * 0.78, vignetteMix);
+			vec2 centered = uv - vec2(0.5);
+			float vignette = smoothstep(0.45, 0.92, length(centered));
+			float vignetteMix = clamp(vignette * vignetteIntensity, 0.0, 1.0);
+			col = mix(col, col * 0.78, vignetteMix);
 
-                        float noise = hash(uv * resolution.xy + time * 15.0);
-                        float grain = noise * 2.0 - 1.0;
-                        float scan = sin((uv.y * resolution.y + time * 12.0) * 3.14159);
-                        scan = clamp(scan * 0.5, -1.0, 1.0);
-                        float grit = clamp(grain * 0.6 + scan * 0.4, -1.0, 1.0);
-                        col += col * grit * textureStrength;
+			float noise = hash(uv * resolution.xy + time * 15.0);
+			float grain = noise * 2.0 - 1.0;
+			float scan = sin((uv.y * resolution.y + time * 12.0) * 3.14159);
+			scan = clamp(scan * 0.5, -1.0, 1.0);
+			float grit = clamp(grain * 0.6 + scan * 0.4, -1.0, 1.0);
+			col += col * grit * textureStrength;
 
-                        col = clamp(col, 0.0, 1.0);
+			col = clamp(col, 0.0, 1.0);
 
-                        float alpha = mix(topColor.a, bottomColor.a, gradient);
-                        return vec4(col, alpha) * color;
-                }
-        ]],
-        configure = function(effect)
-                local shader = effect.shader
+			float alpha = mix(topColor.a, bottomColor.a, gradient);
+			return vec4(col, alpha) * color;
+		}
+	]],
+	configure = function(effect)
+		local shader = effect.shader
 
-                local top = {0x1A / 255, 0x0F / 255, 0x1E / 255, 1}
-                local bottom = {0x05 / 255, 0x05 / 255, 0x05 / 255, 1}
-                local accent = {0xFF / 255, 0x2D / 255, 0xAA / 255, 1}
+		local top = {0x1A / 255, 0x0F / 255, 0x1E / 255, 1}
+		local bottom = {0x05 / 255, 0x05 / 255, 0x05 / 255, 1}
+		local accent = {0xFF / 255, 0x2D / 255, 0xAA / 255, 1}
 
-                sendColor(shader, "topColor", top)
-                sendColor(shader, "bottomColor", bottom)
-                sendColor(shader, "accentColor", accent)
-                sendFloat(shader, "vignetteIntensity", 0.66)
-                sendFloat(shader, "accentStrength", 0.64)
-                sendFloat(shader, "textureStrength", 0.085)
-                sendFloat(shader, "bandCenter", 0.55)
-                sendFloat(shader, "bandWidth", 0.42)
-        end,
-        draw = function(effect, x, y, w, h, intensity)
-                return drawShader(effect, x, y, w, h, intensity)
-        end,
+		sendColor(shader, "topColor", top)
+		sendColor(shader, "bottomColor", bottom)
+		sendColor(shader, "accentColor", accent)
+		sendFloat(shader, "vignetteIntensity", 0.66)
+		sendFloat(shader, "accentStrength", 0.64)
+		sendFloat(shader, "textureStrength", 0.085)
+		sendFloat(shader, "bandCenter", 0.55)
+		sendFloat(shader, "bandWidth", 0.42)
+	end,
+	draw = function(effect, x, y, w, h, intensity)
+		return drawShader(effect, x, y, w, h, intensity)
+	end,
 })
 -- Radiant fabric of light for the shop screen
 registerEffect({

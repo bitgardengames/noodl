@@ -117,10 +117,10 @@ function Score:increase(points)
 		PlayerStats:add("totalApplesEaten", 1)
 		updateAchievementChecks(self)
 
-                if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
-                                self.runHighScoreTriggered = true
-                                self.highScoreGlowTimer = 0
-                end
+		if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
+				self.runHighScoreTriggered = true
+				self.highScoreGlowTimer = 0
+		end
 end
 
 function Score:addFruitBonus(amount)
@@ -132,10 +132,10 @@ function Score:addBonus(points)
 		self.current = self.current + points
 		updateAchievementChecks(self)
 
-                if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
-                                self.runHighScoreTriggered = true
-                                self.highScoreGlowTimer = 0
-                end
+		if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
+				self.runHighScoreTriggered = true
+				self.highScoreGlowTimer = 0
+		end
 end
 
 local function updateComboBonusValue(self)
@@ -172,15 +172,15 @@ function Score:getHighScoreGlowStrength()
 end
 
 local function finalizeRunResult(self, options)
-        options = options or {}
-        local cause = options.cause or "unknown"
-        local won = options.won or false
+	options = options or {}
+	local cause = options.cause or "unknown"
+	local won = options.won or false
 
-        PlayerStats:updateMax("snakeScore", self.current)
+	PlayerStats:updateMax("snakeScore", self.current)
 
-        Achievements:checkAll({
-                bestScore = PlayerStats:get("snakeScore"),
-                snakeScore = self.current,
+	Achievements:checkAll({
+		bestScore = PlayerStats:get("snakeScore"),
+		snakeScore = self.current,
 	})
 
 	self:setHighScore(self.current)
@@ -219,38 +219,38 @@ local function finalizeRunResult(self, options)
 		PlayerStats:updateMax("longestFloorClearTime", slowestFloor)
 	end
 
-        local result = {
-                score       = self.current,
-                highScore   = self:getHighScore(),
-                apples      = runApples,
-                totalApples = lifetimeApples,
-                stats = {
-                        apples = runApples
-                },
-                cause = cause,
-                won = won,
-        }
+	local result = {
+		score       = self.current,
+		highScore   = self:getHighScore(),
+		apples      = runApples,
+		totalApples = lifetimeApples,
+		stats = {
+			apples = runApples
+		},
+		cause = cause,
+		won = won,
+	}
 
-        if options.endingMessage then
-                result.endingMessage = options.endingMessage
-        end
+	if options.endingMessage then
+		result.endingMessage = options.endingMessage
+	end
 
-        if options.storyTitle then
-                result.storyTitle = options.storyTitle
-        end
+	if options.storyTitle then
+		result.storyTitle = options.storyTitle
+	end
 
-        return result
+	return result
 end
 
 function Score:handleGameOver(cause)
-        return finalizeRunResult(self, { cause = cause or "unknown", won = false })
+	return finalizeRunResult(self, { cause = cause or "unknown", won = false })
 end
 
 function Score:handleRunClear(options)
-        options = options or {}
-        options.cause = options.cause or "victory"
-        options.won = true
-        return finalizeRunResult(self, options)
+	options = options or {}
+	options.cause = options.cause or "victory"
+	options.won = true
+	return finalizeRunResult(self, options)
 end
 
 return Score

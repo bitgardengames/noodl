@@ -139,7 +139,7 @@ end
 
 local function aabb(x1,y1,w1,h1, x2,y2,w2,h2)
 	return x1 < x2 + w2 and x1 + w1 > x2 and
-		   y1 < y2 + h2 and y1 + h1 > y2
+			y1 < y2 + h2 and y1 + h1 > y2
 end
 
 function Fruit:spawn(trail, rocks, safeZone)
@@ -242,15 +242,15 @@ function Fruit:update(dt)
 		active.scaleY = 1 - k
 		active.shadow = 1.0
 		active.alpha  = 1.0
-                if t >= 1 then
-                        active.phase = "idle"
-                        active.timer = 0
-                        active.scaleX, active.scaleY = 1, 1
-                        active.shadow = 1.0
-                        -- Intentionally keep active.idleTimer unchanged so the bob animation stays continuous
-                        active.sparkleTimer = love.math.random(IDLE_SPARKLE_MIN_DELAY, IDLE_SPARKLE_MAX_DELAY)
-                end
-        end
+		if t >= 1 then
+			active.phase = "idle"
+			active.timer = 0
+			active.scaleX, active.scaleY = 1, 1
+			active.shadow = 1.0
+			-- Intentionally keep active.idleTimer unchanged so the bob animation stays continuous
+			active.sparkleTimer = love.math.random(IDLE_SPARKLE_MIN_DELAY, IDLE_SPARKLE_MAX_DELAY)
+		end
+	end
 
 	if active.phase == "idle" or active.phase == "wobble" then
 		active.idleTimer = (active.idleTimer or 0) + dt

@@ -47,15 +47,15 @@ local function easeOutCubic(t)
 end
 
 local function ensureTransitionTitleCanvas(self)
-        local width = math.max(1, math.ceil(self.screenWidth or love.graphics.getWidth() or 1))
-        local height = math.max(1, math.ceil(self.screenHeight or love.graphics.getHeight() or 1))
-        local canvas = self.transitionTitleCanvas
-        if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
-                canvas = love.graphics.newCanvas(width, height)
-                canvas:setFilter("linear", "linear")
-                self.transitionTitleCanvas = canvas
-        end
-        return canvas
+	local width = math.max(1, math.ceil(self.screenWidth or love.graphics.getWidth() or 1))
+	local height = math.max(1, math.ceil(self.screenHeight or love.graphics.getHeight() or 1))
+	local canvas = self.transitionTitleCanvas
+	if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
+		canvas = love.graphics.newCanvas(width, height)
+		canvas:setFilter("linear", "linear")
+		self.transitionTitleCanvas = canvas
+	end
+	return canvas
 end
 
 local RUN_ACTIVE_STATES = {
@@ -64,19 +64,19 @@ local RUN_ACTIVE_STATES = {
 }
 
 local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
-        Face,
-        Popup,
-        Fruit,
-        Rocks,
-        Lasers,
+	Face,
+	Popup,
+	Fruit,
+	Rocks,
+	Lasers,
 	Darts,
 	Saws,
 	Arena,
 	Particles,
-        UpgradeVisuals,
-        Achievements,
-        FloatingText,
-        Score,
+	UpgradeVisuals,
+	Achievements,
+	FloatingText,
+	Score,
 })
 
 local function cloneColor(color, fallback)
@@ -462,15 +462,15 @@ local function resolveHitStopScale(self)
 end
 
 local function resolveMouseVisibilityTarget(self)
-        if not getMouseInterface() then
-                return nil
-        end
+	if not getMouseInterface() then
+		return nil
+	end
 
-        local transition = self.transition
-        local inShop = transition and transition:isShopActive()
-        if inShop then
-                return true
-        end
+	local transition = self.transition
+	local inShop = transition and transition:isShopActive()
+	if inShop then
+		return true
+	end
 
 	if RUN_ACTIVE_STATES[self.state] == true then
 		return false
@@ -571,7 +571,7 @@ local function updateRunTimers(self, dt)
 end
 
 local function updateSystems(systems, dt)
-        ModuleUtil.runHook(systems, "update", dt)
+	ModuleUtil.runHook(systems, "update", dt)
 end
 
 local function updateGlobalSystems(dt)
@@ -646,19 +646,19 @@ local function drawAdrenalineGlow(self)
 end
 
 function Game:load(options)
-        options = options or {}
+	options = options or {}
 
-        local requestedFloor = math.max(1, math.floor(options.startFloor or 1))
-        local totalFloors = #Floors
-        if totalFloors > 0 then
-                requestedFloor = math.min(requestedFloor, totalFloors)
-        end
+	local requestedFloor = math.max(1, math.floor(options.startFloor or 1))
+	local totalFloors = #Floors
+	if totalFloors > 0 then
+		requestedFloor = math.min(requestedFloor, totalFloors)
+	end
 
-        self.state = "playing"
-        self.startFloor = requestedFloor
-        self.floor = requestedFloor
-        self.runTimer = 0
-        self.floorTimer = 0
+	self.state = "playing"
+	self.startFloor = requestedFloor
+	self.floor = requestedFloor
+	self.runTimer = 0
+	self.floorTimer = 0
 
 	self.mouseCursorState = nil
 
@@ -683,7 +683,7 @@ function Game:load(options)
 		Snake.adrenaline.active = false
 	end
 
-        self:setupFloor(self.floor)
+	self:setupFloor(self.floor)
 
 	self.transition:startFloorIntro(2.8, {
 		transitionAdvance = false,
@@ -693,12 +693,12 @@ function Game:load(options)
 end
 
 function Game:reset()
-        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-        Face:set("idle")
-        self.state = "playing"
-        self.floor = self.startFloor or 1
-        self.runTimer = 0
-        self.floorTimer = 0
+	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+	Face:set("idle")
+	self.state = "playing"
+	self.floor = self.startFloor or 1
+	self.runTimer = 0
+	self.floorTimer = 0
 
 	self.mouseCursorState = nil
 
@@ -714,11 +714,11 @@ function Game:reset()
 end
 
 function Game:enter(data)
-        UI.clearButtons()
-        self:load(data)
+	UI.clearButtons()
+	self:load(data)
 
-        Audio:playMusic("game")
-        SessionStats:reset()
+	Audio:playMusic("game")
+	SessionStats:reset()
 	PlayerStats:add("sessionsPlayed", 1)
 
 	Achievements:checkAll({
@@ -790,65 +790,65 @@ end
 
 -- start a floor transition
 function Game:startFloorTransition(advance, skipFade)
-        Snake:finishDescending()
-        self.transition:startFloorTransition(advance, skipFade)
+	Snake:finishDescending()
+	self.transition:startFloorTransition(advance, skipFade)
 end
 
 function Game:triggerVictory()
-        if self.state == "victory" then
-                return
-        end
+	if self.state == "victory" then
+		return
+	end
 
-        Snake:finishDescending()
-        if Arena and Arena.resetExit then
-                Arena:resetExit()
-        end
+	Snake:finishDescending()
+	if Arena and Arena.resetExit then
+		Arena:resetExit()
+	end
 
-        local floorTime = self.floorTimer or 0
-        if floorTime and floorTime > 0 then
-                SessionStats:add("totalFloorTime", floorTime)
-                SessionStats:updateMin("fastestFloorClear", floorTime)
-                SessionStats:updateMax("slowestFloorClear", floorTime)
-                SessionStats:set("lastFloorClearTime", floorTime)
-        end
-        self.floorTimer = 0
+	local floorTime = self.floorTimer or 0
+	if floorTime and floorTime > 0 then
+		SessionStats:add("totalFloorTime", floorTime)
+		SessionStats:updateMin("fastestFloorClear", floorTime)
+		SessionStats:updateMax("slowestFloorClear", floorTime)
+		SessionStats:set("lastFloorClearTime", floorTime)
+	end
+	self.floorTimer = 0
 
-        local currentFloor = self.floor or 1
-        local nextFloor = currentFloor + 1
-        PlayerStats:add("floorsCleared", 1)
-        PlayerStats:updateMax("deepestFloorReached", nextFloor)
-        SessionStats:add("floorsCleared", 1)
-        SessionStats:updateMax("deepestFloorReached", nextFloor)
+	local currentFloor = self.floor or 1
+	local nextFloor = currentFloor + 1
+	PlayerStats:add("floorsCleared", 1)
+	PlayerStats:updateMax("deepestFloorReached", nextFloor)
+	SessionStats:add("floorsCleared", 1)
+	SessionStats:updateMax("deepestFloorReached", nextFloor)
 
-        Audio:playSound("floor_advance")
+	Audio:playSound("floor_advance")
 
-        local floorData = Floors[currentFloor] or {}
-        local floorName = floorData.name or string.format("Floor %d", currentFloor)
-        local endingMessage = Localization:get("gameover.victory_story_body", { floor = floorName })
-        if endingMessage == "gameover.victory_story_body" then
-                endingMessage = Floors.victoryMessage or string.format("With the festival feast safely reclaimed from %s, Noodl rockets home to start the parade.", floorName)
-        end
+	local floorData = Floors[currentFloor] or {}
+	local floorName = floorData.name or string.format("Floor %d", currentFloor)
+	local endingMessage = Localization:get("gameover.victory_story_body", { floor = floorName })
+	if endingMessage == "gameover.victory_story_body" then
+		endingMessage = Floors.victoryMessage or string.format("With the festival feast safely reclaimed from %s, Noodl rockets home to start the parade.", floorName)
+	end
 
-        local storyTitle = Localization:get("gameover.victory_story_title")
-        if storyTitle == "gameover.victory_story_title" then
-                storyTitle = Floors.storyTitle or "Noodl's Grand Feast"
-        end
+	local storyTitle = Localization:get("gameover.victory_story_title")
+	if storyTitle == "gameover.victory_story_title" then
+		storyTitle = Floors.storyTitle or "Noodl's Grand Feast"
+	end
 
-        local result = Score:handleRunClear({
-                endingMessage = endingMessage,
-                storyTitle = storyTitle,
-        })
+	local result = Score:handleRunClear({
+		endingMessage = endingMessage,
+		storyTitle = storyTitle,
+	})
 
-        Achievements:save()
+	Achievements:save()
 
-        self.victoryResult = result
-        self.victoryTimer = 0
-        self.victoryDelay = 1.2
-        self.state = "victory"
+	self.victoryResult = result
+	self.victoryTimer = 0
+	self.victoryDelay = 1.2
+	self.state = "victory"
 end
 
 function Game:startFloorIntro(duration, extra)
-        self.transition:startFloorIntro(duration, extra)
+	self.transition:startFloorIntro(duration, extra)
 end
 
 function Game:startFadeIn(duration)
@@ -873,15 +873,15 @@ function Game:updateDescending(dt)
 
 	local dx, dy = tail.drawX - self.hole.x, tail.drawY - self.hole.y
 	local dist = math.sqrt(dx * dx + dy * dy)
-        if dist < self.hole.radius then
-                local finalFloor = #Floors
-                if (self.floor or 1) >= finalFloor then
-                        self:triggerVictory()
-                else
-                        Snake:finishDescending()
-                        self:startFloorTransition(true)
-                end
-        end
+	if dist < self.hole.radius then
+		local finalFloor = #Floors
+		if (self.floor or 1) >= finalFloor then
+			self:triggerVictory()
+		else
+			Snake:finishDescending()
+			self:startFloorTransition(true)
+		end
+	end
 end
 
 function Game:updateGameplay(dt)
@@ -1135,91 +1135,91 @@ local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
 end
 
 local function drawTransitionFloorIntro(self, timer, duration, data)
-        local floorData = data.transitionFloorData or self.currentFloorData
-        if not floorData then
-                return
-        end
+	local floorData = data.transitionFloorData or self.currentFloorData
+	if not floorData then
+		return
+	end
 
-        love.graphics.setColor(1, 1, 1, 1)
-        drawPlayfieldLayers(self, "playing")
+	love.graphics.setColor(1, 1, 1, 1)
+	drawPlayfieldLayers(self, "playing")
 
-        local totalDuration = duration or 0
-        local progress = totalDuration > 0 and clamp01(timer / totalDuration) or 1
-        local awaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
-        local visualProgress = progress
-        if awaitingConfirm then
-                visualProgress = math.min(visualProgress, 0.7)
-        end
+	local totalDuration = duration or 0
+	local progress = totalDuration > 0 and clamp01(timer / totalDuration) or 1
+	local awaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
+	local visualProgress = progress
+	if awaitingConfirm then
+		visualProgress = math.min(visualProgress, 0.7)
+	end
 
-        local appearProgress = math.min(1, visualProgress / 0.28)
-        local appear = easeOutCubic(appearProgress)
-        local dissolveProgress = visualProgress > 0.48 and clamp01((visualProgress - 0.48) / 0.4) or 0
-        if awaitingConfirm then
-                dissolveProgress = 0
-        end
-        local overlayAlpha = 0.8 * (1 - 0.55 * dissolveProgress)
-        local highlightAlpha = appear * (1 - dissolveProgress)
+	local appearProgress = math.min(1, visualProgress / 0.28)
+	local appear = easeOutCubic(appearProgress)
+	local dissolveProgress = visualProgress > 0.48 and clamp01((visualProgress - 0.48) / 0.4) or 0
+	if awaitingConfirm then
+		dissolveProgress = 0
+	end
+	local overlayAlpha = 0.8 * (1 - 0.55 * dissolveProgress)
+	local highlightAlpha = appear * (1 - dissolveProgress)
 
-        love.graphics.setColor(0, 0, 0, overlayAlpha)
-        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+	love.graphics.setColor(0, 0, 0, overlayAlpha)
+	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 
-        local canvas = ensureTransitionTitleCanvas(self)
-        local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
-        local titleOffset = (1 - appear) * 36
+	local canvas = ensureTransitionTitleCanvas(self)
+	local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+	local titleOffset = (1 - appear) * 36
 
-        love.graphics.push("all")
-        love.graphics.setCanvas(canvas)
-        love.graphics.clear(0, 0, 0, 0)
-        love.graphics.origin()
-        love.graphics.setBlendMode("alpha")
+	love.graphics.push("all")
+	love.graphics.setCanvas(canvas)
+	love.graphics.clear(0, 0, 0, 0)
+	love.graphics.origin()
+	love.graphics.setBlendMode("alpha")
 
-        love.graphics.setFont(UI.fonts.title)
-        local titleY = self.screenHeight / 2 - 90 + titleOffset
-        local shadowAlpha = (shadow[4] or 0.5) * highlightAlpha
-        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
-        love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth, "center")
-        love.graphics.setColor(1, 1, 1, highlightAlpha)
-        love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth, "center")
+	love.graphics.setFont(UI.fonts.title)
+	local titleY = self.screenHeight / 2 - 90 + titleOffset
+	local shadowAlpha = (shadow[4] or 0.5) * highlightAlpha
+	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
+	love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth, "center")
+	love.graphics.setColor(1, 1, 1, highlightAlpha)
+	love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth, "center")
 
-        if floorData.flavor and floorData.flavor ~= "" then
-                love.graphics.setFont(UI.fonts.button)
-                local flavorY = titleY + UI.fonts.title:getHeight() + 32
-                local flavorAlpha = highlightAlpha * 0.95
-                love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * flavorAlpha)
-                love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth, "center")
-                love.graphics.setColor(1, 1, 1, flavorAlpha)
-                love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth, "center")
-        end
+	if floorData.flavor and floorData.flavor ~= "" then
+		love.graphics.setFont(UI.fonts.button)
+		local flavorY = titleY + UI.fonts.title:getHeight() + 32
+		local flavorAlpha = highlightAlpha * 0.95
+		love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * flavorAlpha)
+		love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth, "center")
+		love.graphics.setColor(1, 1, 1, flavorAlpha)
+		love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth, "center")
+	end
 
-        if data.transitionAwaitInput then
-                local promptText = Localization:get("game.floor_intro.prompt")
-                if promptText and promptText ~= "" then
-                        local promptFont = UI.fonts.prompt or UI.fonts.body
-                        love.graphics.setFont(promptFont)
-                        local promptFade = 1 - clamp01((visualProgress - 0.72) / 0.18)
-                        local promptAlpha = highlightAlpha * promptFade
-                        local y = self.screenHeight - promptFont:getHeight() * 2.2
-                        love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * promptAlpha)
-                        love.graphics.printf(promptText, 2, y + 2, self.screenWidth, "center")
-                        love.graphics.setColor(1, 1, 1, promptAlpha)
-                        love.graphics.printf(promptText, 0, y, self.screenWidth, "center")
-                end
-        end
+	if data.transitionAwaitInput then
+		local promptText = Localization:get("game.floor_intro.prompt")
+		if promptText and promptText ~= "" then
+			local promptFont = UI.fonts.prompt or UI.fonts.body
+			love.graphics.setFont(promptFont)
+			local promptFade = 1 - clamp01((visualProgress - 0.72) / 0.18)
+			local promptAlpha = highlightAlpha * promptFade
+			local y = self.screenHeight - promptFont:getHeight() * 2.2
+			love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * promptAlpha)
+			love.graphics.printf(promptText, 2, y + 2, self.screenWidth, "center")
+			love.graphics.setColor(1, 1, 1, promptAlpha)
+			love.graphics.printf(promptText, 0, y, self.screenWidth, "center")
+		end
+	end
 
-        love.graphics.setCanvas()
-        love.graphics.pop()
+	love.graphics.setCanvas()
+	love.graphics.pop()
 
-        love.graphics.push("all")
-        local canvasAlpha = 1 - clamp01(dissolveProgress)
-        love.graphics.setColor(1, 1, 1, canvasAlpha)
-        love.graphics.draw(canvas, 0, 0)
-        love.graphics.pop()
+	love.graphics.push("all")
+	local canvasAlpha = 1 - clamp01(dissolveProgress)
+	love.graphics.setColor(1, 1, 1, canvasAlpha)
+	love.graphics.draw(canvas, 0, 0)
+	love.graphics.pop()
 
-        drawTransitionNotes(self, 999, 1, nil)
+	drawTransitionNotes(self, 999, 1, nil)
 
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 
-        return true
+	return true
 end
 
 function Game:drawTransition()
@@ -1338,25 +1338,25 @@ function Game:update(dt)
 	updateFeedbackState(self, scaledDt)
 	updateHitStopState(self, dt)
 
-        if handlePauseMenu(self, dt) then
-                return
-        end
+	if handlePauseMenu(self, dt) then
+		return
+	end
 
-        if self.state == "victory" then
-                local delay = self.victoryDelay or 0
-                self.victoryTimer = (self.victoryTimer or 0) + scaledDt
+	if self.state == "victory" then
+		local delay = self.victoryDelay or 0
+		self.victoryTimer = (self.victoryTimer or 0) + scaledDt
 
-                if self.victoryTimer >= delay then
-                        local summary = self.victoryResult or Score:handleRunClear()
-                        return { state = "gameover", data = summary }
-                end
+		if self.victoryTimer >= delay then
+			local summary = self.victoryResult or Score:handleRunClear()
+			return { state = "gameover", data = summary }
+		end
 
-                return
-        end
+		return
+	end
 
-        updateRunTimers(self, scaledDt)
+	updateRunTimers(self, scaledDt)
 
-        updateGlobalSystems(scaledDt)
+	updateGlobalSystems(scaledDt)
 
 	local transition = self.transition
 	local transitionBlocking = false

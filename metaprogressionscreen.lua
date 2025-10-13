@@ -135,26 +135,26 @@ local function drawBackground(sw, sh)
 end
 
 local function resetHeldDpad()
-        heldDpadButton = nil
-        heldDpadAction = nil
-        heldDpadTimer = 0
-        heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+	heldDpadButton = nil
+	heldDpadAction = nil
+	heldDpadTimer = 0
+	heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 end
 
 local function getListTop(tab)
-        tab = tab or activeTab
-        if tab == "experience" then
-                return EXPERIENCE_LIST_TOP
-        end
+	tab = tab or activeTab
+	if tab == "experience" then
+		return EXPERIENCE_LIST_TOP
+	end
 
-        return DEFAULT_LIST_TOP
+	return DEFAULT_LIST_TOP
 end
 
 local function startHeldDpad(button, action)
-        heldDpadButton = button
-        heldDpadAction = action
-        heldDpadTimer = 0
-        heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+	heldDpadButton = button
+	heldDpadAction = action
+	heldDpadTimer = 0
+	heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 end
 
 local function stopHeldDpad(button)
@@ -193,7 +193,7 @@ local function getActiveList()
 		return statsEntries, STAT_CARD_HEIGHT, STAT_CARD_SPACING
 	end
 
-        return trackEntries, TRACK_CARD_MIN_HEIGHT, CARD_SPACING
+	return trackEntries, TRACK_CARD_MIN_HEIGHT, CARD_SPACING
 end
 
 local function getScrollPadding()
@@ -214,26 +214,26 @@ local function updateScrollBounds(sw, sh)
 		end
 	end
 
-        local baseTop = getListTop()
-        viewportTop = baseTop + topOffset
-        viewportHeight = math.max(0, viewportBottom - viewportTop)
+	local baseTop = getListTop()
+	viewportTop = baseTop + topOffset
+	viewportHeight = math.max(0, viewportBottom - viewportTop)
 
-        if activeTab == "experience" then
-                contentHeight = trackContentHeight
-        else
-                local entries, itemHeight, spacing = getActiveList()
-                local count = #entries
-                if count > 0 then
-                        contentHeight = count * itemHeight + math.max(0, count - 1) * spacing
-                else
-                        contentHeight = 0
-                end
-        end
+	if activeTab == "experience" then
+		contentHeight = trackContentHeight
+	else
+		local entries, itemHeight, spacing = getActiveList()
+		local count = #entries
+		if count > 0 then
+			contentHeight = count * itemHeight + math.max(0, count - 1) * spacing
+		else
+			contentHeight = 0
+		end
+	end
 
-        local bottomPadding = getScrollPadding()
-        if bottomPadding > 0 and contentHeight > 0 then
-                contentHeight = contentHeight + bottomPadding
-        end
+	local bottomPadding = getScrollPadding()
+	if bottomPadding > 0 and contentHeight > 0 then
+		contentHeight = contentHeight + bottomPadding
+	end
 
 	minScrollOffset = math.min(0, viewportHeight - contentHeight)
 
@@ -304,31 +304,31 @@ local statFormatters = {
 }
 
 local hiddenStats = {
-        averageFloorClearTime = true,
-        bestFruitPerMinute = true,
-        averageFruitPerMinute = true,
-        dailyChallengesCompleted = true,
-        mostUpgradesInRun = true,
+	averageFloorClearTime = true,
+	bestFruitPerMinute = true,
+	averageFruitPerMinute = true,
+	dailyChallengesCompleted = true,
+	mostUpgradesInRun = true,
 }
 
 local function isHiddenStat(key)
-        if not key or key == "" then
-                return true
-        end
+	if not key or key == "" then
+		return true
+	end
 
-        if hiddenStats[key] then
-                return true
-        end
+	if hiddenStats[key] then
+		return true
+	end
 
-        if type(key) ~= "string" then
-                return true
-        end
+	if type(key) ~= "string" then
+		return true
+	end
 
-        if key:find("^dailyChallenge:") or key:find("^funChallenge:") then
-                return true
-        end
+	if key:find("^dailyChallenge:") or key:find("^funChallenge:") then
+		return true
+	end
 
-        return false
+	return false
 end
 
 local highlightStatOrder = {
@@ -356,32 +356,32 @@ local function buildStatsEntries()
 	local labelTable = Localization:getTable("metaprogression.stat_labels") or {}
 	local seen = {}
 
-        for key, label in pairs(labelTable) do
-                if not isHiddenStat(key) then
-                        local value = PlayerStats:get(key)
-                        local formatter = statFormatters[key]
-                        statsEntries[#statsEntries + 1] = {
-                                id = key,
-                                label = label,
-                                value = value,
-                                valueText = formatter and formatter(value) or formatStatValue(value),
-                        }
-                        seen[key] = true
-                end
-        end
+	for key, label in pairs(labelTable) do
+		if not isHiddenStat(key) then
+			local value = PlayerStats:get(key)
+			local formatter = statFormatters[key]
+			statsEntries[#statsEntries + 1] = {
+				id = key,
+				label = label,
+				value = value,
+				valueText = formatter and formatter(value) or formatStatValue(value),
+			}
+			seen[key] = true
+		end
+	end
 
-        for key, value in pairs(PlayerStats.data or {}) do
-                if not seen[key] and not isHiddenStat(key) then
-                        local label = prettifyKey(key)
-                        local formatter = statFormatters[key]
-                        statsEntries[#statsEntries + 1] = {
-                                id = key,
-                                label = label,
-                                value = value,
-                                valueText = formatter and formatter(value) or formatStatValue(value),
-                        }
-                end
-        end
+	for key, value in pairs(PlayerStats.data or {}) do
+		if not seen[key] and not isHiddenStat(key) then
+			local label = prettifyKey(key)
+			local formatter = statFormatters[key]
+			statsEntries[#statsEntries + 1] = {
+				id = key,
+				label = label,
+				value = value,
+				valueText = formatter and formatter(value) or formatStatValue(value),
+			}
+		end
+	end
 
 	table.sort(statsEntries, function(a, b)
 		if a.label == b.label then
@@ -470,78 +470,78 @@ local function darkenColor(color, amount)
 end
 
 local function withAlpha(color, alpha)
-        if type(color) ~= "table" then
-                return {1, 1, 1, clampColorComponent(alpha or 1)}
-        end
+	if type(color) ~= "table" then
+		return {1, 1, 1, clampColorComponent(alpha or 1)}
+	end
 
-        return {
-                clampColorComponent(color[1] or 1),
-                clampColorComponent(color[2] or 1),
-                clampColorComponent(color[3] or 1),
-                clampColorComponent(alpha or color[4] or 1),
-        }
+	return {
+		clampColorComponent(color[1] or 1),
+		clampColorComponent(color[2] or 1),
+		clampColorComponent(color[3] or 1),
+		clampColorComponent(alpha or color[4] or 1),
+	}
 end
 
 local function drawWindowFrame(x, y, width, height, options)
-        options = options or {}
+	options = options or {}
 
-        if not width or not height or width <= 0 or height <= 0 then
-                return
-        end
+	if not width or not height or width <= 0 or height <= 0 then
+		return
+	end
 
-        local panelColor = options.baseColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
-        local borderColor = options.borderColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-        local accentColor = options.accentColor or Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
-        local shadowColor = options.shadowColor or (UI.colors and UI.colors.shadow) or Theme.shadowColor or {0, 0, 0, 0.45}
-        local shadowAlpha = options.shadowAlpha
-        local baseAlpha = options.baseAlpha or 0.94
-        local borderAlpha = options.borderAlpha or 0.85
-        local accentAlpha = options.accentAlpha or 0.28
-        local accentHeight = options.accentHeight or WINDOW_ACCENT_HEIGHT
-        local accentInsetX = options.accentInsetX or (WINDOW_PADDING_X * 0.6)
-        local accentInsetY = options.accentInsetY or (WINDOW_PADDING_Y * 0.35)
+	local panelColor = options.baseColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
+	local borderColor = options.borderColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+	local accentColor = options.accentColor or Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
+	local shadowColor = options.shadowColor or (UI.colors and UI.colors.shadow) or Theme.shadowColor or {0, 0, 0, 0.45}
+	local shadowAlpha = options.shadowAlpha
+	local baseAlpha = options.baseAlpha or 0.94
+	local borderAlpha = options.borderAlpha or 0.85
+	local accentAlpha = options.accentAlpha or 0.28
+	local accentHeight = options.accentHeight or WINDOW_ACCENT_HEIGHT
+	local accentInsetX = options.accentInsetX or (WINDOW_PADDING_X * 0.6)
+	local accentInsetY = options.accentInsetY or (WINDOW_PADDING_Y * 0.35)
 
-        local shadowOffset = options.shadowOffset
-        if shadowOffset == nil then
-                shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or WINDOW_SHADOW_OFFSET
-        end
+	local shadowOffset = options.shadowOffset
+	if shadowOffset == nil then
+		shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or WINDOW_SHADOW_OFFSET
+	end
 
-        if shadowOffset and shadowOffset ~= 0 then
-                love.graphics.setColor(withAlpha(shadowColor, shadowAlpha))
-                UI.drawRoundedRect(x + shadowOffset, y + shadowOffset, width, height, WINDOW_CORNER_RADIUS + 2)
-        end
+	if shadowOffset and shadowOffset ~= 0 then
+		love.graphics.setColor(withAlpha(shadowColor, shadowAlpha))
+		UI.drawRoundedRect(x + shadowOffset, y + shadowOffset, width, height, WINDOW_CORNER_RADIUS + 2)
+	end
 
-        local fill = withAlpha(panelColor, baseAlpha)
-        love.graphics.setColor(fill)
-        UI.drawRoundedRect(x, y, width, height, WINDOW_CORNER_RADIUS)
+	local fill = withAlpha(panelColor, baseAlpha)
+	love.graphics.setColor(fill)
+	UI.drawRoundedRect(x, y, width, height, WINDOW_CORNER_RADIUS)
 
-        if accentHeight and accentHeight > 0 then
-                local accentWidth = math.max(0, width - accentInsetX * 2)
-                if accentWidth > 0 and height - accentInsetY * 2 > 0 then
-                        local accentY = y + accentInsetY
-                        local accentX = x + accentInsetX
-                        love.graphics.setColor(withAlpha(accentColor, accentAlpha))
-                        UI.drawRoundedRect(accentX, accentY, accentWidth, math.min(accentHeight, height - accentInsetY * 2), math.max(4, accentHeight / 2))
-                end
-        end
+	if accentHeight and accentHeight > 0 then
+		local accentWidth = math.max(0, width - accentInsetX * 2)
+		if accentWidth > 0 and height - accentInsetY * 2 > 0 then
+			local accentY = y + accentInsetY
+			local accentX = x + accentInsetX
+			love.graphics.setColor(withAlpha(accentColor, accentAlpha))
+			UI.drawRoundedRect(accentX, accentY, accentWidth, math.min(accentHeight, height - accentInsetY * 2), math.max(4, accentHeight / 2))
+		end
+	end
 
-        love.graphics.setColor(withAlpha(borderColor, borderAlpha))
-        love.graphics.setLineWidth(options.borderWidth or 2)
-        love.graphics.rectangle("line", x, y, width, height, WINDOW_CORNER_RADIUS, WINDOW_CORNER_RADIUS)
-        love.graphics.setLineWidth(1)
+	love.graphics.setColor(withAlpha(borderColor, borderAlpha))
+	love.graphics.setLineWidth(options.borderWidth or 2)
+	love.graphics.rectangle("line", x, y, width, height, WINDOW_CORNER_RADIUS, WINDOW_CORNER_RADIUS)
+	love.graphics.setLineWidth(1)
 
-        if options.overlay then
-                options.overlay(x, y, width, height)
-        end
+	if options.overlay then
+		options.overlay(x, y, width, height)
+	end
 
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function roundNearest(value)
-        value = value or 0
-        if value >= 0 then
-                return math.floor(value + 0.5)
-        end
+	value = value or 0
+	if value >= 0 then
+		return math.floor(value + 0.5)
+	end
 	return math.ceil(value - 0.5)
 end
 
@@ -579,15 +579,15 @@ local function describeUnlockTag(tag)
 end
 
 local function annotateTrackEntry(entry)
-        if not entry then
-                return
-        end
+	if not entry then
+		return
+	end
 
-        local rewards = {}
-        local effects = entry.effects or {}
-        if effects.shopExtraChoices and effects.shopExtraChoices ~= 0 then
-                local reward = formatShopChoice(effects.shopExtraChoices)
-                if reward then
+	local rewards = {}
+	local effects = entry.effects or {}
+	if effects.shopExtraChoices and effects.shopExtraChoices ~= 0 then
+		local reward = formatShopChoice(effects.shopExtraChoices)
+		if reward then
 			rewards[#rewards + 1] = reward
 		end
 	end
@@ -601,62 +601,62 @@ local function annotateTrackEntry(entry)
 		end
 	end
 
-        entry.rewards = rewards
+	entry.rewards = rewards
 end
 
 local function measureTrackEntryHeight(entry)
-        if not entry then
-                return TRACK_CARD_MIN_HEIGHT
-        end
+	if not entry then
+		return TRACK_CARD_MIN_HEIGHT
+	end
 
-        local wrapWidth = CARD_WIDTH - 48
-        local desc = entry.description or ""
-        local bodyFont = UI.fonts.body
-        local descHeight = 0
-        if desc ~= "" then
-                local _, wrapped = bodyFont:getWrap(desc, wrapWidth)
-                local lineCount = math.max(1, #wrapped)
-                descHeight = lineCount * bodyFont:getHeight()
-        end
+	local wrapWidth = CARD_WIDTH - 48
+	local desc = entry.description or ""
+	local bodyFont = UI.fonts.body
+	local descHeight = 0
+	if desc ~= "" then
+		local _, wrapped = bodyFont:getWrap(desc, wrapWidth)
+		local lineCount = math.max(1, #wrapped)
+		descHeight = lineCount * bodyFont:getHeight()
+	end
 
-        local rewards = entry.rewards or {}
-        local rewardBlockHeight = 0
-        if #rewards > 0 then
-                local smallFont = UI.fonts.small
-                rewardBlockHeight = 6 + #rewards * smallFont:getHeight()
-        end
+	local rewards = entry.rewards or {}
+	local rewardBlockHeight = 0
+	if #rewards > 0 then
+		local smallFont = UI.fonts.small
+		rewardBlockHeight = 6 + #rewards * smallFont:getHeight()
+	end
 
-        local textY = 20
-        local descY = textY + 58
+	local textY = 20
+	local descY = textY + 58
 
-        local yCursor = descY + descHeight + rewardBlockHeight
-        local requiredHeight = yCursor + 12
+	local yCursor = descY + descHeight + rewardBlockHeight
+	local requiredHeight = yCursor + 12
 
-        return math.max(TRACK_CARD_MIN_HEIGHT, math.ceil(requiredHeight))
+	return math.max(TRACK_CARD_MIN_HEIGHT, math.ceil(requiredHeight))
 end
 
 local function recalculateTrackLayout()
-        local offset = 0
-        trackContentHeight = 0
+	local offset = 0
+	trackContentHeight = 0
 
-        for _, entry in ipairs(trackEntries or {}) do
-                local height = measureTrackEntryHeight(entry)
-                entry.cardHeight = height
-                entry.offset = offset
-                offset = offset + height + CARD_SPACING
-        end
+	for _, entry in ipairs(trackEntries or {}) do
+		local height = measureTrackEntryHeight(entry)
+		entry.cardHeight = height
+		entry.offset = offset
+		offset = offset + height + CARD_SPACING
+	end
 
-        if offset > 0 then
-                trackContentHeight = offset - CARD_SPACING
-        end
+	if offset > 0 then
+		trackContentHeight = offset - CARD_SPACING
+	end
 end
 
 local function annotateTrackEntries()
-        for _, entry in ipairs(trackEntries or {}) do
-                annotateTrackEntry(entry)
-        end
+	for _, entry in ipairs(trackEntries or {}) do
+		annotateTrackEntry(entry)
+	end
 
-        recalculateTrackLayout()
+	recalculateTrackLayout()
 end
 
 local function resolveAchievementName(id)
@@ -726,54 +726,54 @@ local function resolveSkinStatus(skin)
 end
 
 local function buildCosmeticsEntries()
-        cosmeticsEntries = {}
-        hoveredCosmeticIndex = nil
-        pressedCosmeticIndex = nil
-        cosmeticsFocusIndex = nil
-        cosmeticsSummary.unlocked = 0
-        cosmeticsSummary.total = 0
-        cosmeticsSummary.newUnlocks = 0
+	cosmeticsEntries = {}
+	hoveredCosmeticIndex = nil
+	pressedCosmeticIndex = nil
+	cosmeticsFocusIndex = nil
+	cosmeticsSummary.unlocked = 0
+	cosmeticsSummary.total = 0
+	cosmeticsSummary.newUnlocks = 0
 
-        if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
-                return
-        end
+	if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
+		return
+	end
 
-        local skins = SnakeCosmetics:getSkins() or {}
-        local selectedIndex
-        local recentlyUnlockedIds = {}
+	local skins = SnakeCosmetics:getSkins() or {}
+	local selectedIndex
+	local recentlyUnlockedIds = {}
 
-        for _, skin in ipairs(skins) do
-                cosmeticsSummary.total = cosmeticsSummary.total + 1
-                if skin.unlocked then
-                        cosmeticsSummary.unlocked = cosmeticsSummary.unlocked + 1
-                end
-                if skin.justUnlocked then
-                        cosmeticsSummary.newUnlocks = cosmeticsSummary.newUnlocks + 1
-                        recentlyUnlockedIds[#recentlyUnlockedIds + 1] = skin.id
-                end
+	for _, skin in ipairs(skins) do
+		cosmeticsSummary.total = cosmeticsSummary.total + 1
+		if skin.unlocked then
+			cosmeticsSummary.unlocked = cosmeticsSummary.unlocked + 1
+		end
+		if skin.justUnlocked then
+			cosmeticsSummary.newUnlocks = cosmeticsSummary.newUnlocks + 1
+			recentlyUnlockedIds[#recentlyUnlockedIds + 1] = skin.id
+		end
 
-                local entry = {
-                        id = skin.id,
-                        skin = skin,
-                        justUnlocked = skin.justUnlocked,
-                }
-                entry.statusLabel, entry.detailText, entry.statusColor = resolveSkinStatus(skin)
-                cosmeticsEntries[#cosmeticsEntries + 1] = entry
+		local entry = {
+			id = skin.id,
+			skin = skin,
+			justUnlocked = skin.justUnlocked,
+		}
+		entry.statusLabel, entry.detailText, entry.statusColor = resolveSkinStatus(skin)
+		cosmeticsEntries[#cosmeticsEntries + 1] = entry
 
-                if skin.selected then
-                        selectedIndex = #cosmeticsEntries
-                end
-        end
+		if skin.selected then
+			selectedIndex = #cosmeticsEntries
+		end
+	end
 
-        if cosmeticsSummary.newUnlocks > 0 and SnakeCosmetics and SnakeCosmetics.clearRecentUnlocks then
-                SnakeCosmetics:clearRecentUnlocks(recentlyUnlockedIds)
-        end
+	if cosmeticsSummary.newUnlocks > 0 and SnakeCosmetics and SnakeCosmetics.clearRecentUnlocks then
+		SnakeCosmetics:clearRecentUnlocks(recentlyUnlockedIds)
+	end
 
-        if selectedIndex then
-                cosmeticsFocusIndex = selectedIndex
-        elseif #cosmeticsEntries > 0 then
-                cosmeticsFocusIndex = 1
-        end
+	if selectedIndex then
+		cosmeticsFocusIndex = selectedIndex
+	elseif #cosmeticsEntries > 0 then
+		cosmeticsFocusIndex = 1
+	end
 end
 
 local function updateCosmeticsLayout(sw)
@@ -785,16 +785,16 @@ local function updateCosmeticsLayout(sw)
 		return
 	end
 
-        local listX = (sw - CARD_WIDTH) / 2
-        local listTop = getListTop("cosmetics")
+	local listX = (sw - CARD_WIDTH) / 2
+	local listTop = getListTop("cosmetics")
 
-        for index, entry in ipairs(cosmeticsEntries) do
-                local y = listTop + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
-                entry.bounds = {
-                        x = listX,
-                        y = y,
-                        w = CARD_WIDTH,
-                        h = COSMETIC_CARD_HEIGHT,
+	for index, entry in ipairs(cosmeticsEntries) do
+		local y = listTop + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
+		entry.bounds = {
+			x = listX,
+			y = y,
+			w = CARD_WIDTH,
+			h = COSMETIC_CARD_HEIGHT,
 		}
 	end
 end
@@ -810,12 +810,12 @@ local function ensureCosmeticVisible(index)
 
 	local itemHeight = COSMETIC_CARD_HEIGHT
 	local spacing = COSMETIC_CARD_SPACING
-        local listTop = getListTop("cosmetics")
-        local top = listTop + scrollOffset + (index - 1) * (itemHeight + spacing)
-        local bottom = top + itemHeight
-        local viewportTop = getListTop("cosmetics")
-        local bottomPadding = getScrollPadding()
-        local viewportBottom = viewportTop + math.max(0, viewportHeight - bottomPadding)
+	local listTop = getListTop("cosmetics")
+	local top = listTop + scrollOffset + (index - 1) * (itemHeight + spacing)
+	local bottom = top + itemHeight
+	local viewportTop = getListTop("cosmetics")
+	local bottomPadding = getScrollPadding()
+	local viewportBottom = viewportTop + math.max(0, viewportHeight - bottomPadding)
 
 	if top < viewportTop then
 		scrollOffset = scrollOffset + (viewportTop - top)
@@ -1125,10 +1125,10 @@ function ProgressionScreen:enter()
 
 	buttonList:reset(buttons)
 
-        local _, activeIndex = findTab(activeTab)
-        if activeIndex then
-                buttonList:setFocus(activeIndex, nil, true)
-        end
+	local _, activeIndex = findTab(activeTab)
+	if activeIndex then
+		buttonList:setFocus(activeIndex, nil, true)
+	end
 
 	scrollOffset = 0
 	updateScrollBounds(sw, sh)
@@ -1184,311 +1184,311 @@ local function handleConfirm()
 end
 
 local function drawSummaryPanel(sw)
-        if not progressionState then
-                return
-        end
+	if not progressionState then
+		return
+	end
 
-        local contentWidth = CARD_WIDTH
-        local contentHeight = SUMMARY_CONTENT_HEIGHT
-        local frameWidth = contentWidth + WINDOW_PADDING_X * 2
-        local frameHeight = contentHeight + WINDOW_PADDING_Y * 2
-        local frameX = (sw - frameWidth) / 2
-        local frameY = EXPERIENCE_SUMMARY_TOP - WINDOW_PADDING_Y
-        local panelX = frameX + WINDOW_PADDING_X
-        local panelY = EXPERIENCE_SUMMARY_TOP
-        local padding = 24
-        local border = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-        local accentColor = Theme.progressColor or Theme.accentTextColor or {0.6, 0.8, 0.6, 1}
-        local mutedColor = withAlpha(Theme.mutedTextColor or Theme.textColor, 0.85)
+	local contentWidth = CARD_WIDTH
+	local contentHeight = SUMMARY_CONTENT_HEIGHT
+	local frameWidth = contentWidth + WINDOW_PADDING_X * 2
+	local frameHeight = contentHeight + WINDOW_PADDING_Y * 2
+	local frameX = (sw - frameWidth) / 2
+	local frameY = EXPERIENCE_SUMMARY_TOP - WINDOW_PADDING_Y
+	local panelX = frameX + WINDOW_PADDING_X
+	local panelY = EXPERIENCE_SUMMARY_TOP
+	local padding = 24
+	local border = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+	local accentColor = Theme.progressColor or Theme.accentTextColor or {0.6, 0.8, 0.6, 1}
+	local mutedColor = withAlpha(Theme.mutedTextColor or Theme.textColor, 0.85)
 
-        drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-                accentHeight = 0,
-                accentInsetY = WINDOW_PADDING_Y * 0.5,
-                accentAlpha = 0.32,
-        })
+	drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
+		accentHeight = 0,
+		accentInsetY = WINDOW_PADDING_Y * 0.5,
+		accentAlpha = 0.32,
+	})
 
-        local glow = withAlpha(lightenColor(accentColor, 0.45), 0.22)
+	local glow = withAlpha(lightenColor(accentColor, 0.45), 0.22)
 
-        local levelText = Localization:get("metaprogression.level_label", { level = progressionState.level or 1 })
-        local totalText = Localization:get("metaprogression.total_xp", { total = progressionState.totalExperience or 0 })
+	local levelText = Localization:get("metaprogression.level_label", { level = progressionState.level or 1 })
+	local totalText = Localization:get("metaprogression.total_xp", { total = progressionState.totalExperience or 0 })
 
-        local progressLabel
-        local xpIntoLevel = progressionState.xpIntoLevel or 0
-        local xpForNext = progressionState.xpForNext or 0
-        local progressRatio = 1
+	local progressLabel
+	local xpIntoLevel = progressionState.xpIntoLevel or 0
+	local xpForNext = progressionState.xpForNext or 0
+	local progressRatio = 1
 
-        if xpForNext <= 0 then
-                progressLabel = Localization:get("metaprogression.max_level")
-                progressRatio = 1
-        else
-                local remaining = math.max(0, xpForNext - xpIntoLevel)
-                progressLabel = Localization:get("metaprogression.next_unlock", { remaining = remaining })
-                if xpForNext > 0 then
-                        progressRatio = math.min(1, math.max(0, xpIntoLevel / xpForNext))
-                else
-                        progressRatio = 0
-                end
-        end
+	if xpForNext <= 0 then
+		progressLabel = Localization:get("metaprogression.max_level")
+		progressRatio = 1
+	else
+		local remaining = math.max(0, xpForNext - xpIntoLevel)
+		progressLabel = Localization:get("metaprogression.next_unlock", { remaining = remaining })
+		if xpForNext > 0 then
+			progressRatio = math.min(1, math.max(0, xpIntoLevel / xpForNext))
+		else
+			progressRatio = 0
+		end
+	end
 
-        local circleRadius = 52
-        local circleCenterX = panelX + padding + circleRadius
-        local circleCenterY = panelY + contentHeight / 2
-        local outerRadius = circleRadius + 8
+	local circleRadius = 52
+	local circleCenterX = panelX + padding + circleRadius
+	local circleCenterY = panelY + contentHeight / 2
+	local outerRadius = circleRadius + 8
 
-        love.graphics.setColor(withAlpha(darkenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.15), 0.92))
-        love.graphics.circle("fill", circleCenterX, circleCenterY, outerRadius)
+	love.graphics.setColor(withAlpha(darkenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.15), 0.92))
+	love.graphics.circle("fill", circleCenterX, circleCenterY, outerRadius)
 
-        local arcEndAngle = -math.pi / 2 + (math.pi * 2) * progressRatio
+	local arcEndAngle = -math.pi / 2 + (math.pi * 2) * progressRatio
 
-        love.graphics.setColor(withAlpha(glow, 1))
-        love.graphics.setLineWidth(8)
-        love.graphics.arc("line", "open", circleCenterX, circleCenterY, outerRadius, -math.pi / 2, arcEndAngle)
-        love.graphics.setLineWidth(1)
+	love.graphics.setColor(withAlpha(glow, 1))
+	love.graphics.setLineWidth(8)
+	love.graphics.arc("line", "open", circleCenterX, circleCenterY, outerRadius, -math.pi / 2, arcEndAngle)
+	love.graphics.setLineWidth(1)
 
-        love.graphics.setColor(withAlpha(lightenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.18), 0.96))
-        love.graphics.circle("fill", circleCenterX, circleCenterY, circleRadius)
+	love.graphics.setColor(withAlpha(lightenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.18), 0.96))
+	love.graphics.circle("fill", circleCenterX, circleCenterY, circleRadius)
 
-        love.graphics.setColor(withAlpha(border, 0.85))
-        love.graphics.setLineWidth(2)
-        love.graphics.circle("line", circleCenterX, circleCenterY, circleRadius)
-        love.graphics.setLineWidth(1)
+	love.graphics.setColor(withAlpha(border, 0.85))
+	love.graphics.setLineWidth(2)
+	love.graphics.circle("line", circleCenterX, circleCenterY, circleRadius)
+	love.graphics.setLineWidth(1)
 
-        local levelValue = formatInteger(progressionState.level or 1)
-        love.graphics.setFont(UI.fonts.timer)
-        love.graphics.setColor(Theme.textColor)
-        love.graphics.printf(levelValue, circleCenterX - circleRadius, circleCenterY - UI.fonts.timer:getHeight() / 2 - 4, circleRadius * 2, "center")
+	local levelValue = formatInteger(progressionState.level or 1)
+	love.graphics.setFont(UI.fonts.timer)
+	love.graphics.setColor(Theme.textColor)
+	love.graphics.printf(levelValue, circleCenterX - circleRadius, circleCenterY - UI.fonts.timer:getHeight() / 2 - 4, circleRadius * 2, "center")
 
-        local infoX = circleCenterX + circleRadius + padding
-        local infoY = panelY + padding
+	local infoX = circleCenterX + circleRadius + padding
+	local infoY = panelY + padding
 
-        love.graphics.setFont(UI.fonts.button)
-        love.graphics.setColor(Theme.textColor)
-        love.graphics.print(levelText, infoX, infoY)
-        infoY = infoY + UI.fonts.button:getHeight() + 6
+	love.graphics.setFont(UI.fonts.button)
+	love.graphics.setColor(Theme.textColor)
+	love.graphics.print(levelText, infoX, infoY)
+	infoY = infoY + UI.fonts.button:getHeight() + 6
 
-        love.graphics.setFont(UI.fonts.heading)
-        love.graphics.setColor(withAlpha(Theme.textColor, 0.95))
-        love.graphics.print(totalText, infoX, infoY)
-        infoY = infoY + UI.fonts.heading:getHeight() + 4
+	love.graphics.setFont(UI.fonts.heading)
+	love.graphics.setColor(withAlpha(Theme.textColor, 0.95))
+	love.graphics.print(totalText, infoX, infoY)
+	infoY = infoY + UI.fonts.heading:getHeight() + 4
 
-        love.graphics.setFont(UI.fonts.body)
-        love.graphics.setColor(withAlpha(accentColor, 0.95))
-        love.graphics.print(progressLabel, infoX, infoY)
-        infoY = infoY + UI.fonts.body:getHeight() + 6
+	love.graphics.setFont(UI.fonts.body)
+	love.graphics.setColor(withAlpha(accentColor, 0.95))
+	love.graphics.print(progressLabel, infoX, infoY)
+	infoY = infoY + UI.fonts.body:getHeight() + 6
 
-        if xpForNext > 0 then
-                local progressText = string.format("%s / %s XP", formatInteger(xpIntoLevel), formatInteger(xpForNext))
-                love.graphics.setFont(UI.fonts.caption)
-                love.graphics.setColor(mutedColor)
-                love.graphics.print(progressText, infoX, infoY)
-        else
-                love.graphics.setFont(UI.fonts.caption)
-                love.graphics.setColor(mutedColor)
-                love.graphics.print(Localization:get("metaprogression.max_level"), infoX, infoY)
-        end
+	if xpForNext > 0 then
+		local progressText = string.format("%s / %s XP", formatInteger(xpIntoLevel), formatInteger(xpForNext))
+		love.graphics.setFont(UI.fonts.caption)
+		love.graphics.setColor(mutedColor)
+		love.graphics.print(progressText, infoX, infoY)
+	else
+		love.graphics.setFont(UI.fonts.caption)
+		love.graphics.setColor(mutedColor)
+		love.graphics.print(Localization:get("metaprogression.max_level"), infoX, infoY)
+	end
 
-        local barX = infoX
-        local barY = panelY + contentHeight - padding - 24
-        local barWidth = contentWidth - (barX - panelX) - padding
-        local barHeight = 18
-        local barRadius = math.min(9, barHeight / 2)
+	local barX = infoX
+	local barY = panelY + contentHeight - padding - 24
+	local barWidth = contentWidth - (barX - panelX) - padding
+	local barHeight = 18
+	local barRadius = math.min(9, barHeight / 2)
 
-        local function drawRoundedSegment(x, y, width, height, radius)
-                if width <= 0 or height <= 0 then
-                        return
-                end
+	local function drawRoundedSegment(x, y, width, height, radius)
+		if width <= 0 or height <= 0 then
+			return
+		end
 
-                local clampedRadius = math.min(radius or 0, width / 2, height / 2)
-                UI.drawRoundedRect(x, y, width, height, clampedRadius)
-        end
+		local clampedRadius = math.min(radius or 0, width / 2, height / 2)
+		UI.drawRoundedRect(x, y, width, height, clampedRadius)
+	end
 
-        love.graphics.setColor(withAlpha(darkenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.35), 0.92))
-        drawRoundedSegment(barX, barY, barWidth, barHeight, barRadius)
+	love.graphics.setColor(withAlpha(darkenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.35), 0.92))
+	drawRoundedSegment(barX, barY, barWidth, barHeight, barRadius)
 
-        local fillWidth = math.max(0, barWidth * progressRatio)
-        if fillWidth > 0 then
-                local fillColor = withAlpha(lightenColor(accentColor, 0.2), 0.95)
-                love.graphics.setColor(fillColor)
-                drawRoundedSegment(barX, barY, fillWidth, barHeight, barRadius)
+	local fillWidth = math.max(0, barWidth * progressRatio)
+	if fillWidth > 0 then
+		local fillColor = withAlpha(lightenColor(accentColor, 0.2), 0.95)
+		love.graphics.setColor(fillColor)
+		drawRoundedSegment(barX, barY, fillWidth, barHeight, barRadius)
 
-                love.graphics.setColor(withAlpha(lightenColor(fillColor, 0.25), 0.55))
-                drawRoundedSegment(barX, barY, fillWidth, barHeight * 0.55, barRadius)
-        end
+		love.graphics.setColor(withAlpha(lightenColor(fillColor, 0.25), 0.55))
+		drawRoundedSegment(barX, barY, fillWidth, barHeight * 0.55, barRadius)
+	end
 
-        love.graphics.setColor(withAlpha(border, 0.9))
-        love.graphics.setLineWidth(1.6)
-        love.graphics.rectangle("line", barX, barY, barWidth, barHeight, barRadius, barRadius)
-        love.graphics.setLineWidth(1)
+	love.graphics.setColor(withAlpha(border, 0.9))
+	love.graphics.setLineWidth(1.6)
+	love.graphics.rectangle("line", barX, barY, barWidth, barHeight, barRadius, barRadius)
+	love.graphics.setLineWidth(1)
 
-        if xpForNext > 0 then
-                local percent = math.floor(progressRatio * 100 + 0.5)
-                local badgeText = string.format("%d%%", percent)
-                love.graphics.setFont(UI.fonts.caption)
-                local badgePaddingX = 12
-                local badgePaddingY = 6
-                local badgeWidth = UI.fonts.caption:getWidth(badgeText) + badgePaddingX * 2
-                local badgeHeight = UI.fonts.caption:getHeight() + badgePaddingY * 2
-                local badgeX = barX + barWidth - badgeWidth
-                local badgeY = barY - badgeHeight - 6
+	if xpForNext > 0 then
+		local percent = math.floor(progressRatio * 100 + 0.5)
+		local badgeText = string.format("%d%%", percent)
+		love.graphics.setFont(UI.fonts.caption)
+		local badgePaddingX = 12
+		local badgePaddingY = 6
+		local badgeWidth = UI.fonts.caption:getWidth(badgeText) + badgePaddingX * 2
+		local badgeHeight = UI.fonts.caption:getHeight() + badgePaddingY * 2
+		local badgeX = barX + barWidth - badgeWidth
+		local badgeY = barY - badgeHeight - 6
 
-                love.graphics.setColor(withAlpha(lightenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.12), 0.9))
-                UI.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
+		love.graphics.setColor(withAlpha(lightenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.12), 0.9))
+		UI.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
 
-                love.graphics.setColor(withAlpha(accentColor, 0.95))
-                love.graphics.printf(badgeText, badgeX, badgeY + badgePaddingY - 2, badgeWidth, "center")
+		love.graphics.setColor(withAlpha(accentColor, 0.95))
+		love.graphics.printf(badgeText, badgeX, badgeY + badgePaddingY - 2, badgeWidth, "center")
 
-                love.graphics.setColor(withAlpha(glow, 0.7))
-                love.graphics.circle("fill", badgeX + badgeWidth * 0.25, badgeY + badgeHeight * 0.35, 3)
-                love.graphics.circle("fill", badgeX + badgeWidth * 0.72, badgeY + badgeHeight * 0.65, 2)
-        end
+		love.graphics.setColor(withAlpha(glow, 0.7))
+		love.graphics.circle("fill", badgeX + badgeWidth * 0.25, badgeY + badgeHeight * 0.35, 3)
+		love.graphics.circle("fill", badgeX + badgeWidth * 0.72, badgeY + badgeHeight * 0.65, 2)
+	end
 
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function drawTrack(sw, sh)
-        local listX = (sw - CARD_WIDTH) / 2
-        local clipY = getListTop("experience")
-        local clipH = viewportHeight
+	local listX = (sw - CARD_WIDTH) / 2
+	local clipY = getListTop("experience")
+	local clipH = viewportHeight
 
-        if clipH <= 0 then
-                return
-        end
+	if clipH <= 0 then
+		return
+	end
 
-        local frameX = listX - WINDOW_PADDING_X
-        local frameY = clipY - WINDOW_PADDING_Y
-        local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
-        local frameHeight = clipH + WINDOW_PADDING_Y * 2
-        drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-                accentHeight = 0,
-                accentInsetY = WINDOW_PADDING_Y * 0.5,
-                accentAlpha = 0.18,
-        })
+	local frameX = listX - WINDOW_PADDING_X
+	local frameY = clipY - WINDOW_PADDING_Y
+	local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
+	local frameHeight = clipH + WINDOW_PADDING_Y * 2
+	drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
+		accentHeight = 0,
+		accentInsetY = WINDOW_PADDING_Y * 0.5,
+		accentAlpha = 0.18,
+	})
 
-        love.graphics.push()
-        love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+	love.graphics.push()
+	love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
 
-        for index, entry in ipairs(trackEntries) do
-                local cardHeight = entry.cardHeight or TRACK_CARD_MIN_HEIGHT
-                local offset = entry.offset or ((index - 1) * (TRACK_CARD_MIN_HEIGHT + CARD_SPACING))
-                local y = clipY + scrollOffset + offset
-                local visibleThreshold = math.max(cardHeight, TRACK_CARD_MIN_HEIGHT)
-                if y + cardHeight >= clipY - visibleThreshold and y <= clipY + clipH + visibleThreshold then
-                        local unlocked = entry.unlocked
-                        local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-                        local fillAlpha = unlocked and 0.9 or 0.7
+	for index, entry in ipairs(trackEntries) do
+		local cardHeight = entry.cardHeight or TRACK_CARD_MIN_HEIGHT
+		local offset = entry.offset or ((index - 1) * (TRACK_CARD_MIN_HEIGHT + CARD_SPACING))
+		local y = clipY + scrollOffset + offset
+		local visibleThreshold = math.max(cardHeight, TRACK_CARD_MIN_HEIGHT)
+		if y + cardHeight >= clipY - visibleThreshold and y <= clipY + clipH + visibleThreshold then
+			local unlocked = entry.unlocked
+			local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+			local fillAlpha = unlocked and 0.9 or 0.7
 
-                        love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], fillAlpha)
-                        UI.drawRoundedRect(listX, y, CARD_WIDTH, cardHeight, 12)
+			love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], fillAlpha)
+			UI.drawRoundedRect(listX, y, CARD_WIDTH, cardHeight, 12)
 
-                        local borderColor = unlocked and (Theme.achieveColor or {0.55, 0.75, 0.55, 1}) or (Theme.lockedCardColor or {0.5, 0.35, 0.4, 1})
-                        love.graphics.setColor(borderColor)
-                        love.graphics.setLineWidth(2)
-                        love.graphics.rectangle("line", listX, y, CARD_WIDTH, cardHeight, 12, 12)
+			local borderColor = unlocked and (Theme.achieveColor or {0.55, 0.75, 0.55, 1}) or (Theme.lockedCardColor or {0.5, 0.35, 0.4, 1})
+			love.graphics.setColor(borderColor)
+			love.graphics.setLineWidth(2)
+			love.graphics.rectangle("line", listX, y, CARD_WIDTH, cardHeight, 12, 12)
 
-                        local textX = listX + 24
-                        local textY = y + 20
+			local textX = listX + 24
+			local textY = y + 20
 
-                        love.graphics.setFont(UI.fonts.button)
+			love.graphics.setFont(UI.fonts.button)
 			love.graphics.setColor(Theme.textColor)
 			local header = Localization:get("metaprogression.card_level", { level = entry.level or 0 })
 			love.graphics.print(header, textX, textY)
 
-                        love.graphics.setFont(UI.fonts.body)
-                        love.graphics.print(entry.name or "", textX, textY + 30)
+			love.graphics.setFont(UI.fonts.body)
+			love.graphics.print(entry.name or "", textX, textY + 30)
 
-                        local wrapWidth = CARD_WIDTH - 48
-                        love.graphics.setColor(Theme.textColor)
+			local wrapWidth = CARD_WIDTH - 48
+			love.graphics.setColor(Theme.textColor)
 
-                        local desc = entry.description or ""
-                        local descY = textY + 58
-                        local descHeight = 0
-                        if desc ~= "" then
-                                local _, wrapped = UI.fonts.body:getWrap(desc, wrapWidth)
-                                local lineCount = math.max(1, #wrapped)
-                                descHeight = lineCount * UI.fonts.body:getHeight()
-                                love.graphics.setColor(Theme.textColor)
-                                love.graphics.setFont(UI.fonts.body)
-                                love.graphics.printf(desc, textX, descY, wrapWidth)
-                        end
+			local desc = entry.description or ""
+			local descY = textY + 58
+			local descHeight = 0
+			if desc ~= "" then
+				local _, wrapped = UI.fonts.body:getWrap(desc, wrapWidth)
+				local lineCount = math.max(1, #wrapped)
+				descHeight = lineCount * UI.fonts.body:getHeight()
+				love.graphics.setColor(Theme.textColor)
+				love.graphics.setFont(UI.fonts.body)
+				love.graphics.printf(desc, textX, descY, wrapWidth)
+			end
 
-                        local infoY = descY + descHeight
-                        local rewards = entry.rewards or {}
-                        local smallFont = UI.fonts.small
-                        local lineHeight = smallFont:getHeight()
+			local infoY = descY + descHeight
+			local rewards = entry.rewards or {}
+			local smallFont = UI.fonts.small
+			local lineHeight = smallFont:getHeight()
 
-                        if #rewards > 0 then
-                                infoY = infoY + 6
-                                love.graphics.setFont(smallFont)
-                                local rewardColor = Theme.progressColor or Theme.textColor
-                                love.graphics.setColor(withAlpha(rewardColor, 0.9))
-                                for _, line in ipairs(rewards) do
-                                        love.graphics.printf("• " .. line, textX, infoY, wrapWidth, "left")
-                                        infoY = infoY + lineHeight
-                                end
-                        end
+			if #rewards > 0 then
+				infoY = infoY + 6
+				love.graphics.setFont(smallFont)
+				local rewardColor = Theme.progressColor or Theme.textColor
+				love.graphics.setColor(withAlpha(rewardColor, 0.9))
+				for _, line in ipairs(rewards) do
+					love.graphics.printf("• " .. line, textX, infoY, wrapWidth, "left")
+					infoY = infoY + lineHeight
+				end
+			end
 
-                end
-        end
+		end
+	end
 
 	love.graphics.setScissor()
 	love.graphics.pop()
 end
 
 local function drawCosmeticsHeader(sw)
-        local headerY = TAB_BOTTOM + 28
-        love.graphics.setFont(UI.fonts.button)
-        love.graphics.setColor(Theme.textColor)
-        love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, headerY, sw, "center")
+	local headerY = TAB_BOTTOM + 28
+	love.graphics.setFont(UI.fonts.button)
+	love.graphics.setColor(Theme.textColor)
+	love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, headerY, sw, "center")
 
-        if cosmeticsSummary.total > 0 then
-                local summaryText = Localization:get("metaprogression.cosmetics.progress", {
-                        unlocked = cosmeticsSummary.unlocked or 0,
-                        total = cosmeticsSummary.total or 0,
-                })
-                local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
-                love.graphics.setFont(UI.fonts.caption)
-                love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-                love.graphics.printf(summaryText, 0, headerY + 38, sw, "center")
+	if cosmeticsSummary.total > 0 then
+		local summaryText = Localization:get("metaprogression.cosmetics.progress", {
+			unlocked = cosmeticsSummary.unlocked or 0,
+			total = cosmeticsSummary.total or 0,
+		})
+		local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
+		love.graphics.setFont(UI.fonts.caption)
+		love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
+		love.graphics.printf(summaryText, 0, headerY + 38, sw, "center")
 
-                if cosmeticsSummary.newUnlocks and cosmeticsSummary.newUnlocks > 0 then
-                        local key = (cosmeticsSummary.newUnlocks == 1) and "metaprogression.cosmetics.new_summary_single" or "metaprogression.cosmetics.new_summary_multiple"
-                        local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor
-                        love.graphics.setFont(UI.fonts.small)
-                        love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.92)
-                        love.graphics.printf(Localization:get(key, { count = cosmeticsSummary.newUnlocks }), 0, headerY + 60, sw, "center")
-                end
-        end
+		if cosmeticsSummary.newUnlocks and cosmeticsSummary.newUnlocks > 0 then
+			local key = (cosmeticsSummary.newUnlocks == 1) and "metaprogression.cosmetics.new_summary_single" or "metaprogression.cosmetics.new_summary_multiple"
+			local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor
+			love.graphics.setFont(UI.fonts.small)
+			love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.92)
+			love.graphics.printf(Localization:get(key, { count = cosmeticsSummary.newUnlocks }), 0, headerY + 60, sw, "center")
+		end
+	end
 end
 
 local function drawCosmeticsList(sw, sh)
-        local clipY = getListTop("cosmetics")
-        local clipH = viewportHeight
+	local clipY = getListTop("cosmetics")
+	local clipH = viewportHeight
 
-        if clipH <= 0 then
-                return
-        end
+	if clipH <= 0 then
+		return
+	end
 
-        updateCosmeticsLayout(sw)
+	updateCosmeticsLayout(sw)
 
-        local listX = (sw - CARD_WIDTH) / 2
+	local listX = (sw - CARD_WIDTH) / 2
 
-        local frameX = listX - WINDOW_PADDING_X
-        local frameY = clipY - WINDOW_PADDING_Y
-        local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
-        local frameHeight = clipH + WINDOW_PADDING_Y * 2
-        drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-                accentHeight = 0,
-                accentInsetY = WINDOW_PADDING_Y * 0.5,
-                accentAlpha = 0.24,
-        })
+	local frameX = listX - WINDOW_PADDING_X
+	local frameY = clipY - WINDOW_PADDING_Y
+	local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
+	local frameHeight = clipH + WINDOW_PADDING_Y * 2
+	drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
+		accentHeight = 0,
+		accentInsetY = WINDOW_PADDING_Y * 0.5,
+		accentAlpha = 0.24,
+	})
 
-        love.graphics.push()
-        love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+	love.graphics.push()
+	love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
 
-        local listTop = clipY
+	local listTop = clipY
 
-        for index, entry in ipairs(cosmeticsEntries) do
-                local y = listTop + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
+	for index, entry in ipairs(cosmeticsEntries) do
+		local y = listTop + scrollOffset + (index - 1) * (COSMETIC_CARD_HEIGHT + COSMETIC_CARD_SPACING)
 		entry.bounds = entry.bounds or {}
 		entry.bounds.x = listX
 		entry.bounds.y = y
@@ -1496,12 +1496,12 @@ local function drawCosmeticsList(sw, sh)
 		entry.bounds.h = COSMETIC_CARD_HEIGHT
 
 		if y + COSMETIC_CARD_HEIGHT >= clipY - COSMETIC_CARD_HEIGHT and y <= clipY + clipH + COSMETIC_CARD_HEIGHT then
-                        local skin = entry.skin or {}
-                        local unlocked = skin.unlocked
-                        local selected = skin.selected
-                        local isFocused = (index == cosmeticsFocusIndex)
-                        local isHovered = (index == hoveredCosmeticIndex)
-                        local isNew = entry.justUnlocked
+			local skin = entry.skin or {}
+			local unlocked = skin.unlocked
+			local selected = skin.selected
+			local isFocused = (index == cosmeticsFocusIndex)
+			local isHovered = (index == hoveredCosmeticIndex)
+			local isNew = entry.justUnlocked
 
 			local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
 			local fillColor
@@ -1513,151 +1513,151 @@ local function drawCosmeticsList(sw, sh)
 				fillColor = darkenColor(basePanel, 0.25)
 			end
 
-                        if isFocused or isHovered then
-                                fillColor = lightenColor(fillColor, 0.06)
-                        end
+			if isFocused or isHovered then
+				fillColor = lightenColor(fillColor, 0.06)
+			end
 
-                        if isNew then
-                                fillColor = lightenColor(fillColor, 0.08)
-                        end
+			if isNew then
+				fillColor = lightenColor(fillColor, 0.08)
+			end
 
 			love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.92)
 			UI.drawRoundedRect(listX, y, CARD_WIDTH, COSMETIC_CARD_HEIGHT, 14)
 
-                        local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
-                        if selected then
-                                borderColor = Theme.accentTextColor or borderColor
-                        elseif unlocked then
-                                borderColor = Theme.progressColor or borderColor
-                        elseif Theme.lockedCardColor then
-                                borderColor = Theme.lockedCardColor
-                        end
+			local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
+			if selected then
+				borderColor = Theme.accentTextColor or borderColor
+			elseif unlocked then
+				borderColor = Theme.progressColor or borderColor
+			elseif Theme.lockedCardColor then
+				borderColor = Theme.lockedCardColor
+			end
 
-                        if isNew then
-                                borderColor = lightenColor(borderColor, 0.12)
-                        end
+			if isNew then
+				borderColor = lightenColor(borderColor, 0.12)
+			end
 
-                        love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
-                        love.graphics.setLineWidth(isFocused and 3 or 2)
-                        love.graphics.rectangle("line", listX, y, CARD_WIDTH, COSMETIC_CARD_HEIGHT, 14, 14)
+			love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1)
+			love.graphics.setLineWidth(isFocused and 3 or 2)
+			love.graphics.rectangle("line", listX, y, CARD_WIDTH, COSMETIC_CARD_HEIGHT, 14, 14)
 
-                        if isFocused then
+			if isFocused then
 				local highlight = Theme.highlightColor or {1, 1, 1, 0.08}
 				love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.08) + 0.04)
 				UI.drawRoundedRect(listX + 6, y + 6, CARD_WIDTH - 12, COSMETIC_CARD_HEIGHT - 12, 12)
 			end
 
-                        local skinColors = skin.colors or {}
-                        local bodyColor = skinColors.body or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
-                        local outlineColor = skinColors.outline or {0.05, 0.15, 0.12, 1}
-                        local glowColor = skinColors.glow or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
+			local skinColors = skin.colors or {}
+			local bodyColor = skinColors.body or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
+			local outlineColor = skinColors.outline or {0.05, 0.15, 0.12, 1}
+			local glowColor = skinColors.glow or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
 
-                        if not unlocked then
-                                bodyColor = darkenColor(bodyColor, 0.25)
-                                outlineColor = darkenColor(outlineColor, 0.2)
-                                glowColor = darkenColor(glowColor, 0.3)
-                        end
+			if not unlocked then
+				bodyColor = darkenColor(bodyColor, 0.25)
+				outlineColor = darkenColor(outlineColor, 0.2)
+				glowColor = darkenColor(glowColor, 0.3)
+			end
 
 			local previewX = listX + 28
 			local previewY = y + (COSMETIC_CARD_HEIGHT - COSMETIC_PREVIEW_HEIGHT) / 2
 			local previewW = COSMETIC_PREVIEW_WIDTH
 			local previewH = COSMETIC_PREVIEW_HEIGHT
 
-                        if unlocked then
-                                love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], (glowColor[4] or 1) * 0.45)
-                                love.graphics.setLineWidth(6)
-                                love.graphics.rectangle("line", previewX - 6, previewY - 6, previewW + 12, previewH + 12, previewH / 2 + 6, previewH / 2 + 6)
-                        end
+			if unlocked then
+				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], (glowColor[4] or 1) * 0.45)
+				love.graphics.setLineWidth(6)
+				love.graphics.rectangle("line", previewX - 6, previewY - 6, previewW + 12, previewH + 12, previewH / 2 + 6, previewH / 2 + 6)
+			end
 
 			love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], bodyColor[4] or 1)
 			UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewH / 2)
 
-                        love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 1)
-                        love.graphics.setLineWidth(3)
-                        love.graphics.rectangle("line", previewX, previewY, previewW, previewH, previewH / 2, previewH / 2)
+			love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 1)
+			love.graphics.setLineWidth(3)
+			love.graphics.rectangle("line", previewX, previewY, previewW, previewH, previewH / 2, previewH / 2)
 
-                        love.graphics.setLineWidth(1)
+			love.graphics.setLineWidth(1)
 
-                        if not unlocked then
-                                local overlayColor = withAlpha(Theme.bgColor or {0, 0, 0, 1}, 0.25)
-                                love.graphics.setColor(overlayColor[1], overlayColor[2], overlayColor[3], overlayColor[4] or 1)
-                                UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewH / 2)
+			if not unlocked then
+				local overlayColor = withAlpha(Theme.bgColor or {0, 0, 0, 1}, 0.25)
+				love.graphics.setColor(overlayColor[1], overlayColor[2], overlayColor[3], overlayColor[4] or 1)
+				UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewH / 2)
 
-                                local lockColor = Theme.lockedCardColor or {0.5, 0.35, 0.4, 1}
-                                local shackleColor = lightenColor(lockColor, 0.1)
-                                local bodyColor = darkenColor(lockColor, 0.12)
-                                local lockWidth = math.min(60, previewW * 0.78)
-                                local lockHeight = math.max(30, previewH * 0.74)
-                                local lockBodyHeight = lockHeight + 10
-                                local lockX = previewX + (previewW - lockWidth) / 2
-                                local lockY = previewY + (previewH - lockHeight) / 2 + 2
-                                local shackleWidth = lockWidth * 0.68
-                                local postWidth = math.max(3, lockWidth * 0.16)
-                                local postHeight = math.max(lockHeight * 0.75, lockHeight - 3)
-                                local shackleX = previewX + (previewW - shackleWidth) / 2
-                                local postY = lockY - postHeight
-                                local topCenterY = postY
-                                local topRectX = shackleX + postWidth / 2
-                                local topRectWidth = shackleWidth - postWidth
-                                local topRectY = topCenterY - postWidth / 2
+				local lockColor = Theme.lockedCardColor or {0.5, 0.35, 0.4, 1}
+				local shackleColor = lightenColor(lockColor, 0.1)
+				local bodyColor = darkenColor(lockColor, 0.12)
+				local lockWidth = math.min(60, previewW * 0.78)
+				local lockHeight = math.max(30, previewH * 0.74)
+				local lockBodyHeight = lockHeight + 10
+				local lockX = previewX + (previewW - lockWidth) / 2
+				local lockY = previewY + (previewH - lockHeight) / 2 + 2
+				local shackleWidth = lockWidth * 0.68
+				local postWidth = math.max(3, lockWidth * 0.16)
+				local postHeight = math.max(lockHeight * 0.75, lockHeight - 3)
+				local shackleX = previewX + (previewW - shackleWidth) / 2
+				local postY = lockY - postHeight
+				local topCenterY = postY
+				local topRectX = shackleX + postWidth / 2
+				local topRectWidth = shackleWidth - postWidth
+				local topRectY = topCenterY - postWidth / 2
 
-                                -- subtle drop shadow behind the lock to make it pop from the overlay
-                                local shadowOffsetX, shadowOffsetY = 3, 4
-                                local shadowColor = withAlpha(Theme.shadowColor or {0, 0, 0, 1}, 0.28)
-                                love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowColor[4] or 1)
-                                UI.drawRoundedRect(lockX + shadowOffsetX, lockY + shadowOffsetY, lockWidth, lockBodyHeight, 4)
-                                love.graphics.rectangle("fill", shackleX + shadowOffsetX, postY + shadowOffsetY, postWidth, postHeight)
-                                love.graphics.rectangle("fill", shackleX + shackleWidth - postWidth + shadowOffsetX, postY + shadowOffsetY, postWidth, postHeight)
-                                love.graphics.rectangle("fill", topRectX + shadowOffsetX, topRectY + shadowOffsetY, topRectWidth, postWidth)
-                                love.graphics.circle("fill", topRectX + shadowOffsetX, topCenterY + shadowOffsetY, postWidth / 2)
-                                love.graphics.circle("fill", topRectX + topRectWidth + shadowOffsetX, topCenterY + shadowOffsetY, postWidth / 2)
+				-- subtle drop shadow behind the lock to make it pop from the overlay
+				local shadowOffsetX, shadowOffsetY = 3, 4
+				local shadowColor = withAlpha(Theme.shadowColor or {0, 0, 0, 1}, 0.28)
+				love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowColor[4] or 1)
+				UI.drawRoundedRect(lockX + shadowOffsetX, lockY + shadowOffsetY, lockWidth, lockBodyHeight, 4)
+				love.graphics.rectangle("fill", shackleX + shadowOffsetX, postY + shadowOffsetY, postWidth, postHeight)
+				love.graphics.rectangle("fill", shackleX + shackleWidth - postWidth + shadowOffsetX, postY + shadowOffsetY, postWidth, postHeight)
+				love.graphics.rectangle("fill", topRectX + shadowOffsetX, topRectY + shadowOffsetY, topRectWidth, postWidth)
+				love.graphics.circle("fill", topRectX + shadowOffsetX, topCenterY + shadowOffsetY, postWidth / 2)
+				love.graphics.circle("fill", topRectX + topRectWidth + shadowOffsetX, topCenterY + shadowOffsetY, postWidth / 2)
 
-                                love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], (bodyColor[4] or 1) * 0.9)
-                                UI.drawRoundedRect(lockX, lockY, lockWidth, lockBodyHeight, 4)
+				love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], (bodyColor[4] or 1) * 0.9)
+				UI.drawRoundedRect(lockX, lockY, lockWidth, lockBodyHeight, 4)
 
-                                -- vertical posts
-                                love.graphics.setColor(shackleColor[1], shackleColor[2], shackleColor[3], shackleColor[4] or 1)
-                                love.graphics.rectangle("fill", shackleX, postY, postWidth, postHeight)
-                                love.graphics.rectangle("fill", shackleX + shackleWidth - postWidth, postY, postWidth, postHeight)
+				-- vertical posts
+				love.graphics.setColor(shackleColor[1], shackleColor[2], shackleColor[3], shackleColor[4] or 1)
+				love.graphics.rectangle("fill", shackleX, postY, postWidth, postHeight)
+				love.graphics.rectangle("fill", shackleX + shackleWidth - postWidth, postY, postWidth, postHeight)
 
-                                -- straight top bar with rounded corners similar to the snake styling
-                                love.graphics.rectangle("fill", topRectX, topRectY, topRectWidth, postWidth)
-                                love.graphics.circle("fill", topRectX, topCenterY, postWidth / 2)
-                                love.graphics.circle("fill", topRectX + topRectWidth, topCenterY, postWidth / 2)
+				-- straight top bar with rounded corners similar to the snake styling
+				love.graphics.rectangle("fill", topRectX, topRectY, topRectWidth, postWidth)
+				love.graphics.circle("fill", topRectX, topCenterY, postWidth / 2)
+				love.graphics.circle("fill", topRectX + topRectWidth, topCenterY, postWidth / 2)
 
-                                local keyholeWidth = math.max(5, lockWidth * 0.16 - 4)
-                                local keyholeHeight = math.max(9, lockHeight * 0.44)
-                                local keyholeX = previewX + previewW / 2 - keyholeWidth / 2
-                                local keyholeY = lockY + lockHeight / 2 - keyholeHeight / 2
-                                local keyholeColor = Theme.bgColor or {0, 0, 0, 1}
-                                love.graphics.setColor(keyholeColor[1], keyholeColor[2], keyholeColor[3], (keyholeColor[4] or 1) * 0.9)
-                                love.graphics.rectangle("fill", keyholeX, keyholeY, keyholeWidth, keyholeHeight, 2, 2)
-                        end
+				local keyholeWidth = math.max(5, lockWidth * 0.16 - 4)
+				local keyholeHeight = math.max(9, lockHeight * 0.44)
+				local keyholeX = previewX + previewW / 2 - keyholeWidth / 2
+				local keyholeY = lockY + lockHeight / 2 - keyholeHeight / 2
+				local keyholeColor = Theme.bgColor or {0, 0, 0, 1}
+				love.graphics.setColor(keyholeColor[1], keyholeColor[2], keyholeColor[3], (keyholeColor[4] or 1) * 0.9)
+				love.graphics.rectangle("fill", keyholeX, keyholeY, keyholeWidth, keyholeHeight, 2, 2)
+			end
 
-                        if isNew then
-                                local badgeText = Localization:get("metaprogression.cosmetics.new_badge")
-                                local badgeFont = UI.fonts.caption
-                                love.graphics.setFont(badgeFont)
-                                local textWidth = badgeFont:getWidth(badgeText)
-                                local paddingX = 18
-                                local paddingY = 6
-                                local badgeWidth = textWidth + paddingX
-                                local badgeHeight = badgeFont:getHeight() + paddingY
-                                local badgeX = listX + CARD_WIDTH - badgeWidth - 24
-                                local badgeY = y - badgeHeight / 2
-                                local accent = Theme.progressColor or Theme.accentTextColor or {1, 1, 1, 1}
-                                love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.95)
-                                UI.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
+			if isNew then
+				local badgeText = Localization:get("metaprogression.cosmetics.new_badge")
+				local badgeFont = UI.fonts.caption
+				love.graphics.setFont(badgeFont)
+				local textWidth = badgeFont:getWidth(badgeText)
+				local paddingX = 18
+				local paddingY = 6
+				local badgeWidth = textWidth + paddingX
+				local badgeHeight = badgeFont:getHeight() + paddingY
+				local badgeX = listX + CARD_WIDTH - badgeWidth - 24
+				local badgeY = y - badgeHeight / 2
+				local accent = Theme.progressColor or Theme.accentTextColor or {1, 1, 1, 1}
+				love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.95)
+				UI.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
 
-                                local badgeTextColor = Theme.bgColor or {0, 0, 0, 1}
-                                love.graphics.setColor(badgeTextColor[1], badgeTextColor[2], badgeTextColor[3], badgeTextColor[4] or 1)
-                                love.graphics.printf(badgeText, badgeX, badgeY + paddingY / 2, badgeWidth, "center")
-                        end
+				local badgeTextColor = Theme.bgColor or {0, 0, 0, 1}
+				love.graphics.setColor(badgeTextColor[1], badgeTextColor[2], badgeTextColor[3], badgeTextColor[4] or 1)
+				love.graphics.printf(badgeText, badgeX, badgeY + paddingY / 2, badgeWidth, "center")
+			end
 
-                        local textX = previewX + previewW + 24
-                        local textWidth = CARD_WIDTH - (textX - listX) - 28
+			local textX = previewX + previewW + 24
+			local textWidth = CARD_WIDTH - (textX - listX) - 28
 
-                        love.graphics.setFont(UI.fonts.button)
+			love.graphics.setFont(UI.fonts.button)
 			love.graphics.setColor(Theme.textColor)
 			love.graphics.printf(skin.name or skin.id or "", textX, y + 20, textWidth, "left")
 
@@ -1683,32 +1683,32 @@ local function drawCosmeticsList(sw, sh)
 end
 
 local function drawStatsHeader(sw)
-        -- Intentionally left blank: the stats header and subheader have been removed.
+	-- Intentionally left blank: the stats header and subheader have been removed.
 end
 
 local function drawStatsSummary(sw)
-        if #statsHighlights == 0 then
-                return
-        end
+	if #statsHighlights == 0 then
+		return
+	end
 
-        local totalWidth = #statsHighlights * STATS_SUMMARY_CARD_WIDTH + math.max(0, #statsHighlights - 1) * STATS_SUMMARY_CARD_SPACING
-        local frameWidth = totalWidth + WINDOW_PADDING_X * 2
-        local frameHeight = STATS_SUMMARY_CARD_HEIGHT + WINDOW_PADDING_Y * 2
-        local frameX = sw / 2 - frameWidth / 2
-        local frameY = viewportTop - WINDOW_PADDING_Y
-        drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-                accentHeight = 0,
-                accentInsetY = WINDOW_PADDING_Y * 0.35,
-                accentAlpha = 0.26,
-        })
+	local totalWidth = #statsHighlights * STATS_SUMMARY_CARD_WIDTH + math.max(0, #statsHighlights - 1) * STATS_SUMMARY_CARD_SPACING
+	local frameWidth = totalWidth + WINDOW_PADDING_X * 2
+	local frameHeight = STATS_SUMMARY_CARD_HEIGHT + WINDOW_PADDING_Y * 2
+	local frameX = sw / 2 - frameWidth / 2
+	local frameY = viewportTop - WINDOW_PADDING_Y
+	drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
+		accentHeight = 0,
+		accentInsetY = WINDOW_PADDING_Y * 0.35,
+		accentAlpha = 0.26,
+	})
 
-        local startX = frameX + WINDOW_PADDING_X
-        local cardY = frameY + WINDOW_PADDING_Y
-        local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
-        local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
-        local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
+	local startX = frameX + WINDOW_PADDING_X
+	local cardY = frameY + WINDOW_PADDING_Y
+	local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
+	local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
+	local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
 
-        for index, entry in ipairs(statsHighlights) do
+	for index, entry in ipairs(statsHighlights) do
 		local cardX = startX + (index - 1) * (STATS_SUMMARY_CARD_WIDTH + STATS_SUMMARY_CARD_SPACING)
 		local fillColor = lightenColor(basePanel, 0.20 + 0.05 * ((index - 1) % 2))
 
@@ -1725,36 +1725,36 @@ local function drawStatsSummary(sw)
 		love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
 		love.graphics.printf(entry.label or "", cardX + 20, cardY + 18, STATS_SUMMARY_CARD_WIDTH - 40, "left")
 
-                love.graphics.setFont(UI.fonts.heading)
-                love.graphics.setColor(Theme.textColor)
-                love.graphics.printf(entry.valueText or "0", cardX + 20, cardY + 42, STATS_SUMMARY_CARD_WIDTH - 40, "left")
-        end
+		love.graphics.setFont(UI.fonts.heading)
+		love.graphics.setColor(Theme.textColor)
+		love.graphics.printf(entry.valueText or "0", cardX + 20, cardY + 42, STATS_SUMMARY_CARD_WIDTH - 40, "left")
+	end
 end
 
 local function drawStatsList(sw, sh)
-        local clipY = viewportTop
-        local clipH = viewportHeight
+	local clipY = viewportTop
+	local clipH = viewportHeight
 
-        if clipH <= 0 then
-                return
-        end
+	if clipH <= 0 then
+		return
+	end
 
-        local listX = (sw - CARD_WIDTH) / 2
+	local listX = (sw - CARD_WIDTH) / 2
 
-        local frameX = listX - WINDOW_PADDING_X
-        local frameY = clipY - WINDOW_PADDING_Y
-        local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
-        local frameHeight = clipH + WINDOW_PADDING_Y * 2
-        drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-                accentHeight = 0,
-                accentInsetY = WINDOW_PADDING_Y * 0.5,
-                accentAlpha = 0.18,
-        })
+	local frameX = listX - WINDOW_PADDING_X
+	local frameY = clipY - WINDOW_PADDING_Y
+	local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
+	local frameHeight = clipH + WINDOW_PADDING_Y * 2
+	drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
+		accentHeight = 0,
+		accentInsetY = WINDOW_PADDING_Y * 0.5,
+		accentAlpha = 0.18,
+	})
 
-        love.graphics.push()
-        love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+	love.graphics.push()
+	love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
 
-        if #statsEntries == 0 then
+	if #statsEntries == 0 then
 		love.graphics.setFont(UI.fonts.body)
 		love.graphics.setColor(Theme.textColor)
 		love.graphics.printf(Localization:get("metaprogression.stats_empty"), listX, clipY + viewportHeight / 2 - 12, CARD_WIDTH, "center")
@@ -1781,24 +1781,24 @@ local function drawStatsList(sw, sh)
 				love.graphics.rectangle("line", listX, y, CARD_WIDTH, STAT_CARD_HEIGHT, 12, 12)
 				love.graphics.setLineWidth(1)
 
-                                love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.18)
-                                love.graphics.rectangle("fill", listX + 20, y + STAT_CARD_HEIGHT - 8, CARD_WIDTH - 40, 4, 2, 2)
+				love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.18)
+				love.graphics.rectangle("fill", listX + 20, y + STAT_CARD_HEIGHT - 8, CARD_WIDTH - 40, 4, 2, 2)
 
-                                local labelX = listX + 32
-                                local valueAreaX = listX + CARD_WIDTH * 0.55
-                                local valueAreaWidth = CARD_WIDTH - (valueAreaX - listX) - 32
-                                local labelWidth = valueAreaX - labelX - 16
+				local labelX = listX + 32
+				local valueAreaX = listX + CARD_WIDTH * 0.55
+				local valueAreaWidth = CARD_WIDTH - (valueAreaX - listX) - 32
+				local labelWidth = valueAreaX - labelX - 16
 
 				love.graphics.setFont(UI.fonts.caption)
 				love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-                                love.graphics.printf(entry.label, labelX, y + 12, labelWidth, "left")
+				love.graphics.printf(entry.label, labelX, y + 12, labelWidth, "left")
 
-                                love.graphics.setFont(UI.fonts.subtitle)
-                                love.graphics.setColor(Theme.textColor)
-                                love.graphics.printf(entry.valueText, valueAreaX, y + 26, valueAreaWidth, "right")
-                        end
-                end
-        end
+				love.graphics.setFont(UI.fonts.subtitle)
+				love.graphics.setColor(Theme.textColor)
+				love.graphics.printf(entry.valueText, valueAreaX, y + 26, valueAreaWidth, "right")
+			end
+		end
+	end
 
 	love.graphics.setScissor()
 	love.graphics.pop()
@@ -1827,15 +1827,15 @@ function ProgressionScreen:draw()
 
 	buttonList:syncUI()
 
-        for _, tab in ipairs(tabs) do
-                local id = tab.buttonId
-                if id then
-                        local button = UI.buttons[id]
-                        if button then
-                                button.toggled = (activeTab == tab.id) or nil
-                        end
-                end
-        end
+	for _, tab in ipairs(tabs) do
+		local id = tab.buttonId
+		if id then
+			local button = UI.buttons[id]
+			if button then
+				button.toggled = (activeTab == tab.id) or nil
+			end
+		end
+	end
 
 	for _, button in buttonList:iter() do
 		UI.drawButton(button.id)

@@ -88,7 +88,7 @@ end
 -- AABB collision check
 local function aabb(ax, ay, aw, ah, bx, by, bw, bh)
 		return ax < bx + bw and ax + aw > bx and
-				   ay < by + bh and ay + ah > by
+					ay < by + bh and ay + ah > by
 end
 
 local function rerouteAlongWall(headX, headY)
@@ -423,49 +423,49 @@ local function handleRockCollision(headX, headY)
 								if Snake.onDashBreakRock then
 										Snake:onDashBreakRock(centerX, centerY)
 								end
-                                                else
-                                                                local context = {
-                                                                                pushX = 0,
-                                                                                pushY = 0,
-                                                                                grace = DAMAGE_GRACE,
-                                                                                shake = 0.35,
-                                                                }
+						else
+								local context = {
+										pushX = 0,
+										pushY = 0,
+										grace = DAMAGE_GRACE,
+										shake = 0.35,
+								}
 
-                                                                local shielded = Snake:consumeCrashShield()
+								local shielded = Snake:consumeCrashShield()
 
-                                                                if not shielded then
-                                                                                Rocks:triggerHitFlash(rock)
-                                                                                return "hit", "rock", context
-                                                                end
+								if not shielded then
+										Rocks:triggerHitFlash(rock)
+										return "hit", "rock", context
+								end
 
-                                                                Rocks:destroy(rock)
-                                                                context.damage = 0
+								Rocks:destroy(rock)
+								context.damage = 0
 
-                                                                Particles:spawnBurst(centerX, centerY, {
-                                                                                count = 8,
-                                                                                speed = 40,
-                                                                                speedVariance = 36,
-                                                                                life = 0.4,
-                                                                                size = 3,
-                                                                                color = {0.9, 0.8, 0.5, 1},
-                                                                                spread = math.pi * 2,
-                                                                                angleJitter = math.pi * 0.8,
-                                                                                drag = 2.8,
-                                                                                gravity = 210,
-                                                                                scaleMin = 0.55,
-                                                                                scaleVariance = 0.5,
-                                                                                fadeTo = 0.05,
-                                                                })
-                                                                Audio:playSound("shield_rock")
+								Particles:spawnBurst(centerX, centerY, {
+										count = 8,
+										speed = 40,
+										speedVariance = 36,
+										life = 0.4,
+										size = 3,
+										color = {0.9, 0.8, 0.5, 1},
+										spread = math.pi * 2,
+										angleJitter = math.pi * 0.8,
+										drag = 2.8,
+										gravity = 210,
+										scaleMin = 0.55,
+										scaleVariance = 0.5,
+										fadeTo = 0.05,
+								})
+								Audio:playSound("shield_rock")
 
-                                                                if Snake.onShieldConsumed then
-                                                                                Snake:onShieldConsumed(centerX, centerY, "rock")
-                                                                end
+								if Snake.onShieldConsumed then
+										Snake:onShieldConsumed(centerX, centerY, "rock")
+								end
 
-                                                                recordShieldEvent("rock")
+								recordShieldEvent("rock")
 
-                                                                return "hit", "rock", context
-                                                end
+								return "hit", "rock", context
+						end
 
 						break
 				end

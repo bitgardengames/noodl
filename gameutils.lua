@@ -20,38 +20,38 @@ local function loadCoreSystems(sw, sh)
 end
 
 local GAMEPLAY_SYSTEMS = ModuleUtil.prepareSystems({
-        Movement,
-        Score,
-        FloatingText,
-        Particles,
-        UpgradeVisuals,
-        Rocks,
-        Saws,
-        UI,
+	Movement,
+	Score,
+	FloatingText,
+	Particles,
+	UpgradeVisuals,
+	Rocks,
+	Saws,
+	UI,
 })
 
 local function loadGameplaySystems(context)
-        ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "load", context)
+	ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "load", context)
 end
 
 local function resetGameplaySystems()
-        ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "reset")
+	ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "reset")
 end
 
 function GameUtils:prepareGame(sw, sh)
-        loadCoreSystems(sw, sh)
-        local context = {
-                screenWidth = sw,
-                screenHeight = sh,
-        }
-        loadGameplaySystems(context)
-        resetGameplaySystems()
+	loadCoreSystems(sw, sh)
+	local context = {
+		screenWidth = sw,
+		screenHeight = sh,
+	}
+	loadGameplaySystems(context)
+	resetGameplaySystems()
 
-        Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
+	Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
 end
 
 function GameUtils:getGameplaySystems()
-        return GAMEPLAY_SYSTEMS
+	return GAMEPLAY_SYSTEMS
 end
 
 return GameUtils

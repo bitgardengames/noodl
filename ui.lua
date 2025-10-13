@@ -98,7 +98,7 @@ local spacingMinimums = {
 }
 
 local baseUpgradeLayout = {
-        width = 208,
+	width = 208,
 	spacing = 12,
 	baseHeight = 58,
 	iconRadius = 18,
@@ -316,18 +316,18 @@ local function drawHeartOutline(x, y, size, thickness)
 	end
 
 	local previousWidth = love.graphics.getLineWidth()
-        local previousJoin = love.graphics.getLineJoin()
-        local previousStyle = love.graphics.getLineStyle()
+	local previousJoin = love.graphics.getLineJoin()
+	local previousStyle = love.graphics.getLineStyle()
 
-        love.graphics.setLineWidth(thickness)
-        love.graphics.setLineJoin("bevel")
-        love.graphics.setLineStyle("smooth")
+	love.graphics.setLineWidth(thickness)
+	love.graphics.setLineJoin("bevel")
+	love.graphics.setLineStyle("smooth")
 
-        love.graphics.polygon("line", coords)
+	love.graphics.polygon("line", coords)
 
-        love.graphics.setLineWidth(previousWidth)
-        love.graphics.setLineJoin(previousJoin)
-        love.graphics.setLineStyle(previousStyle)
+	love.graphics.setLineWidth(previousWidth)
+	love.graphics.setLineJoin(previousJoin)
+	love.graphics.setLineStyle(previousStyle)
 end
 
 local function drawHeartShape(x, y, size)
@@ -523,9 +523,9 @@ end
 
 -- Utility: draw rounded rectangle
 function UI.drawRoundedRect(x, y, w, h, r, segments)
-        local radius = r or UI.spacing.buttonRadius
-        radius = math.min(radius, w / 2, h / 2)
-        love.graphics.rectangle("fill", x, y, w, h, radius, radius, segments)
+	local radius = r or UI.spacing.buttonRadius
+	radius = math.min(radius, w / 2, h / 2)
+	love.graphics.rectangle("fill", x, y, w, h, radius, radius, segments)
 end
 
 function UI.drawPanel(x, y, w, h, opts)
@@ -539,48 +539,48 @@ function UI.drawPanel(x, y, w, h, opts)
 		love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h, radius, radius)
 	end
 
-        local alphaMultiplier = opts.alpha or 1
-        local fillColor = opts.fill or UI.colors.panel or UI.colors.button
-        setColor(fillColor, alphaMultiplier)
-        love.graphics.rectangle("fill", x, y, w, h, radius, radius)
+	local alphaMultiplier = opts.alpha or 1
+	local fillColor = opts.fill or UI.colors.panel or UI.colors.button
+	setColor(fillColor, alphaMultiplier)
+	love.graphics.rectangle("fill", x, y, w, h, radius, radius)
 
-        if opts.highlight ~= false then
-                local highlightAlpha = opts.highlightAlpha
-                if highlightAlpha == nil then
-                        highlightAlpha = 0.12
-                end
-                highlightAlpha = highlightAlpha * alphaMultiplier
-                if highlightAlpha > 0 then
-                        local prevMode, prevAlphaMode = love.graphics.getBlendMode()
-                        love.graphics.setBlendMode("add", "alphamultiply")
-                        local highlightColor = opts.highlightColor or {1, 1, 1, 1}
-                        local hr = highlightColor[1] or 1
-                        local hg = highlightColor[2] or 1
-                        local hb = highlightColor[3] or 1
-                        local ha = (highlightColor[4] or 1) * highlightAlpha
-                        love.graphics.setColor(hr, hg, hb, ha)
-                        love.graphics.rectangle("fill", x, y, w, h, radius, radius)
-                        love.graphics.setBlendMode(prevMode, prevAlphaMode)
-                end
-        end
+	if opts.highlight ~= false then
+		local highlightAlpha = opts.highlightAlpha
+		if highlightAlpha == nil then
+			highlightAlpha = 0.12
+		end
+		highlightAlpha = highlightAlpha * alphaMultiplier
+		if highlightAlpha > 0 then
+			local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+			love.graphics.setBlendMode("add", "alphamultiply")
+			local highlightColor = opts.highlightColor or {1, 1, 1, 1}
+			local hr = highlightColor[1] or 1
+			local hg = highlightColor[2] or 1
+			local hb = highlightColor[3] or 1
+			local ha = (highlightColor[4] or 1) * highlightAlpha
+			love.graphics.setColor(hr, hg, hb, ha)
+			love.graphics.rectangle("fill", x, y, w, h, radius, radius)
+			love.graphics.setBlendMode(prevMode, prevAlphaMode)
+		end
+	end
 
-        if opts.border ~= false then
-                local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
-                setColor(borderColor, alphaMultiplier)
-                love.graphics.setLineWidth(opts.borderWidth or 2)
-                love.graphics.rectangle("line", x, y, w, h, radius, radius)
-                love.graphics.setLineWidth(1)
-        end
+	if opts.border ~= false then
+		local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
+		setColor(borderColor, alphaMultiplier)
+		love.graphics.setLineWidth(opts.borderWidth or 2)
+		love.graphics.rectangle("line", x, y, w, h, radius, radius)
+		love.graphics.setLineWidth(1)
+	end
 
-        if opts.focused then
-                local focusRadius = radius + (opts.focusRadiusOffset or 4)
-                local focusPadding = opts.focusPadding or 3
-                local focusColor = opts.focusColor or UI.colors.border or UI.colors.highlight
-                setColor(focusColor, opts.focusAlpha or 1.1)
-                love.graphics.setLineWidth(opts.focusWidth or 3)
-                love.graphics.rectangle("line", x - focusPadding, y - focusPadding, w + focusPadding * 2, h + focusPadding * 2, focusRadius, focusRadius)
-                love.graphics.setLineWidth(1)
-        end
+	if opts.focused then
+		local focusRadius = radius + (opts.focusRadiusOffset or 4)
+		local focusPadding = opts.focusPadding or 3
+		local focusColor = opts.focusColor or UI.colors.border or UI.colors.highlight
+		setColor(focusColor, opts.focusAlpha or 1.1)
+		love.graphics.setLineWidth(opts.focusWidth or 3)
+		love.graphics.rectangle("line", x - focusPadding, y - focusPadding, w + focusPadding * 2, h + focusPadding * 2, focusRadius, focusRadius)
+		love.graphics.setLineWidth(1)
+	end
 end
 
 function UI.drawLabel(text, x, y, width, align, opts)
@@ -685,11 +685,11 @@ end
 
 -- Draw button (render only)
 function UI.drawButton(id)
-        local btn = UI.buttons[id]
-        if not btn or not btn.bounds then return end
+	local btn = UI.buttons[id]
+	if not btn or not btn.bounds then return end
 
-        local b = btn.bounds
-        local s = UI.spacing
+	local b = btn.bounds
+	local s = UI.spacing
 
 	local mx, my = love.mouse.getPosition()
 	local hoveredByMouse = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
@@ -726,14 +726,14 @@ function UI.drawButton(id)
 		love.graphics.rectangle("fill", b.x + shadowOffset, b.y + shadowOffset + yOffset, b.w, b.h, radius, radius)
 	end
 
-        local fillColor = UI.colors.button
-        local isToggled = btn.toggled
-        if displayHover then
-                fillColor = UI.colors.buttonHover
-        end
-        if btn.pressed or isToggled then
-                fillColor = UI.colors.buttonPress
-        end
+	local fillColor = UI.colors.button
+	local isToggled = btn.toggled
+	if displayHover then
+		fillColor = UI.colors.buttonHover
+	end
+	if btn.pressed or isToggled then
+		fillColor = UI.colors.buttonPress
+	end
 
 	setColor(fillColor)
 	love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
@@ -753,12 +753,12 @@ function UI.drawButton(id)
 		love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 	end
 
-        if btn.focused then
-                local focusStrength = btn.focusAnim or 0
-                if focusStrength > 0.01 then
-                        local focusRadius = radius + 4
-                        local padding = 3
-                        local focusColor = UI.colors.border or UI.colors.highlight
+	if btn.focused then
+		local focusStrength = btn.focusAnim or 0
+		if focusStrength > 0.01 then
+			local focusRadius = radius + 4
+			local padding = 3
+			local focusColor = UI.colors.border or UI.colors.highlight
 			setColor(focusColor, 0.8 + 0.4 * focusStrength)
 			love.graphics.setLineWidth(3)
 			love.graphics.rectangle("line", b.x - padding, b.y + yOffset - padding, b.w + padding * 2, b.h + padding * 2, focusRadius, focusRadius)
@@ -780,9 +780,9 @@ function UI.drawButton(id)
 	-- TEXT
 	UI.setFont("button")
 	local textColor = UI.colors.text
-        if displayHover or (btn.focusAnim or 0) > 0.001 or isToggled then
-                textColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0))
-        end
+	if displayHover or (btn.focusAnim or 0) > 0.001 or isToggled then
+		textColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0))
+	end
 	setColor(textColor)
 	local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
 	love.graphics.printf(btn.text or "", b.x, textY, b.w, "center")
@@ -1335,9 +1335,9 @@ local function drawComboIndicator(self)
 		love.graphics.setColor(0, 0, 0, 0.25)
 		love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth, barHeight, 6, 6)
 
-                love.graphics.setColor(1, 0.78, 0.3, 0.85)
-                love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
-        end
+		love.graphics.setColor(1, 0.78, 0.3, 0.85)
+		love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
+	end
 
 	love.graphics.pop()
 end
@@ -1439,30 +1439,30 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		local boxWidth = textWidth + paddingX * 2
 		local boxHeight = font:getHeight() + paddingY * 2
 		local position = overlay.position or "bottomRight"
-                local anchorX, anchorY
+		local anchorX, anchorY
 
-                if position == "topLeft" then
-                        anchorX = -radius * 0.75
-                        anchorY = -radius * 0.75
-                elseif position == "topRight" then
-                        anchorX = radius * 0.75
-                        anchorY = -radius * 0.75
-                elseif position == "bottomLeft" then
-                        anchorX = -radius * 0.75
-                        anchorY = radius * 0.75
-                elseif position == "center" then
-                        anchorX = 0
-                        anchorY = 0
-                else
-                        anchorX = radius * 0.75
-                        anchorY = radius * 0.75
-                end
+		if position == "topLeft" then
+			anchorX = -radius * 0.75
+			anchorY = -radius * 0.75
+		elseif position == "topRight" then
+			anchorX = radius * 0.75
+			anchorY = -radius * 0.75
+		elseif position == "bottomLeft" then
+			anchorX = -radius * 0.75
+			anchorY = radius * 0.75
+		elseif position == "center" then
+			anchorX = 0
+			anchorY = 0
+		else
+			anchorX = radius * 0.75
+			anchorY = radius * 0.75
+		end
 
-                anchorX = anchorX + (overlay.offsetX or 0)
-                anchorY = anchorY + (overlay.offsetY or 0)
+		anchorX = anchorX + (overlay.offsetX or 0)
+		anchorY = anchorY + (overlay.offsetY or 0)
 
-                local boxX = anchorX - boxWidth * 0.5
-                local boxY = anchorY - boxHeight * 0.5
+		local boxX = anchorX - boxWidth * 0.5
+		local boxY = anchorY - boxHeight * 0.5
 		local cornerRadius = overlay.cornerRadius or math.min(10, boxHeight * 0.5)
 
 		love.graphics.setColor(background[1], background[2], background[3], background[4] or 1)
@@ -1473,9 +1473,9 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.rectangle("line", boxX, boxY, boxWidth, boxHeight, cornerRadius, cornerRadius)
 
 		local textColor = overlay.textColor or {1, 1, 1, 1}
-                love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
-                local textY = boxY + (boxHeight - font:getHeight()) * 0.5
-                love.graphics.printf(text, boxX, textY, boxWidth, "center")
+		love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
+		local textY = boxY + (boxHeight - font:getHeight()) * 0.5
+		love.graphics.printf(text, boxX, textY, boxWidth, "center")
 		if previousFont then
 			love.graphics.setFont(previousFont)
 		end
@@ -1502,31 +1502,31 @@ local function buildShieldIndicator(self)
 	local label = Localization:get("upgrades.hud.shields")
 
 	local accent = {0.55, 0.82, 1.0, 1.0}
-        local statusKey = "ready"
+	local statusKey = "ready"
 
-        if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
-                accent = {1.0, 0.55, 0.45, 1.0}
-                statusKey = "depleted"
-        end
+	if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
+		accent = {1.0, 0.55, 0.45, 1.0}
+		statusKey = "depleted"
+	end
 
-        local overlayBackground = lightenColor(accent, 0.1)
-        overlayBackground[4] = 0.92
+	local overlayBackground = lightenColor(accent, 0.1)
+	overlayBackground[4] = 0.92
 
-        return {
-                id = "__shields",
-                label = label,
-                stackCount = count,
-                icon = "shield",
-                accentColor = accent,
-                iconOverlay = {
-                        text = count,
-                        position = "center",
-                        font = "badge",
-                        paddingX = 8,
-                        paddingY = 4,
-                        backgroundColor = overlayBackground,
-                        textColor = Theme.textColor,
-                },
+	return {
+		id = "__shields",
+		label = label,
+		stackCount = count,
+		icon = "shield",
+		accentColor = accent,
+		iconOverlay = {
+			text = count,
+			position = "center",
+			font = "badge",
+			paddingX = 8,
+			paddingY = 4,
+			backgroundColor = overlayBackground,
+			textColor = Theme.textColor,
+		},
 		status = Localization:get("upgrades.hud." .. statusKey),
 		showBar = false,
 		visibility = 1,
@@ -1606,21 +1606,21 @@ function UI:drawUpgradeIndicators()
 		love.graphics.setLineWidth(2)
 		love.graphics.rectangle("line", x, drawY, width, panelHeight, 14, 14)
 
-                local iconX = x + iconRadius + 14
-                local iconY = drawY + iconRadius + 12
-                drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius, entry.iconOverlay)
+		local iconX = x + iconRadius + 14
+		local iconY = drawY + iconRadius + 12
+		drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius, entry.iconOverlay)
 
-                local textX = iconX + iconRadius + 12
-                local textWidth = math.max(60, width - (textX - x) - 14)
+		local textX = iconX + iconRadius + 12
+		local textWidth = math.max(60, width - (textX - x) - 14)
 
-                local showLabel = false
+		local showLabel = false
 
-                if entry.status then
-                        UI.setFont("small")
-                        love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75 * visibility)
-                        local statusY = showLabel and (drawY + 38) or (drawY + 20)
-                        love.graphics.printf(entry.status, textX, statusY, textWidth, "left")
-                end
+		if entry.status then
+			UI.setFont("small")
+			love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.75 * visibility)
+			local statusY = showLabel and (drawY + 38) or (drawY + 20)
+			love.graphics.printf(entry.status, textX, statusY, textWidth, "left")
+		end
 
 		if hasBar then
 			local progress = clamp01(entry.displayProgress or 0)
