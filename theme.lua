@@ -9,19 +9,19 @@ local Theme = {
 	highlightColor = {1.0, 1.0, 1.0, 0.06},
 
 	-- Buttons
-	buttonColor     = {0.40, 0.35, 0.55, 1.0},
-	buttonHover     = {0.55, 0.48, 0.70, 1.0},
-	buttonPress     = {0.28, 0.24, 0.40, 1.0},
-	borderColor     = {0.30, 0.55, 0.45, 1.0},
+        buttonColor     = {0.26, 0.22, 0.34, 1.0},
+        buttonHover     = {0.34, 0.30, 0.48, 1.0},
+        buttonPress     = {0.20, 0.18, 0.28, 1.0},
+        borderColor     = {0.42, 0.72, 0.62, 1.0},
 
 	-- Panels
-	panelColor      = {0.18, 0.18, 0.22, 0.92},
-	panelBorder     = {0.35, 0.30, 0.50, 1.0},
+        panelColor      = {0.16, 0.16, 0.22, 0.94},
+        panelBorder     = {0.32, 0.50, 0.54, 1.0},
 
 	-- Text
 	textColor       = {0.88, 0.88, 0.92, 1.0},
 	mutedTextColor  = {0.70, 0.72, 0.78, 1.0},
-	accentTextColor = {0.95, 0.76, 0.48, 1.0},
+        accentTextColor = {0.82, 0.92, 0.78, 1.0},
 
 	-- State / feedback colours
 	lockedCardColor = {0.50, 0.35, 0.40, 1.0},
