@@ -29,6 +29,10 @@ local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
+local BACKDROP_BOX_WIDTH = 1232
+local BACKDROP_BOX_HEIGHT = 706
+local BACKDROP_BOX_LINE_WIDTH = 12
+
 local function configureBackgroundEffect()
 	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
 	if not effect then
@@ -49,19 +53,36 @@ local function configureBackgroundEffect()
 end
 
 local function drawBackground(sw, sh)
-	love.graphics.setColor(Theme.bgColor)
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
+        love.graphics.setColor(Theme.bgColor)
+        love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-	if not backgroundEffect then
-		configureBackgroundEffect()
-	end
+        if not backgroundEffect then
+                configureBackgroundEffect()
+        end
 
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-	end
+        local boxX = (sw - BACKDROP_BOX_WIDTH) / 2
+        local boxY = (sh - BACKDROP_BOX_HEIGHT) / 2
 
-	love.graphics.setColor(1, 1, 1, 1)
+        if backgroundEffect then
+                local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+                Shaders.draw(backgroundEffect, boxX, boxY, BACKDROP_BOX_WIDTH, BACKDROP_BOX_HEIGHT, intensity)
+        end
+
+        if BACKDROP_BOX_LINE_WIDTH > 0 then
+                local halfLineWidth = BACKDROP_BOX_LINE_WIDTH / 2
+                love.graphics.setColor(Theme.buttonHover)
+                love.graphics.setLineWidth(BACKDROP_BOX_LINE_WIDTH)
+                love.graphics.rectangle(
+                        "line",
+                        boxX - halfLineWidth,
+                        boxY - halfLineWidth,
+                        BACKDROP_BOX_WIDTH + BACKDROP_BOX_LINE_WIDTH,
+                        BACKDROP_BOX_HEIGHT + BACKDROP_BOX_LINE_WIDTH
+                )
+                love.graphics.setLineWidth(1)
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function getDayUnit(count)
