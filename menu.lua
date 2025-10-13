@@ -33,7 +33,7 @@ local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
-local BACKDROP_RECT_WIDTH = 1920
+local BACKDROP_RECT_WIDTH = 1280
 local BACKDROP_RECT_HEIGHT = 720
 local BACKDROP_RECT_LINE_WIDTH = 12
 local BACKDROP_RECT_PADDING = 80
