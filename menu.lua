@@ -305,6 +305,7 @@ function Menu:draw()
                 if sawScale <= 0 then
                         sawScale = 1
                 end
+                sawScale = sawScale * 0.9
 
                 local desiredTrackLengthWorld = wordWidth + cellSize
                 local shortenedTrackLengthWorld = math.max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 90)
