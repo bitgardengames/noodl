@@ -930,7 +930,9 @@ local function drawSnakeStroke(path, radius, options)
 	love.graphics.circle("fill", lastX, lastY, radius)
 	end
 
-	drawCornerCaps(path, radius)
+	if useRoundCaps then
+		drawCornerCaps(path, radius)
+	end
 end
 
 local function renderSnakeToCanvas(trail, coords, head, half, options)
