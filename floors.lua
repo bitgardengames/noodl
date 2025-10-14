@@ -390,52 +390,6 @@ flavor = "At the final gate, Noodl secures the last fruit and coils around the h
 	},
 }
 
--- Layout guidelines ensure randomized arenas shrink in a controlled way as the
--- player descends deeper, while keeping hazard setups valid.
-local ARENA_LAYOUT_PHASES = {
-        { floorMax = 5,  layout = { minCols = 31, maxCols = 33, minRows = 23, maxRows = 25 } },
-        { floorMax = 10, layout = { minCols = 29, maxCols = 33, minRows = 21, maxRows = 25 } },
-        { floorMax = 15, layout = { minCols = 27, maxCols = 31, minRows = 19, maxRows = 23 } },
-        { floorMax = 20, layout = { minCols = 25, maxCols = 29, minRows = 19, maxRows = 21 } },
-}
-
-local function applyArenaLayoutGuidelines()
-        local fallbackPhase = ARENA_LAYOUT_PHASES[#ARENA_LAYOUT_PHASES]
-
-        for floorIndex, floorData in pairs(Floors) do
-                if type(floorIndex) == "number" and type(floorData) == "table" then
-                        local appliedPhase = nil
-                        for _, phase in ipairs(ARENA_LAYOUT_PHASES) do
-                                if floorIndex <= phase.floorMax then
-                                        appliedPhase = phase
-                                        break
-                                end
-                        end
-
-                        local phaseToApply = appliedPhase or fallbackPhase
-                        if phaseToApply then
-                                local overrides = floorData.arenaLayout or {}
-                                for key, value in pairs(phaseToApply.layout) do
-                                        if overrides[key] == nil then
-                                                overrides[key] = value
-                                        end
-                                end
-
-                                if overrides.minCols and overrides.minRows then
-                                        local baselineArea = overrides.minCols * overrides.minRows
-                                        if overrides.minArea == nil or overrides.minArea < baselineArea then
-                                                overrides.minArea = baselineArea
-                                        end
-                                end
-
-                                floorData.arenaLayout = overrides
-                        end
-                end
-        end
-end
-
-applyArenaLayoutGuidelines()
-
 Floors.storyTitle = "Harvest Complete"
 Floors.victoryMessage = "Noodl hauls the full harvest home, every fruit accounted for."
 

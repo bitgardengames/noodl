@@ -229,10 +229,7 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 	opts = opts or {}
 	local maxAttempts = 200
 	local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
-	local cols = math.max(1, math.floor((Arena.cols or 0)))
-	local rows = math.max(1, math.floor((Arena.rows or 0)))
-
-	local random = (love and love.math and love.math.random) or math.random
+	local cols, rows = Arena.cols, Arena.rows
 
 	trail = trail or {}
 	local fruitX, fruitY = 0, 0
@@ -283,8 +280,8 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 	end
 
 	for _ = 1, maxAttempts do
-		local col = random(1, cols)
-		local row = random(1, rows)
+		local col = love.math.random(1, cols)
+		local row = love.math.random(1, rows)
 		local cx, cy = Arena:getCenterOfTile(col, row)
 
 		local blocked = false
