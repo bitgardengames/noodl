@@ -12,6 +12,7 @@ local Particles = require("particles")
 local FloatingText = require("floatingtext")
 local FloorPlan = require("floorplan")
 local Upgrades = require("upgrades")
+local ArenaLayout = require("arenalayout")
 
 local FloorSetup = {}
 
@@ -33,15 +34,18 @@ local function applyPalette(palette)
 end
 
 local function resetFloorEntities()
-	Arena:resetExit()
-	if Arena.clearSpawnDebugData then
-		Arena:clearSpawnDebugData()
-	end
-	Movement:reset()
-	FloatingText:reset()
-	Particles:reset()
-	Rocks:reset()
-	Saws:reset()
+        Arena:resetExit()
+        if Arena.clearSpawnDebugData then
+                Arena:clearSpawnDebugData()
+        end
+        if Arena.setLayout then
+                Arena:setLayout(nil)
+        end
+        Movement:reset()
+        FloatingText:reset()
+        Particles:reset()
+        Rocks:reset()
+        Saws:reset()
 	Lasers:reset()
 	Darts:reset()
 end
@@ -137,12 +141,10 @@ local function buildSpawnBuffer(baseSafeZone)
 end
 
 local function prepareOccupancy()
-	SnakeUtils.initOccupancy()
-
-	for _, segment in ipairs(Snake:getSegments()) do
-		local col, row = Arena:getTileFromWorld(segment.drawX, segment.drawY)
-		SnakeUtils.setOccupied(col, row, true)
-	end
+        for _, segment in ipairs(Snake:getSegments()) do
+                local col, row = Arena:getTileFromWorld(segment.drawX, segment.drawY)
+                SnakeUtils.setOccupied(col, row, true)
+        end
 
 	local safeZone = Snake:getSafeZone(3)
 	local rockSafeZone = Snake:getSafeZone(5)
@@ -578,41 +580,55 @@ local function mergeCells(primary, secondary)
 	return merged
 end
 
-local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
-	local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
-	local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
-	local dartPlan, desiredDarts = buildDartPlan(traitContext)
-	local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
+local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData, layout)
+        local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
+        local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
+        local dartPlan, desiredDarts = buildDartPlan(traitContext)
+        local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
 
-	return {
-		numRocks = traitContext.rocks,
-		numSaws = traitContext.saws,
-		halfTiles = halfTiles,
-		bladeRadius = DEFAULT_SAW_RADIUS,
-		safeZone = safeZone,
-		reservedCells = reservedCells,
-		reservedSafeZone = reservedSafeZone,
-		rockSafeZone = rockSafeZone,
-		spawnBuffer = spawnBuffer,
-		reservedSpawnBuffer = reservedSpawnBuffer,
-		spawnSafeCells = spawnSafeCells,
-		lasers = laserPlan,
-		laserCount = desiredLasers,
-		darts = dartPlan,
-		dartCount = desiredDarts,
-	}
+        return {
+                numRocks = traitContext.rocks,
+                numSaws = traitContext.saws,
+                halfTiles = halfTiles,
+                bladeRadius = DEFAULT_SAW_RADIUS,
+                safeZone = safeZone,
+                reservedCells = reservedCells,
+                reservedSafeZone = reservedSafeZone,
+                rockSafeZone = rockSafeZone,
+                spawnBuffer = spawnBuffer,
+                reservedSpawnBuffer = reservedSpawnBuffer,
+                spawnSafeCells = spawnSafeCells,
+                lasers = laserPlan,
+                laserCount = desiredLasers,
+                darts = dartPlan,
+                dartCount = desiredDarts,
+                layout = layout,
+        }
 end
 
 function FloorSetup.prepare(floorNum, floorData)
-	applyPalette(floorData and floorData.palette)
-	Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
-	resetFloorEntities()
-	local safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer = prepareOccupancy()
+        applyPalette(floorData and floorData.palette)
+        Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
+        resetFloorEntities()
+        SnakeUtils.initOccupancy()
 
-	local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
-	applyBaselineHazardTraits(traitContext)
+        local layout = ArenaLayout.generate(floorNum, floorData)
+        if layout and layout.blocked then
+                for _, cell in ipairs(layout.blocked) do
+                        SnakeUtils.setOccupied(cell[1], cell[2], true)
+                end
+        end
 
-	traitContext = Upgrades:modifyFloorContext(traitContext)
+        if Arena.setLayout then
+                Arena:setLayout(layout)
+        end
+
+        local safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer = prepareOccupancy()
+
+        local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
+        applyBaselineHazardTraits(traitContext)
+
+        traitContext = Upgrades:modifyFloorContext(traitContext)
 	traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
 	traitContext.dartCount = math.max(0, traitContext.dartCount or 0)
 
@@ -626,24 +642,26 @@ function FloorSetup.prepare(floorNum, floorData)
 		traitContext.dartCount = math.min(dartCap, traitContext.dartCount)
 	end
 
-	local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
+        local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData, layout)
 
-	if Arena.setSpawnDebugData then
-		Arena:setSpawnDebugData({
-			safeZone = safeZone,
-			rockSafeZone = rockSafeZone,
-			spawnBuffer = spawnBuffer,
-			spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
-			reservedCells = reservedCells,
-			reservedSafeZone = reservedSafeZone,
-			reservedSpawnBuffer = reservedSpawnBuffer,
-		})
-	end
+        if Arena.setSpawnDebugData then
+                Arena:setSpawnDebugData({
+                        safeZone = safeZone,
+                        rockSafeZone = rockSafeZone,
+                        spawnBuffer = spawnBuffer,
+                        spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
+                        reservedCells = reservedCells,
+                        reservedSafeZone = reservedSafeZone,
+                        reservedSpawnBuffer = reservedSpawnBuffer,
+                        layout = layout,
+                })
+        end
 
-	return {
-		traitContext = traitContext,
-		spawnPlan = spawnPlan,
-	}
+        return {
+                traitContext = traitContext,
+                spawnPlan = spawnPlan,
+                layout = layout,
+        }
 end
 
 function FloorSetup.finalizeContext(traitContext, spawnPlan)
@@ -651,11 +669,14 @@ function FloorSetup.finalizeContext(traitContext, spawnPlan)
 end
 
 function FloorSetup.spawnHazards(spawnPlan)
-	spawnSaws(spawnPlan.numSaws or 0, spawnPlan.halfTiles, spawnPlan.bladeRadius, spawnPlan.spawnSafeCells)
-	spawnLasers(spawnPlan.lasers or {})
-	spawnDarts(spawnPlan.darts or {})
-	spawnRocks(spawnPlan.numRocks or 0, spawnPlan.spawnSafeCells or spawnPlan.rockSafeZone or spawnPlan.safeZone)
-	Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
+        if Arena.setLayout and spawnPlan.layout then
+                Arena:setLayout(spawnPlan.layout)
+        end
+        spawnSaws(spawnPlan.numSaws or 0, spawnPlan.halfTiles, spawnPlan.bladeRadius, spawnPlan.spawnSafeCells)
+        spawnLasers(spawnPlan.lasers or {})
+        spawnDarts(spawnPlan.darts or {})
+        spawnRocks(spawnPlan.numRocks or 0, spawnPlan.spawnSafeCells or spawnPlan.rockSafeZone or spawnPlan.safeZone)
+        Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
 	SnakeUtils.releaseCells(spawnPlan.reservedSafeZone)
 	SnakeUtils.releaseCells(spawnPlan.reservedSpawnBuffer)
 	SnakeUtils.releaseCells(spawnPlan.reservedCells)

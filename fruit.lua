@@ -143,13 +143,57 @@ local function aabb(x1,y1,w1,h1, x2,y2,w2,h2)
 end
 
 function Fruit:spawn(trail, rocks, safeZone)
-	local cx, cy, col, row = SnakeUtils.getSafeSpawn(trail, self, rocks, safeZone)
-	if not cx then
-		col, row = Arena:getRandomTile()
-		cx, cy = Arena:getCenterOfTile(col, row)
-	end
+        local layout = Arena.getLayout and Arena:getLayout()
+        local layoutBlocked = layout and layout.blockedLookup
+        local cx, cy, col, row = SnakeUtils.getSafeSpawn(trail, self, rocks, safeZone)
+        if not cx then
+                local attempts = 0
+                local interiorCols = math.max(1, (Arena.cols or 0) - 2)
+                local interiorRows = math.max(1, (Arena.rows or 0) - 2)
+                local maxAttempts = math.min(interiorCols * interiorRows, 180)
+                local found = false
 
-	active.x, active.y = cx, cy
+                while attempts < maxAttempts do
+                        attempts = attempts + 1
+                        local candidateCol, candidateRow = Arena:getRandomTile()
+                        local occupied = SnakeUtils.isOccupied(candidateCol, candidateRow)
+                        if not occupied and layoutBlocked then
+                                occupied = layoutBlocked[candidateCol .. "," .. candidateRow] or false
+                        end
+
+                        if not occupied then
+                                col, row = candidateCol, candidateRow
+                                cx, cy = Arena:getCenterOfTile(col, row)
+                                found = true
+                                break
+                        end
+                end
+
+                if not found then
+                        for rowIndex = 2, (Arena.rows or 2) - 1 do
+                                for colIndex = 2, (Arena.cols or 2) - 1 do
+                                        local occupied = SnakeUtils.isOccupied(colIndex, rowIndex)
+                                        if not occupied and (not layoutBlocked or not layoutBlocked[colIndex .. "," .. rowIndex]) then
+                                                col, row = colIndex, rowIndex
+                                                cx, cy = Arena:getCenterOfTile(col, row)
+                                                found = true
+                                                break
+                                        end
+                                end
+
+                                if found then
+                                        break
+                                end
+                        end
+                end
+
+                if not found then
+                        col, row = Arena:getRandomTile()
+                        cx, cy = Arena:getCenterOfTile(col, row)
+                end
+        end
+
+        active.x, active.y = cx, cy
 	active.col, active.row = col, row
 	active.type   = chooseFruitType()
 	active.alpha  = 0
