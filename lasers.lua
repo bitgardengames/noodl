@@ -357,9 +357,9 @@ function Lasers:reset()
 end
 
 function Lasers:spawn(x, y, dir, options)
-	if not LASERS_ENABLED then
-		return
-	end
+        if not LASERS_ENABLED then
+                return
+        end
 
 	dir = dir or "horizontal"
 	options = options or {}
@@ -402,14 +402,22 @@ function Lasers:spawn(x, y, dir, options)
 	SnakeUtils.setOccupied(col, row, true)
 
 	computeBeamTarget(beam)
-	emitters[#emitters + 1] = beam
-	return beam
+        emitters[#emitters + 1] = beam
+        return beam
+end
+
+function Lasers:getEmitters()
+        local copies = {}
+        for index, beam in ipairs(emitters) do
+                copies[index] = beam
+        end
+        return copies
 end
 
 function Lasers:update(dt)
-	if not LASERS_ENABLED then
-		return
-	end
+        if not LASERS_ENABLED then
+                return
+        end
 
 	if dt <= 0 then
 		return
