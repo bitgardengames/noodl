@@ -1577,7 +1577,7 @@ local function drawXpSection(self, x, y, width)
         love.graphics.push()
         love.graphics.translate(centerX, centerY)
         love.graphics.scale(popScale, popScale)
-        love.graphics.printf(levelValue, -innerRadius, -fontProgressValue:getHeight() / 2 - 4, innerRadius * 2, "center")
+        love.graphics.printf(levelValue, -innerRadius, -fontProgressValue:getHeight() / 2 + 2, innerRadius * 2, "center")
         love.graphics.pop()
 
 	local totalLabel = Localization:get("gameover.meta_progress_total_label", {
