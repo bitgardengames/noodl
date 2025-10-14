@@ -616,8 +616,20 @@ local pool = {
 		rarity = "uncommon",
 		allowDuplicates = true,
 		maxStacks = 4,
-		onAcquire = function(state)
-			Snake:addSpeedMultiplier(1.10)
+                onAcquire = function(state)
+                        Snake:addSpeedMultiplier(1.10)
+
+                        if state then
+                                state.counters = state.counters or {}
+                                local stacks = (state.counters.quickFangsStacks or 0) + 1
+                                state.counters.quickFangsStacks = stacks
+                                if Snake.setQuickFangsStacks then
+                                        Snake:setQuickFangsStacks(stacks)
+                                end
+                        elseif Snake.setQuickFangsStacks then
+                                Snake:setQuickFangsStacks((Snake.quickFangs and Snake.quickFangs.stacks or 0) + 1)
+                        end
+
                         celebrateUpgrade(getUpgradeString("quick_fangs", "name"), nil, {
                                 color = {1, 0.63, 0.42, 1},
                                 particleCount = 18,
@@ -625,17 +637,6 @@ local pool = {
                                 particleLife = 0.38,
                                 textOffset = 46,
                                 textScale = 1.18,
-                                visual = {
-                                        variant = "fang_flurry",
-                                        addBlend = true,
-                                        life = 0.66,
-                                        innerRadius = 12,
-                                        outerRadius = 52,
-                                        showBase = false,
-                                        color = {1, 0.62, 0.42, 1},
-                                        variantSecondaryColor = {1.0, 0.9, 0.74, 0.92},
-                                        variantTertiaryColor = {1.0, 0.46, 0.26, 0.78},
-                                },
                         })
                 end,
         }),
@@ -2452,6 +2453,11 @@ function Upgrades:applyPersistentEffects(rebaseline)
 
         if Snake.setEventHorizonActive then
                 Snake:setEventHorizonActive(effects.wallPortal and true or false)
+        end
+
+        if Snake.setQuickFangsStacks then
+                local counters = state.counters or {}
+                Snake:setQuickFangsStacks(counters.quickFangsStacks or 0)
         end
 
         if Snake.setPhoenixEchoCharges then

@@ -1002,10 +1002,10 @@ drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
 end
 
 local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
-	local hasShield = shieldCount and shieldCount > 0
-	if not hasShield and not (shieldFlashTimer and shieldFlashTimer > 0) then
-	return
-	end
+        local hasShield = shieldCount and shieldCount > 0
+        if not hasShield and not (shieldFlashTimer and shieldFlashTimer > 0) then
+        return
+        end
 
 	local baseRadius = SEGMENT_SIZE * (0.95 + 0.06 * math.max(0, (shieldCount or 1) - 1))
 	local time = love.timer.getTime()
@@ -1029,8 +1029,90 @@ local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTi
 	love.graphics.setColor(0.45, 0.85, 1, (alpha + 0.15) * 0.5)
 	love.graphics.circle("fill", hx, hy, baseRadius * 0.8 * pulse)
 
-	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.setLineWidth(1)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setLineWidth(1)
+end
+
+local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
+        if not data then return end
+        local stacks = data.stacks or 0
+        if stacks <= 0 then return end
+
+        local intensity = math.max(0, data.intensity or 0)
+        if intensity <= 0.01 then return end
+
+        local flash = math.max(0, data.flash or 0)
+        local ratio = data.speedRatio or 1
+        if not ratio or ratio < 0 then
+                ratio = 0
+        end
+
+        local speedBonus = math.max(0, ratio - 1)
+        local highlight = math.min(1, intensity * 0.85 + flash * 0.6 + math.min(0.45, speedBonus * 0.4))
+        local time = data.time or love.timer.getTime()
+        if not time or time <= 0 then
+                time = love.timer.getTime()
+        end
+
+        local baseRadius = SEGMENT_SIZE * (0.92 + 0.07 * math.min(stacks, 4))
+        drawSoftGlow(hx, hy, baseRadius * (1.25 + 0.25 * highlight), 1.0, 0.62, 0.42, 0.18 + 0.24 * highlight)
+
+        love.graphics.push("all")
+        love.graphics.translate(hx, hy)
+        love.graphics.setBlendMode("alpha")
+
+        local ringAlpha = 0.18 + 0.28 * highlight
+        love.graphics.setLineWidth(2.2)
+        love.graphics.setColor(1.0, 0.68, 0.42, ringAlpha)
+        love.graphics.circle("line", 0, 0, baseRadius * (0.92 + 0.18 * highlight), 32)
+
+        local fangCount = 5 + math.min(stacks * 2, 6)
+        local orbit = baseRadius * (0.8 + 0.18 * highlight)
+        local fangLength = SEGMENT_SIZE * (0.35 + 0.05 * stacks + 0.08 * highlight)
+        local fangWidth = fangLength * 0.42
+        local spin = 2.8 + stacks * 0.35 + speedBonus * 1.2
+
+        for i = 1, fangCount do
+                local offset = (i - 1) / fangCount
+                local angle = time * spin + offset * math.pi * 2
+                local wobble = math.sin(time * (4.6 + stacks * 0.3) + i * 1.2) * (0.18 + 0.12 * highlight)
+                local finalAngle = angle + wobble
+
+                local dirX = math.cos(finalAngle)
+                local dirY = math.sin(finalAngle)
+                local baseX = dirX * orbit
+                local baseY = dirY * orbit
+                local tipX = dirX * (orbit + fangLength)
+                local tipY = dirY * (orbit + fangLength)
+                local perpX = -dirY
+                local perpY = dirX
+                local leftX = baseX + perpX * fangWidth * 0.5
+                local leftY = baseY + perpY * fangWidth * 0.5
+                local rightX = baseX - perpX * fangWidth * 0.5
+                local rightY = baseY - perpY * fangWidth * 0.5
+
+                local fangAlpha = math.min(1, 0.36 + 0.4 * intensity + flash * 0.4)
+                love.graphics.setColor(1.0, 0.62, 0.42, fangAlpha)
+                love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
+
+                love.graphics.setLineWidth(1.4)
+                love.graphics.setColor(1.0, 0.86, 0.6, fangAlpha * 0.85)
+                love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
+
+                local slashRadius = orbit + fangLength * (0.75 + 0.1 * highlight)
+                local slashWidth = 0.2 + 0.08 * highlight
+                love.graphics.setLineWidth(1.6)
+                love.graphics.setColor(1.0, 0.74, 0.46, (0.22 + 0.26 * intensity + 0.2 * flash) * (0.9 - offset * 0.2))
+                love.graphics.arc("line", "open", 0, 0, slashRadius, finalAngle - slashWidth, finalAngle + slashWidth, 18)
+        end
+
+        if data.active then
+                love.graphics.setBlendMode("add")
+                love.graphics.setColor(1.0, 0.82, 0.52, 0.2 + 0.3 * highlight)
+                love.graphics.circle("line", 0, 0, baseRadius * (1.35 + 0.25 * highlight), 36)
+        end
+
+        love.graphics.pop()
 end
 
 local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
@@ -1895,12 +1977,16 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
         end
 
         if upgradeVisuals and upgradeVisuals.adrenaline then
-		drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
-	end
+                drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
+        end
 
-	if upgradeVisuals and upgradeVisuals.dash then
-		drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
-	end
+        if upgradeVisuals and upgradeVisuals.quickFangs then
+                drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
+        end
+
+        if upgradeVisuals and upgradeVisuals.dash then
+                drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
+        end
 
 	local faceScale = 1
 	Face:draw(hx, hy, faceScale)
