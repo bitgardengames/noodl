@@ -191,135 +191,232 @@ local function smoothApproach(current, target, speed, dt)
         return current + (target - current) * t
 end
 
-local function cubicBezierPoint(t, p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y)
-        local u = 1 - t
-        local tt = t * t
-        local uu = u * u
-        local uuu = uu * u
-        local ttt = tt * t
-
-        local x = uuu * p0x + 3 * uu * t * p1x + 3 * u * tt * p2x + ttt * p3x
-        local y = uuu * p0y + 3 * uu * t * p1y + 3 * u * tt * p2y + ttt * p3y
-
-        return x, y
-end
-
-local function buildPreviewTrail(preview, startX, startY, headX, headY, idleTimer)
+local function ensurePreviewPath(preview, anchorX, anchorY)
         if not preview then
                 return
         end
 
-        if not (startX and startY and headX and headY) then
-                preview.trail = preview.trail or {}
-                for i = #preview.trail, 1, -1 do
-                        preview.trail[i] = nil
+        local segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
+        local spacing = segmentSize
+        local cols = preview.gridCols or 7
+        local rows = preview.gridRows or 5
+
+        local needsRebuild = preview._pathAnchorX ~= anchorX
+                or preview._pathAnchorY ~= anchorY
+                or preview._pathSpacing ~= spacing
+                or preview._pathCols ~= cols
+                or preview._pathRows ~= rows
+
+        if not needsRebuild and not preview.pathNeedsRebuild then
+                return
+        end
+
+        local leftX = anchorX - spacing * (cols - 1) / 2
+        local bottomY = anchorY - spacing * 0.5
+
+        local nodes = preview.pathNodes or {}
+        local count = 0
+
+        local function append(col, row)
+                local x = leftX + col * spacing
+                local y = bottomY - row * spacing
+
+                if count > 0 then
+                        local prev = nodes[count]
+                        if prev and abs(prev.x - x) < 0.001 and abs(prev.y - y) < 0.001 then
+                                return
+                        end
                 end
-                preview.worldTrail = preview.worldTrail or {}
-                for i = #preview.worldTrail, 1, -1 do
-                        preview.worldTrail[i] = nil
+
+                count = count + 1
+                local node = nodes[count] or {}
+                node.x = x
+                node.y = y
+                nodes[count] = node
+        end
+
+        for row = 0, rows - 1 do
+                if row % 2 == 0 then
+                        for col = 0, cols - 1 do
+                                append(col, row)
+                        end
+                        if row < rows - 1 then
+                                append(cols - 1, row + 1)
+                        end
+                else
+                        for col = cols - 1, 0, -1 do
+                                append(col, row)
+                        end
+                        if row < rows - 1 then
+                                append(0, row + 1)
+                        end
                 end
+        end
+
+        for row = rows - 2, 0, -1 do
+                append(cols - 1, row)
+        end
+
+        for col = cols - 2, 0, -1 do
+                append(col, 0)
+        end
+
+        for i = count + 1, #nodes do
+                nodes[i] = nil
+        end
+
+        preview.pathNodes = nodes
+        preview.pathNeedsRebuild = true
+        preview._pathAnchorX = anchorX
+        preview._pathAnchorY = anchorY
+        preview._pathSpacing = spacing
+        preview._pathCols = cols
+        preview._pathRows = rows
+end
+
+local function rebuildPreviewPath(preview)
+        local nodes = preview.pathNodes
+        if not nodes or #nodes < 2 then
+                preview.pathLength = 0
+                preview.pathCumulative = nil
+                return
+        end
+
+        local count = #nodes
+        local cumulative = preview.pathCumulative or {}
+        cumulative[1] = 0
+
+        local total = 0
+        for i = 1, count do
+                local curr = nodes[i]
+                local nextNode = nodes[(i % count) + 1]
+                local dx = nextNode.x - curr.x
+                local dy = nextNode.y - curr.y
+                local segLen = sqrt(dx * dx + dy * dy)
+                if segLen < 0.0001 then
+                        cumulative[i + 1] = total
+                else
+                        total = total + segLen
+                        cumulative[i + 1] = total
+                end
+        end
+
+        preview.pathCumulative = cumulative
+        preview.pathLength = total
+        preview.pathNeedsRebuild = false
+end
+
+local function samplePreviewPath(preview, distance)
+        local nodes = preview.pathNodes
+        if not nodes or #nodes == 0 then
+                                return 0, 0
+        end
+
+        local total = preview.pathLength or 0
+        if total <= 0 then
+                return nodes[1].x or 0, nodes[1].y or 0
+        end
+
+        local count = #nodes
+        local cumulative = preview.pathCumulative or {}
+        distance = distance % total
+
+        for i = 1, count do
+                local segStart = cumulative[i] or 0
+                local segEnd = cumulative[i + 1] or total
+                local segLen = segEnd - segStart
+                if segLen > 0 and distance <= segEnd + 1e-6 then
+                        local curr = nodes[i]
+                        local nextNode = nodes[(i % count) + 1]
+                        local t = clamp((distance - segStart) / segLen)
+                        local sampleX = curr.x + (nextNode.x - curr.x) * t
+                        local sampleY = curr.y + (nextNode.y - curr.y) * t
+                        return sampleX, sampleY
+                end
+        end
+
+        local last = nodes[count]
+        return last.x or 0, last.y or 0
+end
+
+local function buildPreviewTrail(preview, anchorX, anchorY, dt, excited)
+        if not preview then
+                return
+        end
+
+        ensurePreviewPath(preview, anchorX, anchorY)
+
+        if preview.pathNeedsRebuild then
+                rebuildPreviewPath(preview)
+        end
+
+        local totalLength = preview.pathLength or 0
+        if not totalLength or totalLength <= 0 then
+                if preview.trail then
+                        for i = #preview.trail, 1, -1 do
+                                preview.trail[i] = nil
+                        end
+                end
+                if preview.worldTrail then
+                        for i = #preview.worldTrail, 1, -1 do
+                                preview.worldTrail[i] = nil
+                        end
+                end
+                preview.segmentCountResolved = nil
                 preview.headWorldX = nil
                 preview.headWorldY = nil
                 return
         end
 
-        idleTimer = idleTimer or 0
-        local spacing = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
+        dt = dt or 0
+        local segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
         local desiredCount = preview.segmentCount or 18
-        local dx = headX - startX
-        local verticalSpan = max(120, abs(startY - headY) + 160)
-        local cp1x = startX + dx * 0.18
-        local cp2x = startX + dx * 0.72
-        local cp1y = startY - verticalSpan * 0.38
-        local cp2y = headY - verticalSpan * 0.62
 
-        if startY < headY then
-                cp1y = startY - verticalSpan * 0.32
-                cp2y = headY - verticalSpan * 0.52
-        end
+        local targetSpeed = segmentSize * (excited and 4.4 or 3.6)
+        preview.currentSpeed = smoothApproach(preview.currentSpeed, targetSpeed, 6, dt)
+        local speed = preview.currentSpeed or targetSpeed
 
-        cp1y = min(cp1y, startY - 36)
-        cp2y = min(cp2y, headY - 20)
+        preview.pathProgress = (preview.pathProgress or 0) + speed * dt
+        local headProgress = preview.pathProgress % totalLength
+        preview.pathProgress = headProgress
 
-        local steps = 64
-        local points = {}
-        local totalLength = 0
-        local prevX, prevY = startX, startY
-        points[1] = { x = startX, y = startY, length = 0 }
-
-        for i = 1, steps do
-                local t = i / steps
-                local px, py = cubicBezierPoint(t, startX, startY, cp1x, cp1y, cp2x, cp2y, headX, headY)
-                local dxStep = px - prevX
-                local dyStep = py - prevY
-                local segmentLength = sqrt(dxStep * dxStep + dyStep * dyStep)
-                totalLength = totalLength + segmentLength
-                points[#points + 1] = { x = px, y = py, length = totalLength }
-                prevX, prevY = px, py
-        end
-
+        local spacing = segmentSize
         local maxSegments = max(2, math.floor(totalLength / spacing) + 1)
         local count = max(2, min(desiredCount, maxSegments))
-
-        local function sampleAtDistance(distance)
-                if distance <= 0 then
-                        return startX, startY
-                end
-
-                for i = 2, #points do
-                        local curr = points[i]
-                        if distance <= curr.length then
-                                local prevPoint = points[i - 1]
-                                local segLen = curr.length - prevPoint.length
-                                if segLen <= 0 then
-                                        return curr.x, curr.y
-                                end
-
-                                local t = clamp((distance - prevPoint.length) / segLen)
-                                local sampleX = prevPoint.x + (curr.x - prevPoint.x) * t
-                                local sampleY = prevPoint.y + (curr.y - prevPoint.y) * t
-                                return sampleX, sampleY
-                        end
-                end
-
-                local last = points[#points]
-                return last.x, last.y
-        end
 
         preview.trail = preview.trail or {}
         preview.worldTrail = preview.worldTrail or {}
 
-        local trail = preview.trail
-        local worldTrail = preview.worldTrail
         for index = 1, count do
-                local distFromTail = totalLength - (index - 1) * spacing
-                if distFromTail < 0 then
-                        distFromTail = 0
-                end
+                local distance = headProgress - (index - 1) * spacing
+                distance = distance % totalLength
+                local worldX, worldY = samplePreviewPath(preview, distance)
 
-                local worldX, worldY = sampleAtDistance(distFromTail)
-                local seg = trail[index] or {}
+                local seg = preview.trail[index] or {}
                 seg.drawX = worldX
                 seg.drawY = worldY
-                trail[index] = seg
+                preview.trail[index] = seg
 
-                local worldSeg = worldTrail[index] or {}
+                local worldSeg = preview.worldTrail[index] or {}
                 worldSeg.drawX = worldX
                 worldSeg.drawY = worldY
-                worldTrail[index] = worldSeg
+                preview.worldTrail[index] = worldSeg
+
+                if index == 1 then
+                        preview.headWorldX = worldX
+                        preview.headWorldY = worldY
+                end
         end
 
-        for i = count + 1, #trail do
-                trail[i] = nil
+        for i = count + 1, #preview.trail do
+                preview.trail[i] = nil
         end
 
-        for i = count + 1, #worldTrail do
-                worldTrail[i] = nil
+        for i = count + 1, #preview.worldTrail do
+                preview.worldTrail[i] = nil
         end
 
         preview.segmentCountResolved = count
-        preview.headWorldX = worldTrail[1] and worldTrail[1].drawX or headX
-        preview.headWorldY = worldTrail[1] and worldTrail[1].drawY or headY
 end
 
 function Shop:start(currentFloor)
@@ -340,6 +437,9 @@ function Shop:start(currentFloor)
                 segmentCount = 18,
                 idleTimer = 0,
                 scale = 1,
+                gridCols = 7,
+                gridRows = 5,
+                pathNeedsRebuild = true,
         }
         self:refreshCards()
 end
@@ -404,16 +504,20 @@ function Shop:refreshCards(options)
 
         if self.snakePreview then
                 local preview = self.snakePreview
-                preview.currentX = nil
-                preview.currentY = nil
-                preview.targetX = nil
-                preview.targetY = nil
+                preview.pathProgress = 0
+                preview.currentSpeed = nil
                 preview.anchorX = nil
                 preview.anchorY = nil
                 preview.segmentCountResolved = nil
                 preview.headWorldX = nil
                 preview.headWorldY = nil
                 preview.idleTimer = preview.idleTimer or 0
+                preview.pathNeedsRebuild = true
+                preview._pathAnchorX = nil
+                preview._pathAnchorY = nil
+                preview._pathSpacing = nil
+                preview._pathCols = nil
+                preview._pathRows = nil
 
                 if preview.trail then
                         for i = #preview.trail, 1, -1 do
@@ -620,60 +724,19 @@ function Shop:update(dt)
         local preview = self.snakePreview
         if preview then
                 preview.idleTimer = (preview.idleTimer or 0) + dt
+                local screenW = love.graphics.getWidth()
+                local screenH = love.graphics.getHeight()
+                preview.screenW = screenW
+                preview.screenH = screenH
 
-                local targetCard = nil
-                if self.selected then
-                        targetCard = self.selected
-                elseif self.focusIndex and self.cards then
-                        targetCard = self.cards[self.focusIndex]
-                elseif self.cards and self.cards[1] then
-                        targetCard = self.cards[1]
-                end
+                local anchorX = screenW * 0.5
+                local anchorY = screenH - math.max(88, screenH * 0.08)
+                preview.anchorX = anchorX
+                preview.anchorY = anchorY
 
-                local screenW = preview.screenW or love.graphics.getWidth()
-                local screenH = preview.screenH or love.graphics.getHeight()
-                local anchorX = preview.anchorX or (screenW * 0.5)
-                local anchorY = preview.anchorY or (screenH - math.max(88, screenH * 0.08))
-                local segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
-                local targetX
-                if targetCard then
-                        if targetCard.focusPoint then
-                                targetX = targetCard.focusPoint.x
-                        elseif targetCard.bounds then
-                                local b = targetCard.bounds
-                                if b then
-                                        targetX = b.x + b.w * 0.5
-                                end
-                        end
-                end
+                preview.segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
 
-                if not targetX then
-                        targetX = anchorX or (screenW * 0.5)
-                end
-
-                local targetY = anchorY - segmentSize * 1.2
-
-                if anchorX then
-                        local offset = targetX - anchorX
-                        local trackingStrength = self.selected and 0.55 or 0.35
-                        targetX = anchorX + offset * trackingStrength
-                end
-
-                preview.targetX = targetX
-                preview.targetY = targetY
-
-                local chaseSpeed = self.selected and 8 or 5.2
-                preview.currentX = smoothApproach(preview.currentX, preview.targetX, chaseSpeed, dt)
-                preview.currentY = smoothApproach(preview.currentY, preview.targetY, chaseSpeed, dt)
-
-                if preview.currentX == nil then
-                        preview.currentX = preview.targetX
-                end
-
-                if preview.currentY == nil then
-                        preview.currentY = preview.targetY
-                end
-
+                buildPreviewTrail(preview, anchorX, anchorY, dt, self.selected ~= nil)
         end
 end
 
@@ -1393,23 +1456,12 @@ function Shop:draw(screenW, screenH)
                 local anchorY = screenH - math.max(88, screenH * 0.08)
                 preview.anchorX = anchorX
                 preview.anchorY = anchorY
-
-                local headX = preview.currentX or preview.targetX or anchorX
-                local headY = preview.currentY or preview.targetY or layoutCenterY
-                local segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE
-                if headY and segmentSize then
-                        headY = math.min(headY, anchorY - segmentSize * 0.5)
-                end
-
-                if headX and headY then
-                        local idleTimer = preview.idleTimer or 0
-                        buildPreviewTrail(preview, anchorX, anchorY, headX, headY, idleTimer)
-                        local trail = preview.trail
-                        if trail and #trail > 1 then
-                                love.graphics.push()
-                                SnakeDraw.run(trail, #trail, preview.segmentSize or SnakeUtils.SEGMENT_SIZE)
-                                love.graphics.pop()
-                        end
+                buildPreviewTrail(preview, anchorX, anchorY, 0, self.selected ~= nil)
+                local trail = preview.trail
+                if trail and #trail > 1 then
+                        love.graphics.push()
+                        SnakeDraw.run(trail, #trail, preview.segmentSize or SnakeUtils.SEGMENT_SIZE)
+                        love.graphics.pop()
                 end
         end
 
