@@ -109,45 +109,45 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-        leftx = { slot = "horizontal" },
-        rightx = { slot = "horizontal" },
-        lefty = { slot = "vertical" },
-        righty = { slot = "vertical" },
-        [1] = { slot = "horizontal" },
-        [2] = { slot = "vertical" },
+	leftx = { slot = "horizontal" },
+	rightx = { slot = "horizontal" },
+	lefty = { slot = "vertical" },
+	righty = { slot = "vertical" },
+	[1] = { slot = "horizontal" },
+	[2] = { slot = "vertical" },
 }
 
 local function resetAnalogAxis()
-        analogAxisDirections.horizontal = nil
-        analogAxisDirections.vertical = nil
+	analogAxisDirections.horizontal = nil
+	analogAxisDirections.vertical = nil
 end
 
 local function handleAnalogAxis(self, axis, value)
-        local mapping = analogAxisMap[axis]
-        if not mapping then
-                return
-        end
+	local mapping = analogAxisMap[axis]
+	if not mapping then
+		return
+	end
 
-        local direction
-        if value >= ANALOG_DEADZONE then
-                direction = "positive"
-        elseif value <= -ANALOG_DEADZONE then
-                direction = "negative"
-        end
+	local direction
+	if value >= ANALOG_DEADZONE then
+		direction = "positive"
+	elseif value <= -ANALOG_DEADZONE then
+		direction = "negative"
+	end
 
-        if analogAxisDirections[mapping.slot] == direction then
-                return
-        end
+	if analogAxisDirections[mapping.slot] == direction then
+		return
+	end
 
-        analogAxisDirections[mapping.slot] = direction
+	analogAxisDirections[mapping.slot] = direction
 
-        if direction then
-                local actions = analogAxisActions[mapping.slot]
-                local action = actions and actions[direction]
-                if action then
-                        action(self)
-                end
-        end
+	if direction then
+		local actions = analogAxisActions[mapping.slot]
+		local action = actions and actions[direction]
+		if action then
+			action(self)
+		end
+	end
 end
 
 function Shop:start(currentFloor)
@@ -204,10 +204,10 @@ function Shop:refreshCards(options)
 
 	resetAnalogAxis()
 
-        for i = 1, #self.cards do
-                self.cardStates[i] = {
-                        progress = 0,
-                        delay = initialDelay + (i - 1) * 0.08,
+	for i = 1, #self.cards do
+		self.cardStates[i] = {
+			progress = 0,
+			delay = initialDelay + (i - 1) * 0.08,
 			selection = 0,
 			selectionClock = 0,
 			hover = 0,
@@ -216,11 +216,10 @@ function Shop:refreshCards(options)
 			selectionFlash = nil,
 			revealSoundPlayed = false,
 			selectSoundPlayed = false,
-                        discardActive = false,
-                        discard = nil,
-                }
-        end
-
+			discardActive = false,
+			discard = nil,
+		}
+	end
 end
 
 function Shop:beginRestock()
@@ -405,12 +404,11 @@ function Shop:update(dt)
 				Audio:playSound("shop_purchase")
 			end
 		end
-        else
-                self.selectionTimer = 0
-                self.selectionComplete = false
-                self.selectedIndex = nil
-        end
-
+	else
+		self.selectionTimer = 0
+		self.selectionComplete = false
+		self.selectedIndex = nil
+	end
 end
 
 local rarityBorderAlpha = 0.85
@@ -1020,10 +1018,10 @@ function Shop:draw(screenW, screenH)
 			yOffset = yOffset + 46 * focusEase
 			scale = scale * (1 + 0.35 * focusEase)
 			alpha = math.min(1, alpha * (1 + 0.6 * focusEase))
-                        -- Make sure the selected card renders at full opacity while it
-                        -- animates toward the center. Without this explicit override the focus easing
-                        -- could leave it slightly translucent until the animation fully
-                        -- completes, which felt like a bug. Forcing alpha to 1 keeps the
+			-- Make sure the selected card renders at full opacity while it
+			-- animates toward the center. Without this clamp the focus easing
+			-- could leave it slightly translucent until the animation fully
+			-- completes, which felt like a bug. Forcing alpha to 1 keeps the
 			-- spotlighted card crisp for the whole animation.
 			alpha = 1
 		else
@@ -1056,10 +1054,10 @@ function Shop:draw(screenW, screenH)
 			end
 		end
 
-                local drawWidth = cardWidth * scale
-                local drawHeight = cardHeight * scale
-                local drawX = centerX - drawWidth / 2
-                local drawY = centerY - drawHeight / 2
+		local drawWidth = cardWidth * scale
+		local drawHeight = cardHeight * scale
+		local drawX = centerX - drawWidth / 2
+		local drawY = centerY - drawHeight / 2
 
 		local usingFocusNavigation = self.inputMode == "gamepad" or self.inputMode == "keyboard"
 		local mouseHover = mx >= drawX and mx <= drawX + drawWidth
@@ -1082,11 +1080,10 @@ function Shop:draw(screenW, screenH)
 		love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
 		local appearanceAlpha = self.selected == card and 1 or alpha
                 drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, state, self.selected == card, appearanceAlpha)
-                love.graphics.pop()
-                card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
-                card.focusPoint = { x = centerX, y = drawY + drawHeight + 32 }
+		love.graphics.pop()
+		card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
 
-                if state and state.selectionFlash then
+		if state and state.selectionFlash then
 			local flashDuration = 0.75
 			local t = math.max(0, math.min(1, state.selectionFlash / flashDuration))
 			local ease = 1 - ((1 - t) * (1 - t))
@@ -1115,15 +1112,15 @@ function Shop:draw(screenW, screenH)
 		end
 	end
 
-        if selectedIndex then
-                renderCard(selectedIndex, self.cards[selectedIndex])
-        end
+	if selectedIndex then
+		renderCard(selectedIndex, self.cards[selectedIndex])
+	end
 
-        if self.selected then
-                love.graphics.setFont(UI.fonts.button)
-                love.graphics.setColor(1, 0.88, 0.6, 0.9)
-                love.graphics.printf(
-                        string.format("%s claimed", self.selected.name or "Relic"),
+	if self.selected then
+		love.graphics.setFont(UI.fonts.button)
+		love.graphics.setColor(1, 0.88, 0.6, 0.9)
+		love.graphics.printf(
+			string.format("%s claimed", self.selected.name or "Relic"),
 			0,
 			screenH * 0.87,
 			screenW,

@@ -38,7 +38,7 @@ local GameInput = require("gameinput")
 local ModuleUtil = require("moduleutil")
 local Game = {}
 
-local clamp = Easing.clamp
+local clamp01 = Easing.clamp01
 local easeOutExpo = Easing.easeOutExpo
 
 local function easeOutCubic(t)
@@ -1063,7 +1063,7 @@ local function drawTransitionFadeOut(self, timer, duration)
 	if not duration or duration <= 0 then
 		progress = 1
 	else
-		progress = clamp(timer / duration)
+		progress = clamp01(timer / duration)
 	end
 
 	love.graphics.setColor(0, 0, 0, progress)
@@ -1101,7 +1101,7 @@ local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
 
 		if fadeAlpha then
 			noteAlpha = fadeAlpha(offsetDelay, 0.4)
-			noteOffset = (1 - easeOutExpo(clamp((timer - offsetDelay) / 0.55))) * 16 * (outroAlpha or 1)
+			noteOffset = (1 - easeOutExpo(clamp01((timer - offsetDelay) / 0.55))) * 16 * (outroAlpha or 1)
 		else
 			noteAlpha = outroAlpha or 1
 		end
@@ -1144,7 +1144,7 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 	drawPlayfieldLayers(self, "playing")
 
 	local totalDuration = duration or 0
-	local progress = totalDuration > 0 and clamp(timer / totalDuration) or 1
+	local progress = totalDuration > 0 and clamp01(timer / totalDuration) or 1
 	local awaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
 	local visualProgress = progress
 	if awaitingConfirm then
@@ -1153,7 +1153,7 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 
 	local appearProgress = math.min(1, visualProgress / 0.28)
 	local appear = easeOutCubic(appearProgress)
-	local dissolveProgress = visualProgress > 0.48 and clamp((visualProgress - 0.48) / 0.4) or 0
+	local dissolveProgress = visualProgress > 0.48 and clamp01((visualProgress - 0.48) / 0.4) or 0
 	if awaitingConfirm then
 		dissolveProgress = 0
 	end
@@ -1196,7 +1196,7 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 		if promptText and promptText ~= "" then
 			local promptFont = UI.fonts.prompt or UI.fonts.body
 			love.graphics.setFont(promptFont)
-			local promptFade = 1 - clamp((visualProgress - 0.72) / 0.18)
+			local promptFade = 1 - clamp01((visualProgress - 0.72) / 0.18)
 			local promptAlpha = highlightAlpha * promptFade
 			local y = self.screenHeight - promptFont:getHeight() * 2.2
 			love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * promptAlpha)
@@ -1210,7 +1210,7 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 	love.graphics.pop()
 
 	love.graphics.push("all")
-	local canvasAlpha = 1 - clamp(dissolveProgress)
+	local canvasAlpha = 1 - clamp01(dissolveProgress)
 	love.graphics.setColor(1, 1, 1, canvasAlpha)
 	love.graphics.draw(canvas, 0, 0)
 	love.graphics.pop()
@@ -1252,7 +1252,7 @@ function Game:drawTransition()
 		if not duration or duration <= 0 then
 			progress = 1
 		else
-			progress = clamp(timer / duration)
+			progress = clamp01(timer / duration)
 		end
 
 		local alpha = 1 - progress

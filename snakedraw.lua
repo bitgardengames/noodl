@@ -900,44 +900,42 @@ local function drawCornerCaps(path, radius)
 end
 
 local function drawSnakeStroke(path, radius, options)
-        if not path or radius <= 0 or #path < 2 then
-        return
-        end
+	if not path or radius <= 0 or #path < 2 then
+	return
+	end
 
-        if #path == 2 then
-        if options and options.sharpCorners then
-                local x, y = path[1], path[2]
-                love.graphics.rectangle("fill", x - radius, y - radius, radius * 2, radius * 2)
-        else
-                love.graphics.circle("fill", path[1], path[2], radius)
-        end
-        return
-        end
+	if #path == 2 then
+	if options and options.sharpCorners then
+		local x, y = path[1], path[2]
+		love.graphics.rectangle("fill", x - radius, y - radius, radius * 2, radius * 2)
+	else
+		love.graphics.circle("fill", path[1], path[2], radius)
+	end
+	return
+	end
 
-        love.graphics.setLineWidth(radius * 2)
-        love.graphics.line(path)
+	love.graphics.setLineWidth(radius * 2)
+	love.graphics.line(path)
 
-        local firstX, firstY = path[1], path[2]
-        local lastX, lastY = path[#path - 1], path[#path]
+	local firstX, firstY = path[1], path[2]
+	local lastX, lastY = path[#path - 1], path[#path]
 
-        local useRoundCaps = not (options and options.sharpCorners)
+	local useRoundCaps = not (options and options.sharpCorners)
 
-        if firstX and firstY and useRoundCaps then
-        love.graphics.circle("fill", firstX, firstY, radius)
-        end
+	if firstX and firstY and useRoundCaps then
+	love.graphics.circle("fill", firstX, firstY, radius)
+	end
 
-        if lastX and lastY and useRoundCaps then
-        love.graphics.circle("fill", lastX, lastY, radius)
-        end
+	if lastX and lastY and useRoundCaps then
+	love.graphics.circle("fill", lastX, lastY, radius)
+	end
 
-        if useRoundCaps then
-        drawCornerCaps(path, radius)
-        end
+	drawCornerCaps(path, radius)
 end
 
 local function renderSnakeToCanvas(trail, coords, head, half, options)
-        local bodyColor = SnakeCosmetics:getBodyColor()
-        local outlineColor = SnakeCosmetics:getOutlineColor()
+	local bodyColor = SnakeCosmetics:getBodyColor()
+	local outlineColor = SnakeCosmetics:getOutlineColor()
 	local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
 	local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
 	local bulgeRadius = half * FRUIT_BULGE_SCALE
@@ -948,26 +946,17 @@ local function renderSnakeToCanvas(trail, coords, head, half, options)
 	local bodyCoords = coords
 
 	love.graphics.push("all")
-        local desiredJoin
-        if options and options.lineJoin then
-        desiredJoin = options.lineJoin
-        elseif sharpCorners then
-        desiredJoin = "miter"
-        else
-        desiredJoin = "round"
-        end
+	if sharpCorners then
+	love.graphics.setLineStyle("rough")
+	love.graphics.setLineJoin("miter")
+	else
+	love.graphics.setLineStyle("smooth")
+	love.graphics.setLineJoin("bevel")
+	end
 
-        if sharpCorners then
-        love.graphics.setLineStyle("rough")
-        else
-        love.graphics.setLineStyle("smooth")
-        end
-
-        love.graphics.setLineJoin(desiredJoin)
-
-        love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-        drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
-        drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
+	love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+	drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+	drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
 
 	love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
 	drawSnakeStroke(bodyCoords, half, options)

@@ -28,7 +28,7 @@ local transitionBlockedEvents = {
 	gamepadaxis = true,
 }
 
-local clamp = Easing.clamp
+local clamp01 = Easing.clamp01
 local getTransitionAlpha = Easing.getTransitionAlpha
 
 local function parseDuration(value)
@@ -106,7 +106,7 @@ local function updateTransitionContext(self, data)
 	if progress == nil then
 		progress = context.transitioning and 0 or 1
 	end
-	progress = clamp(progress)
+	progress = clamp01(progress)
 
 	context.progress = progress
 	context.duration = data.duration or self.transitionDuration or 0

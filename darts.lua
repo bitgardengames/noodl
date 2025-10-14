@@ -29,13 +29,13 @@ local function getTime()
 	return love.timer.getTime()
 end
 
-local function clamp(value)
-        if value < 0 then
-                return 0
-        elseif value > 1 then
-                return 1
-        end
-        return value
+local function clamp01(value)
+	if value < 0 then
+		return 0
+	elseif value > 1 then
+		return 1
+	end
+	return value
 end
 
 local function getLauncherColors()
@@ -320,7 +320,7 @@ local function advanceLauncher(launcher, dt)
 		launcher.telegraphTimer = (launcher.telegraphTimer or 0) - dt
 		local duration = launcher.telegraphDuration or DEFAULT_TELEGRAPH_DURATION
 		local progress = 1 - (launcher.telegraphTimer or 0) / duration
-		launcher.telegraphProgress = clamp(progress)
+		launcher.telegraphProgress = clamp01(progress)
 
 		if launcher.telegraphTimer <= 0 then
 			launcher.projectile = {
@@ -444,7 +444,7 @@ local function drawTelegraph(launcher, bodyColor, accentColor)
 	end
 
 	local pulse = 0.35 + 0.25 * math.sin((getTime() + launcher.randomOffset) * TELEGRAPH_PULSE_SPEED)
-	local glowAlpha = clamp(progress * 0.9 + pulse * 0.35)
+	local glowAlpha = clamp01(progress * 0.9 + pulse * 0.35)
 
 	love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], glowAlpha)
 
@@ -483,9 +483,9 @@ local function drawTelegraph(launcher, bodyColor, accentColor)
 	end
 
 	love.graphics.setColor(1, 1, 1, glowAlpha * 0.5)
-	love.graphics.circle("line", launcher.holeX, launcher.holeY, HOLE_RADIUS * clamp(progress * 0.75))
+	love.graphics.circle("line", launcher.holeX, launcher.holeY, HOLE_RADIUS * clamp01(progress * 0.75))
 	love.graphics.setColor(1, 1, 1, glowAlpha * 0.35)
-	love.graphics.circle("fill", launcher.holeX, launcher.holeY, HOLE_RADIUS * clamp(progress * 0.4))
+	love.graphics.circle("fill", launcher.holeX, launcher.holeY, HOLE_RADIUS * clamp01(progress * 0.4))
 end
 
 local function drawProjectile(launcher, accentColor)
@@ -596,7 +596,7 @@ local function drawImpact(launcher, accentColor)
 		return
 	end
 
-	local progress = clamp(impact.timer / (impact.life or IMPACT_RING_LIFE))
+	local progress = clamp01(impact.timer / (impact.life or IMPACT_RING_LIFE))
 	local radius = 6 + (1 - progress) * 12
 	love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], progress * 0.6)
 	love.graphics.setLineWidth(2)

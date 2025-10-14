@@ -7,13 +7,13 @@ local cos = math.cos
 local sin = math.sin
 local random = love.math.random
 
-local function clamp(value)
-        if value <= 0 then
-                return 0
-        end
-        if value >= 1 then
-                return 1
-        end
+local function clamp01(value)
+	if value <= 0 then
+		return 0
+	end
+	if value >= 1 then
+		return 1
+	end
 	return value
 end
 
@@ -34,7 +34,7 @@ local function drawShieldBadge(effect, progress)
 	local badgeColor = effect.badgeColor
 	if not badgeColor then return end
 
-        local alpha = (badgeColor[4] or 1) * clamp(1 - progress * 1.1)
+	local alpha = (badgeColor[4] or 1) * clamp01(1 - progress * 1.1)
 	if alpha <= 0 then return end
 
 	local pulse = 1 + 0.05 * sin(progress * pi * 6)
@@ -63,7 +63,7 @@ local function drawBurstBadge(effect, progress)
 	local badgeColor = effect.badgeColor
 	if not badgeColor then return end
 
-        local alpha = (badgeColor[4] or 1) * clamp(1 - progress * 1.05)
+	local alpha = (badgeColor[4] or 1) * clamp01(1 - progress * 1.05)
 	if alpha <= 0 then return end
 
 	local points = 5
@@ -90,7 +90,7 @@ local function drawSparkBadge(effect, progress)
 	local badgeColor = effect.badgeColor
 	if not badgeColor then return end
 
-        local alpha = (badgeColor[4] or 1) * clamp(1 - progress * 1.2)
+	local alpha = (badgeColor[4] or 1) * clamp01(1 - progress * 1.2)
 	if alpha <= 0 then return end
 
 	local rotation = (effect.rotation or 0) + progress * pi * 0.8
@@ -190,11 +190,11 @@ local function drawRings(effect, progress)
 
 	for index = 1, ringCount do
 		local delay = (index - 1) * pulseDelay
-                local ringProgress = clamp((progress - delay) / (1 - delay))
+		local ringProgress = clamp01((progress - delay) / (1 - delay))
 		if ringProgress > 0 then
 			local eased = ringProgress * ringProgress
 			local radius = innerRadius + (outerRadius - innerRadius) * eased + (index - 1) * ringSpacing
-                        local alpha = (color[4] or 1) * clamp(1.1 - ringProgress * 1.1)
+			local alpha = (color[4] or 1) * clamp01(1.1 - ringProgress * 1.1)
 			if alpha > 0 then
 				love.graphics.setLineWidth((effect.ringWidth or 4) * (1 - 0.35 * eased))
 				love.graphics.setColor(color[1], color[2], color[3], alpha)
@@ -212,7 +212,7 @@ local function drawGlow(effect, progress)
 
 	local haloColor = effect.haloColor
 	if haloColor and (haloColor[4] or 0) > 0 then
-        local haloAlpha = haloColor[4] * clamp(1 - progress)
+		local haloAlpha = haloColor[4] * clamp01(1 - progress)
 		if haloAlpha > 0 then
 			love.graphics.setColor(haloColor[1], haloColor[2], haloColor[3], haloAlpha)
 			love.graphics.circle("fill", effect.x, effect.y, (effect.outerRadius or 44) * (0.4 + progress * 0.45), 36)
@@ -221,7 +221,7 @@ local function drawGlow(effect, progress)
 
 	local glowColor = effect.glowColor
 	if glowColor and (glowColor[4] or 0) > 0 then
-        local glowAlpha = glowColor[4] * clamp(1 - progress * 0.8)
+		local glowAlpha = glowColor[4] * clamp01(1 - progress * 0.8)
 		if glowAlpha > 0 then
 			local pulse = 0.9 + 0.2 * sin(progress * pi * 4)
 			love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], glowAlpha)
@@ -239,7 +239,7 @@ function UpgradeVisuals:draw()
 	love.graphics.push("all")
 
 	for _, effect in ipairs(self.effects) do
-                local progress = clamp(effect.age / effect.life)
+		local progress = clamp01(effect.age / effect.life)
 		drawGlow(effect, progress)
 		drawRings(effect, progress)
 		drawBadge(effect, progress)
