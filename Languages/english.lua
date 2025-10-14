@@ -447,11 +447,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Stone Whisperer",
 				description = "Rocks spawn far less often after eating fruit.",
 			},
-			tail_trainer = {
-				name = "Tail Trainer",
-				description = "While Snake is length 10+, consecutive fruits unleash a tail lash that shatters rocks, stalls saws, and grants bonus score. Triggers faster with more copies.",
-				activation_text = "Tail Lash!",
-			},
 			deliberate_coil = {
 				name = "Deliberate Coil",
 				description = "Snake moves 15% slower. The exit unlocks one fruit later.",
@@ -524,11 +519,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			wardens_chorus = {
 				name = "Warden's Chorus",
 				description = "Each Defense upgrade adds crash shield progress at the start of every floor.",
-			},
-			rattle_gambit = {
-				name = "Rattle Gambit",
-				description = "Collect five fruit in a row without losing a shield to jam darts for a moment and gain +2 bonus score (+1 per additional copy).",
-				activation_text = "Gambit Rattle",
 			},
 			pulse_bloom = {
 				name = "Pulse Bloom",

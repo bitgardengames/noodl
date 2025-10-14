@@ -4,9 +4,7 @@
 | --- | --- | --- | --- |
 | Extra Bite | Common | The exit unlocks one fruit earlier. Rocks spawn 15% more often. |  |
 | Fresh Supplies | Common | Discard the current shop cards and restock with new ones. | Tags: economy; Duplicates allowed; Restocks shop on use; Weight: 0.6 |
-| Rattle Gambit | Common | Collect five fruit in a row without losing a shield to jam darts for a moment and gain +2 bonus score (+1 per additional copy). | Tags: combo, utility; Up to 3 stacks |
 | Stone Whisperer | Common | Rocks spawn far less often after eating fruit. |  |
-| Tail Trainer | Common | Snake moves 4% faster. | Tags: speed; Up to 3 stacks |
 | Adrenaline Surge | Uncommon | Snake surges forward after each fruit. | Tags: adrenaline |
 | Aegis Recycler | Uncommon | Every two broken crash shields forge a fresh one. | Tags: defense |
 | Aegis Winder | Uncommon | After collecting twenty fruit, forge a single crash shield charge. | Tags: defense |

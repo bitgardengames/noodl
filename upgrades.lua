@@ -353,51 +353,6 @@ local function grimReliquaryShieldHandler(data, state)
 	state.counters = counters
 end
 
-local function rattleGambitFruitHandler(data, state)
-	if not (data and state) then return end
-
-	local stacks = getStacks(state, "rattle_gambit")
-	if stacks <= 0 then return end
-
-	local counters = state.counters or {}
-	local chain = (counters.rattleGambitChain or 0) + 1
-	counters.rattleGambitChain = chain
-	state.counters = counters
-
-	local threshold = math.max(3, 5 - math.max(0, stacks - 1))
-	if chain < threshold then
-		return
-	end
-
-	counters.rattleGambitChain = 0
-
-	if Darts and Darts.addGlobalJam then
-		local duration = 0.5 + 0.15 * math.max(0, stacks - 1)
-		Darts:addGlobalJam(duration)
-	end
-
-	if Score and Score.addBonus then
-		local bonus = 2 + stacks
-		Score:addBonus(bonus)
-	end
-
-	celebrateUpgrade(getUpgradeString("rattle_gambit", "activation_text"), data, {
-		color = {0.88, 0.92, 1, 1},
-		textOffset = 48,
-		textScale = 1.1,
-		particleCount = 14 + stacks * 2,
-		particleSpeed = 125,
-		particleLife = 0.4,
-	})
-end
-
-local function rattleGambitShieldReset(_, state)
-	if not state then return end
-	if state.counters then
-		state.counters.rattleGambitChain = 0
-	end
-end
-
 local function newRunState()
 	return RunState.new(defaultEffects)
 end
@@ -600,64 +555,6 @@ local function handleBulwarkChorusFloorStart(_, state)
 			},
 		})
 	end
-end
-
-local function tailTrainerFruitHandler(data, state)
-	if not (state and data) then return end
-
-	local stacks = getStacks(state, "tail_trainer")
-	if stacks <= 0 then return end
-
-	local length = 0
-	if Snake and Snake.getLength then
-		length = Snake:getLength() or 0
-	end
-
-	local minLength = 10 + math.max(0, stacks - 1) * 2
-	if length < minLength then
-		state.counters.tailTrainerProgress = 0
-		return
-	end
-
-	local progress = (state.counters.tailTrainerProgress or 0) + 1
-	local threshold = math.max(2, 5 - math.min(stacks, 3))
-
-	if progress >= threshold then
-		progress = 0
-
-		if Rocks and Rocks.shatterNearest then
-			Rocks:shatterNearest(data.x or 0, data.y or 0, 1)
-		end
-
-		if Saws and Saws.stall then
-			Saws:stall(0.4 + 0.2 * stacks)
-		end
-
-		if Score and Score.addBonus then
-			Score:addBonus(2 + stacks)
-		end
-
-		local label = getUpgradeString("tail_trainer", "activation_text") or getUpgradeString("tail_trainer", "name")
-		celebrateUpgrade(label, data, {
-			color = {0.92, 0.78, 0.54, 1},
-			textOffset = 48,
-			textScale = 1.1,
-			particleCount = 14 + stacks * 2,
-			particleSpeed = 130,
-			particleLife = 0.42,
-			visual = {
-				badge = "spark",
-				outerRadius = 52,
-				innerRadius = 16,
-				ringCount = 3,
-				life = 0.62,
-				glowAlpha = 0.24,
-				haloAlpha = 0.18,
-			},
-		})
-	end
-
-	state.counters.tailTrainerProgress = progress
 end
 
 local mapmakersCompassHazards = {
@@ -931,28 +828,11 @@ local pool = {
 			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.6
 		end,
 	}),
-	register({
-		id = "tail_trainer",
-		nameKey = "upgrades.tail_trainer.name",
-		descKey = "upgrades.tail_trainer.description",
-		rarity = "common",
-		allowDuplicates = true,
-		maxStacks = 3,
-		tags = {"defense", "utility"},
-		onAcquire = function(state)
-			state.counters.tailTrainerProgress = state.counters.tailTrainerProgress or 0
-
-			if not state.counters.tailTrainerHandlersRegistered then
-				state.counters.tailTrainerHandlersRegistered = true
-				Upgrades:addEventHandler("fruitCollected", tailTrainerFruitHandler)
-			end
-		end,
-	}),
-	register({
-		id = "deliberate_coil",
-		nameKey = "upgrades.deliberate_coil.name",
-		descKey = "upgrades.deliberate_coil.description",
-		rarity = "epic",
+        register({
+                id = "deliberate_coil",
+                nameKey = "upgrades.deliberate_coil.name",
+                descKey = "upgrades.deliberate_coil.description",
+                rarity = "epic",
 		tags = {"speed", "risk"},
 		unlockTag = "speedcraft",
 		onAcquire = function(state)
@@ -1348,29 +1228,11 @@ local pool = {
 			})
 		end,
 	}),
-	register({
-		id = "rattle_gambit",
-		nameKey = "upgrades.rattle_gambit.name",
-		descKey = "upgrades.rattle_gambit.description",
-		rarity = "common",
-		allowDuplicates = true,
-		maxStacks = 3,
-		tags = {"combo", "utility"},
-		onAcquire = function(state)
-			state.counters.rattleGambitChain = state.counters.rattleGambitChain or 0
-
-			if not state.counters.rattleGambitHandlersRegistered then
-				state.counters.rattleGambitHandlersRegistered = true
-				Upgrades:addEventHandler("fruitCollected", rattleGambitFruitHandler)
-				Upgrades:addEventHandler("shieldConsumed", rattleGambitShieldReset)
-			end
-		end,
-	}),
-	register({
-		id = "pulse_bloom",
-		nameKey = "upgrades.pulse_bloom.name",
-		descKey = "upgrades.pulse_bloom.description",
-		rarity = "rare",
+        register({
+                id = "pulse_bloom",
+                nameKey = "upgrades.pulse_bloom.name",
+                descKey = "upgrades.pulse_bloom.description",
+                rarity = "rare",
 		tags = {"defense", "economy"},
 		allowDuplicates = true,
 		maxStacks = 2,
