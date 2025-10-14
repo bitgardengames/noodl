@@ -548,14 +548,25 @@ local function applyMapmakersCompass(state, context, options)
 			Saws:stall(0.6 + 0.1 * stacks)
 		end
 
-		if celebrate then
-			local label = getUpgradeString("mapmakers_compass", "activation_text") or getUpgradeString("mapmakers_compass", "name")
-			celebrateUpgrade(label, eventData, {
-				color = {0.92, 0.82, 0.6, 1},
-				textOffset = 46,
-				textScale = 1.08,
-			})
-		end
+                if celebrate then
+                        local label = getUpgradeString("mapmakers_compass", "activation_text") or getUpgradeString("mapmakers_compass", "name")
+                        celebrateUpgrade(label, eventData, {
+                                color = {0.92, 0.82, 0.6, 1},
+                                textOffset = 46,
+                                textScale = 1.08,
+                                visual = {
+                                        variant = "guiding_compass",
+                                        showBase = false,
+                                        life = 0.78,
+                                        innerRadius = 12,
+                                        outerRadius = 58,
+                                        addBlend = true,
+                                        color = {0.92, 0.82, 0.6, 1},
+                                        variantSecondaryColor = {1.0, 0.68, 0.32, 0.95},
+                                        variantTertiaryColor = {0.72, 0.86, 1.0, 0.7},
+                                },
+                        })
+                end
 
 		return
 	end
@@ -568,14 +579,25 @@ local function applyMapmakersCompass(state, context, options)
 	state.counters.mapmakersCompassTarget = chosen.key
 	state.counters.mapmakersCompassReduction = reduction
 
-	if celebrate then
-		local label = getUpgradeString("mapmakers_compass", chosen.labelKey or "activation_text") or getUpgradeString("mapmakers_compass", "name")
-		celebrateUpgrade(label, eventData, {
-			color = chosen.color or {0.72, 0.86, 1.0, 1},
-			textOffset = 46,
-			textScale = 1.08,
-		})
-	end
+        if celebrate then
+                local label = getUpgradeString("mapmakers_compass", chosen.labelKey or "activation_text") or getUpgradeString("mapmakers_compass", "name")
+                celebrateUpgrade(label, eventData, {
+                        color = chosen.color or {0.72, 0.86, 1.0, 1},
+                        textOffset = 46,
+                        textScale = 1.08,
+                        visual = {
+                                variant = "guiding_compass",
+                                showBase = false,
+                                life = 0.82,
+                                innerRadius = 12,
+                                outerRadius = 62,
+                                addBlend = true,
+                                color = chosen.color or {0.72, 0.86, 1.0, 1},
+                                variantSecondaryColor = {1.0, 0.82, 0.42, 1},
+                                variantTertiaryColor = {0.48, 0.72, 1.0, 0.85},
+                        },
+                })
+        end
 end
 
 local function mapmakersCompassFloorStart(data, state)
@@ -719,18 +741,29 @@ local pool = {
 		descKey = "upgrades.adrenaline_surge.description",
 		rarity = "uncommon",
 		tags = {"adrenaline"},
-		onAcquire = function(state)
-			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
-			celebrateUpgrade(getUpgradeString("adrenaline_surge", "name"), nil, {
-				color = {1, 0.42, 0.42, 1},
-				particleCount = 20,
-				particleSpeed = 160,
-				particleLife = 0.36,
-				textOffset = 42,
-				textScale = 1.16,
-			})
-		end,
-	}),
+                onAcquire = function(state)
+                        state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+                        celebrateUpgrade(getUpgradeString("adrenaline_surge", "name"), nil, {
+                                color = {1, 0.42, 0.42, 1},
+                                particleCount = 20,
+                                particleSpeed = 160,
+                                particleLife = 0.36,
+                                textOffset = 42,
+                                textScale = 1.16,
+                                visual = {
+                                        variant = "adrenaline_rush",
+                                        showBase = false,
+                                        life = 0.72,
+                                        innerRadius = 12,
+                                        outerRadius = 56,
+                                        addBlend = true,
+                                        color = {1, 0.46, 0.42, 1},
+                                        variantSecondaryColor = {1, 0.72, 0.44, 0.95},
+                                        variantTertiaryColor = {1, 0.94, 0.92, 0.85},
+                                },
+                        })
+                end,
+        }),
 	register({
 		id = "stone_whisperer",
 		nameKey = "upgrades.stone_whisperer.name",
@@ -753,16 +786,27 @@ local pool = {
 			if UI.adjustFruitGoal then
 				UI:adjustFruitGoal(1)
 			end
-			celebrateUpgrade(getUpgradeString("deliberate_coil", "name"), nil, {
-				color = {0.76, 0.56, 0.88, 1},
-				particleCount = 16,
-				particleSpeed = 90,
-				particleLife = 0.5,
-				textOffset = 40,
-				textScale = 1.08,
-			})
-		end,
-	}),
+                        celebrateUpgrade(getUpgradeString("deliberate_coil", "name"), nil, {
+                                color = {0.76, 0.56, 0.88, 1},
+                                particleCount = 16,
+                                particleSpeed = 90,
+                                particleLife = 0.5,
+                                textOffset = 40,
+                                textScale = 1.08,
+                                visual = {
+                                        variant = "coiled_focus",
+                                        showBase = false,
+                                        life = 0.86,
+                                        innerRadius = 14,
+                                        outerRadius = 60,
+                                        addBlend = true,
+                                        color = {0.76, 0.56, 0.88, 1},
+                                        variantSecondaryColor = {0.58, 0.44, 0.92, 0.9},
+                                        variantTertiaryColor = {0.98, 0.9, 1.0, 0.75},
+                                },
+                        })
+                end,
+        }),
 	register({
 		id = "pocket_springs",
 		nameKey = "upgrades.pocket_springs.name",
