@@ -113,10 +113,10 @@ UI.fonts = {}
 
 local BUTTON_POP_DURATION = 0.32
 
-local function clamp01(value)
-	if value < 0 then return 0 end
-	if value > 1 then return 1 end
-	return value
+local function clamp(value)
+        if value < 0 then return 0 end
+        if value > 1 then return 1 end
+        return value
 end
 
 local function lerp(a, b, t)
@@ -637,7 +637,7 @@ function UI.drawSlider(id, x, y, w, value, opts)
 		})
 	end
 
-	local sliderValue = clamp01(value or 0)
+	local sliderValue = clamp(value or 0)
 	local trackX = x + padding
 	local trackW = w - padding * 2
 	local trackY = y + h - padding - trackHeight
@@ -1246,7 +1246,7 @@ function UI:setUpgradeIndicators(indicators)
 					id = id,
 					visibility = 0,
 					targetVisibility = 1,
-					displayProgress = data.charge ~= nil and clamp01(data.charge) or nil,
+					displayProgress = data.charge ~= nil and clamp(data.charge) or nil,
 				}
 				items[id] = item
 			end
@@ -1259,7 +1259,7 @@ function UI:setUpgradeIndicators(indicators)
 			item.status = data.status
 			item.chargeLabel = data.chargeLabel
 			if data.charge ~= nil then
-				item.targetProgress = clamp01(data.charge)
+				item.targetProgress = clamp(data.charge)
 				if item.displayProgress == nil then
 					item.displayProgress = item.targetProgress
 				end
@@ -1558,7 +1558,7 @@ function UI:drawUpgradeIndicators()
 	local entries = {}
 	for _, id in ipairs(orderedIds) do
 		local item = container.items[id]
-		if item and clamp01(item.visibility or 0) > 0.01 then
+		if item and clamp(item.visibility or 0) > 0.01 then
 			table.insert(entries, item)
 		end
 	end
@@ -1585,7 +1585,7 @@ function UI:drawUpgradeIndicators()
 	local y = margin
 
 	for _, entry in ipairs(entries) do
-		local visibility = clamp01(entry.visibility or 1)
+		local visibility = clamp(entry.visibility or 1)
 		local accent = entry.accentColor or Theme.panelBorder or {1, 1, 1, 1}
 		local hasBar = entry.showBar and entry.displayProgress ~= nil
 		local panelHeight = baseHeight + (hasBar and 8 or 0)
@@ -1623,7 +1623,7 @@ function UI:drawUpgradeIndicators()
 		end
 
 		if hasBar then
-			local progress = clamp01(entry.displayProgress or 0)
+			local progress = clamp(entry.displayProgress or 0)
 			local iconBarWidth = layout.iconBarWidth or (iconRadius * 1.8)
 			local iconBarHeight = layout.iconBarHeight or math.max(4, math.floor(barHeight))
 			local barX = iconX - iconBarWidth * 0.5
@@ -1698,7 +1698,7 @@ function UI:drawFruitSockets()
 
 	local goalFlash = 0
 	if self.goalCelebrated then
-		local flashT = clamp01(self.goalReachedAnim / 0.7)
+		local flashT = clamp(self.goalReachedAnim / 0.7)
 		goalFlash = math.pow(1 - flashT, 1.4)
 	end
 
@@ -1744,7 +1744,7 @@ function UI:drawFruitSockets()
 		-- socket shadow
 		local socket = self.fruitSockets[i]
 		local hasFruit = socket ~= nil
-		local appear = hasFruit and clamp01(socket.anim / self.socketAnimTime) or 0
+		local appear = hasFruit and clamp(socket.anim / self.socketAnimTime) or 0
 		local radius = hasFruit and socketRadius or socketRadius * 0.8
 		local shadowScale = hasFruit and (0.75 + 0.25 * appear) or 0.85
 		local shadowAlpha = hasFruit and (0.45 * math.max(appear, 0.2)) or 0.4
@@ -1766,7 +1766,7 @@ function UI:drawFruitSockets()
 
 		-- draw fruit if collected
 		if socket then
-			local t = clamp01(socket.anim / self.socketAnimTime)
+			local t = clamp(socket.anim / self.socketAnimTime)
 			local appearEase
 			if socket.state == "removing" then
 				appearEase = 1 - Easing.easeInBack(1 - t)
@@ -1778,14 +1778,14 @@ function UI:drawFruitSockets()
 			local scale = math.min(1.18, appearEase)
 			local bounceScale = 1
 			if socket.bounceTimer ~= nil then
-				local bounceProgress = clamp01(socket.bounceTimer / self.socketBounceDuration)
+				local bounceProgress = clamp(socket.bounceTimer / self.socketBounceDuration)
 				bounceScale = 1 + math.sin(bounceProgress * math.pi) * 0.24 * (1 - bounceProgress * 0.4)
 			end
 
 			local celebrationWave = 0
 			if self.goalCelebrated then
 				local waveTime = self.goalReachedAnim or 0
-				local waveFade = math.max(0, 1 - clamp01(waveTime / 0.9))
+				local waveFade = math.max(0, 1 - clamp(waveTime / 0.9))
 				celebrationWave = math.sin(waveTime * 12 - i * 0.35) * 0.05 * waveFade
 			end
 

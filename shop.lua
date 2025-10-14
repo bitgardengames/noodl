@@ -154,7 +154,7 @@ end
 
 local min, max, abs, sqrt, sin, exp = math.min, math.max, math.abs, math.sqrt, math.sin, math.exp
 
-local function clamp01(value)
+local function clamp(value)
         if not value then
                 return 0
         end
@@ -275,7 +275,7 @@ local function buildPreviewTrail(preview, startX, startY, headX, headY, idleTime
                                         return curr.x, curr.y
                                 end
 
-                                local t = clamp01((distance - prevPoint.length) / segLen)
+                                local t = clamp((distance - prevPoint.length) / segLen)
                                 local sampleX = prevPoint.x + (curr.x - prevPoint.x) * t
                                 local sampleY = prevPoint.y + (curr.y - prevPoint.y) * t
                                 return sampleX, sampleY
@@ -1456,11 +1456,11 @@ function Shop:draw(screenW, screenH)
                                 SnakeDraw.run(trail, #trail, preview.segmentSize or SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, previewVisuals)
 
                                 local headSeg = trail[1]
-                                local glowStrength = clamp01((self.selectionProgress or 0) ^ 0.6)
+                                local glowStrength = clamp((self.selectionProgress or 0) ^ 0.6)
                                 local selectedState = (self.selectedIndex and self.cardStates) and self.cardStates[self.selectedIndex] or nil
                                 if selectedState and selectedState.selectionFlash then
                                         local flashDuration = 0.75
-                                        local t = clamp01(selectedState.selectionFlash / flashDuration)
+                                        local t = clamp(selectedState.selectionFlash / flashDuration)
                                         local flashEase = 1 - (1 - t) * (1 - t)
                                         glowStrength = max(glowStrength, flashEase)
                                 end

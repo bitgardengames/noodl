@@ -1,21 +1,21 @@
 local Easing = {}
 
-function Easing.clamp(value, minValue, maxValue)
-	if minValue > maxValue then
-		minValue, maxValue = maxValue, minValue
-	end
+function Easing.clampRange(value, minValue, maxValue)
+        if minValue > maxValue then
+                minValue, maxValue = maxValue, minValue
+        end
 
-	if value < minValue then
-		return minValue
-	elseif value > maxValue then
-		return maxValue
-	end
+        if value < minValue then
+                return minValue
+        elseif value > maxValue then
+                return maxValue
+        end
 
-	return value
+        return value
 end
 
-function Easing.clamp01(value)
-	return Easing.clamp(value, 0, 1)
+function Easing.clamp(value)
+        return Easing.clampRange(value, 0, 1)
 end
 
 function Easing.lerp(a, b, t)
@@ -67,11 +67,11 @@ function Easing.easedProgress(timer, duration)
 		return 1
 	end
 
-	return Easing.easeInOutCubic(Easing.clamp01(timer / duration))
+	return Easing.easeInOutCubic(Easing.clamp(timer / duration))
 end
 
 function Easing.getTransitionAlpha(t, direction)
-	t = Easing.clamp01(t)
+	t = Easing.clamp(t)
 
 	if direction == 1 then
 		return t
