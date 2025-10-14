@@ -108,16 +108,222 @@ local function buildColors(floorData)
 end
 
 local function addCell(list, lookup, col, row, variant)
-        local key = col .. "," .. row
-        local cell = {col, row}
-        if variant then
-                cell.variant = variant
-        end
-        list[#list + 1] = cell
-        if lookup then
-                lookup[key] = true
-        end
-        return cell
+local key = col .. "," .. row
+local cell = {col, row}
+if variant then
+cell.variant = variant
+end
+list[#list + 1] = cell
+if lookup then
+lookup[key] = true
+end
+return cell
+end
+
+local function computeCellBounds(cells)
+if not cells or #cells == 0 then
+return nil
+end
+
+local minCol, maxCol = math.huge, -math.huge
+local minRow, maxRow = math.huge, -math.huge
+
+for _, cell in ipairs(cells) do
+local col = math.floor(cell[1] or 0)
+local row = math.floor(cell[2] or 0)
+if col < minCol then minCol = col end
+if col > maxCol then maxCol = col end
+if row < minRow then minRow = row end
+if row > maxRow then maxRow = row end
+end
+
+if minCol == math.huge or minRow == math.huge then
+return nil
+end
+
+return {
+minCol = minCol,
+maxCol = maxCol,
+minRow = minRow,
+maxRow = maxRow,
+}
+end
+
+local function buildPlayableOutline(walkableLookup, cols, rows)
+	if not walkableLookup then
+		return nil
+	end
+
+	local function hasWalkable(col, row)
+		if col < 1 or col > cols or row < 1 or row > rows then
+			return false
+		end
+		return walkableLookup[col .. "," .. row] ~= nil
+	end
+
+	local edges = {}
+	local startLookup = {}
+	local edgeLookup = {}
+
+	local function addEdge(sx, sy, ex, ey)
+		local key = sx .. "," .. sy .. "|" .. ex .. "," .. ey
+		if edgeLookup[key] then
+			return
+		end
+
+		local edge = { sx = sx, sy = sy, ex = ex, ey = ey }
+		edgeLookup[key] = edge
+		edges[#edges + 1] = edge
+
+		local startKey = sx .. "," .. sy
+		local list = startLookup[startKey]
+		if not list then
+			list = {}
+			startLookup[startKey] = list
+		end
+		list[#list + 1] = edge
+	end
+
+	local added = false
+	for key in pairs(walkableLookup) do
+		local col, row = key:match('^(%-?%d+),(%-?%d+)$')
+		col = tonumber(col)
+		row = tonumber(row)
+		if col and row then
+			if not hasWalkable(col, row - 1) then
+				addEdge(col, row - 1, col - 1, row - 1)
+				added = true
+			end
+			if not hasWalkable(col - 1, row) then
+				addEdge(col - 1, row - 1, col - 1, row)
+				added = true
+			end
+			if not hasWalkable(col, row + 1) then
+				addEdge(col - 1, row, col, row)
+				added = true
+			end
+			if not hasWalkable(col + 1, row) then
+				addEdge(col, row, col, row - 1)
+				added = true
+			end
+		end
+	end
+
+	if not added or #edges == 0 then
+		return nil
+	end
+
+	local visited = {}
+	local loops = {}
+
+	for _, edge in ipairs(edges) do
+		if not visited[edge] then
+			local loop = {}
+			local current = edge
+			local startKey = current.sx .. "," .. current.sy
+			while true do
+				visited[current] = true
+				loop[#loop + 1] = { current.sx, current.sy }
+				local endKey = current.ex .. "," .. current.ey
+				if endKey == startKey then
+					break
+				end
+				local nextList = startLookup[endKey]
+				local nextEdge = nil
+				if nextList then
+					for _, candidate in ipairs(nextList) do
+						if not visited[candidate] then
+							nextEdge = candidate
+							break
+						end
+					end
+				end
+				if not nextEdge then
+					loop = nil
+					break
+				end
+				current = nextEdge
+			end
+
+			if loop and #loop >= 3 then
+				local first = loop[1]
+				loop[#loop + 1] = { first[1], first[2] }
+				loops[#loops + 1] = loop
+			end
+		end
+	end
+
+	if #loops == 0 then
+		return nil
+	end
+
+	return loops
+end
+
+local function computePolygonArea(points)
+	if not points or #points < 4 then
+		return 0
+	end
+
+	local area = 0
+	for i = 1, #points - 1 do
+		local a = points[i]
+		local b = points[i + 1]
+		area = area + (a[1] * b[2] - b[1] * a[2])
+	end
+
+	return area * 0.5
+end
+
+local function computePlayableArea(walkable, walkableLookup, cols, rows)
+	if (not walkable or #walkable == 0) and (not walkableLookup or next(walkableLookup) == nil) then
+		return nil
+	end
+
+	local bounds = computeCellBounds(walkable)
+	if bounds then
+		bounds.minCol = math.max(1, bounds.minCol - 1)
+		bounds.maxCol = math.min(cols, bounds.maxCol + 1)
+		bounds.minRow = math.max(1, bounds.minRow - 1)
+		bounds.maxRow = math.min(rows, bounds.maxRow + 1)
+	end
+
+	local loops = buildPlayableOutline(walkableLookup, cols, rows)
+	local primary = nil
+	local holes = nil
+
+	if loops then
+		local bestArea = nil
+		holes = {}
+		for _, loop in ipairs(loops) do
+			local area = math.abs(computePolygonArea(loop))
+			if area > 0 then
+				if not bestArea or area > bestArea then
+					if primary then
+						holes[#holes + 1] = primary
+					end
+					primary = loop
+					bestArea = area
+				else
+					holes[#holes + 1] = loop
+				end
+			end
+		end
+		if holes and #holes == 0 then
+			holes = nil
+		end
+	end
+
+	if not bounds and not primary then
+		return nil
+	end
+
+	return {
+		bounds = bounds,
+		loops = loops,
+		primaryLoop = primary,
+		holes = holes,
+	}
 end
 
 function ArenaLayout.generate(floorNum, floorData, attemptIndex)
@@ -192,28 +398,30 @@ function ArenaLayout.generate(floorNum, floorData, attemptIndex)
                                 addCell(blocked, blockedLookup, col, row, variant)
                         end
                 end
-        end
+end
 
-        local colors = buildColors(floorData)
+	local colors = buildColors(floorData)
+	local playableArea = computePlayableArea(walkable, walkableLookup, cols, rows)
 
-        return {
-                seed = baseSeed,
-                seedOffset = offset,
-                rngSeed = rngSeed,
-                blocked = blocked,
-                walkable = walkable,
-                decorations = decorations,
-                blockedLookup = blockedLookup,
-                walkableLookup = walkableLookup,
-                colors = colors,
-                meta = {
-                        ringInset = ringInset,
-                        columnSpacing = columnSpacing,
-                        rowSpacing = rowSpacing,
-                        crossHalfCols = crossHalfCols,
-                        crossHalfRows = crossHalfRows,
-                },
-        }
+	return {
+		seed = baseSeed,
+		seedOffset = offset,
+		rngSeed = rngSeed,
+		blocked = blocked,
+		walkable = walkable,
+		decorations = decorations,
+		blockedLookup = blockedLookup,
+		walkableLookup = walkableLookup,
+		colors = colors,
+		playableArea = playableArea,
+		meta = {
+			ringInset = ringInset,
+			columnSpacing = columnSpacing,
+			rowSpacing = rowSpacing,
+			crossHalfCols = crossHalfCols,
+			crossHalfRows = crossHalfRows,
+		},
+	}
 end
 
 return ArenaLayout
