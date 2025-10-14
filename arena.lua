@@ -91,18 +91,52 @@ local function drawSpawnDebugOverlay(self)
 		end
 	end
 
-	love.graphics.push("all")
-	love.graphics.setLineWidth(1.25)
-	love.graphics.setBlendMode("alpha")
+        love.graphics.push("all")
+        love.graphics.setLineWidth(1.25)
+        love.graphics.setBlendMode("alpha")
 
-	drawCells(debugData.spawnSafeCells, {0.95, 0.34, 0.32, 0.24})
-	drawCells(debugData.spawnBuffer, {1.0, 0.64, 0.26, 0.28})
-	drawCells(debugData.safeZone, {0.22, 0.68, 1.0, 0.35}, {0.92, 0.98, 1.0, 0.75})
-	drawCells(debugData.rockSafeZone, {0.64, 0.36, 0.88, 0.2})
-	drawCells(debugData.reservedCells, nil, {1.0, 1.0, 1.0, 0.35})
-	drawCells(debugData.reservedSpawnBuffer, nil, {1.0, 0.86, 0.38, 0.45})
+        if debugData.layoutMask then
+                drawCells(debugData.layoutMask.cells, {0.24, 0.32, 0.18, 0.28}, {0.94, 0.98, 0.74, 0.65})
+        end
 
-	love.graphics.pop()
+        drawCells(debugData.spawnSafeCells, {0.95, 0.34, 0.32, 0.24})
+        drawCells(debugData.spawnBuffer, {1.0, 0.64, 0.26, 0.28})
+        drawCells(debugData.safeZone, {0.22, 0.68, 1.0, 0.35}, {0.92, 0.98, 1.0, 0.75})
+        drawCells(debugData.rockSafeZone, {0.64, 0.36, 0.88, 0.2})
+        drawCells(debugData.reservedCells, nil, {1.0, 1.0, 1.0, 0.35})
+        drawCells(debugData.reservedSpawnBuffer, nil, {1.0, 0.86, 0.38, 0.45})
+
+        love.graphics.pop()
+
+        local meta = debugData.layoutMaskMetadata
+        if meta then
+                local density = meta.density or 0
+                local reachable = meta.reachable or 0
+                local attempt = (meta.attemptIndex or 0) + 1
+                local seed = meta.seed or 0
+                local validity = (meta.valid == false) and " [invalid]" or ""
+                local variantLabel = meta.variantName or meta.variant
+                local variantIndex = meta.variantIndex
+
+                if (not variantLabel or variantLabel == "") and debugData.layoutVariant then
+                        variantLabel = debugData.layoutVariant.name or debugData.layoutVariant.id
+                        variantIndex = variantIndex or debugData.layoutVariant.index
+                end
+
+                local variantSuffix = ""
+                if variantLabel and variantLabel ~= "" then
+                        if variantIndex then
+                                variantSuffix = string.format(" [%s#%d]", variantLabel, variantIndex)
+                        else
+                                variantSuffix = string.format(" [%s]", variantLabel)
+                        end
+                end
+
+                local summary = string.format("mask seed:%d dens:%.2f reach:%d (attempt %d)%s%s", seed, density, reachable, attempt, validity, variantSuffix)
+                love.graphics.setColor(1, 1, 1, 0.82)
+                love.graphics.print(summary, self.x + 6, self.y + 6)
+                love.graphics.setColor(1, 1, 1, 1)
+        end
 end
 
 local function mixChannel(base, target, amount)
@@ -142,24 +176,165 @@ function Arena:setSpawnDebugData(data)
 		return
 	end
 
-	self._spawnDebugData = {
-		safeZone = data.safeZone,
-		rockSafeZone = data.rockSafeZone,
-		spawnBuffer = data.spawnBuffer,
-		spawnSafeCells = data.spawnSafeCells,
-		reservedCells = data.reservedCells,
-		reservedSafeZone = data.reservedSafeZone,
-		reservedSpawnBuffer = data.reservedSpawnBuffer,
-	}
+        self._spawnDebugData = {
+                safeZone = data.safeZone,
+                rockSafeZone = data.rockSafeZone,
+                spawnBuffer = data.spawnBuffer,
+                spawnSafeCells = data.spawnSafeCells,
+                reservedCells = data.reservedCells,
+                reservedSafeZone = data.reservedSafeZone,
+                reservedSpawnBuffer = data.reservedSpawnBuffer,
+                blockedCells = data.blockedCells,
+                layoutMask = data.layoutMask,
+                layoutMaskMetadata = data.layoutMask and data.layoutMask.metadata,
+                layoutVariant = data.layoutVariant,
+        }
 end
 
 function Arena:clearSpawnDebugData()
-	self._spawnDebugData = nil
+        self._spawnDebugData = nil
+end
+
+local function resolveMaskColors(self, cell)
+        local base = Theme.arenaBG or {0.24, 0.24, 0.24, 1}
+        local border = Theme.arenaBorder or {0.5, 0.42, 0.34, 1}
+        local snakeColor = Theme.snake or {0.3, 0.78, 0.48, 1}
+        local kind = cell.kind or "stone"
+
+        if kind == "foliage" then
+                local fill = {
+                        mixChannel(base[1] or 0.2, snakeColor[1] or 0.4, 0.65),
+                        mixChannel(base[2] or 0.2, snakeColor[2] or 0.8, 0.68),
+                        mixChannel(base[3] or 0.2, snakeColor[3] or 0.4, 0.55),
+                        0.82,
+                }
+                local outline = {
+                        mixChannel(border[1] or 0.4, snakeColor[1] or 0.4, 0.35),
+                        mixChannel(border[2] or 0.35, snakeColor[2] or 0.6, 0.35),
+                        mixChannel(border[3] or 0.3, snakeColor[3] or 0.32, 0.3),
+                        0.92,
+                }
+                local detail = {
+                        mixChannel(fill[1], snakeColor[1] or 0.6, 0.2),
+                        mixChannel(fill[2], snakeColor[2] or 0.9, 0.22),
+                        mixChannel(fill[3], snakeColor[3] or 0.52, 0.18),
+                        0.88,
+                }
+                local shadow = {
+                        mixChannel(base[1] or 0.2, 0, 0.5),
+                        mixChannel(base[2] or 0.2, 0.05, 0.45),
+                        mixChannel(base[3] or 0.2, 0.03, 0.42),
+                        0.42,
+                }
+                return fill, outline, detail, shadow
+        elseif kind == "pillar" then
+                local fill = {
+                        mixChannel(base[1] or 0.2, border[1] or 0.5, 0.72),
+                        mixChannel(base[2] or 0.2, border[2] or 0.42, 0.7),
+                        mixChannel(base[3] or 0.2, border[3] or 0.34, 0.68),
+                        0.94,
+                }
+                local outline = {
+                        mixChannel(border[1] or 0.5, 0.1, 0.4),
+                        mixChannel(border[2] or 0.42, 0.08, 0.4),
+                        mixChannel(border[3] or 0.34, 0.06, 0.38),
+                        1.0,
+                }
+                local detail = {
+                        mixChannel(fill[1], 1, 0.18),
+                        mixChannel(fill[2], 1, 0.18),
+                        mixChannel(fill[3], 1, 0.18),
+                        0.86,
+                }
+                local shadow = {
+                        mixChannel(base[1] or 0.2, 0, 0.55),
+                        mixChannel(base[2] or 0.2, 0, 0.5),
+                        mixChannel(base[3] or 0.2, 0, 0.5),
+                        0.38,
+                }
+                return fill, outline, detail, shadow
+        else
+                local fill = {
+                        mixChannel(base[1] or 0.2, border[1] or 0.5, 0.6),
+                        mixChannel(base[2] or 0.2, border[2] or 0.42, 0.6),
+                        mixChannel(base[3] or 0.2, border[3] or 0.34, 0.6),
+                        0.9,
+                }
+                local outline = {
+                        mixChannel(border[1] or 0.5, 0, 0.35),
+                        mixChannel(border[2] or 0.42, 0, 0.35),
+                        mixChannel(border[3] or 0.34, 0, 0.35),
+                        0.98,
+                }
+                local detail = {
+                        mixChannel(fill[1], 1, 0.12),
+                        mixChannel(fill[2], 1, 0.12),
+                        mixChannel(fill[3], 1, 0.12),
+                        0.72,
+                }
+                local shadow = {
+                        mixChannel(base[1] or 0.2, 0, 0.45),
+                        mixChannel(base[2] or 0.2, 0, 0.42),
+                        mixChannel(base[3] or 0.2, 0, 0.42),
+                        0.4,
+                }
+                return fill, outline, detail, shadow
+        end
+end
+
+local function drawProceduralMask(self)
+        local mask = self._proceduralMask
+        if not (mask and mask.cells and #mask.cells > 0) then
+                return
+        end
+
+        local tileSize = self.tileSize or 24
+        local radius = math.min(tileSize * 0.28, 6)
+
+        love.graphics.push("all")
+        love.graphics.setLineWidth(1.05)
+
+        for _, cell in ipairs(mask.cells) do
+                local col = normalizeCellCoordinate(cell[1])
+                local row = normalizeCellCoordinate(cell[2])
+                if col and row and col >= 1 and col <= self.cols and row >= 1 and row <= self.rows then
+                        local x, y = self:getTilePosition(col, row)
+                        local fillColor, outlineColor, detailColor, shadowColor = resolveMaskColors(self, cell)
+
+                        if shadowColor then
+                                love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowColor[4] or 0.4)
+                                love.graphics.rectangle("fill", x + 1.2, y + tileSize * 0.08, tileSize - 1.8, tileSize - 1.2, radius, radius)
+                        end
+
+                        love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 1)
+                        love.graphics.rectangle("fill", x, y, tileSize, tileSize, radius, radius)
+
+                        if detailColor then
+                                if (cell.kind or "stone") == "foliage" then
+                                        love.graphics.setColor(detailColor[1], detailColor[2], detailColor[3], detailColor[4] or 0.85)
+                                        love.graphics.ellipse("fill", x + tileSize * 0.5, y + tileSize * 0.52, tileSize * 0.36, tileSize * 0.26)
+                                elseif cell.kind == "pillar" then
+                                        love.graphics.setColor(detailColor[1], detailColor[2], detailColor[3], detailColor[4] or 0.78)
+                                        love.graphics.rectangle("fill", x + tileSize * 0.22, y + tileSize * 0.12, tileSize * 0.56, tileSize * 0.76, radius * 0.6, radius * 0.6)
+                                else
+                                        love.graphics.setColor(detailColor[1], detailColor[2], detailColor[3], detailColor[4] or 0.68)
+                                        love.graphics.rectangle("fill", x + tileSize * 0.12, y + tileSize * 0.12, tileSize * 0.76, tileSize * 0.26, radius * 0.7, radius * 0.7)
+                                end
+                        end
+
+                        if outlineColor then
+                                love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 1)
+                                love.graphics.rectangle("line", x + 1, y + 1, tileSize - 2, tileSize - 2, radius, radius)
+                        end
+                end
+        end
+
+        love.graphics.pop()
 end
 
 function Arena:updateScreenBounds(sw, sh)
-	self.x = math.floor((sw - self.width) / 2)
-	self.y = math.floor((sh - self.height) / 2)
+        self.x = math.floor((sw - self.width) / 2)
+        self.y = math.floor((sh - self.height) / 2)
 
 	-- snap x,y to nearest tile boundary so centers align
 	self.x = self.x - (self.x % self.tileSize)
@@ -283,26 +458,40 @@ end
 
 -- Draws the playfield with a solid fill + simple border
 function Arena:drawBackground()
-	local ax, ay, aw, ah = self:getBounds()
+        local ax, ay, aw, ah = self:getBounds()
 
-	if self.activeBackgroundEffect then
-		local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(self.activeBackgroundEffect)
-		local intensity = self.activeBackgroundEffect.arenaIntensity or defaultArena
-		Shaders.draw(self.activeBackgroundEffect, ax, ay, aw, ah, intensity)
-	end
+        if self.activeBackgroundEffect then
+                local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(self.activeBackgroundEffect)
+                local intensity = self.activeBackgroundEffect.arenaIntensity or defaultArena
+                Shaders.draw(self.activeBackgroundEffect, ax, ay, aw, ah, intensity)
+        end
 
-	-- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
-	love.graphics.setColor(Theme.arenaBG)
-	love.graphics.rectangle("fill", ax, ay, aw, ah)
+        -- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
+        love.graphics.setColor(Theme.arenaBG)
+        love.graphics.rectangle("fill", ax, ay, aw, ah)
 
-	drawSpawnDebugOverlay(self)
+        drawProceduralMask(self)
 
-	love.graphics.setColor(1, 1, 1, 1)
+        drawSpawnDebugOverlay(self)
+
+        love.graphics.setColor(1, 1, 1, 1)
+end
+
+function Arena:setProceduralMask(mask)
+        if mask and mask.cells and #mask.cells > 0 then
+                self._proceduralMask = mask
+        else
+                self._proceduralMask = nil
+        end
+end
+
+function Arena:getProceduralMask()
+        return self._proceduralMask
 end
 
 -- Draws border
 function Arena:drawBorder()
-	local ax, ay, aw, ah = self:getBounds()
+        local ax, ay, aw, ah = self:getBounds()
 
 	-- Match snake style
 	local thickness    = 20       -- border thickness

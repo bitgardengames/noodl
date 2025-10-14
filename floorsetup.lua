@@ -12,6 +12,7 @@ local Particles = require("particles")
 local FloatingText = require("floatingtext")
 local FloorPlan = require("floorplan")
 local Upgrades = require("upgrades")
+local ArenaGen = require("arenagen")
 
 local FloorSetup = {}
 
@@ -33,15 +34,18 @@ local function applyPalette(palette)
 end
 
 local function resetFloorEntities()
-	Arena:resetExit()
-	if Arena.clearSpawnDebugData then
-		Arena:clearSpawnDebugData()
-	end
-	Movement:reset()
-	FloatingText:reset()
-	Particles:reset()
-	Rocks:reset()
-	Saws:reset()
+        Arena:resetExit()
+        if Arena.clearSpawnDebugData then
+                Arena:clearSpawnDebugData()
+        end
+        if Arena.setProceduralMask then
+                Arena:setProceduralMask(nil)
+        end
+        Movement:reset()
+        FloatingText:reset()
+        Particles:reset()
+        Rocks:reset()
+        Saws:reset()
 	Lasers:reset()
 	Darts:reset()
 end
@@ -578,29 +582,32 @@ local function mergeCells(primary, secondary)
 	return merged
 end
 
-local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
-	local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
-	local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
-	local dartPlan, desiredDarts = buildDartPlan(traitContext)
-	local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
+local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData, reservedBlockedCells, layoutMask)
+        local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
+        local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
+        local dartPlan, desiredDarts = buildDartPlan(traitContext)
+        local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
+        spawnSafeCells = mergeCells(spawnSafeCells, reservedBlockedCells)
 
-	return {
-		numRocks = traitContext.rocks,
-		numSaws = traitContext.saws,
-		halfTiles = halfTiles,
+        return {
+                numRocks = traitContext.rocks,
+                numSaws = traitContext.saws,
+                halfTiles = halfTiles,
 		bladeRadius = DEFAULT_SAW_RADIUS,
 		safeZone = safeZone,
 		reservedCells = reservedCells,
-		reservedSafeZone = reservedSafeZone,
-		rockSafeZone = rockSafeZone,
-		spawnBuffer = spawnBuffer,
-		reservedSpawnBuffer = reservedSpawnBuffer,
-		spawnSafeCells = spawnSafeCells,
-		lasers = laserPlan,
-		laserCount = desiredLasers,
-		darts = dartPlan,
-		dartCount = desiredDarts,
-	}
+                reservedSafeZone = reservedSafeZone,
+                rockSafeZone = rockSafeZone,
+                spawnBuffer = spawnBuffer,
+                reservedSpawnBuffer = reservedSpawnBuffer,
+                spawnSafeCells = spawnSafeCells,
+                blockedCells = reservedBlockedCells,
+                layoutMask = layoutMask,
+                lasers = laserPlan,
+                laserCount = desiredLasers,
+                darts = dartPlan,
+                dartCount = desiredDarts,
+        }
 end
 
 function FloorSetup.prepare(floorNum, floorData)
@@ -626,22 +633,78 @@ function FloorSetup.prepare(floorNum, floorData)
 		traitContext.dartCount = math.min(dartCap, traitContext.dartCount)
 	end
 
-	local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
+        local layoutConfig = traitContext and traitContext.arenaLayout
+        if not layoutConfig and FloorPlan.getArenaLayoutConfig then
+                layoutConfig = FloorPlan.getArenaLayoutConfig(floorNum)
+                if traitContext then
+                        traitContext.arenaLayout = layoutConfig
+                end
+        end
 
-	if Arena.setSpawnDebugData then
-		Arena:setSpawnDebugData({
-			safeZone = safeZone,
-			rockSafeZone = rockSafeZone,
-			spawnBuffer = spawnBuffer,
-			spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
-			reservedCells = reservedCells,
-			reservedSafeZone = reservedSafeZone,
-			reservedSpawnBuffer = reservedSpawnBuffer,
-		})
-	end
+        if traitContext and layoutConfig and layoutConfig.seed and not traitContext.layoutSeed then
+                traitContext.layoutSeed = layoutConfig.seed
+        end
 
-	return {
-		traitContext = traitContext,
+        if traitContext and layoutConfig then
+                traitContext.layoutVariantId = layoutConfig.variantId
+                traitContext.layoutVariantName = layoutConfig.variantName
+                traitContext.layoutVariantIndex = layoutConfig.variantIndex
+        end
+
+        local layoutMask
+        local reservedBlockedCells
+
+        if layoutConfig then
+                layoutMask = ArenaGen.generate({
+                        floor = floorNum,
+                        spawnBuffer = spawnBuffer,
+                        config = layoutConfig,
+                        seed = traitContext and traitContext.layoutSeed,
+                        theme = floorData and floorData.backgroundTheme,
+                        variant = layoutConfig and (layoutConfig.variantId or layoutConfig.variantName),
+                        variantName = layoutConfig and layoutConfig.variantName,
+                        variantIndex = layoutConfig and layoutConfig.variantIndex,
+                })
+
+                if layoutMask and layoutMask.metadata and not layoutMask.metadata.valid then
+                        layoutMask.cells = {}
+                        layoutMask.lookup = {}
+                end
+
+                if layoutMask and layoutMask.cells and #layoutMask.cells > 0 then
+                        reservedBlockedCells = SnakeUtils.reserveCells(layoutMask.cells)
+                end
+
+                if Arena.setProceduralMask then
+                        Arena:setProceduralMask((layoutMask and layoutMask.cells and #layoutMask.cells > 0) and layoutMask or nil)
+                end
+        elseif Arena.setProceduralMask then
+                Arena:setProceduralMask(nil)
+        end
+
+        local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData, reservedBlockedCells, layoutMask)
+
+        if Arena.setSpawnDebugData then
+                Arena:setSpawnDebugData({
+                        safeZone = safeZone,
+                        rockSafeZone = rockSafeZone,
+                        spawnBuffer = spawnBuffer,
+                        spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
+                        reservedCells = reservedCells,
+                        reservedSafeZone = reservedSafeZone,
+                        reservedSpawnBuffer = reservedSpawnBuffer,
+                        blockedCells = reservedBlockedCells,
+                        layoutMask = layoutMask,
+                        layoutVariant = layoutConfig and {
+                                id = layoutConfig.variantId,
+                                name = layoutConfig.variantName,
+                                index = layoutConfig.variantIndex,
+                        },
+                })
+        end
+
+        return {
+                traitContext = traitContext,
 		spawnPlan = spawnPlan,
 	}
 end
