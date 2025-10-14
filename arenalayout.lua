@@ -120,15 +120,21 @@ local function addCell(list, lookup, col, row, variant)
         return cell
 end
 
-function ArenaLayout.generate(floorNum, floorData)
+function ArenaLayout.generate(floorNum, floorData, attemptIndex)
         local cols = Arena.cols or 0
         local rows = Arena.rows or 0
         if cols <= 0 or rows <= 0 then
                 return nil
         end
 
-        local seed = computeSeed(floorNum, floorData)
-        local rng = love.math.newRandomGenerator(seed)
+        local baseSeed = computeSeed(floorNum, floorData)
+        local offset = 0
+        if type(attemptIndex) == "number" and attemptIndex ~= 0 then
+                offset = math.max(0, math.floor(attemptIndex))
+        end
+
+        local rngSeed = baseSeed + offset * 9973
+        local rng = love.math.newRandomGenerator(rngSeed)
 
         local blocked = {}
         local walkable = {}
@@ -151,7 +157,7 @@ function ArenaLayout.generate(floorNum, floorData)
         local rowOffset = rng:random(0, rowSpacing - 1)
 
         local accentChance = 0.16 + rng:random() * 0.12
-        local diagWidth = (((seed + columnSpacing + rowSpacing) % 3) == 0) and 2 or 1
+        local diagWidth = (((rngSeed + columnSpacing + rowSpacing) % 3) == 0) and 2 or 1
 
         for row = 1, rows do
                 for col = 1, cols do
@@ -163,7 +169,7 @@ function ArenaLayout.generate(floorNum, floorData)
                                 local horizontal = math.abs(row - centerRow) <= crossHalfRows
                                 local gridColumn = ((col - ringInset) % columnSpacing) == columnOffset
                                 local gridRow = ((row - ringInset) % rowSpacing) == rowOffset
-                                local diagonal = math.abs(col - row) <= diagWidth and (((col + row + seed) % 3) == 0)
+                                local diagonal = math.abs(col - row) <= diagWidth and (((col + row + rngSeed) % 3) == 0)
                                 isWalkable = vertical or horizontal or gridColumn or gridRow or diagonal
                         end
 
@@ -182,7 +188,7 @@ function ArenaLayout.generate(floorNum, floorData)
                                         decorations[#decorations + 1] = deco
                                 end
                         else
-                                local variant = ((col + row + seed) % 3 == 0) and "cluster" or "single"
+                                local variant = ((col + row + rngSeed) % 3 == 0) and "cluster" or "single"
                                 addCell(blocked, blockedLookup, col, row, variant)
                         end
                 end
@@ -191,7 +197,9 @@ function ArenaLayout.generate(floorNum, floorData)
         local colors = buildColors(floorData)
 
         return {
-                seed = seed,
+                seed = baseSeed,
+                seedOffset = offset,
+                rngSeed = rngSeed,
                 blocked = blocked,
                 walkable = walkable,
                 decorations = decorations,
