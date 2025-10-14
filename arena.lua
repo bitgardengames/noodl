@@ -1,6 +1,7 @@
 local Theme = require("theme")
 local Audio = require("audio")
 local Shaders = require("shaders")
+local ArenaLayoutDraw = require("arenalayoutdraw")
 
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
@@ -95,12 +96,14 @@ local function drawSpawnDebugOverlay(self)
 	love.graphics.setLineWidth(1.25)
 	love.graphics.setBlendMode("alpha")
 
-	drawCells(debugData.spawnSafeCells, {0.95, 0.34, 0.32, 0.24})
-	drawCells(debugData.spawnBuffer, {1.0, 0.64, 0.26, 0.28})
-	drawCells(debugData.safeZone, {0.22, 0.68, 1.0, 0.35}, {0.92, 0.98, 1.0, 0.75})
-	drawCells(debugData.rockSafeZone, {0.64, 0.36, 0.88, 0.2})
-	drawCells(debugData.reservedCells, nil, {1.0, 1.0, 1.0, 0.35})
-	drawCells(debugData.reservedSpawnBuffer, nil, {1.0, 0.86, 0.38, 0.45})
+        drawCells(debugData.layoutWalkable, {0.26, 0.62, 0.96, 0.18})
+        drawCells(debugData.layoutBlocked, {0.86, 0.32, 0.42, 0.26}, {0.94, 0.58, 0.68, 0.5})
+        drawCells(debugData.spawnSafeCells, {0.95, 0.34, 0.32, 0.24})
+        drawCells(debugData.spawnBuffer, {1.0, 0.64, 0.26, 0.28})
+        drawCells(debugData.safeZone, {0.22, 0.68, 1.0, 0.35}, {0.92, 0.98, 1.0, 0.75})
+        drawCells(debugData.rockSafeZone, {0.64, 0.36, 0.88, 0.2})
+        drawCells(debugData.reservedCells, nil, {1.0, 1.0, 1.0, 0.35})
+        drawCells(debugData.reservedSpawnBuffer, nil, {1.0, 0.86, 0.38, 0.45})
 
 	love.graphics.pop()
 end
@@ -122,39 +125,58 @@ local function isTileInSafeZone(safeZone, col, row)
 end
 
 local Arena = {
-	x = 0, y = 0,
-	width = 792,
-	height = 600,
-	tileSize = 24,
-	cols = 0,
-	rows = 0,
-		exit = nil,
-		activeBackgroundEffect = nil,
-	borderFlare = 0,
-	borderFlareStrength = 0,
-	borderFlareTimer = 0,
-	borderFlareDuration = 1.05,
+        x = 0, y = 0,
+        width = 792,
+        height = 600,
+        tileSize = 24,
+        cols = 0,
+        rows = 0,
+        exit = nil,
+        activeBackgroundEffect = nil,
+        borderFlare = 0,
+        borderFlareStrength = 0,
+        borderFlareTimer = 0,
+        borderFlareDuration = 1.05,
+        _activeLayout = nil,
 }
 
 function Arena:setSpawnDebugData(data)
-	if not data then
-		self._spawnDebugData = nil
-		return
-	end
+        if not data then
+                self._spawnDebugData = nil
+                return
+        end
 
-	self._spawnDebugData = {
-		safeZone = data.safeZone,
-		rockSafeZone = data.rockSafeZone,
-		spawnBuffer = data.spawnBuffer,
-		spawnSafeCells = data.spawnSafeCells,
-		reservedCells = data.reservedCells,
-		reservedSafeZone = data.reservedSafeZone,
-		reservedSpawnBuffer = data.reservedSpawnBuffer,
-	}
+        self._spawnDebugData = {
+                safeZone = data.safeZone,
+                rockSafeZone = data.rockSafeZone,
+                spawnBuffer = data.spawnBuffer,
+                spawnSafeCells = data.spawnSafeCells,
+                reservedCells = data.reservedCells,
+                reservedSafeZone = data.reservedSafeZone,
+                reservedSpawnBuffer = data.reservedSpawnBuffer,
+                layoutBlocked = data.layout and data.layout.blocked or nil,
+                layoutWalkable = data.layout and data.layout.walkable or nil,
+                layoutSeed = data.layout and data.layout.seed or nil,
+                layoutMeta = data.layout and data.layout.meta or nil,
+        }
 end
 
 function Arena:clearSpawnDebugData()
-	self._spawnDebugData = nil
+        self._spawnDebugData = nil
+end
+
+function Arena:setLayout(layout)
+        self._activeLayout = layout
+        if self._spawnDebugData then
+                self._spawnDebugData.layoutBlocked = layout and layout.blocked or nil
+                self._spawnDebugData.layoutWalkable = layout and layout.walkable or nil
+                self._spawnDebugData.layoutSeed = layout and layout.seed or nil
+                self._spawnDebugData.layoutMeta = layout and layout.meta or nil
+        end
+end
+
+function Arena:getLayout()
+        return self._activeLayout
 end
 
 function Arena:updateScreenBounds(sw, sh)
@@ -291,13 +313,17 @@ function Arena:drawBackground()
 		Shaders.draw(self.activeBackgroundEffect, ax, ay, aw, ah, intensity)
 	end
 
-	-- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
-	love.graphics.setColor(Theme.arenaBG)
-	love.graphics.rectangle("fill", ax, ay, aw, ah)
+        -- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
+        love.graphics.setColor(Theme.arenaBG)
+        love.graphics.rectangle("fill", ax, ay, aw, ah)
 
-	drawSpawnDebugOverlay(self)
+        if ArenaLayoutDraw and self._activeLayout then
+                ArenaLayoutDraw.draw(self, self._activeLayout)
+        end
 
-	love.graphics.setColor(1, 1, 1, 1)
+        drawSpawnDebugOverlay(self)
+
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- Draws border
