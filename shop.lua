@@ -204,7 +204,7 @@ local function cubicBezierPoint(t, p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y)
         return x, y
 end
 
-local function buildPreviewTrail(preview, startX, startY, headX, headY, idleTimer, scale)
+local function buildPreviewTrail(preview, startX, startY, headX, headY, idleTimer)
         if not preview then
                 return
         end
@@ -226,13 +226,10 @@ local function buildPreviewTrail(preview, startX, startY, headX, headY, idleTime
         idleTimer = idleTimer or 0
         local spacing = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
         local desiredCount = preview.segmentCount or 18
-        local wobble = sin(idleTimer * 1.35) * 40
-        local sniff = sin(idleTimer * 2.6) * 14
-
         local dx = headX - startX
         local verticalSpan = max(120, abs(startY - headY) + 160)
-        local cp1x = startX + dx * 0.18 + wobble * 0.18
-        local cp2x = startX + dx * 0.72 - wobble * 0.12
+        local cp1x = startX + dx * 0.18
+        local cp2x = startX + dx * 0.72
         local cp1y = startY - verticalSpan * 0.38
         local cp2y = headY - verticalSpan * 0.62
 
@@ -252,7 +249,7 @@ local function buildPreviewTrail(preview, startX, startY, headX, headY, idleTime
 
         for i = 1, steps do
                 local t = i / steps
-                local px, py = cubicBezierPoint(t, startX, startY, cp1x, cp1y, cp2x, cp2y, headX, headY + sniff)
+                local px, py = cubicBezierPoint(t, startX, startY, cp1x, cp1y, cp2x, cp2y, headX, headY)
                 local dxStep = px - prevX
                 local dyStep = py - prevY
                 local segmentLength = sqrt(dxStep * dxStep + dyStep * dyStep)
@@ -294,11 +291,6 @@ local function buildPreviewTrail(preview, startX, startY, headX, headY, idleTime
 
         local trail = preview.trail
         local worldTrail = preview.worldTrail
-        local anchorX = preview.anchorX or startX
-        local anchorY = preview.anchorY or startY
-        scale = scale or 1
-        local invScale = (scale ~= 0) and (1 / scale) or 1
-
         for index = 1, count do
                 local distFromTail = totalLength - (index - 1) * spacing
                 if distFromTail < 0 then
@@ -307,8 +299,8 @@ local function buildPreviewTrail(preview, startX, startY, headX, headY, idleTime
 
                 local worldX, worldY = sampleAtDistance(distFromTail)
                 local seg = trail[index] or {}
-                seg.drawX = anchorX + (worldX - anchorX) * invScale
-                seg.drawY = anchorY + (worldY - anchorY) * invScale
+                seg.drawX = worldX
+                seg.drawY = worldY
                 trail[index] = seg
 
                 local worldSeg = worldTrail[index] or {}
@@ -347,7 +339,7 @@ function Shop:start(currentFloor)
                 segmentSize = segmentSize,
                 segmentCount = 18,
                 idleTimer = 0,
-                scale = 0.88,
+                scale = 1,
                 previewVisuals = {
                         timeDilation = {
                                 active = false,
@@ -677,7 +669,8 @@ function Shop:update(dt)
                         local screenW = preview.screenW or love.graphics.getWidth()
                         local screenH = preview.screenH or love.graphics.getHeight()
                         targetX = screenW * 0.5
-                        targetY = preview.layoutCenterY or screenH * 0.5
+                        local layoutCenterY = preview.layoutCenterY or screenH * 0.5
+                        targetY = layoutCenterY + 64
                 end
 
                 preview.targetX = targetX
@@ -1399,7 +1392,7 @@ function Shop:draw(screenW, screenH)
                 drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, state, self.selected == card, appearanceAlpha)
                 love.graphics.pop()
                 card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
-                card.focusPoint = { x = centerX, y = drawY + drawHeight * 0.45 }
+                card.focusPoint = { x = centerX, y = drawY + drawHeight + 32 }
 
                 if state and state.selectionFlash then
 			local flashDuration = 0.75
@@ -1447,26 +1440,18 @@ function Shop:draw(screenW, screenH)
 
                 local headX = preview.currentX or preview.targetX or anchorX
                 local headY = preview.currentY or preview.targetY or layoutCenterY
+                local segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE
+                if headY and segmentSize then
+                        headY = math.min(headY, anchorY - segmentSize * 0.5)
+                end
 
                 if headX and headY then
-                        local sniffStrength = 1 - clamp01(self.selectionProgress or 0)
                         local idleTimer = preview.idleTimer or 0
-                        local horizontalSway = sin(idleTimer * 1.6) * 26 * sniffStrength
-                        local verticalBob = sin(idleTimer * 2.4) * 8 * sniffStrength
-                        headX = headX + horizontalSway
-                        headY = headY + verticalBob
-
-                        buildPreviewTrail(preview, anchorX, anchorY, headX, headY, idleTimer, preview.scale)
+                        buildPreviewTrail(preview, anchorX, anchorY, headX, headY, idleTimer)
                         local trail = preview.trail
                         if trail and #trail > 1 then
                                 local scale = preview.scale or 1
                                 love.graphics.push()
-                                if scale ~= 1 then
-                                        love.graphics.translate(anchorX, anchorY)
-                                        love.graphics.scale(scale, scale)
-                                        love.graphics.translate(-anchorX, -anchorY)
-                                end
-
                                 local previewVisuals = preview.previewVisuals
                                 SnakeDraw.run(trail, #trail, preview.segmentSize or SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, previewVisuals)
 
@@ -1483,8 +1468,8 @@ function Shop:draw(screenW, screenH)
                                 if headSeg and glowStrength > 0 then
                                         local pulse = 1 + 0.25 * sin((preview.idleTimer or 0) * 5.2)
                                         local safeScale = (scale ~= 0) and scale or 1
-                                        local radius = (preview.segmentSize or SnakeUtils.SEGMENT_SIZE) * (0.6 + glowStrength * 0.95) / safeScale * pulse
-                                        love.graphics.setLineWidth(3 / safeScale)
+                                        local radius = (preview.segmentSize or SnakeUtils.SEGMENT_SIZE) * (0.6 + glowStrength * 0.95) * safeScale * pulse
+                                        love.graphics.setLineWidth(3 * safeScale)
                                         love.graphics.setColor(1, 0.86, 0.38, 0.24 * glowStrength)
                                         love.graphics.circle("line", headSeg.drawX, headSeg.drawY, radius)
                                         love.graphics.setColor(1, 0.68, 0.22, 0.18 * glowStrength)
