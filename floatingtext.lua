@@ -10,7 +10,7 @@ local random = lm.random
 local sin, cos = math.sin, math.cos
 local max = math.max
 
-local clamp = Easing.clamp
+local clampRange = Easing.clampRange
 local lerp = Easing.lerp
 local easeOutCubic = Easing.easeOutCubic
 local easeInCubic = Easing.easeInCubic
@@ -164,7 +164,7 @@ local function resolveFade(duration, fadeStart)
 		return nil, nil
 	end
 
-	local startTime = duration * clamp(fadeStart, 0, 0.99)
+	local startTime = duration * clampRange(fadeStart, 0, 0.99)
 	local fadeDuration = max(duration - startTime, 0.001)
 
 	return startTime, fadeDuration
@@ -271,7 +271,7 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 		popDuration = popDuration,
 		wobbleMagnitude = wobbleMagnitude,
 		wobbleFrequency = wobbleFrequency,
-		fadeStart = clamp(fadeStart, 0, 0.99),
+		fadeStart = clampRange(fadeStart, 0, 0.99),
 		fadeStartTime = fadeStartTime,
 		fadeDuration = fadeDuration,
 		drift = drift,
@@ -313,7 +313,7 @@ function FloatingText:update(dt)
 		entry.timer = entry.timer + dt
 
 		local duration = entry.duration
-		local progress = duration > 0 and clamp(entry.timer / duration, 0, 1) or 1
+		local progress = duration > 0 and clampRange(entry.timer / duration, 0, 1) or 1
 
 		entry.offsetY = -entry.riseDistance * easeOutCubic(progress)
 		entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * math.sin(entry.wobbleFrequency * entry.timer)
@@ -329,11 +329,11 @@ function FloatingText:update(dt)
 		end
 
 		if entry.popDuration > 0 and entry.timer < entry.popDuration then
-			local popProgress = clamp(entry.timer / entry.popDuration, 0, 1)
+			local popProgress = clampRange(entry.timer / entry.popDuration, 0, 1)
 			entry.scale = lerp(entry.popScale, entry.baseScale, easeOutBack(popProgress))
 		else
 			local settleDuration = math.max(duration - entry.popDuration, 0.001)
-			local settleProgress = clamp((entry.timer - entry.popDuration) / settleDuration, 0, 1)
+			local settleProgress = clampRange((entry.timer - entry.popDuration) / settleDuration, 0, 1)
 			local pulse = sin(entry.timer * 6) * (1 - settleProgress) * 0.04
 			entry.scale = entry.baseScale * (1 + pulse)
 		end
@@ -362,12 +362,12 @@ function FloatingText:draw()
 		local alpha = entry.color[4] or 1
 		if entry.duration > 0 and entry.fadeStartTime then
 			if entry.timer >= entry.fadeStartTime then
-				local fadeProgress = clamp((entry.timer - entry.fadeStartTime) / entry.fadeDuration, 0, 1)
+				local fadeProgress = clampRange((entry.timer - entry.fadeStartTime) / entry.fadeDuration, 0, 1)
 				alpha = alpha * (1 - easeInCubic(fadeProgress))
 			end
 		end
 
-		alpha = clamp(alpha, 0, 1)
+		alpha = clampRange(alpha, 0, 1)
 
 		lg.push()
 		lg.translate(entry.x + entry.offsetX + entry.jitterX, entry.y + entry.offsetY + entry.jitterY)

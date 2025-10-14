@@ -136,21 +136,21 @@ local function updateHeldDpad(dt)
 	end
 end
 
-local function clamp01(value)
-	if value < 0 then
-		return 0
-	elseif value > 1 then
-		return 1
-	end
-	return value
+local function clamp(value)
+        if value < 0 then
+                return 0
+        elseif value > 1 then
+                return 1
+        end
+        return value
 end
 
 local function lightenColor(color, amount)
-	if not color then
-		return {1, 1, 1, 1}
-	end
+        if not color then
+                return {1, 1, 1, 1}
+        end
 
-	amount = clamp01(amount or 0)
+        amount = clamp(amount or 0)
 	local r = color[1] or 1
 	local g = color[2] or 1
 	local b = color[3] or 1
@@ -165,11 +165,11 @@ local function lightenColor(color, amount)
 end
 
 local function darkenColor(color, amount)
-	if not color then
-		return {0, 0, 0, 1}
-	end
+        if not color then
+                return {0, 0, 0, 1}
+        end
 
-	amount = clamp01(amount or 0)
+        amount = clamp(amount or 0)
 	local factor = 1 - amount
 	local a = color[4] or 1
 
@@ -293,7 +293,7 @@ local function getAchievementRewardLabel(achievement)
 end
 
 local function toPercent(value)
-	value = clamp01(value or 0)
+        value = clamp(value or 0)
 	return math.floor(value * 100 + 0.5)
 end
 
@@ -822,7 +822,7 @@ function AchievementsMenu:draw()
 	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, summaryProgressHeight, 6, 6)
 
 	love.graphics.setColor(Theme.progressColor or {0.6, 0.9, 0.4, 1})
-	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
+        love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp(totals.completion), summaryProgressHeight, 6, 6)
 
 	love.graphics.push("all")
 	UI.drawPanel(panelX, panelY, panelWidth, panelHeight, {
