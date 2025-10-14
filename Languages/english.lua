@@ -42,11 +42,11 @@ local english = {
 					title = "Floor Explorer",
 					description = "Clear ${goal} floors in a single run.",
 				},
-				apples = {
-					title = "Fruit Sampler",
-					description = "Collect ${goal} apples in a single run.",
-					progress = "Run apples: ${current}/${goal}",
-				},
+                                apples = {
+                                        title = "Fruit Sampler",
+                                        description = "Collect ${goal} fruit in a single run.",
+                                        progress = "Fruit collected: ${current}/${goal}",
+                                },
 				dragonfruit = {
 					title = "Dragonfruit Delight",
 					description = "Collect ${goal} dragonfruit in a single run.",
