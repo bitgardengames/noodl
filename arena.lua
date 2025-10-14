@@ -92,9 +92,68 @@ local function drawSpawnDebugOverlay(self)
 		end
 	end
 
-	love.graphics.push("all")
-	love.graphics.setLineWidth(1.25)
-	love.graphics.setBlendMode("alpha")
+        love.graphics.push("all")
+        love.graphics.setLineWidth(1.25)
+        love.graphics.setBlendMode("alpha")
+
+        local validation = debugData.layoutValidation
+        if validation then
+                local lines = {}
+                local statusParts = {}
+                statusParts[#statusParts + 1] = validation.success and "PASS" or "FAIL"
+                if validation.relaxed then
+                        statusParts[#statusParts + 1] = "relaxed"
+                end
+                if validation.forced then
+                        statusParts[#statusParts + 1] = "forced"
+                end
+
+                lines[#lines + 1] = string.format("Validation: %s", table.concat(statusParts, " | "))
+
+                if validation.attempt or validation.maxAttempts then
+                        local attemptText = validation.attempt and tostring(validation.attempt) or "?"
+                        if validation.maxAttempts then
+                                attemptText = attemptText .. "/" .. tostring(validation.maxAttempts)
+                        end
+                        lines[#lines + 1] = string.format("Attempts: %s", attemptText)
+                end
+
+                if validation.startCells or validation.totalSpawn then
+                        lines[#lines + 1] = string.format("Spawn cells: %d/%d", validation.startCells or 0, validation.totalSpawn or 0)
+                end
+
+                if validation.totalWalkable then
+                        lines[#lines + 1] = string.format("Walkable reach: %d/%d", validation.reachableWalkable or 0, validation.totalWalkable or 0)
+                end
+
+                if validation.totalFruit and validation.totalFruit > 0 then
+                        lines[#lines + 1] = string.format("Fruit reach: %d/%d", validation.reachableFruit or 0, validation.totalFruit or 0)
+                end
+
+                if validation.totalExit and validation.totalExit > 0 then
+                        lines[#lines + 1] = string.format("Exit reach: %d/%d", validation.reachableExit or 0, validation.totalExit or 0)
+                end
+
+                if validation.reason and not validation.success then
+                        lines[#lines + 1] = "Reason: " .. tostring(validation.reason)
+                end
+
+                if validation.seedOffset and validation.seedOffset > 0 then
+                        lines[#lines + 1] = string.format("Seed offset: %d", validation.seedOffset)
+                end
+
+                if validation.rngSeed then
+                        lines[#lines + 1] = string.format("RNG seed: %d", validation.rngSeed)
+                end
+
+                local textX = self.x + 6
+                local textY = self.y + 6
+                love.graphics.setColor(0.94, 0.96, 1.0, 0.88)
+                for _, line in ipairs(lines) do
+                        love.graphics.print(line, textX, textY)
+                        textY = textY + 14
+                end
+        end
 
         drawCells(debugData.layoutWalkable, {0.26, 0.62, 0.96, 0.18})
         drawCells(debugData.layoutBlocked, {0.86, 0.32, 0.42, 0.26}, {0.94, 0.58, 0.68, 0.5})
@@ -158,6 +217,7 @@ function Arena:setSpawnDebugData(data)
                 layoutWalkable = data.layout and data.layout.walkable or nil,
                 layoutSeed = data.layout and data.layout.seed or nil,
                 layoutMeta = data.layout and data.layout.meta or nil,
+                layoutValidation = data.layoutValidation,
         }
 end
 
