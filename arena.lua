@@ -5,6 +5,20 @@ local Shaders = require("shaders")
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
 
+local ABS_MIN_COLS = 23
+local ABS_MAX_COLS = 33
+local ABS_MIN_ROWS = 19
+local ABS_MAX_ROWS = 25
+local DEFAULT_MIN_AREA = 25 * 19
+
+local DEFAULT_LAYOUT_GUIDELINES = {
+        minCols = 25,
+        maxCols = ABS_MAX_COLS,
+        minRows = 19,
+        maxRows = ABS_MAX_ROWS,
+        minArea = DEFAULT_MIN_AREA,
+}
+
 
 local function getModule(name)
 	local loaded = package.loaded[name]
@@ -24,14 +38,189 @@ local function getModule(name)
 end
 
 local function distanceSquared(ax, ay, bx, by)
-	local dx, dy = ax - bx, ay - by
-	return dx * dx + dy * dy
+        local dx, dy = ax - bx, ay - by
+        return dx * dx + dy * dy
+end
+
+local function clampIndex(value, minIndex, maxIndex)
+        if value < minIndex then
+                return minIndex
+        elseif value > maxIndex then
+                return maxIndex
+        end
+        return value
+end
+
+local function toOddIndexRange(minValue, maxValue, absMin, absMax)
+        local lower = math.max(absMin or 1, math.floor(minValue or absMin or 1))
+        local upper = math.min(absMax or lower, math.floor(maxValue or absMax or lower))
+
+        if lower > upper then
+                lower, upper = upper, lower
+        end
+
+        local minIndex = math.ceil((lower - 1) / 2)
+        local maxIndex = math.floor((upper - 1) / 2)
+
+        if minIndex > maxIndex then
+                minIndex = math.ceil((absMin - 1) / 2)
+                maxIndex = math.floor((absMax - 1) / 2)
+        end
+
+        if minIndex > maxIndex then
+                minIndex = maxIndex
+        end
+
+        return minIndex, maxIndex
+end
+
+local function indexToOdd(index)
+        return index * 2 + 1
+end
+
+local function requiredOddIndexForValue(value)
+        value = math.max(1, value or 1)
+        return math.ceil((value - 1) / 2)
+end
+
+local function resolveLayoutGuidelines(floorNum, floorData)
+        local overrides = (type(floorData) == "table" and floorData.arenaLayout) or nil
+        local guidelines = {
+                minCols = DEFAULT_LAYOUT_GUIDELINES.minCols,
+                maxCols = DEFAULT_LAYOUT_GUIDELINES.maxCols,
+                minRows = DEFAULT_LAYOUT_GUIDELINES.minRows,
+                maxRows = DEFAULT_LAYOUT_GUIDELINES.maxRows,
+                minArea = DEFAULT_LAYOUT_GUIDELINES.minArea,
+        }
+
+        if type(overrides) == "table" then
+                if overrides.minCols ~= nil then
+                        guidelines.minCols = overrides.minCols
+                end
+                if overrides.maxCols ~= nil then
+                        guidelines.maxCols = overrides.maxCols
+                end
+                if overrides.minRows ~= nil then
+                        guidelines.minRows = overrides.minRows
+                end
+                if overrides.maxRows ~= nil then
+                        guidelines.maxRows = overrides.maxRows
+                end
+                if overrides.minArea ~= nil then
+                        guidelines.minArea = overrides.minArea
+                end
+        end
+
+        local floorIndex = math.max(1, math.floor(floorNum or 1))
+        local depth = math.max(0, floorIndex - 1)
+        if depth > 0 then
+                local shrinkCols = math.min(4, math.floor(depth / 4))
+                local shrinkRows = math.min(3, math.floor(depth / 5))
+
+                if shrinkCols > 0 then
+                        local newMinCols = math.max(ABS_MIN_COLS, math.floor(guidelines.minCols - shrinkCols))
+                        local newMaxCols = math.max(newMinCols, math.floor(guidelines.maxCols - math.floor(shrinkCols / 2)))
+                        guidelines.minCols = newMinCols
+                        guidelines.maxCols = newMaxCols
+                end
+
+                if shrinkRows > 0 then
+                        local newMinRows = math.max(ABS_MIN_ROWS, math.floor(guidelines.minRows - shrinkRows))
+                        local newMaxRows = math.max(newMinRows, math.floor(guidelines.maxRows - math.floor(shrinkRows / 2)))
+                        guidelines.minRows = newMinRows
+                        guidelines.maxRows = newMaxRows
+                end
+        end
+
+        local colMinIndex, colMaxIndex = toOddIndexRange(guidelines.minCols, guidelines.maxCols, ABS_MIN_COLS, ABS_MAX_COLS)
+        local rowMinIndex, rowMaxIndex = toOddIndexRange(guidelines.minRows, guidelines.maxRows, ABS_MIN_ROWS, ABS_MAX_ROWS)
+
+        guidelines.minCols = indexToOdd(colMinIndex)
+        guidelines.maxCols = indexToOdd(colMaxIndex)
+        guidelines.minRows = indexToOdd(rowMinIndex)
+        guidelines.maxRows = indexToOdd(rowMaxIndex)
+
+        local desiredMinArea = math.floor(guidelines.minArea or DEFAULT_MIN_AREA)
+        desiredMinArea = math.max(DEFAULT_MIN_AREA, desiredMinArea)
+        local minimumPossibleArea = guidelines.minCols * guidelines.minRows
+        local maximumPossibleArea = guidelines.maxCols * guidelines.maxRows
+
+        desiredMinArea = math.max(desiredMinArea, minimumPossibleArea)
+        if desiredMinArea > maximumPossibleArea then
+                desiredMinArea = maximumPossibleArea
+        end
+
+        guidelines.minArea = desiredMinArea
+        guidelines._colMinIndex = colMinIndex
+        guidelines._colMaxIndex = colMaxIndex
+        guidelines._rowMinIndex = rowMinIndex
+        guidelines._rowMaxIndex = rowMaxIndex
+
+        return guidelines
+end
+
+local function generateLayoutFromGuidelines(guidelines)
+        if not guidelines then
+                return nil
+        end
+
+        local colMinIndex = guidelines._colMinIndex or math.ceil((ABS_MIN_COLS - 1) / 2)
+        local colMaxIndex = guidelines._colMaxIndex or math.floor((ABS_MAX_COLS - 1) / 2)
+        local rowMinIndex = guidelines._rowMinIndex or math.ceil((ABS_MIN_ROWS - 1) / 2)
+        local rowMaxIndex = guidelines._rowMaxIndex or math.floor((ABS_MAX_ROWS - 1) / 2)
+
+        if colMinIndex > colMaxIndex then
+                colMinIndex, colMaxIndex = colMaxIndex, colMinIndex
+        end
+        if rowMinIndex > rowMaxIndex then
+                rowMinIndex, rowMaxIndex = rowMaxIndex, rowMinIndex
+        end
+
+        local random = (love and love.math and love.math.random) or math.random
+
+        local colIndex = random(colMinIndex, colMaxIndex)
+        local rowIndex = random(rowMinIndex, rowMaxIndex)
+        local cols = indexToOdd(colIndex)
+        local rows = indexToOdd(rowIndex)
+        local minArea = guidelines.minArea or DEFAULT_MIN_AREA
+
+        if cols * rows < minArea then
+                local requiredColsIndex = requiredOddIndexForValue(math.ceil(minArea / rows))
+                colIndex = clampIndex(requiredColsIndex, colMinIndex, colMaxIndex)
+                cols = indexToOdd(colIndex)
+        end
+
+        if cols * rows < minArea then
+                local requiredRowsIndex = requiredOddIndexForValue(math.ceil(minArea / cols))
+                rowIndex = clampIndex(requiredRowsIndex, rowMinIndex, rowMaxIndex)
+                rows = indexToOdd(rowIndex)
+        end
+
+        if cols * rows < minArea then
+                colIndex = colMaxIndex
+                rowIndex = rowMaxIndex
+                cols = indexToOdd(colIndex)
+                rows = indexToOdd(rowIndex)
+        end
+
+        return {
+                cols = cols,
+                rows = rows,
+                colIndex = colIndex,
+                rowIndex = rowIndex,
+                minCols = indexToOdd(colMinIndex),
+                maxCols = indexToOdd(colMaxIndex),
+                minRows = indexToOdd(rowMinIndex),
+                maxRows = indexToOdd(rowMaxIndex),
+                minArea = minArea,
+                guidelines = guidelines,
+        }
 end
 
 local function getHighlightColor(color)
-	color = color or {1, 1, 1, 1}
+        color = color or {1, 1, 1, 1}
 
-	local r = math.min(1, color[1] * 1.2 + 0.08)
+        local r = math.min(1, color[1] * 1.2 + 0.08)
 	local g = math.min(1, color[2] * 1.2 + 0.08)
 	local b = math.min(1, color[3] * 1.2 + 0.08)
 	local a = (color[4] or 1) * 0.75
@@ -122,17 +311,21 @@ local function isTileInSafeZone(safeZone, col, row)
 end
 
 local Arena = {
-	x = 0, y = 0,
-	width = 792,
-	height = 600,
-	tileSize = 24,
-	cols = 0,
-	rows = 0,
-		exit = nil,
-		activeBackgroundEffect = nil,
-	borderFlare = 0,
-	borderFlareStrength = 0,
-	borderFlareTimer = 0,
+        x = 0, y = 0,
+        width = 792,
+        height = 600,
+        tileSize = 24,
+        cols = math.floor(792 / 24),
+        rows = math.floor(600 / 24),
+        screenWidth = nil,
+        screenHeight = nil,
+        _layout = nil,
+        _layoutFloor = nil,
+                exit = nil,
+                activeBackgroundEffect = nil,
+        borderFlare = 0,
+        borderFlareStrength = 0,
+        borderFlareTimer = 0,
 	borderFlareDuration = 1.05,
 }
 
@@ -158,15 +351,31 @@ function Arena:clearSpawnDebugData()
 end
 
 function Arena:updateScreenBounds(sw, sh)
-	self.x = math.floor((sw - self.width) / 2)
-	self.y = math.floor((sh - self.height) / 2)
+        if sw == nil or sh == nil then
+                if love and love.graphics and love.graphics.getDimensions then
+                        sw, sh = love.graphics.getDimensions()
+                else
+                        sw, sh = self.screenWidth or 0, self.screenHeight or 0
+                end
+        end
 
-	-- snap x,y to nearest tile boundary so centers align
-	self.x = self.x - (self.x % self.tileSize)
-	self.y = self.y - (self.y % self.tileSize)
+        self.screenWidth = sw
+        self.screenHeight = sh
 
-	self.cols = math.floor(self.width / self.tileSize)
-	self.rows = math.floor(self.height / self.tileSize)
+        self.x = math.floor((sw - self.width) / 2)
+        self.y = math.floor((sh - self.height) / 2)
+
+        -- snap x,y to nearest tile boundary so centers align
+        self.x = self.x - (self.x % self.tileSize)
+        self.y = self.y - (self.y % self.tileSize)
+
+        self.cols = math.max(1, math.floor(self.width / self.tileSize))
+        self.rows = math.max(1, math.floor(self.height / self.tileSize))
+
+        if self._layout then
+                self.cols = self._layout.cols or self.cols
+                self.rows = self._layout.rows or self.rows
+        end
 end
 
 function Arena:getTilePosition(col, row)
@@ -180,14 +389,61 @@ function Arena:getCenterOfTile(col, row)
 end
 
 function Arena:getTileFromWorld(x, y)
-	local col = math.floor((x - self.x) / self.tileSize) + 1
-	local row = math.floor((y - self.y) / self.tileSize) + 1
+        local col = math.floor((x - self.x) / self.tileSize) + 1
+        local row = math.floor((y - self.y) / self.tileSize) + 1
 
-	-- clamp inside arena grid
-	col = math.max(1, math.min(self.cols, col))
-	row = math.max(1, math.min(self.rows, row))
+        -- clamp inside arena grid
+        col = math.max(1, math.min(self.cols, col))
+        row = math.max(1, math.min(self.rows, row))
 
-	return col, row
+        return col, row
+end
+
+function Arena:prepareLayout(floorNum, floorData, screenWidth, screenHeight, options)
+        options = options or {}
+        local regenerate = options.force or (self._layout == nil) or (self._layoutFloor ~= floorNum)
+
+        if regenerate then
+                local guidelines = resolveLayoutGuidelines(floorNum, floorData)
+                local layout = generateLayoutFromGuidelines(guidelines)
+
+                if layout then
+                        layout.guidelines = guidelines
+                        layout.floor = floorNum
+                        self._layout = layout
+                        self._layoutFloor = floorNum
+                        self.width = layout.cols * self.tileSize
+                        self.height = layout.rows * self.tileSize
+                        self.cols = layout.cols
+                        self.rows = layout.rows
+                end
+        end
+
+        if self._layout then
+                self.width = self._layout.cols * self.tileSize
+                self.height = self._layout.rows * self.tileSize
+        end
+
+        local sw = screenWidth or self.screenWidth
+        local sh = screenHeight or self.screenHeight
+
+        if (not sw or not sh) and love and love.graphics and love.graphics.getDimensions then
+                sw, sh = love.graphics.getDimensions()
+        end
+
+        if sw and sh then
+                self:updateScreenBounds(sw, sh)
+                if self._layout then
+                        self.cols = self._layout.cols or self.cols
+                        self.rows = self._layout.rows or self.rows
+                end
+        end
+
+        return self._layout
+end
+
+function Arena:getCurrentLayout()
+        return self._layout
 end
 
 function Arena:isInside(x, y)

@@ -604,10 +604,11 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
 end
 
 function FloorSetup.prepare(floorNum, floorData)
-	applyPalette(floorData and floorData.palette)
-	Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
-	resetFloorEntities()
-	local safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer = prepareOccupancy()
+        Arena:prepareLayout(floorNum, floorData, nil, nil, { force = true })
+        applyPalette(floorData and floorData.palette)
+        Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
+        resetFloorEntities()
+        local safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer = prepareOccupancy()
 
 	local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
 	applyBaselineHazardTraits(traitContext)
