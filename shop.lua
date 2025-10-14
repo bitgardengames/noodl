@@ -385,6 +385,8 @@ local function buildPreviewTrail(preview, anchorX, anchorY, dt, excited)
                 preview.headWorldY = nil
                 preview.headDirX = nil
                 preview.headDirY = nil
+                preview._lastDirX = nil
+                preview._lastDirY = nil
                 return
         end
 
@@ -407,10 +409,27 @@ local function buildPreviewTrail(preview, anchorX, anchorY, dt, excited)
         preview.trail = preview.trail or {}
         preview.worldTrail = preview.worldTrail or {}
 
+        local lastDirX = preview._lastDirX or 0
+        local lastDirY = preview._lastDirY or 0
+
         for index = 1, count do
                 local distance = headProgress - (index - 1) * spacing
                 distance = distance % totalLength
                 local worldX, worldY, dirX, dirY = samplePreviewPath(preview, distance)
+
+                if dirX == nil and dirY == nil then
+                        dirX, dirY = lastDirX, lastDirY
+                else
+                        if dirX ~= nil then
+                                lastDirX = dirX
+                        end
+                        if dirY ~= nil then
+                                lastDirY = dirY
+                        end
+                end
+
+                dirX = dirX or 0
+                dirY = dirY or 0
 
                 local seg = preview.trail[index] or {}
                 seg.drawX = worldX
@@ -433,6 +452,9 @@ local function buildPreviewTrail(preview, anchorX, anchorY, dt, excited)
                         preview.headDirY = dirY
                 end
         end
+
+        preview._lastDirX = lastDirX
+        preview._lastDirY = lastDirY
 
         for i = count + 1, #preview.trail do
                 preview.trail[i] = nil
@@ -539,6 +561,8 @@ function Shop:refreshCards(options)
                 preview.headWorldY = nil
                 preview.headDirX = nil
                 preview.headDirY = nil
+                preview._lastDirX = nil
+                preview._lastDirY = nil
                 preview.idleTimer = preview.idleTimer or 0
                 preview.pathNeedsRebuild = true
                 preview._pathAnchorX = nil
@@ -1497,7 +1521,7 @@ function Shop:draw(screenW, screenH)
                                 nil,
                                 nil,
                                 nil,
-                                { sharpCorners = true }
+                                { lineJoin = "round" }
                         )
                         love.graphics.pop()
                 end
