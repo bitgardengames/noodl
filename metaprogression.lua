@@ -66,12 +66,6 @@ local unlockDefinitions = {
 		description = "Unlocks advanced combo support upgrades in the shop.",
 		unlockTags = { "combo_mastery" },
 	},
-	[8] = {
-		id = "reliquary_clearance",
-		name = "Reliquary Clearance",
-		description = "Unlocks the Grim Reliquary defensive relic in the upgrade pool.",
-		unlockTags = { "reliquary_clearance" },
-	},
 	[9] = {
 		id = "ion_storm_scales",
 		name = "Ion Storm Scales",

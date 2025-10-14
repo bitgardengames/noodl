@@ -2,7 +2,6 @@ local Snake = require("snake")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
-local Darts = require("darts")
 local GameState = require("gamestate")
 local Score = require("score")
 local UI = require("ui")
@@ -240,118 +239,6 @@ local function prismLockCooldownHandler(data, state)
 	})
 end
 
-local function arcConductorLaserHandler(data, state)
-	if not (data and state) then return end
-
-	local stacks = getStacks(state, "arc_conductor")
-	if stacks <= 0 then return end
-
-	local baseDuration = state.counters and state.counters.arcConductorBase or 0
-	if baseDuration <= 0 then return end
-
-	local duration = baseDuration + 0.4 * math.max(0, stacks - 1)
-	if duration > 0 and Darts and Darts.addGlobalJam then
-		Darts:addGlobalJam(duration)
-	end
-
-	if Score and Score.addBonus then
-		local bonus = 1 + math.max(0, stacks - 1)
-		Score:addBonus(bonus)
-	end
-
-	celebrateUpgrade(getUpgradeString("arc_conductor", "activation_text"), data, {
-		color = {0.68, 0.88, 1.0, 1},
-		textOffset = 52,
-		textScale = 1.12,
-		particleCount = 18 + stacks * 2,
-		particleSpeed = 140,
-		particleLife = 0.46,
-	})
-end
-
-local function resetScarletCenserCharges(state)
-	if not state then return end
-	local counters = state.counters or {}
-	local stacks = getStacks(state, "scarlet_censer")
-	if stacks <= 0 then
-		counters.scarletCenserCharges = 0
-	else
-		counters.scarletCenserCharges = stacks
-	end
-	state.counters = counters
-end
-
-local function scarletCenserShieldHandler(data, state)
-	if not (data and state) then return end
-	if data.cause ~= "dart" then return end
-
-	local stacks = getStacks(state, "scarlet_censer")
-	if stacks <= 0 then return end
-
-	local counters = state.counters or {}
-	local charges = counters.scarletCenserCharges or stacks
-	if charges <= 0 then return end
-
-	charges = charges - 1
-	counters.scarletCenserCharges = charges
-	state.counters = counters
-
-	grantCrashShields(1)
-
-	if Darts and Darts.addGlobalJam then
-		local duration = 0.8 + 0.3 * math.max(0, stacks - 1)
-		Darts:addGlobalJam(duration)
-	end
-
-	celebrateUpgrade(getUpgradeString("scarlet_censer", "activation_text"), data, {
-		color = {1.0, 0.58, 0.64, 1},
-		textOffset = 50,
-		textScale = 1.1,
-		particleCount = 16 + stacks * 2,
-		particleSpeed = 130,
-		particleLife = 0.42,
-	})
-end
-
-local function scarletCenserFloorStart(_, state)
-	if not state then return end
-	resetScarletCenserCharges(state)
-end
-
-local function grimReliquaryShieldHandler(data, state)
-	if not (data and state) then return end
-	if data.cause ~= "dart" then return end
-
-	local stacks = getStacks(state, "grim_reliquary")
-	if stacks <= 0 then return end
-
-	local counters = state.counters or {}
-	local souls = (counters.grimReliquarySouls or 0) + 1
-	local threshold = math.max(1, 3 - math.max(0, stacks - 1))
-
-	if souls >= threshold then
-		souls = souls - threshold
-
-		grantCrashShields(1)
-
-		if Darts and Darts.addGlobalJam then
-			local duration = 0.6 + 0.2 * math.max(0, stacks - 1)
-			Darts:addGlobalJam(duration)
-		end
-
-		celebrateUpgrade(getUpgradeString("grim_reliquary", "activation_text"), data, {
-			color = {0.86, 0.74, 1, 1},
-			textOffset = 54,
-			textScale = 1.14,
-			particleCount = 20 + stacks * 2,
-			particleSpeed = 150,
-			particleLife = 0.48,
-		})
-	end
-
-	counters.grimReliquarySouls = souls
-	state.counters = counters
-end
 
 local function newRunState()
 	return RunState.new(defaultEffects)
@@ -1070,32 +957,6 @@ local pool = {
 		},
 	}),
 	register({
-		id = "arc_conductor",
-		nameKey = "upgrades.arc_conductor.name",
-		descKey = "upgrades.arc_conductor.description",
-		rarity = "uncommon",
-		allowDuplicates = true,
-		maxStacks = 3,
-		tags = {"defense", "utility"},
-		onAcquire = function(state)
-			state.counters.arcConductorBase = state.counters.arcConductorBase or 1.2
-
-			if not state.counters.arcConductorHandlerRegistered then
-				state.counters.arcConductorHandlerRegistered = true
-				Upgrades:addEventHandler("laserShielded", arcConductorLaserHandler)
-			end
-
-			celebrateUpgrade(getUpgradeString("arc_conductor", "name"), nil, {
-				color = {0.68, 0.88, 1.0, 1},
-				particleCount = 16,
-				particleSpeed = 120,
-				particleLife = 0.44,
-				textOffset = 46,
-				textScale = 1.1,
-			})
-		end,
-	}),
-	register({
 		id = "mirrored_scales",
 		nameKey = "upgrades.mirrored_scales.name",
 		descKey = "upgrades.mirrored_scales.description",
@@ -1152,37 +1013,6 @@ local pool = {
 				particleLife = 0.48,
 				textOffset = 48,
 				textScale = 1.12,
-			})
-		end,
-	}),
-	register({
-		id = "scarlet_censer",
-		nameKey = "upgrades.scarlet_censer.name",
-		descKey = "upgrades.scarlet_censer.description",
-		rarity = "uncommon",
-		allowDuplicates = true,
-		maxStacks = 2,
-		tags = {"defense", "utility"},
-		onAcquire = function(state)
-			resetScarletCenserCharges(state)
-
-			if (state.counters.scarletCenserCharges or 0) <= 0 then
-				state.counters.scarletCenserCharges = 1
-			end
-
-			if not state.counters.scarletCenserHandlersRegistered then
-				state.counters.scarletCenserHandlersRegistered = true
-				Upgrades:addEventHandler("shieldConsumed", scarletCenserShieldHandler)
-				Upgrades:addEventHandler("floorStart", scarletCenserFloorStart)
-			end
-
-			celebrateUpgrade(getUpgradeString("scarlet_censer", "name"), nil, {
-				color = {1.0, 0.58, 0.64, 1},
-				particleCount = 14,
-				particleSpeed = 115,
-				particleLife = 0.4,
-				textOffset = 44,
-				textScale = 1.08,
 			})
 		end,
 	}),
@@ -1570,22 +1400,6 @@ local pool = {
 		},
 	}),
 
-	register({
-		id = "grim_reliquary",
-		nameKey = "upgrades.grim_reliquary.name",
-		descKey = "upgrades.grim_reliquary.description",
-		rarity = "rare",
-		tags = {"defense"},
-		unlockTag = "reliquary_clearance",
-		onAcquire = function(state)
-			state.counters.grimReliquarySouls = state.counters.grimReliquarySouls or 0
-
-			if not state.counters.grimReliquaryHandlerRegistered then
-				state.counters.grimReliquaryHandlerRegistered = true
-				Upgrades:addEventHandler("shieldConsumed", grimReliquaryShieldHandler)
-			end
-		end,
-	}),
 	register({
 		id = "abyssal_catalyst",
 		nameKey = "upgrades.abyssal_catalyst.name",
