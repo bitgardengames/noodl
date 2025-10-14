@@ -340,27 +340,6 @@ function Shop:start(currentFloor)
                 segmentCount = 18,
                 idleTimer = 0,
                 scale = 1,
-                previewVisuals = {
-                        timeDilation = {
-                                active = false,
-                                timer = 0,
-                                duration = 2.4,
-                                cooldown = 2.4,
-                                cooldownTimer = 0,
-                        },
-                        dash = {
-                                active = false,
-                                timer = 0,
-                                duration = 1.3,
-                                cooldown = 1.3,
-                                cooldownTimer = 0,
-                        },
-                        adrenaline = {
-                                active = false,
-                                timer = 0,
-                                duration = 1.6,
-                        },
-                },
         }
         self:refreshCards()
 end
@@ -651,27 +630,27 @@ function Shop:update(dt)
                         targetCard = self.cards[1]
                 end
 
-                local targetX, targetY = nil, nil
+                local screenW = preview.screenW or love.graphics.getWidth()
+                local screenH = preview.screenH or love.graphics.getHeight()
+                local anchorY = preview.anchorY or (screenH - math.max(88, screenH * 0.08))
+                local segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
+                local targetX
                 if targetCard then
                         if targetCard.focusPoint then
                                 targetX = targetCard.focusPoint.x
-                                targetY = targetCard.focusPoint.y
                         elseif targetCard.bounds then
                                 local b = targetCard.bounds
                                 if b then
                                         targetX = b.x + b.w * 0.5
-                                        targetY = b.y + b.h * 0.4
                                 end
                         end
                 end
 
                 if not targetX then
-                        local screenW = preview.screenW or love.graphics.getWidth()
-                        local screenH = preview.screenH or love.graphics.getHeight()
                         targetX = screenW * 0.5
-                        local layoutCenterY = preview.layoutCenterY or screenH * 0.5
-                        targetY = layoutCenterY + 64
                 end
+
+                local targetY = anchorY - segmentSize * 1.2
 
                 preview.targetX = targetX
                 preview.targetY = targetY
@@ -688,36 +667,6 @@ function Shop:update(dt)
                         preview.currentY = preview.targetY
                 end
 
-                local visuals = preview.previewVisuals
-                local idleTimer = preview.idleTimer or 0
-                if visuals then
-                        if visuals.timeDilation then
-                                local duration = visuals.timeDilation.duration or 2.4
-                                local normalized = duration > 0 and (idleTimer % duration) or 0
-                                visuals.timeDilation.active = true
-                                visuals.timeDilation.timer = normalized
-                                visuals.timeDilation.duration = duration
-                                visuals.timeDilation.cooldown = duration
-                                visuals.timeDilation.cooldownTimer = duration - normalized
-                        end
-
-                        if visuals.dash then
-                                local duration = visuals.dash.duration or 1.3
-                                local normalized = duration > 0 and (idleTimer % duration) or 0
-                                visuals.dash.timer = normalized
-                                visuals.dash.duration = duration
-                                visuals.dash.cooldown = duration
-                                visuals.dash.cooldownTimer = duration - normalized
-                                visuals.dash.active = (self.selectionProgress or 0) > 0.15 or self.selected ~= nil
-                        end
-
-                        if visuals.adrenaline then
-                                local duration = visuals.adrenaline.duration or 1.6
-                                visuals.adrenaline.timer = duration > 0 and (idleTimer % duration) or 0
-                                visuals.adrenaline.duration = duration
-                                visuals.adrenaline.active = (self.selectionProgress or 0) > 0.25
-                        end
-                end
         end
 end
 
@@ -1450,33 +1399,8 @@ function Shop:draw(screenW, screenH)
                         buildPreviewTrail(preview, anchorX, anchorY, headX, headY, idleTimer)
                         local trail = preview.trail
                         if trail and #trail > 1 then
-                                local scale = preview.scale or 1
                                 love.graphics.push()
-                                local previewVisuals = preview.previewVisuals
-                                SnakeDraw.run(trail, #trail, preview.segmentSize or SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, previewVisuals)
-
-                                local headSeg = trail[1]
-                                local glowStrength = clamp((self.selectionProgress or 0) ^ 0.6)
-                                local selectedState = (self.selectedIndex and self.cardStates) and self.cardStates[self.selectedIndex] or nil
-                                if selectedState and selectedState.selectionFlash then
-                                        local flashDuration = 0.75
-                                        local t = clamp(selectedState.selectionFlash / flashDuration)
-                                        local flashEase = 1 - (1 - t) * (1 - t)
-                                        glowStrength = max(glowStrength, flashEase)
-                                end
-
-                                if headSeg and glowStrength > 0 then
-                                        local pulse = 1 + 0.25 * sin((preview.idleTimer or 0) * 5.2)
-                                        local safeScale = (scale ~= 0) and scale or 1
-                                        local radius = (preview.segmentSize or SnakeUtils.SEGMENT_SIZE) * (0.6 + glowStrength * 0.95) * safeScale * pulse
-                                        love.graphics.setLineWidth(3 * safeScale)
-                                        love.graphics.setColor(1, 0.86, 0.38, 0.24 * glowStrength)
-                                        love.graphics.circle("line", headSeg.drawX, headSeg.drawY, radius)
-                                        love.graphics.setColor(1, 0.68, 0.22, 0.18 * glowStrength)
-                                        love.graphics.circle("fill", headSeg.drawX, headSeg.drawY, radius * 0.52)
-                                        love.graphics.setColor(1, 1, 1, 1)
-                                end
-
+                                SnakeDraw.run(trail, #trail, preview.segmentSize or SnakeUtils.SEGMENT_SIZE)
                                 love.graphics.pop()
                         end
                 end
