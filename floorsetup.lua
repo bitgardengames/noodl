@@ -16,6 +16,8 @@ local ArenaLayout = require("arenalayout")
 
 local FloorSetup = {}
 
+local computeSpawnContext
+
 local TRACK_LENGTH = 120
 local DEFAULT_SAW_RADIUS = 16
 local LAYOUT_VALIDATION_MAX_ATTEMPTS = 8
@@ -327,7 +329,7 @@ local function trackHitsBlocked(fx, fy, dir, blockedLookup)
         return false
 end
 
-local function computeSpawnContext()
+function computeSpawnContext()
         local safeZone = Snake:getSafeZone(3)
         local rockSafeZone = Snake:getSafeZone(5)
         local spawnBuffer = buildSpawnBuffer(rockSafeZone)
