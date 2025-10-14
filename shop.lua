@@ -6,8 +6,6 @@ local MetaProgression = require("metaprogression")
 local Theme = require("theme")
 local Shaders = require("shaders")
 local Floors = require("floors")
-local SnakeDraw = require("snakedraw")
-local SnakeUtils = require("snakeutils")
 local Shop = {}
 
 local ANALOG_DEADZONE = 0.35
@@ -152,321 +150,6 @@ local function handleAnalogAxis(self, axis, value)
         end
 end
 
-local min, max, abs, sqrt, sin, exp = math.min, math.max, math.abs, math.sqrt, math.sin, math.exp
-
-local function clamp(value)
-        if not value then
-                return 0
-        end
-
-        if value <= 0 then
-                return 0
-        end
-
-        if value >= 1 then
-                return 1
-        end
-
-        return value
-end
-
-local function smoothApproach(current, target, speed, dt)
-        if target == nil then
-                return current
-        end
-
-        if current == nil then
-                return target
-        end
-
-        if not dt or dt <= 0 then
-                return target
-        end
-
-        if not speed or speed <= 0 then
-                return target
-        end
-
-        local t = 1 - exp(-speed * dt)
-        return current + (target - current) * t
-end
-
-local function ensurePreviewPath(preview, anchorX, anchorY)
-        if not preview then
-                return
-        end
-
-        local segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
-        local spacing = segmentSize
-        local cols = preview.gridCols or 7
-        local rows = preview.gridRows or 5
-
-        local needsRebuild = preview._pathAnchorX ~= anchorX
-                or preview._pathAnchorY ~= anchorY
-                or preview._pathSpacing ~= spacing
-                or preview._pathCols ~= cols
-                or preview._pathRows ~= rows
-
-        if not needsRebuild and not preview.pathNeedsRebuild then
-                return
-        end
-
-        local leftX = anchorX - spacing * (cols - 1) / 2
-        local bottomY = anchorY - spacing * 0.5
-
-        local nodes = preview.pathNodes or {}
-        local count = 0
-
-        local function append(col, row)
-                local x = leftX + col * spacing
-                local y = bottomY - row * spacing
-
-                if count > 0 then
-                        local prev = nodes[count]
-                        if prev and abs(prev.x - x) < 0.001 and abs(prev.y - y) < 0.001 then
-                                return
-                        end
-                end
-
-                count = count + 1
-                local node = nodes[count] or {}
-                node.x = x
-                node.y = y
-                nodes[count] = node
-        end
-
-        for row = 0, rows - 1 do
-                if row % 2 == 0 then
-                        for col = 0, cols - 1 do
-                                append(col, row)
-                        end
-                        if row < rows - 1 then
-                                append(cols - 1, row + 1)
-                        end
-                else
-                        for col = cols - 1, 0, -1 do
-                                append(col, row)
-                        end
-                        if row < rows - 1 then
-                                append(0, row + 1)
-                        end
-                end
-        end
-
-        for row = rows - 2, 0, -1 do
-                append(cols - 1, row)
-        end
-
-        for col = cols - 2, 0, -1 do
-                append(col, 0)
-        end
-
-        for i = count + 1, #nodes do
-                nodes[i] = nil
-        end
-
-        preview.pathNodes = nodes
-        preview.pathNeedsRebuild = true
-        preview._pathAnchorX = anchorX
-        preview._pathAnchorY = anchorY
-        preview._pathSpacing = spacing
-        preview._pathCols = cols
-        preview._pathRows = rows
-end
-
-local function rebuildPreviewPath(preview)
-        local nodes = preview.pathNodes
-        if not nodes or #nodes < 2 then
-                preview.pathLength = 0
-                preview.pathCumulative = nil
-                return
-        end
-
-        local count = #nodes
-        local cumulative = preview.pathCumulative or {}
-        cumulative[1] = 0
-
-        local total = 0
-        for i = 1, count do
-                local curr = nodes[i]
-                local nextNode = nodes[(i % count) + 1]
-                local dx = nextNode.x - curr.x
-                local dy = nextNode.y - curr.y
-                local segLen = sqrt(dx * dx + dy * dy)
-                if segLen < 0.0001 then
-                        cumulative[i + 1] = total
-                else
-                        total = total + segLen
-                        cumulative[i + 1] = total
-                end
-        end
-
-        preview.pathCumulative = cumulative
-        preview.pathLength = total
-        preview.pathNeedsRebuild = false
-end
-
-local function samplePreviewPath(preview, distance)
-        local nodes = preview.pathNodes
-        if not nodes or #nodes == 0 then
-                return 0, 0
-        end
-
-        local total = preview.pathLength or 0
-        if total <= 0 then
-                local first = nodes[1] or {}
-                return first.x or 0, first.y or 0
-        end
-
-        local count = #nodes
-        local cumulative = preview.pathCumulative or {}
-        distance = distance % total
-
-        for i = 1, count do
-                local segStart = cumulative[i] or 0
-                local segEnd = cumulative[i + 1] or total
-                local segLen = segEnd - segStart
-                if segLen > 0 and distance <= segEnd + 1e-6 then
-                        local curr = nodes[i]
-                        local nextNode = nodes[(i % count) + 1]
-                        local t = clamp((distance - segStart) / segLen)
-                        local sampleX = curr.x + (nextNode.x - curr.x) * t
-                        local sampleY = curr.y + (nextNode.y - curr.y) * t
-                        local dirX, dirY
-                        local dx = nextNode.x - curr.x
-                        local dy = nextNode.y - curr.y
-                        local dirLen = sqrt(dx * dx + dy * dy)
-                        if dirLen > 1e-6 then
-                                dirX = dx / dirLen
-                                dirY = dy / dirLen
-
-                                if abs(dirX) > abs(dirY) then
-                                        dirX = dirX >= 0 and 1 or -1
-                                        dirY = 0
-                                elseif abs(dirY) > abs(dirX) then
-                                        dirY = dirY >= 0 and 1 or -1
-                                        dirX = 0
-                                end
-                        end
-
-                        return sampleX, sampleY, dirX, dirY
-                end
-        end
-
-        local last = nodes[count]
-        return last.x or 0, last.y or 0
-end
-
-local function buildPreviewTrail(preview, anchorX, anchorY, dt, excited)
-        if not preview then
-                return
-        end
-
-        ensurePreviewPath(preview, anchorX, anchorY)
-
-        if preview.pathNeedsRebuild then
-                rebuildPreviewPath(preview)
-        end
-
-        local totalLength = preview.pathLength or 0
-        if not totalLength or totalLength <= 0 then
-                if preview.trail then
-                        for i = #preview.trail, 1, -1 do
-                                preview.trail[i] = nil
-                        end
-                end
-                if preview.worldTrail then
-                        for i = #preview.worldTrail, 1, -1 do
-                                preview.worldTrail[i] = nil
-                        end
-                end
-                preview.segmentCountResolved = nil
-                preview.headWorldX = nil
-                preview.headWorldY = nil
-                preview.headDirX = nil
-                preview.headDirY = nil
-                preview._lastDirX = nil
-                preview._lastDirY = nil
-                return
-        end
-
-        dt = dt or 0
-        local segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
-        local desiredCount = preview.segmentCount or 18
-
-        local targetSpeed = segmentSize * (excited and 4.4 or 3.6)
-        preview.currentSpeed = smoothApproach(preview.currentSpeed, targetSpeed, 6, dt)
-        local speed = preview.currentSpeed or targetSpeed
-
-        preview.pathProgress = (preview.pathProgress or 0) + speed * dt
-        local headProgress = preview.pathProgress % totalLength
-        preview.pathProgress = headProgress
-
-        local spacing = segmentSize
-        local maxSegments = max(2, math.floor(totalLength / spacing) + 1)
-        local count = max(2, min(desiredCount, maxSegments))
-
-        preview.trail = preview.trail or {}
-        preview.worldTrail = preview.worldTrail or {}
-
-        local lastDirX = preview._lastDirX or 0
-        local lastDirY = preview._lastDirY or 0
-
-        for index = 1, count do
-                local distance = headProgress - (index - 1) * spacing
-                distance = distance % totalLength
-                local worldX, worldY, dirX, dirY = samplePreviewPath(preview, distance)
-
-                if dirX == nil and dirY == nil then
-                        dirX, dirY = lastDirX, lastDirY
-                else
-                        if dirX ~= nil then
-                                lastDirX = dirX
-                        end
-                        if dirY ~= nil then
-                                lastDirY = dirY
-                        end
-                end
-
-                dirX = dirX or 0
-                dirY = dirY or 0
-
-                local seg = preview.trail[index] or {}
-                seg.drawX = worldX
-                seg.drawY = worldY
-                seg.dirX = dirX
-                seg.dirY = dirY
-                preview.trail[index] = seg
-
-                local worldSeg = preview.worldTrail[index] or {}
-                worldSeg.drawX = worldX
-                worldSeg.drawY = worldY
-                worldSeg.dirX = dirX
-                worldSeg.dirY = dirY
-                preview.worldTrail[index] = worldSeg
-
-                if index == 1 then
-                        preview.headWorldX = worldX
-                        preview.headWorldY = worldY
-                        preview.headDirX = dirX
-                        preview.headDirY = dirY
-                end
-        end
-
-        preview._lastDirX = lastDirX
-        preview._lastDirY = lastDirY
-
-        for i = count + 1, #preview.trail do
-                preview.trail[i] = nil
-        end
-
-        for i = count + 1, #preview.worldTrail do
-                preview.worldTrail[i] = nil
-        end
-
-        preview.segmentCountResolved = count
-end
-
 function Shop:start(currentFloor)
         self.floor = currentFloor or 1
         local floorData = Floors[self.floor]
@@ -477,18 +160,6 @@ function Shop:start(currentFloor)
         self.inputMode = nil
         self.time = 0
         configureBackgroundEffect(self.floorPalette)
-        local segmentSize = SnakeUtils and SnakeUtils.SEGMENT_SIZE or 24
-        self.snakePreview = {
-                trail = {},
-                worldTrail = {},
-                segmentSize = segmentSize,
-                segmentCount = 18,
-                idleTimer = 0,
-                scale = 1,
-                gridCols = 7,
-                gridRows = 5,
-                pathNeedsRebuild = true,
-        }
         self:refreshCards()
 end
 
@@ -550,39 +221,6 @@ function Shop:refreshCards(options)
                 }
         end
 
-        if self.snakePreview then
-                local preview = self.snakePreview
-                preview.pathProgress = 0
-                preview.currentSpeed = nil
-                preview.anchorX = nil
-                preview.anchorY = nil
-                preview.segmentCountResolved = nil
-                preview.headWorldX = nil
-                preview.headWorldY = nil
-                preview.headDirX = nil
-                preview.headDirY = nil
-                preview._lastDirX = nil
-                preview._lastDirY = nil
-                preview.idleTimer = preview.idleTimer or 0
-                preview.pathNeedsRebuild = true
-                preview._pathAnchorX = nil
-                preview._pathAnchorY = nil
-                preview._pathSpacing = nil
-                preview._pathCols = nil
-                preview._pathRows = nil
-
-                if preview.trail then
-                        for i = #preview.trail, 1, -1 do
-                                preview.trail[i] = nil
-                        end
-                end
-
-                if preview.worldTrail then
-                        for i = #preview.worldTrail, 1, -1 do
-                                preview.worldTrail[i] = nil
-                        end
-                end
-        end
 end
 
 function Shop:beginRestock()
@@ -773,23 +411,6 @@ function Shop:update(dt)
                 self.selectedIndex = nil
         end
 
-        local preview = self.snakePreview
-        if preview then
-                preview.idleTimer = (preview.idleTimer or 0) + dt
-                local screenW = love.graphics.getWidth()
-                local screenH = love.graphics.getHeight()
-                preview.screenW = screenW
-                preview.screenH = screenH
-
-                local anchorX = screenW * 0.5
-                local anchorY = screenH - math.max(88, screenH * 0.08)
-                preview.anchorX = anchorX
-                preview.anchorY = anchorY
-
-                preview.segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
-
-                buildPreviewTrail(preview, anchorX, anchorY, dt, self.selected ~= nil)
-        end
 end
 
 local rarityBorderAlpha = 0.85
@@ -1399,10 +1020,10 @@ function Shop:draw(screenW, screenH)
 			yOffset = yOffset + 46 * focusEase
 			scale = scale * (1 + 0.35 * focusEase)
 			alpha = math.min(1, alpha * (1 + 0.6 * focusEase))
-			-- Make sure the selected card renders at full opacity while it
-			-- animates toward the center. Without this clamp the focus easing
-			-- could leave it slightly translucent until the animation fully
-			-- completes, which felt like a bug. Forcing alpha to 1 keeps the
+                        -- Make sure the selected card renders at full opacity while it
+                        -- animates toward the center. Without this explicit override the focus easing
+                        -- could leave it slightly translucent until the animation fully
+                        -- completes, which felt like a bug. Forcing alpha to 1 keeps the
 			-- spotlighted card crisp for the whole animation.
 			alpha = 1
 		else
@@ -1496,35 +1117,6 @@ function Shop:draw(screenW, screenH)
 
         if selectedIndex then
                 renderCard(selectedIndex, self.cards[selectedIndex])
-        end
-
-        local preview = self.snakePreview
-        if preview then
-                preview.screenW = screenW
-                preview.screenH = screenH
-                preview.layoutCenterY = layoutCenterY
-
-                local anchorX = screenW * 0.5
-                local anchorY = screenH - math.max(88, screenH * 0.08)
-                preview.anchorX = anchorX
-                preview.anchorY = anchorY
-                buildPreviewTrail(preview, anchorX, anchorY, 0, self.selected ~= nil)
-                local trail = preview.trail
-                if trail and #trail > 1 then
-                        love.graphics.push()
-                        SnakeDraw.run(
-                                trail,
-                                #trail,
-                                preview.segmentSize or SnakeUtils.SEGMENT_SIZE,
-                                nil,
-                                nil,
-                                nil,
-                                nil,
-                                nil,
-                                { lineJoin = "round" }
-                        )
-                        love.graphics.pop()
-                end
         end
 
         if self.selected then
