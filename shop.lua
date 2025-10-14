@@ -6,6 +6,8 @@ local MetaProgression = require("metaprogression")
 local Theme = require("theme")
 local Shaders = require("shaders")
 local Floors = require("floors")
+local SnakeDraw = require("snakedraw")
+local SnakeUtils = require("snakeutils")
 local Shop = {}
 
 local ANALOG_DEADZONE = 0.35
@@ -109,45 +111,223 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-	leftx = { slot = "horizontal" },
-	rightx = { slot = "horizontal" },
-	lefty = { slot = "vertical" },
-	righty = { slot = "vertical" },
-	[1] = { slot = "horizontal" },
-	[2] = { slot = "vertical" },
+        leftx = { slot = "horizontal" },
+        rightx = { slot = "horizontal" },
+        lefty = { slot = "vertical" },
+        righty = { slot = "vertical" },
+        [1] = { slot = "horizontal" },
+        [2] = { slot = "vertical" },
 }
 
 local function resetAnalogAxis()
-	analogAxisDirections.horizontal = nil
-	analogAxisDirections.vertical = nil
+        analogAxisDirections.horizontal = nil
+        analogAxisDirections.vertical = nil
 end
 
 local function handleAnalogAxis(self, axis, value)
-	local mapping = analogAxisMap[axis]
-	if not mapping then
-		return
-	end
+        local mapping = analogAxisMap[axis]
+        if not mapping then
+                return
+        end
 
-	local direction
-	if value >= ANALOG_DEADZONE then
-		direction = "positive"
-	elseif value <= -ANALOG_DEADZONE then
-		direction = "negative"
-	end
+        local direction
+        if value >= ANALOG_DEADZONE then
+                direction = "positive"
+        elseif value <= -ANALOG_DEADZONE then
+                direction = "negative"
+        end
 
-	if analogAxisDirections[mapping.slot] == direction then
-		return
-	end
+        if analogAxisDirections[mapping.slot] == direction then
+                return
+        end
 
-	analogAxisDirections[mapping.slot] = direction
+        analogAxisDirections[mapping.slot] = direction
 
-	if direction then
-		local actions = analogAxisActions[mapping.slot]
-		local action = actions and actions[direction]
-		if action then
-			action(self)
-		end
-	end
+        if direction then
+                local actions = analogAxisActions[mapping.slot]
+                local action = actions and actions[direction]
+                if action then
+                        action(self)
+                end
+        end
+end
+
+local min, max, abs, sqrt, sin, exp = math.min, math.max, math.abs, math.sqrt, math.sin, math.exp
+
+local function clamp01(value)
+        if not value then
+                return 0
+        end
+
+        if value <= 0 then
+                return 0
+        end
+
+        if value >= 1 then
+                return 1
+        end
+
+        return value
+end
+
+local function smoothApproach(current, target, speed, dt)
+        if target == nil then
+                return current
+        end
+
+        if current == nil then
+                return target
+        end
+
+        if not dt or dt <= 0 then
+                return target
+        end
+
+        if not speed or speed <= 0 then
+                return target
+        end
+
+        local t = 1 - exp(-speed * dt)
+        return current + (target - current) * t
+end
+
+local function cubicBezierPoint(t, p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y)
+        local u = 1 - t
+        local tt = t * t
+        local uu = u * u
+        local uuu = uu * u
+        local ttt = tt * t
+
+        local x = uuu * p0x + 3 * uu * t * p1x + 3 * u * tt * p2x + ttt * p3x
+        local y = uuu * p0y + 3 * uu * t * p1y + 3 * u * tt * p2y + ttt * p3y
+
+        return x, y
+end
+
+local function buildPreviewTrail(preview, startX, startY, headX, headY, idleTimer, scale)
+        if not preview then
+                return
+        end
+
+        if not (startX and startY and headX and headY) then
+                preview.trail = preview.trail or {}
+                for i = #preview.trail, 1, -1 do
+                        preview.trail[i] = nil
+                end
+                preview.worldTrail = preview.worldTrail or {}
+                for i = #preview.worldTrail, 1, -1 do
+                        preview.worldTrail[i] = nil
+                end
+                preview.headWorldX = nil
+                preview.headWorldY = nil
+                return
+        end
+
+        idleTimer = idleTimer or 0
+        local spacing = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
+        local desiredCount = preview.segmentCount or 18
+        local wobble = sin(idleTimer * 1.35) * 40
+        local sniff = sin(idleTimer * 2.6) * 14
+
+        local dx = headX - startX
+        local verticalSpan = max(120, abs(startY - headY) + 160)
+        local cp1x = startX + dx * 0.18 + wobble * 0.18
+        local cp2x = startX + dx * 0.72 - wobble * 0.12
+        local cp1y = startY - verticalSpan * 0.38
+        local cp2y = headY - verticalSpan * 0.62
+
+        if startY < headY then
+                cp1y = startY - verticalSpan * 0.32
+                cp2y = headY - verticalSpan * 0.52
+        end
+
+        cp1y = min(cp1y, startY - 36)
+        cp2y = min(cp2y, headY - 20)
+
+        local steps = 64
+        local points = {}
+        local totalLength = 0
+        local prevX, prevY = startX, startY
+        points[1] = { x = startX, y = startY, length = 0 }
+
+        for i = 1, steps do
+                local t = i / steps
+                local px, py = cubicBezierPoint(t, startX, startY, cp1x, cp1y, cp2x, cp2y, headX, headY + sniff)
+                local dxStep = px - prevX
+                local dyStep = py - prevY
+                local segmentLength = sqrt(dxStep * dxStep + dyStep * dyStep)
+                totalLength = totalLength + segmentLength
+                points[#points + 1] = { x = px, y = py, length = totalLength }
+                prevX, prevY = px, py
+        end
+
+        local maxSegments = max(2, math.floor(totalLength / spacing) + 1)
+        local count = max(2, min(desiredCount, maxSegments))
+
+        local function sampleAtDistance(distance)
+                if distance <= 0 then
+                        return startX, startY
+                end
+
+                for i = 2, #points do
+                        local curr = points[i]
+                        if distance <= curr.length then
+                                local prevPoint = points[i - 1]
+                                local segLen = curr.length - prevPoint.length
+                                if segLen <= 0 then
+                                        return curr.x, curr.y
+                                end
+
+                                local t = clamp01((distance - prevPoint.length) / segLen)
+                                local sampleX = prevPoint.x + (curr.x - prevPoint.x) * t
+                                local sampleY = prevPoint.y + (curr.y - prevPoint.y) * t
+                                return sampleX, sampleY
+                        end
+                end
+
+                local last = points[#points]
+                return last.x, last.y
+        end
+
+        preview.trail = preview.trail or {}
+        preview.worldTrail = preview.worldTrail or {}
+
+        local trail = preview.trail
+        local worldTrail = preview.worldTrail
+        local anchorX = preview.anchorX or startX
+        local anchorY = preview.anchorY or startY
+        scale = scale or 1
+        local invScale = (scale ~= 0) and (1 / scale) or 1
+
+        for index = 1, count do
+                local distFromTail = totalLength - (index - 1) * spacing
+                if distFromTail < 0 then
+                        distFromTail = 0
+                end
+
+                local worldX, worldY = sampleAtDistance(distFromTail)
+                local seg = trail[index] or {}
+                seg.drawX = anchorX + (worldX - anchorX) * invScale
+                seg.drawY = anchorY + (worldY - anchorY) * invScale
+                trail[index] = seg
+
+                local worldSeg = worldTrail[index] or {}
+                worldSeg.drawX = worldX
+                worldSeg.drawY = worldY
+                worldTrail[index] = worldSeg
+        end
+
+        for i = count + 1, #trail do
+                trail[i] = nil
+        end
+
+        for i = count + 1, #worldTrail do
+                worldTrail[i] = nil
+        end
+
+        preview.segmentCountResolved = count
+        preview.headWorldX = worldTrail[1] and worldTrail[1].drawX or headX
+        preview.headWorldY = worldTrail[1] and worldTrail[1].drawY or headY
 end
 
 function Shop:start(currentFloor)
@@ -160,6 +340,36 @@ function Shop:start(currentFloor)
         self.inputMode = nil
         self.time = 0
         configureBackgroundEffect(self.floorPalette)
+        local segmentSize = SnakeUtils and SnakeUtils.SEGMENT_SIZE or 24
+        self.snakePreview = {
+                trail = {},
+                worldTrail = {},
+                segmentSize = segmentSize,
+                segmentCount = 18,
+                idleTimer = 0,
+                scale = 0.88,
+                previewVisuals = {
+                        timeDilation = {
+                                active = false,
+                                timer = 0,
+                                duration = 2.4,
+                                cooldown = 2.4,
+                                cooldownTimer = 0,
+                        },
+                        dash = {
+                                active = false,
+                                timer = 0,
+                                duration = 1.3,
+                                cooldown = 1.3,
+                                cooldownTimer = 0,
+                        },
+                        adrenaline = {
+                                active = false,
+                                timer = 0,
+                                duration = 1.6,
+                        },
+                },
+        }
         self:refreshCards()
 end
 
@@ -204,10 +414,10 @@ function Shop:refreshCards(options)
 
 	resetAnalogAxis()
 
-	for i = 1, #self.cards do
-		self.cardStates[i] = {
-			progress = 0,
-			delay = initialDelay + (i - 1) * 0.08,
+        for i = 1, #self.cards do
+                self.cardStates[i] = {
+                        progress = 0,
+                        delay = initialDelay + (i - 1) * 0.08,
 			selection = 0,
 			selectionClock = 0,
 			hover = 0,
@@ -216,10 +426,36 @@ function Shop:refreshCards(options)
 			selectionFlash = nil,
 			revealSoundPlayed = false,
 			selectSoundPlayed = false,
-			discardActive = false,
-			discard = nil,
-		}
-	end
+                        discardActive = false,
+                        discard = nil,
+                }
+        end
+
+        if self.snakePreview then
+                local preview = self.snakePreview
+                preview.currentX = nil
+                preview.currentY = nil
+                preview.targetX = nil
+                preview.targetY = nil
+                preview.anchorX = nil
+                preview.anchorY = nil
+                preview.segmentCountResolved = nil
+                preview.headWorldX = nil
+                preview.headWorldY = nil
+                preview.idleTimer = preview.idleTimer or 0
+
+                if preview.trail then
+                        for i = #preview.trail, 1, -1 do
+                                preview.trail[i] = nil
+                        end
+                end
+
+                if preview.worldTrail then
+                        for i = #preview.worldTrail, 1, -1 do
+                                preview.worldTrail[i] = nil
+                        end
+                end
+        end
 end
 
 function Shop:beginRestock()
@@ -404,11 +640,92 @@ function Shop:update(dt)
 				Audio:playSound("shop_purchase")
 			end
 		end
-	else
-		self.selectionTimer = 0
-		self.selectionComplete = false
-		self.selectedIndex = nil
-	end
+        else
+                self.selectionTimer = 0
+                self.selectionComplete = false
+                self.selectedIndex = nil
+        end
+
+        local preview = self.snakePreview
+        if preview then
+                preview.idleTimer = (preview.idleTimer or 0) + dt
+
+                local targetCard = nil
+                if self.selected then
+                        targetCard = self.selected
+                elseif self.focusIndex and self.cards then
+                        targetCard = self.cards[self.focusIndex]
+                elseif self.cards and self.cards[1] then
+                        targetCard = self.cards[1]
+                end
+
+                local targetX, targetY = nil, nil
+                if targetCard then
+                        if targetCard.focusPoint then
+                                targetX = targetCard.focusPoint.x
+                                targetY = targetCard.focusPoint.y
+                        elseif targetCard.bounds then
+                                local b = targetCard.bounds
+                                if b then
+                                        targetX = b.x + b.w * 0.5
+                                        targetY = b.y + b.h * 0.4
+                                end
+                        end
+                end
+
+                if not targetX then
+                        local screenW = preview.screenW or love.graphics.getWidth()
+                        local screenH = preview.screenH or love.graphics.getHeight()
+                        targetX = screenW * 0.5
+                        targetY = preview.layoutCenterY or screenH * 0.5
+                end
+
+                preview.targetX = targetX
+                preview.targetY = targetY
+
+                local chaseSpeed = self.selected and 8 or 5.2
+                preview.currentX = smoothApproach(preview.currentX, preview.targetX, chaseSpeed, dt)
+                preview.currentY = smoothApproach(preview.currentY, preview.targetY, chaseSpeed, dt)
+
+                if preview.currentX == nil then
+                        preview.currentX = preview.targetX
+                end
+
+                if preview.currentY == nil then
+                        preview.currentY = preview.targetY
+                end
+
+                local visuals = preview.previewVisuals
+                local idleTimer = preview.idleTimer or 0
+                if visuals then
+                        if visuals.timeDilation then
+                                local duration = visuals.timeDilation.duration or 2.4
+                                local normalized = duration > 0 and (idleTimer % duration) or 0
+                                visuals.timeDilation.active = true
+                                visuals.timeDilation.timer = normalized
+                                visuals.timeDilation.duration = duration
+                                visuals.timeDilation.cooldown = duration
+                                visuals.timeDilation.cooldownTimer = duration - normalized
+                        end
+
+                        if visuals.dash then
+                                local duration = visuals.dash.duration or 1.3
+                                local normalized = duration > 0 and (idleTimer % duration) or 0
+                                visuals.dash.timer = normalized
+                                visuals.dash.duration = duration
+                                visuals.dash.cooldown = duration
+                                visuals.dash.cooldownTimer = duration - normalized
+                                visuals.dash.active = (self.selectionProgress or 0) > 0.15 or self.selected ~= nil
+                        end
+
+                        if visuals.adrenaline then
+                                local duration = visuals.adrenaline.duration or 1.6
+                                visuals.adrenaline.timer = duration > 0 and (idleTimer % duration) or 0
+                                visuals.adrenaline.duration = duration
+                                visuals.adrenaline.active = (self.selectionProgress or 0) > 0.25
+                        end
+                end
+        end
 end
 
 local rarityBorderAlpha = 0.85
@@ -1054,10 +1371,10 @@ function Shop:draw(screenW, screenH)
 			end
 		end
 
-		local drawWidth = cardWidth * scale
-		local drawHeight = cardHeight * scale
-		local drawX = centerX - drawWidth / 2
-		local drawY = centerY - drawHeight / 2
+                local drawWidth = cardWidth * scale
+                local drawHeight = cardHeight * scale
+                local drawX = centerX - drawWidth / 2
+                local drawY = centerY - drawHeight / 2
 
 		local usingFocusNavigation = self.inputMode == "gamepad" or self.inputMode == "keyboard"
 		local mouseHover = mx >= drawX and mx <= drawX + drawWidth
@@ -1080,10 +1397,11 @@ function Shop:draw(screenW, screenH)
 		love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
 		local appearanceAlpha = self.selected == card and 1 or alpha
                 drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, state, self.selected == card, appearanceAlpha)
-		love.graphics.pop()
-		card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
+                love.graphics.pop()
+                card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
+                card.focusPoint = { x = centerX, y = drawY + drawHeight * 0.45 }
 
-		if state and state.selectionFlash then
+                if state and state.selectionFlash then
 			local flashDuration = 0.75
 			local t = math.max(0, math.min(1, state.selectionFlash / flashDuration))
 			local ease = 1 - ((1 - t) * (1 - t))
@@ -1112,15 +1430,78 @@ function Shop:draw(screenW, screenH)
 		end
 	end
 
-	if selectedIndex then
-		renderCard(selectedIndex, self.cards[selectedIndex])
-	end
+        if selectedIndex then
+                renderCard(selectedIndex, self.cards[selectedIndex])
+        end
 
-	if self.selected then
-		love.graphics.setFont(UI.fonts.button)
-		love.graphics.setColor(1, 0.88, 0.6, 0.9)
-		love.graphics.printf(
-			string.format("%s claimed", self.selected.name or "Relic"),
+        local preview = self.snakePreview
+        if preview then
+                preview.screenW = screenW
+                preview.screenH = screenH
+                preview.layoutCenterY = layoutCenterY
+
+                local anchorX = screenW * 0.5
+                local anchorY = screenH - math.max(88, screenH * 0.08)
+                preview.anchorX = anchorX
+                preview.anchorY = anchorY
+
+                local headX = preview.currentX or preview.targetX or anchorX
+                local headY = preview.currentY or preview.targetY or layoutCenterY
+
+                if headX and headY then
+                        local sniffStrength = 1 - clamp01(self.selectionProgress or 0)
+                        local idleTimer = preview.idleTimer or 0
+                        local horizontalSway = sin(idleTimer * 1.6) * 26 * sniffStrength
+                        local verticalBob = sin(idleTimer * 2.4) * 8 * sniffStrength
+                        headX = headX + horizontalSway
+                        headY = headY + verticalBob
+
+                        buildPreviewTrail(preview, anchorX, anchorY, headX, headY, idleTimer, preview.scale)
+                        local trail = preview.trail
+                        if trail and #trail > 1 then
+                                local scale = preview.scale or 1
+                                love.graphics.push()
+                                if scale ~= 1 then
+                                        love.graphics.translate(anchorX, anchorY)
+                                        love.graphics.scale(scale, scale)
+                                        love.graphics.translate(-anchorX, -anchorY)
+                                end
+
+                                local previewVisuals = preview.previewVisuals
+                                SnakeDraw.run(trail, #trail, preview.segmentSize or SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, previewVisuals)
+
+                                local headSeg = trail[1]
+                                local glowStrength = clamp01((self.selectionProgress or 0) ^ 0.6)
+                                local selectedState = (self.selectedIndex and self.cardStates) and self.cardStates[self.selectedIndex] or nil
+                                if selectedState and selectedState.selectionFlash then
+                                        local flashDuration = 0.75
+                                        local t = clamp01(selectedState.selectionFlash / flashDuration)
+                                        local flashEase = 1 - (1 - t) * (1 - t)
+                                        glowStrength = max(glowStrength, flashEase)
+                                end
+
+                                if headSeg and glowStrength > 0 then
+                                        local pulse = 1 + 0.25 * sin((preview.idleTimer or 0) * 5.2)
+                                        local safeScale = (scale ~= 0) and scale or 1
+                                        local radius = (preview.segmentSize or SnakeUtils.SEGMENT_SIZE) * (0.6 + glowStrength * 0.95) / safeScale * pulse
+                                        love.graphics.setLineWidth(3 / safeScale)
+                                        love.graphics.setColor(1, 0.86, 0.38, 0.24 * glowStrength)
+                                        love.graphics.circle("line", headSeg.drawX, headSeg.drawY, radius)
+                                        love.graphics.setColor(1, 0.68, 0.22, 0.18 * glowStrength)
+                                        love.graphics.circle("fill", headSeg.drawX, headSeg.drawY, radius * 0.52)
+                                        love.graphics.setColor(1, 1, 1, 1)
+                                end
+
+                                love.graphics.pop()
+                        end
+                end
+        end
+
+        if self.selected then
+                love.graphics.setFont(UI.fonts.button)
+                love.graphics.setColor(1, 0.88, 0.6, 0.9)
+                love.graphics.printf(
+                        string.format("%s claimed", self.selected.name or "Relic"),
 			0,
 			screenH * 0.87,
 			screenW,
