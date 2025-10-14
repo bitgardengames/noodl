@@ -104,6 +104,7 @@ Snake.eventHorizon = nil
 Snake.stormchaser = nil
 Snake.titanblood = nil
 Snake.temporalAnchor = nil
+Snake.quickFangs = nil
 
 local function resolveTimeDilationScale(ability)
 	if ability and ability.active then
@@ -214,6 +215,7 @@ function Snake:resetModifiers()
         self.stormchaser = nil
         self.titanblood = nil
         self.temporalAnchor = nil
+        self.quickFangs = nil
         UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
 
@@ -221,6 +223,38 @@ function Snake:setStonebreakerStacks(count)
         count = count or 0
         if count < 0 then count = 0 end
         self.stonebreakerStacks = count
+end
+
+function Snake:setQuickFangsStacks(count)
+        count = math.max(0, math.floor((count or 0) + 0.0001))
+        local state = self.quickFangs
+        local previous = state and (state.stacks or 0) or 0
+
+        if count > 0 then
+                if not state then
+                        state = { intensity = 0, baseTarget = 0, time = 0, stacks = 0, flash = 0 }
+                        self.quickFangs = state
+                end
+
+                state.stacks = count
+                state.baseTarget = math.min(0.65, 0.32 + 0.11 * math.min(count, 4))
+                state.target = state.baseTarget
+                if count > previous then
+                        state.intensity = math.max(state.intensity or 0, 0.55)
+                        state.flash = math.min(1.0, (state.flash or 0) + 0.7)
+                end
+        elseif state then
+                state.stacks = 0
+                state.baseTarget = 0
+                state.target = 0
+        end
+
+        if self.quickFangs then
+                local data = self.quickFangs
+                if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 then
+                        self.quickFangs = nil
+                end
+        end
 end
 
 function Snake:setChronospiralActive(active)
@@ -1021,14 +1055,28 @@ local function collectUpgradeVisuals(self)
 		}
 	end
 
-	if self.adrenaline and self.adrenaline.active then
-		visuals = visuals or {}
-		visuals.adrenaline = {
-			active = true,
-			timer = self.adrenaline.timer or 0,
-			duration = self.adrenaline.duration or 0,
-		}
-	end
+        if self.adrenaline and self.adrenaline.active then
+                visuals = visuals or {}
+                visuals.adrenaline = {
+                        active = true,
+                        timer = self.adrenaline.timer or 0,
+                        duration = self.adrenaline.duration or 0,
+                }
+        end
+
+        local quickFangs = self.quickFangs
+        if quickFangs and (((quickFangs.intensity or 0) > 0.01) or (quickFangs.stacks or 0) > 0) then
+                visuals = visuals or {}
+                visuals.quickFangs = {
+                        stacks = quickFangs.stacks or 0,
+                        intensity = quickFangs.intensity or 0,
+                        target = quickFangs.target or 0,
+                        speedRatio = quickFangs.speedRatio or 1,
+                        active = quickFangs.active or false,
+                        time = quickFangs.time or 0,
+                        flash = quickFangs.flash or 0,
+                }
+        end
 
         if self.timeDilation then
                 visuals = visuals or {}
@@ -1650,18 +1698,50 @@ function Snake:update(dt)
 	end
 
 	-- adrenaline boost check
-	if self.adrenaline and self.adrenaline.active then
-		speed = speed * self.adrenaline.boost
-		self.adrenaline.timer = self.adrenaline.timer - dt
-		if self.adrenaline.timer <= 0 then
-			self.adrenaline.active = false
-		end
-	end
+        if self.adrenaline and self.adrenaline.active then
+                speed = speed * self.adrenaline.boost
+                self.adrenaline.timer = self.adrenaline.timer - dt
+                if self.adrenaline.timer <= 0 then
+                        self.adrenaline.active = false
+                end
+        end
 
-	local stepX = direction.x * speed * dt
-	local stepY = direction.y * speed * dt
-	local newX = head.drawX + stepX
-	local newY = head.drawY + stepY
+        if self.quickFangs then
+                local state = self.quickFangs
+                state.time = (state.time or 0) + dt * (1.4 + math.min(1.8, (speed / math.max(1, self.baseSpeed or 1))))
+                state.flash = math.max(0, (state.flash or 0) - dt * 1.8)
+
+                local baseTarget = state.baseTarget or 0
+                local baseSpeed = self.baseSpeed or 1
+                if not baseSpeed or baseSpeed <= 0 then
+                        baseSpeed = 1
+                end
+
+                local ratio = speed / baseSpeed
+                if ratio < 0 then ratio = 0 end
+                state.speedRatio = ratio
+
+                local bonus = math.max(0, ratio - 1)
+                local dynamic = math.min(0.35, bonus * 0.4)
+                local flashBonus = (state.flash or 0) * 0.35
+                local target = math.min(1, math.max(0, baseTarget + dynamic + flashBonus))
+                state.target = target
+
+                local intensity = state.intensity or 0
+                local blend = math.min(1, dt * 6.0)
+                intensity = intensity + (target - intensity) * blend
+                state.intensity = intensity
+                state.active = (target > baseTarget + 0.02) or (ratio > 1.05) or ((state.flash or 0) > 0.05)
+
+                if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.02 then
+                        self.quickFangs = nil
+                end
+        end
+
+        local stepX = direction.x * speed * dt
+        local stepY = direction.y * speed * dt
+        local newX = head.drawX + stepX
+        local newY = head.drawY + stepY
 
 	-- advance cell clock, maybe snap & commit queued direction
 	local snappedThisTick = false
