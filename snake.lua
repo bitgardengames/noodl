@@ -97,6 +97,9 @@ Snake.stoneSkinSawGrace = 0
 Snake.dash = nil
 Snake.timeDilation = nil
 Snake.hazardGraceTimer = 0
+Snake.chronospiral = nil
+Snake.abyssalCatalyst = nil
+Snake.phoenixEcho = nil
 
 local function resolveTimeDilationScale(ability)
 	if ability and ability.active then
@@ -197,16 +200,105 @@ function Snake:resetModifiers()
 	self.stonebreakerStacks = 0
 	self.stoneSkinSawGrace = 0
 	self.dash = nil
-	self.timeDilation = nil
-	self.adrenaline = nil
-	self.hazardGraceTimer = 0
-	UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
+        self.timeDilation = nil
+        self.adrenaline = nil
+        self.hazardGraceTimer = 0
+        self.chronospiral = nil
+        self.abyssalCatalyst = nil
+        self.phoenixEcho = nil
+        UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
 
 function Snake:setStonebreakerStacks(count)
-	count = count or 0
-	if count < 0 then count = 0 end
-	self.stonebreakerStacks = count
+        count = count or 0
+        if count < 0 then count = 0 end
+        self.stonebreakerStacks = count
+end
+
+function Snake:setChronospiralActive(active)
+        if active then
+                local state = self.chronospiral
+                if not state then
+                        state = { intensity = 0, target = 1, spin = 0 }
+                        self.chronospiral = state
+                end
+                state.target = 1
+                state.active = true
+        else
+                local state = self.chronospiral
+                if state then
+                        state.target = 0
+                        state.active = false
+                end
+        end
+end
+
+function Snake:setAbyssalCatalystStacks(count)
+        count = math.max(0, math.floor((count or 0) + 0.0001))
+        local state = self.abyssalCatalyst
+
+        if count > 0 then
+                if not state then
+                        state = { intensity = 0, target = 0, time = 0 }
+                        self.abyssalCatalyst = state
+                end
+                state.stacks = count
+                state.target = math.min(1, 0.55 + 0.18 * math.min(count, 3))
+        elseif state then
+                state.stacks = 0
+                state.target = 0
+        end
+
+        if self.abyssalCatalyst and (self.abyssalCatalyst.stacks or 0) <= 0 and (self.abyssalCatalyst.intensity or 0) <= 0 then
+                self.abyssalCatalyst = nil
+        end
+end
+
+function Snake:setPhoenixEchoCharges(count, options)
+        count = math.max(0, math.floor((count or 0) + 0.0001))
+        options = options or {}
+
+        local state = self.phoenixEcho
+        if not state and (count > 0 or options.triggered or options.instantIntensity) then
+                state = { intensity = 0, target = 0, time = 0, flareTimer = 0, flareDuration = 1.2, charges = 0 }
+                self.phoenixEcho = state
+        elseif not state then
+                return
+        end
+
+        local previous = state.charges or 0
+        state.charges = count
+
+        if count > 0 then
+                state.target = math.min(1, 0.55 + 0.18 * math.min(count, 3))
+        else
+                state.target = 0
+        end
+
+        if count > previous then
+                state.flareTimer = math.max(state.flareTimer or 0, 1.25)
+        elseif count < previous then
+                state.flareTimer = math.max(state.flareTimer or 0, 0.9)
+        end
+
+        if options.triggered then
+                state.flareTimer = math.max(state.flareTimer or 0, options.triggered)
+                state.intensity = math.max(state.intensity or 0, 0.85)
+        end
+
+        if options.instantIntensity then
+                state.intensity = math.max(state.intensity or 0, options.instantIntensity)
+        end
+
+        if options.flareDuration then
+                state.flareDuration = options.flareDuration
+        elseif not state.flareDuration then
+                state.flareDuration = 1.2
+        end
+
+        if count <= 0 and state.target <= 0 and (state.intensity or 0) <= 0 and (state.flareTimer or 0) <= 0 then
+                self.phoenixEcho = nil
+        end
 end
 
 function Snake:addShieldBurst(config)
@@ -883,18 +975,53 @@ local function collectUpgradeVisuals(self)
 		}
 	end
 
-	if self.dash then
-		visuals = visuals or {}
-		visuals.dash = {
-			active = self.dash.active or false,
-			timer = self.dash.timer or 0,
+        if self.dash then
+                visuals = visuals or {}
+                visuals.dash = {
+                        active = self.dash.active or false,
+                        timer = self.dash.timer or 0,
 			duration = self.dash.duration or 0,
 			cooldown = self.dash.cooldown or 0,
 			cooldownTimer = self.dash.cooldownTimer or 0,
-		}
-	end
+                }
+        end
 
-	return visuals
+        local chronospiral = self.chronospiral
+        if chronospiral and ((chronospiral.intensity or 0) > 1e-3 or (chronospiral.target or 0) > 0) then
+                visuals = visuals or {}
+                visuals.chronospiral = {
+                        intensity = chronospiral.intensity or 0,
+                        spin = chronospiral.spin or 0,
+                }
+        end
+
+        local abyssal = self.abyssalCatalyst
+        if abyssal and ((abyssal.intensity or 0) > 1e-3 or (abyssal.target or 0) > 0) then
+                visuals = visuals or {}
+                visuals.abyssalCatalyst = {
+                        intensity = abyssal.intensity or 0,
+                        stacks = abyssal.stacks or 0,
+                        pulse = abyssal.pulse or abyssal.time or 0,
+                }
+        end
+
+        local phoenix = self.phoenixEcho
+        if phoenix and (((phoenix.intensity or 0) > 1e-3) or (phoenix.charges or 0) > 0 or (phoenix.flareTimer or 0) > 0) then
+                visuals = visuals or {}
+                local flare = 0
+                local flareDuration = phoenix.flareDuration or 1.2
+                if flareDuration > 0 and (phoenix.flareTimer or 0) > 0 then
+                        flare = math.min(1, phoenix.flareTimer / flareDuration)
+                end
+                visuals.phoenixEcho = {
+                        intensity = phoenix.intensity or 0,
+                        charges = phoenix.charges or 0,
+                        flare = flare,
+                        time = phoenix.time or 0,
+                }
+        end
+
+        return visuals
 end
 
 -- Build initial trail aligned to CELL CENTERS
@@ -1210,11 +1337,56 @@ function Snake:finishDescending()
 end
 
 function Snake:update(dt)
-	if isDead then return false, "dead", { fatal = true } end
+        if isDead then return false, "dead", { fatal = true } end
 
-	-- base speed with upgrades/modifiers
-	local head = trail[1]
-	local speed = self:getSpeed()
+        if self.chronospiral then
+                local state = self.chronospiral
+                state.spin = (state.spin or 0) + dt
+                local intensity = state.intensity or 0
+                local target = state.target or 0
+                local rate = (state.active and 4.0 or 2.4)
+                local blend = math.min(1, dt * rate)
+                intensity = intensity + (target - intensity) * blend
+                state.intensity = intensity
+                if intensity < 0.005 and target <= 0 then
+                        self.chronospiral = nil
+                end
+        end
+
+        if self.abyssalCatalyst then
+                local state = self.abyssalCatalyst
+                state.time = (state.time or 0) + dt
+                state.pulse = state.time
+                local intensity = state.intensity or 0
+                local target = state.target or 0
+                local blend = math.min(1, dt * 3.0)
+                intensity = intensity + (target - intensity) * blend
+                state.intensity = intensity
+                if (state.stacks or 0) <= 0 and intensity < 0.01 then
+                        self.abyssalCatalyst = nil
+                end
+        end
+
+        if self.phoenixEcho then
+                local state = self.phoenixEcho
+                state.time = (state.time or 0) + dt
+                state.flareDuration = state.flareDuration or 1.2
+                if state.flareTimer then
+                        state.flareTimer = math.max(0, state.flareTimer - dt)
+                end
+                local intensity = state.intensity or 0
+                local target = state.target or 0
+                local blend = math.min(1, dt * 4.2)
+                intensity = intensity + (target - intensity) * blend
+                state.intensity = intensity
+                if (state.charges or 0) <= 0 and target <= 0 and intensity < 0.01 and (state.flareTimer or 0) <= 0 then
+                        self.phoenixEcho = nil
+                end
+        end
+
+        -- base speed with upgrades/modifiers
+        local head = trail[1]
+        local speed = self:getSpeed()
 
 	local hole = descendingHole
 	if hole then

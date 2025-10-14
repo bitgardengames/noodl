@@ -1407,17 +1407,18 @@ local pool = {
 		rarity = "epic",
 		allowDuplicates = false,
 		tags = {"defense", "risk"},
-		unlockTag = "abyssal_protocols",
-		onAcquire = function(state)
-			state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 0.85
-			state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.9
-			state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) - 0.5
-			state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.2
+                unlockTag = "abyssal_protocols",
+                onAcquire = function(state)
+                        state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 0.85
+                        state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.9
+                        state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) - 0.5
+                        state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.2
+                        state.effects.abyssalCatalyst = (state.effects.abyssalCatalyst or 0) + 1
 
-			grantCrashShields(1)
+                        grantCrashShields(1)
 
-			celebrateUpgrade(getUpgradeString("abyssal_catalyst", "name"), nil, {
-				color = {0.62, 0.58, 0.94, 1},
+                        celebrateUpgrade(getUpgradeString("abyssal_catalyst", "name"), nil, {
+                                color = {0.62, 0.58, 0.94, 1},
 				particleCount = 22,
 				particleSpeed = 150,
 				particleLife = 0.5,
@@ -1515,16 +1516,17 @@ local pool = {
 		rarity = "epic",
 		tags = {"combo", "defense", "risk"},
 		weight = 1,
-		unlockTag = "combo_mastery",
-		onAcquire = function(state)
-			state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.75
-			state.effects.sawSpinMult = (state.effects.sawSpinMult or 1) * 0.6
-			state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.6
-			for _ = 1, 4 do
-				Snake:grow()
-			end
-			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
-		end,
+                unlockTag = "combo_mastery",
+                onAcquire = function(state)
+                        state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.75
+                        state.effects.sawSpinMult = (state.effects.sawSpinMult or 1) * 0.6
+                        state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.6
+                        state.effects.chronospiralCore = true
+                        for _ = 1, 4 do
+                                Snake:grow()
+                        end
+                        Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
+                end,
 	}),
 	register({
 		id = "phoenix_echo",
@@ -2138,18 +2140,23 @@ function Upgrades:tryFloorReplay(game, cause)
 	game.deathCause = nil
 
 	local hx, hy = Snake:getHead()
-	celebrateUpgrade(getUpgradeString("phoenix_echo", "name"), nil, {
-		x = hx,
-		y = hy,
-		color = {1, 0.62, 0.32, 1},
-		particleCount = 24,
-		particleSpeed = 170,
-		particleLife = 0.6,
-		textOffset = 60,
-		textScale = 1.22,
-	})
+        celebrateUpgrade(getUpgradeString("phoenix_echo", "name"), nil, {
+                x = hx,
+                y = hy,
+                color = {1, 0.62, 0.32, 1},
+                particleCount = 24,
+                particleSpeed = 170,
+                particleLife = 0.6,
+                textOffset = 60,
+                textScale = 1.22,
+        })
 
-	return restored
+        self:applyPersistentEffects(false)
+        if Snake.setPhoenixEchoCharges then
+                Snake:setPhoenixEchoCharges(state.counters.phoenixEchoCharges or 0, { triggered = 1.4, flareDuration = 1.4 })
+        end
+
+        return restored
 end
 
 local function captureBaseline(state)
@@ -2322,9 +2329,22 @@ function Upgrades:applyPersistentEffects(rebaseline)
 			local maxUses = ability.maxFloorUses or ability.floorCharges
 			ability.floorCharges = math.max(0, math.min(ability.floorCharges, maxUses))
 		end
-	else
-		Snake.timeDilation = nil
-	end
+        else
+                Snake.timeDilation = nil
+        end
+
+        if Snake.setChronospiralActive then
+                Snake:setChronospiralActive(effects.chronospiralCore and true or false)
+        end
+
+        if Snake.setAbyssalCatalystStacks then
+                Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
+        end
+
+        if Snake.setPhoenixEchoCharges then
+                local counters = state.counters or {}
+                Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
+        end
 end
 
 local SHOP_PITY_MAX = 5
