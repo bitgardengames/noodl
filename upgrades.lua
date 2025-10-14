@@ -182,24 +182,29 @@ local function mirroredScalesLaserHandler(data, state)
 		Score:addBonus(bonus)
 	end
 
-	celebrateUpgrade(getUpgradeString("mirrored_scales", "activation_text"), data, {
-		color = {0.72, 0.92, 1, 1},
-		textOffset = 56,
-		textScale = 1.18,
-		particleCount = 18 + stacks * 2,
-		particleSpeed = 150,
-		particleLife = 0.48,
-		visual = {
-			badge = "shield",
-			outerRadius = 64,
-			innerRadius = 20,
-			ringCount = 3,
-			ringSpacing = 12,
-			life = 0.72,
-			glowAlpha = 0.34,
-			haloAlpha = 0.24,
-		},
-	})
+        celebrateUpgrade(getUpgradeString("mirrored_scales", "activation_text"), data, {
+                color = {0.72, 0.92, 1, 1},
+                textOffset = 56,
+                textScale = 1.18,
+                particleCount = 18 + stacks * 2,
+                particleSpeed = 150,
+                particleLife = 0.48,
+                visual = {
+                        badge = "shield",
+                        outerRadius = 64,
+                        innerRadius = 20,
+                        ringCount = 3,
+                        ringSpacing = 12,
+                        life = 0.72,
+                        glowAlpha = 0.34,
+                        haloAlpha = 0.24,
+                        variant = "prism_refraction",
+                        addBlend = true,
+                        color = {0.72, 0.92, 1.0, 1},
+                        variantSecondaryColor = {0.46, 0.78, 1.0, 0.95},
+                        variantTertiaryColor = {1.0, 0.96, 0.72, 0.82},
+                },
+        })
 end
 
 local function prismLockCooldownHandler(data, state)
@@ -591,18 +596,29 @@ local pool = {
 		maxStacks = 4,
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(1.10)
-			celebrateUpgrade(getUpgradeString("quick_fangs", "name"), nil, {
-				color = {1, 0.63, 0.42, 1},
-				particleCount = 18,
-				particleSpeed = 150,
-				particleLife = 0.38,
-				textOffset = 46,
-				textScale = 1.18,
-			})
-		end,
-	}),
-	register({
-		id = "stone_skin",
+                        celebrateUpgrade(getUpgradeString("quick_fangs", "name"), nil, {
+                                color = {1, 0.63, 0.42, 1},
+                                particleCount = 18,
+                                particleSpeed = 150,
+                                particleLife = 0.38,
+                                textOffset = 46,
+                                textScale = 1.18,
+                                visual = {
+                                        variant = "fang_flurry",
+                                        addBlend = true,
+                                        life = 0.66,
+                                        innerRadius = 12,
+                                        outerRadius = 52,
+                                        showBase = false,
+                                        color = {1, 0.62, 0.42, 1},
+                                        variantSecondaryColor = {1.0, 0.9, 0.74, 0.92},
+                                        variantTertiaryColor = {1.0, 0.46, 0.26, 0.78},
+                                },
+                        })
+                end,
+        }),
+        register({
+                id = "stone_skin",
 		nameKey = "upgrades.stone_skin.name",
 		descKey = "upgrades.stone_skin.description",
 		rarity = "uncommon",
@@ -617,16 +633,25 @@ local pool = {
 				state.counters.stoneSkinHandlerRegistered = true
 				Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
 			end
-			celebrateUpgrade(getUpgradeString("stone_skin", "name"), nil, {
-				color = {0.75, 0.82, 0.88, 1},
-				particleCount = 14,
-				particleSpeed = 90,
-				particleLife = 0.45,
-				textOffset = 50,
-				textScale = 1.12,
-			})
-		end,
-	}),
+                        celebrateUpgrade(getUpgradeString("stone_skin", "name"), nil, {
+                                color = {0.75, 0.82, 0.88, 1},
+                                particleCount = 14,
+                                particleSpeed = 90,
+                                particleLife = 0.45,
+                                textOffset = 50,
+                                textScale = 1.12,
+                                visual = {
+                                        variant = "stoneguard_bastion",
+                                        life = 0.8,
+                                        innerRadius = 14,
+                                        outerRadius = 60,
+                                        color = {0.74, 0.8, 0.88, 1},
+                                        variantSecondaryColor = {0.46, 0.5, 0.56, 1},
+                                        variantTertiaryColor = {0.94, 0.96, 0.98, 0.72},
+                                },
+                        })
+                end,
+        }),
 	register({
 		id = "aegis_recycler",
 		nameKey = "upgrades.aegis_recycler.name",
