@@ -309,12 +309,13 @@ end
 local function samplePreviewPath(preview, distance)
         local nodes = preview.pathNodes
         if not nodes or #nodes == 0 then
-                                return 0, 0
+                return 0, 0
         end
 
         local total = preview.pathLength or 0
         if total <= 0 then
-                return nodes[1].x or 0, nodes[1].y or 0
+                local first = nodes[1] or {}
+                return first.x or 0, first.y or 0
         end
 
         local count = #nodes
@@ -331,7 +332,24 @@ local function samplePreviewPath(preview, distance)
                         local t = clamp((distance - segStart) / segLen)
                         local sampleX = curr.x + (nextNode.x - curr.x) * t
                         local sampleY = curr.y + (nextNode.y - curr.y) * t
-                        return sampleX, sampleY
+                        local dirX, dirY
+                        local dx = nextNode.x - curr.x
+                        local dy = nextNode.y - curr.y
+                        local dirLen = sqrt(dx * dx + dy * dy)
+                        if dirLen > 1e-6 then
+                                dirX = dx / dirLen
+                                dirY = dy / dirLen
+
+                                if abs(dirX) > abs(dirY) then
+                                        dirX = dirX >= 0 and 1 or -1
+                                        dirY = 0
+                                elseif abs(dirY) > abs(dirX) then
+                                        dirY = dirY >= 0 and 1 or -1
+                                        dirX = 0
+                                end
+                        end
+
+                        return sampleX, sampleY, dirX, dirY
                 end
         end
 
@@ -365,6 +383,8 @@ local function buildPreviewTrail(preview, anchorX, anchorY, dt, excited)
                 preview.segmentCountResolved = nil
                 preview.headWorldX = nil
                 preview.headWorldY = nil
+                preview.headDirX = nil
+                preview.headDirY = nil
                 return
         end
 
@@ -390,21 +410,27 @@ local function buildPreviewTrail(preview, anchorX, anchorY, dt, excited)
         for index = 1, count do
                 local distance = headProgress - (index - 1) * spacing
                 distance = distance % totalLength
-                local worldX, worldY = samplePreviewPath(preview, distance)
+                local worldX, worldY, dirX, dirY = samplePreviewPath(preview, distance)
 
                 local seg = preview.trail[index] or {}
                 seg.drawX = worldX
                 seg.drawY = worldY
+                seg.dirX = dirX
+                seg.dirY = dirY
                 preview.trail[index] = seg
 
                 local worldSeg = preview.worldTrail[index] or {}
                 worldSeg.drawX = worldX
                 worldSeg.drawY = worldY
+                worldSeg.dirX = dirX
+                worldSeg.dirY = dirY
                 preview.worldTrail[index] = worldSeg
 
                 if index == 1 then
                         preview.headWorldX = worldX
                         preview.headWorldY = worldY
+                        preview.headDirX = dirX
+                        preview.headDirY = dirY
                 end
         end
 
@@ -511,6 +537,8 @@ function Shop:refreshCards(options)
                 preview.segmentCountResolved = nil
                 preview.headWorldX = nil
                 preview.headWorldY = nil
+                preview.headDirX = nil
+                preview.headDirY = nil
                 preview.idleTimer = preview.idleTimer or 0
                 preview.pathNeedsRebuild = true
                 preview._pathAnchorX = nil
@@ -1460,7 +1488,17 @@ function Shop:draw(screenW, screenH)
                 local trail = preview.trail
                 if trail and #trail > 1 then
                         love.graphics.push()
-                        SnakeDraw.run(trail, #trail, preview.segmentSize or SnakeUtils.SEGMENT_SIZE)
+                        SnakeDraw.run(
+                                trail,
+                                #trail,
+                                preview.segmentSize or SnakeUtils.SEGMENT_SIZE,
+                                nil,
+                                nil,
+                                nil,
+                                nil,
+                                nil,
+                                { sharpCorners = true }
+                        )
                         love.graphics.pop()
                 end
         end
