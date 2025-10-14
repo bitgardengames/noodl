@@ -1244,9 +1244,11 @@ function GameOver:enter(data)
 			xpIntoLevel = startSnapshot.xpIntoLevel or 0,
 			xpForLevel = startSnapshot.xpForNext or MetaProgression:getXpForLevel(startSnapshot.level or 1),
 			displayedGained = 0,
-			fillSpeed = fillSpeed,
-			levelFlash = 0,
-			celebrations = {},
+                        fillSpeed = fillSpeed,
+                        levelFlash = 0,
+                        levelPopDuration = 0.65,
+                        levelPopTimer = 0.65,
+                        celebrations = {},
 			pendingMilestones = {},
 			levelUnlocks = {},
 			bonusXP = challengeBonusXP,
@@ -1462,8 +1464,8 @@ local function drawXpSection(self, x, y, width)
 
 	local levelColor = Theme.progressColor or UI.colors.progress or UI.colors.text
 	local flash = math.max(0, math.min(1, anim.levelFlash or 0))
-	local levelText = Localization:get("gameover.meta_progress_level_label", { level = anim.displayedLevel or 1 })
-	local levelY = headerY + fontProgressTitle:getHeight() + 12
+        local levelText = Localization:get("gameover.meta_progress_level_label", { level = anim.displayedLevel or 1 })
+        local levelY = headerY + fontProgressTitle:getHeight() + 16
 	UI.drawLabel(levelText, x, levelY, width, "center", {
 		font = fontProgressValue,
 		color = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.78 + 0.2 * flash },
@@ -1557,10 +1559,26 @@ local function drawXpSection(self, x, y, width)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
 	end
 
-	love.graphics.setFont(fontProgressValue)
-	love.graphics.setColor(Theme.textColor or UI.colors.text)
-	local levelValue = tostring(anim.displayedLevel or 1)
-	love.graphics.printf(levelValue, centerX - innerRadius, centerY - fontProgressValue:getHeight() / 2 - 4, innerRadius * 2, "center")
+        love.graphics.setFont(fontProgressValue)
+        love.graphics.setColor(Theme.textColor or UI.colors.text)
+        local levelValue = tostring(anim.displayedLevel or 1)
+        local popDuration = anim.levelPopDuration or 0.65
+        local popTimer = clamp(anim.levelPopTimer or popDuration, 0, popDuration)
+        local popProgress = 1
+        if popDuration > 1e-6 then
+                popProgress = clamp(popTimer / popDuration, 0, 1)
+        end
+        local popScale = 1
+        if popProgress < 1 then
+                local pop = clamp(1 - popProgress, 0, 1)
+                popScale = 1 + easeOutBack(pop) * 0.3
+        end
+
+        love.graphics.push()
+        love.graphics.translate(centerX, centerY)
+        love.graphics.scale(popScale, popScale)
+        love.graphics.printf(levelValue, -innerRadius, -fontProgressValue:getHeight() / 2 - 4, innerRadius * 2, "center")
+        love.graphics.pop()
 
 	local totalLabel = Localization:get("gameover.meta_progress_total_label", {
 		total = math.floor((anim.displayedTotal or 0) + 0.5),
@@ -1917,9 +1935,11 @@ function GameOver:update(dt)
 
 	local previousLevel = anim.displayedLevel or 1
 	local level, xpIntoLevel, xpForNext = MetaProgression:getProgressForTotal(anim.displayedTotal)
-	if level > previousLevel then
-		for levelReached = previousLevel + 1, level do
-			anim.levelFlash = 0.9
+        if level > previousLevel then
+                anim.levelPopDuration = anim.levelPopDuration or 0.65
+                anim.levelPopTimer = 0
+                for levelReached = previousLevel + 1, level do
+                        anim.levelFlash = 0.9
 			addCelebration(anim, {
 				type = "level",
 				title = Localization:get("gameover.meta_progress_level_up", { level = levelReached }),
@@ -1974,9 +1994,17 @@ function GameOver:update(dt)
 		anim.visualPercent = clamp(fraction, 0, 1)
 	end
 
-	if anim.levelFlash then
-		anim.levelFlash = math.max(0, anim.levelFlash - dt)
-	end
+        if anim.levelFlash then
+                anim.levelFlash = math.max(0, anim.levelFlash - dt)
+        end
+
+        local popDuration = anim.levelPopDuration or 0.65
+        if popDuration > 0 then
+                local timer = anim.levelPopTimer or popDuration
+                anim.levelPopTimer = math.min(popDuration, timer + dt)
+        else
+                anim.levelPopTimer = 0
+        end
 
 	if anim.pendingMilestones then
 		for _, milestone in ipairs(anim.pendingMilestones) do
