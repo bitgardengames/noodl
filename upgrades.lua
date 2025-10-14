@@ -1635,28 +1635,30 @@ local pool = {
 				if Saws and Saws.stall then
 					Saws:stall(0.7)
 				end
-				celebrateUpgrade(getUpgradeString("stormchaser_rig", "activation_text"), data, {
-					color = {0.88, 0.94, 1.0, 1},
-					particleCount = 16,
-					particleSpeed = 140,
-					particleLife = 0.4,
-					particleSize = 4,
-					particleSpread = math.pi * 2,
-					textOffset = 58,
-					textScale = 1.14,
-					visual = {
-						badge = "bolt",
-						outerRadius = 56,
-						innerRadius = 18,
-						ringCount = 3,
-						life = 0.68,
-						glowAlpha = 0.32,
-						haloAlpha = 0.24,
-					},
-				})
-			end,
-		},
-	}),
+                                celebrateUpgrade(getUpgradeString("stormchaser_rig", "activation_text"), data, {
+                                        color = {0.88, 0.94, 1.0, 1},
+                                        particleCount = 16,
+                                        particleSpeed = 140,
+                                        particleLife = 0.4,
+                                        particleSize = 4,
+                                        particleSpread = math.pi * 2,
+                                        textOffset = 58,
+                                        textScale = 1.14,
+                                        visual = {
+                                                variant = "storm_burst",
+                                                showBase = false,
+                                                life = 0.78,
+                                                innerRadius = 18,
+                                                outerRadius = 60,
+                                                addBlend = true,
+                                                color = {0.88, 0.94, 1.0, 1},
+                                                variantSecondaryColor = {0.38, 0.68, 1.0, 0.9},
+                                                variantTertiaryColor = {1.0, 0.96, 0.78, 0.85},
+                                        },
+                                })
+                        end,
+                },
+        }),
 	register({
 		id = "temporal_anchor",
 		nameKey = "upgrades.temporal_anchor.name",
@@ -1712,19 +1714,28 @@ local pool = {
 		allowDuplicates = false,
 		weight = 1,
 		unlockTag = "legendary",
-		onAcquire = function(state)
-			state.effects.wallPortal = true
-			celebrateUpgrade(getUpgradeString("event_horizon", "name"), nil, {
-				color = {1, 0.86, 0.34, 1},
-				particleCount = 32,
-				particleSpeed = 160,
-				particleLife = 0.6,
-				particleSize = 5,
-				particleSpread = math.pi * 2,
-				particleSpeedVariance = 90,
-			})
-		end,
-	}),
+                onAcquire = function(state)
+                        state.effects.wallPortal = true
+                        celebrateUpgrade(getUpgradeString("event_horizon", "name"), nil, {
+                                color = {1, 0.86, 0.34, 1},
+                                particleCount = 32,
+                                particleSpeed = 160,
+                                particleLife = 0.6,
+                                particleSize = 5,
+                                particleSpread = math.pi * 2,
+                                particleSpeedVariance = 90,
+                                visual = {
+                                        variant = "event_horizon",
+                                        showBase = false,
+                                        life = 0.92,
+                                        innerRadius = 16,
+                                        outerRadius = 62,
+                                        color = {1, 0.86, 0.34, 1},
+                                        variantSecondaryColor = {0.46, 0.78, 1.0, 0.9},
+                                },
+                        })
+                end,
+        }),
 }
 
 local function getRarityInfo(rarity)
@@ -2149,6 +2160,17 @@ function Upgrades:tryFloorReplay(game, cause)
                 particleLife = 0.6,
                 textOffset = 60,
                 textScale = 1.22,
+                visual = {
+                        variant = "phoenix_flare",
+                        showBase = false,
+                        life = 1.18,
+                        innerRadius = 16,
+                        outerRadius = 58,
+                        addBlend = true,
+                        color = {1, 0.62, 0.32, 1},
+                        variantSecondaryColor = {1, 0.44, 0.14, 0.95},
+                        variantTertiaryColor = {1, 0.85, 0.48, 0.88},
+                },
         })
 
         self:applyPersistentEffects(false)

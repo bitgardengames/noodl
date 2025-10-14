@@ -8,19 +8,32 @@ local sin = math.sin
 local random = love.math.random
 
 local function clamp01(value)
-	if value <= 0 then
-		return 0
-	end
-	if value >= 1 then
-		return 1
-	end
-	return value
+        if value <= 0 then
+                return 0
+        end
+        if value >= 1 then
+                return 1
+        end
+        return value
+end
+
+local function deepcopy(value)
+        if type(value) ~= "table" then
+                return value
+        end
+
+        local copy = {}
+        for k, v in pairs(value) do
+                copy[k] = deepcopy(v)
+        end
+
+        return copy
 end
 
 local function copyColor(color)
-	if not color then
-		return {1, 1, 1, 1}
-	end
+        if not color then
+                return {1, 1, 1, 1}
+        end
 
 	return {
 		color[1] or 1,
@@ -28,6 +41,14 @@ local function copyColor(color)
 		color[3] or 1,
 		color[4] == nil and 1 or color[4],
 	}
+end
+
+local function copyOptionalColor(color)
+        if not color then
+                return nil
+        end
+
+        return copyColor(color)
 end
 
 local function drawShieldBadge(effect, progress)
@@ -120,10 +141,10 @@ local badgeDrawers = {
 }
 
 function UpgradeVisuals:spawn(x, y, options)
-	if not x or not y then return end
-	options = options or {}
+        if not x or not y then return end
+        options = options or {}
 
-	local effect = {
+        local effect = {
 		x = x,
 		y = y,
 		age = 0,
@@ -141,11 +162,16 @@ function UpgradeVisuals:spawn(x, y, options)
 		pulseDelay = options.pulseDelay or 0.12,
 		innerRadius = options.innerRadius or 12,
 		outerRadius = options.outerRadius or options.radius or 44,
-		variant = options.variant or "pulse",
-		glowAlpha = options.glowAlpha,
-		haloAlpha = options.haloAlpha,
-		addBlend = options.addBlend ~= false,
-	}
+                variant = options.variant or "pulse",
+                variantColor = copyOptionalColor(options.variantColor),
+                variantSecondaryColor = copyOptionalColor(options.variantSecondaryColor),
+                variantTertiaryColor = copyOptionalColor(options.variantTertiaryColor),
+                variantData = options.variantData and deepcopy(options.variantData) or nil,
+                showBase = options.showBase ~= false,
+                glowAlpha = options.glowAlpha,
+                haloAlpha = options.haloAlpha,
+                addBlend = options.addBlend ~= false,
+        }
 
 	effect.outerRadius = math.max(effect.outerRadius or 0, effect.innerRadius + 6)
 	if options.outerRadius and options.radius then
@@ -174,16 +200,206 @@ function UpgradeVisuals:update(dt)
 end
 
 local function drawBadge(effect, progress)
-	if not effect.badge then return end
-	local drawer = badgeDrawers[effect.badge]
-	if not drawer then return end
-	drawer(effect, progress)
+        if not effect.badge then return end
+        local drawer = badgeDrawers[effect.badge]
+        if not drawer then return end
+        drawer(effect, progress)
+end
+
+local function drawPhoenixFlare(effect, progress)
+        local x, y = effect.x, effect.y
+        local outerRadius = effect.outerRadius or 44
+        local innerRadius = effect.innerRadius or 12
+        local baseColor = effect.variantColor or effect.color or {1, 0.6, 0.24, 1}
+        local wingColor = effect.variantSecondaryColor or {1, 0.42, 0.12, 1}
+        local emberColor = effect.variantTertiaryColor or {1, 0.82, 0.44, 1}
+
+        local baseAlpha = (baseColor[4] or 1) * clamp01(1.1 - progress * 1.15)
+        if baseAlpha <= 0 then return end
+
+        local pulse = 0.9 + 0.18 * sin(progress * pi * 5)
+
+        if effect.addBlend then
+                love.graphics.setBlendMode("add")
+        end
+
+        local flareHeight = outerRadius * (1.1 + 0.25 * pulse)
+        love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], baseAlpha * 0.55)
+        love.graphics.ellipse("fill", x, y + flareHeight * 0.1, innerRadius * 0.85 * pulse, flareHeight * 0.55, 36)
+
+        local crestAlpha = (emberColor[4] or 1) * clamp01(1 - progress * 1.05)
+        love.graphics.setColor(emberColor[1], emberColor[2], emberColor[3], crestAlpha * 0.9)
+        love.graphics.polygon("fill", x, y - innerRadius * 1.2, x + innerRadius * 0.7, y + innerRadius * 0.4, x, y + innerRadius * 0.9, x - innerRadius * 0.7, y + innerRadius * 0.4)
+
+        local wingAlpha = (wingColor[4] or 1) * clamp01(1 - progress * 1.35)
+        local span = outerRadius * (1.35 + 0.12 * sin(progress * pi * 4))
+        local height = outerRadius * 0.7
+        for side = -1, 1, 2 do
+                local points = {
+                        x, y - height * 0.18,
+                        x + side * span * 0.58, y - height * 0.32,
+                        x + side * span * 0.9, y + height * 0.05,
+                        x + side * span * 0.4, y + height * 0.55,
+                        x, y + height * 0.32,
+                }
+                love.graphics.setColor(wingColor[1], wingColor[2], wingColor[3], wingAlpha * 0.55)
+                love.graphics.polygon("fill", points)
+                love.graphics.setColor(wingColor[1], wingColor[2], wingColor[3], wingAlpha)
+                love.graphics.setLineWidth(2.2)
+                love.graphics.polygon("line", points)
+        end
+
+        local emberBaseAlpha = (emberColor[4] or 1) * clamp01(1 - progress * 0.9)
+        if emberBaseAlpha > 0 then
+                for i = 1, 6 do
+                        local start = (i - 1) * 0.12
+                        local emberProgress = (progress - start) / 0.58
+                        if emberProgress > -0.1 and emberProgress < 1.1 then
+                                emberProgress = clamp01(emberProgress)
+                                local fade = 1 - emberProgress
+                                local angle = (effect.rotation or 0) + i * 0.75 + progress * pi * 1.4
+                                local dist = innerRadius * (0.5 + 0.3 * sin(progress * pi * 6 + i))
+                                local ex = x + cos(angle) * dist
+                                local ey = y - outerRadius * (0.15 + emberProgress * 0.75) - i * 2
+                                love.graphics.setColor(emberColor[1], emberColor[2], emberColor[3], emberBaseAlpha * fade * 0.85)
+                                love.graphics.circle("fill", ex, ey, innerRadius * 0.2 * (0.8 + 0.4 * fade), 18)
+                        end
+                end
+        end
+
+        if effect.addBlend then
+                love.graphics.setBlendMode("alpha")
+        end
+
+        love.graphics.setLineWidth(1)
+end
+
+local function drawEventHorizon(effect, progress)
+        local x, y = effect.x, effect.y
+        local outerRadius = effect.outerRadius or 44
+        local innerRadius = effect.innerRadius or 12
+        local highlightColor = effect.variantColor or effect.color or {1, 0.82, 0.38, 1}
+        local shardColor = effect.variantSecondaryColor or {0.4, 0.7, 1.0, 1}
+
+        local gravityAlpha = clamp01(1 - progress * 0.9)
+        if gravityAlpha <= 0 then return end
+
+        love.graphics.setColor(0.02, 0.02, 0.08, 0.7 * gravityAlpha)
+        love.graphics.circle("fill", x, y, outerRadius * (0.65 + 0.2 * progress), 48)
+
+        love.graphics.setColor(0, 0, 0, 0.88 * gravityAlpha)
+        love.graphics.circle("fill", x, y, innerRadius * (1.25 - 0.4 * progress), 48)
+
+        love.graphics.setLineWidth(3)
+        for i = 1, 3 do
+                local radius = innerRadius * (1.7 + i * 0.55)
+                local startAngle = (effect.rotation or 0) + progress * pi * (1.6 + i * 0.25) + i * 0.6
+                local sweep = pi * (0.45 + 0.1 * i)
+                local alpha = (highlightColor[4] or 1) * clamp01(1.15 - progress * (0.7 + i * 0.15)) * 0.9
+                love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], alpha)
+                love.graphics.arc("line", "open", x, y, radius, startAngle, startAngle + sweep, 32)
+        end
+
+        local shardAlpha = (shardColor[4] or 1) * gravityAlpha
+        for i = 1, 6 do
+                local orbit = innerRadius * (1.2 + i * 0.32)
+                local angle = (effect.rotation or 0) + progress * pi * (2.6 + i * 0.18) + i * 0.8
+                local ex = x + cos(angle) * orbit
+                local ey = y + sin(angle) * orbit
+                love.graphics.setColor(shardColor[1], shardColor[2], shardColor[3], shardAlpha * (0.65 + 0.25 * ((i % 2 == 0) and 1 or 0.8)))
+                love.graphics.circle("fill", ex, ey, innerRadius * 0.22 * clamp01(1.05 - progress * 0.8), 18)
+        end
+
+        local rimAlpha = (highlightColor[4] or 1) * clamp01(1 - progress * 1.2)
+        love.graphics.setLineWidth(2)
+        love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], rimAlpha)
+        love.graphics.circle("line", x, y, outerRadius * (0.92 - 0.18 * progress), 48)
+
+        love.graphics.setLineWidth(1)
+end
+
+local function drawStormBurst(effect, progress)
+        local x, y = effect.x, effect.y
+        local outerRadius = effect.outerRadius or 44
+        local innerRadius = effect.innerRadius or 12
+        local boltColor = effect.variantColor or effect.color or {0.86, 0.94, 1.0, 1}
+        local auraColor = effect.variantSecondaryColor or {0.34, 0.66, 1.0, 0.9}
+        local sparkColor = effect.variantTertiaryColor or {1, 0.95, 0.75, 0.9}
+
+        local alpha = (boltColor[4] or 1) * clamp01(1.05 - progress * 1.15)
+        if alpha <= 0 then return end
+
+        if effect.addBlend then
+                love.graphics.setBlendMode("add")
+                love.graphics.setColor(auraColor[1], auraColor[2], auraColor[3], (auraColor[4] or 1) * alpha * 0.55)
+                love.graphics.circle("fill", x, y, outerRadius * (0.78 + 0.18 * sin(progress * pi * 4)), 36)
+                love.graphics.setBlendMode("alpha")
+        end
+
+        local branches = 3
+        for branch = 1, branches do
+                local delay = (branch - 1) * 0.08
+                local branchProgress = clamp01((progress - delay) / (0.78 - delay * 0.4))
+                if branchProgress > 0 then
+                        local branchAlpha = alpha * (1 - 0.2 * (branch - 1))
+                        local angle = (effect.rotation or 0) + branch * (pi / 3) + sin(progress * pi * (3 + branch)) * 0.2
+                        local length = outerRadius * (1.25 + 0.22 * branch) * branchProgress
+                        local lateral = innerRadius * (0.9 - 0.18 * branch)
+
+                        local points = { x, y }
+                        local segments = 4
+                        for seg = 1, segments do
+                                local t = seg / segments
+                                local wobble = sin(progress * pi * (4 + branch) + seg * 1.4) * lateral * (1 - t)
+                                local px = x + cos(angle) * length * t - sin(angle) * wobble * (seg % 2 == 0 and -0.6 or 0.6)
+                                local py = y + sin(angle) * length * t + cos(angle) * wobble * (seg % 2 == 0 and -0.6 or 0.6)
+                                points[#points + 1] = px
+                                points[#points + 1] = py
+                        end
+
+                        love.graphics.setColor(boltColor[1], boltColor[2], boltColor[3], branchAlpha)
+                        love.graphics.setLineWidth(3.2 - branch * 0.4)
+                        love.graphics.line(points)
+
+                        local tipX = points[#points - 1]
+                        local tipY = points[#points]
+                        love.graphics.setColor(boltColor[1], boltColor[2], boltColor[3], branchAlpha * 0.8)
+                        love.graphics.circle("fill", tipX, tipY, innerRadius * 0.35, 18)
+                end
+        end
+
+        local sparkAlpha = (sparkColor[4] or 1) * alpha * 0.75
+        if sparkAlpha > 0 then
+                for i = 1, 6 do
+                        local angle = (effect.rotation or 0) + i * (pi / 3) + progress * pi * 1.8
+                        local radius = innerRadius * (1.6 + 0.35 * sin(progress * pi * 5 + i))
+                        local sx = x + cos(angle) * radius
+                        local sy = y + sin(angle) * radius
+                        love.graphics.setColor(sparkColor[1], sparkColor[2], sparkColor[3], sparkAlpha)
+                        love.graphics.circle("fill", sx, sy, innerRadius * 0.28, 12)
+                end
+        end
+
+        love.graphics.setLineWidth(1)
+end
+
+local variantDrawers = {
+        phoenix_flare = drawPhoenixFlare,
+        event_horizon = drawEventHorizon,
+        storm_burst = drawStormBurst,
+}
+
+local function drawVariant(effect, progress)
+        if not effect.variant then return end
+        local drawer = variantDrawers[effect.variant]
+        if not drawer then return end
+        drawer(effect, progress)
 end
 
 local function drawRings(effect, progress)
-	local color = effect.color or {1, 1, 1, 1}
-	local ringCount = effect.ringCount or 1
-	local ringSpacing = effect.ringSpacing or 10
+        local color = effect.color or {1, 1, 1, 1}
+        local ringCount = effect.ringCount or 1
+        local ringSpacing = effect.ringSpacing or 10
 	local outerRadius = effect.outerRadius or 44
 	local innerRadius = effect.innerRadius or 12
 	local pulseDelay = effect.pulseDelay or 0.12
@@ -233,19 +449,22 @@ local function drawGlow(effect, progress)
 end
 
 function UpgradeVisuals:draw()
-	if not love or not love.graphics then return end
-	if #self.effects == 0 then return end
+        if not love or not love.graphics then return end
+        if #self.effects == 0 then return end
 
-	love.graphics.push("all")
+        love.graphics.push("all")
 
-	for _, effect in ipairs(self.effects) do
-		local progress = clamp01(effect.age / effect.life)
-		drawGlow(effect, progress)
-		drawRings(effect, progress)
-		drawBadge(effect, progress)
-	end
+        for _, effect in ipairs(self.effects) do
+                local progress = clamp01(effect.age / effect.life)
+                if effect.showBase ~= false then
+                        drawGlow(effect, progress)
+                        drawRings(effect, progress)
+                        drawBadge(effect, progress)
+                end
+                drawVariant(effect, progress)
+        end
 
-	love.graphics.pop()
+        love.graphics.pop()
 end
 
 function UpgradeVisuals:reset()
