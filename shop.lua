@@ -5,6 +5,7 @@ local Audio = require("audio")
 local MetaProgression = require("metaprogression")
 local Theme = require("theme")
 local Shaders = require("shaders")
+local Floors = require("floors")
 local Shop = {}
 
 local ANALOG_DEADZONE = 0.35
@@ -14,41 +15,67 @@ local BACKGROUND_EFFECT_TYPE = "shopGlimmer"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
-local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
+local function getColorChannels(color, fallback)
+        local reference = color or fallback
+        if not reference then
+                return 0, 0, 0, 1
+        end
 
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.54
-
-	Shaders.configure(effect, {
-		bgColor = Theme.bgColor,
-		accentColor = Theme.buttonHover,
-		glowColor = Theme.accentTextColor,
-	})
-
-	backgroundEffect = effect
+        return reference[1] or 0, reference[2] or 0, reference[3] or 0, reference[4] or 1
 end
 
-local function drawBackground(screenW, screenH)
-	love.graphics.setColor(0.07, 0.08, 0.11, 1)
-	love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+local function configureBackgroundEffect(palette)
+        local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+        if not effect then
+                backgroundEffect = nil
+                return
+        end
 
-	if not backgroundEffect then
-		configureBackgroundEffect()
-	end
+        local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+        effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.54
 
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, screenW, screenH, intensity)
-	end
+        local needsConfigure = (effect._appliedPalette ~= palette) or not effect._appliedPaletteConfigured
 
-	love.graphics.setColor(0.07, 0.08, 0.11, 0.28)
-	love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-	love.graphics.setColor(1, 1, 1, 1)
+        if needsConfigure then
+                local bgColor = (palette and palette.bgColor) or Theme.bgColor
+                local accentColor = (palette and (palette.arenaBorder or palette.snake)) or Theme.buttonHover
+                local highlightColor = (palette and (palette.highlightColor or palette.snake or palette.arenaBorder))
+                        or Theme.accentTextColor
+                        or Theme.highlightColor
+
+                Shaders.configure(effect, {
+                        bgColor = bgColor,
+                        accentColor = accentColor,
+                        glowColor = highlightColor,
+                        highlightColor = highlightColor,
+                })
+
+                effect._appliedPalette = palette
+                effect._appliedPaletteConfigured = true
+        end
+
+        backgroundEffect = effect
+end
+
+local function drawBackground(screenW, screenH, palette)
+        local bgColor = (palette and palette.bgColor) or Theme.bgColor
+        local baseR, baseG, baseB, baseA = getColorChannels(bgColor)
+        love.graphics.setColor(baseR * 0.92, baseG * 0.92, baseB * 0.92, baseA)
+        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+
+        if not backgroundEffect or backgroundEffect._appliedPalette ~= palette then
+                configureBackgroundEffect(palette)
+        end
+
+        if backgroundEffect then
+                local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+                Shaders.draw(backgroundEffect, 0, 0, screenW, screenH, intensity)
+        end
+
+        local overlayR, overlayG, overlayB = getColorChannels(bgColor)
+        love.graphics.setColor(overlayR, overlayG, overlayB, 0.28)
+        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function moveFocusAnalog(self, delta)
@@ -122,14 +149,16 @@ local function handleAnalogAxis(self, axis, value)
 end
 
 function Shop:start(currentFloor)
-	self.floor = currentFloor or 1
-	self.shopkeeperLine = nil
-	self.shopkeeperSubline = nil
-	self.selectionHoldDuration = 1.85
-	self.inputMode = nil
-	self.time = 0
-	configureBackgroundEffect()
-	self:refreshCards()
+        self.floor = currentFloor or 1
+        local floorData = Floors[self.floor]
+        self.floorPalette = floorData and floorData.palette or nil
+        self.shopkeeperLine = nil
+        self.shopkeeperSubline = nil
+        self.selectionHoldDuration = 1.85
+        self.inputMode = nil
+        self.time = 0
+        configureBackgroundEffect(self.floorPalette)
+        self:refreshCards()
 end
 
 function Shop:refreshCards(options)
@@ -742,7 +771,7 @@ local function drawCard(card, x, y, w, h, hovered, index, _, isSelected, appeara
 end
 
 function Shop:draw(screenW, screenH)
-	drawBackground(screenW, screenH)
+        drawBackground(screenW, screenH, self.floorPalette)
 	local textAreaWidth = screenW * 0.8
 	local textAreaX = (screenW - textAreaWidth) / 2
 	local currentY = screenH * 0.12
