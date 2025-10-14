@@ -1,7 +1,6 @@
 local Theme = require("theme")
 local Audio = require("audio")
 local Shaders = require("shaders")
-local ArenaLayoutDraw = require("arenalayoutdraw")
 
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
@@ -92,151 +91,22 @@ local function drawSpawnDebugOverlay(self)
 		end
 	end
 
-        love.graphics.push("all")
-        love.graphics.setLineWidth(1.25)
-        love.graphics.setBlendMode("alpha")
+	love.graphics.push("all")
+	love.graphics.setLineWidth(1.25)
+	love.graphics.setBlendMode("alpha")
 
-        local validation = debugData.layoutValidation
-        if validation then
-                local lines = {}
-                local statusParts = {}
-                statusParts[#statusParts + 1] = validation.success and "PASS" or "FAIL"
-                if validation.relaxed then
-                        statusParts[#statusParts + 1] = "relaxed"
-                end
-                if validation.forced then
-                        statusParts[#statusParts + 1] = "forced"
-                end
-
-                lines[#lines + 1] = string.format("Validation: %s", table.concat(statusParts, " | "))
-
-                if validation.attempt or validation.maxAttempts then
-                        local attemptText = validation.attempt and tostring(validation.attempt) or "?"
-                        if validation.maxAttempts then
-                                attemptText = attemptText .. "/" .. tostring(validation.maxAttempts)
-                        end
-                        lines[#lines + 1] = string.format("Attempts: %s", attemptText)
-                end
-
-                if validation.startCells or validation.totalSpawn then
-                        lines[#lines + 1] = string.format("Spawn cells: %d/%d", validation.startCells or 0, validation.totalSpawn or 0)
-                end
-
-                if validation.totalWalkable then
-                        lines[#lines + 1] = string.format("Walkable reach: %d/%d", validation.reachableWalkable or 0, validation.totalWalkable or 0)
-                end
-
-                if validation.totalFruit and validation.totalFruit > 0 then
-                        lines[#lines + 1] = string.format("Fruit reach: %d/%d", validation.reachableFruit or 0, validation.totalFruit or 0)
-                end
-
-                if validation.totalExit and validation.totalExit > 0 then
-                        lines[#lines + 1] = string.format("Exit reach: %d/%d", validation.reachableExit or 0, validation.totalExit or 0)
-                end
-
-                if validation.reason and not validation.success then
-                        lines[#lines + 1] = "Reason: " .. tostring(validation.reason)
-                end
-
-                if validation.seedOffset and validation.seedOffset > 0 then
-                        lines[#lines + 1] = string.format("Seed offset: %d", validation.seedOffset)
-                end
-
-                if validation.rngSeed then
-                        lines[#lines + 1] = string.format("RNG seed: %d", validation.rngSeed)
-                end
-
-                local textX = self.x + 6
-                local textY = self.y + 6
-                love.graphics.setColor(0.94, 0.96, 1.0, 0.88)
-                for _, line in ipairs(lines) do
-                        love.graphics.print(line, textX, textY)
-                        textY = textY + 14
-                end
-        end
-
-        drawCells(debugData.layoutWalkable, {0.26, 0.62, 0.96, 0.18})
-        drawCells(debugData.layoutBlocked, {0.86, 0.32, 0.42, 0.26}, {0.94, 0.58, 0.68, 0.5})
-        drawCells(debugData.spawnSafeCells, {0.95, 0.34, 0.32, 0.24})
-        drawCells(debugData.spawnBuffer, {1.0, 0.64, 0.26, 0.28})
-        drawCells(debugData.safeZone, {0.22, 0.68, 1.0, 0.35}, {0.92, 0.98, 1.0, 0.75})
-        drawCells(debugData.rockSafeZone, {0.64, 0.36, 0.88, 0.2})
-        drawCells(debugData.reservedCells, nil, {1.0, 1.0, 1.0, 0.35})
-        drawCells(debugData.reservedSpawnBuffer, nil, {1.0, 0.86, 0.38, 0.45})
+	drawCells(debugData.spawnSafeCells, {0.95, 0.34, 0.32, 0.24})
+	drawCells(debugData.spawnBuffer, {1.0, 0.64, 0.26, 0.28})
+	drawCells(debugData.safeZone, {0.22, 0.68, 1.0, 0.35}, {0.92, 0.98, 1.0, 0.75})
+	drawCells(debugData.rockSafeZone, {0.64, 0.36, 0.88, 0.2})
+	drawCells(debugData.reservedCells, nil, {1.0, 1.0, 1.0, 0.35})
+	drawCells(debugData.reservedSpawnBuffer, nil, {1.0, 0.86, 0.38, 0.45})
 
 	love.graphics.pop()
 end
 
 local function mixChannel(base, target, amount)
 	return base + (target - base) * amount
-end
-
-
-local function getActiveLayoutBounds(arena)
-	if not arena then
-		return 0, 0, 0, 0
-	end
-
-	local layout = arena._activeLayout
-	local tileSize = arena.tileSize or 24
-	if layout and layout.playableArea and layout.playableArea.bounds then
-		local bounds = layout.playableArea.bounds
-		if bounds.minCol and bounds.maxCol and bounds.minRow and bounds.maxRow then
-			local ax = arena.x + (bounds.minCol - 1) * tileSize
-			local ay = arena.y + (bounds.minRow - 1) * tileSize
-			local aw = (bounds.maxCol - bounds.minCol + 1) * tileSize
-			local ah = (bounds.maxRow - bounds.minRow + 1) * tileSize
-			return ax, ay, aw, ah
-		end
-	end
-
-	return arena.x, arena.y, arena.width, arena.height
-end
-
-local function getPlayablePixelLoop(arena)
-	if not arena then
-		return nil
-	end
-
-	local layout = arena._activeLayout
-	if not layout then
-		return nil
-	end
-
-	local playable = layout.playableArea
-	local primaryLoop = playable and playable.primaryLoop
-	if not (primaryLoop and #primaryLoop >= 4) then
-		return nil
-	end
-
-	local originX = arena.x or 0
-	local originY = arena.y or 0
-	local tileSize = arena.tileSize or 24
-
-	local cacheOrigin = playable.pixelLoopOrigin
-	if cacheOrigin and playable.pixelLoop and
-		cacheOrigin.x == originX and
-		cacheOrigin.y == originY and
-		cacheOrigin.tileSize == tileSize then
-		return playable.pixelLoop
-	end
-
-	local points = {}
-	for _, corner in ipairs(primaryLoop) do
-		local px = originX + (corner[1] or 0) * tileSize
-		local py = originY + (corner[2] or 0) * tileSize
-		points[#points + 1] = px
-		points[#points + 1] = py
-	end
-
-	playable.pixelLoop = points
-	playable.pixelLoopOrigin = {
-		x = originX,
-		y = originY,
-		tileSize = tileSize,
-	}
-
-	return points
 end
 
 local function isTileInSafeZone(safeZone, col, row)
@@ -252,63 +122,39 @@ local function isTileInSafeZone(safeZone, col, row)
 end
 
 local Arena = {
-        x = 0, y = 0,
-        width = 792,
-        height = 600,
-        tileSize = 24,
-        cols = 0,
-        rows = 0,
-        exit = nil,
-        activeBackgroundEffect = nil,
-        borderFlare = 0,
-        borderFlareStrength = 0,
-        borderFlareTimer = 0,
-        borderFlareDuration = 1.05,
-        _activeLayout = nil,
+	x = 0, y = 0,
+	width = 792,
+	height = 600,
+	tileSize = 24,
+	cols = 0,
+	rows = 0,
+		exit = nil,
+		activeBackgroundEffect = nil,
+	borderFlare = 0,
+	borderFlareStrength = 0,
+	borderFlareTimer = 0,
+	borderFlareDuration = 1.05,
 }
 
 function Arena:setSpawnDebugData(data)
-        if not data then
-                self._spawnDebugData = nil
-                return
-        end
+	if not data then
+		self._spawnDebugData = nil
+		return
+	end
 
-        self._spawnDebugData = {
-                safeZone = data.safeZone,
-                rockSafeZone = data.rockSafeZone,
-                spawnBuffer = data.spawnBuffer,
-                spawnSafeCells = data.spawnSafeCells,
-                reservedCells = data.reservedCells,
-                reservedSafeZone = data.reservedSafeZone,
-                reservedSpawnBuffer = data.reservedSpawnBuffer,
-                layoutBlocked = data.layout and data.layout.blocked or nil,
-                layoutWalkable = data.layout and data.layout.walkable or nil,
-                layoutSeed = data.layout and data.layout.seed or nil,
-                layoutMeta = data.layout and data.layout.meta or nil,
-                layoutValidation = data.layoutValidation,
-        }
+	self._spawnDebugData = {
+		safeZone = data.safeZone,
+		rockSafeZone = data.rockSafeZone,
+		spawnBuffer = data.spawnBuffer,
+		spawnSafeCells = data.spawnSafeCells,
+		reservedCells = data.reservedCells,
+		reservedSafeZone = data.reservedSafeZone,
+		reservedSpawnBuffer = data.reservedSpawnBuffer,
+	}
 end
 
 function Arena:clearSpawnDebugData()
-        self._spawnDebugData = nil
-end
-
-function Arena:setLayout(layout)
-	self._activeLayout = layout
-	if layout and layout.playableArea then
-		layout.playableArea.pixelLoop = nil
-		layout.playableArea.pixelLoopOrigin = nil
-	end
-	if self._spawnDebugData then
-		self._spawnDebugData.layoutBlocked = layout and layout.blocked or nil
-		self._spawnDebugData.layoutWalkable = layout and layout.walkable or nil
-		self._spawnDebugData.layoutSeed = layout and layout.seed or nil
-		self._spawnDebugData.layoutMeta = layout and layout.meta or nil
-        end
-end
-
-function Arena:getLayout()
-        return self._activeLayout
+	self._spawnDebugData = nil
 end
 
 function Arena:updateScreenBounds(sw, sh)
@@ -437,7 +283,7 @@ end
 
 -- Draws the playfield with a solid fill + simple border
 function Arena:drawBackground()
-	local ax, ay, aw, ah = getActiveLayoutBounds(self)
+	local ax, ay, aw, ah = self:getBounds()
 
 	if self.activeBackgroundEffect then
 		local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(self.activeBackgroundEffect)
@@ -445,223 +291,31 @@ function Arena:drawBackground()
 		Shaders.draw(self.activeBackgroundEffect, ax, ay, aw, ah, intensity)
 	end
 
-        -- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
-        love.graphics.setColor(Theme.arenaBG)
-        love.graphics.rectangle("fill", ax, ay, aw, ah)
+	-- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
+	love.graphics.setColor(Theme.arenaBG)
+	love.graphics.rectangle("fill", ax, ay, aw, ah)
 
-        if ArenaLayoutDraw and self._activeLayout then
-                ArenaLayoutDraw.draw(self, self._activeLayout)
-        end
+	drawSpawnDebugOverlay(self)
 
-        drawSpawnDebugOverlay(self)
-
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- Draws border
 function Arena:drawBorder()
-	local polygon = getPlayablePixelLoop(self)
-	local hasPolygon = polygon and #polygon >= 6
+	local ax, ay, aw, ah = self:getBounds()
 
-	if not hasPolygon then
-		local ax, ay, aw, ah = getActiveLayoutBounds(self)
-
-		-- Match snake style
-		local thickness    = 20       -- border thickness
-		local outlineSize  = 6        -- black outline thickness
-		local shadowOffset = 3
-		local radius       = thickness / 2
-
-		-- Expand the border rect outward so it doesn’t bleed inside
-		local correction = (thickness / 2) + 3   -- negative = pull inward, positive = push outward
-		local ox = correction
-		local oy = correction
-		local bx, by = ax - ox, ay - oy
-		local bw, bh = aw + ox * 2, ah + oy * 2
-
-		local borderFlare = math.max(0, math.min(1.2, self.borderFlare or 0))
-		local flarePulse = 0
-		if borderFlare > 0 then
-			flarePulse = (math.sin((self.borderFlareTimer or 0) * 9.0) + 1) * 0.5
-		end
-
-		-- Create/reuse MSAA canvas
-		if not self.borderCanvas or
-			self.borderCanvas:getWidth() ~= love.graphics.getWidth() or
-			self.borderCanvas:getHeight() ~= love.graphics.getHeight() then
-			self.borderCanvas = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight(), {msaa = 8})
-		end
-
-		love.graphics.setCanvas(self.borderCanvas)
-		love.graphics.clear(0,0,0,0)
-
-		love.graphics.setLineStyle("smooth")
-
-		-- Outline pass
-		love.graphics.setColor(0, 0, 0, 1)
-		love.graphics.setLineWidth(thickness + outlineSize)
-		love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
-
-		-- Fill (arena border color)
-		local borderColor = Theme.arenaBorder
-		if borderFlare > 0 and borderColor then
-			local mixAmount = math.min(0.45, 0.32 * borderFlare + 0.18 * flarePulse * borderFlare)
-			local r = mixChannel(borderColor[1] or 1, 0.96, mixAmount)
-			local g = mixChannel(borderColor[2] or 1, 0.24, mixAmount * 1.05)
-			local b = mixChannel(borderColor[3] or 1, 0.18, mixAmount * 1.1)
-			love.graphics.setColor(r, g, b, borderColor[4] or 1)
-		else
-			if borderColor then
-				love.graphics.setColor(borderColor)
-			else
-				love.graphics.setColor(1, 1, 1, 1)
-			end
-		end
-		love.graphics.setLineWidth(thickness)
-		love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
-
-		-- Highlight pass for the top + left edges
-		local highlightShift = 3
-		local function appendArcPoints(points, cx, cy, radius, startAngle, endAngle, segments, skipFirst)
-			if segments < 1 then
-				segments = 1
-			end
-
-			for i = 0, segments do
-				if not (skipFirst and i == 0) then
-					local t = i / segments
-					local angle = startAngle + (endAngle - startAngle) * t
-					points[#points + 1] = cx + math.cos(angle) * radius - highlightShift
-					points[#points + 1] = cy + math.sin(angle) * radius - highlightShift
-				end
-			end
-		end
-
-		local highlight = getHighlightColor(Theme.arenaBorder)
-		-- Disable the glossy highlight along the top-left edge.
-		highlight[4] = 0
-		if borderFlare > 0 then
-			-- Ease the flare towards a softer pastel tint instead of a harsh glow.
-			-- This keeps the pickup celebration visible while avoiding a sharp contrast.
-			highlight[1] = math.min(1, mixChannel(highlight[1], 0.97, 0.35 * borderFlare))
-			highlight[2] = math.max(0, mixChannel(highlight[2], 0.3, 0.48 * borderFlare))
-			highlight[3] = math.max(0, mixChannel(highlight[3], 0.25, 0.52 * borderFlare))
-			highlight[4] = math.min(1, highlight[4] * (1 + 0.45 * borderFlare))
-		end
-
-		local highlightAlpha = highlight[4] or 0
-		local highlightOffset = 2
-		if highlightAlpha > 0 then
-			local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
-			local cornerOffsetX = 3
-			local cornerOffsetY = 3
-			local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
-			local scissorY = math.floor(by - highlightWidth - highlightOffset - highlightShift)
-			local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset + highlightShift * 2)
-			local scissorH = math.ceil(bh + highlightWidth * 2 + highlightOffset + highlightShift * 2)
-			local outerRadius = radius + highlightOffset
-			local arcSegments = math.max(6, math.floor(outerRadius * 0.75))
-
-			local topPoints = {}
-			topPoints[#topPoints + 1] = bx + bw - radius - highlightShift
-			topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
-			topPoints[#topPoints + 1] = bx + radius - highlightShift
-			topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
-			local cornerStartIndex = #topPoints + 1
-			appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -math.pi / 2, -math.pi, arcSegments, true)
-			for i = cornerStartIndex, #topPoints, 2 do
-				topPoints[i] = topPoints[i] + cornerOffsetX
-				topPoints[i + 1] = topPoints[i + 1] + cornerOffsetY
-			end
-
-			local leftPoints = {}
-			leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
-			leftPoints[#leftPoints + 1] = by + radius - highlightShift
-			leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
-			leftPoints[#leftPoints + 1] = by + bh - radius - highlightShift
-
-			love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
-			local prevLineWidth = love.graphics.getLineWidth()
-			local prevLineStyle = love.graphics.getLineStyle()
-			local prevLineJoin = love.graphics.getLineJoin()
-			love.graphics.setLineStyle("smooth")
-			love.graphics.setLineJoin("bevel")
-			love.graphics.setLineWidth(highlightWidth)
-
-			love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.4 + cornerOffsetY))
-			love.graphics.line(topPoints)
-
-			love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.4), scissorH)
-			love.graphics.line(leftPoints)
-
-			love.graphics.setScissor()
-			love.graphics.setLineWidth(prevLineWidth)
-			love.graphics.setLineStyle(prevLineStyle)
-			love.graphics.setLineJoin(prevLineJoin)
-		end
-
-		if borderFlare > 0.01 then
-			local glowStrength = borderFlare
-			local glowAlpha = 0.28 * glowStrength + 0.16 * flarePulse * glowStrength
-			local emberAlpha = 0.18 * glowStrength
-
-			love.graphics.push("all")
-			love.graphics.setBlendMode("add")
-			love.graphics.setLineWidth(thickness + outlineSize * (1.05 + 0.25 * glowStrength))
-			love.graphics.setColor(0.96, 0.32, 0.24, glowAlpha)
-			love.graphics.rectangle("line", bx, by, bw, bh, radius + 4 + glowStrength * 3.0, radius + 4 + glowStrength * 3.0)
-			love.graphics.setLineWidth(math.max(2, thickness * 0.55))
-			love.graphics.setColor(0.55, 0.08, 0.06, emberAlpha)
-			love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
-			love.graphics.pop()
-		end
-
-		-- Soft caps for highlight ends
-		local topCapX = bx + bw - radius - highlightShift
-		local topCapY = by - highlightOffset - highlightShift
-		local leftCapX = bx - highlightOffset - highlightShift
-		local leftCapY = by + bh - radius - highlightShift
-
-		if highlightAlpha > 0 then
-			local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
-			local capRadius = highlightWidth * 0.7
-			local featherRadius = capRadius * (1.9 + 0.35 * borderFlare)
-			local capAlpha = highlightAlpha * (0.4 + 0.22 * borderFlare)
-			local featherAlpha = highlightAlpha * (0.18 + 0.16 * borderFlare)
-
-			local function drawHighlightCap(cx, cy)
-				if capAlpha > 0 then
-					love.graphics.setColor(highlight[1], highlight[2], highlight[3], capAlpha)
-					love.graphics.circle("fill", cx, cy, capRadius)
-				end
-
-				if featherAlpha > 0 then
-					love.graphics.setColor(highlight[1], highlight[2], highlight[3], featherAlpha)
-					love.graphics.circle("fill", cx, cy, featherRadius)
-				end
-			end
-
-			drawHighlightCap(topCapX, topCapY)
-			drawHighlightCap(leftCapX, leftCapY)
-
-			love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
-		end
-
-		love.graphics.setCanvas()
-
-		-- Shadow pass
-		love.graphics.setColor(0, 0, 0, 0.25)
-		love.graphics.draw(self.borderCanvas, shadowOffset, shadowOffset)
-
-		-- Final draw
-		love.graphics.setColor(1, 1, 1, 1)
-		love.graphics.draw(self.borderCanvas, 0, 0)
-		return
-	end
-
+	-- Match snake style
 	local thickness    = 20       -- border thickness
 	local outlineSize  = 6        -- black outline thickness
 	local shadowOffset = 3
+	local radius       = thickness / 2
+
+	-- Expand the border rect outward so it doesn’t bleed inside
+	local correction = (thickness / 2) + 3   -- negative = pull inward, positive = push outward
+	local ox = correction
+	local oy = correction
+	local bx, by = ax - ox, ay - oy
+	local bw, bh = aw + ox * 2, ah + oy * 2
 
 	local borderFlare = math.max(0, math.min(1.2, self.borderFlare or 0))
 	local flarePulse = 0
@@ -669,25 +323,24 @@ function Arena:drawBorder()
 		flarePulse = (math.sin((self.borderFlareTimer or 0) * 9.0) + 1) * 0.5
 	end
 
+	-- Create/reuse MSAA canvas
 	if not self.borderCanvas or
 		self.borderCanvas:getWidth() ~= love.graphics.getWidth() or
 		self.borderCanvas:getHeight() ~= love.graphics.getHeight() then
 		self.borderCanvas = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight(), {msaa = 8})
 	end
 
-	local function drawPolygon(mode, points)
-		love.graphics.polygon(mode, table.unpack(points))
-	end
-
 	love.graphics.setCanvas(self.borderCanvas)
 	love.graphics.clear(0,0,0,0)
-	love.graphics.setLineStyle("smooth")
-	love.graphics.setLineJoin("bevel")
 
+	love.graphics.setLineStyle("smooth")
+
+	-- Outline pass
 	love.graphics.setColor(0, 0, 0, 1)
 	love.graphics.setLineWidth(thickness + outlineSize)
-	drawPolygon("line", polygon)
+	love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
+	-- Fill (arena border color)
 	local borderColor = Theme.arenaBorder
 	if borderFlare > 0 and borderColor then
 		local mixAmount = math.min(0.45, 0.32 * borderFlare + 0.18 * flarePulse * borderFlare)
@@ -703,7 +356,89 @@ function Arena:drawBorder()
 		end
 	end
 	love.graphics.setLineWidth(thickness)
-	drawPolygon("line", polygon)
+	love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
+
+	-- Highlight pass for the top + left edges
+	local highlightShift = 3
+	local function appendArcPoints(points, cx, cy, radius, startAngle, endAngle, segments, skipFirst)
+		if segments < 1 then
+			segments = 1
+		end
+
+		for i = 0, segments do
+			if not (skipFirst and i == 0) then
+				local t = i / segments
+				local angle = startAngle + (endAngle - startAngle) * t
+				points[#points + 1] = cx + math.cos(angle) * radius - highlightShift
+				points[#points + 1] = cy + math.sin(angle) * radius - highlightShift
+			end
+		end
+	end
+
+	local highlight = getHighlightColor(Theme.arenaBorder)
+	-- Disable the glossy highlight along the top-left edge.
+	highlight[4] = 0
+	if borderFlare > 0 then
+		-- Ease the flare towards a softer pastel tint instead of a harsh glow.
+		-- This keeps the pickup celebration visible while avoiding a sharp contrast.
+		highlight[1] = math.min(1, mixChannel(highlight[1], 0.97, 0.35 * borderFlare))
+		highlight[2] = math.max(0, mixChannel(highlight[2], 0.3, 0.48 * borderFlare))
+		highlight[3] = math.max(0, mixChannel(highlight[3], 0.25, 0.52 * borderFlare))
+		highlight[4] = math.min(1, highlight[4] * (1 + 0.45 * borderFlare))
+	end
+
+	local highlightAlpha = highlight[4] or 0
+	local highlightOffset = 2
+	if highlightAlpha > 0 then
+		local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
+		local cornerOffsetX = 3
+		local cornerOffsetY = 3
+		local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
+		local scissorY = math.floor(by - highlightWidth - highlightOffset - highlightShift)
+		local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset + highlightShift * 2)
+		local scissorH = math.ceil(bh + highlightWidth * 2 + highlightOffset + highlightShift * 2)
+		local outerRadius = radius + highlightOffset
+		local arcSegments = math.max(6, math.floor(outerRadius * 0.75))
+
+		local topPoints = {}
+		topPoints[#topPoints + 1] = bx + bw - radius - highlightShift
+		topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+		topPoints[#topPoints + 1] = bx + radius - highlightShift
+		topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+		local cornerStartIndex = #topPoints + 1
+		appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -math.pi / 2, -math.pi, arcSegments, true)
+		for i = cornerStartIndex, #topPoints, 2 do
+			topPoints[i] = topPoints[i] + cornerOffsetX
+			topPoints[i + 1] = topPoints[i + 1] + cornerOffsetY
+		end
+
+		local leftPoints = {}
+		leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
+		leftPoints[#leftPoints + 1] = by + radius - highlightShift
+		leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
+		leftPoints[#leftPoints + 1] = by + bh - radius - highlightShift
+
+		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
+		local prevLineWidth = love.graphics.getLineWidth()
+		local prevLineStyle = love.graphics.getLineStyle()
+		local prevLineJoin = love.graphics.getLineJoin()
+		love.graphics.setLineStyle("smooth")
+		love.graphics.setLineJoin("bevel")
+		love.graphics.setLineWidth(highlightWidth)
+
+		-- Top edge highlight
+		love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.4 + cornerOffsetY))
+		love.graphics.line(topPoints)
+
+		-- Left edge highlight
+		love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.4), scissorH)
+		love.graphics.line(leftPoints)
+
+		love.graphics.setScissor()
+		love.graphics.setLineWidth(prevLineWidth)
+		love.graphics.setLineStyle(prevLineStyle)
+		love.graphics.setLineJoin(prevLineJoin)
+	end
 
 	if borderFlare > 0.01 then
 		local glowStrength = borderFlare
@@ -712,53 +447,57 @@ function Arena:drawBorder()
 
 		love.graphics.push("all")
 		love.graphics.setBlendMode("add")
-		love.graphics.setLineJoin("bevel")
 		love.graphics.setLineWidth(thickness + outlineSize * (1.05 + 0.25 * glowStrength))
 		love.graphics.setColor(0.96, 0.32, 0.24, glowAlpha)
-		drawPolygon("line", polygon)
+		love.graphics.rectangle("line", bx, by, bw, bh, radius + 4 + glowStrength * 3.0, radius + 4 + glowStrength * 3.0)
 		love.graphics.setLineWidth(math.max(2, thickness * 0.55))
 		love.graphics.setColor(0.55, 0.08, 0.06, emberAlpha)
-		drawPolygon("line", polygon)
+		love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 		love.graphics.pop()
 	end
 
-	local function clearInterior()
-		love.graphics.push("all")
-		love.graphics.setBlendMode("replace", "premultiplied")
-		love.graphics.setColor(0, 0, 0, 0)
-		drawPolygon("fill", polygon)
-		love.graphics.pop()
-	end
+	-- Soft caps for highlight ends
+	local topCapX = bx + bw - radius - highlightShift
+	local topCapY = by - highlightOffset - highlightShift
+	local leftCapX = bx - highlightOffset - highlightShift
+	local leftCapY = by + bh - radius - highlightShift
 
-	clearInterior()
-
-	local highlight = getHighlightColor(Theme.arenaBorder)
-	local highlightAlpha = 0
-	if borderFlare > 0 then
-		highlightAlpha = highlight[4] or 0
-		highlight[1] = math.min(1, mixChannel(highlight[1], 0.97, 0.35 * borderFlare))
-		highlight[2] = math.max(0, mixChannel(highlight[2], 0.3, 0.48 * borderFlare))
-		highlight[3] = math.max(0, mixChannel(highlight[3], 0.25, 0.52 * borderFlare))
-		highlightAlpha = math.min(1, highlightAlpha * (0.75 + 0.35 * borderFlare))
-	end
-
-	if highlightAlpha > 0.01 then
+	if highlightAlpha > 0 then
 		local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
+		local capRadius = highlightWidth * 0.7
+		local featherRadius = capRadius * (1.9 + 0.35 * borderFlare)
+		local capAlpha = highlightAlpha * (0.4 + 0.22 * borderFlare)
+		local featherAlpha = highlightAlpha * (0.18 + 0.16 * borderFlare)
+
+		local function drawHighlightCap(cx, cy)
+			if capAlpha > 0 then
+				love.graphics.setColor(highlight[1], highlight[2], highlight[3], capAlpha)
+				love.graphics.circle("fill", cx, cy, capRadius)
+			end
+
+			if featherAlpha > 0 then
+				love.graphics.setColor(highlight[1], highlight[2], highlight[3], featherAlpha)
+				love.graphics.circle("fill", cx, cy, featherRadius)
+			end
+		end
+
+		drawHighlightCap(topCapX, topCapY)
+		drawHighlightCap(leftCapX, leftCapY)
+
 		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
-		love.graphics.setLineWidth(highlightWidth)
-		love.graphics.setLineJoin("bevel")
-		drawPolygon("line", polygon)
-		clearInterior()
 	end
 
 	love.graphics.setCanvas()
 
+	-- Shadow pass
 	love.graphics.setColor(0, 0, 0, 0.25)
 	love.graphics.draw(self.borderCanvas, shadowOffset, shadowOffset)
 
+	-- Final draw
 	love.graphics.setColor(1, 1, 1, 1)
 	love.graphics.draw(self.borderCanvas, 0, 0)
 end
+
 -- Spawn an exit at a random valid tile
 function Arena:spawnExit()
 	if self.exit then return end
