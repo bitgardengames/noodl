@@ -456,8 +456,28 @@ function Arena:isInside(x, y)
 end
 
 function Arena:getRandomTile()
-	local col = love.math.random(2, self.cols - 1)
-	local row = love.math.random(2, self.rows - 1)
+	local cols = math.max(1, self.cols or math.floor((self.width or 0) / (self.tileSize or 1)))
+	local rows = math.max(1, self.rows or math.floor((self.height or 0) / (self.tileSize or 1)))
+
+	local random = (love and love.math and love.math.random) or math.random
+
+	local colMin = math.min(cols, 2)
+	local colMax = math.max(colMin, cols - 1)
+	if colMax < colMin then
+		local fallback = math.max(1, math.floor(cols / 2 + 0.5))
+		colMin, colMax = fallback, fallback
+	end
+
+	local rowMin = math.min(rows, 2)
+	local rowMax = math.max(rowMin, rows - 1)
+	if rowMax < rowMin then
+		local fallback = math.max(1, math.floor(rows / 2 + 0.5))
+		rowMin, rowMax = fallback, fallback
+	end
+
+	local col = random(colMin, colMax)
+	local row = random(rowMin, rowMax)
+
 	return col, row
 end
 
