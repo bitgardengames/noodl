@@ -1285,11 +1285,13 @@ function GameOver:enter(data)
 		self.progressionAnimation.fruitXpPer = xpPerFruit
 		self.progressionAnimation.fruitPoints = fruitPoints
 
+		local startLevel = self.progressionAnimation.displayedLevel or startSnapshot.level or 1
 		if (self.progressionAnimation.xpForLevel or 0) > 0 then
 			self.progressionAnimation.visualPercent = clamp((self.progressionAnimation.xpIntoLevel or 0) / self.progressionAnimation.xpForLevel, 0, 1)
 		else
 			self.progressionAnimation.visualPercent = 0
 		end
+		self.progressionAnimation.visualProgress = math.max(0, (startLevel - 1) + (self.progressionAnimation.visualPercent or 0))
 
 		if type(self.progression.milestones) == "table" then
 			for _, milestone in ipairs(self.progression.milestones) do
@@ -1946,15 +1948,30 @@ function GameOver:update(dt)
 	anim.xpIntoLevel = xpIntoLevel
 	anim.xpForLevel = xpForNext
 
+	local xpForLevel = anim.xpForLevel or 0
 	local targetPercent = 0
-	if (anim.xpForLevel or 0) > 0 then
-		targetPercent = clamp((anim.xpIntoLevel or 0) / anim.xpForLevel, 0, 1)
+	if xpForLevel > 0 then
+		targetPercent = clamp((anim.xpIntoLevel or 0) / xpForLevel, 0, 1)
 	end
+
 	local easeSpeed = anim.fillEaseSpeed or 9
-	if not anim.visualPercent then
+	if xpForLevel <= 0 then
+		anim.visualProgress = math.max(0, (level - 1))
 		anim.visualPercent = targetPercent
 	else
-		anim.visualPercent = approachExp(anim.visualPercent, targetPercent, dt, easeSpeed)
+		local targetProgress = math.max(0, (level - 1) + targetPercent)
+		if not anim.visualProgress then
+			local basePercent = anim.visualPercent or targetPercent
+			anim.visualProgress = math.max(0, (previousLevel - 1) + basePercent)
+		end
+
+		local currentProgress = anim.visualProgress or 0
+		targetProgress = math.max(targetProgress, currentProgress)
+		anim.visualProgress = approachExp(currentProgress, targetProgress, dt, easeSpeed)
+
+		local loops = math.floor(math.max(0, anim.visualProgress))
+		local fraction = anim.visualProgress - loops
+		anim.visualPercent = clamp(fraction, 0, 1)
 	end
 
 	if anim.levelFlash then
