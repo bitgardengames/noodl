@@ -438,11 +438,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
 				celebration = "Early Exit",
 			},
-			metronome_totem = {
-				name = "Metronome Totem",
-				description = "Each fruit adds 0.35s to the combo timer. The exit requires +1 fruit.",
-				timer_bonus = "+0.35s",
-			},
 			adrenaline_surge = {
 				name = "Adrenaline Surge",
 				description = "Snake surges forward after each fruit.",
@@ -472,10 +467,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				rocks_text = "Thinned Rocks",
 				saws_text = "Sparse Saws",
 				lasers_text = "Scattered Lasers",
-			},
-			lucky_bite = {
-				name = "Lucky Bite",
-				description = "Each fruit grants +1 bonus score.",
 			},
 			momentum_memory = {
 				name = "Momentum Memory",
@@ -534,11 +525,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Warden's Chorus",
 				description = "Each Defense upgrade adds crash shield progress at the start of every floor.",
 			},
-			gilded_trail = {
-				name = "Gilded Trail",
-				description = "Every fifth fruit grants +3 bonus score.",
-				combo_bonus = "Gilded Trail +3",
-			},
 			rattle_gambit = {
 				name = "Rattle Gambit",
 				description = "Collect five fruit in a row without losing a shield to jam darts for a moment and gain +2 bonus score (+1 per additional copy).",
@@ -550,10 +536,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				heal_text = "Blooming Vitality",
 				shield_text = "Blooming Guard",
 			},
-			aurora_band = {
-				name = "Aurora Band",
-				description = "Combo window increases by 0.35s.",
-			},
 			tempo_turbine = {
 				name = "Tempo Turbine",
 				description = "Combos of 2+ fruits build charge; every third combo fruit stalls saws for 0.7s and grants +2 bonus score.",
@@ -562,10 +544,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			caravan_contract = {
 				name = "Caravan Contract",
 				description = "Shops offer +1 card. Each floor spawns an extra rock.",
-			},
-			market_pulse = {
-				name = "Market Pulse",
-				description = "Combo finishers grant +0.25 bonus score per shop slot you own.",
 			},
 			mercantile_echo = {
 				name = "Mercantile Echo",
@@ -594,17 +572,9 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				description = "The first upgrade you buy each floor grants +1 crash shield, +2 bonus score, and stalls saws for 0.9s. Effects stack with additional copies.",
 				trigger = "Patron's Favor",
 			},
-			venomous_hunger = {
-				name = "Venomous Hunger",
-				description = "Combo rewards are 50% stronger. The exit requires +1 fruit.",
-			},
 			predators_reflex = {
 				name = "Predator's Reflex",
 				description = "Adrenaline bursts are 25% stronger and trigger at the start of each floor.",
-			},
-			combo_harmonizer = {
-				name = "Combo Harmonizer",
-				description = "Combo window extends by 0.12s for each Combo upgrade you own.",
 			},
 			grim_reliquary = {
 				name = "Grim Reliquary",

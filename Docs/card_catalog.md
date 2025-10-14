@@ -4,9 +4,6 @@
 | --- | --- | --- | --- |
 | Extra Bite | Common | The exit unlocks one fruit earlier. Rocks spawn 15% more often. |  |
 | Fresh Supplies | Common | Discard the current shop cards and restock with new ones. | Tags: economy; Duplicates allowed; Restocks shop on use; Weight: 0.6 |
-| Gilded Trail | Common | Every fifth fruit grants +3 bonus score. | Tags: economy |
-| Lucky Bite | Common | Each fruit grants +1 bonus score. | Up to 3 stacks |
-| Metronome Totem | Common | Each fruit adds 0.35s to the combo timer. The exit requires +1 fruit. | Tags: combo |
 | Rattle Gambit | Common | Collect five fruit in a row without losing a shield to jam darts for a moment and gain +2 bonus score (+1 per additional copy). | Tags: combo, utility; Up to 3 stacks |
 | Stone Whisperer | Common | Rocks spawn far less often after eating fruit. |  |
 | Tail Trainer | Common | Snake moves 4% faster. | Tags: speed; Up to 3 stacks |
@@ -14,16 +11,13 @@
 | Aegis Recycler | Uncommon | Every two broken crash shields forge a fresh one. | Tags: defense |
 | Aegis Winder | Uncommon | After collecting twenty fruit, forge a single crash shield charge. | Tags: defense |
 | Arc Conductor | Uncommon | Blocking a laser overloads dart launchers, jamming them briefly and granting +1 bonus score (+1 per additional copy). | Tags: defense, utility; Up to 3 stacks |
-| Aurora Band | Uncommon | Combo window increases by 0.35s. | Tags: combo, risk |
 | Caravan Contract | Uncommon | Shops offer +1 card. Each floor spawns an extra rock. | Tags: economy, risk |
 | Circuit Breaker | Uncommon | Saw tracks freeze for 1s after each fruit. |  |
-| Combo Harmonizer | Uncommon | Combo window extends by 0.12s for each Combo upgrade you own. | Tags: combo; Requires tags: combo |
 | Crystal Cache | Uncommon | Crash shields burst into motes worth +2 bonus score. | Tags: economy, defense |
 | Diffraction Barrier | Uncommon | Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s. | Tags: defense |
 | Echo Aegis | Uncommon | Crash shields unleash a shockwave that stalls saws. |  |
 | Guild Ledger | Uncommon | Each shop slot reduces rock spawn chance by 1.5%. | Tags: economy, defense; Requires tags: economy |
 | Mapmaker's Compass | Uncommon | The exit unlocks one fruit earlier. | Tags: economy, risk |
-| Market Pulse | Uncommon | Combo finishers grant +0.25 bonus score per shop slot you own. | Tags: economy, combo |
 | Molting Reflex | Uncommon | Crash shields trigger a 60% adrenaline surge. | Tags: adrenaline, defense; Requires tags: adrenaline |
 | Momentum Memory | Uncommon | Adrenaline bursts last 2s longer. | Requires tags: adrenaline |
 | Quick Fangs | Uncommon | Snake moves 10% faster. | Up to 4 stacks |
@@ -31,7 +25,6 @@
 | Scarlet Censer | Uncommon | Each floor, dart strikes on your shield forge crash shields while jamming dart launchers. | Tags: defense, utility; Up to 2 stacks |
 | Stone Skin | Uncommon | Gain a crash shield that shatters rocks and shrugs off a saw or laser hit. | Up to 4 stacks |
 | Tempo Turbine | Uncommon | Combos of 2+ fruits build charge; every third combo fruit stalls saws for 0.7s and grants +2 bonus score. | Tags: combo, economy |
-| Venomous Hunger | Uncommon | Combo rewards are 50% stronger. The exit requires +1 fruit. | Tags: risk |
 | Verdant Bonds | Uncommon | Buying an Economy upgrade grants crash shields equal to Verdant Bonds stacks. | Tags: economy, defense; Up to 3 stacks |
 | Artisan Catalog | Rare | The first upgrade you buy each floor grants +1 crash shield, +2 bonus score, and stalls saws for 0.9s. Effects stack with additional copies. | Tags: economy, defense |
 | Grim Reliquary | Rare | Dart impacts against your shield store souls; cash them in for a heal or crash shield while jamming dart launchers. | Tags: defense |

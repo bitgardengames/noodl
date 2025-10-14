@@ -1023,26 +1023,11 @@ local pool = {
 			end
 		end,
 	}),
-	register({
-		id = "lucky_bite",
-		nameKey = "upgrades.lucky_bite.name",
-		descKey = "upgrades.lucky_bite.description",
-		rarity = "common",
-		allowDuplicates = true,
-		maxStacks = 3,
-		onAcquire = function(state)
-			if Score.addFruitBonus then
-				Score:addFruitBonus(1)
-			else
-				Score.fruitBonus = (Score.fruitBonus or 0) + 1
-			end
-		end,
-	}),
-	register({
-		id = "momentum_memory",
-		nameKey = "upgrades.momentum_memory.name",
-		descKey = "upgrades.momentum_memory.description",
-		rarity = "uncommon",
+        register({
+                id = "momentum_memory",
+                nameKey = "upgrades.momentum_memory.name",
+                descKey = "upgrades.momentum_memory.description",
+                rarity = "uncommon",
 		requiresTags = {"adrenaline"},
 		onAcquire = function(state)
 			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
@@ -1703,26 +1688,11 @@ local pool = {
 			end,
 		},
 	}),
-	register({
-		id = "venomous_hunger",
-		nameKey = "upgrades.venomous_hunger.name",
-		descKey = "upgrades.venomous_hunger.description",
-		rarity = "uncommon",
-		tags = {"risk"},
-		unlockTag = "venom_lab",
-		onAcquire = function(state)
-			state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.5
-			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
-			if UI.adjustFruitGoal then
-				UI:adjustFruitGoal(1)
-			end
-		end,
-	}),
-	register({
-		id = "predators_reflex",
-		nameKey = "upgrades.predators_reflex.name",
-		descKey = "upgrades.predators_reflex.description",
-		rarity = "rare",
+        register({
+                id = "predators_reflex",
+                nameKey = "upgrades.predators_reflex.name",
+                descKey = "upgrades.predators_reflex.description",
+                rarity = "rare",
 		requiresTags = {"adrenaline"},
 		onAcquire = function(state)
 			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
