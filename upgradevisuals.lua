@@ -206,6 +206,214 @@ local function drawBadge(effect, progress)
         drawer(effect, progress)
 end
 
+local function drawFangFlurry(effect, progress)
+        local x, y = effect.x, effect.y
+        local innerRadius = effect.innerRadius or 12
+        local outerRadius = effect.outerRadius or 44
+        local baseColor = effect.variantColor or effect.color or {1.0, 0.62, 0.42, 1}
+        local highlightColor = effect.variantSecondaryColor or {1.0, 0.9, 0.74, 0.92}
+        local slashColor = effect.variantTertiaryColor or {1.0, 0.46, 0.26, 0.78}
+
+        local baseAlpha = (baseColor[4] or 1) * clamp01(1.1 - progress * 1.25)
+        if baseAlpha <= 0 then return end
+
+        local fangCount = (effect.variantData and effect.variantData.fangs) or 6
+        local rotation = (effect.rotation or 0) + progress * pi * 0.8
+
+        love.graphics.push("all")
+
+        if effect.addBlend then
+                love.graphics.setBlendMode("add")
+        end
+
+        local pulse = 0.9 + 0.18 * sin(progress * pi * 4.2)
+        love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 1) * baseAlpha * 0.4)
+        love.graphics.circle("fill", x, y, innerRadius * (0.6 + 0.25 * pulse), 24)
+
+        for index = 1, fangCount do
+                local offset = (index - 1) / fangCount
+                local angle = rotation + offset * pi * 2
+                local sway = sin(progress * pi * (4 + index * 0.35)) * 0.18
+                angle = angle + sway * 0.18
+
+                local dirX, dirY = cos(angle), sin(angle)
+                local perpX, perpY = -dirY, dirX
+
+                local tipRadius = innerRadius + (outerRadius - innerRadius) * (0.82 + 0.12 * sin(progress * pi * 5 + index))
+                local baseRadius = innerRadius * (0.55 + 0.2 * cos(progress * pi * 3 + index))
+                local width = innerRadius * (0.26 + 0.12 * (1 - progress))
+
+                local baseX = x + dirX * baseRadius
+                local baseY = y + dirY * baseRadius
+                local tipX = x + dirX * tipRadius
+                local tipY = y + dirY * tipRadius
+                local leftX = baseX + perpX * width
+                local leftY = baseY + perpY * width
+                local rightX = baseX - perpX * width
+                local rightY = baseY - perpY * width
+
+                local fade = 1 - offset * 0.2
+                love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], baseAlpha * (0.8 + 0.2 * fade))
+                love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
+
+                love.graphics.setLineWidth(1.6)
+                love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 1) * baseAlpha * 0.9 * fade)
+                love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
+
+                local slashRadius = tipRadius + innerRadius * (0.28 + 0.18 * (1 - progress))
+                local slashWidth = 0.18 + 0.12 * (1 - progress)
+                love.graphics.setLineWidth(2.4)
+                love.graphics.setColor(slashColor[1], slashColor[2], slashColor[3], (slashColor[4] or 1) * baseAlpha * 0.65 * fade)
+                love.graphics.arc("line", "open", x, y, slashRadius, angle - slashWidth, angle + slashWidth, 14)
+        end
+
+        love.graphics.pop()
+        love.graphics.setLineWidth(1)
+end
+
+local function drawStoneguardBastion(effect, progress)
+        local x, y = effect.x, effect.y
+        local innerRadius = effect.innerRadius or 12
+        local outerRadius = effect.outerRadius or 44
+        local slabColor = effect.variantColor or effect.color or {0.74, 0.8, 0.88, 1}
+        local edgeColor = effect.variantSecondaryColor or {0.46, 0.5, 0.56, 1}
+        local dustColor = effect.variantTertiaryColor or {0.94, 0.96, 0.98, 0.72}
+
+        local slabAlpha = (slabColor[4] or 1) * clamp01(1.05 - progress * 1.1)
+        if slabAlpha <= 0 then return end
+
+        local slabCount = (effect.variantData and effect.variantData.slabs) or 5
+        local rotation = (effect.rotation or 0) + sin(progress * pi * 2.2) * 0.12
+        local bandRadius = (innerRadius + outerRadius) * 0.5
+        local bandThickness = (outerRadius - innerRadius) * (0.55 + 0.2 * (1 - progress))
+
+        love.graphics.push("all")
+
+        for index = 1, slabCount do
+                local offset = (index - 0.5) / slabCount
+                local angle = rotation + offset * pi * 2
+                local wobble = sin(progress * pi * (3 + index * 0.4)) * 0.18
+                angle = angle + wobble * 0.12
+
+                local dirX, dirY = cos(angle), sin(angle)
+                local perpX, perpY = -dirY, dirX
+
+                local centerDist = bandRadius + sin(progress * pi * 4 + index) * innerRadius * 0.08
+                local halfWidth = bandThickness * 0.28
+                local halfTopWidth = halfWidth * (0.78 + 0.08 * sin(progress * pi * 5 + index))
+                local length = bandThickness * (0.9 + 0.18 * sin(progress * pi * 3.2 + index * 0.6))
+
+                local innerDist = centerDist - length * 0.5
+                local outerDist = centerDist + length * 0.5
+
+                local innerLeftX = x + dirX * innerDist + perpX * halfWidth
+                local innerLeftY = y + dirY * innerDist + perpY * halfWidth
+                local innerRightX = x + dirX * innerDist - perpX * halfWidth
+                local innerRightY = y + dirY * innerDist - perpY * halfWidth
+                local outerLeftX = x + dirX * outerDist + perpX * halfTopWidth
+                local outerLeftY = y + dirY * outerDist + perpY * halfTopWidth
+                local outerRightX = x + dirX * outerDist - perpX * halfTopWidth
+                local outerRightY = y + dirY * outerDist - perpY * halfTopWidth
+
+                local fade = 1 - progress * 0.45
+                love.graphics.setColor(slabColor[1], slabColor[2], slabColor[3], slabAlpha * (0.85 + 0.15 * fade))
+                love.graphics.polygon("fill", innerLeftX, innerLeftY, outerLeftX, outerLeftY, outerRightX, outerRightY, innerRightX, innerRightY)
+
+                love.graphics.setLineWidth(2)
+                love.graphics.setColor(edgeColor[1], edgeColor[2], edgeColor[3], (edgeColor[4] or 1) * slabAlpha * 0.95)
+                love.graphics.polygon("line", innerLeftX, innerLeftY, outerLeftX, outerLeftY, outerRightX, outerRightY, innerRightX, innerRightY)
+
+                love.graphics.setLineWidth(1.1)
+                love.graphics.setColor(edgeColor[1], edgeColor[2], edgeColor[3], (edgeColor[4] or 1) * slabAlpha * 0.55)
+                love.graphics.line((innerLeftX + outerLeftX) * 0.5, (innerLeftY + outerLeftY) * 0.5, (innerRightX + outerRightX) * 0.5, (innerRightY + outerRightY) * 0.5)
+        end
+
+        local dustAlpha = (dustColor[4] or 1) * clamp01(1 - progress * 1.4)
+        if dustAlpha > 0 then
+                love.graphics.setColor(dustColor[1], dustColor[2], dustColor[3], dustAlpha)
+                local dustCount = 8
+                local dustRadius = outerRadius * (0.62 + 0.18 * progress)
+                for index = 1, dustCount do
+                        local angle = rotation + index * (pi * 2 / dustCount) + sin(progress * pi * 5 + index) * 0.12
+                        local distance = dustRadius * (0.88 + 0.18 * sin(progress * pi * 4 + index * 0.6))
+                        local px = x + cos(angle) * distance
+                        local py = y + sin(angle) * distance
+                        love.graphics.circle("fill", px, py, innerRadius * (0.14 + 0.04 * sin(progress * pi * 6 + index)), 12)
+                end
+        end
+
+        love.graphics.pop()
+        love.graphics.setLineWidth(1)
+end
+
+local function drawPrismRefraction(effect, progress)
+        local x, y = effect.x, effect.y
+        local innerRadius = effect.innerRadius or 12
+        local outerRadius = effect.outerRadius or 44
+        local beamColor = effect.variantColor or effect.color or {0.72, 0.92, 1.0, 1}
+        local shardColor = effect.variantSecondaryColor or {0.46, 0.78, 1.0, 0.95}
+        local glintColor = effect.variantTertiaryColor or {1.0, 0.96, 0.72, 0.82}
+
+        local beamAlpha = (beamColor[4] or 1) * clamp01(1.08 - progress * 1.2)
+        if beamAlpha <= 0 then return end
+
+        local shardCount = (effect.variantData and effect.variantData.shards) or 6
+        local rotation = (effect.rotation or 0) + progress * pi * 1.1
+
+        love.graphics.push("all")
+
+        if effect.addBlend then
+                love.graphics.setBlendMode("add")
+        end
+
+        for index = 1, shardCount do
+                local offset = (index - 1) / shardCount
+                local angle = rotation + offset * pi * 2
+                local sway = sin(progress * pi * (3.2 + index * 0.25)) * 0.2
+                angle = angle + sway
+
+                local dirX, dirY = cos(angle), sin(angle)
+                local perpX, perpY = -dirY, dirX
+
+                local innerDist = innerRadius * (0.72 + 0.18 * sin(progress * pi * 4 + index))
+                local outerDist = outerRadius * (0.8 + 0.16 * sin(progress * pi * 3 + index * 1.1))
+                local width = innerRadius * (0.22 + 0.1 * (1 - progress))
+
+                local baseX = x + dirX * innerDist
+                local baseY = y + dirY * innerDist
+                local tipX = x + dirX * outerDist
+                local tipY = y + dirY * outerDist
+                local leftX = baseX + perpX * width
+                local leftY = baseY + perpY * width
+                local rightX = baseX - perpX * width
+                local rightY = baseY - perpY * width
+
+                local fade = 1 - progress * 0.4
+                love.graphics.setColor(shardColor[1], shardColor[2], shardColor[3], (shardColor[4] or 1) * beamAlpha * (0.65 + 0.35 * fade))
+                love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
+
+                love.graphics.setLineWidth(1.8)
+                love.graphics.setColor(beamColor[1], beamColor[2], beamColor[3], beamAlpha * 0.9)
+                love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
+        end
+
+        local glintAlpha = (glintColor[4] or 1) * clamp01(1 - progress * 0.95)
+        if glintAlpha > 0 then
+                love.graphics.setColor(glintColor[1], glintColor[2], glintColor[3], glintAlpha)
+                love.graphics.setLineWidth(2.6)
+                local arcRadius = outerRadius * (0.82 + 0.12 * sin(progress * pi * 2))
+                local arcSpan = pi * 0.28
+                local arcCount = math.max(3, math.floor(shardCount / 2))
+                for index = 1, arcCount do
+                        local angle = rotation + index * (pi * 2 / arcCount)
+                        love.graphics.arc("line", "open", x, y, arcRadius, angle - arcSpan * 0.5, angle + arcSpan * 0.5, 18)
+                end
+        end
+
+        love.graphics.pop()
+        love.graphics.setLineWidth(1)
+end
+
 local function drawPhoenixFlare(effect, progress)
         local x, y = effect.x, effect.y
         local outerRadius = effect.outerRadius or 44
@@ -387,6 +595,9 @@ local variantDrawers = {
         phoenix_flare = drawPhoenixFlare,
         event_horizon = drawEventHorizon,
         storm_burst = drawStormBurst,
+        fang_flurry = drawFangFlurry,
+        stoneguard_bastion = drawStoneguardBastion,
+        prism_refraction = drawPrismRefraction,
 }
 
 local function drawVariant(effect, progress)
