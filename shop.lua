@@ -632,6 +632,7 @@ function Shop:update(dt)
 
                 local screenW = preview.screenW or love.graphics.getWidth()
                 local screenH = preview.screenH or love.graphics.getHeight()
+                local anchorX = preview.anchorX or (screenW * 0.5)
                 local anchorY = preview.anchorY or (screenH - math.max(88, screenH * 0.08))
                 local segmentSize = preview.segmentSize or SnakeUtils.SEGMENT_SIZE or 24
                 local targetX
@@ -647,10 +648,16 @@ function Shop:update(dt)
                 end
 
                 if not targetX then
-                        targetX = screenW * 0.5
+                        targetX = anchorX or (screenW * 0.5)
                 end
 
                 local targetY = anchorY - segmentSize * 1.2
+
+                if anchorX then
+                        local offset = targetX - anchorX
+                        local trackingStrength = self.selected and 0.55 or 0.35
+                        targetX = anchorX + offset * trackingStrength
+                end
 
                 preview.targetX = targetX
                 preview.targetY = targetY
