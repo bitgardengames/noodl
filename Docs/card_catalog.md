@@ -8,7 +8,6 @@
 | Adrenaline Surge | Uncommon | Snake surges forward after each fruit. | Tags: adrenaline |
 | Aegis Recycler | Uncommon | Every two broken crash shields forge a fresh one. | Tags: defense |
 | Aegis Winder | Uncommon | After collecting twenty fruit, forge a single crash shield charge. | Tags: defense |
-| Arc Conductor | Uncommon | Blocking a laser overloads dart launchers, jamming them briefly and granting +1 bonus score (+1 per additional copy). | Tags: defense, utility; Up to 3 stacks |
 | Caravan Contract | Uncommon | Shops offer +1 card. Each floor spawns an extra rock. | Tags: economy, risk |
 | Circuit Breaker | Uncommon | Saw tracks freeze for 1s after each fruit. |  |
 | Crystal Cache | Uncommon | Crash shields burst into motes worth +2 bonus score. | Tags: economy, defense |
@@ -20,12 +19,10 @@
 | Momentum Memory | Uncommon | Adrenaline bursts last 2s longer. | Requires tags: adrenaline |
 | Quick Fangs | Uncommon | Snake moves 10% faster. | Up to 4 stacks |
 | Resonant Shell | Uncommon | Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own. | Tags: defense; Requires tags: defense; Unlock tag: specialist |
-| Scarlet Censer | Uncommon | Each floor, dart strikes on your shield forge crash shields while jamming dart launchers. | Tags: defense, utility; Up to 2 stacks |
 | Stone Skin | Uncommon | Gain a crash shield that shatters rocks and shrugs off a saw or laser hit. | Up to 4 stacks |
 | Tempo Turbine | Uncommon | Combos of 2+ fruits build charge; every third combo fruit stalls saws for 0.7s and grants +2 bonus score. | Tags: combo, economy |
 | Verdant Bonds | Uncommon | Buying an Economy upgrade grants crash shields equal to Verdant Bonds stacks. | Tags: economy, defense; Up to 3 stacks |
 | Artisan Catalog | Rare | The first upgrade you buy each floor grants +1 crash shield, +2 bonus score, and stalls saws for 0.9s. Effects stack with additional copies. | Tags: economy, defense |
-| Grim Reliquary | Rare | Dart impacts against your shield store souls; cash them in for a heal or crash shield while jamming dart launchers. | Tags: defense |
 | Mercantile Echo | Rare | The first time you acquire an upgrade with a new tag, gain +0.15s saw stall and +1 bonus score. | Tags: economy |
 | Mirror Mantle | Rare | Breaking a crash shield grants +3 bonus score and stalls saws for 1s. | Tags: defense, combo |
 | Mirrored Scales | Rare | Blocking a laser makes it fire back the other way after a quick recharge and grants +2 bonus score (+1 per additional copy). | Tags: defense, economy |

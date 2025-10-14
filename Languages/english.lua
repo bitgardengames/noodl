@@ -488,11 +488,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				description = "Breaking a crash shield grants +3 bonus score and stalls saws for 1s.",
 				activation_text = "Mirrored Rebound",
 			},
-			arc_conductor = {
-				name = "Arc Conductor",
-				description = "Blocking a laser overloads dart launchers, jamming them briefly and granting +1 bonus score (+1 per additional copy).",
-				activation_text = "Arc Feedback",
-			},
 			mirrored_scales = {
 				name = "Mirrored Scales",
 				description = "Blocking a laser makes it fire back the other way after a quick recharge and grants +2 bonus score (+1 per additional copy).",
@@ -505,11 +500,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			resonant_shell = {
 				name = "Resonant Shell",
 				description = "Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own.",
-			},
-			scarlet_censer = {
-				name = "Scarlet Censer",
-				description = "Each floor, dart strikes on your shield forge crash shields while jamming dart launchers.",
-				activation_text = "Scarlet Reprieve",
 			},
 			prism_lock = {
 				name = "Prism Lock",
@@ -565,11 +555,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			predators_reflex = {
 				name = "Predator's Reflex",
 				description = "Adrenaline bursts are 25% stronger and trigger at the start of each floor.",
-			},
-			grim_reliquary = {
-				name = "Grim Reliquary",
-				description = "Dart impacts against your shield store souls; cash them in to forge crash shields while jamming dart launchers.",
-				activation_text = "Reliquary Unbound",
 			},
 			abyssal_catalyst = {
 				name = "Abyssal Catalyst",
