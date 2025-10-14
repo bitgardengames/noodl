@@ -115,24 +115,149 @@ local function getGameInstance()
 end
 
 local function grantCrashShields(amount)
-	amount = math.max(0, math.floor((amount or 0) + 0.0001))
-	if amount <= 0 then
-		return 0
-	end
+        amount = math.max(0, math.floor((amount or 0) + 0.0001))
+        if amount <= 0 then
+                return 0
+        end
 
-	if Snake and Snake.addCrashShields then
-		Snake:addCrashShields(amount)
-		return amount
-	end
+        if Snake and Snake.addCrashShields then
+                Snake:addCrashShields(amount)
+                return amount
+        end
 
-	return 0
+        return 0
+end
+
+local function getSegmentPosition(fraction)
+        if not Snake or not Snake.getSegments then
+                if Snake and Snake.getHead then
+                        return Snake:getHead()
+                end
+                return nil, nil
+        end
+
+        local segments = Snake:getSegments()
+        local count = segments and #segments or 0
+        if count <= 0 then
+                if Snake and Snake.getHead then
+                        return Snake:getHead()
+                end
+                return nil, nil
+        end
+
+        fraction = fraction or 0
+        if fraction < 0 then
+                fraction = 0
+        elseif fraction > 1 then
+                fraction = 1
+        end
+
+        local index = 1
+        if count > 1 then
+                local scaled = fraction * (count - 1)
+                index = math.floor(scaled + 0.5) + 1
+        end
+
+        if index > count then
+                index = count
+        elseif index < 1 then
+                index = 1
+        end
+
+        local segment = segments[index]
+        if segment then
+                local x = segment.drawX or segment.x
+                local y = segment.drawY or segment.y
+                if x and y then
+                        return x, y
+                end
+        end
+
+        if Snake and Snake.getHead then
+                return Snake:getHead()
+        end
+
+        return nil, nil
+end
+
+local function applySegmentPosition(options, fraction)
+        if not options then
+                options = {}
+        end
+
+        local x, y = getSegmentPosition(fraction)
+        if x and y then
+                options.x = options.x or x
+                options.y = options.y or y
+        end
+
+        return options
+end
+
+local function collectPositions(source, limit, extractor)
+        if not source then
+                return nil
+        end
+
+        local count = #source
+        if not count or count <= 0 then
+                return {}
+        end
+
+        local result = {}
+        local maxCount = math.min(limit or count, count)
+        for index = 1, maxCount do
+                local item = source[index]
+                if item then
+                        local px, py = extractor(item)
+                        if px and py then
+                                result[#result + 1] = { px, py }
+                        end
+                end
+        end
+
+        return result
+end
+
+local function getSawCenters(limit)
+        if not Saws or not Saws.getAll then
+                return nil
+        end
+
+        return collectPositions(Saws:getAll(), limit, function(saw)
+                local sx, sy
+                if Saws.getCollisionCenter then
+                        sx, sy = Saws:getCollisionCenter(saw)
+                end
+                return sx or saw.x, sy or saw.y
+        end)
+end
+
+local function getRockCenters(limit)
+        if not Rocks or not Rocks.getAll then
+                return nil
+        end
+
+        return collectPositions(Rocks:getAll(), limit, function(rock)
+                return rock.x, rock.y
+        end)
+end
+
+local function getLaserCenters(limit)
+        if not Lasers or not Lasers.getEmitters then
+                return nil
+        end
+
+        return collectPositions(Lasers:getEmitters(), limit, function(beam)
+                return beam.x, beam.y
+        end)
 end
 
 local function stoneSkinShieldHandler(data, state)
-	if not state then return end
-	if getStacks(state, "stone_skin") <= 0 then return end
-	if not data or data.cause ~= "rock" then return end
-	if not Rocks or not Rocks.shatterNearest then return end
+        if not state then return end
+        if getStacks(state, "stone_skin") <= 0 then return end
+        if not data or data.cause ~= "rock" then return end
+        if not Rocks or not Rocks.shatterNearest then return end
 
 	local fx, fy = getEventPosition(data)
 	celebrateUpgrade(nil, nil, {
@@ -630,14 +755,16 @@ local pool = {
                                 Snake:setQuickFangsStacks((Snake.quickFangs and Snake.quickFangs.stacks or 0) + 1)
                         end
 
-                        celebrateUpgrade(getUpgradeString("quick_fangs", "name"), nil, {
+                        local celebrationOptions = {
                                 color = {1, 0.63, 0.42, 1},
                                 particleCount = 18,
                                 particleSpeed = 150,
                                 particleLife = 0.38,
                                 textOffset = 46,
                                 textScale = 1.18,
-                        })
+                        }
+                        applySegmentPosition(celebrationOptions, 0.28)
+                        celebrateUpgrade(getUpgradeString("quick_fangs", "name"), nil, celebrationOptions)
                 end,
         }),
         register({
@@ -656,7 +783,7 @@ local pool = {
 				state.counters.stoneSkinHandlerRegistered = true
 				Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
 			end
-                        celebrateUpgrade(getUpgradeString("stone_skin", "name"), nil, {
+                        local celebrationOptions = {
                                 color = {0.75, 0.82, 0.88, 1},
                                 particleCount = 14,
                                 particleSpeed = 90,
@@ -672,7 +799,9 @@ local pool = {
                                         variantSecondaryColor = {0.46, 0.5, 0.56, 1},
                                         variantTertiaryColor = {0.94, 0.96, 0.98, 0.72},
                                 },
-                        })
+                        }
+                        applySegmentPosition(celebrationOptions, 0.46)
+                        celebrateUpgrade(getUpgradeString("stone_skin", "name"), nil, celebrationOptions)
                 end,
         }),
 	register({
@@ -726,14 +855,16 @@ local pool = {
 			if UI.adjustFruitGoal then
 				UI:adjustFruitGoal(-1)
 			end
-			celebrateUpgrade(getUpgradeString("extra_bite", "celebration"), nil, {
-				color = {1, 0.86, 0.36, 1},
-				particleCount = 10,
-				particleSpeed = 70,
-				particleLife = 0.38,
-				textOffset = 38,
-				textScale = 1.04,
-			})
+                        local celebrationOptions = {
+                                color = {1, 0.86, 0.36, 1},
+                                particleCount = 10,
+                                particleSpeed = 70,
+                                particleLife = 0.38,
+                                textOffset = 38,
+                                textScale = 1.04,
+                        }
+                        applySegmentPosition(celebrationOptions, 0.92)
+                        celebrateUpgrade(getUpgradeString("extra_bite", "celebration"), nil, celebrationOptions)
 		end,
 	}),
 	register({
@@ -913,30 +1044,109 @@ local pool = {
 			end,
 		},
 	}),
-	register({
-		id = "circuit_breaker",
-		nameKey = "upgrades.circuit_breaker.name",
-		descKey = "upgrades.circuit_breaker.description",
-		rarity = "uncommon",
-		onAcquire = function(state)
-			state.effects.sawStall = (state.effects.sawStall or 0) + 1
-		end,
-	}),
-	register({
-		id = "stonebreaker_hymn",
-		nameKey = "upgrades.stonebreaker_hymn.name",
-		descKey = "upgrades.stonebreaker_hymn.description",
-		rarity = "rare",
-		allowDuplicates = true,
-		maxStacks = 2,
-		onAcquire = function(state)
-			state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.25
-			state.counters.stonebreakerStacks = (state.counters.stonebreakerStacks or 0) + 1
-			if Snake.setStonebreakerStacks then
-				Snake:setStonebreakerStacks(state.counters.stonebreakerStacks)
-			end
-		end,
-	}),
+        register({
+                id = "circuit_breaker",
+                nameKey = "upgrades.circuit_breaker.name",
+                descKey = "upgrades.circuit_breaker.description",
+                rarity = "uncommon",
+                onAcquire = function(state)
+                        state.effects.sawStall = (state.effects.sawStall or 0) + 1
+                        local sparkColor = {1, 0.58, 0.32, 1}
+                        celebrateUpgrade(getUpgradeString("circuit_breaker", "name"), nil, {
+                                color = sparkColor,
+                                skipVisuals = true,
+                                skipParticles = true,
+                                textOffset = 44,
+                                textScale = 1.08,
+                        })
+
+                        local sawCenters = getSawCenters(2)
+                        local baseVisual = {
+                                badge = "spark",
+                                outerRadius = 54,
+                                innerRadius = 16,
+                                ringCount = 3,
+                                life = 0.68,
+                                glowAlpha = 0.32,
+                                haloAlpha = 0.2,
+                                addBlend = true,
+                        }
+                        local baseOptions = {
+                                color = sparkColor,
+                                skipText = true,
+                                particleCount = 12,
+                                particleSpeed = 150,
+                                particleLife = 0.4,
+                                visual = baseVisual,
+                        }
+                        if sawCenters and #sawCenters > 0 then
+                                for _, pos in ipairs(sawCenters) do
+                                        local sparkOptions = deepcopy(baseOptions)
+                                        sparkOptions.x = pos[1]
+                                        sparkOptions.y = pos[2]
+                                        celebrateUpgrade(nil, nil, sparkOptions)
+                                end
+                        else
+                                local fallbackOptions = deepcopy(baseOptions)
+                                applySegmentPosition(fallbackOptions, 0.82)
+                                celebrateUpgrade(nil, nil, fallbackOptions)
+                        end
+                end,
+        }),
+        register({
+                id = "stonebreaker_hymn",
+                nameKey = "upgrades.stonebreaker_hymn.name",
+                descKey = "upgrades.stonebreaker_hymn.description",
+                rarity = "rare",
+                allowDuplicates = true,
+                maxStacks = 2,
+                onAcquire = function(state)
+                        state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.25
+                        state.counters.stonebreakerStacks = (state.counters.stonebreakerStacks or 0) + 1
+                        if Snake.setStonebreakerStacks then
+                                Snake:setStonebreakerStacks(state.counters.stonebreakerStacks)
+                        end
+                        local hymnColor = {0.9, 0.82, 0.64, 1}
+                        celebrateUpgrade(getUpgradeString("stonebreaker_hymn", "name"), nil, {
+                                color = hymnColor,
+                                skipVisuals = true,
+                                skipParticles = true,
+                                textOffset = 48,
+                                textScale = 1.1,
+                        })
+
+                        local rockCenters = getRockCenters(2)
+                        local baseVisual = {
+                                variant = "stoneguard_bastion",
+                                life = 0.78,
+                                innerRadius = 14,
+                                outerRadius = 64,
+                                color = {0.82, 0.76, 0.66, 1},
+                                variantSecondaryColor = {0.5, 0.54, 0.58, 1},
+                                variantTertiaryColor = {0.96, 0.98, 1.0, 0.72},
+                        }
+                        local baseOptions = {
+                                color = hymnColor,
+                                skipText = true,
+                                particleCount = 14,
+                                particleSpeed = 100,
+                                particleLife = 0.48,
+                                visual = baseVisual,
+                        }
+                        if rockCenters and #rockCenters > 0 then
+                                for _, pos in ipairs(rockCenters) do
+                                        local celebration = deepcopy(baseOptions)
+                                        celebration.x = pos[1]
+                                        celebration.y = pos[2]
+                                        celebrateUpgrade(nil, nil, celebration)
+                                end
+                        else
+                                local fallback = deepcopy(baseOptions)
+                                applySegmentPosition(fallback, 0.6)
+                                celebrateUpgrade(nil, nil, fallback)
+                        end
+                end,
+        }),
 	register({
 		id = "echo_aegis",
 		nameKey = "upgrades.echo_aegis.name",
@@ -1042,18 +1252,58 @@ local pool = {
 			end
 		end,
 	}),
-	register({
-		id = "diffraction_barrier",
-		nameKey = "upgrades.diffraction_barrier.name",
-		descKey = "upgrades.diffraction_barrier.description",
-		rarity = "uncommon",
-		tags = {"defense"},
-		onAcquire = function(state)
-			state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 1.25
-			state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.8
-			state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) + 0.5
-		end,
-	}),
+        register({
+                id = "diffraction_barrier",
+                nameKey = "upgrades.diffraction_barrier.name",
+                descKey = "upgrades.diffraction_barrier.description",
+                rarity = "uncommon",
+                tags = {"defense"},
+                onAcquire = function(state)
+                        state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 1.25
+                        state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.8
+                        state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) + 0.5
+                        local barrierColor = {0.74, 0.88, 1, 1}
+                        celebrateUpgrade(getUpgradeString("diffraction_barrier", "name"), nil, {
+                                color = barrierColor,
+                                skipVisuals = true,
+                                skipParticles = true,
+                                textOffset = 48,
+                                textScale = 1.08,
+                        })
+
+                        local laserCenters = getLaserCenters(2)
+                        local baseVisual = {
+                                variant = "prism_refraction",
+                                life = 0.74,
+                                innerRadius = 16,
+                                outerRadius = 64,
+                                addBlend = true,
+                                color = {0.74, 0.88, 1, 1},
+                                variantSecondaryColor = {0.46, 0.78, 1.0, 0.95},
+                                variantTertiaryColor = {1.0, 0.96, 0.72, 0.82},
+                        }
+                        local baseOptions = {
+                                color = barrierColor,
+                                skipText = true,
+                                particleCount = 14,
+                                particleSpeed = 120,
+                                particleLife = 0.46,
+                                visual = baseVisual,
+                        }
+                        if laserCenters and #laserCenters > 0 then
+                                for _, pos in ipairs(laserCenters) do
+                                        local celebration = deepcopy(baseOptions)
+                                        celebration.x = pos[1]
+                                        celebration.y = pos[2]
+                                        celebrateUpgrade(nil, nil, celebration)
+                                end
+                        else
+                                local fallback = deepcopy(baseOptions)
+                                applySegmentPosition(fallback, 0.18)
+                                celebrateUpgrade(nil, nil, fallback)
+                        end
+                end,
+        }),
 	register({
 		id = "resonant_shell",
 		nameKey = "upgrades.resonant_shell.name",
@@ -1076,16 +1326,18 @@ local pool = {
 				end)
 			end
 
-			celebrateUpgrade(getUpgradeString("resonant_shell", "name"), nil, {
-				color = {0.8, 0.88, 1, 1},
-				particleCount = 18,
-				particleSpeed = 120,
-				particleLife = 0.48,
-				textOffset = 48,
-				textScale = 1.12,
-			})
-		end,
-	}),
+                        local celebrationOptions = {
+                                color = {0.8, 0.88, 1, 1},
+                                particleCount = 18,
+                                particleSpeed = 120,
+                                particleLife = 0.48,
+                                textOffset = 48,
+                                textScale = 1.12,
+                        }
+                        applySegmentPosition(celebrationOptions, 0.52)
+                        celebrateUpgrade(getUpgradeString("resonant_shell", "name"), nil, celebrationOptions)
+                end,
+        }),
 	register({
 		id = "prism_lock",
 		nameKey = "upgrades.prism_lock.name",
