@@ -1500,15 +1500,19 @@ local pool = {
 		tags = {"defense", "risk"},
 		unlockTag = "abyssal_protocols",
 		weight = 1,
-		onAcquire = function(state)
-			Snake:addCrashShields(3)
-			state.effects.sawStall = (state.effects.sawStall or 0) + 2
-			for _ = 1, 5 do
-				Snake:grow()
-			end
-			Snake.extraGrowth = (Snake.extraGrowth or 0) + 2
-		end,
-	}),
+                onAcquire = function(state)
+                        Snake:addCrashShields(3)
+                        state.effects.sawStall = (state.effects.sawStall or 0) + 2
+                        for _ = 1, 5 do
+                                Snake:grow()
+                        end
+                        Snake.extraGrowth = (Snake.extraGrowth or 0) + 2
+                        state.effects.titanbloodPact = (state.effects.titanbloodPact or 0) + 1
+                        if Snake.setTitanbloodStacks then
+                                Snake:setTitanbloodStacks(state.effects.titanbloodPact)
+                        end
+                end,
+        }),
 	register({
 		id = "chronospiral_core",
 		nameKey = "upgrades.chronospiral_core.name",
@@ -1618,18 +1622,24 @@ local pool = {
 		rarity = "rare",
 		tags = {"mobility", "economy"},
 		unlockTag = "stormtech",
-		onAcquire = function(state)
-			state.counters.stormchaserRigPrimed = false
-		end,
-		handlers = {
-			dashActivated = function(_, state)
-				if not state or not state.counters then return end
-				state.counters.stormchaserRigPrimed = true
-			end,
-			fruitCollected = function(data, state)
-				if not state or not state.counters or not state.counters.stormchaserRigPrimed then return end
-				state.counters.stormchaserRigPrimed = false
-				if Score.addBonus then
+                onAcquire = function(state)
+                        state.counters.stormchaserRigPrimed = false
+                        if Snake.setStormchaserPrimed then
+                                Snake:setStormchaserPrimed(false)
+                        end
+                end,
+                handlers = {
+                        dashActivated = function(_, state)
+                                if not state or not state.counters then return end
+                                state.counters.stormchaserRigPrimed = true
+                                if Snake.setStormchaserPrimed then
+                                        Snake:setStormchaserPrimed(true)
+                                end
+                        end,
+                        fruitCollected = function(data, state)
+                                if not state or not state.counters or not state.counters.stormchaserRigPrimed then return end
+                                state.counters.stormchaserRigPrimed = false
+                                if Score.addBonus then
 					Score:addBonus(2)
 				end
 				if Saws and Saws.stall then
@@ -1656,6 +1666,9 @@ local pool = {
                                                 variantTertiaryColor = {1.0, 0.96, 0.78, 0.85},
                                         },
                                 })
+                                if Snake.setStormchaserPrimed then
+                                        Snake:setStormchaserPrimed(false)
+                                end
                         end,
                 },
         }),
@@ -1667,12 +1680,13 @@ local pool = {
 		tags = {"utility", "defense"},
 		allowDuplicates = false,
 		unlockTag = "timekeeper",
-		onAcquire = function(state)
-			local ability = state.effects.timeSlow or {}
-			ability.duration = ability.duration or 1.6
-			ability.cooldown = ability.cooldown or 8
-			ability.timeScale = ability.timeScale or 0.35
-			state.effects.timeSlow = ability
+                onAcquire = function(state)
+                        local ability = state.effects.timeSlow or {}
+                        ability.duration = ability.duration or 1.6
+                        ability.cooldown = ability.cooldown or 8
+                        ability.timeScale = ability.timeScale or 0.35
+                        ability.source = ability.source or "temporal_anchor"
+                        state.effects.timeSlow = ability
 
 			if not state.counters.temporalAnchorHandlerRegistered then
 				state.counters.temporalAnchorHandlerRegistered = true
@@ -2361,6 +2375,14 @@ function Upgrades:applyPersistentEffects(rebaseline)
 
         if Snake.setAbyssalCatalystStacks then
                 Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
+        end
+
+        if Snake.setTitanbloodStacks then
+                Snake:setTitanbloodStacks(effects.titanbloodPact or 0)
+        end
+
+        if Snake.setEventHorizonActive then
+                Snake:setEventHorizonActive(effects.wallPortal and true or false)
         end
 
         if Snake.setPhoenixEchoCharges then

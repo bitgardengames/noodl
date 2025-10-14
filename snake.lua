@@ -100,6 +100,10 @@ Snake.hazardGraceTimer = 0
 Snake.chronospiral = nil
 Snake.abyssalCatalyst = nil
 Snake.phoenixEcho = nil
+Snake.eventHorizon = nil
+Snake.stormchaser = nil
+Snake.titanblood = nil
+Snake.temporalAnchor = nil
 
 local function resolveTimeDilationScale(ability)
 	if ability and ability.active then
@@ -206,6 +210,10 @@ function Snake:resetModifiers()
         self.chronospiral = nil
         self.abyssalCatalyst = nil
         self.phoenixEcho = nil
+        self.eventHorizon = nil
+        self.stormchaser = nil
+        self.titanblood = nil
+        self.temporalAnchor = nil
         UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
 
@@ -298,6 +306,64 @@ function Snake:setPhoenixEchoCharges(count, options)
 
         if count <= 0 and state.target <= 0 and (state.intensity or 0) <= 0 and (state.flareTimer or 0) <= 0 then
                 self.phoenixEcho = nil
+        end
+end
+
+function Snake:setEventHorizonActive(active)
+        if active then
+                local state = self.eventHorizon
+                if not state then
+                        state = { intensity = 0, target = 1, spin = 0, time = 0 }
+                        self.eventHorizon = state
+                end
+                state.target = 1
+                state.active = true
+        else
+                local state = self.eventHorizon
+                if state then
+                        state.target = 0
+                        state.active = false
+                end
+        end
+end
+
+function Snake:setStormchaserPrimed(active)
+        local state = self.stormchaser
+        if active then
+                if not state then
+                        state = { intensity = 0, target = 1, time = 0, primed = true }
+                        self.stormchaser = state
+                end
+                state.target = 1
+                state.primed = true
+        elseif state then
+                state.target = 0
+                state.primed = false
+        end
+
+        if self.stormchaser and not self.stormchaser.primed and (self.stormchaser.intensity or 0) <= 0 and (self.stormchaser.target or 0) <= 0 then
+                self.stormchaser = nil
+        end
+end
+
+function Snake:setTitanbloodStacks(count)
+        count = math.max(0, math.floor((count or 0) + 0.0001))
+        local state = self.titanblood
+
+        if count > 0 then
+                if not state then
+                        state = { intensity = 0, target = 0, time = 0 }
+                        self.titanblood = state
+                end
+                state.stacks = count
+                state.target = math.min(1, 0.5 + 0.18 * math.min(count, 3))
+        elseif state then
+                state.stacks = 0
+                state.target = 0
+        end
+
+        if self.titanblood and (self.titanblood.stacks or 0) <= 0 and (self.titanblood.intensity or 0) <= 0 then
+                self.titanblood = nil
         end
 end
 
@@ -964,16 +1030,27 @@ local function collectUpgradeVisuals(self)
 		}
 	end
 
-	if self.timeDilation then
-		visuals = visuals or {}
-		visuals.timeDilation = {
-			active = self.timeDilation.active or false,
-			timer = self.timeDilation.timer or 0,
+        if self.timeDilation then
+                visuals = visuals or {}
+                visuals.timeDilation = {
+                        active = self.timeDilation.active or false,
+                        timer = self.timeDilation.timer or 0,
 			duration = self.timeDilation.duration or 0,
 			cooldown = self.timeDilation.cooldown or 0,
-			cooldownTimer = self.timeDilation.cooldownTimer or 0,
-		}
-	end
+                        cooldownTimer = self.timeDilation.cooldownTimer or 0,
+                }
+        end
+
+        local temporalAnchor = self.temporalAnchor
+        if temporalAnchor and (((temporalAnchor.intensity or 0) > 1e-3) or (temporalAnchor.target or 0) > 0) then
+                visuals = visuals or {}
+                visuals.temporalAnchor = {
+                        intensity = temporalAnchor.intensity or 0,
+                        ready = temporalAnchor.ready or 0,
+                        active = temporalAnchor.active or false,
+                        time = temporalAnchor.time or 0,
+                }
+        end
 
         if self.dash then
                 visuals = visuals or {}
@@ -1002,6 +1079,36 @@ local function collectUpgradeVisuals(self)
                         intensity = abyssal.intensity or 0,
                         stacks = abyssal.stacks or 0,
                         pulse = abyssal.pulse or abyssal.time or 0,
+                }
+        end
+
+        local titanblood = self.titanblood
+        if titanblood and ((titanblood.intensity or 0) > 1e-3 or (titanblood.target or 0) > 0) then
+                visuals = visuals or {}
+                visuals.titanblood = {
+                        intensity = titanblood.intensity or 0,
+                        stacks = titanblood.stacks or 0,
+                        time = titanblood.time or 0,
+                }
+        end
+
+        local stormchaser = self.stormchaser
+        if stormchaser and ((stormchaser.intensity or 0) > 1e-3 or (stormchaser.target or 0) > 0) then
+                visuals = visuals or {}
+                visuals.stormchaser = {
+                        intensity = stormchaser.intensity or 0,
+                        primed = stormchaser.primed or false,
+                        time = stormchaser.time or 0,
+                }
+        end
+
+        local eventHorizon = self.eventHorizon
+        if eventHorizon and ((eventHorizon.intensity or 0) > 1e-3 or (eventHorizon.target or 0) > 0) then
+                visuals = visuals or {}
+                visuals.eventHorizon = {
+                        intensity = eventHorizon.intensity or 0,
+                        spin = eventHorizon.spin or 0,
+                        time = eventHorizon.time or 0,
                 }
         end
 
@@ -1384,6 +1491,46 @@ function Snake:update(dt)
                 end
         end
 
+        if self.eventHorizon then
+                local state = self.eventHorizon
+                state.time = (state.time or 0) + dt
+                state.spin = (state.spin or 0) + dt * (0.7 + 0.9 * (state.intensity or 0))
+                local intensity = state.intensity or 0
+                local target = state.target or 0
+                local blend = math.min(1, dt * (state.active and 3.2 or 2.0))
+                intensity = intensity + (target - intensity) * blend
+                state.intensity = intensity
+                if not state.active and target <= 0 and intensity < 0.01 then
+                        self.eventHorizon = nil
+                end
+        end
+
+        if self.stormchaser then
+                local state = self.stormchaser
+                state.time = (state.time or 0) + dt
+                local intensity = state.intensity or 0
+                local target = state.target or 0
+                local blend = math.min(1, dt * (state.primed and 6.5 or 4.2))
+                intensity = intensity + (target - intensity) * blend
+                state.intensity = intensity
+                if not state.primed and target <= 0 and intensity < 0.02 then
+                        self.stormchaser = nil
+                end
+        end
+
+        if self.titanblood then
+                local state = self.titanblood
+                state.time = (state.time or 0) + dt
+                local intensity = state.intensity or 0
+                local target = state.target or 0
+                local blend = math.min(1, dt * 3.4)
+                intensity = intensity + (target - intensity) * blend
+                state.intensity = intensity
+                if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.01 then
+                        self.titanblood = nil
+                end
+        end
+
         -- base speed with upgrades/modifiers
         local head = trail[1]
         local speed = self:getSpeed()
@@ -1427,19 +1574,64 @@ function Snake:update(dt)
 		end
 	end
 
-	if self.timeDilation then
-		if self.timeDilation.cooldownTimer and self.timeDilation.cooldownTimer > 0 then
-			self.timeDilation.cooldownTimer = math.max(0, (self.timeDilation.cooldownTimer or 0) - dt)
-		end
+        if self.timeDilation then
+                if self.timeDilation.cooldownTimer and self.timeDilation.cooldownTimer > 0 then
+                        self.timeDilation.cooldownTimer = math.max(0, (self.timeDilation.cooldownTimer or 0) - dt)
+                end
 
-		if self.timeDilation.active then
-			self.timeDilation.timer = (self.timeDilation.timer or 0) - dt
-			if self.timeDilation.timer <= 0 then
-				self.timeDilation.active = false
-				self.timeDilation.timer = 0
-			end
-		end
-	end
+                if self.timeDilation.active then
+                        self.timeDilation.timer = (self.timeDilation.timer or 0) - dt
+                        if self.timeDilation.timer <= 0 then
+                                self.timeDilation.active = false
+                                self.timeDilation.timer = 0
+                        end
+                end
+        end
+
+        local dilation = self.timeDilation
+        if dilation and dilation.source == "temporal_anchor" then
+                local state = self.temporalAnchor
+                if not state then
+                        state = { intensity = 0, target = 0, ready = 0, time = 0 }
+                        self.temporalAnchor = state
+                end
+                state.time = (state.time or 0) + dt
+                state.active = dilation.active or false
+                local cooldown = dilation.cooldown or 0
+                local cooldownTimer = dilation.cooldownTimer or 0
+                local readiness
+                if dilation.active then
+                        readiness = 1
+                elseif cooldown and cooldown > 0 then
+                        readiness = 1 - math.min(1, cooldownTimer / cooldown)
+                else
+                        readiness = (cooldownTimer <= 0) and 1 or 0
+                end
+                state.ready = math.max(0, math.min(1, readiness))
+                if dilation.active then
+                        state.target = 1
+                else
+                        state.target = math.max(0.2, 0.3 + state.ready * 0.5)
+                end
+        elseif self.temporalAnchor then
+                local state = self.temporalAnchor
+                state.time = (state.time or 0) + dt
+                state.active = false
+                state.ready = 0
+                state.target = 0
+        end
+
+        if self.temporalAnchor then
+                local state = self.temporalAnchor
+                local intensity = state.intensity or 0
+                local target = state.target or 0
+                local blend = math.min(1, dt * 5.0)
+                intensity = intensity + (target - intensity) * blend
+                state.intensity = intensity
+                if intensity < 0.01 and target <= 0 then
+                        self.temporalAnchor = nil
+                end
+        end
 
 	hole = descendingHole
 	if hole and head then
