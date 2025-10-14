@@ -12,7 +12,6 @@ end)
 Score.current = 0
 Score.highscore = 0
 Score.saveFile = "scores.lua"
-Score.fruitBonus = 0
 Score.comboBonusMult = 1
 Score.comboBonusBase = 1
 Score.highScoreGlowDuration = 4
@@ -82,7 +81,6 @@ function Score:reset(mode)
 	if mode == nil then
 		-- Just reset the current score
 		self.current = 0
-		self.fruitBonus = 0
 		self.comboBonusBase = 1
 		self.comboBonusMult = 1
 		self.highScoreGlowTimer = 0
@@ -112,7 +110,7 @@ end
 
 function Score:increase(points)
 	points = points or 1
-		self.current = self.current + points + (self.fruitBonus or 0)
+		self.current = self.current + points
 
 		PlayerStats:add("totalApplesEaten", 1)
 		updateAchievementChecks(self)
@@ -121,10 +119,6 @@ function Score:increase(points)
 				self.runHighScoreTriggered = true
 				self.highScoreGlowTimer = 0
 		end
-end
-
-function Score:addFruitBonus(amount)
-		self.fruitBonus = (self.fruitBonus or 0) + (amount or 0)
 end
 
 function Score:addBonus(points)

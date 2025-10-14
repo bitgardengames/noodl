@@ -94,8 +94,4 @@ function PlayerStats:reset(saveAfter)
 	end
 end
 
-function PlayerStats:getSchema()
-	return playerSchema
-end
-
 return PlayerStats
