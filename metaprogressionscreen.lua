@@ -106,6 +106,18 @@ local function darkenColor(color, amount)
         return {r, g, b, a}
 end
 
+local function shallowCopy(value)
+        if type(value) ~= "table" then
+                return value
+        end
+
+        local copy = {}
+        for k, v in pairs(value) do
+                copy[k] = v
+        end
+        return copy
+end
+
 local heldDpadButton = nil
 local heldDpadAction = nil
 local heldDpadTimer = 0
@@ -655,20 +667,8 @@ local function withAlpha(color, alpha)
         }
 end
 
-local function shallowCopy(value)
-        if type(value) ~= "table" then
-                return value
-        end
-
-        local copy = {}
-        for k, v in pairs(value) do
-                copy[k] = v
-        end
-        return copy
-end
-
 local function drawWindowFrame(x, y, width, height, options)
-	options = options or {}
+        options = options or {}
 
 	if not width or not height or width <= 0 or height <= 0 then
 		return
