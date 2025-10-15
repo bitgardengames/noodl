@@ -1,15 +1,15 @@
 local Screen = require("screen")
 
 local SplashScreen = {
-	TransitionDurationIn = 0.25,
-	TransitionDurationOut = 0.25,
-	DisplayDuration = 2,
-	BackgroundColor = { 0.04, 0.04, 0.05, 1 },
+	transitionDurationIn = 0.25,
+	transitionDurationOut = 0.25,
+	displayDuration = 2,
+	backgroundColor = { 0.04, 0.04, 0.05, 1 },
 }
 
-local LogoImage = nil
+local logoImage = nil
 
-local function LoadImage(path)
+local function loadImage(path)
 	if not path then
 		return nil
 	end
@@ -22,26 +22,26 @@ local function LoadImage(path)
 	return nil
 end
 
-local function EnsureLogo()
-	if LogoImage or not love or not love.graphics then
-		return LogoImage
+local function ensureLogo()
+	if logoImage or not love or not love.graphics then
+		return logoImage
 	end
 
-	LogoImage = LoadImage("Assets/SplashLogo.png")
+	logoImage = loadImage("Assets/SplashLogo.png")
 
-	return LogoImage
+	return logoImage
 end
 
 function SplashScreen:enter()
 	self.timer = 0
-	EnsureLogo()
+	ensureLogo()
 end
 
 function SplashScreen:leave()
 	self.timer = 0
 end
 
-local function DrawBackground(color, width, height)
+local function drawBackground(color, width, height)
 	if not color then
 		love.graphics.clear(0, 0, 0, 1)
 		return
@@ -51,27 +51,27 @@ local function DrawBackground(color, width, height)
 	love.graphics.rectangle("fill", 0, 0, width, height)
 end
 
-local function DrawLogo(image, width, height)
+local function drawLogo(image, width, height)
 	if not image then
 		return
 	end
 
-	local ImgWidth, ImgHeight = image:getDimensions()
-	if not ImgWidth or not ImgHeight or ImgWidth == 0 or ImgHeight == 0 then
+	local imgWidth, imgHeight = image:getDimensions()
+	if not imgWidth or not imgHeight or imgWidth == 0 or imgHeight == 0 then
 		return
 	end
 
-	local MaxWidth = width * 0.5
-	local MaxHeight = height * 0.5
-	local scale = math.min(MaxWidth / ImgWidth, MaxHeight / ImgHeight, 1)
+	local maxWidth = width * 0.5
+	local maxHeight = height * 0.5
+	local scale = math.min(maxWidth / imgWidth, maxHeight / imgHeight, 1)
 	if scale <= 0 then
 		scale = 1
 	end
 
-	local DrawWidth = ImgWidth * scale
-	local DrawHeight = ImgHeight * scale
-	local x = (width - DrawWidth) * 0.5
-	local y = (height - DrawHeight) * 0.5 - 20
+	local drawWidth = imgWidth * scale
+	local drawHeight = imgHeight * scale
+	local x = (width - drawWidth) * 0.5
+	local y = (height - drawHeight) * 0.5 - 20
 
 	if y < 0 then
 		y = 0
@@ -88,27 +88,27 @@ function SplashScreen:update(dt)
 
 	self.timer = self.timer + (dt or 0)
 
-	if self.timer >= self.DisplayDuration then
+	if self.timer >= self.displayDuration then
 		return "menu"
 	end
 end
 
-local function DrawFadeOverlay(timer, duration, width, height)
+local function drawFadeOverlay(timer, duration, width, height)
 	if not timer or not duration or duration <= 0 then
 		return
 	end
 
-	local FadeInTime = math.min(timer, 0.2)
-	local FadeInAlpha = 1 - math.min(FadeInTime / 0.2, 1)
+	local fadeInTime = math.min(timer, 0.2)
+	local fadeInAlpha = 1 - math.min(fadeInTime / 0.2, 1)
 
-	local FadeOutStart = (duration or 1.25) - 0.25
-	local FadeOutAlpha = 0
-	if timer > FadeOutStart then
-		local FadeOutProgress = math.min((timer - FadeOutStart) / 0.25, 1)
-		FadeOutAlpha = FadeOutProgress
+	local fadeOutStart = (duration or 1.25) - 0.25
+	local fadeOutAlpha = 0
+	if timer > fadeOutStart then
+		local fadeOutProgress = math.min((timer - fadeOutStart) / 0.25, 1)
+		fadeOutAlpha = fadeOutProgress
 	end
 
-	local alpha = math.max(FadeInAlpha, FadeOutAlpha)
+	local alpha = math.max(fadeInAlpha, fadeOutAlpha)
 	if alpha <= 0 then
 		return
 	end
@@ -123,9 +123,9 @@ function SplashScreen:draw()
 		sw, sh = love.graphics.getDimensions()
 	end
 
-	DrawBackground(self.BackgroundColor, sw, sh)
-	DrawLogo(LogoImage, sw, sh)
-	DrawFadeOverlay(self.timer, self.DisplayDuration, sw, sh)
+	drawBackground(self.backgroundColor, sw, sh)
+	drawLogo(logoImage, sw, sh)
+	drawFadeOverlay(self.timer, self.displayDuration, sw, sh)
 
 	love.graphics.setColor(1, 1, 1, 1)
 end

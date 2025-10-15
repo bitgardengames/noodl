@@ -9,93 +9,93 @@ local Shaders = require("shaders")
 local Audio = require("audio")
 
 local FloorSelect = {
-	TransitionDuration = 0.45,
+	transitionDuration = 0.45,
 }
 
-local ButtonList = ButtonList.new()
+local buttonList = ButtonList.new()
 local buttons = {}
-local HighestUnlocked = 1
-local DefaultFloor = 1
+local highestUnlocked = 1
+local defaultFloor = 1
 
-local BACKGROUND_EFFECT_TYPE = "MenuConstellation"
-local BackgroundEffectCache = {}
-local BackgroundEffect = nil
+local BACKGROUND_EFFECT_TYPE = "menuConstellation"
+local backgroundEffectCache = {}
+local backgroundEffect = nil
 
 local ANALOG_DEADZONE = 0.35
-local AnalogAxisDirections = { horizontal = nil, vertical = nil }
+local analogAxisDirections = { horizontal = nil, vertical = nil }
 
 local layout = {
-	StartX = 0,
-	StartY = 0,
-	GridWidth = 0,
-	GridHeight = 0,
-	SectionSpacing = 0,
-	BackY = 0,
-	ButtonHeight = 0,
-	LastWidth = 0,
-	LastHeight = 0,
+	startX = 0,
+	startY = 0,
+	gridWidth = 0,
+	gridHeight = 0,
+	sectionSpacing = 0,
+	backY = 0,
+	buttonHeight = 0,
+	lastWidth = 0,
+	lastHeight = 0,
 }
 
-local function ConfigureBackgroundEffect()
-	local effect = Shaders.ensure(BackgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+local function configureBackgroundEffect()
+	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
 	if not effect then
-		BackgroundEffect = nil
+		backgroundEffect = nil
 		return
 	end
 
-	local DefaultBackdrop = select(1, Shaders.GetDefaultIntensities(effect))
-	effect.backdropIntensity = DefaultBackdrop or effect.backdropIntensity or 0.58
+	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+	effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.58
 
 	Shaders.configure(effect, {
-		BgColor = Theme.BgColor,
-		AccentColor = Theme.ButtonHover,
-		HighlightColor = Theme.AccentTextColor,
+		bgColor = Theme.bgColor,
+		accentColor = Theme.buttonHover,
+		highlightColor = Theme.accentTextColor,
 	})
 
-	BackgroundEffect = effect
+	backgroundEffect = effect
 end
 
-local function DrawBackground(sw, sh)
-	love.graphics.setColor(Theme.BgColor)
+local function drawBackground(sw, sh)
+	love.graphics.setColor(Theme.bgColor)
 	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-	if not BackgroundEffect then
-		ConfigureBackgroundEffect()
+	if not backgroundEffect then
+		configureBackgroundEffect()
 	end
 
-	if BackgroundEffect then
-		local intensity = BackgroundEffect.backdropIntensity or select(1, Shaders.GetDefaultIntensities(BackgroundEffect))
-		Shaders.draw(BackgroundEffect, 0, 0, sw, sh, intensity)
+	if backgroundEffect then
+		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function ResetAnalogAxis()
-	AnalogAxisDirections.horizontal = nil
-	AnalogAxisDirections.vertical = nil
+local function resetAnalogAxis()
+	analogAxisDirections.horizontal = nil
+	analogAxisDirections.vertical = nil
 end
 
-local AnalogAxisActions = {
+local analogAxisActions = {
 	horizontal = {
 		negative = function()
-			ButtonList:moveFocus(-1)
+			buttonList:moveFocus(-1)
 		end,
 		positive = function()
-			ButtonList:moveFocus(1)
+			buttonList:moveFocus(1)
 		end,
 	},
 	vertical = {
 		negative = function()
-			ButtonList:moveFocus(-1)
+			buttonList:moveFocus(-1)
 		end,
 		positive = function()
-			ButtonList:moveFocus(1)
+			buttonList:moveFocus(1)
 		end,
 	},
 }
 
-local AnalogAxisMap = {
+local analogAxisMap = {
 	leftx = { slot = "horizontal" },
 	rightx = { slot = "horizontal" },
 	lefty = { slot = "vertical" },
@@ -104,8 +104,8 @@ local AnalogAxisMap = {
 	[2] = { slot = "vertical" },
 }
 
-local function HandleAnalogAxis(axis, value)
-	local mapping = AnalogAxisMap[axis]
+local function handleAnalogAxis(axis, value)
+	local mapping = analogAxisMap[axis]
 	if not mapping then
 		return
 	end
@@ -117,14 +117,14 @@ local function HandleAnalogAxis(axis, value)
 		direction = "negative"
 	end
 
-	if AnalogAxisDirections[mapping.slot] == direction then
+	if analogAxisDirections[mapping.slot] == direction then
 		return
 	end
 
-	AnalogAxisDirections[mapping.slot] = direction
+	analogAxisDirections[mapping.slot] = direction
 
 	if direction then
-		local actions = AnalogAxisActions[mapping.slot]
+		local actions = analogAxisActions[mapping.slot]
 		local action = actions and actions[direction]
 		if action then
 			action()
@@ -141,233 +141,233 @@ local function clamp(value, minimum, maximum)
 	return value
 end
 
-local function BuildButtons(sw, sh)
+local function buildButtons(sw, sh)
 	local spacing = UI.spacing or {}
-	local MarginX = math.max(72, math.floor(sw * 0.08))
-	local MarginBottom = math.max(140, math.floor(sh * 0.18))
-	local GapX = math.max(18, spacing.buttonSpacing or 24)
-	local GapY = math.max(18, spacing.buttonSpacing or 24)
-	local SectionSpacing = spacing.sectionSpacing or 28
+	local marginX = math.max(72, math.floor(sw * 0.08))
+	local marginBottom = math.max(140, math.floor(sh * 0.18))
+	local gapX = math.max(18, spacing.buttonSpacing or 24)
+	local gapY = math.max(18, spacing.buttonSpacing or 24)
+	local sectionSpacing = spacing.sectionSpacing or 28
 
-	local columns = math.max(1, math.min(4, math.ceil(HighestUnlocked / 4)))
-	local AvailableWidth = sw - MarginX * 2 - GapX * (columns - 1)
-	local ButtonWidth = math.max(180, math.floor(AvailableWidth / columns))
-	local ButtonHeight = math.max(44, math.floor((spacing.buttonHeight or 56) * 0.9))
+	local columns = math.max(1, math.min(4, math.ceil(highestUnlocked / 4)))
+	local availableWidth = sw - marginX * 2 - gapX * (columns - 1)
+	local buttonWidth = math.max(180, math.floor(availableWidth / columns))
+	local buttonHeight = math.max(44, math.floor((spacing.buttonHeight or 56) * 0.9))
 
-	local rows = math.ceil(HighestUnlocked / columns)
-	local GridHeight = rows * ButtonHeight + math.max(0, rows - 1) * GapY
+	local rows = math.ceil(highestUnlocked / columns)
+	local gridHeight = rows * buttonHeight + math.max(0, rows - 1) * gapY
 
-	local TopMargin = math.max(120, math.floor(sh * 0.2))
-	local AvailableHeight = sh - TopMargin - MarginBottom
-	local StartY = TopMargin + math.max(0, math.floor((AvailableHeight - GridHeight) / 2))
-	local StartX = math.floor((sw - (ButtonWidth * columns + GapX * (columns - 1))) / 2)
+	local topMargin = math.max(120, math.floor(sh * 0.2))
+	local availableHeight = sh - topMargin - marginBottom
+	local startY = topMargin + math.max(0, math.floor((availableHeight - gridHeight) / 2))
+	local startX = math.floor((sw - (buttonWidth * columns + gapX * (columns - 1))) / 2)
 
 	local defs = {}
 
-	for floor = 1, HighestUnlocked do
+	for floor = 1, highestUnlocked do
 		local col = (floor - 1) % columns
 		local row = math.floor((floor - 1) / columns)
-		local x = StartX + col * (ButtonWidth + GapX)
-		local y = StartY + row * (ButtonHeight + GapY)
-		local FloorData = Floors[floor] or {}
-		local LabelArgs = {
+		local x = startX + col * (buttonWidth + gapX)
+		local y = startY + row * (buttonHeight + gapY)
+		local floorData = Floors[floor] or {}
+		local labelArgs = {
 			floor = floor,
-			name = FloorData.name or Localization:get("common.unknown"),
+			name = floorData.name or Localization:get("common.unknown"),
 		}
 
 		defs[#defs + 1] = {
 			id = string.format("floor_button_%d", floor),
 			x = x,
 			y = y,
-			w = ButtonWidth,
-			h = ButtonHeight,
+			w = buttonWidth,
+			h = buttonHeight,
 			action = {
 				state = "game",
-				data = { StartFloor = floor },
+				data = { startFloor = floor },
 			},
 			floor = floor,
-			LabelKey = "floor_select.button_label",
-			LabelArgs = LabelArgs,
+			labelKey = "floor_select.button_label",
+			labelArgs = labelArgs,
 		}
 	end
 
-	local BackWidth = ButtonWidth
-	local BackX = math.floor((sw - BackWidth) / 2)
-	local BackY = StartY + GridHeight + SectionSpacing * 4
-	local MaxBackY = sh - (spacing.buttonHeight or 56) - 40
-	BackY = clamp(BackY, StartY + GridHeight + SectionSpacing * 2, MaxBackY)
+	local backWidth = buttonWidth
+	local backX = math.floor((sw - backWidth) / 2)
+	local backY = startY + gridHeight + sectionSpacing * 4
+	local maxBackY = sh - (spacing.buttonHeight or 56) - 40
+	backY = clamp(backY, startY + gridHeight + sectionSpacing * 2, maxBackY)
 
 	defs[#defs + 1] = {
 			id = "floor_back",
-			x = BackX,
-			y = BackY,
-			w = BackWidth,
-			h = ButtonHeight,
+			x = backX,
+			y = backY,
+			w = backWidth,
+			h = buttonHeight,
 			action = "menu",
-			LabelKey = "common.back",
+			labelKey = "common.back",
 	}
 
-	buttons = ButtonList:reset(defs)
+	buttons = buttonList:reset(defs)
 
 	for index, btn in ipairs(buttons) do
-		if btn.floor == DefaultFloor then
-			ButtonList:setFocus(index, nil, true)
+		if btn.floor == defaultFloor then
+			buttonList:setFocus(index, nil, true)
 			break
 		end
 	end
 
-	layout.startX = StartX
-	layout.startY = StartY
-	layout.gridWidth = ButtonWidth * columns + GapX * (columns - 1)
-	layout.gridHeight = GridHeight
-	layout.sectionSpacing = SectionSpacing
-	layout.backY = BackY
-	layout.buttonHeight = ButtonHeight
+	layout.startX = startX
+	layout.startY = startY
+	layout.gridWidth = buttonWidth * columns + gapX * (columns - 1)
+	layout.gridHeight = gridHeight
+	layout.sectionSpacing = sectionSpacing
+	layout.backY = backY
+	layout.buttonHeight = buttonHeight
 	layout.lastWidth = sw
 	layout.lastHeight = sh
 end
 
-local function EnsureLayout(sw, sh)
+local function ensureLayout(sw, sh)
 	if layout.lastWidth ~= sw or layout.lastHeight ~= sh then
-		BuildButtons(sw, sh)
+		buildButtons(sw, sh)
 	end
 end
 
 function FloorSelect:enter(data)
-	UI.ClearButtons()
+	UI.clearButtons()
 	Screen:update()
-	ConfigureBackgroundEffect()
-	ResetAnalogAxis()
+	configureBackgroundEffect()
+	resetAnalogAxis()
 
-	local RequestedHighest = data and data.highestFloor
-	HighestUnlocked = math.max(1, math.floor(RequestedHighest or PlayerStats:get("DeepestFloorReached") or 1))
-	local TotalFloors = #Floors
-	if TotalFloors > 0 then
-			HighestUnlocked = math.min(HighestUnlocked, TotalFloors)
+	local requestedHighest = data and data.highestFloor
+	highestUnlocked = math.max(1, math.floor(requestedHighest or PlayerStats:get("deepestFloorReached") or 1))
+	local totalFloors = #Floors
+	if totalFloors > 0 then
+			highestUnlocked = math.min(highestUnlocked, totalFloors)
 	end
 
-	DefaultFloor = math.max(1, math.min(HighestUnlocked, math.floor((data and data.defaultFloor) or HighestUnlocked)))
+	defaultFloor = math.max(1, math.min(highestUnlocked, math.floor((data and data.defaultFloor) or highestUnlocked)))
 
 	local sw, sh = Screen:get()
-	BuildButtons(sw, sh)
+	buildButtons(sw, sh)
 end
 
 function FloorSelect:update(dt)
 	local sw, sh = Screen:get()
-	EnsureLayout(sw, sh)
+	ensureLayout(sw, sh)
 
 	local mx, my = love.mouse.getPosition()
-	ButtonList:updateHover(mx, my)
+	buttonList:updateHover(mx, my)
 end
 
-local function DrawHeading(sw, sh)
+local function drawHeading(sw, sh)
 	local title = Localization:get("floor_select.title")
 	local subtitle = Localization:get("floor_select.subtitle")
-	local HighestText = Localization:get("floor_select.highest_label", { floor = HighestUnlocked })
+	local highestText = Localization:get("floor_select.highest_label", { floor = highestUnlocked })
 
-	UI.DrawLabel(title, 0, math.floor(sh * 0.08), sw, "center", { FontKey = "title" })
+	UI.drawLabel(title, 0, math.floor(sh * 0.08), sw, "center", { fontKey = "title" })
 
-	local SubtitleFont = UI.fonts.body
-	local SubtitleHeight = SubtitleFont and SubtitleFont:getHeight() or 28
-	local SubtitleY = math.floor(sh * 0.08) + (UI.fonts.title and UI.fonts.title:GetHeight() or 64) + 10
-	UI.DrawLabel(subtitle, sw * 0.15, SubtitleY, sw * 0.7, "center", { FontKey = "body", color = UI.colors.SubtleText })
+	local subtitleFont = UI.fonts.body
+	local subtitleHeight = subtitleFont and subtitleFont:getHeight() or 28
+	local subtitleY = math.floor(sh * 0.08) + (UI.fonts.title and UI.fonts.title:getHeight() or 64) + 10
+	UI.drawLabel(subtitle, sw * 0.15, subtitleY, sw * 0.7, "center", { fontKey = "body", color = UI.colors.subtleText })
 
-	local HighestY = SubtitleY + SubtitleHeight + 8
-	UI.DrawLabel(HighestText, sw * 0.2, HighestY, sw * 0.6, "center", { FontKey = "body", color = UI.colors.text })
+	local highestY = subtitleY + subtitleHeight + 8
+	UI.drawLabel(highestText, sw * 0.2, highestY, sw * 0.6, "center", { fontKey = "body", color = UI.colors.text })
 
 	local instruction = Localization:get("floor_select.instruction")
-	local InstructionY = layout.startY - layout.sectionSpacing * 1.5
-	UI.DrawLabel(instruction, sw * 0.15, InstructionY, sw * 0.7, "center", { FontKey = "body", color = UI.colors.SubtleText })
+	local instructionY = layout.startY - layout.sectionSpacing * 1.5
+	UI.drawLabel(instruction, sw * 0.15, instructionY, sw * 0.7, "center", { fontKey = "body", color = UI.colors.subtleText })
 end
 
-local function DrawButtons()
+local function drawButtons()
 	for _, btn in ipairs(buttons) do
 		if btn.labelKey then
 			btn.text = Localization:get(btn.labelKey, btn.labelArgs)
 		end
 
-		UI.RegisterButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
-		UI.DrawButton(btn.id)
+		UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
+		UI.drawButton(btn.id)
 	end
 end
 
-local function DrawDescription(sw)
-	local focused = ButtonList:getFocused()
-	local FocusFloor = focused and focused.floor
-	if type(FocusFloor) ~= "number" then
-		FocusFloor = DefaultFloor
+local function drawDescription(sw)
+	local focused = buttonList:getFocused()
+	local focusFloor = focused and focused.floor
+	if type(focusFloor) ~= "number" then
+		focusFloor = defaultFloor
 	end
 
-	local FloorData = Floors[FocusFloor] or {}
-	local description = FloorData.flavor or Localization:get("floor_select.description_fallback")
+	local floorData = Floors[focusFloor] or {}
+	local description = floorData.flavor or Localization:get("floor_select.description_fallback")
 	local padding = math.max(60, math.floor(sw * 0.12))
 	local width = sw - padding * 2
-	local SectionSpacing = layout.sectionSpacing or 24
-	local BaseY = layout.backY - SectionSpacing * 2
+	local sectionSpacing = layout.sectionSpacing or 24
+	local baseY = layout.backY - sectionSpacing * 2
 
-	local BodyFont = UI.fonts.body
-	local DescHeight = 0
-	if BodyFont then
-		local _, lines = BodyFont:getWrap(description, width)
-		DescHeight = #lines * BodyFont:getHeight()
+	local bodyFont = UI.fonts.body
+	local descHeight = 0
+	if bodyFont then
+		local _, lines = bodyFont:getWrap(description, width)
+		descHeight = #lines * bodyFont:getHeight()
 	end
 
-	local MinY = layout.startY + layout.gridHeight + SectionSpacing
-	local y = math.max(MinY, BaseY - DescHeight)
-	UI.DrawLabel(description, padding, y, width, "center", { FontKey = "body", color = UI.colors.SubtleText })
+	local minY = layout.startY + layout.gridHeight + sectionSpacing
+	local y = math.max(minY, baseY - descHeight)
+	UI.drawLabel(description, padding, y, width, "center", { fontKey = "body", color = UI.colors.subtleText })
 end
 
 function FloorSelect:draw()
 	local sw, sh = Screen:get()
-	DrawBackground(sw, sh)
+	drawBackground(sw, sh)
 
-	DrawHeading(sw, sh)
-	DrawButtons()
-	DrawDescription(sw)
+	drawHeading(sw, sh)
+	drawButtons()
+	drawDescription(sw)
 end
 
 function FloorSelect:mousepressed(x, y, button)
-	ButtonList:mousepressed(x, y, button)
+	buttonList:mousepressed(x, y, button)
 end
 
 function FloorSelect:mousereleased(x, y, button)
-	local action = ButtonList:mousereleased(x, y, button)
+	local action = buttonList:mousereleased(x, y, button)
 	if action then
-		Audio:PlaySound("click")
+		Audio:playSound("click")
 		return action
 	end
 end
 
-local function ActivateFocused()
-	local action = ButtonList:activateFocused()
+local function activateFocused()
+	local action = buttonList:activateFocused()
 	if action then
-		Audio:PlaySound("click")
+		Audio:playSound("click")
 	end
 	return action
 end
 
 function FloorSelect:keypressed(key)
 	if key == "left" or key == "up" then
-		ButtonList:moveFocus(-1)
+		buttonList:moveFocus(-1)
 	elseif key == "right" or key == "down" then
-		ButtonList:moveFocus(1)
+		buttonList:moveFocus(1)
 	elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
-		return ActivateFocused()
+		return activateFocused()
 	elseif key == "escape" or key == "backspace" then
-		Audio:PlaySound("click")
+		Audio:playSound("click")
 		return "menu"
 	end
 end
 
 function FloorSelect:gamepadpressed(_, button)
 	if button == "dpup" or button == "dpleft" then
-		ButtonList:moveFocus(-1)
+		buttonList:moveFocus(-1)
 	elseif button == "dpdown" or button == "dpright" then
-		ButtonList:moveFocus(1)
+		buttonList:moveFocus(1)
 	elseif button == "a" or button == "start" then
-		return ActivateFocused()
+		return activateFocused()
 	elseif button == "b" then
-		Audio:PlaySound("click")
+		Audio:playSound("click")
 		return "menu"
 	end
 end
@@ -375,11 +375,11 @@ end
 FloorSelect.joystickpressed = FloorSelect.gamepadpressed
 
 function FloorSelect:gamepadaxis(_, axis, value)
-	HandleAnalogAxis(axis, value)
+	handleAnalogAxis(axis, value)
 end
 
 function FloorSelect:joystickaxis(_, axis, value)
-	HandleAnalogAxis(axis, value)
+	handleAnalogAxis(axis, value)
 end
 
 FloorSelect.joystickaxis = FloorSelect.gamepadaxis

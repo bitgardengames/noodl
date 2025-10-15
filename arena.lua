@@ -6,7 +6,7 @@ local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
 
 
-local function GetModule(name)
+local function getModule(name)
 	local loaded = package.loaded[name]
 	if loaded ~= nil then
 		if loaded == true then
@@ -23,12 +23,12 @@ local function GetModule(name)
 	return nil
 end
 
-local function DistanceSquared(ax, ay, bx, by)
+local function distanceSquared(ax, ay, bx, by)
 	local dx, dy = ax - bx, ay - by
 	return dx * dx + dy * dy
 end
 
-local function GetHighlightColor(color)
+local function getHighlightColor(color)
 	color = color or {1, 1, 1, 1}
 
 	local r = math.min(1, color[1] * 1.2 + 0.08)
@@ -39,7 +39,7 @@ local function GetHighlightColor(color)
 	return {r, g, b, a}
 end
 
-local function NormalizeCellCoordinate(value)
+local function normalizeCellCoordinate(value)
 	if value == nil then
 		return nil
 	end
@@ -47,45 +47,45 @@ local function NormalizeCellCoordinate(value)
 	return math.floor(value + 0.5)
 end
 
-local function DrawSpawnDebugOverlay(self)
-	local DebugData = self._spawnDebugData
-	if not DebugData then
+local function drawSpawnDebugOverlay(self)
+	local debugData = self._spawnDebugData
+	if not debugData then
 		return
 	end
 
-	local Snake = GetModule("snake")
-	if not (Snake and Snake.IsDeveloperAssistEnabled and Snake:IsDeveloperAssistEnabled()) then
+	local Snake = getModule("snake")
+	if not (Snake and Snake.isDeveloperAssistEnabled and Snake:isDeveloperAssistEnabled()) then
 		return
 	end
 
-	local function DrawCells(cells, FillColor, OutlineColor)
+	local function drawCells(cells, fillColor, outlineColor)
 		if not (cells and #cells > 0) then
 			return
 		end
 
-		local TileSize = self.TileSize or 24
-		local radius = math.min(8, TileSize * 0.35)
+		local tileSize = self.tileSize or 24
+		local radius = math.min(8, tileSize * 0.35)
 
-		if FillColor then
-			love.graphics.setColor(FillColor[1], FillColor[2], FillColor[3], FillColor[4] or 0.22)
+		if fillColor then
+			love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.22)
 			for _, cell in ipairs(cells) do
-				local col = NormalizeCellCoordinate(cell[1])
-				local row = NormalizeCellCoordinate(cell[2])
+				local col = normalizeCellCoordinate(cell[1])
+				local row = normalizeCellCoordinate(cell[2])
 				if col and row and col >= 1 and col <= self.cols and row >= 1 and row <= self.rows then
-					local x, y = self:GetTilePosition(col, row)
-					love.graphics.rectangle("fill", x, y, TileSize, TileSize, radius, radius)
+					local x, y = self:getTilePosition(col, row)
+					love.graphics.rectangle("fill", x, y, tileSize, tileSize, radius, radius)
 				end
 			end
 		end
 
-		if OutlineColor then
-			love.graphics.setColor(OutlineColor[1], OutlineColor[2], OutlineColor[3], OutlineColor[4] or 0.4)
+		if outlineColor then
+			love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 0.4)
 			for _, cell in ipairs(cells) do
-				local col = NormalizeCellCoordinate(cell[1])
-				local row = NormalizeCellCoordinate(cell[2])
+				local col = normalizeCellCoordinate(cell[1])
+				local row = normalizeCellCoordinate(cell[2])
 				if col and row and col >= 1 and col <= self.cols and row >= 1 and row <= self.rows then
-					local x, y = self:GetTilePosition(col, row)
-					love.graphics.rectangle("line", x + 1, y + 1, TileSize - 2, TileSize - 2, radius, radius)
+					local x, y = self:getTilePosition(col, row)
+					love.graphics.rectangle("line", x + 1, y + 1, tileSize - 2, tileSize - 2, radius, radius)
 				end
 			end
 		end
@@ -95,24 +95,24 @@ local function DrawSpawnDebugOverlay(self)
 	love.graphics.setLineWidth(1.25)
 	love.graphics.setBlendMode("alpha")
 
-	DrawCells(DebugData.spawnSafeCells, {0.95, 0.34, 0.32, 0.24})
-	DrawCells(DebugData.spawnBuffer, {1.0, 0.64, 0.26, 0.28})
-	DrawCells(DebugData.safeZone, {0.22, 0.68, 1.0, 0.35}, {0.92, 0.98, 1.0, 0.75})
-	DrawCells(DebugData.rockSafeZone, {0.64, 0.36, 0.88, 0.2})
-	DrawCells(DebugData.reservedCells, nil, {1.0, 1.0, 1.0, 0.35})
-	DrawCells(DebugData.reservedSpawnBuffer, nil, {1.0, 0.86, 0.38, 0.45})
+	drawCells(debugData.spawnSafeCells, {0.95, 0.34, 0.32, 0.24})
+	drawCells(debugData.spawnBuffer, {1.0, 0.64, 0.26, 0.28})
+	drawCells(debugData.safeZone, {0.22, 0.68, 1.0, 0.35}, {0.92, 0.98, 1.0, 0.75})
+	drawCells(debugData.rockSafeZone, {0.64, 0.36, 0.88, 0.2})
+	drawCells(debugData.reservedCells, nil, {1.0, 1.0, 1.0, 0.35})
+	drawCells(debugData.reservedSpawnBuffer, nil, {1.0, 0.86, 0.38, 0.45})
 
 	love.graphics.pop()
 end
 
-local function MixChannel(base, target, amount)
+local function mixChannel(base, target, amount)
 	return base + (target - base) * amount
 end
 
-local function IsTileInSafeZone(SafeZone, col, row)
-	if not SafeZone then return false end
+local function isTileInSafeZone(safeZone, col, row)
+	if not safeZone then return false end
 
-	for _, cell in ipairs(SafeZone) do
+	for _, cell in ipairs(safeZone) do
 		if cell[1] == col and cell[2] == row then
 			return true
 		end
@@ -125,63 +125,63 @@ local Arena = {
 	x = 0, y = 0,
 	width = 792,
 	height = 600,
-	TileSize = 24,
+	tileSize = 24,
 	cols = 0,
 	rows = 0,
 		exit = nil,
-		ActiveBackgroundEffect = nil,
-	BorderFlare = 0,
-	BorderFlareStrength = 0,
-	BorderFlareTimer = 0,
-	BorderFlareDuration = 1.05,
+		activeBackgroundEffect = nil,
+	borderFlare = 0,
+	borderFlareStrength = 0,
+	borderFlareTimer = 0,
+	borderFlareDuration = 1.05,
 }
 
-function Arena:SetSpawnDebugData(data)
+function Arena:setSpawnDebugData(data)
 	if not data then
 		self._spawnDebugData = nil
 		return
 	end
 
 	self._spawnDebugData = {
-		SafeZone = data.safeZone,
-		RockSafeZone = data.rockSafeZone,
-		SpawnBuffer = data.spawnBuffer,
-		SpawnSafeCells = data.spawnSafeCells,
-		ReservedCells = data.reservedCells,
-		ReservedSafeZone = data.reservedSafeZone,
-		ReservedSpawnBuffer = data.reservedSpawnBuffer,
+		safeZone = data.safeZone,
+		rockSafeZone = data.rockSafeZone,
+		spawnBuffer = data.spawnBuffer,
+		spawnSafeCells = data.spawnSafeCells,
+		reservedCells = data.reservedCells,
+		reservedSafeZone = data.reservedSafeZone,
+		reservedSpawnBuffer = data.reservedSpawnBuffer,
 	}
 end
 
-function Arena:ClearSpawnDebugData()
+function Arena:clearSpawnDebugData()
 	self._spawnDebugData = nil
 end
 
-function Arena:UpdateScreenBounds(sw, sh)
+function Arena:updateScreenBounds(sw, sh)
 	self.x = math.floor((sw - self.width) / 2)
 	self.y = math.floor((sh - self.height) / 2)
 
 	-- snap x,y to nearest tile boundary so centers align
-	self.x = self.x - (self.x % self.TileSize)
-	self.y = self.y - (self.y % self.TileSize)
+	self.x = self.x - (self.x % self.tileSize)
+	self.y = self.y - (self.y % self.tileSize)
 
-	self.cols = math.floor(self.width / self.TileSize)
-	self.rows = math.floor(self.height / self.TileSize)
+	self.cols = math.floor(self.width / self.tileSize)
+	self.rows = math.floor(self.height / self.tileSize)
 end
 
-function Arena:GetTilePosition(col, row)
-	return self.x + (col - 1) * self.TileSize,
-			self.y + (row - 1) * self.TileSize
+function Arena:getTilePosition(col, row)
+	return self.x + (col - 1) * self.tileSize,
+			self.y + (row - 1) * self.tileSize
 end
 
-function Arena:GetCenterOfTile(col, row)
-	local x, y = self:GetTilePosition(col, row)
-	return x + self.TileSize / 2, y + self.TileSize / 2
+function Arena:getCenterOfTile(col, row)
+	local x, y = self:getTilePosition(col, row)
+	return x + self.tileSize / 2, y + self.tileSize / 2
 end
 
-function Arena:GetTileFromWorld(x, y)
-	local col = math.floor((x - self.x) / self.TileSize) + 1
-	local row = math.floor((y - self.y) / self.TileSize) + 1
+function Arena:getTileFromWorld(x, y)
+	local col = math.floor((x - self.x) / self.tileSize) + 1
+	local row = math.floor((y - self.y) / self.tileSize) + 1
 
 	-- clamp inside arena grid
 	col = math.max(1, math.min(self.cols, col))
@@ -190,8 +190,8 @@ function Arena:GetTileFromWorld(x, y)
 	return col, row
 end
 
-function Arena:IsInside(x, y)
-	local inset = self.TileSize / 2
+function Arena:isInside(x, y)
+	local inset = self.tileSize / 2
 
 	return x >= (self.x + inset) and
 			x <= (self.x + self.width  - inset) and
@@ -199,44 +199,44 @@ function Arena:IsInside(x, y)
 			y <= (self.y + self.height - inset)
 end
 
-function Arena:GetRandomTile()
+function Arena:getRandomTile()
 	local col = love.math.random(2, self.cols - 1)
 	local row = love.math.random(2, self.rows - 1)
 	return col, row
 end
 
-function Arena:GetBounds()
+function Arena:getBounds()
 	return self.x, self.y, self.width, self.height
 end
 
-function Arena:SetBackgroundEffect(EffectData, palette)
-	local EffectType
+function Arena:setBackgroundEffect(effectData, palette)
+	local effectType
 	local overrides
 
-	if type(EffectData) == "string" then
-		EffectType = EffectData
-	elseif type(EffectData) == "table" then
-		EffectType = EffectData.type or EffectData.name
-		overrides = EffectData
+	if type(effectData) == "string" then
+		effectType = effectData
+	elseif type(effectData) == "table" then
+		effectType = effectData.type or effectData.name
+		overrides = effectData
 	end
 
 	self._backgroundEffects = self._backgroundEffects or {}
 
-	if not EffectType or not Shaders.has(EffectType) then
-		self.ActiveBackgroundEffect = nil
+	if not effectType or not Shaders.has(effectType) then
+		self.activeBackgroundEffect = nil
 		return
 	end
 
-	local effect = Shaders.ensure(self._backgroundEffects, EffectType)
+	local effect = Shaders.ensure(self._backgroundEffects, effectType)
 	if not effect then
-		self.ActiveBackgroundEffect = nil
+		self.activeBackgroundEffect = nil
 		return
 	end
 
-	local DefaultBackdrop, DefaultArena = Shaders.GetDefaultIntensities(effect)
+	local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(effect)
 
-	effect.backdropIntensity = DefaultBackdrop
-	effect.arenaIntensity = DefaultArena
+	effect.backdropIntensity = defaultBackdrop
+	effect.arenaIntensity = defaultArena
 
 	if overrides then
 		if overrides.backdropIntensity then
@@ -252,28 +252,28 @@ function Arena:SetBackgroundEffect(EffectData, palette)
 
 	Shaders.configure(effect, palette, overrides)
 
-	self.ActiveBackgroundEffect = effect
+	self.activeBackgroundEffect = effect
 end
 
-function Arena:DrawBackgroundEffect(x, y, w, h, intensity)
-	local effect = self.ActiveBackgroundEffect
+function Arena:drawBackgroundEffect(x, y, w, h, intensity)
+	local effect = self.activeBackgroundEffect
 	if not effect then
 		return false
 	end
 
-	local DrawIntensity = intensity or effect.backdropIntensity or select(1, Shaders.GetDefaultIntensities(effect))
-	return Shaders.draw(effect, x, y, w, h, DrawIntensity)
+	local drawIntensity = intensity or effect.backdropIntensity or select(1, Shaders.getDefaultIntensities(effect))
+	return Shaders.draw(effect, x, y, w, h, drawIntensity)
 end
 
-function Arena:DrawBackdrop(sw, sh)
-	love.graphics.setColor(Theme.BgColor)
+function Arena:drawBackdrop(sw, sh)
+	love.graphics.setColor(Theme.bgColor)
 	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
 	local drawn = false
-	local effect = self.ActiveBackgroundEffect
+	local effect = self.activeBackgroundEffect
 	if effect then
-		local DefaultBackdrop = select(1, Shaders.GetDefaultIntensities(effect))
-		local intensity = effect.backdropIntensity or DefaultBackdrop
+		local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+		local intensity = effect.backdropIntensity or defaultBackdrop
 		drawn = Shaders.draw(effect, 0, 0, sw, sh, intensity) or false
 	end
 
@@ -282,32 +282,32 @@ function Arena:DrawBackdrop(sw, sh)
 end
 
 -- Draws the playfield with a solid fill + simple border
-function Arena:DrawBackground()
-	local ax, ay, aw, ah = self:GetBounds()
+function Arena:drawBackground()
+	local ax, ay, aw, ah = self:getBounds()
 
-	if self.ActiveBackgroundEffect then
-		local DefaultBackdrop, DefaultArena = Shaders.GetDefaultIntensities(self.ActiveBackgroundEffect)
-		local intensity = self.ActiveBackgroundEffect.ArenaIntensity or DefaultArena
-		Shaders.draw(self.ActiveBackgroundEffect, ax, ay, aw, ah, intensity)
+	if self.activeBackgroundEffect then
+		local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(self.activeBackgroundEffect)
+		local intensity = self.activeBackgroundEffect.arenaIntensity or defaultArena
+		Shaders.draw(self.activeBackgroundEffect, ax, ay, aw, ah, intensity)
 	end
 
 	-- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
-	love.graphics.setColor(Theme.ArenaBG)
+	love.graphics.setColor(Theme.arenaBG)
 	love.graphics.rectangle("fill", ax, ay, aw, ah)
 
-	DrawSpawnDebugOverlay(self)
+	drawSpawnDebugOverlay(self)
 
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- Draws border
-function Arena:DrawBorder()
-	local ax, ay, aw, ah = self:GetBounds()
+function Arena:drawBorder()
+	local ax, ay, aw, ah = self:getBounds()
 
 	-- Match snake style
 	local thickness    = 20       -- border thickness
-	local OutlineSize  = 6        -- black outline thickness
-	local ShadowOffset = 3
+	local outlineSize  = 6        -- black outline thickness
+	local shadowOffset = 3
 	local radius       = thickness / 2
 
 	-- Expand the border rect outward so it doesn’t bleed inside
@@ -317,40 +317,40 @@ function Arena:DrawBorder()
 	local bx, by = ax - ox, ay - oy
 	local bw, bh = aw + ox * 2, ah + oy * 2
 
-	local BorderFlare = math.max(0, math.min(1.2, self.BorderFlare or 0))
-	local FlarePulse = 0
-	if BorderFlare > 0 then
-		FlarePulse = (math.sin((self.BorderFlareTimer or 0) * 9.0) + 1) * 0.5
+	local borderFlare = math.max(0, math.min(1.2, self.borderFlare or 0))
+	local flarePulse = 0
+	if borderFlare > 0 then
+		flarePulse = (math.sin((self.borderFlareTimer or 0) * 9.0) + 1) * 0.5
 	end
 
 	-- Create/reuse MSAA canvas
-	if not self.BorderCanvas or
-		self.BorderCanvas:GetWidth() ~= love.graphics.getWidth() or
-		self.BorderCanvas:GetHeight() ~= love.graphics.getHeight() then
-		self.BorderCanvas = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight(), {msaa = 8})
+	if not self.borderCanvas or
+		self.borderCanvas:getWidth() ~= love.graphics.getWidth() or
+		self.borderCanvas:getHeight() ~= love.graphics.getHeight() then
+		self.borderCanvas = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight(), {msaa = 8})
 	end
 
-	love.graphics.setCanvas(self.BorderCanvas)
+	love.graphics.setCanvas(self.borderCanvas)
 	love.graphics.clear(0,0,0,0)
 
 	love.graphics.setLineStyle("smooth")
 
 	-- Outline pass
 	love.graphics.setColor(0, 0, 0, 1)
-	love.graphics.setLineWidth(thickness + OutlineSize)
+	love.graphics.setLineWidth(thickness + outlineSize)
 	love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
 	-- Fill (arena border color)
-	local BorderColor = Theme.ArenaBorder
-	if BorderFlare > 0 and BorderColor then
-		local MixAmount = math.min(0.45, 0.32 * BorderFlare + 0.18 * FlarePulse * BorderFlare)
-		local r = MixChannel(BorderColor[1] or 1, 0.96, MixAmount)
-		local g = MixChannel(BorderColor[2] or 1, 0.24, MixAmount * 1.05)
-		local b = MixChannel(BorderColor[3] or 1, 0.18, MixAmount * 1.1)
-		love.graphics.setColor(r, g, b, BorderColor[4] or 1)
+	local borderColor = Theme.arenaBorder
+	if borderFlare > 0 and borderColor then
+		local mixAmount = math.min(0.45, 0.32 * borderFlare + 0.18 * flarePulse * borderFlare)
+		local r = mixChannel(borderColor[1] or 1, 0.96, mixAmount)
+		local g = mixChannel(borderColor[2] or 1, 0.24, mixAmount * 1.05)
+		local b = mixChannel(borderColor[3] or 1, 0.18, mixAmount * 1.1)
+		love.graphics.setColor(r, g, b, borderColor[4] or 1)
 	else
-		if BorderColor then
-			love.graphics.setColor(BorderColor)
+		if borderColor then
+			love.graphics.setColor(borderColor)
 		else
 			love.graphics.setColor(1, 1, 1, 1)
 		end
@@ -359,214 +359,214 @@ function Arena:DrawBorder()
 	love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
 	-- Highlight pass for the top + left edges
-	local HighlightShift = 3
-	local function AppendArcPoints(points, cx, cy, radius, StartAngle, EndAngle, segments, SkipFirst)
+	local highlightShift = 3
+	local function appendArcPoints(points, cx, cy, radius, startAngle, endAngle, segments, skipFirst)
 		if segments < 1 then
 			segments = 1
 		end
 
 		for i = 0, segments do
-			if not (SkipFirst and i == 0) then
+			if not (skipFirst and i == 0) then
 				local t = i / segments
-				local angle = StartAngle + (EndAngle - StartAngle) * t
-				points[#points + 1] = cx + math.cos(angle) * radius - HighlightShift
-				points[#points + 1] = cy + math.sin(angle) * radius - HighlightShift
+				local angle = startAngle + (endAngle - startAngle) * t
+				points[#points + 1] = cx + math.cos(angle) * radius - highlightShift
+				points[#points + 1] = cy + math.sin(angle) * radius - highlightShift
 			end
 		end
 	end
 
-	local highlight = GetHighlightColor(Theme.ArenaBorder)
+	local highlight = getHighlightColor(Theme.arenaBorder)
 	-- Disable the glossy highlight along the top-left edge.
 	highlight[4] = 0
-	if BorderFlare > 0 then
+	if borderFlare > 0 then
 		-- Ease the flare towards a softer pastel tint instead of a harsh glow.
 		-- This keeps the pickup celebration visible while avoiding a sharp contrast.
-		highlight[1] = math.min(1, MixChannel(highlight[1], 0.97, 0.35 * BorderFlare))
-		highlight[2] = math.max(0, MixChannel(highlight[2], 0.3, 0.48 * BorderFlare))
-		highlight[3] = math.max(0, MixChannel(highlight[3], 0.25, 0.52 * BorderFlare))
-		highlight[4] = math.min(1, highlight[4] * (1 + 0.45 * BorderFlare))
+		highlight[1] = math.min(1, mixChannel(highlight[1], 0.97, 0.35 * borderFlare))
+		highlight[2] = math.max(0, mixChannel(highlight[2], 0.3, 0.48 * borderFlare))
+		highlight[3] = math.max(0, mixChannel(highlight[3], 0.25, 0.52 * borderFlare))
+		highlight[4] = math.min(1, highlight[4] * (1 + 0.45 * borderFlare))
 	end
 
-	local HighlightAlpha = highlight[4] or 0
-	local HighlightOffset = 2
-	if HighlightAlpha > 0 then
-		local HighlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * BorderFlare))
-		local CornerOffsetX = 3
-		local CornerOffsetY = 3
-		local ScissorX = math.floor(bx - HighlightWidth - HighlightOffset - HighlightShift)
-		local ScissorY = math.floor(by - HighlightWidth - HighlightOffset - HighlightShift)
-		local ScissorW = math.ceil(bw + HighlightWidth * 2 + HighlightOffset + HighlightShift * 2)
-		local ScissorH = math.ceil(bh + HighlightWidth * 2 + HighlightOffset + HighlightShift * 2)
-		local OuterRadius = radius + HighlightOffset
-		local ArcSegments = math.max(6, math.floor(OuterRadius * 0.75))
+	local highlightAlpha = highlight[4] or 0
+	local highlightOffset = 2
+	if highlightAlpha > 0 then
+		local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
+		local cornerOffsetX = 3
+		local cornerOffsetY = 3
+		local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
+		local scissorY = math.floor(by - highlightWidth - highlightOffset - highlightShift)
+		local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset + highlightShift * 2)
+		local scissorH = math.ceil(bh + highlightWidth * 2 + highlightOffset + highlightShift * 2)
+		local outerRadius = radius + highlightOffset
+		local arcSegments = math.max(6, math.floor(outerRadius * 0.75))
 
-		local TopPoints = {}
-		TopPoints[#TopPoints + 1] = bx + bw - radius - HighlightShift
-		TopPoints[#TopPoints + 1] = by - HighlightOffset - HighlightShift
-		TopPoints[#TopPoints + 1] = bx + radius - HighlightShift
-		TopPoints[#TopPoints + 1] = by - HighlightOffset - HighlightShift
-		local CornerStartIndex = #TopPoints + 1
-		AppendArcPoints(TopPoints, bx + radius - HighlightShift, by + radius - HighlightShift, OuterRadius, -math.pi / 2, -math.pi, ArcSegments, true)
-		for i = CornerStartIndex, #TopPoints, 2 do
-			TopPoints[i] = TopPoints[i] + CornerOffsetX
-			TopPoints[i + 1] = TopPoints[i + 1] + CornerOffsetY
+		local topPoints = {}
+		topPoints[#topPoints + 1] = bx + bw - radius - highlightShift
+		topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+		topPoints[#topPoints + 1] = bx + radius - highlightShift
+		topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+		local cornerStartIndex = #topPoints + 1
+		appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -math.pi / 2, -math.pi, arcSegments, true)
+		for i = cornerStartIndex, #topPoints, 2 do
+			topPoints[i] = topPoints[i] + cornerOffsetX
+			topPoints[i + 1] = topPoints[i + 1] + cornerOffsetY
 		end
 
-		local LeftPoints = {}
-		LeftPoints[#LeftPoints + 1] = bx - HighlightOffset - HighlightShift
-		LeftPoints[#LeftPoints + 1] = by + radius - HighlightShift
-		LeftPoints[#LeftPoints + 1] = bx - HighlightOffset - HighlightShift
-		LeftPoints[#LeftPoints + 1] = by + bh - radius - HighlightShift
+		local leftPoints = {}
+		leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
+		leftPoints[#leftPoints + 1] = by + radius - highlightShift
+		leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
+		leftPoints[#leftPoints + 1] = by + bh - radius - highlightShift
 
-		love.graphics.setColor(highlight[1], highlight[2], highlight[3], HighlightAlpha)
-		local PrevLineWidth = love.graphics.getLineWidth()
-		local PrevLineStyle = love.graphics.getLineStyle()
-		local PrevLineJoin = love.graphics.getLineJoin()
+		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
+		local prevLineWidth = love.graphics.getLineWidth()
+		local prevLineStyle = love.graphics.getLineStyle()
+		local prevLineJoin = love.graphics.getLineJoin()
 		love.graphics.setLineStyle("smooth")
 		love.graphics.setLineJoin("bevel")
-		love.graphics.setLineWidth(HighlightWidth)
+		love.graphics.setLineWidth(highlightWidth)
 
 		-- Top edge highlight
-		love.graphics.setScissor(ScissorX, ScissorY, ScissorW, math.ceil(HighlightWidth * 2.4 + CornerOffsetY))
-		love.graphics.line(TopPoints)
+		love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.4 + cornerOffsetY))
+		love.graphics.line(topPoints)
 
 		-- Left edge highlight
-		love.graphics.setScissor(ScissorX, ScissorY, math.ceil(HighlightWidth * 2.4), ScissorH)
-		love.graphics.line(LeftPoints)
+		love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.4), scissorH)
+		love.graphics.line(leftPoints)
 
 		love.graphics.setScissor()
-		love.graphics.setLineWidth(PrevLineWidth)
-		love.graphics.setLineStyle(PrevLineStyle)
-		love.graphics.setLineJoin(PrevLineJoin)
+		love.graphics.setLineWidth(prevLineWidth)
+		love.graphics.setLineStyle(prevLineStyle)
+		love.graphics.setLineJoin(prevLineJoin)
 	end
 
-	if BorderFlare > 0.01 then
-		local GlowStrength = BorderFlare
-		local GlowAlpha = 0.28 * GlowStrength + 0.16 * FlarePulse * GlowStrength
-		local EmberAlpha = 0.18 * GlowStrength
+	if borderFlare > 0.01 then
+		local glowStrength = borderFlare
+		local glowAlpha = 0.28 * glowStrength + 0.16 * flarePulse * glowStrength
+		local emberAlpha = 0.18 * glowStrength
 
 		love.graphics.push("all")
 		love.graphics.setBlendMode("add")
-		love.graphics.setLineWidth(thickness + OutlineSize * (1.05 + 0.25 * GlowStrength))
-		love.graphics.setColor(0.96, 0.32, 0.24, GlowAlpha)
-		love.graphics.rectangle("line", bx, by, bw, bh, radius + 4 + GlowStrength * 3.0, radius + 4 + GlowStrength * 3.0)
+		love.graphics.setLineWidth(thickness + outlineSize * (1.05 + 0.25 * glowStrength))
+		love.graphics.setColor(0.96, 0.32, 0.24, glowAlpha)
+		love.graphics.rectangle("line", bx, by, bw, bh, radius + 4 + glowStrength * 3.0, radius + 4 + glowStrength * 3.0)
 		love.graphics.setLineWidth(math.max(2, thickness * 0.55))
-		love.graphics.setColor(0.55, 0.08, 0.06, EmberAlpha)
+		love.graphics.setColor(0.55, 0.08, 0.06, emberAlpha)
 		love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 		love.graphics.pop()
 	end
 
 	-- Soft caps for highlight ends
-	local TopCapX = bx + bw - radius - HighlightShift
-	local TopCapY = by - HighlightOffset - HighlightShift
-	local LeftCapX = bx - HighlightOffset - HighlightShift
-	local LeftCapY = by + bh - radius - HighlightShift
+	local topCapX = bx + bw - radius - highlightShift
+	local topCapY = by - highlightOffset - highlightShift
+	local leftCapX = bx - highlightOffset - highlightShift
+	local leftCapY = by + bh - radius - highlightShift
 
-	if HighlightAlpha > 0 then
-		local HighlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * BorderFlare))
-		local CapRadius = HighlightWidth * 0.7
-		local FeatherRadius = CapRadius * (1.9 + 0.35 * BorderFlare)
-		local CapAlpha = HighlightAlpha * (0.4 + 0.22 * BorderFlare)
-		local FeatherAlpha = HighlightAlpha * (0.18 + 0.16 * BorderFlare)
+	if highlightAlpha > 0 then
+		local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
+		local capRadius = highlightWidth * 0.7
+		local featherRadius = capRadius * (1.9 + 0.35 * borderFlare)
+		local capAlpha = highlightAlpha * (0.4 + 0.22 * borderFlare)
+		local featherAlpha = highlightAlpha * (0.18 + 0.16 * borderFlare)
 
-		local function DrawHighlightCap(cx, cy)
-			if CapAlpha > 0 then
-				love.graphics.setColor(highlight[1], highlight[2], highlight[3], CapAlpha)
-				love.graphics.circle("fill", cx, cy, CapRadius)
+		local function drawHighlightCap(cx, cy)
+			if capAlpha > 0 then
+				love.graphics.setColor(highlight[1], highlight[2], highlight[3], capAlpha)
+				love.graphics.circle("fill", cx, cy, capRadius)
 			end
 
-			if FeatherAlpha > 0 then
-				love.graphics.setColor(highlight[1], highlight[2], highlight[3], FeatherAlpha)
-				love.graphics.circle("fill", cx, cy, FeatherRadius)
+			if featherAlpha > 0 then
+				love.graphics.setColor(highlight[1], highlight[2], highlight[3], featherAlpha)
+				love.graphics.circle("fill", cx, cy, featherRadius)
 			end
 		end
 
-		DrawHighlightCap(TopCapX, TopCapY)
-		DrawHighlightCap(LeftCapX, LeftCapY)
+		drawHighlightCap(topCapX, topCapY)
+		drawHighlightCap(leftCapX, leftCapY)
 
-		love.graphics.setColor(highlight[1], highlight[2], highlight[3], HighlightAlpha)
+		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
 	end
 
 	love.graphics.setCanvas()
 
 	-- Shadow pass
 	love.graphics.setColor(0, 0, 0, 0.25)
-	love.graphics.draw(self.BorderCanvas, ShadowOffset, ShadowOffset)
+	love.graphics.draw(self.borderCanvas, shadowOffset, shadowOffset)
 
 	-- Final draw
 	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.draw(self.BorderCanvas, 0, 0)
+	love.graphics.draw(self.borderCanvas, 0, 0)
 end
 
 -- Spawn an exit at a random valid tile
-function Arena:SpawnExit()
+function Arena:spawnExit()
 	if self.exit then return end
 
-	local SnakeUtils = GetModule("snakeutils")
-	local Fruit = GetModule("fruit")
-	local FruitCol, FruitRow = nil, nil
-	if Fruit and Fruit.GetTile then
-		FruitCol, FruitRow = Fruit:GetTile()
+	local SnakeUtils = getModule("snakeutils")
+	local Fruit = getModule("fruit")
+	local fruitCol, fruitRow = nil, nil
+	if Fruit and Fruit.getTile then
+		fruitCol, fruitRow = Fruit:getTile()
 	end
 
-	local Rocks = GetModule("rocks")
-	local RockList = (Rocks and Rocks.GetAll and Rocks:GetAll()) or {}
+	local Rocks = getModule("rocks")
+	local rockList = (Rocks and Rocks.getAll and Rocks:getAll()) or {}
 
-	local Snake = GetModule("snake")
-	local SnakeSegments = nil
-	local SnakeSafeZone = nil
-	local HeadX, HeadY = nil, nil
+	local Snake = getModule("snake")
+	local snakeSegments = nil
+	local snakeSafeZone = nil
+	local headX, headY = nil, nil
 	if Snake then
-		if Snake.GetSegments then
-			SnakeSegments = Snake:GetSegments()
+		if Snake.getSegments then
+			snakeSegments = Snake:getSegments()
 		end
-		if Snake.GetSafeZone then
-			SnakeSafeZone = Snake:GetSafeZone(3)
+		if Snake.getSafeZone then
+			snakeSafeZone = Snake:getSafeZone(3)
 		end
-		if Snake.GetHead then
-			HeadX, HeadY = Snake:GetHead()
+		if Snake.getHead then
+			headX, headY = Snake:getHead()
 		end
 	end
 
-	local threshold = (SnakeUtils and SnakeUtils.SEGMENT_SIZE) or self.TileSize
-	local HalfThreshold = threshold * 0.5
-	local MinHeadDistance = self.TileSize * MIN_HEAD_DISTANCE_TILES
-	local MinHeadDistanceSq = MinHeadDistance * MinHeadDistance
+	local threshold = (SnakeUtils and SnakeUtils.SEGMENT_SIZE) or self.tileSize
+	local halfThreshold = threshold * 0.5
+	local minHeadDistance = self.tileSize * MIN_HEAD_DISTANCE_TILES
+	local minHeadDistanceSq = minHeadDistance * minHeadDistance
 
-	local function TileIsSafe(col, row)
-		local cx, cy = self:GetCenterOfTile(col, row)
+	local function tileIsSafe(col, row)
+		local cx, cy = self:getCenterOfTile(col, row)
 
-		if SnakeUtils and SnakeUtils.IsOccupied and SnakeUtils.IsOccupied(col, row) then
+		if SnakeUtils and SnakeUtils.isOccupied and SnakeUtils.isOccupied(col, row) then
 			return false
 		end
 
-		if FruitCol and FruitRow and FruitCol == col and FruitRow == row then
+		if fruitCol and fruitRow and fruitCol == col and fruitRow == row then
 			return false
 		end
 
-		for _, rock in ipairs(RockList) do
-			local rcol, rrow = self:GetTileFromWorld(rock.x or cx, rock.y or cy)
+		for _, rock in ipairs(rockList) do
+			local rcol, rrow = self:getTileFromWorld(rock.x or cx, rock.y or cy)
 			if rcol == col and rrow == row then
 				return false
 			end
 		end
 
-		if SnakeSafeZone and IsTileInSafeZone(SnakeSafeZone, col, row) then
+		if snakeSafeZone and isTileInSafeZone(snakeSafeZone, col, row) then
 			return false
 		end
 
-		if SnakeSegments then
-			for _, seg in ipairs(SnakeSegments) do
+		if snakeSegments then
+			for _, seg in ipairs(snakeSegments) do
 				local dx = math.abs((seg.drawX or 0) - cx)
 				local dy = math.abs((seg.drawY or 0) - cy)
-				if dx < HalfThreshold and dy < HalfThreshold then
+				if dx < halfThreshold and dy < halfThreshold then
 					return false
 				end
 			end
 		end
 
-		if HeadX and HeadY then
-			if DistanceSquared(cx, cy, HeadX, HeadY) < MinHeadDistanceSq then
+		if headX and headY then
+			if distanceSquared(cx, cy, headX, headY) < minHeadDistanceSq then
 				return false
 			end
 		end
@@ -574,87 +574,87 @@ function Arena:SpawnExit()
 		return true
 	end
 
-	local ChosenCol, ChosenRow
+	local chosenCol, chosenRow
 	for _ = 1, EXIT_SAFE_ATTEMPTS do
-		local col, row = self:GetRandomTile()
-		if TileIsSafe(col, row) then
-			ChosenCol, ChosenRow = col, row
+		local col, row = self:getRandomTile()
+		if tileIsSafe(col, row) then
+			chosenCol, chosenRow = col, row
 			break
 		end
 	end
 
-	if not (ChosenCol and ChosenRow) then
+	if not (chosenCol and chosenRow) then
 		for row = 2, self.rows - 1 do
 			for col = 2, self.cols - 1 do
-				if TileIsSafe(col, row) then
-					ChosenCol, ChosenRow = col, row
+				if tileIsSafe(col, row) then
+					chosenCol, chosenRow = col, row
 					break
 				end
 			end
-			if ChosenCol then break end
+			if chosenCol then break end
 		end
 	end
 
-	ChosenCol = ChosenCol or math.floor(self.cols / 2)
-	ChosenRow = ChosenRow or math.floor(self.rows / 2)
+	chosenCol = chosenCol or math.floor(self.cols / 2)
+	chosenRow = chosenRow or math.floor(self.rows / 2)
 
-	if SnakeUtils and SnakeUtils.SetOccupied then
-		SnakeUtils.SetOccupied(ChosenCol, ChosenRow, true)
+	if SnakeUtils and SnakeUtils.setOccupied then
+		SnakeUtils.setOccupied(chosenCol, chosenRow, true)
 	end
 
-	local x, y = self:GetCenterOfTile(ChosenCol, ChosenRow)
-	local size = self.TileSize * 0.75
+	local x, y = self:getCenterOfTile(chosenCol, chosenRow)
+	local size = self.tileSize * 0.75
 	self.exit = {
 		x = x, y = y,
 		size = size,
 		anim = 0,                -- 0 = closed, 1 = fully open
-		AnimTime = 0.4,          -- seconds to open
-		col = ChosenCol,
-		row = ChosenRow,
+		animTime = 0.4,          -- seconds to open
+		col = chosenCol,
+		row = chosenRow,
 		time = 0,
 	}
-	Audio:PlaySound("exit_spawn")
+	Audio:playSound("exit_spawn")
 end
 
-function Arena:GetExitCenter()
+function Arena:getExitCenter()
 	if not self.exit then return nil, nil, 0 end
 	local r = self.exit.size * 0.5
 	return self.exit.x, self.exit.y, r
 end
 
-function Arena:HasExit()
+function Arena:hasExit()
 	return self.exit ~= nil
 end
 
 function Arena:update(dt)
 	if dt and dt > 0 then
-		local BaseStrength = self.BorderFlareStrength
+		local baseStrength = self.borderFlareStrength
 
-		if not (BaseStrength and BaseStrength > 0) then
-			BaseStrength = self.BorderFlare or 0
-			if BaseStrength > 0 then
-				self.BorderFlareStrength = BaseStrength
+		if not (baseStrength and baseStrength > 0) then
+			baseStrength = self.borderFlare or 0
+			if baseStrength > 0 then
+				self.borderFlareStrength = baseStrength
 			end
 		end
 
-		if BaseStrength and BaseStrength > 0 then
-			local duration = math.max(0.35, self.BorderFlareDuration or 1.05)
-			local timer = math.min(duration, (self.BorderFlareTimer or 0) + dt)
+		if baseStrength and baseStrength > 0 then
+			local duration = math.max(0.35, self.borderFlareDuration or 1.05)
+			local timer = math.min(duration, (self.borderFlareTimer or 0) + dt)
 			local progress = math.min(1, timer / duration)
 			local fade = 1 - (progress * progress * (3 - 2 * progress))
 
-			self.BorderFlare = math.max(0, BaseStrength * fade)
-			self.BorderFlareTimer = timer
+			self.borderFlare = math.max(0, baseStrength * fade)
+			self.borderFlareTimer = timer
 
 			if progress >= 1 then
-				self.BorderFlare = 0
-				self.BorderFlareStrength = 0
-				self.BorderFlareTimer = 0
+				self.borderFlare = 0
+				self.borderFlareStrength = 0
+				self.borderFlareTimer = 0
 			end
 		else
-			self.BorderFlare = 0
-			self.BorderFlareStrength = 0
-			self.BorderFlareTimer = 0
+			self.borderFlare = 0
+			self.borderFlareStrength = 0
+			self.borderFlareTimer = 0
 		end
 	end
 
@@ -663,18 +663,18 @@ function Arena:update(dt)
 	end
 
 	if self.exit.anim < 1 then
-		self.exit.anim = math.min(1, self.exit.anim + dt / self.exit.AnimTime)
+		self.exit.anim = math.min(1, self.exit.anim + dt / self.exit.animTime)
 	end
 
 	self.exit.time = (self.exit.time or 0) + dt
 end
 
 -- Reset/clear exit when moving to next floor
-function Arena:ResetExit()
+function Arena:resetExit()
 	if self.exit then
-		local SnakeUtils = GetModule("snakeutils")
-		if SnakeUtils and SnakeUtils.SetOccupied and self.exit.col and self.exit.row then
-			SnakeUtils.SetOccupied(self.exit.col, self.exit.row, false)
+		local SnakeUtils = getModule("snakeutils")
+		if SnakeUtils and SnakeUtils.setOccupied and self.exit.col and self.exit.row then
+			SnakeUtils.setOccupied(self.exit.col, self.exit.row, false)
 		end
 	end
 
@@ -682,16 +682,16 @@ function Arena:ResetExit()
 end
 
 -- Check if snake head collides with the exit
-function Arena:CheckExitCollision(SnakeX, SnakeY)
+function Arena:checkExitCollision(snakeX, snakeY)
 	if not self.exit then return false end
-	local dx, dy = SnakeX - self.exit.x, SnakeY - self.exit.y
-	local DistSq = dx * dx + dy * dy
+	local dx, dy = snakeX - self.exit.x, snakeY - self.exit.y
+	local distSq = dx * dx + dy * dy
 	local r = self.exit.size * 0.5
-	return DistSq <= (r * r)
+	return distSq <= (r * r)
 end
 
 -- Draw the exit (if active)
-function Arena:DrawExit()
+function Arena:drawExit()
 	if not self.exit then return end
 
 	local exit = self.exit
@@ -701,9 +701,9 @@ function Arena:DrawExit()
 	local cx, cy = exit.x, exit.y
 	local time = exit.time or 0
 
-	local RimRadius = radius * (1.05 + 0.03 * math.sin(time * 1.3))
+	local rimRadius = radius * (1.05 + 0.03 * math.sin(time * 1.3))
 	love.graphics.setColor(0.16, 0.15, 0.19, 1)
-	love.graphics.circle("fill", cx, cy, RimRadius, 48)
+	love.graphics.circle("fill", cx, cy, rimRadius, 48)
 
 	love.graphics.setColor(0.10, 0.09, 0.12, 1)
 	love.graphics.circle("fill", cx, cy, radius * 0.94, 48)
@@ -726,22 +726,22 @@ function Arena:DrawExit()
 	love.graphics.setLineWidth(1)
 end
 
-function Arena:TriggerBorderFlare(strength, duration)
+function Arena:triggerBorderFlare(strength, duration)
 	local amount = math.max(0, strength or 0)
 	if amount <= 0 then
 		return
 	end
 
-	local existing = self.BorderFlare or 0
-	local NewStrength = math.min(1.2, existing + amount)
-	self.BorderFlare = NewStrength
-	self.BorderFlareStrength = NewStrength
-	self.BorderFlareTimer = 0
+	local existing = self.borderFlare or 0
+	local newStrength = math.min(1.2, existing + amount)
+	self.borderFlare = newStrength
+	self.borderFlareStrength = newStrength
+	self.borderFlareTimer = 0
 
 	if duration and duration > 0 then
-		self.BorderFlareDuration = duration
-	elseif not self.BorderFlareDuration or self.BorderFlareDuration <= 0 then
-		self.BorderFlareDuration = 1.05
+		self.borderFlareDuration = duration
+	elseif not self.borderFlareDuration or self.borderFlareDuration <= 0 then
+		self.borderFlareDuration = 1.05
 	end
 end
 

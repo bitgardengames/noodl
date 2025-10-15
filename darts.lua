@@ -11,7 +11,7 @@ local DARTS_ENABLED = false
 
 local launchers = {}
 
-function Darts:IsEnabled()
+function Darts:isEnabled()
 	return DARTS_ENABLED
 end
 
@@ -25,7 +25,7 @@ local HOLE_RADIUS = 10
 local TELEGRAPH_PULSE_SPEED = 6.4
 local IMPACT_RING_LIFE = 0.32
 
-local function GetTime()
+local function getTime()
 	return love.timer.getTime()
 end
 
@@ -38,23 +38,23 @@ local function clamp01(value)
 	return value
 end
 
-local function GetLauncherColors()
-	local body = Theme.LaserBaseColor or {0.18, 0.19, 0.24, 0.95}
-	local accent = Theme.LaserColor or {1, 0.32, 0.26, 1}
+local function getLauncherColors()
+	local body = Theme.laserBaseColor or {0.18, 0.19, 0.24, 0.95}
+	local accent = Theme.laserColor or {1, 0.32, 0.26, 1}
 	return body, accent
 end
 
-local function GetDartColors(accent)
-	local shaft = Theme.DartShaftColor or {0.82, 0.84, 0.88, 1}
-	local highlight = Theme.DartHighlightColor or {1, 1, 1, 0.65}
-	local fletching = Theme.DartFletchingColor or {0.24, 0.26, 0.32, 0.95}
-	local tip = Theme.DartTipColor or {accent[1], accent[2], accent[3], 1}
+local function getDartColors(accent)
+	local shaft = Theme.dartShaftColor or {0.82, 0.84, 0.88, 1}
+	local highlight = Theme.dartHighlightColor or {1, 1, 1, 0.65}
+	local fletching = Theme.dartFletchingColor or {0.24, 0.26, 0.32, 0.95}
+	local tip = Theme.dartTipColor or {accent[1], accent[2], accent[3], 1}
 	return shaft, highlight, fletching, tip
 end
 
-local function GetArenaLimits(dir, facing)
-	local ax, ay, aw, ah = Arena:GetBounds()
-	local inset = (Arena.TileSize or 24) * 0.5
+local function getArenaLimits(dir, facing)
+	local ax, ay, aw, ah = Arena:getBounds()
+	local inset = (Arena.tileSize or 24) * 0.5
 	local left = ax + inset
 	local right = ax + aw - inset
 	local top = ay + inset
@@ -75,9 +75,9 @@ local function GetArenaLimits(dir, facing)
 	end
 end
 
-local function GetHolePosition(dir, facing, x, y)
-	local TileSize = Arena.TileSize or 24
-	local offset = TileSize * 0.5 + 6
+local function getHolePosition(dir, facing, x, y)
+	local tileSize = Arena.tileSize or 24
+	local offset = tileSize * 0.5 + 6
 	if dir == "horizontal" then
 		return x - facing * offset, y
 	else
@@ -85,7 +85,7 @@ local function GetHolePosition(dir, facing, x, y)
 	end
 end
 
-local function UpdateImpact(launcher, dt)
+local function updateImpact(launcher, dt)
 	local impact = launcher and launcher.impact
 	if not impact then
 		return
@@ -97,59 +97,59 @@ local function UpdateImpact(launcher, dt)
 	end
 end
 
-local function ScheduleCooldown(launcher)
-	local MinCooldown = launcher.cooldownMin or DEFAULT_COOLDOWN_MIN
-	local MaxCooldown = launcher.cooldownMax or DEFAULT_COOLDOWN_MAX
-	if MaxCooldown < MinCooldown then
-		MaxCooldown = MinCooldown
+local function scheduleCooldown(launcher)
+	local minCooldown = launcher.cooldownMin or DEFAULT_COOLDOWN_MIN
+	local maxCooldown = launcher.cooldownMax or DEFAULT_COOLDOWN_MAX
+	if maxCooldown < minCooldown then
+		maxCooldown = minCooldown
 	end
 
 	local roll = love.math.random()
-	launcher.cooldownTimer = MinCooldown + (MaxCooldown - MinCooldown) * roll
+	launcher.cooldownTimer = minCooldown + (maxCooldown - minCooldown) * roll
 	launcher.state = "cooldown"
 	launcher.telegraphProgress = 0
 end
 
-local function SpawnImpactFX(x, y, DirX, DirY)
-	local _, accent = GetLauncherColors()
-	local NormalX = DirX or 0
-	local NormalY = DirY or 0
+local function spawnImpactFX(x, y, dirX, dirY)
+	local _, accent = getLauncherColors()
+	local normalX = dirX or 0
+	local normalY = dirY or 0
 
-	Particles:SpawnBurst(x, y, {
+	Particles:spawnBurst(x, y, {
 		count = love.math.random(4, 6),
 		speed = 110,
-		SpeedVariance = 40,
+		speedVariance = 40,
 		life = 0.32,
 		size = 3.2,
 		color = {accent[1], accent[2], accent[3], 1},
 		spread = math.pi * 0.6,
-		angle = math.atan2(NormalY, NormalX),
-		AngleJitter = math.pi * 0.25,
+		angle = math.atan2(normalY, normalX),
+		angleJitter = math.pi * 0.25,
 		drag = 2.6,
 		gravity = 160,
-		ScaleMin = 0.48,
-		ScaleVariance = 0.4,
-		FadeTo = 0,
+		scaleMin = 0.48,
+		scaleVariance = 0.4,
+		fadeTo = 0,
 	})
 
-	Particles:SpawnBurst(x, y, {
+	Particles:spawnBurst(x, y, {
 		count = love.math.random(4, 6),
 		speed = 60,
-		SpeedVariance = 28,
+		speedVariance = 28,
 		life = 0.38,
 		size = 2.0,
 		color = {1, 0.92, 0.72, 0.6},
 		spread = math.pi * 2,
-		AngleJitter = math.pi,
+		angleJitter = math.pi,
 		drag = 3.4,
 		gravity = 0,
-		ScaleMin = 0.32,
-		ScaleVariance = 0.4,
-		FadeTo = 0,
+		scaleMin = 0.32,
+		scaleVariance = 0.4,
+		fadeTo = 0,
 	})
 end
 
-local function TriggerImpact(launcher, HitX, HitY)
+local function triggerImpact(launcher, hitX, hitY)
 	if not launcher then
 		return
 	end
@@ -157,29 +157,29 @@ local function TriggerImpact(launcher, HitX, HitY)
 	local projectile = launcher.projectile
 	if projectile then
 		launcher.impact = {
-			x = HitX or projectile.tipX,
-			y = HitY or projectile.tipY,
-			DirX = projectile.dirX,
-			DirY = projectile.dirY,
+			x = hitX or projectile.tipX,
+			y = hitY or projectile.tipY,
+			dirX = projectile.dirX,
+			dirY = projectile.dirY,
 			timer = IMPACT_RING_LIFE,
 			life = IMPACT_RING_LIFE,
 		}
 	end
 
-	SpawnImpactFX(HitX or launcher.x, HitY or launcher.y, launcher.dirX, launcher.dirY)
-	Audio:PlaySound("shield_saw")
+	spawnImpactFX(hitX or launcher.x, hitY or launcher.y, launcher.dirX, launcher.dirY)
+	Audio:playSound("shield_saw")
 	launcher.projectile = nil
-	ScheduleCooldown(launcher)
+	scheduleCooldown(launcher)
 end
 
-local function JamLauncher(launcher, duration)
+local function jamLauncher(launcher, duration)
 	if not (launcher and duration and duration > 0) then
 		return
 	end
 
 	if launcher.state == "firing" then
 		local projectile = launcher.projectile
-		TriggerImpact(launcher, projectile and projectile.tipX, projectile and projectile.tipY)
+		triggerImpact(launcher, projectile and projectile.tipX, projectile and projectile.tipY)
 	end
 
 	if launcher.state == "telegraph" then
@@ -193,68 +193,68 @@ local function JamLauncher(launcher, duration)
 	end
 end
 
-local function GetRockCollision(projectile, NewTipX, NewTipY)
-	local rocks = Rocks:GetAll()
+local function getRockCollision(projectile, newTipX, newTipY)
+	local rocks = Rocks:getAll()
 	if not (rocks and #rocks > 0) then
 		return nil
 	end
 
-	local BestDistance
+	local bestDistance
 	local hit
-	local DirX, DirY = projectile.dirX, projectile.dirY
-	local PrevX, PrevY = projectile.tipX, projectile.tipY
+	local dirX, dirY = projectile.dirX, projectile.dirY
+	local prevX, prevY = projectile.tipX, projectile.tipY
 
 	for _, rock in ipairs(rocks) do
 		local width = rock.w or 24
 		local height = rock.h or 24
-		local OffsetY = rock.offsetY or 0
-		local ScaleX = rock.scaleX or 1
-		local ScaleY = rock.scaleY or 1
+		local offsetY = rock.offsetY or 0
+		local scaleX = rock.scaleX or 1
+		local scaleY = rock.scaleY or 1
 
-		local HalfW = (width * ScaleX) * 0.5
-		local HalfH = (height * ScaleY) * 0.5
-		local left = (rock.x or 0) - HalfW
-		local right = left + width * ScaleX
-		local top = (rock.y or 0) + OffsetY - HalfH
-		local bottom = top + height * ScaleY
+		local halfW = (width * scaleX) * 0.5
+		local halfH = (height * scaleY) * 0.5
+		local left = (rock.x or 0) - halfW
+		local right = left + width * scaleX
+		local top = (rock.y or 0) + offsetY - halfH
+		local bottom = top + height * scaleY
 
-		if DirX ~= 0 then
-			local y = NewTipY
+		if dirX ~= 0 then
+			local y = newTipY
 			if y >= top and y <= bottom then
-				if DirX > 0 then
-					if PrevX <= left and NewTipX >= left then
+				if dirX > 0 then
+					if prevX <= left and newTipX >= left then
 						local distance = left - projectile.originX
-						if not BestDistance or distance < BestDistance then
-							BestDistance = distance
+						if not bestDistance or distance < bestDistance then
+							bestDistance = distance
 							hit = { x = left, y = y }
 						end
 					end
 				else
-					if PrevX >= right and NewTipX <= right then
+					if prevX >= right and newTipX <= right then
 						local distance = projectile.originX - right
-						if not BestDistance or distance < BestDistance then
-							BestDistance = distance
+						if not bestDistance or distance < bestDistance then
+							bestDistance = distance
 							hit = { x = right, y = y }
 						end
 					end
 				end
 			end
 		else
-			local x = NewTipX
+			local x = newTipX
 			if x >= left and x <= right then
-				if DirY > 0 then
-					if PrevY <= top and NewTipY >= top then
+				if dirY > 0 then
+					if prevY <= top and newTipY >= top then
 						local distance = top - projectile.originY
-						if not BestDistance or distance < BestDistance then
-							BestDistance = distance
+						if not bestDistance or distance < bestDistance then
+							bestDistance = distance
 							hit = { x = x, y = top }
 						end
 					end
 				else
-					if PrevY >= bottom and NewTipY <= bottom then
+					if prevY >= bottom and newTipY <= bottom then
 						local distance = projectile.originY - bottom
-						if not BestDistance or distance < BestDistance then
-							BestDistance = distance
+						if not bestDistance or distance < bestDistance then
+							bestDistance = distance
 							hit = { x = x, y = bottom }
 						end
 					end
@@ -266,49 +266,49 @@ local function GetRockCollision(projectile, NewTipX, NewTipY)
 	return hit
 end
 
-local function UpdateProjectile(launcher, dt)
+local function updateProjectile(launcher, dt)
 	local projectile = launcher.projectile
 	if not projectile then
 		return
 	end
 
 	local speed = projectile.speed or DEFAULT_FIRE_SPEED
-	local DirX, DirY = projectile.dirX, projectile.dirY
+	local dirX, dirY = projectile.dirX, projectile.dirY
 	local travel = speed * dt
 
 	projectile.prevTipX = projectile.tipX
 	projectile.prevTipY = projectile.tipY
 
-	local NewTipX = projectile.tipX + DirX * travel
-	local NewTipY = projectile.tipY + DirY * travel
+	local newTipX = projectile.tipX + dirX * travel
+	local newTipY = projectile.tipY + dirY * travel
 
-	if DirX ~= 0 then
-		if (DirX > 0 and NewTipX > projectile.limit) or (DirX < 0 and NewTipX < projectile.limit) then
-			NewTipX = projectile.limit
+	if dirX ~= 0 then
+		if (dirX > 0 and newTipX > projectile.limit) or (dirX < 0 and newTipX < projectile.limit) then
+			newTipX = projectile.limit
 		end
 	else
-		if (DirY > 0 and NewTipY > projectile.limit) or (DirY < 0 and NewTipY < projectile.limit) then
-			NewTipY = projectile.limit
+		if (dirY > 0 and newTipY > projectile.limit) or (dirY < 0 and newTipY < projectile.limit) then
+			newTipY = projectile.limit
 		end
 	end
 
-	local collision = GetRockCollision(projectile, NewTipX, NewTipY)
+	local collision = getRockCollision(projectile, newTipX, newTipY)
 	if collision then
-		NewTipX = collision.x
-		NewTipY = collision.y
+		newTipX = collision.x
+		newTipY = collision.y
 	end
 
-	projectile.tipX = NewTipX
-	projectile.tipY = NewTipY
-	projectile.baseX = NewTipX - DirX * projectile.length
-	projectile.baseY = NewTipY - DirY * projectile.length
+	projectile.tipX = newTipX
+	projectile.tipY = newTipY
+	projectile.baseX = newTipX - dirX * projectile.length
+	projectile.baseY = newTipY - dirY * projectile.length
 
-	if (DirX ~= 0 and NewTipX == projectile.limit) or (DirY ~= 0 and NewTipY == projectile.limit) or collision then
-		TriggerImpact(launcher, NewTipX, NewTipY)
+	if (dirX ~= 0 and newTipX == projectile.limit) or (dirY ~= 0 and newTipY == projectile.limit) or collision then
+		triggerImpact(launcher, newTipX, newTipY)
 	end
 end
 
-local function AdvanceLauncher(launcher, dt)
+local function advanceLauncher(launcher, dt)
 	if launcher.state == "cooldown" then
 		launcher.cooldownTimer = (launcher.cooldownTimer or 0) - dt
 		if launcher.cooldownTimer <= 0 then
@@ -324,35 +324,35 @@ local function AdvanceLauncher(launcher, dt)
 
 		if launcher.telegraphTimer <= 0 then
 			launcher.projectile = {
-				TipX = launcher.startX,
-				TipY = launcher.startY,
-				PrevTipX = launcher.startX,
-				PrevTipY = launcher.startY,
-				BaseX = launcher.startX - launcher.dirX * launcher.dartLength,
-				BaseY = launcher.startY - launcher.dirY * launcher.dartLength,
-				DirX = launcher.dirX,
-				DirY = launcher.dirY,
+				tipX = launcher.startX,
+				tipY = launcher.startY,
+				prevTipX = launcher.startX,
+				prevTipY = launcher.startY,
+				baseX = launcher.startX - launcher.dirX * launcher.dartLength,
+				baseY = launcher.startY - launcher.dirY * launcher.dartLength,
+				dirX = launcher.dirX,
+				dirY = launcher.dirY,
 				speed = launcher.fireSpeed or DEFAULT_FIRE_SPEED,
 				length = launcher.dartLength,
 				limit = launcher.travelLimit,
-				OriginX = launcher.startX,
-				OriginY = launcher.startY,
+				originX = launcher.startX,
+				originY = launcher.startY,
 			}
 			launcher.state = "firing"
 			launcher.telegraphProgress = 1
-			Audio:PlaySound("laser_fire")
+			Audio:playSound("laser_fire")
 		end
 	elseif launcher.state == "firing" then
-		UpdateProjectile(launcher, dt)
+		updateProjectile(launcher, dt)
 	end
 
-	UpdateImpact(launcher, dt)
+	updateImpact(launcher, dt)
 end
 
 function Darts:reset()
 	for _, launcher in ipairs(launchers) do
 		if launcher.col and launcher.row then
-			SnakeUtils.SetOccupied(launcher.col, launcher.row, false)
+			SnakeUtils.setOccupied(launcher.col, launcher.row, false)
 		end
 	end
 
@@ -371,7 +371,7 @@ function Darts:spawn(x, y, dir, options)
 	dir = dir or "horizontal"
 	options = options or {}
 
-	local col, row = Arena:GetTileFromWorld(x, y)
+	local col, row = Arena:getTileFromWorld(x, y)
 	local facing = options.facing
 	if facing == nil then
 		if dir == "horizontal" then
@@ -382,13 +382,13 @@ function Darts:spawn(x, y, dir, options)
 	end
 
 	facing = (facing >= 0) and 1 or -1
-	local DirX = (dir == "horizontal") and facing or 0
-	local DirY = (dir == "vertical") and facing or 0
-	local _, TravelLimit = GetArenaLimits(dir, facing)
+	local dirX = (dir == "horizontal") and facing or 0
+	local dirY = (dir == "vertical") and facing or 0
+	local _, travelLimit = getArenaLimits(dir, facing)
 
-	local TileSize = Arena.TileSize or 24
-	local StartX = x + DirX * (TileSize * 0.5 - 6)
-	local StartY = y + DirY * (TileSize * 0.5 - 6)
+	local tileSize = Arena.tileSize or 24
+	local startX = x + dirX * (tileSize * 0.5 - 6)
+	local startY = y + dirY * (tileSize * 0.5 - 6)
 
 	local launcher = {
 		x = x,
@@ -397,27 +397,27 @@ function Darts:spawn(x, y, dir, options)
 		row = row,
 		dir = dir,
 		facing = facing,
-		DirX = DirX,
-		DirY = DirY,
-		StartX = StartX,
-		StartY = StartY,
-		TravelLimit = TravelLimit,
-		TelegraphDuration = options.telegraphDuration or DEFAULT_TELEGRAPH_DURATION,
-		FireSpeed = options.fireSpeed or DEFAULT_FIRE_SPEED,
-		DartLength = options.dartLength or DEFAULT_DART_LENGTH,
-		CooldownMin = options.cooldownMin or DEFAULT_COOLDOWN_MIN,
-		CooldownMax = options.cooldownMax or DEFAULT_COOLDOWN_MAX,
+		dirX = dirX,
+		dirY = dirY,
+		startX = startX,
+		startY = startY,
+		travelLimit = travelLimit,
+		telegraphDuration = options.telegraphDuration or DEFAULT_TELEGRAPH_DURATION,
+		fireSpeed = options.fireSpeed or DEFAULT_FIRE_SPEED,
+		dartLength = options.dartLength or DEFAULT_DART_LENGTH,
+		cooldownMin = options.cooldownMin or DEFAULT_COOLDOWN_MIN,
+		cooldownMax = options.cooldownMax or DEFAULT_COOLDOWN_MAX,
 		state = "cooldown",
-		TelegraphProgress = 0,
-		RandomOffset = love.math.random() * math.pi * 2,
+		telegraphProgress = 0,
+		randomOffset = love.math.random() * math.pi * 2,
 	}
 
-	launcher.travelLimit = TravelLimit
+	launcher.travelLimit = travelLimit
 
-	launcher.holeX, launcher.holeY = GetHolePosition(dir, facing, x, y)
+	launcher.holeX, launcher.holeY = getHolePosition(dir, facing, x, y)
 
-	SnakeUtils.SetOccupied(col, row, true)
-	ScheduleCooldown(launcher)
+	SnakeUtils.setOccupied(col, row, true)
+	scheduleCooldown(launcher)
 
 	launchers[#launchers + 1] = launcher
 	return launcher
@@ -433,152 +433,152 @@ function Darts:update(dt)
 	end
 
 	for _, launcher in ipairs(launchers) do
-		AdvanceLauncher(launcher, dt)
+		advanceLauncher(launcher, dt)
 	end
 end
 
-local function DrawTelegraph(launcher, BodyColor, AccentColor)
+local function drawTelegraph(launcher, bodyColor, accentColor)
 	local progress = launcher.telegraphProgress or 0
 	if progress <= 0 then
 		return
 	end
 
-	local pulse = 0.35 + 0.25 * math.sin((GetTime() + launcher.randomOffset) * TELEGRAPH_PULSE_SPEED)
-	local GlowAlpha = clamp01(progress * 0.9 + pulse * 0.35)
+	local pulse = 0.35 + 0.25 * math.sin((getTime() + launcher.randomOffset) * TELEGRAPH_PULSE_SPEED)
+	local glowAlpha = clamp01(progress * 0.9 + pulse * 0.35)
 
-	love.graphics.setColor(AccentColor[1], AccentColor[2], AccentColor[3], GlowAlpha)
+	love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], glowAlpha)
 
-	local TipAdvance = 12
-	local ShaftLength = 18
-	local ShaftThickness = DART_THICKNESS * 0.6
+	local tipAdvance = 12
+	local shaftLength = 18
+	local shaftThickness = DART_THICKNESS * 0.6
 
 	if launcher.dir == "horizontal" then
 		local dir = launcher.dirX >= 0 and 1 or -1
-		local TipX = launcher.startX - dir * (1 - progress) * TipAdvance
-		local BaseX = TipX - dir * ShaftLength
-		local ShaftX = math.min(BaseX, TipX)
-		local ShaftW = math.abs(TipX - BaseX)
+		local tipX = launcher.startX - dir * (1 - progress) * tipAdvance
+		local baseX = tipX - dir * shaftLength
+		local shaftX = math.min(baseX, tipX)
+		local shaftW = math.abs(tipX - baseX)
 
-		love.graphics.rectangle("fill", ShaftX, launcher.y - ShaftThickness * 0.5, ShaftW, ShaftThickness)
+		love.graphics.rectangle("fill", shaftX, launcher.y - shaftThickness * 0.5, shaftW, shaftThickness)
 
 		love.graphics.polygon("fill",
-			TipX, launcher.y,
-			TipX - dir * 8, launcher.y - DART_THICKNESS * 0.8,
-			TipX - dir * 8, launcher.y + DART_THICKNESS * 0.8
+			tipX, launcher.y,
+			tipX - dir * 8, launcher.y - DART_THICKNESS * 0.8,
+			tipX - dir * 8, launcher.y + DART_THICKNESS * 0.8
 		)
 	else
 		local dir = launcher.dirY >= 0 and 1 or -1
-		local TipY = launcher.startY - dir * (1 - progress) * TipAdvance
-		local BaseY = TipY - dir * ShaftLength
-		local ShaftY = math.min(BaseY, TipY)
-		local ShaftH = math.abs(TipY - BaseY)
+		local tipY = launcher.startY - dir * (1 - progress) * tipAdvance
+		local baseY = tipY - dir * shaftLength
+		local shaftY = math.min(baseY, tipY)
+		local shaftH = math.abs(tipY - baseY)
 
-		love.graphics.rectangle("fill", launcher.x - ShaftThickness * 0.5, ShaftY, ShaftThickness, ShaftH)
+		love.graphics.rectangle("fill", launcher.x - shaftThickness * 0.5, shaftY, shaftThickness, shaftH)
 
 		love.graphics.polygon("fill",
-			launcher.x, TipY,
-			launcher.x - DART_THICKNESS * 0.8, TipY - dir * 8,
-			launcher.x + DART_THICKNESS * 0.8, TipY - dir * 8
+			launcher.x, tipY,
+			launcher.x - DART_THICKNESS * 0.8, tipY - dir * 8,
+			launcher.x + DART_THICKNESS * 0.8, tipY - dir * 8
 		)
 	end
 
-	love.graphics.setColor(1, 1, 1, GlowAlpha * 0.5)
+	love.graphics.setColor(1, 1, 1, glowAlpha * 0.5)
 	love.graphics.circle("line", launcher.holeX, launcher.holeY, HOLE_RADIUS * clamp01(progress * 0.75))
-	love.graphics.setColor(1, 1, 1, GlowAlpha * 0.35)
+	love.graphics.setColor(1, 1, 1, glowAlpha * 0.35)
 	love.graphics.circle("fill", launcher.holeX, launcher.holeY, HOLE_RADIUS * clamp01(progress * 0.4))
 end
 
-local function DrawProjectile(launcher, AccentColor)
+local function drawProjectile(launcher, accentColor)
 	local projectile = launcher.projectile
 	if not projectile then
 		return
 	end
 
-	local DirX, DirY = projectile.dirX, projectile.dirY
-	local ShaftColor, HighlightColor, FletchingColor, TipColor = GetDartColors(AccentColor)
-	local ShaftThickness = DART_THICKNESS * 0.75
-	local TipLength = 12
-	local FletchingSize = 6
+	local dirX, dirY = projectile.dirX, projectile.dirY
+	local shaftColor, highlightColor, fletchingColor, tipColor = getDartColors(accentColor)
+	local shaftThickness = DART_THICKNESS * 0.75
+	local tipLength = 12
+	local fletchingSize = 6
 
-	if DirX ~= 0 then
-		local dir = DirX >= 0 and 1 or -1
-		local BaseX = projectile.baseX
-		local TipX = projectile.tipX
-		local ShaftEndX = TipX - dir * TipLength
+	if dirX ~= 0 then
+		local dir = dirX >= 0 and 1 or -1
+		local baseX = projectile.baseX
+		local tipX = projectile.tipX
+		local shaftEndX = tipX - dir * tipLength
 		if dir > 0 then
-			ShaftEndX = math.max(ShaftEndX, BaseX)
+			shaftEndX = math.max(shaftEndX, baseX)
 		else
-			ShaftEndX = math.min(ShaftEndX, BaseX)
+			shaftEndX = math.min(shaftEndX, baseX)
 		end
 
-		local ShaftX = math.min(BaseX, ShaftEndX)
-		local ShaftW = math.abs(ShaftEndX - BaseX)
+		local shaftX = math.min(baseX, shaftEndX)
+		local shaftW = math.abs(shaftEndX - baseX)
 
-		love.graphics.setColor(ShaftColor)
-		if ShaftW > 0 then
-			love.graphics.rectangle("fill", ShaftX, projectile.tipY - ShaftThickness * 0.5, ShaftW, ShaftThickness)
+		love.graphics.setColor(shaftColor)
+		if shaftW > 0 then
+			love.graphics.rectangle("fill", shaftX, projectile.tipY - shaftThickness * 0.5, shaftW, shaftThickness)
 
-			love.graphics.setColor(HighlightColor)
-			love.graphics.rectangle("fill", ShaftX, projectile.tipY - ShaftThickness * 0.5, ShaftW, ShaftThickness * 0.35)
+			love.graphics.setColor(highlightColor)
+			love.graphics.rectangle("fill", shaftX, projectile.tipY - shaftThickness * 0.5, shaftW, shaftThickness * 0.35)
 		end
 
-		love.graphics.setColor(FletchingColor)
-		local FletchX = BaseX - dir * 2
+		love.graphics.setColor(fletchingColor)
+		local fletchX = baseX - dir * 2
 		love.graphics.polygon("fill",
-			FletchX, projectile.tipY,
-			FletchX - dir * FletchingSize, projectile.tipY - DART_THICKNESS * 0.9,
-			FletchX - dir * FletchingSize, projectile.tipY + DART_THICKNESS * 0.9
+			fletchX, projectile.tipY,
+			fletchX - dir * fletchingSize, projectile.tipY - DART_THICKNESS * 0.9,
+			fletchX - dir * fletchingSize, projectile.tipY + DART_THICKNESS * 0.9
 		)
 
-		love.graphics.setColor(TipColor)
+		love.graphics.setColor(tipColor)
 		love.graphics.polygon("fill",
-			TipX + dir * 2, projectile.tipY,
-			TipX - dir * TipLength, projectile.tipY - DART_THICKNESS,
-			TipX - dir * TipLength, projectile.tipY + DART_THICKNESS
+			tipX + dir * 2, projectile.tipY,
+			tipX - dir * tipLength, projectile.tipY - DART_THICKNESS,
+			tipX - dir * tipLength, projectile.tipY + DART_THICKNESS
 		)
 	else
 		local top = math.min(projectile.baseY, projectile.tipY)
 		local height = math.abs(projectile.tipY - projectile.baseY)
-		local dir = DirY >= 0 and 1 or -1
-		local BaseY = projectile.baseY
-		local TipY = projectile.tipY
-		local ShaftEndY = TipY - dir * TipLength
+		local dir = dirY >= 0 and 1 or -1
+		local baseY = projectile.baseY
+		local tipY = projectile.tipY
+		local shaftEndY = tipY - dir * tipLength
 		if dir > 0 then
-			ShaftEndY = math.max(ShaftEndY, BaseY)
+			shaftEndY = math.max(shaftEndY, baseY)
 		else
-			ShaftEndY = math.min(ShaftEndY, BaseY)
+			shaftEndY = math.min(shaftEndY, baseY)
 		end
 
-		local ShaftY = math.min(BaseY, ShaftEndY)
-		local ShaftH = math.abs(ShaftEndY - BaseY)
+		local shaftY = math.min(baseY, shaftEndY)
+		local shaftH = math.abs(shaftEndY - baseY)
 
-		love.graphics.setColor(ShaftColor)
-		if ShaftH > 0 then
-			love.graphics.rectangle("fill", projectile.tipX - ShaftThickness * 0.5, ShaftY, ShaftThickness, ShaftH)
+		love.graphics.setColor(shaftColor)
+		if shaftH > 0 then
+			love.graphics.rectangle("fill", projectile.tipX - shaftThickness * 0.5, shaftY, shaftThickness, shaftH)
 
-			love.graphics.setColor(HighlightColor)
-			love.graphics.rectangle("fill", projectile.tipX - ShaftThickness * 0.5, ShaftY, ShaftThickness * 0.35, ShaftH)
+			love.graphics.setColor(highlightColor)
+			love.graphics.rectangle("fill", projectile.tipX - shaftThickness * 0.5, shaftY, shaftThickness * 0.35, shaftH)
 		end
 
-		love.graphics.setColor(FletchingColor)
-		local FletchY = BaseY - dir * 2
+		love.graphics.setColor(fletchingColor)
+		local fletchY = baseY - dir * 2
 		love.graphics.polygon("fill",
-			projectile.tipX, FletchY,
-			projectile.tipX - DART_THICKNESS * 0.9, FletchY - dir * FletchingSize,
-			projectile.tipX + DART_THICKNESS * 0.9, FletchY - dir * FletchingSize
+			projectile.tipX, fletchY,
+			projectile.tipX - DART_THICKNESS * 0.9, fletchY - dir * fletchingSize,
+			projectile.tipX + DART_THICKNESS * 0.9, fletchY - dir * fletchingSize
 		)
 
-		love.graphics.setColor(TipColor)
+		love.graphics.setColor(tipColor)
 		love.graphics.polygon("fill",
-			projectile.tipX, TipY + dir * 2,
-			projectile.tipX - DART_THICKNESS, TipY - dir * TipLength,
-			projectile.tipX + DART_THICKNESS, TipY - dir * TipLength
+			projectile.tipX, tipY + dir * 2,
+			projectile.tipX - DART_THICKNESS, tipY - dir * tipLength,
+			projectile.tipX + DART_THICKNESS, tipY - dir * tipLength
 		)
 	end
 end
 
-local function DrawHole(launcher, BodyColor)
-	love.graphics.setColor(BodyColor)
+local function drawHole(launcher, bodyColor)
+	love.graphics.setColor(bodyColor)
 	love.graphics.circle("fill", launcher.holeX, launcher.holeY, HOLE_RADIUS)
 
 	love.graphics.setColor(1, 1, 1, 0.15)
@@ -590,7 +590,7 @@ local function DrawHole(launcher, BodyColor)
 	love.graphics.setLineWidth(1)
 end
 
-local function DrawImpact(launcher, AccentColor)
+local function drawImpact(launcher, accentColor)
 	local impact = launcher.impact
 	if not impact then
 		return
@@ -598,7 +598,7 @@ local function DrawImpact(launcher, AccentColor)
 
 	local progress = clamp01(impact.timer / (impact.life or IMPACT_RING_LIFE))
 	local radius = 6 + (1 - progress) * 12
-	love.graphics.setColor(AccentColor[1], AccentColor[2], AccentColor[3], progress * 0.6)
+	love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], progress * 0.6)
 	love.graphics.setLineWidth(2)
 	love.graphics.circle("line", impact.x, impact.y, radius)
 	love.graphics.setLineWidth(1)
@@ -609,19 +609,19 @@ function Darts:draw()
 		return
 	end
 
-	local BodyColor, AccentColor = GetLauncherColors()
+	local bodyColor, accentColor = getLauncherColors()
 
 	for _, launcher in ipairs(launchers) do
-		DrawHole(launcher, BodyColor)
-		DrawTelegraph(launcher, BodyColor, AccentColor)
-		DrawProjectile(launcher, AccentColor)
-		DrawImpact(launcher, AccentColor)
+		drawHole(launcher, bodyColor)
+		drawTelegraph(launcher, bodyColor, accentColor)
+		drawProjectile(launcher, accentColor)
+		drawImpact(launcher, accentColor)
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function OverlapsProjectile(launcher, x, y, w, h)
+local function overlapsProjectile(launcher, x, y, w, h)
 	local projectile = launcher.projectile
 	if not projectile then
 		return false
@@ -629,17 +629,17 @@ local function OverlapsProjectile(launcher, x, y, w, h)
 
 	local margin = DART_THICKNESS * 0.5
 	if projectile.dirX ~= 0 then
-		local PrevBase = projectile.prevTipX - projectile.dirX * projectile.length
-		local left = math.min(projectile.baseX, projectile.tipX, projectile.prevTipX, PrevBase) - margin
-		local right = math.max(projectile.baseX, projectile.tipX, projectile.prevTipX, PrevBase) + margin
+		local prevBase = projectile.prevTipX - projectile.dirX * projectile.length
+		local left = math.min(projectile.baseX, projectile.tipX, projectile.prevTipX, prevBase) - margin
+		local right = math.max(projectile.baseX, projectile.tipX, projectile.prevTipX, prevBase) + margin
 		local top = projectile.tipY - margin
 		local bottom = projectile.tipY + margin
 
 		return x < right and x + w > left and y < bottom and y + h > top
 	else
-		local PrevBase = projectile.prevTipY - projectile.dirY * projectile.length
-		local top = math.min(projectile.baseY, projectile.tipY, projectile.prevTipY, PrevBase) - margin
-		local bottom = math.max(projectile.baseY, projectile.tipY, projectile.prevTipY, PrevBase) + margin
+		local prevBase = projectile.prevTipY - projectile.dirY * projectile.length
+		local top = math.min(projectile.baseY, projectile.tipY, projectile.prevTipY, prevBase) - margin
+		local bottom = math.max(projectile.baseY, projectile.tipY, projectile.prevTipY, prevBase) + margin
 		local left = projectile.tipX - margin
 		local right = projectile.tipX + margin
 
@@ -647,17 +647,17 @@ local function OverlapsProjectile(launcher, x, y, w, h)
 	end
 end
 
-function Darts:CheckCollision(x, y, w, h)
+function Darts:checkCollision(x, y, w, h)
 	if not DARTS_ENABLED then
 		return nil
 	end
 
 	for _, launcher in ipairs(launchers) do
-		if launcher.state == "firing" and OverlapsProjectile(launcher, x, y, w, h) then
+		if launcher.state == "firing" and overlapsProjectile(launcher, x, y, w, h) then
 			return {
 				launcher = launcher,
-				DirX = launcher.dirX,
-				DirY = launcher.dirY,
+				dirX = launcher.dirX,
+				dirY = launcher.dirY,
 				x = launcher.projectile and launcher.projectile.tipX,
 				y = launcher.projectile and launcher.projectile.tipY,
 			}
@@ -667,7 +667,7 @@ function Darts:CheckCollision(x, y, w, h)
 	return nil
 end
 
-function Darts:OnShieldedHit(hit, HitX, HitY)
+function Darts:onShieldedHit(hit, hitX, hitY)
 	if not DARTS_ENABLED then
 		return
 	end
@@ -681,16 +681,16 @@ function Darts:OnShieldedHit(hit, HitX, HitY)
 		return
 	end
 
-	TriggerImpact(launcher, HitX or hit.x, HitY or hit.y)
+	triggerImpact(launcher, hitX or hit.x, hitY or hit.y)
 end
 
-function Darts:AddGlobalJam(duration)
+function Darts:addGlobalJam(duration)
 	if not duration or duration <= 0 then
 		return
 	end
 
 	for _, launcher in ipairs(launchers) do
-		JamLauncher(launcher, duration)
+		jamLauncher(launcher, duration)
 	end
 end
 

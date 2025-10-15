@@ -3,41 +3,41 @@ local SessionStats = require("sessionstats")
 local Achievements = require("achievements")
 local Score = {}
 
-Achievements:RegisterStateProvider(function()
+Achievements:registerStateProvider(function()
 	return {
-		SnakeScore = Score.current or 0,
+		snakeScore = Score.current or 0,
 	}
 end)
 
 Score.current = 0
 Score.highscore = 0
-Score.SaveFile = "scores.lua"
-Score.ComboBonusMult = 1
-Score.ComboBonusBase = 1
-Score.HighScoreGlowDuration = 4
-Score.HighScoreGlowTimer = 0
-Score.PreviousHighScore = 0
-Score.RunHighScoreTriggered = false
+Score.saveFile = "scores.lua"
+Score.comboBonusMult = 1
+Score.comboBonusBase = 1
+Score.highScoreGlowDuration = 4
+Score.highScoreGlowTimer = 0
+Score.previousHighScore = 0
+Score.runHighScoreTriggered = false
 
-local function UpdateAchievementChecks(self)
-		Achievements:CheckAll({
-				TotalApplesEaten = PlayerStats:get("TotalApplesEaten"),
-				SnakeScore = self.current,
+local function updateAchievementChecks(self)
+		Achievements:checkAll({
+				totalApplesEaten = PlayerStats:get("totalApplesEaten"),
+				snakeScore = self.current,
 		})
 end
 
 function Score:load()
 		self.current = 0
 		self.highscore = 0
-		self.ComboBonusBase = 1
-		self.ComboBonusMult = 1
-		self.HighScoreGlowTimer = 0
-		self.PreviousHighScore = 0
-		self.RunHighScoreTriggered = false
+		self.comboBonusBase = 1
+		self.comboBonusMult = 1
+		self.highScoreGlowTimer = 0
+		self.previousHighScore = 0
+		self.runHighScoreTriggered = false
 
 		-- Load from file
-		if love.filesystem.getInfo(self.SaveFile) then
-				local chunk = love.filesystem.load(self.SaveFile)
+		if love.filesystem.getInfo(self.saveFile) then
+				local chunk = love.filesystem.load(self.saveFile)
 				local ok, saved = pcall(chunk)
 				if ok and type(saved) == "table" then
 						if type(saved.highscore) == "number" then
@@ -74,21 +74,21 @@ function Score:save()
 		local lines = { "return {\n" }
 		table.insert(lines, string.format("    highscore = %d,\n", math.max(0, self.highscore or 0)))
 		table.insert(lines, "}\n")
-		love.filesystem.write(self.SaveFile, table.concat(lines))
+		love.filesystem.write(self.saveFile, table.concat(lines))
 end
 
 function Score:reset(mode)
 	if mode == nil then
 		-- Just reset the current score
 		self.current = 0
-		self.ComboBonusBase = 1
-		self.ComboBonusMult = 1
-		self.HighScoreGlowTimer = 0
-		self.RunHighScoreTriggered = false
-		self.PreviousHighScore = self:GetHighScore()
+		self.comboBonusBase = 1
+		self.comboBonusMult = 1
+		self.highScoreGlowTimer = 0
+		self.runHighScoreTriggered = false
+		self.previousHighScore = self:getHighScore()
 	elseif mode == "all" then
 		self.highscore = 0
-		self.PreviousHighScore = 0
+		self.previousHighScore = 0
 		self:save()
 	end
 end
@@ -97,11 +97,11 @@ function Score:get()
 		return self.current
 end
 
-function Score:GetHighScore()
+function Score:getHighScore()
 		return self.highscore or 0
 end
 
-function Score:SetHighScore(score)
+function Score:setHighScore(score)
 		if score > (self.highscore or 0) then
 				self.highscore = score
 				self:save()
@@ -112,114 +112,114 @@ function Score:increase(points)
 	points = points or 1
 		self.current = self.current + points
 
-		PlayerStats:add("TotalApplesEaten", 1)
-		UpdateAchievementChecks(self)
+		PlayerStats:add("totalApplesEaten", 1)
+		updateAchievementChecks(self)
 
-		if not self.RunHighScoreTriggered and (self.PreviousHighScore or 0) > 0 and self.current > self.PreviousHighScore then
-				self.RunHighScoreTriggered = true
-				self.HighScoreGlowTimer = 0
+		if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
+				self.runHighScoreTriggered = true
+				self.highScoreGlowTimer = 0
 		end
 end
 
-function Score:AddBonus(points)
+function Score:addBonus(points)
 		if not points or points == 0 then return end
 		self.current = self.current + points
-		UpdateAchievementChecks(self)
+		updateAchievementChecks(self)
 
-		if not self.RunHighScoreTriggered and (self.PreviousHighScore or 0) > 0 and self.current > self.PreviousHighScore then
-				self.RunHighScoreTriggered = true
-				self.HighScoreGlowTimer = 0
+		if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
+				self.runHighScoreTriggered = true
+				self.highScoreGlowTimer = 0
 		end
 end
 
-local function UpdateComboBonusValue(self)
-		local base = self.ComboBonusBase or 1
+local function updateComboBonusValue(self)
+		local base = self.comboBonusBase or 1
 		if base < 0 then base = 0 end
-		self.ComboBonusMult = base
-		return self.ComboBonusMult
+		self.comboBonusMult = base
+		return self.comboBonusMult
 end
 
-function Score:SetComboBonusMultiplier(mult)
+function Score:setComboBonusMultiplier(mult)
 		mult = mult or 1
 		if mult < 0 then mult = 0 end
-		self.ComboBonusBase = mult
-		return UpdateComboBonusValue(self)
+		self.comboBonusBase = mult
+		return updateComboBonusValue(self)
 end
 
-function Score:GetComboBonusMultiplier()
-		return UpdateComboBonusValue(self)
+function Score:getComboBonusMultiplier()
+		return updateComboBonusValue(self)
 end
 
 function Score:update(dt)
-		if self.HighScoreGlowTimer and self.HighScoreGlowTimer > 0 then
-				self.HighScoreGlowTimer = math.max(0, self.HighScoreGlowTimer - dt)
+		if self.highScoreGlowTimer and self.highScoreGlowTimer > 0 then
+				self.highScoreGlowTimer = math.max(0, self.highScoreGlowTimer - dt)
 		end
 end
 
-function Score:GetHighScoreGlowStrength()
-		if not self.HighScoreGlowTimer or self.HighScoreGlowTimer <= 0 then
+function Score:getHighScoreGlowStrength()
+		if not self.highScoreGlowTimer or self.highScoreGlowTimer <= 0 then
 				return 0
 		end
 
-		local normalized = self.HighScoreGlowTimer / self.HighScoreGlowDuration
+		local normalized = self.highScoreGlowTimer / self.highScoreGlowDuration
 		return math.max(0, math.min(1, normalized))
 end
 
-local function FinalizeRunResult(self, options)
+local function finalizeRunResult(self, options)
 	options = options or {}
 	local cause = options.cause or "unknown"
 	local won = options.won or false
 
-	PlayerStats:UpdateMax("SnakeScore", self.current)
+	PlayerStats:updateMax("snakeScore", self.current)
 
-	Achievements:CheckAll({
-		BestScore = PlayerStats:get("SnakeScore"),
-		SnakeScore = self.current,
+	Achievements:checkAll({
+		bestScore = PlayerStats:get("snakeScore"),
+		snakeScore = self.current,
 	})
 
-	self:SetHighScore(self.current)
+	self:setHighScore(self.current)
 
-	local RunApples = SessionStats:get("ApplesEaten") or 0
-	local LifetimeApples = PlayerStats:get("TotalApplesEaten") or 0
-	local RunTiles = SessionStats:get("TilesTravelled") or 0
-	local RunCombos = SessionStats:get("CombosTriggered") or 0
-	local RunShieldsSaved = SessionStats:get("CrashShieldsSaved") or 0
-	local RunTime = SessionStats:get("TimeAlive") or 0
-	local FastestFloor = SessionStats:get("FastestFloorClear") or 0
-	local SlowestFloor = SessionStats:get("SlowestFloorClear") or 0
+	local runApples = SessionStats:get("applesEaten") or 0
+	local lifetimeApples = PlayerStats:get("totalApplesEaten") or 0
+	local runTiles = SessionStats:get("tilesTravelled") or 0
+	local runCombos = SessionStats:get("combosTriggered") or 0
+	local runShieldsSaved = SessionStats:get("crashShieldsSaved") or 0
+	local runTime = SessionStats:get("timeAlive") or 0
+	local fastestFloor = SessionStats:get("fastestFloorClear") or 0
+	local slowestFloor = SessionStats:get("slowestFloorClear") or 0
 
-	PlayerStats:UpdateMax("MostApplesInRun", RunApples)
-	if RunTime > 0 then
-		PlayerStats:add("TotalTimeAlive", RunTime)
-		PlayerStats:UpdateMax("LongestRunDuration", RunTime)
+	PlayerStats:updateMax("mostApplesInRun", runApples)
+	if runTime > 0 then
+		PlayerStats:add("totalTimeAlive", runTime)
+		PlayerStats:updateMax("longestRunDuration", runTime)
 	end
-	if RunTiles > 0 then
-		PlayerStats:add("TilesTravelled", RunTiles)
-		PlayerStats:UpdateMax("MostTilesTravelledInRun", RunTiles)
+	if runTiles > 0 then
+		PlayerStats:add("tilesTravelled", runTiles)
+		PlayerStats:updateMax("mostTilesTravelledInRun", runTiles)
 	end
-	if RunCombos > 0 then
-		PlayerStats:add("TotalCombosTriggered", RunCombos)
-		PlayerStats:UpdateMax("MostCombosInRun", RunCombos)
+	if runCombos > 0 then
+		PlayerStats:add("totalCombosTriggered", runCombos)
+		PlayerStats:updateMax("mostCombosInRun", runCombos)
 	end
-	if RunShieldsSaved > 0 then
-		PlayerStats:add("CrashShieldsSaved", RunShieldsSaved)
-		PlayerStats:UpdateMax("MostShieldsSavedInRun", RunShieldsSaved)
+	if runShieldsSaved > 0 then
+		PlayerStats:add("crashShieldsSaved", runShieldsSaved)
+		PlayerStats:updateMax("mostShieldsSavedInRun", runShieldsSaved)
 	end
-	if FastestFloor > 0 then
-		PlayerStats:UpdateMin("BestFloorClearTime", FastestFloor)
+	if fastestFloor > 0 then
+		PlayerStats:updateMin("bestFloorClearTime", fastestFloor)
 	end
 
-	if SlowestFloor > 0 then
-		PlayerStats:UpdateMax("LongestFloorClearTime", SlowestFloor)
+	if slowestFloor > 0 then
+		PlayerStats:updateMax("longestFloorClearTime", slowestFloor)
 	end
 
 	local result = {
 		score       = self.current,
-		HighScore   = self:GetHighScore(),
-		apples      = RunApples,
-		TotalApples = LifetimeApples,
+		highScore   = self:getHighScore(),
+		apples      = runApples,
+		totalApples = lifetimeApples,
 		stats = {
-			apples = RunApples
+			apples = runApples
 		},
 		cause = cause,
 		won = won,
@@ -236,15 +236,15 @@ local function FinalizeRunResult(self, options)
 	return result
 end
 
-function Score:HandleGameOver(cause)
-	return FinalizeRunResult(self, { cause = cause or "unknown", won = false })
+function Score:handleGameOver(cause)
+	return finalizeRunResult(self, { cause = cause or "unknown", won = false })
 end
 
-function Score:HandleRunClear(options)
+function Score:handleRunClear(options)
 	options = options or {}
 	options.cause = options.cause or "victory"
 	options.won = true
-	return FinalizeRunResult(self, options)
+	return finalizeRunResult(self, options)
 end
 
 return Score

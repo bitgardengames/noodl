@@ -9,7 +9,7 @@ SnakeUtils.POP_DURATION = 0.3
 
 SnakeUtils.occupied = {}
 
-function SnakeUtils.InitOccupancy()
+function SnakeUtils.initOccupancy()
 	SnakeUtils.occupied = {}
 	for col = 1, Arena.cols do
 		SnakeUtils.occupied[col] = {}
@@ -20,21 +20,21 @@ function SnakeUtils.InitOccupancy()
 end
 
 -- Mark / unmark cells
-function SnakeUtils.SetOccupied(col, row, value)
+function SnakeUtils.setOccupied(col, row, value)
 	if SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row] ~= nil then
 		SnakeUtils.occupied[col][row] = value
 	end
 end
 
-function SnakeUtils.IsOccupied(col, row)
+function SnakeUtils.isOccupied(col, row)
 	return SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row]
 end
 
-local function CellWithinBounds(col, row)
+local function cellWithinBounds(col, row)
 	return col >= 1 and col <= Arena.cols and row >= 1 and row <= Arena.rows
 end
 
-local function NormalizeCell(col, row)
+local function normalizeCell(col, row)
 	if not col or not row then
 		return nil
 	end
@@ -42,39 +42,39 @@ local function NormalizeCell(col, row)
 	col = math.floor(col + 0.5)
 	row = math.floor(row + 0.5)
 
-	if not CellWithinBounds(col, row) then
+	if not cellWithinBounds(col, row) then
 		return nil
 	end
 
 	return col, row
 end
 
-local function ForEachNormalizedCell(cells, callback)
+local function forEachNormalizedCell(cells, callback)
 	if not cells then
 		return
 	end
 
 	for _, cell in ipairs(cells) do
-		local col, row = NormalizeCell(cell[1], cell[2])
+		local col, row = normalizeCell(cell[1], cell[2])
 		if col then
 			callback(col, row)
 		end
 	end
 end
 
-local function MarkCells(cells, value)
-	ForEachNormalizedCell(cells, function(col, row)
-		SnakeUtils.SetOccupied(col, row, value)
+local function markCells(cells, value)
+	forEachNormalizedCell(cells, function(col, row)
+		SnakeUtils.setOccupied(col, row, value)
 	end)
 end
 
 -- Reserve a collection of cells and return the subset that we actually marked.
-function SnakeUtils.ReserveCells(cells)
+function SnakeUtils.reserveCells(cells)
 	local reserved = {}
 
-	ForEachNormalizedCell(cells, function(col, row)
-		if not SnakeUtils.IsOccupied(col, row) then
-			SnakeUtils.SetOccupied(col, row, true)
+	forEachNormalizedCell(cells, function(col, row)
+		if not SnakeUtils.isOccupied(col, row) then
+			SnakeUtils.setOccupied(col, row, true)
 			reserved[#reserved + 1] = {col, row}
 		end
 	end)
@@ -82,35 +82,35 @@ function SnakeUtils.ReserveCells(cells)
 	return reserved
 end
 
-function SnakeUtils.ReleaseCells(cells)
-	MarkCells(cells, false)
+function SnakeUtils.releaseCells(cells)
+	markCells(cells, false)
 end
 
-function SnakeUtils.GetTrackCells(fx, fy, dir, TrackLength)
-	local CenterCol, CenterRow = Arena:GetTileFromWorld(fx, fy)
-	local TileSize = SnakeUtils.SEGMENT_SIZE
-	local HalfTiles = math.floor((TrackLength / TileSize) / 2)
+function SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
+	local centerCol, centerRow = Arena:getTileFromWorld(fx, fy)
+	local tileSize = SnakeUtils.SEGMENT_SIZE
+	local halfTiles = math.floor((trackLength / tileSize) / 2)
 	local cells = {}
 
 	if dir == "horizontal" then
-		local StartCol = CenterCol - HalfTiles
-		local EndCol   = CenterCol + HalfTiles
-		if StartCol < 1 or EndCol > Arena.cols then
+		local startCol = centerCol - halfTiles
+		local endCol   = centerCol + halfTiles
+		if startCol < 1 or endCol > Arena.cols then
 			return {}
 		end
 
-		for c = StartCol, EndCol do
-			cells[#cells + 1] = {c, CenterRow}
+		for c = startCol, endCol do
+			cells[#cells + 1] = {c, centerRow}
 		end
 	else
-		local StartRow = CenterRow - HalfTiles
-		local EndRow   = CenterRow + HalfTiles
-		if StartRow < 1 or EndRow > Arena.rows then
+		local startRow = centerRow - halfTiles
+		local endRow   = centerRow + halfTiles
+		if startRow < 1 or endRow > Arena.rows then
 			return {}
 		end
 
-		for r = StartRow, EndRow do
-			cells[#cells + 1] = {CenterCol, r}
+		for r = startRow, endRow do
+			cells[#cells + 1] = {centerCol, r}
 		end
 	end
 
@@ -119,48 +119,48 @@ end
 
 local SAW_TRACK_OFFSETS = {-2, -1, 0, 1, 2}
 
-function SnakeUtils.GetSawTrackCells(fx, fy, dir)
-	local CenterCol, CenterRow = Arena:GetTileFromWorld(fx, fy)
+function SnakeUtils.getSawTrackCells(fx, fy, dir)
+	local centerCol, centerRow = Arena:getTileFromWorld(fx, fy)
 	local cells = {}
 
 	if dir == "horizontal" then
-		if CenterRow < 1 or CenterRow > Arena.rows then
+		if centerRow < 1 or centerRow > Arena.rows then
 			return {}
 		end
 
 		for _, offset in ipairs(SAW_TRACK_OFFSETS) do
-			local col = CenterCol + offset
+			local col = centerCol + offset
 			if col < 1 or col > Arena.cols then
 				return {}
 			end
 
-			cells[#cells + 1] = {col, CenterRow}
+			cells[#cells + 1] = {col, centerRow}
 		end
 	else
-		if CenterCol < 1 or CenterCol > Arena.cols then
+		if centerCol < 1 or centerCol > Arena.cols then
 			return {}
 		end
 
 		for _, offset in ipairs(SAW_TRACK_OFFSETS) do
-			local row = CenterRow + offset
+			local row = centerRow + offset
 			if row < 1 or row > Arena.rows then
 				return {}
 			end
 
-			cells[#cells + 1] = {CenterCol, row}
+			cells[#cells + 1] = {centerCol, row}
 		end
 	end
 
 	return cells
 end
 
-local function CellsAreFree(cells)
+local function cellsAreFree(cells)
 	if not cells or #cells == 0 then
 		return false
 	end
 
 	for _, cell in ipairs(cells) do
-		if SnakeUtils.IsOccupied(cell[1], cell[2]) then
+		if SnakeUtils.isOccupied(cell[1], cell[2]) then
 			return false
 		end
 	end
@@ -168,31 +168,31 @@ local function CellsAreFree(cells)
 	return true
 end
 
-function SnakeUtils.TrackIsFree(fx, fy, dir, TrackLength)
-	return CellsAreFree(SnakeUtils.GetTrackCells(fx, fy, dir, TrackLength))
+function SnakeUtils.trackIsFree(fx, fy, dir, trackLength)
+	return cellsAreFree(SnakeUtils.getTrackCells(fx, fy, dir, trackLength))
 end
 
 -- Mark every grid cell overlapped by a hazard track
-function SnakeUtils.OccupyTrack(fx, fy, dir, TrackLength)
-	local cells = SnakeUtils.GetTrackCells(fx, fy, dir, TrackLength)
-	MarkCells(cells, true)
+function SnakeUtils.occupyTrack(fx, fy, dir, trackLength)
+	local cells = SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
+	markCells(cells, true)
 	return cells
 end
 
-function SnakeUtils.OccupySawTrack(fx, fy, dir)
-	local cells = SnakeUtils.GetSawTrackCells(fx, fy, dir)
-	MarkCells(cells, true)
+function SnakeUtils.occupySawTrack(fx, fy, dir)
+	local cells = SnakeUtils.getSawTrackCells(fx, fy, dir)
+	markCells(cells, true)
 	return cells
 end
 
-function SnakeUtils.SawTrackIsFree(fx, fy, dir)
-	return CellsAreFree(SnakeUtils.GetSawTrackCells(fx, fy, dir))
+function SnakeUtils.sawTrackIsFree(fx, fy, dir)
+	return cellsAreFree(SnakeUtils.getSawTrackCells(fx, fy, dir))
 end
 
 -- Safe spawn: just randomize until we find a free cell
 -- Axis-Aligned Bounding Box
 function SnakeUtils.aabb(ax, ay, asize, bx, by, bsize)
-	-- If tables passed, extract DrawX/DrawY
+	-- If tables passed, extract drawX/drawY
 	if type(ax) == "table" then
 		ax, ay = ax.drawX, ax.drawY
 		asize = SnakeUtils.SEGMENT_SIZE
@@ -209,7 +209,7 @@ function SnakeUtils.aabb(ax, ay, asize, bx, by, bsize)
 end
 
 -- handle input direction
-function SnakeUtils.CalculateDirection(current, input)
+function SnakeUtils.calculateDirection(current, input)
 	local nd = SnakeUtils.directions[input]
 	if nd and not (nd.x == -current.x and nd.y == -current.y) then
 		return nd
@@ -225,51 +225,51 @@ SnakeUtils.directions = {
 }
 
 -- safer apple spawn (grid aware)
-function SnakeUtils.GetSafeSpawn(trail, fruit, rocks, SafeZone, opts)
+function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 	opts = opts or {}
-	local MaxAttempts = 200
+	local maxAttempts = 200
 	local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
 	local cols, rows = Arena.cols, Arena.rows
 
 	trail = trail or {}
-	local FruitX, FruitY = 0, 0
+	local fruitX, fruitY = 0, 0
 	if fruit and fruit.getPosition then
-		FruitX, FruitY = fruit:getPosition()
+		fruitX, fruitY = fruit:getPosition()
 	end
-	local RockList = (rocks and rocks.getAll and rocks:getAll()) or {}
-	local SafeCells = SafeZone or {}
+	local rockList = (rocks and rocks.getAll and rocks:getAll()) or {}
+	local safeCells = safeZone or {}
 
-	local AvoidFront = not not opts.avoidFrontOfSnake
-	local FrontCells
-	local FrontLookup
+	local avoidFront = not not opts.avoidFrontOfSnake
+	local frontCells
+	local frontLookup
 
-	if AvoidFront and trail[1] then
+	if avoidFront and trail[1] then
 		local head = trail[1]
-		local DirX, DirY = head.dirX, head.dirY
+		local dirX, dirY = head.dirX, head.dirY
 
-		if (DirX == nil or DirY == nil) and opts.direction then
-			DirX = opts.direction.x
-			DirY = opts.direction.y
+		if (dirX == nil or dirY == nil) and opts.direction then
+			dirX = opts.direction.x
+			dirY = opts.direction.y
 		end
 
-		if DirX and DirY then
-			local HeadCol, HeadRow = Arena:GetTileFromWorld(head.drawX, head.drawY)
-			if HeadCol and HeadRow then
+		if dirX and dirY then
+			local headCol, headRow = Arena:getTileFromWorld(head.drawX, head.drawY)
+			if headCol and headRow then
 				local buffer = math.max(1, math.floor(opts.frontBuffer or 1))
 				for i = 1, buffer do
-					local AheadCol = HeadCol + DirX * i
-					local AheadRow = HeadRow + DirY * i
+					local aheadCol = headCol + dirX * i
+					local aheadRow = headRow + dirY * i
 
-					if CellWithinBounds(AheadCol, AheadRow) then
-						if not FrontCells then
-							FrontCells = {}
-							FrontLookup = {}
+					if cellWithinBounds(aheadCol, aheadRow) then
+						if not frontCells then
+							frontCells = {}
+							frontLookup = {}
 						end
 
-						local key = AheadCol .. "," .. AheadRow
-						if not FrontLookup[key] then
-							FrontLookup[key] = true
-							FrontCells[#FrontCells + 1] = { AheadCol, AheadRow }
+						local key = aheadCol .. "," .. aheadRow
+						if not frontLookup[key] then
+							frontLookup[key] = true
+							frontCells[#frontCells + 1] = { aheadCol, aheadRow }
 						end
 					else
 						break
@@ -279,14 +279,14 @@ function SnakeUtils.GetSafeSpawn(trail, fruit, rocks, SafeZone, opts)
 		end
 	end
 
-	for _ = 1, MaxAttempts do
+	for _ = 1, maxAttempts do
 		local col = love.math.random(1, cols)
 		local row = love.math.random(1, rows)
-		local cx, cy = Arena:GetCenterOfTile(col, row)
+		local cx, cy = Arena:getCenterOfTile(col, row)
 
 		local blocked = false
 
-		if SnakeUtils.IsOccupied(col, row) then
+		if SnakeUtils.isOccupied(col, row) then
 			blocked = true
 		end
 
@@ -301,13 +301,13 @@ function SnakeUtils.GetSafeSpawn(trail, fruit, rocks, SafeZone, opts)
 		end
 
 		-- fruit
-		if not blocked and SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, FruitX, FruitY, SEGMENT_SIZE) then
+		if not blocked and SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, fruitX, fruitY, SEGMENT_SIZE) then
 			blocked = true
 		end
 
 		-- rocks
 		if not blocked then
-			for _, rock in ipairs(RockList) do
+			for _, rock in ipairs(rockList) do
 				if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, rock.x, rock.y, rock.w) then
 					blocked = true
 					break
@@ -315,8 +315,8 @@ function SnakeUtils.GetSafeSpawn(trail, fruit, rocks, SafeZone, opts)
 			end
 		end
 
-		if not blocked and SafeZone then
-			for _, cell in ipairs(SafeCells) do
+		if not blocked and safeZone then
+			for _, cell in ipairs(safeCells) do
 				if cell[1] == col and cell[2] == row then
 					blocked = true
 					break
@@ -324,9 +324,9 @@ function SnakeUtils.GetSafeSpawn(trail, fruit, rocks, SafeZone, opts)
 			end
 		end
 
-		if not blocked and FrontCells then
-			for i = 1, #FrontCells do
-				local cell = FrontCells[i]
+		if not blocked and frontCells then
+			for i = 1, #frontCells do
+				local cell = frontCells[i]
 				if cell[1] == col and cell[2] == row then
 					blocked = true
 					break

@@ -3,7 +3,7 @@ local UI = require("ui")
 local ButtonList = {}
 ButtonList.__index = ButtonList
 
-local function IsSelectable(button)
+local function isSelectable(button)
 	if not button then return false end
 	if button.disabled then return false end
 	if button.unlocked == false then return false end
@@ -12,14 +12,14 @@ local function IsSelectable(button)
 end
 
 function ButtonList.new()
-	return setmetatable({buttons = {}, FocusIndex = nil, FocusSource = nil, LastNonMouseFocusIndex = nil}, ButtonList)
+	return setmetatable({buttons = {}, focusIndex = nil, focusSource = nil, lastNonMouseFocusIndex = nil}, ButtonList)
 end
 
 function ButtonList:reset(definitions)
 	self.buttons = {}
-	self.FocusIndex = nil
-	self.FocusSource = nil
-	self.LastNonMouseFocusIndex = nil
+	self.focusIndex = nil
+	self.focusSource = nil
+	self.lastNonMouseFocusIndex = nil
 
 	for index, definition in ipairs(definitions or {}) do
 		local button = {}
@@ -29,8 +29,8 @@ function ButtonList:reset(definitions)
 
 		button.id = button.id or button.action or button.text or button.label or ("button" .. index)
 		button.text = button.text or button.label or button.id
-		button.w = button.w or UI.spacing.ButtonWidth
-		button.h = button.h or UI.spacing.ButtonHeight
+		button.w = button.w or UI.spacing.buttonWidth
+		button.h = button.h or UI.spacing.buttonHeight
 		button.x = button.x or 0
 		button.y = button.y or 0
 		button.hoveredByMouse = false
@@ -38,11 +38,11 @@ function ButtonList:reset(definitions)
 		self.buttons[#self.buttons + 1] = button
 	end
 
-	self:FocusFirst()
+	self:focusFirst()
 	-- Avoid treating the initial focus as a non-mouse selection so that
 	-- the UI can clear focus when the cursor leaves the buttons before any
 	-- keyboard/controller input has occurred.
-	self.LastNonMouseFocusIndex = nil
+	self.lastNonMouseFocusIndex = nil
 
 	return self.buttons
 end
@@ -51,101 +51,101 @@ function ButtonList:iter()
 	return ipairs(self.buttons)
 end
 
-function ButtonList:UpdateFocusVisuals()
+function ButtonList:updateFocusVisuals()
 	for index, button in ipairs(self.buttons) do
-		local focused = (self.FocusIndex == index)
+		local focused = (self.focusIndex == index)
 		button.focused = focused
 		button.hovered = focused or button.hoveredByMouse or false
-		UI.SetButtonFocus(button.id, focused)
+		UI.setButtonFocus(button.id, focused)
 	end
 end
 
-function ButtonList:SetFocus(index, source, SkipNonMouseHistory)
+function ButtonList:setFocus(index, source, skipNonMouseHistory)
 	if not index or not self.buttons[index] then return end
 
-	self.FocusIndex = index
-	self.FocusSource = source or "programmatic"
-	if self.FocusSource ~= "mouse" and not SkipNonMouseHistory then
-		self.LastNonMouseFocusIndex = index
+	self.focusIndex = index
+	self.focusSource = source or "programmatic"
+	if self.focusSource ~= "mouse" and not skipNonMouseHistory then
+		self.lastNonMouseFocusIndex = index
 	end
-	self:UpdateFocusVisuals()
+	self:updateFocusVisuals()
 
 	return self.buttons[index]
 end
 
-function ButtonList:ClearFocus()
-	self.FocusIndex = nil
-	self.FocusSource = nil
-	self.LastNonMouseFocusIndex = nil
-	self:UpdateFocusVisuals()
+function ButtonList:clearFocus()
+	self.focusIndex = nil
+	self.focusSource = nil
+	self.lastNonMouseFocusIndex = nil
+	self:updateFocusVisuals()
 end
 
-function ButtonList:FocusFirst()
+function ButtonList:focusFirst()
 	for index, button in ipairs(self.buttons) do
-		if IsSelectable(button) then
-			return self:SetFocus(index, nil, true)
+		if isSelectable(button) then
+			return self:setFocus(index, nil, true)
 		end
 	end
 
 	if #self.buttons > 0 then
-		return self:SetFocus(1, nil, true)
+		return self:setFocus(1, nil, true)
 	end
 end
 
-function ButtonList:MoveFocus(delta)
+function ButtonList:moveFocus(delta)
 	if not delta or delta == 0 or #self.buttons == 0 then return end
 
-	local index = self.FocusIndex or 0
+	local index = self.focusIndex or 0
 	for _ = 1, #self.buttons do
 		index = ((index - 1 + delta) % #self.buttons) + 1
-		if IsSelectable(self.buttons[index]) then
-			return self:SetFocus(index)
+		if isSelectable(self.buttons[index]) then
+			return self:setFocus(index)
 		end
 	end
 end
 
-function ButtonList:GetFocused()
-	if not self.FocusIndex then return nil end
-	return self.buttons[self.FocusIndex]
+function ButtonList:getFocused()
+	if not self.focusIndex then return nil end
+	return self.buttons[self.focusIndex]
 end
 
-function ButtonList:SyncUI()
+function ButtonList:syncUI()
 	for _, button in ipairs(self.buttons) do
-		UI.RegisterButton(button.id, button.x, button.y, button.w, button.h, button.text)
+		UI.registerButton(button.id, button.x, button.y, button.w, button.h, button.text)
 	end
 end
 
 function ButtonList:draw()
-	self:SyncUI()
+	self:syncUI()
 	for _, button in ipairs(self.buttons) do
-		UI.DrawButton(button.id)
+		UI.drawButton(button.id)
 	end
 end
 
-function ButtonList:UpdateHover(mx, my)
+function ButtonList:updateHover(mx, my)
 	local hovered
-	local HoveredIndex
+	local hoveredIndex
 
 	for index, button in ipairs(self.buttons) do
-		local IsHover = UI.IsHovered(button.x, button.y, button.w, button.h, mx, my)
-		button.hoveredByMouse = IsHover
-		if IsHover then
+		local isHover = UI.isHovered(button.x, button.y, button.w, button.h, mx, my)
+		button.hoveredByMouse = isHover
+		if isHover then
 			hovered = button
-			HoveredIndex = index
+			hoveredIndex = index
 		end
 	end
 
-	if HoveredIndex then
-		self:SetFocus(HoveredIndex, "mouse")
+	if hoveredIndex then
+		self:setFocus(hoveredIndex, "mouse")
 	else
-		if self.FocusSource == "mouse" then
-			if self.LastNonMouseFocusIndex and self.buttons[self.LastNonMouseFocusIndex] then
-				self:SetFocus(self.LastNonMouseFocusIndex)
+		if self.focusSource == "mouse" then
+			if self.lastNonMouseFocusIndex and self.buttons[self.lastNonMouseFocusIndex] then
+				self:setFocus(self.lastNonMouseFocusIndex)
 			else
-				self:ClearFocus()
+				self:clearFocus()
 			end
 		else
-			self:UpdateFocusVisuals()
+			self:updateFocusVisuals()
 		end
 	end
 
@@ -158,7 +158,7 @@ function ButtonList:mousepressed(x, y, button)
 
 	for index, entry in ipairs(self.buttons) do
 		if entry.id == id then
-			self:SetFocus(index)
+			self:setFocus(index)
 			break
 		end
 	end
@@ -177,11 +177,11 @@ function ButtonList:mousereleased(x, y, button)
 	end
 end
 
-function ButtonList:ActivateFocused()
-	local button = self:GetFocused()
+function ButtonList:activateFocused()
+	local button = self:getFocused()
 	if not button then return end
 
-	if not IsSelectable(button) then
+	if not isSelectable(button) then
 		return nil, button
 	end
 

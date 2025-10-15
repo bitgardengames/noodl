@@ -9,13 +9,13 @@ function SessionStats:add(stat, amount)
 	self.data[stat] = (self.data[stat] or 0) + amount
 end
 
-function SessionStats:UpdateMax(stat, value)
+function SessionStats:updateMax(stat, value)
 	if not self.data[stat] or value > self.data[stat] then
 		self.data[stat] = value
 	end
 end
 
-function SessionStats:UpdateMin(stat, value)
+function SessionStats:updateMin(stat, value)
 	if value == nil then
 		return
 	end
@@ -30,11 +30,11 @@ function SessionStats:set(stat, value)
 	self.data[stat] = value
 end
 
-function SessionStats:get(stat, DefaultValue)
+function SessionStats:get(stat, defaultValue)
 	local value = self.data[stat]
 	if value == nil then
-		if DefaultValue ~= nil then
-			return DefaultValue
+		if defaultValue ~= nil then
+			return defaultValue
 		end
 		return 0
 	end

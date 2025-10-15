@@ -12,58 +12,58 @@ local PlayerStats = require("playerstats")
 local SawActor = require("sawactor")
 
 local Menu = {
-	TransitionDuration = 0.45,
+	transitionDuration = 0.45,
 }
 
 local ANALOG_DEADZONE = 0.35
-local ButtonList = ButtonList.new()
+local buttonList = ButtonList.new()
 local buttons = {}
 local t = 0
-local DailyChallenge = nil
-local DailyChallengeAnim = 0
-local AnalogAxisDirections = { horizontal = nil, vertical = nil }
-local TitleSaw = SawActor.new()
+local dailyChallenge = nil
+local dailyChallengeAnim = 0
+local analogAxisDirections = { horizontal = nil, vertical = nil }
+local titleSaw = SawActor.new()
 
-local BACKGROUND_EFFECT_TYPE = "MenuConstellation"
-local BackgroundEffectCache = {}
-local BackgroundEffect = nil
+local BACKGROUND_EFFECT_TYPE = "menuConstellation"
+local backgroundEffectCache = {}
+local backgroundEffect = nil
 
-local function ConfigureBackgroundEffect()
-	local effect = Shaders.ensure(BackgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+local function configureBackgroundEffect()
+	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
 	if not effect then
-		BackgroundEffect = nil
+		backgroundEffect = nil
 		return
 	end
 
-	local DefaultBackdrop = select(1, Shaders.GetDefaultIntensities(effect))
-	effect.backdropIntensity = DefaultBackdrop or effect.backdropIntensity or 0.58
+	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+	effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.58
 
 	Shaders.configure(effect, {
-		BgColor = Theme.BgColor,
-		AccentColor = Theme.ButtonHover,
-		HighlightColor = Theme.AccentTextColor,
+		bgColor = Theme.bgColor,
+		accentColor = Theme.buttonHover,
+		highlightColor = Theme.accentTextColor,
 	})
 
-	BackgroundEffect = effect
+	backgroundEffect = effect
 end
 
-local function DrawBackground(sw, sh)
-	love.graphics.setColor(Theme.BgColor)
+local function drawBackground(sw, sh)
+	love.graphics.setColor(Theme.bgColor)
 	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-	if not BackgroundEffect then
-		ConfigureBackgroundEffect()
+	if not backgroundEffect then
+		configureBackgroundEffect()
 	end
 
-	if BackgroundEffect then
-		local intensity = BackgroundEffect.backdropIntensity or select(1, Shaders.GetDefaultIntensities(BackgroundEffect))
-		Shaders.draw(BackgroundEffect, 0, 0, sw, sh, intensity)
+	if backgroundEffect then
+		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function GetDayUnit(count)
+local function getDayUnit(count)
 	if count == 1 then
 		return Localization:get("common.day_unit_singular")
 	end
@@ -71,26 +71,26 @@ local function GetDayUnit(count)
 	return Localization:get("common.day_unit_plural")
 end
 
-local AnalogAxisActions = {
+local analogAxisActions = {
 	horizontal = {
 		negative = function()
-			ButtonList:moveFocus(-1)
+			buttonList:moveFocus(-1)
 		end,
 		positive = function()
-			ButtonList:moveFocus(1)
+			buttonList:moveFocus(1)
 		end,
 	},
 	vertical = {
 		negative = function()
-			ButtonList:moveFocus(-1)
+			buttonList:moveFocus(-1)
 		end,
 		positive = function()
-			ButtonList:moveFocus(1)
+			buttonList:moveFocus(1)
 		end,
 	},
 }
 
-local AnalogAxisMap = {
+local analogAxisMap = {
 	leftx = { slot = "horizontal" },
 	rightx = { slot = "horizontal" },
 	lefty = { slot = "vertical" },
@@ -99,12 +99,12 @@ local AnalogAxisMap = {
 	[2] = { slot = "vertical" },
 }
 
-local function ResetAnalogAxis()
-	AnalogAxisDirections.horizontal = nil
-	AnalogAxisDirections.vertical = nil
+local function resetAnalogAxis()
+	analogAxisDirections.horizontal = nil
+	analogAxisDirections.vertical = nil
 end
 
-local function PrepareStartAction(action)
+local function prepareStartAction(action)
 	if type(action) ~= "string" then
 		return action
 	end
@@ -113,7 +113,7 @@ local function PrepareStartAction(action)
 		return action
 	end
 
-	local deepest = PlayerStats:get("DeepestFloorReached") or 0
+	local deepest = PlayerStats:get("deepestFloorReached") or 0
 	if deepest <= 1 then
 		return action
 	end
@@ -121,14 +121,14 @@ local function PrepareStartAction(action)
 	return {
 		state = "floorselect",
 		data = {
-			HighestFloor = deepest,
-			DefaultFloor = deepest,
+			highestFloor = deepest,
+			defaultFloor = deepest,
 		},
 	}
 end
 
-local function HandleAnalogAxis(axis, value)
-	local mapping = AnalogAxisMap[axis]
+local function handleAnalogAxis(axis, value)
+	local mapping = analogAxisMap[axis]
 	if not mapping then
 		return
 	end
@@ -140,14 +140,14 @@ local function HandleAnalogAxis(axis, value)
 		direction = "negative"
 	end
 
-	if AnalogAxisDirections[mapping.slot] == direction then
+	if analogAxisDirections[mapping.slot] == direction then
 		return
 	end
 
-	AnalogAxisDirections[mapping.slot] = direction
+	analogAxisDirections[mapping.slot] = direction
 
 	if direction then
-		local actions = AnalogAxisActions[mapping.slot]
+		local actions = analogAxisActions[mapping.slot]
 		local action = actions and actions[direction]
 		if action then
 			action()
@@ -155,7 +155,7 @@ local function HandleAnalogAxis(axis, value)
 	end
 end
 
-local function SetColorWithAlpha(color, alpha)
+local function setColorWithAlpha(color, alpha)
 	local r, g, b, a = 1, 1, 1, alpha or 1
 	if color then
 		r, g, b = color[1] or 1, color[2] or 1, color[3] or 1
@@ -166,19 +166,19 @@ end
 
 function Menu:enter()
 	t = 0
-	UI.ClearButtons()
+	UI.clearButtons()
 
-	Audio:PlayMusic("menu")
+	Audio:playMusic("menu")
 	Screen:update()
 
-	DailyChallenge = DailyChallenges:GetDailyChallenge()
-	DailyChallengeAnim = 0
-	ResetAnalogAxis()
+	dailyChallenge = DailyChallenges:getDailyChallenge()
+	dailyChallengeAnim = 0
+	resetAnalogAxis()
 
-	ConfigureBackgroundEffect()
+	configureBackgroundEffect()
 
 	local sw, sh = Screen:get()
-	local CenterX = sw / 2
+	local centerX = sw / 2
 
 	local labels = {
 		{ key = "menu.start_game",   action = "game" },
@@ -189,43 +189,43 @@ function Menu:enter()
 		{ key = "menu.quit",         action = "quit" },
 	}
 
-	local TotalButtonHeight = #labels * UI.spacing.ButtonHeight + math.max(0, #labels - 1) * UI.spacing.ButtonSpacing
+	local totalButtonHeight = #labels * UI.spacing.buttonHeight + math.max(0, #labels - 1) * UI.spacing.buttonSpacing
 	-- Shift the buttons down a bit so the title has breathing room.
-	local StartY = sh / 2 - TotalButtonHeight / 2 + sh * 0.08
+	local startY = sh / 2 - totalButtonHeight / 2 + sh * 0.08
 
 	local defs = {}
 
 	for i, entry in ipairs(labels) do
-		local x = CenterX - UI.spacing.ButtonWidth / 2
-		local y = StartY + (i - 1) * (UI.spacing.ButtonHeight + UI.spacing.ButtonSpacing)
+		local x = centerX - UI.spacing.buttonWidth / 2
+		local y = startY + (i - 1) * (UI.spacing.buttonHeight + UI.spacing.buttonSpacing)
 
 		defs[#defs + 1] = {
-			id = "MenuButton" .. i,
+			id = "menuButton" .. i,
 			x = x,
 			y = y,
-			w = UI.spacing.ButtonWidth,
-			h = UI.spacing.ButtonHeight,
-			LabelKey = entry.key,
+			w = UI.spacing.buttonWidth,
+			h = UI.spacing.buttonHeight,
+			labelKey = entry.key,
 			text = Localization:get(entry.key),
 			action = entry.action,
 			hovered = false,
 			scale = 1,
 			alpha = 0,
-			OffsetY = 50,
+			offsetY = 50,
 		}
 	end
 
-	buttons = ButtonList:reset(defs)
+	buttons = buttonList:reset(defs)
 end
 
 function Menu:update(dt)
 	t = t + dt
 
 	local mx, my = love.mouse.getPosition()
-	ButtonList:updateHover(mx, my)
+	buttonList:updateHover(mx, my)
 
-	if DailyChallenge then
-		DailyChallengeAnim = math.min(DailyChallengeAnim + dt * 2, 1)
+	if dailyChallenge then
+		dailyChallengeAnim = math.min(dailyChallengeAnim + dt * 2, 1)
 	end
 
 	for i, btn in ipairs(buttons) do
@@ -235,14 +235,14 @@ function Menu:update(dt)
 			btn.scale = math.max((btn.scale or 1) - dt * 5, 1.0)
 		end
 
-		local AppearDelay = (i - 1) * 0.08
-		local AppearTime = math.min((t - AppearDelay) * 3, 1)
-		btn.alpha = math.max(0, math.min(AppearTime, 1))
+		local appearDelay = (i - 1) * 0.08
+		local appearTime = math.min((t - appearDelay) * 3, 1)
+		btn.alpha = math.max(0, math.min(appearTime, 1))
 		btn.offsetY = (1 - btn.alpha) * 50
 	end
 
-	if TitleSaw then
-		TitleSaw:update(dt)
+	if titleSaw then
+		titleSaw:update(dt)
 	end
 
 	Face:update(dt)
@@ -251,52 +251,52 @@ end
 function Menu:draw()
 	local sw, sh = Screen:get()
 
-	DrawBackground(sw, sh)
+	drawBackground(sw, sh)
 
-	local BaseCellSize = 20
-	local BaseSpacing = 10
-	local WordScale = 1.5
+	local baseCellSize = 20
+	local baseSpacing = 10
+	local wordScale = 1.5
 
-	local CellSize = BaseCellSize * WordScale
+	local cellSize = baseCellSize * wordScale
 	local word = Localization:get("menu.title_word")
-	local spacing = BaseSpacing * WordScale
-	local WordWidth = (#word * (3 * CellSize + spacing)) - spacing - (CellSize * 3)
-	local ox = (sw - WordWidth) / 2
+	local spacing = baseSpacing * wordScale
+	local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+	local ox = (sw - wordWidth) / 2
 	local oy = sh * 0.2
 
-	if TitleSaw then
-		local SawRadius = TitleSaw.radius or 1
-		local WordHeight = CellSize * 3
-		local SawScale = WordHeight / (2 * SawRadius)
-		if SawScale <= 0 then
-			SawScale = 1
+	if titleSaw then
+		local sawRadius = titleSaw.radius or 1
+		local wordHeight = cellSize * 3
+		local sawScale = wordHeight / (2 * sawRadius)
+		if sawScale <= 0 then
+			sawScale = 1
 		end
 
-		local DesiredTrackLengthWorld = WordWidth + CellSize
-		local ShortenedTrackLengthWorld = math.max(2 * SawRadius * SawScale, DesiredTrackLengthWorld - 90)
-		local TargetTrackLengthBase = ShortenedTrackLengthWorld / SawScale
-		if not TitleSaw.trackLength or math.abs(TitleSaw.trackLength - TargetTrackLengthBase) > 0.001 then
-			TitleSaw.trackLength = TargetTrackLengthBase
+		local desiredTrackLengthWorld = wordWidth + cellSize
+		local shortenedTrackLengthWorld = math.max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 90)
+		local targetTrackLengthBase = shortenedTrackLengthWorld / sawScale
+		if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
+			titleSaw.trackLength = targetTrackLengthBase
 		end
 
-		local TrackLengthWorld = (TitleSaw.trackLength or TargetTrackLengthBase) * SawScale
-		local SlotThicknessBase = TitleSaw.getSlotThickness and TitleSaw:getSlotThickness() or 10
-		local SlotThicknessWorld = SlotThicknessBase * SawScale
+		local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
+		local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
+		local slotThicknessWorld = slotThicknessBase * sawScale
 
-		local TargetLeft = ox - 15
-		local TargetBottom = oy - 30
+		local targetLeft = ox - 15
+		local targetBottom = oy - 30
 
-		local SawX = TargetLeft + TrackLengthWorld / 2
-		local SawY = TargetBottom - SlotThicknessWorld / 2
+		local sawX = targetLeft + trackLengthWorld / 2
+		local sawY = targetBottom - slotThicknessWorld / 2
 
-		TitleSaw:draw(SawX, SawY, SawScale)
+		titleSaw:draw(sawX, sawY, sawScale)
 	end
 
-	local trail = DrawWord.draw(word, ox, oy, CellSize, spacing)
+	local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
 
 	if trail and #trail > 0 then
 		local head = trail[#trail]
-		Face:draw(head.x, head.y, WordScale)
+		Face:draw(head.x, head.y, wordScale)
 	end
 
 	for _, btn in ipairs(buttons) do
@@ -305,216 +305,216 @@ function Menu:draw()
 		end
 
 		if btn.alpha > 0 then
-			UI.RegisterButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
+			UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
 
 			love.graphics.push()
 			love.graphics.translate(btn.x + btn.w / 2, btn.y + btn.h / 2 + btn.offsetY)
 			love.graphics.scale(btn.scale)
 			love.graphics.translate(-(btn.x + btn.w / 2), -(btn.y + btn.h / 2))
 
-			UI.DrawButton(btn.id)
+			UI.drawButton(btn.id)
 
 			love.graphics.pop()
 		end
 	end
 
 	love.graphics.setFont(UI.fonts.small)
-	love.graphics.setColor(Theme.TextColor)
+	love.graphics.setColor(Theme.textColor)
 	love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
 
-	if DailyChallenge and DailyChallengeAnim > 0 then
-		local alpha = math.min(1, DailyChallengeAnim)
+	if dailyChallenge and dailyChallengeAnim > 0 then
+		local alpha = math.min(1, dailyChallengeAnim)
 		local eased = alpha * alpha
-		local PanelWidth = math.min(420, sw - 72)
-		local padding = UI.spacing.PanelPadding or 16
-		local PanelX = sw - PanelWidth - 36
-		local HeaderFont = UI.fonts.small
-		local TitleFont = UI.fonts.button
-		local BodyFont = UI.fonts.body
-		local ProgressFont = UI.fonts.small
+		local panelWidth = math.min(420, sw - 72)
+		local padding = UI.spacing.panelPadding or 16
+		local panelX = sw - panelWidth - 36
+		local headerFont = UI.fonts.small
+		local titleFont = UI.fonts.button
+		local bodyFont = UI.fonts.body
+		local progressFont = UI.fonts.small
 
-		local HeaderText = Localization:get("menu.daily_panel_header")
-		local TitleText = Localization:get(DailyChallenge.titleKey, DailyChallenge.descriptionReplacements)
-		local DescriptionText = Localization:get(DailyChallenge.descriptionKey, DailyChallenge.descriptionReplacements)
+		local headerText = Localization:get("menu.daily_panel_header")
+		local titleText = Localization:get(dailyChallenge.titleKey, dailyChallenge.descriptionReplacements)
+		local descriptionText = Localization:get(dailyChallenge.descriptionKey, dailyChallenge.descriptionReplacements)
 
-		local _, DescLines = BodyFont:getWrap(DescriptionText, PanelWidth - padding * 2)
-		local DescHeight = #DescLines * BodyFont:getHeight()
+		local _, descLines = bodyFont:getWrap(descriptionText, panelWidth - padding * 2)
+		local descHeight = #descLines * bodyFont:getHeight()
 
-		local StatusBar = DailyChallenge.statusBar
+		local statusBar = dailyChallenge.statusBar
 		local ratio = 0
-		local ProgressText = nil
-		local StatusBarHeight = 0
-		local BonusText = nil
-		local StreakLines = {}
+		local progressText = nil
+		local statusBarHeight = 0
+		local bonusText = nil
+		local streakLines = {}
 
-		if StatusBar then
-			ratio = math.max(0, math.min(StatusBar.ratio or 0, 1))
-			if StatusBar.textKey then
-				ProgressText = Localization:get(StatusBar.textKey, StatusBar.replacements)
+		if statusBar then
+			ratio = math.max(0, math.min(statusBar.ratio or 0, 1))
+			if statusBar.textKey then
+				progressText = Localization:get(statusBar.textKey, statusBar.replacements)
 			end
-			StatusBarHeight = 10 + 14
-			if ProgressText then
-				StatusBarHeight = StatusBarHeight + ProgressFont:getHeight() + 6
+			statusBarHeight = 10 + 14
+			if progressText then
+				statusBarHeight = statusBarHeight + progressFont:getHeight() + 6
 			end
 		end
 
-		if DailyChallenge.xpReward and DailyChallenge.xpReward > 0 then
-			BonusText = Localization:get("menu.daily_panel_bonus", { xp = DailyChallenge.xpReward })
+		if dailyChallenge.xpReward and dailyChallenge.xpReward > 0 then
+			bonusText = Localization:get("menu.daily_panel_bonus", { xp = dailyChallenge.xpReward })
 		end
 
-		local CurrentStreak = math.max(0, PlayerStats:get("DailyChallengeStreak") or 0)
-		local BestStreak = math.max(CurrentStreak, PlayerStats:get("DailyChallengeBestStreak") or 0)
+		local currentStreak = math.max(0, PlayerStats:get("dailyChallengeStreak") or 0)
+		local bestStreak = math.max(currentStreak, PlayerStats:get("dailyChallengeBestStreak") or 0)
 
-		if CurrentStreak > 0 then
-			StreakLines[#StreakLines + 1] = Localization:get("menu.daily_panel_streak", {
-				streak = CurrentStreak,
-				unit = GetDayUnit(CurrentStreak),
+		if currentStreak > 0 then
+			streakLines[#streakLines + 1] = Localization:get("menu.daily_panel_streak", {
+				streak = currentStreak,
+				unit = getDayUnit(currentStreak),
 			})
 
-			StreakLines[#StreakLines + 1] = Localization:get("menu.daily_panel_best", {
-				best = BestStreak,
-				unit = GetDayUnit(BestStreak),
+			streakLines[#streakLines + 1] = Localization:get("menu.daily_panel_best", {
+				best = bestStreak,
+				unit = getDayUnit(bestStreak),
 			})
 
-			local MessageKey = DailyChallenge.completed and "menu.daily_panel_complete_message" or "menu.daily_panel_keep_alive"
-			StreakLines[#StreakLines + 1] = Localization:get(MessageKey)
+			local messageKey = dailyChallenge.completed and "menu.daily_panel_complete_message" or "menu.daily_panel_keep_alive"
+			streakLines[#streakLines + 1] = Localization:get(messageKey)
 		else
-			StreakLines[#StreakLines + 1] = Localization:get("menu.daily_panel_start")
+			streakLines[#streakLines + 1] = Localization:get("menu.daily_panel_start")
 		end
 
-		local PanelHeight = padding * 2
-			+ HeaderFont:getHeight()
+		local panelHeight = padding * 2
+			+ headerFont:getHeight()
 			+ 6
-			+ TitleFont:getHeight()
+			+ titleFont:getHeight()
 			+ 10
-			+ DescHeight
-			+ (BonusText and (ProgressFont:getHeight() + 10) or 0)
-			+ StatusBarHeight
+			+ descHeight
+			+ (bonusText and (progressFont:getHeight() + 10) or 0)
+			+ statusBarHeight
 
-		if #StreakLines > 0 then
-			PanelHeight = PanelHeight + 8
-			for i = 1, #StreakLines do
-				PanelHeight = PanelHeight + ProgressFont:getHeight()
-				if i < #StreakLines then
-					PanelHeight = PanelHeight + 4
+		if #streakLines > 0 then
+			panelHeight = panelHeight + 8
+			for i = 1, #streakLines do
+				panelHeight = panelHeight + progressFont:getHeight()
+				if i < #streakLines then
+					panelHeight = panelHeight + 4
 				end
 			end
 		end
 
-		local PanelY = math.max(36, sh - PanelHeight - 36)
+		local panelY = math.max(36, sh - panelHeight - 36)
 
-		SetColorWithAlpha(Theme.ShadowColor, eased * 0.7)
-		love.graphics.rectangle("fill", PanelX + 6, PanelY + 8, PanelWidth, PanelHeight, 14, 14)
+		setColorWithAlpha(Theme.shadowColor, eased * 0.7)
+		love.graphics.rectangle("fill", panelX + 6, panelY + 8, panelWidth, panelHeight, 14, 14)
 
-		SetColorWithAlpha(Theme.PanelColor, alpha)
-		UI.DrawRoundedRect(PanelX, PanelY, PanelWidth, PanelHeight, 14)
+		setColorWithAlpha(Theme.panelColor, alpha)
+		UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
 
-		SetColorWithAlpha(Theme.PanelBorder, alpha)
+		setColorWithAlpha(Theme.panelBorder, alpha)
 		love.graphics.setLineWidth(2)
-		love.graphics.rectangle("line", PanelX, PanelY, PanelWidth, PanelHeight, 14, 14)
+		love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 14, 14)
 
-		local TextX = PanelX + padding
-		local TextY = PanelY + padding
+		local textX = panelX + padding
+		local textY = panelY + padding
 
-		love.graphics.setFont(HeaderFont)
-		SetColorWithAlpha(Theme.ShadowColor, alpha)
-		love.graphics.print(HeaderText, TextX + 2, TextY + 2)
-		SetColorWithAlpha(Theme.TextColor, alpha)
-		love.graphics.print(HeaderText, TextX, TextY)
+		love.graphics.setFont(headerFont)
+		setColorWithAlpha(Theme.shadowColor, alpha)
+		love.graphics.print(headerText, textX + 2, textY + 2)
+		setColorWithAlpha(Theme.textColor, alpha)
+		love.graphics.print(headerText, textX, textY)
 
-		TextY = TextY + HeaderFont:getHeight() + 6
+		textY = textY + headerFont:getHeight() + 6
 
-		love.graphics.setFont(TitleFont)
-		love.graphics.print(TitleText, TextX, TextY)
+		love.graphics.setFont(titleFont)
+		love.graphics.print(titleText, textX, textY)
 
-		TextY = TextY + TitleFont:getHeight() + 10
+		textY = textY + titleFont:getHeight() + 10
 
-		love.graphics.setFont(BodyFont)
-		love.graphics.printf(DescriptionText, TextX, TextY, PanelWidth - padding * 2)
+		love.graphics.setFont(bodyFont)
+		love.graphics.printf(descriptionText, textX, textY, panelWidth - padding * 2)
 
-		TextY = TextY + DescHeight
+		textY = textY + descHeight
 
-		if BonusText then
-			TextY = TextY + 8
-			love.graphics.setFont(ProgressFont)
-			love.graphics.print(BonusText, TextX, TextY)
-			TextY = TextY + ProgressFont:getHeight()
+		if bonusText then
+			textY = textY + 8
+			love.graphics.setFont(progressFont)
+			love.graphics.print(bonusText, textX, textY)
+			textY = textY + progressFont:getHeight()
 		end
 
-		if #StreakLines > 0 then
-			TextY = TextY + 8
-			love.graphics.setFont(ProgressFont)
-			for i, line in ipairs(StreakLines) do
-				if i == #StreakLines and not DailyChallenge.completed then
-					SetColorWithAlpha(Theme.WarningColor or Theme.AccentTextColor, alpha)
+		if #streakLines > 0 then
+			textY = textY + 8
+			love.graphics.setFont(progressFont)
+			for i, line in ipairs(streakLines) do
+				if i == #streakLines and not dailyChallenge.completed then
+					setColorWithAlpha(Theme.warningColor or Theme.accentTextColor, alpha)
 				else
-					SetColorWithAlpha(Theme.TextColor, alpha)
+					setColorWithAlpha(Theme.textColor, alpha)
 				end
-				love.graphics.print(line, TextX, TextY)
-				TextY = TextY + ProgressFont:getHeight()
-				if i < #StreakLines then
-					TextY = TextY + 4
+				love.graphics.print(line, textX, textY)
+				textY = textY + progressFont:getHeight()
+				if i < #streakLines then
+					textY = textY + 4
 				end
 			end
-			SetColorWithAlpha(Theme.TextColor, alpha)
+			setColorWithAlpha(Theme.textColor, alpha)
 		end
 
-		if StatusBar then
-			TextY = TextY + 10
-			love.graphics.setFont(ProgressFont)
+		if statusBar then
+			textY = textY + 10
+			love.graphics.setFont(progressFont)
 
-			if ProgressText then
-				love.graphics.print(ProgressText, TextX, TextY)
-				TextY = TextY + ProgressFont:getHeight() + 6
+			if progressText then
+				love.graphics.print(progressText, textX, textY)
+				textY = textY + progressFont:getHeight() + 6
 			end
 
-			local BarHeight = 14
-			local BarWidth = PanelWidth - padding * 2
+			local barHeight = 14
+			local barWidth = panelWidth - padding * 2
 
-			SetColorWithAlpha({0, 0, 0, 0.35}, alpha)
-			UI.DrawRoundedRect(TextX, TextY, BarWidth, BarHeight, 8)
+			setColorWithAlpha({0, 0, 0, 0.35}, alpha)
+			UI.drawRoundedRect(textX, textY, barWidth, barHeight, 8)
 
-			local FillWidth = BarWidth * ratio
-			if FillWidth > 0 then
-				SetColorWithAlpha(Theme.ProgressColor, alpha)
-				UI.DrawRoundedRect(TextX, TextY, FillWidth, BarHeight, 8)
+			local fillWidth = barWidth * ratio
+			if fillWidth > 0 then
+				setColorWithAlpha(Theme.progressColor, alpha)
+				UI.drawRoundedRect(textX, textY, fillWidth, barHeight, 8)
 			end
 
-			SetColorWithAlpha(Theme.PanelBorder, alpha)
+			setColorWithAlpha(Theme.panelBorder, alpha)
 			love.graphics.setLineWidth(1.5)
-			love.graphics.rectangle("line", TextX, TextY, BarWidth, BarHeight, 8, 8)
+			love.graphics.rectangle("line", textX, textY, barWidth, barHeight, 8, 8)
 
-			TextY = TextY + BarHeight
+			textY = textY + barHeight
 		end
 	end
 end
 
 function Menu:mousepressed(x, y, button)
-	ButtonList:mousepressed(x, y, button)
+	buttonList:mousepressed(x, y, button)
 end
 
 function Menu:mousereleased(x, y, button)
-	local action = ButtonList:mousereleased(x, y, button)
+	local action = buttonList:mousereleased(x, y, button)
 	if action then
-		return PrepareStartAction(action)
+		return prepareStartAction(action)
 	end
 end
 
-local function HandleMenuConfirm()
-	local action = ButtonList:activateFocused()
+local function handleMenuConfirm()
+	local action = buttonList:activateFocused()
 	if action then
-		Audio:PlaySound("click")
-		return PrepareStartAction(action)
+		Audio:playSound("click")
+		return prepareStartAction(action)
 	end
 end
 
 function Menu:keypressed(key)
 	if key == "up" or key == "left" then
-		ButtonList:moveFocus(-1)
+		buttonList:moveFocus(-1)
 	elseif key == "down" or key == "right" then
-		ButtonList:moveFocus(1)
+		buttonList:moveFocus(1)
 	elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
-		return HandleMenuConfirm()
+		return handleMenuConfirm()
 	elseif key == "escape" or key == "backspace" then
 		return "quit"
 	end
@@ -522,11 +522,11 @@ end
 
 function Menu:gamepadpressed(_, button)
 	if button == "dpup" or button == "dpleft" then
-		ButtonList:moveFocus(-1)
+		buttonList:moveFocus(-1)
 	elseif button == "dpdown" or button == "dpright" then
-		ButtonList:moveFocus(1)
+		buttonList:moveFocus(1)
 	elseif button == "a" or button == "start" then
-		return HandleMenuConfirm()
+		return handleMenuConfirm()
 	elseif button == "b" then
 		return "quit"
 	end
@@ -535,7 +535,7 @@ end
 Menu.joystickpressed = Menu.gamepadpressed
 
 function Menu:gamepadaxis(_, axis, value)
-	HandleAnalogAxis(axis, value)
+	handleAnalogAxis(axis, value)
 end
 
 Menu.joystickaxis = Menu.gamepadaxis

@@ -6,7 +6,7 @@ local UpgradeVisuals = require("upgradevisuals")
 
 local UpgradeHelpers = {}
 
-function UpgradeHelpers.GetUpgradeString(id, field)
+function UpgradeHelpers.getUpgradeString(id, field)
 	if not id or not field then return nil end
 	return Localization:get("upgrades." .. id .. "." .. field)
 end
@@ -14,27 +14,27 @@ end
 UpgradeHelpers.rarities = {
 	common = {
 		weight = 46,
-		LabelKey = "upgrades.rarities.common",
+		labelKey = "upgrades.rarities.common",
 		color = {0.75, 0.82, 0.88, 1},
 	},
 	uncommon = {
 		weight = 30,
-		LabelKey = "upgrades.rarities.uncommon",
+		labelKey = "upgrades.rarities.uncommon",
 		color = {0.55, 0.78, 0.58, 1},
 	},
 	rare = {
 		weight = 16,
-		LabelKey = "upgrades.rarities.rare",
+		labelKey = "upgrades.rarities.rare",
 		color = {0.54, 0.72, 0.96, 1},
 	},
 	epic = {
 		weight = 5.2,
-		LabelKey = "upgrades.rarities.epic",
+		labelKey = "upgrades.rarities.epic",
 		color = {0.76, 0.56, 0.88, 1},
 	},
 	legendary = {
 		weight = 1.4,
-		LabelKey = "upgrades.rarities.legendary",
+		labelKey = "upgrades.rarities.legendary",
 		color = {1, 0.66, 0.32, 1},
 	},
 }
@@ -53,43 +53,43 @@ end
 
 UpgradeHelpers.deepcopy = deepcopy
 
-UpgradeHelpers.DefaultEffects = {
-	SawSpeedMult = 1,
-	SawSpinMult = 1,
-	SawStall = 0,
-	SawSinkDuration = 0,
-	RockSpawnMult = 1,
-	RockSpawnFlat = 0,
-	RockShatter = 0,
-	LaserChargeMult = 1,
-	LaserChargeFlat = 0,
-	LaserFireMult = 1,
-	LaserFireFlat = 0,
-	LaserCooldownMult = 1,
-	LaserCooldownFlat = 0,
-	ComboBonusMult = 1,
-	FruitGoalDelta = 0,
-	RockSpawnBonus = 0,
-	SawSpawnBonus = 0,
-	LaserSpawnBonus = 0,
+UpgradeHelpers.defaultEffects = {
+	sawSpeedMult = 1,
+	sawSpinMult = 1,
+	sawStall = 0,
+	sawSinkDuration = 0,
+	rockSpawnMult = 1,
+	rockSpawnFlat = 0,
+	rockShatter = 0,
+	laserChargeMult = 1,
+	laserChargeFlat = 0,
+	laserFireMult = 1,
+	laserFireFlat = 0,
+	laserCooldownMult = 1,
+	laserCooldownFlat = 0,
+	comboBonusMult = 1,
+	fruitGoalDelta = 0,
+	rockSpawnBonus = 0,
+	sawSpawnBonus = 0,
+	laserSpawnBonus = 0,
 	adrenaline = nil,
-	AdrenalineDurationBonus = 0,
-	AdrenalineBoostBonus = 0,
-	ComboWindowBonus = 0,
-	ComboBonusFlat = 0,
-	ShopSlots = 0,
-	WallPortal = false,
+	adrenalineDurationBonus = 0,
+	adrenalineBoostBonus = 0,
+	comboWindowBonus = 0,
+	comboBonusFlat = 0,
+	shopSlots = 0,
+	wallPortal = false,
 	dash = nil,
-	TimeSlow = nil,
+	timeSlow = nil,
 }
 
-local function GetEventPosition(data)
+local function getEventPosition(data)
 	if data and data.x and data.y then
 		return data.x, data.y
 	end
 
-	if Snake.GetHead then
-		local hx, hy = Snake:GetHead()
+	if Snake.getHead then
+		local hx, hy = Snake:getHead()
 		if hx and hy then
 			return hx, hy
 		end
@@ -98,100 +98,100 @@ local function GetEventPosition(data)
 	return nil, nil
 end
 
-UpgradeHelpers.GetEventPosition = GetEventPosition
+UpgradeHelpers.getEventPosition = getEventPosition
 
-function UpgradeHelpers.CelebrateUpgrade(label, data, options)
+function UpgradeHelpers.celebrateUpgrade(label, data, options)
 	options = options or {}
 
 	local fx = options.x
 	local fy = options.y
 	if not fx or not fy then
-		fx, fy = GetEventPosition(data)
+		fx, fy = getEventPosition(data)
 	end
 
 	if fx and fy and label and not options.skipText and FloatingText then
-		local TextColor = options.textColor or options.color or {1, 1, 1, 1}
-		local TextOffset = options.textOffset or 44
-		local TextScale = options.textScale or 1.05
-		local TextLife = options.textLife or 56
-		FloatingText:add(label, fx, fy - TextOffset, TextColor, TextScale, TextLife)
+		local textColor = options.textColor or options.color or {1, 1, 1, 1}
+		local textOffset = options.textOffset or 44
+		local textScale = options.textScale or 1.05
+		local textLife = options.textLife or 56
+		FloatingText:add(label, fx, fy - textOffset, textColor, textScale, textLife)
 	end
 
 	if fx and fy and not options.skipVisuals and UpgradeVisuals then
-		local VisualOptions
+		local visualOptions
 		if options.visual then
-			VisualOptions = deepcopy(options.visual)
+			visualOptions = deepcopy(options.visual)
 		else
-			VisualOptions = {}
-			VisualOptions.outerRadius = options.visualRadius or VisualOptions.outerRadius
-			VisualOptions.innerRadius = options.visualInnerRadius or VisualOptions.innerRadius
-			VisualOptions.ringCount = options.visualRings or VisualOptions.ringCount
-			VisualOptions.ringSpacing = options.visualRingSpacing or VisualOptions.ringSpacing
-			VisualOptions.life = options.visualLife or VisualOptions.life
+			visualOptions = {}
+			visualOptions.outerRadius = options.visualRadius or visualOptions.outerRadius
+			visualOptions.innerRadius = options.visualInnerRadius or visualOptions.innerRadius
+			visualOptions.ringCount = options.visualRings or visualOptions.ringCount
+			visualOptions.ringSpacing = options.visualRingSpacing or visualOptions.ringSpacing
+			visualOptions.life = options.visualLife or visualOptions.life
 		end
 
-		if VisualOptions then
-			if options.visualBadge and VisualOptions.badge == nil then
-				VisualOptions.badge = options.visualBadge
+		if visualOptions then
+			if options.visualBadge and visualOptions.badge == nil then
+				visualOptions.badge = options.visualBadge
 			end
-			if options.visualVariant and VisualOptions.variant == nil then
-				VisualOptions.variant = options.visualVariant
+			if options.visualVariant and visualOptions.variant == nil then
+				visualOptions.variant = options.visualVariant
 			end
-			if options.visualAddBlend ~= nil and VisualOptions.addBlend == nil then
-				VisualOptions.addBlend = options.visualAddBlend
+			if options.visualAddBlend ~= nil and visualOptions.addBlend == nil then
+				visualOptions.addBlend = options.visualAddBlend
 			end
-			if options.visualGlowAlpha and VisualOptions.glowAlpha == nil then
-				VisualOptions.glowAlpha = options.visualGlowAlpha
+			if options.visualGlowAlpha and visualOptions.glowAlpha == nil then
+				visualOptions.glowAlpha = options.visualGlowAlpha
 			end
-			if options.visualHaloAlpha and VisualOptions.haloAlpha == nil then
-				VisualOptions.haloAlpha = options.visualHaloAlpha
-			end
-
-			local VisualColor = VisualOptions.color or options.visualColor or options.color or options.textColor
-			if not VisualColor then
-				VisualColor = { 1, 1, 1, 1 }
+			if options.visualHaloAlpha and visualOptions.haloAlpha == nil then
+				visualOptions.haloAlpha = options.visualHaloAlpha
 			end
 
-			VisualOptions.color = VisualColor
-			VisualOptions.outerRadius = VisualOptions.outerRadius or 44
-			VisualOptions.innerRadius = VisualOptions.innerRadius or 12
-			VisualOptions.ringCount = VisualOptions.ringCount or 2
-			VisualOptions.life = VisualOptions.life or 0.72
+			local visualColor = visualOptions.color or options.visualColor or options.color or options.textColor
+			if not visualColor then
+				visualColor = { 1, 1, 1, 1 }
+			end
 
-			UpgradeVisuals:spawn(fx, fy, VisualOptions)
+			visualOptions.color = visualColor
+			visualOptions.outerRadius = visualOptions.outerRadius or 44
+			visualOptions.innerRadius = visualOptions.innerRadius or 12
+			visualOptions.ringCount = visualOptions.ringCount or 2
+			visualOptions.life = visualOptions.life or 0.72
+
+			UpgradeVisuals:spawn(fx, fy, visualOptions)
 		end
 	end
 
 	if fx and fy and not options.skipParticles and Particles then
-		local ParticleOptions
+		local particleOptions
 		if options.particles then
-			ParticleOptions = deepcopy(options.particles)
+			particleOptions = deepcopy(options.particles)
 		else
-			ParticleOptions = {
+			particleOptions = {
 				count = options.particleCount or 12,
 				speed = options.particleSpeed or 110,
 				life = options.particleLife or 0.45,
 				size = options.particleSize or 4,
 				spread = options.particleSpread or math.pi * 2,
-				AngleJitter = options.particleAngleJitter,
-				SpeedVariance = options.particleSpeedVariance,
-				ScaleMin = options.particleScaleMin,
-				ScaleVariance = options.particleScaleVariance,
+				angleJitter = options.particleAngleJitter,
+				speedVariance = options.particleSpeedVariance,
+				scaleMin = options.particleScaleMin,
+				scaleVariance = options.particleScaleVariance,
 				drag = options.particleDrag,
 				gravity = options.particleGravity,
-				FadeTo = options.particleFadeTo,
+				fadeTo = options.particleFadeTo,
 			}
 		end
 
-		ParticleOptions = ParticleOptions or {}
-		if ParticleOptions.count == nil then
-			ParticleOptions.count = 12
+		particleOptions = particleOptions or {}
+		if particleOptions.count == nil then
+			particleOptions.count = 12
 		end
-		if ParticleOptions.color == nil then
-			ParticleOptions.color = options.particleColor or options.color
+		if particleOptions.color == nil then
+			particleOptions.color = options.particleColor or options.color
 		end
 
-		Particles:SpawnBurst(fx, fy, ParticleOptions)
+		Particles:spawnBurst(fx, fy, particleOptions)
 	end
 end
 

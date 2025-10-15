@@ -1,7 +1,7 @@
 local Timer = {}
 Timer.__index = Timer
 
-local function SanitizeDuration(duration)
+local function sanitizeDuration(duration)
 	if duration == nil then
 		return 0
 	end
@@ -15,7 +15,7 @@ function Timer.new(duration, options)
 	options = options or {}
 
 	local instance = {
-		duration = SanitizeDuration(duration or 0),
+		duration = sanitizeDuration(duration or 0),
 		elapsed = 0,
 		loop = options.loop or false,
 		paused = options.paused or false,
@@ -33,14 +33,14 @@ function Timer:clone()
 	local copy = Timer.new(self.duration, {
 		loop = self.loop,
 		paused = self.paused,
-		AutoStart = self.active,
+		autoStart = self.active,
 	})
 	copy.elapsed = self.elapsed
 	return copy
 end
 
-function Timer:SetDuration(duration)
-	self.duration = SanitizeDuration(duration or 0)
+function Timer:setDuration(duration)
+	self.duration = sanitizeDuration(duration or 0)
 	if self.elapsed > self.duration then
 		self.elapsed = self.duration
 	end
@@ -49,7 +49,7 @@ end
 
 function Timer:start(duration)
 	if duration ~= nil then
-		self:SetDuration(duration)
+		self:setDuration(duration)
 	end
 
 	self.elapsed = 0
@@ -77,33 +77,33 @@ function Timer:reset()
 	return self
 end
 
-function Timer:SetLoop(loop)
+function Timer:setLoop(loop)
 	self.loop = not not loop
 	return self
 end
 
-function Timer:SetPaused(paused)
+function Timer:setPaused(paused)
 	self.paused = not not paused
 	return self
 end
 
-function Timer:IsPaused()
+function Timer:isPaused()
 	return self.paused
 end
 
-function Timer:IsActive()
+function Timer:isActive()
 	return self.active and not self.paused
 end
 
-function Timer:GetElapsed()
+function Timer:getElapsed()
 	return self.elapsed
 end
 
-function Timer:GetDuration()
+function Timer:getDuration()
 	return self.duration
 end
 
-function Timer:GetRemaining()
+function Timer:getRemaining()
 	if self.duration <= 0 then
 		return 0
 	end
@@ -114,7 +114,7 @@ function Timer:GetRemaining()
 	return remaining
 end
 
-function Timer:GetProgress()
+function Timer:getProgress()
 	if self.duration <= 0 then
 		return 1
 	end
@@ -127,7 +127,7 @@ function Timer:GetProgress()
 	return progress
 end
 
-function Timer:IsFinished()
+function Timer:isFinished()
 	if self.duration <= 0 then
 		return not self.active
 	end

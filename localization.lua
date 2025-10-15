@@ -7,7 +7,7 @@ Localization._currentStrings = {}
 Localization._fallbackCode = "english"
 Localization._fallbackStrings = {}
 
-local function ResolveNode(tbl, key)
+local function resolveNode(tbl, key)
 	local value = tbl
 	for part in key:gmatch("[^%.]+") do
 		if type(value) ~= "table" then
@@ -36,7 +36,7 @@ function Localization:_loadLanguage(code)
 	return self._languages[code]
 end
 
-function Localization:SetLanguage(code)
+function Localization:setLanguage(code)
 	if not code then
 		code = self._fallbackCode
 	end
@@ -44,7 +44,7 @@ function Localization:SetLanguage(code)
 	local data, err = self:_loadLanguage(code)
 	if not data then
 		if code ~= self._fallbackCode then
-			return self:SetLanguage(self._fallbackCode)
+			return self:setLanguage(self._fallbackCode)
 		end
 
 		error("Failed to load language '" .. tostring(code) .. "': " .. tostring(err))
@@ -53,9 +53,9 @@ function Localization:SetLanguage(code)
 	self._currentCode = code
 	self._currentStrings = data.strings or {}
 
-	local FallbackData = self:_loadLanguage(self._fallbackCode)
-	if FallbackData then
-		self._fallbackStrings = FallbackData.strings or {}
+	local fallbackData = self:_loadLanguage(self._fallbackCode)
+	if fallbackData then
+		self._fallbackStrings = fallbackData.strings or {}
 	end
 
 	return true
@@ -66,7 +66,7 @@ function Localization:get(key, replacements)
 		return ""
 	end
 
-	local result = ResolveNode(self._currentStrings, key) or ResolveNode(self._fallbackStrings, key)
+	local result = resolveNode(self._currentStrings, key) or resolveNode(self._fallbackStrings, key)
 	local value = result
 	if type(value) ~= "string" then
 		value = key
@@ -81,19 +81,19 @@ function Localization:get(key, replacements)
 	return value
 end
 
-function Localization:GetTable(key)
-	local value = ResolveNode(self._currentStrings, key) or ResolveNode(self._fallbackStrings, key)
+function Localization:getTable(key)
+	local value = resolveNode(self._currentStrings, key) or resolveNode(self._fallbackStrings, key)
 	if type(value) == "table" then
 		return value
 	end
 	return nil
 end
 
-function Localization:GetCurrentLanguage()
+function Localization:getCurrentLanguage()
 	return self._currentCode or self._fallbackCode
 end
 
-function Localization:GetLanguageName(code)
+function Localization:getLanguageName(code)
 	local data = self:_loadLanguage(code)
 	if data and data.name then
 		return data.name
@@ -101,7 +101,7 @@ function Localization:GetLanguageName(code)
 	return code
 end
 
-local function ScanLanguages()
+local function scanLanguages()
 	local items = {}
 	for _, item in ipairs(love.filesystem.getDirectoryItems("Languages")) do
 		if item:match("%.lua$") then
@@ -112,9 +112,9 @@ local function ScanLanguages()
 	return items
 end
 
-function Localization:GetAvailableLanguages()
+function Localization:getAvailableLanguages()
 	if not self._languageOrder then
-		self._languageOrder = ScanLanguages()
+		self._languageOrder = scanLanguages()
 	end
 	return self._languageOrder
 end

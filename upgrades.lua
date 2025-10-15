@@ -12,54 +12,54 @@ local UpgradeHelpers = require("upgradehelpers")
 local DataSchemas = require("dataschemas")
 
 local Upgrades = {}
-local PoolById = {}
-local UpgradeSchema = DataSchemas.UpgradeDefinition
-local GetUpgradeString = UpgradeHelpers.GetUpgradeString
+local poolById = {}
+local upgradeSchema = DataSchemas.upgradeDefinition
+local getUpgradeString = UpgradeHelpers.getUpgradeString
 local rarities = UpgradeHelpers.rarities
 local deepcopy = UpgradeHelpers.deepcopy
-local DefaultEffects = UpgradeHelpers.DefaultEffects
-local CelebrateUpgrade = UpgradeHelpers.CelebrateUpgrade
-local GetEventPosition = UpgradeHelpers.GetEventPosition
+local defaultEffects = UpgradeHelpers.defaultEffects
+local celebrateUpgrade = UpgradeHelpers.celebrateUpgrade
+local getEventPosition = UpgradeHelpers.getEventPosition
 
 local RunState = {}
 RunState.__index = RunState
 
 function RunState.new(defaults)
 	local state = {
-		TakenOrder = {},
-		TakenSet = {},
+		takenOrder = {},
+		takenSet = {},
 		tags = {},
 		counters = {},
 		handlers = {},
-		effects = deepcopy(defaults or DefaultEffects),
+		effects = deepcopy(defaults or defaultEffects),
 		baseline = {},
 	}
 
 	return setmetatable(state, RunState)
 end
 
-function RunState:GetStacks(id)
+function RunState:getStacks(id)
 	if not id then
 		return 0
 	end
 
-	return self.TakenSet[id] or 0
+	return self.takenSet[id] or 0
 end
 
-function RunState:AddStacks(id, amount)
+function RunState:addStacks(id, amount)
 	if not id then
 		return
 	end
 
 	amount = amount or 1
-	self.TakenSet[id] = (self.TakenSet[id] or 0) + amount
+	self.takenSet[id] = (self.takenSet[id] or 0) + amount
 end
 
-function RunState:HasUpgrade(id)
-	return self:GetStacks(id) > 0
+function RunState:hasUpgrade(id)
+	return self:getStacks(id) > 0
 end
 
-function RunState:AddHandler(event, handler)
+function RunState:addHandler(event, handler)
 	if not event or type(handler) ~= "function" then
 		return
 	end
@@ -84,13 +84,13 @@ function RunState:notify(event, data)
 	end
 end
 
-function RunState:ResetEffects(defaults)
-	self.effects = deepcopy(defaults or DefaultEffects)
+function RunState:resetEffects(defaults)
+	self.effects = deepcopy(defaults or defaultEffects)
 end
 
 local POCKET_SPRINGS_FRUIT_TARGET = 20
 
-local function GetStacks(state, id)
+local function getStacks(state, id)
 	if not state or not id then
 		return 0
 	end
@@ -100,47 +100,47 @@ local function GetStacks(state, id)
 		return method(state, id)
 	end
 
-	local TakenSet = state.takenSet
-	if not TakenSet then
+	local takenSet = state.takenSet
+	if not takenSet then
 		return 0
 	end
 
-	return TakenSet[id] or 0
+	return takenSet[id] or 0
 end
 
-local function GetGameInstance()
+local function getGameInstance()
 	if GameState and GameState.states then
 		return GameState.states.game
 	end
 end
 
-local function GrantCrashShields(amount)
+local function grantCrashShields(amount)
         amount = math.max(0, math.floor((amount or 0) + 0.0001))
         if amount <= 0 then
                 return 0
         end
 
-        if Snake and Snake.AddCrashShields then
-                Snake:AddCrashShields(amount)
+        if Snake and Snake.addCrashShields then
+                Snake:addCrashShields(amount)
                 return amount
         end
 
         return 0
 end
 
-local function GetSegmentPosition(fraction)
-        if not Snake or not Snake.GetSegments then
-                if Snake and Snake.GetHead then
-                        return Snake:GetHead()
+local function getSegmentPosition(fraction)
+        if not Snake or not Snake.getSegments then
+                if Snake and Snake.getHead then
+                        return Snake:getHead()
                 end
                 return nil, nil
         end
 
-        local segments = Snake:GetSegments()
+        local segments = Snake:getSegments()
         local count = segments and #segments or 0
         if count <= 0 then
-                if Snake and Snake.GetHead then
-                        return Snake:GetHead()
+                if Snake and Snake.getHead then
+                        return Snake:getHead()
                 end
                 return nil, nil
         end
@@ -173,19 +173,19 @@ local function GetSegmentPosition(fraction)
                 end
         end
 
-        if Snake and Snake.GetHead then
-                return Snake:GetHead()
+        if Snake and Snake.getHead then
+                return Snake:getHead()
         end
 
         return nil, nil
 end
 
-local function ApplySegmentPosition(options, fraction)
+local function applySegmentPosition(options, fraction)
         if not options then
                 options = {}
         end
 
-        local x, y = GetSegmentPosition(fraction)
+        local x, y = getSegmentPosition(fraction)
         if x and y then
                 options.x = options.x or x
                 options.y = options.y or y
@@ -194,7 +194,7 @@ local function ApplySegmentPosition(options, fraction)
         return options
 end
 
-local function CollectPositions(source, limit, extractor)
+local function collectPositions(source, limit, extractor)
         if not source then
                 return nil
         end
@@ -205,8 +205,8 @@ local function CollectPositions(source, limit, extractor)
         end
 
         local result = {}
-        local MaxCount = math.min(limit or count, count)
-        for index = 1, MaxCount do
+        local maxCount = math.min(limit or count, count)
+        for index = 1, maxCount do
                 local item = source[index]
                 if item then
                         local px, py = extractor(item)
@@ -219,76 +219,76 @@ local function CollectPositions(source, limit, extractor)
         return result
 end
 
-local function GetSawCenters(limit)
-        if not Saws or not Saws.GetAll then
+local function getSawCenters(limit)
+        if not Saws or not Saws.getAll then
                 return nil
         end
 
-        return CollectPositions(Saws:GetAll(), limit, function(saw)
+        return collectPositions(Saws:getAll(), limit, function(saw)
                 local sx, sy
-                if Saws.GetCollisionCenter then
-                        sx, sy = Saws:GetCollisionCenter(saw)
+                if Saws.getCollisionCenter then
+                        sx, sy = Saws:getCollisionCenter(saw)
                 end
                 return sx or saw.x, sy or saw.y
         end)
 end
 
-local function GetRockCenters(limit)
-        if not Rocks or not Rocks.GetAll then
+local function getRockCenters(limit)
+        if not Rocks or not Rocks.getAll then
                 return nil
         end
 
-        return CollectPositions(Rocks:GetAll(), limit, function(rock)
+        return collectPositions(Rocks:getAll(), limit, function(rock)
                 return rock.x, rock.y
         end)
 end
 
-local function GetLaserCenters(limit)
-        if not Lasers or not Lasers.GetEmitters then
+local function getLaserCenters(limit)
+        if not Lasers or not Lasers.getEmitters then
                 return nil
         end
 
-        return CollectPositions(Lasers:GetEmitters(), limit, function(beam)
+        return collectPositions(Lasers:getEmitters(), limit, function(beam)
                 return beam.x, beam.y
         end)
 end
 
-local function StoneSkinShieldHandler(data, state)
+local function stoneSkinShieldHandler(data, state)
         if not state then return end
-        if GetStacks(state, "stone_skin") <= 0 then return end
+        if getStacks(state, "stone_skin") <= 0 then return end
         if not data or data.cause ~= "rock" then return end
-        if not Rocks or not Rocks.ShatterNearest then return end
+        if not Rocks or not Rocks.shatterNearest then return end
 
-	local fx, fy = GetEventPosition(data)
-	CelebrateUpgrade(nil, nil, {
+	local fx, fy = getEventPosition(data)
+	celebrateUpgrade(nil, nil, {
 		x = fx,
 		y = fy,
-		SkipText = true,
+		skipText = true,
 		color = {0.75, 0.82, 0.88, 1},
-		ParticleCount = 16,
-		ParticleSpeed = 100,
-		ParticleLife = 0.42,
+		particleCount = 16,
+		particleSpeed = 100,
+		particleLife = 0.42,
 		visual = {
 			badge = "shield",
-			OuterRadius = 56,
-			InnerRadius = 16,
-			RingCount = 3,
-			RingSpacing = 10,
+			outerRadius = 56,
+			innerRadius = 16,
+			ringCount = 3,
+			ringSpacing = 10,
 			life = 0.82,
-			GlowAlpha = 0.28,
-			HaloAlpha = 0.18,
+			glowAlpha = 0.28,
+			haloAlpha = 0.18,
 		},
 	})
-	Rocks:ShatterNearest(fx or 0, fy or 0, 1)
+	Rocks:shatterNearest(fx or 0, fy or 0, 1)
 end
 
-local function NewRunState()
-        return RunState.new(DefaultEffects)
+local function newRunState()
+        return RunState.new(defaultEffects)
 end
 
-Upgrades.RunState = NewRunState()
+Upgrades.runState = newRunState()
 
-local function NormalizeUpgradeDefinition(upgrade)
+local function normalizeUpgradeDefinition(upgrade)
 	if type(upgrade) ~= "table" then
 		error("upgrade definition must be a table")
 	end
@@ -307,30 +307,30 @@ local function NormalizeUpgradeDefinition(upgrade)
 		upgrade.desc = nil
 	end
 
-	DataSchemas.ApplyDefaults(UpgradeSchema, upgrade)
+	DataSchemas.applyDefaults(upgradeSchema, upgrade)
 	local context = string.format("upgrade '%s'", tostring(upgrade.id or "?"))
-	DataSchemas.validate(UpgradeSchema, upgrade, context)
+	DataSchemas.validate(upgradeSchema, upgrade, context)
 
 	return upgrade
 end
 
 local function register(upgrade)
-	NormalizeUpgradeDefinition(upgrade)
-	PoolById[upgrade.id] = upgrade
+	normalizeUpgradeDefinition(upgrade)
+	poolById[upgrade.id] = upgrade
 	return upgrade
 end
 
-local function CountUpgradesWithTag(state, tag)
+local function countUpgradesWithTag(state, tag)
 	if not state or not tag then return 0 end
 
 	local total = 0
 	if not state.takenSet then return total end
 
 	for id, count in pairs(state.takenSet) do
-		local upgrade = PoolById[id]
+		local upgrade = poolById[id]
 		if upgrade and upgrade.tags then
-			for _, UpgradeTag in ipairs(upgrade.tags) do
-				if UpgradeTag == tag then
+			for _, upgradeTag in ipairs(upgrade.tags) do
+				if upgradeTag == tag then
 					total = total + (count or 0)
 					break
 				end
@@ -341,35 +341,35 @@ local function CountUpgradesWithTag(state, tag)
 	return total
 end
 
-local function UpdateResonantShellBonus(state)
+local function updateResonantShellBonus(state)
 	if not state then return end
 
-	local PerBonus = state.counters and state.counters.resonantShellPerBonus or 0
-	local PerCharge = state.counters and state.counters.resonantShellPerCharge or 0
-	if PerBonus <= 0 and PerCharge <= 0 then return end
+	local perBonus = state.counters and state.counters.resonantShellPerBonus or 0
+	local perCharge = state.counters and state.counters.resonantShellPerCharge or 0
+	if perBonus <= 0 and perCharge <= 0 then return end
 
-	local DefenseCount = CountUpgradesWithTag(state, "defense")
+	local defenseCount = countUpgradesWithTag(state, "defense")
 
-	if PerBonus > 0 then
+	if perBonus > 0 then
 		local previous = state.counters.resonantShellBonus or 0
-		local NewBonus = PerBonus * DefenseCount
-		state.counters.resonantShellBonus = NewBonus
-		state.effects.sawStall = (state.effects.sawStall or 0) - previous + NewBonus
+		local newBonus = perBonus * defenseCount
+		state.counters.resonantShellBonus = newBonus
+		state.effects.sawStall = (state.effects.sawStall or 0) - previous + newBonus
 	end
 
-	if PerCharge > 0 then
-		local PreviousCharge = state.counters.resonantShellChargeBonus or 0
-		local NewCharge = PerCharge * DefenseCount
-		state.counters.resonantShellChargeBonus = NewCharge
-		state.effects.laserChargeFlat = (state.effects.laserChargeFlat or 0) - PreviousCharge + NewCharge
+	if perCharge > 0 then
+		local previousCharge = state.counters.resonantShellChargeBonus or 0
+		local newCharge = perCharge * defenseCount
+		state.counters.resonantShellChargeBonus = newCharge
+		state.effects.laserChargeFlat = (state.effects.laserChargeFlat or 0) - previousCharge + newCharge
 	end
 end
 
-local function UpdateGuildLedger(state)
+local function updateGuildLedger(state)
 	if not state then return end
 
-	local PerSlot = state.counters and state.counters.guildLedgerFlatPerSlot or 0
-	if PerSlot == 0 then return end
+	local perSlot = state.counters and state.counters.guildLedgerFlatPerSlot or 0
+	if perSlot == 0 then return end
 
 	local slots = 0
 	if state.effects then
@@ -377,16 +377,16 @@ local function UpdateGuildLedger(state)
 	end
 
 	local previous = state.counters.guildLedgerBonus or 0
-	local NewBonus = -(PerSlot * slots)
-	state.counters.guildLedgerBonus = NewBonus
-	state.effects.rockSpawnFlat = (state.effects.rockSpawnFlat or 0) - previous + NewBonus
+	local newBonus = -(perSlot * slots)
+	state.counters.guildLedgerBonus = newBonus
+	state.effects.rockSpawnFlat = (state.effects.rockSpawnFlat or 0) - previous + newBonus
 end
 
-local function UpdateStoneCensus(state)
+local function updateStoneCensus(state)
 	if not state then return end
 
-	local PerEconomy = state.counters and state.counters.stoneCensusReduction or 0
-	if PerEconomy == 0 then return end
+	local perEconomy = state.counters and state.counters.stoneCensusReduction or 0
+	if perEconomy == 0 then return end
 
 	local previous = state.counters.stoneCensusMult or 1
 	if previous <= 0 then previous = 1 end
@@ -395,72 +395,72 @@ local function UpdateStoneCensus(state)
 	effects.rockSpawnMult = effects.rockSpawnMult or 1
 	effects.rockSpawnMult = effects.rockSpawnMult / previous
 
-	local EconomyCount = CountUpgradesWithTag(state, "economy")
-	local NewMult = math.max(0.2, 1 - PerEconomy * EconomyCount)
+	local economyCount = countUpgradesWithTag(state, "economy")
+	local newMult = math.max(0.2, 1 - perEconomy * economyCount)
 
-	state.counters.stoneCensusMult = NewMult
-	effects.rockSpawnMult = effects.rockSpawnMult * NewMult
+	state.counters.stoneCensusMult = newMult
+	effects.rockSpawnMult = effects.rockSpawnMult * newMult
 	state.effects = effects
 end
 
-local function HandleBulwarkChorusFloorStart(_, state)
+local function handleBulwarkChorusFloorStart(_, state)
 	if not state or not state.counters then return end
-	if GetStacks(state, "wardens_chorus") <= 0 then return end
+	if getStacks(state, "wardens_chorus") <= 0 then return end
 
-	local PerDefense = state.counters.bulwarkChorusPerDefense or 0
-	if PerDefense <= 0 then return end
+	local perDefense = state.counters.bulwarkChorusPerDefense or 0
+	if perDefense <= 0 then return end
 
-	local DefenseCount = CountUpgradesWithTag(state, "defense")
-	if DefenseCount <= 0 then return end
+	local defenseCount = countUpgradesWithTag(state, "defense")
+	if defenseCount <= 0 then return end
 
-	local progress = (state.counters.bulwarkChorusProgress or 0) + PerDefense * DefenseCount
+	local progress = (state.counters.bulwarkChorusProgress or 0) + perDefense * defenseCount
 	local shields = math.floor(progress)
 	state.counters.bulwarkChorusProgress = progress - shields
 
-	if shields > 0 and Snake.AddCrashShields then
-		Snake:AddCrashShields(shields)
-		CelebrateUpgrade(nil, nil, {
-			SkipText = true,
+	if shields > 0 and Snake.addCrashShields then
+		Snake:addCrashShields(shields)
+		celebrateUpgrade(nil, nil, {
+			skipText = true,
 			color = {0.7, 0.9, 1.0, 1},
-			SkipParticles = true,
+			skipParticles = true,
 			visual = {
 				badge = "shield",
-				OuterRadius = 54,
-				InnerRadius = 14,
-				RingCount = 3,
+				outerRadius = 54,
+				innerRadius = 14,
+				ringCount = 3,
 				life = 0.85,
-				GlowAlpha = 0.24,
-				HaloAlpha = 0.15,
+				glowAlpha = 0.24,
+				haloAlpha = 0.15,
 			},
 		})
 	end
 end
 
-local MapmakersCompassHazards = {
+local mapmakersCompassHazards = {
 	{
-		key = "LaserCount",
-		EffectKey = "LaserSpawnBonus",
-		LabelKey = "lasers_text",
+		key = "laserCount",
+		effectKey = "laserSpawnBonus",
+		labelKey = "lasers_text",
 		color = {0.72, 0.9, 1.0, 1},
 		priority = 3,
 	},
 	{
 		key = "saws",
-		EffectKey = "SawSpawnBonus",
-		LabelKey = "saws_text",
+		effectKey = "sawSpawnBonus",
+		labelKey = "saws_text",
 		color = {1.0, 0.78, 0.42, 1},
 		priority = 2,
 	},
 	{
 		key = "rocks",
-		EffectKey = "RockSpawnBonus",
-		LabelKey = "rocks_text",
+		effectKey = "rockSpawnBonus",
+		labelKey = "rocks_text",
 		color = {0.72, 0.86, 1.0, 1},
 		priority = 1,
 	},
 }
 
-local function ClearMapmakersCompass(state)
+local function clearMapmakersCompass(state)
 	if not state then return end
 	local counters = state.counters
 	if not counters then return end
@@ -470,23 +470,23 @@ local function ClearMapmakersCompass(state)
 
 	state.effects = state.effects or {}
 
-	for EffectKey, delta in pairs(applied) do
+	for effectKey, delta in pairs(applied) do
 		if delta ~= 0 then
-			state.effects[EffectKey] = (state.effects[EffectKey] or 0) - delta
+			state.effects[effectKey] = (state.effects[effectKey] or 0) - delta
 		end
 	end
 
 	counters.mapmakersCompassApplied = {}
 end
 
-local function ApplyMapmakersCompass(state, context, options)
+local function applyMapmakersCompass(state, context, options)
 	if not state then return end
 	state.effects = state.effects or {}
 	state.counters = state.counters or {}
 
-	ClearMapmakersCompass(state)
+	clearMapmakersCompass(state)
 
-	local stacks = GetStacks(state, "mapmakers_compass")
+	local stacks = getStacks(state, "mapmakers_compass")
 	if stacks <= 0 then
 		return
 	end
@@ -502,7 +502,7 @@ local function ApplyMapmakersCompass(state, context, options)
 	state.counters.mapmakersCompassLastContext = context
 
 	local candidates = {}
-	for _, entry in ipairs(MapmakersCompassHazards) do
+	for _, entry in ipairs(mapmakersCompassHazards) do
 		local value = context[entry.key] or 0
 		table.insert(candidates, { info = entry, value = value })
 	end
@@ -524,11 +524,11 @@ local function ApplyMapmakersCompass(state, context, options)
 
 	local applied = state.counters.mapmakersCompassApplied
 	local celebrate = options and options.celebrate
-	local EventData = options and options.eventData
+	local eventData = options and options.eventData
 
 	if not chosen then
-		if Score and Score.AddBonus then
-			Score:AddBonus(2 + stacks)
+		if Score and Score.addBonus then
+			Score:addBonus(2 + stacks)
 		end
 
 		if Saws and Saws.stall then
@@ -536,21 +536,21 @@ local function ApplyMapmakersCompass(state, context, options)
 		end
 
                 if celebrate then
-                        local label = GetUpgradeString("mapmakers_compass", "activation_text") or GetUpgradeString("mapmakers_compass", "name")
-                        CelebrateUpgrade(label, EventData, {
+                        local label = getUpgradeString("mapmakers_compass", "activation_text") or getUpgradeString("mapmakers_compass", "name")
+                        celebrateUpgrade(label, eventData, {
                                 color = {0.92, 0.82, 0.6, 1},
-                                TextOffset = 46,
-                                TextScale = 1.08,
+                                textOffset = 46,
+                                textScale = 1.08,
                                 visual = {
                                         variant = "guiding_compass",
-                                        ShowBase = false,
+                                        showBase = false,
                                         life = 0.78,
-                                        InnerRadius = 12,
-                                        OuterRadius = 58,
-                                        AddBlend = true,
+                                        innerRadius = 12,
+                                        outerRadius = 58,
+                                        addBlend = true,
                                         color = {0.92, 0.82, 0.6, 1},
-                                        VariantSecondaryColor = {1.0, 0.68, 0.32, 0.95},
-                                        VariantTertiaryColor = {0.72, 0.86, 1.0, 0.7},
+                                        variantSecondaryColor = {1.0, 0.68, 0.32, 0.95},
+                                        variantTertiaryColor = {0.72, 0.86, 1.0, 0.7},
                                 },
                         })
                 end
@@ -560,42 +560,353 @@ local function ApplyMapmakersCompass(state, context, options)
 
 	local reduction = 1 + math.floor((stacks - 1) * 0.5)
 	local delta = -reduction
-	local EffectKey = chosen.effectKey
-	state.effects[EffectKey] = (state.effects[EffectKey] or 0) + delta
-	applied[EffectKey] = delta
+	local effectKey = chosen.effectKey
+	state.effects[effectKey] = (state.effects[effectKey] or 0) + delta
+	applied[effectKey] = delta
 	state.counters.mapmakersCompassTarget = chosen.key
 	state.counters.mapmakersCompassReduction = reduction
 
         if celebrate then
-                local label = GetUpgradeString("mapmakers_compass", chosen.labelKey or "activation_text") or GetUpgradeString("mapmakers_compass", "name")
-                CelebrateUpgrade(label, EventData, {
+                local label = getUpgradeString("mapmakers_compass", chosen.labelKey or "activation_text") or getUpgradeString("mapmakers_compass", "name")
+                celebrateUpgrade(label, eventData, {
                         color = chosen.color or {0.72, 0.86, 1.0, 1},
-                        TextOffset = 46,
-                        TextScale = 1.08,
+                        textOffset = 46,
+                        textScale = 1.08,
                         visual = {
                                 variant = "guiding_compass",
-                                ShowBase = false,
+                                showBase = false,
                                 life = 0.82,
-                                InnerRadius = 12,
-                                OuterRadius = 62,
-                                AddBlend = true,
+                                innerRadius = 12,
+                                outerRadius = 62,
+                                addBlend = true,
                                 color = chosen.color or {0.72, 0.86, 1.0, 1},
-                                VariantSecondaryColor = {1.0, 0.82, 0.42, 1},
-                                VariantTertiaryColor = {0.48, 0.72, 1.0, 0.85},
+                                variantSecondaryColor = {1.0, 0.82, 0.42, 1},
+                                variantTertiaryColor = {0.48, 0.72, 1.0, 0.85},
                         },
                 })
         end
 end
 
-local function MapmakersCompassFloorStart(data, state)
-        if not (data and state) then return end
-        if GetStacks(state, "mapmakers_compass") <= 0 then return end
+local function mapmakersCompassFloorStart(data, state)
+	if not (data and state) then return end
+	if getStacks(state, "mapmakers_compass") <= 0 then return end
 
-        local context = data.context
-        ApplyMapmakersCompass(state, context, { celebrate = true, EventData = data })
+	local context = data.context
+	applyMapmakersCompass(state, context, { celebrate = true, eventData = data })
 end
 
-local function NormalizeDirection(dx, dy)
+local pool = {
+	register({
+		id = "quick_fangs",
+		nameKey = "upgrades.quick_fangs.name",
+		descKey = "upgrades.quick_fangs.description",
+		rarity = "uncommon",
+		allowDuplicates = true,
+		maxStacks = 4,
+                onAcquire = function(state)
+                        Snake:addSpeedMultiplier(1.10)
+
+                        if state then
+                                state.counters = state.counters or {}
+                                local stacks = (state.counters.quickFangsStacks or 0) + 1
+                                state.counters.quickFangsStacks = stacks
+                                if Snake.setQuickFangsStacks then
+                                        Snake:setQuickFangsStacks(stacks)
+                                end
+                        elseif Snake.setQuickFangsStacks then
+                                Snake:setQuickFangsStacks((Snake.quickFangs and Snake.quickFangs.stacks or 0) + 1)
+                        end
+
+                        local celebrationOptions = {
+                                color = {1, 0.63, 0.42, 1},
+                                particleCount = 18,
+                                particleSpeed = 150,
+                                particleLife = 0.38,
+                                textOffset = 46,
+                                textScale = 1.18,
+                        }
+                        applySegmentPosition(celebrationOptions, 0.28)
+                        celebrateUpgrade(getUpgradeString("quick_fangs", "name"), nil, celebrationOptions)
+                end,
+        }),
+        register({
+                id = "stone_skin",
+		nameKey = "upgrades.stone_skin.name",
+		descKey = "upgrades.stone_skin.description",
+		rarity = "uncommon",
+		allowDuplicates = true,
+		maxStacks = 4,
+		onAcquire = function(state)
+			Snake:addCrashShields(1)
+			if Snake.addStoneSkinSawGrace then
+				Snake:addStoneSkinSawGrace(1)
+			end
+			if not state.counters.stoneSkinHandlerRegistered then
+				state.counters.stoneSkinHandlerRegistered = true
+				Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
+			end
+                        local celebrationOptions = {
+                                color = {0.75, 0.82, 0.88, 1},
+                                particleCount = 14,
+                                particleSpeed = 90,
+                                particleLife = 0.45,
+                                textOffset = 50,
+                                textScale = 1.12,
+                                visual = {
+                                        variant = "stoneguard_bastion",
+                                        life = 0.8,
+                                        innerRadius = 14,
+                                        outerRadius = 60,
+                                        color = {0.74, 0.8, 0.88, 1},
+                                        variantSecondaryColor = {0.46, 0.5, 0.56, 1},
+                                        variantTertiaryColor = {0.94, 0.96, 0.98, 0.72},
+                                },
+                        }
+                        applySegmentPosition(celebrationOptions, 0.46)
+                        celebrateUpgrade(getUpgradeString("stone_skin", "name"), nil, celebrationOptions)
+                end,
+        }),
+	register({
+		id = "aegis_recycler",
+		nameKey = "upgrades.aegis_recycler.name",
+		descKey = "upgrades.aegis_recycler.description",
+		rarity = "uncommon",
+		tags = {"defense"},
+		onAcquire = function(state)
+			state.counters.aegisRecycler = state.counters.aegisRecycler or 0
+		end,
+		handlers = {
+			shieldConsumed = function(data, state)
+				state.counters.aegisRecycler = (state.counters.aegisRecycler or 0) + 1
+				if state.counters.aegisRecycler >= 2 then
+					state.counters.aegisRecycler = state.counters.aegisRecycler - 2
+					Snake:addCrashShields(1)
+					local fx, fy = getEventPosition(data)
+					if fx and fy then
+						celebrateUpgrade(nil, data, {
+							x = fx,
+							y = fy,
+							skipText = true,
+							color = {0.6, 0.85, 1, 1},
+							particleCount = 10,
+							particleSpeed = 90,
+							particleLife = 0.45,
+							visual = {
+								badge = "shield",
+								outerRadius = 50,
+								innerRadius = 14,
+								ringCount = 3,
+								life = 0.75,
+								glowAlpha = 0.26,
+								haloAlpha = 0.16,
+							},
+						})
+					end
+				end
+			end,
+		},
+	}),
+	register({
+		id = "extra_bite",
+		nameKey = "upgrades.extra_bite.name",
+		descKey = "upgrades.extra_bite.description",
+		rarity = "common",
+		onAcquire = function(state)
+			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
+			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
+			if UI.adjustFruitGoal then
+				UI:adjustFruitGoal(-1)
+			end
+                        local celebrationOptions = {
+                                color = {1, 0.86, 0.36, 1},
+                                particleCount = 10,
+                                particleSpeed = 70,
+                                particleLife = 0.38,
+                                textOffset = 38,
+                                textScale = 1.04,
+                        }
+                        applySegmentPosition(celebrationOptions, 0.92)
+                        celebrateUpgrade(getUpgradeString("extra_bite", "celebration"), nil, celebrationOptions)
+		end,
+	}),
+	register({
+		id = "adrenaline_surge",
+		nameKey = "upgrades.adrenaline_surge.name",
+		descKey = "upgrades.adrenaline_surge.description",
+		rarity = "uncommon",
+		tags = {"adrenaline"},
+                onAcquire = function(state)
+                        state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+                        celebrateUpgrade(getUpgradeString("adrenaline_surge", "name"), nil, {
+                                color = {1, 0.42, 0.42, 1},
+                                particleCount = 20,
+                                particleSpeed = 160,
+                                particleLife = 0.36,
+                                textOffset = 42,
+                                textScale = 1.16,
+                                visual = {
+                                        variant = "adrenaline_rush",
+                                        showBase = false,
+                                        life = 0.72,
+                                        innerRadius = 12,
+                                        outerRadius = 56,
+                                        addBlend = true,
+                                        color = {1, 0.46, 0.42, 1},
+                                        variantSecondaryColor = {1, 0.72, 0.44, 0.95},
+                                        variantTertiaryColor = {1, 0.94, 0.92, 0.85},
+                                },
+                        })
+                end,
+        }),
+	register({
+		id = "stone_whisperer",
+		nameKey = "upgrades.stone_whisperer.name",
+		descKey = "upgrades.stone_whisperer.description",
+		rarity = "common",
+		onAcquire = function(state)
+			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.6
+		end,
+	}),
+        register({
+                id = "deliberate_coil",
+                nameKey = "upgrades.deliberate_coil.name",
+                descKey = "upgrades.deliberate_coil.description",
+                rarity = "epic",
+		tags = {"speed", "risk"},
+		unlockTag = "speedcraft",
+		onAcquire = function(state)
+			Snake:addSpeedMultiplier(0.85)
+			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+			if UI.adjustFruitGoal then
+				UI:adjustFruitGoal(1)
+			end
+                        celebrateUpgrade(getUpgradeString("deliberate_coil", "name"), nil, {
+                                color = {0.76, 0.56, 0.88, 1},
+                                particleCount = 16,
+                                particleSpeed = 90,
+                                particleLife = 0.5,
+                                textOffset = 40,
+                                textScale = 1.08,
+                                visual = {
+                                        variant = "coiled_focus",
+                                        showBase = false,
+                                        life = 0.86,
+                                        innerRadius = 14,
+                                        outerRadius = 60,
+                                        addBlend = true,
+                                        color = {0.76, 0.56, 0.88, 1},
+                                        variantSecondaryColor = {0.58, 0.44, 0.92, 0.9},
+                                        variantTertiaryColor = {0.98, 0.9, 1.0, 0.75},
+                                },
+                        })
+                end,
+        }),
+	register({
+		id = "pocket_springs",
+		nameKey = "upgrades.pocket_springs.name",
+		descKey = "upgrades.pocket_springs.description",
+		rarity = "uncommon",
+		tags = {"defense"},
+		onAcquire = function(state)
+			state.counters.pocketSpringsFruit = state.counters.pocketSpringsFruit or 0
+			if state.counters.pocketSpringsComplete == nil then
+				state.counters.pocketSpringsComplete = false
+			end
+		end,
+		handlers = {
+			fruitCollected = function(data, state)
+				if getStacks(state, "pocket_springs") <= 0 then
+					return
+				end
+
+				if state.counters.pocketSpringsComplete then
+					return
+				end
+
+				state.counters.pocketSpringsFruit = (state.counters.pocketSpringsFruit or 0) + 1
+				if state.counters.pocketSpringsFruit >= POCKET_SPRINGS_FRUIT_TARGET then
+					state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
+					state.counters.pocketSpringsComplete = true
+					Snake:addCrashShields(1)
+				end
+			end,
+		},
+	}),
+	register({
+		id = "mapmakers_compass",
+		nameKey = "upgrades.mapmakers_compass.name",
+		descKey = "upgrades.mapmakers_compass.description",
+		rarity = "uncommon",
+		tags = {"defense", "utility"},
+		onAcquire = function(state)
+			state.effects = state.effects or {}
+			state.counters = state.counters or {}
+			state.counters.mapmakersCompassApplied = state.counters.mapmakersCompassApplied or {}
+
+			if not state.counters.mapmakersCompassHandlerRegistered then
+				state.counters.mapmakersCompassHandlerRegistered = true
+				Upgrades:addEventHandler("floorStart", mapmakersCompassFloorStart)
+			end
+
+			if state.counters.mapmakersCompassLastContext then
+				applyMapmakersCompass(state, state.counters.mapmakersCompassLastContext, { celebrate = false })
+			end
+		end,
+	}),
+        register({
+                id = "momentum_memory",
+                nameKey = "upgrades.momentum_memory.name",
+                descKey = "upgrades.momentum_memory.description",
+                rarity = "uncommon",
+		requiresTags = {"adrenaline"},
+		onAcquire = function(state)
+			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+			state.effects.adrenalineDurationBonus = (state.effects.adrenalineDurationBonus or 0) + 2
+		end,
+	}),
+	register({
+		id = "molting_reflex",
+		nameKey = "upgrades.molting_reflex.name",
+		descKey = "upgrades.molting_reflex.description",
+		rarity = "uncommon",
+		requiresTags = {"adrenaline"},
+		tags = {"adrenaline", "defense"},
+		handlers = {
+			shieldConsumed = function(data)
+				if not Snake.adrenaline then return end
+
+				Snake.adrenaline.active = true
+				local baseDuration = Snake.adrenaline.duration or 2.5
+				local surgeDuration = baseDuration * 0.6
+				if surgeDuration <= 0 then surgeDuration = 1 end
+				local currentTimer = Snake.adrenaline.timer or 0
+				Snake.adrenaline.timer = math.max(currentTimer, surgeDuration)
+
+				local fx, fy = getEventPosition(data)
+				if fx and fy then
+					celebrateUpgrade(nil, data, {
+						x = fx,
+						y = fy,
+						skipText = true,
+						color = {1, 0.72, 0.28, 1},
+						particleCount = 12,
+						particleSpeed = 120,
+						particleLife = 0.5,
+						visual = {
+							badge = "spark",
+							outerRadius = 50,
+							innerRadius = 14,
+							ringCount = 3,
+							life = 0.74,
+							glowAlpha = 0.28,
+							haloAlpha = 0.18,
+						},
+					})
+				end
+			end,
+		},
+	}),
+local function normalizeDirection(dx, dy)
         dx = dx or 0
         dy = dy or 0
 
@@ -611,7 +922,7 @@ local atan2 = math.atan2 or function(y, x)
         return math.atan(y, x)
 end
 
-local function ApplyCircuitBreakerFacing(options, dx, dy)
+local function applyCircuitBreakerFacing(options, dx, dy)
         if not options then
                 return
         end
@@ -621,21 +932,21 @@ local function ApplyCircuitBreakerFacing(options, dx, dy)
                 return
         end
 
-        dx, dy = NormalizeDirection(dx, dy)
-        local BaseAngle = atan2(dy, dx)
+        dx, dy = normalizeDirection(dx, dy)
+        local baseAngle = atan2(dy, dx)
         local spread = particles.spread or 0
-        particles.angleOffset = BaseAngle - spread * 0.5
+        particles.angleOffset = baseAngle - spread * 0.5
 end
 
-local function GetSawFacingDirection(SawInfo)
-        if not SawInfo then
+local function getSawFacingDirection(sawInfo)
+        if not sawInfo then
                 return 0, -1
         end
 
-        if SawInfo.dir == "vertical" then
-                if SawInfo.side == "left" then
+        if sawInfo.dir == "vertical" then
+                if sawInfo.side == "left" then
                         return 1, 0
-                elseif SawInfo.side == "right" then
+                elseif sawInfo.side == "right" then
                         return -1, 0
                 end
 
@@ -645,7 +956,7 @@ local function GetSawFacingDirection(SawInfo)
         return 0, -1
 end
 
-local function BuildCircuitBreakerTargets(data)
+local function buildCircuitBreakerTargets(data)
         local targets = {}
         if not data then
                 return targets
@@ -684,336 +995,25 @@ local function BuildCircuitBreakerTargets(data)
         return targets
 end
 
-local pool = {
-	register({
-		id = "quick_fangs",
-		NameKey = "upgrades.quick_fangs.name",
-		DescKey = "upgrades.quick_fangs.description",
-		rarity = "uncommon",
-		AllowDuplicates = true,
-		MaxStacks = 4,
-                OnAcquire = function(state)
-                        Snake:AddSpeedMultiplier(1.10)
-
-                        if state then
-                                state.counters = state.counters or {}
-                                local stacks = (state.counters.quickFangsStacks or 0) + 1
-                                state.counters.quickFangsStacks = stacks
-                                if Snake.SetQuickFangsStacks then
-                                        Snake:SetQuickFangsStacks(stacks)
-                                end
-                        elseif Snake.SetQuickFangsStacks then
-                                Snake:SetQuickFangsStacks((Snake.QuickFangs and Snake.QuickFangs.stacks or 0) + 1)
-                        end
-
-                        local CelebrationOptions = {
-                                color = {1, 0.63, 0.42, 1},
-                                ParticleCount = 18,
-                                ParticleSpeed = 150,
-                                ParticleLife = 0.38,
-                                TextOffset = 46,
-                                TextScale = 1.18,
-                        }
-                        ApplySegmentPosition(CelebrationOptions, 0.28)
-                        CelebrateUpgrade(GetUpgradeString("quick_fangs", "name"), nil, CelebrationOptions)
-                end,
-        }),
-        register({
-                id = "stone_skin",
-		NameKey = "upgrades.stone_skin.name",
-		DescKey = "upgrades.stone_skin.description",
-		rarity = "uncommon",
-		AllowDuplicates = true,
-		MaxStacks = 4,
-		OnAcquire = function(state)
-			Snake:AddCrashShields(1)
-			if Snake.AddStoneSkinSawGrace then
-				Snake:AddStoneSkinSawGrace(1)
-			end
-			if not state.counters.stoneSkinHandlerRegistered then
-				state.counters.stoneSkinHandlerRegistered = true
-				Upgrades:AddEventHandler("ShieldConsumed", StoneSkinShieldHandler)
-			end
-                        local CelebrationOptions = {
-                                color = {0.75, 0.82, 0.88, 1},
-                                ParticleCount = 14,
-                                ParticleSpeed = 90,
-                                ParticleLife = 0.45,
-                                TextOffset = 50,
-                                TextScale = 1.12,
-                                visual = {
-                                        variant = "stoneguard_bastion",
-                                        life = 0.8,
-                                        InnerRadius = 14,
-                                        OuterRadius = 60,
-                                        color = {0.74, 0.8, 0.88, 1},
-                                        VariantSecondaryColor = {0.46, 0.5, 0.56, 1},
-                                        VariantTertiaryColor = {0.94, 0.96, 0.98, 0.72},
-                                },
-                        }
-                        ApplySegmentPosition(CelebrationOptions, 0.46)
-                        CelebrateUpgrade(GetUpgradeString("stone_skin", "name"), nil, CelebrationOptions)
-                end,
-        }),
-	register({
-		id = "aegis_recycler",
-		NameKey = "upgrades.aegis_recycler.name",
-		DescKey = "upgrades.aegis_recycler.description",
-		rarity = "uncommon",
-		tags = {"defense"},
-		OnAcquire = function(state)
-			state.counters.aegisRecycler = state.counters.aegisRecycler or 0
-		end,
-		handlers = {
-			ShieldConsumed = function(data, state)
-				state.counters.aegisRecycler = (state.counters.aegisRecycler or 0) + 1
-				if state.counters.aegisRecycler >= 2 then
-					state.counters.aegisRecycler = state.counters.aegisRecycler - 2
-					Snake:AddCrashShields(1)
-					local fx, fy = GetEventPosition(data)
-					if fx and fy then
-						CelebrateUpgrade(nil, data, {
-							x = fx,
-							y = fy,
-							SkipText = true,
-							color = {0.6, 0.85, 1, 1},
-							ParticleCount = 10,
-							ParticleSpeed = 90,
-							ParticleLife = 0.45,
-							visual = {
-								badge = "shield",
-								OuterRadius = 50,
-								InnerRadius = 14,
-								RingCount = 3,
-								life = 0.75,
-								GlowAlpha = 0.26,
-								HaloAlpha = 0.16,
-							},
-						})
-					end
-				end
-			end,
-		},
-	}),
-	register({
-		id = "extra_bite",
-		NameKey = "upgrades.extra_bite.name",
-		DescKey = "upgrades.extra_bite.description",
-		rarity = "common",
-		OnAcquire = function(state)
-			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
-			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
-			if UI.AdjustFruitGoal then
-				UI:AdjustFruitGoal(-1)
-			end
-                        local CelebrationOptions = {
-                                color = {1, 0.86, 0.36, 1},
-                                ParticleCount = 10,
-                                ParticleSpeed = 70,
-                                ParticleLife = 0.38,
-                                TextOffset = 38,
-                                TextScale = 1.04,
-                        }
-                        ApplySegmentPosition(CelebrationOptions, 0.92)
-                        CelebrateUpgrade(GetUpgradeString("extra_bite", "celebration"), nil, CelebrationOptions)
-		end,
-	}),
-	register({
-		id = "adrenaline_surge",
-		NameKey = "upgrades.adrenaline_surge.name",
-		DescKey = "upgrades.adrenaline_surge.description",
-		rarity = "uncommon",
-		tags = {"adrenaline"},
-                OnAcquire = function(state)
-                        state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
-                        CelebrateUpgrade(GetUpgradeString("adrenaline_surge", "name"), nil, {
-                                color = {1, 0.42, 0.42, 1},
-                                ParticleCount = 20,
-                                ParticleSpeed = 160,
-                                ParticleLife = 0.36,
-                                TextOffset = 42,
-                                TextScale = 1.16,
-                                visual = {
-                                        variant = "adrenaline_rush",
-                                        ShowBase = false,
-                                        life = 0.72,
-                                        InnerRadius = 12,
-                                        OuterRadius = 56,
-                                        AddBlend = true,
-                                        color = {1, 0.46, 0.42, 1},
-                                        VariantSecondaryColor = {1, 0.72, 0.44, 0.95},
-                                        VariantTertiaryColor = {1, 0.94, 0.92, 0.85},
-                                },
-                        })
-                end,
-        }),
-	register({
-		id = "stone_whisperer",
-		NameKey = "upgrades.stone_whisperer.name",
-		DescKey = "upgrades.stone_whisperer.description",
-		rarity = "common",
-		OnAcquire = function(state)
-			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.6
-		end,
-	}),
-        register({
-                id = "deliberate_coil",
-                NameKey = "upgrades.deliberate_coil.name",
-                DescKey = "upgrades.deliberate_coil.description",
-                rarity = "epic",
-		tags = {"speed", "risk"},
-		UnlockTag = "speedcraft",
-		OnAcquire = function(state)
-			Snake:AddSpeedMultiplier(0.85)
-			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
-			if UI.AdjustFruitGoal then
-				UI:AdjustFruitGoal(1)
-			end
-                        CelebrateUpgrade(GetUpgradeString("deliberate_coil", "name"), nil, {
-                                color = {0.76, 0.56, 0.88, 1},
-                                ParticleCount = 16,
-                                ParticleSpeed = 90,
-                                ParticleLife = 0.5,
-                                TextOffset = 40,
-                                TextScale = 1.08,
-                                visual = {
-                                        variant = "coiled_focus",
-                                        ShowBase = false,
-                                        life = 0.86,
-                                        InnerRadius = 14,
-                                        OuterRadius = 60,
-                                        AddBlend = true,
-                                        color = {0.76, 0.56, 0.88, 1},
-                                        VariantSecondaryColor = {0.58, 0.44, 0.92, 0.9},
-                                        VariantTertiaryColor = {0.98, 0.9, 1.0, 0.75},
-                                },
-                        })
-                end,
-        }),
-	register({
-		id = "pocket_springs",
-		NameKey = "upgrades.pocket_springs.name",
-		DescKey = "upgrades.pocket_springs.description",
-		rarity = "uncommon",
-		tags = {"defense"},
-		OnAcquire = function(state)
-			state.counters.pocketSpringsFruit = state.counters.pocketSpringsFruit or 0
-			if state.counters.pocketSpringsComplete == nil then
-				state.counters.pocketSpringsComplete = false
-			end
-		end,
-		handlers = {
-			FruitCollected = function(data, state)
-				if GetStacks(state, "pocket_springs") <= 0 then
-					return
-				end
-
-				if state.counters.pocketSpringsComplete then
-					return
-				end
-
-				state.counters.pocketSpringsFruit = (state.counters.pocketSpringsFruit or 0) + 1
-				if state.counters.pocketSpringsFruit >= POCKET_SPRINGS_FRUIT_TARGET then
-					state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
-					state.counters.pocketSpringsComplete = true
-					Snake:AddCrashShields(1)
-				end
-			end,
-		},
-	}),
-	register({
-		id = "mapmakers_compass",
-		NameKey = "upgrades.mapmakers_compass.name",
-		DescKey = "upgrades.mapmakers_compass.description",
-		rarity = "uncommon",
-		tags = {"defense", "utility"},
-		OnAcquire = function(state)
-			state.effects = state.effects or {}
-			state.counters = state.counters or {}
-			state.counters.mapmakersCompassApplied = state.counters.mapmakersCompassApplied or {}
-
-			if not state.counters.mapmakersCompassHandlerRegistered then
-				state.counters.mapmakersCompassHandlerRegistered = true
-				Upgrades:AddEventHandler("FloorStart", MapmakersCompassFloorStart)
-			end
-
-			if state.counters.mapmakersCompassLastContext then
-				ApplyMapmakersCompass(state, state.counters.mapmakersCompassLastContext, { celebrate = false })
-			end
-		end,
-	}),
-        register({
-                id = "momentum_memory",
-                NameKey = "upgrades.momentum_memory.name",
-                DescKey = "upgrades.momentum_memory.description",
-                rarity = "uncommon",
-		RequiresTags = {"adrenaline"},
-		OnAcquire = function(state)
-			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
-			state.effects.adrenalineDurationBonus = (state.effects.adrenalineDurationBonus or 0) + 2
-		end,
-	}),
-	register({
-		id = "molting_reflex",
-		NameKey = "upgrades.molting_reflex.name",
-		DescKey = "upgrades.molting_reflex.description",
-		rarity = "uncommon",
-		RequiresTags = {"adrenaline"},
-		tags = {"adrenaline", "defense"},
-		handlers = {
-			ShieldConsumed = function(data)
-				if not Snake.adrenaline then return end
-
-				Snake.adrenaline.active = true
-				local BaseDuration = Snake.adrenaline.duration or 2.5
-				local SurgeDuration = BaseDuration * 0.6
-				if SurgeDuration <= 0 then SurgeDuration = 1 end
-				local CurrentTimer = Snake.adrenaline.timer or 0
-				Snake.adrenaline.timer = math.max(CurrentTimer, SurgeDuration)
-
-				local fx, fy = GetEventPosition(data)
-				if fx and fy then
-					CelebrateUpgrade(nil, data, {
-						x = fx,
-						y = fy,
-						SkipText = true,
-						color = {1, 0.72, 0.28, 1},
-						ParticleCount = 12,
-						ParticleSpeed = 120,
-						ParticleLife = 0.5,
-						visual = {
-							badge = "spark",
-							OuterRadius = 50,
-							InnerRadius = 14,
-							RingCount = 3,
-							life = 0.74,
-							GlowAlpha = 0.28,
-							HaloAlpha = 0.18,
-						},
-					})
-				end
-			end,
-		},
-	}),
         register({
                 id = "circuit_breaker",
-                NameKey = "upgrades.circuit_breaker.name",
-                DescKey = "upgrades.circuit_breaker.description",
+                nameKey = "upgrades.circuit_breaker.name",
+                descKey = "upgrades.circuit_breaker.description",
                 rarity = "uncommon",
-                OnAcquire = function(state)
+                onAcquire = function(state)
                         state.effects.sawStall = (state.effects.sawStall or 0) + 1
-                        local SparkColor = {1, 0.58, 0.32, 1}
-                        CelebrateUpgrade(GetUpgradeString("circuit_breaker", "name"), nil, {
-                                color = SparkColor,
-                                SkipVisuals = true,
-                                SkipParticles = true,
-                                TextOffset = 44,
-                                TextScale = 1.08,
+                        local sparkColor = {1, 0.58, 0.32, 1}
+                        celebrateUpgrade(getUpgradeString("circuit_breaker", "name"), nil, {
+                                color = sparkColor,
+                                skipVisuals = true,
+                                skipParticles = true,
+                                textOffset = 44,
+                                textScale = 1.08,
                         })
                 end,
                 handlers = {
-                        SawsStalled = function(data, state)
-                                if GetStacks(state, "circuit_breaker") <= 0 then
+                        sawsStalled = function(data, state)
+                                if getStacks(state, "circuit_breaker") <= 0 then
                                         return
                                 end
 
@@ -1025,33 +1025,33 @@ local pool = {
                                         return
                                 end
 
-                                local SparkColor = {1, 0.58, 0.32, 1}
-                                local BaseOptions = {
-                                        color = SparkColor,
-                                        SkipText = true,
-                                        SkipVisuals = true,
+                                local sparkColor = {1, 0.58, 0.32, 1}
+                                local baseOptions = {
+                                        color = sparkColor,
+                                        skipText = true,
+                                        skipVisuals = true,
                                         particles = {
                                                 count = 14,
                                                 speed = 120,
-                                                SpeedVariance = 70,
+                                                speedVariance = 70,
                                                 life = 0.28,
                                                 size = 2.2,
                                                 color = {1, 0.74, 0.38, 1},
                                                 spread = math.pi * 0.45,
-                                                AngleJitter = math.pi * 0.18,
+                                                angleJitter = math.pi * 0.18,
                                                 gravity = 200,
                                                 drag = 1.5,
-                                                FadeTo = 0,
-                                                ScaleMin = 0.32,
-                                                ScaleVariance = 0.2,
+                                                fadeTo = 0,
+                                                scaleMin = 0.32,
+                                                scaleVariance = 0.2,
                                         },
                                 }
-                                local targets = BuildCircuitBreakerTargets(data)
+                                local targets = buildCircuitBreakerTargets(data)
                                 if not targets or #targets == 0 then
                                         targets = {}
-                                        local SawCenters = GetSawCenters(2)
-                                        if SawCenters and #SawCenters > 0 then
-                                                for _, pos in ipairs(SawCenters) do
+                                        local sawCenters = getSawCenters(2)
+                                        if sawCenters and #sawCenters > 0 then
+                                                for _, pos in ipairs(sawCenters) do
                                                         if pos then
                                                                 targets[#targets + 1] = {
                                                                         x = pos[1],
@@ -1066,215 +1066,215 @@ local pool = {
                                         for i = 1, limit do
                                                 local target = targets[i]
                                                 if target then
-                                                        local SparkOptions = deepcopy(BaseOptions)
-                                                        SparkOptions.x = target.x
-                                                        SparkOptions.y = target.y
-                                                        local DirX, DirY = GetSawFacingDirection(target)
-                                                        ApplyCircuitBreakerFacing(SparkOptions, DirX, DirY)
-                                                        CelebrateUpgrade(nil, nil, SparkOptions)
+                                                        local sparkOptions = deepcopy(baseOptions)
+                                                        sparkOptions.x = target.x
+                                                        sparkOptions.y = target.y
+                                                        local dirX, dirY = getSawFacingDirection(target)
+                                                        applyCircuitBreakerFacing(sparkOptions, dirX, dirY)
+                                                        celebrateUpgrade(nil, nil, sparkOptions)
                                                 end
                                         end
                                 else
-                                        local FallbackOptions = deepcopy(BaseOptions)
-                                        ApplySegmentPosition(FallbackOptions, 0.82)
-                                        ApplyCircuitBreakerFacing(FallbackOptions, 0, -1)
-                                        CelebrateUpgrade(nil, nil, FallbackOptions)
+                                        local fallbackOptions = deepcopy(baseOptions)
+                                        applySegmentPosition(fallbackOptions, 0.82)
+                                        applyCircuitBreakerFacing(fallbackOptions, 0, -1)
+                                        celebrateUpgrade(nil, nil, fallbackOptions)
                                 end
                         end,
                 },
         }),
         register({
                 id = "stonebreaker_hymn",
-                NameKey = "upgrades.stonebreaker_hymn.name",
-                DescKey = "upgrades.stonebreaker_hymn.description",
+                nameKey = "upgrades.stonebreaker_hymn.name",
+                descKey = "upgrades.stonebreaker_hymn.description",
                 rarity = "rare",
-                AllowDuplicates = true,
-                MaxStacks = 2,
-                OnAcquire = function(state)
+                allowDuplicates = true,
+                maxStacks = 2,
+                onAcquire = function(state)
                         state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.25
                         state.counters.stonebreakerStacks = (state.counters.stonebreakerStacks or 0) + 1
-                        if Snake.SetStonebreakerStacks then
-                                Snake:SetStonebreakerStacks(state.counters.stonebreakerStacks)
+                        if Snake.setStonebreakerStacks then
+                                Snake:setStonebreakerStacks(state.counters.stonebreakerStacks)
                         end
-                        local HymnColor = {0.9, 0.82, 0.64, 1}
-                        CelebrateUpgrade(GetUpgradeString("stonebreaker_hymn", "name"), nil, {
-                                color = HymnColor,
-                                SkipVisuals = true,
-                                SkipParticles = true,
-                                TextOffset = 48,
-                                TextScale = 1.1,
+                        local hymnColor = {0.9, 0.82, 0.64, 1}
+                        celebrateUpgrade(getUpgradeString("stonebreaker_hymn", "name"), nil, {
+                                color = hymnColor,
+                                skipVisuals = true,
+                                skipParticles = true,
+                                textOffset = 48,
+                                textScale = 1.1,
                         })
 
-                        local RockCenters = GetRockCenters(2)
-                        local BaseVisual = {
+                        local rockCenters = getRockCenters(2)
+                        local baseVisual = {
                                 variant = "stoneguard_bastion",
                                 life = 0.78,
-                                InnerRadius = 14,
-                                OuterRadius = 64,
+                                innerRadius = 14,
+                                outerRadius = 64,
                                 color = {0.82, 0.76, 0.66, 1},
-                                VariantSecondaryColor = {0.5, 0.54, 0.58, 1},
-                                VariantTertiaryColor = {0.96, 0.98, 1.0, 0.72},
+                                variantSecondaryColor = {0.5, 0.54, 0.58, 1},
+                                variantTertiaryColor = {0.96, 0.98, 1.0, 0.72},
                         }
-                        local BaseOptions = {
-                                color = HymnColor,
-                                SkipText = true,
-                                ParticleCount = 14,
-                                ParticleSpeed = 100,
-                                ParticleLife = 0.48,
-                                visual = BaseVisual,
+                        local baseOptions = {
+                                color = hymnColor,
+                                skipText = true,
+                                particleCount = 14,
+                                particleSpeed = 100,
+                                particleLife = 0.48,
+                                visual = baseVisual,
                         }
-                        if RockCenters and #RockCenters > 0 then
-                                for _, pos in ipairs(RockCenters) do
-                                        local celebration = deepcopy(BaseOptions)
+                        if rockCenters and #rockCenters > 0 then
+                                for _, pos in ipairs(rockCenters) do
+                                        local celebration = deepcopy(baseOptions)
                                         celebration.x = pos[1]
                                         celebration.y = pos[2]
-                                        CelebrateUpgrade(nil, nil, celebration)
+                                        celebrateUpgrade(nil, nil, celebration)
                                 end
                         else
-                                local fallback = deepcopy(BaseOptions)
-                                ApplySegmentPosition(fallback, 0.6)
-                                CelebrateUpgrade(nil, nil, fallback)
+                                local fallback = deepcopy(baseOptions)
+                                applySegmentPosition(fallback, 0.6)
+                                celebrateUpgrade(nil, nil, fallback)
                         end
                 end,
         }),
         register({
                 id = "diffraction_barrier",
-                NameKey = "upgrades.diffraction_barrier.name",
-                DescKey = "upgrades.diffraction_barrier.description",
+                nameKey = "upgrades.diffraction_barrier.name",
+                descKey = "upgrades.diffraction_barrier.description",
                 rarity = "uncommon",
                 tags = {"defense"},
-                OnAcquire = function(state)
+                onAcquire = function(state)
                         state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 1.25
                         state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.8
                         state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) + 0.5
-                        local BarrierColor = {0.74, 0.88, 1, 1}
-                        CelebrateUpgrade(GetUpgradeString("diffraction_barrier", "name"), nil, {
-                                color = BarrierColor,
-                                SkipVisuals = true,
-                                SkipParticles = true,
-                                TextOffset = 48,
-                                TextScale = 1.08,
+                        local barrierColor = {0.74, 0.88, 1, 1}
+                        celebrateUpgrade(getUpgradeString("diffraction_barrier", "name"), nil, {
+                                color = barrierColor,
+                                skipVisuals = true,
+                                skipParticles = true,
+                                textOffset = 48,
+                                textScale = 1.08,
                         })
 
-                        local LaserCenters = GetLaserCenters(2)
-                        local BaseVisual = {
+                        local laserCenters = getLaserCenters(2)
+                        local baseVisual = {
                                 variant = "prism_refraction",
                                 life = 0.74,
-                                InnerRadius = 16,
-                                OuterRadius = 64,
-                                AddBlend = true,
+                                innerRadius = 16,
+                                outerRadius = 64,
+                                addBlend = true,
                                 color = {0.74, 0.88, 1, 1},
-                                VariantSecondaryColor = {0.46, 0.78, 1.0, 0.95},
-                                VariantTertiaryColor = {1.0, 0.96, 0.72, 0.82},
+                                variantSecondaryColor = {0.46, 0.78, 1.0, 0.95},
+                                variantTertiaryColor = {1.0, 0.96, 0.72, 0.82},
                         }
-                        local BaseOptions = {
-                                color = BarrierColor,
-                                SkipText = true,
-                                ParticleCount = 14,
-                                ParticleSpeed = 120,
-                                ParticleLife = 0.46,
-                                visual = BaseVisual,
+                        local baseOptions = {
+                                color = barrierColor,
+                                skipText = true,
+                                particleCount = 14,
+                                particleSpeed = 120,
+                                particleLife = 0.46,
+                                visual = baseVisual,
                         }
-                        if LaserCenters and #LaserCenters > 0 then
-                                for _, pos in ipairs(LaserCenters) do
-                                        local celebration = deepcopy(BaseOptions)
+                        if laserCenters and #laserCenters > 0 then
+                                for _, pos in ipairs(laserCenters) do
+                                        local celebration = deepcopy(baseOptions)
                                         celebration.x = pos[1]
                                         celebration.y = pos[2]
-                                        CelebrateUpgrade(nil, nil, celebration)
+                                        celebrateUpgrade(nil, nil, celebration)
                                 end
                         else
-                                local fallback = deepcopy(BaseOptions)
-                                ApplySegmentPosition(fallback, 0.18)
-                                CelebrateUpgrade(nil, nil, fallback)
+                                local fallback = deepcopy(baseOptions)
+                                applySegmentPosition(fallback, 0.18)
+                                celebrateUpgrade(nil, nil, fallback)
                         end
                 end,
         }),
 	register({
 		id = "resonant_shell",
-		NameKey = "upgrades.resonant_shell.name",
-		DescKey = "upgrades.resonant_shell.description",
+		nameKey = "upgrades.resonant_shell.name",
+		descKey = "upgrades.resonant_shell.description",
 		rarity = "uncommon",
-		RequiresTags = {"defense"},
+		requiresTags = {"defense"},
 		tags = {"defense"},
-		UnlockTag = "specialist",
-		OnAcquire = function(state)
+		unlockTag = "specialist",
+		onAcquire = function(state)
 			state.counters.resonantShellPerBonus = 0.35
 			state.counters.resonantShellPerCharge = 0.08
-			UpdateResonantShellBonus(state)
+			updateResonantShellBonus(state)
 
 			if not state.counters.resonantShellHandlerRegistered then
 				state.counters.resonantShellHandlerRegistered = true
-				Upgrades:AddEventHandler("UpgradeAcquired", function(_, RunState)
-					if not RunState then return end
-					if GetStacks(RunState, "resonant_shell") <= 0 then return end
-					UpdateResonantShellBonus(RunState)
+				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+					if not runState then return end
+					if getStacks(runState, "resonant_shell") <= 0 then return end
+					updateResonantShellBonus(runState)
 				end)
 			end
 
-                        local CelebrationOptions = {
+                        local celebrationOptions = {
                                 color = {0.8, 0.88, 1, 1},
-                                ParticleCount = 18,
-                                ParticleSpeed = 120,
-                                ParticleLife = 0.48,
-                                TextOffset = 48,
-                                TextScale = 1.12,
+                                particleCount = 18,
+                                particleSpeed = 120,
+                                particleLife = 0.48,
+                                textOffset = 48,
+                                textScale = 1.12,
                         }
-                        ApplySegmentPosition(CelebrationOptions, 0.52)
-                        CelebrateUpgrade(GetUpgradeString("resonant_shell", "name"), nil, CelebrationOptions)
+                        applySegmentPosition(celebrationOptions, 0.52)
+                        celebrateUpgrade(getUpgradeString("resonant_shell", "name"), nil, celebrationOptions)
                 end,
         }),
         register({
                 id = "wardens_chorus",
-                NameKey = "upgrades.wardens_chorus.name",
-		DescKey = "upgrades.wardens_chorus.description",
+                nameKey = "upgrades.wardens_chorus.name",
+		descKey = "upgrades.wardens_chorus.description",
 		rarity = "rare",
-		RequiresTags = {"defense"},
+		requiresTags = {"defense"},
 		tags = {"defense"},
-		UnlockTag = "specialist",
-		OnAcquire = function(state)
+		unlockTag = "specialist",
+		onAcquire = function(state)
 			state.counters.bulwarkChorusPerDefense = 0.33
 			state.counters.bulwarkChorusProgress = state.counters.bulwarkChorusProgress or 0
 
 			if not state.counters.bulwarkChorusHandlerRegistered then
 				state.counters.bulwarkChorusHandlerRegistered = true
-				Upgrades:AddEventHandler("FloorStart", HandleBulwarkChorusFloorStart)
+				Upgrades:addEventHandler("floorStart", handleBulwarkChorusFloorStart)
 			end
 
-			CelebrateUpgrade(GetUpgradeString("wardens_chorus", "name"), nil, {
+			celebrateUpgrade(getUpgradeString("wardens_chorus", "name"), nil, {
 				color = {0.66, 0.88, 1, 1},
-				ParticleCount = 18,
-				ParticleSpeed = 120,
-				ParticleLife = 0.46,
-				TextOffset = 46,
-				TextScale = 1.1,
+				particleCount = 18,
+				particleSpeed = 120,
+				particleLife = 0.46,
+				textOffset = 46,
+				textScale = 1.1,
 			})
 		end,
 	}),
         register({
                 id = "pulse_bloom",
-                NameKey = "upgrades.pulse_bloom.name",
-                DescKey = "upgrades.pulse_bloom.description",
+                nameKey = "upgrades.pulse_bloom.name",
+                descKey = "upgrades.pulse_bloom.description",
                 rarity = "rare",
 		tags = {"defense", "economy"},
-		AllowDuplicates = true,
-		MaxStacks = 2,
-		OnAcquire = function(state)
+		allowDuplicates = true,
+		maxStacks = 2,
+		onAcquire = function(state)
 			state.counters.pulseBloomSeen = {}
 			state.counters.pulseBloomUnique = 0
 		end,
 		handlers = {
-			FruitCollected = function(data, state)
+			fruitCollected = function(data, state)
 				if not (data and state) then return end
 
-				local stacks = GetStacks(state, "pulse_bloom")
+				local stacks = getStacks(state, "pulse_bloom")
 				if stacks <= 0 then return end
 
-				local FruitId = data.name or (data.fruitType and data.fruitType.id)
-				if not FruitId then return end
+				local fruitId = data.name or (data.fruitType and data.fruitType.id)
+				if not fruitId then return end
 
 				local seen = state.counters.pulseBloomSeen or {}
-				if not seen[FruitId] then
-					seen[FruitId] = true
+				if not seen[fruitId] then
+					seen[fruitId] = true
 					state.counters.pulseBloomUnique = (state.counters.pulseBloomUnique or 0) + 1
 					state.counters.pulseBloomSeen = seen
 				end
@@ -1287,26 +1287,26 @@ local pool = {
 				state.counters.pulseBloomUnique = 0
 				state.counters.pulseBloomSeen = {}
 
-				GrantCrashShields(1)
+				grantCrashShields(1)
 
-				CelebrateUpgrade(GetUpgradeString("pulse_bloom", "shield_text"), data, {
+				celebrateUpgrade(getUpgradeString("pulse_bloom", "shield_text"), data, {
 					color = {0.76, 0.94, 0.82, 1},
-					TextOffset = 50,
-					TextScale = 1.12,
-					ParticleCount = 20 + stacks * 2,
-					ParticleSpeed = 120,
-					ParticleLife = 0.44,
+					textOffset = 50,
+					textScale = 1.12,
+					particleCount = 20 + stacks * 2,
+					particleSpeed = 120,
+					particleLife = 0.44,
 				})
 			end,
 		},
         }),
         register({
                 id = "caravan_contract",
-                NameKey = "upgrades.caravan_contract.name",
-                DescKey = "upgrades.caravan_contract.description",
+                nameKey = "upgrades.caravan_contract.name",
+                descKey = "upgrades.caravan_contract.description",
 		rarity = "uncommon",
 		tags = {"economy", "risk"},
-		OnAcquire = function(state)
+		onAcquire = function(state)
 			state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
 			state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
 		end,
@@ -1314,39 +1314,39 @@ local pool = {
 
         register({
                 id = "verdant_bonds",
-                NameKey = "upgrades.verdant_bonds.name",
-                DescKey = "upgrades.verdant_bonds.description",
+                nameKey = "upgrades.verdant_bonds.name",
+                descKey = "upgrades.verdant_bonds.description",
 		rarity = "uncommon",
 		tags = {"economy", "defense"},
-		AllowDuplicates = true,
-		MaxStacks = 3,
-                OnAcquire = function(state)
+		allowDuplicates = true,
+		maxStacks = 3,
+                onAcquire = function(state)
                         state.counters = state.counters or {}
                         state.counters.verdantBondsProgress = state.counters.verdantBondsProgress or 0
                         if not state.counters.verdantBondsHandlerRegistered then
                                 state.counters.verdantBondsHandlerRegistered = true
-                                Upgrades:AddEventHandler("UpgradeAcquired", function(data, RunState)
-                                        if not RunState then return end
-                                        if GetStacks(RunState, "verdant_bonds") <= 0 then return end
+                                Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
+                                        if not runState then return end
+                                        if getStacks(runState, "verdant_bonds") <= 0 then return end
                                         if not data or not data.upgrade then return end
 
-                                        local UpgradeTags = data.upgrade.tags
-                                        local HasEconomy = false
-                                        if UpgradeTags then
-                                                for _, tag in ipairs(UpgradeTags) do
+                                        local upgradeTags = data.upgrade.tags
+                                        local hasEconomy = false
+                                        if upgradeTags then
+                                                for _, tag in ipairs(upgradeTags) do
                                                         if tag == "economy" then
-                                                                HasEconomy = true
+                                                                hasEconomy = true
                                                                 break
                                                         end
                                                 end
                                         end
 
-                                        if not HasEconomy then return end
+                                        if not hasEconomy then return end
 
-                                        RunState.counters = RunState.counters or {}
-                                        local counters = RunState.counters
+                                        runState.counters = runState.counters or {}
+                                        local counters = runState.counters
 
-                                        local stacks = GetStacks(RunState, "verdant_bonds")
+                                        local stacks = getStacks(runState, "verdant_bonds")
                                         if stacks <= 0 then return end
 
                                         local progress = (counters.verdantBondsProgress or 0) + stacks
@@ -1356,11 +1356,11 @@ local pool = {
 
                                         if shields <= 0 then return end
 
-                                        if Snake and Snake.AddCrashShields then
-                                                Snake:AddCrashShields(shields)
+                                        if Snake and Snake.addCrashShields then
+                                                Snake:addCrashShields(shields)
                                         end
 
-                                        local label = GetUpgradeString("verdant_bonds", "activation_text")
+                                        local label = getUpgradeString("verdant_bonds", "activation_text")
                                         if shields > 1 then
                                                 if label and label ~= "" then
                                                         label = string.format("%s +%d", label, shields)
@@ -1369,21 +1369,21 @@ local pool = {
                                                 end
                                         end
 
-                                        CelebrateUpgrade(label, data, {
+                                        celebrateUpgrade(label, data, {
                                                 color = {0.58, 0.88, 0.64, 1},
-                                                ParticleCount = 14,
-                                                ParticleSpeed = 120,
-                                                ParticleLife = 0.48,
-                                                TextOffset = 46,
-                                                TextScale = 1.1,
+                                                particleCount = 14,
+                                                particleSpeed = 120,
+                                                particleLife = 0.48,
+                                                textOffset = 46,
+                                                textScale = 1.1,
                                                 visual = {
                                                         badge = "shield",
-                                                        OuterRadius = 52,
-                                                        InnerRadius = 16,
-                                                        RingCount = 3,
+                                                        outerRadius = 52,
+                                                        innerRadius = 16,
+                                                        ringCount = 3,
                                                         life = 0.68,
-                                                        GlowAlpha = 0.26,
-                                                        HaloAlpha = 0.18,
+                                                        glowAlpha = 0.26,
+                                                        haloAlpha = 0.18,
                                                 },
                                         })
                                 end)
@@ -1392,87 +1392,87 @@ local pool = {
         }),
 	register({
 		id = "fresh_supplies",
-		NameKey = "upgrades.fresh_supplies.name",
-		DescKey = "upgrades.fresh_supplies.description",
+		nameKey = "upgrades.fresh_supplies.name",
+		descKey = "upgrades.fresh_supplies.description",
 		rarity = "common",
 		tags = {"economy"},
-		RestockShop = true,
-		AllowDuplicates = true,
+		restockShop = true,
+		allowDuplicates = true,
 		weight = 0.6,
 	}),
 	register({
 		id = "stone_census",
-		NameKey = "upgrades.stone_census.name",
-		DescKey = "upgrades.stone_census.description",
+		nameKey = "upgrades.stone_census.name",
+		descKey = "upgrades.stone_census.description",
 		rarity = "rare",
-		RequiresTags = {"economy"},
+		requiresTags = {"economy"},
 		tags = {"economy", "defense"},
-		OnAcquire = function(state)
+		onAcquire = function(state)
 			state.counters.stoneCensusReduction = 0.07
 			state.counters.stoneCensusMult = state.counters.stoneCensusMult or 1
-			UpdateStoneCensus(state)
+			updateStoneCensus(state)
 
 			if not state.counters.stoneCensusHandlerRegistered then
 				state.counters.stoneCensusHandlerRegistered = true
-				Upgrades:AddEventHandler("UpgradeAcquired", function(_, RunState)
-					if not RunState then return end
-					if GetStacks(RunState, "stone_census") <= 0 then return end
-					UpdateStoneCensus(RunState)
+				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+					if not runState then return end
+					if getStacks(runState, "stone_census") <= 0 then return end
+					updateStoneCensus(runState)
 				end)
 			end
 
-			CelebrateUpgrade(GetUpgradeString("stone_census", "name"), nil, {
+			celebrateUpgrade(getUpgradeString("stone_census", "name"), nil, {
 				color = {0.85, 0.92, 1, 1},
-				ParticleCount = 16,
-				ParticleSpeed = 110,
-				ParticleLife = 0.4,
-				TextOffset = 44,
-				TextScale = 1.08,
+				particleCount = 16,
+				particleSpeed = 110,
+				particleLife = 0.4,
+				textOffset = 44,
+				textScale = 1.08,
 			})
 		end,
 	}),
 	register({
 		id = "guild_ledger",
-		NameKey = "upgrades.guild_ledger.name",
-		DescKey = "upgrades.guild_ledger.description",
+		nameKey = "upgrades.guild_ledger.name",
+		descKey = "upgrades.guild_ledger.description",
 		rarity = "uncommon",
-		RequiresTags = {"economy"},
+		requiresTags = {"economy"},
 		tags = {"economy", "defense"},
-		OnAcquire = function(state)
+		onAcquire = function(state)
 			state.counters.guildLedgerFlatPerSlot = 0.015
-			UpdateGuildLedger(state)
+			updateGuildLedger(state)
 
 			if not state.counters.guildLedgerHandlerRegistered then
 				state.counters.guildLedgerHandlerRegistered = true
-				Upgrades:AddEventHandler("UpgradeAcquired", function(_, RunState)
-					if not RunState then return end
-					if GetStacks(RunState, "guild_ledger") <= 0 then return end
-					UpdateGuildLedger(RunState)
+				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+					if not runState then return end
+					if getStacks(runState, "guild_ledger") <= 0 then return end
+					updateGuildLedger(runState)
 				end)
 			end
 
-			CelebrateUpgrade(GetUpgradeString("guild_ledger", "name"), nil, {
+			celebrateUpgrade(getUpgradeString("guild_ledger", "name"), nil, {
 				color = {1, 0.86, 0.46, 1},
-				ParticleCount = 16,
-				ParticleSpeed = 120,
-				ParticleLife = 0.42,
-				TextOffset = 42,
-				TextScale = 1.1,
+				particleCount = 16,
+				particleSpeed = 120,
+				particleLife = 0.42,
+				textOffset = 42,
+				textScale = 1.1,
 			})
 		end,
         }),
         register({
                 id = "predators_reflex",
-                NameKey = "upgrades.predators_reflex.name",
-                DescKey = "upgrades.predators_reflex.description",
+                nameKey = "upgrades.predators_reflex.name",
+                descKey = "upgrades.predators_reflex.description",
                 rarity = "rare",
-		RequiresTags = {"adrenaline"},
-		OnAcquire = function(state)
+		requiresTags = {"adrenaline"},
+		onAcquire = function(state)
 			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
 			state.effects.adrenalineBoostBonus = (state.effects.adrenalineBoostBonus or 0) + 0.25
 		end,
 		handlers = {
-			FloorStart = function()
+			floorStart = function()
 				if Snake.adrenaline then
 					Snake.adrenaline.active = true
 					Snake.adrenaline.timer = (Snake.adrenaline.duration or 0) * 0.5
@@ -1483,80 +1483,80 @@ local pool = {
 
 	register({
 		id = "abyssal_catalyst",
-		NameKey = "upgrades.abyssal_catalyst.name",
-		DescKey = "upgrades.abyssal_catalyst.description",
+		nameKey = "upgrades.abyssal_catalyst.name",
+		descKey = "upgrades.abyssal_catalyst.description",
 		rarity = "epic",
-		AllowDuplicates = false,
+		allowDuplicates = false,
 		tags = {"defense", "risk"},
-                UnlockTag = "abyssal_protocols",
-                OnAcquire = function(state)
+                unlockTag = "abyssal_protocols",
+                onAcquire = function(state)
                         state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 0.85
                         state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.9
                         state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) - 0.5
                         state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.2
                         state.effects.abyssalCatalyst = (state.effects.abyssalCatalyst or 0) + 1
 
-                        GrantCrashShields(1)
+                        grantCrashShields(1)
 
-                        CelebrateUpgrade(GetUpgradeString("abyssal_catalyst", "name"), nil, {
+                        celebrateUpgrade(getUpgradeString("abyssal_catalyst", "name"), nil, {
                                 color = {0.62, 0.58, 0.94, 1},
-				ParticleCount = 22,
-				ParticleSpeed = 150,
-				ParticleLife = 0.5,
-				TextOffset = 48,
-				TextScale = 1.14,
+				particleCount = 22,
+				particleSpeed = 150,
+				particleLife = 0.5,
+				textOffset = 48,
+				textScale = 1.14,
 			})
 		end,
 	}),
 	register({
 		id = "spectral_harvest",
-		NameKey = "upgrades.spectral_harvest.name",
-		DescKey = "upgrades.spectral_harvest.description",
+		nameKey = "upgrades.spectral_harvest.name",
+		descKey = "upgrades.spectral_harvest.description",
 		rarity = "epic",
 		tags = {"economy", "combo"},
-		OnAcquire = function(state)
+		onAcquire = function(state)
 			state.counters.spectralHarvestReady = true
 		end,
 		handlers = {
-			FloorStart = function(_, state)
+			floorStart = function(_, state)
 				state.counters.spectralHarvestReady = true
 			end,
-			FruitCollected = function(_, state)
+			fruitCollected = function(_, state)
 				if not state.counters.spectralHarvestReady then return end
 				state.counters.spectralHarvestReady = false
 
 				local Fruit = require("fruit")
 				local FruitEvents = require("fruitevents")
-				if not (Fruit and FruitEvents and FruitEvents.HandleConsumption) then return end
+				if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
 
-				local fx, fy = Fruit:GetPosition()
+				local fx, fy = Fruit:getPosition()
 				if not (fx and fy) then return end
 
-				FruitEvents.HandleConsumption(fx, fy)
+				FruitEvents.handleConsumption(fx, fy)
 			end,
 		},
 	}),
 	register({
 		id = "solar_reservoir",
-		NameKey = "upgrades.solar_reservoir.name",
-		DescKey = "upgrades.solar_reservoir.description",
+		nameKey = "upgrades.solar_reservoir.name",
+		descKey = "upgrades.solar_reservoir.description",
 		rarity = "epic",
 		tags = {"economy", "defense"},
-		OnAcquire = function(state)
+		onAcquire = function(state)
 			state.counters.solarReservoirReady = false
 		end,
 		handlers = {
-			FloorStart = function(_, state)
+			floorStart = function(_, state)
 				state.counters.solarReservoirReady = true
 			end,
-			FruitCollected = function(data, state)
+			fruitCollected = function(data, state)
 				if not state.counters.solarReservoirReady then return end
 				state.counters.solarReservoirReady = false
 				if Saws and Saws.stall then
 					Saws:stall(2)
 				end
-				if Score.AddBonus then
-					Score:AddBonus(4)
+				if Score.addBonus then
+					Score:addBonus(4)
 				end
 			end,
 		},
@@ -1564,45 +1564,45 @@ local pool = {
 
 	register({
 		id = "tectonic_resolve",
-		NameKey = "upgrades.tectonic_resolve.name",
-		DescKey = "upgrades.tectonic_resolve.description",
+		nameKey = "upgrades.tectonic_resolve.name",
+		descKey = "upgrades.tectonic_resolve.description",
 		rarity = "rare",
 		tags = {"defense"},
-		OnAcquire = function(state)
+		onAcquire = function(state)
 			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
 			state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.25
 		end,
 	}),
 	register({
 		id = "titanblood_pact",
-		NameKey = "upgrades.titanblood_pact.name",
-		DescKey = "upgrades.titanblood_pact.description",
+		nameKey = "upgrades.titanblood_pact.name",
+		descKey = "upgrades.titanblood_pact.description",
 		rarity = "epic",
 		tags = {"defense", "risk"},
-		UnlockTag = "abyssal_protocols",
+		unlockTag = "abyssal_protocols",
 		weight = 1,
-                OnAcquire = function(state)
-                        Snake:AddCrashShields(3)
+                onAcquire = function(state)
+                        Snake:addCrashShields(3)
                         state.effects.sawStall = (state.effects.sawStall or 0) + 2
                         for _ = 1, 5 do
                                 Snake:grow()
                         end
-                        Snake.ExtraGrowth = (Snake.ExtraGrowth or 0) + 2
+                        Snake.extraGrowth = (Snake.extraGrowth or 0) + 2
                         state.effects.titanbloodPact = (state.effects.titanbloodPact or 0) + 1
-                        if Snake.SetTitanbloodStacks then
-                                Snake:SetTitanbloodStacks(state.effects.titanbloodPact)
+                        if Snake.setTitanbloodStacks then
+                                Snake:setTitanbloodStacks(state.effects.titanbloodPact)
                         end
                 end,
         }),
 	register({
 		id = "chronospiral_core",
-		NameKey = "upgrades.chronospiral_core.name",
-		DescKey = "upgrades.chronospiral_core.description",
+		nameKey = "upgrades.chronospiral_core.name",
+		descKey = "upgrades.chronospiral_core.description",
 		rarity = "epic",
 		tags = {"combo", "defense", "risk"},
 		weight = 1,
-                UnlockTag = "combo_mastery",
-                OnAcquire = function(state)
+                unlockTag = "combo_mastery",
+                onAcquire = function(state)
                         state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.75
                         state.effects.sawSpinMult = (state.effects.sawSpinMult or 1) * 0.6
                         state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.6
@@ -1610,29 +1610,29 @@ local pool = {
                         for _ = 1, 4 do
                                 Snake:grow()
                         end
-                        Snake.ExtraGrowth = (Snake.ExtraGrowth or 0) + 1
+                        Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
                 end,
 	}),
 	register({
 		id = "phoenix_echo",
-		NameKey = "upgrades.phoenix_echo.name",
-		DescKey = "upgrades.phoenix_echo.description",
+		nameKey = "upgrades.phoenix_echo.name",
+		descKey = "upgrades.phoenix_echo.description",
 		rarity = "epic",
 		tags = {"defense", "risk"},
-		UnlockTag = "abyssal_protocols",
-		OnAcquire = function(state)
+		unlockTag = "abyssal_protocols",
+		onAcquire = function(state)
 			state.counters.phoenixEchoCharges = (state.counters.phoenixEchoCharges or 0) + 1
 		end,
 	}),
 	register({
 		id = "thunder_dash",
-		NameKey = "upgrades.thunder_dash.name",
-		DescKey = "upgrades.thunder_dash.description",
+		nameKey = "upgrades.thunder_dash.name",
+		descKey = "upgrades.thunder_dash.description",
 		rarity = "rare",
 		tags = {"mobility"},
-		AllowDuplicates = false,
-		UnlockTag = "abilities",
-		OnAcquire = function(state)
+		allowDuplicates = false,
+		unlockTag = "abilities",
+		onAcquire = function(state)
 			local dash = state.effects.dash or {}
 			dash.duration = dash.duration or 0.35
 			dash.cooldown = dash.cooldown or 6
@@ -1642,18 +1642,18 @@ local pool = {
 
 			if not state.counters.thunderDashHandlerRegistered then
 				state.counters.thunderDashHandlerRegistered = true
-				Upgrades:AddEventHandler("DashActivated", function(data)
-					local label = GetUpgradeString("thunder_dash", "activation_text")
-					CelebrateUpgrade(label, data, {
+				Upgrades:addEventHandler("dashActivated", function(data)
+					local label = getUpgradeString("thunder_dash", "activation_text")
+					celebrateUpgrade(label, data, {
 						color = {1.0, 0.78, 0.32, 1},
-						ParticleCount = 24,
-						ParticleSpeed = 160,
-						ParticleLife = 0.35,
-						ParticleSize = 4,
-						ParticleSpread = math.pi * 2,
-						ParticleSpeedVariance = 90,
-						TextOffset = 52,
-						TextScale = 1.14,
+						particleCount = 24,
+						particleSpeed = 160,
+						particleLife = 0.35,
+						particleSize = 4,
+						particleSpread = math.pi * 2,
+						particleSpeedVariance = 90,
+						textOffset = 52,
+						textScale = 1.14,
 					})
 				end)
 			end
@@ -1661,36 +1661,36 @@ local pool = {
 	}),
 	register({
 		id = "sparkstep_relay",
-		NameKey = "upgrades.sparkstep_relay.name",
-		DescKey = "upgrades.sparkstep_relay.description",
+		nameKey = "upgrades.sparkstep_relay.name",
+		descKey = "upgrades.sparkstep_relay.description",
 		rarity = "rare",
-		RequiresTags = {"mobility"},
+		requiresTags = {"mobility"},
 		tags = {"mobility", "defense"},
-		UnlockTag = "stormtech",
+		unlockTag = "stormtech",
 		handlers = {
-			DashActivated = function(data)
-				local fx, fy = GetEventPosition(data)
-				if Rocks and Rocks.ShatterNearest then
-					Rocks:ShatterNearest(fx or 0, fy or 0, 1)
+			dashActivated = function(data)
+				local fx, fy = getEventPosition(data)
+				if Rocks and Rocks.shatterNearest then
+					Rocks:shatterNearest(fx or 0, fy or 0, 1)
 				end
 				if Saws and Saws.stall then
 					Saws:stall(0.6)
 				end
-				CelebrateUpgrade(GetUpgradeString("sparkstep_relay", "activation_text"), data, {
+				celebrateUpgrade(getUpgradeString("sparkstep_relay", "activation_text"), data, {
 					color = {1.0, 0.78, 0.36, 1},
-					ParticleCount = 20,
-					ParticleSpeed = 150,
-					ParticleLife = 0.36,
-					TextOffset = 56,
-					TextScale = 1.16,
+					particleCount = 20,
+					particleSpeed = 150,
+					particleLife = 0.36,
+					textOffset = 56,
+					textScale = 1.16,
 					visual = {
 						badge = "bolt",
-						OuterRadius = 54,
-						InnerRadius = 18,
-						RingCount = 3,
+						outerRadius = 54,
+						innerRadius = 18,
+						ringCount = 3,
 						life = 0.6,
-						GlowAlpha = 0.32,
-						HaloAlpha = 0.22,
+						glowAlpha = 0.32,
+						haloAlpha = 0.22,
 					},
 				})
 			end,
@@ -1698,13 +1698,13 @@ local pool = {
         }),
         register({
                 id = "temporal_anchor",
-		NameKey = "upgrades.temporal_anchor.name",
-		DescKey = "upgrades.temporal_anchor.description",
+		nameKey = "upgrades.temporal_anchor.name",
+		descKey = "upgrades.temporal_anchor.description",
 		rarity = "rare",
 		tags = {"utility", "defense"},
-		AllowDuplicates = false,
-		UnlockTag = "timekeeper",
-                OnAcquire = function(state)
+		allowDuplicates = false,
+		unlockTag = "timekeeper",
+                onAcquire = function(state)
                         local ability = state.effects.timeSlow or {}
                         ability.duration = ability.duration or 1.6
                         ability.cooldown = ability.cooldown or 8
@@ -1714,18 +1714,18 @@ local pool = {
 
 			if not state.counters.temporalAnchorHandlerRegistered then
 				state.counters.temporalAnchorHandlerRegistered = true
-				Upgrades:AddEventHandler("TimeDilationActivated", function(data)
-					local label = GetUpgradeString("temporal_anchor", "activation_text")
-					CelebrateUpgrade(label, data, {
+				Upgrades:addEventHandler("timeDilationActivated", function(data)
+					local label = getUpgradeString("temporal_anchor", "activation_text")
+					celebrateUpgrade(label, data, {
 						color = {0.62, 0.84, 1.0, 1},
-						ParticleCount = 26,
-						ParticleSpeed = 120,
-						ParticleLife = 0.5,
-						ParticleSize = 5,
-						ParticleSpread = math.pi * 2,
-						ParticleSpeedVariance = 70,
-						TextOffset = 60,
-						TextScale = 1.12,
+						particleCount = 26,
+						particleSpeed = 120,
+						particleLife = 0.5,
+						particleSize = 5,
+						particleSpread = math.pi * 2,
+						particleSpeedVariance = 70,
+						textOffset = 60,
+						textScale = 1.12,
 					})
 				end)
 			end
@@ -1733,83 +1733,83 @@ local pool = {
 	}),
 	register({
 		id = "zephyr_coils",
-		NameKey = "upgrades.zephyr_coils.name",
-		DescKey = "upgrades.zephyr_coils.description",
+		nameKey = "upgrades.zephyr_coils.name",
+		descKey = "upgrades.zephyr_coils.description",
 		rarity = "rare",
 		tags = {"mobility", "risk"},
-		UnlockTag = "stormtech",
-		OnAcquire = function(state)
-			Snake:AddSpeedMultiplier(1.2)
-			Snake.ExtraGrowth = (Snake.ExtraGrowth or 0) + 1
+		unlockTag = "stormtech",
+		onAcquire = function(state)
+			Snake:addSpeedMultiplier(1.2)
+			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
 		end,
 	}),
 	register({
 		id = "event_horizon",
-		NameKey = "upgrades.event_horizon.name",
-		DescKey = "upgrades.event_horizon.description",
+		nameKey = "upgrades.event_horizon.name",
+		descKey = "upgrades.event_horizon.description",
 		rarity = "legendary",
 		tags = {"defense", "mobility"},
-		AllowDuplicates = false,
+		allowDuplicates = false,
 		weight = 1,
-		UnlockTag = "legendary",
-                OnAcquire = function(state)
+		unlockTag = "legendary",
+                onAcquire = function(state)
                         state.effects.wallPortal = true
-                        CelebrateUpgrade(GetUpgradeString("event_horizon", "name"), nil, {
+                        celebrateUpgrade(getUpgradeString("event_horizon", "name"), nil, {
                                 color = {1, 0.86, 0.34, 1},
-                                ParticleCount = 32,
-                                ParticleSpeed = 160,
-                                ParticleLife = 0.6,
-                                ParticleSize = 5,
-                                ParticleSpread = math.pi * 2,
-                                ParticleSpeedVariance = 90,
+                                particleCount = 32,
+                                particleSpeed = 160,
+                                particleLife = 0.6,
+                                particleSize = 5,
+                                particleSpread = math.pi * 2,
+                                particleSpeedVariance = 90,
                                 visual = {
                                         variant = "event_horizon",
-                                        ShowBase = false,
+                                        showBase = false,
                                         life = 0.92,
-                                        InnerRadius = 16,
-                                        OuterRadius = 62,
+                                        innerRadius = 16,
+                                        outerRadius = 62,
                                         color = {1, 0.86, 0.34, 1},
-                                        VariantSecondaryColor = {0.46, 0.78, 1.0, 0.9},
+                                        variantSecondaryColor = {0.46, 0.78, 1.0, 0.9},
                                 },
                         })
                 end,
         }),
 }
 
-local function GetRarityInfo(rarity)
+local function getRarityInfo(rarity)
 	return rarities[rarity or "common"] or rarities.common
 end
 
-function Upgrades:BeginRun()
-	self.RunState = NewRunState()
+function Upgrades:beginRun()
+	self.runState = newRunState()
 end
 
-function Upgrades:GetEffect(name)
+function Upgrades:getEffect(name)
 	if not name then return nil end
-	return self.RunState.effects[name]
+	return self.runState.effects[name]
 end
 
-function Upgrades:HasTag(tag)
-	return tag and self.RunState.tags[tag] or false
+function Upgrades:hasTag(tag)
+	return tag and self.runState.tags[tag] or false
 end
 
-function Upgrades:AddTag(tag)
+function Upgrades:addTag(tag)
 	if not tag then return end
-	self.RunState.tags[tag] = true
+	self.runState.tags[tag] = true
 end
 
-local function HudText(key, replacements)
+local function hudText(key, replacements)
 	return Localization:get("upgrades.hud." .. key, replacements)
 end
 
-function Upgrades:GetTakenCount(id)
+function Upgrades:getTakenCount(id)
 	if not id then return 0 end
-	return GetStacks(self.RunState, id)
+	return getStacks(self.runState, id)
 end
 
-function Upgrades:AddEventHandler(event, handler)
+function Upgrades:addEventHandler(event, handler)
 	if not event or type(handler) ~= "function" then return end
-	local state = self.RunState
+	local state = self.runState
 	if state and state.addHandler then
 		state:addHandler(event, handler)
 		return
@@ -1827,7 +1827,7 @@ function Upgrades:AddEventHandler(event, handler)
 end
 
 function Upgrades:notify(event, data)
-	local state = self.RunState
+	local state = self.runState
 	if not state then return end
 
 	if state.notify then
@@ -1848,74 +1848,74 @@ local function clamp(value, min, max)
 	return value
 end
 
-function Upgrades:GetHUDIndicators()
+function Upgrades:getHUDIndicators()
 	local indicators = {}
-	local state = self.RunState
+	local state = self.runState
 	if not state then
 		return indicators
 	end
 
-	local function HasUpgrade(id)
-		return GetStacks(state, id) > 0
+	local function hasUpgrade(id)
+		return getStacks(state, id) > 0
 	end
 
-	local StoneStacks = state.counters and state.counters.stonebreakerStacks or 0
-	if StoneStacks > 0 then
+	local stoneStacks = state.counters and state.counters.stonebreakerStacks or 0
+	if stoneStacks > 0 then
 		local label = Localization:get("upgrades.stonebreaker_hymn.name")
 		local current = 0
-		if Rocks.GetShatterProgress then
-			current = Rocks:GetShatterProgress() or 0
+		if Rocks.getShatterProgress then
+			current = Rocks:getShatterProgress() or 0
 		end
 
 		local rate = 0
-		if Rocks.GetShatterRate then
-			rate = Rocks:GetShatterRate() or 0
+		if Rocks.getShatterRate then
+			rate = Rocks:getShatterRate() or 0
 		else
-			rate = Rocks.ShatterOnFruit or 0
+			rate = Rocks.shatterOnFruit or 0
 		end
 
 		local progress = 0
-		local IsReady = false
+		local isReady = false
 		if rate and rate > 0 then
 			if rate >= 1 then
 				progress = 1
-				IsReady = true
+				isReady = true
 			else
 				progress = clamp(current, 0, 1)
 				if progress >= 0.999 then
-					IsReady = true
+					isReady = true
 				end
 			end
 		end
 
-		local StatusKey
+		local statusKey
 		if not rate or rate <= 0 then
-			StatusKey = "depleted"
-		elseif IsReady then
-			StatusKey = "ready"
+			statusKey = "depleted"
+		elseif isReady then
+			statusKey = "ready"
 		else
-			StatusKey = "charging"
+			statusKey = "charging"
 		end
 
-		local ChargeLabel
+		local chargeLabel
 		if rate and rate > 0 then
-			ChargeLabel = HudText("percent", { percent = math.floor(progress * 100 + 0.5) })
+			chargeLabel = hudText("percent", { percent = math.floor(progress * 100 + 0.5) })
 		end
 
 		table.insert(indicators, {
 			id = "stonebreaker_hymn",
 			label = label,
-			AccentColor = {1.0, 0.78, 0.36, 1},
-			StackCount = StoneStacks,
+			accentColor = {1.0, 0.78, 0.36, 1},
+			stackCount = stoneStacks,
 			charge = progress,
-			ChargeLabel = ChargeLabel,
-			status = HudText(StatusKey),
+			chargeLabel = chargeLabel,
+			status = hudText(statusKey),
 			icon = "pickaxe",
-			ShowBar = true,
+			showBar = true,
 		})
 	end
 
-	if HasUpgrade("pocket_springs") then
+	if hasUpgrade("pocket_springs") then
 		local counters = state.counters or {}
 		local complete = counters.pocketSpringsComplete
 		if not complete then
@@ -1928,131 +1928,131 @@ function Upgrades:GetHUDIndicators()
 			table.insert(indicators, {
 				id = "pocket_springs",
 				label = Localization:get("upgrades.pocket_springs.name"),
-				AccentColor = {0.58, 0.82, 1.0, 1.0},
-				StackCount = nil,
+				accentColor = {0.58, 0.82, 1.0, 1.0},
+				stackCount = nil,
 				charge = progress,
-				ChargeLabel = HudText("progress", {
+				chargeLabel = hudText("progress", {
 					current = tostring(collected),
 					target = tostring(POCKET_SPRINGS_FRUIT_TARGET),
 				}),
-				status = HudText("charging"),
+				status = hudText("charging"),
 				icon = "shield",
-				ShowBar = true,
+				showBar = true,
 			})
 		end
 	end
 
-	local AdrenalineTaken = HasUpgrade("adrenaline_surge")
+	local adrenalineTaken = hasUpgrade("adrenaline_surge")
 	local adrenaline = Snake.adrenaline
-	if AdrenalineTaken or (adrenaline and adrenaline.active) then
+	if adrenalineTaken or (adrenaline and adrenaline.active) then
 		local label = Localization:get("upgrades.adrenaline_surge.name")
 		local active = adrenaline and adrenaline.active
 		local duration = (adrenaline and adrenaline.duration) or 0
 		local timer = (adrenaline and math.max(adrenaline.timer or 0, 0)) or 0
 		local charge
-		local ChargeLabel
+		local chargeLabel
 
 		if active and duration > 0 then
 			charge = clamp(timer / duration, 0, 1)
-			ChargeLabel = HudText("seconds", { seconds = string.format("%.1f", timer) })
+			chargeLabel = hudText("seconds", { seconds = string.format("%.1f", timer) })
 		end
 
-		local status = active and HudText("active") or HudText("ready")
+		local status = active and hudText("active") or hudText("ready")
 
 		table.insert(indicators, {
 			id = "adrenaline_surge",
 			label = label,
-			HideLabel = true,
-			AccentColor = {1.0, 0.45, 0.45, 1},
-			StackCount = nil,
+			hideLabel = true,
+			accentColor = {1.0, 0.45, 0.45, 1},
+			stackCount = nil,
 			charge = charge,
-			ChargeLabel = ChargeLabel,
+			chargeLabel = chargeLabel,
 			status = status,
 			icon = "bolt",
-			ShowBar = active and charge ~= nil,
+			showBar = active and charge ~= nil,
 		})
 	end
 
-	local DashState = Snake.GetDashState and Snake:GetDashState()
-	if DashState then
+	local dashState = Snake.getDashState and Snake:getDashState()
+	if dashState then
 		local label = Localization:get("upgrades.thunder_dash.name")
 		local accent = {1.0, 0.78, 0.32, 1}
 		local status
 		local charge
-		local ChargeLabel
-		local ShowBar = false
+		local chargeLabel
+		local showBar = false
 
-		if DashState.active and DashState.duration > 0 then
-			local remaining = math.max(DashState.timer or 0, 0)
-			charge = clamp(remaining / DashState.duration, 0, 1)
-			ChargeLabel = HudText("seconds", { seconds = string.format("%.1f", remaining) })
-			status = HudText("active")
-			ShowBar = true
+		if dashState.active and dashState.duration > 0 then
+			local remaining = math.max(dashState.timer or 0, 0)
+			charge = clamp(remaining / dashState.duration, 0, 1)
+			chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remaining) })
+			status = hudText("active")
+			showBar = true
 		else
-			local cooldown = DashState.cooldown or 0
-			local RemainingCooldown = math.max(DashState.cooldownTimer or 0, 0)
-			if cooldown > 0 and RemainingCooldown > 0 then
-				local progress = 1 - clamp(RemainingCooldown / cooldown, 0, 1)
+			local cooldown = dashState.cooldown or 0
+			local remainingCooldown = math.max(dashState.cooldownTimer or 0, 0)
+			if cooldown > 0 and remainingCooldown > 0 then
+				local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
 				charge = progress
-				ChargeLabel = HudText("seconds", { seconds = string.format("%.1f", RemainingCooldown) })
-				status = HudText("charging")
-				ShowBar = true
+				chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remainingCooldown) })
+				status = hudText("charging")
+				showBar = true
 			else
 				charge = 1
-				status = HudText("ready")
+				status = hudText("ready")
 			end
 		end
 
 		table.insert(indicators, {
 			id = "thunder_dash",
 			label = label,
-			HideLabel = true,
-			AccentColor = accent,
-			StackCount = nil,
+			hideLabel = true,
+			accentColor = accent,
+			stackCount = nil,
 			charge = charge,
-			ChargeLabel = ChargeLabel,
+			chargeLabel = chargeLabel,
 			status = status,
 			icon = "bolt",
-			ShowBar = ShowBar,
+			showBar = showBar,
 		})
 	end
 
-	local TimeState = Snake.GetTimeDilationState and Snake:GetTimeDilationState()
-	if TimeState then
+	local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState()
+	if timeState then
 		local label = Localization:get("upgrades.temporal_anchor.name")
 		local accent = {0.62, 0.84, 1.0, 1}
 		local status
 		local charge
-		local ChargeLabel
-		local ShowBar = false
+		local chargeLabel
+		local showBar = false
 
-		local ChargesRemaining = TimeState.floorCharges
-		local MaxUses = TimeState.maxFloorUses
+		local chargesRemaining = timeState.floorCharges
+		local maxUses = timeState.maxFloorUses
 
-		if TimeState.active and TimeState.duration > 0 then
-			local remaining = math.max(TimeState.timer or 0, 0)
-			charge = clamp(remaining / TimeState.duration, 0, 1)
-			ChargeLabel = HudText("seconds", { seconds = string.format("%.1f", remaining) })
-			status = HudText("active")
-			ShowBar = true
+		if timeState.active and timeState.duration > 0 then
+			local remaining = math.max(timeState.timer or 0, 0)
+			charge = clamp(remaining / timeState.duration, 0, 1)
+			chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remaining) })
+			status = hudText("active")
+			showBar = true
 		else
-			if MaxUses and ChargesRemaining ~= nil and ChargesRemaining <= 0 then
+			if maxUses and chargesRemaining ~= nil and chargesRemaining <= 0 then
 				charge = 0
-				status = HudText("depleted")
-				ChargeLabel = nil
-				ShowBar = false
+				status = hudText("depleted")
+				chargeLabel = nil
+				showBar = false
 			else
-				local cooldown = TimeState.cooldown or 0
-				local RemainingCooldown = math.max(TimeState.cooldownTimer or 0, 0)
-				if cooldown > 0 and RemainingCooldown > 0 then
-					local progress = 1 - clamp(RemainingCooldown / cooldown, 0, 1)
+				local cooldown = timeState.cooldown or 0
+				local remainingCooldown = math.max(timeState.cooldownTimer or 0, 0)
+				if cooldown > 0 and remainingCooldown > 0 then
+					local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
 					charge = progress
-					ChargeLabel = HudText("seconds", { seconds = string.format("%.1f", RemainingCooldown) })
-					status = HudText("charging")
-					ShowBar = true
+					chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remainingCooldown) })
+					status = hudText("charging")
+					showBar = true
 				else
 					charge = 1
-					status = HudText("ready")
+					status = hudText("ready")
 				end
 			end
 		end
@@ -2060,43 +2060,43 @@ function Upgrades:GetHUDIndicators()
 		table.insert(indicators, {
 			id = "temporal_anchor",
 			label = label,
-			HideLabel = true,
-			AccentColor = accent,
-			StackCount = nil,
+			hideLabel = true,
+			accentColor = accent,
+			stackCount = nil,
 			charge = charge,
-			ChargeLabel = ChargeLabel,
+			chargeLabel = chargeLabel,
 			status = status,
 			icon = "hourglass",
-			ShowBar = ShowBar,
+			showBar = showBar,
 		})
 	end
 
-	local PhoenixCharges = 0
+	local phoenixCharges = 0
 	if state.counters then
-		PhoenixCharges = state.counters.phoenixEchoCharges or 0
+		phoenixCharges = state.counters.phoenixEchoCharges or 0
 	end
 
-	if PhoenixCharges > 0 then
+	if phoenixCharges > 0 then
 		local label = Localization:get("upgrades.phoenix_echo.name")
 		table.insert(indicators, {
 			id = "phoenix_echo",
 			label = label,
-			AccentColor = {1.0, 0.62, 0.32, 1},
-			StackCount = PhoenixCharges,
+			accentColor = {1.0, 0.62, 0.32, 1},
+			stackCount = phoenixCharges,
 			charge = nil,
 			status = nil,
 			icon = "phoenix",
-			ShowBar = false,
+			showBar = false,
 		})
 	end
 
 	return indicators
 end
 
-function Upgrades:RecordFloorReplaySnapshot(game)
+function Upgrades:recordFloorReplaySnapshot(game)
 	if not game then return end
 
-	local state = self.RunState
+	local state = self.runState
 	if not state or not state.counters then return end
 
 	-- The phoenix upgrade no longer tracks snake position, so we don't need to
@@ -2104,10 +2104,10 @@ function Upgrades:RecordFloorReplaySnapshot(game)
 	return
 end
 
-function Upgrades:ModifyFloorContext(context)
+function Upgrades:modifyFloorContext(context)
 	if not context then return context end
 
-	local effects = self.RunState.effects
+	local effects = self.runState.effects
 	if effects.fruitGoalDelta and context.fruitGoal then
 		local goal = context.fruitGoal + effects.fruitGoalDelta
 		goal = math.floor(goal + 0.5)
@@ -2140,16 +2140,16 @@ local function round(value)
 	end
 end
 
-function Upgrades:GetComboBonus(ComboCount)
+function Upgrades:getComboBonus(comboCount)
 	local bonus = 0
 	local breakdown = {}
 
-	if not ComboCount or ComboCount < 2 then
+	if not comboCount or comboCount < 2 then
 		return bonus, breakdown
 	end
 
-	local effects = self.RunState.effects
-	local flat = (effects.comboBonusFlat or 0) * (ComboCount - 1)
+	local effects = self.runState.effects
+	local flat = (effects.comboBonusFlat or 0) * (comboCount - 1)
 	if flat ~= 0 then
 		local amount = round(flat)
 		if amount ~= 0 then
@@ -2161,10 +2161,10 @@ function Upgrades:GetComboBonus(ComboCount)
 	return bonus, breakdown
 end
 
-function Upgrades:TryFloorReplay(game, cause)
+function Upgrades:tryFloorReplay(game, cause)
 	if not game then return false end
 
-	local state = self.RunState
+	local state = self.runState
 	if not state or not state.counters then return false end
 
 	local charges = state.counters.phoenixEchoCharges or 0
@@ -2182,137 +2182,137 @@ function Upgrades:TryFloorReplay(game, cause)
 	game.transitionResumeFadeDuration = nil
 
 	local restored = false
-	Snake:ResetPosition()
+	Snake:resetPosition()
 	restored = true
 
 	game.state = "playing"
 	game.deathCause = nil
 
-	local hx, hy = Snake:GetHead()
-        CelebrateUpgrade(GetUpgradeString("phoenix_echo", "name"), nil, {
+	local hx, hy = Snake:getHead()
+        celebrateUpgrade(getUpgradeString("phoenix_echo", "name"), nil, {
                 x = hx,
                 y = hy,
                 color = {1, 0.62, 0.32, 1},
-                ParticleCount = 24,
-                ParticleSpeed = 170,
-                ParticleLife = 0.6,
-                TextOffset = 60,
-                TextScale = 1.22,
+                particleCount = 24,
+                particleSpeed = 170,
+                particleLife = 0.6,
+                textOffset = 60,
+                textScale = 1.22,
                 visual = {
                         variant = "phoenix_flare",
-                        ShowBase = false,
+                        showBase = false,
                         life = 1.18,
-                        InnerRadius = 16,
-                        OuterRadius = 58,
-                        AddBlend = true,
+                        innerRadius = 16,
+                        outerRadius = 58,
+                        addBlend = true,
                         color = {1, 0.62, 0.32, 1},
-                        VariantSecondaryColor = {1, 0.44, 0.14, 0.95},
-                        VariantTertiaryColor = {1, 0.85, 0.48, 0.88},
+                        variantSecondaryColor = {1, 0.44, 0.14, 0.95},
+                        variantTertiaryColor = {1, 0.85, 0.48, 0.88},
                 },
         })
 
-        self:ApplyPersistentEffects(false)
-        if Snake.SetPhoenixEchoCharges then
-                Snake:SetPhoenixEchoCharges(state.counters.phoenixEchoCharges or 0, { triggered = 1.4, FlareDuration = 1.4 })
+        self:applyPersistentEffects(false)
+        if Snake.setPhoenixEchoCharges then
+                Snake:setPhoenixEchoCharges(state.counters.phoenixEchoCharges or 0, { triggered = 1.4, flareDuration = 1.4 })
         end
 
         return restored
 end
 
-local function CaptureBaseline(state)
+local function captureBaseline(state)
 	local baseline = state.baseline
-	baseline.sawSpeedMult = Saws.SpeedMult or 1
-	baseline.sawSpinMult = Saws.SpinMult or 1
-	if Saws.GetStallOnFruit then
-		baseline.sawStall = Saws:GetStallOnFruit()
+	baseline.sawSpeedMult = Saws.speedMult or 1
+	baseline.sawSpinMult = Saws.spinMult or 1
+	if Saws.getStallOnFruit then
+		baseline.sawStall = Saws:getStallOnFruit()
 	else
-		baseline.sawStall = Saws.StallOnFruit or 0
+		baseline.sawStall = Saws.stallOnFruit or 0
 	end
-	if Rocks.GetSpawnChance then
-		baseline.rockSpawnChance = Rocks:GetSpawnChance()
+	if Rocks.getSpawnChance then
+		baseline.rockSpawnChance = Rocks:getSpawnChance()
 	else
-		baseline.rockSpawnChance = Rocks.SpawnChance or 0.25
+		baseline.rockSpawnChance = Rocks.spawnChance or 0.25
 	end
-	baseline.rockShatter = Rocks.ShatterOnFruit or 0
-	if Score.GetComboBonusMultiplier then
-		baseline.comboBonusMult = Score:GetComboBonusMultiplier()
+	baseline.rockShatter = Rocks.shatterOnFruit or 0
+	if Score.getComboBonusMultiplier then
+		baseline.comboBonusMult = Score:getComboBonusMultiplier()
 	else
-		baseline.comboBonusMult = Score.ComboBonusMult or 1
+		baseline.comboBonusMult = Score.comboBonusMult or 1
 	end
 	if Lasers then
-		baseline.laserChargeMult = Lasers.ChargeDurationMult or 1
-		baseline.laserChargeFlat = Lasers.ChargeDurationFlat or 0
-		baseline.laserFireMult = Lasers.FireDurationMult or 1
-		baseline.laserFireFlat = Lasers.FireDurationFlat or 0
-		baseline.laserCooldownMult = Lasers.CooldownMult or 1
-		baseline.laserCooldownFlat = Lasers.CooldownFlat or 0
+		baseline.laserChargeMult = Lasers.chargeDurationMult or 1
+		baseline.laserChargeFlat = Lasers.chargeDurationFlat or 0
+		baseline.laserFireMult = Lasers.fireDurationMult or 1
+		baseline.laserFireFlat = Lasers.fireDurationFlat or 0
+		baseline.laserCooldownMult = Lasers.cooldownMult or 1
+		baseline.laserCooldownFlat = Lasers.cooldownFlat or 0
 	end
 end
 
-local function EnsureBaseline(state)
+local function ensureBaseline(state)
 	state.baseline = state.baseline or {}
 	if not next(state.baseline) then
-		CaptureBaseline(state)
+		captureBaseline(state)
 	end
 end
 
-function Upgrades:ApplyPersistentEffects(rebaseline)
-	local state = self.RunState
+function Upgrades:applyPersistentEffects(rebaseline)
+	local state = self.runState
 	local effects = state.effects
 
 	if rebaseline then
 		state.baseline = {}
 	end
-	EnsureBaseline(state)
+	ensureBaseline(state)
 	local base = state.baseline
 
-	local SawSpeed = (base.sawSpeedMult or 1) * (effects.sawSpeedMult or 1)
-	local SawSpin = (base.sawSpinMult or 1) * (effects.sawSpinMult or 1)
-	Saws.SpeedMult = SawSpeed
-	Saws.SpinMult = SawSpin
+	local sawSpeed = (base.sawSpeedMult or 1) * (effects.sawSpeedMult or 1)
+	local sawSpin = (base.sawSpinMult or 1) * (effects.sawSpinMult or 1)
+	Saws.speedMult = sawSpeed
+	Saws.spinMult = sawSpin
 
-	local StallBase = base.sawStall or 0
-	local StallBonus = effects.sawStall or 0
-	local StallValue = StallBase + StallBonus
-	if Saws.SetStallOnFruit then
-		Saws:SetStallOnFruit(StallValue)
+	local stallBase = base.sawStall or 0
+	local stallBonus = effects.sawStall or 0
+	local stallValue = stallBase + stallBonus
+	if Saws.setStallOnFruit then
+		Saws:setStallOnFruit(stallValue)
 	else
-		Saws.StallOnFruit = StallValue
+		Saws.stallOnFruit = stallValue
 	end
 
-	local RockBase = base.rockSpawnChance or 0.25
-	local RockChance = math.max(0.02, RockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
-	Rocks.SpawnChance = RockChance
-	Rocks.ShatterOnFruit = (base.rockShatter or 0) + (effects.rockShatter or 0)
-	if Snake.SetStonebreakerStacks then
+	local rockBase = base.rockSpawnChance or 0.25
+	local rockChance = math.max(0.02, rockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
+	Rocks.spawnChance = rockChance
+	Rocks.shatterOnFruit = (base.rockShatter or 0) + (effects.rockShatter or 0)
+	if Snake.setStonebreakerStacks then
 		local stacks = 0
 		if state and state.counters then
 			stacks = state.counters.stonebreakerStacks or 0
 		end
 		if stacks <= 0 and effects.rockShatter then
-			local PerStack = 0.25
-			stacks = math.floor(((effects.rockShatter or 0) / PerStack) + 0.5)
+			local perStack = 0.25
+			stacks = math.floor(((effects.rockShatter or 0) / perStack) + 0.5)
 		end
-		Snake:SetStonebreakerStacks(stacks)
+		Snake:setStonebreakerStacks(stacks)
 	end
 
-	local ComboBase = base.comboBonusMult or 1
-	local ComboMult = ComboBase * (effects.comboBonusMult or 1)
-	if Score.SetComboBonusMultiplier then
-		Score:SetComboBonusMultiplier(ComboMult)
+	local comboBase = base.comboBonusMult or 1
+	local comboMult = comboBase * (effects.comboBonusMult or 1)
+	if Score.setComboBonusMultiplier then
+		Score:setComboBonusMultiplier(comboMult)
 	else
-		Score.ComboBonusMult = ComboMult
+		Score.comboBonusMult = comboMult
 	end
 
 	if Lasers then
-		Lasers.ChargeDurationMult = (base.laserChargeMult or 1) * (effects.laserChargeMult or 1)
-		Lasers.ChargeDurationFlat = (base.laserChargeFlat or 0) + (effects.laserChargeFlat or 0)
-		Lasers.FireDurationMult = (base.laserFireMult or 1) * (effects.laserFireMult or 1)
-		Lasers.FireDurationFlat = (base.laserFireFlat or 0) + (effects.laserFireFlat or 0)
-		Lasers.CooldownMult = (base.laserCooldownMult or 1) * (effects.laserCooldownMult or 1)
-		Lasers.CooldownFlat = (base.laserCooldownFlat or 0) + (effects.laserCooldownFlat or 0)
-		if Lasers.ApplyTimingModifiers then
-			Lasers:ApplyTimingModifiers()
+		Lasers.chargeDurationMult = (base.laserChargeMult or 1) * (effects.laserChargeMult or 1)
+		Lasers.chargeDurationFlat = (base.laserChargeFlat or 0) + (effects.laserChargeFlat or 0)
+		Lasers.fireDurationMult = (base.laserFireMult or 1) * (effects.laserFireMult or 1)
+		Lasers.fireDurationFlat = (base.laserFireFlat or 0) + (effects.laserFireFlat or 0)
+		Lasers.cooldownMult = (base.laserCooldownMult or 1) * (effects.laserCooldownMult or 1)
+		Lasers.cooldownFlat = (base.laserCooldownFlat or 0) + (effects.laserCooldownFlat or 0)
+		if Lasers.applyTimingModifiers then
+			Lasers:applyTimingModifiers()
 		end
 	end
 
@@ -2329,7 +2329,7 @@ function Upgrades:ApplyPersistentEffects(rebaseline)
 	if effects.dash then
 		Snake.dash = Snake.dash or {}
 		local dash = Snake.dash
-		local FirstSetup = not dash.configured
+		local firstSetup = not dash.configured
 		dash.duration = effects.dash.duration or dash.duration or 0
 		dash.cooldown = effects.dash.cooldown or dash.cooldown or 0
 		dash.speedMult = effects.dash.speedMult or dash.speedMult or 1
@@ -2338,7 +2338,7 @@ function Upgrades:ApplyPersistentEffects(rebaseline)
 		dash.timer = dash.timer or 0
 		dash.cooldownTimer = dash.cooldownTimer or 0
 		dash.active = dash.active or false
-		if FirstSetup then
+		if firstSetup then
 			dash.active = false
 			dash.timer = 0
 			dash.cooldownTimer = 0
@@ -2354,9 +2354,9 @@ function Upgrades:ApplyPersistentEffects(rebaseline)
 	end
 
 	if effects.timeSlow then
-		Snake.TimeDilation = Snake.TimeDilation or {}
-		local ability = Snake.TimeDilation
-		local FirstSetup = not ability.configured
+		Snake.timeDilation = Snake.timeDilation or {}
+		local ability = Snake.timeDilation
+		local firstSetup = not ability.configured
 		ability.duration = effects.timeSlow.duration or ability.duration or 0
 		ability.cooldown = effects.timeSlow.cooldown or ability.cooldown or 0
 		ability.timeScale = effects.timeSlow.timeScale or ability.timeScale or 1
@@ -2364,7 +2364,7 @@ function Upgrades:ApplyPersistentEffects(rebaseline)
 		ability.timer = ability.timer or 0
 		ability.cooldownTimer = ability.cooldownTimer or 0
 		ability.active = ability.active or false
-		if FirstSetup then
+		if firstSetup then
 			ability.active = false
 			ability.timer = 0
 			ability.cooldownTimer = 0
@@ -2381,42 +2381,42 @@ function Upgrades:ApplyPersistentEffects(rebaseline)
 		end
 
 		ability.maxFloorUses = 1
-		if FirstSetup or rebaseline then
+		if firstSetup or rebaseline then
 			ability.floorCharges = ability.maxFloorUses
 		elseif ability.floorCharges == nil then
 			ability.floorCharges = ability.maxFloorUses
 		else
-			local MaxUses = ability.maxFloorUses or ability.floorCharges
-			ability.floorCharges = math.max(0, math.min(ability.floorCharges, MaxUses))
+			local maxUses = ability.maxFloorUses or ability.floorCharges
+			ability.floorCharges = math.max(0, math.min(ability.floorCharges, maxUses))
 		end
         else
-                Snake.TimeDilation = nil
+                Snake.timeDilation = nil
         end
 
-        if Snake.SetChronospiralActive then
-                Snake:SetChronospiralActive(effects.chronospiralCore and true or false)
+        if Snake.setChronospiralActive then
+                Snake:setChronospiralActive(effects.chronospiralCore and true or false)
         end
 
-        if Snake.SetAbyssalCatalystStacks then
-                Snake:SetAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
+        if Snake.setAbyssalCatalystStacks then
+                Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
         end
 
-        if Snake.SetTitanbloodStacks then
-                Snake:SetTitanbloodStacks(effects.titanbloodPact or 0)
+        if Snake.setTitanbloodStacks then
+                Snake:setTitanbloodStacks(effects.titanbloodPact or 0)
         end
 
-        if Snake.SetEventHorizonActive then
-                Snake:SetEventHorizonActive(effects.wallPortal and true or false)
+        if Snake.setEventHorizonActive then
+                Snake:setEventHorizonActive(effects.wallPortal and true or false)
         end
 
-        if Snake.SetQuickFangsStacks then
+        if Snake.setQuickFangsStacks then
                 local counters = state.counters or {}
-                Snake:SetQuickFangsStacks(counters.quickFangsStacks or 0)
+                Snake:setQuickFangsStacks(counters.quickFangsStacks or 0)
         end
 
-        if Snake.SetPhoenixEchoCharges then
+        if Snake.setPhoenixEchoCharges then
                 local counters = state.counters or {}
-                Snake:SetPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
+                Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
         end
 end
 
@@ -2437,28 +2437,28 @@ local SHOP_PITY_RARITY_RANK = {
 	legendary = 5,
 }
 
-local function CalculateWeight(upgrade, PityLevel)
-	local RarityInfo = GetRarityInfo(upgrade.rarity)
-	local RarityWeight = RarityInfo.weight or 1
-	local weight = RarityWeight * (upgrade.weight or 1)
+local function calculateWeight(upgrade, pityLevel)
+	local rarityInfo = getRarityInfo(upgrade.rarity)
+	local rarityWeight = rarityInfo.weight or 1
+	local weight = rarityWeight * (upgrade.weight or 1)
 
 	local bonus = SHOP_PITY_RARITY_BONUS[upgrade.rarity]
-	if bonus and PityLevel and PityLevel > 0 then
-		weight = weight * (1 + math.min(PityLevel, SHOP_PITY_MAX) * bonus)
+	if bonus and pityLevel and pityLevel > 0 then
+		weight = weight * (1 + math.min(pityLevel, SHOP_PITY_MAX) * bonus)
 	end
 
 	return weight
 end
 
-function Upgrades:CanOffer(upgrade, context, AllowTaken)
+function Upgrades:canOffer(upgrade, context, allowTaken)
         if not upgrade then return false end
 
-        local count = self:GetTakenCount(upgrade.id)
+        local count = self:getTakenCount(upgrade.id)
         if upgrade.rarity == "legendary" and count > 0 then
                 return false
         end
 
-        if not AllowTaken then
+        if not allowTaken then
                 if (count > 0 and not upgrade.allowDuplicates) then
                         return false
                 end
@@ -2469,7 +2469,7 @@ function Upgrades:CanOffer(upgrade, context, AllowTaken)
 
 	if upgrade.requiresTags then
 		for _, tag in ipairs(upgrade.requiresTags) do
-			if not self:HasTag(tag) then
+			if not self:hasTag(tag) then
 				return false
 			end
 		end
@@ -2477,48 +2477,48 @@ function Upgrades:CanOffer(upgrade, context, AllowTaken)
 
 	if upgrade.excludesTags then
 		for _, tag in ipairs(upgrade.excludesTags) do
-			if self:HasTag(tag) then
+			if self:hasTag(tag) then
 				return false
 			end
 		end
 	end
 
-	local CombinedUnlockTags = nil
+	local combinedUnlockTags = nil
 	if type(upgrade.unlockTags) == "table" then
-		CombinedUnlockTags = {}
+		combinedUnlockTags = {}
 		for _, tag in ipairs(upgrade.unlockTags) do
-			CombinedUnlockTags[#CombinedUnlockTags + 1] = tag
+			combinedUnlockTags[#combinedUnlockTags + 1] = tag
 		end
 	end
 	if upgrade.unlockTag then
-		CombinedUnlockTags = CombinedUnlockTags or {}
-		CombinedUnlockTags[#CombinedUnlockTags + 1] = upgrade.unlockTag
+		combinedUnlockTags = combinedUnlockTags or {}
+		combinedUnlockTags[#combinedUnlockTags + 1] = upgrade.unlockTag
 	end
 
-	if CombinedUnlockTags and MetaProgression and MetaProgression.IsTagUnlocked then
-		for _, tag in ipairs(CombinedUnlockTags) do
-			if tag and not MetaProgression:IsTagUnlocked(tag) then
+	if combinedUnlockTags and MetaProgression and MetaProgression.isTagUnlocked then
+		for _, tag in ipairs(combinedUnlockTags) do
+			if tag and not MetaProgression:isTagUnlocked(tag) then
 				return false
 			end
 		end
-	elseif upgrade.unlockTag and MetaProgression and MetaProgression.IsTagUnlocked then
-		if not MetaProgression:IsTagUnlocked(upgrade.unlockTag) then
+	elseif upgrade.unlockTag and MetaProgression and MetaProgression.isTagUnlocked then
+		if not MetaProgression:isTagUnlocked(upgrade.unlockTag) then
 			return false
 		end
 	end
 
-	if upgrade.condition and not upgrade.condition(self.RunState, context) then
+	if upgrade.condition and not upgrade.condition(self.runState, context) then
 		return false
 	end
 
 	return true
 end
 
-local function DecorateCard(upgrade)
-	local RarityInfo = GetRarityInfo(upgrade.rarity)
+local function decorateCard(upgrade)
+	local rarityInfo = getRarityInfo(upgrade.rarity)
 	local name = upgrade.name
 	local description = upgrade.desc
-	local RarityLabel = RarityInfo and RarityInfo.label
+	local rarityLabel = rarityInfo and rarityInfo.label
 
 	if upgrade.nameKey then
 		name = Localization:get(upgrade.nameKey)
@@ -2526,8 +2526,8 @@ local function DecorateCard(upgrade)
 	if upgrade.descKey then
 		description = Localization:get(upgrade.descKey)
 	end
-	if RarityInfo and RarityInfo.labelKey then
-		RarityLabel = Localization:get(RarityInfo.labelKey)
+	if rarityInfo and rarityInfo.labelKey then
+		rarityLabel = Localization:get(rarityInfo.labelKey)
 	end
 
 	return {
@@ -2535,30 +2535,30 @@ local function DecorateCard(upgrade)
 		name = name,
 		desc = description,
 		rarity = upgrade.rarity,
-		RarityColor = RarityInfo.color,
-		RarityLabel = RarityLabel,
-		RestockShop = upgrade.restockShop,
+		rarityColor = rarityInfo.color,
+		rarityLabel = rarityLabel,
+		restockShop = upgrade.restockShop,
 		upgrade = upgrade,
 	}
 end
 
-function Upgrades:GetRandom(n, context)
-	local state = self.RunState or NewRunState()
-	local PityLevel = 0
+function Upgrades:getRandom(n, context)
+	local state = self.runState or newRunState()
+	local pityLevel = 0
 	if state and state.counters then
-		PityLevel = math.min(state.counters.shopBadLuck or 0, SHOP_PITY_MAX)
+		pityLevel = math.min(state.counters.shopBadLuck or 0, SHOP_PITY_MAX)
 	end
 
 	local available = {}
 	for _, upgrade in ipairs(pool) do
-		if self:CanOffer(upgrade, context, false) then
+		if self:canOffer(upgrade, context, false) then
 			table.insert(available, upgrade)
 		end
 	end
 
 	if #available == 0 then
 		for _, upgrade in ipairs(pool) do
-			if self:CanOffer(upgrade, context, true) then
+			if self:canOffer(upgrade, context, true) then
 				table.insert(available, upgrade)
 			end
 		end
@@ -2567,100 +2567,100 @@ function Upgrades:GetRandom(n, context)
 	local cards = {}
 	n = math.min(n or 3, #available)
 	for _ = 1, n do
-		local TotalWeight = 0
+		local totalWeight = 0
 		local weights = {}
 		for i, upgrade in ipairs(available) do
-			local weight = CalculateWeight(upgrade, PityLevel)
-			TotalWeight = TotalWeight + weight
+			local weight = calculateWeight(upgrade, pityLevel)
+			totalWeight = totalWeight + weight
 			weights[i] = weight
 		end
 
-		if TotalWeight <= 0 then break end
+		if totalWeight <= 0 then break end
 
-		local roll = love.math.random() * TotalWeight
+		local roll = love.math.random() * totalWeight
 		local cumulative = 0
-		local ChosenIndex = 1
+		local chosenIndex = 1
 		for i, weight in ipairs(weights) do
 			cumulative = cumulative + weight
 			if roll <= cumulative then
-				ChosenIndex = i
+				chosenIndex = i
 				break
 			end
 		end
 
-		local choice = available[ChosenIndex]
-		table.insert(cards, DecorateCard(choice))
-		table.remove(available, ChosenIndex)
+		local choice = available[chosenIndex]
+		table.insert(cards, decorateCard(choice))
+		table.remove(available, chosenIndex)
 		if #available == 0 then break end
 	end
 
 	if state and state.counters then
-		local BestRank = 0
+		local bestRank = 0
 		for _, card in ipairs(cards) do
 			local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
-			if rank > BestRank then
-				BestRank = rank
+			if rank > bestRank then
+				bestRank = rank
 			end
 		end
 
-		if BestRank >= (SHOP_PITY_RARITY_RANK.rare or 0) then
+		if bestRank >= (SHOP_PITY_RARITY_RANK.rare or 0) then
 			state.counters.shopBadLuck = 0
 		else
 			local counter = (state.counters.shopBadLuck or 0) + 1
 			state.counters.shopBadLuck = math.min(counter, SHOP_PITY_MAX)
 		end
 
-		local LegendaryUnlocked = MetaProgression and MetaProgression.IsTagUnlocked and MetaProgression:IsTagUnlocked("legendary")
-		if LegendaryUnlocked then
-			local HasLegendary = false
+		local legendaryUnlocked = MetaProgression and MetaProgression.isTagUnlocked and MetaProgression:isTagUnlocked("legendary")
+		if legendaryUnlocked then
+			local hasLegendary = false
 			for _, card in ipairs(cards) do
 				if card.rarity == "legendary" then
-					HasLegendary = true
+					hasLegendary = true
 					break
 				end
 			end
 
-			if HasLegendary then
+			if hasLegendary then
 				state.counters.legendaryBadLuck = 0
 			else
-				local LegendaryCounter = (state.counters.legendaryBadLuck or 0) + 1
-				if LegendaryCounter >= LEGENDARY_PITY_THRESHOLD then
-					local LegendaryChoices = {}
+				local legendaryCounter = (state.counters.legendaryBadLuck or 0) + 1
+				if legendaryCounter >= LEGENDARY_PITY_THRESHOLD then
+					local legendaryChoices = {}
 					for _, upgrade in ipairs(pool) do
-						if upgrade.rarity == "legendary" and self:CanOffer(upgrade, context, false) then
-							table.insert(LegendaryChoices, DecorateCard(upgrade))
+						if upgrade.rarity == "legendary" and self:canOffer(upgrade, context, false) then
+							table.insert(legendaryChoices, decorateCard(upgrade))
 						end
 					end
-					if #LegendaryChoices == 0 then
+					if #legendaryChoices == 0 then
 						for _, upgrade in ipairs(pool) do
-							if upgrade.rarity == "legendary" and self:CanOffer(upgrade, context, true) then
-								table.insert(LegendaryChoices, DecorateCard(upgrade))
+							if upgrade.rarity == "legendary" and self:canOffer(upgrade, context, true) then
+								table.insert(legendaryChoices, decorateCard(upgrade))
 							end
 						end
 					end
 
-					if #LegendaryChoices > 0 then
-						local ReplacementIndex
-						local LowestRank
+					if #legendaryChoices > 0 then
+						local replacementIndex
+						local lowestRank
 						for index, card in ipairs(cards) do
 							local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
-							if not ReplacementIndex or rank < LowestRank then
-								ReplacementIndex = index
-								LowestRank = rank
+							if not replacementIndex or rank < lowestRank then
+								replacementIndex = index
+								lowestRank = rank
 							end
 						end
 
-						if ReplacementIndex then
-							cards[ReplacementIndex] = LegendaryChoices[love.math.random(1, #LegendaryChoices)]
+						if replacementIndex then
+							cards[replacementIndex] = legendaryChoices[love.math.random(1, #legendaryChoices)]
 						else
-							table.insert(cards, LegendaryChoices[love.math.random(1, #LegendaryChoices)])
+							table.insert(cards, legendaryChoices[love.math.random(1, #legendaryChoices)])
 						end
 
-						LegendaryCounter = 0
+						legendaryCounter = 0
 					end
 				end
 
-				state.counters.legendaryBadLuck = math.min(LegendaryCounter, LEGENDARY_PITY_THRESHOLD)
+				state.counters.legendaryBadLuck = math.min(legendaryCounter, LEGENDARY_PITY_THRESHOLD)
 			end
 		else
 			state.counters.legendaryBadLuck = nil
@@ -2674,26 +2674,26 @@ function Upgrades:acquire(card, context)
 	if not card or not card.upgrade then return end
 
 	local upgrade = card.upgrade
-	local state = self.RunState
+	local state = self.runState
 
 	if state and state.addStacks then
 		state:addStacks(upgrade.id, 1)
 	else
-		local CurrentStacks = GetStacks(state, upgrade.id)
-		state.takenSet[upgrade.id] = CurrentStacks + 1
+		local currentStacks = getStacks(state, upgrade.id)
+		state.takenSet[upgrade.id] = currentStacks + 1
 	end
 	table.insert(state.takenOrder, upgrade.id)
 
-	PlayerStats:add("TotalUpgradesPurchased", 1)
-	PlayerStats:UpdateMax("MostUpgradesInRun", #state.takenOrder)
+	PlayerStats:add("totalUpgradesPurchased", 1)
+	PlayerStats:updateMax("mostUpgradesInRun", #state.takenOrder)
 
 	if upgrade.rarity == "legendary" then
-		PlayerStats:add("LegendaryUpgradesPurchased", 1)
+		PlayerStats:add("legendaryUpgradesPurchased", 1)
 	end
 
 	if upgrade.tags then
 		for _, tag in ipairs(upgrade.tags) do
-			self:AddTag(tag)
+			self:addTag(tag)
 		end
 	end
 
@@ -2703,12 +2703,12 @@ function Upgrades:acquire(card, context)
 
 	if upgrade.handlers then
 		for event, handler in pairs(upgrade.handlers) do
-			self:AddEventHandler(event, handler)
+			self:addEventHandler(event, handler)
 		end
 	end
 
-	self:notify("UpgradeAcquired", { id = upgrade.id, upgrade = upgrade, context = context })
-	self:ApplyPersistentEffects(false)
+	self:notify("upgradeAcquired", { id = upgrade.id, upgrade = upgrade, context = context })
+	self:applyPersistentEffects(false)
 end
 
 return Upgrades

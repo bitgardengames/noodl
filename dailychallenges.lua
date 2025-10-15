@@ -3,7 +3,7 @@ local SessionStats = require("sessionstats")
 
 local AchievementsModule
 
-local function GetAchievements()
+local function getAchievements()
 	if AchievementsModule == nil then
 		local ok, module = pcall(require, "achievements")
 		if ok then
@@ -22,20 +22,20 @@ local function GetAchievements()
 end
 
 local DailyChallenges = {}
-DailyChallenges.DefaultXpReward = 120
+DailyChallenges.defaultXpReward = 120
 
-local DefaultDateProvider = function()
+local defaultDateProvider = function()
 	return os.date("*t")
 end
 
-local function DefaultProgressReplacements(current, goal)
+local function defaultProgressReplacements(current, goal)
 	return {
 		current = current or 0,
 		goal = goal or 0,
 	}
 end
 
-local function MergeReplacements(base, extra)
+local function mergeReplacements(base, extra)
 	if not base then
 		base = {}
 	end
@@ -51,7 +51,7 @@ local function MergeReplacements(base, extra)
 	return base
 end
 
-local function CallChallengeFunction(challenge, key, ...)
+local function callChallengeFunction(challenge, key, ...)
 	if not challenge then
 		return nil
 	end
@@ -70,13 +70,13 @@ local function CallChallengeFunction(challenge, key, ...)
 	return result
 end
 
-local function ResolveGoal(challenge, context)
+local function resolveGoal(challenge, context)
 	local override = context and context.goalOverride
 	if override ~= nil then
 		return override
 	end
 
-	local value = CallChallengeFunction(challenge, "GetGoal", context)
+	local value = callChallengeFunction(challenge, "getGoal", context)
 	if value ~= nil then
 		return value
 	end
@@ -84,21 +84,21 @@ local function ResolveGoal(challenge, context)
 	return challenge.goal or 0
 end
 
-local function ResolveCurrent(challenge, context)
+local function resolveCurrent(challenge, context)
 	local override = context and context.currentOverride
 	if override ~= nil then
 		return override
 	end
 
-	local value = CallChallengeFunction(challenge, "GetValue", context)
+	local value = callChallengeFunction(challenge, "getValue", context)
 	if value ~= nil then
 		return value
 	end
 
 	if challenge.sessionStat then
-		local StatsSource = context and context.sessionStats
-		if StatsSource and type(StatsSource.get) == "function" then
-			return StatsSource:get(challenge.sessionStat) or 0
+		local statsSource = context and context.sessionStats
+		if statsSource and type(statsSource.get) == "function" then
+			return statsSource:get(challenge.sessionStat) or 0
 		end
 
 		if SessionStats and SessionStats.get then
@@ -113,20 +113,20 @@ local function ResolveCurrent(challenge, context)
 	return 0
 end
 
-local function ResolveProgressReplacements(challenge, current, goal, context)
-	local replacements = DefaultProgressReplacements(current, goal)
-	local extra = CallChallengeFunction(challenge, "ProgressReplacements", current, goal, context)
+local function resolveProgressReplacements(challenge, current, goal, context)
+	local replacements = defaultProgressReplacements(current, goal)
+	local extra = callChallengeFunction(challenge, "progressReplacements", current, goal, context)
 	if extra then
-		replacements = MergeReplacements(replacements, extra)
+		replacements = mergeReplacements(replacements, extra)
 	end
 	return replacements
 end
 
-local function ResolveDescriptionReplacements(challenge, current, goal, context)
+local function resolveDescriptionReplacements(challenge, current, goal, context)
 	local replacements = { goal = goal or 0, current = current or 0 }
-	local extra = CallChallengeFunction(challenge, "DescriptionReplacements", current, goal, context)
+	local extra = callChallengeFunction(challenge, "descriptionReplacements", current, goal, context)
 	if extra then
-		replacements = MergeReplacements(replacements, extra)
+		replacements = mergeReplacements(replacements, extra)
 	end
 	return replacements
 end
@@ -134,68 +134,68 @@ end
 local DEFAULT_PROGRESS_KEY = "menu.daily_panel_progress"
 local DEFAULT_COMPLETE_KEY = "menu.daily_panel_complete"
 
-local function BuildStatusBar(challenge, completed, current, goal, ratio, replacements)
+local function buildStatusBar(challenge, completed, current, goal, ratio, replacements)
 	if not goal or goal <= 0 then
 		return nil
 	end
 
-	local TextKey
+	local textKey
 	if completed then
-		TextKey = challenge.completeKey or DEFAULT_COMPLETE_KEY
+		textKey = challenge.completeKey or DEFAULT_COMPLETE_KEY
 	else
-		TextKey = challenge.progressKey or DEFAULT_PROGRESS_KEY
+		textKey = challenge.progressKey or DEFAULT_PROGRESS_KEY
 	end
 
 	return {
 		current = current or 0,
 		goal = goal or 0,
 		ratio = ratio or 0,
-		TextKey = TextKey,
-		replacements = replacements or DefaultProgressReplacements(current, goal),
+		textKey = textKey,
+		replacements = replacements or defaultProgressReplacements(current, goal),
 		completed = completed or false,
 	}
 end
 
-local function ClampRatio(current, goal)
+local function clampRatio(current, goal)
 	if goal and goal > 0 then
 		return math.max(0, math.min(1, current / goal))
 	end
 	return 0
 end
 
-local function ResolveDate(self, override)
+local function resolveDate(self, override)
 	if type(override) == "table" then
 		return override
 	end
 
-	local provider = self._dateProvider or DefaultDateProvider
+	local provider = self._dateProvider or defaultDateProvider
 	return provider()
 end
 
-local function BuildStorageKey(self, challenge, date, suffix)
+local function buildStorageKey(self, challenge, date, suffix)
 	if not challenge or not challenge.id then
 		return nil
 	end
 
-	date = ResolveDate(self, date)
+	date = resolveDate(self, date)
 	if not date then
 		return nil
 	end
 
-	local DayValue = (date.year or 0) * 512 + (date.yday or 0)
-	return string.format("DailyChallenge:%s:%d:%s", challenge.id, DayValue, suffix)
+	local dayValue = (date.year or 0) * 512 + (date.yday or 0)
+	return string.format("dailyChallenge:%s:%d:%s", challenge.id, dayValue, suffix)
 end
 
-local function GetStoredProgress(self, challenge, date)
-	local key = BuildStorageKey(self, challenge, date, "progress")
+local function getStoredProgress(self, challenge, date)
+	local key = buildStorageKey(self, challenge, date, "progress")
 	if not key then
 		return 0
 	end
 	return PlayerStats:get(key) or 0
 end
 
-local function SetStoredProgress(self, challenge, date, value)
-	local key = BuildStorageKey(self, challenge, date, "progress")
+local function setStoredProgress(self, challenge, date, value)
+	local key = buildStorageKey(self, challenge, date, "progress")
 	if not key then
 		return
 	end
@@ -204,8 +204,8 @@ local function SetStoredProgress(self, challenge, date, value)
 	PlayerStats:set(key, value)
 end
 
-local function IsStoredComplete(self, challenge, date)
-	local key = BuildStorageKey(self, challenge, date, "complete")
+local function isStoredComplete(self, challenge, date)
+	local key = buildStorageKey(self, challenge, date, "complete")
 	if not key then
 		return false
 	end
@@ -214,8 +214,8 @@ local function IsStoredComplete(self, challenge, date)
 	return value >= 1
 end
 
-local function SetStoredComplete(self, challenge, date, complete)
-	local key = BuildStorageKey(self, challenge, date, "complete")
+local function setStoredComplete(self, challenge, date, complete)
+	local key = buildStorageKey(self, challenge, date, "complete")
 	if not key then
 		return
 	end
@@ -223,12 +223,12 @@ local function SetStoredComplete(self, challenge, date, complete)
 	PlayerStats:set(key, complete and 1 or 0)
 end
 
-local function GetChallengeIndex(self, count, date)
+local function getChallengeIndex(self, count, date)
 	if count <= 0 then
 		return nil
 	end
 
-	date = ResolveDate(self, date)
+	date = resolveDate(self, date)
 	if not date then
 		return 1
 	end
@@ -241,178 +241,178 @@ local function GetChallengeIndex(self, count, date)
 	return index
 end
 
-local function EvaluateChallenge(self, challenge, context)
+local function evaluateChallenge(self, challenge, context)
 	if not challenge then
 		return nil
 	end
 
 	context = context or {}
 
-	local goal = ResolveGoal(challenge, context)
-	local current = ResolveCurrent(challenge, context)
+	local goal = resolveGoal(challenge, context)
+	local current = resolveCurrent(challenge, context)
 	local date = context.date or context.dateOverride
-	local StoredProgress = GetStoredProgress(self, challenge, date)
-	if StoredProgress and StoredProgress > (current or 0) then
-		current = StoredProgress
+	local storedProgress = getStoredProgress(self, challenge, date)
+	if storedProgress and storedProgress > (current or 0) then
+		current = storedProgress
 	end
 
-	local StoredComplete = IsStoredComplete(self, challenge, date)
-	local ratio = ClampRatio(current, goal)
+	local storedComplete = isStoredComplete(self, challenge, date)
+	local ratio = clampRatio(current, goal)
 
-	local DescriptionReplacements = ResolveDescriptionReplacements(challenge, current, goal, context)
-	local ProgressReplacements = ResolveProgressReplacements(challenge, current, goal, context)
-	local completed = StoredComplete or (goal > 0 and current >= goal)
-	local StatusBar = BuildStatusBar(challenge, completed, current, goal, ratio, ProgressReplacements)
+	local descriptionReplacements = resolveDescriptionReplacements(challenge, current, goal, context)
+	local progressReplacements = resolveProgressReplacements(challenge, current, goal, context)
+	local completed = storedComplete or (goal > 0 and current >= goal)
+	local statusBar = buildStatusBar(challenge, completed, current, goal, ratio, progressReplacements)
 
 	return {
 		id = challenge.id,
 		index = challenge.index,
-		TitleKey = challenge.titleKey,
-		DescriptionKey = challenge.descriptionKey,
-		DescriptionReplacements = DescriptionReplacements,
+		titleKey = challenge.titleKey,
+		descriptionKey = challenge.descriptionKey,
+		descriptionReplacements = descriptionReplacements,
 		goal = goal,
 		current = current,
 		ratio = ratio,
 		completed = completed,
-		XpReward = challenge.xpReward or DailyChallenges.DefaultXpReward,
-		StatusBar = StatusBar,
+		xpReward = challenge.xpReward or DailyChallenges.defaultXpReward,
+		statusBar = statusBar,
 	}
 end
 
 DailyChallenges.challenges = {
 	{
 		id = "combo_crunch",
-		TitleKey = "menu.daily.combo.title",
-		DescriptionKey = "menu.daily.combo.description",
-		SessionStat = "BestComboStreak",
+		titleKey = "menu.daily.combo.title",
+		descriptionKey = "menu.daily.combo.description",
+		sessionStat = "bestComboStreak",
 		goal = 5,
-		ProgressKey = "menu.daily.combo.progress",
-		CompleteKey = "menu.daily.combo.complete",
-		ProgressReplacements = function(self, current, goal)
+		progressKey = "menu.daily.combo.progress",
+		completeKey = "menu.daily.combo.complete",
+		progressReplacements = function(self, current, goal)
 			return {
 				best = current or 0,
 				goal = goal or 0,
 			}
 		end,
-		XpReward = 70,
+		xpReward = 70,
 	},
 	{
 		id = "floor_explorer",
-		TitleKey = "menu.daily.floors.title",
-		DescriptionKey = "menu.daily.floors.description",
-		SessionStat = "FloorsCleared",
+		titleKey = "menu.daily.floors.title",
+		descriptionKey = "menu.daily.floors.description",
+		sessionStat = "floorsCleared",
 		goal = 5,
-		XpReward = 80,
+		xpReward = 80,
 	},
 	{
 		id = "fruit_sampler",
-		TitleKey = "menu.daily.apples.title",
-		DescriptionKey = "menu.daily.apples.description",
-		SessionStat = "ApplesEaten",
+		titleKey = "menu.daily.apples.title",
+		descriptionKey = "menu.daily.apples.description",
+		sessionStat = "applesEaten",
 		goal = 45,
-		ProgressKey = "menu.daily.apples.progress",
-		XpReward = 70,
+		progressKey = "menu.daily.apples.progress",
+		xpReward = 70,
 	},
 	{
 		id = "dragonfruit_delight",
-		TitleKey = "menu.daily.dragonfruit.title",
-		DescriptionKey = "menu.daily.dragonfruit.description",
-		SessionStat = "DragonfruitEaten",
+		titleKey = "menu.daily.dragonfruit.title",
+		descriptionKey = "menu.daily.dragonfruit.description",
+		sessionStat = "dragonfruitEaten",
 		goal = 1,
-		ProgressKey = "menu.daily.dragonfruit.progress",
-		CompleteKey = "menu.daily.dragonfruit.complete",
-		XpReward = 90,
+		progressKey = "menu.daily.dragonfruit.progress",
+		completeKey = "menu.daily.dragonfruit.complete",
+		xpReward = 90,
 	},
 	{
 		id = "combo_conductor",
-		TitleKey = "menu.daily.combos.title",
-		DescriptionKey = "menu.daily.combos.description",
-		SessionStat = "CombosTriggered",
+		titleKey = "menu.daily.combos.title",
+		descriptionKey = "menu.daily.combos.description",
+		sessionStat = "combosTriggered",
 		goal = 8,
-		ProgressKey = "menu.daily.combos.progress",
-		XpReward = 60,
+		progressKey = "menu.daily.combos.progress",
+		xpReward = 60,
 	},
 	{
 		id = "shield_specialist",
-		TitleKey = "menu.daily.shields.title",
-		DescriptionKey = "menu.daily.shields.description",
-		SessionStat = "CrashShieldsSaved",
+		titleKey = "menu.daily.shields.title",
+		descriptionKey = "menu.daily.shields.description",
+		sessionStat = "crashShieldsSaved",
 		goal = 3,
-		ProgressKey = "menu.daily.shields.progress",
-		CompleteKey = "menu.daily.shields.complete",
-		XpReward = 80,
+		progressKey = "menu.daily.shields.progress",
+		completeKey = "menu.daily.shields.complete",
+		xpReward = 80,
 	},
 	{
 		id = "shield_triad",
-		TitleKey = "menu.daily.shield_triad.title",
-		DescriptionKey = "menu.daily.shield_triad.description",
+		titleKey = "menu.daily.shield_triad.title",
+		descriptionKey = "menu.daily.shield_triad.description",
 		goal = 3,
-		ProgressKey = "menu.daily.shield_triad.progress",
-		CompleteKey = "menu.daily.shield_triad.complete",
-		GetValue = function(self, context)
-			local StatsSource = context and context.sessionStats
-			if StatsSource and type(StatsSource.get) == "function" then
-				local wall = StatsSource:get("RunShieldWallBounces") or 0
-				local rock = StatsSource:get("RunShieldRockBreaks") or 0
-				local saw = StatsSource:get("RunShieldSawParries") or 0
+		progressKey = "menu.daily.shield_triad.progress",
+		completeKey = "menu.daily.shield_triad.complete",
+		getValue = function(self, context)
+			local statsSource = context and context.sessionStats
+			if statsSource and type(statsSource.get) == "function" then
+				local wall = statsSource:get("runShieldWallBounces") or 0
+				local rock = statsSource:get("runShieldRockBreaks") or 0
+				local saw = statsSource:get("runShieldSawParries") or 0
 				return (wall > 0 and 1 or 0) + (rock > 0 and 1 or 0) + (saw > 0 and 1 or 0)
 			end
 
-			local wall = SessionStats and SessionStats.get and SessionStats:get("RunShieldWallBounces") or 0
-			local rock = SessionStats and SessionStats.get and SessionStats:get("RunShieldRockBreaks") or 0
-			local saw = SessionStats and SessionStats.get and SessionStats:get("RunShieldSawParries") or 0
+			local wall = SessionStats and SessionStats.get and SessionStats:get("runShieldWallBounces") or 0
+			local rock = SessionStats and SessionStats.get and SessionStats:get("runShieldRockBreaks") or 0
+			local saw = SessionStats and SessionStats.get and SessionStats:get("runShieldSawParries") or 0
 			return (wall > 0 and 1 or 0) + (rock > 0 and 1 or 0) + (saw > 0 and 1 or 0)
 		end,
-		XpReward = 85,
+		xpReward = 85,
 	},
 	{
 		id = "serpentine_marathon",
-		TitleKey = "menu.daily.marathon.title",
-		DescriptionKey = "menu.daily.marathon.description",
-		SessionStat = "TilesTravelled",
+		titleKey = "menu.daily.marathon.title",
+		descriptionKey = "menu.daily.marathon.description",
+		sessionStat = "tilesTravelled",
 		goal = 3000,
-		ProgressKey = "menu.daily.marathon.progress",
-		XpReward = 70,
+		progressKey = "menu.daily.marathon.progress",
+		xpReward = 70,
 	},
 	{
 		id = "shield_wall_master",
-		TitleKey = "menu.daily.shield_bounce.title",
-		DescriptionKey = "menu.daily.shield_bounce.description",
-		SessionStat = "RunShieldWallBounces",
+		titleKey = "menu.daily.shield_bounce.title",
+		descriptionKey = "menu.daily.shield_bounce.description",
+		sessionStat = "runShieldWallBounces",
 		goal = 5,
-		ProgressKey = "menu.daily.shield_bounce.progress",
-		CompleteKey = "menu.daily.shield_bounce.complete",
-		XpReward = 80,
+		progressKey = "menu.daily.shield_bounce.progress",
+		completeKey = "menu.daily.shield_bounce.complete",
+		xpReward = 80,
 	},
 	{
 		id = "rock_breaker",
-		TitleKey = "menu.daily.rock_breaker.title",
-		DescriptionKey = "menu.daily.rock_breaker.description",
-		SessionStat = "RunShieldRockBreaks",
+		titleKey = "menu.daily.rock_breaker.title",
+		descriptionKey = "menu.daily.rock_breaker.description",
+		sessionStat = "runShieldRockBreaks",
 		goal = 4,
-		ProgressKey = "menu.daily.rock_breaker.progress",
-		CompleteKey = "menu.daily.rock_breaker.complete",
-		XpReward = 80,
+		progressKey = "menu.daily.rock_breaker.progress",
+		completeKey = "menu.daily.rock_breaker.complete",
+		xpReward = 80,
 	},
 	{
 		id = "saw_parry_ace",
-		TitleKey = "menu.daily.saw_parry.title",
-		DescriptionKey = "menu.daily.saw_parry.description",
-		SessionStat = "RunShieldSawParries",
+		titleKey = "menu.daily.saw_parry.title",
+		descriptionKey = "menu.daily.saw_parry.description",
+		sessionStat = "runShieldSawParries",
 		goal = 2,
-		ProgressKey = "menu.daily.saw_parry.progress",
-		CompleteKey = "menu.daily.saw_parry.complete",
-		XpReward = 90,
+		progressKey = "menu.daily.saw_parry.progress",
+		completeKey = "menu.daily.saw_parry.complete",
+		xpReward = 90,
 	},
 	{
 		id = "time_keeper",
-		TitleKey = "menu.daily.time_keeper.title",
-		DescriptionKey = "menu.daily.time_keeper.description",
-		SessionStat = "TimeAlive",
+		titleKey = "menu.daily.time_keeper.title",
+		descriptionKey = "menu.daily.time_keeper.description",
+		sessionStat = "timeAlive",
 		goal = 600,
-		ProgressKey = "menu.daily.time_keeper.progress",
-		ProgressReplacements = function(self, current, goal)
-			local function FormatSeconds(seconds)
+		progressKey = "menu.daily.time_keeper.progress",
+		progressReplacements = function(self, current, goal)
+			local function formatSeconds(seconds)
 				seconds = math.max(0, math.floor(seconds or 0))
 				local minutes = math.floor(seconds / 60)
 				local secs = seconds % 60
@@ -420,27 +420,27 @@ DailyChallenges.challenges = {
 			end
 
 			return {
-				current = FormatSeconds(current),
-				goal = FormatSeconds(goal),
+				current = formatSeconds(current),
+				goal = formatSeconds(goal),
 			}
 		end,
-		DescriptionReplacements = function(self, current, goal)
+		descriptionReplacements = function(self, current, goal)
 			return {
 				goal = math.floor((goal or 0) / 60),
 				current = math.floor((current or 0) / 60),
 			}
 		end,
-		XpReward = 90,
+		xpReward = 90,
 	},
 	{
 		id = "floor_tourist",
-		TitleKey = "menu.daily.floor_tourist.title",
-		DescriptionKey = "menu.daily.floor_tourist.description",
-		SessionStat = "TotalFloorTime",
+		titleKey = "menu.daily.floor_tourist.title",
+		descriptionKey = "menu.daily.floor_tourist.description",
+		sessionStat = "totalFloorTime",
 		goal = 480,
-		ProgressKey = "menu.daily.floor_tourist.progress",
-		ProgressReplacements = function(self, current, goal)
-			local function FormatSeconds(seconds)
+		progressKey = "menu.daily.floor_tourist.progress",
+		progressReplacements = function(self, current, goal)
+			local function formatSeconds(seconds)
 				seconds = math.max(0, math.floor(seconds or 0))
 				local minutes = math.floor(seconds / 60)
 				local secs = seconds % 60
@@ -448,85 +448,85 @@ DailyChallenges.challenges = {
 			end
 
 			return {
-				current = FormatSeconds(current),
-				goal = FormatSeconds(goal),
+				current = formatSeconds(current),
+				goal = formatSeconds(goal),
 			}
 		end,
-		DescriptionReplacements = function(self, current, goal)
+		descriptionReplacements = function(self, current, goal)
 			return {
 				goal = math.floor((goal or 0) / 60),
 			}
 		end,
-		XpReward = 85,
+		xpReward = 85,
 		},
 		{
 			id = "floor_conqueror",
-			TitleKey = "menu.daily.floor_conqueror.title",
-			DescriptionKey = "menu.daily.floor_conqueror.description",
-			SessionStat = "FloorsCleared",
+			titleKey = "menu.daily.floor_conqueror.title",
+			descriptionKey = "menu.daily.floor_conqueror.description",
+			sessionStat = "floorsCleared",
 			goal = 8,
-			XpReward = 100,
+			xpReward = 100,
 		},
 		{
 		id = "depth_delver",
-		TitleKey = "menu.daily.depth_delver.title",
-		DescriptionKey = "menu.daily.depth_delver.description",
-		SessionStat = "DeepestFloorReached",
+		titleKey = "menu.daily.depth_delver.title",
+		descriptionKey = "menu.daily.depth_delver.description",
+		sessionStat = "deepestFloorReached",
 		goal = 10,
-		ProgressKey = "menu.daily.depth_delver.progress",
-		CompleteKey = "menu.daily.depth_delver.complete",
-		ProgressReplacements = function(self, current, goal)
+		progressKey = "menu.daily.depth_delver.progress",
+		completeKey = "menu.daily.depth_delver.complete",
+		progressReplacements = function(self, current, goal)
 			return {
 				current = math.max(1, math.floor(current or 1)),
 				goal = goal or 0,
 			}
 		end,
-		XpReward = 110,
+		xpReward = 110,
 	},
 	{
 		id = "apple_hoarder",
-		TitleKey = "menu.daily.apple_hoarder.title",
-		DescriptionKey = "menu.daily.apple_hoarder.description",
-		SessionStat = "ApplesEaten",
+		titleKey = "menu.daily.apple_hoarder.title",
+		descriptionKey = "menu.daily.apple_hoarder.description",
+		sessionStat = "applesEaten",
 		goal = 70,
-		ProgressKey = "menu.daily.apple_hoarder.progress",
-		XpReward = 90,
+		progressKey = "menu.daily.apple_hoarder.progress",
+		xpReward = 90,
 	},
 	{
 		id = "streak_perfectionist",
-		TitleKey = "menu.daily.streak_perfectionist.title",
-		DescriptionKey = "menu.daily.streak_perfectionist.description",
-		SessionStat = "FruitWithoutTurning",
+		titleKey = "menu.daily.streak_perfectionist.title",
+		descriptionKey = "menu.daily.streak_perfectionist.description",
+		sessionStat = "fruitWithoutTurning",
 		goal = 12,
-		ProgressKey = "menu.daily.streak_perfectionist.progress",
-		CompleteKey = "menu.daily.streak_perfectionist.complete",
-		XpReward = 90,
+		progressKey = "menu.daily.streak_perfectionist.progress",
+		completeKey = "menu.daily.streak_perfectionist.complete",
+		xpReward = 90,
 	},
 }
 
-function DailyChallenges:GetChallengeForIndex(index, context)
+function DailyChallenges:getChallengeForIndex(index, context)
 	local challenge = self.challenges[index]
 	if not challenge then
 		return nil
 	end
 
 	challenge.index = index
-	return EvaluateChallenge(self, challenge, context)
+	return evaluateChallenge(self, challenge, context)
 end
 
-function DailyChallenges:GetDailyChallenge(date, context)
+function DailyChallenges:getDailyChallenge(date, context)
 	local count = #self.challenges
-	local index = GetChallengeIndex(self, count, date)
+	local index = getChallengeIndex(self, count, date)
 	if not index then
 		return nil
 	end
 
 	context = context or {}
-	context.date = context.date or ResolveDate(self, date)
-	return self:GetChallengeForIndex(index, context)
+	context.date = context.date or resolveDate(self, date)
+	return self:getChallengeForIndex(index, context)
 end
 
-local function GetDayValue(date)
+local function getDayValue(date)
 	if not date then
 		return nil
 	end
@@ -534,18 +534,18 @@ local function GetDayValue(date)
 	return (date.year or 0) * 512 + (date.yday or 0)
 end
 
-function DailyChallenges:ApplyRunResults(StatsSource, options)
-	StatsSource = StatsSource or SessionStats
+function DailyChallenges:applyRunResults(statsSource, options)
+	statsSource = statsSource or SessionStats
 	options = options or {}
 
 	local date = options.date
-	local ResolvedDate = ResolveDate(self, date)
+	local resolvedDate = resolveDate(self, date)
 	local count = #self.challenges
 	if count == 0 then
 		return nil
 	end
 
-	local index = GetChallengeIndex(self, count, ResolvedDate)
+	local index = getChallengeIndex(self, count, resolvedDate)
 	if not index then
 		return nil
 	end
@@ -555,87 +555,87 @@ function DailyChallenges:ApplyRunResults(StatsSource, options)
 		return nil
 	end
 
-	local RunValue = CallChallengeFunction(challenge, "GetRunValue", StatsSource, options)
+	local runValue = callChallengeFunction(challenge, "getRunValue", statsSource, options)
 
-	if RunValue == nil then
-		if challenge.sessionStat and StatsSource then
-			if type(StatsSource.get) == "function" then
-				RunValue = StatsSource:get(challenge.sessionStat) or 0
+	if runValue == nil then
+		if challenge.sessionStat and statsSource then
+			if type(statsSource.get) == "function" then
+				runValue = statsSource:get(challenge.sessionStat) or 0
 			else
-				RunValue = StatsSource[challenge.sessionStat] or 0
+				runValue = statsSource[challenge.sessionStat] or 0
 			end
 		elseif challenge.stat then
-			RunValue = PlayerStats:get(challenge.stat) or 0
+			runValue = PlayerStats:get(challenge.stat) or 0
 		end
 	end
 
-	RunValue = math.max(0, math.floor(RunValue or 0))
+	runValue = math.max(0, math.floor(runValue or 0))
 
-	local goal = ResolveGoal(challenge)
-	local StoredProgress = GetStoredProgress(self, challenge, ResolvedDate)
-	local best = StoredProgress
-	if RunValue > best then
-		best = RunValue
-		SetStoredProgress(self, challenge, ResolvedDate, best)
+	local goal = resolveGoal(challenge)
+	local storedProgress = getStoredProgress(self, challenge, resolvedDate)
+	local best = storedProgress
+	if runValue > best then
+		best = runValue
+		setStoredProgress(self, challenge, resolvedDate, best)
 	end
 
-	local AlreadyCompleted = IsStoredComplete(self, challenge, ResolvedDate)
-	local XpAwarded = 0
-	local CompletedNow = false
-	local StreakInfo = nil
+	local alreadyCompleted = isStoredComplete(self, challenge, resolvedDate)
+	local xpAwarded = 0
+	local completedNow = false
+	local streakInfo = nil
 
-	local PreviousStreak = PlayerStats:get("DailyChallengeStreak") or 0
-	local PreviousBest = PlayerStats:get("DailyChallengeBestStreak") or 0
-	local LastCompletionDay = PlayerStats:get("DailyChallengeLastCompletionDay") or 0
-	local DayValue = GetDayValue(ResolvedDate)
+	local previousStreak = PlayerStats:get("dailyChallengeStreak") or 0
+	local previousBest = PlayerStats:get("dailyChallengeBestStreak") or 0
+	local lastCompletionDay = PlayerStats:get("dailyChallengeLastCompletionDay") or 0
+	local dayValue = getDayValue(resolvedDate)
 
-	if goal > 0 and RunValue >= goal and not AlreadyCompleted then
-		SetStoredComplete(self, challenge, ResolvedDate, true)
-		XpAwarded = challenge.xpReward or self.DefaultXpReward
-		CompletedNow = true
+	if goal > 0 and runValue >= goal and not alreadyCompleted then
+		setStoredComplete(self, challenge, resolvedDate, true)
+		xpAwarded = challenge.xpReward or self.defaultXpReward
+		completedNow = true
 
-		PlayerStats:add("DailyChallengesCompleted", 1)
+		PlayerStats:add("dailyChallengesCompleted", 1)
 
-		local NewStreak = PreviousStreak
-		if DayValue then
-			if LastCompletionDay > 0 then
-				if LastCompletionDay == DayValue then
-					NewStreak = math.max(PreviousStreak, 1)
-				elseif LastCompletionDay == DayValue - 1 then
-					NewStreak = math.max(PreviousStreak, 0) + 1
+		local newStreak = previousStreak
+		if dayValue then
+			if lastCompletionDay > 0 then
+				if lastCompletionDay == dayValue then
+					newStreak = math.max(previousStreak, 1)
+				elseif lastCompletionDay == dayValue - 1 then
+					newStreak = math.max(previousStreak, 0) + 1
 				else
-					NewStreak = 1
+					newStreak = 1
 				end
 			else
-				NewStreak = 1
+				newStreak = 1
 			end
 
-			PlayerStats:set("DailyChallengeLastCompletionDay", DayValue)
+			PlayerStats:set("dailyChallengeLastCompletionDay", dayValue)
 		else
-			NewStreak = math.max(PreviousStreak, 1)
+			newStreak = math.max(previousStreak, 1)
 		end
 
-		if NewStreak <= 0 then
-			NewStreak = 1
+		if newStreak <= 0 then
+			newStreak = 1
 		end
 
-		PlayerStats:set("DailyChallengeStreak", NewStreak)
+		PlayerStats:set("dailyChallengeStreak", newStreak)
 
-		local BestStreak = PreviousBest
-		if NewStreak > BestStreak then
-			BestStreak = NewStreak
-			PlayerStats:set("DailyChallengeBestStreak", BestStreak)
+		local bestStreak = previousBest
+		if newStreak > bestStreak then
+			bestStreak = newStreak
+			PlayerStats:set("dailyChallengeBestStreak", bestStreak)
 		end
 
-		StreakInfo = {
-			current = NewStreak,
-			best = BestStreak,
-			WasNewBest = NewStreak > PreviousBest,
-			continued = (LastCompletionDay > 0 and DayValue and (DayValue - LastCompletionDay) == 1) or false,
-			DayValue = DayValue,
+		streakInfo = {
+			current = newStreak,
+			best = bestStreak,
+			wasNewBest = newStreak > previousBest,
+			continued = (lastCompletionDay > 0 and dayValue and (dayValue - lastCompletionDay) == 1) or false,
+			dayValue = dayValue,
 		}
 
-		local achievements = GetAchievements()
+		local achievements = getAchievements()
 		if achievements and achievements.checkAll then
 			local ok, err = pcall(function()
 				achievements:checkAll()
@@ -644,34 +644,34 @@ function DailyChallenges:ApplyRunResults(StatsSource, options)
 				print("[DailyChallenges] Failed to update achievements after daily challenge completion:", err)
 			end
 		end
-	elseif AlreadyCompleted then
-		local CurrentStreak = math.max(PreviousStreak, 0)
-		local BestStreak = math.max(PreviousBest, CurrentStreak)
-		StreakInfo = {
-			current = CurrentStreak,
-			best = BestStreak,
-			AlreadyCompleted = true,
-			DayValue = DayValue,
+	elseif alreadyCompleted then
+		local currentStreak = math.max(previousStreak, 0)
+		local bestStreak = math.max(previousBest, currentStreak)
+		streakInfo = {
+			current = currentStreak,
+			best = bestStreak,
+			alreadyCompleted = true,
+			dayValue = dayValue,
 		}
-	elseif PreviousStreak > 0 then
-		local CurrentStreak = math.max(PreviousStreak, 0)
-		local BestStreak = math.max(PreviousBest, CurrentStreak)
-		StreakInfo = {
-			current = CurrentStreak,
-			best = BestStreak,
-			NeedsCompletion = (DayValue ~= nil and LastCompletionDay ~= DayValue),
-			DayValue = DayValue,
+	elseif previousStreak > 0 then
+		local currentStreak = math.max(previousStreak, 0)
+		local bestStreak = math.max(previousBest, currentStreak)
+		streakInfo = {
+			current = currentStreak,
+			best = bestStreak,
+			needsCompletion = (dayValue ~= nil and lastCompletionDay ~= dayValue),
+			dayValue = dayValue,
 		}
 	end
 
 	return {
-		ChallengeId = challenge.id,
+		challengeId = challenge.id,
 		goal = goal,
 		progress = best,
-		completed = AlreadyCompleted or CompletedNow,
-		CompletedNow = CompletedNow,
-		XpAwarded = XpAwarded,
-		StreakInfo = StreakInfo,
+		completed = alreadyCompleted or completedNow,
+		completedNow = completedNow,
+		xpAwarded = xpAwarded,
+		streakInfo = streakInfo,
 	}
 end
 

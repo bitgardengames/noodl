@@ -43,7 +43,7 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.52,
-				RadiusMultiplier = 1.35,
+				radiusMultiplier = 1.35,
 				color = {0.98, 0.72, 0.78, 1.0},
 				step = 2,
 			},
@@ -98,13 +98,13 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "AuroraVeil",
+				type = "auroraVeil",
 				intensity = 0.68,
 				opacity = 0.82,
-				CurtainDensity = 7.5,
-				DriftSpeed = 0.85,
+				curtainDensity = 7.5,
+				driftSpeed = 0.85,
 				parallax = 1.6,
-				ShimmerStrength = 0.75,
+				shimmerStrength = 0.75,
 				colors = {
 					primary = {0.36, 0.88, 0.96, 0.85},
 					secondary = {0.76, 0.58, 1.00, 0.95},
@@ -113,7 +113,7 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.55,
-				RadiusMultiplier = 1.45,
+				radiusMultiplier = 1.45,
 				color = {0.60, 0.85, 1.00, 1.0},
 			},
 		},
@@ -132,11 +132,11 @@ local SKIN_DEFINITIONS = {
 		effects = {
 			glow = {
 				intensity = 0.45,
-				RadiusMultiplier = 1.3,
+				radiusMultiplier = 1.3,
 				color = {1.00, 0.78, 0.35, 1.0},
 			},
 		},
-		unlock = { achievement = "AppleTycoon" },
+		unlock = { achievement = "appleTycoon" },
 		order = 40,
 	},
 	{
@@ -150,12 +150,12 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "AbyssalPulse",
+				type = "abyssalPulse",
 				intensity = 0.72,
 				opacity = 0.86,
-				SwirlDensity = 9.0,
-				GlimmerFrequency = 4.2,
-				DriftSpeed = 1.05,
+				swirlDensity = 9.0,
+				glimmerFrequency = 4.2,
+				driftSpeed = 1.05,
 				darkness = 0.32,
 				colors = {
 					primary = {0.20, 0.35, 0.75, 1.0},
@@ -165,12 +165,12 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.6,
-				RadiusMultiplier = 1.6,
+				radiusMultiplier = 1.6,
 				color = {0.36, 0.62, 1.00, 1.0},
 				step = 3,
 			},
 		},
-		unlock = { achievement = "FloorAscendant" },
+		unlock = { achievement = "floorAscendant" },
 		order = 50,
 	},
 	{
@@ -184,11 +184,11 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "IonStorm",
+				type = "ionStorm",
 				intensity = 0.82,
 				opacity = 0.9,
-				BoltFrequency = 9.5,
-				FlashFrequency = 5.8,
+				boltFrequency = 9.5,
+				flashFrequency = 5.8,
 				haze = 0.7,
 				turbulence = 1.45,
 				colors = {
@@ -199,7 +199,7 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.75,
-				RadiusMultiplier = 1.55,
+				radiusMultiplier = 1.55,
 				color = {0.62, 0.88, 1.00, 1.0},
 				step = 2,
 			},
@@ -218,13 +218,13 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "PetalBloom",
+				type = "petalBloom",
 				intensity = 0.76,
 				opacity = 0.84,
-				PetalCount = 8.5,
-				PulseSpeed = 2.2,
-				TrailStrength = 0.6,
-				BloomStrength = 0.8,
+				petalCount = 8.5,
+				pulseSpeed = 2.2,
+				trailStrength = 0.6,
+				bloomStrength = 0.8,
 				colors = {
 					primary = {0.52, 0.16, 0.58, 1.0},
 					secondary = {0.94, 0.48, 0.88, 1.0},
@@ -233,12 +233,12 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.65,
-				RadiusMultiplier = 1.5,
+				radiusMultiplier = 1.5,
 				color = {0.94, 0.48, 0.88, 1.0},
 				step = 2,
 			},
 		},
-		unlock = { achievement = "MetaMilestone5" },
+		unlock = { achievement = "metaMilestone5" },
 		order = 70,
 	},
 	{
@@ -252,13 +252,13 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "VoidEcho",
+				type = "voidEcho",
 				intensity = 0.64,
 				opacity = 0.8,
-				VeilFrequency = 7.6,
-				EchoSpeed = -1.1,
-				PhaseShift = 0.3,
-				RiftIntensity = 0.22,
+				veilFrequency = 7.6,
+				echoSpeed = -1.1,
+				phaseShift = 0.3,
+				riftIntensity = 0.22,
 				colors = {
 					primary = {0.18, 0.18, 0.32, 1.0},
 					secondary = {0.32, 0.22, 0.52, 1.0},
@@ -267,12 +267,12 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.65,
-				RadiusMultiplier = 1.45,
+				radiusMultiplier = 1.45,
 				color = {0.48, 0.28, 0.96, 0.9},
 				step = 1,
 			},
 		},
-		unlock = { achievement = "FloorAbyss" },
+		unlock = { achievement = "floorAbyss" },
 		order = 80,
 	},
 	{
@@ -286,13 +286,13 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "ChronoWeave",
+				type = "chronoWeave",
 				intensity = 0.7,
 				opacity = 0.88,
-				RingDensity = 10.5,
-				TimeFlow = 2.6,
-				WeaveStrength = 1.2,
-				PhaseOffset = 0.04,
+				ringDensity = 10.5,
+				timeFlow = 2.6,
+				weaveStrength = 1.2,
+				phaseOffset = 0.04,
 				colors = {
 					primary = {0.46, 0.70, 1.00, 0.95},
 					secondary = {0.60, 0.82, 1.00, 1.0},
@@ -301,7 +301,7 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.7,
-				RadiusMultiplier = 1.6,
+				radiusMultiplier = 1.6,
 				color = {0.70, 0.88, 1.00, 1.0},
 				step = 2,
 			},
@@ -320,11 +320,11 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "IonStorm",
+				type = "ionStorm",
 				intensity = 0.62,
 				opacity = 0.85,
-				BoltFrequency = 6.2,
-				FlashFrequency = 4.0,
+				boltFrequency = 6.2,
+				flashFrequency = 4.0,
 				haze = 0.4,
 				turbulence = 1.1,
 				colors = {
@@ -335,7 +335,7 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.68,
-				RadiusMultiplier = 1.6,
+				radiusMultiplier = 1.6,
 				color = {0.44, 0.80, 1.00, 1.0},
 				step = 2,
 			},
@@ -354,13 +354,13 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "GildedFacet",
+				type = "gildedFacet",
 				intensity = 0.7,
 				opacity = 0.83,
-				FacetDensity = 15.0,
-				SparkleDensity = 11.5,
-				BeamSpeed = 0.9,
-				ReflectionStrength = 0.75,
+				facetDensity = 15.0,
+				sparkleDensity = 11.5,
+				beamSpeed = 0.9,
+				reflectionStrength = 0.75,
 				colors = {
 					primary = {0.96, 0.78, 0.42, 1.0},
 					secondary = {1.00, 0.92, 0.68, 1.0},
@@ -369,12 +369,12 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.68,
-				RadiusMultiplier = 1.55,
+				radiusMultiplier = 1.55,
 				color = {1.00, 0.90, 0.60, 1.0},
 				step = 3,
 			},
 		},
-		unlock = { achievement = "ScoreLegend" },
+		unlock = { achievement = "scoreLegend" },
 		order = 100,
 	},
 	{
@@ -388,13 +388,13 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "ConstellationDrift",
+				type = "constellationDrift",
 				intensity = 0.74,
 				opacity = 0.86,
-				StarDensity = 6.8,
-				DriftSpeed = 1.25,
+				starDensity = 6.8,
+				driftSpeed = 1.25,
 				parallax = 0.75,
-				TwinkleStrength = 0.85,
+				twinkleStrength = 0.85,
 				colors = {
 					primary = {0.24, 0.32, 0.62, 1.0},
 					secondary = {0.52, 0.70, 1.00, 1.0},
@@ -403,12 +403,12 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.72,
-				RadiusMultiplier = 1.7,
+				radiusMultiplier = 1.7,
 				color = {0.58, 0.82, 1.00, 1.0},
 				step = 2,
 			},
 		},
-		unlock = { achievement = "MetaMilestone7" },
+		unlock = { achievement = "metaMilestone7" },
 		order = 110,
 	},
 	{
@@ -422,13 +422,13 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "CrystalBloom",
+				type = "crystalBloom",
 				intensity = 0.66,
 				opacity = 0.82,
-				ShardDensity = 7.8,
-				SweepSpeed = -0.75,
-				RefractionStrength = 0.7,
-				VeinStrength = 0.68,
+				shardDensity = 7.8,
+				sweepSpeed = -0.75,
+				refractionStrength = 0.7,
+				veinStrength = 0.68,
 				colors = {
 					primary = {0.24, 0.72, 0.58, 1.0},
 					secondary = {0.32, 0.86, 0.68, 1.0},
@@ -437,12 +437,12 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.6,
-				RadiusMultiplier = 1.48,
+				radiusMultiplier = 1.48,
 				color = {0.62, 0.92, 0.70, 1.0},
 				step = 2,
 			},
 		},
-		unlock = { achievement = "DailyFunChampion" },
+		unlock = { achievement = "dailyFunChampion" },
 		order = 120,
 	},
 	{
@@ -456,13 +456,13 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "EmberForge",
+				type = "emberForge",
 				intensity = 0.78,
 				opacity = 0.84,
-				EmberFrequency = 8.8,
-				EmberSpeed = 1.2,
-				EmberGlow = 0.82,
-				SlagDarkness = 0.42,
+				emberFrequency = 8.8,
+				emberSpeed = 1.2,
+				emberGlow = 0.82,
+				slagDarkness = 0.42,
 				colors = {
 					primary = {0.32, 0.14, 0.28, 1.0},
 					secondary = {0.94, 0.38, 0.32, 1.0},
@@ -471,12 +471,12 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.7,
-				RadiusMultiplier = 1.62,
+				radiusMultiplier = 1.62,
 				color = {0.96, 0.46, 0.42, 1.0},
 				step = 3,
 			},
 		},
-		unlock = { achievement = "AppleEternal" },
+		unlock = { achievement = "appleEternal" },
 		order = 130,
 	},
 	{
@@ -490,13 +490,13 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "MechanicalScan",
+				type = "mechanicalScan",
 				intensity = 0.63,
 				opacity = 0.86,
-				ScanSpeed = 1.6,
-				GearFrequency = 13.2,
-				GearParallax = 1.35,
-				ServoIntensity = 0.58,
+				scanSpeed = 1.6,
+				gearFrequency = 13.2,
+				gearParallax = 1.35,
+				servoIntensity = 0.58,
 				colors = {
 					primary = {0.42, 0.46, 0.62, 1.0},
 					secondary = {0.56, 0.60, 0.82, 1.0},
@@ -505,12 +505,12 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.68,
-				RadiusMultiplier = 1.52,
+				radiusMultiplier = 1.52,
 				color = {0.90, 0.82, 0.58, 1.0},
 				step = 1,
 			},
 		},
-		unlock = { achievement = "RockCrusher" },
+		unlock = { achievement = "rockCrusher" },
 		order = 140,
 	},
 	{
@@ -524,13 +524,13 @@ local SKIN_DEFINITIONS = {
 		},
 		effects = {
 			overlay = {
-				type = "TidalChorus",
+				type = "tidalChorus",
 				intensity = 0.78,
 				opacity = 0.88,
-				WaveFrequency = 6.2,
-				CrestSpeed = 1.5,
-				ChorusStrength = 0.68,
-				DepthShift = -0.08,
+				waveFrequency = 6.2,
+				crestSpeed = 1.5,
+				chorusStrength = 0.68,
+				depthShift = -0.08,
 				colors = {
 					primary = {0.20, 0.62, 0.94, 1.0},
 					secondary = {0.40, 0.90, 1.00, 1.0},
@@ -539,17 +539,17 @@ local SKIN_DEFINITIONS = {
 			},
 			glow = {
 				intensity = 0.74,
-				RadiusMultiplier = 1.68,
+				radiusMultiplier = 1.68,
 				color = {0.52, 0.92, 1.00, 1.0},
 				step = 2,
 			},
 		},
-		unlock = { achievement = "ComboInferno" },
+		unlock = { achievement = "comboInferno" },
 		order = 150,
 	},
 }
 
-local function BuildDefaultState()
+local function buildDefaultState()
 	local unlocked = {}
 
 	for _, definition in ipairs(SKIN_DEFINITIONS) do
@@ -562,16 +562,16 @@ local function BuildDefaultState()
 	unlocked[DEFAULT_SKIN_ID] = true
 
 	return {
-		SelectedSkin = DEFAULT_SKIN_ID,
+		selectedSkin = DEFAULT_SKIN_ID,
 		unlocked = unlocked,
-		UnlockHistory = {},
-		RecentUnlocks = {},
+		unlockHistory = {},
+		recentUnlocks = {},
 	}
 end
 
-local DEFAULT_STATE = BuildDefaultState()
+local DEFAULT_STATE = buildDefaultState()
 
-local function CopyTable(source)
+local function copyTable(source)
 	if type(source) ~= "table" then
 		return {}
 	end
@@ -579,7 +579,7 @@ local function CopyTable(source)
 	local result = {}
 	for key, value in pairs(source) do
 		if type(value) == "table" then
-			result[key] = CopyTable(value)
+			result[key] = copyTable(value)
 		else
 			result[key] = value
 		end
@@ -587,7 +587,7 @@ local function CopyTable(source)
 	return result
 end
 
-local function MergeTables(target, source)
+local function mergeTables(target, source)
 	if type(target) ~= "table" then
 		target = {}
 	end
@@ -598,7 +598,7 @@ local function MergeTables(target, source)
 
 	for key, value in pairs(source) do
 		if type(value) == "table" then
-			target[key] = MergeTables(CopyTable(target[key] or {}), value)
+			target[key] = mergeTables(copyTable(target[key] or {}), value)
 		else
 			target[key] = value
 		end
@@ -607,7 +607,7 @@ local function MergeTables(target, source)
 	return target
 end
 
-local function IsArray(tbl)
+local function isArray(tbl)
 	if type(tbl) ~= "table" then
 		return false
 	end
@@ -625,30 +625,30 @@ end
 
 local function serialize(value, indent)
 	indent = indent or 0
-	local ValueType = type(value)
+	local valueType = type(value)
 
-	if ValueType == "number" or ValueType == "boolean" then
+	if valueType == "number" or valueType == "boolean" then
 		return tostring(value)
-	elseif ValueType == "string" then
+	elseif valueType == "string" then
 		return string.format("%q", value)
-	elseif ValueType == "table" then
+	elseif valueType == "table" then
 		local spacing = string.rep(" ", indent)
 		local lines = { "{\n" }
-		local NextIndent = indent + 4
-		local EntryIndent = string.rep(" ", NextIndent)
-		if IsArray(value) then
+		local nextIndent = indent + 4
+		local entryIndent = string.rep(" ", nextIndent)
+		if isArray(value) then
 			for index, val in ipairs(value) do
-				table.insert(lines, string.format("%s[%d] = %s,\n", EntryIndent, index, serialize(val, NextIndent)))
+				table.insert(lines, string.format("%s[%d] = %s,\n", entryIndent, index, serialize(val, nextIndent)))
 			end
 		else
 			for key, val in pairs(value) do
-				local KeyRepr
+				local keyRepr
 				if type(key) == "string" then
-					KeyRepr = string.format("[\"%s\"]", key)
+					keyRepr = string.format("[\"%s\"]", key)
 				else
-					KeyRepr = string.format("[%s]", tostring(key))
+					keyRepr = string.format("[%s]", tostring(key))
 				end
-				table.insert(lines, string.format("%s%s = %s,\n", EntryIndent, KeyRepr, serialize(val, NextIndent)))
+				table.insert(lines, string.format("%s%s = %s,\n", entryIndent, keyRepr, serialize(val, nextIndent)))
 			end
 		end
 		table.insert(lines, string.format("%s}", spacing))
@@ -667,7 +667,7 @@ function SnakeCosmetics:_buildIndex()
 	self._orderedSkins = {}
 
 	for _, def in ipairs(SKIN_DEFINITIONS) do
-		local entry = CopyTable(def)
+		local entry = copyTable(def)
 		entry.order = entry.order or DEFAULT_ORDER
 		self._skinsById[entry.id] = entry
 		table.insert(self._orderedSkins, entry)
@@ -690,22 +690,22 @@ function SnakeCosmetics:_ensureLoaded()
 
 	self:_buildIndex()
 
-	self.state = CopyTable(DEFAULT_STATE)
+	self.state = copyTable(DEFAULT_STATE)
 
 	if love.filesystem.getInfo(SAVE_FILE) then
 		local ok, chunk = pcall(love.filesystem.load, SAVE_FILE)
 		if ok and chunk then
 			local success, data = pcall(chunk)
 			if success and type(data) == "table" then
-				self.state = MergeTables(CopyTable(DEFAULT_STATE), data)
+				self.state = mergeTables(copyTable(DEFAULT_STATE), data)
 			end
 		end
 	end
 
 	self.state.unlocked = self.state.unlocked or {}
 	self.state.unlocked[DEFAULT_SKIN_ID] = true
-	self.state.UnlockHistory = self.state.UnlockHistory or {}
-	self.state.RecentUnlocks = self.state.RecentUnlocks or {}
+	self.state.unlockHistory = self.state.unlockHistory or {}
+	self.state.recentUnlocks = self.state.recentUnlocks or {}
 
 	self:_validateSelection()
 
@@ -717,11 +717,11 @@ function SnakeCosmetics:_validateSelection()
 		return
 	end
 
-	local selected = self.state.SelectedSkin or DEFAULT_SKIN_ID
+	local selected = self.state.selectedSkin or DEFAULT_SKIN_ID
 	if not self.state.unlocked[selected] then
-		self.state.SelectedSkin = DEFAULT_SKIN_ID
+		self.state.selectedSkin = DEFAULT_SKIN_ID
 	else
-		self.state.SelectedSkin = selected
+		self.state.selectedSkin = selected
 	end
 end
 
@@ -731,10 +731,10 @@ function SnakeCosmetics:_save()
 	end
 
 	local snapshot = {
-		SelectedSkin = self.state.SelectedSkin,
-		unlocked = CopyTable(self.state.unlocked),
-		UnlockHistory = CopyTable(self.state.UnlockHistory or {}),
-		RecentUnlocks = CopyTable(self.state.RecentUnlocks or {}),
+		selectedSkin = self.state.selectedSkin,
+		unlocked = copyTable(self.state.unlocked),
+		unlockHistory = copyTable(self.state.unlockHistory or {}),
+		recentUnlocks = copyTable(self.state.recentUnlocks or {}),
 	}
 
 	local serialized = "return " .. serialize(snapshot, 0) .. "\n"
@@ -743,7 +743,7 @@ end
 
 function SnakeCosmetics:_recordUnlock(id, context)
 	context = context or {}
-	self.state.UnlockHistory = self.state.UnlockHistory or {}
+	self.state.unlockHistory = self.state.unlockHistory or {}
 
 	local record = {
 		id = id,
@@ -760,7 +760,7 @@ function SnakeCosmetics:_recordUnlock(id, context)
 		record.timestamp = os.time()
 	end
 
-	table.insert(self.state.UnlockHistory, record)
+	table.insert(self.state.unlockHistory, record)
 end
 
 function SnakeCosmetics:_unlockSkinInternal(id, context)
@@ -773,13 +773,13 @@ function SnakeCosmetics:_unlockSkinInternal(id, context)
 	end
 
 	self.state.unlocked[id] = true
-	self.state.RecentUnlocks = self.state.RecentUnlocks or {}
-	self.state.RecentUnlocks[id] = true
+	self.state.recentUnlocks = self.state.recentUnlocks or {}
+	self.state.recentUnlocks[id] = true
 	self:_recordUnlock(id, context)
 	return true
 end
 
-function SnakeCosmetics:IsSkinUnlocked(id)
+function SnakeCosmetics:isSkinUnlocked(id)
 	self:_ensureLoaded()
 	return self.state.unlocked[id] == true
 end
@@ -789,13 +789,13 @@ function SnakeCosmetics:_registerAchievementListener()
 		return
 	end
 
-	if not (Achievements and Achievements.RegisterUnlockListener) then
+	if not (Achievements and Achievements.registerUnlockListener) then
 		return
 	end
 
-	Achievements:RegisterUnlockListener(function(id)
+	Achievements:registerUnlockListener(function(id)
 		local ok, err = pcall(function()
-			self:OnAchievementUnlocked(id)
+			self:onAchievementUnlocked(id)
 		end)
 		if not ok then
 			print("[snakecosmetics] failed to process achievement unlock", tostring(id), err)
@@ -805,7 +805,7 @@ function SnakeCosmetics:_registerAchievementListener()
 	self._achievementListenerRegistered = true
 end
 
-local function MatchesLevelRequirement(skin, level)
+local function matchesLevelRequirement(skin, level)
 	local unlock = skin.unlock or {}
 	if not unlock.level then
 		return false
@@ -813,15 +813,15 @@ local function MatchesLevelRequirement(skin, level)
 	return level >= unlock.level
 end
 
-local function MatchesAchievementRequirement(skin, AchievementId)
+local function matchesAchievementRequirement(skin, achievementId)
 	local unlock = skin.unlock or {}
 	if not unlock.achievement then
 		return false
 	end
-	return unlock.achievement == AchievementId
+	return unlock.achievement == achievementId
 end
 
-function SnakeCosmetics:SyncMetaLevel(level, context)
+function SnakeCosmetics:syncMetaLevel(level, context)
 	self:_ensureLoaded()
 
 	level = math.max(1, math.floor(level or 1))
@@ -829,20 +829,20 @@ function SnakeCosmetics:SyncMetaLevel(level, context)
 
 	local changed = false
 	for _, skin in ipairs(self._orderedSkins or {}) do
-		if MatchesLevelRequirement(skin, level) then
-			local UnlockContext = {
-				source = "MetaLevel",
+		if matchesLevelRequirement(skin, level) then
+			local unlockContext = {
+				source = "metaLevel",
 				level = skin.unlock.level,
 			}
 			if context and type(context.levelUps) == "table" then
 				for _, lvl in ipairs(context.levelUps) do
 					if lvl == skin.unlock.level then
-						UnlockContext.justUnlocked = true
+						unlockContext.justUnlocked = true
 						break
 					end
 				end
 			end
-			changed = self:_unlockSkinInternal(skin.id, UnlockContext) or changed
+			changed = self:_unlockSkinInternal(skin.id, unlockContext) or changed
 		end
 	end
 
@@ -852,20 +852,20 @@ function SnakeCosmetics:SyncMetaLevel(level, context)
 	end
 end
 
-function SnakeCosmetics:SyncAchievements()
+function SnakeCosmetics:syncAchievements()
 	self:_ensureLoaded()
 
 	local changed = false
 	for _, skin in ipairs(self._orderedSkins or {}) do
 		local unlock = skin.unlock or {}
 		if unlock.achievement then
-			local definition = Achievements:GetDefinition(unlock.achievement)
+			local definition = Achievements:getDefinition(unlock.achievement)
 			if definition and definition.unlocked then
-				local UnlockContext = {
+				local unlockContext = {
 					source = "achievement",
 					achievement = unlock.achievement,
 				}
-				changed = self:_unlockSkinInternal(skin.id, UnlockContext) or changed
+				changed = self:_unlockSkinInternal(skin.id, unlockContext) or changed
 			end
 		end
 	end
@@ -876,12 +876,12 @@ function SnakeCosmetics:SyncAchievements()
 	end
 end
 
-function SnakeCosmetics:OnAchievementUnlocked(id)
+function SnakeCosmetics:onAchievementUnlocked(id)
 	self:_ensureLoaded()
 
 	local changed = false
 	for _, skin in ipairs(self._orderedSkins or {}) do
-		if MatchesAchievementRequirement(skin, id) then
+		if matchesAchievementRequirement(skin, id) then
 			changed = self:_unlockSkinInternal(skin.id, {
 				source = "achievement",
 				achievement = id,
@@ -902,28 +902,28 @@ function SnakeCosmetics:load(context)
 	context = context or {}
 
 	if context.metaLevel then
-		self:SyncMetaLevel(context.metaLevel)
+		self:syncMetaLevel(context.metaLevel)
 	end
 
-	self:SyncAchievements()
+	self:syncAchievements()
 end
 
-function SnakeCosmetics:GetSkins()
+function SnakeCosmetics:getSkins()
 	self:_ensureLoaded()
 
 	local list = {}
-	local RecentUnlocks = self.state.RecentUnlocks or {}
+	local recentUnlocks = self.state.recentUnlocks or {}
 	for _, skin in ipairs(self._orderedSkins or {}) do
-		local entry = CopyTable(skin)
+		local entry = copyTable(skin)
 		entry.unlocked = self.state.unlocked[skin.id] == true
-		entry.selected = (self.state.SelectedSkin == skin.id)
-		entry.justUnlocked = RecentUnlocks[skin.id] == true
+		entry.selected = (self.state.selectedSkin == skin.id)
+		entry.justUnlocked = recentUnlocks[skin.id] == true
 		list[#list + 1] = entry
 	end
 	return list
 end
 
-function SnakeCosmetics:ClearRecentUnlocks(ids)
+function SnakeCosmetics:clearRecentUnlocks(ids)
 	self:_ensureLoaded()
 
 	local changed = false
@@ -935,14 +935,14 @@ function SnakeCosmetics:ClearRecentUnlocks(ids)
 			else
 				id = key
 			end
-			if id and self.state.RecentUnlocks[id] then
-				self.state.RecentUnlocks[id] = nil
+			if id and self.state.recentUnlocks[id] then
+				self.state.recentUnlocks[id] = nil
 				changed = true
 			end
 		end
 	else
-		for id in pairs(self.state.RecentUnlocks or {}) do
-			self.state.RecentUnlocks[id] = nil
+		for id in pairs(self.state.recentUnlocks or {}) do
+			self.state.recentUnlocks[id] = nil
 			changed = true
 		end
 	end
@@ -952,38 +952,38 @@ function SnakeCosmetics:ClearRecentUnlocks(ids)
 	end
 end
 
-function SnakeCosmetics:GetActiveSkinId()
+function SnakeCosmetics:getActiveSkinId()
 	self:_ensureLoaded()
-	return self.state.SelectedSkin or DEFAULT_SKIN_ID
+	return self.state.selectedSkin or DEFAULT_SKIN_ID
 end
 
-function SnakeCosmetics:GetActiveSkin()
+function SnakeCosmetics:getActiveSkin()
 	self:_ensureLoaded()
-	local id = self:GetActiveSkinId()
+	local id = self:getActiveSkinId()
 	return self._skinsById[id] or self._skinsById[DEFAULT_SKIN_ID]
 end
 
-function SnakeCosmetics:SetActiveSkin(id)
+function SnakeCosmetics:setActiveSkin(id)
 	self:_ensureLoaded()
 
 	if not id or not self._skinsById[id] then
 		return false
 	end
 
-	if not self:IsSkinUnlocked(id) then
+	if not self:isSkinUnlocked(id) then
 		return false
 	end
 
-	if self.state.SelectedSkin == id then
+	if self.state.selectedSkin == id then
 		return false
 	end
 
-	self.state.SelectedSkin = id
+	self.state.selectedSkin = id
 	self:_save()
 	return true
 end
 
-local function ResolveColor(color, fallback)
+local function resolveColor(color, fallback)
 	if type(color) == "table" and #color >= 3 then
 		local r = color[1] or 0
 		local g = color[2] or 0
@@ -993,49 +993,49 @@ local function ResolveColor(color, fallback)
 	end
 
 	if fallback then
-		return ResolveColor(fallback)
+		return resolveColor(fallback)
 	end
 
 	return { 1, 1, 1, 1 }
 end
 
-function SnakeCosmetics:GetBodyColor()
-	local skin = self:GetActiveSkin()
+function SnakeCosmetics:getBodyColor()
+	local skin = self:getActiveSkin()
 	local palette = skin and skin.colors or {}
-	return ResolveColor(palette.body, Theme.SnakeDefault)
+	return resolveColor(palette.body, Theme.snakeDefault)
 end
 
-function SnakeCosmetics:GetOutlineColor()
-	local skin = self:GetActiveSkin()
+function SnakeCosmetics:getOutlineColor()
+	local skin = self:getActiveSkin()
 	local palette = skin and skin.colors or {}
-	return ResolveColor(palette.outline, { 0, 0, 0, 1 })
+	return resolveColor(palette.outline, { 0, 0, 0, 1 })
 end
 
-function SnakeCosmetics:GetGlowColor()
-	local skin = self:GetActiveSkin()
+function SnakeCosmetics:getGlowColor()
+	local skin = self:getActiveSkin()
 	local palette = skin and skin.colors or {}
 	local effects = skin and skin.effects or {}
-	local GlowEffect = effects.glow or {}
-	if GlowEffect.color then
-		return ResolveColor(GlowEffect.color)
+	local glowEffect = effects.glow or {}
+	if glowEffect.color then
+		return resolveColor(glowEffect.color)
 	end
-	return ResolveColor(palette.glow, self:GetBodyColor())
+	return resolveColor(palette.glow, self:getBodyColor())
 end
 
-function SnakeCosmetics:GetGlowEffect()
-	local skin = self:GetActiveSkin()
+function SnakeCosmetics:getGlowEffect()
+	local skin = self:getActiveSkin()
 	local effects = skin and skin.effects or {}
 	if effects.glow then
-		return CopyTable(effects.glow)
+		return copyTable(effects.glow)
 	end
 	return nil
 end
 
-function SnakeCosmetics:GetOverlayEffect()
-	local skin = self:GetActiveSkin()
+function SnakeCosmetics:getOverlayEffect()
+	local skin = self:getActiveSkin()
 	local effects = skin and skin.effects or {}
 	if effects.overlay then
-		return CopyTable(effects.overlay)
+		return copyTable(effects.overlay)
 	end
 	return nil
 end

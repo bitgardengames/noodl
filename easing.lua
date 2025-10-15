@@ -1,14 +1,14 @@
 local Easing = {}
 
-function Easing.clamp(value, MinValue, MaxValue)
-	if MinValue > MaxValue then
-		MinValue, MaxValue = MaxValue, MinValue
+function Easing.clamp(value, minValue, maxValue)
+	if minValue > maxValue then
+		minValue, maxValue = maxValue, minValue
 	end
 
-	if value < MinValue then
-		return MinValue
-	elseif value > MaxValue then
-		return MaxValue
+	if value < minValue then
+		return minValue
+	elseif value > maxValue then
+		return maxValue
 	end
 
 	return value
@@ -22,16 +22,16 @@ function Easing.lerp(a, b, t)
 	return a + (b - a) * t
 end
 
-function Easing.EaseOutCubic(t)
+function Easing.easeOutCubic(t)
 	local inv = 1 - t
 	return 1 - inv * inv * inv
 end
 
-function Easing.EaseInCubic(t)
+function Easing.easeInCubic(t)
 	return t * t * t
 end
 
-function Easing.EaseInOutCubic(t)
+function Easing.easeInOutCubic(t)
 	if t < 0.5 then
 		return 4 * t * t * t
 	end
@@ -40,7 +40,7 @@ function Easing.EaseInOutCubic(t)
 	return 0.5 * t * t * t + 1
 end
 
-function Easing.EaseOutExpo(t)
+function Easing.easeOutExpo(t)
 	if t >= 1 then
 		return 1
 	end
@@ -48,29 +48,29 @@ function Easing.EaseOutExpo(t)
 	return 1 - math.pow(2, -10 * t)
 end
 
-function Easing.EaseOutBack(t)
+function Easing.easeOutBack(t)
 	local c1 = 1.70158
 	local c3 = c1 + 1
 
 	return 1 + c3 * math.pow(t - 1, 3) + c1 * math.pow(t - 1, 2)
 end
 
-function Easing.EaseInBack(t)
+function Easing.easeInBack(t)
 	local c1 = 1.70158
 	local c3 = c1 + 1
 
 	return c3 * math.pow(t, 3) - c1 * math.pow(t, 2)
 end
 
-function Easing.EasedProgress(timer, duration)
+function Easing.easedProgress(timer, duration)
 	if not duration or duration <= 0 then
 		return 1
 	end
 
-	return Easing.EaseInOutCubic(Easing.clamp01(timer / duration))
+	return Easing.easeInOutCubic(Easing.clamp01(timer / duration))
 end
 
-function Easing.GetTransitionAlpha(t, direction)
+function Easing.getTransitionAlpha(t, direction)
 	t = Easing.clamp01(t)
 
 	if direction == 1 then

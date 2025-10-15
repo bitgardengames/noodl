@@ -18,52 +18,52 @@ local letters = {
 	}
 }
 
-function DrawWord.draw(word, ox, oy, CellSize, spacing)
+function DrawWord.draw(word, ox, oy, cellSize, spacing)
 	local x = ox
-	local FullTrail = {}
+	local fullTrail = {}
 
-	local LetterCount = 0
+	local letterCount = 0
 	for i = 1, #word do
 	if letters[word:sub(i, i)] then
-		LetterCount = LetterCount + 1
+		letterCount = letterCount + 1
 	end
 	end
 
-	local DrawnLetters = 0
+	local drawnLetters = 0
 	for i = 1, #word do
 	local ch = word:sub(i,i)
 	local def = letters[ch]
 	if def then
-		DrawnLetters = DrawnLetters + 1
-		local LetterPoints = {}
+		drawnLetters = drawnLetters + 1
+		local letterPoints = {}
 		for index, pt in ipairs(def) do
-		local px = x + pt[1] * CellSize
-		local py = oy + pt[2] * CellSize
-		LetterPoints[index] = { x = px, y = py }
-		FullTrail[#FullTrail + 1] = { x = px, y = py }
+		local px = x + pt[1] * cellSize
+		local py = oy + pt[2] * cellSize
+		letterPoints[index] = { x = px, y = py }
+		fullTrail[#fullTrail + 1] = { x = px, y = py }
 		end
 
-		local SnakeTrail = {}
-		for index = #LetterPoints, 1, -1 do
-		local point = LetterPoints[index]
-		SnakeTrail[#SnakeTrail + 1] = {
+		local snakeTrail = {}
+		for index = #letterPoints, 1, -1 do
+		local point = letterPoints[index]
+		snakeTrail[#snakeTrail + 1] = {
 			x = point.x,
 			y = point.y,
-			DrawX = point.x,
-			DrawY = point.y,
+			drawX = point.x,
+			drawY = point.y,
 		}
 		end
 
 		-- The menu draws the face manually so it sits at the end of the word.
 		-- Disable the built-in face rendering here to avoid double faces.
-		SnakeDraw.run(SnakeTrail, #SnakeTrail, CellSize, nil, nil, nil, nil, nil, {
-		DrawFace = false,
+		SnakeDraw.run(snakeTrail, #snakeTrail, cellSize, nil, nil, nil, nil, nil, {
+		drawFace = false,
 		})
 
-		x = x + (3 * CellSize) + spacing
+		x = x + (3 * cellSize) + spacing
 	end
 	end
-	return FullTrail
+	return fullTrail
 end
 
 return DrawWord

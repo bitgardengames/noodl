@@ -39,21 +39,21 @@ local ModuleUtil = require("moduleutil")
 local Game = {}
 
 local clamp01 = Easing.clamp01
-local EaseOutExpo = Easing.EaseOutExpo
+local easeOutExpo = Easing.easeOutExpo
 
-local function EaseOutCubic(t)
+local function easeOutCubic(t)
 	local inv = 1 - t
 	return 1 - inv * inv * inv
 end
 
-local function EnsureTransitionTitleCanvas(self)
-	local width = math.max(1, math.ceil(self.ScreenWidth or love.graphics.getWidth() or 1))
-	local height = math.max(1, math.ceil(self.ScreenHeight or love.graphics.getHeight() or 1))
-	local canvas = self.TransitionTitleCanvas
+local function ensureTransitionTitleCanvas(self)
+	local width = math.max(1, math.ceil(self.screenWidth or love.graphics.getWidth() or 1))
+	local height = math.max(1, math.ceil(self.screenHeight or love.graphics.getHeight() or 1))
+	local canvas = self.transitionTitleCanvas
 	if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
 		canvas = love.graphics.newCanvas(width, height)
 		canvas:setFilter("linear", "linear")
-		self.TransitionTitleCanvas = canvas
+		self.transitionTitleCanvas = canvas
 	end
 	return canvas
 end
@@ -63,7 +63,7 @@ local RUN_ACTIVE_STATES = {
 	descending = true,
 }
 
-local ENTITY_UPDATE_ORDER = ModuleUtil.PrepareSystems({
+local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
 	Face,
 	Popup,
 	Fruit,
@@ -79,7 +79,7 @@ local ENTITY_UPDATE_ORDER = ModuleUtil.PrepareSystems({
 	Score,
 })
 
-local function CloneColor(color, fallback)
+local function cloneColor(color, fallback)
 	local source = color or fallback
 	if not source then
 		return nil
@@ -93,39 +93,39 @@ local function CloneColor(color, fallback)
 	}
 end
 
-local function ResetFeedbackState(self)
+local function resetFeedbackState(self)
 	self.feedback = {
-		ImpactTimer = 0,
-		ImpactDuration = 0.36,
-		ImpactPeak = 0,
-		SurgeTimer = 0,
-		SurgeDuration = 0.78,
-		SurgePeak = 0,
-		PanicTimer = 0,
-		PanicDuration = 2.6,
-		DangerLevel = 0,
-		DangerPulseTimer = 0,
-		PanicBurst = 0,
-		ImpactRipple = nil,
-		SurgeRipple = nil,
+		impactTimer = 0,
+		impactDuration = 0.36,
+		impactPeak = 0,
+		surgeTimer = 0,
+		surgeDuration = 0.78,
+		surgePeak = 0,
+		panicTimer = 0,
+		panicDuration = 2.6,
+		dangerLevel = 0,
+		dangerPulseTimer = 0,
+		panicBurst = 0,
+		impactRipple = nil,
+		surgeRipple = nil,
 	}
-	self.HitStop = nil
+	self.hitStop = nil
 end
 
-local function EnsureFeedbackState(self)
+local function ensureFeedbackState(self)
 	if not self.feedback then
-		ResetFeedbackState(self)
+		resetFeedbackState(self)
 	end
 
 	return self.feedback
 end
 
-local function UpdateFeedbackState(self, dt)
+local function updateFeedbackState(self, dt)
 	if not dt or dt <= 0 then
 		return
 	end
 
-	local state = EnsureFeedbackState(self)
+	local state = ensureFeedbackState(self)
 
 	state.impactTimer = math.max(0, (state.impactTimer or 0) - dt)
 	state.surgeTimer = math.max(0, (state.surgeTimer or 0) - dt)
@@ -140,124 +140,124 @@ local function UpdateFeedbackState(self, dt)
 		state.surgeRipple = nil
 	end
 
-	local TargetDanger = 0
+	local targetDanger = 0
 	if (state.panicTimer or 0) > 0 and (state.panicDuration or 0) > 0 then
-		TargetDanger = math.max(0, math.min(1, (state.panicTimer or 0) / state.panicDuration))
+		targetDanger = math.max(0, math.min(1, (state.panicTimer or 0) / state.panicDuration))
 	end
 
 	local smoothing = math.min(dt * 4.5, 1)
-	state.dangerLevel = (state.dangerLevel or 0) + (TargetDanger - (state.dangerLevel or 0)) * smoothing
+	state.dangerLevel = (state.dangerLevel or 0) + (targetDanger - (state.dangerLevel or 0)) * smoothing
 
-	local ImpactDecay = math.min(dt * 2.6, 1)
-	state.impactPeak = math.max(0, (state.impactPeak or 0) - ImpactDecay)
+	local impactDecay = math.min(dt * 2.6, 1)
+	state.impactPeak = math.max(0, (state.impactPeak or 0) - impactDecay)
 
-	local SurgeDecay = math.min(dt * 1.8, 1)
-	state.surgePeak = math.max(0, (state.surgePeak or 0) - SurgeDecay)
+	local surgeDecay = math.min(dt * 1.8, 1)
+	state.surgePeak = math.max(0, (state.surgePeak or 0) - surgeDecay)
 
 	state.panicBurst = math.max(0, (state.panicBurst or 0) - dt * 0.9)
 end
 
-local function DrawFeedbackOverlay(self)
+local function drawFeedbackOverlay(self)
 	local state = self.feedback
 	if not state then
 		return
 	end
 
-	local ScreenW = self.ScreenWidth or love.graphics.getWidth()
-	local ScreenH = self.ScreenHeight or love.graphics.getHeight()
+	local screenW = self.screenWidth or love.graphics.getWidth()
+	local screenH = self.screenHeight or love.graphics.getHeight()
 
-	local ImpactTimer = state.impactTimer or 0
-	local ImpactDuration = state.impactDuration or 1
-	local ImpactPeak = state.impactPeak or 0
+	local impactTimer = state.impactTimer or 0
+	local impactDuration = state.impactDuration or 1
+	local impactPeak = state.impactPeak or 0
 
-	if ImpactTimer > 0 and ImpactPeak > 0 then
-		local progress = math.max(0, math.min(1, ImpactTimer / ImpactDuration))
-		local intensity = ImpactPeak * (progress ^ 0.7)
+	if impactTimer > 0 and impactPeak > 0 then
+		local progress = math.max(0, math.min(1, impactTimer / impactDuration))
+		local intensity = impactPeak * (progress ^ 0.7)
 		local age = 1 - progress
 
 		love.graphics.push("all")
 		love.graphics.setBlendMode("add")
 		love.graphics.setColor(1, 1, 1, 0.22 * intensity)
-		love.graphics.rectangle("fill", -12, -12, ScreenW + 24, ScreenH + 24)
+		love.graphics.rectangle("fill", -12, -12, screenW + 24, screenH + 24)
 
 		love.graphics.setColor(1, 0.78, 0.45, 0.32 * intensity)
 		local inset = 10 + intensity * 8
 		love.graphics.setLineWidth(3 + intensity * 6)
-		love.graphics.rectangle("line", inset, inset, ScreenW - inset * 2, ScreenH - inset * 2, 28, 28)
+		love.graphics.rectangle("line", inset, inset, screenW - inset * 2, screenH - inset * 2, 28, 28)
 
 		local ripple = state.impactRipple
 		if ripple then
-			local rx = ripple.x or ScreenW * 0.5
-			local ry = ripple.y or ScreenH * 0.5
-			local BaseRadius = ripple.baseRadius or 52
+			local rx = ripple.x or screenW * 0.5
+			local ry = ripple.y or screenH * 0.5
+			local baseRadius = ripple.baseRadius or 52
 			local color = ripple.color or { 1, 0.42, 0.32, 1 }
-			local RingRadius = BaseRadius + EaseOutExpo(age) * (140 + intensity * 80)
-			local FillRadius = BaseRadius * (0.55 + age * 0.6)
+			local ringRadius = baseRadius + easeOutExpo(age) * (140 + intensity * 80)
+			local fillRadius = baseRadius * (0.55 + age * 0.6)
 
 			love.graphics.setLineWidth(2.5 + intensity * 4)
 			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.55 * intensity)
-			love.graphics.circle("line", rx, ry, RingRadius, 64)
+			love.graphics.circle("line", rx, ry, ringRadius, 64)
 
 			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.22 * intensity)
-			love.graphics.circle("fill", rx, ry, FillRadius, 48)
+			love.graphics.circle("fill", rx, ry, fillRadius, 48)
 		end
 
 		love.graphics.pop()
 	end
 
-	local SurgeTimer = state.surgeTimer or 0
-	local SurgeDuration = state.surgeDuration or 1
-	local SurgePeak = state.surgePeak or 0
-	if SurgeTimer > 0 and SurgePeak > 0 then
-		local progress = math.max(0, math.min(1, SurgeTimer / SurgeDuration))
-		local intensity = SurgePeak * (progress ^ 0.8)
+	local surgeTimer = state.surgeTimer or 0
+	local surgeDuration = state.surgeDuration or 1
+	local surgePeak = state.surgePeak or 0
+	if surgeTimer > 0 and surgePeak > 0 then
+		local progress = math.max(0, math.min(1, surgeTimer / surgeDuration))
+		local intensity = surgePeak * (progress ^ 0.8)
 		local expansion = 1 - progress
 
 		love.graphics.push("all")
 		love.graphics.setBlendMode("add")
-		local radius = math.sqrt(ScreenW * ScreenW + ScreenH * ScreenH)
+		local radius = math.sqrt(screenW * screenW + screenH * screenH)
 		love.graphics.setColor(1, 0.9, 0.5, 0.22 * intensity)
 		love.graphics.setLineWidth(2 + intensity * 6)
-		love.graphics.circle("line", ScreenW * 0.5, ScreenH * 0.5, radius * (0.6 + expansion * 0.26), 64)
+		love.graphics.circle("line", screenW * 0.5, screenH * 0.5, radius * (0.6 + expansion * 0.26), 64)
 		local ripple = state.surgeRipple
 		if ripple then
-			local rx = ripple.x or ScreenW * 0.5
-			local ry = ripple.y or ScreenH * 0.5
-			local BaseRadius = ripple.baseRadius or 48
+			local rx = ripple.x or screenW * 0.5
+			local ry = ripple.y or screenH * 0.5
+			local baseRadius = ripple.baseRadius or 48
 			local color = ripple.color or { 1, 0.9, 0.55, 1 }
-			local eased = EaseOutCubic(1 - progress)
-			local RingRadius = BaseRadius + eased * (160 + intensity * 90)
+			local eased = easeOutCubic(1 - progress)
+			local ringRadius = baseRadius + eased * (160 + intensity * 90)
 			love.graphics.setLineWidth(2 + intensity * 4)
 			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.35 * intensity)
-			love.graphics.circle("line", rx, ry, RingRadius, 72)
+			love.graphics.circle("line", rx, ry, ringRadius, 72)
 
 			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.18 * intensity)
-			love.graphics.circle("fill", rx, ry, BaseRadius * (0.4 + eased * 0.6), 48)
+			love.graphics.circle("fill", rx, ry, baseRadius * (0.4 + eased * 0.6), 48)
 		end
 
 		love.graphics.pop()
 	end
 
-	local BaseDanger = state.dangerLevel or 0
+	local baseDanger = state.dangerLevel or 0
 	local burst = state.panicBurst or 0
-	local danger = math.max(BaseDanger, burst * 0.7)
+	local danger = math.max(baseDanger, burst * 0.7)
 	if danger > 0 then
-		local PulseTimer = state.dangerPulseTimer or 0
-		local pulse = 0.5 + 0.5 * math.sin(PulseTimer * (4.6 + danger * 3.2))
+		local pulseTimer = state.dangerPulseTimer or 0
+		local pulse = 0.5 + 0.5 * math.sin(pulseTimer * (4.6 + danger * 3.2))
 		love.graphics.push("all")
 		love.graphics.setColor(0.45, 0.03, 0.08, 0.4 * danger + 0.22 * pulse * danger)
-		love.graphics.rectangle("fill", -14, -14, ScreenW + 28, ScreenH + 28)
+		love.graphics.rectangle("fill", -14, -14, screenW + 28, screenH + 28)
 
-		local OutlineAlpha = math.min(0.78, 0.35 + danger * 0.45 + burst * 0.35)
-		love.graphics.setColor(0.95, 0.1, 0.22, OutlineAlpha)
+		local outlineAlpha = math.min(0.78, 0.35 + danger * 0.45 + burst * 0.35)
+		love.graphics.setColor(0.95, 0.1, 0.22, outlineAlpha)
 		local thickness = 16 + danger * 28
 		love.graphics.setLineWidth(thickness)
-		love.graphics.rectangle("line", thickness * 0.5, thickness * 0.5, ScreenW - thickness, ScreenH - thickness, 32, 32)
+		love.graphics.rectangle("line", thickness * 0.5, thickness * 0.5, screenW - thickness, screenH - thickness, 32, 32)
 		love.graphics.pop()
 	end
 end
 
-local function ResolveFeedbackPosition(self, options)
+local function resolveFeedbackPosition(self, options)
 	if not options then
 		options = {}
 	end
@@ -265,13 +265,13 @@ local function ResolveFeedbackPosition(self, options)
 	local x = options.hitX or options.x or options.headX or options.snakeX
 	local y = options.hitY or options.y or options.headY or options.snakeY
 
-	if not (x and y) and Snake and Snake.GetHead then
-		x, y = Snake:GetHead()
+	if not (x and y) and Snake and Snake.getHead then
+		x, y = Snake:getHead()
 	end
 
 	if not (x and y) then
-		local w = self.ScreenWidth or love.graphics.getWidth() or 0
-		local h = self.ScreenHeight or love.graphics.getHeight() or 0
+		local w = self.screenWidth or love.graphics.getWidth() or 0
+		local h = self.screenHeight or love.graphics.getHeight() or 0
 		x = w * 0.5
 		y = h * 0.5
 	end
@@ -279,9 +279,9 @@ local function ResolveFeedbackPosition(self, options)
 	return x, y
 end
 
-local EnsureHitStopState
+local ensureHitStopState
 
-function Game:ApplyHitStop(intensity, duration)
+function Game:applyHitStop(intensity, duration)
 	intensity = math.max(intensity or 0, 0)
 	duration = math.max(duration or 0, 0)
 
@@ -289,14 +289,14 @@ function Game:ApplyHitStop(intensity, duration)
 		return
 	end
 
-	local state = EnsureHitStopState(self)
+	local state = ensureHitStopState(self)
 	state.timer = math.max(state.timer or 0, duration)
 	state.duration = math.max(state.duration or 0, duration)
 	state.intensity = math.min(0.95, math.max(state.intensity or 0, intensity))
 end
 
-function Game:TriggerImpactFeedback(strength, options)
-	local state = EnsureFeedbackState(self)
+function Game:triggerImpactFeedback(strength, options)
+	local state = ensureFeedbackState(self)
 	strength = math.max(strength or 0, 0)
 
 	local duration = 0.28 + strength * 0.24
@@ -307,67 +307,67 @@ function Game:TriggerImpactFeedback(strength, options)
 	state.impactPeak = math.min(1.25, math.max(state.impactPeak or 0, spike))
 	state.panicBurst = math.min(1.35, (state.panicBurst or 0) + 0.35 + strength * 0.4)
 
-	local ImpactRipple = state.impactRipple or {}
-	local rx, ry = ResolveFeedbackPosition(self, options)
-	ImpactRipple.x = rx
-	ImpactRipple.y = ry
-	ImpactRipple.baseRadius = (options and options.radius) or ImpactRipple.baseRadius or 54
-	ImpactRipple.color = CloneColor(options and options.color, { 1, 0.42, 0.32, 1 })
-	state.impactRipple = ImpactRipple
+	local impactRipple = state.impactRipple or {}
+	local rx, ry = resolveFeedbackPosition(self, options)
+	impactRipple.x = rx
+	impactRipple.y = ry
+	impactRipple.baseRadius = (options and options.radius) or impactRipple.baseRadius or 54
+	impactRipple.color = cloneColor(options and options.color, { 1, 0.42, 0.32, 1 })
+	state.impactRipple = impactRipple
 
-	local HitStopStrength = 0.3 + strength * 0.35
-	local HitStopDuration = 0.08 + strength * 0.08
-	self:ApplyHitStop(HitStopStrength, HitStopDuration)
+	local hitStopStrength = 0.3 + strength * 0.35
+	local hitStopDuration = 0.08 + strength * 0.08
+	self:applyHitStop(hitStopStrength, hitStopDuration)
 
 	if Shaders and Shaders.notify then
-		Shaders.notify("SpecialEvent", {
+		Shaders.notify("specialEvent", {
 			type = "danger",
 			strength = math.min(1.2, 0.45 + strength * 0.55),
 		})
 	end
 end
 
-function Game:TriggerPanicFeedback(strength)
-	local state = EnsureFeedbackState(self)
+function Game:triggerPanicFeedback(strength)
+	local state = ensureFeedbackState(self)
 	strength = math.max(strength or 0, 0)
 
-	local BaseDuration = state.panicDuration or 2.6
-	local duration = BaseDuration * (0.55 + strength * 0.5)
+	local baseDuration = state.panicDuration or 2.6
+	local duration = baseDuration * (0.55 + strength * 0.5)
 	state.panicTimer = math.max(state.panicTimer or 0, duration)
 	state.panicBurst = math.min(1.5, (state.panicBurst or 0) + 0.5 + strength * 0.5)
 	state.dangerPulseTimer = 0
 end
 
-function Game:TriggerSurgeFeedback(strength, options)
-	local state = EnsureFeedbackState(self)
+function Game:triggerSurgeFeedback(strength, options)
+	local state = ensureFeedbackState(self)
 	strength = math.max(strength or 0, 0)
 
 	local duration = 0.6 + strength * 0.4
 	state.surgeDuration = duration
 	state.surgeTimer = duration
-	local SurgeSpike = 0.45 + strength * 0.55
-	state.surgePeak = math.min(1.15, math.max(state.surgePeak or 0, SurgeSpike))
+	local surgeSpike = 0.45 + strength * 0.55
+	state.surgePeak = math.min(1.15, math.max(state.surgePeak or 0, surgeSpike))
 
 	local ripple = state.surgeRipple or {}
-	local rx, ry = ResolveFeedbackPosition(self, options)
+	local rx, ry = resolveFeedbackPosition(self, options)
 	ripple.x = rx
 	ripple.y = ry
 	ripple.baseRadius = (options and options.radius) or ripple.baseRadius or 48
-	ripple.color = CloneColor(options and options.color, { 1, 0.9, 0.55, 1 })
+	ripple.color = cloneColor(options and options.color, { 1, 0.9, 0.55, 1 })
 	state.surgeRipple = ripple
 
 	if Shaders and Shaders.notify then
-		Shaders.notify("SpecialEvent", {
+		Shaders.notify("specialEvent", {
 			type = "tension",
 			strength = math.min(1.0, 0.3 + strength * 0.45),
 		})
 	end
 end
 
-local CachedMouseInterface
-local MouseSupportChecked = false
+local cachedMouseInterface
+local mouseSupportChecked = false
 
-local function IsCursorSupported(mouse)
+local function isCursorSupported(mouse)
 	local checker = mouse and mouse.isCursorSupported
 	if not checker then
 		return true
@@ -385,29 +385,29 @@ local function IsCursorSupported(mouse)
 	return supported and true or false
 end
 
-local function GetMouseInterface()
-	if MouseSupportChecked then
-		return CachedMouseInterface
+local function getMouseInterface()
+	if mouseSupportChecked then
+		return cachedMouseInterface
 	end
 
-	MouseSupportChecked = true
+	mouseSupportChecked = true
 
 	if not love or not love.mouse then
-		CachedMouseInterface = nil
+		cachedMouseInterface = nil
 		return nil
 	end
 
 	local mouse = love.mouse
-	if not mouse.setVisible or not IsCursorSupported(mouse) then
-		CachedMouseInterface = nil
+	if not mouse.setVisible or not isCursorSupported(mouse) then
+		cachedMouseInterface = nil
 		return nil
 	end
 
-	CachedMouseInterface = mouse
-	return CachedMouseInterface
+	cachedMouseInterface = mouse
+	return cachedMouseInterface
 end
 
-local function GetMouseVisibility(mouse)
+local function getMouseVisibility(mouse)
 	if mouse and mouse.isVisible then
 		local ok, visible = pcall(mouse.isVisible)
 		if ok and visible ~= nil then
@@ -418,32 +418,32 @@ local function GetMouseVisibility(mouse)
 	return true
 end
 
-EnsureHitStopState = function(self)
-	if not self.HitStop then
-		self.HitStop = {
+ensureHitStopState = function(self)
+	if not self.hitStop then
+		self.hitStop = {
 			timer = 0,
 			duration = 0,
 			intensity = 0,
 		}
 	end
 
-	return self.HitStop
+	return self.hitStop
 end
 
-local function UpdateHitStopState(self, dt)
-	local state = self.HitStop
+local function updateHitStopState(self, dt)
+	local state = self.hitStop
 	if not state then
 		return
 	end
 
 	state.timer = math.max(0, (state.timer or 0) - (dt or 0))
 	if state.timer <= 0 then
-		self.HitStop = nil
+		self.hitStop = nil
 	end
 end
 
-local function ResolveHitStopScale(self)
-	local state = self.HitStop
+local function resolveHitStopScale(self)
+	local state = self.hitStop
 	if not state then
 		return 1
 	end
@@ -457,18 +457,18 @@ local function ResolveHitStopScale(self)
 	end
 
 	local progress = math.max(0, math.min(1, timer / duration))
-	local slow = 1 - EaseOutCubic(progress) * math.min(intensity, 0.95)
+	local slow = 1 - easeOutCubic(progress) * math.min(intensity, 0.95)
 	return math.max(0.1, slow)
 end
 
-local function ResolveMouseVisibilityTarget(self)
-	if not GetMouseInterface() then
+local function resolveMouseVisibilityTarget(self)
+	if not getMouseInterface() then
 		return nil
 	end
 
 	local transition = self.transition
-	local InShop = transition and transition:isShopActive()
-	if InShop then
+	local inShop = transition and transition:isShopActive()
+	if inShop then
 		return true
 	end
 
@@ -479,13 +479,13 @@ local function ResolveMouseVisibilityTarget(self)
 	return nil
 end
 
-function Game:ReleaseMouseVisibility()
-	local state = self.MouseCursorState
+function Game:releaseMouseVisibility()
+	local state = self.mouseCursorState
 	if not state then
 		return
 	end
 
-	local mouse = state.interface or GetMouseInterface()
+	local mouse = state.interface or getMouseInterface()
 	if mouse and mouse.setVisible then
 		local restore = state.originalVisible
 		if restore == nil then
@@ -494,45 +494,45 @@ function Game:ReleaseMouseVisibility()
 		mouse.setVisible(restore and true or false)
 	end
 
-	self.MouseCursorState = nil
+	self.mouseCursorState = nil
 end
 
-function Game:UpdateMouseVisibility()
-	local mouse = GetMouseInterface()
+function Game:updateMouseVisibility()
+	local mouse = getMouseInterface()
 	if not mouse then
-		self:ReleaseMouseVisibility()
+		self:releaseMouseVisibility()
 		return
 	end
 
-	local TargetVisible = ResolveMouseVisibilityTarget(self)
-	if TargetVisible == nil then
-		self:ReleaseMouseVisibility()
+	local targetVisible = resolveMouseVisibilityTarget(self)
+	if targetVisible == nil then
+		self:releaseMouseVisibility()
 		return
 	end
 
-	local state = self.MouseCursorState
+	local state = self.mouseCursorState
 	if not state then
-		local CurrentVisible = GetMouseVisibility(mouse)
+		local currentVisible = getMouseVisibility(mouse)
 		state = {
 			interface = mouse,
-			OriginalVisible = CurrentVisible,
-			CurrentVisible = CurrentVisible,
+			originalVisible = currentVisible,
+			currentVisible = currentVisible,
 		}
-		self.MouseCursorState = state
+		self.mouseCursorState = state
 	end
 
-	if state.currentVisible ~= TargetVisible then
-		mouse.setVisible(TargetVisible and true or false)
-		state.currentVisible = TargetVisible
+	if state.currentVisible ~= targetVisible then
+		mouse.setVisible(targetVisible and true or false)
+		state.currentVisible = targetVisible
 	end
 end
 
-function Game:IsTransitionActive()
+function Game:isTransitionActive()
 	local transition = self.transition
 	return transition ~= nil and transition:isActive()
 end
 
-function Game:ConfirmTransitionIntro()
+function Game:confirmTransitionIntro()
 	local transition = self.transition
 	if not transition then
 		return false
@@ -541,72 +541,72 @@ function Game:ConfirmTransitionIntro()
 	return transition:confirmFloorIntro() and true or false
 end
 
-local function GetScaledDeltaTime(self, dt)
+local function getScaledDeltaTime(self, dt)
 	if not dt then
 		return dt
 	end
 
 	local scale = 1
-	if Snake and Snake.GetTimeScale then
-		local SnakeScale = Snake:GetTimeScale()
-		if SnakeScale and SnakeScale > 0 then
-			scale = SnakeScale
+	if Snake and Snake.getTimeScale then
+		local snakeScale = Snake:getTimeScale()
+		if snakeScale and snakeScale > 0 then
+			scale = snakeScale
 		end
 	end
 
-	scale = scale * ResolveHitStopScale(self)
+	scale = scale * resolveHitStopScale(self)
 
 	return dt * scale
 end
 
-local function UpdateRunTimers(self, dt)
+local function updateRunTimers(self, dt)
 	if RUN_ACTIVE_STATES[self.state] then
-		SessionStats:add("TimeAlive", dt)
-		self.RunTimer = (self.RunTimer or 0) + dt
+		SessionStats:add("timeAlive", dt)
+		self.runTimer = (self.runTimer or 0) + dt
 	end
 
 	if self.state == "playing" then
-		self.FloorTimer = (self.FloorTimer or 0) + dt
+		self.floorTimer = (self.floorTimer or 0) + dt
 	end
 end
 
-local function UpdateSystems(systems, dt)
-	ModuleUtil.RunHook(systems, "update", dt)
+local function updateSystems(systems, dt)
+	ModuleUtil.runHook(systems, "update", dt)
 end
 
-local function UpdateGlobalSystems(dt)
+local function updateGlobalSystems(dt)
 	FruitEvents.update(dt)
 	Shaders.update(dt)
 end
 
-local function HandlePauseMenu(game, dt)
+local function handlePauseMenu(game, dt)
 	local paused = game.state == "paused"
-	local FloorName = nil
+	local floorName = nil
 	if game.currentFloorData then
-		FloorName = game.currentFloorData.name
+		floorName = game.currentFloorData.name
 	end
-	PauseMenu:update(dt, paused, game.floor, FloorName)
+	PauseMenu:update(dt, paused, game.floor, floorName)
 	return paused
 end
 
-local function ForwardShopInput(game, EventName, ...)
+local function forwardShopInput(game, eventName, ...)
 	local input = game.input
 	if not input or not input.handleShopInput then
 		return false
 	end
 
-	return input:handleShopInput(EventName, ...)
+	return input:handleShopInput(eventName, ...)
 end
 
-local function DrawShadowedText(font, text, x, y, width, align, alpha)
+local function drawShadowedText(font, text, x, y, width, align, alpha)
 	if alpha <= 0 then
 		return
 	end
 
 	love.graphics.setFont(font)
-	local shadow = Theme.ShadowColor or { 0, 0, 0, 0.5 }
-	local ShadowAlpha = (shadow[4] or 1) * alpha
-	love.graphics.setColor(shadow[1], shadow[2], shadow[3], ShadowAlpha)
+	local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+	local shadowAlpha = (shadow[4] or 1) * alpha
+	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
 	love.graphics.printf(text, x + 2, y + 2, width, align)
 
 	love.graphics.setColor(1, 1, 1, alpha)
@@ -615,144 +615,144 @@ end
 
 local STATE_UPDATERS = {
 	descending = function(self, dt)
-		self:UpdateDescending(dt)
+		self:updateDescending(dt)
 		return true
 	end,
 }
 
-local function DrawAdrenalineGlow(self)
-	local GlowStrength = Score:GetHighScoreGlowStrength()
+local function drawAdrenalineGlow(self)
+	local glowStrength = Score:getHighScoreGlowStrength()
 
 	if Snake.adrenaline and Snake.adrenaline.active then
 		local duration = Snake.adrenaline.duration or 1
 		if duration > 0 then
-			local AdrenalineStrength = math.max(0, math.min(1, (Snake.adrenaline.timer or 0) / duration))
-			GlowStrength = math.max(GlowStrength, AdrenalineStrength * 0.85)
+			local adrenalineStrength = math.max(0, math.min(1, (Snake.adrenaline.timer or 0) / duration))
+			glowStrength = math.max(glowStrength, adrenalineStrength * 0.85)
 		end
 	end
 
-	if GlowStrength <= 0 then return end
+	if glowStrength <= 0 then return end
 
         local time = love.timer.getTime()
 	local pulse = 0.85 + 0.15 * math.sin(time * 2.25)
-	local EasedStrength = 0.6 + GlowStrength * 0.4
-	local alpha = 0.18 * EasedStrength * pulse
+	local easedStrength = 0.6 + glowStrength * 0.4
+	local alpha = 0.18 * easedStrength * pulse
 
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 	love.graphics.setColor(0.65, 0.82, 0.95, alpha)
-	love.graphics.rectangle("fill", 0, 0, self.ScreenWidth, self.ScreenHeight)
+	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 	love.graphics.pop()
 end
 
 function Game:load(options)
 	options = options or {}
 
-	local RequestedFloor = math.max(1, math.floor(options.startFloor or 1))
-	local TotalFloors = #Floors
-	if TotalFloors > 0 then
-		RequestedFloor = math.min(RequestedFloor, TotalFloors)
+	local requestedFloor = math.max(1, math.floor(options.startFloor or 1))
+	local totalFloors = #Floors
+	if totalFloors > 0 then
+		requestedFloor = math.min(requestedFloor, totalFloors)
 	end
 
 	self.state = "playing"
-	self.StartFloor = RequestedFloor
-	self.floor = RequestedFloor
-	self.RunTimer = 0
-	self.FloorTimer = 0
+	self.startFloor = requestedFloor
+	self.floor = requestedFloor
+	self.runTimer = 0
+	self.floorTimer = 0
 
-	self.MouseCursorState = nil
+	self.mouseCursorState = nil
 
 	Screen:update()
-	self.ScreenWidth, self.ScreenHeight = Screen:get()
-	Arena:UpdateScreenBounds(self.ScreenWidth, self.ScreenHeight)
+	self.screenWidth, self.screenHeight = Screen:get()
+	Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
 
 	Score:load()
-	Upgrades:BeginRun()
-	GameUtils:PrepareGame(self.ScreenWidth, self.ScreenHeight)
+	Upgrades:beginRun()
+	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
 	Face:set("idle")
 
 	self.transition = TransitionManager.new(self)
 	self.input = GameInput.new(self, self.transition)
-	self.input:ResetAxes()
+	self.input:resetAxes()
 
-	ResetFeedbackState(self)
+	resetFeedbackState(self)
 
-	self.SingleTouchDeath = true
+	self.singleTouchDeath = true
 
 	if Snake.adrenaline then
 		Snake.adrenaline.active = false
 	end
 
-	self:SetupFloor(self.floor)
+	self:setupFloor(self.floor)
 
-	self.transition:StartFloorIntro(2.8, {
-		TransitionAdvance = false,
-		TransitionAwaitInput = true,
-		TransitionFloorData = Floors[self.floor] or Floors[1],
+	self.transition:startFloorIntro(2.8, {
+		transitionAdvance = false,
+		transitionAwaitInput = true,
+		transitionFloorData = Floors[self.floor] or Floors[1],
 	})
 end
 
 function Game:reset()
-	GameUtils:PrepareGame(self.ScreenWidth, self.ScreenHeight)
+	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
 	Face:set("idle")
 	self.state = "playing"
-	self.floor = self.StartFloor or 1
-	self.RunTimer = 0
-	self.FloorTimer = 0
+	self.floor = self.startFloor or 1
+	self.runTimer = 0
+	self.floorTimer = 0
 
-	self.MouseCursorState = nil
+	self.mouseCursorState = nil
 
-	ResetFeedbackState(self)
+	resetFeedbackState(self)
 
 	if self.transition then
 		self.transition:reset()
 	end
 
 	if self.input then
-		self.input:ResetAxes()
+		self.input:resetAxes()
 	end
 end
 
 function Game:enter(data)
-	UI.ClearButtons()
+	UI.clearButtons()
 	self:load(data)
 
-	Audio:PlayMusic("game")
+	Audio:playMusic("game")
 	SessionStats:reset()
-	PlayerStats:add("SessionsPlayed", 1)
+	PlayerStats:add("sessionsPlayed", 1)
 
-	Achievements:CheckAll({
-		SessionsPlayed = PlayerStats:get("SessionsPlayed"),
+	Achievements:checkAll({
+		sessionsPlayed = PlayerStats:get("sessionsPlayed"),
 	})
 
-	self:UpdateMouseVisibility()
+	self:updateMouseVisibility()
 end
 
 function Game:leave()
-	self:ReleaseMouseVisibility()
+	self:releaseMouseVisibility()
 
-	if Snake and Snake.ResetModifiers then
-		Snake:ResetModifiers()
+	if Snake and Snake.resetModifiers then
+		Snake:resetModifiers()
 	end
 
-	if UI and UI.SetUpgradeIndicators then
-		UI:SetUpgradeIndicators(nil)
+	if UI and UI.setUpgradeIndicators then
+		UI:setUpgradeIndicators(nil)
 	end
 end
 
-function Game:BeginDeath()
+function Game:beginDeath()
 	if self.state ~= "dying" then
 		self.state = "dying"
-		if Snake and Snake.SetDead then
-			Snake:SetDead(true)
+		if Snake and Snake.setDead then
+			Snake:setDead(true)
 		end
-		local trail = Snake:GetSegments()
-		Death:SpawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
-		Audio:PlaySound("death")
+		local trail = Snake:getSegments()
+		Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
+		Audio:playSound("death")
 	end
 end
 
-function Game:ApplyDamage(amount, cause, context)
+function Game:applyDamage(amount, cause, context)
 	local inflicted = math.floor((amount or 0) + 0.0001)
 	if inflicted < 0 then
 		inflicted = 0
@@ -766,96 +766,96 @@ function Game:ApplyDamage(amount, cause, context)
 		return true
 	end
 
-	local ImpactStrength = math.max(0.35, ((context and context.shake) or 0) + inflicted * 0.12)
+	local impactStrength = math.max(0.35, ((context and context.shake) or 0) + inflicted * 0.12)
 
-	if Snake and Snake.OnDamageTaken then
-		Snake:OnDamageTaken(cause, context)
+	if Snake and Snake.onDamageTaken then
+		Snake:onDamageTaken(cause, context)
 	end
 
-	self:TriggerImpactFeedback(ImpactStrength, context)
+	self:triggerImpactFeedback(impactStrength, context)
 
-	if Settings.ScreenShake ~= false and context and context.shake and self.Effects and self.Effects.shake then
+	if Settings.screenShake ~= false and context and context.shake and self.Effects and self.Effects.shake then
 		self.Effects:shake(context.shake)
 	end
 
 	return false
 end
 
-function Game:StartDescending(HoleX, HoleY, HoleRadius)
+function Game:startDescending(holeX, holeY, holeRadius)
 	self.state = "descending"
-	self.hole = { x = HoleX, y = HoleY, radius = HoleRadius or 24 }
-	Snake:StartDescending(self.hole.x, self.hole.y, self.hole.radius)
-	Audio:PlaySound("exit_enter")
+	self.hole = { x = holeX, y = holeY, radius = holeRadius or 24 }
+	Snake:startDescending(self.hole.x, self.hole.y, self.hole.radius)
+	Audio:playSound("exit_enter")
 end
 
 -- start a floor transition
-function Game:StartFloorTransition(advance, SkipFade)
-	Snake:FinishDescending()
-	self.transition:StartFloorTransition(advance, SkipFade)
+function Game:startFloorTransition(advance, skipFade)
+	Snake:finishDescending()
+	self.transition:startFloorTransition(advance, skipFade)
 end
 
-function Game:TriggerVictory()
+function Game:triggerVictory()
 	if self.state == "victory" then
 		return
 	end
 
-	Snake:FinishDescending()
-	if Arena and Arena.ResetExit then
-		Arena:ResetExit()
+	Snake:finishDescending()
+	if Arena and Arena.resetExit then
+		Arena:resetExit()
 	end
 
-	local FloorTime = self.FloorTimer or 0
-	if FloorTime and FloorTime > 0 then
-		SessionStats:add("TotalFloorTime", FloorTime)
-		SessionStats:UpdateMin("FastestFloorClear", FloorTime)
-		SessionStats:UpdateMax("SlowestFloorClear", FloorTime)
-		SessionStats:set("LastFloorClearTime", FloorTime)
+	local floorTime = self.floorTimer or 0
+	if floorTime and floorTime > 0 then
+		SessionStats:add("totalFloorTime", floorTime)
+		SessionStats:updateMin("fastestFloorClear", floorTime)
+		SessionStats:updateMax("slowestFloorClear", floorTime)
+		SessionStats:set("lastFloorClearTime", floorTime)
 	end
-	self.FloorTimer = 0
+	self.floorTimer = 0
 
-	local CurrentFloor = self.floor or 1
-	local NextFloor = CurrentFloor + 1
-	PlayerStats:add("FloorsCleared", 1)
-	PlayerStats:UpdateMax("DeepestFloorReached", NextFloor)
-	SessionStats:add("FloorsCleared", 1)
-	SessionStats:UpdateMax("DeepestFloorReached", NextFloor)
+	local currentFloor = self.floor or 1
+	local nextFloor = currentFloor + 1
+	PlayerStats:add("floorsCleared", 1)
+	PlayerStats:updateMax("deepestFloorReached", nextFloor)
+	SessionStats:add("floorsCleared", 1)
+	SessionStats:updateMax("deepestFloorReached", nextFloor)
 
-	Audio:PlaySound("floor_advance")
+	Audio:playSound("floor_advance")
 
-	local FloorData = Floors[CurrentFloor] or {}
-	local FloorName = FloorData.name or string.format("Floor %d", CurrentFloor)
-	local EndingMessage = Localization:get("gameover.victory_story_body", { floor = FloorName })
-	if EndingMessage == "gameover.victory_story_body" then
-		EndingMessage = Floors.VictoryMessage or string.format("With the festival feast safely reclaimed from %s, Noodl rockets home to start the parade.", FloorName)
-	end
-
-	local StoryTitle = Localization:get("gameover.victory_story_title")
-	if StoryTitle == "gameover.victory_story_title" then
-		StoryTitle = Floors.StoryTitle or "Noodl's Grand Feast"
+	local floorData = Floors[currentFloor] or {}
+	local floorName = floorData.name or string.format("Floor %d", currentFloor)
+	local endingMessage = Localization:get("gameover.victory_story_body", { floor = floorName })
+	if endingMessage == "gameover.victory_story_body" then
+		endingMessage = Floors.victoryMessage or string.format("With the festival feast safely reclaimed from %s, Noodl rockets home to start the parade.", floorName)
 	end
 
-	local result = Score:HandleRunClear({
-		EndingMessage = EndingMessage,
-		StoryTitle = StoryTitle,
+	local storyTitle = Localization:get("gameover.victory_story_title")
+	if storyTitle == "gameover.victory_story_title" then
+		storyTitle = Floors.storyTitle or "Noodl's Grand Feast"
+	end
+
+	local result = Score:handleRunClear({
+		endingMessage = endingMessage,
+		storyTitle = storyTitle,
 	})
 
 	Achievements:save()
 
-	self.VictoryResult = result
-	self.VictoryTimer = 0
-	self.VictoryDelay = 1.2
+	self.victoryResult = result
+	self.victoryTimer = 0
+	self.victoryDelay = 1.2
 	self.state = "victory"
 end
 
-function Game:StartFloorIntro(duration, extra)
-	self.transition:StartFloorIntro(duration, extra)
+function Game:startFloorIntro(duration, extra)
+	self.transition:startFloorIntro(duration, extra)
 end
 
-function Game:StartFadeIn(duration)
-	self.transition:StartFadeIn(duration)
+function Game:startFadeIn(duration)
+	self.transition:startFadeIn(duration)
 end
 
-function Game:UpdateDescending(dt)
+function Game:updateDescending(dt)
 	Snake:update(dt)
 
 	-- Keep saw blades animating while the snake descends into the exit hole
@@ -863,110 +863,110 @@ function Game:UpdateDescending(dt)
 		Saws:update(dt)
 	end
 
-	local segments = Snake:GetSegments()
+	local segments = Snake:getSegments()
 	local tail = segments[#segments]
 	if not tail then
-		Snake:FinishDescending()
-		self:StartFloorTransition(true)
+		Snake:finishDescending()
+		self:startFloorTransition(true)
 		return
 	end
 
 	local dx, dy = tail.drawX - self.hole.x, tail.drawY - self.hole.y
 	local dist = math.sqrt(dx * dx + dy * dy)
 	if dist < self.hole.radius then
-		local FinalFloor = #Floors
-		if (self.floor or 1) >= FinalFloor then
-			self:TriggerVictory()
+		local finalFloor = #Floors
+		if (self.floor or 1) >= finalFloor then
+			self:triggerVictory()
 		else
-			Snake:FinishDescending()
-			self:StartFloorTransition(true)
+			Snake:finishDescending()
+			self:startFloorTransition(true)
 		end
 	end
 end
 
-function Game:UpdateGameplay(dt)
-	local FruitX, FruitY = Fruit:GetPosition()
+function Game:updateGameplay(dt)
+	local fruitX, fruitY = Fruit:getPosition()
 
-	if Upgrades and Upgrades.RecordFloorReplaySnapshot then
-		Upgrades:RecordFloorReplaySnapshot(self)
+	if Upgrades and Upgrades.recordFloorReplaySnapshot then
+		Upgrades:recordFloorReplaySnapshot(self)
 	end
 
-	local MoveResult, cause, context = Movement:update(dt)
+	local moveResult, cause, context = Movement:update(dt)
 
-	if MoveResult == "hit" then
+	if moveResult == "hit" then
 		local damage = (context and context.damage) or 1
-		local survived = self:ApplyDamage(damage, cause, context)
+		local survived = self:applyDamage(damage, cause, context)
 		if not survived then
-			local ReplayTriggered = false
-			if Upgrades and Upgrades.TryFloorReplay then
-				ReplayTriggered = Upgrades:TryFloorReplay(self, cause)
+			local replayTriggered = false
+			if Upgrades and Upgrades.tryFloorReplay then
+				replayTriggered = Upgrades:tryFloorReplay(self, cause)
 			end
-			if ReplayTriggered then
+			if replayTriggered then
 				return
 			end
-			self.DeathCause = cause
-			self:BeginDeath()
+			self.deathCause = cause
+			self:beginDeath()
 		end
 		return
-	elseif MoveResult == "dead" then
-		local ReplayTriggered = false
-		if Upgrades and Upgrades.TryFloorReplay then
-			ReplayTriggered = Upgrades:TryFloorReplay(self, cause)
+	elseif moveResult == "dead" then
+		local replayTriggered = false
+		if Upgrades and Upgrades.tryFloorReplay then
+			replayTriggered = Upgrades:tryFloorReplay(self, cause)
 		end
-		if ReplayTriggered then
+		if replayTriggered then
 			return
 		end
-		self.DeathCause = cause
-		self:BeginDeath()
+		self.deathCause = cause
+		self:beginDeath()
 		return
 	end
 
-	if MoveResult == "scored" then
-		FruitEvents.HandleConsumption(FruitX, FruitY)
+	if moveResult == "scored" then
+		FruitEvents.handleConsumption(fruitX, fruitY)
 
-		local GoalReached = UI:IsGoalReached()
-		if GoalReached then
-			Arena:SpawnExit()
+		local goalReached = UI:isGoalReached()
+		if goalReached then
+			Arena:spawnExit()
 		end
 
 		-- Removed surge feedback when collecting fruit to eliminate the outward ring effect.
 	end
 
-	local SnakeX, SnakeY = Snake:GetHead()
-	if Arena:CheckExitCollision(SnakeX, SnakeY) then
-		local hx, hy, hr = Arena:GetExitCenter()
+	local snakeX, snakeY = Snake:getHead()
+	if Arena:checkExitCollision(snakeX, snakeY) then
+		local hx, hy, hr = Arena:getExitCenter()
 		if hx and hy then
-			self:StartDescending(hx, hy, hr)
+			self:startDescending(hx, hy, hr)
 		end
 	end
 end
 
-function Game:UpdateEntities(dt)
-	UpdateSystems(ENTITY_UPDATE_ORDER, dt)
+function Game:updateEntities(dt)
+	updateSystems(ENTITY_UPDATE_ORDER, dt)
 end
 
-function Game:HandleDeath(dt)
+function Game:handleDeath(dt)
 	if self.state ~= "dying" then
 		return
 	end
 
 	Death:update(dt)
-	if not Death:IsFinished() then
+	if not Death:isFinished() then
 		return
 	end
 
 	Achievements:save()
-	local result = Score:HandleGameOver(self.DeathCause)
+	local result = Score:handleGameOver(self.deathCause)
 	if result then
 		return { state = "gameover", data = result }
 	end
 end
 
-local function DrawPlayfieldLayers(self, StateOverride)
-	local RenderState = StateOverride or self.state
+local function drawPlayfieldLayers(self, stateOverride)
+	local renderState = stateOverride or self.state
 
-	Arena:DrawBackground()
-	Death:ApplyShake()
+	Arena:drawBackground()
+	Death:applyShake()
 
 	Fruit:draw()
 	Rocks:draw()
@@ -974,90 +974,90 @@ local function DrawPlayfieldLayers(self, StateOverride)
 	Darts:draw()
 	Saws:draw()
 
-	local IsDescending = (RenderState == "descending")
-	local ShouldDrawExitAfterSnake = (not IsDescending and RenderState ~= "dying" and RenderState ~= "gameover")
+	local isDescending = (renderState == "descending")
+	local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
 
-	if not IsDescending and not ShouldDrawExitAfterSnake then
-		Arena:DrawExit()
+	if not isDescending and not shouldDrawExitAfterSnake then
+		Arena:drawExit()
 	end
 
-	if IsDescending then
-		self:DrawDescending()
-	elseif RenderState == "dying" then
+	if isDescending then
+		self:drawDescending()
+	elseif renderState == "dying" then
 		Death:draw()
-	elseif RenderState ~= "gameover" then
+	elseif renderState ~= "gameover" then
 		Snake:draw()
 	end
 
-	if ShouldDrawExitAfterSnake then
-		Arena:DrawExit()
+	if shouldDrawExitAfterSnake then
+		Arena:drawExit()
 	end
 
 	Particles:draw()
 	UpgradeVisuals:draw()
 	Popup:draw()
-	Arena:DrawBorder()
+	Arena:drawBorder()
 end
 
-local function DrawDeveloperAssistBadge(self)
-	if not (Snake.IsDeveloperAssistEnabled and Snake:IsDeveloperAssistEnabled()) then
+local function drawDeveloperAssistBadge(self)
+	if not (Snake.isDeveloperAssistEnabled and Snake:isDeveloperAssistEnabled()) then
 		return
 	end
 
 	local fonts = UI and UI.fonts
-	local BadgeFont = fonts and (fonts.caption or fonts.prompt or fonts.body)
-	local PreviousFont = love.graphics.getFont()
-	if BadgeFont then
-		love.graphics.setFont(BadgeFont)
+	local badgeFont = fonts and (fonts.caption or fonts.prompt or fonts.body)
+	local previousFont = love.graphics.getFont()
+	if badgeFont then
+		love.graphics.setFont(badgeFont)
 	else
-		BadgeFont = PreviousFont
+		badgeFont = previousFont
 	end
 
 	local label = "DEV ASSIST ENABLED (F1)"
-	local TextWidth = BadgeFont and BadgeFont:getWidth(label) or (#label * 7)
-	local TextHeight = BadgeFont and BadgeFont:getHeight() or 16
-	local PaddingX = 16
-	local PaddingY = 10
+	local textWidth = badgeFont and badgeFont:getWidth(label) or (#label * 7)
+	local textHeight = badgeFont and badgeFont:getHeight() or 16
+	local paddingX = 16
+	local paddingY = 10
 	local margin = 24
-	local BoxWidth = TextWidth + PaddingX * 2
-	local BoxHeight = TextHeight + PaddingY * 2
-	local x = (self.ScreenWidth or 0) - BoxWidth - margin
+	local boxWidth = textWidth + paddingX * 2
+	local boxHeight = textHeight + paddingY * 2
+	local x = (self.screenWidth or 0) - boxWidth - margin
 	local y = margin
 
 	love.graphics.setColor(0.1, 0.14, 0.21, 0.72)
-	love.graphics.rectangle("fill", x, y, BoxWidth, BoxHeight, 10, 10)
+	love.graphics.rectangle("fill", x, y, boxWidth, boxHeight, 10, 10)
 
 	love.graphics.setColor(0.28, 0.42, 0.58, 0.9)
 	love.graphics.setLineWidth(2)
-	love.graphics.rectangle("line", x, y, BoxWidth, BoxHeight, 10, 10)
+	love.graphics.rectangle("line", x, y, boxWidth, boxHeight, 10, 10)
 	love.graphics.setLineWidth(1)
 
 	love.graphics.setColor(0.85, 0.97, 1, 1)
-	love.graphics.print(label, x + PaddingX, y + PaddingY)
+	love.graphics.print(label, x + paddingX, y + paddingY)
 
 	love.graphics.setColor(1, 1, 1, 1)
-	if PreviousFont then
-		love.graphics.setFont(PreviousFont)
+	if previousFont then
+		love.graphics.setFont(previousFont)
 	end
 end
 
-local function DrawInterfaceLayers(self)
+local function drawInterfaceLayers(self)
 	FloatingText:draw()
 
-	DrawAdrenalineGlow(self)
+	drawAdrenalineGlow(self)
 
-	DrawFeedbackOverlay(self)
+	drawFeedbackOverlay(self)
 
-	Death:DrawFlash(self.ScreenWidth, self.ScreenHeight)
-	PauseMenu:draw(self.ScreenWidth, self.ScreenHeight)
+	Death:drawFlash(self.screenWidth, self.screenHeight)
+	PauseMenu:draw(self.screenWidth, self.screenHeight)
 	UI:draw()
-	DrawDeveloperAssistBadge(self)
+	drawDeveloperAssistBadge(self)
 	Achievements:draw()
 end
 
-local function DrawTransitionFadeOut(self, timer, duration)
-	DrawPlayfieldLayers(self)
-	DrawInterfaceLayers(self)
+local function drawTransitionFadeOut(self, timer, duration)
+	drawPlayfieldLayers(self)
+	drawInterfaceLayers(self)
 
 	local progress
 	if not duration or duration <= 0 then
@@ -1067,105 +1067,105 @@ local function DrawTransitionFadeOut(self, timer, duration)
 	end
 
 	love.graphics.setColor(0, 0, 0, progress)
-	love.graphics.rectangle("fill", 0, 0, self.ScreenWidth, self.ScreenHeight)
+	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 	love.graphics.setColor(1, 1, 1, 1)
 
 	return true
 end
 
-local function DrawTransitionShop(self, _)
+local function drawTransitionShop(self, _)
 	love.graphics.setColor(0, 0, 0, 0.85)
-	love.graphics.rectangle("fill", 0, 0, self.ScreenWidth, self.ScreenHeight)
+	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 	love.graphics.setColor(1, 1, 1, 1)
-	Shop:draw(self.ScreenWidth, self.ScreenHeight)
+	Shop:draw(self.screenWidth, self.screenHeight)
 
 	return true
 end
 
-local function DrawTransitionNotes(self, timer, OutroAlpha, FadeAlpha)
-	local notes = self.TransitionNotes
+local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
+	local notes = self.transitionNotes
 	if not (notes and #notes > 0) then
 		return
 	end
 
-	local y = self.ScreenHeight / 2 + 64
-	local width = self.ScreenWidth * 0.45
-	local x = (self.ScreenWidth - width) / 2
-	local ButtonFont = UI.fonts.button
-	local BodyFont = UI.fonts.body
+	local y = self.screenHeight / 2 + 64
+	local width = self.screenWidth * 0.45
+	local x = (self.screenWidth - width) / 2
+	local buttonFont = UI.fonts.button
+	local bodyFont = UI.fonts.body
 
 	for index, note in ipairs(notes) do
-		local OffsetDelay = 0.9 + (index - 1) * 0.22
-		local NoteAlpha
-		local NoteOffset = 0
+		local offsetDelay = 0.9 + (index - 1) * 0.22
+		local noteAlpha
+		local noteOffset = 0
 
-		if FadeAlpha then
-			NoteAlpha = FadeAlpha(OffsetDelay, 0.4)
-			NoteOffset = (1 - EaseOutExpo(clamp01((timer - OffsetDelay) / 0.55))) * 16 * (OutroAlpha or 1)
+		if fadeAlpha then
+			noteAlpha = fadeAlpha(offsetDelay, 0.4)
+			noteOffset = (1 - easeOutExpo(clamp01((timer - offsetDelay) / 0.55))) * 16 * (outroAlpha or 1)
 		else
-			NoteAlpha = OutroAlpha or 1
+			noteAlpha = outroAlpha or 1
 		end
 
 		if note.title and note.title ~= "" then
-			DrawShadowedText(
-				ButtonFont,
+			drawShadowedText(
+				buttonFont,
 				note.title,
 				x,
-				y + NoteOffset,
+				y + noteOffset,
 				width,
 				"center",
-				NoteAlpha
+				noteAlpha
 			)
-			y = y + ButtonFont:getHeight() + 6
+			y = y + buttonFont:getHeight() + 6
 		end
 
 		if note.text and note.text ~= "" then
-			DrawShadowedText(
-				BodyFont,
+			drawShadowedText(
+				bodyFont,
 				note.text,
 				x,
-				y + NoteOffset,
+				y + noteOffset,
 				width,
 				"center",
-				NoteAlpha
+				noteAlpha
 			)
-			y = y + BodyFont:getHeight() + 10
+			y = y + bodyFont:getHeight() + 10
 		end
 	end
 end
 
-local function DrawTransitionFloorIntro(self, timer, duration, data)
-	local FloorData = data.transitionFloorData or self.CurrentFloorData
-	if not FloorData then
+local function drawTransitionFloorIntro(self, timer, duration, data)
+	local floorData = data.transitionFloorData or self.currentFloorData
+	if not floorData then
 		return
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)
-	DrawPlayfieldLayers(self, "playing")
+	drawPlayfieldLayers(self, "playing")
 
-	local TotalDuration = duration or 0
-	local progress = TotalDuration > 0 and clamp01(timer / TotalDuration) or 1
-	local AwaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
-	local VisualProgress = progress
-	if AwaitingConfirm then
-		VisualProgress = math.min(VisualProgress, 0.7)
+	local totalDuration = duration or 0
+	local progress = totalDuration > 0 and clamp01(timer / totalDuration) or 1
+	local awaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
+	local visualProgress = progress
+	if awaitingConfirm then
+		visualProgress = math.min(visualProgress, 0.7)
 	end
 
-	local AppearProgress = math.min(1, VisualProgress / 0.28)
-	local appear = EaseOutCubic(AppearProgress)
-	local DissolveProgress = VisualProgress > 0.48 and clamp01((VisualProgress - 0.48) / 0.4) or 0
-	if AwaitingConfirm then
-		DissolveProgress = 0
+	local appearProgress = math.min(1, visualProgress / 0.28)
+	local appear = easeOutCubic(appearProgress)
+	local dissolveProgress = visualProgress > 0.48 and clamp01((visualProgress - 0.48) / 0.4) or 0
+	if awaitingConfirm then
+		dissolveProgress = 0
 	end
-	local OverlayAlpha = 0.8 * (1 - 0.55 * DissolveProgress)
-	local HighlightAlpha = appear * (1 - DissolveProgress)
+	local overlayAlpha = 0.8 * (1 - 0.55 * dissolveProgress)
+	local highlightAlpha = appear * (1 - dissolveProgress)
 
-	love.graphics.setColor(0, 0, 0, OverlayAlpha)
-	love.graphics.rectangle("fill", 0, 0, self.ScreenWidth, self.ScreenHeight)
+	love.graphics.setColor(0, 0, 0, overlayAlpha)
+	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 
-	local canvas = EnsureTransitionTitleCanvas(self)
-	local shadow = Theme.ShadowColor or { 0, 0, 0, 0.5 }
-	local TitleOffset = (1 - appear) * 36
+	local canvas = ensureTransitionTitleCanvas(self)
+	local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+	local titleOffset = (1 - appear) * 36
 
 	love.graphics.push("all")
 	love.graphics.setCanvas(canvas)
@@ -1174,35 +1174,35 @@ local function DrawTransitionFloorIntro(self, timer, duration, data)
 	love.graphics.setBlendMode("alpha")
 
 	love.graphics.setFont(UI.fonts.title)
-	local TitleY = self.ScreenHeight / 2 - 90 + TitleOffset
-	local ShadowAlpha = (shadow[4] or 0.5) * HighlightAlpha
-	love.graphics.setColor(shadow[1], shadow[2], shadow[3], ShadowAlpha)
-	love.graphics.printf(FloorData.name or "", 2, TitleY + 2, self.ScreenWidth, "center")
-	love.graphics.setColor(1, 1, 1, HighlightAlpha)
-	love.graphics.printf(FloorData.name or "", 0, TitleY, self.ScreenWidth, "center")
+	local titleY = self.screenHeight / 2 - 90 + titleOffset
+	local shadowAlpha = (shadow[4] or 0.5) * highlightAlpha
+	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
+	love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth, "center")
+	love.graphics.setColor(1, 1, 1, highlightAlpha)
+	love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth, "center")
 
-	if FloorData.flavor and FloorData.flavor ~= "" then
+	if floorData.flavor and floorData.flavor ~= "" then
 		love.graphics.setFont(UI.fonts.button)
-		local FlavorY = TitleY + UI.fonts.title:GetHeight() + 32
-		local FlavorAlpha = HighlightAlpha * 0.95
-		love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * FlavorAlpha)
-		love.graphics.printf(FloorData.flavor, 2, FlavorY + 2, self.ScreenWidth, "center")
-		love.graphics.setColor(1, 1, 1, FlavorAlpha)
-		love.graphics.printf(FloorData.flavor, 0, FlavorY, self.ScreenWidth, "center")
+		local flavorY = titleY + UI.fonts.title:getHeight() + 32
+		local flavorAlpha = highlightAlpha * 0.95
+		love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * flavorAlpha)
+		love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth, "center")
+		love.graphics.setColor(1, 1, 1, flavorAlpha)
+		love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth, "center")
 	end
 
 	if data.transitionAwaitInput then
-		local PromptText = Localization:get("game.floor_intro.prompt")
-		if PromptText and PromptText ~= "" then
-			local PromptFont = UI.fonts.prompt or UI.fonts.body
-			love.graphics.setFont(PromptFont)
-			local PromptFade = 1 - clamp01((VisualProgress - 0.72) / 0.18)
-			local PromptAlpha = HighlightAlpha * PromptFade
-			local y = self.ScreenHeight - PromptFont:getHeight() * 2.2
-			love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * PromptAlpha)
-			love.graphics.printf(PromptText, 2, y + 2, self.ScreenWidth, "center")
-			love.graphics.setColor(1, 1, 1, PromptAlpha)
-			love.graphics.printf(PromptText, 0, y, self.ScreenWidth, "center")
+		local promptText = Localization:get("game.floor_intro.prompt")
+		if promptText and promptText ~= "" then
+			local promptFont = UI.fonts.prompt or UI.fonts.body
+			love.graphics.setFont(promptFont)
+			local promptFade = 1 - clamp01((visualProgress - 0.72) / 0.18)
+			local promptAlpha = highlightAlpha * promptFade
+			local y = self.screenHeight - promptFont:getHeight() * 2.2
+			love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * promptAlpha)
+			love.graphics.printf(promptText, 2, y + 2, self.screenWidth, "center")
+			love.graphics.setColor(1, 1, 1, promptAlpha)
+			love.graphics.printf(promptText, 0, y, self.screenWidth, "center")
 		end
 	end
 
@@ -1210,43 +1210,43 @@ local function DrawTransitionFloorIntro(self, timer, duration, data)
 	love.graphics.pop()
 
 	love.graphics.push("all")
-	local CanvasAlpha = 1 - clamp01(DissolveProgress)
-	love.graphics.setColor(1, 1, 1, CanvasAlpha)
+	local canvasAlpha = 1 - clamp01(dissolveProgress)
+	love.graphics.setColor(1, 1, 1, canvasAlpha)
 	love.graphics.draw(canvas, 0, 0)
 	love.graphics.pop()
 
-	DrawTransitionNotes(self, 999, 1, nil)
+	drawTransitionNotes(self, 999, 1, nil)
 
 	love.graphics.setColor(1, 1, 1, 1)
 
 	return true
 end
 
-function Game:DrawTransition()
-	if not self:IsTransitionActive() then
+function Game:drawTransition()
+	if not self:isTransitionActive() then
 		return
 	end
 
-	local phase = self.transition:GetPhase()
-	local timer = self.transition:GetTimer() or 0
-	local duration = self.transition:GetDuration() or 0
-	local data = self.transition:GetData() or {}
+	local phase = self.transition:getPhase()
+	local timer = self.transition:getTimer() or 0
+	local duration = self.transition:getDuration() or 0
+	local data = self.transition:getData() or {}
 
 	if phase == "fadeout" then
-		if DrawTransitionFadeOut(self, timer, duration) then
+		if drawTransitionFadeOut(self, timer, duration) then
 			return
 		end
 	elseif phase == "shop" then
-		if DrawTransitionShop(self, timer) then
+		if drawTransitionShop(self, timer) then
 			return
 		end
 	elseif phase == "floorintro" then
-		if DrawTransitionFloorIntro(self, timer, duration, data) then
+		if drawTransitionFloorIntro(self, timer, duration, data) then
 			return
 		end
 	elseif phase == "fadein" then
-		DrawPlayfieldLayers(self, "playing")
-		DrawInterfaceLayers(self)
+		drawPlayfieldLayers(self, "playing")
+		drawInterfaceLayers(self)
 
 		local progress
 		if not duration or duration <= 0 then
@@ -1257,32 +1257,32 @@ function Game:DrawTransition()
 
 		local alpha = 1 - progress
 		love.graphics.setColor(0, 0, 0, alpha)
-		love.graphics.rectangle("fill", 0, 0, self.ScreenWidth, self.ScreenHeight)
+		love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 		love.graphics.setColor(1, 1, 1, 1)
 	end
 end
 
-function Game:DrawStateTransition(direction, progress, eased, alpha)
-	local IsFloorTransition = false
-	if self.transition and self.transition:IsActive() then
-		local phase = self.transition:GetPhase()
-		IsFloorTransition = phase ~= nil
+function Game:drawStateTransition(direction, progress, eased, alpha)
+	local isFloorTransition = false
+	if self.transition and self.transition:isActive() then
+		local phase = self.transition:getPhase()
+		isFloorTransition = phase ~= nil
 	end
 
-	if direction == "out" and not IsFloorTransition then
+	if direction == "out" and not isFloorTransition then
 		return nil
 	end
 
 	self:draw()
 
-	if IsFloorTransition then
+	if isFloorTransition then
 		love.graphics.setColor(1, 1, 1, 1)
-		return { SkipOverlay = true }
+		return { skipOverlay = true }
 	end
 
 	if direction == "in" then
-		local width = self.ScreenWidth or love.graphics.getWidth()
-		local height = self.ScreenHeight or love.graphics.getHeight()
+		local width = self.screenWidth or love.graphics.getWidth()
+		local height = self.screenHeight or love.graphics.getHeight()
 
 		if alpha and alpha > 0 then
 			love.graphics.setColor(0, 0, 0, alpha)
@@ -1290,17 +1290,17 @@ function Game:DrawStateTransition(direction, progress, eased, alpha)
 		end
 
 		love.graphics.setColor(1, 1, 1, 1)
-		return { SkipOverlay = true }
+		return { skipOverlay = true }
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)
 	return true
 end
 
-function Game:DrawDescending()
+function Game:drawDescending()
 	if not self.hole then
 		Snake:draw()
-		Arena:DrawExit()
+		Arena:drawExit()
 		return
 	end
 
@@ -1308,139 +1308,139 @@ function Game:DrawDescending()
 	local hy = self.hole.y
 	local hr = self.hole.radius or 0
 
-	Arena:DrawExit()
+	Arena:drawExit()
 
-	local CoverRadius = hr * 0.92
-	if CoverRadius <= 0 then
-		CoverRadius = hr
+	local coverRadius = hr * 0.92
+	if coverRadius <= 0 then
+		coverRadius = hr
 	end
 
-	if CoverRadius > 0 then
+	if coverRadius > 0 then
 		love.graphics.setColor(0.05, 0.05, 0.05, 1)
-		love.graphics.circle("fill", hx, hy, CoverRadius)
+		love.graphics.circle("fill", hx, hy, coverRadius)
 
 		love.graphics.setColor(0, 0, 0, 1)
-		local PreviousLineWidth = love.graphics.getLineWidth()
+		local previousLineWidth = love.graphics.getLineWidth()
 		love.graphics.setLineWidth(2)
-		love.graphics.circle("line", hx, hy, CoverRadius)
-		love.graphics.setLineWidth(PreviousLineWidth)
+		love.graphics.circle("line", hx, hy, coverRadius)
+		love.graphics.setLineWidth(previousLineWidth)
 	end
 
-	Snake:DrawClipped(hx, hy, hr)
+	Snake:drawClipped(hx, hy, hr)
 
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
 function Game:update(dt)
-	self:UpdateMouseVisibility()
+	self:updateMouseVisibility()
 
-	local ScaledDt = GetScaledDeltaTime(self, dt)
-	UpdateFeedbackState(self, ScaledDt)
-	UpdateHitStopState(self, dt)
+	local scaledDt = getScaledDeltaTime(self, dt)
+	updateFeedbackState(self, scaledDt)
+	updateHitStopState(self, dt)
 
-	if HandlePauseMenu(self, dt) then
+	if handlePauseMenu(self, dt) then
 		return
 	end
 
 	if self.state == "victory" then
-		local delay = self.VictoryDelay or 0
-		self.VictoryTimer = (self.VictoryTimer or 0) + ScaledDt
+		local delay = self.victoryDelay or 0
+		self.victoryTimer = (self.victoryTimer or 0) + scaledDt
 
-		if self.VictoryTimer >= delay then
-			local summary = self.VictoryResult or Score:HandleRunClear()
+		if self.victoryTimer >= delay then
+			local summary = self.victoryResult or Score:handleRunClear()
 			return { state = "gameover", data = summary }
 		end
 
 		return
 	end
 
-	UpdateRunTimers(self, ScaledDt)
+	updateRunTimers(self, scaledDt)
 
-	UpdateGlobalSystems(ScaledDt)
+	updateGlobalSystems(scaledDt)
 
 	local transition = self.transition
-	local TransitionBlocking = false
+	local transitionBlocking = false
 	if transition and transition:isActive() then
-		transition:update(ScaledDt)
-		TransitionBlocking = transition.isGameplayBlocked and transition:isGameplayBlocked()
+		transition:update(scaledDt)
+		transitionBlocking = transition.isGameplayBlocked and transition:isGameplayBlocked()
 	end
 
-	if TransitionBlocking then
+	if transitionBlocking then
 		return
 	end
 
-	local StateHandler = STATE_UPDATERS[self.state]
-	if StateHandler and StateHandler(self, ScaledDt) then
+	local stateHandler = STATE_UPDATERS[self.state]
+	if stateHandler and stateHandler(self, scaledDt) then
 		return
 	end
 
 	if self.state == "playing" then
-		self:UpdateGameplay(ScaledDt)
+		self:updateGameplay(scaledDt)
 	end
 
-	self:UpdateEntities(ScaledDt)
-	UI:SetUpgradeIndicators(Upgrades:GetHUDIndicators())
+	self:updateEntities(scaledDt)
+	UI:setUpgradeIndicators(Upgrades:getHUDIndicators())
 
-	local result = self:HandleDeath(ScaledDt)
+	local result = self:handleDeath(scaledDt)
 	if result then
 		return result
 	end
 end
 
-function Game:SetupFloor(FloorNum)
-	self.CurrentFloorData = Floors[FloorNum] or Floors[1]
+function Game:setupFloor(floorNum)
+	self.currentFloorData = Floors[floorNum] or Floors[1]
 
 	FruitEvents.reset()
 
-	self.FloorTimer = 0
+	self.floorTimer = 0
 
-	local setup = FloorSetup.prepare(FloorNum, self.CurrentFloorData)
-	local TraitContext = setup.traitContext
-	local SpawnPlan = setup.spawnPlan
+	local setup = FloorSetup.prepare(floorNum, self.currentFloorData)
+	local traitContext = setup.traitContext
+	local spawnPlan = setup.spawnPlan
 
-	UI:SetFruitGoal(TraitContext.fruitGoal)
+	UI:setFruitGoal(traitContext.fruitGoal)
 
-	self.TransitionNotes = nil
+	self.transitionNotes = nil
 
-	Upgrades:ApplyPersistentEffects(true)
+	Upgrades:applyPersistentEffects(true)
 
 	if Snake.adrenaline then
 		Snake.adrenaline.active = false
 		Snake.adrenaline.timer = 0
 	end
 
-	FloorSetup.FinalizeContext(TraitContext, SpawnPlan)
-	Upgrades:notify("FloorStart", { floor = FloorNum, context = TraitContext })
+	FloorSetup.finalizeContext(traitContext, spawnPlan)
+	Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
 
-	FloorSetup.SpawnHazards(SpawnPlan)
+	FloorSetup.spawnHazards(spawnPlan)
 end
 
 function Game:draw()
 	love.graphics.clear()
 
-	if Arena.DrawBackdrop then
-		Arena:DrawBackdrop(self.ScreenWidth, self.ScreenHeight)
+	if Arena.drawBackdrop then
+		Arena:drawBackdrop(self.screenWidth, self.screenHeight)
 	else
-		love.graphics.setColor(Theme.BgColor)
-		love.graphics.rectangle("fill", 0, 0, self.ScreenWidth, self.ScreenHeight)
+		love.graphics.setColor(Theme.bgColor)
+		love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 		love.graphics.setColor(1, 1, 1, 1)
 	end
 
-	if self:IsTransitionActive() then
-		self:DrawTransition()
+	if self:isTransitionActive() then
+		self:drawTransition()
 		return
 	end
 
-	DrawPlayfieldLayers(self)
-	DrawInterfaceLayers(self)
+	drawPlayfieldLayers(self)
+	drawInterfaceLayers(self)
 end
 
 function Game:keypressed(key)
-	if ForwardShopInput(self, "keypressed", key) then
+	if forwardShopInput(self, "keypressed", key) then
 		return
 	end
 
-	if self:ConfirmTransitionIntro() then
+	if self:confirmTransitionIntro() then
 		return
 	end
 
@@ -1448,7 +1448,7 @@ function Game:keypressed(key)
 end
 
 function Game:mousepressed(x, y, button)
-	if self:ConfirmTransitionIntro() then
+	if self:confirmTransitionIntro() then
 		return
 	end
 
@@ -1457,7 +1457,7 @@ function Game:mousepressed(x, y, button)
 		return
 	end
 
-	ForwardShopInput(self, "mousepressed", x, y, button)
+	forwardShopInput(self, "mousepressed", x, y, button)
 end
 
 function Game:mousereleased(x, y, button)
@@ -1471,24 +1471,24 @@ function Game:mousereleased(x, y, button)
 	end
 
 	if self.input then
-		return self.input:ApplyPauseMenuSelection(selection)
+		return self.input:applyPauseMenuSelection(selection)
 	end
 end
 
 function Game:gamepadpressed(_, button)
-	if self:ConfirmTransitionIntro() then
+	if self:confirmTransitionIntro() then
 		return
 	end
 
 	if self.input then
-		return self.input:HandleGamepadButton(button)
+		return self.input:handleGamepadButton(button)
 	end
 end
 Game.joystickpressed = Game.gamepadpressed
 
 function Game:gamepadaxis(_, axis, value)
 	if self.input then
-		return self.input:HandleGamepadAxis(axis, value)
+		return self.input:handleGamepadAxis(axis, value)
 	end
 end
 Game.joystickaxis = Game.gamepadaxis

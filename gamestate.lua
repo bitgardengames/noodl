@@ -5,18 +5,18 @@ local GameState = {}
 GameState.states = {}
 GameState.current = nil
 GameState.next = nil
-GameState.TransitionFrom = nil
-GameState.TransitionTime = 0
-GameState.DefaultTransitionDuration = 1.0
-GameState.TransitionDuration = GameState.DefaultTransitionDuration
+GameState.transitionFrom = nil
+GameState.transitionTime = 0
+GameState.defaultTransitionDuration = 1.0
+GameState.transitionDuration = GameState.defaultTransitionDuration
 GameState.transitioning = false
-GameState.TransitionDirection = 1 -- 1 = fade out, -1 = fade in
-GameState.PendingData = nil
-GameState.QueuedState = nil
-GameState.QueuedData = nil
-GameState.TransitionContext = nil
+GameState.transitionDirection = 1 -- 1 = fade out, -1 = fade in
+GameState.pendingData = nil
+GameState.queuedState = nil
+GameState.queuedData = nil
+GameState.transitionContext = nil
 
-local TransitionBlockedEvents = {
+local transitionBlockedEvents = {
 	mousepressed = true,
 	mousereleased = true,
 	keypressed = true,
@@ -29,62 +29,62 @@ local TransitionBlockedEvents = {
 }
 
 local clamp01 = Easing.clamp01
-local GetTransitionAlpha = Easing.GetTransitionAlpha
+local getTransitionAlpha = Easing.getTransitionAlpha
 
-local function ParseDuration(value)
+local function parseDuration(value)
 	if type(value) == "number" and value >= 0 then
 		return value
 	end
 end
 
-local function ResolveStateDurationPreference(state, direction, OtherStateName)
+local function resolveStateDurationPreference(state, direction, otherStateName)
 	if not state then
 		return nil
 	end
 
 	local handler = state.getTransitionDuration
 	if handler then
-		local value = handler(state, direction, OtherStateName)
-		local parsed = ParseDuration(value)
+		local value = handler(state, direction, otherStateName)
+		local parsed = parseDuration(value)
 		if parsed ~= nil then
 			return parsed
 		end
 	end
 
 	if direction == "in" then
-		local value = ParseDuration(state.transitionDurationIn)
+		local value = parseDuration(state.transitionDurationIn)
 		if value ~= nil then
 			return value
 		end
 	elseif direction == "out" then
-		local value = ParseDuration(state.transitionDurationOut)
+		local value = parseDuration(state.transitionDurationOut)
 		if value ~= nil then
 			return value
 		end
 	end
 
-	return ParseDuration(state.transitionDuration)
+	return parseDuration(state.transitionDuration)
 end
 
-local function ResolveTransitionDuration(self, FromName, ToName)
-	local ToState = ToName and self.states[ToName]
-	local FromState = FromName and self.states[FromName]
+local function resolveTransitionDuration(self, fromName, toName)
+	local toState = toName and self.states[toName]
+	local fromState = fromName and self.states[fromName]
 
-	local duration = ResolveStateDurationPreference(ToState, "in", FromName)
-		or ResolveStateDurationPreference(FromState, "out", ToName)
+	local duration = resolveStateDurationPreference(toState, "in", fromName)
+		or resolveStateDurationPreference(fromState, "out", toName)
 
 	if duration ~= nil then
 		return duration
 	end
 
-	return self.DefaultTransitionDuration or 0
+	return self.defaultTransitionDuration or 0
 end
 
-local function UpdateTransitionContext(self, data)
-	local context = self.TransitionContext
+local function updateTransitionContext(self, data)
+	local context = self.transitionContext
 	if not context then
 		context = {}
-		self.TransitionContext = context
+		self.transitionContext = context
 	end
 
 	context.transitioning = data.transitioning or false
@@ -109,11 +109,11 @@ local function UpdateTransitionContext(self, data)
 	progress = clamp01(progress)
 
 	context.progress = progress
-	context.duration = data.duration or self.TransitionDuration or 0
+	context.duration = data.duration or self.transitionDuration or 0
 	context.time = data.time or (progress * context.duration)
 
 	if context.direction ~= 0 and context.transitioning then
-		context.alpha = GetTransitionAlpha(progress, context.direction)
+		context.alpha = getTransitionAlpha(progress, context.direction)
 	else
 		context.alpha = 0
 	end
@@ -124,56 +124,56 @@ local function UpdateTransitionContext(self, data)
 	return context
 end
 
-local function GetCurrentState(self)
+local function getCurrentState(self)
 	return self.states[self.current]
 end
 
-local function CallCurrentState(self, MethodName, ...)
-	local state = GetCurrentState(self)
+local function callCurrentState(self, methodName, ...)
+	local state = getCurrentState(self)
 	if state then
-		local handler = state[MethodName]
+		local handler = state[methodName]
 		if handler then
 			return handler(state, ...)
 		end
 	end
 end
 
-function GameState:switch(StateName, data)
+function GameState:switch(stateName, data)
 	if self.transitioning then
-		self.QueuedState = StateName
-		self.QueuedData = data
+		self.queuedState = stateName
+		self.queuedData = data
 		return
 	end
 
-	self.TransitionDuration = ResolveTransitionDuration(self, self.current, StateName)
+	self.transitionDuration = resolveTransitionDuration(self, self.current, stateName)
 
-	if self.current == nil or self.TransitionDuration <= 0 then
-		local previous = GetCurrentState(self)
+	if self.current == nil or self.transitionDuration <= 0 then
+		local previous = getCurrentState(self)
 		if previous and previous.leave then
 			previous:leave()
 		end
 
-		self.current = StateName
-		self.TransitionFrom = nil
-		self.TransitionTime = 0
+		self.current = stateName
+		self.transitionFrom = nil
+		self.transitionTime = 0
 		self.transitioning = false
-		self.TransitionDirection = -1
-		self.PendingData = nil
+		self.transitionDirection = -1
+		self.pendingData = nil
 
-		local NextState = GetCurrentState(self)
-		if NextState and NextState.enter then
-			NextState:enter(data)
+		local nextState = getCurrentState(self)
+		if nextState and nextState.enter then
+			nextState:enter(data)
 		end
 
-		if NextState and NextState.onTransitionEnd then
-			NextState:onTransitionEnd("in", nil)
+		if nextState and nextState.onTransitionEnd then
+			nextState:onTransitionEnd("in", nil)
 		end
 
-		UpdateTransitionContext(self, {
+		updateTransitionContext(self, {
 			transitioning = false,
 			direction = 0,
 			progress = 1,
-			duration = self.TransitionDuration,
+			duration = self.transitionDuration,
 			time = 0,
 			from = nil,
 			to = self.current,
@@ -182,23 +182,23 @@ function GameState:switch(StateName, data)
 		return
 	end
 
-	self.next = StateName
-	self.PendingData = data
+	self.next = stateName
+	self.pendingData = data
 	self.transitioning = true
-	self.TransitionDirection = 1
-	self.TransitionTime = 0
-	self.TransitionFrom = self.current
+	self.transitionDirection = 1
+	self.transitionTime = 0
+	self.transitionFrom = self.current
 
-	local CurrentState = GetCurrentState(self)
-	if CurrentState and CurrentState.onTransitionStart then
-		CurrentState:onTransitionStart("out", StateName)
+	local currentState = getCurrentState(self)
+	if currentState and currentState.onTransitionStart then
+		currentState:onTransitionStart("out", stateName)
 	end
 
-	UpdateTransitionContext(self, {
+	updateTransitionContext(self, {
 		transitioning = true,
 		direction = 1,
 		progress = 0,
-		duration = self.TransitionDuration,
+		duration = self.transitionDuration,
 		time = 0,
 		from = self.current,
 		to = self.next,
@@ -207,113 +207,113 @@ end
 
 function GameState:update(dt)
 	if self.transitioning then
-		self.TransitionTime = math.min(1, self.TransitionTime + dt / self.TransitionDuration)
+		self.transitionTime = math.min(1, self.transitionTime + dt / self.transitionDuration)
 
 		local context
 
-		if self.TransitionDirection == 1 and self.TransitionTime >= 1 then
-			local PreviousState = GetCurrentState(self)
-			if PreviousState and PreviousState.onTransitionEnd then
-				PreviousState:onTransitionEnd("out", self.next)
+		if self.transitionDirection == 1 and self.transitionTime >= 1 then
+			local previousState = getCurrentState(self)
+			if previousState and previousState.onTransitionEnd then
+				previousState:onTransitionEnd("out", self.next)
 			end
-			if PreviousState and PreviousState.leave then
-				PreviousState:leave()
+			if previousState and previousState.leave then
+				previousState:leave()
 			end
 
 			self.current = self.next
 			self.next = nil
-			self.TransitionDirection = -1
-			self.TransitionTime = 0
+			self.transitionDirection = -1
+			self.transitionTime = 0
 
-			local NextState = GetCurrentState(self)
-			if NextState and NextState.enter then
-				NextState:enter(self.PendingData)
+			local nextState = getCurrentState(self)
+			if nextState and nextState.enter then
+				nextState:enter(self.pendingData)
 			end
-			if NextState and NextState.onTransitionStart then
-				NextState:onTransitionStart("in", self.TransitionFrom)
+			if nextState and nextState.onTransitionStart then
+				nextState:onTransitionStart("in", self.transitionFrom)
 			end
 
-			self.PendingData = nil
-			context = UpdateTransitionContext(self, {
+			self.pendingData = nil
+			context = updateTransitionContext(self, {
 				transitioning = true,
-				direction = self.TransitionDirection,
-				progress = self.TransitionTime,
-				duration = self.TransitionDuration,
+				direction = self.transitionDirection,
+				progress = self.transitionTime,
+				duration = self.transitionDuration,
 				time = 0,
-				from = self.TransitionFrom,
+				from = self.transitionFrom,
 				to = self.current,
 			})
-		elseif self.TransitionDirection == -1 and self.TransitionTime >= 1 then
-			local ActiveState = GetCurrentState(self)
-			if ActiveState and ActiveState.onTransitionEnd then
-				ActiveState:onTransitionEnd("in", self.TransitionFrom)
+		elseif self.transitionDirection == -1 and self.transitionTime >= 1 then
+			local activeState = getCurrentState(self)
+			if activeState and activeState.onTransitionEnd then
+				activeState:onTransitionEnd("in", self.transitionFrom)
 			end
 
 			self.transitioning = false
-			self.TransitionTime = 0
-			self.TransitionFrom = nil
+			self.transitionTime = 0
+			self.transitionFrom = nil
 
-			if self.QueuedState then
-				local QueuedState, QueuedData = self.QueuedState, self.QueuedData
-				self.QueuedState, self.QueuedData = nil, nil
-				self:switch(QueuedState, QueuedData)
+			if self.queuedState then
+				local queuedState, queuedData = self.queuedState, self.queuedData
+				self.queuedState, self.queuedData = nil, nil
+				self:switch(queuedState, queuedData)
 			end
-			context = UpdateTransitionContext(self, {
+			context = updateTransitionContext(self, {
 				transitioning = false,
-				direction = self.TransitionDirection,
-				progress = self.TransitionTime,
-				duration = self.TransitionDuration,
+				direction = self.transitionDirection,
+				progress = self.transitionTime,
+				duration = self.transitionDuration,
 				time = 0,
 				from = nil,
 				to = self.current,
 			})
 		else
-			local FromName, ToName
-			if self.TransitionDirection == 1 then
-				FromName = self.current
-				ToName = self.next
+			local fromName, toName
+			if self.transitionDirection == 1 then
+				fromName = self.current
+				toName = self.next
 			else
-				FromName = self.TransitionFrom
-				ToName = self.current
+				fromName = self.transitionFrom
+				toName = self.current
 			end
 
-			context = UpdateTransitionContext(self, {
+			context = updateTransitionContext(self, {
 				transitioning = true,
-				direction = self.TransitionDirection,
-				progress = self.TransitionTime,
-				duration = self.TransitionDuration,
-				time = self.TransitionTime * self.TransitionDuration,
-				from = FromName,
-				to = ToName,
+				direction = self.transitionDirection,
+				progress = self.transitionTime,
+				duration = self.transitionDuration,
+				time = self.transitionTime * self.transitionDuration,
+				from = fromName,
+				to = toName,
 			})
 		end
 
-		return CallCurrentState(self, "TransitionUpdate", dt, self.TransitionDirection, self.TransitionTime, context)
+		return callCurrentState(self, "transitionUpdate", dt, self.transitionDirection, self.transitionTime, context)
 	end
 
-	UpdateTransitionContext(self, {
+	updateTransitionContext(self, {
 		transitioning = false,
 		direction = 0,
 		progress = 1,
-		duration = self.TransitionDuration,
+		duration = self.transitionDuration,
 		time = 0,
 		from = nil,
 		to = self.current,
 	})
 
-	return CallCurrentState(self, "update", dt)
+	return callCurrentState(self, "update", dt)
 end
 
 function GameState:draw()
-	CallCurrentState(self, "draw")
+	callCurrentState(self, "draw")
 
 	if not self.transitioning then
 		return
 	end
 
-	local context = self.TransitionContext
-	local progress = math.min(math.max(self.TransitionTime, 0), 1)
-	local alpha = (context and context.alpha) or GetTransitionAlpha(progress, self.TransitionDirection)
+	local context = self.transitionContext
+	local progress = math.min(math.max(self.transitionTime, 0), 1)
+	local alpha = (context and context.alpha) or getTransitionAlpha(progress, self.transitionDirection)
 
 	if alpha <= 0 then
 		return
@@ -327,12 +327,12 @@ function GameState:draw()
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
-function GameState:dispatch(EventName, ...)
-	if self.transitioning and TransitionBlockedEvents[EventName] then
+function GameState:dispatch(eventName, ...)
+	if self.transitioning and transitionBlockedEvents[eventName] then
 		return
 	end
 
-	return CallCurrentState(self, EventName, ...)
+	return callCurrentState(self, eventName, ...)
 end
 
 return GameState

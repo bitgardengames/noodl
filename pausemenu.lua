@@ -7,58 +7,58 @@ local Theme = require("theme")
 local PauseMenu = {}
 
 local alpha = 0
-local FadeSpeed = 4
+local fadeSpeed = 4
 
-local CurrentFloorLabel = nil
+local currentFloorLabel = nil
 
 local ButtonList = require("buttonlist")
 local ANALOG_DEADZONE = 0.35
-local PanelBounds = { x = 0, y = 0, w = 0, h = 0 }
+local panelBounds = { x = 0, y = 0, w = 0, h = 0 }
 
-local function ToggleMusic()
-	Audio:PlaySound("click")
-	Settings.MuteMusic = not Settings.MuteMusic
+local function toggleMusic()
+	Audio:playSound("click")
+	Settings.muteMusic = not Settings.muteMusic
 	Settings:save()
-	Audio:ApplyVolumes()
+	Audio:applyVolumes()
 end
 
-local function ToggleSFX()
-	Audio:PlaySound("click")
-	Settings.MuteSFX = not Settings.MuteSFX
+local function toggleSFX()
+	Audio:playSound("click")
+	Settings.muteSFX = not Settings.muteSFX
 	Settings:save()
-	Audio:ApplyVolumes()
+	Audio:applyVolumes()
 end
 
-local BaseButtons = {
-	{ TextKey = "pause.resume",       id = "PauseResume", action = "resume" },
-	{ id = "PauseToggleMusic", action = ToggleMusic },
-	{ id = "PauseToggleSFX",   action = ToggleSFX },
-	{ TextKey = "pause.quit", id = "PauseQuit",   action = "menu" },
+local baseButtons = {
+	{ textKey = "pause.resume",       id = "pauseResume", action = "resume" },
+	{ id = "pauseToggleMusic", action = toggleMusic },
+	{ id = "pauseToggleSFX",   action = toggleSFX },
+	{ textKey = "pause.quit", id = "pauseQuit",   action = "menu" },
 }
 
-local ButtonList = ButtonList.new()
-local AnalogAxisDirections = { horizontal = nil, vertical = nil }
+local buttonList = ButtonList.new()
+local analogAxisDirections = { horizontal = nil, vertical = nil }
 
-local AnalogAxisActions = {
+local analogAxisActions = {
 	horizontal = {
 		negative = function()
-			ButtonList:moveFocus(-1)
+			buttonList:moveFocus(-1)
 		end,
 		positive = function()
-			ButtonList:moveFocus(1)
+			buttonList:moveFocus(1)
 		end,
 	},
 	vertical = {
 		negative = function()
-			ButtonList:moveFocus(-1)
+			buttonList:moveFocus(-1)
 		end,
 		positive = function()
-			ButtonList:moveFocus(1)
+			buttonList:moveFocus(1)
 		end,
 	},
 }
 
-local AnalogAxisMap = {
+local analogAxisMap = {
 	leftx = { slot = "horizontal" },
 	rightx = { slot = "horizontal" },
 	lefty = { slot = "vertical" },
@@ -67,13 +67,13 @@ local AnalogAxisMap = {
 	[2] = { slot = "vertical" },
 }
 
-local function ResetAnalogAxis()
-	AnalogAxisDirections.horizontal = nil
-	AnalogAxisDirections.vertical = nil
+local function resetAnalogAxis()
+	analogAxisDirections.horizontal = nil
+	analogAxisDirections.vertical = nil
 end
 
-local function HandleAnalogAxis(axis, value)
-	local mapping = AnalogAxisMap[axis]
+local function handleAnalogAxis(axis, value)
+	local mapping = analogAxisMap[axis]
 	if not mapping then
 		return
 	end
@@ -85,14 +85,14 @@ local function HandleAnalogAxis(axis, value)
 		direction = "negative"
 	end
 
-	if AnalogAxisDirections[mapping.slot] == direction then
+	if analogAxisDirections[mapping.slot] == direction then
 		return
 	end
 
-	AnalogAxisDirections[mapping.slot] = direction
+	analogAxisDirections[mapping.slot] = direction
 
 	if direction then
-		local actions = AnalogAxisActions[mapping.slot]
+		local actions = analogAxisActions[mapping.slot]
 		local action = actions and actions[direction]
 		if action then
 			action()
@@ -100,166 +100,166 @@ local function HandleAnalogAxis(axis, value)
 	end
 end
 
-local function GetToggleLabel(id)
-	if id == "PauseToggleMusic" then
-		local state = Settings.MuteMusic and Localization:get("common.off") or Localization:get("common.on")
+local function getToggleLabel(id)
+	if id == "pauseToggleMusic" then
+		local state = Settings.muteMusic and Localization:get("common.off") or Localization:get("common.on")
 		return Localization:get("pause.toggle_music", { state = state })
-	elseif id == "PauseToggleSFX" then
-		local state = Settings.MuteSFX and Localization:get("common.off") or Localization:get("common.on")
+	elseif id == "pauseToggleSFX" then
+		local state = Settings.muteSFX and Localization:get("common.off") or Localization:get("common.on")
 		return Localization:get("pause.toggle_sfx", { state = state })
 	end
 
 	return nil
 end
 
-function PauseMenu:UpdateButtonLabels()
-	for _, button in ButtonList:iter() do
+function PauseMenu:updateButtonLabels()
+	for _, button in buttonList:iter() do
 		if button.textKey then
 			button.text = Localization:get(button.textKey)
 		end
-		local label = GetToggleLabel(button.id)
+		local label = getToggleLabel(button.id)
 		if label then
 			button.text = label
 		end
 	end
 end
 
-function PauseMenu:load(ScreenWidth, ScreenHeight)
-	UI.ClearButtons()
+function PauseMenu:load(screenWidth, screenHeight)
+	UI.clearButtons()
 
-	ResetAnalogAxis()
+	resetAnalogAxis()
 
-	local CenterX = ScreenWidth / 2
-	local CenterY = ScreenHeight / 2
-	local ButtonWidth = UI.spacing.ButtonWidth
-	local ButtonHeight = UI.spacing.ButtonHeight
-	local spacing = UI.spacing.ButtonSpacing
-	local count = #BaseButtons
+	local centerX = screenWidth / 2
+	local centerY = screenHeight / 2
+	local buttonWidth = UI.spacing.buttonWidth
+	local buttonHeight = UI.spacing.buttonHeight
+	local spacing = UI.spacing.buttonSpacing
+	local count = #baseButtons
 
-	local TitleHeight = UI.fonts.subtitle:GetHeight()
-	local HeaderSpacing = UI.spacing.SectionSpacing * 0.5
-	local ButtonArea = count * ButtonHeight + math.max(0, count - 1) * spacing
-	local PanelPadding = UI.spacing.PanelPadding
-	local PanelWidth = ButtonWidth + PanelPadding * 2
-	local PanelHeight = PanelPadding + TitleHeight + HeaderSpacing + ButtonArea + PanelPadding
+	local titleHeight = UI.fonts.subtitle:getHeight()
+	local headerSpacing = UI.spacing.sectionSpacing * 0.5
+	local buttonArea = count * buttonHeight + math.max(0, count - 1) * spacing
+	local panelPadding = UI.spacing.panelPadding
+	local panelWidth = buttonWidth + panelPadding * 2
+	local panelHeight = panelPadding + titleHeight + headerSpacing + buttonArea + panelPadding
 
-	local PanelX = CenterX - PanelWidth / 2
-	local PanelY = CenterY - PanelHeight / 2
+	local panelX = centerX - panelWidth / 2
+	local panelY = centerY - panelHeight / 2
 
-	PanelBounds = { x = PanelX, y = PanelY, w = PanelWidth, h = PanelHeight }
+	panelBounds = { x = panelX, y = panelY, w = panelWidth, h = panelHeight }
 
 	local defs = {}
 
-	local StartY = PanelY + PanelPadding + TitleHeight + HeaderSpacing
+	local startY = panelY + panelPadding + titleHeight + headerSpacing
 
-	for index, btn in ipairs(BaseButtons) do
+	for index, btn in ipairs(baseButtons) do
 		defs[#defs + 1] = {
 			id = btn.id,
-			TextKey = btn.textKey,
-			BaseText = btn.textKey and Localization:get(btn.textKey) or "",
-			text = GetToggleLabel(btn.id) or BaseText,
+			textKey = btn.textKey,
+			baseText = btn.textKey and Localization:get(btn.textKey) or "",
+			text = getToggleLabel(btn.id) or baseText,
 			action = btn.action,
-			x = PanelX + PanelPadding,
-			y = StartY + (index - 1) * (ButtonHeight + spacing),
-			w = ButtonWidth,
-			h = ButtonHeight,
+			x = panelX + panelPadding,
+			y = startY + (index - 1) * (buttonHeight + spacing),
+			w = buttonWidth,
+			h = buttonHeight,
 		}
 	end
 
-	ButtonList:reset(defs)
-	self:UpdateButtonLabels()
+	buttonList:reset(defs)
+	self:updateButtonLabels()
 	alpha = 0
 end
 
-local function RefreshFloorLabel(FloorNumber, FloorName)
-	if not FloorNumber then
+local function refreshFloorLabel(floorNumber, floorName)
+	if not floorNumber then
 		return
 	end
 
-	local ResolvedName = FloorName
-	if not ResolvedName or ResolvedName == "" then
-		ResolvedName = Localization:get("common.unknown")
+	local resolvedName = floorName
+	if not resolvedName or resolvedName == "" then
+		resolvedName = Localization:get("common.unknown")
 	end
 
-	CurrentFloorLabel = Localization:get("pause.floor_label", {
-		number = FloorNumber,
-		name = ResolvedName,
+	currentFloorLabel = Localization:get("pause.floor_label", {
+		number = floorNumber,
+		name = resolvedName,
 	})
 end
 
-function PauseMenu:update(dt, IsPaused, FloorNumber, FloorName)
-	if IsPaused then
-		alpha = math.min(alpha + dt * FadeSpeed, 1)
+function PauseMenu:update(dt, isPaused, floorNumber, floorName)
+	if isPaused then
+		alpha = math.min(alpha + dt * fadeSpeed, 1)
 	else
-		alpha = math.max(alpha - dt * FadeSpeed, 0)
+		alpha = math.max(alpha - dt * fadeSpeed, 0)
 	end
 
 	if alpha > 0 then
 		local mx, my = love.mouse.getPosition()
-		ButtonList:updateHover(mx, my)
+		buttonList:updateHover(mx, my)
 	end
 
-	if FloorNumber then
-		RefreshFloorLabel(FloorNumber, FloorName)
+	if floorNumber then
+		refreshFloorLabel(floorNumber, floorName)
 	end
 
-	self:UpdateButtonLabels()
+	self:updateButtonLabels()
 end
 
-function PauseMenu:draw(ScreenWidth, ScreenHeight)
+function PauseMenu:draw(screenWidth, screenHeight)
 	if alpha <= 0 then return end
 
 	love.graphics.setColor(0, 0, 0, 0.55 * alpha)
-	love.graphics.rectangle("fill", 0, 0, ScreenWidth, ScreenHeight)
+	love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
 
-	if CurrentFloorLabel then
-		UI.DrawLabel(CurrentFloorLabel, 0, UI.spacing.PanelPadding, ScreenWidth, "center", {
-			FontKey = "subtitle",
+	if currentFloorLabel then
+		UI.drawLabel(currentFloorLabel, 0, UI.spacing.panelPadding, screenWidth, "center", {
+			fontKey = "subtitle",
 			alpha = alpha,
 		})
 	end
 
-	local panel = PanelBounds
+	local panel = panelBounds
 	if panel and panel.w > 0 and panel.h > 0 then
-		local PanelFill = { Theme.PanelColor[1], Theme.PanelColor[2], Theme.PanelColor[3], (Theme.PanelColor[4] or 1) * alpha }
-		local PanelBorder = { Theme.PanelBorder[1], Theme.PanelBorder[2], Theme.PanelBorder[3], (Theme.PanelBorder[4] or 1) * alpha }
+		local panelFill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * alpha }
+		local panelBorder = { Theme.panelBorder[1], Theme.panelBorder[2], Theme.panelBorder[3], (Theme.panelBorder[4] or 1) * alpha }
 
-		UI.DrawPanel(panel.x, panel.y, panel.w, panel.h, {
-			fill = PanelFill,
-			BorderColor = PanelBorder,
-			ShadowAlpha = alpha,
+		UI.drawPanel(panel.x, panel.y, panel.w, panel.h, {
+			fill = panelFill,
+			borderColor = panelBorder,
+			shadowAlpha = alpha,
 		})
 
-		UI.DrawLabel(Localization:get("pause.title"), panel.x, panel.y + UI.spacing.PanelPadding, panel.w, "center", {
-			FontKey = "subtitle",
+		UI.drawLabel(Localization:get("pause.title"), panel.x, panel.y + UI.spacing.panelPadding, panel.w, "center", {
+			fontKey = "subtitle",
 			alpha = alpha,
 		})
 	end
 
-	ButtonList:draw()
+	buttonList:draw()
 end
 
 function PauseMenu:mousepressed(x, y, button)
-	ButtonList:mousepressed(x, y, button)
+	buttonList:mousepressed(x, y, button)
 end
 
 function PauseMenu:mousereleased(x, y, button)
-	local action, entry = ButtonList:mousereleased(x, y, button)
+	local action, entry = buttonList:mousereleased(x, y, button)
 
 	if type(action) == "function" then
 		action()
-		self:UpdateButtonLabels()
+		self:updateButtonLabels()
 		return nil
 	end
 
-	if entry and GetToggleLabel(entry.id) then
-		self:UpdateButtonLabels()
+	if entry and getToggleLabel(entry.id) then
+		self:updateButtonLabels()
 	end
 
 	return action
 end
 
-local function HandleActionResult(action, entry)
+local function handleActionResult(action, entry)
 	if type(action) == "function" then
 		action()
 		if entry then
@@ -268,16 +268,16 @@ local function HandleActionResult(action, entry)
 		return nil, true
 	end
 
-	return action, entry and GetToggleLabel(entry.id) ~= nil
+	return action, entry and getToggleLabel(entry.id) ~= nil
 end
 
-function PauseMenu:ActivateFocused()
-	local action, entry = ButtonList:activateFocused()
+function PauseMenu:activateFocused()
+	local action, entry = buttonList:activateFocused()
 	if not entry and not action then return nil end
 
-	local resolved, RequiresRefresh = HandleActionResult(action, entry)
-	if RequiresRefresh then
-		self:UpdateButtonLabels()
+	local resolved, requiresRefresh = handleActionResult(action, entry)
+	if requiresRefresh then
+		self:updateButtonLabels()
 	end
 
 	return resolved
@@ -285,11 +285,11 @@ end
 
 function PauseMenu:keypressed(key)
 	if key == "up" or key == "left" then
-		ButtonList:moveFocus(-1)
+		buttonList:moveFocus(-1)
 	elseif key == "down" or key == "right" then
-		ButtonList:moveFocus(1)
+		buttonList:moveFocus(1)
 	elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
-		return self:ActivateFocused()
+		return self:activateFocused()
 	elseif key == "escape" or key == "backspace" then
 		return "resume"
 	end
@@ -297,11 +297,11 @@ end
 
 function PauseMenu:gamepadpressed(_, button)
 	if button == "dpup" or button == "dpleft" then
-		ButtonList:moveFocus(-1)
+		buttonList:moveFocus(-1)
 	elseif button == "dpdown" or button == "dpright" then
-		ButtonList:moveFocus(1)
+		buttonList:moveFocus(1)
 	elseif button == "a" or button == "start" then
-		return self:ActivateFocused()
+		return self:activateFocused()
 	elseif button == "b" then
 		return "resume"
 	end
@@ -310,7 +310,7 @@ end
 PauseMenu.joystickpressed = PauseMenu.gamepadpressed
 
 function PauseMenu:gamepadaxis(_, axis, value)
-	HandleAnalogAxis(axis, value)
+	handleAnalogAxis(axis, value)
 end
 
 PauseMenu.joystickaxis = PauseMenu.gamepadaxis

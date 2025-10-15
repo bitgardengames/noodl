@@ -6,9 +6,9 @@ local Achievements = require("achievements")
 local GameInput = {}
 GameInput.__index = GameInput
 
-local DirectionButtonMap = { dpleft = "left", dpright = "right", dpup = "up", dpdown = "down" }
+local directionButtonMap = { dpleft = "left", dpright = "right", dpup = "up", dpdown = "down" }
 local ANALOG_DEADZONE = 0.5
-local AxisButtonMap = {
+local axisButtonMap = {
 	leftx = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
 	rightx = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
 	lefty = { slot = "vertical", negative = "dpup", positive = "dpdown" },
@@ -17,7 +17,7 @@ local AxisButtonMap = {
 	[2] = { slot = "vertical", negative = "dpup", positive = "dpdown" },
 }
 
-local ButtonAliases = {
+local buttonAliases = {
 	a = "dash",
 	rightshoulder = "dash",
 	righttrigger = "dash",
@@ -26,7 +26,7 @@ local ButtonAliases = {
 	lefttrigger = "slow",
 }
 
-local PlayingButtonHandlers = {
+local playingButtonHandlers = {
 	start = function(game)
 		if game.state == "playing" then
 			game.state = "paused"
@@ -44,24 +44,24 @@ local PlayingButtonHandlers = {
 	end,
 }
 
-local function ResolvePlayingAction(button)
-	return ButtonAliases[button] or button
+local function resolvePlayingAction(button)
+	return buttonAliases[button] or button
 end
 
 function GameInput.new(game, transition)
 	return setmetatable({
 		game = game,
 		transition = transition,
-		AxisState = { horizontal = nil, vertical = nil },
+		axisState = { horizontal = nil, vertical = nil },
 	}, GameInput)
 end
 
-function GameInput:ResetAxes()
-	self.AxisState.horizontal = nil
-	self.AxisState.vertical = nil
+function GameInput:resetAxes()
+	self.axisState.horizontal = nil
+	self.axisState.vertical = nil
 end
 
-function GameInput:ApplyPauseMenuSelection(selection)
+function GameInput:applyPauseMenuSelection(selection)
 	if selection == "resume" then
 		self.game.state = "playing"
 	elseif selection == "menu" then
@@ -70,53 +70,53 @@ function GameInput:ApplyPauseMenuSelection(selection)
 	end
 end
 
-function GameInput:HandlePauseMenuInput(button)
+function GameInput:handlePauseMenuInput(button)
 	if button == "start" then
-		return self:ApplyPauseMenuSelection("resume")
+		return self:applyPauseMenuSelection("resume")
 	end
 
 	local action = PauseMenu:gamepadpressed(nil, button)
 	if action then
-		return self:ApplyPauseMenuSelection(action)
+		return self:applyPauseMenuSelection(action)
 	end
 end
 
-function GameInput:HandlePlayingButton(button)
-	local direction = DirectionButtonMap[button]
+function GameInput:handlePlayingButton(button)
+	local direction = directionButtonMap[button]
 	if direction then
 		Controls:keypressed(self.game, direction)
 		return
 	end
 
-	local handler = PlayingButtonHandlers[ResolvePlayingAction(button)]
+	local handler = playingButtonHandlers[resolvePlayingAction(button)]
 	if handler then
 		return handler(self.game)
 	end
 end
 
-function GameInput:HandleGamepadButton(button)
-	if self.transition:HandleShopInput("gamepadpressed", nil, button) then
+function GameInput:handleGamepadButton(button)
+	if self.transition:handleShopInput("gamepadpressed", nil, button) then
 		return
 	end
 
 	if self.game.state == "paused" then
-		return self:HandlePauseMenuInput(button)
+		return self:handlePauseMenuInput(button)
 	end
 
-	return self:HandlePlayingButton(button)
+	return self:handlePlayingButton(button)
 end
 
-function GameInput:HandleGamepadAxis(axis, value)
-	if self.transition:IsShopActive() and Shop.gamepadaxis then
+function GameInput:handleGamepadAxis(axis, value)
+	if self.transition:isShopActive() and Shop.gamepadaxis then
 		Shop:gamepadaxis(nil, axis, value)
 	end
 
-	local config = AxisButtonMap[axis]
+	local config = axisButtonMap[axis]
 	if not config then
 		return
 	end
 
-	local state = self.AxisState
+	local state = self.axisState
 	local direction
 	if value >= ANALOG_DEADZONE then
 		direction = config.positive
@@ -127,13 +127,13 @@ function GameInput:HandleGamepadAxis(axis, value)
 	if state[config.slot] ~= direction then
 		state[config.slot] = direction
 		if direction then
-			self:HandleGamepadButton(direction)
+			self:handleGamepadButton(direction)
 		end
 	end
 end
 
-function GameInput:HandleShopInput(MethodName, ...)
-	return self.transition:HandleShopInput(MethodName, ...)
+function GameInput:handleShopInput(methodName, ...)
+	return self.transition:handleShopInput(methodName, ...)
 end
 
 return GameInput

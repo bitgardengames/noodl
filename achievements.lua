@@ -7,19 +7,19 @@ local MetaProgression
 
 local Achievements = {
 	definitions = {},
-	DefinitionOrder = {},
+	definitionOrder = {},
 	categories = {},
-	CategoryOrder = {},
+	categoryOrder = {},
 	unlocked = {},
-	PopupQueue = {},
-	PopupTimer = 0,
-	PopupDuration = 3,
-	StateProviders = {},
+	popupQueue = {},
+	popupTimer = 0,
+	popupDuration = 3,
+	stateProviders = {},
 }
 
 local DEFAULT_CATEGORY_ORDER = 100
 local DEFAULT_ORDER = 1000
-local function CopyTable(source)
+local function copyTable(source)
 	local target = {}
 	if source then
 		for key, value in pairs(source) do
@@ -29,7 +29,7 @@ local function CopyTable(source)
 	return target
 end
 
-local function ApplyDefaults(def)
+local function applyDefaults(def)
 	def.id = def.id or ""
 	def.titleKey = def.titleKey or ("achievements_definitions." .. def.id .. ".title")
 	def.descriptionKey = def.descriptionKey or ("achievements_definitions." .. def.id .. ".description")
@@ -44,13 +44,13 @@ local function ApplyDefaults(def)
 	return def
 end
 
-function Achievements:RegisterStateProvider(provider)
+function Achievements:registerStateProvider(provider)
 	if type(provider) == "function" then
-		table.insert(self.StateProviders, provider)
+		table.insert(self.stateProviders, provider)
 	end
 end
 
-function Achievements:RegisterUnlockListener(listener)
+function Achievements:registerUnlockListener(listener)
 	if type(listener) ~= "function" then
 		return
 	end
@@ -74,18 +74,18 @@ function Achievements:_notifyUnlockListeners(id, achievement)
 	end
 end
 
-function Achievements:_addDefinition(RawDef)
-	local def = ApplyDefaults(CopyTable(RawDef))
+function Achievements:_addDefinition(rawDef)
+	local def = applyDefaults(copyTable(rawDef))
 	self.definitions[def.id] = def
-	table.insert(self.DefinitionOrder, def.id)
+	table.insert(self.definitionOrder, def.id)
 
 	self.categories[def.category] = self.categories[def.category] or {}
 	table.insert(self.categories[def.category], def.id)
 end
 
-local function SortAchievements(AId, BId, definitions)
-	local a = definitions[AId]
-	local b = definitions[BId]
+local function sortAchievements(aId, bId, definitions)
+	local a = definitions[aId]
+	local b = definitions[bId]
 	if a.order == b.order then
 		return (a.titleKey or a.id) < (b.titleKey or b.id)
 	end
@@ -93,31 +93,31 @@ local function SortAchievements(AId, BId, definitions)
 end
 
 function Achievements:_finalizeOrdering()
-	table.sort(self.DefinitionOrder, function(AId, BId)
-		return SortAchievements(AId, BId, self.definitions)
+	table.sort(self.definitionOrder, function(aId, bId)
+		return sortAchievements(aId, bId, self.definitions)
 	end)
 
-	local OrderedCategories = {}
+	local orderedCategories = {}
 	for category, ids in pairs(self.categories) do
-		table.sort(ids, function(AId, BId)
-			return SortAchievements(AId, BId, self.definitions)
+		table.sort(ids, function(aId, bId)
+			return sortAchievements(aId, bId, self.definitions)
 		end)
-		OrderedCategories[#OrderedCategories + 1] = {
+		orderedCategories[#orderedCategories + 1] = {
 			id = category,
-			order = (self.definitions[ids[1]] and self.definitions[ids[1]].CategoryOrder) or DEFAULT_CATEGORY_ORDER
+			order = (self.definitions[ids[1]] and self.definitions[ids[1]].categoryOrder) or DEFAULT_CATEGORY_ORDER
 		}
 	end
 
-	table.sort(OrderedCategories, function(a, b)
+	table.sort(orderedCategories, function(a, b)
 		if a.order == b.order then
 			return a.id < b.id
 		end
 		return a.order < b.order
 	end)
 
-	self.CategoryOrder = {}
-	for _, info in ipairs(OrderedCategories) do
-		table.insert(self.CategoryOrder, info.id)
+	self.categoryOrder = {}
+	for _, info in ipairs(orderedCategories) do
+		table.insert(self.categoryOrder, info.id)
 	end
 end
 
@@ -138,39 +138,39 @@ function Achievements:_ensureInitialized()
 	self:_finalizeOrdering()
 
 	if not self._defaultProvidersRegistered then
-		self:RegisterStateProvider(function()
+		self:registerStateProvider(function()
 			return {
-				TotalApplesEaten = PlayerStats:get("TotalApplesEaten") or 0,
-				SessionsPlayed = PlayerStats:get("SessionsPlayed") or 0,
-				TotalDragonfruitEaten = PlayerStats:get("TotalDragonfruitEaten") or 0,
-				BestScore = PlayerStats:get("SnakeScore") or 0,
-				FloorsCleared = PlayerStats:get("FloorsCleared") or 0,
-				DeepestFloorReached = PlayerStats:get("DeepestFloorReached") or 0,
-				BestComboStreak = PlayerStats:get("BestComboStreak") or 0,
-				DailyChallengesCompleted = PlayerStats:get("DailyChallengesCompleted") or 0,
-				ShieldWallBounces = PlayerStats:get("ShieldWallBounces") or 0,
-				ShieldRockBreaks = PlayerStats:get("ShieldRockBreaks") or 0,
-				ShieldSawParries = PlayerStats:get("ShieldSawParries") or 0,
+				totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0,
+				sessionsPlayed = PlayerStats:get("sessionsPlayed") or 0,
+				totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
+				bestScore = PlayerStats:get("snakeScore") or 0,
+				floorsCleared = PlayerStats:get("floorsCleared") or 0,
+				deepestFloorReached = PlayerStats:get("deepestFloorReached") or 0,
+				bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
+				dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0,
+				shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0,
+				shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0,
+				shieldSawParries = PlayerStats:get("shieldSawParries") or 0,
 			}
 		end)
 
-		self:RegisterStateProvider(function()
+		self:registerStateProvider(function()
 			local SessionStats = require("sessionstats")
 			return {
-				RunApplesEaten = SessionStats:get("ApplesEaten") or 0,
-				RunFloorsCleared = SessionStats:get("FloorsCleared") or 0,
-				RunDeepestFloor = SessionStats:get("DeepestFloorReached") or 0,
-				RunShieldWallBounces = SessionStats:get("RunShieldWallBounces") or 0,
-				RunShieldRockBreaks = SessionStats:get("RunShieldRockBreaks") or 0,
-				RunShieldSawParries = SessionStats:get("RunShieldSawParries") or 0,
-				RunCrashShieldsSaved = SessionStats:get("CrashShieldsSaved") or 0,
-				RunDragonfruitEaten = SessionStats:get("DragonfruitEaten") or 0,
-				RunBestComboStreak = SessionStats:get("BestComboStreak") or 0,
-				FruitWithoutTurning = SessionStats:get("FruitWithoutTurning") or 0,
+				runApplesEaten = SessionStats:get("applesEaten") or 0,
+				runFloorsCleared = SessionStats:get("floorsCleared") or 0,
+				runDeepestFloor = SessionStats:get("deepestFloorReached") or 0,
+				runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0,
+				runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0,
+				runShieldSawParries = SessionStats:get("runShieldSawParries") or 0,
+				runCrashShieldsSaved = SessionStats:get("crashShieldsSaved") or 0,
+				runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0,
+				runBestComboStreak = SessionStats:get("bestComboStreak") or 0,
+				fruitWithoutTurning = SessionStats:get("fruitWithoutTurning") or 0,
 			}
 		end)
 
-		self:RegisterStateProvider(function()
+		self:registerStateProvider(function()
 			if not Snake then
 				local ok, module = pcall(require, "snake")
 				if ok then
@@ -181,16 +181,16 @@ function Achievements:_ensureInitialized()
 				end
 			end
 
-			if Snake and Snake.GetLength then
-				local length = Snake:GetLength()
+			if Snake and Snake.getLength then
+				local length = Snake:getLength()
 				if length then
-					return { SnakeLength = length }
+					return { snakeLength = length }
 				end
 			end
 			return nil
 		end)
 
-		self:RegisterStateProvider(function()
+		self:registerStateProvider(function()
 			if not MetaProgression then
 				local ok, module = pcall(require, "metaprogression")
 				if ok then
@@ -201,12 +201,12 @@ function Achievements:_ensureInitialized()
 				end
 			end
 
-			if MetaProgression and MetaProgression.GetState then
-				local ok, state = pcall(MetaProgression.GetState, MetaProgression)
+			if MetaProgression and MetaProgression.getState then
+				local ok, state = pcall(MetaProgression.getState, MetaProgression)
 				if ok and type(state) == "table" then
 					return {
-						TotalMetaExperience = state.totalExperience or 0,
-						MetaLevel = state.level or 0,
+						totalMetaExperience = state.totalExperience or 0,
+						metaLevel = state.level or 0,
 					}
 				elseif not ok then
 					print("[achievements] failed to query metaprogression state:", state)
@@ -223,7 +223,7 @@ function Achievements:_ensureInitialized()
 	self._initialized = true
 end
 
-local function MergeStateValue(target, key, value)
+local function mergeStateValue(target, key, value)
 	local existing = target[key]
 	if type(value) == "number" then
 		if type(existing) == "number" then
@@ -243,13 +243,13 @@ end
 function Achievements:_mergeState(target, source)
 	if not source then return end
 	for key, value in pairs(source) do
-		MergeStateValue(target, key, value)
+		mergeStateValue(target, key, value)
 	end
 end
 
 function Achievements:_buildState(external)
 	local combined = {}
-	for _, provider in ipairs(self.StateProviders) do
+	for _, provider in ipairs(self.stateProviders) do
 		local ok, result = pcall(provider, combined)
 		if ok then
 			if type(result) == "table" then
@@ -267,7 +267,7 @@ function Achievements:_buildState(external)
 	return combined
 end
 
-local function EvaluateProgress(def, state)
+local function evaluateProgress(def, state)
 	if def.progressFn then
 		local ok, value = pcall(def.progressFn, state, def)
 		if ok and type(value) == "number" then
@@ -284,7 +284,7 @@ local function EvaluateProgress(def, state)
 	return def.progress or 0
 end
 
-local function ShouldUnlock(def, state, progress)
+local function shouldUnlock(def, state, progress)
 	if def.condition then
 		local ok, result = pcall(def.condition, state, def)
 		if ok then
@@ -305,7 +305,7 @@ local function ShouldUnlock(def, state, progress)
 	return false
 end
 
-local function ClampProgress(def, progress)
+local function clampProgress(def, progress)
 	if def.goal and def.goal > 0 then
 		return math.min(progress, def.goal)
 	end
@@ -339,26 +339,26 @@ function Achievements:unlock(name)
 		self._unlockedLookup[name] = true
 	end
 
-	local RunAchievements = SessionStats:get("RunAchievements")
-	if type(RunAchievements) ~= "table" then
-		RunAchievements = {}
+	local runAchievements = SessionStats:get("runAchievements")
+	if type(runAchievements) ~= "table" then
+		runAchievements = {}
 	end
-	local AlreadyRecorded = false
-	for _, id in ipairs(RunAchievements) do
+	local alreadyRecorded = false
+	for _, id in ipairs(runAchievements) do
 		if id == name then
-			AlreadyRecorded = true
+			alreadyRecorded = true
 			break
 		end
 	end
-	if not AlreadyRecorded then
-		RunAchievements[#RunAchievements + 1] = name
-		SessionStats:set("RunAchievements", RunAchievements)
+	if not alreadyRecorded then
+		runAchievements[#runAchievements + 1] = name
+		SessionStats:set("runAchievements", runAchievements)
 	end
 
-	table.insert(self.PopupQueue, achievement)
+	table.insert(self.popupQueue, achievement)
 
-	if Audio and Audio.PlaySound then
-		Audio:PlaySound("achievement")
+	if Audio and Audio.playSound then
+		Audio:playSound("achievement")
 	end
 
 	self:save()
@@ -374,29 +374,29 @@ function Achievements:check(key, state)
 		return
 	end
 
-	local CombinedState = self:_buildState(state)
-	local progress = EvaluateProgress(achievement, CombinedState)
+	local combinedState = self:_buildState(state)
+	local progress = evaluateProgress(achievement, combinedState)
 	if type(progress) == "number" then
-		achievement.progress = ClampProgress(achievement, progress)
+		achievement.progress = clampProgress(achievement, progress)
 	end
 
-	if not achievement.unlocked and ShouldUnlock(achievement, CombinedState, progress) then
+	if not achievement.unlocked and shouldUnlock(achievement, combinedState, progress) then
 		self:unlock(key)
 	end
 end
 
-function Achievements:CheckAll(state)
+function Achievements:checkAll(state)
 	self:_ensureInitialized()
 
-	local CombinedState = self:_buildState(state)
+	local combinedState = self:_buildState(state)
 
 	for key, achievement in pairs(self.definitions) do
-		local progress = EvaluateProgress(achievement, CombinedState)
+		local progress = evaluateProgress(achievement, combinedState)
 		if type(progress) == "number" then
-			achievement.progress = ClampProgress(achievement, progress)
+			achievement.progress = clampProgress(achievement, progress)
 		end
 
-		if not achievement.unlocked and ShouldUnlock(achievement, CombinedState, progress) then
+		if not achievement.unlocked and shouldUnlock(achievement, combinedState, progress) then
 			self:unlock(key)
 		end
 	end
@@ -405,13 +405,13 @@ end
 function Achievements:update(dt)
 	self:_ensureInitialized()
 
-	if #self.PopupQueue > 0 then
-		self.PopupTimer = self.PopupTimer + dt
-		local TotalTime = self.PopupDuration + 1.0
+	if #self.popupQueue > 0 then
+		self.popupTimer = self.popupTimer + dt
+		local totalTime = self.popupDuration + 1.0
 
-		if self.PopupTimer >= TotalTime then
-			table.remove(self.PopupQueue, 1)
-			self.PopupTimer = 0
+		if self.popupTimer >= totalTime then
+			table.remove(self.popupQueue, 1)
+			self.popupTimer = 0
 		end
 	end
 end
@@ -421,80 +421,80 @@ function Achievements:_getPopupFonts()
 	return UI.fonts.badge or UI.fonts.button, UI.fonts.caption or UI.fonts.body
 end
 
-local function IconPaths(IconName)
+local function iconPaths(iconName)
 	return {
-		string.format("Assets/Achievements/%s.png", IconName),
-		string.format("Assets/%s.png", IconName),
+		string.format("Assets/Achievements/%s.png", iconName),
+		string.format("Assets/%s.png", iconName),
 	}
 end
 
-function Achievements:_getIcon(IconName)
-	if not IconName then return nil end
+function Achievements:_getIcon(iconName)
+	if not iconName then return nil end
 	self._iconCache = self._iconCache or {}
 
-	if self._iconCache[IconName] ~= nil then
-		return self._iconCache[IconName]
+	if self._iconCache[iconName] ~= nil then
+		return self._iconCache[iconName]
 	end
 
-	for _, path in ipairs(IconPaths(IconName)) do
+	for _, path in ipairs(iconPaths(iconName)) do
 		if love.filesystem.getInfo(path) then
 			local ok, image = pcall(love.graphics.newImage, path)
 			if ok then
-				self._iconCache[IconName] = image
+				self._iconCache[iconName] = image
 				return image
 			end
 		end
 	end
 
-	self._iconCache[IconName] = false
+	self._iconCache[iconName] = false
 	return nil
 end
 
 function Achievements:draw()
 	self:_ensureInitialized()
 
-	if #self.PopupQueue == 0 then
+	if #self.popupQueue == 0 then
 		return
 	end
 
-	local ach = self.PopupQueue[1]
+	local ach = self.popupQueue[1]
 	local Screen = require("screen")
 	local sw, sh = Screen:get()
 
-	local FontTitle, FontDesc = self:_getPopupFonts()
+	local fontTitle, fontDesc = self:_getPopupFonts()
 
 	local padding = 20
 	local width = 500
 	local height = 100
-	local BaseX = (sw - width) / 2
-	local BaseY = sh * 0.25
+	local baseX = (sw - width) / 2
+	local baseY = sh * 0.25
 
-	local AppearTime = 0.4
-	local HoldTime = self.PopupDuration
-	local ExitTime = 0.6
+	local appearTime = 0.4
+	local holdTime = self.popupDuration
+	local exitTime = 0.6
 
-	local t = self.PopupTimer
-	local alpha, OffsetY, scale = 1, 0, 1
+	local t = self.popupTimer
+	local alpha, offsetY, scale = 1, 0, 1
 
-	if t < AppearTime then
-		local p = t / AppearTime
+	if t < appearTime then
+		local p = t / appearTime
 		local ease = p * p * (3 - 2 * p)
-		OffsetY = (1 - ease) * -150
+		offsetY = (1 - ease) * -150
 		scale = 1.0 + 0.2 * (1 - ease)
 		alpha = ease
-	elseif t < AppearTime + HoldTime then
-		OffsetY = 0
+	elseif t < appearTime + holdTime then
+		offsetY = 0
 		scale = 1.0
 		alpha = 1
 	else
-		local p = (t - AppearTime - HoldTime) / ExitTime
+		local p = (t - appearTime - holdTime) / exitTime
 		local ease = p * p
-		OffsetY = ease * -150
+		offsetY = ease * -150
 		alpha = 1 - ease
 	end
 
-	local x = BaseX
-	local y = BaseY + OffsetY
+	local x = baseX
+	local y = baseY + offsetY
 
 	love.graphics.push()
 	love.graphics.translate(x + width / 2, y + height / 2)
@@ -505,36 +505,36 @@ function Achievements:draw()
 	love.graphics.rectangle("fill", x, y, width, height, 12, 12)
 
 	local icon = self:_getIcon(ach.popupIcon or ach.icon)
-	local IconSize = 64
-	local IconSpace = icon and IconSize or 0
+	local iconSize = 64
+	local iconSpace = icon and iconSize or 0
 
 	if icon then
 		love.graphics.setColor(1, 1, 1, alpha)
-		local ScaleX = IconSize / icon:getWidth()
-		local ScaleY = IconSize / icon:getHeight()
-		love.graphics.draw(icon, x + padding, y + (height - IconSize) / 2, 0, ScaleX, ScaleY)
+		local scaleX = iconSize / icon:getWidth()
+		local scaleY = iconSize / icon:getHeight()
+		love.graphics.draw(icon, x + padding, y + (height - iconSize) / 2, 0, scaleX, scaleY)
 	end
 
-	local LocalizedTitle = Localization:get(ach.titleKey)
-	local LocalizedDescription = Localization:get(ach.descriptionKey)
-	local heading = Localization:get("achievements.popup_heading", { title = LocalizedTitle })
+	local localizedTitle = Localization:get(ach.titleKey)
+	local localizedDescription = Localization:get(ach.descriptionKey)
+	local heading = Localization:get("achievements.popup_heading", { title = localizedTitle })
 
 	love.graphics.setColor(1, 1, 0.2, alpha)
-	love.graphics.setFont(FontTitle)
-	love.graphics.printf(heading, x + padding + IconSpace, y + 15, width - (padding * 2) - IconSpace, "left")
+	love.graphics.setFont(fontTitle)
+	love.graphics.printf(heading, x + padding + iconSpace, y + 15, width - (padding * 2) - iconSpace, "left")
 
 	love.graphics.setColor(1, 1, 1, alpha)
-	love.graphics.setFont(FontDesc)
+	love.graphics.setFont(fontDesc)
 	local message = Localization:get("achievements.popup_message", {
-		title = LocalizedTitle,
-		description = LocalizedDescription,
+		title = localizedTitle,
+		description = localizedDescription,
 	})
-	love.graphics.printf(message, x + padding + IconSpace, y + 50, width - (padding * 2) - IconSpace, "left")
+	love.graphics.printf(message, x + padding + iconSpace, y + 50, width - (padding * 2) - iconSpace, "left")
 
 	love.graphics.pop()
 end
 
-local function SerializeValue(value)
+local function serializeValue(value)
 	if type(value) == "number" then
 		if math.type and math.type(value) == "integer" then
 			return string.format("%d", value)
@@ -558,15 +558,15 @@ function Achievements:save()
 	local lines = { "return {" }
 	for key, value in pairs(data) do
 		table.insert(lines, string.format("  [\"%s\"] = { unlocked = %s, progress = %s },",
-			key, tostring(value.unlocked), SerializeValue(value.progress or 0)))
+			key, tostring(value.unlocked), serializeValue(value.progress or 0)))
 	end
 	table.insert(lines, "}")
 
-	local LuaData = table.concat(lines, "\n")
-	love.filesystem.write("achievementdata.lua", LuaData)
+	local luaData = table.concat(lines, "\n")
+	love.filesystem.write("achievementdata.lua", luaData)
 end
 
-local function ApplySavedData(definitions, saved)
+local function applySavedData(definitions, saved)
 	for key, info in pairs(saved) do
 		local def = definitions[key]
 		if def then
@@ -592,16 +592,16 @@ function Achievements:load()
 		local chunk = love.filesystem.load("achievementdata.lua")
 		local ok, data = pcall(chunk)
 		if ok and type(data) == "table" then
-			ApplySavedData(self.definitions, data)
+			applySavedData(self.definitions, data)
 		end
 	end
 end
 
-function Achievements:GetDisplayOrder()
+function Achievements:getDisplayOrder()
 	self:_ensureInitialized()
 
 	local blocks = {}
-	for _, category in ipairs(self.CategoryOrder) do
+	for _, category in ipairs(self.categoryOrder) do
 		local ids = self.categories[category] or {}
 		local entries = {}
 		for _, id in ipairs(ids) do
@@ -615,7 +615,7 @@ function Achievements:GetDisplayOrder()
 	return blocks
 end
 
-function Achievements:GetProgressLabel(def)
+function Achievements:getProgressLabel(def)
 	self:_ensureInitialized()
 
 	if def.unlocked then
@@ -645,7 +645,7 @@ function Achievements:GetProgressLabel(def)
 	return nil
 end
 
-function Achievements:GetProgressRatio(def)
+function Achievements:getProgressRatio(def)
 	if def.unlocked then
 		return 1
 	end
@@ -657,10 +657,10 @@ function Achievements:GetProgressRatio(def)
 	return 0
 end
 
-function Achievements:GetTotals()
+function Achievements:getTotals()
 	self:_ensureInitialized()
 
-	local total = #self.DefinitionOrder
+	local total = #self.definitionOrder
 	local unlocked = 0
 	local completion = 0
 
@@ -672,7 +672,7 @@ function Achievements:GetTotals()
 		}
 	end
 
-	for _, id in ipairs(self.DefinitionOrder) do
+	for _, id in ipairs(self.definitionOrder) do
 		local def = self.definitions[id]
 		if def and def.unlocked then
 			unlocked = unlocked + 1
@@ -688,7 +688,7 @@ function Achievements:GetTotals()
 	}
 end
 
-function Achievements:GetDefinition(id)
+function Achievements:getDefinition(id)
 	self:_ensureInitialized()
 	return self.definitions[id]
 end

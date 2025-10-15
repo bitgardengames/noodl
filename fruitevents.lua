@@ -21,122 +21,122 @@ local FruitEvents = {}
 
 local DEFAULT_COMBO_WINDOW = 2.25
 
-local ComboState = {
+local comboState = {
 	count = 0,
 	timer = 0,
 	window = DEFAULT_COMBO_WINDOW,
-	BaseWindow = DEFAULT_COMBO_WINDOW,
-	BaseOverride = DEFAULT_COMBO_WINDOW,
+	baseWindow = DEFAULT_COMBO_WINDOW,
+	baseOverride = DEFAULT_COMBO_WINDOW,
 	best = 0,
 }
 
-Achievements:RegisterStateProvider(function()
+Achievements:registerStateProvider(function()
 	return {
-		CurrentCombo = ComboState.count or 0,
-		BestComboStreak = math.max(ComboState.best or 0, ComboState.count or 0),
+		currentCombo = comboState.count or 0,
+		bestComboStreak = math.max(comboState.best or 0, comboState.count or 0),
 	}
 end)
 
-local function GetUpgradeEffect(name)
-	if Upgrades and Upgrades.GetEffect then
-		return Upgrades:GetEffect(name)
+local function getUpgradeEffect(name)
+	if Upgrades and Upgrades.getEffect then
+		return Upgrades:getEffect(name)
 	end
 end
 
-local function GetBaseWindow()
-	local override = ComboState.baseOverride or DEFAULT_COMBO_WINDOW
-	local bonus = GetUpgradeEffect("ComboWindowBonus") or 0
+local function getBaseWindow()
+	local override = comboState.baseOverride or DEFAULT_COMBO_WINDOW
+	local bonus = getUpgradeEffect("comboWindowBonus") or 0
 	return math.max(0.5, override + bonus)
 end
 
-local function UpdateComboWindow()
-	ComboState.baseWindow = GetBaseWindow()
-	ComboState.window = math.max(0.75, ComboState.baseWindow)
-	ComboState.timer = math.min(ComboState.timer or 0, ComboState.window)
+local function updateComboWindow()
+	comboState.baseWindow = getBaseWindow()
+	comboState.window = math.max(0.75, comboState.baseWindow)
+	comboState.timer = math.min(comboState.timer or 0, comboState.window)
 end
 
-local function SyncComboToUI()
-	UpdateComboWindow()
-	UI:SetCombo(
-		ComboState.count or 0,
-		ComboState.timer or 0,
-		ComboState.window or DEFAULT_COMBO_WINDOW
+local function syncComboToUI()
+	updateComboWindow()
+	UI:setCombo(
+		comboState.count or 0,
+		comboState.timer or 0,
+		comboState.window or DEFAULT_COMBO_WINDOW
 	)
 end
 
-local function ApplyComboReward(x, y)
-	if ComboState.timer > 0 then
-		ComboState.count = ComboState.count + 1
+local function applyComboReward(x, y)
+	if comboState.timer > 0 then
+		comboState.count = comboState.count + 1
 	else
-		ComboState.count = 1
+		comboState.count = 1
 	end
 
-	ComboState.timer = ComboState.window
-	local ComboCount = ComboState.count
-	ComboState.best = math.max(ComboState.best or 0, ComboCount)
-	local BestStreak = ComboState.best or ComboCount or 0
-	PlayerStats:UpdateMax("BestComboStreak", BestStreak)
-	SessionStats:UpdateMax("BestComboStreak", BestStreak)
-	if ComboCount >= 2 then
-		SessionStats:add("CombosTriggered", 1)
+	comboState.timer = comboState.window
+	local comboCount = comboState.count
+	comboState.best = math.max(comboState.best or 0, comboCount)
+	local bestStreak = comboState.best or comboCount or 0
+	PlayerStats:updateMax("bestComboStreak", bestStreak)
+	SessionStats:updateMax("bestComboStreak", bestStreak)
+	if comboCount >= 2 then
+		SessionStats:add("combosTriggered", 1)
 	end
-	Shaders.notify("ComboChanged", {
-		combo = ComboCount,
-		timer = ComboState.timer or 0,
-		window = ComboState.window or DEFAULT_COMBO_WINDOW,
+	Shaders.notify("comboChanged", {
+		combo = comboCount,
+		timer = comboState.timer or 0,
+		window = comboState.window or DEFAULT_COMBO_WINDOW,
 	})
-	SyncComboToUI()
+	syncComboToUI()
 
-	if ComboCount < 2 then
+	if comboCount < 2 then
 		return
 	end
 
-	local BurstColor = {1, 0.82, 0.3, 1}
-	local BaseBonus = math.min((ComboCount - 1) * 2, 10)
-	local multiplier = Score.GetComboBonusMultiplier and Score:GetComboBonusMultiplier() or 1
-	local ScaledCombo = math.floor(BaseBonus * multiplier + 0.5)
+	local burstColor = {1, 0.82, 0.3, 1}
+	local baseBonus = math.min((comboCount - 1) * 2, 10)
+	local multiplier = Score.getComboBonusMultiplier and Score:getComboBonusMultiplier() or 1
+	local scaledCombo = math.floor(baseBonus * multiplier + 0.5)
 
-	local ExtraBonus = 0
-	if Upgrades and Upgrades.GetComboBonus then
-		ExtraBonus = Upgrades:GetComboBonus(ComboCount) or 0
+	local extraBonus = 0
+	if Upgrades and Upgrades.getComboBonus then
+		extraBonus = Upgrades:getComboBonus(comboCount) or 0
 	end
 
-	local TotalBonus = math.max(0, ScaledCombo + ExtraBonus)
+	local totalBonus = math.max(0, scaledCombo + extraBonus)
 
-	if TotalBonus > 0 then
-		Score:AddBonus(TotalBonus)
+	if totalBonus > 0 then
+		Score:addBonus(totalBonus)
 
-		local summary = string.format("Combo Bonus +%d", TotalBonus)
+		local summary = string.format("Combo Bonus +%d", totalBonus)
 		FloatingText:add(summary, x, y - 74, {1, 0.95, 0.6, 1}, 1.3, 48)
-		Shaders.notify("SpecialEvent", {
+		Shaders.notify("specialEvent", {
 			type = "combo",
 			strength = 0.38,
 			color = {1, 0.9, 0.5, 1},
 		})
 	end
 
-	Particles:SpawnBurst(x, y, {
-		count = love.math.random(10, 14) + ComboCount,
-		speed = 90 + ComboCount * 12,
+	Particles:spawnBurst(x, y, {
+		count = love.math.random(10, 14) + comboCount,
+		speed = 90 + comboCount * 12,
 		life = 0.6,
 		size = 4,
-		color = BurstColor,
+		color = burstColor,
 		spread = math.pi * 2,
 		gravity = 30,
 		drag = 2.5,
-		FadeTo = 0
+		fadeTo = 0
 	})
 end
 
-local function AddFloatingText(label, x, y, color, duration, size)
+local function addFloatingText(label, x, y, color, duration, size)
 	if not label or label == "" then return end
-	FloatingText:add(label, x, y, color or Theme.TextColor, duration or 1.1, size or 42)
+	FloatingText:add(label, x, y, color or Theme.textColor, duration or 1.1, size or 42)
 end
 
-local function ApplyRunRewards(FruitType, x, y)
-	if not FruitType then return end
+local function applyRunRewards(fruitType, x, y)
+	if not fruitType then return end
 
-	local rewards = FruitType.runRewards or FruitType.runReward
+	local rewards = fruitType.runRewards or fruitType.runReward
 	if not rewards then return end
 
 	if rewards.type then
@@ -145,58 +145,58 @@ local function ApplyRunRewards(FruitType, x, y)
 
 	local offset = 74
 	for _, reward in ipairs(rewards) do
-		local RewardType = reward.type
-		if RewardType == "ComboTime" then
+		local rewardType = reward.type
+		if rewardType == "comboTime" then
 			local amount = reward.amount or reward.duration or 0
 			if amount and amount ~= 0 then
-				FruitEvents.BoostComboTimer(amount)
+				FruitEvents.boostComboTimer(amount)
 				if reward.label then
-					AddFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
+					addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
 					offset = offset + 22
 				end
-				Shaders.notify("SpecialEvent", {
-					type = "ComboBoost",
+				Shaders.notify("specialEvent", {
+					type = "comboBoost",
 					strength = 0.24,
 					color = reward.color,
 				})
 			end
-		elseif RewardType == "StallSaws" then
+		elseif rewardType == "stallSaws" then
 			local duration = reward.duration or reward.amount or 0
 			if duration and duration > 0 then
 				Saws:stall(duration)
 				if reward.label then
-					AddFloatingText(reward.label, x, y - offset, reward.color or {0.8, 0.9, 1, 1}, reward.duration, reward.size)
+					addFloatingText(reward.label, x, y - offset, reward.color or {0.8, 0.9, 1, 1}, reward.duration, reward.size)
 					offset = offset + 22
 				end
-				Shaders.notify("SpecialEvent", {
-					type = "StallSaws",
+				Shaders.notify("specialEvent", {
+					type = "stallSaws",
 					strength = 0.36,
 					color = reward.color or {0.72, 0.85, 1, 1},
 				})
 			end
-		elseif RewardType == "shield" then
+		elseif rewardType == "shield" then
 			local shields = math.floor(reward.amount or 0)
 			if shields ~= 0 then
-				Snake:AddCrashShields(shields)
+				Snake:addCrashShields(shields)
 				if reward.label and reward.showLabel ~= false then
-					AddFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
+					addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
 					offset = offset + 22
 				end
-				Shaders.notify("SpecialEvent", {
+				Shaders.notify("specialEvent", {
 					type = "shield",
 					strength = 0.48,
 					color = reward.color or {0.72, 1, 0.82, 1},
 				})
 			end
-		elseif RewardType == "ScoreBonus" then
+		elseif rewardType == "scoreBonus" then
 			local bonus = math.floor(reward.amount or 0)
 			if bonus ~= 0 then
-				Score:AddBonus(bonus)
+				Score:addBonus(bonus)
 				if reward.label then
-					AddFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
+					addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
 					offset = offset + 22
 				end
-				Shaders.notify("SpecialEvent", {
+				Shaders.notify("specialEvent", {
 					type = "score",
 					strength = 0.32,
 					color = reward.color or {1, 0.78, 0.45, 1},
@@ -207,131 +207,131 @@ local function ApplyRunRewards(FruitType, x, y)
 end
 
 function FruitEvents.reset()
-	ComboState.count = 0
-	ComboState.timer = 0
-	ComboState.baseOverride = DEFAULT_COMBO_WINDOW
-	ComboState.baseWindow = DEFAULT_COMBO_WINDOW
-	ComboState.window = DEFAULT_COMBO_WINDOW
-	ComboState.best = 0
-	SyncComboToUI()
-	Shaders.notify("ComboLost", { reason = "reset" })
+	comboState.count = 0
+	comboState.timer = 0
+	comboState.baseOverride = DEFAULT_COMBO_WINDOW
+	comboState.baseWindow = DEFAULT_COMBO_WINDOW
+	comboState.window = DEFAULT_COMBO_WINDOW
+	comboState.best = 0
+	syncComboToUI()
+	Shaders.notify("comboLost", { reason = "reset" })
 end
 
-function FruitEvents:GetDefaultComboWindow()
+function FruitEvents:getDefaultComboWindow()
 	return DEFAULT_COMBO_WINDOW
 end
 
-function FruitEvents:SetComboWindow(window)
-	ComboState.baseOverride = math.max(0.5, window or DEFAULT_COMBO_WINDOW)
-	SyncComboToUI()
+function FruitEvents:setComboWindow(window)
+	comboState.baseOverride = math.max(0.5, window or DEFAULT_COMBO_WINDOW)
+	syncComboToUI()
 end
 
 function FruitEvents.update(dt)
-	UpdateComboWindow()
-	if ComboState.timer > 0 then
-		ComboState.timer = math.max(0, ComboState.timer - dt)
+	updateComboWindow()
+	if comboState.timer > 0 then
+		comboState.timer = math.max(0, comboState.timer - dt)
 
-		if ComboState.timer == 0 then
-			ComboState.count = 0
-			Shaders.notify("ComboLost", { reason = "timeout" })
+		if comboState.timer == 0 then
+			comboState.count = 0
+			Shaders.notify("comboLost", { reason = "timeout" })
 		end
 
-		SyncComboToUI()
+		syncComboToUI()
 	end
 end
 
-function FruitEvents.GetComboCount()
-	return ComboState.count or 0
+function FruitEvents.getComboCount()
+	return comboState.count or 0
 end
 
-function FruitEvents.BoostComboTimer(amount)
+function FruitEvents.boostComboTimer(amount)
 	if not amount or amount <= 0 then return end
-	UpdateComboWindow()
-	ComboState.timer = math.min(ComboState.window or DEFAULT_COMBO_WINDOW, (ComboState.timer or 0) + amount)
-	SyncComboToUI()
-	if (ComboState.count or 0) >= 2 then
-		Shaders.notify("SpecialEvent", {
-			type = "ComboBoost",
+	updateComboWindow()
+	comboState.timer = math.min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
+	syncComboToUI()
+	if (comboState.count or 0) >= 2 then
+		Shaders.notify("specialEvent", {
+			type = "comboBoost",
 			strength = 0.22,
 		})
 	end
 end
 
-function FruitEvents.HandleConsumption(x, y)
-	local points = Fruit:GetPoints()
-	local name = Fruit:GetTypeName()
-	local FruitType = Fruit:GetType()
-	local col, row = Fruit:GetTile()
+function FruitEvents.handleConsumption(x, y)
+	local points = Fruit:getPoints()
+	local name = Fruit:getTypeName()
+	local fruitType = Fruit:getType()
+	local col, row = Fruit:getTile()
 
 	Snake:grow()
-	Snake:MarkFruitSegment(x, y)
+	Snake:markFruitSegment(x, y)
 
 	Face:set("happy", 2)
-	FloatingText:add("+" .. tostring(points), x, y, Theme.TextColor, 1.0, 40)
+	FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40)
 	Score:increase(points)
-	Audio:PlaySound("fruit")
-	SessionStats:add("ApplesEaten", 1)
-	if Snake.OnFruitCollected then
-		Snake:OnFruitCollected()
+	Audio:playSound("fruit")
+	SessionStats:add("applesEaten", 1)
+	if Snake.onFruitCollected then
+		Snake:onFruitCollected()
 	end
 
 	if col and row then
-		SnakeUtils.SetOccupied(col, row, false)
+		SnakeUtils.setOccupied(col, row, false)
 	end
 
-	local SafeZone = Snake:GetSafeZone(3)
+	local safeZone = Snake:getSafeZone(3)
 
 	if name == "Dragonfruit" then
-		PlayerStats:add("TotalDragonfruitEaten", 1)
-		SessionStats:add("DragonfruitEaten", 1)
-		Achievements:unlock("DragonHunter")
-		Shaders.notify("SpecialEvent", {
+		PlayerStats:add("totalDragonfruitEaten", 1)
+		SessionStats:add("dragonfruitEaten", 1)
+		Achievements:unlock("dragonHunter")
+		Shaders.notify("specialEvent", {
 			type = "dragonfruit",
 			strength = 0.9,
 		})
 	end
 
-	UI:TriggerScorePulse()
-	UI:AddFruit(FruitType)
-	local GoalReached = UI:IsGoalReached()
+	UI:triggerScorePulse()
+	UI:addFruit(fruitType)
+	local goalReached = UI:isGoalReached()
 
-	local ExitAlreadyOpen = Arena and Arena.HasExit and Arena:HasExit()
-	if not ExitAlreadyOpen and not GoalReached then
-		Fruit:spawn(Snake:GetSegments(), Rocks, SafeZone)
+	local exitAlreadyOpen = Arena and Arena.hasExit and Arena:hasExit()
+	if not exitAlreadyOpen and not goalReached then
+		Fruit:spawn(Snake:getSegments(), Rocks, safeZone)
 	end
 
-	if love.math.random() < Rocks:GetSpawnChance() then
-		local fx, fy, TileCol, TileRow = SnakeUtils.GetSafeSpawn(
-			Snake:GetSegments(),
+	if love.math.random() < Rocks:getSpawnChance() then
+		local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(
+			Snake:getSegments(),
 			Fruit,
 			Rocks,
-			SafeZone,
+			safeZone,
 			{
-				AvoidFrontOfSnake = true,
-				direction = Snake:GetDirection(),
-				FrontBuffer = 5,
+				avoidFrontOfSnake = true,
+				direction = Snake:getDirection(),
+				frontBuffer = 5,
 			}
 		)
 		if fx then
 			Rocks:spawn(fx, fy, "small")
-			SnakeUtils.SetOccupied(TileCol, TileRow, true)
+			SnakeUtils.setOccupied(tileCol, tileRow, true)
 		end
 	end
 
-	Saws:OnFruitCollected()
-	if Rocks.OnFruitCollected then
-		Rocks:OnFruitCollected(x, y)
+	Saws:onFruitCollected()
+	if Rocks.onFruitCollected then
+		Rocks:onFruitCollected(x, y)
 	end
 
-	ApplyComboReward(x, y)
-	ApplyRunRewards(FruitType, x, y)
+	applyComboReward(x, y)
+	applyRunRewards(fruitType, x, y)
 
-	if Arena and Arena.TriggerBorderFlare then
-		local ComboCount = FruitEvents.GetComboCount and FruitEvents.GetComboCount() or 0
-		local BaseStrength = 0.12
-		local ComboBoost = math.min(ComboCount, 5) * 0.02
-		local duration = 0.55 + math.min(ComboCount, 4) * 0.03
-		Arena:TriggerBorderFlare(BaseStrength + ComboBoost, duration)
+	if Arena and Arena.triggerBorderFlare then
+		local comboCount = FruitEvents.getComboCount and FruitEvents.getComboCount() or 0
+		local baseStrength = 0.12
+		local comboBoost = math.min(comboCount, 5) * 0.02
+		local duration = 0.55 + math.min(comboCount, 4) * 0.03
+		Arena:triggerBorderFlare(baseStrength + comboBoost, duration)
 	end
 
 	if Snake.adrenaline then
@@ -339,20 +339,20 @@ function FruitEvents.HandleConsumption(x, y)
 		Snake.adrenaline.timer = Snake.adrenaline.duration
 	end
 
-	Upgrades:notify("FruitCollected", {
+	Upgrades:notify("fruitCollected", {
 		x = x,
 		y = y,
-		FruitType = FruitType,
+		fruitType = fruitType,
 		name = name,
-		combo = ComboState.count or 0,
+		combo = comboState.count or 0,
 	})
 
 	local state = {
-		SnakeScore = Score:get(),
-		SnakeApplesEaten = Score:get(),
-		TotalApplesEaten = PlayerStats:get("TotalApplesEaten") or 0
+		snakeScore = Score:get(),
+		snakeApplesEaten = Score:get(),
+		totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0
 	}
-	Achievements:CheckAll(state)
+	Achievements:checkAll(state)
 end
 
 return FruitEvents
