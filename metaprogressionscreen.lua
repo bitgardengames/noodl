@@ -66,6 +66,8 @@ local viewportTop = DEFAULT_LIST_TOP
 local viewportHeight = 0
 local contentHeight = 0
 
+local drawCosmeticSnakePreview
+
 local function clampColorComponent(value)
         if value < 0 then
                 return 0
@@ -1743,7 +1745,7 @@ local function ensureCosmeticPreviewTrail()
         return cosmeticPreviewTrail, cosmeticPreviewBounds
 end
 
-local function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, palette)
+function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, palette)
         if not previewW or not previewH or previewW <= 0 or previewH <= 0 then
                 return
         end
