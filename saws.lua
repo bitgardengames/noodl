@@ -375,46 +375,10 @@ function Saws:update(dt)
 			saw.scaleY = progress
 			saw.scaleX = progress
 
-			if progress >= 1 then
-				saw.phase = "squash"
-				saw.timer = 0
-				local sawColor = Theme.sawColor or {0.8, 0.8, 0.8, 1}
-				local primary = copyColor(sawColor)
-				primary[4] = 1
-				local highlight = getHighlightColor(sawColor)
-
-				Particles:spawnBurst(saw.x, saw.y, {
-					count = love.math.random(6, 10),
-					speed = 62,
-					speedVariance = 44,
-					life = 0.4,
-					size = 3,
-					color = primary,
-					spread = math.pi * 2,
-					angleJitter = math.pi * 0.8,
-					drag = 2.5,
-					gravity = 185,
-					scaleMin = 0.62,
-					scaleVariance = 0.56,
-					fadeTo = 0.1,
-				})
-
-				Particles:spawnBurst(saw.x, saw.y, {
-					count = love.math.random(3, 4),
-					speed = 118,
-					speedVariance = 52,
-					life = 0.27,
-					size = 2,
-					color = highlight,
-					spread = math.pi * 2,
-					angleJitter = math.pi,
-					drag = 1.1,
-					gravity = 150,
-					scaleMin = 0.38,
-					scaleVariance = 0.28,
-					fadeTo = 0,
-				})
-			end
+                        if progress >= 1 then
+                                saw.phase = "squash"
+                                saw.timer = 0
+                        end
 
 		elseif saw.phase == "squash" then
 			local progress = math.min(saw.timer / SQUASH_DURATION, 1)
