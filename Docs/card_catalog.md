@@ -22,7 +22,6 @@
 | Stone Skin | Uncommon | Gain a crash shield that shatters rocks and shrugs off a saw or laser hit. | Up to 4 stacks |
 | Verdant Bonds | Uncommon | Buying an Economy upgrade grants crash shields equal to Verdant Bonds stacks. | Tags: economy, defense; Up to 3 stacks |
 | Artisan Catalog | Rare | The first upgrade you buy each floor grants +1 crash shield, +2 bonus score, and stalls saws for 0.9s. Effects stack with additional copies. | Tags: economy, defense |
-| Mirrored Scales | Rare | Blocking a laser makes it fire back the other way after a quick recharge and grants +2 bonus score (+1 per additional copy). | Tags: defense, economy |
 | Predator's Reflex | Rare | Adrenaline bursts are 25% stronger and trigger at the start of each floor. | Requires tags: adrenaline |
 | Pulse Bloom | Rare | Harvest a handful of distinct fruit to forge a crash shield. | Tags: defense, economy; Up to 2 stacks |
 | Sparkstep Relay | Rare | Dashing shatters the nearest rock and stalls saws for 0.6s. | Tags: mobility, defense; Requires tags: mobility |

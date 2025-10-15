@@ -483,11 +483,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Echo Aegis",
 				description = "Crash shields unleash a shockwave that stalls saws.",
 			},
-				mirrored_scales = {
-					name = "Mirrored Scales",
-				description = "Blocking a laser makes it fire back the other way after a quick recharge and grants +2 bonus score (+1 per additional copy).",
-				activation_text = "Laser Ricochet",
-			},
 			diffraction_barrier = {
 				name = "Diffraction Barrier",
 				description = "Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s.",
