@@ -1197,40 +1197,6 @@ local pool = {
 		},
 	}),
 	register({
-		id = "mirror_mantle",
-		nameKey = "upgrades.mirror_mantle.name",
-		descKey = "upgrades.mirror_mantle.description",
-		rarity = "rare",
-		tags = {"defense", "combo"},
-		handlers = {
-			shieldConsumed = function(data)
-				if Score.addBonus then
-					Score:addBonus(3)
-				end
-				if Saws and Saws.stall then
-					Saws:stall(1)
-				end
-				celebrateUpgrade(getUpgradeString("mirror_mantle", "activation_text"), data, {
-					color = {0.82, 0.74, 1, 1},
-					particleCount = 18,
-					particleSpeed = 140,
-					particleLife = 0.5,
-					textOffset = 50,
-					textScale = 1.14,
-					visual = {
-						badge = "shield",
-						outerRadius = 60,
-						innerRadius = 18,
-						ringCount = 4,
-						life = 0.7,
-						glowAlpha = 0.3,
-						haloAlpha = 0.22,
-					},
-				})
-			end,
-		},
-	}),
-	register({
 		id = "mirrored_scales",
 		nameKey = "upgrades.mirrored_scales.name",
 		descKey = "upgrades.mirrored_scales.description",

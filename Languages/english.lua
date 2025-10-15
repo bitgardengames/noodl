@@ -483,13 +483,8 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Echo Aegis",
 				description = "Crash shields unleash a shockwave that stalls saws.",
 			},
-			mirror_mantle = {
-				name = "Mirror Mantle",
-				description = "Breaking a crash shield grants +3 bonus score and stalls saws for 1s.",
-				activation_text = "Mirrored Rebound",
-			},
-			mirrored_scales = {
-				name = "Mirrored Scales",
+				mirrored_scales = {
+					name = "Mirrored Scales",
 				description = "Blocking a laser makes it fire back the other way after a quick recharge and grants +2 bonus score (+1 per additional copy).",
 				activation_text = "Laser Ricochet",
 			},
