@@ -525,21 +525,21 @@ local function handleSawCollision(headX, headY)
 
 		Saws:destroy(sawHit)
 
-		Particles:spawnBurst(headX, headY, {
-				count = 8,
-				speed = 40,
-				speedVariance = 34,
-				life = 0.35,
-				size = 3,
-				color = {0.9, 0.7, 0.3, 1},
-				spread = math.pi * 2,
-				angleJitter = math.pi * 0.9,
-				drag = 3.0,
-				gravity = 240,
-				scaleMin = 0.5,
-				scaleVariance = 0.6,
-				fadeTo = 0,
-		})
+                Particles:spawnBurst(headX, headY, {
+                                count = 8,
+                                speed = 48,
+                                speedVariance = 36,
+                                life = 0.32,
+                                size = 2.2,
+                                color = {1.0, 0.9, 0.45, 1},
+                                spread = math.pi * 2,
+                                angleJitter = math.pi * 0.9,
+                                drag = 3.2,
+                                gravity = 240,
+                                scaleMin = 0.4,
+                                scaleVariance = 0.45,
+                                fadeTo = 0.05,
+                })
 		Audio:playSound("shield_saw")
 
 		if Snake.onShieldConsumed then

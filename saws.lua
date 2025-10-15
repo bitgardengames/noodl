@@ -239,37 +239,37 @@ local function removeSaw(target)
 			primary[4] = 1
 			local highlight = getHighlightColor(sawColor)
 
-			Particles:spawnBurst(px or saw.x, py or saw.y, {
-				count = 12,
-				speed = 82,
-				speedVariance = 68,
-				life = 0.4,
-				size = 3,
-				color = primary,
-				spread = math.pi * 2,
-				angleJitter = math.pi,
-				drag = 3.5,
-				gravity = 260,
-				scaleMin = 0.58,
-				scaleVariance = 0.66,
-				fadeTo = 0.06,
-			})
+                        Particles:spawnBurst(px or saw.x, py or saw.y, {
+                                count = 12,
+                                speed = 82,
+                                speedVariance = 68,
+                                life = 0.35,
+                                size = 2.3,
+                                color = {primary[1], primary[2], primary[3], primary[4]},
+                                spread = math.pi * 2,
+                                angleJitter = math.pi,
+                                drag = 3.5,
+                                gravity = 260,
+                                scaleMin = 0.45,
+                                scaleVariance = 0.5,
+                                fadeTo = 0.04,
+                        })
 
-			Particles:spawnBurst(px or saw.x, py or saw.y, {
-				count = love.math.random(4, 6),
-				speed = 126,
-				speedVariance = 70,
-				life = 0.28,
-				size = 2.1,
-				color = highlight,
-				spread = math.pi * 2,
-				angleJitter = math.pi,
-				drag = 1.4,
-				gravity = 200,
-				scaleMin = 0.4,
-				scaleVariance = 0.32,
-				fadeTo = 0,
-			})
+                        Particles:spawnBurst(px or saw.x, py or saw.y, {
+                                count = love.math.random(4, 6),
+                                speed = 132,
+                                speedVariance = 72,
+                                life = 0.26,
+                                size = 1.8,
+                                color = {1.0, 0.94, 0.52, highlight[4] or 1},
+                                spread = math.pi * 2,
+                                angleJitter = math.pi,
+                                drag = 1.4,
+                                gravity = 200,
+                                scaleMin = 0.34,
+                                scaleVariance = 0.28,
+                                fadeTo = 0.02,
+                        })
 
 			table.remove(current, index)
 			break
