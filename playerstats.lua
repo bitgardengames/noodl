@@ -2,26 +2,26 @@ local DataSchemas = require("dataschemas")
 
 local PlayerStats = {}
 
-local saveFile = "savedstats.lua"
-local playerSchema = DataSchemas.playerStats
+local SaveFile = "savedstats.lua"
+local PlayerSchema = DataSchemas.PlayerStats
 
 PlayerStats.data = {}
 
-local function applySchemaDefaults(store)
+local function ApplySchemaDefaults(store)
 	if type(store.data) ~= "table" then
 		store.data = {}
 	end
 
-	DataSchemas.applyDefaults(playerSchema, store.data)
+	DataSchemas.ApplyDefaults(PlayerSchema, store.data)
 end
 
-local function freshData()
-	return DataSchemas.collectDefaults(playerSchema)
+local function FreshData()
+	return DataSchemas.CollectDefaults(PlayerSchema)
 end
 
 function PlayerStats:load()
-	if love.filesystem.getInfo(saveFile) then
-		local success, chunk = pcall(love.filesystem.load, saveFile)
+	if love.filesystem.getInfo(SaveFile) then
+		local success, chunk = pcall(love.filesystem.load, SaveFile)
 		if success and chunk then
 			local ok, saved = pcall(chunk)
 			if ok and type(saved) == "table" then
@@ -30,26 +30,26 @@ function PlayerStats:load()
 		end
 	end
 
-	applySchemaDefaults(self)
+	ApplySchemaDefaults(self)
 end
 
 function PlayerStats:save()
 	local lines = { "return {\n" }
 
 	for k, v in pairs(self.data) do
-		local vType = type(v)
-		if vType == "number" then
+		local VType = type(v)
+		if VType == "number" then
 			table.insert(lines, string.format("    [%q] = %s,\n", k, tostring(v)))
-		elseif vType == "string" then
+		elseif VType == "string" then
 			table.insert(lines, string.format("    [%q] = %q,\n", k, v))
-		elseif vType == "boolean" then
+		elseif VType == "boolean" then
 			table.insert(lines, string.format("    [%q] = %s,\n", k, tostring(v)))
 		end
 		-- Skip nested tables or unsupported types
 	end
 
 	table.insert(lines, "}\n")
-	love.filesystem.write(saveFile, table.concat(lines))
+	love.filesystem.write(SaveFile, table.concat(lines))
 end
 
 function PlayerStats:add(stat, amount)
@@ -57,14 +57,14 @@ function PlayerStats:add(stat, amount)
 	self:save()
 end
 
-function PlayerStats:updateMax(stat, value)
+function PlayerStats:UpdateMax(stat, value)
 	if not self.data[stat] or value > self.data[stat] then
 		self.data[stat] = value
 		self:save()
 	end
 end
 
-function PlayerStats:updateMin(stat, value)
+function PlayerStats:UpdateMin(stat, value)
 	if value == nil then
 		return
 	end
@@ -84,12 +84,12 @@ function PlayerStats:get(stat)
 	return self.data[stat] or 0
 end
 
-function PlayerStats:reset(saveAfter)
-	self.data = freshData()
+function PlayerStats:reset(SaveAfter)
+	self.data = FreshData()
 
-	applySchemaDefaults(self)
+	ApplySchemaDefaults(self)
 
-	if saveAfter ~= false then
+	if SaveAfter ~= false then
 		self:save()
 	end
 end

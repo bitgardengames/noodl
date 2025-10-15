@@ -1,11 +1,11 @@
 local MetaProgression = {}
 
-local saveFile = "metaprogression_state.lua"
+local SaveFile = "metaprogression_state.lua"
 
 local DEFAULT_DATA = {
-	totalExperience = 0,
+	TotalExperience = 0,
 	level = 1,
-	unlockHistory = {},
+	UnlockHistory = {},
 }
 
 --[[
@@ -27,44 +27,44 @@ local LINEAR_XP_PER_LEVEL = 21
 local XP_CURVE_SCALE = 10
 local XP_CURVE_EXPONENT = 1.32
 
-local unlockDefinitions = {
+local UnlockDefinitions = {
 	[2] = {
 		id = "shop_expansion_1",
 		name = "Shop Expansion I",
 		description = "Adds a third upgrade card to every visit.",
 		effects = {
-			shopExtraChoices = 1,
+			ShopExtraChoices = 1,
 		},
 	},
 	[3] = {
 		id = "specialist_pool",
 		name = "Specialist Contracts",
 		description = "Unlocks rare defensive specialists in the upgrade pool.",
-		unlockTags = { "specialist" },
+		UnlockTags = { "specialist" },
 	},
 	[4] = {
 		id = "dash_prototype",
 		name = "Thunder Dash Prototype",
 		description = "Unlocks dash ability upgrades in the shop.",
-		unlockTags = { "abilities" },
+		UnlockTags = { "abilities" },
 	},
 	[5] = {
 		id = "temporal_study",
 		name = "Temporal Study",
 		description = "Unlocks time-bending upgrades that slow the arena.",
-		unlockTags = { "timekeeper" },
+		UnlockTags = { "timekeeper" },
 	},
 	[6] = {
 		id = "event_horizon",
 		name = "Event Horizon",
 		description = "Unlocks experimental portal tech—legendary upgrades included.",
-		unlockTags = { "legendary" },
+		UnlockTags = { "legendary" },
 	},
 	[7] = {
 		id = "combo_research",
 		name = "Combo Research Initiative",
 		description = "Unlocks advanced combo support upgrades in the shop.",
-		unlockTags = { "combo_mastery" },
+		UnlockTags = { "combo_mastery" },
 	},
 	[9] = {
 		id = "ion_storm_scales",
@@ -75,25 +75,25 @@ local unlockDefinitions = {
 		id = "stormrunner_certification",
 		name = "Stormrunner Certification",
 		description = "Unlocks dash-synergy upgrades like Sparkstep Relay in the shop.",
-		unlockTags = { "stormtech" },
+		UnlockTags = { "stormtech" },
 	},
 	[11] = {
 		id = "precision_coils",
 		name = "Precision Coil Prototypes",
 		description = "Unlocks the deliberate coil speed regulator upgrade.",
-		unlockTags = { "speedcraft" },
+		UnlockTags = { "speedcraft" },
 	},
 	[12] = {
 		id = "chrono_carapace_scales",
 		name = "Chrono Carapace Scales",
 		description = "Unlocks the Chrono Carapace snake skin and artisan supply contracts in the shop.",
-		unlockTags = { "artisan_alliance" },
+		UnlockTags = { "artisan_alliance" },
 	},
 	[13] = {
 		id = "abyssal_protocols",
 		name = "Abyssal Protocols",
 		description = "Unlocks abyssal relic upgrades including the Abyssal Catalyst.",
-		unlockTags = { "abyssal_protocols" },
+		UnlockTags = { "abyssal_protocols" },
 	},
         [14] = {
                 id = "midnight_circuit_scales",
@@ -102,7 +102,7 @@ local unlockDefinitions = {
         },
 }
 
-local milestoneThresholds = {
+local MilestoneThresholds = {
 	650,
 	1300,
 	2400,
@@ -112,14 +112,14 @@ local milestoneThresholds = {
 	10500,
 }
 
-local function copyTable(tbl)
+local function CopyTable(tbl)
 	local result = {}
 	if type(tbl) ~= "table" then
 		return result
 	end
 	for k, v in pairs(tbl) do
 		if type(v) == "table" then
-			result[k] = copyTable(v)
+			result[k] = CopyTable(v)
 		else
 			result[k] = v
 		end
@@ -132,10 +132,10 @@ function MetaProgression:_ensureLoaded()
 		return
 	end
 
-	self.data = copyTable(DEFAULT_DATA)
+	self.data = CopyTable(DEFAULT_DATA)
 
-	if love.filesystem.getInfo(saveFile) then
-		local success, chunk = pcall(love.filesystem.load, saveFile)
+	if love.filesystem.getInfo(SaveFile) then
+		local success, chunk = pcall(love.filesystem.load, SaveFile)
 		if success and chunk then
 			local ok, saved = pcall(chunk)
 			if ok and type(saved) == "table" then
@@ -143,21 +143,21 @@ function MetaProgression:_ensureLoaded()
 					if type(DEFAULT_DATA[k]) ~= "table" then
 						self.data[k] = v
 					elseif type(v) == "table" then
-						self.data[k] = copyTable(v)
+						self.data[k] = CopyTable(v)
 					end
 				end
 			end
 		end
 	end
 
-	if type(self.data.totalExperience) ~= "number" or self.data.totalExperience < 0 then
-		self.data.totalExperience = 0
+	if type(self.data.TotalExperience) ~= "number" or self.data.TotalExperience < 0 then
+		self.data.TotalExperience = 0
 	end
 	if type(self.data.level) ~= "number" or self.data.level < 1 then
 		self.data.level = 1
 	end
-	if type(self.data.unlockHistory) ~= "table" then
-		self.data.unlockHistory = {}
+	if type(self.data.UnlockHistory) ~= "table" then
+		self.data.UnlockHistory = {}
 	end
 
 	self._loaded = true
@@ -165,20 +165,20 @@ end
 
 local function serialize(value, indent)
 	indent = indent or 0
-	local valueType = type(value)
+	local ValueType = type(value)
 
-	if valueType == "number" or valueType == "boolean" then
+	if ValueType == "number" or ValueType == "boolean" then
 		return tostring(value)
-	elseif valueType == "string" then
+	elseif ValueType == "string" then
 		return string.format("%q", value)
-	elseif valueType == "table" then
+	elseif ValueType == "table" then
 		local spacing = string.rep(" ", indent)
 		local lines = { "{\n" }
-		local nextIndent = indent + 4
-		local entryIndent = string.rep(" ", nextIndent)
+		local NextIndent = indent + 4
+		local EntryIndent = string.rep(" ", NextIndent)
 		for k, v in pairs(value) do
 			local key = string.format("[%q]", tostring(k))
-			table.insert(lines, string.format("%s%s = %s,\n", entryIndent, key, serialize(v, nextIndent)))
+			table.insert(lines, string.format("%s%s = %s,\n", EntryIndent, key, serialize(v, NextIndent)))
 		end
 		table.insert(lines, string.format("%s}", spacing))
 		return table.concat(lines)
@@ -189,51 +189,51 @@ end
 
 function MetaProgression:_save()
 	self:_ensureLoaded()
-	local toSave = {
-		totalExperience = self.data.totalExperience,
+	local ToSave = {
+		TotalExperience = self.data.TotalExperience,
 		level = self.data.level,
-		unlockHistory = self.data.unlockHistory,
+		UnlockHistory = self.data.UnlockHistory,
 	}
-	local serialized = "return " .. serialize(toSave, 0) .. "\n"
-	love.filesystem.write(saveFile, serialized)
+	local serialized = "return " .. serialize(ToSave, 0) .. "\n"
+	love.filesystem.write(SaveFile, serialized)
 end
 
-function MetaProgression:getXpForLevel(level)
+function MetaProgression:GetXpForLevel(level)
 	level = math.max(1, math.floor(level or 1))
-	local levelIndex = level - 1
+	local LevelIndex = level - 1
 	local base = BASE_XP_PER_LEVEL
-	local linear = LINEAR_XP_PER_LEVEL * levelIndex
-	local curve = math.floor((levelIndex ^ XP_CURVE_EXPONENT) * XP_CURVE_SCALE)
+	local linear = LINEAR_XP_PER_LEVEL * LevelIndex
+	local curve = math.floor((LevelIndex ^ XP_CURVE_EXPONENT) * XP_CURVE_SCALE)
 	return base + linear + curve
 end
 
-function MetaProgression:getProgressForTotal(totalXP)
+function MetaProgression:GetProgressForTotal(TotalXP)
 	self:_ensureLoaded()
 	local level = 1
-	local xpForNext = self:getXpForLevel(level)
-	local remaining = math.max(0, totalXP or 0)
+	local XpForNext = self:GetXpForLevel(level)
+	local remaining = math.max(0, TotalXP or 0)
 
-	while remaining >= xpForNext do
-		remaining = remaining - xpForNext
+	while remaining >= XpForNext do
+		remaining = remaining - XpForNext
 		level = level + 1
-		xpForNext = self:getXpForLevel(level)
+		XpForNext = self:GetXpForLevel(level)
 	end
 
-	return level, remaining, xpForNext
+	return level, remaining, XpForNext
 end
 
-function MetaProgression:getTotalXpForLevel(level)
+function MetaProgression:GetTotalXpForLevel(level)
 	level = math.max(1, math.floor(level or 1))
 	local total = 0
 	for lvl = 1, level - 1 do
-		total = total + self:getXpForLevel(lvl)
+		total = total + self:GetXpForLevel(lvl)
 	end
 	return total
 end
 
 local CORE_UNLOCK_TAG = "core"
 
-local function accumulateEffects(target, source)
+local function AccumulateEffects(target, source)
 	if type(source) ~= "table" then
 		return
 	end
@@ -251,15 +251,15 @@ function MetaProgression:_collectUnlockedEffects()
 	self:_ensureLoaded()
 
 	local effects = {
-		shopExtraChoices = 0,
+		ShopExtraChoices = 0,
 		tags = { [CORE_UNLOCK_TAG] = true },
 	}
 
-	local currentLevel = self.data.level or 1
-	for level, definition in pairs(unlockDefinitions) do
-		if level <= currentLevel then
+	local CurrentLevel = self.data.level or 1
+	for level, definition in pairs(UnlockDefinitions) do
+		if level <= CurrentLevel then
 			if definition.effects then
-				accumulateEffects(effects, definition.effects)
+				AccumulateEffects(effects, definition.effects)
 			end
 			if definition.unlockTags then
 				for _, tag in ipairs(definition.unlockTags) do
@@ -274,44 +274,44 @@ function MetaProgression:_collectUnlockedEffects()
 	return effects
 end
 
-function MetaProgression:getShopBonusSlots()
+function MetaProgression:GetShopBonusSlots()
 	local effects = self:_collectUnlockedEffects()
 	return math.floor(effects.shopExtraChoices or 0)
 end
 
-function MetaProgression:getUnlockedTags()
+function MetaProgression:GetUnlockedTags()
 	local effects = self:_collectUnlockedEffects()
 	return effects.tags or {}
 end
 
-function MetaProgression:isTagUnlocked(tag)
+function MetaProgression:IsTagUnlocked(tag)
 	if not tag or tag == CORE_UNLOCK_TAG then
 		return true
 	end
 
-	local unlocked = self:getUnlockedTags()
+	local unlocked = self:GetUnlockedTags()
 	return unlocked[tag] == true
 end
 
-function MetaProgression:getUnlockTrack()
+function MetaProgression:GetUnlockTrack()
 	self:_ensureLoaded()
 
-	local currentTotal = math.max(0, self.data.totalExperience or 0)
-	local currentLevel = math.max(1, self.data.level or 1)
+	local CurrentTotal = math.max(0, self.data.TotalExperience or 0)
+	local CurrentLevel = math.max(1, self.data.level or 1)
 
 	local track = {}
-	for level, definition in pairs(unlockDefinitions) do
+	for level, definition in pairs(UnlockDefinitions) do
 		local entry = {
 			level = level,
 			id = definition.id,
 			name = definition.name,
 			description = definition.description,
-			unlockTags = definition.unlockTags,
+			UnlockTags = definition.unlockTags,
 			effects = definition.effects,
-			unlocked = currentLevel >= level,
+			unlocked = CurrentLevel >= level,
 		}
-		entry.totalXpRequired = self:getTotalXpForLevel(level)
-		local remaining = entry.totalXpRequired - currentTotal
+		entry.totalXpRequired = self:GetTotalXpForLevel(level)
+		local remaining = entry.totalXpRequired - CurrentTotal
 		entry.remainingXp = math.max(0, math.floor(remaining + 0.5))
 		table.insert(track, entry)
 	end
@@ -326,41 +326,41 @@ function MetaProgression:getUnlockTrack()
 	return track
 end
 
-local function buildSnapshot(self, totalXP)
-	local level, xpIntoLevel, xpForNext = self:getProgressForTotal(totalXP)
+local function BuildSnapshot(self, TotalXP)
+	local level, XpIntoLevel, XpForNext = self:GetProgressForTotal(TotalXP)
 	return {
-		total = math.floor(totalXP + 0.5),
+		total = math.floor(TotalXP + 0.5),
 		level = level,
-		xpIntoLevel = xpIntoLevel,
-		xpForNext = xpForNext,
+		XpIntoLevel = XpIntoLevel,
+		XpForNext = XpForNext,
 	}
 end
 
-local function calculateRunGain(runStats)
-	local apples = math.max(0, math.floor(runStats.apples or 0))
-	local score = math.max(0, math.floor(runStats.score or 0))
-	local bonusXP = math.max(0, math.floor(runStats.bonusXP or 0))
+local function CalculateRunGain(RunStats)
+	local apples = math.max(0, math.floor(RunStats.apples or 0))
+	local score = math.max(0, math.floor(RunStats.score or 0))
+	local BonusXP = math.max(0, math.floor(RunStats.bonusXP or 0))
 
-	local fruitPoints = apples * XP_PER_FRUIT
-	local scoreBonus = 0
+	local FruitPoints = apples * XP_PER_FRUIT
+	local ScoreBonus = 0
 	if SCORE_BONUS_DIVISOR > 0 then
-		scoreBonus = math.min(SCORE_BONUS_MAX, math.floor(score / SCORE_BONUS_DIVISOR))
+		ScoreBonus = math.min(SCORE_BONUS_MAX, math.floor(score / SCORE_BONUS_DIVISOR))
 	end
 
-	local total = fruitPoints + bonusXP
+	local total = FruitPoints + BonusXP
 	return {
 		apples = apples,
-		fruitPoints = fruitPoints,
-		scoreBonus = scoreBonus,
-		bonusXP = bonusXP,
+		FruitPoints = FruitPoints,
+		ScoreBonus = ScoreBonus,
+		BonusXP = BonusXP,
 		total = total,
 	}
 end
 
-local function prepareUnlocks(levelUps)
+local function PrepareUnlocks(LevelUps)
 	local unlocks = {}
-	for _, level in ipairs(levelUps) do
-		local info = unlockDefinitions[level]
+	for _, level in ipairs(LevelUps) do
+		local info = UnlockDefinitions[level]
 		if info then
 			unlocks[#unlocks + 1] = {
 				level = level,
@@ -378,10 +378,10 @@ local function prepareUnlocks(levelUps)
 	return unlocks
 end
 
-local function prepareMilestones(startTotal, endTotal)
+local function PrepareMilestones(StartTotal, EndTotal)
 	local milestones = {}
-	for _, threshold in ipairs(milestoneThresholds) do
-		if startTotal < threshold and endTotal >= threshold then
+	for _, threshold in ipairs(MilestoneThresholds) do
+		if StartTotal < threshold and EndTotal >= threshold then
 			milestones[#milestones + 1] = {
 				threshold = threshold,
 			}
@@ -390,62 +390,62 @@ local function prepareMilestones(startTotal, endTotal)
 	return milestones
 end
 
-function MetaProgression:getState()
+function MetaProgression:GetState()
 	self:_ensureLoaded()
-	local snapshot = buildSnapshot(self, self.data.totalExperience)
+	local snapshot = BuildSnapshot(self, self.data.TotalExperience)
 	return {
-		totalExperience = snapshot.total,
+		TotalExperience = snapshot.total,
 		level = snapshot.level,
-		xpIntoLevel = snapshot.xpIntoLevel,
-		xpForNext = snapshot.xpForNext,
+		XpIntoLevel = snapshot.xpIntoLevel,
+		XpForNext = snapshot.xpForNext,
 	}
 end
 
-function MetaProgression:grantRunPoints(runStats)
+function MetaProgression:GrantRunPoints(RunStats)
 	self:_ensureLoaded()
-	runStats = runStats or {}
+	RunStats = RunStats or {}
 
-	local gain = calculateRunGain(runStats)
-	local startTotal = self.data.totalExperience or 0
-	local startSnapshot = buildSnapshot(self, startTotal)
+	local gain = CalculateRunGain(RunStats)
+	local StartTotal = self.data.TotalExperience or 0
+	local StartSnapshot = BuildSnapshot(self, StartTotal)
 
-	local gainedTotal = math.max(0, (gain.fruitPoints or 0) + (gain.bonusXP or 0))
-	local endTotal = startTotal + gainedTotal
-	local endSnapshot = buildSnapshot(self, endTotal)
+	local GainedTotal = math.max(0, (gain.fruitPoints or 0) + (gain.bonusXP or 0))
+	local EndTotal = StartTotal + GainedTotal
+	local EndSnapshot = BuildSnapshot(self, EndTotal)
 
-	local levelUps = {}
-	for level = startSnapshot.level + 1, endSnapshot.level do
-		levelUps[#levelUps + 1] = level
-		self.data.unlockHistory[level] = true
+	local LevelUps = {}
+	for level = StartSnapshot.level + 1, EndSnapshot.level do
+		LevelUps[#LevelUps + 1] = level
+		self.data.UnlockHistory[level] = true
 	end
 
-	self.data.totalExperience = endTotal
-	self.data.level = endSnapshot.level
+	self.data.TotalExperience = EndTotal
+	self.data.level = EndSnapshot.level
 	self:_save()
 
-	local okCosmetics, Cosmetics = pcall(require, "snakecosmetics")
-	if okCosmetics and Cosmetics and Cosmetics.syncMetaLevel then
-		local okSync, err = pcall(function()
-			Cosmetics:syncMetaLevel(endSnapshot.level, { levelUps = copyTable(levelUps) })
+	local OkCosmetics, Cosmetics = pcall(require, "snakecosmetics")
+	if OkCosmetics and Cosmetics and Cosmetics.SyncMetaLevel then
+		local OkSync, err = pcall(function()
+			Cosmetics:SyncMetaLevel(EndSnapshot.level, { LevelUps = CopyTable(LevelUps) })
 		end)
-		if not okSync then
+		if not OkSync then
 			print("[metaprogression] failed to sync cosmetics:", err)
 		end
 	end
 
-	local unlocks = prepareUnlocks(levelUps)
-	local milestones = prepareMilestones(startTotal, endTotal)
+	local unlocks = PrepareUnlocks(LevelUps)
+	local milestones = PrepareMilestones(StartTotal, EndTotal)
 
 	return {
 		apples = gain.apples,
-		gained = gainedTotal,
+		gained = GainedTotal,
 		breakdown = gain,
-		start = startSnapshot,
-		result = endSnapshot,
-		levelUps = levelUps,
+		start = StartSnapshot,
+		result = EndSnapshot,
+		LevelUps = LevelUps,
 		unlocks = unlocks,
 		milestones = milestones,
-		eventsCount = #levelUps + #unlocks + #milestones,
+		EventsCount = #LevelUps + #unlocks + #milestones,
 	}
 end
 

@@ -10,16 +10,16 @@ local LASERS_ENABLED = true
 
 local emitters = {}
 
-function Lasers:isEnabled()
+function Lasers:IsEnabled()
 	return LASERS_ENABLED
 end
 
-Lasers.fireDurationMult = 1
-Lasers.fireDurationFlat = 0
-Lasers.chargeDurationMult = 1
-Lasers.chargeDurationFlat = 0
-Lasers.cooldownMult = 1
-Lasers.cooldownFlat = 0
+Lasers.FireDurationMult = 1
+Lasers.FireDurationFlat = 0
+Lasers.ChargeDurationMult = 1
+Lasers.ChargeDurationFlat = 0
+Lasers.CooldownMult = 1
+Lasers.CooldownFlat = 0
 
 local FLASH_DECAY = 3.8
 local DEFAULT_FIRE_COLOR = {1, 0.16, 0.16, 1}
@@ -35,11 +35,11 @@ local IMPACT_RING_SPEED = 1.85
 local IMPACT_RING_RANGE = 16
 local IMPACT_FLARE_RADIUS = 12
 
-local function getTime()
+local function GetTime()
 	return love.timer.getTime()
 end
 
-local function copyColor(color, alpha)
+local function CopyColor(color, alpha)
 	local r = 1
 	local g = 0.38
 	local b = 0.18
@@ -55,11 +55,11 @@ local function copyColor(color, alpha)
 	return { r, g, b, a }
 end
 
-local function getFirePalette(color)
-	local base = copyColor(color or DEFAULT_FIRE_COLOR)
-	local glow = copyColor(base, (base[4] or 1) * 0.65)
-	local core = copyColor(base, 0.95)
-	local rim = copyColor(base, 1.0)
+local function GetFirePalette(color)
+	local base = CopyColor(color or DEFAULT_FIRE_COLOR)
+	local glow = CopyColor(base, (base[4] or 1) * 0.65)
+	local core = CopyColor(base, 0.95)
+	local rim = CopyColor(base, 1.0)
 
 	rim[1] = math.min(1, rim[1] * 1.1)
 	rim[2] = math.min(1, rim[2] * 0.7)
@@ -73,24 +73,24 @@ local function getFirePalette(color)
 	}
 end
 
-local function getEmitterColors()
-	local body = Theme.laserBaseColor or {0.18, 0.19, 0.24, 0.95}
-	local accent = copyColor(Theme.laserColor or {1, 0.32, 0.26, 1})
+local function GetEmitterColors()
+	local body = Theme.LaserBaseColor or {0.18, 0.19, 0.24, 0.95}
+	local accent = CopyColor(Theme.LaserColor or {1, 0.32, 0.26, 1})
 	accent[4] = 0.85
 	return body, accent
 end
 
-local function releaseOccupancy(beam)
+local function ReleaseOccupancy(beam)
 	if not beam then
 		return
 	end
 
 	if beam.col and beam.row then
-		SnakeUtils.setOccupied(beam.col, beam.row, false)
+		SnakeUtils.SetOccupied(beam.col, beam.row, false)
 	end
 end
 
-local function getFacingFromPosition(dir, col, row)
+local function GetFacingFromPosition(dir, col, row)
 	if dir == "vertical" then
 		local midpoint = math.floor((Arena.rows or 1) / 2)
 		if row and row > midpoint then
@@ -116,7 +116,7 @@ local function clamp(value, minimum, maximum)
 	return value
 end
 
-local function applyDurationModifiers(base, mult, flat, minimum)
+local function ApplyDurationModifiers(base, mult, flat, minimum)
 	if not base then
 		return nil
 	end
@@ -131,58 +131,58 @@ local function applyDurationModifiers(base, mult, flat, minimum)
 	return value
 end
 
-local function computeCooldownBounds(baseMin, baseMax)
-	local mult = Lasers.cooldownMult or 1
-	local flat = Lasers.cooldownFlat or 0
+local function ComputeCooldownBounds(BaseMin, BaseMax)
+	local mult = Lasers.CooldownMult or 1
+	local flat = Lasers.CooldownFlat or 0
 
-	local minValue = (baseMin or 0) * mult + flat
-	minValue = math.max(0, minValue)
+	local MinValue = (BaseMin or 0) * mult + flat
+	MinValue = math.max(0, MinValue)
 
-	local maxBase = baseMax or baseMin or 0
-	local maxValue = maxBase * mult + flat
-	if maxValue < minValue then
-		maxValue = minValue
+	local MaxBase = BaseMax or BaseMin or 0
+	local MaxValue = MaxBase * mult + flat
+	if MaxValue < MinValue then
+		MaxValue = MinValue
 	end
 
-	return minValue, maxValue
+	return MinValue, MaxValue
 end
 
-local function recalcBeamTiming(beam, isInitial)
+local function RecalcBeamTiming(beam, IsInitial)
 	if not beam then
 		return
 	end
 
-	local baseFire = beam.baseFireDuration or DEFAULT_FIRE_DURATION
-	local baseCharge = beam.baseChargeDuration or DEFAULT_CHARGE_DURATION
-	local baseMin = beam.baseCooldownMin or 4.2
-	local baseMax = beam.baseCooldownMax or (baseMin + 3.4)
+	local BaseFire = beam.baseFireDuration or DEFAULT_FIRE_DURATION
+	local BaseCharge = beam.baseChargeDuration or DEFAULT_CHARGE_DURATION
+	local BaseMin = beam.baseCooldownMin or 4.2
+	local BaseMax = beam.baseCooldownMax or (BaseMin + 3.4)
 
-	local oldFire = beam.fireDuration or baseFire
-	local oldCharge = beam.chargeDuration or baseCharge
-	local oldCooldownDuration = beam.cooldownDuration or (beam.fireCooldown or baseMin)
-	local remainingCooldown = beam.fireCooldown
+	local OldFire = beam.fireDuration or BaseFire
+	local OldCharge = beam.chargeDuration or BaseCharge
+	local OldCooldownDuration = beam.cooldownDuration or (beam.fireCooldown or BaseMin)
+	local RemainingCooldown = beam.fireCooldown
 
-	local newFire = applyDurationModifiers(baseFire, Lasers.fireDurationMult, Lasers.fireDurationFlat, 0.1)
-	local newCharge = applyDurationModifiers(baseCharge, Lasers.chargeDurationMult, Lasers.chargeDurationFlat, 0.05)
-	local newMin, newMax = computeCooldownBounds(baseMin, baseMax)
+	local NewFire = ApplyDurationModifiers(BaseFire, Lasers.FireDurationMult, Lasers.FireDurationFlat, 0.1)
+	local NewCharge = ApplyDurationModifiers(BaseCharge, Lasers.ChargeDurationMult, Lasers.ChargeDurationFlat, 0.05)
+	local NewMin, NewMax = ComputeCooldownBounds(BaseMin, BaseMax)
 
-	beam.fireDuration = newFire
-	beam.chargeDuration = newCharge
-	beam.fireCooldownMin = newMin
-	beam.fireCooldownMax = newMax
+	beam.fireDuration = NewFire
+	beam.chargeDuration = NewCharge
+	beam.fireCooldownMin = NewMin
+	beam.fireCooldownMax = NewMax
 
 	local roll = beam.cooldownRoll
-	if roll == nil or isInitial then
+	if roll == nil or IsInitial then
 		roll = love.math.random()
 		beam.cooldownRoll = roll
 	end
 
-	local duration = newMin + (newMax - newMin) * roll
-	duration = math.max(newMin, duration)
+	local duration = NewMin + (NewMax - NewMin) * roll
+	duration = math.max(NewMin, duration)
 
 	beam.cooldownDuration = duration
 
-	if isInitial then
+	if IsInitial then
 		beam.fireCooldown = duration
 		beam.fireTimer = nil
 		beam.chargeTimer = nil
@@ -191,122 +191,122 @@ local function recalcBeamTiming(beam, isInitial)
 
 	if beam.state == "firing" and beam.fireTimer then
 		local progress = 0
-		if oldFire and oldFire > 0 then
-			progress = clamp(1 - (beam.fireTimer / oldFire), 0, 1)
+		if OldFire and OldFire > 0 then
+			progress = clamp(1 - (beam.fireTimer / OldFire), 0, 1)
 		end
-		beam.fireTimer = newFire * (1 - progress)
-	elseif beam.fireTimer and beam.fireTimer > newFire then
-		beam.fireTimer = newFire
+		beam.fireTimer = NewFire * (1 - progress)
+	elseif beam.fireTimer and beam.fireTimer > NewFire then
+		beam.fireTimer = NewFire
 	end
 
 	if beam.state == "charging" and beam.chargeTimer then
 		local progress = 0
-		if oldCharge and oldCharge > 0 then
-			progress = clamp(1 - (beam.chargeTimer / oldCharge), 0, 1)
+		if OldCharge and OldCharge > 0 then
+			progress = clamp(1 - (beam.chargeTimer / OldCharge), 0, 1)
 		end
-		beam.chargeTimer = newCharge * (1 - progress)
-	elseif beam.chargeTimer and beam.chargeTimer > newCharge then
-		beam.chargeTimer = newCharge
+		beam.chargeTimer = NewCharge * (1 - progress)
+	elseif beam.chargeTimer and beam.chargeTimer > NewCharge then
+		beam.chargeTimer = NewCharge
 	end
 
-	if remainingCooldown then
+	if RemainingCooldown then
 		local progress = 0
-		if oldCooldownDuration and oldCooldownDuration > 0 then
-			progress = clamp(1 - (remainingCooldown / oldCooldownDuration), 0, 1)
+		if OldCooldownDuration and OldCooldownDuration > 0 then
+			progress = clamp(1 - (RemainingCooldown / OldCooldownDuration), 0, 1)
 		end
 		beam.fireCooldown = duration * (1 - progress)
 	end
 end
 
-local function computeBeamTarget(beam)
-	local tileSize = Arena.tileSize or 24
+local function ComputeBeamTarget(beam)
+	local TileSize = Arena.TileSize or 24
 	local facing = beam.facing or 1
-	local inset = math.max(2, tileSize * 0.5 - 4)
-	local startX = beam.x or 0
-	local startY = beam.y or 0
-	local endX, endY
-	local rocks = Rocks:getAll() or {}
-	local bestDistance = math.huge
-	local hitRock
+	local inset = math.max(2, TileSize * 0.5 - 4)
+	local StartX = beam.x or 0
+	local StartY = beam.y or 0
+	local EndX, EndY
+	local rocks = Rocks:GetAll() or {}
+	local BestDistance = math.huge
+	local HitRock
 
 	if beam.dir == "horizontal" then
-		startX = startX + facing * inset
-		endY = startY
+		StartX = StartX + facing * inset
+		EndY = StartY
 
-		local wallX
+		local WallX
 		if facing > 0 then
-			wallX = (Arena.x or 0) + (Arena.width or 0) - WALL_INSET
+			WallX = (Arena.x or 0) + (Arena.width or 0) - WALL_INSET
 		else
-			wallX = (Arena.x or 0) + WALL_INSET
+			WallX = (Arena.x or 0) + WALL_INSET
 		end
 
-		endX = wallX
+		EndX = WallX
 
 		for _, rock in ipairs(rocks) do
 			if rock.row == beam.row then
 				local delta = (rock.x - (beam.x or 0)) * facing
-				if delta and delta > 0 and delta < bestDistance then
-					bestDistance = delta
-					hitRock = rock
+				if delta and delta > 0 and delta < BestDistance then
+					BestDistance = delta
+					HitRock = rock
 				end
 			end
 		end
 
-		if hitRock then
-			local edge = tileSize * 0.5 - 2
-			endX = hitRock.x - facing * edge
+		if HitRock then
+			local edge = TileSize * 0.5 - 2
+			EndX = HitRock.x - facing * edge
 		end
 	else
-		startY = startY + facing * inset
-		endX = startX
+		StartY = StartY + facing * inset
+		EndX = StartX
 
-		local wallY
+		local WallY
 		if facing > 0 then
-			wallY = (Arena.y or 0) + (Arena.height or 0) - WALL_INSET
+			WallY = (Arena.y or 0) + (Arena.height or 0) - WALL_INSET
 		else
-			wallY = (Arena.y or 0) + WALL_INSET
+			WallY = (Arena.y or 0) + WALL_INSET
 		end
 
-		endY = wallY
+		EndY = WallY
 
 		for _, rock in ipairs(rocks) do
 			if rock.col == beam.col then
 				local delta = (rock.y - (beam.y or 0)) * facing
-				if delta and delta > 0 and delta < bestDistance then
-					bestDistance = delta
-					hitRock = rock
+				if delta and delta > 0 and delta < BestDistance then
+					BestDistance = delta
+					HitRock = rock
 				end
 			end
 		end
 
-		if hitRock then
-			local edge = tileSize * 0.5 - 2
-			endY = hitRock.y - facing * edge
+		if HitRock then
+			local edge = TileSize * 0.5 - 2
+			EndY = HitRock.y - facing * edge
 		end
 	end
 
 	if beam.dir == "horizontal" then
-		local minX = math.min(startX, endX)
-		local width = math.max(0, math.abs(endX - startX))
+		local MinX = math.min(StartX, EndX)
+		local width = math.max(0, math.abs(EndX - StartX))
 		local thickness = beam.beamThickness or DEFAULT_BEAM_THICKNESS
-		beam.beamRect = {minX, startY - thickness * 0.5, width, thickness}
+		beam.beamRect = {MinX, StartY - thickness * 0.5, width, thickness}
 	else
-		local minY = math.min(startY, endY)
-		local height = math.max(0, math.abs(endY - startY))
+		local MinY = math.min(StartY, EndY)
+		local height = math.max(0, math.abs(EndY - StartY))
 		local thickness = beam.beamThickness or DEFAULT_BEAM_THICKNESS
-		beam.beamRect = {startX - thickness * 0.5, minY, thickness, height}
+		beam.beamRect = {StartX - thickness * 0.5, MinY, thickness, height}
 	end
 
-	beam.beamStartX = startX
-	beam.beamStartY = startY
-	beam.beamEndX = endX
-	beam.beamEndY = endY or startY
-	beam.impactX = endX
-	beam.impactY = endY or startY
-	beam.targetRock = hitRock
+	beam.beamStartX = StartX
+	beam.beamStartY = StartY
+	beam.beamEndX = EndX
+	beam.beamEndY = EndY or StartY
+	beam.impactX = EndX
+	beam.impactY = EndY or StartY
+	beam.targetRock = HitRock
 end
 
-function Lasers:reflectBeam(beam, options)
+function Lasers:ReflectBeam(beam, options)
 	if not LASERS_ENABLED then
 		return nil
 	end
@@ -320,9 +320,9 @@ function Lasers:reflectBeam(beam, options)
 	local facing = beam.facing or 1
 	beam.facing = -(facing >= 0 and 1 or -1)
 
-	computeBeamTarget(beam)
+	ComputeBeamTarget(beam)
 
-	local baseCharge = beam.chargeDuration or beam.baseChargeDuration or DEFAULT_CHARGE_DURATION
+	local BaseCharge = beam.chargeDuration or beam.baseChargeDuration or DEFAULT_CHARGE_DURATION
 	local factor = options.chargeFactor or 0.45
 	if factor < 0.05 then
 		factor = 0.05
@@ -330,24 +330,24 @@ function Lasers:reflectBeam(beam, options)
 		factor = 1
 	end
 
-	local chargeTime = math.max(0.12, baseCharge * factor)
+	local ChargeTime = math.max(0.12, BaseCharge * factor)
 
 	beam.state = "charging"
-	beam.chargeTimer = chargeTime
+	beam.chargeTimer = ChargeTime
 	beam.fireTimer = nil
 	beam.fireCooldown = nil
 	beam.cooldownRoll = love.math.random()
-	beam.cooldownDuration = chargeTime
+	beam.cooldownDuration = ChargeTime
 	beam.telegraphStrength = 0
 	beam.flashTimer = math.max(beam.flashTimer or 0, 0.9)
 	beam.burnAlpha = 0.92
 
-	return chargeTime
+	return ChargeTime
 end
 
 function Lasers:reset()
 	for _, beam in ipairs(emitters) do
-		releaseOccupancy(beam)
+		ReleaseOccupancy(beam)
 	end
 	emitters = {}
 
@@ -364,10 +364,10 @@ function Lasers:spawn(x, y, dir, options)
 	dir = dir or "horizontal"
 	options = options or {}
 
-	local col, row = Arena:getTileFromWorld(x, y)
+	local col, row = Arena:GetTileFromWorld(x, y)
 	local facing = options.facing
 	if facing == nil then
-		facing = getFacingFromPosition(dir, col, row)
+		facing = GetFacingFromPosition(dir, col, row)
 	end
 
 	facing = (facing >= 0) and 1 or -1
@@ -379,14 +379,14 @@ function Lasers:spawn(x, y, dir, options)
 		row = row,
 		dir = dir,
 		facing = facing,
-		beamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS,
-		firePalette = options.firePalette or getFirePalette(options.fireColor),
+		BeamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS,
+		FirePalette = options.firePalette or GetFirePalette(options.fireColor),
 		state = "cooldown",
-		flashTimer = 0,
-		burnAlpha = 0,
-		baseGlow = 0,
-		telegraphStrength = 0,
-		randomOffset = love.math.random() * math.pi * 2,
+		FlashTimer = 0,
+		BurnAlpha = 0,
+		BaseGlow = 0,
+		TelegraphStrength = 0,
+		RandomOffset = love.math.random() * math.pi * 2,
 	}
 
 	beam.baseFireDuration = math.max(0.2, options.fireDuration or DEFAULT_FIRE_DURATION)
@@ -397,16 +397,16 @@ function Lasers:spawn(x, y, dir, options)
 		beam.baseCooldownMax = beam.baseCooldownMin
 	end
 
-	recalcBeamTiming(beam, true)
+	RecalcBeamTiming(beam, true)
 
-	SnakeUtils.setOccupied(col, row, true)
+	SnakeUtils.SetOccupied(col, row, true)
 
-	computeBeamTarget(beam)
+	ComputeBeamTarget(beam)
         emitters[#emitters + 1] = beam
         return beam
 end
 
-function Lasers:getEmitters()
+function Lasers:GetEmitters()
         local copies = {}
         for index, beam in ipairs(emitters) do
                 copies[index] = beam
@@ -424,7 +424,7 @@ function Lasers:update(dt)
 	end
 
 	for _, beam in ipairs(emitters) do
-		computeBeamTarget(beam)
+		ComputeBeamTarget(beam)
 
 		if beam.state == "charging" then
 			beam.chargeTimer = (beam.chargeTimer or beam.chargeDuration) - dt
@@ -434,7 +434,7 @@ function Lasers:update(dt)
 				beam.chargeTimer = nil
 				beam.flashTimer = math.max(beam.flashTimer or 0, 0.75)
 				beam.burnAlpha = 0.92
-				Audio:playSound("laser_fire")
+				Audio:PlaySound("laser_fire")
 			end
 		elseif beam.state == "firing" then
 			beam.fireTimer = (beam.fireTimer or beam.fireDuration) - dt
@@ -442,12 +442,12 @@ function Lasers:update(dt)
 			if beam.fireTimer <= 0 then
 				beam.state = "cooldown"
 				beam.cooldownRoll = love.math.random()
-				local minCooldown = beam.fireCooldownMin or 0
-				local maxCooldown = beam.fireCooldownMax or minCooldown
-				if maxCooldown < minCooldown then
-					maxCooldown = minCooldown
+				local MinCooldown = beam.fireCooldownMin or 0
+				local MaxCooldown = beam.fireCooldownMax or MinCooldown
+				if MaxCooldown < MinCooldown then
+					MaxCooldown = MinCooldown
 				end
-				local duration = minCooldown + (maxCooldown - minCooldown) * (beam.cooldownRoll or 0)
+				local duration = MinCooldown + (MaxCooldown - MinCooldown) * (beam.cooldownRoll or 0)
 				local pending = beam.pendingCooldownBonus or 0
 				if pending ~= 0 then
 					duration = duration + pending
@@ -477,27 +477,27 @@ function Lasers:update(dt)
 			end
 		end
 
-		local targetGlow = 0
-		local telegraphStrength = beam.telegraphStrength or 0
+		local TargetGlow = 0
+		local TelegraphStrength = beam.telegraphStrength or 0
 		if beam.state == "charging" then
 			local duration = math.max(beam.chargeDuration or 0, 0.01)
 			local timer = clamp(beam.chargeTimer or duration, 0, duration)
 			local progress = 1 - (timer / duration)
 			progress = clamp(progress, 0, 1)
-			telegraphStrength = progress * progress
-			targetGlow = telegraphStrength
+			TelegraphStrength = progress * progress
+			TargetGlow = TelegraphStrength
 		else
-			telegraphStrength = math.max(0, telegraphStrength - dt * 3.6)
-			targetGlow = 0
+			TelegraphStrength = math.max(0, TelegraphStrength - dt * 3.6)
+			TargetGlow = 0
 		end
-		beam.telegraphStrength = telegraphStrength
+		beam.telegraphStrength = TelegraphStrength
 
 		local glow = beam.baseGlow or 0
-		local glowApproach = dt * 3.2
-		if glow < targetGlow then
-			glow = math.min(targetGlow, glow + glowApproach)
+		local GlowApproach = dt * 3.2
+		if glow < TargetGlow then
+			glow = math.min(TargetGlow, glow + GlowApproach)
 		else
-			glow = math.max(targetGlow, glow - glowApproach * 0.75)
+			glow = math.max(TargetGlow, glow - GlowApproach * 0.75)
 		end
 		beam.baseGlow = glow
 
@@ -511,7 +511,7 @@ function Lasers:update(dt)
 	end
 end
 
-function Lasers:onShieldedHit(beam, hitX, hitY)
+function Lasers:OnShieldedHit(beam, HitX, HitY)
 	if not LASERS_ENABLED then
 		return
 	end
@@ -524,28 +524,28 @@ function Lasers:onShieldedHit(beam, hitX, hitY)
 
 	local Upgrades = package.loaded["upgrades"]
 	if Upgrades and Upgrades.notify then
-		Upgrades:notify("laserShielded", {
+		Upgrades:notify("LaserShielded", {
 			beam = beam,
-			x = hitX,
-			y = hitY,
-			emitterX = beam.x,
-			emitterY = beam.y,
-			impactX = beam.impactX,
-			impactY = beam.impactY,
+			x = HitX,
+			y = HitY,
+			EmitterX = beam.x,
+			EmitterY = beam.y,
+			ImpactX = beam.impactX,
+			ImpactY = beam.impactY,
 		})
 	end
 end
 
-local function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh)
+local function RectsOverlap(ax, ay, aw, ah, bx, by, bw, bh)
 	return ax < bx + bw and ax + aw > bx and ay < by + bh and ay + ah > by
 end
 
-local function baseBounds(beam)
+local function BaseBounds(beam)
 	if not beam then
 		return
 	end
 
-	local size = Arena.tileSize or 24
+	local size = Arena.TileSize or 24
 	local half = size * 0.5
 	local margin = math.max(2, size * 0.22)
 	if margin > half then
@@ -559,17 +559,17 @@ local function baseBounds(beam)
 	return bx, by, width, height
 end
 
-function Lasers:applyTimingModifiers()
+function Lasers:ApplyTimingModifiers()
 	if not LASERS_ENABLED then
 		return
 	end
 
 	for _, beam in ipairs(emitters) do
-		recalcBeamTiming(beam, false)
+		RecalcBeamTiming(beam, false)
 	end
 end
 
-function Lasers:checkCollision(x, y, w, h)
+function Lasers:CheckCollision(x, y, w, h)
 	if not LASERS_ENABLED then
 		return nil
 	end
@@ -579,15 +579,15 @@ function Lasers:checkCollision(x, y, w, h)
 	end
 
 	for _, beam in ipairs(emitters) do
-		local bx, by, bw, bh = baseBounds(beam)
-		if bx and rectsOverlap(bx, by, bw, bh, x, y, w, h) then
+		local bx, by, bw, bh = BaseBounds(beam)
+		if bx and RectsOverlap(bx, by, bw, bh, x, y, w, h) then
 			beam.flashTimer = math.max(beam.flashTimer or 0, 1)
 			return beam
 		end
 
 		if beam.state == "firing" and beam.beamRect then
 			local rx, ry, rw, rh = beam.beamRect[1], beam.beamRect[2], beam.beamRect[3], beam.beamRect[4]
-			if rw and rh and rw > 0 and rh > 0 and rectsOverlap(rx, ry, rw, rh, x, y, w, h) then
+			if rw and rh and rw > 0 and rh > 0 and RectsOverlap(rx, ry, rw, rh, x, y, w, h) then
 				beam.flashTimer = math.max(beam.flashTimer or 0, 1)
 				return beam
 			end
@@ -597,7 +597,7 @@ function Lasers:checkCollision(x, y, w, h)
 	return nil
 end
 
-local function drawBurnMark(beam)
+local function DrawBurnMark(beam)
 	if not (beam and beam.impactX and beam.impactY) then
 		return
 	end
@@ -616,92 +616,92 @@ local function drawBurnMark(beam)
 	love.graphics.circle("line", beam.impactX, beam.impactY, radius * 0.9)
 end
 
-local function drawBeam(beam)
+local function DrawBeam(beam)
 	if not beam.beamRect then
 		return
 	end
 
-	local palette = beam.firePalette or getFirePalette(DEFAULT_FIRE_COLOR)
+	local palette = beam.firePalette or GetFirePalette(DEFAULT_FIRE_COLOR)
 	local x, y, w, h = beam.beamRect[1], beam.beamRect[2], beam.beamRect[3], beam.beamRect[4]
 	if not (x and y and w and h) then
 		return
 	end
 
-	local t = getTime()
-	local facingSign = beam.facing or 1
+	local t = GetTime()
+	local FacingSign = beam.facing or 1
 
 	if beam.state == "firing" then
 		local flicker = 0.82 + 0.18 * math.sin(t * 11 + (beam.beamStartX or 0) * 0.05 + (beam.beamStartY or 0) * 0.05)
-		local glowAlpha = (palette.glow[4] or 0.5) * flicker
-		love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], glowAlpha)
+		local GlowAlpha = (palette.glow[4] or 0.5) * flicker
+		love.graphics.setColor(palette.glow[1], palette.glow[2], palette.glow[3], GlowAlpha)
 		love.graphics.rectangle("fill", x - BEAM_GLOW_EXPANSION, y - BEAM_GLOW_EXPANSION, w + BEAM_GLOW_EXPANSION * 2, h + BEAM_GLOW_EXPANSION * 2, 7, 7)
 
-		local innerGlowAlpha = math.min(1, (palette.core[4] or 0.9) * (0.85 + 0.15 * flicker))
-		love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], innerGlowAlpha)
+		local InnerGlowAlpha = math.min(1, (palette.core[4] or 0.9) * (0.85 + 0.15 * flicker))
+		love.graphics.setColor(palette.core[1], palette.core[2], palette.core[3], InnerGlowAlpha)
 		love.graphics.rectangle("fill", x - 2, y - 2, w + 4, h + 4, 6, 6)
 
 		local rim = palette.rim or palette.core
 		love.graphics.setColor(rim[1], rim[2], rim[3], (rim[4] or 1))
 		love.graphics.rectangle("fill", x, y, w, h, 4, 4)
 
-		local highlightThickness = math.max(1.5, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.35)
+		local HighlightThickness = math.max(1.5, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.35)
 		love.graphics.setColor(1, 0.97, 0.75, 0.55)
 		if beam.dir == "horizontal" then
-			local centerY = y + h * 0.5
-			love.graphics.rectangle("fill", x, centerY - highlightThickness * 0.5, w, highlightThickness, 3, 3)
+			local CenterY = y + h * 0.5
+			love.graphics.rectangle("fill", x, CenterY - HighlightThickness * 0.5, w, HighlightThickness, 3, 3)
 		else
-			local centerX = x + w * 0.5
-			love.graphics.rectangle("fill", centerX - highlightThickness * 0.5, y, highlightThickness, h, 3, 3)
+			local CenterX = x + w * 0.5
+			love.graphics.rectangle("fill", CenterX - HighlightThickness * 0.5, y, HighlightThickness, h, 3, 3)
 		end
 
-		local edgeThickness = math.max(1, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.22)
+		local EdgeThickness = math.max(1, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.22)
 		love.graphics.setColor(1, 0.65, 0.45, 0.35 + 0.25 * flicker)
 		if beam.dir == "horizontal" then
-			love.graphics.rectangle("fill", x, y + h - edgeThickness, w, edgeThickness, 3, 3)
-			love.graphics.rectangle("fill", x, y, w, edgeThickness, 3, 3)
+			love.graphics.rectangle("fill", x, y + h - EdgeThickness, w, EdgeThickness, 3, 3)
+			love.graphics.rectangle("fill", x, y, w, EdgeThickness, 3, 3)
 		else
-			love.graphics.rectangle("fill", x + w - edgeThickness, y, edgeThickness, h, 3, 3)
-			love.graphics.rectangle("fill", x, y, edgeThickness, h, 3, 3)
+			love.graphics.rectangle("fill", x + w - EdgeThickness, y, EdgeThickness, h, 3, 3)
+			love.graphics.rectangle("fill", x, y, EdgeThickness, h, 3, 3)
 		end
 
 		local length = (beam.dir == "horizontal") and w or h
-		local pulseSpacing = math.max(24, length / 6)
-		local pulseSize = pulseSpacing * 0.55
-		local travel = (t * BEAM_PULSE_SPEED * 45 * facingSign) % pulseSpacing
+		local PulseSpacing = math.max(24, length / 6)
+		local PulseSize = PulseSpacing * 0.55
+		local travel = (t * BEAM_PULSE_SPEED * 45 * FacingSign) % PulseSpacing
 		love.graphics.setColor(1, 0.8, 0.45, 0.25 + 0.35 * flicker)
 		if beam.dir == "horizontal" then
-			for start = -travel, w, pulseSpacing do
-				local segmentStart = math.max(0, start)
-				local segmentEnd = math.min(w, start + pulseSize)
-				if segmentEnd > segmentStart then
-					love.graphics.rectangle("fill", x + segmentStart, y + h * 0.15, segmentEnd - segmentStart, h * 0.7, 3, 3)
+			for start = -travel, w, PulseSpacing do
+				local SegmentStart = math.max(0, start)
+				local SegmentEnd = math.min(w, start + PulseSize)
+				if SegmentEnd > SegmentStart then
+					love.graphics.rectangle("fill", x + SegmentStart, y + h * 0.15, SegmentEnd - SegmentStart, h * 0.7, 3, 3)
 				end
 			end
 
-			local sparkCount = math.max(2, math.floor(w / 96))
+			local SparkCount = math.max(2, math.floor(w / 96))
 			love.graphics.setColor(1, 0.92, 0.75, 0.4 + 0.35 * flicker)
-			for i = 0, sparkCount do
-				local offset = (i / math.max(1, sparkCount)) * w
+			for i = 0, SparkCount do
+				local offset = (i / math.max(1, SparkCount)) * w
 				local sway = math.sin(t * 6 + offset * 0.04 + (beam.randomOffset or 0)) * (h * 0.12)
-				local sparkWidth = math.max(3, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.4)
-				love.graphics.rectangle("fill", x + offset - sparkWidth * 0.5, y + h * 0.5 + sway - edgeThickness, sparkWidth, edgeThickness * 2, 3, 3)
+				local SparkWidth = math.max(3, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.4)
+				love.graphics.rectangle("fill", x + offset - SparkWidth * 0.5, y + h * 0.5 + sway - EdgeThickness, SparkWidth, EdgeThickness * 2, 3, 3)
 			end
 		else
-			for start = -travel, h, pulseSpacing do
-				local segmentStart = math.max(0, start)
-				local segmentEnd = math.min(h, start + pulseSize)
-				if segmentEnd > segmentStart then
-					love.graphics.rectangle("fill", x + w * 0.15, y + segmentStart, w * 0.7, segmentEnd - segmentStart, 3, 3)
+			for start = -travel, h, PulseSpacing do
+				local SegmentStart = math.max(0, start)
+				local SegmentEnd = math.min(h, start + PulseSize)
+				if SegmentEnd > SegmentStart then
+					love.graphics.rectangle("fill", x + w * 0.15, y + SegmentStart, w * 0.7, SegmentEnd - SegmentStart, 3, 3)
 				end
 			end
 
-			local sparkCount = math.max(2, math.floor(h / 96))
+			local SparkCount = math.max(2, math.floor(h / 96))
 			love.graphics.setColor(1, 0.92, 0.75, 0.4 + 0.35 * flicker)
-			for i = 0, sparkCount do
-				local offset = (i / math.max(1, sparkCount)) * h
+			for i = 0, SparkCount do
+				local offset = (i / math.max(1, SparkCount)) * h
 				local sway = math.sin(t * 6 + offset * 0.04 + (beam.randomOffset or 0)) * (w * 0.12)
-				local sparkHeight = math.max(3, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.4)
-				love.graphics.rectangle("fill", x + w * 0.5 + sway - edgeThickness, y + offset - sparkHeight * 0.5, edgeThickness * 2, sparkHeight, 3, 3)
+				local SparkHeight = math.max(3, (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.4)
+				love.graphics.rectangle("fill", x + w * 0.5 + sway - EdgeThickness, y + offset - SparkHeight * 0.5, EdgeThickness * 2, SparkHeight, 3, 3)
 			end
 		end
 	elseif beam.state == "charging" then
@@ -716,26 +716,26 @@ local function drawBeam(beam)
 
 		love.graphics.setColor(1, 0.95, 0.65, 0.25 + 0.35 * progress)
 		if beam.dir == "horizontal" then
-			local bandHeight = math.max(1.2, h * 0.25)
-			love.graphics.rectangle("fill", x, y + h * 0.5 - bandHeight * 0.5, w, bandHeight, 2, 2)
+			local BandHeight = math.max(1.2, h * 0.25)
+			love.graphics.rectangle("fill", x, y + h * 0.5 - BandHeight * 0.5, w, BandHeight, 2, 2)
 		else
-			local bandWidth = math.max(1.2, w * 0.25)
-			love.graphics.rectangle("fill", x + w * 0.5 - bandWidth * 0.5, y, bandWidth, h, 2, 2)
+			local BandWidth = math.max(1.2, w * 0.25)
+			love.graphics.rectangle("fill", x + w * 0.5 - BandWidth * 0.5, y, BandWidth, h, 2, 2)
 		end
 
 		local stripes = 4
 		local rim = palette.rim or palette.core
 		for i = 0, stripes - 1 do
 			local offset = (progress + i / stripes) % 1
-			local stripeAlpha = math.max(0, (0.55 - i * 0.08) * (0.35 + progress * 0.65))
+			local StripeAlpha = math.max(0, (0.55 - i * 0.08) * (0.35 + progress * 0.65))
 			if beam.dir == "horizontal" then
-				local stripeX = x + (w - 6) * offset
-				love.graphics.setColor(rim[1], rim[2], rim[3], stripeAlpha)
-				love.graphics.rectangle("fill", stripeX, y + 1, 6, h - 2, 2, 2)
+				local StripeX = x + (w - 6) * offset
+				love.graphics.setColor(rim[1], rim[2], rim[3], StripeAlpha)
+				love.graphics.rectangle("fill", StripeX, y + 1, 6, h - 2, 2, 2)
 			else
-				local stripeY = y + (h - 6) * offset
-				love.graphics.setColor(rim[1], rim[2], rim[3], stripeAlpha)
-				love.graphics.rectangle("fill", x + 1, stripeY, w - 2, 6, 2, 2)
+				local StripeY = y + (h - 6) * offset
+				love.graphics.setColor(rim[1], rim[2], rim[3], StripeAlpha)
+				love.graphics.rectangle("fill", x + 1, StripeY, w - 2, 6, 2, 2)
 			end
 		end
 
@@ -752,7 +752,7 @@ local function drawBeam(beam)
 	end
 end
 
-local function drawImpactEffect(beam)
+local function DrawImpactEffect(beam)
 	if beam.state ~= "firing" then
 		return
 	end
@@ -761,110 +761,110 @@ local function drawImpactEffect(beam)
 		return
 	end
 
-	local palette = beam.firePalette or getFirePalette(DEFAULT_FIRE_COLOR)
+	local palette = beam.firePalette or GetFirePalette(DEFAULT_FIRE_COLOR)
 	local core = palette.core or DEFAULT_FIRE_COLOR
 	local rim = palette.rim or core
-	local t = getTime()
+	local t = GetTime()
 	local offset = beam.randomOffset or 0
 	local flicker = 0.75 + 0.25 * math.sin(t * 10 + offset)
-	local baseRadius = (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.8
+	local BaseRadius = (beam.beamThickness or DEFAULT_BEAM_THICKNESS) * 0.8
 
 	love.graphics.setColor(core[1], core[2], core[3], 0.35 + 0.4 * flicker)
-	love.graphics.circle("fill", beam.impactX, beam.impactY, baseRadius + math.sin(t * 8 + offset) * 1.5)
+	love.graphics.circle("fill", beam.impactX, beam.impactY, BaseRadius + math.sin(t * 8 + offset) * 1.5)
 
 	local pulse = math.fmod(t * IMPACT_RING_SPEED + offset, 1)
 	if pulse < 0 then
 		pulse = pulse + 1
 	end
 
-	local pulseRadius = IMPACT_FLARE_RADIUS + pulse * IMPACT_RING_RANGE
-	local pulseAlpha = math.max(0, 0.55 * (1 - pulse))
-	love.graphics.setColor(rim[1], rim[2], rim[3], pulseAlpha)
+	local PulseRadius = IMPACT_FLARE_RADIUS + pulse * IMPACT_RING_RANGE
+	local PulseAlpha = math.max(0, 0.55 * (1 - pulse))
+	love.graphics.setColor(rim[1], rim[2], rim[3], PulseAlpha)
 	love.graphics.setLineWidth(2)
-	love.graphics.circle("line", beam.impactX, beam.impactY, pulseRadius)
+	love.graphics.circle("line", beam.impactX, beam.impactY, PulseRadius)
 
 	love.graphics.setColor(1, 0.95, 0.75, 0.45 * flicker)
-	local sparkLength = IMPACT_FLARE_RADIUS * 1.3
+	local SparkLength = IMPACT_FLARE_RADIUS * 1.3
 	local spokes = 6
 	for i = 0, spokes - 1 do
 		local angle = offset + (i / spokes) * (math.pi * 2)
-		local dx = math.cos(angle) * sparkLength
-		local dy = math.sin(angle) * sparkLength
+		local dx = math.cos(angle) * SparkLength
+		local dy = math.sin(angle) * SparkLength
 		love.graphics.line(beam.impactX - dx * 0.35, beam.impactY - dy * 0.35, beam.impactX + dx, beam.impactY + dy)
 	end
 end
 
-local function drawEmitterBase(beam)
-	local baseColor, accentColor = getEmitterColors()
-	local tileSize = Arena.tileSize or 24
-	local half = tileSize * 0.5
+local function DrawEmitterBase(beam)
+	local BaseColor, AccentColor = GetEmitterColors()
+	local TileSize = Arena.TileSize or 24
+	local half = TileSize * 0.5
 	local bx = (beam.x or 0) - half
 	local by = (beam.y or 0) - half
 	local flash = clamp(beam.flashTimer or 0, 0, 1)
 	local telegraph = clamp(beam.telegraphStrength or 0, 0, 1)
-	local baseGlow = clamp(beam.baseGlow or 0, 0, 1)
-	local highlightBoost = (beam.state == "firing") and 0.28 or 0
-	highlightBoost = highlightBoost + telegraph * 0.4
+	local BaseGlow = clamp(beam.baseGlow or 0, 0, 1)
+	local HighlightBoost = (beam.state == "firing") and 0.28 or 0
+	HighlightBoost = HighlightBoost + telegraph * 0.4
 
-	local t = getTime()
-	local pulseStrength = telegraph > 0 and (telegraph * (0.6 + telegraph * 0.4)) or 0
+	local t = GetTime()
+	local PulseStrength = telegraph > 0 and (telegraph * (0.6 + telegraph * 0.4)) or 0
 	local pulse = 0
-	if pulseStrength > 0 then
-		pulse = (0.18 + 0.25 * math.sin(t * 5.5 + (beam.x or 0) * 0.03 + (beam.y or 0) * 0.03)) * pulseStrength
+	if PulseStrength > 0 then
+		pulse = (0.18 + 0.25 * math.sin(t * 5.5 + (beam.x or 0) * 0.03 + (beam.y or 0) * 0.03)) * PulseStrength
 	end
-	local showPrimeRing = (telegraph > 0) or (beam.state == "firing")
-	if showPrimeRing then
-		local glowAlpha = 0.16 + baseGlow * 0.6 + flash * 0.35 + highlightBoost * 0.35 + pulse * 0.4
-		love.graphics.setColor(1, 0.32, 0.25, math.min(0.85, glowAlpha))
-		local glowRadius = BASE_GLOW_RADIUS + tileSize * 0.1 + baseGlow * (tileSize * 0.22)
-		love.graphics.circle("fill", beam.x or 0, beam.y or 0, glowRadius)
+	local ShowPrimeRing = (telegraph > 0) or (beam.state == "firing")
+	if ShowPrimeRing then
+		local GlowAlpha = 0.16 + BaseGlow * 0.6 + flash * 0.35 + HighlightBoost * 0.35 + pulse * 0.4
+		love.graphics.setColor(1, 0.32, 0.25, math.min(0.85, GlowAlpha))
+		local GlowRadius = BASE_GLOW_RADIUS + TileSize * 0.1 + BaseGlow * (TileSize * 0.22)
+		love.graphics.circle("fill", beam.x or 0, beam.y or 0, GlowRadius)
 	end
 
-	love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], (baseColor[4] or 1) + flash * 0.1)
-	love.graphics.rectangle("fill", bx, by, tileSize, tileSize, 6, 6)
+	love.graphics.setColor(BaseColor[1], BaseColor[2], BaseColor[3], (BaseColor[4] or 1) + flash * 0.1)
+	love.graphics.rectangle("fill", bx, by, TileSize, TileSize, 6, 6)
 
 	love.graphics.setColor(0, 0, 0, 0.45 + flash * 0.25 + telegraph * 0.15)
-	love.graphics.rectangle("line", bx, by, tileSize, tileSize, 6, 6)
+	love.graphics.rectangle("line", bx, by, TileSize, TileSize, 6, 6)
 
-	local accentAlpha = (accentColor[4] or 0.8) + flash * 0.2 + highlightBoost
-	love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], math.min(1, accentAlpha))
-	love.graphics.rectangle("line", bx + 2, by + 2, tileSize - 4, tileSize - 4, 4, 4)
+	local AccentAlpha = (AccentColor[4] or 0.8) + flash * 0.2 + HighlightBoost
+	love.graphics.setColor(AccentColor[1], AccentColor[2], AccentColor[3], math.min(1, AccentAlpha))
+	love.graphics.rectangle("line", bx + 2, by + 2, TileSize - 4, TileSize - 4, 4, 4)
 
-	love.graphics.setColor(1, 1, 1, 0.16 + highlightBoost * 0.45 + flash * 0.2 + telegraph * 0.25)
-	local highlightWidth = math.min(tileSize * 0.45, tileSize - 6)
-	love.graphics.rectangle("fill", bx + 3, by + 3, highlightWidth, tileSize * 0.2, 3, 3)
+	love.graphics.setColor(1, 1, 1, 0.16 + HighlightBoost * 0.45 + flash * 0.2 + telegraph * 0.25)
+	local HighlightWidth = math.min(TileSize * 0.45, TileSize - 6)
+	love.graphics.rectangle("fill", bx + 3, by + 3, HighlightWidth, TileSize * 0.2, 3, 3)
 
-	local slitLength = tileSize * 0.55
-	local slitThickness = math.max(3, tileSize * 0.18)
+	local SlitLength = TileSize * 0.55
+	local SlitThickness = math.max(3, TileSize * 0.18)
 	local cx = beam.x or 0
 	local cy = beam.y or 0
-	if showPrimeRing then
+	if ShowPrimeRing then
 		local spin = (t * 2.5 + (beam.randomOffset or 0)) % (math.pi * 2)
-		local ringRadius = tileSize * 0.45 + math.sin(t * 3.5 + (beam.randomOffset or 0)) * (tileSize * 0.05)
+		local RingRadius = TileSize * 0.45 + math.sin(t * 3.5 + (beam.randomOffset or 0)) * (TileSize * 0.05)
 		love.graphics.setLineWidth(2)
-		love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.28 + flash * 0.4 + highlightBoost * 0.35 + telegraph * 0.25)
+		love.graphics.setColor(AccentColor[1], AccentColor[2], AccentColor[3], 0.28 + flash * 0.4 + HighlightBoost * 0.35 + telegraph * 0.25)
 		for i = 0, 2 do
 			local angle = spin + i * (math.pi * 2 / 3)
-			love.graphics.arc("line", "open", cx, cy, ringRadius, angle - 0.35, angle + 0.35, 16)
+			love.graphics.arc("line", "open", cx, cy, RingRadius, angle - 0.35, angle + 0.35, 16)
 		end
 
 		if beam.state == "charging" then
-			local chargeLift = (math.sin(t * 6 + (beam.randomOffset or 0)) * 0.5 + 0.5) * tileSize * 0.08
+			local ChargeLift = (math.sin(t * 6 + (beam.randomOffset or 0)) * 0.5 + 0.5) * TileSize * 0.08
 			love.graphics.setColor(1, 0.4, 0.32, 0.35 + flash * 0.35 + telegraph * 0.55)
-			love.graphics.circle("line", cx, cy, ringRadius * 0.65 + chargeLift)
+			love.graphics.circle("line", cx, cy, RingRadius * 0.65 + ChargeLift)
 		elseif beam.state == "firing" then
 			love.graphics.setColor(1, 0.55, 0.4, 0.35 + flash * 0.45 + telegraph * 0.25)
-			love.graphics.circle("line", cx, cy, ringRadius * 0.8)
+			love.graphics.circle("line", cx, cy, RingRadius * 0.8)
 		end
 	end
 	if beam.dir == "horizontal" then
 		local dir = beam.facing or 1
-		local front = cx + dir * (tileSize * 0.32)
-		love.graphics.rectangle("fill", front - slitThickness * 0.5, cy - slitLength * 0.5, slitThickness, slitLength, 3, 3)
+		local front = cx + dir * (TileSize * 0.32)
+		love.graphics.rectangle("fill", front - SlitThickness * 0.5, cy - SlitLength * 0.5, SlitThickness, SlitLength, 3, 3)
 	else
 		local dir = beam.facing or 1
-		local front = cy + dir * (tileSize * 0.32)
-		love.graphics.rectangle("fill", cx - slitLength * 0.5, front - slitThickness * 0.5, slitLength, slitThickness, 3, 3)
+		local front = cy + dir * (TileSize * 0.32)
+		love.graphics.rectangle("fill", cx - SlitLength * 0.5, front - SlitThickness * 0.5, SlitLength, SlitThickness, 3, 3)
 	end
 end
 
@@ -881,19 +881,19 @@ function Lasers:draw()
 	love.graphics.setLineWidth(2)
 
 	for _, beam in ipairs(emitters) do
-		drawBurnMark(beam)
+		DrawBurnMark(beam)
 	end
 
 	for _, beam in ipairs(emitters) do
-		drawBeam(beam)
+		DrawBeam(beam)
 	end
 
 	for _, beam in ipairs(emitters) do
-		drawImpactEffect(beam)
+		DrawImpactEffect(beam)
 	end
 
 	for _, beam in ipairs(emitters) do
-		drawEmitterBase(beam)
+		DrawEmitterBase(beam)
 	end
 
 	love.graphics.pop()

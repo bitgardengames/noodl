@@ -1,8 +1,8 @@
 local InputMode = {
-	lastDevice = nil,
+	LastDevice = nil,
 }
 
-local function isMouseSupported()
+local function IsMouseSupported()
 	local supported = love.mouse.isCursorSupported()
 
 	if supported == nil then
@@ -12,28 +12,28 @@ local function isMouseSupported()
 	return supported
 end
 
-function InputMode:noteMouse()
-	if isMouseSupported() then
-		self.lastDevice = "mouse"
+function InputMode:NoteMouse()
+	if IsMouseSupported() then
+		self.LastDevice = "mouse"
 	end
 end
 
-function InputMode:noteKeyboard()
-	self.lastDevice = "keyboard"
+function InputMode:NoteKeyboard()
+	self.LastDevice = "keyboard"
 end
 
-function InputMode:noteGamepad()
-	self.lastDevice = "gamepad"
+function InputMode:NoteGamepad()
+	self.LastDevice = "gamepad"
 end
 
-function InputMode:noteGamepadAxis(value)
+function InputMode:NoteGamepadAxis(value)
 	if math.abs(value or 0) > 0.25 then
-		self:noteGamepad()
+		self:NoteGamepad()
 	end
 end
 
-function InputMode:isMouseActive()
-	return self.lastDevice == "mouse" and isMouseSupported()
+function InputMode:IsMouseActive()
+	return self.LastDevice == "mouse" and IsMouseSupported()
 end
 
 return InputMode

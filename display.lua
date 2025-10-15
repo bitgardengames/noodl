@@ -1,58 +1,58 @@
 local Display = {}
 
-local displayModes = { "fullscreen", "windowed" }
+local DisplayModes = { "fullscreen", "windowed" }
 
 local resolutions = {
 	{ id = "1280x720", width = 1280, height = 720 },
-	{ id = "1280x800", width = 1280, height = 800, noteKey = "settings.resolution_note_steam_deck" },
+	{ id = "1280x800", width = 1280, height = 800, NoteKey = "settings.resolution_note_steam_deck" },
 	{ id = "1366x768", width = 1366, height = 768 },
 	{ id = "1600x900", width = 1600, height = 900 },
 	{ id = "1920x1080", width = 1920, height = 1080 },
 	{ id = "2560x1440", width = 2560, height = 1440 },
 }
 
-local resolutionIndex = {}
+local ResolutionIndex = {}
 for index, res in ipairs(resolutions) do
-	resolutionIndex[res.id] = index
+	ResolutionIndex[res.id] = index
 end
 
-local function wrapIndex(index, count)
+local function WrapIndex(index, count)
 	return ((index - 1) % count) + 1
 end
 
-function Display.getDisplayModes()
-	return displayModes
+function Display.GetDisplayModes()
+	return DisplayModes
 end
 
-function Display.cycleDisplayMode(current, delta)
+function Display.CycleDisplayMode(current, delta)
 	delta = delta or 1
-	local count = #displayModes
+	local count = #DisplayModes
 	if count == 0 then
 		return current
 	end
 
-	local currentIndex = 1
-	for i, mode in ipairs(displayModes) do
+	local CurrentIndex = 1
+	for i, mode in ipairs(DisplayModes) do
 		if mode == current then
-			currentIndex = i
+			CurrentIndex = i
 			break
 		end
 	end
 
-	local newIndex = wrapIndex(currentIndex + delta, count)
-	return displayModes[newIndex]
+	local NewIndex = WrapIndex(CurrentIndex + delta, count)
+	return DisplayModes[NewIndex]
 end
 
-function Display.getResolution(id)
-	if id and resolutionIndex[id] then
-		return resolutions[resolutionIndex[id]]
+function Display.GetResolution(id)
+	if id and ResolutionIndex[id] then
+		return resolutions[ResolutionIndex[id]]
 	end
 
 	return resolutions[1]
 end
 
-function Display.getResolutionLabel(localization, id)
-	local entry = Display.getResolution(id)
+function Display.GetResolutionLabel(localization, id)
+	local entry = Display.GetResolution(id)
 	local label = string.format("%d x %d", entry.width, entry.height)
 
 	if entry.noteKey and localization and localization.get then
@@ -65,20 +65,20 @@ function Display.getResolutionLabel(localization, id)
 	return label
 end
 
-function Display.getDefaultResolutionId()
+function Display.GetDefaultResolutionId()
 	return resolutions[1].id
 end
 
-function Display.cycleResolution(currentId, delta)
+function Display.CycleResolution(CurrentId, delta)
 	delta = delta or 1
 	local count = #resolutions
 	if count == 0 then
-		return currentId
+		return CurrentId
 	end
 
-	local currentIndex = resolutionIndex[currentId] or 1
-	local newIndex = wrapIndex(currentIndex + delta, count)
-	return resolutions[newIndex].id
+	local CurrentIndex = ResolutionIndex[CurrentId] or 1
+	local NewIndex = WrapIndex(CurrentIndex + delta, count)
+	return resolutions[NewIndex].id
 end
 
 function Display.ensure(settings)
@@ -89,8 +89,8 @@ function Display.ensure(settings)
 		changed = true
 	end
 
-	if not settings.resolution or not resolutionIndex[settings.resolution] then
-		settings.resolution = Display.getDefaultResolutionId()
+	if not settings.resolution or not ResolutionIndex[settings.resolution] then
+		settings.resolution = Display.GetDefaultResolutionId()
 		changed = true
 	end
 
@@ -118,7 +118,7 @@ function Display.apply(settings)
 		flags.fullscreen = true
 		flags.fullscreentype = "desktop"
 	else
-		local res = Display.getResolution(settings.resolution)
+		local res = Display.GetResolution(settings.resolution)
 		width, height = res.width, res.height
 		flags.fullscreen = false
 		flags.fullscreentype = nil

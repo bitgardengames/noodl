@@ -6,30 +6,30 @@ local UI = require("ui")
 local Localization = require("localization")
 
 local DevScreen = {
-	transitionDuration = 0.35,
+	TransitionDuration = 0.35,
 }
 
 local ANALOG_DEADZONE = 0.35
 
-local buttonList = ButtonList.new()
+local ButtonList = ButtonList.new()
 local buttons = {}
 
 local layout = {
 	panel = { x = 0, y = 0, w = 0, h = 0, padding = 0 },
 	button = { x = 0, y = 0 },
-	contentX = 0,
-	contentWidth = 0,
+	ContentX = 0,
+	ContentWidth = 0,
 	screen = { w = 0, h = 0 },
 }
 
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local AnalogAxisDirections = { horizontal = nil, vertical = nil }
 
-local function resetAnalogAxis()
-	analogAxisDirections.horizontal = nil
-	analogAxisDirections.vertical = nil
+local function ResetAnalogAxis()
+	AnalogAxisDirections.horizontal = nil
+	AnalogAxisDirections.vertical = nil
 end
 
-local function getHighlightColor(color)
+local function GetHighlightColor(color)
 	color = color or {1, 1, 1, 1}
 	local r = math.min(1, color[1] * 1.2 + 0.08)
 	local g = math.min(1, color[2] * 1.2 + 0.08)
@@ -38,102 +38,102 @@ local function getHighlightColor(color)
 	return {r, g, b, a}
 end
 
-local function drawDevApple(cx, cy, radius)
-	local appleColor = Theme.appleColor or {0.9, 0.45, 0.55, 1}
-	local highlight = getHighlightColor(appleColor)
-	local borderWidth = math.max(4, radius * 0.22)
-	local appleRadiusX = radius
+local function DrawDevApple(cx, cy, radius)
+	local AppleColor = Theme.AppleColor or {0.9, 0.45, 0.55, 1}
+	local highlight = GetHighlightColor(AppleColor)
+	local BorderWidth = math.max(4, radius * 0.22)
+	local AppleRadiusX = radius
 
-	local shadowAlpha = 0.3
-	love.graphics.setColor(0, 0, 0, shadowAlpha)
+	local ShadowAlpha = 0.3
+	love.graphics.setColor(0, 0, 0, ShadowAlpha)
 	love.graphics.circle(
 		"fill",
-		cx + appleRadiusX * 0.16,
-		cy + appleRadiusX * 0.18,
-		appleRadiusX + borderWidth * 0.5,
+		cx + AppleRadiusX * 0.16,
+		cy + AppleRadiusX * 0.18,
+		AppleRadiusX + BorderWidth * 0.5,
 		48
 	)
 
-	love.graphics.setColor(appleColor[1], appleColor[2], appleColor[3], appleColor[4] or 1)
-	love.graphics.circle("fill", cx, cy, appleRadiusX, 64)
+	love.graphics.setColor(AppleColor[1], AppleColor[2], AppleColor[3], AppleColor[4] or 1)
+	love.graphics.circle("fill", cx, cy, AppleRadiusX, 64)
 
 	love.graphics.push()
-	love.graphics.translate(cx - appleRadiusX * 0.3, cy - appleRadiusX * 0.35)
+	love.graphics.translate(cx - AppleRadiusX * 0.3, cy - AppleRadiusX * 0.35)
 	love.graphics.rotate(-0.35)
-	local highlightAlpha = (highlight[4] or 1) * 0.85
-	love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
+	local HighlightAlpha = (highlight[4] or 1) * 0.85
+	love.graphics.setColor(highlight[1], highlight[2], highlight[3], HighlightAlpha)
 	love.graphics.circle("fill", 0, 0, radius * 0.5, 48)
 	love.graphics.pop()
 
-	love.graphics.setLineWidth(borderWidth)
+	love.graphics.setLineWidth(BorderWidth)
 	love.graphics.setColor(0, 0, 0, 1)
-	love.graphics.circle("line", cx, cy, appleRadiusX, 64)
+	love.graphics.circle("line", cx, cy, AppleRadiusX, 64)
 	love.graphics.setLineWidth(1)
 
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
-function DevScreen:updateLayout()
+function DevScreen:UpdateLayout()
 	local sw, sh = Screen:get()
 	layout.screen.w = sw
 	layout.screen.h = sh
 
 	local spacing = UI.spacing
-	local panelPadding = spacing.panelPadding or 20
-	local frameSize = 256
-	local horizontalMargin = math.max(140, sw * 0.18)
+	local PanelPadding = spacing.panelPadding or 20
+	local FrameSize = 256
+	local HorizontalMargin = math.max(140, sw * 0.18)
 
-	local minPanelWidth = frameSize + panelPadding * 2 + 160
-	local panelWidth = math.max(minPanelWidth, math.min(780, sw - horizontalMargin))
-	panelWidth = math.min(panelWidth, sw - 60)
+	local MinPanelWidth = FrameSize + PanelPadding * 2 + 160
+	local PanelWidth = math.max(MinPanelWidth, math.min(780, sw - HorizontalMargin))
+	PanelWidth = math.min(PanelWidth, sw - 60)
 
-	local minPanelHeight = frameSize + panelPadding * 2 + spacing.buttonHeight + 220
-	local panelHeight = math.max(minPanelHeight, math.min(640, sh - 160))
-	panelHeight = math.min(panelHeight, sh - 60)
+	local MinPanelHeight = FrameSize + PanelPadding * 2 + spacing.buttonHeight + 220
+	local PanelHeight = math.max(MinPanelHeight, math.min(640, sh - 160))
+	PanelHeight = math.min(PanelHeight, sh - 60)
 
-	local panelX = (sw - panelWidth) / 2
-	local panelY = (sh - panelHeight) / 2
+	local PanelX = (sw - PanelWidth) / 2
+	local PanelY = (sh - PanelHeight) / 2
 
-	layout.panel.x = panelX
-	layout.panel.y = panelY
-	layout.panel.w = panelWidth
-	layout.panel.h = panelHeight
-	layout.panel.padding = panelPadding
+	layout.panel.x = PanelX
+	layout.panel.y = PanelY
+	layout.panel.w = PanelWidth
+	layout.panel.h = PanelHeight
+	layout.panel.padding = PanelPadding
 
-	layout.contentX = panelX + panelPadding
-	layout.contentWidth = panelWidth - panelPadding * 2
+	layout.contentX = PanelX + PanelPadding
+	layout.contentWidth = PanelWidth - PanelPadding * 2
 
-	local buttonX = panelX + (panelWidth - spacing.buttonWidth) / 2
-	local buttonY = panelY + panelHeight - panelPadding - spacing.buttonHeight
+	local ButtonX = PanelX + (PanelWidth - spacing.buttonWidth) / 2
+	local ButtonY = PanelY + PanelHeight - PanelPadding - spacing.buttonHeight
 
-	layout.button.x = buttonX
-	layout.button.y = buttonY
+	layout.button.x = ButtonX
+	layout.button.y = ButtonY
 
-	buttons = buttonList:reset({
+	buttons = ButtonList:reset({
 		{
-			id = "devBackButton",
-			x = buttonX,
-			y = buttonY,
+			id = "DevBackButton",
+			x = ButtonX,
+			y = ButtonY,
 			w = spacing.buttonWidth,
 			h = spacing.buttonHeight,
-			labelKey = "dev.back_to_menu",
+			LabelKey = "dev.back_to_menu",
 			action = "menu",
 		},
 	})
 end
 
 function DevScreen:enter()
-	UI.clearButtons()
-	self:updateLayout()
-	resetAnalogAxis()
+	UI.ClearButtons()
+	self:UpdateLayout()
+	ResetAnalogAxis()
 end
 
-local function handleAnalogAxis(axis, value)
+local function HandleAnalogAxis(axis, value)
 	if axis ~= "leftx" and axis ~= "lefty" and axis ~= "rightx" and axis ~= "righty" then
 		return
 	end
 
-	local axisType = (axis == "lefty" or axis == "righty") and "vertical" or "horizontal"
+	local AxisType = (axis == "lefty" or axis == "righty") and "vertical" or "horizontal"
 	local direction
 	if value > ANALOG_DEADZONE then
 		direction = "positive"
@@ -142,24 +142,24 @@ local function handleAnalogAxis(axis, value)
 	end
 
 	if not direction then
-		analogAxisDirections[axisType] = nil
+		AnalogAxisDirections[AxisType] = nil
 		return
 	end
 
-	if analogAxisDirections[axisType] == direction then
+	if AnalogAxisDirections[AxisType] == direction then
 		return
 	end
 
-	analogAxisDirections[axisType] = direction
+	AnalogAxisDirections[AxisType] = direction
 
 	local delta = direction == "positive" and 1 or -1
-	buttonList:moveFocus(delta)
+	ButtonList:moveFocus(delta)
 end
 
-local function handleConfirm()
-	local action = buttonList:activateFocused()
+local function HandleConfirm()
+	local action = ButtonList:activateFocused()
 	if action then
-		Audio:playSound("click")
+		Audio:PlaySound("click")
 	end
 	return action
 end
@@ -167,11 +167,11 @@ end
 function DevScreen:update(dt)
 	local sw, sh = Screen:get()
 	if sw ~= layout.screen.w or sh ~= layout.screen.h then
-		self:updateLayout()
+		self:UpdateLayout()
 	end
 
 	local mx, my = love.mouse.getPosition()
-	buttonList:updateHover(mx, my)
+	ButtonList:updateHover(mx, my)
 end
 
 function DevScreen:draw()
@@ -180,118 +180,118 @@ function DevScreen:draw()
 	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
 	local panel = layout.panel
-	local contentX = layout.contentX
-	local contentWidth = layout.contentWidth
-	local buttonPos = layout.button
+	local ContentX = layout.contentX
+	local ContentWidth = layout.contentWidth
+	local ButtonPos = layout.button
 
-	UI.drawPanel(panel.x, panel.y, panel.w, panel.h, {
+	UI.DrawPanel(panel.x, panel.y, panel.w, panel.h, {
 		fill = {0.12, 0.12, 0.16, 0.96},
-		borderColor = Theme.panelBorder,
-		shadowOffset = UI.spacing.shadowOffset or 8,
+		BorderColor = Theme.PanelBorder,
+		ShadowOffset = UI.spacing.ShadowOffset or 8,
 	})
 
-	local headingFont = UI.fonts.heading
-	local bodyFont = UI.fonts.body
-	local smallFont = UI.fonts.small
+	local HeadingFont = UI.fonts.heading
+	local BodyFont = UI.fonts.body
+	local SmallFont = UI.fonts.small
 
-	local headingHeight = headingFont and headingFont:getHeight() or 32
-	local bodyHeight = bodyFont and bodyFont:getHeight() or 20
-	local smallHeight = smallFont and smallFont:getHeight() or 14
+	local HeadingHeight = HeadingFont and HeadingFont:getHeight() or 32
+	local BodyHeight = BodyFont and BodyFont:getHeight() or 20
+	local SmallHeight = SmallFont and SmallFont:getHeight() or 14
 
 	local y = panel.y + panel.padding
 
-	UI.drawLabel(Localization:get("dev.title"), contentX, y, contentWidth, "left", {
-		fontKey = "heading",
-		color = Theme.accentTextColor,
+	UI.DrawLabel(Localization:get("dev.title"), ContentX, y, ContentWidth, "left", {
+		FontKey = "heading",
+		color = Theme.AccentTextColor,
 	})
 
-	y = y + headingHeight + 12
+	y = y + HeadingHeight + 12
 
-	UI.drawLabel(Localization:get("dev.subtitle"), contentX, y, contentWidth, "left", {
-		fontKey = "body",
-		color = Theme.textColor,
+	UI.DrawLabel(Localization:get("dev.subtitle"), ContentX, y, ContentWidth, "left", {
+		FontKey = "body",
+		color = Theme.TextColor,
 	})
 
-	y = y + bodyHeight + 10
+	y = y + BodyHeight + 10
 
-	UI.drawLabel(Localization:get("dev.description"), contentX, y, contentWidth, "left", {
-		fontKey = "small",
-		color = Theme.mutedTextColor,
+	UI.DrawLabel(Localization:get("dev.description"), ContentX, y, ContentWidth, "left", {
+		FontKey = "small",
+		color = Theme.MutedTextColor,
 	})
 
-	y = y + smallHeight + 36
+	y = y + SmallHeight + 36
 
-	local frameSize = 256
-	local frameX = panel.x + (panel.w - frameSize) / 2
-	local maxFrameY = buttonPos.y - frameSize - 48
-	local minFrameY = panel.y + panel.padding + 110
-	local frameY = math.max(minFrameY, math.min(y, maxFrameY))
+	local FrameSize = 256
+	local FrameX = panel.x + (panel.w - FrameSize) / 2
+	local MaxFrameY = ButtonPos.y - FrameSize - 48
+	local MinFrameY = panel.y + panel.padding + 110
+	local FrameY = math.max(MinFrameY, math.min(y, MaxFrameY))
 
-	local frameLabel = Localization:get("dev.frame_label")
-	if frameLabel and frameLabel ~= "dev.frame_label" then
-		UI.drawLabel(frameLabel, frameX, frameY - smallHeight - 10, frameSize, "center", {
-			fontKey = "small",
-			color = Theme.mutedTextColor,
+	local FrameLabel = Localization:get("dev.frame_label")
+	if FrameLabel and FrameLabel ~= "dev.frame_label" then
+		UI.DrawLabel(FrameLabel, FrameX, FrameY - SmallHeight - 10, FrameSize, "center", {
+			FontKey = "small",
+			color = Theme.MutedTextColor,
 		})
 	end
 
-	local shadowColor = Theme.shadowColor or {0, 0, 0, 0.45}
-	love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 1) * 0.9)
-	love.graphics.rectangle("fill", frameX + 6, frameY + 8, frameSize, frameSize)
+	local ShadowColor = Theme.ShadowColor or {0, 0, 0, 0.45}
+	love.graphics.setColor(ShadowColor[1], ShadowColor[2], ShadowColor[3], (ShadowColor[4] or 1) * 0.9)
+	love.graphics.rectangle("fill", FrameX + 6, FrameY + 8, FrameSize, FrameSize)
 
 	love.graphics.setColor(0.16, 0.16, 0.22, 1.0)
-	love.graphics.rectangle("fill", frameX, frameY, frameSize, frameSize)
+	love.graphics.rectangle("fill", FrameX, FrameY, FrameSize, FrameSize)
 
 	love.graphics.setLineWidth(4)
-	love.graphics.setColor(Theme.accentTextColor)
-	love.graphics.rectangle("line", frameX - 6, frameY - 6, frameSize + 12, frameSize + 12)
+	love.graphics.setColor(Theme.AccentTextColor)
+	love.graphics.rectangle("line", FrameX - 6, FrameY - 6, FrameSize + 12, FrameSize + 12)
 	love.graphics.setLineWidth(1)
 
 	love.graphics.setColor(1, 1, 1, 1)
 
-	local appleRadius = frameSize * 0.32
-	local appleCenterX = frameX + frameSize / 2
-	local appleCenterY = frameY + frameSize / 2
-	drawDevApple(appleCenterX, appleCenterY, appleRadius)
+	local AppleRadius = FrameSize * 0.32
+	local AppleCenterX = FrameX + FrameSize / 2
+	local AppleCenterY = FrameY + FrameSize / 2
+	DrawDevApple(AppleCenterX, AppleCenterY, AppleRadius)
 
-	local numberLabel = "5000"
-	local previousFont = love.graphics.getFont()
-	local labelFont = UI.fonts.display or UI.fonts.heading or UI.fonts.body or previousFont
-	if labelFont then
-		love.graphics.setFont(labelFont)
+	local NumberLabel = "5000"
+	local PreviousFont = love.graphics.getFont()
+	local LabelFont = UI.fonts.display or UI.fonts.heading or UI.fonts.body or PreviousFont
+	if LabelFont then
+		love.graphics.setFont(LabelFont)
 	end
-	local labelWidth = labelFont and labelFont:getWidth(numberLabel) or 0
-	local labelHeight = labelFont and labelFont:getHeight() or 0
-	local textMargin = math.max(10, frameSize * 0.04)
-	local textX = frameX + textMargin - 5
-	local textOffsetY = math.max(6, frameSize * 0.02)
-	local textY = frameY + frameSize - labelHeight - textMargin + textOffsetY + 5
-	local shadowOffset = math.max(3, labelHeight * 0.08)
+	local LabelWidth = LabelFont and LabelFont:getWidth(NumberLabel) or 0
+	local LabelHeight = LabelFont and LabelFont:getHeight() or 0
+	local TextMargin = math.max(10, FrameSize * 0.04)
+	local TextX = FrameX + TextMargin - 5
+	local TextOffsetY = math.max(6, FrameSize * 0.02)
+	local TextY = FrameY + FrameSize - LabelHeight - TextMargin + TextOffsetY + 5
+	local ShadowOffset = math.max(3, LabelHeight * 0.08)
 	love.graphics.setColor(0, 0, 0, 0.55)
-	love.graphics.print(numberLabel, textX + shadowOffset, textY + shadowOffset)
-	love.graphics.setColor(Theme.accentTextColor)
-	love.graphics.print(numberLabel, textX, textY)
+	love.graphics.print(NumberLabel, TextX + ShadowOffset, TextY + ShadowOffset)
+	love.graphics.setColor(Theme.AccentTextColor)
+	love.graphics.print(NumberLabel, TextX, TextY)
 
 	love.graphics.setColor(1, 1, 1, 1)
-	if previousFont then
-		love.graphics.setFont(previousFont)
+	if PreviousFont then
+		love.graphics.setFont(PreviousFont)
 	end
 
 	for _, btn in ipairs(buttons) do
 		if btn.labelKey then
 			btn.text = Localization:get(btn.labelKey)
 		end
-		UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
-		UI.drawButton(btn.id)
+		UI.RegisterButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
+		UI.DrawButton(btn.id)
 	end
 end
 
 function DevScreen:mousepressed(x, y, button)
-	buttonList:mousepressed(x, y, button)
+	ButtonList:mousepressed(x, y, button)
 end
 
 function DevScreen:mousereleased(x, y, button)
-	local action = buttonList:mousereleased(x, y, button)
+	local action = ButtonList:mousereleased(x, y, button)
 	if action then
 		return action
 	end
@@ -299,11 +299,11 @@ end
 
 function DevScreen:keypressed(key)
 	if key == "up" or key == "left" then
-		buttonList:moveFocus(-1)
+		ButtonList:moveFocus(-1)
 	elseif key == "down" or key == "right" then
-		buttonList:moveFocus(1)
+		ButtonList:moveFocus(1)
 	elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
-		return handleConfirm()
+		return HandleConfirm()
 	elseif key == "escape" or key == "backspace" then
 		return "menu"
 	end
@@ -311,11 +311,11 @@ end
 
 function DevScreen:gamepadpressed(_, button)
 	if button == "dpup" or button == "dpleft" then
-		buttonList:moveFocus(-1)
+		ButtonList:moveFocus(-1)
 	elseif button == "dpdown" or button == "dpright" then
-		buttonList:moveFocus(1)
+		ButtonList:moveFocus(1)
 	elseif button == "a" or button == "start" then
-		return handleConfirm()
+		return HandleConfirm()
 	elseif button == "b" then
 		return "menu"
 	end
@@ -324,7 +324,7 @@ end
 DevScreen.joystickpressed = DevScreen.gamepadpressed
 
 function DevScreen:gamepadaxis(_, axis, value)
-	handleAnalogAxis(axis, value)
+	HandleAnalogAxis(axis, value)
 end
 
 DevScreen.joystickaxis = DevScreen.gamepadaxis

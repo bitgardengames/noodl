@@ -2,14 +2,14 @@ local Settings = require("settings")
 
 local Death = {
 	particles = {},
-	shakeTime = 0,
-	shakeIntensity = 0,
-	flashTime = 0,
-	flashDuration = 0.3,
-	flashMaxAlpha = 0.45
+	ShakeTime = 0,
+	ShakeIntensity = 0,
+	FlashTime = 0,
+	FlashDuration = 0.3,
+	FlashMaxAlpha = 0.45
 }
 
-function Death:spawnFromSnake(trail, SEGMENT_SIZE)
+function Death:SpawnFromSnake(trail, SEGMENT_SIZE)
 	for i = 1, #trail do
 	local p = trail[i]
 	if p.drawX and p.drawY then
@@ -27,11 +27,11 @@ function Death:spawnFromSnake(trail, SEGMENT_SIZE)
 	end
 
 	-- add screen shake on death spawn
-	self.shakeTime = 0.4        -- duration in seconds
-	self.shakeIntensity = 8     -- pixels of max shake
+	self.ShakeTime = 0.4        -- duration in seconds
+	self.ShakeIntensity = 8     -- pixels of max shake
 
 	-- trigger a quick red flash overlay
-	self.flashTime = self.flashDuration
+	self.FlashTime = self.FlashDuration
 end
 
 function Death:update(dt)
@@ -51,26 +51,26 @@ function Death:update(dt)
 	end
 
 	-- update shake
-	if self.shakeTime > 0 then
-	self.shakeTime = self.shakeTime - dt
-	if self.shakeTime < 0 then self.shakeTime = 0 end
+	if self.ShakeTime > 0 then
+	self.ShakeTime = self.ShakeTime - dt
+	if self.ShakeTime < 0 then self.ShakeTime = 0 end
 	end
 
 	-- update flash timer
-	if self.flashTime > 0 then
-	self.flashTime = self.flashTime - dt
-	if self.flashTime < 0 then self.flashTime = 0 end
+	if self.FlashTime > 0 then
+	self.FlashTime = self.FlashTime - dt
+	if self.FlashTime < 0 then self.FlashTime = 0 end
 	end
 end
 
 -- call this before drawing game elements
-function Death:applyShake()
-	if Settings.screenShake == false then
+function Death:ApplyShake()
+	if Settings.ScreenShake == false then
 	return
 	end
 
-	if self.shakeTime > 0 then
-	local intensity = self.shakeIntensity * (self.shakeTime / 0.4) -- fade out
+	if self.ShakeTime > 0 then
+	local intensity = self.ShakeIntensity * (self.ShakeTime / 0.4) -- fade out
 	local dx = love.math.random(-intensity, intensity)
 	local dy = love.math.random(-intensity, intensity)
 	love.graphics.translate(dx, dy)
@@ -87,18 +87,18 @@ function Death:draw()
 	love.graphics.setColor(1, 1, 1, 1) -- reset
 end
 
-function Death:drawFlash(width, height)
-	if self.flashTime <= 0 then return end
+function Death:DrawFlash(width, height)
+	if self.FlashTime <= 0 then return end
 
-	local t = self.flashTime / self.flashDuration
-	local alpha = (t * t) * self.flashMaxAlpha
+	local t = self.FlashTime / self.FlashDuration
+	local alpha = (t * t) * self.FlashMaxAlpha
 	love.graphics.setColor(1, 0.25, 0.2, alpha)
 	love.graphics.rectangle("fill", 0, 0, width, height)
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
-function Death:isFinished()
-	return #self.particles == 0 and self.shakeTime <= 0 and self.flashTime <= 0
+function Death:IsFinished()
+	return #self.particles == 0 and self.ShakeTime <= 0 and self.FlashTime <= 0
 end
 
 return Death

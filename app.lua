@@ -14,7 +14,7 @@ local SnakeCosmetics = require("snakecosmetics")
 local InputMode = require("inputmode")
 
 local App = {
-	stateModules = {
+	StateModules = {
 		splash = require("splashscreen"),
 		menu = require("menu"),
 		game = require("game"),
@@ -27,34 +27,34 @@ local App = {
 	}
 }
 
-function App:registerStates()
+function App:RegisterStates()
 	local states = {}
-	for stateName, module in pairs(self.stateModules) do
-		states[stateName] = module
+	for StateName, module in pairs(self.StateModules) do
+		states[StateName] = module
 	end
 	GameState.states = states
 end
 
-function App:loadSubsystems()
+function App:LoadSubsystems()
 	Screen:update()
-	Localization:setLanguage(Settings.language)
+	Localization:SetLanguage(Settings.language)
 	Audio:load()
 	Achievements:load()
 	Score:load()
 	PlayerStats:load()
-	local metaState = MetaProgression:getState() or {}
+	local MetaState = MetaProgression:GetState() or {}
 	SnakeCosmetics:load({
-		metaLevel = metaState.level or 1,
+		MetaLevel = MetaState.level or 1,
 	})
 end
 
-function App:resolveAction(action)
+function App:ResolveAction(action)
 	if not action then return end
 
 	if type(action) == "table" then
-		local stateName = action.state
-		if stateName and GameState.states[stateName] then
-			GameState:switch(stateName, action.data)
+		local StateName = action.state
+		if StateName and GameState.states[StateName] then
+			GameState:switch(StateName, action.data)
 		end
 		return
 	end
@@ -75,15 +75,15 @@ function App:load()
 	Settings:load()
 	Display.apply(Settings)
 
-	self:registerStates()
-	self:loadSubsystems()
+	self:RegisterStates()
+	self:LoadSubsystems()
 
 	GameState:switch("splash")
 end
 
-function App:forwardEvent(eventName, ...)
-	local result = GameState:dispatch(eventName, ...)
-	self:resolveAction(result)
+function App:ForwardEvent(EventName, ...)
+	local result = GameState:dispatch(EventName, ...)
+	self:ResolveAction(result)
 
 	return result
 end
@@ -91,12 +91,12 @@ end
 function App:update(dt)
 	Screen:update(dt)
 	local action = GameState:update(dt)
-	self:resolveAction(action)
+	self:ResolveAction(action)
 	UI:update(dt)
 end
 
 function App:draw()
-	local bg = Theme.bgColor or {0, 0, 0, 1}
+	local bg = Theme.BgColor or {0, 0, 0, 1}
 	local r = bg[1] or 0
 	local g = bg[2] or 0
 	local b = bg[3] or 0
@@ -106,25 +106,25 @@ function App:draw()
 
 	GameState:draw()
 
-        if Settings.showFPS then
+        if Settings.ShowFPS then
                 local fps = love.timer.getFPS()
 		local label = string.format("FPS: %d", fps)
 		local padding = 6
 
-		if UI.setFont then
-			UI.setFont("caption")
+		if UI.SetFont then
+			UI.SetFont("caption")
 		end
 
 		local font = love.graphics.getFont()
-		local textWidth = font and font:getWidth(label) or 0
-		local textHeight = font and font:getHeight() or 14
-		local boxWidth = textWidth + padding * 2
-		local boxHeight = textHeight + padding * 2
+		local TextWidth = font and font:getWidth(label) or 0
+		local TextHeight = font and font:getHeight() or 14
+		local BoxWidth = TextWidth + padding * 2
+		local BoxHeight = TextHeight + padding * 2
 		local x = 12
 		local y = 12
 
 		love.graphics.setColor(0, 0, 0, 0.6)
-		love.graphics.rectangle("fill", x, y, boxWidth, boxHeight, 6, 6)
+		love.graphics.rectangle("fill", x, y, BoxWidth, BoxHeight, 6, 6)
 		love.graphics.setColor(1, 1, 1, 0.95)
 		love.graphics.print(label, x + padding, y + padding)
 		love.graphics.setColor(1, 1, 1, 1)
@@ -132,66 +132,66 @@ function App:draw()
 end
 
 function App:keypressed(key)
-	InputMode:noteKeyboard()
+	InputMode:NoteKeyboard()
 	if key == "printscreen" then
 		local time = os.date("%Y-%m-%d_%H-%M-%S")
 		love.graphics.captureScreenshot("screenshot_" .. time .. ".png")
 	end
 
-	return self:forwardEvent("keypressed", key)
+	return self:ForwardEvent("keypressed", key)
 end
 
 function App:resize()
 	Screen:update()
 end
 
-local function createEventForwarder(eventName, preHook)
+local function CreateEventForwarder(EventName, PreHook)
 	return function(self, ...)
-		if preHook then
-			preHook(...)
+		if PreHook then
+			PreHook(...)
 		end
-		return self:forwardEvent(eventName, ...)
+		return self:ForwardEvent(EventName, ...)
 	end
 end
 
-local eventForwarders = {
+local EventForwarders = {
 	mousepressed = function()
-		InputMode:noteMouse()
+		InputMode:NoteMouse()
 	end,
 	mousereleased = function()
-		InputMode:noteMouse()
+		InputMode:NoteMouse()
 	end,
 	mousemoved = function()
-		InputMode:noteMouse()
+		InputMode:NoteMouse()
 	end,
 	wheelmoved = function()
-		InputMode:noteMouse()
+		InputMode:NoteMouse()
 	end,
 	joystickpressed = function()
-		InputMode:noteGamepad()
+		InputMode:NoteGamepad()
 	end,
 	joystickaxis = function(_, _, value)
-		InputMode:noteGamepadAxis(value)
+		InputMode:NoteGamepadAxis(value)
 	end,
 	gamepadpressed = function()
-		InputMode:noteGamepad()
+		InputMode:NoteGamepad()
 	end,
 	gamepadaxis = function(_, _, value)
-		InputMode:noteGamepadAxis(value)
+		InputMode:NoteGamepadAxis(value)
 	end,
 }
 
-local passthroughEvents = {
+local PassthroughEvents = {
 	joystickreleased = true,
 	gamepadreleased = true,
 }
 
-for eventName, hook in pairs(eventForwarders) do
-	App[eventName] = createEventForwarder(eventName, hook)
+for EventName, hook in pairs(EventForwarders) do
+	App[EventName] = CreateEventForwarder(EventName, hook)
 end
 
-for eventName in pairs(passthroughEvents) do
-	App[eventName] = createEventForwarder(eventName)
+for EventName in pairs(PassthroughEvents) do
+	App[EventName] = CreateEventForwarder(EventName)
 end
 
 return App

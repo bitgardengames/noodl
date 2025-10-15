@@ -13,33 +13,33 @@ local function clone(value)
 	return copy
 end
 
-local function resolveDefault(entry)
+local function ResolveDefault(entry)
 	if type(entry) ~= "table" then
 		return nil
 	end
 
-	local defaultValue = entry.default
-	if defaultValue == nil then
+	local DefaultValue = entry.default
+	if DefaultValue == nil then
 		return nil
 	end
 
-	if type(defaultValue) == "function" then
-		return defaultValue()
+	if type(DefaultValue) == "function" then
+		return DefaultValue()
 	end
 
-	return clone(defaultValue)
+	return clone(DefaultValue)
 end
 
-function DataSchemas.applyDefaults(schema, target)
+function DataSchemas.ApplyDefaults(schema, target)
 	if type(schema) ~= "table" or type(target) ~= "table" then
 		return target
 	end
 
 	for key, entry in pairs(schema) do
 		if target[key] == nil then
-			local defaultValue = resolveDefault(entry)
-			if defaultValue ~= nil then
-				target[key] = defaultValue
+			local DefaultValue = ResolveDefault(entry)
+			if DefaultValue ~= nil then
+				target[key] = DefaultValue
 			end
 		end
 	end
@@ -47,14 +47,14 @@ function DataSchemas.applyDefaults(schema, target)
 	return target
 end
 
-function DataSchemas.collectDefaults(schema)
+function DataSchemas.CollectDefaults(schema)
 	local defaults = {}
 	if type(schema) ~= "table" then
 		return defaults
 	end
 
 	for key, entry in pairs(schema) do
-		local value = resolveDefault(entry)
+		local value = ResolveDefault(entry)
 		if value ~= nil then
 			defaults[key] = value
 		end
@@ -91,157 +91,157 @@ function DataSchemas.validate(schema, target, context)
 	return true
 end
 
-DataSchemas.playerStats = {
-	totalApplesEaten = {
+DataSchemas.PlayerStats = {
+	TotalApplesEaten = {
 		type = "number",
 		default = 0,
 		description = "Lifetime apples eaten across all runs.",
 	},
-	sessionsPlayed = {
+	SessionsPlayed = {
 		type = "number",
 		default = 0,
 		description = "Number of complete run attempts.",
 	},
-	totalDragonfruitEaten = {
+	TotalDragonfruitEaten = {
 		type = "number",
 		default = 0,
 		description = "Lifetime dragonfruit collected.",
 	},
-	snakeScore = {
+	SnakeScore = {
 		type = "number",
 		description = "Highest score achieved in a single run.",
 	},
-	floorsCleared = {
+	FloorsCleared = {
 		type = "number",
 		default = 0,
 		description = "Total floors cleared across all runs.",
 	},
-	deepestFloorReached = {
+	DeepestFloorReached = {
 		type = "number",
 		default = 0,
 		description = "Deepest floor reached in any run.",
 	},
-	bestComboStreak = {
+	BestComboStreak = {
 		type = "number",
 		default = 0,
 		description = "Highest combo streak recorded.",
 	},
-	dailyChallengesCompleted = {
+	DailyChallengesCompleted = {
 		type = "number",
 		default = 0,
 		description = "Daily challenges completed.",
 	},
-	shieldWallBounces = {
+	ShieldWallBounces = {
 		type = "number",
 		default = 0,
 		description = "Shield wall ricochets accumulated.",
 	},
-	shieldRockBreaks = {
+	ShieldRockBreaks = {
 		type = "number",
 		default = 0,
 		description = "Shield-assisted rock breaks.",
 	},
-	shieldSawParries = {
+	ShieldSawParries = {
 		type = "number",
 		default = 0,
 		description = "Shield parries against saws and similar hazards.",
 	},
-	totalUpgradesPurchased = {
+	TotalUpgradesPurchased = {
 		type = "number",
 		default = 0,
 		description = "Lifetime upgrades bought from the shop.",
 	},
-	mostUpgradesInRun = {
+	MostUpgradesInRun = {
 		type = "number",
 		default = 0,
 		description = "Highest number of upgrades acquired in a single run.",
 	},
-	legendaryUpgradesPurchased = {
+	LegendaryUpgradesPurchased = {
 		type = "number",
 		default = 0,
 		description = "Legendary upgrades purchased across all runs.",
 	},
-	dailyChallengeStreak = {
+	DailyChallengeStreak = {
 		type = "number",
 		default = 0,
 		description = "Current daily challenge completion streak.",
 	},
-	dailyChallengeBestStreak = {
+	DailyChallengeBestStreak = {
 		type = "number",
 		default = 0,
 		description = "Best daily challenge streak achieved.",
 	},
-	dailyChallengeLastCompletionDay = {
+	DailyChallengeLastCompletionDay = {
 		type = "number",
 		description = "Calendar day value of the most recent daily completion.",
 	},
-	mostApplesInRun = {
+	MostApplesInRun = {
 		type = "number",
 		default = 0,
 		description = "Most apples collected in a single run.",
 	},
-	totalTimeAlive = {
+	TotalTimeAlive = {
 		type = "number",
 		default = 0,
 		description = "Total survival time across all runs (seconds).",
 	},
-	longestRunDuration = {
+	LongestRunDuration = {
 		type = "number",
 		default = 0,
 		description = "Longest run duration recorded (seconds).",
 	},
-	tilesTravelled = {
+	TilesTravelled = {
 		type = "number",
 		default = 0,
 		description = "Lifetime tiles travelled.",
 	},
-	mostTilesTravelledInRun = {
+	MostTilesTravelledInRun = {
 		type = "number",
 		default = 0,
 		description = "Most tiles travelled in a single run.",
 	},
-	totalCombosTriggered = {
+	TotalCombosTriggered = {
 		type = "number",
 		default = 0,
 		description = "Total combos triggered across all runs.",
 	},
-	mostCombosInRun = {
+	MostCombosInRun = {
 		type = "number",
 		default = 0,
 		description = "Most combos triggered in a single run.",
 	},
-	crashShieldsSaved = {
+	CrashShieldsSaved = {
 		type = "number",
 		default = 0,
 		description = "Crash shields spent to prevent hits.",
 	},
-	mostShieldsSavedInRun = {
+	MostShieldsSavedInRun = {
 		type = "number",
 		default = 0,
 		description = "Most crash shields saved in a single run.",
 	},
-	bestFloorClearTime = {
+	BestFloorClearTime = {
 		type = "number",
 		description = "Fastest floor clear time (seconds).",
 	},
-	longestFloorClearTime = {
+	LongestFloorClearTime = {
 		type = "number",
 		description = "Slowest floor clear time (seconds).",
 	},
 }
 
-DataSchemas.upgradeDefinition = {
+DataSchemas.UpgradeDefinition = {
 	id = {
 		type = "string",
 		required = true,
 		description = "Unique identifier for the upgrade.",
 	},
-	nameKey = {
+	NameKey = {
 		type = "string",
 		required = true,
 		description = "Localization key for upgrade name.",
 	},
-	descKey = {
+	DescKey = {
 		type = "string",
 		description = "Localization key for upgrade description.",
 	},

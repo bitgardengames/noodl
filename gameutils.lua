@@ -13,13 +13,13 @@ local ModuleUtil = require("moduleutil")
 
 local GameUtils = {}
 
-local function loadCoreSystems(sw, sh)
+local function LoadCoreSystems(sw, sh)
 	Snake:load(sw, sh)
-	Snake:resetModifiers()
+	Snake:ResetModifiers()
 	PauseMenu:load(sw, sh)
 end
 
-local GAMEPLAY_SYSTEMS = ModuleUtil.prepareSystems({
+local GAMEPLAY_SYSTEMS = ModuleUtil.PrepareSystems({
 	Movement,
 	Score,
 	FloatingText,
@@ -30,27 +30,27 @@ local GAMEPLAY_SYSTEMS = ModuleUtil.prepareSystems({
 	UI,
 })
 
-local function loadGameplaySystems(context)
-	ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "load", context)
+local function LoadGameplaySystems(context)
+	ModuleUtil.RunHook(GAMEPLAY_SYSTEMS, "load", context)
 end
 
-local function resetGameplaySystems()
-	ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "reset")
+local function ResetGameplaySystems()
+	ModuleUtil.RunHook(GAMEPLAY_SYSTEMS, "reset")
 end
 
-function GameUtils:prepareGame(sw, sh)
-	loadCoreSystems(sw, sh)
+function GameUtils:PrepareGame(sw, sh)
+	LoadCoreSystems(sw, sh)
 	local context = {
-		screenWidth = sw,
-		screenHeight = sh,
+		ScreenWidth = sw,
+		ScreenHeight = sh,
 	}
-	loadGameplaySystems(context)
-	resetGameplaySystems()
+	LoadGameplaySystems(context)
+	ResetGameplaySystems()
 
-	Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
+	Fruit:spawn(Snake:GetSegments(), Rocks, Snake:GetSafeZone(3))
 end
 
-function GameUtils:getGameplaySystems()
+function GameUtils:GetGameplaySystems()
 	return GAMEPLAY_SYSTEMS
 end
 

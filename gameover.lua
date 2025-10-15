@@ -10,15 +10,15 @@ local MetaProgression = require("metaprogression")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 
-local GameOver = { isVictory = false }
+local GameOver = { IsVictory = false }
 
 local unpack = unpack
 
 local ANALOG_DEADZONE = 0.35
 
-local function pickDeathMessage(cause)
-	local deathTable = Localization:getTable("gameover.deaths") or {}
-	local entries = deathTable[cause] or deathTable.unknown or {}
+local function PickDeathMessage(cause)
+	local DeathTable = Localization:GetTable("gameover.deaths") or {}
+	local entries = DeathTable[cause] or DeathTable.unknown or {}
 	if #entries == 0 then
 		return Localization:get("gameover.default_message")
 	end
@@ -26,37 +26,37 @@ local function pickDeathMessage(cause)
 	return entries[love.math.random(#entries)]
 end
 
-local fontTitle
-local fontScore
-local fontSmall
-local fontBadge
-local fontProgressTitle
-local fontProgressValue
-local fontProgressSmall
+local FontTitle
+local FontScore
+local FontSmall
+local FontBadge
+local FontProgressTitle
+local FontProgressValue
+local FontProgressSmall
 local stats = {}
-local buttonList = ButtonList.new()
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local ButtonList = ButtonList.new()
+local AnalogAxisDirections = { horizontal = nil, vertical = nil }
 
-local analogAxisActions = {
+local AnalogAxisActions = {
 	horizontal = {
 		negative = function()
-			buttonList:moveFocus(-1)
+			ButtonList:moveFocus(-1)
 		end,
 		positive = function()
-			buttonList:moveFocus(1)
+			ButtonList:moveFocus(1)
 		end,
 	},
 	vertical = {
 		negative = function()
-			buttonList:moveFocus(-1)
+			ButtonList:moveFocus(-1)
 		end,
 		positive = function()
-			buttonList:moveFocus(1)
+			ButtonList:moveFocus(1)
 		end,
 	},
 }
 
-local analogAxisMap = {
+local AnalogAxisMap = {
 	leftx = { slot = "horizontal" },
 	rightx = { slot = "horizontal" },
 	lefty = { slot = "vertical" },
@@ -65,12 +65,12 @@ local analogAxisMap = {
 	[2] = { slot = "vertical" },
 }
 
-local function resetAnalogAxis()
-	analogAxisDirections.horizontal = nil
-	analogAxisDirections.vertical = nil
+local function ResetAnalogAxis()
+	AnalogAxisDirections.horizontal = nil
+	AnalogAxisDirections.vertical = nil
 end
 
-local function getDayUnit(count)
+local function GetDayUnit(count)
 	if count == 1 then
 		return Localization:get("common.day_unit_singular")
 	end
@@ -78,8 +78,8 @@ local function getDayUnit(count)
 	return Localization:get("common.day_unit_plural")
 end
 
-local function handleAnalogAxis(axis, value)
-	local mapping = analogAxisMap[axis]
+local function HandleAnalogAxis(axis, value)
+	local mapping = AnalogAxisMap[axis]
 	if not mapping then
 		return
 	end
@@ -91,14 +91,14 @@ local function handleAnalogAxis(axis, value)
 		direction = "negative"
 	end
 
-	if analogAxisDirections[mapping.slot] == direction then
+	if AnalogAxisDirections[mapping.slot] == direction then
 		return
 	end
 
-	analogAxisDirections[mapping.slot] = direction
+	AnalogAxisDirections[mapping.slot] = direction
 
 	if direction then
-		local actions = analogAxisActions[mapping.slot]
+		local actions = AnalogAxisActions[mapping.slot]
 		local action = actions and actions[direction]
 		if action then
 			action()
@@ -106,54 +106,54 @@ local function handleAnalogAxis(axis, value)
 	end
 end
 -- Layout constants
-local function getButtonMetrics()
+local function GetButtonMetrics()
 	local spacing = UI.spacing or {}
 	return spacing.buttonWidth or 260, spacing.buttonHeight or 56, spacing.buttonSpacing or 24
 end
 
-local function getCelebrationEntryHeight()
+local function GetCelebrationEntryHeight()
 	return (UI.scaled and UI.scaled(64, 48)) or 64
 end
 
-local function getCelebrationEntrySpacing()
+local function GetCelebrationEntrySpacing()
 	local gap = (UI.scaled and UI.scaled(10, 6)) or 10
-	return getCelebrationEntryHeight() + gap
+	return GetCelebrationEntryHeight() + gap
 end
 
-local function getStatCardHeight()
+local function GetStatCardHeight()
 	return (UI.scaled and UI.scaled(96, 72)) or 96
 end
 
-local function getStatCardSpacing()
+local function GetStatCardSpacing()
 	return (UI.scaled and UI.scaled(18, 12)) or 18
 end
 
-local function getStatCardMinWidth()
+local function GetStatCardMinWidth()
 	return (UI.scaled and UI.scaled(160, 120)) or 160
 end
 
-local function getSectionPadding()
+local function GetSectionPadding()
 	return (UI.scaled and UI.scaled(20, 14)) or 20
 end
 
-local function getSectionSpacing()
+local function GetSectionSpacing()
 	return (UI.scaled and UI.scaled(22, 16)) or 22
 end
 
-local function getSectionInnerSpacing()
+local function GetSectionInnerSpacing()
 	return (UI.scaled and UI.scaled(12, 8)) or 12
 end
 
-local function getSectionSmallSpacing()
+local function GetSectionSmallSpacing()
 	return (UI.scaled and UI.scaled(8, 5)) or 8
 end
 
-local function getSectionHeaderSpacing()
+local function GetSectionHeaderSpacing()
 	return (UI.scaled and UI.scaled(18, 14)) or 18
 end
 
-local function measureXpPanelHeight(self, width, celebrationCount)
-	if not self or not self.progressionAnimation then
+local function MeasureXpPanelHeight(self, width, CelebrationCount)
+	if not self or not self.ProgressionAnimation then
 		return 0
 	end
 
@@ -162,83 +162,83 @@ local function measureXpPanelHeight(self, width, celebrationCount)
 		return 0
 	end
 
-	local titleHeight = fontProgressTitle and fontProgressTitle:getHeight() or 0
-	local levelHeight = fontProgressValue and fontProgressValue:getHeight() or 0
-	local smallHeight = fontProgressSmall and fontProgressSmall:getHeight() or 0
+	local TitleHeight = FontProgressTitle and FontProgressTitle:getHeight() or 0
+	local LevelHeight = FontProgressValue and FontProgressValue:getHeight() or 0
+	local SmallHeight = FontProgressSmall and FontProgressSmall:getHeight() or 0
 
 	local height = 18
-	height = height + titleHeight
-	height = height + 12 + levelHeight
-	height = height + 6 + smallHeight
+	height = height + TitleHeight
+	height = height + 12 + LevelHeight
+	height = height + 6 + SmallHeight
 	height = height + 18
 
-	local maxRadius = math.max(48, math.min(74, (width / 2) - 24))
-	local ringThickness = math.max(14, math.min(24, maxRadius * 0.42))
-	local ringRadius = math.max(32, maxRadius - ringThickness * 0.25)
-	local outerRadius = ringRadius + ringThickness * 0.45
+	local MaxRadius = math.max(48, math.min(74, (width / 2) - 24))
+	local RingThickness = math.max(14, math.min(24, MaxRadius * 0.42))
+	local RingRadius = math.max(32, MaxRadius - RingThickness * 0.25)
+	local OuterRadius = RingRadius + RingThickness * 0.45
 
-	height = height + ringRadius + outerRadius
+	height = height + RingRadius + OuterRadius
 	height = height + 18
 
 	local breakdown = (self.progression and self.progression.breakdown) or {}
-	local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
-	if bonusXP > 0 then
-		height = height + smallHeight + 6
+	local BonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
+	if BonusXP > 0 then
+		height = height + SmallHeight + 6
 	end
 
-	if self.dailyStreakMessage then
-		height = height + smallHeight + 6
+	if self.DailyStreakMessage then
+		height = height + SmallHeight + 6
 	end
 
-	height = height + smallHeight
+	height = height + SmallHeight
 	height = height + 4
-	height = height + smallHeight
+	height = height + SmallHeight
 	height = height + 16
 
-	local count = math.max(0, celebrationCount or 0)
+	local count = math.max(0, CelebrationCount or 0)
 	if count > 0 then
-		height = height + count * getCelebrationEntrySpacing()
+		height = height + count * GetCelebrationEntrySpacing()
 	end
 
 	return math.max(160, height)
 end
 
-local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
-local backgroundEffectCache = {}
-local backgroundEffect = nil
+local BACKGROUND_EFFECT_TYPE = "AfterglowPulse"
+local BackgroundEffectCache = {}
+local BackgroundEffect = nil
 
-local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+local function ConfigureBackgroundEffect()
+	local effect = Shaders.ensure(BackgroundEffectCache, BACKGROUND_EFFECT_TYPE)
 	if not effect then
-		backgroundEffect = nil
+		BackgroundEffect = nil
 		return
 	end
 
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	if GameOver.isVictory then
+	local DefaultBackdrop = select(1, Shaders.GetDefaultIntensities(effect))
+	if GameOver.IsVictory then
 		effect.backdropIntensity = 0.72
 	else
-		effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.62
+		effect.backdropIntensity = DefaultBackdrop or effect.backdropIntensity or 0.62
 	end
 
-	local accent = Theme.warningColor
-	local pulse = Theme.progressColor
+	local accent = Theme.WarningColor
+	local pulse = Theme.ProgressColor
 
-	if GameOver.isVictory then
-		accent = Theme.progressColor
-		pulse = Theme.accentTextColor or Theme.progressColor
+	if GameOver.IsVictory then
+		accent = Theme.ProgressColor
+		pulse = Theme.AccentTextColor or Theme.ProgressColor
 	end
 
 	Shaders.configure(effect, {
-		bgColor = Theme.bgColor,
-		accentColor = accent,
-		pulseColor = pulse,
+		BgColor = Theme.BgColor,
+		AccentColor = accent,
+		PulseColor = pulse,
 	})
 
-	backgroundEffect = effect
+	BackgroundEffect = effect
 end
 
-local function easeOutBack(t)
+local function EaseOutBack(t)
 	local c1 = 1.70158
 	local c3 = c1 + 1
 	local progress = t - 1
@@ -254,12 +254,12 @@ local function clamp(value, minimum, maximum)
 	return value
 end
 
-local function easeOutQuad(t)
+local function EaseOutQuad(t)
 	local inv = 1 - t
 	return 1 - inv * inv
 end
 
-local function copyColor(color)
+local function CopyColor(color)
 	if type(color) ~= "table" then
 		return { 1, 1, 1, 1 }
 	end
@@ -272,7 +272,7 @@ local function copyColor(color)
 	}
 end
 
-local function lightenColor(color, factor)
+local function LightenColor(color, factor)
 	factor = factor or 0.35
 	local r = color[1] or 1
 	local g = color[2] or 1
@@ -286,7 +286,7 @@ local function lightenColor(color, factor)
 	}
 end
 
-local function darkenColor(color, factor)
+local function DarkenColor(color, factor)
 	factor = factor or 0.35
 	local r = color[1] or 1
 	local g = color[2] or 1
@@ -300,7 +300,7 @@ local function darkenColor(color, factor)
 	}
 end
 
-local function withAlpha(color, alpha)
+local function WithAlpha(color, alpha)
 	local r = color[1] or 1
 	local g = color[2] or 1
 	local b = color[3] or 1
@@ -308,11 +308,11 @@ local function withAlpha(color, alpha)
 	return { r, g, b, a * alpha }
 end
 
-local function randomRange(minimum, maximum)
+local function RandomRange(minimum, maximum)
 	return minimum + (maximum - minimum) * love.math.random()
 end
 
-local function approachExp(current, target, dt, speed)
+local function ApproachExp(current, target, dt, speed)
 	if speed <= 0 then
 		return target
 	end
@@ -321,68 +321,68 @@ local function approachExp(current, target, dt, speed)
 	return current + (target - current) * factor
 end
 
-local function spawnFruitAnimation(anim)
+local function SpawnFruitAnimation(anim)
 	if not anim or not anim.barMetrics then
 		return false
 	end
 
 	local metrics = anim.barMetrics
-	local palette = anim.fruitPalette or { Theme.appleColor }
-	local color = copyColor(palette[love.math.random(#palette)] or Theme.appleColor)
+	local palette = anim.fruitPalette or { Theme.AppleColor }
+	local color = CopyColor(palette[love.math.random(#palette)] or Theme.AppleColor)
 
 	local fruit
 	if metrics.style == "radial" then
-		local centerX = metrics.centerX or 0
-		local centerY = metrics.centerY or 0
+		local CenterX = metrics.centerX or 0
+		local CenterY = metrics.centerY or 0
 		local radius = metrics.outerRadius or metrics.radius or 56
-		local launchOffsetX = randomRange(-radius * 0.6, radius * 0.6)
-		local launchLift = math.max(radius * 0.8, 54)
-		local launchX = centerX + launchOffsetX
-		local launchY = centerY - radius - launchLift
-		local controlX = (launchX + centerX) / 2 + randomRange(-radius * 0.25, radius * 0.25)
-		local controlY = math.min(launchY, centerY) - math.max(radius * 0.75, 48)
+		local LaunchOffsetX = RandomRange(-radius * 0.6, radius * 0.6)
+		local LaunchLift = math.max(radius * 0.8, 54)
+		local LaunchX = CenterX + LaunchOffsetX
+		local LaunchY = CenterY - radius - LaunchLift
+		local ControlX = (LaunchX + CenterX) / 2 + RandomRange(-radius * 0.25, radius * 0.25)
+		local ControlY = math.min(LaunchY, CenterY) - math.max(radius * 0.75, 48)
 
 		fruit = {
 			timer = 0,
-			duration = randomRange(0.55, 0.85),
-			startX = launchX,
-			startY = launchY,
-			controlX = controlX,
-			controlY = controlY,
-			endX = centerX,
-			endY = centerY,
-			scaleStart = randomRange(0.42, 0.52),
-			scalePeak = randomRange(0.68, 0.82),
-			scaleEnd = randomRange(0.50, 0.64),
-			wobbleSeed = love.math.random() * math.pi * 2,
-			wobbleSpeed = randomRange(4.5, 6.5),
+			duration = RandomRange(0.55, 0.85),
+			StartX = LaunchX,
+			StartY = LaunchY,
+			ControlX = ControlX,
+			ControlY = ControlY,
+			EndX = CenterX,
+			EndY = CenterY,
+			ScaleStart = RandomRange(0.42, 0.52),
+			ScalePeak = RandomRange(0.68, 0.82),
+			ScaleEnd = RandomRange(0.50, 0.64),
+			WobbleSeed = love.math.random() * math.pi * 2,
+			WobbleSpeed = RandomRange(4.5, 6.5),
 			color = color,
-			splashAngle = clamp(anim.visualPercent or 0, 0, 1),
+			SplashAngle = clamp(anim.visualPercent or 0, 0, 1),
 		}
 	else
-		local launchX = metrics.x + metrics.width * 0.5
-		local launchY = metrics.y - math.max(metrics.height * 2.2, 72)
+		local LaunchX = metrics.x + metrics.width * 0.5
+		local LaunchY = metrics.y - math.max(metrics.height * 2.2, 72)
 
-		local endX = metrics.x + metrics.width * 0.5
-		local endY = metrics.y + metrics.height * 0.5
-		local apexLift = math.max(metrics.height * 1.35, 64)
-		local controlX = (launchX + endX) / 2
-		local controlY = math.min(launchY, endY) - apexLift
+		local EndX = metrics.x + metrics.width * 0.5
+		local EndY = metrics.y + metrics.height * 0.5
+		local ApexLift = math.max(metrics.height * 1.35, 64)
+		local ControlX = (LaunchX + EndX) / 2
+		local ControlY = math.min(LaunchY, EndY) - ApexLift
 
 		fruit = {
 			timer = 0,
-			duration = randomRange(0.55, 0.85),
-			startX = launchX,
-			startY = launchY,
-			controlX = controlX,
-			controlY = controlY,
-			endX = endX,
-			endY = endY,
-			scaleStart = randomRange(0.42, 0.52),
-			scalePeak = randomRange(0.68, 0.82),
-			scaleEnd = randomRange(0.50, 0.64),
-			wobbleSeed = love.math.random() * math.pi * 2,
-			wobbleSpeed = randomRange(4.5, 6.5),
+			duration = RandomRange(0.55, 0.85),
+			StartX = LaunchX,
+			StartY = LaunchY,
+			ControlX = ControlX,
+			ControlY = ControlY,
+			EndX = EndX,
+			EndY = EndY,
+			ScaleStart = RandomRange(0.42, 0.52),
+			ScalePeak = RandomRange(0.68, 0.82),
+			ScaleEnd = RandomRange(0.50, 0.64),
+			WobbleSeed = love.math.random() * math.pi * 2,
+			WobbleSpeed = RandomRange(4.5, 6.5),
 			color = color,
 		}
 	end
@@ -394,7 +394,7 @@ local function spawnFruitAnimation(anim)
 	return true
 end
 
-local function updateFruitAnimations(anim, dt)
+local function UpdateFruitAnimations(anim, dt)
 	if not anim or (anim.fruitTotal or 0) <= 0 then
 		return
 	end
@@ -406,7 +406,7 @@ local function updateFruitAnimations(anim, dt)
 
 	if metrics then
 		while (anim.fruitRemaining or 0) > 0 and anim.fruitSpawnTimer >= interval do
-			if not spawnFruitAnimation(anim) then
+			if not SpawnFruitAnimation(anim) then
 				break
 			end
 			anim.fruitSpawnTimer = anim.fruitSpawnTimer - interval
@@ -433,12 +433,12 @@ local function updateFruitAnimations(anim, dt)
 					fruit.splashTimer = 0
 					fruit.splashDuration = fruit.splashDuration or 0.35
 
-					local xpPer = anim.fruitXpPer or 0
-					if xpPer > 0 then
+					local XpPer = anim.fruitXpPer or 0
+					if XpPer > 0 then
 						local pending = anim.pendingFruitXp or 0
 						local delivered = anim.fruitDelivered or 0
 						local remaining = math.max(0, (anim.fruitPoints or 0) - delivered - pending)
-						local grant = math.min(remaining, xpPer)
+						local grant = math.min(remaining, XpPer)
 						anim.pendingFruitXp = pending + grant
 					end
 
@@ -458,7 +458,7 @@ local function updateFruitAnimations(anim, dt)
 
 end
 
-local function drawFruitAnimations(anim)
+local function DrawFruitAnimations(anim)
 	local fruits = anim and anim.fruitAnimations
 	if not fruits or #fruits == 0 then
 		return
@@ -466,53 +466,53 @@ local function drawFruitAnimations(anim)
 
 	for _, fruit in ipairs(fruits) do
 		local progress = clamp(fruit.progress or 0, 0, 1)
-		local eased = easeOutQuad(progress)
+		local eased = EaseOutQuad(progress)
 		local inv = 1 - eased
-		local pathX = inv * inv * (fruit.startX or 0)
+		local PathX = inv * inv * (fruit.startX or 0)
 			+ 2 * inv * eased * (fruit.controlX or 0)
 			+ eased * eased * (fruit.endX or 0)
-		local pathY = inv * inv * (fruit.startY or 0)
+		local PathY = inv * inv * (fruit.startY or 0)
 			+ 2 * inv * eased * (fruit.controlY or 0)
 			+ eased * eased * (fruit.endY or 0)
 
 		local wobble = math.sin((fruit.wobbleSeed or 0) + (fruit.wobbleSpeed or 5.2) * eased)
-		local wobbleMul = 0.95 + wobble * 0.04
+		local WobbleMul = 0.95 + wobble * 0.04
 
-		local scaleStart = fruit.scaleStart or 0.5
-		local scalePeak = fruit.scalePeak or (scaleStart * 1.35)
-		local scaleEnd = fruit.scaleEnd or (scaleStart * 0.95)
+		local ScaleStart = fruit.scaleStart or 0.5
+		local ScalePeak = fruit.scalePeak or (ScaleStart * 1.35)
+		local ScaleEnd = fruit.scaleEnd or (ScaleStart * 0.95)
 		local scale
 		if progress < 0.5 then
 			local t = clamp(progress / 0.5, 0, 1)
-			scale = scaleStart + (scalePeak - scaleStart) * easeOutBack(t)
+			scale = ScaleStart + (ScalePeak - ScaleStart) * EaseOutBack(t)
 		else
 			local t = clamp((progress - 0.5) / 0.5, 0, 1)
-			scale = scalePeak + (scaleEnd - scalePeak) * easeOutQuad(t)
+			scale = ScalePeak + (ScaleEnd - ScalePeak) * EaseOutQuad(t)
 		end
 
-		local radius = 12 * scale * wobbleMul
-		local fadeMul = 1
+		local radius = 12 * scale * WobbleMul
+		local FadeMul = 1
 		if fruit.fade then
-			fadeMul = clamp(1 - fruit.fade / 0.35, 0, 1)
+			FadeMul = clamp(1 - fruit.fade / 0.35, 0, 1)
 		end
 
-		local color = fruit.color or Theme.appleColor
-		local highlight = lightenColor(color, 0.42)
+		local color = fruit.color or Theme.AppleColor
+		local highlight = LightenColor(color, 0.42)
 
-		local drawFruit = not fruit.landed or (fruit.splashTimer or 0) < 0.08
-		if drawFruit and fadeMul > 0 then
-			love.graphics.setColor(0, 0, 0, 0.25 * fadeMul)
-			love.graphics.ellipse("fill", pathX + 3, pathY + 3 + wobble * 3, radius * 1.05, radius * 0.9, 30)
+		local DrawFruit = not fruit.landed or (fruit.splashTimer or 0) < 0.08
+		if DrawFruit and FadeMul > 0 then
+			love.graphics.setColor(0, 0, 0, 0.25 * FadeMul)
+			love.graphics.ellipse("fill", PathX + 3, PathY + 3 + wobble * 3, radius * 1.05, radius * 0.9, 30)
 
-			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * fadeMul)
-			love.graphics.circle("fill", pathX, pathY + wobble * 2, radius, 30)
+			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * FadeMul)
+			love.graphics.circle("fill", PathX, PathY + wobble * 2, radius, 30)
 
-			love.graphics.setColor(0, 0, 0, 0.85 * fadeMul)
+			love.graphics.setColor(0, 0, 0, 0.85 * FadeMul)
 			love.graphics.setLineWidth(2)
-			love.graphics.circle("line", pathX, pathY + wobble * 2, radius, 30)
+			love.graphics.circle("line", PathX, PathY + wobble * 2, radius, 30)
 
-			love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.7) * fadeMul)
-			love.graphics.circle("fill", pathX - radius * 0.35, pathY + wobble * 2 - radius * 0.45, radius * 0.45, 24)
+			love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.7) * FadeMul)
+			love.graphics.circle("fill", PathX - radius * 0.35, PathY + wobble * 2 - radius * 0.45, radius * 0.45, 24)
 		end
 
 		love.graphics.setLineWidth(1)
@@ -522,297 +522,297 @@ local function drawFruitAnimations(anim)
 	love.graphics.setLineWidth(1)
 end
 
-local function drawBackground(sw, sh)
-	local baseColor = (UI.colors and UI.colors.background) or Theme.bgColor
-	love.graphics.setColor(baseColor)
+local function DrawBackground(sw, sh)
+	local BaseColor = (UI.colors and UI.colors.background) or Theme.BgColor
+	love.graphics.setColor(BaseColor)
 	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-	if not backgroundEffect then
-		configureBackgroundEffect()
+	if not BackgroundEffect then
+		ConfigureBackgroundEffect()
 	end
 
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
+	if BackgroundEffect then
+		local intensity = BackgroundEffect.backdropIntensity or select(1, Shaders.GetDefaultIntensities(BackgroundEffect))
+		Shaders.draw(BackgroundEffect, 0, 0, sw, sh, intensity)
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- All button definitions in one place
-local buttonDefs = {
-	{ id = "goPlay", textKey = "gameover.play_again", action = "game" },
-	{ id = "goMenu", textKey = "gameover.quit_to_menu", action = "menu" },
+local ButtonDefs = {
+	{ id = "GoPlay", TextKey = "gameover.play_again", action = "game" },
+	{ id = "GoMenu", TextKey = "gameover.quit_to_menu", action = "menu" },
 }
 
-local function calculateStatLayout(contentWidth, padding, count)
-	local totalCards = math.max(0, count or 0)
-	local availableWidth = math.max(0, contentWidth - padding * 2)
-	local maxColumns = math.min(totalCards, 3)
-	local columns = math.max(1, maxColumns)
-	local statCardSpacing = getStatCardSpacing()
-	local statCardMinWidth = getStatCardMinWidth()
-	local statCardHeight = getStatCardHeight()
+local function CalculateStatLayout(ContentWidth, padding, count)
+	local TotalCards = math.max(0, count or 0)
+	local AvailableWidth = math.max(0, ContentWidth - padding * 2)
+	local MaxColumns = math.min(TotalCards, 3)
+	local columns = math.max(1, MaxColumns)
+	local StatCardSpacing = GetStatCardSpacing()
+	local StatCardMinWidth = GetStatCardMinWidth()
+	local StatCardHeight = GetStatCardHeight()
 
-	if totalCards == 0 then
+	if TotalCards == 0 then
 		return {
 			columns = 0,
 			rows = 0,
-			cardWidth = 0,
+			CardWidth = 0,
 			height = 0,
-			spacing = statCardSpacing,
-			availableWidth = availableWidth,
+			spacing = StatCardSpacing,
+			AvailableWidth = AvailableWidth,
 		}
 	end
 
 	while columns > 1 do
-		local tentativeWidth = (availableWidth - statCardSpacing * (columns - 1)) / columns
-		if tentativeWidth >= statCardMinWidth then
+		local TentativeWidth = (AvailableWidth - StatCardSpacing * (columns - 1)) / columns
+		if TentativeWidth >= StatCardMinWidth then
 			break
 		end
 		columns = columns - 1
 	end
 
-	local cardWidth
+	local CardWidth
 	if columns <= 1 then
 		columns = 1
-		cardWidth = availableWidth
+		CardWidth = AvailableWidth
 	else
-		cardWidth = (availableWidth - statCardSpacing * (columns - 1)) / columns
+		CardWidth = (AvailableWidth - StatCardSpacing * (columns - 1)) / columns
 	end
 
-	cardWidth = math.max(0, cardWidth)
+	CardWidth = math.max(0, CardWidth)
 
-	local rows = math.ceil(totalCards / columns)
-	local height = rows * statCardHeight + math.max(0, rows - 1) * statCardSpacing
+	local rows = math.ceil(TotalCards / columns)
+	local height = rows * StatCardHeight + math.max(0, rows - 1) * StatCardSpacing
 
 	return {
 		columns = columns,
 		rows = rows,
-		cardWidth = cardWidth,
+		CardWidth = CardWidth,
 		height = height,
-		spacing = statCardSpacing,
-		availableWidth = availableWidth,
+		spacing = StatCardSpacing,
+		AvailableWidth = AvailableWidth,
 	}
 end
 
-local function calculateAchievementsLayout(achievements, panelWidth, sectionPadding, innerSpacing, smallSpacing)
+local function CalculateAchievementsLayout(achievements, PanelWidth, SectionPadding, InnerSpacing, SmallSpacing)
 	local list = achievements or {}
-	if not list or #list == 0 or (panelWidth or 0) <= 0 then
+	if not list or #list == 0 or (PanelWidth or 0) <= 0 then
 		return nil
 	end
 
-	local headerHeight = fontProgressSmall:getHeight()
-	local textWidth = math.max(0, panelWidth - sectionPadding * 2)
-	local totalHeight = headerHeight
+	local HeaderHeight = FontProgressSmall:getHeight()
+	local TextWidth = math.max(0, PanelWidth - SectionPadding * 2)
+	local TotalHeight = HeaderHeight
 	local entries = {}
 
 	for index, achievement in ipairs(list) do
-		totalHeight = totalHeight + innerSpacing
-		totalHeight = totalHeight + fontSmall:getHeight()
+		TotalHeight = TotalHeight + InnerSpacing
+		TotalHeight = TotalHeight + FontSmall:getHeight()
 
 		local description = achievement.description or ""
-		local descriptionLines = 0
+		local DescriptionLines = 0
 		if description ~= "" then
-			if textWidth > 0 then
-				local _, wrapped = fontProgressSmall:getWrap(description, textWidth)
+			if TextWidth > 0 then
+				local _, wrapped = FontProgressSmall:getWrap(description, TextWidth)
 				if wrapped and #wrapped > 0 then
-					descriptionLines = #wrapped
+					DescriptionLines = #wrapped
 				else
-					descriptionLines = 1
+					DescriptionLines = 1
 				end
 			else
-				descriptionLines = 1
+				DescriptionLines = 1
 			end
 		end
 
-		totalHeight = totalHeight + descriptionLines * fontProgressSmall:getHeight()
+		TotalHeight = TotalHeight + DescriptionLines * FontProgressSmall:getHeight()
 
 		entries[#entries + 1] = {
 			title = achievement.title or "",
 			description = description,
-			descriptionLines = descriptionLines,
+			DescriptionLines = DescriptionLines,
 		}
 
 		if index < #list then
-			totalHeight = totalHeight + smallSpacing
+			TotalHeight = TotalHeight + SmallSpacing
 		end
 	end
 
-	local panelHeight = sectionPadding * 2 + totalHeight
-	panelHeight = math.floor(panelHeight + 0.5)
+	local PanelHeight = SectionPadding * 2 + TotalHeight
+	PanelHeight = math.floor(PanelHeight + 0.5)
 
 	return {
 		entries = entries,
-		height = panelHeight,
-		headerHeight = headerHeight,
-		textWidth = textWidth,
+		height = PanelHeight,
+		HeaderHeight = HeaderHeight,
+		TextWidth = TextWidth,
 	}
 end
 
-local function defaultButtonLayout(sw, sh, defs, startY)
+local function DefaultButtonLayout(sw, sh, defs, StartY)
 	local list = {}
-	local buttonWidth, buttonHeight, buttonSpacing = getButtonMetrics()
-	local centerX = sw / 2 - buttonWidth / 2
+	local ButtonWidth, ButtonHeight, ButtonSpacing = GetButtonMetrics()
+	local CenterX = sw / 2 - ButtonWidth / 2
 
 	for i, def in ipairs(defs) do
-		local y = startY + (i - 1) * (buttonHeight + buttonSpacing)
+		local y = StartY + (i - 1) * (ButtonHeight + ButtonSpacing)
 		list[#list + 1] = {
 			id = def.id,
-			textKey = def.textKey,
+			TextKey = def.textKey,
 			text = def.text,
 			action = def.action,
-			x = centerX,
+			x = CenterX,
 			y = y,
-			w = buttonWidth,
-			h = buttonHeight,
+			w = ButtonWidth,
+			h = ButtonHeight,
 		}
 	end
 
 	return list
 end
 
-local function drawCenteredPanel(x, y, width, height, radius)
-	UI.drawPanel(x, y, width, height, {
+local function DrawCenteredPanel(x, y, width, height, radius)
+	UI.DrawPanel(x, y, width, height, {
 		radius = radius,
-		shadowOffset = UI.spacing.shadowOffset,
-		fill = Theme.panelColor,
-		borderColor = Theme.panelBorder,
-		borderWidth = 2,
+		ShadowOffset = UI.spacing.ShadowOffset,
+		fill = Theme.PanelColor,
+		BorderColor = Theme.PanelBorder,
+		BorderWidth = 2,
 	})
 end
 
-local function drawInsetPanel(x, y, width, height, options)
+local function DrawInsetPanel(x, y, width, height, options)
 	if width <= 0 or height <= 0 then
 		return
 	end
 
 	options = options or {}
 	local radius = options.radius or 16
-	local lightenFactor = options.lighten or 0.12
-	local baseAlpha = options.alpha or 0.88
-	local borderAlpha = options.borderAlpha or 0.65
-	local borderWidth = options.borderWidth or 1
+	local LightenFactor = options.lighten or 0.12
+	local BaseAlpha = options.alpha or 0.88
+	local BorderAlpha = options.borderAlpha or 0.65
+	local BorderWidth = options.borderWidth or 1
 
-	local baseColor = Theme.panelColor or { 0.18, 0.18, 0.22, 1 }
-	local fillColor = withAlpha(lightenColor(baseColor, lightenFactor), baseAlpha)
-	local borderColor = withAlpha(Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }, borderAlpha)
+	local BaseColor = Theme.PanelColor or { 0.18, 0.18, 0.22, 1 }
+	local FillColor = WithAlpha(LightenColor(BaseColor, LightenFactor), BaseAlpha)
+	local BorderColor = WithAlpha(Theme.PanelBorder or { 0.35, 0.3, 0.5, 1 }, BorderAlpha)
 
-	UI.drawPanel(x, y, width, height, {
+	UI.DrawPanel(x, y, width, height, {
 		radius = radius,
-		shadowOffset = 0,
-		fill = fillColor,
-		borderColor = borderColor,
-		borderWidth = borderWidth,
+		ShadowOffset = 0,
+		fill = FillColor,
+		BorderColor = BorderColor,
+		BorderWidth = BorderWidth,
 	})
 end
 
-local function handleButtonAction(_, action)
+local function HandleButtonAction(_, action)
 	return action
 end
 
-function GameOver:updateLayoutMetrics()
-	if not fontSmall or not fontScore then
+function GameOver:UpdateLayoutMetrics()
+	if not FontSmall or not FontScore then
 		return false
 	end
 
 	local sw = select(1, Screen:get())
 	local padding = 24
 	local margin = 24
-	local maxAllowed = math.max(40, sw - margin)
-	local safeMaxWidth = math.max(80, sw - margin * 2)
-	safeMaxWidth = math.min(safeMaxWidth, maxAllowed)
-	local preferredWidth = math.min(sw * 0.72, 640)
-	local minWidth = math.min(320, safeMaxWidth)
-	local contentWidth = math.max(minWidth, math.min(preferredWidth, safeMaxWidth))
-	local innerWidth = contentWidth - padding * 2
+	local MaxAllowed = math.max(40, sw - margin)
+	local SafeMaxWidth = math.max(80, sw - margin * 2)
+	SafeMaxWidth = math.min(SafeMaxWidth, MaxAllowed)
+	local PreferredWidth = math.min(sw * 0.72, 640)
+	local MinWidth = math.min(320, SafeMaxWidth)
+	local ContentWidth = math.max(MinWidth, math.min(PreferredWidth, SafeMaxWidth))
+	local InnerWidth = ContentWidth - padding * 2
 
-	local sectionPadding = getSectionPadding()
-	local sectionSpacing = getSectionSpacing()
-	local innerSpacing = getSectionInnerSpacing()
-	local smallSpacing = getSectionSmallSpacing()
-	local headerSpacing = getSectionHeaderSpacing()
+	local SectionPadding = GetSectionPadding()
+	local SectionSpacing = GetSectionSpacing()
+	local InnerSpacing = GetSectionInnerSpacing()
+	local SmallSpacing = GetSectionSmallSpacing()
+	local HeaderSpacing = GetSectionHeaderSpacing()
 
-	local wrapLimit = math.max(0, innerWidth - sectionPadding * 2)
+	local WrapLimit = math.max(0, InnerWidth - SectionPadding * 2)
 
-	local messageText = self.deathMessage or Localization:get("gameover.default_message")
-	local _, wrappedMessage = fontSmall:getWrap(messageText, wrapLimit)
-	local messageLines = math.max(1, #wrappedMessage)
-	local messageHeight = messageLines * fontSmall:getHeight()
-	local messagePanelHeight = math.floor(messageHeight + sectionPadding * 2 + 0.5)
+	local MessageText = self.DeathMessage or Localization:get("gameover.default_message")
+	local _, WrappedMessage = FontSmall:getWrap(MessageText, WrapLimit)
+	local MessageLines = math.max(1, #WrappedMessage)
+	local MessageHeight = MessageLines * FontSmall:getHeight()
+	local MessagePanelHeight = math.floor(MessageHeight + SectionPadding * 2 + 0.5)
 
-	local headerFont = UI.fonts.heading or fontSmall
-	local headerHeight = headerFont:getHeight()
+	local HeaderFont = UI.fonts.heading or FontSmall
+	local HeaderHeight = HeaderFont:getHeight()
 
-	local scoreHeaderHeight = fontProgressSmall:getHeight()
-	local scoreNumberHeight = fontScore:getHeight()
-	local badgeHeight = 0
-	if self.isNewHighScore then
-		badgeHeight = fontBadge:getHeight() + smallSpacing
+	local ScoreHeaderHeight = FontProgressSmall:getHeight()
+	local ScoreNumberHeight = FontScore:getHeight()
+	local BadgeHeight = 0
+	if self.IsNewHighScore then
+		BadgeHeight = FontBadge:getHeight() + SmallSpacing
 	end
-	local scorePanelHeight = sectionPadding * 2 + scoreHeaderHeight + innerSpacing + scoreNumberHeight + badgeHeight
-	scorePanelHeight = math.floor(scorePanelHeight + 0.5)
+	local ScorePanelHeight = SectionPadding * 2 + ScoreHeaderHeight + InnerSpacing + ScoreNumberHeight + BadgeHeight
+	ScorePanelHeight = math.floor(ScorePanelHeight + 0.5)
 
-	local statCards = 2
-	local achievementsList = self.achievementsEarned or {}
+	local StatCards = 2
+	local AchievementsList = self.AchievementsEarned or {}
 
-	local xpPanelHeight = 0
-	local xpLayout = nil
-	if self.progressionAnimation then
-		local availableWidth = math.max(0, innerWidth - sectionPadding * 2)
-		if availableWidth > 0 then
-			local preferredWidth = availableWidth * 0.85
-			local maxWidth = math.min(560, availableWidth)
-			local minWidth = math.min(availableWidth, math.max(320, innerWidth * 0.45))
-			local xpWidth = math.max(minWidth, math.min(maxWidth, preferredWidth))
-			xpWidth = math.floor(xpWidth + 0.5)
-			local offset = math.floor(math.max(0, (availableWidth - xpWidth) / 2) + 0.5)
+	local XpPanelHeight = 0
+	local XpLayout = nil
+	if self.ProgressionAnimation then
+		local AvailableWidth = math.max(0, InnerWidth - SectionPadding * 2)
+		if AvailableWidth > 0 then
+			local PreferredWidth = AvailableWidth * 0.85
+			local MaxWidth = math.min(560, AvailableWidth)
+			local MinWidth = math.min(AvailableWidth, math.max(320, InnerWidth * 0.45))
+			local XpWidth = math.max(MinWidth, math.min(MaxWidth, PreferredWidth))
+			XpWidth = math.floor(XpWidth + 0.5)
+			local offset = math.floor(math.max(0, (AvailableWidth - XpWidth) / 2) + 0.5)
 
-			local celebrations = (self.progressionAnimation.celebrations and #self.progressionAnimation.celebrations) or 0
-			local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
-			local targetHeight = measureXpPanelHeight(self, xpWidth, celebrations)
+			local celebrations = (self.ProgressionAnimation.celebrations and #self.ProgressionAnimation.celebrations) or 0
+			local BaseHeight = MeasureXpPanelHeight(self, XpWidth, 0)
+			local TargetHeight = MeasureXpPanelHeight(self, XpWidth, celebrations)
 
-			xpLayout = {
-				width = xpWidth,
+			XpLayout = {
+				width = XpWidth,
 				offset = offset,
 			}
 
-			self.baseXpSectionHeight = baseHeight
-			if not self.xpSectionHeight then
-				self.xpSectionHeight = baseHeight
+			self.BaseXpSectionHeight = BaseHeight
+			if not self.XpSectionHeight then
+				self.XpSectionHeight = BaseHeight
 			else
-				self.xpSectionHeight = math.max(self.xpSectionHeight, baseHeight)
+				self.XpSectionHeight = math.max(self.XpSectionHeight, BaseHeight)
 			end
 
-			local animatedHeight = self.xpSectionHeight or targetHeight
-			xpPanelHeight = math.floor(math.max(targetHeight, animatedHeight) + 0.5)
+			local AnimatedHeight = self.XpSectionHeight or TargetHeight
+			XpPanelHeight = math.floor(math.max(TargetHeight, AnimatedHeight) + 0.5)
 		end
 	end
 
-	local minColumnWidth = math.max(getStatCardMinWidth() + sectionPadding * 2, 260)
-	local columnSpacing = sectionSpacing
+	local MinColumnWidth = math.max(GetStatCardMinWidth() + SectionPadding * 2, 260)
+	local ColumnSpacing = SectionSpacing
 
-	local function buildLayout(columnCount)
-		columnCount = math.max(1, columnCount or 1)
+	local function BuildLayout(ColumnCount)
+		ColumnCount = math.max(1, ColumnCount or 1)
 
-		local availableWidth = math.max(0, innerWidth - sectionPadding * 2)
-		if availableWidth <= 0 then
+		local AvailableWidth = math.max(0, InnerWidth - SectionPadding * 2)
+		if AvailableWidth <= 0 then
 			return {
-				columnCount = 1,
-				columnWidth = 0,
+				ColumnCount = 1,
+				ColumnWidth = 0,
 				entries = {},
-				columnsHeight = 0,
-				sectionInfo = {},
+				ColumnsHeight = 0,
+				SectionInfo = {},
 			}
 		end
 
 		local width
-		if columnCount <= 1 then
-			columnCount = 1
-			width = availableWidth
+		if ColumnCount <= 1 then
+			ColumnCount = 1
+			width = AvailableWidth
 		else
-			width = (availableWidth - columnSpacing * (columnCount - 1)) / columnCount
-			if width < minColumnWidth then
+			width = (AvailableWidth - ColumnSpacing * (ColumnCount - 1)) / ColumnCount
+			if width < MinColumnWidth then
 				return nil
 			end
 		end
@@ -822,268 +822,268 @@ function GameOver:updateLayoutMetrics()
 		end
 
 		local sections = {}
-		local sectionInfo = {}
+		local SectionInfo = {}
 
-		if scorePanelHeight > 0 then
-			sections[#sections + 1] = { id = "score", height = scorePanelHeight }
-			sectionInfo.score = { height = scorePanelHeight }
+		if ScorePanelHeight > 0 then
+			sections[#sections + 1] = { id = "score", height = ScorePanelHeight }
+			SectionInfo.score = { height = ScorePanelHeight }
 		end
 
-		local statLayout = calculateStatLayout(width, sectionPadding, statCards)
-		local statHeight = sectionPadding * 2 + fontProgressSmall:getHeight()
-		if (statLayout.height or 0) > 0 then
-			statHeight = statHeight + innerSpacing + statLayout.height
+		local StatLayout = CalculateStatLayout(width, SectionPadding, StatCards)
+		local StatHeight = SectionPadding * 2 + FontProgressSmall:getHeight()
+		if (StatLayout.height or 0) > 0 then
+			StatHeight = StatHeight + InnerSpacing + StatLayout.height
 		end
-		statHeight = math.floor(statHeight + 0.5)
-		if statHeight > 0 then
-			sections[#sections + 1] = { id = "stats", height = statHeight, layoutData = statLayout }
-			sectionInfo.stats = { height = statHeight, layout = statLayout }
+		StatHeight = math.floor(StatHeight + 0.5)
+		if StatHeight > 0 then
+			sections[#sections + 1] = { id = "stats", height = StatHeight, LayoutData = StatLayout }
+			SectionInfo.stats = { height = StatHeight, layout = StatLayout }
 		end
 
-		local achievementsLayout = calculateAchievementsLayout(achievementsList, width, sectionPadding, innerSpacing, smallSpacing)
-		if achievementsLayout and achievementsLayout.height > 0 then
+		local AchievementsLayout = CalculateAchievementsLayout(AchievementsList, width, SectionPadding, InnerSpacing, SmallSpacing)
+		if AchievementsLayout and AchievementsLayout.height > 0 then
 			sections[#sections + 1] = {
 				id = "achievements",
-				height = achievementsLayout.height,
-				layoutData = achievementsLayout,
+				height = AchievementsLayout.height,
+				LayoutData = AchievementsLayout,
 			}
-			sectionInfo.achievements = { height = achievementsLayout.height, layout = achievementsLayout }
+			SectionInfo.achievements = { height = AchievementsLayout.height, layout = AchievementsLayout }
 		end
 
 		if #sections == 0 then
 			return {
-				columnCount = columnCount,
-				columnWidth = width,
+				ColumnCount = ColumnCount,
+				ColumnWidth = width,
 				entries = {},
-				columnsHeight = 0,
-				sectionInfo = sectionInfo,
+				ColumnsHeight = 0,
+				SectionInfo = SectionInfo,
 			}
 		end
 
-		local columnHeights = {}
-		for i = 1, columnCount do
-			columnHeights[i] = 0
+		local ColumnHeights = {}
+		for i = 1, ColumnCount do
+			ColumnHeights[i] = 0
 		end
 
 		local entries = {}
 		for _, section in ipairs(sections) do
-			local targetColumn = 1
-			for i = 2, columnCount do
-				if columnHeights[i] < columnHeights[targetColumn] - 0.01 then
-					targetColumn = i
+			local TargetColumn = 1
+			for i = 2, ColumnCount do
+				if ColumnHeights[i] < ColumnHeights[TargetColumn] - 0.01 then
+					TargetColumn = i
 				end
 			end
 
-			local offsetY = columnHeights[targetColumn]
+			local OffsetY = ColumnHeights[TargetColumn]
 			entries[#entries + 1] = {
 				id = section.id,
-				column = targetColumn,
-				x = (targetColumn - 1) * (width + (columnCount > 1 and columnSpacing or 0)),
-				y = offsetY,
+				column = TargetColumn,
+				x = (TargetColumn - 1) * (width + (ColumnCount > 1 and ColumnSpacing or 0)),
+				y = OffsetY,
 				width = width,
 				height = section.height,
-				layoutData = section.layoutData,
+				LayoutData = section.layoutData,
 			}
 
-			columnHeights[targetColumn] = columnHeights[targetColumn] + section.height + sectionSpacing
+			ColumnHeights[TargetColumn] = ColumnHeights[TargetColumn] + section.height + SectionSpacing
 		end
 
-		local maxColumnHeight = 0
-		for i = 1, columnCount do
-			local h = columnHeights[i]
+		local MaxColumnHeight = 0
+		for i = 1, ColumnCount do
+			local h = ColumnHeights[i]
 			if h > 0 then
-				h = h - sectionSpacing
+				h = h - SectionSpacing
 			end
-			if h > maxColumnHeight then
-				maxColumnHeight = h
+			if h > MaxColumnHeight then
+				MaxColumnHeight = h
 			end
 		end
 
 		return {
-			columnCount = columnCount,
-			columnWidth = width,
+			ColumnCount = ColumnCount,
+			ColumnWidth = width,
 			entries = entries,
-			columnsHeight = maxColumnHeight,
-			sectionInfo = sectionInfo,
+			ColumnsHeight = MaxColumnHeight,
+			SectionInfo = SectionInfo,
 		}
 	end
 
-	local layoutOptions = { buildLayout(2), buildLayout(1) }
-	local bestLayout = nil
-	local baseHeight = padding * 2 + headerHeight + headerSpacing + messagePanelHeight
-	local hasXpSection = xpPanelHeight > 0
+	local LayoutOptions = { BuildLayout(2), BuildLayout(1) }
+	local BestLayout = nil
+	local BaseHeight = padding * 2 + HeaderHeight + HeaderSpacing + MessagePanelHeight
+	local HasXpSection = XpPanelHeight > 0
 
-	for _, option in ipairs(layoutOptions) do
+	for _, option in ipairs(LayoutOptions) do
 		if option then
-			local entryCount = #(option.entries or {})
-			local totalHeight = baseHeight
-			if hasXpSection then
-				totalHeight = totalHeight + sectionSpacing + xpPanelHeight
+			local EntryCount = #(option.entries or {})
+			local TotalHeight = BaseHeight
+			if HasXpSection then
+				TotalHeight = TotalHeight + SectionSpacing + XpPanelHeight
 			end
-			if entryCount > 0 then
-				totalHeight = totalHeight + sectionSpacing
+			if EntryCount > 0 then
+				TotalHeight = TotalHeight + SectionSpacing
 				if (option.columnsHeight or 0) > 0 then
-					totalHeight = totalHeight + option.columnsHeight
+					TotalHeight = TotalHeight + option.columnsHeight
 				end
 			end
-			option.totalHeight = totalHeight
-			if not bestLayout or totalHeight < (bestLayout.totalHeight or math.huge) then
-				bestLayout = option
+			option.totalHeight = TotalHeight
+			if not BestLayout or TotalHeight < (BestLayout.totalHeight or math.huge) then
+				BestLayout = option
 			end
 		end
 	end
 
-	if not bestLayout then
-		bestLayout = {
-			columnCount = 1,
-			columnWidth = innerWidth - sectionPadding * 2,
+	if not BestLayout then
+		BestLayout = {
+			ColumnCount = 1,
+			ColumnWidth = InnerWidth - SectionPadding * 2,
 			entries = {},
-			columnsHeight = 0,
-			sectionInfo = {},
-			totalHeight = hasXpSection and (baseHeight + sectionSpacing + xpPanelHeight) or baseHeight,
+			ColumnsHeight = 0,
+			SectionInfo = {},
+			TotalHeight = HasXpSection and (BaseHeight + SectionSpacing + XpPanelHeight) or BaseHeight,
 		}
 	end
 
-	local summaryPanelHeight = math.floor((bestLayout.totalHeight or baseHeight) + 0.5)
-	contentWidth = math.floor(contentWidth + 0.5)
-	wrapLimit = math.floor(wrapLimit + 0.5)
+	local SummaryPanelHeight = math.floor((BestLayout.totalHeight or BaseHeight) + 0.5)
+	ContentWidth = math.floor(ContentWidth + 0.5)
+	WrapLimit = math.floor(WrapLimit + 0.5)
 
-	local layoutChanged = false
-	if not self.summaryPanelHeight or math.abs(self.summaryPanelHeight - summaryPanelHeight) >= 1 then
-		layoutChanged = true
+	local LayoutChanged = false
+	if not self.SummaryPanelHeight or math.abs(self.SummaryPanelHeight - SummaryPanelHeight) >= 1 then
+		LayoutChanged = true
 	end
-	if not self.contentWidth or math.abs(self.contentWidth - contentWidth) >= 1 then
-		layoutChanged = true
+	if not self.ContentWidth or math.abs(self.ContentWidth - ContentWidth) >= 1 then
+		LayoutChanged = true
 	end
-	if not self.wrapLimit or math.abs(self.wrapLimit - wrapLimit) >= 1 then
-		layoutChanged = true
+	if not self.WrapLimit or math.abs(self.WrapLimit - WrapLimit) >= 1 then
+		LayoutChanged = true
 	end
 
-	local previousLayout = self.summarySectionLayout or {}
-	local previousEntries = previousLayout.entries or {}
-	local newEntries = bestLayout.entries or {}
-	if (previousLayout.columnCount or 0) ~= (bestLayout.columnCount or 0)
-		or #previousEntries ~= #newEntries
-		or math.abs((previousLayout.columnsHeight or 0) - (bestLayout.columnsHeight or 0)) >= 1 then
-		layoutChanged = true
+	local PreviousLayout = self.SummarySectionLayout or {}
+	local PreviousEntries = PreviousLayout.entries or {}
+	local NewEntries = BestLayout.entries or {}
+	if (PreviousLayout.columnCount or 0) ~= (BestLayout.columnCount or 0)
+		or #PreviousEntries ~= #NewEntries
+		or math.abs((PreviousLayout.columnsHeight or 0) - (BestLayout.columnsHeight or 0)) >= 1 then
+		LayoutChanged = true
 	else
-		for index, entry in ipairs(newEntries) do
-			local prev = previousEntries[index]
+		for index, entry in ipairs(NewEntries) do
+			local prev = PreviousEntries[index]
 			if not prev
 				or prev.id ~= entry.id
 				or prev.column ~= entry.column
 				or math.abs((prev.x or 0) - (entry.x or 0)) >= 1
 				or math.abs((prev.y or 0) - (entry.y or 0)) >= 1
 				or math.abs((prev.width or 0) - (entry.width or 0)) >= 1 then
-				layoutChanged = true
+				LayoutChanged = true
 				break
 			end
 		end
 	end
 
-	local statsInfo = bestLayout.sectionInfo.stats or {}
-	local achievementsInfo = bestLayout.sectionInfo.achievements or {}
+	local StatsInfo = BestLayout.sectionInfo.stats or {}
+	local AchievementsInfo = BestLayout.sectionInfo.achievements or {}
 
-	if not self.messagePanelHeight or math.abs(self.messagePanelHeight - messagePanelHeight) >= 1 then
-		layoutChanged = true
+	if not self.MessagePanelHeight or math.abs(self.MessagePanelHeight - MessagePanelHeight) >= 1 then
+		LayoutChanged = true
 	end
-	if not self.scorePanelHeight or math.abs(self.scorePanelHeight - scorePanelHeight) >= 1 then
-		layoutChanged = true
+	if not self.ScorePanelHeight or math.abs(self.ScorePanelHeight - ScorePanelHeight) >= 1 then
+		LayoutChanged = true
 	end
-	if not self.statPanelHeight or math.abs(self.statPanelHeight - (statsInfo.height or 0)) >= 1 then
-		layoutChanged = true
+	if not self.StatPanelHeight or math.abs(self.StatPanelHeight - (StatsInfo.height or 0)) >= 1 then
+		LayoutChanged = true
 	end
-	if not self.achievementsPanelHeight or math.abs(self.achievementsPanelHeight - (achievementsInfo.height or 0)) >= 1 then
-		layoutChanged = true
+	if not self.AchievementsPanelHeight or math.abs(self.AchievementsPanelHeight - (AchievementsInfo.height or 0)) >= 1 then
+		LayoutChanged = true
 	end
-	if not self.xpPanelHeight or math.abs(self.xpPanelHeight - xpPanelHeight) >= 1 then
-		layoutChanged = true
-	end
-
-	local previousXpLayout = self.xpLayout or {}
-	local newXpLayout = xpLayout or {}
-	if math.abs((previousXpLayout.width or 0) - (newXpLayout.width or 0)) >= 1
-		or math.abs((previousXpLayout.offset or 0) - (newXpLayout.offset or 0)) >= 1 then
-		layoutChanged = true
+	if not self.XpPanelHeight or math.abs(self.XpPanelHeight - XpPanelHeight) >= 1 then
+		LayoutChanged = true
 	end
 
-	self.summaryPanelHeight = summaryPanelHeight
-	self.contentWidth = contentWidth
-	self.contentPadding = padding
-	self.wrapLimit = wrapLimit
-	self.messageLines = messageLines
-	self.messagePanelHeight = messagePanelHeight
-	self.scorePanelHeight = scorePanelHeight
-	self.statPanelHeight = statsInfo.height or 0
-	self.sectionPaddingValue = sectionPadding
-	self.sectionSpacingValue = sectionSpacing
-	self.sectionInnerSpacingValue = innerSpacing
-	self.sectionSmallSpacingValue = smallSpacing
-	self.sectionHeaderSpacingValue = headerSpacing
-	self.innerContentWidth = innerWidth
-	self.statLayout = statsInfo.layout
-	self.achievementsPanelHeight = achievementsInfo.height or 0
-	self.achievementsLayout = achievementsInfo.layout
-	self.summarySectionLayout = bestLayout
-	self.xpPanelHeight = xpPanelHeight
-	self.xpLayout = xpLayout
+	local PreviousXpLayout = self.XpLayout or {}
+	local NewXpLayout = XpLayout or {}
+	if math.abs((PreviousXpLayout.width or 0) - (NewXpLayout.width or 0)) >= 1
+		or math.abs((PreviousXpLayout.offset or 0) - (NewXpLayout.offset or 0)) >= 1 then
+		LayoutChanged = true
+	end
 
-	return layoutChanged
+	self.SummaryPanelHeight = SummaryPanelHeight
+	self.ContentWidth = ContentWidth
+	self.ContentPadding = padding
+	self.WrapLimit = WrapLimit
+	self.MessageLines = MessageLines
+	self.MessagePanelHeight = MessagePanelHeight
+	self.ScorePanelHeight = ScorePanelHeight
+	self.StatPanelHeight = StatsInfo.height or 0
+	self.SectionPaddingValue = SectionPadding
+	self.SectionSpacingValue = SectionSpacing
+	self.SectionInnerSpacingValue = InnerSpacing
+	self.SectionSmallSpacingValue = SmallSpacing
+	self.SectionHeaderSpacingValue = HeaderSpacing
+	self.InnerContentWidth = InnerWidth
+	self.StatLayout = StatsInfo.layout
+	self.AchievementsPanelHeight = AchievementsInfo.height or 0
+	self.AchievementsLayout = AchievementsInfo.layout
+	self.SummarySectionLayout = BestLayout
+	self.XpPanelHeight = XpPanelHeight
+	self.XpLayout = XpLayout
+
+	return LayoutChanged
 end
 
-function GameOver:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
-	totalButtonHeight = math.max(0, totalButtonHeight or 0)
-	buttonSpacing = math.max(0, buttonSpacing or 0)
+function GameOver:ComputeAnchors(sw, sh, TotalButtonHeight, ButtonSpacing)
+	TotalButtonHeight = math.max(0, TotalButtonHeight or 0)
+	ButtonSpacing = math.max(0, ButtonSpacing or 0)
 
-	local panelHeight = math.max(0, self.summaryPanelHeight or 0)
-	local titleTop = 48
-	local titleHeight = fontTitle and fontTitle:getHeight() or 0
-	local panelTopMin = titleTop + titleHeight + 24
-	local bottomMargin = 40
-	local buttonAreaTop = sh - bottomMargin - totalButtonHeight
-	local spacingBetween = math.max(48, buttonSpacing)
-	local panelBottomMax = buttonAreaTop - spacingBetween
+	local PanelHeight = math.max(0, self.SummaryPanelHeight or 0)
+	local TitleTop = 48
+	local TitleHeight = FontTitle and FontTitle:getHeight() or 0
+	local PanelTopMin = TitleTop + TitleHeight + 24
+	local BottomMargin = 40
+	local ButtonAreaTop = sh - BottomMargin - TotalButtonHeight
+	local SpacingBetween = math.max(48, ButtonSpacing)
+	local PanelBottomMax = ButtonAreaTop - SpacingBetween
 
-	if panelBottomMax < panelTopMin then
-		panelBottomMax = panelTopMin
+	if PanelBottomMax < PanelTopMin then
+		PanelBottomMax = PanelTopMin
 	end
 
-	local availableSpace = math.max(0, panelBottomMax - panelTopMin)
-	local panelY = panelTopMin
+	local AvailableSpace = math.max(0, PanelBottomMax - PanelTopMin)
+	local PanelY = PanelTopMin
 
-	if availableSpace > panelHeight then
-		panelY = panelTopMin + (availableSpace - panelHeight) / 2
-	elseif panelHeight > availableSpace then
-		panelY = math.max(panelTopMin, panelBottomMax - panelHeight)
+	if AvailableSpace > PanelHeight then
+		PanelY = PanelTopMin + (AvailableSpace - PanelHeight) / 2
+	elseif PanelHeight > AvailableSpace then
+		PanelY = math.max(PanelTopMin, PanelBottomMax - PanelHeight)
 	end
 
-	panelY = math.floor(panelY + 0.5)
+	PanelY = math.floor(PanelY + 0.5)
 
-	local buttonStartY = math.max(buttonAreaTop, panelY + panelHeight + spacingBetween)
-	buttonStartY = math.min(buttonStartY, sh - bottomMargin - totalButtonHeight)
-	buttonStartY = math.floor(buttonStartY + 0.5)
+	local ButtonStartY = math.max(ButtonAreaTop, PanelY + PanelHeight + SpacingBetween)
+	ButtonStartY = math.min(ButtonStartY, sh - BottomMargin - TotalButtonHeight)
+	ButtonStartY = math.floor(ButtonStartY + 0.5)
 
-	self.summaryPanelY = panelY
-	self.buttonStartY = buttonStartY
+	self.SummaryPanelY = PanelY
+	self.ButtonStartY = ButtonStartY
 
-	return panelY, buttonStartY
+	return PanelY, ButtonStartY
 end
 
-function GameOver:updateButtonLayout()
+function GameOver:UpdateButtonLayout()
 	local sw, sh = Screen:get()
-	local _, buttonHeight, buttonSpacing = getButtonMetrics()
-	local totalButtonHeight = 0
-	if #buttonDefs > 0 then
-		totalButtonHeight = #buttonDefs * buttonHeight + math.max(0, (#buttonDefs - 1) * buttonSpacing)
+	local _, ButtonHeight, ButtonSpacing = GetButtonMetrics()
+	local TotalButtonHeight = 0
+	if #ButtonDefs > 0 then
+		TotalButtonHeight = #ButtonDefs * ButtonHeight + math.max(0, (#ButtonDefs - 1) * ButtonSpacing)
 	end
 
-	local _, startY = self:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
-	local defs = defaultButtonLayout(sw, sh, buttonDefs, startY)
+	local _, StartY = self:ComputeAnchors(sw, sh, TotalButtonHeight, ButtonSpacing)
+	local defs = DefaultButtonLayout(sw, sh, ButtonDefs, StartY)
 
-	buttonList:reset(defs)
+	ButtonList:reset(defs)
 end
 
-local function addCelebration(anim, entry)
+local function AddCelebration(anim, entry)
 	if not anim or not entry then
 		return
 	end
@@ -1093,53 +1093,53 @@ local function addCelebration(anim, entry)
 	entry.duration = entry.duration or 4.5
 	table.insert(anim.celebrations, entry)
 
-	local maxVisible = 3
-	while #anim.celebrations > maxVisible do
+	local MaxVisible = 3
+	while #anim.celebrations > MaxVisible do
 		table.remove(anim.celebrations, 1)
 	end
 end
 
 function GameOver:enter(data)
-	UI.clearButtons()
-	resetAnalogAxis()
+	UI.ClearButtons()
+	ResetAnalogAxis()
 
 	data = data or {cause = "unknown"}
 
-	self.isVictory = data.won == true
-	self.customTitle = type(data.storyTitle) == "string" and data.storyTitle or nil
-	GameOver.isVictory = self.isVictory
+	self.IsVictory = data.won == true
+	self.CustomTitle = type(data.storyTitle) == "string" and data.storyTitle or nil
+	GameOver.IsVictory = self.IsVictory
 
-	Audio:playMusic("scorescreen")
+	Audio:PlayMusic("scorescreen")
 	Screen:update()
 
 	local cause = data.cause or "unknown"
-	if self.isVictory then
-		local defaultVictory = Localization:get("gameover.victory_message")
-		if defaultVictory == "gameover.victory_message" then
-			defaultVictory = "Noodl wriggles home with a belly full of snacks."
+	if self.IsVictory then
+		local DefaultVictory = Localization:get("gameover.victory_message")
+		if DefaultVictory == "gameover.victory_message" then
+			DefaultVictory = "Noodl wriggles home with a belly full of snacks."
 		end
-		self.deathMessage = data.endingMessage or defaultVictory
+		self.DeathMessage = data.endingMessage or DefaultVictory
 	else
-		self.deathMessage = pickDeathMessage(cause)
+		self.DeathMessage = PickDeathMessage(cause)
 	end
-	self.summaryMessage = self.deathMessage
+	self.SummaryMessage = self.DeathMessage
 
-	configureBackgroundEffect()
+	ConfigureBackgroundEffect()
 
-	fontTitle = UI.fonts.display or UI.fonts.title
-	fontScore = UI.fonts.title or UI.fonts.display
-	fontSmall = UI.fonts.caption or UI.fonts.body
-	fontBadge = UI.fonts.badge or UI.fonts.button
-	fontProgressTitle = UI.fonts.heading or UI.fonts.subtitle
-	fontProgressValue = UI.fonts.display or UI.fonts.title
-	fontProgressSmall = UI.fonts.caption or UI.fonts.body
+	FontTitle = UI.fonts.display or UI.fonts.title
+	FontScore = UI.fonts.title or UI.fonts.display
+	FontSmall = UI.fonts.caption or UI.fonts.body
+	FontBadge = UI.fonts.badge or UI.fonts.button
+	FontProgressTitle = UI.fonts.heading or UI.fonts.subtitle
+	FontProgressValue = UI.fonts.display or UI.fonts.title
+	FontProgressSmall = UI.fonts.caption or UI.fonts.body
 
 	-- Merge default stats with provided stats
 	stats = {
 		score       = 0,
-		highScore   = 0,
-		apples      = SessionStats:get("applesEaten"),
-		totalApples = "?",
+		HighScore   = 0,
+		apples      = SessionStats:get("ApplesEaten"),
+		TotalApples = "?",
 	}
 	for k, v in pairs(data.stats or {}) do
 		stats[k] = v
@@ -1151,16 +1151,16 @@ function GameOver:enter(data)
 
 	stats.highScore = stats.highScore or 0
 	stats.totalApples = stats.totalApples or stats.apples or 0
-	self.isNewHighScore = (stats.score or 0) > 0 and (stats.score or 0) >= (stats.highScore or 0)
+	self.IsNewHighScore = (stats.score or 0) > 0 and (stats.score or 0) >= (stats.highScore or 0)
 
-	self.achievementsEarned = {}
-	local runAchievements = SessionStats:get("runAchievements")
-	if type(runAchievements) == "table" then
-		for _, achievementId in ipairs(runAchievements) do
-			local def = Achievements:getDefinition(achievementId)
+	self.AchievementsEarned = {}
+	local RunAchievements = SessionStats:get("RunAchievements")
+	if type(RunAchievements) == "table" then
+		for _, AchievementId in ipairs(RunAchievements) do
+			local def = Achievements:GetDefinition(AchievementId)
 			if def then
-				self.achievementsEarned[#self.achievementsEarned + 1] = {
-					id = achievementId,
+				self.AchievementsEarned[#self.AchievementsEarned + 1] = {
+					id = AchievementId,
 					title = Localization:get(def.titleKey),
 					description = Localization:get(def.descriptionKey),
 				}
@@ -1168,136 +1168,136 @@ function GameOver:enter(data)
 		end
 	end
 
-	self.dailyChallengeResult = DailyChallenges:applyRunResults(SessionStats)
-	local challengeBonusXP = 0
-	if self.dailyChallengeResult then
-		challengeBonusXP = math.max(0, self.dailyChallengeResult.xpAwarded or 0)
+	self.DailyChallengeResult = DailyChallenges:ApplyRunResults(SessionStats)
+	local ChallengeBonusXP = 0
+	if self.DailyChallengeResult then
+		ChallengeBonusXP = math.max(0, self.DailyChallengeResult.XpAwarded or 0)
 	end
 
-	self.dailyStreakMessage = nil
-	self.dailyStreakColor = nil
-	if self.dailyChallengeResult and self.dailyChallengeResult.streakInfo then
-		local info = self.dailyChallengeResult.streakInfo
+	self.DailyStreakMessage = nil
+	self.DailyStreakColor = nil
+	if self.DailyChallengeResult and self.DailyChallengeResult.StreakInfo then
+		local info = self.DailyChallengeResult.StreakInfo
 		local streak = math.max(0, info.current or 0)
 		local best = math.max(streak, info.best or 0)
 
 		if streak > 0 then
 			local replacements = {
 				streak = streak,
-				unit = getDayUnit(streak),
+				unit = GetDayUnit(streak),
 				best = best,
-				bestUnit = getDayUnit(best),
+				BestUnit = GetDayUnit(best),
 			}
 
-			local messageKey
-			if self.dailyChallengeResult.completedNow then
+			local MessageKey
+			if self.DailyChallengeResult.CompletedNow then
 				if info.wasNewBest then
-					messageKey = "gameover.daily_streak_new_best"
+					MessageKey = "gameover.daily_streak_new_best"
 				else
-					messageKey = "gameover.daily_streak_extended"
+					MessageKey = "gameover.daily_streak_extended"
 				end
 			elseif info.alreadyCompleted then
-				messageKey = "gameover.daily_streak_already_complete"
+				MessageKey = "gameover.daily_streak_already_complete"
 			elseif info.needsCompletion then
-				messageKey = "gameover.daily_streak_needs_completion"
+				MessageKey = "gameover.daily_streak_needs_completion"
 			else
-				messageKey = "gameover.daily_streak_status"
+				MessageKey = "gameover.daily_streak_status"
 			end
 
-			self.dailyStreakMessage = Localization:get(messageKey, replacements)
+			self.DailyStreakMessage = Localization:get(MessageKey, replacements)
 
-			if self.dailyChallengeResult.completedNow then
+			if self.DailyChallengeResult.CompletedNow then
 				if info.wasNewBest then
-					self.dailyStreakColor = Theme.accentTextColor or UI.colors.accentText or UI.colors.highlight
+					self.DailyStreakColor = Theme.AccentTextColor or UI.colors.AccentText or UI.colors.highlight
 				else
-					self.dailyStreakColor = Theme.progressColor or UI.colors.progress or UI.colors.highlight
+					self.DailyStreakColor = Theme.ProgressColor or UI.colors.progress or UI.colors.highlight
 				end
 			elseif info.alreadyCompleted then
-				self.dailyStreakColor = UI.colors.mutedText or Theme.mutedTextColor or UI.colors.text
+				self.DailyStreakColor = UI.colors.MutedText or Theme.MutedTextColor or UI.colors.text
 			elseif info.needsCompletion then
-				self.dailyStreakColor = Theme.warningColor or UI.colors.warning or UI.colors.highlight
+				self.DailyStreakColor = Theme.WarningColor or UI.colors.warning or UI.colors.highlight
 			else
-				self.dailyStreakColor = UI.colors.highlight or UI.colors.text
+				self.DailyStreakColor = UI.colors.highlight or UI.colors.text
 			end
 		end
 	end
 
-	self.progression = MetaProgression:grantRunPoints({
+	self.progression = MetaProgression:GrantRunPoints({
 		apples = stats.apples or 0,
 		score = stats.score or 0,
-		bonusXP = challengeBonusXP,
+		BonusXP = ChallengeBonusXP,
 	})
 
-	self.xpSectionHeight = nil
-	self.baseXpSectionHeight = nil
-	self.progressionAnimation = nil
+	self.XpSectionHeight = nil
+	self.BaseXpSectionHeight = nil
+	self.ProgressionAnimation = nil
 
 	if self.progression then
-		local startSnapshot = self.progression.start or { total = 0, level = 1, xpIntoLevel = 0, xpForNext = MetaProgression:getXpForLevel(1) }
-		local resultSnapshot = self.progression.result or startSnapshot
+		local StartSnapshot = self.progression.start or { total = 0, level = 1, XpIntoLevel = 0, XpForNext = MetaProgression:GetXpForLevel(1) }
+		local ResultSnapshot = self.progression.result or StartSnapshot
 
-		local fillSpeed = math.max(60, (self.progression.gained or 0) / 1.2)
-		self.progressionAnimation = {
-			displayedTotal = startSnapshot.total or 0,
-			targetTotal = resultSnapshot.total or (startSnapshot.total or 0),
-			displayedLevel = startSnapshot.level or 1,
-			xpIntoLevel = startSnapshot.xpIntoLevel or 0,
-			xpForLevel = startSnapshot.xpForNext or MetaProgression:getXpForLevel(startSnapshot.level or 1),
-			displayedGained = 0,
-                        fillSpeed = fillSpeed,
-                        levelFlash = 0,
-                        levelPopDuration = 0.65,
-                        levelPopTimer = 0.65,
+		local FillSpeed = math.max(60, (self.progression.gained or 0) / 1.2)
+		self.ProgressionAnimation = {
+			DisplayedTotal = StartSnapshot.total or 0,
+			TargetTotal = ResultSnapshot.total or (StartSnapshot.total or 0),
+			DisplayedLevel = StartSnapshot.level or 1,
+			XpIntoLevel = StartSnapshot.xpIntoLevel or 0,
+			XpForLevel = StartSnapshot.xpForNext or MetaProgression:GetXpForLevel(StartSnapshot.level or 1),
+			DisplayedGained = 0,
+                        FillSpeed = FillSpeed,
+                        LevelFlash = 0,
+                        LevelPopDuration = 0.65,
+                        LevelPopTimer = 0.65,
                         celebrations = {},
-			pendingMilestones = {},
-			levelUnlocks = {},
-			bonusXP = challengeBonusXP,
-			barPulse = 0,
-			pendingFruitXp = 0,
-			fruitDelivered = 0,
-			fillEaseSpeed = clamp(fillSpeed / 12, 6, 16),
+			PendingMilestones = {},
+			LevelUnlocks = {},
+			BonusXP = ChallengeBonusXP,
+			BarPulse = 0,
+			PendingFruitXp = 0,
+			FruitDelivered = 0,
+			FillEaseSpeed = clamp(FillSpeed / 12, 6, 16),
 		}
 
-		local applesCollected = math.max(0, stats.apples or 0)
-		local fruitPoints = 0
+		local ApplesCollected = math.max(0, stats.apples or 0)
+		local FruitPoints = 0
 		if self.progression and self.progression.breakdown then
-			fruitPoints = math.max(0, self.progression.breakdown.fruitPoints or 0)
+			FruitPoints = math.max(0, self.progression.breakdown.FruitPoints or 0)
 		end
-		local xpPerFruit = 0
-		if applesCollected > 0 and fruitPoints > 0 then
-			xpPerFruit = fruitPoints / applesCollected
+		local XpPerFruit = 0
+		if ApplesCollected > 0 and FruitPoints > 0 then
+			XpPerFruit = FruitPoints / ApplesCollected
 		end
-		local spawnInterval = 0.08
-		if xpPerFruit > 0 and fillSpeed > 0 then
-			spawnInterval = clamp(xpPerFruit / fillSpeed, 0.03, 0.16)
+		local SpawnInterval = 0.08
+		if XpPerFruit > 0 and FillSpeed > 0 then
+			SpawnInterval = clamp(XpPerFruit / FillSpeed, 0.03, 0.16)
 		end
 
-		self.progressionAnimation.fruitTotal = applesCollected
-		self.progressionAnimation.fruitRemaining = applesCollected
-		self.progressionAnimation.fruitAnimations = {}
-		self.progressionAnimation.fruitSpawnTimer = 0
-		self.progressionAnimation.fruitSpawnInterval = spawnInterval
-		self.progressionAnimation.fruitPalette = {
-			Theme.appleColor,
-			Theme.bananaColor,
-			Theme.blueberryColor,
-			Theme.goldenPearColor,
-			Theme.dragonfruitColor,
+		self.ProgressionAnimation.FruitTotal = ApplesCollected
+		self.ProgressionAnimation.FruitRemaining = ApplesCollected
+		self.ProgressionAnimation.FruitAnimations = {}
+		self.ProgressionAnimation.FruitSpawnTimer = 0
+		self.ProgressionAnimation.FruitSpawnInterval = SpawnInterval
+		self.ProgressionAnimation.FruitPalette = {
+			Theme.AppleColor,
+			Theme.BananaColor,
+			Theme.BlueberryColor,
+			Theme.GoldenPearColor,
+			Theme.DragonfruitColor,
 		}
-		self.progressionAnimation.fruitXpPer = xpPerFruit
-		self.progressionAnimation.fruitPoints = fruitPoints
+		self.ProgressionAnimation.FruitXpPer = XpPerFruit
+		self.ProgressionAnimation.FruitPoints = FruitPoints
 
-		local startLevel = self.progressionAnimation.displayedLevel or startSnapshot.level or 1
-		if (self.progressionAnimation.xpForLevel or 0) > 0 then
-			self.progressionAnimation.visualPercent = clamp((self.progressionAnimation.xpIntoLevel or 0) / self.progressionAnimation.xpForLevel, 0, 1)
+		local StartLevel = self.ProgressionAnimation.DisplayedLevel or StartSnapshot.level or 1
+		if (self.ProgressionAnimation.XpForLevel or 0) > 0 then
+			self.ProgressionAnimation.VisualPercent = clamp((self.ProgressionAnimation.XpIntoLevel or 0) / self.ProgressionAnimation.XpForLevel, 0, 1)
 		else
-			self.progressionAnimation.visualPercent = 0
+			self.ProgressionAnimation.VisualPercent = 0
 		end
-		self.progressionAnimation.visualProgress = math.max(0, (startLevel - 1) + (self.progressionAnimation.visualPercent or 0))
+		self.ProgressionAnimation.VisualProgress = math.max(0, (StartLevel - 1) + (self.ProgressionAnimation.VisualPercent or 0))
 
 		if type(self.progression.milestones) == "table" then
 			for _, milestone in ipairs(self.progression.milestones) do
-				self.progressionAnimation.pendingMilestones[#self.progressionAnimation.pendingMilestones + 1] = {
+				self.ProgressionAnimation.PendingMilestones[#self.ProgressionAnimation.PendingMilestones + 1] = {
 					threshold = milestone.threshold,
 					triggered = false,
 				}
@@ -1307,8 +1307,8 @@ function GameOver:enter(data)
 		if type(self.progression.unlocks) == "table" then
 			for _, unlock in ipairs(self.progression.unlocks) do
 				local level = unlock.level
-				self.progressionAnimation.levelUnlocks[level] = self.progressionAnimation.levelUnlocks[level] or {}
-				table.insert(self.progressionAnimation.levelUnlocks[level], {
+				self.ProgressionAnimation.LevelUnlocks[level] = self.ProgressionAnimation.LevelUnlocks[level] or {}
+				table.insert(self.ProgressionAnimation.LevelUnlocks[level], {
 					name = unlock.name,
 					description = unlock.description,
 				})
@@ -1316,12 +1316,12 @@ function GameOver:enter(data)
 		end
 	end
 
-	self:updateLayoutMetrics()
-	self:updateButtonLayout()
+	self:UpdateLayoutMetrics()
+	self:UpdateButtonLayout()
 
 end
 
-local function getLocalizedOrFallback(key, fallback)
+local function GetLocalizedOrFallback(key, fallback)
 	local value = Localization:get(key)
 	if value == key then
 		return fallback
@@ -1329,634 +1329,634 @@ local function getLocalizedOrFallback(key, fallback)
 	return value
 end
 
-local function drawStatPill(x, y, width, height, label, value)
-	UI.drawPanel(x, y, width, height, {
+local function DrawStatPill(x, y, width, height, label, value)
+	UI.DrawPanel(x, y, width, height, {
 		radius = 18,
-		shadowOffset = 0,
-		fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * 0.7 },
-		borderColor = UI.colors.border or Theme.panelBorder,
-		borderWidth = 2,
+		ShadowOffset = 0,
+		fill = { Theme.PanelColor[1], Theme.PanelColor[2], Theme.PanelColor[3], (Theme.PanelColor[4] or 1) * 0.7 },
+		BorderColor = UI.colors.border or Theme.PanelBorder,
+		BorderWidth = 2,
 	})
 
-	UI.drawLabel(label, x + 8, y + 12, width - 16, "center", {
-		font = fontProgressSmall,
-		color = UI.colors.mutedText or UI.colors.text,
+	UI.DrawLabel(label, x + 8, y + 12, width - 16, "center", {
+		font = FontProgressSmall,
+		color = UI.colors.MutedText or UI.colors.text,
 	})
 
-	local displayFont = fontProgressValue
-	if displayFont:getWidth(value) > width - 32 then
-		displayFont = fontBadge
-		if displayFont:getWidth(value) > width - 32 then
-			displayFont = fontSmall
+	local DisplayFont = FontProgressValue
+	if DisplayFont:getWidth(value) > width - 32 then
+		DisplayFont = FontBadge
+		if DisplayFont:getWidth(value) > width - 32 then
+			DisplayFont = FontSmall
 		end
 	end
 
-	local valueY = y + height / 2 - displayFont:getHeight() / 2 + 6
-	UI.drawLabel(value, x + 8, valueY, width - 16, "center", {
-		font = displayFont,
+	local ValueY = y + height / 2 - DisplayFont:getHeight() / 2 + 6
+	UI.DrawLabel(value, x + 8, ValueY, width - 16, "center", {
+		font = DisplayFont,
 		color = UI.colors.text,
 	})
 end
 
-local function drawCelebrationsList(anim, x, startY, width)
+local function DrawCelebrationsList(anim, x, StartY, width)
 	local events = anim and anim.celebrations or {}
 	if not events or #events == 0 then
-		return startY
+		return StartY
 	end
 
-	local y = startY
-	local cardWidth = width - 32
+	local y = StartY
+	local CardWidth = width - 32
 	local now = love.timer.getTime()
 
-	local celebrationHeight = getCelebrationEntryHeight()
-	local celebrationSpacing = getCelebrationEntrySpacing()
-	local outerRadius = (UI.scaled and UI.scaled(16, 12)) or 16
-	local innerRadius = (UI.scaled and UI.scaled(12, 8)) or 12
+	local CelebrationHeight = GetCelebrationEntryHeight()
+	local CelebrationSpacing = GetCelebrationEntrySpacing()
+	local OuterRadius = (UI.scaled and UI.scaled(16, 12)) or 16
+	local InnerRadius = (UI.scaled and UI.scaled(12, 8)) or 12
 
 	for index, event in ipairs(events) do
 		local timer = math.max(0, event.timer or 0)
 		local appear = math.min(1, timer / 0.35)
-		local appearEase = easeOutBack(appear)
-		local fadeAlpha = 1
+		local AppearEase = EaseOutBack(appear)
+		local FadeAlpha = 1
 		local duration = event.duration or 4.5
 		if duration > 0 then
-			local fadeStart = math.max(0, duration - 0.65)
-			if timer > fadeStart then
-				local fadeProgress = math.min(1, (timer - fadeStart) / 0.65)
-				fadeAlpha = 1 - fadeProgress
+			local FadeStart = math.max(0, duration - 0.65)
+			if timer > FadeStart then
+				local FadeProgress = math.min(1, (timer - FadeStart) / 0.65)
+				FadeAlpha = 1 - FadeProgress
 			end
 		end
 
-		local alpha = math.max(0, fadeAlpha)
+		local alpha = math.max(0, FadeAlpha)
 
 		if alpha > 0.01 then
-			local cardX = x + 16
-			local cardY = y
+			local CardX = x + 16
+			local CardY = y
 			local wobble = math.sin(now * 4.2 + index * 0.8) * 2 * alpha
 
 			love.graphics.push()
-			love.graphics.translate(cardX + cardWidth / 2, cardY + celebrationHeight / 2 + wobble)
-			love.graphics.scale(0.92 + 0.08 * appearEase, 0.92 + 0.08 * appearEase)
-			love.graphics.translate(-(cardX + cardWidth / 2), -(cardY + celebrationHeight / 2 + wobble))
+			love.graphics.translate(CardX + CardWidth / 2, CardY + CelebrationHeight / 2 + wobble)
+			love.graphics.scale(0.92 + 0.08 * AppearEase, 0.92 + 0.08 * AppearEase)
+			love.graphics.translate(-(CardX + CardWidth / 2), -(CardY + CelebrationHeight / 2 + wobble))
 
 			love.graphics.setColor(0, 0, 0, 0.35 * alpha)
-			love.graphics.rectangle("fill", cardX + 5, cardY + 6, cardWidth, celebrationHeight, outerRadius, outerRadius)
+			love.graphics.rectangle("fill", CardX + 5, CardY + 6, CardWidth, CelebrationHeight, OuterRadius, OuterRadius)
 
-			local accent = event.color or Theme.progressColor or { 1, 1, 1, 1 }
+			local accent = event.color or Theme.ProgressColor or { 1, 1, 1, 1 }
 			love.graphics.setColor(accent[1], accent[2], accent[3], 0.22 * alpha)
-			love.graphics.rectangle("fill", cardX, cardY, cardWidth, celebrationHeight, outerRadius, outerRadius)
+			love.graphics.rectangle("fill", CardX, CardY, CardWidth, CelebrationHeight, OuterRadius, OuterRadius)
 
 			love.graphics.setColor(accent[1], accent[2], accent[3], 0.55 * alpha)
 			love.graphics.setLineWidth(2)
-			love.graphics.rectangle("line", cardX, cardY, cardWidth, celebrationHeight, outerRadius, outerRadius)
+			love.graphics.rectangle("line", CardX, CardY, CardWidth, CelebrationHeight, OuterRadius, OuterRadius)
 
 			local shimmer = 0.45 + 0.25 * math.sin(now * 6 + index)
 			love.graphics.setColor(accent[1], accent[2], accent[3], shimmer * 0.18 * alpha)
-			love.graphics.rectangle("line", cardX + 3, cardY + 3, cardWidth - 6, celebrationHeight - 6, innerRadius, innerRadius)
+			love.graphics.rectangle("line", CardX + 3, CardY + 3, CardWidth - 6, CelebrationHeight - 6, InnerRadius, InnerRadius)
 
-			UI.drawLabel(event.title or "", cardX + 18, cardY + 12, cardWidth - 36, "left", {
-				font = fontProgressSmall,
+			UI.DrawLabel(event.title or "", CardX + 18, CardY + 12, CardWidth - 36, "left", {
+				font = FontProgressSmall,
 				color = { UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], alpha },
 			})
 
 			if event.subtitle and event.subtitle ~= "" then
-				UI.drawLabel(event.subtitle, cardX + 18, cardY + 32, cardWidth - 36, "left", {
-					font = fontSmall,
-					color = { UI.colors.mutedText[1], UI.colors.mutedText[2], UI.colors.mutedText[3], alpha },
+				UI.DrawLabel(event.subtitle, CardX + 18, CardY + 32, CardWidth - 36, "left", {
+					font = FontSmall,
+					color = { UI.colors.MutedText[1], UI.colors.MutedText[2], UI.colors.MutedText[3], alpha },
 				})
 			end
 
 			love.graphics.pop()
 		end
 
-		y = y + celebrationSpacing
+		y = y + CelebrationSpacing
 	end
 
 	love.graphics.setLineWidth(1)
 	return y
 end
 
-local function drawXpSection(self, x, y, width)
-	local anim = self.progressionAnimation
+local function DrawXpSection(self, x, y, width)
+	local anim = self.ProgressionAnimation
 	if not anim then
 		return
 	end
 
-	local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
-	local baseHeight = self.baseXpSectionHeight or measureXpPanelHeight(self, width, 0)
-	local targetHeight = measureXpPanelHeight(self, width, celebrationCount)
-	self.baseXpSectionHeight = self.baseXpSectionHeight or baseHeight
-	local animatedHeight = self.xpSectionHeight or targetHeight
-	local height = math.max(160, baseHeight, targetHeight, animatedHeight)
-	UI.drawPanel(x, y, width, height, {
+	local CelebrationCount = (anim.celebrations and #anim.celebrations) or 0
+	local BaseHeight = self.BaseXpSectionHeight or MeasureXpPanelHeight(self, width, 0)
+	local TargetHeight = MeasureXpPanelHeight(self, width, CelebrationCount)
+	self.BaseXpSectionHeight = self.BaseXpSectionHeight or BaseHeight
+	local AnimatedHeight = self.XpSectionHeight or TargetHeight
+	local height = math.max(160, BaseHeight, TargetHeight, AnimatedHeight)
+	UI.DrawPanel(x, y, width, height, {
 		radius = 18,
-		shadowOffset = 0,
-		fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * 0.65 },
-		borderColor = UI.colors.border or Theme.panelBorder,
-		borderWidth = 2,
+		ShadowOffset = 0,
+		fill = { Theme.PanelColor[1], Theme.PanelColor[2], Theme.PanelColor[3], (Theme.PanelColor[4] or 1) * 0.65 },
+		BorderColor = UI.colors.border or Theme.PanelBorder,
+		BorderWidth = 2,
 	})
 
-	local headerY = y + 18
-	UI.drawLabel(getLocalizedOrFallback("gameover.meta_progress_title", "Experience"), x, headerY, width, "center", {
-		font = fontProgressTitle,
+	local HeaderY = y + 18
+	UI.DrawLabel(GetLocalizedOrFallback("gameover.meta_progress_title", "Experience"), x, HeaderY, width, "center", {
+		font = FontProgressTitle,
 		color = UI.colors.text,
 	})
 
-	local levelColor = Theme.progressColor or UI.colors.progress or UI.colors.text
+	local LevelColor = Theme.ProgressColor or UI.colors.progress or UI.colors.text
 	local flash = math.max(0, math.min(1, anim.levelFlash or 0))
-        local levelText = Localization:get("gameover.meta_progress_level_label", { level = anim.displayedLevel or 1 })
-        local levelY = headerY + fontProgressTitle:getHeight() + 16
-	UI.drawLabel(levelText, x, levelY, width, "center", {
-		font = fontProgressValue,
-		color = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.78 + 0.2 * flash },
+        local LevelText = Localization:get("gameover.meta_progress_level_label", { level = anim.displayedLevel or 1 })
+        local LevelY = HeaderY + FontProgressTitle:getHeight() + 16
+	UI.DrawLabel(LevelText, x, LevelY, width, "center", {
+		font = FontProgressValue,
+		color = { LevelColor[1] or 1, LevelColor[2] or 1, LevelColor[3] or 1, 0.78 + 0.2 * flash },
 	})
 
 	if flash > 0.01 then
-		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+		local PrevMode, PrevAlphaMode = love.graphics.getBlendMode()
 		love.graphics.setBlendMode("add", "alphamultiply")
-		local centerX = x + width / 2
-		local centerY = levelY + fontProgressValue:getHeight() / 2
-		love.graphics.setColor(levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.24 * flash)
-		love.graphics.circle("fill", centerX, centerY, 48 + flash * 26, 48)
+		local CenterX = x + width / 2
+		local CenterY = LevelY + FontProgressValue:getHeight() / 2
+		love.graphics.setColor(LevelColor[1] or 1, LevelColor[2] or 1, LevelColor[3] or 1, 0.24 * flash)
+		love.graphics.circle("fill", CenterX, CenterY, 48 + flash * 26, 48)
 		love.graphics.setColor(1, 1, 1, 0.12 * flash)
-		love.graphics.circle("line", centerX, centerY, 48 + flash * 18, 48)
-		love.graphics.setBlendMode(prevMode, prevAlphaMode)
+		love.graphics.circle("line", CenterX, CenterY, 48 + flash * 18, 48)
+		love.graphics.setBlendMode(PrevMode, PrevAlphaMode)
 	end
 
 	local gained = math.max(0, math.floor((anim.displayedGained or 0) + 0.5))
-	local gainedText = Localization:get("gameover.meta_progress_gain_short", { points = gained })
-	local gainedY = levelY + fontProgressValue:getHeight() + 6
-	UI.drawLabel(gainedText, x, gainedY, width, "center", {
-		font = fontProgressSmall,
-		color = UI.colors.mutedText or UI.colors.text,
+	local GainedText = Localization:get("gameover.meta_progress_gain_short", { points = gained })
+	local GainedY = LevelY + FontProgressValue:getHeight() + 6
+	UI.DrawLabel(GainedText, x, GainedY, width, "center", {
+		font = FontProgressSmall,
+		color = UI.colors.MutedText or UI.colors.text,
 	})
 
-	local ringTop = gainedY + fontProgressSmall:getHeight() + 18
-	local centerX = x + width / 2
-	local maxRadius = math.max(48, math.min(74, (width / 2) - 24))
-	local ringThickness = math.max(14, math.min(24, maxRadius * 0.42))
-	local ringRadius = maxRadius - ringThickness * 0.25
-	local innerRadius = math.max(32, ringRadius - ringThickness * 0.6)
-	local outerRadius = ringRadius + ringThickness * 0.45
-	local centerY = ringTop + ringRadius
+	local RingTop = GainedY + FontProgressSmall:getHeight() + 18
+	local CenterX = x + width / 2
+	local MaxRadius = math.max(48, math.min(74, (width / 2) - 24))
+	local RingThickness = math.max(14, math.min(24, MaxRadius * 0.42))
+	local RingRadius = MaxRadius - RingThickness * 0.25
+	local InnerRadius = math.max(32, RingRadius - RingThickness * 0.6)
+	local OuterRadius = RingRadius + RingThickness * 0.45
+	local CenterY = RingTop + RingRadius
 	local percent = clamp(anim.visualPercent or 0, 0, 1)
 	local pulse = clamp(anim.barPulse or 0, 0, 1)
 
 	anim.barMetrics = anim.barMetrics or {}
 	anim.barMetrics.style = "radial"
-	anim.barMetrics.centerX = centerX
-	anim.barMetrics.centerY = centerY
-	anim.barMetrics.radius = ringRadius
-	anim.barMetrics.innerRadius = innerRadius
-	anim.barMetrics.outerRadius = outerRadius
-	anim.barMetrics.thickness = ringThickness
+	anim.barMetrics.centerX = CenterX
+	anim.barMetrics.centerY = CenterY
+	anim.barMetrics.radius = RingRadius
+	anim.barMetrics.innerRadius = InnerRadius
+	anim.barMetrics.outerRadius = OuterRadius
+	anim.barMetrics.thickness = RingThickness
 
-	local panelColor = Theme.panelColor or { 0.18, 0.18, 0.22, 1 }
-	local trackColor = withAlpha(darkenColor(panelColor, 0.2), 0.85)
-	local ringColor = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.9 }
+	local PanelColor = Theme.PanelColor or { 0.18, 0.18, 0.22, 1 }
+	local TrackColor = WithAlpha(DarkenColor(PanelColor, 0.2), 0.85)
+	local RingColor = { LevelColor[1] or 1, LevelColor[2] or 1, LevelColor[3] or 1, 0.9 }
 
-	love.graphics.setColor(trackColor)
-	love.graphics.circle("fill", centerX, centerY, outerRadius)
+	love.graphics.setColor(TrackColor)
+	love.graphics.circle("fill", CenterX, CenterY, OuterRadius)
 
-	local startAngle = -math.pi / 2
-	love.graphics.setColor(withAlpha(lightenColor(panelColor, 0.12), 0.88))
-	love.graphics.setLineWidth(ringThickness)
-	love.graphics.arc("line", "open", centerX, centerY, ringRadius, startAngle, startAngle + math.pi * 2, 96)
+	local StartAngle = -math.pi / 2
+	love.graphics.setColor(WithAlpha(LightenColor(PanelColor, 0.12), 0.88))
+	love.graphics.setLineWidth(RingThickness)
+	love.graphics.arc("line", "open", CenterX, CenterY, RingRadius, StartAngle, StartAngle + math.pi * 2, 96)
 
 	if percent > 0 then
-		local endAngle = startAngle + percent * math.pi * 2
+		local EndAngle = StartAngle + percent * math.pi * 2
 		local scale = 1 + pulse * 0.04
-		local widthMul = 1 + pulse * 0.45
+		local WidthMul = 1 + pulse * 0.45
 
-		love.graphics.setColor(ringColor)
-		love.graphics.setLineWidth(ringThickness * widthMul)
-		love.graphics.arc("line", "open", centerX, centerY, ringRadius * scale, startAngle, endAngle, 96)
+		love.graphics.setColor(RingColor)
+		love.graphics.setLineWidth(RingThickness * WidthMul)
+		love.graphics.arc("line", "open", CenterX, CenterY, RingRadius * scale, StartAngle, EndAngle, 96)
 
-		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+		local PrevMode, PrevAlphaMode = love.graphics.getBlendMode()
 		love.graphics.setBlendMode("add", "alphamultiply")
-		love.graphics.setColor(ringColor[1], ringColor[2], ringColor[3], 0.24 + 0.18 * flash)
-		love.graphics.arc("line", "open", centerX, centerY, ringRadius * (scale + 0.08 + pulse * 0.06), startAngle, endAngle, 96)
-		love.graphics.setBlendMode(prevMode, prevAlphaMode)
+		love.graphics.setColor(RingColor[1], RingColor[2], RingColor[3], 0.24 + 0.18 * flash)
+		love.graphics.arc("line", "open", CenterX, CenterY, RingRadius * (scale + 0.08 + pulse * 0.06), StartAngle, EndAngle, 96)
+		love.graphics.setBlendMode(PrevMode, PrevAlphaMode)
 	end
 
-	love.graphics.setColor(withAlpha(lightenColor(panelColor, 0.18), 0.94))
-	love.graphics.circle("fill", centerX, centerY, innerRadius)
+	love.graphics.setColor(WithAlpha(LightenColor(PanelColor, 0.18), 0.94))
+	love.graphics.circle("fill", CenterX, CenterY, InnerRadius)
 
-	drawFruitAnimations(anim)
+	DrawFruitAnimations(anim)
 
-	love.graphics.setColor(withAlpha(Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }, 0.85))
+	love.graphics.setColor(WithAlpha(Theme.PanelBorder or { 0.35, 0.3, 0.5, 1 }, 0.85))
 	love.graphics.setLineWidth(2)
-	love.graphics.circle("line", centerX, centerY, innerRadius, 96)
+	love.graphics.circle("line", CenterX, CenterY, InnerRadius, 96)
 	love.graphics.setLineWidth(1)
 
 	if flash > 0.01 then
-		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+		local PrevMode, PrevAlphaMode = love.graphics.getBlendMode()
 		love.graphics.setBlendMode("add", "alphamultiply")
-		love.graphics.setColor(ringColor[1], ringColor[2], ringColor[3], 0.26 * flash)
-		love.graphics.circle("line", centerX, centerY, outerRadius + flash * 22, 96)
+		love.graphics.setColor(RingColor[1], RingColor[2], RingColor[3], 0.26 * flash)
+		love.graphics.circle("line", CenterX, CenterY, OuterRadius + flash * 22, 96)
 		love.graphics.setColor(1, 1, 1, 0.14 * flash)
-		love.graphics.circle("fill", centerX, centerY, innerRadius + flash * 14, 96)
-		love.graphics.setBlendMode(prevMode, prevAlphaMode)
+		love.graphics.circle("fill", CenterX, CenterY, InnerRadius + flash * 14, 96)
+		love.graphics.setBlendMode(PrevMode, PrevAlphaMode)
 	end
 
-        love.graphics.setFont(fontProgressValue)
-        love.graphics.setColor(Theme.textColor or UI.colors.text)
-        local levelValue = tostring(anim.displayedLevel or 1)
-        local popDuration = anim.levelPopDuration or 0.65
-        local popTimer = clamp(anim.levelPopTimer or popDuration, 0, popDuration)
-        local popProgress = 1
-        if popDuration > 1e-6 then
-                popProgress = clamp(popTimer / popDuration, 0, 1)
+        love.graphics.setFont(FontProgressValue)
+        love.graphics.setColor(Theme.TextColor or UI.colors.text)
+        local LevelValue = tostring(anim.displayedLevel or 1)
+        local PopDuration = anim.levelPopDuration or 0.65
+        local PopTimer = clamp(anim.levelPopTimer or PopDuration, 0, PopDuration)
+        local PopProgress = 1
+        if PopDuration > 1e-6 then
+                PopProgress = clamp(PopTimer / PopDuration, 0, 1)
         end
-        local popScale = 1
-        if popProgress < 1 then
-                local pop = clamp(1 - popProgress, 0, 1)
-                popScale = 1 + easeOutBack(pop) * 0.3
+        local PopScale = 1
+        if PopProgress < 1 then
+                local pop = clamp(1 - PopProgress, 0, 1)
+                PopScale = 1 + EaseOutBack(pop) * 0.3
         end
 
         love.graphics.push()
-        love.graphics.translate(centerX, centerY)
-        love.graphics.scale(popScale, popScale)
-        love.graphics.printf(levelValue, -innerRadius, -fontProgressValue:getHeight() / 2 + 2, innerRadius * 2, "center")
+        love.graphics.translate(CenterX, CenterY)
+        love.graphics.scale(PopScale, PopScale)
+        love.graphics.printf(LevelValue, -InnerRadius, -FontProgressValue:getHeight() / 2 + 2, InnerRadius * 2, "center")
         love.graphics.pop()
 
-	local totalLabel = Localization:get("gameover.meta_progress_total_label", {
+	local TotalLabel = Localization:get("gameover.meta_progress_total_label", {
 		total = math.floor((anim.displayedTotal or 0) + 0.5),
 	})
 
-	local remainingLabel
+	local RemainingLabel
 	if (anim.xpForLevel or 0) <= 0 then
-		remainingLabel = Localization:get("gameover.meta_progress_max_level")
+		RemainingLabel = Localization:get("gameover.meta_progress_max_level")
 	else
 		local remaining = math.max(0, math.ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
-		remainingLabel = Localization:get("gameover.meta_progress_next", { remaining = remaining })
+		RemainingLabel = Localization:get("gameover.meta_progress_next", { remaining = remaining })
 	end
 
-	local labelY = centerY + outerRadius + 18
+	local LabelY = CenterY + OuterRadius + 18
 	local breakdown = self.progression and self.progression.breakdown or {}
-	local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
-	if bonusXP > 0 then
-		local bonusText = Localization:get("gameover.meta_progress_bonus", { bonus = bonusXP })
-		UI.drawLabel(bonusText, x, labelY, width, "center", {
-			font = fontProgressSmall,
+	local BonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
+	if BonusXP > 0 then
+		local BonusText = Localization:get("gameover.meta_progress_bonus", { bonus = BonusXP })
+		UI.DrawLabel(BonusText, x, LabelY, width, "center", {
+			font = FontProgressSmall,
 			color = UI.colors.highlight or UI.colors.text,
 		})
-		labelY = labelY + fontProgressSmall:getHeight() + 6
+		LabelY = LabelY + FontProgressSmall:getHeight() + 6
 	end
 
-	if self.dailyStreakMessage then
-		UI.drawLabel(self.dailyStreakMessage, x, labelY, width, "center", {
-			font = fontProgressSmall,
-			color = self.dailyStreakColor or UI.colors.highlight or UI.colors.text,
+	if self.DailyStreakMessage then
+		UI.DrawLabel(self.DailyStreakMessage, x, LabelY, width, "center", {
+			font = FontProgressSmall,
+			color = self.DailyStreakColor or UI.colors.highlight or UI.colors.text,
 		})
-		labelY = labelY + fontProgressSmall:getHeight() + 6
+		LabelY = LabelY + FontProgressSmall:getHeight() + 6
 	end
 
-	UI.drawLabel(totalLabel, x, labelY, width, "center", {
-		font = fontProgressSmall,
+	UI.DrawLabel(TotalLabel, x, LabelY, width, "center", {
+		font = FontProgressSmall,
 		color = UI.colors.text,
 	})
 
-	labelY = labelY + fontProgressSmall:getHeight() + 4
-	UI.drawLabel(remainingLabel, x, labelY, width, "center", {
-		font = fontProgressSmall,
-		color = UI.colors.mutedText or UI.colors.text,
+	LabelY = LabelY + FontProgressSmall:getHeight() + 4
+	UI.DrawLabel(RemainingLabel, x, LabelY, width, "center", {
+		font = FontProgressSmall,
+		color = UI.colors.MutedText or UI.colors.text,
 	})
 
-	local celebrationStart = labelY + fontProgressSmall:getHeight() + 16
-	drawCelebrationsList(anim, x, celebrationStart, width)
+	local CelebrationStart = LabelY + FontProgressSmall:getHeight() + 16
+	DrawCelebrationsList(anim, x, CelebrationStart, width)
 end
 
-local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSpacing, smallSpacing)
+local function DrawScorePanel(self, x, y, width, height, SectionPadding, InnerSpacing, SmallSpacing)
 	if (height or 0) <= 0 or (width or 0) <= 0 then
 		return
 	end
 
-	drawInsetPanel(x, y, width, height, { radius = 18 })
+	DrawInsetPanel(x, y, width, height, { radius = 18 })
 
-	local scoreLabel = getLocalizedOrFallback("gameover.score_label", "Score")
-	local labelY = y + sectionPadding
-	UI.drawLabel(scoreLabel, x + sectionPadding, labelY, width - sectionPadding * 2, "center", {
-		font = fontProgressSmall,
-		color = UI.colors.mutedText or UI.colors.text,
+	local ScoreLabel = GetLocalizedOrFallback("gameover.score_label", "Score")
+	local LabelY = y + SectionPadding
+	UI.DrawLabel(ScoreLabel, x + SectionPadding, LabelY, width - SectionPadding * 2, "center", {
+		font = FontProgressSmall,
+		color = UI.colors.MutedText or UI.colors.text,
 	})
 
-	local valueY = labelY + fontProgressSmall:getHeight() + innerSpacing
-	local progressColor = Theme.progressColor or { 1, 1, 1, 1 }
-	UI.drawLabel(tostring(stats.score or 0), x, valueY, width, "center", {
-		font = fontScore,
-		color = { progressColor[1] or 1, progressColor[2] or 1, progressColor[3] or 1, 0.92 },
+	local ValueY = LabelY + FontProgressSmall:getHeight() + InnerSpacing
+	local ProgressColor = Theme.ProgressColor or { 1, 1, 1, 1 }
+	UI.DrawLabel(tostring(stats.score or 0), x, ValueY, width, "center", {
+		font = FontScore,
+		color = { ProgressColor[1] or 1, ProgressColor[2] or 1, ProgressColor[3] or 1, 0.92 },
 	})
 
-	if self.isNewHighScore then
-		local badgeColor = Theme.achieveColor or { 1, 1, 1, 1 }
-		local badgeY = valueY + fontScore:getHeight() + smallSpacing
-		UI.drawLabel(Localization:get("gameover.high_score_badge"), x + sectionPadding, badgeY, width - sectionPadding * 2, "center", {
-			font = fontBadge,
-			color = { badgeColor[1] or 1, badgeColor[2] or 1, badgeColor[3] or 1, 0.9 },
+	if self.IsNewHighScore then
+		local BadgeColor = Theme.AchieveColor or { 1, 1, 1, 1 }
+		local BadgeY = ValueY + FontScore:getHeight() + SmallSpacing
+		UI.DrawLabel(Localization:get("gameover.high_score_badge"), x + SectionPadding, BadgeY, width - SectionPadding * 2, "center", {
+			font = FontBadge,
+			color = { BadgeColor[1] or 1, BadgeColor[2] or 1, BadgeColor[3] or 1, 0.9 },
 		})
 	end
 end
 
-local function drawStatsPanel(self, x, y, width, height, sectionPadding, innerSpacing, layoutData)
+local function DrawStatsPanel(self, x, y, width, height, SectionPadding, InnerSpacing, LayoutData)
 	if (height or 0) <= 0 or (width or 0) <= 0 then
 		return
 	end
 
-	drawInsetPanel(x, y, width, height, { radius = 18 })
+	DrawInsetPanel(x, y, width, height, { radius = 18 })
 
-	local statsHeader = getLocalizedOrFallback("gameover.stats_header", "Highlights")
-	local statsY = y + sectionPadding
-	UI.drawLabel(statsHeader, x + sectionPadding, statsY, width - sectionPadding * 2, "left", {
-		font = fontProgressSmall,
-		color = UI.colors.mutedText or UI.colors.text,
+	local StatsHeader = GetLocalizedOrFallback("gameover.stats_header", "Highlights")
+	local StatsY = y + SectionPadding
+	UI.DrawLabel(StatsHeader, x + SectionPadding, StatsY, width - SectionPadding * 2, "left", {
+		font = FontProgressSmall,
+		color = UI.colors.MutedText or UI.colors.text,
 	})
 
-	statsY = statsY + fontProgressSmall:getHeight() + innerSpacing
+	StatsY = StatsY + FontProgressSmall:getHeight() + InnerSpacing
 
-	local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
-	local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Apples")
-	local statCards = {
-		{ label = bestLabel, value = tostring(stats.highScore or 0) },
-		{ label = applesLabel, value = tostring(stats.apples or 0) },
+	local BestLabel = GetLocalizedOrFallback("gameover.stats_best_label", "Best")
+	local ApplesLabel = GetLocalizedOrFallback("gameover.stats_apples_label", "Apples")
+	local StatCards = {
+		{ label = BestLabel, value = tostring(stats.highScore or 0) },
+		{ label = ApplesLabel, value = tostring(stats.apples or 0) },
 	}
 
-	local statLayout = layoutData or calculateStatLayout(width, sectionPadding, #statCards)
-	local availableWidth = (statLayout and statLayout.availableWidth) or (width - sectionPadding * 2)
-	local statSpacing = (statLayout and statLayout.spacing) or getStatCardSpacing()
-	local statCardHeight = getStatCardHeight()
-	local cardIndex = 1
-	local rows = math.max(1, (statLayout and statLayout.rows) or 1)
-	local columns = math.max(1, (statLayout and statLayout.columns) or 1)
+	local StatLayout = LayoutData or CalculateStatLayout(width, SectionPadding, #StatCards)
+	local AvailableWidth = (StatLayout and StatLayout.availableWidth) or (width - SectionPadding * 2)
+	local StatSpacing = (StatLayout and StatLayout.spacing) or GetStatCardSpacing()
+	local StatCardHeight = GetStatCardHeight()
+	local CardIndex = 1
+	local rows = math.max(1, (StatLayout and StatLayout.rows) or 1)
+	local columns = math.max(1, (StatLayout and StatLayout.columns) or 1)
 
 	for row = 1, rows do
-		local itemsInRow = math.min(columns, #statCards - (row - 1) * columns)
-		if itemsInRow <= 0 then
+		local ItemsInRow = math.min(columns, #StatCards - (row - 1) * columns)
+		if ItemsInRow <= 0 then
 			break
 		end
 
-		local rowWidth = itemsInRow * (statLayout.cardWidth or 0) + math.max(0, itemsInRow - 1) * statSpacing
-		local rowOffset = math.max(0, (availableWidth - rowWidth) / 2)
-		local baseX = x + sectionPadding + rowOffset
-		local rowY = statsY + (row - 1) * (statCardHeight + statSpacing)
+		local RowWidth = ItemsInRow * (StatLayout.cardWidth or 0) + math.max(0, ItemsInRow - 1) * StatSpacing
+		local RowOffset = math.max(0, (AvailableWidth - RowWidth) / 2)
+		local BaseX = x + SectionPadding + RowOffset
+		local RowY = StatsY + (row - 1) * (StatCardHeight + StatSpacing)
 
-		for col = 0, itemsInRow - 1 do
-			local card = statCards[cardIndex]
+		for col = 0, ItemsInRow - 1 do
+			local card = StatCards[CardIndex]
 			if not card then
 				break
 			end
 
-			local cardX = baseX + col * ((statLayout.cardWidth or 0) + statSpacing)
-			drawStatPill(cardX, rowY, statLayout.cardWidth or 0, statCardHeight, card.label, card.value)
-			cardIndex = cardIndex + 1
+			local CardX = BaseX + col * ((StatLayout.cardWidth or 0) + StatSpacing)
+			DrawStatPill(CardX, RowY, StatLayout.cardWidth or 0, StatCardHeight, card.label, card.value)
+			CardIndex = CardIndex + 1
 		end
 	end
 end
 
-local function drawAchievementsPanel(self, x, y, width, height, sectionPadding, innerSpacing, smallSpacing, layoutData)
-	if not layoutData or (height or 0) <= 0 or (width or 0) <= 0 then
+local function DrawAchievementsPanel(self, x, y, width, height, SectionPadding, InnerSpacing, SmallSpacing, LayoutData)
+	if not LayoutData or (height or 0) <= 0 or (width or 0) <= 0 then
 		return
 	end
 
-	local entries = layoutData.entries or {}
+	local entries = LayoutData.entries or {}
 	if #entries == 0 then
 		return
 	end
 
-	drawInsetPanel(x, y, width, height, { radius = 18 })
+	DrawInsetPanel(x, y, width, height, { radius = 18 })
 
-	local achievementsLabel = getLocalizedOrFallback("gameover.achievements_header", "Achievements")
-	local headerText = string.format("%s (%d)", achievementsLabel, #entries)
-	local textX = x + sectionPadding
-	local textWidth = layoutData.textWidth or (width - sectionPadding * 2)
-	local entryY = y + sectionPadding
+	local AchievementsLabel = GetLocalizedOrFallback("gameover.achievements_header", "Achievements")
+	local HeaderText = string.format("%s (%d)", AchievementsLabel, #entries)
+	local TextX = x + SectionPadding
+	local TextWidth = LayoutData.textWidth or (width - SectionPadding * 2)
+	local EntryY = y + SectionPadding
 
-	UI.drawLabel(headerText, textX, entryY, textWidth, "left", {
-		font = fontProgressSmall,
+	UI.DrawLabel(HeaderText, TextX, EntryY, TextWidth, "left", {
+		font = FontProgressSmall,
 		color = UI.colors.text,
 	})
 
-	entryY = entryY + fontProgressSmall:getHeight() + innerSpacing
+	EntryY = EntryY + FontProgressSmall:getHeight() + InnerSpacing
 
 	for index, entry in ipairs(entries) do
-		UI.drawLabel(entry.title or "", textX, entryY, textWidth, "left", {
-			font = fontSmall,
+		UI.DrawLabel(entry.title or "", TextX, EntryY, TextWidth, "left", {
+			font = FontSmall,
 			color = UI.colors.highlight or UI.colors.text,
 		})
-		entryY = entryY + fontSmall:getHeight()
+		EntryY = EntryY + FontSmall:getHeight()
 
 		if entry.description and entry.description ~= "" then
-			UI.drawLabel(entry.description, textX, entryY, textWidth, "left", {
-				font = fontProgressSmall,
-				color = UI.colors.mutedText or UI.colors.text,
+			UI.DrawLabel(entry.description, TextX, EntryY, TextWidth, "left", {
+				font = FontProgressSmall,
+				color = UI.colors.MutedText or UI.colors.text,
 			})
-			entryY = entryY + (entry.descriptionLines or 0) * fontProgressSmall:getHeight()
+			EntryY = EntryY + (entry.descriptionLines or 0) * FontProgressSmall:getHeight()
 		end
 
 		if index < #entries then
-			entryY = entryY + smallSpacing
+			EntryY = EntryY + SmallSpacing
 		end
 	end
 end
 
-local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
-	local panelHeight = self.summaryPanelHeight or 0
-	panelY = panelY or 120
-	drawCenteredPanel(contentX, panelY, contentWidth, panelHeight, 20)
+local function DrawCombinedPanel(self, ContentWidth, ContentX, padding, PanelY)
+	local PanelHeight = self.SummaryPanelHeight or 0
+	PanelY = PanelY or 120
+	DrawCenteredPanel(ContentX, PanelY, ContentWidth, PanelHeight, 20)
 
-	local innerWidth = self.innerContentWidth or (contentWidth - padding * 2)
-	local innerX = contentX + padding
+	local InnerWidth = self.InnerContentWidth or (ContentWidth - padding * 2)
+	local InnerX = ContentX + padding
 
-	local sectionPadding = self.sectionPaddingValue or getSectionPadding()
-	local sectionSpacing = self.sectionSpacingValue or getSectionSpacing()
-	local innerSpacing = self.sectionInnerSpacingValue or getSectionInnerSpacing()
-	local smallSpacing = self.sectionSmallSpacingValue or getSectionSmallSpacing()
-	local headerSpacing = self.sectionHeaderSpacingValue or getSectionHeaderSpacing()
+	local SectionPadding = self.SectionPaddingValue or GetSectionPadding()
+	local SectionSpacing = self.SectionSpacingValue or GetSectionSpacing()
+	local InnerSpacing = self.SectionInnerSpacingValue or GetSectionInnerSpacing()
+	local SmallSpacing = self.SectionSmallSpacingValue or GetSectionSmallSpacing()
+	local HeaderSpacing = self.SectionHeaderSpacingValue or GetSectionHeaderSpacing()
 
-	local headerFont = UI.fonts.heading or fontSmall
-	local titleY = panelY + padding
-	UI.drawLabel(getLocalizedOrFallback("gameover.run_summary_title", "Run Summary"), contentX, titleY, contentWidth, "center", {
-		font = headerFont,
+	local HeaderFont = UI.fonts.heading or FontSmall
+	local TitleY = PanelY + padding
+	UI.DrawLabel(GetLocalizedOrFallback("gameover.run_summary_title", "Run Summary"), ContentX, TitleY, ContentWidth, "center", {
+		font = HeaderFont,
 		color = UI.colors.text,
 	})
 
-	local currentY = titleY + headerFont:getHeight() + headerSpacing
+	local CurrentY = TitleY + HeaderFont:getHeight() + HeaderSpacing
 
-	local wrapLimit = self.wrapLimit or math.max(0, innerWidth - sectionPadding * 2)
-	local messageText = self.deathMessage or Localization:get("gameover.default_message")
-	local messagePanelHeight = self.messagePanelHeight or 0
-	if messagePanelHeight > 0 then
-		drawInsetPanel(innerX, currentY, innerWidth, messagePanelHeight)
-		UI.drawLabel(messageText, innerX + sectionPadding, currentY + sectionPadding, wrapLimit, "center", {
-			font = fontSmall,
-			color = UI.colors.mutedText or UI.colors.text,
+	local WrapLimit = self.WrapLimit or math.max(0, InnerWidth - SectionPadding * 2)
+	local MessageText = self.DeathMessage or Localization:get("gameover.default_message")
+	local MessagePanelHeight = self.MessagePanelHeight or 0
+	if MessagePanelHeight > 0 then
+		DrawInsetPanel(InnerX, CurrentY, InnerWidth, MessagePanelHeight)
+		UI.DrawLabel(MessageText, InnerX + SectionPadding, CurrentY + SectionPadding, WrapLimit, "center", {
+			font = FontSmall,
+			color = UI.colors.MutedText or UI.colors.text,
 		})
-		currentY = currentY + messagePanelHeight
+		CurrentY = CurrentY + MessagePanelHeight
 	end
 
-	local xpHeight = self.xpPanelHeight or 0
-	local xpLayout = self.xpLayout or {}
+	local XpHeight = self.XpPanelHeight or 0
+	local XpLayout = self.XpLayout or {}
 
-	if xpHeight > 0 then
-		currentY = currentY + sectionSpacing
-		local availableWidth = math.max(0, innerWidth - sectionPadding * 2)
-		local xpWidth = math.max(0, math.min(availableWidth, xpLayout.width or availableWidth))
-		local offset = xpLayout.offset or math.max(0, (availableWidth - xpWidth) / 2)
-		local xpX = innerX + sectionPadding + offset
-		drawXpSection(self, xpX, currentY, xpWidth)
-		currentY = currentY + xpHeight
+	if XpHeight > 0 then
+		CurrentY = CurrentY + SectionSpacing
+		local AvailableWidth = math.max(0, InnerWidth - SectionPadding * 2)
+		local XpWidth = math.max(0, math.min(AvailableWidth, XpLayout.width or AvailableWidth))
+		local offset = XpLayout.offset or math.max(0, (AvailableWidth - XpWidth) / 2)
+		local XpX = InnerX + SectionPadding + offset
+		DrawXpSection(self, XpX, CurrentY, XpWidth)
+		CurrentY = CurrentY + XpHeight
 	end
 
-	local layout = self.summarySectionLayout or {}
+	local layout = self.SummarySectionLayout or {}
 	local entries = layout.entries or {}
 
 	if #entries > 0 then
-		currentY = currentY + sectionSpacing
-		local baseX = innerX + sectionPadding
+		CurrentY = CurrentY + SectionSpacing
+		local BaseX = InnerX + SectionPadding
 
 		for _, entry in ipairs(entries) do
-			local entryWidth = entry.width or (innerWidth - sectionPadding * 2)
-			local entryHeight = entry.height or 0
-			local entryX = baseX + (entry.x or 0)
-			local entryY = currentY + (entry.y or 0)
+			local EntryWidth = entry.width or (InnerWidth - SectionPadding * 2)
+			local EntryHeight = entry.height or 0
+			local EntryX = BaseX + (entry.x or 0)
+			local EntryY = CurrentY + (entry.y or 0)
 
 			if entry.id == "score" then
-				drawScorePanel(self, entryX, entryY, entryWidth, entryHeight, sectionPadding, innerSpacing, smallSpacing)
+				DrawScorePanel(self, EntryX, EntryY, EntryWidth, EntryHeight, SectionPadding, InnerSpacing, SmallSpacing)
 			elseif entry.id == "stats" then
-				drawStatsPanel(self, entryX, entryY, entryWidth, entryHeight, sectionPadding, innerSpacing, entry.layoutData or self.statLayout)
+				DrawStatsPanel(self, EntryX, EntryY, EntryWidth, EntryHeight, SectionPadding, InnerSpacing, entry.layoutData or self.StatLayout)
 			elseif entry.id == "achievements" then
-				drawAchievementsPanel(self, entryX, entryY, entryWidth, entryHeight, sectionPadding, innerSpacing, smallSpacing, entry.layoutData or self.achievementsLayout)
+				DrawAchievementsPanel(self, EntryX, EntryY, EntryWidth, EntryHeight, SectionPadding, InnerSpacing, SmallSpacing, entry.layoutData or self.AchievementsLayout)
 			end
 		end
 
-		currentY = currentY + (layout.columnsHeight or 0)
+		CurrentY = CurrentY + (layout.columnsHeight or 0)
 	end
 end
 
 function GameOver:draw()
 	local sw, sh = Screen:get()
-	local layoutChanged = self:updateLayoutMetrics()
-	if layoutChanged then
-		self:updateButtonLayout()
+	local LayoutChanged = self:UpdateLayoutMetrics()
+	if LayoutChanged then
+		self:UpdateButtonLayout()
 	end
-	drawBackground(sw, sh)
+	DrawBackground(sw, sh)
 
-	local _, buttonHeight, buttonSpacing = getButtonMetrics()
-	local totalButtonHeight = 0
-	if #buttonDefs > 0 then
-		totalButtonHeight = #buttonDefs * buttonHeight + math.max(0, (#buttonDefs - 1) * buttonSpacing)
+	local _, ButtonHeight, ButtonSpacing = GetButtonMetrics()
+	local TotalButtonHeight = 0
+	if #ButtonDefs > 0 then
+		TotalButtonHeight = #ButtonDefs * ButtonHeight + math.max(0, (#ButtonDefs - 1) * ButtonSpacing)
 	end
-	local panelY = select(1, self:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing))
+	local PanelY = select(1, self:ComputeAnchors(sw, sh, TotalButtonHeight, ButtonSpacing))
 
 	local margin = 24
-	local fallbackMaxAllowed = math.max(40, sw - margin)
-	local fallbackSafe = math.max(80, sw - margin * 2)
-	fallbackSafe = math.min(fallbackSafe, fallbackMaxAllowed)
-	local fallbackPreferred = math.min(sw * 0.72, 640)
-	local fallbackMin = math.min(320, fallbackSafe)
-	local computedWidth = math.max(fallbackMin, math.min(fallbackPreferred, fallbackSafe))
-	local contentWidth = self.contentWidth or computedWidth
-	local contentX = (sw - contentWidth) / 2
-	local padding = self.contentPadding or 24
+	local FallbackMaxAllowed = math.max(40, sw - margin)
+	local FallbackSafe = math.max(80, sw - margin * 2)
+	FallbackSafe = math.min(FallbackSafe, FallbackMaxAllowed)
+	local FallbackPreferred = math.min(sw * 0.72, 640)
+	local FallbackMin = math.min(320, FallbackSafe)
+	local ComputedWidth = math.max(FallbackMin, math.min(FallbackPreferred, FallbackSafe))
+	local ContentWidth = self.ContentWidth or ComputedWidth
+	local ContentX = (sw - ContentWidth) / 2
+	local padding = self.ContentPadding or 24
 
-	local titleKey = self.isVictory and "gameover.victory_title" or "gameover.title"
-	local fallbackTitle = self.isVictory and "Noodl's Grand Feast" or "Game Over"
-	local titleText = self.customTitle or getLocalizedOrFallback(titleKey, fallbackTitle)
+	local TitleKey = self.IsVictory and "gameover.victory_title" or "gameover.title"
+	local FallbackTitle = self.IsVictory and "Noodl's Grand Feast" or "Game Over"
+	local TitleText = self.CustomTitle or GetLocalizedOrFallback(TitleKey, FallbackTitle)
 
-	UI.drawLabel(titleText, 0, 48, sw, "center", {
-		font = fontTitle,
+	UI.DrawLabel(TitleText, 0, 48, sw, "center", {
+		font = FontTitle,
 		color = UI.colors.text,
 	})
 
-	drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
+	DrawCombinedPanel(self, ContentWidth, ContentX, padding, PanelY)
 
-	for _, btn in buttonList:iter() do
+	for _, btn in ButtonList:iter() do
 		if btn.textKey then
 			btn.text = Localization:get(btn.textKey)
 		end
 	end
 
-	buttonList:draw()
+	ButtonList:draw()
 end
 
 function GameOver:update(dt)
-	local anim = self.progressionAnimation
+	local anim = self.ProgressionAnimation
 	if not anim then
-		local layoutChanged = self:updateLayoutMetrics()
-		if layoutChanged then
-			self:updateButtonLayout()
+		local LayoutChanged = self:UpdateLayoutMetrics()
+		if LayoutChanged then
+			self:UpdateButtonLayout()
 		end
 		return
 	end
 
-	local targetTotal = anim.targetTotal or anim.displayedTotal or 0
-	local startTotal = 0
+	local TargetTotal = anim.targetTotal or anim.displayedTotal or 0
+	local StartTotal = 0
 	if self.progression and self.progression.start then
-		startTotal = self.progression.start.total or 0
+		StartTotal = self.progression.start.total or 0
 	end
 
-	local previousTotal = anim.displayedTotal or startTotal
-	local fruitPoints = math.max(0, anim.fruitPoints or 0)
-	local deliveredFruit = math.max(0, anim.fruitDelivered or 0)
-	local pendingFruit = math.max(0, anim.pendingFruitXp or 0)
-	local allowedTarget = targetTotal
+	local PreviousTotal = anim.displayedTotal or StartTotal
+	local FruitPoints = math.max(0, anim.fruitPoints or 0)
+	local DeliveredFruit = math.max(0, anim.fruitDelivered or 0)
+	local PendingFruit = math.max(0, anim.pendingFruitXp or 0)
+	local AllowedTarget = TargetTotal
 
-	if fruitPoints > 0 and deliveredFruit < fruitPoints then
-		local gatedTarget = startTotal + math.min(fruitPoints, deliveredFruit + pendingFruit)
-		allowedTarget = math.min(allowedTarget, gatedTarget)
+	if FruitPoints > 0 and DeliveredFruit < FruitPoints then
+		local GatedTarget = StartTotal + math.min(FruitPoints, DeliveredFruit + PendingFruit)
+		AllowedTarget = math.min(AllowedTarget, GatedTarget)
 	end
 
-	local newTotal = previousTotal
-	if previousTotal < allowedTarget then
-		local increment = math.min(anim.fillSpeed * dt, allowedTarget - previousTotal)
-		newTotal = previousTotal + increment
+	local NewTotal = PreviousTotal
+	if PreviousTotal < AllowedTarget then
+		local increment = math.min(anim.fillSpeed * dt, AllowedTarget - PreviousTotal)
+		NewTotal = PreviousTotal + increment
 
-		if fruitPoints > 0 and deliveredFruit < fruitPoints then
-			local newDelivered = math.min(fruitPoints, deliveredFruit + increment)
-			local used = newDelivered - deliveredFruit
-			anim.fruitDelivered = newDelivered
-			anim.pendingFruitXp = math.max(0, pendingFruit - used)
+		if FruitPoints > 0 and DeliveredFruit < FruitPoints then
+			local NewDelivered = math.min(FruitPoints, DeliveredFruit + increment)
+			local used = NewDelivered - DeliveredFruit
+			anim.fruitDelivered = NewDelivered
+			anim.pendingFruitXp = math.max(0, PendingFruit - used)
 		end
-	elseif previousTotal < targetTotal then
-		newTotal = math.min(targetTotal, previousTotal)
+	elseif PreviousTotal < TargetTotal then
+		NewTotal = math.min(TargetTotal, PreviousTotal)
 	else
-		newTotal = targetTotal
+		NewTotal = TargetTotal
 	end
 
-	anim.displayedTotal = newTotal
-	if newTotal >= targetTotal - 1e-6 then
-		anim.displayedTotal = targetTotal
+	anim.displayedTotal = NewTotal
+	if NewTotal >= TargetTotal - 1e-6 then
+		anim.displayedTotal = TargetTotal
 		anim.displayedGained = (self.progression and self.progression.gained) or 0
 		anim.pendingFruitXp = 0
-		anim.fruitDelivered = fruitPoints
+		anim.fruitDelivered = FruitPoints
 	else
-		anim.displayedGained = math.min((self.progression and self.progression.gained) or 0, newTotal - startTotal)
+		anim.displayedGained = math.min((self.progression and self.progression.gained) or 0, NewTotal - StartTotal)
 	end
 
-	local previousLevel = anim.displayedLevel or 1
-	local level, xpIntoLevel, xpForNext = MetaProgression:getProgressForTotal(anim.displayedTotal)
-        if level > previousLevel then
+	local PreviousLevel = anim.displayedLevel or 1
+	local level, XpIntoLevel, XpForNext = MetaProgression:GetProgressForTotal(anim.displayedTotal)
+        if level > PreviousLevel then
                 anim.levelPopDuration = anim.levelPopDuration or 0.65
                 anim.levelPopTimer = 0
-                for levelReached = previousLevel + 1, level do
+                for LevelReached = PreviousLevel + 1, level do
                         anim.levelFlash = 0.9
-			addCelebration(anim, {
+			AddCelebration(anim, {
 				type = "level",
-				title = Localization:get("gameover.meta_progress_level_up", { level = levelReached }),
+				title = Localization:get("gameover.meta_progress_level_up", { level = LevelReached }),
 				subtitle = Localization:get("gameover.meta_progress_level_up_subtitle"),
-				color = Theme.progressColor or { 1, 1, 1, 1 },
+				color = Theme.ProgressColor or { 1, 1, 1, 1 },
 				duration = 5.5,
 			})
-			Audio:playSound("goal_reached")
+			Audio:PlaySound("goal_reached")
 
-			local unlockList = anim.levelUnlocks[levelReached]
-			if unlockList then
-				for _, unlock in ipairs(unlockList) do
-					addCelebration(anim, {
+			local UnlockList = anim.levelUnlocks[LevelReached]
+			if UnlockList then
+				for _, unlock in ipairs(UnlockList) do
+					AddCelebration(anim, {
 						type = "unlock",
 						title = Localization:get("gameover.meta_progress_unlock_header", { name = unlock.name or "???" }),
 						subtitle = unlock.description or "",
-						color = Theme.achieveColor or { 1, 1, 1, 1 },
+						color = Theme.AchieveColor or { 1, 1, 1, 1 },
 						duration = 6,
 					})
 				end
@@ -1965,29 +1965,29 @@ function GameOver:update(dt)
 	end
 
 	anim.displayedLevel = level
-	anim.xpIntoLevel = xpIntoLevel
-	anim.xpForLevel = xpForNext
+	anim.xpIntoLevel = XpIntoLevel
+	anim.xpForLevel = XpForNext
 
-	local xpForLevel = anim.xpForLevel or 0
-	local targetPercent = 0
-	if xpForLevel > 0 then
-		targetPercent = clamp((anim.xpIntoLevel or 0) / xpForLevel, 0, 1)
+	local XpForLevel = anim.xpForLevel or 0
+	local TargetPercent = 0
+	if XpForLevel > 0 then
+		TargetPercent = clamp((anim.xpIntoLevel or 0) / XpForLevel, 0, 1)
 	end
 
-	local easeSpeed = anim.fillEaseSpeed or 9
-	if xpForLevel <= 0 then
+	local EaseSpeed = anim.fillEaseSpeed or 9
+	if XpForLevel <= 0 then
 		anim.visualProgress = math.max(0, (level - 1))
-		anim.visualPercent = targetPercent
+		anim.visualPercent = TargetPercent
 	else
-		local targetProgress = math.max(0, (level - 1) + targetPercent)
+		local TargetProgress = math.max(0, (level - 1) + TargetPercent)
 		if not anim.visualProgress then
-			local basePercent = anim.visualPercent or targetPercent
-			anim.visualProgress = math.max(0, (previousLevel - 1) + basePercent)
+			local BasePercent = anim.visualPercent or TargetPercent
+			anim.visualProgress = math.max(0, (PreviousLevel - 1) + BasePercent)
 		end
 
-		local currentProgress = anim.visualProgress or 0
-		targetProgress = math.max(targetProgress, currentProgress)
-		anim.visualProgress = approachExp(currentProgress, targetProgress, dt, easeSpeed)
+		local CurrentProgress = anim.visualProgress or 0
+		TargetProgress = math.max(TargetProgress, CurrentProgress)
+		anim.visualProgress = ApproachExp(CurrentProgress, TargetProgress, dt, EaseSpeed)
 
 		local loops = math.floor(math.max(0, anim.visualProgress))
 		local fraction = anim.visualProgress - loops
@@ -1998,10 +1998,10 @@ function GameOver:update(dt)
                 anim.levelFlash = math.max(0, anim.levelFlash - dt)
         end
 
-        local popDuration = anim.levelPopDuration or 0.65
-        if popDuration > 0 then
-                local timer = anim.levelPopTimer or popDuration
-                anim.levelPopTimer = math.min(popDuration, timer + dt)
+        local PopDuration = anim.levelPopDuration or 0.65
+        if PopDuration > 0 then
+                local timer = anim.levelPopTimer or PopDuration
+                anim.levelPopTimer = math.min(PopDuration, timer + dt)
         else
                 anim.levelPopTimer = 0
         end
@@ -2010,14 +2010,14 @@ function GameOver:update(dt)
 		for _, milestone in ipairs(anim.pendingMilestones) do
 			if not milestone.triggered and (anim.displayedTotal or 0) >= (milestone.threshold or 0) then
 				milestone.triggered = true
-				addCelebration(anim, {
+				AddCelebration(anim, {
 					type = "milestone",
 					title = Localization:get("gameover.meta_progress_milestone_header"),
 					subtitle = Localization:get("gameover.meta_progress_milestone", { threshold = milestone.threshold }),
-					color = Theme.achieveColor or { 1, 1, 1, 1 },
+					color = Theme.AchieveColor or { 1, 1, 1, 1 },
 					duration = 6.5,
 				})
-				Audio:playSound("achievement")
+				Audio:PlaySound("achievement")
 			end
 		end
 	end
@@ -2032,74 +2032,74 @@ function GameOver:update(dt)
 		end
 	end
 
-	updateFruitAnimations(anim, dt)
+	UpdateFruitAnimations(anim, dt)
 
 	if anim.barPulse then
 		anim.barPulse = math.max(0, anim.barPulse - dt * 2.4)
 	end
 
-	local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
-	local xpWidth = (self.xpLayout and self.xpLayout.width) or 0
-	if xpWidth <= 0 then
-		local innerWidth = self.innerContentWidth or 0
-		local sectionPadding = self.sectionPaddingValue or getSectionPadding()
-		xpWidth = math.max(0, innerWidth - sectionPadding * 2)
+	local CelebrationCount = (anim.celebrations and #anim.celebrations) or 0
+	local XpWidth = (self.XpLayout and self.XpLayout.width) or 0
+	if XpWidth <= 0 then
+		local InnerWidth = self.InnerContentWidth or 0
+		local SectionPadding = self.SectionPaddingValue or GetSectionPadding()
+		XpWidth = math.max(0, InnerWidth - SectionPadding * 2)
 	end
 
-	local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
-	local targetHeight = measureXpPanelHeight(self, xpWidth, celebrationCount)
-	self.baseXpSectionHeight = baseHeight
-	self.xpSectionHeight = self.xpSectionHeight or baseHeight
+	local BaseHeight = MeasureXpPanelHeight(self, XpWidth, 0)
+	local TargetHeight = MeasureXpPanelHeight(self, XpWidth, CelebrationCount)
+	self.BaseXpSectionHeight = BaseHeight
+	self.XpSectionHeight = self.XpSectionHeight or BaseHeight
 	local smoothing = math.min(dt * 6, 1)
-	self.xpSectionHeight = self.xpSectionHeight + (targetHeight - self.xpSectionHeight) * smoothing
+	self.XpSectionHeight = self.XpSectionHeight + (TargetHeight - self.XpSectionHeight) * smoothing
 
-	local layoutChanged = self:updateLayoutMetrics()
-	if layoutChanged then
-		self:updateButtonLayout()
+	local LayoutChanged = self:UpdateLayoutMetrics()
+	if LayoutChanged then
+		self:UpdateButtonLayout()
 	end
 end
 
 function GameOver:mousepressed(x, y, button)
-	buttonList:mousepressed(x, y, button)
+	ButtonList:mousepressed(x, y, button)
 end
 
 function GameOver:mousereleased(x, y, button)
-	local action = buttonList:mousereleased(x, y, button)
-	return handleButtonAction(self, action)
+	local action = ButtonList:mousereleased(x, y, button)
+	return HandleButtonAction(self, action)
 end
 
 function GameOver:keypressed(key)
 	if key == "up" or key == "left" then
-		buttonList:moveFocus(-1)
+		ButtonList:moveFocus(-1)
 	elseif key == "down" or key == "right" then
-		buttonList:moveFocus(1)
+		ButtonList:moveFocus(1)
 	elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
-		local action = buttonList:activateFocused()
-		local resolved = handleButtonAction(self, action)
+		local action = ButtonList:activateFocused()
+		local resolved = HandleButtonAction(self, action)
 		if resolved then
-			Audio:playSound("click")
+			Audio:PlaySound("click")
 		end
 		return resolved
 	elseif key == "escape" or key == "backspace" then
-		Audio:playSound("click")
+		Audio:PlaySound("click")
 		return "menu"
 	end
 end
 
 function GameOver:gamepadpressed(_, button)
 	if button == "dpup" or button == "dpleft" then
-		buttonList:moveFocus(-1)
+		ButtonList:moveFocus(-1)
 	elseif button == "dpdown" or button == "dpright" then
-		buttonList:moveFocus(1)
+		ButtonList:moveFocus(1)
 	elseif button == "a" or button == "start" then
-		local action = buttonList:activateFocused()
-		local resolved = handleButtonAction(self, action)
+		local action = ButtonList:activateFocused()
+		local resolved = HandleButtonAction(self, action)
 		if resolved then
-			Audio:playSound("click")
+			Audio:PlaySound("click")
 		end
 		return resolved
 	elseif button == "b" then
-		Audio:playSound("click")
+		Audio:PlaySound("click")
 		return "menu"
 	end
 end
@@ -2107,7 +2107,7 @@ end
 GameOver.joystickpressed = GameOver.gamepadpressed
 
 function GameOver:gamepadaxis(_, axis, value)
-	handleAnalogAxis(axis, value)
+	HandleAnalogAxis(axis, value)
 end
 
 GameOver.joystickaxis = GameOver.gamepadaxis

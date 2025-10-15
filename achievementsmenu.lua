@@ -12,13 +12,13 @@ local Shaders = require("shaders")
 local SnakeCosmetics = require("snakecosmetics")
 
 local AchievementsMenu = {
-	transitionDuration = 0.45,
+	TransitionDuration = 0.45,
 }
 
-local buttonList = ButtonList.new()
-local iconCache = {}
-local displayBlocks = {}
-local achievementRewardText = {}
+local ButtonList = ButtonList.new()
+local IconCache = {}
+local DisplayBlocks = {}
+local AchievementRewardText = {}
 
 local START_Y = 180
 local SUMMARY_SPACING_TEXT_PROGRESS = 32
@@ -44,92 +44,92 @@ local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
 local ANALOG_DEADZONE = 0.35
 
-local scrollOffset = 0
-local minScrollOffset = 0
-local viewportHeight = 0
-local contentHeight = 0
+local ScrollOffset = 0
+local MinScrollOffset = 0
+local ViewportHeight = 0
+local ContentHeight = 0
 local DPAD_SCROLL_AMOUNT = CARD_SPACING
 
-local heldDpadButton = nil
-local heldDpadAction = nil
-local heldDpadTimer = 0
-local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local HeldDpadButton = nil
+local HeldDpadAction = nil
+local HeldDpadTimer = 0
+local HeldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+local AnalogAxisDirections = { horizontal = nil, vertical = nil }
 
-local BACKGROUND_EFFECT_TYPE = "achievementRadiance"
-local backgroundEffectCache = {}
-local backgroundEffect = nil
+local BACKGROUND_EFFECT_TYPE = "AchievementRadiance"
+local BackgroundEffectCache = {}
+local BackgroundEffect = nil
 
-local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+local function ConfigureBackgroundEffect()
+	local effect = Shaders.ensure(BackgroundEffectCache, BACKGROUND_EFFECT_TYPE)
 	if not effect then
-		backgroundEffect = nil
+		BackgroundEffect = nil
 		return
 	end
 
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.56
+	local DefaultBackdrop = select(1, Shaders.GetDefaultIntensities(effect))
+	effect.backdropIntensity = DefaultBackdrop or effect.backdropIntensity or 0.56
 
 	Shaders.configure(effect, {
-		bgColor = Theme.bgColor,
-		accentColor = Theme.achieveColor,
-		sparkleColor = Theme.accentTextColor,
+		BgColor = Theme.BgColor,
+		AccentColor = Theme.AchieveColor,
+		SparkleColor = Theme.AccentTextColor,
 	})
 
-	backgroundEffect = effect
+	BackgroundEffect = effect
 end
 
-local function drawBackground(sw, sh)
-	love.graphics.setColor(Theme.bgColor)
+local function DrawBackground(sw, sh)
+	love.graphics.setColor(Theme.BgColor)
 	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-	if not backgroundEffect then
-		configureBackgroundEffect()
+	if not BackgroundEffect then
+		ConfigureBackgroundEffect()
 	end
 
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
+	if BackgroundEffect then
+		local intensity = BackgroundEffect.backdropIntensity or select(1, Shaders.GetDefaultIntensities(BackgroundEffect))
+		Shaders.draw(BackgroundEffect, 0, 0, sw, sh, intensity)
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function resetHeldDpad()
-	heldDpadButton = nil
-	heldDpadAction = nil
-	heldDpadTimer = 0
-	heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+local function ResetHeldDpad()
+	HeldDpadButton = nil
+	HeldDpadAction = nil
+	HeldDpadTimer = 0
+	HeldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 end
 
-local function startHeldDpad(button, action)
-	heldDpadButton = button
-	heldDpadAction = action
-	heldDpadTimer = 0
-	heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
+local function StartHeldDpad(button, action)
+	HeldDpadButton = button
+	HeldDpadAction = action
+	HeldDpadTimer = 0
+	HeldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 end
 
-local function stopHeldDpad(button)
-	if heldDpadButton ~= button then
+local function StopHeldDpad(button)
+	if HeldDpadButton ~= button then
 		return
 	end
 
-	resetHeldDpad()
+	ResetHeldDpad()
 end
 
-local function updateHeldDpad(dt)
-	if not heldDpadAction then
+local function UpdateHeldDpad(dt)
+	if not HeldDpadAction then
 		return
 	end
 
-	heldDpadTimer = heldDpadTimer + dt
+	HeldDpadTimer = HeldDpadTimer + dt
 
-	local interval = heldDpadInterval
-	while heldDpadTimer >= interval do
-		heldDpadTimer = heldDpadTimer - interval
-		heldDpadAction()
-		heldDpadInterval = DPAD_REPEAT_INTERVAL
-		interval = heldDpadInterval
+	local interval = HeldDpadInterval
+	while HeldDpadTimer >= interval do
+		HeldDpadTimer = HeldDpadTimer - interval
+		HeldDpadAction()
+		HeldDpadInterval = DPAD_REPEAT_INTERVAL
+		interval = HeldDpadInterval
 		if interval <= 0 then
 			break
 		end
@@ -145,7 +145,7 @@ local function clamp01(value)
 	return value
 end
 
-local function lightenColor(color, amount)
+local function LightenColor(color, amount)
 	if not color then
 		return {1, 1, 1, 1}
 	end
@@ -164,7 +164,7 @@ local function lightenColor(color, amount)
 	}
 end
 
-local function darkenColor(color, amount)
+local function DarkenColor(color, amount)
 	if not color then
 		return {0, 0, 0, 1}
 	end
@@ -181,7 +181,7 @@ local function darkenColor(color, amount)
 	}
 end
 
-local function withAlpha(color, alpha)
+local function WithAlpha(color, alpha)
 	if not color then
 		return {1, 1, 1, alpha or 1}
 	end
@@ -194,7 +194,7 @@ local function withAlpha(color, alpha)
 	}
 end
 
-local function joinWithConjunction(items)
+local function JoinWithConjunction(items)
 	local count = #items
 	if count == 0 then
 		return ""
@@ -221,7 +221,7 @@ local function joinWithConjunction(items)
 	return string.format("%s, %s %s", table.concat(buffer, ", "), conj, items[count])
 end
 
-local function formatAchievementRewards(rewards)
+local function FormatAchievementRewards(rewards)
 	local formatted = {}
 	for _, reward in ipairs(rewards or {}) do
 		if reward.type == "cosmetic" then
@@ -241,23 +241,23 @@ local function formatAchievementRewards(rewards)
 		return nil
 	end
 
-	local headingKey = (#formatted > 1) and "achievements.rewards.multiple" or "achievements.rewards.single"
-	local heading = Localization:get(headingKey)
-	if heading == headingKey then
+	local HeadingKey = (#formatted > 1) and "achievements.rewards.multiple" or "achievements.rewards.single"
+	local heading = Localization:get(HeadingKey)
+	if heading == HeadingKey then
 		heading = (#formatted > 1) and "Rewards" or "Reward"
 	end
 
-	return string.format("%s: %s", heading, joinWithConjunction(formatted))
+	return string.format("%s: %s", heading, JoinWithConjunction(formatted))
 end
 
-local function rebuildAchievementRewards()
-	achievementRewardText = {}
+local function RebuildAchievementRewards()
+	AchievementRewardText = {}
 
-	if not SnakeCosmetics or not SnakeCosmetics.getSkins then
+	if not SnakeCosmetics or not SnakeCosmetics.GetSkins then
 		return
 	end
 
-	local ok, skins = pcall(SnakeCosmetics.getSkins, SnakeCosmetics)
+	local ok, skins = pcall(SnakeCosmetics.GetSkins, SnakeCosmetics)
 	if not ok then
 		print("[achievementsmenu] failed to query cosmetics:", skins)
 		return
@@ -277,179 +277,179 @@ local function rebuildAchievementRewards()
 	end
 
 	for id, rewards in pairs(grouped) do
-		local label = formatAchievementRewards(rewards)
+		local label = FormatAchievementRewards(rewards)
 		if label then
-			achievementRewardText[id] = label
+			AchievementRewardText[id] = label
 		end
 	end
 end
 
-local function getAchievementRewardLabel(achievement)
+local function GetAchievementRewardLabel(achievement)
 	if not achievement then
 		return nil
 	end
 
-	return achievementRewardText[achievement.id]
+	return AchievementRewardText[achievement.id]
 end
 
-local function toPercent(value)
+local function ToPercent(value)
 	value = clamp01(value or 0)
 	return math.floor(value * 100 + 0.5)
 end
 
-local function buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
-	local segmentSize = SnakeUtils.SEGMENT_SIZE
-	local halfSegment = segmentSize * 0.5
-	local trackCenterX = trackX + trackWidth * 0.5
-	local trackTop = trackY + halfSegment
-	local trackBottom = trackY + trackHeight - halfSegment
-	local topY = math.max(trackTop, math.min(trackBottom, thumbY + halfSegment))
-	local bottomY = math.min(trackBottom, math.max(trackTop, thumbY + thumbHeight - halfSegment))
+local function BuildThumbSnakeTrail(TrackX, TrackY, TrackWidth, TrackHeight, ThumbY, ThumbHeight)
+	local SegmentSize = SnakeUtils.SEGMENT_SIZE
+	local HalfSegment = SegmentSize * 0.5
+	local TrackCenterX = TrackX + TrackWidth * 0.5
+	local TrackTop = TrackY + HalfSegment
+	local TrackBottom = TrackY + TrackHeight - HalfSegment
+	local TopY = math.max(TrackTop, math.min(TrackBottom, ThumbY + HalfSegment))
+	local BottomY = math.min(TrackBottom, math.max(TrackTop, ThumbY + ThumbHeight - HalfSegment))
 
-	if bottomY < topY then
-		local midpoint = (topY + bottomY) * 0.5
-		bottomY = midpoint
-		topY = midpoint
+	if BottomY < TopY then
+		local midpoint = (TopY + BottomY) * 0.5
+		BottomY = midpoint
+		TopY = midpoint
 	end
 
 	local trail = {}
-	trail[#trail + 1] = { x = trackCenterX, y = bottomY }
+	trail[#trail + 1] = { x = TrackCenterX, y = BottomY }
 
-	local spacing = SnakeUtils.SEGMENT_SPACING or segmentSize
-	local y = bottomY - spacing
-	while y > topY do
-		trail[#trail + 1] = { x = trackCenterX, y = y }
+	local spacing = SnakeUtils.SEGMENT_SPACING or SegmentSize
+	local y = BottomY - spacing
+	while y > TopY do
+		trail[#trail + 1] = { x = TrackCenterX, y = y }
 		y = y - spacing
 	end
 
-	trail[#trail + 1] = { x = trackCenterX, y = topY }
+	trail[#trail + 1] = { x = TrackCenterX, y = TopY }
 
-	return trail, segmentSize
+	return trail, SegmentSize
 end
 
-local function computeLayout(sw, sh)
+local function ComputeLayout(sw, sh)
 	local layout = {}
 
-	local edgeMarginX = math.max(32, sw * 0.05)
-	local basePanelWidth = CARD_WIDTH + BASE_PANEL_PADDING_X * 2
-	local availableWidth = sw - edgeMarginX * 2
-	local fallbackWidth = sw * 0.9
-	local targetWidth = math.max(availableWidth, fallbackWidth)
-	targetWidth = math.min(targetWidth, sw - 24)
-	local maxPanelWidth = math.max(0, math.min(basePanelWidth, targetWidth))
-	local widthScale
-	if maxPanelWidth <= 0 then
-		widthScale = 1
+	local EdgeMarginX = math.max(32, sw * 0.05)
+	local BasePanelWidth = CARD_WIDTH + BASE_PANEL_PADDING_X * 2
+	local AvailableWidth = sw - EdgeMarginX * 2
+	local FallbackWidth = sw * 0.9
+	local TargetWidth = math.max(AvailableWidth, FallbackWidth)
+	TargetWidth = math.min(TargetWidth, sw - 24)
+	local MaxPanelWidth = math.max(0, math.min(BasePanelWidth, TargetWidth))
+	local WidthScale
+	if MaxPanelWidth <= 0 then
+		WidthScale = 1
 	else
-		widthScale = math.min(1, maxPanelWidth / basePanelWidth)
+		WidthScale = math.min(1, MaxPanelWidth / BasePanelWidth)
 	end
 
-	layout.widthScale = widthScale
-	layout.cardWidth = CARD_WIDTH * widthScale
-	layout.panelPaddingX = BASE_PANEL_PADDING_X * widthScale
-	layout.panelWidth = basePanelWidth * widthScale
+	layout.widthScale = WidthScale
+	layout.cardWidth = CARD_WIDTH * WidthScale
+	layout.panelPaddingX = BASE_PANEL_PADDING_X * WidthScale
+	layout.panelWidth = BasePanelWidth * WidthScale
 
-	local panelPaddingX = layout.panelPaddingX
-	local scrollbarGap = math.max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
-	local maxTotalWidth = sw - 24
-	local totalWidth = layout.panelWidth + scrollbarGap + SCROLLBAR_TRACK_WIDTH
-	if totalWidth > maxTotalWidth and basePanelWidth > 0 then
-		local availableForPanel = math.max(0, maxTotalWidth - scrollbarGap - SCROLLBAR_TRACK_WIDTH)
-		if availableForPanel < layout.panelWidth then
-			local adjustedScale = availableForPanel / basePanelWidth
-			if adjustedScale < widthScale then
-				widthScale = math.max(0.5, adjustedScale)
-				layout.widthScale = widthScale
-				layout.cardWidth = CARD_WIDTH * widthScale
-				layout.panelPaddingX = BASE_PANEL_PADDING_X * widthScale
-				layout.panelWidth = basePanelWidth * widthScale
-				panelPaddingX = layout.panelPaddingX
-				scrollbarGap = math.max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
-				totalWidth = layout.panelWidth + scrollbarGap + SCROLLBAR_TRACK_WIDTH
+	local PanelPaddingX = layout.panelPaddingX
+	local ScrollbarGap = math.max(MIN_SCROLLBAR_INSET, PanelPaddingX * 0.5)
+	local MaxTotalWidth = sw - 24
+	local TotalWidth = layout.panelWidth + ScrollbarGap + SCROLLBAR_TRACK_WIDTH
+	if TotalWidth > MaxTotalWidth and BasePanelWidth > 0 then
+		local AvailableForPanel = math.max(0, MaxTotalWidth - ScrollbarGap - SCROLLBAR_TRACK_WIDTH)
+		if AvailableForPanel < layout.panelWidth then
+			local AdjustedScale = AvailableForPanel / BasePanelWidth
+			if AdjustedScale < WidthScale then
+				WidthScale = math.max(0.5, AdjustedScale)
+				layout.widthScale = WidthScale
+				layout.cardWidth = CARD_WIDTH * WidthScale
+				layout.panelPaddingX = BASE_PANEL_PADDING_X * WidthScale
+				layout.panelWidth = BasePanelWidth * WidthScale
+				PanelPaddingX = layout.panelPaddingX
+				ScrollbarGap = math.max(MIN_SCROLLBAR_INSET, PanelPaddingX * 0.5)
+				TotalWidth = layout.panelWidth + ScrollbarGap + SCROLLBAR_TRACK_WIDTH
 			end
 		end
 	end
 
-	local panelX = (sw - totalWidth) * 0.5
-	local maxPanelX = sw - totalWidth - 12
-	panelX = math.max(12, math.min(panelX, maxPanelX))
-	layout.panelX = panelX
-	layout.listX = panelX + panelPaddingX
+	local PanelX = (sw - TotalWidth) * 0.5
+	local MaxPanelX = sw - TotalWidth - 12
+	PanelX = math.max(12, math.min(PanelX, MaxPanelX))
+	layout.panelX = PanelX
+	layout.listX = PanelX + PanelPaddingX
 
-	local titleFont = UI.fonts.title
-	local titleFontHeight = titleFont:getHeight()
-	local titleY = math.max(60, math.min(90, sh * 0.08))
-	layout.titleY = titleY
+	local TitleFont = UI.fonts.title
+	local TitleFontHeight = TitleFont:getHeight()
+	local TitleY = math.max(60, math.min(90, sh * 0.08))
+	layout.titleY = TitleY
 
-	local topSpacing = math.max(28, sh * 0.045)
-	local desiredPanelTop = titleY + titleFontHeight + topSpacing
-	local containerTop = math.max(96, math.min(START_Y, desiredPanelTop))
+	local TopSpacing = math.max(28, sh * 0.045)
+	local DesiredPanelTop = TitleY + TitleFontHeight + TopSpacing
+	local ContainerTop = math.max(96, math.min(START_Y, DesiredPanelTop))
 
 	layout.panelPaddingY = BASE_PANEL_PADDING_Y
 
-	local panelPaddingY = layout.panelPaddingY
-	local summaryInsetX = math.max(28, panelPaddingX)
-	layout.summaryInsetX = summaryInsetX
+	local PanelPaddingY = layout.panelPaddingY
+	local SummaryInsetX = math.max(28, PanelPaddingX)
+	layout.summaryInsetX = SummaryInsetX
 
-	local summaryVerticalPadding = math.max(SUMMARY_PANEL_TOP_PADDING_MIN, panelPaddingY * 0.35)
-	local summaryTopPadding = summaryVerticalPadding
-	local summaryBottomPadding = math.max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, summaryVerticalPadding)
+	local SummaryVerticalPadding = math.max(SUMMARY_PANEL_TOP_PADDING_MIN, PanelPaddingY * 0.35)
+	local SummaryTopPadding = SummaryVerticalPadding
+	local SummaryBottomPadding = math.max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, SummaryVerticalPadding)
 
-	local summaryPanel = {
-		x = panelX,
-		y = containerTop,
+	local SummaryPanel = {
+		x = PanelX,
+		y = ContainerTop,
 		width = layout.panelWidth,
-		topPadding = summaryTopPadding,
-		bottomPadding = summaryBottomPadding,
+		TopPadding = SummaryTopPadding,
+		BottomPadding = SummaryBottomPadding,
 	}
 
-	local progressHeight = SUMMARY_PROGRESS_BAR_HEIGHT
-	local summaryLineHeight = UI.fonts.achieve:getHeight()
-	local summaryProgressSpacing = SUMMARY_SPACING_TEXT_PROGRESS
+	local ProgressHeight = SUMMARY_PROGRESS_BAR_HEIGHT
+	local SummaryLineHeight = UI.fonts.achieve:GetHeight()
+	local SummaryProgressSpacing = SUMMARY_SPACING_TEXT_PROGRESS
 
-	layout.summaryLineHeight = summaryLineHeight
-	layout.summaryProgressHeight = progressHeight
+	layout.summaryLineHeight = SummaryLineHeight
+	layout.summaryProgressHeight = ProgressHeight
 
-	local summaryContentHeight = summaryLineHeight + summaryProgressSpacing + progressHeight
-	local summaryHeight = summaryTopPadding + summaryContentHeight + summaryBottomPadding
+	local SummaryContentHeight = SummaryLineHeight + SummaryProgressSpacing + ProgressHeight
+	local SummaryHeight = SummaryTopPadding + SummaryContentHeight + SummaryBottomPadding
 
-	summaryPanel.height = summaryHeight
-	layout.summaryPanel = summaryPanel
+	SummaryPanel.height = SummaryHeight
+	layout.summaryPanel = SummaryPanel
 
-	layout.summaryTextX = panelX + summaryInsetX
-	layout.summaryTextWidth = layout.panelWidth - summaryInsetX * 2
-	layout.summaryTextY = summaryPanel.y + summaryTopPadding
-	layout.summaryProgressY = layout.summaryTextY + summaryLineHeight + summaryProgressSpacing
+	layout.summaryTextX = PanelX + SummaryInsetX
+	layout.summaryTextWidth = layout.panelWidth - SummaryInsetX * 2
+	layout.summaryTextY = SummaryPanel.y + SummaryTopPadding
+	layout.summaryProgressY = layout.summaryTextY + SummaryLineHeight + SummaryProgressSpacing
 
-	local highlightInsetX = math.max(SUMMARY_HIGHLIGHT_INSET, summaryInsetX * 0.6)
-	local highlightInsetY = math.max(SUMMARY_HIGHLIGHT_INSET, math.min(summaryTopPadding, summaryBottomPadding) * 0.75)
-	layout.summaryHighlightInset = { x = highlightInsetX, y = highlightInsetY }
+	local HighlightInsetX = math.max(SUMMARY_HIGHLIGHT_INSET, SummaryInsetX * 0.6)
+	local HighlightInsetY = math.max(SUMMARY_HIGHLIGHT_INSET, math.min(SummaryTopPadding, SummaryBottomPadding) * 0.75)
+	layout.summaryHighlightInset = { x = HighlightInsetX, y = HighlightInsetY }
 
-	local titleClearance = titleY + titleFontHeight + math.max(24, sh * 0.03)
-	local summaryTop = summaryPanel.y - summaryTopPadding
-	if summaryTop < titleClearance then
-		local adjustment = titleClearance - summaryTop
-		summaryPanel.y = summaryPanel.y + adjustment
+	local TitleClearance = TitleY + TitleFontHeight + math.max(24, sh * 0.03)
+	local SummaryTop = SummaryPanel.y - SummaryTopPadding
+	if SummaryTop < TitleClearance then
+		local adjustment = TitleClearance - SummaryTop
+		SummaryPanel.y = SummaryPanel.y + adjustment
 		layout.summaryTextY = layout.summaryTextY + adjustment
 		layout.summaryProgressY = layout.summaryProgressY + adjustment
 	end
 
-	local panelGap = math.max(SUMMARY_PANEL_GAP_MIN, panelPaddingY * 0.35)
-	layout.panelGap = panelGap
+	local PanelGap = math.max(SUMMARY_PANEL_GAP_MIN, PanelPaddingY * 0.35)
+	layout.panelGap = PanelGap
 
-	local listPanelY = summaryPanel.y + summaryPanel.height + panelGap
-	layout.panelY = listPanelY
+	local ListPanelY = SummaryPanel.y + SummaryPanel.height + PanelGap
+	layout.panelY = ListPanelY
 
-	local footerReserve = (UI.spacing.buttonHeight or 0) + (UI.spacing.buttonSpacing or 0) + ((UI.scaled and UI.scaled(48, 32)) or 48)
-	local bottomMargin = math.max(80, math.min(120, sh * 0.16))
-	bottomMargin = math.max(bottomMargin, footerReserve)
-	layout.bottomMargin = bottomMargin
+	local FooterReserve = (UI.spacing.ButtonHeight or 0) + (UI.spacing.ButtonSpacing or 0) + ((UI.scaled and UI.scaled(48, 32)) or 48)
+	local BottomMargin = math.max(80, math.min(120, sh * 0.16))
+	BottomMargin = math.max(BottomMargin, FooterReserve)
+	layout.bottomMargin = BottomMargin
 
-	layout.viewportBottom = sh - bottomMargin
-	layout.startY = listPanelY + panelPaddingY
+	layout.viewportBottom = sh - BottomMargin
+	layout.startY = ListPanelY + PanelPaddingY
 	layout.viewportHeight = math.max(0, layout.viewportBottom - layout.startY)
 
-	layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
+	layout.panelHeight = layout.viewportHeight + PanelPaddingY * 2
 	layout.scissorTop = math.max(0, layout.startY - SCROLL_SCISSOR_TOP_PADDING)
 	layout.scissorBottom = layout.viewportBottom
 	layout.scissorHeight = math.max(0, layout.scissorBottom - layout.scissorTop)
@@ -457,98 +457,98 @@ local function computeLayout(sw, sh)
 	return layout
 end
 
-local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered)
-	local trail, segmentSize = buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
+local function DrawThumbSnake(TrackX, TrackY, TrackWidth, TrackHeight, ThumbY, ThumbHeight, IsHovered, IsThumbHovered)
+	local trail, SegmentSize = BuildThumbSnakeTrail(TrackX, TrackY, TrackWidth, TrackHeight, ThumbY, ThumbHeight)
 	if #trail < 2 then
 		return
 	end
 
-	local snakeR, snakeG, snakeB = unpack(Theme.snakeDefault)
-	local highlightColor = Theme.highlightColor or {1, 1, 1, 0.1}
-	local trackBase = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-	local trackColor = lightenColor(trackBase, isHovered and 0.45 or 0.35)
-	local trackAlpha = (trackColor[4] or 1) * (isHovered and 0.75 or 0.55)
+	local SnakeR, SnakeG, SnakeB = unpack(Theme.SnakeDefault)
+	local HighlightColor = Theme.HighlightColor or {1, 1, 1, 0.1}
+	local TrackBase = Theme.PanelColor or {0.18, 0.18, 0.22, 0.9}
+	local TrackColor = LightenColor(TrackBase, IsHovered and 0.45 or 0.35)
+	local TrackAlpha = (TrackColor[4] or 1) * (IsHovered and 0.75 or 0.55)
 
 	love.graphics.push("all")
 
-	local trackRadius = math.max(8, segmentSize * 0.55)
-	love.graphics.setColor(trackColor[1], trackColor[2], trackColor[3], trackAlpha)
-	love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
+	local TrackRadius = math.max(8, SegmentSize * 0.55)
+	love.graphics.setColor(TrackColor[1], TrackColor[2], TrackColor[3], TrackAlpha)
+	love.graphics.rectangle("fill", TrackX, TrackY, TrackWidth, TrackHeight, TrackRadius)
 
-	local trackOutline = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
-	local outlineAlpha = (trackOutline[4] or 1) * (isHovered and 0.9 or 0.55)
-	love.graphics.setColor(trackOutline[1], trackOutline[2], trackOutline[3], outlineAlpha)
+	local TrackOutline = Theme.PanelBorder or Theme.BorderColor or {0.5, 0.6, 0.75, 1}
+	local OutlineAlpha = (TrackOutline[4] or 1) * (IsHovered and 0.9 or 0.55)
+	love.graphics.setColor(TrackOutline[1], TrackOutline[2], TrackOutline[3], OutlineAlpha)
 	love.graphics.setLineWidth(2)
-	love.graphics.rectangle("line", trackX, trackY, trackWidth, trackHeight, trackRadius)
+	love.graphics.rectangle("line", TrackX, TrackY, TrackWidth, TrackHeight, TrackRadius)
 
-	local thumbHighlight = highlightColor
-	if isThumbHovered then
-		thumbHighlight = lightenColor(highlightColor, 0.35)
-	elseif isHovered then
-		thumbHighlight = lightenColor(highlightColor, 0.18)
+	local ThumbHighlight = HighlightColor
+	if IsThumbHovered then
+		ThumbHighlight = LightenColor(HighlightColor, 0.35)
+	elseif IsHovered then
+		ThumbHighlight = LightenColor(HighlightColor, 0.18)
 	end
 
-	local hr = thumbHighlight[1] or snakeR
-	local hg = thumbHighlight[2] or snakeG
-	local hb = thumbHighlight[3] or snakeB
-	local ha = thumbHighlight[4] or 0.12
-	if isThumbHovered then
+	local hr = ThumbHighlight[1] or SnakeR
+	local hg = ThumbHighlight[2] or SnakeG
+	local hb = ThumbHighlight[3] or SnakeB
+	local ha = ThumbHighlight[4] or 0.12
+	if IsThumbHovered then
 		ha = math.min(1, ha + 0.28)
-	elseif isHovered then
+	elseif IsHovered then
 		ha = math.min(1, ha + 0.15)
 	end
 
-	local highlightInsetX = math.max(4, (trackWidth - segmentSize) * 0.35)
-	local highlightInsetY = math.max(6, segmentSize * 0.45)
-	local highlightX = trackX + highlightInsetX
-	local highlightY = thumbY + highlightInsetY
-	local highlightW = math.max(0, trackWidth - highlightInsetX * 2)
-	local highlightH = math.max(0, thumbHeight - highlightInsetY * 2)
+	local HighlightInsetX = math.max(4, (TrackWidth - SegmentSize) * 0.35)
+	local HighlightInsetY = math.max(6, SegmentSize * 0.45)
+	local HighlightX = TrackX + HighlightInsetX
+	local HighlightY = ThumbY + HighlightInsetY
+	local HighlightW = math.max(0, TrackWidth - HighlightInsetX * 2)
+	local HighlightH = math.max(0, ThumbHeight - HighlightInsetY * 2)
 	love.graphics.setColor(hr, hg, hb, ha)
-	love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, segmentSize * 0.45)
+	love.graphics.rectangle("fill", HighlightX, HighlightY, HighlightW, HighlightH, SegmentSize * 0.45)
 
-	local outlinePad = math.max(10, segmentSize)
-	local scissorX = trackX - outlinePad
-	local scissorY = trackY - outlinePad
-	local scissorW = trackWidth + outlinePad * 2
-	local scissorH = trackHeight + outlinePad * 2
-	love.graphics.setScissor(scissorX, scissorY, scissorW, scissorH)
+	local OutlinePad = math.max(10, SegmentSize)
+	local ScissorX = TrackX - OutlinePad
+	local ScissorY = TrackY - OutlinePad
+	local ScissorW = TrackWidth + OutlinePad * 2
+	local ScissorH = TrackHeight + OutlinePad * 2
+	love.graphics.setScissor(ScissorX, ScissorY, ScissorW, ScissorH)
 
 	love.graphics.setColor(1, 1, 1, 1)
-	SnakeDraw.run(trail, #trail, segmentSize, nil, nil, nil, nil, nil)
+	SnakeDraw.run(trail, #trail, SegmentSize, nil, nil, nil, nil, nil)
 
 	local head = trail[#trail]
 	if head then
-		local headRadius = segmentSize * 0.32
-		local eyeOffset = headRadius * 0.55
-		local eyeRadius = math.max(1, headRadius * 0.22)
+		local HeadRadius = SegmentSize * 0.32
+		local EyeOffset = HeadRadius * 0.55
+		local EyeRadius = math.max(1, HeadRadius * 0.22)
 
 		love.graphics.setColor(1, 1, 1, 0.9)
-		love.graphics.circle("fill", head.x - eyeOffset, head.y - eyeRadius * 0.4, eyeRadius)
-		love.graphics.circle("fill", head.x + eyeOffset, head.y - eyeRadius * 0.4, eyeRadius)
+		love.graphics.circle("fill", head.x - EyeOffset, head.y - EyeRadius * 0.4, EyeRadius)
+		love.graphics.circle("fill", head.x + EyeOffset, head.y - EyeRadius * 0.4, EyeRadius)
 
 		love.graphics.setColor(0.05, 0.05, 0.05, 0.85)
-		love.graphics.circle("fill", head.x - eyeOffset, head.y - eyeRadius * 0.3, eyeRadius * 0.45)
-		love.graphics.circle("fill", head.x + eyeOffset, head.y - eyeRadius * 0.3, eyeRadius * 0.45)
+		love.graphics.circle("fill", head.x - EyeOffset, head.y - EyeRadius * 0.3, EyeRadius * 0.45)
+		love.graphics.circle("fill", head.x + EyeOffset, head.y - EyeRadius * 0.3, EyeRadius * 0.45)
 	end
 
 	love.graphics.setScissor()
 	love.graphics.pop()
 end
 
-local function updateScrollBounds(sw, sh, layout)
-	layout = layout or computeLayout(sw, sh)
+local function UpdateScrollBounds(sw, sh, layout)
+	layout = layout or ComputeLayout(sw, sh)
 
-	viewportHeight = layout.viewportHeight
+	ViewportHeight = layout.viewportHeight
 
 	local y = layout.startY
-	local maxBottom = layout.startY
+	local MaxBottom = layout.startY
 
-	if displayBlocks then
-		for _, block in ipairs(displayBlocks) do
+	if DisplayBlocks then
+		for _, block in ipairs(DisplayBlocks) do
 			if block.achievements then
 				for _ in ipairs(block.achievements) do
-					maxBottom = math.max(maxBottom, y + CARD_HEIGHT)
+					MaxBottom = math.max(MaxBottom, y + CARD_HEIGHT)
 					y = y + CARD_SPACING
 				end
 			end
@@ -556,68 +556,68 @@ local function updateScrollBounds(sw, sh, layout)
 		end
 	end
 
-	contentHeight = math.max(0, maxBottom - layout.startY)
-	minScrollOffset = math.min(0, viewportHeight - contentHeight)
+	ContentHeight = math.max(0, MaxBottom - layout.startY)
+	MinScrollOffset = math.min(0, ViewportHeight - ContentHeight)
 
-	if scrollOffset < minScrollOffset then
-		scrollOffset = minScrollOffset
-	elseif scrollOffset > 0 then
-		scrollOffset = 0
+	if ScrollOffset < MinScrollOffset then
+		ScrollOffset = MinScrollOffset
+	elseif ScrollOffset > 0 then
+		ScrollOffset = 0
 	end
 
 	return layout
 end
 
-local function scrollBy(amount)
+local function ScrollBy(amount)
 	if amount == 0 then
 		return
 	end
 
-	scrollOffset = scrollOffset + amount
+	ScrollOffset = ScrollOffset + amount
 
 	local sw, sh = Screen:get()
-	updateScrollBounds(sw, sh)
+	UpdateScrollBounds(sw, sh)
 end
 
-local function dpadScrollUp()
-	scrollBy(DPAD_SCROLL_AMOUNT)
-	buttonList:moveFocus(-1)
+local function DpadScrollUp()
+	ScrollBy(DPAD_SCROLL_AMOUNT)
+	ButtonList:moveFocus(-1)
 end
 
-local function dpadScrollDown()
-	scrollBy(-DPAD_SCROLL_AMOUNT)
-	buttonList:moveFocus(1)
+local function DpadScrollDown()
+	ScrollBy(-DPAD_SCROLL_AMOUNT)
+	ButtonList:moveFocus(1)
 end
 
-local analogDirections = {
-	dpup = { id = "analog_dpup", repeatable = true, action = dpadScrollUp },
-	dpdown = { id = "analog_dpdown", repeatable = true, action = dpadScrollDown },
+local AnalogDirections = {
+	dpup = { id = "analog_dpup", repeatable = true, action = DpadScrollUp },
+	dpdown = { id = "analog_dpdown", repeatable = true, action = DpadScrollDown },
 	dpleft = {
 		id = "analog_dpleft",
 		repeatable = false,
 		action = function()
-			buttonList:moveFocus(-1)
+			ButtonList:moveFocus(-1)
 		end,
 	},
 	dpright = {
 		id = "analog_dpright",
 		repeatable = false,
 		action = function()
-			buttonList:moveFocus(1)
+			ButtonList:moveFocus(1)
 		end,
 	},
 }
 
-local analogAxisMap = {
-	leftx = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
-	rightx = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
-	lefty = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
-	righty = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
-	[1] = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
-	[2] = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
+local AnalogAxisMap = {
+	leftx = { slot = "horizontal", negative = AnalogDirections.dpleft, positive = AnalogDirections.dpright },
+	rightx = { slot = "horizontal", negative = AnalogDirections.dpleft, positive = AnalogDirections.dpright },
+	lefty = { slot = "vertical", negative = AnalogDirections.dpup, positive = AnalogDirections.dpdown },
+	righty = { slot = "vertical", negative = AnalogDirections.dpup, positive = AnalogDirections.dpdown },
+	[1] = { slot = "horizontal", negative = AnalogDirections.dpleft, positive = AnalogDirections.dpright },
+	[2] = { slot = "vertical", negative = AnalogDirections.dpup, positive = AnalogDirections.dpdown },
 }
 
-local function activateAnalogDirection(direction)
+local function ActivateAnalogDirection(direction)
 	if not direction then
 		return
 	end
@@ -625,26 +625,26 @@ local function activateAnalogDirection(direction)
 	direction.action()
 
 	if direction.repeatable then
-		startHeldDpad(direction.id, direction.action)
+		StartHeldDpad(direction.id, direction.action)
 	end
 end
 
-local function resetAnalogDirections()
-	for slot, direction in pairs(analogAxisDirections) do
+local function ResetAnalogDirections()
+	for slot, direction in pairs(AnalogAxisDirections) do
 		if direction and direction.repeatable then
-			stopHeldDpad(direction.id)
+			StopHeldDpad(direction.id)
 		end
-		analogAxisDirections[slot] = nil
+		AnalogAxisDirections[slot] = nil
 	end
 end
 
-local function handleGamepadAxis(axis, value)
-	local mapping = analogAxisMap[axis]
+local function HandleGamepadAxis(axis, value)
+	local mapping = AnalogAxisMap[axis]
 	if not mapping then
 		return
 	end
 
-	local previous = analogAxisDirections[mapping.slot]
+	local previous = AnalogAxisDirections[mapping.slot]
 	local direction
 
 	if value >= ANALOG_DEADZONE then
@@ -658,48 +658,48 @@ local function handleGamepadAxis(axis, value)
 	end
 
 	if previous and previous.repeatable then
-		stopHeldDpad(previous.id)
+		StopHeldDpad(previous.id)
 	end
 
-	analogAxisDirections[mapping.slot] = direction or nil
+	AnalogAxisDirections[mapping.slot] = direction or nil
 
-	activateAnalogDirection(direction)
+	ActivateAnalogDirection(direction)
 end
 
 function AchievementsMenu:enter()
 	Screen:update()
-	UI.clearButtons()
+	UI.ClearButtons()
 
 	local sw, sh = Screen:get()
 
-	configureBackgroundEffect()
+	ConfigureBackgroundEffect()
 
-	scrollOffset = 0
-	minScrollOffset = 0
-	resetAnalogDirections()
+	ScrollOffset = 0
+	MinScrollOffset = 0
+	ResetAnalogDirections()
 
 	Face:set("idle")
 
-	buttonList:reset({
+	ButtonList:reset({
 		{
-			id = "achievementsBack",
-			x = sw / 2 - UI.spacing.buttonWidth / 2,
+			id = "AchievementsBack",
+			x = sw / 2 - UI.spacing.ButtonWidth / 2,
 			y = sh - 80,
-			w = UI.spacing.buttonWidth,
-			h = UI.spacing.buttonHeight,
-			textKey = "achievements.back_to_menu",
+			w = UI.spacing.ButtonWidth,
+			h = UI.spacing.ButtonHeight,
+			TextKey = "achievements.back_to_menu",
 			text = Localization:get("achievements.back_to_menu"),
 			action = "menu",
 		},
 	})
 
-	iconCache = {}
-	displayBlocks = Achievements:getDisplayOrder()
-	rebuildAchievementRewards()
+	IconCache = {}
+	DisplayBlocks = Achievements:GetDisplayOrder()
+	RebuildAchievementRewards()
 
-	resetHeldDpad()
+	ResetHeldDpad()
 
-	local function loadIcon(path)
+	local function LoadIcon(path)
 		local ok, image = pcall(love.graphics.newImage, path)
 		if ok then
 			return image
@@ -707,19 +707,19 @@ function AchievementsMenu:enter()
 		return nil
 	end
 
-	iconCache.__default = loadIcon("Assets/Achievements/Default.png")
+	IconCache.__default = LoadIcon("Assets/Achievements/Default.png")
 
-	updateScrollBounds(sw, sh)
+	UpdateScrollBounds(sw, sh)
 
-	for _, block in ipairs(displayBlocks) do
+	for _, block in ipairs(DisplayBlocks) do
 		for _, ach in ipairs(block.achievements) do
-			local iconName = ach.icon or "Default"
-			local path = string.format("Assets/Achievements/%s.png", iconName)
+			local IconName = ach.icon or "Default"
+			local path = string.format("Assets/Achievements/%s.png", IconName)
 			if not love.filesystem.getInfo(path) then
 				path = "Assets/Achievements/Default.png"
 			end
-			if not iconCache[ach.id] then
-				iconCache[ach.id] = loadIcon(path)
+			if not IconCache[ach.id] then
+				IconCache[ach.id] = LoadIcon(path)
 			end
 		end
 	end
@@ -727,284 +727,284 @@ end
 
 function AchievementsMenu:update(dt)
 	local mx, my = love.mouse.getPosition()
-	buttonList:updateHover(mx, my)
+	ButtonList:updateHover(mx, my)
 	Face:update(dt)
-	updateHeldDpad(dt)
+	UpdateHeldDpad(dt)
 end
 
 function AchievementsMenu:draw()
 	local sw, sh = Screen:get()
-	drawBackground(sw, sh)
+	DrawBackground(sw, sh)
 
-	if not displayBlocks or #displayBlocks == 0 then
-		displayBlocks = Achievements:getDisplayOrder()
+	if not DisplayBlocks or #DisplayBlocks == 0 then
+		DisplayBlocks = Achievements:GetDisplayOrder()
 	end
 
-	local layout = computeLayout(sw, sh)
-	layout = updateScrollBounds(sw, sh, layout)
+	local layout = ComputeLayout(sw, sh)
+	layout = UpdateScrollBounds(sw, sh, layout)
 
-	local titleFont = UI.fonts.title
-	love.graphics.setFont(titleFont)
-	local titleColor = Theme.textColor or {1, 1, 1, 1}
-	love.graphics.setColor(titleColor)
+	local TitleFont = UI.fonts.title
+	love.graphics.setFont(TitleFont)
+	local TitleColor = Theme.TextColor or {1, 1, 1, 1}
+	love.graphics.setColor(TitleColor)
 	love.graphics.printf(Localization:get("achievements.title"), 0, layout.titleY, sw, "center")
 
-	local startY = layout.startY
+	local StartY = layout.startY
 	local spacing = CARD_SPACING
-	local cardWidth = layout.cardWidth
-	local cardHeight = CARD_HEIGHT
-	local categorySpacing = CATEGORY_SPACING
+	local CardWidth = layout.cardWidth
+	local CardHeight = CARD_HEIGHT
+	local CategorySpacing = CATEGORY_SPACING
 
-	local listX = layout.listX
-	local panelPaddingX = layout.panelPaddingX
-	local panelPaddingY = layout.panelPaddingY
-	local panelX = layout.panelX
-	local panelY = layout.panelY
-	local panelWidth = layout.panelWidth
-	local panelHeight = layout.panelHeight
-	local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-	local panelBorder = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
-	local shadowColor = Theme.shadowColor or {0, 0, 0, 0.35}
-	local highlightColor = Theme.highlightColor or {1, 1, 1, 0.06}
-	local summaryPanel = layout.summaryPanel
-	local summaryTextX = layout.summaryTextX
-	local summaryTextY = layout.summaryTextY
-	local summaryTextWidth = layout.summaryTextWidth
-	local summaryProgressHeight = layout.summaryProgressHeight
-	local summaryLineHeight = layout.summaryLineHeight or UI.fonts.achieve:getHeight()
+	local ListX = layout.listX
+	local PanelPaddingX = layout.panelPaddingX
+	local PanelPaddingY = layout.panelPaddingY
+	local PanelX = layout.panelX
+	local PanelY = layout.panelY
+	local PanelWidth = layout.panelWidth
+	local PanelHeight = layout.panelHeight
+	local PanelColor = Theme.PanelColor or {0.18, 0.18, 0.22, 0.9}
+	local PanelBorder = Theme.PanelBorder or Theme.BorderColor or {0.5, 0.6, 0.75, 1}
+	local ShadowColor = Theme.ShadowColor or {0, 0, 0, 0.35}
+	local HighlightColor = Theme.HighlightColor or {1, 1, 1, 0.06}
+	local SummaryPanel = layout.summaryPanel
+	local SummaryTextX = layout.summaryTextX
+	local SummaryTextY = layout.summaryTextY
+	local SummaryTextWidth = layout.summaryTextWidth
+	local SummaryProgressHeight = layout.summaryProgressHeight
+	local SummaryLineHeight = layout.summaryLineHeight or UI.fonts.achieve:GetHeight()
 
 	love.graphics.push("all")
-	UI.drawPanel(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, {
+	UI.DrawPanel(SummaryPanel.x, SummaryPanel.y, SummaryPanel.width, SummaryPanel.height, {
 		radius = 24,
-		fill = panelColor,
+		fill = PanelColor,
 		alpha = 0.95,
-		borderColor = panelBorder,
-		borderWidth = 2,
+		BorderColor = PanelBorder,
+		BorderWidth = 2,
 		highlight = false,
-		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
+		ShadowColor = WithAlpha(ShadowColor, (ShadowColor[4] or 0.35) * 0.85),
 	})
 
-	local highlightInset = layout.summaryHighlightInset or { x = SUMMARY_HIGHLIGHT_INSET, y = SUMMARY_HIGHLIGHT_INSET }
-	local highlightInsetX = math.min(summaryPanel.width * 0.25, highlightInset.x or SUMMARY_HIGHLIGHT_INSET)
-	local highlightInsetY = highlightInset.y or SUMMARY_HIGHLIGHT_INSET
-	local maxHighlightInsetX = math.max(0, (summaryPanel.width - 2) * 0.5)
-	local maxHighlightInsetY = math.max(0, (summaryPanel.height - 2) * 0.5)
-	highlightInsetX = math.max(0, math.min(highlightInsetX, maxHighlightInsetX))
-	highlightInsetY = math.max(0, math.min(highlightInsetY, maxHighlightInsetY))
-	local highlightX = summaryPanel.x + highlightInsetX
-	local highlightY = summaryPanel.y + highlightInsetY
-	local highlightW = math.max(0, summaryPanel.width - highlightInsetX * 2)
-	local highlightH = math.max(0, summaryPanel.height - highlightInsetY * 2)
-	if highlightW > 0 and highlightH > 0 then
-		love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 0.08) * 1.1)
-		love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, 18, 18)
+	local HighlightInset = layout.summaryHighlightInset or { x = SUMMARY_HIGHLIGHT_INSET, y = SUMMARY_HIGHLIGHT_INSET }
+	local HighlightInsetX = math.min(SummaryPanel.width * 0.25, HighlightInset.x or SUMMARY_HIGHLIGHT_INSET)
+	local HighlightInsetY = HighlightInset.y or SUMMARY_HIGHLIGHT_INSET
+	local MaxHighlightInsetX = math.max(0, (SummaryPanel.width - 2) * 0.5)
+	local MaxHighlightInsetY = math.max(0, (SummaryPanel.height - 2) * 0.5)
+	HighlightInsetX = math.max(0, math.min(HighlightInsetX, MaxHighlightInsetX))
+	HighlightInsetY = math.max(0, math.min(HighlightInsetY, MaxHighlightInsetY))
+	local HighlightX = SummaryPanel.x + HighlightInsetX
+	local HighlightY = SummaryPanel.y + HighlightInsetY
+	local HighlightW = math.max(0, SummaryPanel.width - HighlightInsetX * 2)
+	local HighlightH = math.max(0, SummaryPanel.height - HighlightInsetY * 2)
+	if HighlightW > 0 and HighlightH > 0 then
+		love.graphics.setColor(HighlightColor[1], HighlightColor[2], HighlightColor[3], (HighlightColor[4] or 0.08) * 1.1)
+		love.graphics.rectangle("fill", HighlightX, HighlightY, HighlightW, HighlightH, 18, 18)
 	end
 	love.graphics.pop()
 
-	local totals = Achievements:getTotals()
-	local unlockedLabel = Localization:get("achievements.summary.unlocked", {
+	local totals = Achievements:GetTotals()
+	local UnlockedLabel = Localization:get("achievements.summary.unlocked", {
 		unlocked = totals.unlocked,
 		total = totals.total,
 	})
-	local completionPercent = toPercent(totals.completion)
-	local completionLabel = Localization:get("achievements.summary.completion", {
-		percent = completionPercent,
+	local CompletionPercent = ToPercent(totals.completion)
+	local CompletionLabel = Localization:get("achievements.summary.completion", {
+		percent = CompletionPercent,
 	})
-	local achieveFont = UI.fonts.achieve
+	local AchieveFont = UI.fonts.achieve
 
-	love.graphics.setFont(achieveFont)
-	love.graphics.setColor(titleColor)
-	love.graphics.printf(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left")
-	love.graphics.printf(completionLabel, summaryTextX, summaryTextY, summaryTextWidth, "right")
+	love.graphics.setFont(AchieveFont)
+	love.graphics.setColor(TitleColor)
+	love.graphics.printf(UnlockedLabel, SummaryTextX, SummaryTextY, SummaryTextWidth, "left")
+	love.graphics.printf(CompletionLabel, SummaryTextX, SummaryTextY, SummaryTextWidth, "right")
 
-	local progressBarY = layout.summaryProgressY
-	love.graphics.setColor(darkenColor(panelColor, 0.4))
-	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, summaryProgressHeight, 6, 6)
+	local ProgressBarY = layout.summaryProgressY
+	love.graphics.setColor(DarkenColor(PanelColor, 0.4))
+	love.graphics.rectangle("fill", SummaryTextX, ProgressBarY, SummaryTextWidth, SummaryProgressHeight, 6, 6)
 
-	love.graphics.setColor(Theme.progressColor or {0.6, 0.9, 0.4, 1})
-	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
+	love.graphics.setColor(Theme.ProgressColor or {0.6, 0.9, 0.4, 1})
+	love.graphics.rectangle("fill", SummaryTextX, ProgressBarY, SummaryTextWidth * clamp01(totals.completion), SummaryProgressHeight, 6, 6)
 
 	love.graphics.push("all")
-	UI.drawPanel(panelX, panelY, panelWidth, panelHeight, {
+	UI.DrawPanel(PanelX, PanelY, PanelWidth, PanelHeight, {
 		radius = 28,
-		fill = panelColor,
+		fill = PanelColor,
 		alpha = 0.95,
-		borderColor = panelBorder,
-		borderWidth = 2,
+		BorderColor = PanelBorder,
+		BorderWidth = 2,
 		highlight = false,
-		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
+		ShadowColor = WithAlpha(ShadowColor, (ShadowColor[4] or 0.35) * 0.9),
 	})
 	love.graphics.pop()
 
-	local scissorTop = layout.scissorTop
-	local scissorBottom = layout.scissorBottom
-	local scissorHeight = layout.scissorHeight
-	love.graphics.setScissor(0, scissorTop, sw, scissorHeight)
+	local ScissorTop = layout.scissorTop
+	local ScissorBottom = layout.scissorBottom
+	local ScissorHeight = layout.scissorHeight
+	love.graphics.setScissor(0, ScissorTop, sw, ScissorHeight)
 
 	love.graphics.push()
-	love.graphics.translate(0, scrollOffset)
+	love.graphics.translate(0, ScrollOffset)
 
-	local y = startY
-	for _, block in ipairs(displayBlocks) do
-		local categoryLabel = Localization:get("achievements.categories." .. block.id)
+	local y = StartY
+	for _, block in ipairs(DisplayBlocks) do
+		local CategoryLabel = Localization:get("achievements.categories." .. block.id)
 		love.graphics.setFont(UI.fonts.button)
-		love.graphics.setColor(titleColor[1], titleColor[2], titleColor[3], (titleColor[4] or 1) * 0.85)
-		love.graphics.printf(categoryLabel, 0, y - 32, sw, "center")
+		love.graphics.setColor(TitleColor[1], TitleColor[2], TitleColor[3], (TitleColor[4] or 1) * 0.85)
+		love.graphics.printf(CategoryLabel, 0, y - 32, sw, "center")
 
 		for _, ach in ipairs(block.achievements) do
 			local unlocked = ach.unlocked
 			local goal = ach.goal or 0
-			local hiddenLocked = ach.hidden and not unlocked
-			local hasProgress = (not hiddenLocked) and goal > 0
-			local icon = hiddenLocked and iconCache.__default or iconCache[ach.id]
+			local HiddenLocked = ach.hidden and not unlocked
+			local HasProgress = (not HiddenLocked) and goal > 0
+			local icon = HiddenLocked and IconCache.__default or IconCache[ach.id]
 			if not icon then
-				icon = iconCache.__default
+				icon = IconCache.__default
 			end
-			local x = listX
-			local barW = math.max(0, cardWidth - 120)
-			local cardY = y
+			local x = ListX
+			local BarW = math.max(0, CardWidth - 120)
+			local CardY = y
 
-			local cardBase = unlocked and lightenColor(panelColor, 0.18) or darkenColor(panelColor, 0.08)
-			if hiddenLocked then
-				cardBase = darkenColor(panelColor, 0.2)
+			local CardBase = unlocked and LightenColor(PanelColor, 0.18) or DarkenColor(PanelColor, 0.08)
+			if HiddenLocked then
+				CardBase = DarkenColor(PanelColor, 0.2)
 			end
 
-			local accentBorder = Theme.borderColor or panelBorder
-			local borderTint
+			local AccentBorder = Theme.BorderColor or PanelBorder
+			local BorderTint
 			if unlocked then
-				borderTint = lightenColor(accentBorder, 0.2)
-			elseif hiddenLocked then
-				borderTint = darkenColor(panelBorder, 0.15)
+				BorderTint = LightenColor(AccentBorder, 0.2)
+			elseif HiddenLocked then
+				BorderTint = DarkenColor(PanelBorder, 0.15)
 			else
-				borderTint = Theme.panelBorder or accentBorder
+				BorderTint = Theme.PanelBorder or AccentBorder
 			end
 
 			love.graphics.push("all")
-			UI.drawPanel(x, cardY, cardWidth, cardHeight, {
+			UI.DrawPanel(x, CardY, CardWidth, CardHeight, {
 				radius = 18,
-				fill = cardBase,
-				borderColor = borderTint,
-				borderWidth = 2,
+				fill = CardBase,
+				BorderColor = BorderTint,
+				BorderWidth = 2,
 				highlight = false,
-				shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
+				ShadowColor = WithAlpha(ShadowColor, (ShadowColor[4] or 0.3) * 0.9),
 			})
 			love.graphics.pop()
 
 			if icon then
-				local iconX, iconY = x + 16, cardY + 18
-				local scaleX = 56 / icon:getWidth()
-				local scaleY = 56 / icon:getHeight()
+				local IconX, IconY = x + 16, CardY + 18
+				local ScaleX = 56 / icon:getWidth()
+				local ScaleY = 56 / icon:getHeight()
 				local tint = unlocked and 1 or 0.55
 				love.graphics.setColor(tint, tint, tint, 1)
-				love.graphics.draw(icon, iconX, iconY, 0, scaleX, scaleY)
+				love.graphics.draw(icon, IconX, IconY, 0, ScaleX, ScaleY)
 
-				local iconBorder = hiddenLocked and darkenColor(borderTint, 0.35) or borderTint
-				love.graphics.setColor(iconBorder)
+				local IconBorder = HiddenLocked and DarkenColor(BorderTint, 0.35) or BorderTint
+				love.graphics.setColor(IconBorder)
 				love.graphics.setLineWidth(2)
-				love.graphics.rectangle("line", iconX - 2, iconY - 2, 60, 60, 8)
+				love.graphics.rectangle("line", IconX - 2, IconY - 2, 60, 60, 8)
 			end
 
-			local textX = x + 96
+			local TextX = x + 96
 
-			local titleText
-			local descriptionText
-			if hiddenLocked then
-				titleText = Localization:get("achievements.hidden.title")
-				descriptionText = Localization:get("achievements.hidden.description")
+			local TitleText
+			local DescriptionText
+			if HiddenLocked then
+				TitleText = Localization:get("achievements.hidden.title")
+				DescriptionText = Localization:get("achievements.hidden.description")
 			else
-				titleText = Localization:get(ach.titleKey)
-				descriptionText = Localization:get(ach.descriptionKey)
+				TitleText = Localization:get(ach.titleKey)
+				DescriptionText = Localization:get(ach.descriptionKey)
 			end
 
 			love.graphics.setFont(UI.fonts.achieve)
-			love.graphics.setColor(titleColor)
-			love.graphics.printf(titleText, textX, cardY + 10, cardWidth - 110, "left")
+			love.graphics.setColor(TitleColor)
+			love.graphics.printf(TitleText, TextX, CardY + 10, CardWidth - 110, "left")
 
 			love.graphics.setFont(UI.fonts.body)
-			local bodyColor = withAlpha(titleColor, (titleColor[4] or 1) * 0.8)
-			love.graphics.setColor(bodyColor)
-			local textWidth = cardWidth - 110
-			love.graphics.printf(descriptionText, textX, cardY + 38, textWidth, "left")
+			local BodyColor = WithAlpha(TitleColor, (TitleColor[4] or 1) * 0.8)
+			love.graphics.setColor(BodyColor)
+			local TextWidth = CardWidth - 110
+			love.graphics.printf(DescriptionText, TextX, CardY + 38, TextWidth, "left")
 
-			local rewardText = nil
-			if not hiddenLocked then
-				rewardText = getAchievementRewardLabel(ach)
+			local RewardText = nil
+			if not HiddenLocked then
+				RewardText = GetAchievementRewardLabel(ach)
 			end
 
-			local barH = 12
-			local barX = textX
-			local barY = cardY + cardHeight - 24
+			local BarH = 12
+			local BarX = TextX
+			local BarY = CardY + CardHeight - 24
 
-			if rewardText and rewardText ~= "" then
+			if RewardText and RewardText ~= "" then
 				love.graphics.setFont(UI.fonts.small)
-				love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.72))
-				local rewardY = barY - (hasProgress and 36 or 24)
-				love.graphics.printf(rewardText, textX, rewardY, textWidth, "left")
+				love.graphics.setColor(WithAlpha(TitleColor, (TitleColor[4] or 1) * 0.72))
+				local RewardY = BarY - (HasProgress and 36 or 24)
+				love.graphics.printf(RewardText, TextX, RewardY, TextWidth, "left")
 			end
 
-			if hasProgress then
-				local ratio = Achievements:getProgressRatio(ach)
+			if HasProgress then
+				local ratio = Achievements:GetProgressRatio(ach)
 
-				love.graphics.setColor(darkenColor(cardBase, 0.45))
-				love.graphics.rectangle("fill", barX, barY, barW, barH, 6)
+				love.graphics.setColor(DarkenColor(CardBase, 0.45))
+				love.graphics.rectangle("fill", BarX, BarY, BarW, BarH, 6)
 
-				love.graphics.setColor(Theme.progressColor)
-				love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 6)
+				love.graphics.setColor(Theme.ProgressColor)
+				love.graphics.rectangle("fill", BarX, BarY, BarW * ratio, BarH, 6)
 
-				local progressLabel = Achievements:getProgressLabel(ach)
-				if progressLabel then
+				local ProgressLabel = Achievements:GetProgressLabel(ach)
+				if ProgressLabel then
 					love.graphics.setFont(UI.fonts.small)
-					love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.9))
-					love.graphics.printf(progressLabel, barX, barY - 18, barW, "right")
+					love.graphics.setColor(WithAlpha(TitleColor, (TitleColor[4] or 1) * 0.9))
+					love.graphics.printf(ProgressLabel, BarX, BarY - 18, BarW, "right")
 				end
 			end
 
 			y = y + spacing
 		end
 
-		y = y + categorySpacing
+		y = y + CategorySpacing
 	end
 
 	love.graphics.pop()
 	love.graphics.setScissor()
 
-	if contentHeight > viewportHeight then
-		local trackWidth = SCROLLBAR_TRACK_WIDTH
-		local trackInset = math.max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
-		local trackX = panelX + panelWidth + trackInset
-		local trackY = startY
-		local trackHeight = viewportHeight
+	if ContentHeight > ViewportHeight then
+		local TrackWidth = SCROLLBAR_TRACK_WIDTH
+		local TrackInset = math.max(MIN_SCROLLBAR_INSET, PanelPaddingX * 0.5)
+		local TrackX = PanelX + PanelWidth + TrackInset
+		local TrackY = StartY
+		local TrackHeight = ViewportHeight
 
-		local scrollRange = -minScrollOffset
-		local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
+		local ScrollRange = -MinScrollOffset
+		local ScrollProgress = ScrollRange > 0 and (-ScrollOffset / ScrollRange) or 0
 
-		local minThumbHeight = 36
-		local thumbHeight = math.max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
-		thumbHeight = math.min(thumbHeight, trackHeight)
-		local thumbY = trackY + (trackHeight - thumbHeight) * scrollProgress
+		local MinThumbHeight = 36
+		local ThumbHeight = math.max(MinThumbHeight, ViewportHeight * (ViewportHeight / ContentHeight))
+		ThumbHeight = math.min(ThumbHeight, TrackHeight)
+		local ThumbY = TrackY + (TrackHeight - ThumbHeight) * ScrollProgress
 
 		local mx, my = love.mouse.getPosition()
-		local isOverScrollbar = mx >= trackX and mx <= trackX + trackWidth and my >= trackY and my <= trackY + trackHeight
-		local isOverThumb = isOverScrollbar and my >= thumbY and my <= thumbY + thumbHeight
+		local IsOverScrollbar = mx >= TrackX and mx <= TrackX + TrackWidth and my >= TrackY and my <= TrackY + TrackHeight
+		local IsOverThumb = IsOverScrollbar and my >= ThumbY and my <= ThumbY + ThumbHeight
 
-		drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isOverScrollbar, isOverThumb)
+		DrawThumbSnake(TrackX, TrackY, TrackWidth, TrackHeight, ThumbY, ThumbHeight, IsOverScrollbar, IsOverThumb)
 	end
 
-	for _, btn in buttonList:iter() do
+	for _, btn in ButtonList:iter() do
 		if btn.textKey then
 			btn.text = Localization:get(btn.textKey)
 		end
 	end
 
-	buttonList:draw()
+	ButtonList:draw()
 end
 
 function AchievementsMenu:mousepressed(x, y, button)
-	buttonList:mousepressed(x, y, button)
+	ButtonList:mousepressed(x, y, button)
 end
 
 function AchievementsMenu:mousereleased(x, y, button)
-	local action = buttonList:mousereleased(x, y, button)
+	local action = ButtonList:mousereleased(x, y, button)
 	return action
 end
 
@@ -1018,40 +1018,40 @@ function AchievementsMenu:wheelmoved(dx, dy)
 		return
 	end
 
-	scrollBy(dy * SCROLL_SPEED)
+	ScrollBy(dy * SCROLL_SPEED)
 end
 
 function AchievementsMenu:keypressed(key)
 	if key == "up" then
-		scrollBy(DPAD_SCROLL_AMOUNT)
-		buttonList:moveFocus(-1)
+		ScrollBy(DPAD_SCROLL_AMOUNT)
+		ButtonList:moveFocus(-1)
 	elseif key == "down" then
-		scrollBy(-DPAD_SCROLL_AMOUNT)
-		buttonList:moveFocus(1)
+		ScrollBy(-DPAD_SCROLL_AMOUNT)
+		ButtonList:moveFocus(1)
 	elseif key == "left" then
-		buttonList:moveFocus(-1)
+		ButtonList:moveFocus(-1)
 	elseif key == "right" then
-		buttonList:moveFocus(1)
+		ButtonList:moveFocus(1)
 	elseif key == "pageup" then
-		local pageStep = DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING))
-		scrollBy(pageStep)
+		local PageStep = DPAD_SCROLL_AMOUNT * math.max(1, math.floor(ViewportHeight / CARD_SPACING))
+		ScrollBy(PageStep)
 	elseif key == "pagedown" then
-		local pageStep = DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING))
-		scrollBy(-pageStep)
+		local PageStep = DPAD_SCROLL_AMOUNT * math.max(1, math.floor(ViewportHeight / CARD_SPACING))
+		ScrollBy(-PageStep)
 	elseif key == "home" then
-		scrollBy(-scrollOffset)
+		ScrollBy(-ScrollOffset)
 	elseif key == "end" then
-		scrollBy(minScrollOffset - scrollOffset)
+		ScrollBy(MinScrollOffset - ScrollOffset)
 	elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
-		local action = buttonList:activateFocused()
+		local action = ButtonList:activateFocused()
 		if action then
-			Audio:playSound("click")
+			Audio:PlaySound("click")
 		end
 		return action
 	elseif key == "escape" or key == "backspace" then
-		local action = buttonList:activateFocused() or "menu"
+		local action = ButtonList:activateFocused() or "menu"
 		if action then
-			Audio:playSound("click")
+			Audio:PlaySound("click")
 		end
 		return action
 	end
@@ -1059,23 +1059,23 @@ end
 
 function AchievementsMenu:gamepadpressed(_, button)
 	if button == "dpup" then
-		dpadScrollUp()
-		startHeldDpad(button, dpadScrollUp)
+		DpadScrollUp()
+		StartHeldDpad(button, DpadScrollUp)
 	elseif button == "dpleft" then
-		buttonList:moveFocus(-1)
+		ButtonList:moveFocus(-1)
 	elseif button == "dpdown" then
-		dpadScrollDown()
-		startHeldDpad(button, dpadScrollDown)
+		DpadScrollDown()
+		StartHeldDpad(button, DpadScrollDown)
 	elseif button == "dpright" then
-		buttonList:moveFocus(1)
+		ButtonList:moveFocus(1)
 	elseif button == "leftshoulder" then
-		scrollBy(DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING)))
+		ScrollBy(DPAD_SCROLL_AMOUNT * math.max(1, math.floor(ViewportHeight / CARD_SPACING)))
 	elseif button == "rightshoulder" then
-		scrollBy(-DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING)))
+		ScrollBy(-DPAD_SCROLL_AMOUNT * math.max(1, math.floor(ViewportHeight / CARD_SPACING)))
 	elseif button == "a" or button == "start" or button == "b" then
-		local action = buttonList:activateFocused()
+		local action = ButtonList:activateFocused()
 		if action then
-			Audio:playSound("click")
+			Audio:PlaySound("click")
 		end
 		return action
 	end
@@ -1084,14 +1084,14 @@ end
 AchievementsMenu.joystickpressed = AchievementsMenu.gamepadpressed
 
 function AchievementsMenu:gamepadaxis(_, axis, value)
-	handleGamepadAxis(axis, value)
+	HandleGamepadAxis(axis, value)
 end
 
 AchievementsMenu.joystickaxis = AchievementsMenu.gamepadaxis
 
 function AchievementsMenu:gamepadreleased(_, button)
 	if button == "dpup" or button == "dpdown" then
-		stopHeldDpad(button)
+		StopHeldDpad(button)
 	end
 end
 
