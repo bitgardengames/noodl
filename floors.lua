@@ -1,5 +1,5 @@
 -- floors.lua
-
+--[[
 Threshold of Scales → The serpent's hide opens, inviting the first offerings.
 Gullet of Echoes → Reverent tides pull fruit toward the chanting throat.
 Heartfire Crucible → Pulsing chambers beat with molten devotion.
