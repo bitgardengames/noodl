@@ -1042,77 +1042,41 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
         if intensity <= 0.01 then return end
 
         local flash = math.max(0, data.flash or 0)
-        local ratio = data.speedRatio or 1
-        if not ratio or ratio < 0 then
-                ratio = 0
-        end
+        local highlight = math.min(1, intensity * 0.85 + flash * 0.6)
 
-        local speedBonus = math.max(0, ratio - 1)
-        local highlight = math.min(1, intensity * 0.85 + flash * 0.6 + math.min(0.45, speedBonus * 0.4))
-        local time = data.time or love.timer.getTime()
-        if not time or time <= 0 then
-                time = love.timer.getTime()
-        end
+        local headRadius = SEGMENT_SIZE * 0.4
+        local fangLength = headRadius * (0.75 + 0.05 * math.min(stacks, 4))
+        local fangWidth = fangLength * 0.45
+        local spacing = headRadius * 0.35
+        local mouthDrop = headRadius * 0.4
 
-        local baseRadius = SEGMENT_SIZE * (0.92 + 0.07 * math.min(stacks, 4))
-        drawSoftGlow(hx, hy, baseRadius * (1.25 + 0.25 * highlight), 1.0, 0.62, 0.42, 0.18 + 0.24 * highlight)
+        local outlineColor = SnakeCosmetics:getOutlineColor()
+        local outlineR = outlineColor[1] or 0
+        local outlineG = outlineColor[2] or 0
+        local outlineB = outlineColor[3] or 0
+        local outlineA = (outlineColor[4] or 1) * (0.75 + 0.25 * highlight)
+
+        local fillAlpha = 0.55 + 0.35 * highlight
+        local fillR = 1.0
+        local fillG = 0.96 + 0.04 * highlight
+        local fillB = 0.88 + 0.08 * highlight
 
         love.graphics.push("all")
-        love.graphics.translate(hx, hy)
-        love.graphics.setBlendMode("alpha")
+        love.graphics.translate(hx, hy + mouthDrop)
 
-        local ringAlpha = 0.18 + 0.28 * highlight
-        love.graphics.setLineWidth(2.2)
-        love.graphics.setColor(1.0, 0.68, 0.42, ringAlpha)
-        love.graphics.circle("line", 0, 0, baseRadius * (0.92 + 0.18 * highlight), 32)
+        for _, side in ipairs({ -1, 1 }) do
+                local baseX = side * spacing
+                local topLeftX = baseX - fangWidth * 0.5
+                local topRightX = baseX + fangWidth * 0.5
+                local tipX = baseX
+                local tipY = fangLength
 
-        local fangCount = 5 + math.min(stacks * 2, 6)
-        local orbit = baseRadius * (0.8 + 0.18 * highlight)
-        local fangLength = SEGMENT_SIZE * (0.35 + 0.05 * stacks + 0.08 * highlight)
-        local fangWidth = fangLength * 0.24
-        local outlineWidth = 0.9 + 0.6 * highlight
-        local spin = 2.8 + stacks * 0.35 + speedBonus * 1.2
+                love.graphics.setColor(fillR, fillG, fillB, fillAlpha)
+                love.graphics.polygon("fill", topLeftX, 0, topRightX, 0, tipX, tipY)
 
-        for i = 1, fangCount do
-                local offset = (i - 1) / fangCount
-                local angle = time * spin + offset * math.pi * 2
-                local wobble = math.sin(time * (4.6 + stacks * 0.3) + i * 1.2) * (0.18 + 0.12 * highlight)
-                local finalAngle = angle + wobble
-
-                local dirX = math.cos(finalAngle)
-                local dirY = math.sin(finalAngle)
-                local baseX = dirX * orbit
-                local baseY = dirY * orbit
-                local tipX = dirX * (orbit + fangLength)
-                local tipY = dirY * (orbit + fangLength)
-                local perpX = -dirY
-                local perpY = dirX
-                local leftX = baseX + perpX * fangWidth * 0.5
-                local leftY = baseY + perpY * fangWidth * 0.5
-                local rightX = baseX - perpX * fangWidth * 0.5
-                local rightY = baseY - perpY * fangWidth * 0.5
-
-                local fangAlpha = math.min(1, 0.36 + 0.4 * intensity + flash * 0.4)
-                love.graphics.setLineWidth(outlineWidth)
-                love.graphics.setColor(1.0, 0.66, 0.46, fangAlpha)
-                love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
-
-                love.graphics.setLineWidth(outlineWidth * 0.7)
-                love.graphics.setColor(1.0, 0.9, 0.7, fangAlpha * 0.85)
-                love.graphics.line(leftX, leftY, tipX, tipY)
-                love.graphics.line(rightX, rightY, tipX, tipY)
-
-                local slashRadius = orbit + fangLength * (0.75 + 0.1 * highlight)
-                local slashWidth = 0.2 + 0.08 * highlight
-                love.graphics.setLineWidth(1.6)
-                love.graphics.setColor(1.0, 0.74, 0.46, (0.22 + 0.26 * intensity + 0.2 * flash) * (0.9 - offset * 0.2))
-                love.graphics.arc("line", "open", 0, 0, slashRadius, finalAngle - slashWidth, finalAngle + slashWidth, 18)
-        end
-
-        if data.active then
-                love.graphics.setBlendMode("add")
-                love.graphics.setColor(1.0, 0.82, 0.52, 0.2 + 0.3 * highlight)
-                love.graphics.circle("line", 0, 0, baseRadius * (1.35 + 0.25 * highlight), 36)
+                love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+                love.graphics.setLineWidth(1.4)
+                love.graphics.polygon("line", topLeftX, 0, topRightX, 0, tipX, tipY)
         end
 
         love.graphics.pop()
