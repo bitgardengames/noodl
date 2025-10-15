@@ -5,6 +5,8 @@ local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
 local SnakeCosmetics = require("snakecosmetics")
+local SnakeDraw = require("snakedraw")
+local SnakeUtils = require("snakeutils")
 local Achievements = require("achievements")
 local PlayerStats = require("playerstats")
 local Audio = require("audio")
@@ -76,6 +78,9 @@ local activeTab = "experience"
 local cosmeticsFocusIndex = nil
 local hoveredCosmeticIndex = nil
 local pressedCosmeticIndex = nil
+
+local cosmeticPreviewTrail = nil
+local cosmeticPreviewBounds = nil
 
 local tabs = {
 	{
@@ -470,16 +475,28 @@ local function darkenColor(color, amount)
 end
 
 local function withAlpha(color, alpha)
-	if type(color) ~= "table" then
-		return {1, 1, 1, clampColorComponent(alpha or 1)}
-	end
+        if type(color) ~= "table" then
+                return {1, 1, 1, clampColorComponent(alpha or 1)}
+        end
 
-	return {
-		clampColorComponent(color[1] or 1),
-		clampColorComponent(color[2] or 1),
-		clampColorComponent(color[3] or 1),
-		clampColorComponent(alpha or color[4] or 1),
-	}
+        return {
+                clampColorComponent(color[1] or 1),
+                clampColorComponent(color[2] or 1),
+                clampColorComponent(color[3] or 1),
+                clampColorComponent(alpha or color[4] or 1),
+        }
+end
+
+local function shallowCopy(value)
+        if type(value) ~= "table" then
+                return value
+        end
+
+        local copy = {}
+        for k, v in pairs(value) do
+                copy[k] = v
+        end
+        return copy
 end
 
 local function drawWindowFrame(x, y, width, height, options)
@@ -1434,11 +1451,102 @@ local function drawTrack(sw, sh)
 	love.graphics.pop()
 end
 
+local function ensureCosmeticPreviewTrail()
+        if cosmeticPreviewTrail and cosmeticPreviewBounds then
+                return cosmeticPreviewTrail, cosmeticPreviewBounds
+        end
+
+        local segmentSize = SnakeUtils.SEGMENT_SIZE or 24
+        local step = segmentSize * 0.85
+        local amplitude = segmentSize * 2.4
+        local wobble = segmentSize * 0.35
+        local sampleCount = 18
+
+        local rawPoints = {}
+        for i = 0, sampleCount - 1 do
+                local t = (sampleCount <= 1) and 0 or (i / (sampleCount - 1))
+                local x = i * step
+                local primaryWave = math.sin(t * math.pi * 1.35 + math.pi * 0.25)
+                local secondaryWave = math.sin(t * math.pi * 3.1)
+                local y = primaryWave * amplitude + secondaryWave * wobble
+                rawPoints[#rawPoints + 1] = { x = x, y = y }
+        end
+
+        local trail = {}
+        for i = #rawPoints, 1, -1 do
+                local point = rawPoints[i]
+                trail[#trail + 1] = { x = point.x, y = point.y }
+        end
+
+        local minX, maxX, minY, maxY
+        for i = 1, #trail do
+                local point = trail[i]
+                local px, py = point.x, point.y
+                if minX == nil or px < minX then minX = px end
+                if maxX == nil or px > maxX then maxX = px end
+                if minY == nil or py < minY then minY = py end
+                if maxY == nil or py > maxY then maxY = py end
+        end
+
+        cosmeticPreviewTrail = trail
+        cosmeticPreviewBounds = {
+                minX = minX or 0,
+                maxX = maxX or 0,
+                minY = minY or 0,
+                maxY = maxY or 0,
+        }
+
+        cosmeticPreviewBounds.width = (cosmeticPreviewBounds.maxX or 0) - (cosmeticPreviewBounds.minX or 0)
+        cosmeticPreviewBounds.height = (cosmeticPreviewBounds.maxY or 0) - (cosmeticPreviewBounds.minY or 0)
+        cosmeticPreviewBounds.centerX = (cosmeticPreviewBounds.minX + cosmeticPreviewBounds.maxX) * 0.5
+        cosmeticPreviewBounds.centerY = (cosmeticPreviewBounds.minY + cosmeticPreviewBounds.maxY) * 0.5
+
+        return cosmeticPreviewTrail, cosmeticPreviewBounds
+end
+
+local function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, palette)
+        if not previewW or not previewH or previewW <= 0 or previewH <= 0 then
+                return
+        end
+
+        local trail, bounds = ensureCosmeticPreviewTrail()
+        if not trail or not bounds then
+                return
+        end
+
+        local width = bounds.width or 0
+        local height = bounds.height or 0
+        if width <= 0 or height <= 0 then
+                return
+        end
+
+        local marginX = math.max(12, previewW * 0.12)
+        local marginY = math.max(10, previewH * 0.3)
+        local scale = math.min((previewW - marginX) / width, (previewH - marginY) / height)
+        if not scale or scale <= 0 then
+                return
+        end
+
+        local scissorPad = 14
+        love.graphics.push("all")
+        love.graphics.setScissor(previewX - scissorPad, previewY - scissorPad, previewW + scissorPad * 2, previewH + scissorPad * 2)
+        love.graphics.translate(previewX + previewW / 2, previewY + previewH / 2 + previewH * 0.04)
+        love.graphics.scale(scale * 0.95)
+        love.graphics.translate(-(bounds.centerX or 0), -(bounds.centerY or 0))
+        SnakeDraw.run(trail, #trail, SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, nil, {
+                drawFace = false,
+                skinOverride = skin,
+                paletteOverride = palette,
+                overlayEffect = palette and palette.overlay,
+        })
+        love.graphics.pop()
+end
+
 local function drawCosmeticsHeader(sw)
-	local headerY = TAB_BOTTOM + 28
-	love.graphics.setFont(UI.fonts.button)
-	love.graphics.setColor(Theme.textColor)
-	love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, headerY, sw, "center")
+        local headerY = TAB_BOTTOM + 28
+        love.graphics.setFont(UI.fonts.button)
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, headerY, sw, "center")
 
 	if cosmeticsSummary.total > 0 then
 		local summaryText = Localization:get("metaprogression.cosmetics.progress", {
@@ -1547,36 +1655,60 @@ local function drawCosmeticsList(sw, sh)
 				UI.drawRoundedRect(listX + 6, y + 6, CARD_WIDTH - 12, COSMETIC_CARD_HEIGHT - 12, 12)
 			end
 
-			local skinColors = skin.colors or {}
-			local bodyColor = skinColors.body or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
-			local outlineColor = skinColors.outline or {0.05, 0.15, 0.12, 1}
-			local glowColor = skinColors.glow or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
+                        local palette = SnakeCosmetics:getPaletteForSkin(skin)
+                        local bodyColor = (palette and palette.body) or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
+                        local outlineColor = (palette and palette.outline) or {0.05, 0.15, 0.12, 1}
+                        local glowColor = (palette and palette.glow) or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
+                        local overlayEffect = palette and palette.overlay
 
-			if not unlocked then
-				bodyColor = darkenColor(bodyColor, 0.25)
-				outlineColor = darkenColor(outlineColor, 0.2)
-				glowColor = darkenColor(glowColor, 0.3)
-			end
+                        if not unlocked then
+                                bodyColor = darkenColor(bodyColor, 0.25)
+                                outlineColor = darkenColor(outlineColor, 0.2)
+                                glowColor = darkenColor(glowColor, 0.3)
+                                if overlayEffect then
+                                        overlayEffect = shallowCopy(overlayEffect)
+                                        if overlayEffect.opacity then
+                                                overlayEffect.opacity = overlayEffect.opacity * 0.65
+                                        end
+                                        if overlayEffect.intensity then
+                                                overlayEffect.intensity = overlayEffect.intensity * 0.6
+                                        end
+                                end
+                        end
 
-			local previewX = listX + 28
-			local previewY = y + (COSMETIC_CARD_HEIGHT - COSMETIC_PREVIEW_HEIGHT) / 2
-			local previewW = COSMETIC_PREVIEW_WIDTH
-			local previewH = COSMETIC_PREVIEW_HEIGHT
+                        local previewX = listX + 28
+                        local previewY = y + (COSMETIC_CARD_HEIGHT - COSMETIC_PREVIEW_HEIGHT) / 2
+                        local previewW = COSMETIC_PREVIEW_WIDTH
+                        local previewH = COSMETIC_PREVIEW_HEIGHT
+                        local previewRadius = previewH / 2
 
-			if unlocked then
-				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], (glowColor[4] or 1) * 0.45)
-				love.graphics.setLineWidth(6)
-				love.graphics.rectangle("line", previewX - 6, previewY - 6, previewW + 12, previewH + 12, previewH / 2 + 6, previewH / 2 + 6)
-			end
+                        local previewBase = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
+                        if unlocked then
+                                previewBase = lightenColor(previewBase, 0.16)
+                        else
+                                previewBase = darkenColor(previewBase, 0.08)
+                        end
 
-			love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], bodyColor[4] or 1)
-			UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewH / 2)
+                        love.graphics.setColor(previewBase[1], previewBase[2], previewBase[3], (previewBase[4] or 1) * 0.9)
+                        UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewRadius)
 
-			love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 1)
-			love.graphics.setLineWidth(3)
-			love.graphics.rectangle("line", previewX, previewY, previewW, previewH, previewH / 2, previewH / 2)
+                        if unlocked then
+                                love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], (glowColor[4] or 1) * 0.45)
+                                love.graphics.setLineWidth(6)
+                                love.graphics.rectangle("line", previewX - 6, previewY - 6, previewW + 12, previewH + 12, previewRadius + 6, previewRadius + 6)
+                        end
 
-			love.graphics.setLineWidth(1)
+                        love.graphics.setLineWidth(1)
+                        love.graphics.setColor(1, 1, 1, 1)
+
+                        local previewPalette = {
+                                body = bodyColor,
+                                outline = outlineColor,
+                                glow = glowColor,
+                                overlay = overlayEffect,
+                        }
+
+                        drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, previewPalette)
 
 			if not unlocked then
 				local overlayColor = withAlpha(Theme.bgColor or {0, 0, 0, 1}, 0.25)

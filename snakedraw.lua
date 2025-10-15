@@ -933,11 +933,14 @@ local function drawSnakeStroke(path, radius, options)
 	drawCornerCaps(path, radius)
 end
 
-local function renderSnakeToCanvas(trail, coords, head, half, options)
-	local bodyColor = SnakeCosmetics:getBodyColor()
-	local outlineColor = SnakeCosmetics:getOutlineColor()
-	local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
-	local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
+local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
+        local paletteBody = palette and palette.body
+        local paletteOutline = palette and palette.outline
+
+        local bodyColor = paletteBody or SnakeCosmetics:getBodyColor()
+        local outlineColor = paletteOutline or SnakeCosmetics:getOutlineColor()
+        local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
+        local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
 	local bulgeRadius = half * FRUIT_BULGE_SCALE
 
 	local sharpCorners = options and options.sharpCorners
@@ -1866,22 +1869,31 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 end
 
 function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
-	local options
-	if type(drawFace) == "table" then
-	options = drawFace
-	drawFace = options.drawFace
-	end
+        local options
+        if type(drawFace) == "table" then
+        options = drawFace
+        drawFace = options.drawFace
+        end
 
-	if drawFace == nil then
-	drawFace = true
-	end
+        if drawFace == nil then
+        drawFace = true
+        end
 
-	if not trail or #trail == 0 then return end
+        if not trail or #trail == 0 then return end
 
-	local thickness = SEGMENT_SIZE * 0.8
-	local half      = thickness / 2
+        local thickness = SEGMENT_SIZE * 0.8
+        local half      = thickness / 2
 
-	local overlayEffect = SnakeCosmetics:getOverlayEffect()
+        local palette
+        if options then
+        if options.paletteOverride then
+                palette = options.paletteOverride
+        elseif options.skinOverride then
+                palette = SnakeCosmetics:getPaletteForSkin(options.skinOverride)
+        end
+        end
+
+        local overlayEffect = (options and options.overlayEffect) or (palette and palette.overlay) or SnakeCosmetics:getOverlayEffect()
 
 	local coords = buildCoords(trail)
 	local head = trail[1]
@@ -1904,13 +1916,13 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 
 	love.graphics.setCanvas(snakeCanvas)
 	love.graphics.clear(0,0,0,0)
-	renderSnakeToCanvas(trail, coords, head, half, options)
+        renderSnakeToCanvas(trail, coords, head, half, options, palette)
 	love.graphics.setCanvas()
 	presentSnakeCanvas(overlayEffect, ww, hh)
 	elseif hx and hy then
 	-- fallback: draw a simple disk when only the head is visible
-	local bodyColor = SnakeCosmetics:getBodyColor()
-	local outlineColor = SnakeCosmetics:getOutlineColor()
+        local bodyColor = (palette and palette.body) or SnakeCosmetics:getBodyColor()
+        local outlineColor = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
 	local outlineR = outlineColor[1] or 0
 	local outlineG = outlineColor[2] or 0
 	local outlineB = outlineColor[3] or 0
