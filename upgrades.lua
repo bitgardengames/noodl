@@ -595,8 +595,97 @@ local function mapmakersCompassFloorStart(data, state)
 	applyMapmakersCompass(state, context, { celebrate = true, eventData = data })
 end
 
+local function normalizeDirection(dx, dy)
+        dx = dx or 0
+        dy = dy or 0
+
+        local length = math.sqrt(dx * dx + dy * dy)
+        if not length or length <= 1e-5 then
+                return 0, -1
+        end
+
+        return dx / length, dy / length
+end
+
+local atan2 = math.atan2 or function(y, x)
+        return math.atan(y, x)
+end
+
+local function applyCircuitBreakerFacing(options, dx, dy)
+        if not options then
+                return
+        end
+
+        local particles = options.particles
+        if not particles then
+                return
+        end
+
+        dx, dy = normalizeDirection(dx, dy)
+        local baseAngle = atan2(dy, dx)
+        local spread = particles.spread or 0
+        particles.angleOffset = baseAngle - spread * 0.5
+end
+
+local function getSawFacingDirection(sawInfo)
+        if not sawInfo then
+                return 0, -1
+        end
+
+        if sawInfo.dir == "vertical" then
+                if sawInfo.side == "left" then
+                        return 1, 0
+                elseif sawInfo.side == "right" then
+                        return -1, 0
+                end
+
+                return -1, 0
+        end
+
+        return 0, -1
+end
+
+local function buildCircuitBreakerTargets(data)
+        local targets = {}
+        if not data then
+                return targets
+        end
+
+        if data.saws and #data.saws > 0 then
+                for _, entry in ipairs(data.saws) do
+                        if entry then
+                                local x = entry.x or entry[1]
+                                local y = entry.y or entry[2]
+                                if x and y then
+                                        targets[#targets + 1] = {
+                                                x = x,
+                                                y = y,
+                                                dir = entry.dir,
+                                                side = entry.side,
+                                        }
+                                end
+                        end
+                end
+        elseif data.positions and #data.positions > 0 then
+                for _, pos in ipairs(data.positions) do
+                        if pos then
+                                local x = pos[1]
+                                local y = pos[2]
+                                if x and y then
+                                        targets[#targets + 1] = {
+                                                x = x,
+                                                y = y,
+                                        }
+                                end
+                        end
+                end
+        end
+
+        return targets
+end
+
 local pool = {
-	register({
+        register({
 		id = "quick_fangs",
 		nameKey = "upgrades.quick_fangs.name",
 		descKey = "upgrades.quick_fangs.description",
@@ -905,96 +994,7 @@ local pool = {
 				end
 			end,
 		},
-	}),
-local function normalizeDirection(dx, dy)
-        dx = dx or 0
-        dy = dy or 0
-
-        local length = math.sqrt(dx * dx + dy * dy)
-        if not length or length <= 1e-5 then
-                return 0, -1
-        end
-
-        return dx / length, dy / length
-end
-
-local atan2 = math.atan2 or function(y, x)
-        return math.atan(y, x)
-end
-
-local function applyCircuitBreakerFacing(options, dx, dy)
-        if not options then
-                return
-        end
-
-        local particles = options.particles
-        if not particles then
-                return
-        end
-
-        dx, dy = normalizeDirection(dx, dy)
-        local baseAngle = atan2(dy, dx)
-        local spread = particles.spread or 0
-        particles.angleOffset = baseAngle - spread * 0.5
-end
-
-local function getSawFacingDirection(sawInfo)
-        if not sawInfo then
-                return 0, -1
-        end
-
-        if sawInfo.dir == "vertical" then
-                if sawInfo.side == "left" then
-                        return 1, 0
-                elseif sawInfo.side == "right" then
-                        return -1, 0
-                end
-
-                return -1, 0
-        end
-
-        return 0, -1
-end
-
-local function buildCircuitBreakerTargets(data)
-        local targets = {}
-        if not data then
-                return targets
-        end
-
-        if data.saws and #data.saws > 0 then
-                for _, entry in ipairs(data.saws) do
-                        if entry then
-                                local x = entry.x or entry[1]
-                                local y = entry.y or entry[2]
-                                if x and y then
-                                        targets[#targets + 1] = {
-                                                x = x,
-                                                y = y,
-                                                dir = entry.dir,
-                                                side = entry.side,
-                                        }
-                                end
-                        end
-                end
-        elseif data.positions and #data.positions > 0 then
-                for _, pos in ipairs(data.positions) do
-                        if pos then
-                                local x = pos[1]
-                                local y = pos[2]
-                                if x and y then
-                                        targets[#targets + 1] = {
-                                                x = x,
-                                                y = y,
-                                        }
-                                end
-                        end
-                end
-        end
-
-        return targets
-end
-
+        }),
         register({
                 id = "circuit_breaker",
                 nameKey = "upgrades.circuit_breaker.name",
