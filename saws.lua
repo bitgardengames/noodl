@@ -586,12 +586,44 @@ function Saws:draw()
 	end
 end
 
-function Saws:stall(duration)
+function Saws:stall(duration, options)
 	if not duration or duration <= 0 then
 		return
 	end
 
 	stallTimer = (stallTimer or 0) + duration
+
+	local Upgrades = package.loaded["upgrades"]
+	if Upgrades and Upgrades.notify then
+		local event = {
+			duration = duration,
+			total = stallTimer,
+			cause = options and options.cause or nil,
+			source = options and options.source or nil,
+		}
+
+		local positions = {}
+		local limit = (options and options.positionLimit) or 4
+
+		for _, saw in ipairs(current) do
+			if saw then
+				local cx, cy = getSawCenter(saw)
+				if cx and cy then
+					positions[#positions + 1] = { cx, cy }
+					if limit and limit > 0 and #positions >= limit then
+						break
+					end
+				end
+			end
+		end
+
+		if #positions > 0 then
+			event.positions = positions
+			event.positionCount = #positions
+		end
+
+		Upgrades:notify("sawsStalled", event)
+	end
 end
 
 function Saws:sink(duration)
@@ -631,7 +663,7 @@ end
 function Saws:onFruitCollected()
 	local duration = self:getStallOnFruit()
 	if duration > 0 then
-		self:stall(duration)
+		self:stall(duration, { cause = "fruit" })
 	end
 end
 
