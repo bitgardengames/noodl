@@ -1329,53 +1329,76 @@ local pool = {
 		tags = {"economy", "defense"},
 		allowDuplicates = true,
 		maxStacks = 3,
-		onAcquire = function(state)
-			state.counters.verdantBondsShields = (state.counters.verdantBondsShields or 0) + 1
-			if not state.counters.verdantBondsHandlerRegistered then
-				state.counters.verdantBondsHandlerRegistered = true
-				Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
-					if not runState then return end
-					if getStacks(runState, "verdant_bonds") <= 0 then return end
-					if not data or not data.upgrade then return end
+                onAcquire = function(state)
+                        state.counters = state.counters or {}
+                        state.counters.verdantBondsProgress = state.counters.verdantBondsProgress or 0
+                        if not state.counters.verdantBondsHandlerRegistered then
+                                state.counters.verdantBondsHandlerRegistered = true
+                                Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
+                                        if not runState then return end
+                                        if getStacks(runState, "verdant_bonds") <= 0 then return end
+                                        if not data or not data.upgrade then return end
 
-					local upgradeTags = data.upgrade.tags
-					local hasEconomy = false
-					if upgradeTags then
-						for _, tag in ipairs(upgradeTags) do
-							if tag == "economy" then
-								hasEconomy = true
-								break
-							end
-						end
-					end
+                                        local upgradeTags = data.upgrade.tags
+                                        local hasEconomy = false
+                                        if upgradeTags then
+                                                for _, tag in ipairs(upgradeTags) do
+                                                        if tag == "economy" then
+                                                                hasEconomy = true
+                                                                break
+                                                        end
+                                                end
+                                        end
 
-					if not hasEconomy then return end
+                                        if not hasEconomy then return end
 
-					local shields = runState.counters.verdantBondsShields or 1
-					if Snake and Snake.addCrashShields then
-						Snake:addCrashShields(shields)
-					end
-					celebrateUpgrade(getUpgradeString("verdant_bonds", "activation_text"), data, {
-						color = {0.58, 0.88, 0.64, 1},
-						particleCount = 14,
-						particleSpeed = 120,
-						particleLife = 0.48,
-						textOffset = 46,
-						textScale = 1.1,
-						visual = {
-							badge = "shield",
-							outerRadius = 52,
-							innerRadius = 16,
-							ringCount = 3,
-							life = 0.68,
-							glowAlpha = 0.26,
-							haloAlpha = 0.18,
-						},
-					})
-				end)
-			end
-		end,
-	}),
+                                        runState.counters = runState.counters or {}
+                                        local counters = runState.counters
+
+                                        local stacks = getStacks(runState, "verdant_bonds")
+                                        if stacks <= 0 then return end
+
+                                        local progress = (counters.verdantBondsProgress or 0) + stacks
+                                        local threshold = 3
+                                        local shields = math.floor(progress / threshold)
+                                        counters.verdantBondsProgress = progress - shields * threshold
+
+                                        if shields <= 0 then return end
+
+                                        if Snake and Snake.addCrashShields then
+                                                Snake:addCrashShields(shields)
+                                        end
+
+                                        local label = getUpgradeString("verdant_bonds", "activation_text")
+                                        if shields > 1 then
+                                                if label and label ~= "" then
+                                                        label = string.format("%s +%d", label, shields)
+                                                else
+                                                        label = string.format("+%d", shields)
+                                                end
+                                        end
+
+                                        celebrateUpgrade(label, data, {
+                                                color = {0.58, 0.88, 0.64, 1},
+                                                particleCount = 14,
+                                                particleSpeed = 120,
+                                                particleLife = 0.48,
+                                                textOffset = 46,
+                                                textScale = 1.1,
+                                                visual = {
+                                                        badge = "shield",
+                                                        outerRadius = 52,
+                                                        innerRadius = 16,
+                                                        ringCount = 3,
+                                                        life = 0.68,
+                                                        glowAlpha = 0.26,
+                                                        haloAlpha = 0.18,
+                                                },
+                                        })
+                                end)
+                        end
+                end,
+        }),
 	register({
 		id = "fresh_supplies",
 		nameKey = "upgrades.fresh_supplies.name",
