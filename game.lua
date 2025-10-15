@@ -970,9 +970,9 @@ local function drawPlayfieldLayers(self, stateOverride)
 
 	Fruit:draw()
 	Rocks:draw()
-	Lasers:draw()
 	Darts:draw()
 	Saws:draw()
+	Lasers:draw()
 
 	local isDescending = (renderState == "descending")
 	local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
