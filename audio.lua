@@ -81,7 +81,7 @@ end
 function Audio:PlaySound(name)
 	if not Settings.MuteSFX and self.sounds[name] then
 		self.sounds[name]:stop()
-		self.sounds[name]:SetVolume(Settings.SfxVolume)
+                self.sounds[name]:setVolume(Settings.SfxVolume)
 		self.sounds[name]:play()
 	end
 end
@@ -96,7 +96,7 @@ function Audio:PlayMusic(TrackName)
 	if NewTrack and NewTrack ~= self.CurrentMusic then
 		if self.CurrentMusic then self.CurrentMusic:stop() end
 		self.CurrentMusic = NewTrack
-		self.CurrentMusic:SetVolume(Settings.MusicVolume)
+                self.CurrentMusic:setVolume(Settings.MusicVolume)
 		self.CurrentMusic:play()
 	end
 end
