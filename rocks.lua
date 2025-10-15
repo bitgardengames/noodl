@@ -247,12 +247,15 @@ function Rocks:shatterNearest(x, y, count)
 
 		local bestIndex, bestDist = nil, math.huge
 		for i, rock in ipairs(current) do
-			local dx = (rock.x or x) - x
-			local dy = (rock.y or y) - y
-			local dist = dx * dx + dy * dy
-			if dist < bestDist then
-				bestDist = dist
-				bestIndex = i
+			local phase = rock.phase
+			if not phase or phase == "done" then
+				local dx = (rock.x or x) - x
+				local dy = (rock.y or y) - y
+				local dist = dx * dx + dy * dy
+				if dist < bestDist then
+					bestDist = dist
+					bestIndex = i
+				end
 			end
 		end
 
