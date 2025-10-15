@@ -20,14 +20,11 @@
 | Quick Fangs | Uncommon | Snake moves 10% faster. | Up to 4 stacks |
 | Resonant Shell | Uncommon | Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own. | Tags: defense; Requires tags: defense; Unlock tag: specialist |
 | Stone Skin | Uncommon | Gain a crash shield that shatters rocks and shrugs off a saw or laser hit. | Up to 4 stacks |
-| Tempo Turbine | Uncommon | Combos of 2+ fruits build charge; every third combo fruit stalls saws for 0.7s and grants +2 bonus score. | Tags: combo, economy |
 | Verdant Bonds | Uncommon | Buying an Economy upgrade grants crash shields equal to Verdant Bonds stacks. | Tags: economy, defense; Up to 3 stacks |
 | Artisan Catalog | Rare | The first upgrade you buy each floor grants +1 crash shield, +2 bonus score, and stalls saws for 0.9s. Effects stack with additional copies. | Tags: economy, defense |
-| Mercantile Echo | Rare | The first time you acquire an upgrade with a new tag, gain +0.15s saw stall and +1 bonus score. | Tags: economy |
 | Mirror Mantle | Rare | Breaking a crash shield grants +3 bonus score and stalls saws for 1s. | Tags: defense, combo |
 | Mirrored Scales | Rare | Blocking a laser makes it fire back the other way after a quick recharge and grants +2 bonus score (+1 per additional copy). | Tags: defense, economy |
 | Predator's Reflex | Rare | Adrenaline bursts are 25% stronger and trigger at the start of each floor. | Requires tags: adrenaline |
-| Prism Lock | Rare | Blocking a laser adds +1.1s to its cooldown per stack. | Tags: defense, utility |
 | Pulse Bloom | Rare | Harvest a handful of distinct fruit to forge a crash shield. | Tags: defense, economy; Up to 2 stacks |
 | Sparkstep Relay | Rare | Dashing shatters the nearest rock and stalls saws for 0.6s. | Tags: mobility, defense; Requires tags: mobility |
 | Stone Census | Rare | Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%). | Tags: economy, defense; Requires tags: economy |
