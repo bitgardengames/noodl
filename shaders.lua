@@ -347,10 +347,10 @@ registerEffect({
 
 -- Gentle tidal drift for calmer aquatic stages
 registerEffect({
-	type = "softCurrent",
-	backdropIntensity = 0.56,
-	arenaIntensity = 0.32,
-	source = [[
+        type = "softCurrent",
+        backdropIntensity = 0.56,
+        arenaIntensity = 0.32,
+        source = [[
 		extern float time;
 		extern vec2 resolution;
 		extern vec2 origin;
@@ -400,9 +400,222 @@ registerEffect({
 		sendColor(shader, "deepColor", deep)
 		sendColor(shader, "foamColor", foam)
 	end,
-	draw = function(effect, x, y, w, h, intensity)
-		return drawShader(effect, x, y, w, h, intensity)
-	end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
+})
+
+-- Shimmering scale field for gilded thresholds
+registerEffect({
+        type = "scaleBloom",
+        backdropIntensity = 0.62,
+        arenaIntensity = 0.34,
+        source = [[
+                extern float time;
+                extern vec2 resolution;
+                extern vec2 origin;
+                extern vec4 baseColor;
+                extern vec4 accentColor;
+                extern vec4 glowColor;
+                extern vec4 highlightColor;
+                extern float intensity;
+
+                float hash(vec2 p)
+                {
+                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+                }
+
+                mat2 rotate(float a)
+                {
+                        float s = sin(a);
+                        float c = cos(a);
+                        return mat2(c, -s, s, c);
+                }
+
+                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+                {
+                        vec2 uv = (screen_coords - origin) / resolution;
+                        uv = clamp(uv, 0.0, 1.0);
+
+                        vec2 centered = uv - 0.5;
+                        float depth = smoothstep(0.0, 1.0, uv.y);
+                        vec3 gradient = mix(baseColor.rgb, accentColor.rgb, depth * 0.3);
+
+                        vec2 tile = uv * vec2(12.0, 6.0);
+                        vec2 cell = floor(tile);
+                        vec2 local = fract(tile) - 0.5;
+                        float rotation = (hash(cell) - 0.5) * 1.2 + sin(time * 0.35 + cell.x * 0.7 + cell.y * 0.3) * 0.25;
+                        local = rotate(rotation) * local;
+
+                        float scallop = smoothstep(0.42, 0.0, length(local * vec2(1.3, 0.9)));
+                        float ridge = smoothstep(0.3, 0.0, abs(local.y));
+                        float scaleMask = clamp(scallop * (0.5 + ridge * 0.5), 0.0, 1.0);
+
+                        float shimmer = sin((cell.x + cell.y) * 1.7 + time * 0.9) * 0.5 + 0.5;
+                        float sparkle = sin((uv.x + uv.y) * 24.0 + time * 1.4) * 0.5 + 0.5;
+
+                        vec3 scales = mix(gradient, glowColor.rgb, scaleMask * (0.4 + intensity * 0.4));
+                        vec3 highlight = mix(scales, highlightColor.rgb, clamp(shimmer * intensity, 0.0, 1.0) * 0.35);
+                        highlight = mix(highlight, glowColor.rgb, sparkle * 0.12 * intensity);
+
+                        float rim = smoothstep(0.4, 0.9, length(centered));
+                        vec3 col = mix(highlight, baseColor.rgb, rim * 0.45);
+
+                        float bloom = smoothstep(0.22, 0.02, length(centered)) * (0.2 + intensity * 0.3);
+                        col = mix(col, glowColor.rgb, bloom);
+
+                        return vec4(col, baseColor.a) * color;
+                }
+        ]],
+        configure = function(effect, palette)
+                local shader = effect.shader
+
+                local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+                local accent = getColorComponents(palette and (palette.arenaBG or palette.rock), Theme.arenaBG)
+                local glow = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+                local highlight = getColorComponents(palette and (palette.arenaHighlight or palette.snake), Theme.snakeDefault)
+
+                sendColor(shader, "baseColor", base)
+                sendColor(shader, "accentColor", accent)
+                sendColor(shader, "glowColor", glow)
+                sendColor(shader, "highlightColor", highlight)
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
+})
+
+-- Spiral auroras for radiant lung chambers
+registerEffect({
+        type = "spiralAurora",
+        backdropIntensity = 0.7,
+        arenaIntensity = 0.42,
+        source = [[
+                extern float time;
+                extern vec2 resolution;
+                extern vec2 origin;
+                extern vec4 baseColor;
+                extern vec4 cloudColor;
+                extern vec4 auroraColor;
+                extern vec4 highlightColor;
+                extern float intensity;
+
+                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+                {
+                        vec2 uv = (screen_coords - origin) / resolution;
+                        uv = clamp(uv, 0.0, 1.0);
+
+                        vec2 centered = uv - 0.5;
+                        float radius = length(centered * vec2(1.2, 1.0));
+                        float angle = atan(centered.y, centered.x);
+
+                        float spiral = sin(angle * 5.0 - radius * 12.0 + time * 0.6) * 0.5 + 0.5;
+                        float bands = sin(radius * 18.0 + time * 1.2) * 0.5 + 0.5;
+                        float pulse = sin(time * 0.8 + radius * 4.0) * 0.5 + 0.5;
+
+                        float interior = clamp(1.0 - radius * 1.05, 0.0, 1.0);
+                        vec3 nebula = mix(baseColor.rgb, cloudColor.rgb, interior * 0.8);
+                        nebula = mix(nebula, auroraColor.rgb, spiral * (0.55 + intensity * 0.25));
+                        nebula = mix(nebula, highlightColor.rgb, bands * 0.35 * intensity);
+
+                        float rays = smoothstep(0.3, 0.0, abs(sin(angle * 6.0 + time * 0.45))) * (0.2 + intensity * 0.4);
+                        vec3 col = mix(nebula, auroraColor.rgb, rays);
+
+                        float mist = interior * pulse;
+                        col = mix(col, highlightColor.rgb, mist * 0.28 * (0.6 + intensity * 0.4));
+
+                        float rim = smoothstep(0.55, 0.95, radius);
+                        col = mix(col, baseColor.rgb, rim * 0.35);
+
+                        return vec4(col, baseColor.a) * color;
+                }
+        ]],
+        configure = function(effect, palette)
+                local shader = effect.shader
+
+                local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+                local cloud = getColorComponents(palette and (palette.arenaBG or palette.rock), Theme.arenaBG)
+                local aurora = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+                local highlight = getColorComponents(palette and (palette.arenaHighlight or palette.snake), Theme.snakeDefault)
+
+                sendColor(shader, "baseColor", base)
+                sendColor(shader, "cloudColor", cloud)
+                sendColor(shader, "auroraColor", aurora)
+                sendColor(shader, "highlightColor", highlight)
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
+})
+
+-- Celestial prismatic spiral for the deepest chamber
+registerEffect({
+        type = "prismaticSpiral",
+        backdropIntensity = 0.82,
+        arenaIntensity = 0.5,
+        source = [[
+                extern float time;
+                extern vec2 resolution;
+                extern vec2 origin;
+                extern vec4 baseColor;
+                extern vec4 auraColor;
+                extern vec4 accentColor;
+                extern vec4 glowColor;
+                extern float intensity;
+
+                float hash(vec2 p)
+                {
+                        return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+                }
+
+                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+                {
+                        vec2 uv = (screen_coords - origin) / resolution;
+                        uv = clamp(uv, 0.0, 1.0);
+
+                        vec2 centered = uv - 0.5;
+                        float radius = length(centered);
+                        float angle = atan(centered.y, centered.x);
+
+                        float spiral = sin(angle * 7.0 - radius * 10.0 + time * 0.8) * 0.5 + 0.5;
+                        float prism = sin(angle * 3.0 + time * 0.6) * sin(radius * 14.0 - time * 0.75) * 0.5 + 0.5;
+                        float orbit = sin(time * 0.9 + radius * 24.0 + angle * 4.0) * 0.5 + 0.5;
+
+                        float interior = clamp(1.0 - radius * 1.1, 0.0, 1.0);
+                        vec3 base = mix(baseColor.rgb, auraColor.rgb, interior * 0.85);
+
+                        vec3 prismColor = mix(accentColor.rgb, glowColor.rgb, spiral);
+                        vec3 col = mix(base, prismColor, spiral * (0.4 + intensity * 0.4));
+                        col = mix(col, glowColor.rgb, orbit * 0.3 * intensity);
+
+                        float sparkle = hash(centered * 280.0 + time) * 0.12 + sin((centered.x + centered.y) * 60.0 + time * 1.5) * 0.04;
+                        col += glowColor.rgb * sparkle * intensity;
+
+                        float core = smoothstep(0.32, 0.0, radius);
+                        col = mix(col, accentColor.rgb, core * (0.5 + intensity * 0.5));
+
+                        float vignette = smoothstep(0.6, 1.05, radius);
+                        col = mix(col, baseColor.rgb, vignette * 0.4);
+
+                        return vec4(col, baseColor.a) * color;
+                }
+        ]],
+        configure = function(effect, palette)
+                local shader = effect.shader
+
+                local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+                local aura = getColorComponents(palette and (palette.arenaBG or palette.rock), Theme.arenaBG)
+                local accent = getColorComponents(palette and (palette.arenaHighlight or palette.snake), Theme.snakeDefault)
+                local glow = getColorComponents(palette and (palette.arenaBorder or palette.sawColor), Theme.arenaBorder)
+
+                sendColor(shader, "baseColor", base)
+                sendColor(shader, "auraColor", aura)
+                sendColor(shader, "accentColor", accent)
+                sendColor(shader, "glowColor", glow)
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
 })
 -- Forest canopy shimmer for lush floors
 registerEffect({
