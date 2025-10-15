@@ -18,7 +18,7 @@
 ### 🎨 Floor Atmospheres
 | Floor | Atmosphere Snapshot | Palette + Shader Notes |
 | --- | --- | --- |
-| **Auric Threshold** | Gilded scales part in luminous rings while offerings shimmer with promise. | Verdant gold gradients paired with the new `scaleBloom` shader bathe the arena in radiant scale gleams. |
+| **Auric Threshold** | Gilded petals sigh open in hushed rings while offerings settle like dawnlit dew. | Dusky violets and blush golds drift through the calming `petalCascade` bloom to welcome gentle play. |
 | **Resonant Gullet** | Echoing tides sing hymns that tug tributes toward the chanting throat. | Midnight blues and electric teals glow under intensified `softCurrent` caustics. |
 | **Heartforge Crucible** | Molten valves hammer to a blistering rhythm that tempers every devotion. | Superheated ambers and ember oranges flare through the existing `emberDrift` effect. |
 | **Luminal Gallery** | Lungs of light inhale nebular mists that swirl through auroral currents. | Glacial blues and amethyst beams spiral inside the bespoke `spiralAurora` shader. |
