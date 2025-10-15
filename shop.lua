@@ -17,13 +17,6 @@ local CARD_HOLOGRAM_TYPE = "cardHologram"
 local cardHologramCache = {}
 local backgroundEffect = nil
 
-local CARD_WIDTH = 144
-local CARD_HEIGHT = 248
-local CARD_GUTTER = 24
-local CARD_MAX_COLUMNS = 4
-local CARD_MIN_COLUMNS = 2
-local CARD_CORNER_RADIUS = 14
-
 local function getColorChannels(color, fallback)
         local reference = color or fallback
         if not reference then
@@ -421,12 +414,11 @@ end
 local rarityBorderAlpha = 0.85
 
 local rarityStyles = {
-        common = {
-                base = {0.20, 0.23, 0.28, 1},
-                shadowAlpha = 0.18,
-                borderWidth = 3,
-                aura = {
-                        color = {0.52, 0.62, 0.78, 0.22},
+	common = {
+		base = {0.20, 0.23, 0.28, 1},
+		shadowAlpha = 0.18,
+		aura = {
+			color = {0.52, 0.62, 0.78, 0.22},
 			radius = 0.72,
 			y = 0.42,
 		},
@@ -447,12 +439,11 @@ local rarityStyles = {
 			width = 2,
 		},
 	},
-        uncommon = {
-                base = {0.18, 0.28, 0.22, 1},
-                shadowAlpha = 0.24,
-                borderWidth = 3,
-                aura = {
-                        color = {0.46, 0.78, 0.56, 0.28},
+	uncommon = {
+		base = {0.18, 0.28, 0.22, 1},
+		shadowAlpha = 0.24,
+		aura = {
+			color = {0.46, 0.78, 0.56, 0.28},
 			radius = 0.76,
 			y = 0.40,
 		},
@@ -473,12 +464,11 @@ local rarityStyles = {
 			width = 3,
 		},
 	},
-        rare = {
-                base = {0.16, 0.24, 0.34, 1},
-                shadowAlpha = 0.30,
-                borderWidth = 3,
-                aura = {
-                        color = {0.40, 0.60, 0.92, 0.32},
+	rare = {
+		base = {0.16, 0.24, 0.34, 1},
+		shadowAlpha = 0.30,
+		aura = {
+			color = {0.40, 0.60, 0.92, 0.32},
 			radius = 0.82,
 			y = 0.36,
 		},
@@ -499,11 +489,10 @@ local rarityStyles = {
 			width = 3,
 		},
 	},
-        epic = {
-                base = {0.24, 0.12, 0.42, 1},
-                shadowAlpha = 0.36,
-                borderWidth = 3,
-                aura = {
+	epic = {
+		base = {0.24, 0.12, 0.42, 1},
+		shadowAlpha = 0.36,
+		aura = {
 			color = {0.86, 0.56, 0.98, 0.42},
 			radius = 0.9,
 			y = 0.34,
@@ -565,9 +554,9 @@ local rarityStyles = {
 				{0.44, 0.74, 0.8},
 			},
 		},
-                glow = 0.22,
-                borderWidth = 3,
-        },
+		glow = 0.22,
+		borderWidth = 5,
+	},
 }
 
 local function cloneColor(color)
@@ -653,31 +642,30 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
                 love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
         end
 
-        local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
-        local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
-        local cornerRadius = CARD_CORNER_RADIUS
+	local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
+	local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
 
         if isSelected then
                 local glowClock = love.timer.getTime()
-                local pulse = 0.35 + 0.25 * (math.sin(glowClock * 5) * 0.5 + 0.5)
-                setColor(1, 0.9, 0.45, pulse)
-                love.graphics.setLineWidth(8)
-                love.graphics.rectangle("line", x - 12, y - 12, w + 24, h + 24, cornerRadius + 6, cornerRadius + 6)
-                love.graphics.setLineWidth(3)
-        end
+		local pulse = 0.35 + 0.25 * (math.sin(glowClock * 5) * 0.5 + 0.5)
+		setColor(1, 0.9, 0.45, pulse)
+		love.graphics.setLineWidth(10)
+		love.graphics.rectangle("line", x - 14, y - 14, w + 28, h + 28, 18, 18)
+		love.graphics.setLineWidth(4)
+	end
 
         if style.shadowAlpha and style.shadowAlpha > 0 then
                 setColor(0, 0, 0, style.shadowAlpha)
-                love.graphics.rectangle("fill", x + 6, y + 10, w, h, cornerRadius + 4, cornerRadius + 4)
+                love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
         end
 
         applyColor(setColor, style.base)
-        love.graphics.rectangle("fill", x, y, w, h, cornerRadius, cornerRadius)
+        love.graphics.rectangle("fill", x, y, w, h, 12, 12)
 
         local currentTime = love.timer.getTime()
 
         if style.aura then
-                withTransformedScissor(x, y, w, h, function()
+		withTransformedScissor(x, y, w, h, function()
 			applyColor(setColor, style.aura.color)
 			local radius = math.max(w, h) * (style.aura.radius or 0.72)
 			local centerY = y + h * (style.aura.y or 0.4)
@@ -689,13 +677,13 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		local glowAlpha = getAnimatedAlpha(style.outerGlow, currentTime)
 		if glowAlpha and glowAlpha > 0 then
 			applyColor(setColor, style.outerGlow.color or borderColor, glowAlpha)
-                        love.graphics.setLineWidth(style.outerGlow.width or 6)
-                        local expand = style.outerGlow.expand or 6
-                        love.graphics.rectangle("line", x - expand, y - expand, w + expand * 2, h + expand * 2, cornerRadius + 4, cornerRadius + 4)
-                end
-        end
-        if style.flare then
-                withTransformedScissor(x, y, w, h, function()
+			love.graphics.setLineWidth(style.outerGlow.width or 6)
+			local expand = style.outerGlow.expand or 6
+			love.graphics.rectangle("line", x - expand, y - expand, w + expand * 2, h + expand * 2, 18, 18)
+		end
+	end
+	if style.flare then
+		withTransformedScissor(x, y, w, h, function()
 			applyColor(setColor, style.flare.color)
 			local radius = math.min(w, h) * (style.flare.radius or 0.36)
 			love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
@@ -735,14 +723,14 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		end)
 	end
 
-        if style.glow and style.glow > 0 then
-                applyColor(setColor, borderColor, style.glow)
-                love.graphics.setLineWidth(6)
-                love.graphics.rectangle("line", x - 3, y - 3, w + 6, h + 6, cornerRadius + 2, cornerRadius + 2)
-        end
+	if style.glow and style.glow > 0 then
+		applyColor(setColor, borderColor, style.glow)
+		love.graphics.setLineWidth(6)
+		love.graphics.rectangle("line", x - 3, y - 3, w + 6, h + 6, 16, 16)
+	end
 
-        applyColor(setColor, borderColor, rarityBorderAlpha)
-        local hologramPalette = hologramRarityPalettes[card.rarity or ""]
+	applyColor(setColor, borderColor, rarityBorderAlpha)
+	local hologramPalette = hologramRarityPalettes[card.rarity or ""]
 	if hologramPalette then
 		local effect = Shaders.ensure(cardHologramCache, CARD_HOLOGRAM_TYPE)
 		if effect then
@@ -781,84 +769,83 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 				love.graphics.setColor(1, 1, 1, 1)
 			end)
 		end
-        end
+	end
 
-        applyColor(setColor, borderColor, rarityBorderAlpha)
-        love.graphics.setLineWidth(style.borderWidth or 3)
-        love.graphics.rectangle("line", x, y, w, h, cornerRadius, cornerRadius)
+	applyColor(setColor, borderColor, rarityBorderAlpha)
+	love.graphics.setLineWidth(style.borderWidth or 4)
+	love.graphics.rectangle("line", x, y, w, h, 12, 12)
 
         local hoverGlowAlpha
         if style.innerGlow then
                 hoverGlowAlpha = getAnimatedAlpha(style.innerGlow, currentTime)
-        end
+	end
 
 	if hovered or isSelected then
 		local focusAlpha = hovered and 0.6 or 0.4
 		hoverGlowAlpha = math.max(hoverGlowAlpha or 0, focusAlpha)
 	end
 
-        if hoverGlowAlpha and hoverGlowAlpha > 0 then
-                local innerColor = (style.innerGlow and style.innerGlow.color) or borderColor
-                local inset = (style.innerGlow and style.innerGlow.inset) or 6
-                love.graphics.setLineWidth((style.innerGlow and style.innerGlow.width) or 2)
-                applyColor(setColor, innerColor, hoverGlowAlpha)
-                love.graphics.rectangle("line", x + inset, y + inset, w - inset * 2, h - inset * 2, cornerRadius - 2, cornerRadius - 2)
-        elseif hovered or isSelected then
-                local glowAlpha = hovered and 0.55 or 0.35
-                applyColor(setColor, borderColor, glowAlpha)
-                love.graphics.setLineWidth(2)
-                love.graphics.rectangle("line", x + 6, y + 6, w - 12, h - 12, cornerRadius - 4, cornerRadius - 4)
-        end
+	if hoverGlowAlpha and hoverGlowAlpha > 0 then
+		local innerColor = (style.innerGlow and style.innerGlow.color) or borderColor
+		local inset = (style.innerGlow and style.innerGlow.inset) or 6
+		love.graphics.setLineWidth((style.innerGlow and style.innerGlow.width) or 2)
+		applyColor(setColor, innerColor, hoverGlowAlpha)
+		love.graphics.rectangle("line", x + inset, y + inset, w - inset * 2, h - inset * 2, 10, 10)
+	elseif hovered or isSelected then
+		local glowAlpha = hovered and 0.55 or 0.35
+		applyColor(setColor, borderColor, glowAlpha)
+		love.graphics.setLineWidth(2)
+		love.graphics.rectangle("line", x + 6, y + 6, w - 12, h - 12, 10, 10)
+	end
 
-        love.graphics.setLineWidth(3)
+	love.graphics.setLineWidth(4)
 
-        setColor(1, 1, 1, 1)
-        local titleFont = UI.fonts.button
-        love.graphics.setFont(titleFont)
-        local horizontalPadding = 16
-        local contentWidth = w - horizontalPadding * 2
-        local titleY = y + 20
-        love.graphics.printf(card.name, x + horizontalPadding, titleY, contentWidth, "center")
+	setColor(1, 1, 1, 1)
+	local titleFont = UI.fonts.button
+	love.graphics.setFont(titleFont)
+	local titleWidth = w - 28
+	local titleY = y + 24
+	love.graphics.printf(card.name, x + 14, titleY, titleWidth, "center")
 
-        local _, titleLines = titleFont:getWrap(card.name or "", contentWidth)
-        local titleLineCount = math.max(1, #titleLines)
-        local titleHeight = titleLineCount * titleFont:getHeight() * titleFont:getLineHeight()
-        local contentTop = titleY + titleHeight
+	local _, titleLines = titleFont:getWrap(card.name or "", titleWidth)
+	local titleLineCount = math.max(1, #titleLines)
+	local titleHeight = titleLineCount * titleFont:getHeight() * titleFont:getLineHeight()
+	local contentTop = titleY + titleHeight
 
-        local descStart
-        if card.rarityLabel then
-                local rarityFont = UI.fonts.body
-                love.graphics.setFont(rarityFont)
-                setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
-                local rarityY = contentTop + 8
-                love.graphics.printf(card.rarityLabel, x + horizontalPadding, rarityY, contentWidth, "center")
+	local descStart
+	if card.rarityLabel then
+		local rarityFont = UI.fonts.body
+		love.graphics.setFont(rarityFont)
+		setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
+		local rarityY = contentTop + 10
+		love.graphics.printf(card.rarityLabel, x + 14, rarityY, titleWidth, "center")
 
-                setColor(1, 1, 1, 0.3)
-                love.graphics.setLineWidth(2)
-                local rarityHeight = rarityFont:getHeight() * rarityFont:getLineHeight()
-                local dividerY = rarityY + rarityHeight + 8
-                love.graphics.line(x + horizontalPadding + 8, dividerY, x + w - horizontalPadding - 8, dividerY)
-                descStart = dividerY + 16
-        else
-                setColor(1, 1, 1, 0.3)
-                love.graphics.setLineWidth(2)
-                local dividerY = contentTop + 12
-                love.graphics.line(x + horizontalPadding + 8, dividerY, x + w - horizontalPadding - 8, dividerY)
-                descStart = dividerY + 16
-        end
+		setColor(1, 1, 1, 0.3)
+		love.graphics.setLineWidth(2)
+		local rarityHeight = rarityFont:getHeight() * rarityFont:getLineHeight()
+		local dividerY = rarityY + rarityHeight + 8
+		love.graphics.line(x + 24, dividerY, x + w - 24, dividerY)
+		descStart = dividerY + 16
+	else
+		setColor(1, 1, 1, 0.3)
+		love.graphics.setLineWidth(2)
+		local dividerY = contentTop + 14
+		love.graphics.line(x + 24, dividerY, x + w - 24, dividerY)
+		descStart = dividerY + 16
+	end
 
-        love.graphics.setFont(UI.fonts.body)
-        setColor(0.92, 0.92, 0.92, 1)
-        local descY = descStart
-        if card.upgrade and card.upgrade.tags and #card.upgrade.tags > 0 then
-                love.graphics.setFont(UI.fonts.small)
-                setColor(0.8, 0.85, 0.9, 0.9)
-                love.graphics.printf(table.concat(card.upgrade.tags, " • "), x + horizontalPadding, descY, contentWidth, "center")
-                descY = descY + 18
-                love.graphics.setFont(UI.fonts.body)
-                setColor(0.92, 0.92, 0.92, 1)
-        end
-        love.graphics.printf(card.desc or "", x + horizontalPadding, descY, contentWidth, "center")
+	love.graphics.setFont(UI.fonts.body)
+	setColor(0.92, 0.92, 0.92, 1)
+	local descY = descStart
+	if card.upgrade and card.upgrade.tags and #card.upgrade.tags > 0 then
+		love.graphics.setFont(UI.fonts.small)
+		setColor(0.8, 0.85, 0.9, 0.9)
+		love.graphics.printf(table.concat(card.upgrade.tags, " • "), x + 18, descY, w - 36, "center")
+		descY = descY + 22
+		love.graphics.setFont(UI.fonts.body)
+		setColor(0.92, 0.92, 0.92, 1)
+	end
+	love.graphics.printf(card.desc or "", x + 18, descY, w - 36, "center")
 end
 
 function Shop:draw(screenW, screenH)
@@ -909,44 +896,36 @@ function Shop:draw(screenW, screenH)
 		love.graphics.setColor(1, 1, 1, 1)
 	end
 
-        local cardCount = #self.cards
-        local cardWidth, cardHeight = CARD_WIDTH, CARD_HEIGHT
-        local marginX = math.max(60, screenW * 0.05)
-        local availableWidth = math.max(cardWidth, screenW - marginX * 2)
+	local cardCount = #self.cards
+	local cardWidth, cardHeight = 264, 344
+	local baseSpacing = 48
+	local minSpacing = 28
+	local marginX = math.max(60, screenW * 0.05)
+	local availableWidth = math.max(cardWidth, screenW - marginX * 2)
+	local columns = math.min(cardCount, math.max(1, math.floor((availableWidth + minSpacing) / (cardWidth + minSpacing))))
 
-        local function widthForColumns(columnCount)
-                if columnCount <= 0 then return 0 end
-                return columnCount * cardWidth + math.max(0, columnCount - 1) * CARD_GUTTER
-        end
+	while columns > 1 do
+		local widthNeeded = columns * cardWidth + (columns - 1) * minSpacing
+		if widthNeeded <= availableWidth then
+			break
+		end
+		columns = columns - 1
+	end
 
-        local desiredColumns = math.min(cardCount, CARD_MAX_COLUMNS)
-        if desiredColumns < 1 then desiredColumns = 1 end
-        local columns = desiredColumns
+	columns = math.max(1, columns)
+	local rows = math.max(1, math.ceil(cardCount / columns))
 
-        if widthForColumns(columns) > availableWidth then
-                local fallback = math.min(cardCount, CARD_MIN_COLUMNS)
-                if fallback >= 1 and widthForColumns(fallback) <= availableWidth then
-                        columns = fallback
-                else
-                        columns = 1
-                end
-        end
+	local spacing = 0
+	if columns > 1 then
+		local calculated = (availableWidth - columns * cardWidth) / (columns - 1)
+		spacing = math.max(minSpacing, math.min(baseSpacing, calculated))
+	end
 
-        if cardCount > 0 then
-                columns = math.max(1, math.min(columns, cardCount))
-        else
-                columns = 1
-        end
+	local totalWidth = columns * cardWidth + math.max(0, (columns - 1)) * spacing
+	local startX = (screenW - totalWidth) / 2
 
-        local rows = math.max(1, math.ceil(cardCount / columns))
-
-        local spacing = columns > 1 and CARD_GUTTER or 0
-
-        local totalWidth = widthForColumns(columns)
-        local startX = (screenW - totalWidth) / 2
-
-        local rowSpacing = 56
-        local minRowSpacing = 36
+	local rowSpacing = 72
+	local minRowSpacing = 40
 	local bottomPadding = screenH * 0.12
 	local minTopPadding = screenH * 0.24
 	local topPadding = math.max(minTopPadding, headerBottom + 24)
