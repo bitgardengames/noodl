@@ -1069,7 +1069,8 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
         local fangCount = 5 + math.min(stacks * 2, 6)
         local orbit = baseRadius * (0.8 + 0.18 * highlight)
         local fangLength = SEGMENT_SIZE * (0.35 + 0.05 * stacks + 0.08 * highlight)
-        local fangWidth = fangLength * 0.42
+        local fangWidth = fangLength * 0.24
+        local outlineWidth = 0.9 + 0.6 * highlight
         local spin = 2.8 + stacks * 0.35 + speedBonus * 1.2
 
         for i = 1, fangCount do
@@ -1092,12 +1093,14 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
                 local rightY = baseY - perpY * fangWidth * 0.5
 
                 local fangAlpha = math.min(1, 0.36 + 0.4 * intensity + flash * 0.4)
-                love.graphics.setColor(1.0, 0.62, 0.42, fangAlpha)
-                love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
-
-                love.graphics.setLineWidth(1.4)
-                love.graphics.setColor(1.0, 0.86, 0.6, fangAlpha * 0.85)
+                love.graphics.setLineWidth(outlineWidth)
+                love.graphics.setColor(1.0, 0.66, 0.46, fangAlpha)
                 love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
+
+                love.graphics.setLineWidth(outlineWidth * 0.7)
+                love.graphics.setColor(1.0, 0.9, 0.7, fangAlpha * 0.85)
+                love.graphics.line(leftX, leftY, tipX, tipY)
+                love.graphics.line(rightX, rightY, tipX, tipY)
 
                 local slashRadius = orbit + fangLength * (0.75 + 0.1 * highlight)
                 local slashWidth = 0.2 + 0.08 * highlight

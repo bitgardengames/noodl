@@ -241,7 +241,8 @@ local function drawFangFlurry(effect, progress)
 
                 local tipRadius = innerRadius + (outerRadius - innerRadius) * (0.82 + 0.12 * sin(progress * pi * 5 + index))
                 local baseRadius = innerRadius * (0.55 + 0.2 * cos(progress * pi * 3 + index))
-                local width = innerRadius * (0.26 + 0.12 * (1 - progress))
+                local width = innerRadius * (0.16 + 0.1 * (1 - progress))
+                local outlineWidth = 0.8 + 0.5 * (1 - progress)
 
                 local baseX = x + dirX * baseRadius
                 local baseY = y + dirY * baseRadius
@@ -253,12 +254,14 @@ local function drawFangFlurry(effect, progress)
                 local rightY = baseY - perpY * width
 
                 local fade = 1 - offset * 0.2
-                love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], baseAlpha * (0.8 + 0.2 * fade))
-                love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
-
-                love.graphics.setLineWidth(1.6)
-                love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 1) * baseAlpha * 0.9 * fade)
+                love.graphics.setLineWidth(outlineWidth)
+                love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], baseAlpha * (0.75 + 0.25 * fade))
                 love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
+
+                love.graphics.setLineWidth(outlineWidth * 0.7)
+                love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 1) * baseAlpha * 0.85 * fade)
+                love.graphics.line(leftX, leftY, tipX, tipY)
+                love.graphics.line(rightX, rightY, tipX, tipY)
 
                 local slashRadius = tipRadius + innerRadius * (0.28 + 0.18 * (1 - progress))
                 local slashWidth = 0.18 + 0.12 * (1 - progress)
