@@ -479,11 +479,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Stonebreaker Hymn",
 				description = "Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock.",
 			},
-			echo_aegis = {
-				name = "Echo Aegis",
-				description = "Crash shields unleash a shockwave that stalls saws.",
-			},
-			diffraction_barrier = {
+                        diffraction_barrier = {
 				name = "Diffraction Barrier",
 				description = "Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s.",
 			},
@@ -522,12 +518,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Guild Ledger",
 				description = "Each shop slot reduces rock spawn chance by 1.5%.",
 			},
-			artisan_catalog = {
-				name = "Artisan Catalog",
-				description = "The first upgrade you buy each floor grants +1 crash shield, +2 bonus score, and stalls saws for 0.9s. Effects stack with additional copies.",
-				trigger = "Patron's Favor",
-			},
-			predators_reflex = {
+                        predators_reflex = {
 				name = "Predator's Reflex",
 				description = "Adrenaline bursts are 25% stronger and trigger at the start of each floor.",
 			},
@@ -574,11 +565,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Sparkstep Relay",
 				description = "Dashing shatters the nearest rock and stalls saws for 0.6s.",
 				activation_text = "Sparkstep!",
-			},
-			stormchaser_rig = {
-				name = "Stormchaser Rig",
-				description = "Dashing primes your next fruit to grant +2 bonus score and stall saws for 0.7s.",
-				activation_text = "Stormchaser Bonus",
 			},
 			temporal_anchor = {
 				name = "Temporal Anchor",
