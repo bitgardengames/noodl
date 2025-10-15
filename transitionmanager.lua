@@ -7,7 +7,7 @@ local Shop = require("shop")
 local TransitionManager = {}
 TransitionManager.__index = TransitionManager
 
-local function shallowCopy(values)
+local function ShallowCopy(values)
 	local copy = {}
 	if not values then
 		return copy
@@ -27,11 +27,11 @@ function TransitionManager.new(game)
 		timer = 0,
 		duration = 0,
 		data = {},
-		shopCloseRequested = false,
+		ShopCloseRequested = false,
 	}, TransitionManager)
 end
 
-local function getResumeState(self)
+local function GetResumeState(self)
 	local data = self.data or {}
 	local resume = data.transitionResumePhase
 	if resume == nil or resume == "fadein" then
@@ -40,7 +40,7 @@ local function getResumeState(self)
 	return resume
 end
 
-function TransitionManager:isGameplayBlocked()
+function TransitionManager:IsGameplayBlocked()
 	local phase = self.phase
 	if not phase then
 		return false
@@ -62,7 +62,7 @@ function TransitionManager:isGameplayBlocked()
 	return true
 end
 
-function TransitionManager:updateGameplayState()
+function TransitionManager:UpdateGameplayState()
 	local game = self.game
 	if not game then
 		return
@@ -71,15 +71,15 @@ function TransitionManager:updateGameplayState()
 	local phase = self.phase
 	if not phase then
 		if game.state == "transition" then
-			game.state = getResumeState(self)
+			game.state = GetResumeState(self)
 		end
 		return
 	end
 
-	if self:isGameplayBlocked() then
+	if self:IsGameplayBlocked() then
 		game.state = "transition"
 	else
-		game.state = getResumeState(self)
+		game.state = GetResumeState(self)
 	end
 end
 
@@ -88,39 +88,39 @@ function TransitionManager:reset()
 	self.timer = 0
 	self.duration = 0
 	self.data = {}
-	self.shopCloseRequested = false
-	self:updateGameplayState()
+	self.ShopCloseRequested = false
+	self:UpdateGameplayState()
 end
 
-function TransitionManager:isActive()
+function TransitionManager:IsActive()
 	return self.phase ~= nil
 end
 
-function TransitionManager:isShopActive()
+function TransitionManager:IsShopActive()
 	return self.phase == "shop"
 end
 
-function TransitionManager:getPhase()
+function TransitionManager:GetPhase()
 	return self.phase
 end
 
-function TransitionManager:getTimer()
+function TransitionManager:GetTimer()
 	return self.timer
 end
 
-function TransitionManager:getDuration()
+function TransitionManager:GetDuration()
 	return self.duration
 end
 
-function TransitionManager:getData()
+function TransitionManager:GetData()
 	return self.data
 end
 
-function TransitionManager:setData(values)
-	self.data = shallowCopy(values)
+function TransitionManager:SetData(values)
+	self.data = ShallowCopy(values)
 end
 
-function TransitionManager:mergeData(values)
+function TransitionManager:MergeData(values)
 	if not values then
 		return
 	end
@@ -130,32 +130,32 @@ function TransitionManager:mergeData(values)
 	end
 end
 
-function TransitionManager:startPhase(phase, duration)
+function TransitionManager:StartPhase(phase, duration)
 	self.phase = phase
 	self.timer = 0
 	self.duration = duration or 0
-	self:updateGameplayState()
+	self:UpdateGameplayState()
 end
 
-function TransitionManager:clearPhase()
+function TransitionManager:ClearPhase()
 	self.phase = nil
 	self.timer = 0
 	self.duration = 0
-	self:updateGameplayState()
+	self:UpdateGameplayState()
 end
 
-function TransitionManager:openShop()
+function TransitionManager:OpenShop()
 	Shop:start(self.game.floor)
-	self.shopCloseRequested = false
+	self.ShopCloseRequested = false
 	self.phase = "shop"
 	self.timer = 0
 	self.duration = 0
-	Audio:playSound("shop_open")
-	self:updateGameplayState()
+	Audio:PlaySound("shop_open")
+	self:UpdateGameplayState()
 end
 
-function TransitionManager:startFloorIntro(duration, extra)
-	extra = shallowCopy(extra)
+function TransitionManager:StartFloorIntro(duration, extra)
+	extra = ShallowCopy(extra)
 	if not extra.transitionResumePhase then
 		extra.transitionResumePhase = "playing"
 	end
@@ -166,24 +166,24 @@ function TransitionManager:startFloorIntro(duration, extra)
 		extra.transitionResumeFadeDuration = nil
 	end
 
-	self.data.transitionIntroConfirmed = nil
-	self.data.transitionIntroReady = nil
+	self.data.TransitionIntroConfirmed = nil
+	self.data.TransitionIntroReady = nil
 
-	self:mergeData(extra)
+	self:MergeData(extra)
 
 	local data = self.data
-	local introDuration = duration or data.transitionIntroDuration or 2.2
-	data.transitionIntroDuration = introDuration
+	local IntroDuration = duration or data.transitionIntroDuration or 2.2
+	data.transitionIntroDuration = IntroDuration
 
-	local defaultAwaitInput = true
+	local DefaultAwaitInput = true
 	if data.transitionAdvance == false then
-		defaultAwaitInput = false
+		DefaultAwaitInput = false
 	end
 
 	if extra.transitionAwaitInput ~= nil then
 		data.transitionAwaitInput = extra.transitionAwaitInput and true or false
 	else
-		data.transitionAwaitInput = defaultAwaitInput
+		data.transitionAwaitInput = DefaultAwaitInput
 	end
 
 	if extra.transitionIntroPromptDelay ~= nil then
@@ -194,52 +194,52 @@ function TransitionManager:startFloorIntro(duration, extra)
 
 	data.transitionIntroConfirmed = nil
 
-	self:startPhase("floorintro", introDuration)
-	Audio:playSound("floor_intro")
+	self:StartPhase("floorintro", IntroDuration)
+	Audio:PlaySound("floor_intro")
 end
 
-function TransitionManager:startFadeIn(duration)
-	self:startPhase("fadein", duration or 0.9)
+function TransitionManager:StartFadeIn(duration)
+	self:StartPhase("fadein", duration or 0.9)
 end
 
-function TransitionManager:startFloorTransition(advance, skipFade)
+function TransitionManager:StartFloorTransition(advance, SkipFade)
 	local game = self.game
 
-	local pendingFloor = advance and (game.floor + 1) or nil
-	local floorData = Floors[pendingFloor or game.floor] or Floors[1]
+	local PendingFloor = advance and (game.floor + 1) or nil
+	local FloorData = Floors[PendingFloor or game.floor] or Floors[1]
 
 	if advance then
-		local floorTime = game.floorTimer or 0
-		if floorTime and floorTime > 0 then
-			SessionStats:add("totalFloorTime", floorTime)
-			SessionStats:updateMin("fastestFloorClear", floorTime)
-			SessionStats:updateMax("slowestFloorClear", floorTime)
-			SessionStats:set("lastFloorClearTime", floorTime)
+		local FloorTime = game.floorTimer or 0
+		if FloorTime and FloorTime > 0 then
+			SessionStats:add("TotalFloorTime", FloorTime)
+			SessionStats:UpdateMin("FastestFloorClear", FloorTime)
+			SessionStats:UpdateMax("SlowestFloorClear", FloorTime)
+			SessionStats:set("LastFloorClearTime", FloorTime)
 		end
 		game.floorTimer = 0
 
-		local currentFloor = game.floor or 1
-		local nextFloor = currentFloor + 1
-		PlayerStats:add("floorsCleared", 1)
-		PlayerStats:updateMax("deepestFloorReached", nextFloor)
-		SessionStats:add("floorsCleared", 1)
-		SessionStats:updateMax("deepestFloorReached", nextFloor)
-		Audio:playSound("floor_advance")
+		local CurrentFloor = game.floor or 1
+		local NextFloor = CurrentFloor + 1
+		PlayerStats:add("FloorsCleared", 1)
+		PlayerStats:UpdateMax("DeepestFloorReached", NextFloor)
+		SessionStats:add("FloorsCleared", 1)
+		SessionStats:UpdateMax("DeepestFloorReached", NextFloor)
+		Audio:PlaySound("floor_advance")
 	end
 
-	self:setData({
-		transitionAdvance = advance,
-		pendingFloor = pendingFloor,
-		transitionFloorData = floorData,
-		floorApplied = false,
+	self:SetData({
+		TransitionAdvance = advance,
+		PendingFloor = PendingFloor,
+		TransitionFloorData = FloorData,
+		FloorApplied = false,
 	})
 
-	self.shopCloseRequested = false
-	self:startPhase("fadeout", skipFade and 0 or 1.2)
+	self.ShopCloseRequested = false
+	self:StartPhase("fadeout", SkipFade and 0 or 1.2)
 end
 
 function TransitionManager:update(dt)
-	if not self:isActive() then
+	if not self:IsActive() then
 		return
 	end
 
@@ -251,20 +251,20 @@ function TransitionManager:update(dt)
 			local data = self.data
 			if data.transitionAdvance and not data.floorApplied and data.pendingFloor then
 				self.game.floor = data.pendingFloor
-				self.game:setupFloor(self.game.floor)
+				self.game:SetupFloor(self.game.floor)
 				data.floorApplied = true
 			end
 
-			self:openShop()
+			self:OpenShop()
 		end
 		return
 	end
 
 	if phase == "shop" then
 		Shop:update(dt)
-		if self.shopCloseRequested and Shop:isSelectionComplete() then
-			self.shopCloseRequested = false
-			self:startFloorIntro()
+		if self.ShopCloseRequested and Shop:IsSelectionComplete() then
+			self.ShopCloseRequested = false
+			self:StartFloorIntro()
 		end
 		return
 	end
@@ -280,7 +280,7 @@ function TransitionManager:update(dt)
 				end
 			end
 
-			self:completeFloorIntro()
+			self:CompleteFloorIntro()
 		end
 		return
 	end
@@ -288,34 +288,34 @@ function TransitionManager:update(dt)
 	if phase == "fadein" then
 		if self.timer >= self.duration then
 			self.game.state = "playing"
-			self:clearPhase()
+			self:ClearPhase()
 		end
 		return
 	end
 end
 
-function TransitionManager:handleShopInput(methodName, ...)
-	if not self:isShopActive() then
+function TransitionManager:HandleShopInput(MethodName, ...)
+	if not self:IsShopActive() then
 		return false
 	end
 
-	local handler = Shop[methodName]
+	local handler = Shop[MethodName]
 	if not handler then
 		return true
 	end
 
 	local result = handler(Shop, ...)
 	if result then
-		self.shopCloseRequested = true
+		self.ShopCloseRequested = true
 	end
 
 	return true
 end
 
-function TransitionManager:completeFloorIntro()
+function TransitionManager:CompleteFloorIntro()
 	local data = self.data
-	local resumePhase = data.transitionResumePhase or "fadein"
-	local fadeDuration = data.transitionResumeFadeDuration
+	local ResumePhase = data.transitionResumePhase or "fadein"
+	local FadeDuration = data.transitionResumeFadeDuration
 
 	data.transitionIntroConfirmed = nil
 	data.transitionIntroReady = nil
@@ -326,15 +326,15 @@ function TransitionManager:completeFloorIntro()
 	data.transitionResumePhase = nil
 	data.transitionResumeFadeDuration = nil
 
-	if resumePhase == "fadein" then
-		self:startFadeIn(fadeDuration)
+	if ResumePhase == "fadein" then
+		self:StartFadeIn(FadeDuration)
 	else
 		self.game.state = "playing"
-		self:clearPhase()
+		self:ClearPhase()
 	end
 end
 
-function TransitionManager:confirmFloorIntro()
+function TransitionManager:ConfirmFloorIntro()
 	if self.phase ~= "floorintro" then
 		return false
 	end
@@ -349,20 +349,20 @@ function TransitionManager:confirmFloorIntro()
 	local duration = self.duration or 0
 	if duration > 0 and self.timer < duration then
 		-- Keep only a brief dissolve after the player confirms the intro.
-		local minRemaining = 0.3
-		local targetTimer = duration - minRemaining
-		if targetTimer < 0 then
-			targetTimer = 0
+		local MinRemaining = 0.3
+		local TargetTimer = duration - MinRemaining
+		if TargetTimer < 0 then
+			TargetTimer = 0
 		end
-		if targetTimer > self.timer then
-			self.timer = targetTimer
+		if TargetTimer > self.timer then
+			self.timer = TargetTimer
 		end
 	end
 
-	self:updateGameplayState()
+	self:UpdateGameplayState()
 
 	if self.timer >= self.duration then
-		self:completeFloorIntro()
+		self:CompleteFloorIntro()
 	end
 
 	return true

@@ -12,7 +12,7 @@ local DEFAULT_START_SCALE = 0.8
 local DEFAULT_START_OFFSET = -30
 local BASE_MAX_WIDTH = 560
 
-local function createInstance(config)
+local function CreateInstance(config)
 	config = config or {}
 
 	local instance = {
@@ -21,20 +21,20 @@ local function createInstance(config)
 		subtext = "",
 		alpha = 0,
 		scale = 1,
-		offsetY = 0,
+		OffsetY = 0,
 		duration = config.duration or DEFAULT_DURATION,
-		fadeInDuration = config.fadeInDuration or DEFAULT_FADE,
-		fadeOutDuration = config.fadeOutDuration or DEFAULT_FADE,
+		FadeInDuration = config.fadeInDuration or DEFAULT_FADE,
+		FadeOutDuration = config.fadeOutDuration or DEFAULT_FADE,
 		timer = Timer.new(config.duration or DEFAULT_DURATION),
-		startScale = config.startScale or DEFAULT_START_SCALE,
-		startOffsetY = config.startOffsetY or DEFAULT_START_OFFSET,
+		StartScale = config.startScale or DEFAULT_START_SCALE,
+		StartOffsetY = config.startOffsetY or DEFAULT_START_OFFSET,
 	}
 
 	return setmetatable(instance, Popup)
 end
 
 function Popup.new(config)
-	return createInstance(config)
+	return CreateInstance(config)
 end
 
 function Popup:configure(options)
@@ -43,16 +43,16 @@ function Popup:configure(options)
 		self.duration = options.duration
 	end
 	if options.fadeInDuration then
-		self.fadeInDuration = options.fadeInDuration
+		self.FadeInDuration = options.fadeInDuration
 	end
 	if options.fadeOutDuration then
-		self.fadeOutDuration = options.fadeOutDuration
+		self.FadeOutDuration = options.fadeOutDuration
 	end
 	if options.startScale then
-		self.startScale = options.startScale
+		self.StartScale = options.startScale
 	end
 	if options.startOffsetY then
-		self.startOffsetY = options.startOffsetY
+		self.StartOffsetY = options.startOffsetY
 	end
 	if options.timer then
 		self.timer = options.timer
@@ -66,20 +66,20 @@ function Popup:show(title, description, options)
 		self.duration = options.duration
 	end
 	if options.fadeInDuration then
-		self.fadeInDuration = options.fadeInDuration
+		self.FadeInDuration = options.fadeInDuration
 	end
 	if options.fadeOutDuration then
-		self.fadeOutDuration = options.fadeOutDuration
+		self.FadeOutDuration = options.fadeOutDuration
 	end
 
-	local startScale = options.startScale or self.startScale or DEFAULT_START_SCALE
-	local startOffsetY = options.startOffsetY or self.startOffsetY or DEFAULT_START_OFFSET
+	local StartScale = options.startScale or self.StartScale or DEFAULT_START_SCALE
+	local StartOffsetY = options.startOffsetY or self.StartOffsetY or DEFAULT_START_OFFSET
 
 	self.text = title or ""
 	self.subtext = description or ""
 	self.alpha = 0
-	self.scale = startScale
-	self.offsetY = startOffsetY
+	self.scale = StartScale
+	self.OffsetY = StartOffsetY
 	self.active = true
 
 	local timer = self.timer
@@ -91,21 +91,21 @@ function Popup:show(title, description, options)
 	timer:start()
 end
 
-local function computeAlpha(self, elapsed, duration)
+local function ComputeAlpha(self, elapsed, duration)
 	if duration <= 0 then
 		return 1
 	end
 
-	local fadeInDuration = math.min(self.fadeInDuration or DEFAULT_FADE, duration)
-	local fadeOutDuration = math.min(self.fadeOutDuration or DEFAULT_FADE, duration)
+	local FadeInDuration = math.min(self.FadeInDuration or DEFAULT_FADE, duration)
+	local FadeOutDuration = math.min(self.FadeOutDuration or DEFAULT_FADE, duration)
 
-	if fadeInDuration > 0 and elapsed < fadeInDuration then
-		return math.min(elapsed / fadeInDuration, 1)
+	if FadeInDuration > 0 and elapsed < FadeInDuration then
+		return math.min(elapsed / FadeInDuration, 1)
 	end
 
-	if fadeOutDuration > 0 and (duration - elapsed) <= fadeOutDuration then
+	if FadeOutDuration > 0 and (duration - elapsed) <= FadeOutDuration then
 		local remaining = duration - elapsed
-		return math.max(remaining / fadeOutDuration, 0)
+		return math.max(remaining / FadeOutDuration, 0)
 	end
 
 	return 1
@@ -125,7 +125,7 @@ function Popup:update(dt)
 	local elapsed = timer:getElapsed()
 	local duration = timer:getDuration()
 
-	self.alpha = computeAlpha(self, elapsed, duration)
+	self.alpha = ComputeAlpha(self, elapsed, duration)
 
 	if self.alpha > 0.9 then
 		local t = elapsed * 8
@@ -134,7 +134,7 @@ function Popup:update(dt)
 		self.scale = self.scale + (1 - self.scale) * dt * 6
 	end
 
-	self.offsetY = self.offsetY + (0 - self.offsetY) * dt * 6
+	self.OffsetY = self.OffsetY + (0 - self.OffsetY) * dt * 6
 
 	if completed or timer:isFinished() then
 		self.active = false
@@ -147,65 +147,65 @@ function Popup:draw()
 	local sw, sh = Screen:get()
 	local spacing = UI.spacing or {}
 	local padding = spacing.panelPadding or (UI.scaled and UI.scaled(20, 12) or 20)
-	local innerSpacing = (spacing.sectionSpacing or 28) * 0.4
-	local scaledMaxWidth = UI.scaled and UI.scaled(BASE_MAX_WIDTH, 360) or BASE_MAX_WIDTH
-	local maxWidth = math.min(scaledMaxWidth, sw - padding * 2)
-	local fontTitle = UI.fonts.heading or UI.fonts.subtitle
-	local fontDesc = UI.fonts.caption or UI.fonts.body
+	local InnerSpacing = (spacing.sectionSpacing or 28) * 0.4
+	local ScaledMaxWidth = UI.scaled and UI.scaled(BASE_MAX_WIDTH, 360) or BASE_MAX_WIDTH
+	local MaxWidth = math.min(ScaledMaxWidth, sw - padding * 2)
+	local FontTitle = UI.fonts.heading or UI.fonts.subtitle
+	local FontDesc = UI.fonts.caption or UI.fonts.body
 
-	local titleHeight = fontTitle:getHeight()
-	local boxWidth = maxWidth
-	local wrapWidth = boxWidth - padding * 2
+	local TitleHeight = FontTitle:getHeight()
+	local BoxWidth = MaxWidth
+	local WrapWidth = BoxWidth - padding * 2
 
-	local hasSubtext = self.subtext and self.subtext:match("%S")
-	local descHeight = 0
-	if hasSubtext then
-		local _, descLines = fontDesc:getWrap(self.subtext, wrapWidth)
-		descHeight = (#descLines > 0 and #descLines or 1) * fontDesc:getHeight()
+	local HasSubtext = self.subtext and self.subtext:match("%S")
+	local DescHeight = 0
+	if HasSubtext then
+		local _, DescLines = FontDesc:getWrap(self.subtext, WrapWidth)
+		DescHeight = (#DescLines > 0 and #DescLines or 1) * FontDesc:getHeight()
 	else
-		innerSpacing = 0
+		InnerSpacing = 0
 	end
 
-	local boxHeight = padding * 2 + titleHeight + innerSpacing + descHeight
+	local BoxHeight = padding * 2 + TitleHeight + InnerSpacing + DescHeight
 	local x = sw / 2
-	local y = sh * 0.25 + self.offsetY
+	local y = sh * 0.25 + self.OffsetY
 
 	love.graphics.push()
 	love.graphics.translate(x, y)
 	love.graphics.scale(self.scale, self.scale)
 
-	local panelColor = Theme.panelColor or {1, 1, 1, 1}
-	UI.drawPanel(-boxWidth / 2, 0, boxWidth, boxHeight, {
-		radius = UI.spacing and UI.spacing.panelRadius or 16,
-		shadowOffset = (UI.spacing and UI.spacing.shadowOffset or 6) * 0.6,
-		fill = { panelColor[1] or 1, panelColor[2] or 1, panelColor[3] or 1, (panelColor[4] or 1) * self.alpha },
-		borderColor = Theme.panelBorder,
+	local PanelColor = Theme.PanelColor or {1, 1, 1, 1}
+	UI.DrawPanel(-BoxWidth / 2, 0, BoxWidth, BoxHeight, {
+		radius = UI.spacing and UI.spacing.PanelRadius or 16,
+		ShadowOffset = (UI.spacing and UI.spacing.ShadowOffset or 6) * 0.6,
+		fill = { PanelColor[1] or 1, PanelColor[2] or 1, PanelColor[3] or 1, (PanelColor[4] or 1) * self.alpha },
+		BorderColor = Theme.PanelBorder,
 	})
 
 	local colors = UI.colors or {}
-	local textColor = colors.text or {1, 1, 1, 1}
-	love.graphics.setFont(fontTitle)
-	love.graphics.setColor(textColor[1] or 1, textColor[2] or 1, textColor[3] or 1, (textColor[4] or 1) * self.alpha)
-	love.graphics.printf(self.text, -boxWidth / 2 + padding, padding, wrapWidth, "center")
+	local TextColor = colors.text or {1, 1, 1, 1}
+	love.graphics.setFont(FontTitle)
+	love.graphics.setColor(TextColor[1] or 1, TextColor[2] or 1, TextColor[3] or 1, (TextColor[4] or 1) * self.alpha)
+	love.graphics.printf(self.text, -BoxWidth / 2 + padding, padding, WrapWidth, "center")
 
-	if hasSubtext then
-		local mutedText = colors.mutedText or textColor
-		love.graphics.setFont(fontDesc)
-		love.graphics.setColor(mutedText[1] or 1, mutedText[2] or 1, mutedText[3] or 1, (mutedText[4] or 1) * self.alpha)
-		love.graphics.printf(self.subtext, -boxWidth / 2 + padding, padding + titleHeight + innerSpacing, wrapWidth, "center")
+	if HasSubtext then
+		local MutedText = colors.mutedText or TextColor
+		love.graphics.setFont(FontDesc)
+		love.graphics.setColor(MutedText[1] or 1, MutedText[2] or 1, MutedText[3] or 1, (MutedText[4] or 1) * self.alpha)
+		love.graphics.printf(self.subtext, -BoxWidth / 2 + padding, padding + TitleHeight + InnerSpacing, WrapWidth, "center")
 	end
 
 	love.graphics.pop()
 end
 
-local defaultPopup = createInstance()
+local DefaultPopup = CreateInstance()
 
-function defaultPopup:new(config)
-	return createInstance(config)
+function DefaultPopup:new(config)
+	return CreateInstance(config)
 end
 
-function defaultPopup:getPrototype()
+function DefaultPopup:getPrototype()
 	return Popup
 end
 
-return defaultPopup
+return DefaultPopup

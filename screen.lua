@@ -3,18 +3,18 @@ local UI = require("ui")
 local Screen = {
 	width = nil,
 	height = nil,
-	targetWidth = nil,
-	targetHeight = nil,
-	smoothingSpeed = 12,
-	snapThreshold = 0,
+	TargetWidth = nil,
+	TargetHeight = nil,
+	SmoothingSpeed = 12,
+	SnapThreshold = 0,
 }
 
-local function updateCenter(self)
+local function UpdateCenter(self)
 	self.cx = self.width * 0.5
 	self.cy = self.height * 0.5
 end
 
-local function shouldSnapImmediately(self, dt, instant)
+local function ShouldSnapImmediately(self, dt, instant)
 	if instant == true then
 		return true
 	end
@@ -27,7 +27,7 @@ local function shouldSnapImmediately(self, dt, instant)
 		return true
 	end
 
-	if self.smoothingSpeed <= 0 then
+	if self.SmoothingSpeed <= 0 then
 		return true
 	end
 
@@ -35,36 +35,36 @@ local function shouldSnapImmediately(self, dt, instant)
 end
 
 function Screen:update(dt, instant)
-	local actualWidth, actualHeight = love.graphics.getDimensions()
-	self.targetWidth, self.targetHeight = actualWidth, actualHeight
+	local ActualWidth, ActualHeight = love.graphics.getDimensions()
+	self.TargetWidth, self.TargetHeight = ActualWidth, ActualHeight
 
-	if UI and UI.refreshLayout then
-		UI.refreshLayout(actualWidth, actualHeight)
+	if UI and UI.RefreshLayout then
+		UI.RefreshLayout(ActualWidth, ActualHeight)
 	end
 
-	if shouldSnapImmediately(self, dt, instant) then
-		self.width, self.height = actualWidth, actualHeight
-		updateCenter(self)
+	if ShouldSnapImmediately(self, dt, instant) then
+		self.width, self.height = ActualWidth, ActualHeight
+		UpdateCenter(self)
 		return self.width, self.height
 	end
 
-	local deltaWidth = actualWidth - self.width
-	local deltaHeight = actualHeight - self.height
-	local snapThreshold = self.snapThreshold
+	local DeltaWidth = ActualWidth - self.width
+	local DeltaHeight = ActualHeight - self.height
+	local SnapThreshold = self.SnapThreshold
 
-	if snapThreshold and snapThreshold > 0 then
-		if math.abs(deltaWidth) > snapThreshold or math.abs(deltaHeight) > snapThreshold then
-			self.width, self.height = actualWidth, actualHeight
-			updateCenter(self)
+	if SnapThreshold and SnapThreshold > 0 then
+		if math.abs(DeltaWidth) > SnapThreshold or math.abs(DeltaHeight) > SnapThreshold then
+			self.width, self.height = ActualWidth, ActualHeight
+			UpdateCenter(self)
 			return self.width, self.height
 		end
 	end
 
-	local alpha = 1 - math.exp(-self.smoothingSpeed * dt)
-	self.width = self.width + deltaWidth * alpha
-	self.height = self.height + deltaHeight * alpha
+	local alpha = 1 - math.exp(-self.SmoothingSpeed * dt)
+	self.width = self.width + DeltaWidth * alpha
+	self.height = self.height + DeltaHeight * alpha
 
-	updateCenter(self)
+	UpdateCenter(self)
 
 	return self.width, self.height
 end
@@ -73,11 +73,11 @@ function Screen:get()
 	return self.width, self.height
 end
 
-function Screen:getWidth()
+function Screen:GetWidth()
 	return self.width
 end
 
-function Screen:getHeight()
+function Screen:GetHeight()
 	return self.height
 end
 

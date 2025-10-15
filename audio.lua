@@ -2,8 +2,8 @@ local Settings = require("settings")
 
 local Audio = {
 	sounds = {},
-	musicTracks = {},
-	currentMusic = nil,
+	MusicTracks = {},
+	CurrentMusic = nil,
 }
 
 local SOUND_DEFINITIONS = {
@@ -38,20 +38,20 @@ local MUSIC_DEFINITIONS = {
 	scorescreen = "Assets/Music/Scorescreen.ogg",
 }
 
-local function loadSources(definitions, defaultType)
+local function LoadSources(definitions, DefaultType)
 	local sources = {}
 
 	for name, spec in pairs(definitions) do
 		local path = spec
-		local sourceType = defaultType
+		local SourceType = DefaultType
 
 		if type(spec) == "table" then
 			path = spec.path or spec[1]
-			sourceType = spec.type or spec[2] or defaultType
+			SourceType = spec.type or spec[2] or DefaultType
 		end
 
 		if path then
-			sources[name] = love.audio.newSource(path, sourceType)
+			sources[name] = love.audio.newSource(path, SourceType)
 		end
 	end
 
@@ -59,45 +59,45 @@ local function loadSources(definitions, defaultType)
 end
 
 function Audio:load()
-	self.sounds = loadSources(SOUND_DEFINITIONS, "static")
-	self.musicTracks = loadSources(MUSIC_DEFINITIONS, "stream")
+	self.sounds = LoadSources(SOUND_DEFINITIONS, "static")
+	self.MusicTracks = LoadSources(MUSIC_DEFINITIONS, "stream")
 
-	for _, track in pairs(self.musicTracks) do
+	for _, track in pairs(self.MusicTracks) do
 		track:setLooping(true)
 	end
 
-	self:applyVolumes()
+	self:ApplyVolumes()
 end
 
-function Audio:applyVolumes()
-	for _, track in pairs(self.musicTracks) do
-		track:setVolume(Settings.muteMusic and 0 or Settings.musicVolume)
+function Audio:ApplyVolumes()
+	for _, track in pairs(self.MusicTracks) do
+		track:setVolume(Settings.MuteMusic and 0 or Settings.MusicVolume)
 	end
 	for _, sound in pairs(self.sounds) do
-		sound:setVolume(Settings.muteSFX and 0 or Settings.sfxVolume)
+		sound:setVolume(Settings.MuteSFX and 0 or Settings.SfxVolume)
 	end
 end
 
-function Audio:playSound(name)
-	if not Settings.muteSFX and self.sounds[name] then
+function Audio:PlaySound(name)
+	if not Settings.MuteSFX and self.sounds[name] then
 		self.sounds[name]:stop()
-		self.sounds[name]:setVolume(Settings.sfxVolume)
+		self.sounds[name]:SetVolume(Settings.SfxVolume)
 		self.sounds[name]:play()
 	end
 end
 
-function Audio:playMusic(trackName)
-	if Settings.muteMusic then
-		if self.currentMusic then self.currentMusic:stop() end
+function Audio:PlayMusic(TrackName)
+	if Settings.MuteMusic then
+		if self.CurrentMusic then self.CurrentMusic:stop() end
 		return
 	end
 
-	local newTrack = self.musicTracks[trackName]
-	if newTrack and newTrack ~= self.currentMusic then
-		if self.currentMusic then self.currentMusic:stop() end
-		self.currentMusic = newTrack
-		self.currentMusic:setVolume(Settings.musicVolume)
-		self.currentMusic:play()
+	local NewTrack = self.MusicTracks[TrackName]
+	if NewTrack and NewTrack ~= self.CurrentMusic then
+		if self.CurrentMusic then self.CurrentMusic:stop() end
+		self.CurrentMusic = NewTrack
+		self.CurrentMusic:SetVolume(Settings.MusicVolume)
+		self.CurrentMusic:play()
 	end
 end
 

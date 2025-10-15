@@ -12,50 +12,50 @@ local EYELID_HEIGHT = 1
 
 local PI = math.pi
 
-local shapeDrawers = {}
+local ShapeDrawers = {}
 
-local function drawHappyArc(cx, lift)
+local function DrawHappyArc(cx, lift)
 	love.graphics.arc("line", cx, EYE_CENTER_Y + lift, EYE_RADIUS, PI, 2 * PI)
 end
 
-local function drawSadArc(cx, drop)
+local function DrawSadArc(cx, drop)
 	love.graphics.arc("line", cx, EYE_CENTER_Y + drop, EYE_RADIUS, 0, PI)
 end
 
-local function drawAngryEye(cx, isLeft)
-	local slitWidth = EYELID_WIDTH + 2
-	local slitHeight = EYELID_HEIGHT + 1.2
-	local slitTop = EYE_CENTER_Y - slitHeight / 2
-	local slitLeft = cx - slitWidth / 2
+local function DrawAngryEye(cx, IsLeft)
+	local SlitWidth = EYELID_WIDTH + 2
+	local SlitHeight = EYELID_HEIGHT + 1.2
+	local SlitTop = EYE_CENTER_Y - SlitHeight / 2
+	local SlitLeft = cx - SlitWidth / 2
 
-	love.graphics.rectangle("fill", slitLeft, slitTop, slitWidth, slitHeight)
+	love.graphics.rectangle("fill", SlitLeft, SlitTop, SlitWidth, SlitHeight)
 
-	local browHeight = EYE_RADIUS * 1.6
-	local browTop = slitTop - browHeight
-	local browOuter = browTop
-	local browInner = browTop + browHeight * 0.35
+	local BrowHeight = EYE_RADIUS * 1.6
+	local BrowTop = SlitTop - BrowHeight
+	local BrowOuter = BrowTop
+	local BrowInner = BrowTop + BrowHeight * 0.35
 
-	if isLeft then
+	if IsLeft then
 		love.graphics.polygon(
 			"fill",
-			slitLeft - 1, slitTop,
-			slitLeft + slitWidth + 1, slitTop + slitHeight * 0.45,
-			slitLeft + slitWidth + 1, browInner,
-			slitLeft - 1, browOuter
+			SlitLeft - 1, SlitTop,
+			SlitLeft + SlitWidth + 1, SlitTop + SlitHeight * 0.45,
+			SlitLeft + SlitWidth + 1, BrowInner,
+			SlitLeft - 1, BrowOuter
 		)
 	else
 		love.graphics.polygon(
 			"fill",
-			slitLeft - 1, slitTop + slitHeight * 0.45,
-			slitLeft + slitWidth + 1, slitTop,
-			slitLeft + slitWidth + 1, browOuter,
-			slitLeft - 1, browInner
+			SlitLeft - 1, SlitTop + SlitHeight * 0.45,
+			SlitLeft + SlitWidth + 1, SlitTop,
+			SlitLeft + SlitWidth + 1, BrowOuter,
+			SlitLeft - 1, BrowInner
 		)
 	end
 end
 
-local function registerDrawer(name, drawer, options)
-	shapeDrawers[name] = function()
+local function RegisterDrawer(name, drawer, options)
+	ShapeDrawers[name] = function()
 		if not (options and options.skipColor) then
 			love.graphics.setColor(0, 0, 0, 1)
 		end
@@ -63,58 +63,58 @@ local function registerDrawer(name, drawer, options)
 	end
 end
 
-registerDrawer("idle", function()
+RegisterDrawer("idle", function()
 	-- Explicitly provide a generous segment count so the filled circles stay
 	-- visually round even after any scaling applied to the snake sprite.
-	local circleSegments = 24
-	love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
-	love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
+	local CircleSegments = 24
+	love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, CircleSegments)
+	love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, CircleSegments)
 end)
 
-registerDrawer("blink", function()
-	local leftX = LEFT_EYE_CENTER_X - EYELID_WIDTH / 2
-	local rightX = RIGHT_EYE_CENTER_X - EYELID_WIDTH / 2
+RegisterDrawer("blink", function()
+	local LeftX = LEFT_EYE_CENTER_X - EYELID_WIDTH / 2
+	local RightX = RIGHT_EYE_CENTER_X - EYELID_WIDTH / 2
 	local top = EYE_CENTER_Y - EYELID_HEIGHT / 2
-	love.graphics.rectangle("fill", leftX, top, EYELID_WIDTH, EYELID_HEIGHT)
-	love.graphics.rectangle("fill", rightX, top, EYELID_WIDTH, EYELID_HEIGHT)
+	love.graphics.rectangle("fill", LeftX, top, EYELID_WIDTH, EYELID_HEIGHT)
+	love.graphics.rectangle("fill", RightX, top, EYELID_WIDTH, EYELID_HEIGHT)
 end)
 
-registerDrawer("happy", function()
+RegisterDrawer("happy", function()
 	love.graphics.setLineWidth(EYE_RADIUS * 1.1)
 	love.graphics.setLineJoin("bevel")
-	drawHappyArc(LEFT_EYE_CENTER_X, 1.0)
-	drawHappyArc(RIGHT_EYE_CENTER_X, 1.0)
+	DrawHappyArc(LEFT_EYE_CENTER_X, 1.0)
+	DrawHappyArc(RIGHT_EYE_CENTER_X, 1.0)
 end)
 
-registerDrawer("veryHappy", function()
+RegisterDrawer("VeryHappy", function()
 	love.graphics.setLineWidth(EYE_RADIUS * 1.3)
 	love.graphics.setLineJoin("bevel")
-	drawHappyArc(LEFT_EYE_CENTER_X, 1.3)
-	drawHappyArc(RIGHT_EYE_CENTER_X, 1.3)
+	DrawHappyArc(LEFT_EYE_CENTER_X, 1.3)
+	DrawHappyArc(RIGHT_EYE_CENTER_X, 1.3)
 end)
 
-registerDrawer("sad", function()
+RegisterDrawer("sad", function()
 	love.graphics.setLineWidth(EYE_RADIUS * 0.9)
 	love.graphics.setLineJoin("bevel")
-	drawSadArc(LEFT_EYE_CENTER_X, 0.2)
-	drawSadArc(RIGHT_EYE_CENTER_X, 0.2)
+	DrawSadArc(LEFT_EYE_CENTER_X, 0.2)
+	DrawSadArc(RIGHT_EYE_CENTER_X, 0.2)
 end)
 
-registerDrawer("angry", function()
-	drawAngryEye(LEFT_EYE_CENTER_X, true)
-	drawAngryEye(RIGHT_EYE_CENTER_X, false)
+RegisterDrawer("angry", function()
+	DrawAngryEye(LEFT_EYE_CENTER_X, true)
+	DrawAngryEye(RIGHT_EYE_CENTER_X, false)
 end)
 
-registerDrawer("blank", function()
+RegisterDrawer("blank", function()
 	-- intentionally empty: blank face has no visible eyes
-end, { skipColor = true })
+end, { SkipColor = true })
 
 Face.state = "idle"
 Face.timer = 0
 
 -- for passive blinking
-Face.blinkCooldown = 0
-Face.savedState = "idle"
+Face.BlinkCooldown = 0
+Face.SavedState = "idle"
 
 function Face:set(state, duration)
 	self.state = state or "idle"
@@ -128,7 +128,7 @@ function Face:update(dt)
 		if self.timer <= 0 then
 			-- if blinking, restore the previous state
 			if self.state == "blink" then
-				self.state = self.savedState
+				self.state = self.SavedState
 			else
 				self.state = "idle"
 			end
@@ -138,20 +138,20 @@ function Face:update(dt)
 	end
 
 	-- passive blinking trigger
-	self.blinkCooldown = self.blinkCooldown - dt
-	if self.blinkCooldown <= 0 then
+	self.BlinkCooldown = self.BlinkCooldown - dt
+	if self.BlinkCooldown <= 0 then
 		-- start blink
-		self.savedState = self.state
+		self.SavedState = self.state
 		self.state = "blink"
 		self.timer = 0.1   -- keep blink visible for 0.1s
-		self.blinkCooldown = love.math.random(2, 4)
+		self.BlinkCooldown = love.math.random(2, 4)
 	end
 end
 
 function Face:draw(x, y, scale)
 	scale = scale or 1
 
-	local drawer = shapeDrawers[self.state] or shapeDrawers.idle
+	local drawer = ShapeDrawers[self.state] or ShapeDrawers.idle
 
 	love.graphics.push("all")
 	love.graphics.translate(x, y)

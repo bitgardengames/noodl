@@ -2,36 +2,36 @@ local Snake = require("snake")
 
 local Controls = {}
 
-local gameplayKeyHandlers = {
+local GameplayKeyHandlers = {
 	up = function()
-		Snake:setDirection("up")
+		Snake:SetDirection("up")
 	end,
 	down = function()
-		Snake:setDirection("down")
+		Snake:SetDirection("down")
 	end,
 	left = function()
-		Snake:setDirection("left")
+		Snake:SetDirection("left")
 	end,
 	right = function()
-		Snake:setDirection("right")
+		Snake:SetDirection("right")
 	end,
 	space = function()
-		Snake:activateDash()
+		Snake:ActivateDash()
 	end,
 	lshift = function()
-		Snake:activateTimeDilation()
+		Snake:ActivateTimeDilation()
 	end,
 	rshift = function()
-		Snake:activateTimeDilation()
+		Snake:ActivateTimeDilation()
 	end,
 	f1 = function()
-		if Snake.toggleDeveloperAssist then
-			Snake:toggleDeveloperAssist()
+		if Snake.ToggleDeveloperAssist then
+			Snake:ToggleDeveloperAssist()
 		end
 	end,
 }
 
-local function togglePause(game)
+local function TogglePause(game)
 	if game.state == "paused" then
 		game.state = "playing"
 	else
@@ -41,7 +41,7 @@ end
 
 function Controls:keypressed(game, key)
 	if key == "escape" and game.state ~= "gameover" then
-		togglePause(game)
+		TogglePause(game)
 		return
 	end
 
@@ -49,7 +49,7 @@ function Controls:keypressed(game, key)
 		return
 	end
 
-	local handler = gameplayKeyHandlers[key]
+	local handler = GameplayKeyHandlers[key]
 	if handler then
 		handler()
 	end

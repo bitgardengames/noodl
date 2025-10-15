@@ -251,31 +251,31 @@ local english = {
 				progress = "Progress",
 			},
 			stat_labels = {
-				sessionsPlayed = "Sessions Played",
-				totalApplesEaten = "Apples Collected",
-				totalDragonfruitEaten = "Dragonfruit Collected",
-				floorsCleared = "Floors Cleared",
-				deepestFloorReached = "Deepest Floor Reached",
-				snakeScore = "Best Score",
-				bestComboStreak = "Best Combo Streak",
-				totalCombosTriggered = "Combos Pulled Off",
-				mostApplesInRun = "Most Apples in a Run",
-				crashShieldsSaved = "Emergency Shields Triggered",
-				tilesTravelled = "Tiles Slithered",
-				totalTimeAlive = "Time Alive",
-				longestRunDuration = "Longest Run",
-				totalUpgradesPurchased = "Upgrades Purchased",
-				legendaryUpgradesPurchased = "Legendary Upgrades",
-				mostUpgradesInRun = "Most Upgrades in a Run",
-				bestFloorClearTime = "Fastest Floor Clear",
-				longestFloorClearTime = "Slowest Floor Clear",
-				mostTilesTravelledInRun = "Most Tiles in a Run",
-				mostCombosInRun = "Most Combos in a Run",
-				mostShieldsSavedInRun = "Most Emergency Shields in a Run",
-				shieldWallBounces = "Shield Wall Bounces",
-				shieldRockBreaks = "Shield Rock Breaks",
-				shieldSawParries = "Shield Saw Parries",
-				dailyChallengesCompleted = "Daily Challenges Completed",
+				SessionsPlayed = "Sessions Played",
+				TotalApplesEaten = "Apples Collected",
+				TotalDragonfruitEaten = "Dragonfruit Collected",
+				FloorsCleared = "Floors Cleared",
+				DeepestFloorReached = "Deepest Floor Reached",
+				SnakeScore = "Best Score",
+				BestComboStreak = "Best Combo Streak",
+				TotalCombosTriggered = "Combos Pulled Off",
+				MostApplesInRun = "Most Apples in a Run",
+				CrashShieldsSaved = "Emergency Shields Triggered",
+				TilesTravelled = "Tiles Slithered",
+				TotalTimeAlive = "Time Alive",
+				LongestRunDuration = "Longest Run",
+				TotalUpgradesPurchased = "Upgrades Purchased",
+				LegendaryUpgradesPurchased = "Legendary Upgrades",
+				MostUpgradesInRun = "Most Upgrades in a Run",
+				BestFloorClearTime = "Fastest Floor Clear",
+				LongestFloorClearTime = "Slowest Floor Clear",
+				MostTilesTravelledInRun = "Most Tiles in a Run",
+				MostCombosInRun = "Most Combos in a Run",
+				MostShieldsSavedInRun = "Most Emergency Shields in a Run",
+				ShieldWallBounces = "Shield Wall Bounces",
+				ShieldRockBreaks = "Shield Rock Breaks",
+				ShieldSawParries = "Shield Saw Parries",
+				DailyChallengesCompleted = "Daily Challenges Completed",
 			},
 		},
 		pause = {
@@ -328,7 +328,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			meta_progress_milestone = "${threshold} lifetime XP celebrated!",
 			daily_streak_extended = "Daily streak extended to ${streak} ${unit}!",
 			daily_streak_new_best = "New best daily streak: ${streak} ${unit}!",
-			daily_streak_status = "Daily streak: ${streak} ${unit} (Best: ${best} ${bestUnit})",
+			daily_streak_status = "Daily streak: ${streak} ${unit} (Best: ${best} ${BestUnit})",
 			daily_streak_already_complete = "Today's challenge is already complete. Streak safe at ${streak} ${unit}.",
 			daily_streak_needs_completion = "Streak at ${streak} ${unit}. Finish today's challenge to keep it alive!",
 			deaths = {
@@ -581,167 +581,167 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 		},
 		achievements_definitions = {
-			appleHoarder = {
+			AppleHoarder = {
 				title = "Apple Hoarder",
 				description = "Eat 100 total apples",
 			},
-			appleConqueror = {
+			AppleConqueror = {
 				title = "Apple Conqueror",
 				description = "Eat 500 total apples",
 			},
-			appleTycoon = {
+			AppleTycoon = {
 				title = "Apple Tycoon",
 				description = "Eat 1,000 total apples",
 			},
-			appleEternal = {
+			AppleEternal = {
 				title = "Endless Appetite",
 				description = "Eat 2,500 total apples",
 			},
-			appleInfinite = {
+			AppleInfinite = {
 				title = "Infinite Appetite",
 				description = "Eat 5,000 total apples",
 			},
-			fullBelly = {
+			FullBelly = {
 				title = "Full Belly",
 				description = "Reach a snake length of 50",
 			},
-			comboSpark = {
+			ComboSpark = {
 				title = "Combo Spark",
 				description = "Chain a combo of 3 fruit",
 			},
-			comboSurge = {
+			ComboSurge = {
 				title = "Combo Surge",
 				description = "Chain a combo of 6 fruit",
 			},
-			comboInferno = {
+			ComboInferno = {
 				title = "Combo Inferno",
 				description = "Chain a combo of 10 fruit",
 			},
-			scoreChaser = {
+			ScoreChaser = {
 				title = "Score Chaser",
 				description = "Reach a score of 250",
 			},
-			fruitFiesta = {
+			FruitFiesta = {
 				title = "Fruit Fiesta",
 				description = "Eat 25 fruit in a single run",
 			},
-			floorSprinter = {
+			FloorSprinter = {
 				title = "Floor Sprinter",
 				description = "Clear 3 floors in a single run",
 			},
-			scoreLegend = {
+			ScoreLegend = {
 				title = "Score Legend",
 				description = "Reach a score of 500",
 			},
-			wallRicochet = {
+			WallRicochet = {
 				title = "Ricochet Routine",
 				description = "Bounce off a wall using a crash shield.",
 			},
-			rockShatter = {
+			RockShatter = {
 				title = "Stone Sneeze",
 				description = "Shatter a rock by face-checking it with a crash shield.",
 			},
-			rockCrusher = {
+			RockCrusher = {
 				title = "Rock Crusher",
 				description = "Pulverize 25 rocks with the help of crash shields.",
 			},
-			sawParry = {
+			SawParry = {
 				title = "Saw Whisperer",
 				description = "Let a crash shield devour a saw for you.",
 			},
-			sawAnnihilator = {
+			SawAnnihilator = {
 				title = "Saw Annihilator",
 				description = "Reduce 25 saws to splinters using crash shields.",
 			},
-			shieldTriad = {
+			ShieldTriad = {
 				title = "Crash-Test Maestro",
 				description = "In one run, shrug off a wall, rock, and saw with crash shields.",
 			},
-			straightLineSnacker = {
+			StraightLineSnacker = {
 				title = "Straight-Line Snacker",
 				description = "Collect 3 fruit without turning.",
 			},
-			shieldlessWonder = {
+			ShieldlessWonder = {
 				title = "Shieldless Wonder",
 				description = "Clear 3 floors in a run without triggering a crash shield.",
 			},
-			dragonHunter = {
+			DragonHunter = {
 				title = "Dragon Hunter",
 				description = "Collect the legendary Dragonfruit",
 			},
-			dragonConnoisseur = {
+			DragonConnoisseur = {
 				title = "Dragon Connoisseur",
 				description = "Collect 10 total dragonfruit",
 			},
-			dragonComboFusion = {
+			DragonComboFusion = {
 				title = "Dragon Combo Fusion",
 				description = "Eat a dragonfruit and reach an 8-fruit combo in the same run.",
 			},
-			tokenMenagerie = {
+			TokenMenagerie = {
 				title = "Token Menagerie",
 				description = "Collect four different meta fruit tokens in a single run.",
 			},
-			floorScout = {
+			FloorScout = {
 				title = "Depth Scout",
 				description = "Reach floor 3",
 			},
-			floorDiver = {
+			FloorDiver = {
 				title = "Cavern Diver",
 				description = "Reach floor 6",
 			},
-			floorAbyss = {
+			FloorAbyss = {
 				title = "Abyss Stalker",
 				description = "Reach floor 10",
 			},
-			floorAscendant = {
+			FloorAscendant = {
 				title = "Skyward Survivor",
 				description = "Reach floor 14",
 			},
-			floorVoyager = {
+			FloorVoyager = {
 				title = "Underworld Voyager",
 				description = "Clear 60 floors total",
 			},
-			seasonedRunner = {
+			SeasonedRunner = {
 				title = "Seasoned Runner",
 				description = "Play 20 total runs",
 			},
-			metaMilestone1 = {
+			MetaMilestone1 = {
 				title = "Meta Milestone I",
 				description = "Earn 650 lifetime XP.",
 			},
-			metaMilestone2 = {
+			MetaMilestone2 = {
 				title = "Meta Milestone II",
 				description = "Earn 1,300 lifetime XP.",
 			},
-			metaMilestone3 = {
+			MetaMilestone3 = {
 				title = "Meta Milestone III",
 				description = "Earn 2,400 lifetime XP.",
 			},
-			metaMilestone4 = {
+			MetaMilestone4 = {
 				title = "Meta Milestone IV",
 				description = "Earn 3,800 lifetime XP.",
 			},
-			metaMilestone5 = {
+			MetaMilestone5 = {
 				title = "Meta Milestone V",
 				description = "Earn 5,200 lifetime XP.",
 			},
-			metaMilestone6 = {
+			MetaMilestone6 = {
 				title = "Meta Milestone VI",
 				description = "Earn 7,800 lifetime XP.",
 			},
-			metaMilestone7 = {
+			MetaMilestone7 = {
 				title = "Meta Milestone VII",
 				description = "Earn 10,500 lifetime XP.",
 			},
-			dailyFunDabbler = {
+			DailyFunDabbler = {
 				title = "Daily Dabbler",
 				description = "Complete 1 daily challenge.",
 			},
-			dailyFunRegular = {
+			DailyFunRegular = {
 				title = "Daily Regular",
 				description = "Complete 10 daily challenges.",
 			},
-			dailyFunChampion = {
+			DailyFunChampion = {
 				title = "Daily Champion",
 				description = "Complete 30 daily challenges.",
 			},

@@ -3,39 +3,39 @@ local SnakeUtils = require("snakeutils")
 local Theme = require("theme")
 local Arena = require("arena")
 
-local fruitTypes = {
+local FruitTypes = {
 	{
 		id = "apple",
 		name = "Apple",
-		color = Theme.appleColor,
+		color = Theme.AppleColor,
 		points = 1,
 		weight = 70,
 	},
 	{
 		id = "banana",
 		name = "Banana",
-		color = Theme.bananaColor,
+		color = Theme.BananaColor,
 		points = 3,
 		weight = 20,
 	},
 	{
 		id = "blueberry",
 		name = "Blueberry",
-		color = Theme.blueberryColor,
+		color = Theme.BlueberryColor,
 		points = 5,
 		weight = 8,
 	},
 	{
-		id = "goldenPear",
+		id = "GoldenPear",
 		name = "GoldenPear",
-		color = Theme.goldenPearColor,
+		color = Theme.GoldenPearColor,
 		points = 10,
 		weight = 2,
 	},
 	{
 		id = "dragonfruit",
 		name = "Dragonfruit",
-		color = Theme.dragonfruitColor,
+		color = Theme.DragonfruitColor,
 		points = 50,
 		weight = 0.2,
 	},
@@ -68,7 +68,7 @@ local FADE_DURATION   = 0.20
 local SHADOW_OFFSET = 3
 local OUTLINE_SIZE = 3
 
-local function getHighlightColor(color)
+local function GetHighlightColor(color)
 	color = color or {1, 1, 1, 1}
 	local r = math.min(1, color[1] * 1.2 + 0.08)
 	local g = math.min(1, color[2] * 1.2 + 0.08)
@@ -81,19 +81,19 @@ end
 local active = {
 	x = 0, y = 0,
 	alpha = 0,
-	scaleX = 1, scaleY = 1,
+	ScaleX = 1, ScaleY = 1,
 	shadow = 0.5,
-	offsetY = 0,
-	type = fruitTypes[1],
+	OffsetY = 0,
+	type = FruitTypes[1],
 	phase = "idle",
 	timer = 0
 }
 local fading = nil
-local fadeTimer = 0
-local lastCollectedType = fruitTypes[1]
-local idleSparkles = {}
+local FadeTimer = 0
+local LastCollectedType = FruitTypes[1]
+local IdleSparkles = {}
 
-local function copyColor(color)
+local function CopyColor(color)
 	if not color then
 		return {1, 1, 1, 1}
 	end
@@ -109,24 +109,24 @@ end
 -- Easing
 local function clamp(a, lo, hi) if a < lo then return lo elseif a > hi then return hi else return a end end
 
-local function easeOutQuad(t)  return 1 - (1 - t)^2 end
+local function EaseOutQuad(t)  return 1 - (1 - t)^2 end
 -- Helpers
-local function chooseFruitType()
+local function ChooseFruitType()
 	local total = 0
-	for _, f in ipairs(fruitTypes) do total = total + f.weight end
+	for _, f in ipairs(FruitTypes) do total = total + f.weight end
 	local r, sum = love.math.random() * total, 0
-	for _, f in ipairs(fruitTypes) do
+	for _, f in ipairs(FruitTypes) do
 		sum = sum + f.weight
 		if r <= sum then return f end
 	end
-	return fruitTypes[1]
+	return FruitTypes[1]
 end
 
-local function spawnIdleSparkle(x, y, color)
-	idleSparkles[#idleSparkles + 1] = {
+local function SpawnIdleSparkle(x, y, color)
+	IdleSparkles[#IdleSparkles + 1] = {
 		x = x,
 		y = y,
-		color = copyColor(color),
+		color = CopyColor(color),
 		timer = 0,
 		duration = IDLE_SPARKLE_DURATION,
 		angle = love.math.random() * math.pi * 2,
@@ -142,16 +142,16 @@ local function aabb(x1,y1,w1,h1, x2,y2,w2,h2)
 			y1 < y2 + h2 and y1 + h1 > y2
 end
 
-function Fruit:spawn(trail, rocks, safeZone)
-	local cx, cy, col, row = SnakeUtils.getSafeSpawn(trail, self, rocks, safeZone)
+function Fruit:spawn(trail, rocks, SafeZone)
+	local cx, cy, col, row = SnakeUtils.GetSafeSpawn(trail, self, rocks, SafeZone)
 	if not cx then
-		col, row = Arena:getRandomTile()
-		cx, cy = Arena:getCenterOfTile(col, row)
+		col, row = Arena:GetRandomTile()
+		cx, cy = Arena:GetCenterOfTile(col, row)
 	end
 
 	active.x, active.y = cx, cy
 	active.col, active.row = col, row
-	active.type   = chooseFruitType()
+	active.type   = ChooseFruitType()
 	active.alpha  = 0
 	active.scaleX = 0.8
 	active.scaleY = 0.6
@@ -165,30 +165,30 @@ function Fruit:spawn(trail, rocks, safeZone)
 	active.sparkleTimer = love.math.random(IDLE_SPARKLE_MIN_DELAY, IDLE_SPARKLE_MAX_DELAY)
 
 	if col and row then
-		SnakeUtils.setOccupied(col, row, true)
+		SnakeUtils.SetOccupied(col, row, true)
 	end
 
-	idleSparkles = {}
+	IdleSparkles = {}
 end
 
 function Fruit:update(dt)
 	if fading then
-		fadeTimer = fadeTimer + dt
-		local p = clamp(fadeTimer / FADE_DURATION, 0, 1)
-		local e = easeOutQuad(p)
+		FadeTimer = FadeTimer + dt
+		local p = clamp(FadeTimer / FADE_DURATION, 0, 1)
+		local e = EaseOutQuad(p)
 		fading.alpha = 1 - e
 		fading.scaleX = 1 - 0.2 * e
 		fading.scaleY = 1 - 0.2 * e
 		if p >= 1 then fading = nil end
 	end
 
-	for i = #idleSparkles, 1, -1 do
-		local sparkle = idleSparkles[i]
+	for i = #IdleSparkles, 1, -1 do
+		local sparkle = IdleSparkles[i]
 		sparkle.timer = sparkle.timer + dt
 		sparkle.angle = sparkle.angle + sparkle.spin * dt
 		sparkle.radius = sparkle.radius + sparkle.drift * dt * 0.08
 		if sparkle.timer >= sparkle.duration then
-			table.remove(idleSparkles, i)
+			table.remove(IdleSparkles, i)
 		end
 	end
 
@@ -196,28 +196,28 @@ function Fruit:update(dt)
 
 	if active.phase == "drop" then
 		local t = clamp(active.timer / DROP_DURATION, 0, 1)
-		active.offsetY = -DROP_HEIGHT * (1 - easeOutQuad(t))
-		active.alpha   = easeOutQuad(t)
+		active.offsetY = -DROP_HEIGHT * (1 - EaseOutQuad(t))
+		active.alpha   = EaseOutQuad(t)
 		active.scaleX  = 0.9 + 0.1 * t
 		active.scaleY  = 0.7 + 0.3 * t
 		active.shadow  = 0.35 + 0.65 * t
 
 		if t >= 1 then
 			local col = active.type.color or {1,1,1,1}
-			Particles:spawnBurst(active.x, active.y, {
+			Particles:SpawnBurst(active.x, active.y, {
 				count = love.math.random(6, 9),
 				speed = 48,
-				speedVariance = 36,
+				SpeedVariance = 36,
 				life  = 0.35,
 				size  = 3,
 				color = {col[1], col[2], col[3], 1},
 				spread= math.pi * 2,
-				angleJitter = math.pi,
+				AngleJitter = math.pi,
 				drag = 2.2,
 				gravity = 160,
-				scaleMin = 0.55,
-				scaleVariance = 0.65,
-				fadeTo = 0,
+				ScaleMin = 0.55,
+				ScaleVariance = 0.65,
+				FadeTo = 0,
 			})
 			active.phase = "squash"
 			active.timer = 0
@@ -254,13 +254,13 @@ function Fruit:update(dt)
 
 	if active.phase == "idle" or active.phase == "wobble" then
 		active.idleTimer = (active.idleTimer or 0) + dt
-		local floatPhase = math.sin((active.idleTimer or 0) * IDLE_FLOAT_SPEED)
-		active.bobOffset = floatPhase * IDLE_FLOAT_AMPLITUDE
+		local FloatPhase = math.sin((active.idleTimer or 0) * IDLE_FLOAT_SPEED)
+		active.bobOffset = FloatPhase * IDLE_FLOAT_AMPLITUDE
 		active.glowPulse = 0.7 + 0.3 * math.sin((active.idleTimer or 0) * IDLE_GLOW_SPEED)
 
 		active.sparkleTimer = (active.sparkleTimer or IDLE_SPARKLE_MAX_DELAY) - dt
 		if active.sparkleTimer <= 0 then
-			spawnIdleSparkle(active.x, active.y, getHighlightColor(active.type.color))
+			SpawnIdleSparkle(active.x, active.y, GetHighlightColor(active.type.color))
 			active.sparkleTimer = love.math.random(IDLE_SPARKLE_MIN_DELAY, IDLE_SPARKLE_MAX_DELAY)
 		end
 	else
@@ -269,49 +269,49 @@ function Fruit:update(dt)
 	end
 end
 
-function Fruit:checkCollisionWith(x, y, trail, rocks)
+function Fruit:CheckCollisionWith(x, y, trail, rocks)
 	if fading then return false end
 	if active.phase == "inactive" then return false end
 
 	local half = HITBOX_SIZE / 2
 	if aabb(x - half, y - half, HITBOX_SIZE, HITBOX_SIZE,
 			active.x - half, active.y - half, HITBOX_SIZE, HITBOX_SIZE) then
-		lastCollectedType = active.type
+		LastCollectedType = active.type
 		fading = {
 			x = active.x,
 			y = active.y,
 			alpha = 1,
-			scaleX = active.scaleX,
-			scaleY = active.scaleY,
+			ScaleX = active.scaleX,
+			ScaleY = active.scaleY,
 			shadow = active.shadow,
 			type = active.type
 		}
-		fadeTimer = 0
+		FadeTimer = 0
 		active.phase = "inactive"
 		active.alpha = 0
 		active.bobOffset = 0
 		active.glowPulse = 1
-		idleSparkles = {}
+		IdleSparkles = {}
 
-		local fxColor = getHighlightColor(active.type.color)
-		Particles:spawnBurst(active.x, active.y, {
+		local FxColor = GetHighlightColor(active.type.color)
+		Particles:SpawnBurst(active.x, active.y, {
 			count = love.math.random(10, 14),
 			speed = 120,
-			speedVariance = 90,
+			SpeedVariance = 90,
 			life = 0.45,
 			size = 3.2,
-			color = {fxColor[1], fxColor[2], fxColor[3], 0.95},
+			color = {FxColor[1], FxColor[2], FxColor[3], 0.95},
 			spread = math.pi * 2,
 			drag = 2.7,
 			gravity = -60,
-			fadeTo = 0,
+			FadeTo = 0,
 		})
 		return true
 	end
 	return false
 end
 
-local function drawFruit(f)
+local function DrawFruit(f)
 	if f.phase == "inactive" then return end
 
 	local x, y = f.x, f.y + (f.offsetY or 0) + (f.bobOffset or 0)
@@ -322,27 +322,27 @@ local function drawFruit(f)
 	local pulse = f.glowPulse or 1
 
 	-- drop shadow
-	local shadowAlpha = 0.25 * alpha * (f.shadow or 1)
-	local bobStrength = (f.bobOffset or 0) / IDLE_FLOAT_AMPLITUDE
-	shadowAlpha = shadowAlpha * (1 + math.max(0, bobStrength) * 0.4)
-	local shadowScale = 1 + math.max(0, bobStrength) * 0.12
-	love.graphics.setColor(0, 0, 0, shadowAlpha)
+	local ShadowAlpha = 0.25 * alpha * (f.shadow or 1)
+	local BobStrength = (f.bobOffset or 0) / IDLE_FLOAT_AMPLITUDE
+	ShadowAlpha = ShadowAlpha * (1 + math.max(0, BobStrength) * 0.4)
+	local ShadowScale = 1 + math.max(0, BobStrength) * 0.12
+	love.graphics.setColor(0, 0, 0, ShadowAlpha)
 	love.graphics.ellipse(
 		"fill",
 		x + SHADOW_OFFSET,
 		y + SHADOW_OFFSET + math.min(0, (f.bobOffset or 0) * 0.35),
-		(r * sx + OUTLINE_SIZE * 0.5) * shadowScale,
-		(r * sy + OUTLINE_SIZE * 0.5) * shadowScale,
+		(r * sx + OUTLINE_SIZE * 0.5) * ShadowScale,
+		(r * sy + OUTLINE_SIZE * 0.5) * ShadowScale,
 		segments
 	)
 
 	-- fruit body
-	local bodyColor = f.type.color
-	love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], alpha)
+	local BodyColor = f.type.color
+	love.graphics.setColor(BodyColor[1], BodyColor[2], BodyColor[3], alpha)
 	love.graphics.ellipse("fill", x, y, r * sx, r * sy)
 
 	-- highlight
-	local highlight = getHighlightColor(f.type.color)
+	local highlight = GetHighlightColor(f.type.color)
 	local hx = x - r * sx * 0.3
 	local hy = y - r * sy * 0.35
 	local hrx = r * sx * 0.55
@@ -350,27 +350,27 @@ local function drawFruit(f)
 	love.graphics.push()
 	love.graphics.translate(hx, hy)
 	love.graphics.rotate(-0.35)
-	local highlightAlpha = (highlight[4] or 1) * alpha * (0.75 + pulse * 0.25)
-	love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
+	local HighlightAlpha = (highlight[4] or 1) * alpha * (0.75 + pulse * 0.25)
+	love.graphics.setColor(highlight[1], highlight[2], highlight[3], HighlightAlpha)
 	love.graphics.ellipse("fill", 0, 0, hrx, hry)
 	love.graphics.pop()
 
-	if f == active and #idleSparkles > 0 then
+	if f == active and #IdleSparkles > 0 then
 		love.graphics.push("all")
 		love.graphics.setBlendMode("add")
-		for _, sparkle in ipairs(idleSparkles) do
+		for _, sparkle in ipairs(IdleSparkles) do
 			local progress = clamp(sparkle.timer / sparkle.duration, 0, 1)
 			local fade = 1 - progress
 			local orbit = sparkle.radius + progress * 6
 			local px = x + math.cos(sparkle.angle) * orbit
 			local py = y + math.sin(sparkle.angle) * orbit - progress * 6
-			local glowSize = sparkle.size * (0.6 + 0.4 * math.sin(progress * math.pi))
-			local alphaMul = 0.25 * fade * (0.6 + pulse * 0.4)
+			local GlowSize = sparkle.size * (0.6 + 0.4 * math.sin(progress * math.pi))
+			local AlphaMul = 0.25 * fade * (0.6 + pulse * 0.4)
 
-			love.graphics.setColor(sparkle.color[1], sparkle.color[2], sparkle.color[3], alphaMul)
-			love.graphics.circle("fill", px, py, glowSize)
-			love.graphics.setColor(1, 1, 1, alphaMul * 1.6)
-			love.graphics.circle("line", px, py, glowSize * 0.9)
+			love.graphics.setColor(sparkle.color[1], sparkle.color[2], sparkle.color[3], AlphaMul)
+			love.graphics.circle("fill", px, py, GlowSize)
+			love.graphics.setColor(1, 1, 1, AlphaMul * 1.6)
+			love.graphics.circle("line", px, py, GlowSize * 0.9)
 		end
 		love.graphics.pop()
 	end
@@ -399,16 +399,16 @@ end
 
 function Fruit:draw()
 	if fading and fading.alpha > 0 then
-		drawFruit(fading)
+		DrawFruit(fading)
 	end
-	drawFruit(active)
+	DrawFruit(active)
 end
 
 -- Queries
-function Fruit:getPosition() return active.x, active.y end
-function Fruit:getPoints()   return lastCollectedType.points or 1 end
-function Fruit:getTypeName() return lastCollectedType.name or "Apple" end
-function Fruit:getType()     return lastCollectedType end
-function Fruit:getTile()     return active.col, active.row end
+function Fruit:GetPosition() return active.x, active.y end
+function Fruit:GetPoints()   return LastCollectedType.points or 1 end
+function Fruit:GetTypeName() return LastCollectedType.name or "Apple" end
+function Fruit:GetType()     return LastCollectedType end
+function Fruit:GetTile()     return active.col, active.row end
 
 return Fruit
