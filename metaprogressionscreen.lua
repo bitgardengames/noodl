@@ -66,6 +66,46 @@ local viewportTop = DEFAULT_LIST_TOP
 local viewportHeight = 0
 local contentHeight = 0
 
+local function clampColorComponent(value)
+        if value < 0 then
+                return 0
+        elseif value > 1 then
+                return 1
+        end
+        return value
+end
+
+local function lightenColor(color, amount)
+        if type(color) ~= "table" then
+                return {1, 1, 1, 1}
+        end
+
+        amount = clampColorComponent(amount or 0)
+
+        local r = clampColorComponent((color[1] or 0) + (1 - (color[1] or 0)) * amount)
+        local g = clampColorComponent((color[2] or 0) + (1 - (color[2] or 0)) * amount)
+        local b = clampColorComponent((color[3] or 0) + (1 - (color[3] or 0)) * amount)
+        local a = clampColorComponent(color[4] or 1)
+
+        return {r, g, b, a}
+end
+
+local function darkenColor(color, amount)
+        if type(color) ~= "table" then
+                return {0, 0, 0, 1}
+        end
+
+        amount = clampColorComponent(amount or 0)
+
+        local scale = 1 - amount
+        local r = clampColorComponent((color[1] or 0) * scale)
+        local g = clampColorComponent((color[2] or 0) * scale)
+        local b = clampColorComponent((color[3] or 0) * scale)
+        local a = clampColorComponent(color[4] or 1)
+
+        return {r, g, b, a}
+end
+
 local heldDpadButton = nil
 local heldDpadAction = nil
 local heldDpadTimer = 0
@@ -579,46 +619,6 @@ local function buildStatsEntries()
 	end
 
 	buildStatsHighlights()
-end
-
-local function clampColorComponent(value)
-	if value < 0 then
-		return 0
-	elseif value > 1 then
-		return 1
-	end
-	return value
-end
-
-local function lightenColor(color, amount)
-	if type(color) ~= "table" then
-		return {1, 1, 1, 1}
-	end
-
-	amount = clampColorComponent(amount or 0)
-
-	local r = clampColorComponent((color[1] or 0) + (1 - (color[1] or 0)) * amount)
-	local g = clampColorComponent((color[2] or 0) + (1 - (color[2] or 0)) * amount)
-	local b = clampColorComponent((color[3] or 0) + (1 - (color[3] or 0)) * amount)
-	local a = clampColorComponent(color[4] or 1)
-
-	return {r, g, b, a}
-end
-
-local function darkenColor(color, amount)
-        if type(color) ~= "table" then
-                return {0, 0, 0, 1}
-        end
-
-        amount = clampColorComponent(amount or 0)
-
-        local scale = 1 - amount
-        local r = clampColorComponent((color[1] or 0) * scale)
-        local g = clampColorComponent((color[2] or 0) * scale)
-        local b = clampColorComponent((color[3] or 0) * scale)
-        local a = clampColorComponent(color[4] or 1)
-
-        return {r, g, b, a}
 end
 
 local function formatShaderDisplayName(typeId)
