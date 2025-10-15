@@ -282,56 +282,6 @@ local function stoneSkinShieldHandler(data, state)
 	Rocks:shatterNearest(fx or 0, fy or 0, 1)
 end
 
-local function mirroredScalesChargeFactor(stacks)
-	stacks = stacks or 1
-	local factor = 0.45 - 0.08 * (stacks - 1)
-	if factor < 0.2 then
-		factor = 0.2
-	end
-	return factor
-end
-
-local function mirroredScalesLaserHandler(data, state)
-	if not (state and data) then return end
-
-	local stacks = getStacks(state, "mirrored_scales")
-	if stacks <= 0 then return end
-
-	local beam = data.beam
-	if beam and Lasers and Lasers.reflectBeam then
-		Lasers:reflectBeam(beam, { chargeFactor = mirroredScalesChargeFactor(stacks) })
-	end
-
-	if Score.addBonus then
-		local bonus = 2 + math.max(0, stacks - 1)
-		Score:addBonus(bonus)
-	end
-
-        celebrateUpgrade(getUpgradeString("mirrored_scales", "activation_text"), data, {
-                color = {0.72, 0.92, 1, 1},
-                textOffset = 56,
-                textScale = 1.18,
-                particleCount = 18 + stacks * 2,
-                particleSpeed = 150,
-                particleLife = 0.48,
-                visual = {
-                        badge = "shield",
-                        outerRadius = 64,
-                        innerRadius = 20,
-                        ringCount = 3,
-                        ringSpacing = 12,
-                        life = 0.72,
-                        glowAlpha = 0.34,
-                        haloAlpha = 0.24,
-                        variant = "prism_refraction",
-                        addBlend = true,
-                        color = {0.72, 0.92, 1.0, 1},
-                        variantSecondaryColor = {0.46, 0.78, 1.0, 0.95},
-                        variantTertiaryColor = {1.0, 0.96, 0.72, 0.82},
-                },
-        })
-end
-
 local function newRunState()
         return RunState.new(defaultEffects)
 end
@@ -1195,22 +1145,6 @@ local pool = {
 				})
 			end,
 		},
-	}),
-	register({
-		id = "mirrored_scales",
-		nameKey = "upgrades.mirrored_scales.name",
-		descKey = "upgrades.mirrored_scales.description",
-		rarity = "rare",
-		tags = {"defense", "economy"},
-		onAcquire = function(state)
-			if not state.counters then
-				state.counters = {}
-			end
-			if not state.counters.mirroredScalesHandler then
-				state.counters.mirroredScalesHandler = true
-				Upgrades:addEventHandler("laserShielded", mirroredScalesLaserHandler)
-			end
-		end,
 	}),
         register({
                 id = "diffraction_barrier",
