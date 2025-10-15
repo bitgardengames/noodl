@@ -15,6 +15,18 @@
 - Floor geometry, hazards, and ambience evolve to reflect the living environment.
 - Symbolism reinforces the roguelite loop of rebirth, shedding, and transformation.
 
+### 🎨 Floor Atmospheres
+| Floor | Atmosphere Snapshot | Palette + Shader Notes |
+| --- | --- | --- |
+| **Auric Threshold** | Gilded scales part in luminous rings while offerings shimmer with promise. | Verdant gold gradients paired with the new `scaleBloom` shader bathe the arena in radiant scale gleams. |
+| **Resonant Gullet** | Echoing tides sing hymns that tug tributes toward the chanting throat. | Midnight blues and electric teals glow under intensified `softCurrent` caustics. |
+| **Heartforge Crucible** | Molten valves hammer to a blistering rhythm that tempers every devotion. | Superheated ambers and ember oranges flare through the existing `emberDrift` effect. |
+| **Luminal Gallery** | Lungs of light inhale nebular mists that swirl through auroral currents. | Glacial blues and amethyst beams spiral inside the bespoke `spiralAurora` shader. |
+| **Hemal Basin** | Sacramental digestion pools churn with crimson froth and mirrored scars. | Vivid magentas and sanguine highlights pulse alongside enriched `voidPulse` flashes. |
+| **Marrow Vault** | Fossilised spires archive vows in rings of bone and amber marrow. | Warm bone neutrals and honey highlights drift beneath the atmospheric `ruinMotes`. |
+| **Stormvein Sanctum** | Neural spires discharge stormlight sigils across every coil. | Deep indigos and periwinkle lightning course through invigorated `auroraVeil` ribbons. |
+| **Celestial Coilcore** | The innermost chamber blooms with stellar scales awaiting final devotion. | Cosmic violets and solar golds refract through the radiant `prismaticSpiral` finale. |
+
 ### 🍎 The Fruit Offerings
 - Glowing fruit act as offerings of devotion infused with the Coil's life energy.
 - Collecting fruit allows the snake to descend deeper and sparks manifestations of the serpent god.
