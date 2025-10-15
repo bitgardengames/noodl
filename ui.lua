@@ -100,9 +100,9 @@ local SpacingMinimums = {
 local BaseUpgradeLayout = {
 	width = 208,
 	spacing = 12,
-	BaseHeight = 58,
-	IconRadius = 18,
-	BarHeight = 6,
+	baseHeight = 58,
+	iconRadius = 18,
+	barHeight = 6,
 	margin = 24,
 }
 
