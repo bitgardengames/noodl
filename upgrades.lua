@@ -233,16 +233,6 @@ local function getSawCenters(limit)
         end)
 end
 
-local function getRockCenters(limit)
-        if not Rocks or not Rocks.getAll then
-                return nil
-        end
-
-        return collectPositions(Rocks:getAll(), limit, function(rock)
-                return rock.x, rock.y
-        end)
-end
-
 local function getLaserCenters(limit)
         if not Lasers or not Lasers.getEmitters then
                 return nil
@@ -1096,45 +1086,13 @@ local pool = {
                         if Snake.setStonebreakerStacks then
                                 Snake:setStonebreakerStacks(state.counters.stonebreakerStacks)
                         end
-                        local hymnColor = {0.9, 0.82, 0.64, 1}
                         celebrateUpgrade(getUpgradeString("stonebreaker_hymn", "name"), nil, {
-                                color = hymnColor,
+                                color = {0.9, 0.82, 0.64, 1},
                                 skipVisuals = true,
                                 skipParticles = true,
                                 textOffset = 48,
                                 textScale = 1.1,
                         })
-
-                        local rockCenters = getRockCenters(2)
-                        local baseVisual = {
-                                variant = "stoneguard_bastion",
-                                life = 0.78,
-                                innerRadius = 14,
-                                outerRadius = 64,
-                                color = {0.82, 0.76, 0.66, 1},
-                                variantSecondaryColor = {0.5, 0.54, 0.58, 1},
-                                variantTertiaryColor = {0.96, 0.98, 1.0, 0.72},
-                        }
-                        local baseOptions = {
-                                color = hymnColor,
-                                skipText = true,
-                                particleCount = 14,
-                                particleSpeed = 100,
-                                particleLife = 0.48,
-                                visual = baseVisual,
-                        }
-                        if rockCenters and #rockCenters > 0 then
-                                for _, pos in ipairs(rockCenters) do
-                                        local celebration = deepcopy(baseOptions)
-                                        celebration.x = pos[1]
-                                        celebration.y = pos[2]
-                                        celebrateUpgrade(nil, nil, celebration)
-                                end
-                        else
-                                local fallback = deepcopy(baseOptions)
-                                applySegmentPosition(fallback, 0.6)
-                                celebrateUpgrade(nil, nil, fallback)
-                        end
                 end,
         }),
         register({
