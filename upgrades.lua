@@ -1075,23 +1075,23 @@ local pool = {
                                 end
 
                                 local sparkColor = {1, 0.58, 0.32, 1}
-                                local baseVisual = {
-                                        badge = "spark",
-                                        outerRadius = 54,
-                                        innerRadius = 16,
-                                        ringCount = 3,
-                                        life = 0.68,
-                                        glowAlpha = 0.32,
-                                        haloAlpha = 0.2,
-                                        addBlend = true,
-                                }
                                 local baseOptions = {
                                         color = sparkColor,
                                         skipText = true,
-                                        particleCount = 12,
-                                        particleSpeed = 150,
-                                        particleLife = 0.4,
-                                        visual = baseVisual,
+                                        skipVisuals = true,
+                                        particles = {
+                                                count = 14,
+                                                speed = 180,
+                                                speedVariance = 110,
+                                                life = 0.36,
+                                                size = 3.4,
+                                                color = {1, 0.68, 0.32, 1},
+                                                spread = math.pi * 1.2,
+                                                angleJitter = math.pi * 0.6,
+                                                gravity = 280,
+                                                drag = 1.5,
+                                                fadeTo = 0,
+                                        },
                                 }
 
                                 local positions = {}
