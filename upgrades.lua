@@ -1251,56 +1251,6 @@ local pool = {
 		end,
 	}),
         register({
-                id = "pulse_bloom",
-                nameKey = "upgrades.pulse_bloom.name",
-                descKey = "upgrades.pulse_bloom.description",
-                rarity = "rare",
-		tags = {"defense", "economy"},
-		allowDuplicates = true,
-		maxStacks = 2,
-		onAcquire = function(state)
-			state.counters.pulseBloomSeen = {}
-			state.counters.pulseBloomUnique = 0
-		end,
-		handlers = {
-			fruitCollected = function(data, state)
-				if not (data and state) then return end
-
-				local stacks = getStacks(state, "pulse_bloom")
-				if stacks <= 0 then return end
-
-				local fruitId = data.name or (data.fruitType and data.fruitType.id)
-				if not fruitId then return end
-
-				local seen = state.counters.pulseBloomSeen or {}
-				if not seen[fruitId] then
-					seen[fruitId] = true
-					state.counters.pulseBloomUnique = (state.counters.pulseBloomUnique or 0) + 1
-					state.counters.pulseBloomSeen = seen
-				end
-
-				local threshold = math.max(1, 3 - math.max(0, stacks - 1))
-				if (state.counters.pulseBloomUnique or 0) < threshold then
-					return
-				end
-
-				state.counters.pulseBloomUnique = 0
-				state.counters.pulseBloomSeen = {}
-
-				grantCrashShields(1)
-
-				celebrateUpgrade(getUpgradeString("pulse_bloom", "shield_text"), data, {
-					color = {0.76, 0.94, 0.82, 1},
-					textOffset = 50,
-					textScale = 1.12,
-					particleCount = 20 + stacks * 2,
-					particleSpeed = 120,
-					particleLife = 0.44,
-				})
-			end,
-		},
-        }),
-        register({
                 id = "caravan_contract",
                 nameKey = "upgrades.caravan_contract.name",
                 descKey = "upgrades.caravan_contract.description",

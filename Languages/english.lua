@@ -491,12 +491,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Warden's Chorus",
 				description = "Each Defense upgrade adds crash shield progress at the start of every floor.",
 			},
-			pulse_bloom = {
-				name = "Pulse Bloom",
-				description = "Harvest a handful of distinct fruit to forge a crash shield.",
-				heal_text = "Blooming Vitality",
-				shield_text = "Blooming Guard",
-			},
 			caravan_contract = {
 				name = "Caravan Contract",
 				description = "Shops offer +1 card. Each floor spawns an extra rock.",
