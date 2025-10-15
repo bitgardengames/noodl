@@ -709,7 +709,7 @@ local function drawStormBurst(effect, progress)
                         local sx = x + cos(angle) * radius
                         local sy = y + sin(angle) * radius
                         love.graphics.setColor(sparkColor[1], sparkColor[2], sparkColor[3], sparkAlpha)
-                        love.graphics.circle("fill", sx, sy, innerRadius * 0.28, 12)
+                        love.graphics.circle("fill", sx, sy, innerRadius * 0.32, 12)
                 end
         end
 
