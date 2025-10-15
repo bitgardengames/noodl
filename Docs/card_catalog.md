@@ -12,7 +12,6 @@
 | Circuit Breaker | Uncommon | Saw tracks freeze for 1s after each fruit. |  |
 | Crystal Cache | Uncommon | Crash shields burst into motes worth +2 bonus score. | Tags: economy, defense |
 | Diffraction Barrier | Uncommon | Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s. | Tags: defense |
-| Echo Aegis | Uncommon | Crash shields unleash a shockwave that stalls saws. |  |
 | Guild Ledger | Uncommon | Each shop slot reduces rock spawn chance by 1.5%. | Tags: economy, defense; Requires tags: economy |
 | Mapmaker's Compass | Uncommon | The exit unlocks one fruit earlier. | Tags: economy, risk |
 | Molting Reflex | Uncommon | Crash shields trigger a 60% adrenaline surge. | Tags: adrenaline, defense; Requires tags: adrenaline |
@@ -21,13 +20,11 @@
 | Resonant Shell | Uncommon | Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own. | Tags: defense; Requires tags: defense; Unlock tag: specialist |
 | Stone Skin | Uncommon | Gain a crash shield that shatters rocks and shrugs off a saw or laser hit. | Up to 4 stacks |
 | Verdant Bonds | Uncommon | Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth forges a crash shield. | Tags: economy, defense; Up to 3 stacks |
-| Artisan Catalog | Rare | The first upgrade you buy each floor grants +1 crash shield, +2 bonus score, and stalls saws for 0.9s. Effects stack with additional copies. | Tags: economy, defense |
 | Predator's Reflex | Rare | Adrenaline bursts are 25% stronger and trigger at the start of each floor. | Requires tags: adrenaline |
 | Pulse Bloom | Rare | Harvest a handful of distinct fruit to forge a crash shield. | Tags: defense, economy; Up to 2 stacks |
 | Sparkstep Relay | Rare | Dashing shatters the nearest rock and stalls saws for 0.6s. | Tags: mobility, defense; Requires tags: mobility |
 | Stone Census | Rare | Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%). | Tags: economy, defense; Requires tags: economy |
 | Stonebreaker Hymn | Rare | Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock. | Up to 2 stacks |
-| Stormchaser Rig | Rare | Dashing primes your next fruit to grant +2 bonus score and stall saws for 0.7s. | Tags: mobility, economy |
 | Tectonic Resolve | Rare | Rock spawn chance decreases by 15%. Each fruit has a 25% chance to shatter the nearest rock. | Tags: defense |
 | Temporal Anchor | Rare | Press Shift (or X/Left Shoulder on a controller) to slow time for a short duration, reducing all movement to 35% speed. | Tags: utility, defense; Unlock tag: timekeeper |
 | Thunder Dash | Rare | Press Space (or A/Right Shoulder on a controller) to dash forward, smashing through rocks while briefly speeding up. | Tags: mobility; Unlock tag: abilities |

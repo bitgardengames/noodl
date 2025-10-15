@@ -22,7 +22,7 @@ This guide codifies how card upgrades should look, feel, and move inside the sho
 
 * **Common:** Desaturated steel frame, subtle drop shadow. Animation limited to a soft brightness pulse on hover. Reference **Extra Bite (Common)** and **Stone Whisperer (Common)** for baseline tags and copy length; both sit in the neutral palette in the [Card Catalog](card_catalog.md).
 * **Uncommon:** Secondary accent outline with inner glow. Hover introduces a directional rim light that sweeps left to right. **Adrenaline Surge (Uncommon)** and **Crystal Cache (Uncommon)** demonstrate how adrenaline and defense tags should recolor tag chips in the [Card Catalog](card_catalog.md).
-* **Rare:** Dual-tone gradient border, ambient particle specks that idle at 20% opacity, and a slow 8 s breathing scale on the glow layer. Study **Artisan Catalog (Rare)** and **Stormchaser Rig (Rare)** to align color cues with defense and mobility tags in the [Card Catalog](card_catalog.md).
+* **Rare:** Dual-tone gradient border, ambient particle specks that idle at 20% opacity, and a slow 8 s breathing scale on the glow layer. Study **Pulse Bloom (Rare)** and **Sparkstep Relay (Rare)** to align color cues with defense and mobility tags in the [Card Catalog](card_catalog.md).
 * **Epic & Legendary:** Add parallax shimmer on icon layer and subtle lens flare streaks that trigger when highlighted. **Chronospiral Core (Epic)** and **Event Horizon (Legendary)** show the combo + risk and mobility combinations we should emphasize per the [Card Catalog](card_catalog.md).
 
 ### Layout Guidelines
@@ -41,7 +41,7 @@ This guide codifies how card upgrades should look, feel, and move inside the sho
 
 ### Motion Rules
 
-* All easing uses cubic-bezier(0.2, 0.8, 0.2, 1) for enter/exit, with back-ease reserved for celebratory reveals (first copy of **Artisan Catalog (Rare)**).
+* All easing uses cubic-bezier(0.2, 0.8, 0.2, 1) for enter/exit, with back-ease reserved for celebratory reveals (first copy of **Pulse Bloom (Rare)**).
 * Idle loops cap at 12 s duration. Particle bursts emit no more than 8 sprites to avoid visual noise.
 * Sequential reveals cascade left to right with 90 ms staggering. Newly added cards (such as **Pulse Bloom (Rare)**) should bloom from 80% scale to 100% over 180 ms.
 * When the shop refreshes (e.g., purchasing **Fresh Supplies (Common)**), fade old cards down over 120 ms, hold 60 ms, then fade new set up with simultaneous translation from 12 px below their resting position.

@@ -403,56 +403,6 @@ local function updateStoneCensus(state)
 	state.effects = effects
 end
 
-local function handleArtisanCatalogFloorStart(_, state)
-	if not state then return end
-	if getStacks(state, "artisan_catalog") <= 0 then return end
-
-	state.counters = state.counters or {}
-	state.counters.artisanCatalogPurchases = 0
-end
-
-local function handleArtisanCatalogPurchase(data, state)
-	if not state then return end
-	if getStacks(state, "artisan_catalog") <= 0 then return end
-
-	state.counters = state.counters or {}
-	local purchases = state.counters.artisanCatalogPurchases or 0
-	local copies = getStacks(state, "artisan_catalog")
-
-	if purchases <= 0 and copies > 0 then
-		if Snake and Snake.addCrashShields then
-			Snake:addCrashShields(copies)
-		end
-		if Saws and Saws.stall then
-			Saws:stall(0.9 * copies)
-		end
-		if Score and Score.addBonus then
-			Score:addBonus(2 * copies)
-		end
-
-		celebrateUpgrade(getUpgradeString("artisan_catalog", "trigger"), data, {
-			color = {1.0, 0.78, 0.42, 1},
-			particleCount = 20,
-			particleSpeed = 130,
-			particleLife = 0.45,
-			particleSize = 6,
-			particleSpread = math.pi * 2,
-			visual = {
-				badge = "shield",
-				outerRadius = 72,
-				innerRadius = 20,
-				ringCount = 3,
-				ringSpacing = 12,
-				life = 0.62,
-				glowAlpha = 0.26,
-				haloAlpha = 0.18,
-			},
-		})
-	end
-
-	state.counters.artisanCatalogPurchases = purchases + 1
-end
-
 local function handleBulwarkChorusFloorStart(_, state)
 	if not state or not state.counters then return end
 	if getStacks(state, "wardens_chorus") <= 0 then return end
@@ -1187,61 +1137,6 @@ end
                         end
                 end,
         }),
-	register({
-		id = "echo_aegis",
-		nameKey = "upgrades.echo_aegis.name",
-		descKey = "upgrades.echo_aegis.description",
-		rarity = "uncommon",
-		onAcquire = function(state)
-			if Snake.addShieldBurst then
-				Snake:addShieldBurst({ rocks = 1, stall = 1.5 })
-			else
-				Snake.shieldBurst = Snake.shieldBurst or { rocks = 0, stall = 0 }
-				Snake.shieldBurst.rocks = (Snake.shieldBurst.rocks or 0) + 1
-				Snake.shieldBurst.stall = (Snake.shieldBurst.stall or 0) + 1.5
-			end
-		end,
-		handlers = {
-			shieldConsumed = function(data)
-				if not data or not data.burstTriggered then return end
-
-				local fx, fy = getEventPosition(data)
-				if not (fx and fy) then return end
-
-				celebrateUpgrade(nil, data, {
-					x = fx,
-					y = fy,
-					skipText = true,
-					color = {0.72, 0.9, 1, 1},
-					visual = {
-						color = {0.72, 0.9, 1, 1},
-						glowColor = {0.58, 0.78, 1, 1},
-						haloColor = {0.46, 0.66, 1, 0.22},
-						badge = "burst",
-						badgeScale = 1.08,
-						ringCount = 4,
-						ringSpacing = 14,
-						ringWidth = 5,
-						innerRadius = 18,
-						outerRadius = 86,
-						life = 0.58,
-						glowAlpha = 0.28,
-						haloAlpha = 0.2,
-					},
-					particles = {
-						count = 22,
-						speed = 140,
-						speedVariance = 70,
-						life = 0.52,
-						size = 7,
-						color = {0.58, 0.82, 1, 0.9},
-						drag = 3.2,
-						fadeTo = 0,
-					},
-				})
-			end,
-		},
-	}),
         register({
                 id = "diffraction_barrier",
                 nameKey = "upgrades.diffraction_barrier.name",
@@ -1565,24 +1460,7 @@ end
 				textScale = 1.1,
 			})
 		end,
-	}),
-	register({
-		id = "artisan_catalog",
-		nameKey = "upgrades.artisan_catalog.name",
-		descKey = "upgrades.artisan_catalog.description",
-		rarity = "rare",
-		tags = {"economy", "defense"},
-		unlockTag = "artisan_alliance",
-		onAcquire = function(state)
-			state.counters.artisanCatalogPurchases = state.counters.artisanCatalogPurchases or 0
-		end,
-		handlers = {
-			floorStart = handleArtisanCatalogFloorStart,
-			upgradeAcquired = function(data, runState)
-				handleArtisanCatalogPurchase(data, runState)
-			end,
-		},
-	}),
+        }),
         register({
                 id = "predators_reflex",
                 nameKey = "upgrades.predators_reflex.name",
@@ -1817,66 +1695,9 @@ end
 				})
 			end,
 		},
-	}),
-	register({
-		id = "stormchaser_rig",
-		nameKey = "upgrades.stormchaser_rig.name",
-		descKey = "upgrades.stormchaser_rig.description",
-		rarity = "rare",
-		tags = {"mobility", "economy"},
-		unlockTag = "stormtech",
-                onAcquire = function(state)
-                        state.counters.stormchaserRigPrimed = false
-                        if Snake.setStormchaserPrimed then
-                                Snake:setStormchaserPrimed(false)
-                        end
-                end,
-                handlers = {
-                        dashActivated = function(_, state)
-                                if not state or not state.counters then return end
-                                state.counters.stormchaserRigPrimed = true
-                                if Snake.setStormchaserPrimed then
-                                        Snake:setStormchaserPrimed(true)
-                                end
-                        end,
-                        fruitCollected = function(data, state)
-                                if not state or not state.counters or not state.counters.stormchaserRigPrimed then return end
-                                state.counters.stormchaserRigPrimed = false
-                                if Score.addBonus then
-					Score:addBonus(2)
-				end
-				if Saws and Saws.stall then
-					Saws:stall(0.7)
-				end
-                                celebrateUpgrade(getUpgradeString("stormchaser_rig", "activation_text"), data, {
-                                        color = {0.88, 0.94, 1.0, 1},
-                                        particleCount = 16,
-                                        particleSpeed = 140,
-                                        particleLife = 0.4,
-                                        particleSize = 4,
-                                        particleSpread = math.pi * 2,
-                                        textOffset = 58,
-                                        textScale = 1.14,
-                                        visual = {
-                                                variant = "storm_burst",
-                                                showBase = false,
-                                                life = 0.78,
-                                                innerRadius = 18,
-                                                outerRadius = 60,
-                                                addBlend = true,
-                                                color = {0.88, 0.94, 1.0, 1},
-                                                variantSecondaryColor = {0.38, 0.68, 1.0, 0.9},
-                                                variantTertiaryColor = {1.0, 0.96, 0.78, 0.85},
-                                        },
-                                })
-                                if Snake.setStormchaserPrimed then
-                                        Snake:setStormchaserPrimed(false)
-                                end
-                        end,
-                },
         }),
-	register({
-		id = "temporal_anchor",
+        register({
+                id = "temporal_anchor",
 		nameKey = "upgrades.temporal_anchor.name",
 		descKey = "upgrades.temporal_anchor.description",
 		rarity = "rare",
