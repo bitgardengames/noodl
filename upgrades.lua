@@ -2749,16 +2749,20 @@ local function calculateWeight(upgrade, pityLevel)
 end
 
 function Upgrades:canOffer(upgrade, context, allowTaken)
-	if not upgrade then return false end
+        if not upgrade then return false end
 
-	local count = self:getTakenCount(upgrade.id)
-	if not allowTaken then
-		if (count > 0 and not upgrade.allowDuplicates) then
-			return false
-		end
-		if upgrade.maxStacks and count >= upgrade.maxStacks then
-			return false
-		end
+        local count = self:getTakenCount(upgrade.id)
+        if upgrade.rarity == "legendary" and count > 0 then
+                return false
+        end
+
+        if not allowTaken then
+                if (count > 0 and not upgrade.allowDuplicates) then
+                        return false
+                end
+                if upgrade.maxStacks and count >= upgrade.maxStacks then
+                        return false
+                end
 	end
 
 	if upgrade.requiresTags then
