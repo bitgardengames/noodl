@@ -33,6 +33,12 @@ local COSMETIC_CARD_HEIGHT = 148
 local COSMETIC_CARD_SPACING = 24
 local COSMETIC_PREVIEW_WIDTH = 128
 local COSMETIC_PREVIEW_HEIGHT = 40
+local COSMETIC_SHOWCASE_TILE_WIDTH = 196
+local COSMETIC_SHOWCASE_TILE_HEIGHT = 116
+local COSMETIC_SHOWCASE_SPACING_X = 18
+local COSMETIC_SHOWCASE_SPACING_Y = 16
+local COSMETIC_SHOWCASE_TOP_OFFSET = 96
+local COSMETIC_SHOWCASE_BOTTOM_PADDING = 28
 local SCROLL_SPEED = 48
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
@@ -73,6 +79,8 @@ local statsHighlights = {}
 local statsSummaryHeight = 0
 local cosmeticsEntries = {}
 local cosmeticsSummary = { unlocked = 0, total = 0, newUnlocks = 0 }
+local cosmeticShaderShowcaseEntries = {}
+local cosmeticShowcaseHeight = 0
 local progressionState = nil
 local activeTab = "experience"
 local cosmeticsFocusIndex = nil
@@ -82,11 +90,144 @@ local pressedCosmeticIndex = nil
 local cosmeticPreviewTrail = nil
 local cosmeticPreviewBounds = nil
 
+local function computeCosmeticShowcaseLayout(sw)
+        if not cosmeticShaderShowcaseEntries or #cosmeticShaderShowcaseEntries == 0 then
+                cosmeticShowcaseHeight = 0
+                return nil
+        end
+
+        if not sw then
+                sw = select(1, Screen:get())
+        end
+
+        if not sw then
+                return nil
+        end
+
+        local tileWidth = COSMETIC_SHOWCASE_TILE_WIDTH
+        local tileHeight = COSMETIC_SHOWCASE_TILE_HEIGHT
+        local spacingX = COSMETIC_SHOWCASE_SPACING_X
+        local spacingY = COSMETIC_SHOWCASE_SPACING_Y
+
+        local maxColumns = math.max(1, math.floor((sw + spacingX) / (tileWidth + spacingX)))
+        maxColumns = math.min(maxColumns, #cosmeticShaderShowcaseEntries)
+        if maxColumns < 1 then
+                maxColumns = 1
+        end
+
+        local rows = math.ceil(#cosmeticShaderShowcaseEntries / maxColumns)
+        local contentWidth = maxColumns * tileWidth + (math.max(0, maxColumns - 1) * spacingX)
+        local startX = (sw - contentWidth) * 0.5
+        local startY = TAB_BOTTOM + COSMETIC_SHOWCASE_TOP_OFFSET
+        local contentHeight = rows * tileHeight + math.max(0, rows - 1) * spacingY
+        local contentBottom = startY + contentHeight
+        local requiredListTop = contentBottom + COSMETIC_SHOWCASE_BOTTOM_PADDING
+
+        cosmeticShowcaseHeight = math.max(0, requiredListTop - DEFAULT_LIST_TOP)
+
+        return {
+                startX = startX,
+                startY = startY,
+                tileWidth = tileWidth,
+                tileHeight = tileHeight,
+                spacingX = spacingX,
+                spacingY = spacingY,
+                columns = maxColumns,
+        }
+end
+
+local function drawCosmeticShaderShowcase(sw)
+        local layout = computeCosmeticShowcaseLayout(sw)
+        if not layout then
+                return
+        end
+
+        local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+        local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
+        local textColor = Theme.textColor or {1, 1, 1, 1}
+        local mutedText = Theme.mutedTextColor or {textColor[1], textColor[2], textColor[3], (textColor[4] or 1) * 0.8}
+
+        local previewHeight = math.min(COSMETIC_PREVIEW_HEIGHT, layout.tileHeight - 48)
+        local previewWidth = math.min(COSMETIC_PREVIEW_WIDTH, layout.tileWidth - 36)
+
+        for index, entry in ipairs(cosmeticShaderShowcaseEntries) do
+                local column = (index - 1) % layout.columns
+                local row = math.floor((index - 1) / layout.columns)
+                local tileX = layout.startX + column * (layout.tileWidth + layout.spacingX)
+                local tileY = layout.startY + row * (layout.tileHeight + layout.spacingY)
+
+                local unlocked = (entry.unlockedCount or 0) > 0
+
+                local fillColor = unlocked and lightenColor(basePanel, 0.18) or darkenColor(basePanel, 0.08)
+                love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], (fillColor[4] or 1) * 0.95)
+                UI.drawRoundedRect(tileX, tileY, layout.tileWidth, layout.tileHeight, 12)
+
+                local outline = unlocked and (Theme.progressColor or Theme.accentTextColor or borderColor) or borderColor
+                love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1))
+                love.graphics.setLineWidth(unlocked and 2.4 or 2)
+                love.graphics.rectangle("line", tileX, tileY, layout.tileWidth, layout.tileHeight, 12, 12)
+                love.graphics.setLineWidth(1)
+
+                local previewX = tileX + (layout.tileWidth - previewWidth) * 0.5
+                local previewY = tileY + 14
+
+                local palette = entry.palette or {}
+                local bodyColor = palette.body or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
+                local outlineColor = palette.outline or {0.05, 0.15, 0.12, 1}
+                local glowColor = palette.glow or Theme.accentTextColor or {1, 0.78, 0.32, 1}
+                local overlayEffect = palette.overlay or entry.overlay
+
+                if not unlocked then
+                        bodyColor = darkenColor(bodyColor, 0.22)
+                        outlineColor = darkenColor(outlineColor, 0.16)
+                        glowColor = darkenColor(glowColor, 0.25)
+                        if overlayEffect then
+                                overlayEffect = shallowCopy(overlayEffect)
+                                if overlayEffect.opacity then
+                                        overlayEffect.opacity = overlayEffect.opacity * 0.65
+                                end
+                                if overlayEffect.intensity then
+                                        overlayEffect.intensity = overlayEffect.intensity * 0.6
+                                end
+                        end
+                end
+
+                local previewPalette = {
+                        body = bodyColor,
+                        outline = outlineColor,
+                        glow = glowColor,
+                        overlay = overlayEffect,
+                }
+
+                drawCosmeticSnakePreview(previewX, previewY, previewWidth, previewHeight, entry.primarySkin, previewPalette)
+
+                local label = entry.displayName or entry.type or ""
+                love.graphics.setFont(UI.fonts.caption)
+                love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
+                love.graphics.printf(label, tileX + 12, tileY + layout.tileHeight - 34, layout.tileWidth - 24, "center")
+
+                local statusText
+                if (entry.totalCount or 0) > 1 then
+                        statusText = string.format("%d / %d unlocked", entry.unlockedCount or 0, entry.totalCount or 0)
+                elseif unlocked then
+                        statusText = Localization and Localization.get and Localization:get("metaprogression.status_unlocked") or "Unlocked"
+                else
+                        statusText = Localization and Localization.get and Localization:get("metaprogression.cosmetics.locked_label") or "Locked"
+                end
+
+                love.graphics.setFont(UI.fonts.small)
+                love.graphics.setColor(mutedText[1], mutedText[2], mutedText[3], mutedText[4] or 1)
+                love.graphics.printf(statusText or "", tileX + 12, tileY + layout.tileHeight - 18, layout.tileWidth - 24, "center")
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
+end
+
 local tabs = {
-	{
-		id = "experience",
-		action = "tab_experience",
-		labelKey = "metaprogression.tabs.experience",
+        {
+                id = "experience",
+                action = "tab_experience",
+                labelKey = "metaprogression.tabs.experience",
 	},
 	{
 		id = "cosmetics",
@@ -147,12 +288,18 @@ local function resetHeldDpad()
 end
 
 local function getListTop(tab)
-	tab = tab or activeTab
-	if tab == "experience" then
-		return EXPERIENCE_LIST_TOP
-	end
+        tab = tab or activeTab
+        if tab == "experience" then
+                return EXPERIENCE_LIST_TOP
+        end
 
-	return DEFAULT_LIST_TOP
+        if tab == "cosmetics" then
+                local sw = select(1, Screen:get())
+                computeCosmeticShowcaseLayout(sw)
+                return DEFAULT_LIST_TOP + (cosmeticShowcaseHeight or 0)
+        end
+
+        return DEFAULT_LIST_TOP
 end
 
 local function startHeldDpad(button, action)
@@ -459,19 +606,40 @@ local function lightenColor(color, amount)
 end
 
 local function darkenColor(color, amount)
-	if type(color) ~= "table" then
-		return {0, 0, 0, 1}
-	end
+        if type(color) ~= "table" then
+                return {0, 0, 0, 1}
+        end
 
-	amount = clampColorComponent(amount or 0)
+        amount = clampColorComponent(amount or 0)
 
-	local scale = 1 - amount
-	local r = clampColorComponent((color[1] or 0) * scale)
-	local g = clampColorComponent((color[2] or 0) * scale)
-	local b = clampColorComponent((color[3] or 0) * scale)
-	local a = clampColorComponent(color[4] or 1)
+        local scale = 1 - amount
+        local r = clampColorComponent((color[1] or 0) * scale)
+        local g = clampColorComponent((color[2] or 0) * scale)
+        local b = clampColorComponent((color[3] or 0) * scale)
+        local a = clampColorComponent(color[4] or 1)
 
-	return {r, g, b, a}
+        return {r, g, b, a}
+end
+
+local function formatShaderDisplayName(typeId)
+        if typeId == nil then
+                return ""
+        end
+
+        if type(typeId) ~= "string" then
+                typeId = tostring(typeId)
+        end
+
+        local name = typeId:gsub("_", " ")
+        name = name:gsub("([%l%d])([%u])", "%1 %2")
+        name = name:gsub("(%u)(%u%l)", "%1 %2")
+
+        name = name:gsub("^%l", string.upper)
+        name = name:gsub("(%s)(%l)", function(space, letter)
+                return space .. letter:upper()
+        end)
+
+        return name
 end
 
 local function withAlpha(color, alpha)
@@ -727,37 +895,108 @@ local function getSkinRequirementText(skin)
 end
 
 local function resolveSkinStatus(skin)
-	if not skin then
-		return "", "", Theme.textColor
-	end
+        if not skin then
+                return "", "", Theme.textColor
+        end
 
-	if skin.selected then
-		return Localization:get("metaprogression.cosmetics.equipped"), nil, Theme.accentTextColor or Theme.textColor
-	end
+        if skin.selected then
+                return Localization:get("metaprogression.cosmetics.equipped"), nil, Theme.accentTextColor or Theme.textColor
+        end
 
-	if skin.unlocked then
-		return Localization:get("metaprogression.status_unlocked"), Localization:get("metaprogression.cosmetics.equip_hint"), Theme.progressColor or Theme.textColor
-	end
+        if skin.unlocked then
+                return Localization:get("metaprogression.status_unlocked"), Localization:get("metaprogression.cosmetics.equip_hint"), Theme.progressColor or Theme.textColor
+        end
 
-	return Localization:get("metaprogression.cosmetics.locked_label"), getSkinRequirementText(skin), Theme.lockedCardColor or Theme.warningColor or Theme.textColor
+        return Localization:get("metaprogression.cosmetics.locked_label"), getSkinRequirementText(skin), Theme.lockedCardColor or Theme.warningColor or Theme.textColor
+end
+
+local function buildCosmeticShaderShowcaseEntries(skins)
+        cosmeticShaderShowcaseEntries = {}
+
+        if type(skins) ~= "table" then
+                cosmeticShowcaseHeight = 0
+                return
+        end
+
+        local entriesByType = {}
+
+        for _, skin in ipairs(skins) do
+                local effects = skin.effects or {}
+                local overlay = effects.overlay
+                if overlay and overlay.type then
+                        local key = overlay.type
+                        local entry = entriesByType[key]
+                        if not entry then
+                                entry = {
+                                        type = key,
+                                        displayName = formatShaderDisplayName(key),
+                                        totalCount = 0,
+                                        unlockedCount = 0,
+                                        primarySkin = nil,
+                                }
+                                entriesByType[key] = entry
+                                cosmeticShaderShowcaseEntries[#cosmeticShaderShowcaseEntries + 1] = entry
+                        end
+
+                        entry.totalCount = (entry.totalCount or 0) + 1
+
+                        if skin.unlocked then
+                                entry.unlockedCount = (entry.unlockedCount or 0) + 1
+                                if not entry.primarySkin or not entry.primarySkin.unlocked then
+                                        entry.primarySkin = skin
+                                end
+                        elseif not entry.primarySkin then
+                                entry.primarySkin = skin
+                        end
+                end
+        end
+
+        for _, entry in ipairs(cosmeticShaderShowcaseEntries) do
+                if entry.primarySkin then
+                        entry.skinName = entry.primarySkin.name or entry.primarySkin.id
+                        entry.palette = SnakeCosmetics:getPaletteForSkin(entry.primarySkin)
+                        local effects = entry.primarySkin.effects or {}
+                        entry.overlay = shallowCopy(effects.overlay)
+                else
+                        entry.skinName = nil
+                        entry.palette = nil
+                        entry.overlay = nil
+                end
+        end
+
+        table.sort(cosmeticShaderShowcaseEntries, function(a, b)
+                local nameA = a.displayName or ""
+                local nameB = b.displayName or ""
+                if nameA == nameB then
+                        return (a.skinName or "") < (b.skinName or "")
+                end
+                return nameA < nameB
+        end)
+
+        if #cosmeticShaderShowcaseEntries == 0 then
+                cosmeticShowcaseHeight = 0
+        end
 end
 
 local function buildCosmeticsEntries()
-	cosmeticsEntries = {}
-	hoveredCosmeticIndex = nil
-	pressedCosmeticIndex = nil
-	cosmeticsFocusIndex = nil
-	cosmeticsSummary.unlocked = 0
-	cosmeticsSummary.total = 0
-	cosmeticsSummary.newUnlocks = 0
+        cosmeticsEntries = {}
+        hoveredCosmeticIndex = nil
+        pressedCosmeticIndex = nil
+        cosmeticsFocusIndex = nil
+        cosmeticsSummary.unlocked = 0
+        cosmeticsSummary.total = 0
+        cosmeticsSummary.newUnlocks = 0
 
-	if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
-		return
-	end
+        if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
+                cosmeticShaderShowcaseEntries = {}
+                cosmeticShowcaseHeight = 0
+                return
+        end
 
-	local skins = SnakeCosmetics:getSkins() or {}
-	local selectedIndex
-	local recentlyUnlockedIds = {}
+        local skins = SnakeCosmetics:getSkins() or {}
+        buildCosmeticShaderShowcaseEntries(skins)
+        local selectedIndex
+        local recentlyUnlockedIds = {}
 
 	for _, skin in ipairs(skins) do
 		cosmeticsSummary.total = cosmeticsSummary.total + 1
@@ -1548,24 +1787,26 @@ local function drawCosmeticsHeader(sw)
         love.graphics.setColor(Theme.textColor)
         love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, headerY, sw, "center")
 
-	if cosmeticsSummary.total > 0 then
-		local summaryText = Localization:get("metaprogression.cosmetics.progress", {
-			unlocked = cosmeticsSummary.unlocked or 0,
-			total = cosmeticsSummary.total or 0,
-		})
-		local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
-		love.graphics.setFont(UI.fonts.caption)
-		love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-		love.graphics.printf(summaryText, 0, headerY + 38, sw, "center")
+        if cosmeticsSummary.total > 0 then
+                local summaryText = Localization:get("metaprogression.cosmetics.progress", {
+                        unlocked = cosmeticsSummary.unlocked or 0,
+                        total = cosmeticsSummary.total or 0,
+                })
+                local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
+                love.graphics.setFont(UI.fonts.caption)
+                love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
+                love.graphics.printf(summaryText, 0, headerY + 38, sw, "center")
 
-		if cosmeticsSummary.newUnlocks and cosmeticsSummary.newUnlocks > 0 then
-			local key = (cosmeticsSummary.newUnlocks == 1) and "metaprogression.cosmetics.new_summary_single" or "metaprogression.cosmetics.new_summary_multiple"
-			local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor
-			love.graphics.setFont(UI.fonts.small)
-			love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.92)
-			love.graphics.printf(Localization:get(key, { count = cosmeticsSummary.newUnlocks }), 0, headerY + 60, sw, "center")
-		end
-	end
+                if cosmeticsSummary.newUnlocks and cosmeticsSummary.newUnlocks > 0 then
+                        local key = (cosmeticsSummary.newUnlocks == 1) and "metaprogression.cosmetics.new_summary_single" or "metaprogression.cosmetics.new_summary_multiple"
+                        local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor
+                        love.graphics.setFont(UI.fonts.small)
+                        love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.92)
+                        love.graphics.printf(Localization:get(key, { count = cosmeticsSummary.newUnlocks }), 0, headerY + 60, sw, "center")
+                end
+        end
+
+        drawCosmeticShaderShowcase(sw)
 end
 
 local function drawCosmeticsList(sw, sh)
