@@ -1059,39 +1059,71 @@ local pool = {
                                 textOffset = 44,
                                 textScale = 1.08,
                         })
-
-                        local sawCenters = getSawCenters(2)
-                        local baseVisual = {
-                                badge = "spark",
-                                outerRadius = 54,
-                                innerRadius = 16,
-                                ringCount = 3,
-                                life = 0.68,
-                                glowAlpha = 0.32,
-                                haloAlpha = 0.2,
-                                addBlend = true,
-                        }
-                        local baseOptions = {
-                                color = sparkColor,
-                                skipText = true,
-                                particleCount = 12,
-                                particleSpeed = 150,
-                                particleLife = 0.4,
-                                visual = baseVisual,
-                        }
-                        if sawCenters and #sawCenters > 0 then
-                                for _, pos in ipairs(sawCenters) do
-                                        local sparkOptions = deepcopy(baseOptions)
-                                        sparkOptions.x = pos[1]
-                                        sparkOptions.y = pos[2]
-                                        celebrateUpgrade(nil, nil, sparkOptions)
-                                end
-                        else
-                                local fallbackOptions = deepcopy(baseOptions)
-                                applySegmentPosition(fallbackOptions, 0.82)
-                                celebrateUpgrade(nil, nil, fallbackOptions)
-                        end
                 end,
+                handlers = {
+                        sawsStalled = function(data, state)
+                                if getStacks(state, "circuit_breaker") <= 0 then
+                                        return
+                                end
+
+                                if not data then
+                                        return
+                                end
+
+                                if data.cause and data.cause ~= "fruit" then
+                                        return
+                                end
+
+                                local sparkColor = {1, 0.58, 0.32, 1}
+                                local baseVisual = {
+                                        badge = "spark",
+                                        outerRadius = 54,
+                                        innerRadius = 16,
+                                        ringCount = 3,
+                                        life = 0.68,
+                                        glowAlpha = 0.32,
+                                        haloAlpha = 0.2,
+                                        addBlend = true,
+                                }
+                                local baseOptions = {
+                                        color = sparkColor,
+                                        skipText = true,
+                                        particleCount = 12,
+                                        particleSpeed = 150,
+                                        particleLife = 0.4,
+                                        visual = baseVisual,
+                                }
+
+                                local positions = {}
+                                if data.positions and #data.positions > 0 then
+                                        positions = data.positions
+                                elseif data.saws and #data.saws > 0 then
+                                        positions = data.saws
+                                else
+                                        local sawCenters = getSawCenters(2)
+                                        if sawCenters and #sawCenters > 0 then
+                                                positions = sawCenters
+                                        end
+                                end
+
+                                if positions and #positions > 0 then
+                                        local limit = math.min(#positions, 2)
+                                        for i = 1, limit do
+                                                local pos = positions[i]
+                                                if pos then
+                                                        local sparkOptions = deepcopy(baseOptions)
+                                                        sparkOptions.x = pos[1]
+                                                        sparkOptions.y = pos[2]
+                                                        celebrateUpgrade(nil, nil, sparkOptions)
+                                                end
+                                        end
+                                else
+                                        local fallbackOptions = deepcopy(baseOptions)
+                                        applySegmentPosition(fallbackOptions, 0.82)
+                                        celebrateUpgrade(nil, nil, fallbackOptions)
+                                end
+                        end,
+                },
         }),
         register({
                 id = "stonebreaker_hymn",
