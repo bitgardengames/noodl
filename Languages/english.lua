@@ -501,11 +501,6 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Resonant Shell",
 				description = "Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own.",
 			},
-			prism_lock = {
-				name = "Prism Lock",
-				description = "Blocking a laser adds +1.1s to its cooldown per stack.",
-				activation_text = "Prism Lockdown",
-			},
 			wardens_chorus = {
 				name = "Warden's Chorus",
 				description = "Each Defense upgrade adds crash shield progress at the start of every floor.",
@@ -516,19 +511,9 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				heal_text = "Blooming Vitality",
 				shield_text = "Blooming Guard",
 			},
-			tempo_turbine = {
-				name = "Tempo Turbine",
-				description = "Combos of 2+ fruits build charge; every third combo fruit stalls saws for 0.7s and grants +2 bonus score.",
-				activation_text = "Turbine Surge",
-			},
 			caravan_contract = {
 				name = "Caravan Contract",
 				description = "Shops offer +1 card. Each floor spawns an extra rock.",
-			},
-			mercantile_echo = {
-				name = "Mercantile Echo",
-				description = "The first time you acquire an upgrade with a new tag, gain +0.15s saw stall and +1 bonus score.",
-				activation_text = "Echo Dividend",
 			},
 			verdant_bonds = {
 				name = "Verdant Bonds",

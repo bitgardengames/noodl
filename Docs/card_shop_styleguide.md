@@ -41,7 +41,7 @@ This guide codifies how card upgrades should look, feel, and move inside the sho
 
 ### Motion Rules
 
-* All easing uses cubic-bezier(0.2, 0.8, 0.2, 1) for enter/exit, with back-ease reserved for celebratory reveals (first copy of **Mercantile Echo (Rare)**).
+* All easing uses cubic-bezier(0.2, 0.8, 0.2, 1) for enter/exit, with back-ease reserved for celebratory reveals (first copy of **Artisan Catalog (Rare)**).
 * Idle loops cap at 12 s duration. Particle bursts emit no more than 8 sprites to avoid visual noise.
 * Sequential reveals cascade left to right with 90 ms staggering. Newly added cards (such as **Pulse Bloom (Rare)**) should bloom from 80% scale to 100% over 180 ms.
 * When the shop refreshes (e.g., purchasing **Fresh Supplies (Common)**), fade old cards down over 120 ms, hold 60 ms, then fade new set up with simultaneous translation from 12 px below their resting position.

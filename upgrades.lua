@@ -332,46 +332,8 @@ local function mirroredScalesLaserHandler(data, state)
         })
 end
 
-local function prismLockCooldownHandler(data, state)
-	if not (data and state) then return end
-
-	local stacks = getStacks(state, "prism_lock")
-	if stacks <= 0 then return end
-
-	local perStack = state.counters and state.counters.prismLockCooldown or 0
-	if perStack <= 0 then return end
-
-	local beam = data.beam
-	if not beam then return end
-
-	local bonus = perStack * stacks
-	if bonus <= 0 then return end
-
-	beam.pendingCooldownBonus = (beam.pendingCooldownBonus or 0) + bonus
-
-	celebrateUpgrade(getUpgradeString("prism_lock", "activation_text"), data, {
-		color = {0.82, 0.92, 1, 1},
-		textOffset = 52,
-		textScale = 1.16,
-		particleCount = 14 + stacks * 2,
-		particleSpeed = 130,
-		particleLife = 0.5,
-		visual = {
-			badge = "spark",
-			outerRadius = 60,
-			innerRadius = 18,
-			ringCount = 3,
-			ringSpacing = 12,
-			life = 0.72,
-			glowAlpha = 0.3,
-			haloAlpha = 0.22,
-		},
-	})
-end
-
-
 local function newRunState()
-	return RunState.new(defaultEffects)
+        return RunState.new(defaultEffects)
 end
 
 Upgrades.runState = newRunState()
@@ -1370,24 +1332,9 @@ local pool = {
                         celebrateUpgrade(getUpgradeString("resonant_shell", "name"), nil, celebrationOptions)
                 end,
         }),
-	register({
-		id = "prism_lock",
-		nameKey = "upgrades.prism_lock.name",
-		descKey = "upgrades.prism_lock.description",
-		rarity = "rare",
-		tags = {"defense", "utility"},
-		onAcquire = function(state)
-			state.counters = state.counters or {}
-			state.counters.prismLockCooldown = 1.1
-			if not state.counters.prismLockHandler then
-				state.counters.prismLockHandler = true
-				Upgrades:addEventHandler("laserShielded", prismLockCooldownHandler)
-			end
-		end,
-	}),
-	register({
-		id = "wardens_chorus",
-		nameKey = "upgrades.wardens_chorus.name",
+        register({
+                id = "wardens_chorus",
+                nameKey = "upgrades.wardens_chorus.name",
 		descKey = "upgrades.wardens_chorus.description",
 		rarity = "rare",
 		requiresTags = {"defense"},
@@ -1461,140 +1408,23 @@ local pool = {
 				})
 			end,
 		},
-	}),
-	register({
-		id = "tempo_turbine",
-		nameKey = "upgrades.tempo_turbine.name",
-		descKey = "upgrades.tempo_turbine.description",
-		rarity = "uncommon",
-		tags = {"combo", "economy"},
-		onAcquire = function(state)
-			state.counters.tempoTurbineCharge = state.counters.tempoTurbineCharge or 0
-		end,
-		handlers = {
-			fruitCollected = function(data, state)
-				if not data then return end
-
-				local combo = data.combo or 0
-				if combo < 2 then
-					state.counters.tempoTurbineCharge = 0
-					return
-				end
-
-				local charge = (state.counters.tempoTurbineCharge or 0) + 1
-				local threshold = 3
-				if charge >= threshold then
-					charge = 0
-					if Score.addBonus then
-						Score:addBonus(2)
-					end
-					if Saws and Saws.stall then
-						Saws:stall(0.7)
-					end
-					celebrateUpgrade(getUpgradeString("tempo_turbine", "activation_text"), data, {
-						color = {0.56, 0.84, 0.98, 1},
-						particleCount = 16,
-						particleSpeed = 150,
-						particleLife = 0.46,
-						textOffset = 48,
-						textScale = 1.12,
-						visual = {
-							badge = "spark",
-							outerRadius = 54,
-							innerRadius = 16,
-							ringCount = 3,
-							life = 0.66,
-							glowAlpha = 0.26,
-							haloAlpha = 0.18,
-						},
-					})
-				end
-
-				state.counters.tempoTurbineCharge = charge
-			end,
-		},
-	}),
-	register({
-		id = "caravan_contract",
-		nameKey = "upgrades.caravan_contract.name",
-		descKey = "upgrades.caravan_contract.description",
+        }),
+        register({
+                id = "caravan_contract",
+                nameKey = "upgrades.caravan_contract.name",
+                descKey = "upgrades.caravan_contract.description",
 		rarity = "uncommon",
 		tags = {"economy", "risk"},
 		onAcquire = function(state)
 			state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
 			state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
 		end,
-	}),
+        }),
 
-	register({
-		id = "mercantile_echo",
-		nameKey = "upgrades.mercantile_echo.name",
-		descKey = "upgrades.mercantile_echo.description",
-		rarity = "rare",
-		tags = {"economy"},
-		allowDuplicates = false,
-		onAcquire = function(state)
-			local seen = state.counters.mercantileEchoSeenTags or {}
-			if state.tags then
-				for tag, owned in pairs(state.tags) do
-					if owned then
-						seen[tag] = true
-					end
-				end
-			end
-			state.counters.mercantileEchoSeenTags = seen
-			state.counters.mercantileEchoStacks = state.counters.mercantileEchoStacks or 0
-		end,
-		handlers = {
-			upgradeAcquired = function(data, state)
-				if not state or not state.counters or not data or not data.upgrade then return end
-				local upgradeTags = data.upgrade.tags
-				if not upgradeTags or #upgradeTags == 0 then return end
-
-				local seen = state.counters.mercantileEchoSeenTags or {}
-				local gained = false
-				for _, tag in ipairs(upgradeTags) do
-					if tag and not seen[tag] then
-						seen[tag] = true
-						gained = true
-					end
-				end
-
-				state.counters.mercantileEchoSeenTags = seen
-				if not gained then return end
-
-				state.counters.mercantileEchoStacks = (state.counters.mercantileEchoStacks or 0) + 1
-				local bonusPerTag = 0.15
-				state.effects.sawStall = (state.effects.sawStall or 0) + bonusPerTag
-				if Score.addBonus then
-					Score:addBonus(1)
-				end
-
-				celebrateUpgrade(getUpgradeString("mercantile_echo", "activation_text"), data, {
-					color = {0.94, 0.82, 0.42, 1},
-					particleCount = 14,
-					particleSpeed = 110,
-					particleLife = 0.44,
-					particleSpread = math.pi * 2,
-					textOffset = 54,
-					textScale = 1.1,
-					visual = {
-						badge = "spark",
-						outerRadius = 50,
-						innerRadius = 16,
-						ringCount = 3,
-						life = 0.7,
-						glowAlpha = 0.28,
-						haloAlpha = 0.2,
-					},
-				})
-			end,
-		},
-	}),
-	register({
-		id = "verdant_bonds",
-		nameKey = "upgrades.verdant_bonds.name",
-		descKey = "upgrades.verdant_bonds.description",
+        register({
+                id = "verdant_bonds",
+                nameKey = "upgrades.verdant_bonds.name",
+                descKey = "upgrades.verdant_bonds.description",
 		rarity = "uncommon",
 		tags = {"economy", "defense"},
 		allowDuplicates = true,
