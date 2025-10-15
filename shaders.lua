@@ -411,32 +411,20 @@ registerEffect({
         end,
 })
 
--- Shimmering scale field for gilded thresholds
+-- Tranquil bloom field for the renewed threshold
 registerEffect({
-        type = "scaleBloom",
-        backdropIntensity = 0.62,
-        arenaIntensity = 0.34,
+        type = "petalCascade",
+        backdropIntensity = 0.58,
+        arenaIntensity = 0.32,
         source = [[
                 extern float time;
                 extern vec2 resolution;
                 extern vec2 origin;
                 extern vec4 baseColor;
+                extern vec4 bloomColor;
                 extern vec4 accentColor;
-                extern vec4 glowColor;
                 extern vec4 highlightColor;
                 extern float intensity;
-
-                float hash(vec2 p)
-                {
-                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-                }
-
-                mat2 rotate(float a)
-                {
-                        float s = sin(a);
-                        float c = cos(a);
-                        return mat2(c, -s, s, c);
-                }
 
                 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
                 {
@@ -445,36 +433,37 @@ registerEffect({
 
                         vec2 centered = uv - 0.5;
                         float depth = smoothstep(0.0, 1.0, uv.y);
-                        vec3 gradient = mix(baseColor.rgb, accentColor.rgb, depth * 0.28);
+                        vec3 gradient = mix(baseColor.rgb, bloomColor.rgb, depth * 0.7);
 
-                        vec2 tile = uv * vec2(12.0, 6.0);
-                        vec2 cell = floor(tile);
-                        vec2 local = fract(tile) - 0.5;
-                        float rotation = (hash(cell) - 0.5) * 1.2 + sin(time * 0.35 + cell.x * 0.7 + cell.y * 0.3) * 0.25;
-                        local = rotate(rotation) * local;
+                        float drift = sin((uv.x * 3.0 + time * 0.2)) * 0.04;
+                        float veil = smoothstep(0.46, 0.0, abs((uv.y + drift) - 0.48));
+                        vec3 softened = mix(gradient, accentColor.rgb, veil * (0.14 + intensity * 0.1));
 
-                        float scallop = smoothstep(0.42, 0.0, length(local * vec2(1.3, 0.9)));
-                        float ridge = smoothstep(0.3, 0.0, abs(local.y));
-                        float scaleMask = clamp(scallop * (0.5 + ridge * 0.5), 0.0, 1.0);
+                        vec2 flow = uv;
+                        flow.y += time * 0.06;
+                        flow.x += sin(time * 0.18) * 0.05;
 
-                        float shimmer = sin((cell.x + cell.y) * 1.7 + time * 0.9) * 0.5 + 0.5;
-                        float sparkle = sin((uv.x + uv.y) * 24.0 + time * 1.4) * 0.5 + 0.5;
-                        float glimmer = clamp(shimmer * 0.6 + sparkle * 0.4, 0.0, 1.0);
+                        vec2 petalA = fract(flow * vec2(3.2, 5.0)) - 0.5;
+                        float petalsA = smoothstep(0.32, 0.0, length(petalA * vec2(1.5, 0.85)));
 
-                        vec3 scales = mix(gradient, glowColor.rgb, scaleMask * (0.28 + intensity * 0.42));
-                        vec3 highlight = mix(scales, highlightColor.rgb, pow(glimmer, 1.5) * 0.42 * intensity);
+                        vec2 petalB = fract((flow + vec2(0.27, 0.38)) * vec2(2.4, 4.2)) - 0.5;
+                        float petalsB = smoothstep(0.28, 0.0, length(petalB * vec2(1.3, 0.92)));
 
-                        float bloom = smoothstep(0.3, 0.0, length(centered)) * (0.22 + intensity * 0.32);
-                        vec3 col = mix(highlight, glowColor.rgb, bloom);
+                        float petals = clamp(petalsA + petalsB, 0.0, 1.0);
+                        float shimmer = sin((uv.x * 6.4 + uv.y * 3.6) + time * 0.42) * 0.5 + 0.5;
 
-                        float haze = smoothstep(0.0, 0.8, depth);
-                        col = mix(col, gradient, haze * 0.2);
+                        vec3 bloom = mix(softened, highlightColor.rgb, petals * (0.24 + intensity * 0.38));
+                        bloom = mix(bloom, accentColor.rgb, shimmer * 0.08 * intensity);
 
-                        float veil = smoothstep(0.42, 0.92, length(centered));
-                        col = mix(col, baseColor.rgb, veil * 0.38);
+                        float halo = smoothstep(0.44, 0.0, length(centered));
+                        vec3 col = mix(bloom, highlightColor.rgb, halo * (0.2 + intensity * 0.25));
+                        col += highlightColor.rgb * halo * 0.05 * intensity;
 
-                        float halo = smoothstep(0.18, 0.0, length(centered));
-                        col += glowColor.rgb * halo * 0.08 * intensity;
+                        float hush = smoothstep(0.2, 0.9, depth);
+                        col = mix(col, gradient, hush * 0.18);
+
+                        float vignette = smoothstep(0.38, 0.96, distance(uv, vec2(0.5)));
+                        col = mix(col, baseColor.rgb, vignette * 0.35);
 
                         return vec4(col, baseColor.a) * color;
                 }
@@ -483,13 +472,13 @@ registerEffect({
                 local shader = effect.shader
 
                 local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
-                local accent = getColorComponents(palette and (palette.arenaBG or palette.rock), Theme.arenaBG)
-                local glow = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+                local bloom = getColorComponents(palette and (palette.arenaBG or palette.rock), Theme.arenaBG)
+                local accent = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
                 local highlight = getColorComponents(palette and (palette.arenaHighlight or palette.snake), Theme.snakeDefault)
 
                 sendColor(shader, "baseColor", base)
+                sendColor(shader, "bloomColor", bloom)
                 sendColor(shader, "accentColor", accent)
-                sendColor(shader, "glowColor", glow)
                 sendColor(shader, "highlightColor", highlight)
         end,
         draw = function(effect, x, y, w, h, intensity)
