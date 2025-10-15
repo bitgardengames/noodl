@@ -566,25 +566,38 @@ function Saws:stall(duration, options)
 			source = options and options.source or nil,
 		}
 
-		local positions = {}
-		local limit = (options and options.positionLimit) or 4
+                local positions = {}
+                local sawDetails = {}
+                local limit = (options and options.positionLimit) or 4
 
-		for _, saw in ipairs(current) do
-			if saw then
-				local cx, cy = getSawCenter(saw)
-				if cx and cy then
-					positions[#positions + 1] = { cx, cy }
-					if limit and limit > 0 and #positions >= limit then
-						break
-					end
-				end
-			end
-		end
+                for _, saw in ipairs(current) do
+                        if saw then
+                                local cx, cy = getSawCenter(saw)
+                                if cx and cy then
+                                        positions[#positions + 1] = { cx, cy }
+                                        sawDetails[#sawDetails + 1] = {
+                                                x = cx,
+                                                y = cy,
+                                                dir = saw.dir,
+                                                side = saw.side,
+                                        }
 
-		if #positions > 0 then
-			event.positions = positions
-			event.positionCount = #positions
-		end
+                                        if limit and limit > 0 and #positions >= limit then
+                                                break
+                                        end
+                                end
+                        end
+                end
+
+                if #positions > 0 then
+                        event.positions = positions
+                        event.positionCount = #positions
+                end
+
+                if #sawDetails > 0 then
+                        event.saws = sawDetails
+                        event.sawCount = #sawDetails
+                end
 
 		Upgrades:notify("sawsStalled", event)
 	end

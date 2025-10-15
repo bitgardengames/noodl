@@ -956,6 +956,95 @@ local pool = {
 			end,
 		},
 	}),
+local function normalizeDirection(dx, dy)
+        dx = dx or 0
+        dy = dy or 0
+
+        local length = math.sqrt(dx * dx + dy * dy)
+        if not length or length <= 1e-5 then
+                return 0, -1
+        end
+
+        return dx / length, dy / length
+end
+
+local atan2 = math.atan2 or function(y, x)
+        return math.atan(y, x)
+end
+
+local function applyCircuitBreakerFacing(options, dx, dy)
+        if not options then
+                return
+        end
+
+        local particles = options.particles
+        if not particles then
+                return
+        end
+
+        dx, dy = normalizeDirection(dx, dy)
+        local baseAngle = atan2(dy, dx)
+        local spread = particles.spread or 0
+        particles.angleOffset = baseAngle - spread * 0.5
+end
+
+local function getSawFacingDirection(sawInfo)
+        if not sawInfo then
+                return 0, -1
+        end
+
+        if sawInfo.dir == "vertical" then
+                if sawInfo.side == "left" then
+                        return 1, 0
+                elseif sawInfo.side == "right" then
+                        return -1, 0
+                end
+
+                return -1, 0
+        end
+
+        return 0, -1
+end
+
+local function buildCircuitBreakerTargets(data)
+        local targets = {}
+        if not data then
+                return targets
+        end
+
+        if data.saws and #data.saws > 0 then
+                for _, entry in ipairs(data.saws) do
+                        if entry then
+                                local x = entry.x or entry[1]
+                                local y = entry.y or entry[2]
+                                if x and y then
+                                        targets[#targets + 1] = {
+                                                x = x,
+                                                y = y,
+                                                dir = entry.dir,
+                                                side = entry.side,
+                                        }
+                                end
+                        end
+                end
+        elseif data.positions and #data.positions > 0 then
+                for _, pos in ipairs(data.positions) do
+                        if pos then
+                                local x = pos[1]
+                                local y = pos[2]
+                                if x and y then
+                                        targets[#targets + 1] = {
+                                                x = x,
+                                                y = y,
+                                        }
+                                end
+                        end
+                end
+        end
+
+        return targets
+end
+
         register({
                 id = "circuit_breaker",
                 nameKey = "upgrades.circuit_breaker.name",
@@ -996,42 +1085,49 @@ local pool = {
                                                 speed = 120,
                                                 speedVariance = 70,
                                                 life = 0.28,
-                                                size = 3.4,
+                                                size = 2.2,
                                                 color = {1, 0.74, 0.38, 1},
-                                                spread = math.pi * 0.8,
-                                                angleJitter = math.pi * 0.4,
+                                                spread = math.pi * 0.45,
+                                                angleJitter = math.pi * 0.18,
                                                 gravity = 200,
                                                 drag = 1.5,
                                                 fadeTo = 0,
+                                                scaleMin = 0.32,
+                                                scaleVariance = 0.2,
                                         },
                                 }
-
-                                local positions = {}
-                                if data.positions and #data.positions > 0 then
-                                        positions = data.positions
-                                elseif data.saws and #data.saws > 0 then
-                                        positions = data.saws
-                                else
+                                local targets = buildCircuitBreakerTargets(data)
+                                if not targets or #targets == 0 then
+                                        targets = {}
                                         local sawCenters = getSawCenters(2)
                                         if sawCenters and #sawCenters > 0 then
-                                                positions = sawCenters
+                                                for _, pos in ipairs(sawCenters) do
+                                                        if pos then
+                                                                targets[#targets + 1] = {
+                                                                        x = pos[1],
+                                                                        y = pos[2],
+                                                                }
+                                                        end
+                                                end
                                         end
                                 end
-
-                                if positions and #positions > 0 then
-                                        local limit = math.min(#positions, 2)
+                                if targets and #targets > 0 then
+                                        local limit = math.min(#targets, 2)
                                         for i = 1, limit do
-                                                local pos = positions[i]
-                                                if pos then
+                                                local target = targets[i]
+                                                if target then
                                                         local sparkOptions = deepcopy(baseOptions)
-                                                        sparkOptions.x = pos[1]
-                                                        sparkOptions.y = pos[2]
+                                                        sparkOptions.x = target.x
+                                                        sparkOptions.y = target.y
+                                                        local dirX, dirY = getSawFacingDirection(target)
+                                                        applyCircuitBreakerFacing(sparkOptions, dirX, dirY)
                                                         celebrateUpgrade(nil, nil, sparkOptions)
                                                 end
                                         end
                                 else
                                         local fallbackOptions = deepcopy(baseOptions)
                                         applySegmentPosition(fallbackOptions, 0.82)
+                                        applyCircuitBreakerFacing(fallbackOptions, 0, -1)
                                         celebrateUpgrade(nil, nil, fallbackOptions)
                                 end
                         end,
