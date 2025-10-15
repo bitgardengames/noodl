@@ -588,11 +588,100 @@ local function ApplyMapmakersCompass(state, context, options)
 end
 
 local function MapmakersCompassFloorStart(data, state)
-	if not (data and state) then return end
-	if GetStacks(state, "mapmakers_compass") <= 0 then return end
+        if not (data and state) then return end
+        if GetStacks(state, "mapmakers_compass") <= 0 then return end
 
-	local context = data.context
-	ApplyMapmakersCompass(state, context, { celebrate = true, EventData = data })
+        local context = data.context
+        ApplyMapmakersCompass(state, context, { celebrate = true, EventData = data })
+end
+
+local function NormalizeDirection(dx, dy)
+        dx = dx or 0
+        dy = dy or 0
+
+        local length = math.sqrt(dx * dx + dy * dy)
+        if not length or length <= 1e-5 then
+                return 0, -1
+        end
+
+        return dx / length, dy / length
+end
+
+local atan2 = math.atan2 or function(y, x)
+        return math.atan(y, x)
+end
+
+local function ApplyCircuitBreakerFacing(options, dx, dy)
+        if not options then
+                return
+        end
+
+        local particles = options.particles
+        if not particles then
+                return
+        end
+
+        dx, dy = NormalizeDirection(dx, dy)
+        local BaseAngle = atan2(dy, dx)
+        local spread = particles.spread or 0
+        particles.angleOffset = BaseAngle - spread * 0.5
+end
+
+local function GetSawFacingDirection(SawInfo)
+        if not SawInfo then
+                return 0, -1
+        end
+
+        if SawInfo.dir == "vertical" then
+                if SawInfo.side == "left" then
+                        return 1, 0
+                elseif SawInfo.side == "right" then
+                        return -1, 0
+                end
+
+                return -1, 0
+        end
+
+        return 0, -1
+end
+
+local function BuildCircuitBreakerTargets(data)
+        local targets = {}
+        if not data then
+                return targets
+        end
+
+        if data.saws and #data.saws > 0 then
+                for _, entry in ipairs(data.saws) do
+                        if entry then
+                                local x = entry.x or entry[1]
+                                local y = entry.y or entry[2]
+                                if x and y then
+                                        targets[#targets + 1] = {
+                                                x = x,
+                                                y = y,
+                                                dir = entry.dir,
+                                                side = entry.side,
+                                        }
+                                end
+                        end
+                end
+        elseif data.positions and #data.positions > 0 then
+                for _, pos in ipairs(data.positions) do
+                        if pos then
+                                local x = pos[1]
+                                local y = pos[2]
+                                if x and y then
+                                        targets[#targets + 1] = {
+                                                x = x,
+                                                y = y,
+                                        }
+                                end
+                        end
+                end
+        end
+
+        return targets
 end
 
 local pool = {
@@ -906,95 +995,6 @@ local pool = {
 			end,
 		},
 	}),
-local function NormalizeDirection(dx, dy)
-        dx = dx or 0
-        dy = dy or 0
-
-        local length = math.sqrt(dx * dx + dy * dy)
-        if not length or length <= 1e-5 then
-                return 0, -1
-        end
-
-        return dx / length, dy / length
-end
-
-local atan2 = math.atan2 or function(y, x)
-        return math.atan(y, x)
-end
-
-local function ApplyCircuitBreakerFacing(options, dx, dy)
-        if not options then
-                return
-        end
-
-        local particles = options.particles
-        if not particles then
-                return
-        end
-
-        dx, dy = NormalizeDirection(dx, dy)
-        local BaseAngle = atan2(dy, dx)
-        local spread = particles.spread or 0
-        particles.angleOffset = BaseAngle - spread * 0.5
-end
-
-local function GetSawFacingDirection(SawInfo)
-        if not SawInfo then
-                return 0, -1
-        end
-
-        if SawInfo.dir == "vertical" then
-                if SawInfo.side == "left" then
-                        return 1, 0
-                elseif SawInfo.side == "right" then
-                        return -1, 0
-                end
-
-                return -1, 0
-        end
-
-        return 0, -1
-end
-
-local function BuildCircuitBreakerTargets(data)
-        local targets = {}
-        if not data then
-                return targets
-        end
-
-        if data.saws and #data.saws > 0 then
-                for _, entry in ipairs(data.saws) do
-                        if entry then
-                                local x = entry.x or entry[1]
-                                local y = entry.y or entry[2]
-                                if x and y then
-                                        targets[#targets + 1] = {
-                                                x = x,
-                                                y = y,
-                                                dir = entry.dir,
-                                                side = entry.side,
-                                        }
-                                end
-                        end
-                end
-        elseif data.positions and #data.positions > 0 then
-                for _, pos in ipairs(data.positions) do
-                        if pos then
-                                local x = pos[1]
-                                local y = pos[2]
-                                if x and y then
-                                        targets[#targets + 1] = {
-                                                x = x,
-                                                y = y,
-                                        }
-                                end
-                        end
-                end
-        end
-
-        return targets
-end
-
         register({
                 id = "circuit_breaker",
                 NameKey = "upgrades.circuit_breaker.name",
