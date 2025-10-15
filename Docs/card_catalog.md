@@ -20,7 +20,7 @@
 | Quick Fangs | Uncommon | Snake moves 10% faster. | Up to 4 stacks |
 | Resonant Shell | Uncommon | Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own. | Tags: defense; Requires tags: defense; Unlock tag: specialist |
 | Stone Skin | Uncommon | Gain a crash shield that shatters rocks and shrugs off a saw or laser hit. | Up to 4 stacks |
-| Verdant Bonds | Uncommon | Buying an Economy upgrade grants crash shields equal to Verdant Bonds stacks. | Tags: economy, defense; Up to 3 stacks |
+| Verdant Bonds | Uncommon | Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth forges a crash shield. | Tags: economy, defense; Up to 3 stacks |
 | Artisan Catalog | Rare | The first upgrade you buy each floor grants +1 crash shield, +2 bonus score, and stalls saws for 0.9s. Effects stack with additional copies. | Tags: economy, defense |
 | Predator's Reflex | Rare | Adrenaline bursts are 25% stronger and trigger at the start of each floor. | Requires tags: adrenaline |
 | Pulse Bloom | Rare | Harvest a handful of distinct fruit to forge a crash shield. | Tags: defense, economy; Up to 2 stacks |

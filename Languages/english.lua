@@ -505,11 +505,11 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Caravan Contract",
 				description = "Shops offer +1 card. Each floor spawns an extra rock.",
 			},
-			verdant_bonds = {
-				name = "Verdant Bonds",
-				description = "Buying an Economy upgrade grants crash shields equal to Verdant Bonds stacks.",
-				activation_text = "Verdant Growth",
-			},
+                        verdant_bonds = {
+                                name = "Verdant Bonds",
+                                description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a crash shield.",
+                                activation_text = "Verdant Growth",
+                        },
 			fresh_supplies = {
 				name = "Fresh Supplies",
 				description = "Discard the current shop cards and restock with new ones.",
