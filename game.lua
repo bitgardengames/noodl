@@ -69,7 +69,7 @@ local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
 	Fruit,
 	Rocks,
 	Lasers,
-	Darts,
+	-- Darts, -- Disabled while not in use.
 	Saws,
 	Arena,
 	Particles,
@@ -970,7 +970,7 @@ local function drawPlayfieldLayers(self, stateOverride)
 
 	Fruit:draw()
 	Rocks:draw()
-	Darts:draw()
+	-- Darts:draw() -- Disabled while not in use.
 	Saws:draw()
 	Lasers:draw()
 
