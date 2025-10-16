@@ -1127,9 +1127,9 @@ local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
         local baseRadius = SEGMENT_SIZE * 0.55
         local arcSpacing = SEGMENT_SIZE * 0.16
         local arcOffset = SEGMENT_SIZE * (0.85 + strength * 0.25)
-        local arcSweep = math.pi * (0.35 + 0.15 * math.min(1, strength))
         local maxAlpha = 0.6 + 0.35 * math.min(1, intensity)
         local lineWidth = 2 + 1.6 * math.min(1, strength)
+        local streakLength = SEGMENT_SIZE * (0.9 + 0.35 * math.min(1, strength))
 
         love.graphics.push("all")
         love.graphics.translate(hx, hy)
@@ -1141,12 +1141,12 @@ local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
                 local offset = -(arcOffset + arcSpacing * (index - 1) * 0.6)
                 local alpha = maxAlpha * (0.55 + 0.2 * (3 - index))
                 local width = lineWidth * (1 - 0.15 * (index - 1))
-                local startAngle = -arcSweep * 0.5
-                local endAngle = arcSweep * 0.5
+                local spread = radius * (0.45 - 0.08 * (index - 1))
 
                 love.graphics.setColor(1, 1, 1, alpha)
                 love.graphics.setLineWidth(width)
-                love.graphics.arc("line", offset, 0, radius, startAngle, endAngle, 24)
+                love.graphics.line(offset, -spread, offset - streakLength, -spread)
+                love.graphics.line(offset, spread, offset - streakLength, spread)
         end
 
         love.graphics.pop()
