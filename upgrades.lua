@@ -1,3 +1,4 @@
+local Face = require("face")
 local Snake = require("snake")
 local Rocks = require("rocks")
 local Saws = require("saws")
@@ -696,6 +697,10 @@ local pool = {
                                 Snake:setQuickFangsStacks((Snake.quickFangs and Snake.quickFangs.stacks or 0) + 1)
                         end
 
+                        if Face and Face.set then
+                                Face:set("veryHappy", 1.6)
+                        end
+
                         local celebrationOptions = {
                                 color = {1, 0.63, 0.42, 1},
                                 particleCount = 18,
@@ -720,10 +725,13 @@ local pool = {
 			if Snake.addStoneSkinSawGrace then
 				Snake:addStoneSkinSawGrace(1)
 			end
-			if not state.counters.stoneSkinHandlerRegistered then
-				state.counters.stoneSkinHandlerRegistered = true
-				Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
-			end
+                        if not state.counters.stoneSkinHandlerRegistered then
+                                state.counters.stoneSkinHandlerRegistered = true
+                                Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
+                        end
+                        if Face and Face.set then
+                                Face:set("blank", 1.8)
+                        end
                         local celebrationOptions = {
                                 color = {0.75, 0.82, 0.88, 1},
                                 particleCount = 14,
@@ -793,9 +801,12 @@ local pool = {
 		onAcquire = function(state)
 			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
 			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
-			if UI.adjustFruitGoal then
-				UI:adjustFruitGoal(-1)
-			end
+                        if UI.adjustFruitGoal then
+                                UI:adjustFruitGoal(-1)
+                        end
+                        if Face and Face.set then
+                                Face:set("angry", 1.4)
+                        end
                         local celebrationOptions = {
                                 color = {1, 0.86, 0.36, 1},
                                 particleCount = 10,
@@ -855,10 +866,13 @@ local pool = {
 		unlockTag = "speedcraft",
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(0.85)
-			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
-			if UI.adjustFruitGoal then
-				UI:adjustFruitGoal(1)
-			end
+                        state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+                        if UI.adjustFruitGoal then
+                                UI:adjustFruitGoal(1)
+                        end
+                        if Face and Face.set then
+                                Face:set("sad", 2.0)
+                        end
                         celebrateUpgrade(getUpgradeString("deliberate_coil", "name"), nil, {
                                 color = {0.76, 0.56, 0.88, 1},
                                 particleCount = 16,
