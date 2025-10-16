@@ -47,12 +47,12 @@ local english = {
                                         description = "Collect ${goal} fruit in a single run.",
                                         progress = "Fruit collected: ${current}/${goal}",
                                 },
-				dragonfruit = {
-					title = "Dragonfruit Delight",
-					description = "Collect ${goal} dragonfruit in a single run.",
-					progress = "Dragonfruit snagged: ${current}/${goal}",
-					complete = "Dragonfruit feast! You've nabbed ${current}.",
-				},
+                                shield_showoff = {
+                                        title = "Shield Showoff",
+                                        description = "Break rocks and parry saws ${goal} times total in a single run.",
+                                        progress = "Rocks: ${rocks} | Saws: ${saws} (Total ${current}/${goal})",
+                                        complete = "Shield spectacle! ${current} maneuvers performed.",
+                                },
 				combos = {
 					title = "Combo Conductor",
 					description = "Trigger ${goal} combos in a single run.",
