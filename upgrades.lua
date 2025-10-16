@@ -845,17 +845,7 @@ local pool = {
                                 particleLife = 0.36,
                                 textOffset = 42,
                                 textScale = 1.16,
-                                visual = {
-                                        variant = "adrenaline_rush",
-                                        showBase = false,
-                                        life = 0.72,
-                                        innerRadius = 12,
-                                        outerRadius = 56,
-                                        addBlend = true,
-                                        color = {1, 0.46, 0.42, 1},
-                                        variantSecondaryColor = {1, 0.72, 0.44, 0.95},
-                                        variantTertiaryColor = {1, 0.94, 0.92, 0.85},
-                                },
+                                skipVisuals = true,
                         })
                 end,
         }),
