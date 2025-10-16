@@ -1552,6 +1552,11 @@ local function buildShieldIndicator(self)
 	local overlayBackground = lightenColor(accent, 0.1)
 	overlayBackground[4] = 0.92
 
+	local status
+	if statusKey ~= "ready" then
+		status = Localization:get("upgrades.hud." .. statusKey)
+	end
+
 	return {
 		id = "__shields",
 		label = label,
@@ -1567,7 +1572,7 @@ local function buildShieldIndicator(self)
 			backgroundColor = overlayBackground,
 			textColor = Theme.textColor,
 		},
-		status = Localization:get("upgrades.hud." .. statusKey),
+		status = status,
 		showBar = false,
 		visibility = 1,
 	}
