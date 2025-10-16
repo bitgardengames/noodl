@@ -1196,36 +1196,30 @@ local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
 
 	local time = love.timer.getTime()
 
-	local baseRadius = SEGMENT_SIZE * (1.05 + 0.04 * math.min(stacks, 3))
-	local baseAlpha = 0.18 + 0.08 * math.min(stacks, 3)
+        local baseRadius = SEGMENT_SIZE * (1.02 + 0.04 * math.min(stacks, 3))
+        local arcAlpha = 0.28 + 0.12 * math.min(stacks, 3)
 
-	drawSoftGlow(hx, hy, baseRadius * 1.25, 0.95, 0.86, 0.6, baseAlpha * 1.2)
-
-	love.graphics.setLineWidth(2)
-	love.graphics.setColor(0.52, 0.46, 0.4, baseAlpha)
-	love.graphics.circle("line", hx, hy, baseRadius)
-
-	if progress > 0 then
-	local startAngle = -math.pi / 2
-	love.graphics.setColor(0.88, 0.74, 0.46, 0.35 + 0.25 * progress)
-	love.graphics.setLineWidth(3)
-	love.graphics.arc("line", "open", hx, hy, baseRadius * 1.08, startAngle, startAngle + progress * math.pi * 2)
-	end
+        if progress > 0 then
+                local startAngle = -math.pi / 2
+                love.graphics.setColor(0.88, 0.74, 0.46, arcAlpha)
+                love.graphics.setLineWidth(3)
+                love.graphics.arc("line", "open", hx, hy, baseRadius, startAngle, startAngle + progress * math.pi * 2)
+        end
 
 	local shards = math.max(4, 3 + math.min(stacks * 2, 6))
 	local ready = (rate >= 1) or (progress >= 0.99)
-	for i = 1, shards do
-	local angle = time * (0.8 + stacks * 0.2) + (i / shards) * math.pi * 2
-	local wobble = 0.08 * math.sin(time * 3 + i)
-	local radius = baseRadius * (1.05 + wobble)
-	local size = SEGMENT_SIZE * (0.08 + 0.02 * math.min(stacks, 3))
-	local alpha = 0.25 + 0.35 * progress
-	if ready then
-		alpha = alpha + 0.2
-	end
-	love.graphics.setColor(0.95, 0.86, 0.6, alpha)
-	love.graphics.circle("fill", hx + math.cos(angle) * radius, hy + math.sin(angle) * radius, size)
-	end
+        for i = 1, shards do
+                local angle = time * (0.8 + stacks * 0.2) + (i / shards) * math.pi * 2
+                local wobble = 0.08 * math.sin(time * 3 + i)
+                local radius = baseRadius * (1.1 + wobble)
+                local size = SEGMENT_SIZE * (0.08 + 0.02 * math.min(stacks, 3))
+                local alpha = 0.32 + 0.28 * progress
+                if ready then
+                        alpha = alpha + 0.2
+                end
+                love.graphics.setColor(0.95, 0.86, 0.6, alpha)
+                love.graphics.circle("fill", hx + math.cos(angle) * radius, hy + math.sin(angle) * radius, size)
+        end
 
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.setLineWidth(1)
