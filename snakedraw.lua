@@ -1978,10 +1978,37 @@ local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
         love.graphics.arc("line", "open", hx, hy, baseRadius * 0.78, rotation + math.pi, rotation + math.pi + sweep * 0.85)
 
         love.graphics.setBlendMode("alpha")
-        love.graphics.setColor(0.82, 0.94, 1.0, 0.24 + 0.28 * intensity)
-        love.graphics.setLineWidth(2.4)
-        love.graphics.line(hx - baseRadius * 0.22, hy, hx + baseRadius * 0.22, hy)
-        love.graphics.line(hx, hy - baseRadius * 0.45, hx, hy + baseRadius * 0.4)
+
+        local triangleHeight = baseRadius * (0.5 + 0.25 * readiness)
+        local triangleWidth = baseRadius * 0.38
+        local topBaseY = hy - triangleHeight
+        local bottomBaseY = hy + triangleHeight
+
+        love.graphics.setColor(0.72, 0.88, 1.0, 0.18 + 0.28 * (intensity + readiness * 0.5))
+        love.graphics.setLineWidth(2.2)
+        love.graphics.polygon("line",
+                hx, hy,
+                hx - triangleWidth, topBaseY,
+                hx + triangleWidth, topBaseY
+        )
+        love.graphics.polygon("line",
+                hx, hy,
+                hx - triangleWidth, bottomBaseY,
+                hx + triangleWidth, bottomBaseY
+        )
+
+        local inset = triangleHeight * 0.12
+        love.graphics.setColor(0.52, 0.78, 1.0, 0.12 + 0.22 * (intensity + readiness * 0.6))
+        love.graphics.polygon("fill",
+                hx, hy,
+                hx - triangleWidth * 0.75, topBaseY + inset,
+                hx + triangleWidth * 0.75, topBaseY + inset
+        )
+        love.graphics.polygon("fill",
+                hx, hy,
+                hx - triangleWidth * 0.75, bottomBaseY - inset,
+                hx + triangleWidth * 0.75, bottomBaseY - inset
+        )
 
         love.graphics.pop()
 end
