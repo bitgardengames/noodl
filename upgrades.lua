@@ -1064,15 +1064,15 @@ local pool = {
                                                 speed = 120,
                                                 speedVariance = 70,
                                                 life = 0.28,
-                                                size = 2.2,
+                                                size = 2.8,
                                                 color = {1, 0.74, 0.38, 1},
                                                 spread = math.pi * 0.45,
                                                 angleJitter = math.pi * 0.18,
                                                 gravity = 200,
                                                 drag = 1.5,
                                                 fadeTo = 0,
-                                                scaleMin = 0.32,
-                                                scaleVariance = 0.2,
+                                                scaleMin = 0.4,
+                                                scaleVariance = 0.26,
                                         },
                                 }
                                 local targets = buildCircuitBreakerTargets(data)
