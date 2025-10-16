@@ -1136,6 +1136,221 @@ local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
         love.graphics.setLineWidth(1)
 end
 
+local function drawStoneSkinBulwark(trail, SEGMENT_SIZE, data)
+        if not (trail and data) then return end
+        if #trail <= 0 then return end
+
+        local intensity = math.max(0, data.intensity or 0)
+        local flash = math.max(0, data.flash or 0)
+        local charges = math.max(0, data.charges or 0)
+        if intensity <= 0.01 and flash <= 0.01 and charges <= 0 then return end
+
+        local coverage = math.min(#trail, 4 + charges * 3)
+        local time = data.time or love.timer.getTime()
+
+        love.graphics.push("all")
+        love.graphics.setLineJoin("miter")
+
+        for i = 1, coverage do
+                local seg = trail[i]
+                local nextSeg = trail[math.min(#trail, i + 1)]
+                local x, y = ptXY(seg)
+                if x and y then
+                        local nx, ny = ptXY(nextSeg)
+                        local dirX, dirY = 0, -1
+                        if nx and ny then
+                                dirX, dirY = nx - x, ny - y
+                                local len = math.sqrt(dirX * dirX + dirY * dirY)
+                                if len > 1e-4 then
+                                        dirX, dirY = dirX / len, dirY / len
+                                else
+                                        dirX, dirY = 0, -1
+                                end
+                        end
+
+                        local perpX, perpY = -dirY, dirX
+                        local progress = (i - 1) / math.max(coverage - 1, 1)
+                        local fade = 1 - progress * 0.55
+                        local radius = SEGMENT_SIZE * (0.42 + 0.14 * intensity + 0.05 * math.min(charges, 3))
+                        local sway = math.sin(time * 2.4 + i * 0.9) * SEGMENT_SIZE * 0.06
+                        local offset = SEGMENT_SIZE * (0.1 + 0.12 * math.min(charges, 3)) * (1 - progress * 0.7)
+                        local cx = x + perpX * offset + dirX * sway * 0.3
+                        local cy = y + perpY * offset + dirY * sway * 0.3
+                        local angle = math.atan2(dirY, dirX) + math.sin(time * 1.3 + i) * 0.08
+
+                        local vertices = {}
+                        local sides = 6
+                        for side = 0, sides - 1 do
+                                local theta = angle + side * (math.pi * 2 / sides)
+                                local r = radius * (0.9 + 0.12 * math.sin(time * 3.4 + side + i * 0.4))
+                                vertices[#vertices + 1] = cx + math.cos(theta) * r
+                                vertices[#vertices + 1] = cy + math.sin(theta) * r
+                        end
+
+                        love.graphics.setColor(0.7, 0.76, 0.82, (0.22 + 0.32 * intensity) * fade)
+                        love.graphics.polygon("fill", vertices)
+                        love.graphics.setLineWidth(1.6)
+                        love.graphics.setColor(0.44, 0.5, 0.56, (0.3 + 0.35 * intensity) * fade)
+                        love.graphics.polygon("line", vertices)
+
+                        if flash > 0 then
+                                love.graphics.setColor(0.94, 0.98, 1.0, 0.22 * flash * fade)
+                                love.graphics.circle("line", cx, cy, radius * 1.25, sides)
+                        end
+                end
+        end
+
+        if flash > 0 then
+                local head = trail[1]
+                local hx, hy = ptXY(head)
+                if hx and hy then
+                        drawSoftGlow(hx, hy, SEGMENT_SIZE * (1.2 + 0.35 * flash + 0.2 * intensity), 0.86, 0.92, 1.0, 0.16 * flash)
+                end
+        end
+
+        love.graphics.pop()
+end
+
+local function drawSpectralHarvestEcho(trail, SEGMENT_SIZE, data)
+        if not (trail and data) then return end
+        if #trail <= 0 then return end
+
+        local intensity = math.max(0, data.intensity or 0)
+        local burst = math.max(0, data.burst or 0)
+        local echo = math.max(0, data.echo or 0)
+        local ready = data.ready or false
+        if intensity <= 0.01 and burst <= 0.01 and echo <= 0.01 and not ready then return end
+
+        local time = data.time or love.timer.getTime()
+        local coverage = math.min(#trail, 10 + math.floor((intensity + echo) * 8))
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("add")
+
+        for i = 1, coverage do
+                local seg = trail[i]
+                local nextSeg = trail[math.min(#trail, i + 1)]
+                local x, y = ptXY(seg)
+                if x and y then
+                        local nx, ny = ptXY(nextSeg)
+                        local dirX, dirY = 0, -1
+                        if nx and ny then
+                                dirX, dirY = nx - x, ny - y
+                                local len = math.sqrt(dirX * dirX + dirY * dirY)
+                                if len > 1e-4 then
+                                        dirX, dirY = dirX / len, dirY / len
+                                else
+                                        dirX, dirY = 0, -1
+                                end
+                        end
+
+                        local perpX, perpY = -dirY, dirX
+                        local progress = (i - 1) / math.max(coverage - 1, 1)
+                        local fade = 1 - progress * 0.6
+                        local wave = math.sin(time * 3.6 + i * 0.8) * SEGMENT_SIZE * 0.12
+                        local offset = SEGMENT_SIZE * (0.4 + 0.22 * intensity + 0.28 * echo * (1 - progress))
+                        local gx = x + perpX * (offset + wave)
+                        local gy = y + perpY * (offset - wave * 0.4)
+
+                        love.graphics.setColor(0.66, 0.9, 1.0, (0.16 + 0.26 * intensity) * fade)
+                        love.graphics.setLineWidth(1.4 + intensity * 1.1)
+                        love.graphics.circle("line", gx, gy, SEGMENT_SIZE * (0.28 + 0.08 * echo), 18)
+
+                        love.graphics.setColor(0.42, 0.72, 1.0, (0.1 + 0.22 * echo) * fade)
+                        love.graphics.circle("fill", gx, gy, SEGMENT_SIZE * (0.16 + 0.05 * echo), 14)
+                end
+        end
+
+        local head = trail[1]
+        local hx, hy = ptXY(head)
+        if hx and hy then
+                local haloAlpha = 0.18 + 0.28 * intensity + (ready and 0.12 or 0)
+                drawSoftGlow(hx, hy, SEGMENT_SIZE * (1.3 + 0.35 * intensity + 0.25 * echo), 0.58, 0.9, 1.0, haloAlpha)
+
+                if burst > 0 then
+                        love.graphics.setColor(0.9, 0.96, 1.0, 0.32 * burst)
+                        love.graphics.setLineWidth(2.2)
+                        love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.45 + 0.55 * burst), 30)
+                        love.graphics.setColor(0.62, 0.88, 1.0, 0.26 * burst)
+                        love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.95 + 0.75 * burst), 36)
+                end
+        end
+
+        love.graphics.pop()
+end
+
+local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
+        if not (trail and data) then return end
+        if #trail < 2 then return end
+
+        local intensity = math.max(0, data.intensity or 0)
+        if intensity <= 0.01 then return end
+
+        local stacks = math.max(1, data.stacks or 1)
+        local time = data.time or love.timer.getTime()
+        local stride = math.max(1, math.floor(#trail / (4 + stacks * 2)))
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("add")
+
+        for i = 1, #trail - stride do
+                local seg = trail[i]
+                local nextSeg = trail[i + stride]
+                local x1, y1 = ptXY(seg)
+                local x2, y2 = ptXY(nextSeg)
+                if x1 and y1 and x2 and y2 then
+                        local dirX, dirY = x2 - x1, y2 - y1
+                        local len = math.sqrt(dirX * dirX + dirY * dirY)
+                        if len < 1e-4 then
+                                dirX, dirY = 0, -1
+                        else
+                                dirX, dirY = dirX / len, dirY / len
+                        end
+                        local perpX, perpY = -dirY, dirX
+
+                        local progress = (i - 1) / math.max(#trail - stride, 1)
+                        local sway = math.sin(time * (4.8 + stacks * 0.4) + i * 0.7) * SEGMENT_SIZE * (0.22 + 0.12 * intensity)
+                        local crest = math.sin(time * 2.6 + i) * SEGMENT_SIZE * 0.1
+                        local ctrlX = (x1 + x2) * 0.5 + perpX * sway
+                        local ctrlY = (y1 + y2) * 0.5 + perpY * sway
+
+                        local steps = 6
+                        local points = {}
+                        for step = 0, steps do
+                                local t = step / steps
+                                local inv = 1 - t
+                                local bx = inv * inv * x1 + 2 * inv * t * ctrlX + t * t * x2
+                                local by = inv * inv * y1 + 2 * inv * t * ctrlY + t * t * y2
+                                local peak = 1 - math.abs(0.5 - t) * 2
+                                bx = bx + perpX * crest * peak * 0.8
+                                by = by + perpY * crest * peak * 0.8
+                                points[#points + 1] = bx
+                                points[#points + 1] = by
+                        end
+
+                        local fade = 1 - progress * 0.7
+                        love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
+                        love.graphics.setLineWidth(1.5 + intensity * 1.2)
+                        love.graphics.line(points)
+
+                        love.graphics.setColor(0.92, 0.98, 1.0, (0.08 + 0.18 * intensity) * fade)
+                        love.graphics.circle("fill", x2, y2, SEGMENT_SIZE * 0.14, 12)
+                end
+        end
+
+        local head = trail[1]
+        local hx, hy = ptXY(head)
+        if hx and hy then
+                love.graphics.setColor(0.7, 0.92, 1.0, 0.2 + 0.32 * intensity)
+                love.graphics.setLineWidth(2)
+                local sweep = math.pi * 0.5
+                love.graphics.arc("line", "open", hx, hy, SEGMENT_SIZE * (1.15 + 0.35 * intensity), -sweep * 0.5, sweep * 0.5, 24)
+                love.graphics.arc("line", "open", hx, hy, SEGMENT_SIZE * (1.55 + 0.5 * intensity), -sweep * 0.3, sweep * 0.3, 24)
+        end
+
+        love.graphics.pop()
+end
+
 local function drawEventHorizonSheath(trail, SEGMENT_SIZE, data)
         if not (trail and data) then return end
         if #trail < 1 then return end
@@ -1963,11 +2178,23 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                 drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
         end
 
+        if upgradeVisuals and upgradeVisuals.spectralHarvest then
+                drawSpectralHarvestEcho(trail, SEGMENT_SIZE, upgradeVisuals.spectralHarvest)
+        end
+
+        if upgradeVisuals and upgradeVisuals.zephyrCoils then
+                drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
+        end
+
+        if upgradeVisuals and upgradeVisuals.stoneSkin then
+                drawStoneSkinBulwark(trail, SEGMENT_SIZE, upgradeVisuals.stoneSkin)
+        end
+
         if upgradeVisuals and upgradeVisuals.dash then
                 drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
         end
 
-	local faceScale = 1
+        local faceScale = 1
 	Face:draw(hx, hy, faceScale)
 
         drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
