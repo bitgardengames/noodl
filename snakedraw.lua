@@ -1085,6 +1085,97 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
         love.graphics.pop()
 end
 
+local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
+        if not (trail and data) then return end
+        if #trail < 1 then return end
+
+        local intensity = math.max(0, data.intensity or 0)
+        local ratio = math.max(0, data.ratio or 0)
+        if intensity <= 0.01 and ratio <= 1.05 then return end
+
+        local head = trail[1]
+        local hx, hy = ptXY(head)
+        if not (hx and hy) then return end
+
+        local dirX, dirY = 0, -1
+        if head then
+                dirX = head.dirX or dirX
+                dirY = head.dirY or dirY
+        end
+
+        local nextSeg = trail[2]
+        if nextSeg then
+                local nx, ny = ptXY(nextSeg)
+                if nx and ny and (nx ~= hx or ny ~= hy) then
+                        dirX, dirY = nx - hx, ny - hy
+                end
+        end
+
+        local len = math.sqrt(dirX * dirX + dirY * dirY)
+        if len <= 1e-4 then
+                dirX, dirY = 0, -1
+                len = 1
+        end
+        dirX, dirY = dirX / len, dirY / len
+
+        local angle
+        if math.atan2 then
+                angle = math.atan2(dirY, dirX)
+        else
+                angle = math.atan(dirY, dirX)
+        end
+
+        local time = data.time or love.timer.getTime()
+        local tiers = {
+                { limit = 1.08, color = {0.34, 0.78, 1.0}, radius = 0.8, offset = 0.78, thickness = 1.8 },
+                { limit = 1.32, color = {0.56, 0.9, 1.0}, radius = 1.08, offset = 1.18, thickness = 2.4 },
+                { limit = 1.58, color = {1.00, 0.84, 0.42}, radius = 1.36, offset = 1.54, thickness = 3.0 },
+        }
+
+        local baseRadius = SEGMENT_SIZE * (0.7 + 0.2 * math.min(1, intensity + math.max(0, ratio - 1) * 0.5))
+
+        love.graphics.push("all")
+        love.graphics.translate(hx, hy)
+        love.graphics.rotate(angle)
+        love.graphics.setBlendMode("add")
+
+        local effectiveRatio = math.max(ratio, 1 + intensity * 0.15)
+
+        for index, tier in ipairs(tiers) do
+                if effectiveRatio >= tier.limit then
+                        local nextLimit = tiers[index + 1] and tiers[index + 1].limit or (tier.limit + 0.5)
+                        local range = nextLimit - tier.limit
+                        if range <= 1e-4 then range = 0.4 end
+                        local progress = math.max(0, math.min(1, (effectiveRatio - tier.limit) / range))
+                        local wobble = math.sin(time * (3.4 + index * 0.6) + index) * SEGMENT_SIZE * 0.05
+                        local radius = baseRadius * (tier.radius + 0.08 * progress + 0.05 * math.sin(time * 4.6 + index * 1.2))
+                        local offset = SEGMENT_SIZE * (tier.offset + 0.12 * intensity + 0.1 * progress)
+                        local width = tier.thickness + intensity * (1.2 + 0.6 * progress)
+                        local alpha = (0.18 + 0.3 * intensity) * (0.45 + 0.55 * progress)
+                        local sweep = math.pi * (0.36 + 0.05 * index + 0.06 * intensity)
+
+                        love.graphics.setLineWidth(width)
+                        love.graphics.setColor(tier.color[1], tier.color[2], tier.color[3], alpha)
+                        love.graphics.arc("line", offset + wobble, 0, radius, -sweep, sweep, 28)
+
+                        love.graphics.setLineWidth(width * 0.55)
+                        love.graphics.setColor(tier.color[1], tier.color[2], tier.color[3], alpha * 0.55)
+                        love.graphics.arc("line", offset + wobble * 0.75, 0, radius * 0.68, -sweep * 0.85, sweep * 0.85, 24)
+                end
+        end
+
+        if effectiveRatio >= tiers[#tiers].limit + 0.18 then
+                local extra = math.min(1, (effectiveRatio - (tiers[#tiers].limit + 0.18)) / 0.5)
+                local flareOffset = SEGMENT_SIZE * (1.92 + 0.22 * intensity)
+                local pulse = 0.74 + 0.26 * math.sin(time * 5.6)
+                local flareAlpha = (0.16 + 0.24 * intensity) * extra
+                love.graphics.setColor(1.0, 0.95, 0.62, flareAlpha)
+                love.graphics.circle("fill", flareOffset, 0, baseRadius * 0.42 * pulse, 20)
+        end
+
+        love.graphics.pop()
+end
+
 local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
         if not data then return end
         local stacks = data.stacks or 0
@@ -2194,6 +2285,10 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 
         if upgradeVisuals and upgradeVisuals.dash then
                 drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
+        end
+
+        if upgradeVisuals and upgradeVisuals.speedArcs then
+                drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
         end
 
         local faceScale = 1
