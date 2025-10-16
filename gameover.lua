@@ -1189,38 +1189,40 @@ function GameOver:enter(data)
 				bestUnit = getDayUnit(best),
 			}
 
-			local messageKey
-			if self.dailyChallengeResult.completedNow then
-				if info.wasNewBest then
-					messageKey = "gameover.daily_streak_new_best"
-				else
-					messageKey = "gameover.daily_streak_extended"
-				end
-			elseif info.alreadyCompleted then
-				messageKey = "gameover.daily_streak_already_complete"
-			elseif info.needsCompletion then
-				messageKey = "gameover.daily_streak_needs_completion"
-			else
-				messageKey = "gameover.daily_streak_status"
-			end
+                        local messageKey
+                        if self.dailyChallengeResult.completedNow then
+                                if info.wasNewBest then
+                                        messageKey = "gameover.daily_streak_new_best"
+                                else
+                                        messageKey = "gameover.daily_streak_extended"
+                                end
+                        elseif info.alreadyCompleted then
+                                messageKey = "gameover.daily_streak_already_complete"
+                        elseif not info.needsCompletion then
+                                messageKey = "gameover.daily_streak_status"
+                        end
 
-			self.dailyStreakMessage = Localization:get(messageKey, replacements)
+                        if messageKey then
+                                self.dailyStreakMessage = Localization:get(messageKey, replacements)
+                        else
+                                self.dailyStreakMessage = nil
+                        end
 
-			if self.dailyChallengeResult.completedNow then
-				if info.wasNewBest then
-					self.dailyStreakColor = Theme.accentTextColor or UI.colors.accentText or UI.colors.highlight
-				else
-					self.dailyStreakColor = Theme.progressColor or UI.colors.progress or UI.colors.highlight
-				end
-			elseif info.alreadyCompleted then
-				self.dailyStreakColor = UI.colors.mutedText or Theme.mutedTextColor or UI.colors.text
-			elseif info.needsCompletion then
-				self.dailyStreakColor = Theme.warningColor or UI.colors.warning or UI.colors.highlight
-			else
-				self.dailyStreakColor = UI.colors.highlight or UI.colors.text
-			end
-		end
-	end
+                        if not self.dailyStreakMessage then
+                                self.dailyStreakColor = nil
+                        elseif self.dailyChallengeResult.completedNow then
+                                if info.wasNewBest then
+                                        self.dailyStreakColor = Theme.accentTextColor or UI.colors.accentText or UI.colors.highlight
+                                else
+                                        self.dailyStreakColor = Theme.progressColor or UI.colors.progress or UI.colors.highlight
+                                end
+                        elseif info.alreadyCompleted then
+                                self.dailyStreakColor = UI.colors.mutedText or Theme.mutedTextColor or UI.colors.text
+                        else
+                                self.dailyStreakColor = UI.colors.highlight or UI.colors.text
+                        end
+                end
+        end
 
 	self.progression = MetaProgression:grantRunPoints({
 		apples = stats.apples or 0,
@@ -1580,23 +1582,11 @@ local function drawXpSection(self, x, y, width)
         love.graphics.printf(levelValue, -innerRadius, -fontProgressValue:getHeight() / 2 + 2, innerRadius * 2, "center")
         love.graphics.pop()
 
-	local totalLabel = Localization:get("gameover.meta_progress_total_label", {
-		total = math.floor((anim.displayedTotal or 0) + 0.5),
-	})
-
-	local remainingLabel
-	if (anim.xpForLevel or 0) <= 0 then
-		remainingLabel = Localization:get("gameover.meta_progress_max_level")
-	else
-		local remaining = math.max(0, math.ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
-		remainingLabel = Localization:get("gameover.meta_progress_next", { remaining = remaining })
-	end
-
-	local labelY = centerY + outerRadius + 18
-	local breakdown = self.progression and self.progression.breakdown or {}
-	local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
-	if bonusXP > 0 then
-		local bonusText = Localization:get("gameover.meta_progress_bonus", { bonus = bonusXP })
+        local labelY = centerY + outerRadius + 18
+        local breakdown = self.progression and self.progression.breakdown or {}
+        local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
+        if bonusXP > 0 then
+                local bonusText = Localization:get("gameover.meta_progress_bonus", { bonus = bonusXP })
 		UI.drawLabel(bonusText, x, labelY, width, "center", {
 			font = fontProgressSmall,
 			color = UI.colors.highlight or UI.colors.text,
@@ -1604,26 +1594,35 @@ local function drawXpSection(self, x, y, width)
 		labelY = labelY + fontProgressSmall:getHeight() + 6
 	end
 
-	if self.dailyStreakMessage then
-		UI.drawLabel(self.dailyStreakMessage, x, labelY, width, "center", {
-			font = fontProgressSmall,
-			color = self.dailyStreakColor or UI.colors.highlight or UI.colors.text,
-		})
-		labelY = labelY + fontProgressSmall:getHeight() + 6
-	end
+        if self.dailyStreakMessage then
+                UI.drawLabel(self.dailyStreakMessage, x, labelY, width, "center", {
+                        font = fontProgressSmall,
+                        color = self.dailyStreakColor or UI.colors.highlight or UI.colors.text,
+                })
+                labelY = labelY + fontProgressSmall:getHeight() + 6
+        end
 
-	UI.drawLabel(totalLabel, x, labelY, width, "center", {
-		font = fontProgressSmall,
-		color = UI.colors.text,
-	})
+        local totalValue = math.floor((anim.displayedTotal or 0) + 0.5)
+        local totalLabel
+        if (anim.xpForLevel or 0) <= 0 then
+                totalLabel = Localization:get("gameover.meta_progress_total_summary_max", {
+                        total = totalValue,
+                })
+        else
+                local remaining = math.max(0, math.ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
+                totalLabel = Localization:get("gameover.meta_progress_total_summary_next", {
+                        total = totalValue,
+                        remaining = remaining,
+                })
+        end
 
-	labelY = labelY + fontProgressSmall:getHeight() + 4
-	UI.drawLabel(remainingLabel, x, labelY, width, "center", {
-		font = fontProgressSmall,
-		color = UI.colors.mutedText or UI.colors.text,
-	})
+        UI.drawLabel(totalLabel, x, labelY, width, "center", {
+                font = fontProgressSmall,
+                color = UI.colors.text,
+        })
 
-	local celebrationStart = labelY + fontProgressSmall:getHeight() + 16
+        labelY = labelY + fontProgressSmall:getHeight() + 4
+        local celebrationStart = labelY + fontProgressSmall:getHeight() + 16
 	drawCelebrationsList(anim, x, celebrationStart, width)
 end
 
