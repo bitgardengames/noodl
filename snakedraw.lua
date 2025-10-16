@@ -1088,74 +1088,8 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
 end
 
 local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
-        if not (trail and data) then return end
-        if #trail < 1 then return end
-
-        local intensity = math.max(0, data.intensity or 0)
-        local ratio = math.max(0, data.ratio or 0)
-        if intensity <= 0.01 and ratio <= 1.05 then return end
-
-        local head = trail[1]
-        local hx, hy = ptXY(head)
-        if not (hx and hy) then return end
-
-        local dirX, dirY = 0, -1
-        if head then
-                dirX = head.dirX or dirX
-                dirY = head.dirY or dirY
-        end
-
-        local nextSeg = trail[2]
-        if nextSeg then
-                local nx, ny = ptXY(nextSeg)
-                if nx and ny and (nx ~= hx or ny ~= hy) then
-                        dirX, dirY = nx - hx, ny - hy
-                end
-        end
-
-        local len = math.sqrt(dirX * dirX + dirY * dirY)
-        if len <= 1e-4 then
-                dirX, dirY = 0, -1
-                len = 1
-        end
-        dirX, dirY = dirX / len, dirY / len
-
-        local angle
-        if math.atan2 then
-                angle = math.atan2(dirY, dirX)
-        else
-                angle = math.atan(dirY, dirX)
-        end
-
-        local strength = math.max(intensity, ratio - 1)
-        if strength <= 0 then strength = 0 end
-
-        local baseRadius = SEGMENT_SIZE * 0.55
-        local arcSpacing = SEGMENT_SIZE * 0.16
-        local arcOffset = SEGMENT_SIZE * (0.85 + strength * 0.25)
-        local maxAlpha = 0.6 + 0.35 * math.min(1, intensity)
-        local lineWidth = 2 + 1.6 * math.min(1, strength)
-        local streakLength = SEGMENT_SIZE * (0.9 + 0.35 * math.min(1, strength))
-
-        love.graphics.push("all")
-        love.graphics.translate(hx, hy)
-        love.graphics.rotate(angle)
-        love.graphics.setBlendMode("alpha")
-
-        for index = 1, 3 do
-                local radius = baseRadius + arcSpacing * (index - 1)
-                local offset = -(arcOffset + arcSpacing * (index - 1) * 0.6)
-                local alpha = maxAlpha * (0.55 + 0.2 * (3 - index))
-                local width = lineWidth * (1 - 0.15 * (index - 1))
-                local spread = radius * (0.45 - 0.08 * (index - 1))
-
-                love.graphics.setColor(1, 1, 1, alpha)
-                love.graphics.setLineWidth(width)
-                love.graphics.line(offset, -spread, offset - streakLength, -spread)
-                love.graphics.line(offset, spread, offset - streakLength, spread)
-        end
-
-        love.graphics.pop()
+        -- Motion streaks intentionally disabled to remove speed lines.
+        return
 end
 
 local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
@@ -2007,63 +1941,8 @@ local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
 end
 
 local function drawDashStreaks(trail, SEGMENT_SIZE, data)
-	if not data then return end
-	if not trail or #trail < 2 then return end
-
-	local duration = data.duration or 0
-	if duration <= 0 then duration = 1 end
-
-	local timer = math.max(0, data.timer or 0)
-	local cooldown = data.cooldown or 0
-	local cooldownTimer = math.max(0, data.cooldownTimer or 0)
-
-	local intensity = 0
-	if data.active then
-	intensity = math.max(0.35, math.min(1, timer / duration + 0.2))
-	elseif cooldown > 0 then
-	intensity = math.max(0, 1 - cooldownTimer / math.max(0.0001, cooldown)) * 0.45
-	else
-	intensity = 0.3
-	end
-
-	if intensity <= 0 then return end
-
-	local time = love.timer.getTime()
-
-	local streaks = math.min(#trail - 1, 6)
-	if streaks <= 0 then return end
-
-	love.graphics.push("all")
-	love.graphics.setBlendMode("add")
-
-	for i = 1, streaks do
-	local seg = trail[i]
-	local nextSeg = trail[i + 1]
-	local x1, y1 = ptXY(seg)
-	local x2, y2 = ptXY(nextSeg)
-	if x1 and y1 and x2 and y2 then
-		local fade = (streaks - i + 1) / streaks
-		local wobble = math.sin(time * 8 + i) * SEGMENT_SIZE * 0.05
-		local dirX, dirY = x2 - x1, y2 - y1
-		local length = math.sqrt(dirX * dirX + dirY * dirY)
-		if length > 1e-4 then
-		dirX, dirY = dirX / length, dirY / length
-		end
-		local perpX, perpY = -dirY, dirX
-
-		local offsetX = perpX * wobble
-		local offsetY = perpY * wobble
-
-		love.graphics.setColor(1, 0.76, 0.28, 0.18 + 0.4 * intensity * fade)
-		love.graphics.setLineWidth(SEGMENT_SIZE * (0.35 + 0.12 * intensity * fade))
-		love.graphics.line(x1 + offsetX, y1 + offsetY, x2 + offsetX, y2 + offsetY)
-
-		love.graphics.setColor(1, 0.42, 0.12, 0.15 + 0.25 * intensity * fade)
-		love.graphics.circle("fill", x2 + offsetX * 0.5, y2 + offsetY * 0.5, SEGMENT_SIZE * 0.16 * fade)
-	end
-	end
-
-	love.graphics.pop()
+        -- Dash streaks intentionally disabled to remove motion lines.
+        return
 end
 
 local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
