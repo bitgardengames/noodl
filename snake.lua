@@ -85,6 +85,7 @@ local HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after survivi
 local DAMAGE_FLASH_DURATION = 0.45
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
+local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.18 -- allow a little leeway before counting self-collision
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
@@ -2112,19 +2113,28 @@ function Snake:update(dt)
 			end
 		end
 
-		for i = startIndex, #trail do
-			local cx, cy = toCell(trail[i].drawX, trail[i].drawY)
+                local collisionThreshold = math.max(0, SEGMENT_SPACING - SELF_COLLISION_BUFFER)
+                local collisionThresholdSq = collisionThreshold * collisionThreshold
+
+                for i = startIndex, #trail do
+                        local segment = trail[i]
+                        local cx, cy = toCell(segment.drawX, segment.drawY)
 
 			-- allow stepping into the tail cell if the tail moved off this tick
 			local tailVacated =
 				(i == #trail) and (tailBeforeCol == headCol and tailBeforeRow == headRow)
 
-						if not tailVacated and cx == headCol and cy == headRow then
-								if self:consumeCrashShield() then
-										-- survived; optional FX here
-										self:onShieldConsumed(hx, hy, "self")
-										self:beginHazardGrace()
-								else
+                        if not tailVacated and cx == headCol and cy == headRow then
+                                local dx = hx - segment.drawX
+                                local dy = hy - segment.drawY
+                                local distSq = dx*dx + dy*dy
+
+                                if distSq <= collisionThresholdSq then
+                                        if self:consumeCrashShield() then
+                                                        -- survived; optional FX here
+                                                        self:onShieldConsumed(hx, hy, "self")
+                                                        self:beginHazardGrace()
+                                        else
 										local pushX = -(direction.x or 0) * SEGMENT_SPACING
 										local pushY = -(direction.y or 0) * SEGMENT_SPACING
 										local context = {
@@ -2135,9 +2145,10 @@ function Snake:update(dt)
 											grace = HAZARD_GRACE_DURATION * 2,
 											shake = 0.28,
 										}
-										return false, "self", context
-								end
-						end
+                                                        return false, "self", context
+                                        end
+                                end
+                        end
 				end
 		end
 
