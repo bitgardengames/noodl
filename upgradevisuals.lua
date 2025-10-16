@@ -274,6 +274,77 @@ local function drawFangFlurry(effect, progress)
         love.graphics.setLineWidth(1)
 end
 
+local function drawExtraBiteChomp(effect, progress)
+        local x, y = effect.x, effect.y
+        local innerRadius = effect.innerRadius or 12
+        local outerRadius = effect.outerRadius or 44
+        local fruitColor = effect.variantColor or effect.color or {1.0, 0.82, 0.36, 1}
+        local toothColor = effect.variantSecondaryColor or {1.0, 1.0, 1.0, 0.92}
+        local crumbColor = effect.variantTertiaryColor or {1.0, 0.62, 0.28, 0.82}
+
+        local fruitAlpha = (fruitColor[4] or 1) * clamp01(1.08 - progress * 1.2)
+        if fruitAlpha <= 0 then return end
+
+        love.graphics.push("all")
+
+        if effect.addBlend then
+                love.graphics.setBlendMode("add")
+        end
+
+        local pulse = 0.94 + 0.16 * sin(progress * pi * 4.4)
+        local bodyRadius = outerRadius * (0.52 + 0.12 * (1 - progress)) * pulse
+        love.graphics.setColor(fruitColor[1], fruitColor[2], fruitColor[3], fruitAlpha * 0.85)
+        love.graphics.circle("fill", x, y, bodyRadius, 40)
+
+        love.graphics.setLineWidth(innerRadius * 0.22)
+        love.graphics.setColor(fruitColor[1], fruitColor[2], fruitColor[3], fruitAlpha * 0.6)
+        love.graphics.circle("line", x, y, bodyRadius * (0.86 + 0.1 * sin(progress * pi * 3.6)), 36)
+
+        local biteRadius = bodyRadius * (0.72 + 0.05 * sin(progress * pi * 5.1))
+        local biteDepth = innerRadius * (0.85 + 0.25 * progress)
+        local toothCount = (effect.variantData and effect.variantData.teeth) or 4
+        for index = 1, toothCount do
+                local offset = (index - 0.5) / toothCount
+                local angle = (effect.rotation or 0) + offset * pi * 2 + sin(progress * pi * (3.4 + index * 0.15)) * 0.08
+                local dirX, dirY = cos(angle), sin(angle)
+                local perpX, perpY = -dirY, dirX
+
+                local baseX = x + dirX * biteRadius
+                local baseY = y + dirY * biteRadius
+                local tipX = x + dirX * (biteRadius + biteDepth)
+                local tipY = y + dirY * (biteRadius + biteDepth)
+                local width = innerRadius * (0.62 + 0.16 * sin(progress * pi * 4.6 + index))
+
+                local points = {
+                        baseX + perpX * width * 0.45, baseY + perpY * width * 0.45,
+                        tipX, tipY,
+                        baseX - perpX * width * 0.45, baseY - perpY * width * 0.45,
+                }
+
+                love.graphics.setColor(toothColor[1], toothColor[2], toothColor[3], (toothColor[4] or 1) * fruitAlpha)
+                love.graphics.polygon("fill", points)
+
+                love.graphics.setLineWidth(innerRadius * 0.16)
+                love.graphics.setColor(toothColor[1], toothColor[2], toothColor[3], (toothColor[4] or 1) * fruitAlpha * 0.9)
+                love.graphics.polygon("line", points)
+        end
+
+        local crumbAlpha = (crumbColor[4] or 1) * clamp01(1 - progress * 1.3) * fruitAlpha
+        if crumbAlpha > 0 then
+                love.graphics.setColor(crumbColor[1], crumbColor[2], crumbColor[3], crumbAlpha)
+                local crumbCount = 6
+                for index = 1, crumbCount do
+                        local angle = (effect.rotation or 0) + index * (pi * 2 / crumbCount) + progress * pi * 1.8
+                        local distance = biteRadius + innerRadius * (0.6 + 0.25 * sin(progress * pi * 6 + index))
+                        local size = innerRadius * (0.2 + 0.05 * sin(progress * pi * 5.4 + index))
+                        love.graphics.circle("fill", x + cos(angle) * distance, y + sin(angle) * distance, size, 12)
+                end
+        end
+
+        love.graphics.pop()
+        love.graphics.setLineWidth(1)
+end
+
 local function drawStoneguardBastion(effect, progress)
         local x, y = effect.x, effect.y
         local innerRadius = effect.innerRadius or 12
@@ -473,6 +544,73 @@ local function drawPrismRefraction(effect, progress)
                 for index = 1, arcCount do
                         local angle = rotation + index * (pi * 2 / arcCount)
                         love.graphics.arc("line", "open", x, y, arcRadius, angle - arcSpan * 0.5, angle + arcSpan * 0.5, 18)
+                end
+        end
+
+        love.graphics.pop()
+        love.graphics.setLineWidth(1)
+end
+
+local function drawPocketSprings(effect, progress)
+        local x, y = effect.x, effect.y
+        local innerRadius = effect.innerRadius or 12
+        local outerRadius = effect.outerRadius or 44
+        local coilColor = effect.variantColor or effect.color or {0.68, 0.88, 1.0, 1}
+        local plateColor = effect.variantSecondaryColor or {0.42, 0.72, 1.0, 0.92}
+        local sparkColor = effect.variantTertiaryColor or {1.0, 0.92, 0.6, 0.8}
+
+        local coilAlpha = (coilColor[4] or 1) * clamp01(1.04 - progress * 1.15)
+        if coilAlpha <= 0 then return end
+
+        love.graphics.push("all")
+
+        if effect.addBlend then
+                love.graphics.setBlendMode("add")
+        end
+
+        local wobble = sin(progress * pi * 4.2)
+        local coilHeight = (outerRadius - innerRadius) * (0.78 + 0.18 * sin(progress * pi * 3.2))
+        local startY = y - coilHeight * 0.5
+        local endY = y + coilHeight * 0.5
+        local coilRadius = innerRadius * (0.4 + 0.12 * sin(progress * pi * 5.4))
+        local turns = (effect.variantData and effect.variantData.turns) or 4
+        local spacing = innerRadius * (1.05 + 0.25 * (1 - progress))
+
+        for side = -1, 1, 2 do
+                local offsetX = x + side * spacing
+                local points = {}
+                local steps = 16
+                for step = 0, steps do
+                        local t = step / steps
+                        local angle = t * turns * pi * 2 + progress * pi * 1.4 * side
+                        local px = offsetX + sin(angle) * coilRadius
+                        local py = startY + (endY - startY) * t
+                        points[#points + 1] = px
+                        points[#points + 1] = py
+                end
+
+                love.graphics.setLineWidth(innerRadius * 0.26)
+                love.graphics.setColor(coilColor[1], coilColor[2], coilColor[3], coilAlpha)
+                love.graphics.line(points)
+
+                local plateAlpha = (plateColor[4] or 1) * coilAlpha
+                if plateAlpha > 0 then
+                        love.graphics.setLineWidth(innerRadius * 0.18)
+                        love.graphics.setColor(plateColor[1], plateColor[2], plateColor[3], plateAlpha)
+                        local width = coilRadius * (1.2 + 0.3 * wobble * side)
+                        love.graphics.line(offsetX - width, startY, offsetX + width, startY)
+                        love.graphics.line(offsetX - width, endY, offsetX + width, endY)
+                end
+        end
+
+        local sparkAlpha = (sparkColor[4] or 1) * clamp01(1 - progress * 1.3) * coilAlpha
+        if sparkAlpha > 0 then
+                love.graphics.setColor(sparkColor[1], sparkColor[2], sparkColor[3], sparkAlpha)
+                local sparkCount = 4
+                for index = 1, sparkCount do
+                        local angle = progress * pi * 2 + index * (pi * 0.5)
+                        local radius = innerRadius * (1.4 + 0.25 * sin(progress * pi * 6 + index))
+                        love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, innerRadius * 0.26, 14)
                 end
         end
 
@@ -803,15 +941,85 @@ local function drawGuidingCompass(effect, progress)
         love.graphics.setLineWidth(1)
 end
 
+local function drawMoltingReflex(effect, progress)
+        local x, y = effect.x, effect.y
+        local innerRadius = effect.innerRadius or 12
+        local outerRadius = effect.outerRadius or 44
+        local scaleColor = effect.variantColor or effect.color or {1.0, 0.72, 0.28, 1}
+        local emberColor = effect.variantSecondaryColor or {1.0, 0.46, 0.18, 0.95}
+        local glowColor = effect.variantTertiaryColor or {1.0, 0.92, 0.62, 0.8}
+
+        local scaleAlpha = (scaleColor[4] or 1) * clamp01(1.02 - progress * 1.1)
+        if scaleAlpha <= 0 then return end
+
+        love.graphics.push("all")
+
+        if effect.addBlend then
+                love.graphics.setBlendMode("add")
+        end
+
+        local drift = (outerRadius - innerRadius) * (0.22 + 0.58 * progress)
+        local scaleCount = (effect.variantData and effect.variantData.scales) or 8
+        for index = 1, scaleCount do
+                local fraction = (index - 0.5) / scaleCount
+                local angle = (effect.rotation or 0) + fraction * pi * 2 + sin(progress * pi * (3.6 + index * 0.25)) * 0.1
+                local dirX, dirY = cos(angle), sin(angle)
+                local perpX, perpY = -dirY, dirX
+
+                local radius = innerRadius + drift + sin(progress * pi * 4 + index) * innerRadius * 0.08
+                local centerX = x + dirX * radius
+                local centerY = y + dirY * radius
+                local length = innerRadius * (0.65 + 0.25 * (1 - progress))
+                local width = innerRadius * (0.45 + 0.15 * sin(progress * pi * 5 + index))
+
+                local points = {
+                        centerX + dirX * length * 0.5, centerY + dirY * length * 0.5,
+                        centerX + perpX * width, centerY + perpY * width,
+                        centerX - dirX * length * 0.5, centerY - dirY * length * 0.5,
+                        centerX - perpX * width, centerY - perpY * width,
+                }
+
+                love.graphics.setColor(scaleColor[1], scaleColor[2], scaleColor[3], scaleAlpha * (0.85 - 0.15 * fraction))
+                love.graphics.polygon("fill", points)
+
+                love.graphics.setLineWidth(innerRadius * 0.14)
+                love.graphics.setColor(emberColor[1], emberColor[2], emberColor[3], (emberColor[4] or 1) * scaleAlpha)
+                love.graphics.polygon("line", points)
+        end
+
+        local glowAlpha = (glowColor[4] or 1) * clamp01(1 - progress * 1.3) * scaleAlpha
+        if glowAlpha > 0 then
+                local pulse = 0.9 + 0.18 * sin(progress * pi * 5.2)
+                love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], glowAlpha)
+                love.graphics.setLineWidth(innerRadius * 0.18)
+                love.graphics.circle("line", x, y, innerRadius * (1.2 + 0.4 * pulse), 36)
+                love.graphics.circle("line", x, y, innerRadius * (1.8 + 0.6 * pulse), 36)
+
+                local fleckCount = math.max(4, scaleCount)
+                love.graphics.setLineWidth(1)
+                for index = 1, fleckCount do
+                        local angle = (effect.rotation or 0) + index * (pi * 2 / fleckCount) + progress * pi * 2
+                        local radius = innerRadius * (1.6 + 0.45 * progress) + outerRadius * 0.15
+                        love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, innerRadius * 0.18, 10)
+                end
+        end
+
+        love.graphics.pop()
+        love.graphics.setLineWidth(1)
+end
+
 local variantDrawers = {
         phoenix_flare = drawPhoenixFlare,
         event_horizon = drawEventHorizon,
         storm_burst = drawStormBurst,
         fang_flurry = drawFangFlurry,
+        extra_bite_chomp = drawExtraBiteChomp,
         stoneguard_bastion = drawStoneguardBastion,
         prism_refraction = drawPrismRefraction,
+        pocket_springs = drawPocketSprings,
         coiled_focus = drawCoiledFocus,
         adrenaline_rush = drawAdrenalineRush,
+        molting_reflex = drawMoltingReflex,
         guiding_compass = drawGuidingCompass,
 }
 

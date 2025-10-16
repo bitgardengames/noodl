@@ -814,6 +814,17 @@ local pool = {
                                 particleLife = 0.38,
                                 textOffset = 38,
                                 textScale = 1.04,
+                                visual = {
+                                        variant = "extra_bite_chomp",
+                                        showBase = false,
+                                        life = 0.78,
+                                        innerRadius = 10,
+                                        outerRadius = 52,
+                                        addBlend = true,
+                                        color = {1, 0.86, 0.36, 1},
+                                        variantSecondaryColor = {1, 1, 1, 0.92},
+                                        variantTertiaryColor = {1, 0.62, 0.28, 0.82},
+                                },
                         }
                         applySegmentPosition(celebrationOptions, 0.92)
                         celebrateUpgrade(getUpgradeString("extra_bite", "celebration"), nil, celebrationOptions)
@@ -917,14 +928,35 @@ local pool = {
 				end
 
 				state.counters.pocketSpringsFruit = (state.counters.pocketSpringsFruit or 0) + 1
-				if state.counters.pocketSpringsFruit >= POCKET_SPRINGS_FRUIT_TARGET then
-					state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
-					state.counters.pocketSpringsComplete = true
-					Snake:addCrashShields(1)
-				end
-			end,
-		},
-	}),
+                                if state.counters.pocketSpringsFruit >= POCKET_SPRINGS_FRUIT_TARGET then
+                                        state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
+                                        state.counters.pocketSpringsComplete = true
+                                        Snake:addCrashShields(1)
+                                        local celebrationOptions = {
+                                                color = {0.64, 0.86, 1.0, 1},
+                                                particleCount = 14,
+                                                particleSpeed = 110,
+                                                particleLife = 0.46,
+                                                textOffset = 44,
+                                                textScale = 1.1,
+                                                visual = {
+                                                        variant = "pocket_springs",
+                                                        showBase = false,
+                                                        life = 0.84,
+                                                        innerRadius = 12,
+                                                        outerRadius = 58,
+                                                        addBlend = true,
+                                                        color = {0.68, 0.88, 1.0, 1},
+                                                        variantSecondaryColor = {0.42, 0.72, 1.0, 0.92},
+                                                        variantTertiaryColor = {1.0, 0.92, 0.6, 0.8},
+                                                },
+                                        }
+                                        applySegmentPosition(celebrationOptions, 0.42)
+                                        celebrateUpgrade(getUpgradeString("pocket_springs", "name"), nil, celebrationOptions)
+                                end
+                        end,
+                },
+        }),
 	register({
 		id = "mapmakers_compass",
 		nameKey = "upgrades.mapmakers_compass.name",
@@ -976,28 +1008,30 @@ local pool = {
 				Snake.adrenaline.timer = math.max(currentTimer, surgeDuration)
 
 				local fx, fy = getEventPosition(data)
-				if fx and fy then
-					celebrateUpgrade(nil, data, {
-						x = fx,
-						y = fy,
-						skipText = true,
-						color = {1, 0.72, 0.28, 1},
-						particleCount = 12,
-						particleSpeed = 120,
-						particleLife = 0.5,
-						visual = {
-							badge = "spark",
-							outerRadius = 50,
-							innerRadius = 14,
-							ringCount = 3,
-							life = 0.74,
-							glowAlpha = 0.28,
-							haloAlpha = 0.18,
-						},
-					})
-				end
-			end,
-		},
+                                if fx and fy then
+                                        celebrateUpgrade(nil, data, {
+                                                x = fx,
+                                                y = fy,
+                                                skipText = true,
+                                                color = {1, 0.72, 0.28, 1},
+                                                particleCount = 12,
+                                                particleSpeed = 120,
+                                                particleLife = 0.5,
+                                                visual = {
+                                                        variant = "molting_reflex",
+                                                        showBase = false,
+                                                        life = 0.78,
+                                                        innerRadius = 12,
+                                                        outerRadius = 56,
+                                                        addBlend = true,
+                                                        color = {1, 0.72, 0.28, 1},
+                                                        variantSecondaryColor = {1, 0.46, 0.18, 0.95},
+                                                        variantTertiaryColor = {1, 0.92, 0.62, 0.8},
+                                                },
+                                        })
+                                end
+                        end,
+                },
         }),
         register({
                 id = "circuit_breaker",
