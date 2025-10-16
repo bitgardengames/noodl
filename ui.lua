@@ -1395,23 +1395,63 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
 		love.graphics.setLineWidth(2)
 		love.graphics.circle("line", 0, 0, radius * 0.95, 28)
-	elseif icon == "hourglass" then
-		local bowl = {
-			radius * 0.68, -radius * 0.78,
-			0, -radius * 0.16,
-			-radius * 0.68, -radius * 0.78,
-			-radius * 0.68, radius * 0.78,
-			0, radius * 0.16,
-			radius * 0.68, radius * 0.78,
-		}
-		love.graphics.polygon("fill", bowl)
-		love.graphics.setColor(base[1], base[2], base[3], (base[4] or 1) * 0.6)
-		love.graphics.ellipse("fill", 0, -radius * 0.36, radius * 0.4, radius * 0.2, 28)
-		love.graphics.ellipse("fill", 0, radius * 0.36, radius * 0.4, radius * 0.2, 28)
-		love.graphics.setColor(detail[1], detail[2], detail[3], detail[4] or 1)
-		love.graphics.setLineWidth(2)
-		love.graphics.polygon("line", bowl)
-	elseif icon == "phoenix" then
+       elseif icon == "hourglass" then
+               local topTriangle = {
+                       0, -radius * 0.86,
+                       -radius * 0.6, -radius * 0.12,
+                       radius * 0.6, -radius * 0.12,
+               }
+               local bottomTriangle = {
+                       0, radius * 0.86,
+                       -radius * 0.6, radius * 0.12,
+                       radius * 0.6, radius * 0.12,
+               }
+
+               love.graphics.polygon("fill", topTriangle)
+               love.graphics.polygon("fill", bottomTriangle)
+
+               local highlight = lightenColor(detail, 0.22)
+               love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * 0.85)
+               local topHighlight = {
+                       0, -radius * 0.62,
+                       -radius * 0.36, -radius * 0.2,
+                       radius * 0.36, -radius * 0.2,
+               }
+               local bottomHighlight = {
+                       0, radius * 0.62,
+                       -radius * 0.36, radius * 0.2,
+                       radius * 0.36, radius * 0.2,
+               }
+               love.graphics.polygon("fill", topHighlight)
+               love.graphics.polygon("fill", bottomHighlight)
+
+               local connector = {
+                       -radius * 0.24, -radius * 0.02,
+                       0, -radius * 0.18,
+                       radius * 0.24, -radius * 0.02,
+                       0, radius * 0.18,
+               }
+               love.graphics.setColor(base[1], base[2], base[3], (base[4] or 1) * 0.75)
+               love.graphics.polygon("fill", connector)
+
+               local sheen = lightenColor(detail, 0.42)
+               love.graphics.setColor(sheen[1], sheen[2], sheen[3], (sheen[4] or 1) * 0.6)
+               love.graphics.setLineWidth(1.4)
+               love.graphics.line(-radius * 0.28, -radius * 0.46, -radius * 0.06, -radius * 0.18)
+               love.graphics.line(radius * 0.28, radius * 0.46, radius * 0.06, radius * 0.18)
+
+               local rim = lightenColor(detail, 0.32)
+               love.graphics.setColor(rim[1], rim[2], rim[3], rim[4] or 1)
+               love.graphics.setLineWidth(2.2)
+               love.graphics.polygon("line", topTriangle)
+               love.graphics.polygon("line", bottomTriangle)
+
+               local seam = darkenColor(detail, 0.25)
+               love.graphics.setColor(seam[1], seam[2], seam[3], (seam[4] or 1) * 0.9)
+               love.graphics.setLineWidth(1.5)
+               love.graphics.line(-radius * 0.44, -radius * 0.12, radius * 0.44, -radius * 0.12)
+               love.graphics.line(-radius * 0.44, radius * 0.12, radius * 0.44, radius * 0.12)
+       elseif icon == "phoenix" then
 		local wing = {
 			-radius * 0.88, radius * 0.16,
 			-radius * 0.26, -radius * 0.7,
