@@ -1022,15 +1022,10 @@ local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTi
 	alpha = alpha + flash * 0.4
 	end
 
-	drawSoftGlow(hx, hy, baseRadius * (1.2 + 0.1 * pulse), 0.35, 0.8, 1, alpha * 0.8)
-
-	love.graphics.setLineWidth(4)
-	local lineAlpha = alpha + (hasShield and 0.25 or 0.45)
-	love.graphics.setColor(0.45, 0.85, 1, lineAlpha)
-	love.graphics.circle("line", hx, hy, baseRadius * pulse)
-
-	love.graphics.setColor(0.45, 0.85, 1, (alpha + 0.15) * 0.5)
-	love.graphics.circle("fill", hx, hy, baseRadius * 0.8 * pulse)
+        love.graphics.setLineWidth(4)
+        local lineAlpha = alpha + (hasShield and 0.25 or 0.45)
+        love.graphics.setColor(0.45, 0.85, 1, lineAlpha)
+        love.graphics.circle("line", hx, hy, baseRadius * pulse)
 
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.setLineWidth(1)
