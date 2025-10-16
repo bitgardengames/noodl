@@ -1147,7 +1147,7 @@ local function collectUpgradeVisuals(self)
 		}
 	end
 
-        if self.adrenaline and self.adrenaline.active then
+        if self.adrenaline and self.adrenaline.active and not self.adrenaline.suppressVisuals then
                 visuals = visuals or {}
                 visuals.adrenaline = {
                         active = true,
@@ -1885,6 +1885,7 @@ function Snake:update(dt)
                 self.adrenaline.timer = self.adrenaline.timer - dt
                 if self.adrenaline.timer <= 0 then
                         self.adrenaline.active = false
+                        self.adrenaline.suppressVisuals = nil
                 end
         end
 

@@ -337,6 +337,7 @@ function FruitEvents.handleConsumption(x, y)
 	if Snake.adrenaline then
 		Snake.adrenaline.active = true
 		Snake.adrenaline.timer = Snake.adrenaline.duration
+		Snake.adrenaline.suppressVisuals = nil
 	end
 
 	Upgrades:notify("fruitCollected", {

@@ -1006,6 +1006,7 @@ local pool = {
 				if surgeDuration <= 0 then surgeDuration = 1 end
 				local currentTimer = Snake.adrenaline.timer or 0
 				Snake.adrenaline.timer = math.max(currentTimer, surgeDuration)
+				Snake.adrenaline.suppressVisuals = nil
 
 				local fx, fy = getEventPosition(data)
                                 if fx and fy then
@@ -1444,10 +1445,11 @@ local pool = {
 				if Snake.adrenaline then
 					Snake.adrenaline.active = true
 					Snake.adrenaline.timer = (Snake.adrenaline.duration or 0) * 0.5
-				end
-			end,
-		},
-	}),
+					Snake.adrenaline.suppressVisuals = true
+                                end
+                        end,
+                },
+        }),
 
 	register({
 		id = "abyssal_catalyst",
