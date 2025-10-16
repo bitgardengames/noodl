@@ -219,6 +219,7 @@ function Snake:resetModifiers()
         self.zephyrCoils = nil
         self.spectralHarvest = nil
         self.stoneSkinVisual = nil
+        self.speedVisual = nil
         UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
 
@@ -1155,6 +1156,16 @@ local function collectUpgradeVisuals(self)
                 }
         end
 
+        local speedVisual = self.speedVisual
+        if speedVisual and (((speedVisual.intensity or 0) > 0.01) or (speedVisual.target or 0) > 0) then
+                visuals = visuals or {}
+                visuals.speedArcs = {
+                        intensity = speedVisual.intensity or 0,
+                        ratio = speedVisual.ratio or 0,
+                        time = speedVisual.time or 0,
+                }
+        end
+
         local quickFangs = self.quickFangs
         if quickFangs and (((quickFangs.intensity or 0) > 0.01) or (quickFangs.stacks or 0) > 0) then
                 visuals = visuals or {}
@@ -1752,6 +1763,7 @@ function Snake:update(dt)
         -- base speed with upgrades/modifiers
         local head = trail[1]
         local speed = self:getSpeed()
+        local baselineSpeed = speed
 
 	local hole = descendingHole
 	if hole then
@@ -1873,6 +1885,46 @@ function Snake:update(dt)
                 self.adrenaline.timer = self.adrenaline.timer - dt
                 if self.adrenaline.timer <= 0 then
                         self.adrenaline.active = false
+                end
+        end
+
+        do
+                local reference = self.baseSpeed or baselineSpeed
+                if not (reference and reference > 1e-3) then
+                        reference = baselineSpeed
+                end
+
+                local ratio
+                if reference and reference > 1e-3 then
+                        ratio = speed / reference
+                else
+                        ratio = 1
+                end
+                if ratio < 0 then
+                        ratio = 0
+                end
+
+                local state = self.speedVisual or { intensity = 0, time = 0, ratio = 1 }
+                local target = math.max(0, math.min(1, (ratio - 1) / 0.8))
+                local blend = math.min(1, dt * 5.5)
+                local current = state.intensity or 0
+                current = current + (target - current) * blend
+                state.intensity = current
+                state.target = target
+
+                local ratioBlend = math.min(1, dt * 6.0)
+                local prevRatio = state.ratio or ratio
+                prevRatio = prevRatio + (ratio - prevRatio) * ratioBlend
+                if prevRatio < 0 then prevRatio = 0 end
+                state.ratio = prevRatio
+
+                local timeAdvance = 2.4 + prevRatio * 1.3 + target * 0.8
+                state.time = (state.time or 0) + dt * timeAdvance
+
+                if current > 0.01 or target > 0 then
+                        self.speedVisual = state
+                else
+                        self.speedVisual = nil
                 end
         end
 
