@@ -1043,7 +1043,13 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
         local highlight = math.min(1, intensity * 0.85 + flash * 0.6)
 
         local headRadius = SEGMENT_SIZE * 0.4
-        local stackFactor = math.min(stacks, 4)
+        local rawStacks = math.max(0, stacks)
+        local baseStacks = math.min(rawStacks, 4)
+        local overflowStacks = math.max(0, rawStacks - 4)
+        local visualStacks = baseStacks + overflowStacks * 1.35
+        local activityScale = 1 + math.max(0, data.target or 0) * 0.35
+        local stackFactor = visualStacks * activityScale
+
         local fangLength = headRadius * (0.75 + 0.12 * stackFactor)
         local fangWidth = headRadius * (0.35 + 0.05 * stackFactor)
         local spacing = headRadius * (0.35 + 0.02 * stackFactor)
