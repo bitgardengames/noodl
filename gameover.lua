@@ -794,6 +794,7 @@ function GameOver:updateLayoutMetrics()
 	local headerSpacing = getSectionHeaderSpacing()
 
 	local wrapLimit = math.max(0, innerWidth - sectionPadding * 2)
+	local alignedPanelWidth = wrapLimit
 
 	local messageText = self.deathMessage or Localization:get("gameover.default_message")
 	local _, wrappedMessage = fontSmall:getWrap(messageText, wrapLimit)
@@ -812,20 +813,14 @@ function GameOver:updateLayoutMetrics()
 	if self.progressionAnimation then
 		local availableWidth = math.max(0, innerWidth - sectionPadding * 2)
 		if availableWidth > 0 then
-			local preferredWidth = availableWidth * 0.85
-			local maxWidth = math.min(560, availableWidth)
-			local minWidth = math.min(availableWidth, math.max(320, innerWidth * 0.45))
-			local xpWidth = math.max(minWidth, math.min(maxWidth, preferredWidth))
-			xpWidth = math.floor(xpWidth + 0.5)
-			local offset = math.floor(math.max(0, (availableWidth - xpWidth) / 2) + 0.5)
-
+			local xpWidth = math.floor(availableWidth + 0.5)
 			local celebrations = (self.progressionAnimation.celebrations and #self.progressionAnimation.celebrations) or 0
 			local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
 			local targetHeight = measureXpPanelHeight(self, xpWidth, celebrations)
 
 			xpLayout = {
 				width = xpWidth,
-				offset = offset,
+				offset = 0,
 			}
 
 			self.baseXpSectionHeight = baseHeight
@@ -907,25 +902,49 @@ function GameOver:updateLayoutMetrics()
 
 		local entries = {}
 		for _, section in ipairs(sections) do
-			local targetColumn = 1
-			for i = 2, columnCount do
-				if columnHeights[i] < columnHeights[targetColumn] - 0.01 then
-					targetColumn = i
+			if section.id == "score" and columnCount > 1 then
+				local startY = 0
+				for i = 1, columnCount do
+					if columnHeights[i] > startY then
+						startY = columnHeights[i]
+					end
 				end
+
+				entries[#entries + 1] = {
+					id = section.id,
+					column = 1,
+					x = 0,
+					y = startY,
+					width = availableWidth,
+					height = section.height,
+					layoutData = section.layoutData,
+				}
+
+				local newHeight = startY + section.height + sectionSpacing
+				for i = 1, columnCount do
+					columnHeights[i] = newHeight
+				end
+			else
+				local targetColumn = 1
+				for i = 2, columnCount do
+					if columnHeights[i] < columnHeights[targetColumn] - 0.01 then
+						targetColumn = i
+					end
+				end
+
+				local offsetY = columnHeights[targetColumn]
+				entries[#entries + 1] = {
+					id = section.id,
+					column = targetColumn,
+					x = (targetColumn - 1) * (width + (columnCount > 1 and columnSpacing or 0)),
+					y = offsetY,
+					width = width,
+					height = section.height,
+					layoutData = section.layoutData,
+				}
+
+				columnHeights[targetColumn] = columnHeights[targetColumn] + section.height + sectionSpacing
 			end
-
-			local offsetY = columnHeights[targetColumn]
-			entries[#entries + 1] = {
-				id = section.id,
-				column = targetColumn,
-				x = (targetColumn - 1) * (width + (columnCount > 1 and columnSpacing or 0)),
-				y = offsetY,
-				width = width,
-				height = section.height,
-				layoutData = section.layoutData,
-			}
-
-			columnHeights[targetColumn] = columnHeights[targetColumn] + section.height + sectionSpacing
 		end
 
 		local maxColumnHeight = 0
@@ -1039,6 +1058,12 @@ function GameOver:updateLayoutMetrics()
 	if not self.xpPanelHeight or math.abs(self.xpPanelHeight - xpPanelHeight) >= 1 then
 		layoutChanged = true
 	end
+	if not self.primaryPanelWidth or math.abs(self.primaryPanelWidth - alignedPanelWidth) >= 1 then
+		layoutChanged = true
+	end
+	if not self.primaryPanelOffset or math.abs(self.primaryPanelOffset - sectionPadding) >= 1 then
+		layoutChanged = true
+	end
 
 	local previousXpLayout = self.xpLayout or {}
 	local newXpLayout = xpLayout or {}
@@ -1067,6 +1092,8 @@ function GameOver:updateLayoutMetrics()
 	self.summarySectionLayout = bestLayout
 	self.xpPanelHeight = xpPanelHeight
 	self.xpLayout = xpLayout
+	self.primaryPanelWidth = alignedPanelWidth
+	self.primaryPanelOffset = sectionPadding
 
 	return layoutChanged
 end
@@ -1857,14 +1884,17 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 	local sectionSpacing = self.sectionSpacingValue or getSectionSpacing()
 	local innerSpacing = self.sectionInnerSpacingValue or getSectionInnerSpacing()
 	local smallSpacing = self.sectionSmallSpacingValue or getSectionSmallSpacing()
+	local primaryWidth = self.primaryPanelWidth or math.max(0, innerWidth - sectionPadding * 2)
+	local primaryOffset = self.primaryPanelOffset or sectionPadding
+	local primaryX = innerX + primaryOffset
 	local currentY = panelY + padding
 
 	local wrapLimit = self.wrapLimit or math.max(0, innerWidth - sectionPadding * 2)
 	local messageText = self.deathMessage or Localization:get("gameover.default_message")
 	local messagePanelHeight = self.messagePanelHeight or 0
 	if messagePanelHeight > 0 then
-		drawSummaryPanelBackground(innerX, currentY, innerWidth, messagePanelHeight)
-		UI.drawLabel(messageText, innerX + sectionPadding, currentY + sectionPadding, wrapLimit, "center", {
+		drawSummaryPanelBackground(primaryX, currentY, primaryWidth, messagePanelHeight)
+		UI.drawLabel(messageText, primaryX, currentY + sectionPadding, wrapLimit, "center", {
 			font = fontSmall,
 			color = UI.colors.mutedText or UI.colors.text,
 		})
@@ -1876,10 +1906,9 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 
 	if xpHeight > 0 then
 		currentY = currentY + sectionSpacing
-		local availableWidth = math.max(0, innerWidth - sectionPadding * 2)
-		local xpWidth = math.max(0, math.min(availableWidth, xpLayout.width or availableWidth))
-		local offset = xpLayout.offset or math.max(0, (availableWidth - xpWidth) / 2)
-		local xpX = innerX + sectionPadding + offset
+		local xpWidth = math.max(0, math.min(primaryWidth, xpLayout.width or primaryWidth))
+		local offset = xpLayout.offset or 0
+		local xpX = primaryX + offset
 		drawXpSection(self, xpX, currentY, xpWidth)
 		currentY = currentY + xpHeight
 	end
