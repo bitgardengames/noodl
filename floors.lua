@@ -31,7 +31,7 @@ local Floors = {
             arenaBG     = {0.46, 0.66, 0.39, 1},
             arenaBorder = {0.52, 0.38, 0.24, 1},
             snake       = {0.12, 0.9, 0.48, 1},
-            rock        = {0.74, 0.59, 0.38, 1},
+            rock        = {0.55, 0.57, 0.6, 1},
         },
         backgroundEffect = {
             type = "softCanopy",
