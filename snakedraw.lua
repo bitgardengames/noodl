@@ -1149,7 +1149,8 @@ local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
                         local progress = math.max(0, math.min(1, (effectiveRatio - tier.limit) / range))
                         local wobble = math.sin(time * (3.4 + index * 0.6) + index) * SEGMENT_SIZE * 0.05
                         local radius = baseRadius * (tier.radius + 0.08 * progress + 0.05 * math.sin(time * 4.6 + index * 1.2))
-                        local offset = SEGMENT_SIZE * (tier.offset + 0.12 * intensity + 0.1 * progress)
+                        -- place the arcs behind the snake's head rather than ahead of it
+                        local offset = -SEGMENT_SIZE * (tier.offset + 0.12 * intensity + 0.1 * progress)
                         local width = tier.thickness + intensity * (1.2 + 0.6 * progress)
                         local alpha = (0.18 + 0.3 * intensity) * (0.45 + 0.55 * progress)
                         local sweep = math.pi * (0.36 + 0.05 * index + 0.06 * intensity)
@@ -1166,7 +1167,7 @@ local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
 
         if effectiveRatio >= tiers[#tiers].limit + 0.18 then
                 local extra = math.min(1, (effectiveRatio - (tiers[#tiers].limit + 0.18)) / 0.5)
-                local flareOffset = SEGMENT_SIZE * (1.92 + 0.22 * intensity)
+                local flareOffset = -SEGMENT_SIZE * (1.92 + 0.22 * intensity)
                 local pulse = 0.74 + 0.26 * math.sin(time * 5.6)
                 local flareAlpha = (0.16 + 0.24 * intensity) * extra
                 love.graphics.setColor(1.0, 0.95, 0.62, flareAlpha)
