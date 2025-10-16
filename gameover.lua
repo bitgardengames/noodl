@@ -153,6 +153,29 @@ local function getSectionHeaderSpacing()
 	return (UI.scaled and UI.scaled(18, 14)) or 18
 end
 
+local function formatXpValue(value)
+	local number = tonumber(value)
+	if not number then
+		if value == nil then
+			return "0"
+		end
+		return tostring(value)
+	end
+
+	local sign = ""
+	if number < 0 then
+		sign = "-"
+		number = -number
+	end
+
+	local integer = math.floor(number + 0.5)
+	local digits = tostring(integer)
+	local reversed = digits:reverse():gsub("(%d%d%d)", "%1,")
+	local formatted = reversed:reverse():gsub("^,", "")
+
+	return sign .. formatted
+end
+
 local function measureXpPanelHeight(self, width, celebrationCount)
 	if not self or not self.progressionAnimation then
 		return 0
@@ -703,6 +726,42 @@ local function drawInsetPanel(x, y, width, height, options)
 		radius = radius,
 		shadowOffset = 0,
 		fill = fillColor,
+		borderColor = borderColor,
+		borderWidth = borderWidth,
+	})
+end
+
+local function drawSummaryPanelBackground(x, y, width, height, options)
+	if (width or 0) <= 0 or (height or 0) <= 0 then
+		return
+	end
+
+	options = options or {}
+	local radius = options.radius or 18
+	local fillAlpha = options.fillAlpha or 0.65
+	local borderWidth = options.borderWidth or 2
+	local borderAlpha = options.borderAlpha or 1
+
+	local baseColor = Theme.panelColor or { 0.18, 0.18, 0.22, 1 }
+	local fill = {
+		baseColor[1],
+		baseColor[2],
+		baseColor[3],
+		(baseColor[4] or 1) * fillAlpha,
+	}
+
+	local borderColor = UI.colors.border or Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }
+	borderColor = {
+		borderColor[1],
+		borderColor[2],
+		borderColor[3],
+		(borderColor[4] or 1) * borderAlpha,
+	}
+
+	UI.drawPanel(x, y, width, height, {
+		radius = radius,
+		shadowOffset = 0,
+		fill = fill,
 		borderColor = borderColor,
 		borderWidth = borderWidth,
 	})
@@ -1468,7 +1527,9 @@ local function drawXpSection(self, x, y, width)
 	end
 
 	local gained = math.max(0, math.floor((anim.displayedGained or 0) + 0.5))
-	local gainedText = Localization:get("gameover.meta_progress_gain_short", { points = gained })
+	local gainedText = Localization:get("gameover.meta_progress_gain_short", {
+		points = formatXpValue(gained),
+	})
 	local gainedY = levelY + fontProgressValue:getHeight() + 6
 	UI.drawLabel(gainedText, x, gainedY, width, "center", {
 		font = fontProgressSmall,
@@ -1568,7 +1629,7 @@ local function drawXpSection(self, x, y, width)
         local breakdown = self.progression and self.progression.breakdown or {}
         local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
         if bonusXP > 0 then
-                local bonusText = Localization:get("gameover.meta_progress_bonus", { bonus = bonusXP })
+                local bonusText = Localization:get("gameover.meta_progress_bonus", { bonus = formatXpValue(bonusXP) })
 		UI.drawLabel(bonusText, x, labelY, width, "center", {
 			font = fontProgressSmall,
 			color = UI.colors.highlight or UI.colors.text,
@@ -1588,13 +1649,13 @@ local function drawXpSection(self, x, y, width)
         local totalLabel
         if (anim.xpForLevel or 0) <= 0 then
                 totalLabel = Localization:get("gameover.meta_progress_total_summary_max", {
-                        total = totalValue,
+                        total = formatXpValue(totalValue),
                 })
         else
                 local remaining = math.max(0, math.ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
                 totalLabel = Localization:get("gameover.meta_progress_total_summary_next", {
-                        total = totalValue,
-                        remaining = remaining,
+                        total = formatXpValue(totalValue),
+                        remaining = formatXpValue(remaining),
                 })
         end
 
@@ -1613,7 +1674,7 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 		return
 	end
 
-	drawInsetPanel(x, y, width, height, { radius = 18 })
+	drawSummaryPanelBackground(x, y, width, height, { radius = 18 })
 
 	local scoreLabel = getLocalizedOrFallback("gameover.score_label", "Score")
 	local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
@@ -1636,9 +1697,9 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 	}
 
 	local availableWidth = math.max(0, width - sectionPadding * 2)
-	local columnSpacing = math.max(0, innerSpacing or 0)
+	local columnSpacing = 0
 	local columnCount = #entries
-	local columnWidth = columnCount > 0 and (availableWidth - columnSpacing * (columnCount - 1)) / columnCount or availableWidth
+	local columnWidth = columnCount > 0 and (availableWidth - columnSpacing * math.max(0, columnCount - 1)) / columnCount or availableWidth
 	columnWidth = math.max(0, columnWidth)
 
 	local labelFont = fontProgressSmall
@@ -1802,7 +1863,7 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 	local messageText = self.deathMessage or Localization:get("gameover.default_message")
 	local messagePanelHeight = self.messagePanelHeight or 0
 	if messagePanelHeight > 0 then
-		drawInsetPanel(innerX, currentY, innerWidth, messagePanelHeight)
+		drawSummaryPanelBackground(innerX, currentY, innerWidth, messagePanelHeight)
 		UI.drawLabel(messageText, innerX + sectionPadding, currentY + sectionPadding, wrapLimit, "center", {
 			font = fontSmall,
 			color = UI.colors.mutedText or UI.colors.text,
