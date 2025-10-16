@@ -1224,6 +1224,18 @@ local pool = {
                                 particleLife = 0.48,
                                 textOffset = 48,
                                 textScale = 1.12,
+                                visual = {
+                                        variant = "resonant_shell",
+                                        life = 0.86,
+                                        innerRadius = 12,
+                                        outerRadius = 60,
+                                        addBlend = true,
+                                        glowAlpha = 0.24,
+                                        haloAlpha = 0.16,
+                                        color = {0.8, 0.88, 1, 1},
+                                        variantSecondaryColor = {0.54, 0.76, 1.0, 0.9},
+                                        variantTertiaryColor = {1.0, 0.96, 0.82, 0.75},
+                                },
                         }
                         applySegmentPosition(celebrationOptions, 0.52)
                         celebrateUpgrade(getUpgradeString("resonant_shell", "name"), nil, celebrationOptions)
@@ -1454,16 +1466,29 @@ local pool = {
 
                         grantCrashShields(1)
 
-                        celebrateUpgrade(getUpgradeString("abyssal_catalyst", "name"), nil, {
+                        local celebrationOptions = {
                                 color = {0.62, 0.58, 0.94, 1},
-				particleCount = 22,
-				particleSpeed = 150,
-				particleLife = 0.5,
-				textOffset = 48,
-				textScale = 1.14,
-			})
-		end,
-	}),
+                                particleCount = 22,
+                                particleSpeed = 150,
+                                particleLife = 0.5,
+                                textOffset = 48,
+                                textScale = 1.14,
+                                visual = {
+                                        variant = "abyssal_catalyst",
+                                        showBase = false,
+                                        life = 0.92,
+                                        innerRadius = 13,
+                                        outerRadius = 62,
+                                        addBlend = true,
+                                        color = {0.52, 0.48, 0.92, 1},
+                                        variantSecondaryColor = {0.72, 0.66, 0.98, 0.9},
+                                        variantTertiaryColor = {1.0, 0.84, 1.0, 0.82},
+                                },
+                        }
+                        applySegmentPosition(celebrationOptions, 0.36)
+                        celebrateUpgrade(getUpgradeString("abyssal_catalyst", "name"), nil, celebrationOptions)
+                end,
+        }),
 	register({
 		id = "spectral_harvest",
 		nameKey = "upgrades.spectral_harvest.name",
@@ -1584,8 +1609,30 @@ local pool = {
                                 Snake:grow()
                         end
                         Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
+
+                        local celebrationOptions = {
+                                color = {0.7, 0.76, 1.0, 1},
+                                particleCount = 18,
+                                particleSpeed = 120,
+                                particleLife = 0.5,
+                                textOffset = 46,
+                                textScale = 1.1,
+                                visual = {
+                                        variant = "chronospiral_core",
+                                        showBase = false,
+                                        life = 0.94,
+                                        innerRadius = 12,
+                                        outerRadius = 60,
+                                        addBlend = true,
+                                        color = {0.68, 0.78, 1.0, 1},
+                                        variantSecondaryColor = {0.82, 0.62, 1.0, 0.92},
+                                        variantTertiaryColor = {1.0, 0.92, 0.64, 0.9},
+                                },
+                        }
+                        applySegmentPosition(celebrationOptions, 0.64)
+                        celebrateUpgrade(getUpgradeString("chronospiral_core", "name"), nil, celebrationOptions)
                 end,
-	}),
+        }),
 	register({
 		id = "phoenix_echo",
 		nameKey = "upgrades.phoenix_echo.name",
