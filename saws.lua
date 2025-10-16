@@ -506,31 +506,46 @@ function Saws:draw()
 		love.graphics.setColor(baseColor)
 		love.graphics.polygon("fill", points)
 
-		-- Determine whether the hub highlight should be visible. When the saw
-		-- is mounted in a wall (vertical with an explicit side) the hub sits
-		-- mostly inside the track. If the track clips through the hub we end
-		-- up with a stray grey arc poking out of the blade edge. Skip drawing
-		-- the highlight (and hub hole) in that situation.
+                -- Determine how the hub highlight should appear. When the saw is mounted
+                -- in a wall (vertical with an explicit side) the hub sits mostly inside
+                -- the track. The stencil clips part of the hub which previously removed
+                -- the highlight entirely. Keep rendering it, but fade the highlight based
+                -- on how deep the hub is occluded so it matches the horizontal saws while
+                -- avoiding a harsh seam at the edge of the track.
 		local highlightRadius = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
-		local hideHubHighlight = false
-		local occlusionDepth = SINK_OFFSET + sinkOffset
+                local hideHubHighlight = false
+                local occlusionDepth = SINK_OFFSET + sinkOffset
+                local highlightAlphaMult = 1
 
-		if saw.dir == "vertical" and (saw.side == "left" or saw.side == "right") then
-			if occlusionDepth < highlightRadius then
-				hideHubHighlight = true
-			end
-		elseif occlusionDepth > highlightRadius then
-			hideHubHighlight = true
-		end
+                if saw.dir == "vertical" and (saw.side == "left" or saw.side == "right") then
+                        -- Wall-mounted vertical saws rest partially inside their track. The
+                        -- hub highlight would normally be clipped by the stencil which makes
+                        -- the center disappear entirely. Keep drawing it, but fade the effect
+                        -- based on how deep the hub is occluded so the exposed portion still
+                        -- reads well without leaving a harsh seam.
+                        if occlusionDepth <= 0 then
+                                hideHubHighlight = true
+                        else
+                                local occlusionRatio = math.min(1, math.max(0, occlusionDepth / highlightRadius))
+                                highlightAlphaMult = 0.4 + 0.6 * occlusionRatio
+                        end
+                elseif occlusionDepth > highlightRadius then
+                        hideHubHighlight = true
+                end
 
-		if not hideHubHighlight then
-			local highlight = getHighlightColor(baseColor)
-			love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-			love.graphics.setLineWidth(2)
-			love.graphics.circle("line", 0, 0, highlightRadius)
-		end
+                if not hideHubHighlight then
+                        local highlight = getHighlightColor(baseColor)
+                        love.graphics.setColor(
+                                highlight[1],
+                                highlight[2],
+                                highlight[3],
+                                (highlight[4] or 1) * highlightAlphaMult
+                        )
+                        love.graphics.setLineWidth(2)
+                        love.graphics.circle("line", 0, 0, highlightRadius)
+                end
 
-		-- Outline
+                -- Outline
 		love.graphics.setColor(0, 0, 0, 1)
 		love.graphics.setLineWidth(3)
 		love.graphics.polygon("line", points)
