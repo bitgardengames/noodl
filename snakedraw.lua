@@ -1138,7 +1138,7 @@ local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
 
         for index = 1, 3 do
                 local radius = baseRadius + arcSpacing * (index - 1)
-                local offset = arcOffset + arcSpacing * (index - 1) * 0.6
+                local offset = -(arcOffset + arcSpacing * (index - 1) * 0.6)
                 local alpha = maxAlpha * (0.55 + 0.2 * (3 - index))
                 local width = lineWidth * (1 - 0.15 * (index - 1))
                 local startAngle = -arcSweep * 0.5
