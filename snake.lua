@@ -1176,6 +1176,7 @@ local function collectUpgradeVisuals(self)
                         stacks = zephyr.stacks or 0,
                         intensity = zephyr.intensity or 0,
                         time = zephyr.time or 0,
+                        hasBody = (segmentCount or 0) > 1,
                 }
         end
 
