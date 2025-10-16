@@ -771,16 +771,6 @@ local function drawEventHorizon(effect, progress)
                 love.graphics.arc("line", "open", x, y, radius, startAngle, startAngle + sweep, 32)
         end
 
-        local shardAlpha = (shardColor[4] or 1) * gravityAlpha
-        for i = 1, 6 do
-                local orbit = innerRadius * (1.2 + i * 0.32)
-                local angle = (effect.rotation or 0) + progress * pi * (2.6 + i * 0.18) + i * 0.8
-                local ex = x + cos(angle) * orbit
-                local ey = y + sin(angle) * orbit
-                love.graphics.setColor(shardColor[1], shardColor[2], shardColor[3], shardAlpha * (0.65 + 0.25 * ((i % 2 == 0) and 1 or 0.8)))
-                love.graphics.circle("fill", ex, ey, innerRadius * 0.22 * clamp01(1.05 - progress * 0.8), 18)
-        end
-
         local rimAlpha = (highlightColor[4] or 1) * clamp01(1 - progress * 1.2)
         love.graphics.setLineWidth(2)
         love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], rimAlpha)
