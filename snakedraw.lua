@@ -1286,6 +1286,8 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
         local intensity = math.max(0, data.intensity or 0)
         if intensity <= 0.01 then return end
 
+        if data.hasBody == false then return end
+
         local stacks = math.max(1, data.stacks or 1)
         local time = data.time or love.timer.getTime()
         local stride = math.max(1, math.floor(#trail / (4 + stacks * 2)))
