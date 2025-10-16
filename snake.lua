@@ -147,23 +147,6 @@ function Snake:addCrashShields(n)
 		UI:setCrashShields(self.crashShields)
 	end
 
-	if n and n > 0 then
-		local headX, headY = self:getHead()
-		if headX and headY then
-			local extra = math.max(0, math.floor(n - 1))
-			UpgradeVisuals:spawn(headX, headY, {
-				color = {0.68, 0.88, 1.0, 1},
-				badge = "shield",
-				ringCount = math.min(4, 2 + extra),
-				outerRadius = 46 + math.min(18, extra * 6),
-				innerRadius = 14,
-				life = 0.78 + math.min(0.3, extra * 0.08),
-				badgeScale = 1 + math.min(0.35, extra * 0.12),
-				glowAlpha = 0.28,
-				haloAlpha = 0.18,
-			})
-		end
-	end
 end
 
 function Snake:consumeCrashShield()
@@ -177,23 +160,9 @@ function Snake:consumeCrashShield()
 		self.crashShields = self.crashShields - 1
 		self.shieldFlashTimer = SHIELD_FLASH_DURATION
 		UI:setCrashShields(self.crashShields)
-		local headX, headY = self:getHead()
-		if headX and headY then
-			UpgradeVisuals:spawn(headX, headY, {
-				color = {1, 0.66, 0.4, 1},
-				badge = "shield",
-				ringCount = 3,
-				outerRadius = 44,
-				innerRadius = 12,
-				life = 0.62,
-				badgeScale = 0.95,
-				glowAlpha = 0.24,
-				haloAlpha = 0.18,
-			})
-		end
-		SessionStats:add("crashShieldsSaved", 1)
-		return true
-	end
+                SessionStats:add("crashShieldsSaved", 1)
+                return true
+        end
 	return false
 end
 
@@ -525,36 +494,7 @@ function Snake:onShieldConsumed(x, y, cause)
 				stall = burstStall,
 			} or nil,
 		})
-	elseif burstTriggered and x and y then
-		UpgradeVisuals:spawn(x, y, {
-			color = {0.72, 0.9, 1, 1},
-			glowColor = {0.58, 0.78, 1, 1},
-			haloColor = {0.46, 0.66, 1, 0.22},
-			badge = "burst",
-			badgeScale = 1.08,
-			ringCount = 4,
-			ringSpacing = 14,
-			ringWidth = 5,
-			innerRadius = 18,
-			outerRadius = 86,
-			life = 0.58,
-			glowAlpha = 0.28,
-			haloAlpha = 0.2,
-		})
-
-		if Particles and Particles.spawnBurst then
-			Particles:spawnBurst(x, y, {
-				count = 22,
-				speed = 140,
-				speedVariance = 70,
-				life = 0.52,
-				size = 7,
-				color = {0.58, 0.82, 1, 0.9},
-				drag = 3.2,
-				fadeTo = 0,
-			})
-		end
-	end
+        end
 end
 
 function Snake:addStoneSkinSawGrace(n)
