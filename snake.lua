@@ -216,6 +216,9 @@ function Snake:resetModifiers()
         self.titanblood = nil
         self.temporalAnchor = nil
         self.quickFangs = nil
+        self.zephyrCoils = nil
+        self.spectralHarvest = nil
+        self.stoneSkinVisual = nil
         UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
 end
 
@@ -254,6 +257,30 @@ function Snake:setQuickFangsStacks(count)
                 if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 then
                         self.quickFangs = nil
                 end
+        end
+end
+
+function Snake:setZephyrCoilsStacks(count)
+        count = math.max(0, math.floor((count or 0) + 0.0001))
+
+        local state = self.zephyrCoils
+        if not state and count <= 0 then
+                return
+        end
+
+        if not state then
+                state = { stacks = 0, intensity = 0, target = 0, time = 0 }
+                self.zephyrCoils = state
+        end
+
+        state.stacks = count
+        if count > 0 then
+                state.target = math.min(1, 0.45 + 0.2 * math.min(count, 3))
+                if (state.intensity or 0) < 0.25 then
+                        state.intensity = math.max(state.intensity or 0, 0.25)
+                end
+        else
+                state.target = 0
         end
 end
 
@@ -340,6 +367,51 @@ function Snake:setPhoenixEchoCharges(count, options)
 
         if count <= 0 and state.target <= 0 and (state.intensity or 0) <= 0 and (state.flareTimer or 0) <= 0 then
                 self.phoenixEcho = nil
+        end
+end
+
+function Snake:setSpectralHarvestReady(active, options)
+        options = options or {}
+        local state = self.spectralHarvest
+
+        if active then
+                if not state then
+                        state = { intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
+                        self.spectralHarvest = state
+                end
+                state.ready = true
+                state.target = math.max(state.target or 0, 1)
+                if options.pulse then
+                        state.burst = math.max(state.burst or 0, options.pulse)
+                end
+                if options.instantIntensity then
+                        state.intensity = math.max(state.intensity or 0, options.instantIntensity)
+                end
+        elseif state then
+                state.ready = false
+                state.target = 0
+                if options.pulse then
+                        state.burst = math.max(state.burst or 0, options.pulse)
+                end
+        elseif options and options.ensure then
+                self.spectralHarvest = { ready = false, intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
+        end
+end
+
+function Snake:triggerSpectralHarvest(options)
+        options = options or {}
+        local state = self.spectralHarvest
+        if not state then
+                state = { intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
+                self.spectralHarvest = state
+        end
+
+        state.ready = false
+        state.target = 0
+        state.burst = math.max(state.burst or 0, options.flash or 1)
+        state.echo = math.max(state.echo or 0, options.echo or 1)
+        if options.instantIntensity then
+                state.intensity = math.max(state.intensity or 0, options.instantIntensity)
         end
 end
 
@@ -484,18 +556,37 @@ function Snake:onShieldConsumed(x, y, cause)
 end
 
 function Snake:addStoneSkinSawGrace(n)
-	n = n or 1
-	if n <= 0 then return end
-	self.stoneSkinSawGrace = (self.stoneSkinSawGrace or 0) + n
+        n = n or 1
+        if n <= 0 then return end
+        self.stoneSkinSawGrace = (self.stoneSkinSawGrace or 0) + n
+
+        local visual = self.stoneSkinVisual
+        if not visual then
+                visual = { intensity = 0, target = 0, flash = 0, time = 0, charges = 0 }
+                self.stoneSkinVisual = visual
+        end
+
+        visual.charges = self.stoneSkinSawGrace or 0
+        visual.target = math.min(1, 0.45 + 0.18 * math.min(visual.charges, 4))
+        visual.intensity = math.max(visual.intensity or 0, 0.32 + 0.12 * math.min(visual.charges, 3))
+        visual.flash = math.max(visual.flash or 0, 0.75)
 end
 
 function Snake:consumeStoneSkinSawGrace()
-	if (self.stoneSkinSawGrace or 0) > 0 then
-		self.stoneSkinSawGrace = self.stoneSkinSawGrace - 1
-		self.shieldFlashTimer = SHIELD_FLASH_DURATION
-		return true
-	end
-	return false
+        if (self.stoneSkinSawGrace or 0) > 0 then
+                self.stoneSkinSawGrace = self.stoneSkinSawGrace - 1
+                self.shieldFlashTimer = SHIELD_FLASH_DURATION
+
+                if self.stoneSkinVisual then
+                        local visual = self.stoneSkinVisual
+                        visual.charges = self.stoneSkinSawGrace or 0
+                        visual.target = math.min(1, 0.45 + 0.18 * math.min(visual.charges, 4))
+                        visual.flash = math.max(visual.flash or 0, 1.0)
+                end
+
+                return true
+        end
+        return false
 end
 
 function Snake:isHazardGraceActive()
@@ -1078,6 +1169,16 @@ local function collectUpgradeVisuals(self)
                 }
         end
 
+        local zephyr = self.zephyrCoils
+        if zephyr and (((zephyr.intensity or 0) > 0.01) or (zephyr.stacks or 0) > 0 or (zephyr.target or 0) > 0) then
+                visuals = visuals or {}
+                visuals.zephyrCoils = {
+                        stacks = zephyr.stacks or 0,
+                        intensity = zephyr.intensity or 0,
+                        time = zephyr.time or 0,
+                }
+        end
+
         if self.timeDilation then
                 visuals = visuals or {}
                 visuals.timeDilation = {
@@ -1173,6 +1274,29 @@ local function collectUpgradeVisuals(self)
                         charges = phoenix.charges or 0,
                         flare = flare,
                         time = phoenix.time or 0,
+                }
+        end
+
+        local stoneSkin = self.stoneSkinVisual
+        if stoneSkin and (((stoneSkin.intensity or 0) > 0.01) or (stoneSkin.flash or 0) > 0 or (stoneSkin.charges or 0) > 0) then
+                visuals = visuals or {}
+                visuals.stoneSkin = {
+                        intensity = stoneSkin.intensity or 0,
+                        flash = stoneSkin.flash or 0,
+                        charges = stoneSkin.charges or 0,
+                        time = stoneSkin.time or 0,
+                }
+        end
+
+        local spectral = self.spectralHarvest
+        if spectral and (((spectral.intensity or 0) > 0.01) or (spectral.burst or 0) > 0 or (spectral.echo or 0) > 0 or spectral.ready) then
+                visuals = visuals or {}
+                visuals.spectralHarvest = {
+                        intensity = spectral.intensity or 0,
+                        burst = spectral.burst or 0,
+                        echo = spectral.echo or 0,
+                        ready = spectral.ready or false,
+                        time = spectral.time or 0,
                 }
         end
 
@@ -1576,6 +1700,51 @@ function Snake:update(dt)
                 state.intensity = intensity
                 if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.01 then
                         self.titanblood = nil
+                end
+        end
+
+        local zephyr = self.zephyrCoils
+        if zephyr then
+                zephyr.time = (zephyr.time or 0) + dt
+                local stacks = zephyr.stacks or 0
+                local target = zephyr.target or (stacks > 0 and math.min(1, 0.45 + 0.2 * math.min(stacks, 3)) or 0)
+                zephyr.target = target
+                local blend = math.min(1, dt * 3.6)
+                local intensity = (zephyr.intensity or 0) + (target - (zephyr.intensity or 0)) * blend
+                zephyr.intensity = intensity
+                if stacks <= 0 and intensity <= 0.01 then
+                        self.zephyrCoils = nil
+                end
+        end
+
+        local stoneSkin = self.stoneSkinVisual
+        if stoneSkin then
+                stoneSkin.time = (stoneSkin.time or 0) + dt
+                local charges = self.stoneSkinSawGrace or 0
+                stoneSkin.charges = charges
+                local target = stoneSkin.target or (charges > 0 and math.min(1, 0.45 + 0.18 * math.min(charges, 4)) or 0)
+                stoneSkin.target = target
+                local blend = math.min(1, dt * 5.2)
+                local current = stoneSkin.intensity or 0
+                stoneSkin.intensity = current + (target - current) * blend
+                stoneSkin.flash = math.max(0, (stoneSkin.flash or 0) - dt * 2.6)
+                if charges <= 0 and stoneSkin.intensity <= 0.02 and stoneSkin.flash <= 0.02 then
+                        self.stoneSkinVisual = nil
+                end
+        end
+
+        local spectral = self.spectralHarvest
+        if spectral then
+                spectral.time = (spectral.time or 0) + dt
+                local target = spectral.target or ((spectral.ready and 1) or 0)
+                spectral.target = target
+                local blend = math.min(1, dt * 3.2)
+                local current = spectral.intensity or 0
+                spectral.intensity = current + (target - current) * blend
+                spectral.burst = math.max(0, (spectral.burst or 0) - dt * 1.8)
+                spectral.echo = math.max(0, (spectral.echo or 0) - dt * 0.9)
+                if not spectral.ready and spectral.target <= 0 and spectral.intensity <= 0.02 and spectral.burst <= 0.02 and spectral.echo <= 0.02 then
+                        self.spectralHarvest = nil
                 end
         end
 

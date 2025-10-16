@@ -1468,30 +1468,47 @@ local pool = {
 		id = "spectral_harvest",
 		nameKey = "upgrades.spectral_harvest.name",
 		descKey = "upgrades.spectral_harvest.description",
-		rarity = "epic",
-		tags = {"economy", "combo"},
-		onAcquire = function(state)
-			state.counters.spectralHarvestReady = true
-		end,
-		handlers = {
-			floorStart = function(_, state)
-				state.counters.spectralHarvestReady = true
-			end,
-			fruitCollected = function(_, state)
-				if not state.counters.spectralHarvestReady then return end
-				state.counters.spectralHarvestReady = false
+                rarity = "epic",
+                tags = {"economy", "combo"},
+                onAcquire = function(state)
+                        state.counters.spectralHarvestReady = true
+                        if Snake and Snake.setSpectralHarvestReady then
+                                Snake:setSpectralHarvestReady(true, { pulse = 0.8, instantIntensity = 0.45 })
+                        end
+                end,
+                handlers = {
+                        floorStart = function(_, state)
+                                state.counters.spectralHarvestReady = true
+                                if Snake and Snake.setSpectralHarvestReady then
+                                        Snake:setSpectralHarvestReady(true, { pulse = 0.6 })
+                                end
+                        end,
+                        fruitCollected = function(_, state)
+                                if not state.counters.spectralHarvestReady then return end
+                                state.counters.spectralHarvestReady = false
 
-				local Fruit = require("fruit")
-				local FruitEvents = require("fruitevents")
-				if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
+                                if Snake then
+                                        if Snake.triggerSpectralHarvest then
+                                                Snake:triggerSpectralHarvest({ flash = 1, echo = 1, instantIntensity = 0.55 })
+                                        elseif Snake.setSpectralHarvestReady then
+                                                Snake:setSpectralHarvestReady(false, { pulse = 0.8 })
+                                        end
+                                end
 
-				local fx, fy = Fruit:getPosition()
-				if not (fx and fy) then return end
+                                local Fruit = require("fruit")
+                                local FruitEvents = require("fruitevents")
+                                if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
 
-				FruitEvents.handleConsumption(fx, fy)
-			end,
-		},
-	}),
+                                local fx, fy = Fruit:getPosition()
+                                if not (fx and fy) then return end
+
+                                FruitEvents.handleConsumption(fx, fy)
+                                if Snake and Snake.setSpectralHarvestReady and not Snake.triggerSpectralHarvest then
+                                        Snake:setSpectralHarvestReady(false)
+                                end
+                        end,
+                },
+        }),
 	register({
 		id = "solar_reservoir",
 		nameKey = "upgrades.solar_reservoir.name",
@@ -1687,18 +1704,29 @@ local pool = {
 			end
 		end,
 	}),
-	register({
-		id = "zephyr_coils",
-		nameKey = "upgrades.zephyr_coils.name",
-		descKey = "upgrades.zephyr_coils.description",
-		rarity = "rare",
-		tags = {"mobility", "risk"},
-		unlockTag = "stormtech",
-		onAcquire = function(state)
-			Snake:addSpeedMultiplier(1.2)
-			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
-		end,
-	}),
+        register({
+                id = "zephyr_coils",
+                nameKey = "upgrades.zephyr_coils.name",
+                descKey = "upgrades.zephyr_coils.description",
+                rarity = "rare",
+                tags = {"mobility", "risk"},
+                unlockTag = "stormtech",
+                onAcquire = function(state)
+                        Snake:addSpeedMultiplier(1.2)
+                        Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
+                        if state then
+                                state.counters = state.counters or {}
+                                local stacks = (state.counters.zephyrCoilsStacks or 0) + 1
+                                state.counters.zephyrCoilsStacks = stacks
+                                if Snake.setZephyrCoilsStacks then
+                                        Snake:setZephyrCoilsStacks(stacks)
+                                end
+                        elseif Snake.setZephyrCoilsStacks then
+                                local stacks = (Snake.zephyrCoils and Snake.zephyrCoils.stacks or 0) + 1
+                                Snake:setZephyrCoilsStacks(stacks)
+                        end
+                end,
+        }),
 	register({
 		id = "event_horizon",
 		nameKey = "upgrades.event_horizon.name",
