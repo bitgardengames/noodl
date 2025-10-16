@@ -313,16 +313,46 @@ DailyChallenges.challenges = {
 		progressKey = "menu.daily.apples.progress",
 		xpReward = 70,
 	},
-	{
-		id = "dragonfruit_delight",
-		titleKey = "menu.daily.dragonfruit.title",
-		descriptionKey = "menu.daily.dragonfruit.description",
-		sessionStat = "dragonfruitEaten",
-		goal = 1,
-		progressKey = "menu.daily.dragonfruit.progress",
-		completeKey = "menu.daily.dragonfruit.complete",
-		xpReward = 90,
-	},
+        {
+                id = "shield_showoff",
+                titleKey = "menu.daily.shield_showoff.title",
+                descriptionKey = "menu.daily.shield_showoff.description",
+                goal = 6,
+                progressKey = "menu.daily.shield_showoff.progress",
+                completeKey = "menu.daily.shield_showoff.complete",
+                getValue = function(self, context)
+                        local rocks, saws = 0, 0
+                        local statsSource = context and context.sessionStats
+                        if statsSource and type(statsSource.get) == "function" then
+                                rocks = statsSource:get("runShieldRockBreaks") or 0
+                                saws = statsSource:get("runShieldSawParries") or 0
+                        elseif SessionStats and SessionStats.get then
+                                rocks = SessionStats:get("runShieldRockBreaks") or 0
+                                saws = SessionStats:get("runShieldSawParries") or 0
+                        end
+
+                        return (rocks or 0) + (saws or 0)
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local rocks, saws = 0, 0
+                        local statsSource = context and context.sessionStats
+                        if statsSource and type(statsSource.get) == "function" then
+                                rocks = statsSource:get("runShieldRockBreaks") or 0
+                                saws = statsSource:get("runShieldSawParries") or 0
+                        elseif SessionStats and SessionStats.get then
+                                rocks = SessionStats:get("runShieldRockBreaks") or 0
+                                saws = SessionStats:get("runShieldSawParries") or 0
+                        end
+
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                rocks = rocks,
+                                saws = saws,
+                        }
+                end,
+                xpReward = 95,
+        },
 	{
 		id = "combo_conductor",
 		titleKey = "menu.daily.combos.title",
