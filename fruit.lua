@@ -321,11 +321,12 @@ local function drawFruit(f)
 	local segments = 32
 	local pulse = f.glowPulse or 1
 
-	-- drop shadow
-	local shadowAlpha = 0.25 * alpha * (f.shadow or 1)
-	local bobStrength = (f.bobOffset or 0) / IDLE_FLOAT_AMPLITUDE
-	shadowAlpha = shadowAlpha * (1 + math.max(0, bobStrength) * 0.4)
-	local shadowScale = 1 + math.max(0, bobStrength) * 0.12
+        -- drop shadow
+        local shadowAlpha = 0.25 * alpha * (f.shadow or 1)
+        local bobStrength = (f.bobOffset or 0) / IDLE_FLOAT_AMPLITUDE
+        local liftStrength = math.max(0, -bobStrength)
+        shadowAlpha = shadowAlpha * (1 + liftStrength * 0.4)
+        local shadowScale = 1 + liftStrength * 0.12
 	love.graphics.setColor(0, 0, 0, shadowAlpha)
 	love.graphics.ellipse(
 		"fill",
