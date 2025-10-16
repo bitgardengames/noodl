@@ -1188,6 +1188,7 @@ local function collectUpgradeVisuals(self)
                         stacks = zephyr.stacks or 0,
                         intensity = zephyr.intensity or 0,
                         time = zephyr.time or 0,
+                        ratio = zephyr.speedRatio or (1 + 0.2 * math.min(1, math.max(0, zephyr.intensity or 0))),
                         hasBody = (segmentCount or 0) > 1,
                 }
         end
@@ -1919,6 +1920,10 @@ function Snake:update(dt)
                 prevRatio = prevRatio + (ratio - prevRatio) * ratioBlend
                 if prevRatio < 0 then prevRatio = 0 end
                 state.ratio = prevRatio
+
+                if self.zephyrCoils then
+                        self.zephyrCoils.speedRatio = prevRatio
+                end
 
                 local timeAdvance = 2.4 + prevRatio * 1.3 + target * 0.8
                 state.time = (state.time or 0) + dt * timeAdvance
