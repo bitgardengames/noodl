@@ -1825,6 +1825,14 @@ local function hudText(key, replacements)
 	return Localization:get("upgrades.hud." .. key, replacements)
 end
 
+local function hudStatus(key)
+	if not key or key == "ready" or key == "charging" then
+		return nil
+	end
+
+	return hudText(key)
+end
+
 function Upgrades:getTakenCount(id)
 	if not id then return 0 end
 	return getStacks(self.runState, id)
@@ -1920,6 +1928,7 @@ function Upgrades:getHUDIndicators()
 			statusKey = "charging"
 		end
 
+		local status = hudStatus(statusKey)
 		local chargeLabel
 		if rate and rate > 0 then
 			chargeLabel = hudText("percent", { percent = math.floor(progress * 100 + 0.5) })
@@ -1932,7 +1941,7 @@ function Upgrades:getHUDIndicators()
 			stackCount = stoneStacks,
 			charge = progress,
 			chargeLabel = chargeLabel,
-			status = hudText(statusKey),
+			status = status,
 			icon = "pickaxe",
 			showBar = true,
 		})
@@ -1958,7 +1967,7 @@ function Upgrades:getHUDIndicators()
 					current = tostring(collected),
 					target = tostring(POCKET_SPRINGS_FRUIT_TARGET),
 				}),
-				status = hudText("charging"),
+				status = hudStatus("charging"),
 				icon = "shield",
 				showBar = true,
 			})
@@ -1980,7 +1989,7 @@ function Upgrades:getHUDIndicators()
 			chargeLabel = hudText("seconds", { seconds = string.format("%.1f", timer) })
 		end
 
-		local status = active and hudText("active") or hudText("ready")
+		local status = active and hudStatus("active") or hudStatus("ready")
 
 		table.insert(indicators, {
 			id = "adrenaline_surge",
@@ -2009,7 +2018,7 @@ function Upgrades:getHUDIndicators()
 			local remaining = math.max(dashState.timer or 0, 0)
 			charge = clamp(remaining / dashState.duration, 0, 1)
 			chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remaining) })
-			status = hudText("active")
+			status = hudStatus("active")
 			showBar = true
 		else
 			local cooldown = dashState.cooldown or 0
@@ -2018,11 +2027,11 @@ function Upgrades:getHUDIndicators()
 				local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
 				charge = progress
 				chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remainingCooldown) })
-				status = hudText("charging")
+				status = hudStatus("charging")
 				showBar = true
 			else
 				charge = 1
-				status = hudText("ready")
+				status = hudStatus("ready")
 			end
 		end
 
@@ -2056,12 +2065,12 @@ function Upgrades:getHUDIndicators()
 			local remaining = math.max(timeState.timer or 0, 0)
 			charge = clamp(remaining / timeState.duration, 0, 1)
 			chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remaining) })
-			status = hudText("active")
+			status = hudStatus("active")
 			showBar = true
 		else
 			if maxUses and chargesRemaining ~= nil and chargesRemaining <= 0 then
 				charge = 0
-				status = hudText("depleted")
+				status = hudStatus("depleted")
 				chargeLabel = nil
 				showBar = false
 			else
@@ -2071,11 +2080,11 @@ function Upgrades:getHUDIndicators()
 					local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
 					charge = progress
 					chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remainingCooldown) })
-					status = hudText("charging")
+					status = hudStatus("charging")
 					showBar = true
 				else
 					charge = 1
-					status = hudText("ready")
+					status = hudStatus("ready")
 				end
 			end
 		end
