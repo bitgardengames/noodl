@@ -1435,15 +1435,16 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
                 end
         end
 
-        local head = trail[1]
-        local hx, hy = ptXY(head)
-        if hx and hy then
-                love.graphics.setColor(0.7, 0.92, 1.0, 0.2 + 0.32 * intensity)
-                love.graphics.setLineWidth(2)
-                local sweep = math.pi * 0.5
-                love.graphics.arc("line", "open", hx, hy, SEGMENT_SIZE * (1.15 + 0.35 * intensity), -sweep * 0.5, sweep * 0.5, 24)
-                love.graphics.arc("line", "open", hx, hy, SEGMENT_SIZE * (1.55 + 0.5 * intensity), -sweep * 0.3, sweep * 0.3, 24)
+        local ratio = data.ratio
+        if not ratio or ratio <= 0 then
+                ratio = 1 + 0.2 * math.min(1, math.max(0, intensity))
         end
+
+        drawSpeedMotionArcs(trail, SEGMENT_SIZE, {
+                intensity = intensity,
+                ratio = ratio,
+                time = time,
+        })
 
         love.graphics.pop()
 end
