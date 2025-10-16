@@ -1717,7 +1717,8 @@ local function drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, data)
 
         local stacks = math.max(1, data.stacks or 1)
         local pulse = data.pulse or 0
-        local baseRadius = SEGMENT_SIZE * (0.48 + 0.14 * math.min(stacks, 3))
+        local stackFactor = math.min(stacks, 3)
+        local baseRadius = SEGMENT_SIZE * (0.32 + 0.08 * stackFactor)
         local orbCount = math.min(28, (#trail - 1) * 2)
 
         love.graphics.push("all")
@@ -1744,8 +1745,8 @@ local function drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, data)
                         end
                         local perpX, perpY = -dirY, dirX
                         local swirl = pulse * 1.4 + progress * math.pi * 4
-                        local offset = math.sin(swirl) * baseRadius * (0.9 + intensity * 0.7)
-                        local drift = math.cos(swirl * 0.6) * baseRadius * 0.35
+                        local offset = math.sin(swirl) * baseRadius * (0.52 + intensity * 0.4)
+                        local drift = math.cos(swirl * 0.8) * baseRadius * 0.18
                         local ax = x + perpX * offset + dirX * drift
                         local ay = y + perpY * offset + dirY * drift
                         local fade = 1 - progress * 0.6
@@ -1756,15 +1757,6 @@ local function drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, data)
                         love.graphics.setColor(0.68, 0.56, 0.94, 0.18 * intensity * fade)
                         love.graphics.circle("line", ax, ay, orbRadius * 1.9)
                 end
-        end
-
-        local headSeg = trail[1]
-        local hx, hy = ptXY(headSeg)
-        if hx and hy then
-                drawSoftGlow(hx, hy, baseRadius * (2.4 + 0.4 * intensity), 0.62, 0.42, 0.94, 0.22 + 0.3 * intensity)
-                love.graphics.setColor(0.22, 0.14, 0.36, 0.18 + 0.28 * intensity)
-                love.graphics.setLineWidth(2.2)
-                love.graphics.circle("line", hx, hy, baseRadius * (2.0 + 0.55 * intensity))
         end
 
         love.graphics.pop()
