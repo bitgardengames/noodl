@@ -623,7 +623,7 @@ local STATE_UPDATERS = {
 local function drawAdrenalineGlow(self)
 	local glowStrength = Score:getHighScoreGlowStrength()
 
-	if Snake.adrenaline and Snake.adrenaline.active then
+	if Snake.adrenaline and Snake.adrenaline.active and not Snake.adrenaline.suppressVisuals then
 		local duration = Snake.adrenaline.duration or 1
 		if duration > 0 then
 			local adrenalineStrength = math.max(0, math.min(1, (Snake.adrenaline.timer or 0) / duration))
@@ -681,6 +681,7 @@ function Game:load(options)
 
 	if Snake.adrenaline then
 		Snake.adrenaline.active = false
+		Snake.adrenaline.suppressVisuals = nil
 	end
 
 	self:setupFloor(self.floor)
@@ -1407,6 +1408,7 @@ function Game:setupFloor(floorNum)
 	if Snake.adrenaline then
 		Snake.adrenaline.active = false
 		Snake.adrenaline.timer = 0
+		Snake.adrenaline.suppressVisuals = nil
 	end
 
 	FloorSetup.finalizeContext(traitContext, spawnPlan)
