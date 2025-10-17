@@ -1039,11 +1039,9 @@ function Shop:draw(screenW, screenH)
 
 		local centerX = baseX + cardWidth / 2
 		local centerY = baseY + cardHeight / 2 - yOffset
-		local originalCenterX, originalCenterY = centerX, centerY
-
-		if card == self.selected then
-			centerX = centerX + (screenW / 2 - centerX) * focusEase
-			local targetY = layoutCenterY
+                if card == self.selected then
+                        centerX = centerX + (screenW / 2 - centerX) * focusEase
+                        local targetY = layoutCenterY
 			centerY = centerY + (targetY - centerY) * focusEase
 		else
 			if discardData then
