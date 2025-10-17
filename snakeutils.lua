@@ -4,7 +4,6 @@ local SnakeUtils = {}
 
 SnakeUtils.SEGMENT_SIZE = 24
 SnakeUtils.SEGMENT_SPACING = SnakeUtils.SEGMENT_SIZE
-SnakeUtils.SPEED = 8 -- cells per second now, not pixels
 SnakeUtils.POP_DURATION = 0.3
 
 SnakeUtils.occupied = {}
@@ -86,37 +85,6 @@ function SnakeUtils.releaseCells(cells)
 	markCells(cells, false)
 end
 
-function SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
-	local centerCol, centerRow = Arena:getTileFromWorld(fx, fy)
-	local tileSize = SnakeUtils.SEGMENT_SIZE
-	local halfTiles = math.floor((trackLength / tileSize) / 2)
-	local cells = {}
-
-	if dir == "horizontal" then
-		local startCol = centerCol - halfTiles
-		local endCol   = centerCol + halfTiles
-		if startCol < 1 or endCol > Arena.cols then
-			return {}
-		end
-
-		for c = startCol, endCol do
-			cells[#cells + 1] = {c, centerRow}
-		end
-	else
-		local startRow = centerRow - halfTiles
-		local endRow   = centerRow + halfTiles
-		if startRow < 1 or endRow > Arena.rows then
-			return {}
-		end
-
-		for r = startRow, endRow do
-			cells[#cells + 1] = {centerCol, r}
-		end
-	end
-
-	return cells
-end
-
 local SAW_TRACK_OFFSETS = {-2, -1, 0, 1, 2}
 
 function SnakeUtils.getSawTrackCells(fx, fy, dir)
@@ -168,21 +136,10 @@ local function cellsAreFree(cells)
 	return true
 end
 
-function SnakeUtils.trackIsFree(fx, fy, dir, trackLength)
-	return cellsAreFree(SnakeUtils.getTrackCells(fx, fy, dir, trackLength))
-end
-
--- Mark every grid cell overlapped by a hazard track
-function SnakeUtils.occupyTrack(fx, fy, dir, trackLength)
-	local cells = SnakeUtils.getTrackCells(fx, fy, dir, trackLength)
-	markCells(cells, true)
-	return cells
-end
-
 function SnakeUtils.occupySawTrack(fx, fy, dir)
-	local cells = SnakeUtils.getSawTrackCells(fx, fy, dir)
-	markCells(cells, true)
-	return cells
+        local cells = SnakeUtils.getSawTrackCells(fx, fy, dir)
+        markCells(cells, true)
+        return cells
 end
 
 function SnakeUtils.sawTrackIsFree(fx, fy, dir)
