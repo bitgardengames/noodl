@@ -2118,10 +2118,6 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                 drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
         end
 
-        if upgradeVisuals and upgradeVisuals.stoneSkin then
-                drawStoneSkinBulwark(trail, SEGMENT_SIZE, upgradeVisuals.stoneSkin)
-        end
-
         if upgradeVisuals and upgradeVisuals.dash then
                 drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
         end
