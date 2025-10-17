@@ -2,6 +2,7 @@ local ModuleUtil = {}
 
 local noop = function() end
 local LIFECYCLE_HOOKS = { "load", "reset", "update", "draw" }
+local EMPTY_TABLE = {}
 
 function ModuleUtil.create(name, defaults)
 	if defaults ~= nil and type(defaults) ~= "table" then
@@ -25,7 +26,7 @@ local function ensureLifecycle(system, fallbacks)
                 error("system must be a table")
         end
 
-        local fallbackHandlers = fallbacks or {}
+        local fallbackHandlers = fallbacks or EMPTY_TABLE
 
 	for _, hook in ipairs(LIFECYCLE_HOOKS) do
 		if system[hook] == nil then

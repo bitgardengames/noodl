@@ -14,6 +14,11 @@ local currentFloorLabel = nil
 local ButtonList = require("buttonlist")
 local ANALOG_DEADZONE = 0.35
 local panelBounds = { x = 0, y = 0, w = 0, h = 0 }
+local panelFillColor = { 0, 0, 0, 1 }
+local panelBorderColor = { 0, 0, 0, 1 }
+local panelDrawOptions = { fill = panelFillColor, borderColor = panelBorderColor, shadowAlpha = 1 }
+local subtitleLabelOptions = { fontKey = "subtitle", alpha = 1 }
+local toggleLabelArgs = { state = nil }
 
 local function toggleMusic()
 	Audio:playSound("click")
@@ -101,15 +106,21 @@ local function handleAnalogAxis(axis, value)
 end
 
 local function getToggleLabel(id)
-	if id == "pauseToggleMusic" then
-		local state = Settings.muteMusic and Localization:get("common.off") or Localization:get("common.on")
-		return Localization:get("pause.toggle_music", { state = state })
-	elseif id == "pauseToggleSFX" then
-		local state = Settings.muteSFX and Localization:get("common.off") or Localization:get("common.on")
-		return Localization:get("pause.toggle_sfx", { state = state })
-	end
+        if id == "pauseToggleMusic" then
+                local state = Settings.muteMusic and Localization:get("common.off") or Localization:get("common.on")
+                toggleLabelArgs.state = state
+                local label = Localization:get("pause.toggle_music", toggleLabelArgs)
+                toggleLabelArgs.state = nil
+                return label
+        elseif id == "pauseToggleSFX" then
+                local state = Settings.muteSFX and Localization:get("common.off") or Localization:get("common.on")
+                toggleLabelArgs.state = state
+                local label = Localization:get("pause.toggle_sfx", toggleLabelArgs)
+                toggleLabelArgs.state = nil
+                return label
+        end
 
-	return nil
+        return nil
 end
 
 function PauseMenu:updateButtonLabels()
@@ -146,7 +157,10 @@ function PauseMenu:load(screenWidth, screenHeight)
 	local panelX = centerX - panelWidth / 2
 	local panelY = centerY - panelHeight / 2
 
-	panelBounds = { x = panelX, y = panelY, w = panelWidth, h = panelHeight }
+        panelBounds.x = panelX
+        panelBounds.y = panelY
+        panelBounds.w = panelWidth
+        panelBounds.h = panelHeight
 
 	local defs = {}
 
@@ -212,29 +226,30 @@ function PauseMenu:draw(screenWidth, screenHeight)
 	love.graphics.setColor(0, 0, 0, 0.55 * alpha)
 	love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
 
-	if currentFloorLabel then
-		UI.drawLabel(currentFloorLabel, 0, UI.spacing.panelPadding, screenWidth, "center", {
-			fontKey = "subtitle",
-			alpha = alpha,
-		})
-	end
+        if currentFloorLabel then
+                subtitleLabelOptions.alpha = alpha
+                UI.drawLabel(currentFloorLabel, 0, UI.spacing.panelPadding, screenWidth, "center", subtitleLabelOptions)
+        end
 
-	local panel = panelBounds
-	if panel and panel.w > 0 and panel.h > 0 then
-		local panelFill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * alpha }
-		local panelBorder = { Theme.panelBorder[1], Theme.panelBorder[2], Theme.panelBorder[3], (Theme.panelBorder[4] or 1) * alpha }
+        local panel = panelBounds
+        if panel and panel.w > 0 and panel.h > 0 then
+                panelFillColor[1] = Theme.panelColor[1]
+                panelFillColor[2] = Theme.panelColor[2]
+                panelFillColor[3] = Theme.panelColor[3]
+                panelFillColor[4] = (Theme.panelColor[4] or 1) * alpha
 
-		UI.drawPanel(panel.x, panel.y, panel.w, panel.h, {
-			fill = panelFill,
-			borderColor = panelBorder,
-			shadowAlpha = alpha,
-		})
+                panelBorderColor[1] = Theme.panelBorder[1]
+                panelBorderColor[2] = Theme.panelBorder[2]
+                panelBorderColor[3] = Theme.panelBorder[3]
+                panelBorderColor[4] = (Theme.panelBorder[4] or 1) * alpha
 
-		UI.drawLabel(Localization:get("pause.title"), panel.x, panel.y + UI.spacing.panelPadding, panel.w, "center", {
-			fontKey = "subtitle",
-			alpha = alpha,
-		})
-	end
+                panelDrawOptions.shadowAlpha = alpha
+
+                UI.drawPanel(panel.x, panel.y, panel.w, panel.h, panelDrawOptions)
+
+                subtitleLabelOptions.alpha = alpha
+                UI.drawLabel(Localization:get("pause.title"), panel.x, panel.y + UI.spacing.panelPadding, panel.w, "center", subtitleLabelOptions)
+        end
 
 	buttonList:draw()
 end
