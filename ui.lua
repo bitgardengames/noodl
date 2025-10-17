@@ -5,9 +5,6 @@ local Easing = require("easing")
 
 local UI = {}
 
-local scorePulse = 1.0
-local pulseTimer = 0
-local PULSE_DURATION = 0.3
 
 UI.fruitCollected = 0
 UI.fruitRequired = 0
@@ -632,11 +629,8 @@ function UI:mousereleased(x, y, button)
 	end
 end
 
--- Score pulse logic
 function UI:reset()
-	scorePulse = 1.0
-	pulseTimer = 0
-	self.combo.count = 0
+        self.combo.count = 0
 	self.combo.timer = 0
 	self.combo.duration = 0
 	self.combo.pop = 0
@@ -646,11 +640,6 @@ function UI:reset()
 	self.shields.shakeTimer = 0
 	self.shields.flashTimer = 0
 	self.shields.lastDirection = 0
-end
-
-function UI:triggerScorePulse()
-	scorePulse = 1.2
-	pulseTimer = 0
 end
 
 function UI:setFruitGoal(required)
@@ -781,16 +770,6 @@ function UI:celebrateGoal()
 end
 
 function UI:update(dt)
-	--[[ Update score pulse
-	pulseTimer = pulseTimer + dt
-	if pulseTimer > PULSE_DURATION then
-		scorePulse = 1.0
-	else
-		local progress = pulseTimer / PULSE_DURATION
-		scorePulse = 1.2 - 0.2 * progress
-	end]]
-
-	-- Update button animations
 	for _, button in pairs(UI.buttons) do
 		local hoverTarget = button.hoverTarget or 0
 		local focusTarget = button.focused and 1 or 0
