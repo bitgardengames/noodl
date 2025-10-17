@@ -25,7 +25,6 @@ local english = {
 			daily_panel_header = "Daily Challenge",
 			daily_panel_progress = "Progress: ${current}/${goal}",
 			daily_panel_complete = "Challenge complete! You're at ${current}.",
-			daily_panel_bonus = "Bonus XP: +${xp}",
 			daily_panel_streak = "Current streak: ${streak} ${unit}",
 			daily_panel_best = "Best streak: ${best} ${unit}",
 			daily_panel_keep_alive = "Don't miss today's challenge to keep it alive!",
