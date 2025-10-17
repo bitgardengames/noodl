@@ -1705,7 +1705,7 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 
 	local scoreLabel = getLocalizedOrFallback("gameover.score_label", "Score")
 	local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
-	local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Apples")
+        local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Fruit")
 
 	local entries = {
 		{
@@ -1788,7 +1788,7 @@ local function drawStatsPanel(self, x, y, width, height, sectionPadding, innerSp
 	statsY = statsY + fontProgressSmall:getHeight() + innerSpacing
 
 	local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
-	local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Apples")
+        local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Fruit")
 	local statCards = {
 		{ label = bestLabel, value = tostring(stats.highScore or 0) },
 		{ label = applesLabel, value = tostring(stats.apples or 0) },
