@@ -1764,6 +1764,36 @@ local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
         love.graphics.pop()
 end
 
+local function drawChronoWardPulse(hx, hy, SEGMENT_SIZE, data)
+        if not data then return end
+
+        local intensity = math.max(data.intensity or 0, data.active and 0.3 or 0)
+        if intensity <= 0 then return end
+
+        local now = love.timer.getTime()
+        local baseRadius = SEGMENT_SIZE * (1.05 + 0.35 * intensity)
+
+        drawSoftGlow(hx, hy, baseRadius * 1.45, 0.58, 0.86, 1.0, 0.18 + 0.28 * intensity)
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("add")
+
+        for i = 1, 3 do
+                local phase = (now * 1.6 + i * 0.42) % 1
+                local radius = baseRadius * (1.0 + phase * 0.7)
+                local alpha = (0.16 + 0.32 * intensity) * (1 - phase)
+                if alpha > 0 then
+                        love.graphics.setColor(0.62, 0.9, 1.0, alpha)
+                        love.graphics.circle("line", hx, hy, radius)
+                end
+        end
+
+        love.graphics.setColor(0.84, 0.96, 1.0, 0.12 + 0.2 * intensity)
+        love.graphics.circle("fill", hx, hy, baseRadius * 0.45)
+
+        love.graphics.pop()
+end
+
 local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
         if not data then return end
 
@@ -2132,6 +2162,10 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
         if hx and hy and drawFace ~= false then
         if upgradeVisuals and upgradeVisuals.temporalAnchor then
                 drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
+        end
+
+        if upgradeVisuals and upgradeVisuals.chronoWard then
+                drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
         end
 
         if upgradeVisuals and upgradeVisuals.timeDilation then

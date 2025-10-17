@@ -90,6 +90,8 @@ function RunState:resetEffects(defaults)
 end
 
 local POCKET_SPRINGS_FRUIT_TARGET = 20
+local CHRONO_WARD_DEFAULT_DURATION = 0.85
+local CHRONO_WARD_DEFAULT_SCALE = 0.45
 
 local function getStacks(state, id)
 	if not state or not id then
@@ -179,6 +181,18 @@ local function getSegmentPosition(fraction)
         end
 
         return nil, nil
+end
+
+local function triggerChronoWard(state, data)
+        if not Snake or not Snake.triggerChronoWard then
+                return
+        end
+
+        local effects = state and state.effects or {}
+        local duration = effects.chronoWardDuration or CHRONO_WARD_DEFAULT_DURATION
+        local scale = effects.chronoWardScale or CHRONO_WARD_DEFAULT_SCALE
+
+        Snake:triggerChronoWard(duration, scale)
 end
 
 local function applySegmentPosition(options, fraction)
@@ -1671,48 +1685,87 @@ local pool = {
 			end
 		end,
 	}),
-	register({
-		id = "sparkstep_relay",
-		nameKey = "upgrades.sparkstep_relay.name",
-		descKey = "upgrades.sparkstep_relay.description",
-		rarity = "rare",
-		requiresTags = {"mobility"},
-		tags = {"mobility", "defense"},
-		unlockTag = "stormtech",
-		handlers = {
-			dashActivated = function(data)
-				local fx, fy = getEventPosition(data)
-				if Rocks and Rocks.shatterNearest then
-					Rocks:shatterNearest(fx or 0, fy or 0, 1)
-				end
-				if Saws and Saws.stall then
-					Saws:stall(0.6)
-				end
-				celebrateUpgrade(getUpgradeString("sparkstep_relay", "activation_text"), data, {
-					color = {1.0, 0.78, 0.36, 1},
-					particleCount = 20,
-					particleSpeed = 150,
-					particleLife = 0.36,
-					textOffset = 56,
-					textScale = 1.16,
-					visual = {
-						badge = "bolt",
-						outerRadius = 54,
-						innerRadius = 18,
-						ringCount = 3,
-						life = 0.6,
-						glowAlpha = 0.32,
-						haloAlpha = 0.22,
-					},
-				})
-			end,
-		},
+        register({
+                id = "sparkstep_relay",
+                nameKey = "upgrades.sparkstep_relay.name",
+                descKey = "upgrades.sparkstep_relay.description",
+                rarity = "rare",
+                requiresTags = {"mobility"},
+                tags = {"mobility", "defense"},
+                unlockTag = "stormtech",
+                handlers = {
+                        dashActivated = function(data)
+                                local fx, fy = getEventPosition(data)
+                                if Rocks and Rocks.shatterNearest then
+                                        Rocks:shatterNearest(fx or 0, fy or 0, 1)
+                                end
+                                if Saws and Saws.stall then
+                                        Saws:stall(0.6)
+                                end
+                                celebrateUpgrade(getUpgradeString("sparkstep_relay", "activation_text"), data, {
+                                        color = {1.0, 0.78, 0.36, 1},
+                                        particleCount = 20,
+                                        particleSpeed = 150,
+                                        particleLife = 0.36,
+                                        textOffset = 56,
+                                        textScale = 1.16,
+                                        visual = {
+                                                badge = "bolt",
+                                                outerRadius = 54,
+                                                innerRadius = 18,
+                                                ringCount = 3,
+                                                life = 0.6,
+                                                glowAlpha = 0.32,
+                                                haloAlpha = 0.22,
+                                        },
+                                })
+                        end,
+                },
+        }),
+        register({
+                id = "chrono_ward",
+                nameKey = "upgrades.chrono_ward.name",
+                descKey = "upgrades.chrono_ward.description",
+                rarity = "rare",
+                tags = {"defense", "utility"},
+                allowDuplicates = false,
+                unlockTag = "timekeeper",
+                onAcquire = function(state)
+                        state.effects = state.effects or {}
+                        state.effects.chronoWardDuration = CHRONO_WARD_DEFAULT_DURATION
+                        state.effects.chronoWardScale = CHRONO_WARD_DEFAULT_SCALE
+
+                        local celebrationOptions = {
+                                color = {0.62, 0.86, 1.0, 1},
+                                particleCount = 16,
+                                particleSpeed = 110,
+                                particleLife = 0.42,
+                                textOffset = 52,
+                                textScale = 1.12,
+                                visual = {
+                                        badge = "shield",
+                                        outerRadius = 56,
+                                        innerRadius = 16,
+                                        ringCount = 3,
+                                        life = 0.7,
+                                        glowAlpha = 0.26,
+                                        haloAlpha = 0.18,
+                                },
+                        }
+                        applySegmentPosition(celebrationOptions, 0.36)
+                        celebrateUpgrade(getUpgradeString("chrono_ward", "name"), nil, celebrationOptions)
+                end,
+                handlers = {
+                        shieldConsumed = function(data, state)
+                                triggerChronoWard(state, data)
+                        end,
+                },
         }),
         register({
                 id = "temporal_anchor",
-		nameKey = "upgrades.temporal_anchor.name",
-		descKey = "upgrades.temporal_anchor.description",
-		rarity = "rare",
+                nameKey = "upgrades.temporal_anchor.name",
+                descKey = "upgrades.temporal_anchor.description",
+                rarity = "rare",
 		tags = {"utility", "defense"},
 		allowDuplicates = false,
 		unlockTag = "timekeeper",

@@ -26,6 +26,7 @@
 | Stone Census | Rare | Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%). | Tags: economy, defense; Requires tags: economy |
 | Stonebreaker Hymn | Rare | Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock. | Up to 2 stacks |
 | Tectonic Resolve | Rare | Rock spawn chance decreases by 15%. Each fruit has a 25% chance to shatter the nearest rock. | Tags: defense |
+| Chrono Ward | Rare | Each time a crash shield is consumed, time slows briefly so you can thread through danger. | Tags: defense, utility; Unlock tag: timekeeper |
 | Temporal Anchor | Rare | Press Shift (or X/Left Shoulder on a controller) to slow time for a short duration, reducing all movement to 35% speed. | Tags: utility, defense; Unlock tag: timekeeper |
 | Thunder Dash | Rare | Press Space (or A/Right Shoulder on a controller) to dash forward, smashing through rocks while briefly speeding up. | Tags: mobility; Unlock tag: abilities |
 | Warden's Chorus | Rare | Each Defense upgrade adds crash shield progress at the start of every floor. | Tags: defense; Requires tags: defense; Unlock tag: specialist |

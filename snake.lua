@@ -97,6 +97,7 @@ Snake.stonebreakerStacks = 0
 Snake.stoneSkinSawGrace = 0
 Snake.dash = nil
 Snake.timeDilation = nil
+Snake.chronoWard = nil
 Snake.hazardGraceTimer = 0
 Snake.chronospiral = nil
 Snake.abyssalCatalyst = nil
@@ -107,22 +108,34 @@ Snake.titanblood = nil
 Snake.temporalAnchor = nil
 Snake.quickFangs = nil
 
-local function resolveTimeDilationScale(ability)
-	if ability and ability.active then
-		local scale = ability.timeScale or 1
-		if not (scale and scale > 0) then
-			scale = 0.05
-		end
-		return scale
-	end
+local function resolveTimeDilationScale(primary, secondary)
+        local scale = 1
 
-	return 1
+        if primary and primary.active then
+                local primaryScale = primary.timeScale or 1
+                if not (primaryScale and primaryScale > 0) then
+                        primaryScale = 0.05
+                end
+                scale = primaryScale
+        end
+
+        if secondary and secondary.active then
+                local secondaryScale = secondary.timeScale or 1
+                if not (secondaryScale and secondaryScale > 0) then
+                        secondaryScale = 0.05
+                end
+                if secondaryScale < scale then
+                        scale = secondaryScale
+                end
+        end
+
+        return scale
 end
 
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
-	local speed = (self.baseSpeed or 1) * (self.speedMult or 1)
-	local scale = resolveTimeDilationScale(self.timeDilation)
+        local speed = (self.baseSpeed or 1) * (self.speedMult or 1)
+        local scale = resolveTimeDilationScale(self.timeDilation, self.chronoWard)
 	if scale ~= 1 then
 		speed = speed * scale
 	end
@@ -1138,9 +1151,19 @@ local function collectUpgradeVisuals(self)
                 visuals.timeDilation = {
                         active = self.timeDilation.active or false,
                         timer = self.timeDilation.timer or 0,
-			duration = self.timeDilation.duration or 0,
-			cooldown = self.timeDilation.cooldown or 0,
+                        duration = self.timeDilation.duration or 0,
+                        cooldown = self.timeDilation.cooldown or 0,
                         cooldownTimer = self.timeDilation.cooldownTimer or 0,
+                }
+        end
+
+        local chronoWard = self.chronoWard
+        if chronoWard and (((chronoWard.intensity or 0) > 1e-3) or chronoWard.active) then
+                visuals = visuals or {}
+                visuals.chronoWard = {
+                        active = chronoWard.active or false,
+                        intensity = chronoWard.intensity or 0,
+                        time = chronoWard.time or 0,
                 }
         end
 
@@ -1760,6 +1783,29 @@ function Snake:update(dt)
                 end
         end
 
+        if self.chronoWard then
+                local ward = self.chronoWard
+                ward.time = (ward.time or 0) + dt
+
+                if ward.active then
+                        ward.timer = (ward.timer or 0) - dt
+                        if ward.timer <= 0 then
+                                ward.active = false
+                                ward.timer = 0
+                        end
+                end
+
+                local target = ward.active and 1 or 0
+                ward.target = target
+                local blend = math.min(1, dt * 6.0)
+                local currentIntensity = ward.intensity or 0
+                ward.intensity = currentIntensity + (target - currentIntensity) * blend
+
+                if not ward.active and (ward.intensity or 0) <= 0.01 then
+                        self.chronoWard = nil
+                end
+        end
+
         local dilation = self.timeDilation
         if dilation and dilation.source == "temporal_anchor" then
                 local state = self.temporalAnchor
@@ -2191,10 +2237,10 @@ function Snake:onDashBreakRock(x, y)
 end
 
 function Snake:activateTimeDilation()
-	local ability = self.timeDilation
-	if not ability or ability.active then
-		return false
-	end
+        local ability = self.timeDilation
+        if not ability or ability.active then
+                return false
+        end
 
 	if (ability.cooldownTimer or 0) > 0 then
 		return false
@@ -2230,14 +2276,48 @@ function Snake:activateTimeDilation()
 		})
 	end
 
-	return ability.active
+        return ability.active
+end
+
+function Snake:triggerChronoWard(duration, scale)
+        duration = duration or 0
+        if duration <= 0 then
+                return false
+        end
+
+        scale = scale or 0.45
+        if not (scale and scale > 0) then
+                scale = 0.05
+        else
+                scale = math.max(0.05, math.min(1, scale))
+        end
+
+        local effect = self.chronoWard
+        if not effect then
+                effect = {}
+                self.chronoWard = effect
+        end
+
+        effect.duration = duration
+        effect.timeScale = math.min(effect.timeScale or 1, scale)
+        if not (effect.timeScale and effect.timeScale > 0) then
+                effect.timeScale = scale
+        end
+
+        effect.timer = math.max(effect.timer or 0, duration)
+        effect.active = true
+        effect.target = 1
+        effect.time = effect.time or 0
+        effect.intensity = effect.intensity or 0
+
+        return true
 end
 
 function Snake:getTimeDilationState()
-	local ability = self.timeDilation
-	if not ability then
-		return nil
-	end
+        local ability = self.timeDilation
+        if not ability then
+                return nil
+        end
 
 	return {
 		active = ability.active or false,
@@ -2252,7 +2332,7 @@ function Snake:getTimeDilationState()
 end
 
 function Snake:getTimeScale()
-	return resolveTimeDilationScale(self.timeDilation)
+        return resolveTimeDilationScale(self.timeDilation, self.chronoWard)
 end
 
 function Snake:grow()
