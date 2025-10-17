@@ -13,7 +13,7 @@ local FloatingText = require("floatingtext")
 
 local Snake = {}
 
-local unpack = table.unpack or unpack
+local unpack = unpack
 
 local screenW, screenH
 local direction = { x = 1, y = 0 }
