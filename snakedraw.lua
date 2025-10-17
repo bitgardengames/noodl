@@ -1314,18 +1314,6 @@ local function drawEventHorizonSheath(trail, SEGMENT_SIZE, data)
                         love.graphics.setLineWidth(SEGMENT_SIZE * (0.08 + 0.05 * intensity) * fade)
                         love.graphics.circle("line", px, py, radius)
 
-                        local shardCount = 3
-                        for shard = 1, shardCount do
-                                local angle = swirl + shard * (math.pi * 2 / shardCount)
-                                local orbit = radius * (1.2 + 0.12 * shard)
-                                local ox = px + math.cos(angle) * orbit
-                                local oy = py + math.sin(angle) * orbit
-                                local shardSize = SEGMENT_SIZE * (0.12 + 0.07 * intensity) * fade
-                                love.graphics.setColor(0.96, 0.84, 0.46, (0.18 + 0.24 * intensity) * fade)
-                                love.graphics.circle("fill", ox, oy, shardSize)
-                                love.graphics.setColor(0.36, 0.66, 1.0, (0.2 + 0.28 * intensity) * fade)
-                                love.graphics.circle("line", ox, oy, shardSize * 1.35)
-                        end
                 end
         end
 
