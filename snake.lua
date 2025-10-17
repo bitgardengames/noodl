@@ -86,7 +86,7 @@ local HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after survivi
 local DAMAGE_FLASH_DURATION = 0.45
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
-local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.18 -- allow a little leeway before counting self-collision
+local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.30 -- broader tolerance so near misses and tight turns don't falsely register
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
