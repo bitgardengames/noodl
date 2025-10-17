@@ -48,37 +48,46 @@ local function normalizeCell(col, row)
 	return col, row
 end
 
-local function forEachNormalizedCell(cells, callback)
-	if not cells then
-		return
-	end
-
-	for _, cell in ipairs(cells) do
-		local col, row = normalizeCell(cell[1], cell[2])
-		if col then
-			callback(col, row)
-		end
-	end
-end
-
 local function markCells(cells, value)
-	forEachNormalizedCell(cells, function(col, row)
-		SnakeUtils.setOccupied(col, row, value)
-	end)
+        if not cells then
+                return
+        end
+
+        local occupied = SnakeUtils.occupied
+        for i = 1, #cells do
+                local cell = cells[i]
+                local col, row = normalizeCell(cell[1], cell[2])
+                if col then
+                        local column = occupied[col]
+                        if column and column[row] ~= nil then
+                                column[row] = value
+                        end
+                end
+        end
 end
 
 -- Reserve a collection of cells and return the subset that we actually marked.
 function SnakeUtils.reserveCells(cells)
-	local reserved = {}
+        local reserved = {}
 
-	forEachNormalizedCell(cells, function(col, row)
-		if not SnakeUtils.isOccupied(col, row) then
-			SnakeUtils.setOccupied(col, row, true)
-			reserved[#reserved + 1] = {col, row}
-		end
-	end)
+        if not cells then
+                return reserved
+        end
 
-	return reserved
+        local occupied = SnakeUtils.occupied
+        for i = 1, #cells do
+                local cell = cells[i]
+                local col, row = normalizeCell(cell[1], cell[2])
+                if col then
+                        local column = occupied[col]
+                        if column and not column[row] then
+                                column[row] = true
+                                reserved[#reserved + 1] = {col, row}
+                        end
+                end
+        end
+
+        return reserved
 end
 
 function SnakeUtils.releaseCells(cells)
@@ -123,15 +132,18 @@ function SnakeUtils.getSawTrackCells(fx, fy, dir)
 end
 
 local function cellsAreFree(cells)
-	if not cells or #cells == 0 then
-		return false
-	end
+        if not cells or #cells == 0 then
+                return false
+        end
 
-	for _, cell in ipairs(cells) do
-		if SnakeUtils.isOccupied(cell[1], cell[2]) then
-			return false
-		end
-	end
+        local occupied = SnakeUtils.occupied
+        for i = 1, #cells do
+                local cell = cells[i]
+                local column = occupied[cell[1]]
+                if column and column[cell[2]] then
+                        return false
+                end
+        end
 
 	return true
 end
