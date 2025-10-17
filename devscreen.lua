@@ -260,7 +260,6 @@ function DevScreen:draw()
 	if labelFont then
 		love.graphics.setFont(labelFont)
 	end
-	local labelWidth = labelFont and labelFont:getWidth(numberLabel) or 0
 	local labelHeight = labelFont and labelFont:getHeight() or 0
 	local textMargin = math.max(10, frameSize * 0.04)
 	local textX = frameX + textMargin - 5
