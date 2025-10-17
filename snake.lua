@@ -2525,8 +2525,8 @@ end
 
 local function buildSeveredPalette(fade)
         local palette = SnakeCosmetics and SnakeCosmetics:getPaletteForSkin() or nil
-        local bodyColor = palette and palette.body or (SnakeCosmetics and SnakeCosmetics:getBodyColor and SnakeCosmetics:getBodyColor())
-        local outlineColor = palette and palette.outline or (SnakeCosmetics and SnakeCosmetics:getOutlineColor and SnakeCosmetics:getOutlineColor())
+        local bodyColor = palette and palette.body or (SnakeCosmetics and SnakeCosmetics.getBodyColor and SnakeCosmetics:getBodyColor())
+        local outlineColor = palette and palette.outline or (SnakeCosmetics and SnakeCosmetics.getOutlineColor and SnakeCosmetics:getOutlineColor())
 
         local alpha = clamp01(fade or 1)
 
