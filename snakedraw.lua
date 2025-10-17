@@ -1875,15 +1875,16 @@ local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
         if intensity <= 0.01 and readiness <= 0.01 then return end
 
         local time = data.time or love.timer.getTime()
-        local baseRadius = SEGMENT_SIZE * (1.05 + 0.28 * readiness + 0.22 * intensity)
+        local sizeScale = 0.82
+        local baseRadius = SEGMENT_SIZE * sizeScale * (1.05 + 0.28 * readiness + 0.22 * intensity)
 
-        drawSoftGlow(hx, hy, baseRadius * 1.35, 0.52, 0.78, 1.0, 0.18 + 0.28 * (intensity + readiness * 0.5))
+        drawSoftGlow(hx, hy, baseRadius * 1.2, 0.52, 0.78, 1.0, 0.18 + 0.28 * (intensity + readiness * 0.5))
 
         love.graphics.push("all")
         love.graphics.setBlendMode("add")
 
         love.graphics.setColor(0.46, 0.8, 1.0, 0.18 + 0.32 * (intensity + readiness * 0.6))
-        love.graphics.setLineWidth(2 + 1.2 * intensity)
+        love.graphics.setLineWidth((2 + 1.2 * intensity) * sizeScale)
         love.graphics.circle("line", hx, hy, baseRadius)
 
         local orbitCount = 4
@@ -1892,7 +1893,7 @@ local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
                 local inner = baseRadius * 0.58
                 local outer = baseRadius * (0.92 + 0.18 * readiness)
                 love.graphics.setColor(0.68, 0.9, 1.0, (0.16 + 0.26 * readiness) * (0.6 + 0.4 * intensity))
-                love.graphics.setLineWidth(2.4)
+                love.graphics.setLineWidth(2.4 * sizeScale)
                 love.graphics.line(
                         hx + math.cos(angle) * inner,
                         hy + math.sin(angle) * inner,
@@ -1904,7 +1905,7 @@ local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
         local sweep = math.pi * 0.35
         local rotation = time * (1.4 + 0.6 * readiness)
         love.graphics.setColor(0.38, 0.7, 1.0, 0.16 + 0.28 * intensity)
-        love.graphics.setLineWidth(1.8)
+        love.graphics.setLineWidth(1.8 * sizeScale)
         love.graphics.arc("line", "open", hx, hy, baseRadius * 0.78, rotation, rotation + sweep)
         love.graphics.arc("line", "open", hx, hy, baseRadius * 0.78, rotation + math.pi, rotation + math.pi + sweep * 0.85)
 
@@ -1916,7 +1917,7 @@ local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
         local bottomBaseY = hy + triangleHeight
 
         love.graphics.setColor(0.72, 0.88, 1.0, 0.18 + 0.28 * (intensity + readiness * 0.5))
-        love.graphics.setLineWidth(2.2)
+        love.graphics.setLineWidth(2.2 * sizeScale)
         love.graphics.polygon("line",
                 hx, hy,
                 hx - triangleWidth, topBaseY,
