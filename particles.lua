@@ -6,6 +6,8 @@ end
 
 local Particles = {}
 Particles.list = {}
+Particles.pool = {}
+Particles.colorPool = {}
 
 local ANGLE_JITTER = 0.2
 local SPEED_VARIANCE = 20
@@ -21,84 +23,123 @@ local function normalizeDirection(dx, dy)
 	return (dx or 0) / length, (dy or 0) / length
 end
 
-local function copyColor(color)
-	if not color then
-		return { 1, 1, 1, 1 }
-	end
+local function acquireParticle(self)
+        local pool = self.pool
+        local particle = pool[#pool]
+        if particle then
+                pool[#pool] = nil
+        else
+                particle = {}
+        end
 
-	return {
-		color[1] or 1,
-		color[2] or 1,
-		color[3] or 1,
-		color[4] == nil and 1 or color[4],
-	}
+        local colorPool = self.colorPool
+        local color = colorPool[#colorPool]
+        if color then
+                colorPool[#colorPool] = nil
+        else
+                color = {}
+        end
+
+        particle.color = color
+
+        return particle
+end
+
+local function releaseParticle(self, index, particle)
+        local list = self.list
+        local lastIndex = #list
+        if index ~= lastIndex then
+                list[index] = list[lastIndex]
+        end
+        list[lastIndex] = nil
+
+        local color = particle.color
+        if color then
+                self.colorPool[#self.colorPool + 1] = color
+                particle.color = nil
+        end
+
+        self.pool[#self.pool + 1] = particle
 end
 
 function Particles:spawnBurst(x, y, options)
-	options = options or {}
+        options = options or {}
 
-	local list = self.list
-	local count = math.max(0, options.count or 6)
-	local speed = options.speed or 60
-	local life = options.life or 0.4
-	local baseSize = options.size or 4
-	local baseColor = copyColor(options.color)
-	local startAlpha = baseColor[4]
-	local spread = options.spread or math.pi * 2
-	local angleJitter = options.angleJitter or ANGLE_JITTER
-	local speedVariance = math.max(0, options.speedVariance or SPEED_VARIANCE)
-	local scaleMin = math.max(0, options.scaleMin or SCALE_MIN)
-	local scaleVariance = math.max(0, options.scaleVariance or SCALE_VARIANCE)
-	local drag = options.drag or 0
-	local gravity = options.gravity or 0
-	local fadeTo = options.fadeTo
-	local random = love.math.random
-	local cos = math.cos
-	local sin = math.sin
-	local angleOffset = options.angleOffset or 0
+        local list = self.list
+        local count = math.max(0, options.count or 6)
+        local speed = options.speed or 60
+        local life = options.life or 0.4
+        local baseSize = options.size or 4
+        local sourceColor = options.color
+        local baseR = (sourceColor and sourceColor[1]) or 1
+        local baseG = (sourceColor and sourceColor[2]) or 1
+        local baseB = (sourceColor and sourceColor[3]) or 1
+        local startAlpha = sourceColor and sourceColor[4]
+        if startAlpha == nil then
+                startAlpha = 1
+        end
+        local spread = options.spread or math.pi * 2
+        local angleJitter = options.angleJitter or ANGLE_JITTER
+        local speedVariance = math.max(0, options.speedVariance or SPEED_VARIANCE)
+        local scaleMin = math.max(0, options.scaleMin or SCALE_MIN)
+        local scaleVariance = math.max(0, options.scaleVariance or SCALE_VARIANCE)
+        local drag = options.drag or 0
+        local gravity = options.gravity or 0
+        local fadeTo = options.fadeTo
+        local random = love.math.random
+        local cos = math.cos
+        local sin = math.sin
+        local angleOffset = options.angleOffset or 0
 
-	if count == 0 then
-		return
-	end
+        if count == 0 then
+                return
+        end
 
-	for i = 1, count do
-		local angle = angleOffset + spread * ((i - 0.5) / count) + (random() - 0.5) * angleJitter
-		local velocity = speed + random() * speedVariance
-		local vx = cos(angle) * velocity
-		local vy = sin(angle) * velocity
-		local scale = scaleMin + random() * scaleVariance
+        for i = 1, count do
+                local angle = angleOffset + spread * ((i - 0.5) / count) + (random() - 0.5) * angleJitter
+                local velocity = speed + random() * speedVariance
+                local vx = cos(angle) * velocity
+                local vy = sin(angle) * velocity
+                local scale = scaleMin + random() * scaleVariance
 
-		list[#list + 1] = {
-			x = x,
-			y = y,
-			vx = vx,
-			vy = vy,
-			baseSize = baseSize * scale,
-			life = life,
-			age = 0,
-			color = copyColor(baseColor),
-			drag = drag,
-			gravity = gravity,
-			fadeTo = fadeTo,
-			startAlpha = startAlpha,
-		}
-	end
+                local particle = acquireParticle(self)
+                particle.x = x
+                particle.y = y
+                particle.vx = vx
+                particle.vy = vy
+                particle.baseSize = baseSize * scale
+                particle.life = life
+                particle.age = 0
+                particle.drag = drag
+                particle.gravity = gravity
+                particle.fadeTo = fadeTo
+                particle.startAlpha = startAlpha
+
+                local color = particle.color
+                color[1] = baseR
+                color[2] = baseG
+                color[3] = baseB
+                color[4] = startAlpha
+
+                list[#list + 1] = particle
+        end
 end
 
 function Particles:update(dt)
-	if dt <= 0 or #self.list == 0 then
-		return
-	end
+        if dt <= 0 or #self.list == 0 then
+                return
+        end
 
-	for i = #self.list, 1, -1 do
-		local p = self.list[i]
-		p.age = p.age + dt
+        local list = self.list
+        for i = #list, 1, -1 do
+                local p = list[i]
+                p.age = p.age + dt
 
-		if p.age >= p.life then
-			table.remove(self.list, i)
-		else
-			p.x = p.x + p.vx * dt
-			p.y = p.y + p.vy * dt
+                if p.age >= p.life then
+                        releaseParticle(self, i, p)
+                else
+                        p.x = p.x + p.vx * dt
+                        p.y = p.y + p.vy * dt
 
 			if p.drag and p.drag > 0 then
 				local dragFactor = math.max(0, 1 - dt * p.drag)
@@ -126,11 +167,14 @@ function Particles:update(dt)
 	end
 end
 
+
 function Particles:draw()
-	for _, p in ipairs(self.list) do
-		local t = p.age / p.life
-		local currentSize = p.baseSize * (0.8 + t * 0.6)
-		love.graphics.setColor(p.color)
+        local list = self.list
+        for i = 1, #list do
+                local p = list[i]
+                local t = p.age / p.life
+                local currentSize = p.baseSize * (0.8 + t * 0.6)
+                love.graphics.setColor(p.color)
 		love.graphics.circle("fill", p.x, p.y, currentSize)
 	end
 
@@ -138,7 +182,20 @@ function Particles:draw()
 end
 
 function Particles:reset()
-	self.list = {}
+        local list = self.list
+        local pool = self.pool
+        local colorPool = self.colorPool
+        for i = 1, #list do
+                local p = list[i]
+                local color = p.color
+                if color then
+                        colorPool[#colorPool + 1] = color
+                        p.color = nil
+                end
+                pool[#pool + 1] = p
+        end
+
+        self.list = {}
 end
 
 function Particles:spawnBlood(x, y, options)
