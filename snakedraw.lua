@@ -899,7 +899,7 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 end
 
 drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
-	if radius <= 0 then return end
+        if radius <= 0 then return end
 
 	local colorR = r or 0
 	local colorG = g or 0
@@ -931,6 +931,64 @@ drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
 	end
 
 	love.graphics.pop()
+end
+
+local function fadePalette(palette, alphaScale)
+        local scale = alphaScale or 1
+        local baseBody = (palette and palette.body) or SnakeCosmetics:getBodyColor()
+        local baseOutline = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
+
+        local faded = {
+        body = {
+                baseBody[1] or 1,
+                baseBody[2] or 1,
+                baseBody[3] or 1,
+                (baseBody[4] or 1) * scale,
+        },
+        outline = {
+                baseOutline[1] or 0,
+                baseOutline[2] or 0,
+                baseOutline[3] or 0,
+                (baseOutline[4] or 1) * scale,
+        },
+        }
+
+        if palette and palette.overlay then
+        faded.overlay = palette.overlay
+        end
+
+        return faded
+end
+
+local function drawTrailSegmentToCanvas(trail, half, options, paletteOverride)
+        if not trail or #trail == 0 then
+        return
+        end
+
+        local coords = buildCoords(trail)
+        local head = trail[1]
+
+        if #coords >= 4 then
+        renderSnakeToCanvas(trail, coords, head, half, options, paletteOverride)
+        return
+        end
+
+        local hx = head and (head.drawX or head.x)
+        local hy = head and (head.drawY or head.y)
+        if not (hx and hy) then
+        return
+        end
+
+        local palette = paletteOverride or {}
+        local bodyColor = palette.body or SnakeCosmetics:getBodyColor()
+        local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
+
+        love.graphics.push("all")
+        love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
+        love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+        love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
+        love.graphics.circle("fill", hx, hy, half)
+        love.graphics.pop()
 end
 
 local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
@@ -2026,11 +2084,10 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 
         local overlayEffect = (options and options.overlayEffect) or (palette and palette.overlay) or SnakeCosmetics:getOverlayEffect()
 
-	local coords = buildCoords(trail)
-	local head = trail[1]
+        local head = trail[1]
 
-	love.graphics.setLineStyle("smooth")
-	love.graphics.setLineJoin("bevel") -- or "bevel" if you prefer fewer spikes
+        love.graphics.setLineStyle("smooth")
+        love.graphics.setLineJoin("bevel") -- or "bevel" if you prefer fewer spikes
 
 	local hx, hy
 	if getHead then
@@ -2040,42 +2097,104 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 	hx, hy = ptXY(head)
 	end
 
-	if #coords >= 4 then
-	-- render into a canvas once
-	local ww, hh = love.graphics.getDimensions()
-	ensureSnakeCanvas(ww, hh)
+        local portalInfo = options and options.portalAnimation
+        if portalInfo then
+        local exitTrail = portalInfo.exitTrail
+        if not (exitTrail and #exitTrail > 0) then
+                exitTrail = trail
+        end
 
-	love.graphics.setCanvas(snakeCanvas)
-	love.graphics.clear(0,0,0,0)
-        renderSnakeToCanvas(trail, coords, head, half, options, palette)
-	love.graphics.setCanvas()
-	presentSnakeCanvas(overlayEffect, ww, hh)
-	elseif hx and hy then
-	-- fallback: draw a simple disk when only the head is visible
-        local bodyColor = (palette and palette.body) or SnakeCosmetics:getBodyColor()
-        local outlineColor = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
-	local outlineR = outlineColor[1] or 0
-	local outlineG = outlineColor[2] or 0
-	local outlineB = outlineColor[3] or 0
-	local outlineA = outlineColor[4] or 1
-	local bodyR = bodyColor[1] or 1
-	local bodyG = bodyColor[2] or 1
-	local bodyB = bodyColor[3] or 1
-	local bodyA = bodyColor[4] or 1
+        local entryTrail = portalInfo.entryTrail
+        local exitHead = exitTrail and exitTrail[1]
+        if exitHead then
+                local ex = exitHead.drawX or exitHead.x
+                local ey = exitHead.drawY or exitHead.y
+                if ex and ey then
+                        hx, hy = ex, ey
+                end
+        else
+                hx = portalInfo.exitX or hx
+                hy = portalInfo.exitY or hy
+        end
 
-	local ww, hh = love.graphics.getDimensions()
-	ensureSnakeCanvas(ww, hh)
+        local ww, hh = love.graphics.getDimensions()
+        ensureSnakeCanvas(ww, hh)
 
-	love.graphics.setCanvas(snakeCanvas)
-	love.graphics.clear(0, 0, 0, 0)
-	love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-	love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
-	love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-	love.graphics.circle("fill", hx, hy, half)
-	love.graphics.setCanvas()
+        love.graphics.setCanvas(snakeCanvas)
+        love.graphics.clear(0, 0, 0, 0)
+        drawTrailSegmentToCanvas(exitTrail, half, options, palette)
 
-	presentSnakeCanvas(overlayEffect, ww, hh)
-	end
+        if entryTrail and #entryTrail > 0 then
+                local entryPalette = fadePalette(palette, 0.55)
+                drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette)
+        end
+
+        love.graphics.setCanvas()
+        presentSnakeCanvas(overlayEffect, ww, hh)
+
+        local entryX = portalInfo.entryX
+        local entryY = portalInfo.entryY
+        if not entryX or not entryY then
+                local entryHead = entryTrail and entryTrail[1]
+                if entryHead then
+                        entryX = entryHead.drawX or entryHead.x or entryX
+                        entryY = entryHead.drawY or entryHead.y or entryY
+                end
+        end
+
+        local exitX = portalInfo.exitX or hx
+        local exitY = portalInfo.exitY or hy
+        local progress = portalInfo.progress or 0
+        local clampedProgress = math.min(1, math.max(0, progress))
+
+        if entryX and entryY then
+                local entryAlpha = 0.75 * (1 - clampedProgress * 0.7)
+                drawSoftGlow(entryX, entryY, SEGMENT_SIZE * 1.3, 0.45, 0.78, 1.0, entryAlpha)
+        end
+
+        if exitX and exitY then
+                local exitAlpha = 0.55 + 0.45 * clampedProgress
+                drawSoftGlow(exitX, exitY, SEGMENT_SIZE * 1.4, 1.0, 0.88, 0.4, exitAlpha)
+        end
+        else
+        local coords = buildCoords(trail)
+        if #coords >= 4 then
+                -- render into a canvas once
+                local ww, hh = love.graphics.getDimensions()
+                ensureSnakeCanvas(ww, hh)
+
+                love.graphics.setCanvas(snakeCanvas)
+                love.graphics.clear(0,0,0,0)
+                renderSnakeToCanvas(trail, coords, head, half, options, palette)
+                love.graphics.setCanvas()
+                presentSnakeCanvas(overlayEffect, ww, hh)
+        elseif hx and hy then
+                -- fallback: draw a simple disk when only the head is visible
+                local bodyColor = (palette and palette.body) or SnakeCosmetics:getBodyColor()
+                local outlineColor = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
+                local outlineR = outlineColor[1] or 0
+                local outlineG = outlineColor[2] or 0
+                local outlineB = outlineColor[3] or 0
+                local outlineA = outlineColor[4] or 1
+                local bodyR = bodyColor[1] or 1
+                local bodyG = bodyColor[2] or 1
+                local bodyB = bodyColor[3] or 1
+                local bodyA = bodyColor[4] or 1
+
+                local ww, hh = love.graphics.getDimensions()
+                ensureSnakeCanvas(ww, hh)
+
+                love.graphics.setCanvas(snakeCanvas)
+                love.graphics.clear(0, 0, 0, 0)
+                love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+                love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+                love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+                love.graphics.circle("fill", hx, hy, half)
+                love.graphics.setCanvas()
+
+                presentSnakeCanvas(overlayEffect, ww, hh)
+        end
+        end
 
         if hx and hy and drawFace ~= false then
         if upgradeVisuals and upgradeVisuals.temporalAnchor then
