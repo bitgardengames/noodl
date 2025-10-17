@@ -27,6 +27,16 @@ local fruitsSinceLastTurn = 0
 local severedPieces = {}
 local developerAssistEnabled = false
 local portalAnimation = nil
+local cellKeyStride = 0
+
+local function assignDirection(target, x, y)
+        if not target then
+                return
+        end
+
+        target.x = x
+        target.y = y
+end
 
 local function announceDeveloperAssistChange(enabled)
 	if not (FloatingText and FloatingText.add) then
@@ -1422,21 +1432,26 @@ local function buildInitialTrail()
 end
 
 function Snake:load(w, h)
-	screenW, screenH = w, h
-	direction = { x = 1, y = 0 }
-	pendingDir = { x = 1, y = 0 }
-	segmentCount = 1
-	popTimer = 0
-	moveProgress = 0
-	isDead = false
-	self.shieldFlashTimer = 0
-	self.hazardGraceTimer = 0
-	self.damageFlashTimer = 0
+        screenW, screenH = w, h
+        assignDirection(direction, 1, 0)
+        assignDirection(pendingDir, 1, 0)
+        segmentCount = 1
+        popTimer = 0
+        moveProgress = 0
+        isDead = false
+        self.shieldFlashTimer = 0
+        self.hazardGraceTimer = 0
+        self.damageFlashTimer = 0
         trail = buildInitialTrail()
         descendingHole = nil
         fruitsSinceLastTurn = 0
         severedPieces = {}
         portalAnimation = nil
+        local stride = (Arena and Arena.rows or 0) + 16
+        if stride <= 0 then
+                stride = 64
+        end
+        cellKeyStride = stride
 end
 
 local function getUpgradesModule()
@@ -1444,9 +1459,12 @@ local function getUpgradesModule()
 end
 
 function Snake:setDirection(name)
-	if not isDead then
-		pendingDir = SnakeUtils.calculateDirection(direction, name)
-	end
+        if not isDead then
+                local nd = SnakeUtils.calculateDirection(direction, name)
+                if nd then
+                        assignDirection(pendingDir, nd.x, nd.y)
+                end
+        end
 end
 
 function Snake:setDead(state)
@@ -1580,10 +1598,10 @@ function Snake:beginPortalWarp(params)
 end
 
 function Snake:setDirectionVector(dx, dy)
-	if isDead then return end
+        if isDead then return end
 
-	dx = dx or 0
-	dy = dy or 0
+        dx = dx or 0
+        dy = dy or 0
 
 	local nx, ny = normalizeDirection(dx, dy)
 	if nx == 0 and ny == 0 then
@@ -1591,8 +1609,8 @@ function Snake:setDirectionVector(dx, dy)
 	end
 
 	local prevX, prevY = direction.x, direction.y
-	direction = { x = nx, y = ny }
-	pendingDir = { x = nx, y = ny }
+        assignDirection(direction, nx, ny)
+        assignDirection(pendingDir, nx, ny)
 
 	local head = trail and trail[1]
 	if head then
@@ -1614,11 +1632,20 @@ function Snake:getHeadCell()
 end
 
 local function addSafeCellUnique(cells, seen, col, row)
-	local key = col .. "," .. row
-	if not seen[key] then
-		seen[key] = true
-		cells[#cells + 1] = {col, row}
-	end
+        local stride = cellKeyStride
+        if stride <= 0 then
+                stride = (Arena and Arena.rows or 0) + 16
+                if stride <= 0 then
+                        stride = 64
+                end
+                cellKeyStride = stride
+        end
+
+        local key = col * stride + row
+        if not seen[key] then
+                seen[key] = true
+                cells[#cells + 1] = {col, row}
+        end
 end
 
 function Snake:getSafeZone(lookahead)
@@ -2060,8 +2087,8 @@ function Snake:update(dt)
 		if dist > 1e-4 then
 			local nx, ny = dx / dist, dy / dist
 			local prevX, prevY = direction.x, direction.y
-			direction = { x = nx, y = ny }
-			pendingDir = { x = nx, y = ny }
+                        assignDirection(direction, nx, ny)
+                        assignDirection(pendingDir, nx, ny)
 			if prevX ~= direction.x or prevY ~= direction.y then
 				fruitsSinceLastTurn = 0
 			end
@@ -2180,8 +2207,8 @@ function Snake:update(dt)
 			newX = snapToCenter(newX)
 			newY = snapToCenter(newY)
 			-- commit queued direction
-			local prevX, prevY = direction.x, direction.y
-			direction = { x = pendingDir.x, y = pendingDir.y }
+                        local prevX, prevY = direction.x, direction.y
+                        assignDirection(direction, pendingDir.x, pendingDir.y)
 			if prevX ~= direction.x or prevY ~= direction.y then
 				fruitsSinceLastTurn = 0
 			end
