@@ -74,6 +74,7 @@ local function announceDeveloperAssistChange(enabled)
 end
 
 local SEVERED_TAIL_LIFE = 0.9
+local SEVERED_TAIL_FADE_DURATION = 0.35
 
 local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
 local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING
@@ -2502,17 +2503,53 @@ local function isSawCutPointExposed(saw, sx, sy, px, py)
 	return projection >= -tolerance
 end
 
-local function addSeveredTrail(pieceTrail, segmentEstimate)
-	if not pieceTrail or #pieceTrail <= 1 then
-		return
-	end
+local function clamp01(value)
+        return math.max(0, math.min(1, value or 0))
+end
 
-	severedPieces = severedPieces or {}
-	table.insert(severedPieces, {
-		trail = pieceTrail,
-		timer = SEVERED_TAIL_LIFE,
-		segmentCount = math.max(1, segmentEstimate or #pieceTrail),
-	})
+local function scaleColorAlpha(color, scale)
+        local r = 1
+        local g = 1
+        local b = 1
+        local a = 1
+
+        if type(color) == "table" then
+                r = color[1] or r
+                g = color[2] or g
+                b = color[3] or b
+                a = color[4] or a
+        end
+
+        return { r, g, b, clamp01(a * scale) }
+end
+
+local function buildSeveredPalette(fade)
+        local palette = SnakeCosmetics and SnakeCosmetics:getPaletteForSkin() or nil
+        local bodyColor = palette and palette.body or (SnakeCosmetics and SnakeCosmetics:getBodyColor and SnakeCosmetics:getBodyColor())
+        local outlineColor = palette and palette.outline or (SnakeCosmetics and SnakeCosmetics:getOutlineColor and SnakeCosmetics:getOutlineColor())
+
+        local alpha = clamp01(fade or 1)
+
+        return {
+                body = scaleColorAlpha(bodyColor, alpha),
+                outline = scaleColorAlpha(outlineColor, alpha),
+        }
+end
+
+local function addSeveredTrail(pieceTrail, segmentEstimate)
+        if not pieceTrail or #pieceTrail <= 1 then
+                return
+        end
+
+        severedPieces = severedPieces or {}
+        local fadeDuration = math.min(SEVERED_TAIL_LIFE, SEVERED_TAIL_FADE_DURATION)
+        table.insert(severedPieces, {
+                trail = pieceTrail,
+                timer = SEVERED_TAIL_LIFE,
+                life = SEVERED_TAIL_LIFE,
+                fadeDuration = fadeDuration,
+                segmentCount = math.max(1, segmentEstimate or #pieceTrail),
+        })
 end
 
 local function spawnSawCutParticles(x, y, count)
@@ -2773,22 +2810,41 @@ function Snake:draw()
 	if not isDead then
 		local upgradeVisuals = collectUpgradeVisuals(self)
 
-		if severedPieces and #severedPieces > 0 then
-			for _, piece in ipairs(severedPieces) do
-				local trailData = piece and piece.trail
-				if trailData and #trailData > 1 then
-					local function getPieceHead()
-						local headSeg = trailData[1]
-						if not headSeg then
-							return nil, nil
-						end
-						return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
-					end
+                if severedPieces and #severedPieces > 0 then
+                        for _, piece in ipairs(severedPieces) do
+                                local trailData = piece and piece.trail
+                                if trailData and #trailData > 1 then
+                                        local function getPieceHead()
+                                                local headSeg = trailData[1]
+                                                if not headSeg then
+                                                        return nil, nil
+                                                end
+                                                return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
+                                        end
 
-					SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, false)
-				end
-			end
-		end
+                                        local remaining = piece.timer or 0
+                                        local life = piece.life or SEVERED_TAIL_LIFE
+                                        local fadeDuration = piece.fadeDuration or SEVERED_TAIL_FADE_DURATION
+                                        local fade = 1
+
+                                        if fadeDuration and fadeDuration > 0 then
+                                                if remaining <= fadeDuration then
+                                                        fade = clamp01(remaining / fadeDuration)
+                                                end
+                                        elseif life and life > 0 then
+                                                fade = clamp01(remaining / life)
+                                        end
+
+                                        local drawOptions = {
+                                                drawFace = false,
+                                                paletteOverride = buildSeveredPalette(fade),
+                                                overlayEffect = nil,
+                                        }
+
+                                        SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, drawOptions)
+                                end
+                        end
+                end
 
 		local shouldDrawFace = descendingHole == nil
 		local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
