@@ -286,17 +286,35 @@ local function portalThroughWall(headX, headY)
 				return nil, nil
 		end
 
-		if Snake.translate then
-				Snake:translate(dx, dy)
-		else
-				Snake:setHeadPosition(headX + dx, headY + dy)
-		end
+                local newHeadX, newHeadY
+                local portalDuration = 0.3
+                if Snake.beginPortalWarp then
+                                local started = Snake:beginPortalWarp({
+                                                entryX = entryX,
+                                                entryY = entryY,
+                                                exitX = headX + dx,
+                                                exitY = headY + dy,
+                                                duration = portalDuration,
+                                                dx = dx,
+                                                dy = dy,
+                                })
+                                if started then
+                                                newHeadX, newHeadY = Snake:getHead()
+                                end
+                end
 
-		local newHeadX, newHeadY = Snake:getHead()
+                if not (newHeadX and newHeadY) then
+                                if Snake.translate then
+                                                Snake:translate(dx, dy)
+                                else
+                                                Snake:setHeadPosition(headX + dx, headY + dy)
+                                end
+                                newHeadX, newHeadY = Snake:getHead()
+                end
 
-		if Particles then
-				Particles:spawnBurst(entryX, entryY, {
-						count = 18,
+                if Particles then
+                                Particles:spawnBurst(entryX, entryY, {
+                                                count = 18,
 						speed = 120,
 						speedVariance = 80,
 						life = 0.5,
@@ -304,9 +322,9 @@ local function portalThroughWall(headX, headY)
 						color = {0.9, 0.75, 0.3, 1},
 						spread = math.pi * 2,
 						fadeTo = 0.1,
-				})
-				Particles:spawnBurst(newHeadX, newHeadY, {
-						count = 22,
+                                })
+                                Particles:spawnBurst(newHeadX, newHeadY, {
+                                                count = 22,
 						speed = 150,
 						speedVariance = 90,
 						life = 0.55,

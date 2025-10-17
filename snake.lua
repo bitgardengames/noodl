@@ -26,6 +26,7 @@ local isDead = false
 local fruitsSinceLastTurn = 0
 local severedPieces = {}
 local developerAssistEnabled = false
+local portalAnimation = nil
 
 local function announceDeveloperAssistChange(enabled)
 	if not (FloatingText and FloatingText.add) then
@@ -777,16 +778,138 @@ local function closestPointOnSegment(px, py, ax, ay, bx, by)
 end
 
 local function copySegmentData(segment)
-	if not segment then
-		return nil
-	end
+        if not segment then
+                return nil
+        end
 
-	local copy = {}
-	for key, value in pairs(segment) do
-		copy[key] = value
-	end
+        local copy = {}
+        for key, value in pairs(segment) do
+                copy[key] = value
+        end
 
-	return copy
+        return copy
+end
+
+local function computeTrailLength(trailData)
+        if not trailData then
+                return 0
+        end
+
+        local total = 0
+        for i = 2, #trailData do
+                local prev = trailData[i - 1]
+                local curr = trailData[i]
+                local ax, ay = prev and prev.drawX, prev and prev.drawY
+                local bx, by = curr and curr.drawX, curr and curr.drawY
+                if ax and ay and bx and by then
+                        local dx = bx - ax
+                        local dy = by - ay
+                        total = total + math.sqrt(dx * dx + dy * dy)
+                end
+        end
+
+        return total
+end
+
+local function sliceTrailByLength(sourceTrail, maxLength)
+        if not sourceTrail or #sourceTrail == 0 then
+                return {}
+        end
+
+        local result = {}
+        local first = copySegmentData(sourceTrail[1]) or {}
+        result[1] = first
+
+        if not (maxLength and maxLength > 0) then
+                return result
+        end
+
+        local accumulated = 0
+        for i = 2, #sourceTrail do
+                local prev = sourceTrail[i - 1]
+                local curr = sourceTrail[i]
+                local px, py = prev and prev.drawX, prev and prev.drawY
+                local cx, cy = curr and curr.drawX, curr and curr.drawY
+                if not (px and py and cx and cy) then
+                        break
+                end
+
+                local dx = cx - px
+                local dy = cy - py
+                local segLen = math.sqrt(dx * dx + dy * dy)
+
+                if segLen <= 1e-6 then
+                        result[#result + 1] = copySegmentData(curr)
+                else
+                        if accumulated + segLen >= maxLength then
+                                local remaining = maxLength - accumulated
+                                local t = remaining / segLen
+                                if t < 0 then t = 0 end
+                                if t > 1 then t = 1 end
+                                local x = px + dx * t
+                                local y = py + dy * t
+                                local segCopy = copySegmentData(curr) or {}
+                                segCopy.drawX = x
+                                segCopy.drawY = y
+                                result[#result + 1] = segCopy
+                                return result
+                        end
+
+                        accumulated = accumulated + segLen
+                        result[#result + 1] = copySegmentData(curr)
+                end
+        end
+
+        return result
+end
+
+local function cloneTailFromIndex(startIndex, entryX, entryY)
+        if not trail or #trail == 0 then
+                return {}
+        end
+
+        local index = math.max(1, math.min(startIndex or 1, #trail))
+        local clone = {}
+
+        for i = index, #trail do
+                local segCopy = copySegmentData(trail[i]) or {}
+                if i == index then
+                        segCopy.drawX = entryX or segCopy.drawX
+                        segCopy.drawY = entryY or segCopy.drawY
+                end
+                clone[#clone + 1] = segCopy
+        end
+
+        return clone
+end
+
+local function findPortalEntryIndex(entryX, entryY)
+        if not trail or #trail == 0 then
+                return 1
+        end
+
+        local bestIndex = 1
+        local bestDist = math.huge
+
+        for i = 1, #trail - 1 do
+                local segA = trail[i]
+                local segB = trail[i + 1]
+                local ax, ay = segA and segA.drawX, segA and segA.drawY
+                local bx, by = segB and segB.drawX, segB and segB.drawY
+                if ax and ay and bx and by then
+                        local _, _, distSq = closestPointOnSegment(entryX, entryY, ax, ay, bx, by)
+                        if distSq < bestDist then
+                                bestDist = distSq
+                                bestIndex = i + 1
+                        end
+                end
+        end
+
+        if bestIndex > #trail then
+                bestIndex = #trail
+        end
+
+        return bestIndex
 end
 
 local function trimHoleSegments(hole)
@@ -1309,10 +1432,11 @@ function Snake:load(w, h)
 	self.shieldFlashTimer = 0
 	self.hazardGraceTimer = 0
 	self.damageFlashTimer = 0
-	trail = buildInitialTrail()
-	descendingHole = nil
-	fruitsSinceLastTurn = 0
-	severedPieces = {}
+        trail = buildInitialTrail()
+        descendingHole = nil
+        fruitsSinceLastTurn = 0
+        severedPieces = {}
+        portalAnimation = nil
 end
 
 local function getUpgradesModule()
@@ -1352,30 +1476,107 @@ function Snake:setHeadPosition(x, y)
 end
 
 function Snake:translate(dx, dy)
-	dx = dx or 0
-	dy = dy or 0
-	if dx == 0 and dy == 0 then
-		return
-	end
+        dx = dx or 0
+        dy = dy or 0
+        if dx == 0 and dy == 0 then
+                return
+        end
 
-	for i = 1, #trail do
-		local seg = trail[i]
-		if seg then
-			seg.drawX = seg.drawX + dx
-			seg.drawY = seg.drawY + dy
-		end
-	end
+        for i = 1, #trail do
+                local seg = trail[i]
+                if seg then
+                        seg.drawX = seg.drawX + dx
+                        seg.drawY = seg.drawY + dy
+                end
+        end
 
-	if descendingHole then
-		descendingHole.x = (descendingHole.x or 0) + dx
-		descendingHole.y = (descendingHole.y or 0) + dy
-		if descendingHole.entryPointX then
-			descendingHole.entryPointX = descendingHole.entryPointX + dx
-		end
-		if descendingHole.entryPointY then
-			descendingHole.entryPointY = descendingHole.entryPointY + dy
-		end
-	end
+        if descendingHole then
+                descendingHole.x = (descendingHole.x or 0) + dx
+                descendingHole.y = (descendingHole.y or 0) + dy
+                if descendingHole.entryPointX then
+                        descendingHole.entryPointX = descendingHole.entryPointX + dx
+                end
+                if descendingHole.entryPointY then
+                        descendingHole.entryPointY = descendingHole.entryPointY + dy
+                end
+        end
+end
+
+function Snake:beginPortalWarp(params)
+        if type(params) ~= "table" then
+                return false
+        end
+
+        local entryX = params.entryX
+        local entryY = params.entryY
+        local exitX = params.exitX
+        local exitY = params.exitY
+        local duration = params.duration
+        local dx = params.dx
+        local dy = params.dy
+
+        if not (entryX and entryY and exitX and exitY) then
+                return false
+        end
+
+        local headSeg = trail and trail[1]
+        if headSeg then
+                local hx = headSeg.drawX or headSeg.x or 0
+                local hy = headSeg.drawY or headSeg.y or 0
+                if dx == nil then dx = (exitX or hx) - hx end
+                if dy == nil then dy = (exitY or hy) - hy end
+        else
+                dx = dx or 0
+                dy = dy or 0
+        end
+
+        local entryIndex = findPortalEntryIndex(entryX, entryY)
+        local entryClone = cloneTailFromIndex(entryIndex, entryX, entryY)
+        if not entryClone or #entryClone == 0 then
+                return false
+        end
+
+        local totalLength = computeTrailLength(entryClone)
+        if totalLength <= 0 then
+                totalLength = SEGMENT_SPACING
+        end
+
+        local warpDuration = duration or 0.3
+        if warpDuration < 0.05 then
+                warpDuration = 0.05
+        end
+
+        if (math.abs(dx or 0) > 0) or (math.abs(dy or 0) > 0) then
+                self:translate(dx or 0, dy or 0)
+        end
+
+        local head = trail and trail[1]
+        if head then
+                head.drawX = exitX
+                head.drawY = exitY
+        end
+
+        local entrySource = {}
+        for i = 1, #entryClone do
+                entrySource[i] = copySegmentData(entryClone[i]) or {}
+        end
+
+        portalAnimation = {
+                timer = 0,
+                duration = warpDuration,
+                entryIndex = entryIndex,
+                entryX = entryX,
+                entryY = entryY,
+                exitX = exitX,
+                exitY = exitY,
+                totalLength = totalLength,
+                entrySourceTrail = entrySource,
+                entryTrail = sliceTrailByLength(entrySource, totalLength),
+                exitTrail = {},
+                progress = 0,
+        }
+
+        return true
 end
 
 function Snake:setDirectionVector(dx, dy)
@@ -2143,10 +2344,47 @@ function Snake:update(dt)
 				end
 		end
 
-	-- update timers
-	if popTimer > 0 then
-		popTimer = math.max(0, popTimer - dt)
-	end
+        if portalAnimation then
+                local state = portalAnimation
+                local duration = state.duration or 0.3
+                if not duration or duration <= 1e-4 then
+                        duration = 1e-4
+                end
+
+                state.timer = (state.timer or 0) + dt
+                local progress = state.timer / duration
+                if progress < 0 then progress = 0 end
+                if progress > 1 then progress = 1 end
+                state.progress = progress
+
+                local totalLength = state.totalLength
+                if not totalLength or totalLength <= 0 then
+                        totalLength = computeTrailLength(state.entrySourceTrail)
+                        if totalLength <= 0 then
+                                totalLength = SEGMENT_SPACING
+                        end
+                        state.totalLength = totalLength
+                end
+
+                local entryLength = totalLength * (1 - progress)
+                local exitLength = totalLength * progress
+
+                state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength)
+                state.exitTrail = sliceTrailByLength(trail, exitLength)
+
+                if (not state.exitTrail or #state.exitTrail == 0) and trail and trail[1] then
+                        state.exitTrail = { copySegmentData(trail[1]) }
+                end
+
+                if progress >= 1 then
+                        portalAnimation = nil
+                end
+        end
+
+        -- update timers
+        if popTimer > 0 then
+                popTimer = math.max(0, popTimer - dt)
+        end
 
 	if self.shieldFlashTimer and self.shieldFlashTimer > 0 then
 		self.shieldFlashTimer = math.max(0, self.shieldFlashTimer - dt)
@@ -2848,13 +3086,33 @@ function Snake:draw()
 		local shouldDrawFace = descendingHole == nil
 		local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
-		if not hideDescendingBody then
-			SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
-				return self:getHead()
-			end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
-		end
+                if not hideDescendingBody then
+                        local drawOptions
+                        if portalAnimation then
+                                drawOptions = {
+                                        drawFace = shouldDrawFace,
+                                        portalAnimation = {
+                                                entryTrail = portalAnimation.entryTrail,
+                                                exitTrail = portalAnimation.exitTrail,
+                                                entryX = portalAnimation.entryX,
+                                                entryY = portalAnimation.entryY,
+                                                exitX = portalAnimation.exitX,
+                                                exitY = portalAnimation.exitY,
+                                                progress = portalAnimation.progress or 0,
+                                                duration = portalAnimation.duration or 0.3,
+                                                timer = portalAnimation.timer or 0,
+                                        },
+                                }
+                        else
+                                drawOptions = shouldDrawFace
+                        end
 
-	end
+                        SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
+                                return self:getHead()
+                        end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
+                end
+
+        end
 end
 
 function Snake:resetPosition()
