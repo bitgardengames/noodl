@@ -291,7 +291,6 @@ function FruitEvents.handleConsumption(x, y)
 		})
 	end
 
-	UI:triggerScorePulse()
 	UI:addFruit(fruitType)
 	local goalReached = UI:isGoalReached()
 
