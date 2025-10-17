@@ -86,7 +86,7 @@ local HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after survivi
 local DAMAGE_FLASH_DURATION = 0.45
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
-local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.30 -- broader tolerance so near misses and tight turns don't falsely register
+local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.45 -- give the head more leeway so straight runs don't falsely register
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
@@ -2234,10 +2234,12 @@ function Snake:update(dt)
 	if len > 0 then
 		tailBeforeX, tailBeforeY = trail[len].drawX, trail[len].drawY
 	end
-	local tailBeforeCol, tailBeforeRow
-	if tailBeforeX and tailBeforeY then
-		tailBeforeCol, tailBeforeRow = toCell(tailBeforeX, tailBeforeY)
-	end
+        local tailBeforeCol, tailBeforeRow
+        if tailBeforeX and tailBeforeY then
+                tailBeforeCol, tailBeforeRow = toCell(tailBeforeX, tailBeforeY)
+        end
+
+        local tailAfterCol, tailAfterRow
 
 	local consumedLength = (hole and hole.consumedLength) or 0
 	local maxLen = math.max(0, segmentCount * SEGMENT_SPACING - consumedLength)
@@ -2248,12 +2250,12 @@ function Snake:update(dt)
 	end
 
 	local traveled = 0
-	for i = 2, #trail do
-		local dx = trail[i-1].drawX - trail[i].drawX
-		local dy = trail[i-1].drawY - trail[i].drawY
-		local segLen = math.sqrt(dx*dx + dy*dy)
+        for i = 2, #trail do
+                local dx = trail[i-1].drawX - trail[i].drawX
+                local dy = trail[i-1].drawY - trail[i].drawY
+                local segLen = math.sqrt(dx*dx + dy*dy)
 
-		if traveled + segLen > maxLen then
+                if traveled + segLen > maxLen then
 			local excess = traveled + segLen - maxLen
 			local t = 1 - (excess / segLen)
 			local tailX = trail[i-1].drawX - dx * t
@@ -2265,19 +2267,29 @@ function Snake:update(dt)
 
 			trail[i].drawX, trail[i].drawY = tailX, tailY
 			break
-		else
-			traveled = traveled + segLen
-		end
-	end
+                else
+                        traveled = traveled + segLen
+                end
+        end
 
-	-- collision with self (grid-cell based, only at snap ticks)
-		if snappedThisTick and not self:isHazardGraceActive() then
-				local hx, hy = trail[1].drawX, trail[1].drawY
-				local headCol, headRow = toCell(hx, hy)
+        do
+                local lenAfterTrim = #trail
+                if lenAfterTrim >= 1 then
+                        local tailX, tailY = trail[lenAfterTrim].drawX, trail[lenAfterTrim].drawY
+                        if tailX and tailY then
+                                tailAfterCol, tailAfterRow = toCell(tailX, tailY)
+                        end
+                end
+        end
 
-		-- Don’t check the first ~1 segment of body behind the head (neck).
-		-- Compute by *distance*, not “skip N nodes”.
-		local guardDist = SEGMENT_SPACING * 1.05  -- about one full cell
+        -- collision with self (grid-cell based, only at snap ticks)
+                if snappedThisTick and not self:isHazardGraceActive() then
+                                local hx, hy = trail[1].drawX, trail[1].drawY
+                                local headCol, headRow = toCell(hx, hy)
+
+                -- Don’t check the first ~1 segment of body behind the head (neck).
+                -- Compute by *distance*, not “skip N nodes”.
+                local guardDist = SEGMENT_SPACING * 1.25  -- give the neck extra space while it exits the new tile
 		local walked = 0
 
 		local function seglen(i)
@@ -2294,17 +2306,6 @@ function Snake:update(dt)
 		end
 
 		-- If tail vacated the head cell this tick, don’t count that as a hit
-		local tailBeforeCol, tailBeforeRow = nil, nil
-		do
-			local len = #trail
-			if len >= 1 then
-				local tbx, tby = trail[len].drawX, trail[len].drawY
-				if tbx and tby then
-					tailBeforeCol, tailBeforeRow = toCell(tbx, tby)
-				end
-			end
-		end
-
                 local collisionThreshold = math.max(0, SEGMENT_SPACING - SELF_COLLISION_BUFFER)
                 local collisionThresholdSq = collisionThreshold * collisionThreshold
 
@@ -2313,8 +2314,14 @@ function Snake:update(dt)
                         local cx, cy = toCell(segment.drawX, segment.drawY)
 
 			-- allow stepping into the tail cell if the tail moved off this tick
-			local tailVacated =
-				(i == #trail) and (tailBeforeCol == headCol and tailBeforeRow == headRow)
+                        local tailVacated = false
+                        if i == #trail and tailBeforeCol and tailBeforeRow then
+                                if tailBeforeCol == headCol and tailBeforeRow == headRow then
+                                        if not (tailAfterCol == headCol and tailAfterRow == headRow) then
+                                                tailVacated = true
+                                        end
+                                end
+                        end
 
                         if not tailVacated and cx == headCol and cy == headRow then
                                 local dx = hx - segment.drawX
