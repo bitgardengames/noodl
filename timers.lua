@@ -29,16 +29,6 @@ function Timer.new(duration, options)
 	return setmetatable(instance, Timer)
 end
 
-function Timer:clone()
-	local copy = Timer.new(self.duration, {
-		loop = self.loop,
-		paused = self.paused,
-		autoStart = self.active,
-	})
-	copy.elapsed = self.elapsed
-	return copy
-end
-
 function Timer:setDuration(duration)
 	self.duration = sanitizeDuration(duration or 0)
 	if self.elapsed > self.duration then
@@ -62,69 +52,12 @@ function Timer:start(duration)
 	return self
 end
 
-function Timer:restart(duration)
-	return self:start(duration)
-end
-
-function Timer:stop()
-	self.active = false
-	return self
-end
-
-function Timer:reset()
-	self.elapsed = 0
-	self.paused = false
-	return self
-end
-
-function Timer:setLoop(loop)
-	self.loop = not not loop
-	return self
-end
-
-function Timer:setPaused(paused)
-	self.paused = not not paused
-	return self
-end
-
-function Timer:isPaused()
-	return self.paused
-end
-
-function Timer:isActive()
-	return self.active and not self.paused
-end
-
 function Timer:getElapsed()
 	return self.elapsed
 end
 
 function Timer:getDuration()
 	return self.duration
-end
-
-function Timer:getRemaining()
-	if self.duration <= 0 then
-		return 0
-	end
-	local remaining = self.duration - self.elapsed
-	if remaining < 0 then
-		remaining = 0
-	end
-	return remaining
-end
-
-function Timer:getProgress()
-	if self.duration <= 0 then
-		return 1
-	end
-	local progress = self.elapsed / self.duration
-	if progress < 0 then
-		return 0
-	elseif progress > 1 then
-		return 1
-	end
-	return progress
 end
 
 function Timer:isFinished()

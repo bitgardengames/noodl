@@ -401,14 +401,6 @@ function FloatingText:reset()
 	self.entries = {}
 end
 
-function FloatingText:clear()
-	self:reset()
-end
-
-function FloatingText:getDefaults()
-	return self.defaults
-end
-
 local defaultInstance = createInstance()
 
 function defaultInstance:new(overrides)
