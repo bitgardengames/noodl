@@ -37,30 +37,8 @@ function Popup.new(config)
 	return createInstance(config)
 end
 
-function Popup:configure(options)
-	options = options or {}
-	if options.duration then
-		self.duration = options.duration
-	end
-	if options.fadeInDuration then
-		self.fadeInDuration = options.fadeInDuration
-	end
-	if options.fadeOutDuration then
-		self.fadeOutDuration = options.fadeOutDuration
-	end
-	if options.startScale then
-		self.startScale = options.startScale
-	end
-	if options.startOffsetY then
-		self.startOffsetY = options.startOffsetY
-	end
-	if options.timer then
-		self.timer = options.timer
-	end
-end
-
 function Popup:show(title, description, options)
-	options = options or {}
+        options = options or {}
 
 	if options.duration then
 		self.duration = options.duration

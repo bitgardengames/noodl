@@ -1263,41 +1263,6 @@ function Game:drawTransition()
 	end
 end
 
-function Game:drawStateTransition(direction, progress, eased, alpha)
-	local isFloorTransition = false
-	if self.transition and self.transition:isActive() then
-		local phase = self.transition:getPhase()
-		isFloorTransition = phase ~= nil
-	end
-
-	if direction == "out" and not isFloorTransition then
-		return nil
-	end
-
-	self:draw()
-
-	if isFloorTransition then
-		love.graphics.setColor(1, 1, 1, 1)
-		return { skipOverlay = true }
-	end
-
-	if direction == "in" then
-		local width = self.screenWidth or love.graphics.getWidth()
-		local height = self.screenHeight or love.graphics.getHeight()
-
-		if alpha and alpha > 0 then
-			love.graphics.setColor(0, 0, 0, alpha)
-			love.graphics.rectangle("fill", 0, 0, width, height)
-		end
-
-		love.graphics.setColor(1, 1, 1, 1)
-		return { skipOverlay = true }
-	end
-
-	love.graphics.setColor(1, 1, 1, 1)
-	return true
-end
-
 function Game:drawDescending()
 	if not self.hole then
 		Snake:draw()
