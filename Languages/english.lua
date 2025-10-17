@@ -553,16 +553,20 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				description = "Press Space (or A/Right Shoulder on a controller) to dash forward, smashing through rocks while briefly speeding up.",
 				activation_text = "Thunder Dash!",
 			},
-			sparkstep_relay = {
-				name = "Sparkstep Relay",
-				description = "Dashing shatters the nearest rock and stalls saws for 0.6s.",
-				activation_text = "Sparkstep!",
-			},
-			temporal_anchor = {
-				name = "Temporal Anchor",
-				description = "Press Shift (or X/Left Shoulder on a controller) to slow time for a short duration, reducing all movement to 35% speed.",
-				activation_text = "Time Slow!",
-			},
+                        sparkstep_relay = {
+                                name = "Sparkstep Relay",
+                                description = "Dashing shatters the nearest rock and stalls saws for 0.6s.",
+                                activation_text = "Sparkstep!",
+                        },
+                        chrono_ward = {
+                                name = "Chrono Ward",
+                                description = "Each time a crash shield is consumed, time slows briefly so you can thread through danger and plan your next move.",
+                        },
+                        temporal_anchor = {
+                                name = "Temporal Anchor",
+                                description = "Press Shift (or X/Left Shoulder on a controller) to slow time for a short duration, reducing all movement to 35% speed.",
+                                activation_text = "Time Slow!",
+                        },
 			zephyr_coils = {
 				name = "Zephyr Coils",
 				description = "Snake moves 20% faster. You gain +1 extra growth.",
