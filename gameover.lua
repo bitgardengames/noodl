@@ -121,16 +121,8 @@ local function getCelebrationEntrySpacing()
 	return getCelebrationEntryHeight() + gap
 end
 
-local function getStatCardHeight()
-	return (UI.scaled and UI.scaled(96, 72)) or 96
-end
-
-local function getStatCardSpacing()
-	return (UI.scaled and UI.scaled(18, 12)) or 18
-end
-
 local function getStatCardMinWidth()
-	return (UI.scaled and UI.scaled(160, 120)) or 160
+        return (UI.scaled and UI.scaled(160, 120)) or 160
 end
 
 local function getSectionPadding()
@@ -568,57 +560,6 @@ local buttonDefs = {
 	{ id = "goPlay", textKey = "gameover.play_again", action = "game" },
 	{ id = "goMenu", textKey = "gameover.quit_to_menu", action = "menu" },
 }
-
-local function calculateStatLayout(contentWidth, padding, count)
-	local totalCards = math.max(0, count or 0)
-	local availableWidth = math.max(0, contentWidth - padding * 2)
-	local maxColumns = math.min(totalCards, 3)
-	local columns = math.max(1, maxColumns)
-	local statCardSpacing = getStatCardSpacing()
-	local statCardMinWidth = getStatCardMinWidth()
-	local statCardHeight = getStatCardHeight()
-
-	if totalCards == 0 then
-		return {
-			columns = 0,
-			rows = 0,
-			cardWidth = 0,
-			height = 0,
-			spacing = statCardSpacing,
-			availableWidth = availableWidth,
-		}
-	end
-
-	while columns > 1 do
-		local tentativeWidth = (availableWidth - statCardSpacing * (columns - 1)) / columns
-		if tentativeWidth >= statCardMinWidth then
-			break
-		end
-		columns = columns - 1
-	end
-
-	local cardWidth
-	if columns <= 1 then
-		columns = 1
-		cardWidth = availableWidth
-	else
-		cardWidth = (availableWidth - statCardSpacing * (columns - 1)) / columns
-	end
-
-	cardWidth = math.max(0, cardWidth)
-
-	local rows = math.ceil(totalCards / columns)
-	local height = rows * statCardHeight + math.max(0, rows - 1) * statCardSpacing
-
-	return {
-		columns = columns,
-		rows = rows,
-		cardWidth = cardWidth,
-		height = height,
-		spacing = statCardSpacing,
-		availableWidth = availableWidth,
-	}
-end
 
 local function calculateAchievementsLayout(achievements, panelWidth, sectionPadding, innerSpacing, smallSpacing)
 	local list = achievements or {}
@@ -1399,35 +1340,6 @@ local function getLocalizedOrFallback(key, fallback)
 	return value
 end
 
-local function drawStatPill(x, y, width, height, label, value)
-	UI.drawPanel(x, y, width, height, {
-		radius = 18,
-		shadowOffset = 0,
-		fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * 0.7 },
-		borderColor = UI.colors.border or Theme.panelBorder,
-		borderWidth = 2,
-	})
-
-	UI.drawLabel(label, x + 8, y + 12, width - 16, "center", {
-		font = fontProgressSmall,
-		color = UI.colors.mutedText or UI.colors.text,
-	})
-
-	local displayFont = fontProgressValue
-	if displayFont:getWidth(value) > width - 32 then
-		displayFont = fontBadge
-		if displayFont:getWidth(value) > width - 32 then
-			displayFont = fontSmall
-		end
-	end
-
-	local valueY = y + height / 2 - displayFont:getHeight() / 2 + 6
-	UI.drawLabel(value, x + 8, valueY, width - 16, "center", {
-		font = displayFont,
-		color = UI.colors.text,
-	})
-end
-
 local function drawCelebrationsList(anim, x, startY, width)
 	local events = anim and anim.celebrations or {}
 	if not events or #events == 0 then
@@ -1768,61 +1680,6 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 			font = displayFont,
 			color = color,
 		})
-	end
-end
-
-local function drawStatsPanel(self, x, y, width, height, sectionPadding, innerSpacing, layoutData)
-	if (height or 0) <= 0 or (width or 0) <= 0 then
-		return
-	end
-
-	drawInsetPanel(x, y, width, height, { radius = 18 })
-
-	local statsHeader = getLocalizedOrFallback("gameover.stats_header", "Highlights")
-	local statsY = y + sectionPadding
-	UI.drawLabel(statsHeader, x + sectionPadding, statsY, width - sectionPadding * 2, "left", {
-		font = fontProgressSmall,
-		color = UI.colors.mutedText or UI.colors.text,
-	})
-
-	statsY = statsY + fontProgressSmall:getHeight() + innerSpacing
-
-	local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
-        local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Fruit")
-	local statCards = {
-		{ label = bestLabel, value = tostring(stats.highScore or 0) },
-		{ label = applesLabel, value = tostring(stats.apples or 0) },
-	}
-
-	local statLayout = layoutData or calculateStatLayout(width, sectionPadding, #statCards)
-	local availableWidth = (statLayout and statLayout.availableWidth) or (width - sectionPadding * 2)
-	local statSpacing = (statLayout and statLayout.spacing) or getStatCardSpacing()
-	local statCardHeight = getStatCardHeight()
-	local cardIndex = 1
-	local rows = math.max(1, (statLayout and statLayout.rows) or 1)
-	local columns = math.max(1, (statLayout and statLayout.columns) or 1)
-
-	for row = 1, rows do
-		local itemsInRow = math.min(columns, #statCards - (row - 1) * columns)
-		if itemsInRow <= 0 then
-			break
-		end
-
-		local rowWidth = itemsInRow * (statLayout.cardWidth or 0) + math.max(0, itemsInRow - 1) * statSpacing
-		local rowOffset = math.max(0, (availableWidth - rowWidth) / 2)
-		local baseX = x + sectionPadding + rowOffset
-		local rowY = statsY + (row - 1) * (statCardHeight + statSpacing)
-
-		for col = 0, itemsInRow - 1 do
-			local card = statCards[cardIndex]
-			if not card then
-				break
-			end
-
-			local cardX = baseX + col * ((statLayout.cardWidth or 0) + statSpacing)
-			drawStatPill(cardX, rowY, statLayout.cardWidth or 0, statCardHeight, card.label, card.value)
-			cardIndex = cardIndex + 1
-		end
 	end
 end
 

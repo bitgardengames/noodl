@@ -111,12 +111,6 @@ local function getStacks(state, id)
 	return takenSet[id] or 0
 end
 
-local function getGameInstance()
-	if GameState and GameState.states then
-		return GameState.states.game
-	end
-end
-
 local function grantCrashShields(amount)
         amount = math.max(0, math.floor((amount or 0) + 0.0001))
         if amount <= 0 then
