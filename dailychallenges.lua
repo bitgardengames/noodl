@@ -373,13 +373,53 @@ DailyChallenges.challenges = {
 		xpReward = 80,
 	},
         {
-                id = "dragonfruit_hunter",
-                titleKey = "menu.daily.dragonfruit_hunter.title",
-                descriptionKey = "menu.daily.dragonfruit_hunter.description",
-                sessionStat = "dragonfruitEaten",
-                goal = 2,
-                progressKey = "menu.daily.dragonfruit_hunter.progress",
-                completeKey = "menu.daily.dragonfruit_hunter.complete",
+                id = "balanced_banquet",
+                titleKey = "menu.daily.balanced_banquet.title",
+                descriptionKey = "menu.daily.balanced_banquet.description",
+                goal = 3,
+                progressKey = "menu.daily.balanced_banquet.progress",
+                completeKey = "menu.daily.balanced_banquet.complete",
+                getValue = function(self, context)
+                        local apples, combos = 0, 0
+                        local statsSource = context and context.sessionStats
+                        if statsSource and type(statsSource.get) == "function" then
+                                apples = statsSource:get("applesEaten") or 0
+                                combos = statsSource:get("combosTriggered") or 0
+                        elseif SessionStats and SessionStats.get then
+                                apples = SessionStats:get("applesEaten") or 0
+                                combos = SessionStats:get("combosTriggered") or 0
+                        end
+
+                        apples = apples or 0
+                        combos = combos or 0
+
+                        local feasts = math.min(math.floor(apples / 15), combos)
+                        return math.max(feasts, 0)
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local apples, combos = 0, 0
+                        local statsSource = context and context.sessionStats
+                        if statsSource and type(statsSource.get) == "function" then
+                                apples = statsSource:get("applesEaten") or 0
+                                combos = statsSource:get("combosTriggered") or 0
+                        elseif SessionStats and SessionStats.get then
+                                apples = SessionStats:get("applesEaten") or 0
+                                combos = SessionStats:get("combosTriggered") or 0
+                        end
+
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                apples = apples or 0,
+                                combos = combos or 0,
+                        }
+                end,
+                descriptionReplacements = function(self, current, goal)
+                        return {
+                                goal = goal or 0,
+                                apples_per_combo = 15,
+                        }
+                end,
                 xpReward = 110,
         },
 	{
