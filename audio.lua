@@ -7,10 +7,11 @@ local Audio = {
 }
 
 local SOUND_DEFINITIONS = {
-	fruit = "Assets/Sounds/drop_003.ogg",
-	hover = "Assets/Sounds/tick_002.ogg",
-	click = "Assets/Sounds/select.ogg",
-	achievement = "Assets/Sounds/Retro Event Acute 11.wav",
+        fruit = "Assets/Sounds/drop_003.ogg",
+        hover = "Assets/Sounds/tick_002.ogg",
+        click = "Assets/Sounds/select.ogg",
+        menu_start = "Assets/Sounds/harp strum 5.wav",
+        achievement = "Assets/Sounds/Retro Event Acute 11.wav",
 	shield_gain = "Assets/Sounds/switch_001.ogg",
 	shield_break = "Assets/Sounds/abs-cancel-1.wav",
 	death = "Assets/Sounds/error_007.ogg",

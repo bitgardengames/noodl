@@ -838,9 +838,9 @@ registerEffect({
 })
 -- Neon hazard backdrop for the main menu
 registerEffect({
-	type = "menuConstellation",
-	backdropIntensity = 0.46,
-	arenaIntensity = 0.32,
+        type = "menuConstellation",
+        backdropIntensity = 0.46,
+        arenaIntensity = 0.32,
 	source = [[
 		extern float time;
 		extern vec2 resolution;
@@ -908,9 +908,88 @@ registerEffect({
 		sendFloat(shader, "bandCenter", 0.55)
 		sendFloat(shader, "bandWidth", 0.42)
 	end,
-	draw = function(effect, x, y, w, h, intensity)
-		return drawShader(effect, x, y, w, h, intensity)
-	end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
+})
+
+registerEffect({
+        type = "menuKitchenGlow",
+        backdropIntensity = 0.52,
+        arenaIntensity = 0.34,
+        source = [[
+                extern float time;
+                extern vec2 resolution;
+                extern vec2 origin;
+                extern vec4 topColor;
+                extern vec4 bottomColor;
+                extern vec4 steamColor;
+                extern vec4 accentColor;
+                extern float vignetteIntensity;
+                extern float accentStrength;
+                extern float grainStrength;
+                extern float ribbonFrequency;
+                extern float intensity;
+
+                float hash(vec2 p)
+                {
+                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+                }
+
+                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+                {
+                        vec2 uv = (screen_coords - origin) / resolution;
+                        uv = clamp(uv, 0.0, 1.0);
+
+                        float gradient = smoothstep(0.0, 1.0, uv.y);
+                        vec3 col = mix(topColor.rgb, bottomColor.rgb, gradient);
+
+                        float ribbonOffset = sin(uv.y * ribbonFrequency + time * 0.25) * 0.08;
+                        float ribbonBase = uv.x - 0.5 + ribbonOffset;
+                        float ribbonGlow = exp(-ribbonBase * ribbonBase / 0.02);
+                        ribbonGlow *= 0.45 + 0.3 * sin(time * 0.5 + uv.y * 6.0);
+                        col = mix(col, accentColor.rgb, clamp(ribbonGlow * accentStrength * (0.6 + intensity * 0.4), 0.0, 1.0));
+
+                        float steamPhase = time * 0.35 + uv.y * 2.8;
+                        float steamCurl = sin(steamPhase + sin(uv.x * 6.0 + time * 0.4));
+                        float steamTrail = sin(steamPhase * 0.8 + uv.x * 9.0);
+                        float steamMix = pow(clamp(steamCurl * 0.5 + 0.5, 0.0, 1.0) * clamp(steamTrail * 0.5 + 0.5, 0.0, 1.0), 1.3);
+                        col += steamColor.rgb * steamMix * (0.25 + intensity * 0.3);
+
+                        vec2 centered = uv - vec2(0.5);
+                        float vignette = smoothstep(0.45, 0.92, length(centered));
+                        col = mix(col, col * 0.78, clamp(vignette * vignetteIntensity, 0.0, 1.0));
+
+                        float noise = hash(uv * resolution.xy + time * 12.0);
+                        float grit = (noise * 2.0 - 1.0) * grainStrength;
+                        col += col * grit * 0.35;
+
+                        col = clamp(col, 0.0, 1.0);
+
+                        float alpha = mix(topColor.a, bottomColor.a, gradient);
+                        return vec4(col, alpha) * color;
+                }
+        ]],
+        configure = function(effect)
+                local shader = effect.shader
+
+                local top = {0x2E / 255, 0x1C / 255, 0x28 / 255, 1}
+                local bottom = {0x09 / 255, 0x0A / 255, 0x12 / 255, 1}
+                local steam = {0xFF / 255, 0xD9 / 255, 0x8C / 255, 1}
+                local accent = {0xFF / 255, 0x6B / 255, 0x6B / 255, 1}
+
+                sendColor(shader, "topColor", top)
+                sendColor(shader, "bottomColor", bottom)
+                sendColor(shader, "steamColor", steam)
+                sendColor(shader, "accentColor", accent)
+                sendFloat(shader, "vignetteIntensity", 0.7)
+                sendFloat(shader, "accentStrength", 0.75)
+                sendFloat(shader, "grainStrength", 0.12)
+                sendFloat(shader, "ribbonFrequency", 8.0)
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
 })
 -- Radiant fabric of light for the shop screen
 registerEffect({
