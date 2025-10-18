@@ -964,38 +964,40 @@ end
 
 -- Draw the exit (if active)
 function Arena:drawExit()
-	if not self.exit then return end
+        if not self.exit then return end
 
-	local exit = self.exit
-	local t = exit.anim
-	local eased = 1 - (1 - t) * (1 - t)
-	local radius = (exit.size / 1.5) * eased
-	local cx, cy = exit.x, exit.y
-	local time = exit.time or 0
+        RenderLayers:withLayer("overlay", function()
+                local exit = self.exit
+                local t = exit.anim
+                local eased = 1 - (1 - t) * (1 - t)
+                local radius = (exit.size / 1.5) * eased
+                local cx, cy = exit.x, exit.y
+                local time = exit.time or 0
 
-	local rimRadius = radius * (1.05 + 0.03 * math.sin(time * 1.3))
-	love.graphics.setColor(0.16, 0.15, 0.19, 1)
-	love.graphics.circle("fill", cx, cy, rimRadius, 48)
+                local rimRadius = radius * (1.05 + 0.03 * math.sin(time * 1.3))
+                love.graphics.setColor(0.16, 0.15, 0.19, 1)
+                love.graphics.circle("fill", cx, cy, rimRadius, 48)
 
-	love.graphics.setColor(0.10, 0.09, 0.12, 1)
-	love.graphics.circle("fill", cx, cy, radius * 0.94, 48)
+                love.graphics.setColor(0.10, 0.09, 0.12, 1)
+                love.graphics.circle("fill", cx, cy, radius * 0.94, 48)
 
-	love.graphics.setColor(0.06, 0.05, 0.07, 1)
-	love.graphics.circle("fill", cx, cy, radius * (0.78 + 0.05 * math.sin(time * 2.1)), 48)
+                love.graphics.setColor(0.06, 0.05, 0.07, 1)
+                love.graphics.circle("fill", cx, cy, radius * (0.78 + 0.05 * math.sin(time * 2.1)), 48)
 
-	love.graphics.setColor(0.0, 0.0, 0.0, 1)
-	love.graphics.circle("fill", cx, cy, radius * (0.58 + 0.04 * math.sin(time * 1.7)), 48)
+                love.graphics.setColor(0.0, 0.0, 0.0, 1)
+                love.graphics.circle("fill", cx, cy, radius * (0.58 + 0.04 * math.sin(time * 1.7)), 48)
 
-	love.graphics.setColor(0.22, 0.20, 0.24, 0.85 * eased)
-	love.graphics.arc("fill", cx, cy, radius * 0.98, -math.pi * 0.65, -math.pi * 0.05, 32)
+                love.graphics.setColor(0.22, 0.20, 0.24, 0.85 * eased)
+                love.graphics.arc("fill", cx, cy, radius * 0.98, -math.pi * 0.65, -math.pi * 0.05, 32)
 
-	love.graphics.setColor(0, 0, 0, 0.45 * eased)
-	love.graphics.arc("fill", cx, cy, radius * 0.72, math.pi * 0.2, math.pi * 1.05, 32)
+                love.graphics.setColor(0, 0, 0, 0.45 * eased)
+                love.graphics.arc("fill", cx, cy, radius * 0.72, math.pi * 0.2, math.pi * 1.05, 32)
 
-	love.graphics.setColor(0.04, 0.04, 0.05, 0.9 * eased)
-	love.graphics.setLineWidth(2)
-	love.graphics.circle("line", cx, cy, radius * 0.96, 48)
-	love.graphics.setLineWidth(1)
+                love.graphics.setColor(0.04, 0.04, 0.05, 0.9 * eased)
+                love.graphics.setLineWidth(2)
+                love.graphics.circle("line", cx, cy, radius * 0.96, 48)
+                love.graphics.setLineWidth(1)
+        end)
 end
 
 function Arena:triggerBorderFlare(strength, duration)
