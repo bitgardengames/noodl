@@ -325,18 +325,18 @@ function Arena:rebuildTileDecorations()
         local tileSize = self.tileSize or 24
         local patchDensity = 0.08
         local accentDensity = 0.045
-        local speckDensity = 0.05
+        local speckDensity = 0.03
 
         if theme == "botanical" then
                 patchDensity = patchDensity + 0.015
-                speckDensity = speckDensity + 0.015
+                speckDensity = speckDensity + 0.01
         elseif theme == "machine" then
                 accentDensity = accentDensity + 0.015
                 patchDensity = math.max(0.05, patchDensity - 0.01)
         elseif theme == "oceanic" then
                 patchDensity = patchDensity + 0.01
         elseif theme == "cavern" then
-                speckDensity = speckDensity + 0.01
+                speckDensity = speckDensity + 0.006
         end
 
         local decorations = {}
@@ -415,8 +415,8 @@ function Arena:rebuildTileDecorations()
                                 local offsetY = quantizedOffset(size)
                                 local lighten = rng:random() < 0.5
                                 local target = lighten and highlightTarget or shadowTarget
-                                local amount = lighten and (0.3 + rng:random() * 0.2) or (0.34 + rng:random() * 0.22)
-                                local color = mixColorTowards(baseColor, target, amount, 0.035 + rng:random() * 0.035)
+                                local amount = lighten and (0.26 + rng:random() * 0.16) or (0.3 + rng:random() * 0.18)
+                                local color = mixColorTowards(baseColor, target, amount, 0.025 + rng:random() * 0.03)
                                 local radius = size * (0.4 + rng:random() * 0.1)
                                 decorations[#decorations + 1] = {
                                         col = col,
