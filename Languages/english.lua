@@ -473,14 +473,19 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Molting Reflex",
                             description = "Shields trigger a 60% adrenaline surge.",
 			},
-			circuit_breaker = {
-				name = "Circuit Breaker",
-				description = "Saw tracks freeze for 1s after each fruit.",
-			},
-			stonebreaker_hymn = {
-				name = "Stonebreaker Hymn",
-				description = "Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock.",
-			},
+                        circuit_breaker = {
+                                name = "Circuit Breaker",
+                                description = "Saw tracks freeze for 1s after each fruit.",
+                        },
+                        subduction_array = {
+                                name = "Subduction Array",
+                                description = "After each fruit, saws sink beneath their tracks for 1.6s.",
+                                activation_text = "Saws Submerge",
+                        },
+                        stonebreaker_hymn = {
+                                name = "Stonebreaker Hymn",
+                                description = "Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock.",
+                        },
                         diffraction_barrier = {
 				name = "Diffraction Barrier",
 				description = "Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s.",
