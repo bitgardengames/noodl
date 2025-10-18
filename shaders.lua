@@ -237,56 +237,121 @@ local function registerEffect(def)
 	effectDefinitions[def.type] = def
 end
 
+-- Festival canopy with sunbursts and fireflies for the opening floor
+registerEffect({
+        type = "gardenFestival",
+        backdropIntensity = 0.6,
+        arenaIntensity = 0.36,
+        source = [[
+                extern float time;
+                extern vec2 resolution;
+                extern vec2 origin;
+                extern vec4 baseColor;
+                extern vec4 canopyColor;
+                extern vec4 highlightColor;
+                extern vec4 glowColor;
+                extern float intensity;
+
+                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+                {
+                        vec2 uv = (screen_coords - origin) / resolution;
+                        uv = clamp(uv, 0.0, 1.0);
+
+                        float sway = sin((uv.x + time * 0.08) * 2.8) * 0.05;
+                        float canopyMix = smoothstep(0.1, 0.9, uv.y + sway);
+                        vec3 base = mix(baseColor.rgb, canopyColor.rgb, canopyMix * 0.75);
+
+                        vec2 sunCenter = vec2(0.5, 0.18 + sin(time * 0.32) * 0.02);
+                        vec2 toSun = uv - sunCenter;
+                        float sunDist = length(toSun);
+                        float sunCore = smoothstep(0.38, 0.0, sunDist);
+                        float sunRays = sin(atan(toSun.y, toSun.x) * 8.0 - time * 0.4) * 0.5 + 0.5;
+                        float sunGlow = clamp((sunCore * (0.55 + sunRays * 0.45)) * (0.7 + intensity * 0.6), 0.0, 1.0);
+
+                        float vineWave = sin((uv.x * 7.0 + time * 0.5) + sin((uv.y + time * 0.15) * 5.2));
+                        float vineMask = smoothstep(-0.35, 0.65, vineWave);
+                        vec3 canopyLayer = mix(base, highlightColor.rgb, vineMask * (0.35 + intensity * 0.35));
+
+                        float flutter = sin((uv.x - uv.y) * 22.0 + time * 1.3) * cos((uv.x + uv.y) * 18.0 - time * 1.1);
+                        float firefly = smoothstep(0.72, 1.0, flutter) * (0.18 + intensity * 0.32);
+                        vec3 glowLayer = mix(canopyLayer, glowColor.rgb, firefly);
+
+                        vec3 sunLayer = mix(glowLayer, glowColor.rgb, sunGlow);
+
+                        float edgeShade = smoothstep(0.3, 0.95, distance(uv, vec2(0.5, 0.65)));
+                        vec3 finalColor = mix(sunLayer, baseColor.rgb * 0.92, edgeShade * 0.4);
+
+                        return vec4(finalColor, baseColor.a) * color;
+                }
+        ]],
+        configure = function(effect, palette)
+                local shader = effect.shader
+
+                local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+                local canopy = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
+                local highlight = getColorComponents(palette and (palette.snake or palette.arenaBG), Theme.snakeDefault)
+                local glow = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+
+                sendColor(shader, "baseColor", base)
+                sendColor(shader, "canopyColor", canopy)
+                sendColor(shader, "highlightColor", highlight)
+                sendColor(shader, "glowColor", glow)
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
+})
+
 -- Gentle canopy gradient for relaxed botanical floors
 registerEffect({
-	type = "softCanopy",
-	backdropIntensity = 0.52,
-	arenaIntensity = 0.3,
-	source = [[
-		extern float time;
-		extern vec2 resolution;
-		extern vec2 origin;
-		extern vec4 baseColor;
-		extern vec4 canopyColor;
-		extern vec4 glowColor;
-		extern float intensity;
+        type = "softCanopy",
+        backdropIntensity = 0.52,
+        arenaIntensity = 0.3,
+        source = [[
+                extern float time;
+                extern vec2 resolution;
+                extern vec2 origin;
+                extern vec4 baseColor;
+                extern vec4 canopyColor;
+                extern vec4 glowColor;
+                extern float intensity;
 
-		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-		{
-			vec2 uv = (screen_coords - origin) / resolution;
-			uv = clamp(uv, 0.0, 1.0);
+                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+                {
+                        vec2 uv = (screen_coords - origin) / resolution;
+                        uv = clamp(uv, 0.0, 1.0);
 
-			float sway = sin((uv.x + time * 0.05) * 3.2) * 0.04;
-			float canopy = smoothstep(0.18, 0.82, uv.y + sway);
-			float lightBands = sin((uv.x * 5.0 + uv.y * 1.2) + time * 0.25) * 0.5 + 0.5;
+                        float sway = sin((uv.x + time * 0.05) * 3.2) * 0.04;
+                        float canopy = smoothstep(0.18, 0.82, uv.y + sway);
+                        float lightBands = sin((uv.x * 5.0 + uv.y * 1.2) + time * 0.25) * 0.5 + 0.5;
 
-			vec3 canopyBase = mix(baseColor.rgb, canopyColor.rgb, canopy * 0.5);
-			vec3 soil = mix(baseColor.rgb, glowColor.rgb, 0.35);
-			vec3 base = mix(canopyBase, soil, smoothstep(0.2, 0.9, uv.y) * 0.4);
-			float highlight = clamp(lightBands * (0.22 + intensity * 0.16), 0.0, 1.0);
-			vec3 col = mix(base, glowColor.rgb, highlight * 0.45);
-			col = mix(col, soil, 0.18);
+                        vec3 canopyBase = mix(baseColor.rgb, canopyColor.rgb, canopy * 0.5);
+                        vec3 soil = mix(baseColor.rgb, glowColor.rgb, 0.35);
+                        vec3 base = mix(canopyBase, soil, smoothstep(0.2, 0.9, uv.y) * 0.4);
+                        float highlight = clamp(lightBands * (0.22 + intensity * 0.16), 0.0, 1.0);
+                        vec3 col = mix(base, glowColor.rgb, highlight * 0.45);
+                        col = mix(col, soil, 0.18);
 
-			float vignette = smoothstep(0.45, 0.98, distance(uv, vec2(0.5)));
-			col = mix(col, baseColor.rgb, vignette * 0.35);
+                        float vignette = smoothstep(0.45, 0.98, distance(uv, vec2(0.5)));
+                        col = mix(col, baseColor.rgb, vignette * 0.35);
 
-			return vec4(col, baseColor.a) * color;
-		}
-	]],
-	configure = function(effect, palette)
-		local shader = effect.shader
+                        return vec4(col, baseColor.a) * color;
+                }
+        ]],
+        configure = function(effect, palette)
+                local shader = effect.shader
 
-		local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
-		local canopy = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
-		local glow = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+                local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+                local canopy = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
+                local glow = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
 
-		sendColor(shader, "baseColor", base)
-		sendColor(shader, "canopyColor", canopy)
-		sendColor(shader, "glowColor", glow)
-	end,
-	draw = function(effect, x, y, w, h, intensity)
-		return drawShader(effect, x, y, w, h, intensity)
-	end,
+                sendColor(shader, "baseColor", base)
+                sendColor(shader, "canopyColor", canopy)
+                sendColor(shader, "glowColor", glow)
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
 })
 
 -- Soft cavern haze with muted glints
