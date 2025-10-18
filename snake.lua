@@ -14,6 +14,8 @@ local FloatingText = require("floatingtext")
 local Snake = {}
 
 local unpack = unpack
+local sqrt = math.sqrt
+local max = math.max
 
 local screenW, screenH
 local direction = { x = 1, y = 0 }
@@ -947,7 +949,8 @@ local function trimHoleSegments(hole)
 
 	local radiusSq = radius * radius
 	local consumed = 0
-	local lastInside = nil
+	local lastInsideX, lastInsideY = nil, nil
+	local lastInsideDirX, lastInsideDirY = nil, nil
 	local removedAny = false
 	local i = 1
 
@@ -964,7 +967,10 @@ local function trimHoleSegments(hole)
 		local dy = y - hy
 		if dx * dx + dy * dy <= radiusSq then
 			removedAny = true
-			lastInside = { x = x, y = y, dirX = seg.dirX, dirY = seg.dirY }
+			lastInsideX = x
+			lastInsideY = y
+			lastInsideDirX = seg.dirX
+			lastInsideDirY = seg.dirY
 
 			local nextSeg = workingTrail[i + 1]
 			if nextSeg then
@@ -972,7 +978,7 @@ local function trimHoleSegments(hole)
 				if nx and ny then
 					local segDx = nx - x
 					local segDy = ny - y
-					consumed = consumed + math.sqrt(segDx * segDx + segDy * segDy)
+					consumed = consumed + sqrt(segDx * segDx + segDy * segDy)
 				end
 			end
 
@@ -983,32 +989,32 @@ local function trimHoleSegments(hole)
 	end
 
 	local newHead = workingTrail[1]
-	if removedAny and newHead and lastInside then
-		local oldDx = newHead.drawX - lastInside.x
-		local oldDy = newHead.drawY - lastInside.y
-		local oldLen = math.sqrt(oldDx * oldDx + oldDy * oldDy)
+	if removedAny and newHead and lastInsideX and lastInsideY then
+		local oldDx = newHead.drawX - lastInsideX
+		local oldDy = newHead.drawY - lastInsideY
+		local oldLen = sqrt(oldDx * oldDx + oldDy * oldDy)
 		if oldLen > 0 then
 			consumed = consumed - oldLen
 		end
 
-		local ix, iy = findCircleIntersection(lastInside.x, lastInside.y, newHead.drawX, newHead.drawY, hx, hy, radius)
+		local ix, iy = findCircleIntersection(lastInsideX, lastInsideY, newHead.drawX, newHead.drawY, hx, hy, radius)
 		if ix and iy then
-			local newDx = ix - lastInside.x
-			local newDy = iy - lastInside.y
-			local newLen = math.sqrt(newDx * newDx + newDy * newDy)
+			local newDx = ix - lastInsideX
+			local newDy = iy - lastInsideY
+			local newLen = sqrt(newDx * newDx + newDy * newDy)
 			consumed = consumed + newLen
 			newHead.drawX = ix
 			newHead.drawY = iy
 		else
 			-- fallback: if no intersection, clamp head to previous inside point
-			newHead.drawX = lastInside.x
-			newHead.drawY = lastInside.y
+			newHead.drawX = lastInsideX
+			newHead.drawY = lastInsideY
 		end
 	end
 
 	hole.consumedLength = consumed
 
-	local totalLength = math.max(0, (segmentCount or 0) * SEGMENT_SPACING)
+	local totalLength = max(0, (segmentCount or 0) * SEGMENT_SPACING)
 	if totalLength <= 1e-4 then
 		hole.fullyConsumed = true
 	else
@@ -1023,13 +1029,13 @@ local function trimHoleSegments(hole)
 	if newHead and newHead.drawX and newHead.drawY then
 		hole.entryPointX = newHead.drawX
 		hole.entryPointY = newHead.drawY
-	elseif lastInside then
-		hole.entryPointX = lastInside.x
-		hole.entryPointY = lastInside.y
+	elseif lastInsideX and lastInsideY then
+		hole.entryPointX = lastInsideX
+		hole.entryPointY = lastInsideY
 	end
 
-	if lastInside and lastInside.dirX and lastInside.dirY then
-		hole.entryDirX, hole.entryDirY = normalizeDirection(lastInside.dirX, lastInside.dirY)
+	if lastInsideDirX and lastInsideDirY then
+		hole.entryDirX, hole.entryDirY = normalizeDirection(lastInsideDirX, lastInsideDirY)
 	end
 end
 
@@ -2317,26 +2323,31 @@ function Snake:update(dt)
                 -- Don’t check the first ~1 segment of body behind the head (neck).
                 -- Compute by *distance*, not “skip N nodes”.
                 local guardDist = SEGMENT_SPACING * 1.25  -- give the neck extra space while it exits the new tile
-		local walked = 0
+                local walked = 0
 
-		local function seglen(i)
-			local dx = trail[i-1].drawX - trail[i].drawX
-			local dy = trail[i-1].drawY - trail[i].drawY
-			return math.sqrt(dx*dx + dy*dy)
-		end
+                -- advance 'walked' until we’re past the neck
+                local startIndex = 2
+                local trailCount = #trail
+                while startIndex < trailCount and walked < guardDist do
+                        local prevSegment = trail[startIndex - 1]
+                        local currSegment = trail[startIndex]
+                        local prevX, prevY = prevSegment and prevSegment.drawX, prevSegment and prevSegment.drawY
+                        local currX, currY = currSegment and currSegment.drawX, currSegment and currSegment.drawY
+                        if not (prevX and prevY and currX and currY) then
+                                break
+                        end
 
-		-- advance 'walked' until we’re past the neck
-		local startIndex = 2
-		while startIndex < #trail and walked < guardDist do
-			walked = walked + seglen(startIndex)
-			startIndex = startIndex + 1
-		end
+                        local dx = prevX - currX
+                        local dy = prevY - currY
+                        walked = walked + sqrt(dx * dx + dy * dy)
+                        startIndex = startIndex + 1
+                end
 
-		-- If tail vacated the head cell this tick, don’t count that as a hit
-                local collisionThreshold = math.max(0, SEGMENT_SPACING - SELF_COLLISION_BUFFER)
+                -- If tail vacated the head cell this tick, don’t count that as a hit
+                local collisionThreshold = max(0, SEGMENT_SPACING - SELF_COLLISION_BUFFER)
                 local collisionThresholdSq = collisionThreshold * collisionThreshold
 
-                for i = startIndex, #trail do
+                for i = startIndex, trailCount do
                         local segment = trail[i]
                         local cx, cy = toCell(segment.drawX, segment.drawY)
 
