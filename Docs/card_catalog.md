@@ -8,7 +8,7 @@
 | Stone Whisperer | Common | Rocks spawn far less often after eating fruit. |  |
 | Adrenaline Surge | Uncommon | Snake surges forward after each fruit. | Tags: adrenaline |
 | Aegis Recycler | Uncommon | Every two broken crash shields forge a fresh one. | Tags: defense |
-| Aegis Winder | Uncommon | After collecting twenty fruit, forge a single crash shield charge. | Tags: defense |
+| Tempest Ward | Uncommon | After collecting twenty fruit, forge a single crash shield charge. | Tags: defense |
 | Caravan Contract | Uncommon | Shops offer +1 card. Each floor spawns an extra rock. | Tags: economy, risk |
 | Circuit Breaker | Uncommon | Saw tracks freeze for 1s after each fruit. |  |
 | Crystal Cache | Uncommon | Crash shields burst into motes worth +2 bonus score. | Tags: economy, defense |
