@@ -158,6 +158,21 @@ local function mixColorTowards(baseColor, targetColor, amount, alphaOverride)
         return color
 end
 
+local THEME_TINTS = {
+        botanical   = {0.28, 0.42, 0.24, 1},
+        cavern      = {0.26, 0.3, 0.46, 1},
+        oceanic     = {0.2, 0.36, 0.52, 1},
+        machine     = {0.42, 0.34, 0.24, 1},
+        arctic      = {0.34, 0.5, 0.64, 1},
+        desert      = {0.5, 0.4, 0.22, 1},
+        laboratory  = {0.42, 0.38, 0.56, 1},
+        urban       = {0.3, 0.36, 0.44, 1},
+}
+
+local VARIANT_TINTS = {
+        fungal = {0.34, 0.28, 0.5, 1},
+}
+
 local function hashString(value)
         if not value or value == "" then
                 return 0
@@ -318,6 +333,46 @@ function Arena:rebuildTileDecorations()
         local theme = config.theme
         local variant = config.variant
 
+        local function averagePaletteColors(a, b)
+                if not a and not b then
+                        return nil
+                end
+
+                if not a then
+                        return copyColor(b, 1)
+                end
+
+                if not b then
+                        return copyColor(a, 1)
+                end
+
+                return {
+                        clamp01(((a[1] or 0) + (b[1] or 0)) * 0.5),
+                        clamp01(((a[2] or 0) + (b[2] or 0)) * 0.5),
+                        clamp01(((a[3] or 0) + (b[3] or 0)) * 0.5),
+                        1,
+                }
+        end
+
+        local function resolveThemeTint()
+                local tint = VARIANT_TINTS[variant] or THEME_TINTS[theme]
+                if tint then
+                        return copyColor(tint, 1)
+                end
+
+                if palette then
+                        local snakeColor = palette.snake and copyColor(palette.snake, 1)
+                        local rockColor = palette.rock and copyColor(palette.rock, 1)
+                        local fruitColor = palette.fruit and copyColor(palette.fruit, 1)
+
+                        return averagePaletteColors(averagePaletteColors(snakeColor, rockColor), fruitColor)
+                end
+
+                return nil
+        end
+
+        local themeTint = resolveThemeTint()
+
         local baseSeed = (config.seed or os.time()) % 2147483647
         baseSeed = baseSeed + (config.floor or 0) * 131071 + hashString(theme) * 17 + hashString(variant) * 31
         local rng = love.math.newRandomGenerator(baseSeed)
@@ -340,6 +395,7 @@ function Arena:rebuildTileDecorations()
                 clusterChance = clusterChance - 0.005
         end
 
+        clusterChance = clusterChance * (0.85 + rng:random() * 0.35)
         clusterChance = math.max(0, math.min(0.25, clusterChance))
 
         local decorations = {}
@@ -378,6 +434,12 @@ function Arena:rebuildTileDecorations()
                         color = mixColorTowards(color, accentTarget, accentMix, accentAlpha)
                 end
 
+                if themeTint then
+                        local tintMix = 0.08 + rng:random() * 0.08
+                        local tintAlpha = clamp01((color[4] or 1) * (0.9 + rng:random() * 0.1))
+                        color = mixColorTowards(color, themeTint, tintMix, tintAlpha)
+                end
+
                 return color
         end
 
@@ -391,6 +453,9 @@ function Arena:rebuildTileDecorations()
         end
 
         local function addRoundedSquare(col, row, size, radius, color)
+                local baseAlpha = color[4] or 1
+                local fadeAmplitude = 0.08 + rng:random() * 0.12
+                local fadeSpeed = 0.25 + rng:random() * 0.55
                 decorations[#decorations + 1] = {
                         col = col,
                         row = row,
@@ -399,7 +464,13 @@ function Arena:rebuildTileDecorations()
                         w = size,
                         h = size,
                         radius = radius,
-                        color = color,
+                        color = {color[1], color[2], color[3], baseAlpha},
+                        fade = {
+                                base = baseAlpha,
+                                amplitude = fadeAmplitude,
+                                speed = fadeSpeed,
+                                offset = rng:random() * math.pi * 2,
+                        },
                 }
         end
 
@@ -464,7 +535,17 @@ function Arena:drawTileDecorations()
                         local tileX, tileY = self:getTilePosition(deco.col, deco.row)
                         local drawX = tileX + (deco.x or 0)
                         local drawY = tileY + (deco.y or 0)
-                        love.graphics.setColor(color[1], color[2], color[3], color[4] or 1)
+                        local alpha = color[4] or 1
+                        local fade = deco.fade
+                        if fade and fade.amplitude and fade.amplitude > 0 then
+                                local timerFn = love and love.timer and love.timer.getTime
+                                local time = timerFn and timerFn() or 0
+                                local oscillation = math.sin(time * (fade.speed or 1) + (fade.offset or 0))
+                                local factor = 1 + oscillation * fade.amplitude
+                                alpha = clamp01((fade.base or alpha) * factor)
+                        end
+
+                        love.graphics.setColor(color[1], color[2], color[3], alpha)
                         love.graphics.rectangle("fill", drawX, drawY, width, height, deco.radius or 0, deco.radius or 0)
                 end
         end
