@@ -2978,8 +2978,9 @@ function Snake:checkSawBodyCollision()
 	local guardDistance = SEGMENT_SPACING * 0.9
 	local bodyRadius = SEGMENT_SIZE * 0.5
 
-	for _, saw in ipairs(saws) do
-		if isSawActive(saw) then
+        for i = 1, #saws do
+                local saw = saws[i]
+                if isSawActive(saw) then
 			local sx, sy = getSawCenterPosition(saw)
 			if sx and sy then
 				local sawRadius = (saw.collisionRadius or saw.radius or 0)
@@ -3082,7 +3083,8 @@ function Snake:draw()
 		local upgradeVisuals = collectUpgradeVisuals(self)
 
                 if severedPieces and #severedPieces > 0 then
-                        for _, piece in ipairs(severedPieces) do
+                        for i = 1, #severedPieces do
+                                local piece = severedPieces[i]
                                 local trailData = piece and piece.trail
                                 if trailData and #trailData > 1 then
                                         local function getPieceHead()

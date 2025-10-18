@@ -220,29 +220,33 @@ local function buildCellLookup(cells)
 		return nil
 	end
 
-	local lookup = {}
-	for _, cell in ipairs(cells) do
-		local col = math.floor((cell[1] or 0) + 0.5)
-		local row = math.floor((cell[2] or 0) + 0.5)
-		lookup[col .. "," .. row] = true
-	end
+        local lookup = {}
+        for i = 1, #cells do
+                local cell = cells[i]
+                local col = math.floor((cell[1] or 0) + 0.5)
+                local row = math.floor((cell[2] or 0) + 0.5)
+                lookup[col .. "," .. row] = true
+        end
 
-	return lookup
+        return lookup
 end
 
+local trackThreatCellBuffer = {}
+
 local function trackThreatensSpawnBuffer(fx, fy, dir, spawnLookup)
-	if not spawnLookup then
-		return false
-	end
+        if not spawnLookup then
+                return false
+        end
 
-	local cells = SnakeUtils.getSawTrackCells(fx, fy, dir)
-	for _, cell in ipairs(cells) do
-		if spawnLookup[cell[1] .. "," .. cell[2]] then
-			return true
-		end
-	end
+        local cells = SnakeUtils.getSawTrackCells(fx, fy, dir, trackThreatCellBuffer)
+        for i = 1, #cells do
+                local cell = cells[i]
+                if spawnLookup[cell[1] .. "," .. cell[2]] then
+                        return true
+                end
+        end
 
-	return false
+        return false
 end
 
 local function trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup)
