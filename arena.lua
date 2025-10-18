@@ -323,10 +323,10 @@ function Arena:rebuildTileDecorations()
         local rng = love.math.newRandomGenerator(baseSeed)
 
         local tileSize = self.tileSize or 24
-        local clusterChance = 0.015
-        local minClusterSize = 1
+        local clusterChance = 0.01
+        local minClusterSize = 2
         local maxClusterSize = 4
-        local colorJitter = 0.015
+        local colorJitter = 0.01
 
         if theme == "botanical" then
                 clusterChance = clusterChance + 0.02
