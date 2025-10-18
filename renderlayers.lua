@@ -27,7 +27,7 @@ local function ensureCanvas(name, width, height)
 
         local canvas = canvases[name]
         if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h then
-                canvas = love.graphics.newCanvas(w, h, {stencil = true})
+                canvas = love.graphics.newCanvas(w, h)
                 canvases[name] = canvas
         end
         return canvas
@@ -45,7 +45,7 @@ function RenderLayers:begin(width, height)
         for _, name in ipairs(LAYERS) do
                 local canvas = ensureCanvas(name, canvasWidth, canvasHeight)
                 love.graphics.push("all")
-                love.graphics.setCanvas(canvas)
+                love.graphics.setCanvas({ canvas, stencil = true })
                 love.graphics.clear(0, 0, 0, 0)
                 love.graphics.pop()
         end
@@ -58,7 +58,7 @@ function RenderLayers:push(layerName)
         end
 
         love.graphics.push("all")
-        love.graphics.setCanvas(canvas)
+        love.graphics.setCanvas({ canvas, stencil = true })
 end
 
 function RenderLayers:pop()

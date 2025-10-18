@@ -50,8 +50,8 @@ local function ensureTransitionTitleCanvas(self)
 	local width = math.max(1, math.ceil(self.screenWidth or love.graphics.getWidth() or 1))
 	local height = math.max(1, math.ceil(self.screenHeight or love.graphics.getHeight() or 1))
 	local canvas = self.transitionTitleCanvas
-	if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
-                canvas = love.graphics.newCanvas(width, height, {stencil = true})
+        if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
+                canvas = love.graphics.newCanvas(width, height)
 		canvas:setFilter("linear", "linear")
 		self.transitionTitleCanvas = canvas
 	end
@@ -1177,8 +1177,8 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 	local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
 	local titleOffset = (1 - appear) * 36
 
-	love.graphics.push("all")
-	love.graphics.setCanvas(canvas)
+        love.graphics.push("all")
+        love.graphics.setCanvas({ canvas, stencil = true })
 	love.graphics.clear(0, 0, 0, 0)
 	love.graphics.origin()
 	love.graphics.setBlendMode("alpha")
