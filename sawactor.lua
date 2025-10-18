@@ -189,8 +189,8 @@ function SawActor:draw(x, y, scale)
 
         love.graphics.push()
         love.graphics.translate(
-                (px or x) + offsetX + SHADOW_OFFSET * drawScale,
-                (py or y) + offsetY + SHADOW_OFFSET * drawScale
+                (px or x) + SHADOW_OFFSET * drawScale - offsetX,
+                (py or y) + SHADOW_OFFSET * drawScale - offsetY
         )
         love.graphics.rotate(rotation)
         love.graphics.scale(overallScale, overallScale)
