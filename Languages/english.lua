@@ -510,14 +510,18 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Stone Census",
 				description = "Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%).",
 			},
-			guild_ledger = {
-				name = "Guild Ledger",
-				description = "Each shop slot reduces rock spawn chance by 1.5%.",
-			},
+                        guild_ledger = {
+                                name = "Guild Ledger",
+                                description = "Each shop slot reduces rock spawn chance by 1.5%.",
+                        },
+                        radiant_charter = {
+                                name = "Radiant Charter",
+                                description = "Each extra shop slot removes 1 laser (minimum 0) and adds 1 saw to floor generation.",
+                        },
                         predators_reflex = {
-				name = "Predator's Reflex",
-				description = "Adrenaline bursts are 25% stronger and trigger at the start of each floor.",
-			},
+                                name = "Predator's Reflex",
+                                description = "Adrenaline bursts are 25% stronger and trigger at the start of each floor.",
+                        },
 			abyssal_catalyst = {
 				name = "Abyssal Catalyst",
 				description = "Instantly gain a crash shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",

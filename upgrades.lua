@@ -428,27 +428,54 @@ local function updateResonantShellBonus(state)
 end
 
 local function updateGuildLedger(state)
-	if not state then return end
+        if not state then return end
 
-	local perSlot = state.counters and state.counters.guildLedgerFlatPerSlot or 0
-	if perSlot == 0 then return end
+        local perSlot = state.counters and state.counters.guildLedgerFlatPerSlot or 0
+        if perSlot == 0 then return end
 
-	local slots = 0
-	if state.effects then
-		slots = state.effects.shopSlots or 0
-	end
+        local slots = 0
+        if state.effects then
+                slots = state.effects.shopSlots or 0
+        end
 
-	local previous = state.counters.guildLedgerBonus or 0
-	local newBonus = -(perSlot * slots)
-	state.counters.guildLedgerBonus = newBonus
-	state.effects.rockSpawnFlat = (state.effects.rockSpawnFlat or 0) - previous + newBonus
+        local previous = state.counters.guildLedgerBonus or 0
+        local newBonus = -(perSlot * slots)
+        state.counters.guildLedgerBonus = newBonus
+        state.effects.rockSpawnFlat = (state.effects.rockSpawnFlat or 0) - previous + newBonus
+end
+
+local function updateRadiantCharter(state)
+        if not state then return end
+
+        local perSlotLaser = state.counters and state.counters.radiantCharterLaserPerSlot or 0
+        local perSlotSaw = state.counters and state.counters.radiantCharterSawPerSlot or 0
+        if perSlotLaser == 0 and perSlotSaw == 0 then return end
+
+        local slots = 0
+        if state.effects then
+                slots = state.effects.shopSlots or 0
+        end
+
+        slots = math.max(0, math.floor(slots + 0.0001))
+
+        local previousLaser = state.counters.radiantCharterLaserBonus or 0
+        local previousSaw = state.counters.radiantCharterSawBonus or 0
+
+        local newLaser = -(perSlotLaser * slots)
+        local newSaw = perSlotSaw * slots
+
+        state.counters.radiantCharterLaserBonus = newLaser
+        state.counters.radiantCharterSawBonus = newSaw
+
+        state.effects.laserSpawnBonus = (state.effects.laserSpawnBonus or 0) - previousLaser + newLaser
+        state.effects.sawSpawnBonus = (state.effects.sawSpawnBonus or 0) - previousSaw + newSaw
 end
 
 local function updateStoneCensus(state)
-	if not state then return end
+        if not state then return end
 
-	local perEconomy = state.counters and state.counters.stoneCensusReduction or 0
-	if perEconomy == 0 then return end
+        local perEconomy = state.counters and state.counters.stoneCensusReduction or 0
+        if perEconomy == 0 then return end
 
 	local previous = state.counters.stoneCensusMult or 1
 	if previous <= 0 then previous = 1 end
@@ -1478,35 +1505,68 @@ local pool = {
 			})
 		end,
 	}),
-	register({
-		id = "guild_ledger",
-		nameKey = "upgrades.guild_ledger.name",
-		descKey = "upgrades.guild_ledger.description",
-		rarity = "uncommon",
-		requiresTags = {"economy"},
-		tags = {"economy", "defense"},
-		onAcquire = function(state)
-			state.counters.guildLedgerFlatPerSlot = 0.015
-			updateGuildLedger(state)
+        register({
+                id = "guild_ledger",
+                nameKey = "upgrades.guild_ledger.name",
+                descKey = "upgrades.guild_ledger.description",
+                rarity = "uncommon",
+                requiresTags = {"economy"},
+                tags = {"economy", "defense"},
+                onAcquire = function(state)
+                        state.counters.guildLedgerFlatPerSlot = 0.015
+                        updateGuildLedger(state)
 
-			if not state.counters.guildLedgerHandlerRegistered then
-				state.counters.guildLedgerHandlerRegistered = true
-				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
-					if not runState then return end
-					if getStacks(runState, "guild_ledger") <= 0 then return end
-					updateGuildLedger(runState)
-				end)
-			end
+                        if not state.counters.guildLedgerHandlerRegistered then
+                                state.counters.guildLedgerHandlerRegistered = true
+                                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+                                        if not runState then return end
+                                        if getStacks(runState, "guild_ledger") <= 0 then return end
+                                        updateGuildLedger(runState)
+                                end)
+                        end
 
-			celebrateUpgrade(getUpgradeString("guild_ledger", "name"), nil, {
-				color = {1, 0.86, 0.46, 1},
-				particleCount = 16,
-				particleSpeed = 120,
-				particleLife = 0.42,
-				textOffset = 42,
-				textScale = 1.1,
-			})
-		end,
+                        celebrateUpgrade(getUpgradeString("guild_ledger", "name"), nil, {
+                                color = {1, 0.86, 0.46, 1},
+                                particleCount = 16,
+                                particleSpeed = 120,
+                                particleLife = 0.42,
+                                textOffset = 42,
+                                textScale = 1.1,
+                        })
+                end,
+        }),
+        register({
+                id = "radiant_charter",
+                nameKey = "upgrades.radiant_charter.name",
+                descKey = "upgrades.radiant_charter.description",
+                rarity = "uncommon",
+                requiresTags = {"economy"},
+                tags = {"economy", "defense"},
+                onAcquire = function(state)
+                        state.counters = state.counters or {}
+                        state.counters.radiantCharterLaserPerSlot = 1
+                        state.counters.radiantCharterSawPerSlot = 1
+
+                        updateRadiantCharter(state)
+
+                        if not state.counters.radiantCharterHandlerRegistered then
+                                state.counters.radiantCharterHandlerRegistered = true
+                                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+                                        if not runState then return end
+                                        if getStacks(runState, "radiant_charter") <= 0 then return end
+                                        updateRadiantCharter(runState)
+                                end)
+                        end
+
+                        celebrateUpgrade(getUpgradeString("radiant_charter", "name"), nil, {
+                                color = {0.82, 0.94, 1, 1},
+                                particleCount = 18,
+                                particleSpeed = 118,
+                                particleLife = 0.44,
+                                textOffset = 44,
+                                textScale = 1.08,
+                        })
+                end,
         }),
         register({
                 id = "predators_reflex",
