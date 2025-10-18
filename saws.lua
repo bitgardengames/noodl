@@ -2,6 +2,7 @@ local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local Particles = require("particles")
 local Theme = require("theme")
+local RenderLayers = require("renderlayers")
 
 local Saws = {}
 local current = {}
@@ -22,6 +23,8 @@ local SINK_DISTANCE = 28
 local SINK_SPEED = 3
 local HIT_FLASH_DURATION = 0.18
 local HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
+local SHADOW_OFFSET = 6
+local SHADOW_ALPHA = 0.35
 
 local function copyColor(color)
 	if not color then
@@ -424,6 +427,60 @@ function Saws:draw()
 
 	for _, saw in ipairs(current) do
 		local px, py = getSawCenter(saw)
+		local sinkProgress = math.max(0, math.min(1, saw.sinkProgress or 0))
+		local sinkOffset = sinkProgress * SINK_DISTANCE
+		local occlusionDepth = SINK_OFFSET + sinkOffset
+		local offsetX, offsetY = 0, 0
+		local sinkDir = 1
+
+		if saw.dir == "horizontal" then
+			offsetY = occlusionDepth
+		else
+			sinkDir = (saw.side == "left") and -1 or 1
+			offsetX = sinkDir * occlusionDepth
+		end
+
+		local sinkScale = 1 - 0.1 * sinkProgress
+		local rotation = saw.rotation or 0
+		local teeth = saw.teeth or 8
+		local outer = saw.radius or SAW_RADIUS
+		local inner = outer * 0.8
+		local step = math.pi / math.max(1, teeth)
+		local points = {}
+
+		for i = 0, (teeth * 2) - 1 do
+			local r = (i % 2 == 0) and outer or inner
+			local angle = i * step
+			points[#points + 1] = math.cos(angle) * r
+			points[#points + 1] = math.sin(angle) * r
+		end
+
+		if #points >= 6 then
+			RenderLayers:withLayer("shadows", function()
+				love.graphics.push()
+
+				local shadowOffsetX = offsetX
+				local shadowOffsetY = offsetY
+
+				if saw.dir == "horizontal" then
+					shadowOffsetX = shadowOffsetX + SHADOW_OFFSET * 0.4
+					shadowOffsetY = shadowOffsetY + SHADOW_OFFSET
+				else
+					shadowOffsetX = shadowOffsetX + SHADOW_OFFSET * sinkDir
+					shadowOffsetY = shadowOffsetY + SHADOW_OFFSET * 0.5
+				end
+
+				love.graphics.translate((px or saw.x) + shadowOffsetX, (py or saw.y) + shadowOffsetY)
+				love.graphics.rotate(rotation)
+				love.graphics.scale(sinkScale, sinkScale)
+
+				local alpha = SHADOW_ALPHA * (1 - 0.4 * sinkProgress)
+				love.graphics.setColor(0, 0, 0, alpha)
+				love.graphics.polygon("fill", points)
+
+				love.graphics.pop()
+			end)
+		end
 
 		-- Stencil: clip saw into the track (adjust direction for left/right mounted saws)
 		love.graphics.stencil(function()
@@ -466,36 +523,12 @@ function Saws:draw()
 
 		-- Saw blade
 		love.graphics.push()
-		local sinkOffset = (saw.sinkProgress or 0) * SINK_DISTANCE
-		local offsetX, offsetY = 0, 0
-
-		if saw.dir == "horizontal" then
-			offsetY = SINK_OFFSET + sinkOffset
-		else
-			local sinkDir = (saw.side == "left") and -1 or 1
-			offsetX = sinkDir * (SINK_OFFSET + sinkOffset)
-		end
-
 		love.graphics.translate((px or saw.x) + offsetX, (py or saw.y) + offsetY)
 
 		-- apply spinning rotation
-		love.graphics.rotate(saw.rotation)
+		love.graphics.rotate(rotation)
 
-		local sinkScale = 1 - 0.1 * (saw.sinkProgress or 0)
 		love.graphics.scale(sinkScale, sinkScale)
-
-		local points = {}
-		local teeth = saw.teeth or 8
-		local outer = saw.radius
-		local inner = saw.radius * 0.8
-		local step = math.pi / teeth
-
-		for i = 0, (teeth * 2) - 1 do
-			local r = (i % 2 == 0) and outer or inner
-			local angle = i * step
-			table.insert(points, math.cos(angle) * r)
-			table.insert(points, math.sin(angle) * r)
-		end
 
 		-- Fill
 		local baseColor = Theme.sawColor or {0.8, 0.8, 0.8, 1}
@@ -506,46 +539,45 @@ function Saws:draw()
 		love.graphics.setColor(baseColor)
 		love.graphics.polygon("fill", points)
 
-                -- Determine how the hub highlight should appear. When the saw is mounted
-                -- in a wall (vertical with an explicit side) the hub sits mostly inside
-                -- the track. The stencil clips part of the hub which previously removed
-                -- the highlight entirely. Keep rendering it, but fade the highlight based
-                -- on how deep the hub is occluded so it matches the horizontal saws while
-                -- avoiding a harsh seam at the edge of the track.
+		-- Determine how the hub highlight should appear. When the saw is mounted
+		-- in a wall (vertical with an explicit side) the hub sits mostly inside
+		-- the track. The stencil clips part of the hub which previously removed
+		-- the highlight entirely. Keep rendering it, but fade the highlight based
+		-- on how deep the hub is occluded so it matches the horizontal saws while
+		-- avoiding a harsh seam at the edge of the track.
 		local highlightRadius = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
-                local hideHubHighlight = false
-                local occlusionDepth = SINK_OFFSET + sinkOffset
-                local highlightAlphaMult = 1
+		local hideHubHighlight = false
+		local highlightAlphaMult = 1
 
-                if saw.dir == "vertical" and (saw.side == "left" or saw.side == "right") then
-                        -- Wall-mounted vertical saws rest partially inside their track. The
-                        -- hub highlight would normally be clipped by the stencil which makes
-                        -- the center disappear entirely. Keep drawing it, but fade the effect
-                        -- based on how deep the hub is occluded so the exposed portion still
-                        -- reads well without leaving a harsh seam.
-                        if occlusionDepth <= 0 then
-                                hideHubHighlight = true
-                        else
-                                local occlusionRatio = math.min(1, math.max(0, occlusionDepth / highlightRadius))
-                                highlightAlphaMult = 0.4 + 0.6 * occlusionRatio
-                        end
-                elseif occlusionDepth > highlightRadius then
-                        hideHubHighlight = true
-                end
+		if saw.dir == "vertical" and (saw.side == "left" or saw.side == "right") then
+			-- Wall-mounted vertical saws rest partially inside their track. The
+			-- hub highlight would normally be clipped by the stencil which makes
+			-- the center disappear entirely. Keep drawing it, but fade the effect
+			-- based on how deep the hub is occluded so the exposed portion still
+			-- reads well without leaving a harsh seam.
+			if occlusionDepth <= 0 then
+				hideHubHighlight = true
+			else
+				local occlusionRatio = math.min(1, math.max(0, occlusionDepth / highlightRadius))
+				highlightAlphaMult = 0.4 + 0.6 * occlusionRatio
+			end
+		elseif occlusionDepth > highlightRadius then
+			hideHubHighlight = true
+		end
 
-                if not hideHubHighlight then
-                        local highlight = getHighlightColor(baseColor)
-                        love.graphics.setColor(
-                                highlight[1],
-                                highlight[2],
-                                highlight[3],
-                                (highlight[4] or 1) * highlightAlphaMult
-                        )
-                        love.graphics.setLineWidth(2)
-                        love.graphics.circle("line", 0, 0, highlightRadius)
-                end
+		if not hideHubHighlight then
+			local highlight = getHighlightColor(baseColor)
+			love.graphics.setColor(
+				highlight[1],
+				highlight[2],
+				highlight[3],
+				(highlight[4] or 1) * highlightAlphaMult
+			)
+			love.graphics.setLineWidth(2)
+			love.graphics.circle("line", 0, 0, highlightRadius)
+		end
 
-                -- Outline
+		-- Outline
 		love.graphics.setColor(0, 0, 0, 1)
 		love.graphics.setLineWidth(3)
 		love.graphics.polygon("line", points)
