@@ -210,16 +210,16 @@ DataSchemas.playerStats = {
 		default = 0,
 		description = "Most combos triggered in a single run.",
 	},
-	crashShieldsSaved = {
-		type = "number",
-		default = 0,
-		description = "Crash shields spent to prevent hits.",
-	},
-	mostShieldsSavedInRun = {
-		type = "number",
-		default = 0,
-		description = "Most crash shields saved in a single run.",
-	},
+        shieldsSaved = {
+                type = "number",
+                default = 0,
+                description = "Shields spent to prevent hits.",
+        },
+        mostShieldsSavedInRun = {
+                type = "number",
+                default = 0,
+                description = "Most shields saved in a single run.",
+        },
 	bestFloorClearTime = {
 		type = "number",
 		description = "Fastest floor clear time (seconds).",

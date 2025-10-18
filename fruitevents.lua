@@ -176,8 +176,8 @@ local function applyRunRewards(fruitType, x, y)
 			end
 		elseif rewardType == "shield" then
 			local shields = math.floor(reward.amount or 0)
-			if shields ~= 0 then
-				Snake:addCrashShields(shields)
+                        if shields ~= 0 then
+                                Snake:addShields(shields)
 				if reward.label and reward.showLabel ~= false then
 					addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
 					offset = offset + 22

@@ -163,7 +163,7 @@ function Achievements:_ensureInitialized()
 				runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0,
 				runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0,
 				runShieldSawParries = SessionStats:get("runShieldSawParries") or 0,
-				runCrashShieldsSaved = SessionStats:get("crashShieldsSaved") or 0,
+                                runShieldsSaved = SessionStats:get("shieldsSaved") or 0,
 				runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0,
 				runBestComboStreak = SessionStats:get("bestComboStreak") or 0,
 				fruitWithoutTurning = SessionStats:get("fruitWithoutTurning") or 0,

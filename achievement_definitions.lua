@@ -299,13 +299,13 @@ local definitions = {
 		order = 19,
 		hidden = true,
 		progressFn = function(state)
-			if (state.runFloorsCleared or 0) >= 3 and (state.runCrashShieldsSaved or 0) == 0 then
+                        if (state.runFloorsCleared or 0) >= 3 and (state.runShieldsSaved or 0) == 0 then
 				return 1
 			end
 			return 0
 		end,
 		condition = function(state)
-			return (state.runFloorsCleared or 0) >= 3 and (state.runCrashShieldsSaved or 0) == 0
+                        return (state.runFloorsCleared or 0) >= 3 and (state.runShieldsSaved or 0) == 0
 		end,
 	},
 	{

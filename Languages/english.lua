@@ -59,7 +59,7 @@ local english = {
 				},
 				shields = {
 					title = "Shield Specialist",
-					description = "Trigger ${goal} crash shields in a single run.",
+                                        description = "Trigger ${goal} shields in a single run.",
 					progress = "Emergency saves: ${current}/${goal}",
 					complete = "Shield mastery! ${current} clutch saves.",
 				},
@@ -259,7 +259,7 @@ local english = {
 				bestComboStreak = "Best Combo Streak",
 				totalCombosTriggered = "Combos Pulled Off",
 				mostApplesInRun = "Most Apples in a Run",
-				crashShieldsSaved = "Emergency Shields Triggered",
+                                shieldsSaved = "Emergency Shields Triggered",
 				tilesTravelled = "Tiles Slithered",
 				totalTimeAlive = "Time Alive",
 				longestRunDuration = "Longest Run",
@@ -392,8 +392,8 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			floor_intro = {
 				prompt = "Press any key to descend",
 				heal_section_title = "Floor Rest",
-				heal_note = "Forged ${amount} crash shield(s).",
-				shield_note = "Forged ${amount} crash shield(s).",
+                            heal_note = "Forged ${amount} shield(s).",
+                            shield_note = "Forged ${amount} shield(s).",
 			},
 		},
 		upgrades = {
@@ -406,7 +406,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			momentum_label = "Momentum",
 			hud = {
-				shields = "Crash Shields",
+                                shields = "Shields",
 				ready = "Ready",
 				depleted = "Depleted",
 				charging = "Charging",
@@ -422,17 +422,17 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			stone_skin = {
 				name = "Stone Skin",
-				description = "Gain a crash shield that shatters rocks and shrugs off a saw or laser hit.",
+                            description = "Gain a shield that shatters rocks and shrugs off a saw or laser hit.",
 				shield_text = "Stone Skin!",
 			},
                         aegis_recycler = {
                                 name = "Aegis Recycler",
-                                description = "Every two broken crash shields forge a fresh one.",
+                                description = "Every two broken shields forge a fresh one.",
                                 reforged = "Aegis Reforged",
                         },
                         amber_bloom = {
                                 name = "Amber Bloom",
-                                description = "Track shattered rocks; every third one forges 25% crash-shield progress, letting environmental cleanup snowball into extra protection.",
+                                description = "Track shattered rocks; every third one forges 25% shield progress, letting environmental cleanup snowball into extra protection.",
                                 activation_text = "Amber Bloom",
                         },
                         extra_bite = {
@@ -455,7 +455,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
                         pocket_springs = {
                                 name = "Tempest Ward",
-				description = "After collecting twenty fruit, forge a single crash shield charge.",
+                            description = "After collecting twenty fruit, forge a single shield charge.",
 			},
 			mapmakers_compass = {
 				name = "Mapmaker's Compass",
@@ -471,7 +471,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			molting_reflex = {
 				name = "Molting Reflex",
-				description = "Crash shields trigger a 60% adrenaline surge.",
+                            description = "Shields trigger a 60% adrenaline surge.",
 			},
 			circuit_breaker = {
 				name = "Circuit Breaker",
@@ -491,7 +491,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			wardens_chorus = {
 				name = "Warden's Chorus",
-				description = "Each Defense upgrade adds crash shield progress at the start of every floor.",
+                            description = "Each Defense upgrade adds shield progress at the start of every floor.",
 			},
 			caravan_contract = {
 				name = "Caravan Contract",
@@ -499,7 +499,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
                         verdant_bonds = {
                                 name = "Verdant Bonds",
-                                description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a crash shield.",
+                                description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a shield.",
                                 activation_text = "Verdant Growth",
                         },
 			fresh_supplies = {
@@ -524,7 +524,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
                         },
 			abyssal_catalyst = {
 				name = "Abyssal Catalyst",
-				description = "Instantly gain a crash shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
+                            description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
 			},
 			spectral_harvest = {
 				name = "Spectral Harvest",
@@ -537,7 +537,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			crystal_cache = {
 				name = "Crystal Cache",
-				description = "Crash shields burst into motes worth +2 bonus score.",
+                            description = "Shields burst into motes worth +2 bonus score.",
 				combo_bonus = "Crystal Cache +2",
 			},
 			tectonic_resolve = {
@@ -546,7 +546,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			titanblood_pact = {
 				name = "Titanblood Pact",
-				description = "Gain +3 crash shields and +2s saw stall duration. Grow by +5 and gain +2 extra growth.",
+                            description = "Gain +3 shields and +2s saw stall duration. Grow by +5 and gain +2 extra growth.",
 			},
 			chronospiral_core = {
 				name = "Chronospiral Core",
@@ -568,7 +568,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
                         },
                         chrono_ward = {
                                 name = "Chrono Ward",
-                                description = "Each time a crash shield is consumed, time slows briefly so you can thread through danger and plan your next move.",
+                                description = "Each time a shield is consumed, time slows briefly so you can thread through danger and plan your next move.",
                         },
                         temporal_anchor = {
                                 name = "Temporal Anchor",
@@ -639,27 +639,27 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			wallRicochet = {
 				title = "Ricochet Routine",
-				description = "Bounce off a wall using a crash shield.",
+                            description = "Bounce off a wall using a shield.",
 			},
 			rockShatter = {
 				title = "Stone Sneeze",
-				description = "Shatter a rock by face-checking it with a crash shield.",
+                            description = "Shatter a rock by face-checking it with a shield.",
 			},
 			rockCrusher = {
 				title = "Rock Crusher",
-				description = "Pulverize 25 rocks with the help of crash shields.",
+                            description = "Pulverize 25 rocks with the help of shields.",
 			},
 			sawParry = {
 				title = "Saw Whisperer",
-				description = "Let a crash shield devour a saw for you.",
+                            description = "Let a shield devour a saw for you.",
 			},
 			sawAnnihilator = {
 				title = "Saw Annihilator",
-				description = "Reduce 25 saws to splinters using crash shields.",
+                            description = "Reduce 25 saws to splinters using shields.",
 			},
 			shieldTriad = {
 				title = "Crash-Test Maestro",
-				description = "In one run, shrug off a wall, rock, and saw with crash shields.",
+                            description = "In one run, shrug off a wall, rock, and saw with shields.",
 			},
 			straightLineSnacker = {
 				title = "Straight-Line Snacker",
@@ -667,7 +667,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			shieldlessWonder = {
 				title = "Shieldless Wonder",
-				description = "Clear 3 floors in a run without triggering a crash shield.",
+                            description = "Clear 3 floors in a run without triggering a shield.",
 			},
 			dragonHunter = {
 				title = "Dragon Hunter",

@@ -962,7 +962,7 @@ function UI:setCombo(count, timer, duration)
 end
 
 
-function UI:setCrashShields(count, opts)
+function UI:setShields(count, opts)
 	local shields = self.shields
 	if not shields then return end
 

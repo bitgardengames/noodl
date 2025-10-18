@@ -110,14 +110,14 @@ local function getStacks(state, id)
 	return takenSet[id] or 0
 end
 
-local function grantCrashShields(amount)
+local function grantShields(amount)
         amount = math.max(0, math.floor((amount or 0) + 0.0001))
         if amount <= 0 then
                 return 0
         end
 
-        if Snake and Snake.addCrashShields then
-                Snake:addCrashShields(amount)
+        if Snake and Snake.addShields then
+                Snake:addShields(amount)
                 return amount
         end
 
@@ -318,7 +318,7 @@ local function handleAmberBloomRockShatter(data, state)
                 end
 
                 if shields > 0 then
-                        grantCrashShields(shields)
+                        grantShields(shields)
                 end
 
                 celebrateUpgrade(label, data, {
@@ -506,9 +506,9 @@ local function handleBulwarkChorusFloorStart(_, state)
 	local shields = math.floor(progress)
 	state.counters.bulwarkChorusProgress = progress - shields
 
-	if shields > 0 and Snake.addCrashShields then
-		Snake:addCrashShields(shields)
-		celebrateUpgrade(nil, nil, {
+        if shields > 0 and Snake.addShields then
+                Snake:addShields(shields)
+                celebrateUpgrade(nil, nil, {
 			skipText = true,
 			color = {0.7, 0.9, 1.0, 1},
 			skipParticles = true,
@@ -819,7 +819,7 @@ local pool = {
 		allowDuplicates = true,
 		maxStacks = 4,
 		onAcquire = function(state)
-			Snake:addCrashShields(1)
+                        Snake:addShields(1)
 			if Snake.addStoneSkinSawGrace then
 				Snake:addStoneSkinSawGrace(1)
 			end
@@ -865,7 +865,7 @@ local pool = {
                                 state.counters.aegisRecycler = (state.counters.aegisRecycler or 0) + 1
                                 if state.counters.aegisRecycler >= 2 then
                                         state.counters.aegisRecycler = state.counters.aegisRecycler - 2
-                                        Snake:addCrashShields(1)
+                                        Snake:addShields(1)
 					local fx, fy = getEventPosition(data)
 					if fx and fy then
 						celebrateUpgrade(nil, data, {
@@ -1036,7 +1036,7 @@ local pool = {
                                 if state.counters.pocketSpringsFruit >= POCKET_SPRINGS_FRUIT_TARGET then
                                         state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
                                         state.counters.pocketSpringsComplete = true
-                                        Snake:addCrashShields(1)
+                                        Snake:addShields(1)
                                         local celebrationOptions = {
                                                 color = {0.64, 0.86, 1.0, 1},
                                                 particleCount = 14,
@@ -1430,8 +1430,8 @@ local pool = {
 
                                         if shields <= 0 then return end
 
-                                        if Snake and Snake.addCrashShields then
-                                                Snake:addCrashShields(shields)
+                                        if Snake and Snake.addShields then
+                                                Snake:addShields(shields)
                                         end
 
                                         local label = getUpgradeString("verdant_bonds", "activation_text")
@@ -1604,7 +1604,7 @@ local pool = {
                         state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.2
                         state.effects.abyssalCatalyst = (state.effects.abyssalCatalyst or 0) + 1
 
-                        grantCrashShields(1)
+                        grantShields(1)
 
                         local celebrationOptions = {
                                 color = {0.62, 0.58, 0.94, 1},
@@ -1720,7 +1720,7 @@ local pool = {
 		unlockTag = "abyssal_protocols",
 		weight = 1,
                 onAcquire = function(state)
-                        Snake:addCrashShields(3)
+                        Snake:addShields(3)
                         state.effects.sawStall = (state.effects.sawStall or 0) + 2
                         for _ = 1, 5 do
                                 Snake:grow()
