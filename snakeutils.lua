@@ -9,13 +9,33 @@ SnakeUtils.POP_DURATION = 0.3
 SnakeUtils.occupied = {}
 
 function SnakeUtils.initOccupancy()
-	SnakeUtils.occupied = {}
-	for col = 1, Arena.cols do
-		SnakeUtils.occupied[col] = {}
-		for row = 1, Arena.rows do
-			SnakeUtils.occupied[col][row] = false
-		end
-	end
+        local occupied = SnakeUtils.occupied
+        if type(occupied) ~= "table" then
+                occupied = {}
+                SnakeUtils.occupied = occupied
+        end
+        local cols = Arena.cols
+        local rows = Arena.rows
+
+        for col = 1, cols do
+                local column = occupied[col]
+                if not column then
+                        column = {}
+                        occupied[col] = column
+                end
+
+                for row = 1, rows do
+                        column[row] = false
+                end
+
+                for row = rows + 1, #column do
+                        column[row] = nil
+                end
+        end
+
+        for col = cols + 1, #occupied do
+                occupied[col] = nil
+        end
 end
 
 -- Mark / unmark cells
@@ -95,40 +115,91 @@ function SnakeUtils.releaseCells(cells)
 end
 
 local SAW_TRACK_OFFSETS = {-2, -1, 0, 1, 2}
+local NUM_SAW_TRACK_OFFSETS = #SAW_TRACK_OFFSETS
 
-function SnakeUtils.getSawTrackCells(fx, fy, dir)
-	local centerCol, centerRow = Arena:getTileFromWorld(fx, fy)
-	local cells = {}
+local cellPool = {}
+local cellPoolCount = 0
 
-	if dir == "horizontal" then
-		if centerRow < 1 or centerRow > Arena.rows then
-			return {}
-		end
+local function releaseCell(cell)
+        cell[1] = nil
+        cell[2] = nil
+        cellPoolCount = cellPoolCount + 1
+        cellPool[cellPoolCount] = cell
+end
 
-		for _, offset in ipairs(SAW_TRACK_OFFSETS) do
-			local col = centerCol + offset
-			if col < 1 or col > Arena.cols then
-				return {}
-			end
+local function trimCells(buffer, count)
+        for i = count + 1, #buffer do
+                local cell = buffer[i]
+                if cell then
+                        releaseCell(cell)
+                end
+                buffer[i] = nil
+        end
+        return buffer
+end
 
-			cells[#cells + 1] = {col, centerRow}
-		end
-	else
-		if centerCol < 1 or centerCol > Arena.cols then
-			return {}
-		end
+local function acquireCell(col, row)
+        if cellPoolCount > 0 then
+                local cell = cellPool[cellPoolCount]
+                cellPool[cellPoolCount] = nil
+                cellPoolCount = cellPoolCount - 1
+                cell[1] = col
+                cell[2] = row
+                return cell
+        end
 
-		for _, offset in ipairs(SAW_TRACK_OFFSETS) do
-			local row = centerRow + offset
-			if row < 1 or row > Arena.rows then
-				return {}
-			end
+        return {col, row}
+end
 
-			cells[#cells + 1] = {centerCol, row}
-		end
-	end
+local function assignCell(buffer, index, col, row)
+        local cell = buffer[index]
+        if cell then
+                cell[1] = col
+                cell[2] = row
+        else
+                buffer[index] = acquireCell(col, row)
+        end
+end
 
-	return cells
+function SnakeUtils.getSawTrackCells(fx, fy, dir, out)
+        local centerCol, centerRow = Arena:getTileFromWorld(fx, fy)
+        local cols = Arena.cols
+        local rows = Arena.rows
+        local offsets = SAW_TRACK_OFFSETS
+        local cells = out or {}
+        local count = 0
+
+        if dir == "horizontal" then
+                if centerRow < 1 or centerRow > rows then
+                        return trimCells(cells, 0)
+                end
+
+                for i = 1, NUM_SAW_TRACK_OFFSETS do
+                        local col = centerCol + offsets[i]
+                        if col < 1 or col > cols then
+                                return trimCells(cells, 0)
+                        end
+
+                        count = count + 1
+                        assignCell(cells, count, col, centerRow)
+                end
+        else
+                if centerCol < 1 or centerCol > cols then
+                        return trimCells(cells, 0)
+                end
+
+                for i = 1, NUM_SAW_TRACK_OFFSETS do
+                        local row = centerRow + offsets[i]
+                        if row < 1 or row > rows then
+                                return trimCells(cells, 0)
+                        end
+
+                        count = count + 1
+                        assignCell(cells, count, centerCol, row)
+                end
+        end
+
+        return trimCells(cells, count)
 end
 
 local function cellsAreFree(cells)
@@ -154,8 +225,11 @@ function SnakeUtils.occupySawTrack(fx, fy, dir)
         return cells
 end
 
+local sawTrackScratch = {}
+
 function SnakeUtils.sawTrackIsFree(fx, fy, dir)
-	return cellsAreFree(SnakeUtils.getSawTrackCells(fx, fy, dir))
+        local cells = SnakeUtils.getSawTrackCells(fx, fy, dir, sawTrackScratch)
+        return cellsAreFree(cells)
 end
 
 -- Safe spawn: just randomize until we find a free cell
