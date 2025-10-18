@@ -498,105 +498,98 @@ registerEffect({
 	type = "mushroomPulse",
 	backdropIntensity = 0.95,
 	arenaIntensity = 0.6,
-	source = [[
-		extern float time;
-		extern vec2 resolution;
-		extern vec2 origin;
-		extern vec4 baseColor;
-		extern vec4 cavernColor;
-		extern vec4 stemColor;
-		extern vec4 bloomColor;
-		extern vec4 emberColor;
-		extern vec4 hazeColor;
-		extern float intensity;
+        source = [[
+                extern float time;
+                extern vec2 resolution;
+                extern vec2 origin;
+                extern vec4 baseColor;
+                extern vec4 cavernColor;
+                extern vec4 stemColor;
+                extern vec4 bloomColor;
+                extern vec4 emberColor;
+                extern vec4 hazeColor;
+                extern float intensity;
 
-		float hash(vec2 p)
-		{
-			return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-		}
+                float hash(vec2 p)
+                {
+                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+                }
 
-		float noise(vec2 p)
-		{
-			vec2 i = floor(p);
-			vec2 f = fract(p);
-			vec2 u = f * f * (3.0 - 2.0 * f);
+                float noise(vec2 p)
+                {
+                        vec2 i = floor(p);
+                        vec2 f = fract(p);
+                        vec2 u = f * f * (3.0 - 2.0 * f);
 
-			float a = hash(i);
-			float b = hash(i + vec2(1.0, 0.0));
-			float c = hash(i + vec2(0.0, 1.0));
-			float d = hash(i + vec2(1.0, 1.0));
+                        float a = hash(i);
+                        float b = hash(i + vec2(1.0, 0.0));
+                        float c = hash(i + vec2(0.0, 1.0));
+                        float d = hash(i + vec2(1.0, 1.0));
 
-			return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-		}
+                        return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+                }
 
-		float softCap(vec2 uv, vec2 center, vec2 radius)
-		{
-			vec2 p = (uv - center) / radius;
-			float d = dot(p, p);
-			return exp(-d * 2.6);
-		}
+                float fbm(vec2 p)
+                {
+                        float v = 0.0;
+                        float a = 0.5;
+                        mat2 m = mat2(1.6, -1.2, 1.2, 1.6);
+                        for (int i = 0; i < 4; ++i)
+                        {
+                                v += noise(p) * a;
+                                p = m * p + 13.0;
+                                a *= 0.5;
+                        }
+                        return v;
+                }
 
-		float softStem(vec2 uv, vec2 base, vec2 size)
-		{
-			vec2 p = uv - base;
-			float vertical = smoothstep(-0.02, size.y, p.y) * (1.0 - smoothstep(size.y * 0.9, size.y, p.y));
-			float width = smoothstep(size.x, 0.0, abs(p.x));
-			return clamp(vertical * width, 0.0, 1.0);
-		}
+                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+                {
+                        vec2 uv = (screen_coords - origin) / resolution;
+                        uv = clamp(uv, 0.0, 1.0);
 
-		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-		{
-			vec2 uv = (screen_coords - origin) / resolution;
-			uv = clamp(uv, 0.0, 1.0);
+                        vec2 centered = uv - vec2(0.5);
+                        float aspect = resolution.x / max(resolution.y, 0.0001);
+                        centered.x *= aspect;
 
-			vec2 centered = uv - vec2(0.5);
-			float aspect = resolution.x / max(resolution.y, 0.0001);
-			centered.x *= aspect;
+                        float angle = time * 0.12;
+                        mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+                        vec2 swirl = rot * (centered * 1.8 + vec2(0.08 * sin(time * 0.23), 0.06 * cos(time * 0.17)));
 
-			float horizon = smoothstep(-0.45, 0.55, centered.y);
-			float cavernMix = 0.35 + 0.45 * horizon;
-			vec3 col = mix(baseColor.rgb, cavernColor.rgb, cavernMix);
+                        float cavernLift = smoothstep(-0.55, 0.45, centered.y + 0.1 * sin(time * 0.15));
+                        float baseMix = 0.28 + 0.48 * cavernLift;
+                        vec3 col = mix(baseColor.rgb, cavernColor.rgb, baseMix);
 
-			float mistBand = smoothstep(-0.08, 0.32, centered.y) * smoothstep(0.85, 0.15, abs(centered.x));
-			float mistPulse = 0.4 + 0.6 * noise(centered * 2.5 + vec2(0.0, time * 0.1));
-			col = mix(col, hazeColor.rgb, mistBand * mistPulse * 0.25 * (0.6 + intensity * 0.4));
+                        float depthPulse = fbm(swirl * 1.3 + vec2(0.0, time * 0.05));
+                        float driftingVeil = fbm(swirl * 3.4 - vec2(time * 0.09, time * 0.07));
+                        float veilBand = smoothstep(-0.25, 0.55, centered.y + depthPulse * 0.25);
+                        float veilStrength = (0.35 * driftingVeil + 0.2 * depthPulse) * veilBand;
+                        col = mix(col, hazeColor.rgb, clamp(veilStrength, 0.0, 1.0) * (0.4 + intensity * 0.35));
 
-			vec2 sceneUV = uv;
-			float gentleDrift = 0.5 + 0.5 * sin(time * 0.25);
+                        float underglow = fbm(swirl * 2.1 + vec2(time * 0.11, -time * 0.08));
+                        float bloomMask = smoothstep(0.25, 0.85, underglow);
+                        vec3 bloomLayer = mix(stemColor.rgb, bloomColor.rgb, bloomMask);
+                        col = mix(col, bloomLayer, bloomMask * (0.25 + intensity * 0.4));
 
-			float stemsMask = 0.0;
-			stemsMask += softStem(sceneUV, vec2(0.32, 0.42 + 0.01 * gentleDrift), vec2(0.045, 0.26));
-			stemsMask += softStem(sceneUV, vec2(0.52, 0.44 - 0.01 * gentleDrift), vec2(0.05, 0.24));
-			stemsMask += softStem(sceneUV, vec2(0.70, 0.40 + 0.008 * gentleDrift), vec2(0.04, 0.28));
-			stemsMask = clamp(stemsMask, 0.0, 1.0);
+                        float pulse = 0.5 + 0.5 * sin(time * 0.85 + depthPulse * 3.2);
+                        float emberMask = smoothstep(0.3, 0.8, driftingVeil) * pulse;
+                        vec3 emberLayer = mix(col, emberColor.rgb, emberMask * 0.22 * (0.45 + intensity * 0.55));
 
-			vec3 stems = mix(col, stemColor.rgb, stemsMask * (0.4 + intensity * 0.35));
+                        vec2 moteUV = swirl * vec2(14.0, 10.5) + vec2(time * 0.6, -time * 0.4);
+                        float moteNoise = noise(moteUV);
+                        float moteShape = smoothstep(0.65, 0.95, moteNoise) * (0.3 + intensity * 0.7);
+                        float moteFlicker = 0.5 + 0.5 * sin(time * 1.6 + dot(swirl, vec2(7.3, 5.1)));
+                        vec3 motes = (bloomColor.rgb * 0.18 + emberColor.rgb * 0.12) * moteShape * moteFlicker;
 
-			float cap1 = softCap(sceneUV, vec2(0.32, 0.58 + 0.012 * gentleDrift), vec2(0.16, 0.11));
-			float cap2 = softCap(sceneUV, vec2(0.52, 0.60 - 0.008 * gentleDrift), vec2(0.19, 0.12));
-			float cap3 = softCap(sceneUV, vec2(0.70, 0.57 + 0.014 * gentleDrift), vec2(0.15, 0.10));
+                        vec3 layers = emberLayer + motes;
 
-			float capCluster = clamp(cap1 + cap2 * 0.9 + cap3, 0.0, 1.0);
-			float pulse = 0.65 + 0.35 * pow(0.5 + 0.5 * sin(time * 0.6 + capCluster * 2.5), 2.0);
-			vec3 caps = mix(stems, bloomColor.rgb, capCluster * pulse);
+                        float abyss = smoothstep(0.15, 0.95, length(centered));
+                        vec3 finalColor = mix(layers, baseColor.rgb, abyss * 0.38);
+                        finalColor = clamp(finalColor, 0.0, 1.0);
 
-			float emberNoise = noise(sceneUV * 4.5 + vec2(time * 0.2, -time * 0.15));
-			float emberMask = smoothstep(0.55, 0.95, capCluster) * emberNoise;
-			vec3 embers = mix(caps, emberColor.rgb, emberMask * 0.18 * (0.5 + intensity * 0.5));
-
-			float ambientGlow = smoothstep(0.2, 0.75, capCluster) * (0.3 + 0.3 * gentleDrift);
-			vec3 glowLayer = mix(embers, hazeColor.rgb, ambientGlow * 0.2);
-
-			float drift = noise(centered * 1.5 + vec2(time * 0.05, time * 0.04));
-			float floorFog = smoothstep(-0.35, 0.25, centered.y) * (0.25 + 0.35 * drift);
-			glowLayer = mix(glowLayer, hazeColor.rgb, floorFog * 0.15 * (0.4 + intensity * 0.6));
-
-			float vignette = smoothstep(0.2, 0.9, length(centered));
-			vec3 finalColor = mix(glowLayer, baseColor.rgb, vignette * 0.3);
-
-			return vec4(finalColor, baseColor.a) * color;
-		}
-	]],
+                        return vec4(finalColor, baseColor.a) * color;
+                }
+        ]],
 	configure = function(effect, palette)
 		local shader = effect.shader
 
