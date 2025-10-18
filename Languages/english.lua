@@ -425,16 +425,21 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				description = "Gain a crash shield that shatters rocks and shrugs off a saw or laser hit.",
 				shield_text = "Stone Skin!",
 			},
-			aegis_recycler = {
-				name = "Aegis Recycler",
-				description = "Every two broken crash shields forge a fresh one.",
-				reforged = "Aegis Reforged",
-			},
-			extra_bite = {
-				name = "Extra Bite",
-				description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
-				celebration = "Early Exit",
-			},
+                        aegis_recycler = {
+                                name = "Aegis Recycler",
+                                description = "Every two broken crash shields forge a fresh one.",
+                                reforged = "Aegis Reforged",
+                        },
+                        amber_bloom = {
+                                name = "Amber Bloom",
+                                description = "Track shattered rocks; every third one forges 25% crash-shield progress, letting environmental cleanup snowball into extra protection.",
+                                activation_text = "Amber Bloom",
+                        },
+                        extra_bite = {
+                                name = "Extra Bite",
+                                description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
+                                celebration = "Early Exit",
+                        },
 			adrenaline_surge = {
 				name = "Adrenaline Surge",
 				description = "Snake surges forward after each fruit.",

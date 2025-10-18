@@ -66,9 +66,9 @@ local function getHighlightColor(color)
 end
 
 local function buildRockHighlight(points)
-	if not points then return nil end
+        if not points then return nil end
 
-	local highlight = {}
+        local highlight = {}
 	local scaleX, scaleY = 0.78, 0.66
 	local offsetX, offsetY = -ROCK_SIZE * 0.12 + 2, -ROCK_SIZE * 0.18 + 2
 
@@ -111,7 +111,11 @@ local function buildRockHighlight(points)
 		end
 	end
 
-	return highlight
+        return highlight
+end
+
+local function getUpgradesModule()
+        return package.loaded["upgrades"]
 end
 
 function Rocks:spawn(x, y)
@@ -205,12 +209,13 @@ local function removeRockAt(index, spawnFX)
 	local rock = table.remove(current, index)
 	if not rock then return nil end
 
-	releaseOccupancy(rock)
+        releaseOccupancy(rock)
 
-	if spawnFX ~= false then
-		spawnShatterFX(rock.x, rock.y)
-	end
+        if spawnFX ~= false then
+                spawnShatterFX(rock.x, rock.y)
+        end
 
+        return rock
 end
 
 function Rocks:destroy(target, opts)
@@ -261,9 +266,24 @@ function Rocks:shatterNearest(x, y, count)
 
 		if not bestIndex then break end
 
-		removeRockAt(bestIndex, true)
-		Audio:playSound("rock_shatter")
-	end
+                local shattered = removeRockAt(bestIndex, true)
+                if shattered then
+                        Audio:playSound("rock_shatter")
+
+                        local Upgrades = getUpgradesModule()
+                        if Upgrades and Upgrades.notify then
+                                local fx = shattered.x or x
+                                local fy = shattered.y or y
+                                Upgrades:notify("rockShattered", {
+                                        x = fx,
+                                        y = fy,
+                                        sourceX = x,
+                                        sourceY = y,
+                                        rock = shattered,
+                                })
+                        end
+                end
+        end
 end
 
 function Rocks:addShatterOnFruit(count)
