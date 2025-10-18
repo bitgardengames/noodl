@@ -1,3 +1,5 @@
+local RenderLayers = require("renderlayers")
+
 local UpgradeVisuals = {}
 UpgradeVisuals.effects = {}
 
@@ -1328,19 +1330,21 @@ function UpgradeVisuals:draw()
         if not love or not love.graphics then return end
         if #self.effects == 0 then return end
 
-        love.graphics.push("all")
+        RenderLayers:withLayer("overlay", function()
+                love.graphics.push("all")
 
-        for _, effect in ipairs(self.effects) do
-                local progress = clamp01(effect.age / effect.life)
-                if effect.showBase ~= false then
-                        drawGlow(effect, progress)
-                        drawRings(effect, progress)
-                        drawBadge(effect, progress)
+                for _, effect in ipairs(self.effects) do
+                        local progress = clamp01(effect.age / effect.life)
+                        if effect.showBase ~= false then
+                                drawGlow(effect, progress)
+                                drawRings(effect, progress)
+                                drawBadge(effect, progress)
+                        end
+                        drawVariant(effect, progress)
                 end
-                drawVariant(effect, progress)
-        end
 
-        love.graphics.pop()
+                love.graphics.pop()
+        end)
 end
 
 function UpgradeVisuals:reset()

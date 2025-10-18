@@ -1,4 +1,5 @@
 local Settings = require("settings")
+local RenderLayers = require("renderlayers")
 
 local atan2 = math.atan2 or function(y, x)
 	return math.atan(y, x)
@@ -170,15 +171,21 @@ end
 
 function Particles:draw()
         local list = self.list
-        for i = 1, #list do
-                local p = list[i]
-                local t = p.age / p.life
-                local currentSize = p.baseSize * (0.8 + t * 0.6)
-                love.graphics.setColor(p.color)
-		love.graphics.circle("fill", p.x, p.y, currentSize)
-	end
+        if #list == 0 then
+                return
+        end
 
-	love.graphics.setColor(1, 1, 1, 1)
+        RenderLayers:withLayer("overlay", function()
+                for i = 1, #list do
+                        local p = list[i]
+                        local t = p.age / p.life
+                        local currentSize = p.baseSize * (0.8 + t * 0.6)
+                        love.graphics.setColor(p.color)
+                        love.graphics.circle("fill", p.x, p.y, currentSize)
+                end
+
+                love.graphics.setColor(1, 1, 1, 1)
+        end)
 end
 
 function Particles:reset()
