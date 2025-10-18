@@ -3,6 +3,7 @@ local Screen = require("screen")
 local UI = require("ui")
 local Theme = require("theme")
 local DrawWord = require("drawword")
+local RenderLayers = require("renderlayers")
 local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
@@ -249,9 +250,11 @@ function Menu:update(dt)
 end
 
 function Menu:draw()
-	local sw, sh = Screen:get()
+        local sw, sh = Screen:get()
 
-	drawBackground(sw, sh)
+        RenderLayers:begin(sw, sh)
+
+        drawBackground(sw, sh)
 
 	local baseCellSize = 20
 	local baseSpacing = 10
@@ -292,9 +295,11 @@ function Menu:draw()
 		titleSaw:draw(sawX, sawY, sawScale)
 	end
 
-	local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
+        local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
 
-	if trail and #trail > 0 then
+        RenderLayers:present()
+
+        if trail and #trail > 0 then
 		local head = trail[#trail]
 		Face:draw(head.x, head.y, wordScale)
 	end
