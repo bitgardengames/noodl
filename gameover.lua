@@ -223,6 +223,55 @@ local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
+local function copyColor(color)
+        if type(color) ~= "table" then
+                return { 1, 1, 1, 1 }
+        end
+
+        return {
+                color[1] or 1,
+                color[2] or 1,
+                color[3] or 1,
+                color[4] == nil and 1 or color[4],
+        }
+end
+
+local function lightenColor(color, factor)
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r + (1 - r) * factor,
+                g + (1 - g) * factor,
+                b + (1 - b) * factor,
+                a * (0.65 + factor * 0.35),
+        }
+end
+
+local function darkenColor(color, factor)
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r * (1 - factor),
+                g * (1 - factor),
+                b * (1 - factor),
+                a,
+        }
+end
+
+local function withAlpha(color, alpha)
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return { r, g, b, a * alpha }
+end
+
 local function configureBackgroundEffect()
         local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
         if not effect then
@@ -302,57 +351,8 @@ local function clamp(value, minimum, maximum)
 end
 
 local function easeOutQuad(t)
-	local inv = 1 - t
-	return 1 - inv * inv
-end
-
-local function copyColor(color)
-	if type(color) ~= "table" then
-		return { 1, 1, 1, 1 }
-	end
-
-	return {
-		color[1] or 1,
-		color[2] or 1,
-		color[3] or 1,
-		color[4] == nil and 1 or color[4],
-	}
-end
-
-local function lightenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r + (1 - r) * factor,
-		g + (1 - g) * factor,
-		b + (1 - b) * factor,
-		a * (0.65 + factor * 0.35),
-	}
-end
-
-local function darkenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r * (1 - factor),
-		g * (1 - factor),
-		b * (1 - factor),
-		a,
-	}
-end
-
-local function withAlpha(color, alpha)
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return { r, g, b, a * alpha }
+        local inv = 1 - t
+        return 1 - inv * inv
 end
 
 local function randomRange(minimum, maximum)
