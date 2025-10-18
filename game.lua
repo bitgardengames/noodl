@@ -51,7 +51,7 @@ local function ensureTransitionTitleCanvas(self)
 	local height = math.max(1, math.ceil(self.screenHeight or love.graphics.getHeight() or 1))
 	local canvas = self.transitionTitleCanvas
 	if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
-		canvas = love.graphics.newCanvas(width, height)
+                canvas = love.graphics.newCanvas(width, height, {stencil = true})
 		canvas:setFilter("linear", "linear")
 		self.transitionTitleCanvas = canvas
 	end

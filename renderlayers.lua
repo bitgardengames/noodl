@@ -27,7 +27,7 @@ local function ensureCanvas(name, width, height)
 
         local canvas = canvases[name]
         if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h then
-                canvas = love.graphics.newCanvas(w, h)
+                canvas = love.graphics.newCanvas(w, h, {stencil = true})
                 canvases[name] = canvas
         end
         return canvas
