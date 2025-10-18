@@ -91,6 +91,8 @@ end
 local POCKET_SPRINGS_FRUIT_TARGET = 20
 local CHRONO_WARD_DEFAULT_DURATION = 0.85
 local CHRONO_WARD_DEFAULT_SCALE = 0.45
+local SUBDUCTION_ARRAY_SINK_DURATION = 1.6
+local SUBDUCTION_ARRAY_VISUAL_LIMIT = 3
 
 local function getStacks(state, id)
 	if not state or not id then
@@ -1223,6 +1225,78 @@ local pool = {
                                         applySegmentPosition(fallbackOptions, 0.82)
                                         applyCircuitBreakerFacing(fallbackOptions, 0, -1)
                                         celebrateUpgrade(nil, nil, fallbackOptions)
+                                end
+                        end,
+                },
+        }),
+        register({
+                id = "subduction_array",
+                nameKey = "upgrades.subduction_array.name",
+                descKey = "upgrades.subduction_array.description",
+                rarity = "uncommon",
+                tags = {"defense"},
+                onAcquire = function(state)
+                        if state and state.effects then
+                                state.effects.sawSinkDuration = math.max(state.effects.sawSinkDuration or 0, SUBDUCTION_ARRAY_SINK_DURATION)
+                        end
+
+                        local celebrationOptions = {
+                                color = {0.68, 0.86, 1.0, 1},
+                                skipVisuals = true,
+                                skipParticles = true,
+                                textOffset = 46,
+                                textScale = 1.1,
+                        }
+
+                        celebrateUpgrade(getUpgradeString("subduction_array", "name"), nil, celebrationOptions)
+                end,
+                handlers = {
+                        fruitCollected = function(data, state)
+                                if getStacks(state, "subduction_array") <= 0 then
+                                        return
+                                end
+
+                                local duration = SUBDUCTION_ARRAY_SINK_DURATION
+                                if state and state.effects then
+                                        duration = math.max(duration, state.effects.sawSinkDuration or 0)
+                                end
+
+                                if Saws and Saws.sink then
+                                        Saws:sink(duration)
+                                end
+
+                                local sinkColor = {0.68, 0.86, 1.0, 1}
+                                local activationLabel = getUpgradeString("subduction_array", "activation_text")
+                                local celebrationOptions = {
+                                        color = sinkColor,
+                                        textOffset = 48,
+                                        textScale = 1.08,
+                                        particleCount = 16,
+                                        particleSpeed = 100,
+                                        particleLife = 0.46,
+                                }
+
+                                celebrateUpgrade(activationLabel, data, celebrationOptions)
+
+                                local sawCenters = getSawCenters(SUBDUCTION_ARRAY_VISUAL_LIMIT)
+                                if sawCenters and #sawCenters > 0 then
+                                        for _, pos in ipairs(sawCenters) do
+                                                local fx, fy = pos[1], pos[2]
+                                                if fx and fy then
+                                                        local sinkOptions = {
+                                                                x = fx,
+                                                                y = fy,
+                                                                color = sinkColor,
+                                                                skipText = true,
+                                                                particleCount = 10,
+                                                                particleSpeed = 80,
+                                                                particleLife = 0.4,
+                                                                particleSpread = math.pi * 2,
+                                                                particleSpeedVariance = 40,
+                                                        }
+                                                        celebrateUpgrade(nil, nil, sinkOptions)
+                                                end
+                                        end
                                 end
                         end,
                 },
