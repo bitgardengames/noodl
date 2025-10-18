@@ -237,11 +237,11 @@ local function registerEffect(def)
 	effectDefinitions[def.type] = def
 end
 
--- Festival canopy with sunbursts and fireflies for the opening floor
+-- Mellow canopy drift for the opening garden floor
 registerEffect({
-        type = "gardenFestival",
-        backdropIntensity = 0.6,
-        arenaIntensity = 0.36,
+        type = "gardenMellow",
+        backdropIntensity = 0.54,
+        arenaIntensity = 0.3,
         source = [[
                 extern float time;
                 extern vec2 resolution;
@@ -257,29 +257,25 @@ registerEffect({
                         vec2 uv = (screen_coords - origin) / resolution;
                         uv = clamp(uv, 0.0, 1.0);
 
-                        float sway = sin((uv.x + time * 0.08) * 2.8) * 0.05;
-                        float canopyMix = smoothstep(0.1, 0.9, uv.y + sway);
-                        vec3 base = mix(baseColor.rgb, canopyColor.rgb, canopyMix * 0.75);
+                        float sway = sin((uv.x + time * 0.05) * 1.6) * 0.035;
+                        float canopyMix = smoothstep(0.08, 0.92, uv.y + sway);
+                        vec3 baseLayer = mix(baseColor.rgb, canopyColor.rgb, canopyMix);
 
-                        vec2 sunCenter = vec2(0.5, 0.18 + sin(time * 0.32) * 0.02);
-                        vec2 toSun = uv - sunCenter;
-                        float sunDist = length(toSun);
-                        float sunCore = smoothstep(0.38, 0.0, sunDist);
-                        float sunRays = sin(atan(toSun.y, toSun.x) * 8.0 - time * 0.4) * 0.5 + 0.5;
-                        float sunGlow = clamp((sunCore * (0.55 + sunRays * 0.45)) * (0.7 + intensity * 0.6), 0.0, 1.0);
+                        vec2 sunCenter = vec2(0.52, 0.18 + sin(time * 0.18) * 0.015);
+                        vec2 sunDelta = uv - sunCenter;
+                        float sun = exp(-dot(sunDelta, sunDelta) * 9.0) * (0.28 + intensity * 0.22);
+                        vec3 sunLayer = mix(baseLayer, highlightColor.rgb, clamp(sun, 0.0, 1.0));
 
-                        float vineWave = sin((uv.x * 7.0 + time * 0.5) + sin((uv.y + time * 0.15) * 5.2));
-                        float vineMask = smoothstep(-0.35, 0.65, vineWave);
-                        vec3 canopyLayer = mix(base, highlightColor.rgb, vineMask * (0.35 + intensity * 0.35));
+                        float leafShape = sin((uv.x * 6.0 + uv.y * 3.2) - time * 0.2) * 0.5 + 0.5;
+                        float leafMask = smoothstep(0.6, 1.0, leafShape) * (0.12 + intensity * 0.16);
+                        vec3 leafLayer = mix(sunLayer, mix(sunLayer, glowColor.rgb, 0.4), clamp(leafMask, 0.0, 1.0));
 
-                        float flutter = sin((uv.x - uv.y) * 22.0 + time * 1.3) * cos((uv.x + uv.y) * 18.0 - time * 1.1);
-                        float firefly = smoothstep(0.72, 1.0, flutter) * (0.18 + intensity * 0.32);
-                        vec3 glowLayer = mix(canopyLayer, glowColor.rgb, firefly);
+                        float moteWave = sin((uv.x + uv.y) * 7.5 + time * 0.55) * cos((uv.x * 5.5 - uv.y * 4.0) + time * 0.35);
+                        float moteMask = smoothstep(0.8, 1.0, moteWave) * (0.08 + intensity * 0.12);
+                        vec3 moteLayer = mix(leafLayer, glowColor.rgb, clamp(moteMask, 0.0, 1.0));
 
-                        vec3 sunLayer = mix(glowLayer, glowColor.rgb, sunGlow);
-
-                        float edgeShade = smoothstep(0.3, 0.95, distance(uv, vec2(0.5, 0.65)));
-                        vec3 finalColor = mix(sunLayer, baseColor.rgb * 0.92, edgeShade * 0.4);
+                        float vignette = smoothstep(0.0, 0.85, length(uv - vec2(0.5, 0.55)));
+                        vec3 finalColor = mix(moteLayer, baseColor.rgb * 0.9, vignette * 0.35);
 
                         return vec4(finalColor, baseColor.a) * color;
                 }
