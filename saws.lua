@@ -465,10 +465,14 @@ function Saws:draw()
 				if saw.dir == "horizontal" then
 					shadowOffsetX = shadowOffsetX + SHADOW_OFFSET * 0.4
 					shadowOffsetY = shadowOffsetY + SHADOW_OFFSET
-				else
-					shadowOffsetX = shadowOffsetX + SHADOW_OFFSET * sinkDir
-					shadowOffsetY = shadowOffsetY + SHADOW_OFFSET * 0.5
-				end
+                                else
+                                        local shadowDirX = sinkDir
+                                        if saw.side == "left" then
+                                                shadowDirX = 1
+                                        end
+                                        shadowOffsetX = shadowOffsetX + SHADOW_OFFSET * shadowDirX
+                                        shadowOffsetY = shadowOffsetY + SHADOW_OFFSET * 0.5
+                                end
 
 				love.graphics.translate((px or saw.x) + shadowOffsetX, (py or saw.y) + shadowOffsetY)
 				love.graphics.rotate(rotation)
