@@ -619,15 +619,14 @@ registerEffect({
 
                         float t = time * 0.42;
                         float radius = length(centered);
-                        float angle = atan(centered.y, centered.x);
-                        float swirlAmount = 0.35 + 0.2 * sin(t * 1.7);
-                        float twist = swirlAmount * sin(radius * 3.4 + t * 1.2);
-                        vec2 flow = vec2(cos(angle + twist), sin(angle + twist)) * radius;
+                        float pulse = 0.5 + 0.5 * sin(t * 1.6 + radius * 5.2);
+                        vec2 radial = centered * (0.65 + 0.35 * pulse);
+                        vec2 gentle = vec2(0.12 * sin(t * 0.8 + radius * 2.4), 0.09 * cos(t * 0.6 + radius * 1.8));
+                        vec2 drift = radial + gentle;
 
-                        vec2 drift = flow * 1.8 + vec2(0.12 * sin(t * 0.8), 0.09 * cos(t * 0.6));
-                        float veilField = fbm(drift * 2.6 + vec2(t * 0.3, -t * 0.27));
-                        float bloomField = fbm(drift * 5.4 + vec2(-t * 0.45, t * 0.32));
-                        float glowField = fbm(drift * 7.2 + vec2(t * 0.55, t * 0.41));
+                        float veilField = fbm(drift * 2.6 + vec2(t * 0.28, -t * 0.24));
+                        float bloomField = fbm(drift * 5.4 + vec2(-t * 0.42, t * 0.31));
+                        float glowField = fbm(drift * 7.1 + vec2(t * 0.5, t * 0.38));
 
                         float cavernLift = smoothstep(-0.35, 0.85, veilField + centered.y * 1.2);
                         vec3 baseLayer = mix(baseColor.rgb, cavernColor.rgb, cavernLift * (0.45 + intensity * 0.25));
@@ -648,7 +647,7 @@ registerEffect({
                         float shimmer = 0.5 + 0.5 * sin(t * 2.4 + dot(drift, vec2(6.1, -5.3)));
                         vec3 petals = mix(veiled, bloomColor.rgb, petalTrace * shimmer * 0.22 * (0.6 + intensity * 0.4));
 
-                        float vignette = smoothstep(0.18, 0.95, radius + 0.08 * sin(t + angle));
+                        float vignette = smoothstep(0.18, 0.95, radius + 0.08 * sin(t + radius * 2.1));
                         vec3 finalColor = mix(petals, baseColor.rgb, vignette * 0.35);
                         finalColor = clamp(finalColor, 0.0, 1.0);
 
