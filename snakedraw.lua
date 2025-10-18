@@ -604,7 +604,7 @@ local function presentSnakeCanvas(overlayEffect, width, height)
                 love.graphics.draw(snakeCanvas, 0, 0)
                 drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
                 if #previousCanvas > 0 then
-                        love.graphics.setCanvas(table.unpack(previousCanvas))
+                        love.graphics.setCanvas(unpack(previousCanvas))
                 else
                         love.graphics.setCanvas()
                 end
