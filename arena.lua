@@ -755,7 +755,8 @@ function Arena:drawBorder()
 	end
 
         if #previousCanvas > 0 then
-                love.graphics.setCanvas(table.unpack(previousCanvas))
+                local unpack = table.unpack or unpack
+                love.graphics.setCanvas(unpack(previousCanvas))
         else
                 love.graphics.setCanvas()
         end
