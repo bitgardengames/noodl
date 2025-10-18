@@ -662,7 +662,7 @@ function Arena:_drawArenaInlay()
                 love.graphics.push("all")
                 love.graphics.setBlendMode("alpha")
                 local tint = Theme.arenaBG or {0.18, 0.18, 0.22, 1}
-                local tintStrength = 0.035
+                local tintStrength = 0.05
                 local r = mixChannel(tint[1] or 0.18, 1, 0.18)
                 local g = mixChannel(tint[2] or 0.18, 1, 0.18)
                 local b = mixChannel(tint[3] or 0.22, 1, 0.18)
