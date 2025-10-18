@@ -1039,6 +1039,9 @@ local pool = {
                                         state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
                                         state.counters.pocketSpringsComplete = true
                                         Snake:addShields(1)
+                                        if Face and Face.set then
+                                                Face:set("happy", 1.6)
+                                        end
                                         local celebrationOptions = {
                                                 color = {0.64, 0.86, 1.0, 1},
                                                 particleCount = 14,
@@ -1080,6 +1083,10 @@ local pool = {
 				Upgrades:addEventHandler("floorStart", mapmakersCompassFloorStart)
 			end
 
+			if Face and Face.set then
+				Face:set("happy", 1.4)
+			end
+
 			if state.counters.mapmakersCompassLastContext then
 				applyMapmakersCompass(state, state.counters.mapmakersCompassLastContext, { celebrate = false })
 			end
@@ -1094,6 +1101,9 @@ local pool = {
 		onAcquire = function(state)
 			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
 			state.effects.adrenalineDurationBonus = (state.effects.adrenalineDurationBonus or 0) + 2
+			if Face and Face.set then
+				Face:set("happy", 1.2)
+			end
 		end,
 	}),
 	register({
