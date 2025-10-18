@@ -385,7 +385,7 @@ function Arena:rebuildTileDecorations()
         local clusterChance = 0.01
         local minClusterSize = 2
         local maxClusterSize = 4
-        local colorJitter = 0.01
+        local colorJitter = 0.005
 
         if theme == "botanical" then
                 clusterChance = clusterChance + 0.02
@@ -428,18 +428,18 @@ function Arena:rebuildTileDecorations()
         local function makeClusterColor()
                 local lighten = rng:random() < 0.45
                 local target = lighten and highlightTarget or shadowTarget
-                local amount = lighten and (0.07 + rng:random() * 0.05) or (0.09 + rng:random() * 0.05)
-                local alpha = lighten and (0.1 + rng:random() * 0.05) or (0.12 + rng:random() * 0.05)
+                local amount = lighten and (0.1 + rng:random() * 0.06) or (0.12 + rng:random() * 0.04)
+                local alpha = lighten and (0.18 + rng:random() * 0.05) or (0.22 + rng:random() * 0.05)
                 local color = mixColorTowards(baseColor, target, amount, alpha)
 
                 if rng:random() < 0.35 then
-                        local accentMix = 0.18 + rng:random() * 0.14
-                        local accentAlpha = clamp01((color[4] or 1) * (0.85 + rng:random() * 0.15))
+                        local accentMix = 0.24 + rng:random() * 0.14
+                        local accentAlpha = clamp01((color[4] or 1) * (0.9 + rng:random() * 0.1))
                         color = mixColorTowards(color, accentTarget, accentMix, accentAlpha)
                 end
 
                 if themeTint then
-                        local tintMix = 0.08 + rng:random() * 0.08
+                        local tintMix = 0.1 + rng:random() * 0.08
                         local tintAlpha = clamp01((color[4] or 1) * (0.9 + rng:random() * 0.1))
                         color = mixColorTowards(color, themeTint, tintMix, tintAlpha)
                 end
@@ -452,14 +452,14 @@ function Arena:rebuildTileDecorations()
                 for i = 1, 3 do
                         jittered[i] = clamp01(jittered[i] + (rng:random() * 2 - 1) * colorJitter)
                 end
-                jittered[4] = clamp01((jittered[4] or 1) * (0.85 + rng:random() * 0.15))
+                jittered[4] = clamp01((jittered[4] or 1) * (0.92 + rng:random() * 0.08))
                 return jittered
         end
 
         local function addRoundedSquare(col, row, size, radius, color)
                 local baseAlpha = color[4] or 1
-                local fadeAmplitude = 0.08 + rng:random() * 0.12
-                local fadeSpeed = 0.25 + rng:random() * 0.55
+                local fadeAmplitude = 0.05 + rng:random() * 0.08
+                local fadeSpeed = 0.2 + rng:random() * 0.45
                 decorations[#decorations + 1] = {
                         col = col,
                         row = row,
