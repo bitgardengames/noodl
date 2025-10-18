@@ -322,20 +322,20 @@ function Arena:rebuildTileDecorations()
         local rng = love.math.newRandomGenerator(baseSeed)
 
         local tileSize = self.tileSize or 24
-        local patchDensity = 0.16
-        local accentDensity = 0.07
-        local speckDensity = 0.12
+        local patchDensity = 0.08
+        local accentDensity = 0.045
+        local speckDensity = 0.05
 
         if theme == "botanical" then
-                patchDensity = patchDensity + 0.04
-                speckDensity = speckDensity + 0.03
+                patchDensity = patchDensity + 0.015
+                speckDensity = speckDensity + 0.015
         elseif theme == "machine" then
-                accentDensity = accentDensity + 0.04
-                patchDensity = math.max(0.08, patchDensity - 0.02)
+                accentDensity = accentDensity + 0.015
+                patchDensity = math.max(0.05, patchDensity - 0.01)
         elseif theme == "oceanic" then
-                patchDensity = patchDensity + 0.02
+                patchDensity = patchDensity + 0.01
         elseif theme == "cavern" then
-                speckDensity = speckDensity + 0.02
+                speckDensity = speckDensity + 0.01
         end
 
         local decorations = {}
@@ -371,60 +371,13 @@ function Arena:rebuildTileDecorations()
                         local roll = rng:random()
 
                         if roll < accentDensity then
-                                local base = 0.18 + rng:random() * 0.18
-                                local variance = 0.1 + rng:random() * 0.15
-                                local w = quantizeSize(tileSize * (base + variance * rng:random()))
-                                local h = quantizeSize(tileSize * (base + variance * rng:random()))
-                                if rng:random() < 0.25 then
-                                        w, h = h, w
-                                end
-                                local offsetX = quantizedOffset(w)
-                                local offsetY = quantizedOffset(h)
-                                local amount = 0.25 + rng:random() * 0.35
-                                local color = mixColorTowards(baseColor, accentTarget, amount, 0.08 + rng:random() * 0.06)
-                                local radius = math.min(w, h) * (theme == "machine" and 0.18 or 0.32)
-                                decorations[#decorations + 1] = {
-                                        col = col,
-                                        row = row,
-                                        x = offsetX,
-                                        y = offsetY,
-                                        w = w,
-                                        h = h,
-                                        radius = radius,
-                                        color = color,
-                                }
-                        elseif roll < accentDensity + patchDensity then
-                                local w = quantizeSize(tileSize * (0.3 + rng:random() * 0.4))
-                                local h = quantizeSize(tileSize * (0.25 + rng:random() * 0.35))
-                                if rng:random() < 0.35 then
-                                        w, h = h, w
-                                end
-                                local insetX = quantizedOffset(w)
-                                local insetY = quantizedOffset(h)
-                                local lighten = rng:random() < 0.5
-                                local target = lighten and highlightTarget or shadowTarget
-                                local amount = lighten and (0.18 + rng:random() * 0.16) or (0.22 + rng:random() * 0.2)
-                                local alpha = lighten and (0.12 + rng:random() * 0.08) or (0.14 + rng:random() * 0.1)
-                                local color = mixColorTowards(baseColor, target, amount, alpha)
-                                local radius = math.min(w, h) * (theme == "machine" and 0.22 or (0.28 + rng:random() * 0.08))
-                                decorations[#decorations + 1] = {
-                                        col = col,
-                                        row = row,
-                                        x = insetX,
-                                        y = insetY,
-                                        w = w,
-                                        h = h,
-                                        radius = radius,
-                                        color = color,
-                                }
-                        elseif roll < maxDensity then
-                                local size = quantizeSize(tileSize * (0.12 + rng:random() * 0.12))
+                                local base = 0.2 + rng:random() * 0.16
+                                local variance = 0.08 + rng:random() * 0.12
+                                local size = quantizeSize(tileSize * (base + variance * rng:random()))
                                 local offsetX = quantizedOffset(size)
                                 local offsetY = quantizedOffset(size)
-                                local lighten = rng:random() < 0.5
-                                local target = lighten and highlightTarget or shadowTarget
-                                local amount = lighten and (0.35 + rng:random() * 0.25) or (0.4 + rng:random() * 0.3)
-                                local color = mixColorTowards(baseColor, target, amount, 0.04 + rng:random() * 0.05)
+                                local accentColor = mixColorTowards(baseColor, accentTarget, 0.45 + rng:random() * 0.2, 0.14 + rng:random() * 0.1)
+                                local radius = size * (0.35 + rng:random() * 0.08)
                                 decorations[#decorations + 1] = {
                                         col = col,
                                         row = row,
@@ -432,7 +385,46 @@ function Arena:rebuildTileDecorations()
                                         y = offsetY,
                                         w = size,
                                         h = size,
-                                        radius = size * 0.45,
+                                        radius = radius,
+                                        color = accentColor,
+                                }
+                        elseif roll < accentDensity + patchDensity then
+                                local size = quantizeSize(tileSize * (0.28 + rng:random() * 0.32))
+                                local insetX = quantizedOffset(size)
+                                local insetY = quantizedOffset(size)
+                                local lighten = rng:random() < 0.5
+                                local target = lighten and highlightTarget or shadowTarget
+                                local amount = lighten and (0.18 + rng:random() * 0.12) or (0.22 + rng:random() * 0.16)
+                                local alpha = lighten and (0.1 + rng:random() * 0.06) or (0.12 + rng:random() * 0.08)
+                                local color = mixColorTowards(baseColor, target, amount, alpha)
+                                local radius = size * (theme == "machine" and 0.22 or (0.3 + rng:random() * 0.06))
+                                decorations[#decorations + 1] = {
+                                        col = col,
+                                        row = row,
+                                        x = insetX,
+                                        y = insetY,
+                                        w = size,
+                                        h = size,
+                                        radius = radius,
+                                        color = color,
+                                }
+                        elseif roll < maxDensity then
+                                local size = quantizeSize(tileSize * (0.1 + rng:random() * 0.08))
+                                local offsetX = quantizedOffset(size)
+                                local offsetY = quantizedOffset(size)
+                                local lighten = rng:random() < 0.5
+                                local target = lighten and highlightTarget or shadowTarget
+                                local amount = lighten and (0.3 + rng:random() * 0.2) or (0.34 + rng:random() * 0.22)
+                                local color = mixColorTowards(baseColor, target, amount, 0.035 + rng:random() * 0.035)
+                                local radius = size * (0.4 + rng:random() * 0.1)
+                                decorations[#decorations + 1] = {
+                                        col = col,
+                                        row = row,
+                                        x = offsetX,
+                                        y = offsetY,
+                                        w = size,
+                                        h = size,
+                                        radius = radius,
                                         color = color,
                                 }
                         end
