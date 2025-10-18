@@ -767,13 +767,13 @@ DailyChallenges.challenges = {
                         local statsSource = context and context.sessionStats
                         local apples = getStatValue(statsSource, "applesEaten")
                         local combos = getStatValue(statsSource, "combosTriggered")
-                        local harvests = math.min(math.floor(apples / 12), combos)
+                        local harvests = math.min(math.floor(apples / 8), combos)
                         return math.max(harvests, 0)
                 end,
                 getRunValue = function(self, statsSource)
                         local apples = getStatValue(statsSource, "applesEaten")
                         local combos = getStatValue(statsSource, "combosTriggered")
-                        local harvests = math.min(math.floor(apples / 12), combos)
+                        local harvests = math.min(math.floor(apples / 8), combos)
                         return math.max(harvests, 0)
                 end,
                 progressReplacements = function(self, current, goal, context)
@@ -785,12 +785,12 @@ DailyChallenges.challenges = {
                                 goal = goal or 0,
                                 apples = apples,
                                 combos = combos,
-                                fruit_batch = 12,
+                                fruit_batch = 8,
                         }
                 end,
                 descriptionReplacements = function(self, current, goal)
                         return {
-                                fruit_batch = 12,
+                                fruit_batch = 8,
                         }
                 end,
                 xpReward = 95,
