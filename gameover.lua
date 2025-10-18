@@ -790,95 +790,21 @@ local function defaultButtonLayout(sw, sh, defs, startY)
 	return list
 end
 
-local function drawCenteredPanel(x, y, width, height, radius)
-	UI.drawPanel(x, y, width, height, {
-		radius = radius,
-		shadowOffset = UI.spacing.shadowOffset,
-		fill = Theme.panelColor,
-		borderColor = Theme.panelBorder,
-		borderWidth = 2,
-	})
+local function drawCenteredPanel()
+        -- Background rectangles have been removed from the game over screen,
+        -- so this helper now intentionally draws nothing.
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function drawInsetPanel(x, y, width, height, options)
-	if width <= 0 or height <= 0 then
-		return
-	end
-
-	options = options or {}
-	local radius = options.radius or 16
-	local lightenFactor = options.lighten or 0.12
-	local baseAlpha = options.alpha or 0.88
-	local borderAlpha = options.borderAlpha or 0.65
-	local borderWidth = options.borderWidth or 1
-
-	local baseColor = Theme.panelColor or { 0.18, 0.18, 0.22, 1 }
-	local fillColor = withAlpha(lightenColor(baseColor, lightenFactor), baseAlpha)
-	local borderColor = withAlpha(Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }, borderAlpha)
-
-	UI.drawPanel(x, y, width, height, {
-		radius = radius,
-		shadowOffset = 0,
-		fill = fillColor,
-		borderColor = borderColor,
-		borderWidth = borderWidth,
-	})
+local function drawInsetPanel()
+        -- Intentionally left blank; inset rectangle visuals have been removed.
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function drawSummaryPanelBackground(x, y, width, height, options)
-	if (width or 0) <= 0 or (height or 0) <= 0 then
-		return
-	end
-
-	options = options or {}
-	local radius = options.radius or 18
-	local fillAlpha = options.fillAlpha or 0.65
-	local borderWidth = options.borderWidth or 2
-	local borderAlpha = options.borderAlpha or 1
-
-        local baseColor = Theme.panelColor or { 0.18, 0.18, 0.22, 1 }
-        local fill = {
-                baseColor[1],
-                baseColor[2],
-                baseColor[3],
-                (baseColor[4] or 1) * fillAlpha,
-        }
-
-        local borderColor = UI.colors.border or Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }
-        borderColor = {
-                borderColor[1],
-                borderColor[2],
-                borderColor[3],
-                (borderColor[4] or 1) * borderAlpha,
-        }
-
-        UI.drawPanel(x, y, width, height, {
-                radius = radius,
-                shadowOffset = 0,
-                fill = fill,
-                borderColor = borderColor,
-                borderWidth = borderWidth,
-        })
-
-        if height > 8 and width > 8 then
-                local highlightHeight = math.min(height - 10, 42)
-                if highlightHeight > 6 then
-                        local highlight = withAlpha(lightenColor(fill, 0.24), 0.48)
-                        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-                        love.graphics.rectangle("fill", x + 4, y + 4, width - 8, highlightHeight, math.max(0, radius - 4), math.max(0, radius - 4))
-                end
-
-                local innerBorder = withAlpha(lightenColor(borderColor, 0.22), 0.68)
-                love.graphics.setColor(innerBorder[1], innerBorder[2], innerBorder[3], innerBorder[4])
-                love.graphics.setLineWidth(2)
-                love.graphics.rectangle("line", x + 3, y + 3, width - 6, height - 6, math.max(0, radius - 2), math.max(0, radius - 2))
-
-                local shadow = withAlpha(darkenColor(fill, 0.38), 0.52)
-                love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4])
-                love.graphics.rectangle("line", x + 1.5, y + 1.5, width - 3, height - 3, math.max(0, radius - 1), math.max(0, radius - 1))
-                love.graphics.setLineWidth(1)
-                love.graphics.setColor(1, 1, 1, 1)
-        end
+local function drawSummaryPanelBackground()
+        -- The summary panels no longer use rectangular backdrops.
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setLineWidth(1)
 end
 
 local function handleButtonAction(_, action)
@@ -1555,25 +1481,10 @@ local function drawCelebrationsList(anim, x, startY, width)
 			love.graphics.scale(0.92 + 0.08 * appearEase, 0.92 + 0.08 * appearEase)
 			love.graphics.translate(-(cardX + cardWidth / 2), -(cardY + celebrationHeight / 2 + wobble))
 
-			love.graphics.setColor(0, 0, 0, 0.35 * alpha)
-			love.graphics.rectangle("fill", cardX + 5, cardY + 6, cardWidth, celebrationHeight, outerRadius, outerRadius)
-
-			local accent = event.color or Theme.progressColor or { 1, 1, 1, 1 }
-			love.graphics.setColor(accent[1], accent[2], accent[3], 0.22 * alpha)
-			love.graphics.rectangle("fill", cardX, cardY, cardWidth, celebrationHeight, outerRadius, outerRadius)
-
-			love.graphics.setColor(accent[1], accent[2], accent[3], 0.55 * alpha)
-			love.graphics.setLineWidth(2)
-			love.graphics.rectangle("line", cardX, cardY, cardWidth, celebrationHeight, outerRadius, outerRadius)
-
-			local shimmer = 0.45 + 0.25 * math.sin(now * 6 + index)
-			love.graphics.setColor(accent[1], accent[2], accent[3], shimmer * 0.18 * alpha)
-			love.graphics.rectangle("line", cardX + 3, cardY + 3, cardWidth - 6, celebrationHeight - 6, innerRadius, innerRadius)
-
-			UI.drawLabel(event.title or "", cardX + 18, cardY + 12, cardWidth - 36, "left", {
-				font = fontProgressSmall,
-				color = { UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], alpha },
-			})
+                        UI.drawLabel(event.title or "", cardX + 18, cardY + 12, cardWidth - 36, "left", {
+                                font = fontProgressSmall,
+                                color = { UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], alpha },
+                        })
 
 			if event.subtitle and event.subtitle ~= "" then
 				UI.drawLabel(event.subtitle, cardX + 18, cardY + 32, cardWidth - 36, "left", {
@@ -1582,14 +1493,13 @@ local function drawCelebrationsList(anim, x, startY, width)
 				})
 			end
 
-			love.graphics.pop()
-		end
+                        love.graphics.pop()
+                end
 
-		y = y + celebrationSpacing
-	end
+                y = y + celebrationSpacing
+        end
 
-	love.graphics.setLineWidth(1)
-	return y
+        return y
 end
 
 local function drawXpSection(self, x, y, width)
@@ -1604,40 +1514,11 @@ local function drawXpSection(self, x, y, width)
 	self.baseXpSectionHeight = self.baseXpSectionHeight or baseHeight
 	local animatedHeight = self.xpSectionHeight or targetHeight
 	local height = math.max(160, baseHeight, targetHeight, animatedHeight)
-        local panelFill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * 0.65 }
-        local borderColor = UI.colors.border or Theme.panelBorder
-
-        UI.drawPanel(x, y, width, height, {
-                radius = 18,
-                shadowOffset = 0,
-                fill = panelFill,
-                borderColor = borderColor,
-                borderWidth = 2,
-        })
-
-        local topHighlightHeight = math.min(height - 12, 48)
-        if topHighlightHeight and topHighlightHeight > 4 then
-                local highlightColor = withAlpha(lightenColor(panelFill, 0.32), 0.55)
-                love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], highlightColor[4])
-                love.graphics.rectangle("fill", x + 4, y + 4, width - 8, topHighlightHeight, 14, 14)
-        end
-
-        local innerRim = withAlpha(lightenColor(borderColor or panelFill, 0.28), 0.72)
-        love.graphics.setColor(innerRim[1], innerRim[2], innerRim[3], innerRim[4])
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", x + 3, y + 3, width - 6, height - 6, 16, 16)
-
-        local shadowRim = withAlpha(darkenColor(panelFill, 0.42), 0.55)
-        love.graphics.setColor(shadowRim[1], shadowRim[2], shadowRim[3], shadowRim[4])
-        love.graphics.rectangle("line", x + 1.5, y + 1.5, width - 3, height - 3, 17, 17)
-        love.graphics.setLineWidth(1)
-        love.graphics.setColor(1, 1, 1, 1)
-
         local headerY = y + 18
         UI.drawLabel(getLocalizedOrFallback("gameover.meta_progress_title", "Experience"), x, headerY, width, "center", {
                 font = fontProgressTitle,
                 color = UI.colors.text,
-	})
+        })
 
 	local levelColor = Theme.progressColor or UI.colors.progress or UI.colors.text
 	local flash = math.max(0, math.min(1, anim.levelFlash or 0))
