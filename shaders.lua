@@ -493,11 +493,11 @@ registerEffect({
 		return drawShader(effect, x, y, w, h, intensity, nil, { radius = 12 })
 	end,
 })
--- Cool cavern mist and echoing shimmer
+-- Fluid, blossoming glowcap bloom for mysterious caverns
 registerEffect({
-	type = "mushroomPulse",
-	backdropIntensity = 0.95,
-	arenaIntensity = 0.6,
+        type = "mushroomPulse",
+        backdropIntensity = 0.95,
+        arenaIntensity = 0.6,
         source = [[
                 extern float time;
                 extern vec2 resolution;
@@ -552,64 +552,64 @@ registerEffect({
                         float aspect = resolution.x / max(resolution.y, 0.0001);
                         centered.x *= aspect;
 
-                        float angle = time * 0.12;
-                        mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-                        vec2 swirl = rot * (centered * 1.8 + vec2(0.08 * sin(time * 0.23), 0.06 * cos(time * 0.17)));
+                        float t = time * 0.42;
+                        float radius = length(centered);
+                        float angle = atan(centered.y, centered.x);
+                        float swirlAmount = 0.35 + 0.2 * sin(t * 1.7);
+                        float twist = swirlAmount * sin(radius * 3.4 + t * 1.2);
+                        vec2 flow = vec2(cos(angle + twist), sin(angle + twist)) * radius;
 
-                        float cavernLift = smoothstep(-0.55, 0.45, centered.y + 0.1 * sin(time * 0.15));
-                        float baseMix = 0.28 + 0.48 * cavernLift;
-                        vec3 col = mix(baseColor.rgb, cavernColor.rgb, baseMix);
+                        vec2 drift = flow * 1.8 + vec2(0.12 * sin(t * 0.8), 0.09 * cos(t * 0.6));
+                        float veilField = fbm(drift * 2.6 + vec2(t * 0.3, -t * 0.27));
+                        float bloomField = fbm(drift * 5.4 + vec2(-t * 0.45, t * 0.32));
+                        float glowField = fbm(drift * 7.2 + vec2(t * 0.55, t * 0.41));
 
-                        float depthPulse = fbm(swirl * 1.3 + vec2(0.0, time * 0.05));
-                        float driftingVeil = fbm(swirl * 3.4 - vec2(time * 0.09, time * 0.07));
-                        float veilBand = smoothstep(-0.25, 0.55, centered.y + depthPulse * 0.25);
-                        float veilStrength = (0.35 * driftingVeil + 0.2 * depthPulse) * veilBand;
-                        col = mix(col, hazeColor.rgb, clamp(veilStrength, 0.0, 1.0) * (0.4 + intensity * 0.35));
+                        float cavernLift = smoothstep(-0.35, 0.85, veilField + centered.y * 1.2);
+                        vec3 baseLayer = mix(baseColor.rgb, cavernColor.rgb, cavernLift * (0.45 + intensity * 0.25));
 
-                        float underglow = fbm(swirl * 2.1 + vec2(time * 0.11, -time * 0.08));
-                        float bloomMask = smoothstep(0.25, 0.85, underglow);
-                        vec3 bloomLayer = mix(stemColor.rgb, bloomColor.rgb, bloomMask);
-                        col = mix(col, bloomLayer, bloomMask * (0.25 + intensity * 0.4));
+                        float bloomPulse = 0.5 + 0.5 * sin(t * 3.1 + bloomField * 4.0 + radius * 12.0);
+                        float bloomRing = smoothstep(0.28, 0.0, abs(radius - (0.32 + 0.08 * bloomField)));
+                        float bloomMix = clamp(bloomRing * (0.35 + intensity * 0.55) + bloomPulse * 0.22, 0.0, 1.0);
+                        vec3 bloomLayer = mix(stemColor.rgb, bloomColor.rgb, clamp(bloomField * 0.5 + 0.5, 0.0, 1.0));
+                        vec3 blossomed = mix(baseLayer, bloomLayer, bloomMix);
 
-                        float pulse = 0.5 + 0.5 * sin(time * 0.85 + depthPulse * 3.2);
-                        float emberMask = smoothstep(0.3, 0.8, driftingVeil) * pulse;
-                        vec3 emberLayer = mix(col, emberColor.rgb, emberMask * 0.22 * (0.45 + intensity * 0.55));
+                        float emberSpill = smoothstep(0.25, 0.9, glowField) * (0.25 + intensity * 0.35);
+                        vec3 emberLayer = mix(blossomed, emberColor.rgb, emberSpill * 0.5);
 
-                        vec2 moteUV = swirl * vec2(14.0, 10.5) + vec2(time * 0.6, -time * 0.4);
-                        float moteNoise = noise(moteUV);
-                        float moteShape = smoothstep(0.65, 0.95, moteNoise) * (0.3 + intensity * 0.7);
-                        float moteFlicker = 0.5 + 0.5 * sin(time * 1.6 + dot(swirl, vec2(7.3, 5.1)));
-                        vec3 motes = (bloomColor.rgb * 0.18 + emberColor.rgb * 0.12) * moteShape * moteFlicker;
+                        float hazeVeil = clamp(veilField * 0.6 + glowField * 0.3, 0.0, 1.0);
+                        vec3 veiled = mix(emberLayer, hazeColor.rgb, hazeVeil * 0.18 * (0.6 + intensity * 0.4));
 
-                        vec3 layers = emberLayer + motes;
+                        float petalTrace = smoothstep(0.1, 0.8, bloomField * 0.6 + glowField * 0.4);
+                        float shimmer = 0.5 + 0.5 * sin(t * 2.4 + dot(drift, vec2(6.1, -5.3)));
+                        vec3 petals = mix(veiled, bloomColor.rgb, petalTrace * shimmer * 0.22 * (0.6 + intensity * 0.4));
 
-                        float abyss = smoothstep(0.15, 0.95, length(centered));
-                        vec3 finalColor = mix(layers, baseColor.rgb, abyss * 0.38);
+                        float vignette = smoothstep(0.18, 0.95, radius + 0.08 * sin(t + angle));
+                        vec3 finalColor = mix(petals, baseColor.rgb, vignette * 0.35);
                         finalColor = clamp(finalColor, 0.0, 1.0);
 
                         return vec4(finalColor, baseColor.a) * color;
                 }
         ]],
-	configure = function(effect, palette)
-		local shader = effect.shader
+        configure = function(effect, palette)
+                local shader = effect.shader
 
-		local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
-		local cavern = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
-		local stems = getColorComponents(palette and (palette.arenaBorder or palette.rock), Theme.arenaBorder)
-		local bloom = getColorComponents(palette and (palette.snake or palette.sawColor), Theme.snakeDefault)
-		local ember = getColorComponents(palette and (palette.sawColor or palette.snake), Theme.sawColor)
-		local haze = getColorComponents(palette and (palette.arenaHighlight or palette.uiAccent), Theme.uiAccent)
+                local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+                local cavern = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
+                local stems = getColorComponents(palette and (palette.arenaBorder or palette.rock), Theme.arenaBorder)
+                local bloom = getColorComponents(palette and (palette.snake or palette.sawColor), Theme.snakeDefault)
+                local ember = getColorComponents(palette and (palette.sawColor or palette.snake), Theme.sawColor)
+                local haze = getColorComponents(palette and (palette.arenaHighlight or palette.uiAccent), Theme.uiAccent)
 
-		sendColor(shader, "baseColor", base)
-		sendColor(shader, "cavernColor", cavern)
-		sendColor(shader, "stemColor", stems)
-		sendColor(shader, "bloomColor", bloom)
-		sendColor(shader, "emberColor", ember)
-		sendColor(shader, "hazeColor", haze)
-	end,
-	draw = function(effect, x, y, w, h, intensity)
-		return drawShader(effect, x, y, w, h, intensity)
-	end,
+                sendColor(shader, "baseColor", base)
+                sendColor(shader, "cavernColor", cavern)
+                sendColor(shader, "stemColor", stems)
+                sendColor(shader, "bloomColor", bloom)
+                sendColor(shader, "emberColor", ember)
+                sendColor(shader, "hazeColor", haze)
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
 })
 -- Gentle tidal movement for waterlogged floors
 -- Ember drift for warm and ashen floors
