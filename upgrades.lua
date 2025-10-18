@@ -1574,14 +1574,18 @@ local pool = {
                 descKey = "upgrades.predators_reflex.description",
                 rarity = "rare",
 		requiresTags = {"adrenaline"},
-		onAcquire = function(state)
-			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
-			state.effects.adrenalineBoostBonus = (state.effects.adrenalineBoostBonus or 0) + 0.25
-		end,
-		handlers = {
-			floorStart = function()
-				if Snake.adrenaline then
-					Snake.adrenaline.active = true
+                onAcquire = function(state)
+                        state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+                        state.effects.adrenalineBoostBonus = (state.effects.adrenalineBoostBonus or 0) + 0.25
+                        state.effects.predatorsReflex = true
+                        if Snake and Snake.enablePredatorsReflex then
+                                Snake:enablePredatorsReflex()
+                        end
+                end,
+                handlers = {
+                        floorStart = function()
+                                if Snake.adrenaline then
+                                        Snake.adrenaline.active = true
 					Snake.adrenaline.timer = (Snake.adrenaline.duration or 0) * 0.5
 					Snake.adrenaline.suppressVisuals = true
                                 end
@@ -2535,21 +2539,30 @@ function Upgrades:applyPersistentEffects(rebaseline)
 		end
 	end
 
-	if effects.adrenaline then
-		Snake.adrenaline = Snake.adrenaline or {}
-		Snake.adrenaline.active = Snake.adrenaline.active or false
-		Snake.adrenaline.timer = Snake.adrenaline.timer or 0
-		local duration = (effects.adrenaline.duration or 3) + (effects.adrenalineDurationBonus or 0)
-		Snake.adrenaline.duration = duration
-		local boost = (effects.adrenaline.boost or 1.5) + (effects.adrenalineBoostBonus or 0)
-		Snake.adrenaline.boost = boost
-	end
+        if effects.adrenaline then
+                Snake.adrenaline = Snake.adrenaline or {}
+                Snake.adrenaline.active = Snake.adrenaline.active or false
+                Snake.adrenaline.timer = Snake.adrenaline.timer or 0
+                local duration = (effects.adrenaline.duration or 3) + (effects.adrenalineDurationBonus or 0)
+                Snake.adrenaline.duration = duration
+                local boost = (effects.adrenaline.boost or 1.5) + (effects.adrenalineBoostBonus or 0)
+                Snake.adrenaline.boost = boost
+        end
 
-	if effects.dash then
-		Snake.dash = Snake.dash or {}
-		local dash = Snake.dash
-		local firstSetup = not dash.configured
-		dash.duration = effects.dash.duration or dash.duration or 0
+        if effects.predatorsReflex then
+                if Snake.enablePredatorsReflex then
+                        Snake:enablePredatorsReflex()
+                else
+                        Snake.predatorsReflex = Snake.predatorsReflex or { intensity = 0, target = 0, time = 0 }
+                        Snake.predatorsReflex.enabled = true
+                end
+        end
+
+        if effects.dash then
+                Snake.dash = Snake.dash or {}
+                local dash = Snake.dash
+                local firstSetup = not dash.configured
+                dash.duration = effects.dash.duration or dash.duration or 0
 		dash.cooldown = effects.dash.cooldown or dash.cooldown or 0
 		dash.speedMult = effects.dash.speedMult or dash.speedMult or 1
 		dash.breaksRocks = effects.dash.breaksRocks ~= false
