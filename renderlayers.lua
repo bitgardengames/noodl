@@ -14,9 +14,20 @@ local canvasWidth = 0
 local canvasHeight = 0
 
 local function ensureCanvas(name, width, height)
+        local w = width
+        local h = height
+
+        if not w or w < 1 then
+                w = math.max(1, love.graphics.getWidth() or 1)
+        end
+
+        if not h or h < 1 then
+                h = math.max(1, love.graphics.getHeight() or 1)
+        end
+
         local canvas = canvases[name]
-        if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
-                canvas = love.graphics.newCanvas(width, height)
+        if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h then
+                canvas = love.graphics.newCanvas(w, h)
                 canvases[name] = canvas
         end
         return canvas
