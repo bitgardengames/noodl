@@ -356,7 +356,7 @@ local function handleWallCollision(headX, headY)
 		local top = ay + inset
 		local bottom = ay + ah - inset
 
-		if not Snake:consumeCrashShield() then
+                if not Snake:consumeShield() then
 				local safeX = clamp(headX, left, right)
 				local safeY = clamp(headY, top, bottom)
 				local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY)
@@ -449,7 +449,7 @@ local function handleRockCollision(headX, headY)
 										shake = 0.35,
 								}
 
-								local shielded = Snake:consumeCrashShield()
+                                                                local shielded = Snake:consumeShield()
 
 								if not shielded then
 										Rocks:triggerHitFlash(rock)
@@ -500,7 +500,7 @@ local function handleSawCollision(headX, headY)
 				return
 		end
 
-		local shielded = Snake:consumeCrashShield()
+                local shielded = Snake:consumeShield()
 		local survivedSaw = shielded
 
 		if not survivedSaw and Snake.consumeStoneSkinSawGrace then
@@ -591,7 +591,7 @@ local function handleLaserCollision(headX, headY)
 				return
 		end
 
-		local shielded = Snake:consumeCrashShield()
+                local shielded = Snake:consumeShield()
 		local survived = shielded
 
 		if not survived and Snake.consumeStoneSkinSawGrace then
@@ -674,7 +674,7 @@ local function handleDartCollision(headX, headY)
 				return
 		end
 
-		local shielded = Snake:consumeCrashShield()
+                local shielded = Snake:consumeShield()
 		local survived = shielded
 
 		if not survived and Snake.consumeStoneSkinSawGrace then

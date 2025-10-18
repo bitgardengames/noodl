@@ -102,7 +102,7 @@ local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.45 -- give the head more leewa
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
-Snake.crashShields = 0 -- crash protection: number of hits the snake can absorb
+Snake.shields = 0 -- shield protection: number of hits the snake can absorb
 Snake.extraGrowth = 0
 Snake.shieldBurst = nil
 Snake.shieldFlashTimer = 0
@@ -160,44 +160,44 @@ function Snake:addSpeedMultiplier(mult)
 	self.speedMult = (self.speedMult or 1) * (mult or 1)
 end
 
-function Snake:addCrashShields(n)
-	n = n or 1
-	local previous = self.crashShields or 0
-	local updated = previous + n
-	if updated < 0 then
-		updated = 0
-	end
-	self.crashShields = updated
+function Snake:addShields(n)
+        n = n or 1
+        local previous = self.shields or 0
+        local updated = previous + n
+        if updated < 0 then
+                updated = 0
+        end
+        self.shields = updated
 
-	if n ~= 0 then
-		UI:setCrashShields(self.crashShields)
-	end
+        if n ~= 0 then
+                UI:setShields(self.shields)
+        end
 
 end
 
-function Snake:consumeCrashShield()
-	if developerAssistEnabled then
-		self.shieldFlashTimer = SHIELD_FLASH_DURATION
-		UI:setCrashShields(self.crashShields or 0, { silent = true })
-		return true
-	end
-
-	if (self.crashShields or 0) > 0 then
-		self.crashShields = self.crashShields - 1
-		self.shieldFlashTimer = SHIELD_FLASH_DURATION
-		UI:setCrashShields(self.crashShields)
-                SessionStats:add("crashShieldsSaved", 1)
+function Snake:consumeShield()
+        if developerAssistEnabled then
+                self.shieldFlashTimer = SHIELD_FLASH_DURATION
+                UI:setShields(self.shields or 0, { silent = true })
                 return true
         end
-	return false
+
+        if (self.shields or 0) > 0 then
+                self.shields = self.shields - 1
+                self.shieldFlashTimer = SHIELD_FLASH_DURATION
+                UI:setShields(self.shields)
+                SessionStats:add("shieldsSaved", 1)
+                return true
+        end
+        return false
 end
 
 function Snake:resetModifiers()
-	self.speedMult    = 1.0
-	self.crashShields = 0
-	self.extraGrowth  = 0
-	self.shieldBurst  = nil
-	self.shieldFlashTimer = 0
+        self.speedMult    = 1.0
+        self.shields = 0
+        self.extraGrowth  = 0
+        self.shieldBurst  = nil
+        self.shieldFlashTimer = 0
 	self.stonebreakerStacks = 0
 	self.stoneSkinSawGrace = 0
 	self.dash = nil
@@ -216,7 +216,7 @@ function Snake:resetModifiers()
         self.spectralHarvest = nil
         self.stoneSkinVisual = nil
         self.speedVisual = nil
-        UI:setCrashShields(self.crashShields or 0, { silent = true, immediate = true })
+        UI:setShields(self.shields or 0, { silent = true, immediate = true })
 end
 
 function Snake:setStonebreakerStacks(count)
@@ -1789,7 +1789,7 @@ function Snake:drawClipped(hx, hy, hr)
 				end
 			end
 			return headX, headY
-		end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
+           end, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
 	end
 
 	if clipRadius > 0 and descendingHole and not hideDescendingBody and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
@@ -2367,7 +2367,7 @@ function Snake:update(dt)
                                 local distSq = dx*dx + dy*dy
 
                                 if distSq <= collisionThresholdSq then
-                                        if self:consumeCrashShield() then
+                                        if self:consumeShield() then
                                                         -- survived; optional FX here
                                                         self:onShieldConsumed(hx, hy, "self")
                                                         self:beginHazardGrace()
@@ -3156,7 +3156,7 @@ function Snake:draw()
 
                         SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
                                 return self:getHead()
-                        end, self.crashShields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
+                        end, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
                 end
 
         end
