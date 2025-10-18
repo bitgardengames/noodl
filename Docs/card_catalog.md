@@ -14,6 +14,7 @@
 | Crystal Cache | Uncommon | Crash shields burst into motes worth +2 bonus score. | Tags: economy, defense |
 | Diffraction Barrier | Uncommon | Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s. | Tags: defense |
 | Guild Ledger | Uncommon | Each shop slot reduces rock spawn chance by 1.5%. | Tags: economy, defense; Requires tags: economy |
+| Radiant Charter | Uncommon | Each extra shop slot removes 1 laser (minimum 0) and adds 1 saw to floor generation. | Tags: economy, defense; Requires tags: economy |
 | Mapmaker's Compass | Uncommon | The exit unlocks one fruit earlier. | Tags: economy, risk |
 | Molting Reflex | Uncommon | Crash shields trigger a 60% adrenaline surge. | Tags: adrenaline, defense; Requires tags: adrenaline |
 | Momentum Memory | Uncommon | Adrenaline bursts last 2s longer. | Requires tags: adrenaline |
