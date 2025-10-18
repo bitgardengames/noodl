@@ -2,6 +2,7 @@
 
 | Name | Rarity | Description | Notable details |
 | --- | --- | --- | --- |
+| Amber Bloom | Common | Track shattered rocks; every third one forges 25% crash-shield progress, letting environmental cleanup snowball into extra protection. | Tags: defense |
 | Extra Bite | Common | The exit unlocks one fruit earlier. Rocks spawn 15% more often. |  |
 | Fresh Supplies | Common | Discard the current shop cards and restock with new ones. | Tags: economy; Duplicates allowed; Restocks shop on use; Weight: 0.6 |
 | Stone Whisperer | Common | Rocks spawn far less often after eating fruit. |  |
