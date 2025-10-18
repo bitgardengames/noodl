@@ -368,13 +368,13 @@ function Arena:rebuildTileDecorations()
         local function makeClusterColor()
                 local lighten = rng:random() < 0.45
                 local target = lighten and highlightTarget or shadowTarget
-                local amount = lighten and (0.06 + rng:random() * 0.04) or (0.08 + rng:random() * 0.05)
-                local alpha = lighten and (0.08 + rng:random() * 0.04) or (0.1 + rng:random() * 0.05)
+                local amount = lighten and (0.07 + rng:random() * 0.05) or (0.09 + rng:random() * 0.05)
+                local alpha = lighten and (0.1 + rng:random() * 0.05) or (0.12 + rng:random() * 0.05)
                 local color = mixColorTowards(baseColor, target, amount, alpha)
 
                 if rng:random() < 0.35 then
                         local accentMix = 0.18 + rng:random() * 0.14
-                        local accentAlpha = clamp01((color[4] or 1) * (0.8 + rng:random() * 0.15))
+                        local accentAlpha = clamp01((color[4] or 1) * (0.85 + rng:random() * 0.15))
                         color = mixColorTowards(color, accentTarget, accentMix, accentAlpha)
                 end
 
