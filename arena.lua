@@ -341,22 +341,48 @@ function Arena:rebuildTileDecorations()
         local decorations = {}
         local maxDensity = math.min(0.95, accentDensity + patchDensity + speckDensity)
 
+        local subgrid = math.max(2, tileSize / 6)
+
+        local function quantizeSize(size)
+                local quantized = math.floor(size / subgrid + 0.5) * subgrid
+                quantized = math.max(subgrid, math.min(tileSize, quantized))
+                return quantized
+        end
+
+        local function quantizedOffset(size)
+                local remaining = math.max(0, tileSize - size)
+                if remaining <= 0 then
+                        return 0
+                end
+                local steps = math.max(0, math.floor(remaining / subgrid))
+                if steps <= 0 then
+                        return remaining * 0.5
+                end
+                local stepIndex = rng:random(0, steps)
+                local offset = stepIndex * subgrid
+                if offset > remaining then
+                        offset = remaining
+                end
+                return offset
+        end
+
         for row = 1, rows do
                 for col = 1, cols do
                         local roll = rng:random()
 
                         if roll < accentDensity then
-                                local w = tileSize * (0.12 + rng:random() * 0.3)
-                                local h = tileSize * (0.05 + rng:random() * 0.12)
-                                if rng:random() < 0.5 then
+                                local base = 0.18 + rng:random() * 0.18
+                                local variance = 0.1 + rng:random() * 0.15
+                                local w = quantizeSize(tileSize * (base + variance * rng:random()))
+                                local h = quantizeSize(tileSize * (base + variance * rng:random()))
+                                if rng:random() < 0.25 then
                                         w, h = h, w
                                 end
-                                local offsetX = rng:random() * (tileSize - w)
-                                local offsetY = rng:random() * (tileSize - h)
-                                local amount = 0.25 + rng:random() * 0.45
+                                local offsetX = quantizedOffset(w)
+                                local offsetY = quantizedOffset(h)
+                                local amount = 0.25 + rng:random() * 0.35
                                 local color = mixColorTowards(baseColor, accentTarget, amount, 0.08 + rng:random() * 0.06)
-                                local radius = tileSize * (theme == "machine" and 0.02 or 0.08)
-                                radius = math.min(radius, w * 0.5, h * 0.5)
+                                local radius = math.min(w, h) * (theme == "machine" and 0.18 or 0.32)
                                 decorations[#decorations + 1] = {
                                         col = col,
                                         row = row,
@@ -368,20 +394,19 @@ function Arena:rebuildTileDecorations()
                                         color = color,
                                 }
                         elseif roll < accentDensity + patchDensity then
-                                local w = tileSize * (0.35 + rng:random() * 0.4)
-                                local h = tileSize * (0.22 + rng:random() * 0.35)
+                                local w = quantizeSize(tileSize * (0.3 + rng:random() * 0.4))
+                                local h = quantizeSize(tileSize * (0.25 + rng:random() * 0.35))
                                 if rng:random() < 0.35 then
                                         w, h = h, w
                                 end
-                                local insetX = rng:random() * (tileSize - w)
-                                local insetY = rng:random() * (tileSize - h)
+                                local insetX = quantizedOffset(w)
+                                local insetY = quantizedOffset(h)
                                 local lighten = rng:random() < 0.5
                                 local target = lighten and highlightTarget or shadowTarget
                                 local amount = lighten and (0.18 + rng:random() * 0.16) or (0.22 + rng:random() * 0.2)
                                 local alpha = lighten and (0.12 + rng:random() * 0.08) or (0.14 + rng:random() * 0.1)
                                 local color = mixColorTowards(baseColor, target, amount, alpha)
-                                local radius = tileSize * (theme == "machine" and 0.02 or (0.12 + rng:random() * 0.08))
-                                radius = math.min(radius, w * 0.5, h * 0.5)
+                                local radius = math.min(w, h) * (theme == "machine" and 0.22 or (0.28 + rng:random() * 0.08))
                                 decorations[#decorations + 1] = {
                                         col = col,
                                         row = row,
@@ -393,9 +418,9 @@ function Arena:rebuildTileDecorations()
                                         color = color,
                                 }
                         elseif roll < maxDensity then
-                                local size = tileSize * (0.08 + rng:random() * 0.12)
-                                local offsetX = rng:random() * (tileSize - size)
-                                local offsetY = rng:random() * (tileSize - size)
+                                local size = quantizeSize(tileSize * (0.12 + rng:random() * 0.12))
+                                local offsetX = quantizedOffset(size)
+                                local offsetY = quantizedOffset(size)
                                 local lighten = rng:random() < 0.5
                                 local target = lighten and highlightTarget or shadowTarget
                                 local amount = lighten and (0.35 + rng:random() * 0.25) or (0.4 + rng:random() * 0.3)
@@ -407,7 +432,7 @@ function Arena:rebuildTileDecorations()
                                         y = offsetY,
                                         w = size,
                                         h = size,
-                                        radius = size * 0.5,
+                                        radius = size * 0.45,
                                         color = color,
                                 }
                         end
