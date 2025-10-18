@@ -3,6 +3,7 @@ local Theme = require("theme")
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local Audio = require("audio")
+local RenderLayers = require("renderlayers")
 
 local Rocks = {}
 local current = {}
@@ -368,43 +369,49 @@ function Rocks:update(dt)
 	end
 end
 
+local function withRockTransform(rock, fn)
+        love.graphics.push()
+        love.graphics.translate(rock.x, rock.y + rock.offsetY)
+        love.graphics.scale(rock.scaleX, rock.scaleY)
+        fn()
+        love.graphics.pop()
+end
+
 function Rocks:draw()
-	for _, rock in ipairs(current) do
-		love.graphics.push()
-		love.graphics.translate(rock.x, rock.y + rock.offsetY)
-		love.graphics.scale(rock.scaleX, rock.scaleY)
+        for _, rock in ipairs(current) do
+                RenderLayers:withLayer("shadows", function()
+                        withRockTransform(rock, function()
+                                love.graphics.setColor(0, 0, 0, 0.4)
+                                love.graphics.push()
+                                love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+                                love.graphics.scale(1.1, 1.1)
+                                love.graphics.polygon("fill", rock.shape)
+                                love.graphics.pop()
+                        end)
+                end)
 
-		-- shadow (slightly offset behind rock, scaled up so it feels bigger than outline)
-		love.graphics.setColor(0, 0, 0, 0.4)
-		love.graphics.push()
-		love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-		love.graphics.scale(1.1, 1.1) -- make shadow a bit larger
-		love.graphics.polygon("fill", rock.shape)
-		love.graphics.pop()
+                RenderLayers:withLayer("main", function()
+                        withRockTransform(rock, function()
+                                local baseColor = Theme.rock
+                                if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
+                                        baseColor = HIT_FLASH_COLOR
+                                end
 
-		-- main rock fill
-		local baseColor = Theme.rock
-		if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
-			baseColor = HIT_FLASH_COLOR
-		end
+                                love.graphics.setColor(baseColor)
+                                love.graphics.polygon("fill", rock.shape)
 
-		love.graphics.setColor(baseColor)
-		love.graphics.polygon("fill", rock.shape)
+                                if rock.highlightShape then
+                                        local highlight = getHighlightColor(baseColor)
+                                        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+                                        love.graphics.polygon("fill", rock.highlightShape)
+                                end
 
-		-- highlight
-		if rock.highlightShape then
-			local highlight = getHighlightColor(baseColor)
-			love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-			love.graphics.polygon("fill", rock.highlightShape)
-		end
-
-		-- outline
-		love.graphics.setColor(0, 0, 0, 1)
-		love.graphics.setLineWidth(3)
-		love.graphics.polygon("line", rock.shape)
-
-		love.graphics.pop()
-	end
+                                love.graphics.setColor(0, 0, 0, 1)
+                                love.graphics.setLineWidth(3)
+                                love.graphics.polygon("line", rock.shape)
+                        end)
+                end)
+        end
 end
 
 function Rocks:getSpawnChance()

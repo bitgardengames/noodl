@@ -2,6 +2,7 @@ local Particles = require("particles")
 local SnakeUtils = require("snakeutils")
 local Theme = require("theme")
 local Arena = require("arena")
+local RenderLayers = require("renderlayers")
 
 local fruitTypes = {
 	{
@@ -327,75 +328,80 @@ local function drawFruit(f)
         local liftStrength = math.max(0, -bobStrength)
         shadowAlpha = shadowAlpha * (1 + liftStrength * 0.4)
         local shadowScale = 1 + liftStrength * 0.12
-	love.graphics.setColor(0, 0, 0, shadowAlpha)
-	love.graphics.ellipse(
-		"fill",
-		x + SHADOW_OFFSET,
-		y + SHADOW_OFFSET + math.min(0, (f.bobOffset or 0) * 0.35),
-		(r * sx + OUTLINE_SIZE * 0.5) * shadowScale,
-		(r * sy + OUTLINE_SIZE * 0.5) * shadowScale,
-		segments
-	)
 
-	-- fruit body
-	local bodyColor = f.type.color
-	love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], alpha)
-	love.graphics.ellipse("fill", x, y, r * sx, r * sy)
+        RenderLayers:withLayer("shadows", function()
+                love.graphics.setColor(0, 0, 0, shadowAlpha)
+                love.graphics.ellipse(
+                        "fill",
+                        x + SHADOW_OFFSET,
+                        y + SHADOW_OFFSET + math.min(0, (f.bobOffset or 0) * 0.35),
+                        (r * sx + OUTLINE_SIZE * 0.5) * shadowScale,
+                        (r * sy + OUTLINE_SIZE * 0.5) * shadowScale,
+                        segments
+                )
+        end)
 
-	-- highlight
-	local highlight = getHighlightColor(f.type.color)
-	local hx = x - r * sx * 0.3
-	local hy = y - r * sy * 0.35
-	local hrx = r * sx * 0.55
-	local hry = r * sy * 0.45
-	love.graphics.push()
-	love.graphics.translate(hx, hy)
-	love.graphics.rotate(-0.35)
-	local highlightAlpha = (highlight[4] or 1) * alpha * (0.75 + pulse * 0.25)
-	love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
-	love.graphics.ellipse("fill", 0, 0, hrx, hry)
-	love.graphics.pop()
+        RenderLayers:withLayer("main", function()
+                -- fruit body
+                local bodyColor = f.type.color
+                love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], alpha)
+                love.graphics.ellipse("fill", x, y, r * sx, r * sy)
 
-	if f == active and #idleSparkles > 0 then
-		love.graphics.push("all")
-		love.graphics.setBlendMode("add")
-		for _, sparkle in ipairs(idleSparkles) do
-			local progress = clamp(sparkle.timer / sparkle.duration, 0, 1)
-			local fade = 1 - progress
-			local orbit = sparkle.radius + progress * 6
-			local px = x + math.cos(sparkle.angle) * orbit
-			local py = y + math.sin(sparkle.angle) * orbit - progress * 6
-			local glowSize = sparkle.size * (0.6 + 0.4 * math.sin(progress * math.pi))
-			local alphaMul = 0.25 * fade * (0.6 + pulse * 0.4)
+                -- highlight
+                local highlight = getHighlightColor(f.type.color)
+                local hx = x - r * sx * 0.3
+                local hy = y - r * sy * 0.35
+                local hrx = r * sx * 0.55
+                local hry = r * sy * 0.45
+                love.graphics.push()
+                love.graphics.translate(hx, hy)
+                love.graphics.rotate(-0.35)
+                local highlightAlpha = (highlight[4] or 1) * alpha * (0.75 + pulse * 0.25)
+                love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
+                love.graphics.ellipse("fill", 0, 0, hrx, hry)
+                love.graphics.pop()
 
-			love.graphics.setColor(sparkle.color[1], sparkle.color[2], sparkle.color[3], alphaMul)
-			love.graphics.circle("fill", px, py, glowSize)
-			love.graphics.setColor(1, 1, 1, alphaMul * 1.6)
-			love.graphics.circle("line", px, py, glowSize * 0.9)
-		end
-		love.graphics.pop()
-	end
+                if f == active and #idleSparkles > 0 then
+                        love.graphics.push("all")
+                        love.graphics.setBlendMode("add")
+                        for _, sparkle in ipairs(idleSparkles) do
+                                local progress = clamp(sparkle.timer / sparkle.duration, 0, 1)
+                                local fade = 1 - progress
+                                local orbit = sparkle.radius + progress * 6
+                                local px = x + math.cos(sparkle.angle) * orbit
+                                local py = y + math.sin(sparkle.angle) * orbit - progress * 6
+                                local glowSize = sparkle.size * (0.6 + 0.4 * math.sin(progress * math.pi))
+                                local alphaMul = 0.25 * fade * (0.6 + pulse * 0.4)
 
-	-- outline (2–3px black border)
-	love.graphics.setLineWidth(OUTLINE_SIZE)
-	love.graphics.setColor(0, 0, 0, alpha)
-	love.graphics.ellipse("line", x, y, r * sx, r * sy)
+                                love.graphics.setColor(sparkle.color[1], sparkle.color[2], sparkle.color[3], alphaMul)
+                                love.graphics.circle("fill", px, py, glowSize)
+                                love.graphics.setColor(1, 1, 1, alphaMul * 1.6)
+                                love.graphics.circle("line", px, py, glowSize * 0.9)
+                        end
+                        love.graphics.pop()
+                end
 
-	-- subtle spawn glow
-	if (f == active) and (active.phase ~= "idle") then
-		local glow = 0.18 * alpha
-		local gx = (HITBOX_SIZE * math.max(sx, sy)) * 0.65
-		love.graphics.setColor(1, 1, 1, glow)
-		love.graphics.circle("fill", x, y, gx)
-	end
+                -- outline (2–3px black border)
+                love.graphics.setLineWidth(OUTLINE_SIZE)
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.ellipse("line", x, y, r * sx, r * sy)
 
-	-- rare fruit flair
-	if f.type.name == "Dragonfruit" and f == active then
-		local t = (active.timer or 0)
-		local pulse = 0.5 + 0.5 * math.sin(t * 6.0)
-		love.graphics.setColor(1, 0, 1, 0.15 * pulse * alpha)
-		love.graphics.circle("line", x, y, HITBOX_SIZE * 0.8 + pulse * 4)
-	end
+                -- subtle spawn glow
+                if (f == active) and (active.phase ~= "idle") then
+                        local glow = 0.18 * alpha
+                        local gx = (HITBOX_SIZE * math.max(sx, sy)) * 0.65
+                        love.graphics.setColor(1, 1, 1, glow)
+                        love.graphics.circle("fill", x, y, gx)
+                end
+
+                -- rare fruit flair
+                if f.type.name == "Dragonfruit" and f == active then
+                        local t = (active.timer or 0)
+                        local rarePulse = 0.5 + 0.5 * math.sin(t * 6.0)
+                        love.graphics.setColor(1, 0, 1, 0.15 * rarePulse * alpha)
+                        love.graphics.circle("line", x, y, HITBOX_SIZE * 0.8 + rarePulse * 4)
+                end
+        end)
 end
 
 function Fruit:draw()

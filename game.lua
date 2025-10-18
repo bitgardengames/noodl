@@ -35,6 +35,7 @@ local FloorSetup = require("floorsetup")
 local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
 local ModuleUtil = require("moduleutil")
+local RenderLayers = require("renderlayers")
 local Game = {}
 
 local clamp01 = Easing.clamp01
@@ -963,40 +964,49 @@ function Game:handleDeath(dt)
 end
 
 local function drawPlayfieldLayers(self, stateOverride)
-	local renderState = stateOverride or self.state
+        local renderState = stateOverride or self.state
 
-	Arena:drawBackground()
-	Death:applyShake()
+        RenderLayers:begin(self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
 
-	Fruit:draw()
-	Rocks:draw()
-	-- Darts:draw() -- Disabled while not in use.
-	Saws:draw()
-	Lasers:draw()
+        RenderLayers:withLayer("background", function()
+                Arena:drawBackground()
+        end)
 
-	local isDescending = (renderState == "descending")
-	local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
+        Death:applyShake()
 
-	if not isDescending and not shouldDrawExitAfterSnake then
-		Arena:drawExit()
-	end
+        RenderLayers:withLayer("main", function()
+                Fruit:draw()
+                Rocks:draw()
+                -- Darts:draw() -- Disabled while not in use.
+                Saws:draw()
+                Lasers:draw()
 
-	if isDescending then
-		self:drawDescending()
-	elseif renderState == "dying" then
-		Death:draw()
-	elseif renderState ~= "gameover" then
-		Snake:draw()
-	end
+                local isDescending = (renderState == "descending")
+                local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
 
-	if shouldDrawExitAfterSnake then
-		Arena:drawExit()
-	end
+                if not isDescending and not shouldDrawExitAfterSnake then
+                        Arena:drawExit()
+                end
 
-	Particles:draw()
-	UpgradeVisuals:draw()
-	Popup:draw()
-	Arena:drawBorder()
+                if isDescending then
+                        self:drawDescending()
+                elseif renderState == "dying" then
+                        Death:draw()
+                elseif renderState ~= "gameover" then
+                        Snake:draw()
+                end
+
+                if shouldDrawExitAfterSnake then
+                        Arena:drawExit()
+                end
+
+                Particles:draw()
+                UpgradeVisuals:draw()
+                Popup:draw()
+                Arena:drawBorder()
+        end)
+
+        RenderLayers:present()
 end
 
 local function drawDeveloperAssistBadge(self)

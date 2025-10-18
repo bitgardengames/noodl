@@ -1,6 +1,7 @@
 local Face = require("face")
 local SnakeCosmetics = require("snakecosmetics")
 local ModuleUtil = require("moduleutil")
+local RenderLayers = require("renderlayers")
 
 local SnakeDraw = ModuleUtil.create("SnakeDraw")
 
@@ -584,32 +585,41 @@ local function ensureSnakeOverlayCanvas(width, height)
 end
 
 local function presentSnakeCanvas(overlayEffect, width, height)
-	if not snakeCanvas then
-	return false
-	end
+        if not snakeCanvas then
+                return false
+        end
 
-	love.graphics.setColor(0, 0, 0, 0.25)
-	love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
+        RenderLayers:withLayer("shadows", function()
+                love.graphics.setColor(0, 0, 0, 0.25)
+                love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
+        end)
 
-	local drewOverlay = false
-	if overlayEffect then
-	local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
-	love.graphics.setCanvas(overlayCanvas)
-	love.graphics.clear(0, 0, 0, 0)
-	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.draw(snakeCanvas, 0, 0)
-	drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
-	love.graphics.setCanvas()
-	end
+        local drewOverlay = false
+        if overlayEffect then
+                local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
+                local previousCanvas = { love.graphics.getCanvas() }
+                love.graphics.setCanvas(overlayCanvas)
+                love.graphics.clear(0, 0, 0, 0)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(snakeCanvas, 0, 0)
+                drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
+                if #previousCanvas > 0 then
+                        love.graphics.setCanvas(table.unpack(previousCanvas))
+                else
+                        love.graphics.setCanvas()
+                end
+        end
 
-	love.graphics.setColor(1, 1, 1, 1)
-	if drewOverlay then
-	love.graphics.draw(snakeOverlayCanvas, 0, 0)
-	else
-	love.graphics.draw(snakeCanvas, 0, 0)
-	end
+        RenderLayers:withLayer("main", function()
+                love.graphics.setColor(1, 1, 1, 1)
+                if drewOverlay then
+                        love.graphics.draw(snakeOverlayCanvas, 0, 0)
+                else
+                        love.graphics.draw(snakeCanvas, 0, 0)
+                end
+        end)
 
-	return drewOverlay
+        return drewOverlay
 end
 
 local function resolveColor(color, fallback)
@@ -2197,89 +2207,92 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
         end
 
         if hx and hy and drawFace ~= false then
-        if upgradeVisuals and upgradeVisuals.temporalAnchor then
-                drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
+                RenderLayers:withLayer("overlay", function()
+                        if upgradeVisuals and upgradeVisuals.temporalAnchor then
+                                drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.chronoWard then
+                                drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.timeDilation then
+                                drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.adrenaline then
+                                drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.quickFangs then
+                                drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.spectralHarvest then
+                                drawSpectralHarvestEcho(trail, SEGMENT_SIZE, upgradeVisuals.spectralHarvest)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.zephyrCoils then
+                                drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.dash then
+                                drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.speedArcs then
+                                drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
+                        end
+
+                        local faceScale = 1
+                        Face:draw(hx, hy, faceScale)
+
+                        drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
+
+                        if upgradeVisuals and upgradeVisuals.dash then
+                                drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.eventHorizon then
+                                drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.stormchaser then
+                                drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.chronospiral then
+                                drawChronospiralWake(trail, SEGMENT_SIZE, upgradeVisuals.chronospiral)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
+                                drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.titanblood then
+                                drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.phoenixEcho then
+                                drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.stonebreaker then
+                                drawStonebreakerAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.stonebreaker)
+                        end
+                end)
         end
 
-        if upgradeVisuals and upgradeVisuals.chronoWard then
-                drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
+        if popTimer and popTimer > 0 and hx and hy then
+                RenderLayers:withLayer("overlay", function()
+                        local t = 1 - (popTimer / POP_DURATION)
+                        if t < 1 then
+                                local pulse = 0.8 + 0.4 * math.sin(t * math.pi)
+                                love.graphics.setColor(1, 1, 1, 0.4)
+                                love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
+                        end
+                end)
         end
-
-        if upgradeVisuals and upgradeVisuals.timeDilation then
-                drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
-        end
-
-        if upgradeVisuals and upgradeVisuals.adrenaline then
-                drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
-        end
-
-        if upgradeVisuals and upgradeVisuals.quickFangs then
-                drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
-        end
-
-        if upgradeVisuals and upgradeVisuals.spectralHarvest then
-                drawSpectralHarvestEcho(trail, SEGMENT_SIZE, upgradeVisuals.spectralHarvest)
-        end
-
-        if upgradeVisuals and upgradeVisuals.zephyrCoils then
-                drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
-        end
-
-        if upgradeVisuals and upgradeVisuals.dash then
-                drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
-        end
-
-        if upgradeVisuals and upgradeVisuals.speedArcs then
-                drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
-        end
-
-        local faceScale = 1
-	Face:draw(hx, hy, faceScale)
-
-        drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
-
-        if upgradeVisuals and upgradeVisuals.dash then
-                drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
-        end
-
-        if upgradeVisuals and upgradeVisuals.eventHorizon then
-                drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
-        end
-
-        if upgradeVisuals and upgradeVisuals.stormchaser then
-                drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
-        end
-
-        if upgradeVisuals and upgradeVisuals.chronospiral then
-                drawChronospiralWake(trail, SEGMENT_SIZE, upgradeVisuals.chronospiral)
-        end
-
-        if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
-                drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
-        end
-
-        if upgradeVisuals and upgradeVisuals.titanblood then
-                drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
-        end
-
-        if upgradeVisuals and upgradeVisuals.phoenixEcho then
-                drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
-        end
-
-        if upgradeVisuals and upgradeVisuals.stonebreaker then
-                drawStonebreakerAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.stonebreaker)
-        end
-        end
-
-	-- POP EFFECT
-	if popTimer and popTimer > 0 and hx and hy then
-	local t = 1 - (popTimer / POP_DURATION)
-	if t < 1 then
-		local pulse = 0.8 + 0.4 * math.sin(t * math.pi)
-		love.graphics.setColor(1, 1, 1, 0.4)
-		love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
-	end
-	end
 
 	love.graphics.setColor(1, 1, 1, 1)
 end

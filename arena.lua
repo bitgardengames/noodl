@@ -1,6 +1,7 @@
 local Theme = require("theme")
 local Audio = require("audio")
 local Shaders = require("shaders")
+local RenderLayers = require("renderlayers")
 
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
@@ -595,8 +596,9 @@ function Arena:drawBorder()
 		self.borderCanvas = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight(), {msaa = 8})
 	end
 
-	love.graphics.setCanvas(self.borderCanvas)
-	love.graphics.clear(0,0,0,0)
+        local previousCanvas = { love.graphics.getCanvas() }
+        love.graphics.setCanvas(self.borderCanvas)
+        love.graphics.clear(0,0,0,0)
 
 	love.graphics.setLineStyle("smooth")
 
@@ -752,15 +754,19 @@ function Arena:drawBorder()
 		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
 	end
 
-	love.graphics.setCanvas()
+        if #previousCanvas > 0 then
+                love.graphics.setCanvas(table.unpack(previousCanvas))
+        else
+                love.graphics.setCanvas()
+        end
 
-	-- Shadow pass
-	love.graphics.setColor(0, 0, 0, 0.25)
-	love.graphics.draw(self.borderCanvas, shadowOffset, shadowOffset)
+        RenderLayers:withLayer("shadows", function()
+                love.graphics.setColor(0, 0, 0, 0.25)
+                love.graphics.draw(self.borderCanvas, shadowOffset, shadowOffset)
+        end)
 
-	-- Final draw
-	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.draw(self.borderCanvas, 0, 0)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(self.borderCanvas, 0, 0)
 end
 
 -- Spawn an exit at a random valid tile
