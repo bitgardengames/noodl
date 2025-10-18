@@ -1003,7 +1003,10 @@ local function drawPlayfieldLayers(self, stateOverride)
                 Particles:draw()
                 UpgradeVisuals:draw()
                 Popup:draw()
-                Arena:drawBorder()
+
+                RenderLayers:withLayer("overlay", function()
+                        Arena:drawBorder()
+                end)
         end)
 
         RenderLayers:present()
