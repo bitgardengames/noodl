@@ -7,7 +7,7 @@
 | Fresh Supplies | Common | Discard the current shop cards and restock with new ones. | Tags: economy; Duplicates allowed; Restocks shop on use; Weight: 0.6 |
 | Stone Whisperer | Common | Rocks spawn far less often after eating fruit. |  |
 | Adrenaline Surge | Uncommon | Snake surges forward after each fruit. | Tags: adrenaline |
-| Aegis Recycler | Uncommon | Every two broken shields forge a fresh one. | Tags: defense |
+| Shield Recycler | Uncommon | Every two broken shields forge a fresh one. | Tags: defense |
 | Tempest Ward | Uncommon | After collecting twenty fruit, forge a single shield charge. | Tags: defense |
 | Caravan Contract | Uncommon | Shops offer +1 card. Each floor spawns an extra rock. | Tags: economy, risk |
 | Circuit Breaker | Uncommon | Saw tracks freeze for 1s after each fruit. |  |

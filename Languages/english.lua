@@ -426,9 +426,9 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				shield_text = "Stone Skin!",
 			},
                         aegis_recycler = {
-                                name = "Aegis Recycler",
+                                name = "Shield Recycler",
                                 description = "Every two broken shields forge a fresh one.",
-                                reforged = "Aegis Reforged",
+                                reforged = "Shield Reforged",
                         },
                         amber_bloom = {
                                 name = "Amber Bloom",
