@@ -19,6 +19,7 @@ local TRACK_SLOT_RADIUS = 6
 local STENCIL_EXTENT = 999
 local SINK_OFFSET = 2
 local SINK_DISTANCE = 28
+local SHADOW_OFFSET = 3
 
 local function getHighlightColor(color)
 	color = color or { 1, 1, 1, 1 }
@@ -154,44 +155,61 @@ function SawActor:draw(x, y, scale)
 		offsetY = sinkOffset
 	end
 
-	love.graphics.push()
-	love.graphics.translate((px or x) + offsetX, (py or y) + offsetY)
-	love.graphics.rotate(self.rotation or 0)
-	local sinkScale = 1 - 0.1 * sinkProgress
-	love.graphics.scale(drawScale * sinkScale, drawScale * sinkScale)
+        local sinkScale = 1 - 0.1 * sinkProgress
+        local overallScale = drawScale * sinkScale
+        local rotation = self.rotation or 0
 
-	local points = {}
-	local teeth = self.teeth or DEFAULT_TEETH
-	local outer = self.radius or DEFAULT_RADIUS
-	local inner = outer * 0.8
-	local step = math.pi / teeth
+        local points = {}
+        local teeth = self.teeth or DEFAULT_TEETH
+        local outer = self.radius or DEFAULT_RADIUS
+        local inner = outer * 0.8
+        local step = math.pi / teeth
 
-	for i = 0, (teeth * 2) - 1 do
-		local r = (i % 2 == 0) and outer or inner
-		local angle = i * step
-		points[#points + 1] = math.cos(angle) * r
-		points[#points + 1] = math.sin(angle) * r
-	end
+        for i = 0, (teeth * 2) - 1 do
+                local r = (i % 2 == 0) and outer or inner
+                local angle = i * step
+                points[#points + 1] = math.cos(angle) * r
+                points[#points + 1] = math.sin(angle) * r
+        end
 
-	local baseColor = Theme.sawColor or { 0.8, 0.8, 0.8, 1 }
-	if self.hitFlashTimer and self.hitFlashTimer > 0 then
-		baseColor = HIT_FLASH_COLOR
-	end
+        local triangles = nil
+        if teeth and teeth >= 3 then
+                triangles = love.math.triangulate(points)
+        end
 
-	love.graphics.setColor(baseColor)
+        local function fillSaw()
+                if triangles and #triangles > 0 then
+                        for _, triangle in ipairs(triangles) do
+                                love.graphics.polygon("fill", triangle)
+                        end
+                else
+                        love.graphics.polygon("fill", points)
+                end
+        end
 
-	local triangles = nil
-	if teeth and teeth >= 3 then
-		triangles = love.math.triangulate(points)
-	end
+        love.graphics.push()
+        love.graphics.translate(
+                (px or x) + offsetX + SHADOW_OFFSET * drawScale,
+                (py or y) + offsetY + SHADOW_OFFSET * drawScale
+        )
+        love.graphics.rotate(rotation)
+        love.graphics.scale(overallScale, overallScale)
+        love.graphics.setColor(0, 0, 0, 0.35)
+        fillSaw()
+        love.graphics.pop()
 
-	if triangles and #triangles > 0 then
-		for _, triangle in ipairs(triangles) do
-			love.graphics.polygon("fill", triangle)
-		end
-	else
-		love.graphics.polygon("fill", points)
-	end
+        love.graphics.push()
+        love.graphics.translate((px or x) + offsetX, (py or y) + offsetY)
+        love.graphics.rotate(rotation)
+        love.graphics.scale(overallScale, overallScale)
+
+        local baseColor = Theme.sawColor or { 0.8, 0.8, 0.8, 1 }
+        if self.hitFlashTimer and self.hitFlashTimer > 0 then
+                baseColor = HIT_FLASH_COLOR
+        end
+
+        love.graphics.setColor(baseColor)
+        fillSaw()
 
 	local highlightRadiusLocal = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
 	local highlightRadiusWorld = highlightRadiusLocal * drawScale * sinkScale
@@ -225,7 +243,7 @@ function SawActor:draw(x, y, scale)
 		love.graphics.circle("fill", 0, 0, HUB_HOLE_RADIUS)
 	end
 
-	love.graphics.pop()
+        love.graphics.pop()
 
 	love.graphics.setStencilTest()
 
