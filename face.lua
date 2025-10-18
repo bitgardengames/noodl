@@ -10,30 +10,35 @@ local EYE_RADIUS = 2
 local EYELID_WIDTH = 4
 local EYELID_HEIGHT = 1
 
+local currentEyeScale = 1
+
 local PI = math.pi
 
 local shapeDrawers = {}
 
 local function drawHappyArc(cx, lift)
-	love.graphics.arc("line", cx, EYE_CENTER_Y + lift, EYE_RADIUS, PI, 2 * PI)
+        local radius = EYE_RADIUS * currentEyeScale
+        love.graphics.arc("line", cx, EYE_CENTER_Y + lift, radius, PI, 2 * PI)
 end
 
 local function drawSadArc(cx, drop)
-	love.graphics.arc("line", cx, EYE_CENTER_Y + drop, EYE_RADIUS, 0, PI)
+        local radius = EYE_RADIUS * currentEyeScale
+        love.graphics.arc("line", cx, EYE_CENTER_Y + drop, radius, 0, PI)
 end
 
 local function drawAngryEye(cx, isLeft)
-	local slitWidth = EYELID_WIDTH + 2
-	local slitHeight = EYELID_HEIGHT + 1.2
-	local slitTop = EYE_CENTER_Y - slitHeight / 2
-	local slitLeft = cx - slitWidth / 2
+        local sizeScale = currentEyeScale
+        local slitWidth = (EYELID_WIDTH + 2) * sizeScale
+        local slitHeight = (EYELID_HEIGHT + 1.2) * sizeScale
+        local slitTop = EYE_CENTER_Y - slitHeight / 2
+        local slitLeft = cx - slitWidth / 2
 
-	love.graphics.rectangle("fill", slitLeft, slitTop, slitWidth, slitHeight)
+        love.graphics.rectangle("fill", slitLeft, slitTop, slitWidth, slitHeight)
 
-	local browHeight = EYE_RADIUS * 1.6
-	local browTop = slitTop - browHeight
-	local browOuter = browTop
-	local browInner = browTop + browHeight * 0.35
+        local browHeight = EYE_RADIUS * 1.6 * sizeScale
+        local browTop = slitTop - browHeight
+        local browOuter = browTop
+        local browInner = browTop + browHeight * 0.35
 
 	if isLeft then
 		love.graphics.polygon(
@@ -64,40 +69,43 @@ local function registerDrawer(name, drawer, options)
 end
 
 registerDrawer("idle", function()
-	-- Explicitly provide a generous segment count so the filled circles stay
-	-- visually round even after any scaling applied to the snake sprite.
-	local circleSegments = 24
-	love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
-	love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, EYE_RADIUS, circleSegments)
+        -- Explicitly provide a generous segment count so the filled circles stay
+        -- visually round even after any scaling applied to the snake sprite.
+        local circleSegments = 24
+        local radius = EYE_RADIUS * currentEyeScale
+        love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, radius, circleSegments)
+        love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, radius, circleSegments)
 end)
 
 registerDrawer("blink", function()
-	local leftX = LEFT_EYE_CENTER_X - EYELID_WIDTH / 2
-	local rightX = RIGHT_EYE_CENTER_X - EYELID_WIDTH / 2
-	local top = EYE_CENTER_Y - EYELID_HEIGHT / 2
-	love.graphics.rectangle("fill", leftX, top, EYELID_WIDTH, EYELID_HEIGHT)
-	love.graphics.rectangle("fill", rightX, top, EYELID_WIDTH, EYELID_HEIGHT)
+        local width = EYELID_WIDTH * currentEyeScale
+        local height = EYELID_HEIGHT * currentEyeScale
+        local leftX = LEFT_EYE_CENTER_X - width / 2
+        local rightX = RIGHT_EYE_CENTER_X - width / 2
+        local top = EYE_CENTER_Y - height / 2
+        love.graphics.rectangle("fill", leftX, top, width, height)
+        love.graphics.rectangle("fill", rightX, top, width, height)
 end)
 
 registerDrawer("happy", function()
-	love.graphics.setLineWidth(EYE_RADIUS * 1.1)
-	love.graphics.setLineJoin("bevel")
-	drawHappyArc(LEFT_EYE_CENTER_X, 1.0)
-	drawHappyArc(RIGHT_EYE_CENTER_X, 1.0)
+        love.graphics.setLineWidth(EYE_RADIUS * currentEyeScale * 1.1)
+        love.graphics.setLineJoin("bevel")
+        drawHappyArc(LEFT_EYE_CENTER_X, 1.0)
+        drawHappyArc(RIGHT_EYE_CENTER_X, 1.0)
 end)
 
 registerDrawer("veryHappy", function()
-	love.graphics.setLineWidth(EYE_RADIUS * 1.3)
-	love.graphics.setLineJoin("bevel")
-	drawHappyArc(LEFT_EYE_CENTER_X, 1.3)
-	drawHappyArc(RIGHT_EYE_CENTER_X, 1.3)
+        love.graphics.setLineWidth(EYE_RADIUS * currentEyeScale * 1.3)
+        love.graphics.setLineJoin("bevel")
+        drawHappyArc(LEFT_EYE_CENTER_X, 1.3)
+        drawHappyArc(RIGHT_EYE_CENTER_X, 1.3)
 end)
 
 registerDrawer("sad", function()
-	love.graphics.setLineWidth(EYE_RADIUS * 0.9)
-	love.graphics.setLineJoin("bevel")
-	drawSadArc(LEFT_EYE_CENTER_X, 0.2)
-	drawSadArc(RIGHT_EYE_CENTER_X, 0.2)
+        love.graphics.setLineWidth(EYE_RADIUS * currentEyeScale * 0.9)
+        love.graphics.setLineJoin("bevel")
+        drawSadArc(LEFT_EYE_CENTER_X, 0.2)
+        drawSadArc(RIGHT_EYE_CENTER_X, 0.2)
 end)
 
 registerDrawer("angry", function()
@@ -148,19 +156,44 @@ function Face:update(dt)
 	end
 end
 
-function Face:draw(x, y, scale)
-	scale = scale or 1
+function Face:draw(x, y, scale, options)
+        scale = scale or 1
 
-	local drawer = shapeDrawers[self.state] or shapeDrawers.idle
+        local eyeScale = 1
+        local highlight = 0
+        local time = love.timer.getTime()
+        if options then
+                eyeScale = math.max(0.4, options.eyeScale or eyeScale)
+                highlight = math.max(0, options.highlight or highlight)
+                time = options.time or time
+        end
 
-	love.graphics.push("all")
-	love.graphics.translate(x, y)
-	love.graphics.scale(scale)
-	love.graphics.translate(-FACE_WIDTH / 2, -FACE_HEIGHT / 2)
+        local drawer = shapeDrawers[self.state] or shapeDrawers.idle
 
-	drawer()
+        love.graphics.push("all")
+        love.graphics.translate(x, y)
+        love.graphics.scale(scale)
+        love.graphics.translate(-FACE_WIDTH / 2, -FACE_HEIGHT / 2)
 
-	love.graphics.pop()
+        currentEyeScale = eyeScale
+
+        drawer()
+
+        if highlight > 0 then
+                local baseRadius = EYE_RADIUS * currentEyeScale
+                local glowRadius = baseRadius * (1.35 + 0.35 * highlight)
+                local pulse = 0.82 + 0.18 * math.sin(time * 6)
+                local alpha = (0.16 + 0.22 * highlight) * pulse
+                love.graphics.setBlendMode("add")
+                love.graphics.setColor(1.0, 0.72, 0.28, alpha)
+                love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
+                love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
+                love.graphics.setBlendMode("alpha")
+        end
+
+        currentEyeScale = 1
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.pop()
 end
 
 return Face
