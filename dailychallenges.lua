@@ -372,29 +372,16 @@ DailyChallenges.challenges = {
 		completeKey = "menu.daily.shields.complete",
 		xpReward = 80,
 	},
-	{
-		id = "shield_triad",
-		titleKey = "menu.daily.shield_triad.title",
-		descriptionKey = "menu.daily.shield_triad.description",
-		goal = 3,
-		progressKey = "menu.daily.shield_triad.progress",
-		completeKey = "menu.daily.shield_triad.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			if statsSource and type(statsSource.get) == "function" then
-				local wall = statsSource:get("runShieldWallBounces") or 0
-				local rock = statsSource:get("runShieldRockBreaks") or 0
-				local saw = statsSource:get("runShieldSawParries") or 0
-				return (wall > 0 and 1 or 0) + (rock > 0 and 1 or 0) + (saw > 0 and 1 or 0)
-			end
-
-			local wall = SessionStats and SessionStats.get and SessionStats:get("runShieldWallBounces") or 0
-			local rock = SessionStats and SessionStats.get and SessionStats:get("runShieldRockBreaks") or 0
-			local saw = SessionStats and SessionStats.get and SessionStats:get("runShieldSawParries") or 0
-			return (wall > 0 and 1 or 0) + (rock > 0 and 1 or 0) + (saw > 0 and 1 or 0)
-		end,
-		xpReward = 85,
-	},
+        {
+                id = "dragonfruit_hunter",
+                titleKey = "menu.daily.dragonfruit_hunter.title",
+                descriptionKey = "menu.daily.dragonfruit_hunter.description",
+                sessionStat = "dragonfruitEaten",
+                goal = 2,
+                progressKey = "menu.daily.dragonfruit_hunter.progress",
+                completeKey = "menu.daily.dragonfruit_hunter.complete",
+                xpReward = 110,
+        },
 	{
 		id = "serpentine_marathon",
 		titleKey = "menu.daily.marathon.title",

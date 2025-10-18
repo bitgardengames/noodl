@@ -63,12 +63,12 @@ local english = {
 					progress = "Emergency saves: ${current}/${goal}",
 					complete = "Shield mastery! ${current} clutch saves.",
 				},
-				shield_triad = {
-					title = "Shield Triad",
-					description = "Pull off all three shield maneuvers in a single run.",
-					progress = "Shield feats: ${current}/${goal}",
-					complete = "Shield trifecta! ${current} maneuvers mastered.",
-				},
+                                dragonfruit_hunter = {
+                                        title = "Dragonfruit Hunter",
+                                        description = "Track down ${goal} dragonfruit in a single run.",
+                                        progress = "Dragonfruit collected: ${current}/${goal}",
+                                        complete = "Sweet victory! ${current} dragonfruit devoured.",
+                                },
 				marathon = {
 					title = "Serpentine Marathon",
 					description = "Slither ${goal} tiles in a single run.",
