@@ -205,14 +205,18 @@ local Arena = {
         tileSize = 24,
         cols = 0,
         rows = 0,
-                exit = nil,
-                activeBackgroundEffect = nil,
+        exit = nil,
+        activeBackgroundEffect = nil,
         borderFlare = 0,
         borderFlareStrength = 0,
         borderFlareTimer = 0,
         borderFlareDuration = 1.05,
         _tileDecorations = nil,
         _decorationConfig = nil,
+        _arenaInsetMesh = nil,
+        _arenaNoiseTexture = nil,
+        _arenaNoiseQuad = nil,
+        _arenaOverlayBounds = nil,
 }
 
 function Arena:setSpawnDebugData(data)
@@ -553,6 +557,121 @@ function Arena:drawTileDecorations()
         love.graphics.pop()
 end
 
+function Arena:_ensureArenaNoiseTexture()
+        if self._arenaNoiseTexture then
+                return
+        end
+
+        local size = 128
+        local imageData = love.image.newImageData(size, size)
+        local rng = love.math.newRandomGenerator(os.time() % 2147483647)
+
+        for y = 0, size - 1 do
+                for x = 0, size - 1 do
+                        local value = rng:random()
+                        local shade = clamp01(0.5 + (value - 0.5) * 0.08)
+                        imageData:setPixel(x, y, shade, shade, shade, 1)
+                end
+        end
+
+        local texture = love.graphics.newImage(imageData)
+        texture:setFilter("linear", "linear")
+        texture:setWrap("repeat", "repeat")
+
+        self._arenaNoiseTexture = texture
+end
+
+function Arena:_rebuildArenaInsetMesh(ax, ay, aw, ah)
+        local inset = math.max(10, math.floor(math.min(aw, ah) * 0.04))
+        local innerX = ax + inset
+        local innerY = ay + inset
+        local innerW = math.max(0, aw - inset * 2)
+        local innerH = math.max(0, ah - inset * 2)
+
+        local borderColor = Theme.arenaBorder or {0.2, 0.2, 0.25, 1}
+        local r = mixChannel(borderColor[1] or 0.2, 0.0, 0.7)
+        local g = mixChannel(borderColor[2] or 0.2, 0.0, 0.7)
+        local b = mixChannel(borderColor[3] or 0.25, 0.0, 0.7)
+        local outerAlpha = 0.16
+
+        local vertices = {
+                {ax, ay, 0, 0, r, g, b, outerAlpha},
+                {ax + aw, ay, 1, 0, r, g, b, outerAlpha},
+                {ax + aw, ay + ah, 1, 1, r, g, b, outerAlpha},
+                {ax, ay + ah, 0, 1, r, g, b, outerAlpha},
+                {innerX, innerY, 0, 0, r, g, b, 0},
+                {innerX + innerW, innerY, 1, 0, r, g, b, 0},
+                {innerX + innerW, innerY + innerH, 1, 1, r, g, b, 0},
+                {innerX, innerY + innerH, 0, 1, r, g, b, 0},
+        }
+
+        local mesh = love.graphics.newMesh(vertices, "triangles", "static")
+        mesh:setVertexMap({
+                1, 5, 2,
+                2, 5, 6,
+                2, 6, 3,
+                3, 6, 7,
+                3, 7, 4,
+                4, 7, 8,
+                4, 8, 1,
+                1, 8, 5,
+        })
+
+        self._arenaInsetMesh = mesh
+end
+
+function Arena:_updateArenaOverlayBounds(ax, ay, aw, ah)
+        self:_ensureArenaNoiseTexture()
+
+        local bounds = self._arenaOverlayBounds
+        local changed = not bounds
+        if bounds and (bounds.x ~= ax or bounds.y ~= ay or bounds.w ~= aw or bounds.h ~= ah) then
+                changed = true
+        end
+
+        if not changed then
+                return
+        end
+
+        self:_rebuildArenaInsetMesh(ax, ay, aw, ah)
+
+        if self._arenaNoiseTexture then
+                local textureW, textureH = self._arenaNoiseTexture:getDimensions()
+                local offsetX = love.math.random() * textureW
+                local offsetY = love.math.random() * textureH
+                self._arenaNoiseQuad = love.graphics.newQuad(offsetX, offsetY, aw, ah, textureW, textureH)
+        end
+
+        self._arenaOverlayBounds = { x = ax, y = ay, w = aw, h = ah }
+end
+
+function Arena:_drawArenaInlay()
+        if not self._arenaOverlayBounds then
+                return
+        end
+
+        if self._arenaInsetMesh then
+                love.graphics.push("all")
+                love.graphics.setBlendMode("alpha")
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(self._arenaInsetMesh)
+                love.graphics.pop()
+        end
+
+        if self._arenaNoiseTexture and self._arenaNoiseQuad then
+                love.graphics.push("all")
+                love.graphics.setBlendMode("alpha")
+                local tint = Theme.arenaBG or {0.18, 0.18, 0.22, 1}
+                local tintStrength = 0.035
+                local r = mixChannel(tint[1] or 0.18, 1, 0.18)
+                local g = mixChannel(tint[2] or 0.18, 1, 0.18)
+                local b = mixChannel(tint[3] or 0.22, 1, 0.18)
+                love.graphics.setColor(r, g, b, tintStrength)
+                love.graphics.draw(self._arenaNoiseTexture, self._arenaNoiseQuad, self._arenaOverlayBounds.x, self._arenaOverlayBounds.y)
+                love.graphics.pop()
+        end
+end
+
 function Arena:getRandomTile()
         local col = love.math.random(2, self.cols - 1)
         local row = love.math.random(2, self.rows - 1)
@@ -637,10 +756,10 @@ end
 
 -- Draws the playfield with a solid fill + simple border
 function Arena:drawBackground()
-	local ax, ay, aw, ah = self:getBounds()
+        local ax, ay, aw, ah = self:getBounds()
 
-	if self.activeBackgroundEffect then
-		local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(self.activeBackgroundEffect)
+        if self.activeBackgroundEffect then
+                local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(self.activeBackgroundEffect)
 		local intensity = self.activeBackgroundEffect.arenaIntensity or defaultArena
 		Shaders.draw(self.activeBackgroundEffect, ax, ay, aw, ah, intensity)
 	end
@@ -649,9 +768,13 @@ function Arena:drawBackground()
         love.graphics.setColor(Theme.arenaBG)
         love.graphics.rectangle("fill", ax, ay, aw, ah)
 
+        self:_updateArenaOverlayBounds(ax, ay, aw, ah)
+
         if self.drawTileDecorations then
                 self:drawTileDecorations()
         end
+
+        self:_drawArenaInlay()
 
         drawSpawnDebugOverlay(self)
 
