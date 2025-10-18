@@ -36,19 +36,48 @@ local function defaultProgressReplacements(current, goal)
 end
 
 local function mergeReplacements(base, extra)
-	if not base then
-		base = {}
-	end
+        if not base then
+                base = {}
+        end
 
-	if not extra then
-		return base
-	end
+        if not extra then
+                return base
+        end
 
-	for k, v in pairs(extra) do
-		base[k] = v
-	end
+        for k, v in pairs(extra) do
+                base[k] = v
+        end
 
-	return base
+        return base
+end
+
+local function getStatValue(statsSource, key)
+        if not key then
+                return 0
+        end
+
+        if statsSource then
+                if type(statsSource.get) == "function" then
+                        local value = statsSource:get(key)
+                        if value ~= nil then
+                                return value
+                        end
+                end
+
+                local value = statsSource[key]
+                if value ~= nil then
+                        return value
+                end
+        end
+
+        if SessionStats and SessionStats.get then
+                local value = SessionStats:get(key)
+                if value ~= nil then
+                        return value
+                end
+        end
+
+        return 0
 end
 
 local function callChallengeFunction(challenge, key, ...)
@@ -549,16 +578,606 @@ DailyChallenges.challenges = {
 		progressKey = "menu.daily.apple_hoarder.progress",
 		xpReward = 90,
 	},
-	{
-		id = "streak_perfectionist",
-		titleKey = "menu.daily.streak_perfectionist.title",
-		descriptionKey = "menu.daily.streak_perfectionist.description",
-		sessionStat = "fruitWithoutTurning",
-		goal = 12,
-		progressKey = "menu.daily.streak_perfectionist.progress",
-		completeKey = "menu.daily.streak_perfectionist.complete",
-		xpReward = 90,
-	},
+        {
+                id = "streak_perfectionist",
+                titleKey = "menu.daily.streak_perfectionist.title",
+                descriptionKey = "menu.daily.streak_perfectionist.description",
+                sessionStat = "fruitWithoutTurning",
+                goal = 12,
+                progressKey = "menu.daily.streak_perfectionist.progress",
+                completeKey = "menu.daily.streak_perfectionist.complete",
+                xpReward = 90,
+        },
+        {
+                id = "dragonfruit_gourmand",
+                titleKey = "menu.daily.dragonfruit_gourmand.title",
+                descriptionKey = "menu.daily.dragonfruit_gourmand.description",
+                sessionStat = "dragonfruitEaten",
+                goal = 3,
+                progressKey = "menu.daily.dragonfruit_gourmand.progress",
+                completeKey = "menu.daily.dragonfruit_gourmand.complete",
+                xpReward = 100,
+        },
+        {
+                id = "shield_triathlon",
+                titleKey = "menu.daily.shield_triathlon.title",
+                descriptionKey = "menu.daily.shield_triathlon.description",
+                goal = 3,
+                progressKey = "menu.daily.shield_triathlon.progress",
+                completeKey = "menu.daily.shield_triathlon.complete",
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local bounces = getStatValue(statsSource, "runShieldWallBounces")
+                        local rocks = getStatValue(statsSource, "runShieldRockBreaks")
+                        local saws = getStatValue(statsSource, "runShieldSawParries")
+
+                        local completed = 0
+                        if bounces > 0 then
+                                completed = completed + 1
+                        end
+                        if rocks > 0 then
+                                completed = completed + 1
+                        end
+                        if saws > 0 then
+                                completed = completed + 1
+                        end
+
+                        return completed
+                end,
+                getRunValue = function(self, statsSource)
+                        local bounces = getStatValue(statsSource, "runShieldWallBounces")
+                        local rocks = getStatValue(statsSource, "runShieldRockBreaks")
+                        local saws = getStatValue(statsSource, "runShieldSawParries")
+
+                        local completed = 0
+                        if bounces > 0 then
+                                completed = completed + 1
+                        end
+                        if rocks > 0 then
+                                completed = completed + 1
+                        end
+                        if saws > 0 then
+                                completed = completed + 1
+                        end
+
+                        return completed
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                bounces = getStatValue(statsSource, "runShieldWallBounces"),
+                                rocks = getStatValue(statsSource, "runShieldRockBreaks"),
+                                saws = getStatValue(statsSource, "runShieldSawParries"),
+                        }
+                end,
+                xpReward = 120,
+        },
+        {
+                id = "floor_speedrunner",
+                titleKey = "menu.daily.floor_speedrunner.title",
+                descriptionKey = "menu.daily.floor_speedrunner.description",
+                goal = 1,
+                progressKey = "menu.daily.floor_speedrunner.progress",
+                completeKey = "menu.daily.floor_speedrunner.complete",
+                targetSeconds = 45,
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local fastest = getStatValue(statsSource, "fastestFloorClear")
+                        if fastest <= 0 then
+                                return 0
+                        end
+
+                        return fastest <= (self.targetSeconds or 0) and 1 or 0
+                end,
+                getRunValue = function(self, statsSource)
+                        local fastest = getStatValue(statsSource, "fastestFloorClear")
+                        if fastest <= 0 then
+                                return 0
+                        end
+
+                        return fastest <= (self.targetSeconds or 0) and 1 or 0
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local fastest = getStatValue(statsSource, "fastestFloorClear")
+                        local target = self.targetSeconds or 0
+
+                        local function formatSeconds(seconds)
+                                seconds = math.max(0, seconds or 0)
+                                local minutes = math.floor(seconds / 60)
+                                local secs = math.floor(seconds % 60)
+                                return string.format("%d:%02d", minutes, secs)
+                        end
+
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                best = fastest > 0 and formatSeconds(fastest) or "--:--",
+                                target = formatSeconds(target),
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        return {
+                                seconds = self.targetSeconds or 0,
+                        }
+                end,
+                xpReward = 110,
+        },
+        {
+                id = "pace_setter",
+                titleKey = "menu.daily.pace_setter.title",
+                descriptionKey = "menu.daily.pace_setter.description",
+                goal = 240,
+                progressKey = "menu.daily.pace_setter.progress",
+                completeKey = "menu.daily.pace_setter.complete",
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local tiles = getStatValue(statsSource, "tilesTravelled")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        if timeAlive <= 0 then
+                                return 0
+                        end
+
+                        return math.floor((tiles / timeAlive) * 60)
+                end,
+                getRunValue = function(self, statsSource)
+                        local tiles = getStatValue(statsSource, "tilesTravelled")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        if timeAlive <= 0 then
+                                return 0
+                        end
+
+                        return math.floor((tiles / timeAlive) * 60)
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local tiles = getStatValue(statsSource, "tilesTravelled")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        local minutes = timeAlive / 60
+                        local pace = 0
+                        if timeAlive > 0 then
+                                pace = math.floor((tiles / timeAlive) * 60)
+                        end
+
+                        return {
+                                current = pace,
+                                goal = goal or 0,
+                                pace = pace,
+                                tiles = math.floor(tiles + 0.5),
+                                minutes = string.format("%.1f", math.max(minutes, 0)),
+                        }
+                end,
+                descriptionReplacements = function(self, current, goal)
+                        return {
+                                pace = goal or self.goal or 0,
+                        }
+                end,
+                xpReward = 105,
+        },
+        {
+                id = "combo_harvester",
+                titleKey = "menu.daily.combo_harvester.title",
+                descriptionKey = "menu.daily.combo_harvester.description",
+                goal = 4,
+                progressKey = "menu.daily.combo_harvester.progress",
+                completeKey = "menu.daily.combo_harvester.complete",
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten")
+                        local combos = getStatValue(statsSource, "combosTriggered")
+                        local harvests = math.min(math.floor(apples / 12), combos)
+                        return math.max(harvests, 0)
+                end,
+                getRunValue = function(self, statsSource)
+                        local apples = getStatValue(statsSource, "applesEaten")
+                        local combos = getStatValue(statsSource, "combosTriggered")
+                        local harvests = math.min(math.floor(apples / 12), combos)
+                        return math.max(harvests, 0)
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten")
+                        local combos = getStatValue(statsSource, "combosTriggered")
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                apples = apples,
+                                combos = combos,
+                                fruit_batch = 12,
+                        }
+                end,
+                descriptionReplacements = function(self, current, goal)
+                        return {
+                                fruit_batch = 12,
+                        }
+                end,
+                xpReward = 95,
+        },
+        {
+                id = "guardian_angel",
+                titleKey = "menu.daily.guardian_angel.title",
+                descriptionKey = "menu.daily.guardian_angel.description",
+                goal = 2,
+                progressKey = "menu.daily.guardian_angel.progress",
+                completeKey = "menu.daily.guardian_angel.complete",
+                targetShields = 3,
+                targetSeconds = 480,
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        local completed = 0
+                        if shields >= (self.targetShields or 0) then
+                                completed = completed + 1
+                        end
+                        if timeAlive >= (self.targetSeconds or 0) then
+                                completed = completed + 1
+                        end
+                        return completed
+                end,
+                getRunValue = function(self, statsSource)
+                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        local completed = 0
+                        if shields >= (self.targetShields or 0) then
+                                completed = completed + 1
+                        end
+                        if timeAlive >= (self.targetSeconds or 0) then
+                                completed = completed + 1
+                        end
+                        return completed
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                shields = shields,
+                                minutes = string.format("%.1f", math.max(timeAlive / 60, 0)),
+                                target_shields = self.targetShields or 0,
+                                target_minutes = string.format("%.1f", (self.targetSeconds or 0) / 60),
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        return {
+                                target_shields = self.targetShields or 0,
+                                target_minutes = string.format("%.1f", (self.targetSeconds or 0) / 60),
+                        }
+                end,
+                xpReward = 115,
+        },
+        {
+                id = "fruit_rush",
+                titleKey = "menu.daily.fruit_rush.title",
+                descriptionKey = "menu.daily.fruit_rush.description",
+                goal = 16,
+                progressKey = "menu.daily.fruit_rush.progress",
+                completeKey = "menu.daily.fruit_rush.complete",
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        if timeAlive <= 0 then
+                                return 0
+                        end
+
+                        return math.floor((apples / timeAlive) * 60)
+                end,
+                getRunValue = function(self, statsSource)
+                        local apples = getStatValue(statsSource, "applesEaten")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        if timeAlive <= 0 then
+                                return 0
+                        end
+
+                        return math.floor((apples / timeAlive) * 60)
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        local minutes = timeAlive / 60
+                        local pace = 0
+                        if timeAlive > 0 then
+                                pace = math.floor((apples / timeAlive) * 60)
+                        end
+
+                        return {
+                                current = pace,
+                                goal = goal or 0,
+                                pace = pace,
+                                apples = apples,
+                                minutes = string.format("%.1f", math.max(minutes, 0)),
+                        }
+                end,
+                descriptionReplacements = function(self, current, goal)
+                        return {
+                                pace = goal or self.goal or 0,
+                        }
+                end,
+                xpReward = 100,
+        },
+        {
+                id = "achievement_hunter",
+                titleKey = "menu.daily.achievement_hunter.title",
+                descriptionKey = "menu.daily.achievement_hunter.description",
+                goal = 1,
+                progressKey = "menu.daily.achievement_hunter.progress",
+                completeKey = "menu.daily.achievement_hunter.complete",
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local runAchievements = getStatValue(statsSource, "runAchievements")
+                        if type(runAchievements) ~= "table" then
+                                return 0
+                        end
+
+                        return #runAchievements
+                end,
+                getRunValue = function(self, statsSource)
+                        local runAchievements = getStatValue(statsSource, "runAchievements")
+                        if type(runAchievements) ~= "table" then
+                                return 0
+                        end
+
+                        return #runAchievements
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local runAchievements = getStatValue(statsSource, "runAchievements")
+                        local count = 0
+                        if type(runAchievements) == "table" then
+                                count = #runAchievements
+                        end
+
+                        return {
+                                current = count,
+                                goal = goal or 0,
+                                unlocked = count,
+                        }
+                end,
+                xpReward = 130,
+        },
+        {
+                id = "consistency_champion",
+                titleKey = "menu.daily.consistency_champion.title",
+                descriptionKey = "menu.daily.consistency_champion.description",
+                goal = 1,
+                progressKey = "menu.daily.consistency_champion.progress",
+                completeKey = "menu.daily.consistency_champion.complete",
+                tolerance = 30,
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local fastest = getStatValue(statsSource, "fastestFloorClear")
+                        local slowest = getStatValue(statsSource, "slowestFloorClear")
+                        if fastest <= 0 or slowest <= 0 then
+                                return 0
+                        end
+
+                        return (slowest - fastest) <= (self.tolerance or 0) and 1 or 0
+                end,
+                getRunValue = function(self, statsSource)
+                        local fastest = getStatValue(statsSource, "fastestFloorClear")
+                        local slowest = getStatValue(statsSource, "slowestFloorClear")
+                        if fastest <= 0 or slowest <= 0 then
+                                return 0
+                        end
+
+                        return (slowest - fastest) <= (self.tolerance or 0) and 1 or 0
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local fastest = getStatValue(statsSource, "fastestFloorClear")
+                        local slowest = getStatValue(statsSource, "slowestFloorClear")
+                        local differenceSeconds = 0
+                        if fastest > 0 and slowest > 0 then
+                                differenceSeconds = math.max(0, slowest - fastest)
+                        end
+
+                        local function formatSeconds(seconds)
+                                seconds = math.max(0, seconds or 0)
+                                local minutes = math.floor(seconds / 60)
+                                local secs = math.floor(seconds % 60)
+                                return string.format("%d:%02d", minutes, secs)
+                        end
+
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                fastest = fastest > 0 and formatSeconds(fastest) or "--:--",
+                                slowest = slowest > 0 and formatSeconds(slowest) or "--:--",
+                                difference = math.floor(differenceSeconds + 0.5),
+                                tolerance = self.tolerance or 0,
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        return {
+                                tolerance = self.tolerance or 0,
+                        }
+                end,
+                xpReward = 120,
+        },
+        {
+                id = "depth_sprinter",
+                titleKey = "menu.daily.depth_sprinter.title",
+                descriptionKey = "menu.daily.depth_sprinter.description",
+                goal = 1,
+                progressKey = "menu.daily.depth_sprinter.progress",
+                completeKey = "menu.daily.depth_sprinter.complete",
+                targetFloor = 6,
+                targetSeconds = 420,
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local floors = getStatValue(statsSource, "floorsCleared")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        if floors >= (self.targetFloor or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
+                                return 1
+                        end
+                        return 0
+                end,
+                getRunValue = function(self, statsSource)
+                        local floors = getStatValue(statsSource, "floorsCleared")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        if floors >= (self.targetFloor or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
+                                return 1
+                        end
+                        return 0
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local floors = getStatValue(statsSource, "floorsCleared")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+
+                        local function formatSeconds(seconds)
+                                seconds = math.max(0, seconds or 0)
+                                local minutes = math.floor(seconds / 60)
+                                local secs = math.floor(seconds % 60)
+                                return string.format("%d:%02d", minutes, secs)
+                        end
+
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                floors = floors,
+                                time = formatSeconds(timeAlive),
+                                target_floor = self.targetFloor or 0,
+                                target_time = formatSeconds(self.targetSeconds or 0),
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        local function formatSeconds(seconds)
+                                seconds = math.max(0, seconds or 0)
+                                local minutes = math.floor(seconds / 60)
+                                local secs = math.floor(seconds % 60)
+                                return string.format("%d:%02d", minutes, secs)
+                        end
+
+                        return {
+                                target_floor = self.targetFloor or 0,
+                                target_time = formatSeconds(self.targetSeconds or 0),
+                        }
+                end,
+                xpReward = 130,
+        },
+        {
+                id = "momentum_master",
+                titleKey = "menu.daily.momentum_master.title",
+                descriptionKey = "menu.daily.momentum_master.description",
+                goal = 3,
+                progressKey = "menu.daily.momentum_master.progress",
+                completeKey = "menu.daily.momentum_master.complete",
+                fruitChunk = 8,
+                tileChunk = 1000,
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local chain = getStatValue(statsSource, "fruitWithoutTurning")
+                        local tiles = getStatValue(statsSource, "tilesTravelled")
+                        local surges = math.min(math.floor(chain / (self.fruitChunk or 1)), math.floor(tiles / (self.tileChunk or 1)))
+                        return math.max(surges, 0)
+                end,
+                getRunValue = function(self, statsSource)
+                        local chain = getStatValue(statsSource, "fruitWithoutTurning")
+                        local tiles = getStatValue(statsSource, "tilesTravelled")
+                        local surges = math.min(math.floor(chain / (self.fruitChunk or 1)), math.floor(tiles / (self.tileChunk or 1)))
+                        return math.max(surges, 0)
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local chain = getStatValue(statsSource, "fruitWithoutTurning")
+                        local tiles = getStatValue(statsSource, "tilesTravelled")
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                chain = chain,
+                                tiles = tiles,
+                                fruit_chunk = self.fruitChunk or 1,
+                                tile_chunk = self.tileChunk or 1,
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        return {
+                                fruit_chunk = self.fruitChunk or 1,
+                                tile_chunk = self.tileChunk or 1,
+                        }
+                end,
+                xpReward = 110,
+        },
+        {
+                id = "floor_cartographer",
+                titleKey = "menu.daily.floor_cartographer.title",
+                descriptionKey = "menu.daily.floor_cartographer.description",
+                goal = 4,
+                progressKey = "menu.daily.floor_cartographer.progress",
+                completeKey = "menu.daily.floor_cartographer.complete",
+                timeChunk = 180,
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local floors = getStatValue(statsSource, "floorsCleared")
+                        local timeSpent = getStatValue(statsSource, "totalFloorTime")
+                        local value = math.min(floors, math.floor(timeSpent / (self.timeChunk or 1)))
+                        return math.max(value, 0)
+                end,
+                getRunValue = function(self, statsSource)
+                        local floors = getStatValue(statsSource, "floorsCleared")
+                        local timeSpent = getStatValue(statsSource, "totalFloorTime")
+                        local value = math.min(floors, math.floor(timeSpent / (self.timeChunk or 1)))
+                        return math.max(value, 0)
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local floors = getStatValue(statsSource, "floorsCleared")
+                        local timeSpent = getStatValue(statsSource, "totalFloorTime")
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                floors = floors,
+                                minutes = string.format("%.1f", math.max(timeSpent / 60, 0)),
+                                minutes_chunk = string.format("%.1f", (self.timeChunk or 1) / 60),
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        return {
+                                minutes_chunk = string.format("%.1f", (self.timeChunk or 1) / 60),
+                        }
+                end,
+                xpReward = 100,
+        },
+        {
+                id = "safety_dance",
+                titleKey = "menu.daily.safety_dance.title",
+                descriptionKey = "menu.daily.safety_dance.description",
+                goal = 3,
+                progressKey = "menu.daily.safety_dance.progress",
+                completeKey = "menu.daily.safety_dance.complete",
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local bounces = getStatValue(statsSource, "runShieldWallBounces")
+                        local saws = getStatValue(statsSource, "runShieldSawParries")
+                        local pairs = math.min(math.floor(bounces / 2), math.floor(saws / 2))
+                        return math.max(pairs, 0)
+                end,
+                getRunValue = function(self, statsSource)
+                        local bounces = getStatValue(statsSource, "runShieldWallBounces")
+                        local saws = getStatValue(statsSource, "runShieldSawParries")
+                        local pairs = math.min(math.floor(bounces / 2), math.floor(saws / 2))
+                        return math.max(pairs, 0)
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local bounces = getStatValue(statsSource, "runShieldWallBounces")
+                        local saws = getStatValue(statsSource, "runShieldSawParries")
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                bounces = bounces,
+                                saws = saws,
+                        }
+                end,
+                xpReward = 110,
+        },
 }
 
 function DailyChallenges:getChallengeForIndex(index, context)
