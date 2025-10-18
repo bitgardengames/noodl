@@ -224,34 +224,65 @@ local backgroundEffectCache = {}
 local backgroundEffect = nil
 
 local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
+        local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+        if not effect then
+                backgroundEffect = nil
+                return
+        end
 
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	if GameOver.isVictory then
-		effect.backdropIntensity = 0.72
-	else
-		effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.62
-	end
+        local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+        local baseColor = copyColor(Theme.bgColor or { 0.12, 0.12, 0.14, 1 })
+        local accent = copyColor(Theme.warningColor or { 0.92, 0.55, 0.4, 1 })
+        local pulse = copyColor(Theme.progressColor or { 0.55, 0.75, 0.55, 1 })
+        local vignette
 
-	local accent = Theme.warningColor
-	local pulse = Theme.progressColor
+        if GameOver.isVictory then
+                effect.backdropIntensity = math.min(0.9, (defaultBackdrop or 0.72) + 0.08)
 
-	if GameOver.isVictory then
-		accent = Theme.progressColor
-		pulse = Theme.accentTextColor or Theme.progressColor
-	end
+                accent = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or accent), 0.32)
+                accent[4] = 1
 
-	Shaders.configure(effect, {
-		bgColor = Theme.bgColor,
-		accentColor = accent,
-		pulseColor = pulse,
-	})
+                pulse = lightenColor(copyColor(Theme.progressColor or pulse), 0.4)
+                pulse[4] = 1
 
-	backgroundEffect = effect
+                baseColor = lightenColor(baseColor, 0.08)
+                baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+
+                vignette = {
+                        color = withAlpha(lightenColor(copyColor(Theme.goldenPearColor or Theme.accentTextColor or pulse), 0.28), 0.22),
+                        alpha = 0.22,
+                        steps = 4,
+                        thickness = nil,
+                }
+        else
+                effect.backdropIntensity = math.max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
+
+                local coolAccent = Theme.blueberryColor or Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }
+                accent = lightenColor(copyColor(coolAccent), 0.18)
+                accent[4] = 1
+
+                pulse = lightenColor(copyColor(Theme.panelBorder or pulse), 0.26)
+                pulse[4] = 1
+
+                baseColor = darkenColor(baseColor, 0.15)
+                baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+
+                vignette = {
+                        color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
+                        alpha = 0.28,
+                        steps = 3,
+                        thickness = nil,
+                }
+        end
+
+        Shaders.configure(effect, {
+                bgColor = baseColor,
+                accentColor = accent,
+                pulseColor = pulse,
+        })
+
+        effect.vignetteOverlay = vignette
+        backgroundEffect = effect
 end
 
 local function easeOutBack(t)
@@ -343,13 +374,34 @@ local function spawnFruitAnimation(anim)
 	end
 
 	local metrics = anim.barMetrics
-	local palette = anim.fruitPalette or { Theme.appleColor }
-	local color = copyColor(palette[love.math.random(#palette)] or Theme.appleColor)
+        local palette = anim.fruitPalette or { Theme.appleColor }
+        local color = copyColor(palette[love.math.random(#palette)] or Theme.appleColor)
+        local streakColor = anim.streakColor
 
-	local fruit
-	if metrics.style == "radial" then
-		local centerX = metrics.centerX or 0
-		local centerY = metrics.centerY or 0
+        if streakColor and love.math.random() < 0.35 then
+                color = copyColor(streakColor)
+        end
+
+        local sparkleChance = 0
+        if (anim.bonusXP or 0) > 0 then
+                sparkleChance = sparkleChance + 0.2
+        end
+        if streakColor then
+                sparkleChance = sparkleChance + 0.15
+        end
+
+        local sparkleColor
+        if sparkleChance > 0 and love.math.random() < sparkleChance then
+                color = lightenColor(color, 0.28)
+                color[4] = (color[4] or 1)
+                local tintSource = streakColor or color
+                sparkleColor = withAlpha(lightenColor(copyColor(tintSource), 0.45), 0.9)
+        end
+
+        local fruit
+        if metrics.style == "radial" then
+                local centerX = metrics.centerX or 0
+                local centerY = metrics.centerY or 0
 		local radius = metrics.outerRadius or metrics.radius or 56
 		local launchOffsetX = randomRange(-radius * 0.6, radius * 0.6)
 		local launchLift = math.max(radius * 0.8, 54)
@@ -370,14 +422,18 @@ local function spawnFruitAnimation(anim)
 			scaleStart = randomRange(0.42, 0.52),
 			scalePeak = randomRange(0.68, 0.82),
 			scaleEnd = randomRange(0.50, 0.64),
-			wobbleSeed = love.math.random() * math.pi * 2,
-			wobbleSpeed = randomRange(4.5, 6.5),
-			color = color,
-			splashAngle = clamp(anim.visualPercent or 0, 0, 1),
-		}
-	else
-		local launchX = metrics.x + metrics.width * 0.5
-		local launchY = metrics.y - math.max(metrics.height * 2.2, 72)
+                        wobbleSeed = love.math.random() * math.pi * 2,
+                        wobbleSpeed = randomRange(4.5, 6.5),
+                        color = color,
+                        splashAngle = clamp(anim.visualPercent or 0, 0, 1),
+                        sparkle = sparkleColor ~= nil,
+                        sparkleColor = sparkleColor,
+                        sparkleSpin = randomRange(2.4, 3.4),
+                        sparkleOffset = love.math.random() * math.pi * 2,
+                }
+        else
+                local launchX = metrics.x + metrics.width * 0.5
+                local launchY = metrics.y - math.max(metrics.height * 2.2, 72)
 
 		local endX = metrics.x + metrics.width * 0.5
 		local endY = metrics.y + metrics.height * 0.5
@@ -397,13 +453,17 @@ local function spawnFruitAnimation(anim)
 			scaleStart = randomRange(0.42, 0.52),
 			scalePeak = randomRange(0.68, 0.82),
 			scaleEnd = randomRange(0.50, 0.64),
-			wobbleSeed = love.math.random() * math.pi * 2,
-			wobbleSpeed = randomRange(4.5, 6.5),
-			color = color,
-		}
-	end
+                        wobbleSeed = love.math.random() * math.pi * 2,
+                        wobbleSpeed = randomRange(4.5, 6.5),
+                        color = color,
+                        sparkle = sparkleColor ~= nil,
+                        sparkleColor = sparkleColor,
+                        sparkleSpin = randomRange(2.6, 3.8),
+                        sparkleOffset = love.math.random() * math.pi * 2,
+                }
+        end
 
-	anim.fruitAnimations = anim.fruitAnimations or {}
+        anim.fruitAnimations = anim.fruitAnimations or {}
 	table.insert(anim.fruitAnimations, fruit)
 	anim.fruitRemaining = math.max(0, (anim.fruitRemaining or 0) - 1)
 
@@ -415,20 +475,40 @@ local function updateFruitAnimations(anim, dt)
 		return
 	end
 
-	anim.fruitSpawnTimer = (anim.fruitSpawnTimer or 0) + dt
-	local interval = anim.fruitSpawnInterval or 0.08
+        anim.fruitSpawnTimer = (anim.fruitSpawnTimer or 0) + dt
 
-	local metrics = anim.barMetrics
+        local function computeInterval()
+                local baseInterval = anim.fruitSpawnInterval or 0.08
+                local cadence = 1
 
-	if metrics then
-		while (anim.fruitRemaining or 0) > 0 and anim.fruitSpawnTimer >= interval do
-			if not spawnFruitAnimation(anim) then
-				break
-			end
-			anim.fruitSpawnTimer = anim.fruitSpawnTimer - interval
-			interval = anim.fruitSpawnInterval or interval
-		end
-	end
+                if (anim.bonusXP or 0) > 0 then
+                        local ratio = math.min(1, (anim.bonusXP or 0) / math.max(1, anim.fruitTotal or 1))
+                        cadence = cadence * (0.92 - 0.18 * ratio)
+                end
+
+                if anim.streakColor then
+                        local delivered = math.max(0, anim.fruitDelivered or 0)
+                        local remaining = math.max(0, anim.fruitRemaining or 0)
+                        local wave = math.sin((delivered + remaining) * 0.32)
+                        cadence = cadence * (0.95 - 0.08 * wave)
+                end
+
+                return math.max(0.03, baseInterval * cadence)
+        end
+
+        local interval = computeInterval()
+
+        local metrics = anim.barMetrics
+
+        if metrics then
+                while (anim.fruitRemaining or 0) > 0 and anim.fruitSpawnTimer >= interval do
+                        if not spawnFruitAnimation(anim) then
+                                break
+                        end
+                        anim.fruitSpawnTimer = anim.fruitSpawnTimer - interval
+                        interval = computeInterval()
+                end
+        end
 
 	local active = anim.fruitAnimations or {}
 	for index = #active, 1, -1 do
@@ -516,43 +596,102 @@ local function drawFruitAnimations(anim)
 		local highlight = lightenColor(color, 0.42)
 
 		local drawFruit = not fruit.landed or (fruit.splashTimer or 0) < 0.08
-		if drawFruit and fadeMul > 0 then
-			love.graphics.setColor(0, 0, 0, 0.25 * fadeMul)
-			love.graphics.ellipse("fill", pathX + 3, pathY + 3 + wobble * 3, radius * 1.05, radius * 0.9, 30)
+                if drawFruit and fadeMul > 0 then
+                        love.graphics.setColor(0, 0, 0, 0.25 * fadeMul)
+                        love.graphics.ellipse("fill", pathX + 3, pathY + 3 + wobble * 3, radius * 1.05, radius * 0.9, 30)
 
-			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * fadeMul)
+                        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * fadeMul)
 			love.graphics.circle("fill", pathX, pathY + wobble * 2, radius, 30)
 
 			love.graphics.setColor(0, 0, 0, 0.85 * fadeMul)
 			love.graphics.setLineWidth(2)
 			love.graphics.circle("line", pathX, pathY + wobble * 2, radius, 30)
 
-			love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.7) * fadeMul)
-			love.graphics.circle("fill", pathX - radius * 0.35, pathY + wobble * 2 - radius * 0.45, radius * 0.45, 24)
-		end
+                        love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.7) * fadeMul)
+                        love.graphics.circle("fill", pathX - radius * 0.35, pathY + wobble * 2 - radius * 0.45, radius * 0.45, 24)
+                end
 
-		love.graphics.setLineWidth(1)
-	end
+                if fruit.sparkle and fadeMul > 0 then
+                        local sparkleColor = fruit.sparkleColor or { 1, 1, 1, 0.9 }
+                        local shimmer = math.sin((fruit.timer or 0) * (fruit.sparkleSpin or 3.1) + (fruit.sparkleOffset or 0)) * 0.5 + 0.5
+                        local sparkleAlpha = (sparkleColor[4] or 1) * fadeMul * (0.6 + 0.4 * shimmer)
+                        if sparkleAlpha > 0.01 then
+                                local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+                                love.graphics.setBlendMode("add", "alphamultiply")
+                                love.graphics.setColor(sparkleColor[1] or 1, sparkleColor[2] or 1, sparkleColor[3] or 1, sparkleAlpha)
 
-	love.graphics.setColor(1, 1, 1, 1)
+                                local rayCount = 4
+                                local rayLength = radius * (1.2 + shimmer * 0.4)
+                                love.graphics.setLineWidth(1.3)
+                                for ray = 0, rayCount - 1 do
+                                        local angle = (ray / rayCount) * math.pi * 2 + (fruit.sparkleOffset or 0)
+                                        local dx = math.cos(angle) * rayLength
+                                        local dy = math.sin(angle) * rayLength
+                                        love.graphics.line(pathX, pathY + wobble * 2, pathX + dx, pathY + wobble * 2 + dy)
+                                end
+                                love.graphics.setLineWidth(1)
+                                love.graphics.circle("fill", pathX, pathY + wobble * 2, radius * 0.35 * (0.8 + 0.4 * shimmer), 18)
+                                love.graphics.setBlendMode(prevMode, prevAlphaMode)
+                                love.graphics.setColor(1, 1, 1, 1)
+                        end
+                end
+
+                love.graphics.setLineWidth(1)
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
 	love.graphics.setLineWidth(1)
 end
 
 local function drawBackground(sw, sh)
-	local baseColor = (UI.colors and UI.colors.background) or Theme.bgColor
-	love.graphics.setColor(baseColor)
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
+        local baseColor = (UI.colors and UI.colors.background) or Theme.bgColor
+        love.graphics.setColor(baseColor)
+        love.graphics.rectangle("fill", 0, 0, sw, sh)
 
 	if not backgroundEffect then
 		configureBackgroundEffect()
 	end
 
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-	end
+        if backgroundEffect then
+                local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+                Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
 
-	love.graphics.setColor(1, 1, 1, 1)
+                local vignette = backgroundEffect.vignetteOverlay
+                if vignette then
+                        local steps = math.max(1, math.floor(vignette.steps or 3))
+                        local overlayColor = vignette.color or { 0, 0, 0, 0.22 }
+                        local baseAlpha = vignette.alpha or overlayColor[4] or 0.22
+                        local totalThickness = vignette.thickness or math.max(sw, sh) * 0.14
+                        local band = totalThickness / steps
+
+                        for i = 1, steps do
+                                local inset = (i - 1) * band
+                                local width = sw - inset * 2
+                                local height = sh - inset * 2
+                                if width <= 0 or height <= 0 then
+                                        break
+                                end
+
+                                local edge = math.min(band, height / 2)
+                                local side = math.min(band, width / 2)
+                                local progress = i / steps
+                                local alpha = (overlayColor[4] or 1) * baseAlpha * progress * progress
+
+                                love.graphics.setColor(overlayColor[1] or 0, overlayColor[2] or 0, overlayColor[3] or 0, alpha)
+
+                                love.graphics.rectangle("fill", inset, inset, width, edge)
+                                love.graphics.rectangle("fill", inset, sh - inset - edge, width, edge)
+
+                                local verticalHeight = height - edge * 2
+                                if verticalHeight > 0 then
+                                        love.graphics.rectangle("fill", inset, inset + edge, side, verticalHeight)
+                                        love.graphics.rectangle("fill", sw - inset - side, inset + edge, side, verticalHeight)
+                                end
+                        end
+                end
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- All button definitions in one place
@@ -562,19 +701,25 @@ local buttonDefs = {
 }
 
 local function calculateAchievementsLayout(achievements, panelWidth, sectionPadding, innerSpacing, smallSpacing)
-	local list = achievements or {}
-	if not list or #list == 0 or (panelWidth or 0) <= 0 then
-		return nil
-	end
+        local list = achievements or {}
+        if not list or #list == 0 or (panelWidth or 0) <= 0 then
+                return nil
+        end
 
-	local headerHeight = fontProgressSmall:getHeight()
-	local textWidth = math.max(0, panelWidth - sectionPadding * 2)
-	local totalHeight = headerHeight
-	local entries = {}
+        local headerHeight = fontProgressSmall:getHeight()
+        local headerWidth = math.max(0, panelWidth - sectionPadding * 2)
+        local iconSize = math.max(12, math.min(22, sectionPadding * 0.95))
+        local iconSpacing = math.max(6, math.floor((innerSpacing or 8) * 0.9))
+        local textOffset = iconSize + iconSpacing
+        local textWidth = math.max(0, headerWidth - textOffset)
+        local totalHeight = headerHeight
+        local entries = {}
 
-	for index, achievement in ipairs(list) do
-		totalHeight = totalHeight + innerSpacing
-		totalHeight = totalHeight + fontSmall:getHeight()
+        local badgeBase = Theme.achieveColor or Theme.progressColor or Theme.accentTextColor or { 0.8, 0.45, 0.65, 1 }
+
+        for index, achievement in ipairs(list) do
+                totalHeight = totalHeight + innerSpacing
+                totalHeight = totalHeight + fontSmall:getHeight()
 
 		local description = achievement.description or ""
 		local descriptionLines = 0
@@ -589,30 +734,38 @@ local function calculateAchievementsLayout(achievements, panelWidth, sectionPadd
 			else
 				descriptionLines = 1
 			end
-		end
+                end
 
-		totalHeight = totalHeight + descriptionLines * fontProgressSmall:getHeight()
+                totalHeight = totalHeight + descriptionLines * fontProgressSmall:getHeight()
 
-		entries[#entries + 1] = {
-			title = achievement.title or "",
-			description = description,
-			descriptionLines = descriptionLines,
-		}
+                local badgeColor = lightenColor(copyColor(badgeBase), math.min(0.4, 0.12 * (index - 1)))
+                badgeColor[4] = 1
 
-		if index < #list then
-			totalHeight = totalHeight + smallSpacing
-		end
-	end
+                entries[#entries + 1] = {
+                        title = achievement.title or "",
+                        description = description,
+                        descriptionLines = descriptionLines,
+                        badgeColor = badgeColor,
+                }
 
-	local panelHeight = sectionPadding * 2 + totalHeight
-	panelHeight = math.floor(panelHeight + 0.5)
+                if index < #list then
+                        totalHeight = totalHeight + smallSpacing
+                end
+        end
 
-	return {
-		entries = entries,
-		height = panelHeight,
-		headerHeight = headerHeight,
-		textWidth = textWidth,
-	}
+        local panelHeight = sectionPadding * 2 + totalHeight
+        panelHeight = math.floor(panelHeight + 0.5)
+
+        return {
+                entries = entries,
+                height = panelHeight,
+                headerHeight = headerHeight,
+                headerWidth = headerWidth,
+                textWidth = textWidth,
+                textOffset = textOffset,
+                iconSize = iconSize,
+                iconSpacing = iconSpacing,
+        }
 end
 
 local function defaultButtonLayout(sw, sh, defs, startY)
@@ -683,29 +836,49 @@ local function drawSummaryPanelBackground(x, y, width, height, options)
 	local borderWidth = options.borderWidth or 2
 	local borderAlpha = options.borderAlpha or 1
 
-	local baseColor = Theme.panelColor or { 0.18, 0.18, 0.22, 1 }
-	local fill = {
-		baseColor[1],
-		baseColor[2],
-		baseColor[3],
-		(baseColor[4] or 1) * fillAlpha,
-	}
+        local baseColor = Theme.panelColor or { 0.18, 0.18, 0.22, 1 }
+        local fill = {
+                baseColor[1],
+                baseColor[2],
+                baseColor[3],
+                (baseColor[4] or 1) * fillAlpha,
+        }
 
-	local borderColor = UI.colors.border or Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }
-	borderColor = {
-		borderColor[1],
-		borderColor[2],
-		borderColor[3],
-		(borderColor[4] or 1) * borderAlpha,
-	}
+        local borderColor = UI.colors.border or Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }
+        borderColor = {
+                borderColor[1],
+                borderColor[2],
+                borderColor[3],
+                (borderColor[4] or 1) * borderAlpha,
+        }
 
-	UI.drawPanel(x, y, width, height, {
-		radius = radius,
-		shadowOffset = 0,
-		fill = fill,
-		borderColor = borderColor,
-		borderWidth = borderWidth,
-	})
+        UI.drawPanel(x, y, width, height, {
+                radius = radius,
+                shadowOffset = 0,
+                fill = fill,
+                borderColor = borderColor,
+                borderWidth = borderWidth,
+        })
+
+        if height > 8 and width > 8 then
+                local highlightHeight = math.min(height - 10, 42)
+                if highlightHeight > 6 then
+                        local highlight = withAlpha(lightenColor(fill, 0.24), 0.48)
+                        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+                        love.graphics.rectangle("fill", x + 4, y + 4, width - 8, highlightHeight, math.max(0, radius - 4), math.max(0, radius - 4))
+                end
+
+                local innerBorder = withAlpha(lightenColor(borderColor, 0.22), 0.68)
+                love.graphics.setColor(innerBorder[1], innerBorder[2], innerBorder[3], innerBorder[4])
+                love.graphics.setLineWidth(2)
+                love.graphics.rectangle("line", x + 3, y + 3, width - 6, height - 6, math.max(0, radius - 2), math.max(0, radius - 2))
+
+                local shadow = withAlpha(darkenColor(fill, 0.38), 0.52)
+                love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4])
+                love.graphics.rectangle("line", x + 1.5, y + 1.5, width - 3, height - 3, math.max(0, radius - 1), math.max(0, radius - 1))
+                love.graphics.setLineWidth(1)
+                love.graphics.setColor(1, 1, 1, 1)
+        end
 end
 
 local function handleButtonAction(_, action)
@@ -1262,12 +1435,13 @@ function GameOver:enter(data)
                         celebrations = {},
 			pendingMilestones = {},
 			levelUnlocks = {},
-			bonusXP = challengeBonusXP,
-			barPulse = 0,
-			pendingFruitXp = 0,
-			fruitDelivered = 0,
-			fillEaseSpeed = clamp(fillSpeed / 12, 6, 16),
-		}
+                        bonusXP = challengeBonusXP,
+                        barPulse = 0,
+                        pendingFruitXp = 0,
+                        fruitDelivered = 0,
+                        fillEaseSpeed = clamp(fillSpeed / 12, 6, 16),
+                        streakColor = self.dailyStreakColor,
+                }
 
 		local applesCollected = math.max(0, stats.apples or 0)
 		local fruitPoints = 0
@@ -1430,18 +1604,39 @@ local function drawXpSection(self, x, y, width)
 	self.baseXpSectionHeight = self.baseXpSectionHeight or baseHeight
 	local animatedHeight = self.xpSectionHeight or targetHeight
 	local height = math.max(160, baseHeight, targetHeight, animatedHeight)
-	UI.drawPanel(x, y, width, height, {
-		radius = 18,
-		shadowOffset = 0,
-		fill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * 0.65 },
-		borderColor = UI.colors.border or Theme.panelBorder,
-		borderWidth = 2,
-	})
+        local panelFill = { Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], (Theme.panelColor[4] or 1) * 0.65 }
+        local borderColor = UI.colors.border or Theme.panelBorder
 
-	local headerY = y + 18
-	UI.drawLabel(getLocalizedOrFallback("gameover.meta_progress_title", "Experience"), x, headerY, width, "center", {
-		font = fontProgressTitle,
-		color = UI.colors.text,
+        UI.drawPanel(x, y, width, height, {
+                radius = 18,
+                shadowOffset = 0,
+                fill = panelFill,
+                borderColor = borderColor,
+                borderWidth = 2,
+        })
+
+        local topHighlightHeight = math.min(height - 12, 48)
+        if topHighlightHeight and topHighlightHeight > 4 then
+                local highlightColor = withAlpha(lightenColor(panelFill, 0.32), 0.55)
+                love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], highlightColor[4])
+                love.graphics.rectangle("fill", x + 4, y + 4, width - 8, topHighlightHeight, 14, 14)
+        end
+
+        local innerRim = withAlpha(lightenColor(borderColor or panelFill, 0.28), 0.72)
+        love.graphics.setColor(innerRim[1], innerRim[2], innerRim[3], innerRim[4])
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", x + 3, y + 3, width - 6, height - 6, 16, 16)
+
+        local shadowRim = withAlpha(darkenColor(panelFill, 0.42), 0.55)
+        love.graphics.setColor(shadowRim[1], shadowRim[2], shadowRim[3], shadowRim[4])
+        love.graphics.rectangle("line", x + 1.5, y + 1.5, width - 3, height - 3, 17, 17)
+        love.graphics.setLineWidth(1)
+        love.graphics.setColor(1, 1, 1, 1)
+
+        local headerY = y + 18
+        UI.drawLabel(getLocalizedOrFallback("gameover.meta_progress_title", "Experience"), x, headerY, width, "center", {
+                font = fontProgressTitle,
+                color = UI.colors.text,
 	})
 
 	local levelColor = Theme.progressColor or UI.colors.progress or UI.colors.text
@@ -1693,35 +1888,69 @@ local function drawAchievementsPanel(self, x, y, width, height, sectionPadding, 
 		return
 	end
 
-	drawInsetPanel(x, y, width, height, { radius = 18 })
+        drawInsetPanel(x, y, width, height, { radius = 18 })
 
-	local achievementsLabel = getLocalizedOrFallback("gameover.achievements_header", "Achievements")
-	local headerText = string.format("%s (%d)", achievementsLabel, #entries)
-	local textX = x + sectionPadding
-	local textWidth = layoutData.textWidth or (width - sectionPadding * 2)
-	local entryY = y + sectionPadding
+        local achievementsLabel = getLocalizedOrFallback("gameover.achievements_header", "Achievements")
+        local headerText = string.format("%s (%d)", achievementsLabel, #entries)
+        local headerWidth = layoutData.headerWidth or (width - sectionPadding * 2)
+        local textWidth = layoutData.textWidth or (width - sectionPadding * 2)
+        local textOffset = layoutData.textOffset or 0
+        local iconSize = layoutData.iconSize or 14
+        local entryY = y + sectionPadding
 
-	UI.drawLabel(headerText, textX, entryY, textWidth, "left", {
-		font = fontProgressSmall,
-		color = UI.colors.text,
-	})
+        UI.drawLabel(headerText, x + sectionPadding, entryY, headerWidth, "left", {
+                font = fontProgressSmall,
+                color = UI.colors.text,
+        })
 
-	entryY = entryY + fontProgressSmall:getHeight() + innerSpacing
+        entryY = entryY + fontProgressSmall:getHeight() + innerSpacing
 
-	for index, entry in ipairs(entries) do
-		UI.drawLabel(entry.title or "", textX, entryY, textWidth, "left", {
-			font = fontSmall,
-			color = UI.colors.highlight or UI.colors.text,
-		})
-		entryY = entryY + fontSmall:getHeight()
+        for index, entry in ipairs(entries) do
+                local iconX = x + sectionPadding
+                local iconCenterY = entryY + fontSmall:getHeight() / 2
+                local badgeColor = entry.badgeColor or Theme.achieveColor or UI.colors.highlight or UI.colors.text
 
-		if entry.description and entry.description ~= "" then
-			UI.drawLabel(entry.description, textX, entryY, textWidth, "left", {
-				font = fontProgressSmall,
-				color = UI.colors.mutedText or UI.colors.text,
-			})
-			entryY = entryY + (entry.descriptionLines or 0) * fontProgressSmall:getHeight()
-		end
+                local badgeShadow = withAlpha(darkenColor(badgeColor, 0.55), 0.65)
+                love.graphics.setColor(badgeShadow[1], badgeShadow[2], badgeShadow[3], badgeShadow[4])
+                love.graphics.circle("fill", iconX + iconSize / 2 + 1, iconCenterY + 1, iconSize * 0.48, 20)
+
+                love.graphics.push()
+                love.graphics.translate(iconX + iconSize / 2, iconCenterY)
+                love.graphics.rotate(math.pi / 4)
+
+                local diamond = iconSize * 0.72
+                love.graphics.setColor(badgeColor[1], badgeColor[2], badgeColor[3], (badgeColor[4] or 1) * 0.95)
+                love.graphics.rectangle("fill", -diamond / 2, -diamond / 2, diamond, diamond, iconSize * 0.18, iconSize * 0.18)
+
+                local gleam = withAlpha(lightenColor(badgeColor, 0.38), 0.85)
+                love.graphics.setColor(gleam[1], gleam[2], gleam[3], gleam[4])
+                love.graphics.setLineWidth(2)
+                love.graphics.rectangle("line", -diamond / 2, -diamond / 2, diamond, diamond, iconSize * 0.18, iconSize * 0.18)
+                love.graphics.setLineWidth(1)
+                love.graphics.pop()
+
+                local sparkle = withAlpha(lightenColor(badgeColor, 0.6), 0.9)
+                love.graphics.setColor(sparkle[1], sparkle[2], sparkle[3], sparkle[4])
+                love.graphics.setLineWidth(1.2)
+                love.graphics.line(iconX + iconSize / 2, iconCenterY - iconSize * 0.34, iconX + iconSize / 2, iconCenterY + iconSize * 0.34)
+                love.graphics.line(iconX + iconSize / 2 - iconSize * 0.34, iconCenterY, iconX + iconSize / 2 + iconSize * 0.34, iconCenterY)
+                love.graphics.setLineWidth(1)
+                love.graphics.setColor(1, 1, 1, 1)
+
+                local textX = x + sectionPadding + textOffset
+                UI.drawLabel(entry.title or "", textX, entryY, textWidth, "left", {
+                        font = fontSmall,
+                        color = UI.colors.highlight or UI.colors.text,
+                })
+                entryY = entryY + fontSmall:getHeight()
+
+                if entry.description and entry.description ~= "" then
+                        UI.drawLabel(entry.description, textX, entryY, textWidth, "left", {
+                                font = fontProgressSmall,
+                                color = UI.colors.mutedText or UI.colors.text,
+                        })
+                        entryY = entryY + (entry.descriptionLines or 0) * fontProgressSmall:getHeight()
+                end
 
 		if index < #entries then
 			entryY = entryY + smallSpacing
