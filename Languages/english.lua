@@ -453,8 +453,8 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Deliberate Coil",
 				description = "Snake moves 15% slower. The exit unlocks one fruit later.",
 			},
-			pocket_springs = {
-				name = "Aegis Winder",
+                        pocket_springs = {
+                                name = "Tempest Ward",
 				description = "After collecting twenty fruit, forge a single crash shield charge.",
 			},
 			mapmakers_compass = {
