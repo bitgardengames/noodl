@@ -8,6 +8,7 @@ local lg = love.graphics
 local lm = love.math
 local random = lm.random
 local sin, cos = math.sin, math.cos
+local pi = math.pi
 local max = math.max
 
 local clamp = Easing.clamp
@@ -19,6 +20,7 @@ local easeOutBack = Easing.easeOutBack
 local defaultFont = UI.fonts.subtitle or UI.fonts.display or lg.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 24)
 
 local baseColor = UI.colors.accentText or UI.colors.text or { 1, 1, 1, 1 }
+local fallbackShadow = { offsetX = 0, offsetY = 0, alpha = 0 }
 
 local DEFAULTS = {
 	font = defaultFont,
@@ -193,14 +195,15 @@ local function resolveRiseDistance(defaults, duration, riseSpeed, options)
 end
 
 local function createInstance(overrides)
-	local defaults = resolveDefaults(overrides)
+        local defaults = resolveDefaults(overrides)
 
-	local instance = {
-		defaults = defaults,
-		entries = {},
-	}
+        local instance = {
+                defaults = defaults,
+                entries = {},
+                entryPool = {},
+        }
 
-	return setmetatable(instance, FloatingText)
+        return setmetatable(instance, FloatingText)
 end
 
 function FloatingText.new(overrides)
@@ -251,51 +254,57 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 		hasGlow = glowMagnitude and glowMagnitude > 0
 	end
 
-	local shadow = buildShadow(defaults, options.shadow) or {
-		offsetX = 0,
-		offsetY = 0,
-		alpha = 0,
-	}
+        local shadow = buildShadow(defaults, options.shadow) or fallbackShadow
 
-	entries[#entries + 1] = {
-		text = text,
-		x = x,
-		y = y,
-		color = entryColor,
-		font = font,
-		duration = entryDuration,
-		timer = 0,
-		riseDistance = rise,
-		baseScale = baseScale,
-		popScale = popScale,
-		popDuration = popDuration,
-		wobbleMagnitude = wobbleMagnitude,
-		wobbleFrequency = wobbleFrequency,
-		fadeStart = clamp(fadeStart, 0, 0.99),
-		fadeStartTime = fadeStartTime,
-		fadeDuration = fadeDuration,
-		drift = drift,
-		rotationAmplitude = rotationAmplitude,
-		rotationDirection = rotationDirection,
-		shadow = shadow,
-		glowColor = glowColor,
-		glowFrequency = glowFrequency or 0,
-		glowMagnitude = glowMagnitude or 0,
-		hasGlow = hasGlow,
-		glowPhase = random() * math.pi * 2,
-		glowAlpha = 0,
-		jitter = jitter or 0,
-		hasJitter = (jitter or 0) > 0,
-		jitterSeed = random() * math.pi * 2,
-		jitterX = 0,
-		jitterY = 0,
-		offsetX = 0,
-		offsetY = 0,
-		scale = baseScale,
-		rotation = 0,
-		ox = fontWidth / 2,
-		oy = fontHeight / 2,
-	}
+        local entryPool = self.entryPool
+        local entryIndex = #entryPool
+        local entry
+        if entryIndex > 0 then
+                entry = entryPool[entryIndex]
+                entryPool[entryIndex] = nil
+        else
+                entry = {}
+        end
+
+        entry.text = text
+        entry.x = x
+        entry.y = y
+        entry.color = entryColor
+        entry.font = font
+        entry.duration = entryDuration
+        entry.timer = 0
+        entry.riseDistance = rise
+        entry.baseScale = baseScale
+        entry.popScale = popScale
+        entry.popDuration = popDuration
+        entry.wobbleMagnitude = wobbleMagnitude
+        entry.wobbleFrequency = wobbleFrequency
+        entry.fadeStart = clamp(fadeStart, 0, 0.99)
+        entry.fadeStartTime = fadeStartTime
+        entry.fadeDuration = fadeDuration
+        entry.drift = drift
+        entry.rotationAmplitude = rotationAmplitude
+        entry.rotationDirection = rotationDirection
+        entry.shadow = shadow
+        entry.glowColor = glowColor
+        entry.glowFrequency = glowFrequency or 0
+        entry.glowMagnitude = glowMagnitude or 0
+        entry.hasGlow = hasGlow
+        entry.glowPhase = random() * pi * 2
+        entry.glowAlpha = 0
+        entry.jitter = jitter or 0
+        entry.hasJitter = (jitter or 0) > 0
+        entry.jitterSeed = random() * pi * 2
+        entry.jitterX = 0
+        entry.jitterY = 0
+        entry.offsetX = 0
+        entry.offsetY = 0
+        entry.scale = baseScale
+        entry.rotation = 0
+        entry.ox = fontWidth / 2
+        entry.oy = fontHeight / 2
+
+        entries[#entries + 1] = entry
 end
 
 function FloatingText:update(dt)
@@ -303,20 +312,22 @@ function FloatingText:update(dt)
 		return
 	end
 
-	local entries = self.entries
-	if #entries == 0 then
-		return
-	end
+        local entries = self.entries
+        local entryPool = self.entryPool
+        local count = #entries
+        if count == 0 then
+                return
+        end
 
-	for index = #entries, 1, -1 do
-		local entry = entries[index]
-		entry.timer = entry.timer + dt
+        for index = count, 1, -1 do
+                local entry = entries[index]
+                entry.timer = entry.timer + dt
 
 		local duration = entry.duration
 		local progress = duration > 0 and clamp(entry.timer / duration, 0, 1) or 1
 
 		entry.offsetY = -entry.riseDistance * easeOutCubic(progress)
-		entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * math.sin(entry.wobbleFrequency * entry.timer)
+                entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * sin(entry.wobbleFrequency * entry.timer)
 
 		if entry.hasJitter then
 			local falloff = (1 - progress)
@@ -332,13 +343,13 @@ function FloatingText:update(dt)
 			local popProgress = clamp(entry.timer / entry.popDuration, 0, 1)
 			entry.scale = lerp(entry.popScale, entry.baseScale, easeOutBack(popProgress))
 		else
-			local settleDuration = math.max(duration - entry.popDuration, 0.001)
+                        local settleDuration = max(duration - entry.popDuration, 0.001)
 			local settleProgress = clamp((entry.timer - entry.popDuration) / settleDuration, 0, 1)
 			local pulse = sin(entry.timer * 6) * (1 - settleProgress) * 0.04
 			entry.scale = entry.baseScale * (1 + pulse)
 		end
 
-		entry.rotation = entry.rotationAmplitude * entry.rotationDirection * sin(progress * math.pi)
+                entry.rotation = entry.rotationAmplitude * entry.rotationDirection * sin(progress * pi)
 
 		if entry.hasGlow then
 			local pulse = sin(entry.timer * entry.glowFrequency + entry.glowPhase) * 0.5 + 0.5
@@ -348,16 +359,25 @@ function FloatingText:update(dt)
 			entry.glowAlpha = 0
 		end
 
-		if duration > 0 and entry.timer >= duration then
-			table.remove(entries, index)
-		end
-	end
+                if duration > 0 and entry.timer >= duration then
+                        local lastIndex = #entries
+                        local lastEntry = entries[lastIndex]
+                        entries[lastIndex] = nil
+
+                        if index ~= lastIndex then
+                                entries[index] = lastEntry
+                        end
+
+                        entryPool[#entryPool + 1] = entry
+                end
+        end
 end
 
 function FloatingText:draw()
-	local entries = self.entries
-	for _, entry in ipairs(entries) do
-		lg.setFont(entry.font)
+        local entries = self.entries
+        for index = 1, #entries do
+                local entry = entries[index]
+                lg.setFont(entry.font)
 
 		local alpha = entry.color[4] or 1
 		if entry.duration > 0 and entry.fadeStartTime then
@@ -398,7 +418,13 @@ function FloatingText:draw()
 end
 
 function FloatingText:reset()
-	self.entries = {}
+        local entries = self.entries
+        local entryPool = self.entryPool
+
+        for index = #entries, 1, -1 do
+                entryPool[#entryPool + 1] = entries[index]
+                entries[index] = nil
+        end
 end
 
 local defaultInstance = createInstance()
