@@ -323,9 +323,9 @@ function Arena:rebuildTileDecorations()
         local rng = love.math.newRandomGenerator(baseSeed)
 
         local tileSize = self.tileSize or 24
-        local patchDensity = 0.08
+        local patchDensity = 0.1
         local accentDensity = 0.045
-        local speckDensity = 0.03
+        local speckDensity = 0.018
 
         if theme == "botanical" then
                 patchDensity = patchDensity + 0.015
@@ -367,6 +367,82 @@ function Arena:rebuildTileDecorations()
                 return offset
         end
 
+        local function clampOffset(offset, size)
+                local limit = math.max(0, tileSize - size)
+                if offset < 0 then
+                        offset = 0
+                elseif offset > limit then
+                        offset = limit
+                end
+                return offset
+        end
+
+        local function snapToSubgrid(value)
+                return math.floor(value / subgrid + 0.5) * subgrid
+        end
+
+        local function addRoundedGroup(col, row, opts)
+                if not (opts and opts.color) then
+                        return
+                end
+
+                local baseSize = quantizeSize(opts.baseSize or tileSize * 0.4)
+                local countMin = math.max(1, math.floor(opts.min or 2))
+                local countMax = math.max(countMin, math.floor(opts.max or countMin))
+                local jitterSteps = math.max(0, math.floor(opts.jitterSteps or 1))
+                local sizeJitter = math.max(0, opts.sizeJitter or 0.2)
+                local radiusBase = opts.radiusBase or 0.32
+                local radiusJitter = opts.radiusJitter or 0.08
+                local alphaJitter = opts.alphaJitter or 0
+                local colorVariation = opts.colorVariation or 0
+
+                local anchorX = quantizedOffset(baseSize)
+                local anchorY = quantizedOffset(baseSize)
+                local count = rng:random(countMin, countMax)
+
+                for n = 1, count do
+                        local sizeScale = 1 + (rng:random() * 2 - 1) * sizeJitter
+                        local size = quantizeSize(baseSize * sizeScale)
+                        size = math.max(subgrid, math.min(tileSize, size))
+
+                        local offsetX = anchorX
+                        local offsetY = anchorY
+                        if jitterSteps > 0 then
+                                offsetX = offsetX + snapToSubgrid(rng:random(-jitterSteps, jitterSteps) * subgrid)
+                                offsetY = offsetY + snapToSubgrid(rng:random(-jitterSteps, jitterSteps) * subgrid)
+                        end
+
+                        offsetX = clampOffset(offsetX, size)
+                        offsetY = clampOffset(offsetY, size)
+
+                        local radius = size * (radiusBase + rng:random() * radiusJitter)
+                        local decoColor = copyColor(opts.color)
+
+                        if colorVariation > 0 then
+                                for channel = 1, 3 do
+                                        decoColor[channel] = clamp01(decoColor[channel] + (rng:random() * 2 - 1) * colorVariation)
+                                end
+                        end
+
+                        if alphaJitter > 0 then
+                                local alpha = decoColor[4] or 1
+                                alpha = clamp01(alpha * (1 + (rng:random() * 2 - 1) * alphaJitter))
+                                decoColor[4] = alpha
+                        end
+
+                        decorations[#decorations + 1] = {
+                                col = col,
+                                row = row,
+                                x = offsetX,
+                                y = offsetY,
+                                w = size,
+                                h = size,
+                                radius = radius,
+                                color = decoColor,
+                        }
+                end
+        end
+
         for row = 1, rows do
                 for col = 1, cols do
                         local roll = rng:random()
@@ -375,59 +451,56 @@ function Arena:rebuildTileDecorations()
                                 local base = 0.2 + rng:random() * 0.16
                                 local variance = 0.08 + rng:random() * 0.12
                                 local size = quantizeSize(tileSize * (base + variance * rng:random()))
-                                local offsetX = quantizedOffset(size)
-                                local offsetY = quantizedOffset(size)
                                 local accentColor = mixColorTowards(baseColor, accentTarget, 0.45 + rng:random() * 0.2, 0.14 + rng:random() * 0.1)
-                                local radius = size * (0.35 + rng:random() * 0.08)
-                                decorations[#decorations + 1] = {
-                                        col = col,
-                                        row = row,
-                                        x = offsetX,
-                                        y = offsetY,
-                                        w = size,
-                                        h = size,
-                                        radius = radius,
+                                addRoundedGroup(col, row, {
+                                        baseSize = size,
                                         color = accentColor,
-                                }
+                                        min = 2,
+                                        max = 3,
+                                        jitterSteps = 2,
+                                        sizeJitter = 0.25,
+                                        radiusBase = 0.36,
+                                        radiusJitter = 0.12,
+                                        alphaJitter = 0.2,
+                                        colorVariation = 0.035,
+                                })
                         elseif roll < accentDensity + patchDensity then
-                                local size = quantizeSize(tileSize * (0.28 + rng:random() * 0.32))
-                                local insetX = quantizedOffset(size)
-                                local insetY = quantizedOffset(size)
+                                local size = quantizeSize(tileSize * (0.32 + rng:random() * 0.26))
                                 local lighten = rng:random() < 0.5
                                 local target = lighten and highlightTarget or shadowTarget
                                 local amount = lighten and (0.18 + rng:random() * 0.12) or (0.22 + rng:random() * 0.16)
                                 local alpha = lighten and (0.1 + rng:random() * 0.06) or (0.12 + rng:random() * 0.08)
                                 local color = mixColorTowards(baseColor, target, amount, alpha)
-                                local radius = size * (theme == "machine" and 0.22 or (0.3 + rng:random() * 0.06))
-                                decorations[#decorations + 1] = {
-                                        col = col,
-                                        row = row,
-                                        x = insetX,
-                                        y = insetY,
-                                        w = size,
-                                        h = size,
-                                        radius = radius,
+                                addRoundedGroup(col, row, {
+                                        baseSize = size,
                                         color = color,
-                                }
+                                        min = 3,
+                                        max = 4,
+                                        jitterSteps = 3,
+                                        sizeJitter = 0.28,
+                                        radiusBase = theme == "machine" and 0.24 or 0.34,
+                                        radiusJitter = theme == "machine" and 0.08 or 0.1,
+                                        alphaJitter = 0.15,
+                                        colorVariation = 0.025,
+                                })
                         elseif roll < maxDensity then
-                                local size = quantizeSize(tileSize * (0.1 + rng:random() * 0.08))
-                                local offsetX = quantizedOffset(size)
-                                local offsetY = quantizedOffset(size)
+                                local size = quantizeSize(tileSize * (0.18 + rng:random() * 0.12))
                                 local lighten = rng:random() < 0.5
                                 local target = lighten and highlightTarget or shadowTarget
                                 local amount = lighten and (0.26 + rng:random() * 0.16) or (0.3 + rng:random() * 0.18)
-                                local color = mixColorTowards(baseColor, target, amount, 0.025 + rng:random() * 0.03)
-                                local radius = size * (0.4 + rng:random() * 0.1)
-                                decorations[#decorations + 1] = {
-                                        col = col,
-                                        row = row,
-                                        x = offsetX,
-                                        y = offsetY,
-                                        w = size,
-                                        h = size,
-                                        radius = radius,
+                                local color = mixColorTowards(baseColor, target, amount, 0.035 + rng:random() * 0.035)
+                                addRoundedGroup(col, row, {
+                                        baseSize = size,
                                         color = color,
-                                }
+                                        min = 2,
+                                        max = 3,
+                                        jitterSteps = 2,
+                                        sizeJitter = 0.22,
+                                        radiusBase = 0.38,
+                                        radiusJitter = 0.1,
+                                        alphaJitter = 0.25,
+                                        colorVariation = 0.02,
+                                })
                         end
                 end
         end
