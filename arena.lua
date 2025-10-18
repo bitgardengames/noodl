@@ -323,184 +323,122 @@ function Arena:rebuildTileDecorations()
         local rng = love.math.newRandomGenerator(baseSeed)
 
         local tileSize = self.tileSize or 24
-        local patchDensity = 0.1
-        local accentDensity = 0.045
-        local speckDensity = 0.018
+        local clusterChance = 0.1
+        local minClusterSize = 1
+        local maxClusterSize = 4
+        local colorJitter = 0.02
 
         if theme == "botanical" then
-                patchDensity = patchDensity + 0.015
-                speckDensity = speckDensity + 0.01
+                clusterChance = clusterChance + 0.02
+                maxClusterSize = maxClusterSize + 1
         elseif theme == "machine" then
-                accentDensity = accentDensity + 0.015
-                patchDensity = math.max(0.05, patchDensity - 0.01)
+                clusterChance = math.max(0.06, clusterChance - 0.02)
+                colorJitter = 0.015
         elseif theme == "oceanic" then
-                patchDensity = patchDensity + 0.01
+                clusterChance = clusterChance + 0.01
         elseif theme == "cavern" then
-                speckDensity = speckDensity + 0.006
+                clusterChance = clusterChance - 0.005
         end
+
+        clusterChance = math.max(0, math.min(0.25, clusterChance))
 
         local decorations = {}
-        local maxDensity = math.min(0.95, accentDensity + patchDensity + speckDensity)
+        local occupied = {}
+        local safeZone = self._spawnDebugData and self._spawnDebugData.safeZone
 
-        local subgrid = math.max(2, tileSize / 6)
-
-        local function quantizeSize(size)
-                local quantized = math.floor(size / subgrid + 0.5) * subgrid
-                quantized = math.max(subgrid, math.min(tileSize, quantized))
-                return quantized
+        local function cellKey(col, row)
+                return (row - 1) * cols + col
         end
 
-        local function quantizedOffset(size)
-                local remaining = math.max(0, tileSize - size)
-                if remaining <= 0 then
-                        return 0
-                end
-                local steps = math.max(0, math.floor(remaining / subgrid))
-                if steps <= 0 then
-                        return remaining * 0.5
-                end
-                local stepIndex = rng:random(0, steps)
-                local offset = stepIndex * subgrid
-                if offset > remaining then
-                        offset = remaining
-                end
-                return offset
+        local function isOccupied(col, row)
+                return occupied[cellKey(col, row)] == true
         end
 
-        local function clampOffset(offset, size)
-                local limit = math.max(0, tileSize - size)
-                if offset < 0 then
-                        offset = 0
-                elseif offset > limit then
-                        offset = limit
-                end
-                return offset
+        local function occupy(col, row)
+                occupied[cellKey(col, row)] = true
         end
 
-        local function snapToSubgrid(value)
-                return math.floor(value / subgrid + 0.5) * subgrid
+        local directions = {
+                { 1, 0 },
+                { -1, 0 },
+                { 0, 1 },
+                { 0, -1 },
+        }
+
+        local function makeClusterColor()
+                local lighten = rng:random() < 0.45
+                local target = lighten and highlightTarget or shadowTarget
+                local amount = lighten and (0.2 + rng:random() * 0.15) or (0.26 + rng:random() * 0.18)
+                local alpha = lighten and (0.12 + rng:random() * 0.05) or (0.16 + rng:random() * 0.06)
+                local color = mixColorTowards(baseColor, target, amount, alpha)
+
+                if rng:random() < 0.35 then
+                        local accentMix = 0.3 + rng:random() * 0.25
+                        local accentAlpha = clamp01((color[4] or 1) * (0.85 + rng:random() * 0.25))
+                        color = mixColorTowards(color, accentTarget, accentMix, accentAlpha)
+                end
+
+                return color
         end
 
-        local function addRoundedGroup(col, row, opts)
-                if not (opts and opts.color) then
-                        return
+        local function jitterColor(color)
+                local jittered = copyColor(color)
+                for i = 1, 3 do
+                        jittered[i] = clamp01(jittered[i] + (rng:random() * 2 - 1) * colorJitter)
                 end
+                jittered[4] = clamp01((jittered[4] or 1) * (0.88 + rng:random() * 0.22))
+                return jittered
+        end
 
-                local baseSize = quantizeSize(opts.baseSize or tileSize * 0.4)
-                local countMin = math.max(1, math.floor(opts.min or 2))
-                local countMax = math.max(countMin, math.floor(opts.max or countMin))
-                local jitterSteps = math.max(0, math.floor(opts.jitterSteps or 1))
-                local sizeJitter = math.max(0, opts.sizeJitter or 0.2)
-                local radiusBase = opts.radiusBase or 0.32
-                local radiusJitter = opts.radiusJitter or 0.08
-                local alphaJitter = opts.alphaJitter or 0
-                local colorVariation = opts.colorVariation or 0
-
-                local anchorX = quantizedOffset(baseSize)
-                local anchorY = quantizedOffset(baseSize)
-                local count = rng:random(countMin, countMax)
-
-                for n = 1, count do
-                        local sizeScale = 1 + (rng:random() * 2 - 1) * sizeJitter
-                        local size = quantizeSize(baseSize * sizeScale)
-                        size = math.max(subgrid, math.min(tileSize, size))
-
-                        local offsetX = anchorX
-                        local offsetY = anchorY
-                        if jitterSteps > 0 then
-                                offsetX = offsetX + snapToSubgrid(rng:random(-jitterSteps, jitterSteps) * subgrid)
-                                offsetY = offsetY + snapToSubgrid(rng:random(-jitterSteps, jitterSteps) * subgrid)
-                        end
-
-                        offsetX = clampOffset(offsetX, size)
-                        offsetY = clampOffset(offsetY, size)
-
-                        local radius = size * (radiusBase + rng:random() * radiusJitter)
-                        local decoColor = copyColor(opts.color)
-
-                        if colorVariation > 0 then
-                                for channel = 1, 3 do
-                                        decoColor[channel] = clamp01(decoColor[channel] + (rng:random() * 2 - 1) * colorVariation)
-                                end
-                        end
-
-                        if alphaJitter > 0 then
-                                local alpha = decoColor[4] or 1
-                                alpha = clamp01(alpha * (1 + (rng:random() * 2 - 1) * alphaJitter))
-                                decoColor[4] = alpha
-                        end
-
-                        decorations[#decorations + 1] = {
-                                col = col,
-                                row = row,
-                                x = offsetX,
-                                y = offsetY,
-                                w = size,
-                                h = size,
-                                radius = radius,
-                                color = decoColor,
-                        }
-                end
+        local function addRoundedSquare(col, row, size, radius, color)
+                decorations[#decorations + 1] = {
+                        col = col,
+                        row = row,
+                        x = (tileSize - size) * 0.5,
+                        y = (tileSize - size) * 0.5,
+                        w = size,
+                        h = size,
+                        radius = radius,
+                        color = color,
+                }
         end
 
         for row = 1, rows do
                 for col = 1, cols do
-                        local roll = rng:random()
+                        if not isOccupied(col, row) and rng:random() < clusterChance then
+                                if safeZone and isTileInSafeZone(safeZone, col, row) then
+                                        occupy(col, row)
+                                else
+                                        local clusterColor = makeClusterColor()
+                                        local clusterSize = rng:random(minClusterSize, maxClusterSize)
+                                        local clusterCells = { {col = col, row = row} }
+                                        occupy(col, row)
 
-                        if roll < accentDensity then
-                                local base = 0.2 + rng:random() * 0.16
-                                local variance = 0.08 + rng:random() * 0.12
-                                local size = quantizeSize(tileSize * (base + variance * rng:random()))
-                                local accentColor = mixColorTowards(baseColor, accentTarget, 0.45 + rng:random() * 0.2, 0.14 + rng:random() * 0.1)
-                                addRoundedGroup(col, row, {
-                                        baseSize = size,
-                                        color = accentColor,
-                                        min = 2,
-                                        max = 3,
-                                        jitterSteps = 2,
-                                        sizeJitter = 0.25,
-                                        radiusBase = 0.36,
-                                        radiusJitter = 0.12,
-                                        alphaJitter = 0.2,
-                                        colorVariation = 0.035,
-                                })
-                        elseif roll < accentDensity + patchDensity then
-                                local size = quantizeSize(tileSize * (0.32 + rng:random() * 0.26))
-                                local lighten = rng:random() < 0.5
-                                local target = lighten and highlightTarget or shadowTarget
-                                local amount = lighten and (0.18 + rng:random() * 0.12) or (0.22 + rng:random() * 0.16)
-                                local alpha = lighten and (0.1 + rng:random() * 0.06) or (0.12 + rng:random() * 0.08)
-                                local color = mixColorTowards(baseColor, target, amount, alpha)
-                                addRoundedGroup(col, row, {
-                                        baseSize = size,
-                                        color = color,
-                                        min = 3,
-                                        max = 4,
-                                        jitterSteps = 3,
-                                        sizeJitter = 0.28,
-                                        radiusBase = theme == "machine" and 0.24 or 0.34,
-                                        radiusJitter = theme == "machine" and 0.08 or 0.1,
-                                        alphaJitter = 0.15,
-                                        colorVariation = 0.025,
-                                })
-                        elseif roll < maxDensity then
-                                local size = quantizeSize(tileSize * (0.18 + rng:random() * 0.12))
-                                local lighten = rng:random() < 0.5
-                                local target = lighten and highlightTarget or shadowTarget
-                                local amount = lighten and (0.26 + rng:random() * 0.16) or (0.3 + rng:random() * 0.18)
-                                local color = mixColorTowards(baseColor, target, amount, 0.035 + rng:random() * 0.035)
-                                addRoundedGroup(col, row, {
-                                        baseSize = size,
-                                        color = color,
-                                        min = 2,
-                                        max = 3,
-                                        jitterSteps = 2,
-                                        sizeJitter = 0.22,
-                                        radiusBase = 0.38,
-                                        radiusJitter = 0.1,
-                                        alphaJitter = 0.25,
-                                        colorVariation = 0.02,
-                                })
+                                        local attempts = 0
+                                        while #clusterCells < clusterSize and attempts < clusterSize * 6 do
+                                                attempts = attempts + 1
+                                                local baseIndex = rng:random(1, #clusterCells)
+                                                local baseCell = clusterCells[baseIndex]
+                                                local dir = directions[rng:random(1, #directions)]
+                                                local nextCol = baseCell.col + dir[1]
+                                                local nextRow = baseCell.row + dir[2]
+
+                                                if nextCol >= 1 and nextCol <= cols and nextRow >= 1 and nextRow <= rows then
+                                                        if not isOccupied(nextCol, nextRow) and not (safeZone and isTileInSafeZone(safeZone, nextCol, nextRow)) then
+                                                                occupy(nextCol, nextRow)
+                                                                clusterCells[#clusterCells + 1] = { col = nextCol, row = nextRow }
+                                                        end
+                                                end
+                                        end
+
+                                        local size = math.min(tileSize * (0.48 + rng:random() * 0.18), tileSize)
+                                        local radius = size * (0.18 + rng:random() * 0.14)
+
+                                        for i = 1, #clusterCells do
+                                                local cell = clusterCells[i]
+                                                addRoundedSquare(cell.col, cell.row, size, radius, jitterColor(clusterColor))
+                                        end
+                                end
                         end
                 end
         end
