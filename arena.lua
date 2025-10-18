@@ -106,14 +106,75 @@ local function drawSpawnDebugOverlay(self)
 end
 
 local function mixChannel(base, target, amount)
-	return base + (target - base) * amount
+        return base + (target - base) * amount
+end
+
+local function clamp01(value)
+        if value < 0 then
+                return 0
+        end
+        if value > 1 then
+                return 1
+        end
+        return value
+end
+
+local function copyColor(color, defaultAlpha)
+        if not color then
+                return {0, 0, 0, defaultAlpha or 1}
+        end
+
+        return {
+                color[1] or 0,
+                color[2] or 0,
+                color[3] or 0,
+                color[4] or defaultAlpha or 1,
+        }
+end
+
+local function getPaletteColor(palette, key, fallback, defaultAlpha)
+        local value = fallback
+        if palette and palette[key] then
+                value = palette[key]
+        end
+        return copyColor(value, defaultAlpha)
+end
+
+local function mixColorTowards(baseColor, targetColor, amount, alphaOverride)
+        local color = {}
+        for i = 1, 3 do
+                color[i] = clamp01(mixChannel(baseColor[i] or 0, targetColor[i] or 0, amount))
+        end
+
+        if alphaOverride ~= nil then
+                color[4] = alphaOverride
+        else
+                local baseAlpha = baseColor[4] or 1
+                local targetAlpha = targetColor[4] or 1
+                color[4] = clamp01(mixChannel(baseAlpha, targetAlpha, amount))
+        end
+
+        return color
+end
+
+local function hashString(value)
+        if not value or value == "" then
+                return 0
+        end
+
+        local hash = 0
+        for i = 1, #value do
+                hash = (hash * 131 + string.byte(value, i)) % 2147483647
+        end
+
+        return hash
 end
 
 local function isTileInSafeZone(safeZone, col, row)
-	if not safeZone then return false end
+        if not safeZone then return false end
 
-	for _, cell in ipairs(safeZone) do
-		if cell[1] == col and cell[2] == row then
+        for _, cell in ipairs(safeZone) do
+                if cell[1] == col and cell[2] == row then
 			return true
 		end
 	end
@@ -122,18 +183,20 @@ local function isTileInSafeZone(safeZone, col, row)
 end
 
 local Arena = {
-	x = 0, y = 0,
-	width = 792,
-	height = 600,
-	tileSize = 24,
-	cols = 0,
-	rows = 0,
-		exit = nil,
-		activeBackgroundEffect = nil,
-	borderFlare = 0,
-	borderFlareStrength = 0,
-	borderFlareTimer = 0,
-	borderFlareDuration = 1.05,
+        x = 0, y = 0,
+        width = 792,
+        height = 600,
+        tileSize = 24,
+        cols = 0,
+        rows = 0,
+                exit = nil,
+                activeBackgroundEffect = nil,
+        borderFlare = 0,
+        borderFlareStrength = 0,
+        borderFlareTimer = 0,
+        borderFlareDuration = 1.05,
+        _tileDecorations = nil,
+        _decorationConfig = nil,
 }
 
 function Arena:setSpawnDebugData(data)
@@ -158,15 +221,19 @@ function Arena:clearSpawnDebugData()
 end
 
 function Arena:updateScreenBounds(sw, sh)
-	self.x = math.floor((sw - self.width) / 2)
-	self.y = math.floor((sh - self.height) / 2)
+        self.x = math.floor((sw - self.width) / 2)
+        self.y = math.floor((sh - self.height) / 2)
 
-	-- snap x,y to nearest tile boundary so centers align
-	self.x = self.x - (self.x % self.tileSize)
-	self.y = self.y - (self.y % self.tileSize)
+        -- snap x,y to nearest tile boundary so centers align
+        self.x = self.x - (self.x % self.tileSize)
+        self.y = self.y - (self.y % self.tileSize)
 
-	self.cols = math.floor(self.width / self.tileSize)
-	self.rows = math.floor(self.height / self.tileSize)
+        self.cols = math.floor(self.width / self.tileSize)
+        self.rows = math.floor(self.height / self.tileSize)
+
+        if self.rebuildTileDecorations then
+                self:rebuildTileDecorations()
+        end
 end
 
 function Arena:getTilePosition(col, row)
@@ -191,18 +258,195 @@ function Arena:getTileFromWorld(x, y)
 end
 
 function Arena:isInside(x, y)
-	local inset = self.tileSize / 2
+        local inset = self.tileSize / 2
 
-	return x >= (self.x + inset) and
-			x <= (self.x + self.width  - inset) and
-			y >= (self.y + inset) and
-			y <= (self.y + self.height - inset)
+        return x >= (self.x + inset) and
+                        x <= (self.x + self.width  - inset) and
+                        y >= (self.y + inset) and
+                        y <= (self.y + self.height - inset)
+end
+
+function Arena:setFloorDecorations(floorNum, floorData)
+        if not floorNum and not floorData then
+                self._decorationConfig = nil
+                self._tileDecorations = nil
+                return
+        end
+
+        local seed = os.time()
+        if love and love.timer and love.timer.getTime then
+                seed = seed + math.floor(love.timer.getTime() * 1000)
+        end
+
+        self._decorationConfig = {
+                floor = floorNum or 0,
+                palette = floorData and floorData.palette,
+                theme = floorData and floorData.backgroundTheme,
+                variant = floorData and floorData.backgroundVariant,
+                seed = seed,
+        }
+
+        self:rebuildTileDecorations()
+end
+
+function Arena:rebuildTileDecorations()
+        local config = self._decorationConfig
+        if not config then
+                self._tileDecorations = nil
+                return
+        end
+
+        local cols = self.cols or 0
+        local rows = self.rows or 0
+        if cols <= 0 or rows <= 0 then
+                self._tileDecorations = nil
+                return
+        end
+
+        local palette = config.palette
+        local baseColor = getPaletteColor(palette, "arenaBG", Theme.arenaBG, 1)
+        local highlightTarget = getPaletteColor(palette, "highlightColor", Theme.highlightColor, 1)
+        local shadowTarget = getPaletteColor(palette, "shadowColor", Theme.shadowColor, 1)
+        local accentTarget = getPaletteColor(palette, "arenaBorder", Theme.arenaBorder, 1)
+        if palette and palette.rock then
+                accentTarget = copyColor(palette.rock, 1)
+        elseif Theme.rock then
+                accentTarget = copyColor(Theme.rock, 1)
+        end
+
+        local theme = config.theme
+        local variant = config.variant
+
+        local baseSeed = (config.seed or os.time()) % 2147483647
+        baseSeed = baseSeed + (config.floor or 0) * 131071 + hashString(theme) * 17 + hashString(variant) * 31
+        local rng = love.math.newRandomGenerator(baseSeed)
+
+        local tileSize = self.tileSize or 24
+        local patchDensity = 0.16
+        local accentDensity = 0.07
+        local speckDensity = 0.12
+
+        if theme == "botanical" then
+                patchDensity = patchDensity + 0.04
+                speckDensity = speckDensity + 0.03
+        elseif theme == "machine" then
+                accentDensity = accentDensity + 0.04
+                patchDensity = math.max(0.08, patchDensity - 0.02)
+        elseif theme == "oceanic" then
+                patchDensity = patchDensity + 0.02
+        elseif theme == "cavern" then
+                speckDensity = speckDensity + 0.02
+        end
+
+        local decorations = {}
+        local maxDensity = math.min(0.95, accentDensity + patchDensity + speckDensity)
+
+        for row = 1, rows do
+                for col = 1, cols do
+                        local roll = rng:random()
+
+                        if roll < accentDensity then
+                                local w = tileSize * (0.12 + rng:random() * 0.3)
+                                local h = tileSize * (0.05 + rng:random() * 0.12)
+                                if rng:random() < 0.5 then
+                                        w, h = h, w
+                                end
+                                local offsetX = rng:random() * (tileSize - w)
+                                local offsetY = rng:random() * (tileSize - h)
+                                local amount = 0.25 + rng:random() * 0.45
+                                local color = mixColorTowards(baseColor, accentTarget, amount, 0.08 + rng:random() * 0.06)
+                                local radius = tileSize * (theme == "machine" and 0.02 or 0.08)
+                                radius = math.min(radius, w * 0.5, h * 0.5)
+                                decorations[#decorations + 1] = {
+                                        col = col,
+                                        row = row,
+                                        x = offsetX,
+                                        y = offsetY,
+                                        w = w,
+                                        h = h,
+                                        radius = radius,
+                                        color = color,
+                                }
+                        elseif roll < accentDensity + patchDensity then
+                                local w = tileSize * (0.35 + rng:random() * 0.4)
+                                local h = tileSize * (0.22 + rng:random() * 0.35)
+                                if rng:random() < 0.35 then
+                                        w, h = h, w
+                                end
+                                local insetX = rng:random() * (tileSize - w)
+                                local insetY = rng:random() * (tileSize - h)
+                                local lighten = rng:random() < 0.5
+                                local target = lighten and highlightTarget or shadowTarget
+                                local amount = lighten and (0.18 + rng:random() * 0.16) or (0.22 + rng:random() * 0.2)
+                                local alpha = lighten and (0.12 + rng:random() * 0.08) or (0.14 + rng:random() * 0.1)
+                                local color = mixColorTowards(baseColor, target, amount, alpha)
+                                local radius = tileSize * (theme == "machine" and 0.02 or (0.12 + rng:random() * 0.08))
+                                radius = math.min(radius, w * 0.5, h * 0.5)
+                                decorations[#decorations + 1] = {
+                                        col = col,
+                                        row = row,
+                                        x = insetX,
+                                        y = insetY,
+                                        w = w,
+                                        h = h,
+                                        radius = radius,
+                                        color = color,
+                                }
+                        elseif roll < maxDensity then
+                                local size = tileSize * (0.08 + rng:random() * 0.12)
+                                local offsetX = rng:random() * (tileSize - size)
+                                local offsetY = rng:random() * (tileSize - size)
+                                local lighten = rng:random() < 0.5
+                                local target = lighten and highlightTarget or shadowTarget
+                                local amount = lighten and (0.35 + rng:random() * 0.25) or (0.4 + rng:random() * 0.3)
+                                local color = mixColorTowards(baseColor, target, amount, 0.04 + rng:random() * 0.05)
+                                decorations[#decorations + 1] = {
+                                        col = col,
+                                        row = row,
+                                        x = offsetX,
+                                        y = offsetY,
+                                        w = size,
+                                        h = size,
+                                        radius = size * 0.5,
+                                        color = color,
+                                }
+                        end
+                end
+        end
+
+        self._tileDecorations = decorations
+end
+
+function Arena:drawTileDecorations()
+        local decorations = self._tileDecorations
+        if not decorations or #decorations == 0 then
+                return
+        end
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("alpha")
+
+        for i = 1, #decorations do
+                local deco = decorations[i]
+                local color = deco.color
+                local width = deco.w or 0
+                local height = deco.h or 0
+                if color and width > 0 and height > 0 then
+                        local tileX, tileY = self:getTilePosition(deco.col, deco.row)
+                        local drawX = tileX + (deco.x or 0)
+                        local drawY = tileY + (deco.y or 0)
+                        love.graphics.setColor(color[1], color[2], color[3], color[4] or 1)
+                        love.graphics.rectangle("fill", drawX, drawY, width, height, deco.radius or 0, deco.radius or 0)
+                end
+        end
+
+        love.graphics.pop()
 end
 
 function Arena:getRandomTile()
-	local col = love.math.random(2, self.cols - 1)
-	local row = love.math.random(2, self.rows - 1)
-	return col, row
+        local col = love.math.random(2, self.cols - 1)
+        local row = love.math.random(2, self.rows - 1)
+        return col, row
 end
 
 function Arena:getBounds()
@@ -291,13 +535,17 @@ function Arena:drawBackground()
 		Shaders.draw(self.activeBackgroundEffect, ax, ay, aw, ah, intensity)
 	end
 
-	-- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
-	love.graphics.setColor(Theme.arenaBG)
-	love.graphics.rectangle("fill", ax, ay, aw, ah)
+        -- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
+        love.graphics.setColor(Theme.arenaBG)
+        love.graphics.rectangle("fill", ax, ay, aw, ah)
 
-	drawSpawnDebugOverlay(self)
+        if self.drawTileDecorations then
+                self:drawTileDecorations()
+        end
 
-	love.graphics.setColor(1, 1, 1, 1)
+        drawSpawnDebugOverlay(self)
+
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- Draws border
