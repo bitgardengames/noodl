@@ -4,6 +4,11 @@ local Particles = require("particles")
 local Theme = require("theme")
 local RenderLayers = require("renderlayers")
 
+local max = math.max
+local min = math.min
+local pi = math.pi
+local insert = table.insert
+
 local Saws = {}
 local current = {}
 local slots = {}
@@ -74,9 +79,9 @@ end
 
 local function getHighlightColor(color)
 	color = color or {1, 1, 1, 1}
-	local r = math.min(1, color[1] * 1.2 + 0.08)
-	local g = math.min(1, color[2] * 1.2 + 0.08)
-	local b = math.min(1, color[3] * 1.2 + 0.08)
+	local r = min(1, color[1] * 1.2 + 0.08)
+	local g = min(1, color[2] * 1.2 + 0.08)
+	local b = min(1, color[3] * 1.2 + 0.08)
 	local a = (color[4] or 1) * 0.7
 	return {r, g, b, a}
 end
@@ -100,7 +105,7 @@ local function clampRow(row)
 		return row
 	end
 
-	return math.max(1, math.min(Arena.rows, row))
+	return max(1, min(Arena.rows, row))
 end
 
 local function clampCol(col)
@@ -108,7 +113,7 @@ local function clampCol(col)
 		return col
 	end
 
-	return math.max(1, math.min(Arena.cols, col))
+	return max(1, min(Arena.cols, col))
 end
 
 local function addCell(target, seen, col, row)
@@ -218,7 +223,7 @@ local function getOrCreateSlot(x, y, dir)
 		dir = dir,
 	}
 
-	table.insert(slots, slot)
+	insert(slots, slot)
 	return slot
 end
 
@@ -282,8 +287,8 @@ local function removeSaw(target)
 				life = 0.35,
 				size = 2.3,
 				color = {primary[1], primary[2], primary[3], primary[4]},
-				spread = math.pi * 2,
-				angleJitter = math.pi,
+				spread = pi * 2,
+				angleJitter = pi,
 				drag = 3.5,
 				gravity = 260,
 				scaleMin = 0.45,
@@ -298,8 +303,8 @@ local function removeSaw(target)
 				life = 0.26,
 				size = 1.8,
 				color = {1.0, 0.94, 0.52, highlight[4] or 1},
-				spread = math.pi * 2,
-				angleJitter = math.pi,
+				spread = pi * 2,
+				angleJitter = pi,
 				drag = 1.4,
 				gravity = 200,
 				scaleMin = 0.34,
@@ -318,7 +323,7 @@ end
 function Saws:spawn(x, y, radius, teeth, dir, side)
 	local slot = getOrCreateSlot(x, y, dir)
 
-	table.insert(current, {
+	insert(current, {
 		x = x,
 		y = y,
 		radius = radius or SAW_RADIUS,
@@ -375,11 +380,11 @@ end
 
 function Saws:update(dt)
 	if stallTimer > 0 then
-		stallTimer = math.max(0, stallTimer - dt)
+		stallTimer = max(0, stallTimer - dt)
 	end
 
 	if sinkAutoRaise and sinkTimer > 0 then
-		sinkTimer = math.max(0, sinkTimer - dt)
+		sinkTimer = max(0, sinkTimer - dt)
 		if sinkTimer <= 0 then
 			self:unsink()
 		end
@@ -393,7 +398,7 @@ function Saws:update(dt)
 		saw.collisionRadius = (saw.radius or SAW_RADIUS) * COLLISION_RADIUS_MULT
 
 		saw.timer = saw.timer + dt
-		saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (math.pi * 2)
+		saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (pi * 2)
 
 		local sinkDirection = (saw.sinkTarget or 0) > 0 and 1 or -1
 		saw.sinkProgress = saw.sinkProgress + sinkDirection * dt * SINK_SPEED
@@ -403,10 +408,10 @@ function Saws:update(dt)
 			saw.sinkProgress = 1
 		end
 
-		saw.hitFlashTimer = math.max(0, (saw.hitFlashTimer or 0) - dt)
+		saw.hitFlashTimer = max(0, (saw.hitFlashTimer or 0) - dt)
 
 		if saw.phase == "drop" then
-			local progress = math.min(saw.timer / SPAWN_DURATION, 1)
+			local progress = min(saw.timer / SPAWN_DURATION, 1)
 			saw.offsetY = -40 * (1 - progress)
 			saw.scaleY = progress
 			saw.scaleX = progress
@@ -417,7 +422,7 @@ function Saws:update(dt)
 			end
 
 		elseif saw.phase == "squash" then
-			local progress = math.min(saw.timer / SQUASH_DURATION, 1)
+			local progress = min(saw.timer / SQUASH_DURATION, 1)
 			saw.scaleX = 1 + 0.3 * (1 - progress)
 			saw.scaleY = 1 - 0.3 * (1 - progress)
 			saw.offsetY = 0
@@ -460,7 +465,7 @@ function Saws:draw()
 
 	for _, saw in ipairs(current) do
 		local px, py = getSawCenter(saw)
-		local sinkProgress = math.max(0, math.min(1, saw.sinkProgress or 0))
+		local sinkProgress = max(0, min(1, saw.sinkProgress or 0))
 		local sinkOffset = sinkProgress * SINK_DISTANCE
 		local occlusionDepth = SINK_OFFSET + sinkOffset
 		local offsetX, offsetY = 0, 0
@@ -478,7 +483,7 @@ function Saws:draw()
 		local teeth = saw.teeth or 8
 		local outer = saw.radius or SAW_RADIUS
 		local inner = outer * 0.8
-		local step = math.pi / math.max(1, teeth)
+		local step = pi / max(1, teeth)
 		local points = {}
 
 		for i = 0, (teeth * 2) - 1 do
@@ -567,7 +572,7 @@ function Saws:draw()
 			if occlusionDepth <= 0 then
 				hideHubHighlight = true
 			else
-				local occlusionRatio = math.min(1, math.max(0, occlusionDepth / highlightRadius))
+				local occlusionRatio = min(1, max(0, occlusionDepth / highlightRadius))
 				highlightAlphaMult = 0.4 + 0.6 * occlusionRatio
 			end
 		elseif occlusionDepth > highlightRadius then
@@ -667,7 +672,7 @@ function Saws:sink(duration)
 	sinkActive = true
 
 	if duration and duration > 0 then
-		sinkTimer = math.max(sinkTimer, duration)
+		sinkTimer = max(sinkTimer, duration)
 		sinkAutoRaise = true
 	else
 		sinkTimer = 0
@@ -710,13 +715,13 @@ function Saws:checkCollision(x, y, w, h)
 			local px, py = getSawCollisionCenter(saw)
 
 			-- Circle vs AABB
-			local closestX = math.max(x, math.min(px, x + w))
-			local closestY = math.max(y, math.min(py, y + h))
+			local closestX = max(x, min(px, x + w))
+			local closestY = max(y, min(py, y + h))
 			local dx = px - closestX
 			local dy = py - closestY
 			local collisionRadius = saw.collisionRadius or saw.radius
 			if dx * dx + dy * dy < collisionRadius * collisionRadius then
-				saw.hitFlashTimer = math.max(saw.hitFlashTimer or 0, HIT_FLASH_DURATION)
+				saw.hitFlashTimer = max(saw.hitFlashTimer or 0, HIT_FLASH_DURATION)
 				return saw
 			end
 		end

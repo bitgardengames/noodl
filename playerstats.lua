@@ -1,5 +1,7 @@
 local DataSchemas = require("dataschemas")
 
+local insert = table.insert
+
 local PlayerStats = {}
 
 local saveFile = "savedstats.lua"
@@ -39,16 +41,16 @@ function PlayerStats:save()
 	for k, v in pairs(self.data) do
 		local vType = type(v)
 		if vType == "number" then
-			table.insert(lines, string.format("    [%q] = %s,\n", k, tostring(v)))
+			insert(lines, string.format("    [%q] = %s,\n", k, tostring(v)))
 		elseif vType == "string" then
-			table.insert(lines, string.format("    [%q] = %q,\n", k, v))
+			insert(lines, string.format("    [%q] = %q,\n", k, v))
 		elseif vType == "boolean" then
-			table.insert(lines, string.format("    [%q] = %s,\n", k, tostring(v)))
+			insert(lines, string.format("    [%q] = %s,\n", k, tostring(v)))
 		end
 		-- Skip nested tables or unsupported types
 	end
 
-	table.insert(lines, "}\n")
+	insert(lines, "}\n")
 	love.filesystem.write(saveFile, table.concat(lines))
 end
 

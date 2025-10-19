@@ -3,6 +3,8 @@ local Theme = require("theme")
 local UI = require("ui")
 local Timer = require("timers")
 
+local min = math.min
+
 local Popup = {}
 Popup.__index = Popup
 
@@ -74,11 +76,11 @@ local function computeAlpha(self, elapsed, duration)
 		return 1
 	end
 
-	local fadeInDuration = math.min(self.fadeInDuration or DEFAULT_FADE, duration)
-	local fadeOutDuration = math.min(self.fadeOutDuration or DEFAULT_FADE, duration)
+	local fadeInDuration = min(self.fadeInDuration or DEFAULT_FADE, duration)
+	local fadeOutDuration = min(self.fadeOutDuration or DEFAULT_FADE, duration)
 
 	if fadeInDuration > 0 and elapsed < fadeInDuration then
-		return math.min(elapsed / fadeInDuration, 1)
+		return min(elapsed / fadeInDuration, 1)
 	end
 
 	if fadeOutDuration > 0 and (duration - elapsed) <= fadeOutDuration then
@@ -127,7 +129,7 @@ function Popup:draw()
 	local padding = spacing.panelPadding or (UI.scaled and UI.scaled(20, 12) or 20)
 	local innerSpacing = (spacing.sectionSpacing or 28) * 0.4
 	local scaledMaxWidth = UI.scaled and UI.scaled(BASE_MAX_WIDTH, 360) or BASE_MAX_WIDTH
-	local maxWidth = math.min(scaledMaxWidth, sw - padding * 2)
+	local maxWidth = min(scaledMaxWidth, sw - padding * 2)
 	local fontTitle = UI.fonts.heading or UI.fonts.subtitle
 	local fontDesc = UI.fonts.caption or UI.fonts.body
 

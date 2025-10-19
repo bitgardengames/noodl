@@ -11,6 +11,14 @@ local Score = require("score")
 local SnakeCosmetics = require("snakecosmetics")
 local FloatingText = require("floatingtext")
 
+local abs = math.abs
+local floor = math.floor
+local huge = math.huge
+local min = math.min
+local pi = math.pi
+local insert = table.insert
+local remove = table.remove
+
 local Snake = {}
 
 local unpack = unpack
@@ -225,7 +233,7 @@ local LOSE_SEGMENTS_BURST_OPTIONS = {
         life = 0.42,
         size = 4,
         color = LOSE_SEGMENTS_DEFAULT_BURST_COLOR,
-        spread = math.pi * 2,
+        spread = pi * 2,
         drag = 3.1,
         gravity = 220,
         fadeTo = 0,
@@ -238,8 +246,8 @@ local SHIELD_BREAK_PARTICLE_OPTIONS = {
         life = 0.48,
         size = 5,
         color = {1, 0.46, 0.32, 1},
-        spread = math.pi * 2,
-        angleJitter = math.pi,
+        spread = pi * 2,
+        angleJitter = pi,
         drag = 3.2,
         gravity = 280,
         fadeTo = 0.05,
@@ -248,7 +256,7 @@ local SHIELD_BREAK_PARTICLE_OPTIONS = {
 local SHIELD_BLOOD_PARTICLE_OPTIONS = {
         dirX = 0,
         dirY = -1,
-        spread = math.pi * 0.65,
+        spread = pi * 0.65,
         count = 10,
         dropletCount = 6,
         speed = 210,
@@ -429,7 +437,7 @@ function Snake:setStonebreakerStacks(count)
 end
 
 function Snake:setQuickFangsStacks(count)
-	count = math.max(0, math.floor((count or 0) + 0.0001))
+	count = max(0, floor((count or 0) + 0.0001))
 	local state = self.quickFangs
 	local previous = state and (state.stacks or 0) or 0
 
@@ -440,11 +448,11 @@ function Snake:setQuickFangsStacks(count)
 		end
 
 		state.stacks = count
-		state.baseTarget = math.min(0.65, 0.32 + 0.11 * math.min(count, 4))
+		state.baseTarget = min(0.65, 0.32 + 0.11 * min(count, 4))
 		state.target = state.baseTarget
 		if count > previous then
-			state.intensity = math.max(state.intensity or 0, 0.55)
-			state.flash = math.min(1.0, (state.flash or 0) + 0.7)
+			state.intensity = max(state.intensity or 0, 0.55)
+			state.flash = min(1.0, (state.flash or 0) + 0.7)
 		end
 	elseif state then
 		state.stacks = 0
@@ -470,7 +478,7 @@ function Snake:enablePredatorsReflex()
 end
 
 function Snake:setZephyrCoilsStacks(count)
-	count = math.max(0, math.floor((count or 0) + 0.0001))
+	count = max(0, floor((count or 0) + 0.0001))
 
 	local state = self.zephyrCoils
 	if not state and count <= 0 then
@@ -484,9 +492,9 @@ function Snake:setZephyrCoilsStacks(count)
 
 	state.stacks = count
 	if count > 0 then
-		state.target = math.min(1, 0.45 + 0.2 * math.min(count, 3))
+		state.target = min(1, 0.45 + 0.2 * min(count, 3))
 		if (state.intensity or 0) < 0.25 then
-			state.intensity = math.max(state.intensity or 0, 0.25)
+			state.intensity = max(state.intensity or 0, 0.25)
 		end
 	else
 		state.target = 0
@@ -512,7 +520,7 @@ function Snake:setChronospiralActive(active)
 end
 
 function Snake:setAbyssalCatalystStacks(count)
-	count = math.max(0, math.floor((count or 0) + 0.0001))
+	count = max(0, floor((count or 0) + 0.0001))
 	local state = self.abyssalCatalyst
 
 	if count > 0 then
@@ -521,7 +529,7 @@ function Snake:setAbyssalCatalystStacks(count)
 			self.abyssalCatalyst = state
 		end
 		state.stacks = count
-		state.target = math.min(1, 0.55 + 0.18 * math.min(count, 3))
+		state.target = min(1, 0.55 + 0.18 * min(count, 3))
 	elseif state then
 		state.stacks = 0
 		state.target = 0
@@ -533,7 +541,7 @@ function Snake:setAbyssalCatalystStacks(count)
 end
 
 function Snake:setPhoenixEchoCharges(count, options)
-	count = math.max(0, math.floor((count or 0) + 0.0001))
+	count = max(0, floor((count or 0) + 0.0001))
 	options = options or {}
 
 	local state = self.phoenixEcho
@@ -548,24 +556,24 @@ function Snake:setPhoenixEchoCharges(count, options)
 	state.charges = count
 
 	if count > 0 then
-		state.target = math.min(1, 0.55 + 0.18 * math.min(count, 3))
+		state.target = min(1, 0.55 + 0.18 * min(count, 3))
 	else
 		state.target = 0
 	end
 
 	if count > previous then
-		state.flareTimer = math.max(state.flareTimer or 0, 1.25)
+		state.flareTimer = max(state.flareTimer or 0, 1.25)
 	elseif count < previous then
-		state.flareTimer = math.max(state.flareTimer or 0, 0.9)
+		state.flareTimer = max(state.flareTimer or 0, 0.9)
 	end
 
 	if options.triggered then
-		state.flareTimer = math.max(state.flareTimer or 0, options.triggered)
-		state.intensity = math.max(state.intensity or 0, 0.85)
+		state.flareTimer = max(state.flareTimer or 0, options.triggered)
+		state.intensity = max(state.intensity or 0, 0.85)
 	end
 
 	if options.instantIntensity then
-		state.intensity = math.max(state.intensity or 0, options.instantIntensity)
+		state.intensity = max(state.intensity or 0, options.instantIntensity)
 	end
 
 	if options.flareDuration then
@@ -589,18 +597,18 @@ function Snake:setSpectralHarvestReady(active, options)
 			self.spectralHarvest = state
 		end
 		state.ready = true
-		state.target = math.max(state.target or 0, 1)
+		state.target = max(state.target or 0, 1)
 		if options.pulse then
-			state.burst = math.max(state.burst or 0, options.pulse)
+			state.burst = max(state.burst or 0, options.pulse)
 		end
 		if options.instantIntensity then
-			state.intensity = math.max(state.intensity or 0, options.instantIntensity)
+			state.intensity = max(state.intensity or 0, options.instantIntensity)
 		end
 	elseif state then
 		state.ready = false
 		state.target = 0
 		if options.pulse then
-			state.burst = math.max(state.burst or 0, options.pulse)
+			state.burst = max(state.burst or 0, options.pulse)
 		end
 	elseif options and options.ensure then
 		self.spectralHarvest = {ready = false, intensity = 0, target = 0, time = 0, burst = 0, echo = 0}
@@ -617,10 +625,10 @@ function Snake:triggerSpectralHarvest(options)
 
 	state.ready = false
 	state.target = 0
-	state.burst = math.max(state.burst or 0, options.flash or 1)
-	state.echo = math.max(state.echo or 0, options.echo or 1)
+	state.burst = max(state.burst or 0, options.flash or 1)
+	state.echo = max(state.echo or 0, options.echo or 1)
 	if options.instantIntensity then
-		state.intensity = math.max(state.intensity or 0, options.instantIntensity)
+		state.intensity = max(state.intensity or 0, options.instantIntensity)
 	end
 end
 
@@ -662,7 +670,7 @@ function Snake:setStormchaserPrimed(active)
 end
 
 function Snake:setTitanbloodStacks(count)
-	count = math.max(0, math.floor((count or 0) + 0.0001))
+	count = max(0, floor((count or 0) + 0.0001))
 	local state = self.titanblood
 
 	if count > 0 then
@@ -671,7 +679,7 @@ function Snake:setTitanbloodStacks(count)
 			self.titanblood = state
 		end
 		state.stacks = count
-		state.target = math.min(1, 0.5 + 0.18 * math.min(count, 3))
+		state.target = min(1, 0.5 + 0.18 * min(count, 3))
 	elseif state then
 		state.stacks = 0
 		state.target = 0
@@ -701,7 +709,7 @@ function Snake:onShieldConsumed(x, y, cause)
 	local burstStall = 0
 
 	if self.shieldBurst then
-		local rocksToBreak = math.floor(self.shieldBurst.rocks or 0)
+		local rocksToBreak = floor(self.shieldBurst.rocks or 0)
 		if rocksToBreak > 0 and Rocks and Rocks.shatterNearest then
 			Rocks:shatterNearest(x or 0, y or 0, rocksToBreak)
 			burstTriggered = true
@@ -747,9 +755,9 @@ function Snake:addStoneSkinSawGrace(n)
 	end
 
 	visual.charges = self.stoneSkinSawGrace or 0
-	visual.target = math.min(1, 0.45 + 0.18 * math.min(visual.charges, 4))
-	visual.intensity = math.max(visual.intensity or 0, 0.32 + 0.12 * math.min(visual.charges, 3))
-	visual.flash = math.max(visual.flash or 0, 0.75)
+	visual.target = min(1, 0.45 + 0.18 * min(visual.charges, 4))
+	visual.intensity = max(visual.intensity or 0, 0.32 + 0.12 * min(visual.charges, 3))
+	visual.flash = max(visual.flash or 0, 0.75)
 end
 
 function Snake:consumeStoneSkinSawGrace()
@@ -760,8 +768,8 @@ function Snake:consumeStoneSkinSawGrace()
 		if self.stoneSkinVisual then
 			local visual = self.stoneSkinVisual
 			visual.charges = self.stoneSkinSawGrace or 0
-			visual.target = math.min(1, 0.45 + 0.18 * math.min(visual.charges, 4))
-			visual.flash = math.max(visual.flash or 0, 1.0)
+			visual.target = min(1, 0.45 + 0.18 * min(visual.charges, 4))
+			visual.flash = max(visual.flash or 0, 1.0)
 		end
 
 		return true
@@ -877,11 +885,11 @@ end
 
 -- helpers
 local function snapToCenter(v)
-	return (math.floor(v / SEGMENT_SPACING) + 0.5) * SEGMENT_SPACING
+	return (floor(v / SEGMENT_SPACING) + 0.5) * SEGMENT_SPACING
 end
 
 local function toCell(x, y)
-	return math.floor(x / SEGMENT_SPACING + 0.5), math.floor(y / SEGMENT_SPACING + 0.5)
+	return floor(x / SEGMENT_SPACING + 0.5), floor(y / SEGMENT_SPACING + 0.5)
 end
 
 local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
@@ -931,7 +939,7 @@ end
 
 local function closestPointOnSegment(px, py, ax, ay, bx, by)
 	if not (px and py and ax and ay and bx and by) then
-		return nil, nil, math.huge, 0
+		return nil, nil, huge, 0
 	end
 
 	local abx = bx - ax
@@ -1096,7 +1104,7 @@ local function cloneTailFromIndex(startIndex, entryX, entryY)
 		return {}
 	end
 
-	local index = math.max(1, math.min(startIndex or 1, #trail))
+	local index = max(1, min(startIndex or 1, #trail))
 	local clone = {}
 
 	for i = index, #trail do
@@ -1117,7 +1125,7 @@ local function findPortalEntryIndex(entryX, entryY)
 	end
 
 	local bestIndex = 1
-	local bestDist = math.huge
+	local bestDist = huge
 
 	for i = 1, #trail - 1 do
 		local segA = trail[i]
@@ -1198,7 +1206,7 @@ local function trimHoleSegments(hole)
 				end
 			end
 
-			table.remove(workingTrail, i)
+			remove(workingTrail, i)
 		else
 			break
 		end
@@ -1261,7 +1269,7 @@ local function trimTrailToSegmentLimit()
 	end
 
 	local consumedLength = (descendingHole and descendingHole.consumedLength) or 0
-	local maxLen = math.max(0, segmentCount * SEGMENT_SPACING - consumedLength)
+	local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
 
         if maxLen <= 0 then
                 recycleTrail(trail)
@@ -1291,7 +1299,7 @@ local function trimTrailToSegmentLimit()
                         if removed then
                                 releaseSegment(removed)
                         end
-                        table.remove(trail, i)
+                        remove(trail, i)
                 else
                         if traveled + segLen > maxLen then
                                 local excess = traveled + segLen - maxLen
@@ -1359,18 +1367,18 @@ local function drawDescendingIntoHole(hole)
 	local a = bodyColor[4] or 1
 
 	local baseRadius = SEGMENT_SIZE * 0.5
-	local holeRadius = math.max(baseRadius, hole.radius or baseRadius * 1.6)
-	local depthTarget = math.min(1, consumed / (holeRadius + SEGMENT_SPACING * 0.75))
-	local renderDepth = math.max(depth, depthTarget)
+	local holeRadius = max(baseRadius, hole.radius or baseRadius * 1.6)
+	local depthTarget = min(1, consumed / (holeRadius + SEGMENT_SPACING * 0.75))
+	local renderDepth = max(depth, depthTarget)
 
-	local steps = math.max(2, math.min(7, math.floor((consumed + SEGMENT_SPACING * 0.4) / (SEGMENT_SPACING * 0.55)) + 2))
+	local steps = max(2, min(7, floor((consumed + SEGMENT_SPACING * 0.4) / (SEGMENT_SPACING * 0.55)) + 2))
 
 	local totalLength = (segmentCount or 0) * SEGMENT_SPACING
 	local completion = 0
 	if totalLength > 1e-4 then
-		completion = math.min(1, consumed / totalLength)
+		completion = min(1, consumed / totalLength)
 	end
-	local globalVisibility = math.max(0, 1 - completion)
+	local globalVisibility = max(0, 1 - completion)
 
 	local perpX, perpY = -dirY, dirX
 	local wobble = 0
@@ -1382,7 +1390,7 @@ local function drawDescendingIntoHole(hole)
 
 	for layer = 0, steps - 1 do
 		local layerFrac = (layer + 0.6) / steps
-		local layerDepth = math.min(1, renderDepth * (0.35 + 0.65 * layerFrac))
+		local layerDepth = min(1, renderDepth * (0.35 + 0.65 * layerFrac))
 		local depthFade = 1 - layerDepth
 		local visibility = depthFade * depthFade * globalVisibility
 
@@ -1391,7 +1399,7 @@ local function drawDescendingIntoHole(hole)
 		end
 
 		local radius = baseRadius * (0.9 - 0.55 * layerDepth)
-		radius = math.max(baseRadius * 0.2, radius)
+		radius = max(baseRadius * 0.2, radius)
 
 		local sink = holeRadius * 0.35 * layerDepth
 		local lateral = wobble * (0.4 + 0.25 * layerFrac) * depthFade
@@ -1403,22 +1411,22 @@ local function drawDescendingIntoHole(hole)
 		local shadeG = g * shade
 		local shadeB = b * shade
 		local alpha = a * (0.2 + 0.8 * visibility)
-		love.graphics.setColor(shadeR, shadeG, shadeB, math.max(0, math.min(1, alpha)))
+		love.graphics.setColor(shadeR, shadeG, shadeB, max(0, min(1, alpha)))
 		love.graphics.circle("fill", px, py, radius)
 
 		local outlineAlpha = 0.15 + 0.5 * visibility
-		love.graphics.setColor(0, 0, 0, math.max(0, math.min(1, outlineAlpha)))
+		love.graphics.setColor(0, 0, 0, max(0, min(1, outlineAlpha)))
 		love.graphics.circle("line", px, py, radius)
 
 		if layer == 0 then
-			local highlight = 0.45 * math.min(1, depthFade * 1.1) * globalVisibility
+			local highlight = 0.45 * min(1, depthFade * 1.1) * globalVisibility
 			if highlight > 0 then
 				love.graphics.setColor(r, g, b, highlight)
 				love.graphics.circle("line", px, py, radius * 0.75)
 			end
 		end
 	end
-	local coverAlpha = math.max(depth, renderDepth) * 0.55
+	local coverAlpha = max(depth, renderDepth) * 0.55
 	love.graphics.setColor(0, 0, 0, coverAlpha)
 	love.graphics.circle("fill", hx, hy, holeRadius * (0.38 + 0.22 * renderDepth))
 
@@ -1501,7 +1509,7 @@ local function collectUpgradeVisuals(self)
 			stacks = zephyr.stacks or 0,
 			intensity = zephyr.intensity or 0,
 			time = zephyr.time or 0,
-			ratio = zephyr.speedRatio or (1 + 0.2 * math.min(1, math.max(0, zephyr.intensity or 0))),
+			ratio = zephyr.speedRatio or (1 + 0.2 * min(1, max(0, zephyr.intensity or 0))),
 			hasBody = (segmentCount or 0) > 1,
 		}
 	end
@@ -1604,7 +1612,7 @@ local function collectUpgradeVisuals(self)
 		local flare = 0
 		local flareDuration = phoenix.flareDuration or 1.2
 		if flareDuration > 0 and (phoenix.flareTimer or 0) > 0 then
-			flare = math.min(1, phoenix.flareTimer / flareDuration)
+			flare = min(1, phoenix.flareTimer / flareDuration)
 		end
 		visuals.phoenixEcho = {
 			intensity = phoenix.intensity or 0,
@@ -1643,8 +1651,8 @@ end
 -- Build initial trail aligned to CELL CENTERS
 local function buildInitialTrail()
         local t = {}
-        local midCol = math.floor(Arena.cols / 2)
-        local midRow = math.floor(Arena.rows / 2)
+        local midCol = floor(Arena.cols / 2)
+        local midRow = floor(Arena.rows / 2)
         local startX, startY = Arena:getCenterOfTile(midCol, midRow)
 
         for i = 0, segmentCount - 1 do
@@ -1796,7 +1804,7 @@ function Snake:beginPortalWarp(params)
 		warpDuration = 0.05
 	end
 
-	if (math.abs(dx or 0) > 0) or (math.abs(dy or 0) > 0) then
+	if (abs(dx or 0) > 0) or (abs(dy or 0) > 0) then
 		self:translate(dx or 0, dy or 0)
 	end
 
@@ -1974,7 +1982,7 @@ function Snake:drawClipped(hx, hy, hr)
 			end
 
 			if not (ix and iy) then
-				if descendingHole and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
+				if descendingHole and abs((descendingHole.x or 0) - hx) < 1e-3 and abs((descendingHole.y or 0) - hy) < 1e-3 then
 					ix = descendingHole.entryPointX or px
 					iy = descendingHole.entryPointY or py
 				else
@@ -2013,7 +2021,7 @@ function Snake:drawClipped(hx, hy, hr)
                 clippedHeadX, clippedHeadY, clipCenterX, clipCenterY, clipRadiusValue = nil, nil, nil, nil, nil
         end
 
-	if clipRadius > 0 and descendingHole and not hideDescendingBody and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
+	if clipRadius > 0 and descendingHole and not hideDescendingBody and abs((descendingHole.x or 0) - hx) < 1e-3 and abs((descendingHole.y or 0) - hy) < 1e-3 then
 		love.graphics.setStencilTest("equal", 1)
 		drawDescendingIntoHole(descendingHole)
 	end
@@ -2056,7 +2064,7 @@ function Snake:update(dt)
 		local intensity = state.intensity or 0
 		local target = state.target or 0
 		local rate = (state.active and 4.0 or 2.4)
-		local blend = math.min(1, dt * rate)
+		local blend = min(1, dt * rate)
 		intensity = intensity + (target - intensity) * blend
 		state.intensity = intensity
 		if intensity < 0.005 and target <= 0 then
@@ -2070,7 +2078,7 @@ function Snake:update(dt)
 		state.pulse = state.time
 		local intensity = state.intensity or 0
 		local target = state.target or 0
-		local blend = math.min(1, dt * 3.0)
+		local blend = min(1, dt * 3.0)
 		intensity = intensity + (target - intensity) * blend
 		state.intensity = intensity
 		if (state.stacks or 0) <= 0 and intensity < 0.01 then
@@ -2083,11 +2091,11 @@ function Snake:update(dt)
 		state.time = (state.time or 0) + dt
 		state.flareDuration = state.flareDuration or 1.2
 		if state.flareTimer then
-			state.flareTimer = math.max(0, state.flareTimer - dt)
+			state.flareTimer = max(0, state.flareTimer - dt)
 		end
 		local intensity = state.intensity or 0
 		local target = state.target or 0
-		local blend = math.min(1, dt * 4.2)
+		local blend = min(1, dt * 4.2)
 		intensity = intensity + (target - intensity) * blend
 		state.intensity = intensity
 		if (state.charges or 0) <= 0 and target <= 0 and intensity < 0.01 and (state.flareTimer or 0) <= 0 then
@@ -2101,7 +2109,7 @@ function Snake:update(dt)
 		state.spin = (state.spin or 0) + dt * (0.7 + 0.9 * (state.intensity or 0))
 		local intensity = state.intensity or 0
 		local target = state.target or 0
-		local blend = math.min(1, dt * (state.active and 3.2 or 2.0))
+		local blend = min(1, dt * (state.active and 3.2 or 2.0))
 		intensity = intensity + (target - intensity) * blend
 		state.intensity = intensity
 		if not state.active and target <= 0 and intensity < 0.01 then
@@ -2114,7 +2122,7 @@ function Snake:update(dt)
 		state.time = (state.time or 0) + dt
 		local intensity = state.intensity or 0
 		local target = state.target or 0
-		local blend = math.min(1, dt * (state.primed and 6.5 or 4.2))
+		local blend = min(1, dt * (state.primed and 6.5 or 4.2))
 		intensity = intensity + (target - intensity) * blend
 		state.intensity = intensity
 		if not state.primed and target <= 0 and intensity < 0.02 then
@@ -2127,7 +2135,7 @@ function Snake:update(dt)
 		state.time = (state.time or 0) + dt
 		local intensity = state.intensity or 0
 		local target = state.target or 0
-		local blend = math.min(1, dt * 3.4)
+		local blend = min(1, dt * 3.4)
 		intensity = intensity + (target - intensity) * blend
 		state.intensity = intensity
 		if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.01 then
@@ -2139,9 +2147,9 @@ function Snake:update(dt)
 	if zephyr then
 		zephyr.time = (zephyr.time or 0) + dt
 		local stacks = zephyr.stacks or 0
-		local target = zephyr.target or (stacks > 0 and math.min(1, 0.45 + 0.2 * math.min(stacks, 3)) or 0)
+		local target = zephyr.target or (stacks > 0 and min(1, 0.45 + 0.2 * min(stacks, 3)) or 0)
 		zephyr.target = target
-		local blend = math.min(1, dt * 3.6)
+		local blend = min(1, dt * 3.6)
 		local intensity = (zephyr.intensity or 0) + (target - (zephyr.intensity or 0)) * blend
 		zephyr.intensity = intensity
 		if stacks <= 0 and intensity <= 0.01 then
@@ -2154,12 +2162,12 @@ function Snake:update(dt)
 		stoneSkin.time = (stoneSkin.time or 0) + dt
 		local charges = self.stoneSkinSawGrace or 0
 		stoneSkin.charges = charges
-		local target = stoneSkin.target or (charges > 0 and math.min(1, 0.45 + 0.18 * math.min(charges, 4)) or 0)
+		local target = stoneSkin.target or (charges > 0 and min(1, 0.45 + 0.18 * min(charges, 4)) or 0)
 		stoneSkin.target = target
-		local blend = math.min(1, dt * 5.2)
+		local blend = min(1, dt * 5.2)
 		local current = stoneSkin.intensity or 0
 		stoneSkin.intensity = current + (target - current) * blend
-		stoneSkin.flash = math.max(0, (stoneSkin.flash or 0) - dt * 2.6)
+		stoneSkin.flash = max(0, (stoneSkin.flash or 0) - dt * 2.6)
 		if charges <= 0 and stoneSkin.intensity <= 0.02 and stoneSkin.flash <= 0.02 then
 			self.stoneSkinVisual = nil
 		end
@@ -2170,11 +2178,11 @@ function Snake:update(dt)
 		spectral.time = (spectral.time or 0) + dt
 		local target = spectral.target or ((spectral.ready and 1) or 0)
 		spectral.target = target
-		local blend = math.min(1, dt * 3.2)
+		local blend = min(1, dt * 3.2)
 		local current = spectral.intensity or 0
 		spectral.intensity = current + (target - current) * blend
-		spectral.burst = math.max(0, (spectral.burst or 0) - dt * 1.8)
-		spectral.echo = math.max(0, (spectral.echo or 0) - dt * 0.9)
+		spectral.burst = max(0, (spectral.burst or 0) - dt * 1.8)
+		spectral.echo = max(0, (spectral.echo or 0) - dt * 0.9)
 		if not spectral.ready and spectral.target <= 0 and spectral.intensity <= 0.02 and spectral.burst <= 0.02 and spectral.echo <= 0.02 then
 			self.spectralHarvest = nil
 		end
@@ -2186,18 +2194,18 @@ function Snake:update(dt)
 		local target = 0
 		if self.adrenaline and self.adrenaline.active then
 			local duration = self.adrenaline.duration or 0
-			local timer = math.max(0, self.adrenaline.timer or 0)
+			local timer = max(0, self.adrenaline.timer or 0)
 			if duration > 1e-4 then
-				local remaining = math.max(0, math.min(1, timer / duration))
+				local remaining = max(0, min(1, timer / duration))
 				target = 0.5 + 0.5 * (1 - remaining)
 			else
 				target = 1
 			end
-			target = math.max(target, 0.45)
+			target = max(target, 0.45)
 		end
 		predatorEyes.target = target
 		local intensity = predatorEyes.intensity or 0
-		local blend = math.min(1, dt * 9.0)
+		local blend = min(1, dt * 9.0)
 		intensity = intensity + (target - intensity) * blend
 		predatorEyes.intensity = intensity
 	end
@@ -2223,17 +2231,17 @@ function Snake:update(dt)
 		end
 
 		local consumed = hole.consumedLength or 0
-		local totalDepth = math.max(SEGMENT_SPACING * 0.5, (hole.radius or 0) + SEGMENT_SPACING)
-		local targetDepth = math.min(1, consumed / totalDepth)
+		local totalDepth = max(SEGMENT_SPACING * 0.5, (hole.radius or 0) + SEGMENT_SPACING)
+		local targetDepth = min(1, consumed / totalDepth)
 		local currentDepth = hole.renderDepth or 0
-		local blend = math.min(1, dt * 10)
+		local blend = min(1, dt * 10)
 		currentDepth = currentDepth + (targetDepth - currentDepth) * blend
 		hole.renderDepth = currentDepth
 	end
 
 	if self.dash then
 		if self.dash.cooldownTimer and self.dash.cooldownTimer > 0 then
-			self.dash.cooldownTimer = math.max(0, (self.dash.cooldownTimer or 0) - dt)
+			self.dash.cooldownTimer = max(0, (self.dash.cooldownTimer or 0) - dt)
 		end
 
 		if self.dash.active then
@@ -2248,7 +2256,7 @@ function Snake:update(dt)
 
 	if self.timeDilation then
 		if self.timeDilation.cooldownTimer and self.timeDilation.cooldownTimer > 0 then
-			self.timeDilation.cooldownTimer = math.max(0, (self.timeDilation.cooldownTimer or 0) - dt)
+			self.timeDilation.cooldownTimer = max(0, (self.timeDilation.cooldownTimer or 0) - dt)
 		end
 
 		if self.timeDilation.active then
@@ -2274,7 +2282,7 @@ function Snake:update(dt)
 
 		local target = ward.active and 1 or 0
 		ward.target = target
-		local blend = math.min(1, dt * 6.0)
+		local blend = min(1, dt * 6.0)
 		local currentIntensity = ward.intensity or 0
 		ward.intensity = currentIntensity + (target - currentIntensity) * blend
 
@@ -2298,15 +2306,15 @@ function Snake:update(dt)
 		if dilation.active then
 			readiness = 1
 		elseif cooldown and cooldown > 0 then
-			readiness = 1 - math.min(1, cooldownTimer / cooldown)
+			readiness = 1 - min(1, cooldownTimer / cooldown)
 		else
 			readiness = (cooldownTimer <= 0) and 1 or 0
 		end
-		state.ready = math.max(0, math.min(1, readiness))
+		state.ready = max(0, min(1, readiness))
 		if dilation.active then
 			state.target = 1
 		else
-			state.target = math.max(0.2, 0.3 + state.ready * 0.5)
+			state.target = max(0.2, 0.3 + state.ready * 0.5)
 		end
 	elseif self.temporalAnchor then
 		local state = self.temporalAnchor
@@ -2320,7 +2328,7 @@ function Snake:update(dt)
 		local state = self.temporalAnchor
 		local intensity = state.intensity or 0
 		local target = state.target or 0
-		local blend = math.min(1, dt * 5.0)
+		local blend = min(1, dt * 5.0)
 		intensity = intensity + (target - intensity) * blend
 		state.intensity = intensity
 		if intensity < 0.01 and target <= 0 then
@@ -2371,14 +2379,14 @@ function Snake:update(dt)
 		end
 
 		local state = self.speedVisual or {intensity = 0, time = 0, ratio = 1}
-		local target = math.max(0, math.min(1, (ratio - 1) / 0.8))
-		local blend = math.min(1, dt * 5.5)
+		local target = max(0, min(1, (ratio - 1) / 0.8))
+		local blend = min(1, dt * 5.5)
 		local current = state.intensity or 0
 		current = current + (target - current) * blend
 		state.intensity = current
 		state.target = target
 
-		local ratioBlend = math.min(1, dt * 6.0)
+		local ratioBlend = min(1, dt * 6.0)
 		local prevRatio = state.ratio or ratio
 		prevRatio = prevRatio + (ratio - prevRatio) * ratioBlend
 		if prevRatio < 0 then prevRatio = 0 end
@@ -2400,8 +2408,8 @@ function Snake:update(dt)
 
 	if self.quickFangs then
 		local state = self.quickFangs
-		state.time = (state.time or 0) + dt * (1.4 + math.min(1.8, (speed / math.max(1, self.baseSpeed or 1))))
-		state.flash = math.max(0, (state.flash or 0) - dt * 1.8)
+		state.time = (state.time or 0) + dt * (1.4 + min(1.8, (speed / max(1, self.baseSpeed or 1))))
+		state.flash = max(0, (state.flash or 0) - dt * 1.8)
 
 		local baseTarget = state.baseTarget or 0
 		local baseSpeed = self.baseSpeed or 1
@@ -2413,14 +2421,14 @@ function Snake:update(dt)
 		if ratio < 0 then ratio = 0 end
 		state.speedRatio = ratio
 
-		local bonus = math.max(0, ratio - 1)
-		local dynamic = math.min(0.35, bonus * 0.4)
+		local bonus = max(0, ratio - 1)
+		local dynamic = min(0.35, bonus * 0.4)
 		local flashBonus = (state.flash or 0) * 0.35
-		local target = math.min(1, math.max(0, baseTarget + dynamic + flashBonus))
+		local target = min(1, max(0, baseTarget + dynamic + flashBonus))
 		state.target = target
 
 		local intensity = state.intensity or 0
-		local blend = math.min(1, dt * 6.0)
+		local blend = min(1, dt * 6.0)
 		intensity = intensity + (target - intensity) * blend
 		state.intensity = intensity
 		state.active = (target > baseTarget + 0.02) or (ratio > 1.05) or ((state.flash or 0) > 0.05)
@@ -2489,7 +2497,7 @@ function Snake:update(dt)
                 segment.fruitMarker = nil
                 segment.fruitMarkerX = nil
                 segment.fruitMarkerY = nil
-                table.insert(trail, 1, segment)
+                insert(trail, 1, segment)
                 remaining = remaining - SAMPLE_STEP
         end
 
@@ -2521,7 +2529,7 @@ function Snake:update(dt)
 	local tailAfterCol, tailAfterRow
 
 	local consumedLength = (hole and hole.consumedLength) or 0
-	local maxLen = math.max(0, segmentCount * SEGMENT_SPACING - consumedLength)
+	local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
 
         if maxLen == 0 then
                 recycleTrail(trail)
@@ -2670,19 +2678,19 @@ function Snake:update(dt)
 
 	-- update timers
 	if popTimer > 0 then
-		popTimer = math.max(0, popTimer - dt)
+		popTimer = max(0, popTimer - dt)
 	end
 
 	if self.shieldFlashTimer and self.shieldFlashTimer > 0 then
-		self.shieldFlashTimer = math.max(0, self.shieldFlashTimer - dt)
+		self.shieldFlashTimer = max(0, self.shieldFlashTimer - dt)
 	end
 
 	if self.hazardGraceTimer and self.hazardGraceTimer > 0 then
-		self.hazardGraceTimer = math.max(0, self.hazardGraceTimer - dt)
+		self.hazardGraceTimer = max(0, self.hazardGraceTimer - dt)
 	end
 
 	if self.damageFlashTimer and self.damageFlashTimer > 0 then
-		self.damageFlashTimer = math.max(0, self.damageFlashTimer - dt)
+		self.damageFlashTimer = max(0, self.damageFlashTimer - dt)
 	end
 
         if severedPieces and #severedPieces > 0 then
@@ -2695,7 +2703,7 @@ function Snake:update(dt)
                                                 recycleTrail(piece.trail)
                                                 piece.trail = nil
                                         end
-                                        table.remove(severedPieces, index)
+                                        remove(severedPieces, index)
                                 end
                         end
                 end
@@ -2793,7 +2801,7 @@ function Snake:activateTimeDilation()
 	end
 
 	if ability.active and charges ~= nil then
-		ability.floorCharges = math.max(0, charges - 1)
+		ability.floorCharges = max(0, charges - 1)
 	end
 
 	local hx, hy = self:getHead()
@@ -2818,7 +2826,7 @@ function Snake:triggerChronoWard(duration, scale)
 	if not (scale and scale > 0) then
 		scale = 0.05
 	else
-		scale = math.max(0.05, math.min(1, scale))
+		scale = max(0.05, min(1, scale))
 	end
 
 	local effect = self.chronoWard
@@ -2828,12 +2836,12 @@ function Snake:triggerChronoWard(duration, scale)
 	end
 
 	effect.duration = duration
-	effect.timeScale = math.min(effect.timeScale or 1, scale)
+	effect.timeScale = min(effect.timeScale or 1, scale)
 	if not (effect.timeScale and effect.timeScale > 0) then
 		effect.timeScale = scale
 	end
 
-	effect.timer = math.max(effect.timer or 0, duration)
+	effect.timer = max(effect.timer or 0, duration)
 	effect.active = true
 	effect.target = 1
 	effect.time = effect.time or 0
@@ -2871,13 +2879,13 @@ function Snake:grow()
 end
 
 function Snake:loseSegments(count, options)
-	count = math.floor(count or 0)
+	count = floor(count or 0)
 	if count <= 0 then
 		return 0
 	end
 
-	local available = math.max(0, (segmentCount or 1) - 1)
-	local trimmed = math.min(count, available)
+	local available = max(0, (segmentCount or 1) - 1)
+	local trimmed = min(count, available)
 	if trimmed <= 0 then
 		return 0
 	end
@@ -2903,10 +2911,10 @@ function Snake:loseSegments(count, options)
 		if UI and UI.removeFruit then
 			UI:removeFruit(trimmed)
 		elseif UI then
-			UI.fruitCollected = math.max(0, (UI.fruitCollected or 0) - trimmed)
+			UI.fruitCollected = max(0, (UI.fruitCollected or 0) - trimmed)
 			if type(UI.fruitSockets) == "table" then
-				for _ = 1, math.min(trimmed, #UI.fruitSockets) do
-					table.remove(UI.fruitSockets)
+				for _ = 1, min(trimmed, #UI.fruitSockets) do
+					remove(UI.fruitSockets)
 				end
 			end
 		end
@@ -2928,13 +2936,13 @@ function Snake:loseSegments(count, options)
 
 	if SessionStats and SessionStats.get and SessionStats.set then
 		local apples = SessionStats:get("applesEaten") or 0
-		apples = math.max(0, apples - trimmed)
+		apples = max(0, apples - trimmed)
 		SessionStats:set("applesEaten", apples)
 	end
 
 	if Score and Score.addBonus and Score.get then
 		local currentScore = Score:get() or 0
-		local deduction = math.min(currentScore, trimmed)
+		local deduction = min(currentScore, trimmed)
 		if deduction > 0 then
 			Score:addBonus(-deduction)
 		end
@@ -2948,7 +2956,7 @@ function Snake:loseSegments(count, options)
 
                 if Particles and Particles.spawnBurst and tailX and tailY then
                         local burstOptions = LOSE_SEGMENTS_BURST_OPTIONS
-                        burstOptions.count = math.min(10, 4 + trimmed)
+                        burstOptions.count = min(10, 4 + trimmed)
                         burstOptions.color = burstColor
                         Particles:spawnBurst(tailX, tailY, burstOptions)
                 end
@@ -2958,13 +2966,13 @@ function Snake:loseSegments(count, options)
 end
 
 local function chopTailLossAmount()
-	local available = math.max(0, (segmentCount or 1) - 1)
+	local available = max(0, (segmentCount or 1) - 1)
 	if available <= 0 then
 		return 0
 	end
 
-	local loss = math.floor(math.max(1, available * 0.2))
-	return math.min(loss, available)
+	local loss = floor(max(1, available * 0.2))
+	return min(loss, available)
 end
 
 function Snake:chopTailByHazard(cause)
@@ -3024,7 +3032,7 @@ local function isSawCutPointExposed(saw, sx, sy, px, py)
 end
 
 local function clamp01(value)
-	return math.max(0, math.min(1, value or 0))
+	return max(0, min(1, value or 0))
 end
 
 local function scaleColorAlpha(color, scale)
@@ -3062,13 +3070,13 @@ local function addSeveredTrail(pieceTrail, segmentEstimate)
 	end
 
 	severedPieces = severedPieces or {}
-	local fadeDuration = math.min(SEVERED_TAIL_LIFE, SEVERED_TAIL_FADE_DURATION)
-	table.insert(severedPieces, {
+	local fadeDuration = min(SEVERED_TAIL_LIFE, SEVERED_TAIL_FADE_DURATION)
+	insert(severedPieces, {
 		trail = pieceTrail,
 		timer = SEVERED_TAIL_LIFE,
 		life = SEVERED_TAIL_LIFE,
 		fadeDuration = fadeDuration,
-		segmentCount = math.max(1, segmentEstimate or #pieceTrail),
+		segmentCount = max(1, segmentEstimate or #pieceTrail),
 	})
 end
 
@@ -3078,13 +3086,13 @@ local function spawnSawCutParticles(x, y, count)
 	end
 
 	Particles:spawnBurst(x, y, {
-		count = math.min(12, 5 + (count or 0)),
+		count = min(12, 5 + (count or 0)),
 		speed = 120,
 		speedVariance = 60,
 		life = 0.42,
 		size = 4,
 		color = {1, 0.6, 0.3, 1},
-		spread = math.pi * 2,
+		spread = pi * 2,
 		drag = 3.0,
 		gravity = 220,
 		fadeTo = 0,
@@ -3096,7 +3104,7 @@ function Snake:handleSawBodyCut(context)
 		return false
 	end
 
-	local available = math.max(0, (segmentCount or 1) - 1)
+	local available = max(0, (segmentCount or 1) - 1)
 	if available <= 0 then
 		return false
 	end
@@ -3119,7 +3127,7 @@ function Snake:handleSawBodyCut(context)
 	end
 
 	local totalLength = (segmentCount or 1) * SEGMENT_SPACING
-	local cutDistance = math.max(0, context.cutDistance or 0)
+	local cutDistance = max(0, context.cutDistance or 0)
 	if cutDistance <= SEGMENT_SPACING then
 		return false
 	end
@@ -3141,7 +3149,7 @@ function Snake:handleSawBodyCut(context)
 	end
 
 	local rawSegments = tailDistance / SEGMENT_SPACING
-	local lostSegments = math.max(1, math.floor(rawSegments + 0.25))
+	local lostSegments = max(1, floor(rawSegments + 0.25))
 	if lostSegments > available then
 		lostSegments = available
 	end
@@ -3248,10 +3256,10 @@ function Snake:checkSawBodyCollision()
 						local dx = cx - prevX
 						local dy = cy - prevY
                                                 local segLen = sqrt(dx * dx + dy * dy)
-						local minX = math.min(prevX, cx) - bodyRadius
-						local minY = math.min(prevY, cy) - bodyRadius
-						local maxX = math.max(prevX, cx) + bodyRadius
-						local maxY = math.max(prevY, cy) + bodyRadius
+						local minX = min(prevX, cx) - bodyRadius
+						local minY = min(prevY, cy) - bodyRadius
+						local maxX = max(prevX, cx) + bodyRadius
+						local maxY = max(prevY, cy) + bodyRadius
 						local width = maxX - minX
 						local height = maxY - minY
 
@@ -3298,7 +3306,7 @@ function Snake:markFruitSegment(fruitX, fruitY)
 	local targetIndex = 1
 
 	if fruitX and fruitY then
-		local bestDistSq = math.huge
+		local bestDistSq = huge
 		for i = 1, #trail do
 			local seg = trail[i]
 			local sx = seg and (seg.drawX or seg.x)

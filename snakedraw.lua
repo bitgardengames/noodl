@@ -3,6 +3,17 @@ local SnakeCosmetics = require("snakecosmetics")
 local ModuleUtil = require("moduleutil")
 local RenderLayers = require("renderlayers")
 
+local abs = math.abs
+local atan = math.atan
+local atan2 = math.atan2
+local cos = math.cos
+local floor = math.floor
+local max = math.max
+local min = math.min
+local pi = math.pi
+local sin = math.sin
+local sqrt = math.sqrt
+
 local SnakeDraw = ModuleUtil.create("SnakeDraw")
 
 local unpack = unpack
@@ -803,7 +814,7 @@ local function drawCornerCaps(path, radius)
 		return
 	end
 
-	local pointCount = math.floor(coordCount / 2)
+	local pointCount = floor(coordCount / 2)
 	if pointCount < 3 then
 		return
 	end
@@ -822,15 +833,15 @@ local function drawCornerCaps(path, radius)
 			local dx2 = nx - x
 			local dy2 = ny - y
 
-			local len1 = math.sqrt(dx1 * dx1 + dy1 * dy1)
-			local len2 = math.sqrt(dx2 * dx2 + dy2 * dy2)
+			local len1 = sqrt(dx1 * dx1 + dy1 * dy1)
+			local len2 = sqrt(dx2 * dx2 + dy2 * dy2)
 
 			if len1 > 1e-6 and len2 > 1e-6 then
 				local dot = (dx1 * dx2 + dy1 * dy2) / (len1 * len2)
 				if dot > 1 then dot = 1 end
 				if dot < -1 then dot = -1 end
 
-				if math.abs(dot - 1) > 1e-3 then
+				if abs(dot - 1) > 1e-3 then
 					love.graphics.circle("fill", x, y, radius)
 				end
 			end
@@ -1007,14 +1018,14 @@ local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTi
 		return
 	end
 
-	local baseRadius = SEGMENT_SIZE * (0.95 + 0.06 * math.max(0, (shieldCount or 1) - 1))
+	local baseRadius = SEGMENT_SIZE * (0.95 + 0.06 * max(0, (shieldCount or 1) - 1))
 	local time = love.timer.getTime()
 
-	local pulse = 1 + 0.08 * math.sin(time * 6)
-	local alpha = 0.35 + 0.1 * math.sin(time * 5)
+	local pulse = 1 + 0.08 * sin(time * 6)
+	local alpha = 0.35 + 0.1 * sin(time * 5)
 
 	if shieldFlashTimer and shieldFlashTimer > 0 then
-		local flash = math.min(1, shieldFlashTimer / 0.3)
+		local flash = min(1, shieldFlashTimer / 0.3)
 		pulse = pulse + flash * 0.25
 		alpha = alpha + flash * 0.4
 	end
@@ -1033,18 +1044,18 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
 	local stacks = data.stacks or 0
 	if stacks <= 0 then return end
 
-	local intensity = math.max(0, data.intensity or 0)
+	local intensity = max(0, data.intensity or 0)
 	if intensity <= 0.01 then return end
 
-	local flash = math.max(0, data.flash or 0)
-	local highlight = math.min(1, intensity * 0.85 + flash * 0.6)
+	local flash = max(0, data.flash or 0)
+	local highlight = min(1, intensity * 0.85 + flash * 0.6)
 
 	local headRadius = SEGMENT_SIZE * 0.4
-	local rawStacks = math.max(0, stacks)
-	local baseStacks = math.min(rawStacks, 4)
-	local overflowStacks = math.max(0, rawStacks - 4)
+	local rawStacks = max(0, stacks)
+	local baseStacks = min(rawStacks, 4)
+	local overflowStacks = max(0, rawStacks - 4)
 	local visualStacks = baseStacks + overflowStacks * 1.35
-	local activityScale = 1 + math.max(0, data.target or 0) * 0.35
+	local activityScale = 1 + max(0, data.target or 0) * 0.35
 	local stackFactor = visualStacks * activityScale
 
 	local fangLength = headRadius * (0.75 + 0.12 * stackFactor)
@@ -1105,29 +1116,29 @@ local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
 
 	local time = love.timer.getTime()
 
-	local baseRadius = SEGMENT_SIZE * (1.02 + 0.04 * math.min(stacks, 3))
-	local arcAlpha = 0.28 + 0.12 * math.min(stacks, 3)
+	local baseRadius = SEGMENT_SIZE * (1.02 + 0.04 * min(stacks, 3))
+	local arcAlpha = 0.28 + 0.12 * min(stacks, 3)
 
 	if progress > 0 then
-		local startAngle = -math.pi / 2
+		local startAngle = -pi / 2
 		love.graphics.setColor(0.88, 0.74, 0.46, arcAlpha)
 		love.graphics.setLineWidth(3)
-		love.graphics.arc("line", "open", hx, hy, baseRadius, startAngle, startAngle + progress * math.pi * 2)
+		love.graphics.arc("line", "open", hx, hy, baseRadius, startAngle, startAngle + progress * pi * 2)
 	end
 
-	local shards = math.max(4, 3 + math.min(stacks * 2, 6))
+	local shards = max(4, 3 + min(stacks * 2, 6))
 	local ready = (rate >= 1) or (progress >= 0.99)
 	for i = 1, shards do
-		local angle = time * (0.8 + stacks * 0.2) + (i / shards) * math.pi * 2
-		local wobble = 0.08 * math.sin(time * 3 + i)
+		local angle = time * (0.8 + stacks * 0.2) + (i / shards) * pi * 2
+		local wobble = 0.08 * sin(time * 3 + i)
 		local radius = baseRadius * (1.1 + wobble)
-		local size = SEGMENT_SIZE * (0.08 + 0.02 * math.min(stacks, 3))
+		local size = SEGMENT_SIZE * (0.08 + 0.02 * min(stacks, 3))
 		local alpha = 0.32 + 0.28 * progress
 		if ready then
 			alpha = alpha + 0.2
 		end
 		love.graphics.setColor(0.95, 0.86, 0.6, alpha)
-		love.graphics.circle("fill", hx + math.cos(angle) * radius, hy + math.sin(angle) * radius, size)
+		love.graphics.circle("fill", hx + cos(angle) * radius, hy + sin(angle) * radius, size)
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)
@@ -1138,12 +1149,12 @@ local function drawStoneSkinBulwark(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
 	if #trail <= 0 then return end
 
-	local intensity = math.max(0, data.intensity or 0)
-	local flash = math.max(0, data.flash or 0)
-	local charges = math.max(0, data.charges or 0)
+	local intensity = max(0, data.intensity or 0)
+	local flash = max(0, data.flash or 0)
+	local charges = max(0, data.charges or 0)
 	if intensity <= 0.01 and flash <= 0.01 and charges <= 0 then return end
 
-	local coverage = math.min(#trail, 4 + charges * 3)
+	local coverage = min(#trail, 4 + charges * 3)
 	local time = data.time or love.timer.getTime()
 
 	love.graphics.push("all")
@@ -1151,14 +1162,14 @@ local function drawStoneSkinBulwark(trail, SEGMENT_SIZE, data)
 
 	for i = 1, coverage do
 		local seg = trail[i]
-		local nextSeg = trail[math.min(#trail, i + 1)]
+		local nextSeg = trail[min(#trail, i + 1)]
 		local x, y = ptXY(seg)
 		if x and y then
 			local nx, ny = ptXY(nextSeg)
 			local dirX, dirY = 0, -1
 			if nx and ny then
 				dirX, dirY = nx - x, ny - y
-				local len = math.sqrt(dirX * dirX + dirY * dirY)
+				local len = sqrt(dirX * dirX + dirY * dirY)
 				if len > 1e-4 then
 					dirX, dirY = dirX / len, dirY / len
 				else
@@ -1167,22 +1178,22 @@ local function drawStoneSkinBulwark(trail, SEGMENT_SIZE, data)
 			end
 
 			local perpX, perpY = -dirY, dirX
-			local progress = (i - 1) / math.max(coverage - 1, 1)
+			local progress = (i - 1) / max(coverage - 1, 1)
 			local fade = 1 - progress * 0.55
-			local radius = SEGMENT_SIZE * (0.42 + 0.14 * intensity + 0.05 * math.min(charges, 3))
-			local sway = math.sin(time * 2.4 + i * 0.9) * SEGMENT_SIZE * 0.06
-			local offset = SEGMENT_SIZE * (0.1 + 0.12 * math.min(charges, 3)) * (1 - progress * 0.7)
+			local radius = SEGMENT_SIZE * (0.42 + 0.14 * intensity + 0.05 * min(charges, 3))
+			local sway = sin(time * 2.4 + i * 0.9) * SEGMENT_SIZE * 0.06
+			local offset = SEGMENT_SIZE * (0.1 + 0.12 * min(charges, 3)) * (1 - progress * 0.7)
 			local cx = x + perpX * offset + dirX * sway * 0.3
 			local cy = y + perpY * offset + dirY * sway * 0.3
-			local angle = math.atan2(dirY, dirX) + math.sin(time * 1.3 + i) * 0.08
+			local angle = atan2(dirY, dirX) + sin(time * 1.3 + i) * 0.08
 
 			local vertices = {}
 			local sides = 6
 			for side = 0, sides - 1 do
-				local theta = angle + side * (math.pi * 2 / sides)
-				local r = radius * (0.9 + 0.12 * math.sin(time * 3.4 + side + i * 0.4))
-				vertices[#vertices + 1] = cx + math.cos(theta) * r
-				vertices[#vertices + 1] = cy + math.sin(theta) * r
+				local theta = angle + side * (pi * 2 / sides)
+				local r = radius * (0.9 + 0.12 * sin(time * 3.4 + side + i * 0.4))
+				vertices[#vertices + 1] = cx + cos(theta) * r
+				vertices[#vertices + 1] = cy + sin(theta) * r
 			end
 
 			love.graphics.setColor(0.7, 0.76, 0.82, (0.22 + 0.32 * intensity) * fade)
@@ -1213,28 +1224,28 @@ local function drawSpectralHarvestEcho(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
 	if #trail <= 0 then return end
 
-	local intensity = math.max(0, data.intensity or 0)
-	local burst = math.max(0, data.burst or 0)
-	local echo = math.max(0, data.echo or 0)
+	local intensity = max(0, data.intensity or 0)
+	local burst = max(0, data.burst or 0)
+	local echo = max(0, data.echo or 0)
 	local ready = data.ready or false
 	if intensity <= 0.01 and burst <= 0.01 and echo <= 0.01 and not ready then return end
 
 	local time = data.time or love.timer.getTime()
-	local coverage = math.min(#trail, 10 + math.floor((intensity + echo) * 8))
+	local coverage = min(#trail, 10 + floor((intensity + echo) * 8))
 
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
 	for i = 1, coverage do
 		local seg = trail[i]
-		local nextSeg = trail[math.min(#trail, i + 1)]
+		local nextSeg = trail[min(#trail, i + 1)]
 		local x, y = ptXY(seg)
 		if x and y then
 			local nx, ny = ptXY(nextSeg)
 			local dirX, dirY = 0, -1
 			if nx and ny then
 				dirX, dirY = nx - x, ny - y
-				local len = math.sqrt(dirX * dirX + dirY * dirY)
+				local len = sqrt(dirX * dirX + dirY * dirY)
 				if len > 1e-4 then
 					dirX, dirY = dirX / len, dirY / len
 				else
@@ -1243,9 +1254,9 @@ local function drawSpectralHarvestEcho(trail, SEGMENT_SIZE, data)
 			end
 
 			local perpX, perpY = -dirY, dirX
-			local progress = (i - 1) / math.max(coverage - 1, 1)
+			local progress = (i - 1) / max(coverage - 1, 1)
 			local fade = 1 - progress * 0.6
-			local wave = math.sin(time * 3.6 + i * 0.8) * SEGMENT_SIZE * 0.12
+			local wave = sin(time * 3.6 + i * 0.8) * SEGMENT_SIZE * 0.12
 			local offset = SEGMENT_SIZE * (0.4 + 0.22 * intensity + 0.28 * echo * (1 - progress))
 			local gx = x + perpX * (offset + wave)
 			local gy = y + perpY * (offset - wave * 0.4)
@@ -1281,14 +1292,14 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
 	if #trail < 2 then return end
 
-	local intensity = math.max(0, data.intensity or 0)
+	local intensity = max(0, data.intensity or 0)
 	if intensity <= 0.01 then return end
 
 	if data.hasBody == false then return end
 
-	local stacks = math.max(1, data.stacks or 1)
+	local stacks = max(1, data.stacks or 1)
 	local time = data.time or love.timer.getTime()
-	local stride = math.max(1, math.floor(#trail / (4 + stacks * 2)))
+	local stride = max(1, floor(#trail / (4 + stacks * 2)))
 
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
@@ -1300,7 +1311,7 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 		local x2, y2 = ptXY(nextSeg)
 		if x1 and y1 and x2 and y2 then
 			local dirX, dirY = x2 - x1, y2 - y1
-			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			local len = sqrt(dirX * dirX + dirY * dirY)
 			if len < 1e-4 then
 				dirX, dirY = 0, -1
 			else
@@ -1308,9 +1319,9 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 			end
 			local perpX, perpY = -dirY, dirX
 
-			local progress = (i - 1) / math.max(#trail - stride, 1)
-			local sway = math.sin(time * (4.8 + stacks * 0.4) + i * 0.7) * SEGMENT_SIZE * (0.22 + 0.12 * intensity)
-			local crest = math.sin(time * 2.6 + i) * SEGMENT_SIZE * 0.1
+			local progress = (i - 1) / max(#trail - stride, 1)
+			local sway = sin(time * (4.8 + stacks * 0.4) + i * 0.7) * SEGMENT_SIZE * (0.22 + 0.12 * intensity)
+			local crest = sin(time * 2.6 + i) * SEGMENT_SIZE * 0.1
 			local ctrlX = (x1 + x2) * 0.5 + perpX * sway
 			local ctrlY = (y1 + y2) * 0.5 + perpY * sway
 
@@ -1321,7 +1332,7 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 				local inv = 1 - t
 				local bx = inv * inv * x1 + 2 * inv * t * ctrlX + t * t * x2
 				local by = inv * inv * y1 + 2 * inv * t * ctrlY + t * t * y2
-				local peak = 1 - math.abs(0.5 - t) * 2
+				local peak = 1 - abs(0.5 - t) * 2
 				bx = bx + perpX * crest * peak * 0.8
 				by = by + perpY * crest * peak * 0.8
 				points[#points + 1] = bx
@@ -1340,7 +1351,7 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 
 	local ratio = data.ratio
 	if not ratio or ratio <= 0 then
-		ratio = 1 + 0.2 * math.min(1, math.max(0, intensity))
+		ratio = 1 + 0.2 * min(1, max(0, intensity))
 	end
 
 	drawSpeedMotionArcs(trail, SEGMENT_SIZE, {
@@ -1356,12 +1367,12 @@ local function drawEventHorizonSheath(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
 	if #trail < 1 then return end
 
-	local intensity = math.max(0, data.intensity or 0)
+	local intensity = max(0, data.intensity or 0)
 	if intensity <= 0.01 then return end
 
 	local time = data.time or love.timer.getTime()
 	local spin = data.spin or 0
-	local segmentCount = math.min(#trail, 10)
+	local segmentCount = min(#trail, 10)
 
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
@@ -1370,10 +1381,10 @@ local function drawEventHorizonSheath(trail, SEGMENT_SIZE, data)
 		local seg = trail[i]
 		local px, py = ptXY(seg)
 		if px and py then
-			local progress = (i - 1) / math.max(segmentCount - 1, 1)
+			local progress = (i - 1) / max(segmentCount - 1, 1)
 			local fade = 1 - progress * 0.65
 			local radius = SEGMENT_SIZE * (0.7 + 0.28 * intensity + 0.16 * fade)
-			local swirl = spin * 1.3 + time * 0.6 + progress * math.pi * 1.2
+			local swirl = spin * 1.3 + time * 0.6 + progress * pi * 1.2
 
 			love.graphics.setColor(0.04, 0.08, 0.16, (0.18 + 0.22 * intensity) * fade)
 			love.graphics.circle("fill", px, py, radius * 1.05)
@@ -1398,12 +1409,12 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
 	if #trail < 2 then return end
 
-	local intensity = math.max(0, data.intensity or 0)
+	local intensity = max(0, data.intensity or 0)
 	if intensity <= 0.01 then return end
 
 	local primed = data.primed or false
 	local time = data.time or love.timer.getTime()
-	local stride = math.max(1, math.floor(#trail / (6 + intensity * 6)))
+	local stride = max(1, floor(#trail / (6 + intensity * 6)))
 
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
@@ -1415,7 +1426,7 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 		local x2, y2 = ptXY(nextSeg)
 		if x1 and y1 and x2 and y2 then
 			local dirX, dirY = x2 - x1, y2 - y1
-			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			local len = sqrt(dirX * dirX + dirY * dirY)
 			if len < 1e-4 then
 				dirX, dirY = 0, 1
 			else
@@ -1427,7 +1438,7 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 			local segments = 3
 			for segIdx = 1, segments do
 				local t = segIdx / (segments + 1)
-				local offset = math.sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
+				local offset = sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
 				local px = x1 + dirX * len * t + perpX * offset
 				local py = y1 + dirY * len * t + perpY * offset
 				bolt[#bolt + 1] = px
@@ -1464,12 +1475,12 @@ local function drawTitanbloodSigils(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
 	if #trail < 3 then return end
 
-	local intensity = math.max(0, data.intensity or 0)
+	local intensity = max(0, data.intensity or 0)
 	if intensity <= 0.01 then return end
 
-	local stacks = math.max(1, data.stacks or 1)
+	local stacks = max(1, data.stacks or 1)
 	local time = data.time or love.timer.getTime()
-	local sigilCount = math.min(#trail - 1, 8 + stacks * 3)
+	local sigilCount = min(#trail - 1, 8 + stacks * 3)
 
 	love.graphics.push("all")
 
@@ -1480,25 +1491,25 @@ local function drawTitanbloodSigils(trail, SEGMENT_SIZE, data)
 		local x0, y0 = ptXY(prev)
 		if x1 and y1 and x0 and y0 then
 			local dirX, dirY = x1 - x0, y1 - y0
-			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			local len = sqrt(dirX * dirX + dirY * dirY)
 			if len < 1e-4 then
 				dirX, dirY = 0, 1
 			else
 				dirX, dirY = dirX / len, dirY / len
 			end
 			local perpX, perpY = -dirY, dirX
-			local progress = (i - 2) / math.max(sigilCount - 1, 1)
+			local progress = (i - 2) / max(sigilCount - 1, 1)
 			local fade = 1 - progress * 0.6
-			local sway = math.sin(time * 2.6 + i * 0.8) * SEGMENT_SIZE * 0.12 * fade
-			local offset = SEGMENT_SIZE * (0.45 + 0.08 * math.min(stacks, 4))
+			local sway = sin(time * 2.6 + i * 0.8) * SEGMENT_SIZE * 0.12 * fade
+			local offset = SEGMENT_SIZE * (0.45 + 0.08 * min(stacks, 4))
 			local cx = x1 + perpX * (offset + sway)
 			local cy = y1 + perpY * (offset + sway)
 
 			love.graphics.push()
 			love.graphics.translate(cx, cy)
-			love.graphics.rotate(math.atan2(dirY, dirX))
+			love.graphics.rotate(atan2(dirY, dirX))
 
-			local base = SEGMENT_SIZE * (0.28 + 0.08 * math.min(stacks, 3))
+			local base = SEGMENT_SIZE * (0.28 + 0.08 * min(stacks, 3))
 			love.graphics.setColor(0.32, 0.02, 0.08, (0.16 + 0.24 * intensity) * fade)
 			love.graphics.ellipse("fill", 0, 0, base * 1.2, base * 0.55)
 
@@ -1527,25 +1538,25 @@ local function drawChronospiralWake(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
 	if #trail < 2 then return end
 
-	local intensity = math.max(0, data.intensity or 0)
+	local intensity = max(0, data.intensity or 0)
 	if intensity <= 0.01 then return end
 
 	local spin = data.spin or 0
-	local step = math.max(2, math.floor(#trail / 12))
+	local step = max(2, floor(#trail / 12))
 
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
 	for i = 1, #trail, step do
 		local seg = trail[i]
-		local nextSeg = trail[math.min(#trail, i + 1)]
+		local nextSeg = trail[min(#trail, i + 1)]
 		local px, py = ptXY(seg)
 		if px and py then
 			local nx, ny = ptXY(nextSeg)
 			local dirX, dirY = 0, -1
 			if nx and ny then
 				dirX, dirY = nx - px, ny - py
-				local len = math.sqrt(dirX * dirX + dirY * dirY)
+				local len = sqrt(dirX * dirX + dirY * dirY)
 				if len > 1e-3 then
 					dirX, dirY = dirX / len, dirY / len
 				else
@@ -1553,24 +1564,24 @@ local function drawChronospiralWake(trail, SEGMENT_SIZE, data)
 				end
 			end
 
-			local angle = (math.atan2 and math.atan2(dirY, dirX)) or math.atan(dirY, dirX)
-			local progress = (i - 1) / math.max(#trail - 1, 1)
+			local angle = (atan2 and atan2(dirY, dirX)) or atan(dirY, dirX)
+			local progress = (i - 1) / max(#trail - 1, 1)
 			local baseRadius = SEGMENT_SIZE * (0.55 + 0.35 * intensity)
 			local fade = 1 - progress * 0.65
-			local swirl = spin * 1.25 + progress * math.pi * 1.6
+			local swirl = spin * 1.25 + progress * pi * 1.6
 
 			love.graphics.setLineWidth(1.2 + intensity * 1.2)
 			love.graphics.setColor(0.56, 0.82, 1.0, (0.14 + 0.28 * intensity) * fade)
 			love.graphics.circle("line", px, py, baseRadius)
 
 			love.graphics.setColor(0.84, 0.68, 1.0, (0.16 + 0.3 * intensity) * fade)
-			love.graphics.arc("line", "open", px, py, baseRadius * 1.15, swirl, swirl + math.pi * 0.35)
-			love.graphics.arc("line", "open", px, py, baseRadius * 0.85, swirl + math.pi, swirl + math.pi + math.pi * 0.3)
+			love.graphics.arc("line", "open", px, py, baseRadius * 1.15, swirl, swirl + pi * 0.35)
+			love.graphics.arc("line", "open", px, py, baseRadius * 0.85, swirl + pi, swirl + pi + pi * 0.3)
 
 			love.graphics.push()
 			love.graphics.translate(px, py)
 			love.graphics.rotate(angle)
-			local ribbon = baseRadius * (0.8 + 0.25 * math.sin(swirl * 1.4))
+			local ribbon = baseRadius * (0.8 + 0.25 * sin(swirl * 1.4))
 			love.graphics.setColor(0.46, 0.78, 1.0, (0.12 + 0.22 * intensity) * fade)
 			love.graphics.rectangle("fill", -ribbon, -baseRadius * 0.22, ribbon * 2, baseRadius * 0.44)
 			love.graphics.pop()
@@ -1578,13 +1589,13 @@ local function drawChronospiralWake(trail, SEGMENT_SIZE, data)
 	end
 
 	local coords = {}
-	local pathStep = math.max(1, math.floor(#trail / 24))
+	local pathStep = max(1, floor(#trail / 24))
 	local jitterScale = SEGMENT_SIZE * 0.2 * intensity
 	for i = 1, #trail, pathStep do
 		local seg = trail[i]
 		local px, py = ptXY(seg)
 		if px and py then
-			local jitter = math.sin(spin * 2.0 + i * 0.33) * jitterScale
+			local jitter = sin(spin * 2.0 + i * 0.33) * jitterScale
 			coords[#coords + 1] = px + jitter
 			coords[#coords + 1] = py - jitter * 0.4
 		end
@@ -1603,41 +1614,41 @@ local function drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
 	if #trail < 2 then return end
 
-	local intensity = math.max(0, data.intensity or 0)
+	local intensity = max(0, data.intensity or 0)
 	if intensity <= 0.01 then return end
 
-	local stacks = math.max(1, data.stacks or 1)
+	local stacks = max(1, data.stacks or 1)
 	local pulse = data.pulse or 0
-	local stackFactor = math.min(stacks, 3)
+	local stackFactor = min(stacks, 3)
 	local baseRadius = SEGMENT_SIZE * (0.32 + 0.08 * stackFactor)
-	local orbCount = math.min(28, (#trail - 1) * 2)
+	local orbCount = min(28, (#trail - 1) * 2)
 
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
 	for i = 1, orbCount do
 		local progress = (i - 0.5) / orbCount
-		local idxFloat = 1 + progress * math.max(#trail - 1, 1)
-		local index = math.floor(idxFloat)
+		local idxFloat = 1 + progress * max(#trail - 1, 1)
+		local index = floor(idxFloat)
 		local frac = idxFloat - index
 		local seg = trail[index]
-		local nextSeg = trail[math.min(#trail, index + 1)]
+		local nextSeg = trail[min(#trail, index + 1)]
 		local px, py = ptXY(seg)
 		local nx, ny = ptXY(nextSeg)
 		if px and py and nx and ny then
 			local x = px + (nx - px) * frac
 			local y = py + (ny - py) * frac
 			local dirX, dirY = nx - px, ny - py
-			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			local len = sqrt(dirX * dirX + dirY * dirY)
 			if len < 1e-4 then
 				dirX, dirY = 0, 1
 			else
 				dirX, dirY = dirX / len, dirY / len
 			end
 			local perpX, perpY = -dirY, dirX
-			local swirl = pulse * 1.4 + progress * math.pi * 4
-			local offset = math.sin(swirl) * baseRadius * (0.52 + intensity * 0.4)
-			local drift = math.cos(swirl * 0.8) * baseRadius * 0.18
+			local swirl = pulse * 1.4 + progress * pi * 4
+			local offset = sin(swirl) * baseRadius * (0.52 + intensity * 0.4)
+			local drift = cos(swirl * 0.8) * baseRadius * 0.18
 			local ax = x + perpX * offset + dirX * drift
 			local ay = y + perpY * offset + dirY * drift
 			local fade = 1 - progress * 0.6
@@ -1657,10 +1668,10 @@ local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
 	if #trail < 2 then return end
 
-	local intensity = math.max(0, data.intensity or 0)
-	local charges = math.max(0, data.charges or 0)
-	local flare = math.max(0, data.flare or 0)
-	local heat = math.min(1.2, intensity * 0.7 + charges * 0.18 + flare * 0.6)
+	local intensity = max(0, data.intensity or 0)
+	local charges = max(0, data.charges or 0)
+	local flare = max(0, data.flare or 0)
+	local heat = min(1.2, intensity * 0.7 + charges * 0.18 + flare * 0.6)
 	if heat <= 0.02 then return end
 
 	local time = data.time or love.timer.getTime()
@@ -1668,7 +1679,7 @@ local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
-	local wingSegments = math.min(#trail - 1, 8 + charges * 3)
+	local wingSegments = min(#trail - 1, 8 + charges * 3)
 	for i = 1, wingSegments do
 		local seg = trail[i]
 		local nextSeg = trail[i + 1]
@@ -1676,18 +1687,18 @@ local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
 		local x2, y2 = ptXY(nextSeg)
 		if x1 and y1 and x2 and y2 then
 			local dirX, dirY = x2 - x1, y2 - y1
-			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			local len = sqrt(dirX * dirX + dirY * dirY)
 			if len < 1e-4 then
 				dirX, dirY = 0, 1
 			else
 				dirX, dirY = dirX / len, dirY / len
 			end
 			local perpX, perpY = -dirY, dirX
-			local progress = (i - 1) / math.max(1, wingSegments - 1)
+			local progress = (i - 1) / max(1, wingSegments - 1)
 			local fade = 1 - progress * 0.6
 			local width = SEGMENT_SIZE * (0.32 + 0.14 * heat + 0.06 * charges)
 			local length = SEGMENT_SIZE * (0.7 + 0.25 * heat + 0.1 * charges)
-			local flutter = math.sin(time * 7 + i * 0.55) * width * 0.35
+			local flutter = sin(time * 7 + i * 0.55) * width * 0.35
 			local baseX = x1 - dirX * SEGMENT_SIZE * 0.25 + perpX * flutter
 			local baseY = y1 - dirY * SEGMENT_SIZE * 0.25 + perpY * flutter
 			local tipX = baseX + dirX * length
@@ -1706,29 +1717,29 @@ local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
 		end
 	end
 
-	local emberCount = math.min(32, (#trail - 2) * 2 + charges * 4)
+	local emberCount = min(32, (#trail - 2) * 2 + charges * 4)
 	for i = 1, emberCount do
 		local progress = (i - 0.5) / emberCount
-		local idxFloat = 1 + progress * math.max(#trail - 2, 1)
-		local index = math.floor(idxFloat)
+		local idxFloat = 1 + progress * max(#trail - 2, 1)
+		local index = floor(idxFloat)
 		local frac = idxFloat - index
 		local seg = trail[index]
-		local nextSeg = trail[math.min(#trail, index + 1)]
+		local nextSeg = trail[min(#trail, index + 1)]
 		local x1, y1 = ptXY(seg)
 		local x2, y2 = ptXY(nextSeg)
 		if x1 and y1 and x2 and y2 then
 			local x = x1 + (x2 - x1) * frac
 			local y = y1 + (y2 - y1) * frac
 			local dirX, dirY = x2 - x1, y2 - y1
-			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			local len = sqrt(dirX * dirX + dirY * dirY)
 			if len < 1e-4 then
 				dirX, dirY = 0, 1
 			else
 				dirX, dirY = dirX / len, dirY / len
 			end
 			local perpX, perpY = -dirY, dirX
-			local sway = math.sin(time * 5.2 + i) * SEGMENT_SIZE * 0.22 * heat
-			local lift = math.cos(time * 3.4 + i * 0.8) * SEGMENT_SIZE * 0.28
+			local sway = sin(time * 5.2 + i) * SEGMENT_SIZE * 0.22 * heat
+			local lift = cos(time * 3.4 + i * 0.8) * SEGMENT_SIZE * 0.28
 			local fx = x + perpX * sway + dirX * lift * 0.25
 			local fy = y + perpY * sway + dirY * lift
 			local fade = 0.5 + 0.5 * (1 - progress)
@@ -1752,7 +1763,7 @@ end
 local function drawChronoWardPulse(hx, hy, SEGMENT_SIZE, data)
 	if not data then return end
 
-	local intensity = math.max(data.intensity or 0, data.active and 0.3 or 0)
+	local intensity = max(data.intensity or 0, data.active and 0.3 or 0)
 	if intensity <= 0 then return end
 
 	local now = love.timer.getTime()
@@ -1785,20 +1796,20 @@ local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
 	local duration = data.duration or 0
 	if duration <= 0 then duration = 1 end
 
-	local timer = math.max(0, data.timer or 0)
+	local timer = max(0, data.timer or 0)
 	local cooldown = data.cooldown or 0
-	local cooldownTimer = math.max(0, data.cooldownTimer or 0)
+	local cooldownTimer = max(0, data.cooldownTimer or 0)
 
 	local readiness
 	if cooldown > 0 then
-		readiness = 1 - math.min(1, cooldownTimer / math.max(0.0001, cooldown))
+		readiness = 1 - min(1, cooldownTimer / max(0.0001, cooldown))
 	else
 		readiness = data.active and 1 or 0.6
 	end
 
 	local intensity = readiness * 0.35
 	if data.active then
-		intensity = math.max(intensity, 0.45) + 0.45 * math.min(1, timer / duration)
+		intensity = max(intensity, 0.45) + 0.45 * min(1, timer / duration)
 	end
 
 	if intensity <= 0 then return end
@@ -1814,7 +1825,7 @@ local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
 	love.graphics.setBlendMode("add")
 	for i = 1, 3 do
 		local ringT = (i - 1) / 2
-		local wobble = math.sin(time * (1.6 + ringT * 0.8)) * SEGMENT_SIZE * 0.06
+		local wobble = sin(time * (1.6 + ringT * 0.8)) * SEGMENT_SIZE * 0.06
 		love.graphics.setColor(0.32, 0.74, 1, (0.15 + 0.25 * intensity) * (1 - ringT * 0.35))
 		love.graphics.setLineWidth(1.6 + (3 - i) * 0.9)
 		love.graphics.circle("line", hx, hy, baseRadius * (1.05 + ringT * 0.25) + wobble)
@@ -1823,29 +1834,29 @@ local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
 	love.graphics.setBlendMode("alpha")
 	love.graphics.setColor(0.4, 0.8, 1, 0.25 + 0.4 * intensity)
 	love.graphics.setLineWidth(2)
-	local wobble = 1 + 0.08 * math.sin(time * 2.2)
+	local wobble = 1 + 0.08 * sin(time * 2.2)
 	love.graphics.circle("line", hx, hy, baseRadius * wobble)
 
 	local dialRotation = time * (data.active and 1.8 or 0.9)
 	love.graphics.setColor(0.26, 0.62, 0.95, 0.2 + 0.25 * intensity)
 	love.graphics.setLineWidth(2.4)
 	for i = 1, 3 do
-		local offset = dialRotation + (i - 1) * (math.pi * 2 / 3)
-		love.graphics.arc("line", "open", hx, hy, baseRadius * 0.75, offset, offset + math.pi / 4)
+		local offset = dialRotation + (i - 1) * (pi * 2 / 3)
+		love.graphics.arc("line", "open", hx, hy, baseRadius * 0.75, offset, offset + pi / 4)
 	end
 
 	local tickCount = 6
 	local spin = time * (data.active and -1.2 or -0.6)
 	love.graphics.setColor(0.6, 0.95, 1, 0.2 + 0.35 * intensity)
 	for i = 1, tickCount do
-		local angle = spin + (i / tickCount) * math.pi * 2
+		local angle = spin + (i / tickCount) * pi * 2
 		local inner = baseRadius * 0.55
-		local outer = baseRadius * (1.25 + 0.1 * math.sin(time * 3 + i))
+		local outer = baseRadius * (1.25 + 0.1 * sin(time * 3 + i))
 		love.graphics.line(
-		hx + math.cos(angle) * inner,
-		hy + math.sin(angle) * inner,
-		hx + math.cos(angle) * outer,
-		hy + math.sin(angle) * outer
+		hx + cos(angle) * inner,
+		hy + sin(angle) * inner,
+		hx + cos(angle) * outer,
+		hy + sin(angle) * outer
 		)
 	end
 
@@ -1855,8 +1866,8 @@ end
 local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
 	if not (data and hx and hy) then return end
 
-	local intensity = math.max(0, data.intensity or 0)
-	local readiness = math.max(0, math.min(1, data.ready or 0))
+	local intensity = max(0, data.intensity or 0)
+	local readiness = max(0, min(1, data.ready or 0))
 	if intensity <= 0.01 and readiness <= 0.01 then return end
 
 	local time = data.time or love.timer.getTime()
@@ -1874,25 +1885,25 @@ local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
 
 	local orbitCount = 4
 	for i = 1, orbitCount do
-		local angle = time * (1.0 + 0.4 * intensity) + (i - 1) * (math.pi * 2 / orbitCount)
+		local angle = time * (1.0 + 0.4 * intensity) + (i - 1) * (pi * 2 / orbitCount)
 		local inner = baseRadius * 0.58
 		local outer = baseRadius * (0.92 + 0.18 * readiness)
 		love.graphics.setColor(0.68, 0.9, 1.0, (0.16 + 0.26 * readiness) * (0.6 + 0.4 * intensity))
 		love.graphics.setLineWidth(2.4 * sizeScale)
 		love.graphics.line(
-		hx + math.cos(angle) * inner,
-		hy + math.sin(angle) * inner,
-		hx + math.cos(angle) * outer,
-		hy + math.sin(angle) * outer
+		hx + cos(angle) * inner,
+		hy + sin(angle) * inner,
+		hx + cos(angle) * outer,
+		hy + sin(angle) * outer
 		)
 	end
 
-	local sweep = math.pi * 0.35
+	local sweep = pi * 0.35
 	local rotation = time * (1.4 + 0.6 * readiness)
 	love.graphics.setColor(0.38, 0.7, 1.0, 0.16 + 0.28 * intensity)
 	love.graphics.setLineWidth(1.8 * sizeScale)
 	love.graphics.arc("line", "open", hx, hy, baseRadius * 0.78, rotation, rotation + sweep)
-	love.graphics.arc("line", "open", hx, hy, baseRadius * 0.78, rotation + math.pi, rotation + math.pi + sweep * 0.85)
+	love.graphics.arc("line", "open", hx, hy, baseRadius * 0.78, rotation + pi, rotation + pi + sweep * 0.85)
 
 	love.graphics.setBlendMode("alpha")
 
@@ -1937,11 +1948,11 @@ local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
 	if duration <= 0 then duration = 1 end
 	local timer = data.timer or 0
 	if timer < 0 then timer = 0 end
-	local intensity = math.min(1, timer / duration)
+	local intensity = min(1, timer / duration)
 
 	local time = love.timer.getTime()
 
-	local pulse = 0.9 + 0.1 * math.sin(time * 6)
+	local pulse = 0.9 + 0.1 * sin(time * 6)
 	local radius = SEGMENT_SIZE * (0.6 + 0.35 * intensity) * pulse
 
 	drawSoftGlow(hx, hy, radius * 1.4, 1, 0.68 + 0.2 * intensity, 0.25, 0.4 + 0.5 * intensity)
@@ -1967,23 +1978,23 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 	local duration = data.duration or 0
 	if duration <= 0 then duration = 1 end
 
-	local timer = math.max(0, data.timer or 0)
+	local timer = max(0, data.timer or 0)
 	local cooldown = data.cooldown or 0
-	local cooldownTimer = math.max(0, data.cooldownTimer or 0)
+	local cooldownTimer = max(0, data.cooldownTimer or 0)
 
 	local readiness
 	if data.active then
-		readiness = math.min(1, timer / duration)
+		readiness = min(1, timer / duration)
 	elseif cooldown > 0 then
-		readiness = 1 - math.min(1, cooldownTimer / math.max(0.0001, cooldown))
+		readiness = 1 - min(1, cooldownTimer / max(0.0001, cooldown))
 	else
 		readiness = 1
 	end
 
-	readiness = math.max(0, math.min(1, readiness))
+	readiness = max(0, min(1, readiness))
 	local intensity = readiness
 	if data.active then
-		intensity = math.max(intensity, 0.75)
+		intensity = max(intensity, 0.75)
 	end
 
 	if intensity <= 0 then return end
@@ -2012,16 +2023,16 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 		end
 	end
 
-	local length = math.sqrt(dirX * dirX + dirY * dirY)
+	local length = sqrt(dirX * dirX + dirY * dirY)
 	if length > 1e-4 then
 		dirX, dirY = dirX / length, dirY / length
 	end
 
 	local angle
-	if math.atan2 then
-		angle = math.atan2(dirY, dirX)
+	if atan2 then
+		angle = atan2(dirY, dirX)
 	else
-		angle = math.atan(dirY, dirX)
+		angle = atan(dirY, dirX)
 	end
 
 	love.graphics.push("all")
@@ -2030,21 +2041,21 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 
 	love.graphics.setColor(1, 0.78, 0.26, 0.3 + 0.4 * intensity)
 	love.graphics.setLineWidth(2 + intensity * 2)
-	love.graphics.arc("line", "open", 0, 0, baseRadius, -math.pi * 0.65, math.pi * 0.65)
+	love.graphics.arc("line", "open", 0, 0, baseRadius, -pi * 0.65, pi * 0.65)
 
 	love.graphics.setBlendMode("add")
-	local flareRadius = baseRadius * (1.18 + 0.08 * math.sin(time * 5))
+	local flareRadius = baseRadius * (1.18 + 0.08 * sin(time * 5))
 	love.graphics.setColor(1, 0.86, 0.42, 0.22 + 0.35 * intensity)
-	love.graphics.arc("fill", 0, 0, flareRadius, -math.pi * 0.28, math.pi * 0.28)
+	love.graphics.arc("fill", 0, 0, flareRadius, -pi * 0.28, pi * 0.28)
 
 	if not data.active then
-		local sweep = readiness * math.pi * 2
+		local sweep = readiness * pi * 2
 		love.graphics.setBlendMode("alpha")
 		love.graphics.setColor(1, 0.62, 0.18, 0.35 + 0.4 * intensity)
 		love.graphics.setLineWidth(3)
-		love.graphics.arc("line", "open", 0, 0, baseRadius * 0.85, -math.pi / 2, -math.pi / 2 + sweep)
+		love.graphics.arc("line", "open", 0, 0, baseRadius * 0.85, -pi / 2, -pi / 2 + sweep)
 	else
-		local pulse = 0.75 + 0.25 * math.sin(time * 10)
+		local pulse = 0.75 + 0.25 * sin(time * 10)
 		love.graphics.setColor(1, 0.95, 0.55, 0.5)
 		love.graphics.polygon("fill",
 		baseRadius * 0.75, 0,
@@ -2057,11 +2068,11 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 	love.graphics.setColor(1, 0.68, 0.2, 0.22 + 0.4 * intensity)
 	local sparks = 6
 	for i = 1, sparks do
-		local offset = time * (data.active and 7 or 3.5) + (i / sparks) * math.pi * 2
+		local offset = time * (data.active and 7 or 3.5) + (i / sparks) * pi * 2
 		local inner = baseRadius * 0.5
-		local outer = baseRadius * (1.1 + 0.1 * math.sin(time * 4 + i))
+		local outer = baseRadius * (1.1 + 0.1 * sin(time * 4 + i))
 		love.graphics.setLineWidth(1.25)
-		love.graphics.line(math.cos(offset) * inner, math.sin(offset) * inner, math.cos(offset) * outer, math.sin(offset) * outer)
+		love.graphics.line(cos(offset) * inner, sin(offset) * inner, cos(offset) * outer, sin(offset) * outer)
 	end
 
 	love.graphics.pop()
@@ -2155,7 +2166,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		local exitX = portalInfo.exitX or hx
 		local exitY = portalInfo.exitY or hy
 		local progress = portalInfo.progress or 0
-		local clampedProgress = math.min(1, math.max(0, progress))
+		local clampedProgress = min(1, max(0, progress))
 
 		if entryX and entryY then
 			local entryAlpha = 0.75 * (1 - clampedProgress * 0.7)
@@ -2248,7 +2259,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			local faceOptions = nil
 			if upgradeVisuals and upgradeVisuals.predatorsReflex then
 				local data = upgradeVisuals.predatorsReflex
-				local intensity = math.max(0, math.min(1, data.intensity or 0))
+				local intensity = max(0, min(1, data.intensity or 0))
 				local eyeScale = 1 + 0.45 * intensity
 				faceOptions = {
 					eyeScale = eyeScale,
@@ -2298,7 +2309,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		RenderLayers:withLayer("overlay", function()
 			local t = 1 - (popTimer / POP_DURATION)
 			if t < 1 then
-				local pulse = 0.8 + 0.4 * math.sin(t * math.pi)
+				local pulse = 0.8 + 0.4 * sin(t * pi)
 				love.graphics.setColor(1, 1, 1, 0.4)
 				love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
 			end

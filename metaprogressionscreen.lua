@@ -12,6 +12,15 @@ local PlayerStats = require("playerstats")
 local Audio = require("audio")
 local Shaders = require("shaders")
 
+local abs = math.abs
+local ceil = math.ceil
+local floor = math.floor
+local max = math.max
+local min = math.min
+local pi = math.pi
+local sin = math.sin
+local sort = table.sort
+
 local ProgressionScreen = {
 	transitionDuration = 0.45,
 }
@@ -179,21 +188,21 @@ local function computeCosmeticShowcaseLayout(sw)
 	local spacingX = COSMETIC_SHOWCASE_SPACING_X
 	local spacingY = COSMETIC_SHOWCASE_SPACING_Y
 
-	local maxColumns = math.max(1, math.floor((sw + spacingX) / (tileWidth + spacingX)))
-	maxColumns = math.min(maxColumns, #cosmeticShaderShowcaseEntries)
+	local maxColumns = max(1, floor((sw + spacingX) / (tileWidth + spacingX)))
+	maxColumns = min(maxColumns, #cosmeticShaderShowcaseEntries)
 	if maxColumns < 1 then
 		maxColumns = 1
 	end
 
-	local rows = math.ceil(#cosmeticShaderShowcaseEntries / maxColumns)
-	local contentWidth = maxColumns * tileWidth + (math.max(0, maxColumns - 1) * spacingX)
+	local rows = ceil(#cosmeticShaderShowcaseEntries / maxColumns)
+	local contentWidth = maxColumns * tileWidth + (max(0, maxColumns - 1) * spacingX)
 	local startX = (sw - contentWidth) * 0.5
 	local startY = TAB_BOTTOM + COSMETIC_SHOWCASE_TOP_OFFSET
-	local contentHeight = rows * tileHeight + math.max(0, rows - 1) * spacingY
+	local contentHeight = rows * tileHeight + max(0, rows - 1) * spacingY
 	local contentBottom = startY + contentHeight
 	local requiredListTop = contentBottom + COSMETIC_SHOWCASE_BOTTOM_PADDING
 
-	cosmeticShowcaseHeight = math.max(0, requiredListTop - DEFAULT_LIST_TOP)
+	cosmeticShowcaseHeight = max(0, requiredListTop - DEFAULT_LIST_TOP)
 
 	return {
 		startX = startX,
@@ -217,12 +226,12 @@ local function drawCosmeticShaderShowcase(sw)
 	local textColor = Theme.textColor or {1, 1, 1, 1}
 	local mutedText = Theme.mutedTextColor or {textColor[1], textColor[2], textColor[3], (textColor[4] or 1) * 0.8}
 
-	local previewHeight = math.min(COSMETIC_PREVIEW_HEIGHT, layout.tileHeight - 48)
-	local previewWidth = math.min(COSMETIC_PREVIEW_WIDTH, layout.tileWidth - 36)
+	local previewHeight = min(COSMETIC_PREVIEW_HEIGHT, layout.tileHeight - 48)
+	local previewWidth = min(COSMETIC_PREVIEW_WIDTH, layout.tileWidth - 36)
 
 	for index, entry in ipairs(cosmeticShaderShowcaseEntries) do
 		local column = (index - 1) % layout.columns
-		local row = math.floor((index - 1) / layout.columns)
+		local row = floor((index - 1) / layout.columns)
 		local tileX = layout.startX + column * (layout.tileWidth + layout.spacingX)
 		local tileY = layout.startY + row * (layout.tileHeight + layout.spacingY)
 
@@ -438,7 +447,7 @@ local function updateScrollBounds(sw, sh)
 
 	local baseTop = getListTop()
 	viewportTop = baseTop + topOffset
-	viewportHeight = math.max(0, viewportBottom - viewportTop)
+	viewportHeight = max(0, viewportBottom - viewportTop)
 
 	if activeTab == "experience" then
 		contentHeight = trackContentHeight
@@ -446,7 +455,7 @@ local function updateScrollBounds(sw, sh)
 		local entries, itemHeight, spacing = getActiveList()
 		local count = #entries
 		if count > 0 then
-			contentHeight = count * itemHeight + math.max(0, count - 1) * spacing
+			contentHeight = count * itemHeight + max(0, count - 1) * spacing
 		else
 			contentHeight = 0
 		end
@@ -457,7 +466,7 @@ local function updateScrollBounds(sw, sh)
 		contentHeight = contentHeight + bottomPadding
 	end
 
-	minScrollOffset = math.min(0, viewportHeight - contentHeight)
+	minScrollOffset = min(0, viewportHeight - contentHeight)
 
 	if scrollOffset < minScrollOffset then
 		scrollOffset = minScrollOffset
@@ -467,9 +476,9 @@ local function updateScrollBounds(sw, sh)
 end
 
 local function formatInteger(value)
-	local rounded = math.floor((value or 0) + 0.5)
+	local rounded = floor((value or 0) + 0.5)
 	local sign = rounded < 0 and "-" or ""
-	local digits = tostring(math.abs(rounded))
+	local digits = tostring(abs(rounded))
 	local formatted = digits
 	local count
 
@@ -485,7 +494,7 @@ end
 
 local function formatStatValue(value)
 	if type(value) == "number" then
-		if math.abs(value - math.floor(value + 0.5)) < 0.0001 then
+		if abs(value - floor(value + 0.5)) < 0.0001 then
 			return formatInteger(value)
 		end
 
@@ -500,13 +509,13 @@ local function formatStatValue(value)
 end
 
 local function formatDuration(seconds)
-	local totalSeconds = math.floor((seconds or 0) + 0.5)
+	local totalSeconds = floor((seconds or 0) + 0.5)
 	if totalSeconds < 0 then
 		totalSeconds = 0
 	end
 
-	local hours = math.floor(totalSeconds / 3600)
-	local minutes = math.floor((totalSeconds % 3600) / 60)
+	local hours = floor(totalSeconds / 3600)
+	local minutes = floor((totalSeconds % 3600) / 60)
 	local secs = totalSeconds % 60
 
 	if hours > 0 then
@@ -605,7 +614,7 @@ local function buildStatsEntries()
 		end
 	end
 
-        table.sort(statsEntries, compareStatsEntries)
+        sort(statsEntries, compareStatsEntries)
 
 	local function buildStatsHighlights()
 		statsHighlights = {}
@@ -627,7 +636,7 @@ local function buildStatsEntries()
 			end
 		end
 
-		local desired = math.min(4, #statsEntries)
+		local desired = min(4, #statsEntries)
 		local index = 1
 		while #statsHighlights < desired and index <= #statsEntries do
 			local candidate = statsEntries[index]
@@ -714,12 +723,12 @@ local function drawWindowFrame(x, y, width, height, options)
 	UI.drawRoundedRect(x, y, width, height, WINDOW_CORNER_RADIUS)
 
 	if accentHeight and accentHeight > 0 then
-		local accentWidth = math.max(0, width - accentInsetX * 2)
+		local accentWidth = max(0, width - accentInsetX * 2)
 		if accentWidth > 0 and height - accentInsetY * 2 > 0 then
 			local accentY = y + accentInsetY
 			local accentX = x + accentInsetX
 			love.graphics.setColor(withAlpha(accentColor, accentAlpha))
-			UI.drawRoundedRect(accentX, accentY, accentWidth, math.min(accentHeight, height - accentInsetY * 2), math.max(4, accentHeight / 2))
+			UI.drawRoundedRect(accentX, accentY, accentWidth, min(accentHeight, height - accentInsetY * 2), max(4, accentHeight / 2))
 		end
 	end
 
@@ -738,9 +747,9 @@ end
 local function roundNearest(value)
 	value = value or 0
 	if value >= 0 then
-		return math.floor(value + 0.5)
+		return floor(value + 0.5)
 	end
-	return math.ceil(value - 0.5)
+	return ceil(value - 0.5)
 end
 
 local function formatShopChoice(amount)
@@ -751,7 +760,7 @@ local function formatShopChoice(amount)
 	local label = Localization:get("metaprogression.rewards.shop_extra_choice", {count = amount})
 	if label == "metaprogression.rewards.shop_extra_choice" then
 		local rounded = roundNearest(amount)
-		local noun = (math.abs(rounded) == 1) and "shop card option" or "shop card options"
+		local noun = (abs(rounded) == 1) and "shop card option" or "shop card options"
 		label = string.format("%+d %s", rounded, noun)
 	end
 	return label
@@ -813,7 +822,7 @@ local function measureTrackEntryHeight(entry)
 	local descHeight = 0
 	if desc ~= "" then
 		local _, wrapped = bodyFont:getWrap(desc, wrapWidth)
-		local lineCount = math.max(1, #wrapped)
+		local lineCount = max(1, #wrapped)
 		descHeight = lineCount * bodyFont:getHeight()
 	end
 
@@ -830,7 +839,7 @@ local function measureTrackEntryHeight(entry)
 	local yCursor = descY + descHeight + rewardBlockHeight
 	local requiredHeight = yCursor + 12
 
-	return math.max(TRACK_CARD_MIN_HEIGHT, math.ceil(requiredHeight))
+	return max(TRACK_CARD_MIN_HEIGHT, ceil(requiredHeight))
 end
 
 local function recalculateTrackLayout()
@@ -977,7 +986,7 @@ local function buildCosmeticShaderShowcaseEntries(skins)
 		end
 	end
 
-        table.sort(cosmeticShaderShowcaseEntries, compareCosmeticShowcaseEntries)
+        sort(cosmeticShaderShowcaseEntries, compareCosmeticShowcaseEntries)
 
 	if #cosmeticShaderShowcaseEntries == 0 then
 		cosmeticShowcaseHeight = 0
@@ -1077,7 +1086,7 @@ local function ensureCosmeticVisible(index)
 	local bottom = top + itemHeight
 	local viewportTop = getListTop("cosmetics")
 	local bottomPadding = getScrollPadding()
-	local viewportBottom = viewportTop + math.max(0, viewportHeight - bottomPadding)
+	local viewportBottom = viewportTop + max(0, viewportHeight - bottomPadding)
 
 	if top < viewportTop then
 		scrollOffset = scrollOffset + (viewportTop - top)
@@ -1113,7 +1122,7 @@ local function moveCosmeticsFocus(delta)
 	end
 
 	local index = cosmeticsFocusIndex or 1
-	index = math.max(1, math.min(#cosmeticsEntries, index + delta))
+	index = max(1, min(#cosmeticsEntries, index + delta))
 	setCosmeticsFocus(index, true)
 end
 
@@ -1353,7 +1362,7 @@ function ProgressionScreen:enter()
 
 	local buttons = {}
 	local tabCount = #tabs
-	local totalTabWidth = tabCount * TAB_WIDTH + math.max(0, tabCount - 1) * TAB_SPACING
+	local totalTabWidth = tabCount * TAB_WIDTH + max(0, tabCount - 1) * TAB_SPACING
 	local startX = sw / 2 - totalTabWidth / 2
 
 	for index, tab in ipairs(tabs) do
@@ -1483,10 +1492,10 @@ local function drawSummaryPanel(sw)
 		progressLabel = Localization:get("metaprogression.max_level")
 		progressRatio = 1
 	else
-		local remaining = math.max(0, xpForNext - xpIntoLevel)
+		local remaining = max(0, xpForNext - xpIntoLevel)
 		progressLabel = Localization:get("metaprogression.next_unlock", {remaining = remaining})
 		if xpForNext > 0 then
-			progressRatio = math.min(1, math.max(0, xpIntoLevel / xpForNext))
+			progressRatio = min(1, max(0, xpIntoLevel / xpForNext))
 		else
 			progressRatio = 0
 		end
@@ -1500,11 +1509,11 @@ local function drawSummaryPanel(sw)
 	love.graphics.setColor(withAlpha(darkenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.15), 0.92))
 	love.graphics.circle("fill", circleCenterX, circleCenterY, outerRadius)
 
-	local arcEndAngle = -math.pi / 2 + (math.pi * 2) * progressRatio
+	local arcEndAngle = -pi / 2 + (pi * 2) * progressRatio
 
 	love.graphics.setColor(withAlpha(glow, 1))
 	love.graphics.setLineWidth(8)
-	love.graphics.arc("line", "open", circleCenterX, circleCenterY, outerRadius, -math.pi / 2, arcEndAngle)
+	love.graphics.arc("line", "open", circleCenterX, circleCenterY, outerRadius, -pi / 2, arcEndAngle)
 	love.graphics.setLineWidth(1)
 
 	love.graphics.setColor(withAlpha(lightenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.18), 0.96))
@@ -1553,21 +1562,21 @@ local function drawSummaryPanel(sw)
 	local barY = panelY + contentHeight - padding - 24
 	local barWidth = contentWidth - (barX - panelX) - padding
 	local barHeight = 18
-	local barRadius = math.min(9, barHeight / 2)
+	local barRadius = min(9, barHeight / 2)
 
 	local function drawRoundedSegment(x, y, width, height, radius)
 		if width <= 0 or height <= 0 then
 			return
 		end
 
-		local clampedRadius = math.min(radius or 0, width / 2, height / 2)
+		local clampedRadius = min(radius or 0, width / 2, height / 2)
 		UI.drawRoundedRect(x, y, width, height, clampedRadius)
 	end
 
 	love.graphics.setColor(withAlpha(darkenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.35), 0.92))
 	drawRoundedSegment(barX, barY, barWidth, barHeight, barRadius)
 
-	local fillWidth = math.max(0, barWidth * progressRatio)
+	local fillWidth = max(0, barWidth * progressRatio)
 	if fillWidth > 0 then
 		local fillColor = withAlpha(lightenColor(accentColor, 0.2), 0.95)
 		love.graphics.setColor(fillColor)
@@ -1583,7 +1592,7 @@ local function drawSummaryPanel(sw)
 	love.graphics.setLineWidth(1)
 
 	if xpForNext > 0 then
-		local percent = math.floor(progressRatio * 100 + 0.5)
+		local percent = floor(progressRatio * 100 + 0.5)
 		local badgeText = string.format("%d%%", percent)
 		love.graphics.setFont(UI.fonts.caption)
 		local badgePaddingX = 12
@@ -1633,7 +1642,7 @@ local function drawTrack(sw, sh)
 		local cardHeight = entry.cardHeight or TRACK_CARD_MIN_HEIGHT
 		local offset = entry.offset or ((index - 1) * (TRACK_CARD_MIN_HEIGHT + CARD_SPACING))
 		local y = clipY + scrollOffset + offset
-		local visibleThreshold = math.max(cardHeight, TRACK_CARD_MIN_HEIGHT)
+		local visibleThreshold = max(cardHeight, TRACK_CARD_MIN_HEIGHT)
 		if y + cardHeight >= clipY - visibleThreshold and y <= clipY + clipH + visibleThreshold then
 			local unlocked = entry.unlocked
 			local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
@@ -1666,7 +1675,7 @@ local function drawTrack(sw, sh)
 			local descHeight = 0
 			if desc ~= "" then
 				local _, wrapped = UI.fonts.body:getWrap(desc, wrapWidth)
-				local lineCount = math.max(1, #wrapped)
+				local lineCount = max(1, #wrapped)
 				descHeight = lineCount * UI.fonts.body:getHeight()
 				love.graphics.setColor(Theme.textColor)
 				love.graphics.setFont(UI.fonts.body)
@@ -1711,8 +1720,8 @@ local function ensureCosmeticPreviewTrail()
 	for i = 0, sampleCount - 1 do
 		local t = (sampleCount <= 1) and 0 or (i / (sampleCount - 1))
 		local x = i * step
-		local primaryWave = math.sin(t * math.pi * 1.35 + math.pi * 0.25)
-		local secondaryWave = math.sin(t * math.pi * 3.1)
+		local primaryWave = sin(t * pi * 1.35 + pi * 0.25)
+		local secondaryWave = sin(t * pi * 3.1)
 		local y = primaryWave * amplitude + secondaryWave * wobble
 		rawPoints[#rawPoints + 1] = {x = x, y = y}
 	end
@@ -1765,9 +1774,9 @@ function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, 
 		return
 	end
 
-	local marginX = math.max(12, previewW * 0.12)
-	local marginY = math.max(10, previewH * 0.3)
-	local scale = math.min((previewW - marginX) / width, (previewH - marginY) / height)
+	local marginX = max(12, previewW * 0.12)
+	local marginY = max(10, previewH * 0.3)
+	local scale = min((previewW - marginX) / width, (previewH - marginY) / height)
 	if not scale or scale <= 0 then
 		return
 	end
@@ -1965,14 +1974,14 @@ local function drawCosmeticsList(sw, sh)
 				local lockColor = Theme.lockedCardColor or {0.5, 0.35, 0.4, 1}
 				local shackleColor = lightenColor(lockColor, 0.1)
 				local bodyColor = darkenColor(lockColor, 0.12)
-				local lockWidth = math.min(60, previewW * 0.78)
-				local lockHeight = math.max(30, previewH * 0.74)
+				local lockWidth = min(60, previewW * 0.78)
+				local lockHeight = max(30, previewH * 0.74)
 				local lockBodyHeight = lockHeight + 10
 				local lockX = previewX + (previewW - lockWidth) / 2
 				local lockY = previewY + (previewH - lockHeight) / 2 + 2
 				local shackleWidth = lockWidth * 0.68
-				local postWidth = math.max(3, lockWidth * 0.16)
-				local postHeight = math.max(lockHeight * 0.75, lockHeight - 3)
+				local postWidth = max(3, lockWidth * 0.16)
+				local postHeight = max(lockHeight * 0.75, lockHeight - 3)
 				local shackleX = previewX + (previewW - shackleWidth) / 2
 				local postY = lockY - postHeight
 				local topCenterY = postY
@@ -2004,8 +2013,8 @@ local function drawCosmeticsList(sw, sh)
 				love.graphics.circle("fill", topRectX, topCenterY, postWidth / 2)
 				love.graphics.circle("fill", topRectX + topRectWidth, topCenterY, postWidth / 2)
 
-				local keyholeWidth = math.max(5, lockWidth * 0.16 - 4)
-				local keyholeHeight = math.max(9, lockHeight * 0.44)
+				local keyholeWidth = max(5, lockWidth * 0.16 - 4)
+				local keyholeHeight = max(9, lockHeight * 0.44)
 				local keyholeX = previewX + previewW / 2 - keyholeWidth / 2
 				local keyholeY = lockY + lockHeight / 2 - keyholeHeight / 2
 				local keyholeColor = Theme.bgColor or {0, 0, 0, 1}
@@ -2070,7 +2079,7 @@ local function drawStatsSummary(sw)
 		return
 	end
 
-	local totalWidth = #statsHighlights * STATS_SUMMARY_CARD_WIDTH + math.max(0, #statsHighlights - 1) * STATS_SUMMARY_CARD_SPACING
+	local totalWidth = #statsHighlights * STATS_SUMMARY_CARD_WIDTH + max(0, #statsHighlights - 1) * STATS_SUMMARY_CARD_SPACING
 	local frameWidth = totalWidth + WINDOW_PADDING_X * 2
 	local frameHeight = STATS_SUMMARY_CARD_HEIGHT + WINDOW_PADDING_Y * 2
 	local frameX = sw / 2 - frameWidth / 2

@@ -13,6 +13,11 @@ local PlayerStats = require("playerstats")
 local SawActor = require("sawactor")
 local Tooltip = require("tooltip")
 
+local floor = math.floor
+local max = math.max
+local min = math.min
+local sin = math.sin
+
 local Menu = {
 	transitionDuration = 0.45,
 }
@@ -93,10 +98,10 @@ local function formatResetCountdown(seconds)
 		return nil
 	end
 
-	seconds = math.max(0, math.floor(seconds))
+	seconds = max(0, floor(seconds))
 
-	local hours = math.floor(seconds / 3600)
-	local minutes = math.floor((seconds % 3600) / 60)
+	local hours = floor(seconds / 3600)
+	local minutes = floor((seconds % 3600) / 60)
 	local secs = seconds % 60
 
 	if hours > 0 then
@@ -269,7 +274,7 @@ local function shouldCelebrateDailyChallenge()
 		return false
 	end
 
-	local ratio = math.max(0, math.min(statusBar.ratio or 0, 1))
+	local ratio = max(0, min(statusBar.ratio or 0, 1))
 	return dailyChallenge.completed or ratio >= 0.999
 end
 
@@ -299,7 +304,7 @@ function Menu:enter()
 		{key = "menu.quit",         action = "quit"},
 	}
 
-	local totalButtonHeight = #labels * UI.spacing.buttonHeight + math.max(0, #labels - 1) * UI.spacing.buttonSpacing
+	local totalButtonHeight = #labels * UI.spacing.buttonHeight + max(0, #labels - 1) * UI.spacing.buttonSpacing
 	-- Shift the buttons down a bit so the title has breathing room.
 	local startY = sh / 2 - totalButtonHeight / 2 + sh * 0.08
 
@@ -336,21 +341,21 @@ function Menu:update(dt)
 	Tooltip:update(dt, mx, my)
 
 	if dailyChallenge then
-		dailyChallengeAnim = math.min(dailyChallengeAnim + dt * 2, 1)
+		dailyChallengeAnim = min(dailyChallengeAnim + dt * 2, 1)
 	end
 
 	updateDailyBarCelebration(dt, shouldCelebrateDailyChallenge())
 
 	for i, btn in ipairs(buttons) do
 		if btn.hovered then
-			btn.scale = math.min((btn.scale or 1) + dt * 5, 1.1)
+			btn.scale = min((btn.scale or 1) + dt * 5, 1.1)
 		else
-			btn.scale = math.max((btn.scale or 1) - dt * 5, 1.0)
+			btn.scale = max((btn.scale or 1) - dt * 5, 1.0)
 		end
 
 		local appearDelay = (i - 1) * 0.08
-		local appearTime = math.min((t - appearDelay) * 3, 1)
-		btn.alpha = math.max(0, math.min(appearTime, 1))
+		local appearTime = min((t - appearDelay) * 3, 1)
+		btn.alpha = max(0, min(appearTime, 1))
 		btn.offsetY = (1 - btn.alpha) * 50
 	end
 
@@ -388,7 +393,7 @@ function Menu:draw()
 		end
 
 		local desiredTrackLengthWorld = wordWidth + cellSize
-		local shortenedTrackLengthWorld = math.max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 90)
+		local shortenedTrackLengthWorld = max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 90)
 		local targetTrackLengthBase = shortenedTrackLengthWorld / sawScale
 		if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
 			titleSaw.trackLength = targetTrackLengthBase
@@ -440,9 +445,9 @@ function Menu:draw()
 	love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
 
 	if dailyChallenge and dailyChallengeAnim > 0 then
-		local alpha = math.min(1, dailyChallengeAnim)
+		local alpha = min(1, dailyChallengeAnim)
 		local eased = alpha * alpha
-		local panelWidth = math.min(420, sw - 72)
+		local panelWidth = min(420, sw - 72)
 		local padding = UI.spacing.panelPadding or 16
 		local panelX = sw - panelWidth - 36
 		local headerFont = UI.fonts.small
@@ -465,7 +470,7 @@ function Menu:draw()
 		local streakHeight = 0
 
 		if statusBar then
-			ratio = math.max(0, math.min(statusBar.ratio or 0, 1))
+			ratio = max(0, min(statusBar.ratio or 0, 1))
 			if statusBar.textKey then
 				progressText = Localization:get(statusBar.textKey, statusBar.replacements)
 			end
@@ -478,8 +483,8 @@ function Menu:draw()
 			headerText = string.format("%s · +%d XP", headerText, dailyChallenge.xpReward)
 		end
 
-		local currentStreak = math.max(0, PlayerStats:get("dailyChallengeStreak") or 0)
-		local bestStreak = math.max(currentStreak, PlayerStats:get("dailyChallengeBestStreak") or 0)
+		local currentStreak = max(0, PlayerStats:get("dailyChallengeStreak") or 0)
+		local bestStreak = max(currentStreak, PlayerStats:get("dailyChallengeBestStreak") or 0)
 
 		if currentStreak > 0 then
 			streakLineArgs.streak = currentStreak
@@ -500,7 +505,7 @@ function Menu:draw()
 
 		if streakText then
 			local _, streakLinesWrapped = progressFont:getWrap(streakText, panelWidth - padding * 2)
-			local lineCount = math.max(1, #streakLinesWrapped)
+			local lineCount = max(1, #streakLinesWrapped)
 			streakHeight = lineCount * progressFont:getHeight()
 		end
 
@@ -516,7 +521,7 @@ function Menu:draw()
 			panelHeight = panelHeight + 8 + streakHeight
 		end
 
-		local panelY = math.max(36, sh - panelHeight - 36)
+		local panelY = max(36, sh - panelHeight - 36)
 
 		local mx, my = love.mouse.getPosition()
 		local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
@@ -611,16 +616,16 @@ function Menu:draw()
 
 			if dailyBarCelebration.active and ratio >= 0.999 then
 				local timer = dailyBarCelebration.time or 0
-                                local shimmerWidth = math.max(barWidth * 0.3, barHeight)
-                                local shimmerProgress = (math.sin(timer * 2.2) * 0.5) + 0.5
+                                local shimmerWidth = max(barWidth * 0.3, barHeight)
+                                local shimmerProgress = (sin(timer * 2.2) * 0.5) + 0.5
                                 local shimmerX = textX + shimmerProgress * (barWidth - shimmerWidth)
-                                local shimmerAlpha = 0.35 + 0.25 * math.sin(timer * 3.1)
+                                local shimmerAlpha = 0.35 + 0.25 * sin(timer * 3.1)
 
                                 setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
                                 UI.drawRoundedRect(shimmerX, textY, shimmerWidth, barHeight, 8)
 
 				for _, sparkle in ipairs(dailyBarCelebration.sparkles) do
-					local progress = math.min(1, sparkle.life / sparkle.duration)
+					local progress = min(1, sparkle.life / sparkle.duration)
 					local sparkleAlpha = (1 - progress) * alpha
 					if sparkleAlpha > 0 then
 						local sparkleX = textX + sparkle.x * barWidth

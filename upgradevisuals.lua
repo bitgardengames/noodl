@@ -1,5 +1,7 @@
 local RenderLayers = require("renderlayers")
 
+local floor = math.floor
+
 local UpgradeVisuals = {}
 UpgradeVisuals.effects = {}
 
@@ -158,7 +160,7 @@ function UpgradeVisuals:spawn(x, y, options)
 		badgeScale = options.badgeScale or 1,
 		badge = options.badge,
 		rotation = options.rotation or random() * pi * 2,
-		ringCount = max(1, math.floor(options.ringCount or 2)),
+		ringCount = max(1, floor(options.ringCount or 2)),
 		ringSpacing = options.ringSpacing or 10,
 		ringWidth = options.ringWidth or 4,
 		pulseDelay = options.pulseDelay or 0.12,
@@ -175,11 +177,11 @@ function UpgradeVisuals:spawn(x, y, options)
 		addBlend = options.addBlend ~= false,
 	}
 
-	effect.outerRadius = math.max(effect.outerRadius or 0, effect.innerRadius + 6)
+	effect.outerRadius = max(effect.outerRadius or 0, effect.innerRadius + 6)
 	if options.outerRadius and options.radius then
 		effect.outerRadius = options.outerRadius
 	elseif options.radius and not options.outerRadius then
-		effect.outerRadius = math.max(effect.innerRadius + 6, options.radius)
+		effect.outerRadius = max(effect.innerRadius + 6, options.radius)
 	end
 
 	effect.glowColor[4] = options.glowAlpha or (effect.glowColor[4] or 1) * 0.24
@@ -542,7 +544,7 @@ local function drawPrismRefraction(effect, progress)
 		love.graphics.setLineWidth(2.6)
 		local arcRadius = outerRadius * (0.82 + 0.12 * sin(progress * pi * 2))
 		local arcSpan = pi * 0.28
-		local arcCount = math.max(3, math.floor(shardCount / 2))
+		local arcCount = max(3, floor(shardCount / 2))
 		for index = 1, arcCount do
 			local angle = rotation + index * (pi * 2 / arcCount)
 			love.graphics.arc("line", "open", x, y, arcRadius, angle - arcSpan * 0.5, angle + arcSpan * 0.5, 18)
@@ -987,7 +989,7 @@ local function drawMoltingReflex(effect, progress)
 		love.graphics.circle("line", x, y, innerRadius * (1.2 + 0.4 * pulse), 36)
 		love.graphics.circle("line", x, y, innerRadius * (1.8 + 0.6 * pulse), 36)
 
-		local fleckCount = math.max(4, scaleCount)
+		local fleckCount = max(4, scaleCount)
 		love.graphics.setLineWidth(1)
 		for index = 1, fleckCount do
 			local angle = (effect.rotation or 0) + index * (pi * 2 / fleckCount) + progress * pi * 2
@@ -1229,7 +1231,7 @@ local function drawChronospiralCore(effect, progress)
 
 	local markerAlpha = (markerColor[4] or 1) * clamp01(1 - progress * 1.1) * spiralAlpha
 	if markerAlpha > 0 then
-		local markerCount = math.max(6, armCount * 4)
+		local markerCount = max(6, armCount * 4)
 		local baseRadius = innerRadius + (outerRadius - innerRadius) * progress
 		for index = 1, markerCount do
 			local angle = rotation + index * (pi * 2 / markerCount) + progress * pi * 2.6

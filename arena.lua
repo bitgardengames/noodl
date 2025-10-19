@@ -3,6 +3,14 @@ local Audio = require("audio")
 local Shaders = require("shaders")
 local RenderLayers = require("renderlayers")
 
+local abs = math.abs
+local ceil = math.ceil
+local floor = math.floor
+local max = math.max
+local min = math.min
+local pi = math.pi
+local sin = math.sin
+
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
 
@@ -32,9 +40,9 @@ end
 local function getHighlightColor(color)
 	color = color or {1, 1, 1, 1}
 
-	local r = math.min(1, color[1] * 1.2 + 0.08)
-	local g = math.min(1, color[2] * 1.2 + 0.08)
-	local b = math.min(1, color[3] * 1.2 + 0.08)
+	local r = min(1, color[1] * 1.2 + 0.08)
+	local g = min(1, color[2] * 1.2 + 0.08)
+	local b = min(1, color[3] * 1.2 + 0.08)
 	local a = (color[4] or 1) * 0.75
 
 	return {r, g, b, a}
@@ -45,7 +53,7 @@ local function normalizeCellCoordinate(value)
 		return nil
 	end
 
-	return math.floor(value + 0.5)
+	return floor(value + 0.5)
 end
 
 local function drawSpawnDebugOverlay(self)
@@ -65,7 +73,7 @@ local function drawSpawnDebugOverlay(self)
 		end
 
 		local tileSize = self.tileSize or 24
-		local radius = math.min(8, tileSize * 0.35)
+		local radius = min(8, tileSize * 0.35)
 
 		if fillColor then
 			love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.22)
@@ -241,15 +249,15 @@ function Arena:clearSpawnDebugData()
 end
 
 function Arena:updateScreenBounds(sw, sh)
-	self.x = math.floor((sw - self.width) / 2)
-	self.y = math.floor((sh - self.height) / 2)
+	self.x = floor((sw - self.width) / 2)
+	self.y = floor((sh - self.height) / 2)
 
 	-- snap x,y to nearest tile boundary so centers align
 	self.x = self.x - (self.x % self.tileSize)
 	self.y = self.y - (self.y % self.tileSize)
 
-	self.cols = math.floor(self.width / self.tileSize)
-	self.rows = math.floor(self.height / self.tileSize)
+	self.cols = floor(self.width / self.tileSize)
+	self.rows = floor(self.height / self.tileSize)
 
 	if self.rebuildTileDecorations then
 		self:rebuildTileDecorations()
@@ -267,12 +275,12 @@ function Arena:getCenterOfTile(col, row)
 end
 
 function Arena:getTileFromWorld(x, y)
-	local col = math.floor((x - self.x) / self.tileSize) + 1
-	local row = math.floor((y - self.y) / self.tileSize) + 1
+	local col = floor((x - self.x) / self.tileSize) + 1
+	local row = floor((y - self.y) / self.tileSize) + 1
 
 	-- clamp inside arena grid
-	col = math.max(1, math.min(self.cols, col))
-	row = math.max(1, math.min(self.rows, row))
+	col = max(1, min(self.cols, col))
+	row = max(1, min(self.rows, row))
 
 	return col, row
 end
@@ -294,7 +302,7 @@ function Arena:setFloorDecorations(floorNum, floorData)
 	end
 
 	local seed = os.time()
-	seed = seed + math.floor(love.timer.getTime() * 1000)
+	seed = seed + floor(love.timer.getTime() * 1000)
 
 	self._decorationConfig = {
 		floor = floorNum or 0,
@@ -396,7 +404,7 @@ function Arena:rebuildTileDecorations()
 		clusterChance = clusterChance + 0.02
 		maxClusterSize = maxClusterSize + 1
 	elseif theme == "machine" then
-		clusterChance = math.max(0.06, clusterChance - 0.02)
+		clusterChance = max(0.06, clusterChance - 0.02)
 		colorJitter = 0.015
 	elseif theme == "oceanic" then
 		clusterChance = clusterChance + 0.01
@@ -405,7 +413,7 @@ function Arena:rebuildTileDecorations()
 	end
 
 	clusterChance = clusterChance * (0.85 + rng:random() * 0.35)
-	clusterChance = math.max(0, math.min(0.25, clusterChance))
+	clusterChance = max(0, min(0.25, clusterChance))
 
 	local decorations = {}
 	local occupied = {}
@@ -471,7 +479,7 @@ function Arena:rebuildTileDecorations()
 				base = baseAlpha,
 				amplitude = fadeAmplitude,
 				speed = fadeSpeed,
-				offset = rng:random() * math.pi * 2,
+				offset = rng:random() * pi * 2,
 			},
 		}
 	end
@@ -504,7 +512,7 @@ function Arena:rebuildTileDecorations()
 						end
 					end
 
-					local size = math.min(tileSize * (0.48 + rng:random() * 0.18), tileSize)
+					local size = min(tileSize * (0.48 + rng:random() * 0.18), tileSize)
 					local radius = size * (0.18 + rng:random() * 0.14)
 
 					for i = 1, #clusterCells do
@@ -541,7 +549,7 @@ function Arena:drawTileDecorations()
 			local fade = deco.fade
 			if fade and fade.amplitude and fade.amplitude > 0 then
 				local time = love.timer.getTime()
-				local oscillation = math.sin(time * (fade.speed or 1) + (fade.offset or 0))
+				local oscillation = sin(time * (fade.speed or 1) + (fade.offset or 0))
 				local factor = 1 + oscillation * fade.amplitude
 				alpha = clamp01((fade.base or alpha) * factor)
 			end
@@ -579,11 +587,11 @@ function Arena:_ensureArenaNoiseTexture()
 end
 
 function Arena:_rebuildArenaInsetMesh(ax, ay, aw, ah)
-	local inset = math.max(10, math.floor(math.min(aw, ah) * 0.04))
+	local inset = max(10, floor(min(aw, ah) * 0.04))
 	local innerX = ax + inset
 	local innerY = ay + inset
-	local innerW = math.max(0, aw - inset * 2)
-	local innerH = math.max(0, ah - inset * 2)
+	local innerW = max(0, aw - inset * 2)
+	local innerH = max(0, ah - inset * 2)
 
 	local borderColor = Theme.arenaBorder or {0.2, 0.2, 0.25, 1}
 	local r = mixChannel(borderColor[1] or 0.2, 0.0, 0.7)
@@ -795,10 +803,10 @@ function Arena:drawBorder()
 	local bx, by = ax - ox, ay - oy
 	local bw, bh = aw + ox * 2, ah + oy * 2
 
-	local borderFlare = math.max(0, math.min(1.2, self.borderFlare or 0))
+	local borderFlare = max(0, min(1.2, self.borderFlare or 0))
 	local flarePulse = 0
 	if borderFlare > 0 then
-		flarePulse = (math.sin((self.borderFlareTimer or 0) * 9.0) + 1) * 0.5
+		flarePulse = (sin((self.borderFlareTimer or 0) * 9.0) + 1) * 0.5
 	end
 
 	-- Create/reuse MSAA canvas
@@ -822,7 +830,7 @@ function Arena:drawBorder()
 	-- Fill (arena border color)
 	local borderColor = Theme.arenaBorder
 	if borderFlare > 0 and borderColor then
-		local mixAmount = math.min(0.45, 0.32 * borderFlare + 0.18 * flarePulse * borderFlare)
+		local mixAmount = min(0.45, 0.32 * borderFlare + 0.18 * flarePulse * borderFlare)
 		local r = mixChannel(borderColor[1] or 1, 0.96, mixAmount)
 		local g = mixChannel(borderColor[2] or 1, 0.24, mixAmount * 1.05)
 		local b = mixChannel(borderColor[3] or 1, 0.18, mixAmount * 1.1)
@@ -849,7 +857,7 @@ function Arena:drawBorder()
 				local t = i / segments
 				local angle = startAngle + (endAngle - startAngle) * t
 				points[#points + 1] = cx + math.cos(angle) * radius - highlightShift
-				points[#points + 1] = cy + math.sin(angle) * radius - highlightShift
+				points[#points + 1] = cy + sin(angle) * radius - highlightShift
 			end
 		end
 	end
@@ -860,24 +868,24 @@ function Arena:drawBorder()
 	if borderFlare > 0 then
 		-- Ease the flare towards a softer pastel tint instead of a harsh glow.
 		-- This keeps the pickup celebration visible while avoiding a sharp contrast.
-		highlight[1] = math.min(1, mixChannel(highlight[1], 0.97, 0.35 * borderFlare))
-		highlight[2] = math.max(0, mixChannel(highlight[2], 0.3, 0.48 * borderFlare))
-		highlight[3] = math.max(0, mixChannel(highlight[3], 0.25, 0.52 * borderFlare))
-		highlight[4] = math.min(1, highlight[4] * (1 + 0.45 * borderFlare))
+		highlight[1] = min(1, mixChannel(highlight[1], 0.97, 0.35 * borderFlare))
+		highlight[2] = max(0, mixChannel(highlight[2], 0.3, 0.48 * borderFlare))
+		highlight[3] = max(0, mixChannel(highlight[3], 0.25, 0.52 * borderFlare))
+		highlight[4] = min(1, highlight[4] * (1 + 0.45 * borderFlare))
 	end
 
 	local highlightAlpha = highlight[4] or 0
 	local highlightOffset = 2
 	if highlightAlpha > 0 then
-		local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
+		local highlightWidth = max(1.5, thickness * (0.26 + 0.12 * borderFlare))
 		local cornerOffsetX = 3
 		local cornerOffsetY = 3
-		local scissorX = math.floor(bx - highlightWidth - highlightOffset - highlightShift)
-		local scissorY = math.floor(by - highlightWidth - highlightOffset - highlightShift)
-		local scissorW = math.ceil(bw + highlightWidth * 2 + highlightOffset + highlightShift * 2)
-		local scissorH = math.ceil(bh + highlightWidth * 2 + highlightOffset + highlightShift * 2)
+		local scissorX = floor(bx - highlightWidth - highlightOffset - highlightShift)
+		local scissorY = floor(by - highlightWidth - highlightOffset - highlightShift)
+		local scissorW = ceil(bw + highlightWidth * 2 + highlightOffset + highlightShift * 2)
+		local scissorH = ceil(bh + highlightWidth * 2 + highlightOffset + highlightShift * 2)
 		local outerRadius = radius + highlightOffset
-		local arcSegments = math.max(6, math.floor(outerRadius * 0.75))
+		local arcSegments = max(6, floor(outerRadius * 0.75))
 
 		local topPoints = {}
 		topPoints[#topPoints + 1] = bx + bw - radius - highlightShift
@@ -885,7 +893,7 @@ function Arena:drawBorder()
 		topPoints[#topPoints + 1] = bx + radius - highlightShift
 		topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
 		local cornerStartIndex = #topPoints + 1
-		appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -math.pi / 2, -math.pi, arcSegments, true)
+		appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -pi / 2, -pi, arcSegments, true)
 		for i = cornerStartIndex, #topPoints, 2 do
 			topPoints[i] = topPoints[i] + cornerOffsetX
 			topPoints[i + 1] = topPoints[i + 1] + cornerOffsetY
@@ -906,11 +914,11 @@ function Arena:drawBorder()
 		love.graphics.setLineWidth(highlightWidth)
 
 		-- Top edge highlight
-		love.graphics.setScissor(scissorX, scissorY, scissorW, math.ceil(highlightWidth * 2.4 + cornerOffsetY))
+		love.graphics.setScissor(scissorX, scissorY, scissorW, ceil(highlightWidth * 2.4 + cornerOffsetY))
 		love.graphics.line(topPoints)
 
 		-- Left edge highlight
-		love.graphics.setScissor(scissorX, scissorY, math.ceil(highlightWidth * 2.4), scissorH)
+		love.graphics.setScissor(scissorX, scissorY, ceil(highlightWidth * 2.4), scissorH)
 		love.graphics.line(leftPoints)
 
 		love.graphics.setScissor()
@@ -929,7 +937,7 @@ function Arena:drawBorder()
 		love.graphics.setLineWidth(thickness + outlineSize * (1.05 + 0.25 * glowStrength))
 		love.graphics.setColor(0.96, 0.32, 0.24, glowAlpha)
 		love.graphics.rectangle("line", bx, by, bw, bh, radius + 4 + glowStrength * 3.0, radius + 4 + glowStrength * 3.0)
-		love.graphics.setLineWidth(math.max(2, thickness * 0.55))
+		love.graphics.setLineWidth(max(2, thickness * 0.55))
 		love.graphics.setColor(0.55, 0.08, 0.06, emberAlpha)
 		love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 		love.graphics.pop()
@@ -942,7 +950,7 @@ function Arena:drawBorder()
 	local leftCapY = by + bh - radius - highlightShift
 
 	if highlightAlpha > 0 then
-		local highlightWidth = math.max(1.5, thickness * (0.26 + 0.12 * borderFlare))
+		local highlightWidth = max(1.5, thickness * (0.26 + 0.12 * borderFlare))
 		local capRadius = highlightWidth * 0.7
 		local featherRadius = capRadius * (1.9 + 0.35 * borderFlare)
 		local capAlpha = highlightAlpha * (0.4 + 0.22 * borderFlare)
@@ -1041,8 +1049,8 @@ function Arena:spawnExit()
 
 		if snakeSegments then
 			for _, seg in ipairs(snakeSegments) do
-				local dx = math.abs((seg.drawX or 0) - cx)
-				local dy = math.abs((seg.drawY or 0) - cy)
+				local dx = abs((seg.drawX or 0) - cx)
+				local dy = abs((seg.drawY or 0) - cy)
 				if dx < halfThreshold and dy < halfThreshold then
 					return false
 				end
@@ -1079,8 +1087,8 @@ function Arena:spawnExit()
 		end
 	end
 
-	chosenCol = chosenCol or math.floor(self.cols / 2)
-	chosenRow = chosenRow or math.floor(self.rows / 2)
+	chosenCol = chosenCol or floor(self.cols / 2)
+	chosenRow = chosenRow or floor(self.rows / 2)
 
 	if SnakeUtils and SnakeUtils.setOccupied then
 		SnakeUtils.setOccupied(chosenCol, chosenRow, true)
@@ -1122,12 +1130,12 @@ function Arena:update(dt)
 		end
 
 		if baseStrength and baseStrength > 0 then
-			local duration = math.max(0.35, self.borderFlareDuration or 1.05)
-			local timer = math.min(duration, (self.borderFlareTimer or 0) + dt)
-			local progress = math.min(1, timer / duration)
+			local duration = max(0.35, self.borderFlareDuration or 1.05)
+			local timer = min(duration, (self.borderFlareTimer or 0) + dt)
+			local progress = min(1, timer / duration)
 			local fade = 1 - (progress * progress * (3 - 2 * progress))
 
-			self.borderFlare = math.max(0, baseStrength * fade)
+			self.borderFlare = max(0, baseStrength * fade)
 			self.borderFlareTimer = timer
 
 			if progress >= 1 then
@@ -1147,7 +1155,7 @@ function Arena:update(dt)
 	end
 
 	if self.exit.anim < 1 then
-		self.exit.anim = math.min(1, self.exit.anim + dt / self.exit.animTime)
+		self.exit.anim = min(1, self.exit.anim + dt / self.exit.animTime)
 	end
 
 	self.exit.time = (self.exit.time or 0) + dt
@@ -1186,7 +1194,7 @@ function Arena:drawExit()
 		local cx, cy = exit.x, exit.y
 		local time = exit.time or 0
 
-		local rimRadius = radius * (1.05 + 0.03 * math.sin(time * 1.3))
+		local rimRadius = radius * (1.05 + 0.03 * sin(time * 1.3))
 		love.graphics.setColor(0.16, 0.15, 0.19, 1)
 		love.graphics.circle("fill", cx, cy, rimRadius, 48)
 
@@ -1194,16 +1202,16 @@ function Arena:drawExit()
 		love.graphics.circle("fill", cx, cy, radius * 0.94, 48)
 
 		love.graphics.setColor(0.06, 0.05, 0.07, 1)
-		love.graphics.circle("fill", cx, cy, radius * (0.78 + 0.05 * math.sin(time * 2.1)), 48)
+		love.graphics.circle("fill", cx, cy, radius * (0.78 + 0.05 * sin(time * 2.1)), 48)
 
 		love.graphics.setColor(0.0, 0.0, 0.0, 1)
-		love.graphics.circle("fill", cx, cy, radius * (0.58 + 0.04 * math.sin(time * 1.7)), 48)
+		love.graphics.circle("fill", cx, cy, radius * (0.58 + 0.04 * sin(time * 1.7)), 48)
 
 		love.graphics.setColor(0.22, 0.20, 0.24, 0.85 * eased)
-		love.graphics.arc("fill", cx, cy, radius * 0.98, -math.pi * 0.65, -math.pi * 0.05, 32)
+		love.graphics.arc("fill", cx, cy, radius * 0.98, -pi * 0.65, -pi * 0.05, 32)
 
 		love.graphics.setColor(0, 0, 0, 0.45 * eased)
-		love.graphics.arc("fill", cx, cy, radius * 0.72, math.pi * 0.2, math.pi * 1.05, 32)
+		love.graphics.arc("fill", cx, cy, radius * 0.72, pi * 0.2, pi * 1.05, 32)
 
 		love.graphics.setColor(0.04, 0.04, 0.05, 0.9 * eased)
 		love.graphics.setLineWidth(2)
@@ -1213,13 +1221,13 @@ function Arena:drawExit()
 end
 
 function Arena:triggerBorderFlare(strength, duration)
-	local amount = math.max(0, strength or 0)
+	local amount = max(0, strength or 0)
 	if amount <= 0 then
 		return
 	end
 
 	local existing = self.borderFlare or 0
-	local newStrength = math.min(1.2, existing + amount)
+	local newStrength = min(1.2, existing + amount)
 	self.borderFlare = newStrength
 	self.borderFlareStrength = newStrength
 	self.borderFlareTimer = 0

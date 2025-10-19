@@ -5,6 +5,11 @@ local SnakeUtils = require("snakeutils")
 local Audio = require("audio")
 local RenderLayers = require("renderlayers")
 
+local max = math.max
+local min = math.min
+local pi = math.pi
+local insert = table.insert
+
 local Rocks = {}
 local current = {}
 
@@ -30,15 +35,15 @@ local function generateRockShape(size, seed)
 
 	local points = {}
 	local sides = rng:random(12, 16) -- more segments = rounder
-	local step = (math.pi * 2) / sides
+	local step = (pi * 2) / sides
 	local baseRadius = size * 0.45
 
 	for i = 1, sides do
 		local angle = step * i
 		-- slight wobble so it’s lumpy, but no sharp spikes
 		local r = baseRadius * (0.9 + rng:random() * 0.2)
-		table.insert(points, math.cos(angle) * r)
-		table.insert(points, math.sin(angle) * r)
+		insert(points, math.cos(angle) * r)
+		insert(points, math.sin(angle) * r)
 	end
 
 	return points
@@ -59,9 +64,9 @@ end
 
 local function getHighlightColor(color)
 	color = color or {1, 1, 1, 1}
-	local r = math.min(1, color[1] * 1.2 + 0.08)
-	local g = math.min(1, color[2] * 1.2 + 0.08)
-	local b = math.min(1, color[3] * 1.2 + 0.08)
+	local r = min(1, color[1] * 1.2 + 0.08)
+	local g = min(1, color[2] * 1.2 + 0.08)
+	local b = min(1, color[3] * 1.2 + 0.08)
 	local a = (color[4] or 1) * 0.75
 	return {r, g, b, a}
 end
@@ -105,7 +110,7 @@ local function buildRockHighlight(points)
 			local len = math.sqrt(dx * dx + dy * dy)
 
 			if len > 0 then
-				local scale = math.max(0, (len - inset) / len)
+				local scale = max(0, (len - inset) / len)
 				highlight[i] = cx + dx * scale
 				highlight[i + 1] = cy + dy * scale
 			end
@@ -121,7 +126,7 @@ end
 
 function Rocks:spawn(x, y)
 	local col, row = Arena:getTileFromWorld(x, y)
-	table.insert(current, {
+	insert(current, {
 		x = x,
 		y = y,
 		w = ROCK_SIZE,
@@ -178,8 +183,8 @@ local function spawnShatterFX(x, y)
 		life = 0.45,
 		size = 3.8,
 		color = primary,
-		spread = math.pi * 2,
-		angleJitter = math.pi * 0.9,
+		spread = pi * 2,
+		angleJitter = pi * 0.9,
 		drag = 3.1,
 		gravity = 240,
 		scaleMin = 0.54,
@@ -194,8 +199,8 @@ local function spawnShatterFX(x, y)
 		life = 0.32,
 		size = 2.4,
 		color = highlight,
-		spread = math.pi * 2,
-		angleJitter = math.pi,
+		spread = pi * 2,
+		angleJitter = pi,
 		drag = 1.5,
 		gravity = 190,
 		scaleMin = 0.38,
@@ -241,7 +246,7 @@ function Rocks:triggerHitFlash(target)
 		return
 	end
 
-	target.hitFlashTimer = math.max(target.hitFlashTimer or 0, HIT_FLASH_DURATION)
+	target.hitFlashTimer = max(target.hitFlashTimer or 0, HIT_FLASH_DURATION)
 end
 
 function Rocks:shatterNearest(x, y, count)
@@ -324,11 +329,11 @@ function Rocks:update(dt)
 		rock.timer = rock.timer + dt
 
 		if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
-			rock.hitFlashTimer = math.max(0, rock.hitFlashTimer - dt)
+			rock.hitFlashTimer = max(0, rock.hitFlashTimer - dt)
 		end
 
 		if rock.phase == "drop" then
-			local progress = math.min(rock.timer / SPAWN_DURATION, 1)
+			local progress = min(rock.timer / SPAWN_DURATION, 1)
 			rock.offsetY = -40 * (1 - progress)
 			rock.scaleY = progress
 			rock.scaleX = progress
@@ -343,8 +348,8 @@ function Rocks:update(dt)
 					life = 0.4,
 					size = 3,
 					color = {0.6, 0.5, 0.4, 1},
-					spread = math.pi * 2,
-					angleJitter = math.pi * 0.85,
+					spread = pi * 2,
+					angleJitter = pi * 0.85,
 					drag = 2.2,
 					gravity = 160,
 					scaleMin = 0.6,
@@ -354,7 +359,7 @@ function Rocks:update(dt)
 			end
 
 		elseif rock.phase == "squash" then
-			local progress = math.min(rock.timer / SQUASH_DURATION, 1)
+			local progress = min(rock.timer / SQUASH_DURATION, 1)
 			rock.scaleX = 1 + 0.3 * (1 - progress)
 			rock.scaleY = 1 - 0.3 * (1 - progress)
 			rock.offsetY = 0

@@ -1,5 +1,7 @@
 local UI = require("ui")
 
+local abs = math.abs
+
 local Screen = {
 	width = nil,
 	height = nil,
@@ -53,7 +55,7 @@ function Screen:update(dt, instant)
 	local snapThreshold = self.snapThreshold
 
 	if snapThreshold and snapThreshold > 0 then
-		if math.abs(deltaWidth) > snapThreshold or math.abs(deltaHeight) > snapThreshold then
+		if abs(deltaWidth) > snapThreshold or abs(deltaHeight) > snapThreshold then
 			self.width, self.height = actualWidth, actualHeight
 			updateCenter(self)
 			return self.width, self.height

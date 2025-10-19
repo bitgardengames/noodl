@@ -1,6 +1,9 @@
 local Settings = require("settings")
 local RenderLayers = require("renderlayers")
 
+local max = math.max
+local pi = math.pi
+
 local atan2 = math.atan2 or function(y, x)
 	return math.atan(y, x)
 end
@@ -67,7 +70,7 @@ function Particles:spawnBurst(x, y, options)
 	options = options or {}
 
 	local list = self.list
-	local count = math.max(0, options.count or 6)
+	local count = max(0, options.count or 6)
 	local speed = options.speed or 60
 	local life = options.life or 0.4
 	local baseSize = options.size or 4
@@ -79,11 +82,11 @@ function Particles:spawnBurst(x, y, options)
 	if startAlpha == nil then
 		startAlpha = 1
 	end
-	local spread = options.spread or math.pi * 2
+	local spread = options.spread or pi * 2
 	local angleJitter = options.angleJitter or ANGLE_JITTER
-	local speedVariance = math.max(0, options.speedVariance or SPEED_VARIANCE)
-	local scaleMin = math.max(0, options.scaleMin or SCALE_MIN)
-	local scaleVariance = math.max(0, options.scaleVariance or SCALE_VARIANCE)
+	local speedVariance = max(0, options.speedVariance or SPEED_VARIANCE)
+	local scaleMin = max(0, options.scaleMin or SCALE_MIN)
+	local scaleVariance = max(0, options.scaleVariance or SCALE_VARIANCE)
 	local drag = options.drag or 0
 	local gravity = options.gravity or 0
 	local fadeTo = options.fadeTo
@@ -143,7 +146,7 @@ function Particles:update(dt)
 			p.y = p.y + p.vy * dt
 
 			if p.drag and p.drag > 0 then
-				local dragFactor = math.max(0, 1 - dt * p.drag)
+				local dragFactor = max(0, 1 - dt * p.drag)
 				p.vx = p.vx * dragFactor
 				p.vy = p.vy * dragFactor
 			end
@@ -218,8 +221,8 @@ function Particles:spawnBlood(x, y, options)
 
 	local dirX, dirY = normalizeDirection(options.dirX or 0, options.dirY or -1)
 	local baseAngle = atan2(dirY, dirX)
-	local spraySpread = options.spread or (math.pi * 0.55)
-	local sprayCount = math.max(0, options.count or 14)
+	local spraySpread = options.spread or (pi * 0.55)
+	local sprayCount = max(0, options.count or 14)
 
 	if sprayCount > 0 then
 		self:spawnBurst(x, y, {
@@ -231,14 +234,14 @@ function Particles:spawnBlood(x, y, options)
 			color = options.color or {0.8, 0.08, 0.12, 1},
 			spread = spraySpread,
 			angleOffset = baseAngle - spraySpread * 0.5,
-			angleJitter = options.angleJitter or (math.pi * 0.35),
+			angleJitter = options.angleJitter or (pi * 0.35),
 			drag = options.drag or 2.1,
 			gravity = options.gravity or 280,
 			fadeTo = options.fadeTo or 0.1,
 		})
 	end
 
-	local dropletCount = math.max(0, options.dropletCount or 8)
+	local dropletCount = max(0, options.dropletCount or 8)
 	if dropletCount > 0 then
 		self:spawnBurst(x, y, {
 			count = dropletCount,
@@ -247,9 +250,9 @@ function Particles:spawnBlood(x, y, options)
 			life = options.dropletLife or 0.62,
 			size = options.dropletSize or 2.3,
 			color = options.dropletColor or {0.62, 0.05, 0.08, 0.85},
-			spread = math.pi * 2,
+			spread = pi * 2,
 			angleOffset = 0,
-			angleJitter = options.dropletAngleJitter or math.pi,
+			angleJitter = options.dropletAngleJitter or pi,
 			drag = options.dropletDrag or 3.4,
 			gravity = options.dropletGravity or 340,
 			fadeTo = options.dropletFadeTo or 0,

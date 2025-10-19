@@ -13,6 +13,12 @@ local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 local Achievements = require("achievements")
 
+local abs = math.abs
+local max = math.max
+local min = math.min
+local pi = math.pi
+local sqrt = math.sqrt
+
 local Movement = {}
 
 function Movement:applyForcedDirection(dirX, dirY)
@@ -42,7 +48,7 @@ local PORTAL_ENTRY_BURST_OPTIONS = {
         life = 0.5,
         size = 5,
         color = {0.9, 0.75, 0.3, 1},
-        spread = math.pi * 2,
+        spread = pi * 2,
         fadeTo = 0.1,
 }
 
@@ -53,7 +59,7 @@ local PORTAL_EXIT_BURST_OPTIONS = {
         life = 0.55,
         size = 5,
         color = {1.0, 0.88, 0.4, 1},
-        spread = math.pi * 2,
+        spread = pi * 2,
         fadeTo = 0.05,
 }
 
@@ -64,8 +70,8 @@ local WALL_SHIELD_BURST_OPTIONS = {
         life = 0.45,
         size = 4,
         color = {0.55, 0.85, 1, 1},
-        spread = math.pi * 2,
-        angleJitter = math.pi * 0.75,
+        spread = pi * 2,
+        angleJitter = pi * 0.75,
         drag = 3.2,
         gravity = 180,
         scaleMin = 0.5,
@@ -80,8 +86,8 @@ local ROCK_DASH_BURST_OPTIONS = {
         life = 0.35,
         size = 4,
         color = {1.0, 0.78, 0.32, 1},
-        spread = math.pi * 2,
-        angleJitter = math.pi * 0.6,
+        spread = pi * 2,
+        angleJitter = pi * 0.6,
         drag = 3.0,
         gravity = 180,
         scaleMin = 0.5,
@@ -96,8 +102,8 @@ local ROCK_SHIELD_BURST_OPTIONS = {
         life = 0.4,
         size = 3,
         color = {0.9, 0.8, 0.5, 1},
-        spread = math.pi * 2,
-        angleJitter = math.pi * 0.8,
+        spread = pi * 2,
+        angleJitter = pi * 0.8,
         drag = 2.8,
         gravity = 210,
         scaleMin = 0.55,
@@ -112,8 +118,8 @@ local SAW_SHIELD_BURST_OPTIONS = {
         life = 0.32,
         size = 2.2,
         color = {1.0, 0.9, 0.45, 1},
-        spread = math.pi * 2,
-        angleJitter = math.pi * 0.9,
+        spread = pi * 2,
+        angleJitter = pi * 0.9,
         drag = 3.2,
         gravity = 240,
         scaleMin = 0.4,
@@ -128,8 +134,8 @@ local LASER_SHIELD_BURST_OPTIONS = {
         life = 0.25,
         size = 2.5,
         color = {1.0, 0.55, 0.25, 1},
-        spread = math.pi * 2,
-        angleJitter = math.pi,
+        spread = pi * 2,
+        angleJitter = pi,
         drag = 3.4,
         gravity = 120,
         scaleMin = 0.45,
@@ -202,8 +208,8 @@ local function rerouteAlongWall(headX, headY)
 	local top = ay + inset
 	local bottom = ay + ah - inset
 
-	local clampedX = math.max(left + 1, math.min(right - 1, headX or left))
-	local clampedY = math.max(top + 1, math.min(bottom - 1, headY or top))
+	local clampedX = max(left + 1, min(right - 1, headX or left))
+	local clampedY = max(top + 1, min(bottom - 1, headY or top))
 
 	local hitLeft = (headX or clampedX) <= left
 	local hitRight = (headX or clampedX) >= right
@@ -237,7 +243,7 @@ local function rerouteAlongWall(headX, headY)
 
 	local collidedHorizontal = hitLeft or hitRight
 	local collidedVertical = hitTop or hitBottom
-	local horizontalDominant = math.abs(dir.x or 0) >= math.abs(dir.y or 0)
+	local horizontalDominant = abs(dir.x or 0) >= abs(dir.y or 0)
 
 	if collidedHorizontal and collidedVertical then
 		if horizontalDominant then
@@ -356,7 +362,7 @@ local function portalThroughWall(headX, headY)
 	local entryX = clamp(headX, left, right)
 	local entryY = clamp(headY, top, bottom)
 
-	local margin = math.max(4, math.floor(Arena.tileSize * 0.3))
+	local margin = max(4, math.floor(Arena.tileSize * 0.3))
 	local function insideX(x)
 		return clamp(x, left + margin, right - margin)
 	end
@@ -558,7 +564,7 @@ local function handleSawCollision(headX, headY)
 			if sx and sy then
 				local dx = (headX or sx) - sx
 				local dy = (headY or sy) - sy
-				local dist = math.sqrt(dx * dx + dy * dy)
+				local dist = sqrt(dx * dx + dy * dy)
 				local pushDist = SEGMENT_SIZE
 				if dist > 1e-4 then
 					normalX = dx / dist
@@ -634,7 +640,7 @@ local function handleLaserCollision(headX, headY)
 			local ly = laserHit.impactY or laserHit.y or headY
 			local dx = (headX or lx) - lx
 			local dy = (headY or ly) - ly
-			local dist = math.sqrt(dx * dx + dy * dy)
+			local dist = sqrt(dx * dx + dy * dy)
 			local pushDist = SEGMENT_SIZE
 			if dist > 1e-4 then
 				pushX = (dx / dist) * pushDist
@@ -727,8 +733,8 @@ local function handleDartCollision(headX, headY)
 		life = 0.28,
 		size = 2.6,
 		color = Theme and Theme.laserColor or {1.0, 0.5, 0.3, 1},
-		spread = math.pi * 2,
-		angleJitter = math.pi,
+		spread = pi * 2,
+		angleJitter = pi,
 		drag = 3.1,
 		gravity = 120,
 		scaleMin = 0.42,

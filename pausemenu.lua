@@ -4,6 +4,8 @@ local Localization = require("localization")
 local UI = require("ui")
 local Theme = require("theme")
 
+local max = math.max
+
 local PauseMenu = {}
 
 local alpha = 0
@@ -150,7 +152,7 @@ function PauseMenu:load(screenWidth, screenHeight)
 
 	local titleHeight = UI.fonts.subtitle:getHeight()
 	local headerSpacing = UI.spacing.sectionSpacing * 0.5
-	local buttonArea = count * buttonHeight + math.max(0, count - 1) * spacing
+	local buttonArea = count * buttonHeight + max(0, count - 1) * spacing
 	local panelPadding = UI.spacing.panelPadding
 	local panelWidth = buttonWidth + panelPadding * 2
 	local panelHeight = panelPadding + titleHeight + headerSpacing + buttonArea + panelPadding
@@ -205,7 +207,7 @@ function PauseMenu:update(dt, isPaused, floorNumber, floorName)
 	if isPaused then
 		alpha = math.min(alpha + dt * fadeSpeed, 1)
 	else
-		alpha = math.max(alpha - dt * fadeSpeed, 0)
+		alpha = max(alpha - dt * fadeSpeed, 0)
 	end
 
 	if alpha > 0 then

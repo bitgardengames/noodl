@@ -10,6 +10,15 @@ local MetaProgression = require("metaprogression")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 
+local abs = math.abs
+local floor = math.floor
+local max = math.max
+local min = math.min
+local pi = math.pi
+local sin = math.sin
+local insert = table.insert
+local remove = table.remove
+
 local GameOver = {isVictory = false}
 
 local unpack = unpack
@@ -160,7 +169,7 @@ local function formatXpValue(value)
 		number = -number
 	end
 
-	local integer = math.floor(number + 0.5)
+	local integer = floor(number + 0.5)
 	local digits = tostring(integer)
 	local reversed = digits:reverse():gsub("(%d%d%d)", "%1,")
 	local formatted = reversed:reverse():gsub("^,", "")
@@ -173,7 +182,7 @@ local function measureXpPanelHeight(self, width, celebrationCount)
 		return 0
 	end
 
-	width = math.max(0, width or 0)
+	width = max(0, width or 0)
 	if width <= 0 then
 		return 0
 	end
@@ -188,16 +197,16 @@ local function measureXpPanelHeight(self, width, celebrationCount)
 	height = height + 6 + smallHeight
 	height = height + 18
 
-	local maxRadius = math.max(48, math.min(74, (width / 2) - 24))
-	local ringThickness = math.max(14, math.min(24, maxRadius * 0.42))
-	local ringRadius = math.max(32, maxRadius - ringThickness * 0.25)
+	local maxRadius = max(48, min(74, (width / 2) - 24))
+	local ringThickness = max(14, min(24, maxRadius * 0.42))
+	local ringRadius = max(32, maxRadius - ringThickness * 0.25)
 	local outerRadius = ringRadius + ringThickness * 0.45
 
 	height = height + ringRadius + outerRadius
 	height = height + 18
 
 	local breakdown = (self.progression and self.progression.breakdown) or {}
-	local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
+	local bonusXP = max(0, floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
 	if bonusXP > 0 then
 		height = height + smallHeight + 6
 	end
@@ -211,12 +220,12 @@ local function measureXpPanelHeight(self, width, celebrationCount)
 	height = height + smallHeight
 	height = height + 16
 
-	local count = math.max(0, celebrationCount or 0)
+	local count = max(0, celebrationCount or 0)
 	if count > 0 then
 		height = height + count * getCelebrationEntrySpacing()
 	end
 
-	return math.max(160, height)
+	return max(160, height)
 end
 
 local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
@@ -286,7 +295,7 @@ local function configureBackgroundEffect()
 	local vignette
 
 	if GameOver.isVictory then
-		effect.backdropIntensity = math.min(0.9, (defaultBackdrop or 0.72) + 0.08)
+		effect.backdropIntensity = min(0.9, (defaultBackdrop or 0.72) + 0.08)
 
 		accent = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or accent), 0.32)
 		accent[4] = 1
@@ -304,7 +313,7 @@ local function configureBackgroundEffect()
 			thickness = nil,
 		}
 	else
-		effect.backdropIntensity = math.max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
+		effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
 
 		local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
 		accent = lightenColor(copyColor(coolAccent), 0.18)
@@ -404,11 +413,11 @@ local function spawnFruitAnimation(anim)
 		local centerY = metrics.centerY or 0
 		local radius = metrics.outerRadius or metrics.radius or 56
 		local launchOffsetX = randomRange(-radius * 0.6, radius * 0.6)
-		local launchLift = math.max(radius * 0.8, 54)
+		local launchLift = max(radius * 0.8, 54)
 		local launchX = centerX + launchOffsetX
 		local launchY = centerY - radius - launchLift
 		local controlX = (launchX + centerX) / 2 + randomRange(-radius * 0.25, radius * 0.25)
-		local controlY = math.min(launchY, centerY) - math.max(radius * 0.75, 48)
+		local controlY = min(launchY, centerY) - max(radius * 0.75, 48)
 
 		fruit = {
 			timer = 0,
@@ -422,24 +431,24 @@ local function spawnFruitAnimation(anim)
 			scaleStart = randomRange(0.42, 0.52),
 			scalePeak = randomRange(0.68, 0.82),
 			scaleEnd = randomRange(0.50, 0.64),
-			wobbleSeed = love.math.random() * math.pi * 2,
+			wobbleSeed = love.math.random() * pi * 2,
 			wobbleSpeed = randomRange(4.5, 6.5),
 			color = color,
 			splashAngle = clamp(anim.visualPercent or 0, 0, 1),
 			sparkle = sparkleColor ~= nil,
 			sparkleColor = sparkleColor,
 			sparkleSpin = randomRange(2.4, 3.4),
-			sparkleOffset = love.math.random() * math.pi * 2,
+			sparkleOffset = love.math.random() * pi * 2,
 		}
 	else
 		local launchX = metrics.x + metrics.width * 0.5
-		local launchY = metrics.y - math.max(metrics.height * 2.2, 72)
+		local launchY = metrics.y - max(metrics.height * 2.2, 72)
 
 		local endX = metrics.x + metrics.width * 0.5
 		local endY = metrics.y + metrics.height * 0.5
-		local apexLift = math.max(metrics.height * 1.35, 64)
+		local apexLift = max(metrics.height * 1.35, 64)
 		local controlX = (launchX + endX) / 2
-		local controlY = math.min(launchY, endY) - apexLift
+		local controlY = min(launchY, endY) - apexLift
 
 		fruit = {
 			timer = 0,
@@ -453,19 +462,19 @@ local function spawnFruitAnimation(anim)
 			scaleStart = randomRange(0.42, 0.52),
 			scalePeak = randomRange(0.68, 0.82),
 			scaleEnd = randomRange(0.50, 0.64),
-			wobbleSeed = love.math.random() * math.pi * 2,
+			wobbleSeed = love.math.random() * pi * 2,
 			wobbleSpeed = randomRange(4.5, 6.5),
 			color = color,
 			sparkle = sparkleColor ~= nil,
 			sparkleColor = sparkleColor,
 			sparkleSpin = randomRange(2.6, 3.8),
-			sparkleOffset = love.math.random() * math.pi * 2,
+			sparkleOffset = love.math.random() * pi * 2,
 		}
 	end
 
 	anim.fruitAnimations = anim.fruitAnimations or {}
-	table.insert(anim.fruitAnimations, fruit)
-	anim.fruitRemaining = math.max(0, (anim.fruitRemaining or 0) - 1)
+	insert(anim.fruitAnimations, fruit)
+	anim.fruitRemaining = max(0, (anim.fruitRemaining or 0) - 1)
 
 	return true
 end
@@ -482,18 +491,18 @@ local function updateFruitAnimations(anim, dt)
 		local cadence = 1
 
 		if (anim.bonusXP or 0) > 0 then
-			local ratio = math.min(1, (anim.bonusXP or 0) / math.max(1, anim.fruitTotal or 1))
+			local ratio = min(1, (anim.bonusXP or 0) / max(1, anim.fruitTotal or 1))
 			cadence = cadence * (0.92 - 0.18 * ratio)
 		end
 
 		if anim.streakColor then
-			local delivered = math.max(0, anim.fruitDelivered or 0)
-			local remaining = math.max(0, anim.fruitRemaining or 0)
-			local wave = math.sin((delivered + remaining) * 0.32)
+			local delivered = max(0, anim.fruitDelivered or 0)
+			local remaining = max(0, anim.fruitRemaining or 0)
+			local wave = sin((delivered + remaining) * 0.32)
 			cadence = cadence * (0.95 - 0.08 * wave)
 		end
 
-		return math.max(0.03, baseInterval * cadence)
+		return max(0.03, baseInterval * cadence)
 	end
 
 	local interval = computeInterval()
@@ -516,7 +525,7 @@ local function updateFruitAnimations(anim, dt)
 		fruit.timer = (fruit.timer or 0) + dt
 		local duration = fruit.duration or 0.6
 		if duration <= 0 then
-			table.remove(active, index)
+			remove(active, index)
 		else
 			local progress = clamp(fruit.timer / duration, 0, 1)
 			fruit.progress = progress
@@ -533,12 +542,12 @@ local function updateFruitAnimations(anim, dt)
 					if xpPer > 0 then
 						local pending = anim.pendingFruitXp or 0
 						local delivered = anim.fruitDelivered or 0
-						local remaining = math.max(0, (anim.fruitPoints or 0) - delivered - pending)
-						local grant = math.min(remaining, xpPer)
+						local remaining = max(0, (anim.fruitPoints or 0) - delivered - pending)
+						local grant = min(remaining, xpPer)
 						anim.pendingFruitXp = pending + grant
 					end
 
-					anim.barPulse = math.min(1.5, (anim.barPulse or 0) + 0.45)
+					anim.barPulse = min(1.5, (anim.barPulse or 0) + 0.45)
 				end
 
 				fruit.landingTimer = (fruit.landingTimer or 0) + dt
@@ -546,7 +555,7 @@ local function updateFruitAnimations(anim, dt)
 				fruit.fade = (fruit.fade or 0) + dt
 
 				if fruit.fade >= 0.35 then
-					table.remove(active, index)
+					remove(active, index)
 				end
 			end
 		end
@@ -571,7 +580,7 @@ local function drawFruitAnimations(anim)
 		+ 2 * inv * eased * (fruit.controlY or 0)
 		+ eased * eased * (fruit.endY or 0)
 
-		local wobble = math.sin((fruit.wobbleSeed or 0) + (fruit.wobbleSpeed or 5.2) * eased)
+		local wobble = sin((fruit.wobbleSeed or 0) + (fruit.wobbleSpeed or 5.2) * eased)
 		local wobbleMul = 0.95 + wobble * 0.04
 
 		local scaleStart = fruit.scaleStart or 0.5
@@ -613,7 +622,7 @@ local function drawFruitAnimations(anim)
 
 		if fruit.sparkle and fadeMul > 0 then
 			local sparkleColor = fruit.sparkleColor or {1, 1, 1, 0.9}
-			local shimmer = math.sin((fruit.timer or 0) * (fruit.sparkleSpin or 3.1) + (fruit.sparkleOffset or 0)) * 0.5 + 0.5
+			local shimmer = sin((fruit.timer or 0) * (fruit.sparkleSpin or 3.1) + (fruit.sparkleOffset or 0)) * 0.5 + 0.5
 			local sparkleAlpha = (sparkleColor[4] or 1) * fadeMul * (0.6 + 0.4 * shimmer)
 			if sparkleAlpha > 0.01 then
 				local prevMode, prevAlphaMode = love.graphics.getBlendMode()
@@ -624,9 +633,9 @@ local function drawFruitAnimations(anim)
 				local rayLength = radius * (1.2 + shimmer * 0.4)
 				love.graphics.setLineWidth(1.3)
 				for ray = 0, rayCount - 1 do
-					local angle = (ray / rayCount) * math.pi * 2 + (fruit.sparkleOffset or 0)
+					local angle = (ray / rayCount) * pi * 2 + (fruit.sparkleOffset or 0)
 					local dx = math.cos(angle) * rayLength
-					local dy = math.sin(angle) * rayLength
+					local dy = sin(angle) * rayLength
 					love.graphics.line(pathX, pathY + wobble * 2, pathX + dx, pathY + wobble * 2 + dy)
 				end
 				love.graphics.setLineWidth(1)
@@ -658,10 +667,10 @@ local function drawBackground(sw, sh)
 
 		local vignette = backgroundEffect.vignetteOverlay
 		if vignette then
-			local steps = math.max(1, math.floor(vignette.steps or 3))
+			local steps = max(1, floor(vignette.steps or 3))
 			local overlayColor = vignette.color or {0, 0, 0, 0.22}
 			local baseAlpha = vignette.alpha or overlayColor[4] or 0.22
-			local totalThickness = vignette.thickness or math.max(sw, sh) * 0.14
+			local totalThickness = vignette.thickness or max(sw, sh) * 0.14
 			local band = totalThickness / steps
 
 			for i = 1, steps do
@@ -672,8 +681,8 @@ local function drawBackground(sw, sh)
 					break
 				end
 
-				local edge = math.min(band, height / 2)
-				local side = math.min(band, width / 2)
+				local edge = min(band, height / 2)
+				local side = min(band, width / 2)
 				local progress = i / steps
 				local alpha = (overlayColor[4] or 1) * baseAlpha * progress * progress
 
@@ -707,11 +716,11 @@ local function calculateAchievementsLayout(achievements, panelWidth, sectionPadd
 	end
 
 	local headerHeight = fontProgressSmall:getHeight()
-	local headerWidth = math.max(0, panelWidth - sectionPadding * 2)
-	local iconSize = math.max(12, math.min(22, sectionPadding * 0.95))
-	local iconSpacing = math.max(6, math.floor((innerSpacing or 8) * 0.9))
+	local headerWidth = max(0, panelWidth - sectionPadding * 2)
+	local iconSize = max(12, min(22, sectionPadding * 0.95))
+	local iconSpacing = max(6, floor((innerSpacing or 8) * 0.9))
 	local textOffset = iconSize + iconSpacing
-	local textWidth = math.max(0, headerWidth - textOffset)
+	local textWidth = max(0, headerWidth - textOffset)
 	local totalHeight = headerHeight
 	local entries = {}
 
@@ -738,7 +747,7 @@ local function calculateAchievementsLayout(achievements, panelWidth, sectionPadd
 
 		totalHeight = totalHeight + descriptionLines * fontProgressSmall:getHeight()
 
-		local badgeColor = lightenColor(copyColor(badgeBase), math.min(0.4, 0.12 * (index - 1)))
+		local badgeColor = lightenColor(copyColor(badgeBase), min(0.4, 0.12 * (index - 1)))
 		badgeColor[4] = 1
 
 		entries[#entries + 1] = {
@@ -754,7 +763,7 @@ local function calculateAchievementsLayout(achievements, panelWidth, sectionPadd
 	end
 
 	local panelHeight = sectionPadding * 2 + totalHeight
-	panelHeight = math.floor(panelHeight + 0.5)
+	panelHeight = floor(panelHeight + 0.5)
 
 	return {
 		entries = entries,
@@ -819,12 +828,12 @@ function GameOver:updateLayoutMetrics()
 	local sw = select(1, Screen:get())
 	local padding = 24
 	local margin = 24
-	local maxAllowed = math.max(40, sw - margin)
-	local safeMaxWidth = math.max(80, sw - margin * 2)
-	safeMaxWidth = math.min(safeMaxWidth, maxAllowed)
-	local preferredWidth = math.min(sw * 0.72, 640)
-	local minWidth = math.min(320, safeMaxWidth)
-	local contentWidth = math.max(minWidth, math.min(preferredWidth, safeMaxWidth))
+	local maxAllowed = max(40, sw - margin)
+	local safeMaxWidth = max(80, sw - margin * 2)
+	safeMaxWidth = min(safeMaxWidth, maxAllowed)
+	local preferredWidth = min(sw * 0.72, 640)
+	local minWidth = min(320, safeMaxWidth)
+	local contentWidth = max(minWidth, min(preferredWidth, safeMaxWidth))
 	local innerWidth = contentWidth - padding * 2
 
 	local sectionPadding = getSectionPadding()
@@ -833,27 +842,27 @@ function GameOver:updateLayoutMetrics()
 	local smallSpacing = getSectionSmallSpacing()
 	local headerSpacing = getSectionHeaderSpacing()
 
-	local wrapLimit = math.max(0, innerWidth - sectionPadding * 2)
+	local wrapLimit = max(0, innerWidth - sectionPadding * 2)
 	local alignedPanelWidth = wrapLimit
 
 	local messageText = self.deathMessage or Localization:get("gameover.default_message")
 	local _, wrappedMessage = fontSmall:getWrap(messageText, wrapLimit)
-	local messageLines = math.max(1, #wrappedMessage)
+	local messageLines = max(1, #wrappedMessage)
 	local messageHeight = messageLines * fontSmall:getHeight()
-	local messagePanelHeight = math.floor(messageHeight + sectionPadding * 2 + 0.5)
+	local messagePanelHeight = floor(messageHeight + sectionPadding * 2 + 0.5)
 
 	local scoreHeaderHeight = fontProgressSmall:getHeight()
 	local scoreNumberHeight = (fontScoreValue or fontScore):getHeight()
 	local scorePanelHeight = sectionPadding * 2 + scoreHeaderHeight + innerSpacing + scoreNumberHeight
-	scorePanelHeight = math.floor(scorePanelHeight + 0.5)
+	scorePanelHeight = floor(scorePanelHeight + 0.5)
 	local achievementsList = self.achievementsEarned or {}
 
 	local xpPanelHeight = 0
 	local xpLayout = nil
 	if self.progressionAnimation then
-		local availableWidth = math.max(0, innerWidth - sectionPadding * 2)
+		local availableWidth = max(0, innerWidth - sectionPadding * 2)
 		if availableWidth > 0 then
-			local xpWidth = math.floor(availableWidth + 0.5)
+			local xpWidth = floor(availableWidth + 0.5)
 			local celebrations = (self.progressionAnimation.celebrations and #self.progressionAnimation.celebrations) or 0
 			local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
 			local targetHeight = measureXpPanelHeight(self, xpWidth, celebrations)
@@ -867,21 +876,21 @@ function GameOver:updateLayoutMetrics()
 			if not self.xpSectionHeight then
 				self.xpSectionHeight = baseHeight
 			else
-				self.xpSectionHeight = math.max(self.xpSectionHeight, baseHeight)
+				self.xpSectionHeight = max(self.xpSectionHeight, baseHeight)
 			end
 
 			local animatedHeight = self.xpSectionHeight or targetHeight
-			xpPanelHeight = math.floor(math.max(targetHeight, animatedHeight) + 0.5)
+			xpPanelHeight = floor(max(targetHeight, animatedHeight) + 0.5)
 		end
 	end
 
-	local minColumnWidth = math.max(getStatCardMinWidth() + sectionPadding * 2, 260)
+	local minColumnWidth = max(getStatCardMinWidth() + sectionPadding * 2, 260)
 	local columnSpacing = sectionSpacing
 
 	local function buildLayout(columnCount)
-		columnCount = math.max(1, columnCount or 1)
+		columnCount = max(1, columnCount or 1)
 
-		local availableWidth = math.max(0, innerWidth - sectionPadding * 2)
+		local availableWidth = max(0, innerWidth - sectionPadding * 2)
 		if availableWidth <= 0 then
 			return {
 				columnCount = 1,
@@ -1043,18 +1052,18 @@ function GameOver:updateLayoutMetrics()
 		}
 	end
 
-	local summaryPanelHeight = math.floor((bestLayout.totalHeight or baseHeight) + 0.5)
-	contentWidth = math.floor(contentWidth + 0.5)
-	wrapLimit = math.floor(wrapLimit + 0.5)
+	local summaryPanelHeight = floor((bestLayout.totalHeight or baseHeight) + 0.5)
+	contentWidth = floor(contentWidth + 0.5)
+	wrapLimit = floor(wrapLimit + 0.5)
 
 	local layoutChanged = false
-	if not self.summaryPanelHeight or math.abs(self.summaryPanelHeight - summaryPanelHeight) >= 1 then
+	if not self.summaryPanelHeight or abs(self.summaryPanelHeight - summaryPanelHeight) >= 1 then
 		layoutChanged = true
 	end
-	if not self.contentWidth or math.abs(self.contentWidth - contentWidth) >= 1 then
+	if not self.contentWidth or abs(self.contentWidth - contentWidth) >= 1 then
 		layoutChanged = true
 	end
-	if not self.wrapLimit or math.abs(self.wrapLimit - wrapLimit) >= 1 then
+	if not self.wrapLimit or abs(self.wrapLimit - wrapLimit) >= 1 then
 		layoutChanged = true
 	end
 
@@ -1063,7 +1072,7 @@ function GameOver:updateLayoutMetrics()
 	local newEntries = bestLayout.entries or {}
 	if (previousLayout.columnCount or 0) ~= (bestLayout.columnCount or 0)
 	or #previousEntries ~= #newEntries
-	or math.abs((previousLayout.columnsHeight or 0) - (bestLayout.columnsHeight or 0)) >= 1 then
+	or abs((previousLayout.columnsHeight or 0) - (bestLayout.columnsHeight or 0)) >= 1 then
 		layoutChanged = true
 	else
 		for index, entry in ipairs(newEntries) do
@@ -1071,9 +1080,9 @@ function GameOver:updateLayoutMetrics()
 			if not prev
 			or prev.id ~= entry.id
 			or prev.column ~= entry.column
-			or math.abs((prev.x or 0) - (entry.x or 0)) >= 1
-			or math.abs((prev.y or 0) - (entry.y or 0)) >= 1
-			or math.abs((prev.width or 0) - (entry.width or 0)) >= 1 then
+			or abs((prev.x or 0) - (entry.x or 0)) >= 1
+			or abs((prev.y or 0) - (entry.y or 0)) >= 1
+			or abs((prev.width or 0) - (entry.width or 0)) >= 1 then
 				layoutChanged = true
 				break
 			end
@@ -1083,32 +1092,32 @@ function GameOver:updateLayoutMetrics()
 	local statsInfo = bestLayout.sectionInfo.stats or {}
 	local achievementsInfo = bestLayout.sectionInfo.achievements or {}
 
-	if not self.messagePanelHeight or math.abs(self.messagePanelHeight - messagePanelHeight) >= 1 then
+	if not self.messagePanelHeight or abs(self.messagePanelHeight - messagePanelHeight) >= 1 then
 		layoutChanged = true
 	end
-	if not self.scorePanelHeight or math.abs(self.scorePanelHeight - scorePanelHeight) >= 1 then
+	if not self.scorePanelHeight or abs(self.scorePanelHeight - scorePanelHeight) >= 1 then
 		layoutChanged = true
 	end
-	if not self.statPanelHeight or math.abs(self.statPanelHeight - (statsInfo.height or 0)) >= 1 then
+	if not self.statPanelHeight or abs(self.statPanelHeight - (statsInfo.height or 0)) >= 1 then
 		layoutChanged = true
 	end
-	if not self.achievementsPanelHeight or math.abs(self.achievementsPanelHeight - (achievementsInfo.height or 0)) >= 1 then
+	if not self.achievementsPanelHeight or abs(self.achievementsPanelHeight - (achievementsInfo.height or 0)) >= 1 then
 		layoutChanged = true
 	end
-	if not self.xpPanelHeight or math.abs(self.xpPanelHeight - xpPanelHeight) >= 1 then
+	if not self.xpPanelHeight or abs(self.xpPanelHeight - xpPanelHeight) >= 1 then
 		layoutChanged = true
 	end
-	if not self.primaryPanelWidth or math.abs(self.primaryPanelWidth - alignedPanelWidth) >= 1 then
+	if not self.primaryPanelWidth or abs(self.primaryPanelWidth - alignedPanelWidth) >= 1 then
 		layoutChanged = true
 	end
-	if not self.primaryPanelOffset or math.abs(self.primaryPanelOffset - sectionPadding) >= 1 then
+	if not self.primaryPanelOffset or abs(self.primaryPanelOffset - sectionPadding) >= 1 then
 		layoutChanged = true
 	end
 
 	local previousXpLayout = self.xpLayout or {}
 	local newXpLayout = xpLayout or {}
-	if math.abs((previousXpLayout.width or 0) - (newXpLayout.width or 0)) >= 1
-	or math.abs((previousXpLayout.offset or 0) - (newXpLayout.offset or 0)) >= 1 then
+	if abs((previousXpLayout.width or 0) - (newXpLayout.width or 0)) >= 1
+	or abs((previousXpLayout.offset or 0) - (newXpLayout.offset or 0)) >= 1 then
 		layoutChanged = true
 	end
 
@@ -1139,36 +1148,36 @@ function GameOver:updateLayoutMetrics()
 end
 
 function GameOver:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
-	totalButtonHeight = math.max(0, totalButtonHeight or 0)
-	buttonSpacing = math.max(0, buttonSpacing or 0)
+	totalButtonHeight = max(0, totalButtonHeight or 0)
+	buttonSpacing = max(0, buttonSpacing or 0)
 
-	local panelHeight = math.max(0, self.summaryPanelHeight or 0)
+	local panelHeight = max(0, self.summaryPanelHeight or 0)
 	local titleTop = 48
 	local titleHeight = fontTitle and fontTitle:getHeight() or 0
 	local panelTopMin = titleTop + titleHeight + 24
 	local bottomMargin = 40
 	local buttonAreaTop = sh - bottomMargin - totalButtonHeight
-	local spacingBetween = math.max(48, buttonSpacing)
+	local spacingBetween = max(48, buttonSpacing)
 	local panelBottomMax = buttonAreaTop - spacingBetween
 
 	if panelBottomMax < panelTopMin then
 		panelBottomMax = panelTopMin
 	end
 
-	local availableSpace = math.max(0, panelBottomMax - panelTopMin)
+	local availableSpace = max(0, panelBottomMax - panelTopMin)
 	local panelY = panelTopMin
 
 	if availableSpace > panelHeight then
 		panelY = panelTopMin + (availableSpace - panelHeight) / 2
 	elseif panelHeight > availableSpace then
-		panelY = math.max(panelTopMin, panelBottomMax - panelHeight)
+		panelY = max(panelTopMin, panelBottomMax - panelHeight)
 	end
 
-	panelY = math.floor(panelY + 0.5)
+	panelY = floor(panelY + 0.5)
 
-	local buttonStartY = math.max(buttonAreaTop, panelY + panelHeight + spacingBetween)
-	buttonStartY = math.min(buttonStartY, sh - bottomMargin - totalButtonHeight)
-	buttonStartY = math.floor(buttonStartY + 0.5)
+	local buttonStartY = max(buttonAreaTop, panelY + panelHeight + spacingBetween)
+	buttonStartY = min(buttonStartY, sh - bottomMargin - totalButtonHeight)
+	buttonStartY = floor(buttonStartY + 0.5)
 
 	self.summaryPanelY = panelY
 	self.buttonStartY = buttonStartY
@@ -1181,7 +1190,7 @@ function GameOver:updateButtonLayout()
 	local _, buttonHeight, buttonSpacing = getButtonMetrics()
 	local totalButtonHeight = 0
 	if #buttonDefs > 0 then
-		totalButtonHeight = #buttonDefs * buttonHeight + math.max(0, (#buttonDefs - 1) * buttonSpacing)
+		totalButtonHeight = #buttonDefs * buttonHeight + max(0, (#buttonDefs - 1) * buttonSpacing)
 	end
 
 	local _, startY = self:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
@@ -1198,11 +1207,11 @@ local function addCelebration(anim, entry)
 	anim.celebrations = anim.celebrations or {}
 	entry.timer = 0
 	entry.duration = entry.duration or 4.5
-	table.insert(anim.celebrations, entry)
+	insert(anim.celebrations, entry)
 
 	local maxVisible = 3
 	while #anim.celebrations > maxVisible do
-		table.remove(anim.celebrations, 1)
+		remove(anim.celebrations, 1)
 	end
 end
 
@@ -1279,15 +1288,15 @@ function GameOver:enter(data)
 	self.dailyChallengeResult = DailyChallenges:applyRunResults(SessionStats)
 	local challengeBonusXP = 0
 	if self.dailyChallengeResult then
-		challengeBonusXP = math.max(0, self.dailyChallengeResult.xpAwarded or 0)
+		challengeBonusXP = max(0, self.dailyChallengeResult.xpAwarded or 0)
 	end
 
 	self.dailyStreakMessage = nil
 	self.dailyStreakColor = nil
 	if self.dailyChallengeResult and self.dailyChallengeResult.streakInfo then
 		local info = self.dailyChallengeResult.streakInfo
-		local streak = math.max(0, info.current or 0)
-		local best = math.max(streak, info.best or 0)
+		local streak = max(0, info.current or 0)
+		local best = max(streak, info.best or 0)
 
 		if streak > 0 then
 			local replacements = {
@@ -1346,7 +1355,7 @@ function GameOver:enter(data)
 		local startSnapshot = self.progression.start or {total = 0, level = 1, xpIntoLevel = 0, xpForNext = MetaProgression:getXpForLevel(1)}
 		local resultSnapshot = self.progression.result or startSnapshot
 
-		local fillSpeed = math.max(60, (self.progression.gained or 0) / 1.2)
+		local fillSpeed = max(60, (self.progression.gained or 0) / 1.2)
 		self.progressionAnimation = {
 			displayedTotal = startSnapshot.total or 0,
 			targetTotal = resultSnapshot.total or (startSnapshot.total or 0),
@@ -1369,10 +1378,10 @@ function GameOver:enter(data)
 			streakColor = self.dailyStreakColor,
 		}
 
-		local applesCollected = math.max(0, stats.apples or 0)
+		local applesCollected = max(0, stats.apples or 0)
 		local fruitPoints = 0
 		if self.progression and self.progression.breakdown then
-			fruitPoints = math.max(0, self.progression.breakdown.fruitPoints or 0)
+			fruitPoints = max(0, self.progression.breakdown.fruitPoints or 0)
 		end
 		local xpPerFruit = 0
 		if applesCollected > 0 and fruitPoints > 0 then
@@ -1404,7 +1413,7 @@ function GameOver:enter(data)
 		else
 			self.progressionAnimation.visualPercent = 0
 		end
-		self.progressionAnimation.visualProgress = math.max(0, (startLevel - 1) + (self.progressionAnimation.visualPercent or 0))
+		self.progressionAnimation.visualProgress = max(0, (startLevel - 1) + (self.progressionAnimation.visualPercent or 0))
 
 		if type(self.progression.milestones) == "table" then
 			for _, milestone in ipairs(self.progression.milestones) do
@@ -1419,7 +1428,7 @@ function GameOver:enter(data)
 			for _, unlock in ipairs(self.progression.unlocks) do
 				local level = unlock.level
 				self.progressionAnimation.levelUnlocks[level] = self.progressionAnimation.levelUnlocks[level] or {}
-				table.insert(self.progressionAnimation.levelUnlocks[level], {
+				insert(self.progressionAnimation.levelUnlocks[level], {
 					name = unlock.name,
 					description = unlock.description,
 				})
@@ -1456,25 +1465,25 @@ local function drawCelebrationsList(anim, x, startY, width)
 	local innerRadius = (UI.scaled and UI.scaled(12, 8)) or 12
 
 	for index, event in ipairs(events) do
-		local timer = math.max(0, event.timer or 0)
-		local appear = math.min(1, timer / 0.35)
+		local timer = max(0, event.timer or 0)
+		local appear = min(1, timer / 0.35)
 		local appearEase = easeOutBack(appear)
 		local fadeAlpha = 1
 		local duration = event.duration or 4.5
 		if duration > 0 then
-			local fadeStart = math.max(0, duration - 0.65)
+			local fadeStart = max(0, duration - 0.65)
 			if timer > fadeStart then
-				local fadeProgress = math.min(1, (timer - fadeStart) / 0.65)
+				local fadeProgress = min(1, (timer - fadeStart) / 0.65)
 				fadeAlpha = 1 - fadeProgress
 			end
 		end
 
-		local alpha = math.max(0, fadeAlpha)
+		local alpha = max(0, fadeAlpha)
 
 		if alpha > 0.01 then
 			local cardX = x + 16
 			local cardY = y
-			local wobble = math.sin(now * 4.2 + index * 0.8) * 2 * alpha
+			local wobble = sin(now * 4.2 + index * 0.8) * 2 * alpha
 
 			love.graphics.push()
 			love.graphics.translate(cardX + cardWidth / 2, cardY + celebrationHeight / 2 + wobble)
@@ -1513,7 +1522,7 @@ local function drawXpSection(self, x, y, width)
 	local targetHeight = measureXpPanelHeight(self, width, celebrationCount)
 	self.baseXpSectionHeight = self.baseXpSectionHeight or baseHeight
 	local animatedHeight = self.xpSectionHeight or targetHeight
-	local height = math.max(160, baseHeight, targetHeight, animatedHeight)
+	local height = max(160, baseHeight, targetHeight, animatedHeight)
 	local headerY = y + 18
 	UI.drawLabel(getLocalizedOrFallback("gameover.meta_progress_title", "Experience"), x, headerY, width, "center", {
 		font = fontProgressTitle,
@@ -1521,7 +1530,7 @@ local function drawXpSection(self, x, y, width)
 	})
 
 	local levelColor = Theme.progressColor or UI.colors.progress or UI.colors.text
-	local flash = math.max(0, math.min(1, anim.levelFlash or 0))
+	local flash = max(0, min(1, anim.levelFlash or 0))
 	local levelText = Localization:get("gameover.meta_progress_level_label", {level = anim.displayedLevel or 1})
 	local levelY = headerY + fontProgressTitle:getHeight() + 16
 	UI.drawLabel(levelText, x, levelY, width, "center", {
@@ -1541,7 +1550,7 @@ local function drawXpSection(self, x, y, width)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
 	end
 
-	local gained = math.max(0, math.floor((anim.displayedGained or 0) + 0.5))
+	local gained = max(0, floor((anim.displayedGained or 0) + 0.5))
 	local gainedText = Localization:get("gameover.meta_progress_gain_short", {
 		points = formatXpValue(gained),
 	})
@@ -1553,10 +1562,10 @@ local function drawXpSection(self, x, y, width)
 
 	local ringTop = gainedY + fontProgressSmall:getHeight() + 18
 	local centerX = x + width / 2
-	local maxRadius = math.max(48, math.min(74, (width / 2) - 24))
-	local ringThickness = math.max(14, math.min(24, maxRadius * 0.42))
+	local maxRadius = max(48, min(74, (width / 2) - 24))
+	local ringThickness = max(14, min(24, maxRadius * 0.42))
 	local ringRadius = maxRadius - ringThickness * 0.25
-	local innerRadius = math.max(32, ringRadius - ringThickness * 0.6)
+	local innerRadius = max(32, ringRadius - ringThickness * 0.6)
 	local outerRadius = ringRadius + ringThickness * 0.45
 	local centerY = ringTop + ringRadius
 	local percent = clamp(anim.visualPercent or 0, 0, 1)
@@ -1578,13 +1587,13 @@ local function drawXpSection(self, x, y, width)
 	love.graphics.setColor(trackColor)
 	love.graphics.circle("fill", centerX, centerY, outerRadius)
 
-	local startAngle = -math.pi / 2
+	local startAngle = -pi / 2
 	love.graphics.setColor(withAlpha(lightenColor(panelColor, 0.12), 0.88))
 	love.graphics.setLineWidth(ringThickness)
-	love.graphics.arc("line", "open", centerX, centerY, ringRadius, startAngle, startAngle + math.pi * 2, 96)
+	love.graphics.arc("line", "open", centerX, centerY, ringRadius, startAngle, startAngle + pi * 2, 96)
 
 	if percent > 0 then
-		local endAngle = startAngle + percent * math.pi * 2
+		local endAngle = startAngle + percent * pi * 2
 		local scale = 1 + pulse * 0.04
 		local widthMul = 1 + pulse * 0.45
 
@@ -1642,7 +1651,7 @@ local function drawXpSection(self, x, y, width)
 
 	local labelY = centerY + outerRadius + 18
 	local breakdown = self.progression and self.progression.breakdown or {}
-	local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
+	local bonusXP = max(0, floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
 	if bonusXP > 0 then
 		local bonusText = Localization:get("gameover.meta_progress_bonus", {bonus = formatXpValue(bonusXP)})
 		UI.drawLabel(bonusText, x, labelY, width, "center", {
@@ -1660,14 +1669,14 @@ local function drawXpSection(self, x, y, width)
 		labelY = labelY + fontProgressSmall:getHeight() + 6
 	end
 
-	local totalValue = math.floor((anim.displayedTotal or 0) + 0.5)
+	local totalValue = floor((anim.displayedTotal or 0) + 0.5)
 	local totalLabel
 	if (anim.xpForLevel or 0) <= 0 then
 		totalLabel = Localization:get("gameover.meta_progress_total_summary_max", {
 			total = formatXpValue(totalValue),
 		})
 	else
-		local remaining = math.max(0, math.ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
+		local remaining = max(0, math.ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
 		totalLabel = Localization:get("gameover.meta_progress_total_summary_next", {
 			total = formatXpValue(totalValue),
 			remaining = formatXpValue(remaining),
@@ -1711,11 +1720,11 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 		},
 	}
 
-	local availableWidth = math.max(0, width - sectionPadding * 2)
+	local availableWidth = max(0, width - sectionPadding * 2)
 	local columnSpacing = 0
 	local columnCount = #entries
-	local columnWidth = columnCount > 0 and (availableWidth - columnSpacing * math.max(0, columnCount - 1)) / columnCount or availableWidth
-	columnWidth = math.max(0, columnWidth)
+	local columnWidth = columnCount > 0 and (availableWidth - columnSpacing * max(0, columnCount - 1)) / columnCount or availableWidth
+	columnWidth = max(0, columnWidth)
 
 	local labelFont = fontProgressSmall
 	local valueFont = fontScoreValue or fontScore
@@ -1797,7 +1806,7 @@ local function drawAchievementsPanel(self, x, y, width, height, sectionPadding, 
 
 		love.graphics.push()
 		love.graphics.translate(iconX + iconSize / 2, iconCenterY)
-		love.graphics.rotate(math.pi / 4)
+		love.graphics.rotate(pi / 4)
 
 		local diamond = iconSize * 0.72
 		love.graphics.setColor(badgeColor[1], badgeColor[2], badgeColor[3], (badgeColor[4] or 1) * 0.95)
@@ -1851,12 +1860,12 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 	local sectionSpacing = self.sectionSpacingValue or getSectionSpacing()
 	local innerSpacing = self.sectionInnerSpacingValue or getSectionInnerSpacing()
 	local smallSpacing = self.sectionSmallSpacingValue or getSectionSmallSpacing()
-	local primaryWidth = self.primaryPanelWidth or math.max(0, innerWidth - sectionPadding * 2)
+	local primaryWidth = self.primaryPanelWidth or max(0, innerWidth - sectionPadding * 2)
 	local primaryOffset = self.primaryPanelOffset or sectionPadding
 	local primaryX = innerX + primaryOffset
 	local currentY = panelY + padding
 
-	local wrapLimit = self.wrapLimit or math.max(0, innerWidth - sectionPadding * 2)
+	local wrapLimit = self.wrapLimit or max(0, innerWidth - sectionPadding * 2)
 	local messageText = self.deathMessage or Localization:get("gameover.default_message")
 	local messagePanelHeight = self.messagePanelHeight or 0
 	if messagePanelHeight > 0 then
@@ -1873,7 +1882,7 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 
 	if xpHeight > 0 then
 		currentY = currentY + sectionSpacing
-		local xpWidth = math.max(0, math.min(primaryWidth, xpLayout.width or primaryWidth))
+		local xpWidth = max(0, min(primaryWidth, xpLayout.width or primaryWidth))
 		local offset = xpLayout.offset or 0
 		local xpX = primaryX + offset
 		drawXpSection(self, xpX, currentY, xpWidth)
@@ -1915,17 +1924,17 @@ function GameOver:draw()
 	local _, buttonHeight, buttonSpacing = getButtonMetrics()
 	local totalButtonHeight = 0
 	if #buttonDefs > 0 then
-		totalButtonHeight = #buttonDefs * buttonHeight + math.max(0, (#buttonDefs - 1) * buttonSpacing)
+		totalButtonHeight = #buttonDefs * buttonHeight + max(0, (#buttonDefs - 1) * buttonSpacing)
 	end
 	local panelY = select(1, self:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing))
 
 	local margin = 24
-	local fallbackMaxAllowed = math.max(40, sw - margin)
-	local fallbackSafe = math.max(80, sw - margin * 2)
-	fallbackSafe = math.min(fallbackSafe, fallbackMaxAllowed)
-	local fallbackPreferred = math.min(sw * 0.72, 640)
-	local fallbackMin = math.min(320, fallbackSafe)
-	local computedWidth = math.max(fallbackMin, math.min(fallbackPreferred, fallbackSafe))
+	local fallbackMaxAllowed = max(40, sw - margin)
+	local fallbackSafe = max(80, sw - margin * 2)
+	fallbackSafe = min(fallbackSafe, fallbackMaxAllowed)
+	local fallbackPreferred = min(sw * 0.72, 640)
+	local fallbackMin = min(320, fallbackSafe)
+	local computedWidth = max(fallbackMin, min(fallbackPreferred, fallbackSafe))
 	local contentWidth = self.contentWidth or computedWidth
 	local contentX = (sw - contentWidth) / 2
 	local padding = self.contentPadding or 24
@@ -1967,29 +1976,29 @@ function GameOver:update(dt)
 	end
 
 	local previousTotal = anim.displayedTotal or startTotal
-	local fruitPoints = math.max(0, anim.fruitPoints or 0)
-	local deliveredFruit = math.max(0, anim.fruitDelivered or 0)
-	local pendingFruit = math.max(0, anim.pendingFruitXp or 0)
+	local fruitPoints = max(0, anim.fruitPoints or 0)
+	local deliveredFruit = max(0, anim.fruitDelivered or 0)
+	local pendingFruit = max(0, anim.pendingFruitXp or 0)
 	local allowedTarget = targetTotal
 
 	if fruitPoints > 0 and deliveredFruit < fruitPoints then
-		local gatedTarget = startTotal + math.min(fruitPoints, deliveredFruit + pendingFruit)
-		allowedTarget = math.min(allowedTarget, gatedTarget)
+		local gatedTarget = startTotal + min(fruitPoints, deliveredFruit + pendingFruit)
+		allowedTarget = min(allowedTarget, gatedTarget)
 	end
 
 	local newTotal = previousTotal
 	if previousTotal < allowedTarget then
-		local increment = math.min(anim.fillSpeed * dt, allowedTarget - previousTotal)
+		local increment = min(anim.fillSpeed * dt, allowedTarget - previousTotal)
 		newTotal = previousTotal + increment
 
 		if fruitPoints > 0 and deliveredFruit < fruitPoints then
-			local newDelivered = math.min(fruitPoints, deliveredFruit + increment)
+			local newDelivered = min(fruitPoints, deliveredFruit + increment)
 			local used = newDelivered - deliveredFruit
 			anim.fruitDelivered = newDelivered
-			anim.pendingFruitXp = math.max(0, pendingFruit - used)
+			anim.pendingFruitXp = max(0, pendingFruit - used)
 		end
 	elseif previousTotal < targetTotal then
-		newTotal = math.min(targetTotal, previousTotal)
+		newTotal = min(targetTotal, previousTotal)
 	else
 		newTotal = targetTotal
 	end
@@ -2001,7 +2010,7 @@ function GameOver:update(dt)
 		anim.pendingFruitXp = 0
 		anim.fruitDelivered = fruitPoints
 	else
-		anim.displayedGained = math.min((self.progression and self.progression.gained) or 0, newTotal - startTotal)
+		anim.displayedGained = min((self.progression and self.progression.gained) or 0, newTotal - startTotal)
 	end
 
 	local previousLevel = anim.displayedLevel or 1
@@ -2047,32 +2056,32 @@ function GameOver:update(dt)
 
 	local easeSpeed = anim.fillEaseSpeed or 9
 	if xpForLevel <= 0 then
-		anim.visualProgress = math.max(0, (level - 1))
+		anim.visualProgress = max(0, (level - 1))
 		anim.visualPercent = targetPercent
 	else
-		local targetProgress = math.max(0, (level - 1) + targetPercent)
+		local targetProgress = max(0, (level - 1) + targetPercent)
 		if not anim.visualProgress then
 			local basePercent = anim.visualPercent or targetPercent
-			anim.visualProgress = math.max(0, (previousLevel - 1) + basePercent)
+			anim.visualProgress = max(0, (previousLevel - 1) + basePercent)
 		end
 
 		local currentProgress = anim.visualProgress or 0
-		targetProgress = math.max(targetProgress, currentProgress)
+		targetProgress = max(targetProgress, currentProgress)
 		anim.visualProgress = approachExp(currentProgress, targetProgress, dt, easeSpeed)
 
-		local loops = math.floor(math.max(0, anim.visualProgress))
+		local loops = floor(max(0, anim.visualProgress))
 		local fraction = anim.visualProgress - loops
 		anim.visualPercent = clamp(fraction, 0, 1)
 	end
 
 	if anim.levelFlash then
-		anim.levelFlash = math.max(0, anim.levelFlash - dt)
+		anim.levelFlash = max(0, anim.levelFlash - dt)
 	end
 
 	local popDuration = anim.levelPopDuration or 0.65
 	if popDuration > 0 then
 		local timer = anim.levelPopTimer or popDuration
-		anim.levelPopTimer = math.min(popDuration, timer + dt)
+		anim.levelPopTimer = min(popDuration, timer + dt)
 	else
 		anim.levelPopTimer = 0
 	end
@@ -2098,7 +2107,7 @@ function GameOver:update(dt)
 			local event = anim.celebrations[index]
 			event.timer = (event.timer or 0) + dt
 			if event.timer >= (event.duration or 4.5) then
-				table.remove(anim.celebrations, index)
+				remove(anim.celebrations, index)
 			end
 		end
 	end
@@ -2106,7 +2115,7 @@ function GameOver:update(dt)
 	updateFruitAnimations(anim, dt)
 
 	if anim.barPulse then
-		anim.barPulse = math.max(0, anim.barPulse - dt * 2.4)
+		anim.barPulse = max(0, anim.barPulse - dt * 2.4)
 	end
 
 	local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
@@ -2114,14 +2123,14 @@ function GameOver:update(dt)
 	if xpWidth <= 0 then
 		local innerWidth = self.innerContentWidth or 0
 		local sectionPadding = self.sectionPaddingValue or getSectionPadding()
-		xpWidth = math.max(0, innerWidth - sectionPadding * 2)
+		xpWidth = max(0, innerWidth - sectionPadding * 2)
 	end
 
 	local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
 	local targetHeight = measureXpPanelHeight(self, xpWidth, celebrationCount)
 	self.baseXpSectionHeight = baseHeight
 	self.xpSectionHeight = self.xpSectionHeight or baseHeight
-	local smoothing = math.min(dt * 6, 1)
+	local smoothing = min(dt * 6, 1)
 	self.xpSectionHeight = self.xpSectionHeight + (targetHeight - self.xpSectionHeight) * smoothing
 
 	local layoutChanged = self:updateLayoutMetrics()

@@ -2,6 +2,12 @@ local Audio = require("audio")
 local Localization = require("localization")
 local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
+local floor = math.floor
+local min = math.min
+local m_type = math.type
+local insert = table.insert
+local sort = table.sort
+
 local Snake
 local MetaProgression
 
@@ -73,7 +79,7 @@ end
 
 function Achievements:registerStateProvider(provider)
 	if type(provider) == "function" then
-		table.insert(self.stateProviders, provider)
+		insert(self.stateProviders, provider)
 	end
 end
 
@@ -85,7 +91,7 @@ function Achievements:registerUnlockListener(listener)
 	self:_ensureInitialized()
 
 	self._unlockListeners = self._unlockListeners or {}
-	table.insert(self._unlockListeners, listener)
+	insert(self._unlockListeners, listener)
 end
 
 function Achievements:_notifyUnlockListeners(id, achievement)
@@ -104,19 +110,19 @@ end
 function Achievements:_addDefinition(rawDef)
 	local def = applyDefaults(copyTable(rawDef))
 	self.definitions[def.id] = def
-	table.insert(self.definitionOrder, def.id)
+	insert(self.definitionOrder, def.id)
 
 	self.categories[def.category] = self.categories[def.category] or {}
-	table.insert(self.categories[def.category], def.id)
+	insert(self.categories[def.category], def.id)
 end
 
 function Achievements:_finalizeOrdering()
         currentDefinitionsForSort = self.definitions
-        table.sort(self.definitionOrder, compareAchievementIds)
+        sort(self.definitionOrder, compareAchievementIds)
 
         local orderedCategories = {}
         for category, ids in pairs(self.categories) do
-                table.sort(ids, compareAchievementIds)
+                sort(ids, compareAchievementIds)
                 orderedCategories[#orderedCategories + 1] = {
                         id = category,
                         order = (self.definitions[ids[1]] and self.definitions[ids[1]].categoryOrder) or DEFAULT_CATEGORY_ORDER
@@ -125,11 +131,11 @@ function Achievements:_finalizeOrdering()
 
         currentDefinitionsForSort = nil
 
-        table.sort(orderedCategories, compareCategoryEntries)
+        sort(orderedCategories, compareCategoryEntries)
 
         self.categoryOrder = {}
         for _, info in ipairs(orderedCategories) do
-                table.insert(self.categoryOrder, info.id)
+                insert(self.categoryOrder, info.id)
         end
 end
 
@@ -319,7 +325,7 @@ end
 
 local function clampProgress(def, progress)
 	if def.goal and def.goal > 0 then
-		return math.min(progress, def.goal)
+		return min(progress, def.goal)
 	end
 	return progress
 end
@@ -347,7 +353,7 @@ function Achievements:unlock(name)
 		self._unlockedLookup = {}
 	end
 	if not self._unlockedLookup[name] then
-		table.insert(self.unlocked, name)
+		insert(self.unlocked, name)
 		self._unlockedLookup[name] = true
 	end
 
@@ -367,7 +373,7 @@ function Achievements:unlock(name)
 		SessionStats:set("runAchievements", runAchievements)
 	end
 
-	table.insert(self.popupQueue, achievement)
+	insert(self.popupQueue, achievement)
 
 	if Audio and Audio.playSound then
 		Audio:playSound("achievement")
@@ -548,7 +554,7 @@ end
 
 local function serializeValue(value)
 	if type(value) == "number" then
-		if math.type and math.type(value) == "integer" then
+		if m_type and m_type(value) == "integer" then
 			return string.format("%d", value)
 		end
 		return string.format("%0.4f", value)
@@ -569,10 +575,10 @@ function Achievements:save()
 
 	local lines = {"return {"}
 	for key, value in pairs(data) do
-		table.insert(lines, string.format("  [\"%s\"] = {unlocked = %s, progress = %s},",
+		insert(lines, string.format("  [\"%s\"] = {unlocked = %s, progress = %s},",
 		key, tostring(value.unlocked), serializeValue(value.progress or 0)))
 	end
-	table.insert(lines, "}")
+	insert(lines, "}")
 
 	local luaData = table.concat(lines, "\n")
 	love.filesystem.write("achievementdata.lua", luaData)
@@ -646,8 +652,8 @@ function Achievements:getProgressLabel(def)
 	end
 
 	if def.goal and def.goal > 0 then
-		local progress = math.floor(def.progress or 0)
-		local goal = math.floor(def.goal)
+		local progress = floor(def.progress or 0)
+		local goal = floor(def.goal)
 		return Localization:get("achievements.progress.label", {
 			current = progress,
 			goal = goal,
@@ -663,7 +669,7 @@ function Achievements:getProgressRatio(def)
 	end
 
 	if def.goal and def.goal > 0 then
-		return math.min(1, (def.progress or 0) / def.goal)
+		return min(1, (def.progress or 0) / def.goal)
 	end
 
 	return 0

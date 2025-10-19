@@ -1,6 +1,10 @@
 local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 
+local floor = math.floor
+local max = math.max
+local min = math.min
+
 local AchievementsModule
 
 local function getAchievements()
@@ -187,7 +191,7 @@ end
 
 local function clampRatio(current, goal)
 	if goal and goal > 0 then
-		return math.max(0, math.min(1, current / goal))
+		return max(0, min(1, current / goal))
 	end
 	return 0
 end
@@ -291,7 +295,7 @@ local function setStoredProgress(self, challenge, date, value)
 		return
 	end
 
-	value = math.max(0, math.floor(value or 0))
+	value = max(0, floor(value or 0))
 	PlayerStats:set(key, value)
 end
 
@@ -484,8 +488,8 @@ DailyChallenges.challenges = {
 			apples = apples or 0
 			combos = combos or 0
 
-			local feasts = math.min(math.floor(apples / 15), combos)
-			return math.max(feasts, 0)
+			local feasts = min(floor(apples / 15), combos)
+			return max(feasts, 0)
 		end,
 		progressReplacements = function(self, current, goal, context)
 			local apples, combos = 0, 0
@@ -561,8 +565,8 @@ DailyChallenges.challenges = {
 		progressKey = "menu.daily.time_keeper.progress",
 		progressReplacements = function(self, current, goal)
 			local function formatSeconds(seconds)
-				seconds = math.max(0, math.floor(seconds or 0))
-				local minutes = math.floor(seconds / 60)
+				seconds = max(0, floor(seconds or 0))
+				local minutes = floor(seconds / 60)
 				local secs = seconds % 60
 				return string.format("%d:%02d", minutes, secs)
 			end
@@ -574,8 +578,8 @@ DailyChallenges.challenges = {
 		end,
 		descriptionReplacements = function(self, current, goal)
 			return {
-				goal = math.floor((goal or 0) / 60),
-				current = math.floor((current or 0) / 60),
+				goal = floor((goal or 0) / 60),
+				current = floor((current or 0) / 60),
 			}
 		end,
 		xpReward = 90,
@@ -589,8 +593,8 @@ DailyChallenges.challenges = {
 		progressKey = "menu.daily.floor_tourist.progress",
 		progressReplacements = function(self, current, goal)
 			local function formatSeconds(seconds)
-				seconds = math.max(0, math.floor(seconds or 0))
-				local minutes = math.floor(seconds / 60)
+				seconds = max(0, floor(seconds or 0))
+				local minutes = floor(seconds / 60)
 				local secs = seconds % 60
 				return string.format("%d:%02d", minutes, secs)
 			end
@@ -602,7 +606,7 @@ DailyChallenges.challenges = {
 		end,
 		descriptionReplacements = function(self, current, goal)
 			return {
-				goal = math.floor((goal or 0) / 60),
+				goal = floor((goal or 0) / 60),
 			}
 		end,
 		xpReward = 85,
@@ -625,7 +629,7 @@ DailyChallenges.challenges = {
 		completeKey = "menu.daily.depth_delver.complete",
 		progressReplacements = function(self, current, goal)
 			return {
-				current = math.max(1, math.floor(current or 1)),
+				current = max(1, floor(current or 1)),
 				goal = goal or 0,
 			}
 		end,
@@ -747,9 +751,9 @@ DailyChallenges.challenges = {
 			local target = self.targetSeconds or 0
 
 			local function formatSeconds(seconds)
-				seconds = math.max(0, seconds or 0)
-				local minutes = math.floor(seconds / 60)
-				local secs = math.floor(seconds % 60)
+				seconds = max(0, seconds or 0)
+				local minutes = floor(seconds / 60)
+				local secs = floor(seconds % 60)
 				return string.format("%d:%02d", minutes, secs)
 			end
 
@@ -782,7 +786,7 @@ DailyChallenges.challenges = {
 				return 0
 			end
 
-			return math.floor((tiles / timeAlive) * 60)
+			return floor((tiles / timeAlive) * 60)
 		end,
 		getRunValue = function(self, statsSource)
 			local tiles = getStatValue(statsSource, "tilesTravelled")
@@ -791,7 +795,7 @@ DailyChallenges.challenges = {
 				return 0
 			end
 
-			return math.floor((tiles / timeAlive) * 60)
+			return floor((tiles / timeAlive) * 60)
 		end,
 		progressReplacements = function(self, current, goal, context)
 			local statsSource = context and context.sessionStats
@@ -800,15 +804,15 @@ DailyChallenges.challenges = {
 			local minutes = timeAlive / 60
 			local pace = 0
 			if timeAlive > 0 then
-				pace = math.floor((tiles / timeAlive) * 60)
+				pace = floor((tiles / timeAlive) * 60)
 			end
 
 			return {
 				current = pace,
 				goal = goal or 0,
 				pace = pace,
-				tiles = math.floor(tiles + 0.5),
-				minutes = string.format("%.1f", math.max(minutes, 0)),
+				tiles = floor(tiles + 0.5),
+				minutes = string.format("%.1f", max(minutes, 0)),
 			}
 		end,
 		descriptionReplacements = function(self, current, goal)
@@ -829,14 +833,14 @@ DailyChallenges.challenges = {
 			local statsSource = context and context.sessionStats
 			local apples = getStatValue(statsSource, "applesEaten")
 			local combos = getStatValue(statsSource, "combosTriggered")
-			local harvests = math.min(math.floor(apples / 8), combos)
-			return math.max(harvests, 0)
+			local harvests = min(floor(apples / 8), combos)
+			return max(harvests, 0)
 		end,
 		getRunValue = function(self, statsSource)
 			local apples = getStatValue(statsSource, "applesEaten")
 			local combos = getStatValue(statsSource, "combosTriggered")
-			local harvests = math.min(math.floor(apples / 8), combos)
-			return math.max(harvests, 0)
+			local harvests = min(floor(apples / 8), combos)
+			return max(harvests, 0)
 		end,
 		progressReplacements = function(self, current, goal, context)
 			local statsSource = context and context.sessionStats
@@ -927,7 +931,7 @@ DailyChallenges.challenges = {
 				return 0
 			end
 
-			return math.floor((apples / timeAlive) * 60)
+			return floor((apples / timeAlive) * 60)
 		end,
 		getRunValue = function(self, statsSource)
 			local apples = getStatValue(statsSource, "applesEaten")
@@ -936,7 +940,7 @@ DailyChallenges.challenges = {
 				return 0
 			end
 
-			return math.floor((apples / timeAlive) * 60)
+			return floor((apples / timeAlive) * 60)
 		end,
 		progressReplacements = function(self, current, goal, context)
 			local statsSource = context and context.sessionStats
@@ -945,7 +949,7 @@ DailyChallenges.challenges = {
 			local minutes = timeAlive / 60
 			local pace = 0
 			if timeAlive > 0 then
-				pace = math.floor((apples / timeAlive) * 60)
+				pace = floor((apples / timeAlive) * 60)
 			end
 
 			return {
@@ -953,7 +957,7 @@ DailyChallenges.challenges = {
 				goal = goal or 0,
 				pace = pace,
 				apples = apples,
-				minutes = string.format("%.1f", math.max(minutes, 0)),
+				minutes = string.format("%.1f", max(minutes, 0)),
 			}
 		end,
 		descriptionReplacements = function(self, current, goal)
@@ -1036,13 +1040,13 @@ DailyChallenges.challenges = {
 			local slowest = getStatValue(statsSource, "slowestFloorClear")
 			local differenceSeconds = 0
 			if fastest > 0 and slowest > 0 then
-				differenceSeconds = math.max(0, slowest - fastest)
+				differenceSeconds = max(0, slowest - fastest)
 			end
 
 			local function formatSeconds(seconds)
-				seconds = math.max(0, seconds or 0)
-				local minutes = math.floor(seconds / 60)
-				local secs = math.floor(seconds % 60)
+				seconds = max(0, seconds or 0)
+				local minutes = floor(seconds / 60)
+				local secs = floor(seconds % 60)
 				return string.format("%d:%02d", minutes, secs)
 			end
 
@@ -1051,7 +1055,7 @@ DailyChallenges.challenges = {
 				goal = goal or 0,
 				fastest = fastest > 0 and formatSeconds(fastest) or "--:--",
 				slowest = slowest > 0 and formatSeconds(slowest) or "--:--",
-				difference = math.floor(differenceSeconds + 0.5),
+				difference = floor(differenceSeconds + 0.5),
 				tolerance = self.tolerance or 0,
 			}
 		end,
@@ -1094,9 +1098,9 @@ DailyChallenges.challenges = {
 			local timeAlive = getStatValue(statsSource, "timeAlive")
 
 			local function formatSeconds(seconds)
-				seconds = math.max(0, seconds or 0)
-				local minutes = math.floor(seconds / 60)
-				local secs = math.floor(seconds % 60)
+				seconds = max(0, seconds or 0)
+				local minutes = floor(seconds / 60)
+				local secs = floor(seconds % 60)
 				return string.format("%d:%02d", minutes, secs)
 			end
 
@@ -1111,9 +1115,9 @@ DailyChallenges.challenges = {
 		end,
 		descriptionReplacements = function(self)
 			local function formatSeconds(seconds)
-				seconds = math.max(0, seconds or 0)
-				local minutes = math.floor(seconds / 60)
-				local secs = math.floor(seconds % 60)
+				seconds = max(0, seconds or 0)
+				local minutes = floor(seconds / 60)
+				local secs = floor(seconds % 60)
 				return string.format("%d:%02d", minutes, secs)
 			end
 
@@ -1137,14 +1141,14 @@ DailyChallenges.challenges = {
 			local statsSource = context and context.sessionStats
 			local chain = getStatValue(statsSource, "fruitWithoutTurning")
 			local tiles = getStatValue(statsSource, "tilesTravelled")
-			local surges = math.min(math.floor(chain / (self.fruitChunk or 1)), math.floor(tiles / (self.tileChunk or 1)))
-			return math.max(surges, 0)
+			local surges = min(floor(chain / (self.fruitChunk or 1)), floor(tiles / (self.tileChunk or 1)))
+			return max(surges, 0)
 		end,
 		getRunValue = function(self, statsSource)
 			local chain = getStatValue(statsSource, "fruitWithoutTurning")
 			local tiles = getStatValue(statsSource, "tilesTravelled")
-			local surges = math.min(math.floor(chain / (self.fruitChunk or 1)), math.floor(tiles / (self.tileChunk or 1)))
-			return math.max(surges, 0)
+			local surges = min(floor(chain / (self.fruitChunk or 1)), floor(tiles / (self.tileChunk or 1)))
+			return max(surges, 0)
 		end,
 		progressReplacements = function(self, current, goal, context)
 			local statsSource = context and context.sessionStats
@@ -1179,14 +1183,14 @@ DailyChallenges.challenges = {
 			local statsSource = context and context.sessionStats
 			local floors = getStatValue(statsSource, "floorsCleared")
 			local timeSpent = getStatValue(statsSource, "totalFloorTime")
-			local value = math.min(floors, math.floor(timeSpent / (self.timeChunk or 1)))
-			return math.max(value, 0)
+			local value = min(floors, floor(timeSpent / (self.timeChunk or 1)))
+			return max(value, 0)
 		end,
 		getRunValue = function(self, statsSource)
 			local floors = getStatValue(statsSource, "floorsCleared")
 			local timeSpent = getStatValue(statsSource, "totalFloorTime")
-			local value = math.min(floors, math.floor(timeSpent / (self.timeChunk or 1)))
-			return math.max(value, 0)
+			local value = min(floors, floor(timeSpent / (self.timeChunk or 1)))
+			return max(value, 0)
 		end,
 		progressReplacements = function(self, current, goal, context)
 			local statsSource = context and context.sessionStats
@@ -1196,7 +1200,7 @@ DailyChallenges.challenges = {
 				current = current or 0,
 				goal = goal or 0,
 				floors = floors,
-				minutes = string.format("%.1f", math.max(timeSpent / 60, 0)),
+				minutes = string.format("%.1f", max(timeSpent / 60, 0)),
 				minutes_chunk = string.format("%.1f", (self.timeChunk or 1) / 60),
 			}
 		end,
@@ -1218,14 +1222,14 @@ DailyChallenges.challenges = {
 			local statsSource = context and context.sessionStats
 			local bounces = getStatValue(statsSource, "runShieldWallBounces")
 			local saws = getStatValue(statsSource, "runShieldSawParries")
-			local pairs = math.min(math.floor(bounces / 2), math.floor(saws / 2))
-			return math.max(pairs, 0)
+			local pairs = min(floor(bounces / 2), floor(saws / 2))
+			return max(pairs, 0)
 		end,
 		getRunValue = function(self, statsSource)
 			local bounces = getStatValue(statsSource, "runShieldWallBounces")
 			local saws = getStatValue(statsSource, "runShieldSawParries")
-			local pairs = math.min(math.floor(bounces / 2), math.floor(saws / 2))
-			return math.max(pairs, 0)
+			local pairs = min(floor(bounces / 2), floor(saws / 2))
+			return max(pairs, 0)
 		end,
 		progressReplacements = function(self, current, goal, context)
 			local statsSource = context and context.sessionStats
@@ -1313,7 +1317,7 @@ function DailyChallenges:applyRunResults(statsSource, options)
 		end
 	end
 
-	runValue = math.max(0, math.floor(runValue or 0))
+	runValue = max(0, floor(runValue or 0))
 
 	local goal = resolveGoal(challenge)
 	local storedProgress = getStoredProgress(self, challenge, resolvedDate)
@@ -1344,9 +1348,9 @@ function DailyChallenges:applyRunResults(statsSource, options)
 		if dayValue then
 			if lastCompletionDay > 0 then
 				if lastCompletionDay == dayValue then
-					newStreak = math.max(previousStreak, 1)
+					newStreak = max(previousStreak, 1)
 				elseif lastCompletionDay == dayValue - 1 then
-					newStreak = math.max(previousStreak, 0) + 1
+					newStreak = max(previousStreak, 0) + 1
 				else
 					newStreak = 1
 				end
@@ -1356,7 +1360,7 @@ function DailyChallenges:applyRunResults(statsSource, options)
 
 			PlayerStats:set("dailyChallengeLastCompletionDay", dayValue)
 		else
-			newStreak = math.max(previousStreak, 1)
+			newStreak = max(previousStreak, 1)
 		end
 
 		if newStreak <= 0 then
@@ -1389,8 +1393,8 @@ function DailyChallenges:applyRunResults(statsSource, options)
 			end
 		end
 	elseif alreadyCompleted then
-		local currentStreak = math.max(previousStreak, 0)
-		local bestStreak = math.max(previousBest, currentStreak)
+		local currentStreak = max(previousStreak, 0)
+		local bestStreak = max(previousBest, currentStreak)
 		streakInfo = {
 			current = currentStreak,
 			best = bestStreak,
@@ -1398,8 +1402,8 @@ function DailyChallenges:applyRunResults(statsSource, options)
 			dayValue = dayValue,
 		}
 	elseif previousStreak > 0 then
-		local currentStreak = math.max(previousStreak, 0)
-		local bestStreak = math.max(previousBest, currentStreak)
+		local currentStreak = max(previousStreak, 0)
+		local bestStreak = max(previousBest, currentStreak)
 		streakInfo = {
 			current = currentStreak,
 			best = bestStreak,

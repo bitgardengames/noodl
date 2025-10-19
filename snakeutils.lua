@@ -1,5 +1,7 @@
 local Arena = require("arena")
 
+local floor = math.floor
+
 local SnakeUtils = {}
 
 SnakeUtils.SEGMENT_SIZE = 24
@@ -58,8 +60,8 @@ local function normalizeCell(col, row)
 		return nil
 	end
 
-	col = math.floor(col + 0.5)
-	row = math.floor(row + 0.5)
+	col = floor(col + 0.5)
+	row = floor(row + 0.5)
 
 	if not cellWithinBounds(col, row) then
 		return nil
@@ -298,7 +300,7 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 		if dirX and dirY then
 			local headCol, headRow = Arena:getTileFromWorld(head.drawX, head.drawY)
 			if headCol and headRow then
-				local buffer = math.max(1, math.floor(opts.frontBuffer or 1))
+				local buffer = math.max(1, floor(opts.frontBuffer or 1))
 				for i = 1, buffer do
 					local aheadCol = headCol + dirX * i
 					local aheadRow = headRow + dirY * i

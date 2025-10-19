@@ -1,3 +1,5 @@
+local pow = math.pow
+
 local Easing = {}
 
 function Easing.clamp(value, minValue, maxValue)
@@ -45,21 +47,21 @@ function Easing.easeOutExpo(t)
 		return 1
 	end
 
-	return 1 - math.pow(2, -10 * t)
+	return 1 - pow(2, -10 * t)
 end
 
 function Easing.easeOutBack(t)
 	local c1 = 1.70158
 	local c3 = c1 + 1
 
-	return 1 + c3 * math.pow(t - 1, 3) + c1 * math.pow(t - 1, 2)
+	return 1 + c3 * pow(t - 1, 3) + c1 * pow(t - 1, 2)
 end
 
 function Easing.easeInBack(t)
 	local c1 = 1.70158
 	local c3 = c1 + 1
 
-	return c3 * math.pow(t, 3) - c1 * math.pow(t, 2)
+	return c3 * pow(t, 3) - c1 * pow(t, 2)
 end
 
 function Easing.easedProgress(timer, duration)

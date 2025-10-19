@@ -17,6 +17,10 @@ local Achievements = require("achievements")
 local Upgrades = require("upgrades")
 local Shaders = require("shaders")
 
+local floor = math.floor
+local max = math.max
+local min = math.min
+
 local FruitEvents = {}
 
 local DEFAULT_COMBO_WINDOW = 2.25
@@ -33,7 +37,7 @@ local comboState = {
 Achievements:registerStateProvider(function()
 	return {
 		currentCombo = comboState.count or 0,
-		bestComboStreak = math.max(comboState.best or 0, comboState.count or 0),
+		bestComboStreak = max(comboState.best or 0, comboState.count or 0),
 	}
 end)
 
@@ -46,13 +50,13 @@ end
 local function getBaseWindow()
 	local override = comboState.baseOverride or DEFAULT_COMBO_WINDOW
 	local bonus = getUpgradeEffect("comboWindowBonus") or 0
-	return math.max(0.5, override + bonus)
+	return max(0.5, override + bonus)
 end
 
 local function updateComboWindow()
 	comboState.baseWindow = getBaseWindow()
-	comboState.window = math.max(0.75, comboState.baseWindow)
-	comboState.timer = math.min(comboState.timer or 0, comboState.window)
+	comboState.window = max(0.75, comboState.baseWindow)
+	comboState.timer = min(comboState.timer or 0, comboState.window)
 end
 
 local function syncComboToUI()
@@ -73,7 +77,7 @@ local function applyComboReward(x, y)
 
 	comboState.timer = comboState.window
 	local comboCount = comboState.count
-	comboState.best = math.max(comboState.best or 0, comboCount)
+	comboState.best = max(comboState.best or 0, comboCount)
 	local bestStreak = comboState.best or comboCount or 0
 	PlayerStats:updateMax("bestComboStreak", bestStreak)
 	SessionStats:updateMax("bestComboStreak", bestStreak)
@@ -92,16 +96,16 @@ local function applyComboReward(x, y)
 	end
 
 	local burstColor = {1, 0.82, 0.3, 1}
-	local baseBonus = math.min((comboCount - 1) * 2, 10)
+	local baseBonus = min((comboCount - 1) * 2, 10)
 	local multiplier = Score.getComboBonusMultiplier and Score:getComboBonusMultiplier() or 1
-	local scaledCombo = math.floor(baseBonus * multiplier + 0.5)
+	local scaledCombo = floor(baseBonus * multiplier + 0.5)
 
 	local extraBonus = 0
 	if Upgrades and Upgrades.getComboBonus then
 		extraBonus = Upgrades:getComboBonus(comboCount) or 0
 	end
 
-	local totalBonus = math.max(0, scaledCombo + extraBonus)
+	local totalBonus = max(0, scaledCombo + extraBonus)
 
 	if totalBonus > 0 then
 		Score:addBonus(totalBonus)
@@ -175,7 +179,7 @@ local function applyRunRewards(fruitType, x, y)
 				})
 			end
 		elseif rewardType == "shield" then
-			local shields = math.floor(reward.amount or 0)
+			local shields = floor(reward.amount or 0)
 			if shields ~= 0 then
 				Snake:addShields(shields)
 				if reward.label and reward.showLabel ~= false then
@@ -189,7 +193,7 @@ local function applyRunRewards(fruitType, x, y)
 				})
 			end
 		elseif rewardType == "scoreBonus" then
-			local bonus = math.floor(reward.amount or 0)
+			local bonus = floor(reward.amount or 0)
 			if bonus ~= 0 then
 				Score:addBonus(bonus)
 				if reward.label then
@@ -222,14 +226,14 @@ function FruitEvents:getDefaultComboWindow()
 end
 
 function FruitEvents:setComboWindow(window)
-	comboState.baseOverride = math.max(0.5, window or DEFAULT_COMBO_WINDOW)
+	comboState.baseOverride = max(0.5, window or DEFAULT_COMBO_WINDOW)
 	syncComboToUI()
 end
 
 function FruitEvents.update(dt)
 	updateComboWindow()
 	if comboState.timer > 0 then
-		comboState.timer = math.max(0, comboState.timer - dt)
+		comboState.timer = max(0, comboState.timer - dt)
 
 		if comboState.timer == 0 then
 			comboState.count = 0
@@ -247,7 +251,7 @@ end
 function FruitEvents.boostComboTimer(amount)
 	if not amount or amount <= 0 then return end
 	updateComboWindow()
-	comboState.timer = math.min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
+	comboState.timer = min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
 	syncComboToUI()
 	if (comboState.count or 0) >= 2 then
 		Shaders.notify("specialEvent", {
@@ -328,8 +332,8 @@ function FruitEvents.handleConsumption(x, y)
 	if Arena and Arena.triggerBorderFlare then
 		local comboCount = FruitEvents.getComboCount and FruitEvents.getComboCount() or 0
 		local baseStrength = 0.12
-		local comboBoost = math.min(comboCount, 5) * 0.02
-		local duration = 0.55 + math.min(comboCount, 4) * 0.03
+		local comboBoost = min(comboCount, 5) * 0.02
+		local duration = 0.55 + min(comboCount, 4) * 0.03
 		Arena:triggerBorderFlare(baseStrength + comboBoost, duration)
 	end
 
