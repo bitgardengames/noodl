@@ -25,11 +25,44 @@ local HIT_FLASH_DURATION = 0.18
 local HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
 local SHADOW_OFFSET = 6
 local SHADOW_ALPHA = 0.35
+local STENCIL_EXTENT = 999
+
+local sawStencilState = {
+        dir = nil,
+        side = nil,
+        x = 0,
+        y = 0,
+        radius = 0,
+        sinkOffset = SINK_OFFSET,
+}
+
+local function drawSawStencil()
+        if sawStencilState.dir == "horizontal" then
+                love.graphics.rectangle(
+                        "fill",
+                        sawStencilState.x - TRACK_LENGTH / 2 - sawStencilState.radius,
+                        sawStencilState.y - STENCIL_EXTENT + sawStencilState.sinkOffset,
+                        TRACK_LENGTH + sawStencilState.radius * 2,
+                        STENCIL_EXTENT
+                )
+                return
+        end
+
+        local height = TRACK_LENGTH + sawStencilState.radius * 2
+        local top = sawStencilState.y - TRACK_LENGTH / 2 - sawStencilState.radius
+        if sawStencilState.side == "left" then
+                love.graphics.rectangle("fill", sawStencilState.x, top, STENCIL_EXTENT, height)
+        elseif sawStencilState.side == "right" then
+                love.graphics.rectangle("fill", sawStencilState.x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
+        else
+                love.graphics.rectangle("fill", sawStencilState.x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
+        end
+end
 
 local function copyColor(color)
-	if not color then
-		return { 1, 1, 1, 1 }
-	end
+        if not color then
+                return { 1, 1, 1, 1 }
+        end
 
 	return {
 		color[1] or 1,
@@ -487,41 +520,13 @@ function Saws:draw()
 		end
 
 		-- Stencil: clip saw into the track (adjust direction for left/right mounted saws)
-		love.graphics.stencil(function()
-			if saw.dir == "horizontal" then
-				love.graphics.rectangle("fill",
-				saw.x - TRACK_LENGTH/2 - saw.radius,
-				saw.y - 999 + SINK_OFFSET,
-				TRACK_LENGTH + saw.radius * 2,
-				999)
-			else
-				-- For vertical saws, choose stencil side based on saw.side
-				local height = TRACK_LENGTH + saw.radius * 2
-				local top = saw.y - TRACK_LENGTH/2 - saw.radius
-				if saw.side == "left" then
-					-- allow rightwards area (blade peeking into arena)
-					love.graphics.rectangle("fill",
-					saw.x,
-					top,
-					999,
-					height)
-				elseif saw.side == "right" then
-					-- allow leftwards area (default)
-					love.graphics.rectangle("fill",
-					saw.x - 999,
-					top,
-					999,
-					height)
-				else
-					-- centered/default: cover left side as before (keeps backward compatibility)
-					love.graphics.rectangle("fill",
-					saw.x - 999,
-					top,
-					999,
-					height)
-				end
-			end
-		end, "replace", 1)
+                sawStencilState.dir = saw.dir
+                sawStencilState.side = saw.side
+                sawStencilState.x = saw.x
+                sawStencilState.y = saw.y
+                sawStencilState.radius = saw.radius or SAW_RADIUS
+                sawStencilState.sinkOffset = SINK_OFFSET
+                love.graphics.stencil(drawSawStencil, "replace", 1)
 
 		love.graphics.setStencilTest("equal", 1)
 

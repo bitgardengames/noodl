@@ -21,9 +21,41 @@ local SINK_OFFSET = 2
 local SINK_DISTANCE = 28
 local SHADOW_OFFSET = 3
 
+local sawStencilState = {
+        dir = nil,
+        side = nil,
+        x = 0,
+        y = 0,
+        trackLength = 0,
+        radius = 0,
+        sinkOffset = 0,
+}
+
+local function drawSawStencil()
+        if sawStencilState.dir == "vertical" then
+                local height = sawStencilState.trackLength + sawStencilState.radius * 2
+                local top = sawStencilState.y - sawStencilState.trackLength / 2 - sawStencilState.radius
+                if sawStencilState.side == "left" then
+                        love.graphics.rectangle("fill", sawStencilState.x, top, STENCIL_EXTENT, height)
+                elseif sawStencilState.side == "right" then
+                        love.graphics.rectangle("fill", sawStencilState.x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
+                else
+                        love.graphics.rectangle("fill", sawStencilState.x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
+                end
+        else
+                love.graphics.rectangle(
+                        "fill",
+                        sawStencilState.x - sawStencilState.trackLength / 2 - sawStencilState.radius,
+                        sawStencilState.y - STENCIL_EXTENT + sawStencilState.sinkOffset,
+                        sawStencilState.trackLength + sawStencilState.radius * 2,
+                        STENCIL_EXTENT
+                )
+        end
+end
+
 local function getHighlightColor(color)
-	color = color or { 1, 1, 1, 1 }
-	local r = math.min(1, color[1] * 1.2 + 0.08)
+        color = color or { 1, 1, 1, 1 }
+        local r = math.min(1, color[1] * 1.2 + 0.08)
 	local g = math.min(1, color[2] * 1.2 + 0.08)
 	local b = math.min(1, color[3] * 1.2 + 0.08)
 	local a = (color[4] or 1) * 0.7
@@ -123,23 +155,16 @@ function SawActor:draw(x, y, scale)
 		love.graphics.rectangle("fill", x - trackLength / 2, y - slotThickness / 2, trackLength, slotThickness, slotRadius, slotRadius)
 	end
 
-	love.graphics.stencil(function()
-		if self.dir == "vertical" then
-			local height = trackLength + radius * 2
-			local top = y - trackLength / 2 - radius
-			if self.side == "left" then
-				love.graphics.rectangle("fill", x, top, STENCIL_EXTENT, height)
-			elseif self.side == "right" then
-				love.graphics.rectangle("fill", x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
-			else
-				love.graphics.rectangle("fill", x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
-			end
-		else
-			love.graphics.rectangle("fill", x - trackLength / 2 - radius, y - STENCIL_EXTENT + (self.sinkOffset or SINK_OFFSET) * drawScale, trackLength + radius * 2, STENCIL_EXTENT)
-		end
-	end, "replace", 1)
+        sawStencilState.dir = self.dir
+        sawStencilState.side = self.side
+        sawStencilState.x = x
+        sawStencilState.y = y
+        sawStencilState.trackLength = trackLength
+        sawStencilState.radius = radius
+        sawStencilState.sinkOffset = (self.sinkOffset or SINK_OFFSET) * drawScale
+        love.graphics.stencil(drawSawStencil, "replace", 1)
 
-	love.graphics.setStencilTest("equal", 1)
+        love.graphics.setStencilTest("equal", 1)
 
 	local px, py = getSawCenter(self, x, y, radius, trackLength)
 	local sinkProgress = clampProgress(self.sinkProgress)

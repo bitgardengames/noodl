@@ -31,10 +31,57 @@ local developerAssistEnabled = false
 local portalAnimation = nil
 local cellKeyStride = 0
 
+local stencilCircleX, stencilCircleY, stencilCircleRadius = 0, 0, 0
+local function drawStencilCircle()
+        love.graphics.circle("fill", stencilCircleX, stencilCircleY, stencilCircleRadius)
+end
+
+local clippedHeadX, clippedHeadY, clipCenterX, clipCenterY, clipRadiusValue
+local function getClippedHeadPosition()
+        if not (clippedHeadX and clippedHeadY) then
+                return clippedHeadX, clippedHeadY
+        end
+
+        local radius = clipRadiusValue or 0
+        if radius > 0 then
+                local dx = clippedHeadX - (clipCenterX or 0)
+                local dy = clippedHeadY - (clipCenterY or 0)
+                if dx * dx + dy * dy < radius * radius then
+                        return nil, nil
+                end
+        end
+
+        return clippedHeadX, clippedHeadY
+end
+
+local currentHeadOwner = nil
+local function getOwnerHead()
+        if currentHeadOwner then
+                return currentHeadOwner:getHead()
+        end
+
+        return nil, nil
+end
+
+local activeTrailForHead = nil
+local function getActiveTrailHead()
+        local trailData = activeTrailForHead
+        if not trailData then
+                return nil, nil
+        end
+
+        local headSeg = trailData[1]
+        if not headSeg then
+                return nil, nil
+        end
+
+        return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
+end
+
 local function assignDirection(target, x, y)
-	if not target then
-		return
-	end
+        if not target then
+                return
+        end
 
 	target.x = x
 	target.y = y
@@ -1801,28 +1848,21 @@ function Snake:drawClipped(hx, hy, hr)
 	love.graphics.push("all")
 	local upgradeVisuals = collectUpgradeVisuals(self)
 
-	if clipRadius > 0 then
-		love.graphics.stencil(function()
-			love.graphics.circle("fill", hx, hy, clipRadius)
-		end, "replace", 1)
-		love.graphics.setStencilTest("equal", 0)
-	end
+        if clipRadius > 0 then
+                stencilCircleX, stencilCircleY, stencilCircleRadius = hx, hy, clipRadius
+                love.graphics.stencil(drawStencilCircle, "replace", 1)
+                love.graphics.setStencilTest("equal", 0)
+        end
 
 	local shouldDrawFace = descendingHole == nil
 	local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
-	if not hideDescendingBody then
-		SnakeDraw.run(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, function()
-			if headX and headY and clipRadius > 0 then
-				local dx = headX - hx
-				local dy = headY - hy
-				if dx * dx + dy * dy < clipRadius * clipRadius then
-					return nil, nil
-				end
-			end
-			return headX, headY
-		end, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
-	end
+        if not hideDescendingBody then
+                clippedHeadX, clippedHeadY = headX, headY
+                clipCenterX, clipCenterY, clipRadiusValue = hx, hy, clipRadius
+                SnakeDraw.run(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, getClippedHeadPosition, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
+                clippedHeadX, clippedHeadY, clipCenterX, clipCenterY, clipRadiusValue = nil, nil, nil, nil, nil
+        end
 
 	if clipRadius > 0 and descendingHole and not hideDescendingBody and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
 		love.graphics.setStencilTest("equal", 1)
@@ -3151,19 +3191,11 @@ function Snake:draw()
 			for i = 1, #severedPieces do
 				local piece = severedPieces[i]
 				local trailData = piece and piece.trail
-				if trailData and #trailData > 1 then
-					local function getPieceHead()
-						local headSeg = trailData[1]
-						if not headSeg then
-							return nil, nil
-						end
-						return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
-					end
-
-					local remaining = piece.timer or 0
-					local life = piece.life or SEVERED_TAIL_LIFE
-					local fadeDuration = piece.fadeDuration or SEVERED_TAIL_FADE_DURATION
-					local fade = 1
+                                if trailData and #trailData > 1 then
+                                        local remaining = piece.timer or 0
+                                        local life = piece.life or SEVERED_TAIL_LIFE
+                                        local fadeDuration = piece.fadeDuration or SEVERED_TAIL_FADE_DURATION
+                                        local fade = 1
 
 					if fadeDuration and fadeDuration > 0 then
 						if remaining <= fadeDuration then
@@ -3179,10 +3211,12 @@ function Snake:draw()
 						overlayEffect = nil,
 					}
 
-					SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, drawOptions)
-				end
-			end
-		end
+                                        activeTrailForHead = trailData
+                                        SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getActiveTrailHead, 0, 0, nil, drawOptions)
+                                        activeTrailForHead = nil
+                                end
+                        end
+                end
 
 		local shouldDrawFace = descendingHole == nil
 		local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
@@ -3208,12 +3242,12 @@ function Snake:draw()
 				drawOptions = shouldDrawFace
 			end
 
-			SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
-				return self:getHead()
-			end, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
-		end
+                        currentHeadOwner = self
+                        SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getOwnerHead, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
+                        currentHeadOwner = nil
+                end
 
-	end
+        end
 end
 
 function Snake:resetPosition()
