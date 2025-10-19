@@ -935,9 +935,19 @@ registerEffect({
 			col = mix(col, accentColor.rgb, glow);
 
 			vec2 centered = uv - vec2(0.5);
-			float vignette = smoothstep(0.45, 0.92, length(centered));
-			float vignetteMix = clamp(vignette * vignetteIntensity, 0.0, 1.0);
-			col = mix(col, col * 0.78, vignetteMix);
+                        float vignette = smoothstep(0.45, 0.92, length(centered));
+
+                        vec2 titleCenter = vec2(0.5, 0.22);
+                        vec2 titleRadius = vec2(0.42, 0.18);
+                        vec2 titleOffset = (uv - titleCenter) / titleRadius;
+                        float titleMask = clamp(1.0 - dot(titleOffset, titleOffset), 0.0, 1.0);
+                        float titleHighlight = pow(titleMask, 1.6);
+
+                        float vignetteMix = clamp(vignette * vignetteIntensity * (1.0 - titleHighlight * 0.75), 0.0, 1.0);
+                        col = mix(col, col * 0.78, vignetteMix);
+
+                        vec3 titleLight = mix(col, vec3(1.0), 0.35);
+                        col = mix(col, titleLight, titleHighlight * 0.55 * (0.6 + intensity * 0.4));
 
 			float noise = hash(uv * resolution.xy + time * 15.0);
 			float grain = noise * 2.0 - 1.0;
