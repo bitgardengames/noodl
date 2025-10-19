@@ -13,6 +13,8 @@ local Theme = require("theme")
 local SnakeCosmetics = require("snakecosmetics")
 local InputMode = require("inputmode")
 
+local DEFAULT_BG_COLOR = {0, 0, 0, 1}
+
 local App = {
 	stateModules = {
 		splash = require("splashscreen"),
@@ -96,7 +98,7 @@ function App:update(dt)
 end
 
 function App:draw()
-	local bg = Theme.bgColor or {0, 0, 0, 1}
+        local bg = Theme.bgColor or DEFAULT_BG_COLOR
 	local r = bg[1] or 0
 	local g = bg[2] or 0
 	local b = bg[3] or 0
