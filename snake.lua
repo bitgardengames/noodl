@@ -40,6 +40,73 @@ local function assignDirection(target, x, y)
 	target.y = y
 end
 
+local DEV_ASSIST_ENABLED_COLOR = {0.72, 0.94, 1.0, 1}
+local DEV_ASSIST_DISABLED_COLOR = {1.0, 0.7, 0.68, 1}
+local DEV_ASSIST_FLOATING_TEXT_OPTIONS = {
+        scale = 1.1,
+        popScaleFactor = 1.28,
+        popDuration = 0.28,
+        wobbleMagnitude = 0.12,
+        glow = {
+                color = {0.72, 0.94, 1.0, 0.45},
+                magnitude = 0.35,
+                frequency = 3.2,
+        },
+        shadow = {
+                color = {0, 0, 0, 0.65},
+                offset = {0, 2},
+                blur = 1.5,
+        },
+}
+
+local SHIELD_DAMAGE_FLOATING_TEXT_COLOR = {1, 0.78, 0.68, 1}
+local SHIELD_DAMAGE_FLOATING_TEXT_OPTIONS = {
+        scale = 1.08,
+        popScaleFactor = 1.45,
+        popDuration = 0.24,
+        wobbleMagnitude = 0.2,
+        wobbleFrequency = 4.6,
+        shadow = {
+                color = {0, 0, 0, 0.6},
+                offset = {0, 3},
+                blur = 1.6,
+        },
+        glow = {
+                color = {1, 0.42, 0.32, 0.45},
+                magnitude = 0.35,
+                frequency = 5.2,
+        },
+        jitter = 2.4,
+}
+
+local SHIELD_BREAK_PARTICLE_OPTIONS = {
+        count = 16,
+        speed = 170,
+        speedVariance = 90,
+        life = 0.48,
+        size = 5,
+        color = {1, 0.46, 0.32, 1},
+        spread = math.pi * 2,
+        angleJitter = math.pi,
+        drag = 3.2,
+        gravity = 280,
+        fadeTo = 0.05,
+}
+
+local SHIELD_BLOOD_PARTICLE_OPTIONS = {
+        dirX = 0,
+        dirY = -1,
+        spread = math.pi * 0.65,
+        count = 10,
+        dropletCount = 6,
+        speed = 210,
+        speedVariance = 80,
+        life = 0.5,
+        size = 3.6,
+        gravity = 340,
+        fadeTo = 0.06,
+}
+
 local function announceDeveloperAssistChange(enabled)
 	if not (FloatingText and FloatingText.add) then
 		return
@@ -58,31 +125,14 @@ local function announceDeveloperAssistChange(enabled)
 	hy = (hy or 0) - 80
 
 	local font = UI and UI.fonts and (UI.fonts.prompt or UI.fonts.button)
-	local color
-	if enabled then
-		color = {0.72, 0.94, 1.0, 1}
-	else
-		color = {1.0, 0.7, 0.68, 1}
-	end
+        local color = enabled and DEV_ASSIST_ENABLED_COLOR or DEV_ASSIST_DISABLED_COLOR
+        local options = DEV_ASSIST_FLOATING_TEXT_OPTIONS
+        local glowColor = options.glow.color
+        glowColor[1] = color[1]
+        glowColor[2] = color[2]
+        glowColor[3] = color[3]
 
-	local options = {
-		scale = 1.1,
-		popScaleFactor = 1.28,
-		popDuration = 0.28,
-		wobbleMagnitude = 0.12,
-		glow = {
-			color = {color[1], color[2], color[3], 0.45},
-			magnitude = 0.35,
-			frequency = 3.2,
-		},
-		shadow = {
-			color = {0, 0, 0, 0.65},
-			offset = {0, 2},
-			blur = 1.5,
-		},
-	}
-
-	FloatingText:add(message, hx, hy, color, 1.6, nil, font, options)
+        FloatingText:add(message, hx, hy, color, 1.6, nil, font, options)
 end
 
 local SEVERED_TAIL_LIFE = 0.9
@@ -636,38 +686,16 @@ function Snake:onDamageTaken(cause, info)
 			end
 		end
 
-		if Particles and Particles.spawnBurst then
-			Particles:spawnBurst(centerX, centerY, {
-				count = 16,
-				speed = 170,
-				speedVariance = 90,
-				life = 0.48,
-				size = 5,
-				color = {1, 0.46, 0.32, 1},
-				spread = math.pi * 2,
-				angleJitter = math.pi,
-				drag = 3.2,
-				gravity = 280,
-				fadeTo = 0.05,
-			})
-		end
+                if Particles and Particles.spawnBurst then
+                        Particles:spawnBurst(centerX, centerY, SHIELD_BREAK_PARTICLE_OPTIONS)
+                end
 
-		local shielded = info.damage ~= nil and info.damage <= 0
-		if Particles and Particles.spawnBlood and not shielded then
-			Particles:spawnBlood(centerX, centerY, {
-				dirX = burstDirX,
-				dirY = burstDirY,
-				spread = math.pi * 0.65,
-				count = 10,
-				dropletCount = 6,
-				speed = 210,
-				speedVariance = 80,
-				life = 0.5,
-				size = 3.6,
-				gravity = 340,
-				fadeTo = 0.06,
-			})
-		end
+                local shielded = info.damage ~= nil and info.damage <= 0
+                if Particles and Particles.spawnBlood and not shielded then
+                        SHIELD_BLOOD_PARTICLE_OPTIONS.dirX = burstDirX
+                        SHIELD_BLOOD_PARTICLE_OPTIONS.dirY = burstDirY
+                        Particles:spawnBlood(centerX, centerY, SHIELD_BLOOD_PARTICLE_OPTIONS)
+                end
 
 		if FloatingText and FloatingText.add then
 			local inflicted = info.inflictedDamage or info.damage
@@ -680,30 +708,11 @@ function Snake:onDamageTaken(cause, info)
 				label = "HIT!"
 			end
 
-			if label then
-				local options = {
-					scale = 1.08,
-					popScaleFactor = 1.45,
-					popDuration = 0.24,
-					wobbleMagnitude = 0.2,
-					wobbleFrequency = 4.6,
-					shadow = {
-						color = {0, 0, 0, 0.6},
-						offset = {0, 3},
-						blur = 1.6,
-					},
-					glow = {
-						color = {1, 0.42, 0.32, 0.45},
-						magnitude = 0.35,
-						frequency = 5.2,
-					},
-					jitter = 2.4,
-				}
-
-				FloatingText:add(label, centerX, centerY - 30, {1, 0.78, 0.68, 1}, 0.9, 36, nil, options)
-			end
-		end
-	end
+                        if label then
+                                FloatingText:add(label, centerX, centerY - 30, SHIELD_DAMAGE_FLOATING_TEXT_COLOR, 0.9, 36, nil, SHIELD_DAMAGE_FLOATING_TEXT_OPTIONS)
+                        end
+                end
+        end
 
 	self.shieldFlashTimer = SHIELD_FLASH_DURATION
 	self.damageFlashTimer = DAMAGE_FLASH_DURATION
