@@ -26,7 +26,7 @@ This reference outlines every rotating daily challenge, the in-run actions they 
 | Floor Speedrunner | Clear a floor quickly. | Finish any floor in 45 seconds or less. | 110 XP |
 | Pace Setter | Keep up a fast average pace. | Maintain an average of 240 tiles per minute across the run. | 105 XP |
 | Combo Harvester | Stockpile fruit before bursting. | After hoarding batches of 8 fruit, trigger combos 4 times. | 95 XP |
-| Guardian Angel | Balance defence and endurance. | Trigger 3 emergency shields and survive for 480 seconds (8 minutes); both conditions must be met. | 115 XP |
+| Shielded Marathon | Combine clutch saves with distance. | Trigger 2 emergency shields and travel 320 tiles in a single run; both conditions must be met. | 115 XP |
 | Fruit Rush | Sustain a rapid fruit pace. | Maintain a fruit collection rate of 16 per minute. | 100 XP |
 | Achievement Hunter | Chase in-run unlocks. | Earn 1 achievement during the run. | 130 XP |
 | Consistency Champion | Clear floors at similar speeds. | Keep the gap between the fastest and slowest floor clears within 30 seconds. | 120 XP |
