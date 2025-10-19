@@ -156,12 +156,12 @@ local english = {
 					progress = "Harvests: ${current}/${goal} (Fruit: ${apples}, Combos: ${combos})",
 					complete = "Combo harvest complete! ${current} powerful bursts.",
 				},
-				guardian_angel = {
-					title = "Guardian Angel",
-					description = "Save ${target_shields} times and survive ${target_minutes} minutes in one run.",
-					progress = "Conditions: ${current}/${goal} (Saves: ${shields}/${target_shields}, Minutes: ${minutes}/${target_minutes})",
-					complete = "Guardian duties fulfilled! Both conditions cleared.",
-				},
+                                shielded_marathon = {
+                                        title = "Shielded Marathon",
+                                        description = "Trigger ${target_shields} emergency shields and slither ${target_tiles} tiles in one run.",
+                                        progress = "Conditions: ${current}/${goal} (Saves: ${shields}/${target_shields}, Tiles: ${tiles}/${target_tiles})",
+                                        complete = "Endurance secured! Both shield and distance goals met.",
+                                },
 				fruit_rush = {
 					title = "Fruit Rush",
 					description = "Keep an apple pace of ${pace} per minute in a single run.",

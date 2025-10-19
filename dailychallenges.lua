@@ -857,61 +857,61 @@ DailyChallenges.challenges = {
 		end,
 		xpReward = 95,
 	},
-	{
-		id = "guardian_angel",
-		titleKey = "menu.daily.guardian_angel.title",
-		descriptionKey = "menu.daily.guardian_angel.description",
-		goal = 2,
-		progressKey = "menu.daily.guardian_angel.progress",
-		completeKey = "menu.daily.guardian_angel.complete",
-		targetShields = 3,
-		targetSeconds = 480,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local shields = getStatValue(statsSource, "shieldsSaved")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
-			local completed = 0
-			if shields >= (self.targetShields or 0) then
-				completed = completed + 1
-			end
-			if timeAlive >= (self.targetSeconds or 0) then
-				completed = completed + 1
-			end
-			return completed
-		end,
-		getRunValue = function(self, statsSource)
-			local shields = getStatValue(statsSource, "shieldsSaved")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
-			local completed = 0
-			if shields >= (self.targetShields or 0) then
-				completed = completed + 1
-			end
-			if timeAlive >= (self.targetSeconds or 0) then
-				completed = completed + 1
-			end
-			return completed
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local shields = getStatValue(statsSource, "shieldsSaved")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				shields = shields,
-				minutes = string.format("%.1f", math.max(timeAlive / 60, 0)),
-				target_shields = self.targetShields or 0,
-				target_minutes = string.format("%.1f", (self.targetSeconds or 0) / 60),
-			}
-		end,
-		descriptionReplacements = function(self)
-			return {
-				target_shields = self.targetShields or 0,
-				target_minutes = string.format("%.1f", (self.targetSeconds or 0) / 60),
-			}
-		end,
-		xpReward = 115,
-	},
+        {
+                id = "shielded_marathon",
+                titleKey = "menu.daily.shielded_marathon.title",
+                descriptionKey = "menu.daily.shielded_marathon.description",
+                goal = 2,
+                progressKey = "menu.daily.shielded_marathon.progress",
+                completeKey = "menu.daily.shielded_marathon.complete",
+                targetShields = 2,
+                targetTiles = 320,
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local tiles = getStatValue(statsSource, "tilesTravelled")
+                        local completed = 0
+                        if shields >= (self.targetShields or 0) then
+                                completed = completed + 1
+                        end
+                        if tiles >= (self.targetTiles or 0) then
+                                completed = completed + 1
+                        end
+                        return completed
+                end,
+                getRunValue = function(self, statsSource)
+                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local tiles = getStatValue(statsSource, "tilesTravelled")
+                        local completed = 0
+                        if shields >= (self.targetShields or 0) then
+                                completed = completed + 1
+                        end
+                        if tiles >= (self.targetTiles or 0) then
+                                completed = completed + 1
+                        end
+                        return completed
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local tiles = getStatValue(statsSource, "tilesTravelled")
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                shields = shields,
+                                tiles = tiles,
+                                target_shields = self.targetShields or 0,
+                                target_tiles = self.targetTiles or 0,
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        return {
+                                target_shields = self.targetShields or 0,
+                                target_tiles = self.targetTiles or 0,
+                        }
+                end,
+                xpReward = 115,
+        },
 	{
 		id = "fruit_rush",
 		titleKey = "menu.daily.fruit_rush.title",
