@@ -23,11 +23,14 @@ local buttons = {}
 local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
+local DAILY_BAR_CELEBRATION_DURATION = 6
+
 local dailyBarCelebration = {
-	active = false,
-	time = 0,
-	spawnTimer = 0,
-	sparkles = {},
+        active = false,
+        time = 0,
+        spawnTimer = 0,
+        sparkles = {},
+        finished = false,
 }
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 local titleSaw = SawActor.new()
@@ -137,6 +140,7 @@ local function resetDailyBarCelebration()
 	dailyBarCelebration.time = 0
 	dailyBarCelebration.spawnTimer = 0
 	dailyBarCelebration.sparkles = {}
+	dailyBarCelebration.finished = false
 end
 
 local function spawnDailyBarSparkle()
@@ -151,22 +155,32 @@ end
 
 local function updateDailyBarCelebration(dt, shouldCelebrate)
 	if shouldCelebrate then
-		if not dailyBarCelebration.active then
+		if not dailyBarCelebration.active and not dailyBarCelebration.finished then
 			dailyBarCelebration.active = true
 			dailyBarCelebration.time = 0
 			dailyBarCelebration.spawnTimer = 0
 			dailyBarCelebration.sparkles = {}
 		end
 
-		dailyBarCelebration.time = dailyBarCelebration.time + dt
-		dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer - dt
+		if dailyBarCelebration.active then
+			dailyBarCelebration.time = dailyBarCelebration.time + dt
 
-		local spawnInterval = 0.12
-		while dailyBarCelebration.spawnTimer <= 0 do
-			spawnDailyBarSparkle()
-			dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer + spawnInterval
+			if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_DURATION then
+				dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer - dt
+
+				local spawnInterval = 0.12
+				while dailyBarCelebration.spawnTimer <= 0 do
+					spawnDailyBarSparkle()
+					dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer + spawnInterval
+				end
+			else
+				dailyBarCelebration.active = false
+				dailyBarCelebration.finished = true
+				dailyBarCelebration.spawnTimer = 0
+				dailyBarCelebration.sparkles = {}
+			end
 		end
-	elseif dailyBarCelebration.active then
+	elseif dailyBarCelebration.active or dailyBarCelebration.finished then
 		resetDailyBarCelebration()
 	end
 
