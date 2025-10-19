@@ -48,14 +48,15 @@ end
 local WHITE = {1, 1, 1, 1}
 
 local reactiveState = {
-	comboTarget = 0,
-	comboDisplay = 0,
-	comboPulse = 0,
-	comboPulseTarget = 0,
-	eventPulse = 0,
-	eventPulseTarget = 0,
-	eventColor = {1, 1, 1, 1},
-	lastCombo = 0,
+        comboTarget = 0,
+        comboDisplay = 0,
+        comboPulse = 0,
+        comboPulseTarget = 0,
+        eventPulse = 0,
+        eventPulseTarget = 0,
+        eventColor = {1, 1, 1, 1},
+        tint = {1, 1, 1, 1},
+        lastCombo = 0,
 }
 
 local EVENT_COLORS = {
@@ -126,11 +127,11 @@ function Shaders.update(dt)
 end
 
 local function computeReactiveResponse()
-	local comboValue = reactiveState.comboDisplay or 0
-	local comboStrength = 0
-	if comboValue >= 2 then
-		comboStrength = math.min((comboValue - 1.5) / 8.0, 1.0)
-	end
+        local comboValue = reactiveState.comboDisplay or 0
+        local comboStrength = 0
+        if comboValue >= 2 then
+                comboStrength = math.min((comboValue - 1.5) / 8.0, 1.0)
+        end
 
 	local comboPulse = reactiveState.comboPulse or 0
 	local eventPulse = reactiveState.eventPulse or 0
@@ -140,14 +141,13 @@ local function computeReactiveResponse()
 
 	local tintBlend = math.min(0.25, eventPulse * 0.25 + comboStrength * 0.15)
 	local eventColor = reactiveState.eventColor or WHITE
-	local tint = {
-		lerp(1, eventColor[1] or 1, tintBlend),
-		lerp(1, eventColor[2] or 1, tintBlend),
-		lerp(1, eventColor[3] or 1, tintBlend),
-		1,
-	}
+        local tint = reactiveState.tint
+        tint[1] = lerp(1, eventColor[1] or 1, tintBlend)
+        tint[2] = lerp(1, eventColor[2] or 1, tintBlend)
+        tint[3] = lerp(1, eventColor[3] or 1, tintBlend)
+        tint[4] = 1
 
-	return 1 + boost, comboStrength, comboPulse, eventPulse, tint, boost
+        return 1 + boost, comboStrength, comboPulse, eventPulse, tint, boost
 end
 
 local function drawShader(effect, x, y, w, h, intensity, sendUniforms, drawOptions)
