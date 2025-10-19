@@ -607,13 +607,13 @@ function Menu:draw()
 
 			if dailyBarCelebration.active and ratio >= 0.999 then
 				local timer = dailyBarCelebration.time or 0
-				local shimmerWidth = math.max(barWidth * 0.3, barHeight)
-				local shimmerProgress = (math.sin(timer * 2.2) * 0.5) + 0.5
-				local shimmerX = textX + shimmerProgress * (barWidth - shimmerWidth)
-				local shimmerAlpha = 0.35 + 0.25 * math.sin(timer * 3.1)
+                                local shimmerWidth = math.max(barWidth * 0.3, barHeight)
+                                local shimmerProgress = (math.sin(timer * 2.2) * 0.5) + 0.5
+                                local shimmerX = textX + shimmerProgress * (barWidth - shimmerWidth)
+                                local shimmerAlpha = 0.35 + 0.25 * math.sin(timer * 3.1)
 
-				setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
-				UI.drawRoundedRect(shimmerX, textY - 3, shimmerWidth, barHeight + 6, 6)
+                                setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
+                                UI.drawRoundedRect(shimmerX, textY, shimmerWidth, barHeight, 8)
 
 				for _, sparkle in ipairs(dailyBarCelebration.sparkles) do
 					local progress = math.min(1, sparkle.life / sparkle.duration)
