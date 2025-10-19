@@ -1,44 +1,44 @@
 # Card Catalog
 
-| Name | Rarity | Description | Notable details |
-| --- | --- | --- | --- |
-| Amber Bloom | Common | Track shattered rocks; every third one forges 25% shield progress, letting environmental cleanup snowball into extra protection. | Visual: Shield progress burst when shattered rocks add protection. |
-| Extra Bite | Common | The exit unlocks one fruit earlier. Rocks spawn 15% more often. | Visual: Extra Bite chomp aura when purchased. |
-| Fresh Supplies | Common | Discard the current shop cards and restock with new ones. | Duplicates allowed; Restocks shop on use; Weight: 0.6 |
-| Tail Trainer | Common | Snake moves 4% faster. |  |
-| Stone Whisperer | Common | Rocks spawn far less often after eating fruit. |  |
-| Adrenaline Surge | Uncommon | Snake surges forward after each fruit. |  |
-| Shield Recycler | Uncommon | Every two broken shields forge a fresh one. | Visual: Shield reforging burst on every second shield break. |
-| Tempest Ward | Uncommon | After collecting twenty fruit, forge a single shield charge. | Visual: Pocket Springs ring when the stored shield is granted. |
-| Caravan Contract | Uncommon | Shops offer +1 card. Each floor spawns an extra rock. |  |
-| Circuit Breaker | Uncommon | Saw tracks freeze for 1s after each fruit. | Visual: Sparks shoot across frozen tracks when stalls trigger. |
-| Subduction Array | Uncommon | After each fruit, saws sink beneath their tracks for 1.6s. | Visual: Saws submerge beneath the floor when activated. |
-| Crystal Cache | Uncommon | Shields burst into motes worth +2 bonus score. |  |
-| Diffraction Barrier | Uncommon | Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s. | Visual: Prism refraction rings appear over laser emitters on pickup. |
-| Guild Ledger | Uncommon | Each shop slot reduces rock spawn chance by 1.5%. |  |
-| Radiant Charter | Uncommon | Each extra shop slot removes 1 laser (minimum 0) and adds 1 saw to floor generation. |  |
-| Mapmaker's Compass | Uncommon | At each floor start, reduce the most common hazard spawn. If none remain, gain bonus score and stall the saws instead. | Visual: Guiding compass pulse when hazard spawns are adjusted. |
-| Molting Reflex | Uncommon | Shields trigger a 60% adrenaline surge. | Visual: Molting Reflex flare when shields trigger adrenaline. |
-| Momentum Memory | Uncommon | Adrenaline bursts last 2s longer. |  |
-| Quick Fangs | Uncommon | Snake moves 10% faster. | Up to 4 stacks; Visual: Quick Fangs sketch overlays to draw fangs on the snake when acquired. |
-| Resonant Shell | Uncommon | Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own. | Visual: Resonant Shell aura on acquisition. |
-| Stone Skin | Uncommon | Gain a shield that shatters rocks and shrugs off a saw or laser hit. | Up to 4 stacks; Visual: Stoneguard burst on pickup and when shields smash rocks. |
-| Verdant Bonds | Uncommon | Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth forges a shield. | Up to 3 stacks; Visual: Verdant shield bloom whenever growth converts to shields. |
-| Predator's Reflex | Rare | Adrenaline bursts are 25% stronger and trigger at the start of each floor. |  |
-| Sparkstep Relay | Rare | Dashing shatters the nearest rock and stalls saws for 0.6s. | Visual: Lightning badge when the dash shatters hazards. |
-| Stone Census | Rare | Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%). |  |
-| Stonebreaker Hymn | Rare | Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock. | Up to 2 stacks |
-| Tectonic Resolve | Rare | Rock spawn chance decreases by 15%. Each fruit has a 25% chance to shatter the nearest rock. |  |
-| Chrono Ward | Rare | Each time a shield is consumed, time slows briefly so you can thread through danger. | Visual: Shield badge burst on purchase. |
-| Temporal Anchor | Rare | Press Shift (or X/Left Shoulder on a controller) to slow time for a short duration, reducing all movement to 35% speed. |  |
-| Thunder Dash | Rare | Press Space (or A/Right Shoulder on a controller) to dash forward, smashing through rocks while briefly speeding up. |  |
-| Warden's Chorus | Rare | Each Defense upgrade adds shield progress at the start of every floor. | Visual: Shield pulse when floor-start shields are granted. |
-| Zephyr Coils | Rare | Snake moves 20% faster. You gain +1 extra growth. |  |
-| Abyssal Catalyst | Epic | Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns. | Visual: Abyssal catalyst ring on purchase. |
-| Chronospiral Core | Epic | Saws move 25% slower and spin 40% slower. Combo rewards increase by 60%. You grow by +4 and gain +1 extra growth. | Weight: 1; Visual: Chronospiral flare on purchase. |
-| Deliberate Coil | Epic | Snake moves 15% slower. The exit unlocks one fruit later. | Visual: Coiled focus aura on purchase. |
-| Phoenix Echo | Epic | Once per run, a fatal crash rewinds without resetting the floor. | Visual: Phoenix flare when the rewind triggers. |
-| Solar Reservoir | Epic | The first fruit each floor stalls saws for 2s and grants +4 bonus score. |  |
-| Spectral Harvest | Epic | Once per floor, an echo collects the next fruit immediately after you do. |  |
-| Titanblood Pact | Epic | Gain +3 shields and +2s saw stall duration. Grow by +5 and gain +2 extra growth. | Weight: 1 |
-| Event Horizon | Legendary | Colliding with a wall opens a portal that ejects you from the opposite side of the arena. | Weight: 1; Visual: Event horizon portal burst on purchase. |
+| Name | Rarity | Description | Tags | Stackable | Scaling Behavior | Notable details |
+| --- | --- | --- | --- | --- | --- | --- |
+| Amber Bloom | Common | Track shattered rocks; every third one forges 25% shield progress, letting environmental cleanup snowball into extra protection. | Defense, Rocks, Hazard Control | No | Repeatable trigger tied to rock destruction. | Visual: Shield progress burst when shattered rocks add protection. Helps sustain shields on rock-heavy floors. |
+| Extra Bite | Common | The exit unlocks one fruit earlier. Rocks spawn 15% more often. | Economy, Progression, Risk | No | Passive modifier that persists all run. | Visual: Extra Bite chomp aura when purchased. Earlier exits accelerate floors but increased rocks pressure defenses. |
+| Fresh Supplies | Common | Discard the current shop cards and restock with new ones. | Shop, Utility | Yes (duplicates allowed) | Consumable single-use per purchase; no persistent scaling. | Restocks shop on use; Weight: 0.6. Useful to dig for key synergies, but offers no direct power. |
+| Tail Trainer | Common | Snake moves 4% faster. | Mobility, Speed | Yes (soft stack via duplicates) | Passive flat bonus that stacks additively. | Strong early pick to offset sluggish builds; combine with adrenaline effects for compounding speed. |
+| Stone Whisperer | Common | Rocks spawn far less often after eating fruit. | Hazard Control, Rocks | No | Persistent passive reduction applied every fruit. | Dampens rock pressure for the entire run; pairs well with rock-triggered defenses to keep density manageable. |
+| Adrenaline Surge | Uncommon | Snake surges forward after each fruit. | Mobility, Combo | No | Repeatable trigger on every fruit collected. | Excellent for aggressive lines; compounding with speed buffs can become hard to control without hazard mitigation. |
+| Shield Recycler | Uncommon | Every two broken shields forge a fresh one. | Defense, Shields | No | Repeatable trigger based on shield breaks. | Visual: Shield reforging burst on every second shield break. Rewards frequent shield usage; pairs with shield generators. |
+| Tempest Ward | Uncommon | After collecting twenty fruit, forge a single shield charge. | Defense, Progression | No | Long-cycle trigger that repeats every 20 fruit. | Visual: Pocket Springs ring when the stored shield is granted. Strong in marathon floors with reliable fruit income. |
+| Caravan Contract | Uncommon | Shops offer +1 card. Each floor spawns an extra rock. | Shop, Rocks, Risk | No | Passive global modifier; no further scaling. | Extra shop option improves card selection but escalating rocks demand hazard answers. |
+| Circuit Breaker | Uncommon | Saw tracks freeze for 1s after each fruit. | Hazard Control, Saws | No | Repeatable trigger on every fruit. | Visual: Sparks shoot across frozen tracks when stalls trigger. Great for weaving through dense saw mazes. |
+| Subduction Array | Uncommon | After each fruit, saws sink beneath their tracks for 1.6s. | Hazard Control, Saws | No | Repeatable trigger on every fruit. | Visual: Saws submerge beneath the floor when activated. Strong defensive stall that stacks with other saw slowdowns. |
+| Crystal Cache | Uncommon | Shields burst into motes worth +2 bonus score. | Score, Defense | No | Passive reward triggered on shield loss. | Encourages deliberate shield spending for score chasing; combine with shield engines. |
+| Diffraction Barrier | Uncommon | Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s. | Hazard Control, Lasers, Defense | No | Persistent passive hazard modifier. | Visual: Prism refraction rings appear over laser emitters on pickup. Excellent against dense laser floors; no direct stacking. |
+| Guild Ledger | Uncommon | Each shop slot reduces rock spawn chance by 1.5%. | Shop, Rocks, Economy | No | Passive effect scaling with current shop slots. | Synergizes with slot-adding cards; pairs with Radiant Charter for hazard tuning. |
+| Radiant Charter | Uncommon | Each extra shop slot removes 1 laser (minimum 0) and adds 1 saw to floor generation. | Shop, Hazard Tuning | No | Passive deterministic conversion when slots are added. | Adjusts hazard mix to favor saw-focused builds; consider pairing with saw mitigation. |
+| Mapmaker's Compass | Uncommon | At each floor start, reduce the most common hazard spawn. If none remain, gain bonus score and stall the saws instead. | Hazard Control, Utility, Score | No | Repeatable trigger at every floor start. | Visual: Guiding compass pulse when hazard spawns are adjusted. Strong macro control, rewards diverse hazard suppression. |
+| Molting Reflex | Uncommon | Shields trigger a 60% adrenaline surge. | Defense, Mobility | No | Repeatable trigger whenever shields absorb hits. | Visual: Molting Reflex flare when shields trigger adrenaline. Enables burst routing after intentional shield pops. |
+| Momentum Memory | Uncommon | Adrenaline bursts last 2s longer. | Mobility, Combo | No | Passive extension of adrenaline duration. | Amplifies any adrenaline source; consider ceiling to avoid runaway speed on stacked effects. |
+| Quick Fangs | Uncommon | Snake moves 10% faster. | Mobility, Speed | Yes (max 4 stacks) | Passive flat bonus; stacks linearly up to cap. | Visual: Quick Fangs sketch overlays draw fangs on the snake when acquired. High synergy with hazard slowdown to stay controllable. |
+| Resonant Shell | Uncommon | Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own. | Defense, Hazard Control, Scaling | No | Passive effect that compounds with number of Defense upgrades. | Visual: Resonant Shell aura on acquisition. Scales aggressively in defense-heavy decks; monitor to avoid trivializing hazards. |
+| Stone Skin | Uncommon | Gain a shield that shatters rocks and shrugs off a saw or laser hit. | Defense, Rocks | Yes (max 4 stacks) | Passive shield supply with per-stack charges. | Visual: Stoneguard burst on pickup and when shields smash rocks. High baseline durability; strong with shield recyclers. |
+| Verdant Bonds | Uncommon | Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth forges a shield. | Economy, Defense, Growth | Yes (max 3 stacks) | Passive compounding with each Economy purchase. | Visual: Verdant shield bloom whenever growth converts to shields. Encourages blended econ/defense strategies. |
+| Predator's Reflex | Rare | Adrenaline bursts are 25% stronger and trigger at the start of each floor. | Mobility, Combo | No | Passive boost with guaranteed floor-start trigger. | Adds reliable burst at transition moments; combine with Movement buffs for explosive entries. |
+| Sparkstep Relay | Rare | Dashing shatters the nearest rock and stalls saws for 0.6s. | Mobility, Rocks, Saws | No | Repeatable trigger on each dash activation. | Visual: Lightning badge when the dash shatters hazards. Powerful for dash-centric builds; limited by dash availability. |
+| Stone Census | Rare | Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%). | Economy, Rocks, Hazard Control | No | Passive effect scaling with Economy upgrades owned. | Mitigates rocks in late econ builds; diminishing returns after floor minimum. |
+| Stonebreaker Hymn | Rare | Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock. | Hazard Control, Rocks | Yes (max 2 stacks) | Repeatable trigger with stack-dependent cadence. | Synergizes with fruit generators; full stacks can invalidate rock pressure—watch for balance. |
+| Tectonic Resolve | Rare | Rock spawn chance decreases by 15%. Each fruit has a 25% chance to shatter the nearest rock. | Hazard Control, Rocks, Defense | No | Persistent passive with per-fruit proc chance. | Provides both suppression and removal; pairs well with Combo rewards from rock destruction. |
+| Chrono Ward | Rare | Each time a shield is consumed, time slows briefly so you can thread through danger. | Defense, Mobility, Control | No | Repeatable trigger on shield loss. | Visual: Shield badge burst on purchase. Strong safety valve; relies on consistent shield income. |
+| Temporal Anchor | Rare | Press Shift (or X/Left Shoulder on a controller) to slow time for a short duration, reducing all movement to 35% speed. | Mobility, Control | No | Active ability with cooldown—effect repeats while available. | Encourages deliberate routing; pairs with combo builds that need precision. |
+| Thunder Dash | Rare | Press Space (or A/Right Shoulder on a controller) to dash forward, smashing through rocks while briefly speeding up. | Mobility, Rocks | No | Active ability with cooldown; repeatable. | Provides emergency escape and rock clearing; monitor speed spikes when stacked with other haste cards. |
+| Warden's Chorus | Rare | Each Defense upgrade adds shield progress at the start of every floor. | Defense, Scaling | No | Passive effect scaling with Defense upgrade count. | Visual: Shield pulse when floor-start shields are granted. Strong ramp in defense-heavy decks; interacts with Resonant Shell. |
+| Zephyr Coils | Rare | Snake moves 20% faster. You gain +1 extra growth. | Mobility, Growth | No | Passive flat bonus for speed and growth. | Significant speed jump; requires hazard slowdown or control to remain manageable. |
+| Abyssal Catalyst | Epic | Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns. | Defense, Combo, Risk | No | Passive global modifier with immediate one-time shield grant. | Visual: Abyssal catalyst ring on purchase. High reward but punishes unprepared laser control. |
+| Chronospiral Core | Epic | Saws move 25% slower and spin 40% slower. Combo rewards increase by 60%. You grow by +4 and gain +1 extra growth. | Hazard Control, Combo, Growth | No | Passive global modifier that persists. | Weight: 1; Visual: Chronospiral flare on purchase. Extremely strong saw suppression paired with combo scaling. |
+| Deliberate Coil | Epic | Snake moves 15% slower. The exit unlocks one fruit later. | Economy, Risk | No | Passive penalty with no scaling. | Visual: Coiled focus aura on purchase. Use to enable challenge modifiers or pair with time-slow tools. |
+| Phoenix Echo | Epic | Once per run, a fatal crash rewinds without resetting the floor. | Defense, Safety Net | No | One-off lifesaver; does not replenish. | Visual: Phoenix flare when the rewind triggers. Balance around its high fail-safe value. |
+| Solar Reservoir | Epic | The first fruit each floor stalls saws for 2s and grants +4 bonus score. | Hazard Control, Score | No | Repeatable trigger once per floor. | Front-loaded payoff encourages quick first fruit; pairs with floor-openers like Adrenaline Surge. |
+| Spectral Harvest | Epic | Once per floor, an echo collects the next fruit immediately after you do. | Economy, Tempo | No | Repeatable trigger once per floor. | Provides burst fruit intake; synergizes with per-fruit rewards and exit acceleration. |
+| Titanblood Pact | Epic | Gain +3 shields and +2s saw stall duration. Grow by +5 and gain +2 extra growth. | Defense, Growth, Hazard Control | No | Passive global modifier with immediate shield grant. | Weight: 1. Massive durability spike—monitor combined stall duration with other slows. |
+| Event Horizon | Legendary | Colliding with a wall opens a portal that ejects you from the opposite side of the arena. | Mobility, Hazard Bypass | No | Passive spatial effect active on every wall collision. | Weight: 1; Visual: Event horizon portal burst on purchase. Enables unconventional routing; requires player mastery. |
