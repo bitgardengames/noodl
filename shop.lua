@@ -6,6 +6,13 @@ local MetaProgression = require("metaprogression")
 local Theme = require("theme")
 local Shaders = require("shaders")
 local Floors = require("floors")
+local abs = math.abs
+local ceil = math.ceil
+local floor = math.floor
+local max = math.max
+local min = math.min
+local sin = math.sin
+
 local Shop = {}
 
 local ANALOG_DEADZONE = 0.35
@@ -171,12 +178,12 @@ function Shop:refreshCards(options)
 	local baseChoices = 3
 	local upgradeBonus = 0
 	if Upgrades.getEffect then
-		upgradeBonus = math.max(0, math.floor(Upgrades:getEffect("shopSlots") or 0))
+		upgradeBonus = max(0, floor(Upgrades:getEffect("shopSlots") or 0))
 	end
 
 	local metaBonus = 0
 	if MetaProgression and MetaProgression.getShopBonusSlots then
-		metaBonus = math.max(0, MetaProgression:getShopBonusSlots() or 0)
+		metaBonus = max(0, MetaProgression:getShopBonusSlots() or 0)
 	end
 
 	local extraChoices = upgradeBonus + metaBonus
@@ -305,7 +312,7 @@ function Shop:update(dt)
 			if duration <= 0 then
 				restock.progress = 1
 			else
-				restock.progress = math.min(1, restock.timer / duration)
+				restock.progress = min(1, restock.timer / duration)
 			end
 			restockProgress = restock.progress
 			if restock.progress >= 1 then
@@ -326,14 +333,14 @@ function Shop:update(dt)
 
 	self.selectionProgress = self.selectionProgress or 0
 	if self.selected then
-		self.selectionProgress = math.min(1, self.selectionProgress + dt * 2.4)
+		self.selectionProgress = min(1, self.selectionProgress + dt * 2.4)
 	else
-		self.selectionProgress = math.max(0, self.selectionProgress - dt * 3)
+		self.selectionProgress = max(0, self.selectionProgress - dt * 3)
 	end
 
 	for i, state in ipairs(self.cardStates) do
 		if self.time >= state.delay and state.progress < 1 then
-			state.progress = math.min(1, state.progress + dt * 3.2)
+			state.progress = min(1, state.progress + dt * 3.2)
 		end
 
 		if not state.revealSoundPlayed and self.time >= state.delay then
@@ -349,37 +356,37 @@ function Shop:update(dt)
 		local isSelected = card and self.selected == card
 		local isFocused = (self.focusIndex == i) and not self.selected
 		if isSelected then
-			state.selection = math.min(1, (state.selection or 0) + dt * 4)
+			state.selection = min(1, (state.selection or 0) + dt * 4)
 			state.selectionClock = (state.selectionClock or 0) + dt
-			state.focus = math.min(1, (state.focus or 0) + dt * 3)
-			state.fadeOut = math.max(0, (state.fadeOut or 0) - dt * 4)
-			state.hover = math.max(0, (state.hover or 0) - dt * 6)
+			state.focus = min(1, (state.focus or 0) + dt * 3)
+			state.fadeOut = max(0, (state.fadeOut or 0) - dt * 4)
+			state.hover = max(0, (state.hover or 0) - dt * 6)
 			if not state.selectSoundPlayed then
 				state.selectSoundPlayed = true
 				Audio:playSound("shop_card_select")
 			end
 		else
-			state.selection = math.max(0, (state.selection or 0) - dt * 3)
+			state.selection = max(0, (state.selection or 0) - dt * 3)
 			if state.selection <= 0.001 then
 				state.selectionClock = 0
 			else
 				state.selectionClock = (state.selectionClock or 0) + dt
 			end
 			if isFocused and not restock then
-				state.hover = math.min(1, (state.hover or 0) + dt * 6)
+				state.hover = min(1, (state.hover or 0) + dt * 6)
 			else
-				state.hover = math.max(0, (state.hover or 0) - dt * 4)
+				state.hover = max(0, (state.hover or 0) - dt * 4)
 			end
 			if restock then
 				local fadeTarget = restockProgress or 0
-				state.fadeOut = math.max(fadeTarget, math.min(1, (state.fadeOut or 0) + dt * 3.2))
-				state.focus = math.max(0, (state.focus or 0) - dt * 4)
+				state.fadeOut = max(fadeTarget, min(1, (state.fadeOut or 0) + dt * 3.2))
+				state.focus = max(0, (state.focus or 0) - dt * 4)
 			elseif self.selected then
-				state.fadeOut = math.min(1, (state.fadeOut or 0) + dt * 3.2)
-				state.focus = math.max(0, (state.focus or 0) - dt * 4)
+				state.fadeOut = min(1, (state.fadeOut or 0) + dt * 3.2)
+				state.focus = max(0, (state.focus or 0) - dt * 4)
 			else
-				state.fadeOut = math.max(0, (state.fadeOut or 0) - dt * 3)
-				state.focus = math.max(0, (state.focus or 0) - dt * 3)
+				state.fadeOut = max(0, (state.fadeOut or 0) - dt * 3)
+				state.focus = max(0, (state.focus or 0) - dt * 3)
 			end
 			state.selectSoundPlayed = false
 		end
@@ -604,10 +611,10 @@ local function withTransformedScissor(x, y, w, h, fn)
 	local sx1, sy1 = love.graphics.transformPoint(x, y)
 	local sx2, sy2 = love.graphics.transformPoint(x + w, y + h)
 
-	local scissorX = math.min(sx1, sx2)
-	local scissorY = math.min(sy1, sy2)
-	local scissorW = math.abs(sx2 - sx1)
-	local scissorH = math.abs(sy2 - sy1)
+	local scissorX = min(sx1, sx2)
+	local scissorY = min(sy1, sy2)
+	local scissorW = abs(sx2 - sx1)
+	local scissorH = abs(sy2 - sy1)
 
 	if scissorW <= 0 or scissorH <= 0 then
 		fn()
@@ -632,7 +639,7 @@ local function getAnimatedAlpha(def, time)
 		return maxAlpha
 	end
 	local phase = def.phase or 0
-	local wave = math.sin(time * def.speed + phase) * 0.5 + 0.5
+	local wave = sin(time * def.speed + phase) * 0.5 + 0.5
 	return minAlpha + (maxAlpha - minAlpha) * wave
 end
 
@@ -647,7 +654,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 
 	if isSelected then
 		local glowClock = love.timer.getTime()
-		local pulse = 0.35 + 0.25 * (math.sin(glowClock * 5) * 0.5 + 0.5)
+		local pulse = 0.35 + 0.25 * (sin(glowClock * 5) * 0.5 + 0.5)
 		setColor(1, 0.9, 0.45, pulse)
 		love.graphics.setLineWidth(10)
 		love.graphics.rectangle("line", x - 14, y - 14, w + 28, h + 28, 18, 18)
@@ -667,7 +674,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 	if style.aura then
 		withTransformedScissor(x, y, w, h, function()
 			applyColor(setColor, style.aura.color)
-			local radius = math.max(w, h) * (style.aura.radius or 0.72)
+			local radius = max(w, h) * (style.aura.radius or 0.72)
 			local centerY = y + h * (style.aura.y or 0.4)
 			love.graphics.circle("fill", x + w * 0.5, centerY, radius)
 		end)
@@ -685,7 +692,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 	if style.flare then
 		withTransformedScissor(x, y, w, h, function()
 			applyColor(setColor, style.flare.color)
-			local radius = math.min(w, h) * (style.flare.radius or 0.36)
+			local radius = min(w, h) * (style.flare.radius or 0.36)
 			love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
 		end)
 	end
@@ -699,7 +706,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 			local spacing = style.stripes.spacing or 34
 			local width = style.stripes.width or 22
 			applyColor(setColor, style.stripes.color)
-			local stripeCount = math.ceil((diag * 2) / spacing) + 2
+			local stripeCount = ceil((diag * 2) / spacing) + 2
 			for i = -stripeCount, stripeCount do
 				local pos = i * spacing
 				love.graphics.rectangle("fill", -diag, pos - width / 2, diag * 2, width)
@@ -713,7 +720,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 			local time = love.timer.getTime()
 			for i, pos in ipairs(style.sparkles.positions) do
 				local px, py, scale = pos[1], pos[2], pos[3] or 1
-				local pulse = 0.6 + 0.4 * math.sin(time * (style.sparkles.speed or 1.8) + i * 0.9)
+				local pulse = 0.6 + 0.4 * sin(time * (style.sparkles.speed or 1.8) + i * 0.9)
 				local radius = (style.sparkles.radius or 9) * scale * pulse
 				local sparkleColor = style.sparkles.color or borderColor
 				local sparkleAlpha = (sparkleColor[4] or 1) * pulse
@@ -736,16 +743,16 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		if effect then
 			local hoverValue = (animationState and animationState.hover) or 0
 			if hovered then
-				hoverValue = math.max(hoverValue, 1)
+				hoverValue = max(hoverValue, 1)
 			end
 			local focusValue = (animationState and animationState.focus) or 0
 			local selectionValue = (animationState and animationState.selection) or 0
 			if isSelected then
-				selectionValue = math.max(selectionValue, 1)
+				selectionValue = max(selectionValue, 1)
 			end
 
 			local function ease(t)
-				t = math.max(0, math.min(1, t))
+				t = max(0, min(1, t))
 				return t * t * (3 - 2 * t)
 			end
 
@@ -754,7 +761,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 			local selectionEase = ease(selectionValue)
 
 			local intensity = 0.55 + 0.3 * hoverEase + 0.2 * focusEase + 0.45 * selectionEase
-			intensity = math.max(0, math.min(intensity * fadeAlpha, 1.35))
+			intensity = max(0, min(intensity * fadeAlpha, 1.35))
 
 			local effectData = {
 				parallax = (hoverEase * 0.4 + selectionEase * 0.9) * fadeAlpha,
@@ -782,7 +789,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 
 	if hovered or isSelected then
 		local focusAlpha = hovered and 0.6 or 0.4
-		hoverGlowAlpha = math.max(hoverGlowAlpha or 0, focusAlpha)
+		hoverGlowAlpha = max(hoverGlowAlpha or 0, focusAlpha)
 	end
 
 	if hoverGlowAlpha and hoverGlowAlpha > 0 then
@@ -808,7 +815,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 	love.graphics.printf(card.name, x + 14, titleY, titleWidth, "center")
 
 	local _, titleLines = titleFont:getWrap(card.name or "", titleWidth)
-	local titleLineCount = math.max(1, #titleLines)
+	local titleLineCount = max(1, #titleLines)
 	local titleHeight = titleLineCount * titleFont:getHeight() * titleFont:getLineHeight()
 	local contentTop = titleY + titleHeight
 
@@ -857,7 +864,7 @@ function Shop:draw(screenW, screenH)
 		end
 		local wrapWidth = textAreaWidth
 		local _, lines = font:getWrap(text, wrapWidth)
-		local lineCount = math.max(1, #lines)
+		local lineCount = max(1, #lines)
 		return lineCount * font:getHeight() * font:getLineHeight() + (spacing or 0)
 	end
 
@@ -892,9 +899,9 @@ function Shop:draw(screenW, screenH)
 	local cardWidth, cardHeight = 264, 344
 	local baseSpacing = 48
 	local minSpacing = 28
-	local marginX = math.max(60, screenW * 0.05)
-	local availableWidth = math.max(cardWidth, screenW - marginX * 2)
-	local columns = math.min(cardCount, math.max(1, math.floor((availableWidth + minSpacing) / (cardWidth + minSpacing))))
+	local marginX = max(60, screenW * 0.05)
+	local availableWidth = max(cardWidth, screenW - marginX * 2)
+	local columns = min(cardCount, max(1, floor((availableWidth + minSpacing) / (cardWidth + minSpacing))))
 
 	while columns > 1 do
 		local widthNeeded = columns * cardWidth + (columns - 1) * minSpacing
@@ -904,52 +911,52 @@ function Shop:draw(screenW, screenH)
 		columns = columns - 1
 	end
 
-	columns = math.max(1, columns)
-	local rows = math.max(1, math.ceil(cardCount / columns))
+	columns = max(1, columns)
+	local rows = max(1, ceil(cardCount / columns))
 
 	local spacing = 0
 	if columns > 1 then
 		local calculated = (availableWidth - columns * cardWidth) / (columns - 1)
-		spacing = math.max(minSpacing, math.min(baseSpacing, calculated))
+		spacing = max(minSpacing, min(baseSpacing, calculated))
 	end
 
-	local totalWidth = columns * cardWidth + math.max(0, (columns - 1)) * spacing
+	local totalWidth = columns * cardWidth + max(0, (columns - 1)) * spacing
 	local startX = (screenW - totalWidth) / 2
 
 	local rowSpacing = 72
 	local minRowSpacing = 40
 	local bottomPadding = screenH * 0.12
 	local minTopPadding = screenH * 0.24
-	local topPadding = math.max(minTopPadding, headerBottom + 24)
+	local topPadding = max(minTopPadding, headerBottom + 24)
 	local availableHeight = screenH - topPadding - bottomPadding
 	if availableHeight < 0 then
-		local reduction = math.min(topPadding - minTopPadding, -availableHeight)
+		local reduction = min(topPadding - minTopPadding, -availableHeight)
 		if reduction > 0 then
 			topPadding = topPadding - reduction
 		end
-		availableHeight = math.max(0, screenH - topPadding - bottomPadding)
+		availableHeight = max(0, screenH - topPadding - bottomPadding)
 	end
-	local totalHeight = rows * cardHeight + math.max(0, (rows - 1)) * rowSpacing
+	local totalHeight = rows * cardHeight + max(0, (rows - 1)) * rowSpacing
 	if rows > 1 and totalHeight > availableHeight then
 		local adjustableRows = rows - 1
 		if adjustableRows > 0 then
 			local excess = totalHeight - availableHeight
 			local reduction = excess / adjustableRows
-			rowSpacing = math.max(minRowSpacing, rowSpacing - reduction)
-			totalHeight = rows * cardHeight + math.max(0, (rows - 1)) * rowSpacing
+			rowSpacing = max(minRowSpacing, rowSpacing - reduction)
+			totalHeight = rows * cardHeight + max(0, (rows - 1)) * rowSpacing
 		end
 	end
 
 	local preferredTop = screenH * 0.34
 	local centeredTop = (screenH - totalHeight) / 2
-	local startY = math.max(topPadding, math.min(preferredTop, centeredTop))
+	local startY = max(topPadding, min(preferredTop, centeredTop))
 	local layoutCenterY = startY + totalHeight / 2
 
 	local mx, my = love.mouse.getPosition()
 
 	local function renderCard(i, card)
 		local columnIndex = ((i - 1) % columns)
-		local rowIndex = math.floor((i - 1) / columns)
+		local rowIndex = floor((i - 1) / columns)
 		local baseX = startX + columnIndex * (cardWidth + spacing)
 		local baseY = startY + rowIndex * (cardHeight + rowSpacing)
 		local alpha = 1
@@ -977,9 +984,9 @@ function Shop:draw(screenW, screenH)
 
 			local selection = state.selection or 0
 			if selection > 0 then
-				local pulse = 1 + 0.05 * math.sin((state.selectionClock or 0) * 8)
+				local pulse = 1 + 0.05 * sin((state.selectionClock or 0) * 8)
 				scale = scale * (1 + 0.08 * selection) * pulse
-				alpha = math.min(1, alpha * (1 + 0.2 * selection))
+				alpha = min(1, alpha * (1 + 0.2 * selection))
 			end
 		end
 
@@ -990,13 +997,13 @@ function Shop:draw(screenW, screenH)
 		local discardData = (state and state.discardActive and state.discard and self.restocking) and state.discard or nil
 		local discardOffsetX, discardOffsetY, discardRotation = 0, 0, 0
 		if discardData then
-			local fadeT = math.max(0, math.min(1, fadeOut))
-			local time = discardData.duration and discardData.duration > 0 and math.min(1, (discardData.clock or 0) / discardData.duration) or fadeT
+			local fadeT = max(0, min(1, fadeOut))
+			local time = discardData.duration and discardData.duration > 0 and min(1, (discardData.clock or 0) / discardData.duration) or fadeT
 			local discardEase = fadeT * fadeT * (3 - 2 * fadeT)
 			local motionEase = time * time * (3 - 2 * time)
 			local dropEase = discardEase * discardEase
 			local swayClock = (discardData.clock or 0) * (discardData.swaySpeed or 3.2)
-			local sway = math.sin(swayClock) * (discardData.swayMagnitude or 14) * (1 - motionEase)
+			local sway = sin(swayClock) * (discardData.swayMagnitude or 14) * (1 - motionEase)
 			discardOffsetX = ((discardData.horizontalDistance or 0) * motionEase) + sway * (discardData.direction or 1)
 			local dropDistance = discardData.dropDistance or 0
 			local arcHeight = discardData.arcHeight or 0
@@ -1009,7 +1016,7 @@ function Shop:draw(screenW, screenH)
 		if card == self.selected then
 			yOffset = yOffset + 46 * focusEase
 			scale = scale * (1 + 0.35 * focusEase)
-			alpha = math.min(1, alpha * (1 + 0.6 * focusEase))
+			alpha = min(1, alpha * (1 + 0.6 * focusEase))
 			-- Make sure the selected card renders at full opacity while it
 			-- animates toward the center. Without this clamp the focus easing
 			-- could leave it slightly translucent until the animation fully
@@ -1027,7 +1034,7 @@ function Shop:draw(screenW, screenH)
 			end
 		end
 
-		alpha = math.max(0, math.min(alpha, 1))
+		alpha = max(0, min(alpha, 1))
 
 		local centerX = baseX + cardWidth / 2
 		local centerY = baseY + cardHeight / 2 - yOffset
@@ -1075,11 +1082,11 @@ function Shop:draw(screenW, screenH)
 
 		if state and state.selectionFlash then
 			local flashDuration = 0.75
-			local t = math.max(0, math.min(1, state.selectionFlash / flashDuration))
+			local t = max(0, min(1, state.selectionFlash / flashDuration))
 			local ease = 1 - ((1 - t) * (1 - t))
 			local ringAlpha = (1 - ease) * 0.8
 			local burstAlpha = (1 - ease) * 0.45
-			local radiusBase = math.max(cardWidth, cardHeight) * 0.42
+			local radiusBase = max(cardWidth, cardHeight) * 0.42
 			local radius = radiusBase + ease * 180
 
 			love.graphics.setLineWidth(6)

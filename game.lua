@@ -36,6 +36,13 @@ local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
 local ModuleUtil = require("moduleutil")
 local RenderLayers = require("renderlayers")
+local ceil = math.ceil
+local floor = math.floor
+local max = math.max
+local min = math.min
+local sin = math.sin
+local sqrt = math.sqrt
+
 local Game = {}
 
 local clamp01 = Easing.clamp01
@@ -47,8 +54,8 @@ local function easeOutCubic(t)
 end
 
 local function ensureTransitionTitleCanvas(self)
-	local width = math.max(1, math.ceil(self.screenWidth or love.graphics.getWidth() or 1))
-	local height = math.max(1, math.ceil(self.screenHeight or love.graphics.getHeight() or 1))
+	local width = max(1, ceil(self.screenWidth or love.graphics.getWidth() or 1))
+	local height = max(1, ceil(self.screenHeight or love.graphics.getHeight() or 1))
 	local canvas = self.transitionTitleCanvas
 	if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
 		canvas = love.graphics.newCanvas(width, height)
@@ -127,9 +134,9 @@ local function updateFeedbackState(self, dt)
 
 	local state = ensureFeedbackState(self)
 
-	state.impactTimer = math.max(0, (state.impactTimer or 0) - dt)
-	state.surgeTimer = math.max(0, (state.surgeTimer or 0) - dt)
-	state.panicTimer = math.max(0, (state.panicTimer or 0) - dt)
+	state.impactTimer = max(0, (state.impactTimer or 0) - dt)
+	state.surgeTimer = max(0, (state.surgeTimer or 0) - dt)
+	state.panicTimer = max(0, (state.panicTimer or 0) - dt)
 	state.dangerPulseTimer = (state.dangerPulseTimer or 0) + dt
 
 	if (state.impactTimer or 0) <= 0 then
@@ -142,19 +149,19 @@ local function updateFeedbackState(self, dt)
 
 	local targetDanger = 0
 	if (state.panicTimer or 0) > 0 and (state.panicDuration or 0) > 0 then
-		targetDanger = math.max(0, math.min(1, (state.panicTimer or 0) / state.panicDuration))
+		targetDanger = max(0, min(1, (state.panicTimer or 0) / state.panicDuration))
 	end
 
-	local smoothing = math.min(dt * 4.5, 1)
+	local smoothing = min(dt * 4.5, 1)
 	state.dangerLevel = (state.dangerLevel or 0) + (targetDanger - (state.dangerLevel or 0)) * smoothing
 
-	local impactDecay = math.min(dt * 2.6, 1)
-	state.impactPeak = math.max(0, (state.impactPeak or 0) - impactDecay)
+	local impactDecay = min(dt * 2.6, 1)
+	state.impactPeak = max(0, (state.impactPeak or 0) - impactDecay)
 
-	local surgeDecay = math.min(dt * 1.8, 1)
-	state.surgePeak = math.max(0, (state.surgePeak or 0) - surgeDecay)
+	local surgeDecay = min(dt * 1.8, 1)
+	state.surgePeak = max(0, (state.surgePeak or 0) - surgeDecay)
 
-	state.panicBurst = math.max(0, (state.panicBurst or 0) - dt * 0.9)
+	state.panicBurst = max(0, (state.panicBurst or 0) - dt * 0.9)
 end
 
 local function drawFeedbackOverlay(self)
@@ -171,7 +178,7 @@ local function drawFeedbackOverlay(self)
 	local impactPeak = state.impactPeak or 0
 
 	if impactTimer > 0 and impactPeak > 0 then
-		local progress = math.max(0, math.min(1, impactTimer / impactDuration))
+		local progress = max(0, min(1, impactTimer / impactDuration))
 		local intensity = impactPeak * (progress ^ 0.7)
 		local age = 1 - progress
 
@@ -209,13 +216,13 @@ local function drawFeedbackOverlay(self)
 	local surgeDuration = state.surgeDuration or 1
 	local surgePeak = state.surgePeak or 0
 	if surgeTimer > 0 and surgePeak > 0 then
-		local progress = math.max(0, math.min(1, surgeTimer / surgeDuration))
+		local progress = max(0, min(1, surgeTimer / surgeDuration))
 		local intensity = surgePeak * (progress ^ 0.8)
 		local expansion = 1 - progress
 
 		love.graphics.push("all")
 		love.graphics.setBlendMode("add")
-		local radius = math.sqrt(screenW * screenW + screenH * screenH)
+		local radius = sqrt(screenW * screenW + screenH * screenH)
 		love.graphics.setColor(1, 0.9, 0.5, 0.22 * intensity)
 		love.graphics.setLineWidth(2 + intensity * 6)
 		love.graphics.circle("line", screenW * 0.5, screenH * 0.5, radius * (0.6 + expansion * 0.26), 64)
@@ -240,15 +247,15 @@ local function drawFeedbackOverlay(self)
 
 	local baseDanger = state.dangerLevel or 0
 	local burst = state.panicBurst or 0
-	local danger = math.max(baseDanger, burst * 0.7)
+	local danger = max(baseDanger, burst * 0.7)
 	if danger > 0 then
 		local pulseTimer = state.dangerPulseTimer or 0
-		local pulse = 0.5 + 0.5 * math.sin(pulseTimer * (4.6 + danger * 3.2))
+		local pulse = 0.5 + 0.5 * sin(pulseTimer * (4.6 + danger * 3.2))
 		love.graphics.push("all")
 		love.graphics.setColor(0.45, 0.03, 0.08, 0.4 * danger + 0.22 * pulse * danger)
 		love.graphics.rectangle("fill", -14, -14, screenW + 28, screenH + 28)
 
-		local outlineAlpha = math.min(0.78, 0.35 + danger * 0.45 + burst * 0.35)
+		local outlineAlpha = min(0.78, 0.35 + danger * 0.45 + burst * 0.35)
 		love.graphics.setColor(0.95, 0.1, 0.22, outlineAlpha)
 		local thickness = 16 + danger * 28
 		love.graphics.setLineWidth(thickness)
@@ -282,30 +289,30 @@ end
 local ensureHitStopState
 
 function Game:applyHitStop(intensity, duration)
-	intensity = math.max(intensity or 0, 0)
-	duration = math.max(duration or 0, 0)
+	intensity = max(intensity or 0, 0)
+	duration = max(duration or 0, 0)
 
 	if intensity <= 0 or duration <= 0 then
 		return
 	end
 
 	local state = ensureHitStopState(self)
-	state.timer = math.max(state.timer or 0, duration)
-	state.duration = math.max(state.duration or 0, duration)
-	state.intensity = math.min(0.95, math.max(state.intensity or 0, intensity))
+	state.timer = max(state.timer or 0, duration)
+	state.duration = max(state.duration or 0, duration)
+	state.intensity = min(0.95, max(state.intensity or 0, intensity))
 end
 
 function Game:triggerImpactFeedback(strength, options)
 	local state = ensureFeedbackState(self)
-	strength = math.max(strength or 0, 0)
+	strength = max(strength or 0, 0)
 
 	local duration = 0.28 + strength * 0.24
 	state.impactDuration = duration
 	state.impactTimer = duration
 
 	local spike = 0.55 + strength * 0.65
-	state.impactPeak = math.min(1.25, math.max(state.impactPeak or 0, spike))
-	state.panicBurst = math.min(1.35, (state.panicBurst or 0) + 0.35 + strength * 0.4)
+	state.impactPeak = min(1.25, max(state.impactPeak or 0, spike))
+	state.panicBurst = min(1.35, (state.panicBurst or 0) + 0.35 + strength * 0.4)
 
 	local impactRipple = state.impactRipple or {}
 	local rx, ry = resolveFeedbackPosition(self, options)
@@ -322,31 +329,31 @@ function Game:triggerImpactFeedback(strength, options)
 	if Shaders and Shaders.notify then
 		Shaders.notify("specialEvent", {
 			type = "danger",
-			strength = math.min(1.2, 0.45 + strength * 0.55),
+			strength = min(1.2, 0.45 + strength * 0.55),
 		})
 	end
 end
 
 function Game:triggerPanicFeedback(strength)
 	local state = ensureFeedbackState(self)
-	strength = math.max(strength or 0, 0)
+	strength = max(strength or 0, 0)
 
 	local baseDuration = state.panicDuration or 2.6
 	local duration = baseDuration * (0.55 + strength * 0.5)
-	state.panicTimer = math.max(state.panicTimer or 0, duration)
-	state.panicBurst = math.min(1.5, (state.panicBurst or 0) + 0.5 + strength * 0.5)
+	state.panicTimer = max(state.panicTimer or 0, duration)
+	state.panicBurst = min(1.5, (state.panicBurst or 0) + 0.5 + strength * 0.5)
 	state.dangerPulseTimer = 0
 end
 
 function Game:triggerSurgeFeedback(strength, options)
 	local state = ensureFeedbackState(self)
-	strength = math.max(strength or 0, 0)
+	strength = max(strength or 0, 0)
 
 	local duration = 0.6 + strength * 0.4
 	state.surgeDuration = duration
 	state.surgeTimer = duration
 	local surgeSpike = 0.45 + strength * 0.55
-	state.surgePeak = math.min(1.15, math.max(state.surgePeak or 0, surgeSpike))
+	state.surgePeak = min(1.15, max(state.surgePeak or 0, surgeSpike))
 
 	local ripple = state.surgeRipple or {}
 	local rx, ry = resolveFeedbackPosition(self, options)
@@ -359,7 +366,7 @@ function Game:triggerSurgeFeedback(strength, options)
 	if Shaders and Shaders.notify then
 		Shaders.notify("specialEvent", {
 			type = "tension",
-			strength = math.min(1.0, 0.3 + strength * 0.45),
+			strength = min(1.0, 0.3 + strength * 0.45),
 		})
 	end
 end
@@ -431,7 +438,7 @@ local function updateHitStopState(self, dt)
 		return
 	end
 
-	state.timer = math.max(0, (state.timer or 0) - (dt or 0))
+	state.timer = max(0, (state.timer or 0) - (dt or 0))
 	if state.timer <= 0 then
 		self.hitStop = nil
 	end
@@ -451,9 +458,9 @@ local function resolveHitStopScale(self)
 		return 1
 	end
 
-	local progress = math.max(0, math.min(1, timer / duration))
-	local slow = 1 - easeOutCubic(progress) * math.min(intensity, 0.95)
-	return math.max(0.1, slow)
+	local progress = max(0, min(1, timer / duration))
+	local slow = 1 - easeOutCubic(progress) * min(intensity, 0.95)
+	return max(0.1, slow)
 end
 
 local function resolveMouseVisibilityTarget(self)
@@ -621,15 +628,15 @@ local function drawAdrenalineGlow(self)
 	if Snake.adrenaline and Snake.adrenaline.active and not Snake.adrenaline.suppressVisuals then
 		local duration = Snake.adrenaline.duration or 1
 		if duration > 0 then
-			local adrenalineStrength = math.max(0, math.min(1, (Snake.adrenaline.timer or 0) / duration))
-			glowStrength = math.max(glowStrength, adrenalineStrength * 0.85)
+			local adrenalineStrength = max(0, min(1, (Snake.adrenaline.timer or 0) / duration))
+			glowStrength = max(glowStrength, adrenalineStrength * 0.85)
 		end
 	end
 
 	if glowStrength <= 0 then return end
 
 	local time = love.timer.getTime()
-	local pulse = 0.85 + 0.15 * math.sin(time * 2.25)
+	local pulse = 0.85 + 0.15 * sin(time * 2.25)
 	local easedStrength = 0.6 + glowStrength * 0.4
 	local alpha = 0.18 * easedStrength * pulse
 
@@ -643,10 +650,10 @@ end
 function Game:load(options)
 	options = options or {}
 
-	local requestedFloor = math.max(1, math.floor(options.startFloor or 1))
+	local requestedFloor = max(1, floor(options.startFloor or 1))
 	local totalFloors = #Floors
 	if totalFloors > 0 then
-		requestedFloor = math.min(requestedFloor, totalFloors)
+		requestedFloor = min(requestedFloor, totalFloors)
 	end
 
 	self.state = "playing"
@@ -749,7 +756,7 @@ function Game:beginDeath()
 end
 
 function Game:applyDamage(amount, cause, context)
-	local inflicted = math.floor((amount or 0) + 0.0001)
+	local inflicted = floor((amount or 0) + 0.0001)
 	if inflicted < 0 then
 		inflicted = 0
 	end
@@ -762,7 +769,7 @@ function Game:applyDamage(amount, cause, context)
 		return true
 	end
 
-	local impactStrength = math.max(0.35, ((context and context.shake) or 0) + inflicted * 0.12)
+	local impactStrength = max(0.35, ((context and context.shake) or 0) + inflicted * 0.12)
 
 	if Snake and Snake.onDamageTaken then
 		Snake:onDamageTaken(cause, context)
@@ -868,7 +875,7 @@ function Game:updateDescending(dt)
 	end
 
 	local dx, dy = tail.drawX - self.hole.x, tail.drawY - self.hole.y
-	local dist = math.sqrt(dx * dx + dy * dy)
+	local dist = sqrt(dx * dx + dy * dy)
 	if dist < self.hole.radius then
 		local finalFloor = #Floors
 		if (self.floor or 1) >= finalFloor then
@@ -1156,10 +1163,10 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 	local awaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
 	local visualProgress = progress
 	if awaitingConfirm then
-		visualProgress = math.min(visualProgress, 0.7)
+		visualProgress = min(visualProgress, 0.7)
 	end
 
-	local appearProgress = math.min(1, visualProgress / 0.28)
+	local appearProgress = min(1, visualProgress / 0.28)
 	local appear = easeOutCubic(appearProgress)
 	local dissolveProgress = visualProgress > 0.48 and clamp01((visualProgress - 0.48) / 0.4) or 0
 	if awaitingConfirm then

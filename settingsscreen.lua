@@ -7,6 +7,10 @@ local Localization = require("localization")
 local Shaders = require("shaders")
 local Display = require("display")
 
+local abs = math.abs
+local max = math.max
+local min = math.min
+
 local SettingsScreen = {
 	transitionDuration = 0.45,
 }
@@ -176,15 +180,15 @@ end
 function SettingsScreen:updateScrollBounds()
 	local panel = layout.panel
 	local panelPadding = UI.spacing.panelPadding
-	viewportHeight = math.max(0, (panel and panel.h or 0) - panelPadding * 2)
-	minScrollOffset = math.min(0, viewportHeight - contentHeight)
+	viewportHeight = max(0, (panel and panel.h or 0) - panelPadding * 2)
+	minScrollOffset = min(0, viewportHeight - contentHeight)
 	scrollOffset = clampScroll(scrollOffset)
 	self:updateButtonPositions()
 end
 
 function SettingsScreen:setScroll(offset)
 	local newOffset = clampScroll(offset)
-	if math.abs(newOffset - scrollOffset) > 1e-4 then
+	if abs(newOffset - scrollOffset) > 1e-4 then
 		scrollOffset = newOffset
 		self:updateButtonPositions()
 	end
@@ -218,8 +222,8 @@ function SettingsScreen:isOptionVisible(btn)
 			trackTop = trackTop - btn.sliderTrack.handleRadius
 			trackBottom = trackBottom + btn.sliderTrack.handleRadius
 		end
-		top = math.min(top, trackTop)
-		bottom = math.max(bottom, trackBottom)
+		top = min(top, trackTop)
+		bottom = max(bottom, trackBottom)
 	end
 
 	return bottom > viewportTop and top < viewportBottom
@@ -391,7 +395,7 @@ function SettingsScreen:enter()
 	local selectionWidth = baseSelectionWidth
 
 	if availableWidth > baseSelectionWidth then
-		selectionWidth = math.min(baseSelectionWidth * 1.35, availableWidth)
+		selectionWidth = min(baseSelectionWidth * 1.35, availableWidth)
 	elseif availableWidth > 0 then
 		selectionWidth = availableWidth
 	end
@@ -404,9 +408,9 @@ function SettingsScreen:enter()
 	local desiredMaxPanelHeight = sh - desiredTopMargin - desiredBottomMargin
 	local generalMaxPanelHeight = sh - UI.spacing.sectionSpacing * 2
 
-	local safeDesiredMax = math.max(0, desiredMaxPanelHeight)
-	local safeGeneralMax = math.max(0, generalMaxPanelHeight)
-	local maxPanelHeight = math.min(panelHeight, safeDesiredMax, safeGeneralMax)
+	local safeDesiredMax = max(0, desiredMaxPanelHeight)
+	local safeGeneralMax = max(0, generalMaxPanelHeight)
+	local maxPanelHeight = min(panelHeight, safeDesiredMax, safeGeneralMax)
 	if maxPanelHeight < minPanelHeight then
 		if safeGeneralMax >= minPanelHeight then
 			maxPanelHeight = minPanelHeight
@@ -445,7 +449,7 @@ function SettingsScreen:enter()
 	layout.panel = {x = panelX, y = panelY, w = panelWidth, h = panelHeight}
 	layout.title = {
 		height = titleHeight,
-		y = math.max(UI.spacing.sectionSpacing, panelY - UI.spacing.sectionSpacing - titleHeight * 0.25),
+		y = max(UI.spacing.sectionSpacing, panelY - UI.spacing.sectionSpacing - titleHeight * 0.25),
 	}
 	layout.margins = {
 		top = panelY,
@@ -568,7 +572,7 @@ function SettingsScreen:update(dt)
 			else
 				rel = (mx - btn.x) / btn.w
 			end
-			Settings[sliderDragging] = math.min(1, math.max(0, rel))
+			Settings[sliderDragging] = min(1, max(0, rel))
 			Settings:save()
 			if opt.onChanged then
 				opt.onChanged(Settings, opt)
@@ -600,7 +604,7 @@ function SettingsScreen:draw()
 
 	local titleText = Localization:get("settings.title")
 	local titleLayout = layout.title or {}
-	local titleY = titleLayout.y or math.max(UI.spacing.sectionSpacing, panel.y - UI.spacing.sectionSpacing - (titleLayout.height or 0) * 0.25)
+	local titleY = titleLayout.y or max(UI.spacing.sectionSpacing, panel.y - UI.spacing.sectionSpacing - (titleLayout.height or 0) * 0.25)
 	UI.drawLabel(titleText, 0, titleY, sw, "center", {fontKey = "title"})
 
 	self:updateButtonPositions()
@@ -609,7 +613,7 @@ function SettingsScreen:draw()
 	local viewportX = panel.x + panelPadding
 	local viewportY = panel.y + panelPadding
 	local viewportW = panel.w - panelPadding * 2
-	local viewportH = math.max(0, viewportHeight)
+	local viewportH = max(0, viewportHeight)
 
 	local prevScissorX, prevScissorY, prevScissorW, prevScissorH = love.graphics.getScissor()
 	local appliedScissor = false
@@ -645,7 +649,7 @@ function SettingsScreen:draw()
 			end
 
 		elseif opt.type == "slider" and opt.slider then
-			local value = math.min(1, math.max(0, Settings[opt.slider] or 0))
+			local value = min(1, max(0, Settings[opt.slider] or 0))
 			if visible then
 				local trackX, trackY, trackW, trackH, handleRadius = UI.drawSlider(nil, btn.x, btn.y, btn.w, value, {
 					label = label,
@@ -672,14 +676,14 @@ function SettingsScreen:draw()
 			if visible then
 				local font = UI.fonts.heading
 				local fontHeight = font and font:getHeight() or 0
-				local textY = btn.y + math.max(0, (btn.h - fontHeight) * 0.5)
+				local textY = btn.y + max(0, (btn.h - fontHeight) * 0.5)
 				UI.drawLabel(label, btn.x, textY, btn.w, "left", {
 					font = font,
 					color = UI.colors.subtleText,
 				})
 
 				if fontHeight > 0 then
-					local lineY = math.min(btn.y + btn.h - 3, textY + fontHeight + 4)
+					local lineY = min(btn.y + btn.h - 3, textY + fontHeight + 4)
 					local lineColor = UI.colors.highlight or {1, 1, 1, 0.4}
 					love.graphics.setColor(lineColor[1] or 1, lineColor[2] or 1, lineColor[3] or 1, (lineColor[4] or 1) * 0.45)
 					love.graphics.rectangle("fill", btn.x, lineY, btn.w, 2)
@@ -724,11 +728,11 @@ function SettingsScreen:draw()
 
 		local scrollRange = contentHeight - viewportHeight
 		local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
-		scrollProgress = math.max(0, math.min(1, scrollProgress))
+		scrollProgress = max(0, min(1, scrollProgress))
 
 		local minThumbHeight = 32
-		local thumbHeight = math.max(minThumbHeight, trackHeight * (viewportHeight / contentHeight))
-		thumbHeight = math.min(thumbHeight, trackHeight)
+		local thumbHeight = max(minThumbHeight, trackHeight * (viewportHeight / contentHeight))
+		thumbHeight = min(thumbHeight, trackHeight)
 		local thumbY = trackY + (trackHeight - thumbHeight) * scrollProgress
 
 		local trackColor = Theme.panelBorder or UI.colors.panelBorder or {1, 1, 1, 0.4}
@@ -737,7 +741,7 @@ function SettingsScreen:draw()
 		love.graphics.setColor(trackColor[1] or 1, trackColor[2] or 1, trackColor[3] or 1, (trackColor[4] or 1) * 0.4)
 		love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
 
-		local thumbAlpha = math.min(1, (thumbColor[4] or 1) * 1.2)
+		local thumbAlpha = min(1, (thumbColor[4] or 1) * 1.2)
 		love.graphics.setColor(thumbColor[1] or 1, thumbColor[2] or 1, thumbColor[3] or 1, thumbAlpha)
 		love.graphics.rectangle("fill", trackX, thumbY, trackWidth, thumbHeight, trackRadius)
 		love.graphics.setColor(1, 1, 1, 1)
@@ -804,7 +808,7 @@ function SettingsScreen:setFocus(index, direction, source, skipNonMouseHistory)
 			return
 		end
 	else
-		index = math.max(1, math.min(index, count))
+		index = max(1, min(index, count))
 	end
 
 	if not isButtonFocusable(buttons[index]) then
@@ -902,8 +906,8 @@ function SettingsScreen:adjustFocused(delta)
 	if opt.type == "slider" and opt.slider then
 		local step = 0.05 * delta
 		local value = Settings[opt.slider] or 0
-		local newValue = math.min(1, math.max(0, value + step))
-		if math.abs(newValue - value) > 1e-4 then
+		local newValue = min(1, max(0, value + step))
+		if abs(newValue - value) > 1e-4 then
 			Settings[opt.slider] = newValue
 			Settings:save()
 			if opt.onChanged then
@@ -1014,7 +1018,7 @@ function SettingsScreen:mousepressed(x, y, button)
 				else
 					rel = (x - btn.x) / btn.w
 				end
-				Settings[sliderDragging] = math.min(1, math.max(0, rel))
+				Settings[sliderDragging] = min(1, max(0, rel))
 				Settings:save()
 				if opt.onChanged then
 					opt.onChanged(Settings, opt)

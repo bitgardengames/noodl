@@ -3,6 +3,16 @@ local Theme = require("theme")
 local Localization = require("localization")
 local Easing = require("easing")
 
+local abs = math.abs
+local floor = math.floor
+local max = math.max
+local min = math.min
+local pi = math.pi
+local pow = math.pow
+local sin = math.sin
+local insert = table.insert
+local remove = table.remove
+
 local UI = {}
 
 
@@ -202,14 +212,14 @@ function UI.setButtonFocus(id, focused)
 end
 
 local function round(value)
-	return math.floor(value + 0.5)
+	return floor(value + 0.5)
 end
 
 local function buildFonts(scale)
 	for key, def in pairs(fontDefinitions) do
 		local size = round(def.size * scale)
 		if def.min then
-			size = math.max(def.min, size)
+			size = max(def.min, size)
 		end
 		UI.fonts[key] = love.graphics.newFont(def.path, size)
 	end
@@ -223,7 +233,7 @@ local function scaledSpacingValue(key, scale)
 	local minValue = spacingMinimums[key] or 0
 	local value = round(baseValue * scale)
 	if minValue > 0 then
-		value = math.max(minValue, value)
+		value = max(minValue, value)
 	end
 	return value
 end
@@ -235,7 +245,7 @@ local function applySpacing(scale)
 
 	local headerPadding = round(baseSectionHeaderPadding * scale)
 	if baseSectionHeaderPadding > 0 then
-		headerPadding = math.max(4, headerPadding)
+		headerPadding = max(4, headerPadding)
 	end
 
 	local headingFont = UI.fonts.heading
@@ -243,23 +253,23 @@ local function applySpacing(scale)
 		UI.spacing.sectionHeaderHeight = headingFont:getHeight() + headerPadding
 	else
 		local fallbackHeight = round((fontDefinitions.heading.size + baseSectionHeaderPadding) * scale)
-		fallbackHeight = math.max(headerPadding * 2, fallbackHeight)
+		fallbackHeight = max(headerPadding * 2, fallbackHeight)
 		UI.spacing.sectionHeaderHeight = fallbackHeight
 	end
 end
 
 local function applyUpgradeLayout(scale)
 	local layout = UI.upgradeIndicators.layout
-	layout.width = math.max(160, round(baseUpgradeLayout.width * scale))
-	layout.spacing = math.max(8, round(baseUpgradeLayout.spacing * scale))
-	layout.baseHeight = math.max(42, round(baseUpgradeLayout.baseHeight * scale))
-	layout.iconRadius = math.max(12, round(baseUpgradeLayout.iconRadius * scale))
-	layout.barHeight = math.max(4, round(baseUpgradeLayout.barHeight * scale))
-	layout.margin = math.max(16, round(baseUpgradeLayout.margin * scale))
+	layout.width = max(160, round(baseUpgradeLayout.width * scale))
+	layout.spacing = max(8, round(baseUpgradeLayout.spacing * scale))
+	layout.baseHeight = max(42, round(baseUpgradeLayout.baseHeight * scale))
+	layout.iconRadius = max(12, round(baseUpgradeLayout.iconRadius * scale))
+	layout.barHeight = max(4, round(baseUpgradeLayout.barHeight * scale))
+	layout.margin = max(16, round(baseUpgradeLayout.margin * scale))
 end
 
 local function applySocketSize(scale)
-	UI.socketSize = math.max(18, round(baseSocketSize * scale))
+	UI.socketSize = max(18, round(baseSocketSize * scale))
 end
 
 function UI.getScale()
@@ -269,7 +279,7 @@ end
 function UI.scaled(value, minValue)
 	local result = (value or 0) * UI.getScale()
 	if minValue then
-		result = math.max(minValue, result)
+		result = max(minValue, result)
 	end
 	return round(result)
 end
@@ -281,15 +291,15 @@ function UI.refreshLayout(sw, sh)
 
 	local widthScale = sw / BASE_SCREEN_WIDTH
 	local heightScale = sh / BASE_SCREEN_HEIGHT
-	local scale = math.min(widthScale, heightScale)
+	local scale = min(widthScale, heightScale)
 	if MIN_LAYOUT_SCALE then
-		scale = math.max(MIN_LAYOUT_SCALE, scale)
+		scale = max(MIN_LAYOUT_SCALE, scale)
 	end
 	if MAX_LAYOUT_SCALE then
-		scale = math.min(MAX_LAYOUT_SCALE, scale)
+		scale = min(MAX_LAYOUT_SCALE, scale)
 	end
 
-	if UI.layoutScale and math.abs(scale - UI.layoutScale) < 0.01 then
+	if UI.layoutScale and abs(scale - UI.layoutScale) < 0.01 then
 		return
 	end
 
@@ -327,7 +337,7 @@ end
 -- Utility: draw rounded rectangle
 function UI.drawRoundedRect(x, y, w, h, r, segments)
 	local radius = r or UI.spacing.buttonRadius
-	radius = math.min(radius, w / 2, h / 2)
+	radius = min(radius, w / 2, h / 2)
 	love.graphics.rectangle("fill", x, y, w, h, radius, radius, segments)
 end
 
@@ -464,7 +474,7 @@ function UI.drawSlider(id, x, y, w, value, opts)
 			love.graphics.setFont(valueFont)
 		end
 		setColor(opts.valueColor or UI.colors.subtleText)
-		local percentText = opts.valueText or string.format("%d%%", math.floor(sliderValue * 100 + 0.5))
+		local percentText = opts.valueText or string.format("%d%%", floor(sliderValue * 100 + 0.5))
 		love.graphics.printf(percentText, trackX, trackY - (valueFont and valueFont:getHeight() or 14) - 6, trackW, "right")
 	end
 
@@ -651,7 +661,7 @@ end
 function UI:adjustFruitGoal(delta)
 	if not delta or delta == 0 then return end
 
-	local newGoal = math.max(1, (self.fruitRequired or 0) + delta)
+	local newGoal = max(1, (self.fruitRequired or 0) + delta)
 	self.fruitRequired = newGoal
 
 	if (self.fruitCollected or 0) > newGoal then
@@ -660,7 +670,7 @@ function UI:adjustFruitGoal(delta)
 
 	if type(self.fruitSockets) == "table" then
 		while #self.fruitSockets > newGoal do
-			table.remove(self.fruitSockets)
+			remove(self.fruitSockets)
 		end
 	end
 end
@@ -676,13 +686,13 @@ function UI:isGoalReached()
 end
 
 function UI:addFruit(fruitType)
-	self.fruitCollected = math.min(self.fruitCollected + 1, self.fruitRequired)
+	self.fruitCollected = min(self.fruitCollected + 1, self.fruitRequired)
 	local fruit = fruitType or {name = "Apple", color = {1, 0, 0}}
-	table.insert(self.fruitSockets, {
+	insert(self.fruitSockets, {
 		type = fruit,
 		anim = 0,
 		state = "appearing",
-		wobblePhase = love.math.random() * math.pi * 2,
+		wobblePhase = love.math.random() * pi * 2,
 		bounceTimer = 0,
 		removeTimer = 0,
 		celebrationGlow = nil,
@@ -692,14 +702,14 @@ function UI:addFruit(fruitType)
 end
 
 function UI:removeFruit(count)
-	count = math.floor(count or 0)
+	count = floor(count or 0)
 	if count <= 0 then
 		return 0
 	end
 
 	local removed = 0
 	local removalStagger = 0
-	self.fruitCollected = math.max(0, self.fruitCollected or 0)
+	self.fruitCollected = max(0, self.fruitCollected or 0)
 
 	for _ = 1, count do
 		if (self.fruitCollected or 0) <= 0 then
@@ -717,12 +727,12 @@ function UI:removeFruit(count)
 					socket.state = "removing"
 					socket.removeTimer = 0
 					socket.removeDelay = removalStagger
-					socket.anim = math.min(socket.anim or self.socketAnimTime, self.socketAnimTime)
+					socket.anim = min(socket.anim or self.socketAnimTime, self.socketAnimTime)
 					socket.bounceTimer = nil
 					socket.celebrationGlow = nil
 					socket.celebrationDelay = nil
 					socket.pendingCelebration = nil
-					socket.wobblePhase = socket.wobblePhase or love.math.random() * math.pi * 2
+					socket.wobblePhase = socket.wobblePhase or love.math.random() * pi * 2
 					marked = true
 					removalStagger = removalStagger + 0.05
 					break
@@ -735,12 +745,12 @@ function UI:removeFruit(count)
 					last.state = "removing"
 					last.removeTimer = 0
 					last.removeDelay = removalStagger
-					last.anim = math.min(last.anim or self.socketAnimTime, self.socketAnimTime)
+					last.anim = min(last.anim or self.socketAnimTime, self.socketAnimTime)
 					last.bounceTimer = nil
 					last.celebrationGlow = nil
 					last.celebrationDelay = nil
 					last.pendingCelebration = nil
-					last.wobblePhase = last.wobblePhase or love.math.random() * math.pi * 2
+					last.wobblePhase = last.wobblePhase or love.math.random() * pi * 2
 					removalStagger = removalStagger + 0.05
 				end
 			end
@@ -780,13 +790,13 @@ function UI:update(dt)
 			button.hoverAnim = 0
 		end
 		button.focusAnim = approachExp(button.focusAnim or 0, focusTarget, dt, 9)
-		local glowTarget = math.max(hoverTarget, focusTarget)
+		local glowTarget = max(hoverTarget, focusTarget)
 		button.glow = approachExp(button.glow or 0, glowTarget, dt, 5)
 
 		if button.popTimer ~= nil then
 			button.popTimer = button.popTimer + dt
-			local progress = math.min(1, button.popTimer / BUTTON_POP_DURATION)
-			button.popProgress = math.sin(progress * math.pi) * (1 - progress * 0.45)
+			local progress = min(1, button.popTimer / BUTTON_POP_DURATION)
+			button.popProgress = sin(progress * pi) * (1 - progress * 0.45)
 			if progress >= 1 then
 				button.popTimer = nil
 			end
@@ -811,14 +821,14 @@ function UI:update(dt)
 			if socket.removeTimer >= delay then
 				local removalDuration = self.socketRemoveTime > 0 and self.socketRemoveTime or self.socketAnimTime
 				local removalSpeed = self.socketAnimTime / (removalDuration > 0 and removalDuration or 1)
-				socket.anim = math.max(0, socket.anim - dt * removalSpeed)
+				socket.anim = max(0, socket.anim - dt * removalSpeed)
 				if socket.anim <= 0.001 then
 					removeSocket = true
 				end
 			end
 		else
 			if socket.anim < self.socketAnimTime then
-				socket.anim = math.min(socket.anim + dt, self.socketAnimTime)
+				socket.anim = min(socket.anim + dt, self.socketAnimTime)
 			elseif socket.state == "appearing" then
 				socket.state = "idle"
 			end
@@ -858,13 +868,13 @@ function UI:update(dt)
 		end
 
 		if socket.wobblePhase == nil then
-			socket.wobblePhase = love.math.random() * math.pi * 2
+			socket.wobblePhase = love.math.random() * pi * 2
 		end
 		local wobbleSpeed = socket.state == "removing" and 5.0 or 6.2
 		socket.wobblePhase = socket.wobblePhase + dt * wobbleSpeed
 
 		if removeSocket then
-			table.remove(self.fruitSockets, i)
+			remove(self.fruitSockets, i)
 		end
 	end
 
@@ -876,7 +886,7 @@ function UI:update(dt)
 	end
 
 	if self.combo.pop > 0 then
-		self.combo.pop = math.max(0, self.combo.pop - dt * 3)
+		self.combo.pop = max(0, self.combo.pop - dt * 3)
 	end
 
 	local shields = self.shields
@@ -888,29 +898,29 @@ function UI:update(dt)
 		local target = shields.count or 0
 		local current = shields.display or 0
 		local diff = target - current
-		if math.abs(diff) > 0.01 then
-			local step = diff * math.min(dt * 10, 1)
+		if abs(diff) > 0.01 then
+			local step = diff * min(dt * 10, 1)
 			shields.display = current + step
 		else
 			shields.display = target
 		end
 
 		if shields.popTimer and shields.popTimer > 0 then
-			shields.popTimer = math.max(0, shields.popTimer - dt)
+			shields.popTimer = max(0, shields.popTimer - dt)
 		end
 
 		if shields.shakeTimer and shields.shakeTimer > 0 then
-			shields.shakeTimer = math.max(0, shields.shakeTimer - dt)
+			shields.shakeTimer = max(0, shields.shakeTimer - dt)
 		end
 
 		if shields.flashTimer and shields.flashTimer > 0 then
-			shields.flashTimer = math.max(0, shields.flashTimer - dt)
+			shields.flashTimer = max(0, shields.flashTimer - dt)
 		end
 	end
 
 	local container = self.upgradeIndicators
 	if container and container.items then
-		local smoothing = math.min(dt * 8, 1)
+		local smoothing = min(dt * 8, 1)
 		local toRemove = {}
 		for id, item in pairs(container.items) do
 			item.visibility = item.visibility or 0
@@ -925,7 +935,7 @@ function UI:update(dt)
 			end
 
 			if item.visibility <= 0.01 and targetVis <= 0 then
-				table.insert(toRemove, id)
+				insert(toRemove, id)
 			end
 		end
 
@@ -966,7 +976,7 @@ function UI:setShields(count, opts)
 	local shields = self.shields
 	if not shields then return end
 
-	count = math.max(0, math.floor((count or 0) + 0.0001))
+	count = max(0, floor((count or 0) + 0.0001))
 
 	if shields.count == nil then
 		shields.count = count
@@ -1078,19 +1088,19 @@ local function drawComboIndicator(self)
 	local duration = combo.duration or 0
 	local timer = 0
 	local progress = 0
-	timer = math.max(0, math.min(combo.timer or 0, duration))
+	timer = max(0, min(combo.timer or 0, duration))
 	progress = duration > 0 and timer / duration or 0
 
 	local screenW = love.graphics.getWidth()
 	local titleText = "Combo"
 	titleText = "Combo x" .. combo.count
 
-	local width = math.max(240, UI.fonts.button:getWidth(titleText) + 120)
+	local width = max(240, UI.fonts.button:getWidth(titleText) + 120)
 	local height = 68
 	local x = (screenW - width) / 2
 	local y = 16
 
-	local scale = 1 + 0.08 * math.sin((1 - progress) * math.pi * 2) + (combo.pop or 0) * 0.25
+	local scale = 1 + 0.08 * sin((1 - progress) * pi * 2) + (combo.pop or 0) * 0.25
 
 	love.graphics.push()
 	love.graphics.translate(x + width / 2, y + height / 2)
@@ -1173,7 +1183,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.polygon("fill", bolt)
 	elseif icon == "pickaxe" then
 		love.graphics.push()
-		love.graphics.rotate(-math.pi / 8)
+		love.graphics.rotate(-pi / 8)
 		love.graphics.rectangle("fill", -radius * 0.14, -radius * 0.92, radius * 0.28, radius * 1.84, radius * 0.16)
 		love.graphics.pop()
 		local outline = lightenColor(accent, 0.35)
@@ -1285,7 +1295,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 
 		local boxX = anchorX - boxWidth * 0.5
 		local boxY = anchorY - boxHeight * 0.5
-		local cornerRadius = overlay.cornerRadius or math.min(10, boxHeight * 0.5)
+		local cornerRadius = overlay.cornerRadius or min(10, boxHeight * 0.5)
 
 		love.graphics.setColor(background[1], background[2], background[3], background[4] or 1)
 		love.graphics.rectangle("fill", boxX, boxY, boxWidth, boxHeight, cornerRadius, cornerRadius)
@@ -1315,7 +1325,7 @@ local function buildShieldIndicator(self)
 		rawCount = shields.display
 	end
 
-	local count = math.max(0, math.floor((rawCount or 0) + 0.5))
+	local count = max(0, floor((rawCount or 0) + 0.5))
 
 	if count <= 0 then
 		return nil
@@ -1369,7 +1379,7 @@ function UI:drawUpgradeIndicators()
 	if container.order then
 		for _, id in ipairs(container.order) do
 			if container.items[id] and not seen[id] then
-				table.insert(orderedIds, id)
+				insert(orderedIds, id)
 				seen[id] = true
 			end
 		end
@@ -1377,7 +1387,7 @@ function UI:drawUpgradeIndicators()
 
 	for id in pairs(container.items) do
 		if not seen[id] then
-			table.insert(orderedIds, id)
+			insert(orderedIds, id)
 			seen[id] = true
 		end
 	end
@@ -1386,13 +1396,13 @@ function UI:drawUpgradeIndicators()
 	for _, id in ipairs(orderedIds) do
 		local item = container.items[id]
 		if item and clamp01(item.visibility or 0) > 0.01 then
-			table.insert(entries, item)
+			insert(entries, item)
 		end
 	end
 
 	local shieldEntry = buildShieldIndicator(self)
 	if shieldEntry then
-		table.insert(entries, 1, shieldEntry)
+		insert(entries, 1, shieldEntry)
 	end
 
 	if #entries == 0 then
@@ -1438,7 +1448,7 @@ function UI:drawUpgradeIndicators()
 		drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius, entry.iconOverlay)
 
 		local textX = iconX + iconRadius + 12
-		local textWidth = math.max(60, width - (textX - x) - 14)
+		local textWidth = max(60, width - (textX - x) - 14)
 		local chargeFont = UI.fonts.body
 		local chargeFontHeight = (chargeFont and chargeFont:getHeight()) or 16
 
@@ -1470,12 +1480,12 @@ function UI:drawUpgradeIndicators()
 		if hasBar then
 			local progress = clamp01(entry.displayProgress or 0)
 			local iconBarWidth = layout.iconBarWidth or (iconRadius * 1.8)
-			local iconBarHeight = layout.iconBarHeight or math.max(4, math.floor(barHeight))
+			local iconBarHeight = layout.iconBarHeight or max(4, floor(barHeight))
 			local barX = iconX - iconBarWidth * 0.5
 			local desiredBarY = iconY + iconRadius + 6
 			local reservedSpace = entry.chargeLabel and (chargeFontHeight + 8) or 6
 			local maxBarY = drawY + panelHeight - iconBarHeight - reservedSpace
-			local barY = math.min(desiredBarY, maxBarY)
+			local barY = min(desiredBarY, maxBarY)
 
 			love.graphics.setColor(0, 0, 0, 0.28 * visibility)
 			love.graphics.rectangle("fill", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
@@ -1521,8 +1531,8 @@ function UI:drawFruitSockets()
 	local baseX, baseY = 20, 20
 	local perRow = 10
 	local spacing = self.socketSize + 6
-	local rows = math.max(1, math.ceil(self.fruitRequired / perRow))
-	local cols = math.min(self.fruitRequired, perRow)
+	local rows = max(1, math.ceil(self.fruitRequired / perRow))
+	local cols = min(self.fruitRequired, perRow)
 	if cols == 0 then cols = 1 end
 
 	local gridWidth = (cols - 1) * spacing + self.socketSize
@@ -1538,15 +1548,15 @@ function UI:drawFruitSockets()
 
 	local innerWidth = panelW - paddingX * 2
 	local innerHeight = panelH - paddingY * 2 - headerHeight
-	local baseOffsetX = math.max(0, (innerWidth - gridWidth) * 0.5)
-	local baseOffsetY = math.max(0, (innerHeight - gridHeight) * 0.5)
+	local baseOffsetX = max(0, (innerWidth - gridWidth) * 0.5)
+	local baseOffsetY = max(0, (innerHeight - gridHeight) * 0.5)
 	baseX = panelX + paddingX + baseOffsetX
 	baseY = panelY + paddingY + headerHeight + baseOffsetY
 
 	local goalFlash = 0
 	if self.goalCelebrated then
 		local flashT = clamp01(self.goalReachedAnim / 0.7)
-		goalFlash = math.pow(1 - flashT, 1.4)
+		goalFlash = pow(1 - flashT, 1.4)
 	end
 
 	-- backdrop styled like the HUD panel card
@@ -1582,7 +1592,7 @@ function UI:drawFruitSockets()
 	local highlightColor = (UI.colors and UI.colors.highlight) or Theme.highlightColor or {1, 1, 1, 0.08}
 
 	for i = 1, self.fruitRequired do
-		local row = math.floor((i - 1) / perRow)
+		local row = floor((i - 1) / perRow)
 		local col = (i - 1) % perRow
 		local bounce = 0
 		local x = baseX + col * spacing + self.socketSize / 2
@@ -1594,7 +1604,7 @@ function UI:drawFruitSockets()
 		local appear = hasFruit and clamp01(socket.anim / self.socketAnimTime) or 0
 		local radius = hasFruit and socketRadius or socketRadius * 0.8
 		local shadowScale = hasFruit and (0.75 + 0.25 * appear) or 0.85
-		local shadowAlpha = hasFruit and (0.45 * math.max(appear, 0.2)) or 0.4
+		local shadowAlpha = hasFruit and (0.45 * max(appear, 0.2)) or 0.4
 		love.graphics.setColor(0, 0, 0, shadowAlpha)
 		love.graphics.ellipse("fill", x, y + radius * 0.65, radius * 0.95 * shadowScale, radius * 0.55 * shadowScale, 32)
 
@@ -1603,13 +1613,13 @@ function UI:drawFruitSockets()
 		love.graphics.circle("fill", x, y, radius, 48)
 
 		-- subtle animated rim
-		local rimPulse = 0.35 + 0.25 * math.sin(time * 3.5 + i * 0.7)
+		local rimPulse = 0.35 + 0.25 * sin(time * 3.5 + i * 0.7)
 		love.graphics.setColor(socketOutline[1], socketOutline[2], socketOutline[3], (socketOutline[4] or 1) * rimPulse)
 		love.graphics.setLineWidth(2)
 		love.graphics.circle("line", x, y, radius, 48)
 
 		love.graphics.setColor(1, 1, 1, 0.08 * (hasFruit and appear or 1))
-		love.graphics.arc("fill", x, y, radius * 1.1, -math.pi * 0.6, -math.pi * 0.1, 24)
+		love.graphics.arc("fill", x, y, radius * 1.1, -pi * 0.6, -pi * 0.1, 24)
 
 		-- draw fruit if collected
 		if socket then
@@ -1620,37 +1630,37 @@ function UI:drawFruitSockets()
 			else
 				appearEase = Easing.easeOutBack(t)
 			end
-			appearEase = math.max(0, appearEase)
+			appearEase = max(0, appearEase)
 
-			local scale = math.min(1.18, appearEase)
+			local scale = min(1.18, appearEase)
 			local bounceScale = 1
 			if socket.bounceTimer ~= nil then
 				local bounceProgress = clamp01(socket.bounceTimer / self.socketBounceDuration)
-				bounceScale = 1 + math.sin(bounceProgress * math.pi) * 0.24 * (1 - bounceProgress * 0.4)
+				bounceScale = 1 + sin(bounceProgress * pi) * 0.24 * (1 - bounceProgress * 0.4)
 			end
 
 			local celebrationWave = 0
 			if self.goalCelebrated then
 				local waveTime = self.goalReachedAnim or 0
-				local waveFade = math.max(0, 1 - clamp01(waveTime / 0.9))
-				celebrationWave = math.sin(waveTime * 12 - i * 0.35) * 0.05 * waveFade
+				local waveFade = max(0, 1 - clamp01(waveTime / 0.9))
+				celebrationWave = sin(waveTime * 12 - i * 0.35) * 0.05 * waveFade
 			end
 
 			local goalPulse = 1 + (socket.celebrationGlow or 0) * 0.22 + celebrationWave
-			goalPulse = math.max(0.85, goalPulse)
+			goalPulse = max(0.85, goalPulse)
 
 			local visibility = t
 			if socket.state == "removing" then
 				visibility = visibility * visibility
 			else
-				visibility = math.pow(visibility, 0.85)
+				visibility = pow(visibility, 0.85)
 			end
 
 			love.graphics.push()
 			love.graphics.translate(x, y)
 			local wobbleRotation = 0
 			if socket.wobblePhase then
-				wobbleRotation = math.sin(socket.wobblePhase) * 0.08 * (1 - t)
+				wobbleRotation = sin(socket.wobblePhase) * 0.08 * (1 - t)
 			end
 			love.graphics.rotate(wobbleRotation)
 			love.graphics.scale(scale * goalPulse * bounceScale, scale * goalPulse * bounceScale)
@@ -1666,7 +1676,7 @@ function UI:drawFruitSockets()
 			love.graphics.setColor(fruit.color[1], fruit.color[2], fruit.color[3], fruitAlpha)
 			love.graphics.circle("fill", 0, 0, r, 32)
 
-			love.graphics.setColor(0, 0, 0, math.max(0.2, visibility))
+			love.graphics.setColor(0, 0, 0, max(0.2, visibility))
 			love.graphics.setLineWidth(3)
 			love.graphics.circle("line", 0, 0, r, 32)
 
@@ -1705,7 +1715,7 @@ function UI:drawFruitSockets()
 
 			-- dragonfruit glow
 			if fruit.name == "Dragonfruit" then
-				local pulse = 0.5 + 0.5 * math.sin(time * 6.0)
+				local pulse = 0.5 + 0.5 * sin(time * 6.0)
 				love.graphics.setColor(1, 0, 1, 0.25 * pulse * visibility)
 				love.graphics.circle("line", 0, 0, r + 4 * pulse, 32)
 			end
@@ -1713,7 +1723,7 @@ function UI:drawFruitSockets()
 			love.graphics.pop()
 		else
 			-- idle shimmer in empty sockets
-			local emptyGlow = 0.12 + 0.12 * math.sin(time * 5 + i * 0.9)
+			local emptyGlow = 0.12 + 0.12 * sin(time * 5 + i * 0.9)
 			if goalFlash > 0 then
 				emptyGlow = emptyGlow + 0.08 * goalFlash
 			end

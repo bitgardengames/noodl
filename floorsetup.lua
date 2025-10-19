@@ -13,6 +13,11 @@ local FloatingText = require("floatingtext")
 local FloorPlan = require("floorplan")
 local Upgrades = require("upgrades")
 
+local abs = math.abs
+local floor = math.floor
+local max = math.max
+local min = math.min
+
 local FloorSetup = {}
 
 local TRACK_LENGTH = 120
@@ -52,8 +57,8 @@ local function getCenterSpawnCell()
 	if cols < 1 then cols = 1 end
 	if rows < 1 then rows = 1 end
 
-	local midCol = math.floor(cols / 2)
-	local midRow = math.floor(rows / 2)
+	local midCol = floor(cols / 2)
+	local midRow = floor(rows / 2)
 	return midCol, midRow
 end
 
@@ -65,15 +70,15 @@ local function sawPlacementThreatensSpawn(col, row, dir)
 	local midCol, midRow = getCenterSpawnCell()
 
 	if dir == "horizontal" then
-		if math.abs(col - midCol) <= 2 then
+		if abs(col - midCol) <= 2 then
 			return true
 		end
 
-		if math.abs(row - midRow) <= 1 then
+		if abs(row - midRow) <= 1 then
 			return true
 		end
 	else
-		if math.abs(row - midRow) <= 2 then
+		if abs(row - midRow) <= 2 then
 			return true
 		end
 	end
@@ -86,8 +91,8 @@ local function addCellUnique(list, seen, col, row)
 		return
 	end
 
-	col = math.floor(col + 0.5)
-	row = math.floor(row + 0.5)
+	col = floor(col + 0.5)
+	row = floor(row + 0.5)
 
 	if col < 1 or col > (Arena.cols or 1) or row < 1 or row > (Arena.rows or 1) then
 		return
@@ -178,8 +183,8 @@ local function prepareOccupancy()
 end
 
 local function applyBaselineHazardTraits(traitContext)
-	traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
-	traitContext.dartCount = math.max(0, traitContext.dartCount or 0)
+	traitContext.laserCount = max(0, traitContext.laserCount or 0)
+	traitContext.dartCount = max(0, traitContext.dartCount or 0)
 
 	if traitContext.rockSpawnChance then
 		Rocks.spawnChance = traitContext.rockSpawnChance
@@ -223,8 +228,8 @@ local function buildCellLookup(cells)
 	local lookup = {}
 	for i = 1, #cells do
 		local cell = cells[i]
-		local col = math.floor((cell[1] or 0) + 0.5)
-		local row = math.floor((cell[2] or 0) + 0.5)
+		local col = floor((cell[1] or 0) + 0.5)
+		local row = floor((cell[2] or 0) + 0.5)
 		lookup[col .. "," .. row] = true
 	end
 
@@ -390,12 +395,12 @@ local function getDesiredLaserCount(traitContext, floorData)
 	local baseline = 0
 
 	if traitContext then
-		baseline = math.max(0, math.floor((traitContext.laserCount or 0) + 0.5))
+		baseline = max(0, floor((traitContext.laserCount or 0) + 0.5))
 	end
 
 	local ambient = getAmbientLaserPreference(traitContext, floorData)
 
-	return math.max(baseline, ambient)
+	return max(baseline, ambient)
 end
 
 local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
@@ -407,8 +412,8 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
 	local plan = {}
 	local attempts = 0
 	local maxAttempts = desired * 40
-	local totalCols = math.max(1, Arena.cols or 1)
-	local totalRows = math.max(1, Arena.rows or 1)
+	local totalCols = max(1, Arena.cols or 1)
+	local totalRows = max(1, Arena.rows or 1)
 
 	while #plan < desired and attempts < maxAttempts do
 		attempts = attempts + 1
@@ -425,13 +430,13 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
 			local rowMax = totalRows - 1
 
 			if rowMax < rowMin then
-				local fallback = math.floor(totalRows / 2 + 0.5)
+				local fallback = floor(totalRows / 2 + 0.5)
 				rowMin = fallback
 				rowMax = fallback
 			end
 
-			rowMin = math.max(1, math.min(totalRows, rowMin))
-			rowMax = math.max(rowMin, math.min(totalRows, rowMax))
+			rowMin = max(1, min(totalRows, rowMin))
+			rowMax = max(rowMin, min(totalRows, rowMax))
 			row = love.math.random(rowMin, rowMax)
 		else
 			facing = (love.math.random() < 0.5) and 1 or -1
@@ -440,13 +445,13 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
 			local colMax = totalCols - 1
 
 			if colMax < colMin then
-				local fallback = math.floor(totalCols / 2 + 0.5)
+				local fallback = floor(totalCols / 2 + 0.5)
 				colMin = fallback
 				colMax = fallback
 			end
 
-			colMin = math.max(1, math.min(totalCols, colMin))
-			colMax = math.max(colMin, math.min(totalCols, colMax))
+			colMin = max(1, min(totalCols, colMin))
+			colMax = max(colMin, min(totalCols, colMax))
 			col = love.math.random(colMin, colMax)
 		end
 
@@ -484,7 +489,7 @@ local function getDesiredDartCount(traitContext)
 		return 0
 	end
 
-	return math.max(0, math.floor((traitContext.dartCount or 0) + 0.5))
+	return max(0, floor((traitContext.dartCount or 0) + 0.5))
 end
 
 local function buildDartPlan(traitContext)
@@ -497,8 +502,8 @@ local function buildDartPlan(traitContext)
 	local plan = {}
 	local attempts = 0
 	local maxAttempts = desired * 40
-	local totalCols = math.max(1, Arena.cols or 1)
-	local totalRows = math.max(1, Arena.rows or 1)
+	local totalCols = max(1, Arena.cols or 1)
+	local totalRows = max(1, Arena.rows or 1)
 
 	while #plan < desired and attempts < maxAttempts do
 		attempts = attempts + 1
@@ -511,24 +516,24 @@ local function buildDartPlan(traitContext)
 			local rowMin = 2
 			local rowMax = totalRows - 1
 			if rowMax < rowMin then
-				local fallback = math.floor(totalRows / 2 + 0.5)
+				local fallback = floor(totalRows / 2 + 0.5)
 				rowMin = fallback
 				rowMax = fallback
 			end
-			rowMin = math.max(1, math.min(totalRows, rowMin))
-			rowMax = math.max(rowMin, math.min(totalRows, rowMax))
+			rowMin = max(1, min(totalRows, rowMin))
+			rowMax = max(rowMin, min(totalRows, rowMax))
 			row = love.math.random(rowMin, rowMax)
 		else
 			row = (facing > 0) and 1 or totalRows
 			local colMin = 2
 			local colMax = totalCols - 1
 			if colMax < colMin then
-				local fallback = math.floor(totalCols / 2 + 0.5)
+				local fallback = floor(totalCols / 2 + 0.5)
 				colMin = fallback
 				colMax = fallback
 			end
-			colMin = math.max(1, math.min(totalCols, colMin))
-			colMax = math.max(colMin, math.min(totalCols, colMax))
+			colMin = max(1, min(totalCols, colMin))
+			colMax = max(colMin, min(totalCols, colMax))
 			col = love.math.random(colMin, colMax)
 		end
 
@@ -583,7 +588,7 @@ local function mergeCells(primary, secondary)
 end
 
 local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
-	local halfTiles = math.floor((TRACK_LENGTH / Arena.tileSize) / 2)
+	local halfTiles = floor((TRACK_LENGTH / Arena.tileSize) / 2)
 	local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
 	local dartPlan, desiredDarts = buildDartPlan(traitContext)
 	local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
@@ -620,17 +625,17 @@ function FloorSetup.prepare(floorNum, floorData)
 	applyBaselineHazardTraits(traitContext)
 
 	traitContext = Upgrades:modifyFloorContext(traitContext)
-	traitContext.laserCount = math.max(0, traitContext.laserCount or 0)
-	traitContext.dartCount = math.max(0, traitContext.dartCount or 0)
+	traitContext.laserCount = max(0, traitContext.laserCount or 0)
+	traitContext.dartCount = max(0, traitContext.dartCount or 0)
 
 	local cap = FloorPlan.getLaserCap and FloorPlan.getLaserCap(traitContext.floor)
 	if cap and traitContext.laserCount ~= nil then
-		traitContext.laserCount = math.min(cap, traitContext.laserCount)
+		traitContext.laserCount = min(cap, traitContext.laserCount)
 	end
 
 	local dartCap = FloorPlan.getDartCap and FloorPlan.getDartCap(traitContext.floor)
 	if dartCap and traitContext.dartCount ~= nil then
-		traitContext.dartCount = math.min(dartCap, traitContext.dartCount)
+		traitContext.dartCount = min(dartCap, traitContext.dartCount)
 	end
 
 	local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)

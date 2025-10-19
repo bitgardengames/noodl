@@ -1,5 +1,7 @@
 local Screen = require("screen")
 
+local min = math.min
+
 local SplashScreen = {
 	transitionDurationIn = 0.25,
 	transitionDurationOut = 0.25,
@@ -63,7 +65,7 @@ local function drawLogo(image, width, height)
 
 	local maxWidth = width * 0.5
 	local maxHeight = height * 0.5
-	local scale = math.min(maxWidth / imgWidth, maxHeight / imgHeight, 1)
+	local scale = min(maxWidth / imgWidth, maxHeight / imgHeight, 1)
 	if scale <= 0 then
 		scale = 1
 	end
@@ -98,13 +100,13 @@ local function drawFadeOverlay(timer, duration, width, height)
 		return
 	end
 
-	local fadeInTime = math.min(timer, 0.2)
-	local fadeInAlpha = 1 - math.min(fadeInTime / 0.2, 1)
+	local fadeInTime = min(timer, 0.2)
+	local fadeInAlpha = 1 - min(fadeInTime / 0.2, 1)
 
 	local fadeOutStart = (duration or 1.25) - 0.25
 	local fadeOutAlpha = 0
 	if timer > fadeOutStart then
-		local fadeOutProgress = math.min((timer - fadeOutStart) / 0.25, 1)
+		local fadeOutProgress = min((timer - fadeOutStart) / 0.25, 1)
 		fadeOutAlpha = fadeOutProgress
 	end
 

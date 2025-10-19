@@ -11,6 +11,10 @@ local Face = require("face")
 local Shaders = require("shaders")
 local SnakeCosmetics = require("snakecosmetics")
 
+local floor = math.floor
+local max = math.max
+local min = math.min
+
 local AchievementsMenu = {
 	transitionDuration = 0.45,
 }
@@ -294,7 +298,7 @@ end
 
 local function toPercent(value)
 	value = clamp01(value or 0)
-	return math.floor(value * 100 + 0.5)
+	return floor(value * 100 + 0.5)
 end
 
 local function buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
@@ -303,8 +307,8 @@ local function buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thu
 	local trackCenterX = trackX + trackWidth * 0.5
 	local trackTop = trackY + halfSegment
 	local trackBottom = trackY + trackHeight - halfSegment
-	local topY = math.max(trackTop, math.min(trackBottom, thumbY + halfSegment))
-	local bottomY = math.min(trackBottom, math.max(trackTop, thumbY + thumbHeight - halfSegment))
+	local topY = max(trackTop, min(trackBottom, thumbY + halfSegment))
+	local bottomY = min(trackBottom, max(trackTop, thumbY + thumbHeight - halfSegment))
 
 	if bottomY < topY then
 		local midpoint = (topY + bottomY) * 0.5
@@ -330,18 +334,18 @@ end
 local function computeLayout(sw, sh)
 	local layout = {}
 
-	local edgeMarginX = math.max(32, sw * 0.05)
+	local edgeMarginX = max(32, sw * 0.05)
 	local basePanelWidth = CARD_WIDTH + BASE_PANEL_PADDING_X * 2
 	local availableWidth = sw - edgeMarginX * 2
 	local fallbackWidth = sw * 0.9
-	local targetWidth = math.max(availableWidth, fallbackWidth)
-	targetWidth = math.min(targetWidth, sw - 24)
-	local maxPanelWidth = math.max(0, math.min(basePanelWidth, targetWidth))
+	local targetWidth = max(availableWidth, fallbackWidth)
+	targetWidth = min(targetWidth, sw - 24)
+	local maxPanelWidth = max(0, min(basePanelWidth, targetWidth))
 	local widthScale
 	if maxPanelWidth <= 0 then
 		widthScale = 1
 	else
-		widthScale = math.min(1, maxPanelWidth / basePanelWidth)
+		widthScale = min(1, maxPanelWidth / basePanelWidth)
 	end
 
 	layout.widthScale = widthScale
@@ -350,21 +354,21 @@ local function computeLayout(sw, sh)
 	layout.panelWidth = basePanelWidth * widthScale
 
 	local panelPaddingX = layout.panelPaddingX
-	local scrollbarGap = math.max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
+	local scrollbarGap = max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
 	local maxTotalWidth = sw - 24
 	local totalWidth = layout.panelWidth + scrollbarGap + SCROLLBAR_TRACK_WIDTH
 	if totalWidth > maxTotalWidth and basePanelWidth > 0 then
-		local availableForPanel = math.max(0, maxTotalWidth - scrollbarGap - SCROLLBAR_TRACK_WIDTH)
+		local availableForPanel = max(0, maxTotalWidth - scrollbarGap - SCROLLBAR_TRACK_WIDTH)
 		if availableForPanel < layout.panelWidth then
 			local adjustedScale = availableForPanel / basePanelWidth
 			if adjustedScale < widthScale then
-				widthScale = math.max(0.5, adjustedScale)
+				widthScale = max(0.5, adjustedScale)
 				layout.widthScale = widthScale
 				layout.cardWidth = CARD_WIDTH * widthScale
 				layout.panelPaddingX = BASE_PANEL_PADDING_X * widthScale
 				layout.panelWidth = basePanelWidth * widthScale
 				panelPaddingX = layout.panelPaddingX
-				scrollbarGap = math.max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
+				scrollbarGap = max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
 				totalWidth = layout.panelWidth + scrollbarGap + SCROLLBAR_TRACK_WIDTH
 			end
 		end
@@ -372,28 +376,28 @@ local function computeLayout(sw, sh)
 
 	local panelX = (sw - totalWidth) * 0.5
 	local maxPanelX = sw - totalWidth - 12
-	panelX = math.max(12, math.min(panelX, maxPanelX))
+	panelX = max(12, min(panelX, maxPanelX))
 	layout.panelX = panelX
 	layout.listX = panelX + panelPaddingX
 
 	local titleFont = UI.fonts.title
 	local titleFontHeight = titleFont:getHeight()
-	local titleY = math.max(60, math.min(90, sh * 0.08))
+	local titleY = max(60, min(90, sh * 0.08))
 	layout.titleY = titleY
 
-	local topSpacing = math.max(28, sh * 0.045)
+	local topSpacing = max(28, sh * 0.045)
 	local desiredPanelTop = titleY + titleFontHeight + topSpacing
-	local containerTop = math.max(96, math.min(START_Y, desiredPanelTop))
+	local containerTop = max(96, min(START_Y, desiredPanelTop))
 
 	layout.panelPaddingY = BASE_PANEL_PADDING_Y
 
 	local panelPaddingY = layout.panelPaddingY
-	local summaryInsetX = math.max(28, panelPaddingX)
+	local summaryInsetX = max(28, panelPaddingX)
 	layout.summaryInsetX = summaryInsetX
 
-	local summaryVerticalPadding = math.max(SUMMARY_PANEL_TOP_PADDING_MIN, panelPaddingY * 0.35)
+	local summaryVerticalPadding = max(SUMMARY_PANEL_TOP_PADDING_MIN, panelPaddingY * 0.35)
 	local summaryTopPadding = summaryVerticalPadding
-	local summaryBottomPadding = math.max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, summaryVerticalPadding)
+	local summaryBottomPadding = max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, summaryVerticalPadding)
 
 	local summaryPanel = {
 		x = panelX,
@@ -421,11 +425,11 @@ local function computeLayout(sw, sh)
 	layout.summaryTextY = summaryPanel.y + summaryTopPadding
 	layout.summaryProgressY = layout.summaryTextY + summaryLineHeight + summaryProgressSpacing
 
-	local highlightInsetX = math.max(SUMMARY_HIGHLIGHT_INSET, summaryInsetX * 0.6)
-	local highlightInsetY = math.max(SUMMARY_HIGHLIGHT_INSET, math.min(summaryTopPadding, summaryBottomPadding) * 0.75)
+	local highlightInsetX = max(SUMMARY_HIGHLIGHT_INSET, summaryInsetX * 0.6)
+	local highlightInsetY = max(SUMMARY_HIGHLIGHT_INSET, min(summaryTopPadding, summaryBottomPadding) * 0.75)
 	layout.summaryHighlightInset = {x = highlightInsetX, y = highlightInsetY}
 
-	local titleClearance = titleY + titleFontHeight + math.max(24, sh * 0.03)
+	local titleClearance = titleY + titleFontHeight + max(24, sh * 0.03)
 	local summaryTop = summaryPanel.y - summaryTopPadding
 	if summaryTop < titleClearance then
 		local adjustment = titleClearance - summaryTop
@@ -434,25 +438,25 @@ local function computeLayout(sw, sh)
 		layout.summaryProgressY = layout.summaryProgressY + adjustment
 	end
 
-	local panelGap = math.max(SUMMARY_PANEL_GAP_MIN, panelPaddingY * 0.35)
+	local panelGap = max(SUMMARY_PANEL_GAP_MIN, panelPaddingY * 0.35)
 	layout.panelGap = panelGap
 
 	local listPanelY = summaryPanel.y + summaryPanel.height + panelGap
 	layout.panelY = listPanelY
 
 	local footerReserve = (UI.spacing.buttonHeight or 0) + (UI.spacing.buttonSpacing or 0) + ((UI.scaled and UI.scaled(48, 32)) or 48)
-	local bottomMargin = math.max(80, math.min(120, sh * 0.16))
-	bottomMargin = math.max(bottomMargin, footerReserve)
+	local bottomMargin = max(80, min(120, sh * 0.16))
+	bottomMargin = max(bottomMargin, footerReserve)
 	layout.bottomMargin = bottomMargin
 
 	layout.viewportBottom = sh - bottomMargin
 	layout.startY = listPanelY + panelPaddingY
-	layout.viewportHeight = math.max(0, layout.viewportBottom - layout.startY)
+	layout.viewportHeight = max(0, layout.viewportBottom - layout.startY)
 
 	layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
-	layout.scissorTop = math.max(0, layout.startY - SCROLL_SCISSOR_TOP_PADDING)
+	layout.scissorTop = max(0, layout.startY - SCROLL_SCISSOR_TOP_PADDING)
 	layout.scissorBottom = layout.viewportBottom
-	layout.scissorHeight = math.max(0, layout.scissorBottom - layout.scissorTop)
+	layout.scissorHeight = max(0, layout.scissorBottom - layout.scissorTop)
 
 	return layout
 end
@@ -471,7 +475,7 @@ local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, t
 
 	love.graphics.push("all")
 
-	local trackRadius = math.max(8, segmentSize * 0.55)
+	local trackRadius = max(8, segmentSize * 0.55)
 	love.graphics.setColor(trackColor[1], trackColor[2], trackColor[3], trackAlpha)
 	love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
 
@@ -493,21 +497,21 @@ local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, t
 	local hb = thumbHighlight[3] or snakeB
 	local ha = thumbHighlight[4] or 0.12
 	if isThumbHovered then
-		ha = math.min(1, ha + 0.28)
+		ha = min(1, ha + 0.28)
 	elseif isHovered then
-		ha = math.min(1, ha + 0.15)
+		ha = min(1, ha + 0.15)
 	end
 
-	local highlightInsetX = math.max(4, (trackWidth - segmentSize) * 0.35)
-	local highlightInsetY = math.max(6, segmentSize * 0.45)
+	local highlightInsetX = max(4, (trackWidth - segmentSize) * 0.35)
+	local highlightInsetY = max(6, segmentSize * 0.45)
 	local highlightX = trackX + highlightInsetX
 	local highlightY = thumbY + highlightInsetY
-	local highlightW = math.max(0, trackWidth - highlightInsetX * 2)
-	local highlightH = math.max(0, thumbHeight - highlightInsetY * 2)
+	local highlightW = max(0, trackWidth - highlightInsetX * 2)
+	local highlightH = max(0, thumbHeight - highlightInsetY * 2)
 	love.graphics.setColor(hr, hg, hb, ha)
 	love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, segmentSize * 0.45)
 
-	local outlinePad = math.max(10, segmentSize)
+	local outlinePad = max(10, segmentSize)
 	local scissorX = trackX - outlinePad
 	local scissorY = trackY - outlinePad
 	local scissorW = trackWidth + outlinePad * 2
@@ -521,7 +525,7 @@ local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, t
 	if head then
 		local headRadius = segmentSize * 0.32
 		local eyeOffset = headRadius * 0.55
-		local eyeRadius = math.max(1, headRadius * 0.22)
+		local eyeRadius = max(1, headRadius * 0.22)
 
 		love.graphics.setColor(1, 1, 1, 0.9)
 		love.graphics.circle("fill", head.x - eyeOffset, head.y - eyeRadius * 0.4, eyeRadius)
@@ -548,7 +552,7 @@ local function updateScrollBounds(sw, sh, layout)
 		for _, block in ipairs(displayBlocks) do
 			if block.achievements then
 				for _ in ipairs(block.achievements) do
-					maxBottom = math.max(maxBottom, y + CARD_HEIGHT)
+					maxBottom = max(maxBottom, y + CARD_HEIGHT)
 					y = y + CARD_SPACING
 				end
 			end
@@ -556,8 +560,8 @@ local function updateScrollBounds(sw, sh, layout)
 		end
 	end
 
-	contentHeight = math.max(0, maxBottom - layout.startY)
-	minScrollOffset = math.min(0, viewportHeight - contentHeight)
+	contentHeight = max(0, maxBottom - layout.startY)
+	minScrollOffset = min(0, viewportHeight - contentHeight)
 
 	if scrollOffset < minScrollOffset then
 		scrollOffset = minScrollOffset
@@ -785,16 +789,16 @@ function AchievementsMenu:draw()
 	})
 
 	local highlightInset = layout.summaryHighlightInset or {x = SUMMARY_HIGHLIGHT_INSET, y = SUMMARY_HIGHLIGHT_INSET}
-	local highlightInsetX = math.min(summaryPanel.width * 0.25, highlightInset.x or SUMMARY_HIGHLIGHT_INSET)
+	local highlightInsetX = min(summaryPanel.width * 0.25, highlightInset.x or SUMMARY_HIGHLIGHT_INSET)
 	local highlightInsetY = highlightInset.y or SUMMARY_HIGHLIGHT_INSET
-	local maxHighlightInsetX = math.max(0, (summaryPanel.width - 2) * 0.5)
-	local maxHighlightInsetY = math.max(0, (summaryPanel.height - 2) * 0.5)
-	highlightInsetX = math.max(0, math.min(highlightInsetX, maxHighlightInsetX))
-	highlightInsetY = math.max(0, math.min(highlightInsetY, maxHighlightInsetY))
+	local maxHighlightInsetX = max(0, (summaryPanel.width - 2) * 0.5)
+	local maxHighlightInsetY = max(0, (summaryPanel.height - 2) * 0.5)
+	highlightInsetX = max(0, min(highlightInsetX, maxHighlightInsetX))
+	highlightInsetY = max(0, min(highlightInsetY, maxHighlightInsetY))
 	local highlightX = summaryPanel.x + highlightInsetX
 	local highlightY = summaryPanel.y + highlightInsetY
-	local highlightW = math.max(0, summaryPanel.width - highlightInsetX * 2)
-	local highlightH = math.max(0, summaryPanel.height - highlightInsetY * 2)
+	local highlightW = max(0, summaryPanel.width - highlightInsetX * 2)
+	local highlightH = max(0, summaryPanel.height - highlightInsetY * 2)
 	if highlightW > 0 and highlightH > 0 then
 		love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 0.08) * 1.1)
 		love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, 18, 18)
@@ -861,7 +865,7 @@ function AchievementsMenu:draw()
 				icon = iconCache.__default
 			end
 			local x = listX
-			local barW = math.max(0, cardWidth - 120)
+			local barW = max(0, cardWidth - 120)
 			local cardY = y
 
 			local cardBase = unlocked and lightenColor(panelColor, 0.18) or darkenColor(panelColor, 0.08)
@@ -970,7 +974,7 @@ function AchievementsMenu:draw()
 
 	if contentHeight > viewportHeight then
 		local trackWidth = SCROLLBAR_TRACK_WIDTH
-		local trackInset = math.max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
+		local trackInset = max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
 		local trackX = panelX + panelWidth + trackInset
 		local trackY = startY
 		local trackHeight = viewportHeight
@@ -979,8 +983,8 @@ function AchievementsMenu:draw()
 		local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
 
 		local minThumbHeight = 36
-		local thumbHeight = math.max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
-		thumbHeight = math.min(thumbHeight, trackHeight)
+		local thumbHeight = max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
+		thumbHeight = min(thumbHeight, trackHeight)
 		local thumbY = trackY + (trackHeight - thumbHeight) * scrollProgress
 
 		local mx, my = love.mouse.getPosition()
@@ -1033,10 +1037,10 @@ function AchievementsMenu:keypressed(key)
 	elseif key == "right" then
 		buttonList:moveFocus(1)
 	elseif key == "pageup" then
-		local pageStep = DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING))
+		local pageStep = DPAD_SCROLL_AMOUNT * max(1, floor(viewportHeight / CARD_SPACING))
 		scrollBy(pageStep)
 	elseif key == "pagedown" then
-		local pageStep = DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING))
+		local pageStep = DPAD_SCROLL_AMOUNT * max(1, floor(viewportHeight / CARD_SPACING))
 		scrollBy(-pageStep)
 	elseif key == "home" then
 		scrollBy(-scrollOffset)
@@ -1069,9 +1073,9 @@ function AchievementsMenu:gamepadpressed(_, button)
 	elseif button == "dpright" then
 		buttonList:moveFocus(1)
 	elseif button == "leftshoulder" then
-		scrollBy(DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING)))
+		scrollBy(DPAD_SCROLL_AMOUNT * max(1, floor(viewportHeight / CARD_SPACING)))
 	elseif button == "rightshoulder" then
-		scrollBy(-DPAD_SCROLL_AMOUNT * math.max(1, math.floor(viewportHeight / CARD_SPACING)))
+		scrollBy(-DPAD_SCROLL_AMOUNT * max(1, floor(viewportHeight / CARD_SPACING)))
 	elseif button == "a" or button == "start" or button == "b" then
 		local action = buttonList:activateFocused()
 		if action then

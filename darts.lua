@@ -5,6 +5,12 @@ local Rocks = require("rocks")
 local Audio = require("audio")
 local Particles = require("particles")
 
+local abs = math.abs
+local floor = math.floor
+local max = math.max
+local min = math.min
+local pi = math.pi
+
 local Darts = {}
 
 local DARTS_ENABLED = false
@@ -122,9 +128,9 @@ local function spawnImpactFX(x, y, dirX, dirY)
 		life = 0.32,
 		size = 3.2,
 		color = {accent[1], accent[2], accent[3], 1},
-		spread = math.pi * 0.6,
+		spread = pi * 0.6,
 		angle = math.atan2(normalY, normalX),
-		angleJitter = math.pi * 0.25,
+		angleJitter = pi * 0.25,
 		drag = 2.6,
 		gravity = 160,
 		scaleMin = 0.48,
@@ -139,8 +145,8 @@ local function spawnImpactFX(x, y, dirX, dirY)
 		life = 0.38,
 		size = 2.0,
 		color = {1, 0.92, 0.72, 0.6},
-		spread = math.pi * 2,
-		angleJitter = math.pi,
+		spread = pi * 2,
+		angleJitter = pi,
 		drag = 3.4,
 		gravity = 0,
 		scaleMin = 0.32,
@@ -375,9 +381,9 @@ function Darts:spawn(x, y, dir, options)
 	local facing = options.facing
 	if facing == nil then
 		if dir == "horizontal" then
-			facing = (col <= math.floor((Arena.cols or 1) / 2)) and 1 or -1
+			facing = (col <= floor((Arena.cols or 1) / 2)) and 1 or -1
 		else
-			facing = (row <= math.floor((Arena.rows or 1) / 2)) and 1 or -1
+			facing = (row <= floor((Arena.rows or 1) / 2)) and 1 or -1
 		end
 	end
 
@@ -409,7 +415,7 @@ function Darts:spawn(x, y, dir, options)
 		cooldownMax = options.cooldownMax or DEFAULT_COOLDOWN_MAX,
 		state = "cooldown",
 		telegraphProgress = 0,
-		randomOffset = love.math.random() * math.pi * 2,
+		randomOffset = love.math.random() * pi * 2,
 	}
 
 	launcher.travelLimit = travelLimit
@@ -456,8 +462,8 @@ local function drawTelegraph(launcher, bodyColor, accentColor)
 		local dir = launcher.dirX >= 0 and 1 or -1
 		local tipX = launcher.startX - dir * (1 - progress) * tipAdvance
 		local baseX = tipX - dir * shaftLength
-		local shaftX = math.min(baseX, tipX)
-		local shaftW = math.abs(tipX - baseX)
+		local shaftX = min(baseX, tipX)
+		local shaftW = abs(tipX - baseX)
 
 		love.graphics.rectangle("fill", shaftX, launcher.y - shaftThickness * 0.5, shaftW, shaftThickness)
 
@@ -470,8 +476,8 @@ local function drawTelegraph(launcher, bodyColor, accentColor)
 		local dir = launcher.dirY >= 0 and 1 or -1
 		local tipY = launcher.startY - dir * (1 - progress) * tipAdvance
 		local baseY = tipY - dir * shaftLength
-		local shaftY = math.min(baseY, tipY)
-		local shaftH = math.abs(tipY - baseY)
+		local shaftY = min(baseY, tipY)
+		local shaftH = abs(tipY - baseY)
 
 		love.graphics.rectangle("fill", launcher.x - shaftThickness * 0.5, shaftY, shaftThickness, shaftH)
 
@@ -506,13 +512,13 @@ local function drawProjectile(launcher, accentColor)
 		local tipX = projectile.tipX
 		local shaftEndX = tipX - dir * tipLength
 		if dir > 0 then
-			shaftEndX = math.max(shaftEndX, baseX)
+			shaftEndX = max(shaftEndX, baseX)
 		else
-			shaftEndX = math.min(shaftEndX, baseX)
+			shaftEndX = min(shaftEndX, baseX)
 		end
 
-		local shaftX = math.min(baseX, shaftEndX)
-		local shaftW = math.abs(shaftEndX - baseX)
+		local shaftX = min(baseX, shaftEndX)
+		local shaftW = abs(shaftEndX - baseX)
 
 		love.graphics.setColor(shaftColor)
 		if shaftW > 0 then
@@ -537,20 +543,20 @@ local function drawProjectile(launcher, accentColor)
 		tipX - dir * tipLength, projectile.tipY + DART_THICKNESS
 		)
 	else
-		local top = math.min(projectile.baseY, projectile.tipY)
-		local height = math.abs(projectile.tipY - projectile.baseY)
+		local top = min(projectile.baseY, projectile.tipY)
+		local height = abs(projectile.tipY - projectile.baseY)
 		local dir = dirY >= 0 and 1 or -1
 		local baseY = projectile.baseY
 		local tipY = projectile.tipY
 		local shaftEndY = tipY - dir * tipLength
 		if dir > 0 then
-			shaftEndY = math.max(shaftEndY, baseY)
+			shaftEndY = max(shaftEndY, baseY)
 		else
-			shaftEndY = math.min(shaftEndY, baseY)
+			shaftEndY = min(shaftEndY, baseY)
 		end
 
-		local shaftY = math.min(baseY, shaftEndY)
-		local shaftH = math.abs(shaftEndY - baseY)
+		local shaftY = min(baseY, shaftEndY)
+		local shaftH = abs(shaftEndY - baseY)
 
 		love.graphics.setColor(shaftColor)
 		if shaftH > 0 then
@@ -630,16 +636,16 @@ local function overlapsProjectile(launcher, x, y, w, h)
 	local margin = DART_THICKNESS * 0.5
 	if projectile.dirX ~= 0 then
 		local prevBase = projectile.prevTipX - projectile.dirX * projectile.length
-		local left = math.min(projectile.baseX, projectile.tipX, projectile.prevTipX, prevBase) - margin
-		local right = math.max(projectile.baseX, projectile.tipX, projectile.prevTipX, prevBase) + margin
+		local left = min(projectile.baseX, projectile.tipX, projectile.prevTipX, prevBase) - margin
+		local right = max(projectile.baseX, projectile.tipX, projectile.prevTipX, prevBase) + margin
 		local top = projectile.tipY - margin
 		local bottom = projectile.tipY + margin
 
 		return x < right and x + w > left and y < bottom and y + h > top
 	else
 		local prevBase = projectile.prevTipY - projectile.dirY * projectile.length
-		local top = math.min(projectile.baseY, projectile.tipY, projectile.prevTipY, prevBase) - margin
-		local bottom = math.max(projectile.baseY, projectile.tipY, projectile.prevTipY, prevBase) + margin
+		local top = min(projectile.baseY, projectile.tipY, projectile.prevTipY, prevBase) - margin
+		local bottom = max(projectile.baseY, projectile.tipY, projectile.prevTipY, prevBase) + margin
 		local left = projectile.tipX - margin
 		local right = projectile.tipX + margin
 

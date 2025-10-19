@@ -11,6 +11,12 @@ local PlayerStats = require("playerstats")
 local UpgradeHelpers = require("upgradehelpers")
 local DataSchemas = require("dataschemas")
 
+local floor = math.floor
+local max = math.max
+local min = math.min
+local pi = math.pi
+local insert = table.insert
+
 local Upgrades = {}
 local poolById = {}
 local upgradeSchema = DataSchemas.upgradeDefinition
@@ -70,7 +76,7 @@ function RunState:addHandler(event, handler)
 		self.handlers[event] = handlers
 	end
 
-	table.insert(handlers, handler)
+	insert(handlers, handler)
 end
 
 function RunState:notify(event, data)
@@ -113,7 +119,7 @@ local function getStacks(state, id)
 end
 
 local function grantShields(amount)
-	amount = math.max(0, math.floor((amount or 0) + 0.0001))
+	amount = max(0, floor((amount or 0) + 0.0001))
 	if amount <= 0 then
 		return 0
 	end
@@ -153,7 +159,7 @@ local function getSegmentPosition(fraction)
 	local index = 1
 	if count > 1 then
 		local scaled = fraction * (count - 1)
-		index = math.floor(scaled + 0.5) + 1
+		index = floor(scaled + 0.5) + 1
 	end
 
 	if index > count then
@@ -215,7 +221,7 @@ local function collectPositions(source, limit, extractor)
 	end
 
 	local result = {}
-	local maxCount = math.min(limit or count, count)
+	local maxCount = min(limit or count, count)
 	for index = 1, maxCount do
 		local item = source[index]
 		if item then
@@ -301,7 +307,7 @@ local function handleAmberBloomRockShatter(data, state)
 		counters.amberBloomRockCount = (counters.amberBloomRockCount or 0) - AMBER_BLOOM_SHATTER_THRESHOLD
 
 		local progress = (counters.amberBloomShieldProgress or 0) + AMBER_BLOOM_PROGRESS_PER_TRIGGER
-		local shields = math.floor(progress + 1e-6)
+		local shields = floor(progress + 1e-6)
 		counters.amberBloomShieldProgress = progress - shields
 
 		local label = getUpgradeString("amber_bloom", "activation_text")
@@ -458,7 +464,7 @@ local function updateRadiantCharter(state)
 		slots = state.effects.shopSlots or 0
 	end
 
-	slots = math.max(0, math.floor(slots + 0.0001))
+	slots = max(0, floor(slots + 0.0001))
 
 	local previousLaser = state.counters.radiantCharterLaserBonus or 0
 	local previousSaw = state.counters.radiantCharterSawBonus or 0
@@ -487,7 +493,7 @@ local function updateStoneCensus(state)
 	effects.rockSpawnMult = effects.rockSpawnMult / previous
 
 	local economyCount = countUpgradesWithTag(state, "economy")
-	local newMult = math.max(0.2, 1 - perEconomy * economyCount)
+	local newMult = max(0.2, 1 - perEconomy * economyCount)
 
 	state.counters.stoneCensusMult = newMult
 	effects.rockSpawnMult = effects.rockSpawnMult * newMult
@@ -505,7 +511,7 @@ local function handleBulwarkChorusFloorStart(_, state)
 	if defenseCount <= 0 then return end
 
 	local progress = (state.counters.bulwarkChorusProgress or 0) + perDefense * defenseCount
-	local shields = math.floor(progress)
+	local shields = floor(progress)
 	state.counters.bulwarkChorusProgress = progress - shields
 
 	if shields > 0 and Snake.addShields then
@@ -602,7 +608,7 @@ local function applyMapmakersCompass(state, context, options)
 	local candidates = {}
 	for _, entry in ipairs(mapmakersCompassHazards) do
 		local value = context[entry.key] or 0
-		table.insert(candidates, {info = entry, value = value})
+		insert(candidates, {info = entry, value = value})
 	end
 
         table.sort(candidates, compareCompassCandidates)
@@ -651,7 +657,7 @@ local function applyMapmakersCompass(state, context, options)
 		return
 	end
 
-	local reduction = 1 + math.floor((stacks - 1) * 0.5)
+	local reduction = 1 + floor((stacks - 1) * 0.5)
 	local delta = -reduction
 	local effectKey = chosen.effectKey
 	state.effects[effectKey] = (state.effects[effectKey] or 0) + delta
@@ -1143,7 +1149,7 @@ local pool = {
 				local surgeDuration = baseDuration * 0.6
 				if surgeDuration <= 0 then surgeDuration = 1 end
 				local currentTimer = Snake.adrenaline.timer or 0
-				Snake.adrenaline.timer = math.max(currentTimer, surgeDuration)
+				Snake.adrenaline.timer = max(currentTimer, surgeDuration)
 				Snake.adrenaline.suppressVisuals = nil
 
 				local fx, fy = getEventPosition(data)
@@ -1214,8 +1220,8 @@ local pool = {
 						life = 0.28,
 						size = 2.8,
 						color = {1, 0.74, 0.38, 1},
-						spread = math.pi * 0.45,
-						angleJitter = math.pi * 0.18,
+						spread = pi * 0.45,
+						angleJitter = pi * 0.18,
 						gravity = 200,
 						drag = 1.5,
 						fadeTo = 0,
@@ -1239,7 +1245,7 @@ local pool = {
 					end
 				end
 				if targets and #targets > 0 then
-					local limit = math.min(#targets, 2)
+					local limit = min(#targets, 2)
 					for i = 1, limit do
 						local target = targets[i]
 						if target then
@@ -1268,7 +1274,7 @@ local pool = {
 		tags = {"defense"},
 		onAcquire = function(state)
 			if state and state.effects then
-				state.effects.sawSinkDuration = math.max(state.effects.sawSinkDuration or 0, SUBDUCTION_ARRAY_SINK_DURATION)
+				state.effects.sawSinkDuration = max(state.effects.sawSinkDuration or 0, SUBDUCTION_ARRAY_SINK_DURATION)
 			end
 
 			local celebrationOptions = {
@@ -1289,7 +1295,7 @@ local pool = {
 
 				local duration = SUBDUCTION_ARRAY_SINK_DURATION
 				if state and state.effects then
-					duration = math.max(duration, state.effects.sawSinkDuration or 0)
+					duration = max(duration, state.effects.sawSinkDuration or 0)
 				end
 
 				if Saws and Saws.sink then
@@ -1325,7 +1331,7 @@ local pool = {
 								particleCount = 10,
 								particleSpeed = 80,
 								particleLife = 0.4,
-								particleSpread = math.pi * 2,
+								particleSpread = pi * 2,
 								particleSpeedVariance = 40,
 							}
 							celebrateUpgrade(nil, nil, sinkOptions)
@@ -1533,7 +1539,7 @@ local pool = {
 
 					local progress = (counters.verdantBondsProgress or 0) + stacks
 					local threshold = 3
-					local shields = math.floor(progress / threshold)
+					local shields = floor(progress / threshold)
 					counters.verdantBondsProgress = progress - shields * threshold
 
 					if shields <= 0 then return end
@@ -1922,7 +1928,7 @@ local pool = {
 						particleSpeed = 160,
 						particleLife = 0.35,
 						particleSize = 4,
-						particleSpread = math.pi * 2,
+						particleSpread = pi * 2,
 						particleSpeedVariance = 90,
 						textOffset = 52,
 						textScale = 1.14,
@@ -2033,7 +2039,7 @@ local pool = {
 						particleSpeed = 120,
 						particleLife = 0.5,
 						particleSize = 5,
-						particleSpread = math.pi * 2,
+						particleSpread = pi * 2,
 						particleSpeedVariance = 70,
 						textOffset = 60,
 						textScale = 1.12,
@@ -2082,7 +2088,7 @@ local pool = {
 				particleSpeed = 160,
 				particleLife = 0.6,
 				particleSize = 5,
-				particleSpread = math.pi * 2,
+				particleSpread = pi * 2,
 				particleSpeedVariance = 90,
 				visual = {
 					variant = "event_horizon",
@@ -2153,7 +2159,7 @@ function Upgrades:addEventHandler(event, handler)
 		end
 	end
 
-	table.insert(handlers, handler)
+	insert(handlers, handler)
 end
 
 function Upgrades:notify(event, data)
@@ -2230,10 +2236,10 @@ function Upgrades:getHUDIndicators()
 		local status = hudStatus(statusKey)
 		local chargeLabel
 		if rate and rate > 0 then
-			chargeLabel = hudText("percent", {percent = math.floor(progress * 100 + 0.5)})
+			chargeLabel = hudText("percent", {percent = floor(progress * 100 + 0.5)})
 		end
 
-		table.insert(indicators, {
+		insert(indicators, {
 			id = "stonebreaker_hymn",
 			label = label,
 			accentColor = {1.0, 0.78, 0.36, 1},
@@ -2250,13 +2256,13 @@ function Upgrades:getHUDIndicators()
 		local counters = state.counters or {}
 		local complete = counters.pocketSpringsComplete
 		if not complete then
-			local collected = math.min(counters.pocketSpringsFruit or 0, POCKET_SPRINGS_FRUIT_TARGET)
+			local collected = min(counters.pocketSpringsFruit or 0, POCKET_SPRINGS_FRUIT_TARGET)
 			local progress = 0
 			if POCKET_SPRINGS_FRUIT_TARGET > 0 then
 				progress = clamp(collected / POCKET_SPRINGS_FRUIT_TARGET, 0, 1)
 			end
 
-			table.insert(indicators, {
+			insert(indicators, {
 				id = "pocket_springs",
 				label = Localization:get("upgrades.pocket_springs.name"),
 				accentColor = {0.58, 0.82, 1.0, 1.0},
@@ -2279,7 +2285,7 @@ function Upgrades:getHUDIndicators()
 		local label = Localization:get("upgrades.adrenaline_surge.name")
 		local active = adrenaline and adrenaline.active
 		local duration = (adrenaline and adrenaline.duration) or 0
-		local timer = (adrenaline and math.max(adrenaline.timer or 0, 0)) or 0
+		local timer = (adrenaline and max(adrenaline.timer or 0, 0)) or 0
 		local charge
 		local chargeLabel
 
@@ -2290,7 +2296,7 @@ function Upgrades:getHUDIndicators()
 
 		local status = active and hudStatus("active") or hudStatus("ready")
 
-		table.insert(indicators, {
+		insert(indicators, {
 			id = "adrenaline_surge",
 			label = label,
 			hideLabel = true,
@@ -2314,14 +2320,14 @@ function Upgrades:getHUDIndicators()
 		local showBar = false
 
 		if dashState.active and dashState.duration > 0 then
-			local remaining = math.max(dashState.timer or 0, 0)
+			local remaining = max(dashState.timer or 0, 0)
 			charge = clamp(remaining / dashState.duration, 0, 1)
 			chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remaining)})
 			status = hudStatus("active")
 			showBar = true
 		else
 			local cooldown = dashState.cooldown or 0
-			local remainingCooldown = math.max(dashState.cooldownTimer or 0, 0)
+			local remainingCooldown = max(dashState.cooldownTimer or 0, 0)
 			if cooldown > 0 and remainingCooldown > 0 then
 				local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
 				charge = progress
@@ -2334,7 +2340,7 @@ function Upgrades:getHUDIndicators()
 			end
 		end
 
-		table.insert(indicators, {
+		insert(indicators, {
 			id = "thunder_dash",
 			label = label,
 			hideLabel = true,
@@ -2361,7 +2367,7 @@ function Upgrades:getHUDIndicators()
 		local maxUses = timeState.maxFloorUses
 
 		if timeState.active and timeState.duration > 0 then
-			local remaining = math.max(timeState.timer or 0, 0)
+			local remaining = max(timeState.timer or 0, 0)
 			charge = clamp(remaining / timeState.duration, 0, 1)
 			chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remaining)})
 			status = hudStatus("active")
@@ -2374,7 +2380,7 @@ function Upgrades:getHUDIndicators()
 				showBar = false
 			else
 				local cooldown = timeState.cooldown or 0
-				local remainingCooldown = math.max(timeState.cooldownTimer or 0, 0)
+				local remainingCooldown = max(timeState.cooldownTimer or 0, 0)
 				if cooldown > 0 and remainingCooldown > 0 then
 					local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
 					charge = progress
@@ -2388,7 +2394,7 @@ function Upgrades:getHUDIndicators()
 			end
 		end
 
-		table.insert(indicators, {
+		insert(indicators, {
 			id = "temporal_anchor",
 			label = label,
 			hideLabel = true,
@@ -2409,7 +2415,7 @@ function Upgrades:getHUDIndicators()
 
 	if phoenixCharges > 0 then
 		local label = Localization:get("upgrades.phoenix_echo.name")
-		table.insert(indicators, {
+		insert(indicators, {
 			id = "phoenix_echo",
 			label = label,
 			accentColor = {1.0, 0.62, 0.32, 1},
@@ -2441,22 +2447,22 @@ function Upgrades:modifyFloorContext(context)
 	local effects = self.runState.effects
 	if effects.fruitGoalDelta and context.fruitGoal then
 		local goal = context.fruitGoal + effects.fruitGoalDelta
-		goal = math.floor(goal + 0.5)
+		goal = floor(goal + 0.5)
 		context.fruitGoal = clamp(goal, 1)
 	end
 	if effects.rockSpawnBonus and context.rocks then
 		local rocks = context.rocks + effects.rockSpawnBonus
-		rocks = math.floor(rocks + 0.5)
+		rocks = floor(rocks + 0.5)
 		context.rocks = clamp(rocks, 0)
 	end
 	if effects.sawSpawnBonus and context.saws then
 		local saws = context.saws + effects.sawSpawnBonus
-		saws = math.floor(saws + 0.5)
+		saws = floor(saws + 0.5)
 		context.saws = clamp(saws, 0)
 	end
 	if effects.laserSpawnBonus and context.laserCount then
 		local lasers = context.laserCount + effects.laserSpawnBonus
-		lasers = math.floor(lasers + 0.5)
+		lasers = floor(lasers + 0.5)
 		context.laserCount = clamp(lasers, 0)
 	end
 
@@ -2465,9 +2471,9 @@ end
 
 local function round(value)
 	if value >= 0 then
-		return math.floor(value + 0.5)
+		return floor(value + 0.5)
 	else
-		return -math.floor(math.abs(value) + 0.5)
+		return -floor(math.abs(value) + 0.5)
 	end
 end
 
@@ -2485,7 +2491,7 @@ function Upgrades:getComboBonus(comboCount)
 		local amount = round(flat)
 		if amount ~= 0 then
 			bonus = bonus + amount
-			table.insert(breakdown, {label = Localization:get("upgrades.momentum_label"), amount = amount})
+			insert(breakdown, {label = Localization:get("upgrades.momentum_label"), amount = amount})
 		end
 	end
 
@@ -2612,7 +2618,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
 	end
 
 	local rockBase = base.rockSpawnChance or 0.25
-	local rockChance = math.max(0.02, rockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
+	local rockChance = max(0.02, rockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
 	Rocks.spawnChance = rockChance
 	Rocks.shatterOnFruit = (base.rockShatter or 0) + (effects.rockShatter or 0)
 	if Snake.setStonebreakerStacks then
@@ -2622,7 +2628,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
 		end
 		if stacks <= 0 and effects.rockShatter then
 			local perStack = 0.25
-			stacks = math.floor(((effects.rockShatter or 0) / perStack) + 0.5)
+			stacks = floor(((effects.rockShatter or 0) / perStack) + 0.5)
 		end
 		Snake:setStonebreakerStacks(stacks)
 	end
@@ -2684,7 +2690,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
 			dash.cooldownTimer = 0
 		else
 			if dash.cooldown and dash.cooldown > 0 then
-				dash.cooldownTimer = math.min(dash.cooldownTimer or 0, dash.cooldown)
+				dash.cooldownTimer = min(dash.cooldownTimer or 0, dash.cooldown)
 			else
 				dash.cooldownTimer = 0
 			end
@@ -2714,7 +2720,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
 				ability.timer = 0
 				ability.cooldownTimer = 0
 			elseif ability.cooldown and ability.cooldown > 0 then
-				ability.cooldownTimer = math.min(ability.cooldownTimer or 0, ability.cooldown)
+				ability.cooldownTimer = min(ability.cooldownTimer or 0, ability.cooldown)
 			else
 				ability.cooldownTimer = 0
 			end
@@ -2727,7 +2733,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
 			ability.floorCharges = ability.maxFloorUses
 		else
 			local maxUses = ability.maxFloorUses or ability.floorCharges
-			ability.floorCharges = math.max(0, math.min(ability.floorCharges, maxUses))
+			ability.floorCharges = max(0, min(ability.floorCharges, maxUses))
 		end
 	else
 		Snake.timeDilation = nil
@@ -2784,7 +2790,7 @@ local function calculateWeight(upgrade, pityLevel)
 
 	local bonus = SHOP_PITY_RARITY_BONUS[upgrade.rarity]
 	if bonus and pityLevel and pityLevel > 0 then
-		weight = weight * (1 + math.min(pityLevel, SHOP_PITY_MAX) * bonus)
+		weight = weight * (1 + min(pityLevel, SHOP_PITY_MAX) * bonus)
 	end
 
 	return weight
@@ -2886,26 +2892,26 @@ function Upgrades:getRandom(n, context)
 	local state = self.runState or newRunState()
 	local pityLevel = 0
 	if state and state.counters then
-		pityLevel = math.min(state.counters.shopBadLuck or 0, SHOP_PITY_MAX)
+		pityLevel = min(state.counters.shopBadLuck or 0, SHOP_PITY_MAX)
 	end
 
 	local available = {}
 	for _, upgrade in ipairs(pool) do
 		if self:canOffer(upgrade, context, false) then
-			table.insert(available, upgrade)
+			insert(available, upgrade)
 		end
 	end
 
 	if #available == 0 then
 		for _, upgrade in ipairs(pool) do
 			if self:canOffer(upgrade, context, true) then
-				table.insert(available, upgrade)
+				insert(available, upgrade)
 			end
 		end
 	end
 
 	local cards = {}
-	n = math.min(n or 3, #available)
+	n = min(n or 3, #available)
 	for _ = 1, n do
 		local totalWeight = 0
 		local weights = {}
@@ -2929,7 +2935,7 @@ function Upgrades:getRandom(n, context)
 		end
 
 		local choice = available[chosenIndex]
-		table.insert(cards, decorateCard(choice))
+		insert(cards, decorateCard(choice))
 		table.remove(available, chosenIndex)
 		if #available == 0 then break end
 	end
@@ -2947,7 +2953,7 @@ function Upgrades:getRandom(n, context)
 			state.counters.shopBadLuck = 0
 		else
 			local counter = (state.counters.shopBadLuck or 0) + 1
-			state.counters.shopBadLuck = math.min(counter, SHOP_PITY_MAX)
+			state.counters.shopBadLuck = min(counter, SHOP_PITY_MAX)
 		end
 
 		local legendaryUnlocked = MetaProgression and MetaProgression.isTagUnlocked and MetaProgression:isTagUnlocked("legendary")
@@ -2968,13 +2974,13 @@ function Upgrades:getRandom(n, context)
 					local legendaryChoices = {}
 					for _, upgrade in ipairs(pool) do
 						if upgrade.rarity == "legendary" and self:canOffer(upgrade, context, false) then
-							table.insert(legendaryChoices, decorateCard(upgrade))
+							insert(legendaryChoices, decorateCard(upgrade))
 						end
 					end
 					if #legendaryChoices == 0 then
 						for _, upgrade in ipairs(pool) do
 							if upgrade.rarity == "legendary" and self:canOffer(upgrade, context, true) then
-								table.insert(legendaryChoices, decorateCard(upgrade))
+								insert(legendaryChoices, decorateCard(upgrade))
 							end
 						end
 					end
@@ -2993,14 +2999,14 @@ function Upgrades:getRandom(n, context)
 						if replacementIndex then
 							cards[replacementIndex] = legendaryChoices[love.math.random(1, #legendaryChoices)]
 						else
-							table.insert(cards, legendaryChoices[love.math.random(1, #legendaryChoices)])
+							insert(cards, legendaryChoices[love.math.random(1, #legendaryChoices)])
 						end
 
 						legendaryCounter = 0
 					end
 				end
 
-				state.counters.legendaryBadLuck = math.min(legendaryCounter, LEGENDARY_PITY_THRESHOLD)
+				state.counters.legendaryBadLuck = min(legendaryCounter, LEGENDARY_PITY_THRESHOLD)
 			end
 		else
 			state.counters.legendaryBadLuck = nil
@@ -3022,7 +3028,7 @@ function Upgrades:acquire(card, context)
 		local currentStacks = getStacks(state, upgrade.id)
 		state.takenSet[upgrade.id] = currentStacks + 1
 	end
-	table.insert(state.takenOrder, upgrade.id)
+	insert(state.takenOrder, upgrade.id)
 
 	PlayerStats:add("totalUpgradesPurchased", 1)
 	PlayerStats:updateMax("mostUpgradesInRun", #state.takenOrder)

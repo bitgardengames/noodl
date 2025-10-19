@@ -1,5 +1,7 @@
 local Easing = require("easing")
 
+local min = math.min
+
 local GameState = {}
 
 GameState.states = {}
@@ -207,7 +209,7 @@ end
 
 function GameState:update(dt)
 	if self.transitioning then
-		self.transitionTime = math.min(1, self.transitionTime + dt / self.transitionDuration)
+		self.transitionTime = min(1, self.transitionTime + dt / self.transitionDuration)
 
 		local context
 
@@ -312,7 +314,7 @@ function GameState:draw()
 	end
 
 	local context = self.transitionContext
-	local progress = math.min(math.max(self.transitionTime, 0), 1)
+	local progress = min(math.max(self.transitionTime, 0), 1)
 	local alpha = (context and context.alpha) or getTransitionAlpha(progress, self.transitionDirection)
 
 	if alpha <= 0 then

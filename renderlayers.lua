@@ -1,5 +1,8 @@
 local ModuleUtil = require("moduleutil")
 
+local floor = math.floor
+local max = math.max
+
 local RenderLayers = ModuleUtil.create("RenderLayers")
 
 local LAYERS = {
@@ -34,11 +37,11 @@ local function ensureCanvas(name, width, height)
 	local h = height
 
 	if not w or w < 1 then
-		w = math.max(1, love.graphics.getWidth() or 1)
+		w = max(1, love.graphics.getWidth() or 1)
 	end
 
 	if not h or h < 1 then
-		h = math.max(1, love.graphics.getHeight() or 1)
+		h = max(1, love.graphics.getHeight() or 1)
 	end
 
 	local canvas = canvases[name]
@@ -77,8 +80,8 @@ local function ensureCanvas(name, width, height)
 end
 
 function RenderLayers:begin(width, height)
-	local w = math.max(1, math.floor(width or love.graphics.getWidth() or 1))
-	local h = math.max(1, math.floor(height or love.graphics.getHeight() or 1))
+	local w = max(1, floor(width or love.graphics.getWidth() or 1))
+	local h = max(1, floor(height or love.graphics.getHeight() or 1))
 
 	if canvasWidth ~= w or canvasHeight ~= h then
 		canvasWidth = w

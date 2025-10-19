@@ -1,6 +1,9 @@
 local Theme = require("theme")
 local Achievements = require("achievements")
 
+local max = math.max
+local insert = table.insert
+
 local SnakeCosmetics = {}
 
 local SAVE_FILE = "snakecosmetics_state.lua"
@@ -645,7 +648,7 @@ local function serialize(value, indent)
 		local entryIndent = string.rep(" ", nextIndent)
 		if isArray(value) then
 			for index, val in ipairs(value) do
-				table.insert(lines, string.format("%s[%d] = %s,\n", entryIndent, index, serialize(val, nextIndent)))
+				insert(lines, string.format("%s[%d] = %s,\n", entryIndent, index, serialize(val, nextIndent)))
 			end
 		else
 			for key, val in pairs(value) do
@@ -655,10 +658,10 @@ local function serialize(value, indent)
 				else
 					keyRepr = string.format("[%s]", tostring(key))
 				end
-				table.insert(lines, string.format("%s%s = %s,\n", entryIndent, keyRepr, serialize(val, nextIndent)))
+				insert(lines, string.format("%s%s = %s,\n", entryIndent, keyRepr, serialize(val, nextIndent)))
 			end
 		end
-		table.insert(lines, string.format("%s}", spacing))
+		insert(lines, string.format("%s}", spacing))
 		return table.concat(lines)
 	end
 
@@ -677,7 +680,7 @@ function SnakeCosmetics:_buildIndex()
 		local entry = copyTable(def)
 		entry.order = entry.order or DEFAULT_ORDER
 		self._skinsById[entry.id] = entry
-		table.insert(self._orderedSkins, entry)
+		insert(self._orderedSkins, entry)
 	end
 
         table.sort(self._orderedSkins, compareSkinDefinitions)
@@ -762,7 +765,7 @@ function SnakeCosmetics:_recordUnlock(id, context)
 		record.timestamp = os.time()
 	end
 
-	table.insert(self.state.unlockHistory, record)
+	insert(self.state.unlockHistory, record)
 end
 
 function SnakeCosmetics:_unlockSkinInternal(id, context)
@@ -826,8 +829,8 @@ end
 function SnakeCosmetics:syncMetaLevel(level, context)
 	self:_ensureLoaded()
 
-	level = math.max(1, math.floor(level or 1))
-	self._highestKnownMetaLevel = math.max(self._highestKnownMetaLevel or 0, level)
+	level = max(1, math.floor(level or 1))
+	self._highestKnownMetaLevel = max(self._highestKnownMetaLevel or 0, level)
 
 	local changed = false
 	for _, skin in ipairs(self._orderedSkins or {}) do

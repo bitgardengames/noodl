@@ -2,6 +2,9 @@ local Screen = require("screen")
 local Theme = require("theme")
 local UI = require("ui")
 
+local max = math.max
+local min = math.min
+
 local Tooltip = {
         active = false,
         alpha = 0,
@@ -54,7 +57,7 @@ function Tooltip:update(dt, mx, my)
 
 	if self.active then
 		if self.delayTimer < 0 then
-			self.delayTimer = math.min(self.delayTimer + dt, 0)
+			self.delayTimer = min(self.delayTimer + dt, 0)
 		end
 	elseif self.delayTimer ~= 0 then
 		self.delayTimer = 0
@@ -63,7 +66,7 @@ function Tooltip:update(dt, mx, my)
 	local shouldDisplay = self.active and self.delayTimer >= 0 and hasContent(self.text)
 	local targetAlpha = shouldDisplay and 1 or 0
 	local speed = targetAlpha > self.alpha and 16 or 12
-	self.alpha = self.alpha + (targetAlpha - self.alpha) * math.min(dt * speed, 1)
+	self.alpha = self.alpha + (targetAlpha - self.alpha) * min(dt * speed, 1)
 
 	if not self.active and self.alpha < 0.01 then
 		self.alpha = 0
@@ -162,7 +165,7 @@ function Tooltip:draw()
 
 	local maxWidth = clamp(self.maxWidth or self.defaultMaxWidth or 320, 120, sw - 24)
 	local _, lines = computeWrap(font, text, maxWidth)
-	local lineCount = math.max(1, #lines)
+	local lineCount = max(1, #lines)
 	local lineHeight = font:getHeight()
 	local textHeight = lineCount * lineHeight
 
@@ -171,10 +174,10 @@ function Tooltip:draw()
 	local paddingY = paddingX * 0.75
 	local measuredWidth = 0
 	for i = 1, lineCount do
-		measuredWidth = math.max(measuredWidth, font:getWidth(lines[i]))
+		measuredWidth = max(measuredWidth, font:getWidth(lines[i]))
 	end
-	local boxWidth = math.min(maxWidth, measuredWidth) + paddingX * 2
-	boxWidth = math.max(boxWidth, paddingX * 2 + 12)
+	local boxWidth = min(maxWidth, measuredWidth) + paddingX * 2
+	boxWidth = max(boxWidth, paddingX * 2 + 12)
 	local boxHeight = textHeight + paddingY * 2
 
 	local placement = self.placement or "cursor"

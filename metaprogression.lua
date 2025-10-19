@@ -1,3 +1,7 @@
+local floor = math.floor
+local max = math.max
+local insert = table.insert
+
 local MetaProgression = {}
 
 local saveFile = "metaprogression_state.lua"
@@ -185,9 +189,9 @@ local function serialize(value, indent)
 		local entryIndent = string.rep(" ", nextIndent)
 		for k, v in pairs(value) do
 			local key = string.format("[%q]", tostring(k))
-			table.insert(lines, string.format("%s%s = %s,\n", entryIndent, key, serialize(v, nextIndent)))
+			insert(lines, string.format("%s%s = %s,\n", entryIndent, key, serialize(v, nextIndent)))
 		end
-		table.insert(lines, string.format("%s}", spacing))
+		insert(lines, string.format("%s}", spacing))
 		return table.concat(lines)
 	end
 
@@ -206,11 +210,11 @@ function MetaProgression:_save()
 end
 
 function MetaProgression:getXpForLevel(level)
-	level = math.max(1, math.floor(level or 1))
+	level = max(1, floor(level or 1))
 	local levelIndex = level - 1
 	local base = BASE_XP_PER_LEVEL
 	local linear = LINEAR_XP_PER_LEVEL * levelIndex
-	local curve = math.floor((levelIndex ^ XP_CURVE_EXPONENT) * XP_CURVE_SCALE)
+	local curve = floor((levelIndex ^ XP_CURVE_EXPONENT) * XP_CURVE_SCALE)
 	return base + linear + curve
 end
 
@@ -218,7 +222,7 @@ function MetaProgression:getProgressForTotal(totalXP)
 	self:_ensureLoaded()
 	local level = 1
 	local xpForNext = self:getXpForLevel(level)
-	local remaining = math.max(0, totalXP or 0)
+	local remaining = max(0, totalXP or 0)
 
 	while remaining >= xpForNext do
 		remaining = remaining - xpForNext
@@ -230,7 +234,7 @@ function MetaProgression:getProgressForTotal(totalXP)
 end
 
 function MetaProgression:getTotalXpForLevel(level)
-	level = math.max(1, math.floor(level or 1))
+	level = max(1, floor(level or 1))
 	local total = 0
 	for lvl = 1, level - 1 do
 		total = total + self:getXpForLevel(lvl)
@@ -283,7 +287,7 @@ end
 
 function MetaProgression:getShopBonusSlots()
 	local effects = self:_collectUnlockedEffects()
-	return math.floor(effects.shopExtraChoices or 0)
+	return floor(effects.shopExtraChoices or 0)
 end
 
 function MetaProgression:getUnlockedTags()
@@ -303,8 +307,8 @@ end
 function MetaProgression:getUnlockTrack()
 	self:_ensureLoaded()
 
-	local currentTotal = math.max(0, self.data.totalExperience or 0)
-	local currentLevel = math.max(1, self.data.level or 1)
+	local currentTotal = max(0, self.data.totalExperience or 0)
+	local currentLevel = max(1, self.data.level or 1)
 
 	local track = {}
 	for level, definition in pairs(unlockDefinitions) do
@@ -319,8 +323,8 @@ function MetaProgression:getUnlockTrack()
 		}
 		entry.totalXpRequired = self:getTotalXpForLevel(level)
 		local remaining = entry.totalXpRequired - currentTotal
-		entry.remainingXp = math.max(0, math.floor(remaining + 0.5))
-		table.insert(track, entry)
+		entry.remainingXp = max(0, floor(remaining + 0.5))
+		insert(track, entry)
 	end
 
         table.sort(track, compareUnlockTrackEntries)
@@ -331,7 +335,7 @@ end
 local function buildSnapshot(self, totalXP)
 	local level, xpIntoLevel, xpForNext = self:getProgressForTotal(totalXP)
 	return {
-		total = math.floor(totalXP + 0.5),
+		total = floor(totalXP + 0.5),
 		level = level,
 		xpIntoLevel = xpIntoLevel,
 		xpForNext = xpForNext,
@@ -339,14 +343,14 @@ local function buildSnapshot(self, totalXP)
 end
 
 local function calculateRunGain(runStats)
-	local apples = math.max(0, math.floor(runStats.apples or 0))
-	local score = math.max(0, math.floor(runStats.score or 0))
-	local bonusXP = math.max(0, math.floor(runStats.bonusXP or 0))
+	local apples = max(0, floor(runStats.apples or 0))
+	local score = max(0, floor(runStats.score or 0))
+	local bonusXP = max(0, floor(runStats.bonusXP or 0))
 
 	local fruitPoints = apples * XP_PER_FRUIT
 	local scoreBonus = 0
 	if SCORE_BONUS_DIVISOR > 0 then
-		scoreBonus = math.min(SCORE_BONUS_MAX, math.floor(score / SCORE_BONUS_DIVISOR))
+		scoreBonus = math.min(SCORE_BONUS_MAX, floor(score / SCORE_BONUS_DIVISOR))
 	end
 
 	local total = fruitPoints + bonusXP
@@ -411,7 +415,7 @@ function MetaProgression:grantRunPoints(runStats)
 	local startTotal = self.data.totalExperience or 0
 	local startSnapshot = buildSnapshot(self, startTotal)
 
-	local gainedTotal = math.max(0, (gain.fruitPoints or 0) + (gain.bonusXP or 0))
+	local gainedTotal = max(0, (gain.fruitPoints or 0) + (gain.bonusXP or 0))
 	local endTotal = startTotal + gainedTotal
 	local endSnapshot = buildSnapshot(self, endTotal)
 

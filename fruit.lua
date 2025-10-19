@@ -4,6 +4,11 @@ local Theme = require("theme")
 local Arena = require("arena")
 local RenderLayers = require("renderlayers")
 
+local max = math.max
+local min = math.min
+local pi = math.pi
+local sin = math.sin
+
 local fruitTypes = {
 	{
 		id = "apple",
@@ -71,9 +76,9 @@ local OUTLINE_SIZE = 3
 
 local function getHighlightColor(color)
 	color = color or {1, 1, 1, 1}
-	local r = math.min(1, color[1] * 1.2 + 0.08)
-	local g = math.min(1, color[2] * 1.2 + 0.08)
-	local b = math.min(1, color[3] * 1.2 + 0.08)
+	local r = min(1, color[1] * 1.2 + 0.08)
+	local g = min(1, color[2] * 1.2 + 0.08)
+	local b = min(1, color[3] * 1.2 + 0.08)
 	local a = (color[4] or 1) * 0.75
 	return {r, g, b, a}
 end
@@ -130,7 +135,7 @@ local function spawnIdleSparkle(x, y, color)
 		color = copyColor(color),
 		timer = 0,
 		duration = IDLE_SPARKLE_DURATION,
-		angle = love.math.random() * math.pi * 2,
+		angle = love.math.random() * pi * 2,
 		spin = (love.math.random() - 0.5) * IDLE_SPARKLE_SPIN,
 		radius = HITBOX_SIZE * 0.45 + love.math.random() * HITBOX_SIZE * 0.25,
 		drift = love.math.random() * 8 + 6,
@@ -212,8 +217,8 @@ function Fruit:update(dt)
 				life  = 0.35,
 				size  = 3,
 				color = {col[1], col[2], col[3], 1},
-				spread= math.pi * 2,
-				angleJitter = math.pi,
+				spread= pi * 2,
+				angleJitter = pi,
 				drag = 2.2,
 				gravity = 160,
 				scaleMin = 0.55,
@@ -238,7 +243,7 @@ function Fruit:update(dt)
 	elseif active.phase == "wobble" then
 		local t = clamp(active.timer / WOBBLE_DURATION, 0, 1)
 		local s = (1 - t)
-		local k = math.sin(t * math.pi * 2.0) * 0.06 * s
+		local k = sin(t * pi * 2.0) * 0.06 * s
 		active.scaleX = 1 + k
 		active.scaleY = 1 - k
 		active.shadow = 1.0
@@ -255,9 +260,9 @@ function Fruit:update(dt)
 
 	if active.phase == "idle" or active.phase == "wobble" then
 		active.idleTimer = (active.idleTimer or 0) + dt
-		local floatPhase = math.sin((active.idleTimer or 0) * IDLE_FLOAT_SPEED)
+		local floatPhase = sin((active.idleTimer or 0) * IDLE_FLOAT_SPEED)
 		active.bobOffset = floatPhase * IDLE_FLOAT_AMPLITUDE
-		active.glowPulse = 0.7 + 0.3 * math.sin((active.idleTimer or 0) * IDLE_GLOW_SPEED)
+		active.glowPulse = 0.7 + 0.3 * sin((active.idleTimer or 0) * IDLE_GLOW_SPEED)
 
 		active.sparkleTimer = (active.sparkleTimer or IDLE_SPARKLE_MAX_DELAY) - dt
 		if active.sparkleTimer <= 0 then
@@ -302,7 +307,7 @@ function Fruit:checkCollisionWith(x, y, trail, rocks)
 			life = 0.45,
 			size = 3.2,
 			color = {fxColor[1], fxColor[2], fxColor[3], 0.95},
-			spread = math.pi * 2,
+			spread = pi * 2,
 			drag = 2.7,
 			gravity = -60,
 			fadeTo = 0,
@@ -325,7 +330,7 @@ local function drawFruit(f)
 	-- drop shadow
 	local shadowAlpha = 0.25 * alpha * (f.shadow or 1)
 	local bobStrength = (f.bobOffset or 0) / IDLE_FLOAT_AMPLITUDE
-	local liftStrength = math.max(0, -bobStrength)
+	local liftStrength = max(0, -bobStrength)
 	shadowAlpha = shadowAlpha * (1 + liftStrength * 0.4)
 	local shadowScale = 1 + liftStrength * 0.12
 
@@ -334,7 +339,7 @@ local function drawFruit(f)
 		love.graphics.ellipse(
 		"fill",
 		x + SHADOW_OFFSET,
-		y + SHADOW_OFFSET + math.min(0, (f.bobOffset or 0) * 0.35),
+		y + SHADOW_OFFSET + min(0, (f.bobOffset or 0) * 0.35),
 		(r * sx + OUTLINE_SIZE * 0.5) * shadowScale,
 		(r * sy + OUTLINE_SIZE * 0.5) * shadowScale,
 		segments
@@ -369,8 +374,8 @@ local function drawFruit(f)
 				local fade = 1 - progress
 				local orbit = sparkle.radius + progress * 6
 				local px = x + math.cos(sparkle.angle) * orbit
-				local py = y + math.sin(sparkle.angle) * orbit - progress * 6
-				local glowSize = sparkle.size * (0.6 + 0.4 * math.sin(progress * math.pi))
+				local py = y + sin(sparkle.angle) * orbit - progress * 6
+				local glowSize = sparkle.size * (0.6 + 0.4 * sin(progress * pi))
 				local alphaMul = 0.25 * fade * (0.6 + pulse * 0.4)
 
 				love.graphics.setColor(sparkle.color[1], sparkle.color[2], sparkle.color[3], alphaMul)
@@ -389,7 +394,7 @@ local function drawFruit(f)
 		-- subtle spawn glow
 		if (f == active) and (active.phase ~= "idle") then
 			local glow = 0.18 * alpha
-			local gx = (HITBOX_SIZE * math.max(sx, sy)) * 0.65
+			local gx = (HITBOX_SIZE * max(sx, sy)) * 0.65
 			love.graphics.setColor(1, 1, 1, glow)
 			love.graphics.circle("fill", x, y, gx)
 		end
@@ -397,7 +402,7 @@ local function drawFruit(f)
 		-- rare fruit flair
 		if f.type.name == "Dragonfruit" and f == active then
 			local t = (active.timer or 0)
-			local rarePulse = 0.5 + 0.5 * math.sin(t * 6.0)
+			local rarePulse = 0.5 + 0.5 * sin(t * 6.0)
 			love.graphics.setColor(1, 0, 1, 0.15 * rarePulse * alpha)
 			love.graphics.circle("line", x, y, HITBOX_SIZE * 0.8 + rarePulse * 4)
 		end

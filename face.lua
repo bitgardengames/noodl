@@ -1,3 +1,5 @@
+local max = math.max
+
 local Face = {}
 
 local FACE_WIDTH = 14
@@ -179,8 +181,8 @@ function Face:draw(x, y, scale, options)
 	local highlight = 0
 	local time = love.timer.getTime()
 	if options then
-		eyeScale = math.max(0.4, options.eyeScale or eyeScale)
-		highlight = math.max(0, options.highlight or highlight)
+		eyeScale = max(0.4, options.eyeScale or eyeScale)
+		highlight = max(0, options.highlight or highlight)
 		time = options.time or time
 	end
 

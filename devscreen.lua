@@ -5,6 +5,9 @@ local Theme = require("theme")
 local UI = require("ui")
 local Localization = require("localization")
 
+local max = math.max
+local min = math.min
+
 local DevScreen = {
 	transitionDuration = 0.35,
 }
@@ -31,9 +34,9 @@ end
 
 local function getHighlightColor(color)
 	color = color or {1, 1, 1, 1}
-	local r = math.min(1, color[1] * 1.2 + 0.08)
-	local g = math.min(1, color[2] * 1.2 + 0.08)
-	local b = math.min(1, color[3] * 1.2 + 0.08)
+	local r = min(1, color[1] * 1.2 + 0.08)
+	local g = min(1, color[2] * 1.2 + 0.08)
+	local b = min(1, color[3] * 1.2 + 0.08)
 	local a = (color[4] or 1) * 0.75
 	return {r, g, b, a}
 end
@@ -41,7 +44,7 @@ end
 local function drawDevApple(cx, cy, radius)
 	local appleColor = Theme.appleColor or {0.9, 0.45, 0.55, 1}
 	local highlight = getHighlightColor(appleColor)
-	local borderWidth = math.max(4, radius * 0.22)
+	local borderWidth = max(4, radius * 0.22)
 	local appleRadiusX = radius
 
 	local shadowAlpha = 0.3
@@ -81,15 +84,15 @@ function DevScreen:updateLayout()
 	local spacing = UI.spacing
 	local panelPadding = spacing.panelPadding or 20
 	local frameSize = 256
-	local horizontalMargin = math.max(140, sw * 0.18)
+	local horizontalMargin = max(140, sw * 0.18)
 
 	local minPanelWidth = frameSize + panelPadding * 2 + 160
-	local panelWidth = math.max(minPanelWidth, math.min(780, sw - horizontalMargin))
-	panelWidth = math.min(panelWidth, sw - 60)
+	local panelWidth = max(minPanelWidth, min(780, sw - horizontalMargin))
+	panelWidth = min(panelWidth, sw - 60)
 
 	local minPanelHeight = frameSize + panelPadding * 2 + spacing.buttonHeight + 220
-	local panelHeight = math.max(minPanelHeight, math.min(640, sh - 160))
-	panelHeight = math.min(panelHeight, sh - 60)
+	local panelHeight = max(minPanelHeight, min(640, sh - 160))
+	panelHeight = min(panelHeight, sh - 60)
 
 	local panelX = (sw - panelWidth) / 2
 	local panelY = (sh - panelHeight) / 2
@@ -225,7 +228,7 @@ function DevScreen:draw()
 	local frameX = panel.x + (panel.w - frameSize) / 2
 	local maxFrameY = buttonPos.y - frameSize - 48
 	local minFrameY = panel.y + panel.padding + 110
-	local frameY = math.max(minFrameY, math.min(y, maxFrameY))
+	local frameY = max(minFrameY, min(y, maxFrameY))
 
 	local frameLabel = Localization:get("dev.frame_label")
 	if frameLabel and frameLabel ~= "dev.frame_label" then
@@ -261,11 +264,11 @@ function DevScreen:draw()
 		love.graphics.setFont(labelFont)
 	end
 	local labelHeight = labelFont and labelFont:getHeight() or 0
-	local textMargin = math.max(10, frameSize * 0.04)
+	local textMargin = max(10, frameSize * 0.04)
 	local textX = frameX + textMargin - 5
-	local textOffsetY = math.max(6, frameSize * 0.02)
+	local textOffsetY = max(6, frameSize * 0.02)
 	local textY = frameY + frameSize - labelHeight - textMargin + textOffsetY + 5
-	local shadowOffset = math.max(3, labelHeight * 0.08)
+	local shadowOffset = max(3, labelHeight * 0.08)
 	love.graphics.setColor(0, 0, 0, 0.55)
 	love.graphics.print(numberLabel, textX + shadowOffset, textY + shadowOffset)
 	love.graphics.setColor(Theme.accentTextColor)

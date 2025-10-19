@@ -1,5 +1,10 @@
 local Theme = require("theme")
 
+local abs = math.abs
+local max = math.max
+local min = math.min
+local pi = math.pi
+
 local SawActor = {}
 SawActor.__index = SawActor
 
@@ -55,9 +60,9 @@ end
 
 local function getHighlightColor(color)
         color = color or {1, 1, 1, 1}
-        local r = math.min(1, color[1] * 1.2 + 0.08)
-	local g = math.min(1, color[2] * 1.2 + 0.08)
-	local b = math.min(1, color[3] * 1.2 + 0.08)
+        local r = min(1, color[1] * 1.2 + 0.08)
+	local g = min(1, color[2] * 1.2 + 0.08)
+	local b = min(1, color[3] * 1.2 + 0.08)
 	local a = (color[4] or 1) * 0.7
 	return {r, g, b, a}
 end
@@ -74,9 +79,9 @@ function SawActor.new(options)
 	actor.moveSpeed = options.moveSpeed or DEFAULT_MOVE_SPEED
 	actor.dir = options.dir or DEFAULT_ORIENTATION
 	actor.side = options.side
-	actor.progress = math.max(0, math.min(1, options.progress or 0))
+	actor.progress = max(0, min(1, options.progress or 0))
 	actor.moveDirection = options.moveDirection or DEFAULT_DIRECTION
-	actor.sinkProgress = math.max(0, math.min(1, options.sinkProgress or 0))
+	actor.sinkProgress = max(0, min(1, options.sinkProgress or 0))
 	actor.sinkOffset = options.sinkOffset or SINK_OFFSET
 	actor.sinkDistance = options.sinkDistance or SINK_DISTANCE
 	actor.hitFlashTimer = 0
@@ -89,9 +94,9 @@ function SawActor:update(dt)
 		return
 	end
 
-	self.rotation = (self.rotation + dt * self.spinSpeed) % (math.pi * 2)
+	self.rotation = (self.rotation + dt * self.spinSpeed) % (pi * 2)
 
-	local trackLength = math.max(0.0001, self.trackLength or DEFAULT_TRACK_LENGTH)
+	local trackLength = max(0.0001, self.trackLength or DEFAULT_TRACK_LENGTH)
 	if self.moveSpeed ~= 0 then
 		local direction = self.moveDirection or DEFAULT_DIRECTION
 		local delta = (dt * self.moveSpeed) / trackLength
@@ -99,15 +104,15 @@ function SawActor:update(dt)
 
 		if self.progress >= 1 then
 			self.progress = 1
-			self.moveDirection = -math.abs(direction)
+			self.moveDirection = -abs(direction)
 		elseif self.progress <= 0 then
 			self.progress = 0
-			self.moveDirection = math.abs(direction)
+			self.moveDirection = abs(direction)
 		end
 	end
 
 	if self.hitFlashTimer > 0 then
-		self.hitFlashTimer = math.max(0, self.hitFlashTimer - dt)
+		self.hitFlashTimer = max(0, self.hitFlashTimer - dt)
 	end
 end
 
@@ -120,7 +125,7 @@ function SawActor:triggerHitFlash(duration)
 end
 
 local function clampProgress(value)
-	return math.max(0, math.min(1, value or 0))
+	return max(0, min(1, value or 0))
 end
 
 local function getSawCenter(actor, x, y, radius, trackLength)
@@ -188,7 +193,7 @@ function SawActor:draw(x, y, scale)
 	local teeth = self.teeth or DEFAULT_TEETH
 	local outer = self.radius or DEFAULT_RADIUS
 	local inner = outer * 0.8
-	local step = math.pi / teeth
+	local step = pi / teeth
 
 	for i = 0, (teeth * 2) - 1 do
 		local r = (i % 2 == 0) and outer or inner

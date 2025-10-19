@@ -1,6 +1,9 @@
 local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 local Achievements = require("achievements")
+local max = math.max
+local insert = table.insert
+
 local Score = {}
 
 Achievements:registerStateProvider(function()
@@ -72,8 +75,8 @@ end
 
 function Score:save()
 	local lines = {"return {\n"}
-	table.insert(lines, string.format("    highscore = %d,\n", math.max(0, self.highscore or 0)))
-	table.insert(lines, "}\n")
+	insert(lines, string.format("    highscore = %d,\n", max(0, self.highscore or 0)))
+	insert(lines, "}\n")
 	love.filesystem.write(self.saveFile, table.concat(lines))
 end
 
@@ -152,7 +155,7 @@ end
 
 function Score:update(dt)
 	if self.highScoreGlowTimer and self.highScoreGlowTimer > 0 then
-		self.highScoreGlowTimer = math.max(0, self.highScoreGlowTimer - dt)
+		self.highScoreGlowTimer = max(0, self.highScoreGlowTimer - dt)
 	end
 end
 
@@ -162,7 +165,7 @@ function Score:getHighScoreGlowStrength()
 	end
 
 	local normalized = self.highScoreGlowTimer / self.highScoreGlowDuration
-	return math.max(0, math.min(1, normalized))
+	return max(0, math.min(1, normalized))
 end
 
 local function finalizeRunResult(self, options)

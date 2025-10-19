@@ -8,6 +8,11 @@ local ButtonList = require("buttonlist")
 local Shaders = require("shaders")
 local Audio = require("audio")
 
+local ceil = math.ceil
+local floor = math.floor
+local max = math.max
+local min = math.min
+
 local FloorSelect = {
 	transitionDuration = 0.45,
 }
@@ -144,30 +149,30 @@ end
 
 local function buildButtons(sw, sh)
 	local spacing = UI.spacing or {}
-	local marginX = math.max(72, math.floor(sw * 0.08))
-	local marginBottom = math.max(140, math.floor(sh * 0.18))
-	local gapX = math.max(18, spacing.buttonSpacing or 24)
-	local gapY = math.max(18, spacing.buttonSpacing or 24)
+	local marginX = max(72, floor(sw * 0.08))
+	local marginBottom = max(140, floor(sh * 0.18))
+	local gapX = max(18, spacing.buttonSpacing or 24)
+	local gapY = max(18, spacing.buttonSpacing or 24)
 	local sectionSpacing = spacing.sectionSpacing or 28
 
-	local columns = math.max(1, math.min(4, math.ceil(highestUnlocked / 4)))
+	local columns = max(1, min(4, ceil(highestUnlocked / 4)))
 	local availableWidth = sw - marginX * 2 - gapX * (columns - 1)
-	local buttonWidth = math.max(180, math.floor(availableWidth / columns))
-	local buttonHeight = math.max(44, math.floor((spacing.buttonHeight or 56) * 0.9))
+	local buttonWidth = max(180, floor(availableWidth / columns))
+	local buttonHeight = max(44, floor((spacing.buttonHeight or 56) * 0.9))
 
-	local rows = math.ceil(highestUnlocked / columns)
-	local gridHeight = rows * buttonHeight + math.max(0, rows - 1) * gapY
+	local rows = ceil(highestUnlocked / columns)
+	local gridHeight = rows * buttonHeight + max(0, rows - 1) * gapY
 
-	local topMargin = math.max(120, math.floor(sh * 0.2))
+	local topMargin = max(120, floor(sh * 0.2))
 	local availableHeight = sh - topMargin - marginBottom
-	local startY = topMargin + math.max(0, math.floor((availableHeight - gridHeight) / 2))
-	local startX = math.floor((sw - (buttonWidth * columns + gapX * (columns - 1))) / 2)
+	local startY = topMargin + max(0, floor((availableHeight - gridHeight) / 2))
+	local startX = floor((sw - (buttonWidth * columns + gapX * (columns - 1))) / 2)
 
 	local defs = {}
 
 	for floor = 1, highestUnlocked do
 		local col = (floor - 1) % columns
-		local row = math.floor((floor - 1) / columns)
+		local row = floor((floor - 1) / columns)
 		local x = startX + col * (buttonWidth + gapX)
 		local y = startY + row * (buttonHeight + gapY)
 		local floorData = Floors[floor] or {}
@@ -193,7 +198,7 @@ local function buildButtons(sw, sh)
 	end
 
 	local backWidth = buttonWidth
-	local backX = math.floor((sw - backWidth) / 2)
+	local backX = floor((sw - backWidth) / 2)
 	local backY = startY + gridHeight + sectionSpacing * 4
 	local maxBackY = sh - (spacing.buttonHeight or 56) - 40
 	backY = clamp(backY, startY + gridHeight + sectionSpacing * 2, maxBackY)
@@ -241,13 +246,13 @@ function FloorSelect:enter(data)
 	resetAnalogAxis()
 
 	local requestedHighest = data and data.highestFloor
-	highestUnlocked = math.max(1, math.floor(requestedHighest or PlayerStats:get("deepestFloorReached") or 1))
+	highestUnlocked = max(1, floor(requestedHighest or PlayerStats:get("deepestFloorReached") or 1))
 	local totalFloors = #Floors
 	if totalFloors > 0 then
-		highestUnlocked = math.min(highestUnlocked, totalFloors)
+		highestUnlocked = min(highestUnlocked, totalFloors)
 	end
 
-	defaultFloor = math.max(1, math.min(highestUnlocked, math.floor((data and data.defaultFloor) or highestUnlocked)))
+	defaultFloor = max(1, min(highestUnlocked, floor((data and data.defaultFloor) or highestUnlocked)))
 
 	local sw, sh = Screen:get()
 	buildButtons(sw, sh)
@@ -267,11 +272,11 @@ local function drawHeading(sw, sh)
 	highestLabelArgs.floor = highestUnlocked
 	local highestText = Localization:get("floor_select.highest_label", highestLabelArgs)
 
-	UI.drawLabel(title, 0, math.floor(sh * 0.08), sw, "center", {fontKey = "title"})
+	UI.drawLabel(title, 0, floor(sh * 0.08), sw, "center", {fontKey = "title"})
 
 	local subtitleFont = UI.fonts.body
 	local subtitleHeight = subtitleFont and subtitleFont:getHeight() or 28
-	local subtitleY = math.floor(sh * 0.08) + (UI.fonts.title and UI.fonts.title:getHeight() or 64) + 10
+	local subtitleY = floor(sh * 0.08) + (UI.fonts.title and UI.fonts.title:getHeight() or 64) + 10
 	UI.drawLabel(subtitle, sw * 0.15, subtitleY, sw * 0.7, "center", {fontKey = "body", color = UI.colors.subtleText})
 
 	local highestY = subtitleY + subtitleHeight + 8
@@ -302,7 +307,7 @@ local function drawDescription(sw)
 
 	local floorData = Floors[focusFloor] or {}
 	local description = floorData.flavor or Localization:get("floor_select.description_fallback")
-	local padding = math.max(60, math.floor(sw * 0.12))
+	local padding = max(60, floor(sw * 0.12))
 	local width = sw - padding * 2
 	local sectionSpacing = layout.sectionSpacing or 24
 	local baseY = layout.backY - sectionSpacing * 2
@@ -315,7 +320,7 @@ local function drawDescription(sw)
 	end
 
 	local minY = layout.startY + layout.gridHeight + sectionSpacing
-	local y = math.max(minY, baseY - descHeight)
+	local y = max(minY, baseY - descHeight)
 	UI.drawLabel(description, padding, y, width, "center", {fontKey = "body", color = UI.colors.subtleText})
 end
 
