@@ -11,7 +11,7 @@
 | Shield Recycler | Uncommon | Every two broken shields forge a fresh one. | Tags: defense; Visual: Shield reforging burst on every second shield break. |
 | Tempest Ward | Uncommon | After collecting twenty fruit, forge a single shield charge. | Tags: defense; Visual: Pocket Springs ring when the stored shield is granted. |
 | Caravan Contract | Uncommon | Shops offer +1 card. Each floor spawns an extra rock. | Tags: economy, risk |
-| Circuit Breaker | Uncommon | Saw tracks freeze for 1s after each fruit. |  |
+| Circuit Breaker | Uncommon | Saw tracks freeze for 1s after each fruit. | Visual: Sparks shoot across frozen tracks when stalls trigger. |
 | Crystal Cache | Uncommon | Shields burst into motes worth +2 bonus score. | Tags: economy, defense |
 | Diffraction Barrier | Uncommon | Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s. | Tags: defense; Visual: Prism refraction rings appear over laser emitters on pickup. |
 | Guild Ledger | Uncommon | Each shop slot reduces rock spawn chance by 1.5%. | Tags: economy, defense; Requires tags: economy |
