@@ -14,49 +14,49 @@ local ModuleUtil = require("moduleutil")
 local GameUtils = {}
 
 local function loadCoreSystems(sw, sh)
-    Snake:load(sw, sh)
-    Snake:resetModifiers()
-    PauseMenu:load(sw, sh)
+	Snake:load(sw, sh)
+	Snake:resetModifiers()
+	PauseMenu:load(sw, sh)
 end
 
 local GAMEPLAY_SYSTEMS = ModuleUtil.prepareSystems({
-    Movement,
-    Score,
-    FloatingText,
-    Particles,
-    UpgradeVisuals,
-    Rocks,
-    Saws,
-    UI,
+	Movement,
+	Score,
+	FloatingText,
+	Particles,
+	UpgradeVisuals,
+	Rocks,
+	Saws,
+	UI,
 })
 
 local gameplayContext = {}
 
 local function loadGameplaySystems(context)
-    ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "load", context)
+	ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "load", context)
 end
 
 local function resetGameplaySystems()
-    ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "reset")
+	ModuleUtil.runHook(GAMEPLAY_SYSTEMS, "reset")
 end
 
 function GameUtils:prepareGame(sw, sh)
-    loadCoreSystems(sw, sh)
-    for key in pairs(gameplayContext) do
-        gameplayContext[key] = nil
-    end
+	loadCoreSystems(sw, sh)
+	for key in pairs(gameplayContext) do
+		gameplayContext[key] = nil
+	end
 
-    gameplayContext.screenWidth = sw
-    gameplayContext.screenHeight = sh
+	gameplayContext.screenWidth = sw
+	gameplayContext.screenHeight = sh
 
-    loadGameplaySystems(gameplayContext)
-    resetGameplaySystems()
+	loadGameplaySystems(gameplayContext)
+	resetGameplaySystems()
 
-    Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
+	Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
 end
 
 function GameUtils:getGameplaySystems()
-    return GAMEPLAY_SYSTEMS
+	return GAMEPLAY_SYSTEMS
 end
 
 return GameUtils
