@@ -1,83 +1,83 @@
 local Easing = {}
 
 function Easing.clamp(value, minValue, maxValue)
-	if minValue > maxValue then
-		minValue, maxValue = maxValue, minValue
-	end
+    if minValue > maxValue then
+        minValue, maxValue = maxValue, minValue
+    end
 
-	if value < minValue then
-		return minValue
-	elseif value > maxValue then
-		return maxValue
-	end
+    if value < minValue then
+        return minValue
+    elseif value > maxValue then
+        return maxValue
+    end
 
-	return value
+    return value
 end
 
 function Easing.clamp01(value)
-	return Easing.clamp(value, 0, 1)
+    return Easing.clamp(value, 0, 1)
 end
 
 function Easing.lerp(a, b, t)
-	return a + (b - a) * t
+    return a + (b - a) * t
 end
 
 function Easing.easeOutCubic(t)
-	local inv = 1 - t
-	return 1 - inv * inv * inv
+    local inv = 1 - t
+    return 1 - inv * inv * inv
 end
 
 function Easing.easeInCubic(t)
-	return t * t * t
+    return t * t * t
 end
 
 function Easing.easeInOutCubic(t)
-	if t < 0.5 then
-		return 4 * t * t * t
-	end
+    if t < 0.5 then
+        return 4 * t * t * t
+    end
 
-	t = (2 * t) - 2
-	return 0.5 * t * t * t + 1
+    t = (2 * t) - 2
+    return 0.5 * t * t * t + 1
 end
 
 function Easing.easeOutExpo(t)
-	if t >= 1 then
-		return 1
-	end
+    if t >= 1 then
+        return 1
+    end
 
-	return 1 - math.pow(2, -10 * t)
+    return 1 - math.pow(2, -10 * t)
 end
 
 function Easing.easeOutBack(t)
-	local c1 = 1.70158
-	local c3 = c1 + 1
+    local c1 = 1.70158
+    local c3 = c1 + 1
 
-	return 1 + c3 * math.pow(t - 1, 3) + c1 * math.pow(t - 1, 2)
+    return 1 + c3 * math.pow(t - 1, 3) + c1 * math.pow(t - 1, 2)
 end
 
 function Easing.easeInBack(t)
-	local c1 = 1.70158
-	local c3 = c1 + 1
+    local c1 = 1.70158
+    local c3 = c1 + 1
 
-	return c3 * math.pow(t, 3) - c1 * math.pow(t, 2)
+    return c3 * math.pow(t, 3) - c1 * math.pow(t, 2)
 end
 
 function Easing.easedProgress(timer, duration)
-	if not duration or duration <= 0 then
-		return 1
-	end
+    if not duration or duration <= 0 then
+        return 1
+    end
 
-	return Easing.easeInOutCubic(Easing.clamp01(timer / duration))
+    return Easing.easeInOutCubic(Easing.clamp01(timer / duration))
 end
 
 function Easing.getTransitionAlpha(t, direction)
-	t = Easing.clamp01(t)
+    t = Easing.clamp01(t)
 
-	if direction == 1 then
-		return t
-	end
+    if direction == 1 then
+        return t
+    end
 
-	return 1 - t
+    return 1 - t
 end
 
 return Easing
