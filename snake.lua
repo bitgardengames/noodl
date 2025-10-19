@@ -126,6 +126,22 @@ local SHIELD_DAMAGE_FLOATING_TEXT_OPTIONS = {
         jitter = 2.4,
 }
 
+-- Shared burst configuration to avoid allocations when trimming segments.
+local LOSE_SEGMENTS_DEFAULT_BURST_COLOR = {1, 0.8, 0.4, 1}
+local LOSE_SEGMENTS_SAW_BURST_COLOR = {1, 0.6, 0.3, 1}
+local LOSE_SEGMENTS_BURST_OPTIONS = {
+        count = 0,
+        speed = 120,
+        speedVariance = 46,
+        life = 0.42,
+        size = 4,
+        color = LOSE_SEGMENTS_DEFAULT_BURST_COLOR,
+        spread = math.pi * 2,
+        drag = 3.1,
+        gravity = 220,
+        fadeTo = 0,
+}
+
 local SHIELD_BREAK_PARTICLE_OPTIONS = {
         count = 16,
         speed = 170,
@@ -2788,27 +2804,19 @@ function Snake:loseSegments(count, options)
 		end
 	end
 
-	if (not options) or options.spawnParticles ~= false then
-		local burstColor = {1, 0.8, 0.4, 1}
-		if options and options.cause == "saw" then
-			burstColor = {1, 0.6, 0.3, 1}
-		end
+        if (not options) or options.spawnParticles ~= false then
+                local burstColor = LOSE_SEGMENTS_DEFAULT_BURST_COLOR
+                if options and options.cause == "saw" then
+                        burstColor = LOSE_SEGMENTS_SAW_BURST_COLOR
+                end
 
-		if Particles and Particles.spawnBurst and tailX and tailY then
-			Particles:spawnBurst(tailX, tailY, {
-				count = math.min(10, 4 + trimmed),
-				speed = 120,
-				speedVariance = 46,
-				life = 0.42,
-				size = 4,
-				color = burstColor,
-				spread = math.pi * 2,
-				drag = 3.1,
-				gravity = 220,
-				fadeTo = 0,
-			})
-		end
-	end
+                if Particles and Particles.spawnBurst and tailX and tailY then
+                        local burstOptions = LOSE_SEGMENTS_BURST_OPTIONS
+                        burstOptions.count = math.min(10, 4 + trimmed)
+                        burstOptions.color = burstColor
+                        Particles:spawnBurst(tailX, tailY, burstOptions)
+                end
+        end
 
 	return trimmed
 end
