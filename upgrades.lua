@@ -783,6 +783,7 @@ local pool = {
                 nameKey = "upgrades.tail_trainer.name",
                 descKey = "upgrades.tail_trainer.description",
                 rarity = "common",
+                allowDuplicates = true,
                 onAcquire = function(state)
                         Snake:addSpeedMultiplier(1.04)
 
