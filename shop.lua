@@ -837,15 +837,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 	love.graphics.setFont(UI.fonts.body)
 	setColor(0.92, 0.92, 0.92, 1)
 	local descY = descStart
-	if card.upgrade and card.upgrade.tags and #card.upgrade.tags > 0 then
-		love.graphics.setFont(UI.fonts.small)
-		setColor(0.8, 0.85, 0.9, 0.9)
-		love.graphics.printf(table.concat(card.upgrade.tags, " • "), x + 18, descY, w - 36, "center")
-		descY = descY + 22
-		love.graphics.setFont(UI.fonts.body)
-		setColor(0.92, 0.92, 0.92, 1)
-	end
-	love.graphics.printf(card.desc or "", x + 18, descY, w - 36, "center")
+        love.graphics.printf(card.desc or "", x + 18, descY, w - 36, "center")
 end
 
 function Shop:draw(screenW, screenH)
