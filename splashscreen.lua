@@ -23,7 +23,7 @@ local function loadImage(path)
 end
 
 local function ensureLogo()
-	if logoImage or not love or not love.graphics then
+	if logoImage then
 		return logoImage
 	end
 

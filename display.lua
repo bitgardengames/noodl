@@ -103,10 +103,6 @@ function Display.ensure(settings)
 end
 
 function Display.apply(settings)
-	if not love.window then
-		return
-	end
-
 	local _, _, flags = love.window.getMode()
 	flags = flags or {}
 
