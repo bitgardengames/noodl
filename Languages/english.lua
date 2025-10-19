@@ -582,10 +582,10 @@ local english = {
 				name = "Warden's Chorus",
 				description = "Each Defense upgrade adds shield progress at the start of every floor.",
 			},
-			caravan_contract = {
-				name = "Caravan Contract",
-				description = "Shops offer +1 card. Each floor spawns an extra rock.",
-			},
+                        caravan_contract = {
+                                name = "Caravan Contract",
+                                description = "Shops offer +1 card per stack. Each floor spawns an extra rock.",
+                        },
 			verdant_bonds = {
 				name = "Verdant Bonds",
 				description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a shield.",
