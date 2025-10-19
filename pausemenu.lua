@@ -19,6 +19,7 @@ local panelBorderColor = {0, 0, 0, 1}
 local panelDrawOptions = {fill = panelFillColor, borderColor = panelBorderColor, shadowAlpha = 1}
 local subtitleLabelOptions = {fontKey = "subtitle", alpha = 1}
 local toggleLabelArgs = {state = nil}
+local floorLabelArgs = {number = nil, name = nil}
 
 local function toggleMusic()
 	Audio:playSound("click")
@@ -195,10 +196,9 @@ local function refreshFloorLabel(floorNumber, floorName)
 		resolvedName = Localization:get("common.unknown")
 	end
 
-	currentFloorLabel = Localization:get("pause.floor_label", {
-		number = floorNumber,
-		name = resolvedName,
-	})
+	floorLabelArgs.number = floorNumber
+	floorLabelArgs.name = resolvedName
+	currentFloorLabel = Localization:get("pause.floor_label", floorLabelArgs)
 end
 
 function PauseMenu:update(dt, isPaused, floorNumber, floorName)
