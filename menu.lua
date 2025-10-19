@@ -22,8 +22,16 @@ local buttons = {}
 local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
+local dailyBarCelebration = {
+	active = false,
+	time = 0,
+	spawnTimer = 0,
+	sparkles = {},
+}
 local analogAxisDirections = { horizontal = nil, vertical = nil }
 local titleSaw = SawActor.new()
+
+local random = (love.math and love.math.random) or math.random
 
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
@@ -105,6 +113,55 @@ local function resetAnalogAxis()
 	analogAxisDirections.vertical = nil
 end
 
+local function resetDailyBarCelebration()
+	dailyBarCelebration.active = false
+	dailyBarCelebration.time = 0
+	dailyBarCelebration.spawnTimer = 0
+	dailyBarCelebration.sparkles = {}
+end
+
+local function spawnDailyBarSparkle()
+	local sparkle = {
+		x = random(),
+		duration = 0.6 + random() * 0.4,
+		life = 0,
+		lift = 6 + random() * 6,
+	}
+	table.insert(dailyBarCelebration.sparkles, sparkle)
+end
+
+local function updateDailyBarCelebration(dt, shouldCelebrate)
+	if shouldCelebrate then
+		if not dailyBarCelebration.active then
+			dailyBarCelebration.active = true
+			dailyBarCelebration.time = 0
+			dailyBarCelebration.spawnTimer = 0
+			dailyBarCelebration.sparkles = {}
+		end
+
+		dailyBarCelebration.time = dailyBarCelebration.time + dt
+		dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer - dt
+
+		local spawnInterval = 0.12
+		while dailyBarCelebration.spawnTimer <= 0 do
+			spawnDailyBarSparkle()
+			dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer + spawnInterval
+		end
+	elseif dailyBarCelebration.active then
+		resetDailyBarCelebration()
+	end
+
+	if dailyBarCelebration.active then
+		for i = #dailyBarCelebration.sparkles, 1, -1 do
+			local sparkle = dailyBarCelebration.sparkles[i]
+			sparkle.life = sparkle.life + dt
+			if sparkle.life >= sparkle.duration then
+				table.remove(dailyBarCelebration.sparkles, i)
+			end
+		end
+	end
+end
+
 local function prepareStartAction(action)
 	if type(action) ~= "string" then
 		return action
@@ -165,6 +222,20 @@ local function setColorWithAlpha(color, alpha)
 	love.graphics.setColor(r, g, b, a)
 end
 
+local function shouldCelebrateDailyChallenge()
+	if not dailyChallenge then
+		return false
+	end
+
+	local statusBar = dailyChallenge.statusBar
+	if not statusBar then
+		return false
+	end
+
+	local ratio = math.max(0, math.min(statusBar.ratio or 0, 1))
+	return dailyChallenge.completed or ratio >= 0.999
+end
+
 function Menu:enter()
 	t = 0
 	UI.clearButtons()
@@ -174,6 +245,7 @@ function Menu:enter()
 
 	dailyChallenge = DailyChallenges:getDailyChallenge()
 	dailyChallengeAnim = 0
+	resetDailyBarCelebration()
 	resetAnalogAxis()
 
 	configureBackgroundEffect()
@@ -228,6 +300,8 @@ function Menu:update(dt)
 	if dailyChallenge then
 		dailyChallengeAnim = math.min(dailyChallengeAnim + dt * 2, 1)
 	end
+
+	updateDailyBarCelebration(dt, shouldCelebrateDailyChallenge())
 
 	for i, btn in ipairs(buttons) do
 		if btn.hovered then
@@ -472,6 +546,36 @@ function Menu:draw()
 			if fillWidth > 0 then
 				setColorWithAlpha(Theme.progressColor, alpha)
 				UI.drawRoundedRect(textX, textY, fillWidth, barHeight, 8)
+			end
+
+			if dailyBarCelebration.active and ratio >= 0.999 then
+				local timer = dailyBarCelebration.time or 0
+				local shimmerWidth = math.max(barWidth * 0.3, barHeight)
+				local shimmerProgress = (math.sin(timer * 2.2) * 0.5) + 0.5
+				local shimmerX = textX + shimmerProgress * (barWidth - shimmerWidth)
+				local shimmerAlpha = 0.35 + 0.25 * math.sin(timer * 3.1)
+
+				setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
+				UI.drawRoundedRect(shimmerX, textY - 3, shimmerWidth, barHeight + 6, 6)
+
+				for _, sparkle in ipairs(dailyBarCelebration.sparkles) do
+					local progress = math.min(1, sparkle.life / sparkle.duration)
+					local sparkleAlpha = (1 - progress) * alpha
+					if sparkleAlpha > 0 then
+						local sparkleX = textX + sparkle.x * barWidth
+						local baseY = textY + barHeight / 2
+						local offset = (0.5 - progress) * (barHeight + sparkle.lift)
+						local sparkleY = baseY + offset
+						local size = 2 + (1 - progress) * 3
+
+						love.graphics.setColor(1, 1, 1, sparkleAlpha)
+						love.graphics.setLineWidth(1.2)
+						love.graphics.line(sparkleX - size, sparkleY, sparkleX + size, sparkleY)
+						love.graphics.line(sparkleX, sparkleY - size, sparkleX, sparkleY + size)
+					end
+				end
+
+				love.graphics.setColor(1, 1, 1, 1)
 			end
 
 			setColorWithAlpha(Theme.panelBorder, alpha)
