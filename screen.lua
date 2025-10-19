@@ -1,84 +1,84 @@
 local UI = require("ui")
 
 local Screen = {
-	width = nil,
-	height = nil,
-	targetWidth = nil,
-	targetHeight = nil,
-	smoothingSpeed = 12,
-	snapThreshold = 0,
+    width = nil,
+    height = nil,
+    targetWidth = nil,
+    targetHeight = nil,
+    smoothingSpeed = 12,
+    snapThreshold = 0,
 }
 
 local function updateCenter(self)
-	self.cx = self.width * 0.5
-	self.cy = self.height * 0.5
+    self.cx = self.width * 0.5
+    self.cy = self.height * 0.5
 end
 
 local function shouldSnapImmediately(self, dt, instant)
-	if instant == true then
-		return true
-	end
+    if instant == true then
+        return true
+    end
 
-	if self.width == nil or self.height == nil then
-		return true
-	end
+    if self.width == nil or self.height == nil then
+        return true
+    end
 
-	if dt == nil or dt <= 0 then
-		return true
-	end
+    if dt == nil or dt <= 0 then
+        return true
+    end
 
-	if self.smoothingSpeed <= 0 then
-		return true
-	end
+    if self.smoothingSpeed <= 0 then
+        return true
+    end
 
-	return false
+    return false
 end
 
 function Screen:update(dt, instant)
-	local actualWidth, actualHeight = love.graphics.getDimensions()
-	self.targetWidth, self.targetHeight = actualWidth, actualHeight
+    local actualWidth, actualHeight = love.graphics.getDimensions()
+    self.targetWidth, self.targetHeight = actualWidth, actualHeight
 
-	if UI and UI.refreshLayout then
-		UI.refreshLayout(actualWidth, actualHeight)
-	end
+    if UI and UI.refreshLayout then
+        UI.refreshLayout(actualWidth, actualHeight)
+    end
 
-	if shouldSnapImmediately(self, dt, instant) then
-		self.width, self.height = actualWidth, actualHeight
-		updateCenter(self)
-		return self.width, self.height
-	end
+    if shouldSnapImmediately(self, dt, instant) then
+        self.width, self.height = actualWidth, actualHeight
+        updateCenter(self)
+        return self.width, self.height
+    end
 
-	local deltaWidth = actualWidth - self.width
-	local deltaHeight = actualHeight - self.height
-	local snapThreshold = self.snapThreshold
+    local deltaWidth = actualWidth - self.width
+    local deltaHeight = actualHeight - self.height
+    local snapThreshold = self.snapThreshold
 
-	if snapThreshold and snapThreshold > 0 then
-		if math.abs(deltaWidth) > snapThreshold or math.abs(deltaHeight) > snapThreshold then
-			self.width, self.height = actualWidth, actualHeight
-			updateCenter(self)
-			return self.width, self.height
-		end
-	end
+    if snapThreshold and snapThreshold > 0 then
+        if math.abs(deltaWidth) > snapThreshold or math.abs(deltaHeight) > snapThreshold then
+            self.width, self.height = actualWidth, actualHeight
+            updateCenter(self)
+            return self.width, self.height
+        end
+    end
 
-	local alpha = 1 - math.exp(-self.smoothingSpeed * dt)
-	self.width = self.width + deltaWidth * alpha
-	self.height = self.height + deltaHeight * alpha
+    local alpha = 1 - math.exp(-self.smoothingSpeed * dt)
+    self.width = self.width + deltaWidth * alpha
+    self.height = self.height + deltaHeight * alpha
 
-	updateCenter(self)
+    updateCenter(self)
 
-	return self.width, self.height
+    return self.width, self.height
 end
 
 function Screen:get()
-	return self.width, self.height
+    return self.width, self.height
 end
 
 function Screen:getWidth()
-	return self.width
+    return self.width
 end
 
 function Screen:getHeight()
-	return self.height
+    return self.height
 end
 
 return Screen
