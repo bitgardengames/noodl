@@ -32,12 +32,12 @@ local portalAnimation = nil
 local cellKeyStride = 0
 
 local function assignDirection(target, x, y)
-        if not target then
-                return
-        end
+	if not target then
+		return
+	end
 
-        target.x = x
-        target.y = y
+	target.x = x
+	target.y = y
 end
 
 local function announceDeveloperAssistChange(enabled)
@@ -122,33 +122,33 @@ Snake.temporalAnchor = nil
 Snake.quickFangs = nil
 
 local function resolveTimeDilationScale(primary, secondary)
-        local scale = 1
+	local scale = 1
 
-        if primary and primary.active then
-                local primaryScale = primary.timeScale or 1
-                if not (primaryScale and primaryScale > 0) then
-                        primaryScale = 0.05
-                end
-                scale = primaryScale
-        end
+	if primary and primary.active then
+		local primaryScale = primary.timeScale or 1
+		if not (primaryScale and primaryScale > 0) then
+			primaryScale = 0.05
+		end
+		scale = primaryScale
+	end
 
-        if secondary and secondary.active then
-                local secondaryScale = secondary.timeScale or 1
-                if not (secondaryScale and secondaryScale > 0) then
-                        secondaryScale = 0.05
-                end
-                if secondaryScale < scale then
-                        scale = secondaryScale
-                end
-        end
+	if secondary and secondary.active then
+		local secondaryScale = secondary.timeScale or 1
+		if not (secondaryScale and secondaryScale > 0) then
+			secondaryScale = 0.05
+		end
+		if secondaryScale < scale then
+			scale = secondaryScale
+		end
+	end
 
-        return scale
+	return scale
 end
 
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
-        local speed = (self.baseSpeed or 1) * (self.speedMult or 1)
-        local scale = resolveTimeDilationScale(self.timeDilation, self.chronoWard)
+	local speed = (self.baseSpeed or 1) * (self.speedMult or 1)
+	local scale = resolveTimeDilationScale(self.timeDilation, self.chronoWard)
 	if scale ~= 1 then
 		speed = speed * scale
 	end
@@ -161,323 +161,323 @@ function Snake:addSpeedMultiplier(mult)
 end
 
 function Snake:addShields(n)
-        n = n or 1
-        local previous = self.shields or 0
-        local updated = previous + n
-        if updated < 0 then
-                updated = 0
-        end
-        self.shields = updated
+	n = n or 1
+	local previous = self.shields or 0
+	local updated = previous + n
+	if updated < 0 then
+		updated = 0
+	end
+	self.shields = updated
 
-        if n ~= 0 then
-                UI:setShields(self.shields)
-        end
+	if n ~= 0 then
+		UI:setShields(self.shields)
+	end
 
 end
 
 function Snake:consumeShield()
-        if developerAssistEnabled then
-                self.shieldFlashTimer = SHIELD_FLASH_DURATION
-                UI:setShields(self.shields or 0, { silent = true })
-                return true
-        end
+	if developerAssistEnabled then
+		self.shieldFlashTimer = SHIELD_FLASH_DURATION
+		UI:setShields(self.shields or 0, { silent = true })
+		return true
+	end
 
-        if (self.shields or 0) > 0 then
-                self.shields = self.shields - 1
-                self.shieldFlashTimer = SHIELD_FLASH_DURATION
-                UI:setShields(self.shields)
-                SessionStats:add("shieldsSaved", 1)
-                return true
-        end
-        return false
+	if (self.shields or 0) > 0 then
+		self.shields = self.shields - 1
+		self.shieldFlashTimer = SHIELD_FLASH_DURATION
+		UI:setShields(self.shields)
+		SessionStats:add("shieldsSaved", 1)
+		return true
+	end
+	return false
 end
 
 function Snake:resetModifiers()
-        self.speedMult    = 1.0
-        self.shields = 0
-        self.extraGrowth  = 0
-        self.shieldBurst  = nil
-        self.shieldFlashTimer = 0
+	self.speedMult    = 1.0
+	self.shields = 0
+	self.extraGrowth  = 0
+	self.shieldBurst  = nil
+	self.shieldFlashTimer = 0
 	self.stonebreakerStacks = 0
 	self.stoneSkinSawGrace = 0
 	self.dash = nil
-        self.timeDilation = nil
-        self.adrenaline = nil
-        self.hazardGraceTimer = 0
-        self.chronospiral = nil
-        self.abyssalCatalyst = nil
-        self.phoenixEcho = nil
-        self.eventHorizon = nil
-        self.stormchaser = nil
-        self.titanblood = nil
-        self.temporalAnchor = nil
-        self.quickFangs = nil
-        self.zephyrCoils = nil
-        self.spectralHarvest = nil
-        self.stoneSkinVisual = nil
-        self.speedVisual = nil
-        self.predatorsReflex = nil
-        UI:setShields(self.shields or 0, { silent = true, immediate = true })
+	self.timeDilation = nil
+	self.adrenaline = nil
+	self.hazardGraceTimer = 0
+	self.chronospiral = nil
+	self.abyssalCatalyst = nil
+	self.phoenixEcho = nil
+	self.eventHorizon = nil
+	self.stormchaser = nil
+	self.titanblood = nil
+	self.temporalAnchor = nil
+	self.quickFangs = nil
+	self.zephyrCoils = nil
+	self.spectralHarvest = nil
+	self.stoneSkinVisual = nil
+	self.speedVisual = nil
+	self.predatorsReflex = nil
+	UI:setShields(self.shields or 0, { silent = true, immediate = true })
 end
 
 function Snake:setStonebreakerStacks(count)
-        count = count or 0
-        if count < 0 then count = 0 end
-        self.stonebreakerStacks = count
+	count = count or 0
+	if count < 0 then count = 0 end
+	self.stonebreakerStacks = count
 end
 
 function Snake:setQuickFangsStacks(count)
-        count = math.max(0, math.floor((count or 0) + 0.0001))
-        local state = self.quickFangs
-        local previous = state and (state.stacks or 0) or 0
+	count = math.max(0, math.floor((count or 0) + 0.0001))
+	local state = self.quickFangs
+	local previous = state and (state.stacks or 0) or 0
 
-        if count > 0 then
-                if not state then
-                        state = { intensity = 0, baseTarget = 0, time = 0, stacks = 0, flash = 0 }
-                        self.quickFangs = state
-                end
+	if count > 0 then
+		if not state then
+			state = { intensity = 0, baseTarget = 0, time = 0, stacks = 0, flash = 0 }
+			self.quickFangs = state
+		end
 
-                state.stacks = count
-                state.baseTarget = math.min(0.65, 0.32 + 0.11 * math.min(count, 4))
-                state.target = state.baseTarget
-                if count > previous then
-                        state.intensity = math.max(state.intensity or 0, 0.55)
-                        state.flash = math.min(1.0, (state.flash or 0) + 0.7)
-                end
-        elseif state then
-                state.stacks = 0
-                state.baseTarget = 0
-                state.target = 0
-        end
+		state.stacks = count
+		state.baseTarget = math.min(0.65, 0.32 + 0.11 * math.min(count, 4))
+		state.target = state.baseTarget
+		if count > previous then
+			state.intensity = math.max(state.intensity or 0, 0.55)
+			state.flash = math.min(1.0, (state.flash or 0) + 0.7)
+		end
+	elseif state then
+		state.stacks = 0
+		state.baseTarget = 0
+		state.target = 0
+	end
 
-        if self.quickFangs then
-                local data = self.quickFangs
-                if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 then
-                        self.quickFangs = nil
-                end
-        end
+	if self.quickFangs then
+		local data = self.quickFangs
+		if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 then
+			self.quickFangs = nil
+		end
+	end
 end
 
 function Snake:enablePredatorsReflex()
-        local state = self.predatorsReflex
-        if not state then
-                state = { intensity = 0, target = 0, time = 0 }
-                self.predatorsReflex = state
-        end
-        state.enabled = true
+	local state = self.predatorsReflex
+	if not state then
+		state = { intensity = 0, target = 0, time = 0 }
+		self.predatorsReflex = state
+	end
+	state.enabled = true
 end
 
 function Snake:setZephyrCoilsStacks(count)
-        count = math.max(0, math.floor((count or 0) + 0.0001))
+	count = math.max(0, math.floor((count or 0) + 0.0001))
 
-        local state = self.zephyrCoils
-        if not state and count <= 0 then
-                return
-        end
+	local state = self.zephyrCoils
+	if not state and count <= 0 then
+		return
+	end
 
-        if not state then
-                state = { stacks = 0, intensity = 0, target = 0, time = 0 }
-                self.zephyrCoils = state
-        end
+	if not state then
+		state = { stacks = 0, intensity = 0, target = 0, time = 0 }
+		self.zephyrCoils = state
+	end
 
-        state.stacks = count
-        if count > 0 then
-                state.target = math.min(1, 0.45 + 0.2 * math.min(count, 3))
-                if (state.intensity or 0) < 0.25 then
-                        state.intensity = math.max(state.intensity or 0, 0.25)
-                end
-        else
-                state.target = 0
-        end
+	state.stacks = count
+	if count > 0 then
+		state.target = math.min(1, 0.45 + 0.2 * math.min(count, 3))
+		if (state.intensity or 0) < 0.25 then
+			state.intensity = math.max(state.intensity or 0, 0.25)
+		end
+	else
+		state.target = 0
+	end
 end
 
 function Snake:setChronospiralActive(active)
-        if active then
-                local state = self.chronospiral
-                if not state then
-                        state = { intensity = 0, target = 1, spin = 0 }
-                        self.chronospiral = state
-                end
-                state.target = 1
-                state.active = true
-        else
-                local state = self.chronospiral
-                if state then
-                        state.target = 0
-                        state.active = false
-                end
-        end
+	if active then
+		local state = self.chronospiral
+		if not state then
+			state = { intensity = 0, target = 1, spin = 0 }
+			self.chronospiral = state
+		end
+		state.target = 1
+		state.active = true
+	else
+		local state = self.chronospiral
+		if state then
+			state.target = 0
+			state.active = false
+		end
+	end
 end
 
 function Snake:setAbyssalCatalystStacks(count)
-        count = math.max(0, math.floor((count or 0) + 0.0001))
-        local state = self.abyssalCatalyst
+	count = math.max(0, math.floor((count or 0) + 0.0001))
+	local state = self.abyssalCatalyst
 
-        if count > 0 then
-                if not state then
-                        state = { intensity = 0, target = 0, time = 0 }
-                        self.abyssalCatalyst = state
-                end
-                state.stacks = count
-                state.target = math.min(1, 0.55 + 0.18 * math.min(count, 3))
-        elseif state then
-                state.stacks = 0
-                state.target = 0
-        end
+	if count > 0 then
+		if not state then
+			state = { intensity = 0, target = 0, time = 0 }
+			self.abyssalCatalyst = state
+		end
+		state.stacks = count
+		state.target = math.min(1, 0.55 + 0.18 * math.min(count, 3))
+	elseif state then
+		state.stacks = 0
+		state.target = 0
+	end
 
-        if self.abyssalCatalyst and (self.abyssalCatalyst.stacks or 0) <= 0 and (self.abyssalCatalyst.intensity or 0) <= 0 then
-                self.abyssalCatalyst = nil
-        end
+	if self.abyssalCatalyst and (self.abyssalCatalyst.stacks or 0) <= 0 and (self.abyssalCatalyst.intensity or 0) <= 0 then
+		self.abyssalCatalyst = nil
+	end
 end
 
 function Snake:setPhoenixEchoCharges(count, options)
-        count = math.max(0, math.floor((count or 0) + 0.0001))
-        options = options or {}
+	count = math.max(0, math.floor((count or 0) + 0.0001))
+	options = options or {}
 
-        local state = self.phoenixEcho
-        if not state and (count > 0 or options.triggered or options.instantIntensity) then
-                state = { intensity = 0, target = 0, time = 0, flareTimer = 0, flareDuration = 1.2, charges = 0 }
-                self.phoenixEcho = state
-        elseif not state then
-                return
-        end
+	local state = self.phoenixEcho
+	if not state and (count > 0 or options.triggered or options.instantIntensity) then
+		state = { intensity = 0, target = 0, time = 0, flareTimer = 0, flareDuration = 1.2, charges = 0 }
+		self.phoenixEcho = state
+	elseif not state then
+		return
+	end
 
-        local previous = state.charges or 0
-        state.charges = count
+	local previous = state.charges or 0
+	state.charges = count
 
-        if count > 0 then
-                state.target = math.min(1, 0.55 + 0.18 * math.min(count, 3))
-        else
-                state.target = 0
-        end
+	if count > 0 then
+		state.target = math.min(1, 0.55 + 0.18 * math.min(count, 3))
+	else
+		state.target = 0
+	end
 
-        if count > previous then
-                state.flareTimer = math.max(state.flareTimer or 0, 1.25)
-        elseif count < previous then
-                state.flareTimer = math.max(state.flareTimer or 0, 0.9)
-        end
+	if count > previous then
+		state.flareTimer = math.max(state.flareTimer or 0, 1.25)
+	elseif count < previous then
+		state.flareTimer = math.max(state.flareTimer or 0, 0.9)
+	end
 
-        if options.triggered then
-                state.flareTimer = math.max(state.flareTimer or 0, options.triggered)
-                state.intensity = math.max(state.intensity or 0, 0.85)
-        end
+	if options.triggered then
+		state.flareTimer = math.max(state.flareTimer or 0, options.triggered)
+		state.intensity = math.max(state.intensity or 0, 0.85)
+	end
 
-        if options.instantIntensity then
-                state.intensity = math.max(state.intensity or 0, options.instantIntensity)
-        end
+	if options.instantIntensity then
+		state.intensity = math.max(state.intensity or 0, options.instantIntensity)
+	end
 
-        if options.flareDuration then
-                state.flareDuration = options.flareDuration
-        elseif not state.flareDuration then
-                state.flareDuration = 1.2
-        end
+	if options.flareDuration then
+		state.flareDuration = options.flareDuration
+	elseif not state.flareDuration then
+		state.flareDuration = 1.2
+	end
 
-        if count <= 0 and state.target <= 0 and (state.intensity or 0) <= 0 and (state.flareTimer or 0) <= 0 then
-                self.phoenixEcho = nil
-        end
+	if count <= 0 and state.target <= 0 and (state.intensity or 0) <= 0 and (state.flareTimer or 0) <= 0 then
+		self.phoenixEcho = nil
+	end
 end
 
 function Snake:setSpectralHarvestReady(active, options)
-        options = options or {}
-        local state = self.spectralHarvest
+	options = options or {}
+	local state = self.spectralHarvest
 
-        if active then
-                if not state then
-                        state = { intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
-                        self.spectralHarvest = state
-                end
-                state.ready = true
-                state.target = math.max(state.target or 0, 1)
-                if options.pulse then
-                        state.burst = math.max(state.burst or 0, options.pulse)
-                end
-                if options.instantIntensity then
-                        state.intensity = math.max(state.intensity or 0, options.instantIntensity)
-                end
-        elseif state then
-                state.ready = false
-                state.target = 0
-                if options.pulse then
-                        state.burst = math.max(state.burst or 0, options.pulse)
-                end
-        elseif options and options.ensure then
-                self.spectralHarvest = { ready = false, intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
-        end
+	if active then
+		if not state then
+			state = { intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
+			self.spectralHarvest = state
+		end
+		state.ready = true
+		state.target = math.max(state.target or 0, 1)
+		if options.pulse then
+			state.burst = math.max(state.burst or 0, options.pulse)
+		end
+		if options.instantIntensity then
+			state.intensity = math.max(state.intensity or 0, options.instantIntensity)
+		end
+	elseif state then
+		state.ready = false
+		state.target = 0
+		if options.pulse then
+			state.burst = math.max(state.burst or 0, options.pulse)
+		end
+	elseif options and options.ensure then
+		self.spectralHarvest = { ready = false, intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
+	end
 end
 
 function Snake:triggerSpectralHarvest(options)
-        options = options or {}
-        local state = self.spectralHarvest
-        if not state then
-                state = { intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
-                self.spectralHarvest = state
-        end
+	options = options or {}
+	local state = self.spectralHarvest
+	if not state then
+		state = { intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
+		self.spectralHarvest = state
+	end
 
-        state.ready = false
-        state.target = 0
-        state.burst = math.max(state.burst or 0, options.flash or 1)
-        state.echo = math.max(state.echo or 0, options.echo or 1)
-        if options.instantIntensity then
-                state.intensity = math.max(state.intensity or 0, options.instantIntensity)
-        end
+	state.ready = false
+	state.target = 0
+	state.burst = math.max(state.burst or 0, options.flash or 1)
+	state.echo = math.max(state.echo or 0, options.echo or 1)
+	if options.instantIntensity then
+		state.intensity = math.max(state.intensity or 0, options.instantIntensity)
+	end
 end
 
 function Snake:setEventHorizonActive(active)
-        if active then
-                local state = self.eventHorizon
-                if not state then
-                        state = { intensity = 0, target = 1, spin = 0, time = 0 }
-                        self.eventHorizon = state
-                end
-                state.target = 1
-                state.active = true
-        else
-                local state = self.eventHorizon
-                if state then
-                        state.target = 0
-                        state.active = false
-                end
-        end
+	if active then
+		local state = self.eventHorizon
+		if not state then
+			state = { intensity = 0, target = 1, spin = 0, time = 0 }
+			self.eventHorizon = state
+		end
+		state.target = 1
+		state.active = true
+	else
+		local state = self.eventHorizon
+		if state then
+			state.target = 0
+			state.active = false
+		end
+	end
 end
 
 function Snake:setStormchaserPrimed(active)
-        local state = self.stormchaser
-        if active then
-                if not state then
-                        state = { intensity = 0, target = 1, time = 0, primed = true }
-                        self.stormchaser = state
-                end
-                state.target = 1
-                state.primed = true
-        elseif state then
-                state.target = 0
-                state.primed = false
-        end
+	local state = self.stormchaser
+	if active then
+		if not state then
+			state = { intensity = 0, target = 1, time = 0, primed = true }
+			self.stormchaser = state
+		end
+		state.target = 1
+		state.primed = true
+	elseif state then
+		state.target = 0
+		state.primed = false
+	end
 
-        if self.stormchaser and not self.stormchaser.primed and (self.stormchaser.intensity or 0) <= 0 and (self.stormchaser.target or 0) <= 0 then
-                self.stormchaser = nil
-        end
+	if self.stormchaser and not self.stormchaser.primed and (self.stormchaser.intensity or 0) <= 0 and (self.stormchaser.target or 0) <= 0 then
+		self.stormchaser = nil
+	end
 end
 
 function Snake:setTitanbloodStacks(count)
-        count = math.max(0, math.floor((count or 0) + 0.0001))
-        local state = self.titanblood
+	count = math.max(0, math.floor((count or 0) + 0.0001))
+	local state = self.titanblood
 
-        if count > 0 then
-                if not state then
-                        state = { intensity = 0, target = 0, time = 0 }
-                        self.titanblood = state
-                end
-                state.stacks = count
-                state.target = math.min(1, 0.5 + 0.18 * math.min(count, 3))
-        elseif state then
-                state.stacks = 0
-                state.target = 0
-        end
+	if count > 0 then
+		if not state then
+			state = { intensity = 0, target = 0, time = 0 }
+			self.titanblood = state
+		end
+		state.stacks = count
+		state.target = math.min(1, 0.5 + 0.18 * math.min(count, 3))
+	elseif state then
+		state.stacks = 0
+		state.target = 0
+	end
 
-        if self.titanblood and (self.titanblood.stacks or 0) <= 0 and (self.titanblood.intensity or 0) <= 0 then
-                self.titanblood = nil
-        end
+	if self.titanblood and (self.titanblood.stacks or 0) <= 0 and (self.titanblood.intensity or 0) <= 0 then
+		self.titanblood = nil
+	end
 end
 
 function Snake:addShieldBurst(config)
@@ -530,41 +530,41 @@ function Snake:onShieldConsumed(x, y, cause)
 				stall = burstStall,
 			} or nil,
 		})
-        end
+	end
 end
 
 function Snake:addStoneSkinSawGrace(n)
-        n = n or 1
-        if n <= 0 then return end
-        self.stoneSkinSawGrace = (self.stoneSkinSawGrace or 0) + n
+	n = n or 1
+	if n <= 0 then return end
+	self.stoneSkinSawGrace = (self.stoneSkinSawGrace or 0) + n
 
-        local visual = self.stoneSkinVisual
-        if not visual then
-                visual = { intensity = 0, target = 0, flash = 0, time = 0, charges = 0 }
-                self.stoneSkinVisual = visual
-        end
+	local visual = self.stoneSkinVisual
+	if not visual then
+		visual = { intensity = 0, target = 0, flash = 0, time = 0, charges = 0 }
+		self.stoneSkinVisual = visual
+	end
 
-        visual.charges = self.stoneSkinSawGrace or 0
-        visual.target = math.min(1, 0.45 + 0.18 * math.min(visual.charges, 4))
-        visual.intensity = math.max(visual.intensity or 0, 0.32 + 0.12 * math.min(visual.charges, 3))
-        visual.flash = math.max(visual.flash or 0, 0.75)
+	visual.charges = self.stoneSkinSawGrace or 0
+	visual.target = math.min(1, 0.45 + 0.18 * math.min(visual.charges, 4))
+	visual.intensity = math.max(visual.intensity or 0, 0.32 + 0.12 * math.min(visual.charges, 3))
+	visual.flash = math.max(visual.flash or 0, 0.75)
 end
 
 function Snake:consumeStoneSkinSawGrace()
-        if (self.stoneSkinSawGrace or 0) > 0 then
-                self.stoneSkinSawGrace = self.stoneSkinSawGrace - 1
-                self.shieldFlashTimer = SHIELD_FLASH_DURATION
+	if (self.stoneSkinSawGrace or 0) > 0 then
+		self.stoneSkinSawGrace = self.stoneSkinSawGrace - 1
+		self.shieldFlashTimer = SHIELD_FLASH_DURATION
 
-                if self.stoneSkinVisual then
-                        local visual = self.stoneSkinVisual
-                        visual.charges = self.stoneSkinSawGrace or 0
-                        visual.target = math.min(1, 0.45 + 0.18 * math.min(visual.charges, 4))
-                        visual.flash = math.max(visual.flash or 0, 1.0)
-                end
+		if self.stoneSkinVisual then
+			local visual = self.stoneSkinVisual
+			visual.charges = self.stoneSkinSawGrace or 0
+			visual.target = math.min(1, 0.45 + 0.18 * math.min(visual.charges, 4))
+			visual.flash = math.max(visual.flash or 0, 1.0)
+		end
 
-                return true
-        end
-        return false
+		return true
+	end
+	return false
 end
 
 function Snake:isHazardGraceActive()
@@ -800,138 +800,138 @@ local function closestPointOnSegment(px, py, ax, ay, bx, by)
 end
 
 local function copySegmentData(segment)
-        if not segment then
-                return nil
-        end
+	if not segment then
+		return nil
+	end
 
-        local copy = {}
-        for key, value in pairs(segment) do
-                copy[key] = value
-        end
+	local copy = {}
+	for key, value in pairs(segment) do
+		copy[key] = value
+	end
 
-        return copy
+	return copy
 end
 
 local function computeTrailLength(trailData)
-        if not trailData then
-                return 0
-        end
+	if not trailData then
+		return 0
+	end
 
-        local total = 0
-        for i = 2, #trailData do
-                local prev = trailData[i - 1]
-                local curr = trailData[i]
-                local ax, ay = prev and prev.drawX, prev and prev.drawY
-                local bx, by = curr and curr.drawX, curr and curr.drawY
-                if ax and ay and bx and by then
-                        local dx = bx - ax
-                        local dy = by - ay
-                        total = total + math.sqrt(dx * dx + dy * dy)
-                end
-        end
+	local total = 0
+	for i = 2, #trailData do
+		local prev = trailData[i - 1]
+		local curr = trailData[i]
+		local ax, ay = prev and prev.drawX, prev and prev.drawY
+		local bx, by = curr and curr.drawX, curr and curr.drawY
+		if ax and ay and bx and by then
+			local dx = bx - ax
+			local dy = by - ay
+			total = total + math.sqrt(dx * dx + dy * dy)
+		end
+	end
 
-        return total
+	return total
 end
 
 local function sliceTrailByLength(sourceTrail, maxLength)
-        if not sourceTrail or #sourceTrail == 0 then
-                return {}
-        end
+	if not sourceTrail or #sourceTrail == 0 then
+		return {}
+	end
 
-        local result = {}
-        local first = copySegmentData(sourceTrail[1]) or {}
-        result[1] = first
+	local result = {}
+	local first = copySegmentData(sourceTrail[1]) or {}
+	result[1] = first
 
-        if not (maxLength and maxLength > 0) then
-                return result
-        end
+	if not (maxLength and maxLength > 0) then
+		return result
+	end
 
-        local accumulated = 0
-        for i = 2, #sourceTrail do
-                local prev = sourceTrail[i - 1]
-                local curr = sourceTrail[i]
-                local px, py = prev and prev.drawX, prev and prev.drawY
-                local cx, cy = curr and curr.drawX, curr and curr.drawY
-                if not (px and py and cx and cy) then
-                        break
-                end
+	local accumulated = 0
+	for i = 2, #sourceTrail do
+		local prev = sourceTrail[i - 1]
+		local curr = sourceTrail[i]
+		local px, py = prev and prev.drawX, prev and prev.drawY
+		local cx, cy = curr and curr.drawX, curr and curr.drawY
+		if not (px and py and cx and cy) then
+			break
+		end
 
-                local dx = cx - px
-                local dy = cy - py
-                local segLen = math.sqrt(dx * dx + dy * dy)
+		local dx = cx - px
+		local dy = cy - py
+		local segLen = math.sqrt(dx * dx + dy * dy)
 
-                if segLen <= 1e-6 then
-                        result[#result + 1] = copySegmentData(curr)
-                else
-                        if accumulated + segLen >= maxLength then
-                                local remaining = maxLength - accumulated
-                                local t = remaining / segLen
-                                if t < 0 then t = 0 end
-                                if t > 1 then t = 1 end
-                                local x = px + dx * t
-                                local y = py + dy * t
-                                local segCopy = copySegmentData(curr) or {}
-                                segCopy.drawX = x
-                                segCopy.drawY = y
-                                result[#result + 1] = segCopy
-                                return result
-                        end
+		if segLen <= 1e-6 then
+			result[#result + 1] = copySegmentData(curr)
+		else
+			if accumulated + segLen >= maxLength then
+				local remaining = maxLength - accumulated
+				local t = remaining / segLen
+				if t < 0 then t = 0 end
+				if t > 1 then t = 1 end
+				local x = px + dx * t
+				local y = py + dy * t
+				local segCopy = copySegmentData(curr) or {}
+				segCopy.drawX = x
+				segCopy.drawY = y
+				result[#result + 1] = segCopy
+				return result
+			end
 
-                        accumulated = accumulated + segLen
-                        result[#result + 1] = copySegmentData(curr)
-                end
-        end
+			accumulated = accumulated + segLen
+			result[#result + 1] = copySegmentData(curr)
+		end
+	end
 
-        return result
+	return result
 end
 
 local function cloneTailFromIndex(startIndex, entryX, entryY)
-        if not trail or #trail == 0 then
-                return {}
-        end
+	if not trail or #trail == 0 then
+		return {}
+	end
 
-        local index = math.max(1, math.min(startIndex or 1, #trail))
-        local clone = {}
+	local index = math.max(1, math.min(startIndex or 1, #trail))
+	local clone = {}
 
-        for i = index, #trail do
-                local segCopy = copySegmentData(trail[i]) or {}
-                if i == index then
-                        segCopy.drawX = entryX or segCopy.drawX
-                        segCopy.drawY = entryY or segCopy.drawY
-                end
-                clone[#clone + 1] = segCopy
-        end
+	for i = index, #trail do
+		local segCopy = copySegmentData(trail[i]) or {}
+		if i == index then
+			segCopy.drawX = entryX or segCopy.drawX
+			segCopy.drawY = entryY or segCopy.drawY
+		end
+		clone[#clone + 1] = segCopy
+	end
 
-        return clone
+	return clone
 end
 
 local function findPortalEntryIndex(entryX, entryY)
-        if not trail or #trail == 0 then
-                return 1
-        end
+	if not trail or #trail == 0 then
+		return 1
+	end
 
-        local bestIndex = 1
-        local bestDist = math.huge
+	local bestIndex = 1
+	local bestDist = math.huge
 
-        for i = 1, #trail - 1 do
-                local segA = trail[i]
-                local segB = trail[i + 1]
-                local ax, ay = segA and segA.drawX, segA and segA.drawY
-                local bx, by = segB and segB.drawX, segB and segB.drawY
-                if ax and ay and bx and by then
-                        local _, _, distSq = closestPointOnSegment(entryX, entryY, ax, ay, bx, by)
-                        if distSq < bestDist then
-                                bestDist = distSq
-                                bestIndex = i + 1
-                        end
-                end
-        end
+	for i = 1, #trail - 1 do
+		local segA = trail[i]
+		local segB = trail[i + 1]
+		local ax, ay = segA and segA.drawX, segA and segA.drawY
+		local bx, by = segB and segB.drawX, segB and segB.drawY
+		if ax and ay and bx and by then
+			local _, _, distSq = closestPointOnSegment(entryX, entryY, ax, ay, bx, by)
+			if distSq < bestDist then
+				bestDist = distSq
+				bestIndex = i + 1
+			end
+		end
+	end
 
-        if bestIndex > #trail then
-                bestIndex = #trail
-        end
+	if bestIndex > #trail then
+		bestIndex = #trail
+	end
 
-        return bestIndex
+	return bestIndex
 end
 
 local function trimHoleSegments(hole)
@@ -1250,196 +1250,196 @@ local function collectUpgradeVisuals(self)
 		}
 	end
 
-        if self.adrenaline and self.adrenaline.active and not self.adrenaline.suppressVisuals then
-                visuals = visuals or {}
-                visuals.adrenaline = {
-                        active = true,
-                        timer = self.adrenaline.timer or 0,
-                        duration = self.adrenaline.duration or 0,
-                }
-        end
+	if self.adrenaline and self.adrenaline.active and not self.adrenaline.suppressVisuals then
+		visuals = visuals or {}
+		visuals.adrenaline = {
+			active = true,
+			timer = self.adrenaline.timer or 0,
+			duration = self.adrenaline.duration or 0,
+		}
+	end
 
-        local predatorsReflex = self.predatorsReflex
-        if predatorsReflex and predatorsReflex.enabled then
-                local intensity = predatorsReflex.intensity or 0
-                local target = predatorsReflex.target or 0
-                if intensity > 0.01 or target > 0.01 then
-                        visuals = visuals or {}
-                        visuals.predatorsReflex = {
-                                intensity = intensity,
-                                time = predatorsReflex.time or 0,
-                        }
-                end
-        end
+	local predatorsReflex = self.predatorsReflex
+	if predatorsReflex and predatorsReflex.enabled then
+		local intensity = predatorsReflex.intensity or 0
+		local target = predatorsReflex.target or 0
+		if intensity > 0.01 or target > 0.01 then
+			visuals = visuals or {}
+			visuals.predatorsReflex = {
+				intensity = intensity,
+				time = predatorsReflex.time or 0,
+			}
+		end
+	end
 
-        local speedVisual = self.speedVisual
-        if speedVisual and (((speedVisual.intensity or 0) > 0.01) or (speedVisual.target or 0) > 0) then
-                visuals = visuals or {}
-                visuals.speedArcs = {
-                        intensity = speedVisual.intensity or 0,
-                        ratio = speedVisual.ratio or 0,
-                        time = speedVisual.time or 0,
-                }
-        end
+	local speedVisual = self.speedVisual
+	if speedVisual and (((speedVisual.intensity or 0) > 0.01) or (speedVisual.target or 0) > 0) then
+		visuals = visuals or {}
+		visuals.speedArcs = {
+			intensity = speedVisual.intensity or 0,
+			ratio = speedVisual.ratio or 0,
+			time = speedVisual.time or 0,
+		}
+	end
 
-        local quickFangs = self.quickFangs
-        if quickFangs and (((quickFangs.intensity or 0) > 0.01) or (quickFangs.stacks or 0) > 0) then
-                visuals = visuals or {}
-                visuals.quickFangs = {
-                        stacks = quickFangs.stacks or 0,
-                        intensity = quickFangs.intensity or 0,
-                        target = quickFangs.target or 0,
-                        speedRatio = quickFangs.speedRatio or 1,
-                        active = quickFangs.active or false,
-                        time = quickFangs.time or 0,
-                        flash = quickFangs.flash or 0,
-                }
-        end
+	local quickFangs = self.quickFangs
+	if quickFangs and (((quickFangs.intensity or 0) > 0.01) or (quickFangs.stacks or 0) > 0) then
+		visuals = visuals or {}
+		visuals.quickFangs = {
+			stacks = quickFangs.stacks or 0,
+			intensity = quickFangs.intensity or 0,
+			target = quickFangs.target or 0,
+			speedRatio = quickFangs.speedRatio or 1,
+			active = quickFangs.active or false,
+			time = quickFangs.time or 0,
+			flash = quickFangs.flash or 0,
+		}
+	end
 
-        local zephyr = self.zephyrCoils
-        if zephyr and (((zephyr.intensity or 0) > 0.01) or (zephyr.stacks or 0) > 0 or (zephyr.target or 0) > 0) then
-                visuals = visuals or {}
-                visuals.zephyrCoils = {
-                        stacks = zephyr.stacks or 0,
-                        intensity = zephyr.intensity or 0,
-                        time = zephyr.time or 0,
-                        ratio = zephyr.speedRatio or (1 + 0.2 * math.min(1, math.max(0, zephyr.intensity or 0))),
-                        hasBody = (segmentCount or 0) > 1,
-                }
-        end
+	local zephyr = self.zephyrCoils
+	if zephyr and (((zephyr.intensity or 0) > 0.01) or (zephyr.stacks or 0) > 0 or (zephyr.target or 0) > 0) then
+		visuals = visuals or {}
+		visuals.zephyrCoils = {
+			stacks = zephyr.stacks or 0,
+			intensity = zephyr.intensity or 0,
+			time = zephyr.time or 0,
+			ratio = zephyr.speedRatio or (1 + 0.2 * math.min(1, math.max(0, zephyr.intensity or 0))),
+			hasBody = (segmentCount or 0) > 1,
+		}
+	end
 
-        if self.timeDilation then
-                visuals = visuals or {}
-                visuals.timeDilation = {
-                        active = self.timeDilation.active or false,
-                        timer = self.timeDilation.timer or 0,
-                        duration = self.timeDilation.duration or 0,
-                        cooldown = self.timeDilation.cooldown or 0,
-                        cooldownTimer = self.timeDilation.cooldownTimer or 0,
-                }
-        end
+	if self.timeDilation then
+		visuals = visuals or {}
+		visuals.timeDilation = {
+			active = self.timeDilation.active or false,
+			timer = self.timeDilation.timer or 0,
+			duration = self.timeDilation.duration or 0,
+			cooldown = self.timeDilation.cooldown or 0,
+			cooldownTimer = self.timeDilation.cooldownTimer or 0,
+		}
+	end
 
-        local chronoWard = self.chronoWard
-        if chronoWard and (((chronoWard.intensity or 0) > 1e-3) or chronoWard.active) then
-                visuals = visuals or {}
-                visuals.chronoWard = {
-                        active = chronoWard.active or false,
-                        intensity = chronoWard.intensity or 0,
-                        time = chronoWard.time or 0,
-                }
-        end
+	local chronoWard = self.chronoWard
+	if chronoWard and (((chronoWard.intensity or 0) > 1e-3) or chronoWard.active) then
+		visuals = visuals or {}
+		visuals.chronoWard = {
+			active = chronoWard.active or false,
+			intensity = chronoWard.intensity or 0,
+			time = chronoWard.time or 0,
+		}
+	end
 
-        local temporalAnchor = self.temporalAnchor
-        if temporalAnchor and (((temporalAnchor.intensity or 0) > 1e-3) or (temporalAnchor.target or 0) > 0) then
-                visuals = visuals or {}
-                visuals.temporalAnchor = {
-                        intensity = temporalAnchor.intensity or 0,
-                        ready = temporalAnchor.ready or 0,
-                        active = temporalAnchor.active or false,
-                        time = temporalAnchor.time or 0,
-                }
-        end
+	local temporalAnchor = self.temporalAnchor
+	if temporalAnchor and (((temporalAnchor.intensity or 0) > 1e-3) or (temporalAnchor.target or 0) > 0) then
+		visuals = visuals or {}
+		visuals.temporalAnchor = {
+			intensity = temporalAnchor.intensity or 0,
+			ready = temporalAnchor.ready or 0,
+			active = temporalAnchor.active or false,
+			time = temporalAnchor.time or 0,
+		}
+	end
 
-        if self.dash then
-                visuals = visuals or {}
-                visuals.dash = {
-                        active = self.dash.active or false,
-                        timer = self.dash.timer or 0,
+	if self.dash then
+		visuals = visuals or {}
+		visuals.dash = {
+			active = self.dash.active or false,
+			timer = self.dash.timer or 0,
 			duration = self.dash.duration or 0,
 			cooldown = self.dash.cooldown or 0,
 			cooldownTimer = self.dash.cooldownTimer or 0,
-                }
-        end
+		}
+	end
 
-        local chronospiral = self.chronospiral
-        if chronospiral and ((chronospiral.intensity or 0) > 1e-3 or (chronospiral.target or 0) > 0) then
-                visuals = visuals or {}
-                visuals.chronospiral = {
-                        intensity = chronospiral.intensity or 0,
-                        spin = chronospiral.spin or 0,
-                }
-        end
+	local chronospiral = self.chronospiral
+	if chronospiral and ((chronospiral.intensity or 0) > 1e-3 or (chronospiral.target or 0) > 0) then
+		visuals = visuals or {}
+		visuals.chronospiral = {
+			intensity = chronospiral.intensity or 0,
+			spin = chronospiral.spin or 0,
+		}
+	end
 
-        local abyssal = self.abyssalCatalyst
-        if abyssal and ((abyssal.intensity or 0) > 1e-3 or (abyssal.target or 0) > 0) then
-                visuals = visuals or {}
-                visuals.abyssalCatalyst = {
-                        intensity = abyssal.intensity or 0,
-                        stacks = abyssal.stacks or 0,
-                        pulse = abyssal.pulse or abyssal.time or 0,
-                }
-        end
+	local abyssal = self.abyssalCatalyst
+	if abyssal and ((abyssal.intensity or 0) > 1e-3 or (abyssal.target or 0) > 0) then
+		visuals = visuals or {}
+		visuals.abyssalCatalyst = {
+			intensity = abyssal.intensity or 0,
+			stacks = abyssal.stacks or 0,
+			pulse = abyssal.pulse or abyssal.time or 0,
+		}
+	end
 
-        local titanblood = self.titanblood
-        if titanblood and ((titanblood.intensity or 0) > 1e-3 or (titanblood.target or 0) > 0) then
-                visuals = visuals or {}
-                visuals.titanblood = {
-                        intensity = titanblood.intensity or 0,
-                        stacks = titanblood.stacks or 0,
-                        time = titanblood.time or 0,
-                }
-        end
+	local titanblood = self.titanblood
+	if titanblood and ((titanblood.intensity or 0) > 1e-3 or (titanblood.target or 0) > 0) then
+		visuals = visuals or {}
+		visuals.titanblood = {
+			intensity = titanblood.intensity or 0,
+			stacks = titanblood.stacks or 0,
+			time = titanblood.time or 0,
+		}
+	end
 
-        local stormchaser = self.stormchaser
-        if stormchaser and ((stormchaser.intensity or 0) > 1e-3 or (stormchaser.target or 0) > 0) then
-                visuals = visuals or {}
-                visuals.stormchaser = {
-                        intensity = stormchaser.intensity or 0,
-                        primed = stormchaser.primed or false,
-                        time = stormchaser.time or 0,
-                }
-        end
+	local stormchaser = self.stormchaser
+	if stormchaser and ((stormchaser.intensity or 0) > 1e-3 or (stormchaser.target or 0) > 0) then
+		visuals = visuals or {}
+		visuals.stormchaser = {
+			intensity = stormchaser.intensity or 0,
+			primed = stormchaser.primed or false,
+			time = stormchaser.time or 0,
+		}
+	end
 
-        local eventHorizon = self.eventHorizon
-        if eventHorizon and ((eventHorizon.intensity or 0) > 1e-3 or (eventHorizon.target or 0) > 0) then
-                visuals = visuals or {}
-                visuals.eventHorizon = {
-                        intensity = eventHorizon.intensity or 0,
-                        spin = eventHorizon.spin or 0,
-                        time = eventHorizon.time or 0,
-                }
-        end
+	local eventHorizon = self.eventHorizon
+	if eventHorizon and ((eventHorizon.intensity or 0) > 1e-3 or (eventHorizon.target or 0) > 0) then
+		visuals = visuals or {}
+		visuals.eventHorizon = {
+			intensity = eventHorizon.intensity or 0,
+			spin = eventHorizon.spin or 0,
+			time = eventHorizon.time or 0,
+		}
+	end
 
-        local phoenix = self.phoenixEcho
-        if phoenix and (((phoenix.intensity or 0) > 1e-3) or (phoenix.charges or 0) > 0 or (phoenix.flareTimer or 0) > 0) then
-                visuals = visuals or {}
-                local flare = 0
-                local flareDuration = phoenix.flareDuration or 1.2
-                if flareDuration > 0 and (phoenix.flareTimer or 0) > 0 then
-                        flare = math.min(1, phoenix.flareTimer / flareDuration)
-                end
-                visuals.phoenixEcho = {
-                        intensity = phoenix.intensity or 0,
-                        charges = phoenix.charges or 0,
-                        flare = flare,
-                        time = phoenix.time or 0,
-                }
-        end
+	local phoenix = self.phoenixEcho
+	if phoenix and (((phoenix.intensity or 0) > 1e-3) or (phoenix.charges or 0) > 0 or (phoenix.flareTimer or 0) > 0) then
+		visuals = visuals or {}
+		local flare = 0
+		local flareDuration = phoenix.flareDuration or 1.2
+		if flareDuration > 0 and (phoenix.flareTimer or 0) > 0 then
+			flare = math.min(1, phoenix.flareTimer / flareDuration)
+		end
+		visuals.phoenixEcho = {
+			intensity = phoenix.intensity or 0,
+			charges = phoenix.charges or 0,
+			flare = flare,
+			time = phoenix.time or 0,
+		}
+	end
 
-        local stoneSkin = self.stoneSkinVisual
-        if stoneSkin and (((stoneSkin.intensity or 0) > 0.01) or (stoneSkin.flash or 0) > 0 or (stoneSkin.charges or 0) > 0) then
-                visuals = visuals or {}
-                visuals.stoneSkin = {
-                        intensity = stoneSkin.intensity or 0,
-                        flash = stoneSkin.flash or 0,
-                        charges = stoneSkin.charges or 0,
-                        time = stoneSkin.time or 0,
-                }
-        end
+	local stoneSkin = self.stoneSkinVisual
+	if stoneSkin and (((stoneSkin.intensity or 0) > 0.01) or (stoneSkin.flash or 0) > 0 or (stoneSkin.charges or 0) > 0) then
+		visuals = visuals or {}
+		visuals.stoneSkin = {
+			intensity = stoneSkin.intensity or 0,
+			flash = stoneSkin.flash or 0,
+			charges = stoneSkin.charges or 0,
+			time = stoneSkin.time or 0,
+		}
+	end
 
-        local spectral = self.spectralHarvest
-        if spectral and (((spectral.intensity or 0) > 0.01) or (spectral.burst or 0) > 0 or (spectral.echo or 0) > 0 or spectral.ready) then
-                visuals = visuals or {}
-                visuals.spectralHarvest = {
-                        intensity = spectral.intensity or 0,
-                        burst = spectral.burst or 0,
-                        echo = spectral.echo or 0,
-                        ready = spectral.ready or false,
-                        time = spectral.time or 0,
-                }
-        end
+	local spectral = self.spectralHarvest
+	if spectral and (((spectral.intensity or 0) > 0.01) or (spectral.burst or 0) > 0 or (spectral.echo or 0) > 0 or spectral.ready) then
+		visuals = visuals or {}
+		visuals.spectralHarvest = {
+			intensity = spectral.intensity or 0,
+			burst = spectral.burst or 0,
+			echo = spectral.echo or 0,
+			ready = spectral.ready or false,
+			time = spectral.time or 0,
+		}
+	end
 
-        return visuals
+	return visuals
 end
 
 -- Build initial trail aligned to CELL CENTERS
@@ -1461,26 +1461,26 @@ local function buildInitialTrail()
 end
 
 function Snake:load(w, h)
-        screenW, screenH = w, h
-        assignDirection(direction, 1, 0)
-        assignDirection(pendingDir, 1, 0)
-        segmentCount = 1
-        popTimer = 0
-        moveProgress = 0
-        isDead = false
-        self.shieldFlashTimer = 0
-        self.hazardGraceTimer = 0
-        self.damageFlashTimer = 0
-        trail = buildInitialTrail()
-        descendingHole = nil
-        fruitsSinceLastTurn = 0
-        severedPieces = {}
-        portalAnimation = nil
-        local stride = (Arena and Arena.rows or 0) + 16
-        if stride <= 0 then
-                stride = 64
-        end
-        cellKeyStride = stride
+	screenW, screenH = w, h
+	assignDirection(direction, 1, 0)
+	assignDirection(pendingDir, 1, 0)
+	segmentCount = 1
+	popTimer = 0
+	moveProgress = 0
+	isDead = false
+	self.shieldFlashTimer = 0
+	self.hazardGraceTimer = 0
+	self.damageFlashTimer = 0
+	trail = buildInitialTrail()
+	descendingHole = nil
+	fruitsSinceLastTurn = 0
+	severedPieces = {}
+	portalAnimation = nil
+	local stride = (Arena and Arena.rows or 0) + 16
+	if stride <= 0 then
+		stride = 64
+	end
+	cellKeyStride = stride
 end
 
 local function getUpgradesModule()
@@ -1488,12 +1488,12 @@ local function getUpgradesModule()
 end
 
 function Snake:setDirection(name)
-        if not isDead then
-                local nd = SnakeUtils.calculateDirection(direction, name)
-                if nd then
-                        assignDirection(pendingDir, nd.x, nd.y)
-                end
-        end
+	if not isDead then
+		local nd = SnakeUtils.calculateDirection(direction, name)
+		if nd then
+			assignDirection(pendingDir, nd.x, nd.y)
+		end
+	end
 end
 
 function Snake:setDead(state)
@@ -1523,114 +1523,114 @@ function Snake:setHeadPosition(x, y)
 end
 
 function Snake:translate(dx, dy)
-        dx = dx or 0
-        dy = dy or 0
-        if dx == 0 and dy == 0 then
-                return
-        end
+	dx = dx or 0
+	dy = dy or 0
+	if dx == 0 and dy == 0 then
+		return
+	end
 
-        for i = 1, #trail do
-                local seg = trail[i]
-                if seg then
-                        seg.drawX = seg.drawX + dx
-                        seg.drawY = seg.drawY + dy
-                end
-        end
+	for i = 1, #trail do
+		local seg = trail[i]
+		if seg then
+			seg.drawX = seg.drawX + dx
+			seg.drawY = seg.drawY + dy
+		end
+	end
 
-        if descendingHole then
-                descendingHole.x = (descendingHole.x or 0) + dx
-                descendingHole.y = (descendingHole.y or 0) + dy
-                if descendingHole.entryPointX then
-                        descendingHole.entryPointX = descendingHole.entryPointX + dx
-                end
-                if descendingHole.entryPointY then
-                        descendingHole.entryPointY = descendingHole.entryPointY + dy
-                end
-        end
+	if descendingHole then
+		descendingHole.x = (descendingHole.x or 0) + dx
+		descendingHole.y = (descendingHole.y or 0) + dy
+		if descendingHole.entryPointX then
+			descendingHole.entryPointX = descendingHole.entryPointX + dx
+		end
+		if descendingHole.entryPointY then
+			descendingHole.entryPointY = descendingHole.entryPointY + dy
+		end
+	end
 end
 
 function Snake:beginPortalWarp(params)
-        if type(params) ~= "table" then
-                return false
-        end
+	if type(params) ~= "table" then
+		return false
+	end
 
-        local entryX = params.entryX
-        local entryY = params.entryY
-        local exitX = params.exitX
-        local exitY = params.exitY
-        local duration = params.duration
-        local dx = params.dx
-        local dy = params.dy
+	local entryX = params.entryX
+	local entryY = params.entryY
+	local exitX = params.exitX
+	local exitY = params.exitY
+	local duration = params.duration
+	local dx = params.dx
+	local dy = params.dy
 
-        if not (entryX and entryY and exitX and exitY) then
-                return false
-        end
+	if not (entryX and entryY and exitX and exitY) then
+		return false
+	end
 
-        local headSeg = trail and trail[1]
-        if headSeg then
-                local hx = headSeg.drawX or headSeg.x or 0
-                local hy = headSeg.drawY or headSeg.y or 0
-                if dx == nil then dx = (exitX or hx) - hx end
-                if dy == nil then dy = (exitY or hy) - hy end
-        else
-                dx = dx or 0
-                dy = dy or 0
-        end
+	local headSeg = trail and trail[1]
+	if headSeg then
+		local hx = headSeg.drawX or headSeg.x or 0
+		local hy = headSeg.drawY or headSeg.y or 0
+		if dx == nil then dx = (exitX or hx) - hx end
+		if dy == nil then dy = (exitY or hy) - hy end
+	else
+		dx = dx or 0
+		dy = dy or 0
+	end
 
-        local entryIndex = findPortalEntryIndex(entryX, entryY)
-        local entryClone = cloneTailFromIndex(entryIndex, entryX, entryY)
-        if not entryClone or #entryClone == 0 then
-                return false
-        end
+	local entryIndex = findPortalEntryIndex(entryX, entryY)
+	local entryClone = cloneTailFromIndex(entryIndex, entryX, entryY)
+	if not entryClone or #entryClone == 0 then
+		return false
+	end
 
-        local totalLength = computeTrailLength(entryClone)
-        if totalLength <= 0 then
-                totalLength = SEGMENT_SPACING
-        end
+	local totalLength = computeTrailLength(entryClone)
+	if totalLength <= 0 then
+		totalLength = SEGMENT_SPACING
+	end
 
-        local warpDuration = duration or 0.3
-        if warpDuration < 0.05 then
-                warpDuration = 0.05
-        end
+	local warpDuration = duration or 0.3
+	if warpDuration < 0.05 then
+		warpDuration = 0.05
+	end
 
-        if (math.abs(dx or 0) > 0) or (math.abs(dy or 0) > 0) then
-                self:translate(dx or 0, dy or 0)
-        end
+	if (math.abs(dx or 0) > 0) or (math.abs(dy or 0) > 0) then
+		self:translate(dx or 0, dy or 0)
+	end
 
-        local head = trail and trail[1]
-        if head then
-                head.drawX = exitX
-                head.drawY = exitY
-        end
+	local head = trail and trail[1]
+	if head then
+		head.drawX = exitX
+		head.drawY = exitY
+	end
 
-        local entrySource = {}
-        for i = 1, #entryClone do
-                entrySource[i] = copySegmentData(entryClone[i]) or {}
-        end
+	local entrySource = {}
+	for i = 1, #entryClone do
+		entrySource[i] = copySegmentData(entryClone[i]) or {}
+	end
 
-        portalAnimation = {
-                timer = 0,
-                duration = warpDuration,
-                entryIndex = entryIndex,
-                entryX = entryX,
-                entryY = entryY,
-                exitX = exitX,
-                exitY = exitY,
-                totalLength = totalLength,
-                entrySourceTrail = entrySource,
-                entryTrail = sliceTrailByLength(entrySource, totalLength),
-                exitTrail = {},
-                progress = 0,
-        }
+	portalAnimation = {
+		timer = 0,
+		duration = warpDuration,
+		entryIndex = entryIndex,
+		entryX = entryX,
+		entryY = entryY,
+		exitX = exitX,
+		exitY = exitY,
+		totalLength = totalLength,
+		entrySourceTrail = entrySource,
+		entryTrail = sliceTrailByLength(entrySource, totalLength),
+		exitTrail = {},
+		progress = 0,
+	}
 
-        return true
+	return true
 end
 
 function Snake:setDirectionVector(dx, dy)
-        if isDead then return end
+	if isDead then return end
 
-        dx = dx or 0
-        dy = dy or 0
+	dx = dx or 0
+	dy = dy or 0
 
 	local nx, ny = normalizeDirection(dx, dy)
 	if nx == 0 and ny == 0 then
@@ -1638,8 +1638,8 @@ function Snake:setDirectionVector(dx, dy)
 	end
 
 	local prevX, prevY = direction.x, direction.y
-        assignDirection(direction, nx, ny)
-        assignDirection(pendingDir, nx, ny)
+	assignDirection(direction, nx, ny)
+	assignDirection(pendingDir, nx, ny)
 
 	local head = trail and trail[1]
 	if head then
@@ -1661,20 +1661,20 @@ function Snake:getHeadCell()
 end
 
 local function addSafeCellUnique(cells, seen, col, row)
-        local stride = cellKeyStride
-        if stride <= 0 then
-                stride = (Arena and Arena.rows or 0) + 16
-                if stride <= 0 then
-                        stride = 64
-                end
-                cellKeyStride = stride
-        end
+	local stride = cellKeyStride
+	if stride <= 0 then
+		stride = (Arena and Arena.rows or 0) + 16
+		if stride <= 0 then
+			stride = 64
+		end
+		cellKeyStride = stride
+	end
 
-        local key = col * stride + row
-        if not seen[key] then
-                seen[key] = true
-                cells[#cells + 1] = {col, row}
-        end
+	local key = col * stride + row
+	if not seen[key] then
+		seen[key] = true
+		cells[#cells + 1] = {col, row}
+	end
 end
 
 function Snake:getSafeZone(lookahead)
@@ -1812,7 +1812,7 @@ function Snake:drawClipped(hx, hy, hr)
 				end
 			end
 			return headX, headY
-           end, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
+		end, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
 	end
 
 	if clipRadius > 0 and descendingHole and not hideDescendingBody and math.abs((descendingHole.x or 0) - hx) < 1e-3 and math.abs((descendingHole.y or 0) - hy) < 1e-3 then
@@ -1850,164 +1850,164 @@ function Snake:finishDescending()
 end
 
 function Snake:update(dt)
-        if isDead then return false, "dead", { fatal = true } end
+	if isDead then return false, "dead", { fatal = true } end
 
-        if self.chronospiral then
-                local state = self.chronospiral
-                state.spin = (state.spin or 0) + dt
-                local intensity = state.intensity or 0
-                local target = state.target or 0
-                local rate = (state.active and 4.0 or 2.4)
-                local blend = math.min(1, dt * rate)
-                intensity = intensity + (target - intensity) * blend
-                state.intensity = intensity
-                if intensity < 0.005 and target <= 0 then
-                        self.chronospiral = nil
-                end
-        end
+	if self.chronospiral then
+		local state = self.chronospiral
+		state.spin = (state.spin or 0) + dt
+		local intensity = state.intensity or 0
+		local target = state.target or 0
+		local rate = (state.active and 4.0 or 2.4)
+		local blend = math.min(1, dt * rate)
+		intensity = intensity + (target - intensity) * blend
+		state.intensity = intensity
+		if intensity < 0.005 and target <= 0 then
+			self.chronospiral = nil
+		end
+	end
 
-        if self.abyssalCatalyst then
-                local state = self.abyssalCatalyst
-                state.time = (state.time or 0) + dt
-                state.pulse = state.time
-                local intensity = state.intensity or 0
-                local target = state.target or 0
-                local blend = math.min(1, dt * 3.0)
-                intensity = intensity + (target - intensity) * blend
-                state.intensity = intensity
-                if (state.stacks or 0) <= 0 and intensity < 0.01 then
-                        self.abyssalCatalyst = nil
-                end
-        end
+	if self.abyssalCatalyst then
+		local state = self.abyssalCatalyst
+		state.time = (state.time or 0) + dt
+		state.pulse = state.time
+		local intensity = state.intensity or 0
+		local target = state.target or 0
+		local blend = math.min(1, dt * 3.0)
+		intensity = intensity + (target - intensity) * blend
+		state.intensity = intensity
+		if (state.stacks or 0) <= 0 and intensity < 0.01 then
+			self.abyssalCatalyst = nil
+		end
+	end
 
-        if self.phoenixEcho then
-                local state = self.phoenixEcho
-                state.time = (state.time or 0) + dt
-                state.flareDuration = state.flareDuration or 1.2
-                if state.flareTimer then
-                        state.flareTimer = math.max(0, state.flareTimer - dt)
-                end
-                local intensity = state.intensity or 0
-                local target = state.target or 0
-                local blend = math.min(1, dt * 4.2)
-                intensity = intensity + (target - intensity) * blend
-                state.intensity = intensity
-                if (state.charges or 0) <= 0 and target <= 0 and intensity < 0.01 and (state.flareTimer or 0) <= 0 then
-                        self.phoenixEcho = nil
-                end
-        end
+	if self.phoenixEcho then
+		local state = self.phoenixEcho
+		state.time = (state.time or 0) + dt
+		state.flareDuration = state.flareDuration or 1.2
+		if state.flareTimer then
+			state.flareTimer = math.max(0, state.flareTimer - dt)
+		end
+		local intensity = state.intensity or 0
+		local target = state.target or 0
+		local blend = math.min(1, dt * 4.2)
+		intensity = intensity + (target - intensity) * blend
+		state.intensity = intensity
+		if (state.charges or 0) <= 0 and target <= 0 and intensity < 0.01 and (state.flareTimer or 0) <= 0 then
+			self.phoenixEcho = nil
+		end
+	end
 
-        if self.eventHorizon then
-                local state = self.eventHorizon
-                state.time = (state.time or 0) + dt
-                state.spin = (state.spin or 0) + dt * (0.7 + 0.9 * (state.intensity or 0))
-                local intensity = state.intensity or 0
-                local target = state.target or 0
-                local blend = math.min(1, dt * (state.active and 3.2 or 2.0))
-                intensity = intensity + (target - intensity) * blend
-                state.intensity = intensity
-                if not state.active and target <= 0 and intensity < 0.01 then
-                        self.eventHorizon = nil
-                end
-        end
+	if self.eventHorizon then
+		local state = self.eventHorizon
+		state.time = (state.time or 0) + dt
+		state.spin = (state.spin or 0) + dt * (0.7 + 0.9 * (state.intensity or 0))
+		local intensity = state.intensity or 0
+		local target = state.target or 0
+		local blend = math.min(1, dt * (state.active and 3.2 or 2.0))
+		intensity = intensity + (target - intensity) * blend
+		state.intensity = intensity
+		if not state.active and target <= 0 and intensity < 0.01 then
+			self.eventHorizon = nil
+		end
+	end
 
-        if self.stormchaser then
-                local state = self.stormchaser
-                state.time = (state.time or 0) + dt
-                local intensity = state.intensity or 0
-                local target = state.target or 0
-                local blend = math.min(1, dt * (state.primed and 6.5 or 4.2))
-                intensity = intensity + (target - intensity) * blend
-                state.intensity = intensity
-                if not state.primed and target <= 0 and intensity < 0.02 then
-                        self.stormchaser = nil
-                end
-        end
+	if self.stormchaser then
+		local state = self.stormchaser
+		state.time = (state.time or 0) + dt
+		local intensity = state.intensity or 0
+		local target = state.target or 0
+		local blend = math.min(1, dt * (state.primed and 6.5 or 4.2))
+		intensity = intensity + (target - intensity) * blend
+		state.intensity = intensity
+		if not state.primed and target <= 0 and intensity < 0.02 then
+			self.stormchaser = nil
+		end
+	end
 
-        if self.titanblood then
-                local state = self.titanblood
-                state.time = (state.time or 0) + dt
-                local intensity = state.intensity or 0
-                local target = state.target or 0
-                local blend = math.min(1, dt * 3.4)
-                intensity = intensity + (target - intensity) * blend
-                state.intensity = intensity
-                if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.01 then
-                        self.titanblood = nil
-                end
-        end
+	if self.titanblood then
+		local state = self.titanblood
+		state.time = (state.time or 0) + dt
+		local intensity = state.intensity or 0
+		local target = state.target or 0
+		local blend = math.min(1, dt * 3.4)
+		intensity = intensity + (target - intensity) * blend
+		state.intensity = intensity
+		if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.01 then
+			self.titanblood = nil
+		end
+	end
 
-        local zephyr = self.zephyrCoils
-        if zephyr then
-                zephyr.time = (zephyr.time or 0) + dt
-                local stacks = zephyr.stacks or 0
-                local target = zephyr.target or (stacks > 0 and math.min(1, 0.45 + 0.2 * math.min(stacks, 3)) or 0)
-                zephyr.target = target
-                local blend = math.min(1, dt * 3.6)
-                local intensity = (zephyr.intensity or 0) + (target - (zephyr.intensity or 0)) * blend
-                zephyr.intensity = intensity
-                if stacks <= 0 and intensity <= 0.01 then
-                        self.zephyrCoils = nil
-                end
-        end
+	local zephyr = self.zephyrCoils
+	if zephyr then
+		zephyr.time = (zephyr.time or 0) + dt
+		local stacks = zephyr.stacks or 0
+		local target = zephyr.target or (stacks > 0 and math.min(1, 0.45 + 0.2 * math.min(stacks, 3)) or 0)
+		zephyr.target = target
+		local blend = math.min(1, dt * 3.6)
+		local intensity = (zephyr.intensity or 0) + (target - (zephyr.intensity or 0)) * blend
+		zephyr.intensity = intensity
+		if stacks <= 0 and intensity <= 0.01 then
+			self.zephyrCoils = nil
+		end
+	end
 
-        local stoneSkin = self.stoneSkinVisual
-        if stoneSkin then
-                stoneSkin.time = (stoneSkin.time or 0) + dt
-                local charges = self.stoneSkinSawGrace or 0
-                stoneSkin.charges = charges
-                local target = stoneSkin.target or (charges > 0 and math.min(1, 0.45 + 0.18 * math.min(charges, 4)) or 0)
-                stoneSkin.target = target
-                local blend = math.min(1, dt * 5.2)
-                local current = stoneSkin.intensity or 0
-                stoneSkin.intensity = current + (target - current) * blend
-                stoneSkin.flash = math.max(0, (stoneSkin.flash or 0) - dt * 2.6)
-                if charges <= 0 and stoneSkin.intensity <= 0.02 and stoneSkin.flash <= 0.02 then
-                        self.stoneSkinVisual = nil
-                end
-        end
+	local stoneSkin = self.stoneSkinVisual
+	if stoneSkin then
+		stoneSkin.time = (stoneSkin.time or 0) + dt
+		local charges = self.stoneSkinSawGrace or 0
+		stoneSkin.charges = charges
+		local target = stoneSkin.target or (charges > 0 and math.min(1, 0.45 + 0.18 * math.min(charges, 4)) or 0)
+		stoneSkin.target = target
+		local blend = math.min(1, dt * 5.2)
+		local current = stoneSkin.intensity or 0
+		stoneSkin.intensity = current + (target - current) * blend
+		stoneSkin.flash = math.max(0, (stoneSkin.flash or 0) - dt * 2.6)
+		if charges <= 0 and stoneSkin.intensity <= 0.02 and stoneSkin.flash <= 0.02 then
+			self.stoneSkinVisual = nil
+		end
+	end
 
-        local spectral = self.spectralHarvest
-        if spectral then
-                spectral.time = (spectral.time or 0) + dt
-                local target = spectral.target or ((spectral.ready and 1) or 0)
-                spectral.target = target
-                local blend = math.min(1, dt * 3.2)
-                local current = spectral.intensity or 0
-                spectral.intensity = current + (target - current) * blend
-                spectral.burst = math.max(0, (spectral.burst or 0) - dt * 1.8)
-                spectral.echo = math.max(0, (spectral.echo or 0) - dt * 0.9)
-                if not spectral.ready and spectral.target <= 0 and spectral.intensity <= 0.02 and spectral.burst <= 0.02 and spectral.echo <= 0.02 then
-                        self.spectralHarvest = nil
-                end
-        end
+	local spectral = self.spectralHarvest
+	if spectral then
+		spectral.time = (spectral.time or 0) + dt
+		local target = spectral.target or ((spectral.ready and 1) or 0)
+		spectral.target = target
+		local blend = math.min(1, dt * 3.2)
+		local current = spectral.intensity or 0
+		spectral.intensity = current + (target - current) * blend
+		spectral.burst = math.max(0, (spectral.burst or 0) - dt * 1.8)
+		spectral.echo = math.max(0, (spectral.echo or 0) - dt * 0.9)
+		if not spectral.ready and spectral.target <= 0 and spectral.intensity <= 0.02 and spectral.burst <= 0.02 and spectral.echo <= 0.02 then
+			self.spectralHarvest = nil
+		end
+	end
 
-        local predatorEyes = self.predatorsReflex
-        if predatorEyes and predatorEyes.enabled then
-                predatorEyes.time = (predatorEyes.time or 0) + dt
-                local target = 0
-                if self.adrenaline and self.adrenaline.active then
-                        local duration = self.adrenaline.duration or 0
-                        local timer = math.max(0, self.adrenaline.timer or 0)
-                        if duration > 1e-4 then
-                                local remaining = math.max(0, math.min(1, timer / duration))
-                                target = 0.5 + 0.5 * (1 - remaining)
-                        else
-                                target = 1
-                        end
-                        target = math.max(target, 0.45)
-                end
-                predatorEyes.target = target
-                local intensity = predatorEyes.intensity or 0
-                local blend = math.min(1, dt * 9.0)
-                intensity = intensity + (target - intensity) * blend
-                predatorEyes.intensity = intensity
-        end
+	local predatorEyes = self.predatorsReflex
+	if predatorEyes and predatorEyes.enabled then
+		predatorEyes.time = (predatorEyes.time or 0) + dt
+		local target = 0
+		if self.adrenaline and self.adrenaline.active then
+			local duration = self.adrenaline.duration or 0
+			local timer = math.max(0, self.adrenaline.timer or 0)
+			if duration > 1e-4 then
+				local remaining = math.max(0, math.min(1, timer / duration))
+				target = 0.5 + 0.5 * (1 - remaining)
+			else
+				target = 1
+			end
+			target = math.max(target, 0.45)
+		end
+		predatorEyes.target = target
+		local intensity = predatorEyes.intensity or 0
+		local blend = math.min(1, dt * 9.0)
+		intensity = intensity + (target - intensity) * blend
+		predatorEyes.intensity = intensity
+	end
 
-        -- base speed with upgrades/modifiers
-        local head = trail[1]
-        local speed = self:getSpeed()
-        local baselineSpeed = speed
+	-- base speed with upgrades/modifiers
+	local head = trail[1]
+	local speed = self:getSpeed()
+	local baselineSpeed = speed
 
 	local hole = descendingHole
 	if hole then
@@ -2048,87 +2048,87 @@ function Snake:update(dt)
 		end
 	end
 
-        if self.timeDilation then
-                if self.timeDilation.cooldownTimer and self.timeDilation.cooldownTimer > 0 then
-                        self.timeDilation.cooldownTimer = math.max(0, (self.timeDilation.cooldownTimer or 0) - dt)
-                end
+	if self.timeDilation then
+		if self.timeDilation.cooldownTimer and self.timeDilation.cooldownTimer > 0 then
+			self.timeDilation.cooldownTimer = math.max(0, (self.timeDilation.cooldownTimer or 0) - dt)
+		end
 
-                if self.timeDilation.active then
-                        self.timeDilation.timer = (self.timeDilation.timer or 0) - dt
-                        if self.timeDilation.timer <= 0 then
-                                self.timeDilation.active = false
-                                self.timeDilation.timer = 0
-                        end
-                end
-        end
+		if self.timeDilation.active then
+			self.timeDilation.timer = (self.timeDilation.timer or 0) - dt
+			if self.timeDilation.timer <= 0 then
+				self.timeDilation.active = false
+				self.timeDilation.timer = 0
+			end
+		end
+	end
 
-        if self.chronoWard then
-                local ward = self.chronoWard
-                ward.time = (ward.time or 0) + dt
+	if self.chronoWard then
+		local ward = self.chronoWard
+		ward.time = (ward.time or 0) + dt
 
-                if ward.active then
-                        ward.timer = (ward.timer or 0) - dt
-                        if ward.timer <= 0 then
-                                ward.active = false
-                                ward.timer = 0
-                        end
-                end
+		if ward.active then
+			ward.timer = (ward.timer or 0) - dt
+			if ward.timer <= 0 then
+				ward.active = false
+				ward.timer = 0
+			end
+		end
 
-                local target = ward.active and 1 or 0
-                ward.target = target
-                local blend = math.min(1, dt * 6.0)
-                local currentIntensity = ward.intensity or 0
-                ward.intensity = currentIntensity + (target - currentIntensity) * blend
+		local target = ward.active and 1 or 0
+		ward.target = target
+		local blend = math.min(1, dt * 6.0)
+		local currentIntensity = ward.intensity or 0
+		ward.intensity = currentIntensity + (target - currentIntensity) * blend
 
-                if not ward.active and (ward.intensity or 0) <= 0.01 then
-                        self.chronoWard = nil
-                end
-        end
+		if not ward.active and (ward.intensity or 0) <= 0.01 then
+			self.chronoWard = nil
+		end
+	end
 
-        local dilation = self.timeDilation
-        if dilation and dilation.source == "temporal_anchor" then
-                local state = self.temporalAnchor
-                if not state then
-                        state = { intensity = 0, target = 0, ready = 0, time = 0 }
-                        self.temporalAnchor = state
-                end
-                state.time = (state.time or 0) + dt
-                state.active = dilation.active or false
-                local cooldown = dilation.cooldown or 0
-                local cooldownTimer = dilation.cooldownTimer or 0
-                local readiness
-                if dilation.active then
-                        readiness = 1
-                elseif cooldown and cooldown > 0 then
-                        readiness = 1 - math.min(1, cooldownTimer / cooldown)
-                else
-                        readiness = (cooldownTimer <= 0) and 1 or 0
-                end
-                state.ready = math.max(0, math.min(1, readiness))
-                if dilation.active then
-                        state.target = 1
-                else
-                        state.target = math.max(0.2, 0.3 + state.ready * 0.5)
-                end
-        elseif self.temporalAnchor then
-                local state = self.temporalAnchor
-                state.time = (state.time or 0) + dt
-                state.active = false
-                state.ready = 0
-                state.target = 0
-        end
+	local dilation = self.timeDilation
+	if dilation and dilation.source == "temporal_anchor" then
+		local state = self.temporalAnchor
+		if not state then
+			state = { intensity = 0, target = 0, ready = 0, time = 0 }
+			self.temporalAnchor = state
+		end
+		state.time = (state.time or 0) + dt
+		state.active = dilation.active or false
+		local cooldown = dilation.cooldown or 0
+		local cooldownTimer = dilation.cooldownTimer or 0
+		local readiness
+		if dilation.active then
+			readiness = 1
+		elseif cooldown and cooldown > 0 then
+			readiness = 1 - math.min(1, cooldownTimer / cooldown)
+		else
+			readiness = (cooldownTimer <= 0) and 1 or 0
+		end
+		state.ready = math.max(0, math.min(1, readiness))
+		if dilation.active then
+			state.target = 1
+		else
+			state.target = math.max(0.2, 0.3 + state.ready * 0.5)
+		end
+	elseif self.temporalAnchor then
+		local state = self.temporalAnchor
+		state.time = (state.time or 0) + dt
+		state.active = false
+		state.ready = 0
+		state.target = 0
+	end
 
-        if self.temporalAnchor then
-                local state = self.temporalAnchor
-                local intensity = state.intensity or 0
-                local target = state.target or 0
-                local blend = math.min(1, dt * 5.0)
-                intensity = intensity + (target - intensity) * blend
-                state.intensity = intensity
-                if intensity < 0.01 and target <= 0 then
-                        self.temporalAnchor = nil
-                end
-        end
+	if self.temporalAnchor then
+		local state = self.temporalAnchor
+		local intensity = state.intensity or 0
+		local target = state.target or 0
+		local blend = math.min(1, dt * 5.0)
+		intensity = intensity + (target - intensity) * blend
+		state.intensity = intensity
+		if intensity < 0.01 and target <= 0 then
+			self.temporalAnchor = nil
+		end
+	end
 
 	hole = descendingHole
 	if hole and head then
@@ -2138,8 +2138,8 @@ function Snake:update(dt)
 		if dist > 1e-4 then
 			local nx, ny = dx / dist, dy / dist
 			local prevX, prevY = direction.x, direction.y
-                        assignDirection(direction, nx, ny)
-                        assignDirection(pendingDir, nx, ny)
+			assignDirection(direction, nx, ny)
+			assignDirection(pendingDir, nx, ny)
 			if prevX ~= direction.x or prevY ~= direction.y then
 				fruitsSinceLastTurn = 0
 			end
@@ -2147,95 +2147,95 @@ function Snake:update(dt)
 	end
 
 	-- adrenaline boost check
-        if self.adrenaline and self.adrenaline.active then
-                speed = speed * self.adrenaline.boost
-                self.adrenaline.timer = self.adrenaline.timer - dt
-                if self.adrenaline.timer <= 0 then
-                        self.adrenaline.active = false
-                        self.adrenaline.suppressVisuals = nil
-                end
-        end
+	if self.adrenaline and self.adrenaline.active then
+		speed = speed * self.adrenaline.boost
+		self.adrenaline.timer = self.adrenaline.timer - dt
+		if self.adrenaline.timer <= 0 then
+			self.adrenaline.active = false
+			self.adrenaline.suppressVisuals = nil
+		end
+	end
 
-        do
-                local reference = self.baseSpeed or baselineSpeed
-                if not (reference and reference > 1e-3) then
-                        reference = baselineSpeed
-                end
+	do
+		local reference = self.baseSpeed or baselineSpeed
+		if not (reference and reference > 1e-3) then
+			reference = baselineSpeed
+		end
 
-                local ratio
-                if reference and reference > 1e-3 then
-                        ratio = speed / reference
-                else
-                        ratio = 1
-                end
-                if ratio < 0 then
-                        ratio = 0
-                end
+		local ratio
+		if reference and reference > 1e-3 then
+			ratio = speed / reference
+		else
+			ratio = 1
+		end
+		if ratio < 0 then
+			ratio = 0
+		end
 
-                local state = self.speedVisual or { intensity = 0, time = 0, ratio = 1 }
-                local target = math.max(0, math.min(1, (ratio - 1) / 0.8))
-                local blend = math.min(1, dt * 5.5)
-                local current = state.intensity or 0
-                current = current + (target - current) * blend
-                state.intensity = current
-                state.target = target
+		local state = self.speedVisual or { intensity = 0, time = 0, ratio = 1 }
+		local target = math.max(0, math.min(1, (ratio - 1) / 0.8))
+		local blend = math.min(1, dt * 5.5)
+		local current = state.intensity or 0
+		current = current + (target - current) * blend
+		state.intensity = current
+		state.target = target
 
-                local ratioBlend = math.min(1, dt * 6.0)
-                local prevRatio = state.ratio or ratio
-                prevRatio = prevRatio + (ratio - prevRatio) * ratioBlend
-                if prevRatio < 0 then prevRatio = 0 end
-                state.ratio = prevRatio
+		local ratioBlend = math.min(1, dt * 6.0)
+		local prevRatio = state.ratio or ratio
+		prevRatio = prevRatio + (ratio - prevRatio) * ratioBlend
+		if prevRatio < 0 then prevRatio = 0 end
+		state.ratio = prevRatio
 
-                if self.zephyrCoils then
-                        self.zephyrCoils.speedRatio = prevRatio
-                end
+		if self.zephyrCoils then
+			self.zephyrCoils.speedRatio = prevRatio
+		end
 
-                local timeAdvance = 2.4 + prevRatio * 1.3 + target * 0.8
-                state.time = (state.time or 0) + dt * timeAdvance
+		local timeAdvance = 2.4 + prevRatio * 1.3 + target * 0.8
+		state.time = (state.time or 0) + dt * timeAdvance
 
-                if current > 0.01 or target > 0 then
-                        self.speedVisual = state
-                else
-                        self.speedVisual = nil
-                end
-        end
+		if current > 0.01 or target > 0 then
+			self.speedVisual = state
+		else
+			self.speedVisual = nil
+		end
+	end
 
-        if self.quickFangs then
-                local state = self.quickFangs
-                state.time = (state.time or 0) + dt * (1.4 + math.min(1.8, (speed / math.max(1, self.baseSpeed or 1))))
-                state.flash = math.max(0, (state.flash or 0) - dt * 1.8)
+	if self.quickFangs then
+		local state = self.quickFangs
+		state.time = (state.time or 0) + dt * (1.4 + math.min(1.8, (speed / math.max(1, self.baseSpeed or 1))))
+		state.flash = math.max(0, (state.flash or 0) - dt * 1.8)
 
-                local baseTarget = state.baseTarget or 0
-                local baseSpeed = self.baseSpeed or 1
-                if not baseSpeed or baseSpeed <= 0 then
-                        baseSpeed = 1
-                end
+		local baseTarget = state.baseTarget or 0
+		local baseSpeed = self.baseSpeed or 1
+		if not baseSpeed or baseSpeed <= 0 then
+			baseSpeed = 1
+		end
 
-                local ratio = speed / baseSpeed
-                if ratio < 0 then ratio = 0 end
-                state.speedRatio = ratio
+		local ratio = speed / baseSpeed
+		if ratio < 0 then ratio = 0 end
+		state.speedRatio = ratio
 
-                local bonus = math.max(0, ratio - 1)
-                local dynamic = math.min(0.35, bonus * 0.4)
-                local flashBonus = (state.flash or 0) * 0.35
-                local target = math.min(1, math.max(0, baseTarget + dynamic + flashBonus))
-                state.target = target
+		local bonus = math.max(0, ratio - 1)
+		local dynamic = math.min(0.35, bonus * 0.4)
+		local flashBonus = (state.flash or 0) * 0.35
+		local target = math.min(1, math.max(0, baseTarget + dynamic + flashBonus))
+		state.target = target
 
-                local intensity = state.intensity or 0
-                local blend = math.min(1, dt * 6.0)
-                intensity = intensity + (target - intensity) * blend
-                state.intensity = intensity
-                state.active = (target > baseTarget + 0.02) or (ratio > 1.05) or ((state.flash or 0) > 0.05)
+		local intensity = state.intensity or 0
+		local blend = math.min(1, dt * 6.0)
+		intensity = intensity + (target - intensity) * blend
+		state.intensity = intensity
+		state.active = (target > baseTarget + 0.02) or (ratio > 1.05) or ((state.flash or 0) > 0.05)
 
-                if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.02 then
-                        self.quickFangs = nil
-                end
-        end
+		if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.02 then
+			self.quickFangs = nil
+		end
+	end
 
-        local stepX = direction.x * speed * dt
-        local stepY = direction.y * speed * dt
-        local newX = head.drawX + stepX
-        local newY = head.drawY + stepY
+	local stepX = direction.x * speed * dt
+	local stepY = direction.y * speed * dt
+	local newX = head.drawX + stepX
+	local newY = head.drawY + stepY
 
 	-- advance cell clock, maybe snap & commit queued direction
 	local snappedThisTick = false
@@ -2258,8 +2258,8 @@ function Snake:update(dt)
 			newX = snapToCenter(newX)
 			newY = snapToCenter(newY)
 			-- commit queued direction
-                        local prevX, prevY = direction.x, direction.y
-                        assignDirection(direction, pendingDir.x, pendingDir.y)
+			local prevX, prevY = direction.x, direction.y
+			assignDirection(direction, pendingDir.x, pendingDir.y)
 			if prevX ~= direction.x or prevY ~= direction.y then
 				fruitsSinceLastTurn = 0
 			end
@@ -2312,12 +2312,12 @@ function Snake:update(dt)
 	if len > 0 then
 		tailBeforeX, tailBeforeY = trail[len].drawX, trail[len].drawY
 	end
-        local tailBeforeCol, tailBeforeRow
-        if tailBeforeX and tailBeforeY then
-                tailBeforeCol, tailBeforeRow = toCell(tailBeforeX, tailBeforeY)
-        end
+	local tailBeforeCol, tailBeforeRow
+	if tailBeforeX and tailBeforeY then
+		tailBeforeCol, tailBeforeRow = toCell(tailBeforeX, tailBeforeY)
+	end
 
-        local tailAfterCol, tailAfterRow
+	local tailAfterCol, tailAfterRow
 
 	local consumedLength = (hole and hole.consumedLength) or 0
 	local maxLen = math.max(0, segmentCount * SEGMENT_SPACING - consumedLength)
@@ -2328,12 +2328,12 @@ function Snake:update(dt)
 	end
 
 	local traveled = 0
-        for i = 2, #trail do
-                local dx = trail[i-1].drawX - trail[i].drawX
-                local dy = trail[i-1].drawY - trail[i].drawY
-                local segLen = math.sqrt(dx*dx + dy*dy)
+	for i = 2, #trail do
+		local dx = trail[i-1].drawX - trail[i].drawX
+		local dy = trail[i-1].drawY - trail[i].drawY
+		local segLen = math.sqrt(dx*dx + dy*dy)
 
-                if traveled + segLen > maxLen then
+		if traveled + segLen > maxLen then
 			local excess = traveled + segLen - maxLen
 			local t = 1 - (excess / segLen)
 			local tailX = trail[i-1].drawX - dx * t
@@ -2345,78 +2345,78 @@ function Snake:update(dt)
 
 			trail[i].drawX, trail[i].drawY = tailX, tailY
 			break
-                else
-                        traveled = traveled + segLen
-                end
-        end
+		else
+			traveled = traveled + segLen
+		end
+	end
 
-        do
-                local lenAfterTrim = #trail
-                if lenAfterTrim >= 1 then
-                        local tailX, tailY = trail[lenAfterTrim].drawX, trail[lenAfterTrim].drawY
-                        if tailX and tailY then
-                                tailAfterCol, tailAfterRow = toCell(tailX, tailY)
-                        end
-                end
-        end
+	do
+		local lenAfterTrim = #trail
+		if lenAfterTrim >= 1 then
+			local tailX, tailY = trail[lenAfterTrim].drawX, trail[lenAfterTrim].drawY
+			if tailX and tailY then
+				tailAfterCol, tailAfterRow = toCell(tailX, tailY)
+			end
+		end
+	end
 
-        -- collision with self (grid-cell based, only at snap ticks)
-                if snappedThisTick and not self:isHazardGraceActive() then
-                                local hx, hy = trail[1].drawX, trail[1].drawY
-                                local headCol, headRow = toCell(hx, hy)
+	-- collision with self (grid-cell based, only at snap ticks)
+		if snappedThisTick and not self:isHazardGraceActive() then
+				local hx, hy = trail[1].drawX, trail[1].drawY
+				local headCol, headRow = toCell(hx, hy)
 
-                -- Don’t check the first ~1 segment of body behind the head (neck).
-                -- Compute by *distance*, not “skip N nodes”.
-                local guardDist = SEGMENT_SPACING * 1.25  -- give the neck extra space while it exits the new tile
-                local walked = 0
+		-- Don’t check the first ~1 segment of body behind the head (neck).
+		-- Compute by *distance*, not “skip N nodes”.
+		local guardDist = SEGMENT_SPACING * 1.25  -- give the neck extra space while it exits the new tile
+		local walked = 0
 
-                -- advance 'walked' until we’re past the neck
-                local startIndex = 2
-                local trailCount = #trail
-                while startIndex < trailCount and walked < guardDist do
-                        local prevSegment = trail[startIndex - 1]
-                        local currSegment = trail[startIndex]
-                        local prevX, prevY = prevSegment and prevSegment.drawX, prevSegment and prevSegment.drawY
-                        local currX, currY = currSegment and currSegment.drawX, currSegment and currSegment.drawY
-                        if not (prevX and prevY and currX and currY) then
-                                break
-                        end
+		-- advance 'walked' until we’re past the neck
+		local startIndex = 2
+		local trailCount = #trail
+		while startIndex < trailCount and walked < guardDist do
+			local prevSegment = trail[startIndex - 1]
+			local currSegment = trail[startIndex]
+			local prevX, prevY = prevSegment and prevSegment.drawX, prevSegment and prevSegment.drawY
+			local currX, currY = currSegment and currSegment.drawX, currSegment and currSegment.drawY
+			if not (prevX and prevY and currX and currY) then
+				break
+			end
 
-                        local dx = prevX - currX
-                        local dy = prevY - currY
-                        walked = walked + sqrt(dx * dx + dy * dy)
-                        startIndex = startIndex + 1
-                end
+			local dx = prevX - currX
+			local dy = prevY - currY
+			walked = walked + sqrt(dx * dx + dy * dy)
+			startIndex = startIndex + 1
+		end
 
-                -- If tail vacated the head cell this tick, don’t count that as a hit
-                local collisionThreshold = max(0, SEGMENT_SPACING - SELF_COLLISION_BUFFER)
-                local collisionThresholdSq = collisionThreshold * collisionThreshold
+		-- If tail vacated the head cell this tick, don’t count that as a hit
+		local collisionThreshold = max(0, SEGMENT_SPACING - SELF_COLLISION_BUFFER)
+		local collisionThresholdSq = collisionThreshold * collisionThreshold
 
-                for i = startIndex, trailCount do
-                        local segment = trail[i]
-                        local cx, cy = toCell(segment.drawX, segment.drawY)
+		for i = startIndex, trailCount do
+			local segment = trail[i]
+			local cx, cy = toCell(segment.drawX, segment.drawY)
 
 			-- allow stepping into the tail cell if the tail moved off this tick
-                        local tailVacated = false
-                        if i == #trail and tailBeforeCol and tailBeforeRow then
-                                if tailBeforeCol == headCol and tailBeforeRow == headRow then
-                                        if not (tailAfterCol == headCol and tailAfterRow == headRow) then
-                                                tailVacated = true
-                                        end
-                                end
-                        end
+			local tailVacated = false
+			if i == #trail and tailBeforeCol and tailBeforeRow then
+				if tailBeforeCol == headCol and tailBeforeRow == headRow then
+					if not (tailAfterCol == headCol and tailAfterRow == headRow) then
+						tailVacated = true
+					end
+				end
+			end
 
-                        if not tailVacated and cx == headCol and cy == headRow then
-                                local dx = hx - segment.drawX
-                                local dy = hy - segment.drawY
-                                local distSq = dx*dx + dy*dy
+			if not tailVacated and cx == headCol and cy == headRow then
+				local dx = hx - segment.drawX
+				local dy = hy - segment.drawY
+				local distSq = dx*dx + dy*dy
 
-                                if distSq <= collisionThresholdSq then
-                                        if self:consumeShield() then
-                                                        -- survived; optional FX here
-                                                        self:onShieldConsumed(hx, hy, "self")
-                                                        self:beginHazardGrace()
-                                        else
+				if distSq <= collisionThresholdSq then
+					if self:consumeShield() then
+							-- survived; optional FX here
+							self:onShieldConsumed(hx, hy, "self")
+							self:beginHazardGrace()
+					else
 										local pushX = -(direction.x or 0) * SEGMENT_SPACING
 										local pushY = -(direction.y or 0) * SEGMENT_SPACING
 										local context = {
@@ -2427,54 +2427,54 @@ function Snake:update(dt)
 											grace = HAZARD_GRACE_DURATION * 2,
 											shake = 0.28,
 										}
-                                                        return false, "self", context
-                                        end
-                                end
-                        end
+							return false, "self", context
+					end
+				end
+			end
 				end
 		end
 
-        if portalAnimation then
-                local state = portalAnimation
-                local duration = state.duration or 0.3
-                if not duration or duration <= 1e-4 then
-                        duration = 1e-4
-                end
+	if portalAnimation then
+		local state = portalAnimation
+		local duration = state.duration or 0.3
+		if not duration or duration <= 1e-4 then
+			duration = 1e-4
+		end
 
-                state.timer = (state.timer or 0) + dt
-                local progress = state.timer / duration
-                if progress < 0 then progress = 0 end
-                if progress > 1 then progress = 1 end
-                state.progress = progress
+		state.timer = (state.timer or 0) + dt
+		local progress = state.timer / duration
+		if progress < 0 then progress = 0 end
+		if progress > 1 then progress = 1 end
+		state.progress = progress
 
-                local totalLength = state.totalLength
-                if not totalLength or totalLength <= 0 then
-                        totalLength = computeTrailLength(state.entrySourceTrail)
-                        if totalLength <= 0 then
-                                totalLength = SEGMENT_SPACING
-                        end
-                        state.totalLength = totalLength
-                end
+		local totalLength = state.totalLength
+		if not totalLength or totalLength <= 0 then
+			totalLength = computeTrailLength(state.entrySourceTrail)
+			if totalLength <= 0 then
+				totalLength = SEGMENT_SPACING
+			end
+			state.totalLength = totalLength
+		end
 
-                local entryLength = totalLength * (1 - progress)
-                local exitLength = totalLength * progress
+		local entryLength = totalLength * (1 - progress)
+		local exitLength = totalLength * progress
 
-                state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength)
-                state.exitTrail = sliceTrailByLength(trail, exitLength)
+		state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength)
+		state.exitTrail = sliceTrailByLength(trail, exitLength)
 
-                if (not state.exitTrail or #state.exitTrail == 0) and trail and trail[1] then
-                        state.exitTrail = { copySegmentData(trail[1]) }
-                end
+		if (not state.exitTrail or #state.exitTrail == 0) and trail and trail[1] then
+			state.exitTrail = { copySegmentData(trail[1]) }
+		end
 
-                if progress >= 1 then
-                        portalAnimation = nil
-                end
-        end
+		if progress >= 1 then
+			portalAnimation = nil
+		end
+	end
 
-        -- update timers
-        if popTimer > 0 then
-                popTimer = math.max(0, popTimer - dt)
-        end
+	-- update timers
+	if popTimer > 0 then
+		popTimer = math.max(0, popTimer - dt)
+	end
 
 	if self.shieldFlashTimer and self.shieldFlashTimer > 0 then
 		self.shieldFlashTimer = math.max(0, self.shieldFlashTimer - dt)
@@ -2565,10 +2565,10 @@ function Snake:onDashBreakRock(x, y)
 end
 
 function Snake:activateTimeDilation()
-        local ability = self.timeDilation
-        if not ability or ability.active then
-                return false
-        end
+	local ability = self.timeDilation
+	if not ability or ability.active then
+		return false
+	end
 
 	if (ability.cooldownTimer or 0) > 0 then
 		return false
@@ -2604,48 +2604,48 @@ function Snake:activateTimeDilation()
 		})
 	end
 
-        return ability.active
+	return ability.active
 end
 
 function Snake:triggerChronoWard(duration, scale)
-        duration = duration or 0
-        if duration <= 0 then
-                return false
-        end
+	duration = duration or 0
+	if duration <= 0 then
+		return false
+	end
 
-        scale = scale or 0.45
-        if not (scale and scale > 0) then
-                scale = 0.05
-        else
-                scale = math.max(0.05, math.min(1, scale))
-        end
+	scale = scale or 0.45
+	if not (scale and scale > 0) then
+		scale = 0.05
+	else
+		scale = math.max(0.05, math.min(1, scale))
+	end
 
-        local effect = self.chronoWard
-        if not effect then
-                effect = {}
-                self.chronoWard = effect
-        end
+	local effect = self.chronoWard
+	if not effect then
+		effect = {}
+		self.chronoWard = effect
+	end
 
-        effect.duration = duration
-        effect.timeScale = math.min(effect.timeScale or 1, scale)
-        if not (effect.timeScale and effect.timeScale > 0) then
-                effect.timeScale = scale
-        end
+	effect.duration = duration
+	effect.timeScale = math.min(effect.timeScale or 1, scale)
+	if not (effect.timeScale and effect.timeScale > 0) then
+		effect.timeScale = scale
+	end
 
-        effect.timer = math.max(effect.timer or 0, duration)
-        effect.active = true
-        effect.target = 1
-        effect.time = effect.time or 0
-        effect.intensity = effect.intensity or 0
+	effect.timer = math.max(effect.timer or 0, duration)
+	effect.active = true
+	effect.target = 1
+	effect.time = effect.time or 0
+	effect.intensity = effect.intensity or 0
 
-        return true
+	return true
 end
 
 function Snake:getTimeDilationState()
-        local ability = self.timeDilation
-        if not ability then
-                return nil
-        end
+	local ability = self.timeDilation
+	if not ability then
+		return nil
+	end
 
 	return {
 		active = ability.active or false,
@@ -2660,7 +2660,7 @@ function Snake:getTimeDilationState()
 end
 
 function Snake:getTimeScale()
-        return resolveTimeDilationScale(self.timeDilation, self.chronoWard)
+	return resolveTimeDilationScale(self.timeDilation, self.chronoWard)
 end
 
 function Snake:grow()
@@ -2831,52 +2831,52 @@ local function isSawCutPointExposed(saw, sx, sy, px, py)
 end
 
 local function clamp01(value)
-        return math.max(0, math.min(1, value or 0))
+	return math.max(0, math.min(1, value or 0))
 end
 
 local function scaleColorAlpha(color, scale)
-        local r = 1
-        local g = 1
-        local b = 1
-        local a = 1
+	local r = 1
+	local g = 1
+	local b = 1
+	local a = 1
 
-        if type(color) == "table" then
-                r = color[1] or r
-                g = color[2] or g
-                b = color[3] or b
-                a = color[4] or a
-        end
+	if type(color) == "table" then
+		r = color[1] or r
+		g = color[2] or g
+		b = color[3] or b
+		a = color[4] or a
+	end
 
-        return { r, g, b, clamp01(a * scale) }
+	return { r, g, b, clamp01(a * scale) }
 end
 
 local function buildSeveredPalette(fade)
-        local palette = SnakeCosmetics and SnakeCosmetics:getPaletteForSkin() or nil
-        local bodyColor = palette and palette.body or (SnakeCosmetics and SnakeCosmetics.getBodyColor and SnakeCosmetics:getBodyColor())
-        local outlineColor = palette and palette.outline or (SnakeCosmetics and SnakeCosmetics.getOutlineColor and SnakeCosmetics:getOutlineColor())
+	local palette = SnakeCosmetics and SnakeCosmetics:getPaletteForSkin() or nil
+	local bodyColor = palette and palette.body or (SnakeCosmetics and SnakeCosmetics.getBodyColor and SnakeCosmetics:getBodyColor())
+	local outlineColor = palette and palette.outline or (SnakeCosmetics and SnakeCosmetics.getOutlineColor and SnakeCosmetics:getOutlineColor())
 
-        local alpha = clamp01(fade or 1)
+	local alpha = clamp01(fade or 1)
 
-        return {
-                body = scaleColorAlpha(bodyColor, alpha),
-                outline = scaleColorAlpha(outlineColor, alpha),
-        }
+	return {
+		body = scaleColorAlpha(bodyColor, alpha),
+		outline = scaleColorAlpha(outlineColor, alpha),
+	}
 end
 
 local function addSeveredTrail(pieceTrail, segmentEstimate)
-        if not pieceTrail or #pieceTrail <= 1 then
-                return
-        end
+	if not pieceTrail or #pieceTrail <= 1 then
+		return
+	end
 
-        severedPieces = severedPieces or {}
-        local fadeDuration = math.min(SEVERED_TAIL_LIFE, SEVERED_TAIL_FADE_DURATION)
-        table.insert(severedPieces, {
-                trail = pieceTrail,
-                timer = SEVERED_TAIL_LIFE,
-                life = SEVERED_TAIL_LIFE,
-                fadeDuration = fadeDuration,
-                segmentCount = math.max(1, segmentEstimate or #pieceTrail),
-        })
+	severedPieces = severedPieces or {}
+	local fadeDuration = math.min(SEVERED_TAIL_LIFE, SEVERED_TAIL_FADE_DURATION)
+	table.insert(severedPieces, {
+		trail = pieceTrail,
+		timer = SEVERED_TAIL_LIFE,
+		life = SEVERED_TAIL_LIFE,
+		fadeDuration = fadeDuration,
+		segmentCount = math.max(1, segmentEstimate or #pieceTrail),
+	})
 end
 
 local function spawnSawCutParticles(x, y, count)
@@ -3034,9 +3034,9 @@ function Snake:checkSawBodyCollision()
 	local guardDistance = SEGMENT_SPACING * 0.9
 	local bodyRadius = SEGMENT_SIZE * 0.5
 
-        for i = 1, #saws do
-                local saw = saws[i]
-                if isSawActive(saw) then
+	for i = 1, #saws do
+		local saw = saws[i]
+		if isSawActive(saw) then
 			local sx, sy = getSawCenterPosition(saw)
 			if sx and sy then
 				local sawRadius = (saw.collisionRadius or saw.radius or 0)
@@ -3138,73 +3138,73 @@ function Snake:draw()
 	if not isDead then
 		local upgradeVisuals = collectUpgradeVisuals(self)
 
-                if severedPieces and #severedPieces > 0 then
-                        for i = 1, #severedPieces do
-                                local piece = severedPieces[i]
-                                local trailData = piece and piece.trail
-                                if trailData and #trailData > 1 then
-                                        local function getPieceHead()
-                                                local headSeg = trailData[1]
-                                                if not headSeg then
-                                                        return nil, nil
-                                                end
-                                                return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
-                                        end
+		if severedPieces and #severedPieces > 0 then
+			for i = 1, #severedPieces do
+				local piece = severedPieces[i]
+				local trailData = piece and piece.trail
+				if trailData and #trailData > 1 then
+					local function getPieceHead()
+						local headSeg = trailData[1]
+						if not headSeg then
+							return nil, nil
+						end
+						return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
+					end
 
-                                        local remaining = piece.timer or 0
-                                        local life = piece.life or SEVERED_TAIL_LIFE
-                                        local fadeDuration = piece.fadeDuration or SEVERED_TAIL_FADE_DURATION
-                                        local fade = 1
+					local remaining = piece.timer or 0
+					local life = piece.life or SEVERED_TAIL_LIFE
+					local fadeDuration = piece.fadeDuration or SEVERED_TAIL_FADE_DURATION
+					local fade = 1
 
-                                        if fadeDuration and fadeDuration > 0 then
-                                                if remaining <= fadeDuration then
-                                                        fade = clamp01(remaining / fadeDuration)
-                                                end
-                                        elseif life and life > 0 then
-                                                fade = clamp01(remaining / life)
-                                        end
+					if fadeDuration and fadeDuration > 0 then
+						if remaining <= fadeDuration then
+							fade = clamp01(remaining / fadeDuration)
+						end
+					elseif life and life > 0 then
+						fade = clamp01(remaining / life)
+					end
 
-                                        local drawOptions = {
-                                                drawFace = false,
-                                                paletteOverride = buildSeveredPalette(fade),
-                                                overlayEffect = nil,
-                                        }
+					local drawOptions = {
+						drawFace = false,
+						paletteOverride = buildSeveredPalette(fade),
+						overlayEffect = nil,
+					}
 
-                                        SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, drawOptions)
-                                end
-                        end
-                end
+					SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getPieceHead, 0, 0, nil, drawOptions)
+				end
+			end
+		end
 
 		local shouldDrawFace = descendingHole == nil
 		local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
-                if not hideDescendingBody then
-                        local drawOptions
-                        if portalAnimation then
-                                drawOptions = {
-                                        drawFace = shouldDrawFace,
-                                        portalAnimation = {
-                                                entryTrail = portalAnimation.entryTrail,
-                                                exitTrail = portalAnimation.exitTrail,
-                                                entryX = portalAnimation.entryX,
-                                                entryY = portalAnimation.entryY,
-                                                exitX = portalAnimation.exitX,
-                                                exitY = portalAnimation.exitY,
-                                                progress = portalAnimation.progress or 0,
-                                                duration = portalAnimation.duration or 0.3,
-                                                timer = portalAnimation.timer or 0,
-                                        },
-                                }
-                        else
-                                drawOptions = shouldDrawFace
-                        end
+		if not hideDescendingBody then
+			local drawOptions
+			if portalAnimation then
+				drawOptions = {
+					drawFace = shouldDrawFace,
+					portalAnimation = {
+						entryTrail = portalAnimation.entryTrail,
+						exitTrail = portalAnimation.exitTrail,
+						entryX = portalAnimation.entryX,
+						entryY = portalAnimation.entryY,
+						exitX = portalAnimation.exitX,
+						exitY = portalAnimation.exitY,
+						progress = portalAnimation.progress or 0,
+						duration = portalAnimation.duration or 0.3,
+						timer = portalAnimation.timer or 0,
+					},
+				}
+			else
+				drawOptions = shouldDrawFace
+			end
 
-                        SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
-                                return self:getHead()
-                        end, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
-                end
+			SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, function()
+				return self:getHead()
+			end, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
+		end
 
-        end
+	end
 end
 
 function Snake:resetPosition()

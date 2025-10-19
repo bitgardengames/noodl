@@ -107,90 +107,90 @@ local function drawSpawnDebugOverlay(self)
 end
 
 local function mixChannel(base, target, amount)
-        return base + (target - base) * amount
+	return base + (target - base) * amount
 end
 
 local function clamp01(value)
-        if value < 0 then
-                return 0
-        end
-        if value > 1 then
-                return 1
-        end
-        return value
+	if value < 0 then
+		return 0
+	end
+	if value > 1 then
+		return 1
+	end
+	return value
 end
 
 local function copyColor(color, defaultAlpha)
-        if not color then
-                return {0, 0, 0, defaultAlpha or 1}
-        end
+	if not color then
+		return {0, 0, 0, defaultAlpha or 1}
+	end
 
-        return {
-                color[1] or 0,
-                color[2] or 0,
-                color[3] or 0,
-                color[4] or defaultAlpha or 1,
-        }
+	return {
+		color[1] or 0,
+		color[2] or 0,
+		color[3] or 0,
+		color[4] or defaultAlpha or 1,
+	}
 end
 
 local function getPaletteColor(palette, key, fallback, defaultAlpha)
-        local value = fallback
-        if palette and palette[key] then
-                value = palette[key]
-        end
-        return copyColor(value, defaultAlpha)
+	local value = fallback
+	if palette and palette[key] then
+		value = palette[key]
+	end
+	return copyColor(value, defaultAlpha)
 end
 
 local function mixColorTowards(baseColor, targetColor, amount, alphaOverride)
-        local color = {}
-        for i = 1, 3 do
-                color[i] = clamp01(mixChannel(baseColor[i] or 0, targetColor[i] or 0, amount))
-        end
+	local color = {}
+	for i = 1, 3 do
+		color[i] = clamp01(mixChannel(baseColor[i] or 0, targetColor[i] or 0, amount))
+	end
 
-        if alphaOverride ~= nil then
-                color[4] = alphaOverride
-        else
-                local baseAlpha = baseColor[4] or 1
-                local targetAlpha = targetColor[4] or 1
-                color[4] = clamp01(mixChannel(baseAlpha, targetAlpha, amount))
-        end
+	if alphaOverride ~= nil then
+		color[4] = alphaOverride
+	else
+		local baseAlpha = baseColor[4] or 1
+		local targetAlpha = targetColor[4] or 1
+		color[4] = clamp01(mixChannel(baseAlpha, targetAlpha, amount))
+	end
 
-        return color
+	return color
 end
 
 local THEME_TINTS = {
-        botanical   = {0.28, 0.42, 0.24, 1},
-        cavern      = {0.26, 0.3, 0.46, 1},
-        oceanic     = {0.2, 0.36, 0.52, 1},
-        machine     = {0.42, 0.34, 0.24, 1},
-        arctic      = {0.34, 0.5, 0.64, 1},
-        desert      = {0.5, 0.4, 0.22, 1},
-        laboratory  = {0.42, 0.38, 0.56, 1},
-        urban       = {0.3, 0.36, 0.44, 1},
+	botanical   = {0.28, 0.42, 0.24, 1},
+	cavern      = {0.26, 0.3, 0.46, 1},
+	oceanic     = {0.2, 0.36, 0.52, 1},
+	machine     = {0.42, 0.34, 0.24, 1},
+	arctic      = {0.34, 0.5, 0.64, 1},
+	desert      = {0.5, 0.4, 0.22, 1},
+	laboratory  = {0.42, 0.38, 0.56, 1},
+	urban       = {0.3, 0.36, 0.44, 1},
 }
 
 local VARIANT_TINTS = {
-        fungal = {0.34, 0.28, 0.5, 1},
+	fungal = {0.34, 0.28, 0.5, 1},
 }
 
 local function hashString(value)
-        if not value or value == "" then
-                return 0
-        end
+	if not value or value == "" then
+		return 0
+	end
 
-        local hash = 0
-        for i = 1, #value do
-                hash = (hash * 131 + string.byte(value, i)) % 2147483647
-        end
+	local hash = 0
+	for i = 1, #value do
+		hash = (hash * 131 + string.byte(value, i)) % 2147483647
+	end
 
-        return hash
+	return hash
 end
 
 local function isTileInSafeZone(safeZone, col, row)
-        if not safeZone then return false end
+	if not safeZone then return false end
 
-        for _, cell in ipairs(safeZone) do
-                if cell[1] == col and cell[2] == row then
+	for _, cell in ipairs(safeZone) do
+		if cell[1] == col and cell[2] == row then
 			return true
 		end
 	end
@@ -199,24 +199,24 @@ local function isTileInSafeZone(safeZone, col, row)
 end
 
 local Arena = {
-        x = 0, y = 0,
-        width = 792,
-        height = 600,
-        tileSize = 24,
-        cols = 0,
-        rows = 0,
-        exit = nil,
-        activeBackgroundEffect = nil,
-        borderFlare = 0,
-        borderFlareStrength = 0,
-        borderFlareTimer = 0,
-        borderFlareDuration = 1.05,
-        _tileDecorations = nil,
-        _decorationConfig = nil,
-        _arenaInsetMesh = nil,
-        _arenaNoiseTexture = nil,
-        _arenaNoiseQuad = nil,
-        _arenaOverlayBounds = nil,
+	x = 0, y = 0,
+	width = 792,
+	height = 600,
+	tileSize = 24,
+	cols = 0,
+	rows = 0,
+	exit = nil,
+	activeBackgroundEffect = nil,
+	borderFlare = 0,
+	borderFlareStrength = 0,
+	borderFlareTimer = 0,
+	borderFlareDuration = 1.05,
+	_tileDecorations = nil,
+	_decorationConfig = nil,
+	_arenaInsetMesh = nil,
+	_arenaNoiseTexture = nil,
+	_arenaNoiseQuad = nil,
+	_arenaOverlayBounds = nil,
 }
 
 function Arena:setSpawnDebugData(data)
@@ -241,19 +241,19 @@ function Arena:clearSpawnDebugData()
 end
 
 function Arena:updateScreenBounds(sw, sh)
-        self.x = math.floor((sw - self.width) / 2)
-        self.y = math.floor((sh - self.height) / 2)
+	self.x = math.floor((sw - self.width) / 2)
+	self.y = math.floor((sh - self.height) / 2)
 
-        -- snap x,y to nearest tile boundary so centers align
-        self.x = self.x - (self.x % self.tileSize)
-        self.y = self.y - (self.y % self.tileSize)
+	-- snap x,y to nearest tile boundary so centers align
+	self.x = self.x - (self.x % self.tileSize)
+	self.y = self.y - (self.y % self.tileSize)
 
-        self.cols = math.floor(self.width / self.tileSize)
-        self.rows = math.floor(self.height / self.tileSize)
+	self.cols = math.floor(self.width / self.tileSize)
+	self.rows = math.floor(self.height / self.tileSize)
 
-        if self.rebuildTileDecorations then
-                self:rebuildTileDecorations()
-        end
+	if self.rebuildTileDecorations then
+		self:rebuildTileDecorations()
+	end
 end
 
 function Arena:getTilePosition(col, row)
@@ -278,404 +278,404 @@ function Arena:getTileFromWorld(x, y)
 end
 
 function Arena:isInside(x, y)
-        local inset = self.tileSize / 2
+	local inset = self.tileSize / 2
 
-        return x >= (self.x + inset) and
-                        x <= (self.x + self.width  - inset) and
-                        y >= (self.y + inset) and
-                        y <= (self.y + self.height - inset)
+	return x >= (self.x + inset) and
+			x <= (self.x + self.width  - inset) and
+			y >= (self.y + inset) and
+			y <= (self.y + self.height - inset)
 end
 
 function Arena:setFloorDecorations(floorNum, floorData)
-        if not floorNum and not floorData then
-                self._decorationConfig = nil
-                self._tileDecorations = nil
-                return
-        end
+	if not floorNum and not floorData then
+		self._decorationConfig = nil
+		self._tileDecorations = nil
+		return
+	end
 
-        local seed = os.time()
-        if love and love.timer and love.timer.getTime then
-                seed = seed + math.floor(love.timer.getTime() * 1000)
-        end
+	local seed = os.time()
+	if love and love.timer and love.timer.getTime then
+		seed = seed + math.floor(love.timer.getTime() * 1000)
+	end
 
-        self._decorationConfig = {
-                floor = floorNum or 0,
-                palette = floorData and floorData.palette,
-                theme = floorData and floorData.backgroundTheme,
-                variant = floorData and floorData.backgroundVariant,
-                seed = seed,
-        }
+	self._decorationConfig = {
+		floor = floorNum or 0,
+		palette = floorData and floorData.palette,
+		theme = floorData and floorData.backgroundTheme,
+		variant = floorData and floorData.backgroundVariant,
+		seed = seed,
+	}
 
-        self:rebuildTileDecorations()
+	self:rebuildTileDecorations()
 end
 
 function Arena:rebuildTileDecorations()
-        local config = self._decorationConfig
-        if not config then
-                self._tileDecorations = nil
-                return
-        end
+	local config = self._decorationConfig
+	if not config then
+		self._tileDecorations = nil
+		return
+	end
 
-        local cols = self.cols or 0
-        local rows = self.rows or 0
-        if cols <= 0 or rows <= 0 then
-                self._tileDecorations = nil
-                return
-        end
+	local cols = self.cols or 0
+	local rows = self.rows or 0
+	if cols <= 0 or rows <= 0 then
+		self._tileDecorations = nil
+		return
+	end
 
-        local palette = config.palette
-        local baseColor = getPaletteColor(palette, "arenaBG", Theme.arenaBG, 1)
-        local highlightTarget = getPaletteColor(palette, "highlightColor", Theme.highlightColor, 1)
-        local shadowTarget = getPaletteColor(palette, "shadowColor", Theme.shadowColor, 1)
-        local accentTarget = getPaletteColor(palette, "arenaBorder", Theme.arenaBorder, 1)
-        if palette and palette.rock then
-                accentTarget = copyColor(palette.rock, 1)
-        elseif Theme.rock then
-                accentTarget = copyColor(Theme.rock, 1)
-        end
+	local palette = config.palette
+	local baseColor = getPaletteColor(palette, "arenaBG", Theme.arenaBG, 1)
+	local highlightTarget = getPaletteColor(palette, "highlightColor", Theme.highlightColor, 1)
+	local shadowTarget = getPaletteColor(palette, "shadowColor", Theme.shadowColor, 1)
+	local accentTarget = getPaletteColor(palette, "arenaBorder", Theme.arenaBorder, 1)
+	if palette and palette.rock then
+		accentTarget = copyColor(palette.rock, 1)
+	elseif Theme.rock then
+		accentTarget = copyColor(Theme.rock, 1)
+	end
 
-        local theme = config.theme
-        local variant = config.variant
+	local theme = config.theme
+	local variant = config.variant
 
-        local function averagePaletteColors(a, b)
-                if not a and not b then
-                        return nil
-                end
+	local function averagePaletteColors(a, b)
+		if not a and not b then
+			return nil
+		end
 
-                if not a then
-                        return copyColor(b, 1)
-                end
+		if not a then
+			return copyColor(b, 1)
+		end
 
-                if not b then
-                        return copyColor(a, 1)
-                end
+		if not b then
+			return copyColor(a, 1)
+		end
 
-                return {
-                        clamp01(((a[1] or 0) + (b[1] or 0)) * 0.5),
-                        clamp01(((a[2] or 0) + (b[2] or 0)) * 0.5),
-                        clamp01(((a[3] or 0) + (b[3] or 0)) * 0.5),
-                        1,
-                }
-        end
+		return {
+			clamp01(((a[1] or 0) + (b[1] or 0)) * 0.5),
+			clamp01(((a[2] or 0) + (b[2] or 0)) * 0.5),
+			clamp01(((a[3] or 0) + (b[3] or 0)) * 0.5),
+			1,
+		}
+	end
 
-        local function resolveThemeTint()
-                local tint = VARIANT_TINTS[variant] or THEME_TINTS[theme]
-                if tint then
-                        return copyColor(tint, 1)
-                end
+	local function resolveThemeTint()
+		local tint = VARIANT_TINTS[variant] or THEME_TINTS[theme]
+		if tint then
+			return copyColor(tint, 1)
+		end
 
-                if palette then
-                        local snakeColor = palette.snake and copyColor(palette.snake, 1)
-                        local rockColor = palette.rock and copyColor(palette.rock, 1)
-                        local fruitColor = palette.fruit and copyColor(palette.fruit, 1)
+		if palette then
+			local snakeColor = palette.snake and copyColor(palette.snake, 1)
+			local rockColor = palette.rock and copyColor(palette.rock, 1)
+			local fruitColor = palette.fruit and copyColor(palette.fruit, 1)
 
-                        return averagePaletteColors(averagePaletteColors(snakeColor, rockColor), fruitColor)
-                end
+			return averagePaletteColors(averagePaletteColors(snakeColor, rockColor), fruitColor)
+		end
 
-                return nil
-        end
+		return nil
+	end
 
-        local themeTint = resolveThemeTint()
+	local themeTint = resolveThemeTint()
 
-        local baseSeed = (config.seed or os.time()) % 2147483647
-        baseSeed = baseSeed + (config.floor or 0) * 131071 + hashString(theme) * 17 + hashString(variant) * 31
-        local rng = love.math.newRandomGenerator(baseSeed)
+	local baseSeed = (config.seed or os.time()) % 2147483647
+	baseSeed = baseSeed + (config.floor or 0) * 131071 + hashString(theme) * 17 + hashString(variant) * 31
+	local rng = love.math.newRandomGenerator(baseSeed)
 
-        local tileSize = self.tileSize or 24
-        local clusterChance = 0.01
-        local minClusterSize = 2
-        local maxClusterSize = 4
-        local colorJitter = 0.005
+	local tileSize = self.tileSize or 24
+	local clusterChance = 0.01
+	local minClusterSize = 2
+	local maxClusterSize = 4
+	local colorJitter = 0.005
 
-        if theme == "botanical" then
-                clusterChance = clusterChance + 0.02
-                maxClusterSize = maxClusterSize + 1
-        elseif theme == "machine" then
-                clusterChance = math.max(0.06, clusterChance - 0.02)
-                colorJitter = 0.015
-        elseif theme == "oceanic" then
-                clusterChance = clusterChance + 0.01
-        elseif theme == "cavern" then
-                clusterChance = clusterChance - 0.005
-        end
+	if theme == "botanical" then
+		clusterChance = clusterChance + 0.02
+		maxClusterSize = maxClusterSize + 1
+	elseif theme == "machine" then
+		clusterChance = math.max(0.06, clusterChance - 0.02)
+		colorJitter = 0.015
+	elseif theme == "oceanic" then
+		clusterChance = clusterChance + 0.01
+	elseif theme == "cavern" then
+		clusterChance = clusterChance - 0.005
+	end
 
-        clusterChance = clusterChance * (0.85 + rng:random() * 0.35)
-        clusterChance = math.max(0, math.min(0.25, clusterChance))
+	clusterChance = clusterChance * (0.85 + rng:random() * 0.35)
+	clusterChance = math.max(0, math.min(0.25, clusterChance))
 
-        local decorations = {}
-        local occupied = {}
-        local safeZone = self._spawnDebugData and self._spawnDebugData.safeZone
+	local decorations = {}
+	local occupied = {}
+	local safeZone = self._spawnDebugData and self._spawnDebugData.safeZone
 
-        local function cellKey(col, row)
-                return (row - 1) * cols + col
-        end
+	local function cellKey(col, row)
+		return (row - 1) * cols + col
+	end
 
-        local function isOccupied(col, row)
-                return occupied[cellKey(col, row)] == true
-        end
+	local function isOccupied(col, row)
+		return occupied[cellKey(col, row)] == true
+	end
 
-        local function occupy(col, row)
-                occupied[cellKey(col, row)] = true
-        end
+	local function occupy(col, row)
+		occupied[cellKey(col, row)] = true
+	end
 
-        local directions = {
-                { 1, 0 },
-                { -1, 0 },
-                { 0, 1 },
-                { 0, -1 },
-        }
+	local directions = {
+		{ 1, 0 },
+		{ -1, 0 },
+		{ 0, 1 },
+		{ 0, -1 },
+	}
 
-        local function makeClusterColor()
-                local lighten = rng:random() < 0.45
-                local target = lighten and highlightTarget or shadowTarget
-                local amount = lighten and (0.1 + rng:random() * 0.06) or (0.12 + rng:random() * 0.04)
-                local alpha = lighten and (0.18 + rng:random() * 0.05) or (0.22 + rng:random() * 0.05)
-                local color = mixColorTowards(baseColor, target, amount, alpha)
+	local function makeClusterColor()
+		local lighten = rng:random() < 0.45
+		local target = lighten and highlightTarget or shadowTarget
+		local amount = lighten and (0.1 + rng:random() * 0.06) or (0.12 + rng:random() * 0.04)
+		local alpha = lighten and (0.18 + rng:random() * 0.05) or (0.22 + rng:random() * 0.05)
+		local color = mixColorTowards(baseColor, target, amount, alpha)
 
-                if rng:random() < 0.35 then
-                        local accentMix = 0.24 + rng:random() * 0.14
-                        local accentAlpha = clamp01((color[4] or 1) * (0.9 + rng:random() * 0.1))
-                        color = mixColorTowards(color, accentTarget, accentMix, accentAlpha)
-                end
+		if rng:random() < 0.35 then
+			local accentMix = 0.24 + rng:random() * 0.14
+			local accentAlpha = clamp01((color[4] or 1) * (0.9 + rng:random() * 0.1))
+			color = mixColorTowards(color, accentTarget, accentMix, accentAlpha)
+		end
 
-                if themeTint then
-                        local tintMix = 0.1 + rng:random() * 0.08
-                        local tintAlpha = clamp01((color[4] or 1) * (0.9 + rng:random() * 0.1))
-                        color = mixColorTowards(color, themeTint, tintMix, tintAlpha)
-                end
+		if themeTint then
+			local tintMix = 0.1 + rng:random() * 0.08
+			local tintAlpha = clamp01((color[4] or 1) * (0.9 + rng:random() * 0.1))
+			color = mixColorTowards(color, themeTint, tintMix, tintAlpha)
+		end
 
-                return color
-        end
+		return color
+	end
 
-        local function jitterColor(color)
-                local jittered = copyColor(color)
-                for i = 1, 3 do
-                        jittered[i] = clamp01(jittered[i] + (rng:random() * 2 - 1) * colorJitter)
-                end
-                jittered[4] = clamp01((jittered[4] or 1) * (0.92 + rng:random() * 0.08))
-                return jittered
-        end
+	local function jitterColor(color)
+		local jittered = copyColor(color)
+		for i = 1, 3 do
+			jittered[i] = clamp01(jittered[i] + (rng:random() * 2 - 1) * colorJitter)
+		end
+		jittered[4] = clamp01((jittered[4] or 1) * (0.92 + rng:random() * 0.08))
+		return jittered
+	end
 
-        local function addRoundedSquare(col, row, size, radius, color)
-                local baseAlpha = color[4] or 1
-                local fadeAmplitude = 0.05 + rng:random() * 0.08
-                local fadeSpeed = 0.2 + rng:random() * 0.45
-                decorations[#decorations + 1] = {
-                        col = col,
-                        row = row,
-                        x = (tileSize - size) * 0.5,
-                        y = (tileSize - size) * 0.5,
-                        w = size,
-                        h = size,
-                        radius = radius,
-                        color = {color[1], color[2], color[3], baseAlpha},
-                        fade = {
-                                base = baseAlpha,
-                                amplitude = fadeAmplitude,
-                                speed = fadeSpeed,
-                                offset = rng:random() * math.pi * 2,
-                        },
-                }
-        end
+	local function addRoundedSquare(col, row, size, radius, color)
+		local baseAlpha = color[4] or 1
+		local fadeAmplitude = 0.05 + rng:random() * 0.08
+		local fadeSpeed = 0.2 + rng:random() * 0.45
+		decorations[#decorations + 1] = {
+			col = col,
+			row = row,
+			x = (tileSize - size) * 0.5,
+			y = (tileSize - size) * 0.5,
+			w = size,
+			h = size,
+			radius = radius,
+			color = {color[1], color[2], color[3], baseAlpha},
+			fade = {
+				base = baseAlpha,
+				amplitude = fadeAmplitude,
+				speed = fadeSpeed,
+				offset = rng:random() * math.pi * 2,
+			},
+		}
+	end
 
-        for row = 1, rows do
-                for col = 1, cols do
-                        if not isOccupied(col, row) and rng:random() < clusterChance then
-                                if safeZone and isTileInSafeZone(safeZone, col, row) then
-                                        occupy(col, row)
-                                else
-                                        local clusterColor = makeClusterColor()
-                                        local clusterSize = rng:random(minClusterSize, maxClusterSize)
-                                        local clusterCells = { {col = col, row = row} }
-                                        occupy(col, row)
+	for row = 1, rows do
+		for col = 1, cols do
+			if not isOccupied(col, row) and rng:random() < clusterChance then
+				if safeZone and isTileInSafeZone(safeZone, col, row) then
+					occupy(col, row)
+				else
+					local clusterColor = makeClusterColor()
+					local clusterSize = rng:random(minClusterSize, maxClusterSize)
+					local clusterCells = { {col = col, row = row} }
+					occupy(col, row)
 
-                                        local attempts = 0
-                                        while #clusterCells < clusterSize and attempts < clusterSize * 6 do
-                                                attempts = attempts + 1
-                                                local baseIndex = rng:random(1, #clusterCells)
-                                                local baseCell = clusterCells[baseIndex]
-                                                local dir = directions[rng:random(1, #directions)]
-                                                local nextCol = baseCell.col + dir[1]
-                                                local nextRow = baseCell.row + dir[2]
+					local attempts = 0
+					while #clusterCells < clusterSize and attempts < clusterSize * 6 do
+						attempts = attempts + 1
+						local baseIndex = rng:random(1, #clusterCells)
+						local baseCell = clusterCells[baseIndex]
+						local dir = directions[rng:random(1, #directions)]
+						local nextCol = baseCell.col + dir[1]
+						local nextRow = baseCell.row + dir[2]
 
-                                                if nextCol >= 1 and nextCol <= cols and nextRow >= 1 and nextRow <= rows then
-                                                        if not isOccupied(nextCol, nextRow) and not (safeZone and isTileInSafeZone(safeZone, nextCol, nextRow)) then
-                                                                occupy(nextCol, nextRow)
-                                                                clusterCells[#clusterCells + 1] = { col = nextCol, row = nextRow }
-                                                        end
-                                                end
-                                        end
+						if nextCol >= 1 and nextCol <= cols and nextRow >= 1 and nextRow <= rows then
+							if not isOccupied(nextCol, nextRow) and not (safeZone and isTileInSafeZone(safeZone, nextCol, nextRow)) then
+								occupy(nextCol, nextRow)
+								clusterCells[#clusterCells + 1] = { col = nextCol, row = nextRow }
+							end
+						end
+					end
 
-                                        local size = math.min(tileSize * (0.48 + rng:random() * 0.18), tileSize)
-                                        local radius = size * (0.18 + rng:random() * 0.14)
+					local size = math.min(tileSize * (0.48 + rng:random() * 0.18), tileSize)
+					local radius = size * (0.18 + rng:random() * 0.14)
 
-                                        for i = 1, #clusterCells do
-                                                local cell = clusterCells[i]
-                                                addRoundedSquare(cell.col, cell.row, size, radius, jitterColor(clusterColor))
-                                        end
-                                end
-                        end
-                end
-        end
+					for i = 1, #clusterCells do
+						local cell = clusterCells[i]
+						addRoundedSquare(cell.col, cell.row, size, radius, jitterColor(clusterColor))
+					end
+				end
+			end
+		end
+	end
 
-        self._tileDecorations = decorations
+	self._tileDecorations = decorations
 end
 
 function Arena:drawTileDecorations()
-        local decorations = self._tileDecorations
-        if not decorations or #decorations == 0 then
-                return
-        end
+	local decorations = self._tileDecorations
+	if not decorations or #decorations == 0 then
+		return
+	end
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("alpha")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("alpha")
 
-        for i = 1, #decorations do
-                local deco = decorations[i]
-                local color = deco.color
-                local width = deco.w or 0
-                local height = deco.h or 0
-                if color and width > 0 and height > 0 then
-                        local tileX, tileY = self:getTilePosition(deco.col, deco.row)
-                        local drawX = tileX + (deco.x or 0)
-                        local drawY = tileY + (deco.y or 0)
-                        local alpha = color[4] or 1
-                        local fade = deco.fade
-                        if fade and fade.amplitude and fade.amplitude > 0 then
-                                local timerFn = love and love.timer and love.timer.getTime
-                                local time = timerFn and timerFn() or 0
-                                local oscillation = math.sin(time * (fade.speed or 1) + (fade.offset or 0))
-                                local factor = 1 + oscillation * fade.amplitude
-                                alpha = clamp01((fade.base or alpha) * factor)
-                        end
+	for i = 1, #decorations do
+		local deco = decorations[i]
+		local color = deco.color
+		local width = deco.w or 0
+		local height = deco.h or 0
+		if color and width > 0 and height > 0 then
+			local tileX, tileY = self:getTilePosition(deco.col, deco.row)
+			local drawX = tileX + (deco.x or 0)
+			local drawY = tileY + (deco.y or 0)
+			local alpha = color[4] or 1
+			local fade = deco.fade
+			if fade and fade.amplitude and fade.amplitude > 0 then
+				local timerFn = love and love.timer and love.timer.getTime
+				local time = timerFn and timerFn() or 0
+				local oscillation = math.sin(time * (fade.speed or 1) + (fade.offset or 0))
+				local factor = 1 + oscillation * fade.amplitude
+				alpha = clamp01((fade.base or alpha) * factor)
+			end
 
-                        love.graphics.setColor(color[1], color[2], color[3], alpha)
-                        love.graphics.rectangle("fill", drawX, drawY, width, height, deco.radius or 0, deco.radius or 0)
-                end
-        end
+			love.graphics.setColor(color[1], color[2], color[3], alpha)
+			love.graphics.rectangle("fill", drawX, drawY, width, height, deco.radius or 0, deco.radius or 0)
+		end
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 function Arena:_ensureArenaNoiseTexture()
-        if self._arenaNoiseTexture then
-                return
-        end
+	if self._arenaNoiseTexture then
+		return
+	end
 
-        local size = 128
-        local imageData = love.image.newImageData(size, size)
-        local rng = love.math.newRandomGenerator(os.time() % 2147483647)
+	local size = 128
+	local imageData = love.image.newImageData(size, size)
+	local rng = love.math.newRandomGenerator(os.time() % 2147483647)
 
-        for y = 0, size - 1 do
-                for x = 0, size - 1 do
-                        local value = rng:random()
-                        local shade = clamp01(0.5 + (value - 0.5) * 0.08)
-                        imageData:setPixel(x, y, shade, shade, shade, 1)
-                end
-        end
+	for y = 0, size - 1 do
+		for x = 0, size - 1 do
+			local value = rng:random()
+			local shade = clamp01(0.5 + (value - 0.5) * 0.08)
+			imageData:setPixel(x, y, shade, shade, shade, 1)
+		end
+	end
 
-        local texture = love.graphics.newImage(imageData)
-        texture:setFilter("linear", "linear")
-        texture:setWrap("repeat", "repeat")
+	local texture = love.graphics.newImage(imageData)
+	texture:setFilter("linear", "linear")
+	texture:setWrap("repeat", "repeat")
 
-        self._arenaNoiseTexture = texture
+	self._arenaNoiseTexture = texture
 end
 
 function Arena:_rebuildArenaInsetMesh(ax, ay, aw, ah)
-        local inset = math.max(10, math.floor(math.min(aw, ah) * 0.04))
-        local innerX = ax + inset
-        local innerY = ay + inset
-        local innerW = math.max(0, aw - inset * 2)
-        local innerH = math.max(0, ah - inset * 2)
+	local inset = math.max(10, math.floor(math.min(aw, ah) * 0.04))
+	local innerX = ax + inset
+	local innerY = ay + inset
+	local innerW = math.max(0, aw - inset * 2)
+	local innerH = math.max(0, ah - inset * 2)
 
-        local borderColor = Theme.arenaBorder or {0.2, 0.2, 0.25, 1}
-        local r = mixChannel(borderColor[1] or 0.2, 0.0, 0.7)
-        local g = mixChannel(borderColor[2] or 0.2, 0.0, 0.7)
-        local b = mixChannel(borderColor[3] or 0.25, 0.0, 0.7)
-        local outerAlpha = 0.16
+	local borderColor = Theme.arenaBorder or {0.2, 0.2, 0.25, 1}
+	local r = mixChannel(borderColor[1] or 0.2, 0.0, 0.7)
+	local g = mixChannel(borderColor[2] or 0.2, 0.0, 0.7)
+	local b = mixChannel(borderColor[3] or 0.25, 0.0, 0.7)
+	local outerAlpha = 0.16
 
-        local vertices = {
-                {ax, ay, 0, 0, r, g, b, outerAlpha},
-                {ax + aw, ay, 1, 0, r, g, b, outerAlpha},
-                {ax + aw, ay + ah, 1, 1, r, g, b, outerAlpha},
-                {ax, ay + ah, 0, 1, r, g, b, outerAlpha},
-                {innerX, innerY, 0, 0, r, g, b, 0},
-                {innerX + innerW, innerY, 1, 0, r, g, b, 0},
-                {innerX + innerW, innerY + innerH, 1, 1, r, g, b, 0},
-                {innerX, innerY + innerH, 0, 1, r, g, b, 0},
-        }
+	local vertices = {
+		{ax, ay, 0, 0, r, g, b, outerAlpha},
+		{ax + aw, ay, 1, 0, r, g, b, outerAlpha},
+		{ax + aw, ay + ah, 1, 1, r, g, b, outerAlpha},
+		{ax, ay + ah, 0, 1, r, g, b, outerAlpha},
+		{innerX, innerY, 0, 0, r, g, b, 0},
+		{innerX + innerW, innerY, 1, 0, r, g, b, 0},
+		{innerX + innerW, innerY + innerH, 1, 1, r, g, b, 0},
+		{innerX, innerY + innerH, 0, 1, r, g, b, 0},
+	}
 
-        local mesh = love.graphics.newMesh(vertices, "triangles", "static")
-        mesh:setVertexMap({
-                1, 5, 2,
-                2, 5, 6,
-                2, 6, 3,
-                3, 6, 7,
-                3, 7, 4,
-                4, 7, 8,
-                4, 8, 1,
-                1, 8, 5,
-        })
+	local mesh = love.graphics.newMesh(vertices, "triangles", "static")
+	mesh:setVertexMap({
+		1, 5, 2,
+		2, 5, 6,
+		2, 6, 3,
+		3, 6, 7,
+		3, 7, 4,
+		4, 7, 8,
+		4, 8, 1,
+		1, 8, 5,
+	})
 
-        self._arenaInsetMesh = mesh
+	self._arenaInsetMesh = mesh
 end
 
 function Arena:_updateArenaOverlayBounds(ax, ay, aw, ah)
-        self:_ensureArenaNoiseTexture()
+	self:_ensureArenaNoiseTexture()
 
-        local bounds = self._arenaOverlayBounds
-        local changed = not bounds
-        if bounds and (bounds.x ~= ax or bounds.y ~= ay or bounds.w ~= aw or bounds.h ~= ah) then
-                changed = true
-        end
+	local bounds = self._arenaOverlayBounds
+	local changed = not bounds
+	if bounds and (bounds.x ~= ax or bounds.y ~= ay or bounds.w ~= aw or bounds.h ~= ah) then
+		changed = true
+	end
 
-        if not changed then
-                return
-        end
+	if not changed then
+		return
+	end
 
-        self:_rebuildArenaInsetMesh(ax, ay, aw, ah)
+	self:_rebuildArenaInsetMesh(ax, ay, aw, ah)
 
-        if self._arenaNoiseTexture then
-                local textureW, textureH = self._arenaNoiseTexture:getDimensions()
-                local offsetX = love.math.random() * textureW
-                local offsetY = love.math.random() * textureH
-                self._arenaNoiseQuad = love.graphics.newQuad(offsetX, offsetY, aw, ah, textureW, textureH)
-        end
+	if self._arenaNoiseTexture then
+		local textureW, textureH = self._arenaNoiseTexture:getDimensions()
+		local offsetX = love.math.random() * textureW
+		local offsetY = love.math.random() * textureH
+		self._arenaNoiseQuad = love.graphics.newQuad(offsetX, offsetY, aw, ah, textureW, textureH)
+	end
 
-        self._arenaOverlayBounds = { x = ax, y = ay, w = aw, h = ah }
+	self._arenaOverlayBounds = { x = ax, y = ay, w = aw, h = ah }
 end
 
 function Arena:_drawArenaInlay()
-        if not self._arenaOverlayBounds then
-                return
-        end
+	if not self._arenaOverlayBounds then
+		return
+	end
 
-        if self._arenaInsetMesh then
-                love.graphics.push("all")
-                love.graphics.setBlendMode("alpha")
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(self._arenaInsetMesh)
-                love.graphics.pop()
-        end
+	if self._arenaInsetMesh then
+		love.graphics.push("all")
+		love.graphics.setBlendMode("alpha")
+		love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.draw(self._arenaInsetMesh)
+		love.graphics.pop()
+	end
 
-        if self._arenaNoiseTexture and self._arenaNoiseQuad then
-                love.graphics.push("all")
-                love.graphics.setBlendMode("alpha")
-                local tint = Theme.arenaBG or {0.18, 0.18, 0.22, 1}
-                local tintStrength = 0.05
-                local r = mixChannel(tint[1] or 0.18, 1, 0.18)
-                local g = mixChannel(tint[2] or 0.18, 1, 0.18)
-                local b = mixChannel(tint[3] or 0.22, 1, 0.18)
-                love.graphics.setColor(r, g, b, tintStrength)
-                love.graphics.draw(self._arenaNoiseTexture, self._arenaNoiseQuad, self._arenaOverlayBounds.x, self._arenaOverlayBounds.y)
-                love.graphics.pop()
-        end
+	if self._arenaNoiseTexture and self._arenaNoiseQuad then
+		love.graphics.push("all")
+		love.graphics.setBlendMode("alpha")
+		local tint = Theme.arenaBG or {0.18, 0.18, 0.22, 1}
+		local tintStrength = 0.05
+		local r = mixChannel(tint[1] or 0.18, 1, 0.18)
+		local g = mixChannel(tint[2] or 0.18, 1, 0.18)
+		local b = mixChannel(tint[3] or 0.22, 1, 0.18)
+		love.graphics.setColor(r, g, b, tintStrength)
+		love.graphics.draw(self._arenaNoiseTexture, self._arenaNoiseQuad, self._arenaOverlayBounds.x, self._arenaOverlayBounds.y)
+		love.graphics.pop()
+	end
 end
 
 function Arena:getRandomTile()
-        local col = love.math.random(2, self.cols - 1)
-        local row = love.math.random(2, self.rows - 1)
-        return col, row
+	local col = love.math.random(2, self.cols - 1)
+	local row = love.math.random(2, self.rows - 1)
+	return col, row
 end
 
 function Arena:getBounds()
@@ -756,29 +756,29 @@ end
 
 -- Draws the playfield with a solid fill + simple border
 function Arena:drawBackground()
-        local ax, ay, aw, ah = self:getBounds()
+	local ax, ay, aw, ah = self:getBounds()
 
-        if self.activeBackgroundEffect then
-                local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(self.activeBackgroundEffect)
+	if self.activeBackgroundEffect then
+		local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(self.activeBackgroundEffect)
 		local intensity = self.activeBackgroundEffect.arenaIntensity or defaultArena
 		Shaders.draw(self.activeBackgroundEffect, ax, ay, aw, ah, intensity)
 	end
 
-        -- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
-        love.graphics.setColor(Theme.arenaBG)
-        love.graphics.rectangle("fill", ax, ay, aw, ah)
+	-- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
+	love.graphics.setColor(Theme.arenaBG)
+	love.graphics.rectangle("fill", ax, ay, aw, ah)
 
-        self:_updateArenaOverlayBounds(ax, ay, aw, ah)
+	self:_updateArenaOverlayBounds(ax, ay, aw, ah)
 
-        if self.drawTileDecorations then
-                self:drawTileDecorations()
-        end
+	if self.drawTileDecorations then
+		self:drawTileDecorations()
+	end
 
-        self:_drawArenaInlay()
+	self:_drawArenaInlay()
 
-        drawSpawnDebugOverlay(self)
+	drawSpawnDebugOverlay(self)
 
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- Draws border
@@ -811,9 +811,9 @@ function Arena:drawBorder()
 		self.borderCanvas = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight(), {msaa = 8})
 	end
 
-        local previousCanvas = { love.graphics.getCanvas() }
-        love.graphics.setCanvas(self.borderCanvas)
-        love.graphics.clear(0,0,0,0)
+	local previousCanvas = { love.graphics.getCanvas() }
+	love.graphics.setCanvas(self.borderCanvas)
+	love.graphics.clear(0,0,0,0)
 
 	love.graphics.setLineStyle("smooth")
 
@@ -969,20 +969,20 @@ function Arena:drawBorder()
 		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
 	end
 
-        if #previousCanvas > 0 then
-                local unpack = table.unpack or unpack
-                love.graphics.setCanvas(unpack(previousCanvas))
-        else
-                love.graphics.setCanvas()
-        end
+	if #previousCanvas > 0 then
+		local unpack = table.unpack or unpack
+		love.graphics.setCanvas(unpack(previousCanvas))
+	else
+		love.graphics.setCanvas()
+	end
 
-        RenderLayers:withLayer("shadows", function()
-                love.graphics.setColor(0, 0, 0, 0.25)
-                love.graphics.draw(self.borderCanvas, shadowOffset, shadowOffset)
-        end)
+	RenderLayers:withLayer("shadows", function()
+		love.graphics.setColor(0, 0, 0, 0.25)
+		love.graphics.draw(self.borderCanvas, shadowOffset, shadowOffset)
+	end)
 
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(self.borderCanvas, 0, 0)
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.draw(self.borderCanvas, 0, 0)
 end
 
 -- Spawn an exit at a random valid tile
@@ -1179,40 +1179,40 @@ end
 
 -- Draw the exit (if active)
 function Arena:drawExit()
-        if not self.exit then return end
+	if not self.exit then return end
 
-        RenderLayers:withLayer("overlay", function()
-                local exit = self.exit
-                local t = exit.anim
-                local eased = 1 - (1 - t) * (1 - t)
-                local radius = (exit.size / 1.5) * eased
-                local cx, cy = exit.x, exit.y
-                local time = exit.time or 0
+	RenderLayers:withLayer("overlay", function()
+		local exit = self.exit
+		local t = exit.anim
+		local eased = 1 - (1 - t) * (1 - t)
+		local radius = (exit.size / 1.5) * eased
+		local cx, cy = exit.x, exit.y
+		local time = exit.time or 0
 
-                local rimRadius = radius * (1.05 + 0.03 * math.sin(time * 1.3))
-                love.graphics.setColor(0.16, 0.15, 0.19, 1)
-                love.graphics.circle("fill", cx, cy, rimRadius, 48)
+		local rimRadius = radius * (1.05 + 0.03 * math.sin(time * 1.3))
+		love.graphics.setColor(0.16, 0.15, 0.19, 1)
+		love.graphics.circle("fill", cx, cy, rimRadius, 48)
 
-                love.graphics.setColor(0.10, 0.09, 0.12, 1)
-                love.graphics.circle("fill", cx, cy, radius * 0.94, 48)
+		love.graphics.setColor(0.10, 0.09, 0.12, 1)
+		love.graphics.circle("fill", cx, cy, radius * 0.94, 48)
 
-                love.graphics.setColor(0.06, 0.05, 0.07, 1)
-                love.graphics.circle("fill", cx, cy, radius * (0.78 + 0.05 * math.sin(time * 2.1)), 48)
+		love.graphics.setColor(0.06, 0.05, 0.07, 1)
+		love.graphics.circle("fill", cx, cy, radius * (0.78 + 0.05 * math.sin(time * 2.1)), 48)
 
-                love.graphics.setColor(0.0, 0.0, 0.0, 1)
-                love.graphics.circle("fill", cx, cy, radius * (0.58 + 0.04 * math.sin(time * 1.7)), 48)
+		love.graphics.setColor(0.0, 0.0, 0.0, 1)
+		love.graphics.circle("fill", cx, cy, radius * (0.58 + 0.04 * math.sin(time * 1.7)), 48)
 
-                love.graphics.setColor(0.22, 0.20, 0.24, 0.85 * eased)
-                love.graphics.arc("fill", cx, cy, radius * 0.98, -math.pi * 0.65, -math.pi * 0.05, 32)
+		love.graphics.setColor(0.22, 0.20, 0.24, 0.85 * eased)
+		love.graphics.arc("fill", cx, cy, radius * 0.98, -math.pi * 0.65, -math.pi * 0.05, 32)
 
-                love.graphics.setColor(0, 0, 0, 0.45 * eased)
-                love.graphics.arc("fill", cx, cy, radius * 0.72, math.pi * 0.2, math.pi * 1.05, 32)
+		love.graphics.setColor(0, 0, 0, 0.45 * eased)
+		love.graphics.arc("fill", cx, cy, radius * 0.72, math.pi * 0.2, math.pi * 1.05, 32)
 
-                love.graphics.setColor(0.04, 0.04, 0.05, 0.9 * eased)
-                love.graphics.setLineWidth(2)
-                love.graphics.circle("line", cx, cy, radius * 0.96, 48)
-                love.graphics.setLineWidth(1)
-        end)
+		love.graphics.setColor(0.04, 0.04, 0.05, 0.9 * eased)
+		love.graphics.setLineWidth(2)
+		love.graphics.circle("line", cx, cy, radius * 0.96, 48)
+		love.graphics.setLineWidth(1)
+	end)
 end
 
 function Arena:triggerBorderFlare(strength, duration)

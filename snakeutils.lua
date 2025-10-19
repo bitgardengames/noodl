@@ -9,33 +9,33 @@ SnakeUtils.POP_DURATION = 0.3
 SnakeUtils.occupied = {}
 
 function SnakeUtils.initOccupancy()
-        local occupied = SnakeUtils.occupied
-        if type(occupied) ~= "table" then
-                occupied = {}
-                SnakeUtils.occupied = occupied
-        end
-        local cols = Arena.cols
-        local rows = Arena.rows
+	local occupied = SnakeUtils.occupied
+	if type(occupied) ~= "table" then
+		occupied = {}
+		SnakeUtils.occupied = occupied
+	end
+	local cols = Arena.cols
+	local rows = Arena.rows
 
-        for col = 1, cols do
-                local column = occupied[col]
-                if not column then
-                        column = {}
-                        occupied[col] = column
-                end
+	for col = 1, cols do
+		local column = occupied[col]
+		if not column then
+			column = {}
+			occupied[col] = column
+		end
 
-                for row = 1, rows do
-                        column[row] = false
-                end
+		for row = 1, rows do
+			column[row] = false
+		end
 
-                for row = rows + 1, #column do
-                        column[row] = nil
-                end
-        end
+		for row = rows + 1, #column do
+			column[row] = nil
+		end
+	end
 
-        for col = cols + 1, #occupied do
-                occupied[col] = nil
-        end
+	for col = cols + 1, #occupied do
+		occupied[col] = nil
+	end
 end
 
 -- Mark / unmark cells
@@ -69,45 +69,45 @@ local function normalizeCell(col, row)
 end
 
 local function markCells(cells, value)
-        if not cells then
-                return
-        end
+	if not cells then
+		return
+	end
 
-        local occupied = SnakeUtils.occupied
-        for i = 1, #cells do
-                local cell = cells[i]
-                local col, row = normalizeCell(cell[1], cell[2])
-                if col then
-                        local column = occupied[col]
-                        if column and column[row] ~= nil then
-                                column[row] = value
-                        end
-                end
-        end
+	local occupied = SnakeUtils.occupied
+	for i = 1, #cells do
+		local cell = cells[i]
+		local col, row = normalizeCell(cell[1], cell[2])
+		if col then
+			local column = occupied[col]
+			if column and column[row] ~= nil then
+				column[row] = value
+			end
+		end
+	end
 end
 
 -- Reserve a collection of cells and return the subset that we actually marked.
 function SnakeUtils.reserveCells(cells)
-        local reserved = {}
+	local reserved = {}
 
-        if not cells then
-                return reserved
-        end
+	if not cells then
+		return reserved
+	end
 
-        local occupied = SnakeUtils.occupied
-        for i = 1, #cells do
-                local cell = cells[i]
-                local col, row = normalizeCell(cell[1], cell[2])
-                if col then
-                        local column = occupied[col]
-                        if column and not column[row] then
-                                column[row] = true
-                                reserved[#reserved + 1] = {col, row}
-                        end
-                end
-        end
+	local occupied = SnakeUtils.occupied
+	for i = 1, #cells do
+		local cell = cells[i]
+		local col, row = normalizeCell(cell[1], cell[2])
+		if col then
+			local column = occupied[col]
+			if column and not column[row] then
+				column[row] = true
+				reserved[#reserved + 1] = {col, row}
+			end
+		end
+	end
 
-        return reserved
+	return reserved
 end
 
 function SnakeUtils.releaseCells(cells)
@@ -121,115 +121,115 @@ local cellPool = {}
 local cellPoolCount = 0
 
 local function releaseCell(cell)
-        cell[1] = nil
-        cell[2] = nil
-        cellPoolCount = cellPoolCount + 1
-        cellPool[cellPoolCount] = cell
+	cell[1] = nil
+	cell[2] = nil
+	cellPoolCount = cellPoolCount + 1
+	cellPool[cellPoolCount] = cell
 end
 
 local function trimCells(buffer, count)
-        for i = count + 1, #buffer do
-                local cell = buffer[i]
-                if cell then
-                        releaseCell(cell)
-                end
-                buffer[i] = nil
-        end
-        return buffer
+	for i = count + 1, #buffer do
+		local cell = buffer[i]
+		if cell then
+			releaseCell(cell)
+		end
+		buffer[i] = nil
+	end
+	return buffer
 end
 
 local function acquireCell(col, row)
-        if cellPoolCount > 0 then
-                local cell = cellPool[cellPoolCount]
-                cellPool[cellPoolCount] = nil
-                cellPoolCount = cellPoolCount - 1
-                cell[1] = col
-                cell[2] = row
-                return cell
-        end
+	if cellPoolCount > 0 then
+		local cell = cellPool[cellPoolCount]
+		cellPool[cellPoolCount] = nil
+		cellPoolCount = cellPoolCount - 1
+		cell[1] = col
+		cell[2] = row
+		return cell
+	end
 
-        return {col, row}
+	return {col, row}
 end
 
 local function assignCell(buffer, index, col, row)
-        local cell = buffer[index]
-        if cell then
-                cell[1] = col
-                cell[2] = row
-        else
-                buffer[index] = acquireCell(col, row)
-        end
+	local cell = buffer[index]
+	if cell then
+		cell[1] = col
+		cell[2] = row
+	else
+		buffer[index] = acquireCell(col, row)
+	end
 end
 
 function SnakeUtils.getSawTrackCells(fx, fy, dir, out)
-        local centerCol, centerRow = Arena:getTileFromWorld(fx, fy)
-        local cols = Arena.cols
-        local rows = Arena.rows
-        local offsets = SAW_TRACK_OFFSETS
-        local cells = out or {}
-        local count = 0
+	local centerCol, centerRow = Arena:getTileFromWorld(fx, fy)
+	local cols = Arena.cols
+	local rows = Arena.rows
+	local offsets = SAW_TRACK_OFFSETS
+	local cells = out or {}
+	local count = 0
 
-        if dir == "horizontal" then
-                if centerRow < 1 or centerRow > rows then
-                        return trimCells(cells, 0)
-                end
+	if dir == "horizontal" then
+		if centerRow < 1 or centerRow > rows then
+			return trimCells(cells, 0)
+		end
 
-                for i = 1, NUM_SAW_TRACK_OFFSETS do
-                        local col = centerCol + offsets[i]
-                        if col < 1 or col > cols then
-                                return trimCells(cells, 0)
-                        end
+		for i = 1, NUM_SAW_TRACK_OFFSETS do
+			local col = centerCol + offsets[i]
+			if col < 1 or col > cols then
+				return trimCells(cells, 0)
+			end
 
-                        count = count + 1
-                        assignCell(cells, count, col, centerRow)
-                end
-        else
-                if centerCol < 1 or centerCol > cols then
-                        return trimCells(cells, 0)
-                end
+			count = count + 1
+			assignCell(cells, count, col, centerRow)
+		end
+	else
+		if centerCol < 1 or centerCol > cols then
+			return trimCells(cells, 0)
+		end
 
-                for i = 1, NUM_SAW_TRACK_OFFSETS do
-                        local row = centerRow + offsets[i]
-                        if row < 1 or row > rows then
-                                return trimCells(cells, 0)
-                        end
+		for i = 1, NUM_SAW_TRACK_OFFSETS do
+			local row = centerRow + offsets[i]
+			if row < 1 or row > rows then
+				return trimCells(cells, 0)
+			end
 
-                        count = count + 1
-                        assignCell(cells, count, centerCol, row)
-                end
-        end
+			count = count + 1
+			assignCell(cells, count, centerCol, row)
+		end
+	end
 
-        return trimCells(cells, count)
+	return trimCells(cells, count)
 end
 
 local function cellsAreFree(cells)
-        if not cells or #cells == 0 then
-                return false
-        end
+	if not cells or #cells == 0 then
+		return false
+	end
 
-        local occupied = SnakeUtils.occupied
-        for i = 1, #cells do
-                local cell = cells[i]
-                local column = occupied[cell[1]]
-                if column and column[cell[2]] then
-                        return false
-                end
-        end
+	local occupied = SnakeUtils.occupied
+	for i = 1, #cells do
+		local cell = cells[i]
+		local column = occupied[cell[1]]
+		if column and column[cell[2]] then
+			return false
+		end
+	end
 
 	return true
 end
 
 function SnakeUtils.occupySawTrack(fx, fy, dir)
-        local cells = SnakeUtils.getSawTrackCells(fx, fy, dir)
-        markCells(cells, true)
-        return cells
+	local cells = SnakeUtils.getSawTrackCells(fx, fy, dir)
+	markCells(cells, true)
+	return cells
 end
 
 local sawTrackScratch = {}
 
 function SnakeUtils.sawTrackIsFree(fx, fy, dir)
-        local cells = SnakeUtils.getSawTrackCells(fx, fy, dir, sawTrackScratch)
-        return cellsAreFree(cells)
+	local cells = SnakeUtils.getSawTrackCells(fx, fy, dir, sawTrackScratch)
+	return cellsAreFree(cells)
 end
 
 -- Safe spawn: just randomize until we find a free cell

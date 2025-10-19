@@ -95,11 +95,11 @@ local unlockDefinitions = {
 		description = "Unlocks abyssal relic upgrades including the Abyssal Catalyst.",
 		unlockTags = { "abyssal_protocols" },
 	},
-        [14] = {
-                id = "midnight_circuit_scales",
-                name = "Midnight Circuit Scales",
-                description = "Unlocks the Midnight Circuit snake skin for your handler profile.",
-        },
+	[14] = {
+		id = "midnight_circuit_scales",
+		name = "Midnight Circuit Scales",
+		description = "Unlocks the Midnight Circuit snake skin for your handler profile.",
+	},
 }
 
 local milestoneThresholds = {

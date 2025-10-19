@@ -67,9 +67,9 @@ local function getHighlightColor(color)
 end
 
 local function buildRockHighlight(points)
-        if not points then return nil end
+	if not points then return nil end
 
-        local highlight = {}
+	local highlight = {}
 	local scaleX, scaleY = 0.78, 0.66
 	local offsetX, offsetY = -ROCK_SIZE * 0.12 + 2, -ROCK_SIZE * 0.18 + 2
 
@@ -112,11 +112,11 @@ local function buildRockHighlight(points)
 		end
 	end
 
-        return highlight
+	return highlight
 end
 
 local function getUpgradesModule()
-        return package.loaded["upgrades"]
+	return package.loaded["upgrades"]
 end
 
 function Rocks:spawn(x, y)
@@ -210,13 +210,13 @@ local function removeRockAt(index, spawnFX)
 	local rock = table.remove(current, index)
 	if not rock then return nil end
 
-        releaseOccupancy(rock)
+	releaseOccupancy(rock)
 
-        if spawnFX ~= false then
-                spawnShatterFX(rock.x, rock.y)
-        end
+	if spawnFX ~= false then
+		spawnShatterFX(rock.x, rock.y)
+	end
 
-        return rock
+	return rock
 end
 
 function Rocks:destroy(target, opts)
@@ -267,24 +267,24 @@ function Rocks:shatterNearest(x, y, count)
 
 		if not bestIndex then break end
 
-                local shattered = removeRockAt(bestIndex, true)
-                if shattered then
-                        Audio:playSound("rock_shatter")
+		local shattered = removeRockAt(bestIndex, true)
+		if shattered then
+			Audio:playSound("rock_shatter")
 
-                        local Upgrades = getUpgradesModule()
-                        if Upgrades and Upgrades.notify then
-                                local fx = shattered.x or x
-                                local fy = shattered.y or y
-                                Upgrades:notify("rockShattered", {
-                                        x = fx,
-                                        y = fy,
-                                        sourceX = x,
-                                        sourceY = y,
-                                        rock = shattered,
-                                })
-                        end
-                end
-        end
+			local Upgrades = getUpgradesModule()
+			if Upgrades and Upgrades.notify then
+				local fx = shattered.x or x
+				local fy = shattered.y or y
+				Upgrades:notify("rockShattered", {
+					x = fx,
+					y = fy,
+					sourceX = x,
+					sourceY = y,
+					rock = shattered,
+				})
+			end
+		end
+	end
 end
 
 function Rocks:addShatterOnFruit(count)
@@ -370,48 +370,48 @@ function Rocks:update(dt)
 end
 
 local function withRockTransform(rock, fn)
-        love.graphics.push()
-        love.graphics.translate(rock.x, rock.y + rock.offsetY)
-        love.graphics.scale(rock.scaleX, rock.scaleY)
-        fn()
-        love.graphics.pop()
+	love.graphics.push()
+	love.graphics.translate(rock.x, rock.y + rock.offsetY)
+	love.graphics.scale(rock.scaleX, rock.scaleY)
+	fn()
+	love.graphics.pop()
 end
 
 function Rocks:draw()
-        for _, rock in ipairs(current) do
-                RenderLayers:withLayer("shadows", function()
-                        withRockTransform(rock, function()
-                                love.graphics.setColor(0, 0, 0, 0.4)
-                                love.graphics.push()
-                                love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-                                love.graphics.scale(1.1, 1.1)
-                                love.graphics.polygon("fill", rock.shape)
-                                love.graphics.pop()
-                        end)
-                end)
+	for _, rock in ipairs(current) do
+		RenderLayers:withLayer("shadows", function()
+			withRockTransform(rock, function()
+				love.graphics.setColor(0, 0, 0, 0.4)
+				love.graphics.push()
+				love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+				love.graphics.scale(1.1, 1.1)
+				love.graphics.polygon("fill", rock.shape)
+				love.graphics.pop()
+			end)
+		end)
 
-                RenderLayers:withLayer("main", function()
-                        withRockTransform(rock, function()
-                                local baseColor = Theme.rock
-                                if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
-                                        baseColor = HIT_FLASH_COLOR
-                                end
+		RenderLayers:withLayer("main", function()
+			withRockTransform(rock, function()
+				local baseColor = Theme.rock
+				if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
+					baseColor = HIT_FLASH_COLOR
+				end
 
-                                love.graphics.setColor(baseColor)
-                                love.graphics.polygon("fill", rock.shape)
+				love.graphics.setColor(baseColor)
+				love.graphics.polygon("fill", rock.shape)
 
-                                if rock.highlightShape then
-                                        local highlight = getHighlightColor(baseColor)
-                                        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-                                        love.graphics.polygon("fill", rock.highlightShape)
-                                end
+				if rock.highlightShape then
+					local highlight = getHighlightColor(baseColor)
+					love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+					love.graphics.polygon("fill", rock.highlightShape)
+				end
 
-                                love.graphics.setColor(0, 0, 0, 1)
-                                love.graphics.setLineWidth(3)
-                                love.graphics.polygon("line", rock.shape)
-                        end)
-                end)
-        end
+				love.graphics.setColor(0, 0, 0, 1)
+				love.graphics.setLineWidth(3)
+				love.graphics.polygon("line", rock.shape)
+			end)
+		end)
+	end
 end
 
 function Rocks:getSpawnChance()

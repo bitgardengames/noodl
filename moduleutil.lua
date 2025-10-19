@@ -22,11 +22,11 @@ function ModuleUtil.create(name, defaults)
 end
 
 local function ensureLifecycle(system, fallbacks)
-        if type(system) ~= "table" then
-                error("system must be a table")
-        end
+	if type(system) ~= "table" then
+		error("system must be a table")
+	end
 
-        local fallbackHandlers = fallbacks or EMPTY_TABLE
+	local fallbackHandlers = fallbacks or EMPTY_TABLE
 
 	for _, hook in ipairs(LIFECYCLE_HOOKS) do
 		if system[hook] == nil then
@@ -45,11 +45,11 @@ function ModuleUtil.prepareSystems(systems, fallbacks)
 	local prepared = {}
 	for index, system in ipairs(systems) do
 		if type(system) == "table" then
-                        prepared[index] = ensureLifecycle(system, fallbacks)
-                else
-                        prepared[index] = system
-                end
-        end
+			prepared[index] = ensureLifecycle(system, fallbacks)
+		else
+			prepared[index] = system
+		end
+	end
 
 	return prepared
 end

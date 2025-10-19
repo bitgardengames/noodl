@@ -43,17 +43,17 @@ local english = {
 					title = "Floor Explorer",
 					description = "Clear ${goal} floors in a single run.",
 				},
-                                apples = {
-                                        title = "Fruit Sampler",
-                                        description = "Collect ${goal} fruit in a single run.",
-                                        progress = "Fruit collected: ${current}/${goal}",
-                                },
-                                shield_showoff = {
-                                        title = "Shield Showoff",
-                                        description = "Break rocks and parry saws ${goal} times total in a single run.",
-                                        progress = "Rocks: ${rocks} | Saws: ${saws} (Total ${current}/${goal})",
-                                        complete = "Shield spectacle! ${current} maneuvers performed.",
-                                },
+				apples = {
+					title = "Fruit Sampler",
+					description = "Collect ${goal} fruit in a single run.",
+					progress = "Fruit collected: ${current}/${goal}",
+				},
+				shield_showoff = {
+					title = "Shield Showoff",
+					description = "Break rocks and parry saws ${goal} times total in a single run.",
+					progress = "Rocks: ${rocks} | Saws: ${saws} (Total ${current}/${goal})",
+					complete = "Shield spectacle! ${current} maneuvers performed.",
+				},
 				combos = {
 					title = "Combo Conductor",
 					description = "Trigger ${goal} combos in a single run.",
@@ -61,16 +61,16 @@ local english = {
 				},
 				shields = {
 					title = "Shield Specialist",
-                                        description = "Trigger ${goal} shields in a single run.",
+					description = "Trigger ${goal} shields in a single run.",
 					progress = "Emergency saves: ${current}/${goal}",
 					complete = "Shield mastery! ${current} clutch saves.",
 				},
-                                balanced_banquet = {
-                                        title = "Balanced Banquet",
-                                        description = "Pull off ${goal} combo feasts by earning a combo after every ${apples_per_combo} fruit in one run.",
-                                        progress = "Combo feasts: ${current}/${goal} (Fruit: ${apples} | Combos: ${combos})",
-                                        complete = "Balanced banquet! ${current} combo feasts served.",
-                                },
+				balanced_banquet = {
+					title = "Balanced Banquet",
+					description = "Pull off ${goal} combo feasts by earning a combo after every ${apples_per_combo} fruit in one run.",
+					progress = "Combo feasts: ${current}/${goal} (Fruit: ${apples} | Combos: ${combos})",
+					complete = "Balanced banquet! ${current} combo feasts served.",
+				},
 				marathon = {
 					title = "Serpentine Marathon",
 					description = "Slither ${goal} tiles in a single run.",
@@ -115,97 +115,97 @@ local english = {
 					progress = "Deepest floor: ${current}/${goal}",
 					complete = "Depth conquered! Reached floor ${current}.",
 				},
-                                apple_hoarder = {
-                                        title = "Apple Hoarder",
-                                        description = "Collect ${goal} apples in a single run.",
-                                        progress = "Run apples: ${current}/${goal}",
-                                },
-                                streak_perfectionist = {
-                                        title = "Streak Perfectionist",
-                                        description = "Collect ${goal} fruit without turning in a single run.",
-                                        progress = "No-turn chain: ${current}/${goal}",
-                                        complete = "Flawless flow! Chain reached ${current}.",
-                                },
-                                dragonfruit_gourmand = {
-                                        title = "Dragonfruit Gourmand",
-                                        description = "Devour ${goal} dragonfruit in a single run.",
-                                        progress = "Dragonfruit eaten: ${current}/${goal}",
-                                        complete = "Sweet success! ${current} dragonfruit devoured.",
-                                },
-                                shield_triathlon = {
-                                        title = "Shield Triathlon",
-                                        description = "Bounce, break, and parry with your shield in a single run.",
-                                        progress = "Bounces: ${bounces} | Rocks: ${rocks} | Saws: ${saws} (${current}/${goal})",
-                                        complete = "Shield trifecta! All three maneuvers completed.",
-                                },
-                                floor_speedrunner = {
-                                        title = "Floor Speedrunner",
-                                        description = "Clear any floor in under ${seconds} seconds.",
-                                        progress = "Fastest floor: ${best} (Target ${target})",
-                                        complete = "Blazing clear! Floor finished in ${best}.",
-                                },
-                                pace_setter = {
-                                        title = "Pace Setter",
-                                        description = "Maintain an average pace of ${pace} tiles per minute.",
-                                        progress = "Current pace: ${pace}/${goal} (Tiles: ${tiles}, Minutes: ${minutes})",
-                                        complete = "Steady sprint! Pace hit ${pace} tiles per minute.",
-                                },
-                                combo_harvester = {
-                                        title = "Combo Harvester",
-                                        description = "Trigger combos after hoarding ${fruit_batch} fruit ${goal} times in one run.",
-                                        progress = "Harvests: ${current}/${goal} (Fruit: ${apples}, Combos: ${combos})",
-                                        complete = "Combo harvest complete! ${current} powerful bursts.",
-                                },
-                                guardian_angel = {
-                                        title = "Guardian Angel",
-                                        description = "Save ${target_shields} times and survive ${target_minutes} minutes in one run.",
-                                        progress = "Conditions: ${current}/${goal} (Saves: ${shields}/${target_shields}, Minutes: ${minutes}/${target_minutes})",
-                                        complete = "Guardian duties fulfilled! Both conditions cleared.",
-                                },
-                                fruit_rush = {
-                                        title = "Fruit Rush",
-                                        description = "Keep an apple pace of ${pace} per minute in a single run.",
-                                        progress = "Current pace: ${pace}/${goal} (Apples: ${apples}, Minutes: ${minutes})",
-                                        complete = "Fruit frenzy! Pace reached ${pace} per minute.",
-                                },
-                                achievement_hunter = {
-                                        title = "Achievement Hunter",
-                                        description = "Unlock ${goal} achievement during a single run.",
-                                        progress = "Achievements unlocked: ${unlocked}/${goal}",
-                                        complete = "Achievement spree! ${unlocked} unlocked this run.",
-                                },
-                                consistency_champion = {
-                                        title = "Consistency Champion",
-                                        description = "Keep floor clear times within ${tolerance} seconds of each other in one run.",
-                                        progress = "Fastest: ${fastest} | Slowest: ${slowest} (Difference ${difference}s)",
-                                        complete = "Consistent clears! Difference held to ${difference}s.",
-                                },
-                                depth_sprinter = {
-                                        title = "Depth Sprinter",
-                                        description = "Reach floor ${target_floor} within ${target_time}.",
-                                        progress = "Floors: ${floors}/${target_floor}, Time: ${time}/${target_time}",
-                                        complete = "Lightning descent! Goal hit in ${time}.",
-                                },
-                                momentum_master = {
-                                        title = "Momentum Master",
-                                        description = "Stack ${goal} momentum surges of ${fruit_chunk} fruit and ${tile_chunk} tiles without slowing.",
-                                        progress = "Surges: ${current}/${goal} (Chain: ${chain}, Tiles: ${tiles})",
-                                        complete = "Momentum maintained! ${current} surges sustained.",
-                                },
-                                floor_cartographer = {
-                                        title = "Floor Cartographer",
-                                        description = "Spend ${minutes_chunk} minutes exploring each of ${goal} floors in one run.",
-                                        progress = "Floors mapped: ${current}/${goal} (Floors: ${floors}, Minutes: ${minutes})",
-                                        complete = "Map complete! ${current} floors fully charted.",
-                                },
-                                safety_dance = {
-                                        title = "Safety Dance",
-                                        description = "Pair up ${goal} wall bounces with saw parries in a single run.",
-                                        progress = "Bounces: ${bounces}, Saws: ${saws} (${current}/${goal})",
-                                        complete = "Safe steps! ${current} perfect pairs executed.",
-                                },
-                        },
-                },
+				apple_hoarder = {
+					title = "Apple Hoarder",
+					description = "Collect ${goal} apples in a single run.",
+					progress = "Run apples: ${current}/${goal}",
+				},
+				streak_perfectionist = {
+					title = "Streak Perfectionist",
+					description = "Collect ${goal} fruit without turning in a single run.",
+					progress = "No-turn chain: ${current}/${goal}",
+					complete = "Flawless flow! Chain reached ${current}.",
+				},
+				dragonfruit_gourmand = {
+					title = "Dragonfruit Gourmand",
+					description = "Devour ${goal} dragonfruit in a single run.",
+					progress = "Dragonfruit eaten: ${current}/${goal}",
+					complete = "Sweet success! ${current} dragonfruit devoured.",
+				},
+				shield_triathlon = {
+					title = "Shield Triathlon",
+					description = "Bounce, break, and parry with your shield in a single run.",
+					progress = "Bounces: ${bounces} | Rocks: ${rocks} | Saws: ${saws} (${current}/${goal})",
+					complete = "Shield trifecta! All three maneuvers completed.",
+				},
+				floor_speedrunner = {
+					title = "Floor Speedrunner",
+					description = "Clear any floor in under ${seconds} seconds.",
+					progress = "Fastest floor: ${best} (Target ${target})",
+					complete = "Blazing clear! Floor finished in ${best}.",
+				},
+				pace_setter = {
+					title = "Pace Setter",
+					description = "Maintain an average pace of ${pace} tiles per minute.",
+					progress = "Current pace: ${pace}/${goal} (Tiles: ${tiles}, Minutes: ${minutes})",
+					complete = "Steady sprint! Pace hit ${pace} tiles per minute.",
+				},
+				combo_harvester = {
+					title = "Combo Harvester",
+					description = "Trigger combos after hoarding ${fruit_batch} fruit ${goal} times in one run.",
+					progress = "Harvests: ${current}/${goal} (Fruit: ${apples}, Combos: ${combos})",
+					complete = "Combo harvest complete! ${current} powerful bursts.",
+				},
+				guardian_angel = {
+					title = "Guardian Angel",
+					description = "Save ${target_shields} times and survive ${target_minutes} minutes in one run.",
+					progress = "Conditions: ${current}/${goal} (Saves: ${shields}/${target_shields}, Minutes: ${minutes}/${target_minutes})",
+					complete = "Guardian duties fulfilled! Both conditions cleared.",
+				},
+				fruit_rush = {
+					title = "Fruit Rush",
+					description = "Keep an apple pace of ${pace} per minute in a single run.",
+					progress = "Current pace: ${pace}/${goal} (Apples: ${apples}, Minutes: ${minutes})",
+					complete = "Fruit frenzy! Pace reached ${pace} per minute.",
+				},
+				achievement_hunter = {
+					title = "Achievement Hunter",
+					description = "Unlock ${goal} achievement during a single run.",
+					progress = "Achievements unlocked: ${unlocked}/${goal}",
+					complete = "Achievement spree! ${unlocked} unlocked this run.",
+				},
+				consistency_champion = {
+					title = "Consistency Champion",
+					description = "Keep floor clear times within ${tolerance} seconds of each other in one run.",
+					progress = "Fastest: ${fastest} | Slowest: ${slowest} (Difference ${difference}s)",
+					complete = "Consistent clears! Difference held to ${difference}s.",
+				},
+				depth_sprinter = {
+					title = "Depth Sprinter",
+					description = "Reach floor ${target_floor} within ${target_time}.",
+					progress = "Floors: ${floors}/${target_floor}, Time: ${time}/${target_time}",
+					complete = "Lightning descent! Goal hit in ${time}.",
+				},
+				momentum_master = {
+					title = "Momentum Master",
+					description = "Stack ${goal} momentum surges of ${fruit_chunk} fruit and ${tile_chunk} tiles without slowing.",
+					progress = "Surges: ${current}/${goal} (Chain: ${chain}, Tiles: ${tiles})",
+					complete = "Momentum maintained! ${current} surges sustained.",
+				},
+				floor_cartographer = {
+					title = "Floor Cartographer",
+					description = "Spend ${minutes_chunk} minutes exploring each of ${goal} floors in one run.",
+					progress = "Floors mapped: ${current}/${goal} (Floors: ${floors}, Minutes: ${minutes})",
+					complete = "Map complete! ${current} floors fully charted.",
+				},
+				safety_dance = {
+					title = "Safety Dance",
+					description = "Pair up ${goal} wall bounces with saw parries in a single run.",
+					progress = "Bounces: ${bounces}, Saws: ${saws} (${current}/${goal})",
+					complete = "Safe steps! ${current} perfect pairs executed.",
+				},
+			},
+		},
 		floor_select = {
 			title = "Choose a Floor",
 			subtitle = "Jump back into any unlocked layer of the descent.",
@@ -339,7 +339,7 @@ local english = {
 				bestComboStreak = "Best Combo Streak",
 				totalCombosTriggered = "Combos Pulled Off",
 				mostApplesInRun = "Most Apples in a Run",
-                                shieldsSaved = "Emergency Shields Triggered",
+				shieldsSaved = "Emergency Shields Triggered",
 				tilesTravelled = "Tiles Slithered",
 				totalTimeAlive = "Time Alive",
 				longestRunDuration = "Longest Run",
@@ -376,7 +376,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			run_summary_title = "Run Summary",
 			high_score_badge = "New Personal Best!",
 			stats_best_label = "Best",
-                        stats_apples_label = "Fruit",
+			stats_apples_label = "Fruit",
 			stats_total_label = "Lifetime Apples",
 			total_apples_collected = "Lifetime Apples: ${count}",
 			fruit_summary_title = "Fruit Spoils",
@@ -395,10 +395,10 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			meta_progress_fruit_singular = "1 fruit",
 			meta_progress_fruit_plural = "${count} fruit",
 			meta_progress_bonus = "Bonus XP: +${bonus}",
-                        meta_progress_level_label = "Level ${level}",
-                        meta_progress_total_summary_next = "Total XP: ${total} (${remaining} XP to next level)",
-                        meta_progress_total_summary_max = "Total XP: ${total} (Max level reached!)",
-                        meta_progress_no_events = "Keep playing to unlock new rewards.",
+			meta_progress_level_label = "Level ${level}",
+			meta_progress_total_summary_next = "Total XP: ${total} (${remaining} XP to next level)",
+			meta_progress_total_summary_max = "Total XP: ${total} (Max level reached!)",
+			meta_progress_no_events = "Keep playing to unlock new rewards.",
 			meta_progress_level_up = "Level ${level} reached!",
 			meta_progress_level_up_subtitle = "Progression systems expanding soon.",
 			meta_progress_unlock_header = "Unlock: ${name}",
@@ -407,7 +407,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			daily_streak_extended = "Daily streak extended to ${streak} ${unit}!",
 			daily_streak_new_best = "New best daily streak: ${streak} ${unit}!",
 			daily_streak_status = "Daily streak: ${streak} ${unit} (Best: ${best} ${bestUnit})",
-                        daily_streak_already_complete = "Today's challenge is already complete. Streak safe at ${streak} ${unit}.",
+			daily_streak_already_complete = "Today's challenge is already complete. Streak safe at ${streak} ${unit}.",
 			deaths = {
 				self = {
 					"You bit yourself. Ouch.",
@@ -472,8 +472,8 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			floor_intro = {
 				prompt = "Press any key to descend",
 				heal_section_title = "Floor Rest",
-                            heal_note = "Forged ${amount} shield(s).",
-                            shield_note = "Forged ${amount} shield(s).",
+				heal_note = "Forged ${amount} shield(s).",
+				shield_note = "Forged ${amount} shield(s).",
 			},
 		},
 		upgrades = {
@@ -486,7 +486,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			momentum_label = "Momentum",
 			hud = {
-                                shields = "Shields",
+				shields = "Shields",
 				ready = "Ready",
 				depleted = "Depleted",
 				charging = "Charging",
@@ -502,24 +502,24 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			stone_skin = {
 				name = "Stone Skin",
-                            description = "Gain a shield that shatters rocks and shrugs off a saw or laser hit.",
+				description = "Gain a shield that shatters rocks and shrugs off a saw or laser hit.",
 				shield_text = "Stone Skin!",
 			},
-                        aegis_recycler = {
-                                name = "Shield Recycler",
-                                description = "Every two broken shields forge a fresh one.",
-                                reforged = "Shield Reforged",
-                        },
-                        amber_bloom = {
-                                name = "Amber Bloom",
-                                description = "Track shattered rocks; every third one forges 25% shield progress, letting environmental cleanup snowball into extra protection.",
-                                activation_text = "Amber Bloom",
-                        },
-                        extra_bite = {
-                                name = "Extra Bite",
-                                description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
-                                celebration = "Early Exit",
-                        },
+			aegis_recycler = {
+				name = "Shield Recycler",
+				description = "Every two broken shields forge a fresh one.",
+				reforged = "Shield Reforged",
+			},
+			amber_bloom = {
+				name = "Amber Bloom",
+				description = "Track shattered rocks; every third one forges 25% shield progress, letting environmental cleanup snowball into extra protection.",
+				activation_text = "Amber Bloom",
+			},
+			extra_bite = {
+				name = "Extra Bite",
+				description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
+				celebration = "Early Exit",
+			},
 			adrenaline_surge = {
 				name = "Adrenaline Surge",
 				description = "Snake surges forward after each fruit.",
@@ -533,9 +533,9 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Deliberate Coil",
 				description = "Snake moves 15% slower. The exit unlocks one fruit later.",
 			},
-                        pocket_springs = {
-                                name = "Tempest Ward",
-                            description = "After collecting twenty fruit, forge a single shield charge.",
+			pocket_springs = {
+				name = "Tempest Ward",
+				description = "After collecting twenty fruit, forge a single shield charge.",
 			},
 			mapmakers_compass = {
 				name = "Mapmaker's Compass",
@@ -551,22 +551,22 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			molting_reflex = {
 				name = "Molting Reflex",
-                            description = "Shields trigger a 60% adrenaline surge.",
+				description = "Shields trigger a 60% adrenaline surge.",
 			},
-                        circuit_breaker = {
-                                name = "Circuit Breaker",
-                                description = "Saw tracks freeze for 1s after each fruit.",
-                        },
-                        subduction_array = {
-                                name = "Subduction Array",
-                                description = "After each fruit, saws sink beneath their tracks for 1.6s.",
-                                activation_text = "Saws Submerge",
-                        },
-                        stonebreaker_hymn = {
-                                name = "Stonebreaker Hymn",
-                                description = "Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock.",
-                        },
-                        diffraction_barrier = {
+			circuit_breaker = {
+				name = "Circuit Breaker",
+				description = "Saw tracks freeze for 1s after each fruit.",
+			},
+			subduction_array = {
+				name = "Subduction Array",
+				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
+				activation_text = "Saws Submerge",
+			},
+			stonebreaker_hymn = {
+				name = "Stonebreaker Hymn",
+				description = "Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock.",
+			},
+			diffraction_barrier = {
 				name = "Diffraction Barrier",
 				description = "Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s.",
 			},
@@ -576,17 +576,17 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			wardens_chorus = {
 				name = "Warden's Chorus",
-                            description = "Each Defense upgrade adds shield progress at the start of every floor.",
+				description = "Each Defense upgrade adds shield progress at the start of every floor.",
 			},
 			caravan_contract = {
 				name = "Caravan Contract",
 				description = "Shops offer +1 card. Each floor spawns an extra rock.",
 			},
-                        verdant_bonds = {
-                                name = "Verdant Bonds",
-                                description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a shield.",
-                                activation_text = "Verdant Growth",
-                        },
+			verdant_bonds = {
+				name = "Verdant Bonds",
+				description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a shield.",
+				activation_text = "Verdant Growth",
+			},
 			fresh_supplies = {
 				name = "Fresh Supplies",
 				description = "Discard the current shop cards and restock with new ones.",
@@ -595,21 +595,21 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				name = "Stone Census",
 				description = "Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%).",
 			},
-                        guild_ledger = {
-                                name = "Guild Ledger",
-                                description = "Each shop slot reduces rock spawn chance by 1.5%.",
-                        },
-                        radiant_charter = {
-                                name = "Radiant Charter",
-                                description = "Each extra shop slot removes 1 laser (minimum 0) and adds 1 saw to floor generation.",
-                        },
-                        predators_reflex = {
-                                name = "Predator's Reflex",
-                                description = "Adrenaline bursts are 25% stronger and trigger at the start of each floor.",
-                        },
+			guild_ledger = {
+				name = "Guild Ledger",
+				description = "Each shop slot reduces rock spawn chance by 1.5%.",
+			},
+			radiant_charter = {
+				name = "Radiant Charter",
+				description = "Each extra shop slot removes 1 laser (minimum 0) and adds 1 saw to floor generation.",
+			},
+			predators_reflex = {
+				name = "Predator's Reflex",
+				description = "Adrenaline bursts are 25% stronger and trigger at the start of each floor.",
+			},
 			abyssal_catalyst = {
 				name = "Abyssal Catalyst",
-                            description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
+				description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
 			},
 			spectral_harvest = {
 				name = "Spectral Harvest",
@@ -622,7 +622,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			crystal_cache = {
 				name = "Crystal Cache",
-                            description = "Shields burst into motes worth +2 bonus score.",
+				description = "Shields burst into motes worth +2 bonus score.",
 				combo_bonus = "Crystal Cache +2",
 			},
 			tectonic_resolve = {
@@ -631,7 +631,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			titanblood_pact = {
 				name = "Titanblood Pact",
-                            description = "Gain +3 shields and +2s saw stall duration. Grow by +5 and gain +2 extra growth.",
+				description = "Gain +3 shields and +2s saw stall duration. Grow by +5 and gain +2 extra growth.",
 			},
 			chronospiral_core = {
 				name = "Chronospiral Core",
@@ -646,20 +646,20 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 				description = "Press Space (or A/Right Shoulder on a controller) to dash forward, smashing through rocks while briefly speeding up.",
 				activation_text = "Thunder Dash!",
 			},
-                        sparkstep_relay = {
-                                name = "Sparkstep Relay",
-                                description = "Dashing shatters the nearest rock and stalls saws for 0.6s.",
-                                activation_text = "Sparkstep!",
-                        },
-                        chrono_ward = {
-                                name = "Chrono Ward",
-                                description = "Each time a shield is consumed, time slows briefly so you can thread through danger and plan your next move.",
-                        },
-                        temporal_anchor = {
-                                name = "Temporal Anchor",
-                                description = "Press Shift (or X/Left Shoulder on a controller) to slow time for a short duration, reducing all movement to 35% speed.",
-                                activation_text = "Time Slow!",
-                        },
+			sparkstep_relay = {
+				name = "Sparkstep Relay",
+				description = "Dashing shatters the nearest rock and stalls saws for 0.6s.",
+				activation_text = "Sparkstep!",
+			},
+			chrono_ward = {
+				name = "Chrono Ward",
+				description = "Each time a shield is consumed, time slows briefly so you can thread through danger and plan your next move.",
+			},
+			temporal_anchor = {
+				name = "Temporal Anchor",
+				description = "Press Shift (or X/Left Shoulder on a controller) to slow time for a short duration, reducing all movement to 35% speed.",
+				activation_text = "Time Slow!",
+			},
 			zephyr_coils = {
 				name = "Zephyr Coils",
 				description = "Snake moves 20% faster. You gain +1 extra growth.",
@@ -724,27 +724,27 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			wallRicochet = {
 				title = "Ricochet Routine",
-                            description = "Bounce off a wall using a shield.",
+				description = "Bounce off a wall using a shield.",
 			},
 			rockShatter = {
 				title = "Stone Sneeze",
-                            description = "Shatter a rock by face-checking it with a shield.",
+				description = "Shatter a rock by face-checking it with a shield.",
 			},
 			rockCrusher = {
 				title = "Rock Crusher",
-                            description = "Pulverize 25 rocks with the help of shields.",
+				description = "Pulverize 25 rocks with the help of shields.",
 			},
 			sawParry = {
 				title = "Saw Whisperer",
-                            description = "Let a shield devour a saw for you.",
+				description = "Let a shield devour a saw for you.",
 			},
 			sawAnnihilator = {
 				title = "Saw Annihilator",
-                            description = "Reduce 25 saws to splinters using shields.",
+				description = "Reduce 25 saws to splinters using shields.",
 			},
 			shieldTriad = {
 				title = "Crash-Test Maestro",
-                            description = "In one run, shrug off a wall, rock, and saw with shields.",
+				description = "In one run, shrug off a wall, rock, and saw with shields.",
 			},
 			straightLineSnacker = {
 				title = "Straight-Line Snacker",
@@ -752,7 +752,7 @@ victory_story_body = "Pip helps carry the gathered fruit home, and the orchard f
 			},
 			shieldlessWonder = {
 				title = "Shieldless Wonder",
-                            description = "Clear 3 floors in a run without triggering a shield.",
+				description = "Clear 3 floors in a run without triggering a shield.",
 			},
 			dragonHunter = {
 				title = "Dragon Hunter",
