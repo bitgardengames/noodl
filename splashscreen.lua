@@ -4,7 +4,7 @@ local SplashScreen = {
 	transitionDurationIn = 0.25,
 	transitionDurationOut = 0.25,
 	displayDuration = 2,
-	backgroundColor = { 0.04, 0.04, 0.05, 1 },
+	backgroundColor = {0.04, 0.04, 0.05, 1},
 }
 
 local logoImage = nil

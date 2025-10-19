@@ -221,7 +221,7 @@ local function collectPositions(source, limit, extractor)
 		if item then
 			local px, py = extractor(item)
 			if px and py then
-				result[#result + 1] = { px, py }
+				result[#result + 1] = {px, py}
 			end
 		end
 	end
@@ -602,7 +602,7 @@ local function applyMapmakersCompass(state, context, options)
 	local candidates = {}
 	for _, entry in ipairs(mapmakersCompassHazards) do
 		local value = context[entry.key] or 0
-		table.insert(candidates, { info = entry, value = value })
+		table.insert(candidates, {info = entry, value = value})
 	end
 
         table.sort(candidates, compareCompassCandidates)
@@ -685,7 +685,7 @@ local function mapmakersCompassFloorStart(data, state)
 	if getStacks(state, "mapmakers_compass") <= 0 then return end
 
 	local context = data.context
-	applyMapmakersCompass(state, context, { celebrate = true, eventData = data })
+	applyMapmakersCompass(state, context, {celebrate = true, eventData = data})
 end
 
 local function normalizeDirection(dx, dy)
@@ -974,7 +974,7 @@ local pool = {
 		rarity = "uncommon",
 		tags = {"adrenaline"},
 		onAcquire = function(state)
-			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+			state.effects.adrenaline = state.effects.adrenaline or {duration = 3, boost = 1.5}
 			celebrateUpgrade(getUpgradeString("adrenaline_surge", "name"), nil, {
 				color = {1, 0.42, 0.42, 1},
 				particleCount = 20,
@@ -1108,7 +1108,7 @@ local pool = {
 			end
 
 			if state.counters.mapmakersCompassLastContext then
-				applyMapmakersCompass(state, state.counters.mapmakersCompassLastContext, { celebrate = false })
+				applyMapmakersCompass(state, state.counters.mapmakersCompassLastContext, {celebrate = false})
 			end
 		end,
 	}),
@@ -1119,7 +1119,7 @@ local pool = {
 		rarity = "uncommon",
 		requiresTags = {"adrenaline"},
 		onAcquire = function(state)
-			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+			state.effects.adrenaline = state.effects.adrenaline or {duration = 3, boost = 1.5}
 			state.effects.adrenalineDurationBonus = (state.effects.adrenalineDurationBonus or 0) + 2
 			if Face and Face.set then
 				Face:set("happy", 1.2)
@@ -1679,7 +1679,7 @@ local pool = {
 		rarity = "rare",
 		requiresTags = {"adrenaline"},
 		onAcquire = function(state)
-			state.effects.adrenaline = state.effects.adrenaline or { duration = 3, boost = 1.5 }
+			state.effects.adrenaline = state.effects.adrenaline or {duration = 3, boost = 1.5}
 			state.effects.adrenalineBoostBonus = (state.effects.adrenalineBoostBonus or 0) + 0.25
 			state.effects.predatorsReflex = true
 			if Snake and Snake.enablePredatorsReflex then
@@ -1746,14 +1746,14 @@ local pool = {
 		onAcquire = function(state)
 			state.counters.spectralHarvestReady = true
 			if Snake and Snake.setSpectralHarvestReady then
-				Snake:setSpectralHarvestReady(true, { pulse = 0.8, instantIntensity = 0.45 })
+				Snake:setSpectralHarvestReady(true, {pulse = 0.8, instantIntensity = 0.45})
 			end
 		end,
 		handlers = {
 			floorStart = function(_, state)
 				state.counters.spectralHarvestReady = true
 				if Snake and Snake.setSpectralHarvestReady then
-					Snake:setSpectralHarvestReady(true, { pulse = 0.6 })
+					Snake:setSpectralHarvestReady(true, {pulse = 0.6})
 				end
 			end,
 			fruitCollected = function(_, state)
@@ -1762,9 +1762,9 @@ local pool = {
 
 				if Snake then
 					if Snake.triggerSpectralHarvest then
-						Snake:triggerSpectralHarvest({ flash = 1, echo = 1, instantIntensity = 0.55 })
+						Snake:triggerSpectralHarvest({flash = 1, echo = 1, instantIntensity = 0.55})
 					elseif Snake.setSpectralHarvestReady then
-						Snake:setSpectralHarvestReady(false, { pulse = 0.8 })
+						Snake:setSpectralHarvestReady(false, {pulse = 0.8})
 					end
 				end
 
@@ -2226,7 +2226,7 @@ function Upgrades:getHUDIndicators()
 		local status = hudStatus(statusKey)
 		local chargeLabel
 		if rate and rate > 0 then
-			chargeLabel = hudText("percent", { percent = math.floor(progress * 100 + 0.5) })
+			chargeLabel = hudText("percent", {percent = math.floor(progress * 100 + 0.5)})
 		end
 
 		table.insert(indicators, {
@@ -2281,7 +2281,7 @@ function Upgrades:getHUDIndicators()
 
 		if active and duration > 0 then
 			charge = clamp(timer / duration, 0, 1)
-			chargeLabel = hudText("seconds", { seconds = string.format("%.1f", timer) })
+			chargeLabel = hudText("seconds", {seconds = string.format("%.1f", timer)})
 		end
 
 		local status = active and hudStatus("active") or hudStatus("ready")
@@ -2312,7 +2312,7 @@ function Upgrades:getHUDIndicators()
 		if dashState.active and dashState.duration > 0 then
 			local remaining = math.max(dashState.timer or 0, 0)
 			charge = clamp(remaining / dashState.duration, 0, 1)
-			chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remaining) })
+			chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remaining)})
 			status = hudStatus("active")
 			showBar = true
 		else
@@ -2321,7 +2321,7 @@ function Upgrades:getHUDIndicators()
 			if cooldown > 0 and remainingCooldown > 0 then
 				local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
 				charge = progress
-				chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remainingCooldown) })
+				chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remainingCooldown)})
 				status = hudStatus("charging")
 				showBar = true
 			else
@@ -2359,7 +2359,7 @@ function Upgrades:getHUDIndicators()
 		if timeState.active and timeState.duration > 0 then
 			local remaining = math.max(timeState.timer or 0, 0)
 			charge = clamp(remaining / timeState.duration, 0, 1)
-			chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remaining) })
+			chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remaining)})
 			status = hudStatus("active")
 			showBar = true
 		else
@@ -2374,7 +2374,7 @@ function Upgrades:getHUDIndicators()
 				if cooldown > 0 and remainingCooldown > 0 then
 					local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
 					charge = progress
-					chargeLabel = hudText("seconds", { seconds = string.format("%.1f", remainingCooldown) })
+					chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remainingCooldown)})
 					status = hudStatus("charging")
 					showBar = true
 				else
@@ -2481,7 +2481,7 @@ function Upgrades:getComboBonus(comboCount)
 		local amount = round(flat)
 		if amount ~= 0 then
 			bonus = bonus + amount
-			table.insert(breakdown, { label = Localization:get("upgrades.momentum_label"), amount = amount })
+			table.insert(breakdown, {label = Localization:get("upgrades.momentum_label"), amount = amount})
 		end
 	end
 
@@ -2540,7 +2540,7 @@ function Upgrades:tryFloorReplay(game, cause)
 
 	self:applyPersistentEffects(false)
 	if Snake.setPhoenixEchoCharges then
-		Snake:setPhoenixEchoCharges(state.counters.phoenixEchoCharges or 0, { triggered = 1.4, flareDuration = 1.4 })
+		Snake:setPhoenixEchoCharges(state.counters.phoenixEchoCharges or 0, {triggered = 1.4, flareDuration = 1.4})
 	end
 
 	return restored
@@ -2657,7 +2657,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
 		if Snake.enablePredatorsReflex then
 			Snake:enablePredatorsReflex()
 		else
-			Snake.predatorsReflex = Snake.predatorsReflex or { intensity = 0, target = 0, time = 0 }
+			Snake.predatorsReflex = Snake.predatorsReflex or {intensity = 0, target = 0, time = 0}
 			Snake.predatorsReflex.enabled = true
 		end
 	end
@@ -3043,7 +3043,7 @@ function Upgrades:acquire(card, context)
 		end
 	end
 
-	self:notify("upgradeAcquired", { id = upgrade.id, upgrade = upgrade, context = context })
+	self:notify("upgradeAcquired", {id = upgrade.id, upgrade = upgrade, context = context})
 	self:applyPersistentEffects(false)
 end
 

@@ -1,7 +1,7 @@
 local ModuleUtil = {}
 
 local noop = function() end
-local LIFECYCLE_HOOKS = { "load", "reset", "update", "draw" }
+local LIFECYCLE_HOOKS = {"load", "reset", "update", "draw"}
 local EMPTY_TABLE = {}
 
 function ModuleUtil.create(name, defaults)

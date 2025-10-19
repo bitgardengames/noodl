@@ -61,7 +61,7 @@ end
 
 local function copyColor(color)
         if not color then
-                return { 1, 1, 1, 1 }
+                return {1, 1, 1, 1}
         end
 
 	return {
@@ -125,7 +125,7 @@ local function addCell(target, seen, col, row)
 	end
 
 	seen[key] = true
-	target[#target + 1] = { col, row }
+	target[#target + 1] = {col, row}
 end
 
 local function buildCollisionCellsForSaw(saw)
@@ -630,7 +630,7 @@ function Saws:stall(duration, options)
 			if saw then
 				local cx, cy = getSawCenter(saw)
 				if cx and cy then
-					positions[#positions + 1] = { cx, cy }
+					positions[#positions + 1] = {cx, cy}
 					sawDetails[#sawDetails + 1] = {
 						x = cx,
 						y = cy,
@@ -696,7 +696,7 @@ end
 function Saws:onFruitCollected()
 	local duration = self:getStallOnFruit()
 	if duration > 0 then
-		self:stall(duration, { cause = "fruit" })
+		self:stall(duration, {cause = "fruit"})
 	end
 end
 

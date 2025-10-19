@@ -39,8 +39,8 @@ function DrawWord.draw(word, ox, oy, cellSize, spacing)
 			for index, pt in ipairs(def) do
 				local px = x + pt[1] * cellSize
 				local py = oy + pt[2] * cellSize
-				letterPoints[index] = { x = px, y = py }
-				fullTrail[#fullTrail + 1] = { x = px, y = py }
+				letterPoints[index] = {x = px, y = py}
+				fullTrail[#fullTrail + 1] = {x = px, y = py}
 			end
 
 			local snakeTrail = {}

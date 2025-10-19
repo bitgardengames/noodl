@@ -551,7 +551,7 @@ registerEffect({
 		sendFloat(shader, "scanOffset", scanOffset)
 	end,
 	draw = function(effect, x, y, w, h, intensity)
-		return drawShader(effect, x, y, w, h, intensity, nil, { radius = 12 })
+		return drawShader(effect, x, y, w, h, intensity, nil, {radius = 12})
 	end,
 })
 -- Fluid, blossoming glowcap bloom for mysterious caverns

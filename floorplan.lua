@@ -256,7 +256,7 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
 	local plan = FloorPlan.getBaselinePlanForFloor(floorIndex)
 
 	if plan then
-		local context = { floor = floorIndex }
+		local context = {floor = floorIndex}
 		for key, value in pairs(plan) do
 			context[key] = value
 		end
@@ -269,7 +269,7 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
 	local lastIndex = #baselinePlan
 	local lastPlan = baselinePlan[lastIndex]
 	local extraFloors = floorIndex - lastIndex
-	local context = { floor = floorIndex }
+	local context = {floor = floorIndex}
 
 	for key, value in pairs(lastPlan) do
 		context[key] = value

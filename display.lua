@@ -1,14 +1,14 @@
 local Display = {}
 
-local displayModes = { "fullscreen", "windowed" }
+local displayModes = {"fullscreen", "windowed"}
 
 local resolutions = {
-	{ id = "1280x720", width = 1280, height = 720 },
-	{ id = "1280x800", width = 1280, height = 800, noteKey = "settings.resolution_note_steam_deck" },
-	{ id = "1366x768", width = 1366, height = 768 },
-	{ id = "1600x900", width = 1600, height = 900 },
-	{ id = "1920x1080", width = 1920, height = 1080 },
-	{ id = "2560x1440", width = 2560, height = 1440 },
+	{id = "1280x720", width = 1280, height = 720},
+	{id = "1280x800", width = 1280, height = 800, noteKey = "settings.resolution_note_steam_deck"},
+	{id = "1366x768", width = 1366, height = 768},
+	{id = "1600x900", width = 1600, height = 900},
+	{id = "1920x1080", width = 1920, height = 1080},
+	{id = "2560x1440", width = 2560, height = 1440},
 }
 
 local resolutionIndex = {}

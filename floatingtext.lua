@@ -19,12 +19,12 @@ local easeOutBack = Easing.easeOutBack
 
 local defaultFont = UI.fonts.subtitle or UI.fonts.display or lg.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 24)
 
-local baseColor = UI.colors.accentText or UI.colors.text or { 1, 1, 1, 1 }
-local fallbackShadow = { offsetX = 0, offsetY = 0, alpha = 0 }
+local baseColor = UI.colors.accentText or UI.colors.text or {1, 1, 1, 1}
+local fallbackShadow = {offsetX = 0, offsetY = 0, alpha = 0}
 
 local DEFAULTS = {
 	font = defaultFont,
-	color = { baseColor[1], baseColor[2], baseColor[3], 1 },
+	color = {baseColor[1], baseColor[2], baseColor[3], 1},
 	duration = 1.0,
 	riseSpeed = 30,
 	scale = 0.9,
@@ -45,7 +45,7 @@ local DEFAULTS = {
 		alpha = 0.35,
 	},
 	glow = {
-		color = { baseColor[1], baseColor[2], baseColor[3], 0.55 },
+		color = {baseColor[1], baseColor[2], baseColor[3], 0.55},
 		frequency = 3.4,
 		magnitude = 0.45,
 	},

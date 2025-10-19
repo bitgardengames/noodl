@@ -24,7 +24,7 @@ local SKIN_DEFINITIONS = {
 			outline = {0.05, 0.15, 0.12, 1.0},
 			glow = {0.35, 0.95, 0.80, 0.75},
 		},
-		unlock = { default = true },
+		unlock = {default = true},
 		order = 0,
 	},
 	{
@@ -55,7 +55,7 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = { default = true },
+		unlock = {default = true},
 		order = 12,
 	},
 	{
@@ -67,7 +67,7 @@ local SKIN_DEFINITIONS = {
 			outline = {0.28, 0.08, 0.00, 1.0},
 			glow = {1.00, 0.78, 0.32, 0.90},
 		},
-		unlock = { default = true },
+		unlock = {default = true},
 		order = 15,
 	},
 	{
@@ -79,7 +79,7 @@ local SKIN_DEFINITIONS = {
 			outline = {0.06, 0.16, 0.35, 1.0},
 			glow = {0.52, 0.86, 1.00, 0.88},
 		},
-		unlock = { default = true },
+		unlock = {default = true},
 		order = 18,
 	},
 	{
@@ -91,7 +91,7 @@ local SKIN_DEFINITIONS = {
 			outline = {0.20, 0.05, 0.02, 1.0},
 			glow = {0.95, 0.55, 0.30, 0.78},
 		},
-		unlock = { level = 3 },
+		unlock = {level = 3},
 		order = 20,
 	},
 	{
@@ -124,7 +124,7 @@ local SKIN_DEFINITIONS = {
 				color = {0.60, 0.85, 1.00, 1.0},
 			},
 		},
-		unlock = { level = 6 },
+		unlock = {level = 6},
 		order = 30,
 	},
 	{
@@ -143,7 +143,7 @@ local SKIN_DEFINITIONS = {
 				color = {1.00, 0.78, 0.35, 1.0},
 			},
 		},
-		unlock = { achievement = "appleTycoon" },
+		unlock = {achievement = "appleTycoon"},
 		order = 40,
 	},
 	{
@@ -177,7 +177,7 @@ local SKIN_DEFINITIONS = {
 				step = 3,
 			},
 		},
-		unlock = { achievement = "floorAscendant" },
+		unlock = {achievement = "floorAscendant"},
 		order = 50,
 	},
 	{
@@ -211,7 +211,7 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = { level = 9 },
+		unlock = {level = 9},
 		order = 60,
 	},
 	{
@@ -245,7 +245,7 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = { achievement = "metaMilestone5" },
+		unlock = {achievement = "metaMilestone5"},
 		order = 70,
 	},
 	{
@@ -279,7 +279,7 @@ local SKIN_DEFINITIONS = {
 				step = 1,
 			},
 		},
-		unlock = { achievement = "floorAbyss" },
+		unlock = {achievement = "floorAbyss"},
 		order = 80,
 	},
 	{
@@ -313,7 +313,7 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = { level = 12 },
+		unlock = {level = 12},
 		order = 90,
 	},
 	{
@@ -347,7 +347,7 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = { level = 15 },
+		unlock = {level = 15},
 		order = 95,
 	},
 	{
@@ -381,7 +381,7 @@ local SKIN_DEFINITIONS = {
 				step = 3,
 			},
 		},
-		unlock = { achievement = "scoreLegend" },
+		unlock = {achievement = "scoreLegend"},
 		order = 100,
 	},
 	{
@@ -415,7 +415,7 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = { achievement = "metaMilestone7" },
+		unlock = {achievement = "metaMilestone7"},
 		order = 110,
 	},
 	{
@@ -449,7 +449,7 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = { achievement = "dailyFunChampion" },
+		unlock = {achievement = "dailyFunChampion"},
 		order = 120,
 	},
 	{
@@ -483,7 +483,7 @@ local SKIN_DEFINITIONS = {
 				step = 3,
 			},
 		},
-		unlock = { achievement = "appleEternal" },
+		unlock = {achievement = "appleEternal"},
 		order = 130,
 	},
 	{
@@ -517,7 +517,7 @@ local SKIN_DEFINITIONS = {
 				step = 1,
 			},
 		},
-		unlock = { achievement = "rockCrusher" },
+		unlock = {achievement = "rockCrusher"},
 		order = 140,
 	},
 	{
@@ -551,7 +551,7 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = { achievement = "comboInferno" },
+		unlock = {achievement = "comboInferno"},
 		order = 150,
 	},
 }
@@ -640,7 +640,7 @@ local function serialize(value, indent)
 		return string.format("%q", value)
 	elseif valueType == "table" then
 		local spacing = string.rep(" ", indent)
-		local lines = { "{\n" }
+		local lines = {"{\n"}
 		local nextIndent = indent + 4
 		local entryIndent = string.rep(" ", nextIndent)
 		if isArray(value) then
@@ -991,14 +991,14 @@ local function resolveColor(color, fallback)
 		local g = color[2] or 0
 		local b = color[3] or 0
 		local a = color[4]
-		return { r, g, b, a or 1 }
+		return {r, g, b, a or 1}
 	end
 
 	if fallback then
 		return resolveColor(fallback)
 	end
 
-	return { 1, 1, 1, 1 }
+	return {1, 1, 1, 1}
 end
 
 function SnakeCosmetics:getBodyColor()
@@ -1010,7 +1010,7 @@ end
 function SnakeCosmetics:getOutlineColor()
 	local skin = self:getActiveSkin()
 	local palette = skin and skin.colors or {}
-	return resolveColor(palette.outline, { 0, 0, 0, 1 })
+	return resolveColor(palette.outline, {0, 0, 0, 1})
 end
 
 function SnakeCosmetics:getGlowColor()
@@ -1047,7 +1047,7 @@ function SnakeCosmetics:getPaletteForSkin(skin)
 	if not target then
 		return {
 			body = resolveColor(nil, Theme.snakeDefault),
-			outline = resolveColor(nil, { 0, 0, 0, 1 }),
+			outline = resolveColor(nil, {0, 0, 0, 1}),
 			glow = resolveColor(nil, Theme.snakeDefault),
 		}
 	end
@@ -1057,7 +1057,7 @@ function SnakeCosmetics:getPaletteForSkin(skin)
 
 	local result = {}
 	result.body = resolveColor(palette.body, Theme.snakeDefault)
-	result.outline = resolveColor(palette.outline, { 0, 0, 0, 1 })
+	result.outline = resolveColor(palette.outline, {0, 0, 0, 1})
 
 	local glowEffect = effects.glow or {}
 	if glowEffect.color then

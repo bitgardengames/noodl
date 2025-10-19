@@ -34,7 +34,7 @@ function PlayerStats:load()
 end
 
 function PlayerStats:save()
-	local lines = { "return {\n" }
+	local lines = {"return {\n"}
 
 	for k, v in pairs(self.data) do
 		local vType = type(v)

@@ -32,7 +32,7 @@ local dailyBarCelebration = {
 	sparkles = {},
 	finished = false,
 }
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local analogAxisDirections = {horizontal = nil, vertical = nil}
 local titleSaw = SawActor.new()
 
 local random = (love.math and love.math.random) or math.random
@@ -122,12 +122,12 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-	leftx = { slot = "horizontal" },
-	rightx = { slot = "horizontal" },
-	lefty = { slot = "vertical" },
-	righty = { slot = "vertical" },
-	[1] = { slot = "horizontal" },
-	[2] = { slot = "vertical" },
+	leftx = {slot = "horizontal"},
+	rightx = {slot = "horizontal"},
+	lefty = {slot = "vertical"},
+	righty = {slot = "vertical"},
+	[1] = {slot = "horizontal"},
+	[2] = {slot = "vertical"},
 }
 
 local function resetAnalogAxis()
@@ -287,12 +287,12 @@ function Menu:enter()
 	local centerX = sw / 2
 
 	local labels = {
-		{ key = "menu.start_game",   action = "game" },
-		{ key = "menu.achievements", action = "achievementsmenu" },
-		{ key = "menu.progression",  action = "metaprogression" },
-		{ key = "menu.dev_page",     action = "dev" },
-		{ key = "menu.settings",     action = "settings" },
-		{ key = "menu.quit",         action = "quit" },
+		{key = "menu.start_game",   action = "game"},
+		{key = "menu.achievements", action = "achievementsmenu"},
+		{key = "menu.progression",  action = "metaprogression"},
+		{key = "menu.dev_page",     action = "dev"},
+		{key = "menu.settings",     action = "settings"},
+		{key = "menu.quit",         action = "quit"},
 	}
 
 	local totalButtonHeight = #labels * UI.spacing.buttonHeight + math.max(0, #labels - 1) * UI.spacing.buttonSpacing
@@ -523,7 +523,7 @@ function Menu:draw()
 			local tooltipText
 			if timeRemaining and timeRemaining > 0 then
 				local countdown = formatResetCountdown(timeRemaining)
-				tooltipText = Localization:get("menu.daily_panel_reset_tooltip", { time = countdown })
+				tooltipText = Localization:get("menu.daily_panel_reset_tooltip", {time = countdown})
 			else
 				tooltipText = Localization:get("menu.daily_panel_reset_tooltip_soon")
 			end

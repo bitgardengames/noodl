@@ -46,7 +46,7 @@ end
 
 local function copyColor(color)
 	if not color then
-		return { 1, 1, 1, 1 }
+		return {1, 1, 1, 1}
 	end
 
 	return {

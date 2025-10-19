@@ -261,10 +261,10 @@ function SnakeUtils.calculateDirection(current, input)
 end
 
 SnakeUtils.directions = {
-	up    = { x = 0, y = -1 },
-	down  = { x = 0, y = 1 },
-	left  = { x = -1, y = 0 },
-	right = { x = 1, y = 0 },
+	up    = {x = 0, y = -1},
+	down  = {x = 0, y = 1},
+	left  = {x = -1, y = 0},
+	right = {x = 1, y = 0},
 }
 
 -- safer apple spawn (grid aware)
@@ -312,7 +312,7 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 						local key = aheadCol .. "," .. aheadRow
 						if not frontLookup[key] then
 							frontLookup[key] = true
-							frontCells[#frontCells + 1] = { aheadCol, aheadRow }
+							frontCells[#frontCells + 1] = {aheadCol, aheadRow}
 						end
 					else
 						break

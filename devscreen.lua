@@ -15,14 +15,14 @@ local buttonList = ButtonList.new()
 local buttons = {}
 
 local layout = {
-	panel = { x = 0, y = 0, w = 0, h = 0, padding = 0 },
-	button = { x = 0, y = 0 },
+	panel = {x = 0, y = 0, w = 0, h = 0, padding = 0},
+	button = {x = 0, y = 0},
 	contentX = 0,
 	contentWidth = 0,
-	screen = { w = 0, h = 0 },
+	screen = {w = 0, h = 0},
 }
 
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local function resetAnalogAxis()
 	analogAxisDirections.horizontal = nil

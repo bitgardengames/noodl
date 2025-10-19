@@ -54,7 +54,7 @@ local heldDpadButton = nil
 local heldDpadAction = nil
 local heldDpadTimer = 0
 local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local BACKGROUND_EFFECT_TYPE = "achievementRadiance"
 local backgroundEffectCache = {}
@@ -225,7 +225,7 @@ local function formatAchievementRewards(rewards)
 	local formatted = {}
 	for _, reward in ipairs(rewards or {}) do
 		if reward.type == "cosmetic" then
-			local label = Localization:get("achievements.rewards.cosmetic_skin", { name = reward.name })
+			local label = Localization:get("achievements.rewards.cosmetic_skin", {name = reward.name})
 			if label == "achievements.rewards.cosmetic_skin" then
 				label = string.format("%s snake skin", reward.name or Localization:get("common.unknown"))
 			end
@@ -272,7 +272,7 @@ local function rebuildAchievementRewards()
 				list = {}
 				grouped[unlock.achievement] = list
 			end
-			list[#list + 1] = { type = "cosmetic", name = skin.name }
+			list[#list + 1] = {type = "cosmetic", name = skin.name}
 		end
 	end
 
@@ -313,16 +313,16 @@ local function buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thu
 	end
 
 	local trail = {}
-	trail[#trail + 1] = { x = trackCenterX, y = bottomY }
+	trail[#trail + 1] = {x = trackCenterX, y = bottomY}
 
 	local spacing = SnakeUtils.SEGMENT_SPACING or segmentSize
 	local y = bottomY - spacing
 	while y > topY do
-		trail[#trail + 1] = { x = trackCenterX, y = y }
+		trail[#trail + 1] = {x = trackCenterX, y = y}
 		y = y - spacing
 	end
 
-	trail[#trail + 1] = { x = trackCenterX, y = topY }
+	trail[#trail + 1] = {x = trackCenterX, y = topY}
 
 	return trail, segmentSize
 end
@@ -423,7 +423,7 @@ local function computeLayout(sw, sh)
 
 	local highlightInsetX = math.max(SUMMARY_HIGHLIGHT_INSET, summaryInsetX * 0.6)
 	local highlightInsetY = math.max(SUMMARY_HIGHLIGHT_INSET, math.min(summaryTopPadding, summaryBottomPadding) * 0.75)
-	layout.summaryHighlightInset = { x = highlightInsetX, y = highlightInsetY }
+	layout.summaryHighlightInset = {x = highlightInsetX, y = highlightInsetY}
 
 	local titleClearance = titleY + titleFontHeight + math.max(24, sh * 0.03)
 	local summaryTop = summaryPanel.y - summaryTopPadding
@@ -590,8 +590,8 @@ local function dpadScrollDown()
 end
 
 local analogDirections = {
-	dpup = { id = "analog_dpup", repeatable = true, action = dpadScrollUp },
-	dpdown = { id = "analog_dpdown", repeatable = true, action = dpadScrollDown },
+	dpup = {id = "analog_dpup", repeatable = true, action = dpadScrollUp},
+	dpdown = {id = "analog_dpdown", repeatable = true, action = dpadScrollDown},
 	dpleft = {
 		id = "analog_dpleft",
 		repeatable = false,
@@ -609,12 +609,12 @@ local analogDirections = {
 }
 
 local analogAxisMap = {
-	leftx = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
-	rightx = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
-	lefty = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
-	righty = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
-	[1] = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
-	[2] = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
+	leftx = {slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright},
+	rightx = {slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright},
+	lefty = {slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown},
+	righty = {slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown},
+	[1] = {slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright},
+	[2] = {slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown},
 }
 
 local function activateAnalogDirection(direction)
@@ -784,7 +784,7 @@ function AchievementsMenu:draw()
 		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
 	})
 
-	local highlightInset = layout.summaryHighlightInset or { x = SUMMARY_HIGHLIGHT_INSET, y = SUMMARY_HIGHLIGHT_INSET }
+	local highlightInset = layout.summaryHighlightInset or {x = SUMMARY_HIGHLIGHT_INSET, y = SUMMARY_HIGHLIGHT_INSET}
 	local highlightInsetX = math.min(summaryPanel.width * 0.25, highlightInset.x or SUMMARY_HIGHLIGHT_INSET)
 	local highlightInsetY = highlightInset.y or SUMMARY_HIGHLIGHT_INSET
 	local maxHighlightInsetX = math.max(0, (summaryPanel.width - 2) * 0.5)

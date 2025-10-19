@@ -809,7 +809,7 @@ local function drawStormBurst(effect, progress)
 			local length = outerRadius * (1.25 + 0.22 * branch) * branchProgress
 			local lateral = innerRadius * (0.9 - 0.18 * branch)
 
-			local points = { x, y }
+			local points = {x, y}
 			local segments = 4
 			for seg = 1, segments do
 				local t = seg / segments

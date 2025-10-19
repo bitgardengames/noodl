@@ -152,7 +152,7 @@ local function resolveProgressReplacements(challenge, current, goal, context)
 end
 
 local function resolveDescriptionReplacements(challenge, current, goal, context)
-	local replacements = { goal = goal or 0, current = current or 0 }
+	local replacements = {goal = goal or 0, current = current or 0}
 	local extra = callChallengeFunction(challenge, "descriptionReplacements", current, goal, context)
 	if extra then
 		replacements = mergeReplacements(replacements, extra)
@@ -245,7 +245,7 @@ local function secondsUntilNextMidnight(date)
 		return nil
 	end
 
-	local midnightTable = buildTimeTable(date, { hour = 0, min = 0, sec = 0 })
+	local midnightTable = buildTimeTable(date, {hour = 0, min = 0, sec = 0})
 	local midnightTimestamp = midnightTable and os.time(midnightTable)
 	if not midnightTimestamp then
 		return nil

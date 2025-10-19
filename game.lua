@@ -190,7 +190,7 @@ local function drawFeedbackOverlay(self)
 			local rx = ripple.x or screenW * 0.5
 			local ry = ripple.y or screenH * 0.5
 			local baseRadius = ripple.baseRadius or 52
-			local color = ripple.color or { 1, 0.42, 0.32, 1 }
+			local color = ripple.color or {1, 0.42, 0.32, 1}
 			local ringRadius = baseRadius + easeOutExpo(age) * (140 + intensity * 80)
 			local fillRadius = baseRadius * (0.55 + age * 0.6)
 
@@ -224,7 +224,7 @@ local function drawFeedbackOverlay(self)
 			local rx = ripple.x or screenW * 0.5
 			local ry = ripple.y or screenH * 0.5
 			local baseRadius = ripple.baseRadius or 48
-			local color = ripple.color or { 1, 0.9, 0.55, 1 }
+			local color = ripple.color or {1, 0.9, 0.55, 1}
 			local eased = easeOutCubic(1 - progress)
 			local ringRadius = baseRadius + eased * (160 + intensity * 90)
 			love.graphics.setLineWidth(2 + intensity * 4)
@@ -312,7 +312,7 @@ function Game:triggerImpactFeedback(strength, options)
 	impactRipple.x = rx
 	impactRipple.y = ry
 	impactRipple.baseRadius = (options and options.radius) or impactRipple.baseRadius or 54
-	impactRipple.color = cloneColor(options and options.color, { 1, 0.42, 0.32, 1 })
+	impactRipple.color = cloneColor(options and options.color, {1, 0.42, 0.32, 1})
 	state.impactRipple = impactRipple
 
 	local hitStopStrength = 0.3 + strength * 0.35
@@ -353,7 +353,7 @@ function Game:triggerSurgeFeedback(strength, options)
 	ripple.x = rx
 	ripple.y = ry
 	ripple.baseRadius = (options and options.radius) or ripple.baseRadius or 48
-	ripple.color = cloneColor(options and options.color, { 1, 0.9, 0.55, 1 })
+	ripple.color = cloneColor(options and options.color, {1, 0.9, 0.55, 1})
 	state.surgeRipple = ripple
 
 	if Shaders and Shaders.notify then
@@ -604,7 +604,7 @@ local function drawShadowedText(font, text, x, y, width, align, alpha)
 	end
 
 	love.graphics.setFont(font)
-	local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+	local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
 	local shadowAlpha = (shadow[4] or 1) * alpha
 	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
 	love.graphics.printf(text, x + 2, y + 2, width, align)
@@ -784,7 +784,7 @@ end
 
 function Game:startDescending(holeX, holeY, holeRadius)
 	self.state = "descending"
-	self.hole = { x = holeX, y = holeY, radius = holeRadius or 24 }
+	self.hole = {x = holeX, y = holeY, radius = holeRadius or 24}
 	Snake:startDescending(self.hole.x, self.hole.y, self.hole.radius)
 	Audio:playSound("exit_enter")
 end
@@ -825,7 +825,7 @@ function Game:triggerVictory()
 
 	local floorData = Floors[currentFloor] or {}
 	local floorName = floorData.name or string.format("Floor %d", currentFloor)
-	local endingMessage = Localization:get("gameover.victory_story_body", { floor = floorName })
+	local endingMessage = Localization:get("gameover.victory_story_body", {floor = floorName})
 	if endingMessage == "gameover.victory_story_body" then
 		endingMessage = Floors.victoryMessage or string.format("With the festival feast safely reclaimed from %s, Noodl rockets home to start the parade.", floorName)
 	end
@@ -959,7 +959,7 @@ function Game:handleDeath(dt)
 	Achievements:save()
 	local result = Score:handleGameOver(self.deathCause)
 	if result then
-		return { state = "gameover", data = result }
+		return {state = "gameover", data = result}
 	end
 end
 
@@ -1177,11 +1177,11 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 
 	local canvas = ensureTransitionTitleCanvas(self)
-	local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
+	local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
 	local titleOffset = (1 - appear) * 36
 
 	love.graphics.push("all")
-	love.graphics.setCanvas({ canvas, stencil = true })
+	love.graphics.setCanvas({canvas, stencil = true})
 	love.graphics.clear(0, 0, 0, 0)
 	love.graphics.origin()
 	love.graphics.setBlendMode("alpha")
@@ -1326,7 +1326,7 @@ function Game:update(dt)
 
 		if self.victoryTimer >= delay then
 			local summary = self.victoryResult or Score:handleRunClear()
-			return { state = "gameover", data = summary }
+			return {state = "gameover", data = summary}
 		end
 
 		return
@@ -1389,7 +1389,7 @@ function Game:setupFloor(floorNum)
 	end
 
 	FloorSetup.finalizeContext(traitContext, spawnPlan)
-	Upgrades:notify("floorStart", { floor = floorNum, context = traitContext })
+	Upgrades:notify("floorStart", {floor = floorNum, context = traitContext})
 
 	FloorSetup.spawnHazards(spawnPlan)
 end

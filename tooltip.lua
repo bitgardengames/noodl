@@ -124,7 +124,7 @@ local function computeWrap(font, text, maxWidth)
 
 	local width, lines = font:getWrap(text, maxWidth)
 	if not lines or #lines == 0 then
-		return width, { text }
+		return width, {text}
 	end
 
 	return width, lines

@@ -38,27 +38,27 @@ local shieldStatMap = {
 	wall = {
 		lifetime = "shieldWallBounces",
 		run = "runShieldWallBounces",
-		achievements = { "wallRicochet" },
+		achievements = {"wallRicochet"},
 	},
 	rock = {
 		lifetime = "shieldRockBreaks",
 		run = "runShieldRockBreaks",
-		achievements = { "rockShatter" },
+		achievements = {"rockShatter"},
 	},
 	saw = {
 		lifetime = "shieldSawParries",
 		run = "runShieldSawParries",
-		achievements = { "sawParry" },
+		achievements = {"sawParry"},
 	},
 	laser = {
 		lifetime = "shieldSawParries",
 		run = "runShieldSawParries",
-		achievements = { "sawParry" },
+		achievements = {"sawParry"},
 	},
 	dart = {
 		lifetime = "shieldSawParries",
 		run = "runShieldSawParries",
-		achievements = { "sawParry" },
+		achievements = {"sawParry"},
 	},
 }
 
@@ -107,7 +107,7 @@ local function rerouteAlongWall(headX, headY)
 	local hitTop = (headY or clampedY) <= top
 	local hitBottom = (headY or clampedY) >= bottom
 
-	local dir = Snake:getDirection() or { x = 0, y = 0 }
+	local dir = Snake:getDirection() or {x = 0, y = 0}
 	local newDirX, newDirY = dir.x or 0, dir.y or 0
 
 	local function fallbackVertical()
@@ -365,7 +365,7 @@ local function handleWallCollision(headX, headY)
 		if Snake and Snake.setHeadPosition then
 			Snake:setHeadPosition(clampedX, clampedY)
 		end
-		local dir = Snake.getDirection and Snake:getDirection() or { x = 0, y = 0 }
+		local dir = Snake.getDirection and Snake:getDirection() or {x = 0, y = 0}
 
 		return clampedX, clampedY, "wall", {
 			pushX = 0,

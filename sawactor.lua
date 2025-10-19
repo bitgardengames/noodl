@@ -8,7 +8,7 @@ local DEFAULT_TEETH = 12
 local HUB_HOLE_RADIUS = 4
 local HUB_HIGHLIGHT_PADDING = 3
 local HIT_FLASH_DURATION = 0.18
-local HIT_FLASH_COLOR = { 0.95, 0.08, 0.12, 1 }
+local HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
 local DEFAULT_SPIN_SPEED = 5
 local DEFAULT_TRACK_LENGTH = 120
 local DEFAULT_MOVE_SPEED = 60
@@ -54,12 +54,12 @@ local function drawSawStencil()
 end
 
 local function getHighlightColor(color)
-        color = color or { 1, 1, 1, 1 }
+        color = color or {1, 1, 1, 1}
         local r = math.min(1, color[1] * 1.2 + 0.08)
 	local g = math.min(1, color[2] * 1.2 + 0.08)
 	local b = math.min(1, color[3] * 1.2 + 0.08)
 	local a = (color[4] or 1) * 0.7
-	return { r, g, b, a }
+	return {r, g, b, a}
 end
 
 function SawActor.new(options)
@@ -228,7 +228,7 @@ function SawActor:draw(x, y, scale)
 	love.graphics.rotate(rotation)
 	love.graphics.scale(overallScale, overallScale)
 
-	local baseColor = Theme.sawColor or { 0.8, 0.8, 0.8, 1 }
+	local baseColor = Theme.sawColor or {0.8, 0.8, 0.8, 1}
 	if self.hitFlashTimer and self.hitFlashTimer > 0 then
 		baseColor = HIT_FLASH_COLOR
 	end

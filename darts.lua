@@ -226,7 +226,7 @@ local function getRockCollision(projectile, newTipX, newTipY)
 						local distance = left - projectile.originX
 						if not bestDistance or distance < bestDistance then
 							bestDistance = distance
-							hit = { x = left, y = y }
+							hit = {x = left, y = y}
 						end
 					end
 				else
@@ -234,7 +234,7 @@ local function getRockCollision(projectile, newTipX, newTipY)
 						local distance = projectile.originX - right
 						if not bestDistance or distance < bestDistance then
 							bestDistance = distance
-							hit = { x = right, y = y }
+							hit = {x = right, y = y}
 						end
 					end
 				end
@@ -247,7 +247,7 @@ local function getRockCollision(projectile, newTipX, newTipY)
 						local distance = top - projectile.originY
 						if not bestDistance or distance < bestDistance then
 							bestDistance = distance
-							hit = { x = x, y = top }
+							hit = {x = x, y = top}
 						end
 					end
 				else
@@ -255,7 +255,7 @@ local function getRockCollision(projectile, newTipX, newTipY)
 						local distance = projectile.originY - bottom
 						if not bestDistance or distance < bestDistance then
 							bestDistance = distance
-							hit = { x = x, y = bottom }
+							hit = {x = x, y = bottom}
 						end
 					end
 				end

@@ -18,8 +18,8 @@ local sqrt = math.sqrt
 local max = math.max
 
 local screenW, screenH
-local direction = { x = 1, y = 0 }
-local pendingDir = { x = 1, y = 0 }
+local direction = {x = 1, y = 0}
+local pendingDir = {x = 1, y = 0}
 local trail = {}
 local descendingHole = nil
 local segmentCount = 1
@@ -275,7 +275,7 @@ end
 function Snake:consumeShield()
 	if developerAssistEnabled then
 		self.shieldFlashTimer = SHIELD_FLASH_DURATION
-		UI:setShields(self.shields or 0, { silent = true })
+		UI:setShields(self.shields or 0, {silent = true})
 		return true
 	end
 
@@ -314,7 +314,7 @@ function Snake:resetModifiers()
 	self.stoneSkinVisual = nil
 	self.speedVisual = nil
 	self.predatorsReflex = nil
-	UI:setShields(self.shields or 0, { silent = true, immediate = true })
+	UI:setShields(self.shields or 0, {silent = true, immediate = true})
 end
 
 function Snake:setStonebreakerStacks(count)
@@ -330,7 +330,7 @@ function Snake:setQuickFangsStacks(count)
 
 	if count > 0 then
 		if not state then
-			state = { intensity = 0, baseTarget = 0, time = 0, stacks = 0, flash = 0 }
+			state = {intensity = 0, baseTarget = 0, time = 0, stacks = 0, flash = 0}
 			self.quickFangs = state
 		end
 
@@ -358,7 +358,7 @@ end
 function Snake:enablePredatorsReflex()
 	local state = self.predatorsReflex
 	if not state then
-		state = { intensity = 0, target = 0, time = 0 }
+		state = {intensity = 0, target = 0, time = 0}
 		self.predatorsReflex = state
 	end
 	state.enabled = true
@@ -373,7 +373,7 @@ function Snake:setZephyrCoilsStacks(count)
 	end
 
 	if not state then
-		state = { stacks = 0, intensity = 0, target = 0, time = 0 }
+		state = {stacks = 0, intensity = 0, target = 0, time = 0}
 		self.zephyrCoils = state
 	end
 
@@ -392,7 +392,7 @@ function Snake:setChronospiralActive(active)
 	if active then
 		local state = self.chronospiral
 		if not state then
-			state = { intensity = 0, target = 1, spin = 0 }
+			state = {intensity = 0, target = 1, spin = 0}
 			self.chronospiral = state
 		end
 		state.target = 1
@@ -412,7 +412,7 @@ function Snake:setAbyssalCatalystStacks(count)
 
 	if count > 0 then
 		if not state then
-			state = { intensity = 0, target = 0, time = 0 }
+			state = {intensity = 0, target = 0, time = 0}
 			self.abyssalCatalyst = state
 		end
 		state.stacks = count
@@ -433,7 +433,7 @@ function Snake:setPhoenixEchoCharges(count, options)
 
 	local state = self.phoenixEcho
 	if not state and (count > 0 or options.triggered or options.instantIntensity) then
-		state = { intensity = 0, target = 0, time = 0, flareTimer = 0, flareDuration = 1.2, charges = 0 }
+		state = {intensity = 0, target = 0, time = 0, flareTimer = 0, flareDuration = 1.2, charges = 0}
 		self.phoenixEcho = state
 	elseif not state then
 		return
@@ -480,7 +480,7 @@ function Snake:setSpectralHarvestReady(active, options)
 
 	if active then
 		if not state then
-			state = { intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
+			state = {intensity = 0, target = 0, time = 0, burst = 0, echo = 0}
 			self.spectralHarvest = state
 		end
 		state.ready = true
@@ -498,7 +498,7 @@ function Snake:setSpectralHarvestReady(active, options)
 			state.burst = math.max(state.burst or 0, options.pulse)
 		end
 	elseif options and options.ensure then
-		self.spectralHarvest = { ready = false, intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
+		self.spectralHarvest = {ready = false, intensity = 0, target = 0, time = 0, burst = 0, echo = 0}
 	end
 end
 
@@ -506,7 +506,7 @@ function Snake:triggerSpectralHarvest(options)
 	options = options or {}
 	local state = self.spectralHarvest
 	if not state then
-		state = { intensity = 0, target = 0, time = 0, burst = 0, echo = 0 }
+		state = {intensity = 0, target = 0, time = 0, burst = 0, echo = 0}
 		self.spectralHarvest = state
 	end
 
@@ -523,7 +523,7 @@ function Snake:setEventHorizonActive(active)
 	if active then
 		local state = self.eventHorizon
 		if not state then
-			state = { intensity = 0, target = 1, spin = 0, time = 0 }
+			state = {intensity = 0, target = 1, spin = 0, time = 0}
 			self.eventHorizon = state
 		end
 		state.target = 1
@@ -541,7 +541,7 @@ function Snake:setStormchaserPrimed(active)
 	local state = self.stormchaser
 	if active then
 		if not state then
-			state = { intensity = 0, target = 1, time = 0, primed = true }
+			state = {intensity = 0, target = 1, time = 0, primed = true}
 			self.stormchaser = state
 		end
 		state.target = 1
@@ -562,7 +562,7 @@ function Snake:setTitanbloodStacks(count)
 
 	if count > 0 then
 		if not state then
-			state = { intensity = 0, target = 0, time = 0 }
+			state = {intensity = 0, target = 0, time = 0}
 			self.titanblood = state
 		end
 		state.stacks = count
@@ -579,7 +579,7 @@ end
 
 function Snake:addShieldBurst(config)
 	config = config or {}
-	self.shieldBurst = self.shieldBurst or { rocks = 0, stall = 0 }
+	self.shieldBurst = self.shieldBurst or {rocks = 0, stall = 0}
 	local rocks = config.rocks or 0
 	local stall = config.stall or 0
 	if rocks ~= 0 then
@@ -637,7 +637,7 @@ function Snake:addStoneSkinSawGrace(n)
 
 	local visual = self.stoneSkinVisual
 	if not visual then
-		visual = { intensity = 0, target = 0, flash = 0, time = 0, charges = 0 }
+		visual = {intensity = 0, target = 0, flash = 0, time = 0, charges = 0}
 		self.stoneSkinVisual = visual
 	end
 
@@ -1210,7 +1210,7 @@ local function drawDescendingIntoHole(hole)
 		dirX, dirY = -dirX, -dirY
 	end
 
-	local bodyColor = SnakeCosmetics:getBodyColor() or { 1, 1, 1, 1 }
+	local bodyColor = SnakeCosmetics:getBodyColor() or {1, 1, 1, 1}
 	local r = bodyColor[1] or 1
 	local g = bodyColor[2] or 1
 	local b = bodyColor[3] or 1
@@ -1834,7 +1834,7 @@ function Snake:drawClipped(hx, hy, hr)
 			end
 
 			if ix and iy then
-				trimmed[#trimmed + 1] = { drawX = ix, drawY = iy }
+				trimmed[#trimmed + 1] = {drawX = ix, drawY = iy}
 			end
 
 			for i = startIndex, #trail do
@@ -1899,7 +1899,7 @@ function Snake:finishDescending()
 end
 
 function Snake:update(dt)
-	if isDead then return false, "dead", { fatal = true } end
+	if isDead then return false, "dead", {fatal = true} end
 
 	if self.chronospiral then
 		local state = self.chronospiral
@@ -2138,7 +2138,7 @@ function Snake:update(dt)
 	if dilation and dilation.source == "temporal_anchor" then
 		local state = self.temporalAnchor
 		if not state then
-			state = { intensity = 0, target = 0, ready = 0, time = 0 }
+			state = {intensity = 0, target = 0, ready = 0, time = 0}
 			self.temporalAnchor = state
 		end
 		state.time = (state.time or 0) + dt
@@ -2221,7 +2221,7 @@ function Snake:update(dt)
 			ratio = 0
 		end
 
-		local state = self.speedVisual or { intensity = 0, time = 0, ratio = 1 }
+		local state = self.speedVisual or {intensity = 0, time = 0, ratio = 1}
 		local target = math.max(0, math.min(1, (ratio - 1) / 0.8))
 		local blend = math.min(1, dt * 5.5)
 		local current = state.intensity or 0
@@ -2512,7 +2512,7 @@ function Snake:update(dt)
 		state.exitTrail = sliceTrailByLength(trail, exitLength)
 
 		if (not state.exitTrail or #state.exitTrail == 0) and trail and trail[1] then
-			state.exitTrail = { copySegmentData(trail[1]) }
+			state.exitTrail = {copySegmentData(trail[1])}
 		end
 
 		if progress >= 1 then
@@ -2829,7 +2829,7 @@ function Snake:chopTailByHazard(cause)
 		return 0
 	end
 
-	return self:loseSegments(loss, { cause = cause or "saw" })
+	return self:loseSegments(loss, {cause = cause or "saw"})
 end
 
 function Snake:chopTailBySaw()
@@ -2896,7 +2896,7 @@ local function scaleColorAlpha(color, scale)
 		a = color[4] or a
 	end
 
-	return { r, g, b, clamp01(a * scale) }
+	return {r, g, b, clamp01(a * scale)}
 end
 
 local function buildSeveredPalette(fade)
@@ -3050,7 +3050,7 @@ function Snake:handleSawBodyCut(context)
 	addSeveredTrail(severedTrail, lostSegments + 1)
 	spawnSawCutParticles(cutX, cutY, lostSegments)
 
-	self:loseSegments(lostSegments, { cause = "saw", trimTrail = false })
+	self:loseSegments(lostSegments, {cause = "saw", trimTrail = false})
 
 	return true
 end
