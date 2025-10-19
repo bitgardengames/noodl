@@ -114,8 +114,24 @@ registerDrawer("angry", function()
 end)
 
 registerDrawer("blank", function()
-	-- intentionally empty: blank face has no visible eyes
-end, { skipColor = true })
+        local radius = EYE_RADIUS * currentEyeScale
+        local halfWidth = radius * 0.9
+        local lineWidth = radius * 0.55
+
+        love.graphics.setLineWidth(lineWidth)
+        love.graphics.line(
+                LEFT_EYE_CENTER_X - halfWidth,
+                EYE_CENTER_Y,
+                LEFT_EYE_CENTER_X + halfWidth,
+                EYE_CENTER_Y
+        )
+        love.graphics.line(
+                RIGHT_EYE_CENTER_X - halfWidth,
+                EYE_CENTER_Y,
+                RIGHT_EYE_CENTER_X + halfWidth,
+                EYE_CENTER_Y
+        )
+end)
 
 Face.state = "idle"
 Face.timer = 0
