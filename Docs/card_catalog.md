@@ -12,11 +12,12 @@
 | Tempest Ward | Uncommon | After collecting twenty fruit, forge a single shield charge. | Tags: defense; Visual: Pocket Springs ring when the stored shield is granted. |
 | Caravan Contract | Uncommon | Shops offer +1 card. Each floor spawns an extra rock. | Tags: economy, risk |
 | Circuit Breaker | Uncommon | Saw tracks freeze for 1s after each fruit. | Visual: Sparks shoot across frozen tracks when stalls trigger. |
+| Subduction Array | Uncommon | After each fruit, saws sink beneath their tracks for 1.6s. | Tags: defense; Visual: Saws submerge beneath the floor when activated. |
 | Crystal Cache | Uncommon | Shields burst into motes worth +2 bonus score. | Tags: economy, defense |
 | Diffraction Barrier | Uncommon | Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s. | Tags: defense; Visual: Prism refraction rings appear over laser emitters on pickup. |
 | Guild Ledger | Uncommon | Each shop slot reduces rock spawn chance by 1.5%. | Tags: economy, defense; Requires tags: economy |
 | Radiant Charter | Uncommon | Each extra shop slot removes 1 laser (minimum 0) and adds 1 saw to floor generation. | Tags: economy, defense; Requires tags: economy |
-| Mapmaker's Compass | Uncommon | The exit unlocks one fruit earlier. | Tags: economy, risk; Visual: Guiding compass pulse when hazard spawns are adjusted. |
+| Mapmaker's Compass | Uncommon | At each floor start, reduce the most common hazard spawn. If none remain, gain bonus score and stall the saws instead. | Tags: economy, risk; Visual: Guiding compass pulse when hazard spawns are adjusted. |
 | Molting Reflex | Uncommon | Shields trigger a 60% adrenaline surge. | Tags: adrenaline, defense; Requires tags: adrenaline; Visual: Molting Reflex flare when shields trigger adrenaline. |
 | Momentum Memory | Uncommon | Adrenaline bursts last 2s longer. | Requires tags: adrenaline |
 | Quick Fangs | Uncommon | Snake moves 10% faster. | Up to 4 stacks; Visual: Quick Fangs sketch overlays to draw fangs on the snake when acquired. |
@@ -24,7 +25,6 @@
 | Stone Skin | Uncommon | Gain a shield that shatters rocks and shrugs off a saw or laser hit. | Up to 4 stacks; Visual: Stoneguard burst on pickup and when shields smash rocks. |
 | Verdant Bonds | Uncommon | Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth forges a shield. | Tags: economy, defense; Up to 3 stacks; Visual: Verdant shield bloom whenever growth converts to shields. |
 | Predator's Reflex | Rare | Adrenaline bursts are 25% stronger and trigger at the start of each floor. | Requires tags: adrenaline |
-| Pulse Bloom | Rare | Harvest a handful of distinct fruit to forge a shield. | Tags: defense, economy; Up to 2 stacks |
 | Sparkstep Relay | Rare | Dashing shatters the nearest rock and stalls saws for 0.6s. | Tags: mobility, defense; Requires tags: mobility; Visual: Lightning badge when the dash shatters hazards. |
 | Stone Census | Rare | Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%). | Tags: economy, defense; Requires tags: economy |
 | Stonebreaker Hymn | Rare | Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock. | Up to 2 stacks |
