@@ -27,6 +27,13 @@ local LINEAR_XP_PER_LEVEL = 21
 local XP_CURVE_SCALE = 10
 local XP_CURVE_EXPONENT = 1.32
 
+local function compareUnlockTrackEntries(a, b)
+        if a.level == b.level then
+                return (a.id or "") < (b.id or "")
+        end
+        return a.level < b.level
+end
+
 local unlockDefinitions = {
 	[2] = {
 		id = "shop_expansion_1",
@@ -316,14 +323,9 @@ function MetaProgression:getUnlockTrack()
 		table.insert(track, entry)
 	end
 
-	table.sort(track, function(a, b)
-		if a.level == b.level then
-			return (a.id or "") < (b.id or "")
-		end
-		return a.level < b.level
-	end)
+        table.sort(track, compareUnlockTrackEntries)
 
-	return track
+        return track
 end
 
 local function buildSnapshot(self, totalXP)

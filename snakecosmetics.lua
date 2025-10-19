@@ -7,6 +7,13 @@ local SAVE_FILE = "snakecosmetics_state.lua"
 local DEFAULT_SKIN_ID = "classic_emerald"
 local DEFAULT_ORDER = 1000
 
+local function compareSkinDefinitions(a, b)
+        if a.order == b.order then
+                return (a.id or "") < (b.id or "")
+        end
+        return (a.order or DEFAULT_ORDER) < (b.order or DEFAULT_ORDER)
+end
+
 local SKIN_DEFINITIONS = {
 	{
 		id = "classic_emerald",
@@ -673,12 +680,7 @@ function SnakeCosmetics:_buildIndex()
 		table.insert(self._orderedSkins, entry)
 	end
 
-	table.sort(self._orderedSkins, function(a, b)
-		if a.order == b.order then
-			return (a.id or "") < (b.id or "")
-		end
-		return (a.order or DEFAULT_ORDER) < (b.order or DEFAULT_ORDER)
-	end)
+        table.sort(self._orderedSkins, compareSkinDefinitions)
 
 	self._indexBuilt = true
 end
