@@ -1488,17 +1488,18 @@ local pool = {
 			})
 		end,
 	}),
-	register({
-		id = "caravan_contract",
-		nameKey = "upgrades.caravan_contract.name",
-		descKey = "upgrades.caravan_contract.description",
-		rarity = "uncommon",
-		tags = {"economy", "risk"},
-		onAcquire = function(state)
-			state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
-			state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
-		end,
-	}),
+        register({
+                id = "caravan_contract",
+                nameKey = "upgrades.caravan_contract.name",
+                descKey = "upgrades.caravan_contract.description",
+                rarity = "uncommon",
+                tags = {"economy", "risk"},
+                allowDuplicates = true,
+                onAcquire = function(state)
+                        state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
+                        state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
+                end,
+        }),
 
 	register({
 		id = "verdant_bonds",
