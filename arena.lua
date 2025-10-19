@@ -294,9 +294,7 @@ function Arena:setFloorDecorations(floorNum, floorData)
 	end
 
 	local seed = os.time()
-	if love and love.timer and love.timer.getTime then
-		seed = seed + math.floor(love.timer.getTime() * 1000)
-	end
+	seed = seed + math.floor(love.timer.getTime() * 1000)
 
 	self._decorationConfig = {
 		floor = floorNum or 0,
@@ -542,8 +540,7 @@ function Arena:drawTileDecorations()
 			local alpha = color[4] or 1
 			local fade = deco.fade
 			if fade and fade.amplitude and fade.amplitude > 0 then
-				local timerFn = love and love.timer and love.timer.getTime
-				local time = timerFn and timerFn() or 0
+				local time = love.timer.getTime()
 				local oscillation = math.sin(time * (fade.speed or 1) + (fade.offset or 0))
 				local factor = 1 + oscillation * fade.amplitude
 				alpha = clamp01((fade.base or alpha) * factor)

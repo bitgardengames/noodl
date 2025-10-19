@@ -392,11 +392,6 @@ local function getMouseInterface()
 
 	mouseSupportChecked = true
 
-	if not love or not love.mouse then
-		cachedMouseInterface = nil
-		return nil
-	end
-
 	local mouse = love.mouse
 	if not mouse.setVisible or not isCursorSupported(mouse) then
 		cachedMouseInterface = nil

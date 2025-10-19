@@ -1327,7 +1327,6 @@ local function drawGlow(effect, progress)
 end
 
 function UpgradeVisuals:draw()
-	if not love or not love.graphics then return end
 	if #self.effects == 0 then return end
 
 	RenderLayers:withLayer("overlay", function()
