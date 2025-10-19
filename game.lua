@@ -50,8 +50,8 @@ local function ensureTransitionTitleCanvas(self)
 	local width = math.max(1, math.ceil(self.screenWidth or love.graphics.getWidth() or 1))
 	local height = math.max(1, math.ceil(self.screenHeight or love.graphics.getHeight() or 1))
 	local canvas = self.transitionTitleCanvas
-        if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
-                canvas = love.graphics.newCanvas(width, height)
+	if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
+		canvas = love.graphics.newCanvas(width, height)
 		canvas:setFilter("linear", "linear")
 		self.transitionTitleCanvas = canvas
 	end
@@ -633,7 +633,7 @@ local function drawAdrenalineGlow(self)
 
 	if glowStrength <= 0 then return end
 
-        local time = love.timer.getTime()
+	local time = love.timer.getTime()
 	local pulse = 0.85 + 0.15 * math.sin(time * 2.25)
 	local easedStrength = 0.6 + glowStrength * 0.4
 	local alpha = 0.18 * easedStrength * pulse
@@ -964,52 +964,52 @@ function Game:handleDeath(dt)
 end
 
 local function drawPlayfieldLayers(self, stateOverride)
-        local renderState = stateOverride or self.state
+	local renderState = stateOverride or self.state
 
-        RenderLayers:begin(self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
+	RenderLayers:begin(self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
 
-        RenderLayers:withLayer("background", function()
-                Arena:drawBackground()
-        end)
+	RenderLayers:withLayer("background", function()
+		Arena:drawBackground()
+	end)
 
-        Death:applyShake()
+	Death:applyShake()
 
-        RenderLayers:withLayer("main", function()
-                Fruit:draw()
-                Rocks:draw()
-                -- Darts:draw() -- Disabled while not in use.
-                Saws:draw()
-                Lasers:draw()
+	RenderLayers:withLayer("main", function()
+		Fruit:draw()
+		Rocks:draw()
+		-- Darts:draw() -- Disabled while not in use.
+		Saws:draw()
+		Lasers:draw()
 
-                local isDescending = (renderState == "descending")
-                local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
+		local isDescending = (renderState == "descending")
+		local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
 
-                if not isDescending and not shouldDrawExitAfterSnake then
-                        Arena:drawExit()
-                end
+		if not isDescending and not shouldDrawExitAfterSnake then
+			Arena:drawExit()
+		end
 
-                if isDescending then
-                        self:drawDescending()
-                elseif renderState == "dying" then
-                        Death:draw()
-                elseif renderState ~= "gameover" then
-                        Snake:draw()
-                end
+		if isDescending then
+			self:drawDescending()
+		elseif renderState == "dying" then
+			Death:draw()
+		elseif renderState ~= "gameover" then
+			Snake:draw()
+		end
 
-                if shouldDrawExitAfterSnake then
-                        Arena:drawExit()
-                end
+		if shouldDrawExitAfterSnake then
+			Arena:drawExit()
+		end
 
-                Particles:draw()
-                UpgradeVisuals:draw()
-                Popup:draw()
+		Particles:draw()
+		UpgradeVisuals:draw()
+		Popup:draw()
 
-                RenderLayers:withLayer("overlay", function()
-                        Arena:drawBorder()
-                end)
-        end)
+		RenderLayers:withLayer("overlay", function()
+			Arena:drawBorder()
+		end)
+	end)
 
-        RenderLayers:present()
+	RenderLayers:present()
 end
 
 local function drawDeveloperAssistBadge(self)
@@ -1180,8 +1180,8 @@ local function drawTransitionFloorIntro(self, timer, duration, data)
 	local shadow = Theme.shadowColor or { 0, 0, 0, 0.5 }
 	local titleOffset = (1 - appear) * 36
 
-        love.graphics.push("all")
-        love.graphics.setCanvas({ canvas, stencil = true })
+	love.graphics.push("all")
+	love.graphics.setCanvas({ canvas, stencil = true })
 	love.graphics.clear(0, 0, 0, 0)
 	love.graphics.origin()
 	love.graphics.setBlendMode("alpha")

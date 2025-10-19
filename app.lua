@@ -106,8 +106,8 @@ function App:draw()
 
 	GameState:draw()
 
-        if Settings.showFPS then
-                local fps = love.timer.getFPS()
+	if Settings.showFPS then
+		local fps = love.timer.getFPS()
 		local label = string.format("FPS: %d", fps)
 		local padding = 6
 

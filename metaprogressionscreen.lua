@@ -69,55 +69,55 @@ local contentHeight = 0
 local drawCosmeticSnakePreview
 
 local function clampColorComponent(value)
-        if value < 0 then
-                return 0
-        elseif value > 1 then
-                return 1
-        end
-        return value
+	if value < 0 then
+		return 0
+	elseif value > 1 then
+		return 1
+	end
+	return value
 end
 
 local function lightenColor(color, amount)
-        if type(color) ~= "table" then
-                return {1, 1, 1, 1}
-        end
+	if type(color) ~= "table" then
+		return {1, 1, 1, 1}
+	end
 
-        amount = clampColorComponent(amount or 0)
+	amount = clampColorComponent(amount or 0)
 
-        local r = clampColorComponent((color[1] or 0) + (1 - (color[1] or 0)) * amount)
-        local g = clampColorComponent((color[2] or 0) + (1 - (color[2] or 0)) * amount)
-        local b = clampColorComponent((color[3] or 0) + (1 - (color[3] or 0)) * amount)
-        local a = clampColorComponent(color[4] or 1)
+	local r = clampColorComponent((color[1] or 0) + (1 - (color[1] or 0)) * amount)
+	local g = clampColorComponent((color[2] or 0) + (1 - (color[2] or 0)) * amount)
+	local b = clampColorComponent((color[3] or 0) + (1 - (color[3] or 0)) * amount)
+	local a = clampColorComponent(color[4] or 1)
 
-        return {r, g, b, a}
+	return {r, g, b, a}
 end
 
 local function darkenColor(color, amount)
-        if type(color) ~= "table" then
-                return {0, 0, 0, 1}
-        end
+	if type(color) ~= "table" then
+		return {0, 0, 0, 1}
+	end
 
-        amount = clampColorComponent(amount or 0)
+	amount = clampColorComponent(amount or 0)
 
-        local scale = 1 - amount
-        local r = clampColorComponent((color[1] or 0) * scale)
-        local g = clampColorComponent((color[2] or 0) * scale)
-        local b = clampColorComponent((color[3] or 0) * scale)
-        local a = clampColorComponent(color[4] or 1)
+	local scale = 1 - amount
+	local r = clampColorComponent((color[1] or 0) * scale)
+	local g = clampColorComponent((color[2] or 0) * scale)
+	local b = clampColorComponent((color[3] or 0) * scale)
+	local a = clampColorComponent(color[4] or 1)
 
-        return {r, g, b, a}
+	return {r, g, b, a}
 end
 
 local function shallowCopy(value)
-        if type(value) ~= "table" then
-                return value
-        end
+	if type(value) ~= "table" then
+		return value
+	end
 
-        local copy = {}
-        for k, v in pairs(value) do
-                copy[k] = v
-        end
-        return copy
+	local copy = {}
+	for k, v in pairs(value) do
+		copy[k] = v
+	end
+	return copy
 end
 
 local heldDpadButton = nil
@@ -145,143 +145,143 @@ local cosmeticPreviewTrail = nil
 local cosmeticPreviewBounds = nil
 
 local function computeCosmeticShowcaseLayout(sw)
-        if not cosmeticShaderShowcaseEntries or #cosmeticShaderShowcaseEntries == 0 then
-                cosmeticShowcaseHeight = 0
-                return nil
-        end
+	if not cosmeticShaderShowcaseEntries or #cosmeticShaderShowcaseEntries == 0 then
+		cosmeticShowcaseHeight = 0
+		return nil
+	end
 
-        if not sw then
-                sw = select(1, Screen:get())
-        end
+	if not sw then
+		sw = select(1, Screen:get())
+	end
 
-        if not sw then
-                return nil
-        end
+	if not sw then
+		return nil
+	end
 
-        local tileWidth = COSMETIC_SHOWCASE_TILE_WIDTH
-        local tileHeight = COSMETIC_SHOWCASE_TILE_HEIGHT
-        local spacingX = COSMETIC_SHOWCASE_SPACING_X
-        local spacingY = COSMETIC_SHOWCASE_SPACING_Y
+	local tileWidth = COSMETIC_SHOWCASE_TILE_WIDTH
+	local tileHeight = COSMETIC_SHOWCASE_TILE_HEIGHT
+	local spacingX = COSMETIC_SHOWCASE_SPACING_X
+	local spacingY = COSMETIC_SHOWCASE_SPACING_Y
 
-        local maxColumns = math.max(1, math.floor((sw + spacingX) / (tileWidth + spacingX)))
-        maxColumns = math.min(maxColumns, #cosmeticShaderShowcaseEntries)
-        if maxColumns < 1 then
-                maxColumns = 1
-        end
+	local maxColumns = math.max(1, math.floor((sw + spacingX) / (tileWidth + spacingX)))
+	maxColumns = math.min(maxColumns, #cosmeticShaderShowcaseEntries)
+	if maxColumns < 1 then
+		maxColumns = 1
+	end
 
-        local rows = math.ceil(#cosmeticShaderShowcaseEntries / maxColumns)
-        local contentWidth = maxColumns * tileWidth + (math.max(0, maxColumns - 1) * spacingX)
-        local startX = (sw - contentWidth) * 0.5
-        local startY = TAB_BOTTOM + COSMETIC_SHOWCASE_TOP_OFFSET
-        local contentHeight = rows * tileHeight + math.max(0, rows - 1) * spacingY
-        local contentBottom = startY + contentHeight
-        local requiredListTop = contentBottom + COSMETIC_SHOWCASE_BOTTOM_PADDING
+	local rows = math.ceil(#cosmeticShaderShowcaseEntries / maxColumns)
+	local contentWidth = maxColumns * tileWidth + (math.max(0, maxColumns - 1) * spacingX)
+	local startX = (sw - contentWidth) * 0.5
+	local startY = TAB_BOTTOM + COSMETIC_SHOWCASE_TOP_OFFSET
+	local contentHeight = rows * tileHeight + math.max(0, rows - 1) * spacingY
+	local contentBottom = startY + contentHeight
+	local requiredListTop = contentBottom + COSMETIC_SHOWCASE_BOTTOM_PADDING
 
-        cosmeticShowcaseHeight = math.max(0, requiredListTop - DEFAULT_LIST_TOP)
+	cosmeticShowcaseHeight = math.max(0, requiredListTop - DEFAULT_LIST_TOP)
 
-        return {
-                startX = startX,
-                startY = startY,
-                tileWidth = tileWidth,
-                tileHeight = tileHeight,
-                spacingX = spacingX,
-                spacingY = spacingY,
-                columns = maxColumns,
-        }
+	return {
+		startX = startX,
+		startY = startY,
+		tileWidth = tileWidth,
+		tileHeight = tileHeight,
+		spacingX = spacingX,
+		spacingY = spacingY,
+		columns = maxColumns,
+	}
 end
 
 local function drawCosmeticShaderShowcase(sw)
-        local layout = computeCosmeticShowcaseLayout(sw)
-        if not layout then
-                return
-        end
+	local layout = computeCosmeticShowcaseLayout(sw)
+	if not layout then
+		return
+	end
 
-        local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-        local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
-        local textColor = Theme.textColor or {1, 1, 1, 1}
-        local mutedText = Theme.mutedTextColor or {textColor[1], textColor[2], textColor[3], (textColor[4] or 1) * 0.8}
+	local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+	local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
+	local textColor = Theme.textColor or {1, 1, 1, 1}
+	local mutedText = Theme.mutedTextColor or {textColor[1], textColor[2], textColor[3], (textColor[4] or 1) * 0.8}
 
-        local previewHeight = math.min(COSMETIC_PREVIEW_HEIGHT, layout.tileHeight - 48)
-        local previewWidth = math.min(COSMETIC_PREVIEW_WIDTH, layout.tileWidth - 36)
+	local previewHeight = math.min(COSMETIC_PREVIEW_HEIGHT, layout.tileHeight - 48)
+	local previewWidth = math.min(COSMETIC_PREVIEW_WIDTH, layout.tileWidth - 36)
 
-        for index, entry in ipairs(cosmeticShaderShowcaseEntries) do
-                local column = (index - 1) % layout.columns
-                local row = math.floor((index - 1) / layout.columns)
-                local tileX = layout.startX + column * (layout.tileWidth + layout.spacingX)
-                local tileY = layout.startY + row * (layout.tileHeight + layout.spacingY)
+	for index, entry in ipairs(cosmeticShaderShowcaseEntries) do
+		local column = (index - 1) % layout.columns
+		local row = math.floor((index - 1) / layout.columns)
+		local tileX = layout.startX + column * (layout.tileWidth + layout.spacingX)
+		local tileY = layout.startY + row * (layout.tileHeight + layout.spacingY)
 
-                local unlocked = (entry.unlockedCount or 0) > 0
+		local unlocked = (entry.unlockedCount or 0) > 0
 
-                local fillColor = unlocked and lightenColor(basePanel, 0.18) or darkenColor(basePanel, 0.08)
-                love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], (fillColor[4] or 1) * 0.95)
-                UI.drawRoundedRect(tileX, tileY, layout.tileWidth, layout.tileHeight, 12)
+		local fillColor = unlocked and lightenColor(basePanel, 0.18) or darkenColor(basePanel, 0.08)
+		love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], (fillColor[4] or 1) * 0.95)
+		UI.drawRoundedRect(tileX, tileY, layout.tileWidth, layout.tileHeight, 12)
 
-                local outline = unlocked and (Theme.progressColor or Theme.accentTextColor or borderColor) or borderColor
-                love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1))
-                love.graphics.setLineWidth(unlocked and 2.4 or 2)
-                love.graphics.rectangle("line", tileX, tileY, layout.tileWidth, layout.tileHeight, 12, 12)
-                love.graphics.setLineWidth(1)
+		local outline = unlocked and (Theme.progressColor or Theme.accentTextColor or borderColor) or borderColor
+		love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1))
+		love.graphics.setLineWidth(unlocked and 2.4 or 2)
+		love.graphics.rectangle("line", tileX, tileY, layout.tileWidth, layout.tileHeight, 12, 12)
+		love.graphics.setLineWidth(1)
 
-                local previewX = tileX + (layout.tileWidth - previewWidth) * 0.5
-                local previewY = tileY + 14
+		local previewX = tileX + (layout.tileWidth - previewWidth) * 0.5
+		local previewY = tileY + 14
 
-                local palette = entry.palette or {}
-                local bodyColor = palette.body or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
-                local outlineColor = palette.outline or {0.05, 0.15, 0.12, 1}
-                local glowColor = palette.glow or Theme.accentTextColor or {1, 0.78, 0.32, 1}
-                local overlayEffect = palette.overlay or entry.overlay
+		local palette = entry.palette or {}
+		local bodyColor = palette.body or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
+		local outlineColor = palette.outline or {0.05, 0.15, 0.12, 1}
+		local glowColor = palette.glow or Theme.accentTextColor or {1, 0.78, 0.32, 1}
+		local overlayEffect = palette.overlay or entry.overlay
 
-                if not unlocked then
-                        bodyColor = darkenColor(bodyColor, 0.22)
-                        outlineColor = darkenColor(outlineColor, 0.16)
-                        glowColor = darkenColor(glowColor, 0.25)
-                        if overlayEffect then
-                                overlayEffect = shallowCopy(overlayEffect)
-                                if overlayEffect.opacity then
-                                        overlayEffect.opacity = overlayEffect.opacity * 0.65
-                                end
-                                if overlayEffect.intensity then
-                                        overlayEffect.intensity = overlayEffect.intensity * 0.6
-                                end
-                        end
-                end
+		if not unlocked then
+			bodyColor = darkenColor(bodyColor, 0.22)
+			outlineColor = darkenColor(outlineColor, 0.16)
+			glowColor = darkenColor(glowColor, 0.25)
+			if overlayEffect then
+				overlayEffect = shallowCopy(overlayEffect)
+				if overlayEffect.opacity then
+					overlayEffect.opacity = overlayEffect.opacity * 0.65
+				end
+				if overlayEffect.intensity then
+					overlayEffect.intensity = overlayEffect.intensity * 0.6
+				end
+			end
+		end
 
-                local previewPalette = {
-                        body = bodyColor,
-                        outline = outlineColor,
-                        glow = glowColor,
-                        overlay = overlayEffect,
-                }
+		local previewPalette = {
+			body = bodyColor,
+			outline = outlineColor,
+			glow = glowColor,
+			overlay = overlayEffect,
+		}
 
-                drawCosmeticSnakePreview(previewX, previewY, previewWidth, previewHeight, entry.primarySkin, previewPalette)
+		drawCosmeticSnakePreview(previewX, previewY, previewWidth, previewHeight, entry.primarySkin, previewPalette)
 
-                local label = entry.displayName or entry.type or ""
-                love.graphics.setFont(UI.fonts.caption)
-                love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
-                love.graphics.printf(label, tileX + 12, tileY + layout.tileHeight - 34, layout.tileWidth - 24, "center")
+		local label = entry.displayName or entry.type or ""
+		love.graphics.setFont(UI.fonts.caption)
+		love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
+		love.graphics.printf(label, tileX + 12, tileY + layout.tileHeight - 34, layout.tileWidth - 24, "center")
 
-                local statusText
-                if (entry.totalCount or 0) > 1 then
-                        statusText = string.format("%d / %d unlocked", entry.unlockedCount or 0, entry.totalCount or 0)
-                elseif unlocked then
-                        statusText = Localization and Localization.get and Localization:get("metaprogression.status_unlocked") or "Unlocked"
-                else
-                        statusText = Localization and Localization.get and Localization:get("metaprogression.cosmetics.locked_label") or "Locked"
-                end
+		local statusText
+		if (entry.totalCount or 0) > 1 then
+			statusText = string.format("%d / %d unlocked", entry.unlockedCount or 0, entry.totalCount or 0)
+		elseif unlocked then
+			statusText = Localization and Localization.get and Localization:get("metaprogression.status_unlocked") or "Unlocked"
+		else
+			statusText = Localization and Localization.get and Localization:get("metaprogression.cosmetics.locked_label") or "Locked"
+		end
 
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(mutedText[1], mutedText[2], mutedText[3], mutedText[4] or 1)
-                love.graphics.printf(statusText or "", tileX + 12, tileY + layout.tileHeight - 18, layout.tileWidth - 24, "center")
-        end
+		love.graphics.setFont(UI.fonts.small)
+		love.graphics.setColor(mutedText[1], mutedText[2], mutedText[3], mutedText[4] or 1)
+		love.graphics.printf(statusText or "", tileX + 12, tileY + layout.tileHeight - 18, layout.tileWidth - 24, "center")
+	end
 
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 local tabs = {
-        {
-                id = "experience",
-                action = "tab_experience",
-                labelKey = "metaprogression.tabs.experience",
+	{
+		id = "experience",
+		action = "tab_experience",
+		labelKey = "metaprogression.tabs.experience",
 	},
 	{
 		id = "cosmetics",
@@ -342,18 +342,18 @@ local function resetHeldDpad()
 end
 
 local function getListTop(tab)
-        tab = tab or activeTab
-        if tab == "experience" then
-                return EXPERIENCE_LIST_TOP
-        end
+	tab = tab or activeTab
+	if tab == "experience" then
+		return EXPERIENCE_LIST_TOP
+	end
 
-        if tab == "cosmetics" then
-                local sw = select(1, Screen:get())
-                computeCosmeticShowcaseLayout(sw)
-                return DEFAULT_LIST_TOP + (cosmeticShowcaseHeight or 0)
-        end
+	if tab == "cosmetics" then
+		local sw = select(1, Screen:get())
+		computeCosmeticShowcaseLayout(sw)
+		return DEFAULT_LIST_TOP + (cosmeticShowcaseHeight or 0)
+	end
 
-        return DEFAULT_LIST_TOP
+	return DEFAULT_LIST_TOP
 end
 
 local function startHeldDpad(button, action)
@@ -636,41 +636,41 @@ local function buildStatsEntries()
 end
 
 local function formatShaderDisplayName(typeId)
-        if typeId == nil then
-                return ""
-        end
+	if typeId == nil then
+		return ""
+	end
 
-        if type(typeId) ~= "string" then
-                typeId = tostring(typeId)
-        end
+	if type(typeId) ~= "string" then
+		typeId = tostring(typeId)
+	end
 
-        local name = typeId:gsub("_", " ")
-        name = name:gsub("([%l%d])([%u])", "%1 %2")
-        name = name:gsub("(%u)(%u%l)", "%1 %2")
+	local name = typeId:gsub("_", " ")
+	name = name:gsub("([%l%d])([%u])", "%1 %2")
+	name = name:gsub("(%u)(%u%l)", "%1 %2")
 
-        name = name:gsub("^%l", string.upper)
-        name = name:gsub("(%s)(%l)", function(space, letter)
-                return space .. letter:upper()
-        end)
+	name = name:gsub("^%l", string.upper)
+	name = name:gsub("(%s)(%l)", function(space, letter)
+		return space .. letter:upper()
+	end)
 
-        return name
+	return name
 end
 
 local function withAlpha(color, alpha)
-        if type(color) ~= "table" then
-                return {1, 1, 1, clampColorComponent(alpha or 1)}
-        end
+	if type(color) ~= "table" then
+		return {1, 1, 1, clampColorComponent(alpha or 1)}
+	end
 
-        return {
-                clampColorComponent(color[1] or 1),
-                clampColorComponent(color[2] or 1),
-                clampColorComponent(color[3] or 1),
-                clampColorComponent(alpha or color[4] or 1),
-        }
+	return {
+		clampColorComponent(color[1] or 1),
+		clampColorComponent(color[2] or 1),
+		clampColorComponent(color[3] or 1),
+		clampColorComponent(alpha or color[4] or 1),
+	}
 end
 
 local function drawWindowFrame(x, y, width, height, options)
-        options = options or {}
+	options = options or {}
 
 	if not width or not height or width <= 0 or height <= 0 then
 		return
@@ -897,108 +897,108 @@ local function getSkinRequirementText(skin)
 end
 
 local function resolveSkinStatus(skin)
-        if not skin then
-                return "", "", Theme.textColor
-        end
+	if not skin then
+		return "", "", Theme.textColor
+	end
 
-        if skin.selected then
-                return Localization:get("metaprogression.cosmetics.equipped"), nil, Theme.accentTextColor or Theme.textColor
-        end
+	if skin.selected then
+		return Localization:get("metaprogression.cosmetics.equipped"), nil, Theme.accentTextColor or Theme.textColor
+	end
 
-        if skin.unlocked then
-                return Localization:get("metaprogression.status_unlocked"), Localization:get("metaprogression.cosmetics.equip_hint"), Theme.progressColor or Theme.textColor
-        end
+	if skin.unlocked then
+		return Localization:get("metaprogression.status_unlocked"), Localization:get("metaprogression.cosmetics.equip_hint"), Theme.progressColor or Theme.textColor
+	end
 
-        return Localization:get("metaprogression.cosmetics.locked_label"), getSkinRequirementText(skin), Theme.lockedCardColor or Theme.warningColor or Theme.textColor
+	return Localization:get("metaprogression.cosmetics.locked_label"), getSkinRequirementText(skin), Theme.lockedCardColor or Theme.warningColor or Theme.textColor
 end
 
 local function buildCosmeticShaderShowcaseEntries(skins)
-        cosmeticShaderShowcaseEntries = {}
+	cosmeticShaderShowcaseEntries = {}
 
-        if type(skins) ~= "table" then
-                cosmeticShowcaseHeight = 0
-                return
-        end
+	if type(skins) ~= "table" then
+		cosmeticShowcaseHeight = 0
+		return
+	end
 
-        local entriesByType = {}
+	local entriesByType = {}
 
-        for _, skin in ipairs(skins) do
-                local effects = skin.effects or {}
-                local overlay = effects.overlay
-                if overlay and overlay.type then
-                        local key = overlay.type
-                        local entry = entriesByType[key]
-                        if not entry then
-                                entry = {
-                                        type = key,
-                                        displayName = formatShaderDisplayName(key),
-                                        totalCount = 0,
-                                        unlockedCount = 0,
-                                        primarySkin = nil,
-                                }
-                                entriesByType[key] = entry
-                                cosmeticShaderShowcaseEntries[#cosmeticShaderShowcaseEntries + 1] = entry
-                        end
+	for _, skin in ipairs(skins) do
+		local effects = skin.effects or {}
+		local overlay = effects.overlay
+		if overlay and overlay.type then
+			local key = overlay.type
+			local entry = entriesByType[key]
+			if not entry then
+				entry = {
+					type = key,
+					displayName = formatShaderDisplayName(key),
+					totalCount = 0,
+					unlockedCount = 0,
+					primarySkin = nil,
+				}
+				entriesByType[key] = entry
+				cosmeticShaderShowcaseEntries[#cosmeticShaderShowcaseEntries + 1] = entry
+			end
 
-                        entry.totalCount = (entry.totalCount or 0) + 1
+			entry.totalCount = (entry.totalCount or 0) + 1
 
-                        if skin.unlocked then
-                                entry.unlockedCount = (entry.unlockedCount or 0) + 1
-                                if not entry.primarySkin or not entry.primarySkin.unlocked then
-                                        entry.primarySkin = skin
-                                end
-                        elseif not entry.primarySkin then
-                                entry.primarySkin = skin
-                        end
-                end
-        end
+			if skin.unlocked then
+				entry.unlockedCount = (entry.unlockedCount or 0) + 1
+				if not entry.primarySkin or not entry.primarySkin.unlocked then
+					entry.primarySkin = skin
+				end
+			elseif not entry.primarySkin then
+				entry.primarySkin = skin
+			end
+		end
+	end
 
-        for _, entry in ipairs(cosmeticShaderShowcaseEntries) do
-                if entry.primarySkin then
-                        entry.skinName = entry.primarySkin.name or entry.primarySkin.id
-                        entry.palette = SnakeCosmetics:getPaletteForSkin(entry.primarySkin)
-                        local effects = entry.primarySkin.effects or {}
-                        entry.overlay = shallowCopy(effects.overlay)
-                else
-                        entry.skinName = nil
-                        entry.palette = nil
-                        entry.overlay = nil
-                end
-        end
+	for _, entry in ipairs(cosmeticShaderShowcaseEntries) do
+		if entry.primarySkin then
+			entry.skinName = entry.primarySkin.name or entry.primarySkin.id
+			entry.palette = SnakeCosmetics:getPaletteForSkin(entry.primarySkin)
+			local effects = entry.primarySkin.effects or {}
+			entry.overlay = shallowCopy(effects.overlay)
+		else
+			entry.skinName = nil
+			entry.palette = nil
+			entry.overlay = nil
+		end
+	end
 
-        table.sort(cosmeticShaderShowcaseEntries, function(a, b)
-                local nameA = a.displayName or ""
-                local nameB = b.displayName or ""
-                if nameA == nameB then
-                        return (a.skinName or "") < (b.skinName or "")
-                end
-                return nameA < nameB
-        end)
+	table.sort(cosmeticShaderShowcaseEntries, function(a, b)
+		local nameA = a.displayName or ""
+		local nameB = b.displayName or ""
+		if nameA == nameB then
+			return (a.skinName or "") < (b.skinName or "")
+		end
+		return nameA < nameB
+	end)
 
-        if #cosmeticShaderShowcaseEntries == 0 then
-                cosmeticShowcaseHeight = 0
-        end
+	if #cosmeticShaderShowcaseEntries == 0 then
+		cosmeticShowcaseHeight = 0
+	end
 end
 
 local function buildCosmeticsEntries()
-        cosmeticsEntries = {}
-        hoveredCosmeticIndex = nil
-        pressedCosmeticIndex = nil
-        cosmeticsFocusIndex = nil
-        cosmeticsSummary.unlocked = 0
-        cosmeticsSummary.total = 0
-        cosmeticsSummary.newUnlocks = 0
+	cosmeticsEntries = {}
+	hoveredCosmeticIndex = nil
+	pressedCosmeticIndex = nil
+	cosmeticsFocusIndex = nil
+	cosmeticsSummary.unlocked = 0
+	cosmeticsSummary.total = 0
+	cosmeticsSummary.newUnlocks = 0
 
-        if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
-                cosmeticShaderShowcaseEntries = {}
-                cosmeticShowcaseHeight = 0
-                return
-        end
+	if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
+		cosmeticShaderShowcaseEntries = {}
+		cosmeticShowcaseHeight = 0
+		return
+	end
 
-        local skins = SnakeCosmetics:getSkins() or {}
-        buildCosmeticShaderShowcaseEntries(skins)
-        local selectedIndex
-        local recentlyUnlockedIds = {}
+	local skins = SnakeCosmetics:getSkins() or {}
+	buildCosmeticShaderShowcaseEntries(skins)
+	local selectedIndex
+	local recentlyUnlockedIds = {}
 
 	for _, skin in ipairs(skins) do
 		cosmeticsSummary.total = cosmeticsSummary.total + 1
@@ -1693,122 +1693,122 @@ local function drawTrack(sw, sh)
 end
 
 local function ensureCosmeticPreviewTrail()
-        if cosmeticPreviewTrail and cosmeticPreviewBounds then
-                return cosmeticPreviewTrail, cosmeticPreviewBounds
-        end
+	if cosmeticPreviewTrail and cosmeticPreviewBounds then
+		return cosmeticPreviewTrail, cosmeticPreviewBounds
+	end
 
-        local segmentSize = SnakeUtils.SEGMENT_SIZE or 24
-        local step = segmentSize * 0.85
-        local amplitude = segmentSize * 2.4
-        local wobble = segmentSize * 0.35
-        local sampleCount = 18
+	local segmentSize = SnakeUtils.SEGMENT_SIZE or 24
+	local step = segmentSize * 0.85
+	local amplitude = segmentSize * 2.4
+	local wobble = segmentSize * 0.35
+	local sampleCount = 18
 
-        local rawPoints = {}
-        for i = 0, sampleCount - 1 do
-                local t = (sampleCount <= 1) and 0 or (i / (sampleCount - 1))
-                local x = i * step
-                local primaryWave = math.sin(t * math.pi * 1.35 + math.pi * 0.25)
-                local secondaryWave = math.sin(t * math.pi * 3.1)
-                local y = primaryWave * amplitude + secondaryWave * wobble
-                rawPoints[#rawPoints + 1] = { x = x, y = y }
-        end
+	local rawPoints = {}
+	for i = 0, sampleCount - 1 do
+		local t = (sampleCount <= 1) and 0 or (i / (sampleCount - 1))
+		local x = i * step
+		local primaryWave = math.sin(t * math.pi * 1.35 + math.pi * 0.25)
+		local secondaryWave = math.sin(t * math.pi * 3.1)
+		local y = primaryWave * amplitude + secondaryWave * wobble
+		rawPoints[#rawPoints + 1] = { x = x, y = y }
+	end
 
-        local trail = {}
-        for i = #rawPoints, 1, -1 do
-                local point = rawPoints[i]
-                trail[#trail + 1] = { x = point.x, y = point.y }
-        end
+	local trail = {}
+	for i = #rawPoints, 1, -1 do
+		local point = rawPoints[i]
+		trail[#trail + 1] = { x = point.x, y = point.y }
+	end
 
-        local minX, maxX, minY, maxY
-        for i = 1, #trail do
-                local point = trail[i]
-                local px, py = point.x, point.y
-                if minX == nil or px < minX then minX = px end
-                if maxX == nil or px > maxX then maxX = px end
-                if minY == nil or py < minY then minY = py end
-                if maxY == nil or py > maxY then maxY = py end
-        end
+	local minX, maxX, minY, maxY
+	for i = 1, #trail do
+		local point = trail[i]
+		local px, py = point.x, point.y
+		if minX == nil or px < minX then minX = px end
+		if maxX == nil or px > maxX then maxX = px end
+		if minY == nil or py < minY then minY = py end
+		if maxY == nil or py > maxY then maxY = py end
+	end
 
-        cosmeticPreviewTrail = trail
-        cosmeticPreviewBounds = {
-                minX = minX or 0,
-                maxX = maxX or 0,
-                minY = minY or 0,
-                maxY = maxY or 0,
-        }
+	cosmeticPreviewTrail = trail
+	cosmeticPreviewBounds = {
+		minX = minX or 0,
+		maxX = maxX or 0,
+		minY = minY or 0,
+		maxY = maxY or 0,
+	}
 
-        cosmeticPreviewBounds.width = (cosmeticPreviewBounds.maxX or 0) - (cosmeticPreviewBounds.minX or 0)
-        cosmeticPreviewBounds.height = (cosmeticPreviewBounds.maxY or 0) - (cosmeticPreviewBounds.minY or 0)
-        cosmeticPreviewBounds.centerX = (cosmeticPreviewBounds.minX + cosmeticPreviewBounds.maxX) * 0.5
-        cosmeticPreviewBounds.centerY = (cosmeticPreviewBounds.minY + cosmeticPreviewBounds.maxY) * 0.5
+	cosmeticPreviewBounds.width = (cosmeticPreviewBounds.maxX or 0) - (cosmeticPreviewBounds.minX or 0)
+	cosmeticPreviewBounds.height = (cosmeticPreviewBounds.maxY or 0) - (cosmeticPreviewBounds.minY or 0)
+	cosmeticPreviewBounds.centerX = (cosmeticPreviewBounds.minX + cosmeticPreviewBounds.maxX) * 0.5
+	cosmeticPreviewBounds.centerY = (cosmeticPreviewBounds.minY + cosmeticPreviewBounds.maxY) * 0.5
 
-        return cosmeticPreviewTrail, cosmeticPreviewBounds
+	return cosmeticPreviewTrail, cosmeticPreviewBounds
 end
 
 function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, palette)
-        if not previewW or not previewH or previewW <= 0 or previewH <= 0 then
-                return
-        end
+	if not previewW or not previewH or previewW <= 0 or previewH <= 0 then
+		return
+	end
 
-        local trail, bounds = ensureCosmeticPreviewTrail()
-        if not trail or not bounds then
-                return
-        end
+	local trail, bounds = ensureCosmeticPreviewTrail()
+	if not trail or not bounds then
+		return
+	end
 
-        local width = bounds.width or 0
-        local height = bounds.height or 0
-        if width <= 0 or height <= 0 then
-                return
-        end
+	local width = bounds.width or 0
+	local height = bounds.height or 0
+	if width <= 0 or height <= 0 then
+		return
+	end
 
-        local marginX = math.max(12, previewW * 0.12)
-        local marginY = math.max(10, previewH * 0.3)
-        local scale = math.min((previewW - marginX) / width, (previewH - marginY) / height)
-        if not scale or scale <= 0 then
-                return
-        end
+	local marginX = math.max(12, previewW * 0.12)
+	local marginY = math.max(10, previewH * 0.3)
+	local scale = math.min((previewW - marginX) / width, (previewH - marginY) / height)
+	if not scale or scale <= 0 then
+		return
+	end
 
-        local scissorPad = 14
-        love.graphics.push("all")
-        love.graphics.setScissor(previewX - scissorPad, previewY - scissorPad, previewW + scissorPad * 2, previewH + scissorPad * 2)
-        love.graphics.translate(previewX + previewW / 2, previewY + previewH / 2 + previewH * 0.04)
-        love.graphics.scale(scale * 0.95)
-        love.graphics.translate(-(bounds.centerX or 0), -(bounds.centerY or 0))
-        SnakeDraw.run(trail, #trail, SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, nil, {
-                drawFace = false,
-                skinOverride = skin,
-                paletteOverride = palette,
-                overlayEffect = palette and palette.overlay,
-        })
-        love.graphics.pop()
+	local scissorPad = 14
+	love.graphics.push("all")
+	love.graphics.setScissor(previewX - scissorPad, previewY - scissorPad, previewW + scissorPad * 2, previewH + scissorPad * 2)
+	love.graphics.translate(previewX + previewW / 2, previewY + previewH / 2 + previewH * 0.04)
+	love.graphics.scale(scale * 0.95)
+	love.graphics.translate(-(bounds.centerX or 0), -(bounds.centerY or 0))
+	SnakeDraw.run(trail, #trail, SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, nil, {
+		drawFace = false,
+		skinOverride = skin,
+		paletteOverride = palette,
+		overlayEffect = palette and palette.overlay,
+	})
+	love.graphics.pop()
 end
 
 local function drawCosmeticsHeader(sw)
-        local headerY = TAB_BOTTOM + 28
-        love.graphics.setFont(UI.fonts.button)
-        love.graphics.setColor(Theme.textColor)
-        love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, headerY, sw, "center")
+	local headerY = TAB_BOTTOM + 28
+	love.graphics.setFont(UI.fonts.button)
+	love.graphics.setColor(Theme.textColor)
+	love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, headerY, sw, "center")
 
-        if cosmeticsSummary.total > 0 then
-                local summaryText = Localization:get("metaprogression.cosmetics.progress", {
-                        unlocked = cosmeticsSummary.unlocked or 0,
-                        total = cosmeticsSummary.total or 0,
-                })
-                local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
-                love.graphics.setFont(UI.fonts.caption)
-                love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-                love.graphics.printf(summaryText, 0, headerY + 38, sw, "center")
+	if cosmeticsSummary.total > 0 then
+		local summaryText = Localization:get("metaprogression.cosmetics.progress", {
+			unlocked = cosmeticsSummary.unlocked or 0,
+			total = cosmeticsSummary.total or 0,
+		})
+		local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
+		love.graphics.setFont(UI.fonts.caption)
+		love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
+		love.graphics.printf(summaryText, 0, headerY + 38, sw, "center")
 
-                if cosmeticsSummary.newUnlocks and cosmeticsSummary.newUnlocks > 0 then
-                        local key = (cosmeticsSummary.newUnlocks == 1) and "metaprogression.cosmetics.new_summary_single" or "metaprogression.cosmetics.new_summary_multiple"
-                        local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor
-                        love.graphics.setFont(UI.fonts.small)
-                        love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.92)
-                        love.graphics.printf(Localization:get(key, { count = cosmeticsSummary.newUnlocks }), 0, headerY + 60, sw, "center")
-                end
-        end
+		if cosmeticsSummary.newUnlocks and cosmeticsSummary.newUnlocks > 0 then
+			local key = (cosmeticsSummary.newUnlocks == 1) and "metaprogression.cosmetics.new_summary_single" or "metaprogression.cosmetics.new_summary_multiple"
+			local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor
+			love.graphics.setFont(UI.fonts.small)
+			love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.92)
+			love.graphics.printf(Localization:get(key, { count = cosmeticsSummary.newUnlocks }), 0, headerY + 60, sw, "center")
+		end
+	end
 
-        drawCosmeticShaderShowcase(sw)
+	drawCosmeticShaderShowcase(sw)
 end
 
 local function drawCosmeticsList(sw, sh)
@@ -1898,60 +1898,60 @@ local function drawCosmeticsList(sw, sh)
 				UI.drawRoundedRect(listX + 6, y + 6, CARD_WIDTH - 12, COSMETIC_CARD_HEIGHT - 12, 12)
 			end
 
-                        local palette = SnakeCosmetics:getPaletteForSkin(skin)
-                        local bodyColor = (palette and palette.body) or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
-                        local outlineColor = (palette and palette.outline) or {0.05, 0.15, 0.12, 1}
-                        local glowColor = (palette and palette.glow) or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
-                        local overlayEffect = palette and palette.overlay
+			local palette = SnakeCosmetics:getPaletteForSkin(skin)
+			local bodyColor = (palette and palette.body) or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
+			local outlineColor = (palette and palette.outline) or {0.05, 0.15, 0.12, 1}
+			local glowColor = (palette and palette.glow) or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
+			local overlayEffect = palette and palette.overlay
 
-                        if not unlocked then
-                                bodyColor = darkenColor(bodyColor, 0.25)
-                                outlineColor = darkenColor(outlineColor, 0.2)
-                                glowColor = darkenColor(glowColor, 0.3)
-                                if overlayEffect then
-                                        overlayEffect = shallowCopy(overlayEffect)
-                                        if overlayEffect.opacity then
-                                                overlayEffect.opacity = overlayEffect.opacity * 0.65
-                                        end
-                                        if overlayEffect.intensity then
-                                                overlayEffect.intensity = overlayEffect.intensity * 0.6
-                                        end
-                                end
-                        end
+			if not unlocked then
+				bodyColor = darkenColor(bodyColor, 0.25)
+				outlineColor = darkenColor(outlineColor, 0.2)
+				glowColor = darkenColor(glowColor, 0.3)
+				if overlayEffect then
+					overlayEffect = shallowCopy(overlayEffect)
+					if overlayEffect.opacity then
+						overlayEffect.opacity = overlayEffect.opacity * 0.65
+					end
+					if overlayEffect.intensity then
+						overlayEffect.intensity = overlayEffect.intensity * 0.6
+					end
+				end
+			end
 
-                        local previewX = listX + 28
-                        local previewY = y + (COSMETIC_CARD_HEIGHT - COSMETIC_PREVIEW_HEIGHT) / 2
-                        local previewW = COSMETIC_PREVIEW_WIDTH
-                        local previewH = COSMETIC_PREVIEW_HEIGHT
-                        local previewRadius = previewH / 2
+			local previewX = listX + 28
+			local previewY = y + (COSMETIC_CARD_HEIGHT - COSMETIC_PREVIEW_HEIGHT) / 2
+			local previewW = COSMETIC_PREVIEW_WIDTH
+			local previewH = COSMETIC_PREVIEW_HEIGHT
+			local previewRadius = previewH / 2
 
-                        local previewBase = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
-                        if unlocked then
-                                previewBase = lightenColor(previewBase, 0.16)
-                        else
-                                previewBase = darkenColor(previewBase, 0.08)
-                        end
+			local previewBase = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
+			if unlocked then
+				previewBase = lightenColor(previewBase, 0.16)
+			else
+				previewBase = darkenColor(previewBase, 0.08)
+			end
 
-                        love.graphics.setColor(previewBase[1], previewBase[2], previewBase[3], (previewBase[4] or 1) * 0.9)
-                        UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewRadius)
+			love.graphics.setColor(previewBase[1], previewBase[2], previewBase[3], (previewBase[4] or 1) * 0.9)
+			UI.drawRoundedRect(previewX, previewY, previewW, previewH, previewRadius)
 
-                        if unlocked then
-                                love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], (glowColor[4] or 1) * 0.45)
-                                love.graphics.setLineWidth(6)
-                                love.graphics.rectangle("line", previewX - 6, previewY - 6, previewW + 12, previewH + 12, previewRadius + 6, previewRadius + 6)
-                        end
+			if unlocked then
+				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], (glowColor[4] or 1) * 0.45)
+				love.graphics.setLineWidth(6)
+				love.graphics.rectangle("line", previewX - 6, previewY - 6, previewW + 12, previewH + 12, previewRadius + 6, previewRadius + 6)
+			end
 
-                        love.graphics.setLineWidth(1)
-                        love.graphics.setColor(1, 1, 1, 1)
+			love.graphics.setLineWidth(1)
+			love.graphics.setColor(1, 1, 1, 1)
 
-                        local previewPalette = {
-                                body = bodyColor,
-                                outline = outlineColor,
-                                glow = glowColor,
-                                overlay = overlayEffect,
-                        }
+			local previewPalette = {
+				body = bodyColor,
+				outline = outlineColor,
+				glow = glowColor,
+				overlay = overlayEffect,
+			}
 
-                        drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, previewPalette)
+			drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, previewPalette)
 
 			if not unlocked then
 				local overlayColor = withAlpha(Theme.bgColor or {0, 0, 0, 1}, 0.25)

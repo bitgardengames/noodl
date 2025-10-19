@@ -31,20 +31,20 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float c = cos(angle);
-	  float s = sin(angle);
-	  float stripe = sin((uv.x * c + uv.y * s) * frequency + time * speed) * 0.5 + 0.5;
-	  vec3 stripeColor = mix(colorA.rgb, colorB.rgb, stripe);
-	  float blend = clamp(intensity, 0.0, 1.0);
-	  vec3 result = mix(base.rgb, stripeColor, blend);
-	  return vec4(result, base.a) * color;
+		vec2 uv = texture_coords - vec2(0.5);
+		float c = cos(angle);
+		float s = sin(angle);
+		float stripe = sin((uv.x * c + uv.y * s) * frequency + time * speed) * 0.5 + 0.5;
+		vec3 stripeColor = mix(colorA.rgb, colorB.rgb, stripe);
+		float blend = clamp(intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, stripeColor, blend);
+		return vec4(result, base.a) * color;
 	}
 	]],
 	holo = [[
@@ -57,25 +57,25 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float wave = sin((uv.x + uv.y) * 10.0 + time * speed);
-	  float radial = sin(length(uv * vec2(1.4, 1.0)) * 12.0 - time * (speed * 0.6 + 0.2));
-	  float shimmer = sin((uv.x - uv.y) * 16.0 + time * speed * 1.8);
+		vec2 uv = texture_coords - vec2(0.5);
+		float wave = sin((uv.x + uv.y) * 10.0 + time * speed);
+		float radial = sin(length(uv * vec2(1.4, 1.0)) * 12.0 - time * (speed * 0.6 + 0.2));
+		float shimmer = sin((uv.x - uv.y) * 16.0 + time * speed * 1.8);
 
-	  float baseMix = clamp(0.5 + 0.5 * wave, 0.0, 1.0);
-	  vec3 layer = mix(colorA.rgb, colorB.rgb, baseMix);
-	  layer = mix(layer, colorC.rgb, clamp(radial * 0.5 + 0.5, 0.0, 1.0) * 0.6);
-	  layer += shimmer * 0.12 * colorC.rgb;
+		float baseMix = clamp(0.5 + 0.5 * wave, 0.0, 1.0);
+		vec3 layer = mix(colorA.rgb, colorB.rgb, baseMix);
+		layer = mix(layer, colorC.rgb, clamp(radial * 0.5 + 0.5, 0.0, 1.0) * 0.6);
+		layer += shimmer * 0.12 * colorC.rgb;
 
-	  float blend = clamp(intensity, 0.0, 1.0);
-	  vec3 result = mix(base.rgb, layer, blend);
-	  return vec4(result, base.a) * color;
+		float blend = clamp(intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, layer, blend);
+		return vec4(result, base.a) * color;
 	}
 	]],
 	auroraVeil = [[
@@ -91,26 +91,26 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float curtain = sin(uv.x * curtainDensity + time * driftSpeed);
-	  float curtainB = sin((uv.x * 0.6 - uv.y * 0.8) * (curtainDensity * 0.7) - time * driftSpeed * 0.6);
-	  float blend = (curtain + curtainB) * 0.5;
-	  float vertical = clamp(smoothstep(-0.65, 0.65, uv.y + blend * 0.25), 0.0, 1.0);
-	  float shimmer = sin((uv.y * 5.0 + uv.x * 3.0) - time * parallax) * 0.5 + 0.5;
+		vec2 uv = texture_coords - vec2(0.5);
+		float curtain = sin(uv.x * curtainDensity + time * driftSpeed);
+		float curtainB = sin((uv.x * 0.6 - uv.y * 0.8) * (curtainDensity * 0.7) - time * driftSpeed * 0.6);
+		float blend = (curtain + curtainB) * 0.5;
+		float vertical = clamp(smoothstep(-0.65, 0.65, uv.y + blend * 0.25), 0.0, 1.0);
+		float shimmer = sin((uv.y * 5.0 + uv.x * 3.0) - time * parallax) * 0.5 + 0.5;
 
-	  vec3 aurora = mix(colorA.rgb, colorB.rgb, vertical);
-	  aurora = mix(aurora, colorC.rgb, shimmer * shimmerStrength);
+		vec3 aurora = mix(colorA.rgb, colorB.rgb, vertical);
+		aurora = mix(aurora, colorC.rgb, shimmer * shimmerStrength);
 
-	  float glow = clamp((vertical * 0.6 + shimmer * 0.4) * intensity, 0.0, 1.0);
-	  vec3 result = mix(base.rgb, aurora, glow);
-	  result += aurora * glow * 0.25;
-	  return vec4(result, base.a) * color;
+		float glow = clamp((vertical * 0.6 + shimmer * 0.4) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, aurora, glow);
+		result += aurora * glow * 0.25;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	ionStorm = [[
@@ -126,28 +126,28 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float angle = atan(uv.y, uv.x);
-	  float radius = length(uv);
-	  float bolts = sin(angle * boltFrequency + sin(time * turbulence + radius * 8.0) * 2.2);
-	  float arcs = sin(radius * (boltFrequency * 2.5) - time * flashFrequency);
-	  float flicker = sin(time * flashFrequency * 1.8 + radius * 12.0) * 0.5 + 0.5;
-	  float strike = pow(clamp((bolts * 0.5 + 0.5) * (arcs * 0.5 + 0.5), 0.0, 1.0), 1.5);
-	  float halo = smoothstep(0.0, 0.65, 1.0 - radius) * haze;
+		vec2 uv = texture_coords - vec2(0.5);
+		float angle = atan(uv.y, uv.x);
+		float radius = length(uv);
+		float bolts = sin(angle * boltFrequency + sin(time * turbulence + radius * 8.0) * 2.2);
+		float arcs = sin(radius * (boltFrequency * 2.5) - time * flashFrequency);
+		float flicker = sin(time * flashFrequency * 1.8 + radius * 12.0) * 0.5 + 0.5;
+		float strike = pow(clamp((bolts * 0.5 + 0.5) * (arcs * 0.5 + 0.5), 0.0, 1.0), 1.5);
+		float halo = smoothstep(0.0, 0.65, 1.0 - radius) * haze;
 
-	  vec3 energy = mix(colorA.rgb, colorB.rgb, clamp(strike + flicker * 0.4, 0.0, 1.0));
-	  energy = mix(energy, colorC.rgb, clamp(flicker, 0.0, 1.0));
+		vec3 energy = mix(colorA.rgb, colorB.rgb, clamp(strike + flicker * 0.4, 0.0, 1.0));
+		energy = mix(energy, colorC.rgb, clamp(flicker, 0.0, 1.0));
 
-	  float glow = clamp((strike * 0.8 + halo * 0.6) * intensity, 0.0, 1.0);
-	  vec3 result = mix(base.rgb, energy, glow);
-	  result += colorC.rgb * glow * 0.2;
-	  return vec4(result, base.a) * color;
+		float glow = clamp((strike * 0.8 + halo * 0.6) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, energy, glow);
+		result += colorC.rgb * glow * 0.2;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	petalBloom = [[
@@ -163,28 +163,28 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float radius = length(uv);
-	  float angle = atan(uv.y, uv.x);
-	  float petals = sin(angle * petalCount + sin(time * pulseSpeed) * 0.8);
-	  float rings = sin(radius * (petalCount * 1.4) - time * pulseSpeed * 0.7);
-	  float pulse = sin(time * pulseSpeed + radius * 6.0) * 0.5 + 0.5;
-	  float bloom = pow(clamp(petals * 0.5 + 0.5, 0.0, 1.0), 1.2);
-	  float trails = smoothstep(0.0, 1.0, 1.0 - radius) * trailStrength;
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float angle = atan(uv.y, uv.x);
+		float petals = sin(angle * petalCount + sin(time * pulseSpeed) * 0.8);
+		float rings = sin(radius * (petalCount * 1.4) - time * pulseSpeed * 0.7);
+		float pulse = sin(time * pulseSpeed + radius * 6.0) * 0.5 + 0.5;
+		float bloom = pow(clamp(petals * 0.5 + 0.5, 0.0, 1.0), 1.2);
+		float trails = smoothstep(0.0, 1.0, 1.0 - radius) * trailStrength;
 
-	  vec3 petalColor = mix(colorA.rgb, colorB.rgb, bloom);
-	  petalColor = mix(petalColor, colorC.rgb, clamp(pulse, 0.0, 1.0));
+		vec3 petalColor = mix(colorA.rgb, colorB.rgb, bloom);
+		petalColor = mix(petalColor, colorC.rgb, clamp(pulse, 0.0, 1.0));
 
-	  float glow = clamp((bloom * bloomStrength + trails * 0.4 + pulse * 0.5) * intensity, 0.0, 1.0);
-	  vec3 result = mix(base.rgb, petalColor, glow);
-	  result += petalColor * glow * 0.15;
-	  return vec4(result, base.a) * color;
+		float glow = clamp((bloom * bloomStrength + trails * 0.4 + pulse * 0.5) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, petalColor, glow);
+		result += petalColor * glow * 0.15;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	abyssalPulse = [[
@@ -200,29 +200,29 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float radius = length(uv);
-	  float angle = atan(uv.y, uv.x);
-	  float swirl = sin(angle * swirlDensity - time * driftSpeed + radius * 4.0);
-	  float waves = sin(radius * (swirlDensity * 0.5) + time * driftSpeed * 0.6);
-	  float glimmer = sin(angle * glimmerFrequency + time * glimmerFrequency * 0.7);
-	  float depth = smoothstep(0.0, 0.9, radius);
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float angle = atan(uv.y, uv.x);
+		float swirl = sin(angle * swirlDensity - time * driftSpeed + radius * 4.0);
+		float waves = sin(radius * (swirlDensity * 0.5) + time * driftSpeed * 0.6);
+		float glimmer = sin(angle * glimmerFrequency + time * glimmerFrequency * 0.7);
+		float depth = smoothstep(0.0, 0.9, radius);
 
-	  vec3 abyss = mix(colorA.rgb, colorB.rgb, clamp(swirl * 0.5 + 0.5, 0.0, 1.0));
-	  abyss = mix(abyss, colorC.rgb, clamp(glimmer * 0.5 + 0.5, 0.0, 1.0) * 0.6);
+		vec3 abyss = mix(colorA.rgb, colorB.rgb, clamp(swirl * 0.5 + 0.5, 0.0, 1.0));
+		abyss = mix(abyss, colorC.rgb, clamp(glimmer * 0.5 + 0.5, 0.0, 1.0) * 0.6);
 
-	  float glow = clamp((1.0 - depth) * 0.6 + waves * 0.2 + glimmer * 0.2, 0.0, 1.0) * intensity;
-	  glow = mix(glow, glow * (1.0 - depth), clamp(darkness, 0.0, 1.0));
+		float glow = clamp((1.0 - depth) * 0.6 + waves * 0.2 + glimmer * 0.2, 0.0, 1.0) * intensity;
+		glow = mix(glow, glow * (1.0 - depth), clamp(darkness, 0.0, 1.0));
 
-	  vec3 result = mix(base.rgb, abyss, glow);
-	  result += colorC.rgb * glow * 0.12;
-	  return vec4(result, base.a) * color;
+		vec3 result = mix(base.rgb, abyss, glow);
+		result += colorC.rgb * glow * 0.12;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	chronoWeave = [[
@@ -238,30 +238,30 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float radius = length(uv);
-	  float angle = atan(uv.y, uv.x);
-	  float rings = sin(radius * ringDensity - time * timeFlow);
-	  float spokes = sin(angle * (ringDensity * 0.5) + time * weaveStrength);
-	  float warp = sin((radius * 8.0 + angle * 6.0) + time * (timeFlow * 0.5 + weaveStrength)) * 0.5 + 0.5;
-	  float chrono = clamp(rings * 0.5 + 0.5, 0.0, 1.0);
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float angle = atan(uv.y, uv.x);
+		float rings = sin(radius * ringDensity - time * timeFlow);
+		float spokes = sin(angle * (ringDensity * 0.5) + time * weaveStrength);
+		float warp = sin((radius * 8.0 + angle * 6.0) + time * (timeFlow * 0.5 + weaveStrength)) * 0.5 + 0.5;
+		float chrono = clamp(rings * 0.5 + 0.5, 0.0, 1.0);
 
-	  vec3 core = mix(colorA.rgb, colorB.rgb, chrono);
-	  core = mix(core, colorC.rgb, warp);
+		vec3 core = mix(colorA.rgb, colorB.rgb, chrono);
+		core = mix(core, colorC.rgb, warp);
 
-	  float glow = clamp((chrono * 0.5 + (spokes * 0.5 + 0.5) * weaveStrength + warp * 0.35) * intensity, 0.0, 1.0);
-	  float fade = smoothstep(0.85, 1.1, radius + phaseOffset);
-	  glow *= (1.0 - fade);
+		float glow = clamp((chrono * 0.5 + (spokes * 0.5 + 0.5) * weaveStrength + warp * 0.35) * intensity, 0.0, 1.0);
+		float fade = smoothstep(0.85, 1.1, radius + phaseOffset);
+		glow *= (1.0 - fade);
 
-	  vec3 result = mix(base.rgb, core, glow);
-	  result += colorC.rgb * glow * 0.1;
-	  return vec4(result, base.a) * color;
+		vec3 result = mix(base.rgb, core, glow);
+		result += colorC.rgb * glow * 0.1;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	gildedFacet = [[
@@ -277,28 +277,28 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float radius = length(uv);
-	  float facets = sin(uv.x * facetDensity + sin(uv.y * facetDensity * 1.3 + time * beamSpeed) * 1.5);
-	  float prismatic = sin((uv.x + uv.y) * (facetDensity * 0.7) - time * beamSpeed * 0.8);
-	  float sparkle = sin(time * sparkleDensity + atan(uv.y, uv.x) * 12.0 + radius * 16.0) * 0.5 + 0.5;
-	  float highlight = clamp(facets * 0.5 + 0.5, 0.0, 1.0);
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float facets = sin(uv.x * facetDensity + sin(uv.y * facetDensity * 1.3 + time * beamSpeed) * 1.5);
+		float prismatic = sin((uv.x + uv.y) * (facetDensity * 0.7) - time * beamSpeed * 0.8);
+		float sparkle = sin(time * sparkleDensity + atan(uv.y, uv.x) * 12.0 + radius * 16.0) * 0.5 + 0.5;
+		float highlight = clamp(facets * 0.5 + 0.5, 0.0, 1.0);
 
-	  vec3 metal = mix(colorA.rgb, colorB.rgb, highlight);
-	  metal = mix(metal, colorC.rgb, pow(clamp(sparkle, 0.0, 1.0), 2.0) * reflectionStrength);
+		vec3 metal = mix(colorA.rgb, colorB.rgb, highlight);
+		metal = mix(metal, colorC.rgb, pow(clamp(sparkle, 0.0, 1.0), 2.0) * reflectionStrength);
 
-	  float glow = clamp((highlight * 0.5 + prismatic * 0.35 + sparkle * 0.6) * intensity, 0.0, 1.0);
-	  glow *= (1.0 - smoothstep(0.0, 1.1, radius));
+		float glow = clamp((highlight * 0.5 + prismatic * 0.35 + sparkle * 0.6) * intensity, 0.0, 1.0);
+		glow *= (1.0 - smoothstep(0.0, 1.1, radius));
 
-	  vec3 result = mix(base.rgb, metal, glow);
-	  result += colorC.rgb * glow * 0.18;
-	  return vec4(result, base.a) * color;
+		vec3 result = mix(base.rgb, metal, glow);
+		result += colorC.rgb * glow * 0.18;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	voidEcho = [[
@@ -314,32 +314,32 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float radius = length(uv);
-	  float angle = atan(uv.y, uv.x);
-	  float field = sin((uv.x + uv.y) * veilFrequency + time * echoSpeed);
-	  float lens = sin(radius * (veilFrequency * 1.6) - time * echoSpeed * 0.6 + phaseShift);
-	  float echoes = sin(angle * (veilFrequency * 0.8) - time * echoSpeed * 1.3);
-	  float drift = sin((uv.x - uv.y) * (veilFrequency * 0.5) + time * echoSpeed * 0.4);
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float angle = atan(uv.y, uv.x);
+		float field = sin((uv.x + uv.y) * veilFrequency + time * echoSpeed);
+		float lens = sin(radius * (veilFrequency * 1.6) - time * echoSpeed * 0.6 + phaseShift);
+		float echoes = sin(angle * (veilFrequency * 0.8) - time * echoSpeed * 1.3);
+		float drift = sin((uv.x - uv.y) * (veilFrequency * 0.5) + time * echoSpeed * 0.4);
 
-	  float veil = clamp(field * 0.4 + lens * 0.4 + echoes * 0.2, -1.0, 1.0) * 0.5 + 0.5;
-	  float rift = smoothstep(0.2, 0.95, radius) * riftIntensity;
+		float veil = clamp(field * 0.4 + lens * 0.4 + echoes * 0.2, -1.0, 1.0) * 0.5 + 0.5;
+		float rift = smoothstep(0.2, 0.95, radius) * riftIntensity;
 
-	  vec3 wisp = mix(colorA.rgb, colorB.rgb, veil);
-	  wisp = mix(wisp, colorC.rgb, clamp(drift * 0.5 + 0.5, 0.0, 1.0));
+		vec3 wisp = mix(colorA.rgb, colorB.rgb, veil);
+		wisp = mix(wisp, colorC.rgb, clamp(drift * 0.5 + 0.5, 0.0, 1.0));
 
-	  float glow = clamp((veil * 0.6 + (1.0 - rift) * 0.4 + drift * 0.2) * intensity, 0.0, 1.0);
-	  glow *= (1.0 - smoothstep(0.0, 1.05, radius + drift * 0.08));
+		float glow = clamp((veil * 0.6 + (1.0 - rift) * 0.4 + drift * 0.2) * intensity, 0.0, 1.0);
+		glow *= (1.0 - smoothstep(0.0, 1.05, radius + drift * 0.08));
 
-	  vec3 result = mix(base.rgb, wisp, glow);
-	  result += colorC.rgb * glow * 0.16;
-	  return vec4(result, base.a) * color;
+		vec3 result = mix(base.rgb, wisp, glow);
+		result += colorC.rgb * glow * 0.16;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	constellationDrift = [[
@@ -355,47 +355,47 @@ local overlayShaderSources = {
 
 	float hash(vec2 p)
 	{
-	  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+		return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 	}
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
-
-	  vec2 uv = texture_coords - vec2(0.5);
-	  vec2 starUV = uv * starDensity;
-	  vec2 id = floor(starUV);
-	  vec2 frac = fract(starUV);
-
-	  float twinkle = 0.0;
-	  for (int x = -1; x <= 1; ++x) {
-		for (int y = -1; y <= 1; ++y) {
-		  vec2 offset = vec2(x, y);
-		  vec2 cell = id + offset;
-		  float starSeed = hash(cell);
-		  vec2 starPos = fract(sin(vec2(starSeed, starSeed * 1.7)) * 43758.5453);
-		  vec2 delta = offset + starPos - frac;
-		  float dist = length(delta);
-		  float sparkle = clamp(1.0 - dist * 2.4, 0.0, 1.0);
-		  float pulse = sin(time * driftSpeed + starSeed * 6.283 + parallax * dot(delta, vec2(0.6, -0.4)));
-		  twinkle += sparkle * (0.5 + 0.5 * pulse);
 		}
-	  }
 
-	  twinkle = clamp(twinkle * twinkleStrength, 0.0, 1.2);
-	  float band = sin((uv.x + uv.y) * 6.0 + time * driftSpeed * 0.4) * 0.5 + 0.5;
+		vec2 uv = texture_coords - vec2(0.5);
+		vec2 starUV = uv * starDensity;
+		vec2 id = floor(starUV);
+		vec2 frac = fract(starUV);
 
-	  vec3 starColor = mix(colorA.rgb, colorB.rgb, band);
-	  starColor = mix(starColor, colorC.rgb, clamp(twinkle, 0.0, 1.0));
+		float twinkle = 0.0;
+		for (int x = -1; x <= 1; ++x) {
+		for (int y = -1; y <= 1; ++y) {
+			vec2 offset = vec2(x, y);
+			vec2 cell = id + offset;
+			float starSeed = hash(cell);
+			vec2 starPos = fract(sin(vec2(starSeed, starSeed * 1.7)) * 43758.5453);
+			vec2 delta = offset + starPos - frac;
+			float dist = length(delta);
+			float sparkle = clamp(1.0 - dist * 2.4, 0.0, 1.0);
+			float pulse = sin(time * driftSpeed + starSeed * 6.283 + parallax * dot(delta, vec2(0.6, -0.4)));
+			twinkle += sparkle * (0.5 + 0.5 * pulse);
+		}
+		}
 
-	  float glow = clamp((band * 0.4 + twinkle) * intensity, 0.0, 1.0);
-	  vec3 result = mix(base.rgb, starColor, glow);
-	  result += colorC.rgb * glow * 0.12;
-	  return vec4(result, base.a) * color;
+		twinkle = clamp(twinkle * twinkleStrength, 0.0, 1.2);
+		float band = sin((uv.x + uv.y) * 6.0 + time * driftSpeed * 0.4) * 0.5 + 0.5;
+
+		vec3 starColor = mix(colorA.rgb, colorB.rgb, band);
+		starColor = mix(starColor, colorC.rgb, clamp(twinkle, 0.0, 1.0));
+
+		float glow = clamp((band * 0.4 + twinkle) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, starColor, glow);
+		result += colorC.rgb * glow * 0.12;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	crystalBloom = [[
@@ -411,28 +411,28 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  vec2 shard = uv * shardDensity;
-	  float ridge = sin(shard.x + sin(shard.y * 1.7 + time * sweepSpeed) * 1.2);
-	  float ridgeB = sin(shard.y * 1.4 - time * sweepSpeed * 0.6);
-	  float veins = sin((uv.x - uv.y) * 12.0 + time * sweepSpeed * 1.3);
+		vec2 uv = texture_coords - vec2(0.5);
+		vec2 shard = uv * shardDensity;
+		float ridge = sin(shard.x + sin(shard.y * 1.7 + time * sweepSpeed) * 1.2);
+		float ridgeB = sin(shard.y * 1.4 - time * sweepSpeed * 0.6);
+		float veins = sin((uv.x - uv.y) * 12.0 + time * sweepSpeed * 1.3);
 
-	  float crystalline = clamp(ridge * 0.5 + ridgeB * 0.5, -1.0, 1.0) * 0.5 + 0.5;
-	  float caustic = clamp(veins * 0.5 + 0.5, 0.0, 1.0);
+		float crystalline = clamp(ridge * 0.5 + ridgeB * 0.5, -1.0, 1.0) * 0.5 + 0.5;
+		float caustic = clamp(veins * 0.5 + 0.5, 0.0, 1.0);
 
-	  vec3 mineral = mix(colorA.rgb, colorB.rgb, crystalline);
-	  mineral = mix(mineral, colorC.rgb, caustic * refractionStrength);
+		vec3 mineral = mix(colorA.rgb, colorB.rgb, crystalline);
+		mineral = mix(mineral, colorC.rgb, caustic * refractionStrength);
 
-	  float glow = clamp((crystalline * 0.45 + caustic * veinStrength) * intensity, 0.0, 1.0);
-	  vec3 result = mix(base.rgb, mineral, glow);
-	  result += colorC.rgb * glow * 0.14;
-	  return vec4(result, base.a) * color;
+		float glow = clamp((crystalline * 0.45 + caustic * veinStrength) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, mineral, glow);
+		result += colorC.rgb * glow * 0.14;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	emberForge = [[
@@ -448,30 +448,30 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float radius = length(uv);
-	  float emberFlow = sin((uv.x * 1.4 + uv.y * 0.6) * emberFrequency + time * emberSpeed);
-	  float emberPulse = sin((uv.x - uv.y) * (emberFrequency * 0.5) + time * emberSpeed * 1.6);
-	  float sparks = sin(time * emberSpeed * 2.3 + radius * 18.0) * 0.5 + 0.5;
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float emberFlow = sin((uv.x * 1.4 + uv.y * 0.6) * emberFrequency + time * emberSpeed);
+		float emberPulse = sin((uv.x - uv.y) * (emberFrequency * 0.5) + time * emberSpeed * 1.6);
+		float sparks = sin(time * emberSpeed * 2.3 + radius * 18.0) * 0.5 + 0.5;
 
-	  float forge = clamp(emberFlow * 0.5 + emberPulse * 0.5, -1.0, 1.0) * 0.5 + 0.5;
-	  float slag = smoothstep(0.2, 0.95, radius) * slagDarkness;
+		float forge = clamp(emberFlow * 0.5 + emberPulse * 0.5, -1.0, 1.0) * 0.5 + 0.5;
+		float slag = smoothstep(0.2, 0.95, radius) * slagDarkness;
 
-	  vec3 molten = mix(colorA.rgb, colorB.rgb, forge);
-	  molten = mix(molten, colorC.rgb, clamp(sparks, 0.0, 1.0) * emberGlow);
+		vec3 molten = mix(colorA.rgb, colorB.rgb, forge);
+		molten = mix(molten, colorC.rgb, clamp(sparks, 0.0, 1.0) * emberGlow);
 
-	  float glow = clamp((forge * 0.7 + sparks * 0.4) * intensity, 0.0, 1.0);
-	  glow *= (1.0 - slag);
+		float glow = clamp((forge * 0.7 + sparks * 0.4) * intensity, 0.0, 1.0);
+		glow *= (1.0 - slag);
 
-	  vec3 result = mix(base.rgb, molten, glow);
-	  result += colorC.rgb * glow * 0.2;
-	  return vec4(result, base.a) * color;
+		vec3 result = mix(base.rgb, molten, glow);
+		result += colorC.rgb * glow * 0.2;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	mechanicalScan = [[
@@ -487,27 +487,27 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float radius = length(uv);
-	  float scan = sin((uv.y + uv.x * 0.3) * gearFrequency - time * scanSpeed) * 0.5 + 0.5;
-	  float gears = sin(atan(uv.y, uv.x) * gearFrequency * 0.7 + time * gearParallax);
-	  float ticks = sin(radius * (gearFrequency * 1.8) - time * scanSpeed * 1.5);
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float scan = sin((uv.y + uv.x * 0.3) * gearFrequency - time * scanSpeed) * 0.5 + 0.5;
+		float gears = sin(atan(uv.y, uv.x) * gearFrequency * 0.7 + time * gearParallax);
+		float ticks = sin(radius * (gearFrequency * 1.8) - time * scanSpeed * 1.5);
 
-	  vec3 steel = mix(colorA.rgb, colorB.rgb, scan);
-	  steel = mix(steel, colorC.rgb, clamp(gears * 0.5 + 0.5, 0.0, 1.0) * servoIntensity);
+		vec3 steel = mix(colorA.rgb, colorB.rgb, scan);
+		steel = mix(steel, colorC.rgb, clamp(gears * 0.5 + 0.5, 0.0, 1.0) * servoIntensity);
 
-	  float glow = clamp((scan * 0.45 + ticks * 0.3 + (gears * 0.5 + 0.5) * 0.25) * intensity, 0.0, 1.0);
-	  glow *= (1.0 - smoothstep(0.0, 1.05, radius + 0.02));
+		float glow = clamp((scan * 0.45 + ticks * 0.3 + (gears * 0.5 + 0.5) * 0.25) * intensity, 0.0, 1.0);
+		glow *= (1.0 - smoothstep(0.0, 1.05, radius + 0.02));
 
-	  vec3 result = mix(base.rgb, steel, glow);
-	  result += colorC.rgb * glow * 0.12;
-	  return vec4(result, base.a) * color;
+		vec3 result = mix(base.rgb, steel, glow);
+		result += colorC.rgb * glow * 0.12;
+		return vec4(result, base.a) * color;
 	}
 	]],
 	tidalChorus = [[
@@ -523,25 +523,25 @@ local overlayShaderSources = {
 
 	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 	{
-	  vec4 base = Texel(tex, texture_coords);
-	  float mask = base.a;
-	  if (mask <= 0.0) {
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
 		return base * color;
-	  }
+		}
 
-	  vec2 uv = texture_coords - vec2(0.5);
-	  float wave = sin((uv.x * waveFrequency - uv.y * 1.2) + time * crestSpeed);
-	  float counter = sin((uv.x * 0.8 + uv.y * waveFrequency * 0.7) - time * crestSpeed * 0.7);
-	  float harmonics = sin((uv.x + uv.y) * 5.0 + time * crestSpeed * 1.3);
-	  float depth = smoothstep(-0.4 + depthShift, 0.6 + depthShift, uv.y + wave * 0.1);
+		vec2 uv = texture_coords - vec2(0.5);
+		float wave = sin((uv.x * waveFrequency - uv.y * 1.2) + time * crestSpeed);
+		float counter = sin((uv.x * 0.8 + uv.y * waveFrequency * 0.7) - time * crestSpeed * 0.7);
+		float harmonics = sin((uv.x + uv.y) * 5.0 + time * crestSpeed * 1.3);
+		float depth = smoothstep(-0.4 + depthShift, 0.6 + depthShift, uv.y + wave * 0.1);
 
-	  vec3 tide = mix(colorA.rgb, colorB.rgb, clamp(depth, 0.0, 1.0));
-	  tide = mix(tide, colorC.rgb, clamp(harmonics * 0.5 + 0.5, 0.0, 1.0) * chorusStrength);
+		vec3 tide = mix(colorA.rgb, colorB.rgb, clamp(depth, 0.0, 1.0));
+		tide = mix(tide, colorC.rgb, clamp(harmonics * 0.5 + 0.5, 0.0, 1.0) * chorusStrength);
 
-	  float glow = clamp((depth * 0.5 + (wave * 0.5 + 0.5) * 0.3 + (counter * 0.5 + 0.5) * 0.3) * intensity, 0.0, 1.0);
-	  vec3 result = mix(base.rgb, tide, glow);
-	  result += colorC.rgb * glow * 0.16;
-	  return vec4(result, base.a) * color;
+		float glow = clamp((depth * 0.5 + (wave * 0.5 + 0.5) * 0.3 + (counter * 0.5 + 0.5) * 0.3) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, tide, glow);
+		result += colorC.rgb * glow * 0.16;
+		return vec4(result, base.a) * color;
 	}
 	]],
 }
@@ -585,41 +585,41 @@ local function ensureSnakeOverlayCanvas(width, height)
 end
 
 local function presentSnakeCanvas(overlayEffect, width, height)
-        if not snakeCanvas then
-                return false
-        end
+	if not snakeCanvas then
+		return false
+	end
 
-        RenderLayers:withLayer("shadows", function()
-                love.graphics.setColor(0, 0, 0, 0.25)
-                love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
-        end)
+	RenderLayers:withLayer("shadows", function()
+		love.graphics.setColor(0, 0, 0, 0.25)
+		love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
+	end)
 
-        local drewOverlay = false
-        if overlayEffect then
-                local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
-                local previousCanvas = { love.graphics.getCanvas() }
-                love.graphics.setCanvas(overlayCanvas)
-                love.graphics.clear(0, 0, 0, 0)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(snakeCanvas, 0, 0)
-                drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
-                if #previousCanvas > 0 then
-                        love.graphics.setCanvas(unpack(previousCanvas))
-                else
-                        love.graphics.setCanvas()
-                end
-        end
+	local drewOverlay = false
+	if overlayEffect then
+		local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
+		local previousCanvas = { love.graphics.getCanvas() }
+		love.graphics.setCanvas(overlayCanvas)
+		love.graphics.clear(0, 0, 0, 0)
+		love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.draw(snakeCanvas, 0, 0)
+		drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
+		if #previousCanvas > 0 then
+			love.graphics.setCanvas(unpack(previousCanvas))
+		else
+			love.graphics.setCanvas()
+		end
+	end
 
-        RenderLayers:withLayer("main", function()
-                love.graphics.setColor(1, 1, 1, 1)
-                if drewOverlay then
-                        love.graphics.draw(snakeOverlayCanvas, 0, 0)
-                else
-                        love.graphics.draw(snakeCanvas, 0, 0)
-                end
-        end)
+	RenderLayers:withLayer("main", function()
+		love.graphics.setColor(1, 1, 1, 1)
+		if drewOverlay then
+			love.graphics.draw(snakeOverlayCanvas, 0, 0)
+		else
+			love.graphics.draw(snakeCanvas, 0, 0)
+		end
+	end)
 
-        return drewOverlay
+	return drewOverlay
 end
 
 local function resolveColor(color, fallback)
@@ -873,13 +873,13 @@ local function drawSnakeStroke(path, radius, options)
 end
 
 local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
-        local paletteBody = palette and palette.body
-        local paletteOutline = palette and palette.outline
+	local paletteBody = palette and palette.body
+	local paletteOutline = palette and palette.outline
 
-        local bodyColor = paletteBody or SnakeCosmetics:getBodyColor()
-        local outlineColor = paletteOutline or SnakeCosmetics:getOutlineColor()
-        local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
-        local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
+	local bodyColor = paletteBody or SnakeCosmetics:getBodyColor()
+	local outlineColor = paletteOutline or SnakeCosmetics:getOutlineColor()
+	local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
+	local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
 	local bulgeRadius = half * FRUIT_BULGE_SCALE
 
 	local sharpCorners = options and options.sharpCorners
@@ -909,7 +909,7 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 end
 
 drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
-        if radius <= 0 then return end
+	if radius <= 0 then return end
 
 	local colorR = r or 0
 	local colorG = g or 0
@@ -944,68 +944,68 @@ drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
 end
 
 local function fadePalette(palette, alphaScale)
-        local scale = alphaScale or 1
-        local baseBody = (palette and palette.body) or SnakeCosmetics:getBodyColor()
-        local baseOutline = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
+	local scale = alphaScale or 1
+	local baseBody = (palette and palette.body) or SnakeCosmetics:getBodyColor()
+	local baseOutline = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
 
-        local faded = {
-        body = {
-                baseBody[1] or 1,
-                baseBody[2] or 1,
-                baseBody[3] or 1,
-                (baseBody[4] or 1) * scale,
-        },
-        outline = {
-                baseOutline[1] or 0,
-                baseOutline[2] or 0,
-                baseOutline[3] or 0,
-                (baseOutline[4] or 1) * scale,
-        },
-        }
+	local faded = {
+	body = {
+		baseBody[1] or 1,
+		baseBody[2] or 1,
+		baseBody[3] or 1,
+		(baseBody[4] or 1) * scale,
+	},
+	outline = {
+		baseOutline[1] or 0,
+		baseOutline[2] or 0,
+		baseOutline[3] or 0,
+		(baseOutline[4] or 1) * scale,
+	},
+	}
 
-        if palette and palette.overlay then
-        faded.overlay = palette.overlay
-        end
+	if palette and palette.overlay then
+	faded.overlay = palette.overlay
+	end
 
-        return faded
+	return faded
 end
 
 local function drawTrailSegmentToCanvas(trail, half, options, paletteOverride)
-        if not trail or #trail == 0 then
-        return
-        end
+	if not trail or #trail == 0 then
+	return
+	end
 
-        local coords = buildCoords(trail)
-        local head = trail[1]
+	local coords = buildCoords(trail)
+	local head = trail[1]
 
-        if #coords >= 4 then
-        renderSnakeToCanvas(trail, coords, head, half, options, paletteOverride)
-        return
-        end
+	if #coords >= 4 then
+	renderSnakeToCanvas(trail, coords, head, half, options, paletteOverride)
+	return
+	end
 
-        local hx = head and (head.drawX or head.x)
-        local hy = head and (head.drawY or head.y)
-        if not (hx and hy) then
-        return
-        end
+	local hx = head and (head.drawX or head.x)
+	local hy = head and (head.drawY or head.y)
+	if not (hx and hy) then
+	return
+	end
 
-        local palette = paletteOverride or {}
-        local bodyColor = palette.body or SnakeCosmetics:getBodyColor()
-        local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
+	local palette = paletteOverride or {}
+	local bodyColor = palette.body or SnakeCosmetics:getBodyColor()
+	local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
 
-        love.graphics.push("all")
-        love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
-        love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
-        love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
-        love.graphics.circle("fill", hx, hy, half)
-        love.graphics.pop()
+	love.graphics.push("all")
+	love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
+	love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+	love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
+	love.graphics.circle("fill", hx, hy, half)
+	love.graphics.pop()
 end
 
 local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
-        local hasShield = shieldCount and shieldCount > 0
-        if not hasShield and not (shieldFlashTimer and shieldFlashTimer > 0) then
-        return
-        end
+	local hasShield = shieldCount and shieldCount > 0
+	if not hasShield and not (shieldFlashTimer and shieldFlashTimer > 0) then
+	return
+	end
 
 	local baseRadius = SEGMENT_SIZE * (0.95 + 0.06 * math.max(0, (shieldCount or 1) - 1))
 	local time = love.timer.getTime()
@@ -1019,80 +1019,80 @@ local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTi
 	alpha = alpha + flash * 0.4
 	end
 
-        love.graphics.setLineWidth(4)
-        local lineAlpha = alpha + (hasShield and 0.25 or 0.45)
-        love.graphics.setColor(0.45, 0.85, 1, lineAlpha)
-        love.graphics.circle("line", hx, hy, baseRadius * pulse)
+	love.graphics.setLineWidth(4)
+	local lineAlpha = alpha + (hasShield and 0.25 or 0.45)
+	love.graphics.setColor(0.45, 0.85, 1, lineAlpha)
+	love.graphics.circle("line", hx, hy, baseRadius * pulse)
 
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.setLineWidth(1)
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setLineWidth(1)
 end
 
 local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
-        if not data then return end
-        local stacks = data.stacks or 0
-        if stacks <= 0 then return end
+	if not data then return end
+	local stacks = data.stacks or 0
+	if stacks <= 0 then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        if intensity <= 0.01 then return end
+	local intensity = math.max(0, data.intensity or 0)
+	if intensity <= 0.01 then return end
 
-        local flash = math.max(0, data.flash or 0)
-        local highlight = math.min(1, intensity * 0.85 + flash * 0.6)
+	local flash = math.max(0, data.flash or 0)
+	local highlight = math.min(1, intensity * 0.85 + flash * 0.6)
 
-        local headRadius = SEGMENT_SIZE * 0.4
-        local rawStacks = math.max(0, stacks)
-        local baseStacks = math.min(rawStacks, 4)
-        local overflowStacks = math.max(0, rawStacks - 4)
-        local visualStacks = baseStacks + overflowStacks * 1.35
-        local activityScale = 1 + math.max(0, data.target or 0) * 0.35
-        local stackFactor = visualStacks * activityScale
+	local headRadius = SEGMENT_SIZE * 0.4
+	local rawStacks = math.max(0, stacks)
+	local baseStacks = math.min(rawStacks, 4)
+	local overflowStacks = math.max(0, rawStacks - 4)
+	local visualStacks = baseStacks + overflowStacks * 1.35
+	local activityScale = 1 + math.max(0, data.target or 0) * 0.35
+	local stackFactor = visualStacks * activityScale
 
-        local fangLength = headRadius * (0.75 + 0.12 * stackFactor)
-        local fangWidth = headRadius * (0.35 + 0.05 * stackFactor)
-        local spacing = headRadius * (0.35 + 0.02 * stackFactor)
-        local mouthDrop = headRadius * (0.4 + 0.03 * stackFactor)
+	local fangLength = headRadius * (0.75 + 0.12 * stackFactor)
+	local fangWidth = headRadius * (0.35 + 0.05 * stackFactor)
+	local spacing = headRadius * (0.35 + 0.02 * stackFactor)
+	local mouthDrop = headRadius * (0.4 + 0.03 * stackFactor)
 
-        local outlineColor = SnakeCosmetics:getOutlineColor()
-        local outlineR = outlineColor[1] or 0
-        local outlineG = outlineColor[2] or 0
-        local outlineB = outlineColor[3] or 0
-        local outlineA = (outlineColor[4] or 1) * (0.75 + 0.25 * highlight)
+	local outlineColor = SnakeCosmetics:getOutlineColor()
+	local outlineR = outlineColor[1] or 0
+	local outlineG = outlineColor[2] or 0
+	local outlineB = outlineColor[3] or 0
+	local outlineA = (outlineColor[4] or 1) * (0.75 + 0.25 * highlight)
 
-        local fillAlpha = 0.55 + 0.35 * highlight
-        local fillR = 1.0
-        local fillG = 0.96 + 0.04 * highlight
-        local fillB = 0.88 + 0.08 * highlight
+	local fillAlpha = 0.55 + 0.35 * highlight
+	local fillR = 1.0
+	local fillG = 0.96 + 0.04 * highlight
+	local fillB = 0.88 + 0.08 * highlight
 
-        love.graphics.push("all")
-        love.graphics.translate(hx, hy + mouthDrop)
+	love.graphics.push("all")
+	love.graphics.translate(hx, hy + mouthDrop)
 
-        for _, side in ipairs({ -1, 1 }) do
-                local baseX = side * spacing
-                local topLeftX = baseX - fangWidth * 0.5
-                local topRightX = baseX + fangWidth * 0.5
-                local tipX = baseX
-                local tipY = fangLength
+	for _, side in ipairs({ -1, 1 }) do
+		local baseX = side * spacing
+		local topLeftX = baseX - fangWidth * 0.5
+		local topRightX = baseX + fangWidth * 0.5
+		local tipX = baseX
+		local tipY = fangLength
 
-                love.graphics.setColor(fillR, fillG, fillB, fillAlpha)
-                love.graphics.polygon("fill", topLeftX, 0, topRightX, 0, tipX, tipY)
+		love.graphics.setColor(fillR, fillG, fillB, fillAlpha)
+		love.graphics.polygon("fill", topLeftX, 0, topRightX, 0, tipX, tipY)
 
-                love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-                love.graphics.setLineWidth(1.4)
-                love.graphics.polygon("line", topLeftX, 0, topRightX, 0, tipX, tipY)
-        end
+		love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+		love.graphics.setLineWidth(1.4)
+		love.graphics.polygon("line", topLeftX, 0, topRightX, 0, tipX, tipY)
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
-        -- Motion streaks intentionally disabled to remove speed lines.
-        return
+	-- Motion streaks intentionally disabled to remove speed lines.
+	return
 end
 
 local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
-        if not data then return end
-        local stacks = data.stacks or 0
-        if stacks <= 0 then return end
+	if not data then return end
+	local stacks = data.stacks or 0
+	if stacks <= 0 then return end
 
 	local progress = data.progress or 0
 	local rate = data.rate or 0
@@ -1105,685 +1105,685 @@ local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
 
 	local time = love.timer.getTime()
 
-        local baseRadius = SEGMENT_SIZE * (1.02 + 0.04 * math.min(stacks, 3))
-        local arcAlpha = 0.28 + 0.12 * math.min(stacks, 3)
+	local baseRadius = SEGMENT_SIZE * (1.02 + 0.04 * math.min(stacks, 3))
+	local arcAlpha = 0.28 + 0.12 * math.min(stacks, 3)
 
-        if progress > 0 then
-                local startAngle = -math.pi / 2
-                love.graphics.setColor(0.88, 0.74, 0.46, arcAlpha)
-                love.graphics.setLineWidth(3)
-                love.graphics.arc("line", "open", hx, hy, baseRadius, startAngle, startAngle + progress * math.pi * 2)
-        end
+	if progress > 0 then
+		local startAngle = -math.pi / 2
+		love.graphics.setColor(0.88, 0.74, 0.46, arcAlpha)
+		love.graphics.setLineWidth(3)
+		love.graphics.arc("line", "open", hx, hy, baseRadius, startAngle, startAngle + progress * math.pi * 2)
+	end
 
 	local shards = math.max(4, 3 + math.min(stacks * 2, 6))
 	local ready = (rate >= 1) or (progress >= 0.99)
-        for i = 1, shards do
-                local angle = time * (0.8 + stacks * 0.2) + (i / shards) * math.pi * 2
-                local wobble = 0.08 * math.sin(time * 3 + i)
-                local radius = baseRadius * (1.1 + wobble)
-                local size = SEGMENT_SIZE * (0.08 + 0.02 * math.min(stacks, 3))
-                local alpha = 0.32 + 0.28 * progress
-                if ready then
-                        alpha = alpha + 0.2
-                end
-                love.graphics.setColor(0.95, 0.86, 0.6, alpha)
-                love.graphics.circle("fill", hx + math.cos(angle) * radius, hy + math.sin(angle) * radius, size)
-        end
+	for i = 1, shards do
+		local angle = time * (0.8 + stacks * 0.2) + (i / shards) * math.pi * 2
+		local wobble = 0.08 * math.sin(time * 3 + i)
+		local radius = baseRadius * (1.1 + wobble)
+		local size = SEGMENT_SIZE * (0.08 + 0.02 * math.min(stacks, 3))
+		local alpha = 0.32 + 0.28 * progress
+		if ready then
+			alpha = alpha + 0.2
+		end
+		love.graphics.setColor(0.95, 0.86, 0.6, alpha)
+		love.graphics.circle("fill", hx + math.cos(angle) * radius, hy + math.sin(angle) * radius, size)
+	end
 
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.setLineWidth(1)
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setLineWidth(1)
 end
 
 local function drawStoneSkinBulwark(trail, SEGMENT_SIZE, data)
-        if not (trail and data) then return end
-        if #trail <= 0 then return end
+	if not (trail and data) then return end
+	if #trail <= 0 then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        local flash = math.max(0, data.flash or 0)
-        local charges = math.max(0, data.charges or 0)
-        if intensity <= 0.01 and flash <= 0.01 and charges <= 0 then return end
+	local intensity = math.max(0, data.intensity or 0)
+	local flash = math.max(0, data.flash or 0)
+	local charges = math.max(0, data.charges or 0)
+	if intensity <= 0.01 and flash <= 0.01 and charges <= 0 then return end
 
-        local coverage = math.min(#trail, 4 + charges * 3)
-        local time = data.time or love.timer.getTime()
+	local coverage = math.min(#trail, 4 + charges * 3)
+	local time = data.time or love.timer.getTime()
 
-        love.graphics.push("all")
-        love.graphics.setLineJoin("miter")
+	love.graphics.push("all")
+	love.graphics.setLineJoin("miter")
 
-        for i = 1, coverage do
-                local seg = trail[i]
-                local nextSeg = trail[math.min(#trail, i + 1)]
-                local x, y = ptXY(seg)
-                if x and y then
-                        local nx, ny = ptXY(nextSeg)
-                        local dirX, dirY = 0, -1
-                        if nx and ny then
-                                dirX, dirY = nx - x, ny - y
-                                local len = math.sqrt(dirX * dirX + dirY * dirY)
-                                if len > 1e-4 then
-                                        dirX, dirY = dirX / len, dirY / len
-                                else
-                                        dirX, dirY = 0, -1
-                                end
-                        end
+	for i = 1, coverage do
+		local seg = trail[i]
+		local nextSeg = trail[math.min(#trail, i + 1)]
+		local x, y = ptXY(seg)
+		if x and y then
+			local nx, ny = ptXY(nextSeg)
+			local dirX, dirY = 0, -1
+			if nx and ny then
+				dirX, dirY = nx - x, ny - y
+				local len = math.sqrt(dirX * dirX + dirY * dirY)
+				if len > 1e-4 then
+					dirX, dirY = dirX / len, dirY / len
+				else
+					dirX, dirY = 0, -1
+				end
+			end
 
-                        local perpX, perpY = -dirY, dirX
-                        local progress = (i - 1) / math.max(coverage - 1, 1)
-                        local fade = 1 - progress * 0.55
-                        local radius = SEGMENT_SIZE * (0.42 + 0.14 * intensity + 0.05 * math.min(charges, 3))
-                        local sway = math.sin(time * 2.4 + i * 0.9) * SEGMENT_SIZE * 0.06
-                        local offset = SEGMENT_SIZE * (0.1 + 0.12 * math.min(charges, 3)) * (1 - progress * 0.7)
-                        local cx = x + perpX * offset + dirX * sway * 0.3
-                        local cy = y + perpY * offset + dirY * sway * 0.3
-                        local angle = math.atan2(dirY, dirX) + math.sin(time * 1.3 + i) * 0.08
+			local perpX, perpY = -dirY, dirX
+			local progress = (i - 1) / math.max(coverage - 1, 1)
+			local fade = 1 - progress * 0.55
+			local radius = SEGMENT_SIZE * (0.42 + 0.14 * intensity + 0.05 * math.min(charges, 3))
+			local sway = math.sin(time * 2.4 + i * 0.9) * SEGMENT_SIZE * 0.06
+			local offset = SEGMENT_SIZE * (0.1 + 0.12 * math.min(charges, 3)) * (1 - progress * 0.7)
+			local cx = x + perpX * offset + dirX * sway * 0.3
+			local cy = y + perpY * offset + dirY * sway * 0.3
+			local angle = math.atan2(dirY, dirX) + math.sin(time * 1.3 + i) * 0.08
 
-                        local vertices = {}
-                        local sides = 6
-                        for side = 0, sides - 1 do
-                                local theta = angle + side * (math.pi * 2 / sides)
-                                local r = radius * (0.9 + 0.12 * math.sin(time * 3.4 + side + i * 0.4))
-                                vertices[#vertices + 1] = cx + math.cos(theta) * r
-                                vertices[#vertices + 1] = cy + math.sin(theta) * r
-                        end
+			local vertices = {}
+			local sides = 6
+			for side = 0, sides - 1 do
+				local theta = angle + side * (math.pi * 2 / sides)
+				local r = radius * (0.9 + 0.12 * math.sin(time * 3.4 + side + i * 0.4))
+				vertices[#vertices + 1] = cx + math.cos(theta) * r
+				vertices[#vertices + 1] = cy + math.sin(theta) * r
+			end
 
-                        love.graphics.setColor(0.7, 0.76, 0.82, (0.22 + 0.32 * intensity) * fade)
-                        love.graphics.polygon("fill", vertices)
-                        love.graphics.setLineWidth(1.6)
-                        love.graphics.setColor(0.44, 0.5, 0.56, (0.3 + 0.35 * intensity) * fade)
-                        love.graphics.polygon("line", vertices)
+			love.graphics.setColor(0.7, 0.76, 0.82, (0.22 + 0.32 * intensity) * fade)
+			love.graphics.polygon("fill", vertices)
+			love.graphics.setLineWidth(1.6)
+			love.graphics.setColor(0.44, 0.5, 0.56, (0.3 + 0.35 * intensity) * fade)
+			love.graphics.polygon("line", vertices)
 
-                        if flash > 0 then
-                                love.graphics.setColor(0.94, 0.98, 1.0, 0.22 * flash * fade)
-                                love.graphics.circle("line", cx, cy, radius * 1.25, sides)
-                        end
-                end
-        end
+			if flash > 0 then
+				love.graphics.setColor(0.94, 0.98, 1.0, 0.22 * flash * fade)
+				love.graphics.circle("line", cx, cy, radius * 1.25, sides)
+			end
+		end
+	end
 
-        if flash > 0 then
-                local head = trail[1]
-                local hx, hy = ptXY(head)
-                if hx and hy then
-                        drawSoftGlow(hx, hy, SEGMENT_SIZE * (1.2 + 0.35 * flash + 0.2 * intensity), 0.86, 0.92, 1.0, 0.16 * flash)
-                end
-        end
+	if flash > 0 then
+		local head = trail[1]
+		local hx, hy = ptXY(head)
+		if hx and hy then
+			drawSoftGlow(hx, hy, SEGMENT_SIZE * (1.2 + 0.35 * flash + 0.2 * intensity), 0.86, 0.92, 1.0, 0.16 * flash)
+		end
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawSpectralHarvestEcho(trail, SEGMENT_SIZE, data)
-        if not (trail and data) then return end
-        if #trail <= 0 then return end
+	if not (trail and data) then return end
+	if #trail <= 0 then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        local burst = math.max(0, data.burst or 0)
-        local echo = math.max(0, data.echo or 0)
-        local ready = data.ready or false
-        if intensity <= 0.01 and burst <= 0.01 and echo <= 0.01 and not ready then return end
+	local intensity = math.max(0, data.intensity or 0)
+	local burst = math.max(0, data.burst or 0)
+	local echo = math.max(0, data.echo or 0)
+	local ready = data.ready or false
+	if intensity <= 0.01 and burst <= 0.01 and echo <= 0.01 and not ready then return end
 
-        local time = data.time or love.timer.getTime()
-        local coverage = math.min(#trail, 10 + math.floor((intensity + echo) * 8))
+	local time = data.time or love.timer.getTime()
+	local coverage = math.min(#trail, 10 + math.floor((intensity + echo) * 8))
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        for i = 1, coverage do
-                local seg = trail[i]
-                local nextSeg = trail[math.min(#trail, i + 1)]
-                local x, y = ptXY(seg)
-                if x and y then
-                        local nx, ny = ptXY(nextSeg)
-                        local dirX, dirY = 0, -1
-                        if nx and ny then
-                                dirX, dirY = nx - x, ny - y
-                                local len = math.sqrt(dirX * dirX + dirY * dirY)
-                                if len > 1e-4 then
-                                        dirX, dirY = dirX / len, dirY / len
-                                else
-                                        dirX, dirY = 0, -1
-                                end
-                        end
+	for i = 1, coverage do
+		local seg = trail[i]
+		local nextSeg = trail[math.min(#trail, i + 1)]
+		local x, y = ptXY(seg)
+		if x and y then
+			local nx, ny = ptXY(nextSeg)
+			local dirX, dirY = 0, -1
+			if nx and ny then
+				dirX, dirY = nx - x, ny - y
+				local len = math.sqrt(dirX * dirX + dirY * dirY)
+				if len > 1e-4 then
+					dirX, dirY = dirX / len, dirY / len
+				else
+					dirX, dirY = 0, -1
+				end
+			end
 
-                        local perpX, perpY = -dirY, dirX
-                        local progress = (i - 1) / math.max(coverage - 1, 1)
-                        local fade = 1 - progress * 0.6
-                        local wave = math.sin(time * 3.6 + i * 0.8) * SEGMENT_SIZE * 0.12
-                        local offset = SEGMENT_SIZE * (0.4 + 0.22 * intensity + 0.28 * echo * (1 - progress))
-                        local gx = x + perpX * (offset + wave)
-                        local gy = y + perpY * (offset - wave * 0.4)
+			local perpX, perpY = -dirY, dirX
+			local progress = (i - 1) / math.max(coverage - 1, 1)
+			local fade = 1 - progress * 0.6
+			local wave = math.sin(time * 3.6 + i * 0.8) * SEGMENT_SIZE * 0.12
+			local offset = SEGMENT_SIZE * (0.4 + 0.22 * intensity + 0.28 * echo * (1 - progress))
+			local gx = x + perpX * (offset + wave)
+			local gy = y + perpY * (offset - wave * 0.4)
 
-                        love.graphics.setColor(0.66, 0.9, 1.0, (0.16 + 0.26 * intensity) * fade)
-                        love.graphics.setLineWidth(1.4 + intensity * 1.1)
-                        love.graphics.circle("line", gx, gy, SEGMENT_SIZE * (0.28 + 0.08 * echo), 18)
+			love.graphics.setColor(0.66, 0.9, 1.0, (0.16 + 0.26 * intensity) * fade)
+			love.graphics.setLineWidth(1.4 + intensity * 1.1)
+			love.graphics.circle("line", gx, gy, SEGMENT_SIZE * (0.28 + 0.08 * echo), 18)
 
-                        love.graphics.setColor(0.42, 0.72, 1.0, (0.1 + 0.22 * echo) * fade)
-                        love.graphics.circle("fill", gx, gy, SEGMENT_SIZE * (0.16 + 0.05 * echo), 14)
-                end
-        end
+			love.graphics.setColor(0.42, 0.72, 1.0, (0.1 + 0.22 * echo) * fade)
+			love.graphics.circle("fill", gx, gy, SEGMENT_SIZE * (0.16 + 0.05 * echo), 14)
+		end
+	end
 
-        local head = trail[1]
-        local hx, hy = ptXY(head)
-        if hx and hy then
-                local haloAlpha = 0.18 + 0.28 * intensity + (ready and 0.12 or 0)
-                drawSoftGlow(hx, hy, SEGMENT_SIZE * (1.3 + 0.35 * intensity + 0.25 * echo), 0.58, 0.9, 1.0, haloAlpha)
+	local head = trail[1]
+	local hx, hy = ptXY(head)
+	if hx and hy then
+		local haloAlpha = 0.18 + 0.28 * intensity + (ready and 0.12 or 0)
+		drawSoftGlow(hx, hy, SEGMENT_SIZE * (1.3 + 0.35 * intensity + 0.25 * echo), 0.58, 0.9, 1.0, haloAlpha)
 
-                if burst > 0 then
-                        love.graphics.setColor(0.9, 0.96, 1.0, 0.32 * burst)
-                        love.graphics.setLineWidth(2.2)
-                        love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.45 + 0.55 * burst), 30)
-                        love.graphics.setColor(0.62, 0.88, 1.0, 0.26 * burst)
-                        love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.95 + 0.75 * burst), 36)
-                end
-        end
+		if burst > 0 then
+			love.graphics.setColor(0.9, 0.96, 1.0, 0.32 * burst)
+			love.graphics.setLineWidth(2.2)
+			love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.45 + 0.55 * burst), 30)
+			love.graphics.setColor(0.62, 0.88, 1.0, 0.26 * burst)
+			love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.95 + 0.75 * burst), 36)
+		end
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
-        if not (trail and data) then return end
-        if #trail < 2 then return end
+	if not (trail and data) then return end
+	if #trail < 2 then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        if intensity <= 0.01 then return end
+	local intensity = math.max(0, data.intensity or 0)
+	if intensity <= 0.01 then return end
 
-        if data.hasBody == false then return end
+	if data.hasBody == false then return end
 
-        local stacks = math.max(1, data.stacks or 1)
-        local time = data.time or love.timer.getTime()
-        local stride = math.max(1, math.floor(#trail / (4 + stacks * 2)))
+	local stacks = math.max(1, data.stacks or 1)
+	local time = data.time or love.timer.getTime()
+	local stride = math.max(1, math.floor(#trail / (4 + stacks * 2)))
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        for i = 1, #trail - stride do
-                local seg = trail[i]
-                local nextSeg = trail[i + stride]
-                local x1, y1 = ptXY(seg)
-                local x2, y2 = ptXY(nextSeg)
-                if x1 and y1 and x2 and y2 then
-                        local dirX, dirY = x2 - x1, y2 - y1
-                        local len = math.sqrt(dirX * dirX + dirY * dirY)
-                        if len < 1e-4 then
-                                dirX, dirY = 0, -1
-                        else
-                                dirX, dirY = dirX / len, dirY / len
-                        end
-                        local perpX, perpY = -dirY, dirX
+	for i = 1, #trail - stride do
+		local seg = trail[i]
+		local nextSeg = trail[i + stride]
+		local x1, y1 = ptXY(seg)
+		local x2, y2 = ptXY(nextSeg)
+		if x1 and y1 and x2 and y2 then
+			local dirX, dirY = x2 - x1, y2 - y1
+			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			if len < 1e-4 then
+				dirX, dirY = 0, -1
+			else
+				dirX, dirY = dirX / len, dirY / len
+			end
+			local perpX, perpY = -dirY, dirX
 
-                        local progress = (i - 1) / math.max(#trail - stride, 1)
-                        local sway = math.sin(time * (4.8 + stacks * 0.4) + i * 0.7) * SEGMENT_SIZE * (0.22 + 0.12 * intensity)
-                        local crest = math.sin(time * 2.6 + i) * SEGMENT_SIZE * 0.1
-                        local ctrlX = (x1 + x2) * 0.5 + perpX * sway
-                        local ctrlY = (y1 + y2) * 0.5 + perpY * sway
+			local progress = (i - 1) / math.max(#trail - stride, 1)
+			local sway = math.sin(time * (4.8 + stacks * 0.4) + i * 0.7) * SEGMENT_SIZE * (0.22 + 0.12 * intensity)
+			local crest = math.sin(time * 2.6 + i) * SEGMENT_SIZE * 0.1
+			local ctrlX = (x1 + x2) * 0.5 + perpX * sway
+			local ctrlY = (y1 + y2) * 0.5 + perpY * sway
 
-                        local steps = 6
-                        local points = {}
-                        for step = 0, steps do
-                                local t = step / steps
-                                local inv = 1 - t
-                                local bx = inv * inv * x1 + 2 * inv * t * ctrlX + t * t * x2
-                                local by = inv * inv * y1 + 2 * inv * t * ctrlY + t * t * y2
-                                local peak = 1 - math.abs(0.5 - t) * 2
-                                bx = bx + perpX * crest * peak * 0.8
-                                by = by + perpY * crest * peak * 0.8
-                                points[#points + 1] = bx
-                                points[#points + 1] = by
-                        end
+			local steps = 6
+			local points = {}
+			for step = 0, steps do
+				local t = step / steps
+				local inv = 1 - t
+				local bx = inv * inv * x1 + 2 * inv * t * ctrlX + t * t * x2
+				local by = inv * inv * y1 + 2 * inv * t * ctrlY + t * t * y2
+				local peak = 1 - math.abs(0.5 - t) * 2
+				bx = bx + perpX * crest * peak * 0.8
+				by = by + perpY * crest * peak * 0.8
+				points[#points + 1] = bx
+				points[#points + 1] = by
+			end
 
-                        local fade = 1 - progress * 0.7
-                        love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
-                        love.graphics.setLineWidth(1.5 + intensity * 1.2)
-                        love.graphics.line(points)
+			local fade = 1 - progress * 0.7
+			love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
+			love.graphics.setLineWidth(1.5 + intensity * 1.2)
+			love.graphics.line(points)
 
-                        love.graphics.setColor(0.92, 0.98, 1.0, (0.08 + 0.18 * intensity) * fade)
-                        love.graphics.circle("fill", x2, y2, SEGMENT_SIZE * 0.14, 12)
-                end
-        end
+			love.graphics.setColor(0.92, 0.98, 1.0, (0.08 + 0.18 * intensity) * fade)
+			love.graphics.circle("fill", x2, y2, SEGMENT_SIZE * 0.14, 12)
+		end
+	end
 
-        local ratio = data.ratio
-        if not ratio or ratio <= 0 then
-                ratio = 1 + 0.2 * math.min(1, math.max(0, intensity))
-        end
+	local ratio = data.ratio
+	if not ratio or ratio <= 0 then
+		ratio = 1 + 0.2 * math.min(1, math.max(0, intensity))
+	end
 
-        drawSpeedMotionArcs(trail, SEGMENT_SIZE, {
-                intensity = intensity,
-                ratio = ratio,
-                time = time,
-        })
+	drawSpeedMotionArcs(trail, SEGMENT_SIZE, {
+		intensity = intensity,
+		ratio = ratio,
+		time = time,
+	})
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawEventHorizonSheath(trail, SEGMENT_SIZE, data)
-        if not (trail and data) then return end
-        if #trail < 1 then return end
+	if not (trail and data) then return end
+	if #trail < 1 then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        if intensity <= 0.01 then return end
+	local intensity = math.max(0, data.intensity or 0)
+	if intensity <= 0.01 then return end
 
-        local time = data.time or love.timer.getTime()
-        local spin = data.spin or 0
-        local segmentCount = math.min(#trail, 10)
+	local time = data.time or love.timer.getTime()
+	local spin = data.spin or 0
+	local segmentCount = math.min(#trail, 10)
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        for i = 1, segmentCount do
-                local seg = trail[i]
-                local px, py = ptXY(seg)
-                if px and py then
-                        local progress = (i - 1) / math.max(segmentCount - 1, 1)
-                        local fade = 1 - progress * 0.65
-                        local radius = SEGMENT_SIZE * (0.7 + 0.28 * intensity + 0.16 * fade)
-                        local swirl = spin * 1.3 + time * 0.6 + progress * math.pi * 1.2
+	for i = 1, segmentCount do
+		local seg = trail[i]
+		local px, py = ptXY(seg)
+		if px and py then
+			local progress = (i - 1) / math.max(segmentCount - 1, 1)
+			local fade = 1 - progress * 0.65
+			local radius = SEGMENT_SIZE * (0.7 + 0.28 * intensity + 0.16 * fade)
+			local swirl = spin * 1.3 + time * 0.6 + progress * math.pi * 1.2
 
-                        love.graphics.setColor(0.04, 0.08, 0.16, (0.18 + 0.22 * intensity) * fade)
-                        love.graphics.circle("fill", px, py, radius * 1.05)
+			love.graphics.setColor(0.04, 0.08, 0.16, (0.18 + 0.22 * intensity) * fade)
+			love.graphics.circle("fill", px, py, radius * 1.05)
 
-                        love.graphics.setColor(0.78, 0.88, 1.0, (0.14 + 0.25 * intensity) * fade)
-                        love.graphics.setLineWidth(SEGMENT_SIZE * (0.08 + 0.05 * intensity) * fade)
-                        love.graphics.circle("line", px, py, radius)
+			love.graphics.setColor(0.78, 0.88, 1.0, (0.14 + 0.25 * intensity) * fade)
+			love.graphics.setLineWidth(SEGMENT_SIZE * (0.08 + 0.05 * intensity) * fade)
+			love.graphics.circle("line", px, py, radius)
 
-                end
-        end
+		end
+	end
 
-        local headSeg = trail[1]
-        local hx, hy = ptXY(headSeg)
-        if hx and hy then
-                drawSoftGlow(hx, hy, SEGMENT_SIZE * (2.15 + 0.65 * intensity), 0.7, 0.84, 1.0, 0.18 + 0.24 * intensity)
-        end
+	local headSeg = trail[1]
+	local hx, hy = ptXY(headSeg)
+	if hx and hy then
+		drawSoftGlow(hx, hy, SEGMENT_SIZE * (2.15 + 0.65 * intensity), 0.7, 0.84, 1.0, 0.18 + 0.24 * intensity)
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
-        if not (trail and data) then return end
-        if #trail < 2 then return end
+	if not (trail and data) then return end
+	if #trail < 2 then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        if intensity <= 0.01 then return end
+	local intensity = math.max(0, data.intensity or 0)
+	if intensity <= 0.01 then return end
 
-        local primed = data.primed or false
-        local time = data.time or love.timer.getTime()
-        local stride = math.max(1, math.floor(#trail / (6 + intensity * 6)))
+	local primed = data.primed or false
+	local time = data.time or love.timer.getTime()
+	local stride = math.max(1, math.floor(#trail / (6 + intensity * 6)))
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        for i = 1, #trail - stride, stride do
-                local seg = trail[i]
-                local nextSeg = trail[i + stride]
-                local x1, y1 = ptXY(seg)
-                local x2, y2 = ptXY(nextSeg)
-                if x1 and y1 and x2 and y2 then
-                        local dirX, dirY = x2 - x1, y2 - y1
-                        local len = math.sqrt(dirX * dirX + dirY * dirY)
-                        if len < 1e-4 then
-                                dirX, dirY = 0, 1
-                        else
-                                dirX, dirY = dirX / len, dirY / len
-                        end
-                        local perpX, perpY = -dirY, dirX
+	for i = 1, #trail - stride, stride do
+		local seg = trail[i]
+		local nextSeg = trail[i + stride]
+		local x1, y1 = ptXY(seg)
+		local x2, y2 = ptXY(nextSeg)
+		if x1 and y1 and x2 and y2 then
+			local dirX, dirY = x2 - x1, y2 - y1
+			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			if len < 1e-4 then
+				dirX, dirY = 0, 1
+			else
+				dirX, dirY = dirX / len, dirY / len
+			end
+			local perpX, perpY = -dirY, dirX
 
-                        local bolt = { x1, y1 }
-                        local segments = 3
-                        for segIdx = 1, segments do
-                                local t = segIdx / (segments + 1)
-                                local offset = math.sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
-                                local px = x1 + dirX * len * t + perpX * offset
-                                local py = y1 + dirY * len * t + perpY * offset
-                                bolt[#bolt + 1] = px
-                                bolt[#bolt + 1] = py
-                        end
-                        bolt[#bolt + 1] = x2
-                        bolt[#bolt + 1] = y2
+			local bolt = { x1, y1 }
+			local segments = 3
+			for segIdx = 1, segments do
+				local t = segIdx / (segments + 1)
+				local offset = math.sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
+				local px = x1 + dirX * len * t + perpX * offset
+				local py = y1 + dirY * len * t + perpY * offset
+				bolt[#bolt + 1] = px
+				bolt[#bolt + 1] = py
+			end
+			bolt[#bolt + 1] = x2
+			bolt[#bolt + 1] = y2
 
-                        love.graphics.setColor(0.32, 0.68, 1.0, 0.2 + 0.32 * intensity)
-                        love.graphics.setLineWidth(2.2 + intensity * 1.2)
-                        love.graphics.line(bolt)
+			love.graphics.setColor(0.32, 0.68, 1.0, 0.2 + 0.32 * intensity)
+			love.graphics.setLineWidth(2.2 + intensity * 1.2)
+			love.graphics.line(bolt)
 
-                        local cx = (x1 + x2) * 0.5
-                        local cy = (y1 + y2) * 0.5
-                        love.graphics.setColor(0.9, 0.96, 1.0, 0.16 + 0.26 * intensity)
-                        love.graphics.circle("fill", cx, cy, SEGMENT_SIZE * (0.16 + 0.08 * intensity))
-                end
-        end
+			local cx = (x1 + x2) * 0.5
+			local cy = (y1 + y2) * 0.5
+			love.graphics.setColor(0.9, 0.96, 1.0, 0.16 + 0.26 * intensity)
+			love.graphics.circle("fill", cx, cy, SEGMENT_SIZE * (0.16 + 0.08 * intensity))
+		end
+	end
 
-        if primed then
-                local headSeg = trail[1]
-                local hx, hy = ptXY(headSeg)
-                if hx and hy then
-                        love.graphics.setColor(0.38, 0.74, 1.0, 0.24 + 0.34 * intensity)
-                        love.graphics.setLineWidth(2.4)
-                        love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.4 + 0.32 * intensity))
-                end
-        end
+	if primed then
+		local headSeg = trail[1]
+		local hx, hy = ptXY(headSeg)
+		if hx and hy then
+			love.graphics.setColor(0.38, 0.74, 1.0, 0.24 + 0.34 * intensity)
+			love.graphics.setLineWidth(2.4)
+			love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.4 + 0.32 * intensity))
+		end
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawTitanbloodSigils(trail, SEGMENT_SIZE, data)
-        if not (trail and data) then return end
-        if #trail < 3 then return end
+	if not (trail and data) then return end
+	if #trail < 3 then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        if intensity <= 0.01 then return end
+	local intensity = math.max(0, data.intensity or 0)
+	if intensity <= 0.01 then return end
 
-        local stacks = math.max(1, data.stacks or 1)
-        local time = data.time or love.timer.getTime()
-        local sigilCount = math.min(#trail - 1, 8 + stacks * 3)
+	local stacks = math.max(1, data.stacks or 1)
+	local time = data.time or love.timer.getTime()
+	local sigilCount = math.min(#trail - 1, 8 + stacks * 3)
 
-        love.graphics.push("all")
+	love.graphics.push("all")
 
-        for i = 2, sigilCount + 1 do
-                local seg = trail[i]
-                local prev = trail[i - 1]
-                local x1, y1 = ptXY(seg)
-                local x0, y0 = ptXY(prev)
-                if x1 and y1 and x0 and y0 then
-                        local dirX, dirY = x1 - x0, y1 - y0
-                        local len = math.sqrt(dirX * dirX + dirY * dirY)
-                        if len < 1e-4 then
-                                dirX, dirY = 0, 1
-                        else
-                                dirX, dirY = dirX / len, dirY / len
-                        end
-                        local perpX, perpY = -dirY, dirX
-                        local progress = (i - 2) / math.max(sigilCount - 1, 1)
-                        local fade = 1 - progress * 0.6
-                        local sway = math.sin(time * 2.6 + i * 0.8) * SEGMENT_SIZE * 0.12 * fade
-                        local offset = SEGMENT_SIZE * (0.45 + 0.08 * math.min(stacks, 4))
-                        local cx = x1 + perpX * (offset + sway)
-                        local cy = y1 + perpY * (offset + sway)
+	for i = 2, sigilCount + 1 do
+		local seg = trail[i]
+		local prev = trail[i - 1]
+		local x1, y1 = ptXY(seg)
+		local x0, y0 = ptXY(prev)
+		if x1 and y1 and x0 and y0 then
+			local dirX, dirY = x1 - x0, y1 - y0
+			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			if len < 1e-4 then
+				dirX, dirY = 0, 1
+			else
+				dirX, dirY = dirX / len, dirY / len
+			end
+			local perpX, perpY = -dirY, dirX
+			local progress = (i - 2) / math.max(sigilCount - 1, 1)
+			local fade = 1 - progress * 0.6
+			local sway = math.sin(time * 2.6 + i * 0.8) * SEGMENT_SIZE * 0.12 * fade
+			local offset = SEGMENT_SIZE * (0.45 + 0.08 * math.min(stacks, 4))
+			local cx = x1 + perpX * (offset + sway)
+			local cy = y1 + perpY * (offset + sway)
 
-                        love.graphics.push()
-                        love.graphics.translate(cx, cy)
-                        love.graphics.rotate(math.atan2(dirY, dirX))
+			love.graphics.push()
+			love.graphics.translate(cx, cy)
+			love.graphics.rotate(math.atan2(dirY, dirX))
 
-                        local base = SEGMENT_SIZE * (0.28 + 0.08 * math.min(stacks, 3))
-                        love.graphics.setColor(0.32, 0.02, 0.08, (0.16 + 0.24 * intensity) * fade)
-                        love.graphics.ellipse("fill", 0, 0, base * 1.2, base * 0.55)
+			local base = SEGMENT_SIZE * (0.28 + 0.08 * math.min(stacks, 3))
+			love.graphics.setColor(0.32, 0.02, 0.08, (0.16 + 0.24 * intensity) * fade)
+			love.graphics.ellipse("fill", 0, 0, base * 1.2, base * 0.55)
 
-                        local scale = base * (1.1 + 0.45 * intensity)
-                        local vertices = {
-                                0, -scale * 0.6,
-                                scale * 0.45, 0,
-                                0, scale * 0.6,
-                                -scale * 0.45, 0,
-                        }
+			local scale = base * (1.1 + 0.45 * intensity)
+			local vertices = {
+				0, -scale * 0.6,
+				scale * 0.45, 0,
+				0, scale * 0.6,
+				-scale * 0.45, 0,
+			}
 
-                        love.graphics.setColor(0.82, 0.14, 0.22, (0.22 + 0.3 * intensity) * fade)
-                        love.graphics.polygon("fill", vertices)
-                        love.graphics.setColor(1.0, 0.52, 0.4, (0.2 + 0.28 * intensity) * fade)
-                        love.graphics.setLineWidth(1.4)
-                        love.graphics.polygon("line", vertices)
+			love.graphics.setColor(0.82, 0.14, 0.22, (0.22 + 0.3 * intensity) * fade)
+			love.graphics.polygon("fill", vertices)
+			love.graphics.setColor(1.0, 0.52, 0.4, (0.2 + 0.28 * intensity) * fade)
+			love.graphics.setLineWidth(1.4)
+			love.graphics.polygon("line", vertices)
 
-                        love.graphics.pop()
-                end
-        end
+			love.graphics.pop()
+		end
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawChronospiralWake(trail, SEGMENT_SIZE, data)
-        if not (trail and data) then return end
-        if #trail < 2 then return end
+	if not (trail and data) then return end
+	if #trail < 2 then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        if intensity <= 0.01 then return end
+	local intensity = math.max(0, data.intensity or 0)
+	if intensity <= 0.01 then return end
 
-        local spin = data.spin or 0
-        local step = math.max(2, math.floor(#trail / 12))
+	local spin = data.spin or 0
+	local step = math.max(2, math.floor(#trail / 12))
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        for i = 1, #trail, step do
-                local seg = trail[i]
-                local nextSeg = trail[math.min(#trail, i + 1)]
-                local px, py = ptXY(seg)
-                if px and py then
-                        local nx, ny = ptXY(nextSeg)
-                        local dirX, dirY = 0, -1
-                        if nx and ny then
-                                dirX, dirY = nx - px, ny - py
-                                local len = math.sqrt(dirX * dirX + dirY * dirY)
-                                if len > 1e-3 then
-                                        dirX, dirY = dirX / len, dirY / len
-                                else
-                                        dirX, dirY = 0, -1
-                                end
-                        end
+	for i = 1, #trail, step do
+		local seg = trail[i]
+		local nextSeg = trail[math.min(#trail, i + 1)]
+		local px, py = ptXY(seg)
+		if px and py then
+			local nx, ny = ptXY(nextSeg)
+			local dirX, dirY = 0, -1
+			if nx and ny then
+				dirX, dirY = nx - px, ny - py
+				local len = math.sqrt(dirX * dirX + dirY * dirY)
+				if len > 1e-3 then
+					dirX, dirY = dirX / len, dirY / len
+				else
+					dirX, dirY = 0, -1
+				end
+			end
 
-                        local angle = (math.atan2 and math.atan2(dirY, dirX)) or math.atan(dirY, dirX)
-                        local progress = (i - 1) / math.max(#trail - 1, 1)
-                        local baseRadius = SEGMENT_SIZE * (0.55 + 0.35 * intensity)
-                        local fade = 1 - progress * 0.65
-                        local swirl = spin * 1.25 + progress * math.pi * 1.6
+			local angle = (math.atan2 and math.atan2(dirY, dirX)) or math.atan(dirY, dirX)
+			local progress = (i - 1) / math.max(#trail - 1, 1)
+			local baseRadius = SEGMENT_SIZE * (0.55 + 0.35 * intensity)
+			local fade = 1 - progress * 0.65
+			local swirl = spin * 1.25 + progress * math.pi * 1.6
 
-                        love.graphics.setLineWidth(1.2 + intensity * 1.2)
-                        love.graphics.setColor(0.56, 0.82, 1.0, (0.14 + 0.28 * intensity) * fade)
-                        love.graphics.circle("line", px, py, baseRadius)
+			love.graphics.setLineWidth(1.2 + intensity * 1.2)
+			love.graphics.setColor(0.56, 0.82, 1.0, (0.14 + 0.28 * intensity) * fade)
+			love.graphics.circle("line", px, py, baseRadius)
 
-                        love.graphics.setColor(0.84, 0.68, 1.0, (0.16 + 0.3 * intensity) * fade)
-                        love.graphics.arc("line", "open", px, py, baseRadius * 1.15, swirl, swirl + math.pi * 0.35)
-                        love.graphics.arc("line", "open", px, py, baseRadius * 0.85, swirl + math.pi, swirl + math.pi + math.pi * 0.3)
+			love.graphics.setColor(0.84, 0.68, 1.0, (0.16 + 0.3 * intensity) * fade)
+			love.graphics.arc("line", "open", px, py, baseRadius * 1.15, swirl, swirl + math.pi * 0.35)
+			love.graphics.arc("line", "open", px, py, baseRadius * 0.85, swirl + math.pi, swirl + math.pi + math.pi * 0.3)
 
-                        love.graphics.push()
-                        love.graphics.translate(px, py)
-                        love.graphics.rotate(angle)
-                        local ribbon = baseRadius * (0.8 + 0.25 * math.sin(swirl * 1.4))
-                        love.graphics.setColor(0.46, 0.78, 1.0, (0.12 + 0.22 * intensity) * fade)
-                        love.graphics.rectangle("fill", -ribbon, -baseRadius * 0.22, ribbon * 2, baseRadius * 0.44)
-                        love.graphics.pop()
-                end
-        end
+			love.graphics.push()
+			love.graphics.translate(px, py)
+			love.graphics.rotate(angle)
+			local ribbon = baseRadius * (0.8 + 0.25 * math.sin(swirl * 1.4))
+			love.graphics.setColor(0.46, 0.78, 1.0, (0.12 + 0.22 * intensity) * fade)
+			love.graphics.rectangle("fill", -ribbon, -baseRadius * 0.22, ribbon * 2, baseRadius * 0.44)
+			love.graphics.pop()
+		end
+	end
 
-        local coords = {}
-        local pathStep = math.max(1, math.floor(#trail / 24))
-        local jitterScale = SEGMENT_SIZE * 0.2 * intensity
-        for i = 1, #trail, pathStep do
-                local seg = trail[i]
-                local px, py = ptXY(seg)
-                if px and py then
-                        local jitter = math.sin(spin * 2.0 + i * 0.33) * jitterScale
-                        coords[#coords + 1] = px + jitter
-                        coords[#coords + 1] = py - jitter * 0.4
-                end
-        end
+	local coords = {}
+	local pathStep = math.max(1, math.floor(#trail / 24))
+	local jitterScale = SEGMENT_SIZE * 0.2 * intensity
+	for i = 1, #trail, pathStep do
+		local seg = trail[i]
+		local px, py = ptXY(seg)
+		if px and py then
+			local jitter = math.sin(spin * 2.0 + i * 0.33) * jitterScale
+			coords[#coords + 1] = px + jitter
+			coords[#coords + 1] = py - jitter * 0.4
+		end
+	end
 
-        if #coords >= 4 then
-                love.graphics.setColor(0.52, 0.86, 1.0, 0.1 + 0.18 * intensity)
-                love.graphics.setLineWidth(SEGMENT_SIZE * (0.12 + 0.05 * intensity))
-                love.graphics.line(coords)
-        end
+	if #coords >= 4 then
+		love.graphics.setColor(0.52, 0.86, 1.0, 0.1 + 0.18 * intensity)
+		love.graphics.setLineWidth(SEGMENT_SIZE * (0.12 + 0.05 * intensity))
+		love.graphics.line(coords)
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, data)
-        if not (trail and data) then return end
-        if #trail < 2 then return end
+	if not (trail and data) then return end
+	if #trail < 2 then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        if intensity <= 0.01 then return end
+	local intensity = math.max(0, data.intensity or 0)
+	if intensity <= 0.01 then return end
 
-        local stacks = math.max(1, data.stacks or 1)
-        local pulse = data.pulse or 0
-        local stackFactor = math.min(stacks, 3)
-        local baseRadius = SEGMENT_SIZE * (0.32 + 0.08 * stackFactor)
-        local orbCount = math.min(28, (#trail - 1) * 2)
+	local stacks = math.max(1, data.stacks or 1)
+	local pulse = data.pulse or 0
+	local stackFactor = math.min(stacks, 3)
+	local baseRadius = SEGMENT_SIZE * (0.32 + 0.08 * stackFactor)
+	local orbCount = math.min(28, (#trail - 1) * 2)
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        for i = 1, orbCount do
-                local progress = (i - 0.5) / orbCount
-                local idxFloat = 1 + progress * math.max(#trail - 1, 1)
-                local index = math.floor(idxFloat)
-                local frac = idxFloat - index
-                local seg = trail[index]
-                local nextSeg = trail[math.min(#trail, index + 1)]
-                local px, py = ptXY(seg)
-                local nx, ny = ptXY(nextSeg)
-                if px and py and nx and ny then
-                        local x = px + (nx - px) * frac
-                        local y = py + (ny - py) * frac
-                        local dirX, dirY = nx - px, ny - py
-                        local len = math.sqrt(dirX * dirX + dirY * dirY)
-                        if len < 1e-4 then
-                                dirX, dirY = 0, 1
-                        else
-                                dirX, dirY = dirX / len, dirY / len
-                        end
-                        local perpX, perpY = -dirY, dirX
-                        local swirl = pulse * 1.4 + progress * math.pi * 4
-                        local offset = math.sin(swirl) * baseRadius * (0.52 + intensity * 0.4)
-                        local drift = math.cos(swirl * 0.8) * baseRadius * 0.18
-                        local ax = x + perpX * offset + dirX * drift
-                        local ay = y + perpY * offset + dirY * drift
-                        local fade = 1 - progress * 0.6
-                        local orbRadius = SEGMENT_SIZE * (0.16 + 0.12 * intensity * fade)
+	for i = 1, orbCount do
+		local progress = (i - 0.5) / orbCount
+		local idxFloat = 1 + progress * math.max(#trail - 1, 1)
+		local index = math.floor(idxFloat)
+		local frac = idxFloat - index
+		local seg = trail[index]
+		local nextSeg = trail[math.min(#trail, index + 1)]
+		local px, py = ptXY(seg)
+		local nx, ny = ptXY(nextSeg)
+		if px and py and nx and ny then
+			local x = px + (nx - px) * frac
+			local y = py + (ny - py) * frac
+			local dirX, dirY = nx - px, ny - py
+			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			if len < 1e-4 then
+				dirX, dirY = 0, 1
+			else
+				dirX, dirY = dirX / len, dirY / len
+			end
+			local perpX, perpY = -dirY, dirX
+			local swirl = pulse * 1.4 + progress * math.pi * 4
+			local offset = math.sin(swirl) * baseRadius * (0.52 + intensity * 0.4)
+			local drift = math.cos(swirl * 0.8) * baseRadius * 0.18
+			local ax = x + perpX * offset + dirX * drift
+			local ay = y + perpY * offset + dirY * drift
+			local fade = 1 - progress * 0.6
+			local orbRadius = SEGMENT_SIZE * (0.16 + 0.12 * intensity * fade)
 
-                        love.graphics.setColor(0.32, 0.2, 0.52, 0.24 * intensity * fade)
-                        love.graphics.circle("fill", ax, ay, orbRadius * 1.4)
-                        love.graphics.setColor(0.68, 0.56, 0.94, 0.18 * intensity * fade)
-                        love.graphics.circle("line", ax, ay, orbRadius * 1.9)
-                end
-        end
+			love.graphics.setColor(0.32, 0.2, 0.52, 0.24 * intensity * fade)
+			love.graphics.circle("fill", ax, ay, orbRadius * 1.4)
+			love.graphics.setColor(0.68, 0.56, 0.94, 0.18 * intensity * fade)
+			love.graphics.circle("line", ax, ay, orbRadius * 1.9)
+		end
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
-        if not (trail and data) then return end
-        if #trail < 2 then return end
+	if not (trail and data) then return end
+	if #trail < 2 then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        local charges = math.max(0, data.charges or 0)
-        local flare = math.max(0, data.flare or 0)
-        local heat = math.min(1.2, intensity * 0.7 + charges * 0.18 + flare * 0.6)
-        if heat <= 0.02 then return end
+	local intensity = math.max(0, data.intensity or 0)
+	local charges = math.max(0, data.charges or 0)
+	local flare = math.max(0, data.flare or 0)
+	local heat = math.min(1.2, intensity * 0.7 + charges * 0.18 + flare * 0.6)
+	if heat <= 0.02 then return end
 
-        local time = data.time or love.timer.getTime()
+	local time = data.time or love.timer.getTime()
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        local wingSegments = math.min(#trail - 1, 8 + charges * 3)
-        for i = 1, wingSegments do
-                local seg = trail[i]
-                local nextSeg = trail[i + 1]
-                local x1, y1 = ptXY(seg)
-                local x2, y2 = ptXY(nextSeg)
-                if x1 and y1 and x2 and y2 then
-                        local dirX, dirY = x2 - x1, y2 - y1
-                        local len = math.sqrt(dirX * dirX + dirY * dirY)
-                        if len < 1e-4 then
-                                dirX, dirY = 0, 1
-                        else
-                                dirX, dirY = dirX / len, dirY / len
-                        end
-                        local perpX, perpY = -dirY, dirX
-                        local progress = (i - 1) / math.max(1, wingSegments - 1)
-                        local fade = 1 - progress * 0.6
-                        local width = SEGMENT_SIZE * (0.32 + 0.14 * heat + 0.06 * charges)
-                        local length = SEGMENT_SIZE * (0.7 + 0.25 * heat + 0.1 * charges)
-                        local flutter = math.sin(time * 7 + i * 0.55) * width * 0.35
-                        local baseX = x1 - dirX * SEGMENT_SIZE * 0.25 + perpX * flutter
-                        local baseY = y1 - dirY * SEGMENT_SIZE * 0.25 + perpY * flutter
-                        local tipX = baseX + dirX * length
-                        local tipY = baseY + dirY * length
-                        local leftX = baseX + perpX * width
-                        local leftY = baseY + perpY * width
-                        local rightX = baseX - perpX * width
-                        local rightY = baseY - perpY * width
+	local wingSegments = math.min(#trail - 1, 8 + charges * 3)
+	for i = 1, wingSegments do
+		local seg = trail[i]
+		local nextSeg = trail[i + 1]
+		local x1, y1 = ptXY(seg)
+		local x2, y2 = ptXY(nextSeg)
+		if x1 and y1 and x2 and y2 then
+			local dirX, dirY = x2 - x1, y2 - y1
+			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			if len < 1e-4 then
+				dirX, dirY = 0, 1
+			else
+				dirX, dirY = dirX / len, dirY / len
+			end
+			local perpX, perpY = -dirY, dirX
+			local progress = (i - 1) / math.max(1, wingSegments - 1)
+			local fade = 1 - progress * 0.6
+			local width = SEGMENT_SIZE * (0.32 + 0.14 * heat + 0.06 * charges)
+			local length = SEGMENT_SIZE * (0.7 + 0.25 * heat + 0.1 * charges)
+			local flutter = math.sin(time * 7 + i * 0.55) * width * 0.35
+			local baseX = x1 - dirX * SEGMENT_SIZE * 0.25 + perpX * flutter
+			local baseY = y1 - dirY * SEGMENT_SIZE * 0.25 + perpY * flutter
+			local tipX = baseX + dirX * length
+			local tipY = baseY + dirY * length
+			local leftX = baseX + perpX * width
+			local leftY = baseY + perpY * width
+			local rightX = baseX - perpX * width
+			local rightY = baseY - perpY * width
 
-                        love.graphics.setColor(1.0, 0.58, 0.22, (0.18 + 0.3 * heat) * fade)
-                        love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
-                        love.graphics.setColor(1.0, 0.82, 0.32, (0.12 + 0.22 * heat) * fade)
-                        love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
-                        love.graphics.setColor(1.0, 0.42, 0.12, (0.16 + 0.28 * heat) * fade)
-                        love.graphics.circle("fill", tipX, tipY, SEGMENT_SIZE * (0.15 + 0.08 * heat))
-                end
-        end
+			love.graphics.setColor(1.0, 0.58, 0.22, (0.18 + 0.3 * heat) * fade)
+			love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
+			love.graphics.setColor(1.0, 0.82, 0.32, (0.12 + 0.22 * heat) * fade)
+			love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
+			love.graphics.setColor(1.0, 0.42, 0.12, (0.16 + 0.28 * heat) * fade)
+			love.graphics.circle("fill", tipX, tipY, SEGMENT_SIZE * (0.15 + 0.08 * heat))
+		end
+	end
 
-        local emberCount = math.min(32, (#trail - 2) * 2 + charges * 4)
-        for i = 1, emberCount do
-                local progress = (i - 0.5) / emberCount
-                local idxFloat = 1 + progress * math.max(#trail - 2, 1)
-                local index = math.floor(idxFloat)
-                local frac = idxFloat - index
-                local seg = trail[index]
-                local nextSeg = trail[math.min(#trail, index + 1)]
-                local x1, y1 = ptXY(seg)
-                local x2, y2 = ptXY(nextSeg)
-                if x1 and y1 and x2 and y2 then
-                        local x = x1 + (x2 - x1) * frac
-                        local y = y1 + (y2 - y1) * frac
-                        local dirX, dirY = x2 - x1, y2 - y1
-                        local len = math.sqrt(dirX * dirX + dirY * dirY)
-                        if len < 1e-4 then
-                                dirX, dirY = 0, 1
-                        else
-                                dirX, dirY = dirX / len, dirY / len
-                        end
-                        local perpX, perpY = -dirY, dirX
-                        local sway = math.sin(time * 5.2 + i) * SEGMENT_SIZE * 0.22 * heat
-                        local lift = math.cos(time * 3.4 + i * 0.8) * SEGMENT_SIZE * 0.28
-                        local fx = x + perpX * sway + dirX * lift * 0.25
-                        local fy = y + perpY * sway + dirY * lift
-                        local fade = 0.5 + 0.5 * (1 - progress)
+	local emberCount = math.min(32, (#trail - 2) * 2 + charges * 4)
+	for i = 1, emberCount do
+		local progress = (i - 0.5) / emberCount
+		local idxFloat = 1 + progress * math.max(#trail - 2, 1)
+		local index = math.floor(idxFloat)
+		local frac = idxFloat - index
+		local seg = trail[index]
+		local nextSeg = trail[math.min(#trail, index + 1)]
+		local x1, y1 = ptXY(seg)
+		local x2, y2 = ptXY(nextSeg)
+		if x1 and y1 and x2 and y2 then
+			local x = x1 + (x2 - x1) * frac
+			local y = y1 + (y2 - y1) * frac
+			local dirX, dirY = x2 - x1, y2 - y1
+			local len = math.sqrt(dirX * dirX + dirY * dirY)
+			if len < 1e-4 then
+				dirX, dirY = 0, 1
+			else
+				dirX, dirY = dirX / len, dirY / len
+			end
+			local perpX, perpY = -dirY, dirX
+			local sway = math.sin(time * 5.2 + i) * SEGMENT_SIZE * 0.22 * heat
+			local lift = math.cos(time * 3.4 + i * 0.8) * SEGMENT_SIZE * 0.28
+			local fx = x + perpX * sway + dirX * lift * 0.25
+			local fy = y + perpY * sway + dirY * lift
+			local fade = 0.5 + 0.5 * (1 - progress)
 
-                        love.graphics.setColor(1.0, 0.5, 0.16, (0.12 + 0.2 * heat) * fade)
-                        love.graphics.circle("fill", fx, fy, SEGMENT_SIZE * (0.1 + 0.05 * heat * fade))
-                        love.graphics.setColor(1.0, 0.86, 0.42, (0.08 + 0.16 * heat) * fade)
-                        love.graphics.circle("line", fx, fy, SEGMENT_SIZE * (0.14 + 0.06 * heat))
-                end
-        end
+			love.graphics.setColor(1.0, 0.5, 0.16, (0.12 + 0.2 * heat) * fade)
+			love.graphics.circle("fill", fx, fy, SEGMENT_SIZE * (0.1 + 0.05 * heat * fade))
+			love.graphics.setColor(1.0, 0.86, 0.42, (0.08 + 0.16 * heat) * fade)
+			love.graphics.circle("line", fx, fy, SEGMENT_SIZE * (0.14 + 0.06 * heat))
+		end
+	end
 
-        local headSeg = trail[1]
-        local hx, hy = ptXY(headSeg)
-        if hx and hy then
-                drawSoftGlow(hx, hy, SEGMENT_SIZE * (1.35 + 0.35 * (charges + heat)), 1.0, 0.62, 0.26, 0.3 + 0.35 * heat)
-        end
+	local headSeg = trail[1]
+	local hx, hy = ptXY(headSeg)
+	if hx and hy then
+		drawSoftGlow(hx, hy, SEGMENT_SIZE * (1.35 + 0.35 * (charges + heat)), 1.0, 0.62, 0.26, 0.3 + 0.35 * heat)
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawChronoWardPulse(hx, hy, SEGMENT_SIZE, data)
-        if not data then return end
+	if not data then return end
 
-        local intensity = math.max(data.intensity or 0, data.active and 0.3 or 0)
-        if intensity <= 0 then return end
+	local intensity = math.max(data.intensity or 0, data.active and 0.3 or 0)
+	if intensity <= 0 then return end
 
-        local now = love.timer.getTime()
-        local baseRadius = SEGMENT_SIZE * (1.05 + 0.35 * intensity)
+	local now = love.timer.getTime()
+	local baseRadius = SEGMENT_SIZE * (1.05 + 0.35 * intensity)
 
-        drawSoftGlow(hx, hy, baseRadius * 1.45, 0.58, 0.86, 1.0, 0.18 + 0.28 * intensity)
+	drawSoftGlow(hx, hy, baseRadius * 1.45, 0.58, 0.86, 1.0, 0.18 + 0.28 * intensity)
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        for i = 1, 3 do
-                local phase = (now * 1.6 + i * 0.42) % 1
-                local radius = baseRadius * (1.0 + phase * 0.7)
-                local alpha = (0.16 + 0.32 * intensity) * (1 - phase)
-                if alpha > 0 then
-                        love.graphics.setColor(0.62, 0.9, 1.0, alpha)
-                        love.graphics.circle("line", hx, hy, radius)
-                end
-        end
+	for i = 1, 3 do
+		local phase = (now * 1.6 + i * 0.42) % 1
+		local radius = baseRadius * (1.0 + phase * 0.7)
+		local alpha = (0.16 + 0.32 * intensity) * (1 - phase)
+		if alpha > 0 then
+			love.graphics.setColor(0.62, 0.9, 1.0, alpha)
+			love.graphics.circle("line", hx, hy, radius)
+		end
+	end
 
-        love.graphics.setColor(0.84, 0.96, 1.0, 0.12 + 0.2 * intensity)
-        love.graphics.circle("fill", hx, hy, baseRadius * 0.45)
+	love.graphics.setColor(0.84, 0.96, 1.0, 0.12 + 0.2 * intensity)
+	love.graphics.circle("fill", hx, hy, baseRadius * 0.45)
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
-        if not data then return end
+	if not data then return end
 
-        local duration = data.duration or 0
-        if duration <= 0 then duration = 1 end
+	local duration = data.duration or 0
+	if duration <= 0 then duration = 1 end
 
 	local timer = math.max(0, data.timer or 0)
 	local cooldown = data.cooldown or 0
@@ -1849,92 +1849,92 @@ local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
 	)
 	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
-        if not (data and hx and hy) then return end
+	if not (data and hx and hy) then return end
 
-        local intensity = math.max(0, data.intensity or 0)
-        local readiness = math.max(0, math.min(1, data.ready or 0))
-        if intensity <= 0.01 and readiness <= 0.01 then return end
+	local intensity = math.max(0, data.intensity or 0)
+	local readiness = math.max(0, math.min(1, data.ready or 0))
+	if intensity <= 0.01 and readiness <= 0.01 then return end
 
-        local time = data.time or love.timer.getTime()
-        local sizeScale = 0.82
-        local baseRadius = SEGMENT_SIZE * sizeScale * (1.05 + 0.28 * readiness + 0.22 * intensity)
+	local time = data.time or love.timer.getTime()
+	local sizeScale = 0.82
+	local baseRadius = SEGMENT_SIZE * sizeScale * (1.05 + 0.28 * readiness + 0.22 * intensity)
 
-        drawSoftGlow(hx, hy, baseRadius * 1.2, 0.52, 0.78, 1.0, 0.18 + 0.28 * (intensity + readiness * 0.5))
+	drawSoftGlow(hx, hy, baseRadius * 1.2, 0.52, 0.78, 1.0, 0.18 + 0.28 * (intensity + readiness * 0.5))
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        love.graphics.setColor(0.46, 0.8, 1.0, 0.18 + 0.32 * (intensity + readiness * 0.6))
-        love.graphics.setLineWidth((2 + 1.2 * intensity) * sizeScale)
-        love.graphics.circle("line", hx, hy, baseRadius)
+	love.graphics.setColor(0.46, 0.8, 1.0, 0.18 + 0.32 * (intensity + readiness * 0.6))
+	love.graphics.setLineWidth((2 + 1.2 * intensity) * sizeScale)
+	love.graphics.circle("line", hx, hy, baseRadius)
 
-        local orbitCount = 4
-        for i = 1, orbitCount do
-                local angle = time * (1.0 + 0.4 * intensity) + (i - 1) * (math.pi * 2 / orbitCount)
-                local inner = baseRadius * 0.58
-                local outer = baseRadius * (0.92 + 0.18 * readiness)
-                love.graphics.setColor(0.68, 0.9, 1.0, (0.16 + 0.26 * readiness) * (0.6 + 0.4 * intensity))
-                love.graphics.setLineWidth(2.4 * sizeScale)
-                love.graphics.line(
-                        hx + math.cos(angle) * inner,
-                        hy + math.sin(angle) * inner,
-                        hx + math.cos(angle) * outer,
-                        hy + math.sin(angle) * outer
-                )
-        end
+	local orbitCount = 4
+	for i = 1, orbitCount do
+		local angle = time * (1.0 + 0.4 * intensity) + (i - 1) * (math.pi * 2 / orbitCount)
+		local inner = baseRadius * 0.58
+		local outer = baseRadius * (0.92 + 0.18 * readiness)
+		love.graphics.setColor(0.68, 0.9, 1.0, (0.16 + 0.26 * readiness) * (0.6 + 0.4 * intensity))
+		love.graphics.setLineWidth(2.4 * sizeScale)
+		love.graphics.line(
+			hx + math.cos(angle) * inner,
+			hy + math.sin(angle) * inner,
+			hx + math.cos(angle) * outer,
+			hy + math.sin(angle) * outer
+		)
+	end
 
-        local sweep = math.pi * 0.35
-        local rotation = time * (1.4 + 0.6 * readiness)
-        love.graphics.setColor(0.38, 0.7, 1.0, 0.16 + 0.28 * intensity)
-        love.graphics.setLineWidth(1.8 * sizeScale)
-        love.graphics.arc("line", "open", hx, hy, baseRadius * 0.78, rotation, rotation + sweep)
-        love.graphics.arc("line", "open", hx, hy, baseRadius * 0.78, rotation + math.pi, rotation + math.pi + sweep * 0.85)
+	local sweep = math.pi * 0.35
+	local rotation = time * (1.4 + 0.6 * readiness)
+	love.graphics.setColor(0.38, 0.7, 1.0, 0.16 + 0.28 * intensity)
+	love.graphics.setLineWidth(1.8 * sizeScale)
+	love.graphics.arc("line", "open", hx, hy, baseRadius * 0.78, rotation, rotation + sweep)
+	love.graphics.arc("line", "open", hx, hy, baseRadius * 0.78, rotation + math.pi, rotation + math.pi + sweep * 0.85)
 
-        love.graphics.setBlendMode("alpha")
+	love.graphics.setBlendMode("alpha")
 
-        local triangleHeight = baseRadius * (0.5 + 0.25 * readiness)
-        local triangleWidth = baseRadius * 0.38
-        local topBaseY = hy - triangleHeight
-        local bottomBaseY = hy + triangleHeight
+	local triangleHeight = baseRadius * (0.5 + 0.25 * readiness)
+	local triangleWidth = baseRadius * 0.38
+	local topBaseY = hy - triangleHeight
+	local bottomBaseY = hy + triangleHeight
 
-        love.graphics.setColor(0.72, 0.88, 1.0, 0.18 + 0.28 * (intensity + readiness * 0.5))
-        love.graphics.setLineWidth(2.2 * sizeScale)
-        love.graphics.polygon("line",
-                hx, hy,
-                hx - triangleWidth, topBaseY,
-                hx + triangleWidth, topBaseY
-        )
-        love.graphics.polygon("line",
-                hx, hy,
-                hx - triangleWidth, bottomBaseY,
-                hx + triangleWidth, bottomBaseY
-        )
+	love.graphics.setColor(0.72, 0.88, 1.0, 0.18 + 0.28 * (intensity + readiness * 0.5))
+	love.graphics.setLineWidth(2.2 * sizeScale)
+	love.graphics.polygon("line",
+		hx, hy,
+		hx - triangleWidth, topBaseY,
+		hx + triangleWidth, topBaseY
+	)
+	love.graphics.polygon("line",
+		hx, hy,
+		hx - triangleWidth, bottomBaseY,
+		hx + triangleWidth, bottomBaseY
+	)
 
-        local inset = triangleHeight * 0.12
-        love.graphics.setColor(0.52, 0.78, 1.0, 0.12 + 0.22 * (intensity + readiness * 0.6))
-        love.graphics.polygon("fill",
-                hx, hy,
-                hx - triangleWidth * 0.75, topBaseY + inset,
-                hx + triangleWidth * 0.75, topBaseY + inset
-        )
-        love.graphics.polygon("fill",
-                hx, hy,
-                hx - triangleWidth * 0.75, bottomBaseY - inset,
-                hx + triangleWidth * 0.75, bottomBaseY - inset
-        )
+	local inset = triangleHeight * 0.12
+	love.graphics.setColor(0.52, 0.78, 1.0, 0.12 + 0.22 * (intensity + readiness * 0.6))
+	love.graphics.polygon("fill",
+		hx, hy,
+		hx - triangleWidth * 0.75, topBaseY + inset,
+		hx + triangleWidth * 0.75, topBaseY + inset
+	)
+	love.graphics.polygon("fill",
+		hx, hy,
+		hx - triangleWidth * 0.75, bottomBaseY - inset,
+		hx + triangleWidth * 0.75, bottomBaseY - inset
+	)
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
-        if not data or not data.active then return end
+	if not data or not data.active then return end
 
-        local duration = data.duration or 0
-        if duration <= 0 then duration = 1 end
+	local duration = data.duration or 0
+	if duration <= 0 then duration = 1 end
 	local timer = data.timer or 0
 	if timer < 0 then timer = 0 end
 	local intensity = math.min(1, timer / duration)
@@ -1957,8 +1957,8 @@ local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
 end
 
 local function drawDashStreaks(trail, SEGMENT_SIZE, data)
-        -- Dash streaks intentionally disabled to remove motion lines.
-        return
+	-- Dash streaks intentionally disabled to remove motion lines.
+	return
 end
 
 local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
@@ -2068,36 +2068,36 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 end
 
 function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
-        local options
-        if type(drawFace) == "table" then
-        options = drawFace
-        drawFace = options.drawFace
-        end
+	local options
+	if type(drawFace) == "table" then
+	options = drawFace
+	drawFace = options.drawFace
+	end
 
-        if drawFace == nil then
-        drawFace = true
-        end
+	if drawFace == nil then
+	drawFace = true
+	end
 
-        if not trail or #trail == 0 then return end
+	if not trail or #trail == 0 then return end
 
-        local thickness = SEGMENT_SIZE * 0.8
-        local half      = thickness / 2
+	local thickness = SEGMENT_SIZE * 0.8
+	local half      = thickness / 2
 
-        local palette
-        if options then
-        if options.paletteOverride then
-                palette = options.paletteOverride
-        elseif options.skinOverride then
-                palette = SnakeCosmetics:getPaletteForSkin(options.skinOverride)
-        end
-        end
+	local palette
+	if options then
+	if options.paletteOverride then
+		palette = options.paletteOverride
+	elseif options.skinOverride then
+		palette = SnakeCosmetics:getPaletteForSkin(options.skinOverride)
+	end
+	end
 
-        local overlayEffect = (options and options.overlayEffect) or (palette and palette.overlay) or SnakeCosmetics:getOverlayEffect()
+	local overlayEffect = (options and options.overlayEffect) or (palette and palette.overlay) or SnakeCosmetics:getOverlayEffect()
 
-        local head = trail[1]
+	local head = trail[1]
 
-        love.graphics.setLineStyle("smooth")
-        love.graphics.setLineJoin("bevel") -- or "bevel" if you prefer fewer spikes
+	love.graphics.setLineStyle("smooth")
+	love.graphics.setLineJoin("bevel") -- or "bevel" if you prefer fewer spikes
 
 	local hx, hy
 	if getHead then
@@ -2107,203 +2107,203 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 	hx, hy = ptXY(head)
 	end
 
-        local portalInfo = options and options.portalAnimation
-        if portalInfo then
-        local exitTrail = portalInfo.exitTrail
-        if not (exitTrail and #exitTrail > 0) then
-                exitTrail = trail
-        end
+	local portalInfo = options and options.portalAnimation
+	if portalInfo then
+	local exitTrail = portalInfo.exitTrail
+	if not (exitTrail and #exitTrail > 0) then
+		exitTrail = trail
+	end
 
-        local entryTrail = portalInfo.entryTrail
-        local exitHead = exitTrail and exitTrail[1]
-        if exitHead then
-                local ex = exitHead.drawX or exitHead.x
-                local ey = exitHead.drawY or exitHead.y
-                if ex and ey then
-                        hx, hy = ex, ey
-                end
-        else
-                hx = portalInfo.exitX or hx
-                hy = portalInfo.exitY or hy
-        end
+	local entryTrail = portalInfo.entryTrail
+	local exitHead = exitTrail and exitTrail[1]
+	if exitHead then
+		local ex = exitHead.drawX or exitHead.x
+		local ey = exitHead.drawY or exitHead.y
+		if ex and ey then
+			hx, hy = ex, ey
+		end
+	else
+		hx = portalInfo.exitX or hx
+		hy = portalInfo.exitY or hy
+	end
 
-        local ww, hh = love.graphics.getDimensions()
-        ensureSnakeCanvas(ww, hh)
+	local ww, hh = love.graphics.getDimensions()
+	ensureSnakeCanvas(ww, hh)
 
-        love.graphics.setCanvas(snakeCanvas)
-        love.graphics.clear(0, 0, 0, 0)
-        drawTrailSegmentToCanvas(exitTrail, half, options, palette)
+	love.graphics.setCanvas(snakeCanvas)
+	love.graphics.clear(0, 0, 0, 0)
+	drawTrailSegmentToCanvas(exitTrail, half, options, palette)
 
-        if entryTrail and #entryTrail > 0 then
-                local entryPalette = fadePalette(palette, 0.55)
-                drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette)
-        end
+	if entryTrail and #entryTrail > 0 then
+		local entryPalette = fadePalette(palette, 0.55)
+		drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette)
+	end
 
-        love.graphics.setCanvas()
-        presentSnakeCanvas(overlayEffect, ww, hh)
+	love.graphics.setCanvas()
+	presentSnakeCanvas(overlayEffect, ww, hh)
 
-        local entryX = portalInfo.entryX
-        local entryY = portalInfo.entryY
-        if not entryX or not entryY then
-                local entryHead = entryTrail and entryTrail[1]
-                if entryHead then
-                        entryX = entryHead.drawX or entryHead.x or entryX
-                        entryY = entryHead.drawY or entryHead.y or entryY
-                end
-        end
+	local entryX = portalInfo.entryX
+	local entryY = portalInfo.entryY
+	if not entryX or not entryY then
+		local entryHead = entryTrail and entryTrail[1]
+		if entryHead then
+			entryX = entryHead.drawX or entryHead.x or entryX
+			entryY = entryHead.drawY or entryHead.y or entryY
+		end
+	end
 
-        local exitX = portalInfo.exitX or hx
-        local exitY = portalInfo.exitY or hy
-        local progress = portalInfo.progress or 0
-        local clampedProgress = math.min(1, math.max(0, progress))
+	local exitX = portalInfo.exitX or hx
+	local exitY = portalInfo.exitY or hy
+	local progress = portalInfo.progress or 0
+	local clampedProgress = math.min(1, math.max(0, progress))
 
-        if entryX and entryY then
-                local entryAlpha = 0.75 * (1 - clampedProgress * 0.7)
-                drawSoftGlow(entryX, entryY, SEGMENT_SIZE * 1.3, 0.45, 0.78, 1.0, entryAlpha)
-        end
+	if entryX and entryY then
+		local entryAlpha = 0.75 * (1 - clampedProgress * 0.7)
+		drawSoftGlow(entryX, entryY, SEGMENT_SIZE * 1.3, 0.45, 0.78, 1.0, entryAlpha)
+	end
 
-        if exitX and exitY then
-                local exitAlpha = 0.55 + 0.45 * clampedProgress
-                drawSoftGlow(exitX, exitY, SEGMENT_SIZE * 1.4, 1.0, 0.88, 0.4, exitAlpha)
-        end
-        else
-        local coords = buildCoords(trail)
-        if #coords >= 4 then
-                -- render into a canvas once
-                local ww, hh = love.graphics.getDimensions()
-                ensureSnakeCanvas(ww, hh)
+	if exitX and exitY then
+		local exitAlpha = 0.55 + 0.45 * clampedProgress
+		drawSoftGlow(exitX, exitY, SEGMENT_SIZE * 1.4, 1.0, 0.88, 0.4, exitAlpha)
+	end
+	else
+	local coords = buildCoords(trail)
+	if #coords >= 4 then
+		-- render into a canvas once
+		local ww, hh = love.graphics.getDimensions()
+		ensureSnakeCanvas(ww, hh)
 
-                love.graphics.setCanvas(snakeCanvas)
-                love.graphics.clear(0,0,0,0)
-                renderSnakeToCanvas(trail, coords, head, half, options, palette)
-                love.graphics.setCanvas()
-                presentSnakeCanvas(overlayEffect, ww, hh)
-        elseif hx and hy then
-                -- fallback: draw a simple disk when only the head is visible
-                local bodyColor = (palette and palette.body) or SnakeCosmetics:getBodyColor()
-                local outlineColor = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
-                local outlineR = outlineColor[1] or 0
-                local outlineG = outlineColor[2] or 0
-                local outlineB = outlineColor[3] or 0
-                local outlineA = outlineColor[4] or 1
-                local bodyR = bodyColor[1] or 1
-                local bodyG = bodyColor[2] or 1
-                local bodyB = bodyColor[3] or 1
-                local bodyA = bodyColor[4] or 1
+		love.graphics.setCanvas(snakeCanvas)
+		love.graphics.clear(0,0,0,0)
+		renderSnakeToCanvas(trail, coords, head, half, options, palette)
+		love.graphics.setCanvas()
+		presentSnakeCanvas(overlayEffect, ww, hh)
+	elseif hx and hy then
+		-- fallback: draw a simple disk when only the head is visible
+		local bodyColor = (palette and palette.body) or SnakeCosmetics:getBodyColor()
+		local outlineColor = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
+		local outlineR = outlineColor[1] or 0
+		local outlineG = outlineColor[2] or 0
+		local outlineB = outlineColor[3] or 0
+		local outlineA = outlineColor[4] or 1
+		local bodyR = bodyColor[1] or 1
+		local bodyG = bodyColor[2] or 1
+		local bodyB = bodyColor[3] or 1
+		local bodyA = bodyColor[4] or 1
 
-                local ww, hh = love.graphics.getDimensions()
-                ensureSnakeCanvas(ww, hh)
+		local ww, hh = love.graphics.getDimensions()
+		ensureSnakeCanvas(ww, hh)
 
-                love.graphics.setCanvas(snakeCanvas)
-                love.graphics.clear(0, 0, 0, 0)
-                love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-                love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
-                love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-                love.graphics.circle("fill", hx, hy, half)
-                love.graphics.setCanvas()
+		love.graphics.setCanvas(snakeCanvas)
+		love.graphics.clear(0, 0, 0, 0)
+		love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+		love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+		love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+		love.graphics.circle("fill", hx, hy, half)
+		love.graphics.setCanvas()
 
-                presentSnakeCanvas(overlayEffect, ww, hh)
-        end
-        end
+		presentSnakeCanvas(overlayEffect, ww, hh)
+	end
+	end
 
-        if hx and hy and drawFace ~= false then
-                RenderLayers:withLayer("overlay", function()
-                        if upgradeVisuals and upgradeVisuals.temporalAnchor then
-                                drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
-                        end
+	if hx and hy and drawFace ~= false then
+		RenderLayers:withLayer("overlay", function()
+			if upgradeVisuals and upgradeVisuals.temporalAnchor then
+				drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.chronoWard then
-                                drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
-                        end
+			if upgradeVisuals and upgradeVisuals.chronoWard then
+				drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.timeDilation then
-                                drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
-                        end
+			if upgradeVisuals and upgradeVisuals.timeDilation then
+				drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.adrenaline then
-                                drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
-                        end
+			if upgradeVisuals and upgradeVisuals.adrenaline then
+				drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.quickFangs then
-                                drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
-                        end
+			if upgradeVisuals and upgradeVisuals.quickFangs then
+				drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.spectralHarvest then
-                                drawSpectralHarvestEcho(trail, SEGMENT_SIZE, upgradeVisuals.spectralHarvest)
-                        end
+			if upgradeVisuals and upgradeVisuals.spectralHarvest then
+				drawSpectralHarvestEcho(trail, SEGMENT_SIZE, upgradeVisuals.spectralHarvest)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.zephyrCoils then
-                                drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
-                        end
+			if upgradeVisuals and upgradeVisuals.zephyrCoils then
+				drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.dash then
-                                drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
-                        end
+			if upgradeVisuals and upgradeVisuals.dash then
+				drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.speedArcs then
-                                drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
-                        end
+			if upgradeVisuals and upgradeVisuals.speedArcs then
+				drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
+			end
 
-                        local faceScale = 1
-                        local faceOptions = nil
-                        if upgradeVisuals and upgradeVisuals.predatorsReflex then
-                                local data = upgradeVisuals.predatorsReflex
-                                local intensity = math.max(0, math.min(1, data.intensity or 0))
-                                local eyeScale = 1 + 0.45 * intensity
-                                faceOptions = {
-                                        eyeScale = eyeScale,
-                                        highlight = intensity,
-                                        time = data.time or love.timer.getTime(),
-                                }
-                        end
-                        Face:draw(hx, hy, faceScale, faceOptions)
+			local faceScale = 1
+			local faceOptions = nil
+			if upgradeVisuals and upgradeVisuals.predatorsReflex then
+				local data = upgradeVisuals.predatorsReflex
+				local intensity = math.max(0, math.min(1, data.intensity or 0))
+				local eyeScale = 1 + 0.45 * intensity
+				faceOptions = {
+					eyeScale = eyeScale,
+					highlight = intensity,
+					time = data.time or love.timer.getTime(),
+				}
+			end
+			Face:draw(hx, hy, faceScale, faceOptions)
 
-                        drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
+			drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
 
-                        if upgradeVisuals and upgradeVisuals.dash then
-                                drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
-                        end
+			if upgradeVisuals and upgradeVisuals.dash then
+				drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.eventHorizon then
-                                drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
-                        end
+			if upgradeVisuals and upgradeVisuals.eventHorizon then
+				drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.stormchaser then
-                                drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
-                        end
+			if upgradeVisuals and upgradeVisuals.stormchaser then
+				drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.chronospiral then
-                                drawChronospiralWake(trail, SEGMENT_SIZE, upgradeVisuals.chronospiral)
-                        end
+			if upgradeVisuals and upgradeVisuals.chronospiral then
+				drawChronospiralWake(trail, SEGMENT_SIZE, upgradeVisuals.chronospiral)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
-                                drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
-                        end
+			if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
+				drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.titanblood then
-                                drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
-                        end
+			if upgradeVisuals and upgradeVisuals.titanblood then
+				drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.phoenixEcho then
-                                drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
-                        end
+			if upgradeVisuals and upgradeVisuals.phoenixEcho then
+				drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
+			end
 
-                        if upgradeVisuals and upgradeVisuals.stonebreaker then
-                                drawStonebreakerAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.stonebreaker)
-                        end
-                end)
-        end
+			if upgradeVisuals and upgradeVisuals.stonebreaker then
+				drawStonebreakerAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.stonebreaker)
+			end
+		end)
+	end
 
-        if popTimer and popTimer > 0 and hx and hy then
-                RenderLayers:withLayer("overlay", function()
-                        local t = 1 - (popTimer / POP_DURATION)
-                        if t < 1 then
-                                local pulse = 0.8 + 0.4 * math.sin(t * math.pi)
-                                love.graphics.setColor(1, 1, 1, 0.4)
-                                love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
-                        end
-                end)
-        end
+	if popTimer and popTimer > 0 and hx and hy then
+		RenderLayers:withLayer("overlay", function()
+			local t = 1 - (popTimer / POP_DURATION)
+			if t < 1 then
+				local pulse = 0.8 + 0.4 * math.sin(t * math.pi)
+				love.graphics.setColor(1, 1, 1, 0.4)
+				love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
+			end
+		end)
+	end
 
 	love.graphics.setColor(1, 1, 1, 1)
 end

@@ -18,66 +18,66 @@ local cardHologramCache = {}
 local backgroundEffect = nil
 
 local function getColorChannels(color, fallback)
-        local reference = color or fallback
-        if not reference then
-                return 0, 0, 0, 1
-        end
+	local reference = color or fallback
+	if not reference then
+		return 0, 0, 0, 1
+	end
 
-        return reference[1] or 0, reference[2] or 0, reference[3] or 0, reference[4] or 1
+	return reference[1] or 0, reference[2] or 0, reference[3] or 0, reference[4] or 1
 end
 
 local function configureBackgroundEffect(palette)
-        local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-        if not effect then
-                backgroundEffect = nil
-                return
-        end
+	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+	if not effect then
+		backgroundEffect = nil
+		return
+	end
 
-        local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-        effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.54
+	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+	effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.54
 
-        local needsConfigure = (effect._appliedPalette ~= palette) or not effect._appliedPaletteConfigured
+	local needsConfigure = (effect._appliedPalette ~= palette) or not effect._appliedPaletteConfigured
 
-        if needsConfigure then
-                local bgColor = (palette and palette.bgColor) or Theme.bgColor
-                local accentColor = (palette and (palette.arenaBorder or palette.snake)) or Theme.buttonHover
-                local highlightColor = (palette and (palette.highlightColor or palette.snake or palette.arenaBorder))
-                        or Theme.accentTextColor
-                        or Theme.highlightColor
+	if needsConfigure then
+		local bgColor = (palette and palette.bgColor) or Theme.bgColor
+		local accentColor = (palette and (palette.arenaBorder or palette.snake)) or Theme.buttonHover
+		local highlightColor = (palette and (palette.highlightColor or palette.snake or palette.arenaBorder))
+			or Theme.accentTextColor
+			or Theme.highlightColor
 
-                Shaders.configure(effect, {
-                        bgColor = bgColor,
-                        accentColor = accentColor,
-                        glowColor = highlightColor,
-                        highlightColor = highlightColor,
-                })
+		Shaders.configure(effect, {
+			bgColor = bgColor,
+			accentColor = accentColor,
+			glowColor = highlightColor,
+			highlightColor = highlightColor,
+		})
 
-                effect._appliedPalette = palette
-                effect._appliedPaletteConfigured = true
-        end
+		effect._appliedPalette = palette
+		effect._appliedPaletteConfigured = true
+	end
 
-        backgroundEffect = effect
+	backgroundEffect = effect
 end
 
 local function drawBackground(screenW, screenH, palette)
-        local bgColor = (palette and palette.bgColor) or Theme.bgColor
-        local baseR, baseG, baseB, baseA = getColorChannels(bgColor)
-        love.graphics.setColor(baseR * 0.92, baseG * 0.92, baseB * 0.92, baseA)
-        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+	local bgColor = (palette and palette.bgColor) or Theme.bgColor
+	local baseR, baseG, baseB, baseA = getColorChannels(bgColor)
+	love.graphics.setColor(baseR * 0.92, baseG * 0.92, baseB * 0.92, baseA)
+	love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
-        if not backgroundEffect or backgroundEffect._appliedPalette ~= palette then
-                configureBackgroundEffect(palette)
-        end
+	if not backgroundEffect or backgroundEffect._appliedPalette ~= palette then
+		configureBackgroundEffect(palette)
+	end
 
-        if backgroundEffect then
-                local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-                Shaders.draw(backgroundEffect, 0, 0, screenW, screenH, intensity)
-        end
+	if backgroundEffect then
+		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+		Shaders.draw(backgroundEffect, 0, 0, screenW, screenH, intensity)
+	end
 
-        local overlayR, overlayG, overlayB = getColorChannels(bgColor)
-        love.graphics.setColor(overlayR, overlayG, overlayB, 0.28)
-        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-        love.graphics.setColor(1, 1, 1, 1)
+	local overlayR, overlayG, overlayB = getColorChannels(bgColor)
+	love.graphics.setColor(overlayR, overlayG, overlayB, 0.28)
+	love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function moveFocusAnalog(self, delta)
@@ -151,16 +151,16 @@ local function handleAnalogAxis(self, axis, value)
 end
 
 function Shop:start(currentFloor)
-        self.floor = currentFloor or 1
-        local floorData = Floors[self.floor]
-        self.floorPalette = floorData and floorData.palette or nil
-        self.shopkeeperLine = nil
-        self.shopkeeperSubline = nil
-        self.selectionHoldDuration = 1.85
-        self.inputMode = nil
-        self.time = 0
-        configureBackgroundEffect(self.floorPalette)
-        self:refreshCards()
+	self.floor = currentFloor or 1
+	local floorData = Floors[self.floor]
+	self.floorPalette = floorData and floorData.palette or nil
+	self.shopkeeperLine = nil
+	self.shopkeeperSubline = nil
+	self.selectionHoldDuration = 1.85
+	self.inputMode = nil
+	self.time = 0
+	configureBackgroundEffect(self.floorPalette)
+	self:refreshCards()
 end
 
 function Shop:refreshCards(options)
@@ -637,16 +637,16 @@ local function getAnimatedAlpha(def, time)
 end
 
 local function drawCard(card, x, y, w, h, hovered, index, animationState, isSelected, appearanceAlpha)
-        local fadeAlpha = appearanceAlpha or 1
-        local function setColor(r, g, b, a)
-                love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
-        end
+	local fadeAlpha = appearanceAlpha or 1
+	local function setColor(r, g, b, a)
+		love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
+	end
 
 	local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
 	local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
 
-        if isSelected then
-                local glowClock = love.timer.getTime()
+	if isSelected then
+		local glowClock = love.timer.getTime()
 		local pulse = 0.35 + 0.25 * (math.sin(glowClock * 5) * 0.5 + 0.5)
 		setColor(1, 0.9, 0.45, pulse)
 		love.graphics.setLineWidth(10)
@@ -654,17 +654,17 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		love.graphics.setLineWidth(4)
 	end
 
-        if style.shadowAlpha and style.shadowAlpha > 0 then
-                setColor(0, 0, 0, style.shadowAlpha)
-                love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
-        end
+	if style.shadowAlpha and style.shadowAlpha > 0 then
+		setColor(0, 0, 0, style.shadowAlpha)
+		love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
+	end
 
-        applyColor(setColor, style.base)
-        love.graphics.rectangle("fill", x, y, w, h, 12, 12)
+	applyColor(setColor, style.base)
+	love.graphics.rectangle("fill", x, y, w, h, 12, 12)
 
-        local currentTime = love.timer.getTime()
+	local currentTime = love.timer.getTime()
 
-        if style.aura then
+	if style.aura then
 		withTransformedScissor(x, y, w, h, function()
 			applyColor(setColor, style.aura.color)
 			local radius = math.max(w, h) * (style.aura.radius or 0.72)
@@ -710,7 +710,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 
 	if style.sparkles and style.sparkles.positions then
 		withTransformedScissor(x, y, w, h, function()
-                        local time = love.timer.getTime()
+			local time = love.timer.getTime()
 			for i, pos in ipairs(style.sparkles.positions) do
 				local px, py, scale = pos[1], pos[2], pos[3] or 1
 				local pulse = 0.6 + 0.4 * math.sin(time * (style.sparkles.speed or 1.8) + i * 0.9)
@@ -775,9 +775,9 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 	love.graphics.setLineWidth(style.borderWidth or 4)
 	love.graphics.rectangle("line", x, y, w, h, 12, 12)
 
-        local hoverGlowAlpha
-        if style.innerGlow then
-                hoverGlowAlpha = getAnimatedAlpha(style.innerGlow, currentTime)
+	local hoverGlowAlpha
+	if style.innerGlow then
+		hoverGlowAlpha = getAnimatedAlpha(style.innerGlow, currentTime)
 	end
 
 	if hovered or isSelected then
@@ -837,11 +837,11 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 	love.graphics.setFont(UI.fonts.body)
 	setColor(0.92, 0.92, 0.92, 1)
 	local descY = descStart
-        love.graphics.printf(card.desc or "", x + 18, descY, w - 36, "center")
+	love.graphics.printf(card.desc or "", x + 18, descY, w - 36, "center")
 end
 
 function Shop:draw(screenW, screenH)
-        drawBackground(screenW, screenH, self.floorPalette)
+	drawBackground(screenW, screenH, self.floorPalette)
 	local textAreaWidth = screenW * 0.8
 	local textAreaX = (screenW - textAreaWidth) / 2
 	local currentY = screenH * 0.12
@@ -1031,9 +1031,9 @@ function Shop:draw(screenW, screenH)
 
 		local centerX = baseX + cardWidth / 2
 		local centerY = baseY + cardHeight / 2 - yOffset
-                if card == self.selected then
-                        centerX = centerX + (screenW / 2 - centerX) * focusEase
-                        local targetY = layoutCenterY
+		if card == self.selected then
+			centerX = centerX + (screenW / 2 - centerX) * focusEase
+			local targetY = layoutCenterY
 			centerY = centerY + (targetY - centerY) * focusEase
 		else
 			if discardData then
@@ -1069,7 +1069,7 @@ function Shop:draw(screenW, screenH)
 		love.graphics.scale(scale, scale)
 		love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
 		local appearanceAlpha = self.selected == card and 1 or alpha
-                drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, state, self.selected == card, appearanceAlpha)
+		drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, state, self.selected == card, appearanceAlpha)
 		love.graphics.pop()
 		card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
 

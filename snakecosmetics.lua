@@ -1023,56 +1023,56 @@ function SnakeCosmetics:getGlowColor()
 end
 
 function SnakeCosmetics:getGlowEffect()
-        local skin = self:getActiveSkin()
-        local effects = skin and skin.effects or {}
-        if effects.glow then
-                return copyTable(effects.glow)
-        end
-        return nil
+	local skin = self:getActiveSkin()
+	local effects = skin and skin.effects or {}
+	if effects.glow then
+		return copyTable(effects.glow)
+	end
+	return nil
 end
 
 function SnakeCosmetics:getOverlayEffect()
-        local skin = self:getActiveSkin()
-        local effects = skin and skin.effects or {}
-        if effects.overlay then
-                return copyTable(effects.overlay)
-        end
-        return nil
+	local skin = self:getActiveSkin()
+	local effects = skin and skin.effects or {}
+	if effects.overlay then
+		return copyTable(effects.overlay)
+	end
+	return nil
 end
 
 function SnakeCosmetics:getPaletteForSkin(skin)
-        local target = skin or self:getActiveSkin()
-        if not target then
-                return {
-                        body = resolveColor(nil, Theme.snakeDefault),
-                        outline = resolveColor(nil, { 0, 0, 0, 1 }),
-                        glow = resolveColor(nil, Theme.snakeDefault),
-                }
-        end
+	local target = skin or self:getActiveSkin()
+	if not target then
+		return {
+			body = resolveColor(nil, Theme.snakeDefault),
+			outline = resolveColor(nil, { 0, 0, 0, 1 }),
+			glow = resolveColor(nil, Theme.snakeDefault),
+		}
+	end
 
-        local palette = target.colors or {}
-        local effects = target.effects or {}
+	local palette = target.colors or {}
+	local effects = target.effects or {}
 
-        local result = {}
-        result.body = resolveColor(palette.body, Theme.snakeDefault)
-        result.outline = resolveColor(palette.outline, { 0, 0, 0, 1 })
+	local result = {}
+	result.body = resolveColor(palette.body, Theme.snakeDefault)
+	result.outline = resolveColor(palette.outline, { 0, 0, 0, 1 })
 
-        local glowEffect = effects.glow or {}
-        if glowEffect.color then
-                result.glow = resolveColor(glowEffect.color)
-        else
-                result.glow = resolveColor(palette.glow, result.body)
-        end
+	local glowEffect = effects.glow or {}
+	if glowEffect.color then
+		result.glow = resolveColor(glowEffect.color)
+	else
+		result.glow = resolveColor(palette.glow, result.body)
+	end
 
-        if effects.glow then
-                result.glowEffect = copyTable(effects.glow)
-        end
+	if effects.glow then
+		result.glowEffect = copyTable(effects.glow)
+	end
 
-        if effects.overlay then
-                result.overlay = copyTable(effects.overlay)
-        end
+	if effects.overlay then
+		result.overlay = copyTable(effects.overlay)
+	end
 
-        return result
+	return result
 end
 
 return SnakeCosmetics

@@ -183,7 +183,7 @@ local function finalizeRunResult(self, options)
 	local lifetimeApples = PlayerStats:get("totalApplesEaten") or 0
 	local runTiles = SessionStats:get("tilesTravelled") or 0
 	local runCombos = SessionStats:get("combosTriggered") or 0
-        local runShieldsSaved = SessionStats:get("shieldsSaved") or 0
+	local runShieldsSaved = SessionStats:get("shieldsSaved") or 0
 	local runTime = SessionStats:get("timeAlive") or 0
 	local fastestFloor = SessionStats:get("fastestFloorClear") or 0
 	local slowestFloor = SessionStats:get("slowestFloorClear") or 0
@@ -201,10 +201,10 @@ local function finalizeRunResult(self, options)
 		PlayerStats:add("totalCombosTriggered", runCombos)
 		PlayerStats:updateMax("mostCombosInRun", runCombos)
 	end
-        if runShieldsSaved > 0 then
-                PlayerStats:add("shieldsSaved", runShieldsSaved)
-                PlayerStats:updateMax("mostShieldsSavedInRun", runShieldsSaved)
-        end
+	if runShieldsSaved > 0 then
+		PlayerStats:add("shieldsSaved", runShieldsSaved)
+		PlayerStats:updateMax("mostShieldsSavedInRun", runShieldsSaved)
+	end
 	if fastestFloor > 0 then
 		PlayerStats:updateMin("bestFloorClearTime", fastestFloor)
 	end

@@ -31,9 +31,9 @@
 - Glowing fruit act as offerings of devotion infused with the Coil's life energy.
 - Collecting fruit allows the snake to descend deeper and sparks manifestations of the serpent god.
 - Mechanically enables:
-  - Progression gating by fruit count per floor.
-  - Upgrade triggers as fruit function as spiritual currency.
-  - Diegetic justification for upgrade phases between floors.
+	- Progression gating by fruit count per floor.
+	- Upgrade triggers as fruit function as spiritual currency.
+	- Diegetic justification for upgrade phases between floors.
 
 ### 🏛️ The Shrine of Scales (Card Phase)
 > "The air ripples. The world uncoils. Three Scales tilt in divine balance…"
@@ -42,9 +42,9 @@
 - Three floating Scales of Fate (upgrade cards) appear as avatars of the deity's will.
 - The player selects a single Blessing to internalize, manifesting new instincts, mutations, or powers.
 - Presentation goals:
-  - Palette of deep golds, blacks, and greens with shimmering scale-like textures.
-  - Soundscape blending a low hiss with choral undertones.
-  - Cards inscribed with serpent sigils, illuminated as though underwater.
+	- Palette of deep golds, blacks, and greens with shimmering scale-like textures.
+	- Soundscape blending a low hiss with choral undertones.
+	- Cards inscribed with serpent sigils, illuminated as though underwater.
 
 ### ✨ Blessings of the Coil
 | Name | Effect | Flavor Text |
@@ -66,9 +66,9 @@
 ### 📜 Optional Mythos Expansion
 - Introduce collectible lore fragments (scrolls, fruit descriptions, floor intros) to gradually reveal serpent mythology.
 - Sample fragments:
-  - "Before the first fruit ripened, the Serpent coiled around chaos itself. Each shedding birthed a world."
-  - "Every follower must feed the Coil — for only through hunger does it dream."
+	- "Before the first fruit ripened, the Serpent coiled around chaos itself. Each shedding birthed a world."
+	- "Every follower must feed the Coil — for only through hunger does it dream."
 - Benefits:
-  - Adds replay-value lore hunts.
-  - Infuses the roguelite loop with spiritual resonance.
-  - Sets up an endgame reveal: the player-controlled snake is a shard of the deity seeking reunion.
+	- Adds replay-value lore hunts.
+	- Infuses the roguelite loop with spiritual resonance.
+	- Sets up an endgame reveal: the player-controlled snake is a shard of the deity seeking reunion.

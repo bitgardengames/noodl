@@ -286,35 +286,35 @@ local function portalThroughWall(headX, headY)
 				return nil, nil
 		end
 
-                local newHeadX, newHeadY
-                local portalDuration = 0.3
-                if Snake.beginPortalWarp then
-                                local started = Snake:beginPortalWarp({
-                                                entryX = entryX,
-                                                entryY = entryY,
-                                                exitX = headX + dx,
-                                                exitY = headY + dy,
-                                                duration = portalDuration,
-                                                dx = dx,
-                                                dy = dy,
-                                })
-                                if started then
-                                                newHeadX, newHeadY = Snake:getHead()
-                                end
-                end
+		local newHeadX, newHeadY
+		local portalDuration = 0.3
+		if Snake.beginPortalWarp then
+				local started = Snake:beginPortalWarp({
+						entryX = entryX,
+						entryY = entryY,
+						exitX = headX + dx,
+						exitY = headY + dy,
+						duration = portalDuration,
+						dx = dx,
+						dy = dy,
+				})
+				if started then
+						newHeadX, newHeadY = Snake:getHead()
+				end
+		end
 
-                if not (newHeadX and newHeadY) then
-                                if Snake.translate then
-                                                Snake:translate(dx, dy)
-                                else
-                                                Snake:setHeadPosition(headX + dx, headY + dy)
-                                end
-                                newHeadX, newHeadY = Snake:getHead()
-                end
+		if not (newHeadX and newHeadY) then
+				if Snake.translate then
+						Snake:translate(dx, dy)
+				else
+						Snake:setHeadPosition(headX + dx, headY + dy)
+				end
+				newHeadX, newHeadY = Snake:getHead()
+		end
 
-                if Particles then
-                                Particles:spawnBurst(entryX, entryY, {
-                                                count = 18,
+		if Particles then
+				Particles:spawnBurst(entryX, entryY, {
+						count = 18,
 						speed = 120,
 						speedVariance = 80,
 						life = 0.5,
@@ -322,9 +322,9 @@ local function portalThroughWall(headX, headY)
 						color = {0.9, 0.75, 0.3, 1},
 						spread = math.pi * 2,
 						fadeTo = 0.1,
-                                })
-                                Particles:spawnBurst(newHeadX, newHeadY, {
-                                                count = 22,
+				})
+				Particles:spawnBurst(newHeadX, newHeadY, {
+						count = 22,
 						speed = 150,
 						speedVariance = 90,
 						life = 0.55,
@@ -356,7 +356,7 @@ local function handleWallCollision(headX, headY)
 		local top = ay + inset
 		local bottom = ay + ah - inset
 
-                if not Snake:consumeShield() then
+		if not Snake:consumeShield() then
 				local safeX = clamp(headX, left, right)
 				local safeY = clamp(headY, top, bottom)
 				local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY)
@@ -449,7 +449,7 @@ local function handleRockCollision(headX, headY)
 										shake = 0.35,
 								}
 
-                                                                local shielded = Snake:consumeShield()
+								local shielded = Snake:consumeShield()
 
 								if not shielded then
 										Rocks:triggerHitFlash(rock)
@@ -500,7 +500,7 @@ local function handleSawCollision(headX, headY)
 				return
 		end
 
-                local shielded = Snake:consumeShield()
+		local shielded = Snake:consumeShield()
 		local survivedSaw = shielded
 
 		if not survivedSaw and Snake.consumeStoneSkinSawGrace then
@@ -543,21 +543,21 @@ local function handleSawCollision(headX, headY)
 
 		Saws:destroy(sawHit)
 
-                Particles:spawnBurst(headX, headY, {
-                                count = 8,
-                                speed = 48,
-                                speedVariance = 36,
-                                life = 0.32,
-                                size = 2.2,
-                                color = {1.0, 0.9, 0.45, 1},
-                                spread = math.pi * 2,
-                                angleJitter = math.pi * 0.9,
-                                drag = 3.2,
-                                gravity = 240,
-                                scaleMin = 0.4,
-                                scaleVariance = 0.45,
-                                fadeTo = 0.05,
-                })
+		Particles:spawnBurst(headX, headY, {
+				count = 8,
+				speed = 48,
+				speedVariance = 36,
+				life = 0.32,
+				size = 2.2,
+				color = {1.0, 0.9, 0.45, 1},
+				spread = math.pi * 2,
+				angleJitter = math.pi * 0.9,
+				drag = 3.2,
+				gravity = 240,
+				scaleMin = 0.4,
+				scaleVariance = 0.45,
+				fadeTo = 0.05,
+		})
 		Audio:playSound("shield_saw")
 
 		if Snake.onShieldConsumed then
@@ -591,7 +591,7 @@ local function handleLaserCollision(headX, headY)
 				return
 		end
 
-                local shielded = Snake:consumeShield()
+		local shielded = Snake:consumeShield()
 		local survived = shielded
 
 		if not survived and Snake.consumeStoneSkinSawGrace then
@@ -674,7 +674,7 @@ local function handleDartCollision(headX, headY)
 				return
 		end
 
-                local shielded = Snake:consumeShield()
+		local shielded = Snake:consumeShield()
 		local survived = shielded
 
 		if not survived and Snake.consumeStoneSkinSawGrace then

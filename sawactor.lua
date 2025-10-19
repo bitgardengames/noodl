@@ -155,61 +155,61 @@ function SawActor:draw(x, y, scale)
 		offsetY = sinkOffset
 	end
 
-        local sinkScale = 1 - 0.1 * sinkProgress
-        local overallScale = drawScale * sinkScale
-        local rotation = self.rotation or 0
+	local sinkScale = 1 - 0.1 * sinkProgress
+	local overallScale = drawScale * sinkScale
+	local rotation = self.rotation or 0
 
-        local points = {}
-        local teeth = self.teeth or DEFAULT_TEETH
-        local outer = self.radius or DEFAULT_RADIUS
-        local inner = outer * 0.8
-        local step = math.pi / teeth
+	local points = {}
+	local teeth = self.teeth or DEFAULT_TEETH
+	local outer = self.radius or DEFAULT_RADIUS
+	local inner = outer * 0.8
+	local step = math.pi / teeth
 
-        for i = 0, (teeth * 2) - 1 do
-                local r = (i % 2 == 0) and outer or inner
-                local angle = i * step
-                points[#points + 1] = math.cos(angle) * r
-                points[#points + 1] = math.sin(angle) * r
-        end
+	for i = 0, (teeth * 2) - 1 do
+		local r = (i % 2 == 0) and outer or inner
+		local angle = i * step
+		points[#points + 1] = math.cos(angle) * r
+		points[#points + 1] = math.sin(angle) * r
+	end
 
-        local triangles = nil
-        if teeth and teeth >= 3 then
-                triangles = love.math.triangulate(points)
-        end
+	local triangles = nil
+	if teeth and teeth >= 3 then
+		triangles = love.math.triangulate(points)
+	end
 
-        local function fillSaw()
-                if triangles and #triangles > 0 then
-                        for _, triangle in ipairs(triangles) do
-                                love.graphics.polygon("fill", triangle)
-                        end
-                else
-                        love.graphics.polygon("fill", points)
-                end
-        end
+	local function fillSaw()
+		if triangles and #triangles > 0 then
+			for _, triangle in ipairs(triangles) do
+				love.graphics.polygon("fill", triangle)
+			end
+		else
+			love.graphics.polygon("fill", points)
+		end
+	end
 
-        love.graphics.push()
-        love.graphics.translate(
-                (px or x) + SHADOW_OFFSET * drawScale - offsetX,
-                (py or y) + SHADOW_OFFSET * drawScale - offsetY
-        )
-        love.graphics.rotate(rotation)
-        love.graphics.scale(overallScale, overallScale)
-        love.graphics.setColor(0, 0, 0, 0.35)
-        fillSaw()
-        love.graphics.pop()
+	love.graphics.push()
+	love.graphics.translate(
+		(px or x) + SHADOW_OFFSET * drawScale - offsetX,
+		(py or y) + SHADOW_OFFSET * drawScale - offsetY
+	)
+	love.graphics.rotate(rotation)
+	love.graphics.scale(overallScale, overallScale)
+	love.graphics.setColor(0, 0, 0, 0.35)
+	fillSaw()
+	love.graphics.pop()
 
-        love.graphics.push()
-        love.graphics.translate((px or x) + offsetX, (py or y) + offsetY)
-        love.graphics.rotate(rotation)
-        love.graphics.scale(overallScale, overallScale)
+	love.graphics.push()
+	love.graphics.translate((px or x) + offsetX, (py or y) + offsetY)
+	love.graphics.rotate(rotation)
+	love.graphics.scale(overallScale, overallScale)
 
-        local baseColor = Theme.sawColor or { 0.8, 0.8, 0.8, 1 }
-        if self.hitFlashTimer and self.hitFlashTimer > 0 then
-                baseColor = HIT_FLASH_COLOR
-        end
+	local baseColor = Theme.sawColor or { 0.8, 0.8, 0.8, 1 }
+	if self.hitFlashTimer and self.hitFlashTimer > 0 then
+		baseColor = HIT_FLASH_COLOR
+	end
 
-        love.graphics.setColor(baseColor)
-        fillSaw()
+	love.graphics.setColor(baseColor)
+	fillSaw()
 
 	local highlightRadiusLocal = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
 	local highlightRadiusWorld = highlightRadiusLocal * drawScale * sinkScale
@@ -220,11 +220,11 @@ function SawActor:draw(x, y, scale)
 	-- hub highlight, which leaves a thin grey arc poking past the blade edge.
 	-- Hide the highlight (and hub hole) whenever the occlusion plane reaches
 	-- or crosses the highlight radius so the sliver never appears.
-        if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
-                if occlusionDepth >= highlightRadiusWorld then
-                        hideHubHighlight = true
-                end
-        elseif occlusionDepth >= highlightRadiusWorld then
+	if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
+		if occlusionDepth >= highlightRadiusWorld then
+			hideHubHighlight = true
+		end
+	elseif occlusionDepth >= highlightRadiusWorld then
 		hideHubHighlight = true
 	end
 
@@ -243,7 +243,7 @@ function SawActor:draw(x, y, scale)
 		love.graphics.circle("fill", 0, 0, HUB_HOLE_RADIUS)
 	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 
 	love.graphics.setStencilTest()
 

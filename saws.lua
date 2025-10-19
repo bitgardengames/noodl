@@ -242,37 +242,37 @@ local function removeSaw(target)
 			primary[4] = 1
 			local highlight = getHighlightColor(sawColor)
 
-                        Particles:spawnBurst(px or saw.x, py or saw.y, {
-                                count = 12,
-                                speed = 82,
-                                speedVariance = 68,
-                                life = 0.35,
-                                size = 2.3,
-                                color = {primary[1], primary[2], primary[3], primary[4]},
-                                spread = math.pi * 2,
-                                angleJitter = math.pi,
-                                drag = 3.5,
-                                gravity = 260,
-                                scaleMin = 0.45,
-                                scaleVariance = 0.5,
-                                fadeTo = 0.04,
-                        })
+			Particles:spawnBurst(px or saw.x, py or saw.y, {
+				count = 12,
+				speed = 82,
+				speedVariance = 68,
+				life = 0.35,
+				size = 2.3,
+				color = {primary[1], primary[2], primary[3], primary[4]},
+				spread = math.pi * 2,
+				angleJitter = math.pi,
+				drag = 3.5,
+				gravity = 260,
+				scaleMin = 0.45,
+				scaleVariance = 0.5,
+				fadeTo = 0.04,
+			})
 
-                        Particles:spawnBurst(px or saw.x, py or saw.y, {
-                                count = love.math.random(4, 6),
-                                speed = 132,
-                                speedVariance = 72,
-                                life = 0.26,
-                                size = 1.8,
-                                color = {1.0, 0.94, 0.52, highlight[4] or 1},
-                                spread = math.pi * 2,
-                                angleJitter = math.pi,
-                                drag = 1.4,
-                                gravity = 200,
-                                scaleMin = 0.34,
-                                scaleVariance = 0.28,
-                                fadeTo = 0.02,
-                        })
+			Particles:spawnBurst(px or saw.x, py or saw.y, {
+				count = love.math.random(4, 6),
+				speed = 132,
+				speedVariance = 72,
+				life = 0.26,
+				size = 1.8,
+				color = {1.0, 0.94, 0.52, highlight[4] or 1},
+				spread = math.pi * 2,
+				angleJitter = math.pi,
+				drag = 1.4,
+				gravity = 200,
+				scaleMin = 0.34,
+				scaleVariance = 0.28,
+				fadeTo = 0.02,
+			})
 
 			table.remove(current, index)
 			break
@@ -378,10 +378,10 @@ function Saws:update(dt)
 			saw.scaleY = progress
 			saw.scaleX = progress
 
-                        if progress >= 1 then
-                                saw.phase = "squash"
-                                saw.timer = 0
-                        end
+			if progress >= 1 then
+				saw.phase = "squash"
+				saw.timer = 0
+			end
 
 		elseif saw.phase == "squash" then
 			local progress = math.min(saw.timer / SQUASH_DURATION, 1)
@@ -465,14 +465,14 @@ function Saws:draw()
 				if saw.dir == "horizontal" then
 					shadowOffsetX = shadowOffsetX + SHADOW_OFFSET * 0.4
 					shadowOffsetY = shadowOffsetY + SHADOW_OFFSET
-                                else
-                                        local shadowDirX = sinkDir
-                                        if saw.side == "left" then
-                                                shadowDirX = 1
-                                        end
-                                        shadowOffsetX = shadowOffsetX + SHADOW_OFFSET * shadowDirX
-                                        shadowOffsetY = shadowOffsetY + SHADOW_OFFSET * 0.5
-                                end
+				else
+					local shadowDirX = sinkDir
+					if saw.side == "left" then
+						shadowDirX = 1
+					end
+					shadowOffsetX = shadowOffsetX + SHADOW_OFFSET * shadowDirX
+					shadowOffsetY = shadowOffsetY + SHADOW_OFFSET * 0.5
+				end
 
 				love.graphics.translate((px or saw.x) + shadowOffsetX, (py or saw.y) + shadowOffsetY)
 				love.graphics.rotate(rotation)
@@ -617,38 +617,38 @@ function Saws:stall(duration, options)
 			source = options and options.source or nil,
 		}
 
-                local positions = {}
-                local sawDetails = {}
-                local limit = (options and options.positionLimit) or 4
+		local positions = {}
+		local sawDetails = {}
+		local limit = (options and options.positionLimit) or 4
 
-                for _, saw in ipairs(current) do
-                        if saw then
-                                local cx, cy = getSawCenter(saw)
-                                if cx and cy then
-                                        positions[#positions + 1] = { cx, cy }
-                                        sawDetails[#sawDetails + 1] = {
-                                                x = cx,
-                                                y = cy,
-                                                dir = saw.dir,
-                                                side = saw.side,
-                                        }
+		for _, saw in ipairs(current) do
+			if saw then
+				local cx, cy = getSawCenter(saw)
+				if cx and cy then
+					positions[#positions + 1] = { cx, cy }
+					sawDetails[#sawDetails + 1] = {
+						x = cx,
+						y = cy,
+						dir = saw.dir,
+						side = saw.side,
+					}
 
-                                        if limit and limit > 0 and #positions >= limit then
-                                                break
-                                        end
-                                end
-                        end
-                end
+					if limit and limit > 0 and #positions >= limit then
+						break
+					end
+				end
+			end
+		end
 
-                if #positions > 0 then
-                        event.positions = positions
-                        event.positionCount = #positions
-                end
+		if #positions > 0 then
+			event.positions = positions
+			event.positionCount = #positions
+		end
 
-                if #sawDetails > 0 then
-                        event.saws = sawDetails
-                        event.sawCount = #sawDetails
-                end
+		if #sawDetails > 0 then
+			event.saws = sawDetails
+			event.sawCount = #sawDetails
+		end
 
 		Upgrades:notify("sawsStalled", event)
 	end

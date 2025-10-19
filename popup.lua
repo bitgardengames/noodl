@@ -38,7 +38,7 @@ function Popup.new(config)
 end
 
 function Popup:show(title, description, options)
-        options = options or {}
+	options = options or {}
 
 	if options.duration then
 		self.duration = options.duration
@@ -138,7 +138,7 @@ function Popup:draw()
 	local hasSubtext = self.subtext and self.subtext:match("%S")
 	local descHeight = 0
 	if hasSubtext then
-                local descLines = select(2, fontDesc:getWrap(self.subtext, wrapWidth))
+		local descLines = select(2, fontDesc:getWrap(self.subtext, wrapWidth))
 		descHeight = (#descLines > 0 and #descLines or 1) * fontDesc:getHeight()
 	else
 		innerSpacing = 0

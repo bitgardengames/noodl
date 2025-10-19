@@ -173,7 +173,7 @@ local function drawShader(effect, x, y, w, h, intensity, sendUniforms, drawOptio
 		shader:send("resolution", {w, h})
 	end
 
-        local now = love.timer.getTime()
+	local now = love.timer.getTime()
 
 	if shaderHasUniform(shader, "time") then
 		shader:send("time", now)
@@ -239,115 +239,115 @@ end
 
 -- Mellow canopy drift for the opening garden floor
 registerEffect({
-        type = "gardenMellow",
-        backdropIntensity = 0.54,
-        arenaIntensity = 0.3,
-        source = [[
-                extern float time;
-                extern vec2 resolution;
-                extern vec2 origin;
-                extern vec4 baseColor;
-                extern vec4 canopyColor;
-                extern vec4 highlightColor;
-                extern vec4 glowColor;
-                extern float intensity;
+	type = "gardenMellow",
+	backdropIntensity = 0.54,
+	arenaIntensity = 0.3,
+	source = [[
+		extern float time;
+		extern vec2 resolution;
+		extern vec2 origin;
+		extern vec4 baseColor;
+		extern vec4 canopyColor;
+		extern vec4 highlightColor;
+		extern vec4 glowColor;
+		extern float intensity;
 
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			vec2 uv = (screen_coords - origin) / resolution;
+			uv = clamp(uv, 0.0, 1.0);
 
-                        float sway = sin((uv.x + time * 0.05) * 1.6) * 0.035;
-                        float canopyMix = smoothstep(0.08, 0.92, uv.y + sway);
-                        vec3 baseLayer = mix(baseColor.rgb, canopyColor.rgb, canopyMix);
+			float sway = sin((uv.x + time * 0.05) * 1.6) * 0.035;
+			float canopyMix = smoothstep(0.08, 0.92, uv.y + sway);
+			vec3 baseLayer = mix(baseColor.rgb, canopyColor.rgb, canopyMix);
 
-                        vec2 sunCenter = vec2(0.52, 0.18 + sin(time * 0.18) * 0.015);
-                        vec2 sunDelta = uv - sunCenter;
-                        float sun = exp(-dot(sunDelta, sunDelta) * 9.0) * (0.28 + intensity * 0.22);
-                        vec3 sunLayer = mix(baseLayer, highlightColor.rgb, clamp(sun, 0.0, 1.0));
+			vec2 sunCenter = vec2(0.52, 0.18 + sin(time * 0.18) * 0.015);
+			vec2 sunDelta = uv - sunCenter;
+			float sun = exp(-dot(sunDelta, sunDelta) * 9.0) * (0.28 + intensity * 0.22);
+			vec3 sunLayer = mix(baseLayer, highlightColor.rgb, clamp(sun, 0.0, 1.0));
 
-                        float leafShape = sin((uv.x * 6.0 + uv.y * 3.2) - time * 0.2) * 0.5 + 0.5;
-                        float leafMask = smoothstep(0.6, 1.0, leafShape) * (0.12 + intensity * 0.16);
-                        vec3 leafLayer = mix(sunLayer, mix(sunLayer, glowColor.rgb, 0.4), clamp(leafMask, 0.0, 1.0));
+			float leafShape = sin((uv.x * 6.0 + uv.y * 3.2) - time * 0.2) * 0.5 + 0.5;
+			float leafMask = smoothstep(0.6, 1.0, leafShape) * (0.12 + intensity * 0.16);
+			vec3 leafLayer = mix(sunLayer, mix(sunLayer, glowColor.rgb, 0.4), clamp(leafMask, 0.0, 1.0));
 
-                        float moteWave = sin((uv.x + uv.y) * 7.5 + time * 0.55) * cos((uv.x * 5.5 - uv.y * 4.0) + time * 0.35);
-                        float moteMask = smoothstep(0.8, 1.0, moteWave) * (0.08 + intensity * 0.12);
-                        vec3 moteLayer = mix(leafLayer, glowColor.rgb, clamp(moteMask, 0.0, 1.0));
+			float moteWave = sin((uv.x + uv.y) * 7.5 + time * 0.55) * cos((uv.x * 5.5 - uv.y * 4.0) + time * 0.35);
+			float moteMask = smoothstep(0.8, 1.0, moteWave) * (0.08 + intensity * 0.12);
+			vec3 moteLayer = mix(leafLayer, glowColor.rgb, clamp(moteMask, 0.0, 1.0));
 
-                        float vignette = smoothstep(0.0, 0.85, length(uv - vec2(0.5, 0.55)));
-                        vec3 finalColor = mix(moteLayer, baseColor.rgb * 0.9, vignette * 0.35);
+			float vignette = smoothstep(0.0, 0.85, length(uv - vec2(0.5, 0.55)));
+			vec3 finalColor = mix(moteLayer, baseColor.rgb * 0.9, vignette * 0.35);
 
-                        return vec4(finalColor, baseColor.a) * color;
-                }
-        ]],
-        configure = function(effect, palette)
-                local shader = effect.shader
+			return vec4(finalColor, baseColor.a) * color;
+		}
+	]],
+	configure = function(effect, palette)
+		local shader = effect.shader
 
-                local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
-                local canopy = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
-                local highlight = getColorComponents(palette and (palette.snake or palette.arenaBG), Theme.snakeDefault)
-                local glow = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+		local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+		local canopy = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
+		local highlight = getColorComponents(palette and (palette.snake or palette.arenaBG), Theme.snakeDefault)
+		local glow = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
 
-                sendColor(shader, "baseColor", base)
-                sendColor(shader, "canopyColor", canopy)
-                sendColor(shader, "highlightColor", highlight)
-                sendColor(shader, "glowColor", glow)
-        end,
-        draw = function(effect, x, y, w, h, intensity)
-                return drawShader(effect, x, y, w, h, intensity)
-        end,
+		sendColor(shader, "baseColor", base)
+		sendColor(shader, "canopyColor", canopy)
+		sendColor(shader, "highlightColor", highlight)
+		sendColor(shader, "glowColor", glow)
+	end,
+	draw = function(effect, x, y, w, h, intensity)
+		return drawShader(effect, x, y, w, h, intensity)
+	end,
 })
 
 -- Gentle canopy gradient for relaxed botanical floors
 registerEffect({
-        type = "softCanopy",
-        backdropIntensity = 0.52,
-        arenaIntensity = 0.3,
-        source = [[
-                extern float time;
-                extern vec2 resolution;
-                extern vec2 origin;
-                extern vec4 baseColor;
-                extern vec4 canopyColor;
-                extern vec4 glowColor;
-                extern float intensity;
+	type = "softCanopy",
+	backdropIntensity = 0.52,
+	arenaIntensity = 0.3,
+	source = [[
+		extern float time;
+		extern vec2 resolution;
+		extern vec2 origin;
+		extern vec4 baseColor;
+		extern vec4 canopyColor;
+		extern vec4 glowColor;
+		extern float intensity;
 
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			vec2 uv = (screen_coords - origin) / resolution;
+			uv = clamp(uv, 0.0, 1.0);
 
-                        float sway = sin((uv.x + time * 0.05) * 3.2) * 0.04;
-                        float canopy = smoothstep(0.18, 0.82, uv.y + sway);
-                        float lightBands = sin((uv.x * 5.0 + uv.y * 1.2) + time * 0.25) * 0.5 + 0.5;
+			float sway = sin((uv.x + time * 0.05) * 3.2) * 0.04;
+			float canopy = smoothstep(0.18, 0.82, uv.y + sway);
+			float lightBands = sin((uv.x * 5.0 + uv.y * 1.2) + time * 0.25) * 0.5 + 0.5;
 
-                        vec3 canopyBase = mix(baseColor.rgb, canopyColor.rgb, canopy * 0.5);
-                        vec3 soil = mix(baseColor.rgb, glowColor.rgb, 0.35);
-                        vec3 base = mix(canopyBase, soil, smoothstep(0.2, 0.9, uv.y) * 0.4);
-                        float highlight = clamp(lightBands * (0.22 + intensity * 0.16), 0.0, 1.0);
-                        vec3 col = mix(base, glowColor.rgb, highlight * 0.45);
-                        col = mix(col, soil, 0.18);
+			vec3 canopyBase = mix(baseColor.rgb, canopyColor.rgb, canopy * 0.5);
+			vec3 soil = mix(baseColor.rgb, glowColor.rgb, 0.35);
+			vec3 base = mix(canopyBase, soil, smoothstep(0.2, 0.9, uv.y) * 0.4);
+			float highlight = clamp(lightBands * (0.22 + intensity * 0.16), 0.0, 1.0);
+			vec3 col = mix(base, glowColor.rgb, highlight * 0.45);
+			col = mix(col, soil, 0.18);
 
-                        float vignette = smoothstep(0.45, 0.98, distance(uv, vec2(0.5)));
-                        col = mix(col, baseColor.rgb, vignette * 0.35);
+			float vignette = smoothstep(0.45, 0.98, distance(uv, vec2(0.5)));
+			col = mix(col, baseColor.rgb, vignette * 0.35);
 
-                        return vec4(col, baseColor.a) * color;
-                }
-        ]],
-        configure = function(effect, palette)
-                local shader = effect.shader
+			return vec4(col, baseColor.a) * color;
+		}
+	]],
+	configure = function(effect, palette)
+		local shader = effect.shader
 
-                local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
-                local canopy = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
-                local glow = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+		local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+		local canopy = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
+		local glow = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
 
-                sendColor(shader, "baseColor", base)
-                sendColor(shader, "canopyColor", canopy)
-                sendColor(shader, "glowColor", glow)
-        end,
-        draw = function(effect, x, y, w, h, intensity)
-                return drawShader(effect, x, y, w, h, intensity)
-        end,
+		sendColor(shader, "baseColor", base)
+		sendColor(shader, "canopyColor", canopy)
+		sendColor(shader, "glowColor", glow)
+	end,
+	draw = function(effect, x, y, w, h, intensity)
+		return drawShader(effect, x, y, w, h, intensity)
+	end,
 })
 
 -- Soft cavern haze with muted glints
@@ -408,10 +408,10 @@ registerEffect({
 
 -- Gentle tidal drift for calmer aquatic stages
 registerEffect({
-        type = "softCurrent",
-        backdropIntensity = 0.56,
-        arenaIntensity = 0.32,
-        source = [[
+	type = "softCurrent",
+	backdropIntensity = 0.56,
+	arenaIntensity = 0.32,
+	source = [[
 		extern float time;
 		extern vec2 resolution;
 		extern vec2 origin;
@@ -420,41 +420,41 @@ registerEffect({
 		extern vec4 foamColor;
 		extern float intensity;
 
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			vec2 uv = (screen_coords - origin) / resolution;
+			uv = clamp(uv, 0.0, 1.0);
 
-                        float depth = smoothstep(0.0, 1.0, uv.y);
-                        float wave = sin((uv.x * 3.6 - uv.y * 1.4) + time * 0.22) * 0.5 + 0.5;
-                        float shafts = sin((uv.y * 2.4) - time * 0.18) * 0.5 + 0.5;
-                        float causticA = sin((uv.x * 7.2 + uv.y * 2.8) + time * 0.35) * 0.5 + 0.5;
-                        float causticB = sin((uv.x * 5.1 - uv.y * 5.4) - time * 0.28) * 0.5 + 0.5;
-                        float caustics = clamp((causticA * 0.6 + causticB * 0.4), 0.0, 1.0);
-                        float swirl = sin((uv.x + uv.y) * 2.4 - time * 0.16) * 0.5 + 0.5;
+			float depth = smoothstep(0.0, 1.0, uv.y);
+			float wave = sin((uv.x * 3.6 - uv.y * 1.4) + time * 0.22) * 0.5 + 0.5;
+			float shafts = sin((uv.y * 2.4) - time * 0.18) * 0.5 + 0.5;
+			float causticA = sin((uv.x * 7.2 + uv.y * 2.8) + time * 0.35) * 0.5 + 0.5;
+			float causticB = sin((uv.x * 5.1 - uv.y * 5.4) - time * 0.28) * 0.5 + 0.5;
+			float caustics = clamp((causticA * 0.6 + causticB * 0.4), 0.0, 1.0);
+			float swirl = sin((uv.x + uv.y) * 2.4 - time * 0.16) * 0.5 + 0.5;
 
-                        float shimmer = clamp(wave * 0.32 + shafts * 0.24 + caustics * 0.28 + swirl * 0.3, 0.0, 1.0);
-                        float highlight = pow(shimmer, 1.4) * intensity;
+			float shimmer = clamp(wave * 0.32 + shafts * 0.24 + caustics * 0.28 + swirl * 0.3, 0.0, 1.0);
+			float highlight = pow(shimmer, 1.4) * intensity;
 
-                        vec3 gradient = mix(baseColor.rgb, deepColor.rgb, depth * 0.55);
-                        vec3 foamBlend = mix(deepColor.rgb, foamColor.rgb, 0.65);
-                        vec3 col = mix(gradient, foamBlend, highlight * (0.34 + intensity * 0.28));
+			vec3 gradient = mix(baseColor.rgb, deepColor.rgb, depth * 0.55);
+			vec3 foamBlend = mix(deepColor.rgb, foamColor.rgb, 0.65);
+			vec3 col = mix(gradient, foamBlend, highlight * (0.34 + intensity * 0.28));
 
-                        float bloom = smoothstep(0.32, 0.0, abs(uv.y - 0.45));
-                        col = mix(col, foamColor.rgb, bloom * (0.18 + intensity * 0.18));
+			float bloom = smoothstep(0.32, 0.0, abs(uv.y - 0.45));
+			col = mix(col, foamColor.rgb, bloom * (0.18 + intensity * 0.18));
 
-                        float mist = smoothstep(0.1, 0.9, depth);
-                        vec3 veil = mix(baseColor.rgb, deepColor.rgb, 0.4);
-                        col = mix(col, veil, mist * 0.28);
+			float mist = smoothstep(0.1, 0.9, depth);
+			vec3 veil = mix(baseColor.rgb, deepColor.rgb, 0.4);
+			col = mix(col, veil, mist * 0.28);
 
-                        float seam = 1.0 - smoothstep(0.08, 0.28, abs(uv.y - 0.42));
-                        col = mix(col, foamColor.rgb, seam * 0.12 * intensity);
+			float seam = 1.0 - smoothstep(0.08, 0.28, abs(uv.y - 0.42));
+			col = mix(col, foamColor.rgb, seam * 0.12 * intensity);
 
-                        float vignette = smoothstep(0.38, 0.95, distance(uv, vec2(0.5)));
-                        col = mix(col, baseColor.rgb, vignette * 0.24);
+			float vignette = smoothstep(0.38, 0.95, distance(uv, vec2(0.5)));
+			col = mix(col, baseColor.rgb, vignette * 0.24);
 
-                        return vec4(col, baseColor.a) * color;
-                }
+			return vec4(col, baseColor.a) * color;
+		}
 	]],
 	configure = function(effect, palette)
 		local shader = effect.shader
@@ -467,9 +467,9 @@ registerEffect({
 		sendColor(shader, "deepColor", deep)
 		sendColor(shader, "foamColor", foam)
 	end,
-        draw = function(effect, x, y, w, h, intensity)
-                return drawShader(effect, x, y, w, h, intensity)
-        end,
+	draw = function(effect, x, y, w, h, intensity)
+		return drawShader(effect, x, y, w, h, intensity)
+	end,
 })
 
 -- Holographic overlay for high-rarity shop cards
@@ -556,120 +556,120 @@ registerEffect({
 })
 -- Fluid, blossoming glowcap bloom for mysterious caverns
 registerEffect({
-        type = "mushroomPulse",
-        backdropIntensity = 0.95,
-        arenaIntensity = 0.6,
-        source = [[
-                extern float time;
-                extern vec2 resolution;
-                extern vec2 origin;
-                extern vec4 baseColor;
-                extern vec4 cavernColor;
-                extern vec4 stemColor;
-                extern vec4 bloomColor;
-                extern vec4 emberColor;
-                extern vec4 hazeColor;
-                extern float intensity;
+	type = "mushroomPulse",
+	backdropIntensity = 0.95,
+	arenaIntensity = 0.6,
+	source = [[
+		extern float time;
+		extern vec2 resolution;
+		extern vec2 origin;
+		extern vec4 baseColor;
+		extern vec4 cavernColor;
+		extern vec4 stemColor;
+		extern vec4 bloomColor;
+		extern vec4 emberColor;
+		extern vec4 hazeColor;
+		extern float intensity;
 
-                float hash(vec2 p)
-                {
-                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-                }
+		float hash(vec2 p)
+		{
+			return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+		}
 
-                float noise(vec2 p)
-                {
-                        vec2 i = floor(p);
-                        vec2 f = fract(p);
-                        vec2 u = f * f * (3.0 - 2.0 * f);
+		float noise(vec2 p)
+		{
+			vec2 i = floor(p);
+			vec2 f = fract(p);
+			vec2 u = f * f * (3.0 - 2.0 * f);
 
-                        float a = hash(i);
-                        float b = hash(i + vec2(1.0, 0.0));
-                        float c = hash(i + vec2(0.0, 1.0));
-                        float d = hash(i + vec2(1.0, 1.0));
+			float a = hash(i);
+			float b = hash(i + vec2(1.0, 0.0));
+			float c = hash(i + vec2(0.0, 1.0));
+			float d = hash(i + vec2(1.0, 1.0));
 
-                        return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-                }
+			return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+		}
 
-                float fbm(vec2 p)
-                {
-                        float v = 0.0;
-                        float a = 0.5;
-                        mat2 m = mat2(1.6, -1.2, 1.2, 1.6);
-                        for (int i = 0; i < 4; ++i)
-                        {
-                                v += noise(p) * a;
-                                p = m * p + 13.0;
-                                a *= 0.5;
-                        }
-                        return v;
-                }
+		float fbm(vec2 p)
+		{
+			float v = 0.0;
+			float a = 0.5;
+			mat2 m = mat2(1.6, -1.2, 1.2, 1.6);
+			for (int i = 0; i < 4; ++i)
+			{
+				v += noise(p) * a;
+				p = m * p + 13.0;
+				a *= 0.5;
+			}
+			return v;
+		}
 
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			vec2 uv = (screen_coords - origin) / resolution;
+			uv = clamp(uv, 0.0, 1.0);
 
-                        vec2 centered = uv - vec2(0.5);
-                        float aspect = resolution.x / max(resolution.y, 0.0001);
-                        centered.x *= aspect;
+			vec2 centered = uv - vec2(0.5);
+			float aspect = resolution.x / max(resolution.y, 0.0001);
+			centered.x *= aspect;
 
-                        float t = time * 0.42;
-                        float radius = length(centered);
-                        float pulse = 0.5 + 0.5 * sin(t * 1.6 + radius * 5.2);
-                        vec2 radial = centered * (0.65 + 0.35 * pulse);
-                        vec2 gentle = vec2(0.12 * sin(t * 0.8 + radius * 2.4), 0.09 * cos(t * 0.6 + radius * 1.8));
-                        vec2 drift = radial + gentle;
+			float t = time * 0.42;
+			float radius = length(centered);
+			float pulse = 0.5 + 0.5 * sin(t * 1.6 + radius * 5.2);
+			vec2 radial = centered * (0.65 + 0.35 * pulse);
+			vec2 gentle = vec2(0.12 * sin(t * 0.8 + radius * 2.4), 0.09 * cos(t * 0.6 + radius * 1.8));
+			vec2 drift = radial + gentle;
 
-                        float veilField = fbm(drift * 2.6 + vec2(t * 0.28, -t * 0.24));
-                        float bloomField = fbm(drift * 5.4 + vec2(-t * 0.42, t * 0.31));
-                        float glowField = fbm(drift * 7.1 + vec2(t * 0.5, t * 0.38));
+			float veilField = fbm(drift * 2.6 + vec2(t * 0.28, -t * 0.24));
+			float bloomField = fbm(drift * 5.4 + vec2(-t * 0.42, t * 0.31));
+			float glowField = fbm(drift * 7.1 + vec2(t * 0.5, t * 0.38));
 
-                        float cavernLift = smoothstep(-0.35, 0.85, veilField + centered.y * 1.2);
-                        vec3 baseLayer = mix(baseColor.rgb, cavernColor.rgb, cavernLift * (0.45 + intensity * 0.25));
+			float cavernLift = smoothstep(-0.35, 0.85, veilField + centered.y * 1.2);
+			vec3 baseLayer = mix(baseColor.rgb, cavernColor.rgb, cavernLift * (0.45 + intensity * 0.25));
 
-                        float bloomPulse = 0.5 + 0.5 * sin(t * 3.1 + bloomField * 4.0 + radius * 12.0);
-                        float bloomRing = smoothstep(0.28, 0.0, abs(radius - (0.32 + 0.08 * bloomField)));
-                        float bloomMix = clamp(bloomRing * (0.35 + intensity * 0.55) + bloomPulse * 0.22, 0.0, 1.0);
-                        vec3 bloomLayer = mix(stemColor.rgb, bloomColor.rgb, clamp(bloomField * 0.5 + 0.5, 0.0, 1.0));
-                        vec3 blossomed = mix(baseLayer, bloomLayer, bloomMix);
+			float bloomPulse = 0.5 + 0.5 * sin(t * 3.1 + bloomField * 4.0 + radius * 12.0);
+			float bloomRing = smoothstep(0.28, 0.0, abs(radius - (0.32 + 0.08 * bloomField)));
+			float bloomMix = clamp(bloomRing * (0.35 + intensity * 0.55) + bloomPulse * 0.22, 0.0, 1.0);
+			vec3 bloomLayer = mix(stemColor.rgb, bloomColor.rgb, clamp(bloomField * 0.5 + 0.5, 0.0, 1.0));
+			vec3 blossomed = mix(baseLayer, bloomLayer, bloomMix);
 
-                        float emberSpill = smoothstep(0.25, 0.9, glowField) * (0.25 + intensity * 0.35);
-                        vec3 emberLayer = mix(blossomed, emberColor.rgb, emberSpill * 0.5);
+			float emberSpill = smoothstep(0.25, 0.9, glowField) * (0.25 + intensity * 0.35);
+			vec3 emberLayer = mix(blossomed, emberColor.rgb, emberSpill * 0.5);
 
-                        float hazeVeil = clamp(veilField * 0.6 + glowField * 0.3, 0.0, 1.0);
-                        vec3 veiled = mix(emberLayer, hazeColor.rgb, hazeVeil * 0.18 * (0.6 + intensity * 0.4));
+			float hazeVeil = clamp(veilField * 0.6 + glowField * 0.3, 0.0, 1.0);
+			vec3 veiled = mix(emberLayer, hazeColor.rgb, hazeVeil * 0.18 * (0.6 + intensity * 0.4));
 
-                        float petalTrace = smoothstep(0.1, 0.8, bloomField * 0.6 + glowField * 0.4);
-                        float shimmer = 0.5 + 0.5 * sin(t * 2.4 + dot(drift, vec2(6.1, -5.3)));
-                        vec3 petals = mix(veiled, bloomColor.rgb, petalTrace * shimmer * 0.22 * (0.6 + intensity * 0.4));
+			float petalTrace = smoothstep(0.1, 0.8, bloomField * 0.6 + glowField * 0.4);
+			float shimmer = 0.5 + 0.5 * sin(t * 2.4 + dot(drift, vec2(6.1, -5.3)));
+			vec3 petals = mix(veiled, bloomColor.rgb, petalTrace * shimmer * 0.22 * (0.6 + intensity * 0.4));
 
-                        float vignette = smoothstep(0.18, 0.95, radius + 0.08 * sin(t + radius * 2.1));
-                        vec3 finalColor = mix(petals, baseColor.rgb, vignette * 0.35);
-                        finalColor = clamp(finalColor, 0.0, 1.0);
+			float vignette = smoothstep(0.18, 0.95, radius + 0.08 * sin(t + radius * 2.1));
+			vec3 finalColor = mix(petals, baseColor.rgb, vignette * 0.35);
+			finalColor = clamp(finalColor, 0.0, 1.0);
 
-                        return vec4(finalColor, baseColor.a) * color;
-                }
-        ]],
-        configure = function(effect, palette)
-                local shader = effect.shader
+			return vec4(finalColor, baseColor.a) * color;
+		}
+	]],
+	configure = function(effect, palette)
+		local shader = effect.shader
 
-                local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
-                local cavern = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
-                local stems = getColorComponents(palette and (palette.arenaBorder or palette.rock), Theme.arenaBorder)
-                local bloom = getColorComponents(palette and (palette.snake or palette.sawColor), Theme.snakeDefault)
-                local ember = getColorComponents(palette and (palette.sawColor or palette.snake), Theme.sawColor)
-                local haze = getColorComponents(palette and (palette.arenaHighlight or palette.uiAccent), Theme.uiAccent)
+		local base = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+		local cavern = getColorComponents(palette and palette.arenaBG, Theme.arenaBG)
+		local stems = getColorComponents(palette and (palette.arenaBorder or palette.rock), Theme.arenaBorder)
+		local bloom = getColorComponents(palette and (palette.snake or palette.sawColor), Theme.snakeDefault)
+		local ember = getColorComponents(palette and (palette.sawColor or palette.snake), Theme.sawColor)
+		local haze = getColorComponents(palette and (palette.arenaHighlight or palette.uiAccent), Theme.uiAccent)
 
-                sendColor(shader, "baseColor", base)
-                sendColor(shader, "cavernColor", cavern)
-                sendColor(shader, "stemColor", stems)
-                sendColor(shader, "bloomColor", bloom)
-                sendColor(shader, "emberColor", ember)
-                sendColor(shader, "hazeColor", haze)
-        end,
-        draw = function(effect, x, y, w, h, intensity)
-                return drawShader(effect, x, y, w, h, intensity)
-        end,
+		sendColor(shader, "baseColor", base)
+		sendColor(shader, "cavernColor", cavern)
+		sendColor(shader, "stemColor", stems)
+		sendColor(shader, "bloomColor", bloom)
+		sendColor(shader, "emberColor", ember)
+		sendColor(shader, "hazeColor", haze)
+	end,
+	draw = function(effect, x, y, w, h, intensity)
+		return drawShader(effect, x, y, w, h, intensity)
+	end,
 })
 -- Gentle tidal movement for waterlogged floors
 -- Ember drift for warm and ashen floors
@@ -686,38 +686,38 @@ registerEffect({
 		extern vec4 glowColor;
 		extern float intensity;
 
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			vec2 uv = (screen_coords - origin) / resolution;
+			uv = clamp(uv, 0.0, 1.0);
 
-                        float rise = smoothstep(0.05, 0.95, uv.y);
-                        float drift = time * 0.08;
-                        float scroll = uv.y + drift;
-                        float ribbons = sin((uv.x * 3.5 + scroll * 3.0) - time * 0.45);
-                        float shimmer = sin((uv.x * 6.0 - uv.y * 1.5) + time * 0.6);
-                        float sway = sin(time * 0.1) * 0.12;
-                        float glowBand = smoothstep(0.1 + sway, 0.85 + sway, uv.y);
+			float rise = smoothstep(0.05, 0.95, uv.y);
+			float drift = time * 0.08;
+			float scroll = uv.y + drift;
+			float ribbons = sin((uv.x * 3.5 + scroll * 3.0) - time * 0.45);
+			float shimmer = sin((uv.x * 6.0 - uv.y * 1.5) + time * 0.6);
+			float sway = sin(time * 0.1) * 0.12;
+			float glowBand = smoothstep(0.1 + sway, 0.85 + sway, uv.y);
 
-                        float ember = clamp(rise * 0.55 + ribbons * 0.18 + shimmer * 0.12, 0.0, 1.0);
-                        float flicker = smoothstep(0.25, 1.0, sin(time * 0.7 + uv.y * 8.0) * 0.5 + 0.5);
-                        float warmth = pow(clamp(ember * 0.7 + glowBand * 0.3, 0.0, 1.0), 1.3);
+			float ember = clamp(rise * 0.55 + ribbons * 0.18 + shimmer * 0.12, 0.0, 1.0);
+			float flicker = smoothstep(0.25, 1.0, sin(time * 0.7 + uv.y * 8.0) * 0.5 + 0.5);
+			float warmth = pow(clamp(ember * 0.7 + glowBand * 0.3, 0.0, 1.0), 1.3);
 
-                        vec3 baseWarm = mix(baseColor.rgb, emberColor.rgb, rise * 0.35);
-                        vec3 emberGlow = mix(emberColor.rgb, glowColor.rgb, warmth * (0.5 + intensity * 0.3));
-                        vec3 col = mix(baseWarm, emberGlow, (warmth * 0.65 + flicker * 0.15) * intensity);
+			vec3 baseWarm = mix(baseColor.rgb, emberColor.rgb, rise * 0.35);
+			vec3 emberGlow = mix(emberColor.rgb, glowColor.rgb, warmth * (0.5 + intensity * 0.3));
+			vec3 col = mix(baseWarm, emberGlow, (warmth * 0.65 + flicker * 0.15) * intensity);
 
-                        float haze = smoothstep(0.3, 0.95, glowBand);
-                        col = mix(col, glowColor.rgb, haze * 0.18);
+			float haze = smoothstep(0.3, 0.95, glowBand);
+			col = mix(col, glowColor.rgb, haze * 0.18);
 
-                        float cinder = smoothstep(0.0, 1.0, ember) * 0.1;
-                        col += glowColor.rgb * cinder * intensity;
+			float cinder = smoothstep(0.0, 1.0, ember) * 0.1;
+			col += glowColor.rgb * cinder * intensity;
 
-                        float vignette = smoothstep(0.25, 0.8, distance(uv, vec2(0.5)));
-                        col = mix(col, baseColor.rgb, vignette * 0.36);
+			float vignette = smoothstep(0.25, 0.8, distance(uv, vec2(0.5)));
+			col = mix(col, baseColor.rgb, vignette * 0.36);
 
-                        return vec4(col, baseColor.a) * color;
-                }
+			return vec4(col, baseColor.a) * color;
+		}
 	]],
 	configure = function(effect, palette)
 		local shader = effect.shader
@@ -748,34 +748,34 @@ registerEffect({
 		extern vec4 highlightColor;
 		extern float intensity;
 
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			vec2 uv = (screen_coords - origin) / resolution;
+			uv = clamp(uv, 0.0, 1.0);
 
-                        float vertical = smoothstep(0.0, 1.0, uv.y);
+			float vertical = smoothstep(0.0, 1.0, uv.y);
 
-                        float sweep = sin((uv.y + time * 0.08) * 6.0);
-                        float drift = sin((uv.x * 3.0 + uv.y * 0.5) + time * 0.35);
-                        float motes = clamp(sweep * 0.4 + drift * 0.25 + 0.5, 0.0, 1.0);
+			float sweep = sin((uv.y + time * 0.08) * 6.0);
+			float drift = sin((uv.x * 3.0 + uv.y * 0.5) + time * 0.35);
+			float motes = clamp(sweep * 0.4 + drift * 0.25 + 0.5, 0.0, 1.0);
 
-                        float cross = sin((uv.x * 11.0 - time * 0.4)) * sin((uv.y * 9.0 + time * 0.28));
-                        float sparkle = smoothstep(0.6, 0.94, cross * 0.5 + 0.5);
+			float cross = sin((uv.x * 11.0 - time * 0.4)) * sin((uv.y * 9.0 + time * 0.28));
+			float sparkle = smoothstep(0.6, 0.94, cross * 0.5 + 0.5);
 
-                        float dustAmount = pow(clamp(motes * 0.6 + sparkle * 0.4, 0.0, 1.0), 1.3) * intensity;
+			float dustAmount = pow(clamp(motes * 0.6 + sparkle * 0.4, 0.0, 1.0), 1.3) * intensity;
 
-                        vec3 haze = mix(baseColor.rgb, dustColor.rgb, vertical * 0.35);
-                        vec3 glint = mix(dustColor.rgb, highlightColor.rgb, 0.4);
-                        vec3 col = mix(haze, glint, dustAmount * 0.45);
+			vec3 haze = mix(baseColor.rgb, dustColor.rgb, vertical * 0.35);
+			vec3 glint = mix(dustColor.rgb, highlightColor.rgb, 0.4);
+			vec3 col = mix(haze, glint, dustAmount * 0.45);
 
-                        float bloom = smoothstep(0.28, 0.0, abs(uv.y - 0.55));
-                        col = mix(col, highlightColor.rgb, bloom * 0.12 * intensity);
+			float bloom = smoothstep(0.28, 0.0, abs(uv.y - 0.55));
+			col = mix(col, highlightColor.rgb, bloom * 0.12 * intensity);
 
-                        float vignette = smoothstep(0.36, 0.95, distance(uv, vec2(0.5)));
-                        col = mix(col, baseColor.rgb, vignette * 0.42);
+			float vignette = smoothstep(0.36, 0.95, distance(uv, vec2(0.5)));
+			col = mix(col, baseColor.rgb, vignette * 0.42);
 
-                        return vec4(col, baseColor.a) * color;
-                }
+			return vec4(col, baseColor.a) * color;
+		}
 	]],
 	configure = function(effect, palette)
 		local shader = effect.shader
@@ -806,30 +806,30 @@ registerEffect({
 		extern vec4 auroraSecondary;
 		extern float intensity;
 
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			vec2 uv = (screen_coords - origin) / resolution;
+			uv = clamp(uv, 0.0, 1.0);
 
-                        float wave = sin((uv.x * 4.0 + time * 0.12) + sin(uv.y * 3.0) * 0.5);
-                        float wave2 = sin((uv.x * 6.0 - uv.y * 2.0) - time * 0.08);
-                        float ribbon = clamp(wave * 0.34 + wave2 * 0.26 + 0.5, 0.0, 1.0);
-                        float vertical = smoothstep(0.0, 1.0, uv.y);
+			float wave = sin((uv.x * 4.0 + time * 0.12) + sin(uv.y * 3.0) * 0.5);
+			float wave2 = sin((uv.x * 6.0 - uv.y * 2.0) - time * 0.08);
+			float ribbon = clamp(wave * 0.34 + wave2 * 0.26 + 0.5, 0.0, 1.0);
+			float vertical = smoothstep(0.0, 1.0, uv.y);
 
-                        vec3 baseMix = mix(baseColor.rgb, auroraPrimary.rgb, pow(ribbon, 1.1) * 0.6);
-                        vec3 veil = mix(baseMix, auroraSecondary.rgb, pow(ribbon, 1.6) * (0.35 + vertical * 0.35) * intensity);
+			vec3 baseMix = mix(baseColor.rgb, auroraPrimary.rgb, pow(ribbon, 1.1) * 0.6);
+			vec3 veil = mix(baseMix, auroraSecondary.rgb, pow(ribbon, 1.6) * (0.35 + vertical * 0.35) * intensity);
 
-                        float glow = smoothstep(0.25, 0.0, abs(uv.x - 0.5));
-                        vec3 col = mix(veil, auroraSecondary.rgb, glow * 0.12 * intensity);
+			float glow = smoothstep(0.25, 0.0, abs(uv.x - 0.5));
+			vec3 col = mix(veil, auroraSecondary.rgb, glow * 0.12 * intensity);
 
-                        float horizon = smoothstep(0.2, 0.95, vertical);
-                        col = mix(col, auroraPrimary.rgb, horizon * 0.12);
+			float horizon = smoothstep(0.2, 0.95, vertical);
+			col = mix(col, auroraPrimary.rgb, horizon * 0.12);
 
-                        float vignette = smoothstep(0.45, 0.95, distance(uv, vec2(0.5)));
-                        col = mix(col, baseColor.rgb, vignette * 0.25);
+			float vignette = smoothstep(0.45, 0.95, distance(uv, vec2(0.5)));
+			col = mix(col, baseColor.rgb, vignette * 0.25);
 
-                        return vec4(clamp(col, 0.0, 1.0), baseColor.a) * color;
-                }
+			return vec4(clamp(col, 0.0, 1.0), baseColor.a) * color;
+		}
 	]],
 	configure = function(effect, palette)
 		local shader = effect.shader
@@ -860,26 +860,26 @@ registerEffect({
 		extern vec4 pulseColor;
 		extern float intensity;
 
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			vec2 uv = (screen_coords - origin) / resolution;
+			uv = clamp(uv, 0.0, 1.0);
 
-                        float dist = distance(uv, vec2(0.5));
-                        float pulse = sin(dist * 6.0 - time * 0.7) * 0.5 + 0.5;
-                        float slow = sin(time * 0.25) * 0.5 + 0.5;
-                        float rim = smoothstep(0.25, 0.85, dist);
+			float dist = distance(uv, vec2(0.5));
+			float pulse = sin(dist * 6.0 - time * 0.7) * 0.5 + 0.5;
+			float slow = sin(time * 0.25) * 0.5 + 0.5;
+			float rim = smoothstep(0.25, 0.85, dist);
 
-                        float glowMask = pow(clamp(1.0 - dist * 1.2, 0.0, 1.0), 1.4);
-                        vec3 aura = mix(baseColor.rgb, pulseColor.rgb, glowMask * (0.4 + intensity * 0.5));
-                        vec3 col = mix(aura, rimColor.rgb, (1.0 - rim) * (0.25 + intensity * 0.25) + slow * 0.15 * intensity);
-                        col += pulseColor.rgb * pulse * 0.12 * intensity;
+			float glowMask = pow(clamp(1.0 - dist * 1.2, 0.0, 1.0), 1.4);
+			vec3 aura = mix(baseColor.rgb, pulseColor.rgb, glowMask * (0.4 + intensity * 0.5));
+			vec3 col = mix(aura, rimColor.rgb, (1.0 - rim) * (0.25 + intensity * 0.25) + slow * 0.15 * intensity);
+			col += pulseColor.rgb * pulse * 0.12 * intensity;
 
-                        float vignette = smoothstep(0.4, 0.95, dist);
-                        col = mix(col, baseColor.rgb, clamp(vignette, 0.0, 1.0) * 0.35);
+			float vignette = smoothstep(0.4, 0.95, dist);
+			col = mix(col, baseColor.rgb, clamp(vignette, 0.0, 1.0) * 0.35);
 
-                        return vec4(col, baseColor.a) * color;
-                }
+			return vec4(col, baseColor.a) * color;
+		}
 	]],
 	configure = function(effect, palette)
 		local shader = effect.shader
@@ -898,61 +898,61 @@ registerEffect({
 })
 -- Neon hazard backdrop for the main menu
 registerEffect({
-        type = "menuConstellation",
-        backdropIntensity = 0.46,
-        arenaIntensity = 0.32,
-        source = [[
-                extern vec2 resolution;
-                extern vec2 origin;
-                extern vec4 topColor;
-                extern vec4 bottomColor;
-                extern vec4 accentColor;
-                extern float vignetteIntensity;
-                extern float intensity;
+	type = "menuConstellation",
+	backdropIntensity = 0.46,
+	arenaIntensity = 0.32,
+	source = [[
+		extern vec2 resolution;
+		extern vec2 origin;
+		extern vec4 topColor;
+		extern vec4 bottomColor;
+		extern vec4 accentColor;
+		extern float vignetteIntensity;
+		extern float intensity;
 
-                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-                {
-                        vec2 uv = (screen_coords - origin) / resolution;
-                        uv = clamp(uv, 0.0, 1.0);
+		vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+		{
+			vec2 uv = (screen_coords - origin) / resolution;
+			uv = clamp(uv, 0.0, 1.0);
 
-                        float gradient = smoothstep(0.0, 1.0, uv.y);
-                        vec3 col = mix(topColor.rgb, bottomColor.rgb, gradient);
+			float gradient = smoothstep(0.0, 1.0, uv.y);
+			vec3 col = mix(topColor.rgb, bottomColor.rgb, gradient);
 
-                        vec2 centered = uv - vec2(0.5);
-                        float vignette = smoothstep(0.38, 0.92, length(centered));
-                        col = mix(col, col * 0.55, vignette * vignetteIntensity);
+			vec2 centered = uv - vec2(0.5);
+			float vignette = smoothstep(0.38, 0.92, length(centered));
+			col = mix(col, col * 0.55, vignette * vignetteIntensity);
 
-                        vec2 titleCenter = vec2(0.5, 0.22);
-                        vec2 titleRadius = vec2(0.38, 0.17);
-                        vec2 titleOffset = (uv - titleCenter) / titleRadius;
-                        float titleSpot = exp(-dot(titleOffset, titleOffset) * 2.35);
-                        float titleHighlight = pow(titleSpot, 1.4);
+			vec2 titleCenter = vec2(0.5, 0.22);
+			vec2 titleRadius = vec2(0.38, 0.17);
+			vec2 titleOffset = (uv - titleCenter) / titleRadius;
+			float titleSpot = exp(-dot(titleOffset, titleOffset) * 2.35);
+			float titleHighlight = pow(titleSpot, 1.4);
 
-                        vec3 spotlight = mix(col, accentColor.rgb, 0.55);
-                        col = mix(col, spotlight, clamp(titleHighlight * (0.65 + intensity * 0.35), 0.0, 1.0));
-                        col += accentColor.rgb * titleHighlight * 0.14 * intensity;
+			vec3 spotlight = mix(col, accentColor.rgb, 0.55);
+			col = mix(col, spotlight, clamp(titleHighlight * (0.65 + intensity * 0.35), 0.0, 1.0));
+			col += accentColor.rgb * titleHighlight * 0.14 * intensity;
 
-                        col = clamp(col, 0.0, 1.0);
+			col = clamp(col, 0.0, 1.0);
 
-                        float alpha = mix(topColor.a, bottomColor.a, gradient);
-                        return vec4(col, alpha) * color;
-                }
-        ]],
-        configure = function(effect)
-                local shader = effect.shader
+			float alpha = mix(topColor.a, bottomColor.a, gradient);
+			return vec4(col, alpha) * color;
+		}
+	]],
+	configure = function(effect)
+		local shader = effect.shader
 
-                local top = {0x1A / 255, 0x0F / 255, 0x1E / 255, 1}
-                local bottom = {0x05 / 255, 0x05 / 255, 0x05 / 255, 1}
-                local accent = {0xFF / 255, 0x2D / 255, 0xAA / 255, 1}
+		local top = {0x1A / 255, 0x0F / 255, 0x1E / 255, 1}
+		local bottom = {0x05 / 255, 0x05 / 255, 0x05 / 255, 1}
+		local accent = {0xFF / 255, 0x2D / 255, 0xAA / 255, 1}
 
-                sendColor(shader, "topColor", top)
-                sendColor(shader, "bottomColor", bottom)
-                sendColor(shader, "accentColor", accent)
-                sendFloat(shader, "vignetteIntensity", 0.66)
-        end,
-        draw = function(effect, x, y, w, h, intensity)
-                return drawShader(effect, x, y, w, h, intensity)
-        end,
+		sendColor(shader, "topColor", top)
+		sendColor(shader, "bottomColor", bottom)
+		sendColor(shader, "accentColor", accent)
+		sendFloat(shader, "vignetteIntensity", 0.66)
+	end,
+	draw = function(effect, x, y, w, h, intensity)
+		return drawShader(effect, x, y, w, h, intensity)
+	end,
 })
 -- Radiant fabric of light for the shop screen
 registerEffect({
