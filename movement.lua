@@ -34,6 +34,109 @@ local SEGMENT_SIZE = 24 -- same size as rocks and snake
 local DAMAGE_GRACE = 0.35
 local WALL_GRACE = 0.25
 
+-- Reused particle option tables to avoid recreating identical bursts every frame.
+local PORTAL_ENTRY_BURST_OPTIONS = {
+        count = 18,
+        speed = 120,
+        speedVariance = 80,
+        life = 0.5,
+        size = 5,
+        color = {0.9, 0.75, 0.3, 1},
+        spread = math.pi * 2,
+        fadeTo = 0.1,
+}
+
+local PORTAL_EXIT_BURST_OPTIONS = {
+        count = 22,
+        speed = 150,
+        speedVariance = 90,
+        life = 0.55,
+        size = 5,
+        color = {1.0, 0.88, 0.4, 1},
+        spread = math.pi * 2,
+        fadeTo = 0.05,
+}
+
+local WALL_SHIELD_BURST_OPTIONS = {
+        count = 12,
+        speed = 70,
+        speedVariance = 55,
+        life = 0.45,
+        size = 4,
+        color = {0.55, 0.85, 1, 1},
+        spread = math.pi * 2,
+        angleJitter = math.pi * 0.75,
+        drag = 3.2,
+        gravity = 180,
+        scaleMin = 0.5,
+        scaleVariance = 0.75,
+        fadeTo = 0,
+}
+
+local ROCK_DASH_BURST_OPTIONS = {
+        count = 10,
+        speed = 120,
+        speedVariance = 70,
+        life = 0.35,
+        size = 4,
+        color = {1.0, 0.78, 0.32, 1},
+        spread = math.pi * 2,
+        angleJitter = math.pi * 0.6,
+        drag = 3.0,
+        gravity = 180,
+        scaleMin = 0.5,
+        scaleVariance = 0.6,
+        fadeTo = 0.05,
+}
+
+local ROCK_SHIELD_BURST_OPTIONS = {
+        count = 8,
+        speed = 40,
+        speedVariance = 36,
+        life = 0.4,
+        size = 3,
+        color = {0.9, 0.8, 0.5, 1},
+        spread = math.pi * 2,
+        angleJitter = math.pi * 0.8,
+        drag = 2.8,
+        gravity = 210,
+        scaleMin = 0.55,
+        scaleVariance = 0.5,
+        fadeTo = 0.05,
+}
+
+local SAW_SHIELD_BURST_OPTIONS = {
+        count = 8,
+        speed = 48,
+        speedVariance = 36,
+        life = 0.32,
+        size = 2.2,
+        color = {1.0, 0.9, 0.45, 1},
+        spread = math.pi * 2,
+        angleJitter = math.pi * 0.9,
+        drag = 3.2,
+        gravity = 240,
+        scaleMin = 0.4,
+        scaleVariance = 0.45,
+        fadeTo = 0.05,
+}
+
+local LASER_SHIELD_BURST_OPTIONS = {
+        count = 10,
+        speed = 80,
+        speedVariance = 30,
+        life = 0.25,
+        size = 2.5,
+        color = {1.0, 0.55, 0.25, 1},
+        spread = math.pi * 2,
+        angleJitter = math.pi,
+        drag = 3.4,
+        gravity = 120,
+        scaleMin = 0.45,
+        scaleVariance = 0.4,
+        fadeTo = 0,
+}
+
 local shieldStatMap = {
 	wall = {
 		lifetime = "shieldWallBounces",
@@ -312,28 +415,10 @@ local function portalThroughWall(headX, headY)
 		newHeadX, newHeadY = Snake:getHead()
 	end
 
-	if Particles then
-		Particles:spawnBurst(entryX, entryY, {
-			count = 18,
-			speed = 120,
-			speedVariance = 80,
-			life = 0.5,
-			size = 5,
-			color = {0.9, 0.75, 0.3, 1},
-			spread = math.pi * 2,
-			fadeTo = 0.1,
-		})
-		Particles:spawnBurst(newHeadX, newHeadY, {
-			count = 22,
-			speed = 150,
-			speedVariance = 90,
-			life = 0.55,
-			size = 5,
-			color = {1.0, 0.88, 0.4, 1},
-			spread = math.pi * 2,
-			fadeTo = 0.05,
-		})
-	end
+        if Particles then
+                Particles:spawnBurst(entryX, entryY, PORTAL_ENTRY_BURST_OPTIONS)
+                Particles:spawnBurst(newHeadX, newHeadY, PORTAL_EXIT_BURST_OPTIONS)
+        end
 
 	return newHeadX, newHeadY
 end
@@ -387,21 +472,7 @@ local function handleWallCollision(headX, headY)
 	end
 	headX, headY = clampedX, clampedY
 
-	Particles:spawnBurst(headX, headY, {
-		count = 12,
-		speed = 70,
-		speedVariance = 55,
-		life = 0.45,
-		size = 4,
-		color = {0.55, 0.85, 1, 1},
-		spread = math.pi * 2,
-		angleJitter = math.pi * 0.75,
-		drag = 3.2,
-		gravity = 180,
-		scaleMin = 0.5,
-		scaleVariance = 0.75,
-		fadeTo = 0,
-	})
+        Particles:spawnBurst(headX, headY, WALL_SHIELD_BURST_OPTIONS)
 
 	Audio:playSound("shield_wall")
 
@@ -422,21 +493,7 @@ local function handleRockCollision(headX, headY)
 
 			if Snake.isDashActive and Snake:isDashActive() then
 				Rocks:destroy(rock)
-				Particles:spawnBurst(centerX, centerY, {
-					count = 10,
-					speed = 120,
-					speedVariance = 70,
-					life = 0.35,
-					size = 4,
-					color = {1.0, 0.78, 0.32, 1},
-					spread = math.pi * 2,
-					angleJitter = math.pi * 0.6,
-					drag = 3.0,
-					gravity = 180,
-					scaleMin = 0.5,
-					scaleVariance = 0.6,
-					fadeTo = 0.05,
-				})
+                                Particles:spawnBurst(centerX, centerY, ROCK_DASH_BURST_OPTIONS)
 				Audio:playSound("shield_rock")
 				if Snake.onDashBreakRock then
 					Snake:onDashBreakRock(centerX, centerY)
@@ -459,21 +516,7 @@ local function handleRockCollision(headX, headY)
 				Rocks:destroy(rock)
 				context.damage = 0
 
-				Particles:spawnBurst(centerX, centerY, {
-					count = 8,
-					speed = 40,
-					speedVariance = 36,
-					life = 0.4,
-					size = 3,
-					color = {0.9, 0.8, 0.5, 1},
-					spread = math.pi * 2,
-					angleJitter = math.pi * 0.8,
-					drag = 2.8,
-					gravity = 210,
-					scaleMin = 0.55,
-					scaleVariance = 0.5,
-					fadeTo = 0.05,
-				})
+                                Particles:spawnBurst(centerX, centerY, ROCK_SHIELD_BURST_OPTIONS)
 				Audio:playSound("shield_rock")
 
 				if Snake.onShieldConsumed then
@@ -543,21 +586,7 @@ local function handleSawCollision(headX, headY)
 
 	Saws:destroy(sawHit)
 
-	Particles:spawnBurst(headX, headY, {
-		count = 8,
-		speed = 48,
-		speedVariance = 36,
-		life = 0.32,
-		size = 2.2,
-		color = {1.0, 0.9, 0.45, 1},
-		spread = math.pi * 2,
-		angleJitter = math.pi * 0.9,
-		drag = 3.2,
-		gravity = 240,
-		scaleMin = 0.4,
-		scaleVariance = 0.45,
-		fadeTo = 0.05,
-	})
+        Particles:spawnBurst(headX, headY, SAW_SHIELD_BURST_OPTIONS)
 	Audio:playSound("shield_saw")
 
 	if Snake.onShieldConsumed then
@@ -623,21 +652,7 @@ local function handleLaserCollision(headX, headY)
 
 	Lasers:onShieldedHit(laserHit, headX, headY)
 
-	Particles:spawnBurst(headX, headY, {
-		count = 10,
-		speed = 80,
-		speedVariance = 30,
-		life = 0.25,
-		size = 2.5,
-		color = {1.0, 0.55, 0.25, 1},
-		spread = math.pi * 2,
-		angleJitter = math.pi,
-		drag = 3.4,
-		gravity = 120,
-		scaleMin = 0.45,
-		scaleVariance = 0.4,
-		fadeTo = 0,
-	})
+        Particles:spawnBurst(headX, headY, LASER_SHIELD_BURST_OPTIONS)
 
 	Audio:playSound("shield_saw")
 
