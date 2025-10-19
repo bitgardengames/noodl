@@ -309,6 +309,13 @@ function Arena:setFloorDecorations(floorNum, floorData)
     self:rebuildTileDecorations()
 end
 
+local directions = {
+	{ 1, 0 },
+	{ -1, 0 },
+	{ 0, 1 },
+	{ 0, -1 },
+}
+
 function Arena:rebuildTileDecorations()
     local config = self._decorationConfig
     if not config then
@@ -417,13 +424,6 @@ function Arena:rebuildTileDecorations()
     local function occupy(col, row)
         occupied[cellKey(col, row)] = true
     end
-
-    local directions = {
-        { 1, 0 },
-        { -1, 0 },
-        { 0, 1 },
-        { 0, -1 },
-    }
 
     local function makeClusterColor()
         local lighten = rng:random() < 0.45
