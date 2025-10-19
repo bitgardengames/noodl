@@ -19,12 +19,39 @@ local Achievements = {
 
 local DEFAULT_CATEGORY_ORDER = 100
 local DEFAULT_ORDER = 1000
+
+local currentDefinitionsForSort
+
+local function compareAchievementIds(aId, bId)
+        local definitions = currentDefinitionsForSort
+        if not definitions then
+                return tostring(aId) < tostring(bId)
+        end
+
+        local a = definitions[aId]
+        local b = definitions[bId]
+        if not a or not b then
+                return tostring(aId) < tostring(bId)
+        end
+        if a.order == b.order then
+                return (a.titleKey or a.id) < (b.titleKey or b.id)
+        end
+        return (a.order or DEFAULT_ORDER) < (b.order or DEFAULT_ORDER)
+end
+
+local function compareCategoryEntries(a, b)
+        if a.order == b.order then
+                return a.id < b.id
+        end
+        return a.order < b.order
+end
+
 local function copyTable(source)
-	local target = {}
-	if source then
-		for key, value in pairs(source) do
-			target[key] = value
-		end
+        local target = {}
+        if source then
+                for key, value in pairs(source) do
+                        target[key] = value
+                end
 	end
 	return target
 end
@@ -83,42 +110,27 @@ function Achievements:_addDefinition(rawDef)
 	table.insert(self.categories[def.category], def.id)
 end
 
-local function sortAchievements(aId, bId, definitions)
-	local a = definitions[aId]
-	local b = definitions[bId]
-	if a.order == b.order then
-		return (a.titleKey or a.id) < (b.titleKey or b.id)
-	end
-	return (a.order or DEFAULT_ORDER) < (b.order or DEFAULT_ORDER)
-end
-
 function Achievements:_finalizeOrdering()
-	table.sort(self.definitionOrder, function(aId, bId)
-		return sortAchievements(aId, bId, self.definitions)
-	end)
+        currentDefinitionsForSort = self.definitions
+        table.sort(self.definitionOrder, compareAchievementIds)
 
-	local orderedCategories = {}
-	for category, ids in pairs(self.categories) do
-		table.sort(ids, function(aId, bId)
-			return sortAchievements(aId, bId, self.definitions)
-		end)
-		orderedCategories[#orderedCategories + 1] = {
-			id = category,
-			order = (self.definitions[ids[1]] and self.definitions[ids[1]].categoryOrder) or DEFAULT_CATEGORY_ORDER
-		}
-	end
+        local orderedCategories = {}
+        for category, ids in pairs(self.categories) do
+                table.sort(ids, compareAchievementIds)
+                orderedCategories[#orderedCategories + 1] = {
+                        id = category,
+                        order = (self.definitions[ids[1]] and self.definitions[ids[1]].categoryOrder) or DEFAULT_CATEGORY_ORDER
+                }
+        end
 
-	table.sort(orderedCategories, function(a, b)
-		if a.order == b.order then
-			return a.id < b.id
-		end
-		return a.order < b.order
-	end)
+        currentDefinitionsForSort = nil
 
-	self.categoryOrder = {}
-	for _, info in ipairs(orderedCategories) do
-		table.insert(self.categoryOrder, info.id)
-	end
+        table.sort(orderedCategories, compareCategoryEntries)
+
+        self.categoryOrder = {}
+        for _, info in ipairs(orderedCategories) do
+                table.insert(self.categoryOrder, info.id)
+        end
 end
 
 function Achievements:_ensureInitialized()

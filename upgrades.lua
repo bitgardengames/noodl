@@ -528,28 +528,35 @@ local function handleBulwarkChorusFloorStart(_, state)
 end
 
 local mapmakersCompassHazards = {
-	{
-		key = "laserCount",
-		effectKey = "laserSpawnBonus",
-		labelKey = "lasers_text",
-		color = {0.72, 0.9, 1.0, 1},
-		priority = 3,
-	},
-	{
-		key = "saws",
-		effectKey = "sawSpawnBonus",
-		labelKey = "saws_text",
-		color = {1.0, 0.78, 0.42, 1},
-		priority = 2,
-	},
-	{
-		key = "rocks",
-		effectKey = "rockSpawnBonus",
-		labelKey = "rocks_text",
-		color = {0.72, 0.86, 1.0, 1},
-		priority = 1,
-	},
+        {
+                key = "laserCount",
+                effectKey = "laserSpawnBonus",
+                labelKey = "lasers_text",
+                color = {0.72, 0.9, 1.0, 1},
+                priority = 3,
+        },
+        {
+                key = "saws",
+                effectKey = "sawSpawnBonus",
+                labelKey = "saws_text",
+                color = {1.0, 0.78, 0.42, 1},
+                priority = 2,
+        },
+        {
+                key = "rocks",
+                effectKey = "rockSpawnBonus",
+                labelKey = "rocks_text",
+                color = {0.72, 0.86, 1.0, 1},
+                priority = 1,
+        },
 }
+
+local function compareCompassCandidates(a, b)
+        if a.value == b.value then
+                return (a.info.priority or 0) < (b.info.priority or 0)
+        end
+        return (a.value or 0) > (b.value or 0)
+end
 
 local function clearMapmakersCompass(state)
 	if not state then return end
@@ -598,12 +605,7 @@ local function applyMapmakersCompass(state, context, options)
 		table.insert(candidates, { info = entry, value = value })
 	end
 
-	table.sort(candidates, function(a, b)
-		if a.value == b.value then
-			return (a.info.priority or 0) < (b.info.priority or 0)
-		end
-		return (a.value or 0) > (b.value or 0)
-	end)
+        table.sort(candidates, compareCompassCandidates)
 
 	local chosen
 	for _, candidate in ipairs(candidates) do

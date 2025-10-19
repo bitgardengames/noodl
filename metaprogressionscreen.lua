@@ -138,6 +138,22 @@ local cosmeticShowcaseHeight = 0
 local progressionState = nil
 local activeTab = "experience"
 local cosmeticsFocusIndex = nil
+
+local function compareStatsEntries(a, b)
+        if a.label == b.label then
+                return a.id < b.id
+        end
+        return a.label < b.label
+end
+
+local function compareCosmeticShowcaseEntries(a, b)
+        local nameA = a.displayName or ""
+        local nameB = b.displayName or ""
+        if nameA == nameB then
+                return (a.skinName or "") < (b.skinName or "")
+        end
+        return nameA < nameB
+end
 local hoveredCosmeticIndex = nil
 local pressedCosmeticIndex = nil
 
@@ -589,12 +605,7 @@ local function buildStatsEntries()
 		end
 	end
 
-	table.sort(statsEntries, function(a, b)
-		if a.label == b.label then
-			return a.id < b.id
-		end
-		return a.label < b.label
-	end)
+        table.sort(statsEntries, compareStatsEntries)
 
 	local function buildStatsHighlights()
 		statsHighlights = {}
@@ -966,14 +977,7 @@ local function buildCosmeticShaderShowcaseEntries(skins)
 		end
 	end
 
-	table.sort(cosmeticShaderShowcaseEntries, function(a, b)
-		local nameA = a.displayName or ""
-		local nameB = b.displayName or ""
-		if nameA == nameB then
-			return (a.skinName or "") < (b.skinName or "")
-		end
-		return nameA < nameB
-	end)
+        table.sort(cosmeticShaderShowcaseEntries, compareCosmeticShowcaseEntries)
 
 	if #cosmeticShaderShowcaseEntries == 0 then
 		cosmeticShowcaseHeight = 0
