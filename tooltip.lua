@@ -3,10 +3,10 @@ local Theme = require("theme")
 local UI = require("ui")
 
 local Tooltip = {
-	active = false,
-	alpha = 0,
-	delayTimer = 0,
-	currentId = nil,
+        active = false,
+        alpha = 0,
+        delayTimer = 0,
+        currentId = nil,
 	text = "",
 	placement = "cursor",
 	anchorX = 0,
@@ -17,9 +17,15 @@ local Tooltip = {
 	mouseX = 0,
 	mouseY = 0,
 	defaultDelay = 0.18,
-	defaultOffset = 18,
-	defaultMaxWidth = 320,
+        defaultOffset = 18,
+        defaultMaxWidth = 320,
 }
+
+local EMPTY_TABLE = {}
+local DEFAULT_TOOLTIP_PANEL_COLOR = {0.08, 0.08, 0.12, 0.94}
+local DEFAULT_TOOLTIP_BORDER_COLOR = {1, 1, 1, 0.16}
+local DEFAULT_TOOLTIP_SHADOW_COLOR = {0, 0, 0, 0.4}
+local DEFAULT_TOOLTIP_TEXT_COLOR = {1, 1, 1, 1}
 
 local function hasContent(text)
 	return type(text) == "string" and text:match("%S") ~= nil
@@ -143,7 +149,7 @@ function Tooltip:draw()
 	end
 
 	local sw, sh = Screen:get()
-	local fonts = UI.fonts or {}
+        local fonts = UI.fonts or EMPTY_TABLE
 	local font = fonts.caption or fonts.small or fonts.body
 	if not font then
 		return
@@ -157,7 +163,7 @@ function Tooltip:draw()
 	local lineHeight = font:getHeight()
 	local textHeight = lineCount * lineHeight
 
-	local spacing = UI.spacing or {}
+        local spacing = UI.spacing or EMPTY_TABLE
 	local paddingX = (spacing.panelPadding or 20) * 0.6
 	local paddingY = paddingX * 0.75
 	local measuredWidth = 0
@@ -227,11 +233,11 @@ function Tooltip:draw()
 		y = sh - margin - boxHeight
 	end
 
-	local colors = UI.colors or {}
-	local panelColor = Theme.tooltipBackground or colors.panel or Theme.panelColor or {0.08, 0.08, 0.12, 0.94}
-	local borderColor = Theme.tooltipBorder or colors.border or Theme.panelBorder or {1, 1, 1, 0.16}
-	local shadowColor = Theme.tooltipShadow or colors.shadow or Theme.shadowColor or {0, 0, 0, 0.4}
-	local textColor = Theme.tooltipText or colors.text or Theme.textColor or {1, 1, 1, 1}
+        local colors = UI.colors or EMPTY_TABLE
+        local panelColor = Theme.tooltipBackground or colors.panel or Theme.panelColor or DEFAULT_TOOLTIP_PANEL_COLOR
+        local borderColor = Theme.tooltipBorder or colors.border or Theme.panelBorder or DEFAULT_TOOLTIP_BORDER_COLOR
+        local shadowColor = Theme.tooltipShadow or colors.shadow or Theme.shadowColor or DEFAULT_TOOLTIP_SHADOW_COLOR
+        local textColor = Theme.tooltipText or colors.text or Theme.textColor or DEFAULT_TOOLTIP_TEXT_COLOR
 	local radius = spacing.panelRadius or 12
 
 	love.graphics.setColor(shadowColor[1] or 0, shadowColor[2] or 0, shadowColor[3] or 0, (shadowColor[4] or 1) * alpha * 0.7)
