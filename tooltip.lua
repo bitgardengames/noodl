@@ -31,15 +31,17 @@ local function hasContent(text)
 	return type(text) == "string" and text:match("%S") ~= nil
 end
 
-local function applyDelay(self, options, changed)
-	local delay = options and options.delay
-	if delay == nil then
-		delay = self.defaultDelay or 0
-	end
+local function applyDelay(self, options, changed, suppress)
+        local delay = options and options.delay
+        if delay == nil then
+                delay = self.defaultDelay or 0
+        end
 
-	if changed then
-		self.delayTimer = -(delay or 0)
-	end
+        if changed and not suppress then
+                self.delayTimer = -(delay or 0)
+        elseif suppress and self.delayTimer < 0 then
+                self.delayTimer = 0
+        end
 end
 
 function Tooltip:update(dt, mx, my)
@@ -72,13 +74,14 @@ function Tooltip:update(dt, mx, my)
 end
 
 function Tooltip:show(text, options)
-	options = options or {}
+        options = options or {}
 
-	local id = options.id or text
-	local placement = options.placement or "cursor"
-	local x = options.x or self.anchorX
-	local y = options.y or self.anchorY
-	local maxWidth = options.maxWidth or self.defaultMaxWidth or self.maxWidth
+        local wasVisible = self:isVisible()
+        local id = options.id or text
+        local placement = options.placement or "cursor"
+        local x = options.x or self.anchorX
+        local y = options.y or self.anchorY
+        local maxWidth = options.maxWidth or self.defaultMaxWidth or self.maxWidth
 	local offset = options.offset or self.defaultOffset or self.offset
 
 	local changed = (self.currentId ~= id)
@@ -89,7 +92,7 @@ function Tooltip:show(text, options)
 	or (self.maxWidth ~= maxWidth)
 	or (self.offset ~= offset)
 
-	applyDelay(self, options, changed)
+        applyDelay(self, options, changed, wasVisible)
 
 	self.text = text or ""
 	self.currentId = id
