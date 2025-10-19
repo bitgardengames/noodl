@@ -92,39 +92,60 @@ local function resolveDefaults(overrides)
 	return defaults
 end
 
-local function cloneColor(defaults, color)
+local function applyColor(target, defaults, color)
 	local base = color or defaults.color or DEFAULTS.color
+	local fallback = defaults.color or DEFAULTS.color
+	local destination = target or {}
 
-	return {
-		base[1] or defaults.color[1],
-		base[2] or defaults.color[2],
-		base[3] or defaults.color[3],
-		base[4] == nil and ((defaults.color and defaults.color[4]) or 1) or base[4],
-	}
+	destination[1] = base[1] or fallback[1]
+	destination[2] = base[2] or fallback[2]
+	destination[3] = base[3] or fallback[3]
+
+	local baseAlpha = base[4]
+	if baseAlpha == nil then
+		local fallbackAlpha = fallback[4]
+		if fallbackAlpha == nil then
+			fallbackAlpha = 1
+		end
+		destination[4] = fallbackAlpha
+	else
+		destination[4] = baseAlpha
+	end
+
+	return destination
 end
 
-local function buildShadow(defaults, shadow)
+local function buildShadow(defaults, shadow, target)
 	local defaultsShadow = defaults.shadow or DEFAULTS.shadow
 	if defaultsShadow == nil then
 		return nil
 	end
 
-	if shadow == nil then
-		return {
-			offsetX = defaultsShadow.offsetX,
-			offsetY = defaultsShadow.offsetY,
-			alpha = defaultsShadow.alpha,
-		}
+	if shadow == false then
+		return nil
 	end
 
-	return {
-		offsetX = shadow.offsetX or defaultsShadow.offsetX,
-		offsetY = shadow.offsetY or defaultsShadow.offsetY,
-		alpha = shadow.alpha == nil and defaultsShadow.alpha or shadow.alpha,
-	}
+	if shadow == nil then
+		local destination = target or {}
+		destination.offsetX = defaultsShadow.offsetX
+		destination.offsetY = defaultsShadow.offsetY
+		destination.alpha = defaultsShadow.alpha
+		return destination
+	end
+
+	local destination = target or {}
+	destination.offsetX = shadow.offsetX or defaultsShadow.offsetX
+	destination.offsetY = shadow.offsetY or defaultsShadow.offsetY
+	if shadow.alpha == nil then
+		destination.alpha = defaultsShadow.alpha
+	else
+		destination.alpha = shadow.alpha
+	end
+
+	return destination
 end
 
-local function buildGlow(defaults, glow)
+local function buildGlow(defaults, glow, colorTarget)
 	local defaultsGlow = defaults.glow or DEFAULTS.glow
 	if defaultsGlow == nil or defaultsGlow == false then
 		return nil
@@ -135,30 +156,28 @@ local function buildGlow(defaults, glow)
 	end
 
 	if glow == nil then
-		return {
-			color = {
-				defaultsGlow.color[1],
-				defaultsGlow.color[2],
-				defaultsGlow.color[3],
-				defaultsGlow.color[4] or 1,
-			},
-			frequency = defaultsGlow.frequency,
-			magnitude = defaultsGlow.magnitude,
-		}
+		local destination = colorTarget or {}
+		local color = defaultsGlow.color
+		destination[1] = color[1]
+		destination[2] = color[2]
+		destination[3] = color[3]
+		destination[4] = color[4] or 1
+		return destination, defaultsGlow.frequency, defaultsGlow.magnitude
 	end
 
 	local sourceColor = glow.color or defaultsGlow.color
 
-	return {
-		color = {
-			sourceColor[1] or defaultsGlow.color[1],
-			sourceColor[2] or defaultsGlow.color[2],
-			sourceColor[3] or defaultsGlow.color[3],
-			sourceColor[4] == nil and (defaultsGlow.color[4] or 1) or sourceColor[4],
-		},
-		frequency = glow.frequency or defaultsGlow.frequency,
-		magnitude = glow.magnitude or defaultsGlow.magnitude,
-	}
+	local destination = colorTarget or {}
+	destination[1] = sourceColor[1] or defaultsGlow.color[1]
+	destination[2] = sourceColor[2] or defaultsGlow.color[2]
+	destination[3] = sourceColor[3] or defaultsGlow.color[3]
+	if sourceColor[4] == nil then
+		destination[4] = defaultsGlow.color[4] or 1
+	else
+		destination[4] = sourceColor[4]
+	end
+
+	return destination, glow.frequency or defaultsGlow.frequency, glow.magnitude or defaultsGlow.magnitude
 end
 
 local function resolveFade(duration, fadeStart)
@@ -223,7 +242,17 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 	local fontWidth = font:getWidth(text)
 	local fontHeight = font:getHeight()
 	local entryDuration = (duration ~= nil and duration > 0) and duration or defaults.duration or DEFAULTS.duration
-	local entryColor = cloneColor(defaults, color)
+	local entryPool = self.entryPool
+	local entryIndex = #entryPool
+	local entry
+	if entryIndex > 0 then
+		entry = entryPool[entryIndex]
+		entryPool[entryIndex] = nil
+	else
+		entry = {}
+	end
+
+	entry.color = applyColor(entry.color, defaults, color)
 	local baseScale = options.scale or defaults.scale or DEFAULTS.scale
 
 	local popDefaults = defaults.pop or DEFAULTS.pop
@@ -239,37 +268,37 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 	local rise = resolveRiseDistance(defaults, entryDuration, riseSpeed, options)
 	local rotationAmplitude = options.rotationAmplitude or defaults.rotation or DEFAULTS.rotation
 	local rotationDirection = (random() < 0.5) and -1 or 1
-	local glow = buildGlow(defaults, options.glow)
+	local glowColor, glowFrequency, glowMagnitude = buildGlow(defaults, options.glow, entry.glowColor)
+	entry.glowColor = glowColor
+	if glowColor then
+		entry.glowFrequency = glowFrequency or 0
+		entry.glowMagnitude = glowMagnitude or 0
+		entry.hasGlow = (entry.glowMagnitude or 0) > 0
+	else
+		entry.glowFrequency = 0
+		entry.glowMagnitude = 0
+		entry.hasGlow = false
+	end
 	local jitter = options.jitter
 	if jitter == nil then
 		jitter = defaults.jitter or DEFAULTS.jitter
 	end
 
 	local fadeStartTime, fadeDuration = resolveFade(entryDuration, fadeStart)
-	local glowColor, glowFrequency, glowMagnitude, hasGlow
-	if glow then
-		glowColor = glow.color
-		glowFrequency = glow.frequency
-		glowMagnitude = glow.magnitude
-		hasGlow = glowMagnitude and glowMagnitude > 0
-	end
 
-	local shadow = buildShadow(defaults, options.shadow) or fallbackShadow
-
-	local entryPool = self.entryPool
-	local entryIndex = #entryPool
-	local entry
-	if entryIndex > 0 then
-		entry = entryPool[entryIndex]
-		entryPool[entryIndex] = nil
+	local shadowBuffer = entry._shadow
+	local resolvedShadow = buildShadow(defaults, options.shadow, shadowBuffer)
+	if resolvedShadow then
+		entry.shadow = resolvedShadow
+		entry._shadow = resolvedShadow
 	else
-		entry = {}
+		entry.shadow = fallbackShadow
+		entry._shadow = entry._shadow or {}
 	end
 
 	entry.text = text
 	entry.x = x
 	entry.y = y
-	entry.color = entryColor
 	entry.font = font
 	entry.duration = entryDuration
 	entry.timer = 0
@@ -285,11 +314,6 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 	entry.drift = drift
 	entry.rotationAmplitude = rotationAmplitude
 	entry.rotationDirection = rotationDirection
-	entry.shadow = shadow
-	entry.glowColor = glowColor
-	entry.glowFrequency = glowFrequency or 0
-	entry.glowMagnitude = glowMagnitude or 0
-	entry.hasGlow = hasGlow
 	entry.glowPhase = random() * pi * 2
 	entry.glowAlpha = 0
 	entry.jitter = jitter or 0
@@ -375,9 +399,16 @@ end
 
 function FloatingText:draw()
 	local entries = self.entries
+	local defaultBlendMode, defaultAlphaMode = lg.getBlendMode()
+	local activeGlowBlend = false
+	local currentFont = nil
+
 	for index = 1, #entries do
 		local entry = entries[index]
-		lg.setFont(entry.font)
+		if entry.font ~= currentFont then
+			lg.setFont(entry.font)
+			currentFont = entry.font
+		end
 
 		local alpha = entry.color[4] or 1
 		if entry.duration > 0 and entry.fadeStartTime then
@@ -404,11 +435,14 @@ function FloatingText:draw()
 		lg.print(entry.text, -entry.ox, -entry.oy)
 
 		if entry.glowAlpha and entry.glowAlpha > 0 and entry.glowColor then
-			local previousMode, previousAlphaMode = lg.getBlendMode()
-			lg.setBlendMode("add", "alphamultiply")
+			if not activeGlowBlend then
+				lg.setBlendMode("add", "alphamultiply")
+				activeGlowBlend = true
+			end
 			lg.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], alpha * entry.glowAlpha)
 			lg.print(entry.text, -entry.ox, -entry.oy)
-			lg.setBlendMode(previousMode, previousAlphaMode)
+			lg.setBlendMode(defaultBlendMode, defaultAlphaMode)
+			activeGlowBlend = false
 		end
 
 		lg.pop()
