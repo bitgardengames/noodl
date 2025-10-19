@@ -922,11 +922,11 @@ registerEffect({
 		float vignette = smoothstep(0.38, 0.92, length(centered));
 		col = mix(col, col * 0.55, vignette * vignetteIntensity);
 
-                float bandCenter = 0.5;
-                float bandWidth = 0.12;
-                float titleOffset = (uv.y - bandCenter) / bandWidth;
-                float titleSpot = exp(-(titleOffset * titleOffset) * 2.35);
-                float titleHighlight = pow(titleSpot, 1.4);
+		vec2 titleCenter = vec2(0.5, 0.22);
+		vec2 titleRadius = vec2(0.38, 0.17);
+		vec2 titleOffset = (uv - titleCenter) / titleRadius;
+		float titleSpot = exp(-dot(titleOffset, titleOffset) * 2.35);
+		float titleHighlight = pow(titleSpot, 1.4);
 
 		vec3 spotlight = mix(col, accentColor.rgb, 0.55);
 		col = mix(col, spotlight, clamp(titleHighlight * (0.65 + intensity * 0.35), 0.0, 1.0));
