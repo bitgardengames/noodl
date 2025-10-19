@@ -11,6 +11,7 @@ local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local PlayerStats = require("playerstats")
 local SawActor = require("sawactor")
+local Tooltip = require("tooltip")
 
 local Menu = {
 	transitionDuration = 0.45,
@@ -78,6 +79,24 @@ local function getDayUnit(count)
 	end
 
 	return Localization:get("common.day_unit_plural")
+end
+
+local function formatResetCountdown(seconds)
+	if not seconds then
+		return nil
+	end
+
+	seconds = math.max(0, math.floor(seconds))
+
+	local hours = math.floor(seconds / 3600)
+	local minutes = math.floor((seconds % 3600) / 60)
+	local secs = seconds % 60
+
+	if hours > 0 then
+		return string.format("%d:%02d:%02d", hours, minutes, secs)
+	end
+
+	return string.format("%d:%02d", minutes, secs)
 end
 
 local analogAxisActions = {
@@ -296,6 +315,7 @@ function Menu:update(dt)
 
 	local mx, my = love.mouse.getPosition()
 	buttonList:updateHover(mx, my)
+	Tooltip:update(dt, mx, my)
 
 	if dailyChallenge then
 		dailyChallengeAnim = math.min(dailyChallengeAnim + dt * 2, 1)
@@ -435,6 +455,29 @@ function Menu:draw()
 			if progressText then
 				statusBarHeight = statusBarHeight + progressFont:getHeight() + 6
 			end
+		end
+		local mx, my = love.mouse.getPosition()
+		local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
+		if hovered then
+			local timeRemaining = DailyChallenges:getTimeUntilReset()
+			local tooltipText
+			if timeRemaining and timeRemaining > 0 then
+				local countdown = formatResetCountdown(timeRemaining)
+				tooltipText = Localization:get("menu.daily_panel_reset_tooltip", { time = countdown })
+			else
+				tooltipText = Localization:get("menu.daily_panel_reset_tooltip_soon")
+			end
+			Tooltip:show(tooltipText, {
+				id = "dailyChallengeReset",
+				x = panelX + panelWidth / 2,
+				y = panelY,
+				placement = "above",
+				maxWidth = panelWidth,
+				offset = 14,
+				delay = 0.12,
+			})
+		else
+			Tooltip:hide("dailyChallengeReset")
 		end
 
                 if dailyChallenge.xpReward and dailyChallenge.xpReward > 0 then
@@ -584,7 +627,11 @@ function Menu:draw()
 
 			textY = textY + barHeight
 		end
+	else
+		Tooltip:hide("dailyChallengeReset")
 	end
+
+	Tooltip:draw()
 end
 
 function Menu:mousepressed(x, y, button)

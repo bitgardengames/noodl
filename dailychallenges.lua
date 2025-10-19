@@ -201,6 +201,68 @@ local function resolveDate(self, override)
 	return provider()
 end
 
+
+local function buildTimeTable(date, overrides)
+	if not date then
+		return nil
+	end
+
+	local value = {
+		year = date.year,
+		month = date.month,
+		day = date.day,
+		hour = date.hour,
+		min = date.min,
+		sec = date.sec,
+		isdst = date.isdst,
+	}
+
+	if overrides then
+		for k, v in pairs(overrides) do
+			value[k] = v
+		end
+	end
+
+	return value
+end
+
+local function secondsUntilNextMidnight(date)
+	if not date then
+		return nil
+	end
+
+	if not date.year or not date.month or not date.day then
+		return nil
+	end
+
+	local base = buildTimeTable(date)
+	if not base or base.hour == nil or base.min == nil or base.sec == nil then
+		return nil
+	end
+
+	local nowTimestamp = os.time(base)
+	if not nowTimestamp then
+		return nil
+	end
+
+	local midnightTable = buildTimeTable(date, { hour = 0, min = 0, sec = 0 })
+	local midnightTimestamp = midnightTable and os.time(midnightTable)
+	if not midnightTimestamp then
+		return nil
+	end
+
+	if nowTimestamp >= midnightTimestamp then
+		midnightTimestamp = midnightTimestamp + 24 * 60 * 60
+	end
+
+	local remaining = midnightTimestamp - nowTimestamp
+	if remaining < 0 then
+		remaining = 0
+	end
+
+	return remaining
+end
+
 local function buildStorageKey(self, challenge, date, suffix)
 	if not challenge or not challenge.id then
 		return nil
@@ -1197,9 +1259,15 @@ function DailyChallenges:getDailyChallenge(date, context)
 		return nil
 	end
 
+
 	context = context or {}
 	context.date = context.date or resolveDate(self, date)
 	return self:getChallengeForIndex(index, context)
+end
+
+function DailyChallenges:getTimeUntilReset(date)
+	local resolved = resolveDate(self, date)
+	return secondsUntilNextMidnight(resolved)
 end
 
 local function getDayValue(date)
