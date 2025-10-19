@@ -6,15 +6,15 @@ local Achievements = require("achievements")
 local GameInput = {}
 GameInput.__index = GameInput
 
-local directionButtonMap = { dpleft = "left", dpright = "right", dpup = "up", dpdown = "down" }
+local directionButtonMap = {dpleft = "left", dpright = "right", dpup = "up", dpdown = "down"}
 local ANALOG_DEADZONE = 0.5
 local axisButtonMap = {
-	leftx = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
-	rightx = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
-	lefty = { slot = "vertical", negative = "dpup", positive = "dpdown" },
-	righty = { slot = "vertical", negative = "dpup", positive = "dpdown" },
-	[1] = { slot = "horizontal", negative = "dpleft", positive = "dpright" },
-	[2] = { slot = "vertical", negative = "dpup", positive = "dpdown" },
+	leftx = {slot = "horizontal", negative = "dpleft", positive = "dpright"},
+	rightx = {slot = "horizontal", negative = "dpleft", positive = "dpright"},
+	lefty = {slot = "vertical", negative = "dpup", positive = "dpdown"},
+	righty = {slot = "vertical", negative = "dpup", positive = "dpdown"},
+	[1] = {slot = "horizontal", negative = "dpleft", positive = "dpright"},
+	[2] = {slot = "vertical", negative = "dpup", positive = "dpdown"},
 }
 
 local buttonAliases = {
@@ -52,7 +52,7 @@ function GameInput.new(game, transition)
 	return setmetatable({
 		game = game,
 		transition = transition,
-		axisState = { horizontal = nil, vertical = nil },
+		axisState = {horizontal = nil, vertical = nil},
 	}, GameInput)
 end
 

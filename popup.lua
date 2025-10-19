@@ -156,7 +156,7 @@ function Popup:draw()
 	UI.drawPanel(-boxWidth / 2, 0, boxWidth, boxHeight, {
 		radius = UI.spacing and UI.spacing.panelRadius or 16,
 		shadowOffset = (UI.spacing and UI.spacing.shadowOffset or 6) * 0.6,
-		fill = { panelColor[1] or 1, panelColor[2] or 1, panelColor[3] or 1, (panelColor[4] or 1) * self.alpha },
+		fill = {panelColor[1] or 1, panelColor[2] or 1, panelColor[3] or 1, (panelColor[4] or 1) * self.alpha},
 		borderColor = Theme.panelBorder,
 	})
 

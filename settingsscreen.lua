@@ -23,26 +23,26 @@ local function applyDisplaySettings()
 end
 
 local options = {
-	{ type = "header", labelKey = "settings.section_display" },
-	{ type = "cycle", labelKey = "settings.display_mode", setting = "displayMode" },
-	{ type = "cycle", labelKey = "settings.windowed_resolution", setting = "resolution" },
-	{ type = "toggle", labelKey = "settings.toggle_vsync", toggle = "vsync", onChanged = applyDisplaySettings },
+	{type = "header", labelKey = "settings.section_display"},
+	{type = "cycle", labelKey = "settings.display_mode", setting = "displayMode"},
+	{type = "cycle", labelKey = "settings.windowed_resolution", setting = "resolution"},
+	{type = "toggle", labelKey = "settings.toggle_vsync", toggle = "vsync", onChanged = applyDisplaySettings},
 
-	{ type = "header", labelKey = "settings.section_audio" },
-	{ type = "toggle", labelKey = "settings.toggle_music", toggle = "muteMusic", onChanged = applyAudioVolumes, invertStateLabel = true },
-	{ type = "toggle", labelKey = "settings.toggle_sfx", toggle = "muteSFX", onChanged = applyAudioVolumes, invertStateLabel = true },
-	{ type = "slider", labelKey = "settings.music_volume", slider = "musicVolume", onChanged = applyAudioVolumes },
-	{ type = "slider", labelKey = "settings.sfx_volume", slider = "sfxVolume", onChanged = applyAudioVolumes },
+	{type = "header", labelKey = "settings.section_audio"},
+	{type = "toggle", labelKey = "settings.toggle_music", toggle = "muteMusic", onChanged = applyAudioVolumes, invertStateLabel = true},
+	{type = "toggle", labelKey = "settings.toggle_sfx", toggle = "muteSFX", onChanged = applyAudioVolumes, invertStateLabel = true},
+	{type = "slider", labelKey = "settings.music_volume", slider = "musicVolume", onChanged = applyAudioVolumes},
+	{type = "slider", labelKey = "settings.sfx_volume", slider = "sfxVolume", onChanged = applyAudioVolumes},
 
-	{ type = "header", labelKey = "settings.section_gameplay" },
-	{ type = "toggle", labelKey = "settings.toggle_screen_shake", toggle = "screenShake" },
-	{ type = "toggle", labelKey = "settings.toggle_blood", toggle = "bloodEnabled" },
+	{type = "header", labelKey = "settings.section_gameplay"},
+	{type = "toggle", labelKey = "settings.toggle_screen_shake", toggle = "screenShake"},
+	{type = "toggle", labelKey = "settings.toggle_blood", toggle = "bloodEnabled"},
 
-	{ type = "header", labelKey = "settings.section_interface" },
-	{ type = "toggle", labelKey = "settings.toggle_fps_counter", toggle = "showFPS" },
-	{ type = "cycle", labelKey = "settings.language", setting = "language" },
+	{type = "header", labelKey = "settings.section_interface"},
+	{type = "toggle", labelKey = "settings.toggle_fps_counter", toggle = "showFPS"},
+	{type = "cycle", labelKey = "settings.language", setting = "language"},
 
-	{ type = "action", labelKey = "settings.back", action = "menu" }
+	{type = "action", labelKey = "settings.back", action = "menu"}
 }
 
 local buttons = {}
@@ -56,9 +56,9 @@ local minScrollOffset = 0
 local viewportHeight = 0
 local contentHeight = 0
 local layout = {
-	panel = { x = 0, y = 0, w = 0, h = 0 },
-	title = { y = 0, height = 0 },
-	margins = { top = 0, bottom = 0 },
+	panel = {x = 0, y = 0, w = 0, h = 0},
+	title = {y = 0, height = 0},
+	margins = {top = 0, bottom = 0},
 }
 
 local function isButtonFocusable(btn)
@@ -289,7 +289,7 @@ local function drawBackground(sw, sh)
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local analogAxisActions = {
 	horizontal = {
@@ -311,12 +311,12 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-	leftx = { slot = "horizontal" },
-	rightx = { slot = "horizontal" },
-	lefty = { slot = "vertical" },
-	righty = { slot = "vertical" },
-	[1] = { slot = "horizontal" },
-	[2] = { slot = "vertical" },
+	leftx = {slot = "horizontal"},
+	rightx = {slot = "horizontal"},
+	lefty = {slot = "vertical"},
+	righty = {slot = "vertical"},
+	[1] = {slot = "horizontal"},
+	[2] = {slot = "vertical"},
 }
 
 local function resetAnalogAxis()
@@ -442,7 +442,7 @@ function SettingsScreen:enter()
 		end
 	end
 
-	layout.panel = { x = panelX, y = panelY, w = panelWidth, h = panelHeight }
+	layout.panel = {x = panelX, y = panelY, w = panelWidth, h = panelHeight}
 	layout.title = {
 		height = titleHeight,
 		y = math.max(UI.spacing.sectionSpacing, panelY - UI.spacing.sectionSpacing - titleHeight * 0.25),
@@ -601,7 +601,7 @@ function SettingsScreen:draw()
 	local titleText = Localization:get("settings.title")
 	local titleLayout = layout.title or {}
 	local titleY = titleLayout.y or math.max(UI.spacing.sectionSpacing, panel.y - UI.spacing.sectionSpacing - (titleLayout.height or 0) * 0.25)
-	UI.drawLabel(titleText, 0, titleY, sw, "center", { fontKey = "title" })
+	UI.drawLabel(titleText, 0, titleY, sw, "center", {fontKey = "title"})
 
 	self:updateButtonPositions()
 

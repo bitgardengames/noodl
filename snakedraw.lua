@@ -597,7 +597,7 @@ local function presentSnakeCanvas(overlayEffect, width, height)
 	local drewOverlay = false
 	if overlayEffect then
 		local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
-		local previousCanvas = { love.graphics.getCanvas() }
+		local previousCanvas = {love.graphics.getCanvas()}
 		love.graphics.setCanvas(overlayCanvas)
 		love.graphics.clear(0, 0, 0, 0)
 		love.graphics.setColor(1, 1, 1, 1)
@@ -1066,7 +1066,7 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
 	love.graphics.push("all")
 	love.graphics.translate(hx, hy + mouthDrop)
 
-	for _, side in ipairs({ -1, 1 }) do
+	for _, side in ipairs({-1, 1}) do
 		local baseX = side * spacing
 		local topLeftX = baseX - fangWidth * 0.5
 		local topRightX = baseX + fangWidth * 0.5
@@ -1423,7 +1423,7 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 			end
 			local perpX, perpY = -dirY, dirX
 
-			local bolt = { x1, y1 }
+			local bolt = {x1, y1}
 			local segments = 3
 			for segIdx = 1, segments do
 				local t = segIdx / (segments + 1)

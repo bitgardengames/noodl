@@ -22,7 +22,7 @@ local backgroundEffectCache = {}
 local backgroundEffect = nil
 
 local ANALOG_DEADZONE = 0.35
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local layout = {
 	startX = 0,
@@ -96,12 +96,12 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-	leftx = { slot = "horizontal" },
-	rightx = { slot = "horizontal" },
-	lefty = { slot = "vertical" },
-	righty = { slot = "vertical" },
-	[1] = { slot = "horizontal" },
-	[2] = { slot = "vertical" },
+	leftx = {slot = "horizontal"},
+	rightx = {slot = "horizontal"},
+	lefty = {slot = "vertical"},
+	righty = {slot = "vertical"},
+	[1] = {slot = "horizontal"},
+	[2] = {slot = "vertical"},
 }
 
 local function handleAnalogAxis(axis, value)
@@ -183,7 +183,7 @@ local function buildButtons(sw, sh)
 			h = buttonHeight,
 			action = {
 				state = "game",
-				data = { startFloor = floor },
+				data = {startFloor = floor},
 			},
 			floor = floor,
 			labelKey = "floor_select.button_label",
@@ -263,21 +263,21 @@ end
 local function drawHeading(sw, sh)
 	local title = Localization:get("floor_select.title")
 	local subtitle = Localization:get("floor_select.subtitle")
-	local highestText = Localization:get("floor_select.highest_label", { floor = highestUnlocked })
+	local highestText = Localization:get("floor_select.highest_label", {floor = highestUnlocked})
 
-	UI.drawLabel(title, 0, math.floor(sh * 0.08), sw, "center", { fontKey = "title" })
+	UI.drawLabel(title, 0, math.floor(sh * 0.08), sw, "center", {fontKey = "title"})
 
 	local subtitleFont = UI.fonts.body
 	local subtitleHeight = subtitleFont and subtitleFont:getHeight() or 28
 	local subtitleY = math.floor(sh * 0.08) + (UI.fonts.title and UI.fonts.title:getHeight() or 64) + 10
-	UI.drawLabel(subtitle, sw * 0.15, subtitleY, sw * 0.7, "center", { fontKey = "body", color = UI.colors.subtleText })
+	UI.drawLabel(subtitle, sw * 0.15, subtitleY, sw * 0.7, "center", {fontKey = "body", color = UI.colors.subtleText})
 
 	local highestY = subtitleY + subtitleHeight + 8
-	UI.drawLabel(highestText, sw * 0.2, highestY, sw * 0.6, "center", { fontKey = "body", color = UI.colors.text })
+	UI.drawLabel(highestText, sw * 0.2, highestY, sw * 0.6, "center", {fontKey = "body", color = UI.colors.text})
 
 	local instruction = Localization:get("floor_select.instruction")
 	local instructionY = layout.startY - layout.sectionSpacing * 1.5
-	UI.drawLabel(instruction, sw * 0.15, instructionY, sw * 0.7, "center", { fontKey = "body", color = UI.colors.subtleText })
+	UI.drawLabel(instruction, sw * 0.15, instructionY, sw * 0.7, "center", {fontKey = "body", color = UI.colors.subtleText})
 end
 
 local function drawButtons()
@@ -314,7 +314,7 @@ local function drawDescription(sw)
 
 	local minY = layout.startY + layout.gridHeight + sectionSpacing
 	local y = math.max(minY, baseY - descHeight)
-	UI.drawLabel(description, padding, y, width, "center", { fontKey = "body", color = UI.colors.subtleText })
+	UI.drawLabel(description, padding, y, width, "center", {fontKey = "body", color = UI.colors.subtleText})
 end
 
 function FloorSelect:draw()

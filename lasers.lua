@@ -52,7 +52,7 @@ local function copyColor(color, alpha)
 		a = color[4] or a
 	end
 
-	return { r, g, b, a }
+	return {r, g, b, a}
 end
 
 local function getFirePalette(color)

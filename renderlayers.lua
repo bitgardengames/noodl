@@ -25,7 +25,7 @@ do
 	end
 
 	if desiredMSAASamples >= 2 then
-		canvasCreationOptions = { msaa = desiredMSAASamples }
+		canvasCreationOptions = {msaa = desiredMSAASamples}
 	end
 end
 
@@ -88,7 +88,7 @@ function RenderLayers:begin(width, height)
 	for _, name in ipairs(LAYERS) do
 		local canvas = ensureCanvas(name, canvasWidth, canvasHeight)
 		love.graphics.push("all")
-		love.graphics.setCanvas({ canvas, stencil = true })
+		love.graphics.setCanvas({canvas, stencil = true})
 		love.graphics.clear(0, 0, 0, 0)
 		love.graphics.pop()
 	end
@@ -101,7 +101,7 @@ function RenderLayers:push(layerName)
 	end
 
 	love.graphics.push("all")
-	love.graphics.setCanvas({ canvas, stencil = true })
+	love.graphics.setCanvas({canvas, stencil = true})
 end
 
 function RenderLayers:pop()

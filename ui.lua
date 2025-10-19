@@ -47,19 +47,19 @@ local MIN_LAYOUT_SCALE = 0.6
 local MAX_LAYOUT_SCALE = 1.5
 
 local fontDefinitions = {
-	title = { path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 72, min = 28 },
-	display = { path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 64, min = 24 },
-	subtitle = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 32, min = 18 },
-	heading = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 28, min = 16 },
-	button = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 24, min = 14 },
-	body = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 16, min = 12 },
-	prompt = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12 },
-	caption = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 14, min = 10 },
-	small = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 12, min = 9 },
-	timer = { path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 42, min = 24 },
-	timerSmall = { path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 20, min = 12 },
-	achieve = { path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 18, min = 12 },
-	badge = { path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12 },
+	title = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 72, min = 28},
+	display = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 64, min = 24},
+	subtitle = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 32, min = 18},
+	heading = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 28, min = 16},
+	button = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 24, min = 14},
+	body = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 16, min = 12},
+	prompt = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12},
+	caption = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 14, min = 10},
+	small = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 12, min = 9},
+	timer = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 42, min = 24},
+	timerSmall = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 20, min = 12},
+	achieve = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 18, min = 12},
+	badge = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12},
 }
 
 local baseSpacing = {
@@ -677,7 +677,7 @@ end
 
 function UI:addFruit(fruitType)
 	self.fruitCollected = math.min(self.fruitCollected + 1, self.fruitRequired)
-	local fruit = fruitType or { name = "Apple", color = { 1, 0, 0 } }
+	local fruit = fruitType or {name = "Apple", color = {1, 0, 0}}
 	table.insert(self.fruitSockets, {
 		type = fruit,
 		anim = 0,

@@ -310,10 +310,10 @@ function Arena:setFloorDecorations(floorNum, floorData)
 end
 
 local directions = {
-	{ 1, 0 },
-	{ -1, 0 },
-	{ 0, 1 },
-	{ 0, -1 },
+	{1, 0},
+	{-1, 0},
+	{0, 1},
+	{0, -1},
 }
 
 function Arena:rebuildTileDecorations()
@@ -486,7 +486,7 @@ function Arena:rebuildTileDecorations()
 				else
 					local clusterColor = makeClusterColor()
 					local clusterSize = rng:random(minClusterSize, maxClusterSize)
-					local clusterCells = { {col = col, row = row} }
+					local clusterCells = {{col = col, row = row}}
 					occupy(col, row)
 
 					local attempts = 0
@@ -501,7 +501,7 @@ function Arena:rebuildTileDecorations()
 						if nextCol >= 1 and nextCol <= cols and nextRow >= 1 and nextRow <= rows then
 							if not isOccupied(nextCol, nextRow) and not (safeZone and isTileInSafeZone(safeZone, nextCol, nextRow)) then
 								occupy(nextCol, nextRow)
-								clusterCells[#clusterCells + 1] = { col = nextCol, row = nextRow }
+								clusterCells[#clusterCells + 1] = {col = nextCol, row = nextRow}
 							end
 						end
 					end
@@ -642,7 +642,7 @@ function Arena:_updateArenaOverlayBounds(ax, ay, aw, ah)
 		self._arenaNoiseQuad = love.graphics.newQuad(offsetX, offsetY, aw, ah, textureW, textureH)
 	end
 
-	self._arenaOverlayBounds = { x = ax, y = ay, w = aw, h = ah }
+	self._arenaOverlayBounds = {x = ax, y = ay, w = aw, h = ah}
 end
 
 function Arena:_drawArenaInlay()
@@ -811,7 +811,7 @@ function Arena:drawBorder()
 		self.borderCanvas = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight(), {msaa = 8})
 	end
 
-	local previousCanvas = { love.graphics.getCanvas() }
+	local previousCanvas = {love.graphics.getCanvas()}
 	love.graphics.setCanvas(self.borderCanvas)
 	love.graphics.clear(0,0,0,0)
 

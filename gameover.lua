@@ -10,7 +10,7 @@ local MetaProgression = require("metaprogression")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 
-local GameOver = { isVictory = false }
+local GameOver = {isVictory = false}
 
 local unpack = unpack
 
@@ -36,7 +36,7 @@ local fontProgressValue
 local fontProgressSmall
 local stats = {}
 local buttonList = ButtonList.new()
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local analogAxisActions = {
 	horizontal = {
@@ -58,12 +58,12 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-	leftx = { slot = "horizontal" },
-	rightx = { slot = "horizontal" },
-	lefty = { slot = "vertical" },
-	righty = { slot = "vertical" },
-	[1] = { slot = "horizontal" },
-	[2] = { slot = "vertical" },
+	leftx = {slot = "horizontal"},
+	rightx = {slot = "horizontal"},
+	lefty = {slot = "vertical"},
+	righty = {slot = "vertical"},
+	[1] = {slot = "horizontal"},
+	[2] = {slot = "vertical"},
 }
 
 local function resetAnalogAxis()
@@ -225,7 +225,7 @@ local backgroundEffect = nil
 
 local function copyColor(color)
 	if type(color) ~= "table" then
-		return { 1, 1, 1, 1 }
+		return {1, 1, 1, 1}
 	end
 
 	return {
@@ -269,7 +269,7 @@ local function withAlpha(color, alpha)
 	local g = color[2] or 1
 	local b = color[3] or 1
 	local a = color[4] == nil and 1 or color[4]
-	return { r, g, b, a * alpha }
+	return {r, g, b, a * alpha}
 end
 
 local function configureBackgroundEffect()
@@ -280,9 +280,9 @@ local function configureBackgroundEffect()
 	end
 
 	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	local baseColor = copyColor(Theme.bgColor or { 0.12, 0.12, 0.14, 1 })
-	local accent = copyColor(Theme.warningColor or { 0.92, 0.55, 0.4, 1 })
-	local pulse = copyColor(Theme.progressColor or { 0.55, 0.75, 0.55, 1 })
+	local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
+	local accent = copyColor(Theme.warningColor or {0.92, 0.55, 0.4, 1})
+	local pulse = copyColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
 	local vignette
 
 	if GameOver.isVictory then
@@ -306,7 +306,7 @@ local function configureBackgroundEffect()
 	else
 		effect.backdropIntensity = math.max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
 
-		local coolAccent = Theme.blueberryColor or Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }
+		local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
 		accent = lightenColor(copyColor(coolAccent), 0.18)
 		accent[4] = 1
 
@@ -374,7 +374,7 @@ local function spawnFruitAnimation(anim)
 	end
 
 	local metrics = anim.barMetrics
-	local palette = anim.fruitPalette or { Theme.appleColor }
+	local palette = anim.fruitPalette or {Theme.appleColor}
 	local color = copyColor(palette[love.math.random(#palette)] or Theme.appleColor)
 	local streakColor = anim.streakColor
 
@@ -612,7 +612,7 @@ local function drawFruitAnimations(anim)
 		end
 
 		if fruit.sparkle and fadeMul > 0 then
-			local sparkleColor = fruit.sparkleColor or { 1, 1, 1, 0.9 }
+			local sparkleColor = fruit.sparkleColor or {1, 1, 1, 0.9}
 			local shimmer = math.sin((fruit.timer or 0) * (fruit.sparkleSpin or 3.1) + (fruit.sparkleOffset or 0)) * 0.5 + 0.5
 			local sparkleAlpha = (sparkleColor[4] or 1) * fadeMul * (0.6 + 0.4 * shimmer)
 			if sparkleAlpha > 0.01 then
@@ -659,7 +659,7 @@ local function drawBackground(sw, sh)
 		local vignette = backgroundEffect.vignetteOverlay
 		if vignette then
 			local steps = math.max(1, math.floor(vignette.steps or 3))
-			local overlayColor = vignette.color or { 0, 0, 0, 0.22 }
+			local overlayColor = vignette.color or {0, 0, 0, 0.22}
 			local baseAlpha = vignette.alpha or overlayColor[4] or 0.22
 			local totalThickness = vignette.thickness or math.max(sw, sh) * 0.14
 			local band = totalThickness / steps
@@ -696,8 +696,8 @@ end
 
 -- All button definitions in one place
 local buttonDefs = {
-	{ id = "goPlay", textKey = "gameover.play_again", action = "game" },
-	{ id = "goMenu", textKey = "gameover.quit_to_menu", action = "menu" },
+	{id = "goPlay", textKey = "gameover.play_again", action = "game"},
+	{id = "goMenu", textKey = "gameover.quit_to_menu", action = "menu"},
 }
 
 local function calculateAchievementsLayout(achievements, panelWidth, sectionPadding, innerSpacing, smallSpacing)
@@ -715,7 +715,7 @@ local function calculateAchievementsLayout(achievements, panelWidth, sectionPadd
 	local totalHeight = headerHeight
 	local entries = {}
 
-	local badgeBase = Theme.achieveColor or Theme.progressColor or Theme.accentTextColor or { 0.8, 0.45, 0.65, 1 }
+	local badgeBase = Theme.achieveColor or Theme.progressColor or Theme.accentTextColor or {0.8, 0.45, 0.65, 1}
 
 	for index, achievement in ipairs(list) do
 		totalHeight = totalHeight + innerSpacing
@@ -911,8 +911,8 @@ function GameOver:updateLayoutMetrics()
 		local sectionInfo = {}
 
 		if scorePanelHeight > 0 then
-			sections[#sections + 1] = { id = "score", height = scorePanelHeight }
-			sectionInfo.score = { height = scorePanelHeight }
+			sections[#sections + 1] = {id = "score", height = scorePanelHeight}
+			sectionInfo.score = {height = scorePanelHeight}
 		end
 
 		local achievementsLayout = calculateAchievementsLayout(achievementsList, width, sectionPadding, innerSpacing, smallSpacing)
@@ -922,7 +922,7 @@ function GameOver:updateLayoutMetrics()
 				height = achievementsLayout.height,
 				layoutData = achievementsLayout,
 			}
-			sectionInfo.achievements = { height = achievementsLayout.height, layout = achievementsLayout }
+			sectionInfo.achievements = {height = achievementsLayout.height, layout = achievementsLayout}
 		end
 
 		if #sections == 0 then
@@ -1007,7 +1007,7 @@ function GameOver:updateLayoutMetrics()
 		}
 	end
 
-	local layoutOptions = { buildLayout(2), buildLayout(1) }
+	local layoutOptions = {buildLayout(2), buildLayout(1)}
 	local bestLayout = nil
 	local baseHeight = padding * 2 + messagePanelHeight
 	local hasXpSection = xpPanelHeight > 0
@@ -1343,7 +1343,7 @@ function GameOver:enter(data)
 	self.progressionAnimation = nil
 
 	if self.progression then
-		local startSnapshot = self.progression.start or { total = 0, level = 1, xpIntoLevel = 0, xpForNext = MetaProgression:getXpForLevel(1) }
+		local startSnapshot = self.progression.start or {total = 0, level = 1, xpIntoLevel = 0, xpForNext = MetaProgression:getXpForLevel(1)}
 		local resultSnapshot = self.progression.result or startSnapshot
 
 		local fillSpeed = math.max(60, (self.progression.gained or 0) / 1.2)
@@ -1483,13 +1483,13 @@ local function drawCelebrationsList(anim, x, startY, width)
 
 			UI.drawLabel(event.title or "", cardX + 18, cardY + 12, cardWidth - 36, "left", {
 				font = fontProgressSmall,
-				color = { UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], alpha },
+				color = {UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], alpha},
 			})
 
 			if event.subtitle and event.subtitle ~= "" then
 				UI.drawLabel(event.subtitle, cardX + 18, cardY + 32, cardWidth - 36, "left", {
 					font = fontSmall,
-					color = { UI.colors.mutedText[1], UI.colors.mutedText[2], UI.colors.mutedText[3], alpha },
+					color = {UI.colors.mutedText[1], UI.colors.mutedText[2], UI.colors.mutedText[3], alpha},
 				})
 			end
 
@@ -1522,11 +1522,11 @@ local function drawXpSection(self, x, y, width)
 
 	local levelColor = Theme.progressColor or UI.colors.progress or UI.colors.text
 	local flash = math.max(0, math.min(1, anim.levelFlash or 0))
-	local levelText = Localization:get("gameover.meta_progress_level_label", { level = anim.displayedLevel or 1 })
+	local levelText = Localization:get("gameover.meta_progress_level_label", {level = anim.displayedLevel or 1})
 	local levelY = headerY + fontProgressTitle:getHeight() + 16
 	UI.drawLabel(levelText, x, levelY, width, "center", {
 		font = fontProgressValue,
-		color = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.78 + 0.2 * flash },
+		color = {levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.78 + 0.2 * flash},
 	})
 
 	if flash > 0.01 then
@@ -1571,9 +1571,9 @@ local function drawXpSection(self, x, y, width)
 	anim.barMetrics.outerRadius = outerRadius
 	anim.barMetrics.thickness = ringThickness
 
-	local panelColor = Theme.panelColor or { 0.18, 0.18, 0.22, 1 }
+	local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 1}
 	local trackColor = withAlpha(darkenColor(panelColor, 0.2), 0.85)
-	local ringColor = { levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.9 }
+	local ringColor = {levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.9}
 
 	love.graphics.setColor(trackColor)
 	love.graphics.circle("fill", centerX, centerY, outerRadius)
@@ -1604,7 +1604,7 @@ local function drawXpSection(self, x, y, width)
 
 	drawFruitAnimations(anim)
 
-	love.graphics.setColor(withAlpha(Theme.panelBorder or { 0.35, 0.3, 0.5, 1 }, 0.85))
+	love.graphics.setColor(withAlpha(Theme.panelBorder or {0.35, 0.3, 0.5, 1}, 0.85))
 	love.graphics.setLineWidth(2)
 	love.graphics.circle("line", centerX, centerY, innerRadius, 96)
 	love.graphics.setLineWidth(1)
@@ -1644,7 +1644,7 @@ local function drawXpSection(self, x, y, width)
 	local breakdown = self.progression and self.progression.breakdown or {}
 	local bonusXP = math.max(0, math.floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
 	if bonusXP > 0 then
-		local bonusText = Localization:get("gameover.meta_progress_bonus", { bonus = formatXpValue(bonusXP) })
+		local bonusText = Localization:get("gameover.meta_progress_bonus", {bonus = formatXpValue(bonusXP)})
 		UI.drawLabel(bonusText, x, labelY, width, "center", {
 			font = fontProgressSmall,
 			color = UI.colors.highlight or UI.colors.text,
@@ -1689,7 +1689,7 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 		return
 	end
 
-	drawSummaryPanelBackground(x, y, width, height, { radius = 18 })
+	drawSummaryPanelBackground(x, y, width, height, {radius = 18})
 
 	local scoreLabel = getLocalizedOrFallback("gameover.score_label", "Score")
 	local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
@@ -1723,7 +1723,7 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 	local valueY = labelY + labelFont:getHeight() + innerSpacing
 
 	local mutedColor = UI.colors.mutedText or UI.colors.text
-	local baseValueColor = UI.colors.text or { 1, 1, 1, 1 }
+	local baseValueColor = UI.colors.text or {1, 1, 1, 1}
 	local highlightColor = Theme.progressColor or UI.colors.highlight or baseValueColor
 
 	for index, entry in ipairs(entries) do
@@ -1769,7 +1769,7 @@ local function drawAchievementsPanel(self, x, y, width, height, sectionPadding, 
 		return
 	end
 
-	drawInsetPanel(x, y, width, height, { radius = 18 })
+	drawInsetPanel(x, y, width, height, {radius = 18})
 
 	local achievementsLabel = getLocalizedOrFallback("gameover.achievements_header", "Achievements")
 	local headerText = string.format("%s (%d)", achievementsLabel, #entries)
@@ -2013,9 +2013,9 @@ function GameOver:update(dt)
 			anim.levelFlash = 0.9
 			addCelebration(anim, {
 				type = "level",
-				title = Localization:get("gameover.meta_progress_level_up", { level = levelReached }),
+				title = Localization:get("gameover.meta_progress_level_up", {level = levelReached}),
 				subtitle = Localization:get("gameover.meta_progress_level_up_subtitle"),
-				color = Theme.progressColor or { 1, 1, 1, 1 },
+				color = Theme.progressColor or {1, 1, 1, 1},
 				duration = 5.5,
 			})
 			Audio:playSound("goal_reached")
@@ -2025,9 +2025,9 @@ function GameOver:update(dt)
 				for _, unlock in ipairs(unlockList) do
 					addCelebration(anim, {
 						type = "unlock",
-						title = Localization:get("gameover.meta_progress_unlock_header", { name = unlock.name or "???" }),
+						title = Localization:get("gameover.meta_progress_unlock_header", {name = unlock.name or "???"}),
 						subtitle = unlock.description or "",
-						color = Theme.achieveColor or { 1, 1, 1, 1 },
+						color = Theme.achieveColor or {1, 1, 1, 1},
 						duration = 6,
 					})
 				end
@@ -2084,8 +2084,8 @@ function GameOver:update(dt)
 				addCelebration(anim, {
 					type = "milestone",
 					title = Localization:get("gameover.meta_progress_milestone_header"),
-					subtitle = Localization:get("gameover.meta_progress_milestone", { threshold = milestone.threshold }),
-					color = Theme.achieveColor or { 1, 1, 1, 1 },
+					subtitle = Localization:get("gameover.meta_progress_milestone", {threshold = milestone.threshold}),
+					color = Theme.achieveColor or {1, 1, 1, 1},
 					duration = 6.5,
 				})
 				Audio:playSound("achievement")

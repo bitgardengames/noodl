@@ -9,7 +9,7 @@ local Floors = require("floors")
 local Shop = {}
 
 local ANALOG_DEADZONE = 0.35
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local BACKGROUND_EFFECT_TYPE = "shopGlimmer"
 local backgroundEffectCache = {}
@@ -109,12 +109,12 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-	leftx = { slot = "horizontal" },
-	rightx = { slot = "horizontal" },
-	lefty = { slot = "vertical" },
-	righty = { slot = "vertical" },
-	[1] = { slot = "horizontal" },
-	[2] = { slot = "vertical" },
+	leftx = {slot = "horizontal"},
+	rightx = {slot = "horizontal"},
+	lefty = {slot = "vertical"},
+	righty = {slot = "vertical"},
+	[1] = {slot = "horizontal"},
+	[2] = {slot = "vertical"},
 }
 
 local function resetAnalogAxis()
@@ -188,7 +188,7 @@ function Shop:refreshCards(options)
 
 	local cardCount = baseChoices + extraChoices
 	self.totalChoices = cardCount
-	self.cards = Upgrades:getRandom(cardCount, { floor = self.floor }) or {}
+	self.cards = Upgrades:getRandom(cardCount, {floor = self.floor}) or {}
 	self.cardStates = {}
 	self.selected = nil
 	self.selectedIndex = nil
@@ -318,7 +318,7 @@ function Shop:update(dt)
 			if restock.timer >= delay then
 				local revealDelay = restock.revealDelay or 0
 				self.restocking = nil
-				self:refreshCards({ initialDelay = revealDelay })
+				self:refreshCards({initialDelay = revealDelay})
 				return
 			end
 		end
@@ -564,12 +564,12 @@ local function cloneColor(color)
 		return nil
 	end
 
-	return { color[1] or 0, color[2] or 0, color[3] or 0, color[4] or 1 }
+	return {color[1] or 0, color[2] or 0, color[3] or 0, color[4] or 1}
 end
 
 local hologramRarityPalettes = {}
 do
-	local hologramRarities = { "rare", "epic", "legendary" }
+	local hologramRarities = {"rare", "epic", "legendary"}
 	for _, rarity in ipairs(hologramRarities) do
 		local style = rarityStyles[rarity]
 		if style then
@@ -614,7 +614,7 @@ local function withTransformedScissor(x, y, w, h, fn)
 		return
 	end
 
-	local previous = { love.graphics.getScissor() }
+	local previous = {love.graphics.getScissor()}
 	love.graphics.setScissor(scissorX, scissorY, scissorW, scissorH)
 	fn()
 	if previous[1] then
@@ -1071,7 +1071,7 @@ function Shop:draw(screenW, screenH)
 		local appearanceAlpha = self.selected == card and 1 or alpha
 		drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, state, self.selected == card, appearanceAlpha)
 		love.graphics.pop()
-		card.bounds = { x = drawX, y = drawY, w = drawWidth, h = drawHeight }
+		card.bounds = {x = drawX, y = drawY, w = drawWidth, h = drawHeight}
 
 		if state and state.selectionFlash then
 			local flashDuration = 0.75
@@ -1211,7 +1211,7 @@ function Shop:pick(i)
 		return true
 	end
 
-	Upgrades:acquire(card, { floor = self.floor })
+	Upgrades:acquire(card, {floor = self.floor})
 	self.selected = card
 	self.selectedIndex = i
 	self.selectionTimer = 0

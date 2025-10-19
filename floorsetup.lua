@@ -99,7 +99,7 @@ local function addCellUnique(list, seen, col, row)
 	end
 
 	seen[key] = true
-	list[#list + 1] = { col, row }
+	list[#list + 1] = {col, row}
 end
 
 local function buildSpawnBuffer(baseSafeZone)
@@ -113,7 +113,7 @@ local function buildSpawnBuffer(baseSafeZone)
 	end
 
 	local headCol, headRow = Snake:getHeadCell()
-	local dir = Snake:getDirection() or { x = 0, y = 0 }
+	local dir = Snake:getDirection() or {x = 0, y = 0}
 	local dirX, dirY = dir.x or 0, dir.y or 0
 
 	if dirX == 0 and dirY == 0 then
@@ -153,20 +153,20 @@ local function prepareOccupancy()
 	if headCol and headRow then
 		for dx = -1, 1 do
 			for dy = -1, 1 do
-				reservedCandidates[#reservedCandidates + 1] = { headCol + dx, headRow + dy }
+				reservedCandidates[#reservedCandidates + 1] = {headCol + dx, headRow + dy}
 			end
 		end
 	end
 
 	if safeZone then
 		for _, cell in ipairs(safeZone) do
-			reservedCandidates[#reservedCandidates + 1] = { cell[1], cell[2] }
+			reservedCandidates[#reservedCandidates + 1] = {cell[1], cell[2]}
 		end
 	end
 
 	if rockSafeZone then
 		for _, cell in ipairs(rockSafeZone) do
-			reservedCandidates[#reservedCandidates + 1] = { cell[1], cell[2] }
+			reservedCandidates[#reservedCandidates + 1] = {cell[1], cell[2]}
 		end
 	end
 

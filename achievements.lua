@@ -196,7 +196,7 @@ function Achievements:_ensureInitialized()
 			if Snake and Snake.getLength then
 				local length = Snake:getLength()
 				if length then
-					return { snakeLength = length }
+					return {snakeLength = length}
 				end
 			end
 			return nil
@@ -529,7 +529,7 @@ function Achievements:draw()
 
 	local localizedTitle = Localization:get(ach.titleKey)
 	local localizedDescription = Localization:get(ach.descriptionKey)
-	local heading = Localization:get("achievements.popup_heading", { title = localizedTitle })
+	local heading = Localization:get("achievements.popup_heading", {title = localizedTitle})
 
 	love.graphics.setColor(1, 1, 0.2, alpha)
 	love.graphics.setFont(fontTitle)
@@ -567,9 +567,9 @@ function Achievements:save()
 		}
 	end
 
-	local lines = { "return {" }
+	local lines = {"return {"}
 	for key, value in pairs(data) do
-		table.insert(lines, string.format("  [\"%s\"] = { unlocked = %s, progress = %s },",
+		table.insert(lines, string.format("  [\"%s\"] = {unlocked = %s, progress = %s},",
 		key, tostring(value.unlocked), serializeValue(value.progress or 0)))
 	end
 	table.insert(lines, "}")

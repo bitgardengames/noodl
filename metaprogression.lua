@@ -47,31 +47,31 @@ local unlockDefinitions = {
 		id = "specialist_pool",
 		name = "Specialist Contracts",
 		description = "Unlocks rare defensive specialists in the upgrade pool.",
-		unlockTags = { "specialist" },
+		unlockTags = {"specialist"},
 	},
 	[4] = {
 		id = "dash_prototype",
 		name = "Thunder Dash Prototype",
 		description = "Unlocks dash ability upgrades in the shop.",
-		unlockTags = { "abilities" },
+		unlockTags = {"abilities"},
 	},
 	[5] = {
 		id = "temporal_study",
 		name = "Temporal Study",
 		description = "Unlocks time-bending upgrades that slow the arena.",
-		unlockTags = { "timekeeper" },
+		unlockTags = {"timekeeper"},
 	},
 	[6] = {
 		id = "event_horizon",
 		name = "Event Horizon",
 		description = "Unlocks experimental portal tech—legendary upgrades included.",
-		unlockTags = { "legendary" },
+		unlockTags = {"legendary"},
 	},
 	[7] = {
 		id = "combo_research",
 		name = "Combo Research Initiative",
 		description = "Unlocks advanced combo support upgrades in the shop.",
-		unlockTags = { "combo_mastery" },
+		unlockTags = {"combo_mastery"},
 	},
 	[9] = {
 		id = "ion_storm_scales",
@@ -82,25 +82,25 @@ local unlockDefinitions = {
 		id = "stormrunner_certification",
 		name = "Stormrunner Certification",
 		description = "Unlocks dash-synergy upgrades like Sparkstep Relay in the shop.",
-		unlockTags = { "stormtech" },
+		unlockTags = {"stormtech"},
 	},
 	[11] = {
 		id = "precision_coils",
 		name = "Precision Coil Prototypes",
 		description = "Unlocks the deliberate coil speed regulator upgrade.",
-		unlockTags = { "speedcraft" },
+		unlockTags = {"speedcraft"},
 	},
 	[12] = {
 		id = "chrono_carapace_scales",
 		name = "Chrono Carapace Scales",
 		description = "Unlocks the Chrono Carapace snake skin and artisan supply contracts in the shop.",
-		unlockTags = { "artisan_alliance" },
+		unlockTags = {"artisan_alliance"},
 	},
 	[13] = {
 		id = "abyssal_protocols",
 		name = "Abyssal Protocols",
 		description = "Unlocks abyssal relic upgrades including the Abyssal Catalyst.",
-		unlockTags = { "abyssal_protocols" },
+		unlockTags = {"abyssal_protocols"},
 	},
 	[14] = {
 		id = "midnight_circuit_scales",
@@ -180,7 +180,7 @@ local function serialize(value, indent)
 		return string.format("%q", value)
 	elseif valueType == "table" then
 		local spacing = string.rep(" ", indent)
-		local lines = { "{\n" }
+		local lines = {"{\n"}
 		local nextIndent = indent + 4
 		local entryIndent = string.rep(" ", nextIndent)
 		for k, v in pairs(value) do
@@ -259,7 +259,7 @@ function MetaProgression:_collectUnlockedEffects()
 
 	local effects = {
 		shopExtraChoices = 0,
-		tags = { [CORE_UNLOCK_TAG] = true },
+		tags = {[CORE_UNLOCK_TAG] = true},
 	}
 
 	local currentLevel = self.data.level or 1
@@ -428,7 +428,7 @@ function MetaProgression:grantRunPoints(runStats)
 	local okCosmetics, Cosmetics = pcall(require, "snakecosmetics")
 	if okCosmetics and Cosmetics and Cosmetics.syncMetaLevel then
 		local okSync, err = pcall(function()
-			Cosmetics:syncMetaLevel(endSnapshot.level, { levelUps = copyTable(levelUps) })
+			Cosmetics:syncMetaLevel(endSnapshot.level, {levelUps = copyTable(levelUps)})
 		end)
 		if not okSync then
 			print("[metaprogression] failed to sync cosmetics:", err)

@@ -140,7 +140,7 @@ local function applyRunRewards(fruitType, x, y)
 	if not rewards then return end
 
 	if rewards.type then
-		rewards = { rewards }
+		rewards = {rewards}
 	end
 
 	local offset = 74
@@ -214,7 +214,7 @@ function FruitEvents.reset()
 	comboState.window = DEFAULT_COMBO_WINDOW
 	comboState.best = 0
 	syncComboToUI()
-	Shaders.notify("comboLost", { reason = "reset" })
+	Shaders.notify("comboLost", {reason = "reset"})
 end
 
 function FruitEvents:getDefaultComboWindow()
@@ -233,7 +233,7 @@ function FruitEvents.update(dt)
 
 		if comboState.timer == 0 then
 			comboState.count = 0
-			Shaders.notify("comboLost", { reason = "timeout" })
+			Shaders.notify("comboLost", {reason = "timeout"})
 		end
 
 		syncComboToUI()

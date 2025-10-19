@@ -71,7 +71,7 @@ function Score:load()
 end
 
 function Score:save()
-	local lines = { "return {\n" }
+	local lines = {"return {\n"}
 	table.insert(lines, string.format("    highscore = %d,\n", math.max(0, self.highscore or 0)))
 	table.insert(lines, "}\n")
 	love.filesystem.write(self.saveFile, table.concat(lines))
@@ -237,7 +237,7 @@ local function finalizeRunResult(self, options)
 end
 
 function Score:handleGameOver(cause)
-	return finalizeRunResult(self, { cause = cause or "unknown", won = false })
+	return finalizeRunResult(self, {cause = cause or "unknown", won = false})
 end
 
 function Score:handleRunClear(options)

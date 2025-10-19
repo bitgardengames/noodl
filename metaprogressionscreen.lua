@@ -124,7 +124,7 @@ local heldDpadButton = nil
 local heldDpadAction = nil
 local heldDpadTimer = 0
 local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
-local analogAxisDirections = { horizontal = nil, vertical = nil }
+local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local trackEntries = {}
 local trackContentHeight = 0
@@ -132,7 +132,7 @@ local statsEntries = {}
 local statsHighlights = {}
 local statsSummaryHeight = 0
 local cosmeticsEntries = {}
-local cosmeticsSummary = { unlocked = 0, total = 0, newUnlocks = 0 }
+local cosmeticsSummary = {unlocked = 0, total = 0, newUnlocks = 0}
 local cosmeticShaderShowcaseEntries = {}
 local cosmeticShowcaseHeight = 0
 local progressionState = nil
@@ -748,7 +748,7 @@ local function formatShopChoice(amount)
 		return nil
 	end
 
-	local label = Localization:get("metaprogression.rewards.shop_extra_choice", { count = amount })
+	local label = Localization:get("metaprogression.rewards.shop_extra_choice", {count = amount})
 	if label == "metaprogression.rewards.shop_extra_choice" then
 		local rounded = roundNearest(amount)
 		local noun = (math.abs(rounded) == 1) and "shop card option" or "shop card options"
@@ -769,7 +769,7 @@ local function describeUnlockTag(tag)
 		name = name:gsub("^%l", string.upper)
 	end
 
-	local label = Localization:get("metaprogression.rewards.unlock_tag", { name = name })
+	local label = Localization:get("metaprogression.rewards.unlock_tag", {name = name})
 	if label == "metaprogression.rewards.unlock_tag" then
 		label = string.format("Unlocks %s", name)
 	end
@@ -896,7 +896,7 @@ local function getSkinRequirementText(skin)
 	local unlock = skin and skin.unlock or {}
 
 	if unlock.level then
-		return Localization:get("metaprogression.cosmetics.locked_level", { level = unlock.level })
+		return Localization:get("metaprogression.cosmetics.locked_level", {level = unlock.level})
 	elseif unlock.achievement then
 		local achievementName = resolveAchievementName(unlock.achievement)
 		return Localization:get("metaprogression.cosmetics.locked_achievement", {
@@ -1250,8 +1250,8 @@ local function dpadScrollDown()
 end
 
 local analogDirections = {
-	dpup = { id = "analog_dpup", repeatable = true, action = dpadScrollUp },
-	dpdown = { id = "analog_dpdown", repeatable = true, action = dpadScrollDown },
+	dpup = {id = "analog_dpup", repeatable = true, action = dpadScrollUp},
+	dpdown = {id = "analog_dpdown", repeatable = true, action = dpadScrollDown},
 	dpleft = {
 		id = "analog_dpleft",
 		repeatable = false,
@@ -1269,12 +1269,12 @@ local analogDirections = {
 }
 
 local analogAxisMap = {
-	leftx = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
-	rightx = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
-	lefty = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
-	righty = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
-	[1] = { slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright },
-	[2] = { slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown },
+	leftx = {slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright},
+	rightx = {slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright},
+	lefty = {slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown},
+	righty = {slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown},
+	[1] = {slot = "horizontal", negative = analogDirections.dpleft, positive = analogDirections.dpright},
+	[2] = {slot = "vertical", negative = analogDirections.dpup, positive = analogDirections.dpdown},
 }
 
 local function activateAnalogDirection(direction)
@@ -1340,7 +1340,7 @@ function ProgressionScreen:enter()
 	if SnakeCosmetics and SnakeCosmetics.load then
 		local metaLevel = progressionState and progressionState.level or nil
 		local ok, err = pcall(function()
-			SnakeCosmetics:load({ metaLevel = metaLevel })
+			SnakeCosmetics:load({metaLevel = metaLevel})
 		end)
 		if not ok then
 			print("[metaprogressionscreen] failed to load cosmetics:", err)
@@ -1471,8 +1471,8 @@ local function drawSummaryPanel(sw)
 
 	local glow = withAlpha(lightenColor(accentColor, 0.45), 0.22)
 
-	local levelText = Localization:get("metaprogression.level_label", { level = progressionState.level or 1 })
-	local totalText = Localization:get("metaprogression.total_xp", { total = progressionState.totalExperience or 0 })
+	local levelText = Localization:get("metaprogression.level_label", {level = progressionState.level or 1})
+	local totalText = Localization:get("metaprogression.total_xp", {total = progressionState.totalExperience or 0})
 
 	local progressLabel
 	local xpIntoLevel = progressionState.xpIntoLevel or 0
@@ -1484,7 +1484,7 @@ local function drawSummaryPanel(sw)
 		progressRatio = 1
 	else
 		local remaining = math.max(0, xpForNext - xpIntoLevel)
-		progressLabel = Localization:get("metaprogression.next_unlock", { remaining = remaining })
+		progressLabel = Localization:get("metaprogression.next_unlock", {remaining = remaining})
 		if xpForNext > 0 then
 			progressRatio = math.min(1, math.max(0, xpIntoLevel / xpForNext))
 		else
@@ -1652,7 +1652,7 @@ local function drawTrack(sw, sh)
 
 			love.graphics.setFont(UI.fonts.button)
 			love.graphics.setColor(Theme.textColor)
-			local header = Localization:get("metaprogression.card_level", { level = entry.level or 0 })
+			local header = Localization:get("metaprogression.card_level", {level = entry.level or 0})
 			love.graphics.print(header, textX, textY)
 
 			love.graphics.setFont(UI.fonts.body)
@@ -1714,13 +1714,13 @@ local function ensureCosmeticPreviewTrail()
 		local primaryWave = math.sin(t * math.pi * 1.35 + math.pi * 0.25)
 		local secondaryWave = math.sin(t * math.pi * 3.1)
 		local y = primaryWave * amplitude + secondaryWave * wobble
-		rawPoints[#rawPoints + 1] = { x = x, y = y }
+		rawPoints[#rawPoints + 1] = {x = x, y = y}
 	end
 
 	local trail = {}
 	for i = #rawPoints, 1, -1 do
 		local point = rawPoints[i]
-		trail[#trail + 1] = { x = point.x, y = point.y }
+		trail[#trail + 1] = {x = point.x, y = point.y}
 	end
 
 	local minX, maxX, minY, maxY
@@ -1808,7 +1808,7 @@ local function drawCosmeticsHeader(sw)
 			local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor
 			love.graphics.setFont(UI.fonts.small)
 			love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.92)
-			love.graphics.printf(Localization:get(key, { count = cosmeticsSummary.newUnlocks }), 0, headerY + 60, sw, "center")
+			love.graphics.printf(Localization:get(key, {count = cosmeticsSummary.newUnlocks}), 0, headerY + 60, sw, "center")
 		end
 	end
 
@@ -2245,11 +2245,11 @@ function ProgressionScreen:mousereleased(x, y, button)
 	if action then
 		Audio:playSound("click")
 		if action == "tab_experience" then
-			setActiveTab("experience", { focusSource = "mouse", skipFocusHistory = true })
+			setActiveTab("experience", {focusSource = "mouse", skipFocusHistory = true})
 		elseif action == "tab_cosmetics" then
-			setActiveTab("cosmetics", { focusSource = "mouse", skipFocusHistory = true })
+			setActiveTab("cosmetics", {focusSource = "mouse", skipFocusHistory = true})
 		elseif action == "tab_stats" then
-			setActiveTab("stats", { focusSource = "mouse", skipFocusHistory = true })
+			setActiveTab("stats", {focusSource = "mouse", skipFocusHistory = true})
 		else
 			return action
 		end
