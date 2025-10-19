@@ -25,6 +25,10 @@ local dailyChallenge = nil
 local dailyChallengeAnim = 0
 local DAILY_BAR_CELEBRATION_DURATION = 6
 
+local streakLineArgs = {streak = 0, unit = nil}
+local bestLineArgs = {best = 0, unit = nil}
+local resetTooltipArgs = {time = nil}
+
 local dailyBarCelebration = {
 	active = false,
 	time = 0,
@@ -478,15 +482,13 @@ function Menu:draw()
 		local bestStreak = math.max(currentStreak, PlayerStats:get("dailyChallengeBestStreak") or 0)
 
 		if currentStreak > 0 then
-			local streakLine = Localization:get("menu.daily_panel_streak", {
-				streak = currentStreak,
-				unit = getDayUnit(currentStreak),
-			})
+			streakLineArgs.streak = currentStreak
+			streakLineArgs.unit = getDayUnit(currentStreak)
+			local streakLine = Localization:get("menu.daily_panel_streak", streakLineArgs)
 
-			local bestLine = Localization:get("menu.daily_panel_best", {
-				best = bestStreak,
-				unit = getDayUnit(bestStreak),
-			})
+			bestLineArgs.best = bestStreak
+			bestLineArgs.unit = getDayUnit(bestStreak)
+			local bestLine = Localization:get("menu.daily_panel_best", bestLineArgs)
 
 			local messageKey = dailyChallenge.completed and "menu.daily_panel_complete_message" or "menu.daily_panel_keep_alive"
 			local messageLine = Localization:get(messageKey)
@@ -523,8 +525,10 @@ function Menu:draw()
 			local tooltipText
 			if timeRemaining and timeRemaining > 0 then
 				local countdown = formatResetCountdown(timeRemaining)
-				tooltipText = Localization:get("menu.daily_panel_reset_tooltip", {time = countdown})
+				resetTooltipArgs.time = countdown
+				tooltipText = Localization:get("menu.daily_panel_reset_tooltip", resetTooltipArgs)
 			else
+				resetTooltipArgs.time = nil
 				tooltipText = Localization:get("menu.daily_panel_reset_tooltip_soon")
 			end
 			Tooltip:show(tooltipText, {

@@ -16,6 +16,7 @@ local buttonList = ButtonList.new()
 local buttons = {}
 local highestUnlocked = 1
 local defaultFloor = 1
+local highestLabelArgs = {floor = nil}
 
 local BACKGROUND_EFFECT_TYPE = "menuConstellation"
 local backgroundEffectCache = {}
@@ -263,7 +264,8 @@ end
 local function drawHeading(sw, sh)
 	local title = Localization:get("floor_select.title")
 	local subtitle = Localization:get("floor_select.subtitle")
-	local highestText = Localization:get("floor_select.highest_label", {floor = highestUnlocked})
+	highestLabelArgs.floor = highestUnlocked
+	local highestText = Localization:get("floor_select.highest_label", highestLabelArgs)
 
 	UI.drawLabel(title, 0, math.floor(sh * 0.08), sw, "center", {fontKey = "title"})
 
