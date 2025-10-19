@@ -564,7 +564,7 @@ local english = {
 			subduction_array = {
 				name = "Subduction Array",
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
-				activation_text = "Saws Submerge",
+				activation_text = "",
 			},
 			stonebreaker_hymn = {
 				name = "Stonebreaker Hymn",
