@@ -613,41 +613,51 @@ registerEffect({
 		float aspect = resolution.x / max(resolution.y, 0.0001);
 		centered.x *= aspect;
 
-		float t = time * 0.42;
-		float radius = length(centered);
-		float pulse = 0.5 + 0.5 * sin(t * 1.6 + radius * 5.2);
-		vec2 radial = centered * (0.65 + 0.35 * pulse);
-		vec2 gentle = vec2(0.12 * sin(t * 0.8 + radius * 2.4), 0.09 * cos(t * 0.6 + radius * 1.8));
-		vec2 drift = radial + gentle;
+               float t = time * 0.42;
+               float radius = length(centered);
+               float pulse = 0.5 + 0.5 * sin(t * 1.4 + radius * 4.0);
+               vec2 radial = centered * (0.6 + 0.28 * pulse);
+               vec2 gentle = vec2(0.09 * sin(t * 0.7 + radius * 2.2), 0.07 * cos(t * 0.5 + radius * 1.6));
+               vec2 drift = radial + gentle;
 
-		float veilField = fbm(drift * 2.6 + vec2(t * 0.28, -t * 0.24));
-		float bloomField = fbm(drift * 5.4 + vec2(-t * 0.42, t * 0.31));
-		float glowField = fbm(drift * 7.1 + vec2(t * 0.5, t * 0.38));
+               float swirl = sin(t * 0.35 + radius * 3.6);
+               vec2 swirlOffset = vec2(-drift.y, drift.x) * (0.16 + 0.1 * pulse) * swirl;
+               vec2 flow = drift + swirlOffset;
 
-		float cavernLift = smoothstep(-0.35, 0.85, veilField + centered.y * 1.2);
-		vec3 baseLayer = mix(baseColor.rgb, cavernColor.rgb, cavernLift * (0.45 + intensity * 0.25));
+               float veilField = fbm(flow * 1.9 + vec2(t * 0.18, -t * 0.15));
+               float bloomField = fbm(flow * 3.4 + vec2(-t * 0.26, t * 0.21));
+               float glowField = fbm(flow * 4.1 + vec2(t * 0.33, t * 0.27));
 
-		float bloomPulse = 0.5 + 0.5 * sin(t * 3.1 + bloomField * 4.0 + radius * 12.0);
-		float bloomRing = smoothstep(0.28, 0.0, abs(radius - (0.32 + 0.08 * bloomField)));
-		float bloomMix = clamp(bloomRing * (0.35 + intensity * 0.55) + bloomPulse * 0.22, 0.0, 1.0);
-		vec3 bloomLayer = mix(stemColor.rgb, bloomColor.rgb, clamp(bloomField * 0.5 + 0.5, 0.0, 1.0));
-		vec3 blossomed = mix(baseLayer, bloomLayer, bloomMix);
+               float cavernLift = smoothstep(-0.35, 0.85, veilField + centered.y * 1.1);
+               vec3 baseLayer = mix(baseColor.rgb, cavernColor.rgb, cavernLift * (0.4 + intensity * 0.2));
 
-		float emberSpill = smoothstep(0.25, 0.9, glowField) * (0.25 + intensity * 0.35);
-		vec3 emberLayer = mix(blossomed, emberColor.rgb, emberSpill * 0.5);
+               float bloomPulse = 0.5 + 0.5 * sin(t * 2.0 + bloomField * 3.2 + radius * 9.0);
+               float bloomRing = smoothstep(0.32, 0.02, abs(radius - (0.35 + 0.06 * bloomField)));
+               float bloomMix = clamp(bloomRing * (0.28 + intensity * 0.45) + bloomPulse * 0.18, 0.0, 1.0);
+               vec3 bloomLayer = mix(stemColor.rgb, bloomColor.rgb, clamp(bloomField * 0.55 + 0.45, 0.0, 1.0));
+               vec3 blossomed = mix(baseLayer, bloomLayer, bloomMix);
 
-		float hazeVeil = clamp(veilField * 0.6 + glowField * 0.3, 0.0, 1.0);
-		vec3 veiled = mix(emberLayer, hazeColor.rgb, hazeVeil * 0.18 * (0.6 + intensity * 0.4));
+               float emberSpill = smoothstep(0.25, 0.9, glowField) * (0.18 + intensity * 0.25);
+               vec3 emberLayer = mix(blossomed, emberColor.rgb, emberSpill * 0.4);
 
-		float petalTrace = smoothstep(0.1, 0.8, bloomField * 0.6 + glowField * 0.4);
-		float shimmer = 0.5 + 0.5 * sin(t * 2.4 + dot(drift, vec2(6.1, -5.3)));
-		vec3 petals = mix(veiled, bloomColor.rgb, petalTrace * shimmer * 0.22 * (0.6 + intensity * 0.4));
+               float mistField = fbm(flow * 2.2 + vec2(-t * 0.14, t * 0.12));
+               float mistWave = 0.5 + 0.5 * sin(t * 0.9 + mistField * 2.4 + radius * 3.6);
+               float mistVeil = smoothstep(0.2, 0.85, mistField * 0.7 + glowField * 0.3);
+               float mistMix = clamp(mistVeil * (0.35 + intensity * 0.35) + mistWave * 0.15, 0.0, 1.0);
+               vec3 mistLayer = mix(emberLayer, hazeColor.rgb, mistMix * 0.4);
 
-		float vignette = smoothstep(0.18, 0.95, radius + 0.08 * sin(t + radius * 2.1));
-		vec3 finalColor = mix(petals, baseColor.rgb, vignette * 0.35);
-		finalColor = clamp(finalColor, 0.0, 1.0);
+               float shimmer = 0.5 + 0.5 * sin(t * 1.6 + dot(flow, vec2(4.7, -4.1)));
+               float petalTrace = smoothstep(0.18, 0.9, bloomField * 0.5 + glowField * 0.5);
+               vec3 petals = mix(mistLayer, bloomColor.rgb, petalTrace * shimmer * 0.18 * (0.6 + intensity * 0.4));
 
-		return vec4(finalColor, baseColor.a) * color;
+               float softGlow = smoothstep(0.15, 0.75, mistVeil) * (0.12 + intensity * 0.22);
+               vec3 glowed = mix(petals, bloomColor.rgb, softGlow);
+
+               float vignette = smoothstep(0.2, 0.95, radius + 0.05 * sin(t * 0.6 + radius * 1.7));
+               vec3 finalColor = mix(glowed, baseColor.rgb, vignette * 0.32);
+               finalColor = clamp(finalColor, 0.0, 1.0);
+
+               return vec4(finalColor, baseColor.a) * color;
 	}
 	]],
 	configure = function(effect, palette)
