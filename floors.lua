@@ -26,13 +26,13 @@ local Floors = {
 	[1] = {
 		name = "Garden Gate",
 		flavor = "Noodl winds through the garden, scooping up fruit scattered among the vines.",
-		palette = {
-			bgColor     = {0.14, 0.22, 0.2, 1},
-			arenaBG     = {0.3, 0.46, 0.38, 1},
-			arenaBorder = {0.68, 0.52, 0.3, 1},
-			snake       = {0.26, 0.74, 0.56, 1},
-			rock        = {0.4, 0.48, 0.42, 1},
-		},
+                palette = {
+                        bgColor     = {0.11, 0.2, 0.26, 1},
+                        arenaBG     = {0.26, 0.52, 0.44, 1},
+                        arenaBorder = {0.83, 0.62, 0.34, 1},
+                        snake       = {0.38, 0.86, 0.68, 1},
+                        rock        = {0.44, 0.54, 0.48, 1},
+                },
 		backgroundEffect = {
 			type = "gardenMellow",
 			backdropIntensity = 0.54,
