@@ -19,7 +19,7 @@
 | Mapmaker's Compass | Uncommon | The exit unlocks one fruit earlier. | Tags: economy, risk; Visual: Guiding compass pulse when hazard spawns are adjusted. |
 | Molting Reflex | Uncommon | Shields trigger a 60% adrenaline surge. | Tags: adrenaline, defense; Requires tags: adrenaline; Visual: Molting Reflex flare when shields trigger adrenaline. |
 | Momentum Memory | Uncommon | Adrenaline bursts last 2s longer. | Requires tags: adrenaline |
-| Quick Fangs | Uncommon | Snake moves 10% faster. | Up to 4 stacks |
+| Quick Fangs | Uncommon | Snake moves 10% faster. | Up to 4 stacks; Visual: Quick Fangs sketch overlays to draw fangs on the snake when acquired. |
 | Resonant Shell | Uncommon | Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own. | Tags: defense; Requires tags: defense; Unlock tag: specialist; Visual: Resonant Shell aura on acquisition. |
 | Stone Skin | Uncommon | Gain a shield that shatters rocks and shrugs off a saw or laser hit. | Up to 4 stacks; Visual: Stoneguard burst on pickup and when shields smash rocks. |
 | Verdant Bonds | Uncommon | Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth forges a shield. | Tags: economy, defense; Up to 3 stacks; Visual: Verdant shield bloom whenever growth converts to shields. |
