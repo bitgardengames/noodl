@@ -1297,6 +1297,9 @@ local pool = {
 
 				local sinkColor = {0.68, 0.86, 1.0, 1}
 				local activationLabel = getUpgradeString("subduction_array", "activation_text")
+				if activationLabel == "" or activationLabel == "upgrades.subduction_array.activation_text" then
+					activationLabel = nil
+				end
 				local celebrationOptions = {
 					color = sinkColor,
 					textOffset = 48,
