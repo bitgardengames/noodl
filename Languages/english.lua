@@ -495,11 +495,15 @@ local english = {
 				seconds = "${seconds}s",
 				progress = "${current} / ${target}",
 			},
-			quick_fangs = {
-				name = "Quick Fangs",
-				description = "Snake moves 10% faster.",
-				combo_celebration = "Fang Rush",
-			},
+                        tail_trainer = {
+                                name = "Tail Trainer",
+                                description = "Snake moves 4% faster.",
+                        },
+                        quick_fangs = {
+                                name = "Quick Fangs",
+                                description = "Snake moves 10% faster.",
+                                combo_celebration = "Fang Rush",
+                        },
 			stone_skin = {
 				name = "Stone Skin",
 				description = "Gain a shield that shatters rocks and shrugs off a saw or laser hit.",

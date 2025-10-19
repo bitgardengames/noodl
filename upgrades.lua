@@ -776,12 +776,30 @@ local function buildCircuitBreakerTargets(data)
 end
 
 local pool = {
-	register({
-		id = "quick_fangs",
-		nameKey = "upgrades.quick_fangs.name",
-		descKey = "upgrades.quick_fangs.description",
-		rarity = "uncommon",
-		allowDuplicates = true,
+        register({
+                id = "tail_trainer",
+                nameKey = "upgrades.tail_trainer.name",
+                descKey = "upgrades.tail_trainer.description",
+                rarity = "common",
+                onAcquire = function(state)
+                        Snake:addSpeedMultiplier(1.04)
+
+                        celebrateUpgrade(getUpgradeString("tail_trainer", "name"), nil, {
+                                color = {0.98, 0.76, 0.36, 1},
+                                particleCount = 12,
+                                particleSpeed = 120,
+                                particleLife = 0.34,
+                                textOffset = 36,
+                                textScale = 1.06,
+                        })
+                end,
+        }),
+        register({
+                id = "quick_fangs",
+                nameKey = "upgrades.quick_fangs.name",
+                descKey = "upgrades.quick_fangs.description",
+                rarity = "uncommon",
+                allowDuplicates = true,
 		maxStacks = 4,
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(1.10)
