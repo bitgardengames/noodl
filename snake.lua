@@ -31,6 +31,95 @@ local developerAssistEnabled = false
 local portalAnimation = nil
 local cellKeyStride = 0
 
+local segmentPool = {}
+local segmentPoolCount = 0
+
+local function acquireSegment()
+        if segmentPoolCount > 0 then
+                local segment = segmentPool[segmentPoolCount]
+                segmentPool[segmentPoolCount] = nil
+                segmentPoolCount = segmentPoolCount - 1
+                return segment
+        end
+
+        return {}
+end
+
+local function releaseSegment(segment)
+        if not segment then
+                return
+        end
+
+        segment.drawX = nil
+        segment.drawY = nil
+        segment.x = nil
+        segment.y = nil
+        segment.dirX = nil
+        segment.dirY = nil
+        segment.fruitMarker = nil
+        segment.fruitMarkerX = nil
+        segment.fruitMarkerY = nil
+
+        segmentPoolCount = segmentPoolCount + 1
+        segmentPool[segmentPoolCount] = segment
+end
+
+local function releaseSegmentRange(buffer, startIndex)
+        if not buffer then
+                return
+        end
+
+        for i = #buffer, startIndex, -1 do
+                local segment = buffer[i]
+                buffer[i] = nil
+                if segment then
+                        releaseSegment(segment)
+                end
+        end
+end
+
+local function recycleTrail(buffer)
+        if not buffer then
+                return
+        end
+
+        for i = #buffer, 1, -1 do
+                local segment = buffer[i]
+                buffer[i] = nil
+                if segment then
+                        releaseSegment(segment)
+                end
+        end
+end
+
+local function clearPortalAnimation(state)
+        if not state then
+                return
+        end
+
+        recycleTrail(state.entrySourceTrail)
+        recycleTrail(state.entryTrail)
+        recycleTrail(state.exitTrail)
+        state.entrySourceTrail = nil
+        state.entryTrail = nil
+        state.exitTrail = nil
+end
+
+local function clearSeveredPieces()
+        if not severedPieces then
+                return
+        end
+
+        for i = #severedPieces, 1, -1 do
+                local piece = severedPieces[i]
+                if piece and piece.trail then
+                        recycleTrail(piece.trail)
+                        piece.trail = nil
+                end
+                severedPieces[i] = nil
+        end
+end
+
 local stencilCircleX, stencilCircleY, stencilCircleRadius = 0, 0, 0
 local function drawStencilCircle()
         love.graphics.circle("fill", stencilCircleX, stencilCircleY, stencilCircleRadius)
@@ -728,26 +817,26 @@ function Snake:onDamageTaken(cause, info)
 		local centerX = headX + SEGMENT_SIZE * 0.5
 		local centerY = headY + SEGMENT_SIZE * 0.5
 
-		local burstDirX, burstDirY = 0, -1
-		local pushMag = math.sqrt(pushX * pushX + pushY * pushY)
-		if pushMag > 1e-4 then
-			burstDirX = pushX / pushMag
-			burstDirY = pushY / pushMag
-		elseif dirX and dirY and (dirX ~= 0 or dirY ~= 0) then
-			local dirMag = math.sqrt(dirX * dirX + dirY * dirY)
-			if dirMag > 1e-4 then
-				burstDirX = -dirX / dirMag
-				burstDirY = -dirY / dirMag
-			end
-		else
-			local faceX = direction and direction.x or 0
-			local faceY = direction and direction.y or -1
-			local faceMag = math.sqrt(faceX * faceX + faceY * faceY)
-			if faceMag > 1e-4 then
-				burstDirX = -faceX / faceMag
-				burstDirY = -faceY / faceMag
-			end
-		end
+                local burstDirX, burstDirY = 0, -1
+                local pushMag = sqrt(pushX * pushX + pushY * pushY)
+                if pushMag > 1e-4 then
+                        burstDirX = pushX / pushMag
+                        burstDirY = pushY / pushMag
+                elseif dirX and dirY and (dirX ~= 0 or dirY ~= 0) then
+                        local dirMag = sqrt(dirX * dirX + dirY * dirY)
+                        if dirMag > 1e-4 then
+                                burstDirX = -dirX / dirMag
+                                burstDirY = -dirY / dirMag
+                        end
+                else
+                        local faceX = direction and direction.x or 0
+                        local faceY = direction and direction.y or -1
+                        local faceMag = sqrt(faceX * faceX + faceY * faceY)
+                        if faceMag > 1e-4 then
+                                burstDirX = -faceX / faceMag
+                                burstDirY = -faceY / faceMag
+                        end
+                end
 
                 if Particles and Particles.spawnBurst then
                         Particles:spawnBurst(centerX, centerY, SHIELD_BREAK_PARTICLE_OPTIONS)
@@ -814,7 +903,7 @@ local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
 		return nil, nil
 	end
 
-	discriminant = math.sqrt(discriminant)
+    discriminant = sqrt(discriminant)
 	local t1 = (-b - discriminant) / (2 * a)
 	local t2 = (-b + discriminant) / (2 * a)
 
@@ -833,7 +922,7 @@ local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
 end
 
 local function normalizeDirection(dx, dy)
-	local len = math.sqrt(dx * dx + dy * dy)
+    local len = sqrt(dx * dx + dy * dy)
 	if len == 0 then
 		return 0, 0
 	end
@@ -872,16 +961,22 @@ local function closestPointOnSegment(px, py, ax, ay, bx, by)
 end
 
 local function copySegmentData(segment)
-	if not segment then
-		return nil
-	end
+        if not segment then
+                return nil
+        end
 
-	local copy = {}
-	for key, value in pairs(segment) do
-		copy[key] = value
-	end
+        local copy = acquireSegment()
+        copy.drawX = segment.drawX
+        copy.drawY = segment.drawY
+        copy.dirX = segment.dirX
+        copy.dirY = segment.dirY
+        copy.x = segment.x
+        copy.y = segment.y
+        copy.fruitMarker = segment.fruitMarker
+        copy.fruitMarkerX = segment.fruitMarkerX
+        copy.fruitMarkerY = segment.fruitMarkerY
 
-	return copy
+        return copy
 end
 
 local function computeTrailLength(trailData)
@@ -890,71 +985,110 @@ local function computeTrailLength(trailData)
 	end
 
 	local total = 0
-	for i = 2, #trailData do
-		local prev = trailData[i - 1]
-		local curr = trailData[i]
-		local ax, ay = prev and prev.drawX, prev and prev.drawY
-		local bx, by = curr and curr.drawX, curr and curr.drawY
-		if ax and ay and bx and by then
-			local dx = bx - ax
-			local dy = by - ay
-			total = total + math.sqrt(dx * dx + dy * dy)
-		end
-	end
+        for i = 2, #trailData do
+                local prev = trailData[i - 1]
+                local curr = trailData[i]
+                local ax, ay = prev and prev.drawX, prev and prev.drawY
+                local bx, by = curr and curr.drawX, curr and curr.drawY
+                if ax and ay and bx and by then
+                        local dx = bx - ax
+                        local dy = by - ay
+                        total = total + sqrt(dx * dx + dy * dy)
+                end
+        end
 
 	return total
 end
 
-local function sliceTrailByLength(sourceTrail, maxLength)
-	if not sourceTrail or #sourceTrail == 0 then
-		return {}
-	end
+local function sliceTrailByLength(sourceTrail, maxLength, destination)
+        local result = destination or {}
+        local previousCount = #result
+        local count = 0
 
-	local result = {}
-	local first = copySegmentData(sourceTrail[1]) or {}
-	result[1] = first
+        if not sourceTrail or #sourceTrail == 0 then
+                releaseSegmentRange(result, 1)
+                return result
+        end
 
-	if not (maxLength and maxLength > 0) then
-		return result
-	end
+        if previousCount >= 1 then
+                local existing = result[1]
+                if existing then
+                        releaseSegment(existing)
+                end
+        end
+        local first = copySegmentData(sourceTrail[1]) or acquireSegment()
+        count = 1
+        result[count] = first
 
-	local accumulated = 0
-	for i = 2, #sourceTrail do
-		local prev = sourceTrail[i - 1]
-		local curr = sourceTrail[i]
-		local px, py = prev and prev.drawX, prev and prev.drawY
-		local cx, cy = curr and curr.drawX, curr and curr.drawY
-		if not (px and py and cx and cy) then
-			break
-		end
+        if not (maxLength and maxLength > 0) then
+                releaseSegmentRange(result, count + 1)
+                return result
+        end
 
-		local dx = cx - px
-		local dy = cy - py
-		local segLen = math.sqrt(dx * dx + dy * dy)
+        local accumulated = 0
+        for i = 2, #sourceTrail do
+                local prev = sourceTrail[i - 1]
+                local curr = sourceTrail[i]
+                local px, py = prev and prev.drawX, prev and prev.drawY
+                local cx, cy = curr and curr.drawX, curr and curr.drawY
+                if not (px and py and cx and cy) then
+                        break
+                end
 
-		if segLen <= 1e-6 then
-			result[#result + 1] = copySegmentData(curr)
-		else
-			if accumulated + segLen >= maxLength then
-				local remaining = maxLength - accumulated
-				local t = remaining / segLen
-				if t < 0 then t = 0 end
-				if t > 1 then t = 1 end
-				local x = px + dx * t
-				local y = py + dy * t
-				local segCopy = copySegmentData(curr) or {}
-				segCopy.drawX = x
-				segCopy.drawY = y
-				result[#result + 1] = segCopy
-				return result
-			end
+                local dx = cx - px
+                local dy = cy - py
+                local segLen = sqrt(dx * dx + dy * dy)
 
-			accumulated = accumulated + segLen
-			result[#result + 1] = copySegmentData(curr)
-		end
-	end
+                if segLen <= 1e-6 then
+                        count = count + 1
+                        if count <= previousCount then
+                                local existing = result[count]
+                                if existing then
+                                        releaseSegment(existing)
+                                end
+                        end
+                        result[count] = copySegmentData(curr)
+                else
+                        if accumulated + segLen >= maxLength then
+                                local remaining = maxLength - accumulated
+                                local t = remaining / segLen
+                                if t < 0 then
+                                        t = 0
+                                elseif t > 1 then
+                                        t = 1
+                                end
+                                local x = px + dx * t
+                                local y = py + dy * t
+                                if count + 1 <= previousCount then
+                                        local existing = result[count + 1]
+                                        if existing then
+                                                releaseSegment(existing)
+                                        end
+                                end
+                                local segCopy = copySegmentData(curr) or acquireSegment()
+                                segCopy.drawX = x
+                                segCopy.drawY = y
+                                count = count + 1
+                                result[count] = segCopy
+                                releaseSegmentRange(result, count + 1)
+                                return result
+                        end
 
-	return result
+                        accumulated = accumulated + segLen
+                        count = count + 1
+                        if count <= previousCount then
+                                local existing = result[count]
+                                if existing then
+                                        releaseSegment(existing)
+                                end
+                        end
+                        result[count] = copySegmentData(curr)
+                end
+        end
+
+        releaseSegmentRange(result, count + 1)
+
+        return result
 end
 
 local function cloneTailFromIndex(startIndex, entryX, entryY)
@@ -1129,19 +1263,11 @@ local function trimTrailToSegmentLimit()
 	local consumedLength = (descendingHole and descendingHole.consumedLength) or 0
 	local maxLen = math.max(0, segmentCount * SEGMENT_SPACING - consumedLength)
 
-	if maxLen <= 0 then
-		local head = trail[1]
-		trail = {}
-		if head then
-			trail[1] = {
-				drawX = head.drawX,
-				drawY = head.drawY,
-				dirX = head.dirX,
-				dirY = head.dirY,
-			}
-		end
-		return
-	end
+        if maxLen <= 0 then
+                recycleTrail(trail)
+                trail = {}
+                return
+        end
 
 	local traveled = 0
 	local i = 2
@@ -1151,32 +1277,32 @@ local function trimTrailToSegmentLimit()
 		local px, py = prev and (prev.drawX or prev.x), prev and (prev.drawY or prev.y)
 		local sx, sy = seg and (seg.drawX or seg.x), seg and (seg.drawY or seg.y)
 
-		if not (px and py and sx and sy) then
-			for j = #trail, i, -1 do
-				table.remove(trail, j)
-			end
-			break
-		end
+                if not (px and py and sx and sy) then
+                        releaseSegmentRange(trail, i)
+                        break
+                end
 
-		local dx = px - sx
-		local dy = py - sy
-		local segLen = math.sqrt(dx * dx + dy * dy)
+                local dx = px - sx
+                local dy = py - sy
+                local segLen = sqrt(dx * dx + dy * dy)
 
-		if segLen <= 0 then
-			table.remove(trail, i)
-		else
-			if traveled + segLen > maxLen then
-				local excess = traveled + segLen - maxLen
-				local t = 1 - (excess / segLen)
-				local tailX = px - dx * t
-				local tailY = py - dy * t
+                if segLen <= 0 then
+                        local removed = trail[i]
+                        if removed then
+                                releaseSegment(removed)
+                        end
+                        table.remove(trail, i)
+                else
+                        if traveled + segLen > maxLen then
+                                local excess = traveled + segLen - maxLen
+                                local t = 1 - (excess / segLen)
+                                local tailX = px - dx * t
+                                local tailY = py - dy * t
 
-				for j = #trail, i + 1, -1 do
-					table.remove(trail, j)
-				end
+                                releaseSegmentRange(trail, i + 1)
 
-				seg.drawX = tailX
-				seg.drawY = tailY
+                                seg.drawX = tailX
+                                seg.drawY = tailY
 				if not seg.dirX or not seg.dirY then
 					seg.dirX = direction.x
 					seg.dirY = direction.y
@@ -1206,13 +1332,13 @@ local function drawDescendingIntoHole(hole)
 	local entryX = hole.entryPointX or hx
 	local entryY = hole.entryPointY or hy
 
-	local dirX, dirY = hole.entryDirX or 0, hole.entryDirY or 0
-	local dirLen = math.sqrt(dirX * dirX + dirY * dirY)
-	if dirLen <= 1e-4 then
-		dirX = hx - entryX
-		dirY = hy - entryY
-		dirLen = math.sqrt(dirX * dirX + dirY * dirY)
-	end
+        local dirX, dirY = hole.entryDirX or 0, hole.entryDirY or 0
+        local dirLen = sqrt(dirX * dirX + dirY * dirY)
+        if dirLen <= 1e-4 then
+                dirX = hx - entryX
+                dirY = hy - entryY
+                dirLen = sqrt(dirX * dirX + dirY * dirY)
+        end
 
 	if dirLen <= 1e-4 then
 		dirX, dirY = 0, -1
@@ -1516,20 +1642,22 @@ end
 
 -- Build initial trail aligned to CELL CENTERS
 local function buildInitialTrail()
-	local t = {}
-	local midCol = math.floor(Arena.cols / 2)
-	local midRow = math.floor(Arena.rows / 2)
-	local startX, startY = Arena:getCenterOfTile(midCol, midRow)
+        local t = {}
+        local midCol = math.floor(Arena.cols / 2)
+        local midRow = math.floor(Arena.rows / 2)
+        local startX, startY = Arena:getCenterOfTile(midCol, midRow)
 
-	for i = 0, segmentCount - 1 do
-		local cx = startX - i * SEGMENT_SPACING * direction.x
-		local cy = startY - i * SEGMENT_SPACING * direction.y
-		table.insert(t, {
-			drawX = cx, drawY = cy,
-			dirX = direction.x, dirY = direction.y
-		})
-	end
-	return t
+        for i = 0, segmentCount - 1 do
+                local cx = startX - i * SEGMENT_SPACING * direction.x
+                local cy = startY - i * SEGMENT_SPACING * direction.y
+                local segment = acquireSegment()
+                segment.drawX = cx
+                segment.drawY = cy
+                segment.dirX = direction.x
+                segment.dirY = direction.y
+                t[#t + 1] = segment
+        end
+        return t
 end
 
 function Snake:load(w, h)
@@ -1537,17 +1665,20 @@ function Snake:load(w, h)
 	assignDirection(direction, 1, 0)
 	assignDirection(pendingDir, 1, 0)
 	segmentCount = 1
-	popTimer = 0
-	moveProgress = 0
-	isDead = false
-	self.shieldFlashTimer = 0
-	self.hazardGraceTimer = 0
-	self.damageFlashTimer = 0
-	trail = buildInitialTrail()
-	descendingHole = nil
-	fruitsSinceLastTurn = 0
-	severedPieces = {}
-	portalAnimation = nil
+        popTimer = 0
+        moveProgress = 0
+        isDead = false
+        self.shieldFlashTimer = 0
+        self.hazardGraceTimer = 0
+        self.damageFlashTimer = 0
+        recycleTrail(trail)
+        trail = buildInitialTrail()
+        descendingHole = nil
+        fruitsSinceLastTurn = 0
+        clearSeveredPieces()
+        severedPieces = {}
+        clearPortalAnimation(portalAnimation)
+        portalAnimation = nil
 	local stride = (Arena and Arena.rows or 0) + 16
 	if stride <= 0 then
 		stride = 64
@@ -1675,17 +1806,19 @@ function Snake:beginPortalWarp(params)
 		head.drawY = exitY
 	end
 
-	local entrySource = {}
-	for i = 1, #entryClone do
-		entrySource[i] = copySegmentData(entryClone[i]) or {}
-	end
+        local entrySource = {}
+        for i = 1, #entryClone do
+                entrySource[i] = copySegmentData(entryClone[i]) or {}
+        end
+        recycleTrail(entryClone)
 
-	portalAnimation = {
-		timer = 0,
-		duration = warpDuration,
-		entryIndex = entryIndex,
-		entryX = entryX,
-		entryY = entryY,
+        clearPortalAnimation(portalAnimation)
+        portalAnimation = {
+                timer = 0,
+                duration = warpDuration,
+                entryIndex = entryIndex,
+                entryX = entryX,
+                entryY = entryY,
 		exitX = exitX,
 		exitY = exitY,
 		totalLength = totalLength,
@@ -2199,7 +2332,7 @@ function Snake:update(dt)
 	if hole and head then
 		local dx = hole.x - head.drawX
 		local dy = hole.y - head.drawY
-		local dist = math.sqrt(dx * dx + dy * dy)
+                local dist = sqrt(dx * dx + dy * dy)
 		if dist > 1e-4 then
 			local nx, ny = dx / dist, dy / dist
 			local prevX, prevY = direction.x, direction.y
@@ -2333,9 +2466,9 @@ function Snake:update(dt)
 	end
 
 	-- spatially uniform sampling along the motion path
-	local dx = newX - head.drawX
-	local dy = newY - head.drawY
-	local dist = math.sqrt(dx*dx + dy*dy)
+        local dx = newX - head.drawX
+        local dy = newY - head.drawY
+        local dist = sqrt(dx * dx + dy * dy)
 
 	local nx, ny = 0, 0
 	if dist > 0 then
@@ -2345,17 +2478,20 @@ function Snake:update(dt)
 	local remaining = dist
 	local prevX, prevY = head.drawX, head.drawY
 
-	while remaining >= SAMPLE_STEP do
-		prevX = prevX + nx * SAMPLE_STEP
-		prevY = prevY + ny * SAMPLE_STEP
-		table.insert(trail, 1, {
-			drawX = prevX,
-			drawY = prevY,
-			dirX  = direction.x,
-			dirY  = direction.y
-		})
-		remaining = remaining - SAMPLE_STEP
-	end
+        while remaining >= SAMPLE_STEP do
+                prevX = prevX + nx * SAMPLE_STEP
+                prevY = prevY + ny * SAMPLE_STEP
+                local segment = acquireSegment()
+                segment.drawX = prevX
+                segment.drawY = prevY
+                segment.dirX = direction.x
+                segment.dirY = direction.y
+                segment.fruitMarker = nil
+                segment.fruitMarkerX = nil
+                segment.fruitMarkerY = nil
+                table.insert(trail, 1, segment)
+                remaining = remaining - SAMPLE_STEP
+        end
 
 	-- final correction: put true head at exact new position
 	if trail[1] then
@@ -2387,16 +2523,17 @@ function Snake:update(dt)
 	local consumedLength = (hole and hole.consumedLength) or 0
 	local maxLen = math.max(0, segmentCount * SEGMENT_SPACING - consumedLength)
 
-	if maxLen == 0 then
-		trail = {}
-		len = 0
-	end
+        if maxLen == 0 then
+                recycleTrail(trail)
+                trail = {}
+                len = 0
+        end
 
 	local traveled = 0
 	for i = 2, #trail do
-		local dx = trail[i-1].drawX - trail[i].drawX
-		local dy = trail[i-1].drawY - trail[i].drawY
-		local segLen = math.sqrt(dx*dx + dy*dy)
+                local dx = trail[i - 1].drawX - trail[i].drawX
+                local dy = trail[i - 1].drawY - trail[i].drawY
+                local segLen = sqrt(dx * dx + dy * dy)
 
 		if traveled + segLen > maxLen then
 			local excess = traveled + segLen - maxLen
@@ -2404,11 +2541,9 @@ function Snake:update(dt)
 			local tailX = trail[i-1].drawX - dx * t
 			local tailY = trail[i-1].drawY - dy * t
 
-			for j = #trail, i+1, -1 do
-				table.remove(trail, j)
-			end
+                        releaseSegmentRange(trail, i + 1)
 
-			trail[i].drawX, trail[i].drawY = tailX, tailY
+                        trail[i].drawX, trail[i].drawY = tailX, tailY
 			break
 		else
 			traveled = traveled + segLen
@@ -2524,17 +2659,14 @@ function Snake:update(dt)
 		local entryLength = totalLength * (1 - progress)
 		local exitLength = totalLength * progress
 
-		state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength)
-		state.exitTrail = sliceTrailByLength(trail, exitLength)
+                state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength, state.entryTrail)
+                state.exitTrail = sliceTrailByLength(trail, exitLength, state.exitTrail)
 
-		if (not state.exitTrail or #state.exitTrail == 0) and trail and trail[1] then
-			state.exitTrail = {copySegmentData(trail[1])}
-		end
-
-		if progress >= 1 then
-			portalAnimation = nil
-		end
-	end
+                if progress >= 1 then
+                        clearPortalAnimation(state)
+                        portalAnimation = nil
+                end
+        end
 
 	-- update timers
 	if popTimer > 0 then
@@ -2553,17 +2685,21 @@ function Snake:update(dt)
 		self.damageFlashTimer = math.max(0, self.damageFlashTimer - dt)
 	end
 
-	if severedPieces and #severedPieces > 0 then
-		for index = #severedPieces, 1, -1 do
-			local piece = severedPieces[index]
-			if piece then
-				piece.timer = (piece.timer or 0) - dt
-				if piece.timer <= 0 then
-					table.remove(severedPieces, index)
-				end
-			end
-		end
-	end
+        if severedPieces and #severedPieces > 0 then
+                for index = #severedPieces, 1, -1 do
+                        local piece = severedPieces[index]
+                        if piece then
+                                piece.timer = (piece.timer or 0) - dt
+                                if piece.timer <= 0 then
+                                        if piece.trail then
+                                                recycleTrail(piece.trail)
+                                                piece.trail = nil
+                                        end
+                                        table.remove(severedPieces, index)
+                                end
+                        end
+                end
+        end
 
 	return true
 end
@@ -2998,7 +3134,7 @@ function Snake:handleSawBodyCut(context)
 			if sx and sy and prevCutX and prevCutY then
 				local ddx = sx - prevCutX
 				local ddy = sy - prevCutY
-				tailDistance = tailDistance + math.sqrt(ddx * ddx + ddy * ddy)
+                                tailDistance = tailDistance + sqrt(ddx * ddx + ddy * ddy)
 				prevCutX, prevCutY = sx, sy
 			end
 		end
@@ -3042,18 +3178,22 @@ function Snake:handleSawBodyCut(context)
 	local severedTrail = {}
 	severedTrail[1] = copySegmentData(newTail)
 
-	for i = index, #trail do
-		local segCopy = copySegmentData(trail[i])
-		if segCopy then
-			table.insert(severedTrail, segCopy)
-		end
-	end
+        for i = index, #trail do
+                local segCopy = copySegmentData(trail[i])
+                if segCopy then
+                        severedTrail[#severedTrail + 1] = segCopy
+                end
+        end
 
-	for i = #trail, previousIndex + 1, -1 do
-		table.remove(trail, i)
-	end
+        for i = #trail, previousIndex + 1, -1 do
+                local removed = trail[i]
+                trail[i] = nil
+                if removed then
+                        releaseSegment(removed)
+                end
+        end
 
-	table.insert(trail, newTail)
+        trail[#trail + 1] = newTail
 
 	addSeveredTrail(severedTrail, lostSegments + 1)
 	spawnSawCutParticles(cutX, cutY, lostSegments)
@@ -3107,7 +3247,7 @@ function Snake:checkSawBodyCollision()
 					if cx and cy then
 						local dx = cx - prevX
 						local dy = cy - prevY
-						local segLen = math.sqrt(dx * dx + dy * dy)
+                                                local segLen = sqrt(dx * dx + dy * dy)
 						local minX = math.min(prevX, cx) - bodyRadius
 						local minY = math.min(prevY, cy) - bodyRadius
 						local maxX = math.max(prevX, cx) + bodyRadius
