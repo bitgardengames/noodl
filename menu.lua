@@ -470,30 +470,6 @@ function Menu:draw()
 				statusBarHeight = statusBarHeight + progressFont:getHeight() + 6
 			end
 		end
-		local mx, my = love.mouse.getPosition()
-		local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
-		if hovered then
-			local timeRemaining = DailyChallenges:getTimeUntilReset()
-			local tooltipText
-			if timeRemaining and timeRemaining > 0 then
-				local countdown = formatResetCountdown(timeRemaining)
-				tooltipText = Localization:get("menu.daily_panel_reset_tooltip", { time = countdown })
-			else
-				tooltipText = Localization:get("menu.daily_panel_reset_tooltip_soon")
-			end
-			Tooltip:show(tooltipText, {
-				id = "dailyChallengeReset",
-				x = panelX + panelWidth / 2,
-				y = panelY,
-				placement = "above",
-				maxWidth = panelWidth,
-				offset = 14,
-				delay = 0.12,
-			})
-		else
-			Tooltip:hide("dailyChallengeReset")
-		end
-
 		if dailyChallenge.xpReward and dailyChallenge.xpReward > 0 then
 			headerText = string.format("%s · +%d XP", headerText, dailyChallenge.xpReward)
 		end
@@ -539,6 +515,30 @@ function Menu:draw()
 		end
 
 		local panelY = math.max(36, sh - panelHeight - 36)
+
+		local mx, my = love.mouse.getPosition()
+		local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
+		if hovered then
+			local timeRemaining = DailyChallenges:getTimeUntilReset()
+			local tooltipText
+			if timeRemaining and timeRemaining > 0 then
+				local countdown = formatResetCountdown(timeRemaining)
+				tooltipText = Localization:get("menu.daily_panel_reset_tooltip", { time = countdown })
+			else
+				tooltipText = Localization:get("menu.daily_panel_reset_tooltip_soon")
+			end
+			Tooltip:show(tooltipText, {
+				id = "dailyChallengeReset",
+				x = panelX + panelWidth / 2,
+				y = panelY,
+				placement = "above",
+				maxWidth = panelWidth,
+				offset = 14,
+				delay = 0.12,
+			})
+		else
+			Tooltip:hide("dailyChallengeReset")
+		end
 
 		setColorWithAlpha(Theme.shadowColor, eased * 0.7)
 		love.graphics.rectangle("fill", panelX + 6, panelY + 8, panelWidth, panelHeight, 14, 14)
