@@ -2046,12 +2046,9 @@ local pool = {
 		unlockTag = "abyssal_protocols",
 		weight = 1,
 		onAcquire = function(state)
-			Snake:addShields(3)
-			state.effects.sawStall = (state.effects.sawStall or 0) + 2
-			for _ = 1, 5 do
-				Snake:grow()
-			end
-			Snake.extraGrowth = (Snake.extraGrowth or 0) + 2
+			Snake:addShields(1)
+			Snake:addSpeedMultiplier(1.10)
+			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
 			state.effects.titanbloodPact = (state.effects.titanbloodPact or 0) + 1
 			if Snake.setTitanbloodStacks then
 				Snake:setTitanbloodStacks(state.effects.titanbloodPact)
