@@ -561,6 +561,11 @@ local english = {
                                 name = "Circuit Breaker",
                                 description = "Saw tracks and lasers freeze for 0.75s after each fruit.",
                         },
+                        tremor_bloom = {
+                                name = "Tremor Bloom",
+                                description = "Each time you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",
+                                activation_text = "Shockwave Bloom",
+                        },
                         contract_of_cinders = {
                                 name = "Contract of Cinders",
                                 description = "Gain +2 shields immediately. Each time a shield breaks, leave behind a burning ember that spawns a temporary saw on the next floor.",

@@ -5,6 +5,8 @@ local Saws = require("saws")
 local Lasers = require("lasers")
 local Score = require("score")
 local UI = require("ui")
+local Arena = require("arena")
+local SnakeUtils = require("snakeutils")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
 local PlayerStats = require("playerstats")
@@ -15,6 +17,7 @@ local floor = math.floor
 local max = math.max
 local min = math.min
 local pi = math.pi
+local abs = math.abs
 local insert = table.insert
 
 local Upgrades = {}
@@ -101,6 +104,8 @@ local CIRCUIT_BREAKER_STALL_DURATION = 0.75
 local SUBDUCTION_ARRAY_SINK_DURATION = 1.6
 local SUBDUCTION_ARRAY_VISUAL_LIMIT = 3
 local RESONANT_SHELL_DEFENSE_CAP = 5
+local TREMOR_BLOOM_RADIUS = 2
+local TREMOR_BLOOM_COLOR = {0.76, 0.64, 1.0, 1}
 
 local function getStacks(state, id)
 	if not state or not id then
@@ -297,11 +302,336 @@ local function getLaserEmitterDetails(limit)
         return targets
 end
 
+local function arenaHasGrid()
+        return Arena and Arena.cols and Arena.rows and Arena.getTileFromWorld and Arena.getCenterOfTile
+end
+
+local function getCellKey(col, row)
+        return tostring(col) .. ":" .. tostring(row)
+end
+
+local function isCellWithinBounds(col, row)
+        if not arenaHasGrid() then
+                return false
+        end
+
+        return col >= 1 and col <= Arena.cols and row >= 1 and row <= Arena.rows
+end
+
+local function isCellOpen(col, row, ignoreLookup)
+        if not isCellWithinBounds(col, row) then
+                return false
+        end
+
+        if ignoreLookup and ignoreLookup[getCellKey(col, row)] then
+                return true
+        end
+
+        if SnakeUtils and SnakeUtils.isOccupied then
+                return not SnakeUtils.isOccupied(col, row)
+        end
+
+        return true
+end
+
+local function addPosition(positions, x, y)
+        if positions and x and y then
+                positions[#positions + 1] = {x, y}
+        end
+end
+
+local function getPushCandidates(col, row, originCol, originRow)
+        if not (col and row and originCol and originRow) then
+                return nil
+        end
+
+        local dx = col - originCol
+        local dy = row - originRow
+
+        if dx == 0 and dy == 0 then
+                return nil
+        end
+
+        if max(abs(dx), abs(dy)) > TREMOR_BLOOM_RADIUS then
+                return nil
+        end
+
+        local stepX = 0
+        if dx > 0 then
+                stepX = 1
+        elseif dx < 0 then
+                stepX = -1
+        end
+
+        local stepY = 0
+        if dy > 0 then
+                stepY = 1
+        elseif dy < 0 then
+                stepY = -1
+        end
+
+        if stepX == 0 and stepY == 0 then
+                return nil
+        end
+
+        local candidates = {}
+        local function addCandidate(cx, cy)
+                candidates[#candidates + 1] = {cx, cy}
+        end
+
+        if stepX ~= 0 and stepY ~= 0 then
+                addCandidate(col + stepX, row + stepY)
+                if abs(dx) >= abs(dy) then
+                        addCandidate(col + stepX, row)
+                        addCandidate(col, row + stepY)
+                else
+                        addCandidate(col, row + stepY)
+                        addCandidate(col + stepX, row)
+                end
+        else
+                addCandidate(col + stepX, row + stepY)
+        end
+
+        return candidates
+end
+
+local function pushNearbyRocks(originCol, originRow, positions)
+        if not Rocks or not Rocks.getAll or not arenaHasGrid() then
+                return false
+        end
+
+        local moved = false
+        local rocks = Rocks:getAll()
+        if not rocks then
+                return false
+        end
+
+        for _, rock in ipairs(rocks) do
+                local col, row = rock.col, rock.row
+                if col and row then
+                        local candidates = getPushCandidates(col, row, originCol, originRow)
+                        if candidates then
+                                for _, candidate in ipairs(candidates) do
+                                        local targetCol, targetRow = candidate[1], candidate[2]
+                                        if isCellOpen(targetCol, targetRow) then
+                                                if SnakeUtils and SnakeUtils.setOccupied then
+                                                        SnakeUtils.setOccupied(col, row, false)
+                                                end
+
+                                                local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
+                                                rock.col = targetCol
+                                                rock.row = targetRow
+                                                rock.x = centerX
+                                                rock.y = centerY
+                                                rock.timer = 0
+                                                rock.phase = "done"
+                                                rock.scaleX = 1
+                                                rock.scaleY = 1
+                                                rock.offsetY = 0
+
+                                                if SnakeUtils and SnakeUtils.setOccupied then
+                                                        SnakeUtils.setOccupied(targetCol, targetRow, true)
+                                                end
+
+                                                addPosition(positions, centerX, centerY)
+                                                moved = true
+                                                break
+                                        end
+                                end
+                        end
+                end
+        end
+
+        return moved
+end
+
+local function computeLaserFacing(dir, col, row)
+        if dir == "vertical" then
+                local midpoint = floor((Arena.rows or 1) / 2)
+                if row and row > midpoint then
+                        return -1
+                end
+        else
+                local midpoint = floor((Arena.cols or 1) / 2)
+                if col and col > midpoint then
+                        return -1
+                end
+        end
+
+        return 1
+end
+
+local function pushNearbyLasers(originCol, originRow, positions)
+        if not Lasers or not Lasers.getEmitters or not arenaHasGrid() then
+                return false
+        end
+
+        local moved = false
+        local emitters = Lasers:getEmitters()
+        if not emitters then
+                return false
+        end
+
+        for _, beam in ipairs(emitters) do
+                local col, row = beam.col, beam.row
+                if col and row then
+                        local candidates = getPushCandidates(col, row, originCol, originRow)
+                        if candidates then
+                                for _, candidate in ipairs(candidates) do
+                                        local targetCol, targetRow = candidate[1], candidate[2]
+                                        if isCellOpen(targetCol, targetRow) then
+                                                if SnakeUtils and SnakeUtils.setOccupied then
+                                                        SnakeUtils.setOccupied(col, row, false)
+                                                end
+
+                                                local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
+                                                beam.col = targetCol
+                                                beam.row = targetRow
+                                                beam.x = centerX
+                                                beam.y = centerY
+                                                beam.facing = computeLaserFacing(beam.dir, targetCol, targetRow)
+
+                                                if SnakeUtils and SnakeUtils.setOccupied then
+                                                        SnakeUtils.setOccupied(targetCol, targetRow, true)
+                                                end
+
+                                                addPosition(positions, centerX, centerY)
+                                                moved = true
+                                                break
+                                        end
+                                end
+                        end
+                end
+        end
+
+        return moved
+end
+
+local function buildCellLookup(cells)
+        local lookup = {}
+        if not cells then
+                return lookup
+        end
+
+        for i = 1, #cells do
+                local cell = cells[i]
+                if cell then
+                        lookup[getCellKey(cell[1], cell[2])] = true
+                end
+        end
+
+        return lookup
+end
+
+local function pushNearbySaws(originCol, originRow, positions)
+        if not Saws or not Saws.getAll or not arenaHasGrid() then
+                return false
+        end
+
+        if not SnakeUtils or not (SnakeUtils.getSawTrackCells and SnakeUtils.releaseCells and SnakeUtils.occupySawTrack) then
+                return false
+        end
+
+        local moved = false
+        local saws = Saws:getAll()
+        if not saws then
+                return false
+        end
+
+        for _, saw in ipairs(saws) do
+                local sx, sy = saw.x, saw.y
+                if sx and sy then
+                        local col, row = Arena:getTileFromWorld(sx, sy)
+                        if col and row then
+                                local candidates = getPushCandidates(col, row, originCol, originRow)
+                                if candidates then
+                                        local oldCells = SnakeUtils.getSawTrackCells(saw.x, saw.y, saw.dir)
+                                        local ignoreLookup = buildCellLookup(oldCells)
+
+                                        for _, candidate in ipairs(candidates) do
+                                                local targetCol, targetRow = candidate[1], candidate[2]
+                                                if isCellOpen(targetCol, targetRow, ignoreLookup) then
+                                                        local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
+                                                        local targetCells = SnakeUtils.getSawTrackCells(centerX, centerY, saw.dir)
+                                                        if targetCells and #targetCells > 0 then
+                                                                local blocked = false
+                                                                if SnakeUtils.isOccupied then
+                                                                        for i = 1, #targetCells do
+                                                                                local cell = targetCells[i]
+                                                                                local key = getCellKey(cell[1], cell[2])
+                                                                                if not ignoreLookup[key] and SnakeUtils.isOccupied(cell[1], cell[2]) then
+                                                                                        blocked = true
+                                                                                        break
+                                                                                end
+                                                                        end
+                                                                end
+
+                                                                if not blocked then
+                                                                        if oldCells then
+                                                                                SnakeUtils.releaseCells(oldCells)
+                                                                        end
+
+                                                                        SnakeUtils.occupySawTrack(centerX, centerY, saw.dir)
+                                                                        saw.x = centerX
+                                                                        saw.y = centerY
+                                                                        saw.collisionCells = nil
+                                                                        addPosition(positions, centerX, centerY)
+                                                                        moved = true
+                                                                        break
+                                                                end
+                                                        end
+                                                end
+                                        end
+                                end
+                        end
+                end
+        end
+
+        return moved
+end
+
+local function tremorBloomPushHazards(data)
+        if not data or not arenaHasGrid() then
+                return false, nil
+        end
+
+        local fx, fy = getEventPosition(data)
+        if not (fx and fy) then
+                return false, nil
+        end
+
+        local originCol, originRow = Arena:getTileFromWorld(fx, fy)
+        if not (originCol and originRow) then
+                return false, nil
+        end
+
+        local positions = {}
+        local moved = false
+
+        if pushNearbyRocks(originCol, originRow, positions) then
+                moved = true
+        end
+
+        if pushNearbyLasers(originCol, originRow, positions) then
+                moved = true
+        end
+
+        if pushNearbySaws(originCol, originRow, positions) then
+                moved = true
+        end
+
+        if not moved then
+                return false, nil
+        end
+
+        return true, positions
+end
+
 local function stoneSkinShieldHandler(data, state)
-	if not state then return end
-	if getStacks(state, "stone_skin") <= 0 then return end
-	if not data or data.cause ~= "rock" then return end
-	if not Rocks or not Rocks.shatterNearest then return end
+        if not state then return end
+        if getStacks(state, "stone_skin") <= 0 then return end
+        if not data or data.cause ~= "rock" then return end
+        if not Rocks or not Rocks.shatterNearest then return end
 
 	local fx, fy = getEventPosition(data)
 	celebrateUpgrade(nil, nil, {
@@ -1323,6 +1653,106 @@ local pool = {
                                         applySegmentPosition(fallbackOptions, 0.82)
                                         applyCircuitBreakerFacing(fallbackOptions, 0, -1)
                                         celebrateUpgrade(nil, nil, fallbackOptions)
+                                end
+                        end,
+                },
+        register({
+                id = "tremor_bloom",
+                nameKey = "upgrades.tremor_bloom.name",
+                descKey = "upgrades.tremor_bloom.description",
+                rarity = "rare",
+                tags = {"mobility", "hazard", "rocks", "control"},
+                onAcquire = function()
+                        celebrateUpgrade(getUpgradeString("tremor_bloom", "name"), nil, {
+                                color = TREMOR_BLOOM_COLOR,
+                                textOffset = 46,
+                                textScale = 1.08,
+                                particleCount = 18,
+                                particleSpeed = 120,
+                                particleLife = 0.38,
+                                visual = {
+                                        variant = "pulse",
+                                        showBase = false,
+                                        life = 0.78,
+                                        innerRadius = 10,
+                                        outerRadius = 64,
+                                        ringCount = 3,
+                                        ringSpacing = 10,
+                                        addBlend = true,
+                                        color = TREMOR_BLOOM_COLOR,
+                                        variantSecondaryColor = {0.52, 0.44, 0.96, 0.85},
+                                        variantTertiaryColor = {1.0, 0.86, 0.4, 0.62},
+                                },
+                        })
+                end,
+                handlers = {
+                        fruitCollected = function(data, state)
+                                if getStacks(state, "tremor_bloom") <= 0 then
+                                        return
+                                end
+
+                                local moved, hazardPositions = tremorBloomPushHazards(data)
+                                if not moved then
+                                        return
+                                end
+
+                                local activationLabel = getUpgradeString("tremor_bloom", "activation_text")
+                                if activationLabel == "" or activationLabel == "upgrades.tremor_bloom.activation_text" then
+                                        activationLabel = nil
+                                end
+
+                                local celebrationOptions = {
+                                        color = TREMOR_BLOOM_COLOR,
+                                        textOffset = 48,
+                                        textScale = 1.08,
+                                        particleCount = 18,
+                                        particleSpeed = 120,
+                                        particleLife = 0.4,
+                                        visual = {
+                                                variant = "pulse",
+                                                showBase = false,
+                                                life = 0.72,
+                                                innerRadius = 12,
+                                                outerRadius = 70,
+                                                ringCount = 3,
+                                                ringSpacing = 10,
+                                                addBlend = true,
+                                                color = TREMOR_BLOOM_COLOR,
+                                                variantSecondaryColor = {0.52, 0.44, 0.96, 0.8},
+                                                variantTertiaryColor = {1.0, 0.84, 0.38, 0.56},
+                                        },
+                                }
+
+                                celebrateUpgrade(activationLabel, data, celebrationOptions)
+
+                                if hazardPositions and #hazardPositions > 0 then
+                                        for _, pos in ipairs(hazardPositions) do
+                                                local hx, hy = pos[1], pos[2]
+                                                if hx and hy then
+                                                        celebrateUpgrade(nil, nil, {
+                                                                x = hx,
+                                                                y = hy,
+                                                                skipText = true,
+                                                                color = TREMOR_BLOOM_COLOR,
+                                                                particleCount = 8,
+                                                                particleSpeed = 90,
+                                                                particleLife = 0.32,
+                                                                visual = {
+                                                                        variant = "pulse",
+                                                                        showBase = false,
+                                                                        life = 0.5,
+                                                                        innerRadius = 8,
+                                                                        outerRadius = 40,
+                                                                        ringCount = 2,
+                                                                        ringSpacing = 7,
+                                                                        addBlend = true,
+                                                                        color = TREMOR_BLOOM_COLOR,
+                                                                        variantSecondaryColor = {0.52, 0.44, 0.96, 0.7},
+                                                                        variantTertiaryColor = {1.0, 0.84, 0.38, 0.48},
+                                                                },
+                                                        })
+                                                end
+                                        end
                                 end
                         end,
                 },
