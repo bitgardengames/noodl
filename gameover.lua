@@ -39,6 +39,7 @@ local fontTitle
 local fontScore
 local fontScoreValue
 local fontSmall
+local fontMessage
 local fontBadge
 local fontProgressTitle
 local fontProgressValue
@@ -197,10 +198,11 @@ local function measureXpPanelHeight(self, width, celebrationCount)
 	height = height + 6 + smallHeight
 	height = height + 18
 
-	local maxRadius = max(48, min(74, (width / 2) - 24))
-	local ringThickness = max(14, min(24, maxRadius * 0.42))
-	local ringRadius = max(32, maxRadius - ringThickness * 0.25)
-	local outerRadius = ringRadius + ringThickness * 0.45
+        local baseMaxRadius = max(48, min(74, (width / 2) - 24))
+        local scaledMaxRadius = baseMaxRadius * 1.2
+        local ringThickness = max(14, min(24, scaledMaxRadius * 0.42))
+        local ringRadius = max(32, scaledMaxRadius - ringThickness * 0.25)
+        local outerRadius = ringRadius + ringThickness * 0.45
 
 	height = height + ringRadius + outerRadius
 	height = height + 18
@@ -246,31 +248,46 @@ local function copyColor(color)
 end
 
 local function lightenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r + (1 - r) * factor,
-		g + (1 - g) * factor,
-		b + (1 - b) * factor,
-		a * (0.65 + factor * 0.35),
-	}
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r + (1 - r) * factor,
+                g + (1 - g) * factor,
+                b + (1 - b) * factor,
+                a * (0.65 + factor * 0.35),
+        }
 end
 
 local function darkenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r * (1 - factor),
-		g * (1 - factor),
-		b * (1 - factor),
-		a,
-	}
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r * (1 - factor),
+                g * (1 - factor),
+                b * (1 - factor),
+                a,
+        }
+end
+
+local function desaturateColor(color, amount)
+        amount = max(0, min(1, amount or 0.5))
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        local grey = (r * 0.299) + (g * 0.587) + (b * 0.114)
+        return {
+                r + (grey - r) * amount,
+                g + (grey - g) * amount,
+                b + (grey - b) * amount,
+                a,
+        }
 end
 
 local function withAlpha(color, alpha)
@@ -294,44 +311,48 @@ local function configureBackgroundEffect()
 	local pulse = copyColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
 	local vignette
 
-	if GameOver.isVictory then
-		effect.backdropIntensity = min(0.9, (defaultBackdrop or 0.72) + 0.08)
+        if GameOver.isVictory then
+                effect.backdropIntensity = min(0.9, (defaultBackdrop or 0.72) + 0.08)
 
-		accent = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or accent), 0.32)
-		accent[4] = 1
+                accent = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or accent), 0.32)
+                accent[4] = 1
 
-		pulse = lightenColor(copyColor(Theme.progressColor or pulse), 0.4)
-		pulse[4] = 1
+                pulse = lightenColor(copyColor(Theme.progressColor or pulse), 0.4)
+                pulse[4] = 1
 
-		baseColor = lightenColor(baseColor, 0.08)
-		baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+                baseColor = darkenColor(baseColor, 0.08)
+                baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-		vignette = {
-			color = withAlpha(lightenColor(copyColor(Theme.goldenPearColor or Theme.accentTextColor or pulse), 0.28), 0.22),
-			alpha = 0.22,
-			steps = 4,
-			thickness = nil,
-		}
-	else
-		effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
+                local vignetteColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.accentTextColor or pulse), 0.2)
+                vignetteColor = desaturateColor(vignetteColor, 0.4)
+                vignette = {
+                        color = withAlpha(vignetteColor, 0.22),
+                        alpha = 0.22,
+                        steps = 4,
+                        thickness = nil,
+                }
+        else
+                effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
 
-		local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-		accent = lightenColor(copyColor(coolAccent), 0.18)
-		accent[4] = 1
+                local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+                accent = lightenColor(copyColor(coolAccent), 0.18)
+                accent[4] = 1
 
-		pulse = lightenColor(copyColor(Theme.panelBorder or pulse), 0.26)
-		pulse[4] = 1
+                pulse = lightenColor(copyColor(Theme.panelBorder or pulse), 0.26)
+                pulse[4] = 1
 
-		baseColor = darkenColor(baseColor, 0.15)
-		baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+                baseColor = darkenColor(baseColor, 0.22)
+                baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-		vignette = {
-			color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
-			alpha = 0.28,
-			steps = 3,
-			thickness = nil,
-		}
-	end
+                local vignetteColor = lightenColor(copyColor(coolAccent), 0.04)
+                vignetteColor = desaturateColor(vignetteColor, 0.45)
+                vignette = {
+                        color = withAlpha(vignetteColor, 0.28),
+                        alpha = 0.28,
+                        steps = 3,
+                        thickness = nil,
+                }
+        end
 
 	Shaders.configure(effect, {
 		bgColor = baseColor,
@@ -778,25 +799,43 @@ local function calculateAchievementsLayout(achievements, panelWidth, sectionPadd
 end
 
 local function defaultButtonLayout(sw, sh, defs, startY)
-	local list = {}
-	local buttonWidth, buttonHeight, buttonSpacing = getButtonMetrics()
-	local centerX = sw / 2 - buttonWidth / 2
+        local list = {}
+        local buttonWidth, buttonHeight, buttonSpacing = getButtonMetrics()
+        if #defs == 2 then
+                local totalWidth = buttonWidth * 2 + buttonSpacing
+                local startX = (sw - totalWidth) / 2
+                for i, def in ipairs(defs) do
+                        list[#list + 1] = {
+                                id = def.id,
+                                textKey = def.textKey,
+                                text = def.text,
+                                action = def.action,
+                                x = startX + (i - 1) * (buttonWidth + buttonSpacing),
+                                y = startY,
+                                w = buttonWidth,
+                                h = buttonHeight,
+                        }
+                end
+                return list
+        end
 
-	for i, def in ipairs(defs) do
-		local y = startY + (i - 1) * (buttonHeight + buttonSpacing)
-		list[#list + 1] = {
-			id = def.id,
-			textKey = def.textKey,
-			text = def.text,
-			action = def.action,
-			x = centerX,
-			y = y,
-			w = buttonWidth,
-			h = buttonHeight,
-		}
-	end
+        local centerX = (sw - buttonWidth) / 2
 
-	return list
+        for i, def in ipairs(defs) do
+                local y = startY + (i - 1) * (buttonHeight + buttonSpacing)
+                list[#list + 1] = {
+                        id = def.id,
+                        textKey = def.textKey,
+                        text = def.text,
+                        action = def.action,
+                        x = centerX,
+                        y = y,
+                        w = buttonWidth,
+                        h = buttonHeight,
+                }
+        end
+
+        return list
 end
 
 local function drawCenteredPanel()
@@ -821,7 +860,7 @@ local function handleButtonAction(_, action)
 end
 
 function GameOver:updateLayoutMetrics()
-	if not fontSmall or not fontScore then
+        if not fontSmall or not fontScore or not fontMessage then
 		return false
 	end
 
@@ -846,9 +885,9 @@ function GameOver:updateLayoutMetrics()
 	local alignedPanelWidth = wrapLimit
 
 	local messageText = self.deathMessage or Localization:get("gameover.default_message")
-	local _, wrappedMessage = fontSmall:getWrap(messageText, wrapLimit)
-	local messageLines = max(1, #wrappedMessage)
-	local messageHeight = messageLines * fontSmall:getHeight()
+        local _, wrappedMessage = fontMessage:getWrap(messageText, wrapLimit)
+        local messageLines = max(1, #wrappedMessage)
+        local messageHeight = messageLines * fontMessage:getHeight()
 	local messagePanelHeight = floor(messageHeight + sectionPadding * 2 + 0.5)
 
 	local scoreHeaderHeight = fontProgressSmall:getHeight()
@@ -1152,7 +1191,7 @@ function GameOver:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
 	buttonSpacing = max(0, buttonSpacing or 0)
 
 	local panelHeight = max(0, self.summaryPanelHeight or 0)
-	local titleTop = 48
+        local titleTop = 78
 	local titleHeight = fontTitle and fontTitle:getHeight() or 0
 	local panelTopMin = titleTop + titleHeight + 24
 	local bottomMargin = 40
@@ -1186,14 +1225,18 @@ function GameOver:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
 end
 
 function GameOver:updateButtonLayout()
-	local sw, sh = Screen:get()
-	local _, buttonHeight, buttonSpacing = getButtonMetrics()
-	local totalButtonHeight = 0
-	if #buttonDefs > 0 then
-		totalButtonHeight = #buttonDefs * buttonHeight + max(0, (#buttonDefs - 1) * buttonSpacing)
-	end
+        local sw, sh = Screen:get()
+        local _, buttonHeight, buttonSpacing = getButtonMetrics()
+        local totalButtonHeight = 0
+        if #buttonDefs > 0 then
+                if #buttonDefs == 2 then
+                        totalButtonHeight = buttonHeight
+                else
+                        totalButtonHeight = #buttonDefs * buttonHeight + max(0, (#buttonDefs - 1) * buttonSpacing)
+                end
+        end
 
-	local _, startY = self:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
+        local _, startY = self:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
 	local defs = defaultButtonLayout(sw, sh, buttonDefs, startY)
 
 	buttonList:reset(defs)
@@ -1242,14 +1285,15 @@ function GameOver:enter(data)
 
 	configureBackgroundEffect()
 
-	fontTitle = UI.fonts.display or UI.fonts.title
-	fontScore = UI.fonts.title or UI.fonts.display
-	fontScoreValue = UI.fonts.heading or UI.fonts.subtitle or UI.fonts.title
-	fontSmall = UI.fonts.caption or UI.fonts.body
-	fontBadge = UI.fonts.badge or UI.fonts.button
-	fontProgressTitle = UI.fonts.heading or UI.fonts.subtitle
-	fontProgressValue = UI.fonts.display or UI.fonts.title
-	fontProgressSmall = UI.fonts.caption or UI.fonts.body
+        fontTitle = UI.fonts.display or UI.fonts.title
+        fontScore = UI.fonts.title or UI.fonts.display
+        fontScoreValue = UI.fonts.heading or UI.fonts.subtitle or UI.fonts.title
+        fontSmall = UI.fonts.caption or UI.fonts.body
+        fontMessage = UI.fonts.body or UI.fonts.prompt or fontSmall
+        fontBadge = UI.fonts.badge or UI.fonts.button
+        fontProgressTitle = UI.fonts.heading or UI.fonts.subtitle
+        fontProgressValue = UI.fonts.display or UI.fonts.title
+        fontProgressSmall = UI.fonts.caption or UI.fonts.body
 
 	-- Merge default stats with provided stats
 	stats = {
@@ -1524,7 +1568,7 @@ local function drawXpSection(self, x, y, width)
 	local animatedHeight = self.xpSectionHeight or targetHeight
 	local height = max(160, baseHeight, targetHeight, animatedHeight)
 	local headerY = y + 18
-	UI.drawLabel(getLocalizedOrFallback("gameover.meta_progress_title", "Experience"), x, headerY, width, "center", {
+        UI.drawLabel(getLocalizedOrFallback("gameover.meta_progress_title", "Run Summary"), x, headerY, width, "center", {
 		font = fontProgressTitle,
 		color = UI.colors.text,
 	})
@@ -1560,13 +1604,14 @@ local function drawXpSection(self, x, y, width)
 		color = UI.colors.mutedText or UI.colors.text,
 	})
 
-	local ringTop = gainedY + fontProgressSmall:getHeight() + 18
-	local centerX = x + width / 2
-	local maxRadius = max(48, min(74, (width / 2) - 24))
-	local ringThickness = max(14, min(24, maxRadius * 0.42))
-	local ringRadius = maxRadius - ringThickness * 0.25
-	local innerRadius = max(32, ringRadius - ringThickness * 0.6)
-	local outerRadius = ringRadius + ringThickness * 0.45
+        local ringTop = gainedY + fontProgressSmall:getHeight() + 18
+        local centerX = x + width / 2
+        local baseMaxRadius = max(48, min(74, (width / 2) - 24))
+        local scaledMaxRadius = baseMaxRadius * 1.2
+        local ringThickness = max(14, min(24, scaledMaxRadius * 0.42))
+        local ringRadius = max(32, scaledMaxRadius - ringThickness * 0.25)
+        local innerRadius = max(32, ringRadius - ringThickness * 0.6)
+        local outerRadius = ringRadius + ringThickness * 0.45
 	local centerY = ringTop + ringRadius
 	local percent = clamp(anim.visualPercent or 0, 0, 1)
 	local pulse = clamp(anim.barPulse or 0, 0, 1)
@@ -1869,11 +1914,11 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 	local messageText = self.deathMessage or Localization:get("gameover.default_message")
 	local messagePanelHeight = self.messagePanelHeight or 0
 	if messagePanelHeight > 0 then
-		drawSummaryPanelBackground(primaryX, currentY, primaryWidth, messagePanelHeight)
-		UI.drawLabel(messageText, primaryX, currentY + sectionPadding, wrapLimit, "center", {
-			font = fontSmall,
-			color = UI.colors.mutedText or UI.colors.text,
-		})
+                drawSummaryPanelBackground(primaryX, currentY, primaryWidth, messagePanelHeight)
+                UI.drawLabel(messageText, primaryX, currentY + sectionPadding, wrapLimit, "center", {
+                        font = fontMessage,
+                        color = UI.colors.mutedText or UI.colors.text,
+                })
 		currentY = currentY + messagePanelHeight
 	end
 
@@ -1943,10 +1988,10 @@ function GameOver:draw()
 	local fallbackTitle = self.isVictory and "Noodl's Grand Feast" or "Game Over"
 	local titleText = self.customTitle or getLocalizedOrFallback(titleKey, fallbackTitle)
 
-	UI.drawLabel(titleText, 0, 48, sw, "center", {
-		font = fontTitle,
-		color = UI.colors.text,
-	})
+        UI.drawLabel(titleText, 0, 78, sw, "center", {
+                font = fontTitle,
+                color = UI.colors.text,
+        })
 
 	drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 
