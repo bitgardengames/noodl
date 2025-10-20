@@ -619,11 +619,6 @@ local english = {
 				name = "Spectral Harvest",
 				description = "Once per floor, an echo collects the next fruit immediately after you do.",
 			},
-			solar_reservoir = {
-				name = "Solar Reservoir",
-				description = "The first fruit each floor stalls saws for 2s and grants +4 bonus score.",
-				combo_bonus = "Solar Reservoir +4",
-			},
 			tectonic_resolve = {
 				name = "Tectonic Resolve",
 				description = "Rock spawn chance decreases by 15%. Each fruit has a 25% chance to shatter the nearest rock.",
@@ -632,10 +627,10 @@ local english = {
 				name = "Titanblood Pact",
 				description = "Gain +3 shields and +2s saw stall duration. Grow by +5 and gain +2 extra growth.",
 			},
-			chronospiral_core = {
-				name = "Chronospiral Core",
-				description = "Saws move 25% slower and spin 40% slower. Combo rewards increase by 60%. You grow by +4 and gain +1 extra growth.",
-			},
+                        chronospiral_core = {
+                                name = "Chronospiral Core",
+                                description = "Travel speed is 25% slower.",
+                        },
 			phoenix_echo = {
 				name = "Phoenix Echo",
 				description = "Once per run, a fatal crash rewinds without resetting the floor.",
