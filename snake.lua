@@ -1277,15 +1277,17 @@ local function trimTrailToSegmentLimit()
                 return
         end
 
-	local traveled = 0
-	local i = 2
-	while i <= #trail do
-		local prev = trail[i - 1]
-		local seg = trail[i]
-		local px, py = prev and (prev.drawX or prev.x), prev and (prev.drawY or prev.y)
-		local sx, sy = seg and (seg.drawX or seg.x), seg and (seg.drawY or seg.y)
+        local traveled = 0
+        local i = 2
+        local gluttonsWakeActive = isGluttonsWakeActive()
+        while i <= #trail do
+                local prev = trail[i - 1]
+                local seg = trail[i]
+                local px, py = prev and (prev.drawX or prev.x), prev and (prev.drawY or prev.y)
+                local sx, sy = seg and (seg.drawX or seg.x), seg and (seg.drawY or seg.y)
 
                 if not (px and py and sx and sy) then
+                        crystallizeGluttonsWakeSegments(trail, i, #trail, gluttonsWakeActive)
                         releaseSegmentRange(trail, i)
                         break
                 end
@@ -1295,6 +1297,9 @@ local function trimTrailToSegmentLimit()
                 local segLen = sqrt(dx * dx + dy * dy)
 
                 if segLen <= 0 then
+                        if gluttonsWakeActive then
+                                spawnGluttonsWakeRock(trail[i])
+                        end
                         local removed = trail[i]
                         if removed then
                                 releaseSegment(removed)
@@ -1307,12 +1312,13 @@ local function trimTrailToSegmentLimit()
                                 local tailX = px - dx * t
                                 local tailY = py - dy * t
 
+                                crystallizeGluttonsWakeSegments(trail, i + 1, #trail, gluttonsWakeActive)
                                 releaseSegmentRange(trail, i + 1)
 
                                 seg.drawX = tailX
                                 seg.drawY = tailY
-				if not seg.dirX or not seg.dirY then
-					seg.dirX = direction.x
+                                if not seg.dirX or not seg.dirY then
+                                        seg.dirX = direction.x
 					seg.dirY = direction.y
 				end
 				break
@@ -1695,14 +1701,85 @@ function Snake:load(w, h)
 end
 
 local function getUpgradesModule()
-	return package.loaded["upgrades"]
+        return package.loaded["upgrades"]
+end
+
+local function isGluttonsWakeActive()
+        local Upgrades = getUpgradesModule()
+        if not (Upgrades and Upgrades.getEffect) then
+                return false
+        end
+
+        local effect = Upgrades:getEffect("gluttonsWake")
+        if effect == nil then
+                return false
+        end
+
+        if type(effect) == "boolean" then
+                return effect
+        end
+
+        if type(effect) == "number" then
+                return effect ~= 0
+        end
+
+        return not not effect
+end
+
+local function spawnGluttonsWakeRock(segment)
+        if not segment or not segment.fruitMarker then
+                return
+        end
+
+        local x = segment.drawX or segment.x
+        local y = segment.drawY or segment.y
+        if not (x and y) then
+                return
+        end
+
+        if Rocks and Rocks.spawn then
+                Rocks:spawn(x, y)
+                if Arena and Arena.getTileFromWorld and SnakeUtils and SnakeUtils.setOccupied then
+                        local col, row = Arena:getTileFromWorld(x, y)
+                        if col and row then
+                                SnakeUtils.setOccupied(col, row, true)
+                        end
+                end
+        end
+end
+
+local function crystallizeGluttonsWakeSegments(buffer, startIndex, endIndex, upgradeActive)
+        if not buffer then
+                return
+        end
+
+        if upgradeActive == nil then
+                upgradeActive = isGluttonsWakeActive()
+        end
+
+        if not upgradeActive then
+                return
+        end
+
+        startIndex = startIndex or 1
+        endIndex = endIndex or #buffer
+        if endIndex > #buffer then
+                endIndex = #buffer
+        end
+
+        for i = startIndex, endIndex do
+                local segment = buffer[i]
+                if segment and segment.fruitMarker then
+                        spawnGluttonsWakeRock(segment)
+                end
+        end
 end
 
 function Snake:setDirection(name)
-	if not isDead then
-		local nd = SnakeUtils.calculateDirection(direction, name)
-		if nd then
-			assignDirection(pendingDir, nd.x, nd.y)
+        if not isDead then
+                local nd = SnakeUtils.calculateDirection(direction, name)
+                if nd then
+                        assignDirection(pendingDir, nd.x, nd.y)
 		end
 	end
 end
@@ -2537,24 +2614,26 @@ function Snake:update(dt)
                 len = 0
         end
 
-	local traveled = 0
-	for i = 2, #trail do
+        local traveled = 0
+        local gluttonsWakeActive = isGluttonsWakeActive()
+        for i = 2, #trail do
                 local dx = trail[i - 1].drawX - trail[i].drawX
                 local dy = trail[i - 1].drawY - trail[i].drawY
                 local segLen = sqrt(dx * dx + dy * dy)
 
-		if traveled + segLen > maxLen then
+                if traveled + segLen > maxLen then
 			local excess = traveled + segLen - maxLen
 			local t = 1 - (excess / segLen)
 			local tailX = trail[i-1].drawX - dx * t
 			local tailY = trail[i-1].drawY - dy * t
 
+                        crystallizeGluttonsWakeSegments(trail, i + 1, #trail, gluttonsWakeActive)
                         releaseSegmentRange(trail, i + 1)
 
                         trail[i].drawX, trail[i].drawY = tailX, tailY
-			break
-		else
-			traveled = traveled + segLen
+                        break
+                else
+                        traveled = traveled + segLen
 		end
 	end
 

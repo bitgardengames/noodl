@@ -595,6 +595,10 @@ local english = {
                                 description = "Shops always contain a guaranteed Rare card. Each Rare purchase leaves a radiant laser or saw waiting on the next floor.",
                                 activation_text = "Golden Resonance",
                         },
+                        gluttons_wake = {
+                                name = "Glutton's Wake",
+                                description = "Fruit award double score, but each one crystallizes into a rock when it leaves your tail.",
+                        },
                         grand_bazaar = {
                                 name = "Grand Bazaar",
                                 description = "Shops now stock only Uncommon or higher cards. One slot in every shop is always a Rare.",
