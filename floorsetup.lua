@@ -22,6 +22,12 @@ local FloorSetup = {}
 
 local TRACK_LENGTH = 120
 local DEFAULT_SAW_RADIUS = 16
+local GILDED_SAW_COLOR = {1.0, 0.84, 0.34, 1}
+local GILDED_LASER_PALETTE = {
+        core = {1.0, 0.86, 0.32, 1},
+        glow = {1.0, 0.62, 0.24, 0.9},
+        rim = {1.0, 0.96, 0.72, 1},
+}
 
 local function applyPalette(palette)
 	if Theme.reset then
@@ -254,7 +260,7 @@ local function trackThreatensSpawnBuffer(fx, fy, dir, spawnLookup)
 	return false
 end
 
-local function trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup)
+local function trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup, options)
 	local row = love.math.random(2, Arena.rows - 1)
 	local col = love.math.random(1 + halfTiles, Arena.cols - halfTiles)
 	local fx, fy = Arena:getCenterOfTile(col, row)
@@ -267,8 +273,8 @@ local function trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup)
 		return false
 	end
 
-	if SnakeUtils.sawTrackIsFree(fx, fy, "horizontal") then
-		Saws:spawn(fx, fy, bladeRadius, 8, "horizontal")
+        if SnakeUtils.sawTrackIsFree(fx, fy, "horizontal") then
+                Saws:spawn(fx, fy, bladeRadius, 8, "horizontal", nil, options)
 		SnakeUtils.occupySawTrack(fx, fy, "horizontal")
 		return true
 	end
@@ -276,7 +282,7 @@ local function trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup)
 	return false
 end
 
-local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup)
+local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, options)
 	local side = (love.math.random() < 0.5) and "left" or "right"
 	local col = (side == "left") and 1 or Arena.cols
 	local row = love.math.random(1 + halfTiles, Arena.rows - halfTiles)
@@ -290,8 +296,8 @@ local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup)
 		return false
 	end
 
-	if SnakeUtils.sawTrackIsFree(fx, fy, "vertical") then
-		Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side)
+        if SnakeUtils.sawTrackIsFree(fx, fy, "vertical") then
+                Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side, options)
 		SnakeUtils.occupySawTrack(fx, fy, "vertical")
 		return true
 	end
@@ -299,25 +305,39 @@ local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup)
 	return false
 end
 
-local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer)
-	local spawnLookup = buildCellLookup(spawnBuffer)
+local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
+        local spawnLookup = buildCellLookup(spawnBuffer)
+        options = options or {}
+        local radiantRemaining = max(0, floor((options.radiantCount or 0) + 0.5))
 
-	for _ = 1, numSaws do
-		local dir = (love.math.random() < 0.5) and "horizontal" or "vertical"
-		local placed = false
-		local attempts = 0
-		local maxAttempts = 60
+        for _ = 1, numSaws do
+                local dir = (love.math.random() < 0.5) and "horizontal" or "vertical"
+                local placed = false
+                local attempts = 0
+                local maxAttempts = 60
+                local sawOptions = nil
 
-		while not placed and attempts < maxAttempts do
-			attempts = attempts + 1
+                if radiantRemaining > 0 then
+                        sawOptions = {
+                                color = options.radiantColor or GILDED_SAW_COLOR,
+                                gilded = true,
+                        }
+                end
 
-			if dir == "horizontal" then
-				placed = trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup)
-			else
-				placed = trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup)
-			end
-		end
-	end
+                while not placed and attempts < maxAttempts do
+                        attempts = attempts + 1
+
+                        if dir == "horizontal" then
+                                placed = trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup, sawOptions)
+                        else
+                                placed = trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, sawOptions)
+                        end
+                end
+
+                if placed and sawOptions then
+                        radiantRemaining = radiantRemaining - 1
+                end
+        end
 end
 
 local function spawnLasers(laserPlan)
@@ -481,7 +501,30 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
 		end
 	end
 
-	return plan, desired
+        local desiredRadiant = 0
+        if traitContext and traitContext.gildedObsessionExtraLasers then
+                desiredRadiant = max(0, floor((traitContext.gildedObsessionExtraLasers or 0) + 0.5))
+        end
+
+        local actualRadiant = min(desiredRadiant, #plan)
+        if actualRadiant > 0 then
+                for i = 0, actualRadiant - 1 do
+                        local index = #plan - i
+                        if index >= 1 then
+                                local entry = plan[index]
+                                entry.options = entry.options or {}
+                                entry.options.firePalette = GILDED_LASER_PALETTE
+                                entry.options.fireColor = nil
+                                entry.options.gilded = true
+                        end
+                end
+        end
+
+        if traitContext then
+                traitContext.gildedObsessionExtraLasers = actualRadiant
+        end
+
+        return plan, desired
 end
 
 local function getDesiredDartCount(traitContext)
@@ -588,28 +631,35 @@ local function mergeCells(primary, secondary)
 end
 
 local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
-	local halfTiles = floor((TRACK_LENGTH / Arena.tileSize) / 2)
-	local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
-	local dartPlan, desiredDarts = buildDartPlan(traitContext)
-	local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
+        local halfTiles = floor((TRACK_LENGTH / Arena.tileSize) / 2)
+        local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
+        local dartPlan, desiredDarts = buildDartPlan(traitContext)
+        local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
 
-	return {
-		numRocks = traitContext.rocks,
-		numSaws = traitContext.saws,
-		halfTiles = halfTiles,
-		bladeRadius = DEFAULT_SAW_RADIUS,
-		safeZone = safeZone,
-		reservedCells = reservedCells,
-		reservedSafeZone = reservedSafeZone,
-		rockSafeZone = rockSafeZone,
-		spawnBuffer = spawnBuffer,
-		reservedSpawnBuffer = reservedSpawnBuffer,
-		spawnSafeCells = spawnSafeCells,
-		lasers = laserPlan,
-		laserCount = desiredLasers,
-		darts = dartPlan,
-		dartCount = desiredDarts,
-	}
+        local radiantSaws = max(0, floor((traitContext.gildedObsessionExtraSaws or 0) + 0.5))
+        local radiantLasers = max(0, floor((traitContext.gildedObsessionExtraLasers or 0) + 0.5))
+        traitContext.gildedObsessionExtraSaws = radiantSaws
+        traitContext.gildedObsessionExtraLasers = radiantLasers
+
+        return {
+                numRocks = traitContext.rocks,
+                numSaws = traitContext.saws,
+                halfTiles = halfTiles,
+                bladeRadius = DEFAULT_SAW_RADIUS,
+                safeZone = safeZone,
+                reservedCells = reservedCells,
+                reservedSafeZone = reservedSafeZone,
+                rockSafeZone = rockSafeZone,
+                spawnBuffer = spawnBuffer,
+                reservedSpawnBuffer = reservedSpawnBuffer,
+                spawnSafeCells = spawnSafeCells,
+                lasers = laserPlan,
+                laserCount = desiredLasers,
+                radiantSawCount = radiantSaws,
+                radiantLaserCount = radiantLasers,
+                darts = dartPlan,
+                dartCount = desiredDarts,
+        }
 end
 
 function FloorSetup.prepare(floorNum, floorData)
@@ -663,12 +713,39 @@ function FloorSetup.finalizeContext(traitContext, spawnPlan)
 end
 
 function FloorSetup.spawnHazards(spawnPlan)
-	spawnSaws(spawnPlan.numSaws or 0, spawnPlan.halfTiles, spawnPlan.bladeRadius, spawnPlan.spawnSafeCells)
-	spawnLasers(spawnPlan.lasers or {})
-	spawnDarts(spawnPlan.darts or {})
-	spawnRocks(spawnPlan.numRocks or 0, spawnPlan.spawnSafeCells or spawnPlan.rockSafeZone or spawnPlan.safeZone)
-	Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
-	SnakeUtils.releaseCells(spawnPlan.reservedSafeZone)
+        local gildedInfo
+        if Upgrades and Upgrades.consumeGildedObsessionHazards then
+                gildedInfo = Upgrades:consumeGildedObsessionHazards()
+        end
+
+        local radiantSawCount = 0
+        local radiantLaserCount = 0
+        if spawnPlan then
+                radiantSawCount = spawnPlan.radiantSawCount or 0
+                radiantLaserCount = spawnPlan.radiantLaserCount or 0
+        end
+
+        if gildedInfo then
+                if radiantSawCount <= 0 then
+                        radiantSawCount = gildedInfo.saws or 0
+                end
+                if radiantLaserCount <= 0 then
+                        radiantLaserCount = gildedInfo.lasers or 0
+                end
+        end
+
+        spawnSaws(
+                spawnPlan.numSaws or 0,
+                spawnPlan.halfTiles,
+                spawnPlan.bladeRadius,
+                spawnPlan.spawnSafeCells,
+                {radiantCount = radiantSawCount, radiantColor = GILDED_SAW_COLOR}
+        )
+        spawnLasers(spawnPlan.lasers or {})
+        spawnDarts(spawnPlan.darts or {})
+        spawnRocks(spawnPlan.numRocks or 0, spawnPlan.spawnSafeCells or spawnPlan.rockSafeZone or spawnPlan.safeZone)
+        Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
+        SnakeUtils.releaseCells(spawnPlan.reservedSafeZone)
 	SnakeUtils.releaseCells(spawnPlan.reservedSpawnBuffer)
 	SnakeUtils.releaseCells(spawnPlan.reservedCells)
 end

@@ -382,32 +382,37 @@ function Lasers:spawn(x, y, dir, options)
 
 	facing = (facing >= 0) and 1 or -1
 
-	local beam = {
-		x = x,
-		y = y,
-		col = col,
-		row = row,
-		dir = dir,
-		facing = facing,
-		beamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS,
-		firePalette = options.firePalette or getFirePalette(options.fireColor),
-		state = "cooldown",
-		flashTimer = 0,
-		burnAlpha = 0,
-		baseGlow = 0,
-		telegraphStrength = 0,
-		randomOffset = love.math.random() * pi * 2,
-	}
+        local beam = {
+                x = x,
+                y = y,
+                col = col,
+                row = row,
+                dir = dir,
+                facing = facing,
+                beamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS,
+                firePalette = options.firePalette or getFirePalette(options.fireColor),
+                state = "cooldown",
+                flashTimer = 0,
+                burnAlpha = 0,
+                baseGlow = 0,
+                telegraphStrength = 0,
+                randomOffset = love.math.random() * pi * 2,
+        }
 
-	beam.baseFireDuration = max(0.2, options.fireDuration or DEFAULT_FIRE_DURATION)
-	beam.baseChargeDuration = max(0.25, options.chargeDuration or DEFAULT_CHARGE_DURATION)
-	beam.baseCooldownMin = options.fireCooldownMin or 4.2
-	beam.baseCooldownMax = options.fireCooldownMax or (beam.baseCooldownMin + 3.4)
-	if beam.baseCooldownMax < beam.baseCooldownMin then
-		beam.baseCooldownMax = beam.baseCooldownMin
-	end
+        beam.baseFireDuration = max(0.2, options.fireDuration or DEFAULT_FIRE_DURATION)
+        beam.baseChargeDuration = max(0.25, options.chargeDuration or DEFAULT_CHARGE_DURATION)
+        beam.baseCooldownMin = options.fireCooldownMin or 4.2
+        beam.baseCooldownMax = options.fireCooldownMax or (beam.baseCooldownMin + 3.4)
+        if beam.baseCooldownMax < beam.baseCooldownMin then
+                beam.baseCooldownMax = beam.baseCooldownMin
+        end
 
-	recalcBeamTiming(beam, true)
+        if options.gilded then
+                beam.gilded = true
+                beam.baseGlow = max(beam.baseGlow or 0, 0.45)
+        end
+
+        recalcBeamTiming(beam, true)
 
 	SnakeUtils.setOccupied(col, row, true)
 

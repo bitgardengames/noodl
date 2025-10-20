@@ -1595,9 +1595,53 @@ local pool = {
                         state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
                 end,
         }),
+        register({
+                id = "gilded_obsession",
+                nameKey = "upgrades.gilded_obsession.name",
+                descKey = "upgrades.gilded_obsession.description",
+                rarity = "rare",
+                tags = {"economy", "risk", "hazard"},
+                onAcquire = function(state)
+                        state.effects.shopGuaranteedRare = true
+                        state.counters = state.counters or {}
+                        state.counters.gildedObsessionPendingHazards = state.counters.gildedObsessionPendingHazards or {}
 
-	register({
-		id = "verdant_bonds",
+                        local celebrationOptions = {
+                                color = {1.0, 0.84, 0.36, 1},
+                                particleCount = 20,
+                                particleSpeed = 140,
+                                particleLife = 0.5,
+                                textOffset = 44,
+                                textScale = 1.12,
+                        }
+                        celebrateUpgrade(getUpgradeString("gilded_obsession", "name"), nil, celebrationOptions)
+                end,
+                handlers = {
+                        upgradeAcquired = function(data, state)
+                                if not state or getStacks(state, "gilded_obsession") <= 0 then return end
+                                if not data or not data.upgrade or data.upgrade.rarity ~= "rare" then return end
+
+                                state.counters = state.counters or {}
+                                local pending = state.counters.gildedObsessionPendingHazards or {}
+                                local hazardType = (love.math.random() < 0.5) and "laser" or "saw"
+                                pending[#pending + 1] = {type = hazardType}
+                                state.counters.gildedObsessionPendingHazards = pending
+
+                                local activationLabel = getUpgradeString("gilded_obsession", "activation_text")
+                                celebrateUpgrade(activationLabel, data, {
+                                        color = {1.0, 0.84, 0.34, 1},
+                                        particleCount = 14,
+                                        particleSpeed = 120,
+                                        particleLife = 0.46,
+                                        textOffset = 40,
+                                        textScale = 1.08,
+                                })
+                        end,
+                },
+        }),
+
+        register({
+                id = "verdant_bonds",
 		nameKey = "upgrades.verdant_bonds.name",
 		descKey = "upgrades.verdant_bonds.description",
 		rarity = "uncommon",
@@ -2523,13 +2567,50 @@ function Upgrades:modifyFloorContext(context)
 		saws = floor(saws + 0.5)
 		context.saws = clamp(saws, 0)
 	end
-	if effects.laserSpawnBonus and context.laserCount then
-		local lasers = context.laserCount + effects.laserSpawnBonus
-		lasers = floor(lasers + 0.5)
-		context.laserCount = clamp(lasers, 0)
-	end
+        if effects.laserSpawnBonus and context.laserCount then
+                local lasers = context.laserCount + effects.laserSpawnBonus
+                lasers = floor(lasers + 0.5)
+                context.laserCount = clamp(lasers, 0)
+        end
 
-	return context
+        local state = self.runState
+        if state and state.counters then
+                local pending = state.counters.gildedObsessionPendingHazards
+                if pending and #pending > 0 then
+                        context.saws = context.saws or 0
+                        context.laserCount = context.laserCount or 0
+                        local active = {saws = 0, lasers = 0}
+
+                        for _, hazard in ipairs(pending) do
+                                local hazardType = hazard and hazard.type or nil
+                                if hazardType == "laser" then
+                                        context.laserCount = context.laserCount + 1
+                                        active.lasers = (active.lasers or 0) + 1
+                                else
+                                        context.saws = context.saws + 1
+                                        active.saws = (active.saws or 0) + 1
+                                end
+                        end
+
+                        state.counters.gildedObsessionActiveHazards = active
+                        state.counters.gildedObsessionPendingHazards = {}
+                        context.gildedObsessionExtraSaws = active.saws
+                        context.gildedObsessionExtraLasers = active.lasers
+                end
+        end
+
+        return context
+end
+
+function Upgrades:consumeGildedObsessionHazards()
+        local state = self.runState
+        if not state or not state.counters then
+                return nil
+        end
+
+        local active = state.counters.gildedObsessionActiveHazards
+        state.counters.gildedObsessionActiveHazards = nil
+        return active
 end
 
 local function round(value)
@@ -2965,17 +3046,17 @@ function Upgrades:getRandom(n, context)
 		end
 	end
 
-	if #available == 0 then
-		for _, upgrade in ipairs(pool) do
-			if self:canOffer(upgrade, context, true) then
-				insert(available, upgrade)
-			end
-		end
-	end
+        if #available == 0 then
+                for _, upgrade in ipairs(pool) do
+                        if self:canOffer(upgrade, context, true) then
+                                insert(available, upgrade)
+                        end
+                end
+        end
 
-	local cards = {}
-	n = min(n or 3, #available)
-	for _ = 1, n do
+        local cards = {}
+        n = min(n or 3, #available)
+        for _ = 1, n do
 		local totalWeight = 0
 		local weights = {}
 		for i, upgrade in ipairs(available) do
@@ -2997,20 +3078,67 @@ function Upgrades:getRandom(n, context)
 			end
 		end
 
-		local choice = available[chosenIndex]
-		insert(cards, decorateCard(choice))
-		table.remove(available, chosenIndex)
-		if #available == 0 then break end
-	end
+                local choice = available[chosenIndex]
+                insert(cards, decorateCard(choice))
+                table.remove(available, chosenIndex)
+                if #available == 0 then break end
+        end
 
-	if state and state.counters then
-		local bestRank = 0
-		for _, card in ipairs(cards) do
-			local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
-			if rank > bestRank then
-				bestRank = rank
-			end
-		end
+        local guaranteeRare = state and state.effects and state.effects.shopGuaranteedRare
+        if guaranteeRare and #cards > 0 then
+                local hasRare = false
+                for _, card in ipairs(cards) do
+                        if card.rarity == "rare" then
+                                hasRare = true
+                                break
+                        end
+                end
+
+                if not hasRare then
+                        local rareChoices = {}
+                        for _, upgrade in ipairs(pool) do
+                                if upgrade.rarity == "rare" and self:canOffer(upgrade, context, false) then
+                                        insert(rareChoices, upgrade)
+                                end
+                        end
+
+                        if #rareChoices == 0 then
+                                for _, upgrade in ipairs(pool) do
+                                        if upgrade.rarity == "rare" and self:canOffer(upgrade, context, true) then
+                                                insert(rareChoices, upgrade)
+                                        end
+                                end
+                        end
+
+                        if #rareChoices > 0 then
+                                local replacementIndex
+                                local lowestRank
+                                for index, card in ipairs(cards) do
+                                        local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
+                                        if not replacementIndex or rank < lowestRank then
+                                                replacementIndex = index
+                                                lowestRank = rank
+                                        end
+                                end
+
+                                if replacementIndex then
+                                        local choice = rareChoices[love.math.random(1, #rareChoices)]
+                                        cards[replacementIndex] = decorateCard(choice)
+                                else
+                                        cards[#cards + 1] = decorateCard(rareChoices[love.math.random(1, #rareChoices)])
+                                end
+                        end
+                end
+        end
+
+        if state and state.counters then
+                local bestRank = 0
+                for _, card in ipairs(cards) do
+                        local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
+                        if rank > bestRank then
+                                bestRank = rank
+                        end
+                end
 
 		if bestRank >= (SHOP_PITY_RARITY_RANK.rare or 0) then
 			state.counters.shopBadLuck = 0
