@@ -64,22 +64,55 @@ local function copyColor(color, alpha)
 	return {r, g, b, a}
 end
 
+local function clamp01(value)
+        if value < 0 then
+                return 0
+        end
+        if value > 1 then
+                return 1
+        end
+        return value
+end
+
+local function getRelativeLuminance(color)
+        if not color then
+                return 0
+        end
+
+        local r = color[1] or 0
+        local g = color[2] or 0
+        local b = color[3] or 0
+
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+end
+
 local function getFirePalette(color)
-	local base = copyColor(color or DEFAULT_FIRE_COLOR)
-	local glow = copyColor(base, (base[4] or 1) * 0.65)
-	local core = copyColor(base, 0.95)
-	local rim = copyColor(base, 1.0)
+        local base = copyColor(color or DEFAULT_FIRE_COLOR)
+        local glow = copyColor(base, (base[4] or 1) * 0.65)
+        local core = copyColor(base, 0.95)
+        local rim = copyColor(base, 1.0)
 
-	rim[1] = min(1, rim[1] * 1.1)
-	rim[2] = min(1, rim[2] * 0.7)
-	rim[3] = min(1, rim[3] * 0.7)
-	rim[4] = 1.0
+        rim[1] = min(1, rim[1] * 1.1)
+        rim[2] = min(1, rim[2] * 0.7)
+        rim[3] = min(1, rim[3] * 0.7)
+        rim[4] = 1.0
 
-	return {
-		glow = glow,
-		core = core,
-		rim = rim,
-	}
+        local arenaColor = Theme.arenaBG or Theme.bgColor
+        local arenaLum = getRelativeLuminance(arenaColor)
+        local rimBoost = clamp01((arenaLum - 0.45) * 1.6)
+        if rimBoost > 0 then
+                rim[1] = clamp01(rim[1] * (1 - 0.35 * rimBoost) + rimBoost)
+                rim[2] = clamp01(rim[2] * (1 - 0.45 * rimBoost) + rimBoost * 0.2)
+                rim[3] = clamp01(rim[3] * (1 - 0.45 * rimBoost) + rimBoost * 0.2)
+                glow[4] = clamp(glow[4] + rimBoost * 0.35, 0, 1)
+                core[4] = clamp(core[4] + rimBoost * 0.2, 0, 1)
+        end
+
+        return {
+                glow = glow,
+                core = core,
+                rim = rim,
+        }
 end
 
 local function getEmitterColors()
