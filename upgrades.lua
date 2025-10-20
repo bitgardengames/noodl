@@ -1771,9 +1771,10 @@ local pool = {
 					local stacks = getStacks(runState, "verdant_bonds")
 					if stacks <= 0 then return end
 
-					local progress = (counters.verdantBondsProgress or 0) + stacks
-					local threshold = 3
-					local shields = floor(progress / threshold)
+                                       local progress = (counters.verdantBondsProgress or 0) + stacks
+                                       progress = min(progress, 9)
+                                       local threshold = 3
+                                       local shields = floor(progress / threshold)
 					counters.verdantBondsProgress = progress - shields * threshold
 
 					if shields <= 0 then return end
