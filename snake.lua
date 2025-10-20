@@ -111,6 +111,27 @@ local function clearPortalAnimation(state)
         state.entrySourceTrail = nil
         state.entryTrail = nil
         state.exitTrail = nil
+        state.entryHole = nil
+        state.exitHole = nil
+end
+
+local function smoothStep(edge0, edge1, value)
+        if edge0 == nil or edge1 == nil or value == nil then
+                return 0
+        end
+
+        if edge0 == edge1 then
+                return value >= edge1 and 1 or 0
+        end
+
+        local t = (value - edge0) / (edge1 - edge0)
+        if t < 0 then
+                t = 0
+        elseif t > 1 then
+                t = 1
+        end
+
+        return t * t * (3 - 2 * t)
 end
 
 local function clearSeveredPieces()
@@ -1856,16 +1877,36 @@ function Snake:beginPortalWarp(params)
                 entryIndex = entryIndex,
                 entryX = entryX,
                 entryY = entryY,
-		exitX = exitX,
-		exitY = exitY,
-		totalLength = totalLength,
-		entrySourceTrail = entrySource,
-		entryTrail = sliceTrailByLength(entrySource, totalLength),
-		exitTrail = {},
-		progress = 0,
-	}
+                exitX = exitX,
+                exitY = exitY,
+                totalLength = totalLength,
+                entrySourceTrail = entrySource,
+                entryTrail = sliceTrailByLength(entrySource, totalLength),
+                exitTrail = {},
+                progress = 0,
+                entryHole = {
+                        x = entryX,
+                        y = entryY,
+                        baseRadius = SEGMENT_SIZE * 0.7,
+                        radius = SEGMENT_SIZE * 0.7,
+                        open = 0,
+                        visibility = 0,
+                        spin = 0,
+                        time = 0,
+                },
+                exitHole = {
+                        x = exitX,
+                        y = exitY,
+                        baseRadius = SEGMENT_SIZE * 0.75,
+                        radius = SEGMENT_SIZE * 0.75,
+                        open = 0,
+                        visibility = 0,
+                        spin = 0,
+                        time = 0,
+                },
+        }
 
-	return true
+        return true
 end
 
 function Snake:setDirectionVector(dx, dy)
@@ -2651,11 +2692,11 @@ function Snake:update(dt)
 		end
 	end
 
-	if portalAnimation then
-		local state = portalAnimation
-		local duration = state.duration or 0.3
-		if not duration or duration <= 1e-4 then
-			duration = 1e-4
+        if portalAnimation then
+                local state = portalAnimation
+                local duration = state.duration or 0.3
+                if not duration or duration <= 1e-4 then
+                        duration = 1e-4
 		end
 
 		state.timer = (state.timer or 0) + dt
@@ -2678,6 +2719,44 @@ function Snake:update(dt)
 
                 state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength, state.entryTrail)
                 state.exitTrail = sliceTrailByLength(trail, exitLength, state.exitTrail)
+
+                local entryHole = state.entryHole
+                if entryHole then
+                        entryHole.x = state.entryX
+                        entryHole.y = state.entryY
+                        entryHole.time = (entryHole.time or 0) + dt
+
+                        local entryOpen = smoothStep(0.0, 0.22, progress)
+                        local entryClose = smoothStep(0.68, 1.0, progress)
+                        local entryVisibility = max(0, entryOpen * (1 - entryClose))
+
+                        entryHole.open = entryOpen
+                        entryHole.closing = entryClose
+                        entryHole.visibility = entryVisibility
+                        local baseRadius = entryHole.baseRadius or (SEGMENT_SIZE * 0.7)
+                        entryHole.radius = baseRadius * (0.55 + 0.65 * entryOpen)
+                        entryHole.spin = (entryHole.spin or 0) + dt * (2.4 + 2.1 * entryOpen)
+                        entryHole.pulse = (entryHole.pulse or 0) + dt
+                end
+
+                local exitHole = state.exitHole
+                if exitHole then
+                        exitHole.x = state.exitX
+                        exitHole.y = state.exitY
+                        exitHole.time = (exitHole.time or 0) + dt
+
+                        local exitOpen = smoothStep(0.08, 0.48, progress)
+                        local exitSettle = smoothStep(0.82, 1.0, progress)
+                        local exitVisibility = max(exitOpen, (1 - exitSettle) * 0.45)
+
+                        exitHole.open = exitOpen
+                        exitHole.closing = exitSettle
+                        exitHole.visibility = exitVisibility
+                        local baseRadius = exitHole.baseRadius or (SEGMENT_SIZE * 0.75)
+                        exitHole.radius = baseRadius * (0.5 + 0.6 * exitOpen)
+                        exitHole.spin = (exitHole.spin or 0) + dt * (2.0 + 2.2 * exitOpen)
+                        exitHole.pulse = (exitHole.pulse or 0) + dt
+                end
 
                 if progress >= 1 then
                         clearPortalAnimation(state)
@@ -3388,24 +3467,26 @@ function Snake:draw()
 
 		if not hideDescendingBody then
 			local drawOptions
-			if portalAnimation then
-				drawOptions = {
-					drawFace = shouldDrawFace,
-					portalAnimation = {
-						entryTrail = portalAnimation.entryTrail,
-						exitTrail = portalAnimation.exitTrail,
-						entryX = portalAnimation.entryX,
-						entryY = portalAnimation.entryY,
-						exitX = portalAnimation.exitX,
-						exitY = portalAnimation.exitY,
-						progress = portalAnimation.progress or 0,
-						duration = portalAnimation.duration or 0.3,
-						timer = portalAnimation.timer or 0,
-					},
-				}
-			else
-				drawOptions = shouldDrawFace
-			end
+                        if portalAnimation then
+                                drawOptions = {
+                                        drawFace = shouldDrawFace,
+                                        portalAnimation = {
+                                                entryTrail = portalAnimation.entryTrail,
+                                                exitTrail = portalAnimation.exitTrail,
+                                                entryX = portalAnimation.entryX,
+                                                entryY = portalAnimation.entryY,
+                                                exitX = portalAnimation.exitX,
+                                                exitY = portalAnimation.exitY,
+                                                progress = portalAnimation.progress or 0,
+                                                duration = portalAnimation.duration or 0.3,
+                                                timer = portalAnimation.timer or 0,
+                                                entryHole = portalAnimation.entryHole,
+                                                exitHole = portalAnimation.exitHole,
+                                        },
+                                }
+                        else
+                                drawOptions = shouldDrawFace
+                        end
 
                         currentHeadOwner = self
                         SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getOwnerHead, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
