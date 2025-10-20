@@ -586,6 +586,10 @@ local english = {
                                 name = "Caravan Contract",
                                 description = "Shops offer +1 card per stack. Each floor spawns an extra rock.",
                         },
+                        golden_debt = {
+                                name = "Golden Debt",
+                                description = "Shops offer +1 additional card each floor. Each card you purchase permanently increases the fruit goal to unlock the next exit by +1.",
+                        },
                         gilded_obsession = {
                                 name = "Gilded Obsession",
                                 description = "Shops always contain a guaranteed Rare card. Each Rare purchase leaves a radiant laser or saw waiting on the next floor.",
