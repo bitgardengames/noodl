@@ -100,6 +100,7 @@ local CHRONO_WARD_DEFAULT_SCALE = 0.45
 local CIRCUIT_BREAKER_STALL_DURATION = 1
 local SUBDUCTION_ARRAY_SINK_DURATION = 1.6
 local SUBDUCTION_ARRAY_VISUAL_LIMIT = 3
+local RESONANT_SHELL_DEFENSE_CAP = 5
 
 local function getStacks(state, id)
 	if not state or not id then
@@ -455,21 +456,22 @@ local function updateResonantShellBonus(state)
 	local perCharge = state.counters and state.counters.resonantShellPerCharge or 0
 	if perBonus <= 0 and perCharge <= 0 then return end
 
-	local defenseCount = countUpgradesWithTag(state, "defense")
+        local defenseCount = countUpgradesWithTag(state, "defense")
+        local effectiveDefenseCount = min(defenseCount, RESONANT_SHELL_DEFENSE_CAP)
 
-	if perBonus > 0 then
-		local previous = state.counters.resonantShellBonus or 0
-		local newBonus = perBonus * defenseCount
-		state.counters.resonantShellBonus = newBonus
-		state.effects.sawStall = (state.effects.sawStall or 0) - previous + newBonus
-	end
+        if perBonus > 0 then
+                local previous = state.counters.resonantShellBonus or 0
+                local newBonus = perBonus * effectiveDefenseCount
+                state.counters.resonantShellBonus = newBonus
+                state.effects.sawStall = (state.effects.sawStall or 0) - previous + newBonus
+        end
 
-	if perCharge > 0 then
-		local previousCharge = state.counters.resonantShellChargeBonus or 0
-		local newCharge = perCharge * defenseCount
-		state.counters.resonantShellChargeBonus = newCharge
-		state.effects.laserChargeFlat = (state.effects.laserChargeFlat or 0) - previousCharge + newCharge
-	end
+        if perCharge > 0 then
+                local previousCharge = state.counters.resonantShellChargeBonus or 0
+                local newCharge = perCharge * effectiveDefenseCount
+                state.counters.resonantShellChargeBonus = newCharge
+                state.effects.laserChargeFlat = (state.effects.laserChargeFlat or 0) - previousCharge + newCharge
+        end
 end
 
 local function updateGuildLedger(state)
