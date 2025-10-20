@@ -624,11 +624,6 @@ local english = {
 				description = "The first fruit each floor stalls saws for 2s and grants +4 bonus score.",
 				combo_bonus = "Solar Reservoir +4",
 			},
-			crystal_cache = {
-				name = "Crystal Cache",
-				description = "Shields burst into motes worth +2 bonus score.",
-				combo_bonus = "Crystal Cache +2",
-			},
 			tectonic_resolve = {
 				name = "Tectonic Resolve",
 				description = "Rock spawn chance decreases by 15%. Each fruit has a 25% chance to shatter the nearest rock.",
