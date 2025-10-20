@@ -539,39 +539,6 @@ local function updateStoneCensus(state)
 	state.effects = effects
 end
 
-local function handleBulwarkChorusFloorStart(_, state)
-	if not state or not state.counters then return end
-	if getStacks(state, "wardens_chorus") <= 0 then return end
-
-	local perDefense = state.counters.bulwarkChorusPerDefense or 0
-	if perDefense <= 0 then return end
-
-	local defenseCount = countUpgradesWithTag(state, "defense")
-	if defenseCount <= 0 then return end
-
-	local progress = (state.counters.bulwarkChorusProgress or 0) + perDefense * defenseCount
-	local shields = floor(progress)
-	state.counters.bulwarkChorusProgress = progress - shields
-
-	if shields > 0 and Snake.addShields then
-		Snake:addShields(shields)
-		celebrateUpgrade(nil, nil, {
-			skipText = true,
-			color = {0.7, 0.9, 1.0, 1},
-			skipParticles = true,
-			visual = {
-				badge = "shield",
-				outerRadius = 54,
-				innerRadius = 14,
-				ringCount = 3,
-				life = 0.85,
-				glowAlpha = 0.24,
-				haloAlpha = 0.15,
-			},
-		})
-	end
-end
-
 local mapmakersCompassHazards = {
         {
                 key = "laserCount",
@@ -1624,33 +1591,6 @@ local pool = {
 			}
 			applySegmentPosition(celebrationOptions, 0.52)
 			celebrateUpgrade(getUpgradeString("resonant_shell", "name"), nil, celebrationOptions)
-		end,
-	}),
-	register({
-		id = "wardens_chorus",
-		nameKey = "upgrades.wardens_chorus.name",
-		descKey = "upgrades.wardens_chorus.description",
-		rarity = "rare",
-		requiresTags = {"defense"},
-		tags = {"defense"},
-		unlockTag = "specialist",
-		onAcquire = function(state)
-			state.counters.bulwarkChorusPerDefense = 0.33
-			state.counters.bulwarkChorusProgress = state.counters.bulwarkChorusProgress or 0
-
-			if not state.counters.bulwarkChorusHandlerRegistered then
-				state.counters.bulwarkChorusHandlerRegistered = true
-				Upgrades:addEventHandler("floorStart", handleBulwarkChorusFloorStart)
-			end
-
-			celebrateUpgrade(getUpgradeString("wardens_chorus", "name"), nil, {
-				color = {0.66, 0.88, 1, 1},
-				particleCount = 18,
-				particleSpeed = 120,
-				particleLife = 0.46,
-				textOffset = 46,
-				textScale = 1.1,
-			})
 		end,
 	}),
         register({
