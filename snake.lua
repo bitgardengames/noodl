@@ -1245,6 +1245,8 @@ local function trimHoleSegments(hole)
 	end
 end
 
+local isGluttonsWakeActive
+
 local function trimTrailToSegmentLimit()
 	if not trail or #trail == 0 then
 		return
@@ -1654,7 +1656,7 @@ local function getUpgradesModule()
         return package.loaded["upgrades"]
 end
 
-local function isGluttonsWakeActive()
+isGluttonsWakeActive = function()
         local Upgrades = getUpgradesModule()
         if not (Upgrades and Upgrades.getEffect) then
                 return false
