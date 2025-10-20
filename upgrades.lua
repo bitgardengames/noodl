@@ -1642,6 +1642,7 @@ local pool = {
                                 end
                         end,
                 },
+        }),
         register({
                 id = "tremor_bloom",
                 nameKey = "upgrades.tremor_bloom.name",
