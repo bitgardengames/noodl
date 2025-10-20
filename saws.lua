@@ -320,11 +320,11 @@ end
 
 -- Easing similar to Rocks
 -- Spawn a saw on a track
-function Saws:spawn(x, y, radius, teeth, dir, side)
-	local slot = getOrCreateSlot(x, y, dir)
+function Saws:spawn(x, y, radius, teeth, dir, side, options)
+        local slot = getOrCreateSlot(x, y, dir)
 
-	insert(current, {
-		x = x,
+        insert(current, {
+                x = x,
 		y = y,
 		radius = radius or SAW_RADIUS,
 		collisionRadius = (radius or SAW_RADIUS) * COLLISION_RADIUS_MULT,
@@ -347,10 +347,13 @@ function Saws:spawn(x, y, radius, teeth, dir, side)
 		sinkTarget = sinkActive and 1 or 0,
 		collisionCells = nil,
 		hitFlashTimer = 0,
-	})
+        })
 
-	local saw = current[#current]
-	saw.collisionCells = buildCollisionCellsForSaw(saw)
+        local saw = current[#current]
+        saw.collisionCells = buildCollisionCellsForSaw(saw)
+        options = options or {}
+        saw.color = options.color or saw.color
+        saw.gilded = options.gilded or false
 end
 
 function Saws:getAll()
@@ -545,10 +548,10 @@ function Saws:draw()
 		love.graphics.scale(sinkScale, sinkScale)
 
 		-- Fill
-		local baseColor = Theme.sawColor or {0.8, 0.8, 0.8, 1}
-		if saw.hitFlashTimer and saw.hitFlashTimer > 0 then
-			baseColor = HIT_FLASH_COLOR
-		end
+                local baseColor = saw.color or Theme.sawColor or {0.8, 0.8, 0.8, 1}
+                if saw.hitFlashTimer and saw.hitFlashTimer > 0 then
+                        baseColor = HIT_FLASH_COLOR
+                end
 
 		love.graphics.setColor(baseColor)
 		love.graphics.polygon("fill", points)
@@ -604,11 +607,24 @@ function Saws:draw()
 		love.graphics.pop()
 
 		-- Reset stencil
-		love.graphics.setStencilTest()
+                love.graphics.setStencilTest()
 
-		love.graphics.setColor(1, 1, 1, 1)
-		love.graphics.setLineWidth(1)
-	end
+                if saw.gilded then
+                        local glowX = (px or saw.x) + offsetX
+                        local glowY = (py or saw.y) + offsetY
+                        local glowRadius = (saw.radius or SAW_RADIUS) * 1.4
+                        RenderLayers:withLayer("effects", function()
+                                love.graphics.setColor(1.0, 0.82, 0.32, 0.28)
+                                love.graphics.circle("fill", glowX, glowY, glowRadius)
+                                love.graphics.setColor(1.0, 0.95, 0.72, 0.55)
+                                love.graphics.setLineWidth(2)
+                                love.graphics.circle("line", glowX, glowY, glowRadius * 0.75)
+                        end)
+                end
+
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setLineWidth(1)
+        end
 end
 
 function Saws:stall(duration, options)

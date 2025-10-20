@@ -76,10 +76,11 @@ UpgradeHelpers.defaultEffects = {
 	adrenalineBoostBonus = 0,
 	comboWindowBonus = 0,
 	comboBonusFlat = 0,
-	shopSlots = 0,
-	wallPortal = false,
-	dash = nil,
-	timeSlow = nil,
+shopSlots = 0,
+shopGuaranteedRare = false,
+wallPortal = false,
+dash = nil,
+timeSlow = nil,
 }
 
 local function getEventPosition(data)
