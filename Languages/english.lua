@@ -578,10 +578,10 @@ local english = {
 				name = "Diffraction Barrier",
 				description = "Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s.",
 			},
-			resonant_shell = {
-				name = "Resonant Shell",
-				description = "Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each Defense upgrade you own.",
-			},
+                        resonant_shell = {
+                                name = "Resonant Shell",
+                                description = "Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each of the first 5 Defense upgrades you own.",
+                        },
 			wardens_chorus = {
 				name = "Warden's Chorus",
 				description = "Each Defense upgrade adds shield progress at the start of every floor.",
