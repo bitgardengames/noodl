@@ -638,7 +638,7 @@ local english = {
 			},
 			titanblood_pact = {
 				name = "Titanblood Pact",
-				description = "Gain +1 shield, move 10% faster, and gain +1 extra growth per fruit.",
+                                description = "Gain +1 shield, move 5% faster, and gain +1 extra growth per fruit.",
 			},
                         chronospiral_core = {
                                 name = "Chronospiral Core",
