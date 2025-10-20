@@ -920,10 +920,10 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 end
 
 drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
-	if radius <= 0 then return end
+        if radius <= 0 then return end
 
-	local colorR = r or 0
-	local colorG = g or 0
+        local colorR = r or 0
+        local colorG = g or 0
 	local colorB = b or 0
 	local colorA = a or 1
 	local mode = blendMode or "add"
@@ -951,13 +951,64 @@ drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
 		love.graphics.circle("fill", x, y, radius * (0.55 + 0.35 * t))
 	end
 
-	love.graphics.pop()
+        love.graphics.pop()
+end
+
+local function drawPortalHole(hole, isExit)
+        if not hole then
+                return
+        end
+
+        local visibility = hole.visibility or 0
+        if visibility <= 1e-3 then
+                return
+        end
+
+        local x = hole.x or 0
+        local y = hole.y or 0
+        local radius = hole.radius or 0
+        if radius <= 1e-3 then
+                return
+        end
+
+        local open = hole.open or 0
+        local spin = hole.spin or 0
+        local fillAlpha = (isExit and (0.45 + 0.25 * open) or (0.6 + 0.3 * open)) * visibility
+
+        local accentR, accentG, accentB
+        if isExit then
+                accentR, accentG, accentB = 1.0, 0.88, 0.4
+        else
+                accentR, accentG, accentB = 0.45, 0.78, 1.0
+        end
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("alpha", "premultiplied")
+
+        love.graphics.setColor(0, 0, 0, fillAlpha)
+        love.graphics.circle("fill", x, y, radius)
+
+        local rimRadius = radius * (1.05 + 0.15 * open)
+        local rimAlpha = (0.35 + 0.4 * open) * visibility
+        love.graphics.setLineWidth(2 + 2 * open)
+        love.graphics.setColor(accentR, accentG, accentB, rimAlpha)
+        love.graphics.circle("line", x, y, rimRadius)
+
+        local arcRadius = radius * (0.68 + 0.12 * open)
+        local arcAlpha = (0.28 + 0.32 * open) * visibility
+        local arcSpan = pi * (0.75 + 0.35 * open)
+        love.graphics.setColor(accentR, accentG, accentB, arcAlpha)
+        love.graphics.arc("line", x, y, arcRadius, spin, spin + arcSpan)
+        love.graphics.arc("line", x, y, arcRadius * 0.74, spin + pi * 0.92, spin + pi * 0.92 + arcSpan * 0.6)
+
+        love.graphics.setLineWidth(1)
+        love.graphics.pop()
 end
 
 local function fadePalette(palette, alphaScale)
-	local scale = alphaScale or 1
-	local baseBody = (palette and palette.body) or SnakeCosmetics:getBodyColor()
-	local baseOutline = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
+        local scale = alphaScale or 1
+        local baseBody = (palette and palette.body) or SnakeCosmetics:getBodyColor()
+        local baseOutline = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
 
 	local faded = {
 		body = {
@@ -2073,19 +2124,21 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		hx, hy = ptXY(head)
 	end
 
-	local portalInfo = options and options.portalAnimation
-	if portalInfo then
-		local exitTrail = portalInfo.exitTrail
-		if not (exitTrail and #exitTrail > 0) then
-			exitTrail = trail
-		end
+        local portalInfo = options and options.portalAnimation
+        if portalInfo then
+                local exitTrail = portalInfo.exitTrail
+                if not (exitTrail and #exitTrail > 0) then
+                        exitTrail = trail
+                end
 
-		local entryTrail = portalInfo.entryTrail
-		local exitHead = exitTrail and exitTrail[1]
-		if exitHead then
-			local ex = exitHead.drawX or exitHead.x
-			local ey = exitHead.drawY or exitHead.y
-			if ex and ey then
+                local entryTrail = portalInfo.entryTrail
+                local entryHole = portalInfo.entryHole
+                local exitHole = portalInfo.exitHole
+                local exitHead = exitTrail and exitTrail[1]
+                if exitHead then
+                        local ex = exitHead.drawX or exitHead.x
+                        local ey = exitHead.drawY or exitHead.y
+                        if ex and ey then
 				hx, hy = ex, ey
 			end
 		else
@@ -2096,43 +2149,69 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		local ww, hh = love.graphics.getDimensions()
 		ensureSnakeCanvas(ww, hh)
 
-		love.graphics.setCanvas(snakeCanvas)
-		love.graphics.clear(0, 0, 0, 0)
-		drawTrailSegmentToCanvas(exitTrail, half, options, palette)
+                love.graphics.setCanvas(snakeCanvas)
+                love.graphics.clear(0, 0, 0, 0)
+                drawTrailSegmentToCanvas(exitTrail, half, options, palette)
 
-		if entryTrail and #entryTrail > 0 then
-			local entryPalette = fadePalette(palette, 0.55)
-			drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette)
-		end
+                if entryTrail and #entryTrail > 0 then
+                        local entryPalette = fadePalette(palette, 0.55)
+                        drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette)
+                end
 
-		love.graphics.setCanvas()
-		presentSnakeCanvas(overlayEffect, ww, hh)
+                love.graphics.setCanvas()
+                if exitHole then
+                        drawPortalHole(exitHole, true)
+                end
+                presentSnakeCanvas(overlayEffect, ww, hh)
+                if entryHole then
+                        drawPortalHole(entryHole, false)
+                end
 
-		local entryX = portalInfo.entryX
-		local entryY = portalInfo.entryY
-		if not entryX or not entryY then
-			local entryHead = entryTrail and entryTrail[1]
-			if entryHead then
-				entryX = entryHead.drawX or entryHead.x or entryX
-				entryY = entryHead.drawY or entryHead.y or entryY
-			end
-		end
+                local entryX = (entryHole and entryHole.x) or portalInfo.entryX
+                local entryY = (entryHole and entryHole.y) or portalInfo.entryY
+                if not entryX or not entryY then
+                        local entryHead = entryTrail and entryTrail[1]
+                        if entryHead then
+                                entryX = entryHead.drawX or entryHead.x or entryX
+                                entryY = entryHead.drawY or entryHead.y or entryY
+                        end
+                end
 
-		local exitX = portalInfo.exitX or hx
-		local exitY = portalInfo.exitY or hy
-		local progress = portalInfo.progress or 0
-		local clampedProgress = min(1, max(0, progress))
+                local exitX = (exitHole and exitHole.x) or portalInfo.exitX or hx
+                local exitY = (exitHole and exitHole.y) or portalInfo.exitY or hy
+                local progress = portalInfo.progress or 0
+                local clampedProgress = min(1, max(0, progress))
 
-		if entryX and entryY then
-			local entryAlpha = 0.75 * (1 - clampedProgress * 0.7)
-			drawSoftGlow(entryX, entryY, SEGMENT_SIZE * 1.3, 0.45, 0.78, 1.0, entryAlpha)
-		end
+                if entryX and entryY then
+                        local entryAlpha
+                        local entryRadius
+                        if entryHole then
+                                entryRadius = (entryHole.radius or (SEGMENT_SIZE * 0.7)) * 1.35
+                                entryAlpha = (0.5 + 0.35 * (entryHole.open or 0)) * (entryHole.visibility or 0)
+                        else
+                                entryRadius = SEGMENT_SIZE * 1.3
+                                entryAlpha = 0.75 * (1 - clampedProgress * 0.7)
+                        end
+                        if entryAlpha and entryAlpha > 1e-3 then
+                                drawSoftGlow(entryX, entryY, entryRadius, 0.45, 0.78, 1.0, entryAlpha)
+                        end
+                end
 
-		if exitX and exitY then
-			local exitAlpha = 0.55 + 0.45 * clampedProgress
-			drawSoftGlow(exitX, exitY, SEGMENT_SIZE * 1.4, 1.0, 0.88, 0.4, exitAlpha)
-		end
-	else
+                if exitX and exitY then
+                        local exitAlpha
+                        local exitRadius
+                        if exitHole then
+                                exitRadius = (exitHole.radius or (SEGMENT_SIZE * 0.75)) * 1.45
+                                exitAlpha = (0.35 + 0.5 * (exitHole.open or 0)) * (exitHole.visibility or 0)
+                        else
+                                exitRadius = SEGMENT_SIZE * 1.4
+                                exitAlpha = 0.55 + 0.45 * clampedProgress
+                        end
+                        if exitAlpha and exitAlpha > 1e-3 then
+                                drawSoftGlow(exitX, exitY, exitRadius, 1.0, 0.88, 0.4, exitAlpha)
+                        end
+                end
+        else
 		local coords = buildCoords(trail)
 		if #coords >= 4 then
 			-- render into a canvas once
