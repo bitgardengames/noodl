@@ -511,7 +511,7 @@ local english = {
 			},
 			aegis_recycler = {
 				name = "Shield Recycler",
-				description = "Every two broken shields forge a fresh one.",
+                                description = "Every three broken shields forge a fresh one.",
 				reforged = "Shield Reforged",
 			},
 			amber_bloom = {

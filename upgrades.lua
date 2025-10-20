@@ -949,9 +949,9 @@ local pool = {
 		end,
 		handlers = {
 			shieldConsumed = function(data, state)
-				state.counters.aegisRecycler = (state.counters.aegisRecycler or 0) + 1
-				if state.counters.aegisRecycler >= 2 then
-					state.counters.aegisRecycler = state.counters.aegisRecycler - 2
+                                state.counters.aegisRecycler = (state.counters.aegisRecycler or 0) + 1
+                                if state.counters.aegisRecycler >= 3 then
+                                        state.counters.aegisRecycler = state.counters.aegisRecycler - 3
 					Snake:addShields(1)
 					local fx, fy = getEventPosition(data)
 					if fx and fy then
