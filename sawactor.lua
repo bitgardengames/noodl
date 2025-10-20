@@ -1,5 +1,4 @@
 local Theme = require("theme")
-local Easing = require("easing")
 
 local abs = math.abs
 local max = math.max
@@ -126,25 +125,21 @@ function SawActor:triggerHitFlash(duration)
 end
 
 local function clampProgress(value)
-        return max(0, min(1, value or 0))
-end
-
-local function getEasedProgress(value)
-        return Easing.easeInOutCubic(clampProgress(value))
+	return max(0, min(1, value or 0))
 end
 
 local function getSawCenter(actor, x, y, radius, trackLength)
-        if actor.dir == "vertical" then
-                local minY = y - trackLength / 2 + radius
-                local maxY = y + trackLength / 2 - radius
-                local py = minY + (maxY - minY) * getEasedProgress(actor.progress)
-                return x, py
-        end
+	if actor.dir == "vertical" then
+		local minY = y - trackLength / 2 + radius
+		local maxY = y + trackLength / 2 - radius
+		local py = minY + (maxY - minY) * clampProgress(actor.progress)
+		return x, py
+	end
 
-        local minX = x - trackLength / 2 + radius
-        local maxX = x + trackLength / 2 - radius
-        local px = minX + (maxX - minX) * getEasedProgress(actor.progress)
-        return px, y
+	local minX = x - trackLength / 2 + radius
+	local maxX = x + trackLength / 2 - radius
+	local px = minX + (maxX - minX) * clampProgress(actor.progress)
+	return px, y
 end
 
 function SawActor:draw(x, y, scale)
