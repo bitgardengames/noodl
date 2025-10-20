@@ -496,7 +496,7 @@ local english = {
 				progress = "${current} / ${target}",
 			},
                         tail_trainer = {
-                                name = "Tail Trainer",
+                                name = "Serpent’s Reflex",
                                 description = "Snake moves 4% faster.",
                         },
                         quick_fangs = {
