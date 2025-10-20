@@ -669,7 +669,7 @@ local english = {
 			},
 			zephyr_coils = {
 				name = "Zephyr Coils",
-				description = "Snake moves 20% faster. You gain +1 extra growth.",
+				description = "Snake moves 15% faster. You gain +1 extra growth.",
 			},
 			event_horizon = {
 				name = "Event Horizon",
