@@ -316,7 +316,6 @@ Snake.shields = 0 -- shield protection: number of hits the snake can absorb
 Snake.extraGrowth = 0
 Snake.shieldBurst = nil
 Snake.shieldFlashTimer = 0
-Snake.stonebreakerStacks = 0
 Snake.stoneSkinSawGrace = 0
 Snake.dash = nil
 Snake.timeDilation = nil
@@ -408,8 +407,7 @@ function Snake:resetModifiers()
 	self.extraGrowth  = 0
 	self.shieldBurst  = nil
 	self.shieldFlashTimer = 0
-	self.stonebreakerStacks = 0
-	self.stoneSkinSawGrace = 0
+        self.stoneSkinSawGrace = 0
 	self.dash = nil
 	self.timeDilation = nil
 	self.adrenaline = nil
@@ -428,12 +426,6 @@ function Snake:resetModifiers()
 	self.speedVisual = nil
 	self.predatorsReflex = nil
 	UI:setShields(self.shields or 0, {silent = true, immediate = true})
-end
-
-function Snake:setStonebreakerStacks(count)
-	count = count or 0
-	if count < 0 then count = 0 end
-	self.stonebreakerStacks = count
 end
 
 function Snake:setQuickFangsStacks(count)
@@ -1443,27 +1435,8 @@ end
 local function collectUpgradeVisuals(self)
 	local visuals = nil
 
-	if (self.stonebreakerStacks or 0) > 0 then
-		visuals = visuals or {}
-		local progress = 0
-		if Rocks.getShatterProgress then
-			progress = Rocks:getShatterProgress()
-		end
-		local rate = 0
-		if Rocks.getShatterRate then
-			rate = Rocks:getShatterRate()
-		else
-			rate = Rocks.shatterOnFruit or 0
-		end
-		visuals.stonebreaker = {
-			stacks = self.stonebreakerStacks or 0,
-			progress = progress,
-			rate = rate,
-		}
-	end
-
-	if self.adrenaline and self.adrenaline.active and not self.adrenaline.suppressVisuals then
-		visuals = visuals or {}
+        if self.adrenaline and self.adrenaline.active and not self.adrenaline.suppressVisuals then
+                visuals = visuals or {}
 		visuals.adrenaline = {
 			active = true,
 			timer = self.adrenaline.timer or 0,

@@ -1903,31 +1903,9 @@ local pool = {
 			end,
 		},
 	}),
-	register({
-		id = "stonebreaker_hymn",
-		nameKey = "upgrades.stonebreaker_hymn.name",
-		descKey = "upgrades.stonebreaker_hymn.description",
-		rarity = "rare",
-		allowDuplicates = true,
-		maxStacks = 2,
-		onAcquire = function(state)
-			state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.25
-			state.counters.stonebreakerStacks = (state.counters.stonebreakerStacks or 0) + 1
-			if Snake.setStonebreakerStacks then
-				Snake:setStonebreakerStacks(state.counters.stonebreakerStacks)
-			end
-			celebrateUpgrade(getUpgradeString("stonebreaker_hymn", "name"), nil, {
-				color = {0.9, 0.82, 0.64, 1},
-				skipVisuals = true,
-				skipParticles = true,
-				textOffset = 48,
-				textScale = 1.1,
-			})
-		end,
-	}),
-	register({
-		id = "diffraction_barrier",
-		nameKey = "upgrades.diffraction_barrier.name",
+        register({
+                id = "diffraction_barrier",
+                nameKey = "upgrades.diffraction_barrier.name",
 		descKey = "upgrades.diffraction_barrier.description",
 		rarity = "uncommon",
 		tags = {"defense"},
@@ -2807,65 +2785,8 @@ function Upgrades:getHUDIndicators()
 		return getStacks(state, id) > 0
 	end
 
-	local stoneStacks = state.counters and state.counters.stonebreakerStacks or 0
-	if stoneStacks > 0 then
-		local label = Localization:get("upgrades.stonebreaker_hymn.name")
-		local current = 0
-		if Rocks.getShatterProgress then
-			current = Rocks:getShatterProgress() or 0
-		end
-
-		local rate = 0
-		if Rocks.getShatterRate then
-			rate = Rocks:getShatterRate() or 0
-		else
-			rate = Rocks.shatterOnFruit or 0
-		end
-
-		local progress = 0
-		local isReady = false
-		if rate and rate > 0 then
-			if rate >= 1 then
-				progress = 1
-				isReady = true
-			else
-				progress = clamp(current, 0, 1)
-				if progress >= 0.999 then
-					isReady = true
-				end
-			end
-		end
-
-		local statusKey
-		if not rate or rate <= 0 then
-			statusKey = "depleted"
-		elseif isReady then
-			statusKey = "ready"
-		else
-			statusKey = "charging"
-		end
-
-		local status = hudStatus(statusKey)
-		local chargeLabel
-		if rate and rate > 0 then
-			chargeLabel = hudText("percent", {percent = floor(progress * 100 + 0.5)})
-		end
-
-		insert(indicators, {
-			id = "stonebreaker_hymn",
-			label = label,
-			accentColor = {1.0, 0.78, 0.36, 1},
-			stackCount = stoneStacks,
-			charge = progress,
-			chargeLabel = chargeLabel,
-			status = status,
-			icon = "pickaxe",
-			showBar = true,
-		})
-	end
-
-	if hasUpgrade("pocket_springs") then
-		local counters = state.counters or {}
+        if hasUpgrade("pocket_springs") then
+                local counters = state.counters or {}
 		local complete = counters.pocketSpringsComplete
 		if not complete then
 			local collected = min(counters.pocketSpringsFruit or 0, POCKET_SPRINGS_FRUIT_TARGET)
@@ -3277,21 +3198,10 @@ function Upgrades:applyPersistentEffects(rebaseline)
 		Saws.stallOnFruit = stallValue
 	end
 
-	local rockBase = base.rockSpawnChance or 0.25
-	local rockChance = max(0.02, rockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
-	Rocks.spawnChance = rockChance
-	Rocks.shatterOnFruit = (base.rockShatter or 0) + (effects.rockShatter or 0)
-	if Snake.setStonebreakerStacks then
-		local stacks = 0
-		if state and state.counters then
-			stacks = state.counters.stonebreakerStacks or 0
-		end
-		if stacks <= 0 and effects.rockShatter then
-			local perStack = 0.25
-			stacks = floor(((effects.rockShatter or 0) / perStack) + 0.5)
-		end
-		Snake:setStonebreakerStacks(stacks)
-	end
+        local rockBase = base.rockSpawnChance or 0.25
+        local rockChance = max(0.02, rockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
+        Rocks.spawnChance = rockChance
+        Rocks.shatterOnFruit = (base.rockShatter or 0) + (effects.rockShatter or 0)
 
 	local comboBase = base.comboBonusMult or 1
 	local comboMult = comboBase * (effects.comboBonusMult or 1)

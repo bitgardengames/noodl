@@ -575,12 +575,8 @@ local english = {
                                 description = "After each fruit, saws sink beneath their tracks for 1.6s.",
                                 activation_text = "",
 			},
-			stonebreaker_hymn = {
-				name = "Stonebreaker Hymn",
-				description = "Every fourth fruit shatters the nearest rock. Additional copies advance it until every fruit shatters the nearest rock.",
-			},
-			diffraction_barrier = {
-				name = "Diffraction Barrier",
+                        diffraction_barrier = {
+                                name = "Diffraction Barrier",
 				description = "Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s.",
 			},
                         resonant_shell = {

@@ -1100,51 +1100,6 @@ local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
 	return
 end
 
-local function drawStonebreakerAura(hx, hy, SEGMENT_SIZE, data)
-	if not data then return end
-	local stacks = data.stacks or 0
-	if stacks <= 0 then return end
-
-	local progress = data.progress or 0
-	local rate = data.rate or 0
-	if rate >= 1 then
-		progress = 1
-	else
-		if progress < 0 then progress = 0 end
-		if progress > 1 then progress = 1 end
-	end
-
-	local time = love.timer.getTime()
-
-	local baseRadius = SEGMENT_SIZE * (1.02 + 0.04 * min(stacks, 3))
-	local arcAlpha = 0.28 + 0.12 * min(stacks, 3)
-
-	if progress > 0 then
-		local startAngle = -pi / 2
-		love.graphics.setColor(0.88, 0.74, 0.46, arcAlpha)
-		love.graphics.setLineWidth(3)
-		love.graphics.arc("line", "open", hx, hy, baseRadius, startAngle, startAngle + progress * pi * 2)
-	end
-
-	local shards = max(4, 3 + min(stacks * 2, 6))
-	local ready = (rate >= 1) or (progress >= 0.99)
-	for i = 1, shards do
-		local angle = time * (0.8 + stacks * 0.2) + (i / shards) * pi * 2
-		local wobble = 0.08 * sin(time * 3 + i)
-		local radius = baseRadius * (1.1 + wobble)
-		local size = SEGMENT_SIZE * (0.08 + 0.02 * min(stacks, 3))
-		local alpha = 0.32 + 0.28 * progress
-		if ready then
-			alpha = alpha + 0.2
-		end
-		love.graphics.setColor(0.95, 0.86, 0.6, alpha)
-		love.graphics.circle("fill", hx + cos(angle) * radius, hy + sin(angle) * radius, size)
-	end
-
-	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.setLineWidth(1)
-end
-
 local function drawStoneSkinBulwark(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
 	if #trail <= 0 then return end
@@ -2299,11 +2254,8 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 				drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
 			end
 
-			if upgradeVisuals and upgradeVisuals.stonebreaker then
-				drawStonebreakerAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.stonebreaker)
-			end
-		end)
-	end
+                end)
+        end
 
 	if popTimer and popTimer > 0 and hx and hy then
 		RenderLayers:withLayer("overlay", function()
