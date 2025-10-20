@@ -1584,6 +1584,32 @@ local pool = {
 		end,
 	}),
         register({
+                id = "golden_debt",
+                nameKey = "upgrades.golden_debt.name",
+                descKey = "upgrades.golden_debt.description",
+                rarity = "rare",
+                tags = {"economy", "risk", "shop", "progression"},
+                onAcquire = function(state)
+                        state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
+                        state.counters = state.counters or {}
+                        state.counters.goldenDebtFruitTax = state.counters.goldenDebtFruitTax or 0
+                end,
+                handlers = {
+                        upgradeAcquired = function(data, state)
+                                if not state or getStacks(state, "golden_debt") <= 0 then return end
+                                if not data or not data.upgrade then return end
+
+                                state.counters = state.counters or {}
+                                state.counters.goldenDebtFruitTax = (state.counters.goldenDebtFruitTax or 0) + 1
+                                state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+
+                                if UI.adjustFruitGoal then
+                                        UI:adjustFruitGoal(1)
+                                end
+                        end,
+                },
+        }),
+        register({
                 id = "caravan_contract",
                 nameKey = "upgrades.caravan_contract.name",
                 descKey = "upgrades.caravan_contract.description",
