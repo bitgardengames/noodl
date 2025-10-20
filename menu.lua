@@ -46,43 +46,145 @@ local titleSaw = SawActor.new()
 
 local random = (love.math and love.math.random) or math.random
 
-local BACKGROUND_EFFECT_TYPE = "menuConstellation"
+local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
+local function copyColor(color)
+        if not color then
+                return {0, 0, 0, 1}
+        end
+
+        return {
+                color[1] or 0,
+                color[2] or 0,
+                color[3] or 0,
+                color[4] == nil and 1 or color[4],
+        }
+end
+
+local function lightenColor(color, factor)
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r + (1 - r) * factor,
+                g + (1 - g) * factor,
+                b + (1 - b) * factor,
+                a * (0.65 + factor * 0.35),
+        }
+end
+
+local function darkenColor(color, factor)
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r * (1 - factor),
+                g * (1 - factor),
+                b * (1 - factor),
+                a,
+        }
+end
+
+local function withAlpha(color, alpha)
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {r, g, b, a * alpha}
+end
+
 local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
+        local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+        if not effect then
+                backgroundEffect = nil
+                return
+        end
 
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.58
+        local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+        local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
+        local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+        local accent = lightenColor(copyColor(coolAccent), 0.18)
+        accent[4] = 1
 
-	Shaders.configure(effect, {
-		bgColor = Theme.bgColor,
-		accentColor = Theme.buttonHover,
-		highlightColor = Theme.accentTextColor,
-	})
+        local pulse = lightenColor(copyColor(Theme.panelBorder or Theme.progressColor or accent), 0.26)
+        pulse[4] = 1
 
-	backgroundEffect = effect
+        baseColor = darkenColor(baseColor, 0.15)
+        baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+
+        local vignette = {
+                color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
+                alpha = 0.28,
+                steps = 3,
+                thickness = nil,
+        }
+
+        effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
+
+        Shaders.configure(effect, {
+                bgColor = baseColor,
+                accentColor = accent,
+                pulseColor = pulse,
+        })
+
+        effect.vignetteOverlay = vignette
+        backgroundEffect = effect
 end
 
 local function drawBackground(sw, sh)
-	love.graphics.setColor(Theme.bgColor)
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
+        love.graphics.setColor(Theme.bgColor)
+        love.graphics.rectangle("fill", 0, 0, sw, sh)
 
 	if not backgroundEffect then
 		configureBackgroundEffect()
 	end
 
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-	end
+        if backgroundEffect then
+                local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+                Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
 
-	love.graphics.setColor(1, 1, 1, 1)
+                local vignette = backgroundEffect.vignetteOverlay
+                if vignette then
+                        local steps = max(1, floor(vignette.steps or 3))
+                        local overlayColor = vignette.color or {0, 0, 0, 0.22}
+                        local baseAlpha = vignette.alpha or overlayColor[4] or 0.22
+                        local totalThickness = vignette.thickness or max(sw, sh) * 0.14
+                        local band = totalThickness / steps
+
+                        for i = 1, steps do
+                                local inset = (i - 1) * band
+                                local width = sw - inset * 2
+                                local height = sh - inset * 2
+                                if width <= 0 or height <= 0 then
+                                        break
+                                end
+
+                                local edge = min(band, height / 2)
+                                local side = min(band, width / 2)
+                                local progress = i / steps
+                                local alpha = (overlayColor[4] or 1) * baseAlpha * progress * progress
+
+                                love.graphics.setColor(overlayColor[1] or 0, overlayColor[2] or 0, overlayColor[3] or 0, alpha)
+
+                                love.graphics.rectangle("fill", inset, inset, width, edge)
+                                love.graphics.rectangle("fill", inset, sh - inset - edge, width, edge)
+
+                                local verticalHeight = height - edge * 2
+                                if verticalHeight > 0 then
+                                        love.graphics.rectangle("fill", inset, inset + edge, side, verticalHeight)
+                                        love.graphics.rectangle("fill", sw - inset - side, inset + edge, side, verticalHeight)
+                                end
+                        end
+                end
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function getDayUnit(count)
