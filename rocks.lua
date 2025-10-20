@@ -4,11 +4,13 @@ local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local Audio = require("audio")
 local RenderLayers = require("renderlayers")
+local Easing = require("easing")
 
 local max = math.max
 local min = math.min
 local pi = math.pi
 local insert = table.insert
+local sin = math.sin
 
 local Rocks = {}
 local current = {}
@@ -321,15 +323,60 @@ function Rocks:getShatterProgress()
 end
 
 function Rocks:getShatterRate()
-	return self.shatterOnFruit or 0
+        return self.shatterOnFruit or 0
+end
+
+local function updateTremorSlide(rock, dt)
+        local duration = rock.tremorSlideDuration
+        if not (duration and duration > 0) then
+                return
+        end
+
+        local timer = (rock.tremorSlideTimer or 0) + (dt or 0)
+        if timer >= duration then
+                timer = duration
+        end
+
+        rock.tremorSlideTimer = timer
+
+        local progress = Easing.easeOutCubic(Easing.clamp01(timer / duration))
+        local startX = rock.tremorSlideStartX or rock.x
+        local startY = rock.tremorSlideStartY or rock.y
+        local targetX = rock.tremorSlideTargetX or rock.x
+        local targetY = rock.tremorSlideTargetY or rock.y
+
+        rock.renderX = Easing.lerp(startX, targetX, progress)
+        rock.renderY = Easing.lerp(startY, targetY, progress)
+
+        local lift = rock.tremorSlideLift or 0
+        if lift ~= 0 then
+                rock.tremorSlideOffset = -sin(progress * pi) * lift
+        else
+                rock.tremorSlideOffset = nil
+        end
+
+        if timer >= duration then
+                rock.tremorSlideTimer = nil
+                rock.tremorSlideDuration = nil
+                rock.tremorSlideStartX = nil
+                rock.tremorSlideStartY = nil
+                rock.tremorSlideTargetX = nil
+                rock.tremorSlideTargetY = nil
+                rock.tremorSlideLift = nil
+                rock.tremorSlideOffset = nil
+                rock.renderX = nil
+                rock.renderY = nil
+        end
 end
 
 function Rocks:update(dt)
-	for _, rock in ipairs(current) do
-		rock.timer = rock.timer + dt
+        for _, rock in ipairs(current) do
+                rock.timer = rock.timer + dt
 
-		if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
-			rock.hitFlashTimer = max(0, rock.hitFlashTimer - dt)
+                updateTremorSlide(rock, dt)
+
+                if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
+                        rock.hitFlashTimer = max(0, rock.hitFlashTimer - dt)
 		end
 
 		if rock.phase == "drop" then
@@ -375,11 +422,16 @@ function Rocks:update(dt)
 end
 
 local function withRockTransform(rock, fn)
-	love.graphics.push()
-	love.graphics.translate(rock.x, rock.y + rock.offsetY)
-	love.graphics.scale(rock.scaleX, rock.scaleY)
-	fn()
-	love.graphics.pop()
+        love.graphics.push()
+
+        local drawX = rock.renderX or rock.x
+        local drawY = rock.renderY or rock.y
+        local offsetY = (rock.offsetY or 0) + (rock.tremorSlideOffset or 0)
+
+        love.graphics.translate(drawX, drawY + offsetY)
+        love.graphics.scale(rock.scaleX, rock.scaleY)
+        fn()
+        love.graphics.pop()
 end
 
 function Rocks:draw()
@@ -420,7 +472,24 @@ function Rocks:draw()
 end
 
 function Rocks:getSpawnChance()
-	return self.spawnChance or 0.25
+        return self.spawnChance or 0.25
+end
+
+function Rocks:beginSlide(rock, startX, startY, targetX, targetY, options)
+        if not rock then
+                return
+        end
+
+        options = options or {}
+        rock.tremorSlideDuration = options.duration or 0.28
+        rock.tremorSlideTimer = 0
+        rock.tremorSlideStartX = startX or rock.x
+        rock.tremorSlideStartY = startY or rock.y
+        rock.tremorSlideTargetX = targetX or rock.x
+        rock.tremorSlideTargetY = targetY or rock.y
+        rock.tremorSlideLift = options.lift or 10
+        rock.renderX = rock.tremorSlideStartX
+        rock.renderY = rock.tremorSlideStartY
 end
 
 return Rocks

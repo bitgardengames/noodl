@@ -105,6 +105,8 @@ local SUBDUCTION_ARRAY_SINK_DURATION = 1.6
 local SUBDUCTION_ARRAY_VISUAL_LIMIT = 3
 local RESONANT_SHELL_DEFENSE_CAP = 5
 local TREMOR_BLOOM_RADIUS = 2
+local TREMOR_BLOOM_SLIDE_DURATION = 0.28
+local TREMOR_BLOOM_SAW_NUDGE_AMOUNT = 0.22
 local TREMOR_BLOOM_COLOR = {0.76, 0.64, 1.0, 1}
 
 local function getStacks(state, id)
@@ -414,6 +416,8 @@ local function pushNearbyRocks(originCol, originRow, positions)
                                 for _, candidate in ipairs(candidates) do
                                         local targetCol, targetRow = candidate[1], candidate[2]
                                         if isCellOpen(targetCol, targetRow) then
+                                                local startX, startY = rock.x, rock.y
+
                                                 if SnakeUtils and SnakeUtils.setOccupied then
                                                         SnakeUtils.setOccupied(col, row, false)
                                                 end
@@ -428,6 +432,13 @@ local function pushNearbyRocks(originCol, originRow, positions)
                                                 rock.scaleX = 1
                                                 rock.scaleY = 1
                                                 rock.offsetY = 0
+
+                                                if Rocks and Rocks.beginSlide then
+                                                        Rocks:beginSlide(rock, startX, startY, centerX, centerY, {
+                                                                duration = TREMOR_BLOOM_SLIDE_DURATION,
+                                                                lift = 12,
+                                                        })
+                                                end
 
                                                 if SnakeUtils and SnakeUtils.setOccupied then
                                                         SnakeUtils.setOccupied(targetCol, targetRow, true)
@@ -480,6 +491,8 @@ local function pushNearbyLasers(originCol, originRow, positions)
                                 for _, candidate in ipairs(candidates) do
                                         local targetCol, targetRow = candidate[1], candidate[2]
                                         if isCellOpen(targetCol, targetRow) then
+                                                local startX, startY = beam.x, beam.y
+
                                                 if SnakeUtils and SnakeUtils.setOccupied then
                                                         SnakeUtils.setOccupied(col, row, false)
                                                 end
@@ -490,6 +503,12 @@ local function pushNearbyLasers(originCol, originRow, positions)
                                                 beam.x = centerX
                                                 beam.y = centerY
                                                 beam.facing = computeLaserFacing(beam.dir, targetCol, targetRow)
+
+                                                if Lasers and Lasers.beginEmitterSlide then
+                                                        Lasers:beginEmitterSlide(beam, startX, startY, centerX, centerY, {
+                                                                duration = TREMOR_BLOOM_SLIDE_DURATION,
+                                                        })
+                                                end
 
                                                 if SnakeUtils and SnakeUtils.setOccupied then
                                                         SnakeUtils.setOccupied(targetCol, targetRow, true)
@@ -523,6 +542,62 @@ local function buildCellLookup(cells)
         return lookup
 end
 
+local function nudgeSawAlongTrack(saw, originCol, originRow, positions)
+        if not (saw and Arena and Arena.getCenterOfTile and Saws and Saws.getCenterForProgress) then
+                return false
+        end
+
+        local originX, originY = Arena:getCenterOfTile(originCol, originRow)
+        if not (originX and originY) then
+                return false
+        end
+
+        local startProgress = saw.progress or 0
+        local startCenterX, startCenterY = Saws:getCenterForProgress(saw, startProgress)
+        local targetProgress = startProgress
+
+        if saw.dir == "horizontal" then
+                if (startCenterX or 0) >= originX then
+                        targetProgress = min(1, startProgress + TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
+                else
+                        targetProgress = max(0, startProgress - TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
+                end
+        else
+                if (startCenterY or 0) >= originY then
+                        targetProgress = min(1, startProgress + TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
+                else
+                        targetProgress = max(0, startProgress - TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
+                end
+        end
+
+        if abs(targetProgress - startProgress) < 1e-4 then
+                return false
+        end
+
+        if Saws.beginProgressNudge then
+                Saws:beginProgressNudge(saw, startProgress, targetProgress, {
+                        duration = TREMOR_BLOOM_SLIDE_DURATION,
+                })
+        else
+                saw.progress = targetProgress
+        end
+
+        if targetProgress > startProgress then
+                saw.direction = 1
+        elseif targetProgress < startProgress then
+                saw.direction = -1
+        end
+
+        if positions then
+                local endX, endY = Saws:getCenterForProgress(saw, targetProgress)
+                if endX and endY then
+                        addPosition(positions, endX, endY)
+                end
+        end
+
+        return true
+end
+
 local function pushNearbySaws(originCol, originRow, positions)
         if not Saws or not Saws.getAll or not arenaHasGrid() then
                 return false
@@ -544,6 +619,7 @@ local function pushNearbySaws(originCol, originRow, positions)
                         local col, row = Arena:getTileFromWorld(sx, sy)
                         if col and row then
                                 local candidates = getPushCandidates(col, row, originCol, originRow)
+                                local movedThisSaw = false
                                 if candidates then
                                         local oldCells = SnakeUtils.getSawTrackCells(saw.x, saw.y, saw.dir)
                                         local ignoreLookup = buildCellLookup(oldCells)
@@ -567,20 +643,35 @@ local function pushNearbySaws(originCol, originRow, positions)
                                                                 end
 
                                                                 if not blocked then
+                                                                        local startX, startY = saw.x, saw.y
                                                                         if oldCells then
                                                                                 SnakeUtils.releaseCells(oldCells)
                                                                         end
 
                                                                         SnakeUtils.occupySawTrack(centerX, centerY, saw.dir)
-                                                                        saw.x = centerX
-                                                                        saw.y = centerY
+                                                                        if Saws.beginTrackSlide then
+                                                                                Saws:beginTrackSlide(saw, startX, startY, centerX, centerY, {
+                                                                                        duration = TREMOR_BLOOM_SLIDE_DURATION,
+                                                                                })
+                                                                        else
+                                                                                saw.x = centerX
+                                                                                saw.y = centerY
+                                                                        end
+
                                                                         saw.collisionCells = nil
                                                                         addPosition(positions, centerX, centerY)
                                                                         moved = true
+                                                                        movedThisSaw = true
                                                                         break
                                                                 end
                                                         end
                                                 end
+                                        end
+                                end
+
+                                if not movedThisSaw then
+                                        if nudgeSawAlongTrack(saw, originCol, originRow, positions) then
+                                                moved = true
                                         end
                                 end
                         end

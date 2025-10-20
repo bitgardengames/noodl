@@ -3,6 +3,7 @@ local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local Rocks = require("rocks")
 local Audio = require("audio")
+local Easing = require("easing")
 
 local abs = math.abs
 local floor = math.floor
@@ -482,6 +483,36 @@ function Lasers:stall(duration, options)
         end
 end
 
+local function updateEmitterSlide(beam, dt)
+        local duration = beam and beam.tremorSlideDuration
+        if not (duration and duration > 0) then
+                return
+        end
+
+        local timer = math.min((beam.tremorSlideTimer or 0) + (dt or 0), duration)
+        beam.tremorSlideTimer = timer
+
+        local progress = Easing.easeOutCubic(Easing.clamp01(duration <= 0 and 1 or timer / duration))
+        local startX = beam.tremorSlideStartX or beam.x
+        local startY = beam.tremorSlideStartY or beam.y
+        local targetX = beam.tremorSlideTargetX or beam.x
+        local targetY = beam.tremorSlideTargetY or beam.y
+
+        beam.renderX = Easing.lerp(startX, targetX, progress)
+        beam.renderY = Easing.lerp(startY, targetY, progress)
+
+        if timer >= duration then
+                beam.tremorSlideTimer = nil
+                beam.tremorSlideDuration = nil
+                beam.tremorSlideStartX = nil
+                beam.tremorSlideStartY = nil
+                beam.tremorSlideTargetX = nil
+                beam.tremorSlideTargetY = nil
+                beam.renderX = nil
+                beam.renderY = nil
+        end
+end
+
 function Lasers:update(dt)
         if not LASERS_ENABLED then
                 return
@@ -503,6 +534,7 @@ function Lasers:update(dt)
         end
 
         for _, beam in ipairs(emitters) do
+                updateEmitterSlide(beam, dt)
                 computeBeamTarget(beam)
 
                 if beam.state == "charging" then
@@ -874,33 +906,35 @@ local function drawImpactEffect(beam)
 end
 
 local function drawEmitterBase(beam)
-	local baseColor, accentColor = getEmitterColors()
-	local tileSize = Arena.tileSize or 24
-	local half = tileSize * 0.5
-	local bx = (beam.x or 0) - half
-	local by = (beam.y or 0) - half
-	local flash = clamp(beam.flashTimer or 0, 0, 1)
-	local telegraph = clamp(beam.telegraphStrength or 0, 0, 1)
-	local baseGlow = clamp(beam.baseGlow or 0, 0, 1)
-	local highlightBoost = (beam.state == "firing") and 0.28 or 0
-	highlightBoost = highlightBoost + telegraph * 0.4
+        local baseColor, accentColor = getEmitterColors()
+        local tileSize = Arena.tileSize or 24
+        local half = tileSize * 0.5
+        local cx = beam.renderX or beam.x or 0
+        local cy = beam.renderY or beam.y or 0
+        local bx = cx - half
+        local by = cy - half
+        local flash = clamp(beam.flashTimer or 0, 0, 1)
+        local telegraph = clamp(beam.telegraphStrength or 0, 0, 1)
+        local baseGlow = clamp(beam.baseGlow or 0, 0, 1)
+        local highlightBoost = (beam.state == "firing") and 0.28 or 0
+        highlightBoost = highlightBoost + telegraph * 0.4
 
-	local t = getTime()
-	local pulseStrength = telegraph > 0 and (telegraph * (0.6 + telegraph * 0.4)) or 0
-	local pulse = 0
-	if pulseStrength > 0 then
-		pulse = (0.18 + 0.25 * sin(t * 5.5 + (beam.x or 0) * 0.03 + (beam.y or 0) * 0.03)) * pulseStrength
-	end
-	local showPrimeRing = (telegraph > 0) or (beam.state == "firing")
-	if showPrimeRing then
-		local glowAlpha = 0.16 + baseGlow * 0.6 + flash * 0.35 + highlightBoost * 0.35 + pulse * 0.4
-		love.graphics.setColor(1, 0.32, 0.25, min(0.85, glowAlpha))
-		local glowRadius = BASE_GLOW_RADIUS + tileSize * 0.1 + baseGlow * (tileSize * 0.22)
-		love.graphics.circle("fill", beam.x or 0, beam.y or 0, glowRadius)
-	end
+        local t = getTime()
+        local pulseStrength = telegraph > 0 and (telegraph * (0.6 + telegraph * 0.4)) or 0
+        local pulse = 0
+        if pulseStrength > 0 then
+                pulse = (0.18 + 0.25 * sin(t * 5.5 + cx * 0.03 + cy * 0.03)) * pulseStrength
+        end
+        local showPrimeRing = (telegraph > 0) or (beam.state == "firing")
+        if showPrimeRing then
+                local glowAlpha = 0.16 + baseGlow * 0.6 + flash * 0.35 + highlightBoost * 0.35 + pulse * 0.4
+                love.graphics.setColor(1, 0.32, 0.25, min(0.85, glowAlpha))
+                local glowRadius = BASE_GLOW_RADIUS + tileSize * 0.1 + baseGlow * (tileSize * 0.22)
+                love.graphics.circle("fill", cx, cy, glowRadius)
+        end
 
-	love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], (baseColor[4] or 1) + flash * 0.1)
-	love.graphics.rectangle("fill", bx, by, tileSize, tileSize, 6, 6)
+        love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], (baseColor[4] or 1) + flash * 0.1)
+        love.graphics.rectangle("fill", bx, by, tileSize, tileSize, 6, 6)
 
 	love.graphics.setColor(0, 0, 0, 0.45 + flash * 0.25 + telegraph * 0.15)
 	love.graphics.rectangle("line", bx, by, tileSize, tileSize, 6, 6)
@@ -915,13 +949,11 @@ local function drawEmitterBase(beam)
 
 	local slitLength = tileSize * 0.55
 	local slitThickness = max(3, tileSize * 0.18)
-	local cx = beam.x or 0
-	local cy = beam.y or 0
-	if showPrimeRing then
-		local spin = (t * 2.5 + (beam.randomOffset or 0)) % (pi * 2)
-		local ringRadius = tileSize * 0.45 + sin(t * 3.5 + (beam.randomOffset or 0)) * (tileSize * 0.05)
-		love.graphics.setLineWidth(2)
-		love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.28 + flash * 0.4 + highlightBoost * 0.35 + telegraph * 0.25)
+        if showPrimeRing then
+                local spin = (t * 2.5 + (beam.randomOffset or 0)) % (pi * 2)
+                local ringRadius = tileSize * 0.45 + sin(t * 3.5 + (beam.randomOffset or 0)) * (tileSize * 0.05)
+                love.graphics.setLineWidth(2)
+                love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.28 + flash * 0.4 + highlightBoost * 0.35 + telegraph * 0.25)
 		for i = 0, 2 do
 			local angle = spin + i * (pi * 2 / 3)
 			love.graphics.arc("line", "open", cx, cy, ringRadius, angle - 0.35, angle + 0.35, 16)
@@ -948,9 +980,9 @@ local function drawEmitterBase(beam)
 end
 
 function Lasers:draw()
-	if not LASERS_ENABLED then
-		return
-	end
+        if not LASERS_ENABLED then
+                return
+        end
 
 	if #emitters == 0 then
 		return
@@ -975,7 +1007,23 @@ function Lasers:draw()
 		drawEmitterBase(beam)
 	end
 
-	love.graphics.pop()
+        love.graphics.pop()
+end
+
+function Lasers:beginEmitterSlide(beam, startX, startY, targetX, targetY, options)
+        if not beam then
+                return
+        end
+
+        options = options or {}
+        beam.tremorSlideDuration = options.duration or 0.26
+        beam.tremorSlideTimer = 0
+        beam.tremorSlideStartX = startX or beam.x
+        beam.tremorSlideStartY = startY or beam.y
+        beam.tremorSlideTargetX = targetX or beam.x
+        beam.tremorSlideTargetY = targetY or beam.y
+        beam.renderX = beam.tremorSlideStartX
+        beam.renderY = beam.tremorSlideStartY
 end
 
 return Lasers
