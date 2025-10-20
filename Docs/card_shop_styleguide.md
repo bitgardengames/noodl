@@ -24,7 +24,7 @@ This guide codifies how card upgrades should look, feel, and move inside the sho
 * **Uncommon:** Secondary accent outline with inner glow. Hover introduces a directional rim light that sweeps left to right. **Adrenaline Surge (Uncommon)** and **Shield Recycler (Uncommon)** demonstrate how adrenaline and defense tags should recolor tag chips in the [Card Catalog](card_catalog.md).
 * **Rare:** Dual-tone gradient border, ambient particle specks that idle at 20% opacity, and a slow 8 s breathing scale on the glow layer. Study **Pulse Bloom (Rare)** to align color cues with defense and mobility tags in the [Card Catalog](card_catalog.md).
 * **Uncommon:** Steady single-color border with 50% opacity corner glyphs. Study **Sparkstep Relay (Uncommon)** to match the mobility-forward motion lines and hazard interactions showcased in the [Card Catalog](card_catalog.md).
-* **Epic & Legendary:** Add parallax shimmer on icon layer and subtle lens flare streaks that trigger when highlighted. **Chronospiral Core (Epic)** and **Event Horizon (Legendary)** show the combo + risk and mobility combinations we should emphasize per the [Card Catalog](card_catalog.md).
+* **Epic & Legendary:** Add parallax shimmer on icon layer and subtle lens flare streaks that trigger when highlighted. **Abyssal Catalyst (Epic)** and **Event Horizon (Legendary)** show the combo + risk and mobility combinations we should emphasize per the [Card Catalog](card_catalog.md).
 
 ### Layout Guidelines
 

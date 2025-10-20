@@ -1888,35 +1888,9 @@ local pool = {
 			end,
 		},
 	}),
-	register({
-		id = "solar_reservoir",
-		nameKey = "upgrades.solar_reservoir.name",
-		descKey = "upgrades.solar_reservoir.description",
-		rarity = "epic",
-		tags = {"economy", "defense"},
-		onAcquire = function(state)
-			state.counters.solarReservoirReady = false
-		end,
-		handlers = {
-			floorStart = function(_, state)
-				state.counters.solarReservoirReady = true
-			end,
-			fruitCollected = function(data, state)
-				if not state.counters.solarReservoirReady then return end
-				state.counters.solarReservoirReady = false
-				if Saws and Saws.stall then
-					Saws:stall(2)
-				end
-				if Score.addBonus then
-					Score:addBonus(4)
-				end
-			end,
-		},
-	}),
-
-	register({
-		id = "tectonic_resolve",
-		nameKey = "upgrades.tectonic_resolve.name",
+        register({
+                id = "tectonic_resolve",
+                nameKey = "upgrades.tectonic_resolve.name",
 		descKey = "upgrades.tectonic_resolve.description",
 		rarity = "rare",
 		tags = {"defense"},
@@ -1946,47 +1920,40 @@ local pool = {
 			end
 		end,
 	}),
-	register({
-		id = "chronospiral_core",
-		nameKey = "upgrades.chronospiral_core.name",
-		descKey = "upgrades.chronospiral_core.description",
-		rarity = "epic",
-		tags = {"combo", "defense", "risk"},
-		weight = 1,
-		unlockTag = "combo_mastery",
-		onAcquire = function(state)
-			state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.75
-			state.effects.sawSpinMult = (state.effects.sawSpinMult or 1) * 0.6
-			state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.6
-			state.effects.chronospiralCore = true
-			for _ = 1, 4 do
-				Snake:grow()
-			end
-			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
+        register({
+                id = "chronospiral_core",
+                nameKey = "upgrades.chronospiral_core.name",
+                descKey = "upgrades.chronospiral_core.description",
+                rarity = "rare",
+                tags = {"risk"},
+                unlockTag = "combo_mastery",
+                onAcquire = function(state)
+                        Snake:addSpeedMultiplier(0.75)
+                        state.effects.chronospiralCore = true
 
-			local celebrationOptions = {
-				color = {0.7, 0.76, 1.0, 1},
-				particleCount = 18,
-				particleSpeed = 120,
-				particleLife = 0.5,
-				textOffset = 46,
-				textScale = 1.1,
-				visual = {
-					variant = "chronospiral_core",
-					showBase = false,
-					life = 0.94,
-					innerRadius = 12,
-					outerRadius = 60,
-					addBlend = true,
-					color = {0.68, 0.78, 1.0, 1},
-					variantSecondaryColor = {0.82, 0.62, 1.0, 0.92},
-					variantTertiaryColor = {1.0, 0.92, 0.64, 0.9},
-				},
-			}
-			applySegmentPosition(celebrationOptions, 0.64)
-			celebrateUpgrade(getUpgradeString("chronospiral_core", "name"), nil, celebrationOptions)
-		end,
-	}),
+                        local celebrationOptions = {
+                                color = {0.7, 0.76, 1.0, 1},
+                                particleCount = 18,
+                                particleSpeed = 120,
+                                particleLife = 0.5,
+                                textOffset = 46,
+                                textScale = 1.1,
+                                visual = {
+                                        variant = "chronospiral_core",
+                                        showBase = false,
+                                        life = 0.94,
+                                        innerRadius = 12,
+                                        outerRadius = 60,
+                                        addBlend = true,
+                                        color = {0.68, 0.78, 1.0, 1},
+                                        variantSecondaryColor = {0.82, 0.62, 1.0, 0.92},
+                                        variantTertiaryColor = {1.0, 0.92, 0.64, 0.9},
+                                },
+                        }
+                        applySegmentPosition(celebrationOptions, 0.64)
+                        celebrateUpgrade(getUpgradeString("chronospiral_core", "name"), nil, celebrationOptions)
+                end,
+        }),
 	register({
 		id = "phoenix_echo",
 		nameKey = "upgrades.phoenix_echo.name",
