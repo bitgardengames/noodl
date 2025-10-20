@@ -595,6 +595,10 @@ local english = {
                                 description = "Shops always contain a guaranteed Rare card. Each Rare purchase leaves a radiant laser or saw waiting on the next floor.",
                                 activation_text = "Golden Resonance",
                         },
+                        grand_bazaar = {
+                                name = "Grand Bazaar",
+                                description = "Shops now stock only Uncommon or higher cards. One slot in every shop is always a Rare.",
+                        },
                         verdant_bonds = {
                                 name = "Verdant Bonds",
                                 description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a shield.",

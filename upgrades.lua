@@ -1677,8 +1677,29 @@ local pool = {
         }),
 
         register({
+                id = "grand_bazaar",
+                nameKey = "upgrades.grand_bazaar.name",
+                descKey = "upgrades.grand_bazaar.description",
+                rarity = "rare",
+                tags = {"shop", "economy", "utility", "reward"},
+                onAcquire = function(state)
+                        state.effects.shopGuaranteedRare = true
+                        state.effects.shopMinimumRarity = "uncommon"
+
+                        celebrateUpgrade(getUpgradeString("grand_bazaar", "name"), nil, {
+                                color = {0.95, 0.86, 0.62, 1},
+                                particleCount = 18,
+                                particleSpeed = 120,
+                                particleLife = 0.48,
+                                textOffset = 46,
+                                textScale = 1.1,
+                        })
+                end,
+        }),
+
+        register({
                 id = "verdant_bonds",
-		nameKey = "upgrades.verdant_bonds.name",
+                nameKey = "upgrades.verdant_bonds.name",
 		descKey = "upgrades.verdant_bonds.description",
 		rarity = "uncommon",
 		tags = {"economy", "defense"},
@@ -3078,23 +3099,39 @@ local function decorateCard(upgrade)
 end
 
 function Upgrades:getRandom(n, context)
-	local state = self.runState or newRunState()
-	local pityLevel = 0
-	if state and state.counters then
-		pityLevel = min(state.counters.shopBadLuck or 0, SHOP_PITY_MAX)
-	end
+        local state = self.runState or newRunState()
+        local pityLevel = 0
+        if state and state.counters then
+                pityLevel = min(state.counters.shopBadLuck or 0, SHOP_PITY_MAX)
+        end
 
-	local available = {}
-	for _, upgrade in ipairs(pool) do
-		if self:canOffer(upgrade, context, false) then
-			insert(available, upgrade)
-		end
-	end
+        local minimumRank = 0
+        if state and state.effects then
+                local effects = state.effects
+                if type(effects.shopMinimumRarityRank) == "number" then
+                        minimumRank = effects.shopMinimumRarityRank
+                elseif effects.shopMinimumRarity and SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity] then
+                        minimumRank = SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity]
+                end
+        end
+
+        local available = {}
+        for _, upgrade in ipairs(pool) do
+                if self:canOffer(upgrade, context, false) then
+                        local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+                        if rarityRank >= minimumRank then
+                                insert(available, upgrade)
+                        end
+                end
+        end
 
         if #available == 0 then
                 for _, upgrade in ipairs(pool) do
                         if self:canOffer(upgrade, context, true) then
-                                insert(available, upgrade)
+                                local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+                                if rarityRank >= minimumRank then
+                                        insert(available, upgrade)
+                                end
                         end
                 end
         end
@@ -3143,14 +3180,20 @@ function Upgrades:getRandom(n, context)
                         local rareChoices = {}
                         for _, upgrade in ipairs(pool) do
                                 if upgrade.rarity == "rare" and self:canOffer(upgrade, context, false) then
-                                        insert(rareChoices, upgrade)
+                                        local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+                                        if rarityRank >= minimumRank then
+                                                insert(rareChoices, upgrade)
+                                        end
                                 end
                         end
 
                         if #rareChoices == 0 then
                                 for _, upgrade in ipairs(pool) do
                                         if upgrade.rarity == "rare" and self:canOffer(upgrade, context, true) then
-                                                insert(rareChoices, upgrade)
+                                                local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+                                                if rarityRank >= minimumRank then
+                                                        insert(rareChoices, upgrade)
+                                                end
                                         end
                                 end
                         end
