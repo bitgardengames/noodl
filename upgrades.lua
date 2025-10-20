@@ -1988,36 +1988,37 @@ local pool = {
 		descKey = "upgrades.diffraction_barrier.description",
 		rarity = "uncommon",
 		tags = {"defense"},
-		onAcquire = function(state)
-			state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 1.25
-			state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.8
-			state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) + 0.5
-			local barrierColor = {0.74, 0.88, 1, 1}
-			celebrateUpgrade(getUpgradeString("diffraction_barrier", "name"), nil, {
-				color = barrierColor,
-				skipVisuals = true,
-				skipParticles = true,
-				textOffset = 48,
-				textScale = 1.08,
-			})
+                onAcquire = function(state)
+                        state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 1.25
+                        state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.8
+                        state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) + 0.5
+                        local disruptorColor = {0.76, 0.48, 1.0, 1}
+                        state.effects.laserFireColor = disruptorColor
+                        celebrateUpgrade(getUpgradeString("diffraction_barrier", "name"), nil, {
+                                color = disruptorColor,
+                                skipVisuals = true,
+                                skipParticles = true,
+                                textOffset = 48,
+                                textScale = 1.08,
+                        })
 
-			local laserCenters = getLaserCenters(2)
-			local baseVisual = {
-				variant = "prism_refraction",
-				life = 0.74,
-				innerRadius = 16,
-				outerRadius = 64,
-				addBlend = true,
-				color = {0.74, 0.88, 1, 1},
-				variantSecondaryColor = {0.46, 0.78, 1.0, 0.95},
-				variantTertiaryColor = {1.0, 0.96, 0.72, 0.82},
-			}
-			local baseOptions = {
-				color = barrierColor,
-				skipText = true,
-				particleCount = 14,
-				particleSpeed = 120,
-				particleLife = 0.46,
+                        local laserCenters = getLaserCenters(2)
+                        local baseVisual = {
+                                variant = "prism_refraction",
+                                life = 0.74,
+                                innerRadius = 16,
+                                outerRadius = 64,
+                                addBlend = true,
+                                color = {0.76, 0.48, 1.0, 1},
+                                variantSecondaryColor = {0.58, 0.34, 1.0, 0.9},
+                                variantTertiaryColor = {0.94, 0.78, 1.0, 0.82},
+                        }
+                        local baseOptions = {
+                                color = disruptorColor,
+                                skipText = true,
+                                particleCount = 14,
+                                particleSpeed = 120,
+                                particleLife = 0.46,
 				visual = baseVisual,
 			}
 			if laserCenters and #laserCenters > 0 then
@@ -3264,17 +3265,20 @@ function Upgrades:applyPersistentEffects(rebaseline)
 		Score.comboBonusMult = comboMult
 	end
 
-	if Lasers then
-		Lasers.chargeDurationMult = (base.laserChargeMult or 1) * (effects.laserChargeMult or 1)
-		Lasers.chargeDurationFlat = (base.laserChargeFlat or 0) + (effects.laserChargeFlat or 0)
-		Lasers.fireDurationMult = (base.laserFireMult or 1) * (effects.laserFireMult or 1)
-		Lasers.fireDurationFlat = (base.laserFireFlat or 0) + (effects.laserFireFlat or 0)
-		Lasers.cooldownMult = (base.laserCooldownMult or 1) * (effects.laserCooldownMult or 1)
-		Lasers.cooldownFlat = (base.laserCooldownFlat or 0) + (effects.laserCooldownFlat or 0)
-		if Lasers.applyTimingModifiers then
-			Lasers:applyTimingModifiers()
-		end
-	end
+        if Lasers then
+                Lasers.chargeDurationMult = (base.laserChargeMult or 1) * (effects.laserChargeMult or 1)
+                Lasers.chargeDurationFlat = (base.laserChargeFlat or 0) + (effects.laserChargeFlat or 0)
+                Lasers.fireDurationMult = (base.laserFireMult or 1) * (effects.laserFireMult or 1)
+                Lasers.fireDurationFlat = (base.laserFireFlat or 0) + (effects.laserFireFlat or 0)
+                Lasers.cooldownMult = (base.laserCooldownMult or 1) * (effects.laserCooldownMult or 1)
+                Lasers.cooldownFlat = (base.laserCooldownFlat or 0) + (effects.laserCooldownFlat or 0)
+                if Lasers.applyTimingModifiers then
+                        Lasers:applyTimingModifiers()
+                end
+                if Lasers.setFireColorOverride then
+                        Lasers:setFireColorOverride(effects.laserFireColor)
+                end
+        end
 
        if effects.adrenaline then
                Snake.adrenaline = Snake.adrenaline or {}

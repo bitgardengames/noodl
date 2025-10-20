@@ -29,6 +29,8 @@ Lasers.chargeDurationMult = 1
 Lasers.chargeDurationFlat = 0
 Lasers.cooldownMult = 1
 Lasers.cooldownFlat = 0
+Lasers.fireColorOverride = nil
+Lasers.firePaletteOverride = nil
 
 local FLASH_DECAY = 3.8
 local DEFAULT_FIRE_COLOR = {1, 0.16, 0.16, 1}
@@ -113,6 +115,47 @@ local function getFirePalette(color)
                 core = core,
                 rim = rim,
         }
+end
+
+local function clonePalette(palette)
+        if not palette then
+                return nil
+        end
+
+        local copy = {}
+        if palette.glow then copy.glow = copyColor(palette.glow) end
+        if palette.core then copy.core = copyColor(palette.core) end
+        if palette.rim then copy.rim = copyColor(palette.rim) end
+        return copy
+end
+
+local function ensureBasePalette(beam)
+        if not beam then
+                return nil
+        end
+
+        if not beam.baseFirePalette then
+                local base = clonePalette(beam.firePalette)
+                if not base then
+                        base = clonePalette(getFirePalette(DEFAULT_FIRE_COLOR))
+                end
+                beam.baseFirePalette = base
+        end
+
+        return beam.baseFirePalette
+end
+
+local function applyPaletteOverride(beam)
+        if not beam then
+                return
+        end
+
+        local basePalette = ensureBasePalette(beam)
+        if Lasers.firePaletteOverride then
+                beam.firePalette = clonePalette(Lasers.firePaletteOverride) or basePalette
+        elseif basePalette then
+                beam.firePalette = clonePalette(basePalette)
+        end
 end
 
 local function getEmitterColors()
@@ -416,6 +459,8 @@ function Lasers:spawn(x, y, dir, options)
 
 	facing = (facing >= 0) and 1 or -1
 
+        local initialPalette = options.firePalette and clonePalette(options.firePalette) or getFirePalette(options.fireColor)
+
         local beam = {
                 x = x,
                 y = y,
@@ -424,7 +469,7 @@ function Lasers:spawn(x, y, dir, options)
                 dir = dir,
                 facing = facing,
                 beamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS,
-                firePalette = options.firePalette or getFirePalette(options.fireColor),
+                firePalette = clonePalette(initialPalette) or getFirePalette(options.fireColor),
                 state = "cooldown",
                 flashTimer = 0,
                 burnAlpha = 0,
@@ -432,6 +477,8 @@ function Lasers:spawn(x, y, dir, options)
                 telegraphStrength = 0,
                 randomOffset = love.math.random() * pi * 2,
         }
+
+        beam.baseFirePalette = clonePalette(initialPalette)
 
         beam.baseFireDuration = max(0.2, options.fireDuration or DEFAULT_FIRE_DURATION)
         beam.baseChargeDuration = max(0.25, options.chargeDuration or DEFAULT_CHARGE_DURATION)
@@ -448,10 +495,12 @@ function Lasers:spawn(x, y, dir, options)
 
         recalcBeamTiming(beam, true)
 
-	SnakeUtils.setOccupied(col, row, true)
+        applyPaletteOverride(beam)
 
-	computeBeamTarget(beam)
-	emitters[#emitters + 1] = beam
+        SnakeUtils.setOccupied(col, row, true)
+
+        computeBeamTarget(beam)
+        emitters[#emitters + 1] = beam
 	return beam
 end
 
@@ -461,6 +510,20 @@ function Lasers:getEmitters()
                 copies[index] = beam
         end
         return copies
+end
+
+function Lasers:setFireColorOverride(color)
+        if color then
+                self.fireColorOverride = copyColor(color)
+                self.firePaletteOverride = clonePalette(getFirePalette(color))
+        else
+                self.fireColorOverride = nil
+                self.firePaletteOverride = nil
+        end
+
+        for _, beam in ipairs(emitters) do
+                applyPaletteOverride(beam)
+        end
 end
 
 function Lasers:stall(duration, options)
