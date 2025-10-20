@@ -262,17 +262,27 @@ function FruitEvents.boostComboTimer(amount)
 end
 
 function FruitEvents.handleConsumption(x, y)
-	local points = Fruit:getPoints()
-	local name = Fruit:getTypeName()
-	local fruitType = Fruit:getType()
-	local col, row = Fruit:getTile()
+        local basePoints = Fruit:getPoints()
+        local multiplier = getUpgradeEffect("fruitValueMult") or 1
+        if multiplier < 1 then
+                multiplier = 1
+        end
+        local points = basePoints * multiplier
+        if points < 0 then
+                points = 0
+        else
+                points = floor(points + 0.0001)
+        end
+        local name = Fruit:getTypeName()
+        local fruitType = Fruit:getType()
+        local col, row = Fruit:getTile()
 
-	Snake:grow()
+        Snake:grow()
 	Snake:markFruitSegment(x, y)
 
 	Face:set("happy", 2)
-	FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40)
-	Score:increase(points)
+        FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40)
+        Score:increase(points)
 	Audio:playSound("fruit")
 	SessionStats:add("applesEaten", 1)
 	if Snake.onFruitCollected then

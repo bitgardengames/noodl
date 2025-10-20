@@ -1675,6 +1675,26 @@ local pool = {
                         end,
                 },
         }),
+        register({
+                id = "gluttons_wake",
+                nameKey = "upgrades.gluttons_wake.name",
+                descKey = "upgrades.gluttons_wake.description",
+                rarity = "rare",
+                tags = {"economy", "risk", "hazard", "rocks"},
+                onAcquire = function(state)
+                        state.effects.fruitValueMult = (state.effects.fruitValueMult or 1) * 2
+                        state.effects.gluttonsWake = true
+
+                        celebrateUpgrade(getUpgradeString("gluttons_wake", "name"), nil, {
+                                color = {1.0, 0.7, 0.36, 1},
+                                particleCount = 18,
+                                particleSpeed = 120,
+                                particleLife = 0.5,
+                                textOffset = 46,
+                                textScale = 1.12,
+                        })
+                end,
+        }),
 
         register({
                 id = "grand_bazaar",
