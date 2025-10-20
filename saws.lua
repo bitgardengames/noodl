@@ -3,10 +3,12 @@ local SnakeUtils = require("snakeutils")
 local Particles = require("particles")
 local Theme = require("theme")
 local RenderLayers = require("renderlayers")
+local Easing = require("easing")
 
 local max = math.max
 local min = math.min
 local pi = math.pi
+local sin = math.sin
 local insert = table.insert
 
 local Saws = {}
@@ -191,26 +193,116 @@ local function overlapsCollisionCell(saw, x, y, w, h)
 end
 
 local function isCollisionCandidate(saw, x, y, w, h)
-	if not (saw and x and y and w and h) then
-		return false
-	end
+        if not (saw and x and y and w and h) then
+                return false
+        end
 
-	if (saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0 then
-		return false
-	end
+        if (saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0 then
+                return false
+        end
 
-	return overlapsCollisionCell(saw, x, y, w, h)
+        return overlapsCollisionCell(saw, x, y, w, h)
+end
+
+local function updateSlotSlide(slot, dt)
+        local duration = slot and slot.tremorSlideDuration
+        if not (duration and duration > 0) then
+                return
+        end
+
+        local timer = math.min((slot.tremorSlideTimer or 0) + (dt or 0), duration)
+        slot.tremorSlideTimer = timer
+
+        local progress = Easing.easeOutCubic(Easing.clamp01(duration <= 0 and 1 or timer / duration))
+        local startX = slot.tremorSlideStartX or slot.x
+        local startY = slot.tremorSlideStartY or slot.y
+        local targetX = slot.tremorSlideTargetX or slot.x
+        local targetY = slot.tremorSlideTargetY or slot.y
+
+        slot.renderX = Easing.lerp(startX, targetX, progress)
+        slot.renderY = Easing.lerp(startY, targetY, progress)
+
+        if timer >= duration then
+                slot.tremorSlideTimer = nil
+                slot.tremorSlideDuration = nil
+                slot.tremorSlideStartX = nil
+                slot.tremorSlideStartY = nil
+                slot.tremorSlideTargetX = nil
+                slot.tremorSlideTargetY = nil
+                slot.renderX = nil
+                slot.renderY = nil
+        end
+end
+
+local function updateSawSlide(saw, dt)
+        local duration = saw and saw.tremorSlideDuration
+        if not (duration and duration > 0) then
+                return false
+        end
+
+        local timer = math.min((saw.tremorSlideTimer or 0) + (dt or 0), duration)
+        saw.tremorSlideTimer = timer
+
+        local progress = Easing.easeOutCubic(Easing.clamp01(duration <= 0 and 1 or timer / duration))
+        local startX = saw.tremorSlideStartX or saw.x
+        local startY = saw.tremorSlideStartY or saw.y
+        local targetX = saw.tremorSlideTargetX or saw.x
+        local targetY = saw.tremorSlideTargetY or saw.y
+
+        saw.renderX = Easing.lerp(startX, targetX, progress)
+        saw.renderY = Easing.lerp(startY, targetY, progress)
+
+        if timer >= duration then
+                saw.tremorSlideTimer = nil
+                saw.tremorSlideDuration = nil
+                saw.tremorSlideStartX = nil
+                saw.tremorSlideStartY = nil
+                saw.tremorSlideTargetX = nil
+                saw.tremorSlideTargetY = nil
+                saw.renderX = nil
+                saw.renderY = nil
+        end
+
+        return true
+end
+
+local function updateSawProgressNudge(saw, dt)
+        local duration = saw and saw.tremorNudgeDuration
+        if not (duration and duration > 0) then
+                return false
+        end
+
+        local timer = math.min((saw.tremorNudgeTimer or 0) + (dt or 0), duration)
+        saw.tremorNudgeTimer = timer
+
+        local startProgress = saw.tremorNudgeStart
+        if startProgress == nil then
+                startProgress = saw.progress or 0
+        end
+        local targetProgress = saw.tremorNudgeTarget or startProgress
+        local progress = Easing.easeOutCubic(Easing.clamp01(duration <= 0 and 1 or timer / duration))
+        saw.progress = startProgress + (targetProgress - startProgress) * progress
+
+        if timer >= duration then
+                saw.progress = targetProgress
+                saw.tremorNudgeTimer = nil
+                saw.tremorNudgeDuration = nil
+                saw.tremorNudgeStart = nil
+                saw.tremorNudgeTarget = nil
+        end
+
+        return true
 end
 
 local function getMoveSpeed()
-	return MOVE_SPEED * (Saws.speedMult or 1)
+        return MOVE_SPEED * (Saws.speedMult or 1)
 end
 
 local function getOrCreateSlot(x, y, dir)
-	dir = dir or "horizontal"
+        dir = dir or "horizontal"
 
-	for _, slot in ipairs(slots) do
-		if slot.x == x and slot.y == y and slot.dir == dir then
+        for _, slot in ipairs(slots) do
+                if slot.x == x and slot.y == y and slot.dir == dir then
 			return slot
 		end
 	end
@@ -223,31 +315,63 @@ local function getOrCreateSlot(x, y, dir)
 		dir = dir,
 	}
 
-	insert(slots, slot)
-	return slot
+        insert(slots, slot)
+        return slot
+end
+
+local function getSlotById(id)
+        if not id then
+                return nil
+        end
+
+        for _, slot in ipairs(slots) do
+                if slot.id == id then
+                        return slot
+                end
+        end
+
+        return nil
+end
+
+local function getSawAnchor(saw)
+        if not saw then
+                return nil, nil
+        end
+
+        local anchorX = saw.renderX or saw.x
+        local anchorY = saw.renderY or saw.y
+        return anchorX, anchorY
+end
+
+local function getSawCenterForProgress(saw, progress)
+        if not saw then
+                return nil, nil
+        end
+
+        local anchorX, anchorY = getSawAnchor(saw)
+        if not (anchorX and anchorY) then
+                return anchorX, anchorY
+        end
+
+        local radius = saw.radius or SAW_RADIUS
+        local clamped = max(0, min(1, progress or 0))
+
+        if saw.dir == "horizontal" then
+                local minX = anchorX - TRACK_LENGTH/2 + radius
+                local maxX = anchorX + TRACK_LENGTH/2 - radius
+                local px = minX + (maxX - minX) * clamped
+                return px, anchorY
+        end
+
+        local minY = anchorY - TRACK_LENGTH/2 + radius
+        local maxY = anchorY + TRACK_LENGTH/2 - radius
+        local py = minY + (maxY - minY) * clamped
+
+        return anchorX, py
 end
 
 local function getSawCenter(saw)
-	if not saw then
-		return nil, nil
-	end
-
-	if saw.dir == "horizontal" then
-		local minX = saw.x - TRACK_LENGTH/2 + saw.radius
-		local maxX = saw.x + TRACK_LENGTH/2 - saw.radius
-		local px = minX + (maxX - minX) * saw.progress
-		return px, saw.y
-	end
-
-	local minY = saw.y - TRACK_LENGTH/2 + saw.radius
-	local maxY = saw.y + TRACK_LENGTH/2 - saw.radius
-	local py = minY + (maxY - minY) * saw.progress
-
-	-- Vertical saws should sit centered in their track just like horizontal ones.
-	-- Previously the hub was offset vertically, which made the blade appear to
-	-- jut too far into the arena. Keep the center aligned with the track so both
-	-- orientations look consistent.
-	return saw.x, py
+        return getSawCenterForProgress(saw, saw and saw.progress)
 end
 
 local function getSawCollisionCenter(saw)
@@ -273,19 +397,21 @@ local function removeSaw(target)
 	end
 
 	for index, saw in ipairs(current) do
-		if saw == target or index == target then
-			local px, py = getSawCenter(saw)
-			local sawColor = Theme.sawColor or {0.85, 0.8, 0.75, 1}
-			local primary = copyColor(sawColor)
-			primary[4] = 1
-			local highlight = getHighlightColor(sawColor)
+                if saw == target or index == target then
+                        local anchorX = saw.renderX or saw.x
+                        local anchorY = saw.renderY or saw.y
+                        local px, py = getSawCenter(saw)
+                        local sawColor = Theme.sawColor or {0.85, 0.8, 0.75, 1}
+                        local primary = copyColor(sawColor)
+                        primary[4] = 1
+                        local highlight = getHighlightColor(sawColor)
 
-			Particles:spawnBurst(px or saw.x, py or saw.y, {
-				count = 12,
-				speed = 82,
-				speedVariance = 68,
-				life = 0.35,
-				size = 2.3,
+                        Particles:spawnBurst(px or anchorX, py or anchorY, {
+                                count = 12,
+                                speed = 82,
+                                speedVariance = 68,
+                                life = 0.35,
+                                size = 2.3,
 				color = {primary[1], primary[2], primary[3], primary[4]},
 				spread = pi * 2,
 				angleJitter = pi,
@@ -296,12 +422,12 @@ local function removeSaw(target)
 				fadeTo = 0.04,
 			})
 
-			Particles:spawnBurst(px or saw.x, py or saw.y, {
-				count = love.math.random(4, 6),
-				speed = 132,
-				speedVariance = 72,
-				life = 0.26,
-				size = 1.8,
+                        Particles:spawnBurst(px or anchorX, py or anchorY, {
+                                count = love.math.random(4, 6),
+                                speed = 132,
+                                speedVariance = 72,
+                                life = 0.26,
+                                size = 1.8,
 				color = {1.0, 0.94, 0.52, highlight[4] or 1},
 				spread = pi * 2,
 				angleJitter = pi,
@@ -390,31 +516,37 @@ function Saws:destroy(target)
 end
 
 function Saws:update(dt)
-	if stallTimer > 0 then
-		stallTimer = max(0, stallTimer - dt)
-	end
+        if stallTimer > 0 then
+                stallTimer = max(0, stallTimer - dt)
+        end
 
-	if sinkAutoRaise and sinkTimer > 0 then
-		sinkTimer = max(0, sinkTimer - dt)
-		if sinkTimer <= 0 then
-			self:unsink()
-		end
-	end
+        if sinkAutoRaise and sinkTimer > 0 then
+                sinkTimer = max(0, sinkTimer - dt)
+                if sinkTimer <= 0 then
+                        self:unsink()
+                end
+        end
 
-	for _, saw in ipairs(current) do
-		if not saw.collisionCells then
-			saw.collisionCells = buildCollisionCellsForSaw(saw)
-		end
+        for _, slot in ipairs(slots) do
+                updateSlotSlide(slot, dt)
+        end
+
+        for _, saw in ipairs(current) do
+                if not saw.collisionCells then
+                        saw.collisionCells = buildCollisionCellsForSaw(saw)
+                end
 
 		saw.collisionRadius = (saw.radius or SAW_RADIUS) * COLLISION_RADIUS_MULT
 
 		saw.timer = saw.timer + dt
-		saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (pi * 2)
+                saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (pi * 2)
 
-		local sinkDirection = (saw.sinkTarget or 0) > 0 and 1 or -1
-		saw.sinkProgress = saw.sinkProgress + sinkDirection * dt * SINK_SPEED
-		if saw.sinkProgress < 0 then
-			saw.sinkProgress = 0
+                updateSawSlide(saw, dt)
+
+                local sinkDirection = (saw.sinkTarget or 0) > 0 and 1 or -1
+                saw.sinkProgress = saw.sinkProgress + sinkDirection * dt * SINK_SPEED
+                if saw.sinkProgress < 0 then
+                        saw.sinkProgress = 0
 		elseif saw.sinkProgress > 1 then
 			saw.sinkProgress = 1
 		end
@@ -445,7 +577,9 @@ function Saws:update(dt)
 				saw.offsetY = 0
 			end
                 elseif saw.phase == "done" then
-                        if stallTimer <= 0 then
+                        local nudging = updateSawProgressNudge(saw, dt)
+
+                        if not nudging and stallTimer <= 0 then
                                 -- Move along the track
                                 local delta = (getMoveSpeed() * dt) / TRACK_LENGTH
                                 saw.progress = saw.progress + delta * saw.direction
@@ -467,23 +601,27 @@ function Saws:update(dt)
 end
 
 function Saws:draw()
-	if #slots > 0 then
-		love.graphics.setColor(0, 0, 0, 1)
-		for _, slot in ipairs(slots) do
-			if slot.dir == "horizontal" then
-				love.graphics.rectangle("fill", slot.x - TRACK_LENGTH/2, slot.y - 5, TRACK_LENGTH, 10, 6, 6)
-			else
-				love.graphics.rectangle("fill", slot.x - 5, slot.y - TRACK_LENGTH/2, 10, TRACK_LENGTH, 6, 6)
-			end
-		end
-	end
+        if #slots > 0 then
+                love.graphics.setColor(0, 0, 0, 1)
+                for _, slot in ipairs(slots) do
+                        local slotX = slot.renderX or slot.x
+                        local slotY = slot.renderY or slot.y
+                        if slot.dir == "horizontal" then
+                                love.graphics.rectangle("fill", slotX - TRACK_LENGTH/2, slotY - 5, TRACK_LENGTH, 10, 6, 6)
+                        else
+                                love.graphics.rectangle("fill", slotX - 5, slotY - TRACK_LENGTH/2, 10, TRACK_LENGTH, 6, 6)
+                        end
+                end
+        end
 
-	for _, saw in ipairs(current) do
-		local px, py = getSawCenter(saw)
-		local sinkProgress = max(0, min(1, saw.sinkProgress or 0))
-		local sinkOffset = sinkProgress * SINK_DISTANCE
-		local occlusionDepth = SINK_OFFSET + sinkOffset
-		local offsetX, offsetY = 0, 0
+        for _, saw in ipairs(current) do
+                local anchorX = saw.renderX or saw.x
+                local anchorY = saw.renderY or saw.y
+                local px, py = getSawCenter(saw)
+                local sinkProgress = max(0, min(1, saw.sinkProgress or 0))
+                local sinkOffset = sinkProgress * SINK_DISTANCE
+                local occlusionDepth = SINK_OFFSET + sinkOffset
+                local offsetX, offsetY = 0, 0
 		local sinkDir = 1
 
 		if saw.dir == "horizontal" then
@@ -527,7 +665,7 @@ function Saws:draw()
 					shadowOffsetY = shadowOffsetY + SHADOW_OFFSET * 0.5
 				end
 
-				love.graphics.translate((px or saw.x) + shadowOffsetX, (py or saw.y) + shadowOffsetY)
+                                love.graphics.translate((px or anchorX) + shadowOffsetX, (py or anchorY) + shadowOffsetY)
 				love.graphics.rotate(rotation)
 				love.graphics.scale(sinkScale, sinkScale)
 
@@ -542,17 +680,17 @@ function Saws:draw()
 		-- Stencil: clip saw into the track (adjust direction for left/right mounted saws)
                 sawStencilState.dir = saw.dir
                 sawStencilState.side = saw.side
-                sawStencilState.x = saw.x
-                sawStencilState.y = saw.y
+                sawStencilState.x = anchorX
+                sawStencilState.y = anchorY
                 sawStencilState.radius = saw.radius or SAW_RADIUS
                 sawStencilState.sinkOffset = SINK_OFFSET
                 love.graphics.stencil(drawSawStencil, "replace", 1)
 
-		love.graphics.setStencilTest("equal", 1)
+                love.graphics.setStencilTest("equal", 1)
 
-		-- Saw blade
-		love.graphics.push()
-		love.graphics.translate((px or saw.x) + offsetX, (py or saw.y) + offsetY)
+                -- Saw blade
+                love.graphics.push()
+                love.graphics.translate((px or anchorX) + offsetX, (py or anchorY) + offsetY)
 
 		-- apply spinning rotation
 		love.graphics.rotate(rotation)
@@ -622,8 +760,8 @@ function Saws:draw()
                 love.graphics.setStencilTest()
 
                 if saw.ember then
-                        local glowX = (px or saw.x) + offsetX
-                        local glowY = (py or saw.y) + offsetY
+                        local glowX = (px or anchorX) + offsetX
+                        local glowY = (py or anchorY) + offsetY
                         local radius = (saw.radius or SAW_RADIUS)
                         local phase = saw.emberTrailPhase or 0
                         local trailLength = TRACK_LENGTH * 0.55
@@ -654,8 +792,8 @@ function Saws:draw()
                 end
 
                 if saw.gilded then
-                        local glowX = (px or saw.x) + offsetX
-                        local glowY = (py or saw.y) + offsetY
+                        local glowX = (px or anchorX) + offsetX
+                        local glowY = (py or anchorY) + offsetY
                         local glowRadius = (saw.radius or SAW_RADIUS) * 1.4
                         RenderLayers:withLayer("effects", function()
                                 love.graphics.setColor(1.0, 0.82, 0.32, 0.28)
@@ -770,9 +908,9 @@ function Saws:isCollisionCandidate(saw, x, y, w, h)
 end
 
 function Saws:checkCollision(x, y, w, h)
-	for _, saw in ipairs(self:getAll()) do
-		if isCollisionCandidate(saw, x, y, w, h) then
-			local px, py = getSawCollisionCenter(saw)
+        for _, saw in ipairs(self:getAll()) do
+                if isCollisionCandidate(saw, x, y, w, h) then
+                        local px, py = getSawCollisionCenter(saw)
 
 			-- Circle vs AABB
 			local closestX = max(x, min(px, x + w))
@@ -785,8 +923,63 @@ function Saws:checkCollision(x, y, w, h)
 				return saw
 			end
 		end
-	end
-	return nil
+        end
+        return nil
+end
+
+function Saws:beginTrackSlide(saw, startX, startY, targetX, targetY, options)
+        if not saw then
+                return
+        end
+
+        options = options or {}
+        local duration = options.duration or 0.26
+
+        saw.tremorSlideDuration = duration
+        saw.tremorSlideTimer = 0
+        saw.tremorSlideStartX = startX or saw.x
+        saw.tremorSlideStartY = startY or saw.y
+        saw.tremorSlideTargetX = targetX or saw.x
+        saw.tremorSlideTargetY = targetY or saw.y
+        saw.renderX = saw.tremorSlideStartX
+        saw.renderY = saw.tremorSlideStartY
+
+        saw.x = targetX or saw.x
+        saw.y = targetY or saw.y
+        saw.collisionCells = nil
+
+        if saw.slotId then
+                local slot = getSlotById(saw.slotId)
+                if slot then
+                        slot.tremorSlideDuration = duration
+                        slot.tremorSlideTimer = 0
+                        slot.tremorSlideStartX = startX or slot.x
+                        slot.tremorSlideStartY = startY or slot.y
+                        slot.tremorSlideTargetX = targetX or slot.x
+                        slot.tremorSlideTargetY = targetY or slot.y
+                        slot.renderX = slot.tremorSlideStartX
+                        slot.renderY = slot.tremorSlideStartY
+                        slot.x = targetX or slot.x
+                        slot.y = targetY or slot.y
+                end
+        end
+end
+
+function Saws:beginProgressNudge(saw, startProgress, targetProgress, options)
+        if not saw then
+                return
+        end
+
+        options = options or {}
+        saw.tremorNudgeDuration = options.duration or 0.28
+        saw.tremorNudgeTimer = 0
+        saw.tremorNudgeStart = startProgress or saw.progress or 0
+        saw.tremorNudgeTarget = targetProgress or saw.tremorNudgeStart
+        saw.progress = saw.tremorNudgeStart
+end
+
+function Saws:getCenterForProgress(saw, progress)
+        return getSawCenterForProgress(saw, progress)
 end
 
 return Saws
