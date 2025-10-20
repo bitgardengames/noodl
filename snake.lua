@@ -423,9 +423,8 @@ function Snake:resetModifiers()
 	self.zephyrCoils = nil
 	self.spectralHarvest = nil
 	self.stoneSkinVisual = nil
-	self.speedVisual = nil
-	self.predatorsReflex = nil
-	UI:setShields(self.shields or 0, {silent = true, immediate = true})
+       self.speedVisual = nil
+       UI:setShields(self.shields or 0, {silent = true, immediate = true})
 end
 
 function Snake:setQuickFangsStacks(count)
@@ -458,15 +457,6 @@ function Snake:setQuickFangsStacks(count)
 			self.quickFangs = nil
 		end
 	end
-end
-
-function Snake:enablePredatorsReflex()
-	local state = self.predatorsReflex
-	if not state then
-		state = {intensity = 0, target = 0, time = 0}
-		self.predatorsReflex = state
-	end
-	state.enabled = true
 end
 
 function Snake:setZephyrCoilsStacks(count)
@@ -1444,20 +1434,7 @@ local function collectUpgradeVisuals(self)
 		}
 	end
 
-	local predatorsReflex = self.predatorsReflex
-	if predatorsReflex and predatorsReflex.enabled then
-		local intensity = predatorsReflex.intensity or 0
-		local target = predatorsReflex.target or 0
-		if intensity > 0.01 or target > 0.01 then
-			visuals = visuals or {}
-			visuals.predatorsReflex = {
-				intensity = intensity,
-				time = predatorsReflex.time or 0,
-			}
-		end
-	end
-
-	local speedVisual = self.speedVisual
+       local speedVisual = self.speedVisual
 	if speedVisual and (((speedVisual.intensity or 0) > 0.01) or (speedVisual.target or 0) > 0) then
 		visuals = visuals or {}
 		visuals.speedArcs = {
@@ -2238,29 +2215,7 @@ function Snake:update(dt)
 		end
 	end
 
-	local predatorEyes = self.predatorsReflex
-	if predatorEyes and predatorEyes.enabled then
-		predatorEyes.time = (predatorEyes.time or 0) + dt
-		local target = 0
-		if self.adrenaline and self.adrenaline.active then
-			local duration = self.adrenaline.duration or 0
-			local timer = max(0, self.adrenaline.timer or 0)
-			if duration > 1e-4 then
-				local remaining = max(0, min(1, timer / duration))
-				target = 0.5 + 0.5 * (1 - remaining)
-			else
-				target = 1
-			end
-			target = max(target, 0.45)
-		end
-		predatorEyes.target = target
-		local intensity = predatorEyes.intensity or 0
-		local blend = min(1, dt * 9.0)
-		intensity = intensity + (target - intensity) * blend
-		predatorEyes.intensity = intensity
-	end
-
-	-- base speed with upgrades/modifiers
+       -- base speed with upgrades/modifiers
 	local head = trail[1]
 	local speed = self:getSpeed()
 	local baselineSpeed = speed

@@ -2211,18 +2211,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			end
 
 			local faceScale = 1
-			local faceOptions = nil
-			if upgradeVisuals and upgradeVisuals.predatorsReflex then
-				local data = upgradeVisuals.predatorsReflex
-				local intensity = max(0, min(1, data.intensity or 0))
-				local eyeScale = 1 + 0.45 * intensity
-				faceOptions = {
-					eyeScale = eyeScale,
-					highlight = intensity,
-					time = data.time or love.timer.getTime(),
-				}
-			end
-			Face:draw(hx, hy, faceScale, faceOptions)
+                       Face:draw(hx, hy, faceScale, nil)
 
 			drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
 
