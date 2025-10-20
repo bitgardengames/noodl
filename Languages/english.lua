@@ -572,8 +572,8 @@ local english = {
                                 activation_text = "",
 			},
                         diffraction_barrier = {
-                                name = "Diffraction Barrier",
-				description = "Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s.",
+                                name = "Phase Disruptor",
+                                description = "Lasers charge 25% longer, fire 20% shorter, and stay offline for +0.5s.",
 			},
                         resonant_shell = {
                                 name = "Resonant Shell",
