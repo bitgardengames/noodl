@@ -23,6 +23,9 @@ local FloorSetup = {}
 local TRACK_LENGTH = 120
 local DEFAULT_SAW_RADIUS = 16
 local GILDED_SAW_COLOR = {1.0, 0.84, 0.34, 1}
+local EMBER_SAW_COLOR = {1.0, 0.47, 0.18, 1}
+local EMBER_SAW_TRAIL_COLOR = {1.0, 0.32, 0.08, 0.2}
+local EMBER_SAW_GLOW_COLOR = {1.0, 0.62, 0.22, 0.44}
 local GILDED_LASER_PALETTE = {
         core = {1.0, 0.86, 0.32, 1},
         glow = {1.0, 0.62, 0.24, 0.9},
@@ -308,21 +311,56 @@ end
 local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
         local spawnLookup = buildCellLookup(spawnBuffer)
         options = options or {}
-        local radiantRemaining = max(0, floor((options.radiantCount or 0) + 0.5))
+        local specialQueue = {}
+        local function addSpecial(count, specialOptions)
+                local amount = max(0, floor((count or 0) + 0.5))
+                if amount <= 0 then
+                        return
+                end
+
+                specialQueue[#specialQueue + 1] = {
+                        remaining = amount,
+                        options = specialOptions,
+                }
+        end
+
+        addSpecial(options.radiantCount, {
+                color = options.radiantColor or GILDED_SAW_COLOR,
+                gilded = true,
+        })
+
+        addSpecial(options.emberCount, {
+                color = options.emberColor or EMBER_SAW_COLOR,
+                ember = true,
+                emberTrailColor = options.emberTrailColor or EMBER_SAW_TRAIL_COLOR,
+                emberGlowColor = options.emberGlowColor or EMBER_SAW_GLOW_COLOR,
+        })
+
+        local nextSpecialIndex = 1
+
+        local function acquireSpecial()
+                if #specialQueue == 0 then
+                        return nil, nil
+                end
+
+                for offset = 0, #specialQueue - 1 do
+                        local index = ((nextSpecialIndex + offset - 1) % #specialQueue) + 1
+                        local special = specialQueue[index]
+                        if special and special.remaining > 0 then
+                                return special, index
+                        end
+                end
+
+                return nil, nil
+        end
 
         for _ = 1, numSaws do
                 local dir = (love.math.random() < 0.5) and "horizontal" or "vertical"
                 local placed = false
                 local attempts = 0
                 local maxAttempts = 60
-                local sawOptions = nil
-
-                if radiantRemaining > 0 then
-                        sawOptions = {
-                                color = options.radiantColor or GILDED_SAW_COLOR,
-                                gilded = true,
-                        }
-                end
+                local activeSpecial, activeIndex = acquireSpecial()
+                local sawOptions = activeSpecial and activeSpecial.options or nil
 
                 while not placed and attempts < maxAttempts do
                         attempts = attempts + 1
@@ -334,8 +372,11 @@ local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
                         end
                 end
 
-                if placed and sawOptions then
-                        radiantRemaining = radiantRemaining - 1
+                if placed and activeSpecial then
+                        activeSpecial.remaining = max(0, (activeSpecial.remaining or 0) - 1)
+                        nextSpecialIndex = ((activeIndex or 1) % max(#specialQueue, 1)) + 1
+                elseif activeSpecial then
+                        nextSpecialIndex = ((activeIndex or 1) % max(#specialQueue, 1)) + 1
                 end
         end
 end
@@ -637,8 +678,10 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
         local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
 
         local radiantSaws = max(0, floor((traitContext.gildedObsessionExtraSaws or 0) + 0.5))
+        local emberSaws = max(0, floor((traitContext.contractOfCindersEmberSaws or 0) + 0.5))
         local radiantLasers = max(0, floor((traitContext.gildedObsessionExtraLasers or 0) + 0.5))
         traitContext.gildedObsessionExtraSaws = radiantSaws
+        traitContext.contractOfCindersEmberSaws = emberSaws
         traitContext.gildedObsessionExtraLasers = radiantLasers
 
         return {
@@ -656,6 +699,7 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
                 lasers = laserPlan,
                 laserCount = desiredLasers,
                 radiantSawCount = radiantSaws,
+                emberSawCount = emberSaws,
                 radiantLaserCount = radiantLasers,
                 darts = dartPlan,
                 dartCount = desiredDarts,
@@ -719,9 +763,11 @@ function FloorSetup.spawnHazards(spawnPlan)
         end
 
         local radiantSawCount = 0
+        local emberSawCount = 0
         local radiantLaserCount = 0
         if spawnPlan then
                 radiantSawCount = spawnPlan.radiantSawCount or 0
+                emberSawCount = spawnPlan.emberSawCount or 0
                 radiantLaserCount = spawnPlan.radiantLaserCount or 0
         end
 
@@ -739,7 +785,14 @@ function FloorSetup.spawnHazards(spawnPlan)
                 spawnPlan.halfTiles,
                 spawnPlan.bladeRadius,
                 spawnPlan.spawnSafeCells,
-                {radiantCount = radiantSawCount, radiantColor = GILDED_SAW_COLOR}
+                {
+                        radiantCount = radiantSawCount,
+                        radiantColor = GILDED_SAW_COLOR,
+                        emberCount = emberSawCount,
+                        emberColor = EMBER_SAW_COLOR,
+                        emberTrailColor = EMBER_SAW_TRAIL_COLOR,
+                        emberGlowColor = EMBER_SAW_GLOW_COLOR,
+                }
         )
         spawnLasers(spawnPlan.lasers or {})
         spawnDarts(spawnPlan.darts or {})

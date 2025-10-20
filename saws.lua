@@ -354,6 +354,14 @@ function Saws:spawn(x, y, radius, teeth, dir, side, options)
         options = options or {}
         saw.color = options.color or saw.color
         saw.gilded = options.gilded or false
+        saw.ember = options.ember or false
+        saw.emberTrailColor = options.emberTrailColor
+        saw.emberGlowColor = options.emberGlowColor
+        if saw.ember then
+                saw.emberTrailPhase = love.math.random()
+        else
+                saw.emberTrailPhase = nil
+        end
 end
 
 function Saws:getAll()
@@ -436,22 +444,26 @@ function Saws:update(dt)
 				saw.scaleY = 1
 				saw.offsetY = 0
 			end
-		elseif saw.phase == "done" then
-			if stallTimer <= 0 then
-				-- Move along the track
-				local delta = (getMoveSpeed() * dt) / TRACK_LENGTH
-				saw.progress = saw.progress + delta * saw.direction
+                elseif saw.phase == "done" then
+                        if stallTimer <= 0 then
+                                -- Move along the track
+                                local delta = (getMoveSpeed() * dt) / TRACK_LENGTH
+                                saw.progress = saw.progress + delta * saw.direction
 
-				if saw.progress > 1 then
-					saw.progress = 1
-					saw.direction = -1
-				elseif saw.progress < 0 then
-					saw.progress = 0
-					saw.direction = 1
-				end
-			end
-		end
-	end
+                                if saw.progress > 1 then
+                                        saw.progress = 1
+                                        saw.direction = -1
+                                elseif saw.progress < 0 then
+                                        saw.progress = 0
+                                        saw.direction = 1
+                                end
+                        end
+                end
+
+                if saw.ember then
+                        saw.emberTrailPhase = (saw.emberTrailPhase or 0) + dt
+                end
+        end
 end
 
 function Saws:draw()
@@ -604,10 +616,42 @@ function Saws:draw()
 			love.graphics.circle("fill", 0, 0, HUB_HOLE_RADIUS)
 		end
 
-		love.graphics.pop()
+                love.graphics.pop()
 
-		-- Reset stencil
+                -- Reset stencil
                 love.graphics.setStencilTest()
+
+                if saw.ember then
+                        local glowX = (px or saw.x) + offsetX
+                        local glowY = (py or saw.y) + offsetY
+                        local radius = (saw.radius or SAW_RADIUS)
+                        local phase = saw.emberTrailPhase or 0
+                        local trailLength = TRACK_LENGTH * 0.55
+                        local trailColor = saw.emberTrailColor or {1.0, 0.32, 0.08, 0.2}
+                        local glowColor = saw.emberGlowColor or {1.0, 0.62, 0.22, 0.4}
+                        local pulse = 0.9 + 0.08 * math.sin(phase * 3.1)
+
+                        RenderLayers:withLayer("effects", function()
+                                local trailAlpha = (trailColor[4] or 1)
+                                love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], trailAlpha)
+                                if saw.dir == "horizontal" then
+                                        local height = radius * (0.95 + 0.18 * math.sin(phase * 2.6))
+                                        love.graphics.rectangle("fill", glowX - trailLength * 0.5, glowY - height * 0.5, trailLength, height)
+                                else
+                                        local width = radius * (0.95 + 0.18 * math.cos(phase * 2.4))
+                                        love.graphics.rectangle("fill", glowX - width * 0.5, glowY - trailLength * 0.5, width, trailLength)
+                                end
+
+                                local outerAlpha = (glowColor[4] or 1) * 0.6
+                                love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha)
+                                love.graphics.setLineWidth(2)
+                                love.graphics.circle("line", glowX, glowY, radius * (1.18 + 0.12 * pulse))
+
+                                love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha * 0.6)
+                                love.graphics.circle("line", glowX, glowY, radius * (0.88 + 0.1 * math.sin(phase * 4.4 + 0.8)))
+                                love.graphics.setLineWidth(1)
+                        end)
+                end
 
                 if saw.gilded then
                         local glowX = (px or saw.x) + offsetX
