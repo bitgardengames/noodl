@@ -646,26 +646,29 @@ function Saws:draw()
 			points[#points + 1] = math.sin(angle) * r
 		end
 
-		if #points >= 6 then
-			RenderLayers:withLayer("shadows", function()
-				love.graphics.push()
+                local isBladeHidden = sinkProgress >= 0.999
+                if (saw.scaleX ~= nil and saw.scaleX <= 0) or (saw.scaleY ~= nil and saw.scaleY <= 0) then
+                        isBladeHidden = true
+                end
+                if not isBladeHidden and #points >= 6 then
+                        RenderLayers:withLayer("shadows", function()
+                                love.graphics.push()
 
-				local shadowOffsetX = offsetX
-				local shadowOffsetY = offsetY
+                                local shadowBaseX = (px or anchorX)
+                                local shadowBaseY = (py or anchorY)
 
-				if saw.dir == "horizontal" then
-					shadowOffsetX = shadowOffsetX + SHADOW_OFFSET * 0.4
-					shadowOffsetY = shadowOffsetY + SHADOW_OFFSET
-				else
-					local shadowDirX = sinkDir
-					if saw.side == "left" then
-						shadowDirX = 1
-					end
-					shadowOffsetX = shadowOffsetX + SHADOW_OFFSET * shadowDirX
-					shadowOffsetY = shadowOffsetY + SHADOW_OFFSET * 0.5
-				end
+                                if offsetX > 0 then
+                                        shadowBaseX = shadowBaseX + offsetX
+                                end
 
-                                love.graphics.translate((px or anchorX) + shadowOffsetX, (py or anchorY) + shadowOffsetY)
+                                if offsetY > 0 then
+                                        shadowBaseY = shadowBaseY + offsetY
+                                end
+
+                                local shadowOffsetX = SHADOW_OFFSET
+                                local shadowOffsetY = SHADOW_OFFSET
+
+                                love.graphics.translate(shadowBaseX + shadowOffsetX, shadowBaseY + shadowOffsetY)
 				love.graphics.rotate(rotation)
 				love.graphics.scale(sinkScale, sinkScale)
 
