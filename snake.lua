@@ -1704,8 +1704,8 @@ local function spawnGluttonsWakeRock(segment)
                 return
         end
 
-        local x = segment.drawX or segment.x
-        local y = segment.drawY or segment.y
+        local x = segment.fruitMarkerX or segment.drawX or segment.x
+        local y = segment.fruitMarkerY or segment.drawY or segment.y
         if not (x and y) then
                 return
         end
