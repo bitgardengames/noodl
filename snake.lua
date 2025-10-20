@@ -25,6 +25,9 @@ local unpack = unpack
 local sqrt = math.sqrt
 local max = math.max
 
+local spawnGluttonsWakeRock
+local crystallizeGluttonsWakeSegments
+
 local screenW, screenH
 local direction = {x = 1, y = 0}
 local pendingDir = {x = 1, y = 0}
@@ -1699,7 +1702,7 @@ isGluttonsWakeActive = function()
         return not not effect
 end
 
-local function spawnGluttonsWakeRock(segment)
+spawnGluttonsWakeRock = function(segment)
         if not segment or not segment.fruitMarker then
                 return
         end
@@ -1721,7 +1724,7 @@ local function spawnGluttonsWakeRock(segment)
         end
 end
 
-local function crystallizeGluttonsWakeSegments(buffer, startIndex, endIndex, upgradeActive)
+crystallizeGluttonsWakeSegments = function(buffer, startIndex, endIndex, upgradeActive)
         if not buffer then
                 return
         end
