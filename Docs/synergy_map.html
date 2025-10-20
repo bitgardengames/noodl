@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Noodl Upgrade Synergy Map</title>
+  <style>
+    body { background: #111827; color: #e5e7eb; font-family: sans-serif; }
+    .matrix { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 40px; }
+    .cell { border-radius: 12px; padding: 10px; text-align: center; font-size: 12px; line-height: 1.3; }
+    .Common { background: #374151; }
+    .Uncommon { background: #2563eb; }
+    .Rare { background: #a855f7; }
+    .Epic { background: #f59e0b; }
+    .Legendary { background: #ef4444; }
+    h2 { text-align: center; }
+    .legend { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+    .legend span { padding: 4px 10px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h2>Noodl – Rarity & Synergy Map</h2>
+  <div class="legend">
+    <span class="Common">Common</span>
+    <span class="Uncommon">Uncommon</span>
+    <span class="Rare">Rare</span>
+    <span class="Epic">Epic</span>
+    <span class="Legendary">Legendary</span>
+  </div>
+
+  <div class="matrix">
+    <div><b>Defense</b></div>
+    <div><b>Economy</b></div>
+    <div><b>Mobility</b></div>
+    <div><b>Hazards</b></div>
+    <div><b>Utility</b></div>
+    <div><b>Risk / Rocks</b></div>
+
+    <div class="Common cell">Amber Bloom<br>Stone Whisperer<br>Serpent’s Reflex</div>
+    <div class="Common cell">Extra Bite<br>Fresh Supplies<br>Stone Census</div>
+    <div class="Uncommon cell">Shield Recycler<br>Molting Reflex<br>Resonant Shell<br>Tempest Ward</div>
+    <div class="Uncommon cell">Guild Ledger<br>Mapmaker's Compass<br>Radiant Charter<br>Subduction Array<br>Verdant Bonds</div>
+    <div class="Rare cell">Circuit Breaker<br>Contract of Cinders<br>Tectonic Resolve<br>Chrono Ward<br>Thunder Dash</div>
+    <div class="Rare cell">Glutton’s Wake<br>Golden Debt<br>Caravan Contract<br>Grand Bazaar<br>Zephyr Coils</div>
+
+    <div class="Epic cell">Titanblood Pact<br>Abyssal Catalyst<br>Spectral Harvest<br>Phoenix Echo</div>
+    <div class="Epic cell">Deliberate Coil<br>Chronospiral Core</div>
+    <div class="Legendary cell">Event Horizon</div>
+  </div>
+</body>
+</html>
