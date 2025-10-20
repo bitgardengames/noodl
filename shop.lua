@@ -20,8 +20,6 @@ local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local BACKGROUND_EFFECT_TYPE = "shopGlimmer"
 local backgroundEffectCache = {}
-local CARD_HOLOGRAM_TYPE = "cardHologram"
-local cardHologramCache = {}
 local backgroundEffect = nil
 
 local function getColorChannels(color, fallback)
@@ -566,43 +564,9 @@ local rarityStyles = {
 	},
 }
 
-local function cloneColor(color)
-	if not color then
-		return nil
-	end
-
-	return {color[1] or 0, color[2] or 0, color[3] or 0, color[4] or 1}
-end
-
-local hologramRarityPalettes = {}
-do
-	local hologramRarities = {"rare", "epic", "legendary"}
-	for _, rarity in ipairs(hologramRarities) do
-		local style = rarityStyles[rarity]
-		if style then
-			local primary = cloneColor((style.innerGlow and style.innerGlow.color) or (style.outerGlow and style.outerGlow.color))
-			or cloneColor(style.base)
-			local sparkle = cloneColor(style.sparkles and style.sparkles.color)
-			or cloneColor((style.outerGlow and style.outerGlow.color))
-			or cloneColor((style.innerGlow and style.innerGlow.color))
-			or primary
-			local rim = cloneColor((style.outerGlow and style.outerGlow.color))
-			or cloneColor((style.innerGlow and style.innerGlow.color))
-			or primary
-
-			hologramRarityPalettes[rarity] = {
-				baseColor = cloneColor(style.base) or primary,
-				accentColor = primary,
-				sparkleColor = sparkle or primary,
-				rimColor = rim or primary,
-			}
-		end
-	end
-end
-
 local function applyColor(setColorFn, color, overrideAlpha)
-	if not color then return end
-	setColorFn(color[1], color[2], color[3], overrideAlpha or color[4] or 1)
+        if not color then return end
+        setColorFn(color[1], color[2], color[3], overrideAlpha or color[4] or 1)
 end
 
 local function withTransformedScissor(x, y, w, h, fn)
@@ -736,51 +700,9 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		love.graphics.rectangle("line", x - 3, y - 3, w + 6, h + 6, 16, 16)
 	end
 
-	applyColor(setColor, borderColor, rarityBorderAlpha)
-	local hologramPalette = hologramRarityPalettes[card.rarity or ""]
-	if hologramPalette then
-		local effect = Shaders.ensure(cardHologramCache, CARD_HOLOGRAM_TYPE)
-		if effect then
-			local hoverValue = (animationState and animationState.hover) or 0
-			if hovered then
-				hoverValue = max(hoverValue, 1)
-			end
-			local focusValue = (animationState and animationState.focus) or 0
-			local selectionValue = (animationState and animationState.selection) or 0
-			if isSelected then
-				selectionValue = max(selectionValue, 1)
-			end
-
-			local function ease(t)
-				t = max(0, min(1, t))
-				return t * t * (3 - 2 * t)
-			end
-
-			local hoverEase = ease(hoverValue)
-			local focusEase = ease(focusValue)
-			local selectionEase = ease(selectionValue)
-
-			local intensity = 0.55 + 0.3 * hoverEase + 0.2 * focusEase + 0.45 * selectionEase
-			intensity = max(0, min(intensity * fadeAlpha, 1.35))
-
-			local effectData = {
-				parallax = (hoverEase * 0.4 + selectionEase * 0.9) * fadeAlpha,
-				scanOffset = ((animationState and animationState.selectionClock) or 0) * 0.12,
-			}
-
-			Shaders.configure(effect, hologramPalette, effectData)
-
-			withTransformedScissor(x, y, w, h, function()
-				love.graphics.setColor(1, 1, 1, fadeAlpha)
-				Shaders.draw(effect, x, y, w, h, intensity)
-				love.graphics.setColor(1, 1, 1, 1)
-			end)
-		end
-	end
-
-	applyColor(setColor, borderColor, rarityBorderAlpha)
-	love.graphics.setLineWidth(style.borderWidth or 4)
-	love.graphics.rectangle("line", x, y, w, h, 12, 12)
+        applyColor(setColor, borderColor, rarityBorderAlpha)
+        love.graphics.setLineWidth(style.borderWidth or 4)
+        love.graphics.rectangle("line", x, y, w, h, 12, 12)
 
 	local hoverGlowAlpha
 	if style.innerGlow then
