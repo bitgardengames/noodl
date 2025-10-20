@@ -307,26 +307,11 @@ local function updateDailyBarCelebration(dt, shouldCelebrate)
 end
 
 local function prepareStartAction(action)
-	if type(action) ~= "string" then
-		return action
-	end
+        if type(action) ~= "string" then
+                return action
+        end
 
-	if action ~= "game" then
-		return action
-	end
-
-	local deepest = PlayerStats:get("deepestFloorReached") or 0
-	if deepest <= 1 then
-		return action
-	end
-
-	return {
-		state = "floorselect",
-		data = {
-			highestFloor = deepest,
-			defaultFloor = deepest,
-		},
-	}
+        return action
 end
 
 local function handleAnalogAxis(axis, value)

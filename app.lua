@@ -18,15 +18,14 @@ local DEFAULT_BG_COLOR = {0, 0, 0, 1}
 local App = {
 	stateModules = {
 		splash = require("splashscreen"),
-		menu = require("menu"),
-		game = require("game"),
-		gameover = require("gameover"),
-		achievementsmenu = require("achievementsmenu"),
-		floorselect = require("floorselectscreen"),
-		metaprogression = require("metaprogressionscreen"),
-		settings = require("settingsscreen"),
-		dev = require("devscreen"),
-	}
+                menu = require("menu"),
+                game = require("game"),
+                gameover = require("gameover"),
+                achievementsmenu = require("achievementsmenu"),
+                metaprogression = require("metaprogressionscreen"),
+                settings = require("settingsscreen"),
+                dev = require("devscreen"),
+        }
 }
 
 function App:registerStates()
