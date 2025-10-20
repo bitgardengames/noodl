@@ -355,17 +355,18 @@ local function getSawCenterForProgress(saw, progress)
 
         local radius = saw.radius or SAW_RADIUS
         local clamped = max(0, min(1, progress or 0))
+        local eased = Easing.easeInOutCubic(clamped)
 
         if saw.dir == "horizontal" then
                 local minX = anchorX - TRACK_LENGTH/2 + radius
                 local maxX = anchorX + TRACK_LENGTH/2 - radius
-                local px = minX + (maxX - minX) * clamped
+                local px = minX + (maxX - minX) * eased
                 return px, anchorY
         end
 
         local minY = anchorY - TRACK_LENGTH/2 + radius
         local maxY = anchorY + TRACK_LENGTH/2 - radius
-        local py = minY + (maxY - minY) * clamped
+        local py = minY + (maxY - minY) * eased
 
         return anchorX, py
 end
