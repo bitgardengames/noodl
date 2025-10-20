@@ -557,10 +557,10 @@ local english = {
 				name = "Molting Reflex",
 				description = "Shields trigger a 60% adrenaline surge.",
 			},
-			circuit_breaker = {
-				name = "Circuit Breaker",
-				description = "Saw tracks freeze for 1s after each fruit.",
-			},
+                        circuit_breaker = {
+                                name = "Circuit Breaker",
+                                description = "Saw tracks and lasers freeze for 1s after each fruit.",
+                        },
 			subduction_array = {
 				name = "Subduction Array",
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",

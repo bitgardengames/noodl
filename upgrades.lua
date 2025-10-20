@@ -237,27 +237,63 @@ local function collectPositions(source, limit, extractor)
 end
 
 local function getSawCenters(limit)
-	if not Saws or not Saws.getAll then
-		return nil
-	end
+        if not Saws or not Saws.getAll then
+                return nil
+        end
 
-	return collectPositions(Saws:getAll(), limit, function(saw)
-		local sx, sy
-		if Saws.getCollisionCenter then
-			sx, sy = Saws:getCollisionCenter(saw)
-		end
-		return sx or saw.x, sy or saw.y
-	end)
+        return collectPositions(Saws:getAll(), limit, function(saw)
+                local sx, sy
+                if Saws.getCollisionCenter then
+                        sx, sy = Saws:getCollisionCenter(saw)
+                end
+                return sx or saw.x, sy or saw.y
+        end)
 end
 
 local function getLaserCenters(limit)
-	if not Lasers or not Lasers.getEmitters then
-		return nil
-	end
+        if not Lasers or not Lasers.getEmitters then
+                return nil
+        end
 
-	return collectPositions(Lasers:getEmitters(), limit, function(beam)
-		return beam.x, beam.y
-	end)
+        return collectPositions(Lasers:getEmitters(), limit, function(beam)
+                return beam.x, beam.y
+        end)
+end
+
+local function getLaserEmitterDetails(limit)
+        if not Lasers or not Lasers.getEmitters then
+                return {}
+        end
+
+        local emitters = Lasers:getEmitters()
+        if not emitters then
+                return {}
+        end
+
+        local count = #emitters
+        if not count or count <= 0 then
+                return {}
+        end
+
+        local targets = {}
+        local maxCount = min(limit or count, count)
+        for index = 1, maxCount do
+                local beam = emitters[index]
+                if beam then
+                        local x = beam.x
+                        local y = beam.y
+                        if x and y then
+                                targets[#targets + 1] = {
+                                        x = x,
+                                        y = y,
+                                        dir = beam.dir,
+                                        facing = beam.facing,
+                                }
+                        end
+                end
+        end
+
+        return targets
 end
 
 local function stoneSkinShieldHandler(data, state)
@@ -728,9 +764,9 @@ local function applyCircuitBreakerFacing(options, dx, dy)
 end
 
 local function getSawFacingDirection(sawInfo)
-	if not sawInfo then
-		return 0, -1
-	end
+        if not sawInfo then
+                return 0, -1
+        end
 
 	if sawInfo.dir == "vertical" then
 		if sawInfo.side == "left" then
@@ -742,46 +778,67 @@ local function getSawFacingDirection(sawInfo)
 		return -1, 0
 	end
 
-	return 0, -1
+        return 0, -1
+end
+
+local function getLaserFacingDirection(laserInfo)
+        if not laserInfo then
+                return 0, -1
+        end
+
+        local dir = laserInfo.dir
+        local facing = (laserInfo.facing or 1) >= 0 and 1 or -1
+
+        if dir == "horizontal" then
+                return facing, 0
+        end
+
+        return 0, facing
 end
 
 local function buildCircuitBreakerTargets(data)
-	local targets = {}
-	if not data then
-		return targets
-	end
+        local targets = {}
+        if not data then
+                return targets
+        end
 
-	if data.saws and #data.saws > 0 then
-		for _, entry in ipairs(data.saws) do
-			if entry then
-				local x = entry.x or entry[1]
-				local y = entry.y or entry[2]
-				if x and y then
-					targets[#targets + 1] = {
-						x = x,
-						y = y,
-						dir = entry.dir,
-						side = entry.side,
-					}
-				end
-			end
-		end
-	elseif data.positions and #data.positions > 0 then
-		for _, pos in ipairs(data.positions) do
-			if pos then
-				local x = pos[1]
-				local y = pos[2]
-				if x and y then
-					targets[#targets + 1] = {
-						x = x,
-						y = y,
-					}
-				end
-			end
-		end
-	end
+        if data.saws and #data.saws > 0 then
+                for _, entry in ipairs(data.saws) do
+                        if entry then
+                                local x = entry.x or entry[1]
+                                local y = entry.y or entry[2]
+                                if x and y then
+                                        targets[#targets + 1] = {
+                                                x = x,
+                                                y = y,
+                                                dir = entry.dir,
+                                                side = entry.side,
+                                                type = "saw",
+                                        }
+                                end
+                        end
+                end
+        elseif data.positions and #data.positions > 0 then
+                for _, pos in ipairs(data.positions) do
+                        if pos then
+                                local x = pos[1]
+                                local y = pos[2]
+                                if x and y then
+                                        targets[#targets + 1] = {
+                                                x = x,
+                                                y = y,
+                                                type = "saw",
+                                        }
+                                end
+                        end
+                end
+        end
 
-	return targets
+        return targets
+end
+
+local function buildCircuitBreakerLaserTargets(limit)
+        return getLaserEmitterDetails(limit)
 end
 
 local pool = {
@@ -808,7 +865,7 @@ local pool = {
                 id = "quick_fangs",
                 nameKey = "upgrades.quick_fangs.name",
                 descKey = "upgrades.quick_fangs.description",
-                rarity = "uncommon",
+                rarity = "rare",
                 allowDuplicates = true,
 		maxStacks = 4,
 		onAcquire = function(state)
@@ -1179,11 +1236,11 @@ local pool = {
 			end,
 		},
 	}),
-	register({
-		id = "circuit_breaker",
-		nameKey = "upgrades.circuit_breaker.name",
-		descKey = "upgrades.circuit_breaker.description",
-		rarity = "uncommon",
+        register({
+                id = "circuit_breaker",
+                nameKey = "upgrades.circuit_breaker.name",
+                descKey = "upgrades.circuit_breaker.description",
+                rarity = "rare",
                 onAcquire = function(state)
                         state.effects.sawStall = (state.effects.sawStall or 0) + CIRCUIT_BREAKER_STALL_DURATION
 			local sparkColor = {1, 0.58, 0.32, 1}
@@ -1209,64 +1266,98 @@ local pool = {
 					return
 				end
 
-				local sparkColor = {1, 0.58, 0.32, 1}
-				local baseOptions = {
-					color = sparkColor,
-					skipText = true,
-					skipVisuals = true,
-					particles = {
-						count = 14,
-						speed = 120,
-						speedVariance = 70,
-						life = 0.28,
-						size = 2.8,
-						color = {1, 0.74, 0.38, 1},
-						spread = pi * 0.45,
-						angleJitter = pi * 0.18,
-						gravity = 200,
-						drag = 1.5,
-						fadeTo = 0,
-						scaleMin = 0.4,
-						scaleVariance = 0.26,
-					},
-				}
-				local targets = buildCircuitBreakerTargets(data)
-				if not targets or #targets == 0 then
-					targets = {}
-					local sawCenters = getSawCenters(2)
-					if sawCenters and #sawCenters > 0 then
-						for _, pos in ipairs(sawCenters) do
-							if pos then
-								targets[#targets + 1] = {
-									x = pos[1],
-									y = pos[2],
-								}
-							end
-						end
-					end
-				end
-				if targets and #targets > 0 then
-					local limit = min(#targets, 2)
-					for i = 1, limit do
-						local target = targets[i]
-						if target then
-							local sparkOptions = deepcopy(baseOptions)
-							sparkOptions.x = target.x
-							sparkOptions.y = target.y
-							local dirX, dirY = getSawFacingDirection(target)
-							applyCircuitBreakerFacing(sparkOptions, dirX, dirY)
-							celebrateUpgrade(nil, nil, sparkOptions)
-						end
-					end
-				else
-					local fallbackOptions = deepcopy(baseOptions)
-					applySegmentPosition(fallbackOptions, 0.82)
-					applyCircuitBreakerFacing(fallbackOptions, 0, -1)
-					celebrateUpgrade(nil, nil, fallbackOptions)
-				end
-			end,
-		},
-	}),
+                                local duration = (data and data.duration) or CIRCUIT_BREAKER_STALL_DURATION
+                                if Lasers and Lasers.stall then
+                                        Lasers:stall(duration, {
+                                                cause = data and data.cause or nil,
+                                                source = "circuit_breaker",
+                                                positionLimit = 2,
+                                        })
+                                end
+
+                                local sparkColor = {1, 0.58, 0.32, 1}
+                                local baseOptions = {
+                                        color = sparkColor,
+                                        skipText = true,
+                                        skipVisuals = true,
+                                        particles = {
+                                                count = 14,
+                                                speed = 120,
+                                                speedVariance = 70,
+                                                life = 0.28,
+                                                size = 2.8,
+                                                color = {1, 0.74, 0.38, 1},
+                                                spread = pi * 0.45,
+                                                angleJitter = pi * 0.18,
+                                                gravity = 200,
+                                                drag = 1.5,
+                                                fadeTo = 0,
+                                                scaleMin = 0.4,
+                                                scaleVariance = 0.26,
+                                        },
+                                }
+
+                                local sawTargets = buildCircuitBreakerTargets(data)
+                                if not sawTargets or #sawTargets == 0 then
+                                        sawTargets = {}
+                                        local sawCenters = getSawCenters(2)
+                                        if sawCenters and #sawCenters > 0 then
+                                                for _, pos in ipairs(sawCenters) do
+                                                        if pos then
+                                                                sawTargets[#sawTargets + 1] = {
+                                                                        x = pos[1],
+                                                                        y = pos[2],
+                                                                        type = "saw",
+                                                                }
+                                                        end
+                                                end
+                                        end
+                                end
+
+                                local sparksSpawned = 0
+
+                                if sawTargets and #sawTargets > 0 then
+                                        local limit = min(#sawTargets, 2)
+                                        for i = 1, limit do
+                                                local target = sawTargets[i]
+                                                if target then
+                                                        local sparkOptions = deepcopy(baseOptions)
+                                                        sparkOptions.x = target.x
+                                                        sparkOptions.y = target.y
+                                                        local dirX, dirY = getSawFacingDirection(target)
+                                                        applyCircuitBreakerFacing(sparkOptions, dirX, dirY)
+                                                        celebrateUpgrade(nil, nil, sparkOptions)
+                                                        sparksSpawned = sparksSpawned + 1
+                                                end
+                                        end
+                                end
+
+                                local laserTargets = buildCircuitBreakerLaserTargets(2)
+                                if laserTargets and #laserTargets > 0 then
+                                        local limit = min(#laserTargets, 2)
+                                        for i = 1, limit do
+                                                local target = laserTargets[i]
+                                                if target then
+                                                        local sparkOptions = deepcopy(baseOptions)
+                                                        sparkOptions.x = target.x
+                                                        sparkOptions.y = target.y
+                                                        local dirX, dirY = getLaserFacingDirection(target)
+                                                        applyCircuitBreakerFacing(sparkOptions, dirX, dirY)
+                                                        celebrateUpgrade(nil, nil, sparkOptions)
+                                                        sparksSpawned = sparksSpawned + 1
+                                                end
+                                        end
+                                end
+
+                                if sparksSpawned <= 0 then
+                                        local fallbackOptions = deepcopy(baseOptions)
+                                        applySegmentPosition(fallbackOptions, 0.82)
+                                        applyCircuitBreakerFacing(fallbackOptions, 0, -1)
+                                        celebrateUpgrade(nil, nil, fallbackOptions)
+                                end
+                        end,
+                },
+        }),
 	register({
 		id = "subduction_array",
 		nameKey = "upgrades.subduction_array.name",
@@ -1496,7 +1587,7 @@ local pool = {
                 id = "caravan_contract",
                 nameKey = "upgrades.caravan_contract.name",
                 descKey = "upgrades.caravan_contract.description",
-                rarity = "uncommon",
+                rarity = "rare",
                 tags = {"economy", "risk"},
                 allowDuplicates = true,
                 onAcquire = function(state)

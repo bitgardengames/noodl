@@ -16,6 +16,7 @@ local Lasers = {}
 local LASERS_ENABLED = true
 
 local emitters = {}
+local stallTimer = 0
 
 function Lasers:isEnabled()
 	return LASERS_ENABLED
@@ -353,14 +354,16 @@ function Lasers:reflectBeam(beam, options)
 end
 
 function Lasers:reset()
-	for _, beam in ipairs(emitters) do
-		releaseOccupancy(beam)
-	end
-	emitters = {}
+        for _, beam in ipairs(emitters) do
+                releaseOccupancy(beam)
+        end
+        emitters = {}
 
-	if not LASERS_ENABLED then
-		return
-	end
+        stallTimer = 0
+
+        if not LASERS_ENABLED then
+                return
+        end
 end
 
 function Lasers:spawn(x, y, dir, options)
@@ -414,26 +417,90 @@ function Lasers:spawn(x, y, dir, options)
 end
 
 function Lasers:getEmitters()
-	local copies = {}
-	for index, beam in ipairs(emitters) do
-		copies[index] = beam
-	end
-	return copies
+        local copies = {}
+        for index, beam in ipairs(emitters) do
+                copies[index] = beam
+        end
+        return copies
+end
+
+function Lasers:stall(duration, options)
+        if not duration or duration <= 0 then
+                return
+        end
+
+        stallTimer = (stallTimer or 0) + duration
+
+        local Upgrades = package.loaded["upgrades"]
+        if Upgrades and Upgrades.notify then
+                local event = {
+                        duration = duration,
+                        total = stallTimer,
+                        cause = options and options.cause or nil,
+                        source = options and options.source or nil,
+                }
+
+                local positions = {}
+                local beams = {}
+                local limit = (options and options.positionLimit) or 4
+
+                for _, beam in ipairs(emitters) do
+                        if beam then
+                                local bx, by = beam.x, beam.y
+                                if bx and by then
+                                        positions[#positions + 1] = {bx, by}
+                                        beams[#beams + 1] = {
+                                                x = bx,
+                                                y = by,
+                                                dir = beam.dir,
+                                                facing = beam.facing,
+                                        }
+
+                                        if limit and limit > 0 and #positions >= limit then
+                                                break
+                                        end
+                                end
+                        end
+                end
+
+                if #positions > 0 then
+                        event.positions = positions
+                        event.positionCount = #positions
+                end
+
+                if #beams > 0 then
+                        event.lasers = beams
+                        event.laserCount = #beams
+                end
+
+                Upgrades:notify("lasersStalled", event)
+        end
 end
 
 function Lasers:update(dt)
-	if not LASERS_ENABLED then
-		return
-	end
+        if not LASERS_ENABLED then
+                return
+        end
 
-	if dt <= 0 then
-		return
-	end
+        if dt <= 0 then
+                return
+        end
 
-	for _, beam in ipairs(emitters) do
-		computeBeamTarget(beam)
+        local stall = stallTimer or 0
+        if stall > 0 then
+                if dt <= stall then
+                        stallTimer = max(0, stall - dt)
+                        return
+                end
 
-		if beam.state == "charging" then
+                dt = dt - stall
+                stallTimer = 0
+        end
+
+        for _, beam in ipairs(emitters) do
+                computeBeamTarget(beam)
+
+                if beam.state == "charging" then
 			beam.chargeTimer = (beam.chargeTimer or beam.chargeDuration) - dt
 			if beam.chargeTimer <= 0 then
 				beam.state = "firing"
