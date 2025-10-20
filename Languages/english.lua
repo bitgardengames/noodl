@@ -582,10 +582,6 @@ local english = {
                                 name = "Resonant Shell",
                                 description = "Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each of the first 5 Defense upgrades you own.",
                         },
-			wardens_chorus = {
-				name = "Warden's Chorus",
-				description = "Each Defense upgrade adds shield progress at the start of every floor.",
-			},
                         caravan_contract = {
                                 name = "Caravan Contract",
                                 description = "Shops offer +1 card per stack. Each floor spawns an extra rock.",
