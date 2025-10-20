@@ -585,7 +585,7 @@ local english = {
                         },
                         caravan_contract = {
                                 name = "Caravan Contract",
-                                description = "Shops offer +1 card per stack. Each floor spawns an extra rock.",
+                                description = "Shops offer +1 card per stack.",
                         },
                         golden_debt = {
                                 name = "Golden Debt",

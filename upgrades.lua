@@ -2036,7 +2036,6 @@ local pool = {
                 allowDuplicates = true,
                 onAcquire = function(state)
                         state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
-                        state.effects.rockSpawnBonus = (state.effects.rockSpawnBonus or 0) + 1
                 end,
         }),
         register({
