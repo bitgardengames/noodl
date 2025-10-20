@@ -97,6 +97,7 @@ end
 local POCKET_SPRINGS_FRUIT_TARGET = 20
 local CHRONO_WARD_DEFAULT_DURATION = 0.85
 local CHRONO_WARD_DEFAULT_SCALE = 0.45
+local CIRCUIT_BREAKER_STALL_DURATION = 1
 local SUBDUCTION_ARRAY_SINK_DURATION = 1.6
 local SUBDUCTION_ARRAY_VISUAL_LIMIT = 3
 
@@ -1183,8 +1184,8 @@ local pool = {
 		nameKey = "upgrades.circuit_breaker.name",
 		descKey = "upgrades.circuit_breaker.description",
 		rarity = "uncommon",
-		onAcquire = function(state)
-			state.effects.sawStall = (state.effects.sawStall or 0) + 1
+                onAcquire = function(state)
+                        state.effects.sawStall = (state.effects.sawStall or 0) + CIRCUIT_BREAKER_STALL_DURATION
 			local sparkColor = {1, 0.58, 0.32, 1}
 			celebrateUpgrade(getUpgradeString("circuit_breaker", "name"), nil, {
 				color = sparkColor,
@@ -1272,10 +1273,10 @@ local pool = {
 		descKey = "upgrades.subduction_array.description",
 		rarity = "uncommon",
 		tags = {"defense"},
-		onAcquire = function(state)
-			if state and state.effects then
-				state.effects.sawSinkDuration = max(state.effects.sawSinkDuration or 0, SUBDUCTION_ARRAY_SINK_DURATION)
-			end
+                onAcquire = function(state)
+                        if state and state.effects then
+                                state.effects.sawSinkDuration = (state.effects.sawSinkDuration or 0) + SUBDUCTION_ARRAY_SINK_DURATION
+                        end
 
 			local celebrationOptions = {
 				color = {0.68, 0.86, 1.0, 1},
@@ -1293,10 +1294,13 @@ local pool = {
 					return
 				end
 
-				local duration = SUBDUCTION_ARRAY_SINK_DURATION
-				if state and state.effects then
-					duration = max(duration, state.effects.sawSinkDuration or 0)
-				end
+                                local duration = SUBDUCTION_ARRAY_SINK_DURATION
+                                if state and state.effects then
+                                        local stackedDuration = state.effects.sawSinkDuration or 0
+                                        if stackedDuration > 0 then
+                                                duration = stackedDuration
+                                        end
+                                end
 
 				if Saws and Saws.sink then
 					Saws:sink(duration)
