@@ -549,13 +549,9 @@ local english = {
 				saws_text = "Sparse Saws",
 				lasers_text = "Scattered Lasers",
 			},
-			momentum_memory = {
-				name = "Momentum Memory",
-				description = "Adrenaline bursts last 2s longer.",
-			},
-			molting_reflex = {
-				name = "Molting Reflex",
-				description = "Shields trigger a 60% adrenaline surge.",
+                       molting_reflex = {
+                               name = "Molting Reflex",
+                               description = "Shields trigger a 60% adrenaline surge.",
 			},
                         circuit_breaker = {
                                 name = "Circuit Breaker",
@@ -625,13 +621,9 @@ local english = {
 				name = "Radiant Charter",
 				description = "Each extra shop slot removes 1 laser (minimum 0) and adds 1 saw to floor generation.",
 			},
-			predators_reflex = {
-				name = "Predator's Reflex",
-				description = "Adrenaline bursts are 25% stronger and trigger at the start of each floor.",
-			},
-			abyssal_catalyst = {
-				name = "Abyssal Catalyst",
-				description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
+                       abyssal_catalyst = {
+                               name = "Abyssal Catalyst",
+                               description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
 			},
 			spectral_harvest = {
 				name = "Spectral Harvest",
