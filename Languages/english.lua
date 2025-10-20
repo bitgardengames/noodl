@@ -634,7 +634,7 @@ local english = {
 			},
 			tectonic_resolve = {
 				name = "Tectonic Resolve",
-				description = "Rock spawn chance decreases by 15%. Each fruit has a 25% chance to shatter the nearest rock.",
+                                description = "Rock spawn chance decreases by 15%. Each fruit has a 20% chance to shatter the nearest rock.",
 			},
 			titanblood_pact = {
 				name = "Titanblood Pact",
