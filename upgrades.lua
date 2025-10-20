@@ -2036,8 +2036,8 @@ local pool = {
 		rarity = "rare",
 		tags = {"defense"},
 		onAcquire = function(state)
-			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
-			state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.25
+                        state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
+                        state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.20
 		end,
 	}),
 	register({
