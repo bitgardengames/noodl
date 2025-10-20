@@ -2257,7 +2257,7 @@ local pool = {
 		tags = {"mobility", "risk"},
 		unlockTag = "stormtech",
 		onAcquire = function(state)
-			Snake:addSpeedMultiplier(1.2)
+			Snake:addSpeedMultiplier(1.15)
 			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
 			if state then
 				state.counters = state.counters or {}
