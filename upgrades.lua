@@ -423,6 +423,13 @@ local function pushNearbyRocks(originCol, originRow, positions)
                                                 end
 
                                                 local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
+                                                if Rocks and Rocks.beginSlide then
+                                                        Rocks:beginSlide(rock, startX, startY, centerX, centerY, {
+                                                                duration = TREMOR_BLOOM_SLIDE_DURATION,
+                                                                lift = 12,
+                                                        })
+                                                end
+
                                                 rock.col = targetCol
                                                 rock.row = targetRow
                                                 rock.x = centerX
@@ -432,13 +439,6 @@ local function pushNearbyRocks(originCol, originRow, positions)
                                                 rock.scaleX = 1
                                                 rock.scaleY = 1
                                                 rock.offsetY = 0
-
-                                                if Rocks and Rocks.beginSlide then
-                                                        Rocks:beginSlide(rock, startX, startY, centerX, centerY, {
-                                                                duration = TREMOR_BLOOM_SLIDE_DURATION,
-                                                                lift = 12,
-                                                        })
-                                                end
 
                                                 if SnakeUtils and SnakeUtils.setOccupied then
                                                         SnakeUtils.setOccupied(targetCol, targetRow, true)
@@ -620,6 +620,7 @@ local function pushNearbySaws(originCol, originRow, positions)
                         if col and row then
                                 local candidates = getPushCandidates(col, row, originCol, originRow)
                                 local movedThisSaw = false
+                                local withinRadius = candidates ~= nil
                                 if candidates then
                                         local oldCells = SnakeUtils.getSawTrackCells(saw.x, saw.y, saw.dir)
                                         local ignoreLookup = buildCellLookup(oldCells)
@@ -669,7 +670,7 @@ local function pushNearbySaws(originCol, originRow, positions)
                                         end
                                 end
 
-                                if not movedThisSaw then
+                                if not movedThisSaw and withinRadius then
                                         if nudgeSawAlongTrack(saw, originCol, originRow, positions) then
                                                 moved = true
                                         end
