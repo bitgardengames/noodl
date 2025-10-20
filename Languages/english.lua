@@ -559,7 +559,7 @@ local english = {
 			},
                         circuit_breaker = {
                                 name = "Circuit Breaker",
-                                description = "Saw tracks and lasers freeze for 1s after each fruit.",
+                                description = "Saw tracks and lasers freeze for 0.75s after each fruit.",
                         },
                         contract_of_cinders = {
                                 name = "Contract of Cinders",
