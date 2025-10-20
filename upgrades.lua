@@ -868,8 +868,8 @@ local pool = {
                 rarity = "rare",
                 allowDuplicates = true,
 		maxStacks = 4,
-		onAcquire = function(state)
-			Snake:addSpeedMultiplier(1.10)
+                onAcquire = function(state)
+                        Snake:addSpeedMultiplier(1.10)
 
 			if state then
 				state.counters = state.counters or {}
@@ -2046,8 +2046,8 @@ local pool = {
 		unlockTag = "abyssal_protocols",
 		weight = 1,
 		onAcquire = function(state)
-			Snake:addShields(1)
-			Snake:addSpeedMultiplier(1.10)
+                        Snake:addShields(1)
+                        Snake:addSpeedMultiplier(1.05)
 			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
 			state.effects.titanbloodPact = (state.effects.titanbloodPact or 0) + 1
 			if Snake.setTitanbloodStacks then
