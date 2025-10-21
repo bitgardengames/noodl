@@ -317,103 +317,161 @@ function Fruit:checkCollisionWith(x, y, trail, rocks)
 	return false
 end
 
-local function drawFruit(f)
-	if f.phase == "inactive" then return end
+local function prepareFruitDrawData(f)
+        if not f or f.phase == "inactive" then
+                return nil
+        end
 
-	local x, y = f.x, f.y + (f.offsetY or 0) + (f.bobOffset or 0)
-	local alpha = f.alpha or 1
-	local sx, sy = f.scaleX or 1, f.scaleY or 1
-	local r = HITBOX_SIZE / 2
-	local segments = 32
-	local pulse = f.glowPulse or 1
+        local offsetY = (f.offsetY or 0) + (f.bobOffset or 0)
+        local x = f.x
+        local y = f.y + offsetY
+        local alpha = f.alpha or 1
+        local sx, sy = f.scaleX or 1, f.scaleY or 1
+        local radius = HITBOX_SIZE / 2
+        local pulse = f.glowPulse or 1
+        local bobOffset = f.bobOffset or 0
+        local bobStrength = bobOffset / IDLE_FLOAT_AMPLITUDE
+        local liftStrength = max(0, -bobStrength)
+        local shadowAlpha = 0.25 * alpha * (f.shadow or 1)
+        shadowAlpha = shadowAlpha * (1 + liftStrength * 0.4)
+        local shadowScale = 1 + liftStrength * 0.12
 
-	-- drop shadow
-	local shadowAlpha = 0.25 * alpha * (f.shadow or 1)
-	local bobStrength = (f.bobOffset or 0) / IDLE_FLOAT_AMPLITUDE
-	local liftStrength = max(0, -bobStrength)
-	shadowAlpha = shadowAlpha * (1 + liftStrength * 0.4)
-	local shadowScale = 1 + liftStrength * 0.12
+        return {
+                fruit = f,
+                x = x,
+                y = y,
+                alpha = alpha,
+                sx = sx,
+                sy = sy,
+                radius = radius,
+                pulse = pulse,
+                bobOffset = bobOffset,
+                shadowAlpha = shadowAlpha,
+                shadowScale = shadowScale,
+        }
+end
 
-	RenderLayers:withLayer("shadows", function()
-		love.graphics.setColor(0, 0, 0, shadowAlpha)
-		love.graphics.ellipse(
-		"fill",
-		x + SHADOW_OFFSET,
-		y + SHADOW_OFFSET + min(0, (f.bobOffset or 0) * 0.35),
-		(r * sx + OUTLINE_SIZE * 0.5) * shadowScale,
-		(r * sy + OUTLINE_SIZE * 0.5) * shadowScale,
-		segments
-		)
-	end)
+local function drawFruitShadow(data)
+        if not data then return end
 
-	RenderLayers:withLayer("main", function()
-		-- fruit body
-		local bodyColor = f.type.color
-		love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], alpha)
-		love.graphics.ellipse("fill", x, y, r * sx, r * sy)
+        local f = data.fruit
+        local x, y = data.x, data.y
+        local sx, sy = data.sx, data.sy
+        local r = data.radius
+        local segments = 32
 
-		-- highlight
-		local highlight = getHighlightColor(f.type.color)
-		local hx = x - r * sx * 0.3
-		local hy = y - r * sy * 0.35
-		local hrx = r * sx * 0.55
-		local hry = r * sy * 0.45
-		love.graphics.push()
-		love.graphics.translate(hx, hy)
-		love.graphics.rotate(-0.35)
-		local highlightAlpha = (highlight[4] or 1) * alpha * (0.75 + pulse * 0.25)
-		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
-		love.graphics.ellipse("fill", 0, 0, hrx, hry)
-		love.graphics.pop()
+        love.graphics.setColor(0, 0, 0, data.shadowAlpha)
+        love.graphics.ellipse(
+        "fill",
+        x + SHADOW_OFFSET,
+        y + SHADOW_OFFSET + min(0, (f.bobOffset or 0) * 0.35),
+        (r * sx + OUTLINE_SIZE * 0.5) * data.shadowScale,
+        (r * sy + OUTLINE_SIZE * 0.5) * data.shadowScale,
+        segments
+        )
+end
 
-		if f == active and #idleSparkles > 0 then
-			love.graphics.push("all")
-			love.graphics.setBlendMode("add")
-			for _, sparkle in ipairs(idleSparkles) do
-				local progress = clamp(sparkle.timer / sparkle.duration, 0, 1)
-				local fade = 1 - progress
-				local orbit = sparkle.radius + progress * 6
-				local px = x + math.cos(sparkle.angle) * orbit
-				local py = y + sin(sparkle.angle) * orbit - progress * 6
-				local glowSize = sparkle.size * (0.6 + 0.4 * sin(progress * pi))
-				local alphaMul = 0.25 * fade * (0.6 + pulse * 0.4)
+local function drawFruitMain(data)
+        if not data then return end
 
-				love.graphics.setColor(sparkle.color[1], sparkle.color[2], sparkle.color[3], alphaMul)
-				love.graphics.circle("fill", px, py, glowSize)
-				love.graphics.setColor(1, 1, 1, alphaMul * 1.6)
-				love.graphics.circle("line", px, py, glowSize * 0.9)
-			end
-			love.graphics.pop()
-		end
+        local f = data.fruit
+        local x, y = data.x, data.y
+        local alpha = data.alpha
+        local sx, sy = data.sx, data.sy
+        local r = data.radius
+        local pulse = data.pulse
 
-		-- outline (2–3px black border)
-		love.graphics.setLineWidth(OUTLINE_SIZE)
-		love.graphics.setColor(0, 0, 0, alpha)
-		love.graphics.ellipse("line", x, y, r * sx, r * sy)
+        -- fruit body
+        local bodyColor = f.type.color
+        love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], alpha)
+        love.graphics.ellipse("fill", x, y, r * sx, r * sy)
 
-		-- subtle spawn glow
-		if (f == active) and (active.phase ~= "idle") then
-			local glow = 0.18 * alpha
-			local gx = (HITBOX_SIZE * max(sx, sy)) * 0.65
-			love.graphics.setColor(1, 1, 1, glow)
-			love.graphics.circle("fill", x, y, gx)
-		end
+        -- highlight
+        local highlight = getHighlightColor(f.type.color)
+        local hx = x - r * sx * 0.3
+        local hy = y - r * sy * 0.35
+        local hrx = r * sx * 0.55
+        local hry = r * sy * 0.45
+        love.graphics.push()
+        love.graphics.translate(hx, hy)
+        love.graphics.rotate(-0.35)
+        local highlightAlpha = (highlight[4] or 1) * alpha * (0.75 + pulse * 0.25)
+        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
+        love.graphics.ellipse("fill", 0, 0, hrx, hry)
+        love.graphics.pop()
 
-		-- rare fruit flair
-		if f.type.name == "Dragonfruit" and f == active then
-			local t = (active.timer or 0)
-			local rarePulse = 0.5 + 0.5 * sin(t * 6.0)
-			love.graphics.setColor(1, 0, 1, 0.15 * rarePulse * alpha)
-			love.graphics.circle("line", x, y, HITBOX_SIZE * 0.8 + rarePulse * 4)
-		end
-	end)
+        if f == active and #idleSparkles > 0 then
+                love.graphics.push("all")
+                love.graphics.setBlendMode("add")
+                for _, sparkle in ipairs(idleSparkles) do
+                        local progress = clamp(sparkle.timer / sparkle.duration, 0, 1)
+                        local fade = 1 - progress
+                        local orbit = sparkle.radius + progress * 6
+                        local px = x + math.cos(sparkle.angle) * orbit
+                        local py = y + sin(sparkle.angle) * orbit - progress * 6
+                        local glowSize = sparkle.size * (0.6 + 0.4 * sin(progress * pi))
+                        local alphaMul = 0.25 * fade * (0.6 + pulse * 0.4)
+
+                        love.graphics.setColor(sparkle.color[1], sparkle.color[2], sparkle.color[3], alphaMul)
+                        love.graphics.circle("fill", px, py, glowSize)
+                        love.graphics.setColor(1, 1, 1, alphaMul * 1.6)
+                        love.graphics.circle("line", px, py, glowSize * 0.9)
+                end
+                love.graphics.pop()
+        end
+
+        -- outline (2–3px black border)
+        love.graphics.setLineWidth(OUTLINE_SIZE)
+        love.graphics.setColor(0, 0, 0, alpha)
+        love.graphics.ellipse("line", x, y, r * sx, r * sy)
+
+        -- subtle spawn glow
+        if (f == active) and (active.phase ~= "idle") then
+                local glow = 0.18 * alpha
+                local gx = (HITBOX_SIZE * max(sx, sy)) * 0.65
+                love.graphics.setColor(1, 1, 1, glow)
+                love.graphics.circle("fill", x, y, gx)
+        end
+
+        -- rare fruit flair
+        if f.type.name == "Dragonfruit" and f == active then
+                local t = (active.timer or 0)
+                local rarePulse = 0.5 + 0.5 * sin(t * 6.0)
+                love.graphics.setColor(1, 0, 1, 0.15 * rarePulse * alpha)
+                love.graphics.circle("line", x, y, HITBOX_SIZE * 0.8 + rarePulse * 4)
+        end
 end
 
 function Fruit:draw()
-	if fading and fading.alpha > 0 then
-		drawFruit(fading)
-	end
-	drawFruit(active)
+        local drawList = {}
+
+        if fading and fading.alpha and fading.alpha > 0 then
+                local data = prepareFruitDrawData(fading)
+                if data then
+                        drawList[#drawList + 1] = data
+                end
+        end
+
+        local activeData = prepareFruitDrawData(active)
+        if activeData then
+                drawList[#drawList + 1] = activeData
+        end
+
+        if #drawList == 0 then
+                return
+        end
+
+        RenderLayers:push("shadows")
+        for _, data in ipairs(drawList) do
+                drawFruitShadow(data)
+        end
+        RenderLayers:pop()
+
+        RenderLayers:push("main")
+        for _, data in ipairs(drawList) do
+                drawFruitMain(data)
+        end
+        RenderLayers:pop()
 end
 
 -- Queries
