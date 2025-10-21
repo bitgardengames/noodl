@@ -2085,6 +2085,7 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 end
 
 function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
+	-- upgradeVisuals must be treated as read-only; the table is reused each frame by Snake.collectUpgradeVisuals.
 	local options
 	if type(drawFace) == "table" then
 		options = drawFace

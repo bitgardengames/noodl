@@ -18,6 +18,7 @@ local min = math.min
 local pi = math.pi
 local insert = table.insert
 local remove = table.remove
+local format = string.format
 
 local Snake = {}
 
@@ -138,18 +139,28 @@ local function smoothStep(edge0, edge1, value)
 end
 
 local function clearSeveredPieces()
-        if not severedPieces then
-                return
-        end
+	if not severedPieces then
+		return
+	end
 
-        for i = #severedPieces, 1, -1 do
-                local piece = severedPieces[i]
-                if piece and piece.trail then
-                        recycleTrail(piece.trail)
-                        piece.trail = nil
-                end
-                severedPieces[i] = nil
-        end
+	for i = #severedPieces, 1, -1 do
+		local piece = severedPieces[i]
+		if piece and piece.trail then
+			recycleTrail(piece.trail)
+			piece.trail = nil
+		end
+		severedPieces[i] = nil
+	end
+end
+
+local function wipeTable(t)
+	if not t then
+		return
+	end
+
+	for k in pairs(t) do
+		t[k] = nil
+	end
 end
 
 local stencilCircleX, stencilCircleY, stencilCircleRadius = 0, 0, 0
@@ -1449,185 +1460,237 @@ local function drawDescendingIntoHole(hole)
 end
 
 local function collectUpgradeVisuals(self)
-	local visuals = nil
-
-        if self.adrenaline and self.adrenaline.active and not self.adrenaline.suppressVisuals then
-                visuals = visuals or {}
-		visuals.adrenaline = {
-			active = true,
-			timer = self.adrenaline.timer or 0,
-			duration = self.adrenaline.duration or 0,
-		}
+	local visuals = self._upgradeVisualBuffer
+	-- The returned table is reused every frame; treat it as read-only outside this function.
+	if visuals then
+		wipeTable(visuals)
+	else
+		visuals = {}
+		self._upgradeVisualBuffer = visuals
 	end
 
-       local speedVisual = self.speedVisual
+	local pool = self._upgradeVisualPool
+	if not pool then
+		pool = {}
+		self._upgradeVisualPool = pool
+	end
+
+	local stats = self._upgradeVisualProfile
+	if stats and stats.enabled then
+		stats.totalFrames = (stats.totalFrames or 0) + 1
+		stats.createdThisFrame = 0
+		stats.reusedThisFrame = 0
+		stats.activeEntries = 0
+	end
+
+	local hasAny = false
+
+	local function acquireEntry(key)
+		local entry = pool[key]
+		if not entry then
+			entry = {}
+			pool[key] = entry
+			if stats and stats.enabled then
+				stats.totalCreated = (stats.totalCreated or 0) + 1
+				stats.createdThisFrame = (stats.createdThisFrame or 0) + 1
+				stats.poolSize = (stats.poolSize or 0) + 1
+			end
+		else
+			wipeTable(entry)
+			if stats and stats.enabled then
+				stats.totalReused = (stats.totalReused or 0) + 1
+				stats.reusedThisFrame = (stats.reusedThisFrame or 0) + 1
+			end
+		end
+
+		visuals[key] = entry
+		hasAny = true
+
+		if stats and stats.enabled then
+			stats.activeEntries = (stats.activeEntries or 0) + 1
+		end
+
+		return entry
+	end
+
+	local function commit()
+		if not stats or not stats.enabled then
+			return
+		end
+
+		if not hasAny then
+			stats.emptyFrames = (stats.emptyFrames or 0) + 1
+		end
+
+		local interval = stats.interval or 0
+		if stats.print ~= false and interval > 0 and (stats.totalFrames % interval == 0) then
+			local message = format(
+				"[Snake] upgrade visuals: pool=%d, created=%d, reused=%d, lastFrame(created=%d, reused=%d, active=%d)",
+				stats.poolSize or 0,
+				stats.totalCreated or 0,
+				stats.totalReused or 0,
+				stats.createdThisFrame or 0,
+				stats.reusedThisFrame or 0,
+				stats.activeEntries or 0
+			)
+			print(message)
+		end
+	end
+
+	local adrenaline = self.adrenaline
+	if adrenaline and adrenaline.active and not adrenaline.suppressVisuals then
+		local entry = acquireEntry("adrenaline")
+		entry.active = true
+		entry.timer = adrenaline.timer or 0
+		entry.duration = adrenaline.duration or 0
+	end
+
+	local speedVisual = self.speedVisual
 	if speedVisual and (((speedVisual.intensity or 0) > 0.01) or (speedVisual.target or 0) > 0) then
-		visuals = visuals or {}
-		visuals.speedArcs = {
-			intensity = speedVisual.intensity or 0,
-			ratio = speedVisual.ratio or 0,
-			time = speedVisual.time or 0,
-		}
+		local entry = acquireEntry("speedArcs")
+		entry.intensity = speedVisual.intensity or 0
+		entry.ratio = speedVisual.ratio or 0
+		entry.time = speedVisual.time or 0
 	end
 
 	local quickFangs = self.quickFangs
 	if quickFangs and (((quickFangs.intensity or 0) > 0.01) or (quickFangs.stacks or 0) > 0) then
-		visuals = visuals or {}
-		visuals.quickFangs = {
-			stacks = quickFangs.stacks or 0,
-			intensity = quickFangs.intensity or 0,
-			target = quickFangs.target or 0,
-			speedRatio = quickFangs.speedRatio or 1,
-			active = quickFangs.active or false,
-			time = quickFangs.time or 0,
-			flash = quickFangs.flash or 0,
-		}
+		local entry = acquireEntry("quickFangs")
+		entry.stacks = quickFangs.stacks or 0
+		entry.intensity = quickFangs.intensity or 0
+		entry.target = quickFangs.target or 0
+		entry.speedRatio = quickFangs.speedRatio or 1
+		entry.active = quickFangs.active or false
+		entry.time = quickFangs.time or 0
+		entry.flash = quickFangs.flash or 0
 	end
 
 	local zephyr = self.zephyrCoils
 	if zephyr and (((zephyr.intensity or 0) > 0.01) or (zephyr.stacks or 0) > 0 or (zephyr.target or 0) > 0) then
-		visuals = visuals or {}
-		visuals.zephyrCoils = {
-			stacks = zephyr.stacks or 0,
-			intensity = zephyr.intensity or 0,
-			time = zephyr.time or 0,
-			ratio = zephyr.speedRatio or (1 + 0.2 * min(1, max(0, zephyr.intensity or 0))),
-			hasBody = (segmentCount or 0) > 1,
-		}
+		local entry = acquireEntry("zephyrCoils")
+		entry.stacks = zephyr.stacks or 0
+		entry.intensity = zephyr.intensity or 0
+		entry.time = zephyr.time or 0
+		entry.ratio = zephyr.speedRatio or (1 + 0.2 * min(1, max(0, zephyr.intensity or 0)))
+		entry.hasBody = (segmentCount or 0) > 1
 	end
 
-	if self.timeDilation then
-		visuals = visuals or {}
-		visuals.timeDilation = {
-			active = self.timeDilation.active or false,
-			timer = self.timeDilation.timer or 0,
-			duration = self.timeDilation.duration or 0,
-			cooldown = self.timeDilation.cooldown or 0,
-			cooldownTimer = self.timeDilation.cooldownTimer or 0,
-		}
+	local timeDilation = self.timeDilation
+	if timeDilation then
+		local entry = acquireEntry("timeDilation")
+		entry.active = timeDilation.active or false
+		entry.timer = timeDilation.timer or 0
+		entry.duration = timeDilation.duration or 0
+		entry.cooldown = timeDilation.cooldown or 0
+		entry.cooldownTimer = timeDilation.cooldownTimer or 0
 	end
 
 	local chronoWard = self.chronoWard
 	if chronoWard and (((chronoWard.intensity or 0) > 1e-3) or chronoWard.active) then
-		visuals = visuals or {}
-		visuals.chronoWard = {
-			active = chronoWard.active or false,
-			intensity = chronoWard.intensity or 0,
-			time = chronoWard.time or 0,
-		}
+		local entry = acquireEntry("chronoWard")
+		entry.active = chronoWard.active or false
+		entry.intensity = chronoWard.intensity or 0
+		entry.time = chronoWard.time or 0
 	end
 
 	local temporalAnchor = self.temporalAnchor
 	if temporalAnchor and (((temporalAnchor.intensity or 0) > 1e-3) or (temporalAnchor.target or 0) > 0) then
-		visuals = visuals or {}
-		visuals.temporalAnchor = {
-			intensity = temporalAnchor.intensity or 0,
-			ready = temporalAnchor.ready or 0,
-			active = temporalAnchor.active or false,
-			time = temporalAnchor.time or 0,
-		}
+		local entry = acquireEntry("temporalAnchor")
+		entry.intensity = temporalAnchor.intensity or 0
+		entry.ready = temporalAnchor.ready or 0
+		entry.active = temporalAnchor.active or false
+		entry.time = temporalAnchor.time or 0
 	end
 
-	if self.dash then
-		visuals = visuals or {}
-		visuals.dash = {
-			active = self.dash.active or false,
-			timer = self.dash.timer or 0,
-			duration = self.dash.duration or 0,
-			cooldown = self.dash.cooldown or 0,
-			cooldownTimer = self.dash.cooldownTimer or 0,
-		}
+	local dash = self.dash
+	if dash then
+		local entry = acquireEntry("dash")
+		entry.active = dash.active or false
+		entry.timer = dash.timer or 0
+		entry.duration = dash.duration or 0
+		entry.cooldown = dash.cooldown or 0
+		entry.cooldownTimer = dash.cooldownTimer or 0
 	end
 
 	local chronospiral = self.chronospiral
 	if chronospiral and ((chronospiral.intensity or 0) > 1e-3 or (chronospiral.target or 0) > 0) then
-		visuals = visuals or {}
-		visuals.chronospiral = {
-			intensity = chronospiral.intensity or 0,
-			spin = chronospiral.spin or 0,
-		}
+		local entry = acquireEntry("chronospiral")
+		entry.intensity = chronospiral.intensity or 0
+		entry.spin = chronospiral.spin or 0
 	end
 
 	local abyssal = self.abyssalCatalyst
 	if abyssal and ((abyssal.intensity or 0) > 1e-3 or (abyssal.target or 0) > 0) then
-		visuals = visuals or {}
-		visuals.abyssalCatalyst = {
-			intensity = abyssal.intensity or 0,
-			stacks = abyssal.stacks or 0,
-			pulse = abyssal.pulse or abyssal.time or 0,
-		}
+		local entry = acquireEntry("abyssalCatalyst")
+		entry.intensity = abyssal.intensity or 0
+		entry.stacks = abyssal.stacks or 0
+		entry.pulse = abyssal.pulse or abyssal.time or 0
 	end
 
 	local titanblood = self.titanblood
 	if titanblood and ((titanblood.intensity or 0) > 1e-3 or (titanblood.target or 0) > 0) then
-		visuals = visuals or {}
-		visuals.titanblood = {
-			intensity = titanblood.intensity or 0,
-			stacks = titanblood.stacks or 0,
-			time = titanblood.time or 0,
-		}
+		local entry = acquireEntry("titanblood")
+		entry.intensity = titanblood.intensity or 0
+		entry.stacks = titanblood.stacks or 0
+		entry.time = titanblood.time or 0
 	end
 
 	local stormchaser = self.stormchaser
 	if stormchaser and ((stormchaser.intensity or 0) > 1e-3 or (stormchaser.target or 0) > 0) then
-		visuals = visuals or {}
-		visuals.stormchaser = {
-			intensity = stormchaser.intensity or 0,
-			primed = stormchaser.primed or false,
-			time = stormchaser.time or 0,
-		}
+		local entry = acquireEntry("stormchaser")
+		entry.intensity = stormchaser.intensity or 0
+		entry.primed = stormchaser.primed or false
+		entry.time = stormchaser.time or 0
 	end
 
 	local eventHorizon = self.eventHorizon
 	if eventHorizon and ((eventHorizon.intensity or 0) > 1e-3 or (eventHorizon.target or 0) > 0) then
-		visuals = visuals or {}
-		visuals.eventHorizon = {
-			intensity = eventHorizon.intensity or 0,
-			spin = eventHorizon.spin or 0,
-			time = eventHorizon.time or 0,
-		}
+		local entry = acquireEntry("eventHorizon")
+		entry.intensity = eventHorizon.intensity or 0
+		entry.spin = eventHorizon.spin or 0
+		entry.time = eventHorizon.time or 0
 	end
 
 	local phoenix = self.phoenixEcho
 	if phoenix and (((phoenix.intensity or 0) > 1e-3) or (phoenix.charges or 0) > 0 or (phoenix.flareTimer or 0) > 0) then
-		visuals = visuals or {}
+		local entry = acquireEntry("phoenixEcho")
 		local flare = 0
 		local flareDuration = phoenix.flareDuration or 1.2
 		if flareDuration > 0 and (phoenix.flareTimer or 0) > 0 then
 			flare = min(1, phoenix.flareTimer / flareDuration)
 		end
-		visuals.phoenixEcho = {
-			intensity = phoenix.intensity or 0,
-			charges = phoenix.charges or 0,
-			flare = flare,
-			time = phoenix.time or 0,
-		}
+		entry.intensity = phoenix.intensity or 0
+		entry.charges = phoenix.charges or 0
+		entry.flare = flare
+		entry.time = phoenix.time or 0
 	end
 
 	local stoneSkin = self.stoneSkinVisual
 	if stoneSkin and (((stoneSkin.intensity or 0) > 0.01) or (stoneSkin.flash or 0) > 0 or (stoneSkin.charges or 0) > 0) then
-		visuals = visuals or {}
-		visuals.stoneSkin = {
-			intensity = stoneSkin.intensity or 0,
-			flash = stoneSkin.flash or 0,
-			charges = stoneSkin.charges or 0,
-			time = stoneSkin.time or 0,
-		}
+		local entry = acquireEntry("stoneSkin")
+		entry.intensity = stoneSkin.intensity or 0
+		entry.flash = stoneSkin.flash or 0
+		entry.charges = stoneSkin.charges or 0
+		entry.time = stoneSkin.time or 0
 	end
 
 	local spectral = self.spectralHarvest
 	if spectral and (((spectral.intensity or 0) > 0.01) or (spectral.burst or 0) > 0 or (spectral.echo or 0) > 0 or spectral.ready) then
-		visuals = visuals or {}
-		visuals.spectralHarvest = {
-			intensity = spectral.intensity or 0,
-			burst = spectral.burst or 0,
-			echo = spectral.echo or 0,
-			ready = spectral.ready or false,
-			time = spectral.time or 0,
-		}
+		local entry = acquireEntry("spectralHarvest")
+		entry.intensity = spectral.intensity or 0
+		entry.burst = spectral.burst or 0
+		entry.echo = spectral.echo or 0
+		entry.ready = spectral.ready or false
+		entry.time = spectral.time or 0
 	end
 
-	return visuals
+	commit()
+
+	if hasAny then
+		return visuals
+	end
+
+	return nil
 end
 
 -- Build initial trail aligned to CELL CENTERS
@@ -3534,6 +3597,86 @@ end
 
 function Snake:isDeveloperAssistEnabled()
 	return developerAssistEnabled
+end
+
+function Snake:enableUpgradeVisualProfiling(options)
+	local stats = self._upgradeVisualProfile
+	if not stats then
+		stats = {}
+		self._upgradeVisualProfile = stats
+	end
+
+	if options == nil then
+		options = true
+	end
+
+	if not options then
+		stats.enabled = false
+		return
+	end
+
+	stats.enabled = true
+
+	local interval
+	local shouldPrint
+	if type(options) == "number" then
+		interval = options
+	elseif type(options) == "table" then
+		interval = options.interval
+		if options.print ~= nil then
+			shouldPrint = not not options.print
+		end
+	end
+
+	if interval and interval > 0 then
+		stats.interval = interval
+	elseif not stats.interval or stats.interval <= 0 then
+		stats.interval = 120
+	end
+
+	if shouldPrint ~= nil then
+		stats.print = shouldPrint
+	elseif stats.print == nil then
+		stats.print = true
+	end
+
+	stats.totalFrames = 0
+	stats.totalCreated = 0
+	stats.totalReused = 0
+	stats.poolSize = stats.poolSize or 0
+	stats.createdThisFrame = 0
+	stats.reusedThisFrame = 0
+	stats.activeEntries = 0
+	stats.emptyFrames = 0
+
+	local pool = self._upgradeVisualPool
+	if pool then
+		local count = 0
+		for _ in pairs(pool) do
+			count = count + 1
+		end
+		stats.poolSize = count
+	else
+		stats.poolSize = 0
+	end
+end
+
+function Snake:logUpgradeVisualProfiling()
+	local stats = self._upgradeVisualProfile
+	if not stats then
+		return
+	end
+
+	local message = format(
+		"[Snake] upgrade visuals summary: pool=%d, created=%d, reused=%d, frames=%d, empty=%d",
+		stats.poolSize or 0,
+		stats.totalCreated or 0,
+		stats.totalReused or 0,
+		stats.totalFrames or 0,
+		stats.emptyFrames or 0
+	)
+
+	print(message)
 end
 
 function Snake:getLength()
