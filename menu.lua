@@ -29,6 +29,9 @@ local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
 local DAILY_BAR_CELEBRATION_DURATION = 6
+local DAILY_BAR_CELEBRATION_FADE_WINDOW = 0.85
+local DAILY_BAR_CELEBRATION_MAX_SPARKLE_DURATION = 1
+local DAILY_BAR_CELEBRATION_SPAWN_WINDOW = max(0, DAILY_BAR_CELEBRATION_DURATION - DAILY_BAR_CELEBRATION_MAX_SPARKLE_DURATION)
 
 local streakLineArgs = {streak = 0, unit = nil}
 local bestLineArgs = {best = 0, unit = nil}
@@ -273,34 +276,42 @@ local function updateDailyBarCelebration(dt, shouldCelebrate)
 			dailyBarCelebration.sparkles = {}
 		end
 
-		if dailyBarCelebration.active then
-			dailyBarCelebration.time = dailyBarCelebration.time + dt
+                if dailyBarCelebration.active then
+                        dailyBarCelebration.time = dailyBarCelebration.time + dt
 
-			if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_DURATION then
-				dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer - dt
+                        if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_DURATION then
+                                if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_SPAWN_WINDOW then
+                                        dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer - dt
 
-				local spawnInterval = 0.12
-				while dailyBarCelebration.spawnTimer <= 0 do
-					spawnDailyBarSparkle()
-					dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer + spawnInterval
-				end
-			else
-				dailyBarCelebration.active = false
-				dailyBarCelebration.finished = true
-				dailyBarCelebration.spawnTimer = 0
-				dailyBarCelebration.sparkles = {}
-			end
-		end
-	elseif dailyBarCelebration.active or dailyBarCelebration.finished then
-		resetDailyBarCelebration()
-	end
+                                        local spawnInterval = 0.12
+                                        while dailyBarCelebration.spawnTimer <= 0 do
+                                                spawnDailyBarSparkle()
+                                                dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer + spawnInterval
 
-	if dailyBarCelebration.active then
-		for i = #dailyBarCelebration.sparkles, 1, -1 do
-			local sparkle = dailyBarCelebration.sparkles[i]
-			sparkle.life = sparkle.life + dt
-			if sparkle.life >= sparkle.duration then
-				table.remove(dailyBarCelebration.sparkles, i)
+                                                if dailyBarCelebration.time >= DAILY_BAR_CELEBRATION_SPAWN_WINDOW then
+                                                        break
+                                                end
+                                        end
+                                else
+                                        dailyBarCelebration.spawnTimer = 0
+                                end
+                        else
+                                dailyBarCelebration.active = false
+                                dailyBarCelebration.finished = true
+                                dailyBarCelebration.spawnTimer = 0
+                                dailyBarCelebration.time = DAILY_BAR_CELEBRATION_DURATION
+                        end
+                end
+        elseif dailyBarCelebration.active or dailyBarCelebration.finished then
+                resetDailyBarCelebration()
+        end
+
+        if dailyBarCelebration.active or dailyBarCelebration.finished then
+                for i = #dailyBarCelebration.sparkles, 1, -1 do
+                        local sparkle = dailyBarCelebration.sparkles[i]
+                        sparkle.life = sparkle.life + dt
+                        if sparkle.life >= sparkle.duration then
+                                table.remove(dailyBarCelebration.sparkles, i)
 			end
 		end
 	end
@@ -713,22 +724,37 @@ function Menu:draw()
 				UI.drawRoundedRect(textX, textY, fillWidth, barHeight, 8)
 			end
 
-			if dailyBarCelebration.active and ratio >= 0.999 then
-				local timer = dailyBarCelebration.time or 0
+                        local celebrationVisible = ratio >= 0.999 and (dailyBarCelebration.active or #dailyBarCelebration.sparkles > 0)
+                        if celebrationVisible then
+                                local timer = dailyBarCelebration.time or 0
+                                local fadeAlpha = 1
+
+                                if dailyBarCelebration.active then
+                                        local fadeStart = max(0, DAILY_BAR_CELEBRATION_DURATION - DAILY_BAR_CELEBRATION_FADE_WINDOW)
+                                        if timer > fadeStart then
+                                                local fadeProgress = (timer - fadeStart) / DAILY_BAR_CELEBRATION_FADE_WINDOW
+                                                fadeAlpha = max(0, min(1, 1 - fadeProgress))
+                                        end
+                                else
+                                        fadeAlpha = 0
+                                end
+
                                 local shimmerWidth = max(barWidth * 0.3, barHeight)
                                 local shimmerProgress = (sin(timer * 2.2) * 0.5) + 0.5
                                 local shimmerX = textX + shimmerProgress * (barWidth - shimmerWidth)
-                                local shimmerAlpha = 0.35 + 0.25 * sin(timer * 3.1)
+                                local shimmerAlpha = (0.35 + 0.25 * sin(timer * 3.1)) * fadeAlpha
 
-                                setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
-                                UI.drawRoundedRect(shimmerX, textY, shimmerWidth, barHeight, 8)
+                                if shimmerAlpha > 0 then
+                                        setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
+                                        UI.drawRoundedRect(shimmerX, textY, shimmerWidth, barHeight, 8)
+                                end
 
-				for _, sparkle in ipairs(dailyBarCelebration.sparkles) do
-					local progress = min(1, sparkle.life / sparkle.duration)
-					local sparkleAlpha = (1 - progress) * alpha
-					if sparkleAlpha > 0 then
-						local sparkleX = textX + sparkle.x * barWidth
-						local baseY = textY + barHeight / 2
+                                for _, sparkle in ipairs(dailyBarCelebration.sparkles) do
+                                        local progress = min(1, sparkle.life / sparkle.duration)
+                                        local sparkleAlpha = (1 - progress) * alpha
+                                        if sparkleAlpha > 0 then
+                                                local sparkleX = textX + sparkle.x * barWidth
+                                                local baseY = textY + barHeight / 2
 						local offset = (0.5 - progress) * (barHeight + sparkle.lift)
 						local sparkleY = baseY + offset
 						local size = 2 + (1 - progress) * 3
