@@ -5,6 +5,7 @@ local UI = require("ui")
 local Theme = require("theme")
 
 local max = math.max
+local min = math.min
 
 local PauseMenu = {}
 
