@@ -348,7 +348,6 @@ local directions = {
 
 local DECORATION_PATTERN_WIDTH = 800
 local DECORATION_PATTERN_HEIGHT = 600
-local DECORATION_PATTERN_FILENAME = "generated/arena_floor_pattern.png"
 
 function Arena:rebuildTileDecorations()
 	local config = self._decorationConfig
@@ -596,7 +595,6 @@ function Arena:_buildDecorationPattern(decorations)
         if not decorations or #decorations == 0 then
                 self._decorationPatternTexture = nil
                 self._decorationPatternSignature = nil
-                self._decorationPatternPath = nil
                 return
         end
 
@@ -649,7 +647,6 @@ function Arena:_buildDecorationPattern(decorations)
                 canvas:release()
                 self._decorationPatternTexture = nil
                 self._decorationPatternSignature = nil
-                self._decorationPatternPath = nil
                 return
         end
 
@@ -664,7 +661,6 @@ function Arena:_buildDecorationPattern(decorations)
                 canvas:release()
                 self._decorationPatternTexture = nil
                 self._decorationPatternSignature = nil
-                self._decorationPatternPath = nil
                 return
         end
 
@@ -692,16 +688,12 @@ function Arena:_buildDecorationPattern(decorations)
 
         local imageData = canvas:newImageData()
 
-        love.filesystem.createDirectory("generated")
-        imageData:encode("png", DECORATION_PATTERN_FILENAME)
-
         local texture = love.graphics.newImage(imageData)
         texture:setFilter("linear", "linear")
         texture:setWrap("repeat", "repeat")
 
         self._decorationPatternTexture = texture
         self._decorationPatternSignature = signature
-        self._decorationPatternPath = DECORATION_PATTERN_FILENAME
 
         canvas:release()
 end
