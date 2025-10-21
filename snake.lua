@@ -38,6 +38,9 @@ local segmentCount = 1
 local popTimer = 0
 local isDead = false
 local fruitsSinceLastTurn = 0
+
+local clippedTrailBuffer = {}
+local clippedTrailProxy = {drawX = 0, drawY = 0}
 local severedPieces = {}
 local developerAssistEnabled = false
 local portalAnimation = nil
@@ -2087,46 +2090,62 @@ function Snake:drawClipped(hx, hy, hr)
 			startIndex = startIndex + 1
 		end
 
-		if startIndex == 1 then
-			-- Head is still outside the clip region; render entire trail
-			renderTrail = trail
-		elseif startIndex > #trail then
-			-- Entire snake is within the clip; nothing to draw outside
-			renderTrail = {}
-		else
-			local trimmed = {}
-			local prev = trail[startIndex - 1]
-			local curr = trail[startIndex]
-			local px = prev and (prev.drawX or prev.x)
-			local py = prev and (prev.drawY or prev.y)
-			local cx = curr and (curr.drawX or curr.x)
-			local cy = curr and (curr.drawY or curr.y)
-			local ix, iy
+                if startIndex == 1 then
+                        -- Head is still outside the clip region; render entire trail
+                        renderTrail = trail
+                else
+                        local trimmed = clippedTrailBuffer
+                        local trimmedLen = #trimmed
+                        if trimmedLen > 0 then
+                                for i = trimmedLen, 1, -1 do
+                                        trimmed[i] = nil
+                                end
+                        end
 
-			if px and py and cx and cy then
-				ix, iy = findCircleIntersection(px, py, cx, cy, hx, hy, clipRadius)
-			end
+                        if startIndex > #trail then
+                                -- Entire snake is within the clip; nothing to draw outside
+                                renderTrail = trimmed
+                        else
+                                local prev = trail[startIndex - 1]
+                                local curr = trail[startIndex]
+                                local px = prev and (prev.drawX or prev.x)
+                                local py = prev and (prev.drawY or prev.y)
+                                local cx = curr and (curr.drawX or curr.x)
+                                local cy = curr and (curr.drawY or curr.y)
+                                local ix, iy
 
-			if not (ix and iy) then
-				if descendingHole and abs((descendingHole.x or 0) - hx) < 1e-3 and abs((descendingHole.y or 0) - hy) < 1e-3 then
-					ix = descendingHole.entryPointX or px
-					iy = descendingHole.entryPointY or py
-				else
-					ix, iy = px, py
-				end
-			end
+                                if px and py and cx and cy then
+                                        ix, iy = findCircleIntersection(px, py, cx, cy, hx, hy, clipRadius)
+                                end
 
-			if ix and iy then
-				trimmed[#trimmed + 1] = {drawX = ix, drawY = iy}
-			end
+                                if not (ix and iy) then
+                                        if descendingHole and abs((descendingHole.x or 0) - hx) < 1e-3 and abs((descendingHole.y or 0) - hy) < 1e-3 then
+                                                ix = descendingHole.entryPointX or px
+                                                iy = descendingHole.entryPointY or py
+                                        else
+                                                ix, iy = px, py
+                                        end
+                                end
 
-			for i = startIndex, #trail do
-				trimmed[#trimmed + 1] = trail[i]
-			end
+                                if ix and iy then
+                                        local proxy = clippedTrailProxy
+                                        proxy.drawX = ix
+                                        proxy.drawY = iy
+                                        proxy.x = nil
+                                        proxy.y = nil
+                                        trimmed[1] = proxy
+                                end
 
-			renderTrail = trimmed
-		end
-	end
+                                local insertIndex = ix and iy and 2 or 1
+                                for i = startIndex, #trail do
+                                        trimmed[insertIndex] = trail[i]
+                                        insertIndex = insertIndex + 1
+                                end
+
+                                renderTrail = trimmed
+                        end
+                end
+        end
 
 	love.graphics.push("all")
 	local upgradeVisuals = collectUpgradeVisuals(self)
