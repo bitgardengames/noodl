@@ -32,6 +32,7 @@ local applyOverlay
 
 local SNAKE_BODY_OVERLAY_PATH = "Assets/Overlay.png"
 local SNAKE_BODY_OVERLAY_SCALE = 1
+local SNAKE_BODY_OVERLAY_OPACITY = 0.35
 
 local snakeBodyOverlayImage = nil
 local snakeBodyOverlayQuad = nil
@@ -927,13 +928,9 @@ local function applyBodyTextureOverlayForTrail(trail, coords, head, half, bulgeR
                 return
         end
 
-        local hx, hy = ptXY(head)
-        hx = hx or 0
-        hy = hy or 0
-
         local scale = SNAKE_BODY_OVERLAY_SCALE
         local texW, texH = image:getDimensions()
-        quad:setViewport(hx * scale, hy * scale, width * scale, height * scale, texW, texH)
+        quad:setViewport(0, 0, width * scale, height * scale, texW, texH)
 
         love.graphics.push("all")
         love.graphics.stencil(function()
@@ -954,7 +951,7 @@ local function applyBodyTextureOverlayForTrail(trail, coords, head, half, bulgeR
         love.graphics.setStencilTest("greater", 0)
         love.graphics.setColorMask(true, true, true, false)
         love.graphics.setBlendMode("alpha", "premultiplied")
-        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(1, 1, 1, SNAKE_BODY_OVERLAY_OPACITY)
         love.graphics.draw(image, quad, 0, 0)
         love.graphics.setStencilTest()
         love.graphics.pop()
@@ -973,7 +970,7 @@ local function applyBodyTextureOverlayForCircle(x, y, radius)
 
         local scale = SNAKE_BODY_OVERLAY_SCALE
         local texW, texH = image:getDimensions()
-        quad:setViewport(x * scale, y * scale, width * scale, height * scale, texW, texH)
+        quad:setViewport(0, 0, width * scale, height * scale, texW, texH)
 
         love.graphics.push("all")
         love.graphics.stencil(function()
@@ -986,7 +983,7 @@ local function applyBodyTextureOverlayForCircle(x, y, radius)
         love.graphics.setStencilTest("greater", 0)
         love.graphics.setColorMask(true, true, true, false)
         love.graphics.setBlendMode("alpha", "premultiplied")
-        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(1, 1, 1, SNAKE_BODY_OVERLAY_OPACITY)
         love.graphics.draw(image, quad, 0, 0)
         love.graphics.setStencilTest()
         love.graphics.pop()
