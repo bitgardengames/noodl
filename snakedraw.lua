@@ -30,77 +30,555 @@ local snakeOverlayCanvas = nil
 
 local applyOverlay
 
-local overlayTexturePath = "Assets/Overlay.png"
-local overlayTexture = nil
-local overlayShader = nil
+local overlayShaderSources = {
+	stripes = [[
+	extern float time;
+	extern float frequency;
+	extern float speed;
+	extern float angle;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
 
-local overlayShaderSource = [[
-        extern Image overlayTex;
-        extern vec2 overlayDimensions;
-        extern vec2 overlayScale;
-        extern vec2 overlayAnchor;
-        extern float overlayOpacity;
-        extern vec4 overlayColor;
-        extern vec4 overlayHighlight;
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
 
-        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-        {
-                vec4 base = Texel(tex, texture_coords);
-                if (base.a <= 0.0) {
-                        return base * color;
-                }
+		vec2 uv = texture_coords - vec2(0.5);
+		float c = cos(angle);
+		float s = sin(angle);
+		float stripe = sin((uv.x * c + uv.y * s) * frequency + time * speed) * 0.5 + 0.5;
+		vec3 stripeColor = mix(colorA.rgb, colorB.rgb, stripe);
+		float blend = clamp(intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, stripeColor, blend);
+		return vec4(result, base.a) * color;
+	}
+	]],
+	holo = [[
+	extern float time;
+	extern float speed;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
 
-                vec2 relative = (screen_coords - overlayAnchor) / overlayDimensions;
-                vec2 uv = relative * overlayScale;
-                vec4 pattern = Texel(overlayTex, uv);
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
 
-                float luminance = clamp((pattern.r + pattern.g + pattern.b) / 3.0, 0.0, 1.0);
-                float blend = clamp(pattern.a * overlayColor.a * overlayOpacity, 0.0, 1.0);
-                float finalBlend = blend * mix(0.2, 1.0, luminance);
-                vec3 accent = mix(overlayColor.rgb, overlayHighlight.rgb, luminance);
-                vec3 result = mix(base.rgb, accent, finalBlend);
+		vec2 uv = texture_coords - vec2(0.5);
+		float wave = sin((uv.x + uv.y) * 10.0 + time * speed);
+		float radial = sin(length(uv * vec2(1.4, 1.0)) * 12.0 - time * (speed * 0.6 + 0.2));
+		float shimmer = sin((uv.x - uv.y) * 16.0 + time * speed * 1.8);
 
-                return vec4(result, base.a) * color;
-        }
-]]
+		float baseMix = clamp(0.5 + 0.5 * wave, 0.0, 1.0);
+		vec3 layer = mix(colorA.rgb, colorB.rgb, baseMix);
+		layer = mix(layer, colorC.rgb, clamp(radial * 0.5 + 0.5, 0.0, 1.0) * 0.6);
+		layer += shimmer * 0.12 * colorC.rgb;
 
-local function ensureOverlayResources()
-	if overlayTexture == false then
-		return false
+		float blend = clamp(intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, layer, blend);
+		return vec4(result, base.a) * color;
+	}
+	]],
+	auroraVeil = [[
+	extern float time;
+	extern float curtainDensity;
+	extern float driftSpeed;
+	extern float parallax;
+	extern float shimmerStrength;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		float curtain = sin(uv.x * curtainDensity + time * driftSpeed);
+		float curtainB = sin((uv.x * 0.6 - uv.y * 0.8) * (curtainDensity * 0.7) - time * driftSpeed * 0.6);
+		float blend = (curtain + curtainB) * 0.5;
+		float vertical = clamp(smoothstep(-0.65, 0.65, uv.y + blend * 0.25), 0.0, 1.0);
+		float shimmer = sin((uv.y * 5.0 + uv.x * 3.0) - time * parallax) * 0.5 + 0.5;
+
+		vec3 aurora = mix(colorA.rgb, colorB.rgb, vertical);
+		aurora = mix(aurora, colorC.rgb, shimmer * shimmerStrength);
+
+		float glow = clamp((vertical * 0.6 + shimmer * 0.4) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, aurora, glow);
+		result += aurora * glow * 0.25;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	ionStorm = [[
+	extern float time;
+	extern float boltFrequency;
+	extern float flashFrequency;
+	extern float haze;
+	extern float turbulence;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		float angle = atan(uv.y, uv.x);
+		float radius = length(uv);
+		float bolts = sin(angle * boltFrequency + sin(time * turbulence + radius * 8.0) * 2.2);
+		float arcs = sin(radius * (boltFrequency * 2.5) - time * flashFrequency);
+		float flicker = sin(time * flashFrequency * 1.8 + radius * 12.0) * 0.5 + 0.5;
+		float strike = pow(clamp((bolts * 0.5 + 0.5) * (arcs * 0.5 + 0.5), 0.0, 1.0), 1.5);
+		float halo = smoothstep(0.0, 0.65, 1.0 - radius) * haze;
+
+		vec3 energy = mix(colorA.rgb, colorB.rgb, clamp(strike + flicker * 0.4, 0.0, 1.0));
+		energy = mix(energy, colorC.rgb, clamp(flicker, 0.0, 1.0));
+
+		float glow = clamp((strike * 0.8 + halo * 0.6) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, energy, glow);
+		result += colorC.rgb * glow * 0.2;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	petalBloom = [[
+	extern float time;
+	extern float petalCount;
+	extern float pulseSpeed;
+	extern float trailStrength;
+	extern float bloomStrength;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float angle = atan(uv.y, uv.x);
+		float petals = sin(angle * petalCount + sin(time * pulseSpeed) * 0.8);
+		float rings = sin(radius * (petalCount * 1.4) - time * pulseSpeed * 0.7);
+		float pulse = sin(time * pulseSpeed + radius * 6.0) * 0.5 + 0.5;
+		float bloom = pow(clamp(petals * 0.5 + 0.5, 0.0, 1.0), 1.2);
+		float trails = smoothstep(0.0, 1.0, 1.0 - radius) * trailStrength;
+
+		vec3 petalColor = mix(colorA.rgb, colorB.rgb, bloom);
+		petalColor = mix(petalColor, colorC.rgb, clamp(pulse, 0.0, 1.0));
+
+		float glow = clamp((bloom * bloomStrength + trails * 0.4 + pulse * 0.5) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, petalColor, glow);
+		result += petalColor * glow * 0.15;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	abyssalPulse = [[
+	extern float time;
+	extern float swirlDensity;
+	extern float glimmerFrequency;
+	extern float darkness;
+	extern float driftSpeed;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float angle = atan(uv.y, uv.x);
+		float swirl = sin(angle * swirlDensity - time * driftSpeed + radius * 4.0);
+		float waves = sin(radius * (swirlDensity * 0.5) + time * driftSpeed * 0.6);
+		float glimmer = sin(angle * glimmerFrequency + time * glimmerFrequency * 0.7);
+		float depth = smoothstep(0.0, 0.9, radius);
+
+		vec3 abyss = mix(colorA.rgb, colorB.rgb, clamp(swirl * 0.5 + 0.5, 0.0, 1.0));
+		abyss = mix(abyss, colorC.rgb, clamp(glimmer * 0.5 + 0.5, 0.0, 1.0) * 0.6);
+
+		float glow = clamp((1.0 - depth) * 0.6 + waves * 0.2 + glimmer * 0.2, 0.0, 1.0) * intensity;
+		glow = mix(glow, glow * (1.0 - depth), clamp(darkness, 0.0, 1.0));
+
+		vec3 result = mix(base.rgb, abyss, glow);
+		result += colorC.rgb * glow * 0.12;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	chronoWeave = [[
+	extern float time;
+	extern float ringDensity;
+	extern float timeFlow;
+	extern float weaveStrength;
+	extern float phaseOffset;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float angle = atan(uv.y, uv.x);
+		float rings = sin(radius * ringDensity - time * timeFlow);
+		float spokes = sin(angle * (ringDensity * 0.5) + time * weaveStrength);
+		float warp = sin((radius * 8.0 + angle * 6.0) + time * (timeFlow * 0.5 + weaveStrength)) * 0.5 + 0.5;
+		float chrono = clamp(rings * 0.5 + 0.5, 0.0, 1.0);
+
+		vec3 core = mix(colorA.rgb, colorB.rgb, chrono);
+		core = mix(core, colorC.rgb, warp);
+
+		float glow = clamp((chrono * 0.5 + (spokes * 0.5 + 0.5) * weaveStrength + warp * 0.35) * intensity, 0.0, 1.0);
+		float fade = smoothstep(0.85, 1.1, radius + phaseOffset);
+		glow *= (1.0 - fade);
+
+		vec3 result = mix(base.rgb, core, glow);
+		result += colorC.rgb * glow * 0.1;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	gildedFacet = [[
+	extern float time;
+	extern float facetDensity;
+	extern float sparkleDensity;
+	extern float beamSpeed;
+	extern float reflectionStrength;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float facets = sin(uv.x * facetDensity + sin(uv.y * facetDensity * 1.3 + time * beamSpeed) * 1.5);
+		float prismatic = sin((uv.x + uv.y) * (facetDensity * 0.7) - time * beamSpeed * 0.8);
+		float sparkle = sin(time * sparkleDensity + atan(uv.y, uv.x) * 12.0 + radius * 16.0) * 0.5 + 0.5;
+		float highlight = clamp(facets * 0.5 + 0.5, 0.0, 1.0);
+
+		vec3 metal = mix(colorA.rgb, colorB.rgb, highlight);
+		metal = mix(metal, colorC.rgb, pow(clamp(sparkle, 0.0, 1.0), 2.0) * reflectionStrength);
+
+		float glow = clamp((highlight * 0.5 + prismatic * 0.35 + sparkle * 0.6) * intensity, 0.0, 1.0);
+		glow *= (1.0 - smoothstep(0.0, 1.1, radius));
+
+		vec3 result = mix(base.rgb, metal, glow);
+		result += colorC.rgb * glow * 0.18;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	voidEcho = [[
+	extern float time;
+	extern float veilFrequency;
+	extern float echoSpeed;
+	extern float phaseShift;
+	extern float riftIntensity;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float angle = atan(uv.y, uv.x);
+		float field = sin((uv.x + uv.y) * veilFrequency + time * echoSpeed);
+		float lens = sin(radius * (veilFrequency * 1.6) - time * echoSpeed * 0.6 + phaseShift);
+		float echoes = sin(angle * (veilFrequency * 0.8) - time * echoSpeed * 1.3);
+		float drift = sin((uv.x - uv.y) * (veilFrequency * 0.5) + time * echoSpeed * 0.4);
+
+		float veil = clamp(field * 0.4 + lens * 0.4 + echoes * 0.2, -1.0, 1.0) * 0.5 + 0.5;
+		float rift = smoothstep(0.2, 0.95, radius) * riftIntensity;
+
+		vec3 wisp = mix(colorA.rgb, colorB.rgb, veil);
+		wisp = mix(wisp, colorC.rgb, clamp(drift * 0.5 + 0.5, 0.0, 1.0));
+
+		float glow = clamp((veil * 0.6 + (1.0 - rift) * 0.4 + drift * 0.2) * intensity, 0.0, 1.0);
+		glow *= (1.0 - smoothstep(0.0, 1.05, radius + drift * 0.08));
+
+		vec3 result = mix(base.rgb, wisp, glow);
+		result += colorC.rgb * glow * 0.16;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	constellationDrift = [[
+	extern float time;
+	extern float starDensity;
+	extern float driftSpeed;
+	extern float parallax;
+	extern float twinkleStrength;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	float hash(vec2 p)
+	{
+		return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+	}
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		vec2 starUV = uv * starDensity;
+		vec2 id = floor(starUV);
+		vec2 frac = fract(starUV);
+
+		float twinkle = 0.0;
+		for (int x = -1; x <= 1; ++x) {
+			for (int y = -1; y <= 1; ++y) {
+				vec2 offset = vec2(x, y);
+				vec2 cell = id + offset;
+				float starSeed = hash(cell);
+				vec2 starPos = fract(sin(vec2(starSeed, starSeed * 1.7)) * 43758.5453);
+				vec2 delta = offset + starPos - frac;
+				float dist = length(delta);
+				float sparkle = clamp(1.0 - dist * 2.4, 0.0, 1.0);
+				float pulse = sin(time * driftSpeed + starSeed * 6.283 + parallax * dot(delta, vec2(0.6, -0.4)));
+				twinkle += sparkle * (0.5 + 0.5 * pulse);
+			}
+		}
+
+		twinkle = clamp(twinkle * twinkleStrength, 0.0, 1.2);
+		float band = sin((uv.x + uv.y) * 6.0 + time * driftSpeed * 0.4) * 0.5 + 0.5;
+
+		vec3 starColor = mix(colorA.rgb, colorB.rgb, band);
+		starColor = mix(starColor, colorC.rgb, clamp(twinkle, 0.0, 1.0));
+
+		float glow = clamp((band * 0.4 + twinkle) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, starColor, glow);
+		result += colorC.rgb * glow * 0.12;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	crystalBloom = [[
+	extern float time;
+	extern float shardDensity;
+	extern float sweepSpeed;
+	extern float refractionStrength;
+	extern float veinStrength;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		vec2 shard = uv * shardDensity;
+		float ridge = sin(shard.x + sin(shard.y * 1.7 + time * sweepSpeed) * 1.2);
+		float ridgeB = sin(shard.y * 1.4 - time * sweepSpeed * 0.6);
+		float veins = sin((uv.x - uv.y) * 12.0 + time * sweepSpeed * 1.3);
+
+		float crystalline = clamp(ridge * 0.5 + ridgeB * 0.5, -1.0, 1.0) * 0.5 + 0.5;
+		float caustic = clamp(veins * 0.5 + 0.5, 0.0, 1.0);
+
+		vec3 mineral = mix(colorA.rgb, colorB.rgb, crystalline);
+		mineral = mix(mineral, colorC.rgb, caustic * refractionStrength);
+
+		float glow = clamp((crystalline * 0.45 + caustic * veinStrength) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, mineral, glow);
+		result += colorC.rgb * glow * 0.14;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	emberForge = [[
+	extern float time;
+	extern float emberFrequency;
+	extern float emberSpeed;
+	extern float emberGlow;
+	extern float slagDarkness;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float emberFlow = sin((uv.x * 1.4 + uv.y * 0.6) * emberFrequency + time * emberSpeed);
+		float emberPulse = sin((uv.x - uv.y) * (emberFrequency * 0.5) + time * emberSpeed * 1.6);
+		float sparks = sin(time * emberSpeed * 2.3 + radius * 18.0) * 0.5 + 0.5;
+
+		float forge = clamp(emberFlow * 0.5 + emberPulse * 0.5, -1.0, 1.0) * 0.5 + 0.5;
+		float slag = smoothstep(0.2, 0.95, radius) * slagDarkness;
+
+		vec3 molten = mix(colorA.rgb, colorB.rgb, forge);
+		molten = mix(molten, colorC.rgb, clamp(sparks, 0.0, 1.0) * emberGlow);
+
+		float glow = clamp((forge * 0.7 + sparks * 0.4) * intensity, 0.0, 1.0);
+		glow *= (1.0 - slag);
+
+		vec3 result = mix(base.rgb, molten, glow);
+		result += colorC.rgb * glow * 0.2;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	mechanicalScan = [[
+	extern float time;
+	extern float scanSpeed;
+	extern float gearFrequency;
+	extern float gearParallax;
+	extern float servoIntensity;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		float radius = length(uv);
+		float scan = sin((uv.y + uv.x * 0.3) * gearFrequency - time * scanSpeed) * 0.5 + 0.5;
+		float gears = sin(atan(uv.y, uv.x) * gearFrequency * 0.7 + time * gearParallax);
+		float ticks = sin(radius * (gearFrequency * 1.8) - time * scanSpeed * 1.5);
+
+		vec3 steel = mix(colorA.rgb, colorB.rgb, scan);
+		steel = mix(steel, colorC.rgb, clamp(gears * 0.5 + 0.5, 0.0, 1.0) * servoIntensity);
+
+		float glow = clamp((scan * 0.45 + ticks * 0.3 + (gears * 0.5 + 0.5) * 0.25) * intensity, 0.0, 1.0);
+		glow *= (1.0 - smoothstep(0.0, 1.05, radius + 0.02));
+
+		vec3 result = mix(base.rgb, steel, glow);
+		result += colorC.rgb * glow * 0.12;
+		return vec4(result, base.a) * color;
+	}
+	]],
+	tidalChorus = [[
+	extern float time;
+	extern float waveFrequency;
+	extern float crestSpeed;
+	extern float chorusStrength;
+	extern float depthShift;
+	extern float intensity;
+	extern vec4 colorA;
+	extern vec4 colorB;
+	extern vec4 colorC;
+
+	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+	{
+		vec4 base = Texel(tex, texture_coords);
+		float mask = base.a;
+		if (mask <= 0.0) {
+			return base * color;
+		}
+
+		vec2 uv = texture_coords - vec2(0.5);
+		float wave = sin((uv.x * waveFrequency - uv.y * 1.2) + time * crestSpeed);
+		float counter = sin((uv.x * 0.8 + uv.y * waveFrequency * 0.7) - time * crestSpeed * 0.7);
+		float harmonics = sin((uv.x + uv.y) * 5.0 + time * crestSpeed * 1.3);
+		float depth = smoothstep(-0.4 + depthShift, 0.6 + depthShift, uv.y + wave * 0.1);
+
+		vec3 tide = mix(colorA.rgb, colorB.rgb, clamp(depth, 0.0, 1.0));
+		tide = mix(tide, colorC.rgb, clamp(harmonics * 0.5 + 0.5, 0.0, 1.0) * chorusStrength);
+
+		float glow = clamp((depth * 0.5 + (wave * 0.5 + 0.5) * 0.3 + (counter * 0.5 + 0.5) * 0.3) * intensity, 0.0, 1.0);
+		vec3 result = mix(base.rgb, tide, glow);
+		result += colorC.rgb * glow * 0.16;
+		return vec4(result, base.a) * color;
+	}
+	]],
+}
+
+local overlayShaderCache = {}
+
+local function safeResolveShader(typeId)
+	if overlayShaderCache[typeId] ~= nil then
+		return overlayShaderCache[typeId]
 	end
 
-	if not overlayTexture then
-		local ok, image = pcall(love.graphics.newImage, overlayTexturePath)
-		if not ok then
-			print('[snakedraw] failed to load overlay texture', image)
-			overlayTexture = false
-			return false
-		end
-		image:setWrap('repeat', 'repeat')
-		overlayTexture = image
+	local source = overlayShaderSources[typeId]
+	if not source then
+		overlayShaderCache[typeId] = false
+		return nil
 	end
 
-	if overlayShader == false then
-		return false
+	local ok, shader = pcall(love.graphics.newShader, source)
+	if not ok then
+		print("[snakedraw] failed to build overlay shader", typeId, shader)
+		overlayShaderCache[typeId] = false
+		return nil
 	end
 
-	if not overlayShader then
-		local ok, shader = pcall(love.graphics.newShader, overlayShaderSource)
-		if not ok then
-			print('[snakedraw] failed to build overlay shader', shader)
-			overlayShader = false
-			return false
-		end
-		overlayShader = shader
-	end
-
-	if overlayShader and overlayTexture and overlayShader ~= false and overlayTexture ~= false then
-		overlayShader:send('overlayTex', overlayTexture)
-		overlayShader:send('overlayDimensions', {overlayTexture:getWidth(), overlayTexture:getHeight()})
-		return true
-	end
-
-	return false
+	overlayShaderCache[typeId] = shader
+	return shader
 end
 
 local function ensureSnakeCanvas(width, height)
@@ -117,43 +595,46 @@ local function ensureSnakeOverlayCanvas(width, height)
 	return snakeOverlayCanvas
 end
 
-local function presentSnakeCanvas(overlayEffect, width, height, anchorX, anchorY)
+local function presentSnakeCanvas(overlayEffect, width, height)
 	if not snakeCanvas then
 		return false
 	end
 
-	RenderLayers:withLayer('shadows', function()
+	RenderLayers:withLayer("shadows", function()
 		love.graphics.setColor(0, 0, 0, 0.25)
 		love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
 	end)
 
-	local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
-	local previousCanvas = {love.graphics.getCanvas()}
-	love.graphics.setCanvas(overlayCanvas)
-	love.graphics.clear(0, 0, 0, 0)
-
-	local drewOverlay = applyOverlay(snakeCanvas, overlayEffect, anchorX, anchorY)
-	if not drewOverlay then
+	local drewOverlay = false
+	if overlayEffect then
+		local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
+		local previousCanvas = {love.graphics.getCanvas()}
+		love.graphics.setCanvas(overlayCanvas)
+		love.graphics.clear(0, 0, 0, 0)
 		love.graphics.setColor(1, 1, 1, 1)
 		love.graphics.draw(snakeCanvas, 0, 0)
+		drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
+		if #previousCanvas > 0 then
+			love.graphics.setCanvas(unpack(previousCanvas))
+		else
+			love.graphics.setCanvas()
+		end
 	end
 
-	if #previousCanvas > 0 then
-		love.graphics.setCanvas(unpack(previousCanvas))
-	else
-		love.graphics.setCanvas()
-	end
-
-	RenderLayers:withLayer('main', function()
+	RenderLayers:withLayer("main", function()
 		love.graphics.setColor(1, 1, 1, 1)
-		love.graphics.draw(snakeOverlayCanvas, 0, 0)
+		if drewOverlay then
+			love.graphics.draw(snakeOverlayCanvas, 0, 0)
+		else
+			love.graphics.draw(snakeCanvas, 0, 0)
+		end
 	end)
 
 	return drewOverlay
 end
 
 local function resolveColor(color, fallback)
-	if type(color) == 'table' then
+	if type(color) == "table" then
 		return {
 			color[1] or 0,
 			color[2] or 0,
@@ -169,89 +650,113 @@ local function resolveColor(color, fallback)
 	return {1, 1, 1, 1}
 end
 
-applyOverlay = function(canvas, config, anchorX, anchorY)
-	if not canvas then
+applyOverlay = function(canvas, config)
+	if not (canvas and config and config.type) then
 		return false
 	end
 
-	local overlayConfig = config or {}
-	if overlayConfig.enabled == false then
+	local shader = safeResolveShader(config.type)
+	if not shader then
 		return false
 	end
 
-	local opacity = overlayConfig.opacity
-	if opacity == nil then
-		opacity = overlayConfig.intensity
-	end
-	if opacity == nil then
-		opacity = 0.35
+	local time = love.timer.getTime()
+
+	local colors = config.colors or {}
+	local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor())
+	local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor())
+	local tertiary = resolveColor(colors.tertiary or secondary)
+
+	shader:send("time", time)
+	shader:send("intensity", config.intensity or 0.5)
+	shader:send("colorA", primary)
+	shader:send("colorB", secondary)
+
+	if config.type == "stripes" then
+		shader:send("frequency", config.frequency or 18)
+		shader:send("speed", config.speed or 0.6)
+		shader:send("angle", math.rad(config.angle or 45))
+	elseif config.type == "holo" then
+		shader:send("speed", config.speed or 1.0)
+		shader:send("colorC", tertiary)
+	elseif config.type == "auroraVeil" then
+		shader:send("curtainDensity", config.curtainDensity or 6.5)
+		shader:send("driftSpeed", config.driftSpeed or 0.7)
+		shader:send("parallax", config.parallax or 1.4)
+		shader:send("shimmerStrength", config.shimmerStrength or 0.6)
+		shader:send("colorC", tertiary)
+	elseif config.type == "ionStorm" then
+		shader:send("boltFrequency", config.boltFrequency or 8.5)
+		shader:send("flashFrequency", config.flashFrequency or 5.2)
+		shader:send("haze", config.haze or 0.6)
+		shader:send("turbulence", config.turbulence or 1.2)
+		shader:send("colorC", tertiary)
+	elseif config.type == "petalBloom" then
+		shader:send("petalCount", config.petalCount or 8.0)
+		shader:send("pulseSpeed", config.pulseSpeed or 1.8)
+		shader:send("trailStrength", config.trailStrength or 0.45)
+		shader:send("bloomStrength", config.bloomStrength or 0.65)
+		shader:send("colorC", tertiary)
+	elseif config.type == "abyssalPulse" then
+		shader:send("swirlDensity", config.swirlDensity or 7.0)
+		shader:send("glimmerFrequency", config.glimmerFrequency or 3.5)
+		shader:send("darkness", config.darkness or 0.25)
+		shader:send("driftSpeed", config.driftSpeed or 0.9)
+		shader:send("colorC", tertiary)
+	elseif config.type == "chronoWeave" then
+		shader:send("ringDensity", config.ringDensity or 9.0)
+		shader:send("timeFlow", config.timeFlow or 2.4)
+		shader:send("weaveStrength", config.weaveStrength or 1.0)
+		shader:send("phaseOffset", config.phaseOffset or 0.0)
+		shader:send("colorC", tertiary)
+	elseif config.type == "gildedFacet" then
+		shader:send("facetDensity", config.facetDensity or 14.0)
+		shader:send("sparkleDensity", config.sparkleDensity or 12.0)
+		shader:send("beamSpeed", config.beamSpeed or 1.4)
+		shader:send("reflectionStrength", config.reflectionStrength or 0.6)
+		shader:send("colorC", tertiary)
+	elseif config.type == "voidEcho" then
+		shader:send("veilFrequency", config.veilFrequency or 7.2)
+		shader:send("echoSpeed", config.echoSpeed or 1.2)
+		shader:send("phaseShift", config.phaseShift or 0.4)
+		shader:send("riftIntensity", config.riftIntensity or 0.4)
+		shader:send("colorC", tertiary)
+	elseif config.type == "constellationDrift" then
+		shader:send("starDensity", config.starDensity or 6.5)
+		shader:send("driftSpeed", config.driftSpeed or 1.2)
+		shader:send("parallax", config.parallax or 0.6)
+		shader:send("twinkleStrength", config.twinkleStrength or 0.8)
+		shader:send("colorC", tertiary)
+	elseif config.type == "crystalBloom" then
+		shader:send("shardDensity", config.shardDensity or 6.0)
+		shader:send("sweepSpeed", config.sweepSpeed or 1.1)
+		shader:send("refractionStrength", config.refractionStrength or 0.7)
+		shader:send("veinStrength", config.veinStrength or 0.6)
+		shader:send("colorC", tertiary)
+	elseif config.type == "emberForge" then
+		shader:send("emberFrequency", config.emberFrequency or 8.0)
+		shader:send("emberSpeed", config.emberSpeed or 1.6)
+		shader:send("emberGlow", config.emberGlow or 0.7)
+		shader:send("slagDarkness", config.slagDarkness or 0.35)
+		shader:send("colorC", tertiary)
+	elseif config.type == "mechanicalScan" then
+		shader:send("scanSpeed", config.scanSpeed or 1.8)
+		shader:send("gearFrequency", config.gearFrequency or 12.0)
+		shader:send("gearParallax", config.gearParallax or 1.2)
+		shader:send("servoIntensity", config.servoIntensity or 0.6)
+		shader:send("colorC", tertiary)
+	elseif config.type == "tidalChorus" then
+		shader:send("waveFrequency", config.waveFrequency or 6.5)
+		shader:send("crestSpeed", config.crestSpeed or 1.4)
+		shader:send("chorusStrength", config.chorusStrength or 0.6)
+		shader:send("depthShift", config.depthShift or 0.0)
+		shader:send("colorC", tertiary)
 	end
 
-	opacity = max(0, min(1, opacity))
-	if opacity <= 1e-4 then
-		return false
-	end
-
-	if not ensureOverlayResources() then
-		return false
-	end
-
-	local colors = overlayConfig.colors or {}
-	local tint = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor())
-	local highlight = resolveColor(colors.secondary or colors.highlight or SnakeCosmetics:getGlowColor())
-	local scaleX, scaleY
-	local scale = overlayConfig.textureScale or overlayConfig.scale or 1.0
-
-	if type(scale) == 'table' then
-		scaleX = scale[1] or 1
-		scaleY = scale[2] or scaleX or 1
-	else
-		scaleX = scale or 1
-		scaleY = scaleX
-	end
-
-	if overlayConfig.scaleX then
-		scaleX = overlayConfig.scaleX
-	end
-	if overlayConfig.scaleY then
-		scaleY = overlayConfig.scaleY
-	end
-
-	if scaleX == 0 then scaleX = 1 end
-	if scaleY == 0 then scaleY = 1 end
-	local anchorVecX = anchorX or 0
-	local anchorVecY = anchorY or 0
-
-	local anchorOverride = overlayConfig.anchor
-	if type(anchorOverride) == 'table' then
-		anchorVecX = anchorOverride.x or anchorOverride[1] or anchorVecX
-		anchorVecY = anchorOverride.y or anchorOverride[2] or anchorVecY
-	end
-
-	local anchorOffset = overlayConfig.anchorOffset or overlayConfig.offset
-	if type(anchorOffset) == 'table' then
-		anchorVecX = anchorVecX + (anchorOffset.x or anchorOffset[1] or 0)
-		anchorVecY = anchorVecY + (anchorOffset.y or anchorOffset[2] or 0)
-	end
-	if overlayConfig.offsetX then
-		anchorVecX = anchorVecX + overlayConfig.offsetX
-	end
-	if overlayConfig.offsetY then
-		anchorVecY = anchorVecY + overlayConfig.offsetY
-	end
-
-	overlayShader:send('overlayTex', overlayTexture)
-	overlayShader:send('overlayDimensions', {overlayTexture:getWidth(), overlayTexture:getHeight()})
-	overlayShader:send('overlayScale', {scaleX, scaleY})
-	overlayShader:send('overlayColor', tint)
-	overlayShader:send('overlayHighlight', highlight)
-	overlayShader:send('overlayOpacity', opacity)
-	overlayShader:send('overlayAnchor', {anchorVecX, anchorVecY})
-
-	love.graphics.push('all')
-	love.graphics.setShader(overlayShader)
-	love.graphics.setBlendMode(overlayConfig.blendMode or 'alpha')
-	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.push("all")
+	love.graphics.setShader(shader)
+	love.graphics.setBlendMode(config.blendMode or "alpha")
+	love.graphics.setColor(1, 1, 1, config.opacity or 1)
 	love.graphics.draw(canvas, 0, 0)
 	love.graphics.pop()
 
@@ -1657,7 +2162,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                 if exitHole then
                         drawPortalHole(exitHole, true)
                 end
-                presentSnakeCanvas(overlayEffect, ww, hh, hx, hy)
+                presentSnakeCanvas(overlayEffect, ww, hh)
                 if entryHole then
                         drawPortalHole(entryHole, false)
                 end
@@ -1717,7 +2222,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			love.graphics.clear(0,0,0,0)
 			renderSnakeToCanvas(trail, coords, head, half, options, palette)
 			love.graphics.setCanvas()
-			presentSnakeCanvas(overlayEffect, ww, hh, hx, hy)
+			presentSnakeCanvas(overlayEffect, ww, hh)
 		elseif hx and hy then
 			-- fallback: draw a simple disk when only the head is visible
 			local bodyColor = (palette and palette.body) or SnakeCosmetics:getBodyColor()
@@ -1742,7 +2247,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			love.graphics.circle("fill", hx, hy, half)
 			love.graphics.setCanvas()
 
-			presentSnakeCanvas(overlayEffect, ww, hh, hx, hy)
+			presentSnakeCanvas(overlayEffect, ww, hh)
 		end
 	end
 
