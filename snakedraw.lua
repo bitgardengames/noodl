@@ -30,6 +30,39 @@ local snakeOverlayCanvas = nil
 
 local applyOverlay
 
+local SNAKE_BODY_OVERLAY_PATH = "Assets/Overlay.png"
+local SNAKE_BODY_OVERLAY_SCALE = 1
+
+local snakeBodyOverlayImage = nil
+local snakeBodyOverlayQuad = nil
+local snakeBodyOverlayQuadWidth = nil
+local snakeBodyOverlayQuadHeight = nil
+
+local function ensureSnakeBodyOverlayResources(width, height)
+        if not snakeBodyOverlayImage then
+                local ok, image = pcall(love.graphics.newImage, SNAKE_BODY_OVERLAY_PATH)
+                if ok and image then
+                        image:setWrap("repeat", "repeat")
+                        snakeBodyOverlayImage = image
+                else
+                        snakeBodyOverlayImage = false
+                end
+        end
+
+        if not snakeBodyOverlayImage or snakeBodyOverlayImage == false then
+                return nil, nil
+        end
+
+        if not snakeBodyOverlayQuad or snakeBodyOverlayQuadWidth ~= width or snakeBodyOverlayQuadHeight ~= height then
+                local texW, texH = snakeBodyOverlayImage:getDimensions()
+                snakeBodyOverlayQuad = love.graphics.newQuad(0, 0, width, height, texW, texH)
+                snakeBodyOverlayQuadWidth = width
+                snakeBodyOverlayQuadHeight = height
+        end
+
+        return snakeBodyOverlayImage, snakeBodyOverlayQuad
+end
+
 local overlayShaderSources = {
 	stripes = [[
 	extern float time;
@@ -850,9 +883,9 @@ local function drawCornerCaps(path, radius)
 end
 
 local function drawSnakeStroke(path, radius, options)
-	if not path or radius <= 0 or #path < 2 then
-		return
-	end
+        if not path or radius <= 0 or #path < 2 then
+                return
+        end
 
 	if #path == 2 then
 		if options and options.sharpCorners then
@@ -880,12 +913,88 @@ local function drawSnakeStroke(path, radius, options)
 		love.graphics.circle("fill", lastX, lastY, radius)
 	end
 
-	drawCornerCaps(path, radius)
+        drawCornerCaps(path, radius)
+end
+
+local function applyBodyTextureOverlayForTrail(trail, coords, head, half, bulgeRadius, options)
+        if not snakeCanvas then
+                return
+        end
+
+        local width, height = snakeCanvas:getDimensions()
+        local image, quad = ensureSnakeBodyOverlayResources(width, height)
+        if not (image and quad) then
+                return
+        end
+
+        local hx, hy = ptXY(head)
+        hx = hx or 0
+        hy = hy or 0
+
+        local scale = SNAKE_BODY_OVERLAY_SCALE
+        local texW, texH = image:getDimensions()
+        quad:setViewport(hx * scale, hy * scale, width * scale, height * scale, texW, texH)
+
+        love.graphics.push("all")
+        love.graphics.stencil(function()
+                love.graphics.push("all")
+                love.graphics.setColorMask(false, false, false, false)
+                if options and options.sharpCorners then
+                        love.graphics.setLineStyle("rough")
+                        love.graphics.setLineJoin("miter")
+                else
+                        love.graphics.setLineStyle("smooth")
+                        love.graphics.setLineJoin("bevel")
+                end
+                drawSnakeStroke(coords, half, options)
+                drawFruitBulges(trail, head, bulgeRadius)
+                love.graphics.pop()
+        end, "replace", 1, true)
+
+        love.graphics.setStencilTest("greater", 0)
+        love.graphics.setColorMask(true, true, true, false)
+        love.graphics.setBlendMode("alpha", "premultiplied")
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(image, quad, 0, 0)
+        love.graphics.setStencilTest()
+        love.graphics.pop()
+end
+
+local function applyBodyTextureOverlayForCircle(x, y, radius)
+        if not (snakeCanvas and x and y and radius and radius > 0) then
+                return
+        end
+
+        local width, height = snakeCanvas:getDimensions()
+        local image, quad = ensureSnakeBodyOverlayResources(width, height)
+        if not (image and quad) then
+                return
+        end
+
+        local scale = SNAKE_BODY_OVERLAY_SCALE
+        local texW, texH = image:getDimensions()
+        quad:setViewport(x * scale, y * scale, width * scale, height * scale, texW, texH)
+
+        love.graphics.push("all")
+        love.graphics.stencil(function()
+                love.graphics.push("all")
+                love.graphics.setColorMask(false, false, false, false)
+                love.graphics.circle("fill", x, y, radius)
+                love.graphics.pop()
+        end, "replace", 1, true)
+
+        love.graphics.setStencilTest("greater", 0)
+        love.graphics.setColorMask(true, true, true, false)
+        love.graphics.setBlendMode("alpha", "premultiplied")
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(image, quad, 0, 0)
+        love.graphics.setStencilTest()
+        love.graphics.pop()
 end
 
 local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
-	local paletteBody = palette and palette.body
-	local paletteOutline = palette and palette.outline
+        local paletteBody = palette and palette.body
+        local paletteOutline = palette and palette.outline
 
 	local bodyColor = paletteBody or SnakeCosmetics:getBodyColor()
 	local outlineColor = paletteOutline or SnakeCosmetics:getOutlineColor()
@@ -913,10 +1022,11 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 
 	love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
 	drawSnakeStroke(bodyCoords, half, options)
-	drawFruitBulges(trail, head, bulgeRadius)
+        drawFruitBulges(trail, head, bulgeRadius)
 
-	love.graphics.pop()
+        love.graphics.pop()
 
+        applyBodyTextureOverlayForTrail(trail, coords, head, half, bulgeRadius, options)
 end
 
 drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
@@ -1056,11 +1166,12 @@ local function drawTrailSegmentToCanvas(trail, half, options, paletteOverride)
 	local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
 
 	love.graphics.push("all")
-	love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
-	love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
-	love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
-	love.graphics.circle("fill", hx, hy, half)
-	love.graphics.pop()
+        love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
+        love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+        love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
+        love.graphics.circle("fill", hx, hy, half)
+        applyBodyTextureOverlayForCircle(hx, hy, half)
+        love.graphics.pop()
 end
 
 local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
@@ -2242,15 +2353,16 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 
 			love.graphics.setCanvas(snakeCanvas)
 			love.graphics.clear(0, 0, 0, 0)
-			love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-			love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
-			love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-			love.graphics.circle("fill", hx, hy, half)
-			love.graphics.setCanvas()
+                        love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+                        love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+                        love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+                        love.graphics.circle("fill", hx, hy, half)
+                        applyBodyTextureOverlayForCircle(hx, hy, half)
+                        love.graphics.setCanvas()
 
-			presentSnakeCanvas(overlayEffect, ww, hh)
-		end
-	end
+                        presentSnakeCanvas(overlayEffect, ww, hh)
+                end
+        end
 
 	if hx and hy and drawFace ~= false then
 		RenderLayers:withLayer("overlay", function()
