@@ -240,13 +240,12 @@ local function registerEffect(def)
 	effectDefinitions[def.type] = def
 end
 
--- Mellow canopy drift for the opening garden floor
+-- Ambient light cascade for the opening garden floor
 registerEffect({
-	type = "gardenMellow",
-	backdropIntensity = 0.54,
-	arenaIntensity = 0.3,
+        type = "gardenMellow",
+        backdropIntensity = 0.54,
+        arenaIntensity = 0.3,
         source = [[
-        extern float time;
         extern vec2 resolution;
         extern vec2 origin;
         extern vec4 baseColor;
@@ -255,36 +254,34 @@ registerEffect({
         extern vec4 glowColor;
         extern float intensity;
 
+        vec3 blend(vec3 a, vec3 b, float t)
+        {
+                return mix(a, b, clamp(t, 0.0, 1.0));
+        }
+
         vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         {
                 vec2 uv = (screen_coords - origin) / resolution;
                 uv = clamp(uv, 0.0, 1.0);
 
-                float sway = sin((uv.x + time * 0.07) * 1.8) * 0.04;
-                float vertical = smoothstep(0.0, 1.0, uv.y + sway * 0.15);
+                float vertical = smoothstep(0.0, 1.0, uv.y);
+                vec3 top = blend(baseColor.rgb * 0.8, canopyColor.rgb * 0.95, 0.35);
+                vec3 bottom = blend(canopyColor.rgb, highlightColor.rgb, 0.28 + intensity * 0.18);
+                vec3 gradient = mix(top, bottom, vertical);
 
-                vec3 dawn = mix(baseColor.rgb, highlightColor.rgb, 0.4 + intensity * 0.25);
-                vec3 canopyBlend = mix(baseColor.rgb, canopyColor.rgb, 0.65);
-                vec3 gradient = mix(dawn, canopyBlend, clamp(vertical, 0.0, 1.0));
+                float lift = smoothstep(0.22, 0.72, uv.y);
+                vec3 lifted = mix(gradient, blend(highlightColor.rgb, glowColor.rgb, 0.3 + intensity * 0.15), lift * 0.22);
 
-                float lightBand = exp(-pow((uv.y + sway * 0.6 - 0.38 - sin(time * 0.22) * 0.03) * 3.2, 2.0));
-                float lightMask = clamp(lightBand * (0.3 + intensity * 0.4), 0.0, 1.0);
-                vec3 litGradient = mix(gradient, highlightColor.rgb, lightMask);
+                vec2 center = vec2(0.5, 0.54);
+                float radial = exp(-pow(length((uv - center) * vec2(1.25, 1.05)) * 2.35, 2.1));
+                float spotStrength = clamp(0.42 + intensity * 0.4, 0.0, 1.0);
+                vec3 spot = mix(lifted, blend(highlightColor.rgb, glowColor.rgb, 0.46), radial * spotStrength);
 
-                float branchWave = sin((uv.x * 5.0 + uv.y * 3.6) - time * 0.3) * 0.5 + 0.5;
-                float branchMask = smoothstep(0.45, 0.82, branchWave) * (0.4 + intensity * 0.25);
-                vec3 canopyLayer = mix(litGradient, mix(canopyColor.rgb, glowColor.rgb, 0.35 + intensity * 0.15), clamp(branchMask, 0.0, 1.0));
-
-                float pollen = sin((uv.x * 18.0 - uv.y * 6.0) + time * 0.8) * cos((uv.x * 12.0 + uv.y * 8.0) - time * 0.45);
-                float pollenMask = smoothstep(0.82, 1.0, pollen) * (0.12 + intensity * 0.16);
-                vec3 pollenLayer = mix(canopyLayer, glowColor.rgb, clamp(pollenMask, 0.0, 1.0));
-
-                float spark = sin((uv.x + time * 0.2) * 14.0) * sin((uv.y + time * 0.16) * 18.0);
-                float sparkMask = smoothstep(0.92, 1.0, spark) * (0.06 + intensity * 0.12);
-                vec3 sparkLayer = mix(pollenLayer, mix(highlightColor.rgb, glowColor.rgb, 0.5), clamp(sparkMask, 0.0, 1.0));
-
-                float vignette = smoothstep(0.0, 0.9, length(uv - vec2(0.5, 0.55)));
-                vec3 finalColor = mix(sparkLayer, baseColor.rgb * 0.85, vignette * 0.32);
+                float cornerFalloff = smoothstep(0.25, 0.92, length((uv - vec2(0.5, 0.56)) * vec2(1.2, 1.35)));
+                float topShade = smoothstep(0.05, 0.38, 1.0 - uv.y);
+                float vignette = clamp(cornerFalloff * 0.85 + topShade * 0.4, 0.0, 1.0);
+                vec3 borderBlend = blend(baseColor.rgb * 0.78, canopyColor.rgb, 0.22);
+                vec3 finalColor = mix(spot, borderBlend, vignette * (0.42 + intensity * 0.12));
 
                 return vec4(finalColor, baseColor.a) * color;
         }
