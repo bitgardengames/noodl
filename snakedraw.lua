@@ -949,7 +949,7 @@ local function applyBodyTextureOverlayForTrail(trail, coords, head, half, bulgeR
         end, "replace", 1, true)
 
         love.graphics.setStencilTest("greater", 0)
-        love.graphics.setColorMask(true, true, true, false)
+        love.graphics.setColorMask(true, true, true, true)
         love.graphics.setBlendMode("alpha", "premultiplied")
         love.graphics.setColor(1, 1, 1, SNAKE_BODY_OVERLAY_OPACITY)
         love.graphics.draw(image, quad, 0, 0)
@@ -981,7 +981,7 @@ local function applyBodyTextureOverlayForCircle(x, y, radius)
         end, "replace", 1, true)
 
         love.graphics.setStencilTest("greater", 0)
-        love.graphics.setColorMask(true, true, true, false)
+        love.graphics.setColorMask(true, true, true, true)
         love.graphics.setBlendMode("alpha", "premultiplied")
         love.graphics.setColor(1, 1, 1, SNAKE_BODY_OVERLAY_OPACITY)
         love.graphics.draw(image, quad, 0, 0)
