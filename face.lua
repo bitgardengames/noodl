@@ -17,6 +17,11 @@ local currentEyeScale = 1
 local PI = math.pi
 
 local shapeDrawers = {}
+local shapeDefinitions = {}
+local SHAPE_CANVAS_SIZE = 32
+local FACE_CANVAS_OFFSET_X = (SHAPE_CANVAS_SIZE - FACE_WIDTH) / 2
+local FACE_CANVAS_OFFSET_Y = (SHAPE_CANVAS_SIZE - FACE_HEIGHT) / 2
+local shapeCacheBuilt = false
 
 local function drawHappyArc(cx, lift)
 	local radius = EYE_RADIUS * currentEyeScale
@@ -62,12 +67,54 @@ local function drawAngryEye(cx, isLeft)
 end
 
 local function registerDrawer(name, drawer, options)
-	shapeDrawers[name] = function()
-		if not (options and options.skipColor) then
-			love.graphics.setColor(0, 0, 0, 1)
-		end
-		drawer()
-	end
+        shapeDefinitions[name] = function()
+                if not (options and options.skipColor) then
+                        love.graphics.setColor(0, 0, 0, 1)
+                end
+                drawer()
+        end
+end
+
+local function buildShapeCache()
+        if shapeCacheBuilt then
+                return
+        end
+
+        for name, definition in pairs(shapeDefinitions) do
+                local canvas = love.graphics.newCanvas(SHAPE_CANVAS_SIZE, SHAPE_CANVAS_SIZE)
+
+                love.graphics.push("all")
+                love.graphics.setCanvas(canvas)
+                love.graphics.clear(0, 0, 0, 0)
+                love.graphics.origin()
+                love.graphics.translate(FACE_CANVAS_OFFSET_X, FACE_CANVAS_OFFSET_Y)
+
+                currentEyeScale = 1
+                definition()
+                currentEyeScale = 1
+
+                love.graphics.pop()
+
+                local imageData = canvas:newImageData()
+                local image = love.graphics.newImage(imageData)
+                image:setFilter("nearest", "nearest")
+
+                canvas:release()
+
+                shapeDrawers[name] = {
+                        image = image,
+                        originX = SHAPE_CANVAS_SIZE / 2,
+                        originY = SHAPE_CANVAS_SIZE / 2
+                }
+        end
+
+        shapeCacheBuilt = true
+end
+
+local function ensureShapeCache()
+        if not shapeCacheBuilt then
+                buildShapeCache()
+        end
 end
 
 registerDrawer("idle", function()
@@ -175,43 +222,49 @@ function Face:update(dt)
 end
 
 function Face:draw(x, y, scale, options)
-	scale = scale or 1
+        ensureShapeCache()
 
-	local eyeScale = 1
-	local highlight = 0
-	local time = love.timer.getTime()
-	if options then
-		eyeScale = max(0.4, options.eyeScale or eyeScale)
-		highlight = max(0, options.highlight or highlight)
-		time = options.time or time
-	end
+        scale = scale or 1
 
-	local drawer = shapeDrawers[self.state] or shapeDrawers.idle
+        local eyeScale = 1
+        local highlight = 0
+        local time = love.timer.getTime()
+        if options then
+                eyeScale = max(0.4, options.eyeScale or eyeScale)
+                highlight = max(0, options.highlight or highlight)
+                time = options.time or time
+        end
 
-	love.graphics.push("all")
-	love.graphics.translate(x, y)
-	love.graphics.scale(scale)
-	love.graphics.translate(-FACE_WIDTH / 2, -FACE_HEIGHT / 2)
+        local entry = shapeDrawers[self.state] or shapeDrawers.idle
+        if not entry then
+                return
+        end
 
-	currentEyeScale = eyeScale
+        local finalScale = scale * eyeScale
 
-	drawer()
+        love.graphics.push("all")
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(entry.image, x, y, 0, finalScale, finalScale, entry.originX, entry.originY)
 
-	if highlight > 0 then
-		local baseRadius = EYE_RADIUS * currentEyeScale
-		local glowRadius = baseRadius * (1.35 + 0.35 * highlight)
-		local pulse = 0.82 + 0.18 * math.sin(time * 6)
-		local alpha = (0.16 + 0.22 * highlight) * pulse
-		love.graphics.setBlendMode("add")
-		love.graphics.setColor(1.0, 0.72, 0.28, alpha)
-		love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
-		love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
-		love.graphics.setBlendMode("alpha")
-	end
+        if highlight > 0 then
+                local baseRadius = EYE_RADIUS
+                local glowRadius = baseRadius * (1.35 + 0.35 * highlight)
+                local pulse = 0.82 + 0.18 * math.sin(time * 6)
+                local alpha = (0.16 + 0.22 * highlight) * pulse
 
-	currentEyeScale = 1
-	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.pop()
+                love.graphics.translate(x, y)
+                love.graphics.scale(finalScale)
+                love.graphics.translate(-FACE_WIDTH / 2, -FACE_HEIGHT / 2)
+
+                love.graphics.setBlendMode("add")
+                love.graphics.setColor(1.0, 0.72, 0.28, alpha)
+                love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
+                love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
+                love.graphics.setBlendMode("alpha")
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.pop()
 end
 
 return Face
