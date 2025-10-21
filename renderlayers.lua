@@ -14,6 +14,8 @@ local LAYERS = {
 
 local canvases = {}
 local canvasSamples = {}
+local layerClearedThisFrame = {}
+local layerUsedThisFrame = {}
 local canvasWidth = 0
 local canvasHeight = 0
 
@@ -33,25 +35,26 @@ do
 end
 
 local function ensureCanvas(name, width, height)
-	local w = width
-	local h = height
+        local w = width
+        local h = height
 
-	if not w or w < 1 then
-		w = max(1, love.graphics.getWidth() or 1)
-	end
+        if not w or w < 1 then
+                w = max(1, love.graphics.getWidth() or 1)
+        end
 
-	if not h or h < 1 then
-		h = max(1, love.graphics.getHeight() or 1)
-	end
+        if not h or h < 1 then
+                h = max(1, love.graphics.getHeight() or 1)
+        end
 
-	local canvas = canvases[name]
-	local targetSamples = desiredMSAASamples
-	if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h or (canvasSamples[name] or 0) ~= targetSamples then
-		local created
-		if canvasCreationOptions then
-			local ok, result = pcall(love.graphics.newCanvas, w, h, canvasCreationOptions)
-			if ok and result then
-				created = result
+        local canvas = canvases[name]
+        local targetSamples = desiredMSAASamples
+        local replaced = false
+        if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h or (canvasSamples[name] or 0) ~= targetSamples then
+                local created
+                if canvasCreationOptions then
+                        local ok, result = pcall(love.graphics.newCanvas, w, h, canvasCreationOptions)
+                        if ok and result then
+                                created = result
 				if created.getMSAA then
 					canvasSamples[name] = created:getMSAA() or (canvasCreationOptions.msaa or 0)
 				else
@@ -73,42 +76,52 @@ local function ensureCanvas(name, width, height)
 			end
 		end
 
-		canvas = created
-		canvases[name] = canvas
-	end
-	return canvas
+                canvas = created
+                canvases[name] = canvas
+                replaced = true
+        end
+        return canvas, replaced
 end
 
 function RenderLayers:begin(width, height)
-	local w = max(1, floor(width or love.graphics.getWidth() or 1))
-	local h = max(1, floor(height or love.graphics.getHeight() or 1))
+        local w = max(1, floor(width or love.graphics.getWidth() or 1))
+        local h = max(1, floor(height or love.graphics.getHeight() or 1))
 
 	if canvasWidth ~= w or canvasHeight ~= h then
 		canvasWidth = w
 		canvasHeight = h
 	end
 
-	for _, name in ipairs(LAYERS) do
-		local canvas = ensureCanvas(name, canvasWidth, canvasHeight)
-		love.graphics.push("all")
-		love.graphics.setCanvas({canvas, stencil = true})
-		love.graphics.clear(0, 0, 0, 0)
-		love.graphics.pop()
-	end
+        for name in pairs(canvases) do
+                layerClearedThisFrame[name] = false
+                layerUsedThisFrame[name] = false
+        end
+
+        for _, name in ipairs(LAYERS) do
+                layerClearedThisFrame[name] = false
+                layerUsedThisFrame[name] = false
+        end
 end
 
 function RenderLayers:push(layerName)
-	local canvas = canvases[layerName]
-	if not canvas then
-		canvas = ensureCanvas(layerName, canvasWidth, canvasHeight)
-	end
+        local canvas, replaced = ensureCanvas(layerName, canvasWidth, canvasHeight)
+        if replaced then
+                layerClearedThisFrame[layerName] = false
+        end
 
-	love.graphics.push("all")
-	love.graphics.setCanvas({canvas, stencil = true})
+        love.graphics.push("all")
+        love.graphics.setCanvas({canvas, stencil = true})
+
+        if not layerClearedThisFrame[layerName] then
+                love.graphics.clear(0, 0, 0, 0)
+                layerClearedThisFrame[layerName] = true
+        end
+
+        layerUsedThisFrame[layerName] = true
 end
 
 function RenderLayers:pop()
-	love.graphics.pop()
+        love.graphics.pop()
 end
 
 function RenderLayers:withLayer(layerName, drawFunc)
@@ -127,14 +140,14 @@ function RenderLayers:present()
 	love.graphics.origin()
 	love.graphics.setColor(1, 1, 1, 1)
 
-	for _, name in ipairs(LAYERS) do
-		local canvas = canvases[name]
-		if canvas then
-			love.graphics.draw(canvas, 0, 0)
-		end
-	end
+        for _, name in ipairs(LAYERS) do
+                local canvas = canvases[name]
+                if canvas and layerUsedThisFrame[name] then
+                        love.graphics.draw(canvas, 0, 0)
+                end
+        end
 
-	love.graphics.pop()
+        love.graphics.pop()
 end
 
 return RenderLayers
