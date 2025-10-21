@@ -1962,61 +1962,98 @@ function Snake:getHeadCell()
 	return toCell(hx, hy)
 end
 
-local function addSafeCellUnique(cells, seen, col, row)
-	local stride = cellKeyStride
-	if stride <= 0 then
-		stride = (Arena and Arena.rows or 0) + 16
-		if stride <= 0 then
-			stride = 64
-		end
-		cellKeyStride = stride
-	end
+local SAFE_ZONE_SEEN_RESET = 1000000000
 
-	local key = col * stride + row
-	if not seen[key] then
-		seen[key] = true
-		cells[#cells + 1] = {col, row}
-	end
+local safeZoneCellsBuffer = {}
+local safeZoneSeen = {}
+local safeZoneSeenGen = 0
+
+local function clearExcessSafeCells(cells, count)
+        for i = count + 1, #cells do
+                cells[i] = nil
+        end
+end
+
+local function addSafeCellUnique(cells, seen, gen, count, col, row)
+        local stride = cellKeyStride
+        if stride <= 0 then
+                stride = (Arena and Arena.rows or 0) + 16
+                if stride <= 0 then
+                        stride = 64
+                end
+                cellKeyStride = stride
+        end
+
+        local key = col * stride + row
+        if seen[key] ~= gen then
+                seen[key] = gen
+                count = count + 1
+                local cell = cells[count]
+                if cell then
+                        cell[1] = col
+                        cell[2] = row
+                else
+                        cells[count] = {col, row}
+                end
+        end
+
+        return count
 end
 
 function Snake:getSafeZone(lookahead)
-	local hx, hy = self:getHeadCell()
-	if not (hx and hy) then
-		return {}
-	end
+        local cells = safeZoneCellsBuffer
+        local seen = safeZoneSeen
 
-	local dir = self:getDirection()
-	local cells = {}
-	local seen = {}
+        safeZoneSeenGen = safeZoneSeenGen + 1
+        if safeZoneSeenGen >= SAFE_ZONE_SEEN_RESET then
+                safeZoneSeenGen = 1
+                for key in pairs(seen) do
+                        seen[key] = 0
+                end
+        end
 
-	for i = 1, lookahead do
-		local cx = hx + dir.x * i
-		local cy = hy + dir.y * i
-		addSafeCellUnique(cells, seen, cx, cy)
-	end
+        local gen = safeZoneSeenGen
 
-	local pending = pendingDir
-	if pending and (pending.x ~= dir.x or pending.y ~= dir.y) then
-		-- Immediate turn path (if the queued direction snaps before the next tile)
-		local px, py = hx, hy
-		for i = 1, lookahead do
-			px = px + pending.x
-			py = py + pending.y
-			addSafeCellUnique(cells, seen, px, py)
-		end
+        local count = 0
 
-		-- Typical turn path: advance one tile forward, then apply the queued turn
-		local turnCol = hx + dir.x
-		local turnRow = hy + dir.y
-		px, py = turnCol, turnRow
-		for i = 2, lookahead do
-			px = px + pending.x
-			py = py + pending.y
-			addSafeCellUnique(cells, seen, px, py)
-		end
-	end
+        local hx, hy = self:getHeadCell()
+        if not (hx and hy) then
+                clearExcessSafeCells(cells, count)
+                return cells
+        end
 
-	return cells
+        local dir = self:getDirection()
+
+        for i = 1, lookahead do
+                local cx = hx + dir.x * i
+                local cy = hy + dir.y * i
+                count = addSafeCellUnique(cells, seen, gen, count, cx, cy)
+        end
+
+        local pending = pendingDir
+        if pending and (pending.x ~= dir.x or pending.y ~= dir.y) then
+                -- Immediate turn path (if the queued direction snaps before the next tile)
+                local px, py = hx, hy
+                for i = 1, lookahead do
+                        px = px + pending.x
+                        py = py + pending.y
+                        count = addSafeCellUnique(cells, seen, gen, count, px, py)
+                end
+
+                -- Typical turn path: advance one tile forward, then apply the queued turn
+                local turnCol = hx + dir.x
+                local turnRow = hy + dir.y
+                px, py = turnCol, turnRow
+                for i = 2, lookahead do
+                        px = px + pending.x
+                        py = py + pending.y
+                        count = addSafeCellUnique(cells, seen, gen, count, px, py)
+                end
+        end
+
+        clearExcessSafeCells(cells, count)
+
+        return cells
 end
 
 function Snake:drawClipped(hx, hy, hr)
