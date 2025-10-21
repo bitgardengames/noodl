@@ -642,21 +642,13 @@ function Arena:_buildDecorationPattern(decorations)
                 local w = deco.w or 0
                 local h = deco.h or deco.w or 0
                 if w > 0 and h > 0 then
-                        local drawAlpha = 1
-                        if deco.color then
-                                drawAlpha = deco.color[4] or drawAlpha
-                        end
-                        if deco.fade and deco.fade.base then
-                                drawAlpha = deco.fade.base
-                        end
-
                         local baseX = (deco.col - 1) * tileSize + (deco.x or 0)
                         local baseY = (deco.row - 1) * tileSize + (deco.y or 0)
                         local x = offsetX + (baseX - minX) * scale
                         local y = offsetY + (baseY - minY) * scale
                         local radius = (deco.radius or 0) * scale
 
-                        love.graphics.setColor(1, 1, 1, clamp01(drawAlpha))
+                        love.graphics.setColor(1, 1, 1, 1)
                         love.graphics.rectangle("fill", x, y, w * scale, h * scale, radius, radius)
                 end
         end
