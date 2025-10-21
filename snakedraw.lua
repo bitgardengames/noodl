@@ -615,10 +615,10 @@ local function safeResolveShader(typeId)
 end
 
 local function ensureSnakeCanvas(width, height)
-	if not snakeCanvas or snakeCanvas:getWidth() ~= width or snakeCanvas:getHeight() ~= height then
-		snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8, stencil = true})
-	end
-	return snakeCanvas
+        if not snakeCanvas or snakeCanvas:getWidth() ~= width or snakeCanvas:getHeight() ~= height then
+                snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
+        end
+        return snakeCanvas
 end
 
 local function ensureSnakeOverlayCanvas(width, height)
@@ -2261,7 +2261,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		local ww, hh = love.graphics.getDimensions()
 		ensureSnakeCanvas(ww, hh)
 
-                love.graphics.setCanvas(snakeCanvas)
+                love.graphics.setCanvas({snakeCanvas, stencil = true})
                 love.graphics.clear(0, 0, 0, 0)
                 drawTrailSegmentToCanvas(exitTrail, half, options, palette)
 
@@ -2330,7 +2330,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			local ww, hh = love.graphics.getDimensions()
 			ensureSnakeCanvas(ww, hh)
 
-			love.graphics.setCanvas(snakeCanvas)
+                        love.graphics.setCanvas({snakeCanvas, stencil = true})
 			love.graphics.clear(0,0,0,0)
 			renderSnakeToCanvas(trail, coords, head, half, options, palette)
 			love.graphics.setCanvas()
@@ -2351,7 +2351,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			local ww, hh = love.graphics.getDimensions()
 			ensureSnakeCanvas(ww, hh)
 
-			love.graphics.setCanvas(snakeCanvas)
+                        love.graphics.setCanvas({snakeCanvas, stencil = true})
 			love.graphics.clear(0, 0, 0, 0)
                         love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
                         love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
