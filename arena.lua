@@ -316,11 +316,14 @@ function Arena:setFloorDecorations(floorNum, floorData)
 end
 
 local directions = {
-	{1, 0},
-	{-1, 0},
-	{0, 1},
-	{0, -1},
+        {1, 0},
+        {-1, 0},
+        {0, 1},
+        {0, -1},
 }
+
+local DECORATION_PATTERN_SIZE = 256
+local DECORATION_PATTERN_FILENAME = "generated/arena_floor_pattern.png"
 
 function Arena:rebuildTileDecorations()
 	local config = self._decorationConfig
@@ -524,14 +527,16 @@ function Arena:rebuildTileDecorations()
 		end
 	end
 
-	self._tileDecorations = decorations
+        self._tileDecorations = decorations
+
+        self:_buildDecorationPattern(decorations)
 end
 
 function Arena:drawTileDecorations()
-	local decorations = self._tileDecorations
-	if not decorations or #decorations == 0 then
-		return
-	end
+        local decorations = self._tileDecorations
+        if not decorations or #decorations == 0 then
+                return
+        end
 
 	love.graphics.push("all")
 	love.graphics.setBlendMode("alpha")
@@ -559,13 +564,103 @@ function Arena:drawTileDecorations()
 		end
 	end
 
-	love.graphics.pop()
+        love.graphics.pop()
+end
+
+function Arena:_buildDecorationPattern(decorations)
+        if not decorations or #decorations == 0 then
+                self._decorationPatternTexture = nil
+                self._decorationPatternSignature = nil
+                self._decorationPatternPath = nil
+                return
+        end
+
+        local config = self._decorationConfig or {}
+        local floor = config.floor or 0
+        local theme = config.theme or ""
+        local variant = config.variant or ""
+        local seed = config.seed or 0
+        local tileSize = self.tileSize or 24
+
+        local signature = table.concat({
+                floor,
+                theme,
+                variant,
+                seed,
+                #decorations,
+                tileSize,
+        }, ":")
+
+        if self._decorationPatternSignature == signature then
+                return
+        end
+
+        local rngSeed = (seed + floor * 73 + hashString(theme) * 131 + hashString(variant) * 197 + #decorations * 89 + tileSize * 11) % 2147483647
+        if rngSeed == 0 then
+                rngSeed = 2147483629
+        end
+
+        local rng = love.math.newRandomGenerator(rngSeed)
+        local canvasSize = DECORATION_PATTERN_SIZE
+        local canvas = love.graphics.newCanvas(canvasSize, canvasSize)
+
+        love.graphics.push("all")
+        love.graphics.setCanvas(canvas)
+        love.graphics.clear(0, 0, 0, 0)
+        love.graphics.setBlendMode("alpha")
+        love.graphics.setColor(1, 1, 1, 1)
+
+        local function drawWrappedRoundedRect(x, y, w, h, radius)
+                for ox = -1, 1 do
+                        local drawX = x + ox * canvasSize
+                        if drawX + w > 0 and drawX < canvasSize then
+                                for oy = -1, 1 do
+                                        local drawY = y + oy * canvasSize
+                                        if drawY + h > 0 and drawY < canvasSize then
+                                                love.graphics.rectangle("fill", drawX, drawY, w, h, radius or 0, radius or 0)
+                                        end
+                                end
+                        end
+                end
+        end
+
+        for i = 1, #decorations do
+                local deco = decorations[i]
+                local w = deco.w or 0
+                local h = deco.h or deco.w or 0
+                if w > 0 and h > 0 then
+                        local radius = deco.radius or 0
+                        local cx = rng:random() * canvasSize
+                        local cy = rng:random() * canvasSize
+                        local x = cx - w * 0.5
+                        local y = cy - h * 0.5
+                        drawWrappedRoundedRect(x, y, w, h, radius)
+                end
+        end
+
+        love.graphics.setCanvas()
+        love.graphics.pop()
+
+        local imageData = canvas:newImageData()
+
+        love.filesystem.createDirectory("generated")
+        imageData:encode("png", DECORATION_PATTERN_FILENAME)
+
+        local texture = love.graphics.newImage(imageData)
+        texture:setFilter("linear", "linear")
+        texture:setWrap("repeat", "repeat")
+
+        self._decorationPatternTexture = texture
+        self._decorationPatternSignature = signature
+        self._decorationPatternPath = DECORATION_PATTERN_FILENAME
+
+        canvas:release()
 end
 
 function Arena:_ensureArenaNoiseTexture()
-	if self._arenaNoiseTexture then
-		return
-	end
+        if self._arenaNoiseTexture then
+                return
+        end
 
 	local size = 128
 	local imageData = love.image.newImageData(size, size)
