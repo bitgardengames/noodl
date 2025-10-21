@@ -3662,21 +3662,19 @@ function Snake:enableUpgradeVisualProfiling(options)
 end
 
 function Snake:logUpgradeVisualProfiling()
-	local stats = self._upgradeVisualProfile
-	if not stats then
-		return
-	end
+        local stats = self._upgradeVisualProfile
+        if not stats then
+                return
+        end
 
-	local message = format(
-		"[Snake] upgrade visuals summary: pool=%d, created=%d, reused=%d, frames=%d, empty=%d",
-		stats.poolSize or 0,
-		stats.totalCreated or 0,
-		stats.totalReused or 0,
-		stats.totalFrames or 0,
-		stats.emptyFrames or 0
-	)
-
-	print(message)
+        return format(
+                "[Snake] upgrade visuals summary: pool=%d, created=%d, reused=%d, frames=%d, empty=%d",
+                stats.poolSize or 0,
+                stats.totalCreated or 0,
+                stats.totalReused or 0,
+                stats.totalFrames or 0,
+                stats.emptyFrames or 0
+        )
 end
 
 function Snake:getLength()
