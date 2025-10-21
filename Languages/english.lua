@@ -168,12 +168,12 @@ local english = {
 					progress = "Current pace: ${pace}/${goal} (Apples: ${apples}, Minutes: ${minutes})",
 					complete = "Fruit frenzy! Pace reached ${pace} per minute.",
 				},
-				achievement_hunter = {
-					title = "Achievement Hunter",
-					description = "Unlock ${goal} achievement during a single run.",
-					progress = "Achievements unlocked: ${unlocked}/${goal}",
-					complete = "Achievement spree! ${unlocked} unlocked this run.",
-				},
+                                combo_guardian = {
+                                        title = "Combo Guardian",
+                                        description = "Trigger ${combo_goal} combos while saving ${shield_goal} shields in one run.",
+                                        progress = "Conditions: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Shields: ${shields}/${shield_goal})",
+                                        complete = "Run secured! ${combos} combos and ${shields} shield saves achieved.",
+                                },
 				consistency_champion = {
 					title = "Consistency Champion",
 					description = "Keep floor clear times within ${tolerance} seconds of each other in one run.",

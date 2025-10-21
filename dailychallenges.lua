@@ -967,46 +967,60 @@ DailyChallenges.challenges = {
 		end,
 		xpReward = 100,
 	},
-	{
-		id = "achievement_hunter",
-		titleKey = "menu.daily.achievement_hunter.title",
-		descriptionKey = "menu.daily.achievement_hunter.description",
-		goal = 1,
-		progressKey = "menu.daily.achievement_hunter.progress",
-		completeKey = "menu.daily.achievement_hunter.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local runAchievements = getStatValue(statsSource, "runAchievements")
-			if type(runAchievements) ~= "table" then
-				return 0
-			end
+        {
+                id = "combo_guardian",
+                titleKey = "menu.daily.combo_guardian.title",
+                descriptionKey = "menu.daily.combo_guardian.description",
+                goal = 1,
+                progressKey = "menu.daily.combo_guardian.progress",
+                completeKey = "menu.daily.combo_guardian.complete",
+                comboGoal = 6,
+                shieldGoal = 3,
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local combos = getStatValue(statsSource, "combosTriggered")
+                        local shields = getStatValue(statsSource, "shieldsSaved")
 
-			return #runAchievements
-		end,
-		getRunValue = function(self, statsSource)
-			local runAchievements = getStatValue(statsSource, "runAchievements")
-			if type(runAchievements) ~= "table" then
-				return 0
-			end
+                        if combos >= (self.comboGoal or 0) and shields >= (self.shieldGoal or 0) then
+                                return 1
+                        end
 
-			return #runAchievements
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local runAchievements = getStatValue(statsSource, "runAchievements")
-			local count = 0
-			if type(runAchievements) == "table" then
-				count = #runAchievements
-			end
+                        return 0
+                end,
+                getRunValue = function(self, statsSource)
+                        local combos = getStatValue(statsSource, "combosTriggered")
+                        local shields = getStatValue(statsSource, "shieldsSaved")
 
-			return {
-				current = count,
-				goal = goal or 0,
-				unlocked = count,
-			}
-		end,
-		xpReward = 130,
-	},
+                        if combos >= (self.comboGoal or 0) and shields >= (self.shieldGoal or 0) then
+                                return 1
+                        end
+
+                        return 0
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local combos = getStatValue(statsSource, "combosTriggered")
+                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local comboGoal = self.comboGoal or 0
+                        local shieldGoal = self.shieldGoal or 0
+
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                combos = combos,
+                                combo_goal = comboGoal,
+                                shields = shields,
+                                shield_goal = shieldGoal,
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        return {
+                                combo_goal = self.comboGoal or 0,
+                                shield_goal = self.shieldGoal or 0,
+                        }
+                end,
+                xpReward = 125,
+        },
 	{
 		id = "consistency_champion",
 		titleKey = "menu.daily.consistency_champion.title",
