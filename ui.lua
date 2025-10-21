@@ -226,7 +226,20 @@ local function buildFonts(scale)
 end
 
 UI.spacing = {}
+UI.layout = UI.layout or {}
+UI.layout.menu = UI.layout.menu or {}
 UI.layoutScale = nil
+
+local baseMenuLayout = {
+        marginTop = 128,
+        marginBottom = 112,
+        marginHorizontal = 156,
+        buttonStackOffset = 48,
+        subtitleSpacing = 18,
+        footerSpacing = 32,
+        tooltipOffset = 18,
+        panelMaxWidth = 420,
+}
 
 local function scaledSpacingValue(key, scale)
 	local baseValue = baseSpacing[key] or 0
@@ -239,9 +252,9 @@ local function scaledSpacingValue(key, scale)
 end
 
 local function applySpacing(scale)
-	for key in pairs(baseSpacing) do
-		UI.spacing[key] = scaledSpacingValue(key, scale)
-	end
+        for key in pairs(baseSpacing) do
+                UI.spacing[key] = scaledSpacingValue(key, scale)
+        end
 
 	local headerPadding = round(baseSectionHeaderPadding * scale)
 	if baseSectionHeaderPadding > 0 then
@@ -255,11 +268,11 @@ local function applySpacing(scale)
 		local fallbackHeight = round((fontDefinitions.heading.size + baseSectionHeaderPadding) * scale)
 		fallbackHeight = max(headerPadding * 2, fallbackHeight)
 		UI.spacing.sectionHeaderHeight = fallbackHeight
-	end
+        end
 end
 
 local function applyUpgradeLayout(scale)
-	local layout = UI.upgradeIndicators.layout
+        local layout = UI.upgradeIndicators.layout
 	layout.width = max(160, round(baseUpgradeLayout.width * scale))
 	layout.spacing = max(8, round(baseUpgradeLayout.spacing * scale))
 	layout.baseHeight = max(42, round(baseUpgradeLayout.baseHeight * scale))
@@ -269,7 +282,48 @@ local function applyUpgradeLayout(scale)
 end
 
 local function applySocketSize(scale)
-	UI.socketSize = max(18, round(baseSocketSize * scale))
+        UI.socketSize = max(18, round(baseSocketSize * scale))
+end
+
+local function applyMenuLayout(scale, sw, sh)
+        local layout = UI.layout.menu or {}
+
+        local function scaled(value, minimum)
+                local result = round((value or 0) * scale)
+                if minimum then
+                        result = max(minimum, result)
+                end
+                return result
+        end
+
+        layout.marginTop = max(48, scaled(baseMenuLayout.marginTop, 0))
+        layout.marginBottom = max(48, scaled(baseMenuLayout.marginBottom, 0))
+        layout.marginHorizontal = max(48, scaled(baseMenuLayout.marginHorizontal, 0))
+        layout.buttonStackOffset = max(12, scaled(baseMenuLayout.buttonStackOffset, 0))
+        layout.subtitleSpacing = max(8, scaled(baseMenuLayout.subtitleSpacing, 0))
+        layout.footerSpacing = max(12, scaled(baseMenuLayout.footerSpacing, 0))
+        layout.tooltipOffset = max(10, scaled(baseMenuLayout.tooltipOffset, 0))
+        layout.panelMaxWidth = max(260, scaled(baseMenuLayout.panelMaxWidth, 0))
+        layout.sectionSpacing = UI.spacing.sectionSpacing
+        layout.headerSpacing = UI.spacing.sectionHeaderSpacing
+
+        local titleHeight
+        if UI.fonts.title and UI.fonts.title.getHeight then
+                titleHeight = UI.fonts.title:getHeight()
+        else
+                titleHeight = scaled(fontDefinitions.title.size, 48)
+        end
+
+        layout.titleHeight = titleHeight
+        layout.titleY = layout.marginTop
+        layout.stackTop = layout.titleY + titleHeight + layout.subtitleSpacing
+        layout.bodyTop = layout.stackTop + layout.buttonStackOffset
+        layout.bottomY = sh - layout.marginBottom
+        layout.contentWidth = max(0, sw - layout.marginHorizontal * 2)
+        layout.screenWidth = sw
+        layout.screenHeight = sh
+
+        UI.layout.menu = layout
 end
 
 function UI.getScale()
@@ -305,10 +359,65 @@ function UI.refreshLayout(sw, sh)
 
 	UI.layoutScale = scale
 
-	buildFonts(scale)
-	applySpacing(scale)
-	applyUpgradeLayout(scale)
-	applySocketSize(scale)
+        buildFonts(scale)
+        applySpacing(scale)
+        applyUpgradeLayout(scale)
+        applySocketSize(scale)
+        applyMenuLayout(scale, sw, sh)
+end
+
+function UI.getMenuLayout(sw, sh)
+        local layout = UI.layout and UI.layout.menu or nil
+        if not layout then
+                local widthScale = sw and (sw / BASE_SCREEN_WIDTH) or 1
+                local heightScale = sh and (sh / BASE_SCREEN_HEIGHT) or widthScale
+                local scale = min(widthScale, heightScale)
+                local function scaled(value, minimum)
+                        local result = round((value or 0) * scale)
+                        if minimum then
+                                result = max(minimum, result)
+                        end
+                        return result
+                end
+
+                local sectionSpacing = UI.spacing and UI.spacing.sectionSpacing or scaled(baseSpacing.sectionSpacing or 28, 0)
+                local headerSpacing = UI.spacing and UI.spacing.sectionHeaderSpacing or scaled(baseSpacing.sectionHeaderSpacing or 16, 0)
+
+                return {
+                        marginTop = max(48, scaled(baseMenuLayout.marginTop or 128, 0)),
+                        marginBottom = max(48, scaled(baseMenuLayout.marginBottom or 112, 0)),
+                        marginHorizontal = max(48, scaled(baseMenuLayout.marginHorizontal or 156, 0)),
+                        buttonStackOffset = max(12, scaled(baseMenuLayout.buttonStackOffset or 48, 0)),
+                        subtitleSpacing = max(8, scaled(baseMenuLayout.subtitleSpacing or 18, 0)),
+                        footerSpacing = max(12, scaled(baseMenuLayout.footerSpacing or 32, 0)),
+                        tooltipOffset = max(10, scaled(baseMenuLayout.tooltipOffset or 18, 0)),
+                        panelMaxWidth = max(260, scaled(baseMenuLayout.panelMaxWidth or 420, 0)),
+                        sectionSpacing = sectionSpacing,
+                        headerSpacing = headerSpacing,
+                }
+        end
+
+        if sw and sh then
+                local resolved = {}
+                for key, value in pairs(layout) do
+                        resolved[key] = value
+                end
+                resolved.screenWidth = sw
+                resolved.screenHeight = sh
+                resolved.contentWidth = resolved.contentWidth or max(0, sw - (resolved.marginHorizontal or 0) * 2)
+                resolved.bottomY = resolved.bottomY or (sh - (resolved.marginBottom or 0))
+                if not resolved.stackTop then
+                        local titleHeight = resolved.titleHeight or ((UI.fonts.title and UI.fonts.title:getHeight()) or round(fontDefinitions.title.size or 72))
+                        local baseTitleY = resolved.titleY or (sh * 0.08)
+                        resolved.stackTop = baseTitleY + titleHeight + (resolved.subtitleSpacing or 16)
+                end
+                if not resolved.bodyTop then
+                        resolved.bodyTop = resolved.stackTop + (resolved.buttonStackOffset or 0)
+                end
+                return resolved
+        end
+
+        return layout
 end
 
 UI.colors = {

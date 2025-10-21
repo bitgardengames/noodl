@@ -148,24 +148,30 @@ local function clamp(value, minimum, maximum)
 end
 
 local function buildButtons(sw, sh)
-	local spacing = UI.spacing or {}
-        local marginX = max(72, mathFloor(sw * 0.08))
-        local marginBottom = max(140, mathFloor(sh * 0.18))
-	local gapX = max(18, spacing.buttonSpacing or 24)
-	local gapY = max(18, spacing.buttonSpacing or 24)
-	local sectionSpacing = spacing.sectionSpacing or 28
+        local spacing = UI.spacing or {}
+        local menuLayout = UI.getMenuLayout(sw, sh)
+        local marginX = max(menuLayout.marginHorizontal or 72, mathFloor(sw * 0.08))
+        local marginBottom = menuLayout.marginBottom or max(140, mathFloor(sh * 0.18))
+        local gapX = max(18, spacing.buttonSpacing or 24)
+        local gapY = max(18, spacing.buttonSpacing or 24)
+        local sectionSpacing = menuLayout.sectionSpacing or spacing.sectionSpacing or 28
 
-	local columns = max(1, min(4, ceil(highestUnlocked / 4)))
-	local availableWidth = sw - marginX * 2 - gapX * (columns - 1)
+        local columns = max(1, min(4, ceil(highestUnlocked / 4)))
+        local availableWidth = sw - marginX * 2 - gapX * (columns - 1)
         local buttonWidth = max(180, mathFloor(availableWidth / columns))
         local buttonHeight = max(44, mathFloor((spacing.buttonHeight or 56) * 0.9))
 
-	local rows = ceil(highestUnlocked / columns)
-	local gridHeight = rows * buttonHeight + max(0, rows - 1) * gapY
+        local rows = ceil(highestUnlocked / columns)
+        local gridHeight = rows * buttonHeight + max(0, rows - 1) * gapY
 
-        local topMargin = max(120, mathFloor(sh * 0.2))
-	local availableHeight = sh - topMargin - marginBottom
+        local topMargin = menuLayout.bodyTop or menuLayout.stackTop or max(120, mathFloor(sh * 0.2))
+        local footerGuard = (menuLayout.footerSpacing or sectionSpacing * 2)
+        local lowerBound = (menuLayout.bottomY or (sh - marginBottom)) - footerGuard
+        local availableHeight = max(0, lowerBound - topMargin)
         local startY = topMargin + max(0, mathFloor((availableHeight - gridHeight) / 2))
+        if startY + gridHeight > lowerBound then
+                startY = max(topMargin, lowerBound - gridHeight)
+        end
         local startX = mathFloor((sw - (buttonWidth * columns + gapX * (columns - 1))) / 2)
 
 	local defs = {}
@@ -199,9 +205,10 @@ local function buildButtons(sw, sh)
 
 	local backWidth = buttonWidth
         local backX = mathFloor((sw - backWidth) / 2)
-	local backY = startY + gridHeight + sectionSpacing * 4
-	local maxBackY = sh - (spacing.buttonHeight or 56) - 40
-	backY = clamp(backY, startY + gridHeight + sectionSpacing * 2, maxBackY)
+        local backY = startY + gridHeight + sectionSpacing * 3
+        local maxBackY = lowerBound - (spacing.buttonHeight or 56)
+        local minBackY = startY + gridHeight + sectionSpacing * 2
+        backY = clamp(backY, minBackY, maxBackY)
 
 	defs[#defs + 1] = {
 		id = "floor_back",
@@ -267,24 +274,27 @@ function FloorSelect:update(dt)
 end
 
 local function drawHeading(sw, sh)
-	local title = Localization:get("floor_select.title")
-	local subtitle = Localization:get("floor_select.subtitle")
-	highestLabelArgs.floor = highestUnlocked
-	local highestText = Localization:get("floor_select.highest_label", highestLabelArgs)
+        local title = Localization:get("floor_select.title")
+        local subtitle = Localization:get("floor_select.subtitle")
+        highestLabelArgs.floor = highestUnlocked
+        local highestText = Localization:get("floor_select.highest_label", highestLabelArgs)
 
-        UI.drawLabel(title, 0, mathFloor(sh * 0.08), sw, "center", {fontKey = "title"})
+        local menuLayout = UI.getMenuLayout(sw, sh)
+        local titleY = menuLayout.titleY or mathFloor(sh * 0.08)
+        UI.drawLabel(title, 0, titleY, sw, "center", {fontKey = "title"})
 
-	local subtitleFont = UI.fonts.body
-	local subtitleHeight = subtitleFont and subtitleFont:getHeight() or 28
-        local subtitleY = mathFloor(sh * 0.08) + (UI.fonts.title and UI.fonts.title:getHeight() or 64) + 10
-	UI.drawLabel(subtitle, sw * 0.15, subtitleY, sw * 0.7, "center", {fontKey = "body", color = UI.colors.subtleText})
+        local subtitleFont = UI.fonts.body
+        local subtitleHeight = subtitleFont and subtitleFont:getHeight() or 28
+        local subtitleOffset = (UI.fonts.title and UI.fonts.title:getHeight() or 64) + (menuLayout.subtitleSpacing or 12)
+        local subtitleY = titleY + subtitleOffset
+        UI.drawLabel(subtitle, sw * 0.15, subtitleY, sw * 0.7, "center", {fontKey = "body", color = UI.colors.subtleText})
 
-	local highestY = subtitleY + subtitleHeight + 8
-	UI.drawLabel(highestText, sw * 0.2, highestY, sw * 0.6, "center", {fontKey = "body", color = UI.colors.text})
+        local highestY = subtitleY + subtitleHeight + 8
+        UI.drawLabel(highestText, sw * 0.2, highestY, sw * 0.6, "center", {fontKey = "body", color = UI.colors.text})
 
-	local instruction = Localization:get("floor_select.instruction")
-	local instructionY = layout.startY - layout.sectionSpacing * 1.5
-	UI.drawLabel(instruction, sw * 0.15, instructionY, sw * 0.7, "center", {fontKey = "body", color = UI.colors.subtleText})
+        local instruction = Localization:get("floor_select.instruction")
+        local instructionY = layout.startY - (layout.sectionSpacing or (menuLayout.sectionSpacing or 24)) * 1.2
+        UI.drawLabel(instruction, sw * 0.15, instructionY, sw * 0.7, "center", {fontKey = "body", color = UI.colors.subtleText})
 end
 
 local function drawButtons()
@@ -298,39 +308,41 @@ local function drawButtons()
 	end
 end
 
-local function drawDescription(sw)
-	local focused = buttonList:getFocused()
-	local focusFloor = focused and focused.floor
-	if type(focusFloor) ~= "number" then
-		focusFloor = defaultFloor
-	end
+local function drawDescription(sw, sh)
+        local focused = buttonList:getFocused()
+        local focusFloor = focused and focused.floor
+        if type(focusFloor) ~= "number" then
+                focusFloor = defaultFloor
+        end
 
 	local floorData = Floors[focusFloor] or {}
 	local description = floorData.flavor or Localization:get("floor_select.description_fallback")
-        local padding = max(60, mathFloor(sw * 0.12))
-	local width = sw - padding * 2
-	local sectionSpacing = layout.sectionSpacing or 24
-	local baseY = layout.backY - sectionSpacing * 2
+        local menuLayout = UI.getMenuLayout(sw, sh)
+        local padding = max(menuLayout.marginHorizontal or 60, mathFloor(sw * 0.12))
+        local width = sw - padding * 2
+        local sectionSpacing = layout.sectionSpacing or (menuLayout.sectionSpacing or 24)
+        local baseY = layout.backY - sectionSpacing * 2
 
-	local bodyFont = UI.fonts.body
-	local descHeight = 0
+        local bodyFont = UI.fonts.body
+        local descHeight = 0
 	if bodyFont then
 		local _, lines = bodyFont:getWrap(description, width)
 		descHeight = #lines * bodyFont:getHeight()
 	end
 
-	local minY = layout.startY + layout.gridHeight + sectionSpacing
-	local y = max(minY, baseY - descHeight)
-	UI.drawLabel(description, padding, y, width, "center", {fontKey = "body", color = UI.colors.subtleText})
+        local minY = layout.startY + layout.gridHeight + sectionSpacing
+        local lowerBound = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or 80))) - (menuLayout.footerSpacing or sectionSpacing)
+        local y = max(minY, min(lowerBound - descHeight, baseY - descHeight))
+        UI.drawLabel(description, padding, y, width, "center", {fontKey = "body", color = UI.colors.subtleText})
 end
 
 function FloorSelect:draw()
-	local sw, sh = Screen:get()
-	drawBackground(sw, sh)
+        local sw, sh = Screen:get()
+        drawBackground(sw, sh)
 
-	drawHeading(sw, sh)
-	drawButtons()
-	drawDescription(sw)
+        drawHeading(sw, sh)
+        drawButtons()
+        drawDescription(sw, sh)
 end
 
 function FloorSelect:mousepressed(x, y, button)

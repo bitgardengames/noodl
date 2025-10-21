@@ -380,7 +380,8 @@ function Menu:enter()
 	configureBackgroundEffect()
 
 	local sw, sh = Screen:get()
-	local centerX = sw / 2
+        local centerX = sw / 2
+        local menuLayout = UI.getMenuLayout(sw, sh)
 
 	local labels = {
 		{key = "menu.start_game",   action = "game"},
@@ -391,9 +392,15 @@ function Menu:enter()
 		{key = "menu.quit",         action = "quit"},
 	}
 
-	local totalButtonHeight = #labels * UI.spacing.buttonHeight + max(0, #labels - 1) * UI.spacing.buttonSpacing
-	-- Shift the buttons down a bit so the title has breathing room.
-	local startY = sh / 2 - totalButtonHeight / 2 + sh * 0.08
+        local totalButtonHeight = #labels * UI.spacing.buttonHeight + max(0, #labels - 1) * UI.spacing.buttonSpacing
+        local stackBase = (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
+        local footerGuard = menuLayout.footerSpacing or UI.spacing.sectionSpacing or 24
+        local lowerBound = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or sh * 0.12))) - footerGuard
+        local availableHeight = max(0, lowerBound - stackBase)
+        local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5)
+        if startY + totalButtonHeight > lowerBound then
+                startY = max(stackBase, lowerBound - totalButtonHeight)
+        end
 
 	local defs = {}
 
@@ -454,7 +461,8 @@ function Menu:update(dt)
 end
 
 function Menu:draw()
-	local sw, sh = Screen:get()
+        local sw, sh = Screen:get()
+        local menuLayout = UI.getMenuLayout(sw, sh)
 
 	RenderLayers:begin(sw, sh)
 
@@ -469,7 +477,7 @@ function Menu:draw()
 	local spacing = baseSpacing * wordScale
 	local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
 	local ox = (sw - wordWidth) / 2
-	local oy = sh * 0.2
+        local oy = menuLayout.titleY or (sh * 0.2)
 
 	if titleSaw then
 		local sawRadius = titleSaw.radius or 1
@@ -527,16 +535,20 @@ function Menu:draw()
 		end
 	end
 
-	love.graphics.setFont(UI.fonts.small)
-	love.graphics.setColor(Theme.textColor)
-	love.graphics.print(Localization:get("menu.version"), 10, sh - 24)
+        local versionFont = UI.fonts.small
+        love.graphics.setFont(versionFont)
+        love.graphics.setColor(Theme.textColor)
+        local footerSpacing = menuLayout.footerSpacing or 24
+        local versionHeight = versionFont and versionFont:getHeight() or 0
+        local versionY = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing - versionHeight
+        love.graphics.print(Localization:get("menu.version"), menuLayout.marginHorizontal or 16, versionY)
 
 	if dailyChallenge and dailyChallengeAnim > 0 then
 		local alpha = min(1, dailyChallengeAnim)
 		local eased = alpha * alpha
-		local panelWidth = min(420, sw - 72)
-		local padding = UI.spacing.panelPadding or 16
-		local panelX = sw - panelWidth - 36
+                local panelWidth = min(menuLayout.panelMaxWidth or 420, max(280, menuLayout.contentWidth or (sw - 72)))
+                local padding = UI.spacing.panelPadding or 16
+                local panelX = sw - panelWidth - (menuLayout.marginHorizontal or 36)
 		local headerFont = UI.fonts.small
 		local titleFont = UI.fonts.button
 		local bodyFont = UI.fonts.body
@@ -596,10 +608,10 @@ function Menu:draw()
 			streakHeight = lineCount * progressFont:getHeight()
 		end
 
-		local panelHeight = padding * 2
-		+ headerFont:getHeight()
-		+ 6
-		+ titleFont:getHeight()
+                local panelHeight = padding * 2
+                + headerFont:getHeight()
+                + 6
+                + titleFont:getHeight()
 		+ 10
 		+ descHeight
 		+ statusBarHeight
@@ -608,7 +620,7 @@ function Menu:draw()
 			panelHeight = panelHeight + 8 + streakHeight
 		end
 
-		local panelY = max(36, sh - panelHeight - 36)
+                local panelY = max(menuLayout.marginTop or 36, (menuLayout.bottomY or (sh - (menuLayout.marginBottom or 36))) - panelHeight)
 
 		local mx, my = love.mouse.getPosition()
 		local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
@@ -623,15 +635,15 @@ function Menu:draw()
 				resetTooltipArgs.time = nil
 				tooltipText = Localization:get("menu.daily_panel_reset_tooltip_soon")
 			end
-			Tooltip:show(tooltipText, {
-				id = "dailyChallengeReset",
-				x = panelX + panelWidth / 2,
-				y = panelY,
-				placement = "above",
-				maxWidth = panelWidth,
-				offset = 14,
-				delay = 0.12,
-			})
+                        Tooltip:show(tooltipText, {
+                                id = "dailyChallengeReset",
+                                x = panelX + panelWidth / 2,
+                                y = panelY,
+                                placement = "above",
+                                maxWidth = panelWidth,
+                                offset = menuLayout.tooltipOffset or 14,
+                                delay = 0.12,
+                        })
 		else
 			Tooltip:hide("dailyChallengeReset")
 		end
