@@ -168,11 +168,11 @@ local english = {
 					progress = "Current pace: ${pace}/${goal} (Apples: ${apples}, Minutes: ${minutes})",
 					complete = "Fruit frenzy! Pace reached ${pace} per minute.",
 				},
-                                combo_guardian = {
-                                        title = "Combo Guardian",
-                                        description = "Trigger ${combo_goal} combos while saving ${shield_goal} shields in one run.",
-                                        progress = "Conditions: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Shields: ${shields}/${shield_goal})",
-                                        complete = "Run secured! ${combos} combos and ${shields} shield saves achieved.",
+                                combo_courier = {
+                                        title = "Combo Courier",
+                                        description = "Trigger ${combo_goal} combos while clearing ${floor_goal} floors in one run.",
+                                        progress = "Conditions: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Floors: ${floors}/${floor_goal})",
+                                        complete = "Delivery complete! ${combos} combos and ${floors} floors cleared.",
                                 },
 				consistency_champion = {
 					title = "Consistency Champion",

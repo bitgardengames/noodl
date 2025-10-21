@@ -28,7 +28,7 @@ This reference outlines every rotating daily challenge, the in-run actions they 
 | Combo Harvester | Stockpile fruit before bursting. | After hoarding batches of 8 fruit, trigger combos 4 times. | 95 XP |
 | Shielded Marathon | Combine clutch saves with distance. | Trigger 2 emergency shields and travel 320 tiles in a single run; both conditions must be met. | 115 XP |
 | Fruit Rush | Sustain a rapid fruit pace. | Maintain a fruit collection rate of 16 per minute. | 100 XP |
-| Combo Guardian | Blend offense with defense. | Trigger 6 combos and save 3 shields within one run. | 125 XP |
+| Combo Courier | Keep combos flowing as you descend. | Trigger 5 combos while clearing 4 floors in a single run. | 125 XP |
 | Consistency Champion | Clear floors at similar speeds. | Keep the gap between the fastest and slowest floor clears within 30 seconds. | 120 XP |
 | Depth Sprinter | Descend quickly. | Reach floor 6 within 420 seconds (7 minutes). | 130 XP |
 | Momentum Master | Preserve momentum over distance. | Achieve 3 momentum surges, each requiring 8 fruit collected without turning and 1,000 tiles travelled. | 110 XP |

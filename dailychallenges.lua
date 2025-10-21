@@ -968,20 +968,20 @@ DailyChallenges.challenges = {
 		xpReward = 100,
 	},
         {
-                id = "combo_guardian",
-                titleKey = "menu.daily.combo_guardian.title",
-                descriptionKey = "menu.daily.combo_guardian.description",
+                id = "combo_courier",
+                titleKey = "menu.daily.combo_courier.title",
+                descriptionKey = "menu.daily.combo_courier.description",
                 goal = 1,
-                progressKey = "menu.daily.combo_guardian.progress",
-                completeKey = "menu.daily.combo_guardian.complete",
-                comboGoal = 6,
-                shieldGoal = 3,
+                progressKey = "menu.daily.combo_courier.progress",
+                completeKey = "menu.daily.combo_courier.complete",
+                comboGoal = 5,
+                floorGoal = 4,
                 getValue = function(self, context)
                         local statsSource = context and context.sessionStats
                         local combos = getStatValue(statsSource, "combosTriggered")
-                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local floors = getStatValue(statsSource, "floorsCleared")
 
-                        if combos >= (self.comboGoal or 0) and shields >= (self.shieldGoal or 0) then
+                        if combos >= (self.comboGoal or 0) and floors >= (self.floorGoal or 0) then
                                 return 1
                         end
 
@@ -989,9 +989,9 @@ DailyChallenges.challenges = {
                 end,
                 getRunValue = function(self, statsSource)
                         local combos = getStatValue(statsSource, "combosTriggered")
-                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local floors = getStatValue(statsSource, "floorsCleared")
 
-                        if combos >= (self.comboGoal or 0) and shields >= (self.shieldGoal or 0) then
+                        if combos >= (self.comboGoal or 0) and floors >= (self.floorGoal or 0) then
                                 return 1
                         end
 
@@ -1000,23 +1000,23 @@ DailyChallenges.challenges = {
                 progressReplacements = function(self, current, goal, context)
                         local statsSource = context and context.sessionStats
                         local combos = getStatValue(statsSource, "combosTriggered")
-                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local floors = getStatValue(statsSource, "floorsCleared")
                         local comboGoal = self.comboGoal or 0
-                        local shieldGoal = self.shieldGoal or 0
+                        local floorGoal = self.floorGoal or 0
 
                         return {
                                 current = current or 0,
                                 goal = goal or 0,
                                 combos = combos,
                                 combo_goal = comboGoal,
-                                shields = shields,
-                                shield_goal = shieldGoal,
+                                floors = floors,
+                                floor_goal = floorGoal,
                         }
                 end,
                 descriptionReplacements = function(self)
                         return {
                                 combo_goal = self.comboGoal or 0,
-                                shield_goal = self.shieldGoal or 0,
+                                floor_goal = self.floorGoal or 0,
                         }
                 end,
                 xpReward = 125,
