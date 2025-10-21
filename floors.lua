@@ -16,11 +16,11 @@ local Floors = {
                 flavor = "Noodl winds through the garden, scooping up fruit scattered among the vines.",
                 palette = {
                         bgColor     = {0.1, 0.18, 0.22, 1},
-                        arenaBG     = {0.2, 0.42, 0.32, 1},
-                        arenaBorder = {0.64, 0.48, 0.28, 1},
-                        snake       = {0.5, 0.92, 0.7, 1},
-                        rock        = {0.58, 0.36, 0.24, 1},
-                        sawColor    = {0.88, 0.54, 0.26, 1},
+                        arenaBG     = {0.137, 0.231, 0.208, 1},
+                        arenaBorder = {0.431, 0.608, 0.533, 1},
+                        snake       = {0.443, 0.847, 0.702, 1},
+                        rock        = {0.537, 0.749, 0.757, 1},
+                        sawColor    = {0.769, 0.788, 0.757, 1},
                 },
                 backgroundEffect = {
                         type = "gardenMellow",
