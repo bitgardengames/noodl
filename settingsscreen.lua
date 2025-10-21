@@ -359,8 +359,9 @@ end
 function SettingsScreen:enter()
 	Screen:update()
 	configureBackgroundEffect()
-	local sw, sh = Screen:get()
-	local centerX = sw / 2
+        local sw, sh = Screen:get()
+        local menuLayout = UI.getMenuLayout(sw, sh)
+        local centerX = sw / 2
 
 	resetAnalogAxis()
 
@@ -391,7 +392,8 @@ function SettingsScreen:enter()
 
 	local panelPadding = UI.spacing.panelPadding
 	local baseSelectionWidth = UI.spacing.buttonWidth
-	local availableWidth = sw - UI.spacing.sectionSpacing * 2 - panelPadding * 2
+        local horizontalMargin = menuLayout.marginHorizontal or UI.spacing.sectionSpacing
+        local availableWidth = sw - horizontalMargin * 2 - panelPadding * 2
 	local selectionWidth = baseSelectionWidth
 
 	if availableWidth > baseSelectionWidth then
@@ -403,10 +405,11 @@ function SettingsScreen:enter()
 	local panelWidth = selectionWidth + panelPadding * 2
 	local panelHeight = totalHeight + panelPadding * 2
 	local minPanelHeight = panelPadding * 2 + UI.spacing.buttonHeight
-	local desiredTopMargin = UI.spacing.sectionSpacing + titleHeight + UI.spacing.sectionSpacing
-	local desiredBottomMargin = UI.spacing.sectionSpacing + UI.spacing.buttonHeight + UI.spacing.sectionSpacing
+        local spacingGuard = menuLayout.sectionSpacing or UI.spacing.sectionSpacing
+        local desiredTopMargin = (menuLayout.marginTop or spacingGuard) + titleHeight + spacingGuard
+        local desiredBottomMargin = (menuLayout.marginBottom or spacingGuard) + UI.spacing.buttonHeight + spacingGuard
 	local desiredMaxPanelHeight = sh - desiredTopMargin - desiredBottomMargin
-	local generalMaxPanelHeight = sh - UI.spacing.sectionSpacing * 2
+        local generalMaxPanelHeight = sh - (menuLayout.marginTop or spacingGuard) - (menuLayout.marginBottom or spacingGuard)
 
 	local safeDesiredMax = max(0, desiredMaxPanelHeight)
 	local safeGeneralMax = max(0, generalMaxPanelHeight)
@@ -425,15 +428,15 @@ function SettingsScreen:enter()
 
 	local panelX = centerX - panelWidth / 2
 
-	local minPanelY = desiredTopMargin
-	local maxPanelY = sh - desiredBottomMargin - panelHeight
-	local panelY
+        local minPanelY = desiredTopMargin
+        local maxPanelY = sh - desiredBottomMargin - panelHeight
+        local panelY
 	if maxPanelY >= minPanelY then
 		panelY = minPanelY + (maxPanelY - minPanelY) * 0.5
 	else
 		local centeredY = sh / 2 - panelHeight / 2
-		local minAllowedY = UI.spacing.sectionSpacing
-		local maxAllowedY = sh - panelHeight - UI.spacing.sectionSpacing
+                local minAllowedY = menuLayout.marginTop or spacingGuard
+                local maxAllowedY = sh - panelHeight - (menuLayout.marginBottom or spacingGuard)
 		if maxAllowedY < minAllowedY then
 			maxAllowedY = minAllowedY
 		end
@@ -447,10 +450,10 @@ function SettingsScreen:enter()
 	end
 
 	layout.panel = {x = panelX, y = panelY, w = panelWidth, h = panelHeight}
-	layout.title = {
-		height = titleHeight,
-		y = max(UI.spacing.sectionSpacing, panelY - UI.spacing.sectionSpacing - titleHeight * 0.25),
-	}
+        layout.title = {
+                height = titleHeight,
+                y = max(menuLayout.marginTop or spacingGuard, panelY - (menuLayout.sectionSpacing or spacingGuard) - titleHeight * 0.25),
+        }
 	layout.margins = {
 		top = panelY,
 		bottom = sh - (panelY + panelHeight),
@@ -596,15 +599,17 @@ function SettingsScreen:update(dt)
 end
 
 function SettingsScreen:draw()
-	local sw, sh = Screen:get()
-	drawBackground(sw, sh)
+        local sw, sh = Screen:get()
+        local menuLayout = UI.getMenuLayout(sw, sh)
+        drawBackground(sw, sh)
 
-	local panel = layout.panel
-	UI.drawPanel(panel.x, panel.y, panel.w, panel.h)
+        local panel = layout.panel
+        UI.drawPanel(panel.x, panel.y, panel.w, panel.h)
 
-	local titleText = Localization:get("settings.title")
-	local titleLayout = layout.title or {}
-	local titleY = titleLayout.y or max(UI.spacing.sectionSpacing, panel.y - UI.spacing.sectionSpacing - (titleLayout.height or 0) * 0.25)
+        local titleText = Localization:get("settings.title")
+        local titleLayout = layout.title or {}
+        local spacingGuard = menuLayout.sectionSpacing or UI.spacing.sectionSpacing
+        local titleY = titleLayout.y or max(menuLayout.marginTop or spacingGuard, panel.y - spacingGuard - (titleLayout.height or 0) * 0.25)
 	UI.drawLabel(titleText, 0, titleY, sw, "center", {fontKey = "title"})
 
 	self:updateButtonPositions()
