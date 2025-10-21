@@ -595,12 +595,6 @@ function Arena:_buildDecorationPattern(decorations)
                 return
         end
 
-        local rngSeed = (seed + floor * 73 + hashString(theme) * 131 + hashString(variant) * 197 + #decorations * 89 + tileSize * 11) % 2147483647
-        if rngSeed == 0 then
-                rngSeed = 2147483629
-        end
-
-        local rng = love.math.newRandomGenerator(rngSeed)
         local canvasSize = DECORATION_PATTERN_SIZE
         local canvas = love.graphics.newCanvas(canvasSize, canvasSize)
 
@@ -610,31 +604,58 @@ function Arena:_buildDecorationPattern(decorations)
         love.graphics.setBlendMode("alpha")
         love.graphics.setColor(1, 1, 1, 1)
 
-        local function drawWrappedRoundedRect(x, y, w, h, radius)
-                for ox = -1, 1 do
-                        local drawX = x + ox * canvasSize
-                        if drawX + w > 0 and drawX < canvasSize then
-                                for oy = -1, 1 do
-                                        local drawY = y + oy * canvasSize
-                                        if drawY + h > 0 and drawY < canvasSize then
-                                                love.graphics.rectangle("fill", drawX, drawY, w, h, radius or 0, radius or 0)
-                                        end
-                                end
-                        end
-                end
-        end
+        local minX, minY = math.huge, math.huge
+        local maxX, maxY = -math.huge, -math.huge
 
         for i = 1, #decorations do
                 local deco = decorations[i]
                 local w = deco.w or 0
                 local h = deco.h or deco.w or 0
                 if w > 0 and h > 0 then
-                        local radius = deco.radius or 0
-                        local cx = rng:random() * canvasSize
-                        local cy = rng:random() * canvasSize
-                        local x = cx - w * 0.5
-                        local y = cy - h * 0.5
-                        drawWrappedRoundedRect(x, y, w, h, radius)
+                        local baseX = (deco.col - 1) * tileSize + (deco.x or 0)
+                        local baseY = (deco.row - 1) * tileSize + (deco.y or 0)
+                        if baseX < minX then minX = baseX end
+                        if baseY < minY then minY = baseY end
+                        if baseX + w > maxX then maxX = baseX + w end
+                        if baseY + h > maxY then maxY = baseY + h end
+                end
+        end
+
+        if minX == math.huge or minY == math.huge then
+                love.graphics.setCanvas()
+                love.graphics.pop()
+                canvas:release()
+                self._decorationPatternTexture = nil
+                self._decorationPatternSignature = nil
+                self._decorationPatternPath = nil
+                return
+        end
+
+        local layoutWidth = max(1, maxX - minX)
+        local layoutHeight = max(1, maxY - minY)
+        local scale = min(canvasSize / layoutWidth, canvasSize / layoutHeight)
+        local offsetX = (canvasSize - layoutWidth * scale) * 0.5
+        local offsetY = (canvasSize - layoutHeight * scale) * 0.5
+
+        for i = 1, #decorations do
+                local deco = decorations[i]
+                local w = deco.w or 0
+                local h = deco.h or deco.w or 0
+                if w > 0 and h > 0 then
+                        local color = deco.color or {1, 1, 1, 1}
+                        local drawAlpha = color[4] or 1
+                        if deco.fade and deco.fade.base then
+                                drawAlpha = deco.fade.base
+                        end
+
+                        local baseX = (deco.col - 1) * tileSize + (deco.x or 0)
+                        local baseY = (deco.row - 1) * tileSize + (deco.y or 0)
+                        local x = offsetX + (baseX - minX) * scale
+                        local y = offsetY + (baseY - minY) * scale
+                        local radius = (deco.radius or 0) * scale
+
+                        love.graphics.setColor(color[1] or 1, color[2] or 1, color[3] or 1, clamp01(drawAlpha))
+                        love.graphics.rectangle("fill", x, y, w * scale, h * scale, radius, radius)
                 end
         end
 
