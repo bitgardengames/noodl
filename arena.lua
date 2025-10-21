@@ -322,7 +322,8 @@ local directions = {
         {0, -1},
 }
 
-local DECORATION_PATTERN_SIZE = 256
+local DECORATION_PATTERN_WIDTH = 800
+local DECORATION_PATTERN_HEIGHT = 600
 local DECORATION_PATTERN_FILENAME = "generated/arena_floor_pattern.png"
 
 function Arena:rebuildTileDecorations()
@@ -589,14 +590,17 @@ function Arena:_buildDecorationPattern(decorations)
                 seed,
                 #decorations,
                 tileSize,
+                DECORATION_PATTERN_WIDTH,
+                DECORATION_PATTERN_HEIGHT,
         }, ":")
 
         if self._decorationPatternSignature == signature then
                 return
         end
 
-        local canvasSize = DECORATION_PATTERN_SIZE
-        local canvas = love.graphics.newCanvas(canvasSize, canvasSize)
+        local canvasWidth = DECORATION_PATTERN_WIDTH
+        local canvasHeight = DECORATION_PATTERN_HEIGHT
+        local canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
 
         love.graphics.push("all")
         love.graphics.setCanvas(canvas)
@@ -604,24 +608,18 @@ function Arena:_buildDecorationPattern(decorations)
         love.graphics.setBlendMode("alpha")
         love.graphics.setColor(1, 1, 1, 1)
 
-        local minX, minY = math.huge, math.huge
-        local maxX, maxY = -math.huge, -math.huge
+        local hasDecorations = false
 
         for i = 1, #decorations do
                 local deco = decorations[i]
                 local w = deco.w or 0
                 local h = deco.h or deco.w or 0
                 if w > 0 and h > 0 then
-                        local baseX = (deco.col - 1) * tileSize + (deco.x or 0)
-                        local baseY = (deco.row - 1) * tileSize + (deco.y or 0)
-                        if baseX < minX then minX = baseX end
-                        if baseY < minY then minY = baseY end
-                        if baseX + w > maxX then maxX = baseX + w end
-                        if baseY + h > maxY then maxY = baseY + h end
+                        hasDecorations = true
                 end
         end
 
-        if minX == math.huge or minY == math.huge then
+        if not hasDecorations then
                 love.graphics.setCanvas()
                 love.graphics.pop()
                 canvas:release()
@@ -631,11 +629,23 @@ function Arena:_buildDecorationPattern(decorations)
                 return
         end
 
-        local layoutWidth = max(1, maxX - minX)
-        local layoutHeight = max(1, maxY - minY)
-        local scale = min(canvasSize / layoutWidth, canvasSize / layoutHeight)
-        local offsetX = (canvasSize - layoutWidth * scale) * 0.5
-        local offsetY = (canvasSize - layoutHeight * scale) * 0.5
+        local cols = self.cols or 0
+        local rows = self.rows or 0
+        local layoutWidth = cols * tileSize
+        local layoutHeight = rows * tileSize
+
+        if layoutWidth <= 0 or layoutHeight <= 0 then
+                love.graphics.setCanvas()
+                love.graphics.pop()
+                canvas:release()
+                self._decorationPatternTexture = nil
+                self._decorationPatternSignature = nil
+                self._decorationPatternPath = nil
+                return
+        end
+
+        local offsetX = max(0, (canvasWidth - layoutWidth) * 0.5)
+        local offsetY = max(0, (canvasHeight - layoutHeight) * 0.5)
 
         for i = 1, #decorations do
                 local deco = decorations[i]
@@ -644,12 +654,12 @@ function Arena:_buildDecorationPattern(decorations)
                 if w > 0 and h > 0 then
                         local baseX = (deco.col - 1) * tileSize + (deco.x or 0)
                         local baseY = (deco.row - 1) * tileSize + (deco.y or 0)
-                        local x = offsetX + (baseX - minX) * scale
-                        local y = offsetY + (baseY - minY) * scale
-                        local radius = (deco.radius or 0) * scale
+                        local x = offsetX + baseX
+                        local y = offsetY + baseY
+                        local radius = deco.radius or 0
 
                         love.graphics.setColor(1, 1, 1, 1)
-                        love.graphics.rectangle("fill", x, y, w * scale, h * scale, radius, radius)
+                        love.graphics.rectangle("fill", x, y, w, h, radius, radius)
                 end
         end
 
