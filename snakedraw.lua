@@ -616,7 +616,7 @@ end
 
 local function ensureSnakeCanvas(width, height)
 	if not snakeCanvas or snakeCanvas:getWidth() ~= width or snakeCanvas:getHeight() ~= height then
-		snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
+		snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8, stencil = true})
 	end
 	return snakeCanvas
 end
