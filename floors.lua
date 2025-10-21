@@ -52,11 +52,11 @@ local Floors = {
                 flavor = "Slow waves roll shining citrus along the tiles while Noodl gathers every slice.",
                 palette = {
                         bgColor    = {0.05, 0.11, 0.15, 1},
-                        arenaBG    = {0.1, 0.18, 0.22, 1},
-                        arenaBorder= {0.24, 0.52, 0.5, 1},
+                        arenaBG    = {0.094, 0.216, 0.251, 1},
+                        arenaBorder= {0.165, 0.322, 0.345, 1},
                         snake      = {0.84, 0.95, 0.58, 1},
-                        rock       = {0.3, 0.52, 0.58, 1},
-                        sawColor   = {0.95, 0.78, 0.46, 1},
+                        rock       = {0.361, 0.561, 0.635, 1},
+                        sawColor   = {0.62, 0.659, 0.671, 1},
                 },
                 backgroundEffect = {
                         type = "softCurrent",
