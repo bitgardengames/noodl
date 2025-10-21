@@ -1475,73 +1475,28 @@ local function collectUpgradeVisuals(self)
 		self._upgradeVisualPool = pool
 	end
 
-	local stats = self._upgradeVisualProfile
-	if stats and stats.enabled then
-		stats.totalFrames = (stats.totalFrames or 0) + 1
-		stats.createdThisFrame = 0
-		stats.reusedThisFrame = 0
-		stats.activeEntries = 0
-	end
+        local hasAny = false
 
-	local hasAny = false
+        local function acquireEntry(key)
+                local entry = pool[key]
+                if not entry then
+                        entry = {}
+                        pool[key] = entry
+                else
+                        wipeTable(entry)
+                end
 
-	local function acquireEntry(key)
-		local entry = pool[key]
-		if not entry then
-			entry = {}
-			pool[key] = entry
-			if stats and stats.enabled then
-				stats.totalCreated = (stats.totalCreated or 0) + 1
-				stats.createdThisFrame = (stats.createdThisFrame or 0) + 1
-				stats.poolSize = (stats.poolSize or 0) + 1
-			end
-		else
-			wipeTable(entry)
-			if stats and stats.enabled then
-				stats.totalReused = (stats.totalReused or 0) + 1
-				stats.reusedThisFrame = (stats.reusedThisFrame or 0) + 1
-			end
-		end
+                visuals[key] = entry
+                hasAny = true
 
-		visuals[key] = entry
-		hasAny = true
+                return entry
+        end
 
-		if stats and stats.enabled then
-			stats.activeEntries = (stats.activeEntries or 0) + 1
-		end
-
-		return entry
-	end
-
-	local function commit()
-		if not stats or not stats.enabled then
-			return
-		end
-
-		if not hasAny then
-			stats.emptyFrames = (stats.emptyFrames or 0) + 1
-		end
-
-		local interval = stats.interval or 0
-		if stats.print ~= false and interval > 0 and (stats.totalFrames % interval == 0) then
-			local message = format(
-				"[Snake] upgrade visuals: pool=%d, created=%d, reused=%d, lastFrame(created=%d, reused=%d, active=%d)",
-				stats.poolSize or 0,
-				stats.totalCreated or 0,
-				stats.totalReused or 0,
-				stats.createdThisFrame or 0,
-				stats.reusedThisFrame or 0,
-				stats.activeEntries or 0
-			)
-			print(message)
-		end
-	end
-
-	local adrenaline = self.adrenaline
-	if adrenaline and adrenaline.active and not adrenaline.suppressVisuals then
-		local entry = acquireEntry("adrenaline")
-		entry.active = true
-		entry.timer = adrenaline.timer or 0
+        local adrenaline = self.adrenaline
+        if adrenaline and adrenaline.active and not adrenaline.suppressVisuals then
+                local entry = acquireEntry("adrenaline")
+                entry.active = true
+                entry.timer = adrenaline.timer or 0
 		entry.duration = adrenaline.duration or 0
 	end
 
@@ -1674,23 +1629,21 @@ local function collectUpgradeVisuals(self)
 		entry.time = stoneSkin.time or 0
 	end
 
-	local spectral = self.spectralHarvest
-	if spectral and (((spectral.intensity or 0) > 0.01) or (spectral.burst or 0) > 0 or (spectral.echo or 0) > 0 or spectral.ready) then
-		local entry = acquireEntry("spectralHarvest")
-		entry.intensity = spectral.intensity or 0
-		entry.burst = spectral.burst or 0
-		entry.echo = spectral.echo or 0
-		entry.ready = spectral.ready or false
-		entry.time = spectral.time or 0
-	end
+        local spectral = self.spectralHarvest
+        if spectral and (((spectral.intensity or 0) > 0.01) or (spectral.burst or 0) > 0 or (spectral.echo or 0) > 0 or spectral.ready) then
+                local entry = acquireEntry("spectralHarvest")
+                entry.intensity = spectral.intensity or 0
+                entry.burst = spectral.burst or 0
+                entry.echo = spectral.echo or 0
+                entry.ready = spectral.ready or false
+                entry.time = spectral.time or 0
+        end
 
-	commit()
+        if hasAny then
+                return visuals
+        end
 
-	if hasAny then
-		return visuals
-	end
-
-	return nil
+        return nil
 end
 
 -- Build initial trail aligned to CELL CENTERS
@@ -3599,86 +3552,8 @@ function Snake:isDeveloperAssistEnabled()
 	return developerAssistEnabled
 end
 
-function Snake:enableUpgradeVisualProfiling(options)
-	local stats = self._upgradeVisualProfile
-	if not stats then
-		stats = {}
-		self._upgradeVisualProfile = stats
-	end
-
-	if options == nil then
-		options = true
-	end
-
-	if not options then
-		stats.enabled = false
-		return
-	end
-
-	stats.enabled = true
-
-	local interval
-	local shouldPrint
-	if type(options) == "number" then
-		interval = options
-	elseif type(options) == "table" then
-		interval = options.interval
-		if options.print ~= nil then
-			shouldPrint = not not options.print
-		end
-	end
-
-	if interval and interval > 0 then
-		stats.interval = interval
-	elseif not stats.interval or stats.interval <= 0 then
-		stats.interval = 120
-	end
-
-	if shouldPrint ~= nil then
-		stats.print = shouldPrint
-	elseif stats.print == nil then
-		stats.print = true
-	end
-
-	stats.totalFrames = 0
-	stats.totalCreated = 0
-	stats.totalReused = 0
-	stats.poolSize = stats.poolSize or 0
-	stats.createdThisFrame = 0
-	stats.reusedThisFrame = 0
-	stats.activeEntries = 0
-	stats.emptyFrames = 0
-
-	local pool = self._upgradeVisualPool
-	if pool then
-		local count = 0
-		for _ in pairs(pool) do
-			count = count + 1
-		end
-		stats.poolSize = count
-	else
-		stats.poolSize = 0
-	end
-end
-
-function Snake:logUpgradeVisualProfiling()
-        local stats = self._upgradeVisualProfile
-        if not stats then
-                return
-        end
-
-        return format(
-                "[Snake] upgrade visuals summary: pool=%d, created=%d, reused=%d, frames=%d, empty=%d",
-                stats.poolSize or 0,
-                stats.totalCreated or 0,
-                stats.totalReused or 0,
-                stats.totalFrames or 0,
-                stats.emptyFrames or 0
-        )
-end
-
 function Snake:getLength()
-	return segmentCount
+        return segmentCount
 end
 
 return Snake
