@@ -459,8 +459,9 @@ registerEffect({
 		float seam = 1.0 - smoothstep(0.08, 0.28, abs(uv.y - 0.42));
 		col = mix(col, foamColor.rgb, seam * 0.12 * intensity);
 
-		float vignette = smoothstep(0.38, 0.95, distance(uv, vec2(0.5)));
-		col = mix(col, baseColor.rgb, vignette * 0.24);
+                float vignette = smoothstep(0.4, 0.96, distance(uv, vec2(0.5)));
+                vec3 vignetteTone = mix(deepColor.rgb, foamColor.rgb, 0.28);
+                col = mix(col, vignetteTone, vignette * 0.26);
 
 		return vec4(col, baseColor.a) * color;
 	}
