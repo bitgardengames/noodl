@@ -771,21 +771,59 @@ end
 
 local drawSoftGlow
 
+-- coordinate buffer cache so we can reuse allocations per trail
+local coordsCache = setmetatable({}, { __mode = "k" })
+local coordsCacheFrame = setmetatable({}, { __mode = "k" })
+local currentCoordsFrame = 0
+local emptyCoords = {}
+
 -- polyline coords {x1,y1,x2,y2,...}
 local function buildCoords(trail)
-	local coords = {}
-	local lastx, lasty
-	for i = 1, #trail do
-		local x, y = ptXY(trail[i])
-		if x and y then
-			if not (lastx and lasty and x == lastx and y == lasty) then
-				coords[#coords+1] = x
-				coords[#coords+1] = y
-				lastx, lasty = x, y
-			end
-		end
-	end
-	return coords
+        if not trail then
+                return emptyCoords
+        end
+
+        local cached = coordsCache[trail]
+        if currentCoordsFrame > 0 and coordsCacheFrame[trail] == currentCoordsFrame and cached then
+                return cached
+        end
+
+        local coords = cached or {}
+        local previousCount = coords._used or 0
+        local count = 0
+        local lastx, lasty
+
+        for i = 1, #trail do
+                local x, y = ptXY(trail[i])
+                if x and y then
+                        if not (lastx and lasty and x == lastx and y == lasty) then
+                                local writeIndex = count + 1
+                                local writeNext = writeIndex + 1
+
+                                if coords[writeIndex] ~= x then
+                                        coords[writeIndex] = x
+                                end
+                                if coords[writeNext] ~= y then
+                                        coords[writeNext] = y
+                                end
+
+                                count = writeNext
+                                lastx, lasty = x, y
+                        end
+                end
+        end
+
+        if count < previousCount then
+                for i = count + 1, previousCount do
+                        coords[i] = nil
+                end
+        end
+
+        coords._used = count
+        coordsCache[trail] = coords
+        coordsCacheFrame[trail] = currentCoordsFrame
+
+        return coords
 end
 
 local function drawFruitBulges(trail, head, radius)
@@ -2085,11 +2123,13 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 end
 
 function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
-	-- upgradeVisuals must be treated as read-only; the table is reused each frame by Snake.collectUpgradeVisuals.
-	local options
-	if type(drawFace) == "table" then
-		options = drawFace
-		drawFace = options.drawFace
+        currentCoordsFrame = currentCoordsFrame + 1
+
+        -- upgradeVisuals must be treated as read-only; the table is reused each frame by Snake.collectUpgradeVisuals.
+        local options
+        if type(drawFace) == "table" then
+                options = drawFace
+                drawFace = options.drawFace
 	end
 
 	if drawFace == nil then
