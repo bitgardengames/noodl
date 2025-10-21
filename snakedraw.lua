@@ -27,7 +27,6 @@ local FRUIT_BULGE_SCALE = 1.25
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
 local snakeOverlayCanvas = nil
-local snakeOverlayImage = nil
 
 local applyOverlay
 
@@ -590,86 +589,36 @@ local function ensureSnakeCanvas(width, height)
 end
 
 local function ensureSnakeOverlayCanvas(width, height)
-        if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= width or snakeOverlayCanvas:getHeight() ~= height then
-                snakeOverlayCanvas = love.graphics.newCanvas(width, height)
-        end
-        return snakeOverlayCanvas
-end
-
-local function getSnakeOverlayImage()
-        if snakeOverlayImage == nil then
-                local ok, image = pcall(love.graphics.newImage, "Assets/Overlay.png")
-                if ok and image then
-                        image:setFilter("linear", "linear")
-                        snakeOverlayImage = image
-                else
-                        print("[snakedraw] failed to load snake overlay image", image)
-                        snakeOverlayImage = false
-                end
-        end
-
-        if snakeOverlayImage == false then
-                return nil
-        end
-
-        return snakeOverlayImage
-end
-
-local function drawSnakeOverlayTexture(image, width, height)
-        if not image then
-                return false
-        end
-
-        local imageWidth, imageHeight = image:getWidth(), image:getHeight()
-        if imageWidth <= 0 or imageHeight <= 0 then
-                return false
-        end
-
-        love.graphics.push("all")
-        love.graphics.setBlendMode("alpha")
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(image, 0, 0, 0, width / imageWidth, height / imageHeight)
-        love.graphics.pop()
-
-        return true
+	if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= width or snakeOverlayCanvas:getHeight() ~= height then
+		snakeOverlayCanvas = love.graphics.newCanvas(width, height)
+	end
+	return snakeOverlayCanvas
 end
 
 local function presentSnakeCanvas(overlayEffect, width, height)
-        if not snakeCanvas then
-                return false
-        end
+	if not snakeCanvas then
+		return false
+	end
 
-        RenderLayers:withLayer("shadows", function()
-                love.graphics.setColor(0, 0, 0, 0.25)
-                love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
-        end)
+	RenderLayers:withLayer("shadows", function()
+		love.graphics.setColor(0, 0, 0, 0.25)
+		love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
+	end)
 
-        local overlayImage = getSnakeOverlayImage()
-        local needsOverlayCanvas = overlayEffect ~= nil or overlayImage ~= nil
-        local drewOverlay = false
-
-        if needsOverlayCanvas then
-                local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
-                local previousCanvas = {love.graphics.getCanvas()}
-                love.graphics.setCanvas(overlayCanvas)
-                love.graphics.clear(0, 0, 0, 0)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(snakeCanvas, 0, 0)
-
-                if overlayEffect then
-                        drewOverlay = applyOverlay(snakeCanvas, overlayEffect) or drewOverlay
-                end
-
-                if overlayImage then
-                        local canvasWidth, canvasHeight = overlayCanvas:getWidth(), overlayCanvas:getHeight()
-                        drewOverlay = drawSnakeOverlayTexture(overlayImage, canvasWidth, canvasHeight) or drewOverlay
-                end
-
-                if #previousCanvas > 0 then
-                        love.graphics.setCanvas(unpack(previousCanvas))
-                else
-                        love.graphics.setCanvas()
-                end
+	local drewOverlay = false
+	if overlayEffect then
+		local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
+		local previousCanvas = {love.graphics.getCanvas()}
+		love.graphics.setCanvas(overlayCanvas)
+		love.graphics.clear(0, 0, 0, 0)
+		love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.draw(snakeCanvas, 0, 0)
+		drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
+		if #previousCanvas > 0 then
+			love.graphics.setCanvas(unpack(previousCanvas))
+		else
+			love.graphics.setCanvas()
+		end
 	end
 
 	RenderLayers:withLayer("main", function()
