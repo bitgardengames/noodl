@@ -37,7 +37,7 @@ local Floors = {
                         arenaBG    = {0.13, 0.17, 0.25, 1},
                         arenaBorder= {0.44, 0.36, 0.62, 1},
                         snake      = {0.78, 0.86, 0.98, 1},
-                        rock       = {0.38, 0.54, 0.66, 1},
+                        rock       = {0.41, 0.58, 0.71, 1},
                 },
                 backgroundEffect = {
                         type = "softCavern",
