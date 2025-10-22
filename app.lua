@@ -25,6 +25,7 @@ local App = {
                 metaprogression = require("metaprogressionscreen"),
                 settings = require("settingsscreen"),
                 dev = require("devscreen"),
+                rendercanvas = require("renderscreen"),
         }
 }
 
