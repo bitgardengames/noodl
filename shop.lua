@@ -8,10 +8,13 @@ local Shaders = require("shaders")
 local Floors = require("floors")
 local abs = math.abs
 local ceil = math.ceil
+local cos = math.cos
 local floor = math.floor
 local max = math.max
 local min = math.min
+local pi = math.pi
 local sin = math.sin
+local unpack = table.unpack or unpack
 
 local Shop = {}
 
@@ -419,9 +422,9 @@ end
 local rarityBorderAlpha = 0.85
 
 local rarityStyles = {
-	common = {
-		base = {0.20, 0.23, 0.28, 1},
-		shadowAlpha = 0.18,
+        common = {
+                base = {0.20, 0.23, 0.28, 1},
+                shadowAlpha = 0.18,
 		aura = {
 			color = {0.52, 0.62, 0.78, 0.22},
 			radius = 0.72,
@@ -561,8 +564,255 @@ local rarityStyles = {
 		},
 		glow = 0.22,
 		borderWidth = 5,
-	},
+        },
 }
+
+local function clamp01(value)
+        if value < 0 then
+                return 0
+        elseif value > 1 then
+                return 1
+        end
+
+        return value
+end
+
+local function scaleColor(color, factor, alphaFactor)
+        if not color then
+                return {1, 1, 1, alphaFactor or 1}
+        end
+
+        local alpha = (color[4] or 1) * (alphaFactor or 1)
+        return {
+                clamp01((color[1] or 0) * factor),
+                clamp01((color[2] or 0) * factor),
+                clamp01((color[3] or 0) * factor),
+                alpha,
+        }
+end
+
+local badgeDefinitions = {
+        default = {
+                shape = "circle",
+                fallback = {0.66, 0.72, 0.9, 1},
+                outlineFactor = 0.52,
+                shadowAlpha = 0.65,
+        },
+        economy = {
+                shape = "circle",
+                colorKey = "goldenPearColor",
+                fallback = {0.95, 0.80, 0.45, 1},
+                outlineFactor = 0.42,
+        },
+        defense = {
+                shape = "diamond",
+                colorKey = "snakeDefault",
+                fallback = {0.45, 0.85, 0.70, 1},
+        },
+        mobility = {
+                shape = "triangle_up",
+                colorKey = "blueberryColor",
+                fallback = {0.55, 0.65, 0.95, 1},
+        },
+        risk = {
+                shape = "triangle_down",
+                colorKey = "warningColor",
+                fallback = {0.92, 0.55, 0.40, 1},
+        },
+        utility = {
+                shape = "square",
+                colorKey = "panelBorder",
+                fallback = {0.32, 0.50, 0.54, 1},
+        },
+        hazard = {
+                shape = "hexagon",
+                colorKey = "appleColor",
+                fallback = {0.90, 0.45, 0.55, 1},
+        },
+        adrenaline = {
+                shape = "pentagon",
+                colorKey = "dragonfruitColor",
+                fallback = {0.90, 0.60, 0.80, 1},
+        },
+        speed = {
+                shape = "capsule",
+                colorKey = "buttonHover",
+                fallback = {0.34, 0.30, 0.48, 1},
+                outlineFactor = 0.8,
+        },
+        rocks = {
+                shape = "hexagon",
+                colorKey = "rock",
+                fallback = {0.30, 0.30, 0.35, 1},
+        },
+        shop = {
+                shape = "circle",
+                colorKey = "borderColor",
+                fallback = {0.42, 0.72, 0.62, 1},
+        },
+        progression = {
+                shape = "diamond",
+                colorKey = "progressColor",
+                fallback = {0.55, 0.75, 0.55, 1},
+        },
+        reward = {
+                shape = "circle",
+                colorKey = "accentTextColor",
+                fallback = {0.82, 0.92, 0.78, 1},
+        },
+        combo = {
+                shape = "square",
+                colorKey = "achieveColor",
+                fallback = {0.80, 0.45, 0.65, 1},
+        },
+}
+
+local resolvedBadgeStyles = setmetatable({}, {__mode = "k"})
+
+local function resolveBadgeDefinition(definition)
+        if not definition then return nil end
+
+        local resolved = resolvedBadgeStyles[definition]
+        if not resolved then
+                resolved = {color = {1, 1, 1, 1}}
+                resolvedBadgeStyles[definition] = resolved
+        end
+
+        local colorSource
+        if definition.colorKey and Theme[definition.colorKey] then
+                colorSource = Theme[definition.colorKey]
+        elseif definition.color then
+                colorSource = definition.color
+        end
+
+        local fallback = definition.fallback or {1, 1, 1, 1}
+        colorSource = colorSource or fallback
+
+        local color = resolved.color
+        color[1] = colorSource[1] or fallback[1] or 1
+        color[2] = colorSource[2] or fallback[2] or 1
+        color[3] = colorSource[3] or fallback[3] or 1
+        color[4] = colorSource[4] or fallback[4] or 1
+
+        resolved.shape = definition.shape or "circle"
+        resolved.outlineFactor = definition.outlineFactor
+        resolved.outline = definition.outline
+        resolved.shadowOffset = definition.shadowOffset
+        resolved.shadowAlpha = definition.shadowAlpha
+        resolved.shadow = definition.shadow
+
+        return resolved
+end
+
+local function getBadgeStyleForCard(card)
+        if not card or not card.upgrade then
+                return nil
+        end
+
+        local tags = card.upgrade.tags
+        if type(tags) ~= "table" then
+                return nil
+        end
+
+        local hasTag = false
+        for _, tag in ipairs(tags) do
+                hasTag = true
+                local definition = badgeDefinitions[tag]
+                if definition then
+                        return resolveBadgeDefinition(definition)
+                end
+        end
+
+        if hasTag and badgeDefinitions.default then
+                return resolveBadgeDefinition(badgeDefinitions.default)
+        end
+
+        return nil
+end
+
+local function drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
+        local points = {}
+        local angleStep = (pi * 2) / sides
+        local offset = rotation or 0
+        for i = 0, sides - 1 do
+                local angle = offset + i * angleStep
+                points[#points + 1] = cx + cos(angle) * radius
+                points[#points + 1] = cy + sin(angle) * radius
+        end
+
+        love.graphics.polygon(mode, unpack(points))
+end
+
+local badgeShapeDrawers = {
+        circle = function(mode, cx, cy, size)
+                love.graphics.circle(mode, cx, cy, size * 0.5, 32)
+        end,
+        square = function(mode, cx, cy, size)
+                local half = size * 0.45
+                love.graphics.rectangle(mode, cx - half, cy - half, half * 2, half * 2, size * 0.18, size * 0.18)
+        end,
+        diamond = function(mode, cx, cy, size)
+                local half = size * 0.38
+                love.graphics.push()
+                love.graphics.translate(cx, cy)
+                love.graphics.rotate(pi / 4)
+                love.graphics.rectangle(mode, -half, -half, half * 2, half * 2, size * 0.12, size * 0.12)
+                love.graphics.pop()
+        end,
+        triangle_up = function(mode, cx, cy, size)
+                drawRegularPolygon(mode, cx, cy, size * 0.52, 3, -pi / 2)
+        end,
+        triangle_down = function(mode, cx, cy, size)
+                drawRegularPolygon(mode, cx, cy, size * 0.52, 3, pi / 2)
+        end,
+        hexagon = function(mode, cx, cy, size)
+                drawRegularPolygon(mode, cx, cy, size * 0.48, 6, pi / 6)
+        end,
+        pentagon = function(mode, cx, cy, size)
+                drawRegularPolygon(mode, cx, cy, size * 0.5, 5, -pi / 2)
+        end,
+        capsule = function(mode, cx, cy, size)
+                local width = size * 0.82
+                local height = size * 0.52
+                love.graphics.rectangle(mode, cx - width / 2, cy - height / 2, width, height, height / 2, height / 2)
+        end,
+}
+
+local function drawBadgeShape(shape, mode, cx, cy, size, style)
+        local drawer = badgeShapeDrawers[shape] or badgeShapeDrawers.circle
+        drawer(mode, cx, cy, size, style)
+end
+
+local function drawBadge(setColorFn, style, cx, cy, size)
+        if not style or not style.color then
+                return
+        end
+
+        local shape = style.shape or "circle"
+        local shadow = style.shadow or Theme.shadowColor or {0, 0, 0, 0.45}
+        local shadowAlpha = style.shadowAlpha or 0.7
+        local offset = style.shadowOffset
+        local offsetX = offset and offset[1] or 3
+        local offsetY = offset and offset[2] or 4
+
+        if shadowAlpha > 0 and shadow and (shadow[4] or 0) > 0 then
+                setColorFn(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * shadowAlpha)
+                drawBadgeShape(shape, "fill", cx + offsetX, cy + offsetY, size, style)
+        end
+
+        local fill = style.color
+        setColorFn(fill[1], fill[2], fill[3], fill[4] or 1)
+        drawBadgeShape(shape, "fill", cx, cy, size, style)
+
+        local outlineColor = style.outline or scaleColor(fill, style.outlineFactor or 0.55)
+        local previousWidth = love.graphics.getLineWidth()
+        love.graphics.setLineWidth(style.outlineWidth or 2)
+        setColorFn(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 1)
+        drawBadgeShape(shape, "line", cx, cy, size, style)
+        love.graphics.setLineWidth(previousWidth)
+
+        setColorFn(1, 1, 1, 1)
+end
 
 local function applyColor(setColorFn, color, overrideAlpha)
         if not color then return end
@@ -727,46 +977,74 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		love.graphics.rectangle("line", x + 6, y + 6, w - 12, h - 12, 10, 10)
 	end
 
-	love.graphics.setLineWidth(4)
+        love.graphics.setLineWidth(4)
 
-	setColor(1, 1, 1, 1)
-	local titleFont = UI.fonts.button
-	love.graphics.setFont(titleFont)
-	local titleWidth = w - 28
-	local titleY = y + 24
-	love.graphics.printf(card.name, x + 14, titleY, titleWidth, "center")
+        local headerPadding = 16
+        local badgeInset = 18
+        local badgeSize = 34
+        local badgeStyle = getBadgeStyleForCard(card)
+        local headerHeight = 0
+        local headerTop = y + headerPadding
+        local headerCenterY = headerTop
 
-	local _, titleLines = titleFont:getWrap(card.name or "", titleWidth)
-	local titleLineCount = max(1, #titleLines)
-	local titleHeight = titleLineCount * titleFont:getHeight() * titleFont:getLineHeight()
-	local contentTop = titleY + titleHeight
+        local rarityLabel = card.rarityLabel
+        local rarityFont = UI.fonts.body
+        local hasRarity = rarityLabel and rarityLabel ~= ""
+        local rarityHeight = 0
 
-	local descStart
-	if card.rarityLabel then
-		local rarityFont = UI.fonts.body
-		love.graphics.setFont(rarityFont)
-		setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
-		local rarityY = contentTop + 10
-		love.graphics.printf(card.rarityLabel, x + 14, rarityY, titleWidth, "center")
+        if badgeStyle then
+                headerHeight = max(headerHeight, badgeSize)
+        end
 
-		setColor(1, 1, 1, 0.3)
-		love.graphics.setLineWidth(2)
-		local rarityHeight = rarityFont:getHeight() * rarityFont:getLineHeight()
-		local dividerY = rarityY + rarityHeight + 8
-		love.graphics.line(x + 24, dividerY, x + w - 24, dividerY)
-		descStart = dividerY + 16
-	else
-		setColor(1, 1, 1, 0.3)
-		love.graphics.setLineWidth(2)
-		local dividerY = contentTop + 14
-		love.graphics.line(x + 24, dividerY, x + w - 24, dividerY)
-		descStart = dividerY + 16
-	end
+        if hasRarity then
+                love.graphics.setFont(rarityFont)
+                rarityHeight = rarityFont:getHeight() * rarityFont:getLineHeight()
+                headerHeight = max(headerHeight, rarityHeight)
+        end
 
-	love.graphics.setFont(UI.fonts.body)
-	setColor(0.92, 0.92, 0.92, 1)
-	local descY = descStart
-	love.graphics.printf(card.desc or "", x + 18, descY, w - 36, "center")
+        if headerHeight > 0 then
+                headerCenterY = headerTop + headerHeight * 0.5
+
+                if badgeStyle then
+                        local badgeCenterX = x + badgeInset + badgeSize * 0.5
+                        drawBadge(setColor, badgeStyle, badgeCenterX, headerCenterY, badgeSize)
+                end
+
+                if hasRarity then
+                        love.graphics.setFont(rarityFont)
+                        setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
+                        local rarityWidth = rarityFont:getWidth(rarityLabel)
+                        local rarityX = x + w - badgeInset - rarityWidth
+                        local minRarityX = x + badgeInset + (badgeStyle and badgeSize * 0.6 or 0)
+                        rarityX = max(rarityX, minRarityX)
+                        local rarityY = headerCenterY - rarityHeight * 0.5
+                        love.graphics.print(rarityLabel, rarityX, rarityY)
+                end
+        end
+
+        setColor(1, 1, 1, 1)
+        local titleFont = UI.fonts.button
+        love.graphics.setFont(titleFont)
+        local titleWidth = w - 28
+        local headerBottom = headerTop + headerHeight
+        local titleSpacing = headerHeight > 0 and 12 or 8
+        local titleY = headerBottom + titleSpacing
+        love.graphics.printf(card.name, x + 14, titleY, titleWidth, "center")
+
+        local _, titleLines = titleFont:getWrap(card.name or "", titleWidth)
+        local titleLineCount = max(1, #titleLines)
+        local titleHeight = titleLineCount * titleFont:getHeight() * titleFont:getLineHeight()
+        local contentTop = titleY + titleHeight
+
+        setColor(1, 1, 1, 0.3)
+        love.graphics.setLineWidth(2)
+        local dividerY = contentTop + 18
+        love.graphics.line(x + 24, dividerY, x + w - 24, dividerY)
+        local descStart = dividerY + 16
+
+        love.graphics.setFont(UI.fonts.body)
+        setColor(0.92, 0.92, 0.92, 1)
+        love.graphics.printf(card.desc or "", x + 18, descStart, w - 36, "center")
 end
 
 function Shop:draw(screenW, screenH)
