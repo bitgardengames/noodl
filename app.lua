@@ -12,6 +12,7 @@ local Localization = require("localization")
 local Theme = require("theme")
 local SnakeCosmetics = require("snakecosmetics")
 local InputMode = require("inputmode")
+local CRTFilter = require("crtfilter")
 
 local DEFAULT_BG_COLOR = {0, 0, 0, 1}
 
@@ -75,6 +76,7 @@ end
 function App:load()
 	Settings:load()
 	Display.apply(Settings)
+	CRTFilter.load()
 
 	self:registerStates()
 	self:loadSubsystems()
@@ -91,45 +93,48 @@ end
 
 function App:update(dt)
 	Screen:update(dt)
+	CRTFilter.update(dt)
 	local action = GameState:update(dt)
 	self:resolveAction(action)
 	UI:update(dt)
 end
 
 function App:draw()
-        local bg = Theme.bgColor or DEFAULT_BG_COLOR
-	local r = bg[1] or 0
-	local g = bg[2] or 0
-	local b = bg[3] or 0
-	local a = bg[4] or 1
-	love.graphics.clear(r, g, b, a)
-	love.graphics.setColor(1, 1, 1, 1)
-
-	GameState:draw()
-
-	if Settings.showFPS then
-		local fps = love.timer.getFPS()
-		local label = string.format("FPS: %d", fps)
-		local padding = 6
-
-		if UI.setFont then
-			UI.setFont("caption")
-		end
-
-		local font = love.graphics.getFont()
-		local textWidth = font and font:getWidth(label) or 0
-		local textHeight = font and font:getHeight() or 14
-		local boxWidth = textWidth + padding * 2
-		local boxHeight = textHeight + padding * 2
-		local x = 12
-		local y = 12
-
-		love.graphics.setColor(0, 0, 0, 0.6)
-		love.graphics.rectangle("fill", x, y, boxWidth, boxHeight, 6, 6)
-		love.graphics.setColor(1, 1, 1, 0.95)
-		love.graphics.print(label, x + padding, y + padding)
+	CRTFilter.draw(function()
+		local bg = Theme.bgColor or DEFAULT_BG_COLOR
+		local r = bg[1] or 0
+		local g = bg[2] or 0
+		local b = bg[3] or 0
+		local a = bg[4] or 1
+		love.graphics.clear(r, g, b, a)
 		love.graphics.setColor(1, 1, 1, 1)
-	end
+
+		GameState:draw()
+
+		if Settings.showFPS then
+			local fps = love.timer.getFPS()
+			local label = string.format("FPS: %d", fps)
+			local padding = 6
+
+			if UI.setFont then
+				UI.setFont("caption")
+			end
+
+			local font = love.graphics.getFont()
+			local textWidth = font and font:getWidth(label) or 0
+			local textHeight = font and font:getHeight() or 14
+			local boxWidth = textWidth + padding * 2
+			local boxHeight = textHeight + padding * 2
+			local x = 12
+			local y = 12
+
+			love.graphics.setColor(0, 0, 0, 0.6)
+			love.graphics.rectangle("fill", x, y, boxWidth, boxHeight, 6, 6)
+			love.graphics.setColor(1, 1, 1, 0.95)
+			love.graphics.print(label, x + padding, y + padding)
+			love.graphics.setColor(1, 1, 1, 1)
+		end
+	end)
 end
 
 function App:keypressed(key)
@@ -144,6 +149,7 @@ end
 
 function App:resize()
 	Screen:update()
+	CRTFilter.resize()
 end
 
 local function createEventForwarder(eventName, preHook)
