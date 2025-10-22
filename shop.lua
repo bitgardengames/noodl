@@ -596,38 +596,45 @@ end
 
 local badgeDefinitions = {
         default = {
+                label = "General",
                 shape = "circle",
                 fallback = {0.66, 0.72, 0.9, 1},
                 outlineFactor = 0.52,
                 shadowAlpha = 0.65,
         },
         economy = {
+                label = "Economy",
                 shape = "circle",
                 colorKey = "goldenPearColor",
                 fallback = {0.95, 0.80, 0.45, 1},
                 outlineFactor = 0.42,
         },
         defense = {
+                label = "Defense",
                 shape = "diamond",
                 colorKey = "snakeDefault",
                 fallback = {0.45, 0.85, 0.70, 1},
         },
         mobility = {
+                label = "Mobility",
                 shape = "triangle_up",
                 colorKey = "blueberryColor",
                 fallback = {0.55, 0.65, 0.95, 1},
         },
         risk = {
+                label = "Risk",
                 shape = "triangle_down",
                 colorKey = "warningColor",
                 fallback = {0.92, 0.55, 0.40, 1},
         },
         utility = {
+                label = "Utility",
                 shape = "square",
                 colorKey = "panelBorder",
                 fallback = {0.32, 0.50, 0.54, 1},
         },
         hazard = {
+                label = "Hazard",
                 shape = "hexagon",
                 colorKey = "appleColor",
                 fallback = {0.90, 0.45, 0.55, 1},
@@ -698,12 +705,17 @@ local function getBadgeStyleForCard(card)
                 local canonicalTag = badgeTagAliases[tag] or tag
                 local definition = badgeDefinitions[canonicalTag]
                 if definition then
-                        return resolveBadgeDefinition(definition)
+                        local style = resolveBadgeDefinition(definition)
+                        local label = definition.label or canonicalTag
+                        return style, label
                 end
         end
 
         if hasTag and badgeDefinitions.default then
-                return resolveBadgeDefinition(badgeDefinitions.default)
+                local definition = badgeDefinitions.default
+                local style = resolveBadgeDefinition(definition)
+                local label = definition.label or "default"
+                return style, label
         end
 
         return nil
@@ -1043,7 +1055,17 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 
         local headerPadding = 16
         local badgeInset = 18
-        local badgeStyle = getBadgeStyleForCard(card)
+        local badgeStyle, badgeLabel = getBadgeStyleForCard(card)
+        local badgeLabelFont = UI.fonts.caption or UI.fonts.body
+        local badgeLabelText
+        local badgeLabelWidth = 0
+        local badgeLabelHeight = 0
+        if badgeLabel and badgeLabelFont then
+                badgeLabelText = tostring(badgeLabel)
+                love.graphics.setFont(badgeLabelFont)
+                badgeLabelWidth = badgeLabelFont:getWidth(badgeLabelText)
+                badgeLabelHeight = badgeLabelFont:getHeight() * badgeLabelFont:getLineHeight()
+        end
         local headerHeight = 0
         local headerTop = y + headerPadding
         local headerCenterY = headerTop
@@ -1068,6 +1090,9 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
                         badgeSize = rarityFont:getHeight() * rarityFont:getLineHeight()
                 end
                 headerHeight = max(headerHeight, badgeSize)
+                if badgeLabelHeight > 0 then
+                        headerHeight = max(headerHeight, badgeLabelHeight)
+                end
         end
 
         if headerHeight > 0 then
@@ -1076,6 +1101,13 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
                 if badgeStyle then
                         local badgeCenterX = x + badgeInset + badgeSize * 0.5
                         drawBadge(setColor, badgeStyle, badgeCenterX, headerCenterY, badgeSize)
+                        if badgeLabelText and badgeLabelFont then
+                                love.graphics.setFont(badgeLabelFont)
+                                setColor(borderColor[1], borderColor[2], borderColor[3], 0.75)
+                                local labelX = badgeCenterX + badgeSize * 0.5 + 8
+                                local labelY = headerCenterY - badgeLabelHeight * 0.5
+                                love.graphics.print(badgeLabelText, labelX, labelY)
+                        end
                 end
 
                 if hasRarity then
@@ -1083,7 +1115,14 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
                         setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
                         local rarityWidth = rarityFont:getWidth(rarityLabel)
                         local rarityX = x + w - badgeInset - rarityWidth
-                        local minRarityX = x + badgeInset + (badgeStyle and badgeSize * 0.6 or 0)
+                        local minRarityX = x + badgeInset
+                        if badgeStyle then
+                                minRarityX = minRarityX + badgeSize
+                                if badgeLabelWidth > 0 then
+                                        minRarityX = minRarityX + 8 + badgeLabelWidth
+                                end
+                                minRarityX = minRarityX + 12
+                        end
                         rarityX = max(rarityX, minRarityX)
                         local rarityY = headerCenterY - rarityHeight * 0.5
                         love.graphics.print(rarityLabel, rarityX, rarityY)
