@@ -739,6 +739,14 @@ local function drawStatusMessage(self)
 end
 
 function RenderScreen:draw()
+        local canvas = layout.canvas
+        local hasCanvas = canvas and canvas.w and canvas.h
+
+        if hasCanvas then
+                love.graphics.push()
+                love.graphics.setScissor(canvas.x, canvas.y, canvas.w, canvas.h)
+        end
+
         drawCanvasBackground(self)
 
         RenderLayers:begin(layout.screen.w, layout.screen.h)
@@ -748,27 +756,17 @@ function RenderScreen:draw()
         Rocks:draw()
         RenderLayers:present()
 
-        local canvas = layout.canvas
-        if canvas and canvas.w and canvas.h then
-                love.graphics.push()
-                love.graphics.setScissor(canvas.x, canvas.y, canvas.w, canvas.h)
-                if self.sawActor and self.sawPosition then
-                        self.sawActor:draw(self.sawPosition.x, self.sawPosition.y, 1)
-                end
-                if self.fruitCenter and self.fruitRadius then
-                        drawFruitIcon(self.fruitCenter.x, self.fruitCenter.y, self.fruitRadius)
-                end
-                Lasers:draw()
+        if self.sawActor and self.sawPosition then
+                self.sawActor:draw(self.sawPosition.x, self.sawPosition.y, 1)
+        end
+        if self.fruitCenter and self.fruitRadius then
+                drawFruitIcon(self.fruitCenter.x, self.fruitCenter.y, self.fruitRadius)
+        end
+        Lasers:draw()
+
+        if hasCanvas then
                 love.graphics.setScissor()
                 love.graphics.pop()
-        else
-                if self.sawActor and self.sawPosition then
-                        self.sawActor:draw(self.sawPosition.x, self.sawPosition.y, 1)
-                end
-                if self.fruitCenter and self.fruitRadius then
-                        drawFruitIcon(self.fruitCenter.x, self.fruitCenter.y, self.fruitRadius)
-                end
-                Lasers:draw()
         end
 
         drawCanvasOverlay(self)
