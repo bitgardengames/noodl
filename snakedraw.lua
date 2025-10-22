@@ -633,21 +633,26 @@ local function presentSnakeCanvas(overlayEffect, width, height)
 	return drewOverlay
 end
 
-local function resolveColor(color, fallback)
-	if type(color) == "table" then
-		return {
-			color[1] or 0,
-			color[2] or 0,
-			color[3] or 0,
-			color[4] or 1,
-		}
-	end
+local overlayPrimaryColor = {1, 1, 1, 1}
+local overlaySecondaryColor = {1, 1, 1, 1}
+local overlayTertiaryColor = {1, 1, 1, 1}
 
-	if fallback then
-		return resolveColor(fallback)
-	end
+local function resolveColor(color, fallback, out)
+        local target = out or {}
+        if type(color) == "table" then
+                target[1] = color[1] or 0
+                target[2] = color[2] or 0
+                target[3] = color[3] or 0
+                target[4] = color[4] or 1
+                return target
+        end
 
-	return {1, 1, 1, 1}
+        if fallback then
+                return resolveColor(fallback, nil, target)
+        end
+
+        target[1], target[2], target[3], target[4] = 1, 1, 1, 1
+        return target
 end
 
 applyOverlay = function(canvas, config)
@@ -663,9 +668,9 @@ applyOverlay = function(canvas, config)
 	local time = love.timer.getTime()
 
 	local colors = config.colors or {}
-	local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor())
-	local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor())
-	local tertiary = resolveColor(colors.tertiary or secondary)
+        local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor(), nil, overlayPrimaryColor)
+        local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor(), nil, overlaySecondaryColor)
+        local tertiary = resolveColor(colors.tertiary or secondary, nil, overlayTertiaryColor)
 
 	shader:send("time", time)
 	shader:send("intensity", config.intensity or 0.5)

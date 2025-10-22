@@ -139,18 +139,20 @@ local function approachExp(current, target, dt, speed)
 	return current + (target - current) * factor
 end
 
-local function lightenColor(color, amount)
-	if not color then
-		return {1, 1, 1, 1}
-	end
+local function lightenColor(color, amount, out)
+        local target = out or {}
+        if not color then
+                target[1], target[2], target[3], target[4] = 1, 1, 1, 1
+                return target
+        end
 
-	local a = color[4] or 1
-	return {
-		color[1] + (1 - color[1]) * amount,
-		color[2] + (1 - color[2]) * amount,
-		color[3] + (1 - color[3]) * amount,
-		a,
-	}
+        local a = color[4] or 1
+        target[1] = color[1] + (1 - color[1]) * amount
+        target[2] = color[2] + (1 - color[2]) * amount
+        target[3] = color[3] + (1 - color[3]) * amount
+        target[4] = a
+
+        return target
 end
 
 local function darkenColor(color, amount)
@@ -599,10 +601,18 @@ end
 
 -- Register a button (once per frame in your draw code)
 function UI.registerButton(id, x, y, w, h, text)
-	UI.buttons[id] = UI.buttons[id] or createButtonState()
-	local btn = UI.buttons[id]
-	btn.bounds = {x = x, y = y, w = w, h = h}
-	btn.text = text
+        UI.buttons[id] = UI.buttons[id] or createButtonState()
+        local btn = UI.buttons[id]
+        local bounds = btn.bounds
+        if not bounds then
+                bounds = {}
+                btn.bounds = bounds
+        end
+        bounds.x = x
+        bounds.y = y
+        bounds.w = w
+        bounds.h = h
+        btn.text = text
 end
 
 -- Draw button (render only)
@@ -701,11 +711,12 @@ function UI.drawButton(id)
 
 	-- TEXT
 	UI.setFont("button")
-	local textColor = UI.colors.text
-	if displayHover or (btn.focusAnim or 0) > 0.001 or isToggled then
-		textColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0))
-	end
-	setColor(textColor)
+        local textColor = UI.colors.text
+        if displayHover or (btn.focusAnim or 0) > 0.001 or isToggled then
+                btn._lightenedTextColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0), btn._lightenedTextColor)
+                textColor = btn._lightenedTextColor
+        end
+        setColor(textColor)
 	local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
 	love.graphics.printf(btn.text or "", b.x, textY, b.w, "center")
 
