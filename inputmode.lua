@@ -32,8 +32,4 @@ function InputMode:noteGamepadAxis(value)
 	end
 end
 
-function InputMode:isMouseActive()
-	return self.lastDevice == "mouse" and isMouseSupported()
-end
-
 return InputMode

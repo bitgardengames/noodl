@@ -334,43 +334,6 @@ function Game:triggerImpactFeedback(strength, options)
 	end
 end
 
-function Game:triggerPanicFeedback(strength)
-	local state = ensureFeedbackState(self)
-	strength = max(strength or 0, 0)
-
-	local baseDuration = state.panicDuration or 2.6
-	local duration = baseDuration * (0.55 + strength * 0.5)
-	state.panicTimer = max(state.panicTimer or 0, duration)
-	state.panicBurst = min(1.5, (state.panicBurst or 0) + 0.5 + strength * 0.5)
-	state.dangerPulseTimer = 0
-end
-
-function Game:triggerSurgeFeedback(strength, options)
-	local state = ensureFeedbackState(self)
-	strength = max(strength or 0, 0)
-
-	local duration = 0.6 + strength * 0.4
-	state.surgeDuration = duration
-	state.surgeTimer = duration
-	local surgeSpike = 0.45 + strength * 0.55
-	state.surgePeak = min(1.15, max(state.surgePeak or 0, surgeSpike))
-
-	local ripple = state.surgeRipple or {}
-	local rx, ry = resolveFeedbackPosition(self, options)
-	ripple.x = rx
-	ripple.y = ry
-	ripple.baseRadius = (options and options.radius) or ripple.baseRadius or 48
-	ripple.color = cloneColor(options and options.color, {1, 0.9, 0.55, 1})
-	state.surgeRipple = ripple
-
-	if Shaders and Shaders.notify then
-		Shaders.notify("specialEvent", {
-			type = "tension",
-			strength = min(1.0, 0.3 + strength * 0.45),
-		})
-	end
-end
-
 local cachedMouseInterface
 local mouseSupportChecked = false
 

@@ -690,14 +690,4 @@ function Darts:onShieldedHit(hit, hitX, hitY)
 	triggerImpact(launcher, hitX or hit.x, hitY or hit.y)
 end
 
-function Darts:addGlobalJam(duration)
-	if not duration or duration <= 0 then
-		return
-	end
-
-	for _, launcher in ipairs(launchers) do
-		jamLauncher(launcher, duration)
-	end
-end
-
 return Darts

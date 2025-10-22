@@ -1352,8 +1352,4 @@ function UpgradeVisuals:reset()
 	self.effects = {}
 end
 
-function UpgradeVisuals:isEmpty()
-	return #self.effects == 0
-end
-
 return UpgradeVisuals

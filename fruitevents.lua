@@ -221,15 +221,6 @@ function FruitEvents.reset()
 	Shaders.notify("comboLost", {reason = "reset"})
 end
 
-function FruitEvents:getDefaultComboWindow()
-	return DEFAULT_COMBO_WINDOW
-end
-
-function FruitEvents:setComboWindow(window)
-	comboState.baseOverride = max(0.5, window or DEFAULT_COMBO_WINDOW)
-	syncComboToUI()
-end
-
 function FruitEvents.update(dt)
 	updateComboWindow()
 	if comboState.timer > 0 then

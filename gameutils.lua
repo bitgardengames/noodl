@@ -55,8 +55,4 @@ function GameUtils:prepareGame(sw, sh)
 	Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
 end
 
-function GameUtils:getGameplaySystems()
-	return GAMEPLAY_SYSTEMS
-end
-
 return GameUtils
