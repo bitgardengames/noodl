@@ -800,17 +800,26 @@ function RenderScreen:draw()
         local hasCanvas = canvas and canvas.w and canvas.h
 
         if hasCanvas then
-                love.graphics.push()
+                love.graphics.push("all")
                 love.graphics.setScissor(canvas.x, canvas.y, canvas.w, canvas.h)
         end
 
         drawCanvasBackground(self)
+
+        if hasCanvas then
+                love.graphics.setScissor()
+        end
 
         RenderLayers:begin(layout.screen.w, layout.screen.h)
         if self.snakeTrail and #self.snakeTrail > 0 then
                 SnakeDraw.run(self.snakeTrail, #self.snakeTrail, self.snakeSegmentSize, nil, nil, nil, nil, nil)
         end
         Rocks:draw()
+
+        if hasCanvas then
+                love.graphics.setScissor(canvas.x, canvas.y, canvas.w, canvas.h)
+        end
+
         RenderLayers:present()
 
         if self.sawActor and self.sawPosition then

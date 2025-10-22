@@ -24,7 +24,8 @@ local TRACK_SLOT_RADIUS = 6
 local STENCIL_EXTENT = 999
 local SINK_OFFSET = 2
 local SINK_DISTANCE = 28
-local SHADOW_OFFSET = 3
+local SHADOW_OFFSET = 6
+local SHADOW_ALPHA = 0.35
 
 local sawStencilState = {
         dir = nil,
@@ -217,16 +218,18 @@ function SawActor:draw(x, y, scale)
 		end
 	end
 
-	love.graphics.push()
-	love.graphics.translate(
-	(px or x) + SHADOW_OFFSET * drawScale - offsetX,
-	(py or y) + SHADOW_OFFSET * drawScale - offsetY
-	)
-	love.graphics.rotate(rotation)
-	love.graphics.scale(overallScale, overallScale)
-	love.graphics.setColor(0, 0, 0, 0.35)
-	fillSaw()
-	love.graphics.pop()
+        love.graphics.push()
+        love.graphics.translate(
+        (px or x) + SHADOW_OFFSET * drawScale - offsetX,
+        (py or y) + SHADOW_OFFSET * drawScale - offsetY
+        )
+        love.graphics.rotate(rotation)
+        love.graphics.scale(overallScale, overallScale)
+
+        local shadowAlpha = SHADOW_ALPHA * (1 - 0.4 * sinkProgress)
+        love.graphics.setColor(0, 0, 0, shadowAlpha)
+        fillSaw()
+        love.graphics.pop()
 
 	love.graphics.push()
 	love.graphics.translate((px or x) + offsetX, (py or y) + offsetY)
@@ -241,29 +244,34 @@ function SawActor:draw(x, y, scale)
 	love.graphics.setColor(baseColor)
 	fillSaw()
 
-	local highlightRadiusLocal = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
-	local highlightRadiusWorld = highlightRadiusLocal * drawScale * sinkScale
-	local hideHubHighlight = false
-	local occlusionDepth = sinkOffset
+        local highlightRadiusLocal = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
+        local highlightRadiusWorld = highlightRadiusLocal * drawScale * sinkScale
+        local hideHubHighlight = false
+        local highlightAlphaMult = 1
+        local occlusionDepth = sinkOffset
 
-	-- When the saw is partially embedded in a wall/track the stencil clips the
-	-- hub highlight, which leaves a thin grey arc poking past the blade edge.
-	-- Hide the highlight (and hub hole) whenever the occlusion plane reaches
-	-- or crosses the highlight radius so the sliver never appears.
-	if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
-		if occlusionDepth >= highlightRadiusWorld then
-			hideHubHighlight = true
-		end
-	elseif occlusionDepth >= highlightRadiusWorld then
-		hideHubHighlight = true
-	end
+        if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
+                if occlusionDepth <= 0 then
+                        hideHubHighlight = true
+                else
+                        local occlusionRatio = min(1, max(0, occlusionDepth / highlightRadiusWorld))
+                        highlightAlphaMult = 0.4 + 0.6 * occlusionRatio
+                end
+        elseif occlusionDepth >= highlightRadiusWorld then
+                hideHubHighlight = true
+        end
 
-	if not hideHubHighlight then
-		local highlight = getHighlightColor(baseColor)
-		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-		love.graphics.setLineWidth(2)
-		love.graphics.circle("line", 0, 0, highlightRadiusLocal)
-	end
+        if not hideHubHighlight then
+                local highlight = getHighlightColor(baseColor)
+                love.graphics.setColor(
+                highlight[1],
+                highlight[2],
+                highlight[3],
+                (highlight[4] or 1) * highlightAlphaMult
+                )
+                love.graphics.setLineWidth(2)
+                love.graphics.circle("line", 0, 0, highlightRadiusLocal)
+        end
 
 	love.graphics.setColor(0, 0, 0, 1)
 	love.graphics.setLineWidth(3)
