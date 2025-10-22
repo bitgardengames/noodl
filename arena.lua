@@ -2,6 +2,7 @@ local Theme = require("theme")
 local Audio = require("audio")
 local Shaders = require("shaders")
 local RenderLayers = require("renderlayers")
+local SharedCanvas = require("sharedcanvas")
 
 local abs = math.abs
 local ceil = math.ceil
@@ -931,11 +932,11 @@ end
 
 -- Draws border
 function Arena:drawBorder()
-	local ax, ay, aw, ah = self:getBounds()
+        local ax, ay, aw, ah = self:getBounds()
 
-	-- Match snake style
-	local thickness    = 20       -- border thickness
-	local outlineSize  = 6        -- black outline thickness
+        -- Match snake style
+        local thickness    = 20       -- border thickness
+        local outlineSize  = 6        -- black outline thickness
 	local shadowOffset = 3
 	local radius       = thickness / 2
 
@@ -956,137 +957,180 @@ function Arena:drawBorder()
 		flarePulse = (sin((self.borderFlareTimer or 0) * 9.0) + 1) * 0.5
 	end
 
-	local borderColor = Theme.arenaBorder
-	local colorHash = hashColor(borderColor)
-	local canvasWidth = love.graphics.getWidth()
-	local canvasHeight = love.graphics.getHeight()
+        local borderColor = Theme.arenaBorder
+        local colorHash = hashColor(borderColor)
+        local canvasWidth = love.graphics.getWidth()
+        local canvasHeight = love.graphics.getHeight()
+        local useCanvas = SharedCanvas.isMSAAEnabled()
 
-	if not self.borderCanvas or
-	self._borderLastCanvasWidth ~= canvasWidth or
-	self._borderLastCanvasHeight ~= canvasHeight then
-		self.borderCanvas = love.graphics.newCanvas(canvasWidth, canvasHeight, {msaa = 8})
-		self._borderLastCanvasWidth = canvasWidth
-		self._borderLastCanvasHeight = canvasHeight
-		self.borderDirty = true
-	end
+        local borderCanvas = nil
+        if useCanvas then
+                local canvas, replaced, samples = SharedCanvas.ensureCanvas(self.borderCanvas, canvasWidth, canvasHeight)
+                if SharedCanvas.isMSAAEnabled() then
+                        if canvas ~= self.borderCanvas then
+                                self.borderCanvas = canvas
+                        end
+                        borderCanvas = canvas
+                        self._borderCanvasSamples = samples
+                        if replaced then
+                                self.borderDirty = true
+                        end
+                else
+                        useCanvas = false
+                        borderCanvas = nil
+                end
+        end
 
-	local bounds = self._borderLastBounds
-	local needsRebuild = self.borderDirty
-	if not bounds or bounds[1] ~= bx or bounds[2] ~= by or bounds[3] ~= bw or bounds[4] ~= bh then
-		needsRebuild = true
-	end
+        if not useCanvas then
+                if self.borderCanvas then
+                        self.borderCanvas = nil
+                        self._borderCanvasSamples = nil
+                        self.borderDirty = true
+                end
+        end
 
-	if (self._borderLastColorHash or 0) ~= colorHash then
-		needsRebuild = true
-	end
+        self._borderLastCanvasWidth = canvasWidth
+        self._borderLastCanvasHeight = canvasHeight
 
-	if needsRebuild then
-		local previousCanvas = {love.graphics.getCanvas()}
-		love.graphics.setCanvas(self.borderCanvas)
-		love.graphics.clear(0,0,0,0)
+        local bounds = self._borderLastBounds
+        local needsRebuild = self.borderDirty
+        if not bounds or bounds[1] ~= bx or bounds[2] ~= by or bounds[3] ~= bw or bounds[4] ~= bh then
+                needsRebuild = true
+        end
 
-		love.graphics.setLineStyle("smooth")
+        if (self._borderLastColorHash or 0) ~= colorHash then
+                needsRebuild = true
+        end
 
-		-- Outline pass
-		love.graphics.setColor(0, 0, 0, 1)
-		love.graphics.setLineWidth(thickness + outlineSize)
-		love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
+        if not self._borderGeometry then
+                needsRebuild = true
+        end
 
-		-- Fill (arena border color)
-		if borderColor then
-			love.graphics.setColor(borderColor)
-		else
-			love.graphics.setColor(1, 1, 1, 1)
-		end
-		love.graphics.setLineWidth(thickness)
-		love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
+        local function drawBorderShape(outlineColor, fillColor)
+                local prevLineWidth = love.graphics.getLineWidth()
+                local prevLineStyle = love.graphics.getLineStyle()
 
-		if #previousCanvas > 0 then
-			local unpack = table.unpack or unpack
-			love.graphics.setCanvas(unpack(previousCanvas))
-		else
-			love.graphics.setCanvas()
-		end
+                love.graphics.setLineStyle("smooth")
 
-		if not bounds then
-			bounds = {}
-			self._borderLastBounds = bounds
-		end
-		bounds[1], bounds[2], bounds[3], bounds[4] = bx, by, bw, bh
-		self._borderLastColorHash = colorHash
+                local outline = outlineColor or {0, 0, 0, 1}
+                love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
+                love.graphics.setLineWidth(thickness + outlineSize)
+                love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
-		local outerRadius = radius + highlightOffset
-		local arcSegments = max(6, floor(outerRadius * 0.75))
-		local topPoints = {}
-		topPoints[#topPoints + 1] = bx + bw - radius - highlightShift
-		topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
-		topPoints[#topPoints + 1] = bx + radius - highlightShift
-		topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+                local fill = fillColor or borderColor or {1, 1, 1, 1}
+                love.graphics.setColor(fill[1], fill[2], fill[3], fill[4] or 1)
+                love.graphics.setLineWidth(thickness)
+                love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
-		local function appendArcPoints(points, cx, cy, arcRadius, startAngle, endAngle, segments, skipFirst)
-			if segments < 1 then
-				segments = 1
-			end
+                love.graphics.setLineWidth(prevLineWidth)
+                love.graphics.setLineStyle(prevLineStyle)
+        end
 
-			for i = 0, segments do
-				if not (skipFirst and i == 0) then
-					local t = i / segments
-					local angle = startAngle + (endAngle - startAngle) * t
-					points[#points + 1] = cx + math.cos(angle) * arcRadius - highlightShift
-					points[#points + 1] = cy + sin(angle) * arcRadius - highlightShift
-				end
-			end
-		end
+        if needsRebuild then
+                if borderCanvas then
+                        local previousCanvas = {love.graphics.getCanvas()}
+                        love.graphics.push("all")
+                        love.graphics.setCanvas(borderCanvas)
+                        love.graphics.clear(0, 0, 0, 0)
+                        drawBorderShape({0, 0, 0, 1}, borderColor)
+                        love.graphics.pop()
 
-		local cornerStartIndex = #topPoints + 1
-		appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -pi / 2, -pi, arcSegments, true)
-		for i = cornerStartIndex, #topPoints, 2 do
-			topPoints[i] = topPoints[i] + cornerOffsetX
-			topPoints[i + 1] = topPoints[i + 1] + cornerOffsetY
-		end
+                        if #previousCanvas > 0 then
+                                local unpack = table.unpack or unpack
+                                love.graphics.setCanvas(unpack(previousCanvas))
+                        else
+                                love.graphics.setCanvas()
+                        end
+                end
 
-		local leftPoints = {}
-		leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
-		leftPoints[#leftPoints + 1] = by + radius - highlightShift
-		leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
-		leftPoints[#leftPoints + 1] = by + bh - radius - highlightShift
+                if not bounds then
+                        bounds = {}
+                        self._borderLastBounds = bounds
+                end
+                bounds[1], bounds[2], bounds[3], bounds[4] = bx, by, bw, bh
+                self._borderLastColorHash = colorHash
 
-		self._borderGeometry = {
-			bx = bx,
-			by = by,
-			bw = bw,
-			bh = bh,
-			radius = radius,
-			thickness = thickness,
-			outlineSize = outlineSize,
-			highlightShift = highlightShift,
-			highlightOffset = highlightOffset,
-			cornerOffsetX = cornerOffsetX,
-			cornerOffsetY = cornerOffsetY,
-			highlightTopPoints = topPoints,
-			highlightLeftPoints = leftPoints,
-			topCapX = bx + bw - radius - highlightShift,
-			topCapY = by - highlightOffset - highlightShift,
-			leftCapX = bx - highlightOffset - highlightShift,
-			leftCapY = by + bh - radius - highlightShift,
-		}
+                local outerRadius = radius + highlightOffset
+                local arcSegments = max(6, floor(outerRadius * 0.75))
+                local topPoints = {}
+                topPoints[#topPoints + 1] = bx + bw - radius - highlightShift
+                topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
+                topPoints[#topPoints + 1] = bx + radius - highlightShift
+                topPoints[#topPoints + 1] = by - highlightOffset - highlightShift
 
-		self.borderDirty = false
-	end
+                local function appendArcPoints(points, cx, cy, arcRadius, startAngle, endAngle, segments, skipFirst)
+                        if segments < 1 then
+                                segments = 1
+                        end
 
-	local geometry = self._borderGeometry
+                        for i = 0, segments do
+                                if not (skipFirst and i == 0) then
+                                        local t = i / segments
+                                        local angle = startAngle + (endAngle - startAngle) * t
+                                        points[#points + 1] = cx + math.cos(angle) * arcRadius - highlightShift
+                                        points[#points + 1] = cy + sin(angle) * arcRadius - highlightShift
+                                end
+                        end
+                end
 
-	RenderLayers:withLayer("shadows", function()
-		if self.borderCanvas then
-			love.graphics.setColor(0, 0, 0, 0.25)
-			love.graphics.draw(self.borderCanvas, shadowOffset, shadowOffset)
-		end
-	end)
+                local cornerStartIndex = #topPoints + 1
+                appendArcPoints(topPoints, bx + radius - highlightShift, by + radius - highlightShift, outerRadius, -pi / 2, -pi, arcSegments, true)
+                for i = cornerStartIndex, #topPoints, 2 do
+                        topPoints[i] = topPoints[i] + cornerOffsetX
+                        topPoints[i + 1] = topPoints[i + 1] + cornerOffsetY
+                end
 
-	if self.borderCanvas then
-		love.graphics.setColor(1, 1, 1, 1)
-		love.graphics.draw(self.borderCanvas, 0, 0)
-	end
+                local leftPoints = {}
+                leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
+                leftPoints[#leftPoints + 1] = by + radius - highlightShift
+                leftPoints[#leftPoints + 1] = bx - highlightOffset - highlightShift
+                leftPoints[#leftPoints + 1] = by + bh - radius - highlightShift
+
+                self._borderGeometry = {
+                        bx = bx,
+                        by = by,
+                        bw = bw,
+                        bh = bh,
+                        radius = radius,
+                        thickness = thickness,
+                        outlineSize = outlineSize,
+                        highlightShift = highlightShift,
+                        highlightOffset = highlightOffset,
+                        cornerOffsetX = cornerOffsetX,
+                        cornerOffsetY = cornerOffsetY,
+                        highlightTopPoints = topPoints,
+                        highlightLeftPoints = leftPoints,
+                        topCapX = bx + bw - radius - highlightShift,
+                        topCapY = by - highlightOffset - highlightShift,
+                        leftCapX = bx - highlightOffset - highlightShift,
+                        leftCapY = by + bh - radius - highlightShift,
+                }
+
+                self.borderDirty = false
+        end
+
+        local geometry = self._borderGeometry
+
+        RenderLayers:withLayer("shadows", function()
+                if borderCanvas then
+                        love.graphics.setColor(0, 0, 0, 0.25)
+                        love.graphics.draw(borderCanvas, shadowOffset, shadowOffset)
+                else
+                        love.graphics.push("all")
+                        love.graphics.translate(shadowOffset, shadowOffset)
+                        drawBorderShape({0, 0, 0, 0.25}, {0, 0, 0, 0.25})
+                        love.graphics.pop()
+                end
+        end)
+
+        if borderCanvas then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(borderCanvas, 0, 0)
+        else
+                love.graphics.push("all")
+                drawBorderShape({0, 0, 0, 1}, borderColor)
+                love.graphics.pop()
+        end
 
 	if not geometry then
 		love.graphics.setColor(1, 1, 1, 1)
