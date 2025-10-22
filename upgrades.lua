@@ -1243,6 +1243,7 @@ local pool = {
                 nameKey = "upgrades.tail_trainer.name",
                 descKey = "upgrades.tail_trainer.description",
                 rarity = "common",
+                tags = {"mobility"},
                 allowDuplicates = true,
                 onAcquire = function(state)
                         Snake:addSpeedMultiplier(1.04)
@@ -1392,13 +1393,14 @@ local pool = {
 		end,
 	}),
 	register({
-		id = "extra_bite",
-		nameKey = "upgrades.extra_bite.name",
-		descKey = "upgrades.extra_bite.description",
-		rarity = "common",
-		onAcquire = function(state)
-			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
-			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
+                id = "extra_bite",
+                nameKey = "upgrades.extra_bite.name",
+                descKey = "upgrades.extra_bite.description",
+                rarity = "common",
+                tags = {"hazard"},
+                onAcquire = function(state)
+                        state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
+                        state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
 			if UI.adjustFruitGoal then
 				UI:adjustFruitGoal(-1)
 			end
