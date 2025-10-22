@@ -33,15 +33,6 @@ function Easing.easeInCubic(t)
 	return t * t * t
 end
 
-function Easing.easeInOutCubic(t)
-	if t < 0.5 then
-		return 4 * t * t * t
-	end
-
-	t = (2 * t) - 2
-	return 0.5 * t * t * t + 1
-end
-
 function Easing.easeOutExpo(t)
 	if t >= 1 then
 		return 1
@@ -62,14 +53,6 @@ function Easing.easeInBack(t)
 	local c3 = c1 + 1
 
 	return c3 * pow(t, 3) - c1 * pow(t, 2)
-end
-
-function Easing.easedProgress(timer, duration)
-	if not duration or duration <= 0 then
-		return 1
-	end
-
-	return Easing.easeInOutCubic(Easing.clamp01(timer / duration))
 end
 
 function Easing.getTransitionAlpha(t, direction)

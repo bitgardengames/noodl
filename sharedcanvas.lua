@@ -8,14 +8,6 @@ local DEFAULT_MSAA = 8
 local desiredMSAASamples = nil
 local canvasCreationOptions = nil
 
-local function cloneOptions()
-        if not canvasCreationOptions then
-                return nil
-        end
-
-        return {msaa = canvasCreationOptions.msaa}
-end
-
 local function updateDesiredSamples(samples)
         if type(samples) ~= "number" then
                 samples = 0
@@ -56,11 +48,6 @@ end
 
 function SharedCanvas.isMSAAEnabled()
         return SharedCanvas.getDesiredSamples() >= 2
-end
-
-function SharedCanvas.getCreationOptions()
-        ensureInitialized()
-        return cloneOptions()
 end
 
 local function resolveDimensions(width, height)
