@@ -21,8 +21,6 @@ local remove = table.remove
 
 local GameOver = {isVictory = false}
 
-local unpack = unpack
-
 local ANALOG_DEADZONE = 0.35
 
 local function pickDeathMessage(cause)

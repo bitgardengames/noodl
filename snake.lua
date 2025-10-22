@@ -18,11 +18,7 @@ local min = math.min
 local pi = math.pi
 local insert = table.insert
 local remove = table.remove
-local format = string.format
-
 local Snake = {}
-
-local unpack = unpack
 local sqrt = math.sqrt
 local max = math.max
 
