@@ -16,13 +16,8 @@ local pi = math.pi
 local sin = math.sin
 local sqrt = math.sqrt
 local atan = math.atan
-local atan2 = math.atan2 or function(y, x)
-        if atan then
-                return atan(y, x)
-        end
-        return 0
-end
-local unpack = table.unpack or unpack
+local atan2 = math.atan2
+local unpack = unpack
 
 local Shop = {}
 

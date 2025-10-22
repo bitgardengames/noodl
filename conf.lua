@@ -1,5 +1,5 @@
 function love.conf(t)
-	t.console = false
+	t.console = true
 	--t.window.vsync = 0
 	t.window.msaa = 8
 	t.window.stencil = 8
