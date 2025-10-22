@@ -80,18 +80,43 @@ function RenderLayers:withLayer(layerName, drawFunc)
 	self:pop()
 end
 
-function RenderLayers:present()
-	love.graphics.push("all")
-	love.graphics.setCanvas()
-	love.graphics.origin()
-	love.graphics.setColor(1, 1, 1, 1)
+local function drawLayers(offsetX, offsetY)
+        offsetX = offsetX or 0
+        offsetY = offsetY or 0
 
         for _, name in ipairs(LAYERS) do
                 local canvas = canvases[name]
                 if canvas and layerUsedThisFrame[name] then
-                        love.graphics.draw(canvas, 0, 0)
+                        love.graphics.draw(canvas, offsetX, offsetY)
                 end
         end
+end
+
+function RenderLayers:present()
+        love.graphics.push("all")
+        love.graphics.setCanvas()
+        love.graphics.origin()
+        love.graphics.setColor(1, 1, 1, 1)
+
+        drawLayers(0, 0)
+
+        love.graphics.pop()
+end
+
+function RenderLayers:presentToCanvas(targetCanvas, offsetX, offsetY)
+        if not targetCanvas then
+                return
+        end
+
+        love.graphics.push("all")
+        love.graphics.setCanvas({targetCanvas, stencil = true})
+        love.graphics.origin()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.clear(0, 0, 0, 0)
+
+        love.graphics.setScissor(0, 0, targetCanvas:getWidth(), targetCanvas:getHeight())
+        drawLayers(offsetX, offsetY)
+        love.graphics.setScissor()
 
         love.graphics.pop()
 end

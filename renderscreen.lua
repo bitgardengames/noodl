@@ -223,6 +223,63 @@ local function drawCanvasBackground(self)
         love.graphics.setColor(1, 1, 1, 1)
 end
 
+local function exportCanvasToFile(self, filename)
+        local canvas = layout.canvas
+        if not (canvas and canvas.w and canvas.h and canvas.w > 0 and canvas.h > 0) then
+                return false, "no_canvas"
+        end
+
+        local width = max(1, floor(canvas.w + 0.5))
+        local height = max(1, floor(canvas.h + 0.5))
+        local captureCanvas = love.graphics.newCanvas(width, height)
+
+        local function drawSceneToCapture()
+                RenderLayers:begin(layout.screen.w, layout.screen.h)
+
+                if self.snakeTrail and #self.snakeTrail > 0 then
+                        SnakeDraw.run(self.snakeTrail, #self.snakeTrail, self.snakeSegmentSize, nil, nil, nil, nil, nil)
+                end
+
+                Rocks:draw()
+
+                RenderLayers:presentToCanvas(captureCanvas, -canvas.x, -canvas.y)
+
+                love.graphics.push("all")
+                love.graphics.setCanvas({captureCanvas, stencil = true})
+                love.graphics.origin()
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setScissor(0, 0, width, height)
+                love.graphics.translate(-canvas.x, -canvas.y)
+
+                if self.sawActor and self.sawPosition then
+                        self.sawActor:draw(self.sawPosition.x, self.sawPosition.y, 1)
+                end
+
+                if self.fruitCenter and self.fruitRadius then
+                        drawFruitIcon(self.fruitCenter.x, self.fruitCenter.y, self.fruitRadius)
+                end
+
+                Lasers:draw()
+
+                love.graphics.setScissor()
+                love.graphics.pop()
+        end
+
+        local ok, err = pcall(function()
+                drawSceneToCapture()
+                local imageData = captureCanvas:newImageData()
+                imageData:encode("png", filename)
+        end)
+
+        captureCanvas:release()
+
+        if not ok then
+                return false, err
+        end
+
+        return true
+end
+
 local function drawCanvasOverlay(self)
         if not self.showOverlay then
                 return
@@ -614,7 +671,7 @@ local function handleAction(self, action)
                 Audio:playSound("click")
                 local timestamp = os.date("%Y-%m-%d_%H-%M-%S")
                 local filename = string.format("render_canvas_%s.png", timestamp)
-                local ok = pcall(love.graphics.captureScreenshot, filename)
+                local ok = exportCanvasToFile(self, filename)
                 if ok then
                         self.statusMessage = Localization:get("render.capture_success", {file = filename})
                 else
