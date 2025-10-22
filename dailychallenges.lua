@@ -1021,65 +1021,78 @@ DailyChallenges.challenges = {
                 end,
                 xpReward = 125,
         },
-	{
-		id = "consistency_champion",
-		titleKey = "menu.daily.consistency_champion.title",
-		descriptionKey = "menu.daily.consistency_champion.description",
-		goal = 1,
-		progressKey = "menu.daily.consistency_champion.progress",
-		completeKey = "menu.daily.consistency_champion.complete",
-		tolerance = 30,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local fastest = getStatValue(statsSource, "fastestFloorClear")
-			local slowest = getStatValue(statsSource, "slowestFloorClear")
-			if fastest <= 0 or slowest <= 0 then
-				return 0
-			end
+        {
+                id = "shielded_sprinter",
+                titleKey = "menu.daily.shielded_sprinter.title",
+                descriptionKey = "menu.daily.shielded_sprinter.description",
+                goal = 1,
+                progressKey = "menu.daily.shielded_sprinter.progress",
+                completeKey = "menu.daily.shielded_sprinter.complete",
+                shieldGoal = 2,
+                timeGoal = 420,
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        if timeAlive <= 0 then
+                                return 0
+                        end
 
-			return (slowest - fastest) <= (self.tolerance or 0) and 1 or 0
-		end,
-		getRunValue = function(self, statsSource)
-			local fastest = getStatValue(statsSource, "fastestFloorClear")
-			local slowest = getStatValue(statsSource, "slowestFloorClear")
-			if fastest <= 0 or slowest <= 0 then
-				return 0
-			end
+                        if shields >= (self.shieldGoal or 0) and timeAlive <= (self.timeGoal or 0) then
+                                return 1
+                        end
 
-			return (slowest - fastest) <= (self.tolerance or 0) and 1 or 0
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local fastest = getStatValue(statsSource, "fastestFloorClear")
-			local slowest = getStatValue(statsSource, "slowestFloorClear")
-			local differenceSeconds = 0
-			if fastest > 0 and slowest > 0 then
-				differenceSeconds = max(0, slowest - fastest)
-			end
+                        return 0
+                end,
+                getRunValue = function(self, statsSource)
+                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        if timeAlive <= 0 then
+                                return 0
+                        end
 
-			local function formatSeconds(seconds)
-				seconds = max(0, seconds or 0)
-				local minutes = floor(seconds / 60)
-				local secs = floor(seconds % 60)
-				return string.format("%d:%02d", minutes, secs)
-			end
+                        if shields >= (self.shieldGoal or 0) and timeAlive <= (self.timeGoal or 0) then
+                                return 1
+                        end
 
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				fastest = fastest > 0 and formatSeconds(fastest) or "--:--",
-				slowest = slowest > 0 and formatSeconds(slowest) or "--:--",
-				difference = floor(differenceSeconds + 0.5),
-				tolerance = self.tolerance or 0,
-			}
-		end,
-		descriptionReplacements = function(self)
-			return {
-				tolerance = self.tolerance or 0,
-			}
-		end,
-		xpReward = 120,
-	},
+                        return 0
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local shields = getStatValue(statsSource, "shieldsSaved")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+
+                        local function formatSeconds(seconds)
+                                seconds = max(0, seconds or 0)
+                                local minutes = floor(seconds / 60)
+                                local secs = floor(seconds % 60)
+                                return string.format("%d:%02d", minutes, secs)
+                        end
+
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                shields = shields,
+                                shield_goal = self.shieldGoal or 0,
+                                time = formatSeconds(timeAlive),
+                                time_goal = formatSeconds(self.timeGoal or 0),
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        local function formatSeconds(seconds)
+                                seconds = max(0, seconds or 0)
+                                local minutes = floor(seconds / 60)
+                                local secs = floor(seconds % 60)
+                                return string.format("%d:%02d", minutes, secs)
+                        end
+
+                        return {
+                                shield_goal = self.shieldGoal or 0,
+                                time_goal = formatSeconds(self.timeGoal or 0),
+                        }
+                end,
+                xpReward = 125,
+        },
 	{
 		id = "depth_sprinter",
 		titleKey = "menu.daily.depth_sprinter.title",
