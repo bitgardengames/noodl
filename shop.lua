@@ -632,42 +632,17 @@ local badgeDefinitions = {
                 colorKey = "appleColor",
                 fallback = {0.90, 0.45, 0.55, 1},
         },
-        adrenaline = {
-                shape = "pentagon",
-                colorKey = "dragonfruitColor",
-                fallback = {0.90, 0.60, 0.80, 1},
-        },
-        speed = {
-                shape = "capsule",
-                colorKey = "buttonHover",
-                fallback = {0.34, 0.30, 0.48, 1},
-                outlineFactor = 0.8,
-        },
-        rocks = {
-                shape = "hexagon",
-                colorKey = "rock",
-                fallback = {0.30, 0.30, 0.35, 1},
-        },
-        shop = {
-                shape = "circle",
-                colorKey = "borderColor",
-                fallback = {0.42, 0.72, 0.62, 1},
-        },
-        progression = {
-                shape = "diamond",
-                colorKey = "progressColor",
-                fallback = {0.55, 0.75, 0.55, 1},
-        },
-        reward = {
-                shape = "circle",
-                colorKey = "accentTextColor",
-                fallback = {0.82, 0.92, 0.78, 1},
-        },
-        combo = {
-                shape = "square",
-                colorKey = "achieveColor",
-                fallback = {0.80, 0.45, 0.65, 1},
-        },
+}
+
+local badgeTagAliases = {
+        adrenaline = "mobility",
+        speed = "mobility",
+        rocks = "hazard",
+        shop = "economy",
+        progression = "economy",
+        reward = "economy",
+        combo = "risk",
+        control = "utility",
 }
 
 local resolvedBadgeStyles = setmetatable({}, {__mode = "k"})
@@ -720,7 +695,8 @@ local function getBadgeStyleForCard(card)
         local hasTag = false
         for _, tag in ipairs(tags) do
                 hasTag = true
-                local definition = badgeDefinitions[tag]
+                local canonicalTag = badgeTagAliases[tag] or tag
+                local definition = badgeDefinitions[canonicalTag]
                 if definition then
                         return resolveBadgeDefinition(definition)
                 end
