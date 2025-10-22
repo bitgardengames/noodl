@@ -173,12 +173,12 @@ local english = {
                                         progress = "Conditions: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Floors: ${floors}/${floor_goal})",
                                         complete = "Delivery complete! ${combos} combos and ${floors} floors cleared.",
                                 },
-				consistency_champion = {
-					title = "Consistency Champion",
-					description = "Keep floor clear times within ${tolerance} seconds of each other in one run.",
-					progress = "Fastest: ${fastest} | Slowest: ${slowest} (Difference ${difference}s)",
-					complete = "Consistent clears! Difference held to ${difference}s.",
-				},
+                                shielded_sprinter = {
+                                        title = "Shielded Sprinter",
+                                        description = "Save ${shield_goal} emergency shields and finish within ${time_goal} in one run.",
+                                        progress = "Status: ${current}/${goal} (Saves: ${shields}/${shield_goal}, Time: ${time}/${time_goal})",
+                                        complete = "Swift safety! ${shields} shields saved in ${time}.",
+                                },
 				depth_sprinter = {
 					title = "Depth Sprinter",
 					description = "Reach floor ${target_floor} within ${target_time}.",
