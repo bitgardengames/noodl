@@ -1369,13 +1369,8 @@ function Arena:hasExit()
 end
 
 function Arena:update(dt)
-	local prevFlare = self.borderFlare or 0
-	local prevStrength = self.borderFlareStrength or 0
-	local prevTimer = self.borderFlareTimer or 0
-	local prevDuration = self.borderFlareDuration or 0
-
-	if dt and dt > 0 then
-		local baseStrength = self.borderFlareStrength
+        if dt and dt > 0 then
+                local baseStrength = self.borderFlareStrength
 
 		if not (baseStrength and baseStrength > 0) then
 			baseStrength = self.borderFlare or 0
