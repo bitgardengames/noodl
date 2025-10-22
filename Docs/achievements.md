@@ -1,40 +1,53 @@
 # Achievements Overview
 
-This document lists every achievement currently defined in the game along with its progress requirement and whether it unlocks an additional reward. Requirements are summarized from the in-game descriptions, while unlock information is based on the snake cosmetic definitions.
+This catalog mirrors the authoritative data in [`achievement_definitions.lua`](../achievement_definitions.lua) and
+[`snakecosmetics.lua`](../snakecosmetics.lua). It is intended for balance reviews and economic (value) audits, so each
+entry specifies the numerical goal, how progress is tracked, hidden status, and any cosmetic unlocks that are awarded.
+
+## Summary
+
+- **Total achievements:** 16
+- **Categories:** Progress (3), Depth (0), Skill (11), Collection (2)
+- **Cosmetic unlocks:** Orchard Sovereign, Crystalline Mire, Midnight Mechanica, Tidal Resonance (4 total)
 
 ## Progress Achievements
 
-| Achievement | Progress Requirement | Unlocks |
-| --- | --- | --- |
-| Apple Tycoon | Eat 1,000 total apples. | Unlocks the Orchard Sovereign snake skin. |
-| Daily Dabbler | Complete 1 daily challenge. | — |
-| Daily Champion | Complete 30 daily challenges. | Unlocks the Crystalline Mire snake skin. |
+| Achievement | Goal | Requirement Detail | Tracking Source | Hidden | Unlocks |
+| --- | --- | --- | --- | --- | --- |
+| Apple Tycoon | 1,000 apples | Eat 1,000 apples across all runs. | `PlayerStats.totalApplesEaten` | No | Orchard Sovereign snake skin |
+| Daily Dabbler | 1 daily challenge | Complete a single daily challenge. | `PlayerStats.dailyChallengesCompleted` | No | — |
+| Daily Champion | 30 daily challenges | Complete 30 daily challenges overall. | `PlayerStats.dailyChallengesCompleted` | No | Crystalline Mire snake skin |
 
 ## Depth Achievements
 
-There are currently no depth achievements defined in the game.
+No depth achievements are currently defined in `achievement_definitions.lua`.
 
 ## Skill Achievements
 
-| Achievement | Progress Requirement | Unlocks |
-| --- | --- | --- |
-| Combo Spark | Chain a combo of 3 fruit. | — |
-| Combo Surge | Chain a combo of 6 fruit. | — |
-| Combo Inferno | Chain a combo of 10 fruit. | Unlocks the Tidal Resonance snake skin. |
-| Shieldless Wonder* | Clear 3 floors in a run without triggering a shield. | — |
-| Dragon Combo Fusion* | Eat a dragonfruit and reach an 8-fruit combo in the same run. | — |
-| Ricochet Routine | Bounce off a wall using a shield. | — |
-| Stone Sneeze | Shatter a rock by face-checking it with a shield. | — |
-| Rock Crusher | Pulverize 25 rocks with the help of shields. | Unlocks the Midnight Mechanica snake skin. |
-| Saw Whisperer | Let a shield devour a saw for you. | — |
-| Saw Annihilator | Reduce 25 saws to splinters using shields. | — |
-| Crash-Test Maestro | In one run, shrug off a wall, rock, and saw with shields. | — |
+| Achievement | Goal | Requirement Detail | Tracking Source | Hidden | Unlocks |
+| --- | --- | --- | --- | --- | --- |
+| Combo Spark | 3 fruit combo | Reach a 3-fruit combo streak (lifetime best). | `PlayerStats.bestComboStreak` | No | — |
+| Combo Surge | 6 fruit combo | Reach a 6-fruit combo streak (lifetime best). | `PlayerStats.bestComboStreak` | No | — |
+| Combo Inferno | 10 fruit combo | Reach a 10-fruit combo streak (lifetime best). | `PlayerStats.bestComboStreak` | No | Tidal Resonance snake skin |
+| Shieldless Wonder* | 3 floors | Clear 3 floors in a single run without consuming a shield. | `SessionStats.runFloorsCleared`, `SessionStats.runShieldsSaved` | Yes | — |
+| Dragon Combo Fusion* | 1 run | In the same run, eat at least one dragonfruit and reach an 8-fruit combo streak. | `SessionStats.runDragonfruitEaten`, `SessionStats.runBestComboStreak` | Yes | — |
+| Ricochet Routine | 1 wall bounce | Bounce off a wall while shielded (cumulative). | `PlayerStats.shieldWallBounces` | No | — |
+| Stone Sneeze | 1 rock break | Break a rock by colliding with it while shielded (cumulative). | `PlayerStats.shieldRockBreaks` | No | — |
+| Rock Crusher | 25 rock breaks | Break 25 rocks with shields over time. | `PlayerStats.shieldRockBreaks` | No | Midnight Mechanica snake skin |
+| Saw Whisperer | 1 saw parry | Parry a saw blade using a shield (cumulative). | `PlayerStats.shieldSawParries` | No | — |
+| Saw Annihilator | 25 saw parries | Parry 25 saw blades with shields over time. | `PlayerStats.shieldSawParries` | No | — |
+| Crash-Test Maestro | 3 interactions | In a single run, block at least one wall, rock, and saw with shields. | `SessionStats.runShieldWallBounces`, `SessionStats.runShieldRockBreaks`, `SessionStats.runShieldSawParries` | No | — |
 
 ## Collection Achievements
 
-| Achievement | Progress Requirement | Unlocks |
-| --- | --- | --- |
-| Dragon Hunter | Collect the legendary Dragonfruit. | — |
-| Dragon Connoisseur | Collect 10 total dragonfruit. | — |
+| Achievement | Goal | Requirement Detail | Tracking Source | Hidden | Unlocks |
+| --- | --- | --- | --- | --- | --- |
+| Dragon Hunter | 1 dragonfruit | Collect a dragonfruit (lifetime). | `PlayerStats.totalDragonfruitEaten` | No | — |
+| Dragon Connoisseur | 10 dragonfruit | Collect 10 dragonfruit over time. | `PlayerStats.totalDragonfruitEaten` | No | — |
 
-*Hidden achievements that only appear after being unlocked.
+\*Hidden achievements that only appear after being unlocked.
+
+## Localization Notes
+
+The English localization file contains an unused entry for “Token Menagerie,” but there is no corresponding definition in
+`achievement_definitions.lua`. As a result, it is not obtainable in the current build and is excluded from the catalog.
