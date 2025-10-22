@@ -106,23 +106,36 @@ function DevScreen:updateLayout()
 	layout.contentX = panelX + panelPadding
 	layout.contentWidth = panelWidth - panelPadding * 2
 
-	local buttonX = panelX + (panelWidth - spacing.buttonWidth) / 2
-	local buttonY = panelY + panelHeight - panelPadding - spacing.buttonHeight
+        local buttonX = panelX + (panelWidth - spacing.buttonWidth) / 2
+        local buttonHeight = spacing.buttonHeight
+        local buttonSpacing = spacing.buttonSpacing or 16
+        local buttonCount = 2
+        local firstButtonY = panelY + panelHeight - panelPadding - buttonHeight
+        firstButtonY = firstButtonY - (buttonHeight + buttonSpacing) * (buttonCount - 1)
 
-	layout.button.x = buttonX
-	layout.button.y = buttonY
+        layout.button.x = buttonX
+        layout.button.y = firstButtonY + (buttonCount - 1) * (buttonHeight + buttonSpacing)
 
-	buttons = buttonList:reset({
-		{
-			id = "devBackButton",
-			x = buttonX,
-			y = buttonY,
-			w = spacing.buttonWidth,
-			h = spacing.buttonHeight,
-			labelKey = "dev.back_to_menu",
-			action = "menu",
-		},
-	})
+        buttons = buttonList:reset({
+                {
+                        id = "devRenderButton",
+                        x = buttonX,
+                        y = firstButtonY,
+                        w = spacing.buttonWidth,
+                        h = buttonHeight,
+                        labelKey = "dev.render_canvas",
+                        action = "rendercanvas",
+                },
+                {
+                        id = "devBackButton",
+                        x = buttonX,
+                        y = firstButtonY + buttonHeight + buttonSpacing,
+                        w = spacing.buttonWidth,
+                        h = buttonHeight,
+                        labelKey = "dev.back_to_menu",
+                        action = "menu",
+                },
+        })
 end
 
 function DevScreen:enter()
