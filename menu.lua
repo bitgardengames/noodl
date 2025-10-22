@@ -478,16 +478,24 @@ function Menu:draw()
 
 	drawBackground(sw, sh)
 
-	local baseCellSize = 20
-	local baseSpacing = 10
-	local wordScale = 1.5
+        local baseCellSize = 20
+        local baseSpacing = 10
+        local wordScale = 1.5
 
-	local cellSize = baseCellSize * wordScale
-	local word = Localization:get("menu.title_word")
-	local spacing = baseSpacing * wordScale
-	local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-	local ox = (sw - wordWidth) / 2
-        local oy = menuLayout.titleY or (sh * 0.2)
+        local cellSize = baseCellSize * wordScale
+        local word = Localization:get("menu.title_word")
+        local spacing = baseSpacing * wordScale
+        local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+        local ox = (sw - wordWidth) / 2
+
+        local baseOy = menuLayout.titleY or (sh * 0.2)
+        local buttonTop = buttons[1] and buttons[1].y or (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
+        local desiredSpacing = (UI.spacing.buttonSpacing or 0) + (UI.spacing.buttonHeight or 0) * 0.25 + cellSize * 0.5
+        local wordHeightForSpacing = cellSize * 2
+        local targetBottom = buttonTop - desiredSpacing
+        local currentBottom = baseOy + wordHeightForSpacing
+        local additionalOffset = max(0, targetBottom - currentBottom)
+        local oy = baseOy + additionalOffset
 
 	if titleSaw then
 		local sawRadius = titleSaw.radius or 1
