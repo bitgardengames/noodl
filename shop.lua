@@ -14,6 +14,14 @@ local max = math.max
 local min = math.min
 local pi = math.pi
 local sin = math.sin
+local sqrt = math.sqrt
+local atan = math.atan
+local atan2 = math.atan2 or function(y, x)
+        if atan then
+                return atan(y, x)
+        end
+        return 0
+end
 local unpack = table.unpack or unpack
 
 local Shop = {}
@@ -743,6 +751,76 @@ local function drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
         love.graphics.polygon(mode, unpack(points))
 end
 
+local function drawRoundedTriangle(mode, cx, cy, size, rotation)
+        local radius = size * 0.52
+        local baseCornerRadius = size * 0.14
+        if baseCornerRadius <= 0 then
+                drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+                return
+        end
+
+        local angleStep = (pi * 2) / 3
+        local offset = rotation or 0
+        local vertices = {}
+        for i = 0, 2 do
+                local angle = offset + i * angleStep
+                vertices[i + 1] = {
+                        cx + cos(angle) * radius,
+                        cy + sin(angle) * radius,
+                }
+        end
+
+        local points = {}
+        local segments = 4
+        for i = 1, 3 do
+                local current = vertices[i]
+                local prev = vertices[i == 1 and 3 or (i - 1)]
+                local next = vertices[i == 3 and 1 or (i + 1)]
+
+                local prevDirX = prev[1] - current[1]
+                local prevDirY = prev[2] - current[2]
+                local nextDirX = next[1] - current[1]
+                local nextDirY = next[2] - current[2]
+
+                local prevLen = sqrt(prevDirX * prevDirX + prevDirY * prevDirY)
+                local nextLen = sqrt(nextDirX * nextDirX + nextDirY * nextDirY)
+
+                if prevLen <= 0 or nextLen <= 0 then
+                        drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+                        return
+                end
+
+                local cornerRadius = min(baseCornerRadius, prevLen * 0.48, nextLen * 0.48)
+                local normPrevX = prevDirX / prevLen
+                local normPrevY = prevDirY / prevLen
+                local normNextX = nextDirX / nextLen
+                local normNextY = nextDirY / nextLen
+
+                local prevPointX = current[1] + normPrevX * cornerRadius
+                local prevPointY = current[2] + normPrevY * cornerRadius
+                local nextPointX = current[1] + normNextX * cornerRadius
+                local nextPointY = current[2] + normNextY * cornerRadius
+
+                points[#points + 1] = prevPointX
+                points[#points + 1] = prevPointY
+
+                local anglePrev = atan2(prevPointY - current[2], prevPointX - current[1])
+                local angleNext = atan2(nextPointY - current[2], nextPointX - current[1])
+                while angleNext <= anglePrev do
+                        angleNext = angleNext + (pi * 2)
+                end
+
+                for step = 1, segments do
+                        local t = step / segments
+                        local angle = anglePrev + (angleNext - anglePrev) * t
+                        points[#points + 1] = current[1] + cos(angle) * cornerRadius
+                        points[#points + 1] = current[2] + sin(angle) * cornerRadius
+                end
+        end
+
+        love.graphics.polygon(mode, unpack(points))
+end
+
 local badgeShapeDrawers = {
         circle = function(mode, cx, cy, size)
                 love.graphics.circle(mode, cx, cy, size * 0.5, 32)
@@ -760,10 +838,10 @@ local badgeShapeDrawers = {
                 love.graphics.pop()
         end,
         triangle_up = function(mode, cx, cy, size)
-                drawRegularPolygon(mode, cx, cy, size * 0.52, 3, -pi / 2)
+                drawRoundedTriangle(mode, cx, cy, size, -pi / 2)
         end,
         triangle_down = function(mode, cx, cy, size)
-                drawRegularPolygon(mode, cx, cy, size * 0.52, 3, pi / 2)
+                drawRoundedTriangle(mode, cx, cy, size, pi / 2)
         end,
         hexagon = function(mode, cx, cy, size)
                 drawRegularPolygon(mode, cx, cy, size * 0.48, 6, pi / 6)
