@@ -22,20 +22,11 @@ function DrawWord.draw(word, ox, oy, cellSize, spacing)
 	local x = ox
 	local fullTrail = {}
 
-	local letterCount = 0
-	for i = 1, #word do
-		if letters[word:sub(i, i)] then
-			letterCount = letterCount + 1
-		end
-	end
-
-	local drawnLetters = 0
-	for i = 1, #word do
-		local ch = word:sub(i,i)
-		local def = letters[ch]
-		if def then
-			drawnLetters = drawnLetters + 1
-			local letterPoints = {}
+        for i = 1, #word do
+                local ch = word:sub(i, i)
+                local def = letters[ch]
+                if def then
+                        local letterPoints = {}
 			for index, pt in ipairs(def) do
 				local px = x + pt[1] * cellSize
 				local py = oy + pt[2] * cellSize
