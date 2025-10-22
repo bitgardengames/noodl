@@ -14,7 +14,6 @@ local Arena = require("arena")
 
 local max = math.max
 local min = math.min
-local sin = math.sin
 local floor = math.floor
 
 local RenderScreen = {
@@ -52,6 +51,38 @@ local function copyColor(color)
                 color[3] or 0,
                 color[4] == nil and 1 or color[4],
         }
+end
+
+local function clamp(value, minimum, maximum)
+        if minimum ~= nil then
+                value = max(value, minimum)
+        end
+        if maximum ~= nil then
+                value = min(value, maximum)
+        end
+        return value
+end
+
+local function computeGridIndices(count, total)
+        local indices = {}
+        if total <= 0 or count <= 0 then
+                return indices
+        end
+
+        if total <= count then
+                for index = 1, count do
+                        indices[index] = clamp(index, 1, total)
+                end
+                return indices
+        end
+
+        local spacing = (total + 1) / (count + 1)
+        for index = 1, count do
+                local position = floor(spacing * index + 0.5)
+                indices[index] = clamp(position, 1, total)
+        end
+
+        return indices
 end
 
 local function countLines(text)
@@ -99,16 +130,16 @@ local function handleAnalogAxis(axis, value)
         buttonList:moveFocus(delta)
 end
 
-local function buildSnakeTrail(centerX, startY, segmentSize, totalSegments, amplitude)
+local function buildSnakeTrail(startX, startY, segmentSize, totalSegments, direction)
         local trail = {}
-        local spacing = segmentSize * 0.9
-        local baseY = startY
+        direction = direction or "horizontal"
+
+        local stepX = (direction == "vertical") and 0 or segmentSize
+        local stepY = (direction == "vertical") and segmentSize or 0
 
         for index = 0, totalSegments - 1 do
-                local progress = (totalSegments <= 1) and 0 or (index / (totalSegments - 1))
-                local wave = sin(progress * math.pi * 2) * amplitude
-                local x = centerX + wave
-                local y = baseY + index * spacing
+                local x = startX + stepX * index
+                local y = startY + stepY * index
                 trail[#trail + 1] = {
                         x = x,
                         y = y,
@@ -242,66 +273,58 @@ function RenderScreen:ensureOccupancy()
         SnakeUtils.initOccupancy()
 end
 
-function RenderScreen:setupLasers(segmentSize)
+function RenderScreen:setupLasers(segmentSize, positions)
         Lasers:reset()
         self:ensureOccupancy()
 
-        local canvas = layout.canvas
-        if not canvas then
-                return
+        local size = segmentSize or SnakeUtils.SEGMENT_SIZE or 24
+        local thickness = max(4, size * 0.4)
+        local firing = positions and positions.firing
+        local idle = positions and positions.idle
+
+        if firing and firing.x and firing.y then
+                local beamA = Lasers:spawn(firing.x, firing.y, firing.dir or "horizontal", {
+                        beamThickness = thickness,
+                })
+                if beamA then
+                        beamA.state = "firing"
+                        beamA.fireTimer = beamA.fireDuration
+                        beamA.chargeTimer = 0
+                        beamA.fireCooldown = 0
+                        beamA.flashTimer = 0.4
+                        beamA.burnAlpha = 0.8
+                        beamA.baseGlow = 0.6
+                        beamA.telegraphStrength = 0
+                end
         end
 
-        local thickness = max(4, segmentSize * 0.4)
-        local horizontalY = canvas.y + canvas.h * 0.22
-        local horizontalX = canvas.x + canvas.w * 0.18
-
-        local beamA = Lasers:spawn(horizontalX, horizontalY, "horizontal", {
-                beamThickness = thickness,
-        })
-        if beamA then
-                beamA.state = "firing"
-                beamA.fireTimer = beamA.fireDuration
-                beamA.chargeTimer = 0
-                beamA.fireCooldown = 0
-                beamA.flashTimer = 0.4
-                beamA.burnAlpha = 0.8
-                beamA.baseGlow = 0.6
-                beamA.telegraphStrength = 0
-        end
-
-        local verticalX = canvas.x + canvas.w * 0.68
-        local verticalY = canvas.y + canvas.h * 0.5
-        local beamB = Lasers:spawn(verticalX, verticalY, "vertical", {
-                beamThickness = thickness,
-        })
-        if beamB then
-                beamB.state = "firing"
-                beamB.fireTimer = beamB.fireDuration
-                beamB.chargeTimer = 0
-                beamB.fireCooldown = 0
-                beamB.flashTimer = 0.4
-                beamB.burnAlpha = 0.8
-                beamB.baseGlow = 0.6
-                beamB.telegraphStrength = 0
+        if idle and idle.x and idle.y then
+                local beamB = Lasers:spawn(idle.x, idle.y, idle.dir or "vertical", {
+                        beamThickness = thickness,
+                })
+                if beamB then
+                        beamB.state = "cooldown"
+                        beamB.fireTimer = 0
+                        beamB.chargeTimer = beamB.baseChargeDuration
+                        beamB.fireCooldown = 0
+                        beamB.flashTimer = 0
+                        beamB.burnAlpha = 0
+                        beamB.baseGlow = 0.2
+                        beamB.telegraphStrength = 0
+                end
         end
 end
 
-function RenderScreen:setupRocks()
+function RenderScreen:setupRocks(positions)
         Rocks:reset()
-        local canvas = layout.canvas
-        if not canvas then
+        if not positions or #positions == 0 then
                 return
         end
 
-        local positions = {
-                {canvas.x + canvas.w * 0.28, canvas.y + canvas.h * 0.72},
-                {canvas.x + canvas.w * 0.38, canvas.y + canvas.h * 0.78},
-                {canvas.x + canvas.w * 0.48, canvas.y + canvas.h * 0.74},
-                {canvas.x + canvas.w * 0.60, canvas.y + canvas.h * 0.79},
-        }
-
         for _, pos in ipairs(positions) do
-                Rocks:spawn(pos[1], pos[2])
+                if pos.x and pos.y then
+                        Rocks:spawn(pos.x, pos.y)
+                end
         end
 
         local rocks = Rocks:getAll()
@@ -320,25 +343,52 @@ function RenderScreen:rebuildScene()
                 return
         end
 
-        local segmentSize = max(18, min(canvas.w, canvas.h) * 0.07)
-        self.snakeSegmentSize = segmentSize
-        local totalSegments = 18
-        local amplitude = canvas.w * 0.14
-        local startY = canvas.y + canvas.h * 0.18
-        local centerX = canvas.x + canvas.w * 0.32
+        local tileSize = Arena.tileSize or SnakeUtils.SEGMENT_SIZE or 24
+        local cols = max(1, Arena.cols or floor((canvas.w or tileSize) / tileSize))
+        local rows = max(1, Arena.rows or floor((canvas.h or tileSize) / tileSize))
 
-        self.snakeTrail = buildSnakeTrail(centerX, startY, segmentSize, totalSegments, amplitude)
+        local gridCols = 3
+        local gridRows = 2
+        local columnTiles = computeGridIndices(gridCols, cols)
+        local rowTiles = computeGridIndices(gridRows, rows)
 
+        local function tileCenter(col, row)
+                local cx = canvas.x + (col - 0.5) * tileSize
+                local cy = canvas.y + (row - 0.5) * tileSize
+                return cx, cy
+        end
+
+        self.snakeSegmentSize = tileSize
+
+        local snakeRow = rowTiles[1] or clamp(floor(rows * 0.3), 1, rows)
+        local totalSegments = clamp(floor(cols * 0.35), 6, min(12, cols))
+        local startColLimit = max(1, cols - totalSegments + 1)
+        local baseCol = columnTiles[1] or clamp(floor(cols * 0.2), 1, cols)
+        local startCol = clamp(baseCol - floor(totalSegments / 2), 1, startColLimit)
+        if startCol + totalSegments - 1 > cols then
+                totalSegments = max(1, cols - startCol + 1)
+        end
+
+        if totalSegments < 1 then
+                self.snakeTrail = {}
+        else
+                local startX, startY = tileCenter(startCol, snakeRow)
+                self.snakeTrail = buildSnakeTrail(startX, startY, tileSize, totalSegments, "horizontal")
+        end
+
+        local fruitCol = columnTiles[2] or clamp(floor(cols * 0.5), 1, cols)
+        local fruitRow = rowTiles[1] or snakeRow
+        local fruitX, fruitY = tileCenter(fruitCol, fruitRow)
         self.fruitCenter = {
-                x = canvas.x + canvas.w * 0.46,
-                y = canvas.y + canvas.h * 0.55,
+                x = fruitX,
+                y = fruitY,
         }
-        self.fruitRadius = segmentSize * 0.9
+        self.fruitRadius = max(4, (tileSize - 2) * 0.5)
 
         if not self.sawActor then
                 self.sawActor = SawActor.new({
-                        radius = segmentSize,
-                        trackLength = segmentSize * 4,
+                        radius = tileSize,
+                        trackLength = tileSize * 4,
                         moveSpeed = 0,
                         progress = 0.5,
                         dir = "horizontal",
@@ -348,21 +398,52 @@ function RenderScreen:rebuildScene()
                 })
         end
 
-        self.sawActor.radius = segmentSize
-        self.sawActor.trackLength = segmentSize * 4
+        self.sawActor.radius = tileSize
+        self.sawActor.trackLength = tileSize * 4
         self.sawActor.moveSpeed = 0
         self.sawActor.progress = 0.5
         self.sawActor.sinkProgress = 0.18
         self.sawActor.side = "right"
         self.sawActor.dir = "horizontal"
         self.sawActor.spinSpeed = 4.2
+
+        local sawCol = columnTiles[2] or fruitCol
+        local sawRow = rowTiles[2] or clamp(floor(rows * 0.7), 1, rows)
+        local sawX, sawY = tileCenter(sawCol, sawRow)
         self.sawPosition = {
-                x = canvas.x + canvas.w * 0.76,
-                y = canvas.y + canvas.h * 0.34,
+                x = sawX,
+                y = sawY,
         }
 
-        self:setupLasers(segmentSize)
-        self:setupRocks()
+        local rockBaseCol = columnTiles[1] or startCol
+        local rockBaseRow = rowTiles[2] or sawRow
+        local rockCols = {
+                rockBaseCol,
+                clamp(rockBaseCol + 1, 1, cols),
+                rockBaseCol,
+                clamp(rockBaseCol + 1, 1, cols),
+        }
+        local rockRows = {
+                rockBaseRow,
+                rockBaseRow,
+                clamp(rockBaseRow + 1, 1, rows),
+                clamp(rockBaseRow + 1, 1, rows),
+        }
+        local rockPositions = {}
+        for index = 1, #rockCols do
+                local rx, ry = tileCenter(rockCols[index], rockRows[index])
+                rockPositions[#rockPositions + 1] = {x = rx, y = ry}
+        end
+
+        local laserCol = columnTiles[3] or clamp(floor(cols * 0.8), 1, cols)
+        local firingLaserX, firingLaserY = tileCenter(laserCol, rowTiles[1] or fruitRow)
+        local idleLaserX, idleLaserY = tileCenter(laserCol, rowTiles[2] or sawRow)
+
+        self:setupLasers(tileSize, {
+                firing = {x = firingLaserX, y = firingLaserY, dir = "horizontal"},
+                idle = {x = idleLaserX, y = idleLaserY, dir = "vertical"},
+        })
+        self:setupRocks(rockPositions)
 end
 
 function RenderScreen:updateLayout()
