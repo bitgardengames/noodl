@@ -20,9 +20,6 @@ local function wrapIndex(index, count)
 	return ((index - 1) % count) + 1
 end
 
-function Display.getDisplayModes()
-	return displayModes
-end
 
 function Display.cycleDisplayMode(current, delta)
 	delta = delta or 1

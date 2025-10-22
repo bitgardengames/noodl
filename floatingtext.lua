@@ -225,10 +225,6 @@ local function createInstance(overrides)
 	return setmetatable(instance, FloatingText)
 end
 
-function FloatingText.new(overrides)
-	return createInstance(overrides)
-end
-
 function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 	assert(text ~= nil, "FloatingText:add requires text")
 
