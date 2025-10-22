@@ -8,6 +8,7 @@ local atan = math.atan
 local atan2 = math.atan2
 local cos = math.cos
 local floor = math.floor
+local ceil = math.ceil
 local max = math.max
 local min = math.min
 local pi = math.pi
@@ -560,8 +561,8 @@ local overlayShaderSources = {
 local overlayShaderCache = {}
 
 local function safeResolveShader(typeId)
-	if overlayShaderCache[typeId] ~= nil then
-		return overlayShaderCache[typeId]
+        if overlayShaderCache[typeId] ~= nil then
+                return overlayShaderCache[typeId]
 	end
 
 	local source = overlayShaderSources[typeId]
@@ -581,7 +582,80 @@ local function safeResolveShader(typeId)
 	return shader
 end
 
+local function accumulateBounds(accumulator, coords, hx, hy)
+        local bounds = accumulator or {}
+        local minX = bounds.minX
+        local minY = bounds.minY
+        local maxX = bounds.maxX
+        local maxY = bounds.maxY
+
+        if coords then
+                for i = 1, #coords, 2 do
+                        local x = coords[i]
+                        local y = coords[i + 1]
+                        if x and y then
+                                if not minX or x < minX then minX = x end
+                                if not minY or y < minY then minY = y end
+                                if not maxX or x > maxX then maxX = x end
+                                if not maxY or y > maxY then maxY = y end
+                        end
+                end
+        end
+
+        if hx and hy then
+                if not minX or hx < minX then minX = hx end
+                if not minY or hy < minY then minY = hy end
+                if not maxX or hx > maxX then maxX = hx end
+                if not maxY or hy > maxY then maxY = hy end
+        end
+
+        bounds.minX = minX
+        bounds.minY = minY
+        bounds.maxX = maxX
+        bounds.maxY = maxY
+
+        return bounds
+end
+
+local function finalizeBounds(bounds, half)
+        if not bounds or not bounds.minX or not bounds.minY or not bounds.maxX or not bounds.maxY then
+                return nil
+        end
+
+        local bulgeRadius = half * FRUIT_BULGE_SCALE
+        local margin = max(half + OUTLINE_SIZE, bulgeRadius + OUTLINE_SIZE) + SHADOW_OFFSET + 2
+
+        local minX = bounds.minX
+        local minY = bounds.minY
+        local maxX = bounds.maxX
+        local maxY = bounds.maxY
+
+        local rawX = minX - margin
+        local rawY = minY - margin
+        local rawW = (maxX - minX) + margin * 2
+        local rawH = (maxY - minY) + margin * 2
+
+        local offsetX = floor(rawX)
+        local offsetY = floor(rawY)
+        local width = ceil(rawX + rawW - offsetX)
+        local height = ceil(rawY + rawH - offsetY)
+
+        if width < 1 then width = 1 end
+        if height < 1 then height = 1 end
+
+        bounds.offsetX = offsetX
+        bounds.offsetY = offsetY
+        bounds.width = width
+        bounds.height = height
+
+        return bounds
+end
+
 local function ensureSnakeCanvas(width, height)
+        if width <= 0 or height <= 0 then
+                return nil
+        end
+
         if not snakeCanvas or snakeCanvas:getWidth() ~= width or snakeCanvas:getHeight() ~= height then
                 snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
         end
@@ -589,48 +663,57 @@ local function ensureSnakeCanvas(width, height)
 end
 
 local function ensureSnakeOverlayCanvas(width, height)
-	if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= width or snakeOverlayCanvas:getHeight() ~= height then
-		snakeOverlayCanvas = love.graphics.newCanvas(width, height)
-	end
-	return snakeOverlayCanvas
+        if width <= 0 or height <= 0 then
+                return nil
+        end
+
+        if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= width or snakeOverlayCanvas:getHeight() ~= height then
+                snakeOverlayCanvas = love.graphics.newCanvas(width, height)
+        end
+        return snakeOverlayCanvas
 end
 
-local function presentSnakeCanvas(overlayEffect, width, height)
-	if not snakeCanvas then
-		return false
-	end
+local function presentSnakeCanvas(overlayEffect, width, height, offsetX, offsetY)
+        if not snakeCanvas then
+                return false
+        end
 
-	RenderLayers:withLayer("shadows", function()
-		love.graphics.setColor(0, 0, 0, 0.25)
-		love.graphics.draw(snakeCanvas, SHADOW_OFFSET, SHADOW_OFFSET)
-	end)
+        local drawX = offsetX or 0
+        local drawY = offsetY or 0
 
-	local drewOverlay = false
-	if overlayEffect then
-		local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
-		local previousCanvas = {love.graphics.getCanvas()}
-		love.graphics.setCanvas(overlayCanvas)
-		love.graphics.clear(0, 0, 0, 0)
-		love.graphics.setColor(1, 1, 1, 1)
-		love.graphics.draw(snakeCanvas, 0, 0)
-		drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
-		if #previousCanvas > 0 then
-			love.graphics.setCanvas(unpack(previousCanvas))
-		else
-			love.graphics.setCanvas()
-		end
-	end
+        RenderLayers:withLayer("shadows", function()
+                love.graphics.setColor(0, 0, 0, 0.25)
+                love.graphics.draw(snakeCanvas, drawX + SHADOW_OFFSET, drawY + SHADOW_OFFSET)
+        end)
 
-	RenderLayers:withLayer("main", function()
-		love.graphics.setColor(1, 1, 1, 1)
-		if drewOverlay then
-			love.graphics.draw(snakeOverlayCanvas, 0, 0)
-		else
-			love.graphics.draw(snakeCanvas, 0, 0)
-		end
-	end)
+        local drewOverlay = false
+        if overlayEffect then
+                local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
+                local previousCanvas = {love.graphics.getCanvas()}
+                if overlayCanvas then
+                        love.graphics.setCanvas(overlayCanvas)
+                        love.graphics.clear(0, 0, 0, 0)
+                        love.graphics.setColor(1, 1, 1, 1)
+                        love.graphics.draw(snakeCanvas, 0, 0)
+                        drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
+                end
+                if #previousCanvas > 0 then
+                        love.graphics.setCanvas(unpack(previousCanvas))
+                else
+                        love.graphics.setCanvas()
+                end
+        end
 
-	return drewOverlay
+        RenderLayers:withLayer("main", function()
+                love.graphics.setColor(1, 1, 1, 1)
+                if drewOverlay then
+                        love.graphics.draw(snakeOverlayCanvas, drawX, drawY)
+                else
+                        love.graphics.draw(snakeCanvas, drawX, drawY)
+                end
+        end)
+
+        return drewOverlay
 end
 
 local overlayPrimaryColor = {1, 1, 1, 1}
@@ -1075,13 +1158,13 @@ local function fadePalette(palette, alphaScale)
 	return faded
 end
 
-local function drawTrailSegmentToCanvas(trail, half, options, paletteOverride)
-	if not trail or #trail == 0 then
-		return
-	end
+local function drawTrailSegmentToCanvas(trail, half, options, paletteOverride, coordsOverride)
+        if not trail or #trail == 0 then
+                return
+        end
 
-	local coords = buildCoords(trail)
-	local head = trail[1]
+        local coords = coordsOverride or buildCoords(trail)
+        local head = trail[1]
 
 	if #coords >= 4 then
 		renderSnakeToCanvas(trail, coords, head, half, options, paletteOverride)
@@ -2185,30 +2268,76 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                         local ex = exitHead.drawX or exitHead.x
                         local ey = exitHead.drawY or exitHead.y
                         if ex and ey then
-				hx, hy = ex, ey
-			end
-		else
-			hx = portalInfo.exitX or hx
-			hy = portalInfo.exitY or hy
-		end
+                                hx, hy = ex, ey
+                        end
+                else
+                        hx = portalInfo.exitX or hx
+                        hy = portalInfo.exitY or hy
+                end
 
-		local ww, hh = love.graphics.getDimensions()
-		ensureSnakeCanvas(ww, hh)
+                local exitCoords = buildCoords(exitTrail)
+                local exitHX = exitHead and (exitHead.drawX or exitHead.x)
+                local exitHY = exitHead and (exitHead.drawY or exitHead.y)
+                local bounds = finalizeBounds(accumulateBounds(nil, exitCoords, exitHX, exitHY), half)
 
-                love.graphics.setCanvas({snakeCanvas, stencil = true})
-                love.graphics.clear(0, 0, 0, 0)
-                drawTrailSegmentToCanvas(exitTrail, half, options, palette)
-
+                local entryCoords
                 if entryTrail and #entryTrail > 0 then
-                        local entryPalette = fadePalette(palette, 0.55)
-                        drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette)
+                        local entryHead = entryTrail[1]
+                        local entryHX = entryHead and (entryHead.drawX or entryHead.x)
+                        local entryHY = entryHead and (entryHead.drawY or entryHead.y)
+                        entryCoords = buildCoords(entryTrail)
+                        bounds = finalizeBounds(accumulateBounds(bounds, entryCoords, entryHX, entryHY), half) or bounds
                 end
 
-                love.graphics.setCanvas()
-                if exitHole then
-                        drawPortalHole(exitHole, true)
+                local canvas
+                if bounds then
+                        canvas = ensureSnakeCanvas(bounds.width, bounds.height)
                 end
-                presentSnakeCanvas(overlayEffect, ww, hh)
+
+                local presented = false
+                if canvas and bounds then
+                        love.graphics.setCanvas({canvas, stencil = true})
+                        love.graphics.clear(0, 0, 0, 0)
+                        love.graphics.push()
+                        love.graphics.translate(-bounds.offsetX, -bounds.offsetY)
+                        drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
+
+                        if entryTrail and #entryTrail > 0 then
+                                local entryPalette = fadePalette(palette, 0.55)
+                                drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
+                        end
+                        love.graphics.pop()
+                        love.graphics.setCanvas()
+
+                        if exitHole then
+                                drawPortalHole(exitHole, true)
+                        end
+                        presentSnakeCanvas(overlayEffect, bounds.width, bounds.height, bounds.offsetX, bounds.offsetY)
+                        presented = true
+                end
+
+                if not presented then
+                        if exitHole then
+                                drawPortalHole(exitHole, true)
+                        end
+
+                        local ww, hh = love.graphics.getDimensions()
+                        local fallbackCanvas = ensureSnakeCanvas(ww, hh)
+                        if fallbackCanvas then
+                                love.graphics.setCanvas({fallbackCanvas, stencil = true})
+                                love.graphics.clear(0, 0, 0, 0)
+                                drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
+
+                                if entryTrail and #entryTrail > 0 then
+                                        local entryPalette = fadePalette(palette, 0.55)
+                                        drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
+                                end
+                                love.graphics.setCanvas()
+                                presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
+                                presented = true
+                        end
+                end
+
                 if entryHole then
                         drawPortalHole(entryHole, false)
                 end
@@ -2258,42 +2387,33 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                         end
                 end
         else
-		local coords = buildCoords(trail)
-		if #coords >= 4 then
-			-- render into a canvas once
-			local ww, hh = love.graphics.getDimensions()
-			ensureSnakeCanvas(ww, hh)
+                local coords = buildCoords(trail)
+                local bounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
+                local canvas
+                if bounds then
+                        canvas = ensureSnakeCanvas(bounds.width, bounds.height)
+                end
 
-                        love.graphics.setCanvas({snakeCanvas, stencil = true})
-			love.graphics.clear(0,0,0,0)
-			renderSnakeToCanvas(trail, coords, head, half, options, palette)
-			love.graphics.setCanvas()
-			presentSnakeCanvas(overlayEffect, ww, hh)
-		elseif hx and hy then
-			-- fallback: draw a simple disk when only the head is visible
-			local bodyColor = (palette and palette.body) or SnakeCosmetics:getBodyColor()
-			local outlineColor = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
-			local outlineR = outlineColor[1] or 0
-			local outlineG = outlineColor[2] or 0
-			local outlineB = outlineColor[3] or 0
-			local outlineA = outlineColor[4] or 1
-			local bodyR = bodyColor[1] or 1
-			local bodyG = bodyColor[2] or 1
-			local bodyB = bodyColor[3] or 1
-			local bodyA = bodyColor[4] or 1
-
-			local ww, hh = love.graphics.getDimensions()
-			ensureSnakeCanvas(ww, hh)
-
-                        love.graphics.setCanvas({snakeCanvas, stencil = true})
-			love.graphics.clear(0, 0, 0, 0)
-                        love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-                        love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
-                        love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-                        love.graphics.circle("fill", hx, hy, half)
+                if canvas and bounds then
+                        love.graphics.setCanvas({canvas, stencil = true})
+                        love.graphics.clear(0,0,0,0)
+                        love.graphics.push()
+                        love.graphics.translate(-bounds.offsetX, -bounds.offsetY)
+                        drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+                        love.graphics.pop()
                         love.graphics.setCanvas()
 
-                        presentSnakeCanvas(overlayEffect, ww, hh)
+                        presentSnakeCanvas(overlayEffect, bounds.width, bounds.height, bounds.offsetX, bounds.offsetY)
+                else
+                        local ww, hh = love.graphics.getDimensions()
+                        local fallbackCanvas = ensureSnakeCanvas(ww, hh)
+                        if fallbackCanvas then
+                                love.graphics.setCanvas({fallbackCanvas, stencil = true})
+                                love.graphics.clear(0,0,0,0)
+                                drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+                                love.graphics.setCanvas()
+                                presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
+                        end
                 end
         end
 
