@@ -395,12 +395,11 @@ function Menu:enter()
         local menuLayout = UI.getMenuLayout(sw, sh)
 
 	local labels = {
-		{key = "menu.start_game",   action = "game"},
-		{key = "menu.achievements", action = "achievementsmenu"},
-		{key = "menu.progression",  action = "metaprogression"},
-		{key = "menu.dev_page",     action = "dev"},
-		{key = "menu.settings",     action = "settings"},
-		{key = "menu.quit",         action = "quit"},
+                {key = "menu.start_game",   action = "game"},
+                {key = "menu.achievements", action = "achievementsmenu"},
+                {key = "menu.progression",  action = "metaprogression"},
+                {key = "menu.settings",     action = "settings"},
+                {key = "menu.quit",         action = "quit"},
 	}
 
         local totalButtonHeight = #labels * UI.spacing.buttonHeight + max(0, #labels - 1) * UI.spacing.buttonSpacing
