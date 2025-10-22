@@ -1059,7 +1059,6 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 
         local headerPadding = 16
         local badgeInset = 18
-        local badgeSize = 34
         local badgeStyle = getBadgeStyleForCard(card)
         local headerHeight = 0
         local headerTop = y + headerPadding
@@ -1070,14 +1069,21 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         local hasRarity = rarityLabel and rarityLabel ~= ""
         local rarityHeight = 0
 
-        if badgeStyle then
-                headerHeight = max(headerHeight, badgeSize)
-        end
-
         if hasRarity then
                 love.graphics.setFont(rarityFont)
                 rarityHeight = rarityFont:getHeight() * rarityFont:getLineHeight()
                 headerHeight = max(headerHeight, rarityHeight)
+        end
+
+        local badgeSize = 0
+        if badgeStyle then
+                if rarityHeight > 0 then
+                        badgeSize = rarityHeight
+                else
+                        love.graphics.setFont(rarityFont)
+                        badgeSize = rarityFont:getHeight() * rarityFont:getLineHeight()
+                end
+                headerHeight = max(headerHeight, badgeSize)
         end
 
         if headerHeight > 0 then

@@ -837,6 +837,15 @@ local function normalizeUpgradeDefinition(upgrade)
 	local context = string.format("upgrade '%s'", tostring(upgrade.id or "?"))
 	DataSchemas.validate(upgradeSchema, upgrade, context)
 
+	if type(upgrade.tags) ~= "table" then
+		upgrade.tags = {"default"}
+	else
+		local tagCount = #upgrade.tags
+		if tagCount == 0 then
+			upgrade.tags[1] = "default"
+		end
+	end
+
 	return upgrade
 end
 
