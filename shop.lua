@@ -939,6 +939,19 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 	local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
 	local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
 
+	-- Signature drop shadow to give cards lift against the background
+	local shadowOffsetX, shadowOffsetY = 8, 10
+	setColor(0, 0, 0, 0.38)
+	love.graphics.rectangle("fill", x + shadowOffsetX, y + shadowOffsetY, w, h, 18, 18)
+
+	-- Consistent 3px black outline framing the card regardless of rarity styling
+	local outlineWidth = 3
+	local outlineInset = outlineWidth * 0.5
+	love.graphics.setLineWidth(outlineWidth)
+	setColor(0, 0, 0, 1)
+	love.graphics.rectangle("line", x - outlineInset, y - outlineInset, w + outlineInset * 2, h + outlineInset * 2, 14, 14)
+	love.graphics.setLineWidth(4)
+
 	if isSelected then
 		local glowClock = love.timer.getTime()
 		local pulse = 0.35 + 0.25 * (sin(glowClock * 5) * 0.5 + 0.5)
