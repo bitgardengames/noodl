@@ -149,10 +149,10 @@ local SKIN_DEFINITIONS = {
 		unlock = {achievement = "appleTycoon"},
 		order = 40,
 	},
-	{
-		id = "abyssal_vanguard",
-		name = "Abyssal Vanguard",
-		description = "Awarded for conquering the deepest floors. Unlock the Floor Ascendant achievement to claim it.",
+        {
+                id = "abyssal_vanguard",
+                name = "Abyssal Vanguard",
+                description = "Awarded for conquering the deepest floors. Unlocks at metaprogression level 12.",
 		colors = {
 			body = {0.28, 0.45, 0.82, 1.0},
 			outline = {0.06, 0.12, 0.28, 1.0},
@@ -180,7 +180,7 @@ local SKIN_DEFINITIONS = {
 				step = 3,
 			},
 		},
-		unlock = {achievement = "floorAscendant"},
+                unlock = {level = 12},
 		order = 50,
 	},
 	{
@@ -217,10 +217,10 @@ local SKIN_DEFINITIONS = {
 		unlock = {level = 9},
 		order = 60,
 	},
-	{
-		id = "luminous_bloom",
-		name = "Luminous Bloom",
-		description = "Bioluminescent petals trail with every turn. Unlock the Meta Milestone 5 achievement to claim it.",
+        {
+                id = "luminous_bloom",
+                name = "Luminous Bloom",
+                description = "Bioluminescent petals trail with every turn. Unlocks at metaprogression level 13.",
 		colors = {
 			body = {0.52, 0.16, 0.58, 1.0},
 			outline = {0.14, 0.03, 0.18, 1.0},
@@ -248,13 +248,13 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = {achievement = "metaMilestone5"},
+                unlock = {level = 13},
 		order = 70,
 	},
-	{
-		id = "void_wisp",
-		name = "Void Wisp",
-		description = "An afterimage from beyond the grid. Unlock the Floor Abyss achievement to claim it.",
+        {
+                id = "void_wisp",
+                name = "Void Wisp",
+                description = "An afterimage from beyond the grid. Unlocks at metaprogression level 11.",
 		colors = {
 			body = {0.08, 0.12, 0.18, 1.0},
 			outline = {0.00, 0.00, 0.00, 1.0},
@@ -282,7 +282,7 @@ local SKIN_DEFINITIONS = {
 				step = 1,
 			},
 		},
-		unlock = {achievement = "floorAbyss"},
+                unlock = {level = 11},
 		order = 80,
 	},
 	{
@@ -353,10 +353,10 @@ local SKIN_DEFINITIONS = {
 		unlock = {level = 15},
 		order = 95,
 	},
-	{
-		id = "gilded_siren",
-		name = "Gilded Siren",
-		description = "Goldleaf fins that shimmer with every high score. Unlock the Score Legend achievement to claim it.",
+        {
+                id = "gilded_siren",
+                name = "Gilded Siren",
+                description = "Goldleaf fins that shimmer with every high score. Unlocks at metaprogression level 15.",
 		colors = {
 			body = {0.96, 0.78, 0.42, 1.0},
 			outline = {0.36, 0.20, 0.05, 1.0},
@@ -384,13 +384,13 @@ local SKIN_DEFINITIONS = {
 				step = 3,
 			},
 		},
-		unlock = {achievement = "scoreLegend"},
+                unlock = {level = 15},
 		order = 100,
 	},
-	{
-		id = "abyssal_constellation",
-		name = "Abyssal Constellation",
-		description = "Star-mapped scales that mirror the deepest currents. Unlock the Meta Milestone 7 achievement to claim it.",
+        {
+                id = "abyssal_constellation",
+                name = "Abyssal Constellation",
+                description = "Star-mapped scales that mirror the deepest currents. Unlocks at metaprogression level 14.",
 		colors = {
 			body = {0.14, 0.18, 0.34, 1.0},
 			outline = {0.04, 0.06, 0.14, 1.0},
@@ -418,7 +418,7 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-		unlock = {achievement = "metaMilestone7"},
+                unlock = {level = 14},
 		order = 110,
 	},
 	{
@@ -455,10 +455,10 @@ local SKIN_DEFINITIONS = {
 		unlock = {achievement = "dailyFunChampion"},
 		order = 120,
 	},
-	{
-		id = "obsidian_ritual",
-		name = "Obsidian Ritual",
-		description = "Scales quenched in volcanic rites. Unlock the Apple Eternal achievement to claim it.",
+        {
+                id = "obsidian_ritual",
+                name = "Obsidian Ritual",
+                description = "Scales quenched in volcanic rites. Unlocks at metaprogression level 10.",
 		colors = {
 			body = {0.18, 0.10, 0.16, 1.0},
 			outline = {0.02, 0.01, 0.04, 1.0},
@@ -486,7 +486,7 @@ local SKIN_DEFINITIONS = {
 				step = 3,
 			},
 		},
-		unlock = {achievement = "appleEternal"},
+                unlock = {level = 10},
 		order = 130,
 	},
 	{

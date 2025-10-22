@@ -658,29 +658,9 @@ local english = {
 			},
 		},
 		achievements_definitions = {
-			appleHoarder = {
-				title = "Apple Hoarder",
-				description = "Eat 100 total apples",
-			},
-			appleConqueror = {
-				title = "Apple Conqueror",
-				description = "Eat 500 total apples",
-			},
 			appleTycoon = {
 				title = "Apple Tycoon",
 				description = "Eat 1,000 total apples",
-			},
-			appleEternal = {
-				title = "Endless Appetite",
-				description = "Eat 2,500 total apples",
-			},
-			appleInfinite = {
-				title = "Infinite Appetite",
-				description = "Eat 5,000 total apples",
-			},
-			fullBelly = {
-				title = "Full Belly",
-				description = "Reach a snake length of 50",
 			},
 			comboSpark = {
 				title = "Combo Spark",
@@ -693,22 +673,6 @@ local english = {
 			comboInferno = {
 				title = "Combo Inferno",
 				description = "Chain a combo of 10 fruit",
-			},
-			scoreChaser = {
-				title = "Score Chaser",
-				description = "Reach a score of 250",
-			},
-			fruitFiesta = {
-				title = "Fruit Fiesta",
-				description = "Eat 25 fruit in a single run",
-			},
-			floorSprinter = {
-				title = "Floor Sprinter",
-				description = "Clear 3 floors in a single run",
-			},
-			scoreLegend = {
-				title = "Score Legend",
-				description = "Reach a score of 500",
 			},
 			wallRicochet = {
 				title = "Ricochet Routine",
@@ -734,10 +698,6 @@ local english = {
 				title = "Crash-Test Maestro",
 				description = "In one run, shrug off a wall, rock, and saw with shields.",
 			},
-			straightLineSnacker = {
-				title = "Straight-Line Snacker",
-				description = "Collect 3 fruit without turning.",
-			},
 			shieldlessWonder = {
 				title = "Shieldless Wonder",
 				description = "Clear 3 floors in a run without triggering a shield.",
@@ -758,65 +718,9 @@ local english = {
 				title = "Token Menagerie",
 				description = "Collect four different meta fruit tokens in a single run.",
 			},
-			floorScout = {
-				title = "Depth Scout",
-				description = "Reach floor 3",
-			},
-			floorDiver = {
-				title = "Cavern Diver",
-				description = "Reach floor 6",
-			},
-			floorAbyss = {
-				title = "Abyss Stalker",
-				description = "Reach floor 10",
-			},
-			floorAscendant = {
-				title = "Skyward Survivor",
-				description = "Reach floor 14",
-			},
-			floorVoyager = {
-				title = "Underworld Voyager",
-				description = "Clear 60 floors total",
-			},
-			seasonedRunner = {
-				title = "Seasoned Runner",
-				description = "Play 20 total runs",
-			},
-			metaMilestone1 = {
-				title = "Meta Milestone I",
-				description = "Earn 650 lifetime XP.",
-			},
-			metaMilestone2 = {
-				title = "Meta Milestone II",
-				description = "Earn 1,300 lifetime XP.",
-			},
-			metaMilestone3 = {
-				title = "Meta Milestone III",
-				description = "Earn 2,400 lifetime XP.",
-			},
-			metaMilestone4 = {
-				title = "Meta Milestone IV",
-				description = "Earn 3,800 lifetime XP.",
-			},
-			metaMilestone5 = {
-				title = "Meta Milestone V",
-				description = "Earn 5,200 lifetime XP.",
-			},
-			metaMilestone6 = {
-				title = "Meta Milestone VI",
-				description = "Earn 7,800 lifetime XP.",
-			},
-			metaMilestone7 = {
-				title = "Meta Milestone VII",
-				description = "Earn 10,500 lifetime XP.",
-			},
 			dailyFunDabbler = {
 				title = "Daily Dabbler",
 				description = "Complete 1 daily challenge.",
-			},
-			dailyFunRegular = {
-				title = "Daily Regular",
-				description = "Complete 10 daily challenges.",
 			},
 			dailyFunChampion = {
 				title = "Daily Champion",

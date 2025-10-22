@@ -6,47 +6,22 @@ This document lists every achievement currently defined in the game along with i
 
 | Achievement | Progress Requirement | Unlocks |
 | --- | --- | --- |
-| Apple Hoarder | Eat 100 total apples. | — |
-| Apple Conqueror | Eat 500 total apples. | — |
 | Apple Tycoon | Eat 1,000 total apples. | Unlocks the Orchard Sovereign snake skin. |
-| Endless Appetite | Eat 2,500 total apples. | Unlocks the Obsidian Ritual snake skin. |
-| Infinite Appetite | Eat 5,000 total apples. | — |
-| Seasoned Runner | Play 20 total runs. | — |
-| Meta Milestone I | Earn 650 lifetime XP. | — |
-| Meta Milestone II | Earn 1,300 lifetime XP. | — |
-| Meta Milestone III | Earn 2,400 lifetime XP. | — |
-| Meta Milestone IV | Earn 3,800 lifetime XP. | — |
-| Meta Milestone V | Earn 5,200 lifetime XP. | Unlocks the Luminous Bloom snake skin. |
-| Meta Milestone VI | Earn 7,800 lifetime XP. | — |
-| Meta Milestone VII | Earn 10,500 lifetime XP. | Unlocks the Abyssal Constellation snake skin. |
 | Daily Dabbler | Complete 1 daily challenge. | — |
-| Daily Regular | Complete 10 daily challenges. | — |
 | Daily Champion | Complete 30 daily challenges. | Unlocks the Crystalline Mire snake skin. |
 
 ## Depth Achievements
 
-| Achievement | Progress Requirement | Unlocks |
-| --- | --- | --- |
-| Depth Scout | Reach floor 3. | — |
-| Cavern Diver | Reach floor 6. | — |
-| Abyss Stalker | Reach floor 10. | Unlocks the Void Wisp snake skin. |
-| Skyward Survivor | Reach floor 14. | Unlocks the Abyssal Vanguard snake skin. |
-| Underworld Voyager | Clear 60 floors total. | — |
+There are currently no depth achievements defined in the game.
 
 ## Skill Achievements
 
 | Achievement | Progress Requirement | Unlocks |
 | --- | --- | --- |
-| Full Belly | Reach a snake length of 50. | — |
 | Combo Spark | Chain a combo of 3 fruit. | — |
 | Combo Surge | Chain a combo of 6 fruit. | — |
 | Combo Inferno | Chain a combo of 10 fruit. | Unlocks the Tidal Resonance snake skin. |
-| Straight-Line Snacker* | Collect 3 fruit without turning. | — |
 | Shieldless Wonder* | Clear 3 floors in a run without triggering a shield. | — |
-| Score Chaser | Reach a score of 250. | — |
-| Fruit Fiesta | Eat 25 fruit in a single run. | — |
-| Floor Sprinter | Clear 3 floors in a single run. | — |
-| Score Legend | Reach a score of 500. | Unlocks the Gilded Siren snake skin. |
 | Dragon Combo Fusion* | Eat a dragonfruit and reach an 8-fruit combo in the same run. | — |
 | Ricochet Routine | Bounce off a wall using a shield. | — |
 | Stone Sneeze | Shatter a rock by face-checking it with a shield. | — |

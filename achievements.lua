@@ -8,9 +8,6 @@ local m_type = math.type
 local insert = table.insert
 local sort = table.sort
 
-local Snake
-local MetaProgression
-
 local Achievements = {
 	definitions = {},
 	definitionOrder = {},
@@ -155,87 +152,34 @@ function Achievements:_ensureInitialized()
 
 	self:_finalizeOrdering()
 
-	if not self._defaultProvidersRegistered then
-		self:registerStateProvider(function()
-			return {
-				totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0,
-				sessionsPlayed = PlayerStats:get("sessionsPlayed") or 0,
-				totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
-				bestScore = PlayerStats:get("snakeScore") or 0,
-				floorsCleared = PlayerStats:get("floorsCleared") or 0,
-				deepestFloorReached = PlayerStats:get("deepestFloorReached") or 0,
-				bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
-				dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0,
-				shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0,
-				shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0,
-				shieldSawParries = PlayerStats:get("shieldSawParries") or 0,
-			}
-		end)
+        if not self._defaultProvidersRegistered then
+                self:registerStateProvider(function()
+                        return {
+                                totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0,
+                                totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
+                                bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
+                                dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0,
+                                shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0,
+                                shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0,
+                                shieldSawParries = PlayerStats:get("shieldSawParries") or 0,
+                        }
+                end)
 
-		self:registerStateProvider(function()
-			local SessionStats = require("sessionstats")
-			return {
-				runApplesEaten = SessionStats:get("applesEaten") or 0,
-				runFloorsCleared = SessionStats:get("floorsCleared") or 0,
-				runDeepestFloor = SessionStats:get("deepestFloorReached") or 0,
-				runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0,
-				runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0,
-				runShieldSawParries = SessionStats:get("runShieldSawParries") or 0,
-				runShieldsSaved = SessionStats:get("shieldsSaved") or 0,
-				runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0,
-				runBestComboStreak = SessionStats:get("bestComboStreak") or 0,
-				fruitWithoutTurning = SessionStats:get("fruitWithoutTurning") or 0,
-			}
-		end)
+                self:registerStateProvider(function()
+                        local SessionStats = require("sessionstats")
+                        return {
+                                runFloorsCleared = SessionStats:get("floorsCleared") or 0,
+                                runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0,
+                                runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0,
+                                runShieldSawParries = SessionStats:get("runShieldSawParries") or 0,
+                                runShieldsSaved = SessionStats:get("shieldsSaved") or 0,
+                                runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0,
+                                runBestComboStreak = SessionStats:get("bestComboStreak") or 0,
+                        }
+                end)
 
-		self:registerStateProvider(function()
-			if not Snake then
-				local ok, module = pcall(require, "snake")
-				if ok then
-					Snake = module
-				else
-					print("[achievements] failed to require snake:", module)
-					return nil
-				end
-			end
-
-			if Snake and Snake.getLength then
-				local length = Snake:getLength()
-				if length then
-					return {snakeLength = length}
-				end
-			end
-			return nil
-		end)
-
-		self:registerStateProvider(function()
-			if not MetaProgression then
-				local ok, module = pcall(require, "metaprogression")
-				if ok then
-					MetaProgression = module
-				else
-					print("[achievements] failed to require metaprogression:", module)
-					return nil
-				end
-			end
-
-			if MetaProgression and MetaProgression.getState then
-				local ok, state = pcall(MetaProgression.getState, MetaProgression)
-				if ok and type(state) == "table" then
-					return {
-						totalMetaExperience = state.totalExperience or 0,
-						metaLevel = state.level or 0,
-					}
-				elseif not ok then
-					print("[achievements] failed to query metaprogression state:", state)
-				end
-			end
-
-			return nil
-		end)
-
-		self._defaultProvidersRegistered = true
-	end
+                self._defaultProvidersRegistered = true
+        end
 
 	self._iconCache = {}
 	self._initialized = true
