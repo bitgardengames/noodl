@@ -348,7 +348,6 @@ Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
 Snake.shields = 0 -- shield protection: number of hits the snake can absorb
 Snake.extraGrowth = 0
-Snake.shieldBurst = nil
 Snake.shieldFlashTimer = 0
 Snake.stoneSkinSawGrace = 0
 Snake.dash = nil
@@ -439,7 +438,6 @@ function Snake:resetModifiers()
 	self.speedMult    = 1.0
 	self.shields = 0
 	self.extraGrowth  = 0
-	self.shieldBurst  = nil
 	self.shieldFlashTimer = 0
         self.stoneSkinSawGrace = 0
 	self.dash = nil
@@ -666,25 +664,6 @@ function Snake:setEventHorizonActive(active)
 	end
 end
 
-function Snake:setStormchaserPrimed(active)
-	local state = self.stormchaser
-	if active then
-		if not state then
-			state = {intensity = 0, target = 1, time = 0, primed = true}
-			self.stormchaser = state
-		end
-		state.target = 1
-		state.primed = true
-	elseif state then
-		state.target = 0
-		state.primed = false
-	end
-
-	if self.stormchaser and not self.stormchaser.primed and (self.stormchaser.intensity or 0) <= 0 and (self.stormchaser.target or 0) <= 0 then
-		self.stormchaser = nil
-	end
-end
-
 function Snake:setTitanbloodStacks(count)
 	count = max(0, floor((count or 0) + 0.0001))
 	local state = self.titanblood
@@ -706,41 +685,8 @@ function Snake:setTitanbloodStacks(count)
 	end
 end
 
-function Snake:addShieldBurst(config)
-	config = config or {}
-	self.shieldBurst = self.shieldBurst or {rocks = 0, stall = 0}
-	local rocks = config.rocks or 0
-	local stall = config.stall or 0
-	if rocks ~= 0 then
-		self.shieldBurst.rocks = (self.shieldBurst.rocks or 0) + rocks
-	end
-	if stall ~= 0 then
-		self.shieldBurst.stall = (self.shieldBurst.stall or 0) + stall
-	end
-end
-
 function Snake:onShieldConsumed(x, y, cause)
-	local burstTriggered = false
-	local burstRocks = 0
-	local burstStall = 0
-
-	if self.shieldBurst then
-		local rocksToBreak = floor(self.shieldBurst.rocks or 0)
-		if rocksToBreak > 0 and Rocks and Rocks.shatterNearest then
-			Rocks:shatterNearest(x or 0, y or 0, rocksToBreak)
-			burstTriggered = true
-			burstRocks = rocksToBreak
-		end
-
-		local stallDuration = self.shieldBurst.stall or 0
-		if stallDuration > 0 and Saws and Saws.stall then
-			Saws:stall(stallDuration)
-			burstTriggered = true
-			burstStall = stallDuration
-		end
-	end
-
-	if burstTriggered and (not x or not y) and self.getHead then
+	if (not x or not y) and self.getHead then
 		x, y = self:getHead()
 	end
 
@@ -750,11 +696,6 @@ function Snake:onShieldConsumed(x, y, cause)
 			x = x,
 			y = y,
 			cause = cause or "unknown",
-			burstTriggered = burstTriggered,
-			burst = burstTriggered and {
-				rocks = burstRocks,
-				stall = burstStall,
-			} or nil,
 		})
 	end
 end

@@ -1027,15 +1027,6 @@ function SnakeCosmetics:getGlowColor()
 	return resolveColor(palette.glow, self:getBodyColor())
 end
 
-function SnakeCosmetics:getGlowEffect()
-	local skin = self:getActiveSkin()
-	local effects = skin and skin.effects or {}
-	if effects.glow then
-		return copyTable(effects.glow)
-	end
-	return nil
-end
-
 function SnakeCosmetics:getOverlayEffect()
 	local skin = self:getActiveSkin()
 	local effects = skin and skin.effects or {}

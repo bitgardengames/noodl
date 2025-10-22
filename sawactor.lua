@@ -293,8 +293,4 @@ function SawActor:getSlotThickness()
 	return TRACK_SLOT_THICKNESS
 end
 
-function SawActor:setSinkProgress(progress)
-	self.sinkProgress = clampProgress(progress)
-end
-
 return SawActor

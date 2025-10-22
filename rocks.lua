@@ -294,11 +294,6 @@ function Rocks:shatterNearest(x, y, count)
 	end
 end
 
-function Rocks:addShatterOnFruit(count)
-	if not count or count <= 0 then return end
-	self.shatterOnFruit = (self.shatterOnFruit or 0) + count
-end
-
 function Rocks:onFruitCollected(x, y)
 	local rate = self.shatterOnFruit or 0
 	if rate <= 0 then
@@ -316,14 +311,6 @@ function Rocks:onFruitCollected(x, y)
 	end
 
 	self:shatterNearest(x or 0, y or 0, count)
-end
-
-function Rocks:getShatterProgress()
-	return self.shatterProgress or 0
-end
-
-function Rocks:getShatterRate()
-        return self.shatterOnFruit or 0
 end
 
 local function updateTremorSlide(rock, dt)

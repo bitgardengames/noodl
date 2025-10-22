@@ -93,10 +93,6 @@ function RunState:notify(event, data)
 	end
 end
 
-function RunState:resetEffects(defaults)
-	self.effects = deepcopy(defaults or defaultEffects)
-end
-
 local POCKET_SPRINGS_FRUIT_TARGET = 20
 local CHRONO_WARD_DEFAULT_DURATION = 0.85
 local CHRONO_WARD_DEFAULT_SCALE = 0.45

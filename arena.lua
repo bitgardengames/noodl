@@ -877,16 +877,6 @@ function Arena:setBackgroundEffect(effectData, palette)
 	self.activeBackgroundEffect = effect
 end
 
-function Arena:drawBackgroundEffect(x, y, w, h, intensity)
-	local effect = self.activeBackgroundEffect
-	if not effect then
-		return false
-	end
-
-	local drawIntensity = intensity or effect.backdropIntensity or select(1, Shaders.getDefaultIntensities(effect))
-	return Shaders.draw(effect, x, y, w, h, drawIntensity)
-end
-
 function Arena:drawBackdrop(sw, sh)
 	love.graphics.setColor(Theme.bgColor)
 	love.graphics.rectangle("fill", 0, 0, sw, sh)
