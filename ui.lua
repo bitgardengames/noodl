@@ -429,9 +429,9 @@ UI.colors = {
 	button      = Theme.buttonColor,
 	buttonHover = Theme.buttonHover or lightenColor(Theme.buttonColor, 0.15),
 	buttonPress = Theme.buttonPress or darkenColor(Theme.buttonColor, 0.65),
-	border      = Theme.borderColor,
-	panel       = Theme.panelColor,
-	panelBorder = Theme.panelBorder,
+        border      = {0, 0, 0, 1},
+        panel       = Theme.panelColor,
+        panelBorder = {0, 0, 0, 1},
 	shadow      = Theme.shadowColor,
 	highlight   = Theme.highlightColor or {1, 1, 1, 0.08},
 	progress    = Theme.progressColor,
@@ -1233,7 +1233,7 @@ local function drawComboIndicator(self)
 	love.graphics.setColor(Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], 0.95)
 	love.graphics.rectangle("fill", x, y, width, height, 18, 18)
 
-	love.graphics.setColor(Theme.panelBorder)
+        love.graphics.setColor(UI.colors.border)
 	love.graphics.setLineWidth(3)
 	love.graphics.rectangle("line", x, y, width, height, 18, 18)
 
@@ -1543,7 +1543,7 @@ function UI:drawUpgradeIndicators()
 
 	for _, entry in ipairs(entries) do
 		local visibility = clamp01(entry.visibility or 1)
-		local accent = entry.accentColor or Theme.panelBorder or {1, 1, 1, 1}
+                local accent = entry.accentColor or Theme.panelBorder or {1, 1, 1, 1}
 		local hasBar = entry.showBar and entry.displayProgress ~= nil
 		local panelHeight = baseHeight + (hasBar and 8 or 0)
 
@@ -1558,8 +1558,8 @@ function UI:drawUpgradeIndicators()
 		love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * (0.95 * visibility))
 		love.graphics.rectangle("fill", x, drawY, width, panelHeight, 14, 14)
 
-		local border = lightenColor(accent, 0.15)
-		love.graphics.setColor(border[1], border[2], border[3], (border[4] or 1) * visibility)
+                local border = UI.colors.border
+                love.graphics.setColor(border[1], border[2], border[3], (border[4] or 1) * visibility)
 		love.graphics.setLineWidth(2)
 		love.graphics.rectangle("line", x, drawY, width, panelHeight, 14, 14)
 
@@ -1696,7 +1696,7 @@ function UI:drawFruitSockets()
 	love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
 	love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
 
-	local borderColor = Theme.panelBorder or {0, 0, 0, 1}
+        local borderColor = UI.colors.border or {0, 0, 0, 1}
 	if goalFlash > 0 then
 		borderColor = lightenColor(borderColor, 0.4 * goalFlash)
 	end
@@ -1707,7 +1707,7 @@ function UI:drawFruitSockets()
 	local time = love.timer.getTime()
 	local socketRadius = (self.socketSize / 2) - 2
 	local socketFill = lightenColor(Theme.panelColor, 0.45)
-	local socketOutline = lightenColor(Theme.panelBorder or Theme.textColor, 0.2)
+        local socketOutline = lightenColor(UI.colors.panelBorder or Theme.textColor, 0.2)
 
 	local highlightColor = (UI.colors and UI.colors.highlight) or Theme.highlightColor or {1, 1, 1, 0.08}
 
