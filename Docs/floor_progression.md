@@ -1,38 +1,52 @@
 # Floor Progression Overview
 
-This reference outlines each floor in the current progression, summarising its narrative beat, colour palette, mood, and the shader effect that shapes its background atmosphere.
+The current campaign moves through eight distinct floors. Each entry below is aligned with the live `floors.lua` data so that palette values, shader selections, and narrative beats remain audit-ready.
+
+| Floor | Name | Theme | Background Shader | Backdrop Intensity | Arena Intensity |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Garden Gate | botanical | `gardenMellow` | 0.54 | 0.30 |
+| 2 | Moonwell Caves | cavern | `softCavern` | 0.54 | 0.32 |
+| 3 | Tide Vault | oceanic | `softCurrent` | 0.60 | 0.36 |
+| 4 | Rusted Hoist | machine | `ruinMotes` | 0.60 | 0.34 |
+| 5 | Crystal Run | arctic | `auroraVeil` | 0.62 | 0.42 |
+| 6 | Ember Market | desert | `emberDrift` | 0.62 | 0.38 |
+| 7 | Skywalk | urban — celestial | `auroraVeil` | 0.48 | 0.28 |
+| 8 | Promise Gate | urban — celestial | `voidPulse` | 0.74 | 0.46 |
+
+Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every fruit accounted for."
+
+---
 
 ## Floor 1: Garden Gate
 
 **Description:** Noodl winds through the garden, scooping up fruit scattered among the vines.
 
-**Mood / Tone:** Fresh, welcoming
-
-**Dominant colours:** Greens & golds
-
-**Visual theme:** botanical
+**Mood / Tone:** Fresh, welcoming  
+**Dominant colours:** Woodland greens with golden accents  
+**Visual theme:** botanical canopy
 
 **Palette**
 
 | Element | RGBA (0-255) | Hex |
 | --- | --- | --- |
-| Backdrop | (28, 51, 66, 255) | #1C3342 |
-| Arena base | (66, 133, 112, 255) | #428570 |
-| Arena border | (212, 158, 87, 255) | #D49E57 |
-| Snake | (97, 219, 173, 255) | #61DBAD |
-| Rocks | (112, 138, 122, 255) | #708A7A |
+| Backdrop | (42, 49, 68, 255) | #2A3144 |
+| Arena base | (42, 49, 68, 255) | #2A3144 |
+| Arena border | (184, 169, 133, 255) | #B8A985 |
+| Snake | (118, 214, 195, 255) | #76D6C3 |
+| Rocks | (200, 199, 197, 255) | #C8C7C5 |
+| Saws | (210, 214, 218, 255) | #D2D6DA |
 
-**Background shader:** `gardenMellow` — Mellow canopy drift layers gentle dawn light and sparkling pollen. (intensity backdrop 0.54 / arena 0.30).
+**Background shader:** `gardenMellow` — Mellow canopy drift layers gentle dawn light and sparkling pollen. (Backdrops 0.54 / Arena 0.30)
+
+---
 
 ## Floor 2: Moonwell Caves
 
 **Description:** Moonlit pools mirror Noodl's glide as pears bob within easy reach.
 
-**Mood / Tone:** Cool, mysterious
-
-**Dominant colours:** Deep blue-violet
-
-**Visual theme:** cavern
+**Mood / Tone:** Cool, mysterious  
+**Dominant colours:** Deep blue-violet  
+**Visual theme:** cavern reflections
 
 **Palette**
 
@@ -42,65 +56,66 @@ This reference outlines each floor in the current progression, summarising its n
 | Arena base | (33, 43, 64, 255) | #212B40 |
 | Arena border | (112, 92, 158, 255) | #705C9E |
 | Snake | (199, 219, 250, 255) | #C7DBFA |
-| Rocks | (97, 138, 168, 255) | #618AA8 |
+| Rocks | (105, 148, 181, 255) | #6994B5 |
+| Saws | (176, 176, 189, 255) | #B0B0BD |
 
-**Background shader:** `softCavern` — Soft cavern haze with muted glints shimmering across pools. (intensity backdrop 0.54 / arena 0.32).
+**Background shader:** `softCavern` — Soft cavern haze with muted glints shimmering across pools. (Backdrops 0.54 / Arena 0.32)
+
+---
 
 ## Floor 3: Tide Vault
 
 **Description:** Slow waves roll shining citrus along the tiles while Noodl gathers every slice.
 
-**Mood / Tone:** Flowing, calm
-
-**Dominant colours:** Teal & citrus
-
-**Visual theme:** oceanic
+**Mood / Tone:** Flowing, calm  
+**Dominant colours:** Teal & citrus  
+**Visual theme:** oceanic vault
 
 **Palette**
 
 | Element | RGBA (0-255) | Hex |
 | --- | --- | --- |
 | Backdrop | (13, 28, 38, 255) | #0D1C26 |
-| Arena base | (26, 46, 56, 255) | #1A2E38 |
-| Arena border | (61, 133, 128, 255) | #3D8580 |
+| Arena base | (24, 55, 64, 255) | #183740 |
+| Arena border | (42, 82, 88, 255) | #2A5258 |
 | Snake | (214, 242, 148, 255) | #D6F294 |
-| Rocks | (76, 133, 148, 255) | #4C8594 |
-| Saws | (242, 199, 117, 255) | #F2C775 |
+| Rocks | (92, 143, 162, 255) | #5C8FA2 |
+| Saws | (158, 168, 171, 255) | #9EA8AB |
 
-**Background shader:** `softCurrent` — Gentle tidal drift with caustic highlights and rising mist. (intensity backdrop 0.60 / arena 0.36).
+**Background shader:** `softCurrent` — Gentle tidal drift with caustic highlights and rising mist. (Backdrops 0.60 / Arena 0.36)
+
+---
 
 ## Floor 4: Rusted Hoist
 
 **Description:** Ancient lifts cough up stashed syrup, giving Noodl fresh fuel for the harvest.
 
-**Mood / Tone:** Harsh, mechanical
-
-**Dominant colours:** Bronze & rust
-
-**Visual theme:** machine
+**Mood / Tone:** Harsh, mechanical  
+**Dominant colours:** Bronze & rust  
+**Visual theme:** machine shafts
 
 **Palette**
 
 | Element | RGBA (0-255) | Hex |
 | --- | --- | --- |
 | Backdrop | (36, 31, 20, 255) | #241F14 |
-| Arena base | (59, 48, 31, 255) | #3B301F |
-| Arena border | (128, 107, 61, 255) | #806B3D |
+| Arena base | (61, 51, 31, 255) | #3D331F |
+| Arena border | (148, 122, 71, 255) | #947A47 |
 | Snake | (250, 224, 122, 255) | #FAE07A |
-| Rocks | (138, 97, 56, 255) | #8A6138 |
-| Saws | (204, 189, 163, 255) | #CCBDA3 |
+| Rocks | (168, 117, 71, 255) | #A87547 |
+| Saws | (235, 194, 107, 255) | #EBC26B |
 
-**Background shader:** `ruinMotes` — Dust motes float through ancient machinery glow. (intensity backdrop 0.60 / arena 0.34).
+**Background shader:** `ruinMotes` — Dust motes float through ancient machinery glow. (Backdrops 0.60 / Arena 0.34)
+
+---
 
 ## Floor 5: Crystal Run
 
 **Description:** Frosted crystals light the tunnel and chill each reclaimed apple in Noodl's pack.
 
-**Mood / Tone:** Crisp, serene
-
-**Dominant colours:** Icy blues & white
-
-**Visual theme:** arctic
+**Mood / Tone:** Crisp, serene  
+**Dominant colours:** Icy blues & white  
+**Visual theme:** arctic cavern
 
 **Palette**
 
@@ -113,17 +128,17 @@ This reference outlines each floor in the current progression, summarising its n
 | Rocks | (117, 133, 178, 255) | #7585B2 |
 | Saws | (173, 224, 255, 255) | #ADE0FF |
 
-**Background shader:** `auroraVeil` — Aurora veil ribbons arc overhead with layered light bands. (intensity backdrop 0.62 / arena 0.42).
+**Background shader:** `auroraVeil` — Aurora veil ribbons arc overhead with layered light bands. (Backdrops 0.62 / Arena 0.42)
+
+---
 
 ## Floor 6: Ember Market
 
 **Description:** Emberlit stalls keep peppered fruit warm while Noodl threads the aisles collecting them.
 
-**Mood / Tone:** Hot, kinetic
-
-**Dominant colours:** Orange & amber
-
-**Visual theme:** desert
+**Mood / Tone:** Hot, kinetic  
+**Dominant colours:** Orange & amber  
+**Visual theme:** desert bazaar
 
 **Palette**
 
@@ -136,40 +151,42 @@ This reference outlines each floor in the current progression, summarising its n
 | Rocks | (163, 102, 56, 255) | #A36638 |
 | Saws | (255, 158, 82, 255) | #FF9E52 |
 
-**Background shader:** `emberDrift` — Ember drift lifts warm cinders and shimmering ash currents. (intensity backdrop 0.62 / arena 0.38).
+**Background shader:** `emberDrift` — Ember drift lifts warm cinders and shimmering ash currents. (Backdrops 0.62 / Arena 0.38)
+
+---
 
 ## Floor 7: Skywalk
 
 **Description:** Lanterns line the high road, showing every peach for Noodl to scoop along the bridge.
 
-**Mood / Tone:** Peaceful ascent
-
-**Dominant colours:** White & pastel blue
-
-**Visual theme:** urban — celestial
+**Mood / Tone:** Peaceful ascent  
+**Dominant colours:** White & pastel blue  
+**Visual theme:** urban causeway, celestial variant
 
 **Palette**
 
 | Element | RGBA (0-255) | Hex |
 | --- | --- | --- |
-| Backdrop | (199, 214, 240, 255) | #C7D6F0 |
-| Arena base | (235, 247, 255, 255) | #EBF7FF |
-| Arena border | (184, 219, 245, 255) | #B8DBF5 |
-| Snake | (245, 209, 133, 255) | #F5D185 |
-| Rocks | (143, 173, 219, 255) | #8FADDB |
-| Saws | (235, 199, 148, 255) | #EBC794 |
+| Backdrop | (163, 189, 224, 255) | #A3BDE0 |
+| Arena base | (173, 209, 240, 255) | #ADD1F0 |
+| Arena border | (138, 189, 230, 255) | #8ABDE6 |
+| Snake | (250, 178, 82, 255) | #FAB252 |
+| Rocks | (112, 158, 224, 255) | #709EE0 |
+| Saws | (245, 158, 87, 255) | #F59E57 |
+| Bananas | (224, 173, 61, 255) | #E0AD3D |
+| Golden pears | (230, 148, 51, 255) | #E69433 |
 
-**Background shader:** `auroraVeil` — Aurora veil ribbons arc overhead with layered light bands. (intensity backdrop 0.48 / arena 0.28).
+**Background shader:** `auroraVeil` — High-altitude ribbons soften the skyline while lantern motes sweep the bridge. (Backdrops 0.48 / Arena 0.28)
+
+---
 
 ## Floor 8: Promise Gate
 
 **Description:** At the final gate, Noodl secures the last fruit and coils around the harvest.
 
-**Mood / Tone:** Cosmic closure
-
-**Dominant colours:** Deep purple & magenta
-
-**Visual theme:** urban — celestial
+**Mood / Tone:** Triumphant, reverent  
+**Dominant colours:** Violet & magenta  
+**Visual theme:** celestial threshold
 
 **Palette**
 
@@ -180,6 +197,7 @@ This reference outlines each floor in the current progression, summarising its n
 | Arena border | (173, 66, 184, 255) | #AD42B8 |
 | Snake | (235, 122, 250, 255) | #EB7AFA |
 | Rocks | (138, 82, 173, 255) | #8A52AD |
-| Saws | (255, 128, 179, 255) | #FF80B3 |
+| Saws | (255, 128, 178, 255) | #FF80B2 |
 
-**Background shader:** `voidPulse` — Void pulse radiates concentric glows from the depths. (intensity backdrop 0.74 / arena 0.46).
+**Background shader:** `voidPulse` — Starfield pulses surge through the gateway's halo as the harvest seals. (Backdrops 0.74 / Arena 0.46)
+
