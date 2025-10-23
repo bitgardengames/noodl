@@ -19,7 +19,7 @@ local ANALOG_DEADZONE = 0.35
 local panelBounds = {x = 0, y = 0, w = 0, h = 0}
 local panelFillColor = {0, 0, 0, 1}
 local panelBorderColor = {0, 0, 0, 1}
-local panelDrawOptions = {fill = panelFillColor, borderColor = panelBorderColor, borderWidth = 4, shadowAlpha = 1}
+local panelDrawOptions = {fill = panelFillColor, borderColor = panelBorderColor, borderWidth = 3, shadowAlpha = 1}
 local subtitleLabelOptions = {fontKey = "subtitle", alpha = 1}
 local toggleLabelArgs = {state = nil}
 local floorLabelArgs = {number = nil, name = nil}
