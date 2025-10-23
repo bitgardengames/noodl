@@ -1239,16 +1239,16 @@ end
 
 local pool = {
         register({
-                id = "tail_trainer",
-                nameKey = "upgrades.tail_trainer.name",
-                descKey = "upgrades.tail_trainer.description",
+                id = "serpents_reflex",
+                nameKey = "upgrades.serpents_reflex.name",
+                descKey = "upgrades.serpents_reflex.description",
                 rarity = "common",
                 tags = {"mobility"},
                 allowDuplicates = true,
                 onAcquire = function(state)
                         Snake:addSpeedMultiplier(1.04)
 
-                        celebrateUpgrade(getUpgradeString("tail_trainer", "name"), nil, {
+                        celebrateUpgrade(getUpgradeString("serpents_reflex", "name"), nil, {
                                 color = {0.98, 0.76, 0.36, 1},
                                 particleCount = 12,
                                 particleSpeed = 120,

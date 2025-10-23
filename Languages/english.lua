@@ -479,7 +479,7 @@ local english = {
 				seconds = "${seconds}s",
 				progress = "${current} / ${target}",
 			},
-                        tail_trainer = {
+                        serpents_reflex = {
                                 name = "Serpent’s Reflex",
                                 description = "Snake moves 4% faster.",
                         },
