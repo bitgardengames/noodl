@@ -150,19 +150,27 @@ local function buildCollisionCellsForSaw(saw)
 
 	-- Limit collision coverage to the track cell and the adjacent cell the blade
 	-- actually occupies so the hazard doesn't spill into neighboring tiles.
-	if saw.dir == "horizontal" then
-		for _, cell in ipairs(trackCells) do
-			local col, row = cell[1], cell[2]
-			addCell(cells, seen, col, row)
-			addCell(cells, seen, col, row + 1)
-		end
-	else
-		local offsetDir = (saw.side == "left") and -1 or 1
+        if saw.dir == "horizontal" then
+                for _, cell in ipairs(trackCells) do
+                        local col, row = cell[1], cell[2]
+                        addCell(cells, seen, col, row)
+                        addCell(cells, seen, col, row + 1)
+                end
+        else
+                local offsetDir
 
-		for _, cell in ipairs(trackCells) do
-			local col, row = cell[1], cell[2]
-			addCell(cells, seen, col, row)
-			addCell(cells, seen, col + offsetDir, row)
+                if saw.side == "left" then
+                        offsetDir = 1
+                elseif saw.side == "right" then
+                        offsetDir = -1
+                else
+                        offsetDir = 1
+                end
+
+                for _, cell in ipairs(trackCells) do
+                        local col, row = cell[1], cell[2]
+                        addCell(cells, seen, col, row)
+                        addCell(cells, seen, col + offsetDir, row)
 		end
 	end
 
@@ -374,21 +382,35 @@ local function getSawCenter(saw)
         return getSawCenterForProgress(saw, saw and saw.progress)
 end
 
+local function getVerticalSinkDirection(saw)
+        if not saw then
+                return 1
+        end
+
+        if saw.side == "left" then
+                return 1
+        elseif saw.side == "right" then
+                return -1
+        end
+
+        return 1
+end
+
 local function getSawCollisionCenter(saw)
-	local px, py = getSawCenter(saw)
-	if not (px and py) then
-		return px, py
-	end
+        local px, py = getSawCenter(saw)
+        if not (px and py) then
+                return px, py
+        end
 
-	local sinkOffset = SINK_OFFSET + (saw.sinkProgress or 0) * SINK_DISTANCE
-	if saw.dir == "horizontal" then
-		py = py + sinkOffset
-	else
-		local sinkDir = (saw.side == "left") and -1 or 1
-		px = px + sinkDir * sinkOffset
-	end
+        local sinkOffset = SINK_OFFSET + (saw.sinkProgress or 0) * SINK_DISTANCE
+        if saw.dir == "horizontal" then
+                py = py + sinkOffset
+        else
+                local sinkDir = getVerticalSinkDirection(saw)
+                px = px + sinkDir * sinkOffset
+        end
 
-	return px, py
+        return px, py
 end
 
 local function removeSaw(target)
@@ -624,12 +646,12 @@ function Saws:draw()
                 local offsetX, offsetY = 0, 0
 		local sinkDir = 1
 
-		if saw.dir == "horizontal" then
-			offsetY = occlusionDepth
-		else
-			sinkDir = (saw.side == "left") and -1 or 1
-			offsetX = sinkDir * occlusionDepth
-		end
+                if saw.dir == "horizontal" then
+                        offsetY = occlusionDepth
+                else
+                        sinkDir = getVerticalSinkDirection(saw)
+                        offsetX = sinkDir * occlusionDepth
+                end
 
 		local sinkScale = 1 - 0.1 * sinkProgress
 		local rotation = saw.rotation or 0
