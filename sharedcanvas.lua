@@ -15,6 +15,8 @@ local function buildCanvasOptions(samples)
                 options.msaa = samples
         end
 
+        options.stencil = true
+
         return options
 end
 
