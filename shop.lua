@@ -500,74 +500,67 @@ local rarityStyles = {
 			width = 3,
 		},
 	},
-	epic = {
-		base = {0.24, 0.12, 0.42, 1},
-		shadowAlpha = 0.36,
-		aura = {
-			color = {0.86, 0.56, 0.98, 0.42},
-			radius = 0.9,
-			y = 0.34,
-		},
-		outerGlow = {
-			color = {0.92, 0.74, 1.0, 1},
-			min = 0.2,
-			max = 0.46,
-			speed = 2.4,
-			expand = 9,
-			width = 8,
-		},
-		innerGlow = {
-			color = {0.98, 0.86, 1.0, 1},
-			min = 0.26,
-			max = 0.48,
-			speed = 2.6,
-			inset = 8,
-			width = 3,
-		},
-		sparkles = {
-			color = {0.98, 0.88, 1.0, 0.9},
-			radius = 8,
-			speed = 2.2,
-			positions = {
-				{0.24, 0.18, 1.0},
-				{0.72, 0.32, 0.7},
-				{0.38, 0.68, 0.8},
+		epic = {
+			base = {0.24, 0.12, 0.42, 1},
+			shadowAlpha = 0.36,
+			aura = {
+				color = {0.86, 0.56, 0.98, 0.42},
+				radius = 0.9,
+				y = 0.34,
+			},
+			outerGlow = {
+				color = {0.92, 0.74, 1.0, 1},
+				min = 0.2,
+				max = 0.46,
+				speed = 2.4,
+				expand = 9,
+				width = 8,
+			},
+			innerGlow = {
+				color = {0.98, 0.86, 1.0, 1},
+				min = 0.26,
+				max = 0.48,
+				speed = 2.6,
+				inset = 8,
+				width = 3,
 			},
 		},
-	},
-	legendary = {
-		base = {0.46, 0.28, 0.06, 1},
-		shadowAlpha = 0.46,
-		outerGlow = {
-			color = {1.0, 0.82, 0.34, 1},
-			min = 0.26,
-			max = 0.56,
-			speed = 2.6,
-			expand = 10,
-			width = 10,
-		},
-		innerGlow = {
-			color = {1.0, 0.9, 0.6, 1},
-			min = 0.32,
-			max = 0.58,
-			speed = 3.0,
-			inset = 8,
-			width = 3,
-		},
-		sparkles = {
-			color = {1.0, 0.92, 0.64, 0.95},
-			radius = 10,
-			speed = 2.9,
-			positions = {
-				{0.18, 0.24, 1.1},
-				{0.52, 0.16, 0.9},
-				{0.72, 0.42, 1.2},
-				{0.44, 0.74, 0.8},
+		legendary = {
+			base = {0.46, 0.28, 0.06, 1},
+			shadowAlpha = 0.46,
+			outerGlow = {
+				color = {1.0, 0.82, 0.34, 1},
+				min = 0.26,
+				max = 0.56,
+				speed = 2.6,
+				expand = 10,
+				width = 10,
 			},
+			innerGlow = {
+				color = {1.0, 0.9, 0.6, 1},
+				min = 0.32,
+				max = 0.58,
+				speed = 3.0,
+				inset = 8,
+				width = 3,
+			},
+			sparkles = {
+				color = {1.0, 0.92, 0.64, 0.22},
+				radius = 9,
+				speed = 1.8,
+				driftSpeed = 0.08,
+				driftMinY = 0.16,
+				driftMaxY = 0.98,
+				positions = {
+					{0.22, 0.88, 1.05, 0.00},
+					{0.52, 0.78, 0.85, 0.28},
+					{0.72, 0.94, 1.15, 0.56},
+					{0.36, 0.82, 0.9, 0.84},
+				},
+			},
+			glow = 0.22,
+			borderWidth = 5,
 		},
-		glow = 0.22,
-		borderWidth = 5,
-        },
 }
 
 local function clamp01(value)
@@ -577,6 +570,14 @@ local function clamp01(value)
                 return 1
         end
 
+        return value
+end
+
+local function wrap01(value)
+        value = value - floor(value)
+        if value < 0 then
+                value = value + 1
+        end
         return value
 end
 
@@ -1002,20 +1003,36 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		end)
 	end
 
-	if style.sparkles and style.sparkles.positions then
-		withTransformedScissor(x, y, w, h, function()
-			local time = love.timer.getTime()
-			for i, pos in ipairs(style.sparkles.positions) do
-				local px, py, scale = pos[1], pos[2], pos[3] or 1
-				local pulse = 0.6 + 0.4 * sin(time * (style.sparkles.speed or 1.8) + i * 0.9)
-				local radius = (style.sparkles.radius or 9) * scale * pulse
-				local sparkleColor = style.sparkles.color or borderColor
-				local sparkleAlpha = (sparkleColor[4] or 1) * pulse
-				applyColor(setColor, sparkleColor, sparkleAlpha)
-				love.graphics.circle("fill", x + px * w, y + py * h, radius)
-			end
-		end)
-	end
+        if style.sparkles and style.sparkles.positions then
+                withTransformedScissor(x, y, w, h, function()
+                        local time = love.timer.getTime()
+                        local driftSpeed = style.sparkles.driftSpeed or 0
+                        local driftMinY = style.sparkles.driftMinY or 0
+                        local driftMaxY = style.sparkles.driftMaxY or 1
+                        local driftSpan = max(0.0001, driftMaxY - driftMinY)
+                        for i, pos in ipairs(style.sparkles.positions) do
+                                local px = pos[1] or 0.5
+                                local py = pos[2] or 0.5
+                                local scale = pos[3] or 1
+                                local phase = pos[4] or (i - 1) * 0.31
+                                local pulse = 0.6 + 0.4 * sin(time * (style.sparkles.speed or 1.8) + i * 0.9)
+                                local radius = (style.sparkles.radius or 9) * scale * pulse
+                                local sparkleColor = style.sparkles.color or borderColor
+                                local sparkleAlphaBase = style.sparkles.opacity or sparkleColor[4] or 1
+                                local sparkleAlpha = sparkleAlphaBase * pulse
+                                local sparkleX = x + px * w
+                                local sparkleY
+                                if driftSpeed ~= 0 then
+                                        local normalized = wrap01(py - (time * driftSpeed + phase))
+                                        sparkleY = y + (driftMinY + normalized * driftSpan) * h
+                                else
+                                        sparkleY = y + py * h
+                                end
+                                applyColor(setColor, sparkleColor, sparkleAlpha)
+                                love.graphics.circle("fill", sparkleX, sparkleY, radius)
+                        end
+                end)
+        end
 
 	if style.glow and style.glow > 0 then
 		applyColor(setColor, borderColor, style.glow)
