@@ -8,6 +8,16 @@ local DEFAULT_MSAA = 8
 local desiredMSAASamples = nil
 local canvasCreationOptions = nil
 
+local function buildCanvasOptions(samples)
+        local options = {stencil = true}
+
+        if type(samples) == "number" and samples >= 2 then
+                options.msaa = samples
+        end
+
+        return options
+end
+
 local function updateDesiredSamples(samples)
         if type(samples) ~= "number" then
                 samples = 0
@@ -15,10 +25,10 @@ local function updateDesiredSamples(samples)
 
         if samples >= 2 then
                 desiredMSAASamples = samples
-                canvasCreationOptions = {msaa = samples}
+                canvasCreationOptions = buildCanvasOptions(samples)
         else
                 desiredMSAASamples = 0
-                canvasCreationOptions = nil
+                canvasCreationOptions = buildCanvasOptions(0)
         end
 end
 
@@ -28,15 +38,16 @@ local function ensureInitialized()
         end
 
         desiredMSAASamples = 0
+        canvasCreationOptions = buildCanvasOptions(0)
 
         local limits = love.graphics.getSystemLimits and love.graphics.getSystemLimits()
         if limits and type(limits.msaa) == "number" and limits.msaa >= 2 then
                 desiredMSAASamples = math.min(DEFAULT_MSAA, limits.msaa)
                 if desiredMSAASamples >= 2 then
-                        canvasCreationOptions = {msaa = desiredMSAASamples}
+                        canvasCreationOptions = buildCanvasOptions(desiredMSAASamples)
                 else
                         desiredMSAASamples = 0
-                        canvasCreationOptions = nil
+                        canvasCreationOptions = buildCanvasOptions(0)
                 end
         end
 end
@@ -91,7 +102,7 @@ function SharedCanvas.newCanvas(width, height)
         end
 
         if not canvas then
-                canvas = love.graphics.newCanvas(w, h)
+                canvas = love.graphics.newCanvas(w, h, buildCanvasOptions(0))
                 if canvas.getMSAA then
                         samples = canvas:getMSAA() or 0
                         if samples >= 2 and SharedCanvas.getDesiredSamples() < 2 then
