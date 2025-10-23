@@ -19,7 +19,7 @@ local ANALOG_DEADZONE = 0.35
 local panelBounds = {x = 0, y = 0, w = 0, h = 0}
 local panelFillColor = {0, 0, 0, 1}
 local panelBorderColor = {0, 0, 0, 1}
-local panelDrawOptions = {fill = panelFillColor, borderColor = panelBorderColor, shadowAlpha = 1}
+local panelDrawOptions = {fill = panelFillColor, borderColor = panelBorderColor, borderWidth = 4, shadowAlpha = 1}
 local subtitleLabelOptions = {fontKey = "subtitle", alpha = 1}
 local toggleLabelArgs = {state = nil}
 local floorLabelArgs = {number = nil, name = nil}
@@ -253,10 +253,10 @@ function PauseMenu:draw(screenWidth, screenHeight)
 		panelFillColor[3] = Theme.panelColor[3]
 		panelFillColor[4] = (Theme.panelColor[4] or 1) * alpha
 
-		panelBorderColor[1] = Theme.panelBorder[1]
-		panelBorderColor[2] = Theme.panelBorder[2]
-		panelBorderColor[3] = Theme.panelBorder[3]
-		panelBorderColor[4] = (Theme.panelBorder[4] or 1) * alpha
+                panelBorderColor[1] = 0
+                panelBorderColor[2] = 0
+                panelBorderColor[3] = 0
+                panelBorderColor[4] = alpha
 
 		panelDrawOptions.shadowAlpha = alpha
 
