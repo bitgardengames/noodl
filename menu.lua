@@ -152,40 +152,6 @@ local function drawBackground(sw, sh)
         if backgroundEffect then
                 local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
                 Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-
-                local vignette = backgroundEffect.vignetteOverlay
-                if vignette then
-                        local steps = max(1, floor(vignette.steps or 3))
-                        local overlayColor = vignette.color or {0, 0, 0, 0.22}
-                        local baseAlpha = vignette.alpha or overlayColor[4] or 0.22
-                        local totalThickness = vignette.thickness or max(sw, sh) * 0.14
-                        local band = totalThickness / steps
-
-                        for i = 1, steps do
-                                local inset = (i - 1) * band
-                                local width = sw - inset * 2
-                                local height = sh - inset * 2
-                                if width <= 0 or height <= 0 then
-                                        break
-                                end
-
-                                local edge = min(band, height / 2)
-                                local side = min(band, width / 2)
-                                local progress = i / steps
-                                local alpha = (overlayColor[4] or 1) * baseAlpha * progress * progress
-
-                                love.graphics.setColor(overlayColor[1] or 0, overlayColor[2] or 0, overlayColor[3] or 0, alpha)
-
-                                love.graphics.rectangle("fill", inset, inset, width, edge)
-                                love.graphics.rectangle("fill", inset, sh - inset - edge, width, edge)
-
-                                local verticalHeight = height - edge * 2
-                                if verticalHeight > 0 then
-                                        love.graphics.rectangle("fill", inset, inset + edge, side, verticalHeight)
-                                        love.graphics.rectangle("fill", sw - inset - side, inset + edge, side, verticalHeight)
-                                end
-                        end
-                end
         end
 
         love.graphics.setColor(1, 1, 1, 1)
