@@ -32,11 +32,16 @@ local gameplayKeyHandlers = {
 }
 
 local function togglePause(game)
-	if game.state == "paused" then
-		game.state = "playing"
-	else
-		game.state = "paused"
-	end
+        if game and game.togglePause then
+                game:togglePause()
+                return
+        end
+
+        if game.state == "paused" then
+                game.state = "playing"
+        else
+                game.state = "paused"
+        end
 end
 
 function Controls:keypressed(game, key)
