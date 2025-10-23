@@ -1988,14 +1988,10 @@ spawnGluttonsWakeRock = function(segment)
                 return
         end
 
-        if Rocks and Rocks.spawn then
-                Rocks:spawn(x, y)
-                if Arena and Arena.getTileFromWorld and SnakeUtils and SnakeUtils.setOccupied then
-                        local col, row = Arena:getTileFromWorld(x, y)
-                        if col and row then
-                                SnakeUtils.setOccupied(col, row, true)
-                        end
-                end
+        Rocks:spawn(x, y)
+        local col, row = Arena:getTileFromWorld(x, y)
+        if col and row then
+                SnakeUtils.setOccupied(col, row, true)
         end
 end
 
@@ -3366,46 +3362,28 @@ function Snake:loseSegments(count, options)
 	local tailX = tail and tail.drawX
 	local tailY = tail and tail.drawY
 
-	if (not options) or options.updateFruit ~= false then
-		if UI and UI.removeFruit then
-			UI:removeFruit(trimmed)
-		elseif UI then
-			UI.fruitCollected = max(0, (UI.fruitCollected or 0) - trimmed)
-			if type(UI.fruitSockets) == "table" then
-				for _ = 1, min(trimmed, #UI.fruitSockets) do
-					remove(UI.fruitSockets)
-				end
-			end
-		end
+        if (not options) or options.updateFruit ~= false then
+                UI:removeFruit(trimmed)
 	end
 
-	local fruitGoalLost = false
-	if UI then
-		local collected = UI.fruitCollected or 0
-		local required = UI.fruitRequired or 0
-		fruitGoalLost = required > 0 and collected < required
-	end
+        local collected = UI.fruitCollected or 0
+        local required = UI.fruitRequired or 0
+        local fruitGoalLost = required > 0 and collected < required
 
-	if exitWasOpen and fruitGoalLost and Arena and Arena.resetExit then
-		Arena:resetExit()
-		if Fruit and Fruit.spawn then
-			Fruit:spawn(self:getSegments(), Rocks, self:getSafeZone(3))
-		end
-	end
+        if exitWasOpen and fruitGoalLost then
+                Arena:resetExit()
+                Fruit:spawn(self:getSegments(), Rocks, self:getSafeZone(3))
+        end
 
-	if SessionStats and SessionStats.get and SessionStats.set then
-		local apples = SessionStats:get("applesEaten") or 0
-		apples = max(0, apples - trimmed)
-		SessionStats:set("applesEaten", apples)
-	end
+        local apples = SessionStats:get("applesEaten") or 0
+        apples = max(0, apples - trimmed)
+        SessionStats:set("applesEaten", apples)
 
-	if Score and Score.addBonus and Score.get then
-		local currentScore = Score:get() or 0
-		local deduction = min(currentScore, trimmed)
-		if deduction > 0 then
-			Score:addBonus(-deduction)
-		end
-	end
+        local currentScore = Score:get() or 0
+        local deduction = min(currentScore, trimmed)
+        if deduction > 0 then
+                Score:addBonus(-deduction)
+        end
 
         if (not options) or options.spawnParticles ~= false then
                 local burstColor = LOSE_SEGMENTS_DEFAULT_BURST_COLOR
@@ -3413,7 +3391,7 @@ function Snake:loseSegments(count, options)
                         burstColor = LOSE_SEGMENTS_SAW_BURST_COLOR
                 end
 
-                if Particles and Particles.spawnBurst and tailX and tailY then
+                if tailX and tailY then
                         local burstOptions = LOSE_SEGMENTS_BURST_OPTIONS
                         burstOptions.count = min(10, 4 + trimmed)
                         burstOptions.color = burstColor

@@ -451,13 +451,11 @@ function Game:releaseMouseVisibility()
 	end
 
 	local mouse = state.interface or getMouseInterface()
-	if mouse and mouse.setVisible then
-		local restore = state.originalVisible
-		if restore == nil then
-			restore = true
-		end
-		mouse.setVisible(restore and true or false)
-	end
+        local restore = state.originalVisible
+        if restore == nil then
+                restore = true
+        end
+        mouse.setVisible(restore and true or false)
 
 	self.mouseCursorState = nil
 end
@@ -542,13 +540,11 @@ local function getScaledDeltaTime(self, dt)
 		return dt
 	end
 
-	local scale = 1
-	if Snake and Snake.getTimeScale then
-		local snakeScale = Snake:getTimeScale()
-		if snakeScale and snakeScale > 0 then
-			scale = snakeScale
-		end
-	end
+        local scale = 1
+        local snakeScale = Snake:getTimeScale()
+        if snakeScale and snakeScale > 0 then
+                scale = snakeScale
+        end
 
 	scale = scale * resolveHitStopScale(self)
 
@@ -728,23 +724,17 @@ function Game:enter(data)
 end
 
 function Game:leave()
-	self:releaseMouseVisibility()
+        self:releaseMouseVisibility()
 
-	if Snake and Snake.resetModifiers then
-		Snake:resetModifiers()
-	end
+        Snake:resetModifiers()
 
-	if UI and UI.setUpgradeIndicators then
-		UI:setUpgradeIndicators(nil)
-	end
+        UI:setUpgradeIndicators(nil)
 end
 
 function Game:beginDeath()
 	if self.state ~= "dying" then
 		self.state = "dying"
-		if Snake and Snake.setDead then
-			Snake:setDead(true)
-		end
+                Snake:setDead(true)
 		local trail = Snake:getSegments()
 		Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
 		Audio:playSound("death")
@@ -767,9 +757,7 @@ function Game:applyDamage(amount, cause, context)
 
 	local impactStrength = max(0.35, ((context and context.shake) or 0) + inflicted * 0.12)
 
-	if Snake and Snake.onDamageTaken then
-		Snake:onDamageTaken(cause, context)
-	end
+        Snake:onDamageTaken(cause, context)
 
 	self:triggerImpactFeedback(impactStrength, context)
 
