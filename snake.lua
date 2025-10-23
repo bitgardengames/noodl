@@ -46,6 +46,7 @@ local segmentPool = {}
 local segmentPoolCount = 0
 
 local headCellBuffer = {}
+local headCellBufferCount = 0
 
 local function acquireSegment()
         if segmentPoolCount > 0 then
@@ -862,7 +863,11 @@ local function toCell(x, y)
 end
 
 local function rebuildOccupancyFromTrail()
-        SnakeUtils.initOccupancy()
+        if SnakeUtils.clearSnakeOccupancy then
+                SnakeUtils.clearSnakeOccupancy()
+        else
+                SnakeUtils.initOccupancy()
+        end
 
         if not trail then
                 return
@@ -875,7 +880,11 @@ local function rebuildOccupancyFromTrail()
                         if x and y then
                                 local col, row = toCell(x, y)
                                 if col and row then
-                                        SnakeUtils.setOccupied(col, row, true)
+                                        if SnakeUtils.setSnakeOccupied then
+                                                SnakeUtils.setSnakeOccupied(col, row, true)
+                                        else
+                                                SnakeUtils.setOccupied(col, row, true)
+                                        end
                                 end
                         end
                 end
@@ -1624,6 +1633,105 @@ local function collectUpgradeVisuals(self)
         return nil
 end
 
+local function drawOccupancyDebugOverlay(self)
+        if not developerAssistEnabled then
+                return
+        end
+
+        if not (Arena and Arena.getTilePosition and SnakeUtils and SnakeUtils.getSnakeOccupancy) then
+                return
+        end
+
+        local cols = Arena.cols or 0
+        local rows = Arena.rows or 0
+        if cols <= 0 or rows <= 0 then
+                return
+        end
+
+        local tileSize = Arena.tileSize or SEGMENT_SPACING
+        if not tileSize or tileSize <= 0 then
+                return
+        end
+
+        local snakeOccupancy = SnakeUtils.getSnakeOccupancy()
+        local generalOccupancy = SnakeUtils.occupied
+
+        local stride = cellKeyStride
+        if stride <= 0 then
+                stride = (Arena and Arena.rows or 0) + 16
+                if stride <= 0 then
+                        stride = 64
+                end
+                cellKeyStride = stride
+        end
+
+        local futureLookup = nil
+        if headCellBufferCount and headCellBufferCount > 0 then
+                futureLookup = {}
+                for i = 1, headCellBufferCount do
+                        local cell = headCellBuffer[i]
+                        local col = cell and cell[1]
+                        local row = cell and cell[2]
+                        if col and row then
+                                futureLookup[col * stride + row] = true
+                        end
+                end
+        end
+
+        local headCol, headRow = self:getHeadCell()
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("alpha")
+        love.graphics.setLineWidth(1)
+
+        local gridColor = {1, 1, 1, 0.08}
+        local generalColor = {1.0, 0.42, 0.22, 0.3}
+        local snakeColor = {0.18, 0.72, 1.0, 0.32}
+        local futureColor = {0.36, 0.96, 0.52, 0.55}
+        local headColor = {0.95, 0.98, 1.0, 0.8}
+        local cornerRadius = tileSize * 0.18
+
+        for col = 1, cols do
+                local snakeColumn = snakeOccupancy and snakeOccupancy[col]
+                local generalColumn = generalOccupancy and generalOccupancy[col]
+                for row = 1, rows do
+                        local x, y = Arena:getTilePosition(col, row)
+                        local fillX = x + 1
+                        local fillY = y + 1
+                        local fillSize = tileSize - 2
+
+                        local hasSnake = snakeColumn and snakeColumn[row]
+                        local hasGeneral = generalColumn and generalColumn[row]
+
+                        if hasGeneral and not hasSnake then
+                                love.graphics.setColor(generalColor)
+                                love.graphics.rectangle("fill", fillX, fillY, fillSize, fillSize, cornerRadius, cornerRadius)
+                        end
+
+                        if hasSnake then
+                                love.graphics.setColor(snakeColor)
+                                love.graphics.rectangle("fill", fillX, fillY, fillSize, fillSize, cornerRadius, cornerRadius)
+                        end
+
+                        local key = futureLookup and (col * stride + row)
+                        if futureLookup and key and futureLookup[key] then
+                                love.graphics.setColor(futureColor)
+                                love.graphics.rectangle("line", fillX - 1, fillY - 1, fillSize + 2, fillSize + 2, cornerRadius, cornerRadius)
+                        end
+
+                        if headCol == col and headRow == row then
+                                love.graphics.setColor(headColor)
+                                love.graphics.rectangle("line", fillX - 2, fillY - 2, fillSize + 4, fillSize + 4, cornerRadius, cornerRadius)
+                        end
+
+                        love.graphics.setColor(gridColor[1], gridColor[2], gridColor[3], gridColor[4])
+                        love.graphics.rectangle("line", x, y, tileSize, tileSize)
+                end
+        end
+
+        love.graphics.pop()
+end
+
 -- Build initial trail aligned to CELL CENTERS
 local function buildInitialTrail()
         local t = {}
@@ -2184,7 +2292,10 @@ function Snake:finishDescending()
 end
 
 function Snake:update(dt)
-	if isDead then return false, "dead", {fatal = true} end
+        if isDead then
+                headCellBufferCount = 0
+                return false, "dead", {fatal = true}
+        end
 
 	if self.chronospiral then
 		local state = self.chronospiral
@@ -2707,6 +2818,8 @@ function Snake:update(dt)
                 end
 	end
 
+        headCellBufferCount = headCellCount
+
         -- collision with self (grid-cell based, only at snap ticks)
         if headCellCount > 0 and not self:isHazardGraceActive() then
                 local hx, hy = trail[1].drawX, trail[1].drawY
@@ -2724,7 +2837,8 @@ function Snake:update(dt)
                                         end
                                 end
 
-                                if not tailVacated and SnakeUtils.isOccupied(headCol, headRow) then
+                                local occupiedBySnake = SnakeUtils.isSnakeOccupied and SnakeUtils.isSnakeOccupied(headCol, headRow)
+                                if not tailVacated and occupiedBySnake then
                                         if self:consumeShield() then
                                                 self:onShieldConsumed(hx, hy, "self")
                                                 self:beginHazardGrace()
@@ -3498,10 +3612,10 @@ function Snake:markFruitSegment(fruitX, fruitY)
 end
 
 function Snake:draw()
-	if not isDead then
-		local upgradeVisuals = collectUpgradeVisuals(self)
+        if not isDead then
+                local upgradeVisuals = collectUpgradeVisuals(self)
 
-		if severedPieces and #severedPieces > 0 then
+                if severedPieces and #severedPieces > 0 then
 			for i = 1, #severedPieces do
 				local piece = severedPieces[i]
 				local trailData = piece and piece.trail
@@ -3564,6 +3678,8 @@ function Snake:draw()
                 end
 
         end
+
+        drawOccupancyDebugOverlay(self)
 end
 
 function Snake:resetPosition()
