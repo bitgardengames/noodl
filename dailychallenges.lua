@@ -1021,78 +1021,78 @@ DailyChallenges.challenges = {
                 end,
                 xpReward = 125,
         },
-        {
-                id = "shielded_sprinter",
-                titleKey = "menu.daily.shielded_sprinter.title",
-                descriptionKey = "menu.daily.shielded_sprinter.description",
-                goal = 1,
-                progressKey = "menu.daily.shielded_sprinter.progress",
-                completeKey = "menu.daily.shielded_sprinter.complete",
-                shieldGoal = 2,
-                timeGoal = 420,
-                getValue = function(self, context)
-                        local statsSource = context and context.sessionStats
-                        local shields = getStatValue(statsSource, "shieldsSaved")
-                        local timeAlive = getStatValue(statsSource, "timeAlive")
-                        if timeAlive <= 0 then
-                                return 0
-                        end
+	{
+		id = "combo_dash",
+		titleKey = "menu.daily.combo_dash.title",
+		descriptionKey = "menu.daily.combo_dash.description",
+		goal = 1,
+		progressKey = "menu.daily.combo_dash.progress",
+		completeKey = "menu.daily.combo_dash.complete",
+		comboGoal = 6,
+		timeGoal = 360,
+		getValue = function(self, context)
+			local statsSource = context and context.sessionStats
+			local combos = getStatValue(statsSource, "combosTriggered")
+			local timeAlive = getStatValue(statsSource, "timeAlive")
+			if timeAlive <= 0 then
+				return 0
+			end
 
-                        if shields >= (self.shieldGoal or 0) and timeAlive <= (self.timeGoal or 0) then
-                                return 1
-                        end
+			if combos >= (self.comboGoal or 0) and timeAlive <= (self.timeGoal or 0) then
+				return 1
+			end
 
-                        return 0
-                end,
-                getRunValue = function(self, statsSource)
-                        local shields = getStatValue(statsSource, "shieldsSaved")
-                        local timeAlive = getStatValue(statsSource, "timeAlive")
-                        if timeAlive <= 0 then
-                                return 0
-                        end
+			return 0
+		end,
+		getRunValue = function(self, statsSource)
+			local combos = getStatValue(statsSource, "combosTriggered")
+			local timeAlive = getStatValue(statsSource, "timeAlive")
+			if timeAlive <= 0 then
+				return 0
+			end
 
-                        if shields >= (self.shieldGoal or 0) and timeAlive <= (self.timeGoal or 0) then
-                                return 1
-                        end
+			if combos >= (self.comboGoal or 0) and timeAlive <= (self.timeGoal or 0) then
+				return 1
+			end
 
-                        return 0
-                end,
-                progressReplacements = function(self, current, goal, context)
-                        local statsSource = context and context.sessionStats
-                        local shields = getStatValue(statsSource, "shieldsSaved")
-                        local timeAlive = getStatValue(statsSource, "timeAlive")
+			return 0
+		end,
+		progressReplacements = function(self, current, goal, context)
+			local statsSource = context and context.sessionStats
+			local combos = getStatValue(statsSource, "combosTriggered")
+			local timeAlive = getStatValue(statsSource, "timeAlive")
 
-                        local function formatSeconds(seconds)
-                                seconds = max(0, seconds or 0)
-                                local minutes = floor(seconds / 60)
-                                local secs = floor(seconds % 60)
-                                return string.format("%d:%02d", minutes, secs)
-                        end
+			local function formatSeconds(seconds)
+				seconds = max(0, seconds or 0)
+				local minutes = floor(seconds / 60)
+				local secs = floor(seconds % 60)
+				return string.format("%d:%02d", minutes, secs)
+			end
 
-                        return {
-                                current = current or 0,
-                                goal = goal or 0,
-                                shields = shields,
-                                shield_goal = self.shieldGoal or 0,
-                                time = formatSeconds(timeAlive),
-                                time_goal = formatSeconds(self.timeGoal or 0),
-                        }
-                end,
-                descriptionReplacements = function(self)
-                        local function formatSeconds(seconds)
-                                seconds = max(0, seconds or 0)
-                                local minutes = floor(seconds / 60)
-                                local secs = floor(seconds % 60)
-                                return string.format("%d:%02d", minutes, secs)
-                        end
+			return {
+				current = current or 0,
+				goal = goal or 0,
+				combos = combos,
+				combo_goal = self.comboGoal or 0,
+				time = formatSeconds(timeAlive),
+				time_goal = formatSeconds(self.timeGoal or 0),
+			}
+		end,
+		descriptionReplacements = function(self)
+			local function formatSeconds(seconds)
+				seconds = max(0, seconds or 0)
+				local minutes = floor(seconds / 60)
+				local secs = floor(seconds % 60)
+				return string.format("%d:%02d", minutes, secs)
+			end
 
-                        return {
-                                shield_goal = self.shieldGoal or 0,
-                                time_goal = formatSeconds(self.timeGoal or 0),
-                        }
-                end,
-                xpReward = 125,
-        },
+			return {
+				combo_goal = self.comboGoal or 0,
+				time_goal = formatSeconds(self.timeGoal or 0),
+			}
+		end,
+		xpReward = 130,
+	},
 	{
 		id = "depth_sprinter",
 		titleKey = "menu.daily.depth_sprinter.title",
