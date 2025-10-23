@@ -2002,6 +2002,7 @@ local pool = {
                         state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) + 0.5
                         local disruptorColor = {0.76, 0.48, 1.0, 1}
                         state.effects.laserFireColor = disruptorColor
+                        state.effects.phaseDisruptor = true
                         celebrateUpgrade(getUpgradeString("diffraction_barrier", "name"), nil, {
                                 color = disruptorColor,
                                 skipVisuals = true,
@@ -2009,6 +2010,10 @@ local pool = {
                                 textOffset = 48,
                                 textScale = 1.08,
                         })
+
+                        if Snake and Snake.setPhaseDisruptorActive then
+                		Snake:setPhaseDisruptorActive(true)
+                        end
 
                         local laserCenters = getLaserCenters(2)
                         local baseVisual = {
@@ -3379,6 +3384,10 @@ function Upgrades:applyPersistentEffects(rebaseline)
 
 	if Snake.setEventHorizonActive then
 		Snake:setEventHorizonActive(effects.wallPortal and true or false)
+	end
+
+	if Snake.setPhaseDisruptorActive then
+		Snake:setPhaseDisruptorActive(effects.phaseDisruptor and true or false)
 	end
 
 	if Snake.setQuickFangsStacks then
