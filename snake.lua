@@ -195,6 +195,25 @@ local function removeMainTrailAt(index)
         return removed
 end
 
+local function releaseSegment(segment)
+        if not segment then
+                return
+        end
+
+        segment.drawX = nil
+        segment.drawY = nil
+        segment.x = nil
+        segment.y = nil
+        segment.dirX = nil
+        segment.dirY = nil
+        segment.fruitMarker = nil
+        segment.fruitMarkerX = nil
+        segment.fruitMarkerY = nil
+
+        segmentPoolCount = segmentPoolCount + 1
+        segmentPool[segmentPoolCount] = segment
+end
+
 local function releaseMainTrailRange(startIndex)
         if trailCount == 0 then
                 return
@@ -312,25 +331,6 @@ local function acquireSegment()
         end
 
         return {}
-end
-
-local function releaseSegment(segment)
-        if not segment then
-                return
-        end
-
-        segment.drawX = nil
-        segment.drawY = nil
-        segment.x = nil
-        segment.y = nil
-        segment.dirX = nil
-        segment.dirY = nil
-        segment.fruitMarker = nil
-        segment.fruitMarkerX = nil
-        segment.fruitMarkerY = nil
-
-        segmentPoolCount = segmentPoolCount + 1
-        segmentPool[segmentPoolCount] = segment
 end
 
 local function releaseSegmentRange(buffer, startIndex)
