@@ -720,9 +720,9 @@ local function drawWindowFrame(x, y, width, height, options)
 	local accentInsetY = options.accentInsetY or (WINDOW_PADDING_Y * 0.35)
 
 	local shadowOffset = options.shadowOffset
-	if shadowOffset == nil then
-		shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or WINDOW_SHADOW_OFFSET
-	end
+        if shadowOffset == nil then
+                shadowOffset = UI.shadowOffset or WINDOW_SHADOW_OFFSET
+        end
 
 	if shadowOffset and shadowOffset ~= 0 then
 		love.graphics.setColor(withAlpha(shadowColor, shadowAlpha))
