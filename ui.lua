@@ -15,6 +15,10 @@ local remove = table.remove
 
 local UI = {}
 
+local SHADOW_OFFSET = 3
+
+UI.shadowOffset = SHADOW_OFFSET
+
 
 UI.fruitCollected = 0
 UI.fruitRequired = 0
@@ -73,34 +77,34 @@ local fontDefinitions = {
 }
 
 local baseSpacing = {
-	buttonWidth = 260,
-	buttonHeight = 56,
-	buttonRadius = 14,
-	buttonSpacing = 24,
-	panelRadius = 16,
-	panelPadding = 20,
-	shadowOffset = 6,
-	sectionSpacing = 28,
-	sectionHeaderSpacing = 16,
-	sliderHeight = 68,
-	sliderTrackHeight = 10,
-	sliderHandleRadius = 12,
+        buttonWidth = 260,
+        buttonHeight = 56,
+        buttonRadius = 14,
+        buttonSpacing = 24,
+        panelRadius = 16,
+        panelPadding = 20,
+        shadowOffset = SHADOW_OFFSET,
+        sectionSpacing = 28,
+        sectionHeaderSpacing = 16,
+        sliderHeight = 68,
+        sliderTrackHeight = 10,
+        sliderHandleRadius = 12,
 	sliderPadding = 22,
 }
 
 local spacingMinimums = {
-	buttonWidth = 180,
-	buttonHeight = 44,
-	buttonRadius = 8,
-	buttonSpacing = 16,
-	panelRadius = 12,
-	panelPadding = 14,
-	shadowOffset = 2,
-	sectionSpacing = 18,
-	sectionHeaderSpacing = 10,
-	sliderHeight = 48,
-	sliderTrackHeight = 4,
-	sliderHandleRadius = 10,
+        buttonWidth = 180,
+        buttonHeight = 44,
+        buttonRadius = 8,
+        buttonSpacing = 16,
+        panelRadius = 12,
+        panelPadding = 14,
+        shadowOffset = SHADOW_OFFSET,
+        sectionSpacing = 18,
+        sectionHeaderSpacing = 10,
+        sliderHeight = 48,
+        sliderTrackHeight = 4,
+        sliderHandleRadius = 10,
 	sliderPadding = 14,
 }
 
@@ -227,7 +231,7 @@ local function buildFonts(scale)
 	end
 end
 
-UI.spacing = {}
+UI.spacing = { shadowOffset = SHADOW_OFFSET }
 UI.layout = UI.layout or {}
 UI.layout.menu = UI.layout.menu or {}
 UI.layoutScale = nil
@@ -244,11 +248,14 @@ local baseMenuLayout = {
 }
 
 local function scaledSpacingValue(key, scale)
-	local baseValue = baseSpacing[key] or 0
-	local minValue = spacingMinimums[key] or 0
-	local value = round(baseValue * scale)
-	if minValue > 0 then
-		value = max(minValue, value)
+        if key == "shadowOffset" then
+                return SHADOW_OFFSET
+        end
+        local baseValue = baseSpacing[key] or 0
+        local minValue = spacingMinimums[key] or 0
+        local value = round(baseValue * scale)
+        if minValue > 0 then
+                value = max(minValue, value)
 	end
 	return value
 end
@@ -257,6 +264,8 @@ local function applySpacing(scale)
         for key in pairs(baseSpacing) do
                 UI.spacing[key] = scaledSpacingValue(key, scale)
         end
+
+        UI.spacing.shadowOffset = SHADOW_OFFSET
 
 	local headerPadding = round(baseSectionHeaderPadding * scale)
 	if baseSectionHeaderPadding > 0 then
@@ -453,15 +462,15 @@ function UI.drawRoundedRect(x, y, w, h, r, segments)
 end
 
 function UI.drawPanel(x, y, w, h, opts)
-	opts = opts or {}
-	local radius = opts.radius or UI.spacing.panelRadius
-	local shadowOffset = opts.shadowOffset
-	if shadowOffset == nil then shadowOffset = UI.spacing.shadowOffset end
+        opts = opts or {}
+        local radius = opts.radius or UI.spacing.panelRadius
+        local shadowOffset = opts.shadowOffset
+        if shadowOffset == nil then shadowOffset = UI.shadowOffset end
 
-	if shadowOffset and shadowOffset ~= 0 then
-		setColor(opts.shadowColor or UI.colors.shadow, opts.shadowAlpha or 1)
-		love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h, radius, radius)
-	end
+        if shadowOffset and shadowOffset ~= 0 then
+                setColor(opts.shadowColor or UI.colors.shadow, opts.shadowAlpha or 1)
+                love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h, radius, radius)
+        end
 
 	local alphaMultiplier = opts.alpha or 1
 	local fillColor = opts.fill or UI.colors.panel or UI.colors.button
@@ -650,13 +659,16 @@ function UI.drawButton(id)
 	love.graphics.scale(totalScale, totalScale)
 	love.graphics.translate(-centerX, -centerY)
 
-	local radius = s.buttonRadius
-	local shadowOffset = s.shadowOffset
+        local radius = s.buttonRadius
+        local shadowOffset = s.shadowOffset
+        if shadowOffset == nil then
+                shadowOffset = UI.shadowOffset
+        end
 
-	if shadowOffset and shadowOffset ~= 0 then
-		setColor(UI.colors.shadow)
-		love.graphics.rectangle("fill", b.x + shadowOffset, b.y + shadowOffset + yOffset, b.w, b.h, radius, radius)
-	end
+        if shadowOffset and shadowOffset ~= 0 then
+                setColor(UI.colors.shadow)
+                love.graphics.rectangle("fill", b.x + shadowOffset, b.y + shadowOffset + yOffset, b.w, b.h, radius, radius)
+        end
 
 	local fillColor = UI.colors.button
 	local isToggled = btn.toggled
@@ -1685,12 +1697,12 @@ function UI:drawFruitSockets()
 	end
 
 	-- backdrop styled like the HUD panel card
-	local shadowOffset = (UI.spacing and UI.spacing.shadowOffset) or 6
-	if shadowOffset ~= 0 then
-		local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
-		local shadowAlpha = shadowColor[4] or 1
-		love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
-		love.graphics.rectangle("fill", panelX + shadowOffset, panelY + shadowOffset, panelW, panelH, 12, 12)
+        local shadowOffset = UI.shadowOffset
+        if shadowOffset ~= 0 then
+                local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
+                local shadowAlpha = shadowColor[4] or 1
+                love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
+                love.graphics.rectangle("fill", panelX + shadowOffset, panelY + shadowOffset, panelW, panelH, 12, 12)
 	end
 
         local basePanelColor = Theme.arenaBG or Theme.panelColor or {0.16, 0.16, 0.22, 0.94}
@@ -1729,10 +1741,9 @@ function UI:drawFruitSockets()
 		local hasFruit = socket ~= nil
 		local appear = hasFruit and clamp01(socket.anim / self.socketAnimTime) or 0
 		local radius = hasFruit and socketRadius or socketRadius * 0.8
-		local shadowScale = hasFruit and (0.75 + 0.25 * appear) or 0.85
-		local shadowAlpha = hasFruit and (0.45 * max(appear, 0.2)) or 0.4
-		love.graphics.setColor(0, 0, 0, shadowAlpha)
-		love.graphics.ellipse("fill", x, y + radius * 0.65, radius * 0.95 * shadowScale, radius * 0.55 * shadowScale, 32)
+                local shadowAlpha = hasFruit and (0.45 * max(appear, 0.2)) or 0.4
+                love.graphics.setColor(0, 0, 0, shadowAlpha)
+                love.graphics.circle("fill", x + shadowOffset, y + shadowOffset, radius, 48)
 
 		-- empty socket base
 		love.graphics.setColor(socketFill[1], socketFill[2], socketFill[3], (socketFill[4] or 1) * 0.9)
