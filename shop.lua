@@ -880,8 +880,8 @@ local function drawBadge(setColorFn, style, cx, cy, size)
         local shadow = style.shadow or Theme.shadowColor or {0, 0, 0, 0.45}
         local shadowAlpha = style.shadowAlpha or 0.7
         local offset = style.shadowOffset
-        local offsetX = offset and offset[1] or 3
-        local offsetY = offset and offset[2] or 4
+        local offsetX = offset and offset[1] or 2
+        local offsetY = offset and offset[2] or 3
 
         if shadowAlpha > 0 and shadow and (shadow[4] or 0) > 0 then
                 setColorFn(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * shadowAlpha)
