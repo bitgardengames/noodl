@@ -9,116 +9,50 @@ SnakeUtils.SEGMENT_SPACING = SnakeUtils.SEGMENT_SIZE
 SnakeUtils.POP_DURATION = 0.3
 
 SnakeUtils.occupied = {}
-SnakeUtils.snakeOccupied = {}
-
-local function resetOccupancyGrid(grid, cols, rows)
-        if type(grid) ~= "table" then
-                return
-        end
-
-        if not (cols and rows) or cols <= 0 or rows <= 0 then
-                for col in pairs(grid) do
-                        grid[col] = nil
-                end
-                return
-        end
-
-        for col = 1, cols do
-                local column = grid[col]
-                if not column then
-                        column = {}
-                        grid[col] = column
-                end
-
-                for row = 1, rows do
-                        column[row] = false
-                end
-
-                for row = rows + 1, #column do
-                        column[row] = nil
-                end
-        end
-
-        for col = cols + 1, #grid do
-                grid[col] = nil
-        end
-end
 
 function SnakeUtils.initOccupancy()
-        local occupied = SnakeUtils.occupied
-        if type(occupied) ~= "table" then
-                occupied = {}
-                SnakeUtils.occupied = occupied
-        end
-        local cols = Arena.cols
-        local rows = Arena.rows
+	local occupied = SnakeUtils.occupied
+	if type(occupied) ~= "table" then
+		occupied = {}
+		SnakeUtils.occupied = occupied
+	end
+	local cols = Arena.cols
+	local rows = Arena.rows
 
-        resetOccupancyGrid(occupied, cols, rows)
-        SnakeUtils.clearSnakeOccupancy()
-end
+	for col = 1, cols do
+		local column = occupied[col]
+		if not column then
+			column = {}
+			occupied[col] = column
+		end
 
-function SnakeUtils.clearSnakeOccupancy()
-        local grid = SnakeUtils.snakeOccupied
-        if type(grid) ~= "table" then
-                grid = {}
-                SnakeUtils.snakeOccupied = grid
-        end
+		for row = 1, rows do
+			column[row] = false
+		end
 
-        local cols = Arena.cols
-        local rows = Arena.rows
+		for row = rows + 1, #column do
+			column[row] = nil
+		end
+	end
 
-        resetOccupancyGrid(grid, cols, rows)
+	for col = cols + 1, #occupied do
+		occupied[col] = nil
+	end
 end
 
 -- Mark / unmark cells
 function SnakeUtils.setOccupied(col, row, value)
-        if SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row] ~= nil then
-                SnakeUtils.occupied[col][row] = value
-        end
+	if SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row] ~= nil then
+		SnakeUtils.occupied[col][row] = value
+	end
 end
 
 function SnakeUtils.isOccupied(col, row)
-        if SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row] then
-                return true
-        end
-
-        if SnakeUtils.snakeOccupied[col] and SnakeUtils.snakeOccupied[col][row] then
-                return true
-        end
-
-        return false
-end
-
-function SnakeUtils.setSnakeOccupied(col, row, value)
-        if not (col and row) then
-                return
-        end
-
-        local grid = SnakeUtils.snakeOccupied
-        if type(grid) ~= "table" then
-                grid = {}
-                SnakeUtils.snakeOccupied = grid
-        end
-
-        local column = grid[col]
-        if not column then
-                column = {}
-                grid[col] = column
-        end
-
-        column[row] = not not value
-end
-
-function SnakeUtils.isSnakeOccupied(col, row)
-        return SnakeUtils.snakeOccupied[col] and SnakeUtils.snakeOccupied[col][row] or false
-end
-
-function SnakeUtils.getSnakeOccupancy()
-        return SnakeUtils.snakeOccupied
+	return SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row]
 end
 
 local function cellWithinBounds(col, row)
-        return col >= 1 and col <= Arena.cols and row >= 1 and row <= Arena.rows
+	return col >= 1 and col <= Arena.cols and row >= 1 and row <= Arena.rows
 end
 
 local function normalizeCell(col, row)
@@ -141,17 +75,17 @@ local function markCells(cells, value)
 		return
 	end
 
-        local occupied = SnakeUtils.occupied
-        for i = 1, #cells do
-                local cell = cells[i]
-                local col, row = normalizeCell(cell[1], cell[2])
-                if col then
-                        local column = occupied[col]
-                        if column and column[row] ~= nil then
-                                column[row] = value
-                        end
-                end
-        end
+	local occupied = SnakeUtils.occupied
+	for i = 1, #cells do
+		local cell = cells[i]
+		local col, row = normalizeCell(cell[1], cell[2])
+		if col then
+			local column = occupied[col]
+			if column and column[row] ~= nil then
+				column[row] = value
+			end
+		end
+	end
 end
 
 -- Reserve a collection of cells and return the subset that we actually marked.
@@ -165,15 +99,15 @@ function SnakeUtils.reserveCells(cells)
 	local occupied = SnakeUtils.occupied
 	for i = 1, #cells do
 		local cell = cells[i]
-                local col, row = normalizeCell(cell[1], cell[2])
-                if col then
-                        local column = occupied[col]
-                        if column and not column[row] and not SnakeUtils.isSnakeOccupied(col, row) then
-                                column[row] = true
-                                reserved[#reserved + 1] = {col, row}
-                        end
-                end
-        end
+		local col, row = normalizeCell(cell[1], cell[2])
+		if col then
+			local column = occupied[col]
+			if column and not column[row] then
+				column[row] = true
+				reserved[#reserved + 1] = {col, row}
+			end
+		end
+	end
 
 	return reserved
 end
@@ -275,19 +209,16 @@ local function cellsAreFree(cells)
 		return false
 	end
 
-        local occupied = SnakeUtils.occupied
-        for i = 1, #cells do
-                local cell = cells[i]
-                local column = occupied[cell[1]]
-                if column and column[cell[2]] then
-                        return false
-                end
-                if SnakeUtils.isSnakeOccupied(cell[1], cell[2]) then
-                        return false
-                end
-        end
+	local occupied = SnakeUtils.occupied
+	for i = 1, #cells do
+		local cell = cells[i]
+		local column = occupied[cell[1]]
+		if column and column[cell[2]] then
+			return false
+		end
+	end
 
-        return true
+	return true
 end
 
 function SnakeUtils.occupySawTrack(fx, fy, dir)
