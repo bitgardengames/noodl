@@ -933,7 +933,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 	love.graphics.rectangle("fill", x + shadowOffsetX, y + shadowOffsetY, w, h, 18, 18)
 
         -- Consistent black outline that hugs the exterior of the card frame
-        local outlineWidth = 7
+        local outlineWidth = 5
         local outlineRadius = 16
         setColor(0, 0, 0, 1)
         love.graphics.rectangle("fill", x - outlineWidth, y - outlineWidth, w + outlineWidth * 2, h + outlineWidth * 2, outlineRadius, outlineRadius)
