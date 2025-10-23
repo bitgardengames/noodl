@@ -2384,7 +2384,8 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                         end
 
                         local faceScale = 1
-                        Face:draw(hx, hy, faceScale, nil)
+                        local faceOptions = upgradeVisuals and upgradeVisuals.face or nil
+                        Face:draw(hx, hy, faceScale, faceOptions)
 
                         drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
 

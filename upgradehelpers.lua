@@ -67,6 +67,7 @@ UpgradeHelpers.defaultEffects = {
         laserCooldownMult = 1,
         laserCooldownFlat = 0,
         laserFireColor = nil,
+        phaseDisruptor = nil,
         comboBonusMult = 1,
         fruitValueMult = 1,
         fruitGoalDelta = 0,
