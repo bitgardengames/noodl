@@ -36,6 +36,7 @@ local DAILY_BAR_CELEBRATION_SPAWN_WINDOW = max(0, DAILY_BAR_CELEBRATION_DURATION
 local streakLineArgs = {streak = 0, unit = nil}
 local bestLineArgs = {best = 0, unit = nil}
 local resetTooltipArgs = {time = nil}
+local DAILY_PANEL_OUTLINE_COLOR = {0, 0, 0, 1}
 
 local dailyBarCelebration = {
 	active = false,
@@ -672,9 +673,10 @@ function Menu:draw()
 		setColorWithAlpha(Theme.panelColor, alpha)
 		UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
 
-		setColorWithAlpha(Theme.panelBorder, alpha)
-		love.graphics.setLineWidth(2)
-		love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 14, 14)
+                setColorWithAlpha(DAILY_PANEL_OUTLINE_COLOR, alpha)
+                love.graphics.setLineWidth(4)
+                love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 14, 14)
+                love.graphics.setLineWidth(1)
 
 		local textX = panelX + padding
 		local textY = panelY + padding
