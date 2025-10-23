@@ -716,9 +716,14 @@ function UI.drawButton(id)
                 btn._lightenedTextColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0), btn._lightenedTextColor)
                 textColor = btn._lightenedTextColor
         end
+        local text = btn.text or ""
+        local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
+
+        setColor(0, 0, 0, 0.7)
+        love.graphics.printf(text, b.x + 1, textY + 1, b.w, "center")
+
         setColor(textColor)
-	local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
-	love.graphics.printf(btn.text or "", b.x, textY, b.w, "center")
+        love.graphics.printf(text, b.x, textY, b.w, "center")
 
 	love.graphics.pop()
 end
