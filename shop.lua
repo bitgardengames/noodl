@@ -932,8 +932,8 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 	setColor(0, 0, 0, 0.38)
 	love.graphics.rectangle("fill", x + shadowOffsetX, y + shadowOffsetY, w, h, 18, 18)
 
-	-- Consistent 3px black outline framing the card regardless of rarity styling
-	local outlineWidth = 3
+	-- Consistent 5px black outline framing the card regardless of rarity styling
+	local outlineWidth = 5
 	local outlineInset = outlineWidth * 0.5
 	love.graphics.setLineWidth(outlineWidth)
 	setColor(0, 0, 0, 1)
