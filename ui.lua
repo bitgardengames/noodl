@@ -169,17 +169,22 @@ local function darkenColor(color, amount)
 	}
 end
 
-local function setColor(color, alphaMultiplier)
-	if not color then
-		love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
-		return
-	end
+local function setColor(color, alphaMultiplier, b, a)
+        if not color or type(color) == "table" then
+                if not color then
+                        love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
+                        return
+                end
 
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] or 1
-	love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
+                local r = color[1] or 1
+                local g = color[2] or 1
+                local blue = color[3] or 1
+                local alpha = color[4] or 1
+                love.graphics.setColor(r, g, blue, alpha * (alphaMultiplier or 1))
+                return
+        end
+
+        love.graphics.setColor(color or 1, alphaMultiplier or 1, b or 1, a or 1)
 end
 
 -- Button states
