@@ -52,12 +52,12 @@ function Display.getResolutionLabel(localization, id)
 	local entry = Display.getResolution(id)
 	local label = string.format("%d x %d", entry.width, entry.height)
 
-	if entry.noteKey and localization and localization.get then
-		local note = localization:get(entry.noteKey)
-		if note and note ~= "" then
-			label = string.format("%s (%s)", label, note)
-		end
-	end
+        if entry.noteKey then
+                local note = localization:get(entry.noteKey)
+                if note and note ~= "" then
+                        label = string.format("%s (%s)", label, note)
+                end
+        end
 
 	return label
 end
