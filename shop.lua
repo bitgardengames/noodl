@@ -1070,7 +1070,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         local headerCenterY = headerTop
 
         local rarityLabel = card.rarityLabel
-        local rarityFont = UI.fonts.body
+        local rarityFont = badgeLabelFont or UI.fonts.body
         local hasRarity = rarityLabel and rarityLabel ~= ""
         local rarityHeight = 0
 
