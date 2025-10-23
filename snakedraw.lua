@@ -29,6 +29,11 @@ local FRUIT_BULGE_SCALE = 1.25
 local snakeCanvas = nil
 local snakeOverlayCanvas = nil
 
+local shadowPalette = {
+        body = {0, 0, 0, 0.25},
+        outline = {0, 0, 0, 0.25},
+}
+
 local applyOverlay
 
 local overlayShaderSources = {
@@ -1009,12 +1014,12 @@ local function drawSnakeStroke(path, radius, options)
         drawCornerCaps(path, radius)
 end
 
-local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
+local function renderSnakeGeometry(trail, coords, head, half, options, palette)
         local paletteBody = palette and palette.body
         local paletteOutline = palette and palette.outline
 
-	local bodyColor = paletteBody or SnakeCosmetics:getBodyColor()
-	local outlineColor = paletteOutline or SnakeCosmetics:getOutlineColor()
+        local bodyColor = paletteBody or SnakeCosmetics:getBodyColor()
+        local outlineColor = paletteOutline or SnakeCosmetics:getOutlineColor()
 	local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
 	local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
 	local bulgeRadius = half * FRUIT_BULGE_SCALE
@@ -1024,25 +1029,27 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 	local outlineCoords = coords
 	local bodyCoords = coords
 
-	love.graphics.push("all")
-	if sharpCorners then
-		love.graphics.setLineStyle("rough")
-		love.graphics.setLineJoin("miter")
-	else
-		love.graphics.setLineStyle("smooth")
-		love.graphics.setLineJoin("bevel")
-	end
+        if sharpCorners then
+                love.graphics.setLineStyle("rough")
+                love.graphics.setLineJoin("miter")
+        else
+                love.graphics.setLineStyle("smooth")
+                love.graphics.setLineJoin("bevel")
+        end
 
-	love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-	drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
-	drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
+        love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+        drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+        drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
 
-	love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-	drawSnakeStroke(bodyCoords, half, options)
+        love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+        drawSnakeStroke(bodyCoords, half, options)
         drawFruitBulges(trail, head, bulgeRadius)
+end
 
+local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
+        love.graphics.push("all")
+        renderSnakeGeometry(trail, coords, head, half, options, palette)
         love.graphics.pop()
-
 end
 
 drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
@@ -2313,31 +2320,47 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                 end
         else
                 local coords = buildCoords(trail)
-                local bounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
-                local canvas
-                if bounds then
-                        canvas = ensureSnakeCanvas(bounds.width, bounds.height)
-                end
 
-                if canvas and bounds then
-                        love.graphics.setCanvas({canvas, stencil = true})
-                        love.graphics.clear(0,0,0,0)
-                        love.graphics.push()
-                        love.graphics.translate(-bounds.offsetX, -bounds.offsetY)
-                        drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-                        love.graphics.pop()
-                        love.graphics.setCanvas()
+                if not overlayEffect then
+                        RenderLayers:withLayer("shadows", function()
+                                love.graphics.push("all")
+                                love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+                                drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
+                                love.graphics.pop()
+                        end)
 
-                        presentSnakeCanvas(overlayEffect, bounds.width, bounds.height, bounds.offsetX, bounds.offsetY)
-                else
-                        local ww, hh = love.graphics.getDimensions()
-                        local fallbackCanvas = ensureSnakeCanvas(ww, hh)
-                        if fallbackCanvas then
-                                love.graphics.setCanvas({fallbackCanvas, stencil = true})
-                                love.graphics.clear(0,0,0,0)
+                        RenderLayers:withLayer("main", function()
+                                love.graphics.push("all")
                                 drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+                                love.graphics.pop()
+                        end)
+                else
+                        local bounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
+                        local canvas
+                        if bounds then
+                                canvas = ensureSnakeCanvas(bounds.width, bounds.height)
+                        end
+
+                        if canvas and bounds then
+                                love.graphics.setCanvas({canvas, stencil = true})
+                                love.graphics.clear(0, 0, 0, 0)
+                                love.graphics.push()
+                                love.graphics.translate(-bounds.offsetX, -bounds.offsetY)
+                                drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+                                love.graphics.pop()
                                 love.graphics.setCanvas()
-                                presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
+
+                                presentSnakeCanvas(overlayEffect, bounds.width, bounds.height, bounds.offsetX, bounds.offsetY)
+                        else
+                                local ww, hh = love.graphics.getDimensions()
+                                local fallbackCanvas = ensureSnakeCanvas(ww, hh)
+                                if fallbackCanvas then
+                                        love.graphics.setCanvas({fallbackCanvas, stencil = true})
+                                        love.graphics.clear(0, 0, 0, 0)
+                                        drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+                                        love.graphics.setCanvas()
+                                        presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
+                                end
                         end
                 end
         end
