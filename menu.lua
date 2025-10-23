@@ -674,7 +674,7 @@ function Menu:draw()
 		UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
 
                 setColorWithAlpha(DAILY_PANEL_OUTLINE_COLOR, alpha)
-                love.graphics.setLineWidth(4)
+                love.graphics.setLineWidth(3)
                 love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 14, 14)
                 love.graphics.setLineWidth(1)
 
