@@ -3,6 +3,7 @@ local SharedCanvas = require("sharedcanvas")
 
 local floor = math.floor
 local max = math.max
+local unpack = unpack
 
 local RenderLayers = ModuleUtil.create("RenderLayers")
 
@@ -16,6 +17,7 @@ local LAYERS = {
 local canvases = {}
 local layerClearedThisFrame = {}
 local layerUsedThisFrame = {}
+local canvasStack = {}
 local canvasWidth = 0
 local canvasHeight = 0
 local active = false
@@ -53,8 +55,10 @@ function RenderLayers:begin(width, height)
 end
 
 function RenderLayers:push(layerName)
+        love.graphics.push("all")
+        canvasStack[#canvasStack + 1] = {love.graphics.getCanvas()}
+
         if not active then
-                love.graphics.push("all")
                 return
         end
 
@@ -63,7 +67,6 @@ function RenderLayers:push(layerName)
                 layerClearedThisFrame[layerName] = false
         end
 
-        love.graphics.push("all")
         love.graphics.setCanvas({canvas, stencil = true})
 
         if not layerClearedThisFrame[layerName] then
@@ -74,8 +77,24 @@ function RenderLayers:push(layerName)
         layerUsedThisFrame[layerName] = true
 end
 
+local function restorePreviousCanvas(previous)
+        if not previous or #previous == 0 then
+                love.graphics.setCanvas()
+                return
+        end
+
+        love.graphics.setCanvas(unpack(previous))
+end
+
 function RenderLayers:pop()
+        local previous = canvasStack[#canvasStack]
+        if previous then
+                canvasStack[#canvasStack] = nil
+        end
+
         love.graphics.pop()
+
+        restorePreviousCanvas(previous)
 end
 
 function RenderLayers:withLayer(layerName, drawFunc)
