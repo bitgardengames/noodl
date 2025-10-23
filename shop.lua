@@ -856,14 +856,6 @@ local badgeShapeDrawers = {
         hexagon = function(mode, cx, cy, size)
                 drawRegularPolygon(mode, cx, cy, size * 0.48, 6, pi / 6)
         end,
-        pentagon = function(mode, cx, cy, size)
-                drawRegularPolygon(mode, cx, cy, size * 0.5, 5, -pi / 2)
-        end,
-        capsule = function(mode, cx, cy, size)
-                local width = size * 0.82
-                local height = size * 0.52
-                love.graphics.rectangle(mode, cx - width / 2, cy - height / 2, width, height, height / 2, height / 2)
-        end,
 }
 
 local function drawBadgeShape(shape, mode, cx, cy, size, style)
