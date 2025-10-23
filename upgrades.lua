@@ -2514,7 +2514,7 @@ local pool = {
                 nameKey = "upgrades.chronospiral_core.name",
                 descKey = "upgrades.chronospiral_core.description",
                 rarity = "rare",
-                tags = {"risk"},
+                tags = {"mobility"},
                 unlockTag = "combo_mastery",
                 onAcquire = function(state)
                         Snake:addSpeedMultiplier(0.75)

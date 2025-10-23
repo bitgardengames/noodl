@@ -813,13 +813,16 @@ local function drawRoundedTriangle(mode, cx, cy, size, rotation, style)
 
                 local anglePrev = atan2(prevPointY - current[2], prevPointX - current[1])
                 local angleNext = atan2(nextPointY - current[2], nextPointX - current[1])
-                while angleNext <= anglePrev do
-                        angleNext = angleNext + (pi * 2)
+                local angleDelta = angleNext - anglePrev
+                if angleDelta > pi then
+                        angleDelta = angleDelta - (pi * 2)
+                elseif angleDelta < -pi then
+                        angleDelta = angleDelta + (pi * 2)
                 end
 
                 for step = 1, segments do
                         local t = step / segments
-                        local angle = anglePrev + (angleNext - anglePrev) * t
+                        local angle = anglePrev + angleDelta * t
                         points[#points + 1] = current[1] + cos(angle) * cornerRadius
                         points[#points + 1] = current[2] + sin(angle) * cornerRadius
                 end
