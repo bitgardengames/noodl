@@ -1,38 +1,40 @@
 # Daily Challenges
 
-This reference outlines every rotating daily challenge, the in-run actions they track, the thresholds required for completion, and the experience (XP) they award upon success.
+This reference outlines every rotating daily challenge, the in-run data each one evaluates, the thresholds required for completion,
+and the experience (XP) awarded upon success. Stat keys correspond to `SessionStats` fields unless noted otherwise; custom logic is
+spelled out in the completion criteria column.
 
-| Challenge | Objective | Completion criteria | XP reward |
-| --- | --- | --- | --- |
-| Combo Crunch | Reach a multi-fruit combo streak in one run. | Hit a best combo streak of at least 5 fruit during a single attempt. | 70 XP |
-| Floor Explorer | Push deeper by clearing floors. | Clear 5 floors in a single run. | 80 XP |
-| Fruit Sampler | Collect a large haul of fruit. | Gather 45 fruit in one run. | 70 XP |
-| Shield Showoff | Use shields aggressively. | Break rocks and parry saws a combined total of 6 times before the run ends. | 95 XP |
-| Combo Conductor | Chain combos repeatedly. | Trigger 8 combos across the run. | 60 XP |
-| Shield Specialist | Stay alive with clutch shield saves. | Trigger emergency shields 3 times in one session. | 80 XP |
-| Balanced Banquet | Alternate steady harvesting with burst combos. | Perform 3 "combo feasts" by triggering a combo after each set of 15 fruit collected. | 110 XP |
-| Serpentine Marathon | Keep slithering without stopping. | Travel 3,000 tiles in one run. | 70 XP |
-| Shield Wall Master | Bounce confidently with your shield. | Perform 5 shield wall bounces in a single run. | 80 XP |
-| Rock Breaker | Smash obstacles while shielded. | Break 4 rocks with the shield in one outing. | 80 XP |
-| Saw Parry Ace | Deflect hazards at close range. | Parry 2 saws with the shield during a run. | 90 XP |
-| Time Keeper | Survive for a long stretch. | Stay alive for 600 seconds (10 minutes) or more in one attempt. | 90 XP |
-| Floor Tourist | Linger on each floor. | Spend 480 seconds (8 minutes) exploring floors in a run. | 85 XP |
-| Floor Conqueror | Clear a sequence of floors. | Defeat 8 floors before the run ends. | 100 XP |
-| Depth Delver | Reach the depths. | Make it to floor 10 within a single run. | 110 XP |
-| Apple Hoarder | Prioritise fruit intake. | Consume 70 apples in one run. | 90 XP |
-| Streak Perfectionist | Maintain turn-free precision. | Collect 12 fruit consecutively without turning. | 90 XP |
-| Dragonfruit Gourmand | Focus on rare fruit. | Eat 3 dragonfruit in one session. | 100 XP |
-| Shield Triathlon | Demonstrate all shield techniques. | Execute at least one shield wall bounce, rock break, and saw parry (3 total actions) in a run. | 120 XP |
-| Floor Speedrunner | Clear a floor quickly. | Finish any floor in 45 seconds or less. | 110 XP |
-| Pace Setter | Keep up a fast average pace. | Maintain an average of 240 tiles per minute across the run. | 105 XP |
-| Combo Harvester | Stockpile fruit before bursting. | After hoarding batches of 8 fruit, trigger combos 4 times. | 95 XP |
-| Shielded Marathon | Combine clutch saves with distance. | Trigger 2 emergency shields and travel 320 tiles in a single run; both conditions must be met. | 115 XP |
-| Fruit Rush | Sustain a rapid fruit pace. | Maintain a fruit collection rate of 16 per minute. | 100 XP |
-| Combo Courier | Keep combos flowing as you descend. | Trigger 5 combos while clearing 4 floors in a single run. | 125 XP |
-| Shielded Sprinter | Combine swift clears with clutch defence. | Trigger 2 emergency shields and finish the run within 7 minutes (420 seconds). | 125 XP |
-| Depth Sprinter | Descend quickly. | Reach floor 6 within 420 seconds (7 minutes). | 130 XP |
-| Momentum Master | Preserve momentum over distance. | Achieve 3 momentum surges, each requiring 8 fruit collected without turning and 1,000 tiles travelled. | 110 XP |
-| Floor Cartographer | Thoroughly map multiple floors. | Reach 4 floors while also spending at least 180 seconds (3 minutes) on each across the run. | 100 XP |
-| Safety Dance | Pair defensive moves in sequence. | Complete 3 pairs where two shield wall bounces are matched with two saw parries. | 110 XP |
+| Challenge | ID | Tracked metrics | Completion criteria | XP reward |
+| --- | --- | --- | --- | --- |
+| Combo Crunch | `combo_crunch` | `bestComboStreak` | Reach a best combo streak of **5** fruit within a single run. | 70 XP |
+| Floor Explorer | `floor_explorer` | `floorsCleared` | Clear **5** floors before the run ends. | 80 XP |
+| Fruit Sampler | `fruit_sampler` | `applesEaten` | Collect **45** fruit in one run. | 70 XP |
+| Shield Showoff | `shield_showoff` | `runShieldRockBreaks`, `runShieldSawParries` | Break rocks and parry saws a combined total of **6** times in a single attempt. | 95 XP |
+| Combo Conductor | `combo_conductor` | `combosTriggered` | Trigger **8** combos during a run. | 60 XP |
+| Shield Specialist | `shield_specialist` | `shieldsSaved` | Trigger emergency shields **3** times in one session. | 80 XP |
+| Balanced Banquet | `balanced_banquet` | `applesEaten`, `combosTriggered` | After each block of **15** fruit collected, trigger a combo; complete **3** such "combo feasts" (requires ≥45 fruit and ≥3 combos). | 110 XP |
+| Serpentine Marathon | `serpentine_marathon` | `tilesTravelled` | Travel **3,000** tiles in a single run. | 70 XP |
+| Shield Wall Master | `shield_wall_master` | `runShieldWallBounces` | Perform **5** shield wall bounces in a single run. | 80 XP |
+| Rock Breaker | `rock_breaker` | `runShieldRockBreaks` | Break **4** rocks with the shield in one outing. | 80 XP |
+| Saw Parry Ace | `saw_parry_ace` | `runShieldSawParries` | Parry **2** saws with the shield during a run. | 90 XP |
+| Time Keeper | `time_keeper` | `timeAlive` | Stay alive for **600 seconds** (10 minutes) or longer in one attempt. | 90 XP |
+| Floor Tourist | `floor_tourist` | `totalFloorTime` | Spend **480 seconds** (8 minutes) exploring floors across one run. | 85 XP |
+| Floor Conqueror | `floor_conqueror` | `floorsCleared` | Defeat **8** floors before the run ends. | 100 XP |
+| Depth Delver | `depth_delver` | `deepestFloorReached` | Reach floor **10** within a single run. | 110 XP |
+| Apple Hoarder | `apple_hoarder` | `applesEaten` | Consume **70** apples in one run. | 90 XP |
+| Streak Perfectionist | `streak_perfectionist` | `fruitWithoutTurning` | Collect **12** fruit consecutively without turning. | 90 XP |
+| Dragonfruit Gourmand | `dragonfruit_gourmand` | `dragonfruitEaten` | Eat **3** dragonfruit in one session. | 100 XP |
+| Shield Triathlon | `shield_triathlon` | `runShieldWallBounces`, `runShieldRockBreaks`, `runShieldSawParries` | Perform at least one of each shield action (wall bounce, rock break, saw parry); completing all three awards progress **3**/3. | 120 XP |
+| Floor Speedrunner | `floor_speedrunner` | `fastestFloorClear` | Finish any floor in **45 seconds** or less (tracking stores the best time per run). | 110 XP |
+| Pace Setter | `pace_setter` | `tilesTravelled`, `timeAlive` | Maintain an average pace of **240 tiles per minute** across the run (⌊tiles ÷ time_alive⌋ × 60). | 105 XP |
+| Combo Harvester | `combo_harvester` | `applesEaten`, `combosTriggered` | Bank fruit in sets of **8** before bursting into combos; achieve **4** harvests (min(floor(apples/8), combos) ≥ 4). | 95 XP |
+| Shielded Marathon | `shielded_marathon` | `shieldsSaved`, `tilesTravelled` | Meet both conditions: trigger **2** emergency shields and travel **320** tiles in a single run. | 115 XP |
+| Fruit Rush | `fruit_rush` | `applesEaten`, `timeAlive` | Maintain a fruit collection rate of **16 per minute** (⌊apples ÷ time_alive⌋ × 60). | 100 XP |
+| Combo Courier | `combo_courier` | `combosTriggered`, `floorsCleared` | Trigger **5** combos while also clearing **4** floors in the same run. | 125 XP |
+| Shielded Sprinter | `shielded_sprinter` | `shieldsSaved`, `timeAlive` | Trigger **2** emergency shields and finish the run within **420 seconds** (7 minutes). | 125 XP |
+| Depth Sprinter | `depth_sprinter` | `floorsCleared`, `timeAlive` | Reach floor **6** within **420 seconds** (7 minutes). | 130 XP |
+| Momentum Master | `momentum_master` | `fruitWithoutTurning`, `tilesTravelled` | Achieve **3** momentum surges: each surge demands **8** fruit collected without turning and **1,000** tiles travelled (min(floor(chain/8), floor(tiles/1000)) ≥ 3). | 110 XP |
+| Floor Cartographer | `floor_cartographer` | `floorsCleared`, `totalFloorTime` | Visit **4** floors while spending at least **180 seconds** (3 minutes) on each (min(floorsCleared, floor(totalFloorTime/180)) ≥ 4). | 100 XP |
+| Safety Dance | `safety_dance` | `runShieldWallBounces`, `runShieldSawParries` | Complete **3** defensive pairs, each comprising **2** wall bounces and **2** saw parries (min(floor(bounces/2), floor(saws/2)) ≥ 3). | 110 XP |
 
 Each challenge aligns with the localisation strings shown in the in-game menu, ensuring the titles and descriptions here match what players see daily.
