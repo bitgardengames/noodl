@@ -463,11 +463,11 @@ function Game:releaseMouseVisibility()
 end
 
 function Game:updateMouseVisibility()
-	local mouse = getMouseInterface()
-	if not mouse then
-		self:releaseMouseVisibility()
-		return
-	end
+        local mouse = getMouseInterface()
+        if not mouse then
+                self:releaseMouseVisibility()
+                return
+        end
 
 	local targetVisible = resolveMouseVisibilityTarget(self)
 	if targetVisible == nil then
@@ -493,8 +493,39 @@ function Game:updateMouseVisibility()
 end
 
 function Game:isTransitionActive()
-	local transition = self.transition
-	return transition ~= nil and transition:isActive()
+        local transition = self.transition
+        return transition ~= nil and transition:isActive()
+end
+
+function Game:enterPause()
+        if self.state == "paused" then
+                return
+        end
+
+        if self.state == "gameover" then
+                return
+        end
+
+        self.pauseReturnState = self.state
+        self.state = "paused"
+end
+
+function Game:exitPause()
+        if self.state ~= "paused" then
+                return
+        end
+
+        local restoreState = self.pauseReturnState or "playing"
+        self.pauseReturnState = nil
+        self.state = restoreState
+end
+
+function Game:togglePause()
+        if self.state == "paused" then
+                self:exitPause()
+        elseif self.state ~= "gameover" then
+                self:enterPause()
+        end
 end
 
 function Game:confirmTransitionIntro()
@@ -619,13 +650,14 @@ function Game:load(options)
 		requestedFloor = min(requestedFloor, totalFloors)
 	end
 
-	self.state = "playing"
-	self.startFloor = requestedFloor
-	self.floor = requestedFloor
-	self.runTimer = 0
-	self.floorTimer = 0
+        self.state = "playing"
+        self.startFloor = requestedFloor
+        self.floor = requestedFloor
+        self.runTimer = 0
+        self.floorTimer = 0
+        self.pauseReturnState = nil
 
-	self.mouseCursorState = nil
+        self.mouseCursorState = nil
 
 	Screen:update()
 	self.screenWidth, self.screenHeight = Screen:get()
@@ -659,14 +691,15 @@ function Game:load(options)
 end
 
 function Game:reset()
-	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-	Face:set("idle")
-	self.state = "playing"
-	self.floor = self.startFloor or 1
-	self.runTimer = 0
-	self.floorTimer = 0
+        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+        Face:set("idle")
+        self.state = "playing"
+        self.floor = self.startFloor or 1
+        self.runTimer = 0
+        self.floorTimer = 0
+        self.pauseReturnState = nil
 
-	self.mouseCursorState = nil
+        self.mouseCursorState = nil
 
 	resetFeedbackState(self)
 
@@ -1052,12 +1085,13 @@ local function drawTransitionFadeOut(self, timer, duration)
 end
 
 local function drawTransitionShop(self, _)
-	love.graphics.setColor(0, 0, 0, 0.85)
-	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-	love.graphics.setColor(1, 1, 1, 1)
-	Shop:draw(self.screenWidth, self.screenHeight)
+        love.graphics.setColor(0, 0, 0, 0.85)
+        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+        love.graphics.setColor(1, 1, 1, 1)
+        Shop:draw(self.screenWidth, self.screenHeight)
+        PauseMenu:draw(self.screenWidth, self.screenHeight)
 
-	return true
+        return true
 end
 
 local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
@@ -1380,11 +1414,24 @@ function Game:draw()
 end
 
 function Game:keypressed(key)
-	if forwardShopInput(self, "keypressed", key) then
-		return
-	end
+        if key == "escape" and self.state ~= "gameover" then
+                self:togglePause()
+                return
+        end
 
-	if self:confirmTransitionIntro() then
+        if self.state == "paused" then
+                local action = PauseMenu:keypressed(key)
+                if action and self.input then
+                        return self.input:applyPauseMenuSelection(action)
+                end
+                return
+        end
+
+        if forwardShopInput(self, "keypressed", key) then
+                return
+        end
+
+        if self:confirmTransitionIntro() then
 		return
 	end
 
