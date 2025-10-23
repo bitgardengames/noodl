@@ -7,10 +7,10 @@ local max = math.max
 local RenderLayers = ModuleUtil.create("RenderLayers")
 
 local LAYERS = {
-	"background",
-	"shadows",
-	"main",
-	"overlay",
+        "background",
+        "shadows",
+        "main",
+        "overlay",
 }
 
 local canvases = {}
@@ -18,6 +18,7 @@ local layerClearedThisFrame = {}
 local layerUsedThisFrame = {}
 local canvasWidth = 0
 local canvasHeight = 0
+local active = false
 
 local function ensureCanvas(name, width, height)
         local canvas, replaced = SharedCanvas.ensureCanvas(canvases[name], width, height)
@@ -33,10 +34,12 @@ function RenderLayers:begin(width, height)
         local w = max(1, floor(width or love.graphics.getWidth() or 1))
         local h = max(1, floor(height or love.graphics.getHeight() or 1))
 
-	if canvasWidth ~= w or canvasHeight ~= h then
-		canvasWidth = w
-		canvasHeight = h
-	end
+        active = true
+
+        if canvasWidth ~= w or canvasHeight ~= h then
+                canvasWidth = w
+                canvasHeight = h
+        end
 
         for name in pairs(canvases) do
                 layerClearedThisFrame[name] = false
@@ -50,6 +53,11 @@ function RenderLayers:begin(width, height)
 end
 
 function RenderLayers:push(layerName)
+        if not active then
+                love.graphics.push("all")
+                return
+        end
+
         local canvas, replaced = ensureCanvas(layerName, canvasWidth, canvasHeight)
         if replaced then
                 layerClearedThisFrame[layerName] = false
@@ -71,13 +79,17 @@ function RenderLayers:pop()
 end
 
 function RenderLayers:withLayer(layerName, drawFunc)
-	if not drawFunc then
-		return
-	end
+        if not drawFunc then
+                return
+        end
 
-	self:push(layerName)
-	drawFunc()
-	self:pop()
+        self:push(layerName)
+        drawFunc()
+        self:pop()
+end
+
+function RenderLayers:isActive()
+        return active
 end
 
 local function drawLayers(offsetX, offsetY)
@@ -101,6 +113,8 @@ function RenderLayers:present()
         drawLayers(0, 0)
 
         love.graphics.pop()
+
+        active = false
 end
 
 return RenderLayers
