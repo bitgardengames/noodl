@@ -550,6 +550,7 @@ local hiddenStats = {
 	bestFruitPerMinute = true,
 	averageFruitPerMinute = true,
 	dailyChallengesCompleted = true,
+	dailyChallengeLastCompletionDay = true,
 	mostUpgradesInRun = true,
 }
 
