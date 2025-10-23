@@ -42,7 +42,9 @@ Achievements:registerStateProvider(function()
 end)
 
 local function getUpgradeEffect(name)
-        return Upgrades:getEffect(name)
+	if Upgrades and Upgrades.getEffect then
+		return Upgrades:getEffect(name)
+	end
 end
 
 local function getBaseWindow()
@@ -95,10 +97,13 @@ local function applyComboReward(x, y)
 
 	local burstColor = {1, 0.82, 0.3, 1}
 	local baseBonus = min((comboCount - 1) * 2, 10)
-        local multiplier = Score:getComboBonusMultiplier() or 1
+	local multiplier = Score.getComboBonusMultiplier and Score:getComboBonusMultiplier() or 1
 	local scaledCombo = floor(baseBonus * multiplier + 0.5)
 
-        local extraBonus = Upgrades:getComboBonus(comboCount) or 0
+	local extraBonus = 0
+	if Upgrades and Upgrades.getComboBonus then
+		extraBonus = Upgrades:getComboBonus(comboCount) or 0
+	end
 
 	local totalBonus = max(0, scaledCombo + extraBonus)
 

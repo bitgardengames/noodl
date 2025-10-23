@@ -129,16 +129,30 @@ local function grantShields(amount)
 		return 0
 	end
 
-        Snake:addShields(amount)
-        return amount
+	if Snake and Snake.addShields then
+		Snake:addShields(amount)
+		return amount
+	end
+
+	return 0
 end
 
 local function getSegmentPosition(fraction)
-        local segments = Snake:getSegments()
-        local count = segments and #segments or 0
-        if count <= 0 then
-                return Snake:getHead()
-        end
+	if not Snake or not Snake.getSegments then
+		if Snake and Snake.getHead then
+			return Snake:getHead()
+		end
+		return nil, nil
+	end
+
+	local segments = Snake:getSegments()
+	local count = segments and #segments or 0
+	if count <= 0 then
+		if Snake and Snake.getHead then
+			return Snake:getHead()
+		end
+		return nil, nil
+	end
 
 	fraction = fraction or 0
 	if fraction < 0 then
@@ -168,15 +182,23 @@ local function getSegmentPosition(fraction)
 		end
 	end
 
-        return Snake:getHead()
+	if Snake and Snake.getHead then
+		return Snake:getHead()
+	end
+
+	return nil, nil
 end
 
 local function triggerChronoWard(state, data)
-        local effects = state and state.effects or {}
-        local duration = effects.chronoWardDuration or CHRONO_WARD_DEFAULT_DURATION
-        local scale = effects.chronoWardScale or CHRONO_WARD_DEFAULT_SCALE
+	if not Snake or not Snake.triggerChronoWard then
+		return
+	end
 
-        Snake:triggerChronoWard(duration, scale)
+	local effects = state and state.effects or {}
+	local duration = effects.chronoWardDuration or CHRONO_WARD_DEFAULT_DURATION
+	local scale = effects.chronoWardScale or CHRONO_WARD_DEFAULT_SCALE
+
+	Snake:triggerChronoWard(duration, scale)
 end
 
 local function applySegmentPosition(options, fraction)
@@ -1257,7 +1279,9 @@ local pool = {
 				Snake:setQuickFangsStacks((Snake.quickFangs and Snake.quickFangs.stacks or 0) + 1)
 			end
 
-                        Face:set("veryHappy", 1.6)
+			if Face and Face.set then
+				Face:set("veryHappy", 1.6)
+			end
 
 			local celebrationOptions = {
 				color = {1, 0.63, 0.42, 1},
@@ -1287,7 +1311,9 @@ local pool = {
 				state.counters.stoneSkinHandlerRegistered = true
 				Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
 			end
-                        Face:set("blank", 1.8)
+			if Face and Face.set then
+				Face:set("blank", 1.8)
+			end
 			local celebrationOptions = {
 				color = {0.75, 0.82, 0.88, 1},
 				particleCount = 14,
@@ -1375,8 +1401,12 @@ local pool = {
                 onAcquire = function(state)
                         state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
                         state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
-                        UI:adjustFruitGoal(-1)
-                        Face:set("angry", 1.4)
+			if UI.adjustFruitGoal then
+				UI:adjustFruitGoal(-1)
+			end
+			if Face and Face.set then
+				Face:set("angry", 1.4)
+			end
 			local celebrationOptions = {
 				color = {1, 0.86, 0.36, 1},
 				particleCount = 10,
@@ -1439,8 +1469,12 @@ local pool = {
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(0.85)
 			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
-                        UI:adjustFruitGoal(1)
-                        Face:set("sad", 2.0)
+			if UI.adjustFruitGoal then
+				UI:adjustFruitGoal(1)
+			end
+			if Face and Face.set then
+				Face:set("sad", 2.0)
+			end
 			celebrateUpgrade(getUpgradeString("deliberate_coil", "name"), nil, {
 				color = {0.76, 0.56, 0.88, 1},
 				particleCount = 16,
@@ -1489,7 +1523,9 @@ local pool = {
 					state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
 					state.counters.pocketSpringsComplete = true
 					Snake:addShields(1)
-                                        Face:set("happy", 1.6)
+					if Face and Face.set then
+						Face:set("happy", 1.6)
+					end
 					local celebrationOptions = {
 						color = {0.64, 0.86, 1.0, 1},
 						particleCount = 14,
@@ -1531,7 +1567,9 @@ local pool = {
 				Upgrades:addEventHandler("floorStart", mapmakersCompassFloorStart)
 			end
 
-                        Face:set("happy", 1.4)
+			if Face and Face.set then
+				Face:set("happy", 1.4)
+			end
 
 			if state.counters.mapmakersCompassLastContext then
 				applyMapmakersCompass(state, state.counters.mapmakersCompassLastContext, {celebrate = false})
@@ -1973,7 +2011,9 @@ local pool = {
                                 textScale = 1.08,
                         })
 
-                        Snake:setPhaseDisruptorActive(true)
+                        if Snake and Snake.setPhaseDisruptorActive then
+                		Snake:setPhaseDisruptorActive(true)
+                        end
 
                         local laserCenters = getLaserCenters(2)
                         local baseVisual = {
@@ -2074,7 +2114,9 @@ local pool = {
                                 state.counters.goldenDebtFruitTax = (state.counters.goldenDebtFruitTax or 0) + 1
                                 state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
 
-                                UI:adjustFruitGoal(1)
+                                if UI.adjustFruitGoal then
+                                        UI:adjustFruitGoal(1)
+                                end
                         end,
                 },
         }),
@@ -2220,7 +2262,9 @@ local pool = {
 
 					if shields <= 0 then return end
 
-                                        Snake:addShields(shields)
+					if Snake and Snake.addShields then
+						Snake:addShields(shields)
+					end
 
 					local label = getUpgradeString("verdant_bonds", "activation_text")
 					if shields > 1 then
@@ -2403,28 +2447,41 @@ local pool = {
 		rarity = "epic",
 		tags = {"economy", "combo"},
 		onAcquire = function(state)
-                        state.counters.spectralHarvestReady = true
-                        Snake:setSpectralHarvestReady(true, {pulse = 0.8, instantIntensity = 0.45})
+			state.counters.spectralHarvestReady = true
+			if Snake and Snake.setSpectralHarvestReady then
+				Snake:setSpectralHarvestReady(true, {pulse = 0.8, instantIntensity = 0.45})
+			end
 		end,
 		handlers = {
 			floorStart = function(_, state)
-                                state.counters.spectralHarvestReady = true
-                                Snake:setSpectralHarvestReady(true, {pulse = 0.6})
+				state.counters.spectralHarvestReady = true
+				if Snake and Snake.setSpectralHarvestReady then
+					Snake:setSpectralHarvestReady(true, {pulse = 0.6})
+				end
 			end,
 			fruitCollected = function(_, state)
 				if not state.counters.spectralHarvestReady then return end
 				state.counters.spectralHarvestReady = false
 
-                                Snake:triggerSpectralHarvest({flash = 1, echo = 1, instantIntensity = 0.55})
+				if Snake then
+					if Snake.triggerSpectralHarvest then
+						Snake:triggerSpectralHarvest({flash = 1, echo = 1, instantIntensity = 0.55})
+					elseif Snake.setSpectralHarvestReady then
+						Snake:setSpectralHarvestReady(false, {pulse = 0.8})
+					end
+				end
 
-                                local Fruit = require("fruit")
-                                local FruitEvents = require("fruitevents")
+				local Fruit = require("fruit")
+				local FruitEvents = require("fruitevents")
+				if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
 
-                                local fx, fy = Fruit:getPosition()
-                                if not (fx and fy) then return end
+				local fx, fy = Fruit:getPosition()
+				if not (fx and fy) then return end
 
-                                FruitEvents.handleConsumption(fx, fy)
-                                Snake:setSpectralHarvestReady(false)
+				FruitEvents.handleConsumption(fx, fy)
+				if Snake and Snake.setSpectralHarvestReady and not Snake.triggerSpectralHarvest then
+					Snake:setSpectralHarvestReady(false)
+				end
 			end,
 		},
 	}),

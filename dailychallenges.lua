@@ -74,10 +74,12 @@ local function getStatValue(statsSource, key)
 		end
 	end
 
-        local value = SessionStats:get(key)
-        if value ~= nil then
-                return value
-        end
+	if SessionStats and SessionStats.get then
+		local value = SessionStats:get(key)
+		if value ~= nil then
+			return value
+		end
+	end
 
 	return 0
 end
@@ -132,7 +134,9 @@ local function resolveCurrent(challenge, context)
 			return statsSource:get(challenge.sessionStat) or 0
 		end
 
-                return SessionStats:get(challenge.sessionStat) or 0
+		if SessionStats and SessionStats.get then
+			return SessionStats:get(challenge.sessionStat) or 0
+		end
 	end
 
 	if challenge.stat then
@@ -414,12 +418,12 @@ DailyChallenges.challenges = {
 		getValue = function(self, context)
 			local rocks, saws = 0, 0
 			local statsSource = context and context.sessionStats
-                        if statsSource and type(statsSource.get) == "function" then
-                                rocks = statsSource:get("runShieldRockBreaks") or 0
-                                saws = statsSource:get("runShieldSawParries") or 0
-                        else
-                                rocks = SessionStats:get("runShieldRockBreaks") or 0
-                                saws = SessionStats:get("runShieldSawParries") or 0
+			if statsSource and type(statsSource.get) == "function" then
+				rocks = statsSource:get("runShieldRockBreaks") or 0
+				saws = statsSource:get("runShieldSawParries") or 0
+			elseif SessionStats and SessionStats.get then
+				rocks = SessionStats:get("runShieldRockBreaks") or 0
+				saws = SessionStats:get("runShieldSawParries") or 0
 			end
 
 			return (rocks or 0) + (saws or 0)
@@ -427,12 +431,12 @@ DailyChallenges.challenges = {
 		progressReplacements = function(self, current, goal, context)
 			local rocks, saws = 0, 0
 			local statsSource = context and context.sessionStats
-                        if statsSource and type(statsSource.get) == "function" then
-                                rocks = statsSource:get("runShieldRockBreaks") or 0
-                                saws = statsSource:get("runShieldSawParries") or 0
-                        else
-                                rocks = SessionStats:get("runShieldRockBreaks") or 0
-                                saws = SessionStats:get("runShieldSawParries") or 0
+			if statsSource and type(statsSource.get) == "function" then
+				rocks = statsSource:get("runShieldRockBreaks") or 0
+				saws = statsSource:get("runShieldSawParries") or 0
+			elseif SessionStats and SessionStats.get then
+				rocks = SessionStats:get("runShieldRockBreaks") or 0
+				saws = SessionStats:get("runShieldSawParries") or 0
 			end
 
 			return {
@@ -473,12 +477,12 @@ DailyChallenges.challenges = {
 		getValue = function(self, context)
 			local apples, combos = 0, 0
 			local statsSource = context and context.sessionStats
-                        if statsSource and type(statsSource.get) == "function" then
-                                apples = statsSource:get("applesEaten") or 0
-                                combos = statsSource:get("combosTriggered") or 0
-                        else
-                                apples = SessionStats:get("applesEaten") or 0
-                                combos = SessionStats:get("combosTriggered") or 0
+			if statsSource and type(statsSource.get) == "function" then
+				apples = statsSource:get("applesEaten") or 0
+				combos = statsSource:get("combosTriggered") or 0
+			elseif SessionStats and SessionStats.get then
+				apples = SessionStats:get("applesEaten") or 0
+				combos = SessionStats:get("combosTriggered") or 0
 			end
 
 			apples = apples or 0
@@ -490,12 +494,12 @@ DailyChallenges.challenges = {
 		progressReplacements = function(self, current, goal, context)
 			local apples, combos = 0, 0
 			local statsSource = context and context.sessionStats
-                        if statsSource and type(statsSource.get) == "function" then
-                                apples = statsSource:get("applesEaten") or 0
-                                combos = statsSource:get("combosTriggered") or 0
-                        else
-                                apples = SessionStats:get("applesEaten") or 0
-                                combos = SessionStats:get("combosTriggered") or 0
+			if statsSource and type(statsSource.get) == "function" then
+				apples = statsSource:get("applesEaten") or 0
+				combos = statsSource:get("combosTriggered") or 0
+			elseif SessionStats and SessionStats.get then
+				apples = SessionStats:get("applesEaten") or 0
+				combos = SessionStats:get("combosTriggered") or 0
 			end
 
 			return {

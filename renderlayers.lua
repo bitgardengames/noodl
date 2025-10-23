@@ -3,24 +3,21 @@ local SharedCanvas = require("sharedcanvas")
 
 local floor = math.floor
 local max = math.max
-local unpack = unpack
 
 local RenderLayers = ModuleUtil.create("RenderLayers")
 
 local LAYERS = {
-        "background",
-        "shadows",
-        "main",
-        "overlay",
+	"background",
+	"shadows",
+	"main",
+	"overlay",
 }
 
 local canvases = {}
 local layerClearedThisFrame = {}
 local layerUsedThisFrame = {}
-local canvasStack = {}
 local canvasWidth = 0
 local canvasHeight = 0
-local active = false
 
 local function ensureCanvas(name, width, height)
         local canvas, replaced = SharedCanvas.ensureCanvas(canvases[name], width, height)
@@ -36,12 +33,10 @@ function RenderLayers:begin(width, height)
         local w = max(1, floor(width or love.graphics.getWidth() or 1))
         local h = max(1, floor(height or love.graphics.getHeight() or 1))
 
-        active = true
-
-        if canvasWidth ~= w or canvasHeight ~= h then
-                canvasWidth = w
-                canvasHeight = h
-        end
+	if canvasWidth ~= w or canvasHeight ~= h then
+		canvasWidth = w
+		canvasHeight = h
+	end
 
         for name in pairs(canvases) do
                 layerClearedThisFrame[name] = false
@@ -55,18 +50,12 @@ function RenderLayers:begin(width, height)
 end
 
 function RenderLayers:push(layerName)
-        love.graphics.push("all")
-        canvasStack[#canvasStack + 1] = {love.graphics.getCanvas()}
-
-        if not active then
-                return
-        end
-
         local canvas, replaced = ensureCanvas(layerName, canvasWidth, canvasHeight)
         if replaced then
                 layerClearedThisFrame[layerName] = false
         end
 
+        love.graphics.push("all")
         love.graphics.setCanvas({canvas, stencil = true})
 
         if not layerClearedThisFrame[layerName] then
@@ -77,38 +66,18 @@ function RenderLayers:push(layerName)
         layerUsedThisFrame[layerName] = true
 end
 
-local function restorePreviousCanvas(previous)
-        if not previous or #previous == 0 then
-                love.graphics.setCanvas()
-                return
-        end
-
-        love.graphics.setCanvas(unpack(previous))
-end
-
 function RenderLayers:pop()
-        local previous = canvasStack[#canvasStack]
-        if previous then
-                canvasStack[#canvasStack] = nil
-        end
-
         love.graphics.pop()
-
-        restorePreviousCanvas(previous)
 end
 
 function RenderLayers:withLayer(layerName, drawFunc)
-        if not drawFunc then
-                return
-        end
+	if not drawFunc then
+		return
+	end
 
-        self:push(layerName)
-        drawFunc()
-        self:pop()
-end
-
-function RenderLayers:isActive()
-        return active
+	self:push(layerName)
+	drawFunc()
+	self:pop()
 end
 
 local function drawLayers(offsetX, offsetY)
@@ -132,8 +101,6 @@ function RenderLayers:present()
         drawLayers(0, 0)
 
         love.graphics.pop()
-
-        active = false
 end
 
 return RenderLayers
