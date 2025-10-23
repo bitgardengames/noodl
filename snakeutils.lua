@@ -1,6 +1,8 @@
 local Arena = require("arena")
 
 local floor = math.floor
+local min = math.min
+local max = math.max
 
 local SnakeUtils = {}
 
@@ -9,6 +11,10 @@ SnakeUtils.SEGMENT_SPACING = SnakeUtils.SEGMENT_SIZE
 SnakeUtils.POP_DURATION = 0.3
 
 SnakeUtils.occupied = {}
+
+local OCCUPANCY_FILL_COLOR = {0.95, 0.32, 0.28, 0.35}
+local OCCUPANCY_OUTLINE_COLOR = {1.0, 0.62, 0.46, 0.85}
+local OCCUPANCY_GRID_COLOR = {0.85, 0.9, 1.0, 0.22}
 
 function SnakeUtils.initOccupancy()
 	local occupied = SnakeUtils.occupied
@@ -48,7 +54,103 @@ function SnakeUtils.setOccupied(col, row, value)
 end
 
 function SnakeUtils.isOccupied(col, row)
-	return SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row]
+        return SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row]
+end
+
+function SnakeUtils.drawOccupancyOverlay(options)
+        if not love or not love.graphics then
+                return
+        end
+
+        local cols = Arena.cols or 0
+        local rows = Arena.rows or 0
+        if cols <= 0 or rows <= 0 then
+                return
+        end
+
+        local tileSize = Arena.tileSize or SnakeUtils.SEGMENT_SIZE or 24
+        local occupied = SnakeUtils.occupied
+        if type(occupied) ~= "table" then
+                return
+        end
+
+        local gridColor = (options and options.gridColor) or OCCUPANCY_GRID_COLOR
+        local fillColor = (options and options.fillColor) or OCCUPANCY_FILL_COLOR
+        local outlineColor = (options and options.outlineColor) or OCCUPANCY_OUTLINE_COLOR
+        local gridInset = (options and options.gridInset) or 0.5
+        local occupiedInset = (options and options.occupiedInset) or 1.0
+        local radius = min(8, tileSize * 0.35)
+        local gridWidth = max(0, tileSize - gridInset * 2)
+        local occupiedWidth = max(0, tileSize - occupiedInset * 2)
+
+        local gridR, gridG, gridB, gridA
+        if gridColor then
+                gridR = gridColor[1] or 1
+                gridG = gridColor[2] or 1
+                gridB = gridColor[3] or 1
+                gridA = gridColor[4] == nil and 1 or gridColor[4]
+        end
+
+        local fillR, fillG, fillB, fillA
+        if fillColor then
+                fillR = fillColor[1] or 1
+                fillG = fillColor[2] or 1
+                fillB = fillColor[3] or 1
+                fillA = fillColor[4] == nil and 1 or fillColor[4]
+        end
+
+        local outlineR, outlineG, outlineB, outlineA
+        if outlineColor then
+                outlineR = outlineColor[1] or 1
+                outlineG = outlineColor[2] or 1
+                outlineB = outlineColor[3] or 1
+                outlineA = outlineColor[4] == nil and 1 or outlineColor[4]
+        end
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("alpha")
+
+        if gridColor then
+                love.graphics.setColor(gridR, gridG, gridB, gridA)
+                love.graphics.setLineWidth((options and options.gridLineWidth) or 1)
+                if gridWidth > 0 then
+                        for col = 1, cols do
+                                for row = 1, rows do
+                                        local x, y = Arena:getTilePosition(col, row)
+                                        love.graphics.rectangle("line", x + gridInset, y + gridInset, gridWidth, gridWidth, radius, radius)
+                                end
+                        end
+                end
+        end
+
+        if fillColor or outlineColor then
+                local drawOutline = outlineColor ~= nil
+                if drawOutline then
+                        love.graphics.setLineWidth((options and options.occupiedLineWidth) or 1.5)
+                end
+
+                for col = 1, cols do
+                        local column = occupied[col]
+                        if column then
+                                for row = 1, rows do
+                                        if column[row] then
+                                                local x, y = Arena:getTilePosition(col, row)
+                                                if fillColor and occupiedWidth > 0 then
+                                                        love.graphics.setColor(fillR, fillG, fillB, fillA)
+                                                        love.graphics.rectangle("fill", x + occupiedInset, y + occupiedInset, occupiedWidth, occupiedWidth, radius, radius)
+                                                end
+
+                                                if drawOutline and occupiedWidth > 0 then
+                                                        love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+                                                        love.graphics.rectangle("line", x + occupiedInset, y + occupiedInset, occupiedWidth, occupiedWidth, radius, radius)
+                                                end
+                                        end
+                                end
+                        end
+                end
+        end
+
+        love.graphics.pop()
 end
 
 local function cellWithinBounds(col, row)
