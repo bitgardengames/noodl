@@ -2513,40 +2513,58 @@ function Snake:update(dt)
 		end
 	end
 
-	local stepX = direction.x * speed * dt
-	local stepY = direction.y * speed * dt
-	local newX = head.drawX + stepX
-	local newY = head.drawY + stepY
+        local newX, newY
 
-	-- advance cell clock, maybe snap & commit queued direction
-	local snappedThisTick = false
-	if hole then
-		moveProgress = 0
-	else
-		local stepDistance = speed * dt
-		moveProgress = moveProgress + stepDistance
-		local snaps = 0
-		local segmentLength = SEGMENT_SPACING
-		while moveProgress >= segmentLength do
-			moveProgress = moveProgress - segmentLength
-			snaps = snaps + 1
-		end
-		if snaps > 0 then
-			SessionStats:add("tilesTravelled", snaps)
-		end
-		if snaps > 0 then
-			-- snap to the nearest grid center
-			newX = snapToCenter(newX)
-			newY = snapToCenter(newY)
-			-- commit queued direction
-			local prevX, prevY = direction.x, direction.y
-			assignDirection(direction, pendingDir.x, pendingDir.y)
-			if prevX ~= direction.x or prevY ~= direction.y then
-				fruitsSinceLastTurn = 0
-			end
-			snappedThisTick = true
-		end
-	end
+        -- advance cell clock, maybe snap & commit queued direction
+        local snappedThisTick = false
+        if hole then
+                moveProgress = 0
+                local stepX = direction.x * speed * dt
+                local stepY = direction.y * speed * dt
+                newX = head.drawX + stepX
+                newY = head.drawY + stepY
+        else
+                local remaining = speed * dt
+                local currentDirX, currentDirY = direction.x, direction.y
+                local currX, currY = head.drawX, head.drawY
+                local snaps = 0
+                local segmentLength = SEGMENT_SPACING
+
+                while remaining > 0 do
+                        local available = segmentLength - moveProgress
+                        if available <= 0 then
+                                available = segmentLength
+                                moveProgress = 0
+                        end
+
+                        if remaining < available then
+                                currX = currX + currentDirX * remaining
+                                currY = currY + currentDirY * remaining
+                                moveProgress = moveProgress + remaining
+                                remaining = 0
+                        else
+                                currX = currX + currentDirX * available
+                                currY = currY + currentDirY * available
+                                remaining = remaining - available
+                                moveProgress = 0
+                                snaps = snaps + 1
+
+                                local prevX, prevY = currentDirX, currentDirY
+                                assignDirection(direction, pendingDir.x, pendingDir.y)
+                                currentDirX, currentDirY = direction.x, direction.y
+                                if prevX ~= currentDirX or prevY ~= currentDirY then
+                                        fruitsSinceLastTurn = 0
+                                end
+                                snappedThisTick = true
+                        end
+                end
+
+                if snaps > 0 then
+                        SessionStats:add("tilesTravelled", snaps)
+                end
+
+                newX, newY = currX, currY
+        end
 
 	-- spatially uniform sampling along the motion path
         local dx = newX - head.drawX
