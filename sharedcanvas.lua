@@ -9,7 +9,7 @@ local desiredMSAASamples = nil
 local canvasCreationOptions = nil
 
 local function buildCanvasOptions(samples)
-        local options = {stencil = true}
+        local options = {}
 
         if type(samples) == "number" and samples >= 2 then
                 options.msaa = samples
