@@ -1002,9 +1002,13 @@ local function drawPlayfieldLayers(self, stateOverride)
 		UpgradeVisuals:draw()
 		Popup:draw()
 
-		RenderLayers:withLayer("overlay", function()
-			Arena:drawBorder()
-		end)
+                RenderLayers:withLayer("overlay", function()
+                        if Snake.isDeveloperAssistEnabled and Snake:isDeveloperAssistEnabled() and SnakeUtils.drawOccupancyOverlay then
+                                SnakeUtils.drawOccupancyOverlay()
+                        end
+
+                        Arena:drawBorder()
+                end)
 	end)
 
 	RenderLayers:present()
