@@ -621,7 +621,7 @@ local badgeDefinitions = {
                 shape = "triangle_up",
                 colorKey = "blueberryColor",
                 fallback = {0.55, 0.65, 0.95, 1},
-                cornerRadiusScale = 0.24,
+                cornerRadiusScale = 0.16,
                 cornerSegments = 6,
         },
         risk = {
@@ -751,7 +751,7 @@ local function drawRoundedTriangle(mode, cx, cy, size, rotation, style)
         if style and style.cornerRadius then
                 baseCornerRadius = style.cornerRadius
         else
-                local cornerScale = 0.14
+                local cornerScale = 0.10
                 if style and style.cornerRadiusScale ~= nil then
                         cornerScale = style.cornerRadiusScale
                 end
