@@ -173,12 +173,12 @@ local english = {
                                         progress = "Conditions: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Floors: ${floors}/${floor_goal})",
                                         complete = "Delivery complete! ${combos} combos and ${floors} floors cleared.",
                                 },
-                                shielded_sprinter = {
-                                        title = "Shielded Sprinter",
-                                        description = "Save ${shield_goal} emergency shields and finish within ${time_goal} in one run.",
-                                        progress = "Status: ${current}/${goal} (Saves: ${shields}/${shield_goal}, Time: ${time}/${time_goal})",
-                                        complete = "Swift safety! ${shields} shields saved in ${time}.",
-                                },
+				combo_dash = {
+					title = "Combo Dash",
+					description = "Trigger ${combo_goal} combos within ${time_goal} in a single run.",
+					progress = "Status: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Time: ${time}/${time_goal})",
+					complete = "Dash complete! ${combos} combos in ${time}.",
+				},
 				depth_sprinter = {
 					title = "Depth Sprinter",
 					description = "Reach floor ${target_floor} within ${target_time}.",
