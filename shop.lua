@@ -621,6 +621,8 @@ local badgeDefinitions = {
                 shape = "triangle_up",
                 colorKey = "blueberryColor",
                 fallback = {0.55, 0.65, 0.95, 1},
+                cornerRadiusScale = 0.24,
+                cornerSegments = 6,
         },
         risk = {
                 label = "Risk",
@@ -686,6 +688,10 @@ local function resolveBadgeDefinition(definition)
         resolved.shadowOffset = definition.shadowOffset
         resolved.shadowAlpha = definition.shadowAlpha
         resolved.shadow = definition.shadow
+        resolved.cornerRadius = definition.cornerRadius
+        resolved.cornerRadiusScale = definition.cornerRadiusScale
+        resolved.cornerSegments = definition.cornerSegments
+        resolved.radiusScale = definition.radiusScale
 
         return resolved
 end
@@ -735,9 +741,22 @@ local function drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
         love.graphics.polygon(mode, unpack(points))
 end
 
-local function drawRoundedTriangle(mode, cx, cy, size, rotation)
-        local radius = size * 0.52
-        local baseCornerRadius = size * 0.14
+local function drawRoundedTriangle(mode, cx, cy, size, rotation, style)
+        local radiusScale = 0.52
+        if style and style.radiusScale ~= nil then
+                radiusScale = style.radiusScale
+        end
+        local radius = size * radiusScale
+        local baseCornerRadius
+        if style and style.cornerRadius then
+                baseCornerRadius = style.cornerRadius
+        else
+                local cornerScale = 0.14
+                if style and style.cornerRadiusScale ~= nil then
+                        cornerScale = style.cornerRadiusScale
+                end
+                baseCornerRadius = size * cornerScale
+        end
         if baseCornerRadius <= 0 then
                 drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
                 return
@@ -756,6 +775,10 @@ local function drawRoundedTriangle(mode, cx, cy, size, rotation)
 
         local points = {}
         local segments = 4
+        if style and style.cornerSegments ~= nil then
+                segments = style.cornerSegments
+        end
+        segments = max(1, floor(segments))
         for i = 1, 3 do
                 local current = vertices[i]
                 local prev = vertices[i == 1 and 3 or (i - 1)]
@@ -821,11 +844,11 @@ local badgeShapeDrawers = {
                 love.graphics.rectangle(mode, -half, -half, half * 2, half * 2, size * 0.12, size * 0.12)
                 love.graphics.pop()
         end,
-        triangle_up = function(mode, cx, cy, size)
-                drawRoundedTriangle(mode, cx, cy, size, -pi / 2)
+        triangle_up = function(mode, cx, cy, size, style)
+                drawRoundedTriangle(mode, cx, cy, size, -pi / 2, style)
         end,
-        triangle_down = function(mode, cx, cy, size)
-                drawRoundedTriangle(mode, cx, cy, size, pi / 2)
+        triangle_down = function(mode, cx, cy, size, style)
+                drawRoundedTriangle(mode, cx, cy, size, pi / 2, style)
         end,
         hexagon = function(mode, cx, cy, size)
                 drawRegularPolygon(mode, cx, cy, size * 0.48, 6, pi / 6)
