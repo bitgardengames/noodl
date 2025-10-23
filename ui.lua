@@ -1693,16 +1693,17 @@ function UI:drawFruitSockets()
 		love.graphics.rectangle("fill", panelX + shadowOffset, panelY + shadowOffset, panelW, panelH, 12, 12)
 	end
 
-	local panelColor = Theme.panelColor
-	if goalFlash > 0 then
-		panelColor = lightenColor(panelColor, 0.25 * goalFlash)
-	end
+        local basePanelColor = Theme.arenaBG or Theme.panelColor or {0.16, 0.16, 0.22, 0.94}
+        local panelColor = basePanelColor
+        if goalFlash > 0 then
+                panelColor = lightenColor(panelColor, 0.25 * goalFlash)
+        end
 
-	love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
-	love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
+        love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
+        love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
 
         local borderColor = UI.colors.border or {0, 0, 0, 1}
-	if goalFlash > 0 then
+        if goalFlash > 0 then
 		borderColor = lightenColor(borderColor, 0.4 * goalFlash)
 	end
 	love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
@@ -1710,8 +1711,8 @@ function UI:drawFruitSockets()
 	love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 12, 12)
 
 	local time = love.timer.getTime()
-	local socketRadius = (self.socketSize / 2) - 2
-	local socketFill = lightenColor(Theme.panelColor, 0.45)
+        local socketRadius = (self.socketSize / 2) - 2
+        local socketFill = lightenColor(basePanelColor, 0.45)
         local socketOutline = lightenColor(UI.colors.panelBorder or Theme.textColor, 0.2)
 
 	local highlightColor = (UI.colors and UI.colors.highlight) or Theme.highlightColor or {1, 1, 1, 0.08}
