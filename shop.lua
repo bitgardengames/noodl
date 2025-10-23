@@ -932,18 +932,17 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 	setColor(0, 0, 0, 0.38)
 	love.graphics.rectangle("fill", x + shadowOffsetX, y + shadowOffsetY, w, h, 18, 18)
 
-	-- Consistent 5px black outline framing the card regardless of rarity styling
-	local outlineWidth = 5
-	local outlineInset = outlineWidth * 0.5
-	love.graphics.setLineWidth(outlineWidth)
-	setColor(0, 0, 0, 1)
-	love.graphics.rectangle("line", x - outlineInset, y - outlineInset, w + outlineInset * 2, h + outlineInset * 2, 14, 14)
-	love.graphics.setLineWidth(4)
+        -- Consistent black outline that hugs the exterior of the card frame
+        local outlineWidth = 7
+        local outlineRadius = 16
+        setColor(0, 0, 0, 1)
+        love.graphics.rectangle("fill", x - outlineWidth, y - outlineWidth, w + outlineWidth * 2, h + outlineWidth * 2, outlineRadius, outlineRadius)
+        love.graphics.setLineWidth(4)
 
-	if isSelected then
-		local glowClock = love.timer.getTime()
-		local pulse = 0.35 + 0.25 * (sin(glowClock * 5) * 0.5 + 0.5)
-		setColor(1, 0.9, 0.45, pulse)
+        if isSelected then
+                local glowClock = love.timer.getTime()
+                local pulse = 0.35 + 0.25 * (sin(glowClock * 5) * 0.5 + 0.5)
+                setColor(1, 0.9, 0.45, pulse)
 		love.graphics.setLineWidth(10)
 		love.graphics.rectangle("line", x - 14, y - 14, w + 28, h + 28, 18, 18)
 		love.graphics.setLineWidth(4)
