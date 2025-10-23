@@ -719,7 +719,7 @@ function UI.drawButton(id)
         local text = btn.text or ""
         local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
 
-        setColor(0, 0, 0, 0.7)
+        setColor({0, 0, 0, 0.7})
         love.graphics.printf(text, b.x + 1, textY + 1, b.w, "center")
 
         setColor(textColor)
