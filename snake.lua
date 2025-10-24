@@ -858,7 +858,28 @@ local function snapToCenter(v)
 end
 
 local function toCell(x, y)
-        return floor(x / SEGMENT_SPACING + 0.5), floor(y / SEGMENT_SPACING + 0.5)
+        if not (x and y) then
+                return nil, nil
+        end
+
+        local tileSize = SEGMENT_SPACING
+        local offsetX = 0
+        local offsetY = 0
+
+        if Arena then
+                tileSize = Arena.tileSize or tileSize
+                offsetX = Arena.x or offsetX
+                offsetY = Arena.y or offsetY
+        end
+
+        if not tileSize or tileSize == 0 then
+                tileSize = SEGMENT_SPACING or 1
+        end
+
+        local col = floor(((x - offsetX) / tileSize) + 0.5)
+        local row = floor(((y - offsetY) / tileSize) + 0.5)
+
+        return col, row
 end
 
 local function rebuildOccupancyFromTrail()
