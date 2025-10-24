@@ -46,6 +46,22 @@ local segmentPoolCount = 0
 
 local headCellBuffer = {}
 local snakeBodyOccupancy = {}
+
+local function wipeTable(t)
+        if not t then
+                return
+        end
+
+        for k in pairs(t) do
+                t[k] = nil
+        end
+end
+
+local function clearSnakeBodyOccupancy()
+        for _, column in pairs(snakeBodyOccupancy) do
+                wipeTable(column)
+        end
+end
 local snakeOccupiedCells = {}
 local snakeOccupiedCellCount = 0
 local occupancyCols = 0
@@ -238,22 +254,6 @@ local function clearSeveredPieces()
 		end
 		severedPieces[i] = nil
 	end
-end
-
-local function wipeTable(t)
-        if not t then
-                return
-        end
-
-        for k in pairs(t) do
-                t[k] = nil
-        end
-end
-
-local function clearSnakeBodyOccupancy()
-        for _, column in pairs(snakeBodyOccupancy) do
-                wipeTable(column)
-        end
 end
 
 local function addSnakeBodyOccupancy(col, row)
