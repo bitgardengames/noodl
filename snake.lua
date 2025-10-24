@@ -862,22 +862,26 @@ local function toCell(x, y)
                 return nil, nil
         end
 
-        local tileSize = SEGMENT_SPACING
-        local offsetX = 0
-        local offsetY = 0
+        if Arena and Arena.getTileFromWorld then
+                return Arena:getTileFromWorld(x, y)
+        end
+
+        local tileSize = Arena and Arena.tileSize or SEGMENT_SPACING or 1
+        if tileSize == 0 then
+                tileSize = 1
+        end
+
+        local offsetX = (Arena and Arena.x) or 0
+        local offsetY = (Arena and Arena.y) or 0
+        local col = floor((x - offsetX) / tileSize) + 1
+        local row = floor((y - offsetY) / tileSize) + 1
 
         if Arena then
-                tileSize = Arena.tileSize or tileSize
-                offsetX = Arena.x or offsetX
-                offsetY = Arena.y or offsetY
+                local cols = Arena.cols or col
+                local rows = Arena.rows or row
+                col = max(1, min(cols, col))
+                row = max(1, min(rows, row))
         end
-
-        if not tileSize or tileSize == 0 then
-                tileSize = SEGMENT_SPACING or 1
-        end
-
-        local col = floor(((x - offsetX) / tileSize) + 0.5)
-        local row = floor(((y - offsetY) / tileSize) + 0.5)
 
         return col, row
 end
