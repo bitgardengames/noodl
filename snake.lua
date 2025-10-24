@@ -462,9 +462,9 @@ local HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after survivi
 local DAMAGE_FLASH_DURATION = 0.45
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
-local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.45 -- give the head more leeway so straight runs don't falsely register
+local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.55 -- give the head more leeway so straight runs don't falsely register
 local SELF_COLLISION_BUFFER_SQ = (SELF_COLLISION_BUFFER or 0) * (SELF_COLLISION_BUFFER or 0)
-local MIN_SELF_COLLISION_DISTANCE = SEGMENT_SPACING * 0.75 -- require meaningful overlap before triggering
+local MIN_SELF_COLLISION_DISTANCE = SEGMENT_SPACING * 0.9 -- require meaningful overlap before triggering
 local MIN_SELF_COLLISION_DISTANCE_SQ = MIN_SELF_COLLISION_DISTANCE * MIN_SELF_COLLISION_DISTANCE
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
