@@ -33,7 +33,6 @@ local descendingHole = nil
 local segmentCount = 1
 local popTimer = 0
 local isDead = false
-local fruitsSinceLastTurn = 0
 
 local clippedTrailBuffer = {}
 local clippedTrailProxy = {drawX = 0, drawY = 0}
@@ -1872,7 +1871,6 @@ function Snake:load(w, h)
         recycleTrail(trail)
         trail = buildInitialTrail()
         descendingHole = nil
-        fruitsSinceLastTurn = 0
         clearSeveredPieces()
         severedPieces = {}
         clearPortalAnimation(portalAnimation)
@@ -2136,7 +2134,6 @@ function Snake:setDirectionVector(dx, dy)
 		return
 	end
 
-	local prevX, prevY = direction.x, direction.y
 	assignDirection(direction, nx, ny)
 	assignDirection(pendingDir, nx, ny)
 
@@ -2146,9 +2143,6 @@ function Snake:setDirectionVector(dx, dy)
 		head.dirY = ny
 	end
 
-	if prevX ~= direction.x or prevY ~= direction.y then
-		fruitsSinceLastTurn = 0
-	end
 end
 
 function Snake:getHeadCell()
@@ -2657,15 +2651,11 @@ function Snake:update(dt)
 	if hole and head then
 		local dx = hole.x - head.drawX
 		local dy = hole.y - head.drawY
-                local dist = sqrt(dx * dx + dy * dy)
+		local dist = sqrt(dx * dx + dy * dy)
 		if dist > 1e-4 then
 			local nx, ny = dx / dist, dy / dist
-			local prevX, prevY = direction.x, direction.y
 			assignDirection(direction, nx, ny)
 			assignDirection(pendingDir, nx, ny)
-			if prevX ~= direction.x or prevY ~= direction.y then
-				fruitsSinceLastTurn = 0
-			end
 		end
 	end
 
@@ -2806,12 +2796,8 @@ function Snake:update(dt)
                                         end
                                 end
 
-                                local prevX, prevY = currentDirX, currentDirY
-                                assignDirection(direction, pendingDir.x, pendingDir.y)
-                                currentDirX, currentDirY = direction.x, direction.y
-                                if prevX ~= currentDirX or prevY ~= currentDirY then
-                                        fruitsSinceLastTurn = 0
-                                end
+			assignDirection(direction, pendingDir.x, pendingDir.y)
+			currentDirX, currentDirY = direction.x, direction.y
                         end
                 end
 
@@ -3692,11 +3678,6 @@ function Snake:checkSawBodyCollision()
 	end
 
 	return false
-end
-
-function Snake:onFruitCollected()
-	fruitsSinceLastTurn = (fruitsSinceLastTurn or 0) + 1
-	SessionStats:updateMax("fruitWithoutTurning", fruitsSinceLastTurn)
 end
 
 function Snake:markFruitSegment(fruitX, fruitY)

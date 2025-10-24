@@ -22,7 +22,6 @@ spelled out in the completion criteria column.
 | Floor Conqueror | `floor_conqueror` | `floorsCleared` | Defeat **8** floors before the run ends. | 100 XP |
 | Depth Delver | `depth_delver` | `deepestFloorReached` | Reach floor **10** within a single run. | 110 XP |
 | Apple Hoarder | `apple_hoarder` | `applesEaten` | Consume **70** apples in one run. | 90 XP |
-| Streak Perfectionist | `streak_perfectionist` | `fruitWithoutTurning` | Collect **12** fruit consecutively without turning. | 90 XP |
 | Dragonfruit Gourmand | `dragonfruit_gourmand` | `dragonfruitEaten` | Eat **3** dragonfruit in one session. | 100 XP |
 | Shield Triathlon | `shield_triathlon` | `runShieldWallBounces`, `runShieldRockBreaks`, `runShieldSawParries` | Perform at least one of each shield action (wall bounce, rock break, saw parry); completing all three awards progress **3**/3. | 120 XP |
 | Floor Speedrunner | `floor_speedrunner` | `fastestFloorClear` | Finish any floor in **45 seconds** or less (tracking stores the best time per run). | 110 XP |
@@ -33,7 +32,6 @@ spelled out in the completion criteria column.
 | Combo Courier | `combo_courier` | `combosTriggered`, `floorsCleared` | Trigger **5** combos while also clearing **4** floors in the same run. | 125 XP |
 | Combo Dash | `combo_dash` | `combosTriggered`, `timeAlive` | Trigger **6** combos and finish the run within **360 seconds** (6 minutes). | 130 XP |
 | Fruit Frenzy | `fruit_frenzy` | `applesEaten`, `timeAlive` | Collect **45** apples within **360 seconds** (6 minutes). | 130 XP |
-| Momentum Master | `momentum_master` | `fruitWithoutTurning`, `tilesTravelled` | Achieve **3** momentum surges: each surge demands **8** fruit collected without turning and **1,000** tiles travelled (min(floor(chain/8), floor(tiles/1000)) ≥ 3). | 110 XP |
 | Floor Cartographer | `floor_cartographer` | `floorsCleared`, `totalFloorTime` | Visit **4** floors while spending at least **180 seconds** (3 minutes) on each (min(floorsCleared, floor(totalFloorTime/180)) ≥ 4). | 100 XP |
 | Safety Dance | `safety_dance` | `runShieldWallBounces`, `runShieldSawParries` | Complete **3** defensive pairs, each comprising **2** wall bounces and **2** saw parries (min(floor(bounces/2), floor(saws/2)) ≥ 3). | 110 XP |
 
