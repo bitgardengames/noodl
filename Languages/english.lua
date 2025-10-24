@@ -179,12 +179,12 @@ local english = {
 					progress = "Status: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Time: ${time}/${time_goal})",
 					complete = "Dash complete! ${combos} combos in ${time}.",
 				},
-				depth_sprinter = {
-					title = "Depth Sprinter",
-					description = "Reach floor ${target_floor} within ${target_time}.",
-					progress = "Floors: ${floors}/${target_floor}, Time: ${time}/${target_time}",
-					complete = "Lightning descent! Goal hit in ${time}.",
-				},
+                                fruit_frenzy = {
+                                        title = "Fruit Frenzy",
+                                        description = "Chomp ${target_apples} apples within ${target_time}.",
+                                        progress = "Apples: ${apples}/${target_apples}, Time: ${time}/${target_time}",
+                                        complete = "Frenzy fulfilled! Devoured ${target_apples} apples in time.",
+                                },
 				momentum_master = {
 					title = "Momentum Master",
 					description = "Stack ${goal} momentum surges of ${fruit_chunk} fruit and ${tile_chunk} tiles without slowing.",
