@@ -484,10 +484,19 @@ local function handleWallCollision(headX, headY)
 end
 
 local function handleRockCollision(headX, headY)
-	for _, rock in ipairs(Rocks:getAll()) do
-		if aabb(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE, rock.x, rock.y, rock.w, rock.h) then
-			local centerX = rock.x + rock.w / 2
-			local centerY = rock.y + rock.h / 2
+        local halfSegment = SEGMENT_SIZE / 2
+        local headLeft = headX - halfSegment
+        local headTop = headY - halfSegment
+
+        for _, rock in ipairs(Rocks:getAll()) do
+                local rockWidth = rock.w or SEGMENT_SIZE
+                local rockHeight = rock.h or SEGMENT_SIZE
+                local rockLeft = (rock.x or 0) - rockWidth / 2
+                local rockTop = (rock.y or 0) - rockHeight / 2
+
+                if aabb(headLeft, headTop, SEGMENT_SIZE, SEGMENT_SIZE, rockLeft, rockTop, rockWidth, rockHeight) then
+                        local centerX = rockLeft + rockWidth / 2
+                        local centerY = rockTop + rockHeight / 2
 
 			if Snake.isDashActive and Snake:isDashActive() then
 				Rocks:destroy(rock)
