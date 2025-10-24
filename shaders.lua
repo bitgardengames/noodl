@@ -973,86 +973,93 @@ registerEffect({
 })
 -- Radiant fabric of light for the shop screen
 registerEffect({
-	type = "shopGlimmer",
-	backdropIntensity = 0.54,
-	arenaIntensity = 0.32,
-	source = [[
-	extern float time;
-	extern vec2 resolution;
-	extern vec2 origin;
-	extern vec4 baseColor;
-	extern vec4 accentColor;
-	extern vec4 glowColor;
-	extern float intensity;
+        type = "shopGlimmer",
+        backdropIntensity = 0.52,
+        arenaIntensity = 0.3,
+        source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 topColor;
+        extern vec4 bottomColor;
+        extern vec4 warmColor;
+        extern vec4 tintColor;
+        extern float vignetteStrength;
+        extern float intensity;
 
-	float hash(vec2 p)
-	{
-		return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-	}
+        float hash(vec2 p)
+        {
+                return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        }
 
-	float noise(vec2 p)
-	{
-		vec2 i = floor(p);
-		vec2 f = fract(p);
-		f = f * f * (3.0 - 2.0 * f);
+        float noise(vec2 p)
+        {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                f = f * f * (3.0 - 2.0 * f);
 
-		float a = hash(i);
-		float b = hash(i + vec2(1.0, 0.0));
-		float c = hash(i + vec2(0.0, 1.0));
-		float d = hash(i + vec2(1.0, 1.0));
+                float a = hash(i);
+                float b = hash(i + vec2(1.0, 0.0));
+                float c = hash(i + vec2(0.0, 1.0));
+                float d = hash(i + vec2(1.0, 1.0));
 
-		return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-	}
+                return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+        }
 
-	vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-	{
-		vec2 uv = (screen_coords - origin) / resolution;
-		uv = clamp(uv, 0.0, 1.0);
-		vec2 centered = uv - vec2(0.5);
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+                vec2 uv = (screen_coords - origin) / resolution;
+                uv = clamp(uv, 0.0, 1.0);
+                vec2 centered = uv - vec2(0.5);
 
-		float radius = length(centered);
+                float gradient = smoothstep(0.0, 1.0, uv.y);
+                vec3 col = mix(topColor.rgb, bottomColor.rgb, gradient);
 
-		float ribbonFlow = sin((uv.x * 3.2 + uv.y * 2.6) - time * 0.45);
-		float swirl = sin(atan(centered.y, centered.x) * 4.0 - time * 0.28 + radius * 3.5);
-		float drift = noise(uv * 3.5 + time * 0.1);
+                float dist = length(centered);
+                float vignette = smoothstep(0.38, 0.98, dist);
+                col = mix(col, col * 0.6, vignette * vignetteStrength);
 
-		float ribbonLayer = clamp(ribbonFlow * 0.45 + swirl * 0.3 + drift * 0.6, -1.0, 1.0) * 0.5 + 0.5;
-		float halo = exp(-radius * radius * 4.0);
-		float verticalGlow = smoothstep(0.15, 0.95, uv.y + sin(time * 0.16 + uv.x * 1.4) * 0.05);
+                vec2 warmLeft = (uv - vec2(0.2, 0.9)) / vec2(0.38, 0.26);
+                vec2 warmRight = (uv - vec2(0.8, 0.9)) / vec2(0.38, 0.26);
+                float warmSpot = exp(-dot(warmLeft, warmLeft)) + exp(-dot(warmRight, warmRight));
 
-		float accentMix = clamp((ribbonLayer * 0.6 + halo * 0.25 + verticalGlow * 0.2) * intensity, 0.0, 1.0);
-		vec3 col = mix(baseColor.rgb, accentColor.rgb, accentMix);
+                float breathing = sin(time * 0.08) * 0.5 + 0.5;
+                float shimmer = noise(uv * vec2(6.0, 4.0) + time * 0.15);
+                float softRipple = sin((uv.y * 1.6 + uv.x * 1.1) - time * 0.2) * 0.5 + 0.5;
 
-		float sparkleField = noise(uv * 12.0 + time * 0.6);
-		float sparkle = smoothstep(0.72, 1.0, sparkleField) * (0.35 + 0.25 * intensity);
+                float warmMix = clamp((warmSpot * 0.55 + breathing * 0.08) * intensity, 0.0, 1.0);
+                vec3 warmBlend = mix(col, warmColor.rgb, warmMix * (0.45 + 0.2 * breathing));
+                col = mix(col, warmBlend, clamp(warmMix, 0.0, 1.0));
 
-		float glowPulse = sin(time * 0.22) * 0.5 + 0.5;
-		float glowAmount = clamp((halo * (0.55 + glowPulse * 0.35) + verticalGlow * 0.3 + sparkle * 0.5) * intensity, 0.0, 1.0);
-		col = mix(col, glowColor.rgb, glowAmount);
+                float shimmerCentered = (shimmer - 0.5) * 0.06;
+                col += shimmerCentered;
 
-		float weave = noise(uv * vec2(22.0, 18.0) + vec2(0.0, time * 0.35));
-		col = mix(col, baseColor.rgb, (0.18 + 0.1 * (1.0 - ribbonLayer)) * (1.0 - weave));
+                float ambient = mix(softRipple, shimmer, 0.4);
+                col = mix(col, tintColor.rgb, ambient * 0.08 * intensity);
 
-		col = mix(baseColor.rgb, col, 0.82);
-		col = clamp(col, 0.0, 1.0);
+                col = mix(col, mix(topColor.rgb, bottomColor.rgb, gradient), 0.15 * (1.0 - intensity));
+                col = clamp(col, 0.0, 1.0);
 
-		return vec4(col, baseColor.a) * color;
-	}
-	]],
-	configure = function(effect, palette)
-		local shader = effect.shader
+                return vec4(col, mix(topColor.a, bottomColor.a, gradient)) * color;
+        }
+        ]],
+        configure = function(effect, palette)
+                local shader = effect.shader
 
-		local base = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
-		local accent = getColorComponents(palette and (palette.accentColor or palette.edgeColor), Theme.borderColor)
-		local glow = getColorComponents(palette and (palette.glowColor or palette.highlightColor), Theme.accentTextColor)
+                local top = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
+                local bottom = getColorComponents(palette and (palette.deepColor or palette.shadowColor), {0.05, 0.06, 0.08, 1})
+                local warm = getColorComponents(palette and palette.warmAccent, {0.98, 0.71, 0.45, 1})
+                local tint = getColorComponents(palette and (palette.accentColor or palette.highlightColor), Theme.accentTextColor)
 
-		sendColor(shader, "baseColor", base)
-		sendColor(shader, "accentColor", accent)
-		sendColor(shader, "glowColor", glow)
-	end,
-	draw = function(effect, x, y, w, h, intensity)
-		return drawShader(effect, x, y, w, h, intensity)
-	end,
+                sendColor(shader, "topColor", top)
+                sendColor(shader, "bottomColor", bottom)
+                sendColor(shader, "warmColor", warm)
+                sendColor(shader, "tintColor", tint)
+                sendFloat(shader, "vignetteStrength", 0.68)
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
 })
 
 -- Prismatic beams for achievements showcase
