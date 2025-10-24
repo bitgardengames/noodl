@@ -1593,8 +1593,11 @@ local function drawXpSection(self, x, y, width)
 	local trackColor = withAlpha(darkenColor(panelColor, 0.2), 0.85)
 	local ringColor = {levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.9}
 
+	love.graphics.setColor(0, 0, 0, 1)
+	love.graphics.circle("fill", centerX, centerY, outerRadius + 3, 96)
+
 	love.graphics.setColor(trackColor)
-	love.graphics.circle("fill", centerX, centerY, outerRadius)
+	love.graphics.circle("fill", centerX, centerY, outerRadius, 96)
 
 	local startAngle = -pi / 2
 	love.graphics.setColor(withAlpha(lightenColor(panelColor, 0.12), 0.88))
