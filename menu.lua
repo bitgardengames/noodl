@@ -535,23 +535,22 @@ function Menu:draw()
 
         local versionFont = UI.fonts.small
         love.graphics.setFont(versionFont)
-        local footerSpacing = menuLayout.footerSpacing or 24
-        local bottomMargin = menuLayout.marginBottom or footerSpacing
         local versionHeight = versionFont and versionFont:getHeight() or 0
-        local versionY = (menuLayout.bottomY or (sh - bottomMargin)) - versionHeight
-        local versionMargin = menuLayout.marginHorizontal or 16
-        setColorWithAlpha(Theme.textColor, 0.7)
-        love.graphics.print(Localization:get("menu.version"), versionMargin, versionY)
+        local versionInset = 15
+        local versionY = sh - versionHeight - versionInset
+        local versionX = versionInset
+        setColorWithAlpha(Theme.textColor, 0.6)
+        love.graphics.print(Localization:get("menu.version"), versionX, versionY)
         love.graphics.setColor(Theme.textColor)
 
-	if dailyChallenge and dailyChallengeAnim > 0 then
-		local alpha = min(1, dailyChallengeAnim)
-		local eased = alpha * alpha
+        if dailyChallenge and dailyChallengeAnim > 0 then
+                local alpha = min(1, dailyChallengeAnim)
+                local eased = alpha * alpha
                 local panelWidth = min(menuLayout.panelMaxWidth or 420, max(280, menuLayout.contentWidth or (sw - 72)))
                 local padding = UI.spacing.panelPadding or 16
                 local panelMargin = (menuLayout.marginHorizontal or 36) * EDGE_PROXIMITY_FACTOR
-                local panelOffsetX = 15
-                local panelOffsetY = 15
+                local panelOffsetX = 25
+                local panelOffsetY = 25
                 local panelX = sw - panelWidth - panelMargin + panelOffsetX
 		local headerFont = UI.fonts.small
 		local titleFont = UI.fonts.button
