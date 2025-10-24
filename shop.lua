@@ -21,7 +21,7 @@ local unpack = unpack
 
 local Shop = {}
 
-local ANALOG_DEADZONE = 0.35
+local ANALOG_DEADZONE = 0.3
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local BACKGROUND_EFFECT_TYPE = "shopGlimmer"

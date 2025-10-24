@@ -21,7 +21,7 @@ local remove = table.remove
 
 local GameOver = {isVictory = false}
 
-local ANALOG_DEADZONE = 0.35
+local ANALOG_DEADZONE = 0.3
 
 local function pickDeathMessage(cause)
 	local deathTable = Localization:getTable("gameover.deaths") or {}
