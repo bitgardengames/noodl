@@ -15,6 +15,34 @@ SnakeUtils.occupied = {}
 local OCCUPANCY_FILL_COLOR = {0.95, 0.32, 0.28, 0.35}
 local OCCUPANCY_OUTLINE_COLOR = {1.0, 0.62, 0.46, 0.85}
 local OCCUPANCY_GRID_COLOR = {0.85, 0.9, 1.0, 0.22}
+local FRUIT_HIGHLIGHT_FILL = {0.32, 0.95, 0.48, 0.3}
+local FRUIT_HIGHLIGHT_OUTLINE = {0.32, 0.95, 0.48, 0.8}
+local ROCK_HIGHLIGHT_FILL = {0.92, 0.78, 0.54, 0.3}
+local ROCK_HIGHLIGHT_OUTLINE = {0.92, 0.78, 0.54, 0.8}
+local SAW_TRACK_FILL_COLOR = {1.0, 0.86, 0.3, 0.25}
+local SAW_TRACK_OUTLINE_COLOR = {1.0, 0.92, 0.46, 0.8}
+
+local function getLoadedModule(name)
+        local loaded = package.loaded[name]
+        if loaded == nil or loaded == true then
+                return nil
+        end
+
+        return loaded
+end
+
+local function snapToPixel(value)
+        return floor(value + 0.5)
+end
+
+local function getLineOffset(width)
+        local approximate = floor((width or 1) + 0.5)
+        if approximate % 2 == 1 then
+                return 0.5
+        end
+
+        return 0
+end
 
 function SnakeUtils.initOccupancy()
 	local occupied = SnakeUtils.occupied
@@ -80,8 +108,24 @@ function SnakeUtils.drawOccupancyOverlay(options)
         local gridInset = (options and options.gridInset) or 0.5
         local occupiedInset = (options and options.occupiedInset) or 1.0
         local radius = min(8, tileSize * 0.35)
-        local gridWidth = max(0, tileSize - gridInset * 2)
-        local occupiedWidth = max(0, tileSize - occupiedInset * 2)
+        local gridWidth = max(0, floor((tileSize - gridInset * 2) + 0.5))
+        local occupiedWidth = max(0, floor((tileSize - occupiedInset * 2) + 0.5))
+        local gridLineWidth = (options and options.gridLineWidth) or 1
+        local gridLineOffset = getLineOffset(gridLineWidth)
+        local occupiedLineWidth = (options and options.occupiedLineWidth) or 1.5
+        local occupiedLineOffset = getLineOffset(occupiedLineWidth)
+        local occupiedOutlineWidth = max(0, occupiedWidth - occupiedLineOffset * 2)
+        local objectInset = (options and options.objectInset) or occupiedInset
+        local objectWidth = max(0, floor((tileSize - objectInset * 2) + 0.5))
+        local objectLineWidth = (options and options.objectLineWidth) or 2
+        local objectLineOffset = getLineOffset(objectLineWidth)
+        local objectOutlineWidth = max(0, objectWidth - objectLineOffset * 2)
+        local fruitHighlightFill = (options and options.fruitHighlightFill) or FRUIT_HIGHLIGHT_FILL
+        local fruitHighlightOutline = (options and options.fruitHighlightOutline) or FRUIT_HIGHLIGHT_OUTLINE
+        local rockHighlightFill = (options and options.rockHighlightFill) or ROCK_HIGHLIGHT_FILL
+        local rockHighlightOutline = (options and options.rockHighlightOutline) or ROCK_HIGHLIGHT_OUTLINE
+        local sawHighlightFill = (options and options.sawTrackHighlightFill) or SAW_TRACK_FILL_COLOR
+        local sawHighlightOutline = (options and options.sawTrackHighlightOutline) or SAW_TRACK_OUTLINE_COLOR
 
         local gridR, gridG, gridB, gridA
         if gridColor then
@@ -112,21 +156,32 @@ function SnakeUtils.drawOccupancyOverlay(options)
 
         if gridColor then
                 love.graphics.setColor(gridR, gridG, gridB, gridA)
-                love.graphics.setLineWidth((options and options.gridLineWidth) or 1)
-                if gridWidth > 0 then
+                love.graphics.setLineWidth(gridLineWidth)
+                local gridDrawWidth = max(0, gridWidth - gridLineOffset * 2)
+                if gridDrawWidth > 0 then
                         for col = 1, cols do
                                 for row = 1, rows do
                                         local x, y = Arena:getTilePosition(col, row)
-                                        love.graphics.rectangle("line", x + gridInset, y + gridInset, gridWidth, gridWidth, radius, radius)
+                                        x = snapToPixel(x)
+                                        y = snapToPixel(y)
+                                        love.graphics.rectangle(
+                                                "line",
+                                                x + gridInset + gridLineOffset,
+                                                y + gridInset + gridLineOffset,
+                                                gridDrawWidth,
+                                                gridDrawWidth,
+                                                radius,
+                                                radius
+                                        )
                                 end
                         end
                 end
         end
 
         if fillColor or outlineColor then
-                local drawOutline = outlineColor ~= nil
+                local drawOutline = outlineColor ~= nil and occupiedOutlineWidth > 0
                 if drawOutline then
-                        love.graphics.setLineWidth((options and options.occupiedLineWidth) or 1.5)
+                        love.graphics.setLineWidth(occupiedLineWidth)
                 end
 
                 for col = 1, cols do
@@ -135,14 +190,121 @@ function SnakeUtils.drawOccupancyOverlay(options)
                                 for row = 1, rows do
                                         if column[row] then
                                                 local x, y = Arena:getTilePosition(col, row)
+                                                x = snapToPixel(x)
+                                                y = snapToPixel(y)
                                                 if fillColor and occupiedWidth > 0 then
                                                         love.graphics.setColor(fillR, fillG, fillB, fillA)
                                                         love.graphics.rectangle("fill", x + occupiedInset, y + occupiedInset, occupiedWidth, occupiedWidth, radius, radius)
                                                 end
 
-                                                if drawOutline and occupiedWidth > 0 then
+                                                if drawOutline then
                                                         love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-                                                        love.graphics.rectangle("line", x + occupiedInset, y + occupiedInset, occupiedWidth, occupiedWidth, radius, radius)
+                                                        love.graphics.rectangle(
+                                                                "line",
+                                                                x + occupiedInset + occupiedLineOffset,
+                                                                y + occupiedInset + occupiedLineOffset,
+                                                                occupiedOutlineWidth,
+                                                                occupiedOutlineWidth,
+                                                                radius,
+                                                                radius
+                                                        )
+                                                end
+                                        end
+                                end
+                        end
+                end
+        end
+
+        local function drawHighlightCell(col, row, fillColor, outlineColor)
+                if (not fillColor or objectWidth <= 0) and (not outlineColor or objectOutlineWidth <= 0) then
+                        return
+                end
+
+                if not (col and row) then
+                        return
+                end
+
+                if col < 1 or col > cols or row < 1 or row > rows then
+                        return
+                end
+
+                local x, y = Arena:getTilePosition(col, row)
+                x = snapToPixel(x)
+                y = snapToPixel(y)
+
+                if fillColor and objectWidth > 0 then
+                        local r = fillColor[1] or 1
+                        local g = fillColor[2] or 1
+                        local b = fillColor[3] or 1
+                        local a = fillColor[4] == nil and 1 or fillColor[4]
+                        love.graphics.setColor(r, g, b, a)
+                        love.graphics.rectangle("fill", x + objectInset, y + objectInset, objectWidth, objectWidth, radius, radius)
+                end
+
+                if outlineColor and objectOutlineWidth > 0 then
+                        local r = outlineColor[1] or 1
+                        local g = outlineColor[2] or 1
+                        local b = outlineColor[3] or 1
+                        local a = outlineColor[4] == nil and 1 or outlineColor[4]
+                        love.graphics.setColor(r, g, b, a)
+                        love.graphics.setLineWidth(objectLineWidth)
+                        love.graphics.rectangle(
+                                "line",
+                                x + objectInset + objectLineOffset,
+                                y + objectInset + objectLineOffset,
+                                objectOutlineWidth,
+                                objectOutlineWidth,
+                                radius,
+                                radius
+                        )
+                end
+        end
+
+        local Fruit = getLoadedModule("fruit")
+        if Fruit and Fruit.getTile then
+                local fruitCol, fruitRow = Fruit:getTile()
+                if fruitCol and fruitRow and SnakeUtils.isOccupied and SnakeUtils.isOccupied(fruitCol, fruitRow) then
+                        drawHighlightCell(fruitCol, fruitRow, fruitHighlightFill, fruitHighlightOutline)
+                end
+        end
+
+        local Rocks = getLoadedModule("rocks")
+        if Rocks and Rocks.getAll then
+                local rockList = Rocks:getAll()
+                if type(rockList) == "table" then
+                        for i = 1, #rockList do
+                                local rock = rockList[i]
+                                if rock then
+                                        local rockCol, rockRow = rock.col, rock.row
+                                        if not (rockCol and rockRow) and rock.x and rock.y then
+                                                rockCol, rockRow = Arena:getTileFromWorld(rock.x, rock.y)
+                                        end
+                                        drawHighlightCell(rockCol, rockRow, rockHighlightFill, rockHighlightOutline)
+                                end
+                        end
+                end
+        end
+
+        local Saws = getLoadedModule("saws")
+        if Saws and Saws.getAll then
+                local sawList = Saws:getAll()
+                if type(sawList) == "table" and #sawList > 0 then
+                        local seen = {}
+                        for i = 1, #sawList do
+                                local saw = sawList[i]
+                                if saw then
+                                        local cells = SnakeUtils.getSawTrackCells(saw.x, saw.y, saw.dir)
+                                        if cells then
+                                                for j = 1, #cells do
+                                                        local cell = cells[j]
+                                                        local col, row = cell and cell[1], cell and cell[2]
+                                                        if col and row then
+                                                                local key = col .. ":" .. row
+                                                                if not seen[key] then
+                                                                        seen[key] = true
+                                                                        drawHighlightCell(col, row, sawHighlightFill, sawHighlightOutline)
+                                                                end
+                                                        end
                                                 end
                                         end
                                 end
