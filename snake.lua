@@ -47,6 +47,8 @@ local segmentPoolCount = 0
 local headCellBuffer = {}
 local snakeBodyOccupancy = {}
 
+local TILE_COORD_EPSILON = 1e-9
+
 local function wipeTable(t)
         if not t then
                 return
@@ -991,8 +993,10 @@ local function toCell(x, y)
 
         local offsetX = (Arena and Arena.x) or 0
         local offsetY = (Arena and Arena.y) or 0
-        local col = floor((x - offsetX) / tileSize) + 1
-        local row = floor((y - offsetY) / tileSize) + 1
+        local normalizedCol = ((x - offsetX) / tileSize) + TILE_COORD_EPSILON
+        local normalizedRow = ((y - offsetY) / tileSize) + TILE_COORD_EPSILON
+        local col = floor(normalizedCol) + 1
+        local row = floor(normalizedRow) + 1
 
         if Arena then
                 local cols = Arena.cols or col

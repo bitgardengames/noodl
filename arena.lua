@@ -299,8 +299,15 @@ function Arena:getCenterOfTile(col, row)
 end
 
 function Arena:getTileFromWorld(x, y)
-	local col = floor((x - self.x) / self.tileSize) + 1
-	local row = floor((y - self.y) / self.tileSize) + 1
+	local epsilon = 1e-9
+	local tileSize = self.tileSize
+	if not tileSize or tileSize == 0 then
+		tileSize = 1
+	end
+	local normalizedCol = ((x - self.x) / tileSize) + epsilon
+	local normalizedRow = ((y - self.y) / tileSize) + epsilon
+	local col = floor(normalizedCol) + 1
+	local row = floor(normalizedRow) + 1
 
 	-- clamp inside arena grid
 	col = max(1, min(self.cols, col))
