@@ -22,18 +22,14 @@ local sqrt = math.sqrt
 local Movement = {}
 
 function Movement:applyForcedDirection(dirX, dirY)
-	if not (Snake and Snake.setDirectionVector) then
-		return
-	end
+        dirX = dirX or 0
+        dirY = dirY or 0
 
-	dirX = dirX or 0
-	dirY = dirY or 0
+        if dirX == 0 and dirY == 0 then
+                return
+        end
 
-	if dirX == 0 and dirY == 0 then
-		return
-	end
-
-	Snake:setDirectionVector(dirX, dirY)
+        Snake:setDirectionVector(dirX, dirY)
 end
 
 local SEGMENT_SIZE = 24 -- same size as rocks and snake
@@ -453,10 +449,8 @@ local function handleWallCollision(headX, headY)
 		local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY)
 		local clampedX = reroutedX or safeX
 		local clampedY = reroutedY or safeY
-		if Snake and Snake.setHeadPosition then
-			Snake:setHeadPosition(clampedX, clampedY)
-		end
-		local dir = Snake.getDirection and Snake:getDirection() or {x = 0, y = 0}
+                Snake:setHeadPosition(clampedX, clampedY)
+                local dir = Snake.getDirection and Snake:getDirection() or {x = 0, y = 0}
 
 		return clampedX, clampedY, "wall", {
 			pushX = 0,
@@ -473,9 +467,7 @@ local function handleWallCollision(headX, headY)
 	local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
 	local clampedX = reroutedX or clamp(headX, left, right)
 	local clampedY = reroutedY or clamp(headY, top, bottom)
-	if Snake and Snake.setHeadPosition then
-		Snake:setHeadPosition(clampedX, clampedY)
-	end
+        Snake:setHeadPosition(clampedX, clampedY)
 	headX, headY = clampedX, clampedY
 
         Particles:spawnBurst(headX, headY, WALL_SHIELD_BURST_OPTIONS)

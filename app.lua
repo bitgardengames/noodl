@@ -111,9 +111,7 @@ function App:draw()
 		local label = string.format("FPS: %d", fps)
 		local padding = 6
 
-		if UI.setFont then
-			UI.setFont("caption")
-		end
+                UI.setFont("caption")
 
 		local font = love.graphics.getFont()
 		local textWidth = font and font:getWidth(label) or 0

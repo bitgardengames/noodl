@@ -1148,12 +1148,8 @@ local function activateCosmetic(index)
 		return false
 	end
 
-	if not SnakeCosmetics or not SnakeCosmetics.setActiveSkin then
-		return false
-	end
-
-	local skinId = entry.skin.id
-	local changed = SnakeCosmetics:setActiveSkin(skinId)
+        local skinId = entry.skin.id
+        local changed = SnakeCosmetics:setActiveSkin(skinId)
 	if changed then
 		buildCosmeticsEntries()
 		local newIndex
