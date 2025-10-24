@@ -388,9 +388,9 @@ local function getVerticalSinkDirection(saw)
         end
 
         if saw.side == "left" then
-                return 1
-        elseif saw.side == "right" then
                 return -1
+        elseif saw.side == "right" then
+                return 1
         end
 
         return 1
