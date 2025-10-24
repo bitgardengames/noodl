@@ -1238,7 +1238,15 @@ registerEffect({
 
 		float breathe = sin(time * 0.25) * 0.5 + 0.5;
 
-		vec3 col = mix(baseColor.rgb, accentColor.rgb, fade * 0.35 * intensity);
+                const vec3 centerPalette = vec3(0.125, 0.157, 0.196);
+                const vec3 edgePalette = vec3(0.173, 0.212, 0.267);
+                const vec3 midpointPalette = vec3(0.141, 0.180, 0.235);
+
+                float gradientFactor = clamp(fade, 0.0, 1.0);
+                vec3 gradientMid = mix(edgePalette, midpointPalette, gradientFactor);
+                vec3 gradientBase = mix(gradientMid, centerPalette, smoothstep(0.35, 0.9, gradientFactor));
+                vec3 baseTone = mix(baseColor.rgb, gradientBase, 0.85);
+                vec3 col = mix(baseTone, accentColor.rgb, fade * 0.35 * intensity);
 
 		float glow = exp(-dist * dist * 2.4);
 		float outerGlow = smoothstep(0.5, 0.1, dist);
