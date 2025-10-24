@@ -487,74 +487,6 @@ local function drawCoiledFocus(effect, progress)
 	love.graphics.setLineWidth(1)
 end
 
-local function drawPrismRefraction(effect, progress)
-	local x, y = effect.x, effect.y
-	local innerRadius = effect.innerRadius or 12
-	local outerRadius = effect.outerRadius or 44
-	local beamColor = effect.variantColor or effect.color or {0.72, 0.92, 1.0, 1}
-	local shardColor = effect.variantSecondaryColor or {0.46, 0.78, 1.0, 0.95}
-	local glintColor = effect.variantTertiaryColor or {1.0, 0.96, 0.72, 0.82}
-
-	local beamAlpha = (beamColor[4] or 1) * clamp01(1.08 - progress * 1.2)
-	if beamAlpha <= 0 then return end
-
-	local shardCount = (effect.variantData and effect.variantData.shards) or 6
-	local rotation = (effect.rotation or 0) + progress * pi * 1.1
-
-	love.graphics.push("all")
-
-	if effect.addBlend then
-		love.graphics.setBlendMode("add")
-	end
-
-	for index = 1, shardCount do
-		local offset = (index - 1) / shardCount
-		local angle = rotation + offset * pi * 2
-		local sway = sin(progress * pi * (3.2 + index * 0.25)) * 0.2
-		angle = angle + sway
-
-		local dirX, dirY = cos(angle), sin(angle)
-		local perpX, perpY = -dirY, dirX
-
-		local innerDist = innerRadius * (0.72 + 0.18 * sin(progress * pi * 4 + index))
-		local outerDist = outerRadius * (0.8 + 0.16 * sin(progress * pi * 3 + index * 1.1))
-		local width = innerRadius * (0.22 + 0.1 * (1 - progress))
-
-		local baseX = x + dirX * innerDist
-		local baseY = y + dirY * innerDist
-		local tipX = x + dirX * outerDist
-		local tipY = y + dirY * outerDist
-		local leftX = baseX + perpX * width
-		local leftY = baseY + perpY * width
-		local rightX = baseX - perpX * width
-		local rightY = baseY - perpY * width
-
-		local fade = 1 - progress * 0.4
-		love.graphics.setColor(shardColor[1], shardColor[2], shardColor[3], (shardColor[4] or 1) * beamAlpha * (0.65 + 0.35 * fade))
-		love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
-
-		love.graphics.setLineWidth(1.8)
-		love.graphics.setColor(beamColor[1], beamColor[2], beamColor[3], beamAlpha * 0.9)
-		love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
-	end
-
-	local glintAlpha = (glintColor[4] or 1) * clamp01(1 - progress * 0.95)
-	if glintAlpha > 0 then
-		love.graphics.setColor(glintColor[1], glintColor[2], glintColor[3], glintAlpha)
-		love.graphics.setLineWidth(2.6)
-		local arcRadius = outerRadius * (0.82 + 0.12 * sin(progress * pi * 2))
-		local arcSpan = pi * 0.28
-		local arcCount = max(3, floor(shardCount / 2))
-		for index = 1, arcCount do
-			local angle = rotation + index * (pi * 2 / arcCount)
-			love.graphics.arc("line", "open", x, y, arcRadius, angle - arcSpan * 0.5, angle + arcSpan * 0.5, 18)
-		end
-	end
-
-	love.graphics.pop()
-	love.graphics.setLineWidth(1)
-end
-
 local function drawPocketSprings(effect, progress)
 	local x, y = effect.x, effect.y
 	local innerRadius = effect.innerRadius or 12
@@ -1257,9 +1189,8 @@ local variantDrawers = {
 	storm_burst = drawStormBurst,
 	fang_flurry = drawFangFlurry,
 	extra_bite_chomp = drawExtraBiteChomp,
-	stoneguard_bastion = drawStoneguardBastion,
-	prism_refraction = drawPrismRefraction,
-	pocket_springs = drawPocketSprings,
+        stoneguard_bastion = drawStoneguardBastion,
+        pocket_springs = drawPocketSprings,
 	coiled_focus = drawCoiledFocus,
 	adrenaline_rush = drawAdrenalineRush,
 	molting_reflex = drawMoltingReflex,

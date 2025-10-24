@@ -1896,62 +1896,6 @@ local pool = {
 		},
 	}),
         register({
-                id = "diffraction_barrier",
-                nameKey = "upgrades.diffraction_barrier.name",
-		descKey = "upgrades.diffraction_barrier.description",
-		rarity = "uncommon",
-		tags = {"defense"},
-                onAcquire = function(state)
-                        state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 1.25
-                        state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.8
-                        state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) + 0.5
-                        local disruptorColor = {0.76, 0.48, 1.0, 1}
-                        state.effects.laserFireColor = disruptorColor
-                        state.effects.phaseDisruptor = true
-                        celebrateUpgrade(getUpgradeString("diffraction_barrier", "name"), nil, {
-                                color = disruptorColor,
-                                skipVisuals = true,
-                                skipParticles = true,
-                                textOffset = 48,
-                                textScale = 1.08,
-                        })
-
-                        Snake:setPhaseDisruptorActive(true)
-
-                        local laserCenters = getLaserCenters(2)
-                        local baseVisual = {
-                                variant = "prism_refraction",
-                                life = 0.74,
-                                innerRadius = 16,
-                                outerRadius = 64,
-                                addBlend = true,
-                                color = {0.76, 0.48, 1.0, 1},
-                                variantSecondaryColor = {0.58, 0.34, 1.0, 0.9},
-                                variantTertiaryColor = {0.94, 0.78, 1.0, 0.82},
-                        }
-                        local baseOptions = {
-                                color = disruptorColor,
-                                skipText = true,
-                                particleCount = 14,
-                                particleSpeed = 120,
-                                particleLife = 0.46,
-				visual = baseVisual,
-			}
-			if laserCenters and #laserCenters > 0 then
-				for _, pos in ipairs(laserCenters) do
-					local celebration = deepcopy(baseOptions)
-					celebration.x = pos[1]
-					celebration.y = pos[2]
-					celebrateUpgrade(nil, nil, celebration)
-				end
-			else
-				local fallback = deepcopy(baseOptions)
-				applySegmentPosition(fallback, 0.18)
-				celebrateUpgrade(nil, nil, fallback)
-			end
-		end,
-	}),
-	register({
 		id = "resonant_shell",
 		nameKey = "upgrades.resonant_shell.name",
 		descKey = "upgrades.resonant_shell.description",
@@ -3139,7 +3083,6 @@ function Upgrades:applyPersistentEffects(rebaseline)
         Lasers.cooldownMult = (base.laserCooldownMult or 1) * (effects.laserCooldownMult or 1)
         Lasers.cooldownFlat = (base.laserCooldownFlat or 0) + (effects.laserCooldownFlat or 0)
         Lasers:applyTimingModifiers()
-        Lasers:setFireColorOverride(effects.laserFireColor)
 
        if effects.adrenaline then
                Snake.adrenaline = Snake.adrenaline or {}
@@ -3225,8 +3168,6 @@ function Upgrades:applyPersistentEffects(rebaseline)
         Snake:setTitanbloodStacks(effects.titanbloodPact or 0)
 
         Snake:setEventHorizonActive(effects.wallPortal and true or false)
-
-        Snake:setPhaseDisruptorActive(effects.phaseDisruptor and true or false)
 
         local counters = state.counters or {}
         Snake:setQuickFangsStacks(counters.quickFangsStacks or 0)

@@ -29,8 +29,6 @@ Lasers.chargeDurationMult = 1
 Lasers.chargeDurationFlat = 0
 Lasers.cooldownMult = 1
 Lasers.cooldownFlat = 0
-Lasers.fireColorOverride = nil
-Lasers.firePaletteOverride = nil
 
 local FLASH_DECAY = 3.8
 local DEFAULT_FIRE_COLOR = {1, 0.16, 0.16, 1}
@@ -151,9 +149,7 @@ local function applyPaletteOverride(beam)
         end
 
         local basePalette = ensureBasePalette(beam)
-        if Lasers.firePaletteOverride then
-                beam.firePalette = clonePalette(Lasers.firePaletteOverride) or basePalette
-        elseif basePalette then
+        if basePalette then
                 beam.firePalette = clonePalette(basePalette)
         end
 end
@@ -471,20 +467,6 @@ function Lasers:getEmitters()
                 copies[index] = beam
         end
         return copies
-end
-
-function Lasers:setFireColorOverride(color)
-        if color then
-                self.fireColorOverride = copyColor(color)
-                self.firePaletteOverride = clonePalette(getFirePalette(color))
-        else
-                self.fireColorOverride = nil
-                self.firePaletteOverride = nil
-        end
-
-        for _, beam in ipairs(emitters) do
-                applyPaletteOverride(beam)
-        end
 end
 
 function Lasers:stall(duration, options)

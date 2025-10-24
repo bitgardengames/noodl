@@ -66,43 +66,6 @@ local function drawAngryEye(cx, isLeft)
 	end
 end
 
-local function drawPhaseDisruptorSunglasses()
-	local lensWidth = EYE_RADIUS * 2.4
-	local lensHeight = EYE_RADIUS * 1.9
-	local cornerRadius = lensHeight * 0.38
-	local lensTop = EYE_CENTER_Y - lensHeight / 2
-	local leftLensX = LEFT_EYE_CENTER_X - lensWidth / 2
-	local rightLensX = RIGHT_EYE_CENTER_X - lensWidth / 2
-
-	love.graphics.setColor(0.08, 0.09, 0.14, 0.92)
-	love.graphics.rectangle("fill", leftLensX, lensTop, lensWidth, lensHeight, cornerRadius, cornerRadius, 16)
-	love.graphics.rectangle("fill", rightLensX, lensTop, lensWidth, lensHeight, cornerRadius, cornerRadius, 16)
-
-	local highlightWidth = lensWidth * 0.26
-	local highlightHeight = lensHeight * 0.48
-	local highlightTop = lensTop + lensHeight * 0.2
-	local highlightCorner = cornerRadius * 0.45
-	love.graphics.setColor(0.38, 0.42, 0.50, 0.32)
-	love.graphics.rectangle("fill", leftLensX + lensWidth * 0.12, highlightTop, highlightWidth, highlightHeight, highlightCorner, highlightCorner, 12)
-	love.graphics.rectangle("fill", rightLensX + lensWidth * 0.12, highlightTop, highlightWidth, highlightHeight, highlightCorner, highlightCorner, 12)
-
-	local bridgeOverlap = lensWidth * 0.16
-	local bridgeLeft = leftLensX + lensWidth - bridgeOverlap
-	local bridgeRight = rightLensX + bridgeOverlap
-	local bridgeWidth = bridgeRight - bridgeLeft
-	local bridgeHeight = lensHeight * 0.34
-	local bridgeTop = EYE_CENTER_Y - bridgeHeight / 2
-	local bridgeCorner = bridgeHeight * 0.45
-	love.graphics.setColor(0.08, 0.09, 0.14, 0.92)
-	love.graphics.rectangle("fill", bridgeLeft, bridgeTop, bridgeWidth, bridgeHeight, bridgeCorner, bridgeCorner, 12)
-
-	love.graphics.setColor(0.02, 0.02, 0.03, 1)
-	love.graphics.setLineWidth(0.7)
-	love.graphics.rectangle("line", leftLensX, lensTop, lensWidth, lensHeight, cornerRadius, cornerRadius, 16)
-	love.graphics.rectangle("line", rightLensX, lensTop, lensWidth, lensHeight, cornerRadius, cornerRadius, 16)
-	love.graphics.rectangle("line", bridgeLeft, bridgeTop, bridgeWidth, bridgeHeight, bridgeCorner, bridgeCorner, 12)
-end
-
 local function registerDrawer(name, drawer, options)
         shapeDefinitions[name] = function()
                 if not (options and options.skipColor) then
@@ -266,14 +229,10 @@ function Face:draw(x, y, scale, options)
         local eyeScale = 1
         local highlight = 0
         local time = love.timer.getTime()
-        local showSunglasses = false
         if options then
                 eyeScale = max(0.4, options.eyeScale or eyeScale)
                 highlight = max(0, options.highlight or highlight)
                 time = options.time or time
-                if options.phaseDisruptor then
-                        showSunglasses = true
-                end
         end
 
         local entry = shapeDrawers[self.state] or shapeDrawers.idle
@@ -302,15 +261,6 @@ function Face:draw(x, y, scale, options)
                 love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
                 love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
                 love.graphics.setBlendMode("alpha")
-        end
-
-        if showSunglasses then
-                love.graphics.push()
-                love.graphics.translate(x, y)
-                love.graphics.scale(finalScale)
-                love.graphics.translate(-FACE_WIDTH / 2, -FACE_HEIGHT / 2)
-                drawPhaseDisruptorSunglasses()
-                love.graphics.pop()
         end
 
         love.graphics.setColor(1, 1, 1, 1)
