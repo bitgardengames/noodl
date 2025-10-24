@@ -426,12 +426,7 @@ local function drawFruitMain(data)
         love.graphics.ellipse("line", x, y, r * sx, r * sy)
 
         -- subtle spawn glow
-        if (f == active) and (active.phase ~= "idle") then
-                local glow = 0.18 * alpha
-                local gx = (HITBOX_SIZE * max(sx, sy)) * 0.65
-                love.graphics.setColor(1, 1, 1, glow)
-                love.graphics.circle("fill", x, y, gx)
-        end
+        -- Removed to avoid the temporary color tint when fruit spawn in
 
         -- rare fruit flair
         if f.type.name == "Dragonfruit" and f == active then
