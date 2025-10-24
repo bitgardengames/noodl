@@ -459,6 +459,9 @@ local DAMAGE_FLASH_DURATION = 0.45
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
 local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.45 -- give the head more leeway so straight runs don't falsely register
+local SELF_COLLISION_BUFFER_SQ = (SELF_COLLISION_BUFFER or 0) * (SELF_COLLISION_BUFFER or 0)
+local MIN_SELF_COLLISION_DISTANCE = SEGMENT_SPACING * 0.75 -- require meaningful overlap before triggering
+local MIN_SELF_COLLISION_DISTANCE_SQ = MIN_SELF_COLLISION_DISTANCE * MIN_SELF_COLLISION_DISTANCE
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
@@ -1029,6 +1032,48 @@ local function rebuildOccupancyFromTrail()
                         end
                 end
         end
+end
+
+local function shouldTriggerSelfCollision(headX, headY, headCol, headRow)
+        if not (headX and headY and headCol and headRow) then
+                return false
+        end
+
+        local thresholdSq = max(SELF_COLLISION_BUFFER_SQ or 0, MIN_SELF_COLLISION_DISTANCE_SQ or 0)
+        if thresholdSq <= 0 then
+                return true
+        end
+
+        local closestSq = huge
+        local found = false
+
+        for i = 2, #trail do
+                local segment = trail[i]
+                if segment then
+                        local sx, sy = segment.drawX, segment.drawY
+                        if sx and sy then
+                                local col, row = toCell(sx, sy)
+                                if col == headCol and row == headRow then
+                                        found = true
+                                        local dx = headX - sx
+                                        local dy = headY - sy
+                                        local distSq = dx * dx + dy * dy
+                                        if distSq < closestSq then
+                                                closestSq = distSq
+                                        end
+                                        if distSq <= thresholdSq then
+                                                return true
+                                        end
+                                end
+                        end
+                end
+        end
+
+        if not found then
+                return true
+        end
+
+        return closestSq <= thresholdSq
 end
 
 local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
@@ -2734,8 +2779,10 @@ function Snake:update(dt)
                                         if cell then
                                                 cell[1] = snapCol
                                                 cell[2] = snapRow
+                                                cell[3] = currX
+                                                cell[4] = currY
                                         else
-                                                headCells[headCellCount] = {snapCol, snapRow}
+                                                headCells[headCellCount] = {snapCol, snapRow, currX, currY}
                                         end
                                 end
 
@@ -2861,6 +2908,7 @@ function Snake:update(dt)
                 for i = 1, headCellCount do
                         local cell = headCells[i]
                         local headCol, headRow = cell and cell[1], cell and cell[2]
+                        local headSnapX, headSnapY = cell and cell[3], cell and cell[4]
                         if headCol and headRow then
                                 if lastCheckedCol == headCol and lastCheckedRow == headRow then
                                         goto continue
@@ -2877,22 +2925,26 @@ function Snake:update(dt)
                                 end
 
                                 if not tailVacated and isCellOccupiedBySnake(headCol, headRow) then
-                                        if self:consumeShield() then
-                                                self:onShieldConsumed(hx, hy, "self")
-                                                self:beginHazardGrace()
-                                                break
-                                        else
-                                                local pushX = -(direction.x or 0) * SEGMENT_SPACING
-                                                local pushY = -(direction.y or 0) * SEGMENT_SPACING
-                                                local context = {
-                                                        pushX = pushX,
-                                                        pushY = pushY,
-                                                        dirX = -(direction.x or 0),
-                                                        dirY = -(direction.y or 0),
-                                                        grace = HAZARD_GRACE_DURATION * 2,
-                                                        shake = 0.28,
-                                                }
-                                                return false, "self", context
+                                        local collisionX = headSnapX or hx
+                                        local collisionY = headSnapY or hy
+                                        if shouldTriggerSelfCollision(collisionX, collisionY, headCol, headRow) then
+                                                if self:consumeShield() then
+                                                        self:onShieldConsumed(hx, hy, "self")
+                                                        self:beginHazardGrace()
+                                                        break
+                                                else
+                                                        local pushX = -(direction.x or 0) * SEGMENT_SPACING
+                                                        local pushY = -(direction.y or 0) * SEGMENT_SPACING
+                                                        local context = {
+                                                                pushX = pushX,
+                                                                pushY = pushY,
+                                                                dirX = -(direction.x or 0),
+                                                                dirY = -(direction.y or 0),
+                                                                grace = HAZARD_GRACE_DURATION * 2,
+                                                                shake = 0.28,
+                                                        }
+                                                        return false, "self", context
+                                                end
                                         end
                                 end
                                 ::continue::
