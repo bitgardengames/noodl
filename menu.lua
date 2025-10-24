@@ -535,12 +535,14 @@ function Menu:draw()
 
         local versionFont = UI.fonts.small
         love.graphics.setFont(versionFont)
-        love.graphics.setColor(Theme.textColor)
         local footerSpacing = menuLayout.footerSpacing or 24
+        local bottomMargin = menuLayout.marginBottom or footerSpacing
         local versionHeight = versionFont and versionFont:getHeight() or 0
-        local versionY = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing - versionHeight + 20
-        local versionMargin = (menuLayout.marginHorizontal or 16) * EDGE_PROXIMITY_FACTOR - 20
+        local versionY = (menuLayout.bottomY or (sh - bottomMargin)) - versionHeight
+        local versionMargin = menuLayout.marginHorizontal or 16
+        setColorWithAlpha(Theme.textColor, 0.7)
         love.graphics.print(Localization:get("menu.version"), versionMargin, versionY)
+        love.graphics.setColor(Theme.textColor)
 
 	if dailyChallenge and dailyChallengeAnim > 0 then
 		local alpha = min(1, dailyChallengeAnim)
@@ -548,7 +550,9 @@ function Menu:draw()
                 local panelWidth = min(menuLayout.panelMaxWidth or 420, max(280, menuLayout.contentWidth or (sw - 72)))
                 local padding = UI.spacing.panelPadding or 16
                 local panelMargin = (menuLayout.marginHorizontal or 36) * EDGE_PROXIMITY_FACTOR
-                local panelX = sw - panelWidth - panelMargin
+                local panelOffsetX = 15
+                local panelOffsetY = 15
+                local panelX = sw - panelWidth - panelMargin + panelOffsetX
 		local headerFont = UI.fonts.small
 		local titleFont = UI.fonts.button
 		local bodyFont = UI.fonts.body
@@ -620,7 +624,7 @@ function Menu:draw()
 			panelHeight = panelHeight + 8 + streakHeight
 		end
 
-                local panelY = max(menuLayout.marginTop or 36, (menuLayout.bottomY or (sh - (menuLayout.marginBottom or 36))) - panelHeight)
+                local panelY = max(menuLayout.marginTop or 36, (menuLayout.bottomY or (sh - (menuLayout.marginBottom or 36))) - panelHeight) + panelOffsetY
 
 		local mx, my = love.mouse.getPosition()
 		local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
