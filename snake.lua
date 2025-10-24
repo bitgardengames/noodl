@@ -1729,15 +1729,11 @@ spawnGluttonsWakeRock = function(segment)
                 return
         end
 
-        if Rocks and Rocks.spawn then
-                Rocks:spawn(x, y)
-                if Arena and Arena.getTileFromWorld and SnakeUtils and SnakeUtils.setOccupied then
-                        local col, row = Arena:getTileFromWorld(x, y)
-                        if col and row then
-                                SnakeUtils.setOccupied(col, row, true)
-                        end
-                end
-        end
+    Rocks:spawn(x, y)
+    local col, row = Arena:getTileFromWorld(x, y)
+    if col and row then
+            SnakeUtils.setOccupied(col, row, true)
+    end
 end
 
 crystallizeGluttonsWakeSegments = function(buffer, startIndex, endIndex, upgradeActive)
@@ -3113,11 +3109,9 @@ function Snake:loseSegments(count, options)
 		end
 	end
 
-	if SessionStats and SessionStats.get and SessionStats.set then
-		local apples = SessionStats:get("applesEaten") or 0
-		apples = max(0, apples - trimmed)
-		SessionStats:set("applesEaten", apples)
-	end
+    local apples = SessionStats:get("applesEaten") or 0
+    apples = max(0, apples - trimmed)
+    SessionStats:set("applesEaten", apples)
 
 	if Score and Score.addBonus and Score.get then
 		local currentScore = Score:get() or 0

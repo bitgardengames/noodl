@@ -207,11 +207,7 @@ local function applyBaselineHazardTraits(traitContext)
 		Saws.spinMult = traitContext.sawSpinMult
 	end
 
-	if Saws.setStallOnFruit then
-		Saws:setStallOnFruit(traitContext.sawStall or 0)
-	else
-		Saws.stallOnFruit = traitContext.sawStall or 0
-	end
+    Saws:setStallOnFruit(traitContext.sawStall or 0)
 end
 
 local function finalizeTraitContext(traitContext, spawnPlan)
@@ -219,11 +215,7 @@ local function finalizeTraitContext(traitContext, spawnPlan)
 	traitContext.sawSpeedMult = Saws.speedMult
 	traitContext.sawSpinMult = Saws.spinMult
 
-	if Saws.getStallOnFruit then
-		traitContext.sawStall = Saws:getStallOnFruit()
-	else
-		traitContext.sawStall = Saws.stallOnFruit or 0
-	end
+    traitContext.sawStall = Saws:getStallOnFruit()
 
 	traitContext.laserCount = spawnPlan.laserCount or #(spawnPlan.lasers or {})
 	traitContext.dartCount = spawnPlan.dartCount or #(spawnPlan.darts or {})
@@ -710,9 +702,7 @@ function FloorSetup.prepare(floorNum, floorData)
 	applyPalette(floorData and floorData.palette)
 	Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
 	resetFloorEntities()
-	if Arena.setFloorDecorations then
-		Arena:setFloorDecorations(floorNum, floorData)
-	end
+    Arena:setFloorDecorations(floorNum, floorData)
 	local safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer = prepareOccupancy()
 
 	local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
@@ -734,17 +724,15 @@ function FloorSetup.prepare(floorNum, floorData)
 
 	local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
 
-	if Arena.setSpawnDebugData then
-		Arena:setSpawnDebugData({
-			safeZone = safeZone,
-			rockSafeZone = rockSafeZone,
-			spawnBuffer = spawnBuffer,
-			spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
-			reservedCells = reservedCells,
-			reservedSafeZone = reservedSafeZone,
-			reservedSpawnBuffer = reservedSpawnBuffer,
-		})
-	end
+    Arena:setSpawnDebugData({
+            safeZone = safeZone,
+            rockSafeZone = rockSafeZone,
+            spawnBuffer = spawnBuffer,
+            spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
+            reservedCells = reservedCells,
+            reservedSafeZone = reservedSafeZone,
+            reservedSpawnBuffer = reservedSpawnBuffer,
+    })
 
 	return {
 		traitContext = traitContext,

@@ -129,30 +129,16 @@ local function grantShields(amount)
 		return 0
 	end
 
-	if Snake and Snake.addShields then
-		Snake:addShields(amount)
-		return amount
-	end
-
-	return 0
+        Snake:addShields(amount)
+        return amount
 end
 
 local function getSegmentPosition(fraction)
-	if not Snake or not Snake.getSegments then
-		if Snake and Snake.getHead then
-			return Snake:getHead()
-		end
-		return nil, nil
-	end
-
-	local segments = Snake:getSegments()
-	local count = segments and #segments or 0
-	if count <= 0 then
-		if Snake and Snake.getHead then
-			return Snake:getHead()
-		end
-		return nil, nil
-	end
+        local segments = Snake:getSegments()
+        local count = segments and #segments or 0
+        if count <= 0 then
+                return Snake:getHead()
+        end
 
 	fraction = fraction or 0
 	if fraction < 0 then
@@ -182,19 +168,11 @@ local function getSegmentPosition(fraction)
 		end
 	end
 
-	if Snake and Snake.getHead then
-		return Snake:getHead()
-	end
-
-	return nil, nil
+        return Snake:getHead()
 end
 
 local function triggerChronoWard(state, data)
-	if not Snake or not Snake.triggerChronoWard then
-		return
-	end
-
-	local effects = state and state.effects or {}
+        local effects = state and state.effects or {}
 	local duration = effects.chronoWardDuration or CHRONO_WARD_DEFAULT_DURATION
 	local scale = effects.chronoWardScale or CHRONO_WARD_DEFAULT_SCALE
 
@@ -241,24 +219,13 @@ local function collectPositions(source, limit, extractor)
 end
 
 local function getSawCenters(limit)
-        if not Saws or not Saws.getAll then
-                return nil
-        end
-
         return collectPositions(Saws:getAll(), limit, function(saw)
-                local sx, sy
-                if Saws.getCollisionCenter then
-                        sx, sy = Saws:getCollisionCenter(saw)
-                end
+                local sx, sy = Saws:getCollisionCenter(saw)
                 return sx or saw.x, sy or saw.y
         end)
 end
 
 local function getLaserCenters(limit)
-        if not Lasers or not Lasers.getEmitters then
-                return nil
-        end
-
         return collectPositions(Lasers:getEmitters(), limit, function(beam)
                 return beam.x, beam.y
         end)
@@ -325,11 +292,7 @@ local function isCellOpen(col, row, ignoreLookup)
                 return true
         end
 
-        if SnakeUtils and SnakeUtils.isOccupied then
-                return not SnakeUtils.isOccupied(col, row)
-        end
-
-        return true
+        return not SnakeUtils.isOccupied(col, row)
 end
 
 local function addPosition(positions, x, y)
@@ -414,17 +377,13 @@ local function pushNearbyRocks(originCol, originRow, positions)
                                         if isCellOpen(targetCol, targetRow) then
                                                 local startX, startY = rock.x, rock.y
 
-                                                if SnakeUtils and SnakeUtils.setOccupied then
-                                                        SnakeUtils.setOccupied(col, row, false)
-                                                end
+                                                SnakeUtils.setOccupied(col, row, false)
 
                                                 local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
-                                                if Rocks and Rocks.beginSlide then
-                                                        Rocks:beginSlide(rock, startX, startY, centerX, centerY, {
-                                                                duration = TREMOR_BLOOM_SLIDE_DURATION,
-                                                                lift = 12,
-                                                        })
-                                                end
+                                                Rocks:beginSlide(rock, startX, startY, centerX, centerY, {
+                                                        duration = TREMOR_BLOOM_SLIDE_DURATION,
+                                                        lift = 12,
+                                                })
 
                                                 rock.col = targetCol
                                                 rock.row = targetRow
@@ -436,9 +395,7 @@ local function pushNearbyRocks(originCol, originRow, positions)
                                                 rock.scaleY = 1
                                                 rock.offsetY = 0
 
-                                                if SnakeUtils and SnakeUtils.setOccupied then
-                                                        SnakeUtils.setOccupied(targetCol, targetRow, true)
-                                                end
+                                                SnakeUtils.setOccupied(targetCol, targetRow, true)
 
                                                 addPosition(positions, centerX, centerY)
                                                 moved = true
@@ -489,9 +446,7 @@ local function pushNearbyLasers(originCol, originRow, positions)
                                         if isCellOpen(targetCol, targetRow) then
                                                 local startX, startY = beam.x, beam.y
 
-                                                if SnakeUtils and SnakeUtils.setOccupied then
-                                                        SnakeUtils.setOccupied(col, row, false)
-                                                end
+                                                SnakeUtils.setOccupied(col, row, false)
 
                                                 local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
                                                 beam.col = targetCol
@@ -500,15 +455,11 @@ local function pushNearbyLasers(originCol, originRow, positions)
                                                 beam.y = centerY
                                                 beam.facing = computeLaserFacing(beam.dir, targetCol, targetRow)
 
-                                                if Lasers and Lasers.beginEmitterSlide then
-                                                        Lasers:beginEmitterSlide(beam, startX, startY, centerX, centerY, {
-                                                                duration = TREMOR_BLOOM_SLIDE_DURATION,
-                                                        })
-                                                end
+                                                Lasers:beginEmitterSlide(beam, startX, startY, centerX, centerY, {
+                                                        duration = TREMOR_BLOOM_SLIDE_DURATION,
+                                                })
 
-                                                if SnakeUtils and SnakeUtils.setOccupied then
-                                                        SnakeUtils.setOccupied(targetCol, targetRow, true)
-                                                end
+                                                SnakeUtils.setOccupied(targetCol, targetRow, true)
 
                                                 addPosition(positions, centerX, centerY)
                                                 moved = true
@@ -570,13 +521,9 @@ local function nudgeSawAlongTrack(saw, originCol, originRow, positions)
                 return false
         end
 
-        if Saws.beginProgressNudge then
-                Saws:beginProgressNudge(saw, startProgress, targetProgress, {
-                        duration = TREMOR_BLOOM_SLIDE_DURATION,
-                })
-        else
-                saw.progress = targetProgress
-        end
+        Saws:beginProgressNudge(saw, startProgress, targetProgress, {
+                duration = TREMOR_BLOOM_SLIDE_DURATION,
+        })
 
         if targetProgress > startProgress then
                 saw.direction = 1
@@ -595,19 +542,12 @@ local function nudgeSawAlongTrack(saw, originCol, originRow, positions)
 end
 
 local function pushNearbySaws(originCol, originRow, positions)
-        if not Saws or not Saws.getAll or not arenaHasGrid() then
-                return false
-        end
-
-        if not SnakeUtils or not (SnakeUtils.getSawTrackCells and SnakeUtils.releaseCells and SnakeUtils.occupySawTrack) then
+        if not arenaHasGrid() then
                 return false
         end
 
         local moved = false
         local saws = Saws:getAll()
-        if not saws then
-                return false
-        end
 
         for _, saw in ipairs(saws) do
                 local sx, sy = saw.x, saw.y
@@ -628,14 +568,12 @@ local function pushNearbySaws(originCol, originRow, positions)
                                                         local targetCells = SnakeUtils.getSawTrackCells(centerX, centerY, saw.dir)
                                                         if targetCells and #targetCells > 0 then
                                                                 local blocked = false
-                                                                if SnakeUtils.isOccupied then
-                                                                        for i = 1, #targetCells do
-                                                                                local cell = targetCells[i]
-                                                                                local key = getCellKey(cell[1], cell[2])
-                                                                                if not ignoreLookup[key] and SnakeUtils.isOccupied(cell[1], cell[2]) then
-                                                                                        blocked = true
-                                                                                        break
-                                                                                end
+                                                                for i = 1, #targetCells do
+                                                                        local cell = targetCells[i]
+                                                                        local key = getCellKey(cell[1], cell[2])
+                                                                        if not ignoreLookup[key] and SnakeUtils.isOccupied(cell[1], cell[2]) then
+                                                                                blocked = true
+                                                                                break
                                                                         end
                                                                 end
 
@@ -646,14 +584,9 @@ local function pushNearbySaws(originCol, originRow, positions)
                                                                         end
 
                                                                         SnakeUtils.occupySawTrack(centerX, centerY, saw.dir)
-                                                                        if Saws.beginTrackSlide then
-                                                                                Saws:beginTrackSlide(saw, startX, startY, centerX, centerY, {
-                                                                                        duration = TREMOR_BLOOM_SLIDE_DURATION,
-                                                                                })
-                                                                        else
-                                                                                saw.x = centerX
-                                                                                saw.y = centerY
-                                                                        end
+                                                                        Saws:beginTrackSlide(saw, startX, startY, centerX, centerY, {
+                                                                                duration = TREMOR_BLOOM_SLIDE_DURATION,
+                                                                        })
 
                                                                         saw.collisionCells = nil
                                                                         addPosition(positions, centerX, centerY)
@@ -1058,14 +991,10 @@ local function applyMapmakersCompass(state, context, options)
 	local celebrate = options and options.celebrate
 	local eventData = options and options.eventData
 
-	if not chosen then
-		if Score and Score.addBonus then
-			Score:addBonus(2 + stacks)
-		end
+        if not chosen then
+                Score:addBonus(2 + stacks)
 
-		if Saws and Saws.stall then
-			Saws:stall(0.6 + 0.1 * stacks)
-		end
+                Saws:stall(0.6 + 0.1 * stacks)
 
 		if celebrate then
 			local label = getUpgradeString("mapmakers_compass", "activation_text") or getUpgradeString("mapmakers_compass", "name")
@@ -1268,20 +1197,16 @@ local pool = {
                 onAcquire = function(state)
                         Snake:addSpeedMultiplier(1.10)
 
-			if state then
-				state.counters = state.counters or {}
-				local stacks = (state.counters.quickFangsStacks or 0) + 1
-				state.counters.quickFangsStacks = stacks
-				if Snake.setQuickFangsStacks then
-					Snake:setQuickFangsStacks(stacks)
-				end
-			elseif Snake.setQuickFangsStacks then
-				Snake:setQuickFangsStacks((Snake.quickFangs and Snake.quickFangs.stacks or 0) + 1)
-			end
+                        if state then
+                                state.counters = state.counters or {}
+                                local stacks = (state.counters.quickFangsStacks or 0) + 1
+                                state.counters.quickFangsStacks = stacks
+                                Snake:setQuickFangsStacks(stacks)
+                        else
+                                Snake:setQuickFangsStacks((Snake.quickFangs and Snake.quickFangs.stacks or 0) + 1)
+                        end
 
-			if Face and Face.set then
-				Face:set("veryHappy", 1.6)
-			end
+                        Face:set("veryHappy", 1.6)
 
 			local celebrationOptions = {
 				color = {1, 0.63, 0.42, 1},
@@ -1303,17 +1228,13 @@ local pool = {
 		allowDuplicates = true,
 		maxStacks = 4,
 		onAcquire = function(state)
-			Snake:addShields(1)
-			if Snake.addStoneSkinSawGrace then
-				Snake:addStoneSkinSawGrace(1)
-			end
+                        Snake:addShields(1)
+                        Snake:addStoneSkinSawGrace(1)
 			if not state.counters.stoneSkinHandlerRegistered then
 				state.counters.stoneSkinHandlerRegistered = true
 				Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
 			end
-			if Face and Face.set then
-				Face:set("blank", 1.8)
-			end
+                        Face:set("blank", 1.8)
 			local celebrationOptions = {
 				color = {0.75, 0.82, 0.88, 1},
 				particleCount = 14,
@@ -1401,12 +1322,8 @@ local pool = {
                 onAcquire = function(state)
                         state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
                         state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
-			if UI.adjustFruitGoal then
-				UI:adjustFruitGoal(-1)
-			end
-			if Face and Face.set then
-				Face:set("angry", 1.4)
-			end
+                        UI:adjustFruitGoal(-1)
+                        Face:set("angry", 1.4)
 			local celebrationOptions = {
 				color = {1, 0.86, 0.36, 1},
 				particleCount = 10,
@@ -1468,13 +1385,9 @@ local pool = {
 		unlockTag = "speedcraft",
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(0.85)
-			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
-			if UI.adjustFruitGoal then
-				UI:adjustFruitGoal(1)
-			end
-			if Face and Face.set then
-				Face:set("sad", 2.0)
-			end
+                        state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+                        UI:adjustFruitGoal(1)
+                        Face:set("sad", 2.0)
 			celebrateUpgrade(getUpgradeString("deliberate_coil", "name"), nil, {
 				color = {0.76, 0.56, 0.88, 1},
 				particleCount = 16,
@@ -1523,9 +1436,7 @@ local pool = {
 					state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
 					state.counters.pocketSpringsComplete = true
 					Snake:addShields(1)
-					if Face and Face.set then
-						Face:set("happy", 1.6)
-					end
+                                        Face:set("happy", 1.6)
 					local celebrationOptions = {
 						color = {0.64, 0.86, 1.0, 1},
 						particleCount = 14,
@@ -1567,9 +1478,7 @@ local pool = {
 				Upgrades:addEventHandler("floorStart", mapmakersCompassFloorStart)
 			end
 
-			if Face and Face.set then
-				Face:set("happy", 1.4)
-			end
+                        Face:set("happy", 1.4)
 
 			if state.counters.mapmakersCompassLastContext then
 				applyMapmakersCompass(state, state.counters.mapmakersCompassLastContext, {celebrate = false})
@@ -1652,13 +1561,11 @@ local pool = {
 				end
 
                                 local duration = (data and data.duration) or CIRCUIT_BREAKER_STALL_DURATION
-                                if Lasers and Lasers.stall then
-                                        Lasers:stall(duration, {
-                                                cause = data and data.cause or nil,
-                                                source = "circuit_breaker",
-                                                positionLimit = 2,
-                                        })
-                                end
+                                Lasers:stall(duration, {
+                                        cause = data and data.cause or nil,
+                                        source = "circuit_breaker",
+                                        positionLimit = 2,
+                                })
 
                                 local sparkColor = {1, 0.58, 0.32, 1}
                                 local baseOptions = {
@@ -1947,9 +1854,7 @@ local pool = {
                                         end
                                 end
 
-				if Saws and Saws.sink then
-					Saws:sink(duration)
-				end
+                                Saws:sink(duration)
 
 				local sinkColor = {0.68, 0.86, 1.0, 1}
 				local activationLabel = getUpgradeString("subduction_array", "activation_text")
@@ -2011,9 +1916,7 @@ local pool = {
                                 textScale = 1.08,
                         })
 
-                        if Snake and Snake.setPhaseDisruptorActive then
-                		Snake:setPhaseDisruptorActive(true)
-                        end
+                        Snake:setPhaseDisruptorActive(true)
 
                         local laserCenters = getLaserCenters(2)
                         local baseVisual = {
@@ -2114,9 +2017,7 @@ local pool = {
                                 state.counters.goldenDebtFruitTax = (state.counters.goldenDebtFruitTax or 0) + 1
                                 state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
 
-                                if UI.adjustFruitGoal then
-                                        UI:adjustFruitGoal(1)
-                                end
+                                UI:adjustFruitGoal(1)
                         end,
                 },
         }),
@@ -2262,9 +2163,7 @@ local pool = {
 
 					if shields <= 0 then return end
 
-					if Snake and Snake.addShields then
-						Snake:addShields(shields)
-					end
+                                        Snake:addShields(shields)
 
 					local label = getUpgradeString("verdant_bonds", "activation_text")
 					if shields > 1 then
@@ -2447,44 +2346,31 @@ local pool = {
 		rarity = "epic",
 		tags = {"economy", "combo"},
 		onAcquire = function(state)
-			state.counters.spectralHarvestReady = true
-			if Snake and Snake.setSpectralHarvestReady then
-				Snake:setSpectralHarvestReady(true, {pulse = 0.8, instantIntensity = 0.45})
-			end
+                        state.counters.spectralHarvestReady = true
+                        Snake:setSpectralHarvestReady(true, {pulse = 0.8, instantIntensity = 0.45})
 		end,
 		handlers = {
-			floorStart = function(_, state)
-				state.counters.spectralHarvestReady = true
-				if Snake and Snake.setSpectralHarvestReady then
-					Snake:setSpectralHarvestReady(true, {pulse = 0.6})
-				end
-			end,
-			fruitCollected = function(_, state)
-				if not state.counters.spectralHarvestReady then return end
-				state.counters.spectralHarvestReady = false
+                        floorStart = function(_, state)
+                                state.counters.spectralHarvestReady = true
+                                Snake:setSpectralHarvestReady(true, {pulse = 0.6})
+                        end,
+                        fruitCollected = function(_, state)
+                                if not state.counters.spectralHarvestReady then return end
+                                state.counters.spectralHarvestReady = false
 
-				if Snake then
-					if Snake.triggerSpectralHarvest then
-						Snake:triggerSpectralHarvest({flash = 1, echo = 1, instantIntensity = 0.55})
-					elseif Snake.setSpectralHarvestReady then
-						Snake:setSpectralHarvestReady(false, {pulse = 0.8})
-					end
-				end
+                                Snake:triggerSpectralHarvest({flash = 1, echo = 1, instantIntensity = 0.55})
 
-				local Fruit = require("fruit")
-				local FruitEvents = require("fruitevents")
-				if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
+                                local Fruit = require("fruit")
+                                local FruitEvents = require("fruitevents")
+                                if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
 
-				local fx, fy = Fruit:getPosition()
-				if not (fx and fy) then return end
+                                local fx, fy = Fruit:getPosition()
+                                if not (fx and fy) then return end
 
-				FruitEvents.handleConsumption(fx, fy)
-				if Snake and Snake.setSpectralHarvestReady and not Snake.triggerSpectralHarvest then
-					Snake:setSpectralHarvestReady(false)
-				end
-			end,
-		},
-	}),
+                                FruitEvents.handleConsumption(fx, fy)
+                        end,
+                },
+        }),
         register({
                 id = "tectonic_resolve",
                 nameKey = "upgrades.tectonic_resolve.name",
@@ -2509,11 +2395,9 @@ local pool = {
                         Snake:addSpeedMultiplier(1.05)
 			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
 			state.effects.titanbloodPact = (state.effects.titanbloodPact or 0) + 1
-			if Snake.setTitanbloodStacks then
-				Snake:setTitanbloodStacks(state.effects.titanbloodPact)
-			end
-		end,
-	}),
+                        Snake:setTitanbloodStacks(state.effects.titanbloodPact)
+                end,
+        }),
         register({
                 id = "chronospiral_core",
                 nameKey = "upgrades.chronospiral_core.name",
@@ -2605,12 +2489,8 @@ local pool = {
 		handlers = {
 			dashActivated = function(data)
 				local fx, fy = getEventPosition(data)
-				if Rocks and Rocks.shatterNearest then
-					Rocks:shatterNearest(fx or 0, fy or 0, 1)
-				end
-				if Saws and Saws.stall then
-					Saws:stall(0.6)
-				end
+                                Rocks:shatterNearest(fx or 0, fy or 0, 1)
+                                Saws:stall(0.6)
 				celebrateUpgrade(getUpgradeString("sparkstep_relay", "activation_text"), data, {
 					color = {1.0, 0.78, 0.36, 1},
 					particleCount = 20,
@@ -2715,17 +2595,15 @@ local pool = {
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(1.15)
 			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
-			if state then
-				state.counters = state.counters or {}
-				local stacks = (state.counters.zephyrCoilsStacks or 0) + 1
-				state.counters.zephyrCoilsStacks = stacks
-				if Snake.setZephyrCoilsStacks then
-					Snake:setZephyrCoilsStacks(stacks)
-				end
-			elseif Snake.setZephyrCoilsStacks then
-				local stacks = (Snake.zephyrCoils and Snake.zephyrCoils.stacks or 0) + 1
-				Snake:setZephyrCoilsStacks(stacks)
-			end
+                        if state then
+                                state.counters = state.counters or {}
+                                local stacks = (state.counters.zephyrCoilsStacks or 0) + 1
+                                state.counters.zephyrCoilsStacks = stacks
+                                Snake:setZephyrCoilsStacks(stacks)
+                        else
+                                local stacks = (Snake.zephyrCoils and Snake.zephyrCoils.stacks or 0) + 1
+                                Snake:setZephyrCoilsStacks(stacks)
+                        end
 		end,
 	}),
 	register({
@@ -3196,10 +3074,8 @@ function Upgrades:tryFloorReplay(game, cause)
 		},
 	})
 
-	self:applyPersistentEffects(false)
-	if Snake.setPhoenixEchoCharges then
-		Snake:setPhoenixEchoCharges(state.counters.phoenixEchoCharges or 0, {triggered = 1.4, flareDuration = 1.4})
-	end
+        self:applyPersistentEffects(false)
+        Snake:setPhoenixEchoCharges(state.counters.phoenixEchoCharges or 0, {triggered = 1.4, flareDuration = 1.4})
 
 	return restored
 end
@@ -3208,30 +3084,16 @@ local function captureBaseline(state)
 	local baseline = state.baseline
 	baseline.sawSpeedMult = Saws.speedMult or 1
 	baseline.sawSpinMult = Saws.spinMult or 1
-	if Saws.getStallOnFruit then
-		baseline.sawStall = Saws:getStallOnFruit()
-	else
-		baseline.sawStall = Saws.stallOnFruit or 0
-	end
-	if Rocks.getSpawnChance then
-		baseline.rockSpawnChance = Rocks:getSpawnChance()
-	else
-		baseline.rockSpawnChance = Rocks.spawnChance or 0.25
-	end
+        baseline.sawStall = Saws:getStallOnFruit()
+        baseline.rockSpawnChance = Rocks:getSpawnChance()
 	baseline.rockShatter = Rocks.shatterOnFruit or 0
-	if Score.getComboBonusMultiplier then
-		baseline.comboBonusMult = Score:getComboBonusMultiplier()
-	else
-		baseline.comboBonusMult = Score.comboBonusMult or 1
-	end
-	if Lasers then
-		baseline.laserChargeMult = Lasers.chargeDurationMult or 1
-		baseline.laserChargeFlat = Lasers.chargeDurationFlat or 0
-		baseline.laserFireMult = Lasers.fireDurationMult or 1
-		baseline.laserFireFlat = Lasers.fireDurationFlat or 0
-		baseline.laserCooldownMult = Lasers.cooldownMult or 1
-		baseline.laserCooldownFlat = Lasers.cooldownFlat or 0
-	end
+        baseline.comboBonusMult = Score:getComboBonusMultiplier()
+        baseline.laserChargeMult = Lasers.chargeDurationMult or 1
+        baseline.laserChargeFlat = Lasers.chargeDurationFlat or 0
+        baseline.laserFireMult = Lasers.fireDurationMult or 1
+        baseline.laserFireFlat = Lasers.fireDurationFlat or 0
+        baseline.laserCooldownMult = Lasers.cooldownMult or 1
+        baseline.laserCooldownFlat = Lasers.cooldownFlat or 0
 end
 
 local function ensureBaseline(state)
@@ -3259,11 +3121,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
 	local stallBase = base.sawStall or 0
 	local stallBonus = effects.sawStall or 0
 	local stallValue = stallBase + stallBonus
-	if Saws.setStallOnFruit then
-		Saws:setStallOnFruit(stallValue)
-	else
-		Saws.stallOnFruit = stallValue
-	end
+        Saws:setStallOnFruit(stallValue)
 
         local rockBase = base.rockSpawnChance or 0.25
         local rockChance = max(0.02, rockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
@@ -3272,26 +3130,16 @@ function Upgrades:applyPersistentEffects(rebaseline)
 
 	local comboBase = base.comboBonusMult or 1
 	local comboMult = comboBase * (effects.comboBonusMult or 1)
-	if Score.setComboBonusMultiplier then
-		Score:setComboBonusMultiplier(comboMult)
-	else
-		Score.comboBonusMult = comboMult
-	end
+        Score:setComboBonusMultiplier(comboMult)
 
-        if Lasers then
-                Lasers.chargeDurationMult = (base.laserChargeMult or 1) * (effects.laserChargeMult or 1)
-                Lasers.chargeDurationFlat = (base.laserChargeFlat or 0) + (effects.laserChargeFlat or 0)
-                Lasers.fireDurationMult = (base.laserFireMult or 1) * (effects.laserFireMult or 1)
-                Lasers.fireDurationFlat = (base.laserFireFlat or 0) + (effects.laserFireFlat or 0)
-                Lasers.cooldownMult = (base.laserCooldownMult or 1) * (effects.laserCooldownMult or 1)
-                Lasers.cooldownFlat = (base.laserCooldownFlat or 0) + (effects.laserCooldownFlat or 0)
-                if Lasers.applyTimingModifiers then
-                        Lasers:applyTimingModifiers()
-                end
-                if Lasers.setFireColorOverride then
-                        Lasers:setFireColorOverride(effects.laserFireColor)
-                end
-        end
+        Lasers.chargeDurationMult = (base.laserChargeMult or 1) * (effects.laserChargeMult or 1)
+        Lasers.chargeDurationFlat = (base.laserChargeFlat or 0) + (effects.laserChargeFlat or 0)
+        Lasers.fireDurationMult = (base.laserFireMult or 1) * (effects.laserFireMult or 1)
+        Lasers.fireDurationFlat = (base.laserFireFlat or 0) + (effects.laserFireFlat or 0)
+        Lasers.cooldownMult = (base.laserCooldownMult or 1) * (effects.laserCooldownMult or 1)
+        Lasers.cooldownFlat = (base.laserCooldownFlat or 0) + (effects.laserCooldownFlat or 0)
+        Lasers:applyTimingModifiers()
+        Lasers:setFireColorOverride(effects.laserFireColor)
 
        if effects.adrenaline then
                Snake.adrenaline = Snake.adrenaline or {}
@@ -3370,35 +3218,20 @@ function Upgrades:applyPersistentEffects(rebaseline)
 		Snake.timeDilation = nil
 	end
 
-	if Snake.setChronospiralActive then
-		Snake:setChronospiralActive(effects.chronospiralCore and true or false)
-	end
+        Snake:setChronospiralActive(effects.chronospiralCore and true or false)
 
-	if Snake.setAbyssalCatalystStacks then
-		Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
-	end
+        Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
 
-	if Snake.setTitanbloodStacks then
-		Snake:setTitanbloodStacks(effects.titanbloodPact or 0)
-	end
+        Snake:setTitanbloodStacks(effects.titanbloodPact or 0)
 
-	if Snake.setEventHorizonActive then
-		Snake:setEventHorizonActive(effects.wallPortal and true or false)
-	end
+        Snake:setEventHorizonActive(effects.wallPortal and true or false)
 
-	if Snake.setPhaseDisruptorActive then
-		Snake:setPhaseDisruptorActive(effects.phaseDisruptor and true or false)
-	end
+        Snake:setPhaseDisruptorActive(effects.phaseDisruptor and true or false)
 
-	if Snake.setQuickFangsStacks then
-		local counters = state.counters or {}
-		Snake:setQuickFangsStacks(counters.quickFangsStacks or 0)
-	end
+        local counters = state.counters or {}
+        Snake:setQuickFangsStacks(counters.quickFangsStacks or 0)
 
-	if Snake.setPhoenixEchoCharges then
-		local counters = state.counters or {}
-		Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
-	end
+        Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
 end
 
 local SHOP_PITY_MAX = 5

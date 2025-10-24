@@ -730,21 +730,15 @@ end
 function Game:leave()
 	self:releaseMouseVisibility()
 
-	if Snake and Snake.resetModifiers then
-		Snake:resetModifiers()
-	end
+        Snake:resetModifiers()
 
-	if UI and UI.setUpgradeIndicators then
-		UI:setUpgradeIndicators(nil)
-	end
+        UI:setUpgradeIndicators(nil)
 end
 
 function Game:beginDeath()
-	if self.state ~= "dying" then
-		self.state = "dying"
-		if Snake and Snake.setDead then
-			Snake:setDead(true)
-		end
+        if self.state ~= "dying" then
+                self.state = "dying"
+                Snake:setDead(true)
 		local trail = Snake:getSegments()
 		Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
 		Audio:playSound("death")
