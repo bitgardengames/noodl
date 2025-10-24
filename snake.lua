@@ -46,6 +46,7 @@ local segmentPool = {}
 local segmentPoolCount = 0
 
 local headCellBuffer = {}
+local snakeOccupancy = {}
 
 local function acquireSegment()
         if segmentPoolCount > 0 then
@@ -155,13 +156,46 @@ local function clearSeveredPieces()
 end
 
 local function wipeTable(t)
-	if not t then
-		return
-	end
+        if not t then
+                return
+        end
 
-	for k in pairs(t) do
-		t[k] = nil
-	end
+        for k in pairs(t) do
+                t[k] = nil
+        end
+end
+
+local function clearSnakeOccupancy()
+        for _, column in pairs(snakeOccupancy) do
+                wipeTable(column)
+        end
+end
+
+local function addSnakeOccupancy(col, row)
+        if not (col and row) then
+                return
+        end
+
+        local column = snakeOccupancy[col]
+        if not column then
+                column = {}
+                snakeOccupancy[col] = column
+        end
+
+        column[row] = (column[row] or 0) + 1
+end
+
+local function isCellOccupiedBySnake(col, row)
+        if not (col and row) then
+                return false
+        end
+
+        local column = snakeOccupancy[col]
+        if not column then
+                return false
+        end
+
+        return (column[row] or 0) > 0
 end
 
 local stencilCircleX, stencilCircleY, stencilCircleRadius = 0, 0, 0
@@ -888,6 +922,7 @@ end
 
 local function rebuildOccupancyFromTrail()
         SnakeUtils.initOccupancy()
+        clearSnakeOccupancy()
 
         if not trail then
                 return
@@ -901,6 +936,9 @@ local function rebuildOccupancyFromTrail()
                                 local col, row = toCell(x, y)
                                 if col and row then
                                         SnakeUtils.setOccupied(col, row, true)
+                                        if i > 1 then
+                                                addSnakeOccupancy(col, row)
+                                        end
                                 end
                         end
                 end
@@ -1780,6 +1818,7 @@ function Snake:setDead(state)
         isDead = not not state
         if isDead then
                 SnakeUtils.initOccupancy()
+                clearSnakeOccupancy()
         else
                 rebuildOccupancyFromTrail()
         end
@@ -2731,11 +2770,17 @@ function Snake:update(dt)
         -- collision with self (grid-cell based, only at snap ticks)
         if headCellCount > 0 and not self:isHazardGraceActive() then
                 local hx, hy = trail[1].drawX, trail[1].drawY
+                local lastCheckedCol, lastCheckedRow = nil, nil
 
                 for i = 1, headCellCount do
                         local cell = headCells[i]
                         local headCol, headRow = cell and cell[1], cell and cell[2]
                         if headCol and headRow then
+                                if lastCheckedCol == headCol and lastCheckedRow == headRow then
+                                        goto continue
+                                end
+                                lastCheckedCol, lastCheckedRow = headCol, headRow
+
                                 local tailVacated = false
                                 if i == 1 and tailBeforeCol and tailBeforeRow then
                                         if tailBeforeCol == headCol and tailBeforeRow == headRow then
@@ -2745,7 +2790,7 @@ function Snake:update(dt)
                                         end
                                 end
 
-                                if not tailVacated and SnakeUtils.isOccupied(headCol, headRow) then
+                                if not tailVacated and isCellOccupiedBySnake(headCol, headRow) then
                                         if self:consumeShield() then
                                                 self:onShieldConsumed(hx, hy, "self")
                                                 self:beginHazardGrace()
@@ -2764,6 +2809,7 @@ function Snake:update(dt)
                                                 return false, "self", context
                                         end
                                 end
+                                ::continue::
                         end
                 end
         end
