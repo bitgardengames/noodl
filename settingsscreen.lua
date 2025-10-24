@@ -15,7 +15,7 @@ local SettingsScreen = {
 	transitionDuration = 0.45,
 }
 
-local ANALOG_DEADZONE = 0.35
+local ANALOG_DEADZONE = 0.3
 local SCROLL_SPEED = 60
 
 local function applyAudioVolumes()

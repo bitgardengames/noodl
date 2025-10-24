@@ -22,7 +22,7 @@ local Menu = {
 	transitionDuration = 0.45,
 }
 
-local ANALOG_DEADZONE = 0.35
+local ANALOG_DEADZONE = 0.3
 local buttonList = ButtonList.new()
 local buttons = {}
 local t = 0

@@ -46,7 +46,7 @@ local SCROLLBAR_TRACK_WIDTH = (SnakeUtils.SEGMENT_SIZE or 24) + 12
 
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
-local ANALOG_DEADZONE = 0.35
+local ANALOG_DEADZONE = 0.3
 
 local scrollOffset = 0
 local minScrollOffset = 0

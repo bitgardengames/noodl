@@ -7,7 +7,7 @@ local GameInput = {}
 GameInput.__index = GameInput
 
 local directionButtonMap = {dpleft = "left", dpright = "right", dpup = "up", dpdown = "down"}
-local ANALOG_DEADZONE = 0.5
+local ANALOG_DEADZONE = 0.45
 local axisButtonMap = {
 	leftx = {slot = "horizontal", negative = "dpleft", positive = "dpright"},
 	rightx = {slot = "horizontal", negative = "dpleft", positive = "dpright"},
