@@ -428,8 +428,8 @@ local rarityStyles = {
         common = {
                 base = {0.20, 0.23, 0.28, 1},
                 shadowAlpha = 0.18,
-		aura = {
-			color = {0.52, 0.62, 0.78, 0.22},
+                aura = {
+                        color = {0.52, 0.62, 0.78, 0.22},
 			radius = 0.72,
 			y = 0.42,
 		},
@@ -475,14 +475,19 @@ local rarityStyles = {
 			width = 3,
 		},
 	},
-	rare = {
-		base = {0.16, 0.24, 0.34, 1},
-		shadowAlpha = 0.30,
-		aura = {
-			color = {0.40, 0.60, 0.92, 0.32},
-			radius = 0.82,
-			y = 0.36,
-		},
+        rare = {
+                base = {0.16, 0.24, 0.34, 1},
+                shadowAlpha = 0.30,
+                gradient = {
+                        top = {1.0, 1.0, 1.0, 0.14},
+                        bottom = {0.0, 0.0, 0.0, 0.18},
+                        steps = 20,
+                },
+                aura = {
+                        color = {0.40, 0.60, 0.92, 0.32},
+                        radius = 0.82,
+                        y = 0.36,
+                },
 		outerGlow = {
 			color = {0.48, 0.72, 1.0, 1},
 			min = 0.14,
@@ -498,69 +503,88 @@ local rarityStyles = {
 			speed = 2.1,
 			inset = 8,
 			width = 3,
-		},
-	},
-		epic = {
-			base = {0.24, 0.12, 0.42, 1},
-			shadowAlpha = 0.36,
-			aura = {
-				color = {0.86, 0.56, 0.98, 0.42},
-				radius = 0.9,
-				y = 0.34,
-			},
-			outerGlow = {
-				color = {0.92, 0.74, 1.0, 1},
-				min = 0.2,
-				max = 0.46,
-				speed = 2.4,
-				expand = 9,
-				width = 8,
-			},
-			innerGlow = {
-				color = {0.98, 0.86, 1.0, 1},
-				min = 0.26,
-				max = 0.48,
-				speed = 2.6,
-				inset = 8,
-				width = 3,
-			},
-		},
-		legendary = {
-			base = {0.46, 0.28, 0.06, 1},
-			shadowAlpha = 0.46,
-			outerGlow = {
-				color = {1.0, 0.82, 0.34, 1},
-				min = 0.26,
-				max = 0.56,
-				speed = 2.6,
-				expand = 10,
-				width = 10,
-			},
-			innerGlow = {
-				color = {1.0, 0.9, 0.6, 1},
-				min = 0.32,
-				max = 0.58,
-				speed = 3.0,
-				inset = 8,
-				width = 3,
-			},
-			sparkles = {
-				color = {1.0, 0.92, 0.64, 0.22},
-				radius = 9,
-				speed = 1.8,
-				driftSpeed = 0.08,
-				driftMinY = 0.16,
-				driftMaxY = 0.98,
-				positions = {
-					{0.22, 0.88, 1.05, 0.00},
-					{0.52, 0.78, 0.85, 0.28},
-					{0.72, 0.94, 1.15, 0.56},
-					{0.36, 0.82, 0.9, 0.84},
-				},
-			},
-			glow = 0.22,
-			borderWidth = 5,
-		},
+                },
+        },
+        epic = {
+                base = {0.24, 0.12, 0.42, 1},
+                shadowAlpha = 0.36,
+                gradient = {
+                        top = {1.0, 1.0, 1.0, 0.18},
+                        bottom = {0.0, 0.0, 0.0, 0.22},
+                        steps = 22,
+                },
+                aura = {
+                        color = {0.86, 0.56, 0.98, 0.42},
+                        radius = 0.9,
+                        y = 0.34,
+                },
+                outerGlow = {
+                        color = {0.92, 0.74, 1.0, 1},
+                        min = 0.2,
+                        max = 0.46,
+                        speed = 2.4,
+                        expand = 9,
+                        width = 8,
+                },
+                innerGlow = {
+                        color = {0.98, 0.86, 1.0, 1},
+                        min = 0.26,
+                        max = 0.48,
+                        speed = 2.6,
+                        inset = 8,
+                        width = 3,
+                },
+        },
+        legendary = {
+                base = {0.46, 0.28, 0.06, 1},
+                shadowAlpha = 0.46,
+                gradient = {
+                        top = {1.0, 1.0, 1.0, 0.22},
+                        bottom = {0.0, 0.0, 0.0, 0.26},
+                        steps = 24,
+                },
+                outerGlow = {
+                        color = {1.0, 0.82, 0.34, 1},
+                        min = 0.26,
+                        max = 0.56,
+                        speed = 2.6,
+                        expand = 10,
+                        width = 10,
+                },
+                innerGlow = {
+                        color = {1.0, 0.9, 0.6, 1},
+                        min = 0.32,
+                        max = 0.58,
+                        speed = 3.0,
+                        inset = 8,
+                        width = 3,
+                },
+                sparkles = {
+                        color = {1.0, 0.92, 0.64, 0.22},
+                        radius = 9,
+                        speed = 1.8,
+                        driftSpeed = 0.08,
+                        driftMinY = 0.16,
+                        driftMaxY = 0.98,
+                        positions = {
+                                {0.22, 0.88, 1.05, 0.00},
+                                {0.52, 0.78, 0.85, 0.28},
+                                {0.72, 0.94, 1.15, 0.56},
+                                {0.36, 0.82, 0.9, 0.84},
+                        },
+                },
+                glow = 0.22,
+                borderWidth = 5,
+                shine = {
+                        alpha = 0.28,
+                        angle = -pi / 5,
+                        widthScale = 1.55,
+                        heightScale = 0.58,
+                        offsetX = 0.52,
+                        offsetY = 0.28,
+                        steps = 24,
+                },
+        },
 }
 
 local function clamp01(value)
@@ -579,6 +603,10 @@ local function wrap01(value)
                 value = value + 1
         end
         return value
+end
+
+local function lerp(a, b, t)
+        return a + (b - a) * t
 end
 
 local function scaleColor(color, factor, alphaFactor)
@@ -938,18 +966,19 @@ local function getAnimatedAlpha(def, time)
 end
 
 local function drawCard(card, x, y, w, h, hovered, index, animationState, isSelected, appearanceAlpha)
-	local fadeAlpha = appearanceAlpha or 1
-	local function setColor(r, g, b, a)
-		love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
-	end
+        local fadeAlpha = appearanceAlpha or 1
+        local function setColor(r, g, b, a)
+                love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
+        end
 
-	local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
-	local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
+        local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
+        local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
+        local cardRadius = 12
 
-	-- Signature drop shadow to give cards lift against the background
-	local shadowOffsetX, shadowOffsetY = 8, 10
-	setColor(0, 0, 0, 0.38)
-	love.graphics.rectangle("fill", x + shadowOffsetX, y + shadowOffsetY, w, h, 18, 18)
+        -- Signature drop shadow to give cards lift against the background
+        local shadowOffsetX, shadowOffsetY = 8, 10
+        setColor(0, 0, 0, 0.38)
+        love.graphics.rectangle("fill", x + shadowOffsetX, y + shadowOffsetY, w, h, 18, 18)
 
         -- Consistent black outline that hugs the exterior of the card frame
         local outlineWidth = 6
@@ -972,13 +1001,72 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
 	end
 
-	applyColor(setColor, style.base)
-	love.graphics.rectangle("fill", x, y, w, h, 12, 12)
+        applyColor(setColor, style.base)
+        love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
 
-	local currentTime = love.timer.getTime()
+        local function drawGradientOverlay(def)
+                if not def or not def.top or not def.bottom then
+                        return
+                end
 
-	if style.aura then
-		withTransformedScissor(x, y, w, h, function()
+                local steps = max(1, def.steps or 16)
+                love.graphics.stencil(function()
+                        love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
+                end, "replace", 1)
+                love.graphics.setStencilTest("equal", 1)
+                local segmentHeight = h / steps
+                local topAlpha = def.top[4] or 1
+                local bottomAlpha = def.bottom[4] or 1
+                for i = 0, steps - 1 do
+                        local t = steps == 1 and 0 or i / (steps - 1)
+                        local r = lerp(def.top[1] or 0, def.bottom[1] or 0, t)
+                        local g = lerp(def.top[2] or 0, def.bottom[2] or 0, t)
+                        local b = lerp(def.top[3] or 0, def.bottom[3] or 0, t)
+                        local a = lerp(topAlpha, bottomAlpha, t)
+                        setColor(r, g, b, a)
+                        love.graphics.rectangle("fill", x, y + i * segmentHeight, w, segmentHeight + 1)
+                end
+                love.graphics.setStencilTest()
+                setColor(1, 1, 1, 1)
+        end
+
+        local function drawShineOverlay(def)
+                if not def then
+                        return
+                end
+
+                local steps = max(1, def.steps or 18)
+                love.graphics.stencil(function()
+                        love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
+                end, "replace", 1)
+                love.graphics.setStencilTest("equal", 1)
+                love.graphics.push()
+                love.graphics.translate(x + w * (def.offsetX or 0.5), y + h * (def.offsetY or 0.3))
+                love.graphics.rotate(def.angle or -pi / 5)
+                local shineWidth = w * (def.widthScale or 1.4)
+                local shineHeight = h * (def.heightScale or 0.6)
+                local stepWidth = shineWidth / steps
+                for i = 0, steps - 1 do
+                        local center = -shineWidth / 2 + (i + 0.5) * stepWidth
+                        local normalized = (i + 0.5) / steps * 2 - 1
+                        local strength = max(0, 1 - normalized * normalized)
+                        if strength > 0 then
+                                setColor(1, 1, 1, (def.alpha or 0.24) * strength)
+                                love.graphics.rectangle("fill", center - stepWidth / 2, -shineHeight / 2, stepWidth + 1, shineHeight)
+                        end
+                end
+                love.graphics.pop()
+                love.graphics.setStencilTest()
+                setColor(1, 1, 1, 1)
+        end
+
+        drawGradientOverlay(style.gradient)
+        drawShineOverlay(style.shine)
+
+        local currentTime = love.timer.getTime()
+
+        if style.aura then
+                withTransformedScissor(x, y, w, h, function()
 			applyColor(setColor, style.aura.color)
 			local radius = max(w, h) * (style.aura.radius or 0.72)
 			local centerY = y + h * (style.aura.y or 0.4)
@@ -1174,7 +1262,11 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         local headerBottom = headerTop + headerHeight
         local titleSpacing = headerHeight > 0 and 12 or 8
         local titleY = headerBottom + titleSpacing
-        love.graphics.printf(card.name, x + 14, titleY, titleWidth, "center")
+        local titleX = x + 14
+        setColor(0, 0, 0, 0.85)
+        love.graphics.printf(card.name or "", titleX + 1, titleY + 1, titleWidth, "center")
+        setColor(1, 1, 1, 1)
+        love.graphics.printf(card.name or "", titleX, titleY, titleWidth, "center")
 
         local _, titleLines = titleFont:getWrap(card.name or "", titleWidth)
         local titleLineCount = max(1, #titleLines)
@@ -1188,8 +1280,12 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         local descStart = dividerY + 16
 
         love.graphics.setFont(UI.fonts.body)
+        local descX = x + 18
+        local descWidth = w - 36
+        setColor(0, 0, 0, 0.75)
+        love.graphics.printf(card.desc or "", descX + 1, descStart + 1, descWidth, "center")
         setColor(0.92, 0.92, 0.92, 1)
-        love.graphics.printf(card.desc or "", x + 18, descStart, w - 36, "center")
+        love.graphics.printf(card.desc or "", descX, descStart, descWidth, "center")
 end
 
 function Shop:draw(screenW, screenH)
