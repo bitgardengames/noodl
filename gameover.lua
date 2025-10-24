@@ -1537,14 +1537,9 @@ local function drawXpSection(self, x, y, width)
 		color = UI.colors.text,
 	})
 
-	local levelColor = Theme.progressColor or UI.colors.progress or UI.colors.text
-	local flash = max(0, min(1, anim.levelFlash or 0))
-	local levelText = Localization:get("gameover.meta_progress_level_label", {level = anim.displayedLevel or 1})
-	local levelY = headerY + fontProgressTitle:getHeight() + 16
-	UI.drawLabel(levelText, x, levelY, width, "center", {
-		font = fontProgressValue,
-		color = {levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.78 + 0.2 * flash},
-	})
+        local levelColor = Theme.progressColor or UI.colors.progress or UI.colors.text
+        local flash = max(0, min(1, anim.levelFlash or 0))
+        local levelY = headerY + fontProgressTitle:getHeight() + 16
 
 	if flash > 0.01 then
 		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
@@ -1593,8 +1588,8 @@ local function drawXpSection(self, x, y, width)
 	local trackColor = withAlpha(darkenColor(panelColor, 0.2), 0.85)
 	local ringColor = {levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.9}
 
-	love.graphics.setColor(0, 0, 0, 1)
-	love.graphics.circle("fill", centerX, centerY, outerRadius + 3, 96)
+        love.graphics.setColor(0, 0, 0, 1)
+        love.graphics.circle("fill", centerX, centerY, outerRadius + 9, 96)
 
 	love.graphics.setColor(trackColor)
 	love.graphics.circle("fill", centerX, centerY, outerRadius, 96)
