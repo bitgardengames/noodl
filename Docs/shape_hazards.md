@@ -20,8 +20,3 @@ This catalog documents every active hazard currently deployed in the arena. Each
 - **Environmental Interactions:** Laser beams extend until they strike a wall, rock, or other solid hazard. They can trigger crystal switches and ignite combustible props if the beam rests on them long enough.
 - **Snake Interaction:** The emitter tile is safe to pass when the beam is disabled. Crossing an active beam is fatal to the snake head and any body segment that intersects the path, encouraging players to time movement with the emitter’s cycle.
 
-## Darts
-- **Tile Footprint:** 1×1 launcher tile.
-- **Motion:** Fire single-tile projectiles in straight lines. Launch cadence varies by floor; some emitters volley continuously, while others shoot in bursts after a warning shake. Darts persist until they collide with a blocking tile or leave the arena.
-- **Environmental Interactions:** Projectiles are stopped by walls, rocks, and saw hubs, but can trigger switches and pop fragile collectibles like balloons. Launchers themselves are static props that can be stunned by EMP tiles.
-- **Snake Interaction:** The snake may slither past an inactive launcher safely. Being hit by a projectile instantly kills the head or the body segment it strikes, so players must either outrun volleys or use cover to block incoming darts.

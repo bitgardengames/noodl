@@ -76,7 +76,6 @@ local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
         Fruit,
         Rocks,
         Lasers,
-        -- Darts, -- Disabled while not in use.
         Saws,
         Arena,
         Particles,
@@ -987,10 +986,9 @@ local function drawPlayfieldLayers(self, stateOverride)
 
 	RenderLayers:withLayer("main", function()
 		Fruit:draw()
-		Rocks:draw()
-		-- Darts:draw() -- Disabled while not in use.
-		Saws:draw()
-		Lasers:draw()
+                Rocks:draw()
+                Saws:draw()
+                Lasers:draw()
 
 		local isDescending = (renderState == "descending")
 		local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")

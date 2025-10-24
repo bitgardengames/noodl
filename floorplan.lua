@@ -8,7 +8,6 @@ local FloorPlan = {}
 
 local FINAL_FLOOR = #Floors
 local BASE_LASER_CAP = 3
-local BASE_DART_CAP = 4
 local MAX_LASER_COUNT = 5
 local LASER_GROWTH_SPAN = 8
 local LASER_GROWTH_EXPONENT = 1.35
@@ -46,16 +45,6 @@ local function getLaserCap(floorIndex)
 	return nil
 end
 
-local function getDartCap(floorIndex)
-	floorIndex = floorIndex or 1
-
-	if FINAL_FLOOR > 0 and floorIndex < FINAL_FLOOR then
-		return BASE_DART_CAP
-	end
-
-	return nil
-end
-
 local function applyLaserCap(context)
 	if not context then
 		return
@@ -67,24 +56,12 @@ local function applyLaserCap(context)
 	end
 end
 
-local function applyDartCap(context)
-	if not context then
-		return
-	end
-
-	local cap = getDartCap(context.floor)
-	if cap and context.dartCount ~= nil then
-		context.dartCount = min(cap, context.dartCount)
-	end
-end
-
 local BASELINE_PLAN = {
         [1] = {
                 fruitGoal = 12,
                 rocks = 4,
                 saws = 1,
                 laserCount = 0,
-                dartCount = 0,
                 rockSpawnChance = 0.24,
                 sawSpeedMult = 1.08,
                 sawSpinMult = 1.0,
@@ -95,7 +72,6 @@ local BASELINE_PLAN = {
                 rocks = 5,
                 saws = 1,
                 laserCount = 0,
-                dartCount = 0,
                 rockSpawnChance = 0.26,
                 sawSpeedMult = 1.14,
                 sawSpinMult = 1.06,
@@ -106,7 +82,6 @@ local BASELINE_PLAN = {
                 rocks = 6,
                 saws = 2,
                 laserCount = 0,
-                dartCount = 0,
                 rockSpawnChance = 0.28,
                 sawSpeedMult = 1.2,
                 sawSpinMult = 1.12,
@@ -117,7 +92,6 @@ local BASELINE_PLAN = {
                 rocks = 7,
                 saws = 2,
                 laserCount = 0,
-                dartCount = 0,
                 rockSpawnChance = 0.3,
                 sawSpeedMult = 1.26,
                 sawSpinMult = 1.18,
@@ -128,7 +102,6 @@ local BASELINE_PLAN = {
                 rocks = 8,
                 saws = 3,
                 laserCount = 1,
-                dartCount = 0,
                 rockSpawnChance = 0.33,
                 sawSpeedMult = 1.32,
                 sawSpinMult = 1.24,
@@ -139,7 +112,6 @@ local BASELINE_PLAN = {
                 rocks = 9,
                 saws = 3,
                 laserCount = 1,
-                dartCount = 0,
                 rockSpawnChance = 0.36,
                 sawSpeedMult = 1.38,
                 sawSpinMult = 1.3,
@@ -150,7 +122,6 @@ local BASELINE_PLAN = {
                 rocks = 10,
                 saws = 4,
                 laserCount = 1,
-                dartCount = 1,
                 rockSpawnChance = 0.39,
                 sawSpeedMult = 1.44,
                 sawSpinMult = 1.36,
@@ -161,7 +132,6 @@ local BASELINE_PLAN = {
                 rocks = 11,
                 saws = 4,
                 laserCount = 1,
-                dartCount = 1,
                 rockSpawnChance = 0.42,
                 sawSpeedMult = 1.5,
                 sawSpinMult = 1.42,
@@ -172,7 +142,6 @@ local BASELINE_PLAN = {
 		rocks = 12,
 		saws = 4,
 		laserCount = 1,
-		dartCount = 1,
 		rockSpawnChance = 0.45,
 		sawSpeedMult = 1.56,
 		sawSpinMult = 1.48,
@@ -183,7 +152,6 @@ local BASELINE_PLAN = {
 		rocks = 13,
 		saws = 5,
 		laserCount = 2,
-		dartCount = 1,
 		rockSpawnChance = 0.48,
 		sawSpeedMult = 1.62,
 		sawSpinMult = 1.54,
@@ -194,7 +162,6 @@ local BASELINE_PLAN = {
 		rocks = 14,
 		saws = 5,
 		laserCount = 2,
-		dartCount = 1,
 		rockSpawnChance = 0.5,
 		sawSpeedMult = 1.68,
 		sawSpinMult = 1.6,
@@ -205,7 +172,6 @@ local BASELINE_PLAN = {
 		rocks = 15,
 		saws = 6,
 		laserCount = 2,
-		dartCount = 2,
 		rockSpawnChance = 0.52,
 		sawSpeedMult = 1.74,
 		sawSpinMult = 1.66,
@@ -216,7 +182,6 @@ local BASELINE_PLAN = {
 		rocks = 16,
 		saws = 6,
 		laserCount = 2,
-		dartCount = 2,
 		rockSpawnChance = 0.54,
 		sawSpeedMult = 1.8,
 		sawSpinMult = 1.72,
@@ -227,7 +192,6 @@ local BASELINE_PLAN = {
 		rocks = 17,
 		saws = 7,
 		laserCount = 2,
-		dartCount = 2,
 		rockSpawnChance = 0.56,
 		sawSpeedMult = 1.84,
 		sawSpinMult = 1.76,
@@ -238,7 +202,6 @@ local BASELINE_PLAN = {
 		rocks = 19,
 		saws = 7,
 		laserCount = 3,
-		dartCount = 2,
 		rockSpawnChance = 0.58,
 		sawSpeedMult = 1.88,
 		sawSpinMult = 1.8,
@@ -264,10 +227,9 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
 		for key, value in pairs(plan) do
 			context[key] = value
 		end
-		applyLaserCap(context)
-		applyDartCap(context)
-		return context
-	end
+                applyLaserCap(context)
+                return context
+        end
 
 	local baselinePlan = FloorPlan.getBaselinePlan()
 	local lastIndex = #baselinePlan
@@ -284,11 +246,8 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
 	context.rocks = max(0, min(40, (lastPlan.rocks or 19) + extraFloors))
 	context.saws = max(1, min(8, (lastPlan.saws or 7) + floor(extraFloors / 3)))
 	local baseLaser = lastPlan.laserCount or 0
-	context.laserCount = computeLaserProgression(baseLaser, extraFloors, MAX_LASER_COUNT)
-	local baseDarts = min(2, lastPlan.dartCount or 0)
-	context.dartCount = baseDarts
-	applyLaserCap(context)
-	applyDartCap(context)
+        context.laserCount = computeLaserProgression(baseLaser, extraFloors, MAX_LASER_COUNT)
+        applyLaserCap(context)
 	context.rockSpawnChance = min(0.68, (lastPlan.rockSpawnChance or 0.58) + extraFloors * 0.015)
 	context.sawSpeedMult = min(1.95, (lastPlan.sawSpeedMult or 1.88) + extraFloors * 0.03)
 	context.sawSpinMult = min(1.88, (lastPlan.sawSpinMult or 1.8) + extraFloors * 0.025)
@@ -298,6 +257,5 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
 end
 
 FloorPlan.getLaserCap = getLaserCap
-FloorPlan.getDartCap = getDartCap
 
 return FloorPlan
