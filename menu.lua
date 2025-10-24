@@ -39,6 +39,7 @@ local resetTooltipArgs = {time = nil}
 local DAILY_PANEL_OUTLINE_COLOR = {0, 0, 0, 1}
 local EDGE_PROXIMITY_FACTOR = 0.85
 local BUTTON_STACK_OFFSET = 80
+local LOGO_VERTICAL_LIFT = 120
 
 local dailyBarCelebration = {
 	active = false,
@@ -474,7 +475,7 @@ function Menu:draw()
         local targetBottom = buttonTop - desiredSpacing
         local currentBottom = baseOy + wordHeightForSpacing
         local additionalOffset = max(0, targetBottom - currentBottom)
-        local oy = baseOy + additionalOffset
+        local oy = max(0, baseOy + additionalOffset - LOGO_VERTICAL_LIFT)
 
 	if titleSaw then
 		local sawRadius = titleSaw.radius or 1
