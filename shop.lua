@@ -1277,7 +1277,7 @@ function Shop:draw(screenW, screenH)
 	drawBackground(screenW, screenH, self.floorPalette)
 	local textAreaWidth = screenW * 0.8
 	local textAreaX = (screenW - textAreaWidth) / 2
-	local currentY = screenH * 0.12
+        local currentY = screenH * 0.12 + 30
 
 	love.graphics.setFont(UI.fonts.title)
 	local titleText = Localization:get("shop.title")
