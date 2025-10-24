@@ -1589,7 +1589,7 @@ local function drawXpSection(self, x, y, width)
 	local ringColor = {levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.9}
 
         love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.circle("fill", centerX, centerY, outerRadius + 9, 96)
+        love.graphics.circle("fill", centerX, centerY, outerRadius + 5, 96)
 
 	love.graphics.setColor(trackColor)
 	love.graphics.circle("fill", centerX, centerY, outerRadius, 96)
