@@ -45,7 +45,7 @@ local segmentPool = {}
 local segmentPoolCount = 0
 
 local headCellBuffer = {}
-local snakeOccupancy = {}
+local snakeBodyOccupancy = {}
 local snakeOccupiedCells = {}
 local snakeOccupiedCellCount = 0
 local occupancyCols = 0
@@ -108,6 +108,7 @@ local function resetSnakeOccupancyGrid()
         end
 
         resetTrackedSnakeCells()
+        clearSnakeBodyOccupancy()
 
         occupancyCols = (Arena and Arena.cols) or 0
         occupancyRows = (Arena and Arena.rows) or 0
@@ -249,32 +250,32 @@ local function wipeTable(t)
         end
 end
 
-local function clearSnakeOccupancy()
-        for _, column in pairs(snakeOccupancy) do
+local function clearSnakeBodyOccupancy()
+        for _, column in pairs(snakeBodyOccupancy) do
                 wipeTable(column)
         end
 end
 
-local function addSnakeOccupancy(col, row)
+local function addSnakeBodyOccupancy(col, row)
         if not (col and row) then
                 return
         end
 
-        local column = snakeOccupancy[col]
+        local column = snakeBodyOccupancy[col]
         if not column then
                 column = {}
-                snakeOccupancy[col] = column
+                snakeBodyOccupancy[col] = column
         end
 
         column[row] = (column[row] or 0) + 1
 end
 
-local function isCellOccupiedBySnake(col, row)
+local function isCellOccupiedBySnakeBody(col, row)
         if not (col and row) then
                 return false
         end
 
-        local column = snakeOccupancy[col]
+        local column = snakeBodyOccupancy[col]
         if not column then
                 return false
         end
@@ -462,11 +463,6 @@ local HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after survivi
 local DAMAGE_FLASH_DURATION = 0.45
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
-local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.55 -- give the head more leeway so straight runs don't falsely register
-local SELF_COLLISION_BUFFER_SQ = (SELF_COLLISION_BUFFER or 0) * (SELF_COLLISION_BUFFER or 0)
-local MIN_SELF_COLLISION_DISTANCE = SEGMENT_SPACING * 0.9 -- require meaningful overlap before triggering
-local MIN_SELF_COLLISION_DISTANCE_SQ = MIN_SELF_COLLISION_DISTANCE * MIN_SELF_COLLISION_DISTANCE
-local SELF_COLLISION_SKIP_SEGMENTS = 1 -- ignore the closest body segment to reduce false positives on tight turns
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
@@ -1011,14 +1007,14 @@ end
 local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
         if not ensureOccupancyGrid() then
                 resetTrackedSnakeCells()
-                clearSnakeOccupancy()
+                clearSnakeBodyOccupancy()
                 headOccupancyCol = nil
                 headOccupancyRow = nil
                 return
         end
 
         clearSnakeOccupiedCells()
-        clearSnakeOccupancy()
+        clearSnakeBodyOccupancy()
 
         if not trail then
                 headOccupancyCol = nil
@@ -1043,7 +1039,7 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
                                         end
                                         recordSnakeOccupiedCell(col, row)
                                         if i > 1 then
-                                                addSnakeOccupancy(col, row)
+                                                addSnakeBodyOccupancy(col, row)
                                         end
                                 end
                         end
@@ -1052,50 +1048,6 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
 
         headOccupancyCol = assignedHeadCol
         headOccupancyRow = assignedHeadRow
-end
-
-local function shouldTriggerSelfCollision(headX, headY, headCol, headRow)
-        if not (headX and headY and headCol and headRow) then
-                return false
-        end
-
-        local thresholdSq = max(SELF_COLLISION_BUFFER_SQ or 0, MIN_SELF_COLLISION_DISTANCE_SQ or 0)
-        if thresholdSq <= 0 then
-                return true
-        end
-
-        local closestSq = huge
-        local found = false
-
-        local startIndex = max(2, (SELF_COLLISION_SKIP_SEGMENTS or 0) + 2)
-
-        for i = startIndex, #trail do
-                local segment = trail[i]
-                if segment then
-                        local sx, sy = segment.drawX, segment.drawY
-                        if sx and sy then
-                                local col, row = toCell(sx, sy)
-                                if col == headCol and row == headRow then
-                                        found = true
-                                        local dx = headX - sx
-                                        local dy = headY - sy
-                                        local distSq = dx * dx + dy * dy
-                                        if distSq < closestSq then
-                                                closestSq = distSq
-                                        end
-                                        if distSq <= thresholdSq then
-                                                return true
-                                        end
-                                end
-                        end
-                end
-        end
-
-        if not found then
-                return false
-        end
-
-        return closestSq <= thresholdSq
 end
 
 local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
@@ -1970,7 +1922,7 @@ function Snake:setDead(state)
         isDead = not not state
         if isDead then
                 resetSnakeOccupancyGrid()
-                clearSnakeOccupancy()
+                clearSnakeBodyOccupancy()
         else
                 rebuildOccupancyFromTrail()
         end
@@ -2933,10 +2885,9 @@ function Snake:update(dt)
                                         end
                                 end
 
-                                if not tailVacated and isCellOccupiedBySnake(headCol, headRow) then
-                                        local collisionX = headSnapX or hx
-                                        local collisionY = headSnapY or hy
-                                        if shouldTriggerSelfCollision(collisionX, collisionY, headCol, headRow) then
+                                if not tailVacated and isCellOccupiedBySnakeBody(headCol, headRow) then
+                                        local gridOccupied = SnakeUtils and SnakeUtils.isOccupied and SnakeUtils.isOccupied(headCol, headRow)
+                                        if gridOccupied then
                                                 if self:consumeShield() then
                                                         self:onShieldConsumed(hx, hy, "self")
                                                         self:beginHazardGrace()
