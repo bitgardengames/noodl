@@ -47,6 +47,86 @@ local segmentPoolCount = 0
 
 local headCellBuffer = {}
 local snakeOccupancy = {}
+local snakeOccupiedCells = {}
+local snakeOccupiedCellCount = 0
+local occupancyCols = 0
+local occupancyRows = 0
+
+local function resetTrackedSnakeCells()
+        if snakeOccupiedCellCount <= 0 then
+                return
+        end
+
+        for i = 1, snakeOccupiedCellCount do
+                local cell = snakeOccupiedCells[i]
+                if cell then
+                        cell[1] = nil
+                        cell[2] = nil
+                end
+        end
+
+        snakeOccupiedCellCount = 0
+end
+
+local function clearSnakeOccupiedCells()
+        if snakeOccupiedCellCount <= 0 then
+                return
+        end
+
+        for i = 1, snakeOccupiedCellCount do
+                local cell = snakeOccupiedCells[i]
+                if cell then
+                        local col, row = cell[1], cell[2]
+                        if col and row then
+                                SnakeUtils.setOccupied(col, row, false)
+                        end
+                        cell[1] = nil
+                        cell[2] = nil
+                end
+        end
+
+        snakeOccupiedCellCount = 0
+end
+
+local function recordSnakeOccupiedCell(col, row)
+        local index = snakeOccupiedCellCount + 1
+        local cell = snakeOccupiedCells[index]
+        if cell then
+                cell[1] = col
+                cell[2] = row
+        else
+                snakeOccupiedCells[index] = {col, row}
+        end
+        snakeOccupiedCellCount = index
+        SnakeUtils.setOccupied(col, row, true)
+end
+
+local function resetSnakeOccupancyGrid()
+        if SnakeUtils and SnakeUtils.initOccupancy then
+                SnakeUtils.initOccupancy()
+        end
+
+        resetTrackedSnakeCells()
+
+        occupancyCols = (Arena and Arena.cols) or 0
+        occupancyRows = (Arena and Arena.rows) or 0
+end
+
+local function ensureOccupancyGrid()
+        local cols = (Arena and Arena.cols) or 0
+        local rows = (Arena and Arena.rows) or 0
+        if cols <= 0 or rows <= 0 then
+                return false
+        end
+
+        if cols ~= occupancyCols or rows ~= occupancyRows then
+                resetSnakeOccupancyGrid()
+        elseif not SnakeUtils or not SnakeUtils.occupied or not SnakeUtils.occupied[cols] then
+                resetSnakeOccupancyGrid()
+        end
+
+        return true
+end
 
 local function acquireSegment()
         if segmentPoolCount > 0 then
@@ -921,7 +1001,13 @@ local function toCell(x, y)
 end
 
 local function rebuildOccupancyFromTrail()
-        SnakeUtils.initOccupancy()
+        if not ensureOccupancyGrid() then
+                resetTrackedSnakeCells()
+                clearSnakeOccupancy()
+                return
+        end
+
+        clearSnakeOccupiedCells()
         clearSnakeOccupancy()
 
         if not trail then
@@ -935,7 +1021,7 @@ local function rebuildOccupancyFromTrail()
                         if x and y then
                                 local col, row = toCell(x, y)
                                 if col and row then
-                                        SnakeUtils.setOccupied(col, row, true)
+                                        recordSnakeOccupiedCell(col, row)
                                         if i > 1 then
                                                 addSnakeOccupancy(col, row)
                                         end
@@ -1817,7 +1903,7 @@ end
 function Snake:setDead(state)
         isDead = not not state
         if isDead then
-                SnakeUtils.initOccupancy()
+                resetSnakeOccupancyGrid()
                 clearSnakeOccupancy()
         else
                 rebuildOccupancyFromTrail()
