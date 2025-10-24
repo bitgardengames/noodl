@@ -466,6 +466,7 @@ local SELF_COLLISION_BUFFER = SEGMENT_SPACING * 0.55 -- give the head more leewa
 local SELF_COLLISION_BUFFER_SQ = (SELF_COLLISION_BUFFER or 0) * (SELF_COLLISION_BUFFER or 0)
 local MIN_SELF_COLLISION_DISTANCE = SEGMENT_SPACING * 0.9 -- require meaningful overlap before triggering
 local MIN_SELF_COLLISION_DISTANCE_SQ = MIN_SELF_COLLISION_DISTANCE * MIN_SELF_COLLISION_DISTANCE
+local SELF_COLLISION_SKIP_SEGMENTS = 1 -- ignore the closest body segment to reduce false positives on tight turns
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
@@ -1066,7 +1067,9 @@ local function shouldTriggerSelfCollision(headX, headY, headCol, headRow)
         local closestSq = huge
         local found = false
 
-        for i = 2, #trail do
+        local startIndex = max(2, (SELF_COLLISION_SKIP_SEGMENTS or 0) + 2)
+
+        for i = startIndex, #trail do
                 local segment = trail[i]
                 if segment then
                         local sx, sy = segment.drawX, segment.drawY
