@@ -1093,68 +1093,68 @@ DailyChallenges.challenges = {
 		end,
 		xpReward = 130,
 	},
-	{
-		id = "depth_sprinter",
-		titleKey = "menu.daily.depth_sprinter.title",
-		descriptionKey = "menu.daily.depth_sprinter.description",
-		goal = 1,
-		progressKey = "menu.daily.depth_sprinter.progress",
-		completeKey = "menu.daily.depth_sprinter.complete",
-		targetFloor = 6,
-		targetSeconds = 420,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local floors = getStatValue(statsSource, "floorsCleared")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
-			if floors >= (self.targetFloor or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
-				return 1
-			end
-			return 0
-		end,
-		getRunValue = function(self, statsSource)
-			local floors = getStatValue(statsSource, "floorsCleared")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
-			if floors >= (self.targetFloor or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
-				return 1
-			end
-			return 0
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local floors = getStatValue(statsSource, "floorsCleared")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
+        {
+                id = "fruit_frenzy",
+                titleKey = "menu.daily.fruit_frenzy.title",
+                descriptionKey = "menu.daily.fruit_frenzy.description",
+                goal = 1,
+                progressKey = "menu.daily.fruit_frenzy.progress",
+                completeKey = "menu.daily.fruit_frenzy.complete",
+                targetApples = 45,
+                targetSeconds = 360,
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        if apples >= (self.targetApples or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
+                                return 1
+                        end
+                        return 0
+                end,
+                getRunValue = function(self, statsSource)
+                        local apples = getStatValue(statsSource, "applesEaten")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
+                        if apples >= (self.targetApples or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
+                                return 1
+                        end
+                        return 0
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
 
-			local function formatSeconds(seconds)
-				seconds = max(0, seconds or 0)
-				local minutes = floor(seconds / 60)
-				local secs = floor(seconds % 60)
-				return string.format("%d:%02d", minutes, secs)
-			end
+                        local function formatSeconds(seconds)
+                                seconds = max(0, seconds or 0)
+                                local minutes = floor(seconds / 60)
+                                local secs = floor(seconds % 60)
+                                return string.format("%d:%02d", minutes, secs)
+                        end
 
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				floors = floors,
-				time = formatSeconds(timeAlive),
-				target_floor = self.targetFloor or 0,
-				target_time = formatSeconds(self.targetSeconds or 0),
-			}
-		end,
-		descriptionReplacements = function(self)
-			local function formatSeconds(seconds)
-				seconds = max(0, seconds or 0)
-				local minutes = floor(seconds / 60)
-				local secs = floor(seconds % 60)
-				return string.format("%d:%02d", minutes, secs)
-			end
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                apples = apples,
+                                time = formatSeconds(timeAlive),
+                                target_apples = self.targetApples or 0,
+                                target_time = formatSeconds(self.targetSeconds or 0),
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        local function formatSeconds(seconds)
+                                seconds = max(0, seconds or 0)
+                                local minutes = floor(seconds / 60)
+                                local secs = floor(seconds % 60)
+                                return string.format("%d:%02d", minutes, secs)
+                        end
 
-			return {
-				target_floor = self.targetFloor or 0,
-				target_time = formatSeconds(self.targetSeconds or 0),
-			}
-		end,
-		xpReward = 130,
-	},
+                        return {
+                                target_apples = self.targetApples or 0,
+                                target_time = formatSeconds(self.targetSeconds or 0),
+                        }
+                end,
+                xpReward = 130,
+        },
 	{
 		id = "momentum_master",
 		titleKey = "menu.daily.momentum_master.title",

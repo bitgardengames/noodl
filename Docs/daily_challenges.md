@@ -32,7 +32,7 @@ spelled out in the completion criteria column.
 | Fruit Rush | `fruit_rush` | `applesEaten`, `timeAlive` | Maintain a fruit collection rate of **16 per minute** (⌊apples ÷ time_alive⌋ × 60). | 100 XP |
 | Combo Courier | `combo_courier` | `combosTriggered`, `floorsCleared` | Trigger **5** combos while also clearing **4** floors in the same run. | 125 XP |
 | Combo Dash | `combo_dash` | `combosTriggered`, `timeAlive` | Trigger **6** combos and finish the run within **360 seconds** (6 minutes). | 130 XP |
-| Depth Sprinter | `depth_sprinter` | `floorsCleared`, `timeAlive` | Reach floor **6** within **420 seconds** (7 minutes). | 130 XP |
+| Fruit Frenzy | `fruit_frenzy` | `applesEaten`, `timeAlive` | Collect **45** apples within **360 seconds** (6 minutes). | 130 XP |
 | Momentum Master | `momentum_master` | `fruitWithoutTurning`, `tilesTravelled` | Achieve **3** momentum surges: each surge demands **8** fruit collected without turning and **1,000** tiles travelled (min(floor(chain/8), floor(tiles/1000)) ≥ 3). | 110 XP |
 | Floor Cartographer | `floor_cartographer` | `floorsCleared`, `totalFloorTime` | Visit **4** floors while spending at least **180 seconds** (3 minutes) on each (min(floorsCleared, floor(totalFloorTime/180)) ≥ 4). | 100 XP |
 | Safety Dance | `safety_dance` | `runShieldWallBounces`, `runShieldSawParries` | Complete **3** defensive pairs, each comprising **2** wall bounces and **2** saw parries (min(floor(bounces/2), floor(saws/2)) ≥ 3). | 110 XP |
