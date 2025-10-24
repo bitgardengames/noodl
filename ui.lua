@@ -500,7 +500,7 @@ function UI.drawPanel(x, y, w, h, opts)
 	if opts.border ~= false then
 		local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
 		setColor(borderColor, alphaMultiplier)
-		love.graphics.setLineWidth(opts.borderWidth or 2)
+		love.graphics.setLineWidth(opts.borderWidth or 3)
 		love.graphics.rectangle("line", x, y, w, h, radius, radius)
 		love.graphics.setLineWidth(1)
 	end
@@ -693,7 +693,7 @@ function UI.drawButton(id)
 
 	if UI.colors.border then
 		setColor(UI.colors.border)
-		love.graphics.setLineWidth(2)
+		love.graphics.setLineWidth(3)
 		love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 	end
 
