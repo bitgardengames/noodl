@@ -1613,11 +1613,11 @@ local function drawDescendingIntoHole(hole)
 end
 
 local function collectUpgradeVisuals(self)
-	local visuals = self._upgradeVisualBuffer
-	-- The returned table is reused every frame; treat it as read-only outside this function.
-	if visuals then
-		wipeTable(visuals)
-	else
+        local visuals = self._upgradeVisualBuffer
+        -- The returned table is reused every frame; treat it as read-only outside this function.
+        if visuals then
+                wipeTable(visuals)
+        else
 		visuals = {}
 		self._upgradeVisualBuffer = visuals
 	end
@@ -1802,6 +1802,38 @@ local function collectUpgradeVisuals(self)
         end
 
         return nil
+end
+
+local function getUpgradeVisualsForDraw(self)
+	local visuals = collectUpgradeVisuals(self)
+	if visuals then
+		return visuals
+	end
+
+	if not self.phaseDisruptor then
+		return nil
+	end
+
+	local fallback = self._fallbackUpgradeVisuals
+	if fallback then
+		wipeTable(fallback)
+	else
+		fallback = {}
+		self._fallbackUpgradeVisuals = fallback
+	end
+
+	local faceEntry = self._fallbackFaceVisual
+	if faceEntry then
+		wipeTable(faceEntry)
+	else
+		faceEntry = {}
+		self._fallbackFaceVisual = faceEntry
+	end
+
+	faceEntry.phaseDisruptor = true
+	fallback.face = faceEntry
+
+	return fallback
 end
 
 -- Build initial trail aligned to CELL CENTERS
@@ -2303,7 +2335,7 @@ function Snake:drawClipped(hx, hy, hr)
         end
 
 	love.graphics.push("all")
-	local upgradeVisuals = collectUpgradeVisuals(self)
+	local upgradeVisuals = getUpgradeVisualsForDraw(self)
 
         if clipRadius > 0 then
                 stencilCircleX, stencilCircleY, stencilCircleRadius = hx, hy, clipRadius
@@ -3689,7 +3721,7 @@ end
 
 function Snake:draw()
 	if not isDead then
-		local upgradeVisuals = collectUpgradeVisuals(self)
+	local upgradeVisuals = getUpgradeVisualsForDraw(self)
 
 		if severedPieces and #severedPieces > 0 then
 			for i = 1, #severedPieces do
