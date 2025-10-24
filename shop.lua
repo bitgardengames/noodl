@@ -1259,7 +1259,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         local contentTop = titleY + titleHeight
 
         setColor(1, 1, 1, 0.3)
-        love.graphics.setLineWidth(2)
+        love.graphics.setLineWidth(1)
         local dividerY = contentTop + 18
         love.graphics.line(x + 24, dividerY, x + w - 24, dividerY)
         local descStart = dividerY + 16
