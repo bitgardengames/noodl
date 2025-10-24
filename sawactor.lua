@@ -98,19 +98,24 @@ function SawActor:update(dt)
 	self.rotation = (self.rotation + dt * self.spinSpeed) % (pi * 2)
 
 	local trackLength = max(0.0001, self.trackLength or DEFAULT_TRACK_LENGTH)
-	if self.moveSpeed ~= 0 then
-		local direction = self.moveDirection or DEFAULT_DIRECTION
-		local delta = (dt * self.moveSpeed) / trackLength
-		self.progress = (self.progress or 0) + delta * direction
+        if self.moveSpeed ~= 0 then
+                local direction = self.moveDirection or DEFAULT_DIRECTION
+                local delta = (dt * self.moveSpeed) / trackLength
+                local progress = (self.progress or 0) + delta * direction
 
-		if self.progress >= 1 then
-			self.progress = 1
-			self.moveDirection = -abs(direction)
-		elseif self.progress <= 0 then
-			self.progress = 0
-			self.moveDirection = abs(direction)
-		end
-	end
+                while progress > 1 or progress < 0 do
+                        if progress > 1 then
+                                progress = 2 - progress
+                                direction = -abs(direction)
+                        else
+                                progress = -progress
+                                direction = abs(direction)
+                        end
+                end
+
+                self.progress = max(0, min(1, progress))
+                self.moveDirection = direction
+        end
 
 	if self.hitFlashTimer > 0 then
 		self.hitFlashTimer = max(0, self.hitFlashTimer - dt)
