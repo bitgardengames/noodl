@@ -1023,6 +1023,7 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
         end
 
         local assignedHeadCol, assignedHeadRow = nil, nil
+        local headCellCleared = false
 
         for i = 1, #trail do
                 local segment = trail[i]
@@ -1039,7 +1040,14 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
                                         end
                                         recordSnakeOccupiedCell(col, row)
                                         if i > 1 then
-                                                addSnakeBodyOccupancy(col, row)
+                                                if assignedHeadCol and assignedHeadRow and not headCellCleared then
+                                                        if col ~= assignedHeadCol or row ~= assignedHeadRow then
+                                                                headCellCleared = true
+                                                                addSnakeBodyOccupancy(col, row)
+                                                        end
+                                                else
+                                                        addSnakeBodyOccupancy(col, row)
+                                                end
                                         end
                                 end
                         end
