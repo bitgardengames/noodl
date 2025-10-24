@@ -71,19 +71,30 @@ local RUN_ACTIVE_STATES = {
 }
 
 local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
-	Face,
-	Popup,
-	Fruit,
-	Rocks,
-	Lasers,
-	-- Darts, -- Disabled while not in use.
-	Saws,
-	Arena,
-	Particles,
-	UpgradeVisuals,
-	Achievements,
-	FloatingText,
-	Score,
+        Face,
+        Popup,
+        Fruit,
+        Rocks,
+        Lasers,
+        -- Darts, -- Disabled while not in use.
+        Saws,
+        Arena,
+        Particles,
+        UpgradeVisuals,
+        Achievements,
+        FloatingText,
+        Score,
+})
+
+local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
+        Face,
+        Popup,
+        Arena,
+        Particles,
+        UpgradeVisuals,
+        Achievements,
+        FloatingText,
+        Score,
 })
 
 local function cloneColor(color, fallback)
@@ -935,13 +946,21 @@ function Game:updateGameplay(dt)
 end
 
 function Game:updateEntities(dt)
-	updateSystems(ENTITY_UPDATE_ORDER, dt)
+        updateSystems(ENTITY_UPDATE_ORDER, dt)
+end
+
+function Game:updateTransitionVisuals(dt)
+        if not dt or dt <= 0 then
+                return
+        end
+
+        updateSystems(TRANSITION_VISUAL_SYSTEMS, dt)
 end
 
 function Game:handleDeath(dt)
-	if self.state ~= "dying" then
-		return
-	end
+        if self.state ~= "dying" then
+                return
+        end
 
 	Death:update(dt)
 	if not Death:isFinished() then
@@ -1340,9 +1359,10 @@ function Game:update(dt)
 		transitionBlocking = transition.isGameplayBlocked and transition:isGameplayBlocked()
 	end
 
-	if transitionBlocking then
-		return
-	end
+        if transitionBlocking then
+                self:updateTransitionVisuals(scaledDt)
+                return
+        end
 
 	local stateHandler = STATE_UPDATERS[self.state]
 	if stateHandler and stateHandler(self, scaledDt) then
