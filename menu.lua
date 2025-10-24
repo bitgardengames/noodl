@@ -633,8 +633,8 @@ function Menu:draw()
 			Tooltip:hide("dailyChallengeReset")
 		end
 
-		setColorWithAlpha(Theme.shadowColor, eased * 0.7)
-		love.graphics.rectangle("fill", panelX + 6, panelY + 8, panelWidth, panelHeight, 14, 14)
+                setColorWithAlpha(Theme.shadowColor, eased * 0.7)
+                love.graphics.rectangle("fill", panelX + 5, panelY + 5, panelWidth, panelHeight, 14, 14)
 
 		setColorWithAlpha(Theme.panelColor, alpha)
 		UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
