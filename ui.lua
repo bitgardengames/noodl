@@ -1696,14 +1696,17 @@ function UI:drawFruitSockets()
 		goalFlash = pow(1 - flashT, 1.4)
 	end
 
-	-- backdrop styled like the HUD panel card
-        local shadowOffset = UI.shadowOffset
-        if shadowOffset ~= 0 then
+        -- backdrop styled like the HUD panel card
+        local shadowOffsetBase = UI.shadowOffset or 0
+        local shadowInset = 3
+        local shadowOffsetX = shadowOffsetBase - shadowInset
+        local shadowOffsetY = shadowOffsetBase - shadowInset
+        if shadowOffsetX ~= 0 or shadowOffsetY ~= 0 then
                 local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
                 local shadowAlpha = shadowColor[4] or 1
                 love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
-                love.graphics.rectangle("fill", panelX + shadowOffset, panelY + shadowOffset, panelW, panelH, 12, 12)
-	end
+                love.graphics.rectangle("fill", panelX + shadowOffsetX, panelY + shadowOffsetY, panelW, panelH, 12, 12)
+        end
 
         local basePanelColor = Theme.arenaBG or Theme.panelColor or {0.16, 0.16, 0.22, 0.94}
         local panelColor = basePanelColor
@@ -1741,9 +1744,9 @@ function UI:drawFruitSockets()
 		local hasFruit = socket ~= nil
 		local appear = hasFruit and clamp01(socket.anim / self.socketAnimTime) or 0
 		local radius = hasFruit and socketRadius or socketRadius * 0.8
-                local shadowAlpha = hasFruit and (0.45 * max(appear, 0.2)) or 0.4
-                love.graphics.setColor(0, 0, 0, shadowAlpha)
-                love.graphics.circle("fill", x + shadowOffset, y + shadowOffset, radius, 48)
+		local shadowAlpha = hasFruit and (0.45 * max(appear, 0.2)) or 0.4
+		love.graphics.setColor(0, 0, 0, shadowAlpha)
+		love.graphics.circle("fill", x + shadowOffsetX, y + shadowOffsetY, radius, 48)
 
 		-- empty socket base
 		love.graphics.setColor(socketFill[1], socketFill[2], socketFill[3], (socketFill[4] or 1) * 0.9)
