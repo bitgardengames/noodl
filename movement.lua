@@ -489,10 +489,12 @@ local function handleRockCollision(headX, headY)
         local headTop = headY - halfSegment
 
         for _, rock in ipairs(Rocks:getAll()) do
-                local rockWidth = rock.w or SEGMENT_SIZE
-                local rockHeight = rock.h or SEGMENT_SIZE
-                local rockLeft = (rock.x or 0) - rockWidth / 2
-                local rockTop = (rock.y or 0) - rockHeight / 2
+                local rockCenterX = rock and (rock.renderX or rock.x) or 0
+                local rockCenterY = rock and (rock.renderY or rock.y) or 0
+                local rockWidth = rock and rock.w or SEGMENT_SIZE
+                local rockHeight = rock and rock.h or SEGMENT_SIZE
+                local rockLeft = rockCenterX - rockWidth / 2
+                local rockTop = rockCenterY - rockHeight / 2
 
                 if aabb(headLeft, headTop, SEGMENT_SIZE, SEGMENT_SIZE, rockLeft, rockTop, rockWidth, rockHeight) then
                         local centerX = rockLeft + rockWidth / 2
