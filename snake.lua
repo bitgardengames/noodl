@@ -51,6 +51,8 @@ local snakeOccupiedCells = {}
 local snakeOccupiedCellCount = 0
 local occupancyCols = 0
 local occupancyRows = 0
+local headOccupancyCol = nil
+local headOccupancyRow = nil
 
 local function resetTrackedSnakeCells()
         if snakeOccupiedCellCount <= 0 then
@@ -110,6 +112,9 @@ local function resetSnakeOccupancyGrid()
 
         occupancyCols = (Arena and Arena.cols) or 0
         occupancyRows = (Arena and Arena.rows) or 0
+
+        headOccupancyCol = nil
+        headOccupancyRow = nil
 end
 
 local function ensureOccupancyGrid()
@@ -1003,10 +1008,12 @@ local function toCell(x, y)
         return col, row
 end
 
-local function rebuildOccupancyFromTrail()
+local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
         if not ensureOccupancyGrid() then
                 resetTrackedSnakeCells()
                 clearSnakeOccupancy()
+                headOccupancyCol = nil
+                headOccupancyRow = nil
                 return
         end
 
@@ -1014,8 +1021,12 @@ local function rebuildOccupancyFromTrail()
         clearSnakeOccupancy()
 
         if not trail then
+                headOccupancyCol = nil
+                headOccupancyRow = nil
                 return
         end
+
+        local assignedHeadCol, assignedHeadRow = nil, nil
 
         for i = 1, #trail do
                 local segment = trail[i]
@@ -1024,6 +1035,12 @@ local function rebuildOccupancyFromTrail()
                         if x and y then
                                 local col, row = toCell(x, y)
                                 if col and row then
+                                        if i == 1 then
+                                                if headColOverride and headRowOverride then
+                                                        col, row = headColOverride, headRowOverride
+                                                end
+                                                assignedHeadCol, assignedHeadRow = col, row
+                                        end
                                         recordSnakeOccupiedCell(col, row)
                                         if i > 1 then
                                                 addSnakeOccupancy(col, row)
@@ -1032,6 +1049,9 @@ local function rebuildOccupancyFromTrail()
                         end
                 end
         end
+
+        headOccupancyCol = assignedHeadCol
+        headOccupancyRow = assignedHeadRow
 end
 
 local function shouldTriggerSelfCollision(headX, headY, headCol, headRow)
@@ -2964,7 +2984,27 @@ function Snake:update(dt)
         end
 
         if headCellCount > 0 or tailMoved then
-                rebuildOccupancyFromTrail()
+                local overrideCol, overrideRow = nil, nil
+
+                if headCellCount > 0 then
+                        local latest = headCells[headCellCount]
+                        if latest then
+                                overrideCol = latest[1]
+                                overrideRow = latest[2]
+                        end
+                else
+                        overrideCol = headOccupancyCol
+                        overrideRow = headOccupancyRow
+                end
+
+                if (not overrideCol) or (not overrideRow) then
+                        local headSeg = trail and trail[1]
+                        if headSeg then
+                                overrideCol, overrideRow = toCell(headSeg.drawX, headSeg.drawY)
+                        end
+                end
+
+                rebuildOccupancyFromTrail(overrideCol, overrideRow)
         end
 
         if portalAnimation then
