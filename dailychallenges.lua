@@ -645,16 +645,6 @@ DailyChallenges.challenges = {
 		xpReward = 90,
 	},
 	{
-		id = "streak_perfectionist",
-		titleKey = "menu.daily.streak_perfectionist.title",
-		descriptionKey = "menu.daily.streak_perfectionist.description",
-		sessionStat = "fruitWithoutTurning",
-		goal = 12,
-		progressKey = "menu.daily.streak_perfectionist.progress",
-		completeKey = "menu.daily.streak_perfectionist.complete",
-		xpReward = 90,
-	},
-	{
 		id = "dragonfruit_gourmand",
 		titleKey = "menu.daily.dragonfruit_gourmand.title",
 		descriptionKey = "menu.daily.dragonfruit_gourmand.description",
@@ -1155,49 +1145,6 @@ DailyChallenges.challenges = {
                 end,
                 xpReward = 130,
         },
-	{
-		id = "momentum_master",
-		titleKey = "menu.daily.momentum_master.title",
-		descriptionKey = "menu.daily.momentum_master.description",
-		goal = 3,
-		progressKey = "menu.daily.momentum_master.progress",
-		completeKey = "menu.daily.momentum_master.complete",
-		fruitChunk = 8,
-		tileChunk = 1000,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local chain = getStatValue(statsSource, "fruitWithoutTurning")
-			local tiles = getStatValue(statsSource, "tilesTravelled")
-			local surges = min(floor(chain / (self.fruitChunk or 1)), floor(tiles / (self.tileChunk or 1)))
-			return max(surges, 0)
-		end,
-		getRunValue = function(self, statsSource)
-			local chain = getStatValue(statsSource, "fruitWithoutTurning")
-			local tiles = getStatValue(statsSource, "tilesTravelled")
-			local surges = min(floor(chain / (self.fruitChunk or 1)), floor(tiles / (self.tileChunk or 1)))
-			return max(surges, 0)
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local chain = getStatValue(statsSource, "fruitWithoutTurning")
-			local tiles = getStatValue(statsSource, "tilesTravelled")
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				chain = chain,
-				tiles = tiles,
-				fruit_chunk = self.fruitChunk or 1,
-				tile_chunk = self.tileChunk or 1,
-			}
-		end,
-		descriptionReplacements = function(self)
-			return {
-				fruit_chunk = self.fruitChunk or 1,
-				tile_chunk = self.tileChunk or 1,
-			}
-		end,
-		xpReward = 110,
-	},
 	{
 		id = "floor_cartographer",
 		titleKey = "menu.daily.floor_cartographer.title",
