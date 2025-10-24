@@ -9,6 +9,7 @@ local SnakeCosmetics = {}
 local SAVE_FILE = "snakecosmetics_state.lua"
 local DEFAULT_SKIN_ID = "classic_emerald"
 local DEFAULT_ORDER = 1000
+local DEFAULT_OUTLINE_COLOR = {0, 0, 0, 1}
 
 local function compareSkinDefinitions(a, b)
         if a.order == b.order then
@@ -1011,9 +1012,7 @@ function SnakeCosmetics:getBodyColor()
 end
 
 function SnakeCosmetics:getOutlineColor()
-	local skin = self:getActiveSkin()
-	local palette = skin and skin.colors or {}
-	return resolveColor(palette.outline, {0, 0, 0, 1})
+	return resolveColor(DEFAULT_OUTLINE_COLOR)
 end
 
 function SnakeCosmetics:getGlowColor()
@@ -1041,7 +1040,7 @@ function SnakeCosmetics:getPaletteForSkin(skin)
 	if not target then
 		return {
 			body = resolveColor(nil, Theme.snakeDefault),
-			outline = resolveColor(nil, {0, 0, 0, 1}),
+			outline = resolveColor(DEFAULT_OUTLINE_COLOR),
 			glow = resolveColor(nil, Theme.snakeDefault),
 		}
 	end
@@ -1051,7 +1050,7 @@ function SnakeCosmetics:getPaletteForSkin(skin)
 
 	local result = {}
 	result.body = resolveColor(palette.body, Theme.snakeDefault)
-	result.outline = resolveColor(palette.outline, {0, 0, 0, 1})
+	result.outline = resolveColor(DEFAULT_OUTLINE_COLOR)
 
 	local glowEffect = effects.glow or {}
 	if glowEffect.color then
