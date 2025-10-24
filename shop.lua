@@ -1281,6 +1281,9 @@ function Shop:draw(screenW, screenH)
 
 	love.graphics.setFont(UI.fonts.title)
 	local titleText = Localization:get("shop.title")
+	local shadowOffset = 3
+	love.graphics.setColor(0, 0, 0, 0.6)
+	love.graphics.printf(titleText, textAreaX + shadowOffset, currentY + shadowOffset, textAreaWidth, "center")
 	love.graphics.setColor(1, 1, 1, 1)
 	love.graphics.printf(titleText, textAreaX, currentY, textAreaWidth, "center")
 
