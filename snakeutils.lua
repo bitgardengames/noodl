@@ -498,23 +498,32 @@ function SnakeUtils.sawTrackIsFree(fx, fy, dir)
 	return cellsAreFree(cells)
 end
 
--- Safe spawn: just randomize until we find a free cell
 -- Axis-Aligned Bounding Box
 function SnakeUtils.aabb(ax, ay, asize, bx, by, bsize)
-	-- If tables passed, extract drawX/drawY
-	if type(ax) == "table" then
-		ax, ay = ax.drawX, ax.drawY
-		asize = SnakeUtils.SEGMENT_SIZE
-	end
-	if type(bx) == "table" then
-		bx, by = bx.drawX, bx.drawY
-		bsize = SnakeUtils.SEGMENT_SIZE
-	end
+        -- If tables passed, extract drawX/drawY and assume segment-sized squares
+        if type(ax) == "table" then
+                ax, ay = ax.drawX, ax.drawY
+                asize = SnakeUtils.SEGMENT_SIZE
+        end
+        if type(bx) == "table" then
+                bx, by = bx.drawX, bx.drawY
+                bsize = SnakeUtils.SEGMENT_SIZE
+        end
 
-	return ax < bx + bsize and
-	ax + asize > bx and
-	ay < by + bsize and
-	ay + asize > by
+        if not (ax and ay and bx and by) then
+                return false
+        end
+
+        asize = asize or SnakeUtils.SEGMENT_SIZE
+        bsize = bsize or SnakeUtils.SEGMENT_SIZE
+
+        local ah = (asize or 0) * 0.5
+        local bh = (bsize or 0) * 0.5
+
+        return (ax - ah) < (bx + bh) and
+        (ax + ah) > (bx - bh) and
+        (ay - ah) < (by + bh) and
+        (ay + ah) > (by - bh)
 end
 
 -- handle input direction
