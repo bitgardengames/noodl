@@ -1089,7 +1089,7 @@ local function shouldTriggerSelfCollision(headX, headY, headCol, headRow)
         end
 
         if not found then
-                return true
+                return false
         end
 
         return closestSq <= thresholdSq
