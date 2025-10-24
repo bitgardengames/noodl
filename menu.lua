@@ -636,7 +636,8 @@ function Menu:draw()
                 setColorWithAlpha(Theme.shadowColor, eased * 0.7)
                 love.graphics.rectangle("fill", panelX + 5, panelY + 5, panelWidth, panelHeight, 14, 14)
 
-		setColorWithAlpha(Theme.panelColor, alpha)
+                local panelFillColor = (UI.colors and UI.colors.button) or Theme.buttonColor or Theme.panelColor
+                setColorWithAlpha(panelFillColor, alpha)
 		UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
 
                 setColorWithAlpha(DAILY_PANEL_OUTLINE_COLOR, alpha)
