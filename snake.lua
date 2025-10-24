@@ -484,7 +484,6 @@ Snake.stormchaser = nil
 Snake.titanblood = nil
 Snake.temporalAnchor = nil
 Snake.quickFangs = nil
-Snake.phaseDisruptor = nil
 
 local function resolveTimeDilationScale(primary, secondary)
 	local scale = 1
@@ -573,10 +572,9 @@ function Snake:resetModifiers()
 	self.eventHorizon = nil
 	self.stormchaser = nil
 	self.titanblood = nil
-	self.temporalAnchor = nil
-	self.quickFangs = nil
-	self.phaseDisruptor = nil
-	self.zephyrCoils = nil
+        self.temporalAnchor = nil
+        self.quickFangs = nil
+        self.zephyrCoils = nil
 	self.spectralHarvest = nil
 	self.stoneSkinVisual = nil
        self.speedVisual = nil
@@ -785,14 +783,6 @@ function Snake:setEventHorizonActive(active)
 			state.target = 0
 			state.active = false
 		end
-	end
-end
-
-function Snake:setPhaseDisruptorActive(active)
-	if active then
-		self.phaseDisruptor = true
-	else
-		self.phaseDisruptor = nil
 	end
 end
 
@@ -1790,11 +1780,6 @@ local function collectUpgradeVisuals(self)
                 entry.echo = spectral.echo or 0
                 entry.ready = spectral.ready or false
                 entry.time = spectral.time or 0
-        end
-
-        if self.phaseDisruptor then
-                local entry = acquireEntry("face")
-                entry.phaseDisruptor = true
         end
 
         if hasAny then
