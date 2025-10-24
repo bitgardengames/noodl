@@ -478,11 +478,6 @@ local rarityStyles = {
         rare = {
                 base = {0.16, 0.24, 0.34, 1},
                 shadowAlpha = 0.30,
-                gradient = {
-                        top = {1.0, 1.0, 1.0, 0.14},
-                        bottom = {0.0, 0.0, 0.0, 0.18},
-                        steps = 20,
-                },
                 aura = {
                         color = {0.40, 0.60, 0.92, 0.32},
                         radius = 0.82,
@@ -508,11 +503,6 @@ local rarityStyles = {
         epic = {
                 base = {0.24, 0.12, 0.42, 1},
                 shadowAlpha = 0.36,
-                gradient = {
-                        top = {1.0, 1.0, 1.0, 0.18},
-                        bottom = {0.0, 0.0, 0.0, 0.22},
-                        steps = 22,
-                },
                 aura = {
                         color = {0.86, 0.56, 0.98, 0.42},
                         radius = 0.9,
@@ -538,11 +528,6 @@ local rarityStyles = {
         legendary = {
                 base = {0.46, 0.28, 0.06, 1},
                 shadowAlpha = 0.46,
-                gradient = {
-                        top = {1.0, 1.0, 1.0, 0.22},
-                        bottom = {0.0, 0.0, 0.0, 0.26},
-                        steps = 24,
-                },
                 outerGlow = {
                         color = {1.0, 0.82, 0.34, 1},
                         min = 0.26,
