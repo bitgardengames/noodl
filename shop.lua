@@ -1116,12 +1116,16 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         end
 
         local badgeSize = 0
+        local badgeShape = badgeStyle and badgeStyle.shape
         if badgeStyle then
                 if rarityHeight > 0 then
                         badgeSize = rarityHeight
                 else
                         love.graphics.setFont(rarityFont)
                         badgeSize = rarityFont:getHeight() * rarityFont:getLineHeight()
+                end
+                if badgeShape == "triangle_up" or badgeShape == "triangle_down" then
+                        badgeSize = badgeSize + 4
                 end
                 headerHeight = max(headerHeight, badgeSize)
                 if badgeLabelHeight > 0 then
