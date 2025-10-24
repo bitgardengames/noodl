@@ -37,6 +37,8 @@ local streakLineArgs = {streak = 0, unit = nil}
 local bestLineArgs = {best = 0, unit = nil}
 local resetTooltipArgs = {time = nil}
 local DAILY_PANEL_OUTLINE_COLOR = {0, 0, 0, 1}
+local EDGE_PROXIMITY_FACTOR = 0.85
+local BUTTON_STACK_OFFSET = 80
 
 local dailyBarCelebration = {
 	active = false,
@@ -374,9 +376,19 @@ function Menu:enter()
         local footerGuard = menuLayout.footerSpacing or UI.spacing.sectionSpacing or 24
         local lowerBound = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or sh * 0.12))) - footerGuard
         local availableHeight = max(0, lowerBound - stackBase)
-        local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5)
-        if startY + totalButtonHeight > lowerBound then
-                startY = max(stackBase, lowerBound - totalButtonHeight)
+        local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5) + BUTTON_STACK_OFFSET
+        local minStart = stackBase + BUTTON_STACK_OFFSET
+        local maxStart = lowerBound - totalButtonHeight
+
+        if maxStart < minStart then
+                startY = maxStart
+        else
+                if startY > maxStart then
+                        startY = maxStart
+                end
+                if startY < minStart then
+                        startY = minStart
+                end
         end
 
 	local defs = {}
@@ -526,14 +538,16 @@ function Menu:draw()
         local footerSpacing = menuLayout.footerSpacing or 24
         local versionHeight = versionFont and versionFont:getHeight() or 0
         local versionY = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing - versionHeight
-        love.graphics.print(Localization:get("menu.version"), menuLayout.marginHorizontal or 16, versionY)
+        local versionMargin = (menuLayout.marginHorizontal or 16) * EDGE_PROXIMITY_FACTOR
+        love.graphics.print(Localization:get("menu.version"), versionMargin, versionY)
 
 	if dailyChallenge and dailyChallengeAnim > 0 then
 		local alpha = min(1, dailyChallengeAnim)
 		local eased = alpha * alpha
                 local panelWidth = min(menuLayout.panelMaxWidth or 420, max(280, menuLayout.contentWidth or (sw - 72)))
                 local padding = UI.spacing.panelPadding or 16
-                local panelX = sw - panelWidth - (menuLayout.marginHorizontal or 36)
+                local panelMargin = (menuLayout.marginHorizontal or 36) * EDGE_PROXIMITY_FACTOR
+                local panelX = sw - panelWidth - panelMargin
 		local headerFont = UI.fonts.small
 		local titleFont = UI.fonts.button
 		local bodyFont = UI.fonts.body
