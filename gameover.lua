@@ -186,15 +186,13 @@ local function measureXpPanelHeight(self, width, celebrationCount)
 		return 0
 	end
 
-	local titleHeight = fontProgressTitle and fontProgressTitle:getHeight() or 0
-	local levelHeight = fontProgressValue and fontProgressValue:getHeight() or 0
-	local smallHeight = fontProgressSmall and fontProgressSmall:getHeight() or 0
+        local levelHeight = fontProgressValue and fontProgressValue:getHeight() or 0
+        local smallHeight = fontProgressSmall and fontProgressSmall:getHeight() or 0
 
-	local height = 18
-	height = height + titleHeight
-	height = height + 12 + levelHeight
-	height = height + 6 + smallHeight
-	height = height + 18
+        local height = 18
+        height = height + 16 + levelHeight
+        height = height + 6 + smallHeight
+        height = height + 18
 
         local baseMaxRadius = max(48, min(74, (width / 2) - 24))
         local scaledMaxRadius = baseMaxRadius * 1.2
@@ -1531,15 +1529,11 @@ local function drawXpSection(self, x, y, width)
 	self.baseXpSectionHeight = self.baseXpSectionHeight or baseHeight
 	local animatedHeight = self.xpSectionHeight or targetHeight
 	local height = max(160, baseHeight, targetHeight, animatedHeight)
-	local headerY = y + 18
-        UI.drawLabel(getLocalizedOrFallback("gameover.meta_progress_title", "Run Summary"), x, headerY, width, "center", {
-		font = fontProgressTitle,
-		color = UI.colors.text,
-	})
+        local headerY = y + 18
 
         local levelColor = Theme.progressColor or UI.colors.progress or UI.colors.text
         local flash = max(0, min(1, anim.levelFlash or 0))
-        local levelY = headerY + fontProgressTitle:getHeight() + 16
+        local levelY = headerY + 16
 
 	if flash > 0.01 then
 		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
@@ -1589,7 +1583,7 @@ local function drawXpSection(self, x, y, width)
 	local ringColor = {levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.9}
 
         love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.circle("fill", centerX, centerY, outerRadius + 5, 96)
+        love.graphics.circle("fill", centerX, centerY, outerRadius + 4, 96)
 
 	love.graphics.setColor(trackColor)
 	love.graphics.circle("fill", centerX, centerY, outerRadius, 96)
