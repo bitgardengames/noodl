@@ -27,11 +27,11 @@ local buttonAliases = {
 }
 
 local playingButtonHandlers = {
-        dash = function(game)
-                if game.state == "playing" then
-                        Controls:keypressed(game, "space")
-                end
-        end,
+	dash = function(game)
+		if game.state == "playing" then
+			Controls:keypressed(game, "space")
+		end
+	end,
 	slow = function(game)
 		if game.state == "playing" then
 			Controls:keypressed(game, "lshift")
@@ -57,13 +57,13 @@ function GameInput:resetAxes()
 end
 
 function GameInput:applyPauseMenuSelection(selection)
-        if selection == "resume" then
-                self.game:exitPause()
-        elseif selection == "menu" then
-                self.game:exitPause()
-                Achievements:save()
-                return "menu"
-        end
+	if selection == "resume" then
+		self.game:exitPause()
+	elseif selection == "menu" then
+		self.game:exitPause()
+		Achievements:save()
+		return "menu"
+	end
 end
 
 function GameInput:handlePauseMenuInput(button)
@@ -91,35 +91,35 @@ function GameInput:handlePlayingButton(button)
 end
 
 function GameInput:handleGamepadButton(button)
-        if self.game.state == "paused" then
-                return self:handlePauseMenuInput(button)
-        end
+	if self.game.state == "paused" then
+		return self:handlePauseMenuInput(button)
+	end
 
-        if button == "start" then
-                self.game:enterPause()
-                return
-        end
+	if button == "start" then
+		self.game:enterPause()
+		return
+	end
 
-        if self.transition:handleShopInput("gamepadpressed", nil, button) then
-                return
-        end
+	if self.transition:handleShopInput("gamepadpressed", nil, button) then
+		return
+	end
 
-        return self:handlePlayingButton(button)
+	return self:handlePlayingButton(button)
 end
 
 function GameInput:handleGamepadAxis(axis, value)
-        if self.game.state == "paused" then
-                if PauseMenu.gamepadaxis then
-                        PauseMenu:gamepadaxis(nil, axis, value)
-                end
-                return
-        end
+	if self.game.state == "paused" then
+		if PauseMenu.gamepadaxis then
+			PauseMenu:gamepadaxis(nil, axis, value)
+		end
+		return
+	end
 
-        if self.transition:isShopActive() and Shop.gamepadaxis then
-                Shop:gamepadaxis(nil, axis, value)
-        end
+	if self.transition:isShopActive() and Shop.gamepadaxis then
+		Shop:gamepadaxis(nil, axis, value)
+	end
 
-        local config = axisButtonMap[axis]
+	local config = axisButtonMap[axis]
 	if not config then
 		return
 	end
