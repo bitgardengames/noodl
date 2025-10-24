@@ -958,8 +958,27 @@ registerEffect({
 	configure = function(effect)
 		local shader = effect.shader
 
-		local top = {0x1A / 255, 0x0F / 255, 0x1E / 255, 1}
-		local bottom = {0x05 / 255, 0x05 / 255, 0x05 / 255, 1}
+                local function liftBrightness(color, delta)
+                        local r, g, b, a = color[1], color[2], color[3], color[4]
+                        local brightness = (r + g + b) / 3
+                        if brightness <= 0 then
+                                return {r, g, b, a}
+                        end
+
+                        local target = min(brightness + delta, 1)
+                        local scale = target / brightness
+
+                        return {
+                                min(r * scale, 1),
+                                min(g * scale, 1),
+                                min(b * scale, 1),
+                                a,
+                        }
+                end
+
+                local brightnessLift = 0.05
+                local top = liftBrightness({0x1A / 255, 0x0F / 255, 0x1E / 255, 1}, brightnessLift)
+                local bottom = liftBrightness({0x05 / 255, 0x05 / 255, 0x05 / 255, 1}, brightnessLift)
 		local accent = {0xFF / 255, 0x2D / 255, 0xAA / 255, 1}
 
 		sendColor(shader, "topColor", top)
