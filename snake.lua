@@ -2867,7 +2867,42 @@ function Snake:update(dt)
                                 tailAfterCol, tailAfterRow = toCell(tailX, tailY)
                         end
                 end
-	end
+        end
+
+        local tailMoved = false
+        if lenAfterTrim == 0 then
+                tailMoved = true
+        elseif tailBeforeCol and tailBeforeRow then
+                if not tailAfterCol or not tailAfterRow then
+                        tailMoved = true
+                else
+                        tailMoved = tailBeforeCol ~= tailAfterCol or tailBeforeRow ~= tailAfterRow
+                end
+        end
+
+        if headCellCount > 0 or tailMoved then
+                local overrideCol, overrideRow = nil, nil
+
+                if headCellCount > 0 then
+                        local latest = headCells[headCellCount]
+                        if latest then
+                                overrideCol = latest[1]
+                                overrideRow = latest[2]
+                        end
+                else
+                        overrideCol = headOccupancyCol
+                        overrideRow = headOccupancyRow
+                end
+
+                if (not overrideCol) or (not overrideRow) then
+                        local headSeg = trail and trail[1]
+                        if headSeg then
+                                overrideCol, overrideRow = toCell(headSeg.drawX, headSeg.drawY)
+                        end
+                end
+
+                rebuildOccupancyFromTrail(overrideCol, overrideRow)
+        end
 
         -- collision with self (grid-cell based, only at snap ticks)
         if headCellCount > 0 and not self:isHazardGraceActive() then
@@ -2918,41 +2953,6 @@ function Snake:update(dt)
                                 ::continue::
                         end
                 end
-        end
-
-        local tailMoved = false
-        if lenAfterTrim == 0 then
-                tailMoved = true
-        elseif tailBeforeCol and tailBeforeRow then
-                if not tailAfterCol or not tailAfterRow then
-                        tailMoved = true
-                else
-                        tailMoved = tailBeforeCol ~= tailAfterCol or tailBeforeRow ~= tailAfterRow
-                end
-        end
-
-        if headCellCount > 0 or tailMoved then
-                local overrideCol, overrideRow = nil, nil
-
-                if headCellCount > 0 then
-                        local latest = headCells[headCellCount]
-                        if latest then
-                                overrideCol = latest[1]
-                                overrideRow = latest[2]
-                        end
-                else
-                        overrideCol = headOccupancyCol
-                        overrideRow = headOccupancyRow
-                end
-
-                if (not overrideCol) or (not overrideRow) then
-                        local headSeg = trail and trail[1]
-                        if headSeg then
-                                overrideCol, overrideRow = toCell(headSeg.drawX, headSeg.drawY)
-                        end
-                end
-
-                rebuildOccupancyFromTrail(overrideCol, overrideRow)
         end
 
         if portalAnimation then
