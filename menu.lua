@@ -538,8 +538,8 @@ function Menu:draw()
         love.graphics.setColor(Theme.textColor)
         local footerSpacing = menuLayout.footerSpacing or 24
         local versionHeight = versionFont and versionFont:getHeight() or 0
-        local versionY = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing - versionHeight
-        local versionMargin = (menuLayout.marginHorizontal or 16) * EDGE_PROXIMITY_FACTOR
+        local versionY = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing - versionHeight + 20
+        local versionMargin = (menuLayout.marginHorizontal or 16) * EDGE_PROXIMITY_FACTOR - 20
         love.graphics.print(Localization:get("menu.version"), versionMargin, versionY)
 
 	if dailyChallenge and dailyChallengeAnim > 0 then
