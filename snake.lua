@@ -1218,7 +1218,16 @@ end
 
 -- helpers
 local function snapToCenter(v)
-	return (floor(v / SEGMENT_SPACING) + 0.5) * SEGMENT_SPACING
+        if v == nil then
+                return v
+        end
+
+        local spacing = SEGMENT_SPACING
+        if not spacing or spacing == 0 then
+                return v
+        end
+
+        return (floor(v / spacing) + 0.5) * spacing
 end
 
 local function computeCellIndices(x, y)
@@ -3185,6 +3194,8 @@ function Snake:update(dt)
                         else
                                 currX = currX + currentDirX * available
                                 currY = currY + currentDirY * available
+                                currX = snapToCenter(currX)
+                                currY = snapToCenter(currY)
                                 remaining = remaining - available
                                 moveProgress = 0
                                 snaps = snaps + 1
