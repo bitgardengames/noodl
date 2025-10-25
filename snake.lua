@@ -1908,15 +1908,17 @@ local function collectUpgradeVisuals(self)
 		entry.flash = quickFangs.flash or 0
 	end
 
-	local zephyr = self.zephyrCoils
-	if zephyr and (((zephyr.intensity or 0) > 0.01) or (zephyr.stacks or 0) > 0 or (zephyr.target or 0) > 0) then
-		local entry = acquireEntry("zephyrCoils")
-		entry.stacks = zephyr.stacks or 0
-		entry.intensity = zephyr.intensity or 0
-		entry.time = zephyr.time or 0
-		entry.ratio = zephyr.speedRatio or (1 + 0.2 * min(1, max(0, zephyr.intensity or 0)))
-		entry.hasBody = (segmentCount or 0) > 1
-	end
+        local zephyr = self.zephyrCoils
+        if zephyr and (((zephyr.intensity or 0) > 0.01) or (zephyr.stacks or 0) > 0 or (zephyr.target or 0) > 0) then
+                local entry = acquireEntry("zephyrCoils")
+                entry.stacks = zephyr.stacks or 0
+                entry.intensity = zephyr.intensity or 0
+                entry.time = zephyr.time or 0
+                entry.ratio = zephyr.speedRatio or (1 + 0.2 * min(1, max(0, zephyr.intensity or 0)))
+
+                local trailCount = trail and #trail or 0
+                entry.hasBody = trailCount > 1
+        end
 
 	local timeDilation = self.timeDilation
 	if timeDilation then
