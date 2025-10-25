@@ -57,154 +57,84 @@ local function applyLaserCap(context)
 end
 
 local BASELINE_PLAN = {
-        [1] = {
-                fruitGoal = 12,
-                rocks = 4,
-                saws = 1,
-                laserCount = 0,
-                rockSpawnChance = 0.24,
-                sawSpeedMult = 1.08,
-                sawSpinMult = 1.0,
-                sawStall = 0,
-        },
-        [2] = {
-                fruitGoal = 15,
-                rocks = 5,
-                saws = 1,
-                laserCount = 0,
-                rockSpawnChance = 0.26,
-                sawSpeedMult = 1.14,
-                sawSpinMult = 1.06,
-                sawStall = 0,
-        },
-        [3] = {
-                fruitGoal = 18,
-                rocks = 6,
-                saws = 2,
-                laserCount = 0,
-                rockSpawnChance = 0.28,
-                sawSpeedMult = 1.2,
-                sawSpinMult = 1.12,
-                sawStall = 0,
-        },
-        [4] = {
-                fruitGoal = 21,
-                rocks = 7,
-                saws = 2,
-                laserCount = 0,
-                rockSpawnChance = 0.3,
-                sawSpeedMult = 1.26,
-                sawSpinMult = 1.18,
-                sawStall = 0,
-        },
-        [5] = {
-                fruitGoal = 24,
-                rocks = 8,
-                saws = 3,
-                laserCount = 1,
-                rockSpawnChance = 0.33,
-                sawSpeedMult = 1.32,
-                sawSpinMult = 1.24,
-                sawStall = 0,
-        },
-        [6] = {
-                fruitGoal = 27,
-                rocks = 9,
-                saws = 3,
-                laserCount = 1,
-                rockSpawnChance = 0.36,
-                sawSpeedMult = 1.38,
-                sawSpinMult = 1.3,
-                sawStall = 0,
-        },
-        [7] = {
-                fruitGoal = 30,
-                rocks = 10,
-                saws = 4,
-                laserCount = 1,
-                rockSpawnChance = 0.39,
-                sawSpeedMult = 1.44,
-                sawSpinMult = 1.36,
-                sawStall = 0,
-        },
-        [8] = {
-                fruitGoal = 33,
-                rocks = 11,
-                saws = 4,
-                laserCount = 1,
-                rockSpawnChance = 0.42,
-                sawSpeedMult = 1.5,
-                sawSpinMult = 1.42,
-                sawStall = 0,
-        },
-        [9] = {
-                fruitGoal = 35,
-		rocks = 12,
+	[1] = {
+		fruitGoal = 12,
+		rocks = 4,
+		saws = 1,
+		laserCount = 0,
+		rockSpawnChance = 0.24,
+		sawSpeedMult = 1.08,
+		sawSpinMult = 1.0,
+		sawStall = 0,
+	},
+	[2] = {
+		fruitGoal = 15,
+		rocks = 5,
+		saws = 1,
+		laserCount = 0,
+		rockSpawnChance = 0.26,
+		sawSpeedMult = 1.14,
+		sawSpinMult = 1.06,
+		sawStall = 0,
+	},
+	[3] = {
+		fruitGoal = 18,
+		rocks = 6,
+		saws = 2,
+		laserCount = 0,
+		rockSpawnChance = 0.28,
+		sawSpeedMult = 1.2,
+		sawSpinMult = 1.12,
+		sawStall = 0,
+	},
+	[4] = {
+		fruitGoal = 21,
+		rocks = 7,
+		saws = 2,
+		laserCount = 0,
+		rockSpawnChance = 0.3,
+		sawSpeedMult = 1.26,
+		sawSpinMult = 1.18,
+		sawStall = 0,
+	},
+	[5] = {
+		fruitGoal = 24,
+		rocks = 8,
+		saws = 3,
+		laserCount = 1,
+		rockSpawnChance = 0.33,
+		sawSpeedMult = 1.32,
+		sawSpinMult = 1.24,
+		sawStall = 0,
+	},
+	[6] = {
+		fruitGoal = 27,
+		rocks = 9,
+		saws = 3,
+		laserCount = 1,
+		rockSpawnChance = 0.36,
+		sawSpeedMult = 1.38,
+		sawSpinMult = 1.3,
+		sawStall = 0,
+	},
+	[7] = {
+		fruitGoal = 30,
+		rocks = 10,
 		saws = 4,
 		laserCount = 1,
-		rockSpawnChance = 0.45,
-		sawSpeedMult = 1.56,
-		sawSpinMult = 1.48,
+		rockSpawnChance = 0.39,
+		sawSpeedMult = 1.44,
+		sawSpinMult = 1.36,
 		sawStall = 0,
 	},
-        [10] = {
-                fruitGoal = 38,
-		rocks = 13,
-		saws = 5,
-		laserCount = 2,
-		rockSpawnChance = 0.48,
-		sawSpeedMult = 1.62,
-		sawSpinMult = 1.54,
-		sawStall = 0,
-	},
-        [11] = {
-                fruitGoal = 41,
-		rocks = 14,
-		saws = 5,
-		laserCount = 2,
-		rockSpawnChance = 0.5,
-		sawSpeedMult = 1.68,
-		sawSpinMult = 1.6,
-		sawStall = 0,
-	},
-        [12] = {
-                fruitGoal = 44,
-		rocks = 15,
-		saws = 6,
-		laserCount = 2,
-		rockSpawnChance = 0.52,
-		sawSpeedMult = 1.74,
-		sawSpinMult = 1.66,
-		sawStall = 0,
-	},
-        [13] = {
-                fruitGoal = 47,
-		rocks = 16,
-		saws = 6,
-		laserCount = 2,
-		rockSpawnChance = 0.54,
-		sawSpeedMult = 1.8,
-		sawSpinMult = 1.72,
-		sawStall = 0,
-	},
-        [14] = {
-                fruitGoal = 50,
-		rocks = 17,
-		saws = 7,
-		laserCount = 2,
-		rockSpawnChance = 0.56,
-		sawSpeedMult = 1.84,
-		sawSpinMult = 1.76,
-		sawStall = 0,
-	},
-        [15] = {
-                fruitGoal = 53,
-		rocks = 19,
-		saws = 7,
-		laserCount = 3,
-		rockSpawnChance = 0.58,
-		sawSpeedMult = 1.88,
-		sawSpinMult = 1.8,
+	[8] = {
+		fruitGoal = 33,
+		rocks = 11,
+		saws = 4,
+		laserCount = 1,
+		rockSpawnChance = 0.42,
+		sawSpeedMult = 1.5,
+		sawSpinMult = 1.42,
 		sawStall = 0,
 	},
 }
@@ -227,9 +157,9 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
 		for key, value in pairs(plan) do
 			context[key] = value
 		end
-                applyLaserCap(context)
-                return context
-        end
+		applyLaserCap(context)
+		return context
+	end
 
 	local baselinePlan = FloorPlan.getBaselinePlan()
 	local lastIndex = #baselinePlan
@@ -246,8 +176,8 @@ function FloorPlan.buildBaselineFloorContext(floorNum)
 	context.rocks = max(0, min(40, (lastPlan.rocks or 19) + extraFloors))
 	context.saws = max(1, min(8, (lastPlan.saws or 7) + floor(extraFloors / 3)))
 	local baseLaser = lastPlan.laserCount or 0
-        context.laserCount = computeLaserProgression(baseLaser, extraFloors, MAX_LASER_COUNT)
-        applyLaserCap(context)
+	context.laserCount = computeLaserProgression(baseLaser, extraFloors, MAX_LASER_COUNT)
+	applyLaserCap(context)
 	context.rockSpawnChance = min(0.68, (lastPlan.rockSpawnChance or 0.58) + extraFloors * 0.015)
 	context.sawSpeedMult = min(1.95, (lastPlan.sawSpeedMult or 1.88) + extraFloors * 0.03)
 	context.sawSpinMult = min(1.88, (lastPlan.sawSpinMult or 1.8) + extraFloors * 0.025)
