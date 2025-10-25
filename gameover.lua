@@ -1272,16 +1272,16 @@ function GameOver:enter(data)
 
 	configureBackgroundEffect()
 
-        fontTitle = UI.fonts.display or UI.fonts.title
-        fontScore = UI.fonts.title or UI.fonts.display
-        fontScoreValue = UI.fonts.heading or UI.fonts.subtitle or UI.fonts.title
-        fontSmall = UI.fonts.caption or UI.fonts.body
-        fontMessage = UI.fonts.body or UI.fonts.prompt or fontSmall
-        fontBadge = UI.fonts.badge or UI.fonts.button
-        fontProgressTitle = UI.fonts.heading or UI.fonts.subtitle
-        fontProgressValue = UI.fonts.display or UI.fonts.title
-        fontProgressSmall = UI.fonts.caption or UI.fonts.body
-        fontProgressLabel = UI.fonts.body or UI.fonts.prompt or fontProgressSmall
+	fontTitle = UI.fonts.display or UI.fonts.title
+	fontScore = UI.fonts.title or UI.fonts.display
+	fontScoreValue = UI.fonts.display or UI.fonts.title or UI.fonts.heading
+	fontSmall = UI.fonts.caption or UI.fonts.body
+	fontMessage = UI.fonts.subtitle or UI.fonts.prompt or fontSmall
+	fontBadge = UI.fonts.badge or UI.fonts.button
+	fontProgressTitle = UI.fonts.heading or UI.fonts.subtitle
+	fontProgressValue = UI.fonts.display or UI.fonts.title
+	fontProgressSmall = UI.fonts.caption or UI.fonts.body
+	fontProgressLabel = UI.fonts.prompt or UI.fonts.subtitle or fontProgressSmall
 
 	-- Merge default stats with provided stats
 	stats = {
