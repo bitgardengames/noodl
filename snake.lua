@@ -3384,6 +3384,17 @@ function Snake:update(dt)
 
                                 local snapCol, snapRow = toCell(currX, currY)
                                 if snapCol and snapRow then
+                                        local snapX, snapY
+                                        if Arena and Arena.getCenterOfTile then
+                                                snapX, snapY = Arena:getCenterOfTile(snapCol, snapRow)
+                                        end
+                                        if not (snapX and snapY) then
+                                                snapX = snapToCenter(currX)
+                                                snapY = snapToCenter(currY)
+                                        end
+
+                                        currX, currY = snapX, snapY
+
                                         headCellCount = headCellCount + 1
                                         local cell = headCells[headCellCount]
                                         if cell then
