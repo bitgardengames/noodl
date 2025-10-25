@@ -28,7 +28,199 @@ local crystallizeGluttonsWakeSegments
 local screenW, screenH
 local direction = {x = 1, y = 0}
 local pendingDir = {x = 1, y = 0}
-local trail = {}
+local TrailMethods = {}
+local TrailMeta
+
+function TrailMethods:physicalIndex(index)
+        local capacity = self.capacity
+        if capacity <= 0 then
+                return index
+        end
+
+        local offset = self.head + index - 1
+        if offset > capacity then
+                offset = ((offset - 1) % capacity) + 1
+        elseif offset < 1 then
+                offset = ((offset - 1) % capacity) + 1
+        end
+
+        return offset
+end
+
+function TrailMethods:get(index)
+        if index < 1 or index > self.count then
+                return nil
+        end
+
+        local physical = self:physicalIndex(index)
+        return self.buffer[physical]
+end
+
+function TrailMethods:relinearize(newCapacity)
+        local count = self.count
+        local buffer = self.buffer
+        local compact = {}
+
+        for i = 1, count do
+                compact[i] = buffer[self:physicalIndex(i)]
+        end
+
+        self.buffer = compact
+        self.head = 1
+        self.capacity = newCapacity or max(count, 0)
+end
+
+function TrailMethods:ensureCapacity(required)
+        if required <= self.capacity then
+                return
+        end
+
+        local capacity = self.capacity
+        local newCapacity
+        if capacity <= 0 then
+                newCapacity = max(8, required)
+        else
+                newCapacity = capacity
+                while newCapacity < required do
+                        newCapacity = newCapacity * 2
+                end
+        end
+
+        self:relinearize(newCapacity)
+end
+
+function TrailMethods:set(index, value)
+        if type(index) ~= "number" then
+                rawset(self, index, value)
+                return
+        end
+
+        local count = self.count
+        if value == nil then
+                if index < 1 or index > count then
+                        return
+                end
+
+                local physical = self:physicalIndex(index)
+                self.buffer[physical] = nil
+                if index == count then
+                        self.count = count - 1
+                        if self.count <= 0 then
+                                self.head = 1
+                                self.count = 0
+                        end
+                else
+                        self:relinearize(max(self.capacity, count))
+                        local buffer = self.buffer
+                        for i = index, count - 1 do
+                                buffer[i] = buffer[i + 1]
+                        end
+                        buffer[count] = nil
+                        self.count = count - 1
+                end
+                return
+        end
+
+        if index == count + 1 then
+                self:ensureCapacity(count + 1)
+                local physical = self:physicalIndex(index)
+                self.buffer[physical] = value
+                self.count = count + 1
+                return
+        end
+
+        if index >= 1 and index <= count then
+                local physical = self:physicalIndex(index)
+                self.buffer[physical] = value
+                return
+        end
+
+        self:ensureCapacity(index)
+        local physical = self:physicalIndex(index)
+        self.buffer[physical] = value
+        if index > count then
+                self.count = index
+        end
+end
+
+function TrailMethods:pushHead(segment)
+        local count = self.count
+        self:ensureCapacity(count + 1)
+
+        local newHead
+        if count <= 0 then
+                newHead = 1
+        else
+                newHead = self.head - 1
+                if newHead < 1 then
+                        newHead = self.capacity
+                end
+        end
+
+        self.head = newHead
+        self.buffer[newHead] = segment
+        self.count = count + 1
+end
+
+function TrailMethods:clear()
+        if self.count <= 0 then
+                self.head = 1
+                return
+        end
+
+        for i = 1, self.count do
+                local physical = self:physicalIndex(i)
+                self.buffer[physical] = nil
+        end
+
+        self.count = 0
+        self.head = 1
+end
+
+function TrailMethods:resetFromArray(source)
+        local count = #source
+        if count <= 0 then
+                self:clear()
+                return
+        end
+
+        self:ensureCapacity(count)
+        self.head = 1
+        local buffer = self.buffer
+
+        for i = 1, count do
+                buffer[i] = source[i]
+        end
+
+        self.count = count
+end
+
+TrailMeta = {
+        __len = function(self)
+                return self.count
+        end,
+        __index = function(self, key)
+                if type(key) == "number" then
+                        return TrailMethods.get(self, key)
+                end
+
+                return TrailMethods[key]
+        end,
+        __newindex = function(self, key, value)
+                TrailMethods.set(self, key, value)
+        end,
+}
+
+local function createTrail()
+        return setmetatable({
+                buffer = {},
+                head = 1,
+                count = 0,
+                capacity = 0,
+        }, TrailMeta)
+end
+
+local trail = createTrail()
 local trailLength = 0
 local descendingHole = nil
 local segmentCount = 1
@@ -1860,7 +2052,7 @@ local function trimTrailToLength(maxLen, gluttonsWakeActive)
 
         if not maxLen or maxLen <= 0 then
                 recycleTrail(trail)
-                trail = {}
+                trail:clear()
                 trailLength = 0
                 return
         end
@@ -2268,7 +2460,8 @@ function Snake:load(w, h)
         self.hazardGraceTimer = 0
         self.damageFlashTimer = 0
         recycleTrail(trail)
-        trail = buildInitialTrail()
+        local initialTrail = buildInitialTrail()
+        trail:resetFromArray(initialTrail)
         recomputeTrailLength()
         descendingHole = nil
         clearSeveredPieces()
@@ -3240,7 +3433,7 @@ function Snake:update(dt)
                 segment.fruitMarkerX = nil
                 segment.fruitMarkerY = nil
                 segment.lengthToPrev = 0
-                insert(trail, 1, segment)
+                trail:pushHead(segment)
                 insertedSegments = insertedSegments + 1
                 remaining = remaining - SAMPLE_STEP
         end
@@ -3278,7 +3471,7 @@ function Snake:update(dt)
 
         if maxLen == 0 then
                 recycleTrail(trail)
-                trail = {}
+                trail:clear()
                 trailLength = 0
                 len = 0
         else
