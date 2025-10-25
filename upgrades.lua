@@ -1537,6 +1537,7 @@ local pool = {
                 nameKey = "upgrades.circuit_breaker.name",
                 descKey = "upgrades.circuit_breaker.description",
                 rarity = "rare",
+                tags = {"hazard"},
                 onAcquire = function(state)
                         state.effects.sawStall = (state.effects.sawStall or 0) + CIRCUIT_BREAKER_STALL_DURATION
 			local sparkColor = {1, 0.58, 0.32, 1}
