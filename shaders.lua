@@ -1059,6 +1059,7 @@ registerEffect({
                 col = mix(col, tintColor.rgb, ambient * 0.08 * intensity);
 
                 col = mix(col, mix(topColor.rgb, bottomColor.rgb, gradient), 0.15 * (1.0 - intensity));
+                col *= 1.1;
                 col = clamp(col, 0.0, 1.0);
 
                 return vec4(col, mix(topColor.a, bottomColor.a, gradient)) * color;
