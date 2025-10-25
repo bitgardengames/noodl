@@ -47,6 +47,59 @@ local segmentPoolCount = 0
 local headCellBuffer = {}
 local snakeBodyOccupancy = {}
 
+local recentlyVacatedCells = {}
+local recentlyVacatedCount = 0
+
+local function clearRecentlyVacatedCells()
+        if recentlyVacatedCount <= 0 then
+                recentlyVacatedCount = 0
+                return
+        end
+
+        for i = 1, recentlyVacatedCount do
+                local cell = recentlyVacatedCells[i]
+                if cell then
+                        cell[1] = nil
+                        cell[2] = nil
+                end
+        end
+
+        recentlyVacatedCount = 0
+end
+
+local function markRecentlyVacatedCell(col, row)
+        if not (col and row) then
+                return
+        end
+
+        local index = recentlyVacatedCount + 1
+        local cell = recentlyVacatedCells[index]
+        if cell then
+                cell[1] = col
+                cell[2] = row
+        else
+                cell = {col, row}
+                recentlyVacatedCells[index] = cell
+        end
+
+        recentlyVacatedCount = index
+end
+
+local function wasRecentlyVacated(col, row)
+        if recentlyVacatedCount <= 0 or not (col and row) then
+                return false
+        end
+
+        for i = 1, recentlyVacatedCount do
+                local cell = recentlyVacatedCells[i]
+                if cell and cell[1] == col and cell[2] == row then
+                        return true
+                end
+        end
+
+        return false
+end
+
 local TILE_COORD_EPSILON = 1e-9
 
 local function wipeTable(t)
@@ -63,6 +116,7 @@ local function clearSnakeBodyOccupancy()
         for _, column in pairs(snakeBodyOccupancy) do
                 wipeTable(column)
         end
+        clearRecentlyVacatedCells()
 end
 local snakeOccupiedCells = {}
 local snakeOccupiedFirst = 1
@@ -1138,6 +1192,8 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
 end
 
 local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, overrideRow, tailMoved, tailAfterCol, tailAfterRow)
+        clearRecentlyVacatedCells()
+
         if not ensureOccupancyGrid() then
                 resetTrackedSnakeCells()
                 clearSnakeBodyOccupancy()
@@ -1200,6 +1256,7 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
                         if not (col and row) then
                                 break
                         end
+                        markRecentlyVacatedCell(col, row)
                         SnakeUtils.setOccupied(col, row, false)
                         removeSnakeBodyOccupancy(col, row)
                 end
@@ -1226,6 +1283,7 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
                         return
                 end
 
+                markRecentlyVacatedCell(removedCol, removedRow)
                 SnakeUtils.setOccupied(removedCol, removedRow, false)
                 removeSnakeBodyOccupancy(removedCol, removedRow)
 
@@ -3105,6 +3163,9 @@ function Snake:update(dt)
                                 end
 
                                 if not tailVacated and isCellOccupiedBySnakeBody(headCol, headRow) then
+                                        if wasRecentlyVacated(headCol, headRow) then
+                                                goto continue
+                                        end
                                         local gridOccupied = SnakeUtils and SnakeUtils.isOccupied and SnakeUtils.isOccupied(headCol, headRow)
                                         if gridOccupied then
                                                 if self:consumeShield() then
