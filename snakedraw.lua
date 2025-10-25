@@ -2,6 +2,7 @@ local Face = require("face")
 local SnakeCosmetics = require("snakecosmetics")
 local ModuleUtil = require("moduleutil")
 local RenderLayers = require("renderlayers")
+local SharedCanvas = require("sharedcanvas")
 
 local abs = math.abs
 local atan = math.atan
@@ -27,6 +28,8 @@ local FRUIT_BULGE_SCALE = 1.25
 
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
+local snakeCanvasWidth = 0
+local snakeCanvasHeight = 0
 
 local applyOverlay
 
@@ -655,9 +658,22 @@ local function ensureSnakeCanvas(width, height)
                 return nil
         end
 
-        if not snakeCanvas or snakeCanvas:getWidth() ~= width or snakeCanvas:getHeight() ~= height then
-                snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
+        local targetWidth = max(width, snakeCanvasWidth or 0)
+        local targetHeight = max(height, snakeCanvasHeight or 0)
+
+        local canvas = nil
+        canvas, _, _ = SharedCanvas.ensureCanvas(snakeCanvas, targetWidth, targetHeight)
+        if not canvas then
+                snakeCanvas = nil
+                snakeCanvasWidth = 0
+                snakeCanvasHeight = 0
+                return nil
         end
+
+        snakeCanvas = canvas
+        snakeCanvasWidth = canvas:getWidth()
+        snakeCanvasHeight = canvas:getHeight()
+
         return snakeCanvas
 end
 
