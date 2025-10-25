@@ -4,6 +4,7 @@ local SnakeUtils = require("snakeutils")
 local Rocks = require("rocks")
 local Audio = require("audio")
 local Easing = require("easing")
+local FrameClock = require("frameclock")
 
 local abs = math.abs
 local floor = math.floor
@@ -45,7 +46,7 @@ local IMPACT_RING_RANGE = 16
 local IMPACT_FLARE_RADIUS = 12
 
 local function getTime()
-	return love.timer.getTime()
+        return FrameClock:get()
 end
 
 local function copyColor(color, alpha)

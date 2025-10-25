@@ -12,6 +12,7 @@ local Localization = require("localization")
 local Theme = require("theme")
 local SnakeCosmetics = require("snakecosmetics")
 local InputMode = require("inputmode")
+local FrameClock = require("frameclock")
 
 local DEFAULT_BG_COLOR = {0, 0, 0, 1}
 
@@ -89,17 +90,19 @@ function App:forwardEvent(eventName, ...)
 end
 
 function App:update(dt)
-	Screen:update(dt)
-	local action = GameState:update(dt)
-	self:resolveAction(action)
-	UI:update(dt)
+        FrameClock:capture()
+        Screen:update(dt)
+        local action = GameState:update(dt)
+        self:resolveAction(action)
+        UI:update(dt)
 end
 
 function App:draw()
-	local bg = Theme.bgColor or DEFAULT_BG_COLOR
-	local r = bg[1] or 0
-	local g = bg[2] or 0
-	local b = bg[3] or 0
+        FrameClock:capture()
+        local bg = Theme.bgColor or DEFAULT_BG_COLOR
+        local r = bg[1] or 0
+        local g = bg[2] or 0
+        local b = bg[3] or 0
 	local a = bg[4] or 1
 	love.graphics.clear(r, g, b, a)
 	love.graphics.setColor(1, 1, 1, 1)

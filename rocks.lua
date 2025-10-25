@@ -5,6 +5,7 @@ local SnakeUtils = require("snakeutils")
 local Audio = require("audio")
 local RenderLayers = require("renderlayers")
 local Easing = require("easing")
+local FrameClock = require("frameclock")
 
 local max = math.max
 local min = math.min
@@ -27,13 +28,16 @@ local HIT_FLASH_DURATION = 0.18
 local HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
 
 -- smoother, rounder “stone” generator
+local uniqueSeedSerial = 0
+
 local function generateRockShape(size, seed)
-	local rng
-	if seed then
-		rng = love.math.newRandomGenerator(seed)
-	else
-		rng = love.math.newRandomGenerator(love.timer.getTime() * 1000)
-	end
+        local rng
+        if seed then
+                rng = love.math.newRandomGenerator(seed)
+        else
+                uniqueSeedSerial = uniqueSeedSerial + 1
+                rng = love.math.newRandomGenerator(FrameClock:get() * 1000 + uniqueSeedSerial)
+        end
 
 	local points = {}
 	local sides = rng:random(12, 16) -- more segments = rounder
