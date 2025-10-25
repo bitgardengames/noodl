@@ -1227,6 +1227,7 @@ local pool = {
 		rarity = "uncommon",
 		allowDuplicates = true,
 		maxStacks = 4,
+		tags = {"defense"},
 		onAcquire = function(state)
                         Snake:addShields(1)
                         Snake:addStoneSkinSawGrace(1)
