@@ -29,6 +29,7 @@ local screenW, screenH
 local direction = {x = 1, y = 0}
 local pendingDir = {x = 1, y = 0}
 local trail = {}
+local trailLength = 0
 local descendingHole = nil
 local segmentCount = 1
 local popTimer = 0
@@ -300,6 +301,7 @@ local function releaseSegment(segment)
         segment.cellRow = nil
         segment.cellX = nil
         segment.cellY = nil
+        segment.lengthToPrev = nil
 
         segmentPoolCount = segmentPoolCount + 1
         segmentPool[segmentPoolCount] = segment
@@ -310,12 +312,22 @@ local function releaseSegmentRange(buffer, startIndex)
                 return
         end
 
+        local adjustingMainTrail = buffer == trail
+
         for i = #buffer, startIndex, -1 do
                 local segment = buffer[i]
                 buffer[i] = nil
                 if segment then
+                        if adjustingMainTrail then
+                                local segLen = segment.lengthToPrev or 0
+                                trailLength = trailLength - segLen
+                        end
                         releaseSegment(segment)
                 end
+        end
+
+        if adjustingMainTrail and trailLength < 0 then
+                trailLength = 0
         end
 end
 
@@ -329,6 +341,103 @@ local function recycleTrail(buffer)
                 buffer[i] = nil
                 if segment then
                         releaseSegment(segment)
+                end
+        end
+
+        if buffer == trail then
+                trailLength = 0
+        end
+end
+
+local function setSegmentLengthToPrev(index, length)
+        if not trail or index <= 1 then
+                return
+        end
+
+        local segment = trail[index]
+        if not segment then
+                return
+        end
+
+        local previous = segment.lengthToPrev or 0
+        local newLength = max(0, length or 0)
+        if previous ~= newLength then
+                trailLength = trailLength - previous + newLength
+                if trailLength < 0 then
+                        trailLength = 0
+                end
+                segment.lengthToPrev = newLength
+        end
+end
+
+local function refreshSegmentLength(index)
+        if not trail or index <= 1 or index > #trail then
+                return
+        end
+
+        local segment = trail[index]
+        if not segment then
+                return
+        end
+
+        local prev = trail[index - 1]
+        if not prev then
+                setSegmentLengthToPrev(index, 0)
+                return
+        end
+
+        local ax, ay = prev.drawX, prev.drawY
+        local bx, by = segment.drawX, segment.drawY
+        if ax and ay and bx and by then
+                local dx = bx - ax
+                local dy = by - ay
+                setSegmentLengthToPrev(index, sqrt(dx * dx + dy * dy))
+        else
+                setSegmentLengthToPrev(index, 0)
+        end
+end
+
+local function refreshSegmentLengths(startIndex, endIndex)
+        if not trail or #trail <= 1 then
+                if trail and trail[1] then
+                        trail[1].lengthToPrev = 0
+                end
+                return
+        end
+
+        local startIdx = max(2, startIndex or 2)
+        local endIdx = min(endIndex or #trail, #trail)
+
+        for i = startIdx, endIdx do
+                refreshSegmentLength(i)
+        end
+end
+
+local function recomputeTrailLength()
+        trailLength = 0
+        if not trail then
+                return
+        end
+
+        if trail[1] then
+                trail[1].lengthToPrev = 0
+        end
+
+        for i = 2, #trail do
+                local segment = trail[i]
+                if segment then
+                        local prev = trail[i - 1]
+                        local ax, ay = prev and prev.drawX, prev and prev.drawY
+                        local bx, by = segment.drawX, segment.drawY
+                        if ax and ay and bx and by then
+                                local dx = bx - ax
+                                local dy = by - ay
+                                local len = sqrt(dx * dx + dy * dy)
+                                segment.lengthToPrev = len
+                                trailLength = trailLength + len
+                        else
+                                segment.lengthToPrev = 0
+                        end
                 end
         end
 end
@@ -1461,6 +1570,7 @@ local function copySegmentData(segment)
         copy.cellRow = segment.cellRow
         copy.cellX = segment.cellX
         copy.cellY = segment.cellY
+        copy.lengthToPrev = segment.lengthToPrev
 
         return copy
 end
@@ -1743,70 +1853,89 @@ end
 
 local isGluttonsWakeActive
 
-local function trimTrailToSegmentLimit()
-	if not trail or #trail == 0 then
-		return
-	end
-
-	local consumedLength = (descendingHole and descendingHole.consumedLength) or 0
-	local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
-
-        if maxLen <= 0 then
-                recycleTrail(trail)
-                trail = {}
+local function trimTrailToLength(maxLen, gluttonsWakeActive)
+        if not trail or #trail == 0 then
                 return
         end
 
-        local traveled = 0
-        local i = 2
-        local gluttonsWakeActive = isGluttonsWakeActive()
-        while i <= #trail do
-                local prev = trail[i - 1]
-                local seg = trail[i]
-                local px, py = prev and (prev.drawX or prev.x), prev and (prev.drawY or prev.y)
-                local sx, sy = seg and (seg.drawX or seg.x), seg and (seg.drawY or seg.y)
+        if not maxLen or maxLen <= 0 then
+                recycleTrail(trail)
+                trail = {}
+                trailLength = 0
+                return
+        end
 
-                if not (px and py and sx and sy) then
-                        crystallizeGluttonsWakeSegments(trail, i, #trail, gluttonsWakeActive)
-                        releaseSegmentRange(trail, i)
+        if trailLength <= maxLen + 1e-6 then
+                return
+        end
+
+        local originalTail = #trail
+        local newTailIndex = originalTail
+        local remainingTrim = trailLength - maxLen
+        local partialIndex = nil
+        local partialLength = nil
+        local partialOriginalLen = nil
+
+        while remainingTrim > 1e-6 and newTailIndex > 1 do
+                local segment = trail[newTailIndex]
+                local segLen = (segment and segment.lengthToPrev) or 0
+
+                if segLen <= 1e-6 then
+                        newTailIndex = newTailIndex - 1
+                elseif remainingTrim >= segLen - 1e-6 then
+                        remainingTrim = remainingTrim - segLen
+                        newTailIndex = newTailIndex - 1
+                else
+                        partialIndex = newTailIndex
+                        partialLength = segLen - remainingTrim
+                        partialOriginalLen = segLen
+                        remainingTrim = 0
                         break
                 end
+        end
 
-                local dx = px - sx
-                local dy = py - sy
-                local segLen = sqrt(dx * dx + dy * dy)
+        local removalStart = (partialIndex and (partialIndex + 1)) or (newTailIndex + 1)
+        if removalStart <= originalTail then
+                crystallizeGluttonsWakeSegments(trail, removalStart, originalTail, gluttonsWakeActive)
+                releaseSegmentRange(trail, removalStart)
+        end
 
-                if segLen <= 0 then
-                        if gluttonsWakeActive then
-                                spawnGluttonsWakeRock(trail[i])
-                        end
-                        local removed = trail[i]
-                        if removed then
-                                releaseSegment(removed)
-                        end
-                        remove(trail, i)
-                else
-                        if traveled + segLen > maxLen then
-                                local excess = traveled + segLen - maxLen
-                                local t = 1 - (excess / segLen)
-                                local tailX = px - dx * t
-                                local tailY = py - dy * t
-
-                                crystallizeGluttonsWakeSegments(trail, i + 1, #trail, gluttonsWakeActive)
-                                releaseSegmentRange(trail, i + 1)
-
+        if partialIndex and trail[partialIndex] then
+                local seg = trail[partialIndex]
+                local prev = trail[partialIndex - 1]
+                if prev then
+                        local px, py = prev.drawX, prev.drawY
+                        local sx, sy = seg.drawX, seg.drawY
+                        if px and py and sx and sy and partialOriginalLen and partialOriginalLen > 1e-6 then
+                                local ratio = partialLength / partialOriginalLen
+                                local tailX = px + (sx - px) * ratio
+                                local tailY = py + (sy - py) * ratio
                                 setSegmentDrawPosition(seg, tailX, tailY, true)
                                 if not seg.dirX or not seg.dirY then
                                         seg.dirX = direction.x
                                         seg.dirY = direction.y
                                 end
-                                break
-			else
-				traveled = traveled + segLen
-				i = i + 1
-			end
-		end
-	end
+                                setSegmentLengthToPrev(partialIndex, partialLength)
+                        else
+                                setSegmentLengthToPrev(partialIndex, 0)
+                        end
+                end
+        end
+
+        if trail[1] then
+                trail[1].lengthToPrev = 0
+        end
+end
+
+local function trimTrailToSegmentLimit()
+        if not trail or #trail == 0 then
+                return
+        end
+
+        local consumedLength = (descendingHole and descendingHole.consumedLength) or 0
+        local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
+
+        trimTrailToLength(maxLen, isGluttonsWakeActive())
 end
 
 local function drawDescendingIntoHole(hole)
@@ -2140,6 +2269,7 @@ function Snake:load(w, h)
         self.damageFlashTimer = 0
         recycleTrail(trail)
         trail = buildInitialTrail()
+        recomputeTrailLength()
         descendingHole = nil
         clearSeveredPieces()
         severedPieces = {}
@@ -2262,6 +2392,8 @@ function Snake:setHeadPosition(x, y)
         end
 
         setSegmentDrawPosition(head, x, y, true)
+        head.lengthToPrev = 0
+        refreshSegmentLength(2)
 end
 
 function Snake:translate(dx, dy)
@@ -2340,9 +2472,11 @@ function Snake:beginPortalWarp(params)
 		self:translate(dx or 0, dy or 0)
 	end
 
-	local head = trail and trail[1]
+        local head = trail and trail[1]
         if head then
                 setSegmentDrawPosition(head, exitX, exitY, true)
+                head.lengthToPrev = 0
+                refreshSegmentLength(2)
         end
 
         local entrySource = {}
@@ -3091,8 +3225,9 @@ function Snake:update(dt)
 		nx, ny = dx / dist, dy / dist
 	end
 
-	local remaining = dist
-	local prevX, prevY = head.drawX, head.drawY
+        local remaining = dist
+        local insertedSegments = 0
+        local prevX, prevY = head.drawX, head.drawY
 
         while remaining >= SAMPLE_STEP do
                 prevX = prevX + nx * SAMPLE_STEP
@@ -3104,22 +3239,30 @@ function Snake:update(dt)
                 segment.fruitMarker = nil
                 segment.fruitMarkerX = nil
                 segment.fruitMarkerY = nil
+                segment.lengthToPrev = 0
                 insert(trail, 1, segment)
+                insertedSegments = insertedSegments + 1
                 remaining = remaining - SAMPLE_STEP
         end
 
-	-- final correction: put true head at exact new position
+        -- final correction: put true head at exact new position
         if trail[1] then
                 setSegmentDrawPosition(trail[1], newX, newY, true)
+                trail[1].lengthToPrev = 0
         end
 
-	if hole then
-		trimHoleSegments(hole)
-		head = trail[1]
-		if head then
-			newX, newY = head.drawX, head.drawY
-		end
-	end
+        if hole then
+                trimHoleSegments(hole)
+                head = trail[1]
+                if head then
+                        newX, newY = head.drawX, head.drawY
+                end
+        end
+
+        local maxIndexToUpdate = min(#trail, max(2, insertedSegments + 1))
+        if maxIndexToUpdate >= 2 then
+                refreshSegmentLengths(2, maxIndexToUpdate)
+        end
 
 	-- tail trimming
         local len = #trail
@@ -3130,36 +3273,17 @@ function Snake:update(dt)
 
 	local tailAfterCol, tailAfterRow
 
-	local consumedLength = (hole and hole.consumedLength) or 0
-	local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
+        local consumedLength = (hole and hole.consumedLength) or 0
+        local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
 
         if maxLen == 0 then
                 recycleTrail(trail)
                 trail = {}
+                trailLength = 0
                 len = 0
-        end
-
-        local traveled = 0
-        local gluttonsWakeActive = isGluttonsWakeActive()
-        for i = 2, #trail do
-                local dx = trail[i - 1].drawX - trail[i].drawX
-                local dy = trail[i - 1].drawY - trail[i].drawY
-                local segLen = sqrt(dx * dx + dy * dy)
-
-                if traveled + segLen > maxLen then
-			local excess = traveled + segLen - maxLen
-			local t = 1 - (excess / segLen)
-			local tailX = trail[i-1].drawX - dx * t
-			local tailY = trail[i-1].drawY - dy * t
-
-                        crystallizeGluttonsWakeSegments(trail, i + 1, #trail, gluttonsWakeActive)
-                        releaseSegmentRange(trail, i + 1)
-
-                        setSegmentDrawPosition(trail[i], tailX, tailY, true)
-                        break
-                else
-                        traveled = traveled + segLen
-                end
+        else
+                local gluttonsWakeActive = isGluttonsWakeActive()
+                trimTrailToLength(maxLen, gluttonsWakeActive)
         end
 
         local lenAfterTrim = #trail
@@ -3846,15 +3970,11 @@ function Snake:handleSawBodyCut(context)
                 end
         end
 
-        for i = #trail, previousIndex + 1, -1 do
-                local removed = trail[i]
-                trail[i] = nil
-                if removed then
-                        releaseSegment(removed)
-                end
-        end
+        releaseSegmentRange(trail, previousIndex + 1)
 
         trail[#trail + 1] = newTail
+        newTail.lengthToPrev = 0
+        refreshSegmentLength(#trail)
 
 	addSeveredTrail(severedTrail, lostSegments + 1)
 	spawnSawCutParticles(cutX, cutY, lostSegments)
