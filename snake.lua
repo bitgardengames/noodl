@@ -65,34 +65,39 @@ local function clearSnakeBodyOccupancy()
         end
 end
 local snakeOccupiedCells = {}
-local snakeOccupiedCellCount = 0
+local snakeOccupiedFirst = 1
+local snakeOccupiedLast = 0
 local occupancyCols = 0
 local occupancyRows = 0
 local headOccupancyCol = nil
 local headOccupancyRow = nil
 
 local function resetTrackedSnakeCells()
-        if snakeOccupiedCellCount <= 0 then
+        if snakeOccupiedFirst > snakeOccupiedLast then
+                snakeOccupiedFirst = 1
+                snakeOccupiedLast = 0
                 return
         end
 
-        for i = 1, snakeOccupiedCellCount do
+        for i = snakeOccupiedFirst, snakeOccupiedLast do
                 local cell = snakeOccupiedCells[i]
                 if cell then
                         cell[1] = nil
                         cell[2] = nil
+                        snakeOccupiedCells[i] = nil
                 end
         end
 
-        snakeOccupiedCellCount = 0
+        snakeOccupiedFirst = 1
+        snakeOccupiedLast = 0
 end
 
 local function clearSnakeOccupiedCells()
-        if snakeOccupiedCellCount <= 0 then
+        if snakeOccupiedFirst > snakeOccupiedLast then
                 return
         end
 
-        for i = 1, snakeOccupiedCellCount do
+        for i = snakeOccupiedFirst, snakeOccupiedLast do
                 local cell = snakeOccupiedCells[i]
                 if cell then
                         local col, row = cell[1], cell[2]
@@ -101,23 +106,84 @@ local function clearSnakeOccupiedCells()
                         end
                         cell[1] = nil
                         cell[2] = nil
+                        snakeOccupiedCells[i] = nil
                 end
         end
 
-        snakeOccupiedCellCount = 0
+        snakeOccupiedFirst = 1
+        snakeOccupiedLast = 0
 end
 
 local function recordSnakeOccupiedCell(col, row)
-        local index = snakeOccupiedCellCount + 1
+        if not (col and row) then
+                return
+        end
+
+        local index = snakeOccupiedLast + 1
+        local wasEmpty = snakeOccupiedFirst > snakeOccupiedLast
         local cell = snakeOccupiedCells[index]
         if cell then
                 cell[1] = col
                 cell[2] = row
         else
-                snakeOccupiedCells[index] = {col, row}
+                cell = {col, row}
+                snakeOccupiedCells[index] = cell
         end
-        snakeOccupiedCellCount = index
+
+        snakeOccupiedLast = index
+        if wasEmpty then
+                snakeOccupiedFirst = index
+        end
+
         SnakeUtils.setOccupied(col, row, true)
+end
+
+local function getSnakeTailCell()
+        if snakeOccupiedFirst > snakeOccupiedLast then
+                return nil, nil
+        end
+
+        local cell = snakeOccupiedCells[snakeOccupiedFirst]
+        if not cell then
+                return nil, nil
+        end
+
+        return cell[1], cell[2]
+end
+
+local function popSnakeTailCell()
+        if snakeOccupiedFirst > snakeOccupiedLast then
+                return nil, nil
+        end
+
+        local cell = snakeOccupiedCells[snakeOccupiedFirst]
+        local col, row = nil, nil
+        if cell then
+                col, row = cell[1], cell[2]
+                cell[1] = nil
+                cell[2] = nil
+        end
+
+        snakeOccupiedFirst = snakeOccupiedFirst + 1
+        if snakeOccupiedFirst > snakeOccupiedLast then
+                snakeOccupiedFirst = 1
+                snakeOccupiedLast = 0
+        end
+
+        return col, row
+end
+
+local function getSnakeHeadCell()
+        if snakeOccupiedFirst > snakeOccupiedLast then
+                return nil, nil
+        end
+
+        local cell = snakeOccupiedCells[snakeOccupiedLast]
+        if not cell then
+                return nil, nil
+        end
+
+        return cell[1], cell[2]
 end
 
 local function resetSnakeOccupancyGrid()
@@ -270,6 +336,27 @@ local function addSnakeBodyOccupancy(col, row)
         end
 
         column[row] = (column[row] or 0) + 1
+end
+
+local function removeSnakeBodyOccupancy(col, row)
+        if not (col and row) then
+                return
+        end
+
+        local column = snakeBodyOccupancy[col]
+        if not column then
+                return
+        end
+
+        local count = (column[row] or 0) - 1
+        if count <= 0 then
+                column[row] = nil
+                if not next(column) then
+                        snakeBodyOccupancy[col] = nil
+                end
+        else
+                column[row] = count
+        end
 end
 
 local function isCellOccupiedBySnakeBody(col, row)
@@ -1017,9 +1104,8 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
         end
 
         local assignedHeadCol, assignedHeadRow = nil, nil
-        local headCellCleared = false
 
-        for i = 1, #trail do
+        for i = #trail, 1, -1 do
                 local segment = trail[i]
                 if segment then
                         local x, y = segment.drawX, segment.drawY
@@ -1032,24 +1118,125 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
                                                 end
                                                 assignedHeadCol, assignedHeadRow = col, row
                                         end
+
                                         recordSnakeOccupiedCell(col, row)
-                                        if i > 1 then
-                                                if assignedHeadCol and assignedHeadRow and not headCellCleared then
-                                                        if col ~= assignedHeadCol or row ~= assignedHeadRow then
-                                                                headCellCleared = true
-                                                                addSnakeBodyOccupancy(col, row)
-                                                        end
-                                                else
-                                                        addSnakeBodyOccupancy(col, row)
-                                                end
+
+                                        if i ~= 1 then
+                                                addSnakeBodyOccupancy(col, row)
                                         end
                                 end
                         end
                 end
         end
 
-        headOccupancyCol = assignedHeadCol
-        headOccupancyRow = assignedHeadRow
+        if assignedHeadCol and assignedHeadRow then
+                headOccupancyCol = assignedHeadCol
+                headOccupancyRow = assignedHeadRow
+        else
+                headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+        end
+end
+
+local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, overrideRow, tailMoved, tailAfterCol, tailAfterRow)
+        if not ensureOccupancyGrid() then
+                resetTrackedSnakeCells()
+                clearSnakeBodyOccupancy()
+                headOccupancyCol = nil
+                headOccupancyRow = nil
+                return
+        end
+
+        if not trail or #trail == 0 then
+                clearSnakeOccupiedCells()
+                clearSnakeBodyOccupancy()
+                headOccupancyCol = nil
+                headOccupancyRow = nil
+                return
+        end
+
+        if snakeOccupiedFirst > snakeOccupiedLast then
+                rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                return
+        end
+
+        local processedHead = false
+
+        for i = 1, headCellCount do
+                local cell = headCells[i]
+                local headCol = cell and cell[1]
+                local headRow = cell and cell[2]
+                if headCol and headRow then
+                        if headOccupancyCol ~= headCol or headOccupancyRow ~= headRow then
+                                processedHead = true
+                                local prevHeadCol, prevHeadRow = headOccupancyCol, headOccupancyRow
+                                recordSnakeOccupiedCell(headCol, headRow)
+                                if prevHeadCol and prevHeadRow then
+                                        addSnakeBodyOccupancy(prevHeadCol, prevHeadRow)
+                                end
+                                headOccupancyCol = headCol
+                                headOccupancyRow = headRow
+                        end
+                end
+        end
+
+        if not processedHead then
+                if overrideCol and overrideRow then
+                        if headOccupancyCol ~= overrideCol or headOccupancyRow ~= overrideRow then
+                                rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                                return
+                        end
+                else
+                        headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+                end
+        end
+
+        if not tailMoved then
+                return
+        end
+
+        if not tailAfterCol or not tailAfterRow then
+                while true do
+                        local col, row = popSnakeTailCell()
+                        if not (col and row) then
+                                break
+                        end
+                        SnakeUtils.setOccupied(col, row, false)
+                        removeSnakeBodyOccupancy(col, row)
+                end
+
+                headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+                return
+        end
+
+        local iterations = 0
+        while true do
+                local tailCol, tailRow = getSnakeTailCell()
+                if not (tailCol and tailRow) then
+                        rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                        return
+                end
+
+                if tailCol == tailAfterCol and tailRow == tailAfterRow then
+                        break
+                end
+
+                local removedCol, removedRow = popSnakeTailCell()
+                if not (removedCol and removedRow) then
+                        rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                        return
+                end
+
+                SnakeUtils.setOccupied(removedCol, removedRow, false)
+                removeSnakeBodyOccupancy(removedCol, removedRow)
+
+                iterations = iterations + 1
+                if iterations > 1024 then
+                        rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                        return
+                end
+        end
+
+        headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
 end
 
 local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
@@ -2890,7 +3077,7 @@ function Snake:update(dt)
                         end
                 end
 
-                rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, overrideRow, tailMoved, tailAfterCol, tailAfterRow)
         end
 
         -- collision with self (grid-cell based, only at snap ticks)
