@@ -364,24 +364,35 @@ local function calculateRunGain(runStats)
 end
 
 local function prepareUnlocks(levelUps)
-	local unlocks = {}
-	for _, level in ipairs(levelUps) do
-		local info = unlockDefinitions[level]
-		if info then
-			unlocks[#unlocks + 1] = {
-				level = level,
-				name = info.name,
-				description = info.description,
-			}
-		else
-			unlocks[#unlocks + 1] = {
-				level = level,
-				name = string.format("Meta Reward %d", level),
-				description = "Placeholder: Future reward details coming soon.",
-			}
-		end
-	end
-	return unlocks
+       local unlocks = {}
+       for _, level in ipairs(levelUps) do
+               local info = unlockDefinitions[level]
+               if info then
+                       local tags
+                       if type(info.unlockTags) == "table" then
+                               tags = {}
+                               for i, tag in ipairs(info.unlockTags) do
+                                       tags[i] = tag
+                               end
+                       end
+
+                       unlocks[#unlocks + 1] = {
+                               level = level,
+                               id = info.id,
+                               name = info.name,
+                               description = info.description,
+                               unlockTags = tags,
+                               previewUpgradeId = info.previewUpgradeId,
+                       }
+               else
+                       unlocks[#unlocks + 1] = {
+                               level = level,
+                               name = string.format("Meta Reward %d", level),
+                               description = "Placeholder: Future reward details coming soon.",
+                       }
+               end
+       end
+       return unlocks
 end
 
 local function prepareMilestones(startTotal, endTotal)

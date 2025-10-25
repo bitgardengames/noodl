@@ -9,6 +9,8 @@ local Localization = require("localization")
 local MetaProgression = require("metaprogression")
 local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
+local Upgrades = require("upgrades")
+local Shop = require("shop")
 
 local abs = math.abs
 local floor = math.floor
@@ -75,14 +77,27 @@ local analogAxisMap = {
 }
 
 local function resetAnalogAxis()
-	analogAxisDirections.horizontal = nil
-	analogAxisDirections.vertical = nil
+        analogAxisDirections.horizontal = nil
+        analogAxisDirections.vertical = nil
+end
+
+local function cloneArray(source)
+        if type(source) ~= "table" then
+                return nil
+        end
+
+        local copy = {}
+        for i, value in ipairs(source) do
+                copy[i] = value
+        end
+
+        return copy
 end
 
 local function getDayUnit(count)
-	if count == 1 then
-		return Localization:get("common.day_unit_singular")
-	end
+        if count == 1 then
+                return Localization:get("common.day_unit_singular")
+        end
 
 	return Localization:get("common.day_unit_plural")
 end
@@ -1226,12 +1241,16 @@ function GameOver:enter(data)
 
 	data = data or {cause = "unknown"}
 
-	self.isVictory = data.won == true
-	self.customTitle = type(data.storyTitle) == "string" and data.storyTitle or nil
-	GameOver.isVictory = self.isVictory
+        self.isVictory = data.won == true
+        self.customTitle = type(data.storyTitle) == "string" and data.storyTitle or nil
+        GameOver.isVictory = self.isVictory
 
-	Audio:playMusic("scorescreen")
-	Screen:update()
+        self.unlockOverlayQueue = {}
+        self.activeUnlockOverlay = nil
+        self.progressionComplete = false
+
+        Audio:playMusic("scorescreen")
+        Screen:update()
 
 	local cause = data.cause or "unknown"
 	if self.isVictory then
@@ -1430,20 +1449,27 @@ function GameOver:enter(data)
 			end
 		end
 
-		if type(self.progression.unlocks) == "table" then
-			for _, unlock in ipairs(self.progression.unlocks) do
-				local level = unlock.level
-				self.progressionAnimation.levelUnlocks[level] = self.progressionAnimation.levelUnlocks[level] or {}
-				insert(self.progressionAnimation.levelUnlocks[level], {
-					name = unlock.name,
-					description = unlock.description,
-				})
-			end
-		end
-	end
+                if type(self.progression.unlocks) == "table" then
+                        for _, unlock in ipairs(self.progression.unlocks) do
+                                local level = unlock.level
+                                self.progressionAnimation.levelUnlocks[level] = self.progressionAnimation.levelUnlocks[level] or {}
+                                local entry = {
+                                        name = unlock.name,
+                                        description = unlock.description,
+                                        level = unlock.level,
+                                        id = unlock.id,
+                                        unlockTags = cloneArray(unlock.unlockTags),
+                                        previewUpgradeId = unlock.previewUpgradeId,
+                                }
+                                insert(self.progressionAnimation.levelUnlocks[level], entry)
+                        end
+                end
+        end
 
-	self:updateLayoutMetrics()
-	self:updateButtonLayout()
+        self.progressionComplete = self.progressionAnimation == nil
+
+        self:updateLayoutMetrics()
+        self:updateButtonLayout()
 
 end
 
@@ -1951,24 +1977,27 @@ function GameOver:draw()
 
 	drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 
-	for _, btn in buttonList:iter() do
-		if btn.textKey then
-			btn.text = Localization:get(btn.textKey)
-		end
-	end
+        for _, btn in buttonList:iter() do
+                if btn.textKey then
+                        btn.text = Localization:get(btn.textKey)
+                end
+        end
 
-	buttonList:draw()
+        buttonList:draw()
+
+        self:drawUnlockOverlay()
 end
 
 function GameOver:update(dt)
-	local anim = self.progressionAnimation
-	if not anim then
-		local layoutChanged = self:updateLayoutMetrics()
-		if layoutChanged then
-			self:updateButtonLayout()
-		end
-		return
-	end
+        local anim = self.progressionAnimation
+        if not anim then
+                local layoutChanged = self:updateLayoutMetrics()
+                if layoutChanged then
+                        self:updateButtonLayout()
+                end
+                self:_updateUnlockOverlay(dt)
+                return
+        end
 
 	local targetTotal = anim.targetTotal or anim.displayedTotal or 0
 	local startTotal = 0
@@ -2030,19 +2059,20 @@ function GameOver:update(dt)
 			})
 			Audio:playSound("goal_reached")
 
-			local unlockList = anim.levelUnlocks[levelReached]
-			if unlockList then
-				for _, unlock in ipairs(unlockList) do
-					addCelebration(anim, {
-						type = "unlock",
-						title = Localization:get("gameover.meta_progress_unlock_header", {name = unlock.name or "???"}),
-						subtitle = unlock.description or "",
-						color = Theme.achieveColor or {1, 1, 1, 1},
-						duration = 6,
-					})
-				end
-			end
-		end
+                local unlockList = anim.levelUnlocks[levelReached]
+                if unlockList then
+                        for _, unlock in ipairs(unlockList) do
+                                addCelebration(anim, {
+                                        type = "unlock",
+                                        title = Localization:get("gameover.meta_progress_unlock_header", {name = unlock.name or "???"}),
+                                        subtitle = unlock.description or "",
+                                        color = Theme.achieveColor or {1, 1, 1, 1},
+                                        duration = 6,
+                                })
+                                self:_queueUnlockOverlay(unlock)
+                        end
+                end
+        end
 	end
 
 	anim.displayedLevel = level
@@ -2129,32 +2159,323 @@ function GameOver:update(dt)
 
 	local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
 	local targetHeight = measureXpPanelHeight(self, xpWidth, celebrationCount)
-	self.baseXpSectionHeight = baseHeight
-	self.xpSectionHeight = self.xpSectionHeight or baseHeight
-	local smoothing = min(dt * 6, 1)
-	self.xpSectionHeight = self.xpSectionHeight + (targetHeight - self.xpSectionHeight) * smoothing
+        self.baseXpSectionHeight = baseHeight
+        self.xpSectionHeight = self.xpSectionHeight or baseHeight
+        local smoothing = min(dt * 6, 1)
+        self.xpSectionHeight = self.xpSectionHeight + (targetHeight - self.xpSectionHeight) * smoothing
 
-	local layoutChanged = self:updateLayoutMetrics()
-	if layoutChanged then
-		self:updateButtonLayout()
-	end
+        if not self.progressionComplete and self:_isProgressionFillComplete(anim) then
+                self.progressionComplete = true
+        end
+
+        local layoutChanged = self:updateLayoutMetrics()
+        if layoutChanged then
+                self:updateButtonLayout()
+        end
+
+        self:_updateUnlockOverlay(dt)
+end
+
+function GameOver:_queueUnlockOverlay(unlock)
+        if not unlock then
+                return
+        end
+
+        if not self.unlockOverlayQueue then
+                self.unlockOverlayQueue = {}
+        end
+
+        if not (Upgrades and Upgrades.getShowcaseCardForUnlock) then
+                return
+        end
+
+        local card = Upgrades:getShowcaseCardForUnlock(unlock)
+        if not card then
+                return
+        end
+
+        local overlayTitle = getLocalizedOrFallback("gameover.meta_progress_unlock_overlay_title", "New upgrade unlocked!")
+        local continueText = getLocalizedOrFallback("gameover.meta_progress_unlock_overlay_continue", "Press any key to continue")
+
+        local entry = {
+                unlock = unlock,
+                card = card,
+                title = overlayTitle,
+                continueText = continueText,
+                name = unlock.name,
+                description = unlock.description,
+                level = unlock.level,
+                id = unlock.id,
+                unlockTags = cloneArray(unlock.unlockTags),
+                previewUpgradeId = unlock.previewUpgradeId,
+                phase = "queued",
+                timer = 0,
+                alpha = 0,
+                scale = 0.88,
+                minHoldTime = 0.35,
+                enterDuration = 0.35,
+                exitDuration = 0.28,
+                dismissRequested = false,
+                ready = false,
+                cardState = {hover = 0, focus = 0, selection = 0, fadeOut = 0},
+        }
+
+        self.unlockOverlayQueue[#self.unlockOverlayQueue + 1] = entry
+end
+
+function GameOver:_startUnlockOverlayExit()
+        local overlay = self.activeUnlockOverlay
+        if not overlay or overlay.phase == "exit" then
+                return
+        end
+
+        overlay.phase = "exit"
+        overlay.timer = 0
+        overlay.dismissRequested = false
+        overlay.ready = true
+        Audio:playSound("click")
+end
+
+function GameOver:_updateUnlockOverlay(dt)
+        dt = dt or 0
+
+        if self.progressionComplete and (not self.activeUnlockOverlay) and self.unlockOverlayQueue and #self.unlockOverlayQueue > 0 then
+                local overlay = remove(self.unlockOverlayQueue, 1)
+                overlay.phase = "enter"
+                overlay.timer = 0
+                overlay.alpha = 0
+                overlay.scale = overlay.scale or 0.88
+                overlay.dismissRequested = false
+                overlay.ready = false
+                overlay.cardState = overlay.cardState or {hover = 0, focus = 0, selection = 0, fadeOut = 0}
+                self.activeUnlockOverlay = overlay
+        end
+
+        local overlay = self.activeUnlockOverlay
+        if not overlay then
+                return
+        end
+
+        overlay.timer = (overlay.timer or 0) + dt
+
+        if overlay.phase == "enter" then
+                local duration = overlay.enterDuration or 0.35
+                local progress = duration > 0 and clamp(overlay.timer / duration, 0, 1) or 1
+                local eased = easeOutBack(progress)
+                overlay.alpha = clamp(progress, 0, 1)
+                overlay.scale = 0.88 + 0.12 * eased
+                if progress >= 1 then
+                        overlay.phase = "hold"
+                        overlay.timer = 0
+                        overlay.alpha = 1
+                        overlay.scale = 1
+                        overlay.ready = (overlay.minHoldTime or 0) <= 0
+                        if overlay.ready and overlay.dismissRequested then
+                                self:_startUnlockOverlayExit()
+                        end
+                end
+        elseif overlay.phase == "hold" then
+                local hold = overlay.minHoldTime or 0.3
+                if not overlay.ready and overlay.timer >= hold then
+                        overlay.ready = true
+                        if overlay.dismissRequested then
+                                self:_startUnlockOverlayExit()
+                                return
+                        end
+                end
+                overlay.alpha = 1
+                local wobble = sin(love.timer.getTime() * 2.4) * 0.01
+                overlay.scale = 1 + wobble
+        elseif overlay.phase == "exit" then
+                local duration = overlay.exitDuration or 0.28
+                local progress = duration > 0 and clamp(overlay.timer / duration, 0, 1) or 1
+                local eased = easeOutQuad(progress)
+                overlay.alpha = max(0, 1 - eased)
+                overlay.scale = 1 + 0.06 * (1 - eased)
+                if progress >= 1 then
+                        self.activeUnlockOverlay = nil
+                end
+        end
+end
+
+function GameOver:_consumeUnlockOverlayInput()
+        if not self.progressionComplete then
+                return false
+        end
+
+        if not self.activeUnlockOverlay and self.unlockOverlayQueue and #self.unlockOverlayQueue > 0 then
+                self:_updateUnlockOverlay(0)
+        end
+
+        local overlay = self.activeUnlockOverlay
+        if not overlay then
+                return false
+        end
+
+        overlay.dismissRequested = true
+        if overlay.phase == "exit" then
+                return true
+        end
+
+        if overlay.phase == "hold" and overlay.ready then
+                self:_startUnlockOverlayExit()
+        end
+
+        return true
+end
+
+function GameOver:_isProgressionFillComplete(anim)
+        if not anim then
+                return true
+        end
+
+        local target = anim.targetTotal or 0
+        local displayed = anim.displayedTotal or 0
+        if displayed + 1e-4 < target then
+                return false
+        end
+
+        if (anim.pendingFruitXp or 0) > 0.01 then
+                return false
+        end
+
+        if (anim.fruitRemaining or 0) > 0 then
+                return false
+        end
+
+        local activeFruit = (anim.fruitAnimations and #anim.fruitAnimations or 0)
+        if activeFruit > 0 then
+                return false
+        end
+
+        local gainedTotal = (self.progression and self.progression.gained) or 0
+        if gainedTotal > 0 and (anim.displayedGained or 0) + 0.01 < gainedTotal then
+                return false
+        end
+
+        return true
+end
+
+function GameOver:drawUnlockOverlay()
+        local overlay = self.activeUnlockOverlay
+        if not overlay then
+                return
+        end
+
+        local alpha = clamp(overlay.alpha or 0, 0, 1)
+        if alpha <= 0 then
+                return
+        end
+
+        local sw, sh = Screen:get()
+        love.graphics.push("all")
+        love.graphics.setColor(0, 0, 0, 0.75 * alpha)
+        love.graphics.rectangle("fill", 0, 0, sw, sh)
+
+        local card = overlay.card
+        local titleText = overlay.title or getLocalizedOrFallback("gameover.meta_progress_unlock_overlay_title", "New upgrade unlocked!")
+        local continueText = overlay.continueText or getLocalizedOrFallback("gameover.meta_progress_unlock_overlay_continue", "Press any key to continue")
+        local nameText = overlay.name or ""
+        local descText = overlay.description or ""
+
+        local titleColor = withAlpha(UI.colors.text or {1, 1, 1, 1}, alpha)
+        local mutedColor = withAlpha(UI.colors.mutedText or UI.colors.text or {0.7, 0.7, 0.7, 1}, alpha)
+        local baseContinueColor = Theme.accentTextColor or UI.colors.highlight or UI.colors.text or {1, 1, 1, 1}
+        local continueAlpha = alpha * (overlay.ready and 1 or 0.6)
+        if overlay.ready then
+                local pulse = 0.75 + 0.25 * (sin(love.timer.getTime() * 3.4) * 0.5 + 0.5)
+                continueAlpha = continueAlpha * pulse
+        end
+        local continueColor = withAlpha(baseContinueColor, continueAlpha)
+
+        local baseWidth, baseHeight = 264, 344
+        local maxWidth = sw * 0.45
+        local maxHeight = sh * 0.5
+        local scale = min(maxWidth / baseWidth, maxHeight / baseHeight)
+        scale = min(max(0.6, scale), 1.15)
+        scale = scale * (overlay.scale or 1)
+        local cardWidth = baseWidth * scale
+        local cardHeight = baseHeight * scale
+        local cardX = (sw - cardWidth) / 2
+        local cardCenterY = sh * 0.48
+        local cardY = cardCenterY - cardHeight / 2
+
+        if card then
+                local options = {
+                        appearanceAlpha = alpha,
+                        animationState = overlay.cardState,
+                        index = 1,
+                }
+                Shop.drawCardPreview(card, cardX, cardY, cardWidth, cardHeight, options)
+        end
+
+        local titleFont = fontProgressTitle or fontTitle
+        local nameFont = fontProgressValue or fontTitle
+        local smallFont = fontSmall or UI.fonts.body or fontTitle
+
+        local titleY = max(48, cardY - 140)
+        UI.drawLabel(titleText, 0, titleY, sw, "center", {
+                font = titleFont,
+                color = titleColor,
+        })
+
+        local nextY = cardY + cardHeight + 28
+        if nameText and nameText ~= "" then
+                UI.drawLabel(nameText, 0, nextY, sw, "center", {
+                        font = nameFont,
+                        color = titleColor,
+                })
+                local nameHeight = (nameFont and nameFont:getHeight()) or 0
+                nextY = nextY + nameHeight + 12
+        end
+
+        if descText and descText ~= "" then
+                local descWidth = sw * 0.55
+                local descX = (sw - descWidth) / 2
+                UI.drawLabel(descText, descX, nextY, descWidth, "center", {
+                        font = smallFont,
+                        color = mutedColor,
+                })
+                local smallHeight = (smallFont and smallFont:getHeight() * smallFont:getLineHeight()) or 0
+                nextY = nextY + max(32, smallHeight + 18)
+        end
+
+        local continueY = max(nextY + 24, cardY + cardHeight + 72)
+        UI.drawLabel(continueText, 0, continueY, sw, "center", {
+                font = smallFont,
+                color = continueColor,
+        })
+
+        love.graphics.pop()
 end
 
 function GameOver:mousepressed(x, y, button)
-	buttonList:mousepressed(x, y, button)
+        if self:_consumeUnlockOverlayInput() then
+                return
+        end
+
+        buttonList:mousepressed(x, y, button)
 end
 
 function GameOver:mousereleased(x, y, button)
-	local action = buttonList:mousereleased(x, y, button)
-	return handleButtonAction(self, action)
+        if self.activeUnlockOverlay then
+                return
+        end
+
+        local action = buttonList:mousereleased(x, y, button)
+        return handleButtonAction(self, action)
 end
 
 function GameOver:keypressed(key)
-	if key == "up" or key == "left" then
-		buttonList:moveFocus(-1)
-	elseif key == "down" or key == "right" then
-		buttonList:moveFocus(1)
-	elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
+        if self:_consumeUnlockOverlayInput() then
+                return
+        end
+
+        if key == "up" or key == "left" then
+                buttonList:moveFocus(-1)
+        elseif key == "down" or key == "right" then
+                buttonList:moveFocus(1)
+        elseif key == "return" or key == "kpenter" or key == "enter" or key == "space" then
 		local action = buttonList:activateFocused()
 		local resolved = handleButtonAction(self, action)
 		if resolved then
@@ -2168,11 +2489,15 @@ function GameOver:keypressed(key)
 end
 
 function GameOver:gamepadpressed(_, button)
-	if button == "dpup" or button == "dpleft" then
-		buttonList:moveFocus(-1)
-	elseif button == "dpdown" or button == "dpright" then
-		buttonList:moveFocus(1)
-	elseif button == "a" or button == "start" then
+        if self:_consumeUnlockOverlayInput() then
+                return
+        end
+
+        if button == "dpup" or button == "dpleft" then
+                buttonList:moveFocus(-1)
+        elseif button == "dpdown" or button == "dpright" then
+                buttonList:moveFocus(1)
+        elseif button == "a" or button == "start" then
 		local action = buttonList:activateFocused()
 		local resolved = handleButtonAction(self, action)
 		if resolved then
@@ -2188,7 +2513,11 @@ end
 GameOver.joystickpressed = GameOver.gamepadpressed
 
 function GameOver:gamepadaxis(_, axis, value)
-	handleAnalogAxis(axis, value)
+        if self.activeUnlockOverlay then
+                return
+        end
+
+        handleAnalogAxis(axis, value)
 end
 
 GameOver.joystickaxis = GameOver.gamepadaxis
