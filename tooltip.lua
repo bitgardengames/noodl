@@ -246,8 +246,8 @@ function Tooltip:draw()
         local textColor = Theme.tooltipText or colors.text or Theme.textColor or DEFAULT_TOOLTIP_TEXT_COLOR
 	local radius = spacing.panelRadius or 12
 
-	love.graphics.setColor(shadowColor[1] or 0, shadowColor[2] or 0, shadowColor[3] or 0, (shadowColor[4] or 1) * alpha * 0.7)
-	love.graphics.rectangle("fill", left + 3, y + 5, boxWidth, boxHeight, radius, radius)
+        love.graphics.setColor(shadowColor[1] or 0, shadowColor[2] or 0, shadowColor[3] or 0, (shadowColor[4] or 1) * alpha * 0.7)
+        love.graphics.rectangle("fill", left + 2, y + 4, boxWidth, boxHeight, radius, radius)
 
 	love.graphics.setColor(panelColor[1] or 1, panelColor[2] or 1, panelColor[3] or 1, (panelColor[4] or 1) * alpha)
 	love.graphics.rectangle("fill", left, y, boxWidth, boxHeight, radius, radius)
