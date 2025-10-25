@@ -560,15 +560,6 @@ local rarityStyles = {
                 },
                 glow = 0.22,
                 borderWidth = 5,
-                shine = {
-                        alpha = 0.28,
-                        angle = -pi / 5,
-                        widthScale = 1.55,
-                        heightScale = 0.58,
-                        offsetX = 0.52,
-                        offsetY = 0.28,
-                        steps = 24,
-                },
         },
 }
 
