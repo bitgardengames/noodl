@@ -3270,10 +3270,10 @@ function Upgrades:canOffer(upgrade, context, allowTaken)
 end
 
 local function decorateCard(upgrade)
-	local rarityInfo = getRarityInfo(upgrade.rarity)
-	local name = upgrade.name
-	local description = upgrade.desc
-	local rarityLabel = rarityInfo and rarityInfo.label
+        local rarityInfo = getRarityInfo(upgrade.rarity)
+        local name = upgrade.name
+        local description = upgrade.desc
+        local rarityLabel = rarityInfo and rarityInfo.label
 
 	if upgrade.nameKey then
 		name = Localization:get(upgrade.nameKey)
@@ -3285,16 +3285,94 @@ local function decorateCard(upgrade)
 		rarityLabel = Localization:get(rarityInfo.labelKey)
 	end
 
-	return {
-		id = upgrade.id,
-		name = name,
-		desc = description,
-		rarity = upgrade.rarity,
-		rarityColor = rarityInfo.color,
-		rarityLabel = rarityLabel,
-		restockShop = upgrade.restockShop,
-		upgrade = upgrade,
-	}
+        return {
+                id = upgrade.id,
+                name = name,
+                desc = description,
+                rarity = upgrade.rarity,
+                rarityColor = rarityInfo.color,
+                rarityLabel = rarityLabel,
+                restockShop = upgrade.restockShop,
+                upgrade = upgrade,
+        }
+end
+
+local function matchesUnlockTag(upgrade, tag)
+        if not upgrade or not tag then
+                return false
+        end
+
+        if upgrade.unlockTag == tag then
+                return true
+        end
+
+        if type(upgrade.unlockTags) == "table" then
+                for _, unlockTag in ipairs(upgrade.unlockTags) do
+                        if unlockTag == tag then
+                                return true
+                        end
+                end
+        end
+
+        return false
+end
+
+function Upgrades:getDefinition(id)
+        if not id then
+                return nil
+        end
+
+        return poolById[id]
+end
+
+function Upgrades:getShowcaseCardForTag(tag)
+        if not tag then
+                return nil
+        end
+
+        for _, upgrade in ipairs(pool) do
+                if matchesUnlockTag(upgrade, tag) then
+                        return decorateCard(upgrade)
+                end
+        end
+
+        return nil
+end
+
+function Upgrades:getShowcaseCardForUnlock(unlock)
+        if not unlock then
+                return nil
+        end
+
+        if unlock.previewUpgradeId then
+                local upgrade = self:getDefinition(unlock.previewUpgradeId)
+                if upgrade then
+                        return decorateCard(upgrade)
+                end
+        end
+
+        if type(unlock.unlockTags) == "table" then
+                for _, tag in ipairs(unlock.unlockTags) do
+                        local card = self:getShowcaseCardForTag(tag)
+                        if card then
+                                return card
+                        end
+                end
+        elseif unlock.unlockTag then
+                local card = self:getShowcaseCardForTag(unlock.unlockTag)
+                if card then
+                        return card
+                end
+        end
+
+        if unlock.id then
+                local upgrade = self:getDefinition(unlock.id)
+                if upgrade then
+                        return decorateCard(upgrade)
+                end
+        end
+
+        return nil
 end
 
 function Upgrades:getRandom(n, context)

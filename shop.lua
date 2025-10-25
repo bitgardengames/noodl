@@ -1654,7 +1654,20 @@ function Shop:pick(i)
 end
 
 function Shop:isSelectionComplete()
-	return self.selected ~= nil and self.selectionComplete == true
+        return self.selected ~= nil and self.selectionComplete == true
+end
+
+function Shop.drawCardPreview(card, x, y, w, h, options)
+        if not card then return end
+
+        options = options or {}
+        local hovered = options.hovered == true
+        local index = options.index or 1
+        local animationState = options.animationState or {}
+        local isSelected = options.isSelected == true
+        local appearanceAlpha = options.appearanceAlpha or 1
+
+        drawCard(card, x, y, w, h, hovered, index, animationState, isSelected, appearanceAlpha)
 end
 
 return Shop
