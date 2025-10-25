@@ -32,6 +32,7 @@ function Movement:applyForcedDirection(dirX, dirY)
 end
 
 local SEGMENT_SIZE = 24 -- same size as rocks and snake
+local ROCK_COLLISION_INSET = 2 -- shrink collision boxes slightly to avoid premature hits
 local DAMAGE_GRACE = 0.35
 local WALL_GRACE = 0.25
 
@@ -478,19 +479,20 @@ local function handleWallCollision(headX, headY)
 end
 
 local function handleRockCollision(headX, headY)
-        local halfSegment = SEGMENT_SIZE / 2
-        local headLeft = headX - halfSegment
-        local headTop = headY - halfSegment
+        local headSize = max(0, SEGMENT_SIZE - ROCK_COLLISION_INSET * 2)
+        local halfHeadSize = headSize / 2
+        local headLeft = headX - halfHeadSize
+        local headTop = headY - halfHeadSize
 
         for _, rock in ipairs(Rocks:getAll()) do
                 local rockCenterX = rock and (rock.renderX or rock.x) or 0
                 local rockCenterY = rock and (rock.renderY or rock.y) or 0
-                local rockWidth = rock and rock.w or SEGMENT_SIZE
-                local rockHeight = rock and rock.h or SEGMENT_SIZE
+                local rockWidth = max(0, (rock and rock.w or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
+                local rockHeight = max(0, (rock and rock.h or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
                 local rockLeft = rockCenterX - rockWidth / 2
                 local rockTop = rockCenterY - rockHeight / 2
 
-                if aabb(headLeft, headTop, SEGMENT_SIZE, SEGMENT_SIZE, rockLeft, rockTop, rockWidth, rockHeight) then
+                if aabb(headLeft, headTop, headSize, headSize, rockLeft, rockTop, rockWidth, rockHeight) then
                         local centerX = rockLeft + rockWidth / 2
                         local centerY = rockTop + rockHeight / 2
 
