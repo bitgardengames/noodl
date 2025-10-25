@@ -1192,8 +1192,9 @@ local pool = {
                 nameKey = "upgrades.quick_fangs.name",
                 descKey = "upgrades.quick_fangs.description",
                 rarity = "rare",
+                tags = {"mobility"},
                 allowDuplicates = true,
-		maxStacks = 4,
+                maxStacks = 4,
                 onAcquire = function(state)
                         Snake:addSpeedMultiplier(1.10)
 
