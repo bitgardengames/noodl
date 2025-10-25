@@ -402,7 +402,8 @@ local function getSawCollisionCenter(saw)
                 return px, py
         end
 
-        local sinkOffset = SINK_OFFSET + (saw.sinkProgress or 0) * SINK_DISTANCE
+        local sinkProgress = saw.sinkVisualProgress or saw.sinkProgress or 0
+        local sinkOffset = SINK_OFFSET + sinkProgress * SINK_DISTANCE
         if saw.dir == "horizontal" then
                 py = py + sinkOffset
         else
@@ -491,10 +492,11 @@ function Saws:spawn(x, y, radius, teeth, dir, side, options)
 		direction = 1,
 		slotId = slot and slot.id or nil,
 
-		sinkProgress = sinkActive and 1 or 0,
-		sinkTarget = sinkActive and 1 or 0,
-		collisionCells = nil,
-		hitFlashTimer = 0,
+                sinkProgress = sinkActive and 1 or 0,
+                sinkTarget = sinkActive and 1 or 0,
+                sinkVisualProgress = Easing.easeInOutCubic(sinkActive and 1 or 0),
+                collisionCells = nil,
+                hitFlashTimer = 0,
         })
 
         local saw = current[#current]
@@ -566,12 +568,14 @@ function Saws:update(dt)
                 updateSawSlide(saw, dt)
 
                 local sinkDirection = (saw.sinkTarget or 0) > 0 and 1 or -1
-                saw.sinkProgress = saw.sinkProgress + sinkDirection * dt * SINK_SPEED
+                saw.sinkProgress = (saw.sinkProgress or 0) + sinkDirection * dt * SINK_SPEED
                 if saw.sinkProgress < 0 then
                         saw.sinkProgress = 0
-		elseif saw.sinkProgress > 1 then
-			saw.sinkProgress = 1
-		end
+                elseif saw.sinkProgress > 1 then
+                        saw.sinkProgress = 1
+                end
+
+                saw.sinkVisualProgress = Easing.easeInOutCubic(saw.sinkProgress)
 
 		saw.hitFlashTimer = max(0, (saw.hitFlashTimer or 0) - dt)
 
@@ -641,7 +645,8 @@ function Saws:draw()
                 local anchorY = saw.renderY or saw.y
                 local px, py = getSawCenter(saw)
                 local sinkProgress = max(0, min(1, saw.sinkProgress or 0))
-                local sinkOffset = sinkProgress * SINK_DISTANCE
+                local sinkVisualProgress = max(0, min(1, saw.sinkVisualProgress or sinkProgress))
+                local sinkOffset = sinkVisualProgress * SINK_DISTANCE
                 local occlusionDepth = SINK_OFFSET + sinkOffset
                 local offsetX, offsetY = 0, 0
 		local sinkDir = 1
@@ -653,7 +658,7 @@ function Saws:draw()
                         offsetX = sinkDir * occlusionDepth
                 end
 
-		local sinkScale = 1 - 0.1 * sinkProgress
+                local sinkScale = 1 - 0.1 * sinkVisualProgress
 		local rotation = saw.rotation or 0
 		local teeth = saw.teeth or 8
 		local outer = saw.radius or SAW_RADIUS
@@ -668,7 +673,7 @@ function Saws:draw()
 			points[#points + 1] = math.sin(angle) * r
 		end
 
-                local isBladeHidden = sinkProgress >= 0.999
+                local isBladeHidden = sinkVisualProgress >= 0.999
                 if (saw.scaleX ~= nil and saw.scaleX <= 0) or (saw.scaleY ~= nil and saw.scaleY <= 0) then
                         isBladeHidden = true
                 end
@@ -694,7 +699,7 @@ function Saws:draw()
 				love.graphics.rotate(rotation)
 				love.graphics.scale(sinkScale, sinkScale)
 
-				local alpha = SHADOW_ALPHA * (1 - 0.4 * sinkProgress)
+                                local alpha = SHADOW_ALPHA * (1 - 0.4 * sinkVisualProgress)
 				love.graphics.setColor(0, 0, 0, alpha)
 				love.graphics.polygon("fill", points)
 
