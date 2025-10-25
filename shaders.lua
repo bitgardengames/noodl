@@ -1085,7 +1085,7 @@ registerEffect({
                         }
                 end
 
-                local luminanceLift = 0.05
+                local luminanceLift = 0.10
                 local top = liftLuminance(getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor), luminanceLift)
                 local bottom = liftLuminance(getColorComponents(palette and (palette.deepColor or palette.shadowColor), {0.05, 0.06, 0.08, 1}), luminanceLift)
                 local warm = liftLuminance(getColorComponents(palette and palette.warmAccent, {0.98, 0.71, 0.45, 1}), luminanceLift)
