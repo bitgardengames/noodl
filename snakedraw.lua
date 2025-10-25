@@ -2340,6 +2340,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 
                 local presented = false
                 if canvas and bounds then
+                        love.graphics.push("all")
                         love.graphics.setCanvas({canvas, stencil = true})
                         love.graphics.clear(0, 0, 0, 0)
                         love.graphics.push()
@@ -2351,7 +2352,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                                 drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
                         end
                         love.graphics.pop()
-                        love.graphics.setCanvas()
+                        love.graphics.pop()
 
                         if exitHole then
                                 drawPortalHole(exitHole, true)
@@ -2368,6 +2369,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                         local ww, hh = love.graphics.getDimensions()
                         local fallbackCanvas = ensureSnakeCanvas(ww, hh)
                         if fallbackCanvas then
+                                love.graphics.push("all")
                                 love.graphics.setCanvas({fallbackCanvas, stencil = true})
                                 love.graphics.clear(0, 0, 0, 0)
                                 drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
@@ -2376,7 +2378,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                                         local entryPalette = fadePalette(palette, 0.55)
                                         drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
                                 end
-                                love.graphics.setCanvas()
+                                love.graphics.pop()
                                 presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
                                 presented = true
                         end
@@ -2440,23 +2442,25 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                         end
 
                         if canvas and bounds then
+                                love.graphics.push("all")
                                 love.graphics.setCanvas({canvas, stencil = true})
                                 love.graphics.clear(0,0,0,0)
                                 love.graphics.push()
                                 love.graphics.translate(-bounds.offsetX, -bounds.offsetY)
                                 drawTrailSegmentToCanvas(trail, half, options, palette, coords)
                                 love.graphics.pop()
-                                love.graphics.setCanvas()
+                                love.graphics.pop()
 
                                 presentSnakeCanvas(overlayEffect, bounds.width, bounds.height, bounds.offsetX, bounds.offsetY)
                         else
                                 local ww, hh = love.graphics.getDimensions()
                                 local fallbackCanvas = ensureSnakeCanvas(ww, hh)
                                 if fallbackCanvas then
+                                        love.graphics.push("all")
                                         love.graphics.setCanvas({fallbackCanvas, stencil = true})
                                         love.graphics.clear(0,0,0,0)
                                         drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-                                        love.graphics.setCanvas()
+                                        love.graphics.pop()
                                         presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
                                 end
                         end
