@@ -11,6 +11,7 @@ local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local Upgrades = require("upgrades")
 local Shop = require("shop")
+local FrameClock = require("frameclock")
 
 local abs = math.abs
 local floor = math.floor
@@ -1496,7 +1497,7 @@ local function drawCelebrationsList(anim, x, startY, width)
 
 	local y = startY
 	local cardWidth = width - 32
-	local now = love.timer.getTime()
+        local now = FrameClock:get()
 
 	local celebrationHeight = getCelebrationEntryHeight()
 	local celebrationSpacing = getCelebrationEntrySpacing()
@@ -2295,7 +2296,7 @@ function GameOver:_updateUnlockOverlay(dt)
                         end
                 end
                 overlay.alpha = 1
-                local wobble = sin(love.timer.getTime() * 2.4) * 0.01
+                local wobble = sin(FrameClock:get() * 2.4) * 0.01
                 overlay.scale = 1 + wobble
         elseif overlay.phase == "exit" then
                 local duration = overlay.exitDuration or 0.28
@@ -2394,7 +2395,7 @@ function GameOver:drawUnlockOverlay()
         local baseContinueColor = Theme.accentTextColor or UI.colors.highlight or UI.colors.text or {1, 1, 1, 1}
         local continueAlpha = alpha * (overlay.ready and 1 or 0.6)
         if overlay.ready then
-                local pulse = 0.75 + 0.25 * (sin(love.timer.getTime() * 3.4) * 0.5 + 0.5)
+                local pulse = 0.75 + 0.25 * (sin(FrameClock:get() * 3.4) * 0.5 + 0.5)
                 continueAlpha = continueAlpha * pulse
         end
         local continueColor = withAlpha(baseContinueColor, continueAlpha)
