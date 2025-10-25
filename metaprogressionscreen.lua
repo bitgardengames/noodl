@@ -6,6 +6,7 @@ local Localization = require("localization")
 local MetaProgression = require("metaprogression")
 local SnakeCosmetics = require("snakecosmetics")
 local SnakeDraw = require("snakedraw")
+local RenderLayers = require("renderlayers")
 local SnakeUtils = require("snakeutils")
 local Achievements = require("achievements")
 local PlayerStats = require("playerstats")
@@ -1809,13 +1810,16 @@ function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, 
 	love.graphics.translate(previewX + previewW / 2, previewY + previewH / 2 + previewH * 0.04)
 	love.graphics.scale(scale * 0.95)
 	love.graphics.translate(-(bounds.centerX or 0), -(bounds.centerY or 0))
-	SnakeDraw.run(trail, #trail, SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, nil, {
-		drawFace = false,
-		skinOverride = skin,
-		paletteOverride = palette,
-		overlayEffect = palette and palette.overlay,
-	})
-	love.graphics.pop()
+        local sw, sh = love.graphics.getDimensions()
+        RenderLayers:begin(sw, sh)
+        SnakeDraw.run(trail, #trail, SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, nil, {
+                drawFace = false,
+                skinOverride = skin,
+                paletteOverride = palette,
+                overlayEffect = palette and palette.overlay,
+        })
+        RenderLayers:present()
+        love.graphics.pop()
 end
 
 local function drawCosmeticsHeader(sw)
