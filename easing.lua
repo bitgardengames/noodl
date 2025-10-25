@@ -25,12 +25,21 @@ function Easing.lerp(a, b, t)
 end
 
 function Easing.easeOutCubic(t)
-	local inv = 1 - t
-	return 1 - inv * inv * inv
+        local inv = 1 - t
+        return 1 - inv * inv * inv
+end
+
+function Easing.easeInOutCubic(t)
+        if t < 0.5 then
+                return 4 * t * t * t
+        end
+
+        local inv = 1 - t
+        return 1 - 4 * inv * inv * inv
 end
 
 function Easing.easeInCubic(t)
-	return t * t * t
+        return t * t * t
 end
 
 function Easing.easeOutExpo(t)
