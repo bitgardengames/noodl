@@ -27,7 +27,6 @@ local FRUIT_BULGE_SCALE = 1.25
 
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
-local snakeOverlayCanvas = nil
 
 local applyOverlay
 
@@ -662,17 +661,6 @@ local function ensureSnakeCanvas(width, height)
         return snakeCanvas
 end
 
-local function ensureSnakeOverlayCanvas(width, height)
-        if width <= 0 or height <= 0 then
-                return nil
-        end
-
-        if not snakeOverlayCanvas or snakeOverlayCanvas:getWidth() ~= width or snakeOverlayCanvas:getHeight() ~= height then
-                snakeOverlayCanvas = love.graphics.newCanvas(width, height)
-        end
-        return snakeOverlayCanvas
-end
-
 local function presentSnakeCanvas(overlayEffect, width, height, offsetX, offsetY)
         if not snakeCanvas then
                 return false
@@ -687,28 +675,12 @@ local function presentSnakeCanvas(overlayEffect, width, height, offsetX, offsetY
         end)
 
         local drewOverlay = false
-        if overlayEffect then
-                local overlayCanvas = ensureSnakeOverlayCanvas(width, height)
-                local previousCanvas = {love.graphics.getCanvas()}
-                if overlayCanvas then
-                        love.graphics.setCanvas(overlayCanvas)
-                        love.graphics.clear(0, 0, 0, 0)
-                        love.graphics.setColor(1, 1, 1, 1)
-                        love.graphics.draw(snakeCanvas, 0, 0)
-                        drewOverlay = applyOverlay(snakeCanvas, overlayEffect)
-                end
-                if #previousCanvas > 0 then
-                        love.graphics.setCanvas(unpack(previousCanvas))
-                else
-                        love.graphics.setCanvas()
-                end
-        end
-
         RenderLayers:withLayer("main", function()
                 love.graphics.setColor(1, 1, 1, 1)
-                if drewOverlay then
-                        love.graphics.draw(snakeOverlayCanvas, drawX, drawY)
-                else
+                if overlayEffect then
+                        drewOverlay = applyOverlay(snakeCanvas, overlayEffect, drawX, drawY)
+                end
+                if not drewOverlay then
                         love.graphics.draw(snakeCanvas, drawX, drawY)
                 end
         end)
@@ -738,12 +710,12 @@ local function resolveColor(color, fallback, out)
         return target
 end
 
-applyOverlay = function(canvas, config)
-	if not (canvas and config and config.type) then
-		return false
-	end
+applyOverlay = function(canvas, config, drawX, drawY)
+        if not (canvas and config and config.type) then
+                return false
+        end
 
-	local shader = safeResolveShader(config.type)
+        local shader = safeResolveShader(config.type)
 	if not shader then
 		return false
 	end
@@ -841,14 +813,14 @@ applyOverlay = function(canvas, config)
 		shader:send("colorC", tertiary)
 	end
 
-	love.graphics.push("all")
-	love.graphics.setShader(shader)
-	love.graphics.setBlendMode(config.blendMode or "alpha")
-	love.graphics.setColor(1, 1, 1, config.opacity or 1)
-	love.graphics.draw(canvas, 0, 0)
-	love.graphics.pop()
+        love.graphics.push("all")
+        love.graphics.setShader(shader)
+        love.graphics.setBlendMode(config.blendMode or "alpha")
+        love.graphics.setColor(1, 1, 1, config.opacity or 1)
+        love.graphics.draw(canvas, drawX or 0, drawY or 0)
+        love.graphics.pop()
 
-	return true
+        return true
 end
 
 -- helper: prefer drawX/drawY, fallback to x/y
