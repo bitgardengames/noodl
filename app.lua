@@ -18,13 +18,13 @@ local DEFAULT_BG_COLOR = {0, 0, 0, 1}
 local App = {
 	stateModules = {
 		splash = require("splashscreen"),
-                menu = require("menu"),
-                game = require("game"),
-                gameover = require("gameover"),
-                achievementsmenu = require("achievementsmenu"),
-                metaprogression = require("metaprogressionscreen"),
-                settings = require("settingsscreen"),
-        }
+		menu = require("menu"),
+		game = require("game"),
+		gameover = require("gameover"),
+		achievementsmenu = require("achievementsmenu"),
+		metaprogression = require("metaprogressionscreen"),
+		settings = require("settingsscreen"),
+	}
 }
 
 function App:registerStates()
@@ -96,7 +96,7 @@ function App:update(dt)
 end
 
 function App:draw()
-        local bg = Theme.bgColor or DEFAULT_BG_COLOR
+	local bg = Theme.bgColor or DEFAULT_BG_COLOR
 	local r = bg[1] or 0
 	local g = bg[2] or 0
 	local b = bg[3] or 0
@@ -111,7 +111,7 @@ function App:draw()
 		local label = string.format("FPS: %d", fps)
 		local padding = 6
 
-                UI.setFont("caption")
+		UI.setFont("caption")
 
 		local font = love.graphics.getFont()
 		local textWidth = font and font:getWidth(label) or 0
