@@ -411,7 +411,7 @@ local english = {
 					"Note to self: bricks don’t move.",
 					"Snake discovered geometry… fatally.",
 					"That’s not an exit.",
-					"Turns out walls don’t taste like apples.",
+                                        "Turns out walls don’t taste like fruit.",
 					"Ever heard of brakes?",
 					"Snake tried parkour. Failed.",
 				},
