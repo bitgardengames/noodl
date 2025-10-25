@@ -296,6 +296,10 @@ local function releaseSegment(segment)
         segment.fruitMarker = nil
         segment.fruitMarkerX = nil
         segment.fruitMarkerY = nil
+        segment.cellCol = nil
+        segment.cellRow = nil
+        segment.cellX = nil
+        segment.cellY = nil
 
         segmentPoolCount = segmentPoolCount + 1
         segmentPool[segmentPoolCount] = segment
@@ -1108,13 +1112,16 @@ local function snapToCenter(v)
 	return (floor(v / SEGMENT_SPACING) + 0.5) * SEGMENT_SPACING
 end
 
-local function toCell(x, y)
+local function computeCellIndices(x, y)
         if not (x and y) then
                 return nil, nil
         end
 
         if Arena and Arena.getTileFromWorld then
-                return Arena:getTileFromWorld(x, y)
+                local col, row = Arena:getTileFromWorld(x, y)
+                if col and row then
+                        return col, row
+                end
         end
 
         local tileSize = Arena and Arena.tileSize or SEGMENT_SPACING or 1
@@ -1137,6 +1144,71 @@ local function toCell(x, y)
         end
 
         return col, row
+end
+
+local function toCell(x, y)
+        return computeCellIndices(x, y)
+end
+
+local function invalidateSegmentCell(segment)
+        if not segment then
+                return
+        end
+
+        segment.cellCol = nil
+        segment.cellRow = nil
+        segment.cellX = nil
+        segment.cellY = nil
+end
+
+local function updateSegmentCell(segment)
+        if not segment then
+                return nil, nil
+        end
+
+        local x, y = segment.drawX, segment.drawY
+        if not (x and y) then
+                invalidateSegmentCell(segment)
+                return nil, nil
+        end
+
+        local col, row = computeCellIndices(x, y)
+        segment.cellCol = col
+        segment.cellRow = row
+        segment.cellX = x
+        segment.cellY = y
+        return col, row
+end
+
+local function getSegmentCell(segment)
+        if not segment then
+                return nil, nil
+        end
+
+        local x, y = segment.drawX, segment.drawY
+        local cachedX, cachedY = segment.cellX, segment.cellY
+        local col, row = segment.cellCol, segment.cellRow
+
+        if col and row and cachedX == x and cachedY == y then
+                return col, row
+        end
+
+        return updateSegmentCell(segment)
+end
+
+local function setSegmentDrawPosition(segment, x, y, updateCell)
+        if not segment then
+                return
+        end
+
+        segment.drawX = x
+        segment.drawY = y
+
+        if updateCell then
+                updateSegmentCell(segment)
+        else
+                invalidateSegmentCell(segment)
+        end
 end
 
 local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
@@ -1162,22 +1234,19 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
         for i = #trail, 1, -1 do
                 local segment = trail[i]
                 if segment then
-                        local x, y = segment.drawX, segment.drawY
-                        if x and y then
-                                local col, row = toCell(x, y)
-                                if col and row then
-                                        if i == 1 then
-                                                if headColOverride and headRowOverride then
-                                                        col, row = headColOverride, headRowOverride
-                                                end
-                                                assignedHeadCol, assignedHeadRow = col, row
+                        local col, row = getSegmentCell(segment)
+                        if col and row then
+                                if i == 1 then
+                                        if headColOverride and headRowOverride then
+                                                col, row = headColOverride, headRowOverride
                                         end
+                                        assignedHeadCol, assignedHeadRow = col, row
+                                end
 
-                                        recordSnakeOccupiedCell(col, row)
+                                recordSnakeOccupiedCell(col, row)
 
-                                        if i ~= 1 then
-                                                addSnakeBodyOccupancy(col, row)
-                                        end
+                                if i ~= 1 then
+                                        addSnakeBodyOccupancy(col, row)
                                 end
                         end
                 end
@@ -1388,6 +1457,10 @@ local function copySegmentData(segment)
         copy.fruitMarker = segment.fruitMarker
         copy.fruitMarkerX = segment.fruitMarkerX
         copy.fruitMarkerY = segment.fruitMarkerY
+        copy.cellCol = segment.cellCol
+        copy.cellRow = segment.cellRow
+        copy.cellX = segment.cellX
+        copy.cellY = segment.cellY
 
         return copy
 end
@@ -1479,8 +1552,7 @@ local function sliceTrailByLength(sourceTrail, maxLength, destination)
                                         end
                                 end
                                 local segCopy = copySegmentData(curr) or acquireSegment()
-                                segCopy.drawX = x
-                                segCopy.drawY = y
+                                setSegmentDrawPosition(segCopy, x, y, true)
                                 count = count + 1
                                 result[count] = segCopy
                                 releaseSegmentRange(result, count + 1)
@@ -1513,13 +1585,14 @@ local function cloneTailFromIndex(startIndex, entryX, entryY)
 	local clone = {}
 
 	for i = index, #trail do
-		local segCopy = copySegmentData(trail[i]) or {}
-		if i == index then
-			segCopy.drawX = entryX or segCopy.drawX
-			segCopy.drawY = entryY or segCopy.drawY
-		end
-		clone[#clone + 1] = segCopy
-	end
+                local segCopy = copySegmentData(trail[i]) or {}
+                if i == index then
+                        local newX = entryX or segCopy.drawX
+                        local newY = entryY or segCopy.drawY
+                        setSegmentDrawPosition(segCopy, newX, newY, true)
+                end
+                clone[#clone + 1] = segCopy
+        end
 
 	return clone
 end
@@ -1722,13 +1795,12 @@ local function trimTrailToSegmentLimit()
                                 crystallizeGluttonsWakeSegments(trail, i + 1, #trail, gluttonsWakeActive)
                                 releaseSegmentRange(trail, i + 1)
 
-                                seg.drawX = tailX
-                                seg.drawY = tailY
+                                setSegmentDrawPosition(seg, tailX, tailY, true)
                                 if not seg.dirX or not seg.dirY then
                                         seg.dirX = direction.x
-					seg.dirY = direction.y
-				end
-				break
+                                        seg.dirY = direction.y
+                                end
+                                break
 			else
 				traveled = traveled + segLen
 				i = i + 1
@@ -2047,8 +2119,7 @@ local function buildInitialTrail()
                 local cx = startX - i * SEGMENT_SPACING * direction.x
                 local cy = startY - i * SEGMENT_SPACING * direction.y
                 local segment = acquireSegment()
-                segment.drawX = cx
-                segment.drawY = cy
+                setSegmentDrawPosition(segment, cx, cy, true)
                 segment.dirX = direction.x
                 segment.dirY = direction.y
                 t[#t + 1] = segment
@@ -2185,13 +2256,12 @@ function Snake:getHead()
 end
 
 function Snake:setHeadPosition(x, y)
-	local head = trail[1]
-	if not head then
-		return
-	end
+        local head = trail[1]
+        if not head then
+                return
+        end
 
-	head.drawX = x
-	head.drawY = y
+        setSegmentDrawPosition(head, x, y, true)
 end
 
 function Snake:translate(dx, dy)
@@ -2201,13 +2271,12 @@ function Snake:translate(dx, dy)
 		return
 	end
 
-	for i = 1, #trail do
-		local seg = trail[i]
-		if seg then
-			seg.drawX = seg.drawX + dx
-			seg.drawY = seg.drawY + dy
-		end
-	end
+        for i = 1, #trail do
+                local seg = trail[i]
+                if seg then
+                        setSegmentDrawPosition(seg, seg.drawX + dx, seg.drawY + dy)
+                end
+        end
 
         if descendingHole then
                 descendingHole.x = (descendingHole.x or 0) + dx
@@ -2272,10 +2341,9 @@ function Snake:beginPortalWarp(params)
 	end
 
 	local head = trail and trail[1]
-	if head then
-		head.drawX = exitX
-		head.drawY = exitY
-	end
+        if head then
+                setSegmentDrawPosition(head, exitX, exitY, true)
+        end
 
         local entrySource = {}
         for i = 1, #entryClone do
@@ -2345,11 +2413,17 @@ function Snake:setDirectionVector(dx, dy)
 end
 
 function Snake:getHeadCell()
-	local hx, hy = self:getHead()
-	if not (hx and hy) then
-		return nil, nil
-	end
-	return toCell(hx, hy)
+        local head = trail and trail[1]
+        if head then
+                return getSegmentCell(head)
+        end
+
+        local hx, hy = self:getHead()
+        if hx and hy then
+                return toCell(hx, hy)
+        end
+
+        return nil, nil
 end
 
 local SAFE_ZONE_SEEN_RESET = 1000000000
@@ -3024,8 +3098,7 @@ function Snake:update(dt)
                 prevX = prevX + nx * SAMPLE_STEP
                 prevY = prevY + ny * SAMPLE_STEP
                 local segment = acquireSegment()
-                segment.drawX = prevX
-                segment.drawY = prevY
+                setSegmentDrawPosition(segment, prevX, prevY, true)
                 segment.dirX = direction.x
                 segment.dirY = direction.y
                 segment.fruitMarker = nil
@@ -3036,10 +3109,9 @@ function Snake:update(dt)
         end
 
 	-- final correction: put true head at exact new position
-	if trail[1] then
-		trail[1].drawX = newX
-		trail[1].drawY = newY
-	end
+        if trail[1] then
+                setSegmentDrawPosition(trail[1], newX, newY, true)
+        end
 
 	if hole then
 		trimHoleSegments(hole)
@@ -3050,15 +3122,11 @@ function Snake:update(dt)
 	end
 
 	-- tail trimming
-	local tailBeforeX, tailBeforeY = nil, nil
-	local len = #trail
-	if len > 0 then
-		tailBeforeX, tailBeforeY = trail[len].drawX, trail[len].drawY
-	end
-	local tailBeforeCol, tailBeforeRow
-	if tailBeforeX and tailBeforeY then
-		tailBeforeCol, tailBeforeRow = toCell(tailBeforeX, tailBeforeY)
-	end
+        local len = #trail
+        local tailBeforeCol, tailBeforeRow = nil, nil
+        if len > 0 then
+                tailBeforeCol, tailBeforeRow = getSegmentCell(trail[len])
+        end
 
 	local tailAfterCol, tailAfterRow
 
@@ -3087,21 +3155,19 @@ function Snake:update(dt)
                         crystallizeGluttonsWakeSegments(trail, i + 1, #trail, gluttonsWakeActive)
                         releaseSegmentRange(trail, i + 1)
 
-                        trail[i].drawX, trail[i].drawY = tailX, tailY
+                        setSegmentDrawPosition(trail[i], tailX, tailY, true)
                         break
                 else
                         traveled = traveled + segLen
-		end
-	end
+                end
+        end
 
         local lenAfterTrim = #trail
         do
                 lenAfterTrim = #trail
                 if lenAfterTrim >= 1 then
-                        local tailX, tailY = trail[lenAfterTrim].drawX, trail[lenAfterTrim].drawY
-                        if tailX and tailY then
-                                tailAfterCol, tailAfterRow = toCell(tailX, tailY)
-                        end
+                        local tailSeg = trail[lenAfterTrim]
+                        tailAfterCol, tailAfterRow = getSegmentCell(tailSeg)
                 end
         end
 
@@ -3133,7 +3199,7 @@ function Snake:update(dt)
                 if (not overrideCol) or (not overrideRow) then
                         local headSeg = trail and trail[1]
                         if headSeg then
-                                overrideCol, overrideRow = toCell(headSeg.drawX, headSeg.drawY)
+                                overrideCol, overrideRow = getSegmentCell(headSeg)
                         end
                 end
 
@@ -3752,13 +3818,12 @@ function Snake:handleSawBodyCut(context)
 		end
 	end
 
-	local newTail = copySegmentData(previousSegment) or {}
-	newTail.drawX = cutX
-	newTail.drawY = cutY
-	if previousSegment.x and previousSegment.y then
-		newTail.x = cutX
-		newTail.y = cutY
-	end
+        local newTail = copySegmentData(previousSegment) or {}
+        setSegmentDrawPosition(newTail, cutX, cutY, true)
+        if previousSegment.x and previousSegment.y then
+                newTail.x = cutX
+                newTail.y = cutY
+        end
 
 	local dirX, dirY = normalizeDirection(cutX - (previousSegment.drawX or previousSegment.x or cutX), cutY - (previousSegment.drawY or previousSegment.y or cutY))
 	if (dirX == 0 and dirY == 0) and previousSegment then
