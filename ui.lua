@@ -1856,11 +1856,11 @@ function UI:drawFruitSockets()
 			end
 
 			-- dragonfruit glow
-			if fruit.name == "Dragonfruit" then
-				local pulse = 0.5 + 0.5 * sin(time * 6.0)
-				love.graphics.setColor(1, 0, 1, 0.25 * pulse * visibility)
-				love.graphics.circle("line", 0, 0, r + 4 * pulse, 32)
-			end
+                        if fruit.name == "Dragonfruit" then
+                                local pulse = 0.5 + 0.5 * sin(time * 6.0)
+                                love.graphics.setColor(1, 0, 1, 0.35 * pulse * visibility)
+                                love.graphics.circle("line", 0, 0, r + 4 * pulse, 32)
+                        end
 
 			love.graphics.pop()
 		else
