@@ -352,10 +352,6 @@ local directions = {
 	{0, -1},
 }
 
-local DECORATION_PATTERN_WIDTH = 800
-local DECORATION_PATTERN_HEIGHT = 600
-local DECORATION_PATTERN_FILENAME = "generated/arena_floor_pattern.png"
-
 function Arena:rebuildTileDecorations()
 	local config = self._decorationConfig
 	if not config then
@@ -560,7 +556,6 @@ function Arena:rebuildTileDecorations()
 
 	self._tileDecorations = decorations
 
-	self:_buildDecorationPattern(decorations)
 end
 
 function Arena:drawTileDecorations()
@@ -596,120 +591,6 @@ function Arena:drawTileDecorations()
 	end
 
 	love.graphics.pop()
-end
-
-function Arena:_buildDecorationPattern(decorations)
-	if not decorations or #decorations == 0 then
-		self._decorationPatternTexture = nil
-		self._decorationPatternSignature = nil
-		self._decorationPatternPath = nil
-		return
-	end
-
-	local config = self._decorationConfig or {}
-	local floor = config.floor or 0
-	local theme = config.theme or ""
-	local variant = config.variant or ""
-	local seed = config.seed or 0
-	local tileSize = self.tileSize or 24
-
-	local signature = table.concat({
-		floor,
-		theme,
-		variant,
-		seed,
-		#decorations,
-		tileSize,
-		DECORATION_PATTERN_WIDTH,
-		DECORATION_PATTERN_HEIGHT,
-	}, ":")
-
-	if self._decorationPatternSignature == signature then
-		return
-	end
-
-	local canvasWidth = DECORATION_PATTERN_WIDTH
-	local canvasHeight = DECORATION_PATTERN_HEIGHT
-	local canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
-
-	love.graphics.push("all")
-	love.graphics.setCanvas(canvas)
-	love.graphics.clear(0, 0, 0, 0)
-	love.graphics.setBlendMode("alpha")
-	love.graphics.setColor(1, 1, 1, 1)
-
-	local hasDecorations = false
-
-	for i = 1, #decorations do
-		local deco = decorations[i]
-		local w = deco.w or 0
-		local h = deco.h or deco.w or 0
-		if w > 0 and h > 0 then
-			hasDecorations = true
-		end
-	end
-
-	if not hasDecorations then
-		love.graphics.setCanvas()
-		love.graphics.pop()
-		canvas:release()
-		self._decorationPatternTexture = nil
-		self._decorationPatternSignature = nil
-		self._decorationPatternPath = nil
-		return
-	end
-
-	local cols = self.cols or 0
-	local rows = self.rows or 0
-	local layoutWidth = cols * tileSize
-	local layoutHeight = rows * tileSize
-
-	if layoutWidth <= 0 or layoutHeight <= 0 then
-		love.graphics.setCanvas()
-		love.graphics.pop()
-		canvas:release()
-		self._decorationPatternTexture = nil
-		self._decorationPatternSignature = nil
-		self._decorationPatternPath = nil
-		return
-	end
-
-	local offsetX = max(0, (canvasWidth - layoutWidth) * 0.5)
-	local offsetY = max(0, (canvasHeight - layoutHeight) * 0.5)
-
-	for i = 1, #decorations do
-		local deco = decorations[i]
-		local w = deco.w or 0
-		local h = deco.h or deco.w or 0
-		if w > 0 and h > 0 then
-			local baseX = (deco.col - 1) * tileSize + (deco.x or 0)
-			local baseY = (deco.row - 1) * tileSize + (deco.y or 0)
-			local x = offsetX + baseX
-			local y = offsetY + baseY
-			local radius = deco.radius or 0
-
-			love.graphics.setColor(1, 1, 1, 1)
-			love.graphics.rectangle("fill", x, y, w, h, radius, radius)
-		end
-	end
-
-	love.graphics.setCanvas()
-	love.graphics.pop()
-
-	local imageData = canvas:newImageData()
-
-	love.filesystem.createDirectory("generated")
-	imageData:encode("png", DECORATION_PATTERN_FILENAME)
-
-	local texture = love.graphics.newImage(imageData)
-	texture:setFilter("linear", "linear")
-	texture:setWrap("repeat", "repeat")
-
-	self._decorationPatternTexture = texture
-	self._decorationPatternSignature = signature
-	self._decorationPatternPath = DECORATION_PATTERN_FILENAME
-
-	canvas:release()
 end
 
 function Arena:_ensureArenaNoiseTexture()
