@@ -1065,10 +1065,30 @@ registerEffect({
         configure = function(effect, palette)
                 local shader = effect.shader
 
-                local top = getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor)
-                local bottom = getColorComponents(palette and (palette.deepColor or palette.shadowColor), {0.05, 0.06, 0.08, 1})
-                local warm = getColorComponents(palette and palette.warmAccent, {0.98, 0.71, 0.45, 1})
-                local tint = getColorComponents(palette and (palette.accentColor or palette.highlightColor), Theme.accentTextColor)
+                local function liftLuminance(color, percent)
+                        local r, g, b, a = color[1], color[2], color[3], color[4]
+                        local luminance = r * 0.2126 + g * 0.7152 + b * 0.0722
+
+                        if luminance <= 0 then
+                                return {r, g, b, a}
+                        end
+
+                        local target = min(luminance * (1 + percent), 1)
+                        local scale = target / luminance
+
+                        return {
+                                min(r * scale, 1),
+                                min(g * scale, 1),
+                                min(b * scale, 1),
+                                a,
+                        }
+                end
+
+                local luminanceLift = 0.05
+                local top = liftLuminance(getColorComponents(palette and (palette.bgColor or palette.baseColor), Theme.bgColor), luminanceLift)
+                local bottom = liftLuminance(getColorComponents(palette and (palette.deepColor or palette.shadowColor), {0.05, 0.06, 0.08, 1}), luminanceLift)
+                local warm = liftLuminance(getColorComponents(palette and palette.warmAccent, {0.98, 0.71, 0.45, 1}), luminanceLift)
+                local tint = liftLuminance(getColorComponents(palette and (palette.accentColor or palette.highlightColor), Theme.accentTextColor), luminanceLift)
 
                 sendColor(shader, "topColor", top)
                 sendColor(shader, "bottomColor", bottom)
