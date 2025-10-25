@@ -24,6 +24,7 @@ local remove = table.remove
 local GameOver = {isVictory = false}
 
 local ANALOG_DEADZONE = 0.3
+local XP_RING_SIZE_BOOST = 30
 
 local function pickDeathMessage(cause)
 	local deathTable = Localization:getTable("gameover.deaths") or {}
@@ -44,6 +45,7 @@ local fontBadge
 local fontProgressTitle
 local fontProgressValue
 local fontProgressSmall
+local fontProgressLabel
 local stats = {}
 local buttonList = ButtonList.new()
 local analogAxisDirections = {horizontal = nil, vertical = nil}
@@ -203,6 +205,7 @@ local function measureXpPanelHeight(self, width, celebrationCount)
 
         local levelHeight = fontProgressValue and fontProgressValue:getHeight() or 0
         local smallHeight = fontProgressSmall and fontProgressSmall:getHeight() or 0
+        local labelHeight = (fontProgressLabel and fontProgressLabel:getHeight()) or smallHeight
 
         local height = 18
         height = height + 16 + levelHeight
@@ -212,10 +215,11 @@ local function measureXpPanelHeight(self, width, celebrationCount)
         local baseMaxRadius = max(48, min(74, (width / 2) - 24))
         local scaledMaxRadius = baseMaxRadius * 1.2
         local ringThickness = max(14, min(24, scaledMaxRadius * 0.42))
-        local ringRadius = max(32, scaledMaxRadius - ringThickness * 0.25)
+        local baseRingRadius = max(32, scaledMaxRadius - ringThickness * 0.25)
+        local ringRadius = baseRingRadius + (XP_RING_SIZE_BOOST or 0)
         local outerRadius = ringRadius + ringThickness * 0.45
 
-	height = height + ringRadius + outerRadius
+        height = height + ringRadius + outerRadius
 	height = height + 18
 
 	local breakdown = (self.progression and self.progression.breakdown) or {}
@@ -228,10 +232,10 @@ local function measureXpPanelHeight(self, width, celebrationCount)
 		height = height + smallHeight + 6
 	end
 
-	height = height + smallHeight
-	height = height + 4
-	height = height + smallHeight
-	height = height + 16
+        height = height + labelHeight
+        height = height + 4
+        height = height + labelHeight
+        height = height + 16
 
 	local count = max(0, celebrationCount or 0)
 	if count > 0 then
@@ -867,9 +871,10 @@ function GameOver:updateLayoutMetrics()
         local messageHeight = messageLines * fontMessage:getHeight()
 	local messagePanelHeight = floor(messageHeight + sectionPadding * 2 + 0.5)
 
-	local scoreHeaderHeight = fontProgressSmall:getHeight()
-	local scoreNumberHeight = (fontScoreValue or fontScore):getHeight()
-	local scorePanelHeight = sectionPadding * 2 + scoreHeaderHeight + innerSpacing + scoreNumberHeight
+        local scoreLabelFont = fontProgressLabel or fontProgressSmall
+        local scoreHeaderHeight = (scoreLabelFont and scoreLabelFont:getHeight()) or 0
+        local scoreNumberHeight = (fontScoreValue or fontScore):getHeight()
+        local scorePanelHeight = sectionPadding * 2 + scoreHeaderHeight + innerSpacing + scoreNumberHeight
 	scorePanelHeight = floor(scorePanelHeight + 0.5)
 	local achievementsList = self.achievementsEarned or {}
 
@@ -1276,6 +1281,7 @@ function GameOver:enter(data)
         fontProgressTitle = UI.fonts.heading or UI.fonts.subtitle
         fontProgressValue = UI.fonts.display or UI.fonts.title
         fontProgressSmall = UI.fonts.caption or UI.fonts.body
+        fontProgressLabel = UI.fonts.body or UI.fonts.prompt or fontProgressSmall
 
 	-- Merge default stats with provided stats
 	stats = {
@@ -1589,8 +1595,10 @@ local function drawXpSection(self, x, y, width)
         local baseMaxRadius = max(48, min(74, (width / 2) - 24))
         local scaledMaxRadius = baseMaxRadius * 1.2
         local ringThickness = max(14, min(24, scaledMaxRadius * 0.42))
-        local ringRadius = max(32, scaledMaxRadius - ringThickness * 0.25)
-        local innerRadius = max(32, ringRadius - ringThickness * 0.6)
+        local sizeBoost = XP_RING_SIZE_BOOST or 0
+        local baseRingRadius = max(32, scaledMaxRadius - ringThickness * 0.25)
+        local ringRadius = baseRingRadius + sizeBoost
+        local innerRadius = max(32, baseRingRadius - ringThickness * 0.6) + sizeBoost
         local outerRadius = ringRadius + ringThickness * 0.45
 	local centerY = ringTop + ringRadius
 	local percent = clamp(anim.visualPercent or 0, 0, 1)
@@ -1711,13 +1719,15 @@ local function drawXpSection(self, x, y, width)
 		})
 	end
 
+	local xpLabelFont = fontProgressLabel or fontProgressSmall
+	local xpLabelHeight = (xpLabelFont and xpLabelFont:getHeight()) or 0
 	UI.drawLabel(totalLabel, x, labelY, width, "center", {
-		font = fontProgressSmall,
+		font = xpLabelFont,
 		color = UI.colors.text,
 	})
 
-	labelY = labelY + fontProgressSmall:getHeight() + 4
-	local celebrationStart = labelY + fontProgressSmall:getHeight() + 16
+	labelY = labelY + xpLabelHeight + 4
+	local celebrationStart = labelY + xpLabelHeight + 16
 	drawCelebrationsList(anim, x, celebrationStart, width)
 end
 
@@ -1754,7 +1764,7 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 	local columnWidth = columnCount > 0 and (availableWidth - columnSpacing * max(0, columnCount - 1)) / columnCount or availableWidth
 	columnWidth = max(0, columnWidth)
 
-	local labelFont = fontProgressSmall
+        local labelFont = fontProgressLabel or fontProgressSmall
 	local valueFont = fontScoreValue or fontScore
 	local labelY = y + sectionPadding
 	local valueY = labelY + labelFont:getHeight() + innerSpacing
