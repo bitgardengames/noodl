@@ -1214,9 +1214,10 @@ function GameOver:updateButtonLayout()
         end
 
         local _, startY = self:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
-	local defs = defaultButtonLayout(sw, sh, buttonDefs, startY)
+        startY = max(0, startY - 100)
+        local defs = defaultButtonLayout(sw, sh, buttonDefs, startY)
 
-	buttonList:reset(defs)
+        buttonList:reset(defs)
 end
 
 local function addCelebration(anim, entry)
