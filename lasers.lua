@@ -717,31 +717,42 @@ function Lasers:applyTimingModifiers()
 end
 
 function Lasers:checkCollision(x, y, w, h)
-	if not LASERS_ENABLED then
-		return nil
-	end
+        if not LASERS_ENABLED then
+                return nil
+        end
 
-	if not (x and y and w and h) then
-		return nil
-	end
+        if not (x and y and w and h) then
+                return nil
+        end
 
-	for _, beam in ipairs(emitters) do
-		local bx, by, bw, bh = baseBounds(beam)
-		if bx and rectsOverlap(bx, by, bw, bh, x, y, w, h) then
-			beam.flashTimer = max(beam.flashTimer or 0, 1)
-			return beam
-		end
+        local snakeWidth = max(0, w)
+        local snakeHeight = max(0, h)
+        if snakeWidth == 0 or snakeHeight == 0 then
+                return nil
+        end
 
-		if beam.state == "firing" and beam.beamRect then
-			local rx, ry, rw, rh = beam.beamRect[1], beam.beamRect[2], beam.beamRect[3], beam.beamRect[4]
-			if rw and rh and rw > 0 and rh > 0 and rectsOverlap(rx, ry, rw, rh, x, y, w, h) then
-				beam.flashTimer = max(beam.flashTimer or 0, 1)
-				return beam
-			end
-		end
-	end
+        local halfW = snakeWidth * 0.5
+        local halfH = snakeHeight * 0.5
+        local snakeX = x - halfW
+        local snakeY = y - halfH
 
-	return nil
+        for _, beam in ipairs(emitters) do
+                local bx, by, bw, bh = baseBounds(beam)
+                if bx and rectsOverlap(bx, by, bw, bh, snakeX, snakeY, snakeWidth, snakeHeight) then
+                        beam.flashTimer = max(beam.flashTimer or 0, 1)
+                        return beam
+                end
+
+                if beam.state == "firing" and beam.beamRect then
+                        local rx, ry, rw, rh = beam.beamRect[1], beam.beamRect[2], beam.beamRect[3], beam.beamRect[4]
+                        if rw and rh and rw > 0 and rh > 0 and rectsOverlap(rx, ry, rw, rh, snakeX, snakeY, snakeWidth, snakeHeight) then
+                                beam.flashTimer = max(beam.flashTimer or 0, 1)
+                                return beam
+                        end
+                end
+        end
+
+        return nil
 end
 
 local function drawBurnMark(beam)
