@@ -859,16 +859,6 @@ local coordsCacheFrame = setmetatable({}, { __mode = "k" })
 local currentCoordsFrame = 0
 local emptyCoords = {}
 
-local function trimBuffer(buffer, count)
-        for i = #buffer, count + 1, -1 do
-                buffer[i] = nil
-        end
-end
-
-local zephyrSlipstreamPointBuffers = {}
-local stormchaserBoltBuffer = {}
-local eventHorizonPathBuffer = {}
-
 local STRAIGHT_EPSILON = 1e-4
 
 local function nearlyEqual(a, b)
@@ -1451,22 +1441,15 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
     local time = data.time or FrameClock:get()
 	local stride = max(1, floor(#trail / (4 + stacks * 2)))
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        local steps = 6
-        local points = zephyrSlipstreamPointBuffers[steps]
-        if not points then
-                points = {}
-                zephyrSlipstreamPointBuffers[steps] = points
-        end
-
-        for i = 1, #trail - stride do
-                local seg = trail[i]
-                local nextSeg = trail[i + stride]
-                local x1, y1 = ptXY(seg)
-                local x2, y2 = ptXY(nextSeg)
-                if x1 and y1 and x2 and y2 then
+	for i = 1, #trail - stride do
+		local seg = trail[i]
+		local nextSeg = trail[i + stride]
+		local x1, y1 = ptXY(seg)
+		local x2, y2 = ptXY(nextSeg)
+		if x1 and y1 and x2 and y2 then
 			local dirX, dirY = x2 - x1, y2 - y1
 			local len = sqrt(dirX * dirX + dirY * dirY)
 			if len < 1e-4 then
@@ -1482,27 +1465,24 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 			local ctrlX = (x1 + x2) * 0.5 + perpX * sway
 			local ctrlY = (y1 + y2) * 0.5 + perpY * sway
 
-                        local pointCount = 0
-                        for step = 0, steps do
-                                local t = step / steps
-                                local inv = 1 - t
-                                local bx = inv * inv * x1 + 2 * inv * t * ctrlX + t * t * x2
-                                local by = inv * inv * y1 + 2 * inv * t * ctrlY + t * t * y2
-                                local peak = 1 - abs(0.5 - t) * 2
-                                bx = bx + perpX * crest * peak * 0.8
-                                by = by + perpY * crest * peak * 0.8
-                                pointCount = pointCount + 1
-                                points[pointCount] = bx
-                                pointCount = pointCount + 1
-                                points[pointCount] = by
-                        end
+			local steps = 6
+			local points = {}
+			for step = 0, steps do
+				local t = step / steps
+				local inv = 1 - t
+				local bx = inv * inv * x1 + 2 * inv * t * ctrlX + t * t * x2
+				local by = inv * inv * y1 + 2 * inv * t * ctrlY + t * t * y2
+				local peak = 1 - abs(0.5 - t) * 2
+				bx = bx + perpX * crest * peak * 0.8
+				by = by + perpY * crest * peak * 0.8
+				points[#points + 1] = bx
+				points[#points + 1] = by
+			end
 
-                        trimBuffer(points, pointCount)
-
-                        local fade = 1 - progress * 0.7
-                        love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
-                        love.graphics.setLineWidth(1.5 + intensity * 1.2)
-                        love.graphics.line(points)
+			local fade = 1 - progress * 0.7
+			love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
+			love.graphics.setLineWidth(1.5 + intensity * 1.2)
+			love.graphics.line(points)
 
 			love.graphics.setColor(0.92, 0.98, 1.0, (0.08 + 0.18 * intensity) * fade)
 			love.graphics.circle("fill", x2, y2, SEGMENT_SIZE * 0.14, 12)
@@ -1594,33 +1574,22 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 			end
 			local perpX, perpY = -dirY, dirX
 
-                        local bolt = stormchaserBoltBuffer
-                        local boltCount = 0
-                        boltCount = boltCount + 1
-                        bolt[boltCount] = x1
-                        boltCount = boltCount + 1
-                        bolt[boltCount] = y1
-                        local segments = 3
-                        for segIdx = 1, segments do
-                                local t = segIdx / (segments + 1)
-                                local offset = sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
-                                local px = x1 + dirX * len * t + perpX * offset
-                                local py = y1 + dirY * len * t + perpY * offset
-                                boltCount = boltCount + 1
-                                bolt[boltCount] = px
-                                boltCount = boltCount + 1
-                                bolt[boltCount] = py
-                        end
-                        boltCount = boltCount + 1
-                        bolt[boltCount] = x2
-                        boltCount = boltCount + 1
-                        bolt[boltCount] = y2
+			local bolt = {x1, y1}
+			local segments = 3
+			for segIdx = 1, segments do
+				local t = segIdx / (segments + 1)
+				local offset = sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
+				local px = x1 + dirX * len * t + perpX * offset
+				local py = y1 + dirY * len * t + perpY * offset
+				bolt[#bolt + 1] = px
+				bolt[#bolt + 1] = py
+			end
+			bolt[#bolt + 1] = x2
+			bolt[#bolt + 1] = y2
 
-                        trimBuffer(bolt, boltCount)
-
-                        love.graphics.setColor(0.32, 0.68, 1.0, 0.2 + 0.32 * intensity)
-                        love.graphics.setLineWidth(2.2 + intensity * 1.2)
-                        love.graphics.line(bolt)
+			love.graphics.setColor(0.32, 0.68, 1.0, 0.2 + 0.32 * intensity)
+			love.graphics.setLineWidth(2.2 + intensity * 1.2)
+			love.graphics.line(bolt)
 
 			local cx = (x1 + x2) * 0.5
 			local cy = (y1 + y2) * 0.5
@@ -1759,29 +1728,24 @@ local function drawChronospiralWake(trail, SEGMENT_SIZE, data)
 		end
 	end
 
-        local coords = eventHorizonPathBuffer
-        local coordCount = 0
-        local pathStep = max(1, floor(#trail / 24))
-        local jitterScale = SEGMENT_SIZE * 0.2 * intensity
-        for i = 1, #trail, pathStep do
-                local seg = trail[i]
-                local px, py = ptXY(seg)
-                if px and py then
-                        local jitter = sin(spin * 2.0 + i * 0.33) * jitterScale
-                        coordCount = coordCount + 1
-                        coords[coordCount] = px + jitter
-                        coordCount = coordCount + 1
-                        coords[coordCount] = py - jitter * 0.4
-                end
-        end
+	local coords = {}
+	local pathStep = max(1, floor(#trail / 24))
+	local jitterScale = SEGMENT_SIZE * 0.2 * intensity
+	for i = 1, #trail, pathStep do
+		local seg = trail[i]
+		local px, py = ptXY(seg)
+		if px and py then
+			local jitter = sin(spin * 2.0 + i * 0.33) * jitterScale
+			coords[#coords + 1] = px + jitter
+			coords[#coords + 1] = py - jitter * 0.4
+		end
+	end
 
-        trimBuffer(coords, coordCount)
-
-        if coordCount >= 4 then
-                love.graphics.setColor(0.52, 0.86, 1.0, 0.1 + 0.18 * intensity)
-                love.graphics.setLineWidth(SEGMENT_SIZE * (0.12 + 0.05 * intensity))
-                love.graphics.line(coords)
-        end
+	if #coords >= 4 then
+		love.graphics.setColor(0.52, 0.86, 1.0, 0.1 + 0.18 * intensity)
+		love.graphics.setLineWidth(SEGMENT_SIZE * (0.12 + 0.05 * intensity))
+		love.graphics.line(coords)
+	end
 
 	love.graphics.pop()
 end

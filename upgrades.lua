@@ -1827,7 +1827,7 @@ local pool = {
                 nameKey = "upgrades.subduction_array.name",
                 descKey = "upgrades.subduction_array.description",
                 rarity = "uncommon",
-		tags = {"hazard"},
+		tags = {"defense"},
                 onAcquire = function(state)
                         if state and state.effects then
                                 state.effects.sawSinkDuration = (state.effects.sawSinkDuration or 0) + SUBDUCTION_ARRAY_SINK_DURATION
