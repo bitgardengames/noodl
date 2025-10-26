@@ -25,7 +25,7 @@ local remove = table.remove
 local GameOver = {isVictory = false}
 
 local ANALOG_DEADZONE = 0.3
-local XP_RING_SIZE_BOOST = 30
+local XP_RING_SIZE_BOOST = 16
 
 local function pickDeathMessage(cause)
 	local deathTable = Localization:getTable("gameover.deaths") or {}
@@ -210,15 +210,14 @@ local function measureXpPanelHeight(self, width, celebrationCount)
 
         local height = 18
         height = height + 16 + levelHeight
-        height = height + 6 + smallHeight
         height = height + 18
 
-        local baseMaxRadius = max(56, min(90, (width / 2) - 18))
-        local scaledMaxRadius = baseMaxRadius * 1.2
-        local ringThickness = max(18, min(30, scaledMaxRadius * 0.46))
-        local baseRingRadius = max(36, scaledMaxRadius - ringThickness * 0.22)
+        local baseMaxRadius = max(52, min(84, (width / 2) - 18))
+        local scaledMaxRadius = baseMaxRadius * 1.08
+        local ringThickness = max(16, min(26, scaledMaxRadius * 0.42))
+        local baseRingRadius = max(32, scaledMaxRadius - ringThickness * 0.24)
         local ringRadius = baseRingRadius + (XP_RING_SIZE_BOOST or 0)
-        local outerRadius = ringRadius + ringThickness * 0.45
+        local outerRadius = ringRadius + ringThickness * 0.4
 
         height = height + ringRadius + outerRadius
 	height = height + 18
@@ -1281,10 +1280,10 @@ function GameOver:enter(data)
 	configureBackgroundEffect()
 
 	fontTitle = UI.fonts.display or UI.fonts.title
-	fontScore = UI.fonts.title or UI.fonts.display
-	fontScoreValue = UI.fonts.display or UI.fonts.title or UI.fonts.heading
-	fontSmall = UI.fonts.caption or UI.fonts.body
-	fontMessage = UI.fonts.subtitle or UI.fonts.prompt or fontSmall
+        fontScore = UI.fonts.heading or UI.fonts.title or UI.fonts.display
+        fontScoreValue = UI.fonts.heading or UI.fonts.title or UI.fonts.subtitle
+        fontSmall = UI.fonts.caption or UI.fonts.body
+        fontMessage = UI.fonts.body or UI.fonts.prompt or fontSmall
 	fontBadge = UI.fonts.badge or UI.fonts.button
 	fontProgressTitle = UI.fonts.heading or UI.fonts.subtitle
 	fontProgressValue = UI.fonts.display or UI.fonts.title
@@ -1559,16 +1558,17 @@ local function drawCelebrationsList(anim, x, startY, width)
 end
 
 local function drawXpSection(self, x, y, width)
-	local anim = self.progressionAnimation
-	if not anim then
-		return
-	end
+        local anim = self.progressionAnimation
+        if not anim then
+                return
+        end
 
-	local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
-	local baseHeight = self.baseXpSectionHeight or measureXpPanelHeight(self, width, 0)
-	local targetHeight = measureXpPanelHeight(self, width, celebrationCount)
-	self.baseXpSectionHeight = self.baseXpSectionHeight or baseHeight
-	local animatedHeight = self.xpSectionHeight or targetHeight
+        local centerX = x + width / 2
+        local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
+        local baseHeight = self.baseXpSectionHeight or measureXpPanelHeight(self, width, 0)
+        local targetHeight = measureXpPanelHeight(self, width, celebrationCount)
+        self.baseXpSectionHeight = self.baseXpSectionHeight or baseHeight
+        local animatedHeight = self.xpSectionHeight or targetHeight
 	local height = max(160, baseHeight, targetHeight, animatedHeight)
         local headerY = y + 18
 
@@ -1576,41 +1576,29 @@ local function drawXpSection(self, x, y, width)
         local flash = max(0, min(1, anim.levelFlash or 0))
         local levelY = headerY + 16
 
-	if flash > 0.01 then
-		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
-		love.graphics.setBlendMode("add", "alphamultiply")
-		local centerX = x + width / 2
-		local centerY = levelY + fontProgressValue:getHeight() / 2
-		love.graphics.setColor(levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.24 * flash)
-		love.graphics.circle("fill", centerX, centerY, 48 + flash * 26, 48)
-		love.graphics.setColor(1, 1, 1, 0.12 * flash)
-		love.graphics.circle("line", centerX, centerY, 48 + flash * 18, 48)
-		love.graphics.setBlendMode(prevMode, prevAlphaMode)
-	end
+        if flash > 0.01 then
+                local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+                love.graphics.setBlendMode("add", "alphamultiply")
+                local centerY = levelY + fontProgressValue:getHeight() / 2
+                love.graphics.setColor(levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.24 * flash)
+                love.graphics.circle("fill", centerX, centerY, 48 + flash * 26, 48)
+                love.graphics.setColor(1, 1, 1, 0.12 * flash)
+                love.graphics.circle("line", centerX, centerY, 48 + flash * 18, 48)
+                love.graphics.setBlendMode(prevMode, prevAlphaMode)
+        end
 
-	local gained = max(0, floor((anim.displayedGained or 0) + 0.5))
-	local gainedText = Localization:get("gameover.meta_progress_gain_short", {
-		points = formatXpValue(gained),
-	})
-	local gainedY = levelY + fontProgressValue:getHeight() + 6
-	UI.drawLabel(gainedText, x, gainedY, width, "center", {
-		font = fontProgressSmall,
-		color = UI.colors.mutedText or UI.colors.text,
-	})
-
-        local ringTop = gainedY + fontProgressSmall:getHeight() + 18
-        local centerX = x + width / 2
-        local baseMaxRadius = max(56, min(90, (width / 2) - 18))
-        local scaledMaxRadius = baseMaxRadius * 1.2
-        local ringThickness = max(18, min(30, scaledMaxRadius * 0.46))
+        local ringTop = levelY + fontProgressValue:getHeight() + 18
+        local baseMaxRadius = max(52, min(84, (width / 2) - 18))
+        local scaledMaxRadius = baseMaxRadius * 1.08
+        local ringThickness = max(16, min(26, scaledMaxRadius * 0.42))
         local sizeBoost = XP_RING_SIZE_BOOST or 0
-        local baseRingRadius = max(36, scaledMaxRadius - ringThickness * 0.22)
+        local baseRingRadius = max(32, scaledMaxRadius - ringThickness * 0.24)
         local ringRadius = baseRingRadius + sizeBoost
-        local innerRadius = max(32, baseRingRadius - ringThickness * 0.55) + sizeBoost
-        local outerRadius = ringRadius + ringThickness * 0.45
-	local centerY = ringTop + ringRadius
-	local percent = clamp(anim.visualPercent or 0, 0, 1)
-	local pulse = clamp(anim.barPulse or 0, 0, 1)
+        local innerRadius = max(28, baseRingRadius - ringThickness * 0.52) + sizeBoost
+        local outerRadius = ringRadius + ringThickness * 0.4
+        local centerY = ringTop + ringRadius
+        local percent = clamp(anim.visualPercent or 0, 0, 1)
+        local pulse = clamp(anim.barPulse or 0, 0, 1)
 
 	anim.barMetrics = anim.barMetrics or {}
 	anim.barMetrics.style = "radial"
@@ -1927,14 +1915,14 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 	local xpHeight = self.xpPanelHeight or 0
 	local xpLayout = self.xpLayout or {}
 
-	if xpHeight > 0 then
-		currentY = currentY + sectionSpacing
-		local xpWidth = max(0, min(primaryWidth, xpLayout.width or primaryWidth))
-		local offset = xpLayout.offset or 0
-		local xpX = primaryX + offset
-		drawXpSection(self, xpX, currentY, xpWidth)
-		currentY = currentY + xpHeight
-	end
+        if xpHeight > 0 then
+                currentY = currentY + sectionSpacing
+                local xpWidth = max(0, min(primaryWidth, xpLayout.width or primaryWidth))
+                local sw = select(1, Screen:get())
+                local xpX = floor((sw - xpWidth) / 2 + 0.5)
+                drawXpSection(self, xpX, currentY, xpWidth)
+                currentY = currentY + xpHeight
+        end
 
 	local layout = self.summarySectionLayout or {}
 	local entries = layout.entries or {}
