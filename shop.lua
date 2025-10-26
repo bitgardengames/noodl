@@ -7,6 +7,7 @@ local Theme = require("theme")
 local Shaders = require("shaders")
 local Floors = require("floors")
 local Timer = require("timer")
+local UpgradeHelpers = require("upgradehelpers")
 local abs = math.abs
 local ceil = math.ceil
 local cos = math.cos
@@ -22,12 +23,330 @@ local unpack = unpack
 
 local Shop = {}
 
+local function copyColor(color, fallback)
+        local reference = color or fallback or {1, 1, 1, 1}
+        return {reference[1] or 1, reference[2] or 1, reference[3] or 1, reference[4] or 1}
+end
+
 local ANALOG_DEADZONE = 0.3
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local BACKGROUND_EFFECT_TYPE = "shopGlimmer"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
+
+local rarityRank = {
+        common = 1,
+        uncommon = 2,
+        rare = 3,
+        epic = 4,
+        legendary = 5,
+}
+
+local rarityPromotions = {
+        common = "uncommon",
+        uncommon = "rare",
+        rare = "epic",
+        epic = "legendary",
+}
+
+local function getRarityLabel(rarity)
+        if not rarity then return nil end
+
+        local definition = UpgradeHelpers.rarities and UpgradeHelpers.rarities[rarity]
+        if not definition then
+                return nil
+        end
+
+        if definition.labelKey then
+                return Localization:get(definition.labelKey)
+        end
+
+        return nil
+end
+
+local function appendCardNote(card, note)
+        if not card or not note or note == "" then
+                return
+        end
+
+        if card.desc and card.desc ~= "" then
+                card.desc = string.format("%s\n\n%s", card.desc, note)
+        else
+                card.desc = note
+        end
+end
+
+local function promoteCardRarity(card)
+        if not card then return false end
+
+        local rarity = card.rarity
+        local upgraded = rarityPromotions[rarity]
+        if not upgraded then
+                return false
+        end
+
+        card.rarity = upgraded
+        local definition = UpgradeHelpers.rarities and UpgradeHelpers.rarities[upgraded]
+        if definition then
+                card.rarityColor = copyColor(definition.color)
+        end
+        card.rarityLabel = getRarityLabel(upgraded) or card.rarityLabel
+
+        return true
+end
+
+local function getPaletteBrightness(palette)
+        if not palette or not palette.bgColor then
+                return 0.4
+        end
+
+        local color = palette.bgColor
+        local r = color[1] or 0
+        local g = color[2] or 0
+        local b = color[3] or 0
+        return r * 0.2126 + g * 0.7152 + b * 0.0722
+end
+
+local vendorRotation = {
+        {
+                id = "gilded_broker",
+                name = "Gilded Broker",
+                note = "The Gilded Broker polishes one offering until it gleams.",
+                accent = {1.0, 0.84, 0.38, 1},
+                apply = function(self, cards)
+                        local lowestIndex
+                        local lowestRank
+                        for index, card in ipairs(cards) do
+                                if card and card.upgrade then
+                                        local rank = rarityRank[card.rarity or "common"] or 0
+                                        if not lowestRank or rank < lowestRank then
+                                                lowestRank = rank
+                                                lowestIndex = index
+                                        end
+                                end
+                        end
+
+                        if lowestIndex then
+                                local target = cards[lowestIndex]
+                                if promoteCardRarity(target) then
+                                        appendCardNote(target, self.note)
+                                end
+                        end
+                end,
+        },
+        {
+                id = "clockwork_tinker",
+                name = "Clockwork Tinker",
+                note = "The Clockwork Tinker neatly reorders the display by rarity.",
+                accent = {0.58, 0.78, 1.0, 1},
+                apply = function(self, cards)
+                        table.sort(cards, function(a, b)
+                                if not a or not b then
+                                        return false
+                                end
+                                local ar = rarityRank[a.rarity or "common"] or 0
+                                local br = rarityRank[b.rarity or "common"] or 0
+                                if ar == br then
+                                        return (a.name or "") < (b.name or "")
+                                end
+                                return ar > br
+                        end)
+                        if cards[1] then
+                                appendCardNote(cards[1], self.note)
+                        end
+                end,
+        },
+        {
+                id = "witch_of_spores",
+                name = "Witch of Spores",
+                note = "The Witch of Spores leaves a lingering hex among the wares.",
+                accent = {0.72, 0.54, 0.86, 1},
+                apply = function(self, _, context)
+                        context.forceCurse = true
+                end,
+        },
+}
+
+local function buildVendorContext(shop, context)
+        context = context or {}
+        context.vendor = nil
+
+        local runState = context.runState
+        local visits = 0
+        if runState and runState.counters then
+                visits = max(0, floor(runState.counters.shopVisits or 0))
+        end
+
+        local metaLevel = max(0, floor(context.metaLevel or 0))
+        local indexSeed = (context.floor or 0) + metaLevel + visits
+        if #vendorRotation <= 0 then
+                return context
+        end
+
+        local vendor = vendorRotation[(indexSeed % #vendorRotation) + 1]
+        context.vendor = vendor
+        shop.currentVendor = vendor
+        return context
+end
+
+local function buildMysteryCard(context)
+        context = context or {}
+        local palette = context.palette
+        local accent = copyColor(palette and (palette.highlightColor or palette.snake or palette.arenaBorder), {0.78, 0.62, 0.94, 1})
+        local metaLevel = max(1, floor(context.metaLevel or 1))
+        local floorName = context.floorName or string.format("Floor %d", context.floor or 1)
+        local hint = string.format("Contents echo meta level %d and %s's mood.", metaLevel, floorName)
+
+        return {
+                id = "shop_mystery_box",
+                name = "Mystery Box",
+                desc = string.format("Open it to claim a surprise upgrade. %s", hint),
+                rarity = "rare",
+                rarityColor = accent,
+                rarityLabel = getRarityLabel("rare") or "Mystery",
+                shopEvent = "mystery",
+        }
+end
+
+local function buildCurseCard(context, curseLevel)
+        context = context or {}
+        local palette = context.palette
+        local accent = copyColor(palette and (palette.arenaBorder or palette.snake), {0.64, 0.32, 0.64, 1})
+        local intensity = max(0, floor(curseLevel or 0))
+        local desc = "A creeping curse promises more wicked wares on the next refresh."
+        if intensity > 0 then
+                desc = string.format("Curse depth %d draws harsher surprises with each acceptance.", intensity)
+        end
+
+        return {
+                id = string.format("shop_curse_%d", intensity),
+                name = intensity > 0 and "Deepening Hex" or "Lingering Curse",
+                desc = desc,
+                rarity = "common",
+                rarityColor = accent,
+                rarityLabel = getRarityLabel("common") or "Curse",
+                shopEvent = "curse",
+                curseLevel = intensity,
+        }
+end
+
+local function applyVendorModifications(shop, cards, context)
+        if not cards or #cards == 0 then
+                return context
+        end
+
+        context = buildVendorContext(shop, context)
+        local vendor = context.vendor
+        if not vendor then
+                shop.currentVendor = nil
+                return context
+        end
+
+        local accent = copyColor(vendor.accent, context.palette and context.palette.snake)
+        for _, card in ipairs(cards) do
+                if card and card.upgrade and not card.vendorAccent then
+                        card.vendorAccent = accent
+                end
+        end
+
+        if vendor.apply then
+                vendor:apply(cards, context)
+        end
+
+        return context
+end
+
+local function injectMysteryBox(shop, cards, context)
+        if not cards or #cards == 0 then
+                return false
+        end
+
+        local metaLevel = max(0, floor(context.metaLevel or 0))
+        local visits = 0
+        local runState = context.runState
+        if runState and runState.counters then
+                visits = max(0, floor(runState.counters.shopVisits or 0))
+        end
+
+        local forceMystery = context.forceMystery == true
+        local chance = 0.12 + metaLevel * 0.02
+        if visits % 5 == 0 then
+                chance = chance + 0.08
+        end
+        if forceMystery then
+                chance = 1
+        end
+
+        if love.math.random() >= chance then
+                return false
+        end
+
+        local index = love.math.random(1, #cards)
+        local newCard = buildMysteryCard(context)
+        local replaced = cards[index]
+        if replaced then
+                newCard.replacedCard = replaced
+                newCard.rarity = newCard.rarity or replaced.rarity
+        end
+        cards[index] = newCard
+        shop.lastMysteryIndex = index
+        return true
+end
+
+local function injectCurseCards(shop, cards, context)
+        if not cards or #cards == 0 then
+                return 0
+        end
+
+        local brightness = getPaletteBrightness(context.palette)
+        local baseCurses = max(0, floor(shop.curseLevel or 0))
+        if context.forceCurse then
+                baseCurses = baseCurses + 1
+        end
+        if brightness < 0.28 then
+                baseCurses = baseCurses + 1
+        end
+        if baseCurses <= 0 then
+                return 0
+        end
+
+        local inserted = 0
+        local slots = {}
+        local maxCurse = min(baseCurses, #cards)
+        while inserted < maxCurse do
+                local index = love.math.random(1, #cards)
+                if not slots[index] then
+                        slots[index] = true
+                        cards[index] = buildCurseCard(context, shop.curseLevel or 0)
+                        inserted = inserted + 1
+                end
+        end
+
+        shop.lastCurseCount = inserted
+        return inserted
+end
+
+local function applyDynamicShopEvents(shop, cards, context)
+        context = context or {}
+        context.floor = shop.floor or context.floor
+        context.palette = shop.floorPalette or context.palette
+        local floorData = Floors[shop.floor or 1]
+        context.floorName = floorData and floorData.name or context.floorName
+        context.runState = Upgrades and Upgrades.runState or context.runState
+
+        local metaState = MetaProgression and MetaProgression.getState and MetaProgression:getState()
+        context.metaLevel = metaState and metaState.level or context.metaLevel or 1
+
+        context = applyVendorModifications(shop, cards, context)
+        local insertedCurse = injectCurseCards(shop, cards, context)
+        if insertedCurse > 0 then
+                context.forceMystery = false
+        end
+        injectMysteryBox(shop, cards, context)
+
+        return cards
+end
 
 local function getColorChannels(color, fallback)
 	local reference = color or fallback
@@ -163,23 +482,27 @@ local function handleAnalogAxis(self, axis, value)
 end
 
 function Shop:start(currentFloor)
-	self.floor = currentFloor or 1
-	local floorData = Floors[self.floor]
-	self.floorPalette = floorData and floorData.palette or nil
-	self.shopkeeperLine = nil
-	self.shopkeeperSubline = nil
-	self.selectionHoldDuration = 1.85
-	self.inputMode = nil
-	self.time = 0
-	configureBackgroundEffect(self.floorPalette)
-	self:refreshCards()
+        self.floor = currentFloor or 1
+        local floorData = Floors[self.floor]
+        self.floorPalette = floorData and floorData.palette or nil
+        self.shopkeeperLine = nil
+        self.shopkeeperSubline = nil
+        self.selectionHoldDuration = 1.85
+        self.inputMode = nil
+        self.time = 0
+        self.curseLevel = 0
+        self.currentVendor = nil
+        self.lastMysteryIndex = nil
+        self.lastCurseCount = nil
+        configureBackgroundEffect(self.floorPalette)
+        self:refreshCards()
 end
 
 function Shop:refreshCards(options)
-	options = options or {}
-	local initialDelay = options.initialDelay or 0
+        options = options or {}
+        local initialDelay = options.initialDelay or 0
 
-	self.restocking = nil
+        self.restocking = nil
 	local baseChoices = 3
 	local upgradeBonus = 0
 	if Upgrades.getEffect then
@@ -198,14 +521,22 @@ function Shop:refreshCards(options)
 	self.metaBonusChoices = metaBonus
 	self.extraChoices = extraChoices
 
-	local cardCount = baseChoices + extraChoices
-	self.totalChoices = cardCount
-	self.cards = Upgrades:getRandom(cardCount, {floor = self.floor}) or {}
-	self.cardStates = {}
-	self.selected = nil
-	self.selectedIndex = nil
-	self.selectionProgress = 0
-	self.selectionTimer = 0
+        local cardCount = baseChoices + extraChoices
+        self.totalChoices = cardCount
+
+        local runState = Upgrades and Upgrades.runState
+        if runState and runState.counters then
+                runState.counters.shopVisits = (runState.counters.shopVisits or 0) + 1
+        end
+
+        self.cards = Upgrades:getRandom(cardCount, {floor = self.floor}) or {}
+        applyDynamicShopEvents(self, self.cards, {runState = runState})
+        self.totalChoices = #self.cards
+        self.cardStates = {}
+        self.selected = nil
+        self.selectedIndex = nil
+        self.selectionProgress = 0
+        self.selectionTimer = 0
 	self.selectionComplete = false
 	self.time = 0
 	self.focusIndex = nil
@@ -950,6 +1281,14 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 
         local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
         local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
+        if card.vendorAccent then
+                borderColor = {
+                        card.vendorAccent[1] or borderColor[1],
+                        card.vendorAccent[2] or borderColor[2],
+                        card.vendorAccent[3] or borderColor[3],
+                        borderColor[4] or rarityBorderAlpha,
+                }
+        end
         local cardRadius = 12
 
         -- Signature drop shadow to give cards lift against the background
@@ -1628,21 +1967,46 @@ end
 Shop.joystickaxis = Shop.gamepadaxis
 
 function Shop:pick(i)
-	if self.restocking then return false end
-	if self.selected then return false end
-	local card = self.cards[i]
-	if not card then return false end
+        if self.restocking then return false end
+        if self.selected then return false end
+        local card = self.cards[i]
+        if not card then return false end
 
-	if card.restockShop then
-		Audio:playSound("shop_card_select")
-		self:beginRestock()
-		return true
-	end
+        if card.restockShop then
+                Audio:playSound("shop_card_select")
+                self:beginRestock()
+                return true
+        end
 
-	Upgrades:acquire(card, {floor = self.floor})
-	self.selected = card
-	self.selectedIndex = i
-	self.selectionTimer = 0
+        if card.shopEvent == "mystery" then
+                local rewardList = Upgrades:getRandom(1, {floor = self.floor})
+                local reward = rewardList and rewardList[1]
+                if reward then
+                        self.cards[i] = reward
+                        if self.currentVendor and self.currentVendor.accent and not reward.vendorAccent then
+                                reward.vendorAccent = copyColor(self.currentVendor.accent, self.floorPalette and self.floorPalette.snake)
+                        end
+                        card = reward
+                else
+                        Audio:playSound("shop_card_select")
+                        self:beginRestock()
+                        return true
+                end
+        elseif card.shopEvent == "curse" then
+                self.curseLevel = (self.curseLevel or 0) + 1
+                local runState = Upgrades and Upgrades.runState
+                if runState and runState.counters then
+                        runState.counters.shopCurses = (runState.counters.shopCurses or 0) + 1
+                end
+                Audio:playSound("shop_card_select")
+                self:beginRestock()
+                return true
+        end
+
+        Upgrades:acquire(card, {floor = self.floor})
+        self.selected = card
+        self.selectedIndex = i
+        self.selectionTimer = 0
 	self.selectionComplete = false
 
 	local state = self.cardStates and self.cardStates[i]
