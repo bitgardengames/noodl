@@ -4164,8 +4164,4 @@ function Snake:isDeveloperAssistEnabled()
 	return developerAssistEnabled
 end
 
-function Snake:getLength()
-        return segmentCount
-end
-
 return Snake

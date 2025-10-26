@@ -20,10 +20,6 @@ local LASERS_ENABLED = true
 local emitters = {}
 local stallTimer = 0
 
-function Lasers:isEnabled()
-	return LASERS_ENABLED
-end
-
 Lasers.fireDurationMult = 1
 Lasers.fireDurationFlat = 0
 Lasers.chargeDurationMult = 1
