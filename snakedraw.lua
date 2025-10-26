@@ -2,6 +2,7 @@ local Face = require("face")
 local SnakeCosmetics = require("snakecosmetics")
 local ModuleUtil = require("moduleutil")
 local RenderLayers = require("renderlayers")
+local LoveTimer = require("lovetimer")
 
 local abs = math.abs
 local atan = math.atan
@@ -725,7 +726,7 @@ applyOverlay = function(canvas, config, drawX, drawY)
 		return false
 	end
 
-	local time = love.timer.getTime()
+    local time = LoveTimer.getTime()
 
 	local colors = config.colors or {}
         local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor(), nil, overlayPrimaryColor)
@@ -1173,7 +1174,7 @@ local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTi
 	end
 
 	local baseRadius = SEGMENT_SIZE * (0.95 + 0.06 * max(0, (shieldCount or 1) - 1))
-	local time = love.timer.getTime()
+    local time = LoveTimer.getTime()
 
 	local pulse = 1 + 0.08 * sin(time * 6)
 	local alpha = 0.35 + 0.1 * sin(time * 5)
@@ -1264,7 +1265,7 @@ local function drawSpectralHarvestEcho(trail, SEGMENT_SIZE, data)
 	local ready = data.ready or false
 	if intensity <= 0.01 and burst <= 0.01 and echo <= 0.01 and not ready then return end
 
-	local time = data.time or love.timer.getTime()
+    local time = data.time or LoveTimer.getTime()
 	local coverage = min(#trail, 10 + floor((intensity + echo) * 8))
 
 	love.graphics.push("all")
@@ -1332,7 +1333,7 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 	if data.hasBody == false then return end
 
 	local stacks = max(1, data.stacks or 1)
-	local time = data.time or love.timer.getTime()
+    local time = data.time or LoveTimer.getTime()
 	local stride = max(1, floor(#trail / (4 + stacks * 2)))
 
 	love.graphics.push("all")
@@ -1404,7 +1405,7 @@ local function drawEventHorizonSheath(trail, SEGMENT_SIZE, data)
 	local intensity = max(0, data.intensity or 0)
 	if intensity <= 0.01 then return end
 
-	local time = data.time or love.timer.getTime()
+    local time = data.time or LoveTimer.getTime()
 	local spin = data.spin or 0
 	local segmentCount = min(#trail, 10)
 
@@ -1447,7 +1448,7 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 	if intensity <= 0.01 then return end
 
 	local primed = data.primed or false
-	local time = data.time or love.timer.getTime()
+    local time = data.time or LoveTimer.getTime()
 	local stride = max(1, floor(#trail / (6 + intensity * 6)))
 
 	love.graphics.push("all")
@@ -1513,7 +1514,7 @@ local function drawTitanbloodSigils(trail, SEGMENT_SIZE, data)
 	if intensity <= 0.01 then return end
 
 	local stacks = max(1, data.stacks or 1)
-	local time = data.time or love.timer.getTime()
+    local time = data.time or LoveTimer.getTime()
 	local sigilCount = min(#trail - 1, 8 + stacks * 3)
 
 	love.graphics.push("all")
@@ -1708,7 +1709,7 @@ local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
 	local heat = min(1.2, intensity * 0.7 + charges * 0.18 + flare * 0.6)
 	if heat <= 0.02 then return end
 
-	local time = data.time or love.timer.getTime()
+    local time = data.time or LoveTimer.getTime()
 
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
@@ -1800,7 +1801,7 @@ local function drawChronoWardPulse(hx, hy, SEGMENT_SIZE, data)
 	local intensity = max(data.intensity or 0, data.active and 0.3 or 0)
 	if intensity <= 0 then return end
 
-	local now = love.timer.getTime()
+    local now = LoveTimer.getTime()
 	local baseRadius = SEGMENT_SIZE * (1.05 + 0.35 * intensity)
 
 	drawSoftGlow(hx, hy, baseRadius * 1.45, 0.58, 0.86, 1.0, 0.18 + 0.28 * intensity)
@@ -1848,7 +1849,7 @@ local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
 
 	if intensity <= 0 then return end
 
-	local time = love.timer.getTime()
+    local time = LoveTimer.getTime()
 
 	local baseRadius = SEGMENT_SIZE * (0.95 + 0.35 * intensity)
 
@@ -1904,7 +1905,7 @@ local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
 	local readiness = max(0, min(1, data.ready or 0))
 	if intensity <= 0.01 and readiness <= 0.01 then return end
 
-	local time = data.time or love.timer.getTime()
+    local time = data.time or LoveTimer.getTime()
 	local sizeScale = 0.82
 	local baseRadius = SEGMENT_SIZE * sizeScale * (1.05 + 0.28 * readiness + 0.22 * intensity)
 
@@ -1984,7 +1985,7 @@ local function drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, data)
 	if timer < 0 then timer = 0 end
 	local intensity = min(1, timer / duration)
 
-	local time = love.timer.getTime()
+    local time = LoveTimer.getTime()
 
 	local pulse = 0.9 + 0.1 * sin(time * 6)
 	local radius = SEGMENT_SIZE * (0.6 + 0.35 * intensity) * pulse
@@ -2033,7 +2034,7 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 
 	if intensity <= 0 then return end
 
-	local time = love.timer.getTime()
+    local time = LoveTimer.getTime()
 
 	local baseRadius = SEGMENT_SIZE * (0.85 + 0.3 * intensity)
 	drawSoftGlow(hx, hy, baseRadius * (1.35 + 0.25 * intensity), 1, 0.78, 0.32, 0.25 + 0.35 * intensity)

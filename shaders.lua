@@ -1,4 +1,5 @@
 local Theme = require("theme")
+local LoveTimer = require("lovetimer")
 
 local max = math.max
 local min = math.min
@@ -176,7 +177,7 @@ local function drawShader(effect, x, y, w, h, intensity, sendUniforms, drawOptio
 		shader:send("resolution", {w, h})
 	end
 
-	local now = love.timer.getTime()
+    local now = LoveTimer.getTime()
 
 	if shaderHasUniform(shader, "time") then
 		shader:send("time", now)

@@ -36,6 +36,7 @@ local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
 local ModuleUtil = require("moduleutil")
 local RenderLayers = require("renderlayers")
+local LoveTimer = require("lovetimer")
 local ceil = math.ceil
 local floor = math.floor
 local max = math.max
@@ -639,7 +640,7 @@ local function drawAdrenalineGlow(self)
 
 	if glowStrength <= 0 then return end
 
-	local time = love.timer.getTime()
+    local time = LoveTimer.getTime()
 	local pulse = 0.85 + 0.15 * sin(time * 2.25)
 	local easedStrength = 0.6 + glowStrength * 0.4
 	local alpha = 0.18 * easedStrength * pulse
