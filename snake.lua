@@ -1910,24 +1910,10 @@ local function trimTrailToLength(maxLen, gluttonsWakeActive)
         end
 
         if partialIndex and trail[partialIndex] then
-                local seg = trail[partialIndex]
-                local prev = trail[partialIndex - 1]
-                if prev then
-                        local px, py = prev.drawX, prev.drawY
-                        local sx, sy = seg.drawX, seg.drawY
-                        if px and py and sx and sy and partialOriginalLen and partialOriginalLen > 1e-6 then
-                                local ratio = partialLength / partialOriginalLen
-                                local tailX = px + (sx - px) * ratio
-                                local tailY = py + (sy - py) * ratio
-                                setSegmentDrawPosition(seg, tailX, tailY, true)
-                                if not seg.dirX or not seg.dirY then
-                                        seg.dirX = direction.x
-                                        seg.dirY = direction.y
-                                end
-                                setSegmentLengthToPrev(partialIndex, partialLength)
-                        else
-                                setSegmentLengthToPrev(partialIndex, 0)
-                        end
+                if partialOriginalLen and partialOriginalLen > 1e-6 then
+                        setSegmentLengthToPrev(partialIndex, partialLength)
+                else
+                        setSegmentLengthToPrev(partialIndex, 0)
                 end
         end
 
