@@ -489,7 +489,7 @@ registerEffect({
                 vec3 tinted = mix(cyanTone, violetTone, smoothstep(0.0, 1.0, shimmer));
 
                 vec3 col = base;
-                col = mix(col, tinted, modulation + shimmer * (0.10 + intensity * 0.12));
+                col = mix(col, tinted, modulation + shimmer * (0.09 + intensity * 0.11));
 
                 float haze = smoothstep(0.0, 1.0, uv.y);
                 col = mix(col, mix(bottomColor.rgb, accentColor.rgb, 0.1), haze * 0.08);
@@ -505,7 +505,7 @@ registerEffect({
 
                 float vignette = smoothstep(0.35, 0.98, length(centered * vec2(1.2, 1.05)));
                 vec3 vignetteTone = mix(bottomColor.rgb, accentColor.rgb, 0.18);
-                col = mix(col, vignetteTone, vignette * (0.22 + intensity * 0.12));
+                col = mix(col, vignetteTone, vignette * (0.24 + intensity * 0.13));
 
                 vec2 moteUV = uv;
                 moteUV.y = fract(moteUV.y + time * 0.04);
