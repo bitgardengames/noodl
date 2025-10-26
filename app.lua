@@ -12,6 +12,7 @@ local Localization = require("localization")
 local Theme = require("theme")
 local SnakeCosmetics = require("snakecosmetics")
 local InputMode = require("inputmode")
+local LoveTimer = require("lovetimer")
 
 local DEFAULT_BG_COLOR = {0, 0, 0, 1}
 
@@ -106,8 +107,8 @@ function App:draw()
 
 	GameState:draw()
 
-	if Settings.showFPS then
-		local fps = love.timer.getFPS()
+        if Settings.showFPS then
+                local fps = LoveTimer.getFPS()
 		local label = string.format("FPS: %d", fps)
 		local padding = 6
 
