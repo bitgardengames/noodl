@@ -1667,7 +1667,7 @@ local function drawXpSection(self, x, y, width)
 
         local coreColor = GameOver.xpCoreColor or withAlpha(copyColor(levelColor), 0.55)
         love.graphics.setColor(coreColor[1] or 1, coreColor[2] or 1, coreColor[3] or 1, coreColor[4] or 1)
-        love.graphics.circle("fill", centerX, centerY, innerRadius, 64)
+        love.graphics.circle("fill", centerX, centerY, innerRadius - 1, 64)
 
 	drawFruitAnimations(anim)
 
