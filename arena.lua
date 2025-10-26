@@ -328,13 +328,27 @@ function Arena:getTileFromWorld(x, y)
 	return col, row
 end
 
-function Arena:isInside(x, y)
-	local inset = self.tileSize / 2
+local ARENA_BORDER_TOLERANCE = 1.5
 
-	return x >= (self.x + inset) and
-	x <= (self.x + self.width  - inset) and
-	y >= (self.y + inset) and
-	y <= (self.y + self.height - inset)
+function Arena:isInside(x, y)
+        local inset = self.tileSize / 2
+        local tolerance = self.borderTolerance or ARENA_BORDER_TOLERANCE
+        if tolerance and tolerance > 0 then
+                local left = (self.x + inset) - tolerance
+                local right = (self.x + self.width - inset) + tolerance
+                local top = (self.y + inset) - tolerance
+                local bottom = (self.y + self.height - inset) + tolerance
+
+                return x >= left and
+                x <= right and
+                y >= top and
+                y <= bottom
+        end
+
+        return x >= (self.x + inset) and
+        x <= (self.x + self.width  - inset) and
+        y >= (self.y + inset) and
+        y <= (self.y + self.height - inset)
 end
 
 function Arena:setFloorDecorations(floorNum, floorData)
