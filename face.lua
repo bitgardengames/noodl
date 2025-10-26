@@ -1,4 +1,4 @@
-local LoveTimer = require("lovetimer")
+local Timer = require("timer")
 local max = math.max
 
 local Face = {}
@@ -228,7 +228,7 @@ function Face:draw(x, y, scale, options)
 
 	local eyeScale = 1
 	local highlight = 0
-    local time = LoveTimer.getTime()
+    local time = Timer.getTime()
 	if options then
 		eyeScale = max(0.4, options.eyeScale or eyeScale)
 		highlight = max(0, options.highlight or highlight)

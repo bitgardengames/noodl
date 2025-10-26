@@ -11,9 +11,9 @@ end
 function fallbackTimer:sleep()
 end
 
-local LoveTimer = {}
+local Timer = {}
 
-function LoveTimer.setFallback(timer)
+function Timer.setFallback(timer)
         if type(timer) == "table" then
                 if type(timer.getTime) == "function" then
                         fallbackTimer.getTime = function(_, ...)
@@ -40,19 +40,19 @@ local function resolveTimer()
         return fallbackTimer
 end
 
-function LoveTimer.getTime()
+function Timer.getTime()
         local timer = resolveTimer()
         return timer:getTime()
 end
 
-function LoveTimer.getFPS()
+function Timer.getFPS()
         local timer = resolveTimer()
         return timer:getFPS()
 end
 
-function LoveTimer.sleep(duration)
+function Timer.sleep(duration)
         local timer = resolveTimer()
         return timer:sleep(duration)
 end
 
-return LoveTimer
+return Timer
