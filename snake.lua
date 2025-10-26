@@ -51,6 +51,8 @@ local snakeBodyOccupancy = {}
 local recentlyVacatedCells = {}
 local recentlyVacatedCount = 0
 
+local movementNodeBuffer = {}
+
 local function clearRecentlyVacatedCells()
         if recentlyVacatedCount <= 0 then
                 recentlyVacatedCount = 0
@@ -3213,38 +3215,105 @@ function Snake:update(dt)
         end
 
 	-- spatially uniform sampling along the motion path
-        local dx = newX - head.drawX
-        local dy = newY - head.drawY
-        local dist = sqrt(dx * dx + dy * dy)
+        local nodes = movementNodeBuffer
+        local nodeCount = 1
+        local node = nodes[1]
+        if node then
+                node[1] = head.drawX
+                node[2] = head.drawY
+        else
+                nodes[1] = {head.drawX, head.drawY}
+        end
 
-	local nx, ny = 0, 0
-	if dist > 0 then
-		nx, ny = dx / dist, dy / dist
-	end
+        if headCellCount > 0 then
+                for i = 1, headCellCount do
+                        local cell = headCells[i]
+                        local snapX = cell and cell[3]
+                        local snapY = cell and cell[4]
+                        if snapX and snapY then
+                                nodeCount = nodeCount + 1
+                                node = nodes[nodeCount]
+                                if node then
+                                        node[1] = snapX
+                                        node[2] = snapY
+                                else
+                                        nodes[nodeCount] = {snapX, snapY}
+                                end
+                        end
+                end
+        end
 
-        local remaining = dist
+        nodeCount = nodeCount + 1
+        node = nodes[nodeCount]
+        if node then
+                node[1] = newX
+                node[2] = newY
+        else
+                nodes[nodeCount] = {newX, newY}
+        end
+
         local insertedSegments = 0
-        local prevX, prevY = head.drawX, head.drawY
+        local totalTraversed = 0
+        local nextSampleDist = SAMPLE_STEP
+        local prevNode = nodes[1]
+        local prevX, prevY = prevNode[1], prevNode[2]
+        local lastDirX = head.dirX or direction.x
+        local lastDirY = head.dirY or direction.y
 
-        while remaining >= SAMPLE_STEP do
-                prevX = prevX + nx * SAMPLE_STEP
-                prevY = prevY + ny * SAMPLE_STEP
-                local segment = acquireSegment()
-                setSegmentDrawPosition(segment, prevX, prevY, true)
-                segment.dirX = direction.x
-                segment.dirY = direction.y
-                segment.fruitMarker = nil
-                segment.fruitMarkerX = nil
-                segment.fruitMarkerY = nil
-                segment.lengthToPrev = 0
-                insert(trail, 1, segment)
-                insertedSegments = insertedSegments + 1
-                remaining = remaining - SAMPLE_STEP
+        for index = 2, nodeCount do
+                local nextNode = nodes[index]
+                local targetX, targetY = nextNode[1], nextNode[2]
+                local segDX = targetX - prevX
+                local segDY = targetY - prevY
+                local segDistSq = segDX * segDX + segDY * segDY
+                if segDistSq > TILE_COORD_EPSILON then
+                        local segDist = sqrt(segDistSq)
+                        local segDirX = segDX / segDist
+                        local segDirY = segDY / segDist
+                        lastDirX, lastDirY = segDirX, segDirY
+
+                        local segmentStartDist = totalTraversed
+                        local segmentEndDist = totalTraversed + segDist
+
+                        while nextSampleDist <= segmentEndDist + TILE_COORD_EPSILON do
+                                local distanceIntoSegment = nextSampleDist - segmentStartDist
+                                if distanceIntoSegment < 0 then
+                                        distanceIntoSegment = 0
+                                elseif distanceIntoSegment > segDist then
+                                        distanceIntoSegment = segDist
+                                end
+
+                                local sampleX = prevX + segDirX * distanceIntoSegment
+                                local sampleY = prevY + segDirY * distanceIntoSegment
+                                local segment = acquireSegment()
+                                setSegmentDrawPosition(segment, sampleX, sampleY, true)
+                                segment.dirX = segDirX
+                                segment.dirY = segDirY
+                                segment.fruitMarker = nil
+                                segment.fruitMarkerX = nil
+                                segment.fruitMarkerY = nil
+                                segment.lengthToPrev = 0
+                                insert(trail, 1, segment)
+                                insertedSegments = insertedSegments + 1
+                                nextSampleDist = nextSampleDist + SAMPLE_STEP
+                        end
+
+                        totalTraversed = segmentEndDist
+                        prevX, prevY = targetX, targetY
+                else
+                        prevX, prevY = targetX, targetY
+                end
+        end
+
+        for i = nodeCount + 1, #nodes do
+                nodes[i] = nil
         end
 
         -- final correction: put true head at exact new position
         if trail[1] then
                 setSegmentDrawPosition(trail[1], newX, newY, true)
+                trail[1].dirX = lastDirX
+                trail[1].dirY = lastDirY
                 trail[1].lengthToPrev = 0
         end
 
