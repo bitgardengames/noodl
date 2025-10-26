@@ -1651,7 +1651,7 @@ local function drawXpSection(self, x, y, width)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
 	end
 
-	love.graphics.setColor(withAlpha(lightenColor(panelColor, 0.18), 0.94))
+	love.graphics.setColor(0, 0, 0, 0.94)
 	love.graphics.circle("fill", centerX, centerY, innerRadius)
 
 	drawFruitAnimations(anim)
