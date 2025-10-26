@@ -317,17 +317,19 @@ local function withAlpha(color, alpha)
 end
 
 local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
+        local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+        if not effect then
+                backgroundEffect = nil
+                GameOver.xpToneColor = nil
+                return
+        end
 
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
-	local accent = copyColor(Theme.warningColor or {0.92, 0.55, 0.4, 1})
-	local pulse = copyColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
-	local vignette
+        local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+        local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
+        local accent = copyColor(Theme.warningColor or {0.92, 0.55, 0.4, 1})
+        local pulse = copyColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
+        local vignette
+        local toneColor
 
         if GameOver.isVictory then
                 effect.backdropIntensity = min(0.9, (defaultBackdrop or 0.72) + 0.08)
@@ -340,6 +342,10 @@ local function configureBackgroundEffect()
 
                 baseColor = darkenColor(baseColor, 0.08)
                 baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+
+                toneColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or pulse), 0.26)
+                toneColor = desaturateColor(toneColor, 0.22)
+                toneColor[4] = 0.58
 
                 local vignetteColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.accentTextColor or pulse), 0.2)
                 vignetteColor = desaturateColor(vignetteColor, 0.4)
@@ -362,6 +368,10 @@ local function configureBackgroundEffect()
                 baseColor = darkenColor(baseColor, 0.22)
                 baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
+                toneColor = lightenColor(copyColor(coolAccent), 0.14)
+                toneColor = desaturateColor(toneColor, 0.38)
+                toneColor[4] = 0.52
+
                 local vignetteColor = lightenColor(copyColor(coolAccent), 0.04)
                 vignetteColor = desaturateColor(vignetteColor, 0.45)
                 vignette = {
@@ -372,14 +382,15 @@ local function configureBackgroundEffect()
                 }
         end
 
-	Shaders.configure(effect, {
-		bgColor = baseColor,
-		accentColor = accent,
-		pulseColor = pulse,
-	})
+        Shaders.configure(effect, {
+                bgColor = baseColor,
+                accentColor = accent,
+                pulseColor = pulse,
+        })
 
-	effect.vignetteOverlay = vignette
-	backgroundEffect = effect
+        effect.vignetteOverlay = vignette
+        GameOver.xpToneColor = toneColor or copyColor(pulse)
+        backgroundEffect = effect
 end
 
 local function easeOutBack(t)
@@ -1651,13 +1662,23 @@ local function drawXpSection(self, x, y, width)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
 	end
 
-	love.graphics.setColor(0, 0, 0, 0.94)
-	love.graphics.circle("fill", centerX, centerY, innerRadius)
+        love.graphics.setColor(0, 0, 0, 0.94)
+        love.graphics.circle("fill", centerX, centerY, innerRadius)
 
-	drawFruitAnimations(anim)
+        local toneColor = GameOver.xpToneColor or withAlpha(copyColor(levelColor), 0.55)
+        local toneRadius = max(6, innerRadius * 0.7)
+        love.graphics.setColor(toneColor[1] or 1, toneColor[2] or 1, toneColor[3] or 1, toneColor[4] or 1)
+        love.graphics.circle("fill", centerX, centerY, toneRadius, 64)
 
-	love.graphics.setColor(withAlpha(Theme.panelBorder or {0.35, 0.3, 0.5, 1}, 0.85))
-	love.graphics.setLineWidth(2)
+        local coreColor = lightenColor(copyColor(toneColor), 0.32)
+        coreColor[4] = (toneColor[4] or 1) * 0.65
+        love.graphics.setColor(coreColor[1] or 1, coreColor[2] or 1, coreColor[3] or 1, coreColor[4] or 1)
+        love.graphics.circle("fill", centerX, centerY, toneRadius * 0.6, 48)
+
+        drawFruitAnimations(anim)
+
+        love.graphics.setColor(withAlpha(Theme.panelBorder or {0.35, 0.3, 0.5, 1}, 0.85))
+        love.graphics.setLineWidth(2)
 	love.graphics.circle("line", centerX, centerY, innerRadius, 96)
 	love.graphics.setLineWidth(1)
 
