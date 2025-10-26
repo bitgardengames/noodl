@@ -320,7 +320,7 @@ local function configureBackgroundEffect()
         local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
         if not effect then
                 backgroundEffect = nil
-                GameOver.xpToneColor = nil
+                GameOver.xpCoreColor = nil
                 return
         end
 
@@ -329,7 +329,7 @@ local function configureBackgroundEffect()
         local accent = copyColor(Theme.warningColor or {0.92, 0.55, 0.4, 1})
         local pulse = copyColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
         local vignette
-        local toneColor
+        local coreColor
 
         if GameOver.isVictory then
                 effect.backdropIntensity = min(0.9, (defaultBackdrop or 0.72) + 0.08)
@@ -343,9 +343,9 @@ local function configureBackgroundEffect()
                 baseColor = darkenColor(baseColor, 0.08)
                 baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-                toneColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or pulse), 0.26)
-                toneColor = desaturateColor(toneColor, 0.22)
-                toneColor[4] = 0.58
+                coreColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or pulse), 0.26)
+                coreColor = desaturateColor(coreColor, 0.22)
+                coreColor[4] = 0.58
 
                 local vignetteColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.accentTextColor or pulse), 0.2)
                 vignetteColor = desaturateColor(vignetteColor, 0.4)
@@ -368,9 +368,9 @@ local function configureBackgroundEffect()
                 baseColor = darkenColor(baseColor, 0.22)
                 baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-                toneColor = lightenColor(copyColor(coolAccent), 0.14)
-                toneColor = desaturateColor(toneColor, 0.38)
-                toneColor[4] = 0.52
+                coreColor = lightenColor(copyColor(coolAccent), 0.14)
+                coreColor = desaturateColor(coreColor, 0.38)
+                coreColor[4] = 0.52
 
                 local vignetteColor = lightenColor(copyColor(coolAccent), 0.04)
                 vignetteColor = desaturateColor(vignetteColor, 0.45)
@@ -389,7 +389,7 @@ local function configureBackgroundEffect()
         })
 
         effect.vignetteOverlay = vignette
-        GameOver.xpToneColor = toneColor or copyColor(pulse)
+        GameOver.xpCoreColor = coreColor or copyColor(pulse)
         backgroundEffect = effect
 end
 
@@ -1665,10 +1665,9 @@ local function drawXpSection(self, x, y, width)
 	love.graphics.setColor(0, 0, 0, 0.94)
 	love.graphics.circle("fill", centerX, centerY, innerRadius)
 
-	local toneColor = GameOver.xpToneColor or withAlpha(copyColor(levelColor), 0.55)
-	local toneRadius = max(6, innerRadius * 0.7)
-	love.graphics.setColor(toneColor[1] or 1, toneColor[2] or 1, toneColor[3] or 1, toneColor[4] or 1)
-	love.graphics.circle("fill", centerX, centerY, toneRadius, 64)
+        local coreColor = GameOver.xpCoreColor or withAlpha(copyColor(levelColor), 0.55)
+        love.graphics.setColor(coreColor[1] or 1, coreColor[2] or 1, coreColor[3] or 1, coreColor[4] or 1)
+        love.graphics.circle("fill", centerX, centerY, innerRadius, 64)
 
 	drawFruitAnimations(anim)
 
