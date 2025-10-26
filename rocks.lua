@@ -472,17 +472,17 @@ function Rocks:draw()
                 return
         end
 
-        RenderLayers:push("shadows")
-        for _, rock in ipairs(current) do
-                drawRockShadow(rock)
-        end
-        RenderLayers:pop()
+        RenderLayers:withLayer("shadows", function()
+                for _, rock in ipairs(current) do
+                        drawRockShadow(rock)
+                end
+        end)
 
-        RenderLayers:push("main")
-        for _, rock in ipairs(current) do
-                drawRockBody(rock)
-        end
-        RenderLayers:pop()
+        RenderLayers:withLayer("main", function()
+                for _, rock in ipairs(current) do
+                        drawRockBody(rock)
+                end
+        end)
 end
 
 function Rocks:getSpawnChance()
