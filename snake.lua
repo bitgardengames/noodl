@@ -1130,11 +1130,6 @@ end
 -- local speed = Snake:getSpeed()
 -- and then use `speed` for position updates. This gives upgrades an immediate effect.
 
--- helpers
-local function snapToCenter(v)
-	return (floor(v / SEGMENT_SPACING) + 0.5) * SEGMENT_SPACING
-end
-
 local function toCell(x, y)
         if not (x and y) then
                 return nil, nil
