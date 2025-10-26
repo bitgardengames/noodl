@@ -1574,9 +1574,9 @@ function UI:drawUpgradeIndicators()
 		love.graphics.setColor(0, 0, 0, 0.4 * visibility)
 		love.graphics.rectangle("fill", x + 4, drawY + 6, width, panelHeight, 14, 14)
 
-		local panelColor = Theme.panelColor or {0.16, 0.18, 0.22, 1}
-		love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * (0.95 * visibility))
-		love.graphics.rectangle("fill", x, drawY, width, panelHeight, 14, 14)
+                local panelColor = Theme.arenaBG or Theme.panelColor or {0.16, 0.18, 0.22, 1}
+                love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * (0.95 * visibility))
+                love.graphics.rectangle("fill", x, drawY, width, panelHeight, 14, 14)
 
                 local border = UI.colors.border
                 love.graphics.setColor(border[1], border[2], border[3], (border[4] or 1) * visibility)
@@ -1617,9 +1617,13 @@ function UI:drawUpgradeIndicators()
 			love.graphics.printf(stackText, textX, labelTop, textWidth, "right")
 		end
 
-		if hasBar then
-			local progress = clamp01(entry.displayProgress or 0)
-			local iconBarWidth = layout.iconBarWidth or (iconRadius * 1.8)
+                if hasBar then
+                        local progress = clamp01(entry.displayProgress or 0)
+                        local iconBarWidth = layout.iconBarWidth or (iconRadius * 1.8)
+                        if entry.chargeLabel and chargeFont and chargeFont.getWidth then
+                                local labelWidth = chargeFont:getWidth(entry.chargeLabel)
+                                iconBarWidth = max(iconBarWidth, labelWidth + 16)
+                        end
 			local iconBarHeight = layout.iconBarHeight or max(4, floor(barHeight))
 			local barX = iconX - iconBarWidth * 0.5
 			local desiredBarY = iconY + iconRadius + 6
