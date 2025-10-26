@@ -1526,10 +1526,9 @@ local function buildShieldIndicator(self)
 		status = Localization:get("upgrades.hud." .. statusKey)
 	end
 
-	return {
-		id = "__shields",
-		label = label,
-		stackCount = count,
+        return {
+                id = "__shields",
+                label = label,
 		icon = "shield",
 		accentColor = accent,
 		iconOverlay = {
