@@ -466,9 +466,9 @@ function Arena:rebuildTileDecorations()
 		colorJitter = 0.015
 	elseif theme == "oceanic" then
 		clusterChance = clusterChance + 0.01
-	elseif theme == "cavern" then
-		clusterChance = clusterChance - 0.005
-	end
+        elseif theme == "cavern" then
+                clusterChance = clusterChance + 0.005
+        end
 
 	clusterChance = clusterChance * (0.85 + rng:random() * 0.35)
 	clusterChance = max(0, min(0.25, clusterChance))
