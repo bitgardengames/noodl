@@ -1320,12 +1320,89 @@ local function drawSpectralHarvestEcho(trail, SEGMENT_SIZE, data)
 		end
 	end
 
-	love.graphics.pop()
+        love.graphics.pop()
+end
+
+local function drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, data)
+        if not (hx and hy and SEGMENT_SIZE and data) then return end
+
+        local intensity = max(0, min(1, data.intensity or 0))
+        local flash = max(0, min(1, data.flash or 0))
+        if intensity <= 0.01 and flash <= 0.01 then return end
+
+        local time = data.time or Timer.getTime()
+        local baseSize = SEGMENT_SIZE
+        local drop = baseSize * 0.08
+        local lensWidth = baseSize * (0.5 + 0.1 * intensity)
+        local lensHeight = baseSize * (0.24 + 0.04 * intensity)
+        local lensRadius = lensHeight * 0.55
+        local spacing = baseSize * (0.16 + 0.04 * intensity)
+        local frameThickness = max(1.2, baseSize * 0.055)
+        local bridgeWidth = spacing * 0.7
+        local armLength = baseSize * (0.34 + 0.06 * intensity)
+        local armLift = baseSize * (0.22 + 0.05 * intensity)
+        local wobble = 0.02 * sin(time * 3.2) * (flash * 0.7 + intensity * 0.2)
+        local pulse = 1 + 0.04 * sin(time * 5.4) * (flash * 0.6 + 0.2)
+
+        love.graphics.push("all")
+        love.graphics.translate(hx, hy - drop)
+        love.graphics.rotate(wobble)
+        love.graphics.scale(pulse * (1 + 0.05 * flash), pulse * (1 + 0.02 * flash))
+
+        local lensHalfWidth = lensWidth * 0.5
+        local spacingHalf = spacing * 0.5
+        local leftCenterX = -(lensHalfWidth + spacingHalf)
+        local rightCenterX = lensHalfWidth + spacingHalf
+        local top = -lensHeight * 0.5
+
+        local lensAlpha = 0.62 * intensity + 0.32 * flash
+        love.graphics.setColor(0.06, 0.08, 0.1, lensAlpha)
+        love.graphics.rectangle("fill", leftCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
+        love.graphics.rectangle("fill", rightCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
+
+        love.graphics.setColor(0.02, 0.02, 0.04, lensAlpha * 0.65 + 0.18 * intensity)
+        love.graphics.rectangle("fill", leftCenterX - lensHalfWidth, top - lensHeight * 0.2, lensWidth, lensHeight * 0.55, lensRadius, lensRadius)
+        love.graphics.rectangle("fill", rightCenterX - lensHalfWidth, top - lensHeight * 0.2, lensWidth, lensHeight * 0.55, lensRadius, lensRadius)
+
+        local frameAlpha = 0.85 * intensity + 0.25 * flash
+        love.graphics.setColor(0.01, 0.01, 0.015, frameAlpha)
+        love.graphics.setLineWidth(frameThickness)
+        love.graphics.rectangle("line", leftCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
+        love.graphics.rectangle("line", rightCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
+        love.graphics.rectangle("fill", -bridgeWidth * 0.5, -lensHeight * 0.18, bridgeWidth, lensHeight * 0.36, lensRadius * 0.35, lensRadius * 0.35)
+
+        local leftOuter = leftCenterX - lensHalfWidth
+        local rightOuter = rightCenterX + lensHalfWidth
+        love.graphics.setLineWidth(frameThickness * 0.85)
+        love.graphics.line(leftOuter, -lensHeight * 0.1, leftOuter - armLength, -armLift)
+        love.graphics.line(rightOuter, -lensHeight * 0.1, rightOuter + armLength, -armLift)
+
+        local highlight = min(1, flash + intensity * 0.4)
+        if highlight > 0.01 then
+                love.graphics.setBlendMode("add")
+                local highlightAlpha = (0.18 + 0.32 * flash) * (0.6 + 0.4 * intensity)
+                love.graphics.setColor(0.82, 0.96, 1.0, highlightAlpha)
+                love.graphics.polygon("fill",
+                        leftCenterX - lensHalfWidth * 0.6, top + lensHeight * 0.2,
+                        leftCenterX - lensHalfWidth * 0.2, top,
+                        leftCenterX + lensHalfWidth * 0.2, top + lensHeight * 0.45,
+                        leftCenterX - lensHalfWidth * 0.15, top + lensHeight * 0.6
+                )
+                love.graphics.polygon("fill",
+                        rightCenterX + lensHalfWidth * 0.6, top + lensHeight * 0.2,
+                        rightCenterX + lensHalfWidth * 0.2, top,
+                        rightCenterX - lensHalfWidth * 0.2, top + lensHeight * 0.45,
+                        rightCenterX + lensHalfWidth * 0.15, top + lensHeight * 0.6
+                )
+                love.graphics.setBlendMode("alpha")
+        end
+
+        love.graphics.pop()
 end
 
 local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
-	if not (trail and data) then return end
-	if #trail < 2 then return end
+        if not (trail and data) then return end
+        if #trail < 2 then return end
 
 	local intensity = max(0, data.intensity or 0)
 	if intensity <= 0.01 then return end
@@ -2376,6 +2453,10 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                                 local faceScale = 1
                                 local faceOptions = upgradeVisuals and upgradeVisuals.face or nil
                                 Face:draw(hx, hy, faceScale, faceOptions)
+
+                                if upgradeVisuals and upgradeVisuals.diffractionBarrier then
+                                        drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, upgradeVisuals.diffractionBarrier)
+                                end
 
                                 drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
 

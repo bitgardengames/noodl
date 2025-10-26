@@ -3172,6 +3172,8 @@ function Upgrades:applyPersistentEffects(rebaseline)
 
         Snake:setEventHorizonActive(effects.wallPortal and true or false)
 
+        Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
+
         local counters = state.counters or {}
         Snake:setQuickFangsStacks(counters.quickFangsStacks or 0)
 
@@ -3602,15 +3604,19 @@ function Upgrades:acquire(card, context)
 		end
 	end
 
-	if upgrade.onAcquire then
-		upgrade.onAcquire(state, context)
-	end
+        if upgrade.onAcquire then
+                upgrade.onAcquire(state, context)
+        end
 
-	if upgrade.handlers then
-		for event, handler in pairs(upgrade.handlers) do
-			self:addEventHandler(event, handler)
-		end
-	end
+        if upgrade.id == "diffraction_barrier" then
+                state.effects.diffractionBarrier = true
+        end
+
+        if upgrade.handlers then
+                for event, handler in pairs(upgrade.handlers) do
+                        self:addEventHandler(event, handler)
+                end
+        end
 
 	self:notify("upgradeAcquired", {id = upgrade.id, upgrade = upgrade, context = context})
 	self:applyPersistentEffects(false)

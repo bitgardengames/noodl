@@ -53,10 +53,10 @@ end
 UpgradeHelpers.deepcopy = deepcopy
 
 UpgradeHelpers.defaultEffects = {
-	sawSpeedMult = 1,
-	sawSpinMult = 1,
-	sawStall = 0,
-	sawSinkDuration = 0,
+        sawSpeedMult = 1,
+        sawSpinMult = 1,
+        sawStall = 0,
+        sawSinkDuration = 0,
 	rockSpawnMult = 1,
 	rockSpawnFlat = 0,
 	rockShatter = 0,
@@ -84,6 +84,7 @@ UpgradeHelpers.defaultEffects = {
         dash = nil,
         timeSlow = nil,
         gluttonsWake = false,
+        diffractionBarrier = false,
 }
 
 local function getEventPosition(data)
