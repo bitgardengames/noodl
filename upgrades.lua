@@ -2311,7 +2311,7 @@ local pool = {
                                 local FruitEvents = require("fruitevents")
                                 if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
 
-                                local fx, fy = Fruit:getPosition()
+                                local fx, fy = Fruit:getDrawPosition()
                                 if not (fx and fy) then return end
 
                                 FruitEvents.handleConsumption(fx, fy)

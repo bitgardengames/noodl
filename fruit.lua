@@ -484,6 +484,20 @@ end
 
 -- Queries
 function Fruit:getPosition() return active.x, active.y end
+
+function Fruit:getDrawPosition()
+        if not active then
+                return nil, nil
+        end
+
+        local baseX, baseY = active.x, active.y
+        if not (baseX and baseY) then
+                return baseX, baseY
+        end
+
+        local offsetY = (active.offsetY or 0) + (active.bobOffset or 0)
+        return baseX, baseY + offsetY
+end
 function Fruit:getPoints()   return lastCollectedType.points or 1 end
 function Fruit:getTypeName() return lastCollectedType.name or "Apple" end
 function Fruit:getType()     return lastCollectedType end
