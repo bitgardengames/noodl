@@ -44,45 +44,97 @@ local function getLineOffset(width)
         return 0
 end
 
+local function wipeTable(t)
+        if not t then
+                return
+        end
+
+        for key in pairs(t) do
+                t[key] = nil
+        end
+end
+
 function SnakeUtils.initOccupancy()
-	local occupied = SnakeUtils.occupied
-	if type(occupied) ~= "table" then
-		occupied = {}
-		SnakeUtils.occupied = occupied
-	end
-	local cols = Arena.cols
-	local rows = Arena.rows
+        local occupied = SnakeUtils.occupied
+        if type(occupied) ~= "table" then
+                occupied = {}
+                SnakeUtils.occupied = occupied
+        end
+        local cols = Arena.cols or 0
+        if cols <= 0 then
+                for col = 1, #occupied do
+                        occupied[col] = nil
+                end
+                return
+        end
 
-	for col = 1, cols do
-		local column = occupied[col]
-		if not column then
-			column = {}
-			occupied[col] = column
-		end
+        for col = 1, cols do
+                local column = occupied[col]
+                if not column then
+                        column = {}
+                        occupied[col] = column
+                else
+                        wipeTable(column)
+                end
+        end
 
-		for row = 1, rows do
-			column[row] = false
-		end
-
-		for row = rows + 1, #column do
-			column[row] = nil
-		end
-	end
-
-	for col = cols + 1, #occupied do
-		occupied[col] = nil
-	end
+        for col = cols + 1, #occupied do
+                occupied[col] = nil
+        end
 end
 
 -- Mark / unmark cells
 function SnakeUtils.setOccupied(col, row, value)
-	if SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row] ~= nil then
-		SnakeUtils.occupied[col][row] = value
-	end
+        if not (col and row) then
+                return
+        end
+
+        local occupied = SnakeUtils.occupied
+        if type(occupied) ~= "table" then
+                return
+        end
+
+        local cols = Arena.cols or 0
+        local rows = Arena.rows or 0
+        if col < 1 or col > cols or row < 1 or row > rows then
+                return
+        end
+
+        local column = occupied[col]
+        if not column then
+                if not value then
+                        return
+                end
+
+                column = {}
+                occupied[col] = column
+        end
+
+        local current = column[row]
+        if value then
+                if current then
+                        return
+                end
+
+                column[row] = true
+        elseif current then
+                column[row] = nil
+        end
 end
 
 function SnakeUtils.isOccupied(col, row)
-        return SnakeUtils.occupied[col] and SnakeUtils.occupied[col][row]
+        local cols = Arena.cols or 0
+        local rows = Arena.rows or 0
+        if col < 1 or col > cols or row < 1 or row > rows then
+                return false
+        end
+
+        local column = SnakeUtils.occupied[col]
+        if not column then
+                return false
+        end
+
+        return column[row] and true or false
 end
 
 function SnakeUtils.drawOccupancyOverlay(options)
@@ -335,21 +387,34 @@ local function normalizeCell(col, row)
 end
 
 local function markCells(cells, value)
-	if not cells then
-		return
-	end
+        if not cells then
+                return
+        end
 
-	local occupied = SnakeUtils.occupied
-	for i = 1, #cells do
-		local cell = cells[i]
-		local col, row = normalizeCell(cell[1], cell[2])
-		if col then
-			local column = occupied[col]
-			if column and column[row] ~= nil then
-				column[row] = value
-			end
-		end
-	end
+        local occupied = SnakeUtils.occupied
+        for i = 1, #cells do
+                local cell = cells[i]
+                local col, row = normalizeCell(cell[1], cell[2])
+                if col then
+                        local column = occupied[col]
+                        if not column then
+                                if value then
+                                        column = {}
+                                        occupied[col] = column
+                                else
+                                        column = nil
+                                end
+                        end
+
+                        if column then
+                                if value then
+                                        column[row] = true
+                                else
+                                        column[row] = nil
+                                end
+                        end
+                end
+        end
 end
 
 -- Reserve a collection of cells and return the subset that we actually marked.
