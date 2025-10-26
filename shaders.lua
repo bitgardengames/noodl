@@ -494,6 +494,15 @@ registerEffect({
                 float haze = smoothstep(0.0, 1.0, uv.y);
                 col = mix(col, mix(bottomColor.rgb, accentColor.rgb, 0.1), haze * 0.08);
 
+                vec2 radialCoord = centered * vec2(1.12, 1.04);
+                float focus = pow(1.0 - smoothstep(0.14, 0.96, length(radialCoord)), 1.6);
+                vec3 focusTone = mix(base, mix(bottomColor.rgb, accentColor.rgb, 0.24), 0.42);
+                col = mix(col, focusTone, focus * (0.05 + intensity * 0.04));
+
+                float edgeShade = smoothstep(0.48, 1.08, length(radialCoord));
+                vec3 edgeTone = mix(bottomColor.rgb, secondaryColor.rgb, 0.16);
+                col = mix(col, edgeTone, edgeShade * (0.04 + intensity * 0.03));
+
                 float vignette = smoothstep(0.35, 0.98, length(centered * vec2(1.2, 1.05)));
                 vec3 vignetteTone = mix(bottomColor.rgb, accentColor.rgb, 0.18);
                 col = mix(col, vignetteTone, vignette * (0.22 + intensity * 0.12));
