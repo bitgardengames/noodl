@@ -105,6 +105,84 @@ local TREMOR_BLOOM_SLIDE_DURATION = 0.28
 local TREMOR_BLOOM_SAW_NUDGE_AMOUNT = 0.22
 local TREMOR_BLOOM_COLOR = {0.76, 0.64, 1.0, 1}
 
+local MYSTERY_CARD_OUTCOMES = {
+        {
+                id = "shield_cache",
+                nameKey = "upgrades.mystery_card.outcomes.shield_cache.name",
+                descKey = "upgrades.mystery_card.outcomes.shield_cache.description",
+                toastKey = "upgrades.mystery_card.outcomes.shield_cache.toast",
+                celebration = {
+                        color = {0.64, 0.86, 1.0, 1},
+                        particleCount = 16,
+                        particleSpeed = 110,
+                        particleLife = 0.42,
+                        textOffset = 46,
+                        textScale = 1.1,
+                },
+                apply = function(state)
+                        Snake:addShields(2)
+                        Face:set("happy", 1.6)
+                end,
+        },
+        {
+                id = "velocity_bloom",
+                nameKey = "upgrades.mystery_card.outcomes.velocity_bloom.name",
+                descKey = "upgrades.mystery_card.outcomes.velocity_bloom.description",
+                toastKey = "upgrades.mystery_card.outcomes.velocity_bloom.toast",
+                celebration = {
+                        color = {1.0, 0.72, 0.46, 1},
+                        particleCount = 18,
+                        particleSpeed = 140,
+                        particleLife = 0.48,
+                        textOffset = 44,
+                        textScale = 1.12,
+                },
+                apply = function(state)
+                        Snake:addSpeedMultiplier(1.12)
+                        Face:set("veryHappy", 1.6)
+                end,
+        },
+        {
+                id = "market_portent",
+                nameKey = "upgrades.mystery_card.outcomes.market_portent.name",
+                descKey = "upgrades.mystery_card.outcomes.market_portent.description",
+                toastKey = "upgrades.mystery_card.outcomes.market_portent.toast",
+                celebration = {
+                        color = {0.96, 0.85, 0.52, 1},
+                        particleCount = 14,
+                        particleSpeed = 120,
+                        particleLife = 0.46,
+                        textOffset = 42,
+                        textScale = 1.08,
+                },
+                apply = function(state)
+                        state.effects = state.effects or {}
+                        state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
+                        Face:set("happy", 1.4)
+                end,
+        },
+        {
+                id = "shortcut_map",
+                nameKey = "upgrades.mystery_card.outcomes.shortcut_map.name",
+                descKey = "upgrades.mystery_card.outcomes.shortcut_map.description",
+                toastKey = "upgrades.mystery_card.outcomes.shortcut_map.toast",
+                celebration = {
+                        color = {0.84, 0.94, 0.62, 1},
+                        particleCount = 16,
+                        particleSpeed = 100,
+                        particleLife = 0.44,
+                        textOffset = 42,
+                        textScale = 1.08,
+                },
+                apply = function(state)
+                        state.effects = state.effects or {}
+                        state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
+                        UI:adjustFruitGoal(-1)
+                        Face:set("happy", 1.4)
+                end,
+        },
+}
+
 local function getStacks(state, id)
 	if not state or not id then
 		return 0
@@ -2060,9 +2138,55 @@ local pool = {
         }),
 
         register({
+                id = "mystery_card",
+                nameKey = "upgrades.mystery_card.name",
+                descKey = "upgrades.mystery_card.description",
+                rarity = "rare",
+                tags = {"utility", "risk", "shop"},
+                allowDuplicates = true,
+                onAcquire = function(state)
+                        if #MYSTERY_CARD_OUTCOMES == 0 then
+                                return nil
+                        end
+
+                        local index = love.math.random(1, #MYSTERY_CARD_OUTCOMES)
+                        local outcome = MYSTERY_CARD_OUTCOMES[index]
+                        if not outcome then
+                                return nil
+                        end
+
+                        if outcome.apply then
+                                outcome.apply(state)
+                        end
+
+                        if outcome.toastKey or outcome.nameKey then
+                                local toastLabel = Localization:get(outcome.toastKey or outcome.nameKey)
+                                local celebrationOptions = outcome.celebration and deepcopy(outcome.celebration) or nil
+                                celebrateUpgrade(toastLabel, nil, celebrationOptions)
+                        end
+
+                        local baseName = Localization:get("upgrades.mystery_card.name")
+                        local outcomeName = outcome.nameKey and Localization:get(outcome.nameKey) or nil
+                        local revealedName
+                        if baseName and outcomeName then
+                                revealedName = baseName .. " — " .. outcomeName
+                        else
+                                revealedName = baseName
+                        end
+
+                        local revealedDesc = outcome.descKey and Localization:get(outcome.descKey) or nil
+
+                        return {
+                                name = revealedName,
+                                desc = revealedDesc,
+                        }
+                end,
+        }),
+
+        register({
                 id = "verdant_bonds",
                 nameKey = "upgrades.verdant_bonds.name",
-		descKey = "upgrades.verdant_bonds.description",
+                descKey = "upgrades.verdant_bonds.description",
 		rarity = "uncommon",
 		tags = {"economy", "defense"},
 		allowDuplicates = true,
@@ -3598,8 +3722,9 @@ function Upgrades:acquire(card, context)
 		end
 	end
 
+        local revealInfo
         if upgrade.onAcquire then
-                upgrade.onAcquire(state, context)
+                revealInfo = upgrade.onAcquire(state, context, card)
         end
 
         if upgrade.id == "diffraction_barrier" then
@@ -3612,8 +3737,46 @@ function Upgrades:acquire(card, context)
                 end
         end
 
-	self:notify("upgradeAcquired", {id = upgrade.id, upgrade = upgrade, context = context})
-	self:applyPersistentEffects(false)
+        if revealInfo and card then
+                if revealInfo.nameKey then
+                        card.name = Localization:get(revealInfo.nameKey, revealInfo.nameReplacements)
+                elseif revealInfo.name then
+                        card.name = revealInfo.name
+                end
+
+                if revealInfo.descKey then
+                        card.desc = Localization:get(revealInfo.descKey, revealInfo.descReplacements)
+                elseif revealInfo.desc then
+                        card.desc = revealInfo.desc
+                end
+
+                local appliedRarity = revealInfo.rarity
+                if appliedRarity then
+                        local rarityInfo = getRarityInfo(appliedRarity)
+                        card.rarity = appliedRarity
+                        card.rarityColor = rarityInfo and rarityInfo.color or card.rarityColor
+                        if rarityInfo then
+                                if rarityInfo.labelKey then
+                                        card.rarityLabel = Localization:get(rarityInfo.labelKey)
+                                elseif rarityInfo.label then
+                                        card.rarityLabel = rarityInfo.label
+                                end
+                        end
+                end
+
+                if revealInfo.rarityColor then
+                        card.rarityColor = revealInfo.rarityColor
+                end
+
+                if revealInfo.rarityLabel then
+                        card.rarityLabel = revealInfo.rarityLabel
+                end
+
+                card.revealed = true
+        end
+
+        self:notify("upgradeAcquired", {id = upgrade.id, upgrade = upgrade, context = context})
+        self:applyPersistentEffects(false)
 end
 
 return Upgrades
