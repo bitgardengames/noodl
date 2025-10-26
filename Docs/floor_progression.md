@@ -6,7 +6,7 @@ The current campaign moves through eight distinct floors. Each entry below is al
 | --- | --- | --- | --- | --- | --- |
 | 1 | Garden Gate | botanical | `gardenMellow` | 0.54 | 0.30 |
 | 2 | Moonwell Caves | cavern | `softCavern` | 0.54 | 0.32 |
-| 3 | Tide Vault | oceanic | `softCurrent` | 0.60 | 0.36 |
+| 3 | Tide Vault | oceanic | `abyssDrift` | 0.64 | 0.38 |
 | 4 | Rusted Hoist | machine | `ruinMotes` | 0.60 | 0.34 |
 | 5 | Crystal Run | arctic | `auroraVeil` | 0.62 | 0.42 |
 | 6 | Ember Market | desert | `emberDrift` | 0.62 | 0.38 |
@@ -67,22 +67,22 @@ Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every
 
 **Description:** Slow waves roll shining citrus along the tiles while Noodl gathers every slice.
 
-**Mood / Tone:** Flowing, calm  
-**Dominant colours:** Teal & citrus  
+**Mood / Tone:** Liminal, mesmeric
+**Dominant colours:** Dusky indigo & deep cyan
 **Visual theme:** oceanic vault
 
 **Palette**
 
 | Element | RGBA (0-255) | Hex |
 | --- | --- | --- |
-| Backdrop | (13, 28, 38, 255) | #0D1C26 |
-| Arena base | (24, 55, 64, 255) | #183740 |
-| Arena border | (42, 82, 88, 255) | #2A5258 |
+| Backdrop | (22, 32, 45, 255) | #16202D |
+| Arena base | (30, 73, 84, 255) | #1E4954 |
+| Arena border | (172, 77, 91, 255) | #AC4D5B |
 | Snake | (214, 242, 148, 255) | #D6F294 |
 | Rocks | (92, 143, 162, 255) | #5C8FA2 |
 | Saws | (158, 168, 171, 255) | #9EA8AB |
 
-**Background shader:** `softCurrent` — Gentle tidal drift with caustic highlights and rising mist. (Backdrops 0.60 / Arena 0.36)
+**Background shader:** `abyssDrift` — Refracted indigo bands drift through fogged glass with vertical shimmers and rising motes. (Backdrops 0.64 / Arena 0.38)
 
 ---
 

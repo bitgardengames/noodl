@@ -359,9 +359,9 @@ registerEffect({
 
 -- Soft cavern haze with muted glints
 registerEffect({
-	type = "softCavern",
-	backdropIntensity = 0.48,
-	arenaIntensity = 0.28,
+        type = "softCavern",
+        backdropIntensity = 0.48,
+        arenaIntensity = 0.28,
 	source = [[
 	extern float time;
 	extern vec2 resolution;
@@ -407,17 +407,138 @@ registerEffect({
 		sendColor(shader, "baseColor", base)
 		sendColor(shader, "fogColor", fog)
 		sendColor(shader, "glintColor", glint)
-	end,
-	draw = function(effect, x, y, w, h, intensity)
-		return drawShader(effect, x, y, w, h, intensity)
-	end,
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
+})
+
+-- Murky abyssal drift with layered ripples and drifting motes
+registerEffect({
+        type = "abyssDrift",
+        backdropIntensity = 0.64,
+        arenaIntensity = 0.38,
+        source = [[
+        extern float time;
+        extern vec2 resolution;
+        extern vec2 origin;
+        extern vec4 topColor;
+        extern vec4 bottomColor;
+        extern vec4 accentColor;
+        extern vec4 secondaryColor;
+        extern float intensity;
+
+        float hash(vec2 p)
+        {
+                return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        }
+
+        float noise(vec2 p)
+        {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+
+                float a = hash(i);
+                float b = hash(i + vec2(1.0, 0.0));
+                float c = hash(i + vec2(0.0, 1.0));
+                float d = hash(i + vec2(1.0, 1.0));
+
+                vec2 u = f * f * (3.0 - 2.0 * f);
+                return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+        }
+
+        float fbm(vec2 p)
+        {
+                float value = 0.0;
+                float amplitude = 0.5;
+
+                for (int i = 0; i < 4; ++i)
+                {
+                        value += noise(p) * amplitude;
+                        p *= 2.3;
+                        amplitude *= 0.55;
+                }
+
+                return value;
+        }
+
+        vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+        {
+                vec2 uv = (screen_coords - origin) / resolution;
+                uv = clamp(uv, 0.0, 1.0);
+
+                vec2 centered = uv - 0.5;
+                float gradient = smoothstep(0.0, 1.0, uv.y);
+                vec3 base = mix(topColor.rgb, bottomColor.rgb, gradient);
+
+                float t = time * 0.12;
+                float flowA = fbm(vec2(uv.x * 2.6 - t * 0.8, uv.y * 3.4 + t * 0.6));
+                float flowB = fbm(vec2(uv.x * -1.8 + t * 0.5, uv.y * 2.1 - t * 0.7) + flowA * 0.3);
+                float rippleBands = sin((uv.y * 8.5 + flowA * 2.2) - t * 2.4) * 0.5 + 0.5;
+                float verticalStreaks = sin(uv.x * 24.0 + t * 1.6 + flowB * 3.0) * 0.5 + 0.5;
+                verticalStreaks = pow(verticalStreaks, 6.0);
+                verticalStreaks *= smoothstep(0.15, 0.95, uv.y);
+                float shimmer = clamp(flowA * 0.35 + flowB * 0.35 + rippleBands * 0.25 + verticalStreaks * 0.45, 0.0, 1.0);
+
+                float cyanPass = sin((uv.x * 3.6 + uv.y * 2.4) + t * 1.3) * 0.5 + 0.5;
+                float violetPass = sin((uv.y * 4.2 - uv.x * 1.7) - t * 1.1) * 0.5 + 0.5;
+                float modulation = (cyanPass - violetPass) * 0.05;
+
+                vec3 cyanTone = mix(base, accentColor.rgb, 0.2);
+                vec3 violetTone = mix(base, secondaryColor.rgb, 0.24);
+                vec3 tinted = mix(cyanTone, violetTone, smoothstep(0.0, 1.0, shimmer));
+
+                vec3 col = base;
+                col = mix(col, tinted, modulation + shimmer * (0.10 + intensity * 0.12));
+
+                float haze = smoothstep(0.0, 1.0, uv.y);
+                col = mix(col, mix(bottomColor.rgb, accentColor.rgb, 0.1), haze * 0.08);
+
+                float vignette = smoothstep(0.35, 0.98, length(centered * vec2(1.2, 1.05)));
+                vec3 vignetteTone = mix(bottomColor.rgb, accentColor.rgb, 0.18);
+                col = mix(col, vignetteTone, vignette * (0.22 + intensity * 0.12));
+
+                vec2 moteUV = uv;
+                moteUV.y = fract(moteUV.y + time * 0.04);
+                float motes = 0.0;
+
+                for (int i = 0; i < 3; ++i)
+                {
+                        float layer = fbm(vec2(moteUV.x * (10.0 + float(i) * 3.0), (moteUV.y + float(i) * 0.2) * (14.0 + float(i) * 2.5)));
+                        float layerMotes = smoothstep(0.78, 1.0, layer);
+                        float fade = smoothstep(0.1, 0.95, uv.y);
+                        motes += layerMotes * fade / (float(i) + 1.8);
+                }
+
+                motes = clamp(motes, 0.0, 1.0);
+                col += accentColor.rgb * motes * (0.08 + intensity * 0.12);
+
+                return vec4(col, topColor.a) * color;
+        }
+        ]],
+        configure = function(effect, palette)
+                local shader = effect.shader
+
+                local top = getColorComponents(palette and palette.bgColor, Theme.bgColor)
+                local bottom = getColorComponents(palette and (palette.arenaBG or palette.rock), Theme.arenaBG)
+                local accent = getColorComponents(palette and (palette.arenaBorder or palette.snake), Theme.arenaBorder)
+                local secondary = getColorComponents(palette and (palette.snake or palette.arenaBorder), Theme.snakeDefault)
+
+                sendColor(shader, "topColor", top)
+                sendColor(shader, "bottomColor", bottom)
+                sendColor(shader, "accentColor", accent)
+                sendColor(shader, "secondaryColor", secondary)
+        end,
+        draw = function(effect, x, y, w, h, intensity)
+                return drawShader(effect, x, y, w, h, intensity)
+        end,
 })
 
 -- Gentle tidal drift for calmer aquatic stages
 registerEffect({
-	type = "softCurrent",
-	backdropIntensity = 0.56,
-	arenaIntensity = 0.32,
+        type = "softCurrent",
+        backdropIntensity = 0.56,
+        arenaIntensity = 0.32,
 	source = [[
 	extern float time;
 	extern vec2 resolution;
