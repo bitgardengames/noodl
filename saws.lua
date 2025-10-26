@@ -79,13 +79,26 @@ local function copyColor(color)
 	}
 end
 
+local highlightCache = setmetatable({}, { __mode = "k" })
+local highlightDefault = {1, 1, 1, 1}
+
+local function updateHighlightColor(out, color)
+        local r = min(1, color[1] * 1.2 + 0.08)
+        local g = min(1, color[2] * 1.2 + 0.08)
+        local b = min(1, color[3] * 1.2 + 0.08)
+        local a = (color[4] or 1) * 0.7
+        out[1], out[2], out[3], out[4] = r, g, b, a
+        return out
+end
+
 local function getHighlightColor(color)
-	color = color or {1, 1, 1, 1}
-	local r = min(1, color[1] * 1.2 + 0.08)
-	local g = min(1, color[2] * 1.2 + 0.08)
-	local b = min(1, color[3] * 1.2 + 0.08)
-	local a = (color[4] or 1) * 0.7
-	return {r, g, b, a}
+        color = color or highlightDefault
+        local cached = highlightCache[color]
+        if not cached then
+                cached = {0, 0, 0, 0}
+                highlightCache[color] = cached
+        end
+        return updateHighlightColor(cached, color)
 end
 
 -- modifiers

@@ -37,15 +37,28 @@ local function distanceSquared(ax, ay, bx, by)
 	return dx * dx + dy * dy
 end
 
+local highlightCache = setmetatable({}, { __mode = "k" })
+local highlightDefault = {1, 1, 1, 1}
+
+local function updateHighlightColor(out, color)
+        local r = min(1, color[1] * 1.2 + 0.08)
+        local g = min(1, color[2] * 1.2 + 0.08)
+        local b = min(1, color[3] * 1.2 + 0.08)
+        local a = (color[4] or 1) * 0.75
+        out[1], out[2], out[3], out[4] = r, g, b, a
+        return out
+end
+
 local function getHighlightColor(color)
-	color = color or {1, 1, 1, 1}
+        color = color or highlightDefault
 
-	local r = min(1, color[1] * 1.2 + 0.08)
-	local g = min(1, color[2] * 1.2 + 0.08)
-	local b = min(1, color[3] * 1.2 + 0.08)
-	local a = (color[4] or 1) * 0.75
+        local cached = highlightCache[color]
+        if not cached then
+                cached = {0, 0, 0, 0}
+                highlightCache[color] = cached
+        end
 
-	return {r, g, b, a}
+        return updateHighlightColor(cached, color)
 end
 
 local function normalizeCellCoordinate(value)
