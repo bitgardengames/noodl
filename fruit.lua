@@ -469,17 +469,17 @@ function Fruit:draw()
                 return
         end
 
-        RenderLayers:push("shadows")
-        for _, data in ipairs(drawList) do
-                drawFruitShadow(data)
-        end
-        RenderLayers:pop()
+        RenderLayers:withLayer("shadows", function()
+                for _, data in ipairs(drawList) do
+                        drawFruitShadow(data)
+                end
+        end)
 
-        RenderLayers:push("main")
-        for _, data in ipairs(drawList) do
-                drawFruitMain(data)
-        end
-        RenderLayers:pop()
+        RenderLayers:withLayer("main", function()
+                for _, data in ipairs(drawList) do
+                        drawFruitMain(data)
+                end
+        end)
 end
 
 -- Queries

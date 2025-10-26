@@ -2334,90 +2334,88 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 
         local shouldDrawOverlay = (hx and hy and drawFace ~= false) or (popTimer and popTimer > 0 and hx and hy)
         if shouldDrawOverlay then
-                RenderLayers:push("overlay")
+                RenderLayers:withLayer("overlay", function()
+                        if hx and hy and drawFace ~= false then
+                                if upgradeVisuals and upgradeVisuals.temporalAnchor then
+                                        drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
+                                end
 
-                if hx and hy and drawFace ~= false then
-                        if upgradeVisuals and upgradeVisuals.temporalAnchor then
-                                drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
+                                if upgradeVisuals and upgradeVisuals.chronoWard then
+                                        drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.timeDilation then
+                                        drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.adrenaline then
+                                        drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.quickFangs then
+                                        drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.spectralHarvest then
+                                        drawSpectralHarvestEcho(trail, SEGMENT_SIZE, upgradeVisuals.spectralHarvest)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.zephyrCoils then
+                                        drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.dash then
+                                        drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.speedArcs then
+                                        drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
+                                end
+
+                                local faceScale = 1
+                                local faceOptions = upgradeVisuals and upgradeVisuals.face or nil
+                                Face:draw(hx, hy, faceScale, faceOptions)
+
+                                drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
+
+                                if upgradeVisuals and upgradeVisuals.dash then
+                                        drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.eventHorizon then
+                                        drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.stormchaser then
+                                        drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.chronospiral then
+                                        drawChronospiralWake(trail, SEGMENT_SIZE, upgradeVisuals.chronospiral)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
+                                        drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.titanblood then
+                                        drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
+                                end
+
+                                if upgradeVisuals and upgradeVisuals.phoenixEcho then
+                                        drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
+                                end
                         end
 
-                        if upgradeVisuals and upgradeVisuals.chronoWard then
-                                drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
+                        if popTimer and popTimer > 0 and hx and hy then
+                                local t = 1 - (popTimer / POP_DURATION)
+                                if t < 1 then
+                                        local pulse = 0.8 + 0.4 * sin(t * pi)
+                                        love.graphics.setColor(1, 1, 1, 0.4)
+                                        love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
+                                end
                         end
-
-                        if upgradeVisuals and upgradeVisuals.timeDilation then
-                                drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.adrenaline then
-                                drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.quickFangs then
-                                drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.spectralHarvest then
-                                drawSpectralHarvestEcho(trail, SEGMENT_SIZE, upgradeVisuals.spectralHarvest)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.zephyrCoils then
-                                drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.dash then
-                                drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.speedArcs then
-                                drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
-                        end
-
-                        local faceScale = 1
-                        local faceOptions = upgradeVisuals and upgradeVisuals.face or nil
-                        Face:draw(hx, hy, faceScale, faceOptions)
-
-                        drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
-
-                        if upgradeVisuals and upgradeVisuals.dash then
-                                drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.eventHorizon then
-                                drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.stormchaser then
-                                drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.chronospiral then
-                                drawChronospiralWake(trail, SEGMENT_SIZE, upgradeVisuals.chronospiral)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
-                                drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.titanblood then
-                                drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
-                        end
-
-                        if upgradeVisuals and upgradeVisuals.phoenixEcho then
-                                drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
-                        end
-                end
-
-                if popTimer and popTimer > 0 and hx and hy then
-                        local t = 1 - (popTimer / POP_DURATION)
-                        if t < 1 then
-                                local pulse = 0.8 + 0.4 * sin(t * pi)
-                                love.graphics.setColor(1, 1, 1, 0.4)
-                                love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
-                        end
-                end
-
-                RenderLayers:pop()
+                end)
         end
 
 	love.graphics.setColor(1, 1, 1, 1)
