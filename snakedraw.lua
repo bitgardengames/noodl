@@ -842,59 +842,6 @@ local coordsCacheFrame = setmetatable({}, { __mode = "k" })
 local currentCoordsFrame = 0
 local emptyCoords = {}
 
-local STRAIGHT_EPSILON = 1e-4
-
-local function nearlyEqual(a, b)
-        if a == nil or b == nil then
-                return false
-        end
-
-        return abs(a - b) <= STRAIGHT_EPSILON
-end
-
-local function pointsMatch(ax, ay, bx, by)
-        return nearlyEqual(ax, bx) and nearlyEqual(ay, by)
-end
-
-local function isAxisAligned(ax, ay, bx, by)
-        if not (ax and ay and bx and by) then
-                return true
-        end
-
-        return nearlyEqual(ax, bx) or nearlyEqual(ay, by)
-end
-
-local function alignToAxis(lastx, lasty, x, y)
-        if not (lastx and lasty and x and y) then
-                return x, y
-        end
-
-        local dx = x - lastx
-        local dy = y - lasty
-
-        if abs(dx) >= abs(dy) then
-                y = lasty
-        else
-                x = lastx
-        end
-
-        return x, y
-end
-
-local function appendPoint(coords, count, x, y)
-        local writeIndex = count + 1
-        local writeNext = writeIndex + 1
-
-        if coords[writeIndex] ~= x then
-                coords[writeIndex] = x
-        end
-        if coords[writeNext] ~= y then
-                coords[writeNext] = y
-        end
-
-        return writeNext
-end
-
 -- polyline coords {x1,y1,x2,y2,...}
 local function buildCoords(trail)
         if not trail then
@@ -910,60 +857,24 @@ local function buildCoords(trail)
         local previousCount = coords._used or 0
         local count = 0
         local lastx, lasty
-        local lastBaseX, lastBaseY
 
         for i = 1, #trail do
                 local x, y = ptXY(trail[i])
-                local baseX = trail[i] and trail[i].x
-                local baseY = trail[i] and trail[i].y
                 if x and y then
-                        if lastx and lasty and not isAxisAligned(lastx, lasty, x, y) then
-                                if baseX and baseY and lastBaseX and lastBaseY and count >= 2 then
-                                        local prevBaseX, prevBaseY = lastBaseX, lastBaseY
-                                        local nextBaseX, nextBaseY = baseX, baseY
+                        if not (lastx and lasty and x == lastx and y == lasty) then
+                                local writeIndex = count + 1
+                                local writeNext = writeIndex + 1
 
-                                        coords[count - 1] = prevBaseX
-                                        coords[count] = prevBaseY
-                                        lastx, lasty = prevBaseX, prevBaseY
-
-                                        if not isAxisAligned(prevBaseX, prevBaseY, nextBaseX, nextBaseY) then
-                                                local dx = nextBaseX - prevBaseX
-                                                local dy = nextBaseY - prevBaseY
-                                                local cornerX, cornerY
-
-                                                if abs(dx) >= abs(dy) then
-                                                        cornerX, cornerY = nextBaseX, prevBaseY
-                                                else
-                                                        cornerX, cornerY = prevBaseX, nextBaseY
-                                                end
-
-                                                if not pointsMatch(lastx, lasty, cornerX, cornerY) then
-                                                        count = appendPoint(coords, count, cornerX, cornerY)
-                                                        lastx, lasty = cornerX, cornerY
-                                                end
-                                        end
-
-                                        x, y = nextBaseX, nextBaseY
-                                else
-                                        x, y = alignToAxis(lastx, lasty, x, y)
+                                if coords[writeIndex] ~= x then
+                                        coords[writeIndex] = x
                                 end
-                        end
+                                if coords[writeNext] ~= y then
+                                        coords[writeNext] = y
+                                end
 
-                        if not pointsMatch(lastx, lasty, x, y) then
-                                count = appendPoint(coords, count, x, y)
+                                count = writeNext
                                 lastx, lasty = x, y
-                                if baseX and baseY then
-                                        lastBaseX, lastBaseY = baseX, baseY
-                                else
-                                        lastBaseX, lastBaseY = nil, nil
-                                end
-                        else
-                                if baseX and baseY then
-                                        lastBaseX, lastBaseY = baseX, baseY
-                                end
                         end
-                elseif baseX and baseY then
-                        lastBaseX, lastBaseY = baseX, baseY
                 end
         end
 
