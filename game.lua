@@ -889,7 +889,7 @@ function Game:updateDescending(dt)
 end
 
 function Game:updateGameplay(dt)
-	local fruitX, fruitY = Fruit:getPosition()
+        local fruitX, fruitY = Fruit:getDrawPosition()
 
 	if Upgrades and Upgrades.recordFloorReplaySnapshot then
 		Upgrades:recordFloorReplaySnapshot(self)
