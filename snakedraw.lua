@@ -13,6 +13,7 @@ local ceil = math.ceil
 local max = math.max
 local min = math.min
 local pi = math.pi
+local tau = math.pi * 2
 local sin = math.sin
 local sqrt = math.sqrt
 
@@ -1092,6 +1093,21 @@ local function drawPortalHole(hole, isExit)
         love.graphics.setColor(0, 0, 0, fillAlpha)
         love.graphics.circle("fill", x, y, radius)
 
+        local depthLayers = 3
+        for i = 1, depthLayers do
+                local t = (i - 0.5) / depthLayers
+                local depthRadius = radius * (0.45 + 0.38 * t * (1 + 0.25 * open))
+                local depthAlpha = fillAlpha * (0.22 + 0.55 * (1 - t))
+
+                if isExit then
+                        love.graphics.setColor(0.12, 0.09, 0.02, depthAlpha)
+                else
+                        love.graphics.setColor(0.05, 0.1, 0.18, depthAlpha)
+                end
+
+                love.graphics.circle("fill", x, y, depthRadius)
+        end
+
         local rimRadius = radius * (1.05 + 0.15 * open)
         local rimAlpha = (0.35 + 0.4 * open) * visibility
         love.graphics.setLineWidth(2 + 2 * open)
@@ -1104,6 +1120,40 @@ local function drawPortalHole(hole, isExit)
         love.graphics.setColor(accentR, accentG, accentB, arcAlpha)
         love.graphics.arc("line", x, y, arcRadius, spin, spin + arcSpan)
         love.graphics.arc("line", x, y, arcRadius * 0.74, spin + pi * 0.92, spin + pi * 0.92 + arcSpan * 0.6)
+
+        local swirlAlpha = (0.14 + 0.3 * open) * visibility
+        if swirlAlpha > 1e-3 then
+                love.graphics.setLineWidth(1.5 + 1.5 * open)
+                love.graphics.setColor(accentR, accentG, accentB, swirlAlpha)
+
+                local pulse = hole.pulse or 0
+                local swirlLayers = 2
+                for i = 1, swirlLayers do
+                        local layerRadius = radius * (0.42 + 0.16 * i + 0.08 * open)
+                        local layerSpan = pi * (0.42 + 0.18 * open)
+                        local offset = (i % 2 == 0) and (pi * 0.65) or 0
+                        local startAngle = spin * (0.85 + 0.2 * i) + pulse * (0.5 + 0.15 * i) + offset
+                        love.graphics.arc("line", x, y, layerRadius, startAngle, startAngle + layerSpan)
+                end
+        end
+
+        local sparkleAlpha = (0.18 + 0.22 * open) * visibility
+        if sparkleAlpha > 1e-3 then
+                love.graphics.setLineWidth(1)
+                local pulse = hole.pulse or 0
+                local sparkleCount = isExit and 4 or 3
+                for i = 1, sparkleCount do
+                        local angle = spin * (0.6 + 0.18 * i) + pulse * (0.9 + 0.25 * i) + (i - 1) * tau / sparkleCount
+                        local distance = radius * (0.32 + 0.22 * open)
+                        local sx = x + cos(angle) * distance
+                        local sy = y + sin(angle) * distance
+                        local sparkleRadius = radius * (0.08 + 0.04 * open)
+                        love.graphics.setColor(accentR, accentG, accentB, sparkleAlpha)
+                        love.graphics.circle("fill", sx, sy, sparkleRadius)
+                        love.graphics.setColor(1, 1, 1, sparkleAlpha * 0.55)
+                        love.graphics.circle("fill", sx, sy, sparkleRadius * 0.55)
+                end
+        end
 
         love.graphics.setLineWidth(1)
         love.graphics.pop()
