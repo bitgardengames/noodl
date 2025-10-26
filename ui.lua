@@ -518,20 +518,57 @@ function UI.drawPanel(x, y, w, h, opts)
 end
 
 function UI.drawLabel(text, x, y, width, align, opts)
-	opts = opts or {}
-	local font = opts.font or UI.fonts[opts.fontKey or "body"]
-	if font then
-		love.graphics.setFont(font)
-	end
+        opts = opts or {}
+        local font = opts.font or UI.fonts[opts.fontKey or "body"]
+        if font then
+                love.graphics.setFont(font)
+        end
 
-	local color = opts.color or UI.colors.text
-	setColor(color, opts.alpha or 1)
+        local alpha = opts.alpha or 1
 
-	if width then
-		love.graphics.printf(text, x, y, width, align or "left")
-	else
-		love.graphics.print(text, x, y)
-	end
+        local shadow = opts.shadow
+        if shadow == nil then
+                shadow = opts.dropShadow
+        end
+
+        if shadow then
+                local baseOffset = opts.shadowOffset
+                if baseOffset == nil then
+                        local baseShadow = UI.shadowOffset or 0
+                        baseOffset = max(1, floor(baseShadow * 0.4 + 0.5))
+                end
+
+                local shadowOffsetX = opts.shadowOffsetX
+                local shadowOffsetY = opts.shadowOffsetY
+                if shadowOffsetX == nil and shadowOffsetY == nil then
+                        shadowOffsetX = baseOffset
+                        shadowOffsetY = baseOffset
+                else
+                        shadowOffsetX = shadowOffsetX or 0
+                        shadowOffsetY = shadowOffsetY or 0
+                end
+
+                if shadowOffsetX ~= 0 or shadowOffsetY ~= 0 then
+                        local shadowColor = opts.shadowColor or UI.colors.shadow or {0, 0, 0, 0.6}
+                        local shadowAlpha = (opts.shadowAlpha or 1) * alpha
+                        setColor(shadowColor, shadowAlpha)
+
+                        if width then
+                                love.graphics.printf(text, x + shadowOffsetX, y + shadowOffsetY, width, align or "left")
+                        else
+                                love.graphics.print(text, x + shadowOffsetX, y + shadowOffsetY)
+                        end
+                end
+        end
+
+        local color = opts.color or UI.colors.text
+        setColor(color, alpha)
+
+        if width then
+                love.graphics.printf(text, x, y, width, align or "left")
+        else
+                love.graphics.print(text, x, y)
+        end
 end
 
 function UI.drawSlider(id, x, y, w, value, opts)

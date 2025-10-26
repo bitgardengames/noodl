@@ -26,6 +26,9 @@ local GameOver = {isVictory = false}
 
 local ANALOG_DEADZONE = 0.3
 local XP_RING_SIZE_BOOST = 16
+local BUTTON_VERTICAL_OFFSET = 30
+local TEXT_SHADOW_OFFSET = 2
+local TITLE_SHADOW_OFFSET = 3
 
 local function pickDeathMessage(cause)
 	local deathTable = Localization:getTable("gameover.deaths") or {}
@@ -1204,9 +1207,13 @@ function GameOver:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
 
 	panelY = floor(panelY + 0.5)
 
-	local buttonStartY = max(buttonAreaTop, panelY + panelHeight + spacingBetween)
-	buttonStartY = min(buttonStartY, sh - bottomMargin - totalButtonHeight)
-	buttonStartY = floor(buttonStartY + 0.5)
+        local buttonStartY = max(buttonAreaTop, panelY + panelHeight + spacingBetween)
+        buttonStartY = min(buttonStartY, sh - bottomMargin - totalButtonHeight)
+        if BUTTON_VERTICAL_OFFSET and BUTTON_VERTICAL_OFFSET ~= 0 then
+                buttonStartY = buttonStartY - BUTTON_VERTICAL_OFFSET
+                buttonStartY = max(panelY + panelHeight + spacingBetween, buttonStartY)
+        end
+        buttonStartY = floor(buttonStartY + 0.5)
 
 	self.summaryPanelY = panelY
 	self.buttonStartY = buttonStartY
@@ -1536,16 +1543,20 @@ local function drawCelebrationsList(anim, x, startY, width)
 			love.graphics.scale(0.92 + 0.08 * appearEase, 0.92 + 0.08 * appearEase)
 			love.graphics.translate(-(cardX + cardWidth / 2), -(cardY + celebrationHeight / 2 + wobble))
 
-			UI.drawLabel(event.title or "", cardX + 18, cardY + 12, cardWidth - 36, "left", {
-				font = fontProgressSmall,
-				color = {UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], alpha},
-			})
+                        UI.drawLabel(event.title or "", cardX + 18, cardY + 12, cardWidth - 36, "left", {
+                                font = fontProgressSmall,
+                                color = {UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], alpha},
+                                shadow = true,
+                                shadowOffset = TEXT_SHADOW_OFFSET,
+                        })
 
 			if event.subtitle and event.subtitle ~= "" then
-				UI.drawLabel(event.subtitle, cardX + 18, cardY + 32, cardWidth - 36, "left", {
-					font = fontSmall,
-					color = {UI.colors.mutedText[1], UI.colors.mutedText[2], UI.colors.mutedText[3], alpha},
-				})
+                                UI.drawLabel(event.subtitle, cardX + 18, cardY + 32, cardWidth - 36, "left", {
+                                        font = fontSmall,
+                                        color = {UI.colors.mutedText[1], UI.colors.mutedText[2], UI.colors.mutedText[3], alpha},
+                                        shadow = true,
+                                        shadowOffset = TEXT_SHADOW_OFFSET,
+                                })
 			end
 
 			love.graphics.pop()
@@ -1614,7 +1625,7 @@ local function drawXpSection(self, x, y, width)
 	local ringColor = {levelColor[1] or 1, levelColor[2] or 1, levelColor[3] or 1, 0.9}
 
         love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.circle("fill", centerX, centerY, outerRadius + 4, 96)
+        love.graphics.circle("fill", centerX, centerY, outerRadius + 5, 96)
 
 	love.graphics.setColor(trackColor)
 	love.graphics.circle("fill", centerX, centerY, outerRadius, 96)
@@ -1660,11 +1671,12 @@ local function drawXpSection(self, x, y, width)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
 	end
 
-	love.graphics.setFont(fontProgressValue)
-	love.graphics.setColor(Theme.textColor or UI.colors.text)
-	local levelValue = tostring(anim.displayedLevel or 1)
-	local popDuration = anim.levelPopDuration or 0.65
-	local popTimer = clamp(anim.levelPopTimer or popDuration, 0, popDuration)
+        love.graphics.setFont(fontProgressValue)
+        local textColor = Theme.textColor or UI.colors.text
+        local shadowColor = UI.colors.shadow or Theme.shadowColor or {0, 0, 0, 0.7}
+        local levelValue = tostring(anim.displayedLevel or 1)
+        local popDuration = anim.levelPopDuration or 0.65
+        local popTimer = clamp(anim.levelPopTimer or popDuration, 0, popDuration)
 	local popProgress = 1
 	if popDuration > 1e-6 then
 		popProgress = clamp(popTimer / popDuration, 0, 1)
@@ -1677,6 +1689,14 @@ local function drawXpSection(self, x, y, width)
 
         local levelScale = 1.12
         love.graphics.push()
+        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowColor[4] or 1)
+        love.graphics.translate(centerX + TEXT_SHADOW_OFFSET, centerY + TEXT_SHADOW_OFFSET)
+        love.graphics.scale(popScale * levelScale, popScale * levelScale)
+        love.graphics.printf(levelValue, -innerRadius, -fontProgressValue:getHeight() / 2 + 2, innerRadius * 2, "center")
+        love.graphics.pop()
+
+        love.graphics.push()
+        love.graphics.setColor(textColor[1] or 1, textColor[2] or 1, textColor[3] or 1, textColor[4] or 1)
         love.graphics.translate(centerX, centerY)
         love.graphics.scale(popScale * levelScale, popScale * levelScale)
         love.graphics.printf(levelValue, -innerRadius, -fontProgressValue:getHeight() / 2 + 2, innerRadius * 2, "center")
@@ -1687,18 +1707,22 @@ local function drawXpSection(self, x, y, width)
 	local bonusXP = max(0, floor(((breakdown and breakdown.bonusXP) or 0) + 0.5))
 	if bonusXP > 0 then
 		local bonusText = Localization:get("gameover.meta_progress_bonus", {bonus = formatXpValue(bonusXP)})
-		UI.drawLabel(bonusText, x, labelY, width, "center", {
-			font = fontProgressSmall,
-			color = UI.colors.highlight or UI.colors.text,
-		})
+                UI.drawLabel(bonusText, x, labelY, width, "center", {
+                        font = fontProgressSmall,
+                        color = UI.colors.highlight or UI.colors.text,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
+                })
 		labelY = labelY + fontProgressSmall:getHeight() + 6
 	end
 
 	if self.dailyStreakMessage then
-		UI.drawLabel(self.dailyStreakMessage, x, labelY, width, "center", {
-			font = fontProgressSmall,
-			color = self.dailyStreakColor or UI.colors.highlight or UI.colors.text,
-		})
+                UI.drawLabel(self.dailyStreakMessage, x, labelY, width, "center", {
+                        font = fontProgressSmall,
+                        color = self.dailyStreakColor or UI.colors.highlight or UI.colors.text,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
+                })
 		labelY = labelY + fontProgressSmall:getHeight() + 6
 	end
 
@@ -1718,10 +1742,12 @@ local function drawXpSection(self, x, y, width)
 
 	local xpLabelFont = fontProgressLabel or fontProgressSmall
 	local xpLabelHeight = (xpLabelFont and xpLabelFont:getHeight()) or 0
-	UI.drawLabel(totalLabel, x, labelY, width, "center", {
-		font = xpLabelFont,
-		color = UI.colors.text,
-	})
+        UI.drawLabel(totalLabel, x, labelY, width, "center", {
+                font = xpLabelFont,
+                color = UI.colors.text,
+                shadow = true,
+                shadowOffset = TEXT_SHADOW_OFFSET,
+        })
 
 	labelY = labelY + xpLabelHeight + 4
 	local celebrationStart = labelY + xpLabelHeight + 16
@@ -1772,10 +1798,12 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 
 	for index, entry in ipairs(entries) do
 		local entryX = x + sectionPadding + (index - 1) * (columnWidth + columnSpacing)
-		UI.drawLabel(entry.label or "", entryX, labelY, columnWidth, "center", {
-			font = labelFont,
-			color = mutedColor,
-		})
+                UI.drawLabel(entry.label or "", entryX, labelY, columnWidth, "center", {
+                        font = labelFont,
+                        color = mutedColor,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
+                })
 
 		local valueText = entry.value or "0"
 		local displayFont = valueFont
@@ -1796,10 +1824,12 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 			}
 		end
 
-		UI.drawLabel(valueText, entryX, valueY, columnWidth, "center", {
-			font = displayFont,
-			color = color,
-		})
+                UI.drawLabel(valueText, entryX, valueY, columnWidth, "center", {
+                        font = displayFont,
+                        color = color,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
+                })
 	end
 end
 
@@ -1823,10 +1853,12 @@ local function drawAchievementsPanel(self, x, y, width, height, sectionPadding, 
 	local iconSize = layoutData.iconSize or 14
 	local entryY = y + sectionPadding
 
-	UI.drawLabel(headerText, x + sectionPadding, entryY, headerWidth, "left", {
-		font = fontProgressSmall,
-		color = UI.colors.text,
-	})
+        UI.drawLabel(headerText, x + sectionPadding, entryY, headerWidth, "left", {
+                font = fontProgressSmall,
+                color = UI.colors.text,
+                shadow = true,
+                shadowOffset = TEXT_SHADOW_OFFSET,
+        })
 
 	entryY = entryY + fontProgressSmall:getHeight() + innerSpacing
 
@@ -1863,17 +1895,21 @@ local function drawAchievementsPanel(self, x, y, width, height, sectionPadding, 
 		love.graphics.setColor(1, 1, 1, 1)
 
 		local textX = x + sectionPadding + textOffset
-		UI.drawLabel(entry.title or "", textX, entryY, textWidth, "left", {
-			font = fontSmall,
-			color = UI.colors.highlight or UI.colors.text,
-		})
+                UI.drawLabel(entry.title or "", textX, entryY, textWidth, "left", {
+                        font = fontSmall,
+                        color = UI.colors.highlight or UI.colors.text,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
+                })
 		entryY = entryY + fontSmall:getHeight()
 
 		if entry.description and entry.description ~= "" then
-			UI.drawLabel(entry.description, textX, entryY, textWidth, "left", {
-				font = fontProgressSmall,
-				color = UI.colors.mutedText or UI.colors.text,
-			})
+                        UI.drawLabel(entry.description, textX, entryY, textWidth, "left", {
+                                font = fontProgressSmall,
+                                color = UI.colors.mutedText or UI.colors.text,
+                                shadow = true,
+                                shadowOffset = TEXT_SHADOW_OFFSET,
+                        })
 			entryY = entryY + (entry.descriptionLines or 0) * fontProgressSmall:getHeight()
 		end
 
@@ -1908,6 +1944,8 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
                 UI.drawLabel(messageText, primaryX, currentY + sectionPadding, wrapLimit, "center", {
                         font = fontMessage,
                         color = UI.colors.mutedText or UI.colors.text,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
                 })
 		currentY = currentY + messagePanelHeight
 	end
@@ -1981,6 +2019,8 @@ function GameOver:draw()
         UI.drawLabel(titleText, 0, 78, sw, "center", {
                 font = fontTitle,
                 color = UI.colors.text,
+                shadow = true,
+                shadowOffset = TITLE_SHADOW_OFFSET,
         })
 
 	drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
@@ -2425,6 +2465,8 @@ function GameOver:drawUnlockOverlay()
         UI.drawLabel(titleText, 0, titleY, sw, "center", {
                 font = titleFont,
                 color = titleColor,
+                shadow = true,
+                shadowOffset = TITLE_SHADOW_OFFSET,
         })
 
         local nextY = cardY + cardHeight + 28
@@ -2432,6 +2474,8 @@ function GameOver:drawUnlockOverlay()
                 UI.drawLabel(nameText, 0, nextY, sw, "center", {
                         font = nameFont,
                         color = titleColor,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
                 })
                 local nameHeight = (nameFont and nameFont:getHeight()) or 0
                 nextY = nextY + nameHeight + 12
@@ -2443,6 +2487,8 @@ function GameOver:drawUnlockOverlay()
                 UI.drawLabel(descText, descX, nextY, descWidth, "center", {
                         font = smallFont,
                         color = mutedColor,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
                 })
                 local smallHeight = (smallFont and smallFont:getHeight() * smallFont:getLineHeight()) or 0
                 nextY = nextY + max(32, smallHeight + 18)
@@ -2452,6 +2498,8 @@ function GameOver:drawUnlockOverlay()
         UI.drawLabel(continueText, 0, continueY, sw, "center", {
                 font = smallFont,
                 color = continueColor,
+                shadow = true,
+                shadowOffset = TEXT_SHADOW_OFFSET,
         })
 
         love.graphics.pop()
