@@ -606,6 +606,8 @@ local HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after survivi
 local DAMAGE_FLASH_DURATION = 0.45
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
+local SELF_COLLISION_RADIUS = SEGMENT_SPACING * 0.48
+local SELF_COLLISION_RADIUS_SQ = SELF_COLLISION_RADIUS * SELF_COLLISION_RADIUS
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
 Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
@@ -1343,9 +1345,9 @@ local function normalizeDirection(dx, dy)
 end
 
 local function closestPointOnSegment(px, py, ax, ay, bx, by)
-	if not (px and py and ax and ay and bx and by) then
-		return nil, nil, huge, 0
-	end
+        if not (px and py and ax and ay and bx and by) then
+                return nil, nil, huge, 0
+        end
 
 	local abx = bx - ax
 	local aby = by - ay
@@ -1370,7 +1372,76 @@ local function closestPointOnSegment(px, py, ax, ay, bx, by)
 	local dx = px - cx
 	local dy = py - cy
 
-	return cx, cy, dx * dx + dy * dy, t
+        return cx, cy, dx * dx + dy * dy, t
+end
+
+local function cross2d(ax, ay, bx, by)
+        return ax * by - ay * bx
+end
+
+local function segmentDistanceSq(ax, ay, bx, by, cx, cy, dx, dy)
+        if not (ax and ay and bx and by and cx and cy and dx and dy) then
+                return huge
+        end
+
+        local rX = bx - ax
+        local rY = by - ay
+        local sX = dx - cx
+        local sY = dy - cy
+        local denom = cross2d(rX, rY, sX, sY)
+        local qX = cx - ax
+        local qY = cy - ay
+
+        if abs(denom) > 1e-6 then
+                local t = cross2d(qX, qY, sX, sY) / denom
+                local u = cross2d(qX, qY, rX, rY) / denom
+                if t >= 0 and t <= 1 and u >= 0 and u <= 1 then
+                        return 0
+                end
+        end
+
+        local minDistSq = huge
+        local _, _, distSq = closestPointOnSegment(ax, ay, cx, cy, dx, dy)
+        minDistSq = min(minDistSq, distSq)
+        _, _, distSq = closestPointOnSegment(bx, by, cx, cy, dx, dy)
+        minDistSq = min(minDistSq, distSq)
+        _, _, distSq = closestPointOnSegment(cx, cy, ax, ay, bx, by)
+        minDistSq = min(minDistSq, distSq)
+        _, _, distSq = closestPointOnSegment(dx, dy, ax, ay, bx, by)
+        minDistSq = min(minDistSq, distSq)
+
+        return minDistSq
+end
+
+local function isSelfCollisionAlongPath(startX, startY, endX, endY)
+        if not (startX and startY and endX and endY) then
+                return false
+        end
+
+        local bodyCount = trail and #trail or 0
+        if bodyCount <= 3 then
+                return false
+        end
+
+        local radiusSq = SELF_COLLISION_RADIUS_SQ
+
+        for i = 3, bodyCount do
+                local seg = trail[i]
+                local nextSeg = trail[i + 1]
+                local sx = seg and seg.drawX
+                local sy = seg and seg.drawY
+                local ex = nextSeg and nextSeg.drawX or sx
+                local ey = nextSeg and nextSeg.drawY or sy
+
+                if sx and sy and ex and ey then
+                        local distSq = segmentDistanceSq(startX, startY, endX, endY, sx, sy, ex, ey)
+                        if distSq <= radiusSq then
+                                return true
+                        end
+                end
+        end
+
+        return false
 end
 
 local function copySegmentData(segment)
@@ -2719,8 +2790,9 @@ function Snake:update(dt)
 	end
 
        -- base speed with upgrades/modifiers
-	local head = trail[1]
-	local speed = self:getSpeed()
+        local head = trail[1]
+        local previousHeadX, previousHeadY = head and head.drawX, head and head.drawY
+        local speed = self:getSpeed()
 	local baselineSpeed = speed
 
 	local hole = descendingHole
@@ -3142,13 +3214,18 @@ function Snake:update(dt)
         if headCellCount > 0 and not self:isHazardGraceActive() then
                 local hx, hy = trail[1].drawX, trail[1].drawY
                 local lastCheckedCol, lastCheckedRow = nil, nil
+                local segmentStartX = previousHeadX or hx
+                local segmentStartY = previousHeadY or hy
 
                 for i = 1, headCellCount do
                         local cell = headCells[i]
                         local headCol, headRow = cell and cell[1], cell and cell[2]
                         local headSnapX, headSnapY = cell and cell[3], cell and cell[4]
+                        local targetX = headSnapX or hx
+                        local targetY = headSnapY or hy
                         if headCol and headRow then
                                 if lastCheckedCol == headCol and lastCheckedRow == headRow then
+                                        segmentStartX, segmentStartY = targetX, targetY
                                         goto continue
                                 end
                                 lastCheckedCol, lastCheckedRow = headCol, headRow
@@ -3164,13 +3241,19 @@ function Snake:update(dt)
 
                                 if not tailVacated and isCellOccupiedBySnakeBody(headCol, headRow) then
                                         if wasRecentlyVacated(headCol, headRow) then
+                                                segmentStartX, segmentStartY = targetX, targetY
                                                 goto continue
                                         end
                                         local gridOccupied = SnakeUtils and SnakeUtils.isOccupied and SnakeUtils.isOccupied(headCol, headRow)
                                         if gridOccupied then
+                                                if not isSelfCollisionAlongPath(segmentStartX, segmentStartY, targetX, targetY) then
+                                                        segmentStartX, segmentStartY = targetX, targetY
+                                                        goto continue
+                                                end
                                                 if self:consumeShield() then
                                                         self:onShieldConsumed(hx, hy, "self")
                                                         self:beginHazardGrace()
+                                                        segmentStartX, segmentStartY = targetX, targetY
                                                         break
                                                 else
                                                         local pushX = -(direction.x or 0) * SEGMENT_SPACING
@@ -3187,6 +3270,7 @@ function Snake:update(dt)
                                                 end
                                         end
                                 end
+                                segmentStartX, segmentStartY = targetX, targetY
                                 ::continue::
                         end
                 end
