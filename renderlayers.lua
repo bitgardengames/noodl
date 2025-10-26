@@ -102,30 +102,50 @@ function RenderLayers:withLayer(layerName, drawFunc)
 end
 
 local function processQueuedDraws()
-        for _, layerName in ipairs(layerOrder) do
-                local draws = queuedDraws[layerName]
-                if draws and #draws > 0 then
-                        local canvas, replaced = ensureCanvas(layerName, canvasWidth, canvasHeight)
-                        if replaced then
-                                layerClearedThisFrame[layerName] = false
+        local passes = 0
+        local maxPasses = 16
+
+        while true do
+                local processedAny = false
+
+                for _, layerName in ipairs(layerOrder) do
+                        local draws = queuedDraws[layerName]
+                        if draws and #draws > 0 then
+                                processedAny = true
+
+                                local canvas, replaced = ensureCanvas(layerName, canvasWidth, canvasHeight)
+                                if replaced then
+                                        layerClearedThisFrame[layerName] = false
+                                end
+
+                                love.graphics.push("all")
+                                love.graphics.setCanvas({canvas, stencil = true})
+
+                                if not layerClearedThisFrame[layerName] then
+                                        love.graphics.clear(0, 0, 0, 0)
+                                        layerClearedThisFrame[layerName] = true
+                                end
+
+                                local i = 1
+                                while i <= #draws do
+                                        draws[i]()
+                                        i = i + 1
+                                end
+
+                                love.graphics.pop()
+
+                                layerUsedThisFrame[layerName] = true
+                                queuedDraws[layerName] = {}
                         end
+                end
 
-                        love.graphics.push("all")
-                        love.graphics.setCanvas({canvas, stencil = true})
+                if not processedAny then
+                        break
+                end
 
-                        if not layerClearedThisFrame[layerName] then
-                                love.graphics.clear(0, 0, 0, 0)
-                                layerClearedThisFrame[layerName] = true
-                        end
-
-                        for i = 1, #draws do
-                                draws[i]()
-                        end
-
-                        love.graphics.pop()
-
-                        layerUsedThisFrame[layerName] = true
-                        queuedDraws[layerName] = {}
+                passes = passes + 1
+                if passes >= maxPasses then
+                        break
                 end
         end
 end
