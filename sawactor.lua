@@ -24,7 +24,7 @@ local TRACK_SLOT_RADIUS = 6
 local STENCIL_EXTENT = 999
 local SINK_OFFSET = 2
 local SINK_DISTANCE = 28
-local SHADOW_OFFSET = 6
+local SHADOW_OFFSET = 3
 local SHADOW_ALPHA = 0.35
 
 local sawStencilState = {
