@@ -213,10 +213,10 @@ local function measureXpPanelHeight(self, width, celebrationCount)
         height = height + 6 + smallHeight
         height = height + 18
 
-        local baseMaxRadius = max(48, min(74, (width / 2) - 24))
+        local baseMaxRadius = max(56, min(90, (width / 2) - 18))
         local scaledMaxRadius = baseMaxRadius * 1.2
-        local ringThickness = max(14, min(24, scaledMaxRadius * 0.42))
-        local baseRingRadius = max(32, scaledMaxRadius - ringThickness * 0.25)
+        local ringThickness = max(18, min(30, scaledMaxRadius * 0.46))
+        local baseRingRadius = max(36, scaledMaxRadius - ringThickness * 0.22)
         local ringRadius = baseRingRadius + (XP_RING_SIZE_BOOST or 0)
         local outerRadius = ringRadius + ringThickness * 0.45
 
@@ -881,18 +881,26 @@ function GameOver:updateLayoutMetrics()
 
 	local xpPanelHeight = 0
 	local xpLayout = nil
-	if self.progressionAnimation then
-		local availableWidth = max(0, innerWidth - sectionPadding * 2)
-		if availableWidth > 0 then
-			local xpWidth = floor(availableWidth + 0.5)
-			local celebrations = (self.progressionAnimation.celebrations and #self.progressionAnimation.celebrations) or 0
-			local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
-			local targetHeight = measureXpPanelHeight(self, xpWidth, celebrations)
+        if self.progressionAnimation then
+                local availableWidth = max(0, innerWidth - sectionPadding * 2)
+                if availableWidth > 0 then
+                        local xpWidth = floor(availableWidth + 0.5)
+                        local celebrations = (self.progressionAnimation.celebrations and #self.progressionAnimation.celebrations) or 0
+                        local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
+                        local targetHeight = measureXpPanelHeight(self, xpWidth, celebrations)
+                        local contentX = (sw - contentWidth) / 2
+                        local primaryX = contentX + padding + sectionPadding
+                        local centerOffset = 0
+                        if xpWidth > 0 then
+                                local desiredCenter = sw / 2
+                                local currentCenter = primaryX + xpWidth / 2
+                                centerOffset = floor(desiredCenter - currentCenter + 0.5)
+                        end
 
-			xpLayout = {
-				width = xpWidth,
-				offset = 0,
-			}
+                        xpLayout = {
+                                width = xpWidth,
+                                offset = centerOffset,
+                        }
 
 			self.baseXpSectionHeight = baseHeight
 			if not self.xpSectionHeight then
@@ -1220,7 +1228,6 @@ function GameOver:updateButtonLayout()
         end
 
         local _, startY = self:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
-        startY = max(0, startY - 100)
         local defs = defaultButtonLayout(sw, sh, buttonDefs, startY)
 
         buttonList:reset(defs)
@@ -1593,13 +1600,13 @@ local function drawXpSection(self, x, y, width)
 
         local ringTop = gainedY + fontProgressSmall:getHeight() + 18
         local centerX = x + width / 2
-        local baseMaxRadius = max(48, min(74, (width / 2) - 24))
+        local baseMaxRadius = max(56, min(90, (width / 2) - 18))
         local scaledMaxRadius = baseMaxRadius * 1.2
-        local ringThickness = max(14, min(24, scaledMaxRadius * 0.42))
+        local ringThickness = max(18, min(30, scaledMaxRadius * 0.46))
         local sizeBoost = XP_RING_SIZE_BOOST or 0
-        local baseRingRadius = max(32, scaledMaxRadius - ringThickness * 0.25)
+        local baseRingRadius = max(36, scaledMaxRadius - ringThickness * 0.22)
         local ringRadius = baseRingRadius + sizeBoost
-        local innerRadius = max(32, baseRingRadius - ringThickness * 0.6) + sizeBoost
+        local innerRadius = max(32, baseRingRadius - ringThickness * 0.55) + sizeBoost
         local outerRadius = ringRadius + ringThickness * 0.45
 	local centerY = ringTop + ringRadius
 	local percent = clamp(anim.visualPercent or 0, 0, 1)
@@ -1680,11 +1687,12 @@ local function drawXpSection(self, x, y, width)
 		popScale = 1 + easeOutBack(pop) * 0.3
 	end
 
-	love.graphics.push()
-	love.graphics.translate(centerX, centerY)
-	love.graphics.scale(popScale, popScale)
-	love.graphics.printf(levelValue, -innerRadius, -fontProgressValue:getHeight() / 2 + 2, innerRadius * 2, "center")
-	love.graphics.pop()
+        local levelScale = 1.12
+        love.graphics.push()
+        love.graphics.translate(centerX, centerY)
+        love.graphics.scale(popScale * levelScale, popScale * levelScale)
+        love.graphics.printf(levelValue, -innerRadius, -fontProgressValue:getHeight() / 2 + 2, innerRadius * 2, "center")
+        love.graphics.pop()
 
 	local labelY = centerY + outerRadius + 18
 	local breakdown = self.progression and self.progression.breakdown or {}
