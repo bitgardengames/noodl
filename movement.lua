@@ -20,6 +20,8 @@ local sqrt = math.sqrt
 
 local Movement = {}
 
+local MAX_SNAKE_TIME_STEP = 1 / 60
+
 function Movement:applyForcedDirection(dirX, dirY)
         dirX = dirX or 0
         dirY = dirY or 0
@@ -685,44 +687,59 @@ function Movement:reset()
 end
 
 function Movement:update(dt)
-	local alive, cause, context = Snake:update(dt)
-	if not alive then
-		if context and context.fatal then
-			return "dead", cause or "self", context
-		end
-		return "hit", cause or "self", context
-	end
+        if not dt or dt <= 0 then
+                return
+        end
 
-	local headX, headY = Snake:getHead()
+        local remaining = dt
+        local maxStep = MAX_SNAKE_TIME_STEP
 
-	local wallCause, wallContext
-	headX, headY, wallCause, wallContext = handleWallCollision(headX, headY)
-	if wallCause then
-		return "hit", wallCause, wallContext
-	end
+        while remaining > 0 do
+                local step = min(remaining, maxStep)
+                if step <= 0 then
+                        break
+                end
+                remaining = remaining - step
 
-	local state, stateCause, stateContext = handleRockCollision(headX, headY)
-	if state then
-		return state, stateCause, stateContext
-	end
+                local alive, cause, context = Snake:update(step)
+                if not alive then
+                        if context and context.fatal then
+                                return "dead", cause or "self", context
+                        end
+                        return "hit", cause or "self", context
+                end
 
-	local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
-	if laserState then
-		return laserState, laserCause, laserContext
-	end
+                local headX, headY = Snake:getHead()
 
-        local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
-        if sawState then
-                return sawState, sawCause, sawContext
-	end
+                local wallCause, wallContext
+                headX, headY, wallCause, wallContext = handleWallCollision(headX, headY)
+                if wallCause then
+                        return "hit", wallCause, wallContext
+                end
 
-	if Snake.checkSawBodyCollision then
-		Snake:checkSawBodyCollision()
-	end
+                local state, stateCause, stateContext = handleRockCollision(headX, headY)
+                if state then
+                        return state, stateCause, stateContext
+                end
 
-	if Fruit:checkCollisionWith(headX, headY) then
-		return "scored"
-	end
+                local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
+                if laserState then
+                        return laserState, laserCause, laserContext
+                end
+
+                local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
+                if sawState then
+                        return sawState, sawCause, sawContext
+                end
+
+                if Snake.checkSawBodyCollision then
+                        Snake:checkSawBodyCollision()
+                end
+
+                if Fruit:checkCollisionWith(headX, headY) then
+                        return "scored"
+                end
+        end
 end
 
 return Movement
