@@ -718,10 +718,11 @@ function Snake:resetModifiers()
         self.temporalAnchor = nil
         self.quickFangs = nil
         self.zephyrCoils = nil
-	self.spectralHarvest = nil
-	self.stoneSkinVisual = nil
-       self.speedVisual = nil
-       UI:setShields(self.shields or 0, {silent = true, immediate = true})
+        self.spectralHarvest = nil
+        self.stoneSkinVisual = nil
+        self.speedVisual = nil
+        self.diffractionBarrier = nil
+        UI:setShields(self.shields or 0, {silent = true, immediate = true})
 end
 
 function Snake:setQuickFangsStacks(count)
@@ -757,10 +758,10 @@ function Snake:setQuickFangsStacks(count)
 end
 
 function Snake:setZephyrCoilsStacks(count)
-	count = max(0, floor((count or 0) + 0.0001))
+        count = max(0, floor((count or 0) + 0.0001))
 
-	local state = self.zephyrCoils
-	if not state and count <= 0 then
+        local state = self.zephyrCoils
+        if not state and count <= 0 then
 		return
 	end
 
@@ -777,14 +778,38 @@ function Snake:setZephyrCoilsStacks(count)
 		end
 	else
 		state.target = 0
-	end
+        end
+end
+
+function Snake:setDiffractionBarrierActive(active)
+        if active then
+                local state = self.diffractionBarrier
+                if not state then
+                        state = {intensity = 0, target = 0, time = 0, flash = 0}
+                        self.diffractionBarrier = state
+                end
+
+                if not state.active then
+                        state.flash = min(1.25, (state.flash or 0) + 0.9)
+                        state.intensity = max(state.intensity or 0, 0.55)
+                end
+
+                state.active = true
+                state.target = 1
+        else
+                local state = self.diffractionBarrier
+                if state then
+                        state.active = false
+                        state.target = 0
+                end
+        end
 end
 
 function Snake:setChronospiralActive(active)
-	if active then
-		local state = self.chronospiral
-		if not state then
-			state = {intensity = 0, target = 1, spin = 0}
+        if active then
+                local state = self.chronospiral
+                if not state then
+                        state = {intensity = 0, target = 1, spin = 0}
 			self.chronospiral = state
 		end
 		state.target = 1
@@ -2098,6 +2123,18 @@ local function collectUpgradeVisuals(self)
                 entry.time = spectral.time or 0
         end
 
+        local diffraction = self.diffractionBarrier
+        if diffraction then
+                local intensity = diffraction.intensity or 0
+                local flash = diffraction.flash or 0
+                if intensity > 0.001 or flash > 0.001 or diffraction.active then
+                        local entry = acquireEntry("diffractionBarrier")
+                        entry.intensity = intensity
+                        entry.flash = flash
+                        entry.time = diffraction.time or 0
+                end
+        end
+
         if hasAny then
                 return visuals
         end
@@ -2731,24 +2768,45 @@ function Snake:update(dt)
 		end
 	end
 
-	if self.titanblood then
-		local state = self.titanblood
-		state.time = (state.time or 0) + dt
-		local intensity = state.intensity or 0
-		local target = state.target or 0
-		local blend = min(1, dt * 3.4)
-		intensity = intensity + (target - intensity) * blend
-		state.intensity = intensity
-		if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.01 then
-			self.titanblood = nil
-		end
-	end
+        if self.titanblood then
+                local state = self.titanblood
+                state.time = (state.time or 0) + dt
+                local intensity = state.intensity or 0
+                local target = state.target or 0
+                local blend = min(1, dt * 3.4)
+                intensity = intensity + (target - intensity) * blend
+                state.intensity = intensity
+                if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.01 then
+                        self.titanblood = nil
+                end
+        end
 
-	local zephyr = self.zephyrCoils
-	if zephyr then
-		zephyr.time = (zephyr.time or 0) + dt
-		local stacks = zephyr.stacks or 0
-		local target = zephyr.target or (stacks > 0 and min(1, 0.45 + 0.2 * min(stacks, 3)) or 0)
+        if self.diffractionBarrier then
+                local state = self.diffractionBarrier
+                state.time = (state.time or 0) + dt
+                local target
+                if state.active then
+                        target = 1
+                else
+                        target = state.target or 0
+                end
+
+                state.target = target
+                local blend = min(1, dt * 5.2)
+                local current = state.intensity or 0
+                state.intensity = current + (target - current) * blend
+                state.flash = max(0, (state.flash or 0) - dt * 2.8)
+
+                if not state.active and target <= 0 and state.intensity <= 0.02 and state.flash <= 0.02 then
+                        self.diffractionBarrier = nil
+                end
+        end
+
+        local zephyr = self.zephyrCoils
+        if zephyr then
+                zephyr.time = (zephyr.time or 0) + dt
+                local stacks = zephyr.stacks or 0
+                local target = zephyr.target or (stacks > 0 and min(1, 0.45 + 0.2 * min(stacks, 3)) or 0)
 		zephyr.target = target
 		local blend = min(1, dt * 3.6)
 		local intensity = (zephyr.intensity or 0) + (target - (zephyr.intensity or 0)) * blend
