@@ -6,7 +6,7 @@ local MetaProgression = require("metaprogression")
 local Theme = require("theme")
 local Shaders = require("shaders")
 local Floors = require("floors")
-local LoveTimer = require("lovetimer")
+local Timer = require("timer")
 local abs = math.abs
 local ceil = math.ceil
 local cos = math.cos
@@ -965,7 +965,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         love.graphics.setLineWidth(4)
 
         if isSelected then
-                local glowClock = LoveTimer.getTime()
+                local glowClock = Timer.getTime()
                 local pulse = 0.35 + 0.25 * (sin(glowClock * 5) * 0.5 + 0.5)
                 setColor(1, 0.9, 0.45, pulse)
 		love.graphics.setLineWidth(10)
@@ -1040,7 +1040,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         drawGradientOverlay(style.gradient)
         drawShineOverlay(style.shine)
 
-        local currentTime = LoveTimer.getTime()
+        local currentTime = Timer.getTime()
 
         if style.aura then
                 withTransformedScissor(x, y, w, h, function()
@@ -1088,7 +1088,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 
         if style.sparkles and style.sparkles.positions then
                 withTransformedScissor(x, y, w, h, function()
-                        local time = LoveTimer.getTime()
+                        local time = Timer.getTime()
                         local driftSpeed = style.sparkles.driftSpeed or 0
                         local driftMinY = style.sparkles.driftMinY or 0
                         local driftMaxY = style.sparkles.driftMaxY or 1

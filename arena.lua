@@ -3,7 +3,7 @@ local Audio = require("audio")
 local Shaders = require("shaders")
 local RenderLayers = require("renderlayers")
 local SharedCanvas = require("sharedcanvas")
-local LoveTimer = require("lovetimer")
+local Timer = require("timer")
 
 local abs = math.abs
 local ceil = math.ceil
@@ -360,7 +360,7 @@ function Arena:setFloorDecorations(floorNum, floorData)
 	end
 
 	local seed = os.time()
-    seed = seed + floor(LoveTimer.getTime() * 1000)
+    seed = seed + floor(Timer.getTime() * 1000)
 
 	self._decorationConfig = {
 		floor = floorNum or 0,
@@ -607,7 +607,7 @@ function Arena:drawTileDecorations()
 			local alpha = color[4] or 1
 			local fade = deco.fade
 			if fade and fade.amplitude and fade.amplitude > 0 then
-                            local time = LoveTimer.getTime()
+                            local time = Timer.getTime()
 				local oscillation = sin(time * (fade.speed or 1) + (fade.offset or 0))
 				local factor = 1 + oscillation * fade.amplitude
 				alpha = clamp01((fade.base or alpha) * factor)

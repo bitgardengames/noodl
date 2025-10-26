@@ -2,7 +2,7 @@ local Audio = require("audio")
 local Theme = require("theme")
 local Localization = require("localization")
 local Easing = require("easing")
-local LoveTimer = require("lovetimer")
+local Timer = require("timer")
 
 local abs = math.abs
 local floor = math.floor
@@ -1728,7 +1728,7 @@ function UI:drawFruitSockets()
 	love.graphics.setLineWidth(3)
 	love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 12, 12)
 
-    local time = LoveTimer.getTime()
+    local time = Timer.getTime()
         local socketRadius = (self.socketSize / 2) - 2
         local socketFill = lightenColor(basePanelColor, 0.45)
         local socketOutline = lightenColor(UI.colors.panelBorder or Theme.textColor, 0.2)

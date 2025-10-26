@@ -5,7 +5,7 @@ local SnakeUtils = require("snakeutils")
 local Audio = require("audio")
 local RenderLayers = require("renderlayers")
 local Easing = require("easing")
-local LoveTimer = require("lovetimer")
+local Timer = require("timer")
 
 local max = math.max
 local min = math.min
@@ -33,7 +33,7 @@ local function generateRockShape(size, seed)
 	if seed then
 		rng = love.math.newRandomGenerator(seed)
 	else
-                rng = love.math.newRandomGenerator(LoveTimer.getTime() * 1000)
+                rng = love.math.newRandomGenerator(Timer.getTime() * 1000)
 	end
 
 	local points = {}
