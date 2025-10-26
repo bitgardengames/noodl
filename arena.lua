@@ -329,7 +329,7 @@ function Arena:getTileFromWorld(x, y)
 	return col, row
 end
 
-local ARENA_BORDER_TOLERANCE = 3
+local ARENA_BORDER_TOLERANCE = 5
 
 function Arena:isInside(x, y)
         local inset = self.tileSize / 2
