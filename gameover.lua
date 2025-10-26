@@ -1662,25 +1662,15 @@ local function drawXpSection(self, x, y, width)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
 	end
 
-        love.graphics.setColor(0, 0, 0, 0.94)
-        love.graphics.circle("fill", centerX, centerY, innerRadius)
+	love.graphics.setColor(0, 0, 0, 0.94)
+	love.graphics.circle("fill", centerX, centerY, innerRadius)
 
-        local toneColor = GameOver.xpToneColor or withAlpha(copyColor(levelColor), 0.55)
-        local toneRadius = max(6, innerRadius * 0.7)
-        love.graphics.setColor(toneColor[1] or 1, toneColor[2] or 1, toneColor[3] or 1, toneColor[4] or 1)
-        love.graphics.circle("fill", centerX, centerY, toneRadius, 64)
+	local toneColor = GameOver.xpToneColor or withAlpha(copyColor(levelColor), 0.55)
+	local toneRadius = max(6, innerRadius * 0.7)
+	love.graphics.setColor(toneColor[1] or 1, toneColor[2] or 1, toneColor[3] or 1, toneColor[4] or 1)
+	love.graphics.circle("fill", centerX, centerY, toneRadius, 64)
 
-        local coreColor = lightenColor(copyColor(toneColor), 0.32)
-        coreColor[4] = (toneColor[4] or 1) * 0.65
-        love.graphics.setColor(coreColor[1] or 1, coreColor[2] or 1, coreColor[3] or 1, coreColor[4] or 1)
-        love.graphics.circle("fill", centerX, centerY, toneRadius * 0.6, 48)
-
-        drawFruitAnimations(anim)
-
-        love.graphics.setColor(withAlpha(Theme.panelBorder or {0.35, 0.3, 0.5, 1}, 0.85))
-        love.graphics.setLineWidth(2)
-	love.graphics.circle("line", centerX, centerY, innerRadius, 96)
-	love.graphics.setLineWidth(1)
+	drawFruitAnimations(anim)
 
 	if flash > 0.01 then
 		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
