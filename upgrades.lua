@@ -225,12 +225,6 @@ local function getSawCenters(limit)
         end)
 end
 
-local function getLaserCenters(limit)
-        return collectPositions(Lasers:getEmitters(), limit, function(beam)
-                return beam.x, beam.y
-        end)
-end
-
 local function getLaserEmitterDetails(limit)
         if not Lasers or not Lasers.getEmitters then
                 return {}

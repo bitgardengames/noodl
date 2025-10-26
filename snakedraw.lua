@@ -19,8 +19,6 @@ local sqrt = math.sqrt
 
 local SnakeDraw = ModuleUtil.create("SnakeDraw")
 
-local unpack = unpack
-
 -- tweakables
 local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3

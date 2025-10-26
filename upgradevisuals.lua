@@ -685,8 +685,7 @@ local function drawEventHorizon(effect, progress)
 	local x, y = effect.x, effect.y
 	local outerRadius = effect.outerRadius or 44
 	local innerRadius = effect.innerRadius or 12
-	local highlightColor = effect.variantColor or effect.color or {1, 0.82, 0.38, 1}
-	local shardColor = effect.variantSecondaryColor or {0.4, 0.7, 1.0, 1}
+        local highlightColor = effect.variantColor or effect.color or {1, 0.82, 0.38, 1}
 
 	local gravityAlpha = clamp01(1 - progress * 0.9)
 	if gravityAlpha <= 0 then return end
