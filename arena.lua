@@ -370,14 +370,31 @@ local function calculateHeadLighting(arena, state)
                 headX, headY = Snake:getHead()
         end
 
+        if (not headX or not headY) and Snake and Snake.getHeadCell and arena and arena.getCenterOfTile then
+                local col, row = Snake:getHeadCell()
+                if col and row then
+                        local cx, cy = arena:getCenterOfTile(col, row)
+                        if not headX then
+                                headX = cx
+                        end
+                        if not headY then
+                                headY = cy
+                        end
+                end
+        end
+
         local centerX = arena.x + (arena.width or 0) * 0.5
         local centerY = arena.y + (arena.height or 0) * 0.5
 
-        if headX and headY then
+        if headX then
                 state.lastHeadX = headX
-                state.lastHeadY = headY
         else
                 headX = state.lastHeadX or centerX
+        end
+
+        if headY then
+                state.lastHeadY = headY
+        else
                 headY = state.lastHeadY or centerY
         end
 
