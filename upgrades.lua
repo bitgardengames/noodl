@@ -12,6 +12,7 @@ local MetaProgression = require("metaprogression")
 local PlayerStats = require("playerstats")
 local UpgradeHelpers = require("upgradehelpers")
 local DataSchemas = require("dataschemas")
+local UpgradeVisuals = require("upgradevisuals")
 
 local floor = math.floor
 local max = math.max
@@ -1844,7 +1845,7 @@ local pool = {
                 id = "contract_of_cinders",
                 nameKey = "upgrades.contract_of_cinders.name",
                 descKey = "upgrades.contract_of_cinders.description",
-                rarity = "rare",
+                rarity = "epic",
                 tags = {"defense", "risk", "hazard"},
                 onAcquire = function(state)
                         grantShields(2)
@@ -1905,6 +1906,26 @@ local pool = {
                                                 fadeTo = 0.04,
                                         },
                                 })
+
+                                local fx, fy = getEventPosition(data)
+                                if fx and fy then
+                                        UpgradeVisuals:spawn(fx, fy, {
+                                                variant = "phoenix_flare",
+                                                life = 0.78,
+                                                innerRadius = 10,
+                                                outerRadius = 30,
+                                                ringCount = 2,
+                                                ringSpacing = 7,
+                                                addBlend = true,
+                                                color = {1.0, 0.44, 0.18, 0.85},
+                                                glowAlpha = 0.28,
+                                                haloAlpha = 0.12,
+                                                showBase = false,
+                                                variantColor = {1.0, 0.46, 0.16, 0.95},
+                                                variantSecondaryColor = {1.0, 0.62, 0.24, 0.85},
+                                                variantTertiaryColor = {1.0, 0.86, 0.42, 0.78},
+                                        })
+                                end
                         end,
                 },
         }),
