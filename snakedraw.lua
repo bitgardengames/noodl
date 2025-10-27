@@ -897,14 +897,14 @@ local function drawFruitBulges(trail, head, radius)
         for i = 1, #trail do
                 local seg = trail[i]
                 if seg and seg.fruitMarker and seg ~= head then
-                        local x = seg.fruitMarkerX or seg.drawX or seg.x
-                        local y = seg.fruitMarkerY or seg.drawY or seg.y
+                        local x = seg.drawX or seg.x or seg.fruitMarkerX
+                        local y = seg.drawY or seg.y or seg.fruitMarkerY
 
                         if x and y then
                                 love.graphics.circle("fill", x, y, radius)
                         end
                 end
-	end
+        end
 end
 
 local function drawCornerCaps(path, radius)
