@@ -28,9 +28,42 @@ do
                 extern int highlightCount;
                 extern vec2 highlightPositions[MAX_DIM_HIGHLIGHTS];
                 extern vec2 highlightRadii[MAX_DIM_HIGHLIGHTS];
+                extern float snakeHeadActive;
+                extern vec2 snakeHeadPosition;
+                extern vec2 snakeHeadRadii;
+                extern float fruitActive;
+                extern vec2 fruitPosition;
+                extern vec2 fruitRadii;
+
+                float computeCircleLight(vec2 coords, vec2 center, vec2 radii) {
+                        float innerRadius = radii.x;
+                        float outerRadius = radii.y;
+                        if (outerRadius < innerRadius) {
+                                outerRadius = innerRadius;
+                        }
+                        float dist = distance(coords, center);
+                        float eased = smoothstep(innerRadius, outerRadius, dist);
+                        float circleLight = 1.0 - eased;
+                        return clamp(circleLight, 0.0, 1.0);
+                }
+
+                float applyCircleLight(float current, float contribution) {
+                        return 1.0 - ((1.0 - current) * (1.0 - contribution));
+                }
 
                 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
                         float light = 0.0;
+
+                        if (snakeHeadActive > 0.5) {
+                                float headLight = computeCircleLight(screen_coords, snakeHeadPosition, snakeHeadRadii);
+                                light = applyCircleLight(light, headLight);
+                        }
+
+                        if (fruitActive > 0.5) {
+                                float fruitLight = computeCircleLight(screen_coords, fruitPosition, fruitRadii);
+                                light = applyCircleLight(light, fruitLight);
+                        }
+
                         int count = highlightCount;
                         if (count < 0) {
                                 count = 0;
@@ -42,14 +75,8 @@ do
                                 if (i >= count) {
                                         break;
                                 }
-                                vec2 radii = highlightRadii[i];
-                                float innerRadius = radii.x;
-                                float outerRadius = radii.y;
-                                float dist = distance(screen_coords, highlightPositions[i]);
-                                float eased = smoothstep(innerRadius, outerRadius, dist);
-                                float circleLight = 1.0 - eased;
-                                circleLight = clamp(circleLight, 0.0, 1.0);
-                                light = 1.0 - ((1.0 - light) * (1.0 - circleLight));
+                                float circleLight = computeCircleLight(screen_coords, highlightPositions[i], highlightRadii[i]);
+                                light = applyCircleLight(light, circleLight);
                         }
 
                         float dimAlpha = clamp(baseAlpha, 0.0, 1.0);
@@ -425,7 +452,7 @@ local function calculateHeadLighting(arena, state)
         }
 end
 
-local function pushHighlightTarget(highlights, x, y, innerRadius, outerRadius)
+local function pushHighlightTarget(highlights, x, y, innerRadius, outerRadius, kind)
         if not highlights then
                 return
         end
@@ -451,6 +478,7 @@ local function pushHighlightTarget(highlights, x, y, innerRadius, outerRadius)
                 y = y,
                 innerRadius = innerRadius,
                 outerRadius = outerRadius,
+                kind = kind,
         }
 end
 
@@ -482,7 +510,7 @@ local function gatherFruitHighlights(arena, highlights)
         local tileSize = arena and arena.tileSize or 24
         local innerRadius = tileSize * 0.55
         local outerRadius = innerRadius + tileSize * 2.8
-        pushHighlightTarget(highlights, fx, fy, innerRadius, outerRadius)
+        pushHighlightTarget(highlights, fx, fy, innerRadius, outerRadius, "fruit")
 end
 
 local function gatherLaserHighlights(arena, highlights)
@@ -554,7 +582,7 @@ local function buildDimHighlights(arena, state, headLighting)
         end
 
         if headLighting then
-                pushHighlightTarget(highlights, headLighting.x, headLighting.y, headLighting.innerRadius, headLighting.outerRadius)
+                pushHighlightTarget(highlights, headLighting.x, headLighting.y, headLighting.innerRadius, headLighting.outerRadius, "snakeHead")
         end
 
         if #highlights < MAX_DIM_HIGHLIGHTS then
@@ -649,38 +677,112 @@ function Arena:drawDimLighting()
 
         local headLighting = calculateHeadLighting(self, state)
         local highlights = buildDimHighlights(self, state, headLighting)
-        local highlightCount = (highlights and #highlights) or 0
 
-        if dimLightingShader and highlightCount > 0 then
-                local positions = state.highlightPositions or {}
-                local radii = state.highlightRadii or {}
-                state.highlightPositions = positions
-                state.highlightRadii = radii
+        local snakeHighlight = nil
+        local fruitHighlight = nil
+        local highlightCount = 0
 
-                for index = highlightCount + 1, #positions do
-                        positions[index] = nil
-                end
-                for index = highlightCount + 1, #radii do
-                        radii[index] = nil
-                end
+        local positions = state.highlightPositions or {}
+        local radii = state.highlightRadii or {}
+        state.highlightPositions = positions
+        state.highlightRadii = radii
 
-                for index = 1, highlightCount do
+        if highlights then
+                for index = 1, #highlights do
                         local entry = highlights[index]
-                        local position = positions[index]
-                        if not position then
-                                position = {}
-                                positions[index] = position
-                        end
-                        position[1] = entry.x or ax
-                        position[2] = entry.y or ay
+                        if entry then
+                                if entry.kind == "snakeHead" then
+                                        if not snakeHighlight then
+                                                snakeHighlight = entry
+                                        end
+                                elseif entry.kind == "fruit" then
+                                        if not fruitHighlight then
+                                                fruitHighlight = entry
+                                        end
+                                else
+                                        highlightCount = highlightCount + 1
+                                        local position = positions[highlightCount]
+                                        if not position then
+                                                position = {}
+                                                positions[highlightCount] = position
+                                        end
+                                        position[1] = entry.x or ax
+                                        position[2] = entry.y or ay
 
-                        local radiusPair = radii[index]
-                        if not radiusPair then
-                                radiusPair = {}
-                                radii[index] = radiusPair
+                                        local radiusPair = radii[highlightCount]
+                                        if not radiusPair then
+                                                radiusPair = {}
+                                                radii[highlightCount] = radiusPair
+                                        end
+
+                                        local inner = entry.innerRadius or 0
+                                        local outer = entry.outerRadius or inner
+                                        if outer < inner then
+                                                outer = inner
+                                        end
+                                        radiusPair[1] = inner
+                                        radiusPair[2] = outer
+                                end
                         end
-                        radiusPair[1] = entry.innerRadius or 0
-                        radiusPair[2] = max(entry.outerRadius or 0, entry.innerRadius or 0)
+                end
+        end
+
+        for index = highlightCount + 1, #positions do
+                positions[index] = nil
+        end
+        for index = highlightCount + 1, #radii do
+                radii[index] = nil
+        end
+
+        local useShader = dimLightingShader and (highlightCount > 0 or snakeHighlight or fruitHighlight)
+
+        if useShader then
+                local snakePosition = state.snakeHeadPosition or {}
+                local snakeRadii = state.snakeHeadRadii or {}
+                state.snakeHeadPosition = snakePosition
+                state.snakeHeadRadii = snakeRadii
+
+                local fruitPosition = state.fruitPosition or {}
+                local fruitRadii = state.fruitRadii or {}
+                state.fruitPosition = fruitPosition
+                state.fruitRadii = fruitRadii
+
+                local snakeActive = 0.0
+                if snakeHighlight then
+                        snakeActive = 1.0
+                        snakePosition[1] = snakeHighlight.x or ax
+                        snakePosition[2] = snakeHighlight.y or ay
+                        local inner = snakeHighlight.innerRadius or 0
+                        local outer = snakeHighlight.outerRadius or inner
+                        if outer < inner then
+                                outer = inner
+                        end
+                        snakeRadii[1] = inner
+                        snakeRadii[2] = outer
+                else
+                        snakePosition[1] = ax
+                        snakePosition[2] = ay
+                        snakeRadii[1] = 0
+                        snakeRadii[2] = 0
+                end
+
+                local fruitActive = 0.0
+                if fruitHighlight then
+                        fruitActive = 1.0
+                        fruitPosition[1] = fruitHighlight.x or ax
+                        fruitPosition[2] = fruitHighlight.y or ay
+                        local inner = fruitHighlight.innerRadius or 0
+                        local outer = fruitHighlight.outerRadius or inner
+                        if outer < inner then
+                                outer = inner
+                        end
+                        fruitRadii[1] = inner
+                        fruitRadii[2] = outer
+                else
+                        fruitPosition[1] = ax
+                        fruitPosition[2] = ay
+                        fruitRadii[1] = 0
+                        fruitRadii[2] = 0
                 end
 
                 love.graphics.setShader(dimLightingShader)
@@ -688,6 +790,12 @@ function Arena:drawDimLighting()
                 dimLightingShader:send("highlightCount", highlightCount)
                 dimLightingShader:send("highlightPositions", positions)
                 dimLightingShader:send("highlightRadii", radii)
+                dimLightingShader:send("snakeHeadActive", snakeActive)
+                dimLightingShader:send("snakeHeadPosition", snakePosition)
+                dimLightingShader:send("snakeHeadRadii", snakeRadii)
+                dimLightingShader:send("fruitActive", fruitActive)
+                dimLightingShader:send("fruitPosition", fruitPosition)
+                dimLightingShader:send("fruitRadii", fruitRadii)
                 love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.rectangle("fill", ax, ay, aw, ah)
                 love.graphics.setShader()
