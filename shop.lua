@@ -121,17 +121,142 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-	leftx = {slot = "horizontal"},
-	rightx = {slot = "horizontal"},
-	lefty = {slot = "vertical"},
-	righty = {slot = "vertical"},
-	[1] = {slot = "horizontal"},
-	[2] = {slot = "vertical"},
+        leftx = {slot = "horizontal"},
+        rightx = {slot = "horizontal"},
+        lefty = {slot = "vertical"},
+        righty = {slot = "vertical"},
+        [1] = {slot = "horizontal"},
+        [2] = {slot = "vertical"},
 }
 
 local function resetAnalogAxis()
-	analogAxisDirections.horizontal = nil
-	analogAxisDirections.vertical = nil
+        analogAxisDirections.horizontal = nil
+        analogAxisDirections.vertical = nil
+end
+
+local function updateMysteryReveal(self, card, state, dt)
+        if not dt or dt <= 0 then return end
+        if not card or not state then return end
+
+        local upgrade = card.upgrade
+        if not upgrade or upgrade.id ~= "mystery_card" then
+                return
+        end
+
+        local pending = card.pendingRevealInfo
+        local reveal = state.mysteryReveal
+
+        if not pending and not reveal then
+                return
+        end
+
+        if pending and not reveal then
+                reveal = {
+                        phase = "approach",
+                        timer = 0,
+                        white = 0,
+                        shakeOffset = 0,
+                        shakeRotation = 0,
+                        applied = false,
+                        info = pending,
+                        approachDuration = pending.revealApproachDuration or pending.revealDelay or 0.55,
+                        shakeDuration = pending.revealShakeDuration or 0.5,
+                        flashInDuration = pending.revealFlashInDuration or 0.22,
+                        flashOutDuration = pending.revealFlashOutDuration or 0.45,
+                        shakeMagnitude = pending.revealShakeMagnitude or 9,
+                        shakeFrequency = pending.revealShakeFrequency or 26,
+                        applyThreshold = pending.revealApplyThreshold or 0.6,
+                }
+                state.mysteryReveal = reveal
+        else
+                reveal = state.mysteryReveal
+        end
+
+        if not reveal then return end
+
+        reveal.info = reveal.info or pending
+        local info = reveal.info
+        if not info then
+                reveal.phase = reveal.phase or "done"
+                return
+        end
+
+        reveal.timer = (reveal.timer or 0) + dt
+
+        if reveal.phase == "approach" then
+                reveal.white = 0
+                reveal.shakeOffset = 0
+                reveal.shakeRotation = 0
+                if reveal.timer >= (reveal.approachDuration or 0) then
+                        reveal.phase = "shake"
+                        reveal.timer = 0
+                end
+                return
+        end
+
+        if reveal.phase == "shake" then
+                local duration = reveal.shakeDuration or 0
+                if duration <= 0 then
+                        reveal.phase = "flashIn"
+                        reveal.timer = 0
+                        reveal.shakeOffset = 0
+                        reveal.shakeRotation = 0
+                else
+                        local progress = min(1, reveal.timer / duration)
+                        local amplitude = (1 - progress) * (reveal.shakeMagnitude or 8)
+                        local frequency = reveal.shakeFrequency or 24
+                        reveal.shakeOffset = sin(reveal.timer * frequency) * amplitude
+                        reveal.shakeRotation = sin(reveal.timer * frequency * 0.55) * amplitude * 0.02
+                        if reveal.timer >= duration then
+                                reveal.phase = "flashIn"
+                                reveal.timer = 0
+                                reveal.shakeOffset = 0
+                                reveal.shakeRotation = 0
+                        end
+                end
+                return
+        end
+
+        if reveal.phase == "flashIn" then
+                local duration = reveal.flashInDuration or 0
+                local progress = duration <= 0 and 1 or min(1, reveal.timer / duration)
+                reveal.white = progress
+                if not reveal.applied and (duration <= 0 or reveal.timer >= duration * (reveal.applyThreshold or 0.6)) then
+                        Upgrades:applyCardReveal(card, info)
+                        reveal.applied = true
+                end
+                if duration <= 0 or reveal.timer >= duration then
+                        reveal.phase = "flashOut"
+                        reveal.timer = 0
+                end
+                return
+        end
+
+        if reveal.phase == "flashOut" then
+                local duration = reveal.flashOutDuration or 0
+                if duration <= 0 then
+                        reveal.white = 0
+                        reveal.phase = "done"
+                        reveal.timer = 0
+                else
+                        local progress = min(1, reveal.timer / duration)
+                        reveal.white = 1 - progress
+                        if reveal.timer >= duration then
+                                reveal.white = 0
+                                reveal.phase = "done"
+                                reveal.timer = 0
+                        end
+                end
+                reveal.shakeOffset = 0
+                reveal.shakeRotation = 0
+                return
+        end
+
+        if reveal.phase == "done" then
+                reveal.white = 0
+                reveal.shakeOffset = 0
+                reveal.shakeRotation = 0
+        end
 end
 
 local function handleAnalogAxis(self, axis, value)
@@ -217,21 +342,22 @@ function Shop:refreshCards(options)
 	resetAnalogAxis()
 
 	for i = 1, #self.cards do
-		self.cardStates[i] = {
-			progress = 0,
-			delay = initialDelay + (i - 1) * 0.08,
-			selection = 0,
-			selectionClock = 0,
-			hover = 0,
-			focus = 0,
-			fadeOut = 0,
-			selectionFlash = nil,
-			revealSoundPlayed = false,
-			selectSoundPlayed = false,
-			discardActive = false,
-			discard = nil,
-		}
-	end
+                self.cardStates[i] = {
+                        progress = 0,
+                        delay = initialDelay + (i - 1) * 0.08,
+                        selection = 0,
+                        selectionClock = 0,
+                        hover = 0,
+                        focus = 0,
+                        fadeOut = 0,
+                        selectionFlash = nil,
+                        revealSoundPlayed = false,
+                        selectSoundPlayed = false,
+                        discardActive = false,
+                        discard = nil,
+                        mysteryReveal = nil,
+                }
+        end
 end
 
 function Shop:beginRestock()
@@ -396,27 +522,46 @@ function Shop:update(dt)
 			state.selectSoundPlayed = false
 		end
 
-		if state.selectionFlash then
-			local flashDuration = 0.75
-			state.selectionFlash = state.selectionFlash + dt
-			if state.selectionFlash >= flashDuration then
-				state.selectionFlash = nil
-			end
-		end
-	end
+                if state.selectionFlash then
+                        local flashDuration = 0.75
+                        state.selectionFlash = state.selectionFlash + dt
+                        if state.selectionFlash >= flashDuration then
+                                state.selectionFlash = nil
+                        end
+                end
 
-	if self.selected then
-		self.selectionTimer = (self.selectionTimer or 0) + dt
-		if not self.selectionComplete then
-			local hold = self.selectionHoldDuration or 0
-			local state = self.selectedIndex and self.cardStates and self.cardStates[self.selectedIndex] or nil
-			local flashDone = not (state and state.selectionFlash)
-			if self.selectionTimer >= hold and flashDone then
-				self.selectionComplete = true
-				Audio:playSound("shop_purchase")
-			end
-		end
-	else
+                if card and card.upgrade and card.upgrade.id == "mystery_card" then
+                        updateMysteryReveal(self, card, state, dt)
+                end
+        end
+
+        if self.selected then
+                self.selectionTimer = (self.selectionTimer or 0) + dt
+                if not self.selectionComplete then
+                        local hold = self.selectionHoldDuration or 0
+                        local state = self.selectedIndex and self.cardStates and self.cardStates[self.selectedIndex] or nil
+                        local flashDone = not (state and state.selectionFlash)
+                        local revealDone = true
+                        if self.selected and self.selected.upgrade and self.selected.upgrade.id == "mystery_card" then
+                                local revealState = state and state.mysteryReveal or nil
+                                if self.selected.pendingRevealInfo then
+                                        revealDone = false
+                                elseif revealState then
+                                        local phase = revealState.phase
+                                        local overlayAlpha = revealState.white or 0
+                                        if phase and phase ~= "done" then
+                                                revealDone = false
+                                        elseif overlayAlpha > 0.001 then
+                                                revealDone = false
+                                        end
+                                end
+                        end
+                        if self.selectionTimer >= hold and flashDone and revealDone then
+                                self.selectionComplete = true
+                                Audio:playSound("shop_purchase")
+                        end
+                end
+        else
 		self.selectionTimer = 0
 		self.selectionComplete = false
 		self.selectedIndex = nil
@@ -1263,6 +1408,16 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         love.graphics.printf(card.desc or "", descX + 1, descStart + 1, descWidth, "center")
         setColor(0.92, 0.92, 0.92, 1)
         love.graphics.printf(card.desc or "", descX, descStart, descWidth, "center")
+
+        local revealState = animationState and animationState.mysteryReveal or nil
+        if revealState then
+                local overlayAlpha = revealState.white or 0
+                if overlayAlpha > 0 then
+                        setColor(1, 1, 1, overlayAlpha)
+                        love.graphics.rectangle("fill", x + 8, y + 8, w - 16, h - 16, 10, 10)
+                        setColor(1, 1, 1, 1)
+                end
+        end
 end
 
 function Shop:draw(screenW, screenH)
@@ -1380,15 +1535,16 @@ function Shop:draw(screenW, screenH)
 		local rowIndex = floor((i - 1) / columns)
 		local baseX = startX + columnIndex * (cardWidth + spacing)
 		local baseY = startY + rowIndex * (cardHeight + rowSpacing)
-		local alpha = 1
-		local scale = 1
-		local yOffset = 0
-		local state = self.cardStates and self.cardStates[i]
-		if state then
-			local progress = state.progress or 0
-			local eased = progress * progress * (3 - 2 * progress)
-			alpha = eased
-			yOffset = (1 - eased) * 48
+                local alpha = 1
+                local scale = 1
+                local yOffset = 0
+                local state = self.cardStates and self.cardStates[i]
+                local revealState = state and state.mysteryReveal or nil
+                if state then
+                        local progress = state.progress or 0
+                        local eased = progress * progress * (3 - 2 * progress)
+                        alpha = eased
+                        yOffset = (1 - eased) * 48
 
 			-- Start cards a touch smaller and ease them up to full size so
 			-- the reveal animation feels like a gentle pop rather than a flat fade.
@@ -1453,29 +1609,34 @@ function Shop:draw(screenW, screenH)
 				scale = scale * (1 - 0.2 * fadeEase)
 				alpha = alpha * (1 - 0.9 * fadeEase)
 			end
-		end
+                end
 
-		alpha = max(0, min(alpha, 1))
+                alpha = max(0, min(alpha, 1))
 
-		local centerX = baseX + cardWidth / 2
-		local centerY = baseY + cardHeight / 2 - yOffset
-		if card == self.selected then
-			centerX = centerX + (screenW / 2 - centerX) * focusEase
+                local shakeOffset = (revealState and revealState.shakeOffset) or 0
+                local extraRotation = (revealState and revealState.shakeRotation) or 0
+
+                local centerX = baseX + cardWidth / 2
+                local centerY = baseY + cardHeight / 2 - yOffset
+                if card == self.selected then
+                        centerX = centerX + (screenW / 2 - centerX) * focusEase
 			local targetY = layoutCenterY
 			centerY = centerY + (targetY - centerY) * focusEase
 		else
 			if discardData then
 				centerX = centerX + discardOffsetX
 				centerY = centerY + discardOffsetY
-			else
-				centerY = centerY + 28 * fadeEase
-			end
-		end
+                        else
+                                centerY = centerY + 28 * fadeEase
+                        end
+                end
 
-		local drawWidth = cardWidth * scale
-		local drawHeight = cardHeight * scale
-		local drawX = centerX - drawWidth / 2
-		local drawY = centerY - drawHeight / 2
+                centerX = centerX + shakeOffset
+
+                local drawWidth = cardWidth * scale
+                local drawHeight = cardHeight * scale
+                local drawX = centerX - drawWidth / 2
+                local drawY = centerY - drawHeight / 2
 
 		local usingFocusNavigation = self.inputMode == "gamepad" or self.inputMode == "keyboard"
 		local mouseHover = mx >= drawX and mx <= drawX + drawWidth
@@ -1489,15 +1650,16 @@ function Shop:draw(screenW, screenH)
 		(not usingFocusNavigation and mouseHover)
 		)
 
-		love.graphics.push()
-		love.graphics.translate(centerX, centerY)
-		if discardRotation ~= 0 then
-			love.graphics.rotate(discardRotation)
-		end
-		love.graphics.scale(scale, scale)
-		love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
-		local appearanceAlpha = self.selected == card and 1 or alpha
-		drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, state, self.selected == card, appearanceAlpha)
+                love.graphics.push()
+                love.graphics.translate(centerX, centerY)
+                local totalRotation = discardRotation + extraRotation
+                if totalRotation ~= 0 then
+                        love.graphics.rotate(totalRotation)
+                end
+                love.graphics.scale(scale, scale)
+                love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
+                local appearanceAlpha = self.selected == card and 1 or alpha
+                drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, state, self.selected == card, appearanceAlpha)
 		love.graphics.pop()
 		card.bounds = {x = drawX, y = drawY, w = drawWidth, h = drawHeight}
 
