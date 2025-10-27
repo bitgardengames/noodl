@@ -1780,12 +1780,7 @@ local pool = {
                                         return
                                 end
 
-                                local activationLabel = getUpgradeString("tremor_bloom", "activation_text")
-                                if activationLabel == "" or activationLabel == "upgrades.tremor_bloom.activation_text" then
-                                        activationLabel = nil
-                                end
-
-                                local celebrationOptions = {
+                               local celebrationOptions = {
                                         color = TREMOR_BLOOM_COLOR,
                                         textOffset = 48,
                                         textScale = 1.08,
@@ -1807,7 +1802,7 @@ local pool = {
                                         },
                                 }
 
-                                celebrateUpgrade(activationLabel, data, celebrationOptions)
+                               celebrateUpgrade(nil, data, celebrationOptions)
 
                                 if hazardPositions and #hazardPositions > 0 then
                                         for _, pos in ipairs(hazardPositions) do
