@@ -3,12 +3,10 @@ local UI = require("ui")
 local abs = math.abs
 
 local Screen = {
-	width = nil,
-	height = nil,
-	targetWidth = nil,
-	targetHeight = nil,
-	smoothingSpeed = 12,
-	snapThreshold = 0,
+        width = nil,
+        height = nil,
+        smoothingSpeed = 12,
+        snapThreshold = 0,
 }
 
 local function updateCenter(self)
@@ -37,8 +35,7 @@ local function shouldSnapImmediately(self, dt, instant)
 end
 
 function Screen:update(dt, instant)
-	local actualWidth, actualHeight = love.graphics.getDimensions()
-	self.targetWidth, self.targetHeight = actualWidth, actualHeight
+        local actualWidth, actualHeight = love.graphics.getDimensions()
 
 	if UI and UI.refreshLayout then
 		UI.refreshLayout(actualWidth, actualHeight)
@@ -72,15 +69,7 @@ function Screen:update(dt, instant)
 end
 
 function Screen:get()
-	return self.width, self.height
-end
-
-function Screen:getWidth()
-	return self.width
-end
-
-function Screen:getHeight()
-	return self.height
+        return self.width, self.height
 end
 
 return Screen
