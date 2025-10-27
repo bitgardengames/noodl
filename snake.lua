@@ -21,6 +21,7 @@ local remove = table.remove
 local Snake = {}
 local sqrt = math.sqrt
 local max = math.max
+local EMPTY_TABLE = {}
 
 local spawnGluttonsWakeRock
 local crystallizeGluttonsWakeSegments
@@ -2286,29 +2287,35 @@ function Snake:getHead()
 end
 
 function Snake:setHeadPosition(x, y)
-	local head = trail[1]
-	if not head then
-		return
-	end
+        local head = trail[1]
+        if not head then
+                return
+        end
 
-	head.drawX = x
-	head.drawY = y
+        head.drawX = x
+        head.drawY = y
 end
 
-function Snake:translate(dx, dy)
-	dx = dx or 0
-	dy = dy or 0
-	if dx == 0 and dy == 0 then
-		return
-	end
+function Snake:resetMovementProgress()
+        moveProgress = 0
+end
 
-	for i = 1, #trail do
-		local seg = trail[i]
-		if seg then
-			seg.drawX = seg.drawX + dx
+function Snake:translate(dx, dy, options)
+        dx = dx or 0
+        dy = dy or 0
+        if dx == 0 and dy == 0 then
+                return
+        end
+
+        options = options or EMPTY_TABLE
+
+        for i = 1, #trail do
+                local seg = trail[i]
+                if seg then
+                        seg.drawX = seg.drawX + dx
 			seg.drawY = seg.drawY + dy
 		end
-	end
+        end
 
         if descendingHole then
                 descendingHole.x = (descendingHole.x or 0) + dx
@@ -2322,6 +2329,10 @@ function Snake:translate(dx, dy)
         end
 
         rebuildOccupancyFromTrail()
+
+        if options.resetMoveProgress then
+                moveProgress = 0
+        end
 end
 
 function Snake:beginPortalWarp(params)
@@ -2368,15 +2379,17 @@ function Snake:beginPortalWarp(params)
 		warpDuration = 0.05
 	end
 
-	if (abs(dx or 0) > 0) or (abs(dy or 0) > 0) then
-		self:translate(dx or 0, dy or 0)
-	end
+        if (abs(dx or 0) > 0) or (abs(dy or 0) > 0) then
+                self:translate(dx or 0, dy or 0, {resetMoveProgress = true})
+        else
+                self:resetMovementProgress()
+        end
 
-	local head = trail and trail[1]
-	if head then
-		head.drawX = exitX
-		head.drawY = exitY
-	end
+        local head = trail and trail[1]
+        if head then
+                head.drawX = exitX
+                head.drawY = exitY
+        end
 
         local entrySource = {}
         for i = 1, #entryClone do
