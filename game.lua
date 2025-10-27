@@ -1019,6 +1019,10 @@ local function drawPlayfieldLayers(self, stateOverride)
                                 Arena:drawDimLighting()
                         end
 
+                        if Arena.drawQueuedExit then
+                                Arena:drawQueuedExit()
+                        end
+
                         if Snake.isDeveloperAssistEnabled and Snake:isDeveloperAssistEnabled() and SnakeUtils.drawOccupancyOverlay then
                                 SnakeUtils.drawOccupancyOverlay()
                         end
