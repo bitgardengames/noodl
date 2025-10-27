@@ -47,7 +47,3 @@ No depth achievements are currently defined in `achievement_definitions.lua`.
 
 \*Hidden achievements that only appear after being unlocked.
 
-## Localization Notes
-
-The English localization file contains an unused entry for “Token Menagerie,” but there is no corresponding definition in
-`achievement_definitions.lua`. As a result, it is not obtainable in the current build and is excluded from the catalog.
