@@ -579,7 +579,7 @@ local english = {
                                 description = "Gain +2 shields immediately. Each time a shield breaks, leave behind a burning ember that spawns a saw on the next floor.",
                         },
                         subduction_array = {
-                                name = "Subduction Array",
+                                name = "Subduction Zone",
                                 description = "After each fruit, saws sink beneath their tracks for 1.6s.",
                                 activation_text = "",
 			},
