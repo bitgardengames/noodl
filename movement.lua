@@ -303,6 +303,17 @@ local function rerouteAlongWall(headX, headY)
 
 	Movement:applyForcedDirection(newDirX, newDirY)
 
+	local useGrid = Arena.getTileFromWorld and Arena.getCenterOfTile and Arena.cols and Arena.rows
+	if useGrid then
+		local col, row = Arena:getTileFromWorld(clampedX, clampedY)
+		if col and row then
+			local centerX, centerY = Arena:getCenterOfTile(col, row)
+			if centerX and centerY then
+				clampedX, clampedY = centerX, centerY
+			end
+		end
+	end
+
 	return clampedX, clampedY
 end
 
