@@ -772,6 +772,10 @@ function Movement:update(dt)
                         return sawState, sawCause, sawContext
                 end
 
+                if Snake.checkLaserBodyCollision then
+                        Snake:checkLaserBodyCollision()
+                end
+
                 if Snake.checkSawBodyCollision then
                         Snake:checkSawBodyCollision()
                 end
