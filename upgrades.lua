@@ -2155,28 +2155,24 @@ local pool = {
 
                         local baseName = Localization:get("upgrades.mystery_card.name")
                         local outcomeName = outcome.nameKey and Localization:get(outcome.nameKey) or nil
-                        local revealedName
-                        if baseName and outcomeName then
-                                revealedName = baseName .. " — " .. outcomeName
-                        else
-                                revealedName = baseName
-                        end
+                        local revealedName = outcomeName or baseName
 
                         local revealedDesc = outcome.descKey and Localization:get(outcome.descKey) or nil
 
-                        return {
-                                name = revealedName,
-                                desc = revealedDesc,
-                                revealDelay = 1.15,
-                                revealApproachDuration = 0.55,
-                                revealShakeDuration = 0.5,
-                                revealFlashInDuration = 0.22,
-                                revealFlashOutDuration = 0.48,
-                                revealShakeMagnitude = 9,
-                                revealShakeFrequency = 26,
-                                revealApplyThreshold = 0.6,
-                                revealAnimation = "mystery_card",
-                        }
+                                return {
+                                        name = revealedName,
+                                        desc = revealedDesc,
+                                        revealDelay = 1.15,
+                                        revealApproachDuration = 0.55,
+                                        revealShakeDuration = 0.5,
+                                        revealFlashInDuration = 0.22,
+                                        revealFlashOutDuration = 0.48,
+                                        revealShakeMagnitude = 9,
+                                        revealShakeFrequency = 26,
+                                        revealApplyThreshold = 0.6,
+                                        revealPostPauseDuration = 0.65,
+                                        revealAnimation = "mystery_card",
+                                }
                 end,
         }),
 
