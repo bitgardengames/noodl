@@ -661,6 +661,71 @@ local function ensureSnakeCanvas(width, height)
         return snakeCanvas
 end
 
+
+local function renderTrailRegion(trail, half, options, overlayEffect, palette, coords, bounds)
+        if not trail or #trail == 0 then
+                return false
+        end
+
+        coords = coords or buildCoords(trail)
+
+        local regionBounds = bounds
+        if not regionBounds then
+                local head = trail[1]
+                local hx = head and (head.drawX or head.x)
+                local hy = head and (head.drawY or head.y)
+                regionBounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
+        end
+
+        if not regionBounds then
+                return false
+        end
+
+        local canvas = ensureSnakeCanvas(regionBounds.width, regionBounds.height)
+        if not canvas then
+                return false
+        end
+
+        love.graphics.setCanvas({canvas, stencil = true})
+        love.graphics.clear(0, 0, 0, 0)
+        love.graphics.push()
+        love.graphics.translate(-regionBounds.offsetX, -regionBounds.offsetY)
+        drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+        love.graphics.pop()
+        love.graphics.setCanvas()
+
+        presentSnakeCanvas(overlayEffect, regionBounds.width, regionBounds.height, regionBounds.offsetX, regionBounds.offsetY)
+
+        return true
+end
+
+local function renderPortalFallback(items, half, options, overlayEffect)
+        if not items or #items == 0 then
+                return false
+        end
+
+        local ww, hh = love.graphics.getDimensions()
+        local fallbackCanvas = ensureSnakeCanvas(ww, hh)
+        if not fallbackCanvas then
+                return false
+        end
+
+        love.graphics.setCanvas({fallbackCanvas, stencil = true})
+        love.graphics.clear(0, 0, 0, 0)
+
+        for _, item in ipairs(items) do
+                local trail = item.trail
+                if trail and #trail > 0 then
+                        drawTrailSegmentToCanvas(trail, half, options, item.palette, item.coords)
+                end
+        end
+
+        love.graphics.setCanvas()
+        presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
+
+        return true
+end
+
 local function presentSnakeCanvas(overlayEffect, width, height, offsetX, offsetY)
         if not snakeCanvas then
                 return false
@@ -2317,52 +2382,36 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                         bounds = finalizeBounds(accumulateBounds(bounds, entryCoords, entryHX, entryHY), half) or bounds
                 end
 
-                local canvas
-                if bounds then
-                        canvas = ensureSnakeCanvas(bounds.width, bounds.height)
+                local fallbackItems = {}
+
+                local exitPresented = renderTrailRegion(exitTrail, half, options, overlayEffect, palette, exitCoords, bounds)
+                if not exitPresented then
+                        fallbackItems[#fallbackItems + 1] = {trail = exitTrail, coords = exitCoords, palette = palette, kind = "exit"}
                 end
 
-                local presented = false
-                if canvas and bounds then
-                        love.graphics.setCanvas({canvas, stencil = true})
-                        love.graphics.clear(0, 0, 0, 0)
-                        love.graphics.push()
-                        love.graphics.translate(-bounds.offsetX, -bounds.offsetY)
-                        drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
-
-                        if entryTrail and #entryTrail > 0 then
-                                local entryPalette = fadePalette(palette, 0.55)
-                                drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
+                local entryPresented = false
+                local entryPalette
+                if entryTrail and #entryTrail > 0 then
+                        entryPalette = fadePalette(palette, 0.55)
+                        entryPresented = renderTrailRegion(entryTrail, half, options, overlayEffect, entryPalette, entryCoords)
+                        if not entryPresented then
+                                fallbackItems[#fallbackItems + 1] = {trail = entryTrail, coords = entryCoords, palette = entryPalette, kind = "entry"}
                         end
-                        love.graphics.pop()
-                        love.graphics.setCanvas()
-
-                        if exitHole then
-                                drawPortalHole(exitHole, true)
-                        end
-                        presentSnakeCanvas(overlayEffect, bounds.width, bounds.height, bounds.offsetX, bounds.offsetY)
-                        presented = true
                 end
 
-                if not presented then
-                        if exitHole then
-                                drawPortalHole(exitHole, true)
-                        end
+                if exitHole then
+                        drawPortalHole(exitHole, true)
+                end
 
-                        local ww, hh = love.graphics.getDimensions()
-                        local fallbackCanvas = ensureSnakeCanvas(ww, hh)
-                        if fallbackCanvas then
-                                love.graphics.setCanvas({fallbackCanvas, stencil = true})
-                                love.graphics.clear(0, 0, 0, 0)
-                                drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
-
-                                if entryTrail and #entryTrail > 0 then
-                                        local entryPalette = fadePalette(palette, 0.55)
-                                        drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
+                if #fallbackItems > 0 then
+                        if renderPortalFallback(fallbackItems, half, options, overlayEffect) then
+                                for _, item in ipairs(fallbackItems) do
+                                        if item.kind == "exit" then
+                                                exitPresented = true
+                                        else
+                                                entryPresented = true
+                                        end
                                 end
-                                love.graphics.setCanvas()
-                                presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
-                                presented = true
                         end
                 end
 
