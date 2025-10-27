@@ -623,7 +623,7 @@ local english = {
 			},
 			guild_ledger = {
 				name = "Guild Ledger",
-				description = "Each shop slot reduces rock spawn chance by 1.5%.",
+				description = "Each shop slot reduces rock spawn chance by 3%.",
 			},
 			radiant_charter = {
 				name = "Radiant Charter",
