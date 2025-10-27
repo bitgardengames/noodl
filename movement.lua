@@ -200,8 +200,8 @@ local function rerouteAlongWall(headX, headY)
 	local top = ay + inset
 	local bottom = ay + ah - inset
 
-	local clampedX = max(left + 1, min(right - 1, headX or left))
-	local clampedY = max(top + 1, min(bottom - 1, headY or top))
+        local clampedX = max(left, min(right, headX or left))
+        local clampedY = max(top, min(bottom, headY or top))
 
 	local hitLeft = (headX or clampedX) <= left
 	local hitRight = (headX or clampedX) >= right
