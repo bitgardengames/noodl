@@ -2216,7 +2216,8 @@ function GameOver:draw()
 	local fallbackTitle = self.isVictory and "Noodl's Grand Feast" or "Game Over"
 	local titleText = self.customTitle or getLocalizedOrFallback(titleKey, fallbackTitle)
 
-        UI.drawLabel(titleText, 0, 78, sw, "center", {
+        local headerY = UI.getHeaderY(sw, sh)
+        UI.drawLabel(titleText, 0, headerY, sw, "center", {
                 font = fontTitle,
                 color = UI.colors.text,
                 shadow = true,

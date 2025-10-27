@@ -1369,7 +1369,7 @@ function ProgressionScreen:enter()
         local sw, sh = Screen:get()
         local menuLayout = UI.getMenuLayout(sw, sh)
 
-        local baseTitleY = menuLayout.titleY or (sh * 0.08)
+        local baseTitleY = UI.getHeaderY(sw, sh)
         local baseTitleHeight = menuLayout.titleHeight or ((UI.fonts.title and UI.fonts.title:getHeight()) or 64)
         local subtitleSpacing = menuLayout.subtitleSpacing or 16
         menuAnchors.tabY = menuLayout.stackTop or (baseTitleY + baseTitleHeight + subtitleSpacing)
@@ -2222,7 +2222,8 @@ function ProgressionScreen:draw()
 
         love.graphics.setFont(UI.fonts.title)
         love.graphics.setColor(Theme.textColor)
-        love.graphics.printf(Localization:get("metaprogression.title"), 0, menuLayout.titleY or 48, sw, "center")
+        local headerY = UI.getHeaderY(sw, sh)
+        love.graphics.printf(Localization:get("metaprogression.title"), 0, headerY, sw, "center")
 
 	if activeTab == "experience" then
 		drawSummaryPanel(sw)
