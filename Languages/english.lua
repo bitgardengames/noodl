@@ -589,7 +589,7 @@ local english = {
                         },
                         caravan_contract = {
                                 name = "Caravan Contract",
-                                description = "Shops offer +1 card per stack.",
+                                description = "Shops offer +1 card.",
                         },
                         golden_debt = {
                                 name = "Golden Debt",
