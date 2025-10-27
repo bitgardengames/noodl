@@ -148,21 +148,56 @@ local function addCell(target, seen, col, row)
 	target[#target + 1] = {col, row}
 end
 
+local function clearTrackBounds(target)
+        if not target then
+                return
+        end
+
+        target.trackMinX = nil
+        target.trackMaxX = nil
+        target.trackMinY = nil
+        target.trackMaxY = nil
+end
+
 local function buildCollisionCellsForSaw(saw)
-	if not saw then
-		return nil
-	end
+        if not saw then
+                return nil
+        end
 
-	local trackCells = SnakeUtils.getSawTrackCells(saw.x, saw.y, saw.dir) or {}
-	if #trackCells == 0 then
-		return nil
-	end
+        local trackCells = SnakeUtils.getSawTrackCells(saw.x, saw.y, saw.dir) or {}
+        if #trackCells == 0 then
+                clearTrackBounds(saw)
+                return nil
+        end
 
-	local cells = {}
-	local seen = {}
+        local cells = {}
+        local seen = {}
+        local trackMinX
+        local trackMaxX
+        local trackMinY
+        local trackMaxY
 
-	-- Limit collision coverage to the track cell and the adjacent cell the blade
-	-- actually occupies so the hazard doesn't spill into neighboring tiles.
+        if Arena and Arena.getTilePosition then
+                local tileSize = getTileSize()
+
+                for _, cell in ipairs(trackCells) do
+                        local col, row = cell[1], cell[2]
+                        local cellX, cellY = Arena:getTilePosition(col, row)
+                        if cellX and cellY then
+                                local right = cellX + tileSize
+                                local bottom = cellY + tileSize
+                                trackMinX = (trackMinX and min(trackMinX, cellX)) or cellX
+                                trackMaxX = (trackMaxX and max(trackMaxX, right)) or right
+                                trackMinY = (trackMinY and min(trackMinY, cellY)) or cellY
+                                trackMaxY = (trackMaxY and max(trackMaxY, bottom)) or bottom
+                        end
+                end
+        else
+                clearTrackBounds(saw)
+        end
+
+        -- Limit collision coverage to the track cell and the adjacent cell the blade
+        -- actually occupies so the hazard doesn't spill into neighboring tiles.
         if saw.dir == "horizontal" then
                 for _, cell in ipairs(trackCells) do
                         local col, row = cell[1], cell[2]
@@ -184,10 +219,19 @@ local function buildCollisionCellsForSaw(saw)
                         local col, row = cell[1], cell[2]
                         addCell(cells, seen, col, row)
                         addCell(cells, seen, col + offsetDir, row)
-		end
-	end
+                end
+        end
 
-	return cells
+        if trackMinX and trackMaxX and trackMinY and trackMaxY then
+                saw.trackMinX = trackMinX
+                saw.trackMaxX = trackMaxX
+                saw.trackMinY = trackMinY
+                saw.trackMaxY = trackMaxY
+        else
+                clearTrackBounds(saw)
+        end
+
+        return cells
 end
 
 local function overlapsCollisionCell(saw, x, y, w, h)
@@ -990,6 +1034,7 @@ function Saws:beginTrackSlide(saw, startX, startY, targetX, targetY, options)
         saw.x = targetX or saw.x
         saw.y = targetY or saw.y
         saw.collisionCells = nil
+        clearTrackBounds(saw)
 
         if saw.slotId then
                 local slot = getSlotById(saw.slotId)
