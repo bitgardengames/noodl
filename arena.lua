@@ -29,14 +29,9 @@ do
                 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
                         float radiusSpan = max(outerRadius - innerRadius, 0.0001);
                         float dist = distance(screen_coords, headPos);
-                        float alpha = baseAlpha;
-
-                        if (dist <= innerRadius) {
-                                alpha = 0.0;
-                        } else {
-                                float factor = clamp((dist - innerRadius) / radiusSpan, 0.0, 1.0);
-                                alpha = baseAlpha * factor;
-                        }
+                        float factor = clamp((dist - innerRadius) / radiusSpan, 0.0, 1.0);
+                        float eased = smoothstep(0.0, 1.0, factor);
+                        float alpha = baseAlpha * eased;
 
                         return vec4(0.0, 0.0, 0.0, clamp(alpha, 0.0, baseAlpha));
                 }
@@ -188,55 +183,6 @@ local function clamp(value, minimum, maximum)
         return value
 end
 
-local function smoothstep(t)
-        if t <= 0 then
-                return 0
-        end
-        if t >= 1 then
-                return 1
-        end
-        return t * t * (3 - 2 * t)
-end
-
-local function copyArray(source)
-        if not source then
-                return {}
-        end
-
-        local copy = {}
-        for i = 1, #source do
-                copy[i] = source[i]
-        end
-
-        return copy
-end
-
-local function randomRange(minimum, maximum)
-        if maximum == nil then
-                maximum = minimum
-        end
-
-        if not maximum then
-                return minimum
-        end
-
-        if maximum <= minimum then
-                return minimum
-        end
-
-        local rng = love and love.math and love.math.random
-        if not rng then
-                return minimum
-        end
-
-        return minimum + (maximum - minimum) * rng()
-end
-
-local DEFAULT_DIM_GLOW_STEPS = {1.45, 1.12, 0.82, 0.56, 0.34}
-local DEFAULT_DIM_FOCUS_STEPS = {1.25, 0.88, 0.62, 0.42}
-local DEFAULT_DIM_FRUIT_STEPS = {1.22, 0.92, 0.66, 0.44}
-local DEFAULT_DIM_LASER_STEPS = {1.18, 0.82, 0.55}
-
 local function copyColor(color, defaultAlpha)
         if not color then
                 return {0, 0, 0, defaultAlpha or 1}
@@ -357,103 +303,6 @@ local Arena = {
         _dimState = nil,
 }
 
-local function drawSoftGlow(state, cx, cy, radius, innerAlpha, outerAlpha, steps)
-        if not (state and cx and cy and radius and radius > 0) then
-                return
-        end
-
-        local baseAlpha = clamp(state.baseAlpha or outerAlpha or 1, 0, 1)
-        outerAlpha = clamp(outerAlpha or baseAlpha, 0, baseAlpha)
-        innerAlpha = clamp(innerAlpha or outerAlpha, 0, outerAlpha)
-
-        local glowSteps = steps or state.glowSteps or DEFAULT_DIM_GLOW_STEPS
-        local count = glowSteps and #glowSteps or 0
-
-        if count <= 0 then
-                love.graphics.setColor(0, 0, 0, innerAlpha)
-                love.graphics.circle("fill", cx, cy, radius, state.glowSegments or 48)
-                return
-        end
-
-        local segments = state.glowSegments or 48
-        for i = 1, count do
-                local step = glowSteps[i] or 1
-                local t = 0
-                if count > 1 then
-                        t = (i - 1) / (count - 1)
-                end
-                local eased = smoothstep(t)
-                local alpha = outerAlpha - (outerAlpha - innerAlpha) * eased
-                alpha = clamp(alpha, 0, baseAlpha)
-                love.graphics.setColor(0, 0, 0, alpha)
-                love.graphics.circle("fill", cx, cy, radius * step, segments)
-        end
-end
-
-local function gatherHazardData(arena, state)
-        local list = state.hazardScratch or {}
-        local count = 0
-
-        local Rocks = getModule("rocks")
-        if Rocks and Rocks.getAll then
-                for _, rock in ipairs(Rocks:getAll()) do
-                        count = count + 1
-                        local entry = list[count] or {}
-                        list[count] = entry
-                        entry.object = rock
-                        entry.type = "rock"
-                        entry.x = (rock.renderX or rock.x or 0)
-                        local baseY = rock.renderY or rock.y or 0
-                        entry.y = baseY + (rock.offsetY or 0) + (rock.tremorSlideOffset or 0)
-                        entry.radius = (rock.w or arena.tileSize or 24) * 0.8
-                end
-        end
-
-        local Saws = getModule("saws")
-        if Saws and Saws.getAll then
-                for _, saw in ipairs(Saws:getAll()) do
-                        count = count + 1
-                        local entry = list[count] or {}
-                        list[count] = entry
-                        entry.object = saw
-                        entry.type = "saw"
-                        local cx, cy = nil, nil
-                        if Saws.getCollisionCenter then
-                                cx, cy = Saws:getCollisionCenter(saw)
-                        end
-                        entry.x = cx or saw.renderX or saw.x or 0
-                        entry.y = cy or saw.renderY or saw.y or 0
-                        entry.radius = (saw.collisionRadius or (saw.radius or (arena.tileSize or 24))) * 1.1
-                end
-        end
-
-        local Lasers = getModule("lasers")
-        if Lasers and Lasers.getEmitters then
-                local emitters = Lasers:getEmitters()
-                for _, beam in ipairs(emitters) do
-                        count = count + 1
-                        local entry = list[count] or {}
-                        list[count] = entry
-                        entry.object = beam
-                        entry.type = "laser"
-                        entry.x = beam.renderX or beam.x or 0
-                        entry.y = (beam.renderY or beam.y or 0)
-                        entry.radius = (arena.tileSize or 24) * 1.2
-                        entry.beamStartX = beam.beamStartX or entry.x
-                        entry.beamStartY = beam.beamStartY or entry.y
-                        entry.beamEndX = beam.beamEndX or entry.x
-                        entry.beamEndY = beam.beamEndY or entry.y
-                end
-        end
-
-        for i = count + 1, #list do
-                list[i] = nil
-        end
-
-        state.hazardScratch = list
-        return list
-end
-
 local function calculateHeadLighting(arena, state)
         local Snake = getModule("snake")
         local headX, headY = nil, nil
@@ -508,75 +357,6 @@ local function calculateHeadLighting(arena, state)
         }
 end
 
-local function drawFruitGlow(arena, state)
-        local Fruit = getModule("fruit")
-        if not (Fruit and Fruit.getActive) then
-                return
-        end
-
-        local fruit = Fruit:getActive()
-        if not fruit then
-                return
-        end
-
-        if fruit.phase == "inactive" or (fruit.alpha or 0) <= 0 then
-                return
-        end
-
-        local fx = fruit.x or 0
-        local fy = (fruit.y or 0) + (fruit.offsetY or 0) + (fruit.bobOffset or 0)
-
-        local baseAlpha = state.baseAlpha or 0.85
-        drawSoftGlow(state, fx, fy, state.fruitRadius or 96, baseAlpha * 0.3, baseAlpha * 0.88, state.fruitSteps)
-end
-
-local function drawHazardFlickers(arena, state)
-        local flickers = state.hazardFlickers or {}
-        if not next(flickers) then
-                return
-        end
-
-        local hazards = gatherHazardData(arena, state)
-        local baseAlpha = state.baseAlpha or 0.85
-
-        for _, hazard in ipairs(hazards) do
-                local info = flickers[hazard.object]
-                if info and info.flashTimer and info.flashTimer > 0 then
-                        local duration = info.flashDuration or 0.18
-                        local timer = clamp(info.flashTimer, 0, duration)
-                        local progress = 1 - (duration > 0 and (timer / duration) or 0)
-                        local intensity = smoothstep(progress)
-                        local strength = clamp(info.strength or 0.5, 0.1, 1)
-                        local minAlpha = clamp(baseAlpha * (1 - strength * 0.65 * intensity), baseAlpha * 0.28, baseAlpha)
-                        local outerAlpha = clamp(baseAlpha * (0.92 - 0.25 * intensity), minAlpha, baseAlpha)
-                        local radiusScale = 0.85 + 0.35 * intensity
-                        local radius = (hazard.radius or state.hazardRadius or 72) * radiusScale
-
-                        if hazard.type == "laser" then
-                                drawSoftGlow(state, hazard.x, hazard.y, radius * 0.75, minAlpha, outerAlpha, state.laserSteps)
-
-                                if hazard.beamStartX and hazard.beamEndX and hazard.beamStartY and hazard.beamEndY then
-                                        local samples = state.laserBeamSamples or 3
-                                        local span = 0.42
-                                        for i = 1, samples do
-                                                local t = 0
-                                                if samples > 1 then
-                                                        t = (i - 1) / (samples - 1)
-                                                end
-                                                t = t * span
-                                                local px = hazard.beamStartX + (hazard.beamEndX - hazard.beamStartX) * t
-                                                local py = hazard.beamStartY + (hazard.beamEndY - hazard.beamStartY) * t
-                                                local beamRadius = radius * (0.55 - 0.18 * t)
-                                                drawSoftGlow(state, px, py, beamRadius, minAlpha, outerAlpha * 0.92, state.laserSteps)
-                                        end
-                                end
-                        else
-                                drawSoftGlow(state, hazard.x, hazard.y, radius, minAlpha, outerAlpha, state.glowSteps)
-                        end
-                end
-        end
-end
-
 function Arena:setSpawnDebugData(data)
         if not data then
                 self._spawnDebugData = nil
@@ -612,21 +392,8 @@ function Arena:applyDimFloor(config)
         state.baseAlpha = clamp(config.baseAlpha or 0.85, 0.4, 0.95)
         state.headMinRadius = config.headMinRadius or 120
         state.headMaxRadius = config.headMaxRadius or 260
-        state.fruitRadius = config.fruitRadius or 96
-        state.hazardRadius = config.hazardRadius or 88
-        state.laserBeamSamples = clamp(config.laserBeamSamples or 3, 1, 5)
-        state.glowSteps = copyArray(config.glowSteps or DEFAULT_DIM_GLOW_STEPS)
-        state.focusSteps = copyArray(config.focusSteps or DEFAULT_DIM_FOCUS_STEPS)
-        state.fruitSteps = copyArray(config.fruitSteps or DEFAULT_DIM_FRUIT_STEPS)
-        state.laserSteps = copyArray(config.laserSteps or DEFAULT_DIM_LASER_STEPS)
-        state.glowSegments = clamp(config.glowSegments or 56, 24, 96)
-        state.hazardFlickers = {}
-        state.hazardScratch = {}
-        state.hazardSeen = {}
         state.lastHeadX = nil
         state.lastHeadY = nil
-        state.lastDirX = nil
-        state.lastDirY = nil
         state.canvas = nil
         self._dimState = state
 end
@@ -637,70 +404,9 @@ function Arena:_updateDimFloor(dt)
                 return
         end
 
-        local flickers = state.hazardFlickers
-        if not flickers then
-                flickers = {}
-                state.hazardFlickers = flickers
-        end
-
-        local seen = state.hazardSeen or {}
-        for key in pairs(seen) do
-                seen[key] = nil
-        end
-        state.hazardSeen = seen
-
-        local function updateEntry(hazard)
-                seen[hazard] = true
-                local entry = flickers[hazard]
-                if not entry then
-                        entry = {
-                                timer = randomRange(0.4, 1.2),
-                                flashTimer = 0,
-                                flashDuration = 0,
-                                strength = randomRange(0.35, 0.7),
-                        }
-                        flickers[hazard] = entry
-                end
-
-                entry.timer = (entry.timer or randomRange(0.8, 1.6)) - dt
-                if entry.timer <= 0 then
-                        entry.flashDuration = randomRange(0.12, 0.2)
-                        entry.flashTimer = entry.flashDuration
-                        entry.strength = randomRange(0.35, 0.7)
-                        entry.timer = randomRange(1.1, 2.4)
-                end
-
-                if entry.flashTimer and entry.flashTimer > 0 then
-                        entry.flashTimer = max(0, entry.flashTimer - dt)
-                end
-        end
-
-        local Rocks = getModule("rocks")
-        if Rocks and Rocks.getAll then
-                for _, rock in ipairs(Rocks:getAll()) do
-                        updateEntry(rock)
-                end
-        end
-
-        local Saws = getModule("saws")
-        if Saws and Saws.getAll then
-                for _, saw in ipairs(Saws:getAll()) do
-                        updateEntry(saw)
-                end
-        end
-
-        local Lasers = getModule("lasers")
-        if Lasers and Lasers.getEmitters then
-                for _, beam in ipairs(Lasers:getEmitters()) do
-                        updateEntry(beam)
-                end
-        end
-
-        for hazard, entry in pairs(flickers) do
-                if not seen[hazard] then
-                        flickers[hazard] = nil
-                end
-        end
+        -- The dim floor effect is now fully shader-driven, so we no longer
+        -- need to maintain per-hazard highlight state here. The method is
+        -- retained to preserve the existing update flow.
 end
 
 function Arena:drawDimLighting()
@@ -731,7 +437,6 @@ function Arena:drawDimLighting()
         love.graphics.setBlendMode("replace", "premultiplied")
 
         local headLighting = calculateHeadLighting(self, state)
-        local usedShader = false
 
         if dimLightingShader and headLighting then
                 love.graphics.setShader(dimLightingShader)
@@ -742,19 +447,10 @@ function Arena:drawDimLighting()
                 love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.rectangle("fill", ax, ay, aw, ah)
                 love.graphics.setShader()
-                usedShader = true
         else
                 love.graphics.setColor(0, 0, 0, baseAlpha)
                 love.graphics.rectangle("fill", ax, ay, aw, ah)
         end
-
-        if not usedShader and headLighting then
-                drawSoftGlow(state, headLighting.x, headLighting.y, headLighting.outerRadius, baseAlpha * 0.18, baseAlpha, state.glowSteps)
-                drawSoftGlow(state, headLighting.x, headLighting.y, headLighting.innerRadius, baseAlpha * 0.05, baseAlpha * 0.65, state.focusSteps)
-        end
-
-        drawFruitGlow(self, state)
-        drawHazardFlickers(self, state)
 
         love.graphics.pop()
 
