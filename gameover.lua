@@ -1370,8 +1370,6 @@ function GameOver:enter(data)
 				else
 					messageKey = "gameover.daily_streak_extended"
 				end
-			elseif info.alreadyCompleted then
-				messageKey = "gameover.daily_streak_already_complete"
 			elseif not info.needsCompletion then
 				messageKey = "gameover.daily_streak_status"
 			end
