@@ -11,10 +11,12 @@ local DailyChallenges = require("dailychallenges")
 local Shaders = require("shaders")
 local Upgrades = require("upgrades")
 local Shop = require("shop")
+local UpgradeHelpers = require("upgradehelpers")
 local Timer = require("timer")
 
 local abs = math.abs
 local floor = math.floor
+local ceil = math.ceil
 local max = math.max
 local min = math.min
 local pi = math.pi
@@ -171,13 +173,66 @@ local function getSectionSmallSpacing()
 end
 
 local function getSectionHeaderSpacing()
-	return (UI.scaled and UI.scaled(18, 14)) or 18
+        return (UI.scaled and UI.scaled(18, 14)) or 18
+end
+
+local function getUpgradeCardDimensions()
+        local baseWidthLarge, baseWidthSmall = 200, 150
+        local width = (UI.scaled and UI.scaled(baseWidthLarge, baseWidthSmall)) or baseWidthLarge
+        local height = floor(width * (344 / 264) + 0.5)
+        return width, height
+end
+
+local function getUpgradeCardSpacing()
+        return (UI.scaled and UI.scaled(18, 12)) or 18
+end
+
+local function calculateUpgradeCardLayout(cards, availableWidth)
+        if type(cards) ~= "table" or #cards == 0 or not availableWidth or availableWidth <= 0 then
+                return nil
+        end
+
+        local cardWidth, cardHeight = getUpgradeCardDimensions()
+        local spacing = getUpgradeCardSpacing()
+        local maxColumns = max(1, floor((availableWidth + spacing) / (cardWidth + spacing)))
+        local columns = min(#cards, maxColumns)
+        if columns <= 0 then
+                columns = 1
+        end
+
+        local totalWidth = columns * cardWidth + max(0, (columns - 1) * spacing)
+        local offsetX = max(0, floor((availableWidth - totalWidth) / 2 + 0.5))
+        local positions = {}
+
+        for index = 1, #cards do
+                local columnIndex = (index - 1) % columns
+                local rowIndex = floor((index - 1) / columns)
+                local x = offsetX + columnIndex * (cardWidth + spacing)
+                local y = rowIndex * (cardHeight + spacing)
+                positions[index] = {x = x, y = y}
+        end
+
+        local rows = ceil(#cards / columns)
+        local height = rows * cardHeight + max(0, (rows - 1) * spacing)
+
+        return {
+                positions = positions,
+                columns = columns,
+                rows = rows,
+                cardWidth = cardWidth,
+                cardHeight = cardHeight,
+                spacing = spacing,
+                width = totalWidth,
+                height = height,
+                offsetX = offsetX,
+                availableWidth = availableWidth,
+        }
 end
 
 local function formatXpValue(value)
-	local number = tonumber(value)
-	if not number then
-		if value == nil then
+        local number = tonumber(value)
+        if not number then
+                if value == nil then
 			return "0"
 		end
 		return tostring(value)
@@ -892,8 +947,8 @@ function GameOver:updateLayoutMetrics()
 	scorePanelHeight = floor(scorePanelHeight + 0.5)
 	local achievementsList = self.achievementsEarned or {}
 
-	local xpPanelHeight = 0
-	local xpLayout = nil
+        local xpPanelHeight = 0
+        local xpLayout = nil
         if self.progressionAnimation then
                 local availableWidth = max(0, innerWidth - sectionPadding * 2)
                 if availableWidth > 0 then
@@ -923,15 +978,28 @@ function GameOver:updateLayoutMetrics()
 			end
 
 			local animatedHeight = self.xpSectionHeight or targetHeight
-			xpPanelHeight = floor(max(targetHeight, animatedHeight) + 0.5)
-		end
-	end
+                        xpPanelHeight = floor(max(targetHeight, animatedHeight) + 0.5)
+                end
+        end
 
-	local minColumnWidth = max(getStatCardMinWidth() + sectionPadding * 2, 260)
-	local columnSpacing = sectionSpacing
+        local upgradePanelHeight = 0
+        local upgradeLayout = nil
+        local upgradeCards = self.runUpgradeCards or {}
+        if type(upgradeCards) == "table" and #upgradeCards > 0 then
+                local availableWidth = max(0, innerWidth - sectionPadding * 2)
+                if availableWidth > 0 then
+                        upgradeLayout = calculateUpgradeCardLayout(upgradeCards, availableWidth)
+                        if upgradeLayout then
+                                upgradePanelHeight = floor(max(0, upgradeLayout.height or 0) + 0.5)
+                        end
+                end
+        end
 
-	local function buildLayout(columnCount)
-		columnCount = max(1, columnCount or 1)
+        local minColumnWidth = max(getStatCardMinWidth() + sectionPadding * 2, 260)
+        local columnSpacing = sectionSpacing
+
+        local function buildLayout(columnCount)
+                columnCount = max(1, columnCount or 1)
 
 		local availableWidth = max(0, innerWidth - sectionPadding * 2)
 		if availableWidth <= 0 then
@@ -1059,41 +1127,54 @@ function GameOver:updateLayoutMetrics()
 		}
 	end
 
-	local layoutOptions = {buildLayout(2), buildLayout(1)}
-	local bestLayout = nil
-	local baseHeight = padding * 2 + messagePanelHeight
-	local hasXpSection = xpPanelHeight > 0
+        local layoutOptions = {buildLayout(2), buildLayout(1)}
+        local bestLayout = nil
+        local baseHeight = padding * 2 + messagePanelHeight
+        local hasXpSection = xpPanelHeight > 0
+        local hasUpgradeSection = upgradePanelHeight > 0
 
-	for _, option in ipairs(layoutOptions) do
-		if option then
-			local entryCount = #(option.entries or {})
-			local totalHeight = baseHeight
-			if hasXpSection then
-				totalHeight = totalHeight + sectionSpacing + xpPanelHeight
-			end
-			if entryCount > 0 then
-				totalHeight = totalHeight + sectionSpacing
-				if (option.columnsHeight or 0) > 0 then
-					totalHeight = totalHeight + option.columnsHeight
-				end
-			end
-			option.totalHeight = totalHeight
-			if not bestLayout or totalHeight < (bestLayout.totalHeight or math.huge) then
-				bestLayout = option
-			end
-		end
-	end
+        for _, option in ipairs(layoutOptions) do
+                if option then
+                        local entryCount = #(option.entries or {})
+                        local totalHeight = baseHeight
+                        if entryCount > 0 then
+                                totalHeight = totalHeight + sectionSpacing
+                                if (option.columnsHeight or 0) > 0 then
+                                        totalHeight = totalHeight + option.columnsHeight
+                                end
+                        end
+                        if hasXpSection then
+                                totalHeight = totalHeight + sectionSpacing + xpPanelHeight
+                        end
+                        if hasUpgradeSection then
+                                totalHeight = totalHeight + sectionSpacing + upgradePanelHeight
+                        end
+                        option.totalHeight = totalHeight
+                        if not bestLayout or totalHeight < (bestLayout.totalHeight or math.huge) then
+                                bestLayout = option
+                        end
+                end
+        end
 
-	if not bestLayout then
-		bestLayout = {
+        if not bestLayout then
+                bestLayout = {
 			columnCount = 1,
 			columnWidth = innerWidth - sectionPadding * 2,
-			entries = {},
-			columnsHeight = 0,
-			sectionInfo = {},
-			totalHeight = hasXpSection and (baseHeight + sectionSpacing + xpPanelHeight) or baseHeight,
-		}
-	end
+                        entries = {},
+                        columnsHeight = 0,
+                        sectionInfo = {},
+                        totalHeight = (function()
+                                local total = baseHeight
+                                if hasXpSection then
+                                        total = total + sectionSpacing + xpPanelHeight
+                                end
+                                if hasUpgradeSection then
+                                        total = total + sectionSpacing + upgradePanelHeight
+                                end
+                                return total
+                        end)(),
+                }
+        end
 
 	local summaryPanelHeight = floor((bestLayout.totalHeight or baseHeight) + 0.5)
 	contentWidth = floor(contentWidth + 0.5)
@@ -1144,30 +1225,53 @@ function GameOver:updateLayoutMetrics()
 	if not self.statPanelHeight or abs(self.statPanelHeight - (statsInfo.height or 0)) >= 1 then
 		layoutChanged = true
 	end
-	if not self.achievementsPanelHeight or abs(self.achievementsPanelHeight - (achievementsInfo.height or 0)) >= 1 then
-		layoutChanged = true
-	end
-	if not self.xpPanelHeight or abs(self.xpPanelHeight - xpPanelHeight) >= 1 then
-		layoutChanged = true
-	end
-	if not self.primaryPanelWidth or abs(self.primaryPanelWidth - alignedPanelWidth) >= 1 then
-		layoutChanged = true
-	end
-	if not self.primaryPanelOffset or abs(self.primaryPanelOffset - sectionPadding) >= 1 then
-		layoutChanged = true
-	end
+        if not self.achievementsPanelHeight or abs(self.achievementsPanelHeight - (achievementsInfo.height or 0)) >= 1 then
+                layoutChanged = true
+        end
+        if not self.xpPanelHeight or abs(self.xpPanelHeight - xpPanelHeight) >= 1 then
+                layoutChanged = true
+        end
+        if not self.upgradePanelHeight or abs(self.upgradePanelHeight - upgradePanelHeight) >= 1 then
+                layoutChanged = true
+        end
+        if not self.primaryPanelWidth or abs(self.primaryPanelWidth - alignedPanelWidth) >= 1 then
+                layoutChanged = true
+        end
+        if not self.primaryPanelOffset or abs(self.primaryPanelOffset - sectionPadding) >= 1 then
+                layoutChanged = true
+        end
 
 	local previousXpLayout = self.xpLayout or {}
 	local newXpLayout = xpLayout or {}
-	if abs((previousXpLayout.width or 0) - (newXpLayout.width or 0)) >= 1
-	or abs((previousXpLayout.offset or 0) - (newXpLayout.offset or 0)) >= 1 then
-		layoutChanged = true
-	end
+        if abs((previousXpLayout.width or 0) - (newXpLayout.width or 0)) >= 1
+        or abs((previousXpLayout.offset or 0) - (newXpLayout.offset or 0)) >= 1 then
+                layoutChanged = true
+        end
 
-	self.summaryPanelHeight = summaryPanelHeight
-	self.contentWidth = contentWidth
-	self.contentPadding = padding
-	self.wrapLimit = wrapLimit
+        local previousUpgradeLayout = self.upgradeCardsLayout or {}
+        local newUpgradeLayout = upgradeLayout or {}
+        local previousPositions = previousUpgradeLayout.positions or {}
+        local newPositions = newUpgradeLayout.positions or {}
+        if #previousPositions ~= #newPositions
+        or abs((previousUpgradeLayout.cardWidth or 0) - (newUpgradeLayout.cardWidth or 0)) >= 1
+        or abs((previousUpgradeLayout.cardHeight or 0) - (newUpgradeLayout.cardHeight or 0)) >= 1
+        or abs((previousUpgradeLayout.offsetX or 0) - (newUpgradeLayout.offsetX or 0)) >= 1 then
+                layoutChanged = true
+        else
+                for index, position in ipairs(newPositions) do
+                        local prev = previousPositions[index] or {}
+                        if abs((prev.x or 0) - (position.x or 0)) >= 1
+                        or abs((prev.y or 0) - (position.y or 0)) >= 1 then
+                                layoutChanged = true
+                                break
+                        end
+                end
+        end
+
+        self.summaryPanelHeight = summaryPanelHeight
+        self.contentWidth = contentWidth
+        self.contentPadding = padding
+        self.wrapLimit = wrapLimit
 	self.messageLines = messageLines
 	self.messagePanelHeight = messagePanelHeight
 	self.scorePanelHeight = scorePanelHeight
@@ -1180,14 +1284,16 @@ function GameOver:updateLayoutMetrics()
 	self.innerContentWidth = innerWidth
 	self.statLayout = statsInfo.layout
 	self.achievementsPanelHeight = achievementsInfo.height or 0
-	self.achievementsLayout = achievementsInfo.layout
-	self.summarySectionLayout = bestLayout
-	self.xpPanelHeight = xpPanelHeight
-	self.xpLayout = xpLayout
-	self.primaryPanelWidth = alignedPanelWidth
-	self.primaryPanelOffset = sectionPadding
+        self.achievementsLayout = achievementsInfo.layout
+        self.summarySectionLayout = bestLayout
+        self.xpPanelHeight = xpPanelHeight
+        self.xpLayout = xpLayout
+        self.primaryPanelWidth = alignedPanelWidth
+        self.primaryPanelOffset = sectionPadding
+        self.upgradePanelHeight = upgradePanelHeight
+        self.upgradeCardsLayout = upgradeLayout
 
-	return layoutChanged
+        return layoutChanged
 end
 
 function GameOver:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
@@ -1197,7 +1303,7 @@ function GameOver:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
 	local panelHeight = max(0, self.summaryPanelHeight or 0)
         local titleTop = 78
 	local titleHeight = fontTitle and fontTitle:getHeight() or 0
-	local panelTopMin = titleTop + titleHeight + 24
+        local panelTopMin = titleTop + titleHeight + 16
 	local bottomMargin = 40
 	local buttonAreaTop = sh - bottomMargin - totalButtonHeight
 	local spacingBetween = max(48, buttonSpacing)
@@ -1327,11 +1433,11 @@ function GameOver:enter(data)
 	stats.totalApples = stats.totalApples or stats.apples or 0
 	self.isNewHighScore = (stats.score or 0) > 0 and (stats.score or 0) >= (stats.highScore or 0)
 
-	self.achievementsEarned = {}
-	local runAchievements = SessionStats:get("runAchievements")
-	if type(runAchievements) == "table" then
-		for _, achievementId in ipairs(runAchievements) do
-			local def = Achievements:getDefinition(achievementId)
+        self.achievementsEarned = {}
+        local runAchievements = SessionStats:get("runAchievements")
+        if type(runAchievements) == "table" then
+                for _, achievementId in ipairs(runAchievements) do
+                        local def = Achievements:getDefinition(achievementId)
 			if def then
 				self.achievementsEarned[#self.achievementsEarned + 1] = {
 					id = achievementId,
@@ -1339,14 +1445,65 @@ function GameOver:enter(data)
 					description = Localization:get(def.descriptionKey),
 				}
 			end
-		end
-	end
+                end
+        end
 
-	self.dailyChallengeResult = DailyChallenges:applyRunResults(SessionStats)
-	local challengeBonusXP = 0
-	if self.dailyChallengeResult then
-		challengeBonusXP = max(0, self.dailyChallengeResult.xpAwarded or 0)
-	end
+        self.runUpgradeCards = {}
+        local takenOrder = Upgrades and Upgrades.runState and Upgrades.runState.takenOrder
+        if type(takenOrder) == "table" then
+                for _, upgradeId in ipairs(takenOrder) do
+                        local card
+                        if Upgrades.getShowcaseCardForUnlock then
+                                card = Upgrades:getShowcaseCardForUnlock({id = upgradeId})
+                        end
+
+                        if card and not card.upgrade then
+                                card.upgrade = Upgrades:getDefinition(upgradeId)
+                        end
+
+                        if not card then
+                                local definition = Upgrades:getDefinition(upgradeId)
+                                if definition then
+                                        local name = definition.name
+                                        if definition.nameKey then
+                                                name = Localization:get(definition.nameKey)
+                                        end
+
+                                        local description = definition.desc
+                                        if definition.descKey then
+                                                description = Localization:get(definition.descKey)
+                                        end
+
+                                        local rarityInfo = UpgradeHelpers.rarities and UpgradeHelpers.rarities[definition.rarity or "common"] or nil
+                                        local rarityColor = rarityInfo and rarityInfo.color
+                                        local rarityLabel
+                                        if rarityInfo and rarityInfo.labelKey then
+                                                rarityLabel = Localization:get(rarityInfo.labelKey)
+                                        end
+
+                                        card = {
+                                                id = definition.id,
+                                                name = name or upgradeId,
+                                                desc = description or "",
+                                                rarity = definition.rarity,
+                                                rarityColor = rarityColor,
+                                                rarityLabel = rarityLabel,
+                                                upgrade = definition,
+                                        }
+                                end
+                        end
+
+                        if card then
+                                self.runUpgradeCards[#self.runUpgradeCards + 1] = card
+                        end
+                end
+        end
+
+        self.dailyChallengeResult = DailyChallenges:applyRunResults(SessionStats)
+        local challengeBonusXP = 0
+        if self.dailyChallengeResult then
+                challengeBonusXP = max(0, self.dailyChallengeResult.xpAwarded or 0)
+        end
 
 	self.dailyStreakMessage = nil
 	self.dailyStreakColor = nil
@@ -1762,6 +1919,30 @@ local function drawXpSection(self, x, y, width)
 	drawCelebrationsList(anim, x, celebrationStart, width)
 end
 
+local function drawUpgradeCardsSection(self, x, y, layout)
+        local cards = self.runUpgradeCards or {}
+        if type(cards) ~= "table" or #cards == 0 then
+                return
+        end
+
+        layout = layout or {}
+        local positions = layout.positions or {}
+        local cardWidth = layout.cardWidth or 0
+        local cardHeight = layout.cardHeight or 0
+        if cardWidth <= 0 or cardHeight <= 0 then
+                return
+        end
+
+        for index, position in ipairs(positions) do
+                local card = cards[index]
+                if card then
+                        local drawX = x + (position.x or 0)
+                        local drawY = y + (position.y or 0)
+                        Shop.drawCardPreview(card, drawX, drawY, cardWidth, cardHeight, {index = index})
+                end
+        end
+end
+
 local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSpacing, smallSpacing)
 	if (height or 0) <= 0 or (width or 0) <= 0 then
 		return
@@ -1958,23 +2139,11 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 		currentY = currentY + messagePanelHeight
 	end
 
-	local xpHeight = self.xpPanelHeight or 0
-	local xpLayout = self.xpLayout or {}
+        local layout = self.summarySectionLayout or {}
+        local entries = layout.entries or {}
 
-        if xpHeight > 0 then
+        if #entries > 0 then
                 currentY = currentY + sectionSpacing
-                local xpWidth = max(0, min(primaryWidth, xpLayout.width or primaryWidth))
-                local sw = select(1, Screen:get())
-                local xpX = floor((sw - xpWidth) / 2 + 0.5)
-                drawXpSection(self, xpX, currentY, xpWidth)
-                currentY = currentY + xpHeight
-        end
-
-	local layout = self.summarySectionLayout or {}
-	local entries = layout.entries or {}
-
-	if #entries > 0 then
-		currentY = currentY + sectionSpacing
 		local baseX = innerX + sectionPadding
 
 		for _, entry in ipairs(entries) do
@@ -1990,8 +2159,30 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 			end
 		end
 
-		currentY = currentY + (layout.columnsHeight or 0)
-	end
+                currentY = currentY + (layout.columnsHeight or 0)
+        end
+
+        local xpHeight = self.xpPanelHeight or 0
+        local xpLayout = self.xpLayout or {}
+
+        if xpHeight > 0 then
+                currentY = currentY + sectionSpacing
+                local xpWidth = max(0, min(primaryWidth, xpLayout.width or primaryWidth))
+                local sw = select(1, Screen:get())
+                local xpX = floor((sw - xpWidth) / 2 + 0.5)
+                drawXpSection(self, xpX, currentY, xpWidth)
+                currentY = currentY + xpHeight
+        end
+
+        local upgradeHeight = self.upgradePanelHeight or 0
+        local upgradeLayout = self.upgradeCardsLayout or {}
+
+        if upgradeHeight > 0 then
+                currentY = currentY + sectionSpacing
+                local cardsX = innerX + sectionPadding
+                drawUpgradeCardsSection(self, cardsX, currentY, upgradeLayout)
+                currentY = currentY + upgradeHeight
+        end
 end
 
 function GameOver:draw()
