@@ -17,6 +17,39 @@ local sqrt = math.sqrt
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
 
+local dimLightingShader = nil
+
+do
+        local source = [[
+                extern vec2 headPos;
+                extern float innerRadius;
+                extern float outerRadius;
+                extern float baseAlpha;
+
+                vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
+                        float radiusSpan = max(outerRadius - innerRadius, 0.0001);
+                        float dist = distance(screen_coords, headPos);
+                        float alpha = baseAlpha;
+
+                        if (dist <= innerRadius) {
+                                alpha = 0.0;
+                        } else {
+                                float factor = clamp((dist - innerRadius) / radiusSpan, 0.0, 1.0);
+                                alpha = baseAlpha * factor;
+                        }
+
+                        return vec4(0.0, 0.0, 0.0, clamp(alpha, 0.0, baseAlpha));
+                }
+        ]]
+
+        if love.graphics and love.graphics.isSupported and love.graphics.isSupported("shader") then
+                local ok, shader = pcall(love.graphics.newShader, source)
+                if ok then
+                        dimLightingShader = shader
+                end
+        end
+end
+
 local function getModule(name)
 	local loaded = package.loaded[name]
 	if loaded ~= nil then
@@ -421,7 +454,7 @@ local function gatherHazardData(arena, state)
         return list
 end
 
-local function drawHeadLighting(arena, state)
+local function calculateHeadLighting(arena, state)
         local Snake = getModule("snake")
         local headX, headY = nil, nil
         if Snake and Snake.getHead then
@@ -439,30 +472,9 @@ local function drawHeadLighting(arena, state)
                 headY = state.lastHeadY or centerY
         end
 
-        local dirX, dirY = 0, 0
-        if Snake and Snake.getDirection then
-                local dir = Snake:getDirection()
-                if dir then
-                        dirX = dir.x or 0
-                        dirY = dir.y or 0
-                end
+        if not (headX and headY) then
+                return nil
         end
-
-        if dirX == 0 and dirY == 0 then
-                dirX = state.lastDirX or 1
-                dirY = state.lastDirY or 0
-        end
-
-        local length = sqrt(dirX * dirX + dirY * dirY)
-        if length <= 0.0001 then
-                dirX, dirY = 1, 0
-        else
-                dirX = dirX / length
-                dirY = dirY / length
-        end
-
-        state.lastDirX = dirX
-        state.lastDirY = dirY
 
         local baseSpeed = (Snake and Snake.baseSpeed) or 240
         if not baseSpeed or baseSpeed <= 0 then
@@ -477,31 +489,23 @@ local function drawHeadLighting(arena, state)
         local ratio = clamp(speed / baseSpeed, 0.4, 2.5)
         local maxRadius = state.headMaxRadius or 240
         local minRadius = state.headMinRadius or 120
-        local radius = maxRadius
+        local outerRadius = maxRadius
 
         if ratio >= 1 then
-                radius = radius / sqrt(ratio)
+                outerRadius = outerRadius / sqrt(ratio)
         else
-                radius = radius * (1 + (1 - ratio) * 0.25)
+                outerRadius = outerRadius * (1 + (1 - ratio) * 0.25)
         end
 
-        radius = clamp(radius, minRadius, maxRadius)
-        local baseAlpha = state.baseAlpha or 0.85
+        outerRadius = clamp(outerRadius, minRadius, maxRadius)
+        local innerRadius = clamp(outerRadius * 0.55, minRadius * 0.45, outerRadius)
 
-        drawSoftGlow(state, headX, headY, radius, baseAlpha * 0.18, baseAlpha, state.glowSteps)
-
-        local focusShift = radius * 0.36
-        local forwardRatio = clamp(ratio - 1, 0, 1)
-        local focusRadius = clamp(radius * (0.72 - 0.12 * forwardRatio), minRadius * 0.55, radius)
-        drawSoftGlow(
-                state,
-                headX + dirX * focusShift,
-                headY + dirY * focusShift,
-                focusRadius,
-                baseAlpha * 0.05,
-                baseAlpha * 0.65,
-                state.focusSteps
-        )
+        return {
+                x = headX,
+                y = headY,
+                innerRadius = innerRadius,
+                outerRadius = outerRadius,
+        }
 end
 
 local function drawFruitGlow(arena, state)
@@ -726,10 +730,29 @@ function Arena:drawDimLighting()
         love.graphics.clear(0, 0, 0, 0)
         love.graphics.setBlendMode("replace", "premultiplied")
 
-        love.graphics.setColor(0, 0, 0, baseAlpha)
-        love.graphics.rectangle("fill", ax, ay, aw, ah)
+        local headLighting = calculateHeadLighting(self, state)
+        local usedShader = false
 
-        drawHeadLighting(self, state)
+        if dimLightingShader and headLighting then
+                love.graphics.setShader(dimLightingShader)
+                dimLightingShader:send("headPos", {headLighting.x or ax, headLighting.y or ay})
+                dimLightingShader:send("innerRadius", headLighting.innerRadius or 0)
+                dimLightingShader:send("outerRadius", headLighting.outerRadius or 0)
+                dimLightingShader:send("baseAlpha", baseAlpha)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.rectangle("fill", ax, ay, aw, ah)
+                love.graphics.setShader()
+                usedShader = true
+        else
+                love.graphics.setColor(0, 0, 0, baseAlpha)
+                love.graphics.rectangle("fill", ax, ay, aw, ah)
+        end
+
+        if not usedShader and headLighting then
+                drawSoftGlow(state, headLighting.x, headLighting.y, headLighting.outerRadius, baseAlpha * 0.18, baseAlpha, state.glowSteps)
+                drawSoftGlow(state, headLighting.x, headLighting.y, headLighting.innerRadius, baseAlpha * 0.05, baseAlpha * 0.65, state.focusSteps)
+        end
+
         drawFruitGlow(self, state)
         drawHazardFlickers(self, state)
 
