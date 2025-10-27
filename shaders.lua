@@ -64,14 +64,15 @@ local reactiveState = {
 }
 
 local EVENT_COLORS = {
-	combo = {1.0, 0.86, 0.45, 1},
-	comboBoost = {1.0, 0.92, 0.55, 1},
-	shield = {0.7, 0.98, 0.86, 1},
-	stallSaws = {0.65, 0.82, 1.0, 1},
-	score = {1.0, 0.72, 0.36, 1},
-	dragonfruit = {1.0, 0.45, 0.28, 1},
-	danger = {1.0, 0.38, 0.38, 1},
-	tension = {1.0, 0.67, 0.35, 1},
+        combo = {1.0, 0.86, 0.45, 1},
+        comboBoost = {1.0, 0.92, 0.55, 1},
+        shield = {0.7, 0.98, 0.86, 1},
+        stallSaws = {0.65, 0.82, 1.0, 1},
+        score = {1.0, 0.72, 0.36, 1},
+        dragonfruit = {1.0, 0.45, 0.28, 1},
+        dragonfruitBloom = {1.0, 0.56, 0.86, 1},
+        danger = {1.0, 0.38, 0.38, 1},
+        tension = {1.0, 0.67, 0.35, 1},
 }
 
 local function assignEventColor(color)
