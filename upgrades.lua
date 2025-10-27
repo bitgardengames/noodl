@@ -546,22 +546,6 @@ local function pushNearbyLasers(originCol, originRow, positions)
         return moved
 end
 
-local function buildCellLookup(cells)
-        local lookup = {}
-        if not cells then
-                return lookup
-        end
-
-        for i = 1, #cells do
-                local cell = cells[i]
-                if cell then
-                        lookup[getCellKey(cell[1], cell[2])] = true
-                end
-        end
-
-        return lookup
-end
-
 local function nudgeSawAlongTrack(saw, originCol, originRow, positions)
         if not (saw and Arena and Arena.getCenterOfTile and Saws and Saws.getCenterForProgress) then
                 return false
@@ -628,51 +612,7 @@ local function pushNearbySaws(originCol, originRow, positions)
                         local col, row = Arena:getTileFromWorld(sx, sy)
                         if col and row then
                                 local candidates = getPushCandidates(col, row, originCol, originRow)
-                                local movedThisSaw = false
-                                local withinRadius = candidates ~= nil
-                                if candidates then
-                                        local oldCells = SnakeUtils.getSawTrackCells(saw.x, saw.y, saw.dir)
-                                        local ignoreLookup = buildCellLookup(oldCells)
-
-                                        for _, candidate in ipairs(candidates) do
-                                                local targetCol, targetRow = candidate[1], candidate[2]
-                                                if isCellOpen(targetCol, targetRow, ignoreLookup) then
-                                                        local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
-                                                        local targetCells = SnakeUtils.getSawTrackCells(centerX, centerY, saw.dir)
-                                                        if targetCells and #targetCells > 0 then
-                                                                local blocked = false
-                                                                for i = 1, #targetCells do
-                                                                        local cell = targetCells[i]
-                                                                        local key = getCellKey(cell[1], cell[2])
-                                                                        if not ignoreLookup[key] and SnakeUtils.isOccupied(cell[1], cell[2]) then
-                                                                                blocked = true
-                                                                                break
-                                                                        end
-                                                                end
-
-                                                                if not blocked then
-                                                                        local startX, startY = saw.x, saw.y
-                                                                        if oldCells then
-                                                                                SnakeUtils.releaseCells(oldCells)
-                                                                        end
-
-                                                                        SnakeUtils.occupySawTrack(centerX, centerY, saw.dir)
-                                                                        Saws:beginTrackSlide(saw, startX, startY, centerX, centerY, {
-                                                                                duration = TREMOR_BLOOM_SLIDE_DURATION,
-                                                                        })
-
-                                                                        saw.collisionCells = nil
-                                                                        addPosition(positions, centerX, centerY)
-                                                                        moved = true
-                                                                        movedThisSaw = true
-                                                                        break
-                                                                end
-                                                        end
-                                                end
-                                        end
-                                end
-
-                                if not movedThisSaw and withinRadius then
+                                if candidates ~= nil then
                                         if nudgeSawAlongTrack(saw, originCol, originRow, positions) then
                                                 moved = true
                                         end
