@@ -894,17 +894,17 @@ end
 local function drawFruitBulges(trail, head, radius)
 	if not trail or radius <= 0 then return end
 
-        for i = 1, #trail do
-                local seg = trail[i]
-                if seg and seg.fruitMarker then
-                        local x = seg.drawX or seg.x or seg.fruitMarkerX
-                        local y = seg.drawY or seg.y or seg.fruitMarkerY
+	for i = 1, #trail do
+		local seg = trail[i]
+		if seg and seg.fruitMarker then
+			local x = seg.fruitMarkerX or seg.drawX or seg.x
+			local y = seg.fruitMarkerY or seg.drawY or seg.y
 
-                        if x and y then
-                                love.graphics.circle("fill", x, y, radius)
-                        end
-                end
-        end
+			if x and y then
+				love.graphics.circle("fill", x, y, radius)
+			end
+		end
+	end
 end
 
 local function drawCornerCaps(path, radius)
