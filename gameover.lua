@@ -28,6 +28,7 @@ local GameOver = {isVictory = false}
 
 local ANALOG_DEADZONE = 0.3
 local XP_RING_SIZE_BOOST = 16
+local XP_RING_VERTICAL_OFFSET = -40
 local BUTTON_VERTICAL_OFFSET = 30
 local TEXT_SHADOW_OFFSET = 2
 local TITLE_SHADOW_OFFSET = 3
@@ -277,7 +278,7 @@ local function measureXpPanelHeight(self, width, celebrationCount)
         local ringRadius = baseRingRadius + (XP_RING_SIZE_BOOST or 0)
         local outerRadius = ringRadius + ringThickness * 0.4
 
-        height = height + ringRadius + outerRadius
+        height = height + ringRadius + outerRadius + (XP_RING_VERTICAL_OFFSET or 0)
 	height = height + 18
 
 	local breakdown = (self.progression and self.progression.breakdown) or {}
@@ -1764,7 +1765,7 @@ local function drawXpSection(self, x, y, width)
                 love.graphics.setBlendMode(prevMode, prevAlphaMode)
         end
 
-        local ringTop = levelY + fontProgressValue:getHeight() + 18
+        local ringTop = levelY + fontProgressValue:getHeight() + 18 + (XP_RING_VERTICAL_OFFSET or 0)
         local baseMaxRadius = max(52, min(84, (width / 2) - 18))
         local scaledMaxRadius = baseMaxRadius * 1.08
         local ringThickness = max(16, min(26, scaledMaxRadius * 0.42))
