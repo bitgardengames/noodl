@@ -1015,6 +1015,10 @@ local function drawPlayfieldLayers(self, stateOverride)
 		Popup:draw()
 
                 RenderLayers:withLayer("overlay", function()
+                        if Arena.drawDimLighting then
+                                Arena:drawDimLighting()
+                        end
+
                         if Snake.isDeveloperAssistEnabled and Snake:isDeveloperAssistEnabled() and SnakeUtils.drawOccupancyOverlay then
                                 SnakeUtils.drawOccupancyOverlay()
                         end

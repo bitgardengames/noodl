@@ -31,6 +31,10 @@ local GILDED_LASER_PALETTE = {
         rim = {1.0, 0.96, 0.72, 1},
 }
 
+local DIM_FLOOR_MIN = 3
+local DIM_FLOOR_MAX = 6
+local DIM_FLOOR_CHANCE = 0.24
+
 local function applyPalette(palette)
 	if Theme.reset then
 		Theme.reset()
@@ -46,23 +50,69 @@ local function applyPalette(palette)
 end
 
 local function resetFloorEntities()
-	Arena:resetExit()
-	if Arena.clearSpawnDebugData then
-		Arena:clearSpawnDebugData()
-	end
-	Movement:reset()
-	FloatingText:reset()
-	Particles:reset()
-	Rocks:reset()
-	Saws:reset()
+        Arena:resetExit()
+        if Arena.clearSpawnDebugData then
+                Arena:clearSpawnDebugData()
+        end
+        Movement:reset()
+        FloatingText:reset()
+        Particles:reset()
+        Rocks:reset()
+        Saws:reset()
         Lasers:reset()
 end
 
+local function shouldTriggerDimFloor(floorNum, floorData)
+        if not floorNum then
+                return false
+        end
+
+        if floorNum < DIM_FLOOR_MIN or floorNum > DIM_FLOOR_MAX then
+                return false
+        end
+
+        if floorData and floorData.dimFloorChance == 0 then
+                return false
+        end
+
+        local chance = DIM_FLOOR_CHANCE
+        if floorData and floorData.dimFloorChance then
+                chance = floorData.dimFloorChance
+        end
+
+        if not chance or chance <= 0 then
+                return false
+        end
+
+        return love.math.random() < chance
+end
+
+local function tryApplyDimFloorAnomaly(floorNum, traitContext, floorData)
+        if shouldTriggerDimFloor(floorNum, floorData) then
+                if traitContext then
+                        traitContext.environmentalAnomaly = "dimFloor"
+                end
+
+                Arena:applyDimFloor({
+                        baseAlpha = 0.85,
+                        headMinRadius = 120,
+                        headMaxRadius = 260,
+                        fruitRadius = 96,
+                        hazardRadius = 88,
+                        laserBeamSamples = 3,
+                        glowSegments = 60,
+                })
+                return true
+        end
+
+        return false
+end
+
 local function getCenterSpawnCell()
-	local cols = Arena.cols or 1
-	local rows = Arena.rows or 1
-	if cols < 1 then cols = 1 end
-	if rows < 1 then rows = 1 end
+        local cols = Arena.cols or 1
+        local rows = Arena.rows or 1
+        if cols < 1 then cols = 1 end
+        if rows < 1 then rows = 1 end
 
 	local midCol = floor(cols / 2)
 	local midRow = floor(rows / 2)
@@ -602,14 +652,15 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
 end
 
 function FloorSetup.prepare(floorNum, floorData)
-	applyPalette(floorData and floorData.palette)
-	Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
-	resetFloorEntities()
-    Arena:setFloorDecorations(floorNum, floorData)
-	local safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer = prepareOccupancy()
+        applyPalette(floorData and floorData.palette)
+        Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
+        resetFloorEntities()
+        Arena:setFloorDecorations(floorNum, floorData)
+        Arena:applyDimFloor(nil)
+        local safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer = prepareOccupancy()
 
-	local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
-	applyBaselineHazardTraits(traitContext)
+        local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
+        applyBaselineHazardTraits(traitContext)
 
         traitContext = Upgrades:modifyFloorContext(traitContext)
         traitContext.laserCount = max(0, traitContext.laserCount or 0)
@@ -619,17 +670,23 @@ function FloorSetup.prepare(floorNum, floorData)
                 traitContext.laserCount = min(cap, traitContext.laserCount)
         end
 
-	local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
+        local dimFloorActive = tryApplyDimFloorAnomaly(floorNum, traitContext, floorData)
+        traitContext.dimFloorActive = dimFloorActive
+        if not dimFloorActive and traitContext.environmentalAnomaly == "dimFloor" then
+                traitContext.environmentalAnomaly = nil
+        end
 
-    Arena:setSpawnDebugData({
-            safeZone = safeZone,
-            rockSafeZone = rockSafeZone,
-            spawnBuffer = spawnBuffer,
-            spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
-            reservedCells = reservedCells,
-            reservedSafeZone = reservedSafeZone,
-            reservedSpawnBuffer = reservedSpawnBuffer,
-    })
+        local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
+
+        Arena:setSpawnDebugData({
+                safeZone = safeZone,
+                rockSafeZone = rockSafeZone,
+                spawnBuffer = spawnBuffer,
+                spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
+                reservedCells = reservedCells,
+                reservedSafeZone = reservedSafeZone,
+                reservedSpawnBuffer = reservedSpawnBuffer,
+        })
 
 	return {
 		traitContext = traitContext,

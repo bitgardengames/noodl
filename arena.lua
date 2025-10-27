@@ -12,6 +12,7 @@ local max = math.max
 local min = math.min
 local pi = math.pi
 local sin = math.sin
+local sqrt = math.sqrt
 
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
@@ -133,19 +134,80 @@ local function mixChannel(base, target, amount)
 end
 
 local function clamp01(value)
-	if value < 0 then
-		return 0
-	end
-	if value > 1 then
-		return 1
-	end
-	return value
+        if value < 0 then
+                return 0
+        end
+        if value > 1 then
+                return 1
+        end
+        return value
 end
 
+local function clamp(value, minimum, maximum)
+        if minimum ~= nil and value < minimum then
+                return minimum
+        end
+
+        if maximum ~= nil and value > maximum then
+                return maximum
+        end
+
+        return value
+end
+
+local function smoothstep(t)
+        if t <= 0 then
+                return 0
+        end
+        if t >= 1 then
+                return 1
+        end
+        return t * t * (3 - 2 * t)
+end
+
+local function copyArray(source)
+        if not source then
+                return {}
+        end
+
+        local copy = {}
+        for i = 1, #source do
+                copy[i] = source[i]
+        end
+
+        return copy
+end
+
+local function randomRange(minimum, maximum)
+        if maximum == nil then
+                maximum = minimum
+        end
+
+        if not maximum then
+                return minimum
+        end
+
+        if maximum <= minimum then
+                return minimum
+        end
+
+        local rng = love and love.math and love.math.random
+        if not rng then
+                return minimum
+        end
+
+        return minimum + (maximum - minimum) * rng()
+end
+
+local DEFAULT_DIM_GLOW_STEPS = {1.45, 1.12, 0.82, 0.56, 0.34}
+local DEFAULT_DIM_FOCUS_STEPS = {1.25, 0.88, 0.62, 0.42}
+local DEFAULT_DIM_FRUIT_STEPS = {1.22, 0.92, 0.66, 0.44}
+local DEFAULT_DIM_LASER_STEPS = {1.18, 0.82, 0.55}
+
 local function copyColor(color, defaultAlpha)
-	if not color then
-		return {0, 0, 0, defaultAlpha or 1}
-	end
+        if not color then
+                return {0, 0, 0, defaultAlpha or 1}
+        end
 
 	return {
 		color[1] or 0,
@@ -235,10 +297,10 @@ local function isTileInSafeZone(safeZone, col, row)
 end
 
 local Arena = {
-	x = 0, y = 0,
-	width = 792,
-	height = 600,
-	tileSize = 24,
+        x = 0, y = 0,
+        width = 792,
+        height = 600,
+        tileSize = 24,
 	cols = 0,
 	rows = 0,
 	exit = nil,
@@ -255,17 +317,267 @@ local Arena = {
 	_borderGeometry = nil,
 	_tileDecorations = nil,
 	_decorationConfig = nil,
-	_arenaInsetMesh = nil,
-	_arenaNoiseTexture = nil,
-	_arenaNoiseQuad = nil,
-	_arenaOverlayBounds = nil,
+        _arenaInsetMesh = nil,
+        _arenaNoiseTexture = nil,
+        _arenaNoiseQuad = nil,
+        _arenaOverlayBounds = nil,
+        _dimState = nil,
 }
 
+local function drawSoftGlow(state, cx, cy, radius, innerAlpha, outerAlpha, steps)
+        if not (state and cx and cy and radius and radius > 0) then
+                return
+        end
+
+        local baseAlpha = clamp(state.baseAlpha or outerAlpha or 1, 0, 1)
+        outerAlpha = clamp(outerAlpha or baseAlpha, 0, baseAlpha)
+        innerAlpha = clamp(innerAlpha or outerAlpha, 0, outerAlpha)
+
+        local glowSteps = steps or state.glowSteps or DEFAULT_DIM_GLOW_STEPS
+        local count = glowSteps and #glowSteps or 0
+
+        if count <= 0 then
+                love.graphics.setColor(0, 0, 0, innerAlpha)
+                love.graphics.circle("fill", cx, cy, radius, state.glowSegments or 48)
+                return
+        end
+
+        local segments = state.glowSegments or 48
+        for i = 1, count do
+                local step = glowSteps[i] or 1
+                local t = 0
+                if count > 1 then
+                        t = (i - 1) / (count - 1)
+                end
+                local eased = smoothstep(t)
+                local alpha = outerAlpha - (outerAlpha - innerAlpha) * eased
+                alpha = clamp(alpha, 0, baseAlpha)
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.circle("fill", cx, cy, radius * step, segments)
+        end
+end
+
+local function gatherHazardData(arena, state)
+        local list = state.hazardScratch or {}
+        local count = 0
+
+        local Rocks = getModule("rocks")
+        if Rocks and Rocks.getAll then
+                for _, rock in ipairs(Rocks:getAll()) do
+                        count = count + 1
+                        local entry = list[count] or {}
+                        list[count] = entry
+                        entry.object = rock
+                        entry.type = "rock"
+                        entry.x = (rock.renderX or rock.x or 0)
+                        local baseY = rock.renderY or rock.y or 0
+                        entry.y = baseY + (rock.offsetY or 0) + (rock.tremorSlideOffset or 0)
+                        entry.radius = (rock.w or arena.tileSize or 24) * 0.8
+                end
+        end
+
+        local Saws = getModule("saws")
+        if Saws and Saws.getAll then
+                for _, saw in ipairs(Saws:getAll()) do
+                        count = count + 1
+                        local entry = list[count] or {}
+                        list[count] = entry
+                        entry.object = saw
+                        entry.type = "saw"
+                        local cx, cy = nil, nil
+                        if Saws.getCollisionCenter then
+                                cx, cy = Saws:getCollisionCenter(saw)
+                        end
+                        entry.x = cx or saw.renderX or saw.x or 0
+                        entry.y = cy or saw.renderY or saw.y or 0
+                        entry.radius = (saw.collisionRadius or (saw.radius or (arena.tileSize or 24))) * 1.1
+                end
+        end
+
+        local Lasers = getModule("lasers")
+        if Lasers and Lasers.getEmitters then
+                local emitters = Lasers:getEmitters()
+                for _, beam in ipairs(emitters) do
+                        count = count + 1
+                        local entry = list[count] or {}
+                        list[count] = entry
+                        entry.object = beam
+                        entry.type = "laser"
+                        entry.x = beam.renderX or beam.x or 0
+                        entry.y = (beam.renderY or beam.y or 0)
+                        entry.radius = (arena.tileSize or 24) * 1.2
+                        entry.beamStartX = beam.beamStartX or entry.x
+                        entry.beamStartY = beam.beamStartY or entry.y
+                        entry.beamEndX = beam.beamEndX or entry.x
+                        entry.beamEndY = beam.beamEndY or entry.y
+                end
+        end
+
+        for i = count + 1, #list do
+                list[i] = nil
+        end
+
+        state.hazardScratch = list
+        return list
+end
+
+local function drawHeadLighting(arena, state)
+        local Snake = getModule("snake")
+        local headX, headY = nil, nil
+        if Snake and Snake.getHead then
+                headX, headY = Snake:getHead()
+        end
+
+        local centerX = arena.x + (arena.width or 0) * 0.5
+        local centerY = arena.y + (arena.height or 0) * 0.5
+
+        if headX and headY then
+                state.lastHeadX = headX
+                state.lastHeadY = headY
+        else
+                headX = state.lastHeadX or centerX
+                headY = state.lastHeadY or centerY
+        end
+
+        local dirX, dirY = 0, 0
+        if Snake and Snake.getDirection then
+                local dir = Snake:getDirection()
+                if dir then
+                        dirX = dir.x or 0
+                        dirY = dir.y or 0
+                end
+        end
+
+        if dirX == 0 and dirY == 0 then
+                dirX = state.lastDirX or 1
+                dirY = state.lastDirY or 0
+        end
+
+        local length = sqrt(dirX * dirX + dirY * dirY)
+        if length <= 0.0001 then
+                dirX, dirY = 1, 0
+        else
+                dirX = dirX / length
+                dirY = dirY / length
+        end
+
+        state.lastDirX = dirX
+        state.lastDirY = dirY
+
+        local baseSpeed = (Snake and Snake.baseSpeed) or 240
+        if not baseSpeed or baseSpeed <= 0 then
+                baseSpeed = 240
+        end
+
+        local speed = baseSpeed
+        if Snake and Snake.getSpeed then
+                speed = Snake:getSpeed() or baseSpeed
+        end
+
+        local ratio = clamp(speed / baseSpeed, 0.4, 2.5)
+        local maxRadius = state.headMaxRadius or 240
+        local minRadius = state.headMinRadius or 120
+        local radius = maxRadius
+
+        if ratio >= 1 then
+                radius = radius / sqrt(ratio)
+        else
+                radius = radius * (1 + (1 - ratio) * 0.25)
+        end
+
+        radius = clamp(radius, minRadius, maxRadius)
+        local baseAlpha = state.baseAlpha or 0.85
+
+        drawSoftGlow(state, headX, headY, radius, baseAlpha * 0.18, baseAlpha, state.glowSteps)
+
+        local focusShift = radius * 0.36
+        local forwardRatio = clamp(ratio - 1, 0, 1)
+        local focusRadius = clamp(radius * (0.72 - 0.12 * forwardRatio), minRadius * 0.55, radius)
+        drawSoftGlow(
+                state,
+                headX + dirX * focusShift,
+                headY + dirY * focusShift,
+                focusRadius,
+                baseAlpha * 0.05,
+                baseAlpha * 0.65,
+                state.focusSteps
+        )
+end
+
+local function drawFruitGlow(arena, state)
+        local Fruit = getModule("fruit")
+        if not (Fruit and Fruit.getActive) then
+                return
+        end
+
+        local fruit = Fruit:getActive()
+        if not fruit then
+                return
+        end
+
+        if fruit.phase == "inactive" or (fruit.alpha or 0) <= 0 then
+                return
+        end
+
+        local fx = fruit.x or 0
+        local fy = (fruit.y or 0) + (fruit.offsetY or 0) + (fruit.bobOffset or 0)
+
+        local baseAlpha = state.baseAlpha or 0.85
+        drawSoftGlow(state, fx, fy, state.fruitRadius or 96, baseAlpha * 0.3, baseAlpha * 0.88, state.fruitSteps)
+end
+
+local function drawHazardFlickers(arena, state)
+        local flickers = state.hazardFlickers or {}
+        if not next(flickers) then
+                return
+        end
+
+        local hazards = gatherHazardData(arena, state)
+        local baseAlpha = state.baseAlpha or 0.85
+
+        for _, hazard in ipairs(hazards) do
+                local info = flickers[hazard.object]
+                if info and info.flashTimer and info.flashTimer > 0 then
+                        local duration = info.flashDuration or 0.18
+                        local timer = clamp(info.flashTimer, 0, duration)
+                        local progress = 1 - (duration > 0 and (timer / duration) or 0)
+                        local intensity = smoothstep(progress)
+                        local strength = clamp(info.strength or 0.5, 0.1, 1)
+                        local minAlpha = clamp(baseAlpha * (1 - strength * 0.65 * intensity), baseAlpha * 0.28, baseAlpha)
+                        local outerAlpha = clamp(baseAlpha * (0.92 - 0.25 * intensity), minAlpha, baseAlpha)
+                        local radiusScale = 0.85 + 0.35 * intensity
+                        local radius = (hazard.radius or state.hazardRadius or 72) * radiusScale
+
+                        if hazard.type == "laser" then
+                                drawSoftGlow(state, hazard.x, hazard.y, radius * 0.75, minAlpha, outerAlpha, state.laserSteps)
+
+                                if hazard.beamStartX and hazard.beamEndX and hazard.beamStartY and hazard.beamEndY then
+                                        local samples = state.laserBeamSamples or 3
+                                        local span = 0.42
+                                        for i = 1, samples do
+                                                local t = 0
+                                                if samples > 1 then
+                                                        t = (i - 1) / (samples - 1)
+                                                end
+                                                t = t * span
+                                                local px = hazard.beamStartX + (hazard.beamEndX - hazard.beamStartX) * t
+                                                local py = hazard.beamStartY + (hazard.beamEndY - hazard.beamStartY) * t
+                                                local beamRadius = radius * (0.55 - 0.18 * t)
+                                                drawSoftGlow(state, px, py, beamRadius, minAlpha, outerAlpha * 0.92, state.laserSteps)
+                                        end
+                                end
+                        else
+                                drawSoftGlow(state, hazard.x, hazard.y, radius, minAlpha, outerAlpha, state.glowSteps)
+                        end
+                end
+        end
+end
+
 function Arena:setSpawnDebugData(data)
-	if not data then
-		self._spawnDebugData = nil
-		return
-	end
+        if not data then
+                self._spawnDebugData = nil
+                return
+        end
 
 	self._spawnDebugData = {
 		safeZone = data.safeZone,
@@ -279,7 +591,155 @@ function Arena:setSpawnDebugData(data)
 end
 
 function Arena:clearSpawnDebugData()
-	self._spawnDebugData = nil
+        self._spawnDebugData = nil
+end
+
+function Arena:applyDimFloor(config)
+        if not config then
+                if self._dimState and self._dimState.canvas then
+                        self._dimState.canvas = nil
+                end
+                self._dimState = nil
+                return
+        end
+
+        local state = self._dimState or {}
+        state.active = true
+        state.baseAlpha = clamp(config.baseAlpha or 0.85, 0.4, 0.95)
+        state.headMinRadius = config.headMinRadius or 120
+        state.headMaxRadius = config.headMaxRadius or 260
+        state.fruitRadius = config.fruitRadius or 96
+        state.hazardRadius = config.hazardRadius or 88
+        state.laserBeamSamples = clamp(config.laserBeamSamples or 3, 1, 5)
+        state.glowSteps = copyArray(config.glowSteps or DEFAULT_DIM_GLOW_STEPS)
+        state.focusSteps = copyArray(config.focusSteps or DEFAULT_DIM_FOCUS_STEPS)
+        state.fruitSteps = copyArray(config.fruitSteps or DEFAULT_DIM_FRUIT_STEPS)
+        state.laserSteps = copyArray(config.laserSteps or DEFAULT_DIM_LASER_STEPS)
+        state.glowSegments = clamp(config.glowSegments or 56, 24, 96)
+        state.hazardFlickers = {}
+        state.hazardScratch = {}
+        state.hazardSeen = {}
+        state.lastHeadX = nil
+        state.lastHeadY = nil
+        state.lastDirX = nil
+        state.lastDirY = nil
+        state.canvas = nil
+        self._dimState = state
+end
+
+function Arena:_updateDimFloor(dt)
+        local state = self._dimState
+        if not (state and state.active and dt and dt > 0) then
+                return
+        end
+
+        local flickers = state.hazardFlickers
+        if not flickers then
+                flickers = {}
+                state.hazardFlickers = flickers
+        end
+
+        local seen = state.hazardSeen or {}
+        for key in pairs(seen) do
+                seen[key] = nil
+        end
+        state.hazardSeen = seen
+
+        local function updateEntry(hazard)
+                seen[hazard] = true
+                local entry = flickers[hazard]
+                if not entry then
+                        entry = {
+                                timer = randomRange(0.4, 1.2),
+                                flashTimer = 0,
+                                flashDuration = 0,
+                                strength = randomRange(0.35, 0.7),
+                        }
+                        flickers[hazard] = entry
+                end
+
+                entry.timer = (entry.timer or randomRange(0.8, 1.6)) - dt
+                if entry.timer <= 0 then
+                        entry.flashDuration = randomRange(0.12, 0.2)
+                        entry.flashTimer = entry.flashDuration
+                        entry.strength = randomRange(0.35, 0.7)
+                        entry.timer = randomRange(1.1, 2.4)
+                end
+
+                if entry.flashTimer and entry.flashTimer > 0 then
+                        entry.flashTimer = max(0, entry.flashTimer - dt)
+                end
+        end
+
+        local Rocks = getModule("rocks")
+        if Rocks and Rocks.getAll then
+                for _, rock in ipairs(Rocks:getAll()) do
+                        updateEntry(rock)
+                end
+        end
+
+        local Saws = getModule("saws")
+        if Saws and Saws.getAll then
+                for _, saw in ipairs(Saws:getAll()) do
+                        updateEntry(saw)
+                end
+        end
+
+        local Lasers = getModule("lasers")
+        if Lasers and Lasers.getEmitters then
+                for _, beam in ipairs(Lasers:getEmitters()) do
+                        updateEntry(beam)
+                end
+        end
+
+        for hazard, entry in pairs(flickers) do
+                if not seen[hazard] then
+                        flickers[hazard] = nil
+                end
+        end
+end
+
+function Arena:drawDimLighting()
+        local state = self._dimState
+        if not (state and state.active) then
+                return
+        end
+
+        local baseAlpha = clamp(state.baseAlpha or 0.85, 0, 1)
+        if baseAlpha <= 0 then
+                return
+        end
+
+        local canvas, replaced = SharedCanvas.ensureCanvas(state.canvas, love.graphics.getWidth(), love.graphics.getHeight())
+        if not canvas then
+                return
+        end
+
+        if replaced or canvas ~= state.canvas then
+                state.canvas = canvas
+        end
+
+        local ax, ay, aw, ah = self:getBounds()
+
+        love.graphics.push("all")
+        love.graphics.setCanvas(canvas)
+        love.graphics.clear(0, 0, 0, 0)
+        love.graphics.setBlendMode("replace", "premultiplied")
+
+        love.graphics.setColor(0, 0, 0, baseAlpha)
+        love.graphics.rectangle("fill", ax, ay, aw, ah)
+
+        drawHeadLighting(self, state)
+        drawFruitGlow(self, state)
+        drawHazardFlickers(self, state)
+
+        love.graphics.pop()
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("alpha", "premultiplied")
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(canvas)
+        love.graphics.pop()
 end
 
 function Arena:updateScreenBounds(sw, sh)
@@ -1296,16 +1756,18 @@ function Arena:update(dt)
 				self.borderFlareStrength = 0
 				self.borderFlareTimer = 0
 			end
-		else
-			self.borderFlare = 0
-			self.borderFlareStrength = 0
-			self.borderFlareTimer = 0
-		end
-	end
+                else
+                        self.borderFlare = 0
+                        self.borderFlareStrength = 0
+                        self.borderFlareTimer = 0
+                end
 
-	if not self.exit then
-		return
-	end
+                self:_updateDimFloor(dt)
+        end
+
+        if not self.exit then
+                return
+        end
 
 	if self.exit.anim < 1 then
 		self.exit.anim = min(1, self.exit.anim + dt / self.exit.animTime)
