@@ -3741,23 +3741,41 @@ local function getSawCenterPosition(saw)
 end
 
 local function isSawCutPointExposed(saw, sx, sy, px, py)
-	if not (saw and sx and sy and px and py) then
-		return true
-	end
+        if not (saw and sx and sy and px and py) then
+                return true
+        end
 
-	local tolerance = 1.0
-	local nx, ny
+        local tolerance = 1.0
+        local nx, ny
 
-	if saw.dir == "horizontal" then
-		-- Horizontal saws sit in the floor and only the top half (negative Y)
-		-- should be able to slice the snake.
-		nx, ny = 0, -1
-	else
-		-- For vertical saws, the exposed side depends on which wall the blade
-		-- is mounted to. The sink direction indicates which side is hidden in
-		-- the track, so flip it to get the exposed normal.
-		local sinkDir = (saw.side == "left") and -1 or 1
-		nx, ny = -sinkDir, 0
+        if saw.dir == "horizontal" then
+                local minX = saw.trackMinX
+                local maxX = saw.trackMaxX
+                if minX and maxX then
+                        local lateralTolerance = tolerance
+                        if px < minX - lateralTolerance or px > maxX + lateralTolerance then
+                                return false
+                        end
+                end
+
+                -- Horizontal saws sit in the floor and only the top half (negative Y)
+                -- should be able to slice the snake.
+                nx, ny = 0, -1
+        else
+                local minY = saw.trackMinY
+                local maxY = saw.trackMaxY
+                if minY and maxY then
+                        local lateralTolerance = tolerance
+                        if py < minY - lateralTolerance or py > maxY + lateralTolerance then
+                                return false
+                        end
+                end
+
+                -- For vertical saws, the exposed side depends on which wall the blade
+                -- is mounted to. The sink direction indicates which side is hidden in
+                -- the track, so flip it to get the exposed normal.
+                local sinkDir = (saw.side == "left") and -1 or 1
+                nx, ny = -sinkDir, 0
 	end
 
 	local dx = px - sx
