@@ -16,23 +16,42 @@ local sqrt = math.sqrt
 
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
+local MAX_DIM_HIGHLIGHTS = 16
 
 local dimLightingShader = nil
 
 do
         local source = [[
-                extern vec2 headPos;
-                extern float innerRadius;
-                extern float outerRadius;
+                #define MAX_DIM_HIGHLIGHTS 16
+
                 extern float baseAlpha;
+                extern int highlightCount;
+                extern vec2 highlightPositions[MAX_DIM_HIGHLIGHTS];
+                extern vec2 highlightRadii[MAX_DIM_HIGHLIGHTS];
 
                 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
-                        float radiusSpan = max(outerRadius - innerRadius, 0.0001);
-                        float dist = distance(screen_coords, headPos);
-                        float factor = clamp((dist - innerRadius) / radiusSpan, 0.0, 1.0);
-                        float eased = smoothstep(0.0, 1.0, factor);
-                        float alpha = baseAlpha * eased;
-
+                        float mask = 1.0;
+                        int count = highlightCount;
+                        if (count < 0) {
+                                count = 0;
+                        }
+                        if (count > MAX_DIM_HIGHLIGHTS) {
+                                count = MAX_DIM_HIGHLIGHTS;
+                        }
+                        for (int i = 0; i < MAX_DIM_HIGHLIGHTS; ++i) {
+                                if (i >= count) {
+                                        break;
+                                }
+                                vec2 radii = highlightRadii[i];
+                                float innerRadius = radii.x;
+                                float outerRadius = radii.y;
+                                float radiusSpan = max(outerRadius - innerRadius, 0.0001);
+                                float dist = distance(screen_coords, highlightPositions[i]);
+                                float factor = clamp((dist - innerRadius) / radiusSpan, 0.0, 1.0);
+                                float eased = smoothstep(0.0, 1.0, factor);
+                                mask = min(mask, eased);
+                        }
+                        float alpha = baseAlpha * mask;
                         return vec4(0.0, 0.0, 0.0, clamp(alpha, 0.0, baseAlpha));
                 }
         ]]
@@ -65,6 +84,16 @@ end
 local function distanceSquared(ax, ay, bx, by)
 	local dx, dy = ax - bx, ay - by
 	return dx * dx + dy * dy
+end
+
+local function clearArray(array)
+	if not array then
+		return
+	end
+
+	for index = #array, 1, -1 do
+		array[index] = nil
+	end
 end
 
 local highlightCache = setmetatable({}, { __mode = "k" })
@@ -348,7 +377,7 @@ local function calculateHeadLighting(arena, state)
         end
 
         outerRadius = clamp(outerRadius, minRadius, maxRadius)
-        local innerRadius = clamp(outerRadius * 0.55, minRadius * 0.45, outerRadius)
+        local innerRadius = clamp(outerRadius * 0.92, minRadius, outerRadius)
 
         return {
                 x = headX,
@@ -356,6 +385,149 @@ local function calculateHeadLighting(arena, state)
                 innerRadius = innerRadius,
                 outerRadius = outerRadius,
         }
+end
+
+local function pushHighlightTarget(highlights, x, y, innerRadius, outerRadius)
+        if not highlights then
+                return
+        end
+
+        if #highlights >= MAX_DIM_HIGHLIGHTS then
+                return
+        end
+
+        if not (x and y and innerRadius and outerRadius) then
+                return
+        end
+
+        if innerRadius < 0 then
+                innerRadius = 0
+        end
+
+        if outerRadius < innerRadius then
+                outerRadius = innerRadius
+        end
+
+        highlights[#highlights + 1] = {
+                x = x,
+                y = y,
+                innerRadius = innerRadius,
+                outerRadius = outerRadius,
+        }
+end
+
+local function gatherFruitHighlights(arena, highlights)
+        if #highlights >= MAX_DIM_HIGHLIGHTS then
+                return
+        end
+
+        local Fruit = getModule("fruit")
+        if not (Fruit and Fruit.getActive and Fruit.getDrawPosition) then
+                return
+        end
+
+        local active = Fruit:getActive()
+        if not active then
+                return
+        end
+
+        local alpha = active.alpha or 0
+        if alpha <= 0 then
+                return
+        end
+
+        local fx, fy = Fruit:getDrawPosition()
+        if not (fx and fy) then
+                return
+        end
+
+        local tileSize = arena and arena.tileSize or 24
+        local innerRadius = tileSize * 0.55
+        local outerRadius = innerRadius + tileSize * 2.8
+        pushHighlightTarget(highlights, fx, fy, innerRadius, outerRadius)
+end
+
+local function gatherLaserHighlights(arena, highlights)
+        if #highlights >= MAX_DIM_HIGHLIGHTS then
+                return
+        end
+
+        local Lasers = getModule("lasers")
+        if not (Lasers and Lasers.getEmitters) then
+                return
+        end
+
+        local emitters = Lasers:getEmitters()
+        if not (emitters and #emitters > 0) then
+                return
+        end
+
+        local tileSize = arena and arena.tileSize or 24
+        local baseInner = tileSize * 0.6
+        local baseOuter = baseInner + tileSize * 2.8
+        local beamInner = tileSize * 0.35
+        local beamOuter = beamInner + tileSize * 2.0
+
+        for _, beam in ipairs(emitters) do
+                if #highlights >= MAX_DIM_HIGHLIGHTS then
+                        break
+                end
+
+                if beam then
+                        local state = beam.state
+                        if state == "charging" or state == "firing" then
+                                local bx = beam.renderX or beam.x
+                                local by = beam.renderY or beam.y
+                                if bx and by then
+                                        pushHighlightTarget(highlights, bx, by, baseInner, baseOuter)
+                                end
+                        end
+
+                        if state == "firing" then
+                                local startX = beam.beamStartX
+                                local startY = beam.beamStartY
+                                local endX = beam.beamEndX or beam.impactX
+                                local endY = beam.beamEndY or beam.impactY
+                                if startX and startY and endX and endY then
+                                        local midX = (startX + endX) * 0.5
+                                        local midY = (startY + endY) * 0.5
+                                        pushHighlightTarget(highlights, midX, midY, beamInner, beamOuter)
+                                        if #highlights >= MAX_DIM_HIGHLIGHTS then
+                                                break
+                                        end
+                                        pushHighlightTarget(highlights, endX, endY, beamInner, beamOuter)
+                                end
+                        end
+                end
+        end
+end
+
+local function buildDimHighlights(arena, state, headLighting)
+        if not state then
+                return nil
+        end
+
+        local highlights = state.highlightEntries
+        if not highlights then
+                highlights = {}
+                state.highlightEntries = highlights
+        else
+                clearArray(highlights)
+        end
+
+        if headLighting then
+                pushHighlightTarget(highlights, headLighting.x, headLighting.y, headLighting.innerRadius, headLighting.outerRadius)
+        end
+
+        if #highlights < MAX_DIM_HIGHLIGHTS then
+                gatherFruitHighlights(arena, highlights)
+        end
+
+        if #highlights < MAX_DIM_HIGHLIGHTS then
+                gatherLaserHighlights(arena, highlights)
+        end
+
+        return highlights
 end
 
 function Arena:setSpawnDebugData(data)
@@ -438,13 +610,46 @@ function Arena:drawDimLighting()
         love.graphics.setBlendMode("replace", "premultiplied")
 
         local headLighting = calculateHeadLighting(self, state)
+        local highlights = buildDimHighlights(self, state, headLighting)
+        local highlightCount = (highlights and #highlights) or 0
 
-        if dimLightingShader and headLighting then
+        if dimLightingShader and highlightCount > 0 then
+                local positions = state.highlightPositions or {}
+                local radii = state.highlightRadii or {}
+                state.highlightPositions = positions
+                state.highlightRadii = radii
+
+                for index = highlightCount + 1, #positions do
+                        positions[index] = nil
+                end
+                for index = highlightCount + 1, #radii do
+                        radii[index] = nil
+                end
+
+                for index = 1, highlightCount do
+                        local entry = highlights[index]
+                        local position = positions[index]
+                        if not position then
+                                position = {}
+                                positions[index] = position
+                        end
+                        position[1] = entry.x or ax
+                        position[2] = entry.y or ay
+
+                        local radiusPair = radii[index]
+                        if not radiusPair then
+                                radiusPair = {}
+                                radii[index] = radiusPair
+                        end
+                        radiusPair[1] = entry.innerRadius or 0
+                        radiusPair[2] = max(entry.outerRadius or 0, entry.innerRadius or 0)
+                end
+
                 love.graphics.setShader(dimLightingShader)
-                dimLightingShader:send("headPos", {headLighting.x or ax, headLighting.y or ay})
-                dimLightingShader:send("innerRadius", headLighting.innerRadius or 0)
-                dimLightingShader:send("outerRadius", headLighting.outerRadius or 0)
                 dimLightingShader:send("baseAlpha", baseAlpha)
+                dimLightingShader:send("highlightCount", highlightCount)
+                dimLightingShader:send("highlightPositions", positions)
+                dimLightingShader:send("highlightRadii", radii)
                 love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.rectangle("fill", ax, ay, aw, ah)
                 love.graphics.setShader()
