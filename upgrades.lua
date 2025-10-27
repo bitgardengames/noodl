@@ -609,7 +609,13 @@ local function pushNearbySaws(originCol, originRow, positions)
         local saws = Saws:getAll()
 
         for _, saw in ipairs(saws) do
-                local sx, sy = saw.x, saw.y
+                local progress = saw and saw.progress or 0
+                local sx, sy = Saws:getCenterForProgress and Saws:getCenterForProgress(saw, progress)
+
+                if not (sx and sy) then
+                        sx, sy = saw and saw.x, saw and saw.y
+                end
+
                 if sx and sy then
                         local col, row = Arena:getTileFromWorld(sx, sy)
                         if col and row then
