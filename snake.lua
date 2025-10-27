@@ -4052,30 +4052,39 @@ function Snake:markFruitSegment(fruitX, fruitY)
 		return
 	end
 
-	local targetIndex = 1
+	local segment = trail[1]
 
 	if fruitX and fruitY then
-		local bestDistSq = huge
-		for i = 1, #trail do
-			local seg = trail[i]
-			local sx = seg and (seg.drawX or seg.x)
-			local sy = seg and (seg.drawY or seg.y)
-			if sx and sy then
-				local dx = fruitX - sx
-				local dy = fruitY - sy
-				local distSq = dx * dx + dy * dy
-				if distSq < bestDistSq then
-					bestDistSq = distSq
-					targetIndex = i
-					if distSq <= 1 then
-						break
+		local head = segment
+		local hx = head and (head.drawX or head.x)
+		local hy = head and (head.drawY or head.y)
+
+		if not (hx and hy) then
+			head = nil
+		end
+
+		if not head then
+			local bestIndex = 1
+			local bestDistSq = huge
+			for i = 1, #trail do
+				local seg = trail[i]
+				local sx = seg and (seg.drawX or seg.x)
+				local sy = seg and (seg.drawY or seg.y)
+				if sx and sy then
+					local dx = fruitX - sx
+					local dy = fruitY - sy
+					local distSq = dx * dx + dy * dy
+					if distSq < bestDistSq then
+						bestDistSq = distSq
+						bestIndex = i
 					end
 				end
 			end
+
+			segment = trail[bestIndex]
 		end
 	end
 
-	local segment = trail[targetIndex]
 	if segment then
 		segment.fruitMarker = true
 		if fruitX and fruitY then
