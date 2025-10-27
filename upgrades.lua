@@ -610,7 +610,7 @@ local function pushNearbySaws(originCol, originRow, positions)
 
         for _, saw in ipairs(saws) do
                 local progress = saw and saw.progress or 0
-                local sx, sy = Saws:getCenterForProgress and Saws:getCenterForProgress(saw, progress)
+                local sx, sy = Saws.getCenterForProgress and Saws:getCenterForProgress(saw, progress)
 
                 if not (sx and sy) then
                         sx, sy = saw and saw.x, saw and saw.y
