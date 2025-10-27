@@ -30,8 +30,7 @@ do
                 extern vec2 highlightRadii[MAX_DIM_HIGHLIGHTS];
 
                 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
-                        float mask = 1.0;
-                        float highlight = 0.0;
+                        float light = 0.0;
                         int count = highlightCount;
                         if (count < 0) {
                                 count = 0;
@@ -46,24 +45,16 @@ do
                                 vec2 radii = highlightRadii[i];
                                 float innerRadius = radii.x;
                                 float outerRadius = radii.y;
-                                float radiusSpan = max(outerRadius - innerRadius, 0.0001);
                                 float dist = distance(screen_coords, highlightPositions[i]);
-                                float factor = clamp((dist - innerRadius) / radiusSpan, 0.0, 1.0);
-                                float eased = smoothstep(0.0, 1.0, factor);
-                                float shaped = pow(eased, 1.35);
-                                mask = min(mask, shaped);
-                                highlight = max(highlight, 1.0 - eased);
+                                float eased = smoothstep(innerRadius, outerRadius, dist);
+                                float circleLight = 1.0 - eased;
+                                circleLight = clamp(circleLight, 0.0, 1.0);
+                                light = 1.0 - ((1.0 - light) * (1.0 - circleLight));
                         }
 
-                        float reveal = clamp(1.0 - mask, 0.0, 1.0);
-                        float glow = pow(highlight, 1.8);
-                        float halo = pow(highlight, 2.6);
-                        vec3 glowColor = vec3(0.95, 0.88, 0.72) * glow;
-                        vec3 haloColor = vec3(0.45, 0.4, 0.35) * halo;
-                        vec3 lit = (glowColor + haloColor) * reveal;
-
-                        float alpha = baseAlpha * mask;
-                        return vec4(lit, clamp(alpha, 0.0, 1.0));
+                        float dimAlpha = clamp(baseAlpha, 0.0, 1.0);
+                        float finalAlpha = mix(dimAlpha, 0.0, clamp(light, 0.0, 1.0));
+                        return vec4(0.0, 0.0, 0.0, clamp(finalAlpha, 0.0, 1.0));
                 }
         ]]
 
