@@ -39,7 +39,6 @@ local isDead = false
 local clippedTrailBuffer = {}
 local clippedTrailProxy = {drawX = 0, drawY = 0}
 local severedPieces = {}
-local developerAssistEnabled = false
 local portalAnimation = nil
 local cellKeyStride = 0
 
@@ -484,25 +483,6 @@ local function assignDirection(target, x, y)
 	target.y = y
 end
 
-local DEV_ASSIST_ENABLED_COLOR = {0.72, 0.94, 1.0, 1}
-local DEV_ASSIST_DISABLED_COLOR = {1.0, 0.7, 0.68, 1}
-local DEV_ASSIST_FLOATING_TEXT_OPTIONS = {
-        scale = 1.1,
-        popScaleFactor = 1.28,
-        popDuration = 0.28,
-        wobbleMagnitude = 0.12,
-        glow = {
-                color = {0.72, 0.94, 1.0, 0.45},
-                magnitude = 0.35,
-                frequency = 3.2,
-        },
-        shadow = {
-                color = {0, 0, 0, 0.65},
-                offset = {0, 2},
-                blur = 1.5,
-        },
-}
-
 local SHIELD_DAMAGE_FLOATING_TEXT_COLOR = {1, 0.78, 0.68, 1}
 local SHIELD_DAMAGE_FLOATING_TEXT_OPTIONS = {
         scale = 1.08,
@@ -566,34 +546,6 @@ local SHIELD_BLOOD_PARTICLE_OPTIONS = {
         gravity = 340,
         fadeTo = 0.06,
 }
-
-local function announceDeveloperAssistChange(enabled)
-	if not (FloatingText and FloatingText.add) then
-		return
-	end
-
-	local message = enabled and "DEV ASSIST ENABLED" or "DEV ASSIST DISABLED"
-	local hx, hy
-	if Snake.getHead then
-		hx, hy = Snake:getHead()
-	end
-	if not (hx and hy) then
-		hx = (screenW or 0) * 0.5
-		hy = (screenH or 0) * 0.45
-	end
-
-	hy = (hy or 0) - 80
-
-	local font = UI and UI.fonts and (UI.fonts.prompt or UI.fonts.button)
-        local color = enabled and DEV_ASSIST_ENABLED_COLOR or DEV_ASSIST_DISABLED_COLOR
-        local options = DEV_ASSIST_FLOATING_TEXT_OPTIONS
-        local glowColor = options.glow.color
-        glowColor[1] = color[1]
-        glowColor[2] = color[2]
-        glowColor[3] = color[3]
-
-        FloatingText:add(message, hx, hy, color, 1.6, nil, font, options)
-end
 
 local SEVERED_TAIL_LIFE = 0.9
 local SEVERED_TAIL_FADE_DURATION = 0.35
@@ -685,17 +637,11 @@ function Snake:addShields(n)
 end
 
 function Snake:consumeShield()
-	if developerAssistEnabled then
-		self.shieldFlashTimer = SHIELD_FLASH_DURATION
-		UI:setShields(self.shields or 0, {silent = true})
-		return true
-	end
-
-	if (self.shields or 0) > 0 then
-		self.shields = self.shields - 1
-		self.shieldFlashTimer = SHIELD_FLASH_DURATION
-		UI:setShields(self.shields)
-		SessionStats:add("shieldsSaved", 1)
+        if (self.shields or 0) > 0 then
+                self.shields = self.shields - 1
+                self.shieldFlashTimer = SHIELD_FLASH_DURATION
+                UI:setShields(self.shields)
+                SessionStats:add("shieldsSaved", 1)
 		return true
 	end
 	return false
@@ -4342,26 +4288,6 @@ function Snake:getSegments()
 		}
 	end
 	return copy
-end
-
-function Snake:setDeveloperAssist(state)
-        local newState = not not state
-        if developerAssistEnabled == newState then
-                return developerAssistEnabled
-        end
-
-        developerAssistEnabled = newState
-        announceDeveloperAssistChange(newState)
-        rebuildOccupancyFromTrail()
-        return developerAssistEnabled
-end
-
-function Snake:toggleDeveloperAssist()
-	return self:setDeveloperAssist(not developerAssistEnabled)
-end
-
-function Snake:isDeveloperAssistEnabled()
-	return developerAssistEnabled
 end
 
 return Snake

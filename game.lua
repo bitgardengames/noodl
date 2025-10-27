@@ -1023,57 +1023,11 @@ local function drawPlayfieldLayers(self, stateOverride)
                                 Arena:drawQueuedExit()
                         end
 
-                        if Snake.isDeveloperAssistEnabled and Snake:isDeveloperAssistEnabled() and SnakeUtils.drawOccupancyOverlay then
-                                SnakeUtils.drawOccupancyOverlay()
-                        end
-
                         Arena:drawBorder()
                 end)
-	end)
+        end)
 
 	RenderLayers:present()
-end
-
-local function drawDeveloperAssistBadge(self)
-	if not (Snake.isDeveloperAssistEnabled and Snake:isDeveloperAssistEnabled()) then
-		return
-	end
-
-	local fonts = UI and UI.fonts
-	local badgeFont = fonts and (fonts.caption or fonts.prompt or fonts.body)
-	local previousFont = love.graphics.getFont()
-	if badgeFont then
-		love.graphics.setFont(badgeFont)
-	else
-		badgeFont = previousFont
-	end
-
-	local label = "DEV ASSIST ENABLED (F1)"
-	local textWidth = badgeFont and badgeFont:getWidth(label) or (#label * 7)
-	local textHeight = badgeFont and badgeFont:getHeight() or 16
-	local paddingX = 16
-	local paddingY = 10
-	local margin = 24
-	local boxWidth = textWidth + paddingX * 2
-	local boxHeight = textHeight + paddingY * 2
-	local x = (self.screenWidth or 0) - boxWidth - margin
-	local y = margin
-
-	love.graphics.setColor(0.1, 0.14, 0.21, 0.72)
-	love.graphics.rectangle("fill", x, y, boxWidth, boxHeight, 10, 10)
-
-	love.graphics.setColor(0.28, 0.42, 0.58, 0.9)
-	love.graphics.setLineWidth(2)
-	love.graphics.rectangle("line", x, y, boxWidth, boxHeight, 10, 10)
-	love.graphics.setLineWidth(1)
-
-	love.graphics.setColor(0.85, 0.97, 1, 1)
-	love.graphics.print(label, x + paddingX, y + paddingY)
-
-	love.graphics.setColor(1, 1, 1, 1)
-	if previousFont then
-		love.graphics.setFont(previousFont)
-	end
 end
 
 local function drawInterfaceLayers(self)
@@ -1086,8 +1040,7 @@ local function drawInterfaceLayers(self)
 	Death:drawFlash(self.screenWidth, self.screenHeight)
 	PauseMenu:draw(self.screenWidth, self.screenHeight)
 	UI:draw()
-	drawDeveloperAssistBadge(self)
-	Achievements:draw()
+        Achievements:draw()
 end
 
 local function drawTransitionFadeOut(self, timer, duration)
