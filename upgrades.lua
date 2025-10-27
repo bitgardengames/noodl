@@ -2113,7 +2113,7 @@ local pool = {
                                 pending[#pending + 1] = {type = hazardType}
                                 state.counters.gildedObsessionPendingHazards = pending
 
-                                local activationLabel = getUpgradeString("gilded_obsession", "activation_text")
+                                local activationLabel = getUpgradeString("gilded_obsession", "name")
                                 celebrateUpgrade(activationLabel, data, {
                                         color = {1.0, 0.84, 0.34, 1},
                                         particleCount = 14,
@@ -2269,7 +2269,7 @@ local pool = {
 
                                         Snake:addShields(shields)
 
-					local label = getUpgradeString("verdant_bonds", "activation_text")
+                                        local label = getUpgradeString("verdant_bonds", "name")
 					if shields > 1 then
 						if label and label ~= "" then
 							label = string.format("%s +%d", label, shields)
