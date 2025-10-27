@@ -10,11 +10,11 @@ local pi = math.pi
 local sin = math.sin
 
 local fruitTypes = {
-	{
-		id = "apple",
-		name = "Apple",
-		color = Theme.appleColor,
-		points = 1,
+        {
+                id = "apple",
+                name = "Apple",
+                color = Theme.appleColor,
+                points = 1,
 		weight = 70,
 	},
 	{
@@ -98,11 +98,11 @@ end
 
 -- State
 local active = {
-	x = 0, y = 0,
-	alpha = 0,
-	scaleX = 1, scaleY = 1,
-	shadow = 0.5,
-	offsetY = 0,
+        x = 0, y = 0,
+        alpha = 0,
+        scaleX = 1, scaleY = 1,
+        shadow = 0.5,
+        offsetY = 0,
 	type = fruitTypes[1],
 	phase = "idle",
 	timer = 0
@@ -110,6 +110,7 @@ local active = {
 local fading = nil
 local fadeTimer = 0
 local lastCollectedType = fruitTypes[1]
+local lastCollectedMeta = nil
 local idleSparkles = {}
 
 local function copyColor(color)
@@ -131,14 +132,38 @@ local function clamp(a, lo, hi) if a < lo then return lo elseif a > hi then retu
 local function easeOutQuad(t)  return 1 - (1 - t)^2 end
 -- Helpers
 local function chooseFruitType()
-	local total = 0
-	for _, f in ipairs(fruitTypes) do total = total + f.weight end
-	local r, sum = love.math.random() * total, 0
-	for _, f in ipairs(fruitTypes) do
-		sum = sum + f.weight
-		if r <= sum then return f end
-	end
-	return fruitTypes[1]
+        local total = 0
+        for _, f in ipairs(fruitTypes) do total = total + f.weight end
+        local r, sum = love.math.random() * total, 0
+        for _, f in ipairs(fruitTypes) do
+                sum = sum + f.weight
+                if r <= sum then return f end
+        end
+        return fruitTypes[1]
+end
+
+local function findFruitType(option)
+        if not option then
+                return nil
+        end
+
+        if type(option) == "table" and option.id and option.name then
+                return option
+        end
+
+        if type(option) == "string" then
+                for _, f in ipairs(fruitTypes) do
+                        if f.id == option or f.name == option then
+                                return f
+                        end
+                end
+        end
+
+        return nil
+end
+
+local function clearLastCollectedMeta()
+        lastCollectedMeta = nil
 end
 
 local function spawnIdleSparkle(x, y, color)
@@ -161,38 +186,52 @@ local function aabb(x1,y1,w1,h1, x2,y2,w2,h2)
 	y1 < y2 + h2 and y1 + h1 > y2
 end
 
-function Fruit:spawn(trail, rocks, safeZone)
-	local cx, cy, col, row = SnakeUtils.getSafeSpawn(trail, self, rocks, safeZone)
-	if not cx then
-		col, row = Arena:getRandomTile()
-		cx, cy = Arena:getCenterOfTile(col, row)
-	end
+function Fruit:spawn(trail, rocks, safeZone, options)
+        options = options or {}
+
+        local cx, cy, col, row = SnakeUtils.getSafeSpawn(trail, self, rocks, safeZone)
+        if not cx then
+                col, row = Arena:getRandomTile()
+                cx, cy = Arena:getCenterOfTile(col, row)
+        end
 
 	active.x, active.y = cx, cy
 	active.col, active.row = col, row
-	active.type   = chooseFruitType()
-	active.alpha  = 0
-	active.scaleX = 0.8
-	active.scaleY = 0.6
-	active.shadow = 0.35
-	active.offsetY= -DROP_HEIGHT
+        local forcedType = findFruitType(options.type or options.typeId)
+        active.type   = forcedType or chooseFruitType()
+        active.alpha  = 0
+        active.scaleX = 0.8
+        active.scaleY = 0.6
+        active.shadow = 0.35
+        active.offsetY= -DROP_HEIGHT
 	active.phase  = "drop"
 	active.timer  = 0
 	active.bobOffset = 0
-	active.idleTimer = 0
-	active.glowPulse = 1
-	active.sparkleTimer = love.math.random(IDLE_SPARKLE_MIN_DELAY, IDLE_SPARKLE_MAX_DELAY)
+        active.idleTimer = 0
+        active.glowPulse = 1
+        active.sparkleTimer = love.math.random(IDLE_SPARKLE_MIN_DELAY, IDLE_SPARKLE_MAX_DELAY)
+        active.isBonus = options.isBonus or false
+        if options.countsForGoal == nil then
+                active.countsForGoal = true
+        else
+                active.countsForGoal = not (options.countsForGoal == false)
+        end
+        active.eventTag = options.eventTag
+        active.expireDuration = options.lifespan
+        active.expireTimer = nil
+        active.onExpire = options.onExpire
 
-	if col and row then
-		SnakeUtils.setOccupied(col, row, true)
-	end
+        if col and row then
+                SnakeUtils.setOccupied(col, row, true)
+        end
 
-	idleSparkles = {}
+        idleSparkles = {}
+        clearLastCollectedMeta()
 end
 
 function Fruit:update(dt)
-	if fading then
-		fadeTimer = fadeTimer + dt
+        if fading then
+                fadeTimer = fadeTimer + dt
 		local p = clamp(fadeTimer / FADE_DURATION, 0, 1)
 		local e = easeOutQuad(p)
 		fading.alpha = 1 - e
@@ -211,7 +250,42 @@ function Fruit:update(dt)
 		end
 	end
 
-	active.timer = active.timer + dt
+        active.timer = active.timer + dt
+
+        if active.phase ~= "inactive" and active.expireDuration and active.expireDuration > 0 then
+                active.expireTimer = (active.expireTimer or 0) + dt
+                if active.expireTimer >= active.expireDuration then
+                        local expireCallback = active.onExpire
+                        local expireInfo = {
+                                x = active.x,
+                                y = active.y,
+                                eventTag = active.eventTag,
+                                isBonus = active.isBonus,
+                                countsForGoal = active.countsForGoal,
+                                reason = "timeout",
+                        }
+
+                        if active.col and active.row then
+                                SnakeUtils.setOccupied(active.col, active.row, false)
+                        end
+
+                        active.phase = "inactive"
+                        active.alpha = 0
+                        active.bobOffset = 0
+                        active.glowPulse = 1
+                        active.expireDuration = nil
+                        active.expireTimer = nil
+                        active.onExpire = nil
+                        idleSparkles = {}
+                        fading = nil
+                        clearLastCollectedMeta()
+
+                        if expireCallback then
+                                expireCallback(expireInfo)
+                        end
+                        return
+                end
+        end
 
 	if active.phase == "drop" then
 		local t = clamp(active.timer / DROP_DURATION, 0, 1)
@@ -295,10 +369,16 @@ function Fruit:checkCollisionWith(x, y, trail, rocks)
 	local half = HITBOX_SIZE / 2
 	if aabb(x - half, y - half, HITBOX_SIZE, HITBOX_SIZE,
 	active.x - half, active.y - half, HITBOX_SIZE, HITBOX_SIZE) then
-		lastCollectedType = active.type
-		fading = {
-			x = active.x,
-			y = active.y,
+                lastCollectedType = active.type
+                lastCollectedMeta = {
+                        isBonus = active.isBonus or false,
+                        countsForGoal = active.countsForGoal ~= false,
+                        eventTag = active.eventTag,
+                }
+                active.onExpire = nil
+                fading = {
+                        x = active.x,
+                        y = active.y,
 			alpha = 1,
 			scaleX = active.scaleX,
 			scaleY = active.scaleY,
@@ -502,6 +582,22 @@ function Fruit:getPoints()   return lastCollectedType.points or 1 end
 function Fruit:getTypeName() return lastCollectedType.name or "Apple" end
 function Fruit:getType()     return lastCollectedType end
 function Fruit:getTile()     return active.col, active.row end
+
+function Fruit:getLastCollectedMeta()
+        return lastCollectedMeta
+end
+
+function Fruit:getActiveMetadata()
+        if active and active.phase ~= "inactive" then
+                return {
+                        eventTag = active.eventTag,
+                        isBonus = active.isBonus,
+                        countsForGoal = active.countsForGoal,
+                }
+        end
+
+        return nil
+end
 
 function Fruit:getActive()
         if active and active.phase ~= "inactive" and (active.alpha or 0) > 0 then
