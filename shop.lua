@@ -166,6 +166,8 @@ local function updateMysteryReveal(self, card, state, dt)
                         shakeMagnitude = pending.revealShakeMagnitude or 9,
                         shakeFrequency = pending.revealShakeFrequency or 26,
                         applyThreshold = pending.revealApplyThreshold or 0.6,
+                        postPauseDuration = pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0,
+                        postPauseTimer = 0,
                 }
                 state.mysteryReveal = reveal
         else
@@ -236,19 +238,50 @@ local function updateMysteryReveal(self, card, state, dt)
                 local duration = reveal.flashOutDuration or 0
                 if duration <= 0 then
                         reveal.white = 0
-                        reveal.phase = "done"
-                        reveal.timer = 0
+                        if (reveal.postPauseDuration or 0) > 0 then
+                                reveal.phase = "postPause"
+                                reveal.timer = 0
+                                reveal.postPauseTimer = 0
+                        else
+                                reveal.phase = "done"
+                                reveal.timer = 0
+                        end
                 else
                         local progress = min(1, reveal.timer / duration)
                         reveal.white = 1 - progress
                         if reveal.timer >= duration then
                                 reveal.white = 0
-                                reveal.phase = "done"
-                                reveal.timer = 0
+                                if (reveal.postPauseDuration or 0) > 0 then
+                                        reveal.phase = "postPause"
+                                        reveal.timer = 0
+                                        reveal.postPauseTimer = 0
+                                else
+                                        reveal.phase = "done"
+                                        reveal.timer = 0
+                                end
                         end
                 end
                 reveal.shakeOffset = 0
                 reveal.shakeRotation = 0
+                return
+        end
+
+        if reveal.phase == "postPause" then
+                reveal.white = 0
+                reveal.shakeOffset = 0
+                reveal.shakeRotation = 0
+                local duration = reveal.postPauseDuration or 0
+                if duration <= 0 then
+                        reveal.phase = "done"
+                        reveal.timer = 0
+                        return
+                end
+
+                reveal.postPauseTimer = (reveal.postPauseTimer or 0) + dt
+                if reveal.postPauseTimer >= duration then
+                        reveal.phase = "done"
+                        reveal.timer = 0
+                end
                 return
         end
 
