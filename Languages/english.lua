@@ -585,7 +585,7 @@ local english = {
 			},
                         resonant_shell = {
                                 name = "Resonant Shell",
-                                description = "Gain +0.35s saw stall duration and lasers take +0.08s longer to charge for each of the first 5 Defense upgrades you own.",
+                                description = "For each of the first 5 Defense upgrades you own, saws travel 8% slower (down to 55% speed) and lasers take +0.08s longer to charge.",
                         },
                         caravan_contract = {
                                 name = "Caravan Contract",
