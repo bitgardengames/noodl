@@ -2209,6 +2209,15 @@ local pool = {
                         return {
                                 name = revealedName,
                                 desc = revealedDesc,
+                                revealDelay = 1.15,
+                                revealApproachDuration = 0.55,
+                                revealShakeDuration = 0.5,
+                                revealFlashInDuration = 0.22,
+                                revealFlashOutDuration = 0.48,
+                                revealShakeMagnitude = 9,
+                                revealShakeFrequency = 26,
+                                revealApplyThreshold = 0.6,
+                                revealAnimation = "mystery_card",
                         }
                 end,
         }),
@@ -3725,11 +3734,58 @@ function Upgrades:getRandom(n, context)
 	return cards
 end
 
-function Upgrades:acquire(card, context)
-	if not card or not card.upgrade then return end
+local function applyRevealToCard(card, revealInfo)
+        if not card or not revealInfo then
+                return
+        end
 
-	local upgrade = card.upgrade
-	local state = self.runState
+        if revealInfo.nameKey then
+                card.name = Localization:get(revealInfo.nameKey, revealInfo.nameReplacements)
+        elseif revealInfo.name then
+                card.name = revealInfo.name
+        end
+
+        if revealInfo.descKey then
+                card.desc = Localization:get(revealInfo.descKey, revealInfo.descReplacements)
+        elseif revealInfo.desc then
+                card.desc = revealInfo.desc
+        end
+
+        local appliedRarity = revealInfo.rarity
+        if appliedRarity then
+                local rarityInfo = getRarityInfo(appliedRarity)
+                card.rarity = appliedRarity
+                card.rarityColor = rarityInfo and rarityInfo.color or card.rarityColor
+                if rarityInfo then
+                        if rarityInfo.labelKey then
+                                card.rarityLabel = Localization:get(rarityInfo.labelKey)
+                        elseif rarityInfo.label then
+                                card.rarityLabel = rarityInfo.label
+                        end
+                end
+        end
+
+        if revealInfo.rarityColor then
+                card.rarityColor = revealInfo.rarityColor
+        end
+
+        if revealInfo.rarityLabel then
+                card.rarityLabel = revealInfo.rarityLabel
+        end
+
+        card.pendingRevealInfo = nil
+        card.revealed = true
+end
+
+function Upgrades:applyCardReveal(card, revealInfo)
+        applyRevealToCard(card, revealInfo)
+end
+
+function Upgrades:acquire(card, context)
+        if not card or not card.upgrade then return end
+
+        local upgrade = card.upgrade
+        local state = self.runState
 
 	if state and state.addStacks then
 		state:addStacks(upgrade.id, 1)
@@ -3768,41 +3824,12 @@ function Upgrades:acquire(card, context)
         end
 
         if revealInfo and card then
-                if revealInfo.nameKey then
-                        card.name = Localization:get(revealInfo.nameKey, revealInfo.nameReplacements)
-                elseif revealInfo.name then
-                        card.name = revealInfo.name
+                if revealInfo.revealDelay and revealInfo.revealDelay > 0 then
+                        card.pendingRevealInfo = deepcopy(revealInfo)
+                        card.revealed = false
+                else
+                        self:applyCardReveal(card, revealInfo)
                 end
-
-                if revealInfo.descKey then
-                        card.desc = Localization:get(revealInfo.descKey, revealInfo.descReplacements)
-                elseif revealInfo.desc then
-                        card.desc = revealInfo.desc
-                end
-
-                local appliedRarity = revealInfo.rarity
-                if appliedRarity then
-                        local rarityInfo = getRarityInfo(appliedRarity)
-                        card.rarity = appliedRarity
-                        card.rarityColor = rarityInfo and rarityInfo.color or card.rarityColor
-                        if rarityInfo then
-                                if rarityInfo.labelKey then
-                                        card.rarityLabel = Localization:get(rarityInfo.labelKey)
-                                elseif rarityInfo.label then
-                                        card.rarityLabel = rarityInfo.label
-                                end
-                        end
-                end
-
-                if revealInfo.rarityColor then
-                        card.rarityColor = revealInfo.rarityColor
-                end
-
-                if revealInfo.rarityLabel then
-                        card.rarityLabel = revealInfo.rarityLabel
-                end
-
-                card.revealed = true
         end
 
         self:notify("upgradeAcquired", {id = upgrade.id, upgrade = upgrade, context = context})
