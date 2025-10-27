@@ -598,7 +598,6 @@ local english = {
                         gilded_obsession = {
                                 name = "Gilded Obsession",
                                 description = "Shops always contain a guaranteed Rare card. Each Rare purchase leaves a radiant laser or saw waiting on the next floor.",
-                                activation_text = "Golden Resonance",
                         },
                         gluttons_wake = {
                                 name = "Glutton's Wake",
@@ -611,7 +610,6 @@ local english = {
                         verdant_bonds = {
                                 name = "Verdant Bonds",
                                 description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a shield.",
-                                activation_text = "Verdant Growth",
                         },
 			fresh_supplies = {
 				name = "Fresh Supplies",
