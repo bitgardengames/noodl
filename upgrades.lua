@@ -2309,7 +2309,7 @@ local pool = {
 		requiresTags = {"economy"},
 		tags = {"economy", "defense"},
 		onAcquire = function(state)
-			state.counters.guildLedgerFlatPerSlot = 0.015
+			state.counters.guildLedgerFlatPerSlot = 0.03
 			updateGuildLedger(state)
 
 			if not state.counters.guildLedgerHandlerRegistered then
