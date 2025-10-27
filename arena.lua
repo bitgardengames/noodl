@@ -280,14 +280,15 @@ local Arena = {
         width = 792,
         height = 600,
         tileSize = 24,
-	cols = 0,
-	rows = 0,
-	exit = nil,
-	activeBackgroundEffect = nil,
-	borderFlare = 0,
-	borderFlareStrength = 0,
-	borderFlareTimer = 0,
-	borderFlareDuration = 1.05,
+        cols = 0,
+        rows = 0,
+        exit = nil,
+        _exitDrawRequested = false,
+        activeBackgroundEffect = nil,
+        borderFlare = 0,
+        borderFlareStrength = 0,
+        borderFlareTimer = 0,
+        borderFlareDuration = 1.05,
 	borderDirty = true,
 	_borderLastCanvasWidth = 0,
 	_borderLastCanvasHeight = 0,
@@ -1324,9 +1325,9 @@ end
 
 -- Spawn an exit at a random valid tile
 function Arena:spawnExit()
-	if self.exit then return end
+        if self.exit then return end
 
-	local SnakeUtils = getModule("snakeutils")
+        local SnakeUtils = getModule("snakeutils")
 	local Fruit = getModule("fruit")
 	local fruitCol, fruitRow = nil, nil
 	if Fruit and Fruit.getTile then
@@ -1428,16 +1429,17 @@ function Arena:spawnExit()
 
 	local x, y = self:getCenterOfTile(chosenCol, chosenRow)
 	local size = self.tileSize * 0.75
-	self.exit = {
-		x = x, y = y,
-		size = size,
-		anim = 0,                -- 0 = closed, 1 = fully open
-		animTime = 0.4,          -- seconds to open
-		col = chosenCol,
-		row = chosenRow,
-		time = 0,
-	}
-	Audio:playSound("exit_spawn")
+        self.exit = {
+                x = x, y = y,
+                size = size,
+                anim = 0,                -- 0 = closed, 1 = fully open
+                animTime = 0.4,          -- seconds to open
+                col = chosenCol,
+                row = chosenRow,
+                time = 0,
+        }
+        self._exitDrawRequested = false
+        Audio:playSound("exit_spawn")
 end
 
 function Arena:getExitCenter()
@@ -1497,61 +1499,77 @@ end
 
 -- Reset/clear exit when moving to next floor
 function Arena:resetExit()
-	if self.exit then
-		local SnakeUtils = getModule("snakeutils")
-		if SnakeUtils and SnakeUtils.setOccupied and self.exit.col and self.exit.row then
-			SnakeUtils.setOccupied(self.exit.col, self.exit.row, false)
-		end
-	end
+        if self.exit then
+                local SnakeUtils = getModule("snakeutils")
+                if SnakeUtils and SnakeUtils.setOccupied and self.exit.col and self.exit.row then
+                        SnakeUtils.setOccupied(self.exit.col, self.exit.row, false)
+                end
+        end
 
-	self.exit = nil
+        self.exit = nil
+        self._exitDrawRequested = false
 end
 
 -- Check if snake head collides with the exit
 function Arena:checkExitCollision(snakeX, snakeY)
-	if not self.exit then return false end
+        if not self.exit then return false end
 	local dx, dy = snakeX - self.exit.x, snakeY - self.exit.y
 	local distSq = dx * dx + dy * dy
 	local r = self.exit.size * 0.5
 	return distSq <= (r * r)
 end
 
--- Draw the exit (if active)
+-- Queue exit draw for later in the overlay pass
 function Arena:drawExit()
-	if not self.exit then return end
+        if not self.exit then return end
 
-	RenderLayers:withLayer("overlay", function()
-		local exit = self.exit
-		local t = exit.anim
-		local eased = 1 - (1 - t) * (1 - t)
-		local radius = (exit.size / 1.5) * eased
-		local cx, cy = exit.x, exit.y
-		local time = exit.time or 0
+        self._exitDrawRequested = true
+end
 
-		local rimRadius = radius * (1.05 + 0.03 * sin(time * 1.3))
-		love.graphics.setColor(0.16, 0.15, 0.19, 1)
-		love.graphics.circle("fill", cx, cy, rimRadius, 48)
+local function drawExitVisuals(exit, eased, time)
+        local radius = (exit.size / 1.5) * eased
+        local cx, cy = exit.x, exit.y
 
-		love.graphics.setColor(0.10, 0.09, 0.12, 1)
-		love.graphics.circle("fill", cx, cy, radius * 0.94, 48)
+        local rimRadius = radius * (1.05 + 0.03 * sin(time * 1.3))
+        love.graphics.setColor(0.16, 0.15, 0.19, 1)
+        love.graphics.circle("fill", cx, cy, rimRadius, 48)
 
-		love.graphics.setColor(0.06, 0.05, 0.07, 1)
-		love.graphics.circle("fill", cx, cy, radius * (0.78 + 0.05 * sin(time * 2.1)), 48)
+        love.graphics.setColor(0.10, 0.09, 0.12, 1)
+        love.graphics.circle("fill", cx, cy, radius * 0.94, 48)
 
-		love.graphics.setColor(0.0, 0.0, 0.0, 1)
-		love.graphics.circle("fill", cx, cy, radius * (0.58 + 0.04 * sin(time * 1.7)), 48)
+        love.graphics.setColor(0.06, 0.05, 0.07, 1)
+        love.graphics.circle("fill", cx, cy, radius * (0.78 + 0.05 * sin(time * 2.1)), 48)
 
-		love.graphics.setColor(0.22, 0.20, 0.24, 0.85 * eased)
-		love.graphics.arc("fill", cx, cy, radius * 0.98, -pi * 0.65, -pi * 0.05, 32)
+        love.graphics.setColor(0.0, 0.0, 0.0, 1)
+        love.graphics.circle("fill", cx, cy, radius * (0.58 + 0.04 * sin(time * 1.7)), 48)
 
-		love.graphics.setColor(0, 0, 0, 0.45 * eased)
-		love.graphics.arc("fill", cx, cy, radius * 0.72, pi * 0.2, pi * 1.05, 32)
+        love.graphics.setColor(0.22, 0.20, 0.24, 0.85 * eased)
+        love.graphics.arc("fill", cx, cy, radius * 0.98, -pi * 0.65, -pi * 0.05, 32)
 
-		love.graphics.setColor(0.04, 0.04, 0.05, 0.9 * eased)
-		love.graphics.setLineWidth(2)
-		love.graphics.circle("line", cx, cy, radius * 0.96, 48)
-		love.graphics.setLineWidth(1)
-	end)
+        love.graphics.setColor(0, 0, 0, 0.45 * eased)
+        love.graphics.arc("fill", cx, cy, radius * 0.72, pi * 0.2, pi * 1.05, 32)
+
+        love.graphics.setColor(0.04, 0.04, 0.05, 0.9 * eased)
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", cx, cy, radius * 0.96, 48)
+        love.graphics.setLineWidth(1)
+end
+
+-- Draw the exit visuals during the overlay pass when requested
+function Arena:drawQueuedExit()
+        if not (self._exitDrawRequested and self.exit) then
+                self._exitDrawRequested = false
+                return
+        end
+
+        self._exitDrawRequested = false
+
+        local exit = self.exit
+        local t = exit.anim
+        local eased = 1 - (1 - t) * (1 - t)
+        local time = exit.time or 0
+
+        drawExitVisuals(exit, eased, time)
 end
 
 function Arena:triggerBorderFlare(strength, duration)
