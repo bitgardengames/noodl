@@ -31,6 +31,7 @@ do
 
                 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
                         float mask = 1.0;
+                        float highlight = 0.0;
                         int count = highlightCount;
                         if (count < 0) {
                                 count = 0;
@@ -49,10 +50,20 @@ do
                                 float dist = distance(screen_coords, highlightPositions[i]);
                                 float factor = clamp((dist - innerRadius) / radiusSpan, 0.0, 1.0);
                                 float eased = smoothstep(0.0, 1.0, factor);
-                                mask = min(mask, eased);
+                                float shaped = pow(eased, 1.35);
+                                mask = min(mask, shaped);
+                                highlight = max(highlight, 1.0 - eased);
                         }
+
+                        float reveal = clamp(1.0 - mask, 0.0, 1.0);
+                        float glow = pow(highlight, 1.8);
+                        float halo = pow(highlight, 2.6);
+                        vec3 glowColor = vec3(0.95, 0.88, 0.72) * glow;
+                        vec3 haloColor = vec3(0.45, 0.4, 0.35) * halo;
+                        vec3 lit = (glowColor + haloColor) * reveal;
+
                         float alpha = baseAlpha * mask;
-                        return vec4(0.0, 0.0, 0.0, clamp(alpha, 0.0, baseAlpha));
+                        return vec4(lit, clamp(alpha, 0.0, 1.0));
                 }
         ]]
 
