@@ -234,10 +234,10 @@ local function getPaletteColor(palette, key, fallback, defaultAlpha)
 end
 
 local function mixColorTowards(baseColor, targetColor, amount, alphaOverride)
-	local color = {}
-	for i = 1, 3 do
-		color[i] = clamp01(mixChannel(baseColor[i] or 0, targetColor[i] or 0, amount))
-	end
+        local color = {}
+        for i = 1, 3 do
+                color[i] = clamp01(mixChannel(baseColor[i] or 0, targetColor[i] or 0, amount))
+        end
 
 	if alphaOverride ~= nil then
 		color[4] = alphaOverride
@@ -247,7 +247,26 @@ local function mixColorTowards(baseColor, targetColor, amount, alphaOverride)
 		color[4] = clamp01(mixChannel(baseAlpha, targetAlpha, amount))
 	end
 
-	return color
+        return color
+end
+
+local WHITE = {1, 1, 1, 1}
+
+local function lightenTowards(baseColor, amount, alphaOverride)
+        amount = clamp01(amount or 0)
+        return mixColorTowards(baseColor, WHITE, amount, alphaOverride)
+end
+
+local function easeOutQuad(t)
+        if t <= 0 then
+                return 0
+        end
+        if t >= 1 then
+                return 1
+        end
+
+        local inv = 1 - t
+        return 1 - inv * inv
 end
 
 local THEME_TINTS = {
@@ -1070,10 +1089,10 @@ function Arena:_rebuildArenaInsetMesh(ax, ay, aw, ah)
 end
 
 function Arena:_updateArenaOverlayBounds(ax, ay, aw, ah)
-	self:_ensureArenaNoiseTexture()
+        self:_ensureArenaNoiseTexture()
 
-	local bounds = self._arenaOverlayBounds
-	local changed = not bounds
+        local bounds = self._arenaOverlayBounds
+        local changed = not bounds
 	if bounds and (bounds.x ~= ax or bounds.y ~= ay or bounds.w ~= aw or bounds.h ~= ah) then
 		changed = true
 	end
@@ -1091,13 +1110,163 @@ function Arena:_updateArenaOverlayBounds(ax, ay, aw, ah)
 		self._arenaNoiseQuad = love.graphics.newQuad(offsetX, offsetY, aw, ah, textureW, textureH)
 	end
 
-	self._arenaOverlayBounds = {x = ax, y = ay, w = aw, h = ah}
+        self._arenaOverlayBounds = {x = ax, y = ay, w = aw, h = ah}
+end
+
+function Arena:_updateFloorRipples(dt)
+        if not (dt and dt > 0) then
+                return
+        end
+
+        local ripples = self._floorRipples
+        if not ripples or #ripples == 0 then
+                return
+        end
+
+        for index = #ripples, 1, -1 do
+                local ripple = ripples[index]
+                local duration = ripple.duration or 0.0001
+                if duration <= 0 then
+                        duration = 0.0001
+                end
+
+                ripple.time = (ripple.time or 0) + dt
+                if ripple.time >= duration then
+                        table.remove(ripples, index)
+                end
+        end
+
+        if #ripples == 0 then
+                self._floorRipples = nil
+        end
+end
+
+function Arena:_drawFloorRipples()
+        local ripples = self._floorRipples
+        if not ripples or #ripples == 0 then
+                return
+        end
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("alpha")
+
+        for i = 1, #ripples do
+                local ripple = ripples[i]
+                local duration = ripple.duration or 0.0001
+                if duration <= 0 then
+                        duration = 0.0001
+                end
+
+                local progress = clamp01((ripple.time or 0) / duration)
+                local eased = easeOutQuad(progress)
+
+                local startRadius = ripple.startRadius or 0
+                local endRadius = ripple.endRadius or startRadius
+                local radius = startRadius + (endRadius - startRadius) * eased
+                if radius > 0 then
+                        local fade = (1 - progress)
+                        local ringColor = ripple.color
+                        local thickness = ripple.thickness or 6
+                        local width = clamp(thickness * (0.9 - progress * 0.5), 1.5, thickness)
+
+                        if ripple.fillColor then
+                                local fillAlpha = (ripple.fillColor[4] or 0) * (fade ^ (ripple.fillFadePower or 1.5))
+                                if fillAlpha > 0 then
+                                        local fillRadius = radius * (ripple.fillScale or 0.82)
+                                        if fillRadius > 0 then
+                                                love.graphics.setColor(ripple.fillColor[1], ripple.fillColor[2], ripple.fillColor[3], fillAlpha)
+                                                love.graphics.circle("fill", ripple.x or 0, ripple.y or 0, fillRadius, ripple.segments or 48)
+                                        end
+                                end
+                        end
+
+                        if ringColor and (ringColor[4] or 0) > 0 then
+                                local alpha = (ringColor[4] or 0) * (fade ^ (ripple.fadePower or 1.35))
+                                if alpha > 0 then
+                                        love.graphics.setLineWidth(width)
+                                        love.graphics.setColor(ringColor[1], ringColor[2], ringColor[3], alpha)
+                                        love.graphics.circle("line", ripple.x or 0, ripple.y or 0, radius, ripple.segments or 64)
+                                end
+                        end
+                end
+        end
+
+        love.graphics.setLineWidth(1)
+        love.graphics.pop()
+end
+
+function Arena:addFloorRipple(x, y, options)
+        if not (x and y) then
+                return
+        end
+
+        local tileSize = self.tileSize or 24
+        options = options or {}
+
+        local ripples = self._floorRipples
+        if not ripples then
+                ripples = {}
+                self._floorRipples = ripples
+        end
+
+        local startRadius
+        if options.startRadius then
+                startRadius = options.startRadius
+        elseif options.startRadiusTiles then
+                startRadius = options.startRadiusTiles * tileSize
+        else
+                startRadius = tileSize * 0.45
+        end
+
+        local endRadius
+        if options.endRadius then
+                endRadius = options.endRadius
+        else
+                local radiusTiles = options.radiusTiles or options.endRadiusTiles or 2.4
+                endRadius = radiusTiles * tileSize
+        end
+
+        if endRadius < startRadius then
+                endRadius = startRadius
+        end
+
+        local duration = options.duration or 0.6
+        if duration <= 0 then
+                duration = 0.6
+        end
+
+        local thickness = options.thickness or tileSize * 0.65
+        local lightenAmount = clamp01(options.lightenAmount or 0.4)
+        local baseColor = copyColor(Theme.arenaBG or {0.18, 0.18, 0.22, 1})
+        local ringAlpha = clamp01(options.alpha or 0.34)
+        local fillAlpha = clamp01(options.fillAlpha or ringAlpha * 0.4)
+        local ringColor = lightenTowards(baseColor, lightenAmount, ringAlpha)
+        local fillColor = nil
+        if fillAlpha > 0 then
+                fillColor = lightenTowards(baseColor, clamp01(lightenAmount * 0.6), fillAlpha)
+        end
+
+        ripples[#ripples + 1] = {
+                x = x,
+                y = y,
+                time = 0,
+                duration = duration,
+                startRadius = startRadius,
+                endRadius = endRadius,
+                thickness = thickness,
+                color = ringColor,
+                fillColor = fillColor,
+                fadePower = options.fadePower or 1.35,
+                fillFadePower = options.fillFadePower or 1.6,
+                fillScale = options.fillScale or 0.78,
+                segments = options.segments or 64,
+        }
 end
 
 function Arena:_drawArenaInlay()
-	if not self._arenaOverlayBounds then
-		return
-	end
+        if not self._arenaOverlayBounds then
+                return
+        end
 
 	if self._arenaInsetMesh then
 		love.graphics.push("all")
@@ -1205,19 +1374,20 @@ function Arena:drawBackground()
 
 	-- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
 	love.graphics.setColor(Theme.arenaBG)
-	love.graphics.rectangle("fill", ax, ay, aw, ah)
+        love.graphics.rectangle("fill", ax, ay, aw, ah)
 
-	self:_updateArenaOverlayBounds(ax, ay, aw, ah)
+        self:_updateArenaOverlayBounds(ax, ay, aw, ah)
 
-	if self.drawTileDecorations then
-		self:drawTileDecorations()
-	end
+        if self.drawTileDecorations then
+                self:drawTileDecorations()
+        end
 
-	self:_drawArenaInlay()
+        self:_drawArenaInlay()
+        self:_drawFloorRipples()
 
-	drawSpawnDebugOverlay(self)
+        drawSpawnDebugOverlay(self)
 
-	love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- Draws border
@@ -1689,6 +1859,7 @@ function Arena:update(dt)
                 end
 
                 self:_updateDimFloor(dt)
+                self:_updateFloorRipples(dt)
         end
 
         if not self.exit then

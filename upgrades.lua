@@ -1760,6 +1760,20 @@ local pool = {
                                         return
                                 end
 
+                                local fx, fy = getEventPosition(data)
+                                if fx and fy and Arena and Arena.addFloorRipple then
+                                        local tileSize = Arena.tileSize or 24
+                                        Arena:addFloorRipple(fx, fy, {
+                                                radiusTiles = TREMOR_BLOOM_RADIUS + 0.65,
+                                                duration = 0.58,
+                                                thickness = tileSize * 0.6,
+                                                lightenAmount = 0.45,
+                                                alpha = 0.32,
+                                                fillAlpha = 0.14,
+                                                segments = 72,
+                                        })
+                                end
+
                                 local moved, hazardPositions = tremorBloomPushHazards(data)
                                 if not moved then
                                         return
