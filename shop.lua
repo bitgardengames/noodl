@@ -1457,15 +1457,16 @@ function Shop:draw(screenW, screenH)
 	drawBackground(screenW, screenH, self.floorPalette)
 	local textAreaWidth = screenW * 0.8
 	local textAreaX = (screenW - textAreaWidth) / 2
-        local currentY = screenH * 0.12 + 30
+	local headerY = UI.getHeaderY(screenW, screenH)
+	local currentY = headerY
 
 	love.graphics.setFont(UI.fonts.title)
 	local titleText = Localization:get("shop.title")
 	local shadowOffset = 3
 	love.graphics.setColor(0, 0, 0, 0.6)
-	love.graphics.printf(titleText, textAreaX + shadowOffset, currentY + shadowOffset, textAreaWidth, "center")
+	love.graphics.printf(titleText, textAreaX + shadowOffset, headerY + shadowOffset, textAreaWidth, "center")
 	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.printf(titleText, textAreaX, currentY, textAreaWidth, "center")
+	love.graphics.printf(titleText, textAreaX, headerY, textAreaWidth, "center")
 
 	local function advanceY(text, font, spacing)
 		if not text or text == "" then

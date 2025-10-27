@@ -378,6 +378,22 @@ function UI.refreshLayout(sw, sh)
         applyMenuLayout(scale, sw, sh)
 end
 
+function UI.getHeaderY(sw, sh)
+	local layout = UI.getMenuLayout(sw, sh)
+	if layout then
+		local titleY = layout.titleY or layout.marginTop
+		if titleY then
+			return titleY
+		end
+	end
+
+	if sh and sh > 0 then
+		return round(sh * 0.08)
+	end
+
+	return 78
+end
+
 function UI.getMenuLayout(sw, sh)
         local layout = UI.layout and UI.layout.menu or nil
         if not layout then

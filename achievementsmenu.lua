@@ -383,7 +383,7 @@ local function computeLayout(sw, sh)
 
         local titleFont = UI.fonts.title
         local titleFontHeight = titleFont:getHeight()
-        local titleY = menuLayout.titleY or max(60, min(90, sh * 0.08))
+        local titleY = UI.getHeaderY(sw, sh)
         layout.titleY = titleY
 
         local topSpacing = menuLayout.sectionSpacing or max(28, sh * 0.045)
