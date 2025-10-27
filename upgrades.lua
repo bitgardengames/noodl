@@ -1329,23 +1329,24 @@ local pool = {
 		end,
 	}),
 	register({
-                id = "extra_bite",
-                nameKey = "upgrades.extra_bite.name",
-                descKey = "upgrades.extra_bite.description",
-                rarity = "common",
-                tags = {"hazard"},
-                onAcquire = function(state)
-                        state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
-                        state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
-                        UI:adjustFruitGoal(-1)
-                        Face:set("angry", 1.4)
+		id = "extra_bite",
+		nameKey = "upgrades.extra_bite.name",
+		descKey = "upgrades.extra_bite.description",
+		rarity = "common",
+		tags = {"hazard"},
+		onAcquire = function(state)
+			state.effects = state.effects or {}
+			state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * 0.8
+
+			Face:set("blank", 1.6)
+
 			local celebrationOptions = {
-				color = {1, 0.86, 0.36, 1},
-				particleCount = 10,
-				particleSpeed = 70,
-				particleLife = 0.38,
-				textOffset = 38,
-				textScale = 1.04,
+				color = {0.76, 0.9, 1.0, 1},
+				particleCount = 12,
+				particleSpeed = 80,
+				particleLife = 0.42,
+				textOffset = 40,
+				textScale = 1.06,
 				visual = {
 					variant = "extra_bite_chomp",
 					showBase = false,
@@ -1353,9 +1354,9 @@ local pool = {
 					innerRadius = 10,
 					outerRadius = 52,
 					addBlend = true,
-					color = {1, 0.86, 0.36, 1},
-					variantSecondaryColor = {1, 1, 1, 0.92},
-					variantTertiaryColor = {1, 0.62, 0.28, 0.82},
+					color = {0.76, 0.9, 1.0, 1},
+					variantSecondaryColor = {0.52, 0.74, 1.0, 0.92},
+					variantTertiaryColor = {1.0, 0.94, 0.72, 0.82},
 				},
 			}
 			applySegmentPosition(celebrationOptions, 0.92)

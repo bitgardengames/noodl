@@ -505,11 +505,11 @@ local english = {
 				description = "Track shattered rocks; every third one forges 25% shield progress, letting environmental cleanup snowball into extra protection.",
 				activation_text = "Amber Bloom",
 			},
-			extra_bite = {
-				name = "Extra Bite",
-				description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
-				celebration = "Early Exit",
-			},
+                        extra_bite = {
+                                name = "Viscous Drag",
+                                description = "Saws travel 20% slower.",
+                                celebration = "Track Slowed",
+                        },
 			adrenaline_surge = {
 				name = "Adrenaline Surge",
 				description = "Snake surges forward after each fruit.",
