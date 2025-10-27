@@ -738,10 +738,6 @@ local english = {
 				title = "Dragon Combo Fusion",
 				description = "Eat a dragonfruit and reach an 8-fruit combo in the same run.",
 			},
-			tokenMenagerie = {
-				title = "Token Menagerie",
-				description = "Collect four different meta fruit tokens in a single run.",
-			},
 			dailyFunDabbler = {
 				title = "Daily Dabbler",
 				description = "Complete 1 daily challenge.",
