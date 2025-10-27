@@ -101,6 +101,8 @@ local CIRCUIT_BREAKER_STALL_DURATION = 0.75
 local SUBDUCTION_ARRAY_SINK_DURATION = 1.6
 local SUBDUCTION_ARRAY_VISUAL_LIMIT = 3
 local RESONANT_SHELL_DEFENSE_CAP = 5
+local RESONANT_SHELL_PER_DEFENSE_SLOW = 0.08
+local RESONANT_SHELL_MIN_SPEED_MULT = 0.55
 local TREMOR_BLOOM_RADIUS = 2
 local TREMOR_BLOOM_SLIDE_DURATION = 0.28
 local TREMOR_BLOOM_SAW_NUDGE_AMOUNT = 0.22
@@ -823,20 +825,29 @@ local function countUpgradesWithTag(state, tag)
 end
 
 local function updateResonantShellBonus(state)
-	if not state then return end
+        if not state then return end
 
-	local perBonus = state.counters and state.counters.resonantShellPerBonus or 0
-	local perCharge = state.counters and state.counters.resonantShellPerCharge or 0
-	if perBonus <= 0 and perCharge <= 0 then return end
+        state.effects = state.effects or {}
+
+        local perSlow = state.counters and state.counters.resonantShellPerSlow or 0
+        local perCharge = state.counters and state.counters.resonantShellPerCharge or 0
+        if perSlow <= 0 and perCharge <= 0 then return end
 
         local defenseCount = countUpgradesWithTag(state, "defense")
         local effectiveDefenseCount = min(defenseCount, RESONANT_SHELL_DEFENSE_CAP)
 
-        if perBonus > 0 then
-                local previous = state.counters.resonantShellBonus or 0
-                local newBonus = perBonus * effectiveDefenseCount
-                state.counters.resonantShellBonus = newBonus
-                state.effects.sawStall = (state.effects.sawStall or 0) - previous + newBonus
+        if perSlow > 0 then
+                local previousMult = state.counters and state.counters.resonantShellSpeedMult or 1
+                if previousMult == 0 then
+                        previousMult = 1
+                end
+
+                local reduction = perSlow * effectiveDefenseCount
+                local targetMult = max(RESONANT_SHELL_MIN_SPEED_MULT, 1 - reduction)
+                state.counters.resonantShellSpeedMult = targetMult
+
+                local currentMult = state.effects.sawSpeedMult or 1
+                state.effects.sawSpeedMult = (currentMult / previousMult) * targetMult
         end
 
         if perCharge > 0 then
@@ -1948,15 +1959,16 @@ local pool = {
 		requiresTags = {"defense"},
 		tags = {"defense"},
 		unlockTag = "specialist",
-		onAcquire = function(state)
-			state.counters.resonantShellPerBonus = 0.35
-			state.counters.resonantShellPerCharge = 0.08
-			updateResonantShellBonus(state)
+                onAcquire = function(state)
+                        state.counters.resonantShellPerSlow = RESONANT_SHELL_PER_DEFENSE_SLOW
+                        state.counters.resonantShellPerCharge = 0.08
+                        state.counters.resonantShellSpeedMult = state.counters.resonantShellSpeedMult or 1
+                        updateResonantShellBonus(state)
 
-			if not state.counters.resonantShellHandlerRegistered then
-				state.counters.resonantShellHandlerRegistered = true
-				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
-					if not runState then return end
+                        if not state.counters.resonantShellHandlerRegistered then
+                                state.counters.resonantShellHandlerRegistered = true
+                                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+                                        if not runState then return end
 					if getStacks(runState, "resonant_shell") <= 0 then return end
 					updateResonantShellBonus(runState)
 				end)
