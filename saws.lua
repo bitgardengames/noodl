@@ -173,9 +173,9 @@ local function buildCollisionCellsForSaw(saw)
                 local offsetDir
 
                 if saw.side == "left" then
-                        offsetDir = 1
-                elseif saw.side == "right" then
                         offsetDir = -1
+                elseif saw.side == "right" then
+                        offsetDir = 1
                 else
                         offsetDir = 1
                 end
