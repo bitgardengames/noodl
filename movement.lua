@@ -351,37 +351,59 @@ local function portalThroughWall(headX, headY)
 		verticalDist = headY - bottom
 	end
 
-	local entryX = clamp(headX, left, right)
-	local entryY = clamp(headY, top, bottom)
+        local entryX = clamp(headX, left, right)
+        local entryY = clamp(headY, top, bottom)
 
-	local margin = max(4, math.floor(Arena.tileSize * 0.3))
-	local function insideX(x)
-		return clamp(x, left + margin, right - margin)
-	end
+        local useGrid = Arena.getTileFromWorld and Arena.getCenterOfTile and Arena.cols and Arena.rows
+        local entryPortalX, entryPortalY = entryX, entryY
+        local exitX, exitY
 
-	local function insideY(y)
-		return clamp(y, top + margin, bottom - margin)
-	end
+        if useGrid then
+                local entryCol, entryRow = Arena:getTileFromWorld(entryX, entryY)
+                if entryCol and entryRow then
+                        if horizontalDist >= verticalDist then
+                                local exitCol = outLeft and Arena.cols or 1
+                                local exitRow = entryRow
+                                exitX, exitY = Arena:getCenterOfTile(exitCol, exitRow)
+                        else
+                                local exitCol = entryCol
+                                local exitRow = outTop and Arena.rows or 1
+                                exitX, exitY = Arena:getCenterOfTile(exitCol, exitRow)
+                        end
+                end
+        end
 
-	local exitX, exitY
-	if horizontalDist >= verticalDist then
-		if outLeft then
-			exitX = insideX(right - margin)
-		else
-			exitX = insideX(left + margin)
-		end
-		exitY = insideY(headY)
-	else
-		if outTop then
-			exitY = insideY(bottom - margin)
-		else
-			exitY = insideY(top + margin)
-		end
-		exitX = insideX(headX)
-	end
+        if not (exitX and exitY) then
+                local margin = max(4, math.floor(Arena.tileSize * 0.3))
+                local function insideX(x)
+                        return clamp(x, left + margin, right - margin)
+                end
 
-	local dx = (exitX or headX) - headX
-	local dy = (exitY or headY) - headY
+                local function insideY(y)
+                        return clamp(y, top + margin, bottom - margin)
+                end
+
+                if horizontalDist >= verticalDist then
+                        if outLeft then
+                                exitX = insideX(right - margin)
+                        else
+                                exitX = insideX(left + margin)
+                        end
+                        exitY = insideY(headY)
+                else
+                        if outTop then
+                                exitY = insideY(bottom - margin)
+                        else
+                                exitY = insideY(top + margin)
+                        end
+                        exitX = insideX(headX)
+                end
+
+                entryPortalX, entryPortalY = entryX, entryY
+        end
+
+        local dx = (exitX or headX) - headX
+        local dy = (exitY or headY) - headY
 
 	if dx == 0 and dy == 0 then
 		return nil, nil
@@ -389,32 +411,40 @@ local function portalThroughWall(headX, headY)
 
 	local newHeadX, newHeadY
 	local portalDuration = 0.3
-	if Snake.beginPortalWarp then
-		local started = Snake:beginPortalWarp({
-			entryX = entryX,
-			entryY = entryY,
-			exitX = headX + dx,
-			exitY = headY + dy,
-			duration = portalDuration,
-			dx = dx,
-			dy = dy,
-		})
-		if started then
+        if Snake.beginPortalWarp then
+                local started = Snake:beginPortalWarp({
+                        entryX = entryPortalX,
+                        entryY = entryPortalY,
+                        exitX = headX + dx,
+                        exitY = headY + dy,
+                        duration = portalDuration,
+                        dx = dx,
+                        dy = dy,
+                })
+                if started then
 			newHeadX, newHeadY = Snake:getHead()
 		end
 	end
 
-	if not (newHeadX and newHeadY) then
-		if Snake.translate then
-			Snake:translate(dx, dy)
-		else
-			Snake:setHeadPosition(headX + dx, headY + dy)
-		end
-		newHeadX, newHeadY = Snake:getHead()
-	end
+        if not (newHeadX and newHeadY) then
+                if Snake.translate then
+                        Snake:translate(dx, dy, {resetMoveProgress = true})
+                        if Snake.resetMovementProgress then
+                                Snake:resetMovementProgress()
+                        end
+                else
+                        local targetX = headX + dx
+                        local targetY = headY + dy
+                        Snake:setHeadPosition(targetX, targetY)
+                        if Snake.resetMovementProgress then
+                                Snake:resetMovementProgress()
+                        end
+                end
+                newHeadX, newHeadY = Snake:getHead()
+        end
 
         if Particles then
-                Particles:spawnBurst(entryX, entryY, PORTAL_ENTRY_BURST_OPTIONS)
+                Particles:spawnBurst(entryPortalX, entryPortalY, PORTAL_ENTRY_BURST_OPTIONS)
                 Particles:spawnBurst(newHeadX, newHeadY, PORTAL_EXIT_BURST_OPTIONS)
         end
 
