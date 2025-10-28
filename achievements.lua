@@ -153,29 +153,24 @@ function Achievements:_ensureInitialized()
 	self:_finalizeOrdering()
 
         if not self._defaultProvidersRegistered then
-                self:registerStateProvider(function()
-                        return {
-                                totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0,
-                                totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
-                                bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
-                                dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0,
-                                shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0,
-                                shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0,
-                                shieldSawParries = PlayerStats:get("shieldSawParries") or 0,
-                        }
+                self:registerStateProvider(function(state)
+                        state.totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0
+                        state.totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0
+                        state.bestComboStreak = PlayerStats:get("bestComboStreak") or 0
+                        state.dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0
+                        state.shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0
+                        state.shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0
+                        state.shieldSawParries = PlayerStats:get("shieldSawParries") or 0
                 end)
 
-                self:registerStateProvider(function()
-                        local SessionStats = require("sessionstats")
-                        return {
-                                runFloorsCleared = SessionStats:get("floorsCleared") or 0,
-                                runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0,
-                                runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0,
-                                runShieldSawParries = SessionStats:get("runShieldSawParries") or 0,
-                                runShieldsSaved = SessionStats:get("shieldsSaved") or 0,
-                                runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0,
-                                runBestComboStreak = SessionStats:get("bestComboStreak") or 0,
-                        }
+                self:registerStateProvider(function(state)
+                        state.runFloorsCleared = SessionStats:get("floorsCleared") or 0
+                        state.runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0
+                        state.runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0
+                        state.runShieldSawParries = SessionStats:get("runShieldSawParries") or 0
+                        state.runShieldsSaved = SessionStats:get("shieldsSaved") or 0
+                        state.runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0
+                        state.runBestComboStreak = SessionStats:get("bestComboStreak") or 0
                 end)
 
                 self._defaultProvidersRegistered = true
@@ -209,24 +204,33 @@ function Achievements:_mergeState(target, source)
 	end
 end
 
+local function clearTable(t)
+        for key in pairs(t) do
+                t[key] = nil
+        end
+end
+
 function Achievements:_buildState(external)
-	local combined = {}
-	for _, provider in ipairs(self.stateProviders) do
-		local ok, result = pcall(provider, combined)
-		if ok then
-			if type(result) == "table" then
-				self:_mergeState(combined, result)
-			end
-		else
-			print("[achievements] state provider failed:", result)
-		end
-	end
+        self._combinedState = self._combinedState or {}
+        local combined = self._combinedState
+        clearTable(combined)
 
-	if external then
-		self:_mergeState(combined, external)
-	end
+        for _, provider in ipairs(self.stateProviders) do
+                local ok, result = pcall(provider, combined)
+                if ok then
+                        if type(result) == "table" and result ~= combined then
+                                self:_mergeState(combined, result)
+                        end
+                else
+                        print("[achievements] state provider failed:", result)
+                end
+        end
 
-	return combined
+        if external then
+                self:_mergeState(combined, external)
+        end
+
+        return combined
 end
 
 local function evaluateProgress(def, state)
@@ -348,20 +352,24 @@ function Achievements:check(key, state)
 end
 
 function Achievements:checkAll(state)
-	self:_ensureInitialized()
+        self:_ensureInitialized()
 
-	local combinedState = self:_buildState(state)
+        local combinedState = self:_buildState(state)
 
-	for key, achievement in pairs(self.definitions) do
-		local progress = evaluateProgress(achievement, combinedState)
-		if type(progress) == "number" then
-			achievement.progress = clampProgress(achievement, progress)
-		end
+        for i = 1, #self.definitionOrder do
+                local key = self.definitionOrder[i]
+                local achievement = self.definitions[key]
+                if achievement then
+                        local progress = evaluateProgress(achievement, combinedState)
+                        if type(progress) == "number" then
+                                achievement.progress = clampProgress(achievement, progress)
+                        end
 
-		if not achievement.unlocked and shouldUnlock(achievement, combinedState, progress) then
-			self:unlock(key)
-		end
-	end
+                        if not achievement.unlocked and shouldUnlock(achievement, combinedState, progress) then
+                                self:unlock(key)
+                        end
+                end
+        end
 end
 
 function Achievements:update(dt)
