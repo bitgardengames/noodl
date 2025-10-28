@@ -463,35 +463,68 @@ local function portalThroughWall(headX, headY)
 end
 
 local function handleWallCollision(headX, headY)
-	if Arena:isInside(headX, headY) then
-		return headX, headY
-	end
+        if Arena:isInside(headX, headY) then
+                return headX, headY
+        end
 
-	local portalX, portalY = portalThroughWall(headX, headY)
-	if portalX and portalY then
-		Audio:playSound("wall_portal")
-		return portalX, portalY
-	end
+        local portalX, portalY = portalThroughWall(headX, headY)
+        if portalX and portalY then
+                Audio:playSound("wall_portal")
+                return portalX, portalY
+        end
 
-	local ax, ay, aw, ah = Arena:getBounds()
-	local inset = Arena.tileSize / 2
-	local left = ax + inset
-	local right = ax + aw - inset
-	local top = ay + inset
-	local bottom = ay + ah - inset
+        local ax, ay, aw, ah = Arena:getBounds()
+        local inset = Arena.tileSize / 2
+        local left = ax + inset
+        local right = ax + aw - inset
+        local top = ay + inset
+        local bottom = ay + ah - inset
 
-	if not Snake:consumeShield() then
-		local safeX = clamp(headX, left, right)
-		local safeY = clamp(headY, top, bottom)
-		local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY)
-		local clampedX = reroutedX or safeX
-		local clampedY = reroutedY or safeY
-                Snake:setHeadPosition(clampedX, clampedY)
+        local function relocateSnake(targetX, targetY)
+                if not (targetX and targetY) then
+                        return
+                end
+
+                local deltaX = 0
+                local deltaY = 0
+                if headX and headY then
+                        deltaX = targetX - headX
+                        deltaY = targetY - headY
+                end
+
+                local moved = false
+                if Snake.translate and (deltaX ~= 0 or deltaY ~= 0) then
+                        Snake:translate(deltaX, deltaY, {resetMoveProgress = true})
+                        moved = true
+                elseif Snake.setHeadPosition then
+                        Snake:setHeadPosition(targetX, targetY)
+                        moved = true
+                end
+
+                if Snake.resetMovementProgress then
+                        Snake:resetMovementProgress()
+                end
+
+                if moved then
+                        local newHeadX, newHeadY = Snake:getHead()
+                        headX = newHeadX or targetX
+                        headY = newHeadY or targetY
+                end
+        end
+
+        if not Snake:consumeShield() then
+                local safeX = clamp(headX, left, right)
+                local safeY = clamp(headY, top, bottom)
+                local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY)
+                local clampedX = reroutedX or safeX
+                local clampedY = reroutedY or safeY
+                relocateSnake(clampedX, clampedY)
+                clampedX, clampedY = headX, headY
                 local dir = Snake.getDirection and Snake:getDirection() or {x = 0, y = 0}
 
-		return clampedX, clampedY, "wall", {
-			pushX = 0,
-			pushY = 0,
+                return clampedX, clampedY, "wall", {
+                        pushX = 0,
+                        pushY = 0,
 			snapX = clampedX,
 			snapY = clampedY,
 			dirX = dir.x or 0,
@@ -501,15 +534,14 @@ local function handleWallCollision(headX, headY)
 		}
 	end
 
-	local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
-	local clampedX = reroutedX or clamp(headX, left, right)
-	local clampedY = reroutedY or clamp(headY, top, bottom)
-        Snake:setHeadPosition(clampedX, clampedY)
-	headX, headY = clampedX, clampedY
+        local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
+        local clampedX = reroutedX or clamp(headX, left, right)
+        local clampedY = reroutedY or clamp(headY, top, bottom)
+        relocateSnake(clampedX, clampedY)
 
         Particles:spawnBurst(headX, headY, WALL_SHIELD_BURST_OPTIONS)
 
-	Audio:playSound("shield_wall")
+        Audio:playSound("shield_wall")
 
 	if Snake.onShieldConsumed then
 		Snake:onShieldConsumed(headX, headY, "wall")
