@@ -14,12 +14,34 @@ local function updateDesiredSamples(samples)
         end
 
         if samples >= 2 then
+                samples = math.floor(samples)
+                if samples < 2 then
+                        samples = 0
+                else
+                        samples = math.min(samples, DEFAULT_MSAA)
+                end
+        end
+
+        if samples >= 2 then
                 desiredMSAASamples = samples
                 canvasCreationOptions = {msaa = samples}
         else
                 desiredMSAASamples = 0
                 canvasCreationOptions = nil
         end
+end
+
+local function getMaximumSamplesFromLimits(limits)
+        if type(limits) ~= "table" then
+                return 0
+        end
+
+        local sampleCount = limits.canvasmsaa or limits.msaa or limits.canvasMSAA or limits.MSAA
+        if type(sampleCount) ~= "number" then
+                return 0
+        end
+
+        return sampleCount
 end
 
 local function ensureInitialized()
@@ -30,8 +52,9 @@ local function ensureInitialized()
         desiredMSAASamples = 0
 
         local limits = love.graphics.getSystemLimits and love.graphics.getSystemLimits()
-        if limits and type(limits.msaa) == "number" and limits.msaa >= 2 then
-                desiredMSAASamples = math.min(DEFAULT_MSAA, limits.msaa)
+        local maximumSamples = getMaximumSamplesFromLimits(limits)
+        if maximumSamples >= 2 then
+                desiredMSAASamples = math.min(DEFAULT_MSAA, maximumSamples)
                 if desiredMSAASamples >= 2 then
                         canvasCreationOptions = {msaa = desiredMSAASamples}
                 else
