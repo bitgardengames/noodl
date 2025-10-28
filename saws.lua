@@ -8,6 +8,7 @@ local Easing = require("easing")
 local max = math.max
 local min = math.min
 local pi = math.pi
+local cos = math.cos
 local sin = math.sin
 local insert = table.insert
 
@@ -82,6 +83,8 @@ end
 local highlightCache = setmetatable({}, { __mode = "k" })
 local highlightDefault = {1, 1, 1, 1}
 
+local emptyPoints = {}
+
 local function updateHighlightColor(out, color)
         local r = min(1, color[1] * 1.2 + 0.08)
         local g = min(1, color[2] * 1.2 + 0.08)
@@ -99,6 +102,60 @@ local function getHighlightColor(color)
                 highlightCache[color] = cached
         end
         return updateHighlightColor(cached, color)
+end
+
+local function invalidateSawPointCache(saw)
+        if not saw then
+                return
+        end
+
+        local cache = saw._pointCache
+        if cache then
+                cache.radius = nil
+                cache.teeth = nil
+        end
+end
+
+local function getSawPoints(saw)
+        if not saw then
+                return emptyPoints
+        end
+
+        local radius = saw.radius or SAW_RADIUS
+        local teeth = saw.teeth or 8
+        local cache = saw._pointCache
+
+        if cache and cache.radius == radius and cache.teeth == teeth and cache.points then
+                return cache.points
+        end
+
+        cache = cache or {}
+        local points = cache.points
+
+        if points then
+                for i = #points, 1, -1 do
+                        points[i] = nil
+                end
+        else
+                points = {}
+                cache.points = points
+        end
+
+        local inner = radius * 0.8
+        local step = pi / max(1, teeth)
+
+        for i = 0, (teeth * 2) - 1 do
+                local r = (i % 2 == 0) and radius or inner
+                local angle = i * step
+                points[#points + 1] = cos(angle) * r
+                points[#points + 1] = sin(angle) * r
+        end
+
+        cache.radius = radius
+        cache.teeth = teeth
+        saw._pointCache = cache
+
+        return points
 end
 
 -- modifiers
@@ -557,6 +614,7 @@ function Saws:spawn(x, y, radius, teeth, dir, side, options)
         })
 
         local saw = current[#current]
+        invalidateSawPointCache(saw)
         saw.collisionCells = buildCollisionCellsForSaw(saw)
         options = options or {}
         saw.color = options.color or saw.color
@@ -617,9 +675,18 @@ function Saws:update(dt)
                         saw.collisionCells = buildCollisionCellsForSaw(saw)
                 end
 
-		saw.collisionRadius = (saw.radius or SAW_RADIUS) * COLLISION_RADIUS_MULT
+                saw.collisionRadius = (saw.radius or SAW_RADIUS) * COLLISION_RADIUS_MULT
 
-		saw.timer = saw.timer + dt
+                if saw._pointCache then
+                        local cache = saw._pointCache
+                        local radius = saw.radius or SAW_RADIUS
+                        local teeth = saw.teeth or 8
+                        if cache.radius and (cache.radius ~= radius or cache.teeth ~= teeth) then
+                                invalidateSawPointCache(saw)
+                        end
+                end
+
+                saw.timer = saw.timer + dt
                 saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (pi * 2)
 
                 updateSawSlide(saw, dt)
@@ -716,19 +783,9 @@ function Saws:draw()
                 end
 
                 local sinkScale = 1 - 0.1 * sinkVisualProgress
-		local rotation = saw.rotation or 0
-		local teeth = saw.teeth or 8
-		local outer = saw.radius or SAW_RADIUS
-		local inner = outer * 0.8
-		local step = pi / max(1, teeth)
-		local points = {}
-
-		for i = 0, (teeth * 2) - 1 do
-			local r = (i % 2 == 0) and outer or inner
-			local angle = i * step
-			points[#points + 1] = math.cos(angle) * r
-			points[#points + 1] = math.sin(angle) * r
-		end
+                local rotation = saw.rotation or 0
+                local outer = saw.radius or SAW_RADIUS
+                local points = getSawPoints(saw)
 
                 local isBladeHidden = sinkVisualProgress >= 0.999
                 if (saw.scaleX ~= nil and saw.scaleX <= 0) or (saw.scaleY ~= nil and saw.scaleY <= 0) then
