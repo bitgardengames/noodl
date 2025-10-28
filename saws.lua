@@ -279,6 +279,35 @@ local function buildCollisionCellsForSaw(saw)
                 end
         end
 
+        if Arena and Arena.getTilePosition then
+                local tileSize = getTileSize()
+
+                for _, cell in ipairs(cells) do
+                        local col, row = cell[1], cell[2]
+                        local cellX, cellY = Arena:getTilePosition(col, row)
+                        if cellX and cellY then
+                                local right = cellX + tileSize
+                                local bottom = cellY + tileSize
+                                cell.minX = cellX
+                                cell.maxX = right
+                                cell.minY = cellY
+                                cell.maxY = bottom
+                        else
+                                cell.minX = nil
+                                cell.maxX = nil
+                                cell.minY = nil
+                                cell.maxY = nil
+                        end
+                end
+        else
+                for _, cell in ipairs(cells) do
+                        cell.minX = nil
+                        cell.maxX = nil
+                        cell.minY = nil
+                        cell.maxY = nil
+                end
+        end
+
         if trackMinX and trackMaxX and trackMinY and trackMaxY then
                 saw.trackMinX = trackMinX
                 saw.trackMaxX = trackMaxX
@@ -297,21 +326,45 @@ local function overlapsCollisionCell(saw, x, y, w, h)
 		return true
 	end
 
-	if not (Arena and Arena.getTilePosition) then
-		return true
-	end
+        local tileSizeCache
 
-	local tileSize = getTileSize()
+        for _, cell in ipairs(cells) do
+                local minX = cell.minX
+                local maxX = cell.maxX
+                local minY = cell.minY
+                local maxY = cell.maxY
 
-	for _, cell in ipairs(cells) do
-		local col, row = cell[1], cell[2]
-		local cellX, cellY = Arena:getTilePosition(col, row)
-		if x < cellX + tileSize and x + w > cellX and y < cellY + tileSize and y + h > cellY then
-			return true
-		end
-	end
+                if minX and maxX and minY and maxY then
+                        if x < maxX and x + w > minX and y < maxY and y + h > minY then
+                                return true
+                        end
+                elseif Arena and Arena.getTilePosition then
+                        tileSizeCache = tileSizeCache or getTileSize()
+                        local col, row = cell[1], cell[2]
+                        local cellX, cellY = Arena:getTilePosition(col, row)
+                        if cellX and cellY then
+                                local right = cellX + tileSizeCache
+                                local bottom = cellY + tileSizeCache
+                                cell.minX = cellX
+                                cell.maxX = right
+                                cell.minY = cellY
+                                cell.maxY = bottom
 
-	return false
+                                if x < right and x + w > cellX and y < bottom and y + h > cellY then
+                                        return true
+                                end
+                        else
+                                cell.minX = nil
+                                cell.maxX = nil
+                                cell.minY = nil
+                                cell.maxY = nil
+                        end
+                else
+                        return true
+                end
+        end
+
+        return false
 end
 
 local function isCollisionCandidate(saw, x, y, w, h)
