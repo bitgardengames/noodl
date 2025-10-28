@@ -253,8 +253,23 @@ function Fruit:spawn(trail, rocks, safeZone, options)
 
         local cx, cy, col, row = SnakeUtils.getSafeSpawn(trail, self, rocks, safeZone)
         if not cx then
-                col, row = Arena:getRandomTile()
-                cx, cy = Arena:getCenterOfTile(col, row)
+                local attempts = max(1, (Arena.cols or 0) * (Arena.rows or 0))
+                for _ = 1, attempts do
+                        local candidateCol, candidateRow = Arena:getRandomTile()
+                        if candidateCol and candidateRow and not SnakeUtils.isOccupied(candidateCol, candidateRow) then
+                                local candidateX, candidateY = Arena:getCenterOfTile(candidateCol, candidateRow)
+                                if candidateX and candidateY then
+                                        col, row = candidateCol, candidateRow
+                                        cx, cy = candidateX, candidateY
+                                        break
+                                end
+                        end
+                end
+
+                if not cx then
+                        col, row = Arena:getRandomTile()
+                        cx, cy = Arena:getCenterOfTile(col, row)
+                end
         end
 
 	active.x, active.y = cx, cy

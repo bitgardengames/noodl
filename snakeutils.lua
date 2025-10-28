@@ -347,120 +347,130 @@ SnakeUtils.directions = {
 
 -- safer apple spawn (grid aware)
 function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
-	opts = opts or {}
-	local maxAttempts = 200
-	local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
-	local cols, rows = Arena.cols, Arena.rows
+        opts = opts or {}
+        local maxAttempts = 200
+        local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
+        local cols, rows = Arena.cols, Arena.rows
 
-	trail = trail or {}
-	local fruitX, fruitY = 0, 0
-	if fruit and fruit.getPosition then
-		fruitX, fruitY = fruit:getPosition()
-	end
-	local rockList = (rocks and rocks.getAll and rocks:getAll()) or {}
-	local safeCells = safeZone or {}
+        trail = trail or {}
+        local fruitX, fruitY = 0, 0
+        if fruit and fruit.getPosition then
+                fruitX, fruitY = fruit:getPosition()
+        end
+        local rockList = (rocks and rocks.getAll and rocks:getAll()) or {}
+        local safeCells = safeZone or {}
 
-	local avoidFront = not not opts.avoidFrontOfSnake
-	local frontCells
-	local frontLookup
+        local avoidFront = not not opts.avoidFrontOfSnake
+        local frontCells
+        local frontLookup
 
-	if avoidFront and trail[1] then
-		local head = trail[1]
-		local dirX, dirY = head.dirX, head.dirY
+        if avoidFront and trail[1] then
+                local head = trail[1]
+                local dirX, dirY = head.dirX, head.dirY
 
-		if (dirX == nil or dirY == nil) and opts.direction then
-			dirX = opts.direction.x
-			dirY = opts.direction.y
-		end
+                if (dirX == nil or dirY == nil) and opts.direction then
+                        dirX = opts.direction.x
+                        dirY = opts.direction.y
+                end
 
-		if dirX and dirY then
-			local headCol, headRow = Arena:getTileFromWorld(head.drawX, head.drawY)
-			if headCol and headRow then
-				local buffer = math.max(1, floor(opts.frontBuffer or 1))
-				for i = 1, buffer do
-					local aheadCol = headCol + dirX * i
-					local aheadRow = headRow + dirY * i
+                if dirX and dirY then
+                        local headCol, headRow = Arena:getTileFromWorld(head.drawX, head.drawY)
+                        if headCol and headRow then
+                                local buffer = math.max(1, floor(opts.frontBuffer or 1))
+                                for i = 1, buffer do
+                                        local aheadCol = headCol + dirX * i
+                                        local aheadRow = headRow + dirY * i
 
-					if cellWithinBounds(aheadCol, aheadRow) then
-						if not frontCells then
-							frontCells = {}
-							frontLookup = {}
-						end
+                                        if cellWithinBounds(aheadCol, aheadRow) then
+                                                if not frontCells then
+                                                        frontCells = {}
+                                                        frontLookup = {}
+                                                end
 
-						local key = aheadCol .. "," .. aheadRow
-						if not frontLookup[key] then
-							frontLookup[key] = true
-							frontCells[#frontCells + 1] = {aheadCol, aheadRow}
-						end
-					else
-						break
-					end
-				end
-			end
-		end
-	end
+                                                local key = aheadCol .. "," .. aheadRow
+                                                if not frontLookup[key] then
+                                                        frontLookup[key] = true
+                                                        frontCells[#frontCells + 1] = {aheadCol, aheadRow}
+                                                end
+                                        else
+                                                break
+                                        end
+                                end
+                        end
+                end
+        end
 
-	for _ = 1, maxAttempts do
-		local col = love.math.random(1, cols)
-		local row = love.math.random(1, rows)
-		local cx, cy = Arena:getCenterOfTile(col, row)
+        local function cellIsBlocked(col, row, cx, cy)
+                if SnakeUtils.isOccupied(col, row) then
+                        return true
+                end
 
-		local blocked = false
+                if not (cx and cy) then
+                        return true
+                end
 
-		if SnakeUtils.isOccupied(col, row) then
-			blocked = true
-		end
+                for _, segment in ipairs(trail) do
+                        if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, segment.drawX, segment.drawY, SEGMENT_SIZE, SEGMENT_SIZE) then
+                                return true
+                        end
+                end
 
-		-- snake trail
-		if not blocked then
-			for _, segment in ipairs(trail) do
-				if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, segment.drawX, segment.drawY, SEGMENT_SIZE, SEGMENT_SIZE) then
-					blocked = true
-					break
-				end
-			end
-		end
+                if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, fruitX, fruitY, SEGMENT_SIZE) then
+                        return true
+                end
 
-		-- fruit
-		if not blocked and SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, fruitX, fruitY, SEGMENT_SIZE) then
-			blocked = true
-		end
+                for _, rock in ipairs(rockList) do
+                        if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, rock.x, rock.y, rock.w) then
+                                return true
+                        end
+                end
 
-		-- rocks
-		if not blocked then
-			for _, rock in ipairs(rockList) do
-				if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, rock.x, rock.y, rock.w) then
-					blocked = true
-					break
-				end
-			end
-		end
+                if safeZone then
+                        for _, cell in ipairs(safeCells) do
+                                if cell[1] == col and cell[2] == row then
+                                        return true
+                                end
+                        end
+                end
 
-		if not blocked and safeZone then
-			for _, cell in ipairs(safeCells) do
-				if cell[1] == col and cell[2] == row then
-					blocked = true
-					break
-				end
-			end
-		end
+                if frontCells then
+                        for i = 1, #frontCells do
+                                local cell = frontCells[i]
+                                if cell[1] == col and cell[2] == row then
+                                        return true
+                                end
+                        end
+                end
 
-		if not blocked and frontCells then
-			for i = 1, #frontCells do
-				local cell = frontCells[i]
-				if cell[1] == col and cell[2] == row then
-					blocked = true
-					break
-				end
-			end
-		end
+                return false
+        end
 
-		if not blocked then
-			return cx, cy, col, row
-		end
-	end
+        for _ = 1, maxAttempts do
+                local col = love.math.random(1, cols)
+                local row = love.math.random(1, rows)
+                local cx, cy = Arena:getCenterOfTile(col, row)
 
-	return nil, nil, nil, nil
+                if not cellIsBlocked(col, row, cx, cy) then
+                        return cx, cy, col, row
+                end
+        end
+
+        local totalCells = cols * rows
+        if totalCells > 0 then
+                local startIndex = love.math.random(totalCells) - 1
+                for offset = 0, totalCells - 1 do
+                        local index = (startIndex + offset) % totalCells
+                        local col = (index % cols) + 1
+                        local row = floor(index / cols) + 1
+                        local cx, cy = Arena:getCenterOfTile(col, row)
+
+                        if not cellIsBlocked(col, row, cx, cy) then
+                                return cx, cy, col, row
+                        end
+                end
+        end
+
+        return nil, nil, nil, nil
 end
 
 return SnakeUtils
