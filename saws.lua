@@ -479,14 +479,58 @@ local function getSawCenterForProgress(saw, progress)
         local clamped = max(0, min(1, progress or 0))
 
         if saw.dir == "horizontal" then
-                local minX = anchorX - TRACK_LENGTH/2 + radius
-                local maxX = anchorX + TRACK_LENGTH/2 - radius
+                local minX
+                local maxX
+                local trackMinX = saw.trackMinX
+                local trackMaxX = saw.trackMaxX
+
+                if trackMinX and trackMaxX then
+                        local tileSize = getTileSize()
+                        local halfStep = (tileSize or 0) * 0.5
+                        if halfStep <= 0 then
+                                halfStep = radius
+                        end
+
+                        minX = trackMinX + halfStep
+                        maxX = trackMaxX - halfStep
+
+                        if minX > maxX then
+                                minX = anchorX - TRACK_LENGTH/2 + radius
+                                maxX = anchorX + TRACK_LENGTH/2 - radius
+                        end
+                else
+                        minX = anchorX - TRACK_LENGTH/2 + radius
+                        maxX = anchorX + TRACK_LENGTH/2 - radius
+                end
+
                 local px = minX + (maxX - minX) * clamped
                 return px, anchorY
         end
 
-        local minY = anchorY - TRACK_LENGTH/2 + radius
-        local maxY = anchorY + TRACK_LENGTH/2 - radius
+        local minY
+        local maxY
+        local trackMinY = saw.trackMinY
+        local trackMaxY = saw.trackMaxY
+
+        if trackMinY and trackMaxY then
+                local tileSize = getTileSize()
+                local halfStep = (tileSize or 0) * 0.5
+                if halfStep <= 0 then
+                        halfStep = radius
+                end
+
+                minY = trackMinY + halfStep
+                maxY = trackMaxY - halfStep
+
+                if minY > maxY then
+                        minY = anchorY - TRACK_LENGTH/2 + radius
+                        maxY = anchorY + TRACK_LENGTH/2 - radius
+                end
+        else
+                minY = anchorY - TRACK_LENGTH/2 + radius
+                maxY = anchorY + TRACK_LENGTH/2 - radius
+        end
+
         local py = minY + (maxY - minY) * clamped
 
         return anchorX, py
@@ -1088,10 +1132,29 @@ function Saws:checkCollision(x, y, w, h)
 			local closestY = max(y, min(py, y + h))
 			local dx = px - closestX
 			local dy = py - closestY
-			local collisionRadius = saw.collisionRadius or saw.radius
-			if dx * dx + dy * dy < collisionRadius * collisionRadius then
-				saw.hitFlashTimer = max(saw.hitFlashTimer or 0, HIT_FLASH_DURATION)
-				return saw
+                        local collisionRadius = saw.collisionRadius or saw.radius
+                        if saw.dir == "horizontal" then
+                                local trackMinX = saw.trackMinX
+                                local trackMaxX = saw.trackMaxX
+                                if trackMinX and trackMaxX then
+                                        local limit = min(px - trackMinX, trackMaxX - px)
+                                        if limit and limit < collisionRadius then
+                                                collisionRadius = max(limit, 0)
+                                        end
+                                end
+                        else
+                                local trackMinY = saw.trackMinY
+                                local trackMaxY = saw.trackMaxY
+                                if trackMinY and trackMaxY then
+                                        local limit = min(py - trackMinY, trackMaxY - py)
+                                        if limit and limit < collisionRadius then
+                                                collisionRadius = max(limit, 0)
+                                        end
+                                end
+                        end
+                        if dx * dx + dy * dy < collisionRadius * collisionRadius then
+                                saw.hitFlashTimer = max(saw.hitFlashTimer or 0, HIT_FLASH_DURATION)
+                                return saw
 			end
 		end
         end
