@@ -607,6 +607,16 @@ function Arena:drawDimLighting()
         end
 
         local ax, ay, aw, ah = self:getBounds()
+        local screenWidth = love.graphics.getWidth()
+        local screenHeight = love.graphics.getHeight()
+
+        local function toScreenCoords(x, y)
+                if not (x and y) then
+                        return x, y
+                end
+
+                return x, y
+        end
 
         love.graphics.push("all")
         love.graphics.setCanvas(canvas)
@@ -645,8 +655,11 @@ function Arena:drawDimLighting()
                                                 position = {}
                                                 positions[highlightCount] = position
                                         end
-                                        position[1] = entry.x or ax
-                                        position[2] = entry.y or ay
+                                        local px = entry.x or ax
+                                        local py = entry.y or ay
+                                        px, py = toScreenCoords(px, py)
+                                        position[1] = px
+                                        position[2] = py
 
                                         local radiusPair = radii[highlightCount]
                                         if not radiusPair then
@@ -689,8 +702,11 @@ function Arena:drawDimLighting()
                 local snakeActive = 0.0
                 if snakeHighlight then
                         snakeActive = 1.0
-                        snakePosition[1] = snakeHighlight.x or ax
-                        snakePosition[2] = snakeHighlight.y or ay
+                        local sx = snakeHighlight.x or ax
+                        local sy = snakeHighlight.y or ay
+                        sx, sy = toScreenCoords(sx, sy)
+                        snakePosition[1] = sx
+                        snakePosition[2] = sy
                         local inner = snakeHighlight.innerRadius or 0
                         local outer = snakeHighlight.outerRadius or inner
                         if outer < inner then
@@ -699,8 +715,9 @@ function Arena:drawDimLighting()
                         snakeRadii[1] = inner
                         snakeRadii[2] = outer
                 else
-                        snakePosition[1] = ax
-                        snakePosition[2] = ay
+                        local sx, sy = toScreenCoords(ax, ay)
+                        snakePosition[1] = sx
+                        snakePosition[2] = sy
                         snakeRadii[1] = 0
                         snakeRadii[2] = 0
                 end
@@ -708,8 +725,11 @@ function Arena:drawDimLighting()
                 local fruitActive = 0.0
                 if fruitHighlight then
                         fruitActive = 1.0
-                        fruitPosition[1] = fruitHighlight.x or ax
-                        fruitPosition[2] = fruitHighlight.y or ay
+                        local fx = fruitHighlight.x or ax
+                        local fy = fruitHighlight.y or ay
+                        fx, fy = toScreenCoords(fx, fy)
+                        fruitPosition[1] = fx
+                        fruitPosition[2] = fy
                         local inner = fruitHighlight.innerRadius or 0
                         local outer = fruitHighlight.outerRadius or inner
                         if outer < inner then
@@ -718,8 +738,9 @@ function Arena:drawDimLighting()
                         fruitRadii[1] = inner
                         fruitRadii[2] = outer
                 else
-                        fruitPosition[1] = ax
-                        fruitPosition[2] = ay
+                        local fx, fy = toScreenCoords(ax, ay)
+                        fruitPosition[1] = fx
+                        fruitPosition[2] = fy
                         fruitRadii[1] = 0
                         fruitRadii[2] = 0
                 end
@@ -735,8 +756,9 @@ function Arena:drawDimLighting()
                 dimLightingShader:send("fruitActive", fruitActive)
                 dimLightingShader:send("fruitPosition", fruitPosition)
                 dimLightingShader:send("fruitRadii", fruitRadii)
+                love.graphics.origin()
                 love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.rectangle("fill", ax, ay, aw, ah)
+                love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
                 love.graphics.setShader()
         else
                 love.graphics.setColor(0, 0, 0, baseAlpha)
