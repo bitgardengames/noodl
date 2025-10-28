@@ -14,7 +14,9 @@ local floor = math.floor
 local max = math.max
 local min = math.min
 local pi = math.pi
+local acos = math.acos
 local sin = math.sin
+local tan = math.tan
 local sqrt = math.sqrt
 local atan = math.atan
 local atan2 = math.atan2
@@ -1142,6 +1144,8 @@ local badgeDefinitions = {
                 shape = "triangle_down",
                 colorKey = "warningColor",
                 fallback = {0.92, 0.55, 0.40, 1},
+                cornerRadiusScale = 0.16,
+                cornerSegments = 6,
         },
         utility = {
                 label = "Utility",
@@ -1311,33 +1315,75 @@ local function drawRoundedTriangle(mode, cx, cy, size, rotation, style)
                 end
 
                 local cornerRadius = min(baseCornerRadius, prevLen * 0.48, nextLen * 0.48)
+                if cornerRadius <= 0 then
+                        drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+                        return
+                end
+
                 local normPrevX = prevDirX / prevLen
                 local normPrevY = prevDirY / prevLen
                 local normNextX = nextDirX / nextLen
                 local normNextY = nextDirY / nextLen
 
-                local prevPointX = current[1] + normPrevX * cornerRadius
-                local prevPointY = current[2] + normPrevY * cornerRadius
-                local nextPointX = current[1] + normNextX * cornerRadius
-                local nextPointY = current[2] + normNextY * cornerRadius
+                local incomingPrevX = -normPrevX
+                local incomingPrevY = -normPrevY
+                local incomingNextX = -normNextX
+                local incomingNextY = -normNextY
+
+                local dot = incomingPrevX * incomingNextX + incomingPrevY * incomingNextY
+                dot = max(-1, min(1, dot))
+                local theta = acos(dot)
+                if theta <= 0 then
+                        drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+                        return
+                end
+
+                local halfTheta = theta * 0.5
+                local sinHalf = sin(halfTheta)
+                local tanHalf = tan(halfTheta)
+
+                if abs(sinHalf) < 1e-4 or abs(tanHalf) < 1e-4 then
+                        drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+                        return
+                end
+
+                local outwardX = incomingPrevX + incomingNextX
+                local outwardY = incomingPrevY + incomingNextY
+                local outwardLen = sqrt(outwardX * outwardX + outwardY * outwardY)
+                if outwardLen <= 1e-4 then
+                        drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+                        return
+                end
+
+                outwardX = outwardX / outwardLen
+                outwardY = outwardY / outwardLen
+
+                local offsetToCenter = cornerRadius / sinHalf
+                local offsetAlongEdge = cornerRadius / tanHalf
+
+                local centerX = current[1] + outwardX * offsetToCenter
+                local centerY = current[2] + outwardY * offsetToCenter
+
+                local prevPointX = current[1] + incomingPrevX * offsetAlongEdge
+                local prevPointY = current[2] + incomingPrevY * offsetAlongEdge
+                local nextPointX = current[1] + incomingNextX * offsetAlongEdge
+                local nextPointY = current[2] + incomingNextY * offsetAlongEdge
 
                 points[#points + 1] = prevPointX
                 points[#points + 1] = prevPointY
 
-                local anglePrev = atan2(prevPointY - current[2], prevPointX - current[1])
-                local angleNext = atan2(nextPointY - current[2], nextPointX - current[1])
+                local anglePrev = atan2(prevPointY - centerY, prevPointX - centerX)
+                local angleNext = atan2(nextPointY - centerY, nextPointX - centerX)
                 local angleDelta = angleNext - anglePrev
-                if angleDelta > pi then
-                        angleDelta = angleDelta - (pi * 2)
-                elseif angleDelta < -pi then
+                if angleDelta <= 0 then
                         angleDelta = angleDelta + (pi * 2)
                 end
 
                 for step = 1, segments do
                         local t = step / segments
                         local angle = anglePrev + angleDelta * t
-                        points[#points + 1] = current[1] + cos(angle) * cornerRadius
-                        points[#points + 1] = current[2] + sin(angle) * cornerRadius
+                        points[#points + 1] = centerX + cos(angle) * cornerRadius
+                        points[#points + 1] = centerY + sin(angle) * cornerRadius
                 end
         end
 
@@ -1361,10 +1407,10 @@ local badgeShapeDrawers = {
                 love.graphics.pop()
         end,
         triangle_up = function(mode, cx, cy, size, style)
-                drawRoundedTriangle(mode, cx, cy, size, -pi / 2, style)
+                drawRoundedTriangle(mode, cx, cy, size + 12, -pi / 2, style)
         end,
         triangle_down = function(mode, cx, cy, size, style)
-                drawRoundedTriangle(mode, cx, cy, size, pi / 2, style)
+                drawRoundedTriangle(mode, cx, cy, size + 12, pi / 2, style)
         end,
         hexagon = function(mode, cx, cy, size)
                 drawRegularPolygon(mode, cx, cy, size * 0.48, 6, pi / 6)
@@ -1619,7 +1665,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
                 local MIN_BADGE_SIZE = 136
                 local badgeSize = max(MIN_BADGE_SIZE, badgeStyle.size or 0)
                 local badgeCenterX = x + w * 0.5
-                local badgeCenterY = y + h * (2 / 3) + h / 6 - 60
+                local badgeCenterY = y + h * (2 / 3) + h / 6 - 40
                 drawBadge(setColor, badgeStyle, badgeCenterX, badgeCenterY, badgeSize)
         end
 
