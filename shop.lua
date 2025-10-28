@@ -1383,7 +1383,7 @@ local function drawBadge(setColorFn, style, cx, cy, size)
 
         local shape = style.shape or "circle"
         local fill = style.color
-        local badgeOpacity = 0.15
+        local badgeOpacity = 0.10
         setColorFn(fill[1], fill[2], fill[3], (fill[4] or 1) * badgeOpacity)
         drawBadgeShape(shape, "fill", cx, cy, size, style)
 
@@ -1616,10 +1616,10 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         love.graphics.printf(card.desc or "", descX, descStart, descWidth, "center")
 
         if badgeStyle then
-                local MIN_BADGE_SIZE = 156
+                local MIN_BADGE_SIZE = 136
                 local badgeSize = max(MIN_BADGE_SIZE, badgeStyle.size or 0)
                 local badgeCenterX = x + w * 0.5
-                local badgeCenterY = y + h * (2 / 3) + h / 6 - 20
+                local badgeCenterY = y + h * (2 / 3) + h / 6 - 60
                 drawBadge(setColor, badgeStyle, badgeCenterX, badgeCenterY, badgeSize)
         end
 
