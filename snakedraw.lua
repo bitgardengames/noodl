@@ -29,6 +29,7 @@ local FRUIT_BULGE_SCALE = 1.25
 local snakeCanvas = nil
 
 local applyOverlay
+local drawTrailSegmentToCanvas
 
 local overlayShaderSources = {
 	stripes = [[
@@ -1249,7 +1250,7 @@ local function fadePalette(palette, alphaScale)
 	return faded
 end
 
-local function drawTrailSegmentToCanvas(trail, half, options, paletteOverride, coordsOverride)
+drawTrailSegmentToCanvas = function(trail, half, options, paletteOverride, coordsOverride)
         if not trail or #trail == 0 then
                 return
         end
