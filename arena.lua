@@ -614,6 +614,7 @@ function Arena:drawDimLighting()
 
         love.graphics.push("all")
         love.graphics.setCanvas(canvas)
+        love.graphics.origin()
         love.graphics.clear(0, 0, 0, 0)
         love.graphics.setBlendMode("replace", "premultiplied")
 
@@ -750,6 +751,7 @@ function Arena:drawDimLighting()
 
         love.graphics.push("all")
         love.graphics.setBlendMode("alpha", "premultiplied")
+        love.graphics.origin()
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.draw(canvas)
         love.graphics.pop()
