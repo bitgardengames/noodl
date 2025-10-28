@@ -97,18 +97,29 @@ local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
         Score,
 })
 
-local function cloneColor(color, fallback)
-	local source = color or fallback
-	if not source then
-		return nil
-	end
+local DEFAULT_IMPACT_COLOR = {1, 0.42, 0.32, 1}
+local DEFAULT_SURGE_COLOR = {1, 0.9, 0.55, 1}
 
-	return {
-		source[1] or 1,
-		source[2] or 1,
-		source[3] or 1,
-		source[4] == nil and 1 or source[4],
-	}
+local function cloneColor(color, fallback, reuse)
+        local source = color or fallback
+        if not source then
+                if reuse then
+                        reuse[1], reuse[2], reuse[3], reuse[4] = nil, nil, nil, nil
+                end
+                return reuse
+        end
+
+        local target = reuse or {}
+        target[1] = source[1] or 1
+        target[2] = source[2] or 1
+        target[3] = source[3] or 1
+        local alpha = source[4]
+        if alpha == nil then
+                alpha = 1
+        end
+        target[4] = alpha
+
+        return target
 end
 
 local function resetFeedbackState(self)
@@ -208,7 +219,7 @@ local function drawFeedbackOverlay(self)
 			local rx = ripple.x or screenW * 0.5
 			local ry = ripple.y or screenH * 0.5
 			local baseRadius = ripple.baseRadius or 52
-			local color = ripple.color or {1, 0.42, 0.32, 1}
+                        local color = ripple.color or DEFAULT_IMPACT_COLOR
 			local ringRadius = baseRadius + easeOutExpo(age) * (140 + intensity * 80)
 			local fillRadius = baseRadius * (0.55 + age * 0.6)
 
@@ -242,7 +253,7 @@ local function drawFeedbackOverlay(self)
 			local rx = ripple.x or screenW * 0.5
 			local ry = ripple.y or screenH * 0.5
 			local baseRadius = ripple.baseRadius or 48
-			local color = ripple.color or {1, 0.9, 0.55, 1}
+                        local color = ripple.color or DEFAULT_SURGE_COLOR
 			local eased = easeOutCubic(1 - progress)
 			local ringRadius = baseRadius + eased * (160 + intensity * 90)
 			love.graphics.setLineWidth(2 + intensity * 4)
@@ -329,8 +340,8 @@ function Game:triggerImpactFeedback(strength, options)
 	local rx, ry = resolveFeedbackPosition(self, options)
 	impactRipple.x = rx
 	impactRipple.y = ry
-	impactRipple.baseRadius = (options and options.radius) or impactRipple.baseRadius or 54
-	impactRipple.color = cloneColor(options and options.color, {1, 0.42, 0.32, 1})
+        impactRipple.baseRadius = (options and options.radius) or impactRipple.baseRadius or 54
+        impactRipple.color = cloneColor(options and options.color, DEFAULT_IMPACT_COLOR, impactRipple.color)
 	state.impactRipple = impactRipple
 
 	local hitStopStrength = 0.3 + strength * 0.35
