@@ -26,6 +26,9 @@ local DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT = 264, 344
 
 Shop._backgroundCanvases = Shop._backgroundCanvases or {}
 
+local getBackgroundCacheKey
+local ensureBackgroundCanvas
+
 local rarityBorderAlpha
 local rarityStyles
 
@@ -923,7 +926,7 @@ local function formatColorKey(color)
         )
 end
 
-local function getBackgroundCacheKey(card, style, borderColor, w, h)
+getBackgroundCacheKey = function(card, style, borderColor, w, h)
         local rarity = card and (card.rarity or "common") or "common"
         local styleKey = style and tostring(style) or "default"
         local sizeKey = string.format("%sx%s", tostring(w or 0), tostring(h or 0))
@@ -1067,7 +1070,7 @@ local function drawStaticStyleLayers(style, borderColor, x, y, w, h, alphaMultip
         setColor(1, 1, 1, 1)
 end
 
-local function ensureBackgroundCanvas(styleKey, style, borderColor, w, h)
+ensureBackgroundCanvas = function(styleKey, style, borderColor, w, h)
         local cache = Shop._backgroundCanvases
         local entry = cache and cache[styleKey]
         if entry and entry.width == w and entry.height == h then
