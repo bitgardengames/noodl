@@ -3508,44 +3508,43 @@ function Upgrades:getRandom(n, context)
                 end
         end
 
-        local available = {}
-        for _, upgrade in ipairs(pool) do
-                if self:canOffer(upgrade, context, false) then
-                        local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
-                        if rarityRank >= minimumRank then
-                                insert(available, upgrade)
-                        end
-                end
-        end
-
-        if #available == 0 then
-                for _, upgrade in ipairs(pool) do
-                        if self:canOffer(upgrade, context, true) then
-                                local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
-                                if rarityRank >= minimumRank then
-                                        insert(available, upgrade)
-                                end
-                        end
-                end
-        end
-
-        local cards = {}
-        n = min(n or 3, #available)
-        for _ = 1, n do
-		local totalWeight = 0
-		local weights = {}
-		for i, upgrade in ipairs(available) do
-			local weight = calculateWeight(upgrade, pityLevel)
-			totalWeight = totalWeight + weight
-			weights[i] = weight
+	local available = {}
+	local totalWeight = 0
+	for _, upgrade in ipairs(pool) do
+		if self:canOffer(upgrade, context, false) then
+			local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+			if rarityRank >= minimumRank then
+				local weight = calculateWeight(upgrade, pityLevel)
+				totalWeight = totalWeight + weight
+				insert(available, {upgrade = upgrade, weight = weight})
+			end
 		end
+	end
 
+	if #available == 0 then
+		totalWeight = 0
+		for _, upgrade in ipairs(pool) do
+			if self:canOffer(upgrade, context, true) then
+				local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+				if rarityRank >= minimumRank then
+					local weight = calculateWeight(upgrade, pityLevel)
+					totalWeight = totalWeight + weight
+					insert(available, {upgrade = upgrade, weight = weight})
+				end
+			end
+		end
+	end
+
+	local cards = {}
+	n = min(n or 3, #available)
+	for _ = 1, n do
 		if totalWeight <= 0 then break end
 
 		local roll = love.math.random() * totalWeight
 		local cumulative = 0
 		local chosenIndex = 1
-		for i, weight in ipairs(weights) do
+		for i, entry in ipairs(available) do
+			local weight = entry.weight
 			cumulative = cumulative + weight
 			if roll <= cumulative then
 				chosenIndex = i
@@ -3553,11 +3552,12 @@ function Upgrades:getRandom(n, context)
 			end
 		end
 
-                local choice = available[chosenIndex]
-                insert(cards, decorateCard(choice))
-                table.remove(available, chosenIndex)
-                if #available == 0 then break end
-        end
+		local choice = available[chosenIndex]
+		insert(cards, decorateCard(choice.upgrade))
+		totalWeight = totalWeight - choice.weight
+		table.remove(available, chosenIndex)
+		if #available == 0 then break end
+	end
 
         local guaranteeRare = state and state.effects and state.effects.shopGuaranteedRare
         if guaranteeRare and #cards > 0 then
