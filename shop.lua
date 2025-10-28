@@ -483,9 +483,8 @@ function Shop:refreshCards(options)
                 -- Cache badge visuals here so `drawCard` can avoid recalculating them every frame.
                 -- Any code that mutates a card's upgrade/tags must call `Shop:refreshCards` (or
                 -- otherwise refresh this cache) before the card is rendered again.
-                local badgeStyle, badgeLabel = getBadgeStyleForCard(card)
+                local badgeStyle = getBadgeStyleForCard(card)
                 card._badgeStyle = badgeStyle
-                card._badgeLabel = badgeLabel
 
                 self.cardStates[i] = {
                         progress = 0,
@@ -1549,20 +1548,11 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         local headerPadding = 16
         local headerInset = 18
         local badgeStyle = card and card._badgeStyle
-        local badgeLabel = card and card._badgeLabel
         if not badgeStyle and card then
-                badgeStyle, badgeLabel = getBadgeStyleForCard(card)
+                badgeStyle = getBadgeStyleForCard(card)
                 card._badgeStyle = card._badgeStyle or badgeStyle
-                card._badgeLabel = card._badgeLabel or badgeLabel
         end
         local badgeLabelFont = UI.fonts.caption or UI.fonts.body
-        local badgeLabelText
-        local badgeLabelHeight = 0
-        if badgeLabel and badgeLabelFont then
-                badgeLabelText = tostring(badgeLabel)
-                love.graphics.setFont(badgeLabelFont)
-                badgeLabelHeight = badgeLabelFont:getHeight() * badgeLabelFont:getLineHeight()
-        end
         local headerHeight = 0
         local headerTop = y + headerPadding
         local headerCenterY = headerTop
@@ -1626,20 +1616,11 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         love.graphics.printf(card.desc or "", descX, descStart, descWidth, "center")
 
         if badgeStyle then
-                local MIN_BADGE_SIZE = 96
+                local MIN_BADGE_SIZE = 156
                 local badgeSize = max(MIN_BADGE_SIZE, badgeStyle.size or 0)
                 local badgeCenterX = x + w * 0.5
-                local labelOffset = badgeLabelHeight > 0 and (badgeLabelHeight * 0.5 + 8) or 0
-                local badgeCenterY = y + h * (2 / 3) + h / 6 - labelOffset
+                local badgeCenterY = y + h * (2 / 3) + h / 6 - 20
                 drawBadge(setColor, badgeStyle, badgeCenterX, badgeCenterY, badgeSize)
-
-                if badgeLabelText and badgeLabelFont then
-                        love.graphics.setFont(badgeLabelFont)
-                        setColor(borderColor[1], borderColor[2], borderColor[3], 0.6)
-                        local labelY = badgeCenterY + badgeSize * 0.5 + 8
-                        love.graphics.printf(badgeLabelText, x, labelY, w, "center")
-                        setColor(1, 1, 1, 1)
-                end
         end
 
         local revealState = animationState and animationState.mysteryReveal or nil
