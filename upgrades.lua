@@ -1882,9 +1882,9 @@ local pool = {
                 },
         }),
         register({
-                id = "subduction_array",
-                nameKey = "upgrades.subduction_array.name",
-                descKey = "upgrades.subduction_array.description",
+                id = "sawblade_sinkhole",
+                nameKey = "upgrades.sawblade_sinkhole.name",
+                descKey = "upgrades.sawblade_sinkhole.description",
                 rarity = "uncommon",
 		tags = {"defense"},
                 onAcquire = function(state)
@@ -1900,13 +1900,13 @@ local pool = {
 				textScale = 1.1,
 			}
 
-			celebrateUpgrade(getUpgradeString("subduction_array", "name"), nil, celebrationOptions)
-		end,
-		handlers = {
-			fruitCollected = function(data, state)
-				if getStacks(state, "subduction_array") <= 0 then
-					return
-				end
+                        celebrateUpgrade(getUpgradeString("sawblade_sinkhole", "name"), nil, celebrationOptions)
+                end,
+                handlers = {
+                        fruitCollected = function(data, state)
+                                if getStacks(state, "sawblade_sinkhole") <= 0 then
+                                        return
+                                end
 
                                 local duration = SUBDUCTION_ARRAY_SINK_DURATION
                                 if state and state.effects then
@@ -1919,8 +1919,8 @@ local pool = {
                                 Saws:sink(duration)
 
 				local sinkColor = {0.68, 0.86, 1.0, 1}
-				local activationLabel = getUpgradeString("subduction_array", "activation_text")
-				if activationLabel == "" or activationLabel == "upgrades.subduction_array.activation_text" then
+                                local activationLabel = getUpgradeString("sawblade_sinkhole", "activation_text")
+                                if activationLabel == "" or activationLabel == "upgrades.sawblade_sinkhole.activation_text" then
 					activationLabel = nil
 				end
 				local celebrationOptions = {
