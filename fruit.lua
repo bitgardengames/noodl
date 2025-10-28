@@ -9,6 +9,25 @@ local min = math.min
 local pi = math.pi
 local sin = math.sin
 
+local fruitWeightTotal = 0
+local fruitWeightCumulative = {}
+local fruitWeightDirty = true
+
+local function markFruitWeightsDirty()
+        fruitWeightDirty = true
+end
+
+local function attachFruitTypeMetatable(entry)
+        return setmetatable(entry, {
+                __newindex = function(t, key, value)
+                        rawset(t, key, value)
+                        if key == "weight" then
+                                markFruitWeightsDirty()
+                        end
+                end,
+        })
+end
+
 local fruitTypes = {
         {
                 id = "apple",
@@ -47,7 +66,44 @@ local fruitTypes = {
 	},
 }
 
+for i = 1, #fruitTypes do
+        fruitTypes[i] = attachFruitTypeMetatable(fruitTypes[i])
+end
+
+setmetatable(fruitTypes, {
+        __newindex = function(t, key, value)
+                if type(value) == "table" then
+                        value = attachFruitTypeMetatable(value)
+                end
+                rawset(t, key, value)
+                markFruitWeightsDirty()
+        end,
+})
+
+local function refreshFruitWeightCache()
+        local total = 0
+        for i = #fruitWeightCumulative, 1, -1 do
+                fruitWeightCumulative[i] = nil
+        end
+        for i, fruit in ipairs(fruitTypes) do
+                total = total + (fruit.weight or 0)
+                fruitWeightCumulative[i] = total
+        end
+        fruitWeightTotal = total
+        fruitWeightDirty = false
+end
+
+local function ensureFruitWeightCache()
+        if fruitWeightDirty then
+                refreshFruitWeightCache()
+        end
+end
+
 local Fruit = {}
+
+function Fruit.invalidateFruitWeights()
+        markFruitWeightsDirty()
+end
 
 local SEGMENT_SIZE   = 24
 local HITBOX_SIZE    = SEGMENT_SIZE - 1
@@ -132,14 +188,20 @@ local function clamp(a, lo, hi) if a < lo then return lo elseif a > hi then retu
 local function easeOutQuad(t)  return 1 - (1 - t)^2 end
 -- Helpers
 local function chooseFruitType()
-        local total = 0
-        for _, f in ipairs(fruitTypes) do total = total + f.weight end
-        local r, sum = love.math.random() * total, 0
-        for _, f in ipairs(fruitTypes) do
-                sum = sum + f.weight
-                if r <= sum then return f end
+        ensureFruitWeightCache()
+
+        if fruitWeightTotal <= 0 then
+                return fruitTypes[1]
         end
-        return fruitTypes[1]
+
+        local r = love.math.random() * fruitWeightTotal
+        for i, cumulative in ipairs(fruitWeightCumulative) do
+                if r <= cumulative then
+                        return fruitTypes[i]
+                end
+        end
+
+        return fruitTypes[#fruitTypes] or fruitTypes[1]
 end
 
 local function findFruitType(option)
