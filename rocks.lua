@@ -13,6 +13,8 @@ local pi = math.pi
 local insert = table.insert
 local sin = math.sin
 
+local rockRng = love.math.newRandomGenerator()
+
 local Rocks = {}
 local current = {}
 
@@ -27,29 +29,22 @@ local SHADOW_OFFSET = 3
 local HIT_FLASH_DURATION = 0.18
 local HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
 
--- smoother, rounder “stone” generator
 local function generateRockShape(size, seed)
-	local rng
-	if seed then
-		rng = love.math.newRandomGenerator(seed)
-	else
-                rng = love.math.newRandomGenerator(Timer.getTime() * 1000)
-	end
+        rockRng:setSeed(seed or Timer.getTime() * 1000)
+        local points = {}
+        local sides = rockRng:random(12, 16) -- more segments = rounder
+        local step = (pi * 2) / sides
+        local baseRadius = size * 0.45
 
-	local points = {}
-	local sides = rng:random(12, 16) -- more segments = rounder
-	local step = (pi * 2) / sides
-	local baseRadius = size * 0.45
+        for i = 1, sides do
+                local angle = step * i
+                -- slight wobble so it’s lumpy, but no sharp spikes
+                local r = baseRadius * (0.9 + rockRng:random() * 0.2)
+                insert(points, math.cos(angle) * r)
+                insert(points, math.sin(angle) * r)
+        end
 
-	for i = 1, sides do
-		local angle = step * i
-		-- slight wobble so it’s lumpy, but no sharp spikes
-		local r = baseRadius * (0.9 + rng:random() * 0.2)
-		insert(points, math.cos(angle) * r)
-		insert(points, math.sin(angle) * r)
-	end
-
-	return points
+        return points
 end
 
 local function copyColor(color)
