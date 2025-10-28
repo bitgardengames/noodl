@@ -81,7 +81,7 @@ do
                 }
         ]]
 
-        if love.graphics and love.graphics.isSupported and love.graphics.isSupported("shader") then
+        if love.graphics.isSupported and love.graphics.isSupported("shader") then
                 local ok, shader = pcall(love.graphics.newShader, source)
                 if ok then
                         dimLightingShader = shader
