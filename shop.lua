@@ -22,6 +22,10 @@ local unpack = unpack
 
 local Shop = {}
 
+local DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT = 264, 344
+
+Shop._backgroundCanvases = Shop._backgroundCanvases or {}
+
 local ANALOG_DEADZONE = 0.3
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 
@@ -377,7 +381,13 @@ function Shop:refreshCards(options)
 
 	resetAnalogAxis()
 
-	for i = 1, #self.cards do
+        for i = 1, #self.cards do
+                local card = self.cards[i]
+                local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
+                local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
+                local backgroundKey = getBackgroundCacheKey(card, style, borderColor, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
+                ensureBackgroundCanvas(backgroundKey, style, borderColor, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
+
                 self.cardStates[i] = {
                         progress = 0,
                         delay = initialDelay + (i - 1) * 0.08,
@@ -393,6 +403,7 @@ function Shop:refreshCards(options)
                         discard = nil,
                         mysteryReveal = nil,
                         revealHoldTimer = nil,
+                        backgroundKey = backgroundKey,
                 }
         end
 end
@@ -806,6 +817,199 @@ local function scaleColor(color, factor, alphaFactor)
         }
 end
 
+local function formatColorKey(color)
+        if not color then
+                return "nil"
+        end
+
+        return string.format(
+                "%.3f,%.3f,%.3f,%.3f",
+                color[1] or 0,
+                color[2] or 0,
+                color[3] or 0,
+                color[4] or 1
+        )
+end
+
+local function getBackgroundCacheKey(card, style, borderColor, w, h)
+        local rarity = card and (card.rarity or "common") or "common"
+        local styleKey = style and tostring(style) or "default"
+        local sizeKey = string.format("%sx%s", tostring(w or 0), tostring(h or 0))
+        local colorKey = formatColorKey(borderColor)
+        return table.concat({rarity, styleKey, sizeKey, colorKey}, "|")
+end
+
+local function drawStaticStyleLayers(style, borderColor, x, y, w, h, alphaMultiplier)
+        if not style then return end
+
+        local cardRadius = 12
+
+        local function setColor(r, g, b, a)
+                love.graphics.setColor(r, g, b, (a or 1) * (alphaMultiplier or 1))
+        end
+
+        local function drawGradientOverlay(def)
+                if not def or not def.top or not def.bottom then
+                        return
+                end
+
+                local steps = max(1, def.steps or 16)
+                love.graphics.stencil(function()
+                        love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
+                end, "replace", 1)
+                love.graphics.setStencilTest("equal", 1)
+                local segmentHeight = h / steps
+                local topAlpha = def.top[4] or 1
+                local bottomAlpha = def.bottom[4] or 1
+                for i = 0, steps - 1 do
+                        local t = steps == 1 and 0 or i / (steps - 1)
+                        local r = lerp(def.top[1] or 0, def.bottom[1] or 0, t)
+                        local g = lerp(def.top[2] or 0, def.bottom[2] or 0, t)
+                        local b = lerp(def.top[3] or 0, def.bottom[3] or 0, t)
+                        local a = lerp(topAlpha, bottomAlpha, t)
+                        setColor(r, g, b, a)
+                        love.graphics.rectangle("fill", x, y + i * segmentHeight, w, segmentHeight + 1)
+                end
+                love.graphics.setStencilTest()
+                setColor(1, 1, 1, 1)
+        end
+
+        local function drawShineOverlay(def)
+                if not def then
+                        return
+                end
+
+                local steps = max(1, def.steps or 18)
+                love.graphics.stencil(function()
+                        love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
+                end, "replace", 1)
+                love.graphics.setStencilTest("equal", 1)
+                love.graphics.push()
+                love.graphics.translate(x + w * (def.offsetX or 0.5), y + h * (def.offsetY or 0.3))
+                love.graphics.rotate(def.angle or -pi / 5)
+                local shineWidth = w * (def.widthScale or 1.4)
+                local shineHeight = h * (def.heightScale or 0.6)
+                local stepWidth = shineWidth / steps
+                for i = 0, steps - 1 do
+                        local center = -shineWidth / 2 + (i + 0.5) * stepWidth
+                        local normalized = (i + 0.5) / steps * 2 - 1
+                        local strength = max(0, 1 - normalized * normalized)
+                        if strength > 0 then
+                                setColor(1, 1, 1, (def.alpha or 0.24) * strength)
+                                love.graphics.rectangle("fill", center - stepWidth / 2, -shineHeight / 2, stepWidth + 1, shineHeight)
+                        end
+                end
+                love.graphics.pop()
+                love.graphics.setStencilTest()
+                setColor(1, 1, 1, 1)
+        end
+
+        drawGradientOverlay(style.gradient)
+        drawShineOverlay(style.shine)
+
+        if style.aura then
+                withTransformedScissor(x, y, w, h, function()
+                        applyColor(setColor, style.aura.color)
+                        local radius = max(w, h) * (style.aura.radius or 0.72)
+                        local centerY = y + h * (style.aura.y or 0.4)
+                        love.graphics.circle("fill", x + w * 0.5, centerY, radius)
+                end)
+        end
+
+        if style.flare then
+                withTransformedScissor(x, y, w, h, function()
+                        applyColor(setColor, style.flare.color)
+                        local radius = min(w, h) * (style.flare.radius or 0.36)
+                        love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
+                end)
+        end
+
+        if style.stripes then
+                withTransformedScissor(x, y, w, h, function()
+                        love.graphics.push()
+                        love.graphics.translate(x + w / 2, y + h / 2)
+                        love.graphics.rotate(style.stripes.angle or -math.pi / 6)
+                        local diag = math.sqrt(w * w + h * h)
+                        local spacing = style.stripes.spacing or 34
+                        local width = style.stripes.width or 22
+                        applyColor(setColor, style.stripes.color)
+                        local stripeCount = ceil((diag * 2) / spacing) + 2
+                        for i = -stripeCount, stripeCount do
+                                local pos = i * spacing
+                                love.graphics.rectangle("fill", -diag, pos - width / 2, diag * 2, width)
+                        end
+                        love.graphics.pop()
+                end)
+        end
+
+        if style.sparkles and style.sparkles.positions then
+                withTransformedScissor(x, y, w, h, function()
+                        local driftSpeed = style.sparkles.driftSpeed or 0
+                        local driftMinY = style.sparkles.driftMinY or 0
+                        local driftMaxY = style.sparkles.driftMaxY or 1
+                        local driftSpan = max(0.0001, driftMaxY - driftMinY)
+                        for i, pos in ipairs(style.sparkles.positions) do
+                                local px = pos[1] or 0.5
+                                local py = pos[2] or 0.5
+                                local scale = pos[3] or 1
+                                local phase = pos[4] or (i - 1) * 0.31
+                                local pulse = 0.6 + 0.4 * sin(i * 0.9)
+                                local radius = (style.sparkles.radius or 9) * scale * pulse
+                                local sparkleColor = style.sparkles.color or borderColor
+                                local sparkleAlphaBase = style.sparkles.opacity or sparkleColor[4] or 1
+                                local sparkleAlpha = sparkleAlphaBase * pulse
+                                local sparkleX = x + px * w
+                                local sparkleY
+                                if driftSpeed ~= 0 then
+                                        local normalized = wrap01(py - phase)
+                                        sparkleY = y + (driftMinY + normalized * driftSpan) * h
+                                else
+                                        sparkleY = y + py * h
+                                end
+                                applyColor(setColor, sparkleColor, sparkleAlpha)
+                                love.graphics.circle("fill", sparkleX, sparkleY, radius)
+                        end
+                end)
+        end
+
+        setColor(1, 1, 1, 1)
+end
+
+local function ensureBackgroundCanvas(styleKey, style, borderColor, w, h)
+        local cache = Shop._backgroundCanvases
+        local entry = cache and cache[styleKey]
+        if entry and entry.width == w and entry.height == h then
+                return entry.canvas
+        end
+
+        if not cache then
+                Shop._backgroundCanvases = {}
+                cache = Shop._backgroundCanvases
+        end
+
+        if w <= 0 or h <= 0 then
+                return nil
+        end
+
+        local canvas = love.graphics.newCanvas(w, h)
+        love.graphics.push("all")
+        love.graphics.setCanvas(canvas)
+        love.graphics.clear(0, 0, 0, 0)
+        drawStaticStyleLayers(style, borderColor, 0, 0, w, h)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.pop()
+
+        cache[styleKey] = {canvas = canvas, width = w, height = h}
+        return canvas
+end
+
+local function getBackgroundCanvas(styleKey)
+        local cache = Shop._backgroundCanvases
+        if not cache then return nil end
+        local entry = cache[styleKey]
+        return entry and entry.canvas or nil
+end
+
 local badgeDefinitions = {
         default = {
                 label = "General",
@@ -1179,155 +1383,50 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		love.graphics.setLineWidth(4)
 	end
 
-	if style.shadowAlpha and style.shadowAlpha > 0 then
-		setColor(0, 0, 0, style.shadowAlpha)
-		love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
-	end
+        if style.shadowAlpha and style.shadowAlpha > 0 then
+                setColor(0, 0, 0, style.shadowAlpha)
+                love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
+        end
 
         applyColor(setColor, style.base)
         love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
 
-        local function drawGradientOverlay(def)
-                if not def or not def.top or not def.bottom then
-                        return
+        local backgroundKey = animationState and animationState.backgroundKey
+        if not backgroundKey then
+                backgroundKey = getBackgroundCacheKey(card, style, borderColor, w, h)
+                if animationState then
+                        animationState.backgroundKey = backgroundKey
                 end
-
-                local steps = max(1, def.steps or 16)
-                love.graphics.stencil(function()
-                        love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
-                end, "replace", 1)
-                love.graphics.setStencilTest("equal", 1)
-                local segmentHeight = h / steps
-                local topAlpha = def.top[4] or 1
-                local bottomAlpha = def.bottom[4] or 1
-                for i = 0, steps - 1 do
-                        local t = steps == 1 and 0 or i / (steps - 1)
-                        local r = lerp(def.top[1] or 0, def.bottom[1] or 0, t)
-                        local g = lerp(def.top[2] or 0, def.bottom[2] or 0, t)
-                        local b = lerp(def.top[3] or 0, def.bottom[3] or 0, t)
-                        local a = lerp(topAlpha, bottomAlpha, t)
-                        setColor(r, g, b, a)
-                        love.graphics.rectangle("fill", x, y + i * segmentHeight, w, segmentHeight + 1)
-                end
-                love.graphics.setStencilTest()
-                setColor(1, 1, 1, 1)
         end
 
-        local function drawShineOverlay(def)
-                if not def then
-                        return
-                end
-
-                local steps = max(1, def.steps or 18)
-                love.graphics.stencil(function()
-                        love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
-                end, "replace", 1)
-                love.graphics.setStencilTest("equal", 1)
-                love.graphics.push()
-                love.graphics.translate(x + w * (def.offsetX or 0.5), y + h * (def.offsetY or 0.3))
-                love.graphics.rotate(def.angle or -pi / 5)
-                local shineWidth = w * (def.widthScale or 1.4)
-                local shineHeight = h * (def.heightScale or 0.6)
-                local stepWidth = shineWidth / steps
-                for i = 0, steps - 1 do
-                        local center = -shineWidth / 2 + (i + 0.5) * stepWidth
-                        local normalized = (i + 0.5) / steps * 2 - 1
-                        local strength = max(0, 1 - normalized * normalized)
-                        if strength > 0 then
-                                setColor(1, 1, 1, (def.alpha or 0.24) * strength)
-                                love.graphics.rectangle("fill", center - stepWidth / 2, -shineHeight / 2, stepWidth + 1, shineHeight)
-                        end
-                end
-                love.graphics.pop()
-                love.graphics.setStencilTest()
-                setColor(1, 1, 1, 1)
+        local backgroundCanvas = backgroundKey and getBackgroundCanvas(backgroundKey)
+        if not backgroundCanvas and backgroundKey then
+                backgroundCanvas = ensureBackgroundCanvas(backgroundKey, style, borderColor, w, h)
         end
 
-        drawGradientOverlay(style.gradient)
-        drawShineOverlay(style.shine)
+        if backgroundCanvas then
+                setColor(1, 1, 1, 1)
+                love.graphics.draw(backgroundCanvas, x, y)
+        else
+                drawStaticStyleLayers(style, borderColor, x, y, w, h, fadeAlpha)
+        end
 
         local currentTime = Timer.getTime()
 
-        if style.aura then
-                withTransformedScissor(x, y, w, h, function()
-			applyColor(setColor, style.aura.color)
-			local radius = max(w, h) * (style.aura.radius or 0.72)
-			local centerY = y + h * (style.aura.y or 0.4)
-			love.graphics.circle("fill", x + w * 0.5, centerY, radius)
-		end)
-	end
-
-	if style.outerGlow then
-		local glowAlpha = getAnimatedAlpha(style.outerGlow, currentTime)
-		if glowAlpha and glowAlpha > 0 then
-			applyColor(setColor, style.outerGlow.color or borderColor, glowAlpha)
+        if style.outerGlow then
+                local glowAlpha = getAnimatedAlpha(style.outerGlow, currentTime)
+                if glowAlpha and glowAlpha > 0 then
+                        applyColor(setColor, style.outerGlow.color or borderColor, glowAlpha)
 			love.graphics.setLineWidth(style.outerGlow.width or 6)
 			local expand = style.outerGlow.expand or 6
 			love.graphics.rectangle("line", x - expand, y - expand, w + expand * 2, h + expand * 2, 18, 18)
 		end
 	end
-	if style.flare then
-		withTransformedScissor(x, y, w, h, function()
-			applyColor(setColor, style.flare.color)
-			local radius = min(w, h) * (style.flare.radius or 0.36)
-			love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
-		end)
-	end
-
-	if style.stripes then
-		withTransformedScissor(x, y, w, h, function()
-			love.graphics.push()
-			love.graphics.translate(x + w / 2, y + h / 2)
-			love.graphics.rotate(style.stripes.angle or -math.pi / 6)
-			local diag = math.sqrt(w * w + h * h)
-			local spacing = style.stripes.spacing or 34
-			local width = style.stripes.width or 22
-			applyColor(setColor, style.stripes.color)
-			local stripeCount = ceil((diag * 2) / spacing) + 2
-			for i = -stripeCount, stripeCount do
-				local pos = i * spacing
-				love.graphics.rectangle("fill", -diag, pos - width / 2, diag * 2, width)
-			end
-			love.graphics.pop()
-		end)
-	end
-
-        if style.sparkles and style.sparkles.positions then
-                withTransformedScissor(x, y, w, h, function()
-                        local time = Timer.getTime()
-                        local driftSpeed = style.sparkles.driftSpeed or 0
-                        local driftMinY = style.sparkles.driftMinY or 0
-                        local driftMaxY = style.sparkles.driftMaxY or 1
-                        local driftSpan = max(0.0001, driftMaxY - driftMinY)
-                        for i, pos in ipairs(style.sparkles.positions) do
-                                local px = pos[1] or 0.5
-                                local py = pos[2] or 0.5
-                                local scale = pos[3] or 1
-                                local phase = pos[4] or (i - 1) * 0.31
-                                local pulse = 0.6 + 0.4 * sin(time * (style.sparkles.speed or 1.8) + i * 0.9)
-                                local radius = (style.sparkles.radius or 9) * scale * pulse
-                                local sparkleColor = style.sparkles.color or borderColor
-                                local sparkleAlphaBase = style.sparkles.opacity or sparkleColor[4] or 1
-                                local sparkleAlpha = sparkleAlphaBase * pulse
-                                local sparkleX = x + px * w
-                                local sparkleY
-                                if driftSpeed ~= 0 then
-                                        local normalized = wrap01(py - (time * driftSpeed + phase))
-                                        sparkleY = y + (driftMinY + normalized * driftSpan) * h
-                                else
-                                        sparkleY = y + py * h
-                                end
-                                applyColor(setColor, sparkleColor, sparkleAlpha)
-                                love.graphics.circle("fill", sparkleX, sparkleY, radius)
-                        end
-                end)
+        if style.glow and style.glow > 0 then
+                applyColor(setColor, borderColor, style.glow)
+                love.graphics.setLineWidth(6)
+                love.graphics.rectangle("line", x - 3, y - 3, w + 6, h + 6, 16, 16)
         end
-
-	if style.glow and style.glow > 0 then
-		applyColor(setColor, borderColor, style.glow)
-		love.graphics.setLineWidth(6)
-		love.graphics.rectangle("line", x - 3, y - 3, w + 6, h + 6, 16, 16)
-	end
 
         applyColor(setColor, borderColor, rarityBorderAlpha)
         love.graphics.setLineWidth(style.borderWidth or 4)
@@ -1534,7 +1633,7 @@ function Shop:draw(screenW, screenH)
 	end
 
 	local cardCount = #self.cards
-	local cardWidth, cardHeight = 264, 344
+        local cardWidth, cardHeight = DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT
 	local baseSpacing = 48
 	local minSpacing = 28
 	local marginX = max(60, screenW * 0.05)
