@@ -1359,11 +1359,10 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
 	local spacing = headRadius * (0.35 + 0.02 * stackFactor)
 	local mouthDrop = headRadius * (0.4 + 0.03 * stackFactor)
 
-	local outlineColor = SnakeCosmetics:getOutlineColor()
-	local outlineR = outlineColor[1] or 0
-	local outlineG = outlineColor[2] or 0
-	local outlineB = outlineColor[3] or 0
-	local outlineA = (outlineColor[4] or 1) * (0.75 + 0.25 * highlight)
+        local outlineR = 0
+        local outlineG = 0
+        local outlineB = 0
+        local outlineA = 0.75 + 0.25 * highlight
 
 	local fillAlpha = 0.55 + 0.35 * highlight
 	local fillR = 1.0
