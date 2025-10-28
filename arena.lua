@@ -1070,6 +1070,16 @@ function Arena:drawTileDecorations()
 	love.graphics.push("all")
 	love.graphics.setBlendMode("alpha")
 
+	local fadeTime
+	for i = 1, #decorations do
+		local deco = decorations[i]
+		local fade = deco.fade
+		if fade and fade.amplitude and fade.amplitude > 0 then
+			fadeTime = Timer.getTime()
+			break
+		end
+	end
+
 	for i = 1, #decorations do
 		local deco = decorations[i]
 		local color = deco.color
@@ -1082,7 +1092,7 @@ function Arena:drawTileDecorations()
 			local alpha = color[4] or 1
 			local fade = deco.fade
 			if fade and fade.amplitude and fade.amplitude > 0 then
-                            local time = Timer.getTime()
+                            local time = fadeTime or Timer.getTime()
 				local oscillation = sin(time * (fade.speed or 1) + (fade.offset or 0))
 				local factor = 1 + oscillation * fade.amplitude
 				alpha = clamp01((fade.base or alpha) * factor)
