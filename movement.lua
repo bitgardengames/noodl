@@ -557,8 +557,21 @@ local function handleRockCollision(headX, headY)
         local halfHeadSize = headSize / 2
         local headLeft = headX - halfHeadSize
         local headTop = headY - halfHeadSize
+        local candidates
+        local headCol, headRow = Arena:getTileFromWorld(headX, headY)
 
-        for _, rock in ipairs(Rocks:getAll()) do
+        if headCol and headRow and Rocks.getNearby then
+                local nearby = Rocks:getNearby(headCol, headRow, 1)
+                if Rocks.hasCellLookup and Rocks:hasCellLookup() then
+                        candidates = nearby
+                else
+                        candidates = Rocks:getAll()
+                end
+        else
+                candidates = Rocks:getAll()
+        end
+
+        for _, rock in ipairs(candidates or {}) do
                 local rockCenterX = rock and (rock.renderX or rock.x) or 0
                 local rockCenterY = rock and (rock.renderY or rock.y) or 0
                 local rockWidth = max(0, (rock and rock.w or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
