@@ -650,39 +650,32 @@ function Arena:drawDimLighting()
                                         end
                                 else
                                         highlightCount = highlightCount + 1
-                                        local position = positions[highlightCount]
-                                        if not position then
-                                                position = {}
-                                                positions[highlightCount] = position
-                                        end
                                         local px = entry.x or ax
                                         local py = entry.y or ay
                                         px, py = toScreenCoords(px, py)
-                                        position[1] = px
-                                        position[2] = py
 
-                                        local radiusPair = radii[highlightCount]
-                                        if not radiusPair then
-                                                radiusPair = {}
-                                                radii[highlightCount] = radiusPair
-                                        end
+                                        local baseIndex = (highlightCount - 1) * 2
+                                        positions[baseIndex + 1] = px
+                                        positions[baseIndex + 2] = py
 
                                         local inner = entry.innerRadius or 0
                                         local outer = entry.outerRadius or inner
                                         if outer < inner then
                                                 outer = inner
                                         end
-                                        radiusPair[1] = inner
-                                        radiusPair[2] = outer
+
+                                        radii[baseIndex + 1] = inner
+                                        radii[baseIndex + 2] = outer
                                 end
                         end
                 end
         end
 
-        for index = highlightCount + 1, #positions do
+        local usedComponentCount = highlightCount * 2
+        for index = usedComponentCount + 1, #positions do
                 positions[index] = nil
         end
-        for index = highlightCount + 1, #radii do
+        for index = usedComponentCount + 1, #radii do
                 radii[index] = nil
         end
 
