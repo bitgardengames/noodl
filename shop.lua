@@ -134,6 +134,8 @@ local function resetAnalogAxis()
         analogAxisDirections.vertical = nil
 end
 
+local MYSTERY_REVEAL_EXTRA_HOLD = 1.2
+
 local function updateMysteryReveal(self, card, state, dt)
         if not dt or dt <= 0 then return end
         if not card or not state then return end
@@ -170,6 +172,7 @@ local function updateMysteryReveal(self, card, state, dt)
                         postPauseTimer = 0,
                 }
                 state.mysteryReveal = reveal
+                state.revealHoldTimer = nil
         else
                 reveal = state.mysteryReveal
         end
@@ -389,6 +392,7 @@ function Shop:refreshCards(options)
                         discardActive = false,
                         discard = nil,
                         mysteryReveal = nil,
+                        revealHoldTimer = nil,
                 }
         end
 end
@@ -579,14 +583,32 @@ function Shop:update(dt)
                                 local revealState = state and state.mysteryReveal or nil
                                 if self.selected.pendingRevealInfo then
                                         revealDone = false
+                                        if state then
+                                                state.revealHoldTimer = nil
+                                        end
                                 elseif revealState then
                                         local phase = revealState.phase
                                         local overlayAlpha = revealState.white or 0
                                         if phase and phase ~= "done" then
                                                 revealDone = false
+                                                if state then
+                                                        state.revealHoldTimer = nil
+                                                end
                                         elseif overlayAlpha > 0.001 then
                                                 revealDone = false
+                                                if state then
+                                                        state.revealHoldTimer = nil
+                                                end
+                                        else
+                                                if state then
+                                                        state.revealHoldTimer = (state.revealHoldTimer or 0) + dt
+                                                        if state.revealHoldTimer < MYSTERY_REVEAL_EXTRA_HOLD then
+                                                                revealDone = false
+                                                        end
+                                                end
                                         end
+                                elseif state then
+                                        state.revealHoldTimer = nil
                                 end
                         end
                         if self.selectionTimer >= hold and flashDone and revealDone then
@@ -595,10 +617,16 @@ function Shop:update(dt)
                         end
                 end
         else
-		self.selectionTimer = 0
-		self.selectionComplete = false
-		self.selectedIndex = nil
-	end
+                if self.selectedIndex and self.cardStates then
+                        local previousState = self.cardStates[self.selectedIndex]
+                        if previousState then
+                                previousState.revealHoldTimer = nil
+                        end
+                end
+                self.selectionTimer = 0
+                self.selectionComplete = false
+                self.selectedIndex = nil
+        end
 end
 
 local rarityBorderAlpha = 0.85
@@ -1841,11 +1869,12 @@ function Shop:pick(i)
 	self.selectionTimer = 0
 	self.selectionComplete = false
 
-	local state = self.cardStates and self.cardStates[i]
-	if state then
-		state.selectionFlash = 0
-		state.selectSoundPlayed = true
-	end
+        local state = self.cardStates and self.cardStates[i]
+        if state then
+                state.selectionFlash = 0
+                state.selectSoundPlayed = true
+                state.revealHoldTimer = nil
+        end
 	Audio:playSound("shop_card_select")
 	return true
 end
