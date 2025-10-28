@@ -28,6 +28,7 @@ Shop._backgroundCanvases = Shop._backgroundCanvases or {}
 
 local getBackgroundCacheKey
 local ensureBackgroundCanvas
+local getBadgeStyleForCard
 
 local rarityBorderAlpha
 local rarityStyles
@@ -1209,7 +1210,7 @@ local function resolveBadgeDefinition(definition)
         return resolved
 end
 
-local function getBadgeStyleForCard(card)
+getBadgeStyleForCard = function(card)
         if not card or not card.upgrade then
                 return nil
         end
