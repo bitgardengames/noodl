@@ -470,6 +470,13 @@ function Shop:refreshCards(options)
                 ensureBackgroundCanvas(backgroundKey, style, borderColor, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
                 ensureCardTextLayout(card, DEFAULT_CARD_WIDTH)
 
+                -- Cache badge visuals here so `drawCard` can avoid recalculating them every frame.
+                -- Any code that mutates a card's upgrade/tags must call `Shop:refreshCards` (or
+                -- otherwise refresh this cache) before the card is rendered again.
+                local badgeStyle, badgeLabel = getBadgeStyleForCard(card)
+                card._badgeStyle = badgeStyle
+                card._badgeLabel = badgeLabel
+
                 self.cardStates[i] = {
                         progress = 0,
                         delay = initialDelay + (i - 1) * 0.08,
@@ -1541,7 +1548,13 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 
         local headerPadding = 16
         local badgeInset = 18
-        local badgeStyle, badgeLabel = getBadgeStyleForCard(card)
+        local badgeStyle = card and card._badgeStyle
+        local badgeLabel = card and card._badgeLabel
+        if not badgeStyle and card then
+                badgeStyle, badgeLabel = getBadgeStyleForCard(card)
+                card._badgeStyle = card._badgeStyle or badgeStyle
+                card._badgeLabel = card._badgeLabel or badgeLabel
+        end
         local badgeLabelFont = UI.fonts.caption or UI.fonts.body
         local badgeLabelText
         local badgeLabelWidth = 0
