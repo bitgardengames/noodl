@@ -32,6 +32,9 @@ local ensureBackgroundCanvas
 local rarityBorderAlpha
 local rarityStyles
 
+local applyColor
+local withTransformedScissor
+
 local function getLocalizationRevision()
         if Localization and Localization.getRevision then
                 return Localization:getRevision()
@@ -1394,13 +1397,13 @@ local function drawBadge(setColorFn, style, cx, cy, size)
         setColorFn(1, 1, 1, 1)
 end
 
-local function applyColor(setColorFn, color, overrideAlpha)
+function applyColor(setColorFn, color, overrideAlpha)
         if not color then return end
         setColorFn(color[1], color[2], color[3], overrideAlpha or color[4] or 1)
 end
 
-local function withTransformedScissor(x, y, w, h, fn)
-	if not fn then return end
+function withTransformedScissor(x, y, w, h, fn)
+        if not fn then return end
 
 	local sx1, sy1 = love.graphics.transformPoint(x, y)
 	local sx2, sy2 = love.graphics.transformPoint(x + w, y + h)
