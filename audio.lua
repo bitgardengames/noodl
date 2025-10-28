@@ -32,7 +32,7 @@ local SOUND_DEFINITIONS = {
 }
 
 local MUSIC_DEFINITIONS = {
-	menu = "Assets/Music/Menu2.ogg",
+	menu = "Assets/Music/Menu4.ogg",
 	game = "Assets/Music/Game2.ogg",
 	scorescreen = "Assets/Music/Scorescreen.ogg",
 }
