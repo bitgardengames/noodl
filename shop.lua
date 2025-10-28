@@ -1373,25 +1373,15 @@ local function drawBadge(setColorFn, style, cx, cy, size)
         end
 
         local shape = style.shape or "circle"
-        local shadow = style.shadow or Theme.shadowColor or {0, 0, 0, 0.45}
-        local shadowAlpha = style.shadowAlpha or 0.7
-        local offset = style.shadowOffset
-        local offsetX = offset and offset[1] or 2
-        local offsetY = offset and offset[2] or 3
-
-        if shadowAlpha > 0 and shadow and (shadow[4] or 0) > 0 then
-                setColorFn(shadow[1], shadow[2], shadow[3], (shadow[4] or 1) * shadowAlpha)
-                drawBadgeShape(shape, "fill", cx + offsetX, cy + offsetY, size, style)
-        end
-
         local fill = style.color
-        setColorFn(fill[1], fill[2], fill[3], fill[4] or 1)
+        local badgeOpacity = 0.15
+        setColorFn(fill[1], fill[2], fill[3], (fill[4] or 1) * badgeOpacity)
         drawBadgeShape(shape, "fill", cx, cy, size, style)
 
         local outlineColor = style.outline or scaleColor(fill, style.outlineFactor or 0.55)
         local previousWidth = love.graphics.getLineWidth()
         love.graphics.setLineWidth(style.outlineWidth or 2)
-        setColorFn(outlineColor[1], outlineColor[2], outlineColor[3], outlineColor[4] or 1)
+        setColorFn(outlineColor[1], outlineColor[2], outlineColor[3], (outlineColor[4] or 1) * badgeOpacity)
         drawBadgeShape(shape, "line", cx, cy, size, style)
         love.graphics.setLineWidth(previousWidth)
 
@@ -1547,7 +1537,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         love.graphics.setLineWidth(4)
 
         local headerPadding = 16
-        local badgeInset = 18
+        local headerInset = 18
         local badgeStyle = card and card._badgeStyle
         local badgeLabel = card and card._badgeLabel
         if not badgeStyle and card then
@@ -1557,12 +1547,10 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         end
         local badgeLabelFont = UI.fonts.caption or UI.fonts.body
         local badgeLabelText
-        local badgeLabelWidth = 0
         local badgeLabelHeight = 0
         if badgeLabel and badgeLabelFont then
                 badgeLabelText = tostring(badgeLabel)
                 love.graphics.setFont(badgeLabelFont)
-                badgeLabelWidth = badgeLabelFont:getWidth(badgeLabelText)
                 badgeLabelHeight = badgeLabelFont:getHeight() * badgeLabelFont:getLineHeight()
         end
         local headerHeight = 0
@@ -1580,52 +1568,15 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
                 headerHeight = max(headerHeight, rarityHeight)
         end
 
-        local badgeSize = 0
-        local badgeShape = badgeStyle and badgeStyle.shape
-        if badgeStyle then
-                if rarityHeight > 0 then
-                        badgeSize = rarityHeight
-                else
-                        love.graphics.setFont(rarityFont)
-                        badgeSize = rarityFont:getHeight() * rarityFont:getLineHeight()
-                end
-                if badgeShape == "triangle_up" or badgeShape == "triangle_down" then
-                        badgeSize = badgeSize + 4
-                end
-                headerHeight = max(headerHeight, badgeSize)
-                if badgeLabelHeight > 0 then
-                        headerHeight = max(headerHeight, badgeLabelHeight)
-                end
-        end
-
         if headerHeight > 0 then
                 headerCenterY = headerTop + headerHeight * 0.5
-
-                if badgeStyle then
-                        local badgeCenterX = x + badgeInset + badgeSize * 0.5
-                        drawBadge(setColor, badgeStyle, badgeCenterX, headerCenterY, badgeSize)
-                        if badgeLabelText and badgeLabelFont then
-                                love.graphics.setFont(badgeLabelFont)
-                                setColor(borderColor[1], borderColor[2], borderColor[3], 0.75)
-                                local labelX = badgeCenterX + badgeSize * 0.5 + 8
-                                local labelY = headerCenterY - badgeLabelHeight * 0.5
-                                love.graphics.print(badgeLabelText, labelX, labelY)
-                        end
-                end
 
                 if hasRarity then
                         love.graphics.setFont(rarityFont)
                         setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
                         local rarityWidth = rarityFont:getWidth(rarityLabel)
-                        local rarityX = x + w - badgeInset - rarityWidth
-                        local minRarityX = x + badgeInset
-                        if badgeStyle then
-                                minRarityX = minRarityX + badgeSize
-                                if badgeLabelWidth > 0 then
-                                        minRarityX = minRarityX + 8 + badgeLabelWidth
-                                end
-                                minRarityX = minRarityX + 12
-                        end
+                        local rarityX = x + w - headerInset - rarityWidth
+                        local minRarityX = x + headerInset
                         rarityX = max(rarityX, minRarityX)
                         local rarityY = headerCenterY - rarityHeight * 0.5
                         love.graphics.print(rarityLabel, rarityX, rarityY)
@@ -1663,6 +1614,23 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         love.graphics.printf(card.desc or "", descX + 1, descStart + 1, descWidth, "center")
         setColor(0.92, 0.92, 0.92, 1)
         love.graphics.printf(card.desc or "", descX, descStart, descWidth, "center")
+
+        if badgeStyle then
+                local MIN_BADGE_SIZE = 96
+                local badgeSize = max(MIN_BADGE_SIZE, badgeStyle.size or 0)
+                local badgeCenterX = x + w * 0.5
+                local labelOffset = badgeLabelHeight > 0 and (badgeLabelHeight * 0.5 + 8) or 0
+                local badgeCenterY = y + h * (2 / 3) + h / 6 - labelOffset
+                drawBadge(setColor, badgeStyle, badgeCenterX, badgeCenterY, badgeSize)
+
+                if badgeLabelText and badgeLabelFont then
+                        love.graphics.setFont(badgeLabelFont)
+                        setColor(borderColor[1], borderColor[2], borderColor[3], 0.6)
+                        local labelY = badgeCenterY + badgeSize * 0.5 + 8
+                        love.graphics.printf(badgeLabelText, x, labelY, w, "center")
+                        setColor(1, 1, 1, 1)
+                end
+        end
 
         local revealState = animationState and animationState.mysteryReveal or nil
         if revealState then
