@@ -20,9 +20,12 @@ local min = math.min
 local pi = math.pi
 local abs = math.abs
 local insert = table.insert
+local pool
 
 local Upgrades = {}
 local poolById = {}
+local poolByRarity = {}
+Upgrades.poolByRarity = poolByRarity
 local upgradeSchema = DataSchemas.upgradeDefinition
 local getUpgradeString = UpgradeHelpers.getUpgradeString
 local rarities = UpgradeHelpers.rarities
@@ -803,10 +806,72 @@ local function normalizeUpgradeDefinition(upgrade)
 	return upgrade
 end
 
+for rarity in pairs(rarities or {}) do
+        poolByRarity[rarity] = {}
+end
+
+local function ensureRarityBucket(rarity)
+	if not rarity then
+		return
+	end
+
+	if not poolByRarity[rarity] then
+		poolByRarity[rarity] = {}
+	end
+end
+
+local function removeFromRarityBucket(upgrade)
+	if not upgrade or not upgrade.id then
+		return
+	end
+
+	local bucket = poolByRarity[upgrade.rarity]
+	if not bucket then
+		return
+	end
+
+	for index = #bucket, 1, -1 do
+		if bucket[index] and bucket[index].id == upgrade.id then
+			table.remove(bucket, index)
+			break
+		end
+	end
+end
+
 local function register(upgrade)
 	normalizeUpgradeDefinition(upgrade)
+	local existing = poolById[upgrade.id]
+	if existing then
+		removeFromRarityBucket(existing)
+	end
+
 	poolById[upgrade.id] = upgrade
+	ensureRarityBucket(upgrade.rarity)
+	insert(poolByRarity[upgrade.rarity], upgrade)
 	return upgrade
+end
+
+local function rebuildRarityBuckets()
+	for rarity in pairs(poolByRarity) do
+		poolByRarity[rarity] = {}
+	end
+
+	for rarity in pairs(rarities or {}) do
+		ensureRarityBucket(rarity)
+	end
+
+	if not pool then
+		return
+	end
+
+	for _, upgrade in ipairs(pool) do
+		ensureRarityBucket(upgrade.rarity)
+		insert(poolByRarity[upgrade.rarity], upgrade)
+	end
+end
+
+function Upgrades:refreshRarityBuckets()
+	rebuildRarityBuckets()
 end
 
 local function countUpgradesWithTag(state, tag)
@@ -1196,7 +1261,7 @@ local function buildCircuitBreakerLaserTargets(limit)
         return getLaserEmitterDetails(limit)
 end
 
-local pool = {
+pool = {
         register({
                 id = "serpents_reflex",
                 nameKey = "upgrades.serpents_reflex.name",
@@ -3570,25 +3635,29 @@ function Upgrades:getRandom(n, context)
                 end
 
                 if not hasRare then
-                        local rareChoices = {}
-                        for _, upgrade in ipairs(pool) do
-                                if upgrade.rarity == "rare" and self:canOffer(upgrade, context, false) then
-                                        local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
-                                        if rarityRank >= minimumRank then
-                                                insert(rareChoices, upgrade)
-                                        end
+                        local function collectRareChoices(allowDuplicates)
+                                local bucket = poolByRarity.rare
+                                if not bucket then
+                                        return {}
                                 end
-                        end
 
-                        if #rareChoices == 0 then
-                                for _, upgrade in ipairs(pool) do
-                                        if upgrade.rarity == "rare" and self:canOffer(upgrade, context, true) then
+                                local choices = {}
+                                for _, upgrade in ipairs(bucket) do
+                                        if self:canOffer(upgrade, context, allowDuplicates) then
                                                 local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
                                                 if rarityRank >= minimumRank then
-                                                        insert(rareChoices, upgrade)
+                                                        insert(choices, upgrade)
                                                 end
                                         end
                                 end
+
+                                return choices
+                        end
+
+                        local rareChoices = collectRareChoices(false)
+
+                        if #rareChoices == 0 then
+                                rareChoices = collectRareChoices(true)
                         end
 
                         if #rareChoices > 0 then
@@ -3643,19 +3712,26 @@ function Upgrades:getRandom(n, context)
 			else
 				local legendaryCounter = (state.counters.legendaryBadLuck or 0) + 1
 				if legendaryCounter >= LEGENDARY_PITY_THRESHOLD then
-					local legendaryChoices = {}
-					for _, upgrade in ipairs(pool) do
-						if upgrade.rarity == "legendary" and self:canOffer(upgrade, context, false) then
-							insert(legendaryChoices, decorateCard(upgrade))
-						end
-					end
-					if #legendaryChoices == 0 then
-						for _, upgrade in ipairs(pool) do
-							if upgrade.rarity == "legendary" and self:canOffer(upgrade, context, true) then
-								insert(legendaryChoices, decorateCard(upgrade))
-							end
-						end
-					end
+                                        local function collectLegendaryChoices(allowDuplicates)
+                                                local bucket = poolByRarity.legendary
+                                                if not bucket then
+                                                        return {}
+                                                end
+
+                                                local choices = {}
+                                                for _, upgrade in ipairs(bucket) do
+                                                        if self:canOffer(upgrade, context, allowDuplicates) then
+                                                                insert(choices, decorateCard(upgrade))
+                                                        end
+                                                end
+
+                                                return choices
+                                        end
+
+                                        local legendaryChoices = collectLegendaryChoices(false)
+                                        if #legendaryChoices == 0 then
+                                                legendaryChoices = collectLegendaryChoices(true)
+                                        end
 
 					if #legendaryChoices > 0 then
 						local replacementIndex
