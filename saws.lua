@@ -323,6 +323,27 @@ local function isCollisionCandidate(saw, x, y, w, h)
                 return false
         end
 
+        local trackMinX = saw.trackMinX
+        local trackMaxX = saw.trackMaxX
+        local trackMinY = saw.trackMinY
+        local trackMaxY = saw.trackMaxY
+
+        if trackMinX and trackMaxX and trackMinY and trackMaxY then
+                local padding = SINK_OFFSET + SINK_DISTANCE
+                local queryMinX = x
+                local queryMaxX = x + w
+                local queryMinY = y
+                local queryMaxY = y + h
+                local paddedMinX = trackMinX - padding
+                local paddedMaxX = trackMaxX + padding
+                local paddedMinY = trackMinY - padding
+                local paddedMaxY = trackMaxY + padding
+
+                if queryMaxX < paddedMinX or queryMinX > paddedMaxX or queryMaxY < paddedMinY or queryMinY > paddedMaxY then
+                        return false
+                end
+        end
+
         return overlapsCollisionCell(saw, x, y, w, h)
 end
 
