@@ -296,63 +296,77 @@ local function recalcBeamTiming(beam, isInitial)
 	end
 end
 
-local function computeBeamTarget(beam)
-	local tileSize = Arena.tileSize or 24
-	local facing = beam.facing or 1
-	local inset = max(2, tileSize * 0.5 - 4)
-	local startX = beam.x or 0
-	local startY = beam.y or 0
-	local endX, endY
-	local rocks = Rocks:getAll() or {}
-	local bestDistance = math.huge
-	local hitRock
+local EMPTY_ROCK_LIST = {}
 
-	if beam.dir == "horizontal" then
-		startX = startX + facing * inset
-		endY = startY
+local function computeBeamTarget(beam, rockLookup)
+        local tileSize = Arena.tileSize or 24
+        local facing = beam.facing or 1
+        local inset = max(2, tileSize * 0.5 - 4)
+        local startX = beam.x or 0
+        local startY = beam.y or 0
+        local endX, endY
+        local rocks = EMPTY_ROCK_LIST
+        local bestDistance = math.huge
+        local hitRock
 
-		local wallX
-		if facing > 0 then
-			wallX = (Arena.x or 0) + (Arena.width or 0) - WALL_INSET
-		else
-			wallX = (Arena.x or 0) + WALL_INSET
-		end
+        if beam.dir == "horizontal" then
+                startX = startX + facing * inset
+                endY = startY
 
-		endX = wallX
+                if rockLookup and rockLookup.rows then
+                        rocks = rockLookup.rows[beam.row] or EMPTY_ROCK_LIST
+                else
+                        rocks = Rocks:getAll() or EMPTY_ROCK_LIST
+                end
 
-		for _, rock in ipairs(rocks) do
-			if rock.row == beam.row then
-				local delta = (rock.x - (beam.x or 0)) * facing
-				if delta and delta > 0 and delta < bestDistance then
-					bestDistance = delta
-					hitRock = rock
-				end
-			end
-		end
+                local wallX
+                if facing > 0 then
+                        wallX = (Arena.x or 0) + (Arena.width or 0) - WALL_INSET
+                else
+                        wallX = (Arena.x or 0) + WALL_INSET
+                end
+
+                endX = wallX
+
+                for _, rock in ipairs(rocks) do
+                        if rock.row == beam.row then
+                                local delta = (rock.x - (beam.x or 0)) * facing
+                                if delta and delta > 0 and delta < bestDistance then
+                                        bestDistance = delta
+                                        hitRock = rock
+                                end
+                        end
+                end
 
 		if hitRock then
 			local edge = tileSize * 0.5 - 2
 			endX = hitRock.x - facing * edge
 		end
-	else
-		startY = startY + facing * inset
-		endX = startX
+        else
+                startY = startY + facing * inset
+                endX = startX
 
-		local wallY
-		if facing > 0 then
-			wallY = (Arena.y or 0) + (Arena.height or 0) - WALL_INSET
-		else
-			wallY = (Arena.y or 0) + WALL_INSET
-		end
+                if rockLookup and rockLookup.cols then
+                        rocks = rockLookup.cols[beam.col] or EMPTY_ROCK_LIST
+                else
+                        rocks = Rocks:getAll() or EMPTY_ROCK_LIST
+                end
 
-		endY = wallY
+                local wallY
+                if facing > 0 then
+                        wallY = (Arena.y or 0) + (Arena.height or 0) - WALL_INSET
+                else
+                        wallY = (Arena.y or 0) + WALL_INSET
+                end
 
-		for _, rock in ipairs(rocks) do
-			if rock.col == beam.col then
-				local delta = (rock.y - (beam.y or 0)) * facing
-				if delta and delta > 0 and delta < bestDistance then
-					bestDistance = delta
-					hitRock = rock
+                endY = wallY
+
+                for _, rock in ipairs(rocks) do
+                        if rock.col == beam.col then
+                                local delta = (rock.y - (beam.y or 0)) * facing
+                                if delta and delta > 0 and delta < bestDistance then
+                                        bestDistance = delta
+                                        hitRock = rock
 				end
 			end
 		end
@@ -382,6 +396,47 @@ local function computeBeamTarget(beam)
 	beam.impactX = endX
 	beam.impactY = endY or startY
 	beam.targetRock = hitRock
+end
+
+local function buildRockLookup()
+        local rocks = Rocks:getAll()
+        if not rocks or #rocks == 0 then
+                return {
+                        rows = {},
+                        cols = {},
+                }
+        end
+
+        local rows = {}
+        local cols = {}
+
+        for i = 1, #rocks do
+                local rock = rocks[i]
+                local row = rock and rock.row
+                if row then
+                        local list = rows[row]
+                        if list then
+                                list[#list + 1] = rock
+                        else
+                                rows[row] = {rock}
+                        end
+                end
+
+                local col = rock and rock.col
+                if col then
+                        local list = cols[col]
+                        if list then
+                                list[#list + 1] = rock
+                        else
+                                cols[col] = {rock}
+                        end
+                end
+        end
+
+        return {
+                rows = rows,
+                cols = cols,
+        }
 end
 
 function Lasers:reset()
@@ -455,7 +510,7 @@ function Lasers:spawn(x, y, dir, options)
 
         computeBeamTarget(beam)
         emitters[#emitters + 1] = beam
-	return beam
+        return beam
 end
 
 function Lasers:getEmitters()
@@ -569,9 +624,15 @@ function Lasers:update(dt)
                 stallTimer = 0
         end
 
+        if #emitters == 0 then
+                return
+        end
+
+        local rockLookup = buildRockLookup()
+
         for _, beam in ipairs(emitters) do
                 updateEmitterSlide(beam, dt)
-                computeBeamTarget(beam)
+                computeBeamTarget(beam, rockLookup)
 
                 if beam.state == "charging" then
 			beam.chargeTimer = (beam.chargeTimer or beam.chargeDuration) - dt
