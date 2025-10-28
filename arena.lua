@@ -47,21 +47,17 @@ do
                         return clamp(circleLight, 0.0, 1.0);
                 }
 
-                float applyCircleLight(float current, float contribution) {
-                        return 1.0 - ((1.0 - current) * (1.0 - contribution));
-                }
-
                 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
                         float light = 0.0;
 
                         if (snakeHeadActive > 0.5) {
                                 float headLight = computeCircleLight(screen_coords, snakeHeadPosition, snakeHeadRadii);
-                                light = applyCircleLight(light, headLight);
+                                light = max(light, headLight);
                         }
 
                         if (fruitActive > 0.5) {
                                 float fruitLight = computeCircleLight(screen_coords, fruitPosition, fruitRadii);
-                                light = applyCircleLight(light, fruitLight);
+                                light = max(light, fruitLight);
                         }
 
                         int count = highlightCount;
@@ -76,11 +72,11 @@ do
                                         break;
                                 }
                                 float circleLight = computeCircleLight(screen_coords, highlightPositions[i], highlightRadii[i]);
-                                light = applyCircleLight(light, circleLight);
+                                light = max(light, circleLight);
                         }
 
                         float dimAlpha = clamp(baseAlpha, 0.0, 1.0);
-                        float finalAlpha = mix(dimAlpha, 0.0, clamp(light, 0.0, 1.0));
+                        float finalAlpha = dimAlpha * (1.0 - clamp(light, 0.0, 1.0));
                         return vec4(0.0, 0.0, 0.0, clamp(finalAlpha, 0.0, 1.0));
                 }
         ]]
