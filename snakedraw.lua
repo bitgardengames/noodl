@@ -1309,13 +1309,40 @@ end
 
 local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
 	if not data then return end
-	local stacks = data.stacks or 0
+
+	local stacks = data.stacks
+	local intensity = data.intensity
+	local flash = data.flash
+	local target = data.target
+
+	if type(data[1]) == "table" then
+		local combinedStacks = 0
+		local combinedIntensity = 0
+		local combinedFlash = 0
+		local combinedTarget = 0
+
+		for _, entry in ipairs(data) do
+			combinedStacks = combinedStacks + (entry.stacks or 0)
+			combinedIntensity = max(combinedIntensity, entry.intensity or 0)
+			combinedFlash = max(combinedFlash, entry.flash or 0)
+			combinedTarget = max(combinedTarget, entry.target or 0)
+		end
+
+		stacks = combinedStacks
+		intensity = combinedIntensity
+		flash = combinedFlash
+		target = combinedTarget
+	end
+
+	stacks = stacks or 0
 	if stacks <= 0 then return end
 
-	local intensity = max(0, data.intensity or 0)
+	intensity = max(0, intensity or 0)
 	if intensity <= 0.01 then return end
 
-	local flash = max(0, data.flash or 0)
+	flash = max(0, flash or 0)
+	target = max(0, target or 0)
+
 	local highlight = min(1, intensity * 0.85 + flash * 0.6)
 
 	local headRadius = SEGMENT_SIZE * 0.4
@@ -1323,9 +1350,10 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
 	local baseStacks = min(rawStacks, 4)
 	local overflowStacks = max(0, rawStacks - 4)
 	local visualStacks = baseStacks + overflowStacks * 1.35
-	local activityScale = 1 + max(0, data.target or 0) * 0.35
+	local activityScale = 1 + target * 0.35
 	local stackFactor = visualStacks * activityScale
 
+	-- Always draw a single mirrored pair of fangs; stacks only change their size.
 	local fangLength = headRadius * (0.75 + 0.12 * stackFactor)
 	local fangWidth = headRadius * (0.35 + 0.05 * stackFactor)
 	local spacing = headRadius * (0.35 + 0.02 * stackFactor)
@@ -1340,27 +1368,27 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
 	local fillAlpha = 0.55 + 0.35 * highlight
 	local fillR = 1.0
 	local fillG = 0.96 + 0.04 * highlight
-	local fillB = 0.88 + 0.08 * highlight
+        local fillB = 0.88 + 0.08 * highlight
 
-	love.graphics.push("all")
-	love.graphics.translate(hx, hy + mouthDrop)
+        love.graphics.push("all")
+        love.graphics.translate(hx, hy + mouthDrop)
 
-	for _, side in ipairs({-1, 1}) do
-		local baseX = side * spacing
-		local topLeftX = baseX - fangWidth * 0.5
-		local topRightX = baseX + fangWidth * 0.5
-		local tipX = baseX
-		local tipY = fangLength
+        for side = -1, 1, 2 do
+                local baseX = side * spacing
+                local topLeftX = baseX - fangWidth * 0.5
+                local topRightX = baseX + fangWidth * 0.5
+                local tipX = baseX
+                local tipY = fangLength
 
-		love.graphics.setColor(fillR, fillG, fillB, fillAlpha)
-		love.graphics.polygon("fill", topLeftX, 0, topRightX, 0, tipX, tipY)
+                love.graphics.setColor(fillR, fillG, fillB, fillAlpha)
+                love.graphics.polygon("fill", topLeftX, 0, topRightX, 0, tipX, tipY)
 
-		love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-		love.graphics.setLineWidth(1.4)
-		love.graphics.polygon("line", topLeftX, 0, topRightX, 0, tipX, tipY)
-	end
+                love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+                love.graphics.setLineWidth(1.4)
+                love.graphics.polygon("line", topLeftX, 0, topRightX, 0, tipX, tipY)
+        end
 
-	love.graphics.pop()
+        love.graphics.pop()
 end
 
 local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
