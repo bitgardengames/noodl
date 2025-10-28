@@ -2313,7 +2313,7 @@ function GameOver:_updateUnlockOverlay(dt)
                 overlay.phase = "enter"
                 overlay.timer = 0
                 overlay.alpha = 0
-                overlay.scale = overlay.scale or 0.88
+                overlay.scale = overlay.scale or 1
                 overlay.dismissRequested = false
                 overlay.ready = false
                 overlay.cardState = overlay.cardState or {hover = 0, focus = 0, selection = 0, fadeOut = 0}
@@ -2330,9 +2330,8 @@ function GameOver:_updateUnlockOverlay(dt)
         if overlay.phase == "enter" then
                 local duration = overlay.enterDuration or 0.35
                 local progress = duration > 0 and clamp(overlay.timer / duration, 0, 1) or 1
-                local eased = easeOutBack(progress)
                 overlay.alpha = clamp(progress, 0, 1)
-                overlay.scale = 0.88 + 0.12 * eased
+                overlay.scale = 1
                 if progress >= 1 then
                         overlay.phase = "hold"
                         overlay.timer = 0
@@ -2353,14 +2352,13 @@ function GameOver:_updateUnlockOverlay(dt)
                         end
                 end
                 overlay.alpha = 1
-                local wobble = sin(Timer.getTime() * 2.4) * 0.01
-                overlay.scale = 1 + wobble
+                overlay.scale = 1
         elseif overlay.phase == "exit" then
                 local duration = overlay.exitDuration or 0.28
                 local progress = duration > 0 and clamp(overlay.timer / duration, 0, 1) or 1
                 local eased = easeOutQuad(progress)
                 overlay.alpha = max(0, 1 - eased)
-                overlay.scale = 1 + 0.06 * (1 - eased)
+                overlay.scale = 1
                 if progress >= 1 then
                         self.activeUnlockOverlay = nil
                 end
@@ -2458,10 +2456,17 @@ function GameOver:drawUnlockOverlay()
         local continueColor = withAlpha(baseContinueColor, continueAlpha)
 
         local baseWidth, baseHeight = 264, 344
-        local maxWidth = sw * 0.45
-        local maxHeight = sh * 0.5
-        local scale = min(maxWidth / baseWidth, maxHeight / baseHeight)
-        scale = min(max(0.6, scale), 1.15)
+        local widthMargin = 64
+        local heightMargin = 160
+        local availableWidth = max(0, sw - widthMargin)
+        local availableHeight = max(0, sh - heightMargin)
+        local scale = 1
+        if baseWidth > availableWidth or baseHeight > availableHeight then
+                local widthScale = availableWidth > 0 and (availableWidth / baseWidth) or 0
+                local heightScale = availableHeight > 0 and (availableHeight / baseHeight) or 0
+                local limit = min(widthScale, heightScale)
+                scale = clamp(limit, 0, 1)
+        end
         scale = scale * (overlay.scale or 1)
         local cardWidth = baseWidth * scale
         local cardHeight = baseHeight * scale
