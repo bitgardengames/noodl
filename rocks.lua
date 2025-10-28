@@ -69,10 +69,18 @@ local highlightCache = setmetatable({}, { __mode = "k" })
 local highlightDefault = {1, 1, 1, 1}
 
 local function updateHighlightColor(out, color)
-        local r = min(1, color[1] * 1.2 + 0.08)
-        local g = min(1, color[2] * 1.2 + 0.08)
-        local b = min(1, color[3] * 1.2 + 0.08)
-        local a = (color[4] or 1) * 0.75
+        local baseR = color[1] or 1
+        local baseG = color[2] or 1
+        local baseB = color[3] or 1
+        local baseA = color[4]
+        if baseA == nil then
+                baseA = 1
+        end
+
+        local r = min(1, baseR * 1.2 + 0.08)
+        local g = min(1, baseG * 1.2 + 0.08)
+        local b = min(1, baseB * 1.2 + 0.08)
+        local a = baseA * 0.75
         out[1], out[2], out[3], out[4] = r, g, b, a
         return out
 end
@@ -81,10 +89,31 @@ local function getHighlightColor(color)
         color = color or highlightDefault
         local cached = highlightCache[color]
         if not cached then
-                cached = {0, 0, 0, 0}
+                cached = {
+                        highlight = {0, 0, 0, 0},
+                        _lastR = nil,
+                        _lastG = nil,
+                        _lastB = nil,
+                        _lastA = nil,
+                }
                 highlightCache[color] = cached
         end
-        return updateHighlightColor(cached, color)
+
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4]
+        if a == nil then
+                a = 1
+        end
+
+        if cached._lastR == r and cached._lastG == g and cached._lastB == b and cached._lastA == a then
+                return cached.highlight
+        end
+
+        cached._lastR, cached._lastG, cached._lastB, cached._lastA = r, g, b, a
+        updateHighlightColor(cached.highlight, color)
+        return cached.highlight
 end
 
 local function buildRockHighlight(points)
