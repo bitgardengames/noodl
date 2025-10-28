@@ -1330,17 +1330,6 @@ local function drawComboIndicator(self)
 	love.graphics.pop()
 end
 
-local function buildShieldPoints(radius)
-	return {
-		0, -radius,
-		radius * 0.78, -radius * 0.28,
-		radius * 0.55, radius * 0.85,
-		0, radius,
-		-radius * 0.55, radius * 0.85,
-		-radius * 0.78, -radius * 0.28,
-	}
-end
-
 local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 	local accent = accentColor or {1, 1, 1, 1}
 
@@ -1358,22 +1347,42 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 	love.graphics.setColor(detail[1], detail[2], detail[3], detail[4] or 1)
 
 	if icon == "shield" then
-		local shield = buildShieldPoints(radius * 0.9)
-		love.graphics.polygon("fill", shield)
+		local shieldRadius = radius * 0.9
+		local topY = -shieldRadius
+		local rightX = shieldRadius * 0.78
+		local midY = -shieldRadius * 0.28
+		local lowerRightX = shieldRadius * 0.55
+		local lowerY = shieldRadius * 0.85
+		local bottomY = shieldRadius
+		local lowerLeftX = -lowerRightX
+		local leftX = -rightX
+		local function drawShieldPolygon(mode)
+			love.graphics.polygon(
+				mode,
+				0, topY,
+				rightX, midY,
+				lowerRightX, lowerY,
+				0, bottomY,
+				lowerLeftX, lowerY,
+				leftX, midY
+			)
+		end
+
+		drawShieldPolygon("fill")
 		local outline = lightenColor(accent, 0.35)
 		love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
 		love.graphics.setLineWidth(2)
-		love.graphics.polygon("line", shield)
+		drawShieldPolygon("line")
 	elseif icon == "bolt" then
-		local bolt = {
+		love.graphics.polygon(
+			"fill",
 			-radius * 0.28, -radius * 0.92,
 			radius * 0.42, -radius * 0.2,
 			radius * 0.08, -radius * 0.18,
 			radius * 0.48, radius * 0.82,
 			-radius * 0.2, radius * 0.14,
-			radius * 0.05, 0,
-		}
-		love.graphics.polygon("fill", bolt)
+			radius * 0.05, 0
+		)
 	elseif icon == "pickaxe" then
 		love.graphics.push()
 		love.graphics.rotate(-pi / 8)
@@ -1387,37 +1396,36 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		local baseHalfWidth = radius * 0.62
 		local baseHeight = radius * 0.86
 
-		local topTriangle = {
+		love.graphics.polygon(
+			"fill",
 			0, 0,
 			-baseHalfWidth, -baseHeight,
-			baseHalfWidth, -baseHeight,
-		}
-		local bottomTriangle = {
+			baseHalfWidth, -baseHeight
+		)
+		love.graphics.polygon(
+			"fill",
 			0, 0,
 			-baseHalfWidth, baseHeight,
-			baseHalfWidth, baseHeight,
-		}
-
-		love.graphics.polygon("fill", topTriangle)
-		love.graphics.polygon("fill", bottomTriangle)
+			baseHalfWidth, baseHeight
+		)
 
 		local highlight = lightenColor(detail, 0.22)
 		love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * 0.85)
 		local highlightHalfWidth = radius * 0.38
 		local highlightBase = radius * 0.64
 		local highlightApexOffset = radius * 0.18
-		local topHighlight = {
+		love.graphics.polygon(
+			"fill",
 			0, -highlightApexOffset,
 			-highlightHalfWidth, -highlightBase,
-			highlightHalfWidth, -highlightBase,
-		}
-		local bottomHighlight = {
+			highlightHalfWidth, -highlightBase
+		)
+		love.graphics.polygon(
+			"fill",
 			0, highlightApexOffset,
 			-highlightHalfWidth, highlightBase,
-			highlightHalfWidth, highlightBase,
-		}
-		love.graphics.polygon("fill", topHighlight)
-		love.graphics.polygon("fill", bottomHighlight)
+			highlightHalfWidth, highlightBase
+		)
 
 		local sheen = lightenColor(detail, 0.42)
 		love.graphics.setColor(sheen[1], sheen[2], sheen[3], (sheen[4] or 1) * 0.6)
@@ -1428,8 +1436,18 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		local rim = lightenColor(detail, 0.32)
 		love.graphics.setColor(rim[1], rim[2], rim[3], rim[4] or 1)
 		love.graphics.setLineWidth(2.2)
-		love.graphics.polygon("line", topTriangle)
-		love.graphics.polygon("line", bottomTriangle)
+		love.graphics.polygon(
+			"line",
+			0, 0,
+			-baseHalfWidth, -baseHeight,
+			baseHalfWidth, -baseHeight
+		)
+		love.graphics.polygon(
+			"line",
+			0, 0,
+			-baseHalfWidth, baseHeight,
+			baseHalfWidth, baseHeight
+		)
 
 		local seam = darkenColor(detail, 0.25)
 		love.graphics.setColor(seam[1], seam[2], seam[3], (seam[4] or 1) * 0.9)
@@ -1437,15 +1455,15 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.line(-baseHalfWidth, -baseHeight, baseHalfWidth, -baseHeight)
 		love.graphics.line(-baseHalfWidth, baseHeight, baseHalfWidth, baseHeight)
 	elseif icon == "phoenix" then
-		local wing = {
+		love.graphics.polygon(
+			"fill",
 			-radius * 0.88, radius * 0.16,
 			-radius * 0.26, -radius * 0.7,
 			0, -radius * 0.25,
 			radius * 0.26, -radius * 0.7,
 			radius * 0.88, radius * 0.16,
-			0, radius * 0.88,
-		}
-		love.graphics.polygon("fill", wing)
+			0, radius * 0.88
+		)
 	else
 		love.graphics.circle("fill", 0, 0, radius * 0.72, 28)
 	end
