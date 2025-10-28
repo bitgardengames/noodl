@@ -307,10 +307,14 @@ function Fruit:update(dt)
 		sparkle.timer = sparkle.timer + dt
 		sparkle.angle = sparkle.angle + sparkle.spin * dt
 		sparkle.radius = sparkle.radius + sparkle.drift * dt * 0.08
-		if sparkle.timer >= sparkle.duration then
-			table.remove(idleSparkles, i)
-		end
-	end
+                if sparkle.timer >= sparkle.duration then
+                        local lastIndex = #idleSparkles
+                        if i ~= lastIndex then
+                                idleSparkles[i] = idleSparkles[lastIndex]
+                        end
+                        idleSparkles[lastIndex] = nil
+                end
+        end
 
         active.timer = active.timer + dt
 
