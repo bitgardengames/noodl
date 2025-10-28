@@ -1958,9 +1958,22 @@ function UI:drawFruitSockets()
 
 			-- dragonfruit glow
                         if fruit.name == "Dragonfruit" then
-                                local pulse = 0.5 + 0.5 * sin(time * 6.0)
-                                love.graphics.setColor(1, 0.1, 1, 0.5 * pulse * visibility)
-                                love.graphics.circle("line", 0, 0, r + 4 * pulse, 32)
+                                local pulse = 0.65 + 0.35 * sin(time * 7.2)
+                                local glowColor = Theme.dragonfruitColor or {1, 0.45, 0.86, 1}
+                                local accentAlpha = (0.45 + 0.35 * pulse) * visibility
+
+                                love.graphics.setLineWidth(4)
+                                love.graphics.setColor(
+                                min(1, glowColor[1] + 0.15),
+                                min(1, glowColor[2] * 0.75),
+                                min(1, glowColor[3] * 1.1),
+                                accentAlpha
+                                )
+                                love.graphics.circle("line", 0, 0, r + 4 + 3 * pulse, 40)
+
+                                love.graphics.setColor(1, 0.45, 1, 0.24 * pulse * visibility)
+                                love.graphics.circle("line", 0, 0, r + 9 + 6 * pulse, 40)
+                                love.graphics.setLineWidth(3)
                         end
 
 			love.graphics.pop()

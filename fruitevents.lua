@@ -28,7 +28,7 @@ local DEFAULT_COMBO_WINDOW = 2.25
 local BLOOM_EVENT_TAG = "dragonfruitBloom"
 local BLOOM_MIN_FRUIT = 5
 local BLOOM_MAX_FRUIT = 7
-local BLOOM_FRUIT_LIFESPAN = 1.2
+local BLOOM_FRUIT_LIFESPAN = false
 local BLOOM_RESPAWN_DELAY_MIN = 0.08
 local BLOOM_RESPAWN_DELAY_MAX = 0.2
 
@@ -132,10 +132,13 @@ local function spawnDragonfruitBloomFruit()
         local options = {
                 isBonus = true,
                 countsForGoal = false,
-                lifespan = BLOOM_FRUIT_LIFESPAN,
                 eventTag = BLOOM_EVENT_TAG,
-                onExpire = handleBloomFruitExpired,
         }
+
+        if BLOOM_FRUIT_LIFESPAN and BLOOM_FRUIT_LIFESPAN > 0 then
+                options.lifespan = BLOOM_FRUIT_LIFESPAN
+                options.onExpire = handleBloomFruitExpired
+        end
 
         Fruit:spawn(Snake:getSegments(), Rocks, dragonfruitBloom.safeZone, options)
         dragonfruitBloom.fruitsRemaining = max(0, (dragonfruitBloom.fruitsRemaining or 0) - 1)
