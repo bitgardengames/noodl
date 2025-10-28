@@ -26,6 +26,87 @@ local DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT = 264, 344
 
 Shop._backgroundCanvases = Shop._backgroundCanvases or {}
 
+local function getLocalizationRevision()
+        if Localization and Localization.getRevision then
+                return Localization:getRevision()
+        end
+
+        return 0
+end
+
+local function ensureCardTextLayout(card, width)
+        if not card then return nil end
+
+        local revision = getLocalizationRevision()
+        local name = card.name or ""
+        local desc = card.desc or ""
+        local cache = card._textLayoutCache
+
+        if not cache or cache.revision ~= revision or cache.name ~= name or cache.desc ~= desc then
+                cache = {
+                        revision = revision,
+                        name = name,
+                        desc = desc,
+                        byWidth = {},
+                }
+                card._textLayoutCache = cache
+        end
+
+        local w = width or DEFAULT_CARD_WIDTH
+        local layout = cache.byWidth[w]
+        if layout then
+                return layout
+        end
+
+        local titleFont = UI.fonts.button or UI.fonts.body
+        local bodyFont = UI.fonts.body or UI.fonts.caption
+
+        if not titleFont or not bodyFont then
+                layout = cache.byWidth[w]
+                if not layout then
+                        layout = {
+                                titleLines = {},
+                                titleLineCount = 1,
+                                titleHeight = 0,
+                                titleWidth = w - 28,
+                                descLines = {},
+                                descLineCount = 1,
+                                descHeight = 0,
+                                descWidth = w - 36,
+                        }
+                        cache.byWidth[w] = layout
+                end
+                return layout
+        end
+
+        local titleWidth = w - 28
+        local descWidth = w - 36
+
+        local _, titleLines = titleFont:getWrap(name, titleWidth)
+        local titleLineCount = max(1, #titleLines)
+        local titleLineHeight = titleFont:getHeight() * titleFont:getLineHeight()
+        local titleHeight = titleLineCount * titleLineHeight
+
+        local _, descLines = bodyFont:getWrap(desc, descWidth)
+        local descLineCount = max(1, #descLines)
+        local descLineHeight = bodyFont:getHeight() * bodyFont:getLineHeight()
+        local descHeight = descLineCount * descLineHeight
+
+        layout = {
+                titleLines = titleLines,
+                titleLineCount = titleLineCount,
+                titleHeight = titleHeight,
+                titleWidth = titleWidth,
+                descLines = descLines,
+                descLineCount = descLineCount,
+                descHeight = descHeight,
+                descWidth = descWidth,
+        }
+        cache.byWidth[w] = layout
+
+        return layout
+end
+
 local ANALOG_DEADZONE = 0.3
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 
@@ -387,6 +468,7 @@ function Shop:refreshCards(options)
                 local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
                 local backgroundKey = getBackgroundCacheKey(card, style, borderColor, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
                 ensureBackgroundCanvas(backgroundKey, style, borderColor, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
+                ensureCardTextLayout(card, DEFAULT_CARD_WIDTH)
 
                 self.cardStates[i] = {
                         progress = 0,
@@ -1540,7 +1622,8 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         setColor(1, 1, 1, 1)
         local titleFont = UI.fonts.button
         love.graphics.setFont(titleFont)
-        local titleWidth = w - 28
+        local textLayout = ensureCardTextLayout(card, w) or {}
+        local titleWidth = textLayout.titleWidth or (w - 28)
         local headerBottom = headerTop + headerHeight
         local titleSpacing = headerHeight > 0 and 12 or 8
         local titleY = headerBottom + titleSpacing
@@ -1550,9 +1633,8 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
         setColor(1, 1, 1, 1)
         love.graphics.printf(card.name or "", titleX, titleY, titleWidth, "center")
 
-        local _, titleLines = titleFont:getWrap(card.name or "", titleWidth)
-        local titleLineCount = max(1, #titleLines)
-        local titleHeight = titleLineCount * titleFont:getHeight() * titleFont:getLineHeight()
+        local titleLineCount = textLayout.titleLineCount or 1
+        local titleHeight = textLayout.titleHeight or (titleLineCount * titleFont:getHeight() * titleFont:getLineHeight())
         local contentTop = titleY + titleHeight
 
         setColor(1, 1, 1, 0.3)
@@ -1563,7 +1645,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 
         love.graphics.setFont(UI.fonts.body)
         local descX = x + 18
-        local descWidth = w - 36
+        local descWidth = textLayout.descWidth or (w - 36)
         setColor(0, 0, 0, 0.75)
         love.graphics.printf(card.desc or "", descX + 1, descStart + 1, descWidth, "center")
         setColor(0.92, 0.92, 0.92, 1)
