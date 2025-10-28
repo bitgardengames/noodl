@@ -3992,12 +3992,12 @@ function Snake:checkLaserBodyCollision()
                 return false
         end
 
-        if not (Lasers and Lasers.getEmitters) then
+        if not (Lasers and Lasers.getEmitterCount and Lasers.iterateEmitters) then
                 return false
         end
 
-        local beams = Lasers:getEmitters()
-        if not (beams and #beams > 0) then
+        local emitterCount = Lasers:getEmitterCount()
+        if not (emitterCount and emitterCount > 0) then
                 return false
         end
 
@@ -4011,73 +4011,80 @@ function Snake:checkLaserBodyCollision()
         local guardDistance = SEGMENT_SPACING * 0.9
         local bodyRadius = SEGMENT_SIZE * 0.5
 
-        for i = 1, #beams do
-                local beam = beams[i]
-                if beam and beam.state == "firing" then
-                        local rect = beam.beamRect
-                        if rect then
-                                local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
-                                if rw and rh and rw > 0 and rh > 0 then
-                                        local expandedX = rx - bodyRadius
-                                        local expandedY = ry - bodyRadius
-                                        local expandedW = rw + bodyRadius * 2
-                                        local expandedH = rh + bodyRadius * 2
+        local handled = Lasers:iterateEmitters(function(beam)
+                if not (beam and beam.state == "firing") then
+                        return nil
+                end
 
-                                        local travelled = 0
-                                        local prevX, prevY = headX, headY
+                local rect = beam.beamRect
+                if not rect then
+                        return nil
+                end
 
-                                        for index = 2, #trail do
-                                                local segment = trail[index]
-                                                local cx = segment and (segment.drawX or segment.x)
-                                                local cy = segment and (segment.drawY or segment.y)
-                                                if cx and cy then
-                                                        local dx = cx - prevX
-                                                        local dy = cy - prevY
-                                                        local segLen = sqrt(dx * dx + dy * dy)
+                local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
+                if not (rw and rh and rw > 0 and rh > 0) then
+                        return nil
+                end
 
-                                                        if segLen > 1e-6 then
-                                                                local intersects, cutX, cutY, t = segmentRectIntersection(
-                                                                        prevX,
-                                                                        prevY,
-                                                                        cx,
-                                                                        cy,
-                                                                        expandedX,
-                                                                        expandedY,
-                                                                        expandedW,
-                                                                        expandedH
-                                                                )
+                local expandedX = rx - bodyRadius
+                local expandedY = ry - bodyRadius
+                local expandedW = rw + bodyRadius * 2
+                local expandedH = rh + bodyRadius * 2
 
-                                                                if intersects and t then
-                                                                        local along = travelled + segLen * t
-                                                                        if along > guardDistance then
-                                                                                beam.flashTimer = max(beam.flashTimer or 0, 1)
-                                                                                beam.burnAlpha = 0.92
+                local travelled = 0
+                local prevX, prevY = headX, headY
 
-                                                                                local handled = self:handleSawBodyCut({
-                                                                                        index = index,
-                                                                                        cutX = cutX,
-                                                                                        cutY = cutY,
-                                                                                        cutDistance = along,
-                                                                                        cause = "laser",
-                                                                                })
+                for index = 2, #trail do
+                        local segment = trail[index]
+                        local cx = segment and (segment.drawX or segment.x)
+                        local cy = segment and (segment.drawY or segment.y)
+                        if cx and cy then
+                                local dx = cx - prevX
+                                local dy = cy - prevY
+                                local segLen = sqrt(dx * dx + dy * dy)
 
-                                                                                if handled then
-                                                                                        return true
-                                                                                end
-                                                                        end
-                                                                end
+                                if segLen > 1e-6 then
+                                        local intersects, cutX, cutY, t = segmentRectIntersection(
+                                                prevX,
+                                                prevY,
+                                                cx,
+                                                cy,
+                                                expandedX,
+                                                expandedY,
+                                                expandedW,
+                                                expandedH
+                                        )
+
+                                        if intersects and t then
+                                                local along = travelled + segLen * t
+                                                if along > guardDistance then
+                                                        beam.flashTimer = max(beam.flashTimer or 0, 1)
+                                                        beam.burnAlpha = 0.92
+
+                                                        local handledCut = self:handleSawBodyCut({
+                                                                index = index,
+                                                                cutX = cutX,
+                                                                cutY = cutY,
+                                                                cutDistance = along,
+                                                                cause = "laser",
+                                                        })
+
+                                                        if handledCut then
+                                                                return true
                                                         end
-
-                                                        travelled = travelled + segLen
-                                                        prevX, prevY = cx, cy
                                                 end
                                         end
                                 end
+
+                                travelled = travelled + segLen
+                                prevX, prevY = cx, cy
                         end
                 end
-        end
 
-        return false
+                return nil
+        end)
+
+        return handled and true or false
 end
 
 function Snake:checkSawBodyCollision()

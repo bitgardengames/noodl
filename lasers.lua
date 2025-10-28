@@ -521,6 +521,23 @@ function Lasers:getEmitters()
         return copies
 end
 
+function Lasers:getEmitterCount()
+        return #emitters
+end
+
+function Lasers:iterateEmitters(callback)
+        if type(callback) ~= "function" then
+                return
+        end
+
+        for index = 1, #emitters do
+                local result = callback(emitters[index], index)
+                if result ~= nil then
+                        return result
+                end
+        end
+end
+
 function Lasers:stall(duration, options)
         if not duration or duration <= 0 then
                 return
