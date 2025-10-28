@@ -160,18 +160,20 @@ local function lightenColor(color, amount, out)
         return target
 end
 
-local function darkenColor(color, amount)
-	if not color then
-		return {0, 0, 0, 1}
-	end
+local function darkenColor(color, amount, out)
+        local target = out or {}
+        if not color then
+                target[1], target[2], target[3], target[4] = 0, 0, 0, 1
+                return target
+        end
 
-	local a = color[4] or 1
-	return {
-		color[1] * amount,
-		color[2] * amount,
-		color[3] * amount,
-		a,
-	}
+        local a = color[4] or 1
+        target[1] = color[1] * amount
+        target[2] = color[2] * amount
+        target[3] = color[3] * amount
+        target[4] = a
+
+        return target
 end
 
 local function setColor(color, alphaMultiplier)
@@ -1330,8 +1332,19 @@ local function drawComboIndicator(self)
 	love.graphics.pop()
 end
 
+local ICON_ACCENT_DEFAULT = {1, 1, 1, 1}
+local ICON_COLOR_BASE = {0, 0, 0, 1}
+local ICON_COLOR_DETAIL = {0, 0, 0, 1}
+local ICON_COLOR_OUTLINE = {0, 0, 0, 1}
+local ICON_COLOR_HIGHLIGHT = {0, 0, 0, 1}
+local ICON_COLOR_SHEEN = {0, 0, 0, 1}
+local ICON_COLOR_RIM = {0, 0, 0, 1}
+local ICON_COLOR_SEAM = {0, 0, 0, 1}
+local ICON_OVERLAY_BACKGROUND = {0, 0, 0, 1}
+local ICON_OVERLAY_TEXT_DEFAULT = {1, 1, 1, 1}
+
 local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
-	local accent = accentColor or {1, 1, 1, 1}
+        local accent = accentColor or ICON_ACCENT_DEFAULT
 
 	love.graphics.push("all")
 	love.graphics.translate(x, y)
@@ -1339,11 +1352,11 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 	love.graphics.setColor(0, 0, 0, 0.3)
 	love.graphics.circle("fill", 3, 4, radius + 3, 28)
 
-	local base = darkenColor(accent, 0.6)
+        local base = darkenColor(accent, 0.6, ICON_COLOR_BASE)
 	love.graphics.setColor(base[1], base[2], base[3], base[4] or 1)
 	love.graphics.circle("fill", 0, 0, radius, 28)
 
-	local detail = lightenColor(accent, 0.12)
+        local detail = lightenColor(accent, 0.12, ICON_COLOR_DETAIL)
 	love.graphics.setColor(detail[1], detail[2], detail[3], detail[4] or 1)
 
 	if icon == "shield" then
@@ -1369,7 +1382,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		end
 
 		drawShieldPolygon("fill")
-		local outline = lightenColor(accent, 0.35)
+                local outline = lightenColor(accent, 0.35, ICON_COLOR_OUTLINE)
 		love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
 		love.graphics.setLineWidth(2)
 		drawShieldPolygon("line")
@@ -1388,7 +1401,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.rotate(-pi / 8)
 		love.graphics.rectangle("fill", -radius * 0.14, -radius * 0.92, radius * 0.28, radius * 1.84, radius * 0.16)
 		love.graphics.pop()
-		local outline = lightenColor(accent, 0.35)
+                local outline = lightenColor(accent, 0.35, ICON_COLOR_OUTLINE)
 		love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
 		love.graphics.setLineWidth(2)
 		love.graphics.circle("line", 0, 0, radius * 0.95, 28)
@@ -1409,7 +1422,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 			baseHalfWidth, baseHeight
 		)
 
-		local highlight = lightenColor(detail, 0.22)
+                local highlight = lightenColor(detail, 0.22, ICON_COLOR_HIGHLIGHT)
 		love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * 0.85)
 		local highlightHalfWidth = radius * 0.38
 		local highlightBase = radius * 0.64
@@ -1427,13 +1440,13 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 			highlightHalfWidth, highlightBase
 		)
 
-		local sheen = lightenColor(detail, 0.42)
+                local sheen = lightenColor(detail, 0.42, ICON_COLOR_SHEEN)
 		love.graphics.setColor(sheen[1], sheen[2], sheen[3], (sheen[4] or 1) * 0.6)
 		love.graphics.setLineWidth(1.4)
 		love.graphics.line(-radius * 0.22, -radius * 0.72, -radius * 0.05, -radius * 0.2)
 		love.graphics.line(radius * 0.22, radius * 0.72, radius * 0.05, radius * 0.2)
 
-		local rim = lightenColor(detail, 0.32)
+                local rim = lightenColor(detail, 0.32, ICON_COLOR_RIM)
 		love.graphics.setColor(rim[1], rim[2], rim[3], rim[4] or 1)
 		love.graphics.setLineWidth(2.2)
 		love.graphics.polygon(
@@ -1449,7 +1462,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 			baseHalfWidth, baseHeight
 		)
 
-		local seam = darkenColor(detail, 0.25)
+                local seam = darkenColor(detail, 0.25, ICON_COLOR_SEAM)
 		love.graphics.setColor(seam[1], seam[2], seam[3], (seam[4] or 1) * 0.9)
 		love.graphics.setLineWidth(1.5)
 		love.graphics.line(-baseHalfWidth, -baseHeight, baseHalfWidth, -baseHeight)
@@ -1469,8 +1482,10 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 	end
 
 	if overlay and overlay.text then
-		local background = overlay.backgroundColor or {0, 0, 0, 0.78}
-		local borderColor = overlay.borderColor or lightenColor(accent, 0.35)
+                local overlayBackground = lightenColor(accent, 0.1, ICON_OVERLAY_BACKGROUND)
+                overlayBackground[4] = 0.92
+                local background = overlay.backgroundColor or overlayBackground
+                local borderColor = overlay.borderColor or lightenColor(accent, 0.35, ICON_COLOR_OUTLINE)
 		local fontKey = overlay.font or "small"
 		local paddingX = overlay.paddingX or 6
 		local paddingY = overlay.paddingY or 2
@@ -1515,7 +1530,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.setLineWidth(1)
 		love.graphics.rectangle("line", boxX, boxY, boxWidth, boxHeight, cornerRadius, cornerRadius)
 
-		local textColor = overlay.textColor or {1, 1, 1, 1}
+                local textColor = overlay.textColor or ICON_OVERLAY_TEXT_DEFAULT
 		love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
 		local textY = boxY + (boxHeight - font:getHeight()) * 0.5
 		love.graphics.printf(text, boxX, textY, boxWidth, "center")
@@ -1526,6 +1541,10 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 
 	love.graphics.pop()
 end
+
+local SHIELD_ACCENT_READY = {0.55, 0.82, 1.0, 1.0}
+local SHIELD_ACCENT_DEPLETED = {1.0, 0.55, 0.45, 1.0}
+local SHIELD_OVERLAY_BACKGROUND = {0, 0, 0, 0.92}
 
 local function buildShieldIndicator(self)
 	local shields = self.shields
@@ -1544,16 +1563,16 @@ local function buildShieldIndicator(self)
 
 	local label = Localization:get("upgrades.hud.shields")
 
-	local accent = {0.55, 0.82, 1.0, 1.0}
-	local statusKey = "ready"
+        local accent = SHIELD_ACCENT_READY
+        local statusKey = "ready"
 
-	if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
-		accent = {1.0, 0.55, 0.45, 1.0}
-		statusKey = "depleted"
-	end
+        if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
+                accent = SHIELD_ACCENT_DEPLETED
+                statusKey = "depleted"
+        end
 
-	local overlayBackground = lightenColor(accent, 0.1)
-	overlayBackground[4] = 0.92
+        local overlayBackground = lightenColor(accent, 0.1, SHIELD_OVERLAY_BACKGROUND)
+        overlayBackground[4] = 0.92
 
 	local status
 	if statusKey ~= "ready" then
@@ -1579,6 +1598,9 @@ local function buildShieldIndicator(self)
 		visibility = 1,
 	}
 end
+
+local UPGRADE_BAR_FILL_COLOR = {0, 0, 0, 1}
+local UPGRADE_BAR_OUTLINE_COLOR = {0, 0, 0, 1}
 
 function UI:drawUpgradeIndicators()
 	local container = self.upgradeIndicators
@@ -1633,7 +1655,7 @@ function UI:drawUpgradeIndicators()
 
 	for _, entry in ipairs(entries) do
 		local visibility = clamp01(entry.visibility or 1)
-                local accent = entry.accentColor or Theme.panelBorder or {1, 1, 1, 1}
+                local accent = entry.accentColor or Theme.panelBorder or ICON_ACCENT_DEFAULT
 		local hasBar = entry.showBar and entry.displayProgress ~= nil
 		local panelHeight = baseHeight + (hasBar and 8 or 0)
 
@@ -1704,11 +1726,11 @@ function UI:drawUpgradeIndicators()
 			love.graphics.setColor(0, 0, 0, 0.28 * visibility)
 			love.graphics.rectangle("fill", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
 
-			local fill = lightenColor(accent, 0.05)
+                        local fill = lightenColor(accent, 0.05, UPGRADE_BAR_FILL_COLOR)
 			love.graphics.setColor(fill[1], fill[2], fill[3], (fill[4] or 1) * 0.85 * visibility)
 			love.graphics.rectangle("fill", barX, barY, iconBarWidth * progress, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
 
-			local outline = lightenColor(accent, 0.3)
+                        local outline = lightenColor(accent, 0.3, UPGRADE_BAR_OUTLINE_COLOR)
 			love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1) * 0.9 * visibility)
 			love.graphics.setLineWidth(1)
 			love.graphics.rectangle("line", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
@@ -1732,6 +1754,10 @@ function UI:drawUpgradeIndicators()
 	end
 end
 
+
+local SOCKET_FILL_COLOR = {0, 0, 0, 1}
+local SOCKET_OUTLINE_COLOR = {0, 0, 0, 1}
+local FRUIT_HIGHLIGHT_COLOR = {0, 0, 0, 1}
 
 function UI:drawFruitSockets()
 	if self.fruitRequired <= 0 then
@@ -1804,8 +1830,8 @@ function UI:drawFruitSockets()
 
     local time = Timer.getTime()
         local socketRadius = (self.socketSize / 2) - 2
-        local socketFill = lightenColor(basePanelColor, 0.45)
-        local socketOutline = lightenColor(UI.colors.panelBorder or Theme.textColor, 0.2)
+        local socketFill = lightenColor(basePanelColor, 0.45, SOCKET_FILL_COLOR)
+        local socketOutline = lightenColor(UI.colors.panelBorder or Theme.textColor, 0.2, SOCKET_OUTLINE_COLOR)
 
 	local highlightColor = (UI.colors and UI.colors.highlight) or Theme.highlightColor or {1, 1, 1, 0.08}
 
@@ -1898,7 +1924,7 @@ function UI:drawFruitSockets()
 			love.graphics.circle("line", 0, 0, r, 32)
 
 			-- juicy highlight
-			local highlightColor = lightenColor(fruit.color, 0.6)
+                        local highlightColor = lightenColor(fruit.color, 0.6, FRUIT_HIGHLIGHT_COLOR)
 			local highlightAlpha = (highlightColor[4] or 1) * 0.75 * visibility
 			love.graphics.push()
 			love.graphics.translate(-r * 0.3 + 1, -r * 0.35)
