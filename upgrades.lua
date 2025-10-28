@@ -460,8 +460,12 @@ local function pushNearbyRocks(originCol, originRow, positions)
                                                         lift = 12,
                                                 })
 
-                                                rock.col = targetCol
-                                                rock.row = targetRow
+                                                if Rocks.updateCell then
+                                                        Rocks:updateCell(rock, targetCol, targetRow)
+                                                else
+                                                        rock.col = targetCol
+                                                        rock.row = targetRow
+                                                end
                                                 rock.x = centerX
                                                 rock.y = centerY
                                                 rock.timer = 0

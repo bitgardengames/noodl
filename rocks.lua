@@ -12,11 +12,14 @@ local min = math.min
 local pi = math.pi
 local insert = table.insert
 local sin = math.sin
+local abs = math.abs
 
 local rockRng = love.math.newRandomGenerator()
 
 local Rocks = {}
 local current = {}
+local rockLookup = {}
+local lookupHasEntries = false
 
 Rocks.spawnChance = 0.25
 Rocks.shatterOnFruit = 0
@@ -164,10 +167,53 @@ local function getUpgradesModule()
 	return package.loaded["upgrades"]
 end
 
+local function ensureLookupEntry(rock, col, row)
+        if not (rock and col and row) then
+                return
+        end
+
+        local column = rockLookup[col]
+        if not column then
+                column = {}
+                rockLookup[col] = column
+        end
+
+        column[row] = rock
+        lookupHasEntries = true
+end
+
+local function removeLookupEntry(rock)
+        if not rock then
+                return
+        end
+
+        local col, row = rock.col, rock.row
+        if not (col and row) then
+                return
+        end
+
+        local column = rockLookup[col]
+        if not column then
+                return
+        end
+
+        if column[row] == rock then
+                column[row] = nil
+
+                if not next(column) then
+                        rockLookup[col] = nil
+                end
+
+                if not next(rockLookup) then
+                        lookupHasEntries = false
+                end
+        end
+end
+
 function Rocks:spawn(x, y)
-	local col, row = Arena:getTileFromWorld(x, y)
-	insert(current, {
-		x = x,
+        local col, row = Arena:getTileFromWorld(x, y)
+        insert(current, {
+                x = x,
 		y = y,
 		w = ROCK_SIZE,
 		h = ROCK_SIZE,
@@ -177,12 +223,14 @@ function Rocks:spawn(x, y)
 		scaleY = 0,
 		offsetY = -40,
 		shape = nil,
-		col = col,
-		row = row,
-	})
-	local rock = current[#current]
-	rock.shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999))
-	rock.highlightShape = buildRockHighlight(rock.shape)
+                col = col,
+                row = row,
+        })
+        local rock = current[#current]
+        rock.shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999))
+        rock.highlightShape = buildRockHighlight(rock.shape)
+
+        ensureLookupEntry(rock, col, row)
 end
 
 function Rocks:getAll()
@@ -190,24 +238,27 @@ function Rocks:getAll()
 end
 
 local function releaseOccupancy(rock)
-	if not rock then return end
-	local col, row = rock.col, rock.row
-	if not col or not row then
-		col, row = Arena:getTileFromWorld(rock.x or 0, rock.y or 0)
-	end
-	if col and row then
+        if not rock then return end
+        removeLookupEntry(rock)
+        local col, row = rock.col, rock.row
+        if not col or not row then
+                col, row = Arena:getTileFromWorld(rock.x or 0, rock.y or 0)
+        end
+        if col and row then
 		SnakeUtils.setOccupied(col, row, false)
 	end
 end
 
 function Rocks:reset()
-	for _, rock in ipairs(current) do
-		releaseOccupancy(rock)
-	end
-	current = {}
-	self.spawnChance = 0.25
-	self.shatterOnFruit = 0
-	self.shatterProgress = 0
+        for _, rock in ipairs(current) do
+                releaseOccupancy(rock)
+        end
+        current = {}
+        rockLookup = {}
+        lookupHasEntries = false
+        self.spawnChance = 0.25
+        self.shatterOnFruit = 0
+        self.shatterProgress = 0
 end
 
 local function spawnShatterFX(x, y)
@@ -250,18 +301,71 @@ local function spawnShatterFX(x, y)
 end
 
 local function removeRockAt(index, spawnFX)
-	if not index then return nil end
+        if not index then return nil end
 
-	local rock = table.remove(current, index)
-	if not rock then return nil end
+        local rock = table.remove(current, index)
+        if not rock then return nil end
 
-	releaseOccupancy(rock)
+        releaseOccupancy(rock)
 
-	if spawnFX ~= false then
-		spawnShatterFX(rock.x, rock.y)
-	end
+        if spawnFX ~= false then
+                spawnShatterFX(rock.x, rock.y)
+        end
 
 	return rock
+end
+
+function Rocks:updateCell(rock, col, row)
+        if not rock then
+                return
+        end
+
+        removeLookupEntry(rock)
+
+        rock.col = col
+        rock.row = row
+
+        ensureLookupEntry(rock, col, row)
+end
+
+function Rocks:hasCellLookup()
+        return lookupHasEntries
+end
+
+function Rocks:getNearby(col, row, radius)
+        local results = {}
+
+        if not (col and row) then
+                return results
+        end
+
+        radius = radius or 1
+
+        if not lookupHasEntries then
+                for _, rock in ipairs(current) do
+                        local rockCol, rockRow = rock.col, rock.row
+                        if rockCol and rockRow then
+                                if abs(rockCol - col) <= radius and abs(rockRow - row) <= radius then
+                                        results[#results + 1] = rock
+                                end
+                        end
+                end
+                return results
+        end
+
+        for c = col - radius, col + radius do
+                local column = rockLookup[c]
+                if column then
+                        for r = row - radius, row + radius do
+                                local rock = column[r]
+                                if rock then
+                                        results[#results + 1] = rock
+                                end
+                        end
+                end
+        end
+
+        return results
 end
 
 function Rocks:destroy(target, opts)
