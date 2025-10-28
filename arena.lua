@@ -951,9 +951,21 @@ function Arena:rebuildTileDecorations()
 	local decorations = {}
 	local occupied = {}
 	local safeZone = self._spawnDebugData and self._spawnDebugData.safeZone
+	local safeZoneMap = nil
 
 	local function cellKey(col, row)
 		return (row - 1) * cols + col
+	end
+
+	if safeZone then
+		safeZoneMap = {}
+		for index = 1, #safeZone do
+			local cell = safeZone[index]
+			local cellCol, cellRow = cell[1], cell[2]
+			if cellCol and cellRow then
+				safeZoneMap[cellKey(cellCol, cellRow)] = true
+			end
+		end
 	end
 
 	local function isOccupied(col, row)
@@ -1020,7 +1032,7 @@ function Arena:rebuildTileDecorations()
 	for row = 1, rows do
 		for col = 1, cols do
 			if not isOccupied(col, row) and rng:random() < clusterChance then
-				if safeZone and isTileInSafeZone(safeZone, col, row) then
+				if safeZoneMap and safeZoneMap[cellKey(col, row)] then
 					occupy(col, row)
 				else
 					local clusterColor = makeClusterColor()
@@ -1038,7 +1050,7 @@ function Arena:rebuildTileDecorations()
 						local nextRow = baseCell.row + dir[2]
 
 						if nextCol >= 1 and nextCol <= cols and nextRow >= 1 and nextRow <= rows then
-							if not isOccupied(nextCol, nextRow) and not (safeZone and isTileInSafeZone(safeZone, nextCol, nextRow)) then
+							if not isOccupied(nextCol, nextRow) and not (safeZoneMap and safeZoneMap[cellKey(nextCol, nextRow)]) then
 								occupy(nextCol, nextRow)
 								clusterCells[#clusterCells + 1] = {col = nextCol, row = nextRow}
 							end
@@ -1058,6 +1070,13 @@ function Arena:rebuildTileDecorations()
 	end
 
 	self._tileDecorations = decorations
+
+	if safeZoneMap then
+		for key in pairs(safeZoneMap) do
+			safeZoneMap[key] = nil
+		end
+		safeZoneMap = nil
+	end
 
 end
 
