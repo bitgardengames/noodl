@@ -818,7 +818,10 @@ function Movement:update(dt)
                 end
 
                 if Snake.checkLaserBodyCollision then
-                        Snake:checkLaserBodyCollision()
+                        local emitterCount = Lasers and Lasers.getEmitterCount and Lasers:getEmitterCount() or 0
+                        if emitterCount > 0 then
+                                Snake:checkLaserBodyCollision()
+                        end
                 end
 
                 if Snake.checkSawBodyCollision then
