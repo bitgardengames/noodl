@@ -26,6 +26,9 @@ local DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT = 264, 344
 
 Shop._backgroundCanvases = Shop._backgroundCanvases or {}
 
+local rarityBorderAlpha
+local rarityStyles
+
 local function getLocalizationRevision()
         if Localization and Localization.getRevision then
                 return Localization:getRevision()
@@ -729,9 +732,9 @@ function Shop:update(dt)
         end
 end
 
-local rarityBorderAlpha = 0.85
+rarityBorderAlpha = 0.85
 
-local rarityStyles = {
+rarityStyles = {
         common = {
                 base = {0.20, 0.23, 0.28, 1},
                 shadowAlpha = 0.18,
