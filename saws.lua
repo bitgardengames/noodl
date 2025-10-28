@@ -740,29 +740,56 @@ function Saws:draw()
 
                                 local shadowBaseX = (px or anchorX)
                                 local shadowBaseY = (py or anchorY)
+                                local shadowSinkOffset = offsetY
+                                local applyShadowClip = false
 
-                                if offsetX > 0 then
-                                        shadowBaseX = shadowBaseX + offsetX
+                                if saw.dir == "horizontal" then
+                                        -- When the saw sinks into the track, the shadow should shrink upwards
+                                        -- instead of following the blade down. Move the base upward based on the
+                                        -- sink progress so the clipped result visually tightens towards the slot.
+                                        shadowSinkOffset = SINK_OFFSET - sinkOffset
+                                        local trackTop = anchorY - 5
+                                        local trackWidth = TRACK_LENGTH + outer * 2
+
+                                        love.graphics.stencil(function()
+                                                love.graphics.rectangle(
+                                                        "fill",
+                                                        anchorX - TRACK_LENGTH / 2 - outer,
+                                                        trackTop,
+                                                        trackWidth,
+                                                        STENCIL_EXTENT
+                                                )
+                                        end, "replace", 1)
+                                        love.graphics.setStencilTest("equal", 1)
+                                        applyShadowClip = true
+                                else
+                                        if offsetX > 0 then
+                                                shadowBaseX = shadowBaseX + offsetX
+                                        end
                                 end
 
-                                if offsetY > 0 then
-                                        shadowBaseY = shadowBaseY + offsetY
+                                if shadowSinkOffset and shadowSinkOffset ~= 0 then
+                                        shadowBaseY = shadowBaseY + shadowSinkOffset
                                 end
 
                                 local shadowOffsetX = SHADOW_OFFSET
                                 local shadowOffsetY = SHADOW_OFFSET
 
                                 love.graphics.translate(shadowBaseX + shadowOffsetX, shadowBaseY + shadowOffsetY)
-				love.graphics.rotate(rotation)
-				love.graphics.scale(sinkScale, sinkScale)
+                                love.graphics.rotate(rotation)
+                                love.graphics.scale(sinkScale, sinkScale)
 
                                 local alpha = SHADOW_ALPHA * (1 - 0.4 * sinkVisualProgress)
-				love.graphics.setColor(0, 0, 0, alpha)
-				love.graphics.polygon("fill", points)
+                                love.graphics.setColor(0, 0, 0, alpha)
+                                love.graphics.polygon("fill", points)
 
-				love.graphics.pop()
-			end)
-		end
+                                if applyShadowClip then
+                                        love.graphics.setStencilTest()
+                                end
+
+                                love.graphics.pop()
+                        end)
+                end
 
 		-- Stencil: clip saw into the track (adjust direction for left/right mounted saws)
                 sawStencilState.dir = saw.dir
