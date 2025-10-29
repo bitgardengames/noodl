@@ -1059,7 +1059,11 @@ local function drawSnakeStroke(path, radius, options)
 			local x, y = path[1], path[2]
 			love.graphics.rectangle("fill", x - radius, y - radius, radius * 2, radius * 2)
 		else
-			love.graphics.circle("fill", path[1], path[2], radius)
+			local skipStartCap = options and options.flatStartCap
+			local skipEndCap = options and options.flatEndCap
+			if not (skipStartCap or skipEndCap) then
+				love.graphics.circle("fill", path[1], path[2], radius)
+			end
 		end
 		return
 	end
@@ -1071,12 +1075,14 @@ local function drawSnakeStroke(path, radius, options)
 	local lastX, lastY = path[#path - 1], path[#path]
 
 	local useRoundCaps = not (options and options.sharpCorners)
+	local skipStartCap = options and options.flatStartCap
+	local skipEndCap = options and options.flatEndCap
 
-	if firstX and firstY and useRoundCaps then
+	if firstX and firstY and useRoundCaps and not skipStartCap then
 		love.graphics.circle("fill", firstX, firstY, radius)
 	end
 
-	if lastX and lastY and useRoundCaps then
+	if lastX and lastY and useRoundCaps and not skipEndCap then
 		love.graphics.circle("fill", lastX, lastY, radius)
 	end
 
@@ -1305,10 +1311,17 @@ drawTrailSegmentToCanvas = function(trail, half, options, paletteOverride, coord
 	local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
 
 	love.graphics.push("all")
+	local skipStartCap = options and options.flatStartCap
+	local skipEndCap = options and options.flatEndCap
+
 	love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
-	love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+	if not (skipStartCap or skipEndCap) then
+		love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+	end
 	love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
-	love.graphics.circle("fill", hx, hy, half)
+	if not (skipStartCap or skipEndCap) then
+		love.graphics.circle("fill", hx, hy, half)
+	end
 	love.graphics.pop()
 end
 
