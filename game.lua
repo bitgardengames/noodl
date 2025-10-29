@@ -1105,7 +1105,6 @@ function Game:updateDescending(dt)
 end
 
 function Game:updateGameplay(dt)
-	local fruitX, fruitY = Fruit:getDrawPosition()
 
 	if Upgrades and Upgrades.recordFloorReplaySnapshot then
 		Upgrades:recordFloorReplaySnapshot(self)
@@ -1141,8 +1140,9 @@ function Game:updateGameplay(dt)
 		return
 	end
 
-	if moveResult == "scored" then
-		FruitEvents.handleConsumption(fruitX, fruitY)
+        if moveResult == "scored" then
+                local fruitX, fruitY = Fruit:getDrawPosition()
+                FruitEvents.handleConsumption(fruitX, fruitY)
 
 		local goalReached = UI:isGoalReached()
 		if goalReached then
