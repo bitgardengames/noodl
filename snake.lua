@@ -3729,12 +3729,26 @@ local function chopTailLossAmount()
 end
 
 function Snake:chopTailByHazard(cause)
-	local loss = chopTailLossAmount()
-	if loss <= 0 then
-		return 0
-	end
+        local loss = chopTailLossAmount()
+        if loss <= 0 then
+                return 0
+        end
 
-	return self:loseSegments(loss, {cause = cause or "saw"})
+        local hazardCause = cause or "saw"
+        local trimmed = self:loseSegments(loss, {cause = hazardCause})
+
+        if trimmed > 0 then
+                local Game = package.loaded["game"]
+                if Game then
+                        if Game.triggerTailChopShake then
+                                Game:triggerTailChopShake(hazardCause)
+                        elseif Game.triggerScreenShake then
+                                Game:triggerScreenShake(0.16)
+                        end
+                end
+        end
+
+        return trimmed
 end
 
 function Snake:chopTailBySaw()
