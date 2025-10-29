@@ -46,6 +46,8 @@ local cellKeyStride = 0
 local segmentPool = {}
 local segmentPoolCount = 0
 
+local newHeadSegments = {}
+
 local headCellBuffer = {}
 local snakeBodyOccupancy = {}
 
@@ -3172,6 +3174,8 @@ function Snake:update(dt)
 
 	local remaining = dist
 	local prevX, prevY = head.drawX, head.drawY
+	local buffer = newHeadSegments
+	local bufferCount = 0
 
 	while remaining >= SAMPLE_STEP do
 		prevX = prevX + nx * SAMPLE_STEP
@@ -3184,8 +3188,38 @@ function Snake:update(dt)
 		segment.fruitMarker = nil
 		segment.fruitMarkerX = nil
 		segment.fruitMarkerY = nil
-		insert(trail, 1, segment)
+		bufferCount = bufferCount + 1
+		buffer[bufferCount] = segment
 		remaining = remaining - SAMPLE_STEP
+	end
+
+	if bufferCount > 0 then
+		local existingCount = #trail
+		if existingCount > 0 then
+			for i = existingCount, 1, -1 do
+				trail[i + bufferCount] = trail[i]
+			end
+		end
+
+		for i = bufferCount, 1, -1 do
+			local destIndex = bufferCount - i + 1
+			trail[destIndex] = buffer[i]
+			buffer[i] = nil
+		end
+
+		local cleanupIndex = bufferCount + 1
+		while buffer[cleanupIndex] ~= nil do
+			buffer[cleanupIndex] = nil
+			cleanupIndex = cleanupIndex + 1
+		end
+
+		head = trail[1]
+	else
+		local cleanupIndex = 1
+		while buffer[cleanupIndex] ~= nil do
+			buffer[cleanupIndex] = nil
+			cleanupIndex = cleanupIndex + 1
+		end
 	end
 
 	-- final correction: put true head at exact new position
