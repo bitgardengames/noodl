@@ -16,8 +16,8 @@ local english = {
 		menu = {
 			start_game = "Start Game",
 			settings = "Settings",
-                        achievements = "Achievements",
-                        progression = "Progression",
+						achievements = "Achievements",
+						progression = "Progression",
 			quit = "Quit",
 			version = "v1.0.0",
 			title_word = "noodl",
@@ -155,36 +155,36 @@ local english = {
 					progress = "Harvests: ${current}/${goal} (Fruit: ${apples}, Combos: ${combos})",
 					complete = "Combo harvest complete! ${current} powerful bursts.",
 				},
-                                shielded_marathon = {
-                                        title = "Shielded Marathon",
-                                        description = "Trigger ${target_shields} emergency shields and slither ${target_tiles} tiles in one run.",
-                                        progress = "Conditions: ${current}/${goal} (Saves: ${shields}/${target_shields}, Tiles: ${tiles}/${target_tiles})",
-                                        complete = "Endurance secured! Both shield and distance goals met.",
-                                },
+								shielded_marathon = {
+										title = "Shielded Marathon",
+										description = "Trigger ${target_shields} emergency shields and slither ${target_tiles} tiles in one run.",
+										progress = "Conditions: ${current}/${goal} (Saves: ${shields}/${target_shields}, Tiles: ${tiles}/${target_tiles})",
+										complete = "Endurance secured! Both shield and distance goals met.",
+								},
 				fruit_rush = {
 					title = "Fruit Rush",
 					description = "Keep an apple pace of ${pace} per minute in a single run.",
 					progress = "Current pace: ${pace}/${goal} (Apples: ${apples}, Minutes: ${minutes})",
 					complete = "Fruit frenzy! Pace reached ${pace} per minute.",
 				},
-                                combo_courier = {
-                                        title = "Combo Courier",
-                                        description = "Trigger ${combo_goal} combos while clearing ${floor_goal} floors in one run.",
-                                        progress = "Conditions: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Floors: ${floors}/${floor_goal})",
-                                        complete = "Delivery complete! ${combos} combos and ${floors} floors cleared.",
-                                },
+								combo_courier = {
+										title = "Combo Courier",
+										description = "Trigger ${combo_goal} combos while clearing ${floor_goal} floors in one run.",
+										progress = "Conditions: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Floors: ${floors}/${floor_goal})",
+										complete = "Delivery complete! ${combos} combos and ${floors} floors cleared.",
+								},
 				combo_dash = {
 					title = "Combo Dash",
 					description = "Trigger ${combo_goal} combos within ${time_goal} in a single run.",
 					progress = "Status: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Time: ${time}/${time_goal})",
 					complete = "Dash complete! ${combos} combos in ${time}.",
 				},
-                                fruit_frenzy = {
-                                        title = "Fruit Frenzy",
-                                        description = "Chomp ${target_apples} apples within ${target_time}.",
-                                        progress = "Apples: ${apples}/${target_apples}, Time: ${time}/${target_time}",
-                                        complete = "Frenzy fulfilled! Devoured ${target_apples} apples in time.",
-                                },
+								fruit_frenzy = {
+										title = "Fruit Frenzy",
+										description = "Chomp ${target_apples} apples within ${target_time}.",
+										progress = "Apples: ${apples}/${target_apples}, Time: ${time}/${target_time}",
+										complete = "Frenzy fulfilled! Devoured ${target_apples} apples in time.",
+								},
 				momentum_master = {
 					title = "Momentum Master",
 					description = "Stack ${goal} momentum surges of ${fruit_chunk} fruit and ${tile_chunk} tiles without slowing.",
@@ -371,15 +371,15 @@ local english = {
 			play_again = "Play Again",
 			view_run_summary = "Continue",
 			quit_to_menu = "Quit to Menu",
-                        meta_progress_title = "Run Summary",
-                        meta_progress_gain = "You earned ${points} XP from ${fruit}.",
-                        meta_progress_gain_no_fruit = "You earned ${points} XP this run.",
-                        meta_progress_gain_none = "You didn't earn any XP this run.",
-                        meta_progress_gain_short = "+${points} XP",
-                        meta_progress_unlock_overlay_title = "New upgrade unlocked!",
-                        meta_progress_unlock_overlay_continue = "Press any key to continue",
-                        meta_progress_fruit_singular = "1 fruit",
-                        meta_progress_fruit_plural = "${count} fruit",
+						meta_progress_title = "Run Summary",
+						meta_progress_gain = "You earned ${points} XP from ${fruit}.",
+						meta_progress_gain_no_fruit = "You earned ${points} XP this run.",
+						meta_progress_gain_none = "You didn't earn any XP this run.",
+						meta_progress_gain_short = "+${points} XP",
+						meta_progress_unlock_overlay_title = "New upgrade unlocked!",
+						meta_progress_unlock_overlay_continue = "Press any key to continue",
+						meta_progress_fruit_singular = "1 fruit",
+						meta_progress_fruit_plural = "${count} fruit",
 			meta_progress_bonus = "Bonus XP: +${bonus}",
 			meta_progress_level_label = "Level ${level}",
 			meta_progress_total_summary_next = "Total XP: ${total} (${remaining} XP to next level)",
@@ -411,7 +411,7 @@ local english = {
 					"Note to self: bricks don’t move.",
 					"Snake discovered geometry… fatally.",
 					"That’s not an exit.",
-                                        "Turns out walls don’t taste like fruit.",
+										"Turns out walls don’t taste like fruit.",
 					"Ever heard of brakes?",
 					"Snake tried parkour. Failed.",
 				},
@@ -481,15 +481,15 @@ local english = {
 				seconds = "${seconds}s",
 				progress = "${current} / ${target}",
 			},
-                        serpents_reflex = {
-                                name = "Serpent’s Reflex",
-                                description = "Snake moves 4% faster.",
-                        },
-                        quick_fangs = {
-                                name = "Quick Fangs",
-                                description = "Snake moves 10% faster.",
-                                combo_celebration = "Fang Rush",
-                        },
+						serpents_reflex = {
+								name = "Serpent’s Reflex",
+								description = "Snake moves 4% faster.",
+						},
+						quick_fangs = {
+								name = "Quick Fangs",
+								description = "Snake moves 10% faster.",
+								combo_celebration = "Fang Rush",
+						},
 			stone_skin = {
 				name = "Stone Skin",
 				description = "Gain a shield that shatters rocks and shrugs off a saw or laser hit.",
@@ -497,7 +497,7 @@ local english = {
 			},
 			aegis_recycler = {
 				name = "Shield Recycler",
-                                description = "Every three broken shields forge a fresh one.",
+								description = "Every three broken shields forge a fresh one.",
 				reforged = "Shield Reforged",
 			},
 			amber_bloom = {
@@ -535,87 +535,87 @@ local english = {
 				saws_text = "Sparse Saws",
 				lasers_text = "Scattered Lasers",
 			},
-                        molting_reflex = {
-                                name = "Molting Reflex",
-                                description = "Shields trigger a 60% adrenaline surge.",
-                        },
-                        mystery_card = {
-                                name = "Mystery Card",
-                                description = "Select to reveal a surprise upgrade effect.",
-                                outcomes = {
-                                        shield_cache = {
-                                                name = "Shield Cache",
-                                                description = "Gain 2 shields immediately.",
-                                                toast = "Shield Cache",
-                                        },
-                                        velocity_bloom = {
-                                                name = "Velocity Bloom",
-                                                description = "Snake moves 12% faster.",
-                                                toast = "Velocity Bloom",
-                                        },
-                                        market_portent = {
-                                                name = "Market Portent",
-                                                description = "Shops offer +1 additional card.",
-                                                toast = "Market Portent",
-                                        },
-                                        shortcut_map = {
-                                                name = "Shortcut Map",
-                                                description = "The next exit unlocks after one fewer fruit.",
-                                                toast = "Shortcut Map",
-                                        },
-                                },
-                        },
-                        circuit_breaker = {
-                                name = "Circuit Breaker",
-                                description = "Saw tracks and lasers freeze for 0.75s after each fruit.",
-                        },
-                        tremor_bloom = {
-                                name = "Tremor Bloom",
-                                description = "Each time you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",
-                                activation_text = "Shockwave Bloom",
-                        },
-                        volatile_bloom = {
-                                name = "Volatile Bloom",
-                                description = "After every fruit, plant an unstable charge on the tile you just vacated. After a brief fuse it explodes, breaking nearby rocks and saws while granting shield and combo progress for each hazard caught in the blast.",
-                                activation_text = "Volatile Bloom",
-                        },
-                        contract_of_cinders = {
-                                name = "Contract of Cinders",
-                                description = "Gain +2 shields immediately. Each time a shield breaks, leave behind a burning ember that spawns a saw on the next floor.",
-                        },
-                        sawblade_sinkhole = {
-                                name = "Sawblade Sinkhole",
-                                description = "After each fruit, saws sink beneath their tracks for 1.6s.",
-                                activation_text = "",
+						molting_reflex = {
+								name = "Molting Reflex",
+								description = "Shields trigger a 60% adrenaline surge.",
+						},
+						mystery_card = {
+								name = "Mystery Card",
+								description = "Select to reveal a surprise upgrade effect.",
+								outcomes = {
+										shield_cache = {
+												name = "Shield Cache",
+												description = "Gain 2 shields immediately.",
+												toast = "Shield Cache",
+										},
+										velocity_bloom = {
+												name = "Velocity Bloom",
+												description = "Snake moves 12% faster.",
+												toast = "Velocity Bloom",
+										},
+										market_portent = {
+												name = "Market Portent",
+												description = "Shops offer +1 additional card.",
+												toast = "Market Portent",
+										},
+										shortcut_map = {
+												name = "Shortcut Map",
+												description = "The next exit unlocks after one fewer fruit.",
+												toast = "Shortcut Map",
+										},
+								},
+						},
+						circuit_breaker = {
+								name = "Circuit Breaker",
+								description = "Saw tracks and lasers freeze for 0.75s after each fruit.",
+						},
+						tremor_bloom = {
+								name = "Tremor Bloom",
+								description = "Each time you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",
+								activation_text = "Shockwave Bloom",
+						},
+						volatile_bloom = {
+								name = "Volatile Bloom",
+								description = "After every fruit, plant an unstable charge on the tile you just vacated. After a brief fuse it explodes, breaking nearby rocks and saws while granting shield and combo progress for each hazard caught in the blast.",
+								activation_text = "Volatile Bloom",
+						},
+						contract_of_cinders = {
+								name = "Contract of Cinders",
+								description = "Gain +2 shields immediately. Each time a shield breaks, leave behind a burning ember that spawns a saw on the next floor.",
+						},
+						sawblade_sinkhole = {
+								name = "Sawblade Sinkhole",
+								description = "After each fruit, saws sink beneath their tracks for 1.6s.",
+								activation_text = "",
 			},
-                        resonant_shell = {
-                                name = "Resonant Shell",
-                                description = "For each of the first 5 Defense upgrades you own, saws travel 8% slower (down to 55% speed) and lasers take +0.08s longer to charge.",
-                        },
-                        caravan_contract = {
-                                name = "Caravan Contract",
-                                description = "Shops offer +1 card.",
-                        },
-                        golden_debt = {
-                                name = "Golden Debt",
-                                description = "Shops offer +1 additional card each floor. Each card you purchase permanently increases the fruit goal to unlock the next exit by +1.",
-                        },
-                        gilded_obsession = {
-                                name = "Gilded Obsession",
-                                description = "Shops always contain a guaranteed Rare card. Each Rare purchase leaves a radiant laser or saw waiting on the next floor.",
-                        },
-                        gluttons_wake = {
-                                name = "Glutton's Wake",
-                                description = "Fruit award double score, but each one crystallizes into a rock when it leaves your tail.",
-                        },
-                        grand_bazaar = {
-                                name = "Grand Bazaar",
-                                description = "Shops now stock only Uncommon or higher cards. One slot in every shop is always a Rare.",
-                        },
-                        verdant_bonds = {
-                                name = "Verdant Bonds",
-                                description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a shield.",
-                        },
+						resonant_shell = {
+								name = "Resonant Shell",
+								description = "For each of the first 5 Defense upgrades you own, saws travel 8% slower (down to 55% speed) and lasers take +0.08s longer to charge.",
+						},
+						caravan_contract = {
+								name = "Caravan Contract",
+								description = "Shops offer +1 card.",
+						},
+						golden_debt = {
+								name = "Golden Debt",
+								description = "Shops offer +1 additional card each floor. Each card you purchase permanently increases the fruit goal to unlock the next exit by +1.",
+						},
+						gilded_obsession = {
+								name = "Gilded Obsession",
+								description = "Shops always contain a guaranteed Rare card. Each Rare purchase leaves a radiant laser or saw waiting on the next floor.",
+						},
+						gluttons_wake = {
+								name = "Glutton's Wake",
+								description = "Fruit award double score, but each one crystallizes into a rock when it leaves your tail.",
+						},
+						grand_bazaar = {
+								name = "Grand Bazaar",
+								description = "Shops now stock only Uncommon or higher cards. One slot in every shop is always a Rare.",
+						},
+						verdant_bonds = {
+								name = "Verdant Bonds",
+								description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a shield.",
+						},
 			fresh_supplies = {
 				name = "Fresh Supplies",
 				description = "Discard the current shop cards and restock with new ones.",
@@ -632,9 +632,9 @@ local english = {
 				name = "Radiant Charter",
 				description = "Each extra shop slot removes 1 laser (minimum 0) and adds 1 saw to floor generation.",
 			},
-                       abyssal_catalyst = {
-                               name = "Abyssal Catalyst",
-                               description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
+						abyssal_catalyst = {
+								name = "Abyssal Catalyst",
+								description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
 			},
 			spectral_harvest = {
 				name = "Spectral Harvest",
@@ -642,16 +642,16 @@ local english = {
 			},
 			tectonic_resolve = {
 				name = "Tectonic Resolve",
-                                description = "Rock spawn chance decreases by 15%. Each fruit has a 20% chance to shatter the nearest rock.",
+								description = "Rock spawn chance decreases by 15%. Each fruit has a 20% chance to shatter the nearest rock.",
 			},
 			titanblood_pact = {
 				name = "Titanblood Pact",
-                                description = "Gain +1 shield, move 5% faster, and gain +1 extra growth per fruit.",
+								description = "Gain +1 shield, move 5% faster, and gain +1 extra growth per fruit.",
 			},
-                        chronospiral_core = {
-                                name = "Chronospiral Core",
-                                description = "Travel speed is 25% slower.",
-                        },
+						chronospiral_core = {
+								name = "Chronospiral Core",
+								description = "Travel speed is 25% slower.",
+						},
 			phoenix_echo = {
 				name = "Phoenix Echo",
 				description = "Once per run, a fatal crash rewinds without resetting the floor.",

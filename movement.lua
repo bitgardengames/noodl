@@ -22,14 +22,14 @@ local Movement = {}
 local MAX_SNAKE_TIME_STEP = 1 / 60
 
 function Movement:applyForcedDirection(dirX, dirY)
-        dirX = dirX or 0
-        dirY = dirY or 0
+		dirX = dirX or 0
+		dirY = dirY or 0
 
-        if dirX == 0 and dirY == 0 then
-                return
-        end
+		if dirX == 0 and dirY == 0 then
+				return
+		end
 
-        Snake:setDirectionVector(dirX, dirY)
+		Snake:setDirectionVector(dirX, dirY)
 end
 
 local SEGMENT_SIZE = 24 -- same size as rocks and snake
@@ -39,105 +39,105 @@ local WALL_GRACE = 0.25
 
 -- Reused particle option tables to avoid recreating identical bursts every frame.
 local PORTAL_ENTRY_BURST_OPTIONS = {
-        count = 18,
-        speed = 120,
-        speedVariance = 80,
-        life = 0.5,
-        size = 5,
-        color = {0.9, 0.75, 0.3, 1},
-        spread = pi * 2,
-        fadeTo = 0.1,
+		count = 18,
+		speed = 120,
+		speedVariance = 80,
+		life = 0.5,
+		size = 5,
+		color = {0.9, 0.75, 0.3, 1},
+		spread = pi * 2,
+		fadeTo = 0.1,
 }
 
 local PORTAL_EXIT_BURST_OPTIONS = {
-        count = 22,
-        speed = 150,
-        speedVariance = 90,
-        life = 0.55,
-        size = 5,
-        color = {1.0, 0.88, 0.4, 1},
-        spread = pi * 2,
-        fadeTo = 0.05,
+		count = 22,
+		speed = 150,
+		speedVariance = 90,
+		life = 0.55,
+		size = 5,
+		color = {1.0, 0.88, 0.4, 1},
+		spread = pi * 2,
+		fadeTo = 0.05,
 }
 
 local WALL_SHIELD_BURST_OPTIONS = {
-        count = 12,
-        speed = 70,
-        speedVariance = 55,
-        life = 0.45,
-        size = 4,
-        color = {0.55, 0.85, 1, 1},
-        spread = pi * 2,
-        angleJitter = pi * 0.75,
-        drag = 3.2,
-        gravity = 180,
-        scaleMin = 0.5,
-        scaleVariance = 0.75,
-        fadeTo = 0,
+		count = 12,
+		speed = 70,
+		speedVariance = 55,
+		life = 0.45,
+		size = 4,
+		color = {0.55, 0.85, 1, 1},
+		spread = pi * 2,
+		angleJitter = pi * 0.75,
+		drag = 3.2,
+		gravity = 180,
+		scaleMin = 0.5,
+		scaleVariance = 0.75,
+		fadeTo = 0,
 }
 
 local ROCK_DASH_BURST_OPTIONS = {
-        count = 10,
-        speed = 120,
-        speedVariance = 70,
-        life = 0.35,
-        size = 4,
-        color = {1.0, 0.78, 0.32, 1},
-        spread = pi * 2,
-        angleJitter = pi * 0.6,
-        drag = 3.0,
-        gravity = 180,
-        scaleMin = 0.5,
-        scaleVariance = 0.6,
-        fadeTo = 0.05,
+		count = 10,
+		speed = 120,
+		speedVariance = 70,
+		life = 0.35,
+		size = 4,
+		color = {1.0, 0.78, 0.32, 1},
+		spread = pi * 2,
+		angleJitter = pi * 0.6,
+		drag = 3.0,
+		gravity = 180,
+		scaleMin = 0.5,
+		scaleVariance = 0.6,
+		fadeTo = 0.05,
 }
 
 local ROCK_SHIELD_BURST_OPTIONS = {
-        count = 8,
-        speed = 40,
-        speedVariance = 36,
-        life = 0.4,
-        size = 3,
-        color = {0.9, 0.8, 0.5, 1},
-        spread = pi * 2,
-        angleJitter = pi * 0.8,
-        drag = 2.8,
-        gravity = 210,
-        scaleMin = 0.55,
-        scaleVariance = 0.5,
-        fadeTo = 0.05,
+		count = 8,
+		speed = 40,
+		speedVariance = 36,
+		life = 0.4,
+		size = 3,
+		color = {0.9, 0.8, 0.5, 1},
+		spread = pi * 2,
+		angleJitter = pi * 0.8,
+		drag = 2.8,
+		gravity = 210,
+		scaleMin = 0.55,
+		scaleVariance = 0.5,
+		fadeTo = 0.05,
 }
 
 local SAW_SHIELD_BURST_OPTIONS = {
-        count = 8,
-        speed = 48,
-        speedVariance = 36,
-        life = 0.32,
-        size = 2.2,
-        color = {1.0, 0.9, 0.45, 1},
-        spread = pi * 2,
-        angleJitter = pi * 0.9,
-        drag = 3.2,
-        gravity = 240,
-        scaleMin = 0.4,
-        scaleVariance = 0.45,
-        fadeTo = 0.05,
+		count = 8,
+		speed = 48,
+		speedVariance = 36,
+		life = 0.32,
+		size = 2.2,
+		color = {1.0, 0.9, 0.45, 1},
+		spread = pi * 2,
+		angleJitter = pi * 0.9,
+		drag = 3.2,
+		gravity = 240,
+		scaleMin = 0.4,
+		scaleVariance = 0.45,
+		fadeTo = 0.05,
 }
 
 local LASER_SHIELD_BURST_OPTIONS = {
-        count = 10,
-        speed = 80,
-        speedVariance = 30,
-        life = 0.25,
-        size = 2.5,
-        color = {1.0, 0.55, 0.25, 1},
-        spread = pi * 2,
-        angleJitter = pi,
-        drag = 3.4,
-        gravity = 120,
-        scaleMin = 0.45,
-        scaleVariance = 0.4,
-        fadeTo = 0,
+		count = 10,
+		speed = 80,
+		speedVariance = 30,
+		life = 0.25,
+		size = 2.5,
+		color = {1.0, 0.55, 0.25, 1},
+		spread = pi * 2,
+		angleJitter = pi,
+		drag = 3.4,
+		gravity = 120,
+		scaleMin = 0.45,
+		scaleVariance = 0.4,
+		fadeTo = 0,
 }
 
 local shieldStatMap = {
@@ -156,11 +156,11 @@ local shieldStatMap = {
 		run = "runShieldSawParries",
 		achievements = {"sawParry"},
 	},
-        laser = {
-                lifetime = "shieldSawParries",
-                run = "runShieldSawParries",
-                achievements = {"sawParry"},
-        },
+		laser = {
+				lifetime = "shieldSawParries",
+				run = "runShieldSawParries",
+				achievements = {"sawParry"},
+		},
 }
 
 local function recordShieldEvent(cause)
@@ -200,8 +200,8 @@ local function rerouteAlongWall(headX, headY)
 	local top = ay + inset
 	local bottom = ay + ah - inset
 
-        local clampedX = max(left, min(right, headX or left))
-        local clampedY = max(top, min(bottom, headY or top))
+		local clampedX = max(left, min(right, headX or left))
+		local clampedY = max(top, min(bottom, headY or top))
 
 	local hitLeft = (headX or clampedX) <= left
 	local hitRight = (headX or clampedX) >= right
@@ -362,59 +362,59 @@ local function portalThroughWall(headX, headY)
 		verticalDist = headY - bottom
 	end
 
-        local entryX = clamp(headX, left, right)
-        local entryY = clamp(headY, top, bottom)
+		local entryX = clamp(headX, left, right)
+		local entryY = clamp(headY, top, bottom)
 
-        local useGrid = Arena.getTileFromWorld and Arena.getCenterOfTile and Arena.cols and Arena.rows
-        local entryPortalX, entryPortalY = entryX, entryY
-        local exitX, exitY
+		local useGrid = Arena.getTileFromWorld and Arena.getCenterOfTile and Arena.cols and Arena.rows
+		local entryPortalX, entryPortalY = entryX, entryY
+		local exitX, exitY
 
-        if useGrid then
-                local entryCol, entryRow = Arena:getTileFromWorld(entryX, entryY)
-                if entryCol and entryRow then
-                        if horizontalDist >= verticalDist then
-                                local exitCol = outLeft and Arena.cols or 1
-                                local exitRow = entryRow
-                                exitX, exitY = Arena:getCenterOfTile(exitCol, exitRow)
-                        else
-                                local exitCol = entryCol
-                                local exitRow = outTop and Arena.rows or 1
-                                exitX, exitY = Arena:getCenterOfTile(exitCol, exitRow)
-                        end
-                end
-        end
+		if useGrid then
+				local entryCol, entryRow = Arena:getTileFromWorld(entryX, entryY)
+				if entryCol and entryRow then
+						if horizontalDist >= verticalDist then
+								local exitCol = outLeft and Arena.cols or 1
+								local exitRow = entryRow
+								exitX, exitY = Arena:getCenterOfTile(exitCol, exitRow)
+						else
+								local exitCol = entryCol
+								local exitRow = outTop and Arena.rows or 1
+								exitX, exitY = Arena:getCenterOfTile(exitCol, exitRow)
+						end
+				end
+		end
 
-        if not (exitX and exitY) then
-                local margin = max(4, math.floor(Arena.tileSize * 0.3))
-                local function insideX(x)
-                        return clamp(x, left + margin, right - margin)
-                end
+		if not (exitX and exitY) then
+				local margin = max(4, math.floor(Arena.tileSize * 0.3))
+				local function insideX(x)
+						return clamp(x, left + margin, right - margin)
+				end
 
-                local function insideY(y)
-                        return clamp(y, top + margin, bottom - margin)
-                end
+				local function insideY(y)
+						return clamp(y, top + margin, bottom - margin)
+				end
 
-                if horizontalDist >= verticalDist then
-                        if outLeft then
-                                exitX = insideX(right - margin)
-                        else
-                                exitX = insideX(left + margin)
-                        end
-                        exitY = insideY(headY)
-                else
-                        if outTop then
-                                exitY = insideY(bottom - margin)
-                        else
-                                exitY = insideY(top + margin)
-                        end
-                        exitX = insideX(headX)
-                end
+				if horizontalDist >= verticalDist then
+						if outLeft then
+								exitX = insideX(right - margin)
+						else
+								exitX = insideX(left + margin)
+						end
+						exitY = insideY(headY)
+				else
+						if outTop then
+								exitY = insideY(bottom - margin)
+						else
+								exitY = insideY(top + margin)
+						end
+						exitX = insideX(headX)
+				end
 
-                entryPortalX, entryPortalY = entryX, entryY
-        end
+				entryPortalX, entryPortalY = entryX, entryY
+		end
 
-        local dx = (exitX or headX) - headX
-        local dy = (exitY or headY) - headY
+		local dx = (exitX or headX) - headX
+		local dy = (exitY or headY) - headY
 
 	if dx == 0 and dy == 0 then
 		return nil, nil
@@ -422,109 +422,109 @@ local function portalThroughWall(headX, headY)
 
 	local newHeadX, newHeadY
 	local portalDuration = 0.3
-        if Snake.beginPortalWarp then
-                local started = Snake:beginPortalWarp({
-                        entryX = entryPortalX,
-                        entryY = entryPortalY,
-                        exitX = headX + dx,
-                        exitY = headY + dy,
-                        duration = portalDuration,
-                        dx = dx,
-                        dy = dy,
-                })
-                if started then
+		if Snake.beginPortalWarp then
+				local started = Snake:beginPortalWarp({
+						entryX = entryPortalX,
+						entryY = entryPortalY,
+						exitX = headX + dx,
+						exitY = headY + dy,
+						duration = portalDuration,
+						dx = dx,
+						dy = dy,
+				})
+				if started then
 			newHeadX, newHeadY = Snake:getHead()
 		end
 	end
 
-        if not (newHeadX and newHeadY) then
-                if Snake.translate then
-                        Snake:translate(dx, dy, {resetMoveProgress = true})
-                        if Snake.resetMovementProgress then
-                                Snake:resetMovementProgress()
-                        end
-                else
-                        local targetX = headX + dx
-                        local targetY = headY + dy
-                        Snake:setHeadPosition(targetX, targetY)
-                        if Snake.resetMovementProgress then
-                                Snake:resetMovementProgress()
-                        end
-                end
-                newHeadX, newHeadY = Snake:getHead()
-        end
+		if not (newHeadX and newHeadY) then
+				if Snake.translate then
+						Snake:translate(dx, dy, {resetMoveProgress = true})
+						if Snake.resetMovementProgress then
+								Snake:resetMovementProgress()
+						end
+				else
+						local targetX = headX + dx
+						local targetY = headY + dy
+						Snake:setHeadPosition(targetX, targetY)
+						if Snake.resetMovementProgress then
+								Snake:resetMovementProgress()
+						end
+				end
+				newHeadX, newHeadY = Snake:getHead()
+		end
 
-        if Particles then
-                Particles:spawnBurst(entryPortalX, entryPortalY, PORTAL_ENTRY_BURST_OPTIONS)
-                Particles:spawnBurst(newHeadX, newHeadY, PORTAL_EXIT_BURST_OPTIONS)
-        end
+		if Particles then
+				Particles:spawnBurst(entryPortalX, entryPortalY, PORTAL_ENTRY_BURST_OPTIONS)
+				Particles:spawnBurst(newHeadX, newHeadY, PORTAL_EXIT_BURST_OPTIONS)
+		end
 
 	return newHeadX, newHeadY
 end
 
 local function handleWallCollision(headX, headY)
-        if Arena:isInside(headX, headY) then
-                return headX, headY
-        end
+		if Arena:isInside(headX, headY) then
+				return headX, headY
+		end
 
-        local portalX, portalY = portalThroughWall(headX, headY)
-        if portalX and portalY then
-                Audio:playSound("wall_portal")
-                return portalX, portalY
-        end
+		local portalX, portalY = portalThroughWall(headX, headY)
+		if portalX and portalY then
+				Audio:playSound("wall_portal")
+				return portalX, portalY
+		end
 
-        local ax, ay, aw, ah = Arena:getBounds()
-        local inset = Arena.tileSize / 2
-        local left = ax + inset
-        local right = ax + aw - inset
-        local top = ay + inset
-        local bottom = ay + ah - inset
+		local ax, ay, aw, ah = Arena:getBounds()
+		local inset = Arena.tileSize / 2
+		local left = ax + inset
+		local right = ax + aw - inset
+		local top = ay + inset
+		local bottom = ay + ah - inset
 
-        local function relocateSnake(targetX, targetY)
-                if not (targetX and targetY) then
-                        return
-                end
+		local function relocateSnake(targetX, targetY)
+				if not (targetX and targetY) then
+						return
+				end
 
-                local deltaX = 0
-                local deltaY = 0
-                if headX and headY then
-                        deltaX = targetX - headX
-                        deltaY = targetY - headY
-                end
+				local deltaX = 0
+				local deltaY = 0
+				if headX and headY then
+						deltaX = targetX - headX
+						deltaY = targetY - headY
+				end
 
-                local moved = false
-                if Snake.translate and (deltaX ~= 0 or deltaY ~= 0) then
-                        Snake:translate(deltaX, deltaY, {resetMoveProgress = true})
-                        moved = true
-                elseif Snake.setHeadPosition then
-                        Snake:setHeadPosition(targetX, targetY)
-                        moved = true
-                end
+				local moved = false
+				if Snake.translate and (deltaX ~= 0 or deltaY ~= 0) then
+						Snake:translate(deltaX, deltaY, {resetMoveProgress = true})
+						moved = true
+				elseif Snake.setHeadPosition then
+						Snake:setHeadPosition(targetX, targetY)
+						moved = true
+				end
 
-                if Snake.resetMovementProgress then
-                        Snake:resetMovementProgress()
-                end
+				if Snake.resetMovementProgress then
+						Snake:resetMovementProgress()
+				end
 
-                if moved then
-                        local newHeadX, newHeadY = Snake:getHead()
-                        headX = newHeadX or targetX
-                        headY = newHeadY or targetY
-                end
-        end
+				if moved then
+						local newHeadX, newHeadY = Snake:getHead()
+						headX = newHeadX or targetX
+						headY = newHeadY or targetY
+				end
+		end
 
-        if not Snake:consumeShield() then
-                local safeX = clamp(headX, left, right)
-                local safeY = clamp(headY, top, bottom)
-                local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY)
-                local clampedX = reroutedX or safeX
-                local clampedY = reroutedY or safeY
-                relocateSnake(clampedX, clampedY)
-                clampedX, clampedY = headX, headY
-                local dir = Snake.getDirection and Snake:getDirection() or {x = 0, y = 0}
+		if not Snake:consumeShield() then
+				local safeX = clamp(headX, left, right)
+				local safeY = clamp(headY, top, bottom)
+				local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY)
+				local clampedX = reroutedX or safeX
+				local clampedY = reroutedY or safeY
+				relocateSnake(clampedX, clampedY)
+				clampedX, clampedY = headX, headY
+				local dir = Snake.getDirection and Snake:getDirection() or {x = 0, y = 0}
 
-                return clampedX, clampedY, "wall", {
-                        pushX = 0,
-                        pushY = 0,
+				return clampedX, clampedY, "wall", {
+						pushX = 0,
+						pushY = 0,
 			snapX = clampedX,
 			snapY = clampedY,
 			dirX = dir.x or 0,
@@ -534,14 +534,14 @@ local function handleWallCollision(headX, headY)
 		}
 	end
 
-        local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
-        local clampedX = reroutedX or clamp(headX, left, right)
-        local clampedY = reroutedY or clamp(headY, top, bottom)
-        relocateSnake(clampedX, clampedY)
+		local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
+		local clampedX = reroutedX or clamp(headX, left, right)
+		local clampedY = reroutedY or clamp(headY, top, bottom)
+		relocateSnake(clampedX, clampedY)
 
-        Particles:spawnBurst(headX, headY, WALL_SHIELD_BURST_OPTIONS)
+		Particles:spawnBurst(headX, headY, WALL_SHIELD_BURST_OPTIONS)
 
-        Audio:playSound("shield_wall")
+		Audio:playSound("shield_wall")
 
 	if Snake.onShieldConsumed then
 		Snake:onShieldConsumed(headX, headY, "wall")
@@ -553,39 +553,39 @@ local function handleWallCollision(headX, headY)
 end
 
 local function handleRockCollision(headX, headY)
-        local headSize = max(0, SEGMENT_SIZE - ROCK_COLLISION_INSET * 2)
-        local halfHeadSize = headSize / 2
-        local headLeft = headX - halfHeadSize
-        local headTop = headY - halfHeadSize
-        local candidates
-        local headCol, headRow = Arena:getTileFromWorld(headX, headY)
+		local headSize = max(0, SEGMENT_SIZE - ROCK_COLLISION_INSET * 2)
+		local halfHeadSize = headSize / 2
+		local headLeft = headX - halfHeadSize
+		local headTop = headY - halfHeadSize
+		local candidates
+		local headCol, headRow = Arena:getTileFromWorld(headX, headY)
 
-        if headCol and headRow and Rocks.getNearby then
-                local nearby = Rocks:getNearby(headCol, headRow, 1)
-                if Rocks.hasCellLookup and Rocks:hasCellLookup() then
-                        candidates = nearby
-                else
-                        candidates = Rocks:getAll()
-                end
-        else
-                candidates = Rocks:getAll()
-        end
+		if headCol and headRow and Rocks.getNearby then
+				local nearby = Rocks:getNearby(headCol, headRow, 1)
+				if Rocks.hasCellLookup and Rocks:hasCellLookup() then
+						candidates = nearby
+				else
+						candidates = Rocks:getAll()
+				end
+		else
+				candidates = Rocks:getAll()
+		end
 
-        for _, rock in ipairs(candidates or {}) do
-                local rockCenterX = rock and (rock.renderX or rock.x) or 0
-                local rockCenterY = rock and (rock.renderY or rock.y) or 0
-                local rockWidth = max(0, (rock and rock.w or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
-                local rockHeight = max(0, (rock and rock.h or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
-                local rockLeft = rockCenterX - rockWidth / 2
-                local rockTop = rockCenterY - rockHeight / 2
+		for _, rock in ipairs(candidates or {}) do
+				local rockCenterX = rock and (rock.renderX or rock.x) or 0
+				local rockCenterY = rock and (rock.renderY or rock.y) or 0
+				local rockWidth = max(0, (rock and rock.w or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
+				local rockHeight = max(0, (rock and rock.h or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
+				local rockLeft = rockCenterX - rockWidth / 2
+				local rockTop = rockCenterY - rockHeight / 2
 
-                if aabb(headLeft, headTop, headSize, headSize, rockLeft, rockTop, rockWidth, rockHeight) then
-                        local centerX = rockLeft + rockWidth / 2
-                        local centerY = rockTop + rockHeight / 2
+				if aabb(headLeft, headTop, headSize, headSize, rockLeft, rockTop, rockWidth, rockHeight) then
+						local centerX = rockLeft + rockWidth / 2
+						local centerY = rockTop + rockHeight / 2
 
 			if Snake.isDashActive and Snake:isDashActive() then
 				Rocks:destroy(rock)
-                                Particles:spawnBurst(centerX, centerY, ROCK_DASH_BURST_OPTIONS)
+								Particles:spawnBurst(centerX, centerY, ROCK_DASH_BURST_OPTIONS)
 				Audio:playSound("shield_rock")
 				if Snake.onDashBreakRock then
 					Snake:onDashBreakRock(centerX, centerY)
@@ -608,7 +608,7 @@ local function handleRockCollision(headX, headY)
 				Rocks:destroy(rock)
 				context.damage = 0
 
-                                Particles:spawnBurst(centerX, centerY, ROCK_SHIELD_BURST_OPTIONS)
+								Particles:spawnBurst(centerX, centerY, ROCK_SHIELD_BURST_OPTIONS)
 				Audio:playSound("shield_rock")
 
 				if Snake.onShieldConsumed then
@@ -678,7 +678,7 @@ local function handleSawCollision(headX, headY)
 
 	Saws:destroy(sawHit)
 
-        Particles:spawnBurst(headX, headY, SAW_SHIELD_BURST_OPTIONS)
+		Particles:spawnBurst(headX, headY, SAW_SHIELD_BURST_OPTIONS)
 	Audio:playSound("shield_saw")
 
 	if Snake.onShieldConsumed then
@@ -744,7 +744,7 @@ local function handleLaserCollision(headX, headY)
 
 	Lasers:onShieldedHit(laserHit, headX, headY)
 
-        Particles:spawnBurst(headX, headY, LASER_SHIELD_BURST_OPTIONS)
+		Particles:spawnBurst(headX, headY, LASER_SHIELD_BURST_OPTIONS)
 
 	Audio:playSound("shield_saw")
 
@@ -768,70 +768,70 @@ local function handleLaserCollision(headX, headY)
 end
 
 function Movement:reset()
-        Snake:resetPosition()
+		Snake:resetPosition()
 end
 
 function Movement:update(dt)
-        if not dt or dt <= 0 then
-                return
-        end
+		if not dt or dt <= 0 then
+				return
+		end
 
-        local remaining = dt
-        local maxStep = MAX_SNAKE_TIME_STEP
+		local remaining = dt
+		local maxStep = MAX_SNAKE_TIME_STEP
 
-        while remaining > 0 do
-                local step = min(remaining, maxStep)
-                if step <= 0 then
-                        break
-                end
-                remaining = remaining - step
+		while remaining > 0 do
+				local step = min(remaining, maxStep)
+				if step <= 0 then
+						break
+				end
+				remaining = remaining - step
 
-                local alive, cause, context = Snake:update(step)
-                if not alive then
-                        if context and context.fatal then
-                                return "dead", cause or "self", context
-                        end
-                        return "hit", cause or "self", context
-                end
+				local alive, cause, context = Snake:update(step)
+				if not alive then
+						if context and context.fatal then
+								return "dead", cause or "self", context
+						end
+						return "hit", cause or "self", context
+				end
 
-                local headX, headY = Snake:getHead()
+				local headX, headY = Snake:getHead()
 
-                local wallCause, wallContext
-                headX, headY, wallCause, wallContext = handleWallCollision(headX, headY)
-                if wallCause then
-                        return "hit", wallCause, wallContext
-                end
+				local wallCause, wallContext
+				headX, headY, wallCause, wallContext = handleWallCollision(headX, headY)
+				if wallCause then
+						return "hit", wallCause, wallContext
+				end
 
-                local state, stateCause, stateContext = handleRockCollision(headX, headY)
-                if state then
-                        return state, stateCause, stateContext
-                end
+				local state, stateCause, stateContext = handleRockCollision(headX, headY)
+				if state then
+						return state, stateCause, stateContext
+				end
 
-                local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
-                if laserState then
-                        return laserState, laserCause, laserContext
-                end
+				local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
+				if laserState then
+						return laserState, laserCause, laserContext
+				end
 
-                local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
-                if sawState then
-                        return sawState, sawCause, sawContext
-                end
+				local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
+				if sawState then
+						return sawState, sawCause, sawContext
+				end
 
-                if Snake.checkLaserBodyCollision then
-                        local emitterCount = Lasers and Lasers.getEmitterCount and Lasers:getEmitterCount() or 0
-                        if emitterCount > 0 then
-                                Snake:checkLaserBodyCollision()
-                        end
-                end
+				if Snake.checkLaserBodyCollision then
+						local emitterCount = Lasers and Lasers.getEmitterCount and Lasers:getEmitterCount() or 0
+						if emitterCount > 0 then
+								Snake:checkLaserBodyCollision()
+						end
+				end
 
-                if Snake.checkSawBodyCollision then
-                        Snake:checkSawBodyCollision()
-                end
+				if Snake.checkSawBodyCollision then
+						Snake:checkSawBodyCollision()
+				end
 
-                if Fruit:checkCollisionWith(headX, headY) then
-                        return "scored"
-                end
-        end
+				if Fruit:checkCollisionWith(headX, headY) then
+						return "scored"
+				end
+		end
 end
 
 return Movement

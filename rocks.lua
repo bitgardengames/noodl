@@ -33,21 +33,21 @@ local HIT_FLASH_DURATION = 0.18
 local HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
 
 local function generateRockShape(size, seed)
-        rockRng:setSeed(seed or Timer.getTime() * 1000)
-        local points = {}
-        local sides = rockRng:random(12, 16) -- more segments = rounder
-        local step = (pi * 2) / sides
-        local baseRadius = size * 0.45
+		rockRng:setSeed(seed or Timer.getTime() * 1000)
+		local points = {}
+		local sides = rockRng:random(12, 16) -- more segments = rounder
+		local step = (pi * 2) / sides
+		local baseRadius = size * 0.45
 
-        for i = 1, sides do
-                local angle = step * i
-                -- slight wobble so it’s lumpy, but no sharp spikes
-                local r = baseRadius * (0.9 + rockRng:random() * 0.2)
-                insert(points, math.cos(angle) * r)
-                insert(points, math.sin(angle) * r)
-        end
+		for i = 1, sides do
+				local angle = step * i
+				-- slight wobble so it’s lumpy, but no sharp spikes
+				local r = baseRadius * (0.9 + rockRng:random() * 0.2)
+				insert(points, math.cos(angle) * r)
+				insert(points, math.sin(angle) * r)
+		end
 
-        return points
+		return points
 end
 
 local function copyColor(color)
@@ -67,51 +67,51 @@ local highlightCache = setmetatable({}, { __mode = "k" })
 local highlightDefault = {1, 1, 1, 1}
 
 local function updateHighlightColor(out, color)
-        local baseR = color[1] or 1
-        local baseG = color[2] or 1
-        local baseB = color[3] or 1
-        local baseA = color[4]
-        if baseA == nil then
-                baseA = 1
-        end
+		local baseR = color[1] or 1
+		local baseG = color[2] or 1
+		local baseB = color[3] or 1
+		local baseA = color[4]
+		if baseA == nil then
+				baseA = 1
+		end
 
-        local r = min(1, baseR * 1.2 + 0.08)
-        local g = min(1, baseG * 1.2 + 0.08)
-        local b = min(1, baseB * 1.2 + 0.08)
-        local a = baseA * 0.75
-        out[1], out[2], out[3], out[4] = r, g, b, a
-        return out
+		local r = min(1, baseR * 1.2 + 0.08)
+		local g = min(1, baseG * 1.2 + 0.08)
+		local b = min(1, baseB * 1.2 + 0.08)
+		local a = baseA * 0.75
+		out[1], out[2], out[3], out[4] = r, g, b, a
+		return out
 end
 
 local function getHighlightColor(color)
-        color = color or highlightDefault
-        local cached = highlightCache[color]
-        if not cached then
-                cached = {
-                        highlight = {0, 0, 0, 0},
-                        _lastR = nil,
-                        _lastG = nil,
-                        _lastB = nil,
-                        _lastA = nil,
-                }
-                highlightCache[color] = cached
-        end
+		color = color or highlightDefault
+		local cached = highlightCache[color]
+		if not cached then
+				cached = {
+						highlight = {0, 0, 0, 0},
+						_lastR = nil,
+						_lastG = nil,
+						_lastB = nil,
+						_lastA = nil,
+				}
+				highlightCache[color] = cached
+		end
 
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4]
-        if a == nil then
-                a = 1
-        end
+		local r = color[1] or 1
+		local g = color[2] or 1
+		local b = color[3] or 1
+		local a = color[4]
+		if a == nil then
+				a = 1
+		end
 
-        if cached._lastR == r and cached._lastG == g and cached._lastB == b and cached._lastA == a then
-                return cached.highlight
-        end
+		if cached._lastR == r and cached._lastG == g and cached._lastB == b and cached._lastA == a then
+				return cached.highlight
+		end
 
-        cached._lastR, cached._lastG, cached._lastB, cached._lastA = r, g, b, a
-        updateHighlightColor(cached.highlight, color)
-        return cached.highlight
+		cached._lastR, cached._lastG, cached._lastB, cached._lastA = r, g, b, a
+		updateHighlightColor(cached.highlight, color)
+		return cached.highlight
 end
 
 local function buildRockHighlight(points)
@@ -168,52 +168,52 @@ local function getUpgradesModule()
 end
 
 local function ensureLookupEntry(rock, col, row)
-        if not (rock and col and row) then
-                return
-        end
+		if not (rock and col and row) then
+				return
+		end
 
-        local column = rockLookup[col]
-        if not column then
-                column = {}
-                rockLookup[col] = column
-        end
+		local column = rockLookup[col]
+		if not column then
+				column = {}
+				rockLookup[col] = column
+		end
 
-        column[row] = rock
-        lookupHasEntries = true
+		column[row] = rock
+		lookupHasEntries = true
 end
 
 local function removeLookupEntry(rock)
-        if not rock then
-                return
-        end
+		if not rock then
+				return
+		end
 
-        local col, row = rock.col, rock.row
-        if not (col and row) then
-                return
-        end
+		local col, row = rock.col, rock.row
+		if not (col and row) then
+				return
+		end
 
-        local column = rockLookup[col]
-        if not column then
-                return
-        end
+		local column = rockLookup[col]
+		if not column then
+				return
+		end
 
-        if column[row] == rock then
-                column[row] = nil
+		if column[row] == rock then
+				column[row] = nil
 
-                if not next(column) then
-                        rockLookup[col] = nil
-                end
+				if not next(column) then
+						rockLookup[col] = nil
+				end
 
-                if not next(rockLookup) then
-                        lookupHasEntries = false
-                end
-        end
+				if not next(rockLookup) then
+						lookupHasEntries = false
+				end
+		end
 end
 
 function Rocks:spawn(x, y)
-        local col, row = Arena:getTileFromWorld(x, y)
-        insert(current, {
-                x = x,
+		local col, row = Arena:getTileFromWorld(x, y)
+		insert(current, {
+				x = x,
 		y = y,
 		w = ROCK_SIZE,
 		h = ROCK_SIZE,
@@ -223,14 +223,14 @@ function Rocks:spawn(x, y)
 		scaleY = 0,
 		offsetY = -40,
 		shape = nil,
-                col = col,
-                row = row,
-        })
-        local rock = current[#current]
-        rock.shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999))
-        rock.highlightShape = buildRockHighlight(rock.shape)
+				col = col,
+				row = row,
+		})
+		local rock = current[#current]
+		rock.shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999))
+		rock.highlightShape = buildRockHighlight(rock.shape)
 
-        ensureLookupEntry(rock, col, row)
+		ensureLookupEntry(rock, col, row)
 end
 
 function Rocks:getAll()
@@ -238,27 +238,27 @@ function Rocks:getAll()
 end
 
 local function releaseOccupancy(rock)
-        if not rock then return end
-        removeLookupEntry(rock)
-        local col, row = rock.col, rock.row
-        if not col or not row then
-                col, row = Arena:getTileFromWorld(rock.x or 0, rock.y or 0)
-        end
-        if col and row then
+		if not rock then return end
+		removeLookupEntry(rock)
+		local col, row = rock.col, rock.row
+		if not col or not row then
+				col, row = Arena:getTileFromWorld(rock.x or 0, rock.y or 0)
+		end
+		if col and row then
 		SnakeUtils.setOccupied(col, row, false)
 	end
 end
 
 function Rocks:reset()
-        for _, rock in ipairs(current) do
-                releaseOccupancy(rock)
-        end
-        current = {}
-        rockLookup = {}
-        lookupHasEntries = false
-        self.spawnChance = 0.25
-        self.shatterOnFruit = 0
-        self.shatterProgress = 0
+		for _, rock in ipairs(current) do
+				releaseOccupancy(rock)
+		end
+		current = {}
+		rockLookup = {}
+		lookupHasEntries = false
+		self.spawnChance = 0.25
+		self.shatterOnFruit = 0
+		self.shatterProgress = 0
 end
 
 local function spawnShatterFX(x, y)
@@ -301,71 +301,71 @@ local function spawnShatterFX(x, y)
 end
 
 local function removeRockAt(index, spawnFX)
-        if not index then return nil end
+		if not index then return nil end
 
-        local rock = table.remove(current, index)
-        if not rock then return nil end
+		local rock = table.remove(current, index)
+		if not rock then return nil end
 
-        releaseOccupancy(rock)
+		releaseOccupancy(rock)
 
-        if spawnFX ~= false then
-                spawnShatterFX(rock.x, rock.y)
-        end
+		if spawnFX ~= false then
+				spawnShatterFX(rock.x, rock.y)
+		end
 
 	return rock
 end
 
 function Rocks:updateCell(rock, col, row)
-        if not rock then
-                return
-        end
+		if not rock then
+				return
+		end
 
-        removeLookupEntry(rock)
+		removeLookupEntry(rock)
 
-        rock.col = col
-        rock.row = row
+		rock.col = col
+		rock.row = row
 
-        ensureLookupEntry(rock, col, row)
+		ensureLookupEntry(rock, col, row)
 end
 
 function Rocks:hasCellLookup()
-        return lookupHasEntries
+		return lookupHasEntries
 end
 
 function Rocks:getNearby(col, row, radius)
-        local results = {}
+		local results = {}
 
-        if not (col and row) then
-                return results
-        end
+		if not (col and row) then
+				return results
+		end
 
-        radius = radius or 1
+		radius = radius or 1
 
-        if not lookupHasEntries then
-                for _, rock in ipairs(current) do
-                        local rockCol, rockRow = rock.col, rock.row
-                        if rockCol and rockRow then
-                                if abs(rockCol - col) <= radius and abs(rockRow - row) <= radius then
-                                        results[#results + 1] = rock
-                                end
-                        end
-                end
-                return results
-        end
+		if not lookupHasEntries then
+				for _, rock in ipairs(current) do
+						local rockCol, rockRow = rock.col, rock.row
+						if rockCol and rockRow then
+								if abs(rockCol - col) <= radius and abs(rockRow - row) <= radius then
+										results[#results + 1] = rock
+								end
+						end
+				end
+				return results
+		end
 
-        for c = col - radius, col + radius do
-                local column = rockLookup[c]
-                if column then
-                        for r = row - radius, row + radius do
-                                local rock = column[r]
-                                if rock then
-                                        results[#results + 1] = rock
-                                end
-                        end
-                end
-        end
+		for c = col - radius, col + radius do
+				local column = rockLookup[c]
+				if column then
+						for r = row - radius, row + radius do
+								local rock = column[r]
+								if rock then
+										results[#results + 1] = rock
+								end
+						end
+				end
+		end
 
-        return results
+		return results
 end
 
 function Rocks:destroy(target, opts)
@@ -456,56 +456,56 @@ function Rocks:onFruitCollected(x, y)
 end
 
 local function updateTremorSlide(rock, dt)
-        local duration = rock.tremorSlideDuration
-        if not (duration and duration > 0) then
-                return
-        end
+		local duration = rock.tremorSlideDuration
+		if not (duration and duration > 0) then
+				return
+		end
 
-        local timer = (rock.tremorSlideTimer or 0) + (dt or 0)
-        if timer >= duration then
-                timer = duration
-        end
+		local timer = (rock.tremorSlideTimer or 0) + (dt or 0)
+		if timer >= duration then
+				timer = duration
+		end
 
-        rock.tremorSlideTimer = timer
+		rock.tremorSlideTimer = timer
 
-        local progress = Easing.easeOutCubic(Easing.clamp01(timer / duration))
-        local startX = rock.tremorSlideStartX or rock.x
-        local startY = rock.tremorSlideStartY or rock.y
-        local targetX = rock.tremorSlideTargetX or rock.x
-        local targetY = rock.tremorSlideTargetY or rock.y
+		local progress = Easing.easeOutCubic(Easing.clamp01(timer / duration))
+		local startX = rock.tremorSlideStartX or rock.x
+		local startY = rock.tremorSlideStartY or rock.y
+		local targetX = rock.tremorSlideTargetX or rock.x
+		local targetY = rock.tremorSlideTargetY or rock.y
 
-        rock.renderX = Easing.lerp(startX, targetX, progress)
-        rock.renderY = Easing.lerp(startY, targetY, progress)
+		rock.renderX = Easing.lerp(startX, targetX, progress)
+		rock.renderY = Easing.lerp(startY, targetY, progress)
 
-        local lift = rock.tremorSlideLift or 0
-        if lift ~= 0 then
-                rock.tremorSlideOffset = -sin(progress * pi) * lift
-        else
-                rock.tremorSlideOffset = nil
-        end
+		local lift = rock.tremorSlideLift or 0
+		if lift ~= 0 then
+				rock.tremorSlideOffset = -sin(progress * pi) * lift
+		else
+				rock.tremorSlideOffset = nil
+		end
 
-        if timer >= duration then
-                rock.tremorSlideTimer = nil
-                rock.tremorSlideDuration = nil
-                rock.tremorSlideStartX = nil
-                rock.tremorSlideStartY = nil
-                rock.tremorSlideTargetX = nil
-                rock.tremorSlideTargetY = nil
-                rock.tremorSlideLift = nil
-                rock.tremorSlideOffset = nil
-                rock.renderX = nil
-                rock.renderY = nil
-        end
+		if timer >= duration then
+				rock.tremorSlideTimer = nil
+				rock.tremorSlideDuration = nil
+				rock.tremorSlideStartX = nil
+				rock.tremorSlideStartY = nil
+				rock.tremorSlideTargetX = nil
+				rock.tremorSlideTargetY = nil
+				rock.tremorSlideLift = nil
+				rock.tremorSlideOffset = nil
+				rock.renderX = nil
+				rock.renderY = nil
+		end
 end
 
 function Rocks:update(dt)
-        for _, rock in ipairs(current) do
-                rock.timer = rock.timer + dt
+		for _, rock in ipairs(current) do
+				rock.timer = rock.timer + dt
 
-                updateTremorSlide(rock, dt)
+				updateTremorSlide(rock, dt)
 
-                if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
-                        rock.hitFlashTimer = max(0, rock.hitFlashTimer - dt)
+				if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
+						rock.hitFlashTimer = max(0, rock.hitFlashTimer - dt)
 		end
 
 		if rock.phase == "drop" then
@@ -551,88 +551,88 @@ function Rocks:update(dt)
 end
 
 local function withRockTransform(rock, fn)
-        love.graphics.push()
+		love.graphics.push()
 
-        local drawX = rock.renderX or rock.x
-        local drawY = rock.renderY or rock.y
-        local offsetY = (rock.offsetY or 0) + (rock.tremorSlideOffset or 0)
+		local drawX = rock.renderX or rock.x
+		local drawY = rock.renderY or rock.y
+		local offsetY = (rock.offsetY or 0) + (rock.tremorSlideOffset or 0)
 
-        love.graphics.translate(drawX, drawY + offsetY)
-        love.graphics.scale(rock.scaleX, rock.scaleY)
-        fn()
-        love.graphics.pop()
+		love.graphics.translate(drawX, drawY + offsetY)
+		love.graphics.scale(rock.scaleX, rock.scaleY)
+		fn()
+		love.graphics.pop()
 end
 
 local function drawRockShadow(rock)
-        withRockTransform(rock, function()
-                love.graphics.setColor(0, 0, 0, 0.4)
-                love.graphics.push()
-                love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-                love.graphics.scale(1.1, 1.1)
-                love.graphics.polygon("fill", rock.shape)
-                love.graphics.pop()
-        end)
+		withRockTransform(rock, function()
+				love.graphics.setColor(0, 0, 0, 0.4)
+				love.graphics.push()
+				love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+				love.graphics.scale(1.1, 1.1)
+				love.graphics.polygon("fill", rock.shape)
+				love.graphics.pop()
+		end)
 end
 
 local function drawRockBody(rock)
-        withRockTransform(rock, function()
-                local baseColor = Theme.rock
-                if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
-                        baseColor = HIT_FLASH_COLOR
-                end
+		withRockTransform(rock, function()
+				local baseColor = Theme.rock
+				if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
+						baseColor = HIT_FLASH_COLOR
+				end
 
-                love.graphics.setColor(baseColor)
-                love.graphics.polygon("fill", rock.shape)
+				love.graphics.setColor(baseColor)
+				love.graphics.polygon("fill", rock.shape)
 
-                if rock.highlightShape then
-                        local highlight = getHighlightColor(baseColor)
-                        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-                        love.graphics.polygon("fill", rock.highlightShape)
-                end
+				if rock.highlightShape then
+						local highlight = getHighlightColor(baseColor)
+						love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+						love.graphics.polygon("fill", rock.highlightShape)
+				end
 
-                love.graphics.setColor(0, 0, 0, 1)
-                love.graphics.setLineWidth(3)
-                love.graphics.polygon("line", rock.shape)
-        end)
+				love.graphics.setColor(0, 0, 0, 1)
+				love.graphics.setLineWidth(3)
+				love.graphics.polygon("line", rock.shape)
+		end)
 end
 
 function Rocks:draw()
-        if #current == 0 then
-                return
-        end
+		if #current == 0 then
+				return
+		end
 
-        RenderLayers:withLayer("shadows", function()
-                for _, rock in ipairs(current) do
-                        drawRockShadow(rock)
-                end
-        end)
+		RenderLayers:withLayer("shadows", function()
+				for _, rock in ipairs(current) do
+						drawRockShadow(rock)
+				end
+		end)
 
-        RenderLayers:withLayer("main", function()
-                for _, rock in ipairs(current) do
-                        drawRockBody(rock)
-                end
-        end)
+		RenderLayers:withLayer("main", function()
+				for _, rock in ipairs(current) do
+						drawRockBody(rock)
+				end
+		end)
 end
 
 function Rocks:getSpawnChance()
-        return self.spawnChance or 0.25
+		return self.spawnChance or 0.25
 end
 
 function Rocks:beginSlide(rock, startX, startY, targetX, targetY, options)
-        if not rock then
-                return
-        end
+		if not rock then
+				return
+		end
 
-        options = options or {}
-        rock.tremorSlideDuration = options.duration or 0.28
-        rock.tremorSlideTimer = 0
-        rock.tremorSlideStartX = startX or rock.x
-        rock.tremorSlideStartY = startY or rock.y
-        rock.tremorSlideTargetX = targetX or rock.x
-        rock.tremorSlideTargetY = targetY or rock.y
-        rock.tremorSlideLift = options.lift or 10
-        rock.renderX = rock.tremorSlideStartX
-        rock.renderY = rock.tremorSlideStartY
+		options = options or {}
+		rock.tremorSlideDuration = options.duration or 0.28
+		rock.tremorSlideTimer = 0
+		rock.tremorSlideStartX = startX or rock.x
+		rock.tremorSlideStartY = startY or rock.y
+		rock.tremorSlideTargetX = targetX or rock.x
+		rock.tremorSlideTargetY = targetY or rock.y
+		rock.tremorSlideLift = options.lift or 10
+		rock.renderX = rock.tremorSlideStartX
+		rock.renderY = rock.tremorSlideStartY
 end
 
 return Rocks

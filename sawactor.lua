@@ -28,57 +28,57 @@ local SHADOW_OFFSET = 3
 local SHADOW_ALPHA = 0.35
 
 local sawStencilState = {
-        dir = nil,
-        side = nil,
-        x = 0,
-        y = 0,
-        trackLength = 0,
-        radius = 0,
-        sinkOffset = 0,
+		dir = nil,
+		side = nil,
+		x = 0,
+		y = 0,
+		trackLength = 0,
+		radius = 0,
+		sinkOffset = 0,
 }
 
 local function drawSawStencil()
-        if sawStencilState.dir == "vertical" then
-                local height = sawStencilState.trackLength + sawStencilState.radius * 2
-                local top = sawStencilState.y - sawStencilState.trackLength / 2 - sawStencilState.radius
-                if sawStencilState.side == "left" then
-                        love.graphics.rectangle("fill", sawStencilState.x, top, STENCIL_EXTENT, height)
-                elseif sawStencilState.side == "right" then
-                        love.graphics.rectangle("fill", sawStencilState.x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
-                else
-                        love.graphics.rectangle("fill", sawStencilState.x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
-                end
-        else
-                love.graphics.rectangle(
-                        "fill",
-                        sawStencilState.x - sawStencilState.trackLength / 2 - sawStencilState.radius,
-                        sawStencilState.y - STENCIL_EXTENT + sawStencilState.sinkOffset,
-                        sawStencilState.trackLength + sawStencilState.radius * 2,
-                        STENCIL_EXTENT
-                )
-        end
+		if sawStencilState.dir == "vertical" then
+				local height = sawStencilState.trackLength + sawStencilState.radius * 2
+				local top = sawStencilState.y - sawStencilState.trackLength / 2 - sawStencilState.radius
+				if sawStencilState.side == "left" then
+						love.graphics.rectangle("fill", sawStencilState.x, top, STENCIL_EXTENT, height)
+				elseif sawStencilState.side == "right" then
+						love.graphics.rectangle("fill", sawStencilState.x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
+				else
+						love.graphics.rectangle("fill", sawStencilState.x - STENCIL_EXTENT, top, STENCIL_EXTENT, height)
+				end
+		else
+				love.graphics.rectangle(
+						"fill",
+						sawStencilState.x - sawStencilState.trackLength / 2 - sawStencilState.radius,
+						sawStencilState.y - STENCIL_EXTENT + sawStencilState.sinkOffset,
+						sawStencilState.trackLength + sawStencilState.radius * 2,
+						STENCIL_EXTENT
+				)
+		end
 end
 
 local highlightCache = setmetatable({}, { __mode = "k" })
 local highlightDefault = {1, 1, 1, 1}
 
 local function updateHighlightColor(out, color)
-        local r = min(1, color[1] * 1.2 + 0.08)
-        local g = min(1, color[2] * 1.2 + 0.08)
-        local b = min(1, color[3] * 1.2 + 0.08)
-        local a = (color[4] or 1) * 0.7
-        out[1], out[2], out[3], out[4] = r, g, b, a
-        return out
+		local r = min(1, color[1] * 1.2 + 0.08)
+		local g = min(1, color[2] * 1.2 + 0.08)
+		local b = min(1, color[3] * 1.2 + 0.08)
+		local a = (color[4] or 1) * 0.7
+		out[1], out[2], out[3], out[4] = r, g, b, a
+		return out
 end
 
 local function getHighlightColor(color)
-        color = color or highlightDefault
-        local cached = highlightCache[color]
-        if not cached then
-                cached = {0, 0, 0, 0}
-                highlightCache[color] = cached
-        end
-        return updateHighlightColor(cached, color)
+		color = color or highlightDefault
+		local cached = highlightCache[color]
+		if not cached then
+				cached = {0, 0, 0, 0}
+				highlightCache[color] = cached
+		end
+		return updateHighlightColor(cached, color)
 end
 
 function SawActor.new(options)
@@ -111,24 +111,24 @@ function SawActor:update(dt)
 	self.rotation = (self.rotation + dt * self.spinSpeed) % (pi * 2)
 
 	local trackLength = max(0.0001, self.trackLength or DEFAULT_TRACK_LENGTH)
-        if self.moveSpeed ~= 0 then
-                local direction = self.moveDirection or DEFAULT_DIRECTION
-                local delta = (dt * self.moveSpeed) / trackLength
-                local progress = (self.progress or 0) + delta * direction
+		if self.moveSpeed ~= 0 then
+				local direction = self.moveDirection or DEFAULT_DIRECTION
+				local delta = (dt * self.moveSpeed) / trackLength
+				local progress = (self.progress or 0) + delta * direction
 
-                while progress > 1 or progress < 0 do
-                        if progress > 1 then
-                                progress = 2 - progress
-                                direction = -abs(direction)
-                        else
-                                progress = -progress
-                                direction = abs(direction)
-                        end
-                end
+				while progress > 1 or progress < 0 do
+						if progress > 1 then
+								progress = 2 - progress
+								direction = -abs(direction)
+						else
+								progress = -progress
+								direction = abs(direction)
+						end
+				end
 
-                self.progress = max(0, min(1, progress))
-                self.moveDirection = direction
-        end
+				self.progress = max(0, min(1, progress))
+				self.moveDirection = direction
+		end
 
 	if self.hitFlashTimer > 0 then
 		self.hitFlashTimer = max(0, self.hitFlashTimer - dt)
@@ -179,16 +179,16 @@ function SawActor:draw(x, y, scale)
 		love.graphics.rectangle("fill", x - trackLength / 2, y - slotThickness / 2, trackLength, slotThickness, slotRadius, slotRadius)
 	end
 
-        sawStencilState.dir = self.dir
-        sawStencilState.side = self.side
-        sawStencilState.x = x
-        sawStencilState.y = y
-        sawStencilState.trackLength = trackLength
-        sawStencilState.radius = radius
-        sawStencilState.sinkOffset = (self.sinkOffset or SINK_OFFSET) * drawScale
-        love.graphics.stencil(drawSawStencil, "replace", 1)
+		sawStencilState.dir = self.dir
+		sawStencilState.side = self.side
+		sawStencilState.x = x
+		sawStencilState.y = y
+		sawStencilState.trackLength = trackLength
+		sawStencilState.radius = radius
+		sawStencilState.sinkOffset = (self.sinkOffset or SINK_OFFSET) * drawScale
+		love.graphics.stencil(drawSawStencil, "replace", 1)
 
-        love.graphics.setStencilTest("equal", 1)
+		love.graphics.setStencilTest("equal", 1)
 
 	local px, py = getSawCenter(self, x, y, radius, trackLength)
 	local sinkProgress = clampProgress(self.sinkProgress)
@@ -236,18 +236,18 @@ function SawActor:draw(x, y, scale)
 		end
 	end
 
-        love.graphics.push()
-        love.graphics.translate(
-        (px or x) + SHADOW_OFFSET * drawScale - offsetX,
-        (py or y) + SHADOW_OFFSET * drawScale - offsetY
-        )
-        love.graphics.rotate(rotation)
-        love.graphics.scale(overallScale, overallScale)
+		love.graphics.push()
+		love.graphics.translate(
+		(px or x) + SHADOW_OFFSET * drawScale - offsetX,
+		(py or y) + SHADOW_OFFSET * drawScale - offsetY
+		)
+		love.graphics.rotate(rotation)
+		love.graphics.scale(overallScale, overallScale)
 
-        local shadowAlpha = SHADOW_ALPHA * (1 - 0.4 * sinkProgress)
-        love.graphics.setColor(0, 0, 0, shadowAlpha)
-        fillSaw()
-        love.graphics.pop()
+		local shadowAlpha = SHADOW_ALPHA * (1 - 0.4 * sinkProgress)
+		love.graphics.setColor(0, 0, 0, shadowAlpha)
+		fillSaw()
+		love.graphics.pop()
 
 	love.graphics.push()
 	love.graphics.translate((px or x) + offsetX, (py or y) + offsetY)
@@ -262,34 +262,34 @@ function SawActor:draw(x, y, scale)
 	love.graphics.setColor(baseColor)
 	fillSaw()
 
-        local highlightRadiusLocal = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
-        local highlightRadiusWorld = highlightRadiusLocal * drawScale * sinkScale
-        local hideHubHighlight = false
-        local highlightAlphaMult = 1
-        local occlusionDepth = sinkOffset
+		local highlightRadiusLocal = HUB_HOLE_RADIUS + HUB_HIGHLIGHT_PADDING - 1
+		local highlightRadiusWorld = highlightRadiusLocal * drawScale * sinkScale
+		local hideHubHighlight = false
+		local highlightAlphaMult = 1
+		local occlusionDepth = sinkOffset
 
-        if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
-                if occlusionDepth <= 0 then
-                        hideHubHighlight = true
-                else
-                        local occlusionRatio = min(1, max(0, occlusionDepth / highlightRadiusWorld))
-                        highlightAlphaMult = 0.4 + 0.6 * occlusionRatio
-                end
-        elseif occlusionDepth >= highlightRadiusWorld then
-                hideHubHighlight = true
-        end
+		if self.dir == "vertical" and (self.side == "left" or self.side == "right") then
+				if occlusionDepth <= 0 then
+						hideHubHighlight = true
+				else
+						local occlusionRatio = min(1, max(0, occlusionDepth / highlightRadiusWorld))
+						highlightAlphaMult = 0.4 + 0.6 * occlusionRatio
+				end
+		elseif occlusionDepth >= highlightRadiusWorld then
+				hideHubHighlight = true
+		end
 
-        if not hideHubHighlight then
-                local highlight = getHighlightColor(baseColor)
-                love.graphics.setColor(
-                highlight[1],
-                highlight[2],
-                highlight[3],
-                (highlight[4] or 1) * highlightAlphaMult
-                )
-                love.graphics.setLineWidth(2)
-                love.graphics.circle("line", 0, 0, highlightRadiusLocal)
-        end
+		if not hideHubHighlight then
+				local highlight = getHighlightColor(baseColor)
+				love.graphics.setColor(
+				highlight[1],
+				highlight[2],
+				highlight[3],
+				(highlight[4] or 1) * highlightAlphaMult
+				)
+				love.graphics.setLineWidth(2)
+				love.graphics.circle("line", 0, 0, highlightRadiusLocal)
+		end
 
 	love.graphics.setColor(0, 0, 0, 1)
 	love.graphics.setLineWidth(3)

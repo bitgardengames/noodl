@@ -114,81 +114,81 @@ local VOLATILE_BLOOM_COMBO_PER_HIT = 0.35
 local VOLATILE_BLOOM_COLOR = {0.98, 0.46, 0.3, 1}
 
 local MYSTERY_CARD_OUTCOMES = {
-        {
-                id = "shield_cache",
-                nameKey = "upgrades.mystery_card.outcomes.shield_cache.name",
-                descKey = "upgrades.mystery_card.outcomes.shield_cache.description",
-                toastKey = "upgrades.mystery_card.outcomes.shield_cache.toast",
-                celebration = {
-                        color = {0.64, 0.86, 1.0, 1},
-                        particleCount = 16,
-                        particleSpeed = 110,
-                        particleLife = 0.42,
-                        textOffset = 46,
-                        textScale = 1.1,
-                },
-                apply = function(state)
-                        Snake:addShields(2)
-                        Face:set("happy", 1.6)
-                end,
-        },
-        {
-                id = "velocity_bloom",
-                nameKey = "upgrades.mystery_card.outcomes.velocity_bloom.name",
-                descKey = "upgrades.mystery_card.outcomes.velocity_bloom.description",
-                toastKey = "upgrades.mystery_card.outcomes.velocity_bloom.toast",
-                celebration = {
-                        color = {1.0, 0.72, 0.46, 1},
-                        particleCount = 18,
-                        particleSpeed = 140,
-                        particleLife = 0.48,
-                        textOffset = 44,
-                        textScale = 1.12,
-                },
-                apply = function(state)
-                        Snake:addSpeedMultiplier(1.12)
-                        Face:set("veryHappy", 1.6)
-                end,
-        },
-        {
-                id = "market_portent",
-                nameKey = "upgrades.mystery_card.outcomes.market_portent.name",
-                descKey = "upgrades.mystery_card.outcomes.market_portent.description",
-                toastKey = "upgrades.mystery_card.outcomes.market_portent.toast",
-                celebration = {
-                        color = {0.96, 0.85, 0.52, 1},
-                        particleCount = 14,
-                        particleSpeed = 120,
-                        particleLife = 0.46,
-                        textOffset = 42,
-                        textScale = 1.08,
-                },
-                apply = function(state)
-                        state.effects = state.effects or {}
-                        state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
-                        Face:set("happy", 1.4)
-                end,
-        },
-        {
-                id = "shortcut_map",
-                nameKey = "upgrades.mystery_card.outcomes.shortcut_map.name",
-                descKey = "upgrades.mystery_card.outcomes.shortcut_map.description",
-                toastKey = "upgrades.mystery_card.outcomes.shortcut_map.toast",
-                celebration = {
-                        color = {0.84, 0.94, 0.62, 1},
-                        particleCount = 16,
-                        particleSpeed = 100,
-                        particleLife = 0.44,
-                        textOffset = 42,
-                        textScale = 1.08,
-                },
-                apply = function(state)
-                        state.effects = state.effects or {}
-                        state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
-                        UI:adjustFruitGoal(-1)
-                        Face:set("happy", 1.4)
-                end,
-        },
+		{
+				id = "shield_cache",
+				nameKey = "upgrades.mystery_card.outcomes.shield_cache.name",
+				descKey = "upgrades.mystery_card.outcomes.shield_cache.description",
+				toastKey = "upgrades.mystery_card.outcomes.shield_cache.toast",
+				celebration = {
+						color = {0.64, 0.86, 1.0, 1},
+						particleCount = 16,
+						particleSpeed = 110,
+						particleLife = 0.42,
+						textOffset = 46,
+						textScale = 1.1,
+				},
+				apply = function(state)
+						Snake:addShields(2)
+						Face:set("happy", 1.6)
+				end,
+		},
+		{
+				id = "velocity_bloom",
+				nameKey = "upgrades.mystery_card.outcomes.velocity_bloom.name",
+				descKey = "upgrades.mystery_card.outcomes.velocity_bloom.description",
+				toastKey = "upgrades.mystery_card.outcomes.velocity_bloom.toast",
+				celebration = {
+						color = {1.0, 0.72, 0.46, 1},
+						particleCount = 18,
+						particleSpeed = 140,
+						particleLife = 0.48,
+						textOffset = 44,
+						textScale = 1.12,
+				},
+				apply = function(state)
+						Snake:addSpeedMultiplier(1.12)
+						Face:set("veryHappy", 1.6)
+				end,
+		},
+		{
+				id = "market_portent",
+				nameKey = "upgrades.mystery_card.outcomes.market_portent.name",
+				descKey = "upgrades.mystery_card.outcomes.market_portent.description",
+				toastKey = "upgrades.mystery_card.outcomes.market_portent.toast",
+				celebration = {
+						color = {0.96, 0.85, 0.52, 1},
+						particleCount = 14,
+						particleSpeed = 120,
+						particleLife = 0.46,
+						textOffset = 42,
+						textScale = 1.08,
+				},
+				apply = function(state)
+						state.effects = state.effects or {}
+						state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
+						Face:set("happy", 1.4)
+				end,
+		},
+		{
+				id = "shortcut_map",
+				nameKey = "upgrades.mystery_card.outcomes.shortcut_map.name",
+				descKey = "upgrades.mystery_card.outcomes.shortcut_map.description",
+				toastKey = "upgrades.mystery_card.outcomes.shortcut_map.toast",
+				celebration = {
+						color = {0.84, 0.94, 0.62, 1},
+						particleCount = 16,
+						particleSpeed = 100,
+						particleLife = 0.44,
+						textOffset = 42,
+						textScale = 1.08,
+				},
+				apply = function(state)
+						state.effects = state.effects or {}
+						state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
+						UI:adjustFruitGoal(-1)
+						Face:set("happy", 1.4)
+				end,
+		},
 }
 
 local function getStacks(state, id)
@@ -210,39 +210,39 @@ local function getStacks(state, id)
 end
 
 local function grantShields(amount)
-        amount = max(0, floor((amount or 0) + 0.0001))
-        if amount <= 0 then
-                return 0
-        end
+		amount = max(0, floor((amount or 0) + 0.0001))
+		if amount <= 0 then
+				return 0
+		end
 
-        Snake:addShields(amount)
-        return amount
+		Snake:addShields(amount)
+		return amount
 end
 
 local function boostComboTimer(amount)
-        if not amount or amount <= 0 then
-                return
-        end
+		if not amount or amount <= 0 then
+				return
+		end
 
-        local FruitEvents = package.loaded and package.loaded["fruitevents"]
-        if not FruitEvents then
-                local ok, module = pcall(require, "fruitevents")
-                if ok then
-                        FruitEvents = module
-                end
-        end
+		local FruitEvents = package.loaded and package.loaded["fruitevents"]
+		if not FruitEvents then
+				local ok, module = pcall(require, "fruitevents")
+				if ok then
+						FruitEvents = module
+				end
+		end
 
-        if FruitEvents and FruitEvents.boostComboTimer then
-                FruitEvents.boostComboTimer(amount)
-        end
+		if FruitEvents and FruitEvents.boostComboTimer then
+				FruitEvents.boostComboTimer(amount)
+		end
 end
 
 local function getSegmentPosition(fraction)
-        local segments = Snake:getSegments()
-        local count = segments and #segments or 0
-        if count <= 0 then
-                return Snake:getHead()
-        end
+		local segments = Snake:getSegments()
+		local count = segments and #segments or 0
+		if count <= 0 then
+				return Snake:getHead()
+		end
 
 	fraction = fraction or 0
 	if fraction < 0 then
@@ -272,11 +272,11 @@ local function getSegmentPosition(fraction)
 		end
 	end
 
-        return Snake:getHead()
+		return Snake:getHead()
 end
 
 local function triggerChronoWard(state, data)
-        local effects = state and state.effects or {}
+		local effects = state and state.effects or {}
 	local duration = effects.chronoWardDuration or CHRONO_WARD_DEFAULT_DURATION
 	local scale = effects.chronoWardScale or CHRONO_WARD_DEFAULT_SCALE
 
@@ -323,384 +323,384 @@ local function collectPositions(source, limit, extractor)
 end
 
 local function getSawCenters(limit)
-        return collectPositions(Saws:getAll(), limit, function(saw)
-                local sx, sy = Saws:getCollisionCenter(saw)
-                return sx or saw.x, sy or saw.y
-        end)
+		return collectPositions(Saws:getAll(), limit, function(saw)
+				local sx, sy = Saws:getCollisionCenter(saw)
+				return sx or saw.x, sy or saw.y
+		end)
 end
 
 local function getLaserEmitterDetails(limit)
-        if not Lasers or not Lasers.getEmitters then
-                return {}
-        end
+		if not Lasers or not Lasers.getEmitters then
+				return {}
+		end
 
-        local emitters = Lasers:getEmitters()
-        if not emitters then
-                return {}
-        end
+		local emitters = Lasers:getEmitters()
+		if not emitters then
+				return {}
+		end
 
-        local count = #emitters
-        if not count or count <= 0 then
-                return {}
-        end
+		local count = #emitters
+		if not count or count <= 0 then
+				return {}
+		end
 
-        local targets = {}
-        local maxCount = min(limit or count, count)
-        for index = 1, maxCount do
-                local beam = emitters[index]
-                if beam then
-                        local x = beam.x
-                        local y = beam.y
-                        if x and y then
-                                targets[#targets + 1] = {
-                                        x = x,
-                                        y = y,
-                                        dir = beam.dir,
-                                        facing = beam.facing,
-                                }
-                        end
-                end
-        end
+		local targets = {}
+		local maxCount = min(limit or count, count)
+		for index = 1, maxCount do
+				local beam = emitters[index]
+				if beam then
+						local x = beam.x
+						local y = beam.y
+						if x and y then
+								targets[#targets + 1] = {
+										x = x,
+										y = y,
+										dir = beam.dir,
+										facing = beam.facing,
+								}
+						end
+				end
+		end
 
-        return targets
+		return targets
 end
 
 local function arenaHasGrid()
-        return Arena and Arena.cols and Arena.rows and Arena.getTileFromWorld and Arena.getCenterOfTile
+		return Arena and Arena.cols and Arena.rows and Arena.getTileFromWorld and Arena.getCenterOfTile
 end
 
 local function getCellKey(col, row)
-        return tostring(col) .. ":" .. tostring(row)
+		return tostring(col) .. ":" .. tostring(row)
 end
 
 local function isCellWithinBounds(col, row)
-        if not arenaHasGrid() then
-                return false
-        end
+		if not arenaHasGrid() then
+				return false
+		end
 
-        return col >= 1 and col <= Arena.cols and row >= 1 and row <= Arena.rows
+		return col >= 1 and col <= Arena.cols and row >= 1 and row <= Arena.rows
 end
 
 local function isCellOpen(col, row, ignoreLookup)
-        if not isCellWithinBounds(col, row) then
-                return false
-        end
+		if not isCellWithinBounds(col, row) then
+				return false
+		end
 
-        if ignoreLookup and ignoreLookup[getCellKey(col, row)] then
-                return true
-        end
+		if ignoreLookup and ignoreLookup[getCellKey(col, row)] then
+				return true
+		end
 
-        return not SnakeUtils.isOccupied(col, row)
+		return not SnakeUtils.isOccupied(col, row)
 end
 
 local function addPosition(positions, x, y)
-        if positions and x and y then
-                positions[#positions + 1] = {x, y}
-        end
+		if positions and x and y then
+				positions[#positions + 1] = {x, y}
+		end
 end
 
 local function getPushCandidates(col, row, originCol, originRow)
-        if not (col and row and originCol and originRow) then
-                return nil
-        end
+		if not (col and row and originCol and originRow) then
+				return nil
+		end
 
-        local dx = col - originCol
-        local dy = row - originRow
+		local dx = col - originCol
+		local dy = row - originRow
 
-        if dx == 0 and dy == 0 then
-                return nil
-        end
+		if dx == 0 and dy == 0 then
+				return nil
+		end
 
-        if max(abs(dx), abs(dy)) > TREMOR_BLOOM_RADIUS then
-                return nil
-        end
+		if max(abs(dx), abs(dy)) > TREMOR_BLOOM_RADIUS then
+				return nil
+		end
 
-        local stepX = 0
-        if dx > 0 then
-                stepX = 1
-        elseif dx < 0 then
-                stepX = -1
-        end
+		local stepX = 0
+		if dx > 0 then
+				stepX = 1
+		elseif dx < 0 then
+				stepX = -1
+		end
 
-        local stepY = 0
-        if dy > 0 then
-                stepY = 1
-        elseif dy < 0 then
-                stepY = -1
-        end
+		local stepY = 0
+		if dy > 0 then
+				stepY = 1
+		elseif dy < 0 then
+				stepY = -1
+		end
 
-        if stepX == 0 and stepY == 0 then
-                return nil
-        end
+		if stepX == 0 and stepY == 0 then
+				return nil
+		end
 
-        local candidates = {}
-        local function addCandidate(cx, cy)
-                candidates[#candidates + 1] = {cx, cy}
-        end
+		local candidates = {}
+		local function addCandidate(cx, cy)
+				candidates[#candidates + 1] = {cx, cy}
+		end
 
-        if stepX ~= 0 and stepY ~= 0 then
-                addCandidate(col + stepX, row + stepY)
-                if abs(dx) >= abs(dy) then
-                        addCandidate(col + stepX, row)
-                        addCandidate(col, row + stepY)
-                else
-                        addCandidate(col, row + stepY)
-                        addCandidate(col + stepX, row)
-                end
-        else
-                addCandidate(col + stepX, row + stepY)
-        end
+		if stepX ~= 0 and stepY ~= 0 then
+				addCandidate(col + stepX, row + stepY)
+				if abs(dx) >= abs(dy) then
+						addCandidate(col + stepX, row)
+						addCandidate(col, row + stepY)
+				else
+						addCandidate(col, row + stepY)
+						addCandidate(col + stepX, row)
+				end
+		else
+				addCandidate(col + stepX, row + stepY)
+		end
 
-        return candidates
+		return candidates
 end
 
 local function pushNearbyRocks(originCol, originRow, positions)
-        if not Rocks or not Rocks.getAll or not arenaHasGrid() then
-                return false
-        end
+		if not Rocks or not Rocks.getAll or not arenaHasGrid() then
+				return false
+		end
 
-        local moved = false
-        local rocks = Rocks:getAll()
-        if not rocks then
-                return false
-        end
+		local moved = false
+		local rocks = Rocks:getAll()
+		if not rocks then
+				return false
+		end
 
-        for _, rock in ipairs(rocks) do
-                local col, row = rock.col, rock.row
-                if col and row then
-                        local candidates = getPushCandidates(col, row, originCol, originRow)
-                        if candidates then
-                                for _, candidate in ipairs(candidates) do
-                                        local targetCol, targetRow = candidate[1], candidate[2]
-                                        if isCellOpen(targetCol, targetRow) then
-                                                local startX, startY = rock.x, rock.y
+		for _, rock in ipairs(rocks) do
+				local col, row = rock.col, rock.row
+				if col and row then
+						local candidates = getPushCandidates(col, row, originCol, originRow)
+						if candidates then
+								for _, candidate in ipairs(candidates) do
+										local targetCol, targetRow = candidate[1], candidate[2]
+										if isCellOpen(targetCol, targetRow) then
+												local startX, startY = rock.x, rock.y
 
-                                                SnakeUtils.setOccupied(col, row, false)
+												SnakeUtils.setOccupied(col, row, false)
 
-                                                local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
-                                                Rocks:beginSlide(rock, startX, startY, centerX, centerY, {
-                                                        duration = TREMOR_BLOOM_SLIDE_DURATION,
-                                                        lift = 12,
-                                                })
+												local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
+												Rocks:beginSlide(rock, startX, startY, centerX, centerY, {
+														duration = TREMOR_BLOOM_SLIDE_DURATION,
+														lift = 12,
+												})
 
-                                                if Rocks.updateCell then
-                                                        Rocks:updateCell(rock, targetCol, targetRow)
-                                                else
-                                                        rock.col = targetCol
-                                                        rock.row = targetRow
-                                                end
-                                                rock.x = centerX
-                                                rock.y = centerY
-                                                rock.timer = 0
-                                                rock.phase = "done"
-                                                rock.scaleX = 1
-                                                rock.scaleY = 1
-                                                rock.offsetY = 0
+												if Rocks.updateCell then
+														Rocks:updateCell(rock, targetCol, targetRow)
+												else
+														rock.col = targetCol
+														rock.row = targetRow
+												end
+												rock.x = centerX
+												rock.y = centerY
+												rock.timer = 0
+												rock.phase = "done"
+												rock.scaleX = 1
+												rock.scaleY = 1
+												rock.offsetY = 0
 
-                                                SnakeUtils.setOccupied(targetCol, targetRow, true)
+												SnakeUtils.setOccupied(targetCol, targetRow, true)
 
-                                                addPosition(positions, centerX, centerY)
-                                                moved = true
-                                                break
-                                        end
-                                end
-                        end
-                end
-        end
+												addPosition(positions, centerX, centerY)
+												moved = true
+												break
+										end
+								end
+						end
+				end
+		end
 
-        return moved
+		return moved
 end
 
 local function computeLaserFacing(dir, col, row)
-        if dir == "vertical" then
-                local midpoint = floor((Arena.rows or 1) / 2)
-                if row and row > midpoint then
-                        return -1
-                end
-        else
-                local midpoint = floor((Arena.cols or 1) / 2)
-                if col and col > midpoint then
-                        return -1
-                end
-        end
+		if dir == "vertical" then
+				local midpoint = floor((Arena.rows or 1) / 2)
+				if row and row > midpoint then
+						return -1
+				end
+		else
+				local midpoint = floor((Arena.cols or 1) / 2)
+				if col and col > midpoint then
+						return -1
+				end
+		end
 
-        return 1
+		return 1
 end
 
 local function pushNearbyLasers(originCol, originRow, positions)
-        if not Lasers or not Lasers.getEmitters or not arenaHasGrid() then
-                return false
-        end
+		if not Lasers or not Lasers.getEmitters or not arenaHasGrid() then
+				return false
+		end
 
-        local moved = false
-        local emitters = Lasers:getEmitters()
-        if not emitters then
-                return false
-        end
+		local moved = false
+		local emitters = Lasers:getEmitters()
+		if not emitters then
+				return false
+		end
 
-        for _, beam in ipairs(emitters) do
-                local col, row = beam.col, beam.row
-                if col and row then
-                        local candidates = getPushCandidates(col, row, originCol, originRow)
-                        if candidates then
-                                for _, candidate in ipairs(candidates) do
-                                        local targetCol, targetRow = candidate[1], candidate[2]
-                                        if isCellOpen(targetCol, targetRow) then
-                                                local startX, startY = beam.x, beam.y
+		for _, beam in ipairs(emitters) do
+				local col, row = beam.col, beam.row
+				if col and row then
+						local candidates = getPushCandidates(col, row, originCol, originRow)
+						if candidates then
+								for _, candidate in ipairs(candidates) do
+										local targetCol, targetRow = candidate[1], candidate[2]
+										if isCellOpen(targetCol, targetRow) then
+												local startX, startY = beam.x, beam.y
 
-                                                SnakeUtils.setOccupied(col, row, false)
+												SnakeUtils.setOccupied(col, row, false)
 
-                                                local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
-                                                beam.col = targetCol
-                                                beam.row = targetRow
-                                                beam.x = centerX
-                                                beam.y = centerY
-                                                beam.facing = computeLaserFacing(beam.dir, targetCol, targetRow)
+												local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
+												beam.col = targetCol
+												beam.row = targetRow
+												beam.x = centerX
+												beam.y = centerY
+												beam.facing = computeLaserFacing(beam.dir, targetCol, targetRow)
 
-                                                Lasers:beginEmitterSlide(beam, startX, startY, centerX, centerY, {
-                                                        duration = TREMOR_BLOOM_SLIDE_DURATION,
-                                                })
+												Lasers:beginEmitterSlide(beam, startX, startY, centerX, centerY, {
+														duration = TREMOR_BLOOM_SLIDE_DURATION,
+												})
 
-                                                SnakeUtils.setOccupied(targetCol, targetRow, true)
+												SnakeUtils.setOccupied(targetCol, targetRow, true)
 
-                                                addPosition(positions, centerX, centerY)
-                                                moved = true
-                                                break
-                                        end
-                                end
-                        end
-                end
-        end
+												addPosition(positions, centerX, centerY)
+												moved = true
+												break
+										end
+								end
+						end
+				end
+		end
 
-        return moved
+		return moved
 end
 
 local function nudgeSawAlongTrack(saw, originCol, originRow, positions)
-        if not (saw and Arena and Arena.getCenterOfTile and Saws and Saws.getCenterForProgress) then
-                return false
-        end
+		if not (saw and Arena and Arena.getCenterOfTile and Saws and Saws.getCenterForProgress) then
+				return false
+		end
 
-        local originX, originY = Arena:getCenterOfTile(originCol, originRow)
-        if not (originX and originY) then
-                return false
-        end
+		local originX, originY = Arena:getCenterOfTile(originCol, originRow)
+		if not (originX and originY) then
+				return false
+		end
 
-        local startProgress = saw.progress or 0
-        local startCenterX, startCenterY = Saws:getCenterForProgress(saw, startProgress)
-        local targetProgress = startProgress
+		local startProgress = saw.progress or 0
+		local startCenterX, startCenterY = Saws:getCenterForProgress(saw, startProgress)
+		local targetProgress = startProgress
 
-        if saw.dir == "horizontal" then
-                if (startCenterX or 0) >= originX then
-                        targetProgress = min(1, startProgress + TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
-                else
-                        targetProgress = max(0, startProgress - TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
-                end
-        else
-                if (startCenterY or 0) >= originY then
-                        targetProgress = min(1, startProgress + TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
-                else
-                        targetProgress = max(0, startProgress - TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
-                end
-        end
+		if saw.dir == "horizontal" then
+				if (startCenterX or 0) >= originX then
+						targetProgress = min(1, startProgress + TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
+				else
+						targetProgress = max(0, startProgress - TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
+				end
+		else
+				if (startCenterY or 0) >= originY then
+						targetProgress = min(1, startProgress + TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
+				else
+						targetProgress = max(0, startProgress - TREMOR_BLOOM_SAW_NUDGE_AMOUNT)
+				end
+		end
 
-        if abs(targetProgress - startProgress) < 1e-4 then
-                return false
-        end
+		if abs(targetProgress - startProgress) < 1e-4 then
+				return false
+		end
 
-        Saws:beginProgressNudge(saw, startProgress, targetProgress, {
-                duration = TREMOR_BLOOM_SLIDE_DURATION,
-        })
+		Saws:beginProgressNudge(saw, startProgress, targetProgress, {
+				duration = TREMOR_BLOOM_SLIDE_DURATION,
+		})
 
-        if targetProgress > startProgress then
-                saw.direction = 1
-        elseif targetProgress < startProgress then
-                saw.direction = -1
-        end
+		if targetProgress > startProgress then
+				saw.direction = 1
+		elseif targetProgress < startProgress then
+				saw.direction = -1
+		end
 
-        if positions then
-                local endX, endY = Saws:getCenterForProgress(saw, targetProgress)
-                if endX and endY then
-                        addPosition(positions, endX, endY)
-                end
-        end
+		if positions then
+				local endX, endY = Saws:getCenterForProgress(saw, targetProgress)
+				if endX and endY then
+						addPosition(positions, endX, endY)
+				end
+		end
 
-        return true
+		return true
 end
 
 local function pushNearbySaws(originCol, originRow, positions)
-        if not arenaHasGrid() then
-                return false
-        end
+		if not arenaHasGrid() then
+				return false
+		end
 
-        local moved = false
-        local saws = Saws:getAll()
+		local moved = false
+		local saws = Saws:getAll()
 
-        for _, saw in ipairs(saws) do
-                local progress = saw and saw.progress or 0
-                local sx, sy = Saws.getCenterForProgress and Saws:getCenterForProgress(saw, progress)
+		for _, saw in ipairs(saws) do
+				local progress = saw and saw.progress or 0
+				local sx, sy = Saws.getCenterForProgress and Saws:getCenterForProgress(saw, progress)
 
-                if not (sx and sy) then
-                        sx, sy = saw and saw.x, saw and saw.y
-                end
+				if not (sx and sy) then
+						sx, sy = saw and saw.x, saw and saw.y
+				end
 
-                if sx and sy then
-                        local col, row = Arena:getTileFromWorld(sx, sy)
-                        if col and row then
-                                local candidates = getPushCandidates(col, row, originCol, originRow)
-                                if candidates ~= nil then
-                                        if nudgeSawAlongTrack(saw, originCol, originRow, positions) then
-                                                moved = true
-                                        end
-                                end
-                        end
-                end
-        end
+				if sx and sy then
+						local col, row = Arena:getTileFromWorld(sx, sy)
+						if col and row then
+								local candidates = getPushCandidates(col, row, originCol, originRow)
+								if candidates ~= nil then
+										if nudgeSawAlongTrack(saw, originCol, originRow, positions) then
+												moved = true
+										end
+								end
+						end
+				end
+		end
 
-        return moved
+		return moved
 end
 
 local function tremorBloomPushHazards(data)
-        if not data or not arenaHasGrid() then
-                return false, nil
-        end
+		if not data or not arenaHasGrid() then
+				return false, nil
+		end
 
-        local fx, fy = getEventPosition(data)
-        if not (fx and fy) then
-                return false, nil
-        end
+		local fx, fy = getEventPosition(data)
+		if not (fx and fy) then
+				return false, nil
+		end
 
-        local originCol, originRow = Arena:getTileFromWorld(fx, fy)
-        if not (originCol and originRow) then
-                return false, nil
-        end
+		local originCol, originRow = Arena:getTileFromWorld(fx, fy)
+		if not (originCol and originRow) then
+				return false, nil
+		end
 
-        local positions = {}
-        local moved = false
+		local positions = {}
+		local moved = false
 
-        if pushNearbyRocks(originCol, originRow, positions) then
-                moved = true
-        end
+		if pushNearbyRocks(originCol, originRow, positions) then
+				moved = true
+		end
 
-        if pushNearbyLasers(originCol, originRow, positions) then
-                moved = true
-        end
+		if pushNearbyLasers(originCol, originRow, positions) then
+				moved = true
+		end
 
-        if pushNearbySaws(originCol, originRow, positions) then
-                moved = true
-        end
+		if pushNearbySaws(originCol, originRow, positions) then
+				moved = true
+		end
 
-        if not moved then
-                return false, nil
-        end
+		if not moved then
+				return false, nil
+		end
 
-        return true, positions
+		return true, positions
 end
 
 local function stoneSkinShieldHandler(data, state)
-        if not state then return end
-        if getStacks(state, "stone_skin") <= 0 then return end
-        if not data or data.cause ~= "rock" then return end
-        if not Rocks or not Rocks.shatterNearest then return end
+		if not state then return end
+		if getStacks(state, "stone_skin") <= 0 then return end
+		if not data or data.cause ~= "rock" then return end
+		if not Rocks or not Rocks.shatterNearest then return end
 
 	local fx, fy = getEventPosition(data)
 	celebrateUpgrade(nil, nil, {
@@ -729,10 +729,10 @@ local AMBER_BLOOM_SHATTER_THRESHOLD = 3
 local AMBER_BLOOM_PROGRESS_PER_TRIGGER = 0.25
 
 local function handleAmberBloomRockShatter(data, state)
-        if not state then return end
+		if not state then return end
 
-        if getStacks(state, "amber_bloom") <= 0 then
-                return
+		if getStacks(state, "amber_bloom") <= 0 then
+				return
 	end
 
 	state.counters = state.counters or {}
@@ -790,88 +790,88 @@ local function handleAmberBloomRockShatter(data, state)
 end
 
 local function handleVolatileBloomExplosion(event)
-        local state = Upgrades.runState
-        if not state or getStacks(state, "volatile_bloom") <= 0 then
-                return
-        end
+		local state = Upgrades.runState
+		if not state or getStacks(state, "volatile_bloom") <= 0 then
+				return
+		end
 
-        local hits = event and event.hits
-        local hitCount = hits and #hits or 0
-        if hitCount <= 0 then
-                return
-        end
+		local hits = event and event.hits
+		local hitCount = hits and #hits or 0
+		if hitCount <= 0 then
+				return
+		end
 
-        state.counters = state.counters or {}
-        local counters = state.counters
+		state.counters = state.counters or {}
+		local counters = state.counters
 
-        local totalProgress = (counters.volatileBloomShieldProgress or 0) + hitCount * VOLATILE_BLOOM_SHIELD_PER_HIT
-        local shields = floor(totalProgress + 1e-6)
-        counters.volatileBloomShieldProgress = totalProgress - shields
+		local totalProgress = (counters.volatileBloomShieldProgress or 0) + hitCount * VOLATILE_BLOOM_SHIELD_PER_HIT
+		local shields = floor(totalProgress + 1e-6)
+		counters.volatileBloomShieldProgress = totalProgress - shields
 
-        if hits then
-                for _, hit in ipairs(hits) do
-                        if hit.type == "rock" then
-                                Upgrades:notify("rockShattered", {
-                                        x = hit.x,
-                                        y = hit.y,
-                                        sourceX = event and event.x,
-                                        sourceY = event and event.y,
-                                        rock = hit.rock,
-                                })
-                        end
-                end
-        end
+		if hits then
+				for _, hit in ipairs(hits) do
+						if hit.type == "rock" then
+								Upgrades:notify("rockShattered", {
+										x = hit.x,
+										y = hit.y,
+										sourceX = event and event.x,
+										sourceY = event and event.y,
+										rock = hit.rock,
+								})
+						end
+				end
+		end
 
-        local comboBoost = hitCount * VOLATILE_BLOOM_COMBO_PER_HIT
-        if comboBoost > 0 then
-                boostComboTimer(comboBoost)
-        end
+		local comboBoost = hitCount * VOLATILE_BLOOM_COMBO_PER_HIT
+		if comboBoost > 0 then
+				boostComboTimer(comboBoost)
+		end
 
-        if shields > 0 then
-                grantShields(shields)
-        end
+		if shields > 0 then
+				grantShields(shields)
+		end
 
-        local label = getUpgradeString("volatile_bloom", "activation_text")
-        if label and label ~= "" then
-                if shields > 0 then
-                        if shields > 1 then
-                                label = string.format("%s +%d", label, shields)
-                        else
-                                label = string.format("%s +1", label)
-                        end
-                else
-                        local percent = floor(hitCount * VOLATILE_BLOOM_SHIELD_PER_HIT * 100 + 0.5)
-                        label = string.format("%s +%d%%", label, percent)
-                end
-        else
-                label = nil
-        end
+		local label = getUpgradeString("volatile_bloom", "activation_text")
+		if label and label ~= "" then
+				if shields > 0 then
+						if shields > 1 then
+								label = string.format("%s +%d", label, shields)
+						else
+								label = string.format("%s +1", label)
+						end
+				else
+						local percent = floor(hitCount * VOLATILE_BLOOM_SHIELD_PER_HIT * 100 + 0.5)
+						label = string.format("%s +%d%%", label, percent)
+				end
+		else
+				label = nil
+		end
 
-        local options = {
-                x = event and event.x,
-                y = event and event.y,
-                color = VOLATILE_BLOOM_COLOR,
-                particleCount = 16,
-                particleSpeed = 140,
-                particleLife = 0.42,
-                textOffset = 44,
-                textScale = 1.08,
-                visual = {
-                        variant = "pulse",
-                        showBase = false,
-                        life = 0.74,
-                        innerRadius = 14,
-                        outerRadius = 66,
-                        ringCount = 3,
-                        ringSpacing = 12,
-                        addBlend = true,
-                        color = VOLATILE_BLOOM_COLOR,
-                        variantSecondaryColor = {1.0, 0.74, 0.46, 0.78},
-                        variantTertiaryColor = {1.0, 0.92, 0.62, 0.65},
-                },
-        }
+		local options = {
+				x = event and event.x,
+				y = event and event.y,
+				color = VOLATILE_BLOOM_COLOR,
+				particleCount = 16,
+				particleSpeed = 140,
+				particleLife = 0.42,
+				textOffset = 44,
+				textScale = 1.08,
+				visual = {
+						variant = "pulse",
+						showBase = false,
+						life = 0.74,
+						innerRadius = 14,
+						outerRadius = 66,
+						ringCount = 3,
+						ringSpacing = 12,
+						addBlend = true,
+						color = VOLATILE_BLOOM_COLOR,
+						variantSecondaryColor = {1.0, 0.74, 0.46, 0.78},
+						variantTertiaryColor = {1.0, 0.92, 0.62, 0.65},
+				},
+		}
 
-        celebrateUpgrade(label, nil, options)
+		celebrateUpgrade(label, nil, options)
 end
 
 local function newRunState()
@@ -943,37 +943,37 @@ local function countUpgradesWithTag(state, tag)
 end
 
 local function updateResonantShellBonus(state)
-        if not state then return end
+		if not state then return end
 
-        state.effects = state.effects or {}
+		state.effects = state.effects or {}
 
-        local perSlow = state.counters and state.counters.resonantShellPerSlow or 0
-        local perCharge = state.counters and state.counters.resonantShellPerCharge or 0
-        if perSlow <= 0 and perCharge <= 0 then return end
+		local perSlow = state.counters and state.counters.resonantShellPerSlow or 0
+		local perCharge = state.counters and state.counters.resonantShellPerCharge or 0
+		if perSlow <= 0 and perCharge <= 0 then return end
 
-        local defenseCount = countUpgradesWithTag(state, "defense")
-        local effectiveDefenseCount = min(defenseCount, RESONANT_SHELL_DEFENSE_CAP)
+		local defenseCount = countUpgradesWithTag(state, "defense")
+		local effectiveDefenseCount = min(defenseCount, RESONANT_SHELL_DEFENSE_CAP)
 
-        if perSlow > 0 then
-                local previousMult = state.counters and state.counters.resonantShellSpeedMult or 1
-                if previousMult == 0 then
-                        previousMult = 1
-                end
+		if perSlow > 0 then
+				local previousMult = state.counters and state.counters.resonantShellSpeedMult or 1
+				if previousMult == 0 then
+						previousMult = 1
+				end
 
-                local reduction = perSlow * effectiveDefenseCount
-                local targetMult = max(RESONANT_SHELL_MIN_SPEED_MULT, 1 - reduction)
-                state.counters.resonantShellSpeedMult = targetMult
+				local reduction = perSlow * effectiveDefenseCount
+				local targetMult = max(RESONANT_SHELL_MIN_SPEED_MULT, 1 - reduction)
+				state.counters.resonantShellSpeedMult = targetMult
 
-                local currentMult = state.effects.sawSpeedMult or 1
-                state.effects.sawSpeedMult = (currentMult / previousMult) * targetMult
-        end
+				local currentMult = state.effects.sawSpeedMult or 1
+				state.effects.sawSpeedMult = (currentMult / previousMult) * targetMult
+		end
 
-        if perCharge > 0 then
-                local previousCharge = state.counters.resonantShellChargeBonus or 0
-                local newCharge = perCharge * effectiveDefenseCount
-                state.counters.resonantShellChargeBonus = newCharge
-                state.effects.laserChargeFlat = (state.effects.laserChargeFlat or 0) - previousCharge + newCharge
-        end
+		if perCharge > 0 then
+				local previousCharge = state.counters.resonantShellChargeBonus or 0
+				local newCharge = perCharge * effectiveDefenseCount
+				state.counters.resonantShellChargeBonus = newCharge
+				state.effects.laserChargeFlat = (state.effects.laserChargeFlat or 0) - previousCharge + newCharge
+		end
 end
 
 local function updateGuildLedger(state)
@@ -1042,34 +1042,34 @@ local function updateStoneCensus(state)
 end
 
 local mapmakersCompassHazards = {
-        {
-                key = "laserCount",
-                effectKey = "laserSpawnBonus",
-                labelKey = "lasers_text",
-                color = {0.72, 0.9, 1.0, 1},
-                priority = 3,
-        },
-        {
-                key = "saws",
-                effectKey = "sawSpawnBonus",
-                labelKey = "saws_text",
-                color = {1.0, 0.78, 0.42, 1},
-                priority = 2,
-        },
-        {
-                key = "rocks",
-                effectKey = "rockSpawnBonus",
-                labelKey = "rocks_text",
-                color = {0.72, 0.86, 1.0, 1},
-                priority = 1,
-        },
+		{
+				key = "laserCount",
+				effectKey = "laserSpawnBonus",
+				labelKey = "lasers_text",
+				color = {0.72, 0.9, 1.0, 1},
+				priority = 3,
+		},
+		{
+				key = "saws",
+				effectKey = "sawSpawnBonus",
+				labelKey = "saws_text",
+				color = {1.0, 0.78, 0.42, 1},
+				priority = 2,
+		},
+		{
+				key = "rocks",
+				effectKey = "rockSpawnBonus",
+				labelKey = "rocks_text",
+				color = {0.72, 0.86, 1.0, 1},
+				priority = 1,
+		},
 }
 
 local function compareCompassCandidates(a, b)
-        if a.value == b.value then
-                return (a.info.priority or 0) < (b.info.priority or 0)
-        end
-        return (a.value or 0) > (b.value or 0)
+		if a.value == b.value then
+				return (a.info.priority or 0) < (b.info.priority or 0)
+		end
+		return (a.value or 0) > (b.value or 0)
 end
 
 local function clearMapmakersCompass(state)
@@ -1119,7 +1119,7 @@ local function applyMapmakersCompass(state, context, options)
 		insert(candidates, {info = entry, value = value})
 	end
 
-        table.sort(candidates, compareCompassCandidates)
+		table.sort(candidates, compareCompassCandidates)
 
 	local chosen
 	for _, candidate in ipairs(candidates) do
@@ -1133,10 +1133,10 @@ local function applyMapmakersCompass(state, context, options)
 	local celebrate = options and options.celebrate
 	local eventData = options and options.eventData
 
-        if not chosen then
-                Score:addBonus(2 + stacks)
+		if not chosen then
+				Score:addBonus(2 + stacks)
 
-                Saws:stall(0.6 + 0.1 * stacks)
+				Saws:stall(0.6 + 0.1 * stacks)
 
 		if celebrate then
 			local label = getUpgradeString("mapmakers_compass", "activation_text") or getUpgradeString("mapmakers_compass", "name")
@@ -1231,9 +1231,9 @@ local function applyCircuitBreakerFacing(options, dx, dy)
 end
 
 local function getSawFacingDirection(sawInfo)
-        if not sawInfo then
-                return 0, -1
-        end
+		if not sawInfo then
+				return 0, -1
+		end
 
 	if sawInfo.dir == "vertical" then
 		if sawInfo.side == "left" then
@@ -1245,111 +1245,111 @@ local function getSawFacingDirection(sawInfo)
 		return -1, 0
 	end
 
-        return 0, -1
+		return 0, -1
 end
 
 local function getLaserFacingDirection(laserInfo)
-        if not laserInfo then
-                return 0, -1
-        end
+		if not laserInfo then
+				return 0, -1
+		end
 
-        local dir = laserInfo.dir
-        local facing = (laserInfo.facing or 1) >= 0 and 1 or -1
+		local dir = laserInfo.dir
+		local facing = (laserInfo.facing or 1) >= 0 and 1 or -1
 
-        if dir == "horizontal" then
-                return facing, 0
-        end
+		if dir == "horizontal" then
+				return facing, 0
+		end
 
-        return 0, facing
+		return 0, facing
 end
 
 local function buildCircuitBreakerTargets(data)
-        local targets = {}
-        if not data then
-                return targets
-        end
+		local targets = {}
+		if not data then
+				return targets
+		end
 
-        if data.saws and #data.saws > 0 then
-                for _, entry in ipairs(data.saws) do
-                        if entry then
-                                local x = entry.x or entry[1]
-                                local y = entry.y or entry[2]
-                                if x and y then
-                                        targets[#targets + 1] = {
-                                                x = x,
-                                                y = y,
-                                                dir = entry.dir,
-                                                side = entry.side,
-                                                type = "saw",
-                                        }
-                                end
-                        end
-                end
-        elseif data.positions and #data.positions > 0 then
-                for _, pos in ipairs(data.positions) do
-                        if pos then
-                                local x = pos[1]
-                                local y = pos[2]
-                                if x and y then
-                                        targets[#targets + 1] = {
-                                                x = x,
-                                                y = y,
-                                                type = "saw",
-                                        }
-                                end
-                        end
-                end
-        end
+		if data.saws and #data.saws > 0 then
+				for _, entry in ipairs(data.saws) do
+						if entry then
+								local x = entry.x or entry[1]
+								local y = entry.y or entry[2]
+								if x and y then
+										targets[#targets + 1] = {
+												x = x,
+												y = y,
+												dir = entry.dir,
+												side = entry.side,
+												type = "saw",
+										}
+								end
+						end
+				end
+		elseif data.positions and #data.positions > 0 then
+				for _, pos in ipairs(data.positions) do
+						if pos then
+								local x = pos[1]
+								local y = pos[2]
+								if x and y then
+										targets[#targets + 1] = {
+												x = x,
+												y = y,
+												type = "saw",
+										}
+								end
+						end
+				end
+		end
 
-        return targets
+		return targets
 end
 
 local function buildCircuitBreakerLaserTargets(limit)
-        return getLaserEmitterDetails(limit)
+		return getLaserEmitterDetails(limit)
 end
 
 local pool = {
-        register({
-                id = "serpents_reflex",
-                nameKey = "upgrades.serpents_reflex.name",
-                descKey = "upgrades.serpents_reflex.description",
-                rarity = "common",
-                tags = {"mobility"},
-                allowDuplicates = true,
-                onAcquire = function(state)
-                        Snake:addSpeedMultiplier(1.04)
+		register({
+				id = "serpents_reflex",
+				nameKey = "upgrades.serpents_reflex.name",
+				descKey = "upgrades.serpents_reflex.description",
+				rarity = "common",
+				tags = {"mobility"},
+				allowDuplicates = true,
+				onAcquire = function(state)
+						Snake:addSpeedMultiplier(1.04)
 
-                        celebrateUpgrade(getUpgradeString("serpents_reflex", "name"), nil, {
-                                color = {0.98, 0.76, 0.36, 1},
-                                particleCount = 12,
-                                particleSpeed = 120,
-                                particleLife = 0.34,
-                                textOffset = 36,
-                                textScale = 1.06,
-                        })
-                end,
-        }),
-        register({
-                id = "quick_fangs",
-                nameKey = "upgrades.quick_fangs.name",
-                descKey = "upgrades.quick_fangs.description",
-                rarity = "rare",
-                tags = {"mobility"},
-                allowDuplicates = true,
-                maxStacks = 4,
-                onAcquire = function(state)
-                        Snake:addSpeedMultiplier(1.10)
+						celebrateUpgrade(getUpgradeString("serpents_reflex", "name"), nil, {
+								color = {0.98, 0.76, 0.36, 1},
+								particleCount = 12,
+								particleSpeed = 120,
+								particleLife = 0.34,
+								textOffset = 36,
+								textScale = 1.06,
+						})
+				end,
+		}),
+		register({
+				id = "quick_fangs",
+				nameKey = "upgrades.quick_fangs.name",
+				descKey = "upgrades.quick_fangs.description",
+				rarity = "rare",
+				tags = {"mobility"},
+				allowDuplicates = true,
+				maxStacks = 4,
+				onAcquire = function(state)
+						Snake:addSpeedMultiplier(1.10)
 
-                        if state then
-                                state.counters = state.counters or {}
-                                local stacks = (state.counters.quickFangsStacks or 0) + 1
-                                state.counters.quickFangsStacks = stacks
-                                Snake:setQuickFangsStacks(stacks)
-                        else
-                                Snake:setQuickFangsStacks((Snake.quickFangs and Snake.quickFangs.stacks or 0) + 1)
-                        end
+						if state then
+								state.counters = state.counters or {}
+								local stacks = (state.counters.quickFangsStacks or 0) + 1
+								state.counters.quickFangsStacks = stacks
+								Snake:setQuickFangsStacks(stacks)
+						else
+								Snake:setQuickFangsStacks((Snake.quickFangs and Snake.quickFangs.stacks or 0) + 1)
+						end
 
-                        Face:set("veryHappy", 1.6)
+						Face:set("veryHappy", 1.6)
 
 			local celebrationOptions = {
 				color = {1, 0.63, 0.42, 1},
@@ -1372,13 +1372,13 @@ local pool = {
 		maxStacks = 4,
 		tags = {"defense"},
 		onAcquire = function(state)
-                        Snake:addShields(1)
-                        Snake:addStoneSkinSawGrace(1)
+						Snake:addShields(1)
+						Snake:addStoneSkinSawGrace(1)
 			if not state.counters.stoneSkinHandlerRegistered then
 				state.counters.stoneSkinHandlerRegistered = true
 				Upgrades:addEventHandler("shieldConsumed", stoneSkinShieldHandler)
 			end
-                        Face:set("blank", 1.8)
+						Face:set("blank", 1.8)
 			local celebrationOptions = {
 				color = {0.75, 0.82, 0.88, 1},
 				particleCount = 14,
@@ -1411,9 +1411,9 @@ local pool = {
 		end,
 		handlers = {
 			shieldConsumed = function(data, state)
-                                state.counters.aegisRecycler = (state.counters.aegisRecycler or 0) + 1
-                                if state.counters.aegisRecycler >= 3 then
-                                        state.counters.aegisRecycler = state.counters.aegisRecycler - 3
+								state.counters.aegisRecycler = (state.counters.aegisRecycler or 0) + 1
+								if state.counters.aegisRecycler >= 3 then
+										state.counters.aegisRecycler = state.counters.aegisRecycler - 3
 					Snake:addShields(1)
 					local fx, fy = getEventPosition(data)
 					if fx and fy then
@@ -1458,16 +1458,16 @@ local pool = {
 		end,
 	}),
 	register({
-                id = "extra_bite",
-                nameKey = "upgrades.extra_bite.name",
-                descKey = "upgrades.extra_bite.description",
-                rarity = "common",
-                tags = {"hazard"},
-                onAcquire = function(state)
-                        state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
-                        state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
-                        UI:adjustFruitGoal(-1)
-                        Face:set("angry", 1.4)
+				id = "extra_bite",
+				nameKey = "upgrades.extra_bite.name",
+				descKey = "upgrades.extra_bite.description",
+				rarity = "common",
+				tags = {"hazard"},
+				onAcquire = function(state)
+						state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
+						state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 1.15
+						UI:adjustFruitGoal(-1)
+						Face:set("angry", 1.4)
 			local celebrationOptions = {
 				color = {1, 0.86, 0.36, 1},
 				particleCount = 10,
@@ -1529,9 +1529,9 @@ local pool = {
 		unlockTag = "speedcraft",
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(0.85)
-                        state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
-                        UI:adjustFruitGoal(1)
-                        Face:set("sad", 2.0)
+						state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+						UI:adjustFruitGoal(1)
+						Face:set("sad", 2.0)
 			celebrateUpgrade(getUpgradeString("deliberate_coil", "name"), nil, {
 				color = {0.76, 0.56, 0.88, 1},
 				particleCount = 16,
@@ -1580,7 +1580,7 @@ local pool = {
 					state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
 					state.counters.pocketSpringsComplete = true
 					Snake:addShields(1)
-                                        Face:set("happy", 1.6)
+										Face:set("happy", 1.6)
 					local celebrationOptions = {
 						color = {0.64, 0.86, 1.0, 1},
 						particleCount = 14,
@@ -1622,15 +1622,15 @@ local pool = {
 				Upgrades:addEventHandler("floorStart", mapmakersCompassFloorStart)
 			end
 
-                        Face:set("happy", 1.4)
+						Face:set("happy", 1.4)
 
 			if state.counters.mapmakersCompassLastContext then
 				applyMapmakersCompass(state, state.counters.mapmakersCompassLastContext, {celebrate = false})
 			end
 		end,
 	}),
-       register({
-               id = "molting_reflex",
+		register({
+				id = "molting_reflex",
 		nameKey = "upgrades.molting_reflex.name",
 		descKey = "upgrades.molting_reflex.description",
 		rarity = "uncommon",
@@ -1674,14 +1674,14 @@ local pool = {
 			end,
 		},
 	}),
-        register({
-                id = "circuit_breaker",
-                nameKey = "upgrades.circuit_breaker.name",
-                descKey = "upgrades.circuit_breaker.description",
-                rarity = "rare",
-                tags = {"hazard"},
-                onAcquire = function(state)
-                        state.effects.sawStall = (state.effects.sawStall or 0) + CIRCUIT_BREAKER_STALL_DURATION
+		register({
+				id = "circuit_breaker",
+				nameKey = "upgrades.circuit_breaker.name",
+				descKey = "upgrades.circuit_breaker.description",
+				rarity = "rare",
+				tags = {"hazard"},
+				onAcquire = function(state)
+						state.effects.sawStall = (state.effects.sawStall or 0) + CIRCUIT_BREAKER_STALL_DURATION
 			local sparkColor = {1, 0.58, 0.32, 1}
 			celebrateUpgrade(getUpgradeString("circuit_breaker", "name"), nil, {
 				color = sparkColor,
@@ -1705,371 +1705,371 @@ local pool = {
 					return
 				end
 
-                                local duration = (data and data.duration) or CIRCUIT_BREAKER_STALL_DURATION
-                                Lasers:stall(duration, {
-                                        cause = data and data.cause or nil,
-                                        source = "circuit_breaker",
-                                        positionLimit = 2,
-                                })
+								local duration = (data and data.duration) or CIRCUIT_BREAKER_STALL_DURATION
+								Lasers:stall(duration, {
+										cause = data and data.cause or nil,
+										source = "circuit_breaker",
+										positionLimit = 2,
+								})
 
-                                local sparkColor = {1, 0.58, 0.32, 1}
-                                local baseOptions = {
-                                        color = sparkColor,
-                                        skipText = true,
-                                        skipVisuals = true,
-                                        particles = {
-                                                count = 14,
-                                                speed = 120,
-                                                speedVariance = 70,
-                                                life = 0.28,
-                                                size = 2.8,
-                                                color = {1, 0.74, 0.38, 1},
-                                                spread = pi * 0.45,
-                                                angleJitter = pi * 0.18,
-                                                gravity = 200,
-                                                drag = 1.5,
-                                                fadeTo = 0,
-                                                scaleMin = 0.4,
-                                                scaleVariance = 0.26,
-                                        },
-                                }
+								local sparkColor = {1, 0.58, 0.32, 1}
+								local baseOptions = {
+										color = sparkColor,
+										skipText = true,
+										skipVisuals = true,
+										particles = {
+												count = 14,
+												speed = 120,
+												speedVariance = 70,
+												life = 0.28,
+												size = 2.8,
+												color = {1, 0.74, 0.38, 1},
+												spread = pi * 0.45,
+												angleJitter = pi * 0.18,
+												gravity = 200,
+												drag = 1.5,
+												fadeTo = 0,
+												scaleMin = 0.4,
+												scaleVariance = 0.26,
+										},
+								}
 
-                                local sawTargets = buildCircuitBreakerTargets(data)
-                                if not sawTargets or #sawTargets == 0 then
-                                        sawTargets = {}
-                                        local sawCenters = getSawCenters(2)
-                                        if sawCenters and #sawCenters > 0 then
-                                                for _, pos in ipairs(sawCenters) do
-                                                        if pos then
-                                                                sawTargets[#sawTargets + 1] = {
-                                                                        x = pos[1],
-                                                                        y = pos[2],
-                                                                        type = "saw",
-                                                                }
-                                                        end
-                                                end
-                                        end
-                                end
+								local sawTargets = buildCircuitBreakerTargets(data)
+								if not sawTargets or #sawTargets == 0 then
+										sawTargets = {}
+										local sawCenters = getSawCenters(2)
+										if sawCenters and #sawCenters > 0 then
+												for _, pos in ipairs(sawCenters) do
+														if pos then
+																sawTargets[#sawTargets + 1] = {
+																		x = pos[1],
+																		y = pos[2],
+																		type = "saw",
+																}
+														end
+												end
+										end
+								end
 
-                                local sparksSpawned = 0
+								local sparksSpawned = 0
 
-                                if sawTargets and #sawTargets > 0 then
-                                        local limit = min(#sawTargets, 2)
-                                        for i = 1, limit do
-                                                local target = sawTargets[i]
-                                                if target then
-                                                        local sparkOptions = deepcopy(baseOptions)
-                                                        sparkOptions.x = target.x
-                                                        sparkOptions.y = target.y
-                                                        local dirX, dirY = getSawFacingDirection(target)
-                                                        applyCircuitBreakerFacing(sparkOptions, dirX, dirY)
-                                                        celebrateUpgrade(nil, nil, sparkOptions)
-                                                        sparksSpawned = sparksSpawned + 1
-                                                end
-                                        end
-                                end
+								if sawTargets and #sawTargets > 0 then
+										local limit = min(#sawTargets, 2)
+										for i = 1, limit do
+												local target = sawTargets[i]
+												if target then
+														local sparkOptions = deepcopy(baseOptions)
+														sparkOptions.x = target.x
+														sparkOptions.y = target.y
+														local dirX, dirY = getSawFacingDirection(target)
+														applyCircuitBreakerFacing(sparkOptions, dirX, dirY)
+														celebrateUpgrade(nil, nil, sparkOptions)
+														sparksSpawned = sparksSpawned + 1
+												end
+										end
+								end
 
-                                local laserTargets = buildCircuitBreakerLaserTargets(2)
-                                if laserTargets and #laserTargets > 0 then
-                                        local limit = min(#laserTargets, 2)
-                                        for i = 1, limit do
-                                                local target = laserTargets[i]
-                                                if target then
-                                                        local sparkOptions = deepcopy(baseOptions)
-                                                        sparkOptions.x = target.x
-                                                        sparkOptions.y = target.y
-                                                        local dirX, dirY = getLaserFacingDirection(target)
-                                                        applyCircuitBreakerFacing(sparkOptions, dirX, dirY)
-                                                        celebrateUpgrade(nil, nil, sparkOptions)
-                                                        sparksSpawned = sparksSpawned + 1
-                                                end
-                                        end
-                                end
+								local laserTargets = buildCircuitBreakerLaserTargets(2)
+								if laserTargets and #laserTargets > 0 then
+										local limit = min(#laserTargets, 2)
+										for i = 1, limit do
+												local target = laserTargets[i]
+												if target then
+														local sparkOptions = deepcopy(baseOptions)
+														sparkOptions.x = target.x
+														sparkOptions.y = target.y
+														local dirX, dirY = getLaserFacingDirection(target)
+														applyCircuitBreakerFacing(sparkOptions, dirX, dirY)
+														celebrateUpgrade(nil, nil, sparkOptions)
+														sparksSpawned = sparksSpawned + 1
+												end
+										end
+								end
 
-                                if sparksSpawned <= 0 then
-                                        local fallbackOptions = deepcopy(baseOptions)
-                                        applySegmentPosition(fallbackOptions, 0.82)
-                                        applyCircuitBreakerFacing(fallbackOptions, 0, -1)
-                                        celebrateUpgrade(nil, nil, fallbackOptions)
-                                end
-                        end,
-                },
-        }),
-        register({
-                id = "tremor_bloom",
-                nameKey = "upgrades.tremor_bloom.name",
-                descKey = "upgrades.tremor_bloom.description",
-                rarity = "rare",
-                tags = {"mobility", "hazard", "rocks", "control"},
-                onAcquire = function()
-                        celebrateUpgrade(getUpgradeString("tremor_bloom", "name"), nil, {
-                                color = TREMOR_BLOOM_COLOR,
-                                textOffset = 46,
-                                textScale = 1.08,
-                                particleCount = 18,
-                                particleSpeed = 120,
-                                particleLife = 0.38,
-                                visual = {
-                                        variant = "pulse",
-                                        showBase = false,
-                                        life = 0.78,
-                                        innerRadius = 10,
-                                        outerRadius = 64,
-                                        ringCount = 3,
-                                        ringSpacing = 10,
-                                        addBlend = true,
-                                        color = TREMOR_BLOOM_COLOR,
-                                        variantSecondaryColor = {0.52, 0.44, 0.96, 0.85},
-                                        variantTertiaryColor = {1.0, 0.86, 0.4, 0.62},
-                                },
-                        })
-                end,
-                handlers = {
-                        fruitCollected = function(data, state)
-                                if getStacks(state, "tremor_bloom") <= 0 then
-                                        return
-                                end
+								if sparksSpawned <= 0 then
+										local fallbackOptions = deepcopy(baseOptions)
+										applySegmentPosition(fallbackOptions, 0.82)
+										applyCircuitBreakerFacing(fallbackOptions, 0, -1)
+										celebrateUpgrade(nil, nil, fallbackOptions)
+								end
+						end,
+				},
+		}),
+		register({
+				id = "tremor_bloom",
+				nameKey = "upgrades.tremor_bloom.name",
+				descKey = "upgrades.tremor_bloom.description",
+				rarity = "rare",
+				tags = {"mobility", "hazard", "rocks", "control"},
+				onAcquire = function()
+						celebrateUpgrade(getUpgradeString("tremor_bloom", "name"), nil, {
+								color = TREMOR_BLOOM_COLOR,
+								textOffset = 46,
+								textScale = 1.08,
+								particleCount = 18,
+								particleSpeed = 120,
+								particleLife = 0.38,
+								visual = {
+										variant = "pulse",
+										showBase = false,
+										life = 0.78,
+										innerRadius = 10,
+										outerRadius = 64,
+										ringCount = 3,
+										ringSpacing = 10,
+										addBlend = true,
+										color = TREMOR_BLOOM_COLOR,
+										variantSecondaryColor = {0.52, 0.44, 0.96, 0.85},
+										variantTertiaryColor = {1.0, 0.86, 0.4, 0.62},
+								},
+						})
+				end,
+				handlers = {
+						fruitCollected = function(data, state)
+								if getStacks(state, "tremor_bloom") <= 0 then
+										return
+								end
 
-                                local fx, fy = getEventPosition(data)
-                                if fx and fy and Arena and Arena.addFloorRipple then
-                                        local tileSize = Arena.tileSize or 24
-                                        Arena:addFloorRipple(fx, fy, {
-                                                radiusTiles = TREMOR_BLOOM_RADIUS + 0.65,
-                                                duration = 0.58,
-                                                thickness = tileSize * 0.6,
-                                                lightenAmount = 0.45,
-                                                alpha = 0.32,
-                                                fillAlpha = 0.14,
-                                                segments = 72,
-                                        })
-                                end
+								local fx, fy = getEventPosition(data)
+								if fx and fy and Arena and Arena.addFloorRipple then
+										local tileSize = Arena.tileSize or 24
+										Arena:addFloorRipple(fx, fy, {
+												radiusTiles = TREMOR_BLOOM_RADIUS + 0.65,
+												duration = 0.58,
+												thickness = tileSize * 0.6,
+												lightenAmount = 0.45,
+												alpha = 0.32,
+												fillAlpha = 0.14,
+												segments = 72,
+										})
+								end
 
-                                local moved, hazardPositions = tremorBloomPushHazards(data)
-                                if not moved then
-                                        return
-                                end
+								local moved, hazardPositions = tremorBloomPushHazards(data)
+								if not moved then
+										return
+								end
 
-                               local celebrationOptions = {
-                                        color = TREMOR_BLOOM_COLOR,
-                                        textOffset = 48,
-                                        textScale = 1.08,
-                                        particleCount = 18,
-                                        particleSpeed = 120,
-                                        particleLife = 0.4,
-                                        visual = {
-                                                variant = "pulse",
-                                                showBase = false,
-                                                life = 0.72,
-                                                innerRadius = 12,
-                                                outerRadius = 70,
-                                                ringCount = 3,
-                                                ringSpacing = 10,
-                                                addBlend = true,
-                                                color = TREMOR_BLOOM_COLOR,
-                                                variantSecondaryColor = {0.52, 0.44, 0.96, 0.8},
-                                                variantTertiaryColor = {1.0, 0.84, 0.38, 0.56},
-                                        },
-                                }
+								local celebrationOptions = {
+										color = TREMOR_BLOOM_COLOR,
+										textOffset = 48,
+										textScale = 1.08,
+										particleCount = 18,
+										particleSpeed = 120,
+										particleLife = 0.4,
+										visual = {
+												variant = "pulse",
+												showBase = false,
+												life = 0.72,
+												innerRadius = 12,
+												outerRadius = 70,
+												ringCount = 3,
+												ringSpacing = 10,
+												addBlend = true,
+												color = TREMOR_BLOOM_COLOR,
+												variantSecondaryColor = {0.52, 0.44, 0.96, 0.8},
+												variantTertiaryColor = {1.0, 0.84, 0.38, 0.56},
+										},
+								}
 
-                               celebrateUpgrade(nil, data, celebrationOptions)
+								celebrateUpgrade(nil, data, celebrationOptions)
 
-                                if hazardPositions and #hazardPositions > 0 then
-                                        for _, pos in ipairs(hazardPositions) do
-                                                local hx, hy = pos[1], pos[2]
-                                                if hx and hy then
-                                                        celebrateUpgrade(nil, nil, {
-                                                                x = hx,
-                                                                y = hy,
-                                                                skipText = true,
-                                                                color = TREMOR_BLOOM_COLOR,
-                                                                particleCount = 8,
-                                                                particleSpeed = 90,
-                                                                particleLife = 0.32,
-                                                                visual = {
-                                                                        variant = "pulse",
-                                                                        showBase = false,
-                                                                        life = 0.5,
-                                                                        innerRadius = 8,
-                                                                        outerRadius = 40,
-                                                                        ringCount = 2,
-                                                                        ringSpacing = 7,
-                                                                        addBlend = true,
-                                                                        color = TREMOR_BLOOM_COLOR,
-                                                                        variantSecondaryColor = {0.52, 0.44, 0.96, 0.7},
-                                                                        variantTertiaryColor = {1.0, 0.84, 0.38, 0.48},
-                                                                },
-                                                        })
-                                                end
-                                        end
-                                end
-                        end,
-                },
-        }),
-        register({
-                id = "volatile_bloom",
-                nameKey = "upgrades.volatile_bloom.name",
-                descKey = "upgrades.volatile_bloom.description",
-                rarity = "legendary",
-                tags = {"hazard", "rocks", "defense"},
-                onAcquire = function(state)
-                        state.counters = state.counters or {}
-                        state.counters.volatileBloomShieldProgress = state.counters.volatileBloomShieldProgress or 0
+								if hazardPositions and #hazardPositions > 0 then
+										for _, pos in ipairs(hazardPositions) do
+												local hx, hy = pos[1], pos[2]
+												if hx and hy then
+														celebrateUpgrade(nil, nil, {
+																x = hx,
+																y = hy,
+																skipText = true,
+																color = TREMOR_BLOOM_COLOR,
+																particleCount = 8,
+																particleSpeed = 90,
+																particleLife = 0.32,
+																visual = {
+																		variant = "pulse",
+																		showBase = false,
+																		life = 0.5,
+																		innerRadius = 8,
+																		outerRadius = 40,
+																		ringCount = 2,
+																		ringSpacing = 7,
+																		addBlend = true,
+																		color = TREMOR_BLOOM_COLOR,
+																		variantSecondaryColor = {0.52, 0.44, 0.96, 0.7},
+																		variantTertiaryColor = {1.0, 0.84, 0.38, 0.48},
+																},
+														})
+												end
+										end
+								end
+						end,
+				},
+		}),
+		register({
+				id = "volatile_bloom",
+				nameKey = "upgrades.volatile_bloom.name",
+				descKey = "upgrades.volatile_bloom.description",
+				rarity = "legendary",
+				tags = {"hazard", "rocks", "defense"},
+				onAcquire = function(state)
+						state.counters = state.counters or {}
+						state.counters.volatileBloomShieldProgress = state.counters.volatileBloomShieldProgress or 0
 
-                        local options = {
-                                color = VOLATILE_BLOOM_COLOR,
-                                textOffset = 48,
-                                textScale = 1.12,
-                                particleCount = 20,
-                                particleSpeed = 150,
-                                particleLife = 0.44,
-                                visual = {
-                                        variant = "pulse",
-                                        showBase = false,
-                                        life = 0.8,
-                                        innerRadius = 12,
-                                        outerRadius = 68,
-                                        ringCount = 3,
-                                        ringSpacing = 12,
-                                        addBlend = true,
-                                        color = VOLATILE_BLOOM_COLOR,
-                                        variantSecondaryColor = {1.0, 0.74, 0.46, 0.82},
-                                        variantTertiaryColor = {1.0, 0.92, 0.6, 0.62},
-                                },
-                        }
+						local options = {
+								color = VOLATILE_BLOOM_COLOR,
+								textOffset = 48,
+								textScale = 1.12,
+								particleCount = 20,
+								particleSpeed = 150,
+								particleLife = 0.44,
+								visual = {
+										variant = "pulse",
+										showBase = false,
+										life = 0.8,
+										innerRadius = 12,
+										outerRadius = 68,
+										ringCount = 3,
+										ringSpacing = 12,
+										addBlend = true,
+										color = VOLATILE_BLOOM_COLOR,
+										variantSecondaryColor = {1.0, 0.74, 0.46, 0.82},
+										variantTertiaryColor = {1.0, 0.92, 0.6, 0.62},
+								},
+						}
 
-                        applySegmentPosition(options, 0.78)
-                        celebrateUpgrade(getUpgradeString("volatile_bloom", "name"), nil, options)
-                end,
-                handlers = {
-                        fruitCollected = function(_, state)
-                                if getStacks(state, "volatile_bloom") <= 0 then
-                                        return
-                                end
+						applySegmentPosition(options, 0.78)
+						celebrateUpgrade(getUpgradeString("volatile_bloom", "name"), nil, options)
+				end,
+				handlers = {
+						fruitCollected = function(_, state)
+								if getStacks(state, "volatile_bloom") <= 0 then
+										return
+								end
 
-                                local hx, hy = Snake:getHead()
-                                if not (hx and hy) then
-                                        return
-                                end
+								local hx, hy = Snake:getHead()
+								if not (hx and hy) then
+										return
+								end
 
-                                local dir = Snake:getDirection()
-                                local dirX = dir and dir.x or 0
-                                local dirY = dir and dir.y or 0
-                                if dirX == 0 and dirY == 0 then
-                                        return
-                                end
+								local dir = Snake:getDirection()
+								local dirX = dir and dir.x or 0
+								local dirY = dir and dir.y or 0
+								if dirX == 0 and dirY == 0 then
+										return
+								end
 
-                                local tileSize = (Arena and Arena.tileSize) or SnakeUtils.SEGMENT_SIZE or 24
-                                if not tileSize or tileSize <= 0 then
-                                        tileSize = 24
-                                end
+								local tileSize = (Arena and Arena.tileSize) or SnakeUtils.SEGMENT_SIZE or 24
+								if not tileSize or tileSize <= 0 then
+										tileSize = 24
+								end
 
-                                local dropX = hx - dirX * tileSize
-                                local dropY = hy - dirY * tileSize
+								local dropX = hx - dirX * tileSize
+								local dropY = hy - dirY * tileSize
 
-                                if dropX and dropY then
-                                        VolatileBloom:spawnBomb(dropX, dropY)
-                                end
-                        end,
-                },
-        }),
-        register({
-                id = "contract_of_cinders",
-                nameKey = "upgrades.contract_of_cinders.name",
-                descKey = "upgrades.contract_of_cinders.description",
-                rarity = "epic",
-                tags = {"defense", "risk", "hazard"},
-                onAcquire = function(state)
-                        grantShields(2)
-                        if state then
-                                state.counters = state.counters or {}
-                                state.counters.contractOfCindersPendingSaws = state.counters.contractOfCindersPendingSaws or 0
-                        end
+								if dropX and dropY then
+										VolatileBloom:spawnBomb(dropX, dropY)
+								end
+						end,
+				},
+		}),
+		register({
+				id = "contract_of_cinders",
+				nameKey = "upgrades.contract_of_cinders.name",
+				descKey = "upgrades.contract_of_cinders.description",
+				rarity = "epic",
+				tags = {"defense", "risk", "hazard"},
+				onAcquire = function(state)
+						grantShields(2)
+						if state then
+								state.counters = state.counters or {}
+								state.counters.contractOfCindersPendingSaws = state.counters.contractOfCindersPendingSaws or 0
+						end
 
-                        local emberColor = {1.0, 0.46, 0.18, 1}
-                        local celebrationOptions = {
-                                color = emberColor,
-                                particleCount = 18,
-                                particleSpeed = 150,
-                                particleLife = 0.52,
-                                textOffset = 46,
-                                textScale = 1.14,
-                                particles = {
-                                        count = 16,
-                                        speed = 170,
-                                        speedVariance = 60,
-                                        life = 0.58,
-                                        size = 3.4,
-                                        spread = pi * 0.6,
-                                        angleOffset = -pi / 2,
-                                        angleJitter = pi * 0.5,
-                                        drag = 1.6,
-                                        gravity = -220,
-                                        fadeTo = 0.05,
-                                },
-                        }
-                        applySegmentPosition(celebrationOptions, 0.42)
-                        celebrateUpgrade(getUpgradeString("contract_of_cinders", "name"), nil, celebrationOptions)
-                end,
-                handlers = {
-                        shieldConsumed = function(data, state)
-                                if not state or getStacks(state, "contract_of_cinders") <= 0 then
-                                        return
-                                end
+						local emberColor = {1.0, 0.46, 0.18, 1}
+						local celebrationOptions = {
+								color = emberColor,
+								particleCount = 18,
+								particleSpeed = 150,
+								particleLife = 0.52,
+								textOffset = 46,
+								textScale = 1.14,
+								particles = {
+										count = 16,
+										speed = 170,
+										speedVariance = 60,
+										life = 0.58,
+										size = 3.4,
+										spread = pi * 0.6,
+										angleOffset = -pi / 2,
+										angleJitter = pi * 0.5,
+										drag = 1.6,
+										gravity = -220,
+										fadeTo = 0.05,
+								},
+						}
+						applySegmentPosition(celebrationOptions, 0.42)
+						celebrateUpgrade(getUpgradeString("contract_of_cinders", "name"), nil, celebrationOptions)
+				end,
+				handlers = {
+						shieldConsumed = function(data, state)
+								if not state or getStacks(state, "contract_of_cinders") <= 0 then
+										return
+								end
 
-                                state.counters = state.counters or {}
-                                state.counters.contractOfCindersPendingSaws = (state.counters.contractOfCindersPendingSaws or 0) + 1
+								state.counters = state.counters or {}
+								state.counters.contractOfCindersPendingSaws = (state.counters.contractOfCindersPendingSaws or 0) + 1
 
-                                local emberColor = {1.0, 0.46, 0.18, 1}
-                                celebrateUpgrade(nil, data, {
-                                        skipText = true,
-                                        color = emberColor,
-                                        particles = {
-                                                count = 9,
-                                                speed = 180,
-                                                speedVariance = 70,
-                                                life = 0.64,
-                                                size = 3.0,
-                                                spread = pi * 0.32,
-                                                angleOffset = -pi / 2,
-                                                angleJitter = pi * 0.36,
-                                                drag = 1.9,
-                                                gravity = -250,
-                                                fadeTo = 0.04,
-                                        },
-                                })
+								local emberColor = {1.0, 0.46, 0.18, 1}
+								celebrateUpgrade(nil, data, {
+										skipText = true,
+										color = emberColor,
+										particles = {
+												count = 9,
+												speed = 180,
+												speedVariance = 70,
+												life = 0.64,
+												size = 3.0,
+												spread = pi * 0.32,
+												angleOffset = -pi / 2,
+												angleJitter = pi * 0.36,
+												drag = 1.9,
+												gravity = -250,
+												fadeTo = 0.04,
+										},
+								})
 
-                                local fx, fy = getEventPosition(data)
-                                if fx and fy then
-                                        UpgradeVisuals:spawn(fx, fy, {
-                                                variant = "phoenix_flare",
-                                                life = 0.78,
-                                                innerRadius = 10,
-                                                outerRadius = 30,
-                                                ringCount = 2,
-                                                ringSpacing = 7,
-                                                addBlend = true,
-                                                color = {1.0, 0.44, 0.18, 0.85},
-                                                glowAlpha = 0.28,
-                                                haloAlpha = 0.12,
-                                                showBase = false,
-                                                variantColor = {1.0, 0.46, 0.16, 0.95},
-                                                variantSecondaryColor = {1.0, 0.62, 0.24, 0.85},
-                                                variantTertiaryColor = {1.0, 0.86, 0.42, 0.78},
-                                        })
-                                end
-                        end,
-                },
-        }),
-        register({
-                id = "sawblade_sinkhole",
-                nameKey = "upgrades.sawblade_sinkhole.name",
-                descKey = "upgrades.sawblade_sinkhole.description",
-                rarity = "uncommon",
+								local fx, fy = getEventPosition(data)
+								if fx and fy then
+										UpgradeVisuals:spawn(fx, fy, {
+												variant = "phoenix_flare",
+												life = 0.78,
+												innerRadius = 10,
+												outerRadius = 30,
+												ringCount = 2,
+												ringSpacing = 7,
+												addBlend = true,
+												color = {1.0, 0.44, 0.18, 0.85},
+												glowAlpha = 0.28,
+												haloAlpha = 0.12,
+												showBase = false,
+												variantColor = {1.0, 0.46, 0.16, 0.95},
+												variantSecondaryColor = {1.0, 0.62, 0.24, 0.85},
+												variantTertiaryColor = {1.0, 0.86, 0.42, 0.78},
+										})
+								end
+						end,
+				},
+		}),
+		register({
+				id = "sawblade_sinkhole",
+				nameKey = "upgrades.sawblade_sinkhole.name",
+				descKey = "upgrades.sawblade_sinkhole.description",
+				rarity = "uncommon",
 		tags = {"defense"},
-                onAcquire = function(state)
-                        if state and state.effects then
-                                state.effects.sawSinkDuration = (state.effects.sawSinkDuration or 0) + SUBDUCTION_ARRAY_SINK_DURATION
-                        end
+				onAcquire = function(state)
+						if state and state.effects then
+								state.effects.sawSinkDuration = (state.effects.sawSinkDuration or 0) + SUBDUCTION_ARRAY_SINK_DURATION
+						end
 
 			local celebrationOptions = {
 				color = {0.68, 0.86, 1.0, 1},
@@ -2079,27 +2079,27 @@ local pool = {
 				textScale = 1.1,
 			}
 
-                        celebrateUpgrade(getUpgradeString("sawblade_sinkhole", "name"), nil, celebrationOptions)
-                end,
-                handlers = {
-                        fruitCollected = function(data, state)
-                                if getStacks(state, "sawblade_sinkhole") <= 0 then
-                                        return
-                                end
+						celebrateUpgrade(getUpgradeString("sawblade_sinkhole", "name"), nil, celebrationOptions)
+				end,
+				handlers = {
+						fruitCollected = function(data, state)
+								if getStacks(state, "sawblade_sinkhole") <= 0 then
+										return
+								end
 
-                                local duration = SUBDUCTION_ARRAY_SINK_DURATION
-                                if state and state.effects then
-                                        local stackedDuration = state.effects.sawSinkDuration or 0
-                                        if stackedDuration > 0 then
-                                                duration = stackedDuration
-                                        end
-                                end
+								local duration = SUBDUCTION_ARRAY_SINK_DURATION
+								if state and state.effects then
+										local stackedDuration = state.effects.sawSinkDuration or 0
+										if stackedDuration > 0 then
+												duration = stackedDuration
+										end
+								end
 
-                                Saws:sink(duration)
+								Saws:sink(duration)
 
 				local sinkColor = {0.68, 0.86, 1.0, 1}
-                                local activationLabel = getUpgradeString("sawblade_sinkhole", "activation_text")
-                                if activationLabel == "" or activationLabel == "upgrades.sawblade_sinkhole.activation_text" then
+								local activationLabel = getUpgradeString("sawblade_sinkhole", "activation_text")
+								if activationLabel == "" or activationLabel == "upgrades.sawblade_sinkhole.activation_text" then
 					activationLabel = nil
 				end
 				local celebrationOptions = {
@@ -2136,7 +2136,7 @@ local pool = {
 			end,
 		},
 	}),
-        register({
+		register({
 		id = "resonant_shell",
 		nameKey = "upgrades.resonant_shell.name",
 		descKey = "upgrades.resonant_shell.description",
@@ -2144,16 +2144,16 @@ local pool = {
 		requiresTags = {"defense"},
 		tags = {"defense"},
 		unlockTag = "specialist",
-                onAcquire = function(state)
-                        state.counters.resonantShellPerSlow = RESONANT_SHELL_PER_DEFENSE_SLOW
-                        state.counters.resonantShellPerCharge = 0.08
-                        state.counters.resonantShellSpeedMult = state.counters.resonantShellSpeedMult or 1
-                        updateResonantShellBonus(state)
+				onAcquire = function(state)
+						state.counters.resonantShellPerSlow = RESONANT_SHELL_PER_DEFENSE_SLOW
+						state.counters.resonantShellPerCharge = 0.08
+						state.counters.resonantShellSpeedMult = state.counters.resonantShellSpeedMult or 1
+						updateResonantShellBonus(state)
 
-                        if not state.counters.resonantShellHandlerRegistered then
-                                state.counters.resonantShellHandlerRegistered = true
-                                Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
-                                        if not runState then return end
+						if not state.counters.resonantShellHandlerRegistered then
+								state.counters.resonantShellHandlerRegistered = true
+								Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
+										if not runState then return end
 					if getStacks(runState, "resonant_shell") <= 0 then return end
 					updateResonantShellBonus(runState)
 				end)
@@ -2183,182 +2183,182 @@ local pool = {
 			celebrateUpgrade(getUpgradeString("resonant_shell", "name"), nil, celebrationOptions)
 		end,
 	}),
-        register({
-                id = "golden_debt",
-                nameKey = "upgrades.golden_debt.name",
-                descKey = "upgrades.golden_debt.description",
-                rarity = "rare",
-                tags = {"economy", "risk", "shop", "progression"},
-                onAcquire = function(state)
-                        state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
-                        state.counters = state.counters or {}
-                        state.counters.goldenDebtFruitTax = state.counters.goldenDebtFruitTax or 0
-                end,
-                handlers = {
-                        upgradeAcquired = function(data, state)
-                                if not state or getStacks(state, "golden_debt") <= 0 then return end
-                                if not data or not data.upgrade then return end
+		register({
+				id = "golden_debt",
+				nameKey = "upgrades.golden_debt.name",
+				descKey = "upgrades.golden_debt.description",
+				rarity = "rare",
+				tags = {"economy", "risk", "shop", "progression"},
+				onAcquire = function(state)
+						state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
+						state.counters = state.counters or {}
+						state.counters.goldenDebtFruitTax = state.counters.goldenDebtFruitTax or 0
+				end,
+				handlers = {
+						upgradeAcquired = function(data, state)
+								if not state or getStacks(state, "golden_debt") <= 0 then return end
+								if not data or not data.upgrade then return end
 
-                                state.counters = state.counters or {}
-                                state.counters.goldenDebtFruitTax = (state.counters.goldenDebtFruitTax or 0) + 1
-                                state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+								state.counters = state.counters or {}
+								state.counters.goldenDebtFruitTax = (state.counters.goldenDebtFruitTax or 0) + 1
+								state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
 
-                                UI:adjustFruitGoal(1)
-                        end,
-                },
-        }),
-        register({
-                id = "caravan_contract",
-                nameKey = "upgrades.caravan_contract.name",
-                descKey = "upgrades.caravan_contract.description",
-                rarity = "uncommon",
-                tags = {"economy", "risk"},
-                allowDuplicates = true,
-                onAcquire = function(state)
-                        state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
-                end,
-        }),
-        register({
-                id = "gilded_obsession",
-                nameKey = "upgrades.gilded_obsession.name",
-                descKey = "upgrades.gilded_obsession.description",
-                rarity = "rare",
-                tags = {"economy", "risk", "hazard"},
-                onAcquire = function(state)
-                        state.effects.shopGuaranteedRare = true
-                        state.counters = state.counters or {}
-                        state.counters.gildedObsessionPendingHazards = state.counters.gildedObsessionPendingHazards or {}
+								UI:adjustFruitGoal(1)
+						end,
+				},
+		}),
+		register({
+				id = "caravan_contract",
+				nameKey = "upgrades.caravan_contract.name",
+				descKey = "upgrades.caravan_contract.description",
+				rarity = "uncommon",
+				tags = {"economy", "risk"},
+				allowDuplicates = true,
+				onAcquire = function(state)
+						state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
+				end,
+		}),
+		register({
+				id = "gilded_obsession",
+				nameKey = "upgrades.gilded_obsession.name",
+				descKey = "upgrades.gilded_obsession.description",
+				rarity = "rare",
+				tags = {"economy", "risk", "hazard"},
+				onAcquire = function(state)
+						state.effects.shopGuaranteedRare = true
+						state.counters = state.counters or {}
+						state.counters.gildedObsessionPendingHazards = state.counters.gildedObsessionPendingHazards or {}
 
-                        local celebrationOptions = {
-                                color = {1.0, 0.84, 0.36, 1},
-                                particleCount = 20,
-                                particleSpeed = 140,
-                                particleLife = 0.5,
-                                textOffset = 44,
-                                textScale = 1.12,
-                        }
-                        celebrateUpgrade(getUpgradeString("gilded_obsession", "name"), nil, celebrationOptions)
-                end,
-                handlers = {
-                        upgradeAcquired = function(data, state)
-                                if not state or getStacks(state, "gilded_obsession") <= 0 then return end
-                                if not data or not data.upgrade or data.upgrade.rarity ~= "rare" then return end
+						local celebrationOptions = {
+								color = {1.0, 0.84, 0.36, 1},
+								particleCount = 20,
+								particleSpeed = 140,
+								particleLife = 0.5,
+								textOffset = 44,
+								textScale = 1.12,
+						}
+						celebrateUpgrade(getUpgradeString("gilded_obsession", "name"), nil, celebrationOptions)
+				end,
+				handlers = {
+						upgradeAcquired = function(data, state)
+								if not state or getStacks(state, "gilded_obsession") <= 0 then return end
+								if not data or not data.upgrade or data.upgrade.rarity ~= "rare" then return end
 
-                                state.counters = state.counters or {}
-                                local pending = state.counters.gildedObsessionPendingHazards or {}
-                                local hazardType = (love.math.random() < 0.5) and "laser" or "saw"
-                                pending[#pending + 1] = {type = hazardType}
-                                state.counters.gildedObsessionPendingHazards = pending
+								state.counters = state.counters or {}
+								local pending = state.counters.gildedObsessionPendingHazards or {}
+								local hazardType = (love.math.random() < 0.5) and "laser" or "saw"
+								pending[#pending + 1] = {type = hazardType}
+								state.counters.gildedObsessionPendingHazards = pending
 
-                                local activationLabel = getUpgradeString("gilded_obsession", "name")
-                                celebrateUpgrade(activationLabel, data, {
-                                        color = {1.0, 0.84, 0.34, 1},
-                                        particleCount = 14,
-                                        particleSpeed = 120,
-                                        particleLife = 0.46,
-                                        textOffset = 40,
-                                        textScale = 1.08,
-                                })
-                        end,
-                },
-        }),
-        register({
-                id = "gluttons_wake",
-                nameKey = "upgrades.gluttons_wake.name",
-                descKey = "upgrades.gluttons_wake.description",
-                rarity = "rare",
-                tags = {"economy", "risk", "hazard", "rocks"},
-                onAcquire = function(state)
-                        state.effects.fruitValueMult = (state.effects.fruitValueMult or 1) * 2
-                        state.effects.gluttonsWake = true
+								local activationLabel = getUpgradeString("gilded_obsession", "name")
+								celebrateUpgrade(activationLabel, data, {
+										color = {1.0, 0.84, 0.34, 1},
+										particleCount = 14,
+										particleSpeed = 120,
+										particleLife = 0.46,
+										textOffset = 40,
+										textScale = 1.08,
+								})
+						end,
+				},
+		}),
+		register({
+				id = "gluttons_wake",
+				nameKey = "upgrades.gluttons_wake.name",
+				descKey = "upgrades.gluttons_wake.description",
+				rarity = "rare",
+				tags = {"economy", "risk", "hazard", "rocks"},
+				onAcquire = function(state)
+						state.effects.fruitValueMult = (state.effects.fruitValueMult or 1) * 2
+						state.effects.gluttonsWake = true
 
-                        celebrateUpgrade(getUpgradeString("gluttons_wake", "name"), nil, {
-                                color = {1.0, 0.7, 0.36, 1},
-                                particleCount = 18,
-                                particleSpeed = 120,
-                                particleLife = 0.5,
-                                textOffset = 46,
-                                textScale = 1.12,
-                        })
-                end,
-        }),
+						celebrateUpgrade(getUpgradeString("gluttons_wake", "name"), nil, {
+								color = {1.0, 0.7, 0.36, 1},
+								particleCount = 18,
+								particleSpeed = 120,
+								particleLife = 0.5,
+								textOffset = 46,
+								textScale = 1.12,
+						})
+				end,
+		}),
 
-        register({
-                id = "grand_bazaar",
-                nameKey = "upgrades.grand_bazaar.name",
-                descKey = "upgrades.grand_bazaar.description",
-                rarity = "rare",
-                tags = {"shop", "economy", "utility", "reward"},
-                onAcquire = function(state)
-                        state.effects.shopGuaranteedRare = true
-                        state.effects.shopMinimumRarity = "uncommon"
+		register({
+				id = "grand_bazaar",
+				nameKey = "upgrades.grand_bazaar.name",
+				descKey = "upgrades.grand_bazaar.description",
+				rarity = "rare",
+				tags = {"shop", "economy", "utility", "reward"},
+				onAcquire = function(state)
+						state.effects.shopGuaranteedRare = true
+						state.effects.shopMinimumRarity = "uncommon"
 
-                        celebrateUpgrade(getUpgradeString("grand_bazaar", "name"), nil, {
-                                color = {0.95, 0.86, 0.62, 1},
-                                particleCount = 18,
-                                particleSpeed = 120,
-                                particleLife = 0.48,
-                                textOffset = 46,
-                                textScale = 1.1,
-                        })
-                end,
-        }),
+						celebrateUpgrade(getUpgradeString("grand_bazaar", "name"), nil, {
+								color = {0.95, 0.86, 0.62, 1},
+								particleCount = 18,
+								particleSpeed = 120,
+								particleLife = 0.48,
+								textOffset = 46,
+								textScale = 1.1,
+						})
+				end,
+		}),
 
-        register({
-                id = "mystery_card",
-                nameKey = "upgrades.mystery_card.name",
-                descKey = "upgrades.mystery_card.description",
-                rarity = "rare",
-                tags = {"utility", "risk", "shop"},
-                allowDuplicates = true,
-                onAcquire = function(state)
-                        if #MYSTERY_CARD_OUTCOMES == 0 then
-                                return nil
-                        end
+		register({
+				id = "mystery_card",
+				nameKey = "upgrades.mystery_card.name",
+				descKey = "upgrades.mystery_card.description",
+				rarity = "rare",
+				tags = {"utility", "risk", "shop"},
+				allowDuplicates = true,
+				onAcquire = function(state)
+						if #MYSTERY_CARD_OUTCOMES == 0 then
+								return nil
+						end
 
-                        local index = love.math.random(1, #MYSTERY_CARD_OUTCOMES)
-                        local outcome = MYSTERY_CARD_OUTCOMES[index]
-                        if not outcome then
-                                return nil
-                        end
+						local index = love.math.random(1, #MYSTERY_CARD_OUTCOMES)
+						local outcome = MYSTERY_CARD_OUTCOMES[index]
+						if not outcome then
+								return nil
+						end
 
-                        if outcome.apply then
-                                outcome.apply(state)
-                        end
+						if outcome.apply then
+								outcome.apply(state)
+						end
 
-                        if outcome.toastKey or outcome.nameKey then
-                                local toastLabel = Localization:get(outcome.toastKey or outcome.nameKey)
-                                local celebrationOptions = outcome.celebration and deepcopy(outcome.celebration) or nil
-                                celebrateUpgrade(toastLabel, nil, celebrationOptions)
-                        end
+						if outcome.toastKey or outcome.nameKey then
+								local toastLabel = Localization:get(outcome.toastKey or outcome.nameKey)
+								local celebrationOptions = outcome.celebration and deepcopy(outcome.celebration) or nil
+								celebrateUpgrade(toastLabel, nil, celebrationOptions)
+						end
 
-                        local baseName = Localization:get("upgrades.mystery_card.name")
-                        local outcomeName = outcome.nameKey and Localization:get(outcome.nameKey) or nil
-                        local revealedName = outcomeName or baseName
+						local baseName = Localization:get("upgrades.mystery_card.name")
+						local outcomeName = outcome.nameKey and Localization:get(outcome.nameKey) or nil
+						local revealedName = outcomeName or baseName
 
-                        local revealedDesc = outcome.descKey and Localization:get(outcome.descKey) or nil
+						local revealedDesc = outcome.descKey and Localization:get(outcome.descKey) or nil
 
-                                return {
-                                        name = revealedName,
-                                        desc = revealedDesc,
-                                        revealDelay = 1.15,
-                                        revealApproachDuration = 0.55,
-                                        revealShakeDuration = 0.5,
-                                        revealFlashInDuration = 0.22,
-                                        revealFlashOutDuration = 0.48,
-                                        revealShakeMagnitude = 9,
-                                        revealShakeFrequency = 26,
-                                        revealApplyThreshold = 0.6,
-                                        revealPostPauseDuration = 0.65,
-                                        revealAnimation = "mystery_card",
-                                }
-                end,
-        }),
+								return {
+										name = revealedName,
+										desc = revealedDesc,
+										revealDelay = 1.15,
+										revealApproachDuration = 0.55,
+										revealShakeDuration = 0.5,
+										revealFlashInDuration = 0.22,
+										revealFlashOutDuration = 0.48,
+										revealShakeMagnitude = 9,
+										revealShakeFrequency = 26,
+										revealApplyThreshold = 0.6,
+										revealPostPauseDuration = 0.65,
+										revealAnimation = "mystery_card",
+								}
+				end,
+		}),
 
-        register({
-                id = "verdant_bonds",
-                nameKey = "upgrades.verdant_bonds.name",
-                descKey = "upgrades.verdant_bonds.description",
+		register({
+				id = "verdant_bonds",
+				nameKey = "upgrades.verdant_bonds.name",
+				descKey = "upgrades.verdant_bonds.description",
 		rarity = "uncommon",
 		tags = {"economy", "defense"},
 		allowDuplicates = true,
@@ -2392,17 +2392,17 @@ local pool = {
 					local stacks = getStacks(runState, "verdant_bonds")
 					if stacks <= 0 then return end
 
-                                       local progress = (counters.verdantBondsProgress or 0) + stacks
-                                       progress = min(progress, 9)
-                                       local threshold = 3
-                                       local shields = floor(progress / threshold)
+										local progress = (counters.verdantBondsProgress or 0) + stacks
+										progress = min(progress, 9)
+										local threshold = 3
+										local shields = floor(progress / threshold)
 					counters.verdantBondsProgress = progress - shields * threshold
 
 					if shields <= 0 then return end
 
-                                        Snake:addShields(shields)
+										Snake:addShields(shields)
 
-                                        local label = getUpgradeString("verdant_bonds", "name")
+										local label = getUpgradeString("verdant_bonds", "name")
 					if shields > 1 then
 						if label and label ~= "" then
 							label = string.format("%s +%d", label, shields)
@@ -2536,7 +2536,7 @@ local pool = {
 			})
 		end,
 	}),
-       register({
+		register({
 		id = "abyssal_catalyst",
 		nameKey = "upgrades.abyssal_catalyst.name",
 		descKey = "upgrades.abyssal_catalyst.description",
@@ -2583,40 +2583,40 @@ local pool = {
 		rarity = "epic",
 		tags = {"economy", "combo"},
 		onAcquire = function(state)
-                        state.counters.spectralHarvestReady = true
-                        Snake:setSpectralHarvestReady(true, {pulse = 0.8, instantIntensity = 0.45})
+						state.counters.spectralHarvestReady = true
+						Snake:setSpectralHarvestReady(true, {pulse = 0.8, instantIntensity = 0.45})
 		end,
 		handlers = {
-                        floorStart = function(_, state)
-                                state.counters.spectralHarvestReady = true
-                                Snake:setSpectralHarvestReady(true, {pulse = 0.6})
-                        end,
-                        fruitCollected = function(_, state)
-                                if not state.counters.spectralHarvestReady then return end
-                                state.counters.spectralHarvestReady = false
+						floorStart = function(_, state)
+								state.counters.spectralHarvestReady = true
+								Snake:setSpectralHarvestReady(true, {pulse = 0.6})
+						end,
+						fruitCollected = function(_, state)
+								if not state.counters.spectralHarvestReady then return end
+								state.counters.spectralHarvestReady = false
 
-                                Snake:triggerSpectralHarvest({flash = 1, echo = 1, instantIntensity = 0.55})
+								Snake:triggerSpectralHarvest({flash = 1, echo = 1, instantIntensity = 0.55})
 
-                                local Fruit = require("fruit")
-                                local FruitEvents = require("fruitevents")
-                                if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
+								local Fruit = require("fruit")
+								local FruitEvents = require("fruitevents")
+								if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
 
-                                local fx, fy = Fruit:getDrawPosition()
-                                if not (fx and fy) then return end
+								local fx, fy = Fruit:getDrawPosition()
+								if not (fx and fy) then return end
 
-                                FruitEvents.handleConsumption(fx, fy)
-                        end,
-                },
-        }),
-        register({
-                id = "tectonic_resolve",
-                nameKey = "upgrades.tectonic_resolve.name",
+								FruitEvents.handleConsumption(fx, fy)
+						end,
+				},
+		}),
+		register({
+				id = "tectonic_resolve",
+				nameKey = "upgrades.tectonic_resolve.name",
 		descKey = "upgrades.tectonic_resolve.description",
 		rarity = "rare",
 		tags = {"defense"},
 		onAcquire = function(state)
-                        state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
-                        state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.20
+						state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
+						state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.20
 		end,
 	}),
 	register({
@@ -2628,47 +2628,47 @@ local pool = {
 		unlockTag = "abyssal_protocols",
 		weight = 1,
 		onAcquire = function(state)
-                        Snake:addShields(1)
-                        Snake:addSpeedMultiplier(1.05)
+						Snake:addShields(1)
+						Snake:addSpeedMultiplier(1.05)
 			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
 			state.effects.titanbloodPact = (state.effects.titanbloodPact or 0) + 1
-                        Snake:setTitanbloodStacks(state.effects.titanbloodPact)
-                end,
-        }),
-        register({
-                id = "chronospiral_core",
-                nameKey = "upgrades.chronospiral_core.name",
-                descKey = "upgrades.chronospiral_core.description",
-                rarity = "rare",
-                tags = {"mobility"},
-                unlockTag = "combo_mastery",
-                onAcquire = function(state)
-                        Snake:addSpeedMultiplier(0.75)
-                        state.effects.chronospiralCore = true
+						Snake:setTitanbloodStacks(state.effects.titanbloodPact)
+				end,
+		}),
+		register({
+				id = "chronospiral_core",
+				nameKey = "upgrades.chronospiral_core.name",
+				descKey = "upgrades.chronospiral_core.description",
+				rarity = "rare",
+				tags = {"mobility"},
+				unlockTag = "combo_mastery",
+				onAcquire = function(state)
+						Snake:addSpeedMultiplier(0.75)
+						state.effects.chronospiralCore = true
 
-                        local celebrationOptions = {
-                                color = {0.7, 0.76, 1.0, 1},
-                                particleCount = 18,
-                                particleSpeed = 120,
-                                particleLife = 0.5,
-                                textOffset = 46,
-                                textScale = 1.1,
-                                visual = {
-                                        variant = "chronospiral_core",
-                                        showBase = false,
-                                        life = 0.94,
-                                        innerRadius = 12,
-                                        outerRadius = 60,
-                                        addBlend = true,
-                                        color = {0.68, 0.78, 1.0, 1},
-                                        variantSecondaryColor = {0.82, 0.62, 1.0, 0.92},
-                                        variantTertiaryColor = {1.0, 0.92, 0.64, 0.9},
-                                },
-                        }
-                        applySegmentPosition(celebrationOptions, 0.64)
-                        celebrateUpgrade(getUpgradeString("chronospiral_core", "name"), nil, celebrationOptions)
-                end,
-        }),
+						local celebrationOptions = {
+								color = {0.7, 0.76, 1.0, 1},
+								particleCount = 18,
+								particleSpeed = 120,
+								particleLife = 0.5,
+								textOffset = 46,
+								textScale = 1.1,
+								visual = {
+										variant = "chronospiral_core",
+										showBase = false,
+										life = 0.94,
+										innerRadius = 12,
+										outerRadius = 60,
+										addBlend = true,
+										color = {0.68, 0.78, 1.0, 1},
+										variantSecondaryColor = {0.82, 0.62, 1.0, 0.92},
+										variantTertiaryColor = {1.0, 0.92, 0.64, 0.9},
+								},
+						}
+						applySegmentPosition(celebrationOptions, 0.64)
+						celebrateUpgrade(getUpgradeString("chronospiral_core", "name"), nil, celebrationOptions)
+				end,
+		}),
 	register({
 		id = "phoenix_echo",
 		nameKey = "upgrades.phoenix_echo.name",
@@ -2726,8 +2726,8 @@ local pool = {
 		handlers = {
 			dashActivated = function(data)
 				local fx, fy = getEventPosition(data)
-                                Rocks:shatterNearest(fx or 0, fy or 0, 1)
-                                Saws:stall(0.6)
+								Rocks:shatterNearest(fx or 0, fy or 0, 1)
+								Saws:stall(0.6)
 				celebrateUpgrade(getUpgradeString("sparkstep_relay", "activation_text"), data, {
 					color = {1.0, 0.78, 0.36, 1},
 					particleCount = 20,
@@ -2832,15 +2832,15 @@ local pool = {
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(1.15)
 			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
-                        if state then
-                                state.counters = state.counters or {}
-                                local stacks = (state.counters.zephyrCoilsStacks or 0) + 1
-                                state.counters.zephyrCoilsStacks = stacks
-                                Snake:setZephyrCoilsStacks(stacks)
-                        else
-                                local stacks = (Snake.zephyrCoils and Snake.zephyrCoils.stacks or 0) + 1
-                                Snake:setZephyrCoilsStacks(stacks)
-                        end
+						if state then
+								state.counters = state.counters or {}
+								local stacks = (state.counters.zephyrCoilsStacks or 0) + 1
+								state.counters.zephyrCoilsStacks = stacks
+								Snake:setZephyrCoilsStacks(stacks)
+						else
+								local stacks = (Snake.zephyrCoils and Snake.zephyrCoils.stacks or 0) + 1
+								Snake:setZephyrCoilsStacks(stacks)
+						end
 		end,
 	}),
 	register({
@@ -2935,23 +2935,23 @@ function Upgrades:addEventHandler(event, handler)
 end
 
 function Upgrades:notify(event, data)
-        local state = self.runState
-        if not state then return end
+		local state = self.runState
+		if not state then return end
 
-        if state.notify then
+		if state.notify then
 		state:notify(event, data)
 		return
 	end
 
 	local handlers = state.handlers and state.handlers[event]
 	if not handlers then return end
-        for _, handler in ipairs(handlers) do
-                handler(data, state)
-        end
+		for _, handler in ipairs(handlers) do
+				handler(data, state)
+		end
 end
 
 VolatileBloom:setExplosionCallback(function(event)
-        handleVolatileBloomExplosion(event)
+		handleVolatileBloomExplosion(event)
 end)
 
 local function clamp(value, min, max)
@@ -2971,8 +2971,8 @@ function Upgrades:getHUDIndicators()
 		return getStacks(state, id) > 0
 	end
 
-        if hasUpgrade("pocket_springs") then
-                local counters = state.counters or {}
+		if hasUpgrade("pocket_springs") then
+				local counters = state.counters or {}
 		local complete = counters.pocketSpringsComplete
 		if not complete then
 			local collected = min(counters.pocketSpringsFruit or 0, POCKET_SPRINGS_FRUIT_TARGET)
@@ -3179,61 +3179,61 @@ function Upgrades:modifyFloorContext(context)
 		saws = floor(saws + 0.5)
 		context.saws = clamp(saws, 0)
 	end
-        if effects.laserSpawnBonus and context.laserCount then
-                local lasers = context.laserCount + effects.laserSpawnBonus
-                lasers = floor(lasers + 0.5)
-                context.laserCount = clamp(lasers, 0)
-        end
+		if effects.laserSpawnBonus and context.laserCount then
+				local lasers = context.laserCount + effects.laserSpawnBonus
+				lasers = floor(lasers + 0.5)
+				context.laserCount = clamp(lasers, 0)
+		end
 
-        local state = self.runState
-        if state and state.counters then
-                local emberPending = state.counters.contractOfCindersPendingSaws
-                if emberPending and emberPending > 0 then
-                        context.saws = context.saws or 0
-                        context.contractOfCindersEmberSaws = (context.contractOfCindersEmberSaws or 0) + emberPending
-                        context.saws = context.saws + emberPending
-                        state.counters.contractOfCindersActiveSaws = emberPending
-                        state.counters.contractOfCindersPendingSaws = 0
-                else
-                        state.counters.contractOfCindersActiveSaws = nil
-                end
+		local state = self.runState
+		if state and state.counters then
+				local emberPending = state.counters.contractOfCindersPendingSaws
+				if emberPending and emberPending > 0 then
+						context.saws = context.saws or 0
+						context.contractOfCindersEmberSaws = (context.contractOfCindersEmberSaws or 0) + emberPending
+						context.saws = context.saws + emberPending
+						state.counters.contractOfCindersActiveSaws = emberPending
+						state.counters.contractOfCindersPendingSaws = 0
+				else
+						state.counters.contractOfCindersActiveSaws = nil
+				end
 
-                local pending = state.counters.gildedObsessionPendingHazards
-                if pending and #pending > 0 then
-                        context.saws = context.saws or 0
-                        context.laserCount = context.laserCount or 0
-                        local active = {saws = 0, lasers = 0}
+				local pending = state.counters.gildedObsessionPendingHazards
+				if pending and #pending > 0 then
+						context.saws = context.saws or 0
+						context.laserCount = context.laserCount or 0
+						local active = {saws = 0, lasers = 0}
 
-                        for _, hazard in ipairs(pending) do
-                                local hazardType = hazard and hazard.type or nil
-                                if hazardType == "laser" then
-                                        context.laserCount = context.laserCount + 1
-                                        active.lasers = (active.lasers or 0) + 1
-                                else
-                                        context.saws = context.saws + 1
-                                        active.saws = (active.saws or 0) + 1
-                                end
-                        end
+						for _, hazard in ipairs(pending) do
+								local hazardType = hazard and hazard.type or nil
+								if hazardType == "laser" then
+										context.laserCount = context.laserCount + 1
+										active.lasers = (active.lasers or 0) + 1
+								else
+										context.saws = context.saws + 1
+										active.saws = (active.saws or 0) + 1
+								end
+						end
 
-                        state.counters.gildedObsessionActiveHazards = active
-                        state.counters.gildedObsessionPendingHazards = {}
-                        context.gildedObsessionExtraSaws = active.saws
-                        context.gildedObsessionExtraLasers = active.lasers
-                end
-        end
+						state.counters.gildedObsessionActiveHazards = active
+						state.counters.gildedObsessionPendingHazards = {}
+						context.gildedObsessionExtraSaws = active.saws
+						context.gildedObsessionExtraLasers = active.lasers
+				end
+		end
 
-        return context
+		return context
 end
 
 function Upgrades:consumeGildedObsessionHazards()
-        local state = self.runState
-        if not state or not state.counters then
-                return nil
-        end
+		local state = self.runState
+		if not state or not state.counters then
+				return nil
+		end
 
-        local active = state.counters.gildedObsessionActiveHazards
-        state.counters.gildedObsessionActiveHazards = nil
-        return active
+		local active = state.counters.gildedObsessionActiveHazards
+		state.counters.gildedObsessionActiveHazards = nil
+		return active
 end
 
 local function round(value)
@@ -3315,8 +3315,8 @@ function Upgrades:tryFloorReplay(game, cause)
 		},
 	})
 
-        self:applyPersistentEffects(false)
-        Snake:setPhoenixEchoCharges(state.counters.phoenixEchoCharges or 0, {triggered = 1.4, flareDuration = 1.4})
+		self:applyPersistentEffects(false)
+		Snake:setPhoenixEchoCharges(state.counters.phoenixEchoCharges or 0, {triggered = 1.4, flareDuration = 1.4})
 
 	return restored
 end
@@ -3325,16 +3325,16 @@ local function captureBaseline(state)
 	local baseline = state.baseline
 	baseline.sawSpeedMult = Saws.speedMult or 1
 	baseline.sawSpinMult = Saws.spinMult or 1
-        baseline.sawStall = Saws:getStallOnFruit()
-        baseline.rockSpawnChance = Rocks:getSpawnChance()
+		baseline.sawStall = Saws:getStallOnFruit()
+		baseline.rockSpawnChance = Rocks:getSpawnChance()
 	baseline.rockShatter = Rocks.shatterOnFruit or 0
-        baseline.comboBonusMult = Score:getComboBonusMultiplier()
-        baseline.laserChargeMult = Lasers.chargeDurationMult or 1
-        baseline.laserChargeFlat = Lasers.chargeDurationFlat or 0
-        baseline.laserFireMult = Lasers.fireDurationMult or 1
-        baseline.laserFireFlat = Lasers.fireDurationFlat or 0
-        baseline.laserCooldownMult = Lasers.cooldownMult or 1
-        baseline.laserCooldownFlat = Lasers.cooldownFlat or 0
+		baseline.comboBonusMult = Score:getComboBonusMultiplier()
+		baseline.laserChargeMult = Lasers.chargeDurationMult or 1
+		baseline.laserChargeFlat = Lasers.chargeDurationFlat or 0
+		baseline.laserFireMult = Lasers.fireDurationMult or 1
+		baseline.laserFireFlat = Lasers.fireDurationFlat or 0
+		baseline.laserCooldownMult = Lasers.cooldownMult or 1
+		baseline.laserCooldownFlat = Lasers.cooldownFlat or 0
 end
 
 local function ensureBaseline(state)
@@ -3362,34 +3362,34 @@ function Upgrades:applyPersistentEffects(rebaseline)
 	local stallBase = base.sawStall or 0
 	local stallBonus = effects.sawStall or 0
 	local stallValue = stallBase + stallBonus
-        Saws:setStallOnFruit(stallValue)
+		Saws:setStallOnFruit(stallValue)
 
-        local rockBase = base.rockSpawnChance or 0.25
-        local rockChance = max(0.02, rockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
-        Rocks.spawnChance = rockChance
-        Rocks.shatterOnFruit = (base.rockShatter or 0) + (effects.rockShatter or 0)
+		local rockBase = base.rockSpawnChance or 0.25
+		local rockChance = max(0.02, rockBase * (effects.rockSpawnMult or 1) + (effects.rockSpawnFlat or 0))
+		Rocks.spawnChance = rockChance
+		Rocks.shatterOnFruit = (base.rockShatter or 0) + (effects.rockShatter or 0)
 
 	local comboBase = base.comboBonusMult or 1
 	local comboMult = comboBase * (effects.comboBonusMult or 1)
-        Score:setComboBonusMultiplier(comboMult)
+		Score:setComboBonusMultiplier(comboMult)
 
-        Lasers.chargeDurationMult = (base.laserChargeMult or 1) * (effects.laserChargeMult or 1)
-        Lasers.chargeDurationFlat = (base.laserChargeFlat or 0) + (effects.laserChargeFlat or 0)
-        Lasers.fireDurationMult = (base.laserFireMult or 1) * (effects.laserFireMult or 1)
-        Lasers.fireDurationFlat = (base.laserFireFlat or 0) + (effects.laserFireFlat or 0)
-        Lasers.cooldownMult = (base.laserCooldownMult or 1) * (effects.laserCooldownMult or 1)
-        Lasers.cooldownFlat = (base.laserCooldownFlat or 0) + (effects.laserCooldownFlat or 0)
-        Lasers:applyTimingModifiers()
+		Lasers.chargeDurationMult = (base.laserChargeMult or 1) * (effects.laserChargeMult or 1)
+		Lasers.chargeDurationFlat = (base.laserChargeFlat or 0) + (effects.laserChargeFlat or 0)
+		Lasers.fireDurationMult = (base.laserFireMult or 1) * (effects.laserFireMult or 1)
+		Lasers.fireDurationFlat = (base.laserFireFlat or 0) + (effects.laserFireFlat or 0)
+		Lasers.cooldownMult = (base.laserCooldownMult or 1) * (effects.laserCooldownMult or 1)
+		Lasers.cooldownFlat = (base.laserCooldownFlat or 0) + (effects.laserCooldownFlat or 0)
+		Lasers:applyTimingModifiers()
 
-       if effects.adrenaline then
-               Snake.adrenaline = Snake.adrenaline or {}
-               Snake.adrenaline.active = Snake.adrenaline.active or false
-               Snake.adrenaline.timer = Snake.adrenaline.timer or 0
-               local duration = (effects.adrenaline.duration or 3) + (effects.adrenalineDurationBonus or 0)
-               Snake.adrenaline.duration = duration
-               local boost = (effects.adrenaline.boost or 1.5) + (effects.adrenalineBoostBonus or 0)
-               Snake.adrenaline.boost = boost
-       end
+		if effects.adrenaline then
+				Snake.adrenaline = Snake.adrenaline or {}
+				Snake.adrenaline.active = Snake.adrenaline.active or false
+				Snake.adrenaline.timer = Snake.adrenaline.timer or 0
+				local duration = (effects.adrenaline.duration or 3) + (effects.adrenalineDurationBonus or 0)
+				Snake.adrenaline.duration = duration
+				local boost = (effects.adrenaline.boost or 1.5) + (effects.adrenalineBoostBonus or 0)
+				Snake.adrenaline.boost = boost
+		end
 
 	if effects.dash then
 		Snake.dash = Snake.dash or {}
@@ -3458,20 +3458,20 @@ function Upgrades:applyPersistentEffects(rebaseline)
 		Snake.timeDilation = nil
 	end
 
-        Snake:setChronospiralActive(effects.chronospiralCore and true or false)
+		Snake:setChronospiralActive(effects.chronospiralCore and true or false)
 
-        Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
+		Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
 
-        Snake:setTitanbloodStacks(effects.titanbloodPact or 0)
+		Snake:setTitanbloodStacks(effects.titanbloodPact or 0)
 
-        Snake:setEventHorizonActive(effects.wallPortal and true or false)
+		Snake:setEventHorizonActive(effects.wallPortal and true or false)
 
-        Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
+		Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
 
-        local counters = state.counters or {}
-        Snake:setQuickFangsStacks(counters.quickFangsStacks or 0)
+		local counters = state.counters or {}
+		Snake:setQuickFangsStacks(counters.quickFangsStacks or 0)
 
-        Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
+		Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
 end
 
 local SHOP_PITY_MAX = 5
@@ -3569,10 +3569,10 @@ function Upgrades:canOffer(upgrade, context, allowTaken)
 end
 
 local function decorateCard(upgrade)
-        local rarityInfo = getRarityInfo(upgrade.rarity)
-        local name = upgrade.name
-        local description = upgrade.desc
-        local rarityLabel = rarityInfo and rarityInfo.label
+		local rarityInfo = getRarityInfo(upgrade.rarity)
+		local name = upgrade.name
+		local description = upgrade.desc
+		local rarityLabel = rarityInfo and rarityInfo.label
 
 	if upgrade.nameKey then
 		name = Localization:get(upgrade.nameKey)
@@ -3584,112 +3584,112 @@ local function decorateCard(upgrade)
 		rarityLabel = Localization:get(rarityInfo.labelKey)
 	end
 
-        return {
-                id = upgrade.id,
-                name = name,
-                desc = description,
-                rarity = upgrade.rarity,
-                rarityColor = rarityInfo.color,
-                rarityLabel = rarityLabel,
-                restockShop = upgrade.restockShop,
-                upgrade = upgrade,
-        }
+		return {
+				id = upgrade.id,
+				name = name,
+				desc = description,
+				rarity = upgrade.rarity,
+				rarityColor = rarityInfo.color,
+				rarityLabel = rarityLabel,
+				restockShop = upgrade.restockShop,
+				upgrade = upgrade,
+		}
 end
 
 local function matchesUnlockTag(upgrade, tag)
-        if not upgrade or not tag then
-                return false
-        end
+		if not upgrade or not tag then
+				return false
+		end
 
-        if upgrade.unlockTag == tag then
-                return true
-        end
+		if upgrade.unlockTag == tag then
+				return true
+		end
 
-        if type(upgrade.unlockTags) == "table" then
-                for _, unlockTag in ipairs(upgrade.unlockTags) do
-                        if unlockTag == tag then
-                                return true
-                        end
-                end
-        end
+		if type(upgrade.unlockTags) == "table" then
+				for _, unlockTag in ipairs(upgrade.unlockTags) do
+						if unlockTag == tag then
+								return true
+						end
+				end
+		end
 
-        return false
+		return false
 end
 
 function Upgrades:getDefinition(id)
-        if not id then
-                return nil
-        end
+		if not id then
+				return nil
+		end
 
-        return poolById[id]
+		return poolById[id]
 end
 
 function Upgrades:getShowcaseCardForTag(tag)
-        if not tag then
-                return nil
-        end
+		if not tag then
+				return nil
+		end
 
-        for _, upgrade in ipairs(pool) do
-                if matchesUnlockTag(upgrade, tag) then
-                        return decorateCard(upgrade)
-                end
-        end
+		for _, upgrade in ipairs(pool) do
+				if matchesUnlockTag(upgrade, tag) then
+						return decorateCard(upgrade)
+				end
+		end
 
-        return nil
+		return nil
 end
 
 function Upgrades:getShowcaseCardForUnlock(unlock)
-        if not unlock then
-                return nil
-        end
+		if not unlock then
+				return nil
+		end
 
-        if unlock.previewUpgradeId then
-                local upgrade = self:getDefinition(unlock.previewUpgradeId)
-                if upgrade then
-                        return decorateCard(upgrade)
-                end
-        end
+		if unlock.previewUpgradeId then
+				local upgrade = self:getDefinition(unlock.previewUpgradeId)
+				if upgrade then
+						return decorateCard(upgrade)
+				end
+		end
 
-        if type(unlock.unlockTags) == "table" then
-                for _, tag in ipairs(unlock.unlockTags) do
-                        local card = self:getShowcaseCardForTag(tag)
-                        if card then
-                                return card
-                        end
-                end
-        elseif unlock.unlockTag then
-                local card = self:getShowcaseCardForTag(unlock.unlockTag)
-                if card then
-                        return card
-                end
-        end
+		if type(unlock.unlockTags) == "table" then
+				for _, tag in ipairs(unlock.unlockTags) do
+						local card = self:getShowcaseCardForTag(tag)
+						if card then
+								return card
+						end
+				end
+		elseif unlock.unlockTag then
+				local card = self:getShowcaseCardForTag(unlock.unlockTag)
+				if card then
+						return card
+				end
+		end
 
-        if unlock.id then
-                local upgrade = self:getDefinition(unlock.id)
-                if upgrade then
-                        return decorateCard(upgrade)
-                end
-        end
+		if unlock.id then
+				local upgrade = self:getDefinition(unlock.id)
+				if upgrade then
+						return decorateCard(upgrade)
+				end
+		end
 
-        return nil
+		return nil
 end
 
 function Upgrades:getRandom(n, context)
-        local state = self.runState or newRunState()
-        local pityLevel = 0
-        if state and state.counters then
-                pityLevel = min(state.counters.shopBadLuck or 0, SHOP_PITY_MAX)
-        end
+		local state = self.runState or newRunState()
+		local pityLevel = 0
+		if state and state.counters then
+				pityLevel = min(state.counters.shopBadLuck or 0, SHOP_PITY_MAX)
+		end
 
-        local minimumRank = 0
-        if state and state.effects then
-                local effects = state.effects
-                if type(effects.shopMinimumRarityRank) == "number" then
-                        minimumRank = effects.shopMinimumRarityRank
-                elseif effects.shopMinimumRarity and SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity] then
-                        minimumRank = SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity]
-                end
-        end
+		local minimumRank = 0
+		if state and state.effects then
+				local effects = state.effects
+				if type(effects.shopMinimumRarityRank) == "number" then
+						minimumRank = effects.shopMinimumRarityRank
+				elseif effects.shopMinimumRarity and SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity] then
+						minimumRank = SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity]
+				end
+		end
 
 	local available = {}
 	local totalWeight = 0
@@ -3742,67 +3742,67 @@ function Upgrades:getRandom(n, context)
 		if #available == 0 then break end
 	end
 
-        local guaranteeRare = state and state.effects and state.effects.shopGuaranteedRare
-        if guaranteeRare and #cards > 0 then
-                local hasRare = false
-                for _, card in ipairs(cards) do
-                        if card.rarity == "rare" then
-                                hasRare = true
-                                break
-                        end
-                end
+		local guaranteeRare = state and state.effects and state.effects.shopGuaranteedRare
+		if guaranteeRare and #cards > 0 then
+				local hasRare = false
+				for _, card in ipairs(cards) do
+						if card.rarity == "rare" then
+								hasRare = true
+								break
+						end
+				end
 
-                if not hasRare then
-                        local rareChoices = {}
-                        for _, upgrade in ipairs(pool) do
-                                if upgrade.rarity == "rare" and self:canOffer(upgrade, context, false) then
-                                        local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
-                                        if rarityRank >= minimumRank then
-                                                insert(rareChoices, upgrade)
-                                        end
-                                end
-                        end
+				if not hasRare then
+						local rareChoices = {}
+						for _, upgrade in ipairs(pool) do
+								if upgrade.rarity == "rare" and self:canOffer(upgrade, context, false) then
+										local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+										if rarityRank >= minimumRank then
+												insert(rareChoices, upgrade)
+										end
+								end
+						end
 
-                        if #rareChoices == 0 then
-                                for _, upgrade in ipairs(pool) do
-                                        if upgrade.rarity == "rare" and self:canOffer(upgrade, context, true) then
-                                                local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
-                                                if rarityRank >= minimumRank then
-                                                        insert(rareChoices, upgrade)
-                                                end
-                                        end
-                                end
-                        end
+						if #rareChoices == 0 then
+								for _, upgrade in ipairs(pool) do
+										if upgrade.rarity == "rare" and self:canOffer(upgrade, context, true) then
+												local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+												if rarityRank >= minimumRank then
+														insert(rareChoices, upgrade)
+												end
+										end
+								end
+						end
 
-                        if #rareChoices > 0 then
-                                local replacementIndex
-                                local lowestRank
-                                for index, card in ipairs(cards) do
-                                        local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
-                                        if not replacementIndex or rank < lowestRank then
-                                                replacementIndex = index
-                                                lowestRank = rank
-                                        end
-                                end
+						if #rareChoices > 0 then
+								local replacementIndex
+								local lowestRank
+								for index, card in ipairs(cards) do
+										local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
+										if not replacementIndex or rank < lowestRank then
+												replacementIndex = index
+												lowestRank = rank
+										end
+								end
 
-                                if replacementIndex then
-                                        local choice = rareChoices[love.math.random(1, #rareChoices)]
-                                        cards[replacementIndex] = decorateCard(choice)
-                                else
-                                        cards[#cards + 1] = decorateCard(rareChoices[love.math.random(1, #rareChoices)])
-                                end
-                        end
-                end
-        end
+								if replacementIndex then
+										local choice = rareChoices[love.math.random(1, #rareChoices)]
+										cards[replacementIndex] = decorateCard(choice)
+								else
+										cards[#cards + 1] = decorateCard(rareChoices[love.math.random(1, #rareChoices)])
+								end
+						end
+				end
+		end
 
-        if state and state.counters then
-                local bestRank = 0
-                for _, card in ipairs(cards) do
-                        local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
-                        if rank > bestRank then
-                                bestRank = rank
-                        end
-                end
+		if state and state.counters then
+				local bestRank = 0
+				for _, card in ipairs(cards) do
+						local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
+						if rank > bestRank then
+								bestRank = rank
+						end
+				end
 
 		if bestRank >= (SHOP_PITY_RARITY_RANK.rare or 0) then
 			state.counters.shopBadLuck = 0
@@ -3872,57 +3872,57 @@ function Upgrades:getRandom(n, context)
 end
 
 local function applyRevealToCard(card, revealInfo)
-        if not card or not revealInfo then
-                return
-        end
+		if not card or not revealInfo then
+				return
+		end
 
-        if revealInfo.nameKey then
-                card.name = Localization:get(revealInfo.nameKey, revealInfo.nameReplacements)
-        elseif revealInfo.name then
-                card.name = revealInfo.name
-        end
+		if revealInfo.nameKey then
+				card.name = Localization:get(revealInfo.nameKey, revealInfo.nameReplacements)
+		elseif revealInfo.name then
+				card.name = revealInfo.name
+		end
 
-        if revealInfo.descKey then
-                card.desc = Localization:get(revealInfo.descKey, revealInfo.descReplacements)
-        elseif revealInfo.desc then
-                card.desc = revealInfo.desc
-        end
+		if revealInfo.descKey then
+				card.desc = Localization:get(revealInfo.descKey, revealInfo.descReplacements)
+		elseif revealInfo.desc then
+				card.desc = revealInfo.desc
+		end
 
-        local appliedRarity = revealInfo.rarity
-        if appliedRarity then
-                local rarityInfo = getRarityInfo(appliedRarity)
-                card.rarity = appliedRarity
-                card.rarityColor = rarityInfo and rarityInfo.color or card.rarityColor
-                if rarityInfo then
-                        if rarityInfo.labelKey then
-                                card.rarityLabel = Localization:get(rarityInfo.labelKey)
-                        elseif rarityInfo.label then
-                                card.rarityLabel = rarityInfo.label
-                        end
-                end
-        end
+		local appliedRarity = revealInfo.rarity
+		if appliedRarity then
+				local rarityInfo = getRarityInfo(appliedRarity)
+				card.rarity = appliedRarity
+				card.rarityColor = rarityInfo and rarityInfo.color or card.rarityColor
+				if rarityInfo then
+						if rarityInfo.labelKey then
+								card.rarityLabel = Localization:get(rarityInfo.labelKey)
+						elseif rarityInfo.label then
+								card.rarityLabel = rarityInfo.label
+						end
+				end
+		end
 
-        if revealInfo.rarityColor then
-                card.rarityColor = revealInfo.rarityColor
-        end
+		if revealInfo.rarityColor then
+				card.rarityColor = revealInfo.rarityColor
+		end
 
-        if revealInfo.rarityLabel then
-                card.rarityLabel = revealInfo.rarityLabel
-        end
+		if revealInfo.rarityLabel then
+				card.rarityLabel = revealInfo.rarityLabel
+		end
 
-        card.pendingRevealInfo = nil
-        card.revealed = true
+		card.pendingRevealInfo = nil
+		card.revealed = true
 end
 
 function Upgrades:applyCardReveal(card, revealInfo)
-        applyRevealToCard(card, revealInfo)
+		applyRevealToCard(card, revealInfo)
 end
 
 function Upgrades:acquire(card, context)
-        if not card or not card.upgrade then return end
+		if not card or not card.upgrade then return end
 
-        local upgrade = card.upgrade
-        local state = self.runState
+		local upgrade = card.upgrade
+		local state = self.runState
 
 	if state and state.addStacks then
 		state:addStacks(upgrade.id, 1)
@@ -3945,32 +3945,32 @@ function Upgrades:acquire(card, context)
 		end
 	end
 
-        local revealInfo
-        if upgrade.onAcquire then
-                revealInfo = upgrade.onAcquire(state, context, card)
-        end
+		local revealInfo
+		if upgrade.onAcquire then
+				revealInfo = upgrade.onAcquire(state, context, card)
+		end
 
-        if upgrade.id == "diffraction_barrier" then
-                state.effects.diffractionBarrier = true
-        end
+		if upgrade.id == "diffraction_barrier" then
+				state.effects.diffractionBarrier = true
+		end
 
-        if upgrade.handlers then
-                for event, handler in pairs(upgrade.handlers) do
-                        self:addEventHandler(event, handler)
-                end
-        end
+		if upgrade.handlers then
+				for event, handler in pairs(upgrade.handlers) do
+						self:addEventHandler(event, handler)
+				end
+		end
 
-        if revealInfo and card then
-                if revealInfo.revealDelay and revealInfo.revealDelay > 0 then
-                        card.pendingRevealInfo = deepcopy(revealInfo)
-                        card.revealed = false
-                else
-                        self:applyCardReveal(card, revealInfo)
-                end
-        end
+		if revealInfo and card then
+				if revealInfo.revealDelay and revealInfo.revealDelay > 0 then
+						card.pendingRevealInfo = deepcopy(revealInfo)
+						card.revealed = false
+				else
+						self:applyCardReveal(card, revealInfo)
+				end
+		end
 
-        self:notify("upgradeAcquired", {id = upgrade.id, upgrade = upgrade, context = context})
-        self:applyPersistentEffects(false)
+		self:notify("upgradeAcquired", {id = upgrade.id, upgrade = upgrade, context = context})
+		self:applyPersistentEffects(false)
 end
 
 return Upgrades

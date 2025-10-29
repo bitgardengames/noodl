@@ -26,35 +26,35 @@ local DEFAULT_ORDER = 1000
 local currentDefinitionsForSort
 
 local function compareAchievementIds(aId, bId)
-        local definitions = currentDefinitionsForSort
-        if not definitions then
-                return tostring(aId) < tostring(bId)
-        end
+		local definitions = currentDefinitionsForSort
+		if not definitions then
+				return tostring(aId) < tostring(bId)
+		end
 
-        local a = definitions[aId]
-        local b = definitions[bId]
-        if not a or not b then
-                return tostring(aId) < tostring(bId)
-        end
-        if a.order == b.order then
-                return (a.titleKey or a.id) < (b.titleKey or b.id)
-        end
-        return (a.order or DEFAULT_ORDER) < (b.order or DEFAULT_ORDER)
+		local a = definitions[aId]
+		local b = definitions[bId]
+		if not a or not b then
+				return tostring(aId) < tostring(bId)
+		end
+		if a.order == b.order then
+				return (a.titleKey or a.id) < (b.titleKey or b.id)
+		end
+		return (a.order or DEFAULT_ORDER) < (b.order or DEFAULT_ORDER)
 end
 
 local function compareCategoryEntries(a, b)
-        if a.order == b.order then
-                return a.id < b.id
-        end
-        return a.order < b.order
+		if a.order == b.order then
+				return a.id < b.id
+		end
+		return a.order < b.order
 end
 
 local function copyTable(source)
-        local target = {}
-        if source then
-                for key, value in pairs(source) do
-                        target[key] = value
-                end
+		local target = {}
+		if source then
+				for key, value in pairs(source) do
+						target[key] = value
+				end
 	end
 	return target
 end
@@ -114,26 +114,26 @@ function Achievements:_addDefinition(rawDef)
 end
 
 function Achievements:_finalizeOrdering()
-        currentDefinitionsForSort = self.definitions
-        sort(self.definitionOrder, compareAchievementIds)
+		currentDefinitionsForSort = self.definitions
+		sort(self.definitionOrder, compareAchievementIds)
 
-        local orderedCategories = {}
-        for category, ids in pairs(self.categories) do
-                sort(ids, compareAchievementIds)
-                orderedCategories[#orderedCategories + 1] = {
-                        id = category,
-                        order = (self.definitions[ids[1]] and self.definitions[ids[1]].categoryOrder) or DEFAULT_CATEGORY_ORDER
-                }
-        end
+		local orderedCategories = {}
+		for category, ids in pairs(self.categories) do
+				sort(ids, compareAchievementIds)
+				orderedCategories[#orderedCategories + 1] = {
+						id = category,
+						order = (self.definitions[ids[1]] and self.definitions[ids[1]].categoryOrder) or DEFAULT_CATEGORY_ORDER
+				}
+		end
 
-        currentDefinitionsForSort = nil
+		currentDefinitionsForSort = nil
 
-        sort(orderedCategories, compareCategoryEntries)
+		sort(orderedCategories, compareCategoryEntries)
 
-        self.categoryOrder = {}
-        for _, info in ipairs(orderedCategories) do
-                insert(self.categoryOrder, info.id)
-        end
+		self.categoryOrder = {}
+		for _, info in ipairs(orderedCategories) do
+				insert(self.categoryOrder, info.id)
+		end
 end
 
 function Achievements:_ensureInitialized()
@@ -152,29 +152,29 @@ function Achievements:_ensureInitialized()
 
 	self:_finalizeOrdering()
 
-        if not self._defaultProvidersRegistered then
-                self:registerStateProvider(function(state)
-                        state.totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0
-                        state.totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0
-                        state.bestComboStreak = PlayerStats:get("bestComboStreak") or 0
-                        state.dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0
-                        state.shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0
-                        state.shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0
-                        state.shieldSawParries = PlayerStats:get("shieldSawParries") or 0
-                end)
+		if not self._defaultProvidersRegistered then
+				self:registerStateProvider(function(state)
+						state.totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0
+						state.totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0
+						state.bestComboStreak = PlayerStats:get("bestComboStreak") or 0
+						state.dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0
+						state.shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0
+						state.shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0
+						state.shieldSawParries = PlayerStats:get("shieldSawParries") or 0
+				end)
 
-                self:registerStateProvider(function(state)
-                        state.runFloorsCleared = SessionStats:get("floorsCleared") or 0
-                        state.runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0
-                        state.runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0
-                        state.runShieldSawParries = SessionStats:get("runShieldSawParries") or 0
-                        state.runShieldsSaved = SessionStats:get("shieldsSaved") or 0
-                        state.runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0
-                        state.runBestComboStreak = SessionStats:get("bestComboStreak") or 0
-                end)
+				self:registerStateProvider(function(state)
+						state.runFloorsCleared = SessionStats:get("floorsCleared") or 0
+						state.runShieldWallBounces = SessionStats:get("runShieldWallBounces") or 0
+						state.runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0
+						state.runShieldSawParries = SessionStats:get("runShieldSawParries") or 0
+						state.runShieldsSaved = SessionStats:get("shieldsSaved") or 0
+						state.runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0
+						state.runBestComboStreak = SessionStats:get("bestComboStreak") or 0
+				end)
 
-                self._defaultProvidersRegistered = true
-        end
+				self._defaultProvidersRegistered = true
+		end
 
 	self._iconCache = {}
 	self._initialized = true
@@ -205,32 +205,32 @@ function Achievements:_mergeState(target, source)
 end
 
 local function clearTable(t)
-        for key in pairs(t) do
-                t[key] = nil
-        end
+		for key in pairs(t) do
+				t[key] = nil
+		end
 end
 
 function Achievements:_buildState(external)
-        self._combinedState = self._combinedState or {}
-        local combined = self._combinedState
-        clearTable(combined)
+		self._combinedState = self._combinedState or {}
+		local combined = self._combinedState
+		clearTable(combined)
 
-        for _, provider in ipairs(self.stateProviders) do
-                local ok, result = pcall(provider, combined)
-                if ok then
-                        if type(result) == "table" and result ~= combined then
-                                self:_mergeState(combined, result)
-                        end
-                else
-                        print("[achievements] state provider failed:", result)
-                end
-        end
+		for _, provider in ipairs(self.stateProviders) do
+				local ok, result = pcall(provider, combined)
+				if ok then
+						if type(result) == "table" and result ~= combined then
+								self:_mergeState(combined, result)
+						end
+				else
+						print("[achievements] state provider failed:", result)
+				end
+		end
 
-        if external then
-                self:_mergeState(combined, external)
-        end
+		if external then
+				self:_mergeState(combined, external)
+		end
 
-        return combined
+		return combined
 end
 
 local function evaluateProgress(def, state)
@@ -352,24 +352,24 @@ function Achievements:check(key, state)
 end
 
 function Achievements:checkAll(state)
-        self:_ensureInitialized()
+		self:_ensureInitialized()
 
-        local combinedState = self:_buildState(state)
+		local combinedState = self:_buildState(state)
 
-        for i = 1, #self.definitionOrder do
-                local key = self.definitionOrder[i]
-                local achievement = self.definitions[key]
-                if achievement then
-                        local progress = evaluateProgress(achievement, combinedState)
-                        if type(progress) == "number" then
-                                achievement.progress = clampProgress(achievement, progress)
-                        end
+		for i = 1, #self.definitionOrder do
+				local key = self.definitionOrder[i]
+				local achievement = self.definitions[key]
+				if achievement then
+						local progress = evaluateProgress(achievement, combinedState)
+						if type(progress) == "number" then
+								achievement.progress = clampProgress(achievement, progress)
+						end
 
-                        if not achievement.unlocked and shouldUnlock(achievement, combinedState, progress) then
-                                self:unlock(key)
-                        end
-                end
-        end
+						if not achievement.unlocked and shouldUnlock(achievement, combinedState, progress) then
+								self:unlock(key)
+						end
+				end
+		end
 end
 
 function Achievements:update(dt)
