@@ -51,6 +51,24 @@ local getEventPosition = UpgradeHelpers.getEventPosition
 
 local getStacks
 
+local function getStacks(state, id)
+        if not state or not id then
+                return 0
+        end
+
+        local method = state.getStacks
+        if type(method) == "function" then
+                return method(state, id)
+        end
+
+        local takenSet = state.takenSet
+        if not takenSet then
+                return 0
+        end
+
+        return takenSet[id] or 0
+end
+
 local RunState = {}
 RunState.__index = RunState
 
@@ -268,24 +286,6 @@ local TREMOR_BLOOM_COLOR = {0.76, 0.64, 1.0, 1}
 local VOLATILE_BLOOM_SHIELD_PER_HIT = 0.25
 local VOLATILE_BLOOM_COMBO_PER_HIT = 0.35
 local VOLATILE_BLOOM_COLOR = {0.98, 0.46, 0.3, 1}
-
-local function getStacks(state, id)
-	if not state or not id then
-		return 0
-	end
-
-	local method = state.getStacks
-	if type(method) == "function" then
-		return method(state, id)
-	end
-
-	local takenSet = state.takenSet
-	if not takenSet then
-		return 0
-	end
-
-	return takenSet[id] or 0
-end
 
 local function grantShields(amount)
 	amount = max(0, floor((amount or 0) + 0.0001))
