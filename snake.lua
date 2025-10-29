@@ -4330,6 +4330,7 @@ function Snake:draw()
 						drawFace = false,
 						paletteOverride = buildSeveredPalette(fade),
 						overlayEffect = nil,
+						flatStartCap = true,
 					}
 
 					activeTrailForHead = trailData
