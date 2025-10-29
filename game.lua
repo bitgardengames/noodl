@@ -1454,8 +1454,11 @@ function Game:update(dt)
 		self:updateGameplay(scaledDt)
 	end
 
-	self:updateEntities(scaledDt)
-	UI:setUpgradeIndicators(Upgrades:getHUDIndicators())
+        self:updateEntities(scaledDt)
+        local upgradeIndicators, indicatorsUpdated = Upgrades:getHUDIndicators()
+        if indicatorsUpdated then
+                UI:setUpgradeIndicators(upgradeIndicators)
+        end
 
 	local result = self:handleDeath(scaledDt)
 	if result then
