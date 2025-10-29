@@ -85,11 +85,23 @@ local highlightDefault = {1, 1, 1, 1}
 
 local emptyPoints = {}
 
+local function invalidateSawCache(saw)
+        if not saw then
+                return
+        end
+
+        saw.centerX = nil
+        saw.centerY = nil
+        saw.collisionX = nil
+        saw.collisionY = nil
+        saw.cachedCollisionRadius = nil
+end
+
 local function updateHighlightColor(out, color)
-	local r = min(1, color[1] * 1.2 + 0.08)
-	local g = min(1, color[2] * 1.2 + 0.08)
-	local b = min(1, color[3] * 1.2 + 0.08)
-	local a = (color[4] or 1) * 0.7
+        local r = min(1, color[1] * 1.2 + 0.08)
+        local g = min(1, color[2] * 1.2 + 0.08)
+        local b = min(1, color[3] * 1.2 + 0.08)
+        local a = (color[4] or 1) * 0.7
 	out[1], out[2], out[3], out[4] = r, g, b, a
 	return out
 end
@@ -105,21 +117,33 @@ local function getHighlightColor(color)
 end
 
 local function invalidateSawPointCache(saw)
-	if not saw then
-		return
-	end
+        if not saw then
+                return
+        end
 
-	local cache = saw._pointCache
-	if cache then
-		cache.radius = nil
-		cache.teeth = nil
-	end
+        local cache = saw._pointCache
+        if cache then
+                cache.radius = nil
+                cache.teeth = nil
+        end
+end
+
+local function emitDebugEvent(eventType, saw, payload)
+        local callback = Saws and Saws.debugCallback
+        if not callback then
+                return
+        end
+
+        local ok, err = pcall(callback, eventType, saw, payload)
+        if not ok then
+                print("Saws debug callback error:", err)
+        end
 end
 
 local function getSawPoints(saw)
-	if not saw then
-		return emptyPoints
-	end
+        if not saw then
+                return emptyPoints
+        end
 
 	local radius = saw.radius or SAW_RADIUS
 	local teeth = saw.teeth or 8
@@ -206,14 +230,16 @@ local function addCell(target, seen, col, row)
 end
 
 local function clearTrackBounds(target)
-	if not target then
-		return
-	end
+        if not target then
+                return
+        end
 
-	target.trackMinX = nil
-	target.trackMaxX = nil
-	target.trackMinY = nil
-	target.trackMaxY = nil
+        target.trackMinX = nil
+        target.trackMaxX = nil
+        target.trackMinY = nil
+        target.trackMaxY = nil
+
+        invalidateSawCache(target)
 end
 
 local function buildCollisionCellsForSaw(saw)
@@ -619,7 +645,7 @@ local function getSawCenterForProgress(saw, progress)
 end
 
 local function getSawCenter(saw)
-	return getSawCenterForProgress(saw, saw and saw.progress)
+        return getSawCenterForProgress(saw, saw and saw.progress)
 end
 
 local function getVerticalSinkDirection(saw)
@@ -637,21 +663,120 @@ local function getVerticalSinkDirection(saw)
 end
 
 local function getSawCollisionCenter(saw)
-	local px, py = getSawCenter(saw)
-	if not (px and py) then
-		return px, py
-	end
+        if not saw then
+                return nil, nil
+        end
 
-	local sinkProgress = saw.sinkVisualProgress or saw.sinkProgress or 0
-	local sinkOffset = SINK_OFFSET + sinkProgress * SINK_DISTANCE
-	if saw.dir == "horizontal" then
-		py = py + sinkOffset
-	else
-		local sinkDir = getVerticalSinkDirection(saw)
-		px = px + sinkDir * sinkOffset
-	end
+        local cachedX = saw.collisionX
+        local cachedY = saw.collisionY
+        if cachedX and cachedY then
+                return cachedX, cachedY
+        end
 
-	return px, py
+        local anchorX, anchorY = getSawAnchor(saw)
+        local px, py = getSawCenterForProgress(saw, saw.progress)
+        px = px or anchorX
+        py = py or anchorY
+
+        if not (px and py) then
+                return px, py
+        end
+
+        local sinkProgress = saw.sinkVisualProgress or saw.sinkProgress or 0
+        local sinkOffset = SINK_OFFSET + sinkProgress * SINK_DISTANCE
+        if saw.dir == "horizontal" then
+                py = py + sinkOffset
+        else
+                local sinkDir = getVerticalSinkDirection(saw)
+                px = px + sinkDir * sinkOffset
+        end
+
+        return px, py
+end
+
+local function computeClampedCollisionRadius(saw, collisionX, collisionY)
+        local radius = saw and saw.collisionRadius or nil
+        if not radius then
+                radius = saw and saw.radius or SAW_RADIUS
+        end
+
+        if not saw then
+                return radius
+        end
+
+        if saw.dir == "horizontal" then
+                local trackMinX = saw.trackMinX
+                local trackMaxX = saw.trackMaxX
+                if trackMinX and trackMaxX and collisionX then
+                        local limit = min(collisionX - trackMinX, trackMaxX - collisionX)
+                        if limit and limit < radius then
+                                radius = max(limit, 0)
+                        end
+                end
+        else
+                local trackMinY = saw.trackMinY
+                local trackMaxY = saw.trackMaxY
+                if trackMinY and trackMaxY and collisionY then
+                        local limit = min(collisionY - trackMinY, trackMaxY - collisionY)
+                        if limit and limit < radius then
+                                radius = max(limit, 0)
+                        end
+                end
+        end
+
+        return radius
+end
+
+local function updateSawCachedPositions(saw)
+        if not saw then
+                return
+        end
+
+        local anchorX, anchorY = getSawAnchor(saw)
+        local centerX, centerY = getSawCenterForProgress(saw, saw.progress)
+        centerX = centerX or anchorX
+        centerY = centerY or anchorY
+
+        saw.centerX = centerX
+        saw.centerY = centerY
+
+        local sinkVisualProgress = saw.sinkVisualProgress or saw.sinkProgress or 0
+        local sinkOffset = SINK_OFFSET + sinkVisualProgress * SINK_DISTANCE
+
+        local collisionX = centerX or anchorX
+        local collisionY = centerY or anchorY
+
+        if saw.dir == "horizontal" then
+                if collisionY then
+                        collisionY = collisionY + sinkOffset
+                end
+        else
+                local sinkDir = getVerticalSinkDirection(saw)
+                if collisionX then
+                        collisionX = collisionX + sinkDir * sinkOffset
+                end
+        end
+
+        saw.collisionX = collisionX
+        saw.collisionY = collisionY
+        saw.cachedCollisionRadius = computeClampedCollisionRadius(saw, collisionX or centerX or anchorX, collisionY or centerY or anchorY)
+
+        emitDebugEvent("cache", saw, {
+                centerX = saw.centerX,
+                centerY = saw.centerY,
+                collisionX = saw.collisionX,
+                collisionY = saw.collisionY,
+                collisionRadius = saw.cachedCollisionRadius,
+        })
+
+        if sinkVisualProgress and sinkVisualProgress > 0 then
+                emitDebugEvent("sink", saw, {
+                        sinkProgress = saw.sinkProgress,
+                        sinkVisualProgress = saw.sinkVisualProgress,
+                        collisionX = saw.collisionX,
+                        collisionY = saw.collisionY,
+                })
+        end
 end
 
 local function removeSaw(target)
@@ -662,20 +787,26 @@ local function removeSaw(target)
 	for index = #current, 1, -1 do
 		local saw = current[index]
 		if saw == target or index == target then
-			local anchorX = saw.renderX or saw.x
-			local anchorY = saw.renderY or saw.y
-			local px, py = getSawCenter(saw)
-			local sawColor = Theme.sawColor or {0.85, 0.8, 0.75, 1}
-			local primary = copyColor(sawColor)
-			primary[4] = 1
-			local highlight = getHighlightColor(sawColor)
+                        local anchorX = saw.renderX or saw.x
+                        local anchorY = saw.renderY or saw.y
+                        local px = saw.centerX
+                        local py = saw.centerY
+                        if not (px and py) then
+                                px, py = getSawCenter(saw)
+                        end
+                        local burstX = px or anchorX
+                        local burstY = py or anchorY
+                        local sawColor = Theme.sawColor or {0.85, 0.8, 0.75, 1}
+                        local primary = copyColor(sawColor)
+                        primary[4] = 1
+                        local highlight = getHighlightColor(sawColor)
 
-			Particles:spawnBurst(px or anchorX, py or anchorY, {
-				count = 12,
-				speed = 82,
-				speedVariance = 68,
-				life = 0.35,
-				size = 2.3,
+                        Particles:spawnBurst(burstX, burstY, {
+                                count = 12,
+                                speed = 82,
+                                speedVariance = 68,
+                                life = 0.35,
+                                size = 2.3,
 				color = {primary[1], primary[2], primary[3], primary[4]},
 				spread = pi * 2,
 				angleJitter = pi,
@@ -686,12 +817,12 @@ local function removeSaw(target)
 				fadeTo = 0.04,
 			})
 
-			Particles:spawnBurst(px or anchorX, py or anchorY, {
-				count = love.math.random(4, 6),
-				speed = 132,
-				speedVariance = 72,
-				life = 0.26,
-				size = 1.8,
+                        Particles:spawnBurst(burstX, burstY, {
+                                count = love.math.random(4, 6),
+                                speed = 132,
+                                speedVariance = 72,
+                                life = 0.26,
+                                size = 1.8,
 				color = {1.0, 0.94, 0.52, highlight[4] or 1},
 				spread = pi * 2,
 				angleJitter = pi,
@@ -699,13 +830,18 @@ local function removeSaw(target)
 				gravity = 200,
 				scaleMin = 0.34,
 				scaleVariance = 0.28,
-				fadeTo = 0.02,
-			})
+                                fadeTo = 0.02,
+                        })
 
-			table.remove(current, index)
-			break
-		end
-	end
+                        emitDebugEvent("burst", saw, {
+                                x = burstX,
+                                y = burstY,
+                        })
+
+                        table.remove(current, index)
+                        break
+                end
+        end
 end
 
 -- Easing similar to Rocks
@@ -713,11 +849,11 @@ end
 function Saws:spawn(x, y, radius, teeth, dir, side, options)
 	local slot = getOrCreateSlot(x, y, dir)
 
-	insert(current, {
-		x = x,
-		y = y,
-		radius = radius or SAW_RADIUS,
-		collisionRadius = (radius or SAW_RADIUS) * COLLISION_RADIUS_MULT,
+        insert(current, {
+                x = x,
+                y = y,
+                radius = radius or SAW_RADIUS,
+                collisionRadius = (radius or SAW_RADIUS) * COLLISION_RADIUS_MULT,
 		teeth = teeth or SAW_TEETH,
 		rotation = 0,
 		timer = 0,
@@ -738,30 +874,45 @@ function Saws:spawn(x, y, radius, teeth, dir, side, options)
 		sinkVisualProgress = Easing.easeInOutCubic(sinkActive and 1 or 0),
 		collisionCells = nil,
 		hitFlashTimer = 0,
-	})
+        })
 
-	local saw = current[#current]
-	invalidateSawPointCache(saw)
-	saw.collisionCells = buildCollisionCellsForSaw(saw)
-	options = options or {}
+        local saw = current[#current]
+        invalidateSawPointCache(saw)
+        invalidateSawCache(saw)
+        saw.collisionCells = buildCollisionCellsForSaw(saw)
+        options = options or {}
 	saw.color = options.color or saw.color
 	saw.gilded = options.gilded or false
 	saw.ember = options.ember or false
 	saw.emberTrailColor = options.emberTrailColor
 	saw.emberGlowColor = options.emberGlowColor
-	if saw.ember then
-		saw.emberTrailPhase = love.math.random()
-	else
-		saw.emberTrailPhase = nil
-	end
+        if saw.ember then
+                saw.emberTrailPhase = love.math.random()
+        else
+                saw.emberTrailPhase = nil
+        end
+
+        updateSawCachedPositions(saw)
 end
 
 function Saws:getAll()
-	return current
+        return current
+end
+
+function Saws:setDebugCallback(callback)
+        self.debugCallback = callback
 end
 
 function Saws:getCollisionCenter(saw)
-	return getSawCollisionCenter(saw)
+        if saw then
+                local px = saw.collisionX
+                local py = saw.collisionY
+                if px and py then
+                        return px, py
+                end
+        end
+
+        return getSawCollisionCenter(saw)
 end
 
 function Saws:reset()
@@ -873,10 +1024,12 @@ function Saws:update(dt)
 			end
 		end
 
-		if saw.ember then
-			saw.emberTrailPhase = (saw.emberTrailPhase or 0) + dt
-		end
-	end
+                if saw.ember then
+                        saw.emberTrailPhase = (saw.emberTrailPhase or 0) + dt
+                end
+
+                updateSawCachedPositions(saw)
+        end
 end
 
 function Saws:draw()
@@ -898,8 +1051,12 @@ function Saws:draw()
 		local saw = current[i]
 		local anchorX = saw.renderX or saw.x
 		local anchorY = saw.renderY or saw.y
-		local px, py = getSawCenter(saw)
-		local sinkProgress = max(0, min(1, saw.sinkProgress or 0))
+                local px = saw.centerX
+                local py = saw.centerY
+                if not (px and py) then
+                        px, py = getSawCenter(saw)
+                end
+                local sinkProgress = max(0, min(1, saw.sinkProgress or 0))
 		local sinkVisualProgress = max(0, min(1, saw.sinkVisualProgress or sinkProgress))
 		local sinkOffset = sinkVisualProgress * SINK_DISTANCE
 		local occlusionDepth = SINK_OFFSET + sinkOffset
@@ -1131,15 +1288,19 @@ function Saws:stall(duration, options)
 		local sawDetails = {}
 		local limit = (options and options.positionLimit) or 4
 
-		for i = 1, #current do
-			local saw = current[i]
-			if saw then
-				local cx, cy = getSawCenter(saw)
-				if cx and cy then
-					positions[#positions + 1] = {cx, cy}
-					sawDetails[#sawDetails + 1] = {
-						x = cx,
-						y = cy,
+                for i = 1, #current do
+                        local saw = current[i]
+                        if saw then
+                                local cx = saw.centerX
+                                local cy = saw.centerY
+                                if not (cx and cy) then
+                                        cx, cy = getSawCenter(saw)
+                                end
+                                if cx and cy then
+                                        positions[#positions + 1] = {cx, cy}
+                                        sawDetails[#sawDetails + 1] = {
+                                                x = cx,
+                                                y = cy,
 						dir = saw.dir,
 						side = saw.side,
 					}
@@ -1217,41 +1378,36 @@ end
 function Saws:checkCollision(x, y, w, h)
 	local saws = self:getAll()
 	for i = 1, #saws do
-		local saw = saws[i]
-		if isCollisionCandidate(saw, x, y, w, h) then
-			local px, py = getSawCollisionCenter(saw)
+                local saw = saws[i]
+                if isCollisionCandidate(saw, x, y, w, h) then
+                        local px = saw and saw.collisionX
+                        local py = saw and saw.collisionY
+                        if not (px and py) then
+                                px, py = getSawCollisionCenter(saw)
+                        end
 
-			-- Circle vs AABB
-			local closestX = max(x, min(px, x + w))
-			local closestY = max(y, min(py, y + h))
-			local dx = px - closestX
-			local dy = py - closestY
-			local collisionRadius = saw.collisionRadius or saw.radius
-			if saw.dir == "horizontal" then
-				local trackMinX = saw.trackMinX
-				local trackMaxX = saw.trackMaxX
-				if trackMinX and trackMaxX then
-					local limit = min(px - trackMinX, trackMaxX - px)
-					if limit and limit < collisionRadius then
-						collisionRadius = max(limit, 0)
-					end
-				end
-			else
-				local trackMinY = saw.trackMinY
-				local trackMaxY = saw.trackMaxY
-				if trackMinY and trackMaxY then
-					local limit = min(py - trackMinY, trackMaxY - py)
-					if limit and limit < collisionRadius then
-						collisionRadius = max(limit, 0)
-					end
-				end
-			end
-			if dx * dx + dy * dy < collisionRadius * collisionRadius then
-				saw.hitFlashTimer = max(saw.hitFlashTimer or 0, HIT_FLASH_DURATION)
-				return saw
-			end
-		end
-	end
+                        if px and py then
+                                -- Circle vs AABB
+                                local closestX = max(x, min(px, x + w))
+                                local closestY = max(y, min(py, y + h))
+                                local dx = px - closestX
+                                local dy = py - closestY
+                                local collisionRadius = saw and saw.cachedCollisionRadius
+                                if not collisionRadius then
+                                        collisionRadius = computeClampedCollisionRadius(saw, px, py)
+                                end
+                                if dx * dx + dy * dy < collisionRadius * collisionRadius then
+                                        saw.hitFlashTimer = max(saw.hitFlashTimer or 0, HIT_FLASH_DURATION)
+                                        emitDebugEvent("collision", saw, {
+                                                x = px,
+                                                y = py,
+                                                radius = collisionRadius,
+                                        })
+                                        return saw
+                                end
+                        end
+                end
+        end
 	return nil
 end
 
@@ -1272,15 +1428,17 @@ function Saws:beginTrackSlide(saw, startX, startY, targetX, targetY, options)
 	saw.renderX = saw.tremorSlideStartX
 	saw.renderY = saw.tremorSlideStartY
 
-	saw.x = targetX or saw.x
-	saw.y = targetY or saw.y
-	saw.collisionCells = nil
-	clearTrackBounds(saw)
+        saw.x = targetX or saw.x
+        saw.y = targetY or saw.y
+        saw.collisionCells = nil
+        clearTrackBounds(saw)
+        invalidateSawCache(saw)
+        updateSawCachedPositions(saw)
 
-	if saw.slotId then
-		local slot = getSlotById(saw.slotId)
-		if slot then
-			slot.tremorSlideDuration = duration
+        if saw.slotId then
+                local slot = getSlotById(saw.slotId)
+                if slot then
+                        slot.tremorSlideDuration = duration
 			slot.tremorSlideTimer = 0
 			slot.tremorSlideStartX = startX or slot.x
 			slot.tremorSlideStartY = startY or slot.y
@@ -1300,11 +1458,13 @@ function Saws:beginProgressNudge(saw, startProgress, targetProgress, options)
 	end
 
 	options = options or {}
-	saw.tremorNudgeDuration = options.duration or 0.28
-	saw.tremorNudgeTimer = 0
-	saw.tremorNudgeStart = startProgress or saw.progress or 0
-	saw.tremorNudgeTarget = targetProgress or saw.tremorNudgeStart
-	saw.progress = saw.tremorNudgeStart
+        saw.tremorNudgeDuration = options.duration or 0.28
+        saw.tremorNudgeTimer = 0
+        saw.tremorNudgeStart = startProgress or saw.progress or 0
+        saw.tremorNudgeTarget = targetProgress or saw.tremorNudgeStart
+        saw.progress = saw.tremorNudgeStart
+        invalidateSawCache(saw)
+        updateSawCachedPositions(saw)
 end
 
 function Saws:getCenterForProgress(saw, progress)
