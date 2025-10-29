@@ -214,6 +214,18 @@ local function aabb(ax, ay, aw, ah, bx, by, bw, bh)
 	ay < by + bh and ay + ah > by
 end
 
+local function computeFallbackAxisDirection(component, clampedValue, centerValue)
+        if component and component ~= 0 then
+                return component > 0 and 1 or -1
+        end
+
+        if clampedValue <= centerValue then
+                return 1
+        end
+
+        return -1
+end
+
 local function rerouteAlongWall(headX, headY, left, right, top, bottom)
         local centerX, centerY
         if left and right and top and bottom then
@@ -241,25 +253,8 @@ local function rerouteAlongWall(headX, headY, left, right, top, bottom)
         local dir = Snake:getDirection() or {x = 0, y = 0}
         local newDirX, newDirY = dir.x or 0, dir.y or 0
 
-        local function fallbackVertical()
-                if dir.y and dir.y ~= 0 then
-                        return dir.y > 0 and 1 or -1
-                end
-                if clampedY <= centerY then
-                        return 1
-                end
-                return -1
-        end
-
-        local function fallbackHorizontal()
-                if dir.x and dir.x ~= 0 then
-                        return dir.x > 0 and 1 or -1
-                end
-                if clampedX <= centerX then
-                        return 1
-                end
-                return -1
-        end
+        local fallbackVerticalDir = computeFallbackAxisDirection(dir.y, clampedY, centerY)
+        local fallbackHorizontalDir = computeFallbackAxisDirection(dir.x, clampedX, centerX)
 
 	local collidedHorizontal = hitLeft or hitRight
 	local collidedVertical = hitTop or hitBottom
@@ -268,41 +263,41 @@ local function rerouteAlongWall(headX, headY, left, right, top, bottom)
 	if collidedHorizontal and collidedVertical then
 		if horizontalDominant then
 			newDirX = 0
-			local slide = fallbackVertical()
-			if hitTop and slide < 0 then
-				slide = 1
-			elseif hitBottom and slide > 0 then
-				slide = -1
+                        local slide = fallbackVerticalDir
+                        if hitTop and slide < 0 then
+                                slide = 1
+                        elseif hitBottom and slide > 0 then
+                                slide = -1
 			end
 			newDirY = slide
 		else
 			newDirY = 0
-			local slide = fallbackHorizontal()
-			if hitLeft and slide < 0 then
-				slide = 1
-			elseif hitRight and slide > 0 then
-				slide = -1
+                        local slide = fallbackHorizontalDir
+                        if hitLeft and slide < 0 then
+                                slide = 1
+                        elseif hitRight and slide > 0 then
+                                slide = -1
 			end
 			newDirX = slide
 		end
 	else
 		if collidedHorizontal then
 			newDirX = 0
-			local slide = fallbackVertical()
-			if hitTop and slide < 0 then
-				slide = 1
-			elseif hitBottom and slide > 0 then
-				slide = -1
+                        local slide = fallbackVerticalDir
+                        if hitTop and slide < 0 then
+                                slide = 1
+                        elseif hitBottom and slide > 0 then
+                                slide = -1
 			end
 			newDirY = slide
 		end
 
 		if collidedVertical then
 			newDirY = 0
-			local slide = fallbackHorizontal()
-			if hitLeft and slide < 0 then
-				slide = 1
-			elseif hitRight and slide > 0 then
+                        local slide = fallbackHorizontalDir
+                        if hitLeft and slide < 0 then
+                                slide = 1
+                        elseif hitRight and slide > 0 then
 				slide = -1
 			end
 			newDirX = slide
@@ -412,34 +407,26 @@ local function portalThroughWall(headX, headY)
 		end
 	end
 
-	if not (exitX and exitY) then
-		local margin = max(4, math.floor(Arena.tileSize * 0.3))
-		local function insideX(x)
-			return clamp(x, left + margin, right - margin)
-		end
+        if not (exitX and exitY) then
+                local margin = max(4, math.floor(Arena.tileSize * 0.3))
+                if horizontalDist >= verticalDist then
+                        if outLeft then
+                                exitX = clamp(right - margin, left + margin, right - margin)
+                        else
+                                exitX = clamp(left + margin, left + margin, right - margin)
+                        end
+                        exitY = clamp(headY, top + margin, bottom - margin)
+                else
+                        if outTop then
+                                exitY = clamp(bottom - margin, top + margin, bottom - margin)
+                        else
+                                exitY = clamp(top + margin, top + margin, bottom - margin)
+                        end
+                        exitX = clamp(headX, left + margin, right - margin)
+                end
 
-		local function insideY(y)
-			return clamp(y, top + margin, bottom - margin)
-		end
-
-		if horizontalDist >= verticalDist then
-			if outLeft then
-				exitX = insideX(right - margin)
-			else
-				exitX = insideX(left + margin)
-			end
-			exitY = insideY(headY)
-		else
-			if outTop then
-				exitY = insideY(bottom - margin)
-			else
-				exitY = insideY(top + margin)
-			end
-			exitX = insideX(headX)
-		end
-
-		entryPortalX, entryPortalY = entryX, entryY
-	end
+                entryPortalX, entryPortalY = entryX, entryY
+        end
 
 	local dx = (exitX or headX) - headX
 	local dy = (exitY or headY) - headY
@@ -487,7 +474,41 @@ local function portalThroughWall(headX, headY)
 		Particles:spawnBurst(newHeadX, newHeadY, PORTAL_EXIT_BURST_OPTIONS)
 	end
 
-	return newHeadX, newHeadY
+        return newHeadX, newHeadY
+end
+
+local function relocateHead(headX, headY, targetX, targetY)
+        if not (targetX and targetY) then
+                return headX, headY
+        end
+
+        local deltaX = 0
+        local deltaY = 0
+        if headX and headY then
+                deltaX = targetX - headX
+                deltaY = targetY - headY
+        end
+
+        local moved = false
+        if Snake.translate and (deltaX ~= 0 or deltaY ~= 0) then
+                Snake:translate(deltaX, deltaY, {resetMoveProgress = true})
+                moved = true
+        elseif Snake.setHeadPosition then
+                Snake:setHeadPosition(targetX, targetY)
+                moved = true
+        end
+
+        if Snake.resetMovementProgress then
+                Snake:resetMovementProgress()
+        end
+
+        if moved then
+                local newHeadX, newHeadY = Snake:getHead()
+                headX = newHeadX or targetX
+                headY = newHeadY or targetY
+        end
+
+        return headX, headY
 end
 
 local function handleWallCollision(headX, headY)
@@ -508,46 +529,14 @@ local function handleWallCollision(headX, headY)
 	local top = ay + inset
 	local bottom = ay + ah - inset
 
-	local function relocateSnake(targetX, targetY)
-		if not (targetX and targetY) then
-			return
-		end
-
-		local deltaX = 0
-		local deltaY = 0
-		if headX and headY then
-			deltaX = targetX - headX
-			deltaY = targetY - headY
-		end
-
-		local moved = false
-		if Snake.translate and (deltaX ~= 0 or deltaY ~= 0) then
-			Snake:translate(deltaX, deltaY, {resetMoveProgress = true})
-			moved = true
-		elseif Snake.setHeadPosition then
-			Snake:setHeadPosition(targetX, targetY)
-			moved = true
-		end
-
-		if Snake.resetMovementProgress then
-			Snake:resetMovementProgress()
-		end
-
-		if moved then
-			local newHeadX, newHeadY = Snake:getHead()
-			headX = newHeadX or targetX
-			headY = newHeadY or targetY
-		end
-	end
-
-	if not Snake:consumeShield() then
-		local safeX = clamp(headX, left, right)
-		local safeY = clamp(headY, top, bottom)
+        if not Snake:consumeShield() then
+                local safeX = clamp(headX, left, right)
+                local safeY = clamp(headY, top, bottom)
                 local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY, left, right, top, bottom)
-		local clampedX = reroutedX or safeX
-		local clampedY = reroutedY or safeY
-		relocateSnake(clampedX, clampedY)
-		clampedX, clampedY = headX, headY
+                local clampedX = reroutedX or safeX
+                local clampedY = reroutedY or safeY
+                headX, headY = relocateHead(headX, headY, clampedX, clampedY)
+                clampedX, clampedY = headX, headY
 		local dir = Snake.getDirection and Snake:getDirection() or {x = 0, y = 0}
 
 		return clampedX, clampedY, "wall", {
@@ -563,11 +552,11 @@ local function handleWallCollision(headX, headY)
 	end
 
         local reroutedX, reroutedY = rerouteAlongWall(headX, headY, left, right, top, bottom)
-	local clampedX = reroutedX or clamp(headX, left, right)
-	local clampedY = reroutedY or clamp(headY, top, bottom)
-	relocateSnake(clampedX, clampedY)
+        local clampedX = reroutedX or clamp(headX, left, right)
+        local clampedY = reroutedY or clamp(headY, top, bottom)
+        headX, headY = relocateHead(headX, headY, clampedX, clampedY)
 
-	Particles:spawnBurst(headX, headY, WALL_SHIELD_BURST_OPTIONS)
+        Particles:spawnBurst(headX, headY, WALL_SHIELD_BURST_OPTIONS)
 
 	Audio:playSound("shield_wall")
 
