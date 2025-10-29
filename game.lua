@@ -15,6 +15,7 @@ local PauseMenu = require("pausemenu")
 local Movement = require("movement")
 local Particles = require("particles")
 local UpgradeVisuals = require("upgradevisuals")
+local VolatileBloom = require("volatilebloom")
 local Achievements = require("achievements")
 local FloatingText = require("floatingtext")
 local Arena = require("arena")
@@ -80,6 +81,7 @@ local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
         Saws,
         Arena,
         Particles,
+        VolatileBloom,
         UpgradeVisuals,
         Achievements,
         FloatingText,
@@ -91,6 +93,7 @@ local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
         Popup,
         Arena,
         Particles,
+        VolatileBloom,
         UpgradeVisuals,
         Achievements,
         FloatingText,
@@ -1010,9 +1013,10 @@ local function drawPlayfieldLayers(self, stateOverride)
 			Arena:drawExit()
 		end
 
-		Particles:draw()
-		UpgradeVisuals:draw()
-		Popup:draw()
+                Particles:draw()
+                VolatileBloom:draw()
+                UpgradeVisuals:draw()
+                Popup:draw()
 
                 RenderLayers:withLayer("overlay", function()
                         if Arena.drawDimLighting then

@@ -574,6 +574,11 @@ local english = {
                                 description = "Each time you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",
                                 activation_text = "Shockwave Bloom",
                         },
+                        volatile_bloom = {
+                                name = "Volatile Bloom",
+                                description = "After every fruit, plant an unstable charge on the tile you just vacated. After a brief fuse it explodes, breaking nearby rocks and saws while granting shield and combo progress for each hazard caught in the blast.",
+                                activation_text = "Volatile Bloom",
+                        },
                         contract_of_cinders = {
                                 name = "Contract of Cinders",
                                 description = "Gain +2 shields immediately. Each time a shield breaks, leave behind a burning ember that spawns a saw on the next floor.",

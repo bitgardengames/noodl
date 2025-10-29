@@ -8,6 +8,7 @@ local Rocks = require("rocks")
 local Saws = require("saws")
 local Particles = require("particles")
 local UpgradeVisuals = require("upgradevisuals")
+local VolatileBloom = require("volatilebloom")
 local UI = require("ui")
 local ModuleUtil = require("moduleutil")
 
@@ -20,14 +21,15 @@ local function loadCoreSystems(sw, sh)
 end
 
 local GAMEPLAY_SYSTEMS = ModuleUtil.prepareSystems({
-	Movement,
-	Score,
-	FloatingText,
-	Particles,
-	UpgradeVisuals,
-	Rocks,
-	Saws,
-	UI,
+        Movement,
+        Score,
+        FloatingText,
+        Particles,
+        VolatileBloom,
+        UpgradeVisuals,
+        Rocks,
+        Saws,
+        UI,
 })
 
 local gameplayContext = {}
