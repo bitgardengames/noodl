@@ -22,6 +22,9 @@ local Theme = {
         dartBaseColor      = {0.17, 0.18, 0.23, 0.98},
         dartAccentColor    = {0.42, 0.72, 0.62, 1.0},
         dartTelegraphColor = {0.52, 0.78, 0.72, 0.78},
+        dartBodyColor      = {0.70, 0.68, 0.60, 1.0},
+        dartTipColor       = {0.82, 0.86, 0.90, 1.0},
+        dartTailColor      = {0.42, 0.68, 0.64, 1.0},
 
 	-- Text
 	textColor       = {0.88, 0.88, 0.92, 1.0},
