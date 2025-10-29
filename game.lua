@@ -54,6 +54,8 @@ local easeOutExpo = Easing.easeOutExpo
 local currentGame
 local currentRenderState
 
+local DEATH_HOLD_DURATION = 0.5
+
 local function drawBackgroundLayer()
         Arena:drawBackground()
 end
@@ -913,11 +915,14 @@ function Game:reset()
         Face:set("idle")
         self.state = "playing"
         self.floor = self.startFloor or 1
-	self.runTimer = 0
-	self.floorTimer = 0
-	self.pauseReturnState = nil
+        self.runTimer = 0
+        self.floorTimer = 0
+        self.pauseReturnState = nil
 
         self.mouseCursorState = nil
+
+        self.deathHoldTimer = nil
+        self.deathHoldDuration = nil
 
         self:invalidateTransitionTitleCache()
 
@@ -956,13 +961,15 @@ function Game:leave()
 end
 
 function Game:beginDeath()
-	if self.state ~= "dying" then
-		self.state = "dying"
-		Snake:setDead(true)
-		local trail = Snake:getSegments()
-		Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
-		Audio:playSound("death")
-	end
+        if self.state ~= "dying" then
+                self.state = "dying"
+                Snake:setDead(true)
+                local trail = Snake:getSegments()
+                Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
+                Audio:playSound("death")
+                self.deathHoldTimer = nil
+                self.deathHoldDuration = DEATH_HOLD_DURATION
+        end
 end
 
 function Game:applyDamage(amount, cause, context)
@@ -1171,15 +1178,27 @@ function Game:handleDeath(dt)
 		return
 	end
 
-	Death:update(dt)
-	if not Death:isFinished() then
-		return
-	end
+        Death:update(dt)
+        if not Death:isFinished() then
+                self.deathHoldTimer = nil
+                return
+        end
 
-	Achievements:save()
-	local result = Score:handleGameOver(self.deathCause)
-	if result then
-		return {state = "gameover", data = result}
+        local holdDuration = self.deathHoldDuration or DEATH_HOLD_DURATION or 0
+        if holdDuration > 0 then
+                self.deathHoldTimer = (self.deathHoldTimer or 0) + dt
+                if self.deathHoldTimer < holdDuration then
+                        return
+                end
+        end
+
+        self.deathHoldTimer = nil
+        self.deathHoldDuration = nil
+
+        Achievements:save()
+        local result = Score:handleGameOver(self.deathCause)
+        if result then
+                return {state = "gameover", data = result}
 	end
 end
 
