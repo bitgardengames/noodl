@@ -2,7 +2,6 @@ local Theme = require("theme")
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local Audio = require("audio")
-local Timer = require("timer")
 
 local max = math.max
 local sqrt = math.sqrt
@@ -23,17 +22,15 @@ local DEFAULT_DART_SPEED = 360
 local DEFAULT_DART_LENGTH = 26
 local DEFAULT_DART_THICKNESS = 12
 local BASE_EMITTER_SIZE = 18
-local TELEGRAPH_PULSE_SPEED = 7.4
-local TELEGRAPH_PULSE_INTENSITY = 0.65
 local FLASH_DECAY = 3.5
 local IMPACT_FLASH_DURATION = 0.32
 
-local BASE_EMITTER_COLOR = {0.32, 0.29, 0.22, 0.95}
-local BASE_ACCENT_COLOR = {0.93, 0.64, 0.28, 1.0}
-local TELEGRAPH_COLOR = {1.0, 0.88, 0.52, 0.85}
-local DART_BODY_COLOR = {0.86, 0.72, 0.38, 1.0}
-local DART_TIP_COLOR = {0.82, 0.33, 0.18, 1.0}
-local DART_TAIL_COLOR = {0.65, 0.47, 0.24, 1.0}
+local BASE_EMITTER_COLOR = {0.34, 0.28, 0.18, 0.95}
+local BASE_ACCENT_COLOR = {0.62, 0.48, 0.29, 1.0}
+local TELEGRAPH_COLOR = {0.84, 0.72, 0.53, 0.85}
+local DART_BODY_COLOR = {0.76, 0.63, 0.38, 1.0}
+local DART_TIP_COLOR = {0.62, 0.36, 0.21, 1.0}
+local DART_TAIL_COLOR = {0.54, 0.4, 0.22, 1.0}
 
 local function clamp01(value)
         if value <= 0 then
@@ -43,10 +40,6 @@ local function clamp01(value)
                 return 1
         end
         return value
-end
-
-local function getTime()
-        return Timer.getTime()
 end
 
 local function releaseOccupancy(emitter)
@@ -457,21 +450,27 @@ local function drawEmitter(emitter)
         love.graphics.push("all")
 
         local housingColor = bodyColor
-        local insetColor = scaleColor(bodyColor, 0.72, 1)
+        local insetColor = scaleColor(bodyColor, 0.78, 1)
         love.graphics.setColor(housingColor)
-        love.graphics.rectangle("fill", baseX, baseY, size, size, 6, 6)
+        love.graphics.rectangle("fill", baseX, baseY, size, size, 4, 4)
 
         love.graphics.setColor(insetColor)
-        love.graphics.rectangle("fill", baseX + 3, baseY + 3, size - 6, size - 6, 5, 5)
+        love.graphics.rectangle("fill", baseX + 2, baseY + 2, size - 4, size - 4, 3, 3)
 
-        local slotLength = size + 8
-        local slotThickness = size * 0.32
-        local slotColor = scaleColor(accentColor, 0.4, 0.75)
-        love.graphics.setColor(slotColor)
+        local strapColor = scaleColor(accentColor, 0.85, 0.9)
+        local strapShadow = scaleColor(accentColor, 0.6, 0.8)
+        love.graphics.setColor(strapShadow)
         if emitter.dir == "horizontal" then
-                love.graphics.rectangle("fill", (emitter.x or 0) - slotLength * 0.5, (emitter.y or 0) - slotThickness * 0.5, slotLength, slotThickness, 4, 4)
+                love.graphics.rectangle("fill", baseX - 2, baseY + half + 1, size + 4, 5, 2, 2)
         else
-                love.graphics.rectangle("fill", (emitter.x or 0) - slotThickness * 0.5, (emitter.y or 0) - slotLength * 0.5, slotThickness, slotLength, 4, 4)
+                love.graphics.rectangle("fill", baseX + half + 1, baseY - 2, 5, size + 4, 2, 2)
+        end
+
+        love.graphics.setColor(strapColor)
+        if emitter.dir == "horizontal" then
+                love.graphics.rectangle("fill", baseX - 2, baseY + half - 4, size + 4, 6, 2, 2)
+        else
+                love.graphics.rectangle("fill", baseX + half - 4, baseY - 2, 6, size + 4, 2, 2)
         end
 
         local flash = emitter.flashTimer or 0
@@ -483,24 +482,25 @@ local function drawEmitter(emitter)
 
         local strength = emitter.telegraphStrength or 0
         if strength > 0 then
-                local t = getTime()
-                local pulse = 0.6 + TELEGRAPH_PULSE_INTENSITY * sin(t * TELEGRAPH_PULSE_SPEED + (emitter.randomOffset or 0))
-                local alpha = clamp01(strength * (0.55 + 0.45 * pulse)) * (telegraphColor[4] or 1)
-                local teleColor = {telegraphColor[1], telegraphColor[2], telegraphColor[3], alpha}
-                love.graphics.setColor(teleColor)
+                local alpha = clamp01((telegraphColor[4] or 1) * (0.25 + 0.5 * strength))
+                love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], alpha)
                 if emitter.dir == "horizontal" then
-                        love.graphics.rectangle("fill", (emitter.x or 0) - half - 8, baseY + half - 6, size + 16, 12, 6, 6)
+                        love.graphics.rectangle("fill", (emitter.x or 0) - half - 7, baseY + half - 5, size + 14, 10, 4, 4)
                 else
-                        love.graphics.rectangle("fill", baseX + half - 6, (emitter.y or 0) - half - 8, 12, size + 16, 6, 6)
+                        love.graphics.rectangle("fill", baseX + half - 5, (emitter.y or 0) - half - 7, 10, size + 14, 4, 4)
                 end
         end
 
         love.graphics.setColor(accentColor)
-        love.graphics.rectangle("line", baseX + 1, baseY + 1, size - 2, size - 2, 5, 5)
-        love.graphics.rectangle("line", baseX + 4, baseY + 4, size - 8, size - 8, 4, 4)
+        love.graphics.rectangle("line", baseX + 1, baseY + 1, size - 2, size - 2, 3, 3)
+        love.graphics.rectangle("line", baseX + 3, baseY + 3, size - 6, size - 6, 3, 3)
 
-        love.graphics.circle("fill", baseX + size * 0.28, baseY + size * 0.28, 1.5)
-        love.graphics.circle("fill", baseX + size * 0.72, baseY + size * 0.72, 1.5)
+        local rivetColor = scaleColor(accentColor, 0.55, 1)
+        love.graphics.setColor(rivetColor)
+        love.graphics.rectangle("fill", baseX + size * 0.2, baseY + size * 0.2, 2, 2)
+        love.graphics.rectangle("fill", baseX + size * 0.72, baseY + size * 0.28, 2, 2)
+        love.graphics.rectangle("fill", baseX + size * 0.28, baseY + size * 0.72, 2, 2)
+        love.graphics.rectangle("fill", baseX + size * 0.75, baseY + size * 0.75, 2, 2)
 
         love.graphics.pop()
 end
@@ -522,44 +522,43 @@ local function drawTelegraphPath(emitter)
         end
 
         love.graphics.push("all")
-        local t = getTime()
-        local headAlpha = clamp01((telegraphColor[4] or 1) * strength)
-        love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], headAlpha * 0.65)
-        love.graphics.setLineWidth(3)
-        love.graphics.line(emitter.startX, emitter.startY, emitter.endX, emitter.endY)
-        love.graphics.setLineWidth(1)
-
-        local pulseOffset = (t * 55 + (emitter.randomOffset or 0)) % 18
         local dx = emitter.endX - emitter.startX
         local dy = emitter.endY - emitter.startY
 
-        local accentAlpha = clamp01((accentColor[4] or 1) * (0.45 + 0.55 * strength))
-        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], accentAlpha)
-        for distance = pulseOffset, travel, 18 do
+        local dashSpacing = 16
+        local dashLength = 7 + strength * 3
+        local offset = ((emitter.randomOffset or 0) * 0.5) % dashSpacing
+        local teleAlpha = clamp01((telegraphColor[4] or 1) * (0.35 + 0.45 * strength))
+        love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], teleAlpha)
+        for distance = offset, travel, dashSpacing do
                 local progress = distance / travel
                 local px = emitter.startX + dx * progress
                 local py = emitter.startY + dy * progress
                 if emitter.dir == "horizontal" then
-                        local length = 4 + strength * 5
-                        love.graphics.rectangle("fill", px - length * 0.5, py - 2, length, 4, 1, 1)
+                        love.graphics.rectangle("fill", px - dashLength * 0.5, py - 1, dashLength, 2, 1, 1)
                 else
-                        local length = 4 + strength * 5
-                        love.graphics.rectangle("fill", px - 2, py - length * 0.5, 4, length, 1, 1)
+                        love.graphics.rectangle("fill", px - 1, py - dashLength * 0.5, 2, dashLength, 1, 1)
                 end
         end
 
-        love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], headAlpha)
-        local tipSize = 7 + strength * 6
+        local accentAlpha = clamp01((accentColor[4] or 1) * (0.25 + 0.5 * strength))
+        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], accentAlpha)
         if emitter.dir == "horizontal" then
+                for distance = offset + dashSpacing * 0.5, travel, dashSpacing do
+                        local progress = distance / travel
+                        local px = emitter.startX + dx * progress
+                        love.graphics.rectangle("fill", px - 1, emitter.startY - 4, 2, 8, 1, 1)
+                end
                 local facing = emitter.facing or 1
-                local baseY = emitter.endY
-                local tipX = emitter.endX - facing * 2
-                love.graphics.polygon("fill", tipX, baseY, tipX - facing * tipSize, baseY - 5, tipX - facing * tipSize, baseY + 5)
+                love.graphics.rectangle("fill", emitter.endX - facing * 4, emitter.endY - 6, 3, 12, 1, 1)
         else
+                for distance = offset + dashSpacing * 0.5, travel, dashSpacing do
+                        local progress = distance / travel
+                        local py = emitter.startY + dy * progress
+                        love.graphics.rectangle("fill", emitter.startX - 4, py - 1, 8, 2, 1, 1)
+                end
                 local facing = emitter.facing or 1
-                local baseX = emitter.endX
-                local tipY = emitter.endY - facing * 2
-                love.graphics.polygon("fill", baseX, tipY, baseX - 5, tipY - facing * tipSize, baseX + 5, tipY - facing * tipSize)
+                love.graphics.rectangle("fill", emitter.endX - 6, emitter.endY - facing * 4, 12, 3, 1, 1)
         end
 
         love.graphics.pop()
