@@ -506,12 +506,7 @@ local english = {
 				description = "Every three broken shields forge a fresh one.",
 				reforged = "Shield Reforged",
 			},
-			amber_bloom = {
-				name = "Amber Bloom",
-				description = "Track shattered rocks; every third one forges 25% shield progress, letting environmental cleanup snowball into extra protection.",
-				activation_text = "Amber Bloom",
-			},
-			extra_bite = {
+                        extra_bite = {
 				name = "Extra Bite",
 				description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
 				celebration = "Early Exit",
