@@ -5,6 +5,24 @@ local floor = math.floor
 local max = math.max
 local min = math.min
 
+local function formatSeconds(seconds, floorFirst)
+        seconds = seconds or 0
+        if floorFirst then
+                seconds = floor(seconds)
+        end
+
+        seconds = max(0, seconds)
+
+        local minutes = floor(seconds / 60)
+        local secs = floor(seconds % 60)
+
+        return string.format("%d:%02d", minutes, secs)
+end
+
+local function formatSecondsFloor(seconds)
+        return formatSeconds(seconds, true)
+end
+
 local AchievementsModule
 
 local function getAchievements()
@@ -562,20 +580,13 @@ DailyChallenges.challenges = {
 		descriptionKey = "menu.daily.time_keeper.description",
 		sessionStat = "timeAlive",
 		goal = 600,
-		progressKey = "menu.daily.time_keeper.progress",
-		progressReplacements = function(self, current, goal)
-			local function formatSeconds(seconds)
-				seconds = max(0, floor(seconds or 0))
-				local minutes = floor(seconds / 60)
-				local secs = seconds % 60
-				return string.format("%d:%02d", minutes, secs)
-			end
-
-			return {
-				current = formatSeconds(current),
-				goal = formatSeconds(goal),
-			}
-		end,
+                progressKey = "menu.daily.time_keeper.progress",
+                progressReplacements = function(self, current, goal)
+                        return {
+                                current = formatSecondsFloor(current),
+                                goal = formatSecondsFloor(goal),
+                        }
+                end,
 		descriptionReplacements = function(self, current, goal)
 			return {
 				goal = floor((goal or 0) / 60),
@@ -590,20 +601,13 @@ DailyChallenges.challenges = {
 		descriptionKey = "menu.daily.floor_tourist.description",
 		sessionStat = "totalFloorTime",
 		goal = 480,
-		progressKey = "menu.daily.floor_tourist.progress",
-		progressReplacements = function(self, current, goal)
-			local function formatSeconds(seconds)
-				seconds = max(0, floor(seconds or 0))
-				local minutes = floor(seconds / 60)
-				local secs = seconds % 60
-				return string.format("%d:%02d", minutes, secs)
-			end
-
-			return {
-				current = formatSeconds(current),
-				goal = formatSeconds(goal),
-			}
-		end,
+                progressKey = "menu.daily.floor_tourist.progress",
+                progressReplacements = function(self, current, goal)
+                        return {
+                                current = formatSecondsFloor(current),
+                                goal = formatSecondsFloor(goal),
+                        }
+                end,
 		descriptionReplacements = function(self, current, goal)
 			return {
 				goal = floor((goal or 0) / 60),
@@ -735,25 +739,18 @@ DailyChallenges.challenges = {
 
 			return fastest <= (self.targetSeconds or 0) and 1 or 0
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local fastest = getStatValue(statsSource, "fastestFloorClear")
-			local target = self.targetSeconds or 0
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local fastest = getStatValue(statsSource, "fastestFloorClear")
+                        local target = self.targetSeconds or 0
 
-			local function formatSeconds(seconds)
-				seconds = max(0, seconds or 0)
-				local minutes = floor(seconds / 60)
-				local secs = floor(seconds % 60)
-				return string.format("%d:%02d", minutes, secs)
-			end
-
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				best = fastest > 0 and formatSeconds(fastest) or "--:--",
-				target = formatSeconds(target),
-			}
-		end,
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                best = fastest > 0 and formatSeconds(fastest) or "--:--",
+                                target = formatSeconds(target),
+                        }
+                end,
 		descriptionReplacements = function(self)
 			return {
 				seconds = self.targetSeconds or 0,
@@ -1047,40 +1044,26 @@ DailyChallenges.challenges = {
 
 			return 0
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local combos = getStatValue(statsSource, "combosTriggered")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local combos = getStatValue(statsSource, "combosTriggered")
+                        local timeAlive = getStatValue(statsSource, "timeAlive")
 
-			local function formatSeconds(seconds)
-				seconds = max(0, seconds or 0)
-				local minutes = floor(seconds / 60)
-				local secs = floor(seconds % 60)
-				return string.format("%d:%02d", minutes, secs)
-			end
-
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				combos = combos,
-				combo_goal = self.comboGoal or 0,
-				time = formatSeconds(timeAlive),
-				time_goal = formatSeconds(self.timeGoal or 0),
-			}
-		end,
-		descriptionReplacements = function(self)
-			local function formatSeconds(seconds)
-				seconds = max(0, seconds or 0)
-				local minutes = floor(seconds / 60)
-				local secs = floor(seconds % 60)
-				return string.format("%d:%02d", minutes, secs)
-			end
-
-			return {
-				combo_goal = self.comboGoal or 0,
-				time_goal = formatSeconds(self.timeGoal or 0),
-			}
-		end,
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                combos = combos,
+                                combo_goal = self.comboGoal or 0,
+                                time = formatSeconds(timeAlive),
+                                time_goal = formatSeconds(self.timeGoal or 0),
+                        }
+                end,
+                descriptionReplacements = function(self)
+                        return {
+                                combo_goal = self.comboGoal or 0,
+                                time_goal = formatSeconds(self.timeGoal or 0),
+                        }
+                end,
 		xpReward = 130,
 	},
         {
@@ -1114,13 +1097,6 @@ DailyChallenges.challenges = {
                         local apples = getStatValue(statsSource, "applesEaten")
                         local timeAlive = getStatValue(statsSource, "timeAlive")
 
-                        local function formatSeconds(seconds)
-                                seconds = max(0, seconds or 0)
-                                local minutes = floor(seconds / 60)
-                                local secs = floor(seconds % 60)
-                                return string.format("%d:%02d", minutes, secs)
-                        end
-
                         return {
                                 current = current or 0,
                                 goal = goal or 0,
@@ -1131,13 +1107,6 @@ DailyChallenges.challenges = {
                         }
                 end,
                 descriptionReplacements = function(self)
-                        local function formatSeconds(seconds)
-                                seconds = max(0, seconds or 0)
-                                local minutes = floor(seconds / 60)
-                                local secs = floor(seconds % 60)
-                                return string.format("%d:%02d", minutes, secs)
-                        end
-
                         return {
                                 target_apples = self.targetApples or 0,
                                 target_time = formatSeconds(self.targetSeconds or 0),
