@@ -1150,12 +1150,14 @@ local badgeDefinitions = {
 		cornerRadiusScale = 0.16,
 		cornerSegments = 6,
 	},
-	utility = {
-		label = "Utility",
-		shape = "square",
-		colorKey = "panelBorder",
-		fallback = {0.32, 0.50, 0.54, 1},
-	},
+        utility = {
+                label = "Utility",
+                shape = "square",
+                colorKey = "panelBorder",
+                fallback = {0.32, 0.50, 0.54, 1},
+                cornerRadiusScale = 0.18,
+                cornerSegments = 6,
+        },
         hazard = {
                 label = "Hazard",
                 shape = "hexagon",
@@ -1417,12 +1419,11 @@ local badgeShapeDrawers = {
         circle = function(mode, cx, cy, size)
                 love.graphics.circle(mode, cx, cy, size * 0.5, 32)
         end,
-        square = function(mode, cx, cy, size)
-                local half = size * 0.45
-                love.graphics.rectangle(mode, cx - half, cy - half, half * 2, half * 2)
+        square = function(mode, cx, cy, size, style)
+                drawPolygonShape(mode, cx, cy, size, 4, pi / 4, style, 0.64)
         end,
         diamond = function(mode, cx, cy, size, style)
-                drawPolygonShape(mode, cx, cy, size, 4, pi / 4, style, 0.54)
+                drawPolygonShape(mode, cx, cy, size, 4, 0, style, 0.54)
         end,
         triangle_up = function(mode, cx, cy, size, style)
                 drawRoundedTriangle(mode, cx, cy, size + 12, -pi / 2, style)
