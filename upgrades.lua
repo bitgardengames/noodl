@@ -1322,7 +1322,8 @@ local function buildCircuitBreakerLaserTargets(limit)
 	return getLaserEmitterDetails(limit)
 end
 
-local pool = {
+local pool
+pool = {
 	register({
 		id = "serpents_reflex",
 		nameKey = "upgrades.serpents_reflex.name",
