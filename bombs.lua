@@ -322,7 +322,8 @@ function Bombs:draw()
 	love.graphics.push("all")
 	love.graphics.setBlendMode("alpha")
 
-	for _, bomb in ipairs(bombs) do
+	for i = 1, #bombs do
+		local bomb = bombs[i]
 		drawShockRing(bomb, tileSize)
 		drawExplosion(bomb, tileSize)
 		if bomb.state == "preflash" then
