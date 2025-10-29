@@ -118,6 +118,19 @@ local function easeOutCubic(t)
         return 1 - inv * inv * inv
 end
 
+local function clamp(value, minimum, maximum)
+        if value < minimum then
+                return minimum
+        elseif value > maximum then
+                return maximum
+        end
+        return value
+end
+
+local function circleSegments(radius)
+        return clamp(ceil(radius / 6), 12, 48)
+end
+
 local function ensureTransitionTitleCanvas(self)
         local width = max(1, ceil(self.screenWidth or love.graphics.getWidth() or 1))
         local height = max(1, ceil(self.screenHeight or love.graphics.getHeight() or 1))
@@ -392,12 +405,12 @@ local function drawFeedbackOverlay(self)
 			local ringRadius = baseRadius + easeOutExpo(age) * (140 + intensity * 80)
 			local fillRadius = baseRadius * (0.55 + age * 0.6)
 
-			love.graphics.setLineWidth(2.5 + intensity * 4)
-			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.55 * intensity)
-			love.graphics.circle("line", rx, ry, ringRadius, 64)
+                        love.graphics.setLineWidth(2.5 + intensity * 4)
+                        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.55 * intensity)
+                        love.graphics.circle("line", rx, ry, ringRadius, circleSegments(ringRadius))
 
-			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.22 * intensity)
-			love.graphics.circle("fill", rx, ry, fillRadius, 48)
+                        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.22 * intensity)
+                        love.graphics.circle("fill", rx, ry, fillRadius, circleSegments(fillRadius))
 		end
 
 		love.graphics.pop()
@@ -414,9 +427,10 @@ local function drawFeedbackOverlay(self)
 		love.graphics.push("all")
 		love.graphics.setBlendMode("add")
 		local radius = sqrt(screenW * screenW + screenH * screenH)
-		love.graphics.setColor(1, 0.9, 0.5, 0.22 * intensity)
-		love.graphics.setLineWidth(2 + intensity * 6)
-		love.graphics.circle("line", screenW * 0.5, screenH * 0.5, radius * (0.6 + expansion * 0.26), 64)
+                love.graphics.setColor(1, 0.9, 0.5, 0.22 * intensity)
+                love.graphics.setLineWidth(2 + intensity * 6)
+                local surgeRingRadius = radius * (0.6 + expansion * 0.26)
+                love.graphics.circle("line", screenW * 0.5, screenH * 0.5, surgeRingRadius, circleSegments(surgeRingRadius))
 		local ripple = state.surgeRipple
 		if ripple then
 			local rx = ripple.x or screenW * 0.5
@@ -425,12 +439,13 @@ local function drawFeedbackOverlay(self)
 			local color = ripple.color or {1, 0.9, 0.55, 1}
 			local eased = easeOutCubic(1 - progress)
 			local ringRadius = baseRadius + eased * (160 + intensity * 90)
-			love.graphics.setLineWidth(2 + intensity * 4)
-			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.35 * intensity)
-			love.graphics.circle("line", rx, ry, ringRadius, 72)
+                        love.graphics.setLineWidth(2 + intensity * 4)
+                        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.35 * intensity)
+                        love.graphics.circle("line", rx, ry, ringRadius, circleSegments(ringRadius))
 
-			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.18 * intensity)
-			love.graphics.circle("fill", rx, ry, baseRadius * (0.4 + eased * 0.6), 48)
+                        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.18 * intensity)
+                        local fillRadius = baseRadius * (0.4 + eased * 0.6)
+                        love.graphics.circle("fill", rx, ry, fillRadius, circleSegments(fillRadius))
 		end
 
 		love.graphics.pop()
