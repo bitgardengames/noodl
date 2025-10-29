@@ -2,6 +2,7 @@ local Theme = require("theme")
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local Audio = require("audio")
+local Timer = require("timer")
 
 local max = math.max
 local min = math.min
@@ -9,13 +10,6 @@ local abs = math.abs
 local sqrt = math.sqrt
 local sin = math.sin
 local random = love.math.random
-
-local function currentTime()
-        if love.timer and love.timer.getTime then
-                return love.timer.getTime()
-        end
-        return 0
-end
 
 local Darts = {}
 
@@ -462,7 +456,7 @@ local function drawEmitter(emitter)
 
         local flash = clamp01(emitter.flashTimer or 0)
         local strength = clamp01(emitter.telegraphStrength or 0)
-        local time = currentTime()
+        local time = Timer.getTime()
 
         local shadowColor = Theme.shadowColor or {0, 0, 0, 0.45}
         local shadowAlpha = (shadowColor[4] or 0.45) * (0.65 + 0.25 * strength + 0.1 * flash)
