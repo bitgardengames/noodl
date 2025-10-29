@@ -22,7 +22,16 @@ local pi = math.pi
 local abs = math.abs
 local insert = table.insert
 
-local Upgrades = {}
+local Upgrades = {
+        cachedIndicators = nil,
+        hudIndicatorsDirty = true,
+}
+
+function Upgrades:markHUDIndicatorsDirty()
+        self.hudIndicatorsDirty = true
+        self.cachedIndicators = nil
+        self.hudIndicatorSnapshot = nil
+end
 local poolById = {}
 local upgradeSchema = DataSchemas.upgradeDefinition
 local getUpgradeString = UpgradeHelpers.getUpgradeString
@@ -32,13 +41,140 @@ local defaultEffects = UpgradeHelpers.defaultEffects
 local celebrateUpgrade = UpgradeHelpers.celebrateUpgrade
 local getEventPosition = UpgradeHelpers.getEventPosition
 
+local getStacks
+
 local RunState = {}
 RunState.__index = RunState
 
+local function markHUDIndicatorsDirty()
+        if Upgrades and Upgrades.markHUDIndicatorsDirty then
+                Upgrades:markHUDIndicatorsDirty()
+        end
+end
+
+local function attachObservedTable(state, key)
+        local container = rawget(state, key)
+        if type(container) ~= "table" then
+                return container
+        end
+
+        local meta = getmetatable(container)
+        if meta and meta.__hudIndicatorObserver == key then
+                return container
+        end
+
+        meta = {
+                __newindex = function(t, field, value)
+                        rawset(t, field, value)
+                        markHUDIndicatorsDirty()
+                end,
+                __hudIndicatorObserver = key,
+        }
+
+        setmetatable(container, meta)
+        return container
+end
+
+local function valuesEqual(a, b)
+        if a == b then
+                return true
+        end
+
+        local typeA = type(a)
+        local typeB = type(b)
+        if typeA == "number" and typeB == "number" then
+                return abs(a - b) < 1e-3
+        end
+
+        return false
+end
+
+local function dynamicStateChanged(previous, current)
+        if previous == current then
+                return false
+        end
+
+        if not previous then
+                for _, value in pairs(current) do
+                        if value ~= nil then
+                                return true
+                        end
+                end
+                return false
+        end
+
+        if not current then
+                for _, value in pairs(previous) do
+                        if value ~= nil then
+                                return true
+                        end
+                end
+                return false
+        end
+
+        for key, value in pairs(current) do
+                if not valuesEqual(previous[key], value) then
+                        return true
+                end
+        end
+
+        for key in pairs(previous) do
+                if current[key] == nil then
+                        return true
+                end
+        end
+
+        return false
+end
+
+local function captureHUDDynamicState(state)
+        local snapshot = {}
+
+        local adrenaline = Snake.adrenaline
+        snapshot.adrenalineTaken = getStacks(state, "adrenaline_surge") > 0
+        snapshot.adrenalineActive = adrenaline and adrenaline.active or false
+        snapshot.adrenalineTimer = adrenaline and adrenaline.timer or 0
+        snapshot.adrenalineDuration = adrenaline and adrenaline.duration or 0
+
+        local dashState = Snake.getDashState and Snake:getDashState() or nil
+        snapshot.dashPresent = dashState ~= nil
+        if dashState then
+                snapshot.dashActive = dashState.active or false
+                snapshot.dashTimer = dashState.timer or 0
+                snapshot.dashDuration = dashState.duration or 0
+                snapshot.dashCooldownTimer = dashState.cooldownTimer or 0
+                snapshot.dashCooldown = dashState.cooldown or 0
+        end
+
+        local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState() or nil
+        snapshot.timePresent = timeState ~= nil
+        if timeState then
+                snapshot.timeActive = timeState.active or false
+                snapshot.timeTimer = timeState.timer or 0
+                snapshot.timeDuration = timeState.duration or 0
+                snapshot.timeCooldownTimer = timeState.cooldownTimer or 0
+                snapshot.timeCooldown = timeState.cooldown or 0
+                snapshot.timeFloorCharges = timeState.floorCharges or 0
+                snapshot.timeMaxFloorUses = timeState.maxFloorUses or 0
+        end
+
+        return snapshot
+end
+
+RunState.__newindex = function(self, key, value)
+        rawset(self, key, value)
+        if key == "counters" or key == "takenSet" then
+                if type(value) == "table" then
+                        attachObservedTable(self, key)
+                end
+                markHUDIndicatorsDirty()
+        end
+end
+
 function RunState.new(defaults)
-	local state = {
-		takenOrder = {},
-		takenSet = {},
+        local state = {
+                takenOrder = {},
+                takenSet = {},
 		tags = {},
 		counters = {},
 		handlers = {},
@@ -46,7 +182,12 @@ function RunState.new(defaults)
 		baseline = {},
 	}
 
-	return setmetatable(state, RunState)
+        local instance = setmetatable(state, RunState)
+        attachObservedTable(instance, "counters")
+        attachObservedTable(instance, "takenSet")
+        markHUDIndicatorsDirty()
+
+        return instance
 end
 
 function RunState:getStacks(id)
@@ -62,8 +203,9 @@ function RunState:addStacks(id, amount)
 		return
 	end
 
-	amount = amount or 1
-	self.takenSet[id] = (self.takenSet[id] or 0) + amount
+        amount = amount or 1
+        self.takenSet[id] = (self.takenSet[id] or 0) + amount
+        markHUDIndicatorsDirty()
 end
 
 function RunState:hasUpgrade(id)
@@ -85,14 +227,20 @@ function RunState:addHandler(event, handler)
 end
 
 function RunState:notify(event, data)
-	local handlers = self.handlers[event]
-	if not handlers then
-		return
-	end
+        local handlers = self.handlers[event]
+        if not handlers then
+                return
+        end
 
-	for _, fn in ipairs(handlers) do
-		fn(data, self)
-	end
+        local handled = false
+        for _, fn in ipairs(handlers) do
+                fn(data, self)
+                handled = true
+        end
+
+        if handled then
+                markHUDIndicatorsDirty()
+        end
 end
 
 local POCKET_SPRINGS_FRUIT_TARGET = 20
@@ -2789,7 +2937,8 @@ local function getRarityInfo(rarity)
 end
 
 function Upgrades:beginRun()
-	self.runState = newRunState()
+        self.runState = newRunState()
+        self:markHUDIndicatorsDirty()
 end
 
 function Upgrades:getEffect(name)
@@ -2843,19 +2992,24 @@ function Upgrades:addEventHandler(event, handler)
 end
 
 function Upgrades:notify(event, data)
-	local state = self.runState
-	if not state then return end
+        local state = self.runState
+        if not state then return end
 
-	if state.notify then
-		state:notify(event, data)
-		return
-	end
+        if state.notify then
+                state:notify(event, data)
+                return
+        end
 
-	local handlers = state.handlers and state.handlers[event]
-	if not handlers then return end
-	for _, handler in ipairs(handlers) do
-		handler(data, state)
-	end
+        local handlers = state.handlers and state.handlers[event]
+        if not handlers then return end
+        local handled = false
+        for _, handler in ipairs(handlers) do
+                handler(data, state)
+                handled = true
+        end
+        if handled then
+                self:markHUDIndicatorsDirty()
+        end
 end
 
 Bombs:setExplosionCallback(function(event)
@@ -2869,11 +3023,25 @@ local function clamp(value, min, max)
 end
 
 function Upgrades:getHUDIndicators()
-	local indicators = {}
-	local state = self.runState
-	if not state then
-		return indicators
-	end
+        local state = self.runState
+        local dynamicSnapshot = captureHUDDynamicState(state)
+
+        if not self.hudIndicatorsDirty and dynamicStateChanged(self.hudIndicatorSnapshot, dynamicSnapshot) then
+                self.hudIndicatorsDirty = true
+                self.cachedIndicators = nil
+        end
+
+        if not self.hudIndicatorsDirty and self.cachedIndicators then
+                return self.cachedIndicators, false
+        end
+
+        local indicators = {}
+        if not state then
+                self.cachedIndicators = indicators
+                self.hudIndicatorsDirty = false
+                self.hudIndicatorSnapshot = dynamicSnapshot
+                return indicators, true
+        end
 
 	local function hasUpgrade(id)
 		return getStacks(state, id) > 0
@@ -3040,21 +3208,25 @@ function Upgrades:getHUDIndicators()
 		phoenixCharges = state.counters.phoenixEchoCharges or 0
 	end
 
-	if phoenixCharges > 0 then
-		local label = Localization:get("upgrades.phoenix_echo.name")
-		insert(indicators, {
-			id = "phoenix_echo",
-			label = label,
-			accentColor = {1.0, 0.62, 0.32, 1},
+        if phoenixCharges > 0 then
+                local label = Localization:get("upgrades.phoenix_echo.name")
+                insert(indicators, {
+                        id = "phoenix_echo",
+                        label = label,
+                        accentColor = {1.0, 0.62, 0.32, 1},
 			stackCount = phoenixCharges,
 			charge = nil,
 			status = nil,
 			icon = "phoenix",
 			showBar = false,
 		})
-	end
+        end
 
-	return indicators
+        self.cachedIndicators = indicators
+        self.hudIndicatorsDirty = false
+        self.hudIndicatorSnapshot = dynamicSnapshot
+
+        return indicators, true
 end
 
 function Upgrades:recordFloorReplaySnapshot(game)
