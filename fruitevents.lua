@@ -566,12 +566,14 @@ function FruitEvents.handleConsumption(x, y)
 		combo = comboState.count or 0,
 	})
 
-	local state = {
-		snakeScore = Score:get(),
-		snakeApplesEaten = Score:get(),
-		totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0
-	}
-	Achievements:checkAll(state)
+        local state = {
+                snakeScore = Score:get(),
+                snakeApplesEaten = Score:get(),
+                totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0,
+                totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
+                bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
+        }
+        Achievements:checkAll(state)
 end
 
 return FruitEvents

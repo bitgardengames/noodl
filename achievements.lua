@@ -9,15 +9,17 @@ local insert = table.insert
 local sort = table.sort
 
 local Achievements = {
-	definitions = {},
-	definitionOrder = {},
-	categories = {},
-	categoryOrder = {},
-	unlocked = {},
-	popupQueue = {},
-	popupTimer = 0,
-	popupDuration = 3,
-	stateProviders = {},
+        definitions = {},
+        definitionOrder = {},
+        categories = {},
+        categoryOrder = {},
+        unlocked = {},
+        popupQueue = {},
+        popupTimer = 0,
+        popupDuration = 3,
+        stateProviders = {},
+        _statIndex = {},
+        _fallbackDefinitions = {},
 }
 
 local DEFAULT_CATEGORY_ORDER = 100
@@ -105,17 +107,37 @@ function Achievements:_notifyUnlockListeners(id, achievement)
 end
 
 function Achievements:_addDefinition(rawDef)
-	local def = applyDefaults(copyTable(rawDef))
-	self.definitions[def.id] = def
-	insert(self.definitionOrder, def.id)
+        local def = applyDefaults(copyTable(rawDef))
+        self.definitions[def.id] = def
+        insert(self.definitionOrder, def.id)
 
-	self.categories[def.category] = self.categories[def.category] or {}
-	insert(self.categories[def.category], def.id)
+        self.categories[def.category] = self.categories[def.category] or {}
+        insert(self.categories[def.category], def.id)
+
+        if def.stat then
+                local statIndex = self._statIndex[def.stat]
+                if not statIndex then
+                        statIndex = {}
+                        self._statIndex[def.stat] = statIndex
+                end
+                statIndex[#statIndex + 1] = def.id
+        else
+                if not def.progressFn and not def.condition then
+                        if not self._statlessWarning then
+                                self._statlessWarning = {}
+                        end
+                        if not self._statlessWarning[def.id] then
+                                print("[achievements] definition without stat or custom handlers:", def.id)
+                                self._statlessWarning[def.id] = true
+                        end
+                end
+                insert(self._fallbackDefinitions, def.id)
+        end
 end
 
 function Achievements:_finalizeOrdering()
-	currentDefinitionsForSort = self.definitions
-	sort(self.definitionOrder, compareAchievementIds)
+        currentDefinitionsForSort = self.definitions
+        sort(self.definitionOrder, compareAchievementIds)
 
 	local orderedCategories = {}
 	for category, ids in pairs(self.categories) do
@@ -130,10 +152,40 @@ function Achievements:_finalizeOrdering()
 
 	sort(orderedCategories, compareCategoryEntries)
 
-	self.categoryOrder = {}
-	for _, info in ipairs(orderedCategories) do
-		insert(self.categoryOrder, info.id)
-	end
+        self.categoryOrder = {}
+        for _, info in ipairs(orderedCategories) do
+                insert(self.categoryOrder, info.id)
+        end
+
+        if self._fallbackDefinitions then
+                local fallbackLookup = {}
+                for i = 1, #self._fallbackDefinitions do
+                        fallbackLookup[self._fallbackDefinitions[i]] = true
+                end
+
+                local orderedFallback = {}
+                for i = 1, #self.definitionOrder do
+                        local id = self.definitionOrder[i]
+                        if fallbackLookup[id] then
+                                orderedFallback[#orderedFallback + 1] = id
+                        end
+                end
+
+                self._fallbackDefinitions = orderedFallback
+        end
+
+        if self._statIndex then
+                local position = {}
+                for i = 1, #self.definitionOrder do
+                        position[self.definitionOrder[i]] = i
+                end
+
+                for stat, ids in pairs(self._statIndex) do
+                        sort(ids, function(a, b)
+                                return (position[a] or 0) < (position[b] or 0)
+                        end)
+                end
+        end
 end
 
 function Achievements:_ensureInitialized()
@@ -360,18 +412,56 @@ function Achievements:checkAll(state)
 
         local combinedState = self:_buildState(state)
 
+        local stateKeysProvided = type(state) == "table" and next(state) ~= nil
+        local candidateLookup
+
+        if stateKeysProvided then
+                candidateLookup = self._candidateLookup or {}
+                self._candidateLookup = candidateLookup
+                for key in pairs(candidateLookup) do
+                        candidateLookup[key] = nil
+                end
+
+                if self._statIndex then
+                        for key in pairs(state) do
+                                local ids = self._statIndex[key]
+                                if ids then
+                                        for i = 1, #ids do
+                                                candidateLookup[ids[i]] = true
+                                        end
+                                end
+                        end
+                end
+
+                if self._fallbackDefinitions then
+                        for i = 1, #self._fallbackDefinitions do
+                                candidateLookup[self._fallbackDefinitions[i]] = true
+                        end
+                end
+        end
+
+        local iterateAll = not stateKeysProvided
+
         for i = 1, #self.definitionOrder do
                 local key = self.definitionOrder[i]
-                local achievement = self.definitions[key]
-                if achievement and not achievement.unlocked then
-                        local progress = evaluateProgress(achievement, combinedState)
-                        if type(progress) == "number" then
-                                achievement.progress = clampProgress(achievement, progress)
-                        end
+                if iterateAll or (candidateLookup and candidateLookup[key]) then
+                        local achievement = self.definitions[key]
+                        if achievement and not achievement.unlocked then
+                                local progress = evaluateProgress(achievement, combinedState)
+                                if type(progress) == "number" then
+                                        achievement.progress = clampProgress(achievement, progress)
+                                end
 
-                        if shouldUnlock(achievement, combinedState, progress) then
-                                self:unlock(key)
+                                if shouldUnlock(achievement, combinedState, progress) then
+                                        self:unlock(key)
+                                end
                         end
+                end
+        end
+
+        if candidateLookup then
+                for key in pairs(candidateLookup) do
+                        candidateLookup[key] = nil
                 end
         end
 end
