@@ -725,70 +725,6 @@ local function stoneSkinShieldHandler(data, state)
 	Rocks:shatterNearest(fx or 0, fy or 0, 1)
 end
 
-local AMBER_BLOOM_SHATTER_THRESHOLD = 3
-local AMBER_BLOOM_PROGRESS_PER_TRIGGER = 0.25
-
-local function handleAmberBloomRockShatter(data, state)
-	if not state then return end
-
-	if getStacks(state, "amber_bloom") <= 0 then
-		return
-	end
-
-	state.counters = state.counters or {}
-	local counters = state.counters
-
-	counters.amberBloomRockCount = (counters.amberBloomRockCount or 0) + 1
-
-	while (counters.amberBloomRockCount or 0) >= AMBER_BLOOM_SHATTER_THRESHOLD do
-		counters.amberBloomRockCount = (counters.amberBloomRockCount or 0) - AMBER_BLOOM_SHATTER_THRESHOLD
-
-		local progress = (counters.amberBloomShieldProgress or 0) + AMBER_BLOOM_PROGRESS_PER_TRIGGER
-		local shields = floor(progress + 1e-6)
-		counters.amberBloomShieldProgress = progress - shields
-
-		local label = getUpgradeString("amber_bloom", "activation_text")
-		if label and label ~= "" then
-			if shields > 0 then
-				if shields > 1 then
-					label = string.format("%s +%d", label, shields)
-				else
-					label = string.format("%s +1", label)
-				end
-			else
-				label = string.format("%s +25%%", label)
-			end
-		else
-			label = nil
-		end
-
-		if shields > 0 then
-			grantShields(shields)
-		end
-
-		celebrateUpgrade(label, data, {
-			color = {1.0, 0.72, 0.38, 1},
-			particleCount = 12,
-			particleSpeed = 110,
-			particleLife = 0.44,
-			textOffset = 44,
-			textScale = 1.06,
-			visual = {
-				badge = "shield",
-				outerRadius = 52,
-				innerRadius = 14,
-				ringCount = 3,
-				life = 0.7,
-				glowAlpha = 0.24,
-				haloAlpha = 0.16,
-				color = {1.0, 0.72, 0.38, 1},
-				variantSecondaryColor = {1.0, 0.54, 0.24, 0.92},
-				variantTertiaryColor = {1.0, 0.9, 0.58, 0.78},
-			},
-		})
-	end
-end
-
 local function handleVolatileBloomExplosion(event)
 	local state = Upgrades.runState
 	if not state or getStacks(state, "volatile_bloom") <= 0 then
@@ -1440,25 +1376,8 @@ local pool = {
 			end,
 		},
 	}),
-	register({
-		id = "amber_bloom",
-		nameKey = "upgrades.amber_bloom.name",
-		descKey = "upgrades.amber_bloom.description",
-		rarity = "common",
-		tags = {"defense"},
-		onAcquire = function(state)
-			state.counters = state.counters or {}
-			state.counters.amberBloomRockCount = state.counters.amberBloomRockCount or 0
-			state.counters.amberBloomShieldProgress = state.counters.amberBloomShieldProgress or 0
-
-			if not state.counters.amberBloomHandlerRegistered then
-				state.counters.amberBloomHandlerRegistered = true
-				Upgrades:addEventHandler("rockShattered", handleAmberBloomRockShatter)
-			end
-		end,
-	}),
-	register({
-		id = "extra_bite",
+        register({
+                id = "extra_bite",
 		nameKey = "upgrades.extra_bite.name",
 		descKey = "upgrades.extra_bite.description",
 		rarity = "common",
