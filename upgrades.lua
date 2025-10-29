@@ -49,6 +49,16 @@ local defaultEffects = UpgradeHelpers.defaultEffects
 local celebrateUpgrade = UpgradeHelpers.celebrateUpgrade
 local getEventPosition = UpgradeHelpers.getEventPosition
 
+local function getRarityInfo(rarity)
+        return rarities[rarity or "common"] or rarities.common
+end
+
+local function calculateWeight(upgrade)
+        local rarityInfo = getRarityInfo(upgrade.rarity)
+        local rarityWeight = rarityInfo.weight or 1
+        return rarityWeight * (upgrade.weight or 1)
+end
+
 local getStacks
 
 local function getStacks(state, id)
@@ -2936,10 +2946,6 @@ pool = {
 	}),
 }
 
-local function getRarityInfo(rarity)
-	return rarities[rarity or "common"] or rarities.common
-end
-
 function Upgrades:beginRun()
         self.runState = newRunState()
         self:markHUDIndicatorsDirty()
@@ -3556,12 +3562,6 @@ function Upgrades:applyPersistentEffects(rebaseline)
 	Snake:setQuickFangsStacks(counters.quickFangsStacks or 0)
 
 	Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
-end
-
-local function calculateWeight(upgrade)
-        local rarityInfo = getRarityInfo(upgrade.rarity)
-        local rarityWeight = rarityInfo.weight or 1
-        return rarityWeight * (upgrade.weight or 1)
 end
 
 function Upgrades:canOffer(upgrade, context, allowTaken)
