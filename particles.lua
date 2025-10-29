@@ -9,9 +9,22 @@ local atan2 = math.atan2 or function(y, x)
 end
 
 local Particles = {}
-Particles.list = {}
-Particles.pool = {}
-Particles.colorPool = {}
+Particles.count = 0
+Particles.x = {}
+Particles.y = {}
+Particles.vx = {}
+Particles.vy = {}
+Particles.baseSize = {}
+Particles.life = {}
+Particles.age = {}
+Particles.drag = {}
+Particles.gravity = {}
+Particles.fadeTo = {}
+Particles.startAlpha = {}
+Particles.r = {}
+Particles.g = {}
+Particles.b = {}
+Particles.alpha = {}
 
 local ANGLE_JITTER = 0.2
 local SPEED_VARIANCE = 20
@@ -28,49 +41,57 @@ local function normalizeDirection(dx, dy)
 end
 
 local function acquireParticle(self)
-	local pool = self.pool
-	local particle = pool[#pool]
-	if particle then
-		pool[#pool] = nil
-	else
-		particle = {}
-	end
+        local index = self.count + 1
+        self.count = index
 
-	local colorPool = self.colorPool
-	local color = colorPool[#colorPool]
-	if color then
-		colorPool[#colorPool] = nil
-	else
-		color = {}
-	end
-
-	particle.color = color
-
-	return particle
+        return index
 end
 
-local function releaseParticle(self, index, particle)
-	local list = self.list
-	local lastIndex = #list
-	if index ~= lastIndex then
-		list[index] = list[lastIndex]
-	end
-	list[lastIndex] = nil
+local function releaseParticle(self, index)
+        local count = self.count
+        local lastIndex = count
 
-	local color = particle.color
-	if color then
-		self.colorPool[#self.colorPool + 1] = color
-		particle.color = nil
-	end
+        if index ~= lastIndex then
+                self.x[index] = self.x[lastIndex]
+                self.y[index] = self.y[lastIndex]
+                self.vx[index] = self.vx[lastIndex]
+                self.vy[index] = self.vy[lastIndex]
+                self.baseSize[index] = self.baseSize[lastIndex]
+                self.life[index] = self.life[lastIndex]
+                self.age[index] = self.age[lastIndex]
+                self.drag[index] = self.drag[lastIndex]
+                self.gravity[index] = self.gravity[lastIndex]
+                self.fadeTo[index] = self.fadeTo[lastIndex]
+                self.startAlpha[index] = self.startAlpha[lastIndex]
+                self.r[index] = self.r[lastIndex]
+                self.g[index] = self.g[lastIndex]
+                self.b[index] = self.b[lastIndex]
+                self.alpha[index] = self.alpha[lastIndex]
+        end
 
-	self.pool[#self.pool + 1] = particle
+        self.x[lastIndex] = nil
+        self.y[lastIndex] = nil
+        self.vx[lastIndex] = nil
+        self.vy[lastIndex] = nil
+        self.baseSize[lastIndex] = nil
+        self.life[lastIndex] = nil
+        self.age[lastIndex] = nil
+        self.drag[lastIndex] = nil
+        self.gravity[lastIndex] = nil
+        self.fadeTo[lastIndex] = nil
+        self.startAlpha[lastIndex] = nil
+        self.r[lastIndex] = nil
+        self.g[lastIndex] = nil
+        self.b[lastIndex] = nil
+        self.alpha[lastIndex] = nil
+
+        self.count = count - 1
 end
 
 function Particles:spawnBurst(x, y, options)
 	options = options or {}
 
-	local list = self.list
-	local count = max(0, options.count or 6)
+        local count = max(0, options.count or 6)
 	local speed = options.speed or 60
 	local life = options.life or 0.4
 	local baseSize = options.size or 4
@@ -106,106 +127,112 @@ function Particles:spawnBurst(x, y, options)
 		local vy = sin(angle) * velocity
 		local scale = scaleMin + random() * scaleVariance
 
-		local particle = acquireParticle(self)
-		particle.x = x
-		particle.y = y
-		particle.vx = vx
-		particle.vy = vy
-		particle.baseSize = baseSize * scale
-		particle.life = life
-		particle.age = 0
-		particle.drag = drag
-		particle.gravity = gravity
-		particle.fadeTo = fadeTo
-		particle.startAlpha = startAlpha
+                local index = acquireParticle(self)
+                self.x[index] = x
+                self.y[index] = y
+                self.vx[index] = vx
+                self.vy[index] = vy
+                self.baseSize[index] = baseSize * scale
+                self.life[index] = life
+                self.age[index] = 0
+                self.drag[index] = drag
+                self.gravity[index] = gravity
+                self.fadeTo[index] = fadeTo
+                self.startAlpha[index] = startAlpha
 
-		local color = particle.color
-		color[1] = baseR
-		color[2] = baseG
-		color[3] = baseB
-		color[4] = startAlpha
-
-		list[#list + 1] = particle
-	end
+                self.r[index] = baseR
+                self.g[index] = baseG
+                self.b[index] = baseB
+                self.alpha[index] = startAlpha
+        end
 end
 
 function Particles:update(dt)
-	if dt <= 0 or #self.list == 0 then
-		return
-	end
+        local count = self.count
+        if dt <= 0 or count == 0 then
+                return
+        end
 
-	local list = self.list
-	for i = #list, 1, -1 do
-		local p = list[i]
-		p.age = p.age + dt
+        for i = count, 1, -1 do
+                local age = (self.age[i] or 0) + dt
+                self.age[i] = age
 
-		if p.age >= p.life then
-			releaseParticle(self, i, p)
-		else
-			p.x = p.x + p.vx * dt
-			p.y = p.y + p.vy * dt
+                local life = self.life[i]
+                if age >= life then
+                        releaseParticle(self, i)
+                else
+                        local vx = self.vx[i] or 0
+                        local vy = self.vy[i] or 0
+                        self.x[i] = (self.x[i] or 0) + vx * dt
+                        self.y[i] = (self.y[i] or 0) + vy * dt
 
-			if p.drag and p.drag > 0 then
-				local dragFactor = max(0, 1 - dt * p.drag)
-				p.vx = p.vx * dragFactor
-				p.vy = p.vy * dragFactor
-			end
+                        local drag = self.drag[i]
+                        if drag and drag > 0 then
+                                local dragFactor = max(0, 1 - dt * drag)
+                                vx = vx * dragFactor
+                                vy = vy * dragFactor
+                        end
 
-			if p.gravity and p.gravity ~= 0 then
-				p.vy = p.vy + p.gravity * dt
-			end
+                        local gravity = self.gravity[i]
+                        if gravity and gravity ~= 0 then
+                                vy = vy + gravity * dt
+                        end
 
-			local t = 1 - (p.age / p.life)
-			local endAlpha = p.fadeTo
-			if endAlpha == nil then
-				p.color[4] = t
-			else
-				local start = p.startAlpha
-				if start == nil then
-					start = 1
-				end
+                        self.vx[i] = vx
+                        self.vy[i] = vy
 
-				p.color[4] = start * t + endAlpha * (1 - t)
-			end
-		end
-	end
+                        local t = 1 - (age / life)
+                        local endAlpha = self.fadeTo[i]
+                        if endAlpha == nil then
+                                self.alpha[i] = t
+                        else
+                                local start = self.startAlpha[i]
+                                if start == nil then
+                                        start = 1
+                                end
+
+                                self.alpha[i] = start * t + endAlpha * (1 - t)
+                        end
+                end
+        end
 end
 
 
 function Particles:draw()
-	local list = self.list
-	if #list == 0 then
-		return
-	end
+        local count = self.count
+        if count == 0 then
+                return
+        end
 
-	RenderLayers:withLayer("overlay", function()
-		for i = 1, #list do
-			local p = list[i]
-			local t = p.age / p.life
-			local currentSize = p.baseSize * (0.8 + t * 0.6)
-			love.graphics.setColor(p.color)
-			love.graphics.circle("fill", p.x, p.y, currentSize)
-		end
+        RenderLayers:withLayer("overlay", function()
+                for i = 1, count do
+                        local t = self.age[i] / self.life[i]
+                        local currentSize = self.baseSize[i] * (0.8 + t * 0.6)
+                        love.graphics.setColor(self.r[i], self.g[i], self.b[i], self.alpha[i])
+                        love.graphics.circle("fill", self.x[i], self.y[i], currentSize)
+                end
 
-		love.graphics.setColor(1, 1, 1, 1)
-	end)
+                love.graphics.setColor(1, 1, 1, 1)
+        end)
 end
 
 function Particles:reset()
-	local list = self.list
-	local pool = self.pool
-	local colorPool = self.colorPool
-	for i = 1, #list do
-		local p = list[i]
-		local color = p.color
-		if color then
-			colorPool[#colorPool + 1] = color
-			p.color = nil
-		end
-		pool[#pool + 1] = p
-	end
-
-	self.list = {}
+        self.count = 0
+        self.x = {}
+        self.y = {}
+        self.vx = {}
+        self.vy = {}
+        self.baseSize = {}
+        self.life = {}
+        self.age = {}
+        self.drag = {}
+        self.gravity = {}
+        self.fadeTo = {}
+        self.startAlpha = {}
+        self.r = {}
+        self.g = {}
+        self.b = {}
+        self.alpha = {}
 end
 
 function Particles:spawnBlood(x, y, options)
