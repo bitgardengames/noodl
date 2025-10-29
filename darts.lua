@@ -67,6 +67,42 @@ local function scaleColor(color, factor, alphaFactor)
         return {r, g, b, a}
 end
 
+local function lerp(a, b, t)
+        return a + (b - a) * t
+end
+
+local rimLightScratch = {0, 0, 0, 0}
+local occlusionScratch = {0, 0, 0, 0}
+local tipGlowScratch = {0, 0, 0, 0}
+local highlightFallback = {1, 1, 1, 1}
+
+local function getRimLightColor(color)
+        color = color or highlightFallback
+        rimLightScratch[1] = min(1, (color[1] or 0) * 1.2 + 0.08)
+        rimLightScratch[2] = min(1, (color[2] or 0) * 1.2 + 0.08)
+        rimLightScratch[3] = min(1, (color[3] or 0) * 1.2 + 0.08)
+        rimLightScratch[4] = (color[4] or 1) * 0.65
+        return rimLightScratch
+end
+
+local function getOcclusionColor(color)
+        color = color or highlightFallback
+        occlusionScratch[1] = clamp01((color[1] or 0) * 0.45 + 0.02)
+        occlusionScratch[2] = clamp01((color[2] or 0) * 0.45 + 0.02)
+        occlusionScratch[3] = clamp01((color[3] or 0) * 0.45 + 0.02)
+        occlusionScratch[4] = (color[4] or 1) * 0.7
+        return occlusionScratch
+end
+
+local function getTipGlowColor(color)
+        color = color or highlightFallback
+        tipGlowScratch[1] = min(1, (color[1] or 0) * 1.1 + 0.12)
+        tipGlowScratch[2] = min(1, (color[2] or 0) * 1.1 + 0.12)
+        tipGlowScratch[3] = min(1, (color[3] or 0) * 1.1 + 0.12)
+        tipGlowScratch[4] = (color[4] or 1) * 0.6
+        return tipGlowScratch
+end
+
 local function getEmitterColors()
         local body = Theme.dartBaseColor or BASE_EMITTER_COLOR
         local accent = Theme.dartAccentColor or BASE_ACCENT_COLOR
@@ -614,6 +650,10 @@ local function drawDart(emitter)
 
         love.graphics.push("all")
 
+        local tipCenterX, tipCenterY
+        local trailDirX, trailDirY = 0, 0
+        local trailLength = 0
+
         if emitter.dir == "horizontal" then
                 local shaftHeight = rh * 0.34
                 local shaftY = ry + (rh - shaftHeight) * 0.5
@@ -627,20 +667,42 @@ local function drawDart(emitter)
                 local shaftX = min(shaftStart, shaftEnd)
                 local shaftWidth = abs(shaftEnd - shaftStart)
 
-                love.graphics.setColor(bodyColor)
-                love.graphics.rectangle("fill", shaftX, shaftY, shaftWidth, shaftHeight, 3, 3)
-
-                local highlight = scaleColor(bodyColor, 1.12, 0.9)
-                love.graphics.setColor(highlight)
-                love.graphics.rectangle("fill", shaftX, shaftY + shaftHeight * 0.18, shaftWidth, shaftHeight * 0.32, 3, 3)
-
-                local shadow = scaleColor(bodyColor, 0.7, 1)
-                love.graphics.setColor(shadow)
-                love.graphics.rectangle("fill", shaftX, shaftY + shaftHeight * 0.58, shaftWidth, shaftHeight * 0.34, 3, 3)
-
                 local baseY = ry + rh * 0.5
                 local fletchInner = tailX + facing * (tailInset * 0.35)
                 local fletchOuter = tailX - facing * (tailInset * 1.4 + 4)
+
+                local shadowColor = Theme.shadowColor or {0, 0, 0, 0.45}
+                local shadowAlpha = (shadowColor[4] or 1) * 0.55
+                if shadowAlpha > 0 then
+                        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
+                        local shadowOffsetX = 3
+                        local shadowOffsetY = 3
+                        love.graphics.rectangle("fill", shaftX + shadowOffsetX, shaftY + shadowOffsetY, shaftWidth, shaftHeight, 3, 3)
+                        love.graphics.polygon("fill",
+                                tipX + shadowOffsetX, baseY + shadowOffsetY,
+                                shaftEnd + shadowOffsetX, baseY - shaftHeight * 1.05 + shadowOffsetY,
+                                shaftEnd + shadowOffsetX, baseY + shaftHeight * 1.05 + shadowOffsetY)
+                        love.graphics.polygon("fill",
+                                fletchOuter + shadowOffsetX, baseY + shadowOffsetY,
+                                fletchInner + shadowOffsetX, baseY - rh * 0.55 + shadowOffsetY,
+                                tailX + facing * 2 + shadowOffsetX, baseY - rh * 0.22 + shadowOffsetY)
+                        love.graphics.polygon("fill",
+                                fletchOuter + shadowOffsetX, baseY + shadowOffsetY,
+                                fletchInner + shadowOffsetX, baseY + rh * 0.55 + shadowOffsetY,
+                                tailX + facing * 2 + shadowOffsetX, baseY + rh * 0.22 + shadowOffsetY)
+                end
+
+                love.graphics.setColor(bodyColor)
+                love.graphics.rectangle("fill", shaftX, shaftY, shaftWidth, shaftHeight, 3, 3)
+
+                local highlight = getRimLightColor(bodyColor)
+                love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+                love.graphics.rectangle("fill", shaftX, shaftY + shaftHeight * 0.08, shaftWidth, shaftHeight * 0.26, 3, 3)
+
+                local occlusion = getOcclusionColor(bodyColor)
+                love.graphics.setColor(occlusion[1], occlusion[2], occlusion[3], occlusion[4])
+                love.graphics.rectangle("fill", shaftX, shaftY + shaftHeight * 0.62, shaftWidth, shaftHeight * 0.3, 3, 3)
+
                 love.graphics.setColor(tailColor)
                 love.graphics.polygon("fill",
                         fletchOuter, baseY,
@@ -651,11 +713,52 @@ local function drawDart(emitter)
                         fletchInner, baseY + rh * 0.55,
                         tailX + facing * 2, baseY + rh * 0.22)
 
+                local fletchOcclusion = getOcclusionColor(tailColor)
+                love.graphics.setColor(fletchOcclusion[1], fletchOcclusion[2], fletchOcclusion[3], fletchOcclusion[4])
+                love.graphics.polygon("fill",
+                        lerp(fletchOuter, tailX + facing * 2, 0.45), lerp(baseY, baseY - rh * 0.22, 0.45),
+                        lerp(fletchInner, tailX + facing * 2, 0.35), lerp(baseY - rh * 0.55, baseY - rh * 0.22, 0.35),
+                        lerp(fletchOuter, fletchInner, 0.35), lerp(baseY, baseY - rh * 0.55, 0.35))
+                love.graphics.polygon("fill",
+                        lerp(fletchOuter, tailX + facing * 2, 0.45), lerp(baseY, baseY + rh * 0.22, 0.45),
+                        lerp(fletchInner, tailX + facing * 2, 0.35), lerp(baseY + rh * 0.55, baseY + rh * 0.22, 0.35),
+                        lerp(fletchOuter, fletchInner, 0.35), lerp(baseY, baseY + rh * 0.55, 0.35))
+
+                local fletchHighlight = getRimLightColor(tailColor)
+                love.graphics.setColor(fletchHighlight[1], fletchHighlight[2], fletchHighlight[3], fletchHighlight[4])
+                love.graphics.polygon("fill",
+                        fletchOuter, baseY,
+                        lerp(fletchOuter, fletchInner, 0.22), lerp(baseY, baseY - rh * 0.55, 0.22),
+                        lerp(fletchOuter, tailX + facing * 2, 0.22), lerp(baseY, baseY - rh * 0.22, 0.22))
+                love.graphics.setColor(fletchHighlight[1], fletchHighlight[2], fletchHighlight[3], (fletchHighlight[4] or 1) * 0.65)
+                love.graphics.polygon("fill",
+                        fletchOuter, baseY,
+                        lerp(fletchOuter, fletchInner, 0.18), lerp(baseY, baseY + rh * 0.55, 0.18),
+                        lerp(fletchOuter, tailX + facing * 2, 0.18), lerp(baseY, baseY + rh * 0.22, 0.18))
+
                 love.graphics.setColor(tipColor)
                 love.graphics.polygon("fill",
                         tipX, baseY,
                         shaftEnd, baseY - shaftHeight * 1.05,
                         shaftEnd, baseY + shaftHeight * 1.05)
+
+                local tipHighlight = getRimLightColor(tipColor)
+                love.graphics.setColor(tipHighlight[1], tipHighlight[2], tipHighlight[3], tipHighlight[4])
+                love.graphics.polygon("fill",
+                        tipX, baseY,
+                        lerp(tipX, shaftEnd, 0.24), lerp(baseY, baseY - shaftHeight * 1.05, 0.42),
+                        shaftEnd, lerp(baseY - shaftHeight * 1.05, baseY, 0.18))
+
+                local tipOcclusion = getOcclusionColor(tipColor)
+                love.graphics.setColor(tipOcclusion[1], tipOcclusion[2], tipOcclusion[3], tipOcclusion[4])
+                love.graphics.polygon("fill",
+                        tipX, baseY,
+                        lerp(tipX, shaftEnd, 0.24), lerp(baseY, baseY + shaftHeight * 1.05, 0.42),
+                        shaftEnd, lerp(baseY + shaftHeight * 1.05, baseY, 0.18))
+
+                tipCenterX, tipCenterY = tipX, baseY
+                trailDirX, trailDirY = -(facing), 0
+                trailLength = max(12, abs(tipX - tailX) * 0.5)
         else
                 local shaftWidth = rw * 0.34
                 local shaftX = rx + (rw - shaftWidth) * 0.5
@@ -669,20 +772,42 @@ local function drawDart(emitter)
                 local shaftY = min(shaftStart, shaftEnd)
                 local shaftHeight = abs(shaftEnd - shaftStart)
 
-                love.graphics.setColor(bodyColor)
-                love.graphics.rectangle("fill", shaftX, shaftY, shaftWidth, shaftHeight, 3, 3)
-
-                local highlight = scaleColor(bodyColor, 1.12, 0.9)
-                love.graphics.setColor(highlight)
-                love.graphics.rectangle("fill", shaftX + shaftWidth * 0.18, shaftY, shaftWidth * 0.32, shaftHeight, 3, 3)
-
-                local shadow = scaleColor(bodyColor, 0.7, 1)
-                love.graphics.setColor(shadow)
-                love.graphics.rectangle("fill", shaftX + shaftWidth * 0.58, shaftY, shaftWidth * 0.34, shaftHeight, 3, 3)
-
                 local baseX = rx + rw * 0.5
                 local fletchInner = tailY + facing * (tailInset * 0.35)
                 local fletchOuter = tailY - facing * (tailInset * 1.4 + 4)
+
+                local shadowColor = Theme.shadowColor or {0, 0, 0, 0.45}
+                local shadowAlpha = (shadowColor[4] or 1) * 0.55
+                if shadowAlpha > 0 then
+                        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
+                        local shadowOffsetX = 3
+                        local shadowOffsetY = 3
+                        love.graphics.rectangle("fill", shaftX + shadowOffsetX, shaftY + shadowOffsetY, shaftWidth, shaftHeight, 3, 3)
+                        love.graphics.polygon("fill",
+                                baseX + shadowOffsetX, tipY + shadowOffsetY,
+                                baseX - shaftWidth * 1.05 + shadowOffsetX, shaftEnd + shadowOffsetY,
+                                baseX + shaftWidth * 1.05 + shadowOffsetX, shaftEnd + shadowOffsetY)
+                        love.graphics.polygon("fill",
+                                baseX + shadowOffsetX, fletchOuter + shadowOffsetY,
+                                baseX - rw * 0.55 + shadowOffsetX, fletchInner + shadowOffsetY,
+                                baseX - rw * 0.22 + shadowOffsetX, tailY + facing * 2 + shadowOffsetY)
+                        love.graphics.polygon("fill",
+                                baseX + shadowOffsetX, fletchOuter + shadowOffsetY,
+                                baseX + rw * 0.55 + shadowOffsetX, fletchInner + shadowOffsetY,
+                                baseX + rw * 0.22 + shadowOffsetX, tailY + facing * 2 + shadowOffsetY)
+                end
+
+                love.graphics.setColor(bodyColor)
+                love.graphics.rectangle("fill", shaftX, shaftY, shaftWidth, shaftHeight, 3, 3)
+
+                local highlight = getRimLightColor(bodyColor)
+                love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+                love.graphics.rectangle("fill", shaftX + shaftWidth * 0.08, shaftY, shaftWidth * 0.26, shaftHeight, 3, 3)
+
+                local occlusion = getOcclusionColor(bodyColor)
+                love.graphics.setColor(occlusion[1], occlusion[2], occlusion[3], occlusion[4])
+                love.graphics.rectangle("fill", shaftX + shaftWidth * 0.62, shaftY, shaftWidth * 0.3, shaftHeight, 3, 3)
+
                 love.graphics.setColor(tailColor)
                 love.graphics.polygon("fill",
                         baseX, fletchOuter,
@@ -693,11 +818,75 @@ local function drawDart(emitter)
                         baseX + rw * 0.55, fletchInner,
                         baseX + rw * 0.22, tailY + facing * 2)
 
+                local fletchOcclusion = getOcclusionColor(tailColor)
+                love.graphics.setColor(fletchOcclusion[1], fletchOcclusion[2], fletchOcclusion[3], fletchOcclusion[4])
+                love.graphics.polygon("fill",
+                        lerp(baseX, baseX - rw * 0.55, 0.45), lerp(fletchOuter, fletchInner, 0.45),
+                        lerp(baseX, baseX - rw * 0.22, 0.35), lerp(fletchOuter, tailY + facing * 2, 0.35),
+                        lerp(baseX - rw * 0.55, baseX - rw * 0.22, 0.5), lerp(fletchInner, tailY + facing * 2, 0.5))
+                love.graphics.polygon("fill",
+                        lerp(baseX, baseX + rw * 0.55, 0.45), lerp(fletchOuter, fletchInner, 0.45),
+                        lerp(baseX, baseX + rw * 0.22, 0.35), lerp(fletchOuter, tailY + facing * 2, 0.35),
+                        lerp(baseX + rw * 0.55, baseX + rw * 0.22, 0.5), lerp(fletchInner, tailY + facing * 2, 0.5))
+
+                local fletchHighlight = getRimLightColor(tailColor)
+                love.graphics.setColor(fletchHighlight[1], fletchHighlight[2], fletchHighlight[3], fletchHighlight[4])
+                love.graphics.polygon("fill",
+                        baseX, fletchOuter,
+                        lerp(baseX, baseX - rw * 0.55, 0.22), lerp(fletchOuter, fletchInner, 0.22),
+                        lerp(baseX, baseX - rw * 0.22, 0.22), lerp(fletchOuter, tailY + facing * 2, 0.22))
+                love.graphics.setColor(fletchHighlight[1], fletchHighlight[2], fletchHighlight[3], (fletchHighlight[4] or 1) * 0.65)
+                love.graphics.polygon("fill",
+                        baseX, fletchOuter,
+                        lerp(baseX, baseX + rw * 0.55, 0.18), lerp(fletchOuter, fletchInner, 0.18),
+                        lerp(baseX, baseX + rw * 0.22, 0.18), lerp(fletchOuter, tailY + facing * 2, 0.18))
+
                 love.graphics.setColor(tipColor)
                 love.graphics.polygon("fill",
                         baseX, tipY,
                         baseX - shaftWidth * 1.05, shaftEnd,
                         baseX + shaftWidth * 1.05, shaftEnd)
+
+                local tipHighlight = getRimLightColor(tipColor)
+                love.graphics.setColor(tipHighlight[1], tipHighlight[2], tipHighlight[3], tipHighlight[4])
+                love.graphics.polygon("fill",
+                        baseX, tipY,
+                        lerp(baseX, baseX - shaftWidth * 1.05, 0.42), lerp(tipY, shaftEnd, 0.24),
+                        lerp(baseX, baseX + shaftWidth * 1.05, 0.18), lerp(tipY, shaftEnd, 0.18))
+
+                local tipOcclusion = getOcclusionColor(tipColor)
+                love.graphics.setColor(tipOcclusion[1], tipOcclusion[2], tipOcclusion[3], tipOcclusion[4])
+                love.graphics.polygon("fill",
+                        baseX, tipY,
+                        lerp(baseX, baseX - shaftWidth * 1.05, 0.42), lerp(tipY, shaftEnd, 0.8),
+                        lerp(baseX, baseX + shaftWidth * 1.05, 0.42), lerp(tipY, shaftEnd, 0.8))
+
+                tipCenterX, tipCenterY = baseX, tipY
+                trailDirX, trailDirY = 0, -(facing)
+                trailLength = max(12, abs(tipY - tailY) * 0.5)
+        end
+
+        if tipCenterX and tipCenterY then
+                local glow = getTipGlowColor(tipColor)
+                local prevBlendMode, prevAlphaMode = love.graphics.getBlendMode()
+                love.graphics.setBlendMode("add", "premultiplied")
+
+                local progress = clamp01(emitter.dartProgress or 0)
+                local radius = 3.2 + 1.8 * (1 - progress)
+                love.graphics.setColor(glow[1], glow[2], glow[3], glow[4])
+                love.graphics.circle("fill", tipCenterX, tipCenterY, radius, 16)
+
+                local steps = 4
+                for step = 1, steps do
+                        local t = step / steps
+                        local fade = (1 - t) * 0.55
+                        love.graphics.setColor(glow[1], glow[2], glow[3], glow[4] * fade)
+                        local px = tipCenterX + trailDirX * (trailLength * t)
+                        local py = tipCenterY + trailDirY * (trailLength * t)
+                        love.graphics.circle("fill", px, py, radius * (0.58 - 0.28 * t), 12)
+                end
+
+                love.graphics.setBlendMode(prevBlendMode, prevAlphaMode)
         end
 
         love.graphics.pop()
