@@ -22,6 +22,23 @@ local pi = math.pi
 local abs = math.abs
 local insert = table.insert
 
+local SHOP_PITY_MAX = 5
+local SHOP_PITY_RARITY_BONUS = {
+        rare = 0.24,
+        epic = 0.4,
+        legendary = 0.65,
+}
+
+local LEGENDARY_PITY_THRESHOLD = 5
+
+local SHOP_PITY_RARITY_RANK = {
+        common = 1,
+        uncommon = 2,
+        rare = 3,
+        epic = 4,
+        legendary = 5,
+}
+
 local Upgrades = {
         cachedIndicators = nil,
         hudIndicatorsDirty = true,
@@ -3553,23 +3570,6 @@ function Upgrades:applyPersistentEffects(rebaseline)
 
 	Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
 end
-
-local SHOP_PITY_MAX = 5
-local SHOP_PITY_RARITY_BONUS = {
-	rare = 0.24,
-	epic = 0.4,
-	legendary = 0.65,
-}
-
-local LEGENDARY_PITY_THRESHOLD = 5
-
-local SHOP_PITY_RARITY_RANK = {
-	common = 1,
-	uncommon = 2,
-	rare = 3,
-	epic = 4,
-	legendary = 5,
-}
 
 local function calculateWeight(upgrade, pityLevel)
 	local rarityInfo = getRarityInfo(upgrade.rarity)
