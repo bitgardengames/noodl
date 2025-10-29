@@ -11,7 +11,7 @@ local cos = math.cos
 local sin = math.sin
 local pi = math.pi
 
-local VolatileBloom = {}
+local Bombs = {}
 
 local bombs = {}
 
@@ -163,8 +163,8 @@ local function handleExplosion(bomb)
 		spawnExplosionFX(bomb, radius)
 	end
 
-	if VolatileBloom._onExplosion then
-		VolatileBloom._onExplosion({
+	if Bombs._onExplosion then
+		Bombs._onExplosion({
 			x = bomb.x,
 			y = bomb.y,
 			col = bomb.col,
@@ -216,17 +216,21 @@ local function advanceBomb(bomb, dt)
 	end
 end
 
-function VolatileBloom:load()
-	bombs = bombs or {}
-	self.bombs = bombs
+function Bombs:load()
+        bombs = bombs or {}
+        self.bombs = bombs
 end
 
-function VolatileBloom:reset()
-	bombs = {}
-	self.bombs = bombs
+function Bombs:reset()
+        bombs = {}
+        self.bombs = bombs
 end
 
-function VolatileBloom:update(dt)
+function Bombs:getAll()
+        return bombs
+end
+
+function Bombs:update(dt)
 	if not dt or dt <= 0 then return end
 
 	for i = #bombs, 1, -1 do
@@ -311,7 +315,7 @@ local function drawPreflash(bomb, tileSize)
 	love.graphics.circle("fill", bomb.x, bomb.y, radius)
 end
 
-function VolatileBloom:draw()
+function Bombs:draw()
 	if not bombs or #bombs == 0 then return end
 
 	local tileSize = getTileSize()
@@ -335,7 +339,7 @@ function VolatileBloom:draw()
 	love.graphics.pop()
 end
 
-function VolatileBloom:spawnBomb(x, y, options)
+function Bombs:spawnBomb(x, y, options)
 	if not (x and y) then return nil end
 
 	local col, row
@@ -364,8 +368,8 @@ function VolatileBloom:spawnBomb(x, y, options)
 	return bombs[#bombs]
 end
 
-function VolatileBloom:setExplosionCallback(fn)
+function Bombs:setExplosionCallback(fn)
 	self._onExplosion = fn
 end
 
-return VolatileBloom
+return Bombs

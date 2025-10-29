@@ -8,7 +8,7 @@ local Rocks = require("rocks")
 local Saws = require("saws")
 local Particles = require("particles")
 local UpgradeVisuals = require("upgradevisuals")
-local VolatileBloom = require("volatilebloom")
+local Bombs = require("bombs")
 local UI = require("ui")
 local ModuleUtil = require("moduleutil")
 
@@ -25,7 +25,7 @@ local GAMEPLAY_SYSTEMS = ModuleUtil.prepareSystems({
 	Score,
 	FloatingText,
 	Particles,
-	VolatileBloom,
+        Bombs,
 	UpgradeVisuals,
 	Rocks,
 	Saws,
