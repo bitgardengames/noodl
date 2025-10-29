@@ -9,7 +9,7 @@ GameState.current = nil
 GameState.next = nil
 GameState.transitionFrom = nil
 GameState.transitionTime = 0
-GameState.defaultTransitionDuration = 1.0
+GameState.defaultTransitionDuration = 0.7
 GameState.transitionDuration = GameState.defaultTransitionDuration
 GameState.transitioning = false
 GameState.transitionDirection = 1 -- 1 = fade out, -1 = fade in

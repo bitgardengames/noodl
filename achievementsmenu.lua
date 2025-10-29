@@ -16,7 +16,7 @@ local max = math.max
 local min = math.min
 
 local AchievementsMenu = {
-	transitionDuration = 0.45,
+    transitionDuration = 0.3,
 }
 
 local buttonList = ButtonList.new()

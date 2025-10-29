@@ -19,7 +19,7 @@ local min = math.min
 local sin = math.sin
 
 local Menu = {
-	transitionDuration = 0.45,
+    transitionDuration = 0.3,
 }
 
 local ANALOG_DEADZONE = 0.3
