@@ -540,32 +540,10 @@ local english = {
 				name = "Molting Reflex",
 				description = "Shields trigger a 60% adrenaline surge.",
 			},
-			mystery_card = {
-				name = "Mystery Card",
-				description = "Select to reveal a surprise upgrade effect.",
-				outcomes = {
-					shield_cache = {
-						name = "Shield Cache",
-						description = "Gain 2 shields immediately.",
-						toast = "Shield Cache",
-					},
-					velocity_bloom = {
-						name = "Velocity Bloom",
-						description = "Snake moves 12% faster.",
-						toast = "Velocity Bloom",
-					},
-					market_portent = {
-						name = "Market Portent",
-						description = "Shops offer +1 additional card.",
-						toast = "Market Portent",
-					},
-					shortcut_map = {
-						name = "Shortcut Map",
-						description = "The next exit unlocks after one fewer fruit.",
-						toast = "Shortcut Map",
-					},
-				},
-			},
+                        mystery_card = {
+                                name = "Mystery Card",
+                                description = "Select to reveal and immediately gain a random upgrade.",
+                        },
 			circuit_breaker = {
 				name = "Circuit Breaker",
 				description = "Saw tracks and lasers freeze for 0.75s after each fruit.",

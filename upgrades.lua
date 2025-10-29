@@ -113,84 +113,6 @@ local VOLATILE_BLOOM_SHIELD_PER_HIT = 0.25
 local VOLATILE_BLOOM_COMBO_PER_HIT = 0.35
 local VOLATILE_BLOOM_COLOR = {0.98, 0.46, 0.3, 1}
 
-local MYSTERY_CARD_OUTCOMES = {
-	{
-		id = "shield_cache",
-		nameKey = "upgrades.mystery_card.outcomes.shield_cache.name",
-		descKey = "upgrades.mystery_card.outcomes.shield_cache.description",
-		toastKey = "upgrades.mystery_card.outcomes.shield_cache.toast",
-		celebration = {
-			color = {0.64, 0.86, 1.0, 1},
-			particleCount = 16,
-			particleSpeed = 110,
-			particleLife = 0.42,
-			textOffset = 46,
-			textScale = 1.1,
-		},
-		apply = function(state)
-			Snake:addShields(2)
-			Face:set("happy", 1.6)
-		end,
-	},
-	{
-		id = "velocity_bloom",
-		nameKey = "upgrades.mystery_card.outcomes.velocity_bloom.name",
-		descKey = "upgrades.mystery_card.outcomes.velocity_bloom.description",
-		toastKey = "upgrades.mystery_card.outcomes.velocity_bloom.toast",
-		celebration = {
-			color = {1.0, 0.72, 0.46, 1},
-			particleCount = 18,
-			particleSpeed = 140,
-			particleLife = 0.48,
-			textOffset = 44,
-			textScale = 1.12,
-		},
-		apply = function(state)
-			Snake:addSpeedMultiplier(1.12)
-			Face:set("veryHappy", 1.6)
-		end,
-	},
-	{
-		id = "market_portent",
-		nameKey = "upgrades.mystery_card.outcomes.market_portent.name",
-		descKey = "upgrades.mystery_card.outcomes.market_portent.description",
-		toastKey = "upgrades.mystery_card.outcomes.market_portent.toast",
-		celebration = {
-			color = {0.96, 0.85, 0.52, 1},
-			particleCount = 14,
-			particleSpeed = 120,
-			particleLife = 0.46,
-			textOffset = 42,
-			textScale = 1.08,
-		},
-		apply = function(state)
-			state.effects = state.effects or {}
-			state.effects.shopSlots = (state.effects.shopSlots or 0) + 1
-			Face:set("happy", 1.4)
-		end,
-	},
-	{
-		id = "shortcut_map",
-		nameKey = "upgrades.mystery_card.outcomes.shortcut_map.name",
-		descKey = "upgrades.mystery_card.outcomes.shortcut_map.description",
-		toastKey = "upgrades.mystery_card.outcomes.shortcut_map.toast",
-		celebration = {
-			color = {0.84, 0.94, 0.62, 1},
-			particleCount = 16,
-			particleSpeed = 100,
-			particleLife = 0.44,
-			textOffset = 42,
-			textScale = 1.08,
-		},
-		apply = function(state)
-			state.effects = state.effects or {}
-			state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) - 1
-			UI:adjustFruitGoal(-1)
-			Face:set("happy", 1.4)
-		end,
-	},
-}
-
 local function getStacks(state, id)
 	if not state or not id then
 		return 0
@@ -2230,49 +2152,116 @@ local pool = {
 		rarity = "rare",
 		tags = {"utility", "risk", "shop"},
 		allowDuplicates = true,
-		onAcquire = function(state)
-			if #MYSTERY_CARD_OUTCOMES == 0 then
-				return nil
-			end
+                onAcquire = function(state, context, card)
+                        local runState = state
+                        local pityLevel = 0
+                        if runState and runState.counters then
+                                pityLevel = min(runState.counters.shopBadLuck or 0, SHOP_PITY_MAX)
+                        end
 
-			local index = love.math.random(1, #MYSTERY_CARD_OUTCOMES)
-			local outcome = MYSTERY_CARD_OUTCOMES[index]
-			if not outcome then
-				return nil
-			end
+                        local minimumRank = 0
+                        if runState and runState.effects then
+                                local effects = runState.effects
+                                if type(effects.shopMinimumRarityRank) == "number" then
+                                        minimumRank = effects.shopMinimumRarityRank
+                                elseif effects.shopMinimumRarity and SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity] then
+                                        minimumRank = SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity]
+                                end
+                        end
 
-			if outcome.apply then
-				outcome.apply(state)
-			end
+                        local function defaultReveal()
+                                return {
+                                        revealDelay = 1.15,
+                                        revealApproachDuration = 0.55,
+                                        revealShakeDuration = 0.5,
+                                        revealFlashInDuration = 0.22,
+                                        revealFlashOutDuration = 0.48,
+                                        revealShakeMagnitude = 9,
+                                        revealShakeFrequency = 26,
+                                        revealApplyThreshold = 0.6,
+                                        revealPostPauseDuration = 0.65,
+                                        revealAnimation = "mystery_card",
+                                }
+                        end
 
-			if outcome.toastKey or outcome.nameKey then
-				local toastLabel = Localization:get(outcome.toastKey or outcome.nameKey)
-				local celebrationOptions = outcome.celebration and deepcopy(outcome.celebration) or nil
-				celebrateUpgrade(toastLabel, nil, celebrationOptions)
-			end
+                        local function buildAvailable(allowTaken)
+                                local available = {}
+                                local totalWeight = 0
+                                for _, upgrade in ipairs(pool) do
+                                        if upgrade.id ~= "mystery_card" and Upgrades:canOffer(upgrade, context, allowTaken) then
+                                                local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+                                                if rarityRank >= minimumRank then
+                                                        local weight = calculateWeight(upgrade, pityLevel)
+                                                        totalWeight = totalWeight + weight
+                                                        available[#available + 1] = {upgrade = upgrade, weight = weight}
+                                                end
+                                        end
+                                end
 
-			local baseName = Localization:get("upgrades.mystery_card.name")
-			local outcomeName = outcome.nameKey and Localization:get(outcome.nameKey) or nil
-			local revealedName = outcomeName or baseName
+                                return available, totalWeight
+                        end
 
-			local revealedDesc = outcome.descKey and Localization:get(outcome.descKey) or nil
+                        local available, totalWeight = buildAvailable(false)
+                        if #available == 0 then
+                                available, totalWeight = buildAvailable(true)
+                        end
 
-			return {
-				name = revealedName,
-				desc = revealedDesc,
-				revealDelay = 1.15,
-				revealApproachDuration = 0.55,
-				revealShakeDuration = 0.5,
-				revealFlashInDuration = 0.22,
-				revealFlashOutDuration = 0.48,
-				revealShakeMagnitude = 9,
-				revealShakeFrequency = 26,
-				revealApplyThreshold = 0.6,
-				revealPostPauseDuration = 0.65,
-				revealAnimation = "mystery_card",
-			}
-		end,
-	}),
+                        if totalWeight <= 0 or #available == 0 then
+                                return defaultReveal()
+                        end
+
+                        local roll = love.math.random() * totalWeight
+                        local cumulative = 0
+                        local chosenUpgrade
+                        for _, entry in ipairs(available) do
+                                cumulative = cumulative + entry.weight
+                                if roll <= cumulative then
+                                        chosenUpgrade = entry.upgrade
+                                        break
+                                end
+                        end
+
+                        if not chosenUpgrade and #available > 0 then
+                                chosenUpgrade = available[#available].upgrade
+                        end
+
+                        if not chosenUpgrade then
+                                return defaultReveal()
+                        end
+
+                        local grantedCard = {upgrade = chosenUpgrade}
+                        Upgrades:acquire(grantedCard, context)
+
+                        local decorated = decorateCard(chosenUpgrade)
+                        local revealInfo = {
+                                rarity = chosenUpgrade.rarity,
+                                revealDelay = 1.15,
+                                revealApproachDuration = 0.55,
+                                revealShakeDuration = 0.5,
+                                revealFlashInDuration = 0.22,
+                                revealFlashOutDuration = 0.48,
+                                revealShakeMagnitude = 9,
+                                revealShakeFrequency = 26,
+                                revealApplyThreshold = 0.6,
+                                revealPostPauseDuration = 0.65,
+                                revealAnimation = "mystery_card",
+                        }
+
+                        if chosenUpgrade.nameKey then
+                                revealInfo.nameKey = chosenUpgrade.nameKey
+                        elseif decorated then
+                                revealInfo.name = decorated.name
+                        end
+
+                        if chosenUpgrade.descKey then
+                                revealInfo.descKey = chosenUpgrade.descKey
+                        elseif decorated then
+                                revealInfo.desc = decorated.desc
+                        end
+
+                        return revealInfo
+                end,
+        }),
 
 	register({
 		id = "verdant_bonds",
