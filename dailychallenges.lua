@@ -285,55 +285,78 @@ local function secondsUntilNextMidnight(date)
 	return remaining
 end
 
-local function buildStorageKey(self, challenge, date, suffix)
-	if not challenge or not challenge.id then
-		return nil
-	end
+local function getDayValue(date)
+        if not date then
+                return nil
+        end
 
-	date = resolveDate(self, date)
-	if not date then
-		return nil
-	end
-
-	local dayValue = (date.year or 0) * 512 + (date.yday or 0)
-	return string.format("dailyChallenge:%s:%d:%s", challenge.id, dayValue, suffix)
+        return (date.year or 0) * 512 + (date.yday or 0)
 end
 
-local function getStoredProgress(self, challenge, date)
-	local key = buildStorageKey(self, challenge, date, "progress")
-	if not key then
-		return 0
-	end
-	return PlayerStats:get(key) or 0
+local function buildDailyStoragePrefix(self, challenge, date)
+        if not challenge or not challenge.id then
+                return nil
+        end
+
+        date = resolveDate(self, date)
+        if not date then
+                return nil
+        end
+
+        local dayValue = getDayValue(date)
+        if not dayValue then
+                return nil
+        end
+
+        self._dailyStoragePrefixCache = self._dailyStoragePrefixCache or {}
+        local cache = self._dailyStoragePrefixCache[challenge.id]
+        if not cache or cache.day ~= dayValue then
+                cache = {
+                        day = dayValue,
+                        prefix = string.format("dailyChallenge:%s:%d:", challenge.id, dayValue),
+                }
+                self._dailyStoragePrefixCache[challenge.id] = cache
+        end
+
+        return cache.prefix
 end
 
-local function setStoredProgress(self, challenge, date, value)
-	local key = buildStorageKey(self, challenge, date, "progress")
-	if not key then
-		return
-	end
+local function getStoredProgress(self, challenge, date, prefix)
+        prefix = prefix or buildDailyStoragePrefix(self, challenge, date)
+        if not prefix then
+                return 0
+        end
 
-	value = max(0, floor(value or 0))
-	PlayerStats:set(key, value)
+        return PlayerStats:get(prefix .. "progress") or 0
 end
 
-local function isStoredComplete(self, challenge, date)
-	local key = buildStorageKey(self, challenge, date, "complete")
-	if not key then
-		return false
-	end
+local function setStoredProgress(self, challenge, date, value, prefix)
+        prefix = prefix or buildDailyStoragePrefix(self, challenge, date)
+        if not prefix then
+                return
+        end
 
-	local value = PlayerStats:get(key) or 0
-	return value >= 1
+        value = max(0, floor(value or 0))
+        PlayerStats:set(prefix .. "progress", value)
 end
 
-local function setStoredComplete(self, challenge, date, complete)
-	local key = buildStorageKey(self, challenge, date, "complete")
-	if not key then
-		return
-	end
+local function isStoredComplete(self, challenge, date, prefix)
+        prefix = prefix or buildDailyStoragePrefix(self, challenge, date)
+        if not prefix then
+                return false
+        end
 
-	PlayerStats:set(key, complete and 1 or 0)
+        local value = PlayerStats:get(prefix .. "complete") or 0
+        return value >= 1
+end
+
+local function setStoredComplete(self, challenge, date, complete, prefix)
+        prefix = prefix or buildDailyStoragePrefix(self, challenge, date)
+        if not prefix then
+                return
+        end
+
+        PlayerStats:set(prefix .. "complete", complete and 1 or 0)
 end
 
 local function getChallengeIndex(self, count, date)
@@ -361,15 +384,16 @@ local function evaluateChallenge(self, challenge, context)
 
 	context = context or {}
 
-	local goal = resolveGoal(challenge, context)
-	local current = resolveCurrent(challenge, context)
-	local date = context.date or context.dateOverride
-	local storedProgress = getStoredProgress(self, challenge, date)
-	if storedProgress and storedProgress > (current or 0) then
-		current = storedProgress
-	end
+        local goal = resolveGoal(challenge, context)
+        local current = resolveCurrent(challenge, context)
+        local date = context.date or context.dateOverride
+        local prefix = buildDailyStoragePrefix(self, challenge, date)
+        local storedProgress = getStoredProgress(self, challenge, date, prefix)
+        if storedProgress and storedProgress > (current or 0) then
+                current = storedProgress
+        end
 
-	local storedComplete = isStoredComplete(self, challenge, date)
+        local storedComplete = isStoredComplete(self, challenge, date, prefix)
 	local ratio = clampRatio(current, goal)
 
 	local descriptionReplacements = resolveDescriptionReplacements(challenge, current, goal, context)
@@ -1217,14 +1241,6 @@ function DailyChallenges:getTimeUntilReset(date)
 	return secondsUntilNextMidnight(resolved)
 end
 
-local function getDayValue(date)
-	if not date then
-		return nil
-	end
-
-	return (date.year or 0) * 512 + (date.yday or 0)
-end
-
 function DailyChallenges:applyRunResults(statsSource, options)
 	statsSource = statsSource or SessionStats
 	options = options or {}
@@ -1262,15 +1278,16 @@ function DailyChallenges:applyRunResults(statsSource, options)
 
 	runValue = max(0, floor(runValue or 0))
 
-	local goal = resolveGoal(challenge)
-	local storedProgress = getStoredProgress(self, challenge, resolvedDate)
-	local best = storedProgress
-	if runValue > best then
-		best = runValue
-		setStoredProgress(self, challenge, resolvedDate, best)
-	end
+        local goal = resolveGoal(challenge)
+        local prefix = buildDailyStoragePrefix(self, challenge, resolvedDate)
+        local storedProgress = getStoredProgress(self, challenge, resolvedDate, prefix)
+        local best = storedProgress
+        if runValue > best then
+                best = runValue
+                setStoredProgress(self, challenge, resolvedDate, best, prefix)
+        end
 
-	local alreadyCompleted = isStoredComplete(self, challenge, resolvedDate)
+        local alreadyCompleted = isStoredComplete(self, challenge, resolvedDate, prefix)
 	local xpAwarded = 0
 	local completedNow = false
 	local streakInfo = nil
@@ -1281,7 +1298,7 @@ function DailyChallenges:applyRunResults(statsSource, options)
 	local dayValue = getDayValue(resolvedDate)
 
 	if goal > 0 and runValue >= goal and not alreadyCompleted then
-		setStoredComplete(self, challenge, resolvedDate, true)
+                setStoredComplete(self, challenge, resolvedDate, true, prefix)
 		xpAwarded = challenge.xpReward or self.defaultXpReward
 		completedNow = true
 
