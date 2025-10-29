@@ -585,19 +585,21 @@ local function handleRockCollision(headX, headY)
 	local halfHeadSize = headSize / 2
 	local headLeft = headX - halfHeadSize
 	local headTop = headY - halfHeadSize
-	local candidates
-	local headCol, headRow = Arena:getTileFromWorld(headX, headY)
+        local candidates
+        local hasLookup = Rocks.hasCellLookup and Rocks:hasCellLookup()
 
-	if headCol and headRow and Rocks.getNearby then
-		local nearby = Rocks:getNearby(headCol, headRow, 1)
-		if Rocks.hasCellLookup and Rocks:hasCellLookup() then
-			candidates = nearby
-		else
-			candidates = Rocks:getAll()
-		end
-	else
-		candidates = Rocks:getAll()
-	end
+        if hasLookup and Rocks.getNearby then
+                local headCol, headRow = Arena:getTileFromWorld(headX, headY)
+
+                if headCol and headRow then
+                        local nearby = Rocks:getNearby(headCol, headRow, 1)
+                        candidates = nearby or Rocks:getAll()
+                else
+                        candidates = Rocks:getAll()
+                end
+        else
+                candidates = Rocks:getAll()
+        end
 
 	for _, rock in ipairs(candidates or {}) do
 		local rockCenterX = rock and (rock.renderX or rock.x) or 0
