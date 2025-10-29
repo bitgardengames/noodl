@@ -237,7 +237,8 @@ local function buildCollisionCellsForSaw(saw)
 	if Arena and Arena.getTilePosition then
 		local tileSize = getTileSize()
 
-		for _, cell in ipairs(trackCells) do
+		for i = 1, #trackCells do
+			local cell = trackCells[i]
 			local col, row = cell[1], cell[2]
 			local cellX, cellY = Arena:getTilePosition(col, row)
 			if cellX and cellY then
@@ -256,7 +257,8 @@ local function buildCollisionCellsForSaw(saw)
 	-- Limit collision coverage to the track cell and the adjacent cell the blade
 	-- actually occupies so the hazard doesn't spill into neighboring tiles.
 	if saw.dir == "horizontal" then
-		for _, cell in ipairs(trackCells) do
+		for i = 1, #trackCells do
+			local cell = trackCells[i]
 			local col, row = cell[1], cell[2]
 			addCell(cells, seen, col, row)
 			addCell(cells, seen, col, row + 1)
@@ -272,7 +274,8 @@ local function buildCollisionCellsForSaw(saw)
 			offsetDir = 1
 		end
 
-		for _, cell in ipairs(trackCells) do
+		for i = 1, #trackCells do
+			local cell = trackCells[i]
 			local col, row = cell[1], cell[2]
 			addCell(cells, seen, col, row)
 			addCell(cells, seen, col + offsetDir, row)
@@ -282,7 +285,8 @@ local function buildCollisionCellsForSaw(saw)
 	if Arena and Arena.getTilePosition then
 		local tileSize = getTileSize()
 
-		for _, cell in ipairs(cells) do
+		for i = 1, #cells do
+			local cell = cells[i]
 			local col, row = cell[1], cell[2]
 			local cellX, cellY = Arena:getTilePosition(col, row)
 			if cellX and cellY then
@@ -300,7 +304,8 @@ local function buildCollisionCellsForSaw(saw)
 			end
 		end
 	else
-		for _, cell in ipairs(cells) do
+		for i = 1, #cells do
+			local cell = cells[i]
 			cell.minX = nil
 			cell.maxX = nil
 			cell.minY = nil
@@ -328,7 +333,8 @@ local function overlapsCollisionCell(saw, x, y, w, h)
 
 	local tileSizeCache
 
-	for _, cell in ipairs(cells) do
+	for i = 1, #cells do
+		local cell = cells[i]
 		local minX = cell.minX
 		local maxX = cell.maxX
 		local minY = cell.minY
@@ -497,7 +503,8 @@ end
 local function getOrCreateSlot(x, y, dir)
 	dir = dir or "horizontal"
 
-	for _, slot in ipairs(slots) do
+	for i = 1, #slots do
+		local slot = slots[i]
 		if slot.x == x and slot.y == y and slot.dir == dir then
 			return slot
 		end
@@ -520,7 +527,8 @@ local function getSlotById(id)
 		return nil
 	end
 
-	for _, slot in ipairs(slots) do
+	for i = 1, #slots do
+		local slot = slots[i]
 		if slot.id == id then
 			return slot
 		end
@@ -651,7 +659,8 @@ local function removeSaw(target)
 		return
 	end
 
-	for index, saw in ipairs(current) do
+	for index = #current, 1, -1 do
+		local saw = current[index]
 		if saw == target or index == target then
 			local anchorX = saw.renderX or saw.x
 			local anchorY = saw.renderY or saw.y
@@ -784,11 +793,13 @@ function Saws:update(dt)
 		end
 	end
 
-	for _, slot in ipairs(slots) do
+	for i = 1, #slots do
+		local slot = slots[i]
 		updateSlotSlide(slot, dt)
 	end
 
-	for _, saw in ipairs(current) do
+	for i = 1, #current do
+		local saw = current[i]
 		if not saw.collisionCells then
 			saw.collisionCells = buildCollisionCellsForSaw(saw)
 		end
@@ -871,7 +882,8 @@ end
 function Saws:draw()
 	if #slots > 0 then
 		love.graphics.setColor(0, 0, 0, 1)
-		for _, slot in ipairs(slots) do
+		for i = 1, #slots do
+			local slot = slots[i]
 			local slotX = slot.renderX or slot.x
 			local slotY = slot.renderY or slot.y
 			if slot.dir == "horizontal" then
@@ -882,7 +894,8 @@ function Saws:draw()
 		end
 	end
 
-	for _, saw in ipairs(current) do
+	for i = 1, #current do
+		local saw = current[i]
 		local anchorX = saw.renderX or saw.x
 		local anchorY = saw.renderY or saw.y
 		local px, py = getSawCenter(saw)
@@ -1118,7 +1131,8 @@ function Saws:stall(duration, options)
 		local sawDetails = {}
 		local limit = (options and options.positionLimit) or 4
 
-		for _, saw in ipairs(current) do
+		for i = 1, #current do
+			local saw = current[i]
 			if saw then
 				local cx, cy = getSawCenter(saw)
 				if cx and cy then
@@ -1152,7 +1166,9 @@ function Saws:stall(duration, options)
 end
 
 function Saws:sink(duration)
-	for _, saw in ipairs(self:getAll()) do
+	local saws = self:getAll()
+	for i = 1, #saws do
+		local saw = saws[i]
 		saw.sinkTarget = 1
 	end
 
@@ -1168,7 +1184,9 @@ function Saws:sink(duration)
 end
 
 function Saws:unsink()
-	for _, saw in ipairs(self:getAll()) do
+	local saws = self:getAll()
+	for i = 1, #saws do
+		local saw = saws[i]
 		saw.sinkTarget = 0
 	end
 
@@ -1197,7 +1215,9 @@ function Saws:isCollisionCandidate(saw, x, y, w, h)
 end
 
 function Saws:checkCollision(x, y, w, h)
-	for _, saw in ipairs(self:getAll()) do
+	local saws = self:getAll()
+	for i = 1, #saws do
+		local saw = saws[i]
 		if isCollisionCandidate(saw, x, y, w, h) then
 			local px, py = getSawCollisionCenter(saw)
 
