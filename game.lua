@@ -55,6 +55,9 @@ local currentGame
 local currentRenderState
 
 local DEATH_HOLD_DURATION = 0.5
+local DEFAULT_SHADOW_COLOR = {0, 0, 0, 0.5}
+local DEFAULT_IMPACT_RIPPLE_COLOR = {1, 0.42, 0.32, 1}
+local DEFAULT_SURGE_RIPPLE_COLOR = {1, 0.9, 0.55, 1}
 
 local function drawBackgroundLayer()
         Arena:drawBackground()
@@ -194,7 +197,7 @@ function Game:refreshTransitionTitleCanvas(data)
                 return cache
         end
 
-        local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
+        local shadow = Theme.shadowColor or DEFAULT_SHADOW_COLOR
         local shadowAlpha = shadow[4] or 0.5
 
         love.graphics.push("all")
@@ -401,7 +404,7 @@ local function drawFeedbackOverlay(self)
 			local rx = ripple.x or screenW * 0.5
 			local ry = ripple.y or screenH * 0.5
 			local baseRadius = ripple.baseRadius or 52
-			local color = ripple.color or {1, 0.42, 0.32, 1}
+                        local color = ripple.color or DEFAULT_IMPACT_RIPPLE_COLOR
 			local ringRadius = baseRadius + easeOutExpo(age) * (140 + intensity * 80)
 			local fillRadius = baseRadius * (0.55 + age * 0.6)
 
@@ -436,7 +439,7 @@ local function drawFeedbackOverlay(self)
 			local rx = ripple.x or screenW * 0.5
 			local ry = ripple.y or screenH * 0.5
 			local baseRadius = ripple.baseRadius or 48
-			local color = ripple.color or {1, 0.9, 0.55, 1}
+                        local color = ripple.color or DEFAULT_SURGE_RIPPLE_COLOR
 			local eased = easeOutCubic(1 - progress)
 			local ringRadius = baseRadius + eased * (160 + intensity * 90)
                         love.graphics.setLineWidth(2 + intensity * 4)
@@ -833,7 +836,7 @@ local function drawShadowedText(font, text, x, y, width, align, alpha)
 	end
 
 	love.graphics.setFont(font)
-	local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
+        local shadow = Theme.shadowColor or DEFAULT_SHADOW_COLOR
 	local shadowAlpha = (shadow[4] or 1) * alpha
 	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
 	love.graphics.printf(text, x + 2, y + 2, width, align)
