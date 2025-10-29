@@ -13,7 +13,7 @@ local PlayerStats = require("playerstats")
 local UpgradeHelpers = require("upgradehelpers")
 local DataSchemas = require("dataschemas")
 local UpgradeVisuals = require("upgradevisuals")
-local VolatileBloom = require("volatilebloom")
+local Bombs = require("bombs")
 
 local floor = math.floor
 local max = math.max
@@ -1966,9 +1966,9 @@ local pool = {
 				local dropX = hx - dirX * tileSize
 				local dropY = hy - dirY * tileSize
 
-				if dropX and dropY then
-					VolatileBloom:spawnBomb(dropX, dropY)
-				end
+                                if dropX and dropY then
+                                        Bombs:spawnBomb(dropX, dropY)
+                                end
 			end,
 		},
 	}),
@@ -2950,8 +2950,8 @@ function Upgrades:notify(event, data)
 	end
 end
 
-VolatileBloom:setExplosionCallback(function(event)
-	handleVolatileBloomExplosion(event)
+Bombs:setExplosionCallback(function(event)
+        handleVolatileBloomExplosion(event)
 end)
 
 local function clamp(value, min, max)
