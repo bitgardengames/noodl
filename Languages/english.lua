@@ -438,16 +438,22 @@ local english = {
 					"A molten wake isn't a good place to swim.",
 					"The floor decided to exhale… loudly.",
 				},
-				laser = {
-					"You got carved up by a laser sweep.",
-					"Note to self: don't stand in the light show.",
-					"The beam didn't come to dance.",
-					"Snake tried to limbo under a laser and failed.",
-				},
-				unknown = {
-					"Mysterious demise...",
-					"The void has claimed you.",
-					"Well, that’s one way to end it.",
+                                laser = {
+                                        "You got carved up by a laser sweep.",
+                                        "Note to self: don't stand in the light show.",
+                                        "The beam didn't come to dance.",
+                                        "Snake tried to limbo under a laser and failed.",
+                                },
+                                dart = {
+                                        "A dart trap turned Snake into a pincushion.",
+                                        "Those wall ports aren't just décor.",
+                                        "Snake zigged when the dart zagged.",
+                                        "Tip: telegraphs mean it's time to move.",
+                                },
+                                unknown = {
+                                        "Mysterious demise...",
+                                        "The void has claimed you.",
+                                        "Well, that’s one way to end it.",
 					"Snake blinked out of existence.",
 					"Cosmic forces intervened.",
 					"Snake entered the glitch dimension.",
