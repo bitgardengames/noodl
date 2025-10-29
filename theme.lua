@@ -16,7 +16,12 @@ local Theme = {
 
 	-- Panels
 	panelColor      = {0.16, 0.16, 0.22, 0.94},
-	panelBorder     = {0.32, 0.50, 0.54, 1.0},
+        panelBorder     = {0.32, 0.50, 0.54, 1.0},
+
+        -- Darts
+        dartBaseColor      = {0.17, 0.18, 0.23, 0.98},
+        dartAccentColor    = {0.42, 0.72, 0.62, 1.0},
+        dartTelegraphColor = {0.52, 0.78, 0.72, 0.78},
 
 	-- Text
 	textColor       = {0.88, 0.88, 0.92, 1.0},

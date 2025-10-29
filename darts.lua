@@ -10,6 +10,13 @@ local sqrt = math.sqrt
 local sin = math.sin
 local random = love.math.random
 
+local function currentTime()
+        if love.timer and love.timer.getTime then
+                return love.timer.getTime()
+        end
+        return 0
+end
+
 local Darts = {}
 
 local emitters = {}
@@ -446,21 +453,36 @@ local function drawEmitter(emitter)
         local bodyColor, accentColor, telegraphColor = getEmitterColors()
         local size = BASE_EMITTER_SIZE
         local half = size * 0.5
-        local baseX = (emitter.x or 0) - half
-        local baseY = (emitter.y or 0) - half
+        local centerX = emitter.x or 0
+        local centerY = emitter.y or 0
+        local baseX = centerX - half
+        local baseY = centerY - half
 
         love.graphics.push("all")
 
-        local housingColor = bodyColor
-        local insetColor = scaleColor(bodyColor, 0.78, 1)
-        love.graphics.setColor(housingColor)
+        local flash = clamp01(emitter.flashTimer or 0)
+        local strength = clamp01(emitter.telegraphStrength or 0)
+        local time = currentTime()
+
+        local shadowColor = Theme.shadowColor or {0, 0, 0, 0.45}
+        local shadowAlpha = (shadowColor[4] or 0.45) * (0.65 + 0.25 * strength + 0.1 * flash)
+        love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], clamp01(shadowAlpha))
+        love.graphics.rectangle("fill", baseX + 2, baseY + 3, size, size, 5, 5)
+
+        local housingAlpha = clamp01((bodyColor[4] or 1) + flash * 0.12)
+        love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], housingAlpha)
         love.graphics.rectangle("fill", baseX, baseY, size, size, 4, 4)
 
+        local insetColor = scaleColor(bodyColor, 0.78 + strength * 0.12, 1)
         love.graphics.setColor(insetColor)
         love.graphics.rectangle("fill", baseX + 2, baseY + 2, size - 4, size - 4, 3, 3)
 
-        local strapColor = scaleColor(accentColor, 0.85, 0.9)
-        local strapShadow = scaleColor(accentColor, 0.6, 0.8)
+        local highlight = Theme.highlightColor or {1, 1, 1, 0.06}
+        local highlightAlpha = clamp01((highlight[4] or 0.06) * (0.7 + 0.3 * (flash + strength)))
+        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
+        love.graphics.rectangle("fill", baseX + 3, baseY + 3, size - 6, size * 0.22, 3, 3)
+
+        local strapShadow = scaleColor(accentColor, 0.55, 0.85)
         love.graphics.setColor(strapShadow)
         if emitter.dir == "horizontal" then
                 love.graphics.rectangle("fill", baseX - 2, baseY + half + 1, size + 4, 5, 2, 2)
@@ -468,6 +490,7 @@ local function drawEmitter(emitter)
                 love.graphics.rectangle("fill", baseX + half + 1, baseY - 2, 5, size + 4, 2, 2)
         end
 
+        local strapColor = scaleColor(accentColor, 0.9 + strength * 0.15, 0.95)
         love.graphics.setColor(strapColor)
         if emitter.dir == "horizontal" then
                 love.graphics.rectangle("fill", baseX - 2, baseY + half - 4, size + 4, 6, 2, 2)
@@ -475,34 +498,52 @@ local function drawEmitter(emitter)
                 love.graphics.rectangle("fill", baseX + half - 4, baseY - 2, 6, size + 4, 2, 2)
         end
 
-        local flash = emitter.flashTimer or 0
-        if flash > 0 then
-                local pulse = clamp01(flash)
-                love.graphics.setColor(1, 1, 1, 0.45 * pulse)
-                love.graphics.rectangle("line", baseX - 4, baseY - 4, size + 8, size + 8, 8, 8)
+        local strapHighlightAlpha = clamp01((highlight[4] or 0.06) * (1.4 + strength * 0.6))
+        love.graphics.setColor(highlight[1], highlight[2], highlight[3], strapHighlightAlpha)
+        if emitter.dir == "horizontal" then
+                love.graphics.rectangle("fill", baseX - 2, baseY + half - 3, size + 4, 2, 2, 2)
+        else
+                love.graphics.rectangle("fill", baseX + half - 3, baseY - 2, 2, size + 4, 2, 2)
         end
 
-        local strength = emitter.telegraphStrength or 0
         if strength > 0 then
                 local alpha = clamp01((telegraphColor[4] or 1) * (0.25 + 0.5 * strength))
                 love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], alpha)
                 if emitter.dir == "horizontal" then
-                        love.graphics.rectangle("fill", (emitter.x or 0) - half - 7, baseY + half - 5, size + 14, 10, 4, 4)
+                        love.graphics.rectangle("fill", centerX - half - 7, baseY + half - 5, size + 14, 10, 4, 4)
                 else
-                        love.graphics.rectangle("fill", baseX + half - 5, (emitter.y or 0) - half - 7, 10, size + 14, 4, 4)
+                        love.graphics.rectangle("fill", baseX + half - 5, centerY - half - 7, 10, size + 14, 4, 4)
                 end
         end
 
-        love.graphics.setColor(accentColor)
+        local accentAlpha = clamp01((accentColor[4] or 1) * (0.65 + 0.25 * flash))
+        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], accentAlpha)
+        love.graphics.setLineWidth(1)
         love.graphics.rectangle("line", baseX + 1, baseY + 1, size - 2, size - 2, 3, 3)
         love.graphics.rectangle("line", baseX + 3, baseY + 3, size - 6, size - 6, 3, 3)
 
-        local rivetColor = scaleColor(accentColor, 0.55, 1)
+        if strength > 0 then
+                local pulse = 0.5 + 0.5 * sin(time * 6 + centerX * 0.05 + centerY * 0.05)
+                local expand = 2.2 * strength + pulse * 1.1 * strength
+                local pulseAlpha = clamp01(0.28 + strength * 0.55)
+                love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], pulseAlpha)
+                love.graphics.setLineWidth(1.5 + strength * 2)
+                love.graphics.rectangle("line", baseX + 1 - expand, baseY + 1 - expand, size - 2 + expand * 2, size - 2 + expand * 2, 4, 4)
+                love.graphics.setLineWidth(1)
+        end
+
+        local rivetColor = scaleColor(accentColor, 1.1 + strength * 0.1, 1)
         love.graphics.setColor(rivetColor)
         love.graphics.rectangle("fill", baseX + size * 0.2, baseY + size * 0.2, 2, 2)
         love.graphics.rectangle("fill", baseX + size * 0.72, baseY + size * 0.28, 2, 2)
         love.graphics.rectangle("fill", baseX + size * 0.28, baseY + size * 0.72, 2, 2)
         love.graphics.rectangle("fill", baseX + size * 0.75, baseY + size * 0.75, 2, 2)
+
+        if flash > 0 then
+                local pulse = clamp01(flash)
+                love.graphics.setColor(1, 1, 1, 0.35 * pulse)
+                love.graphics.rectangle("line", baseX - 4, baseY - 4, size + 8, size + 8, 8, 8)
+        end
 
         love.graphics.pop()
 end
