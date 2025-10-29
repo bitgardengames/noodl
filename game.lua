@@ -471,16 +471,16 @@ local function drawFeedbackOverlay(self)
 end
 
 local function resolveFeedbackPosition(self, options)
-        if not options then
-                options = {}
+        local x, y
+
+        if options then
+                x = options.hitX or options.x or options.headX or options.snakeX
+                y = options.hitY or options.y or options.headY or options.snakeY
         end
 
-	local x = options.hitX or options.x or options.headX or options.snakeX
-	local y = options.hitY or options.y or options.headY or options.snakeY
-
-	if not (x and y) and Snake and Snake.getHead then
-		x, y = Snake:getHead()
-	end
+        if not (x and y) and Snake and Snake.getHead then
+                x, y = Snake:getHead()
+        end
 
 	if not (x and y) then
 		local w = self.screenWidth or love.graphics.getWidth() or 0
