@@ -17,6 +17,9 @@ Particles.vy = {}
 Particles.baseSize = {}
 Particles.life = {}
 Particles.age = {}
+Particles.invLife = {}
+Particles.t = {}
+Particles.normAge = {}
 Particles.drag = {}
 Particles.gravity = {}
 Particles.fadeTo = {}
@@ -59,6 +62,9 @@ local function releaseParticle(self, index)
                 self.baseSize[index] = self.baseSize[lastIndex]
                 self.life[index] = self.life[lastIndex]
                 self.age[index] = self.age[lastIndex]
+                self.invLife[index] = self.invLife[lastIndex]
+                self.t[index] = self.t[lastIndex]
+                self.normAge[index] = self.normAge[lastIndex]
                 self.drag[index] = self.drag[lastIndex]
                 self.gravity[index] = self.gravity[lastIndex]
                 self.fadeTo[index] = self.fadeTo[lastIndex]
@@ -76,6 +82,9 @@ local function releaseParticle(self, index)
         self.baseSize[lastIndex] = nil
         self.life[lastIndex] = nil
         self.age[lastIndex] = nil
+        self.invLife[lastIndex] = nil
+        self.t[lastIndex] = nil
+        self.normAge[lastIndex] = nil
         self.drag[lastIndex] = nil
         self.gravity[lastIndex] = nil
         self.fadeTo[lastIndex] = nil
@@ -135,6 +144,9 @@ function Particles:spawnBurst(x, y, options)
                 self.baseSize[index] = baseSize * scale
                 self.life[index] = life
                 self.age[index] = 0
+                self.invLife[index] = (life > 0) and (1 / life) or math.huge
+                self.t[index] = 1
+                self.normAge[index] = 0
                 self.drag[index] = drag
                 self.gravity[index] = gravity
                 self.fadeTo[index] = fadeTo
@@ -154,13 +166,20 @@ function Particles:update(dt)
         end
 
         for i = count, 1, -1 do
-                local age = (self.age[i] or 0) + dt
-                self.age[i] = age
-
-                local life = self.life[i]
-                if age >= life then
+                local invLife = self.invLife[i] or 0
+                local t = (self.t[i] or 0) - dt * invLife
+                if t <= 0 then
                         releaseParticle(self, i)
                 else
+                        self.t[i] = t
+                        local normAge = 1 - t
+                        self.normAge[i] = normAge
+
+                        local life = self.life[i]
+                        if life ~= nil then
+                                self.age[i] = life * normAge
+                        end
+
                         local vx = self.vx[i] or 0
                         local vy = self.vy[i] or 0
                         self.x[i] = (self.x[i] or 0) + vx * dt
@@ -181,7 +200,6 @@ function Particles:update(dt)
                         self.vx[i] = vx
                         self.vy[i] = vy
 
-                        local t = 1 - (age / life)
                         local endAlpha = self.fadeTo[i]
                         if endAlpha == nil then
                                 self.alpha[i] = t
@@ -206,8 +224,13 @@ function Particles:draw()
 
         RenderLayers:withLayer("overlay", function()
                 for i = 1, count do
-                        local t = self.age[i] / self.life[i]
-                        local currentSize = self.baseSize[i] * (0.8 + t * 0.6)
+                        local normAge = self.normAge[i]
+                        if normAge == nil then
+                                local currentT = self.t[i] or 1
+                                normAge = 1 - currentT
+                        end
+
+                        local currentSize = self.baseSize[i] * (0.8 + normAge * 0.6)
                         love.graphics.setColor(self.r[i], self.g[i], self.b[i], self.alpha[i])
                         love.graphics.circle("fill", self.x[i], self.y[i], currentSize)
                 end
@@ -225,6 +248,9 @@ function Particles:reset()
         self.baseSize = {}
         self.life = {}
         self.age = {}
+        self.invLife = {}
+        self.t = {}
+        self.normAge = {}
         self.drag = {}
         self.gravity = {}
         self.fadeTo = {}
