@@ -214,46 +214,52 @@ local function aabb(ax, ay, aw, ah, bx, by, bw, bh)
 	ay < by + bh and ay + ah > by
 end
 
-local function rerouteAlongWall(headX, headY)
-	local ax, ay, aw, ah = Arena:getBounds()
-	local inset = Arena.tileSize / 2
-	local left = ax + inset
-	local right = ax + aw - inset
-	local top = ay + inset
-	local bottom = ay + ah - inset
+local function rerouteAlongWall(headX, headY, left, right, top, bottom)
+        local centerX, centerY
+        if left and right and top and bottom then
+                centerX = (left + right) / 2
+                centerY = (top + bottom) / 2
+        else
+                local ax, ay, aw, ah = Arena:getBounds()
+                local inset = Arena.tileSize / 2
+                left = ax + inset
+                right = ax + aw - inset
+                top = ay + inset
+                bottom = ay + ah - inset
+                centerX = ax + aw / 2
+                centerY = ay + ah / 2
+        end
 
-	local clampedX = max(left, min(right, headX or left))
-	local clampedY = max(top, min(bottom, headY or top))
+        local clampedX = max(left, min(right, headX or left))
+        local clampedY = max(top, min(bottom, headY or top))
 
-	local hitLeft = (headX or clampedX) <= left
-	local hitRight = (headX or clampedX) >= right
-	local hitTop = (headY or clampedY) <= top
-	local hitBottom = (headY or clampedY) >= bottom
+        local hitLeft = (headX or clampedX) <= left
+        local hitRight = (headX or clampedX) >= right
+        local hitTop = (headY or clampedY) <= top
+        local hitBottom = (headY or clampedY) >= bottom
 
-	local dir = Snake:getDirection() or {x = 0, y = 0}
-	local newDirX, newDirY = dir.x or 0, dir.y or 0
+        local dir = Snake:getDirection() or {x = 0, y = 0}
+        local newDirX, newDirY = dir.x or 0, dir.y or 0
 
-	local function fallbackVertical()
-		if dir.y and dir.y ~= 0 then
-			return dir.y > 0 and 1 or -1
-		end
-		local centerY = ay + ah / 2
-		if clampedY <= centerY then
-			return 1
-		end
-		return -1
-	end
+        local function fallbackVertical()
+                if dir.y and dir.y ~= 0 then
+                        return dir.y > 0 and 1 or -1
+                end
+                if clampedY <= centerY then
+                        return 1
+                end
+                return -1
+        end
 
-	local function fallbackHorizontal()
-		if dir.x and dir.x ~= 0 then
-			return dir.x > 0 and 1 or -1
-		end
-		local centerX = ax + aw / 2
-		if clampedX <= centerX then
-			return 1
-		end
-		return -1
-	end
+        local function fallbackHorizontal()
+                if dir.x and dir.x ~= 0 then
+                        return dir.x > 0 and 1 or -1
+                end
+                if clampedX <= centerX then
+                        return 1
+                end
+                return -1
+        end
 
 	local collidedHorizontal = hitLeft or hitRight
 	local collidedVertical = hitTop or hitBottom
@@ -537,7 +543,7 @@ local function handleWallCollision(headX, headY)
 	if not Snake:consumeShield() then
 		local safeX = clamp(headX, left, right)
 		local safeY = clamp(headY, top, bottom)
-		local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY)
+                local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY, left, right, top, bottom)
 		local clampedX = reroutedX or safeX
 		local clampedY = reroutedY or safeY
 		relocateSnake(clampedX, clampedY)
@@ -556,7 +562,7 @@ local function handleWallCollision(headX, headY)
 		}
 	end
 
-	local reroutedX, reroutedY = rerouteAlongWall(headX, headY)
+        local reroutedX, reroutedY = rerouteAlongWall(headX, headY, left, right, top, bottom)
 	local clampedX = reroutedX or clamp(headX, left, right)
 	local clampedY = reroutedY or clamp(headY, top, bottom)
 	relocateSnake(clampedX, clampedY)
