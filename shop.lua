@@ -1376,60 +1376,44 @@ local function drawRoundedRegularPolygon(mode, cx, cy, radius, sides, rotation, 
         love.graphics.polygon(mode, unpack(points))
 end
 
-local function drawRoundedPolygonShape(mode, cx, cy, size, sides, rotation, style, defaultRadiusScale, defaultCornerScale)
+local function drawPolygonShape(mode, cx, cy, size, sides, rotation, style, defaultRadiusScale)
         local radiusScale = defaultRadiusScale or 0.5
         if style and style.radiusScale ~= nil then
                 radiusScale = style.radiusScale
         end
         local radius = size * radiusScale
 
-        local baseCornerRadius
-        if style and style.cornerRadius then
-                baseCornerRadius = style.cornerRadius
-        else
-                local cornerScale = defaultCornerScale or 0.1
-                if style and style.cornerRadiusScale ~= nil then
-                        cornerScale = style.cornerRadiusScale
-                end
-                baseCornerRadius = size * cornerScale
-        end
-
-        local segments = 4
-        if style and style.cornerSegments ~= nil then
-                segments = style.cornerSegments
-        end
-
-        drawRoundedRegularPolygon(mode, cx, cy, radius, sides, rotation, baseCornerRadius, segments)
+        drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
 end
 
 local function drawRoundedTriangle(mode, cx, cy, size, rotation, style)
-        drawRoundedPolygonShape(mode, cx, cy, size, 3, rotation, style, 0.52, 0.10)
+        drawPolygonShape(mode, cx, cy, size, 3, rotation, style, 0.52)
 end
 
 local badgeShapeDrawers = {
-	circle = function(mode, cx, cy, size)
-		love.graphics.circle(mode, cx, cy, size * 0.5, 32)
-	end,
-	square = function(mode, cx, cy, size)
-		local half = size * 0.45
-		love.graphics.rectangle(mode, cx - half, cy - half, half * 2, half * 2, size * 0.18, size * 0.18)
-	end,
-	diamond = function(mode, cx, cy, size)
-		local half = size * 0.38
-		love.graphics.push()
-		love.graphics.translate(cx, cy)
-		love.graphics.rotate(pi / 4)
-		love.graphics.rectangle(mode, -half, -half, half * 2, half * 2, size * 0.12, size * 0.12)
-		love.graphics.pop()
-	end,
-	triangle_up = function(mode, cx, cy, size, style)
-		drawRoundedTriangle(mode, cx, cy, size + 12, -pi / 2, style)
-	end,
+        circle = function(mode, cx, cy, size)
+                love.graphics.circle(mode, cx, cy, size * 0.5, 32)
+        end,
+        square = function(mode, cx, cy, size)
+                local half = size * 0.45
+                love.graphics.rectangle(mode, cx - half, cy - half, half * 2, half * 2)
+        end,
+        diamond = function(mode, cx, cy, size)
+                local half = size * 0.38
+                love.graphics.push()
+                love.graphics.translate(cx, cy)
+                love.graphics.rotate(pi / 4)
+                love.graphics.rectangle(mode, -half, -half, half * 2, half * 2)
+                love.graphics.pop()
+        end,
+        triangle_up = function(mode, cx, cy, size, style)
+                drawRoundedTriangle(mode, cx, cy, size + 12, -pi / 2, style)
+        end,
 	triangle_down = function(mode, cx, cy, size, style)
 		drawRoundedTriangle(mode, cx, cy, size + 12, pi / 2, style)
 	end,
         hexagon = function(mode, cx, cy, size, style)
-                drawRoundedPolygonShape(mode, cx, cy, size, 6, pi / 6, style, 0.48, 0.08)
+                drawPolygonShape(mode, cx, cy, size, 6, pi / 6, style, 0.48)
         end,
 }
 
