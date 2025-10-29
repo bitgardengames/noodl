@@ -28,6 +28,29 @@ local FRUIT_BULGE_SCALE = 1.25
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
 
+local zephyrPoints = {}
+local zephyrPointCapacity = 0
+local stormBolt = {}
+local stormBoltCapacity = 0
+
+local function ensureBufferCapacity(buffer, capacity, needed)
+        if capacity < needed then
+                for i = capacity + 1, needed do
+                        buffer[i] = 0
+                end
+                capacity = needed
+        end
+        return capacity
+end
+
+local function trimBuffer(buffer, used, capacity)
+        if used < capacity then
+                for i = used + 1, capacity do
+                        buffer[i] = nil
+                end
+        end
+end
+
 local applyOverlay
 local drawTrailSegmentToCanvas
 
@@ -1565,12 +1588,16 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
-	for i = 1, #trail - stride do
-		local seg = trail[i]
-		local nextSeg = trail[i + stride]
-		local x1, y1 = ptXY(seg)
-		local x2, y2 = ptXY(nextSeg)
-		if x1 and y1 and x2 and y2 then
+        local steps = 6
+        local requiredPoints = (steps + 1) * 2
+        zephyrPointCapacity = ensureBufferCapacity(zephyrPoints, zephyrPointCapacity, requiredPoints)
+
+        for i = 1, #trail - stride do
+                local seg = trail[i]
+                local nextSeg = trail[i + stride]
+                local x1, y1 = ptXY(seg)
+                local x2, y2 = ptXY(nextSeg)
+                if x1 and y1 and x2 and y2 then
 			local dirX, dirY = x2 - x1, y2 - y1
 			local len = sqrt(dirX * dirX + dirY * dirY)
 			if len < 1e-4 then
@@ -1586,29 +1613,33 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 			local ctrlX = (x1 + x2) * 0.5 + perpX * sway
 			local ctrlY = (y1 + y2) * 0.5 + perpY * sway
 
-			local steps = 6
-			local points = {}
-			for step = 0, steps do
-				local t = step / steps
-				local inv = 1 - t
-				local bx = inv * inv * x1 + 2 * inv * t * ctrlX + t * t * x2
-				local by = inv * inv * y1 + 2 * inv * t * ctrlY + t * t * y2
-				local peak = 1 - abs(0.5 - t) * 2
-				bx = bx + perpX * crest * peak * 0.8
-				by = by + perpY * crest * peak * 0.8
-				points[#points + 1] = bx
-				points[#points + 1] = by
-			end
+                        local points = zephyrPoints
+                        local pointIndex = 1
+                        for step = 0, steps do
+                                local t = step / steps
+                                local inv = 1 - t
+                                local bx = inv * inv * x1 + 2 * inv * t * ctrlX + t * t * x2
+                                local by = inv * inv * y1 + 2 * inv * t * ctrlY + t * t * y2
+                                local peak = 1 - abs(0.5 - t) * 2
+                                bx = bx + perpX * crest * peak * 0.8
+                                by = by + perpY * crest * peak * 0.8
+                                points[pointIndex] = bx
+                                points[pointIndex + 1] = by
+                                pointIndex = pointIndex + 2
+                        end
 
-			local fade = 1 - progress * 0.7
-			love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
-			love.graphics.setLineWidth(1.5 + intensity * 1.2)
-			love.graphics.line(points)
+                        local pointCount = pointIndex - 1
+                        trimBuffer(points, pointCount, zephyrPointCapacity)
 
-			love.graphics.setColor(0.92, 0.98, 1.0, (0.08 + 0.18 * intensity) * fade)
-			love.graphics.circle("fill", x2, y2, SEGMENT_SIZE * 0.14, 12)
-		end
-	end
+                        local fade = 1 - progress * 0.7
+                        love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
+                        love.graphics.setLineWidth(1.5 + intensity * 1.2)
+                        love.graphics.line(points, 1, pointCount)
+
+                        love.graphics.setColor(0.92, 0.98, 1.0, (0.08 + 0.18 * intensity) * fade)
+                        love.graphics.circle("fill", x2, y2, SEGMENT_SIZE * 0.14, 12)
+                end
+        end
 
 	local ratio = data.ratio
 	if not ratio or ratio <= 0 then
@@ -1680,12 +1711,16 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
-	for i = 1, #trail - stride, stride do
-		local seg = trail[i]
-		local nextSeg = trail[i + stride]
-		local x1, y1 = ptXY(seg)
-		local x2, y2 = ptXY(nextSeg)
-		if x1 and y1 and x2 and y2 then
+        local segments = 3
+        local boltPoints = (segments + 2) * 2
+        stormBoltCapacity = ensureBufferCapacity(stormBolt, stormBoltCapacity, boltPoints)
+
+        for i = 1, #trail - stride, stride do
+                local seg = trail[i]
+                local nextSeg = trail[i + stride]
+                local x1, y1 = ptXY(seg)
+                local x2, y2 = ptXY(nextSeg)
+                if x1 and y1 and x2 and y2 then
 			local dirX, dirY = x2 - x1, y2 - y1
 			local len = sqrt(dirX * dirX + dirY * dirY)
 			if len < 1e-4 then
@@ -1695,24 +1730,30 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 			end
 			local perpX, perpY = -dirY, dirX
 
-			local bolt = {x1, y1}
-			local segments = 3
-			for segIdx = 1, segments do
-				local t = segIdx / (segments + 1)
-				local offset = sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
-				local px = x1 + dirX * len * t + perpX * offset
-				local py = y1 + dirY * len * t + perpY * offset
-				bolt[#bolt + 1] = px
-				bolt[#bolt + 1] = py
-			end
-			bolt[#bolt + 1] = x2
-			bolt[#bolt + 1] = y2
+                        local bolt = stormBolt
+                        local boltCount = 2
+                        bolt[1] = x1
+                        bolt[2] = y1
+                        for segIdx = 1, segments do
+                                local t = segIdx / (segments + 1)
+                                local offset = sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
+                                local px = x1 + dirX * len * t + perpX * offset
+                                local py = y1 + dirY * len * t + perpY * offset
+                                boltCount = boltCount + 2
+                                bolt[boltCount - 1] = px
+                                bolt[boltCount] = py
+                        end
+                        boltCount = boltCount + 2
+                        bolt[boltCount - 1] = x2
+                        bolt[boltCount] = y2
 
-			love.graphics.setColor(0.32, 0.68, 1.0, 0.2 + 0.32 * intensity)
-			love.graphics.setLineWidth(2.2 + intensity * 1.2)
-			love.graphics.line(bolt)
+                        trimBuffer(bolt, boltCount, stormBoltCapacity)
 
-			local cx = (x1 + x2) * 0.5
+                        love.graphics.setColor(0.32, 0.68, 1.0, 0.2 + 0.32 * intensity)
+                        love.graphics.setLineWidth(2.2 + intensity * 1.2)
+                        love.graphics.line(bolt, 1, boltCount)
+
+                        local cx = (x1 + x2) * 0.5
 			local cy = (y1 + y2) * 0.5
 			love.graphics.setColor(0.9, 0.96, 1.0, 0.16 + 0.26 * intensity)
 			love.graphics.circle("fill", cx, cy, SEGMENT_SIZE * (0.16 + 0.08 * intensity))
