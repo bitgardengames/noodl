@@ -22,7 +22,7 @@ local sin = math.sin
 local sort = table.sort
 
 local ProgressionScreen = {
-	transitionDuration = 0.45,
+    transitionDuration = 0.3,
 }
 
 local buttonList = ButtonList.new()

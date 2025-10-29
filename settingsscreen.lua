@@ -12,7 +12,7 @@ local max = math.max
 local min = math.min
 
 local SettingsScreen = {
-	transitionDuration = 0.45,
+    transitionDuration = 0.3,
 }
 
 local ANALOG_DEADZONE = 0.3
