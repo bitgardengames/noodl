@@ -333,18 +333,22 @@ function Achievements:unlock(name)
 end
 
 function Achievements:check(key, state)
-	self:_ensureInitialized()
+        self:_ensureInitialized()
 
-	local achievement = self.definitions[key]
-	if not achievement then
-		return
-	end
+        local achievement = self.definitions[key]
+        if not achievement then
+                return
+        end
 
-	local combinedState = self:_buildState(state)
-	local progress = evaluateProgress(achievement, combinedState)
-	if type(progress) == "number" then
-		achievement.progress = clampProgress(achievement, progress)
-	end
+        if achievement.unlocked then
+                return
+        end
+
+        local combinedState = self:_buildState(state)
+        local progress = evaluateProgress(achievement, combinedState)
+        if type(progress) == "number" then
+                achievement.progress = clampProgress(achievement, progress)
+        end
 
 	if not achievement.unlocked and shouldUnlock(achievement, combinedState, progress) then
 		self:unlock(key)
@@ -352,24 +356,24 @@ function Achievements:check(key, state)
 end
 
 function Achievements:checkAll(state)
-	self:_ensureInitialized()
+        self:_ensureInitialized()
 
-	local combinedState = self:_buildState(state)
+        local combinedState = self:_buildState(state)
 
-	for i = 1, #self.definitionOrder do
-		local key = self.definitionOrder[i]
-		local achievement = self.definitions[key]
-		if achievement then
-			local progress = evaluateProgress(achievement, combinedState)
-			if type(progress) == "number" then
-				achievement.progress = clampProgress(achievement, progress)
-			end
+        for i = 1, #self.definitionOrder do
+                local key = self.definitionOrder[i]
+                local achievement = self.definitions[key]
+                if achievement and not achievement.unlocked then
+                        local progress = evaluateProgress(achievement, combinedState)
+                        if type(progress) == "number" then
+                                achievement.progress = clampProgress(achievement, progress)
+                        end
 
-			if not achievement.unlocked and shouldUnlock(achievement, combinedState, progress) then
-				self:unlock(key)
-			end
-		end
-	end
+                        if shouldUnlock(achievement, combinedState, progress) then
+                                self:unlock(key)
+                        end
+                end
+        end
 end
 
 function Achievements:update(dt)
