@@ -58,106 +58,106 @@ local backgroundEffectCache = {}
 local backgroundEffect = nil
 
 local function copyColor(color)
-        if not color then
-                return {0, 0, 0, 1}
-        end
+		if not color then
+				return {0, 0, 0, 1}
+		end
 
-        return {
-                color[1] or 0,
-                color[2] or 0,
-                color[3] or 0,
-                color[4] == nil and 1 or color[4],
-        }
+		return {
+				color[1] or 0,
+				color[2] or 0,
+				color[3] or 0,
+				color[4] == nil and 1 or color[4],
+		}
 end
 
 local function lightenColor(color, factor)
-        factor = factor or 0.35
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] == nil and 1 or color[4]
-        return {
-                r + (1 - r) * factor,
-                g + (1 - g) * factor,
-                b + (1 - b) * factor,
-                a * (0.65 + factor * 0.35),
-        }
+		factor = factor or 0.35
+		local r = color[1] or 1
+		local g = color[2] or 1
+		local b = color[3] or 1
+		local a = color[4] == nil and 1 or color[4]
+		return {
+				r + (1 - r) * factor,
+				g + (1 - g) * factor,
+				b + (1 - b) * factor,
+				a * (0.65 + factor * 0.35),
+		}
 end
 
 local function darkenColor(color, factor)
-        factor = factor or 0.35
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] == nil and 1 or color[4]
-        return {
-                r * (1 - factor),
-                g * (1 - factor),
-                b * (1 - factor),
-                a,
-        }
+		factor = factor or 0.35
+		local r = color[1] or 1
+		local g = color[2] or 1
+		local b = color[3] or 1
+		local a = color[4] == nil and 1 or color[4]
+		return {
+				r * (1 - factor),
+				g * (1 - factor),
+				b * (1 - factor),
+				a,
+		}
 end
 
 local function withAlpha(color, alpha)
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] == nil and 1 or color[4]
-        return {r, g, b, a * alpha}
+		local r = color[1] or 1
+		local g = color[2] or 1
+		local b = color[3] or 1
+		local a = color[4] == nil and 1 or color[4]
+		return {r, g, b, a * alpha}
 end
 
 local function configureBackgroundEffect()
-        local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-        if not effect then
-                backgroundEffect = nil
-                return
-        end
+		local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+		if not effect then
+				backgroundEffect = nil
+				return
+		end
 
-        local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-        local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
-        local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-        local accent = lightenColor(copyColor(coolAccent), 0.18)
-        accent[4] = 1
+		local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+		local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
+		local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+		local accent = lightenColor(copyColor(coolAccent), 0.18)
+		accent[4] = 1
 
-        local pulse = lightenColor(copyColor(Theme.panelBorder or Theme.progressColor or accent), 0.26)
-        pulse[4] = 1
+		local pulse = lightenColor(copyColor(Theme.panelBorder or Theme.progressColor or accent), 0.26)
+		pulse[4] = 1
 
-        baseColor = darkenColor(baseColor, 0.15)
-        baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+		baseColor = darkenColor(baseColor, 0.15)
+		baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-        local vignette = {
-                color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
-                alpha = 0.28,
-                steps = 3,
-                thickness = nil,
-        }
+		local vignette = {
+				color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
+				alpha = 0.28,
+				steps = 3,
+				thickness = nil,
+		}
 
-        effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
+		effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
 
-        Shaders.configure(effect, {
-                bgColor = baseColor,
-                accentColor = accent,
-                pulseColor = pulse,
-        })
+		Shaders.configure(effect, {
+				bgColor = baseColor,
+				accentColor = accent,
+				pulseColor = pulse,
+		})
 
-        effect.vignetteOverlay = vignette
-        backgroundEffect = effect
+		effect.vignetteOverlay = vignette
+		backgroundEffect = effect
 end
 
 local function drawBackground(sw, sh)
-        love.graphics.setColor(Theme.bgColor)
-        love.graphics.rectangle("fill", 0, 0, sw, sh)
+		love.graphics.setColor(Theme.bgColor)
+		love.graphics.rectangle("fill", 0, 0, sw, sh)
 
 	if not backgroundEffect then
 		configureBackgroundEffect()
 	end
 
-        if backgroundEffect then
-                local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-                Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-        end
+		if backgroundEffect then
+				local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
+				Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
+		end
 
-        love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function getDayUnit(count)
@@ -246,53 +246,53 @@ local function updateDailyBarCelebration(dt, shouldCelebrate)
 			dailyBarCelebration.sparkles = {}
 		end
 
-                if dailyBarCelebration.active then
-                        dailyBarCelebration.time = dailyBarCelebration.time + dt
+				if dailyBarCelebration.active then
+						dailyBarCelebration.time = dailyBarCelebration.time + dt
 
-                        if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_DURATION then
-                                if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_SPAWN_WINDOW then
-                                        dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer - dt
+						if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_DURATION then
+								if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_SPAWN_WINDOW then
+										dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer - dt
 
-                                        local spawnInterval = 0.12
-                                        while dailyBarCelebration.spawnTimer <= 0 do
-                                                spawnDailyBarSparkle()
-                                                dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer + spawnInterval
+										local spawnInterval = 0.12
+										while dailyBarCelebration.spawnTimer <= 0 do
+												spawnDailyBarSparkle()
+												dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer + spawnInterval
 
-                                                if dailyBarCelebration.time >= DAILY_BAR_CELEBRATION_SPAWN_WINDOW then
-                                                        break
-                                                end
-                                        end
-                                else
-                                        dailyBarCelebration.spawnTimer = 0
-                                end
-                        else
-                                dailyBarCelebration.active = false
-                                dailyBarCelebration.finished = true
-                                dailyBarCelebration.spawnTimer = 0
-                                dailyBarCelebration.time = DAILY_BAR_CELEBRATION_DURATION
-                        end
-                end
-        elseif dailyBarCelebration.active or dailyBarCelebration.finished then
-                resetDailyBarCelebration()
-        end
+												if dailyBarCelebration.time >= DAILY_BAR_CELEBRATION_SPAWN_WINDOW then
+														break
+												end
+										end
+								else
+										dailyBarCelebration.spawnTimer = 0
+								end
+						else
+								dailyBarCelebration.active = false
+								dailyBarCelebration.finished = true
+								dailyBarCelebration.spawnTimer = 0
+								dailyBarCelebration.time = DAILY_BAR_CELEBRATION_DURATION
+						end
+				end
+		elseif dailyBarCelebration.active or dailyBarCelebration.finished then
+				resetDailyBarCelebration()
+		end
 
-        if dailyBarCelebration.active or dailyBarCelebration.finished then
-                for i = #dailyBarCelebration.sparkles, 1, -1 do
-                        local sparkle = dailyBarCelebration.sparkles[i]
-                        sparkle.life = sparkle.life + dt
-                        if sparkle.life >= sparkle.duration then
-                                table.remove(dailyBarCelebration.sparkles, i)
+		if dailyBarCelebration.active or dailyBarCelebration.finished then
+				for i = #dailyBarCelebration.sparkles, 1, -1 do
+						local sparkle = dailyBarCelebration.sparkles[i]
+						sparkle.life = sparkle.life + dt
+						if sparkle.life >= sparkle.duration then
+								table.remove(dailyBarCelebration.sparkles, i)
 			end
 		end
 	end
 end
 
 local function prepareStartAction(action)
-        if type(action) ~= "string" then
-                return action
-        end
+		if type(action) ~= "string" then
+				return action
+		end
 
-        return action
+		return action
 end
 
 local function handleAnalogAxis(axis, value)
@@ -361,36 +361,36 @@ function Menu:enter()
 	configureBackgroundEffect()
 
 	local sw, sh = Screen:get()
-        local centerX = sw / 2
-        local menuLayout = UI.getMenuLayout(sw, sh)
+		local centerX = sw / 2
+		local menuLayout = UI.getMenuLayout(sw, sh)
 
 	local labels = {
-                {key = "menu.start_game",   action = "game"},
-                {key = "menu.achievements", action = "achievementsmenu"},
-                {key = "menu.progression",  action = "metaprogression"},
-                {key = "menu.settings",     action = "settings"},
-                {key = "menu.quit",         action = "quit"},
+				{key = "menu.start_game",   action = "game"},
+				{key = "menu.achievements", action = "achievementsmenu"},
+				{key = "menu.progression",  action = "metaprogression"},
+				{key = "menu.settings",     action = "settings"},
+				{key = "menu.quit",         action = "quit"},
 	}
 
-        local totalButtonHeight = #labels * UI.spacing.buttonHeight + max(0, #labels - 1) * UI.spacing.buttonSpacing
-        local stackBase = (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
-        local footerGuard = menuLayout.footerSpacing or UI.spacing.sectionSpacing or 24
-        local lowerBound = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or sh * 0.12))) - footerGuard
-        local availableHeight = max(0, lowerBound - stackBase)
-        local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5) + BUTTON_STACK_OFFSET
-        local minStart = stackBase + BUTTON_STACK_OFFSET
-        local maxStart = lowerBound - totalButtonHeight
+		local totalButtonHeight = #labels * UI.spacing.buttonHeight + max(0, #labels - 1) * UI.spacing.buttonSpacing
+		local stackBase = (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
+		local footerGuard = menuLayout.footerSpacing or UI.spacing.sectionSpacing or 24
+		local lowerBound = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or sh * 0.12))) - footerGuard
+		local availableHeight = max(0, lowerBound - stackBase)
+		local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5) + BUTTON_STACK_OFFSET
+		local minStart = stackBase + BUTTON_STACK_OFFSET
+		local maxStart = lowerBound - totalButtonHeight
 
-        if maxStart < minStart then
-                startY = maxStart
-        else
-                if startY > maxStart then
-                        startY = maxStart
-                end
-                if startY < minStart then
-                        startY = minStart
-                end
-        end
+		if maxStart < minStart then
+				startY = maxStart
+		else
+				if startY > maxStart then
+						startY = maxStart
+				end
+				if startY < minStart then
+						startY = minStart
+				end
+		end
 
 	local defs = {}
 
@@ -451,31 +451,31 @@ function Menu:update(dt)
 end
 
 function Menu:draw()
-        local sw, sh = Screen:get()
-        local menuLayout = UI.getMenuLayout(sw, sh)
+		local sw, sh = Screen:get()
+		local menuLayout = UI.getMenuLayout(sw, sh)
 
 	RenderLayers:begin(sw, sh)
 
 	drawBackground(sw, sh)
 
-        local baseCellSize = 20
-        local baseSpacing = 10
-        local wordScale = 1.5
+		local baseCellSize = 20
+		local baseSpacing = 10
+		local wordScale = 1.5
 
-        local cellSize = baseCellSize * wordScale
-        local word = Localization:get("menu.title_word")
-        local spacing = baseSpacing * wordScale
-        local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-        local ox = (sw - wordWidth) / 2
+		local cellSize = baseCellSize * wordScale
+		local word = Localization:get("menu.title_word")
+		local spacing = baseSpacing * wordScale
+		local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+		local ox = (sw - wordWidth) / 2
 
-        local baseOy = menuLayout.titleY or (sh * 0.2)
-        local buttonTop = buttons[1] and buttons[1].y or (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
-        local desiredSpacing = (UI.spacing.buttonSpacing or 0) + (UI.spacing.buttonHeight or 0) * 0.25 + cellSize * 0.5
-        local wordHeightForSpacing = cellSize * 2
-        local targetBottom = buttonTop - desiredSpacing
-        local currentBottom = baseOy + wordHeightForSpacing
-        local additionalOffset = max(0, targetBottom - currentBottom)
-        local oy = max(0, baseOy + additionalOffset - LOGO_VERTICAL_LIFT)
+		local baseOy = menuLayout.titleY or (sh * 0.2)
+		local buttonTop = buttons[1] and buttons[1].y or (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
+		local desiredSpacing = (UI.spacing.buttonSpacing or 0) + (UI.spacing.buttonHeight or 0) * 0.25 + cellSize * 0.5
+		local wordHeightForSpacing = cellSize * 2
+		local targetBottom = buttonTop - desiredSpacing
+		local currentBottom = baseOy + wordHeightForSpacing
+		local additionalOffset = max(0, targetBottom - currentBottom)
+		local oy = max(0, baseOy + additionalOffset - LOGO_VERTICAL_LIFT)
 
 	if titleSaw then
 		local sawRadius = titleSaw.radius or 1
@@ -533,25 +533,25 @@ function Menu:draw()
 		end
 	end
 
-        local versionFont = UI.fonts.small
-        love.graphics.setFont(versionFont)
-        local versionHeight = versionFont and versionFont:getHeight() or 0
-        local versionInset = 15
-        local versionY = sh - versionHeight - versionInset
-        local versionX = versionInset
-        setColorWithAlpha(Theme.textColor, 0.6)
-        love.graphics.print(Localization:get("menu.version"), versionX, versionY)
-        love.graphics.setColor(Theme.textColor)
+		local versionFont = UI.fonts.small
+		love.graphics.setFont(versionFont)
+		local versionHeight = versionFont and versionFont:getHeight() or 0
+		local versionInset = 15
+		local versionY = sh - versionHeight - versionInset
+		local versionX = versionInset
+		setColorWithAlpha(Theme.textColor, 0.6)
+		love.graphics.print(Localization:get("menu.version"), versionX, versionY)
+		love.graphics.setColor(Theme.textColor)
 
-        if dailyChallenge and dailyChallengeAnim > 0 then
-                local alpha = min(1, dailyChallengeAnim)
-                local eased = alpha * alpha
-                local panelWidth = min(menuLayout.panelMaxWidth or 420, max(280, menuLayout.contentWidth or (sw - 72)))
-                local padding = UI.spacing.panelPadding or 16
-                local panelMargin = (menuLayout.marginHorizontal or 36) * EDGE_PROXIMITY_FACTOR
-                local panelOffsetX = 25
-                local panelOffsetY = 25
-                local panelX = sw - panelWidth - panelMargin + panelOffsetX
+		if dailyChallenge and dailyChallengeAnim > 0 then
+				local alpha = min(1, dailyChallengeAnim)
+				local eased = alpha * alpha
+				local panelWidth = min(menuLayout.panelMaxWidth or 420, max(280, menuLayout.contentWidth or (sw - 72)))
+				local padding = UI.spacing.panelPadding or 16
+				local panelMargin = (menuLayout.marginHorizontal or 36) * EDGE_PROXIMITY_FACTOR
+				local panelOffsetX = 25
+				local panelOffsetY = 25
+				local panelX = sw - panelWidth - panelMargin + panelOffsetX
 		local headerFont = UI.fonts.small
 		local titleFont = UI.fonts.button
 		local bodyFont = UI.fonts.body
@@ -611,10 +611,10 @@ function Menu:draw()
 			streakHeight = lineCount * progressFont:getHeight()
 		end
 
-                local panelHeight = padding * 2
-                + headerFont:getHeight()
-                + 6
-                + titleFont:getHeight()
+				local panelHeight = padding * 2
+				+ headerFont:getHeight()
+				+ 6
+				+ titleFont:getHeight()
 		+ 10
 		+ descHeight
 		+ statusBarHeight
@@ -623,7 +623,7 @@ function Menu:draw()
 			panelHeight = panelHeight + 8 + streakHeight
 		end
 
-                local panelY = max(menuLayout.marginTop or 36, (menuLayout.bottomY or (sh - (menuLayout.marginBottom or 36))) - panelHeight) + panelOffsetY
+				local panelY = max(menuLayout.marginTop or 36, (menuLayout.bottomY or (sh - (menuLayout.marginBottom or 36))) - panelHeight) + panelOffsetY
 
 		local mx, my = love.mouse.getPosition()
 		local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
@@ -638,30 +638,30 @@ function Menu:draw()
 				resetTooltipArgs.time = nil
 				tooltipText = Localization:get("menu.daily_panel_reset_tooltip_soon")
 			end
-                        Tooltip:show(tooltipText, {
-                                id = "dailyChallengeReset",
-                                x = panelX + panelWidth / 2,
-                                y = panelY,
-                                placement = "above",
-                                maxWidth = panelWidth,
-                                offset = menuLayout.tooltipOffset or 14,
-                                delay = 0.12,
-                        })
+						Tooltip:show(tooltipText, {
+								id = "dailyChallengeReset",
+								x = panelX + panelWidth / 2,
+								y = panelY,
+								placement = "above",
+								maxWidth = panelWidth,
+								offset = menuLayout.tooltipOffset or 14,
+								delay = 0.12,
+						})
 		else
 			Tooltip:hide("dailyChallengeReset")
 		end
 
-                setColorWithAlpha(Theme.shadowColor, eased * 0.7)
-                love.graphics.rectangle("fill", panelX + 5, panelY + 5, panelWidth, panelHeight, 14, 14)
+				setColorWithAlpha(Theme.shadowColor, eased * 0.7)
+				love.graphics.rectangle("fill", panelX + 5, panelY + 5, panelWidth, panelHeight, 14, 14)
 
-                local panelFillColor = (UI.colors and UI.colors.button) or Theme.buttonColor or Theme.panelColor
-                setColorWithAlpha(panelFillColor, alpha)
+				local panelFillColor = (UI.colors and UI.colors.button) or Theme.buttonColor or Theme.panelColor
+				setColorWithAlpha(panelFillColor, alpha)
 		UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
 
-                setColorWithAlpha(DAILY_PANEL_OUTLINE_COLOR, alpha)
-                love.graphics.setLineWidth(2)
-                love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 14, 14)
-                love.graphics.setLineWidth(1)
+				setColorWithAlpha(DAILY_PANEL_OUTLINE_COLOR, alpha)
+				love.graphics.setLineWidth(2)
+				love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 14, 14)
+				love.graphics.setLineWidth(1)
 
 		local textX = panelX + padding
 		local textY = panelY + padding
@@ -718,37 +718,37 @@ function Menu:draw()
 				UI.drawRoundedRect(textX, textY, fillWidth, barHeight, 8)
 			end
 
-                        local celebrationVisible = ratio >= 0.999 and (dailyBarCelebration.active or #dailyBarCelebration.sparkles > 0)
-                        if celebrationVisible then
-                                local timer = dailyBarCelebration.time or 0
-                                local fadeAlpha = 1
+						local celebrationVisible = ratio >= 0.999 and (dailyBarCelebration.active or #dailyBarCelebration.sparkles > 0)
+						if celebrationVisible then
+								local timer = dailyBarCelebration.time or 0
+								local fadeAlpha = 1
 
-                                if dailyBarCelebration.active then
-                                        local fadeStart = max(0, DAILY_BAR_CELEBRATION_DURATION - DAILY_BAR_CELEBRATION_FADE_WINDOW)
-                                        if timer > fadeStart then
-                                                local fadeProgress = (timer - fadeStart) / DAILY_BAR_CELEBRATION_FADE_WINDOW
-                                                fadeAlpha = max(0, min(1, 1 - fadeProgress))
-                                        end
-                                else
-                                        fadeAlpha = 0
-                                end
+								if dailyBarCelebration.active then
+										local fadeStart = max(0, DAILY_BAR_CELEBRATION_DURATION - DAILY_BAR_CELEBRATION_FADE_WINDOW)
+										if timer > fadeStart then
+												local fadeProgress = (timer - fadeStart) / DAILY_BAR_CELEBRATION_FADE_WINDOW
+												fadeAlpha = max(0, min(1, 1 - fadeProgress))
+										end
+								else
+										fadeAlpha = 0
+								end
 
-                                local shimmerWidth = max(barWidth * 0.3, barHeight)
-                                local shimmerProgress = (sin(timer * 2.2) * 0.5) + 0.5
-                                local shimmerX = textX + shimmerProgress * (barWidth - shimmerWidth)
-                                local shimmerAlpha = (0.35 + 0.25 * sin(timer * 3.1)) * fadeAlpha
+								local shimmerWidth = max(barWidth * 0.3, barHeight)
+								local shimmerProgress = (sin(timer * 2.2) * 0.5) + 0.5
+								local shimmerX = textX + shimmerProgress * (barWidth - shimmerWidth)
+								local shimmerAlpha = (0.35 + 0.25 * sin(timer * 3.1)) * fadeAlpha
 
-                                if shimmerAlpha > 0 then
-                                        setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
-                                        UI.drawRoundedRect(shimmerX, textY, shimmerWidth, barHeight, 8)
-                                end
+								if shimmerAlpha > 0 then
+										setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
+										UI.drawRoundedRect(shimmerX, textY, shimmerWidth, barHeight, 8)
+								end
 
-                                for _, sparkle in ipairs(dailyBarCelebration.sparkles) do
-                                        local progress = min(1, sparkle.life / sparkle.duration)
-                                        local sparkleAlpha = (1 - progress) * alpha
-                                        if sparkleAlpha > 0 then
-                                                local sparkleX = textX + sparkle.x * barWidth
-                                                local baseY = textY + barHeight / 2
+								for _, sparkle in ipairs(dailyBarCelebration.sparkles) do
+										local progress = min(1, sparkle.life / sparkle.duration)
+										local sparkleAlpha = (1 - progress) * alpha
+										if sparkleAlpha > 0 then
+												local sparkleX = textX + sparkle.x * barWidth
+												local baseY = textY + barHeight / 2
 						local offset = (0.5 - progress) * (barHeight + sparkle.lift)
 						local sparkleY = baseY + offset
 						local size = 2 + (1 - progress) * 3

@@ -32,10 +32,10 @@ local XP_CURVE_SCALE = 10
 local XP_CURVE_EXPONENT = 1.32
 
 local function compareUnlockTrackEntries(a, b)
-        if a.level == b.level then
-                return (a.id or "") < (b.id or "")
-        end
-        return a.level < b.level
+		if a.level == b.level then
+				return (a.id or "") < (b.id or "")
+		end
+		return a.level < b.level
 end
 
 local unlockDefinitions = {
@@ -327,9 +327,9 @@ function MetaProgression:getUnlockTrack()
 		insert(track, entry)
 	end
 
-        table.sort(track, compareUnlockTrackEntries)
+		table.sort(track, compareUnlockTrackEntries)
 
-        return track
+		return track
 end
 
 local function buildSnapshot(self, totalXP)
@@ -364,35 +364,35 @@ local function calculateRunGain(runStats)
 end
 
 local function prepareUnlocks(levelUps)
-       local unlocks = {}
-       for _, level in ipairs(levelUps) do
-               local info = unlockDefinitions[level]
-               if info then
-                       local tags
-                       if type(info.unlockTags) == "table" then
-                               tags = {}
-                               for i, tag in ipairs(info.unlockTags) do
-                                       tags[i] = tag
-                               end
-                       end
+		local unlocks = {}
+		for _, level in ipairs(levelUps) do
+				local info = unlockDefinitions[level]
+				if info then
+						local tags
+						if type(info.unlockTags) == "table" then
+								tags = {}
+								for i, tag in ipairs(info.unlockTags) do
+										tags[i] = tag
+								end
+						end
 
-                       unlocks[#unlocks + 1] = {
-                               level = level,
-                               id = info.id,
-                               name = info.name,
-                               description = info.description,
-                               unlockTags = tags,
-                               previewUpgradeId = info.previewUpgradeId,
-                       }
-               else
-                       unlocks[#unlocks + 1] = {
-                               level = level,
-                               name = string.format("Meta Reward %d", level),
-                               description = "Placeholder: Future reward details coming soon.",
-                       }
-               end
-       end
-       return unlocks
+						unlocks[#unlocks + 1] = {
+								level = level,
+								id = info.id,
+								name = info.name,
+								description = info.description,
+								unlockTags = tags,
+								previewUpgradeId = info.previewUpgradeId,
+						}
+				else
+						unlocks[#unlocks + 1] = {
+								level = level,
+								name = string.format("Meta Reward %d", level),
+								description = "Placeholder: Future reward details coming soon.",
+						}
+				end
+		end
+		return unlocks
 end
 
 local function prepareMilestones(startTotal, endTotal)

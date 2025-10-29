@@ -332,12 +332,12 @@ local function buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thu
 end
 
 local function computeLayout(sw, sh)
-        local layout = {}
-        local menuLayout = UI.getMenuLayout(sw, sh)
+		local layout = {}
+		local menuLayout = UI.getMenuLayout(sw, sh)
 
-        local edgeMarginX = max(menuLayout.marginHorizontal or 32, sw * 0.05)
-        local basePanelWidth = CARD_WIDTH + BASE_PANEL_PADDING_X * 2
-        local availableWidth = sw - edgeMarginX * 2
+		local edgeMarginX = max(menuLayout.marginHorizontal or 32, sw * 0.05)
+		local basePanelWidth = CARD_WIDTH + BASE_PANEL_PADDING_X * 2
+		local availableWidth = sw - edgeMarginX * 2
 	local fallbackWidth = sw * 0.9
 	local targetWidth = max(availableWidth, fallbackWidth)
 	targetWidth = min(targetWidth, sw - 24)
@@ -381,19 +381,19 @@ local function computeLayout(sw, sh)
 	layout.panelX = panelX
 	layout.listX = panelX + panelPaddingX
 
-        local titleFont = UI.fonts.title
-        local titleFontHeight = titleFont:getHeight()
-        local titleY = UI.getHeaderY(sw, sh)
-        layout.titleY = titleY
+		local titleFont = UI.fonts.title
+		local titleFontHeight = titleFont:getHeight()
+		local titleY = UI.getHeaderY(sw, sh)
+		layout.titleY = titleY
 
-        local topSpacing = menuLayout.sectionSpacing or max(28, sh * 0.045)
-        local desiredPanelTop = titleY + titleFontHeight + topSpacing
-        local panelAnchor = menuLayout.bodyTop or menuLayout.stackTop or desiredPanelTop
-        local containerTop = max(panelAnchor, min(START_Y, desiredPanelTop))
+		local topSpacing = menuLayout.sectionSpacing or max(28, sh * 0.045)
+		local desiredPanelTop = titleY + titleFontHeight + topSpacing
+		local panelAnchor = menuLayout.bodyTop or menuLayout.stackTop or desiredPanelTop
+		local containerTop = max(panelAnchor, min(START_Y, desiredPanelTop))
 
-        layout.panelPaddingY = BASE_PANEL_PADDING_Y
+		layout.panelPaddingY = BASE_PANEL_PADDING_Y
 
-        local panelPaddingY = layout.panelPaddingY
+		local panelPaddingY = layout.panelPaddingY
 	local summaryInsetX = max(28, panelPaddingX)
 	layout.summaryInsetX = summaryInsetX
 
@@ -401,13 +401,13 @@ local function computeLayout(sw, sh)
 	local summaryTopPadding = summaryVerticalPadding
 	local summaryBottomPadding = max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, summaryVerticalPadding)
 
-        local summaryPanel = {
-                x = panelX,
-                y = containerTop,
-                width = layout.panelWidth,
-                topPadding = summaryTopPadding,
-                bottomPadding = summaryBottomPadding,
-        }
+		local summaryPanel = {
+				x = panelX,
+				y = containerTop,
+				width = layout.panelWidth,
+				topPadding = summaryTopPadding,
+				bottomPadding = summaryBottomPadding,
+		}
 
 	local progressHeight = SUMMARY_PROGRESS_BAR_HEIGHT
 	local summaryLineHeight = UI.fonts.achieve:getHeight()
@@ -440,26 +440,26 @@ local function computeLayout(sw, sh)
 		layout.summaryProgressY = layout.summaryProgressY + adjustment
 	end
 
-        local panelGap = max(SUMMARY_PANEL_GAP_MIN, max(panelPaddingY * 0.35, (menuLayout.sectionSpacing or panelPaddingY)))
-        layout.panelGap = panelGap
+		local panelGap = max(SUMMARY_PANEL_GAP_MIN, max(panelPaddingY * 0.35, (menuLayout.sectionSpacing or panelPaddingY)))
+		layout.panelGap = panelGap
 
-        local listPanelY = summaryPanel.y + summaryPanel.height + panelGap
-        layout.panelY = listPanelY
+		local listPanelY = summaryPanel.y + summaryPanel.height + panelGap
+		layout.panelY = listPanelY
 
-        local footerReserve = (UI.spacing.buttonHeight or 0) + (UI.spacing.buttonSpacing or 0) + ((UI.scaled and UI.scaled(48, 32)) or 48)
-        local bottomMargin = max(menuLayout.marginBottom or 80, footerReserve)
-        layout.bottomMargin = bottomMargin
+		local footerReserve = (UI.spacing.buttonHeight or 0) + (UI.spacing.buttonSpacing or 0) + ((UI.scaled and UI.scaled(48, 32)) or 48)
+		local bottomMargin = max(menuLayout.marginBottom or 80, footerReserve)
+		layout.bottomMargin = bottomMargin
 
-        layout.viewportBottom = (menuLayout.bottomY or (sh - bottomMargin))
-        layout.startY = listPanelY + panelPaddingY
-        layout.viewportHeight = max(0, layout.viewportBottom - layout.startY)
+		layout.viewportBottom = (menuLayout.bottomY or (sh - bottomMargin))
+		layout.startY = listPanelY + panelPaddingY
+		layout.viewportHeight = max(0, layout.viewportBottom - layout.startY)
 
-        layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
-        layout.scissorTop = max(menuLayout.marginTop or 0, layout.startY - SCROLL_SCISSOR_TOP_PADDING)
-        layout.scissorBottom = layout.viewportBottom
-        layout.scissorHeight = max(0, layout.scissorBottom - layout.scissorTop)
+		layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
+		layout.scissorTop = max(menuLayout.marginTop or 0, layout.startY - SCROLL_SCISSOR_TOP_PADDING)
+		layout.scissorBottom = layout.viewportBottom
+		layout.scissorHeight = max(0, layout.scissorBottom - layout.scissorTop)
 
-        return layout
+		return layout
 end
 
 local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered)

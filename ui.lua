@@ -78,34 +78,34 @@ local fontDefinitions = {
 }
 
 local baseSpacing = {
-        buttonWidth = 260,
-        buttonHeight = 56,
-        buttonRadius = 14,
-        buttonSpacing = 24,
-        panelRadius = 16,
-        panelPadding = 20,
-        shadowOffset = SHADOW_OFFSET,
-        sectionSpacing = 28,
-        sectionHeaderSpacing = 16,
-        sliderHeight = 68,
-        sliderTrackHeight = 10,
-        sliderHandleRadius = 12,
+		buttonWidth = 260,
+		buttonHeight = 56,
+		buttonRadius = 14,
+		buttonSpacing = 24,
+		panelRadius = 16,
+		panelPadding = 20,
+		shadowOffset = SHADOW_OFFSET,
+		sectionSpacing = 28,
+		sectionHeaderSpacing = 16,
+		sliderHeight = 68,
+		sliderTrackHeight = 10,
+		sliderHandleRadius = 12,
 	sliderPadding = 22,
 }
 
 local spacingMinimums = {
-        buttonWidth = 180,
-        buttonHeight = 44,
-        buttonRadius = 8,
-        buttonSpacing = 16,
-        panelRadius = 12,
-        panelPadding = 14,
-        shadowOffset = SHADOW_OFFSET,
-        sectionSpacing = 18,
-        sectionHeaderSpacing = 10,
-        sliderHeight = 48,
-        sliderTrackHeight = 4,
-        sliderHandleRadius = 10,
+		buttonWidth = 180,
+		buttonHeight = 44,
+		buttonRadius = 8,
+		buttonSpacing = 16,
+		panelRadius = 12,
+		panelPadding = 14,
+		shadowOffset = SHADOW_OFFSET,
+		sectionSpacing = 18,
+		sectionHeaderSpacing = 10,
+		sliderHeight = 48,
+		sliderTrackHeight = 4,
+		sliderHandleRadius = 10,
 	sliderPadding = 14,
 }
 
@@ -145,35 +145,35 @@ local function approachExp(current, target, dt, speed)
 end
 
 local function lightenColor(color, amount, out)
-        local target = out or {}
-        if not color then
-                target[1], target[2], target[3], target[4] = 1, 1, 1, 1
-                return target
-        end
+		local target = out or {}
+		if not color then
+				target[1], target[2], target[3], target[4] = 1, 1, 1, 1
+				return target
+		end
 
-        local a = color[4] or 1
-        target[1] = color[1] + (1 - color[1]) * amount
-        target[2] = color[2] + (1 - color[2]) * amount
-        target[3] = color[3] + (1 - color[3]) * amount
-        target[4] = a
+		local a = color[4] or 1
+		target[1] = color[1] + (1 - color[1]) * amount
+		target[2] = color[2] + (1 - color[2]) * amount
+		target[3] = color[3] + (1 - color[3]) * amount
+		target[4] = a
 
-        return target
+		return target
 end
 
 local function darkenColor(color, amount, out)
-        local target = out or {}
-        if not color then
-                target[1], target[2], target[3], target[4] = 0, 0, 0, 1
-                return target
-        end
+		local target = out or {}
+		if not color then
+				target[1], target[2], target[3], target[4] = 0, 0, 0, 1
+				return target
+		end
 
-        local a = color[4] or 1
-        target[1] = color[1] * amount
-        target[2] = color[2] * amount
-        target[3] = color[3] * amount
-        target[4] = a
+		local a = color[4] or 1
+		target[1] = color[1] * amount
+		target[2] = color[2] * amount
+		target[3] = color[3] * amount
+		target[4] = a
 
-        return target
+		return target
 end
 
 local function setColor(color, alphaMultiplier)
@@ -240,35 +240,35 @@ UI.layout.menu = UI.layout.menu or {}
 UI.layoutScale = nil
 
 local baseMenuLayout = {
-        marginTop = 128,
-        marginBottom = 112,
-        marginHorizontal = 156,
-        buttonStackOffset = 48,
-        subtitleSpacing = 18,
-        footerSpacing = 32,
-        tooltipOffset = 18,
-        panelMaxWidth = 420,
+		marginTop = 128,
+		marginBottom = 112,
+		marginHorizontal = 156,
+		buttonStackOffset = 48,
+		subtitleSpacing = 18,
+		footerSpacing = 32,
+		tooltipOffset = 18,
+		panelMaxWidth = 420,
 }
 
 local function scaledSpacingValue(key, scale)
-        if key == "shadowOffset" then
-                return SHADOW_OFFSET
-        end
-        local baseValue = baseSpacing[key] or 0
-        local minValue = spacingMinimums[key] or 0
-        local value = round(baseValue * scale)
-        if minValue > 0 then
-                value = max(minValue, value)
+		if key == "shadowOffset" then
+				return SHADOW_OFFSET
+		end
+		local baseValue = baseSpacing[key] or 0
+		local minValue = spacingMinimums[key] or 0
+		local value = round(baseValue * scale)
+		if minValue > 0 then
+				value = max(minValue, value)
 	end
 	return value
 end
 
 local function applySpacing(scale)
-        for key in pairs(baseSpacing) do
-                UI.spacing[key] = scaledSpacingValue(key, scale)
-        end
+		for key in pairs(baseSpacing) do
+				UI.spacing[key] = scaledSpacingValue(key, scale)
+		end
 
-        UI.spacing.shadowOffset = SHADOW_OFFSET
+		UI.spacing.shadowOffset = SHADOW_OFFSET
 
 	local headerPadding = round(baseSectionHeaderPadding * scale)
 	if baseSectionHeaderPadding > 0 then
@@ -282,11 +282,11 @@ local function applySpacing(scale)
 		local fallbackHeight = round((fontDefinitions.heading.size + baseSectionHeaderPadding) * scale)
 		fallbackHeight = max(headerPadding * 2, fallbackHeight)
 		UI.spacing.sectionHeaderHeight = fallbackHeight
-        end
+		end
 end
 
 local function applyUpgradeLayout(scale)
-        local layout = UI.upgradeIndicators.layout
+		local layout = UI.upgradeIndicators.layout
 	layout.width = max(160, round(baseUpgradeLayout.width * scale))
 	layout.spacing = max(8, round(baseUpgradeLayout.spacing * scale))
 	layout.baseHeight = max(42, round(baseUpgradeLayout.baseHeight * scale))
@@ -296,48 +296,48 @@ local function applyUpgradeLayout(scale)
 end
 
 local function applySocketSize(scale)
-        UI.socketSize = max(18, round(baseSocketSize * scale))
+		UI.socketSize = max(18, round(baseSocketSize * scale))
 end
 
 local function applyMenuLayout(scale, sw, sh)
-        local layout = UI.layout.menu or {}
+		local layout = UI.layout.menu or {}
 
-        local function scaled(value, minimum)
-                local result = round((value or 0) * scale)
-                if minimum then
-                        result = max(minimum, result)
-                end
-                return result
-        end
+		local function scaled(value, minimum)
+				local result = round((value or 0) * scale)
+				if minimum then
+						result = max(minimum, result)
+				end
+				return result
+		end
 
-        layout.marginTop = max(48, scaled(baseMenuLayout.marginTop, 0))
-        layout.marginBottom = max(48, scaled(baseMenuLayout.marginBottom, 0))
-        layout.marginHorizontal = max(48, scaled(baseMenuLayout.marginHorizontal, 0))
-        layout.buttonStackOffset = max(12, scaled(baseMenuLayout.buttonStackOffset, 0))
-        layout.subtitleSpacing = max(8, scaled(baseMenuLayout.subtitleSpacing, 0))
-        layout.footerSpacing = max(12, scaled(baseMenuLayout.footerSpacing, 0))
-        layout.tooltipOffset = max(10, scaled(baseMenuLayout.tooltipOffset, 0))
-        layout.panelMaxWidth = max(260, scaled(baseMenuLayout.panelMaxWidth, 0))
-        layout.sectionSpacing = UI.spacing.sectionSpacing
-        layout.headerSpacing = UI.spacing.sectionHeaderSpacing
+		layout.marginTop = max(48, scaled(baseMenuLayout.marginTop, 0))
+		layout.marginBottom = max(48, scaled(baseMenuLayout.marginBottom, 0))
+		layout.marginHorizontal = max(48, scaled(baseMenuLayout.marginHorizontal, 0))
+		layout.buttonStackOffset = max(12, scaled(baseMenuLayout.buttonStackOffset, 0))
+		layout.subtitleSpacing = max(8, scaled(baseMenuLayout.subtitleSpacing, 0))
+		layout.footerSpacing = max(12, scaled(baseMenuLayout.footerSpacing, 0))
+		layout.tooltipOffset = max(10, scaled(baseMenuLayout.tooltipOffset, 0))
+		layout.panelMaxWidth = max(260, scaled(baseMenuLayout.panelMaxWidth, 0))
+		layout.sectionSpacing = UI.spacing.sectionSpacing
+		layout.headerSpacing = UI.spacing.sectionHeaderSpacing
 
-        local titleHeight
-        if UI.fonts.title and UI.fonts.title.getHeight then
-                titleHeight = UI.fonts.title:getHeight()
-        else
-                titleHeight = scaled(fontDefinitions.title.size, 48)
-        end
+		local titleHeight
+		if UI.fonts.title and UI.fonts.title.getHeight then
+				titleHeight = UI.fonts.title:getHeight()
+		else
+				titleHeight = scaled(fontDefinitions.title.size, 48)
+		end
 
-        layout.titleHeight = titleHeight
-        layout.titleY = layout.marginTop
-        layout.stackTop = layout.titleY + titleHeight + layout.subtitleSpacing
-        layout.bodyTop = layout.stackTop + layout.buttonStackOffset
-        layout.bottomY = sh - layout.marginBottom
-        layout.contentWidth = max(0, sw - layout.marginHorizontal * 2)
-        layout.screenWidth = sw
-        layout.screenHeight = sh
+		layout.titleHeight = titleHeight
+		layout.titleY = layout.marginTop
+		layout.stackTop = layout.titleY + titleHeight + layout.subtitleSpacing
+		layout.bodyTop = layout.stackTop + layout.buttonStackOffset
+		layout.bottomY = sh - layout.marginBottom
+		layout.contentWidth = max(0, sw - layout.marginHorizontal * 2)
+		layout.screenWidth = sw
+		layout.screenHeight = sh
 
-        UI.layout.menu = layout
+		UI.layout.menu = layout
 end
 
 function UI.getScale()
@@ -373,11 +373,11 @@ function UI.refreshLayout(sw, sh)
 
 	UI.layoutScale = scale
 
-        buildFonts(scale)
-        applySpacing(scale)
-        applyUpgradeLayout(scale)
-        applySocketSize(scale)
-        applyMenuLayout(scale, sw, sh)
+		buildFonts(scale)
+		applySpacing(scale)
+		applyUpgradeLayout(scale)
+		applySocketSize(scale)
+		applyMenuLayout(scale, sw, sh)
 end
 
 function UI.getHeaderY(sw, sh)
@@ -397,57 +397,57 @@ function UI.getHeaderY(sw, sh)
 end
 
 function UI.getMenuLayout(sw, sh)
-        local layout = UI.layout and UI.layout.menu or nil
-        if not layout then
-                local widthScale = sw and (sw / BASE_SCREEN_WIDTH) or 1
-                local heightScale = sh and (sh / BASE_SCREEN_HEIGHT) or widthScale
-                local scale = min(widthScale, heightScale)
-                local function scaled(value, minimum)
-                        local result = round((value or 0) * scale)
-                        if minimum then
-                                result = max(minimum, result)
-                        end
-                        return result
-                end
+		local layout = UI.layout and UI.layout.menu or nil
+		if not layout then
+				local widthScale = sw and (sw / BASE_SCREEN_WIDTH) or 1
+				local heightScale = sh and (sh / BASE_SCREEN_HEIGHT) or widthScale
+				local scale = min(widthScale, heightScale)
+				local function scaled(value, minimum)
+						local result = round((value or 0) * scale)
+						if minimum then
+								result = max(minimum, result)
+						end
+						return result
+				end
 
-                local sectionSpacing = UI.spacing and UI.spacing.sectionSpacing or scaled(baseSpacing.sectionSpacing or 28, 0)
-                local headerSpacing = UI.spacing and UI.spacing.sectionHeaderSpacing or scaled(baseSpacing.sectionHeaderSpacing or 16, 0)
+				local sectionSpacing = UI.spacing and UI.spacing.sectionSpacing or scaled(baseSpacing.sectionSpacing or 28, 0)
+				local headerSpacing = UI.spacing and UI.spacing.sectionHeaderSpacing or scaled(baseSpacing.sectionHeaderSpacing or 16, 0)
 
-                return {
-                        marginTop = max(48, scaled(baseMenuLayout.marginTop or 128, 0)),
-                        marginBottom = max(48, scaled(baseMenuLayout.marginBottom or 112, 0)),
-                        marginHorizontal = max(48, scaled(baseMenuLayout.marginHorizontal or 156, 0)),
-                        buttonStackOffset = max(12, scaled(baseMenuLayout.buttonStackOffset or 48, 0)),
-                        subtitleSpacing = max(8, scaled(baseMenuLayout.subtitleSpacing or 18, 0)),
-                        footerSpacing = max(12, scaled(baseMenuLayout.footerSpacing or 32, 0)),
-                        tooltipOffset = max(10, scaled(baseMenuLayout.tooltipOffset or 18, 0)),
-                        panelMaxWidth = max(260, scaled(baseMenuLayout.panelMaxWidth or 420, 0)),
-                        sectionSpacing = sectionSpacing,
-                        headerSpacing = headerSpacing,
-                }
-        end
+				return {
+						marginTop = max(48, scaled(baseMenuLayout.marginTop or 128, 0)),
+						marginBottom = max(48, scaled(baseMenuLayout.marginBottom or 112, 0)),
+						marginHorizontal = max(48, scaled(baseMenuLayout.marginHorizontal or 156, 0)),
+						buttonStackOffset = max(12, scaled(baseMenuLayout.buttonStackOffset or 48, 0)),
+						subtitleSpacing = max(8, scaled(baseMenuLayout.subtitleSpacing or 18, 0)),
+						footerSpacing = max(12, scaled(baseMenuLayout.footerSpacing or 32, 0)),
+						tooltipOffset = max(10, scaled(baseMenuLayout.tooltipOffset or 18, 0)),
+						panelMaxWidth = max(260, scaled(baseMenuLayout.panelMaxWidth or 420, 0)),
+						sectionSpacing = sectionSpacing,
+						headerSpacing = headerSpacing,
+				}
+		end
 
-        if sw and sh then
-                local resolved = {}
-                for key, value in pairs(layout) do
-                        resolved[key] = value
-                end
-                resolved.screenWidth = sw
-                resolved.screenHeight = sh
-                resolved.contentWidth = resolved.contentWidth or max(0, sw - (resolved.marginHorizontal or 0) * 2)
-                resolved.bottomY = resolved.bottomY or (sh - (resolved.marginBottom or 0))
-                if not resolved.stackTop then
-                        local titleHeight = resolved.titleHeight or ((UI.fonts.title and UI.fonts.title:getHeight()) or round(fontDefinitions.title.size or 72))
-                        local baseTitleY = resolved.titleY or (sh * 0.08)
-                        resolved.stackTop = baseTitleY + titleHeight + (resolved.subtitleSpacing or 16)
-                end
-                if not resolved.bodyTop then
-                        resolved.bodyTop = resolved.stackTop + (resolved.buttonStackOffset or 0)
-                end
-                return resolved
-        end
+		if sw and sh then
+				local resolved = {}
+				for key, value in pairs(layout) do
+						resolved[key] = value
+				end
+				resolved.screenWidth = sw
+				resolved.screenHeight = sh
+				resolved.contentWidth = resolved.contentWidth or max(0, sw - (resolved.marginHorizontal or 0) * 2)
+				resolved.bottomY = resolved.bottomY or (sh - (resolved.marginBottom or 0))
+				if not resolved.stackTop then
+						local titleHeight = resolved.titleHeight or ((UI.fonts.title and UI.fonts.title:getHeight()) or round(fontDefinitions.title.size or 72))
+						local baseTitleY = resolved.titleY or (sh * 0.08)
+						resolved.stackTop = baseTitleY + titleHeight + (resolved.subtitleSpacing or 16)
+				end
+				if not resolved.bodyTop then
+						resolved.bodyTop = resolved.stackTop + (resolved.buttonStackOffset or 0)
+				end
+				return resolved
+		end
 
-        return layout
+		return layout
 end
 
 UI.colors = {
@@ -457,9 +457,9 @@ UI.colors = {
 	button      = Theme.buttonColor,
 	buttonHover = Theme.buttonHover or lightenColor(Theme.buttonColor, 0.15),
 	buttonPress = Theme.buttonPress or darkenColor(Theme.buttonColor, 0.65),
-        border      = {0, 0, 0, 1},
-        panel       = Theme.panelColor,
-        panelBorder = {0, 0, 0, 1},
+		border      = {0, 0, 0, 1},
+		panel       = Theme.panelColor,
+		panelBorder = {0, 0, 0, 1},
 	shadow      = Theme.shadowColor,
 	highlight   = Theme.highlightColor or {1, 1, 1, 0.08},
 	progress    = Theme.progressColor,
@@ -481,15 +481,15 @@ function UI.drawRoundedRect(x, y, w, h, r, segments)
 end
 
 function UI.drawPanel(x, y, w, h, opts)
-        opts = opts or {}
-        local radius = opts.radius or UI.spacing.panelRadius
-        local shadowOffset = opts.shadowOffset
-        if shadowOffset == nil then shadowOffset = UI.shadowOffset end
+		opts = opts or {}
+		local radius = opts.radius or UI.spacing.panelRadius
+		local shadowOffset = opts.shadowOffset
+		if shadowOffset == nil then shadowOffset = UI.shadowOffset end
 
-        if shadowOffset and shadowOffset ~= 0 then
-                setColor(opts.shadowColor or UI.colors.shadow, opts.shadowAlpha or 1)
-                love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h, radius, radius)
-        end
+		if shadowOffset and shadowOffset ~= 0 then
+				setColor(opts.shadowColor or UI.colors.shadow, opts.shadowAlpha or 1)
+				love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h, radius, radius)
+		end
 
 	local alphaMultiplier = opts.alpha or 1
 	local fillColor = opts.fill or UI.colors.panel or UI.colors.button
@@ -516,13 +516,13 @@ function UI.drawPanel(x, y, w, h, opts)
 		end
 	end
 
-        if opts.border ~= false then
-                local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
-                setColor(borderColor, alphaMultiplier)
-                love.graphics.setLineWidth(opts.borderWidth or 2)
-                love.graphics.rectangle("line", x, y, w, h, radius, radius)
-                love.graphics.setLineWidth(1)
-        end
+		if opts.border ~= false then
+				local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
+				setColor(borderColor, alphaMultiplier)
+				love.graphics.setLineWidth(opts.borderWidth or 2)
+				love.graphics.rectangle("line", x, y, w, h, radius, radius)
+				love.graphics.setLineWidth(1)
+		end
 
 	if opts.focused then
 		local focusRadius = radius + (opts.focusRadiusOffset or 4)
@@ -536,57 +536,57 @@ function UI.drawPanel(x, y, w, h, opts)
 end
 
 function UI.drawLabel(text, x, y, width, align, opts)
-        opts = opts or {}
-        local font = opts.font or UI.fonts[opts.fontKey or "body"]
-        if font then
-                love.graphics.setFont(font)
-        end
+		opts = opts or {}
+		local font = opts.font or UI.fonts[opts.fontKey or "body"]
+		if font then
+				love.graphics.setFont(font)
+		end
 
-        local alpha = opts.alpha or 1
+		local alpha = opts.alpha or 1
 
-        local shadow = opts.shadow
-        if shadow == nil then
-                shadow = opts.dropShadow
-        end
+		local shadow = opts.shadow
+		if shadow == nil then
+				shadow = opts.dropShadow
+		end
 
-        if shadow then
-                local baseOffset = opts.shadowOffset
-                if baseOffset == nil then
-                        local baseShadow = UI.shadowOffset or 0
-                        baseOffset = max(1, floor(baseShadow * 0.4 + 0.5))
-                end
+		if shadow then
+				local baseOffset = opts.shadowOffset
+				if baseOffset == nil then
+						local baseShadow = UI.shadowOffset or 0
+						baseOffset = max(1, floor(baseShadow * 0.4 + 0.5))
+				end
 
-                local shadowOffsetX = opts.shadowOffsetX
-                local shadowOffsetY = opts.shadowOffsetY
-                if shadowOffsetX == nil and shadowOffsetY == nil then
-                        shadowOffsetX = baseOffset
-                        shadowOffsetY = baseOffset
-                else
-                        shadowOffsetX = shadowOffsetX or 0
-                        shadowOffsetY = shadowOffsetY or 0
-                end
+				local shadowOffsetX = opts.shadowOffsetX
+				local shadowOffsetY = opts.shadowOffsetY
+				if shadowOffsetX == nil and shadowOffsetY == nil then
+						shadowOffsetX = baseOffset
+						shadowOffsetY = baseOffset
+				else
+						shadowOffsetX = shadowOffsetX or 0
+						shadowOffsetY = shadowOffsetY or 0
+				end
 
-                if shadowOffsetX ~= 0 or shadowOffsetY ~= 0 then
-                        local shadowColor = opts.shadowColor or UI.colors.shadow or {0, 0, 0, 0.6}
-                        local shadowAlpha = (opts.shadowAlpha or 1) * alpha
-                        setColor(shadowColor, shadowAlpha)
+				if shadowOffsetX ~= 0 or shadowOffsetY ~= 0 then
+						local shadowColor = opts.shadowColor or UI.colors.shadow or {0, 0, 0, 0.6}
+						local shadowAlpha = (opts.shadowAlpha or 1) * alpha
+						setColor(shadowColor, shadowAlpha)
 
-                        if width then
-                                love.graphics.printf(text, x + shadowOffsetX, y + shadowOffsetY, width, align or "left")
-                        else
-                                love.graphics.print(text, x + shadowOffsetX, y + shadowOffsetY)
-                        end
-                end
-        end
+						if width then
+								love.graphics.printf(text, x + shadowOffsetX, y + shadowOffsetY, width, align or "left")
+						else
+								love.graphics.print(text, x + shadowOffsetX, y + shadowOffsetY)
+						end
+				end
+		end
 
-        local color = opts.color or UI.colors.text
-        setColor(color, alpha)
+		local color = opts.color or UI.colors.text
+		setColor(color, alpha)
 
-        if width then
-                love.graphics.printf(text, x, y, width, align or "left")
-        else
-                love.graphics.print(text, x, y)
-        end
+		if width then
+				love.graphics.printf(text, x, y, width, align or "left")
+		else
+				love.graphics.print(text, x, y)
+		end
 end
 
 function UI.drawSlider(id, x, y, w, value, opts)
@@ -666,18 +666,18 @@ end
 
 -- Register a button (once per frame in your draw code)
 function UI.registerButton(id, x, y, w, h, text)
-        UI.buttons[id] = UI.buttons[id] or createButtonState()
-        local btn = UI.buttons[id]
-        local bounds = btn.bounds
-        if not bounds then
-                bounds = {}
-                btn.bounds = bounds
-        end
-        bounds.x = x
-        bounds.y = y
-        bounds.w = w
-        bounds.h = h
-        btn.text = text
+		UI.buttons[id] = UI.buttons[id] or createButtonState()
+		local btn = UI.buttons[id]
+		local bounds = btn.bounds
+		if not bounds then
+				bounds = {}
+				btn.bounds = bounds
+		end
+		bounds.x = x
+		bounds.y = y
+		bounds.w = w
+		bounds.h = h
+		btn.text = text
 end
 
 -- Draw button (render only)
@@ -715,18 +715,18 @@ function UI.drawButton(id)
 	love.graphics.scale(totalScale, totalScale)
 	love.graphics.translate(-centerX, -centerY)
 
-        local radius = s.buttonRadius
-        local shadowOffset = s.shadowOffset
-        if shadowOffset == nil then
-                shadowOffset = UI.shadowOffset
-        end
+		local radius = s.buttonRadius
+		local shadowOffset = s.shadowOffset
+		if shadowOffset == nil then
+				shadowOffset = UI.shadowOffset
+		end
 
-        if shadowOffset and shadowOffset ~= 0 then
-                local shadowOffsetX = shadowOffset - 1
-                local shadowOffsetY = shadowOffset - 1
-                setColor(UI.colors.shadow)
-                love.graphics.rectangle("fill", b.x + shadowOffsetX, b.y + shadowOffsetY + yOffset, b.w, b.h, radius, radius)
-        end
+		if shadowOffset and shadowOffset ~= 0 then
+				local shadowOffsetX = shadowOffset - 1
+				local shadowOffsetY = shadowOffset - 1
+				setColor(UI.colors.shadow)
+				love.graphics.rectangle("fill", b.x + shadowOffsetX, b.y + shadowOffsetY + yOffset, b.w, b.h, radius, radius)
+		end
 
 	local fillColor = UI.colors.button
 	local isToggled = btn.toggled
@@ -749,11 +749,11 @@ function UI.drawButton(id)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
 	end
 
-        if UI.colors.border then
-                setColor(UI.colors.border)
-                love.graphics.setLineWidth(2)
-                love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
-        end
+		if UI.colors.border then
+				setColor(UI.colors.border)
+				love.graphics.setLineWidth(2)
+				love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
+		end
 
 	if btn.focused then
 		local focusStrength = btn.focusAnim or 0
@@ -781,19 +781,19 @@ function UI.drawButton(id)
 
 	-- TEXT
 	UI.setFont("button")
-        local textColor = UI.colors.text
-        if displayHover or (btn.focusAnim or 0) > 0.001 or isToggled then
-                btn._lightenedTextColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0), btn._lightenedTextColor)
-                textColor = btn._lightenedTextColor
-        end
-        local text = btn.text or ""
-        local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
+		local textColor = UI.colors.text
+		if displayHover or (btn.focusAnim or 0) > 0.001 or isToggled then
+				btn._lightenedTextColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0), btn._lightenedTextColor)
+				textColor = btn._lightenedTextColor
+		end
+		local text = btn.text or ""
+		local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
 
-        setColor({0, 0, 0, 0.7})
-        love.graphics.printf(text, b.x + 1, textY + 1, b.w, "center")
+		setColor({0, 0, 0, 0.7})
+		love.graphics.printf(text, b.x + 1, textY + 1, b.w, "center")
 
-        setColor(textColor)
-        love.graphics.printf(text, b.x, textY, b.w, "center")
+		setColor(textColor)
+		love.graphics.printf(text, b.x, textY, b.w, "center")
 
 	love.graphics.pop()
 end
@@ -1308,7 +1308,7 @@ local function drawComboIndicator(self)
 	love.graphics.setColor(Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], 0.95)
 	love.graphics.rectangle("fill", x, y, width, height, 18, 18)
 
-        love.graphics.setColor(UI.colors.border)
+		love.graphics.setColor(UI.colors.border)
 	love.graphics.setLineWidth(3)
 	love.graphics.rectangle("line", x, y, width, height, 18, 18)
 
@@ -1344,7 +1344,7 @@ local ICON_OVERLAY_BACKGROUND = {0, 0, 0, 1}
 local ICON_OVERLAY_TEXT_DEFAULT = {1, 1, 1, 1}
 
 local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
-        local accent = accentColor or ICON_ACCENT_DEFAULT
+		local accent = accentColor or ICON_ACCENT_DEFAULT
 
 	love.graphics.push("all")
 	love.graphics.translate(x, y)
@@ -1352,11 +1352,11 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 	love.graphics.setColor(0, 0, 0, 0.3)
 	love.graphics.circle("fill", 3, 4, radius + 3, 28)
 
-        local base = darkenColor(accent, 0.6, ICON_COLOR_BASE)
+		local base = darkenColor(accent, 0.6, ICON_COLOR_BASE)
 	love.graphics.setColor(base[1], base[2], base[3], base[4] or 1)
 	love.graphics.circle("fill", 0, 0, radius, 28)
 
-        local detail = lightenColor(accent, 0.12, ICON_COLOR_DETAIL)
+		local detail = lightenColor(accent, 0.12, ICON_COLOR_DETAIL)
 	love.graphics.setColor(detail[1], detail[2], detail[3], detail[4] or 1)
 
 	if icon == "shield" then
@@ -1382,7 +1382,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		end
 
 		drawShieldPolygon("fill")
-                local outline = lightenColor(accent, 0.35, ICON_COLOR_OUTLINE)
+				local outline = lightenColor(accent, 0.35, ICON_COLOR_OUTLINE)
 		love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
 		love.graphics.setLineWidth(2)
 		drawShieldPolygon("line")
@@ -1401,7 +1401,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.rotate(-pi / 8)
 		love.graphics.rectangle("fill", -radius * 0.14, -radius * 0.92, radius * 0.28, radius * 1.84, radius * 0.16)
 		love.graphics.pop()
-                local outline = lightenColor(accent, 0.35, ICON_COLOR_OUTLINE)
+				local outline = lightenColor(accent, 0.35, ICON_COLOR_OUTLINE)
 		love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
 		love.graphics.setLineWidth(2)
 		love.graphics.circle("line", 0, 0, radius * 0.95, 28)
@@ -1422,7 +1422,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 			baseHalfWidth, baseHeight
 		)
 
-                local highlight = lightenColor(detail, 0.22, ICON_COLOR_HIGHLIGHT)
+				local highlight = lightenColor(detail, 0.22, ICON_COLOR_HIGHLIGHT)
 		love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 1) * 0.85)
 		local highlightHalfWidth = radius * 0.38
 		local highlightBase = radius * 0.64
@@ -1440,13 +1440,13 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 			highlightHalfWidth, highlightBase
 		)
 
-                local sheen = lightenColor(detail, 0.42, ICON_COLOR_SHEEN)
+				local sheen = lightenColor(detail, 0.42, ICON_COLOR_SHEEN)
 		love.graphics.setColor(sheen[1], sheen[2], sheen[3], (sheen[4] or 1) * 0.6)
 		love.graphics.setLineWidth(1.4)
 		love.graphics.line(-radius * 0.22, -radius * 0.72, -radius * 0.05, -radius * 0.2)
 		love.graphics.line(radius * 0.22, radius * 0.72, radius * 0.05, radius * 0.2)
 
-                local rim = lightenColor(detail, 0.32, ICON_COLOR_RIM)
+				local rim = lightenColor(detail, 0.32, ICON_COLOR_RIM)
 		love.graphics.setColor(rim[1], rim[2], rim[3], rim[4] or 1)
 		love.graphics.setLineWidth(2.2)
 		love.graphics.polygon(
@@ -1462,7 +1462,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 			baseHalfWidth, baseHeight
 		)
 
-                local seam = darkenColor(detail, 0.25, ICON_COLOR_SEAM)
+				local seam = darkenColor(detail, 0.25, ICON_COLOR_SEAM)
 		love.graphics.setColor(seam[1], seam[2], seam[3], (seam[4] or 1) * 0.9)
 		love.graphics.setLineWidth(1.5)
 		love.graphics.line(-baseHalfWidth, -baseHeight, baseHalfWidth, -baseHeight)
@@ -1482,10 +1482,10 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 	end
 
 	if overlay and overlay.text then
-                local overlayBackground = lightenColor(accent, 0.1, ICON_OVERLAY_BACKGROUND)
-                overlayBackground[4] = 0.92
-                local background = overlay.backgroundColor or overlayBackground
-                local borderColor = overlay.borderColor or lightenColor(accent, 0.35, ICON_COLOR_OUTLINE)
+				local overlayBackground = lightenColor(accent, 0.1, ICON_OVERLAY_BACKGROUND)
+				overlayBackground[4] = 0.92
+				local background = overlay.backgroundColor or overlayBackground
+				local borderColor = overlay.borderColor or lightenColor(accent, 0.35, ICON_COLOR_OUTLINE)
 		local fontKey = overlay.font or "small"
 		local paddingX = overlay.paddingX or 6
 		local paddingY = overlay.paddingY or 2
@@ -1530,7 +1530,7 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.setLineWidth(1)
 		love.graphics.rectangle("line", boxX, boxY, boxWidth, boxHeight, cornerRadius, cornerRadius)
 
-                local textColor = overlay.textColor or ICON_OVERLAY_TEXT_DEFAULT
+				local textColor = overlay.textColor or ICON_OVERLAY_TEXT_DEFAULT
 		love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
 		local textY = boxY + (boxHeight - font:getHeight()) * 0.5
 		love.graphics.printf(text, boxX, textY, boxWidth, "center")
@@ -1563,25 +1563,25 @@ local function buildShieldIndicator(self)
 
 	local label = Localization:get("upgrades.hud.shields")
 
-        local accent = SHIELD_ACCENT_READY
-        local statusKey = "ready"
+		local accent = SHIELD_ACCENT_READY
+		local statusKey = "ready"
 
-        if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
-                accent = SHIELD_ACCENT_DEPLETED
-                statusKey = "depleted"
-        end
+		if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
+				accent = SHIELD_ACCENT_DEPLETED
+				statusKey = "depleted"
+		end
 
-        local overlayBackground = lightenColor(accent, 0.1, SHIELD_OVERLAY_BACKGROUND)
-        overlayBackground[4] = 0.92
+		local overlayBackground = lightenColor(accent, 0.1, SHIELD_OVERLAY_BACKGROUND)
+		overlayBackground[4] = 0.92
 
 	local status
 	if statusKey ~= "ready" then
 		status = Localization:get("upgrades.hud." .. statusKey)
 	end
 
-        return {
-                id = "__shields",
-                label = label,
+		return {
+				id = "__shields",
+				label = label,
 		icon = "shield",
 		accentColor = accent,
 		iconOverlay = {
@@ -1655,7 +1655,7 @@ function UI:drawUpgradeIndicators()
 
 	for _, entry in ipairs(entries) do
 		local visibility = clamp01(entry.visibility or 1)
-                local accent = entry.accentColor or Theme.panelBorder or ICON_ACCENT_DEFAULT
+				local accent = entry.accentColor or Theme.panelBorder or ICON_ACCENT_DEFAULT
 		local hasBar = entry.showBar and entry.displayProgress ~= nil
 		local panelHeight = baseHeight + (hasBar and 8 or 0)
 
@@ -1666,12 +1666,12 @@ function UI:drawUpgradeIndicators()
 		love.graphics.setColor(0, 0, 0, 0.4 * visibility)
 		love.graphics.rectangle("fill", x + 4, drawY + 6, width, panelHeight, 14, 14)
 
-                local panelColor = Theme.arenaBG or Theme.panelColor or {0.16, 0.18, 0.22, 1}
-                love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * (0.95 * visibility))
-                love.graphics.rectangle("fill", x, drawY, width, panelHeight, 14, 14)
+				local panelColor = Theme.arenaBG or Theme.panelColor or {0.16, 0.18, 0.22, 1}
+				love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * (0.95 * visibility))
+				love.graphics.rectangle("fill", x, drawY, width, panelHeight, 14, 14)
 
-                local border = UI.colors.border
-                love.graphics.setColor(border[1], border[2], border[3], (border[4] or 1) * visibility)
+				local border = UI.colors.border
+				love.graphics.setColor(border[1], border[2], border[3], (border[4] or 1) * visibility)
 		love.graphics.setLineWidth(2)
 		love.graphics.rectangle("line", x, drawY, width, panelHeight, 14, 14)
 
@@ -1709,13 +1709,13 @@ function UI:drawUpgradeIndicators()
 			love.graphics.printf(stackText, textX, labelTop, textWidth, "right")
 		end
 
-                if hasBar then
-                        local progress = clamp01(entry.displayProgress or 0)
-                        local iconBarWidth = layout.iconBarWidth or (iconRadius * 1.8)
-                        if entry.chargeLabel and chargeFont and chargeFont.getWidth then
-                                local labelWidth = chargeFont:getWidth(entry.chargeLabel)
-                                iconBarWidth = max(iconBarWidth, labelWidth + 16)
-                        end
+				if hasBar then
+						local progress = clamp01(entry.displayProgress or 0)
+						local iconBarWidth = layout.iconBarWidth or (iconRadius * 1.8)
+						if entry.chargeLabel and chargeFont and chargeFont.getWidth then
+								local labelWidth = chargeFont:getWidth(entry.chargeLabel)
+								iconBarWidth = max(iconBarWidth, labelWidth + 16)
+						end
 			local iconBarHeight = layout.iconBarHeight or max(4, floor(barHeight))
 			local barX = iconX - iconBarWidth * 0.5
 			local desiredBarY = iconY + iconRadius + 6
@@ -1726,11 +1726,11 @@ function UI:drawUpgradeIndicators()
 			love.graphics.setColor(0, 0, 0, 0.28 * visibility)
 			love.graphics.rectangle("fill", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
 
-                        local fill = lightenColor(accent, 0.05, UPGRADE_BAR_FILL_COLOR)
+						local fill = lightenColor(accent, 0.05, UPGRADE_BAR_FILL_COLOR)
 			love.graphics.setColor(fill[1], fill[2], fill[3], (fill[4] or 1) * 0.85 * visibility)
 			love.graphics.rectangle("fill", barX, barY, iconBarWidth * progress, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
 
-                        local outline = lightenColor(accent, 0.3, UPGRADE_BAR_OUTLINE_COLOR)
+						local outline = lightenColor(accent, 0.3, UPGRADE_BAR_OUTLINE_COLOR)
 			love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1) * 0.9 * visibility)
 			love.graphics.setLineWidth(1)
 			love.graphics.rectangle("line", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
@@ -1799,39 +1799,39 @@ function UI:drawFruitSockets()
 		goalFlash = pow(1 - flashT, 1.4)
 	end
 
-        -- backdrop styled like the HUD panel card
-        local shadowOffsetBase = UI.shadowOffset or 0
-        local shadowInset = 3
-        local shadowOffsetX = shadowOffsetBase - shadowInset
-        local shadowOffsetY = shadowOffsetBase - shadowInset
-        if shadowOffsetX ~= 0 or shadowOffsetY ~= 0 then
-                local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
-                local shadowAlpha = shadowColor[4] or 1
-                love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
-                love.graphics.rectangle("fill", panelX + shadowOffsetX, panelY + shadowOffsetY, panelW, panelH, 12, 12)
-        end
+		-- backdrop styled like the HUD panel card
+		local shadowOffsetBase = UI.shadowOffset or 0
+		local shadowInset = 3
+		local shadowOffsetX = shadowOffsetBase - shadowInset
+		local shadowOffsetY = shadowOffsetBase - shadowInset
+		if shadowOffsetX ~= 0 or shadowOffsetY ~= 0 then
+				local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
+				local shadowAlpha = shadowColor[4] or 1
+				love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], shadowAlpha)
+				love.graphics.rectangle("fill", panelX + shadowOffsetX, panelY + shadowOffsetY, panelW, panelH, 12, 12)
+		end
 
-        local basePanelColor = Theme.arenaBG or Theme.panelColor or {0.16, 0.16, 0.22, 0.94}
-        local panelColor = basePanelColor
-        if goalFlash > 0 then
-                panelColor = lightenColor(panelColor, 0.25 * goalFlash)
-        end
+		local basePanelColor = Theme.arenaBG or Theme.panelColor or {0.16, 0.16, 0.22, 0.94}
+		local panelColor = basePanelColor
+		if goalFlash > 0 then
+				panelColor = lightenColor(panelColor, 0.25 * goalFlash)
+		end
 
-        love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
-        love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
+		love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1))
+		love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 12, 12)
 
-        local borderColor = UI.colors.border or {0, 0, 0, 1}
-        if goalFlash > 0 then
+		local borderColor = UI.colors.border or {0, 0, 0, 1}
+		if goalFlash > 0 then
 		borderColor = lightenColor(borderColor, 0.4 * goalFlash)
 	end
 	love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1))
 	love.graphics.setLineWidth(3)
 	love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 12, 12)
 
-    local time = Timer.getTime()
-        local socketRadius = (self.socketSize / 2) - 2
-        local socketFill = lightenColor(basePanelColor, 0.45, SOCKET_FILL_COLOR)
-        local socketOutline = lightenColor(UI.colors.panelBorder or Theme.textColor, 0.2, SOCKET_OUTLINE_COLOR)
+	local time = Timer.getTime()
+		local socketRadius = (self.socketSize / 2) - 2
+		local socketFill = lightenColor(basePanelColor, 0.45, SOCKET_FILL_COLOR)
+		local socketOutline = lightenColor(UI.colors.panelBorder or Theme.textColor, 0.2, SOCKET_OUTLINE_COLOR)
 
 	local highlightColor = (UI.colors and UI.colors.highlight) or Theme.highlightColor or {1, 1, 1, 0.08}
 
@@ -1924,7 +1924,7 @@ function UI:drawFruitSockets()
 			love.graphics.circle("line", 0, 0, r, 32)
 
 			-- juicy highlight
-                        local highlightColor = lightenColor(fruit.color, 0.6, FRUIT_HIGHLIGHT_COLOR)
+						local highlightColor = lightenColor(fruit.color, 0.6, FRUIT_HIGHLIGHT_COLOR)
 			local highlightAlpha = (highlightColor[4] or 1) * 0.75 * visibility
 			love.graphics.push()
 			love.graphics.translate(-r * 0.3 + 1, -r * 0.35)
@@ -1957,24 +1957,24 @@ function UI:drawFruitSockets()
 			end
 
 			-- dragonfruit glow
-                        if fruit.name == "Dragonfruit" then
-                                local pulse = 0.65 + 0.35 * sin(time * 7.2)
-                                local glowColor = Theme.dragonfruitColor or {1, 0.45, 0.86, 1}
-                                local accentAlpha = (0.45 + 0.35 * pulse) * visibility
+						if fruit.name == "Dragonfruit" then
+								local pulse = 0.65 + 0.35 * sin(time * 7.2)
+								local glowColor = Theme.dragonfruitColor or {1, 0.45, 0.86, 1}
+								local accentAlpha = (0.45 + 0.35 * pulse) * visibility
 
-                                love.graphics.setLineWidth(4)
-                                love.graphics.setColor(
-                                min(1, glowColor[1] + 0.15),
-                                min(1, glowColor[2] * 0.75),
-                                min(1, glowColor[3] * 1.1),
-                                accentAlpha
-                                )
-                                love.graphics.circle("line", 0, 0, r + 4 + 3 * pulse, 40)
+								love.graphics.setLineWidth(4)
+								love.graphics.setColor(
+								min(1, glowColor[1] + 0.15),
+								min(1, glowColor[2] * 0.75),
+								min(1, glowColor[3] * 1.1),
+								accentAlpha
+								)
+								love.graphics.circle("line", 0, 0, r + 4 + 3 * pulse, 40)
 
-                                love.graphics.setColor(1, 0.45, 1, 0.24 * pulse * visibility)
-                                love.graphics.circle("line", 0, 0, r + 9 + 6 * pulse, 40)
-                                love.graphics.setLineWidth(3)
-                        end
+								love.graphics.setColor(1, 0.45, 1, 0.24 * pulse * visibility)
+								love.graphics.circle("line", 0, 0, r + 9 + 6 * pulse, 40)
+								love.graphics.setLineWidth(3)
+						end
 
 			love.graphics.pop()
 		else

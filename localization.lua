@@ -38,9 +38,9 @@ function Localization:_loadLanguage(code)
 end
 
 function Localization:setLanguage(code)
-        if not code then
-                code = self._fallbackCode
-        end
+		if not code then
+				code = self._fallbackCode
+		end
 
 	local data, err = self:_loadLanguage(code)
 	if not data then
@@ -55,17 +55,17 @@ function Localization:setLanguage(code)
 	self._currentStrings = data.strings or {}
 
 	local fallbackData = self:_loadLanguage(self._fallbackCode)
-        if fallbackData then
-                self._fallbackStrings = fallbackData.strings or {}
-        end
+		if fallbackData then
+				self._fallbackStrings = fallbackData.strings or {}
+		end
 
-        self._revision = (self._revision or 0) + 1
+		self._revision = (self._revision or 0) + 1
 
-        return true
+		return true
 end
 
 function Localization:get(key, replacements)
-        if not key then
+		if not key then
 		return ""
 	end
 
@@ -116,14 +116,14 @@ local function scanLanguages()
 end
 
 function Localization:getAvailableLanguages()
-        if not self._languageOrder then
-                self._languageOrder = scanLanguages()
-        end
-        return self._languageOrder
+		if not self._languageOrder then
+				self._languageOrder = scanLanguages()
+		end
+		return self._languageOrder
 end
 
 function Localization:getRevision()
-        return self._revision or 0
+		return self._revision or 0
 end
 
 return Localization

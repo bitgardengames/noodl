@@ -73,31 +73,31 @@ local RUN_ACTIVE_STATES = {
 }
 
 local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
-        Face,
-        Popup,
-        Fruit,
-        Rocks,
-        Lasers,
-        Saws,
-        Arena,
-        Particles,
-        VolatileBloom,
-        UpgradeVisuals,
-        Achievements,
-        FloatingText,
-        Score,
+		Face,
+		Popup,
+		Fruit,
+		Rocks,
+		Lasers,
+		Saws,
+		Arena,
+		Particles,
+		VolatileBloom,
+		UpgradeVisuals,
+		Achievements,
+		FloatingText,
+		Score,
 })
 
 local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
-        Face,
-        Popup,
-        Arena,
-        Particles,
-        VolatileBloom,
-        UpgradeVisuals,
-        Achievements,
-        FloatingText,
-        Score,
+		Face,
+		Popup,
+		Arena,
+		Particles,
+		VolatileBloom,
+		UpgradeVisuals,
+		Achievements,
+		FloatingText,
+		Score,
 })
 
 local function cloneColor(color, fallback)
@@ -477,11 +477,11 @@ function Game:releaseMouseVisibility()
 end
 
 function Game:updateMouseVisibility()
-        local mouse = getMouseInterface()
-        if not mouse then
-                self:releaseMouseVisibility()
-                return
-        end
+		local mouse = getMouseInterface()
+		if not mouse then
+				self:releaseMouseVisibility()
+				return
+		end
 
 	local targetVisible = resolveMouseVisibilityTarget(self)
 	if targetVisible == nil then
@@ -507,39 +507,39 @@ function Game:updateMouseVisibility()
 end
 
 function Game:isTransitionActive()
-        local transition = self.transition
-        return transition ~= nil and transition:isActive()
+		local transition = self.transition
+		return transition ~= nil and transition:isActive()
 end
 
 function Game:enterPause()
-        if self.state == "paused" then
-                return
-        end
+		if self.state == "paused" then
+				return
+		end
 
-        if self.state == "gameover" then
-                return
-        end
+		if self.state == "gameover" then
+				return
+		end
 
-        self.pauseReturnState = self.state
-        self.state = "paused"
+		self.pauseReturnState = self.state
+		self.state = "paused"
 end
 
 function Game:exitPause()
-        if self.state ~= "paused" then
-                return
-        end
+		if self.state ~= "paused" then
+				return
+		end
 
-        local restoreState = self.pauseReturnState or "playing"
-        self.pauseReturnState = nil
-        self.state = restoreState
+		local restoreState = self.pauseReturnState or "playing"
+		self.pauseReturnState = nil
+		self.state = restoreState
 end
 
 function Game:togglePause()
-        if self.state == "paused" then
-                self:exitPause()
-        elseif self.state ~= "gameover" then
-                self:enterPause()
-        end
+		if self.state == "paused" then
+				self:exitPause()
+		elseif self.state ~= "gameover" then
+				self:enterPause()
+		end
 end
 
 function Game:confirmTransitionIntro()
@@ -643,7 +643,7 @@ local function drawAdrenalineGlow(self)
 
 	if glowStrength <= 0 then return end
 
-    local time = Timer.getTime()
+	local time = Timer.getTime()
 	local pulse = 0.85 + 0.15 * sin(time * 2.25)
 	local easedStrength = 0.6 + glowStrength * 0.4
 	local alpha = 0.18 * easedStrength * pulse
@@ -664,14 +664,14 @@ function Game:load(options)
 		requestedFloor = min(requestedFloor, totalFloors)
 	end
 
-        self.state = "playing"
-        self.startFloor = requestedFloor
-        self.floor = requestedFloor
-        self.runTimer = 0
-        self.floorTimer = 0
-        self.pauseReturnState = nil
+		self.state = "playing"
+		self.startFloor = requestedFloor
+		self.floor = requestedFloor
+		self.runTimer = 0
+		self.floorTimer = 0
+		self.pauseReturnState = nil
 
-        self.mouseCursorState = nil
+		self.mouseCursorState = nil
 
 	Screen:update()
 	self.screenWidth, self.screenHeight = Screen:get()
@@ -705,15 +705,15 @@ function Game:load(options)
 end
 
 function Game:reset()
-        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-        Face:set("idle")
-        self.state = "playing"
-        self.floor = self.startFloor or 1
-        self.runTimer = 0
-        self.floorTimer = 0
-        self.pauseReturnState = nil
+		GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+		Face:set("idle")
+		self.state = "playing"
+		self.floor = self.startFloor or 1
+		self.runTimer = 0
+		self.floorTimer = 0
+		self.pauseReturnState = nil
 
-        self.mouseCursorState = nil
+		self.mouseCursorState = nil
 
 	resetFeedbackState(self)
 
@@ -744,15 +744,15 @@ end
 function Game:leave()
 	self:releaseMouseVisibility()
 
-        Snake:resetModifiers()
+		Snake:resetModifiers()
 
-        UI:setUpgradeIndicators(nil)
+		UI:setUpgradeIndicators(nil)
 end
 
 function Game:beginDeath()
-        if self.state ~= "dying" then
-                self.state = "dying"
-                Snake:setDead(true)
+		if self.state ~= "dying" then
+				self.state = "dying"
+				Snake:setDead(true)
 		local trail = Snake:getSegments()
 		Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
 		Audio:playSound("death")
@@ -892,7 +892,7 @@ function Game:updateDescending(dt)
 end
 
 function Game:updateGameplay(dt)
-        local fruitX, fruitY = Fruit:getDrawPosition()
+		local fruitX, fruitY = Fruit:getDrawPosition()
 
 	if Upgrades and Upgrades.recordFloorReplaySnapshot then
 		Upgrades:recordFloorReplaySnapshot(self)
@@ -949,21 +949,21 @@ function Game:updateGameplay(dt)
 end
 
 function Game:updateEntities(dt)
-        updateSystems(ENTITY_UPDATE_ORDER, dt)
+		updateSystems(ENTITY_UPDATE_ORDER, dt)
 end
 
 function Game:updateTransitionVisuals(dt)
-        if not dt or dt <= 0 then
-                return
-        end
+		if not dt or dt <= 0 then
+				return
+		end
 
-        updateSystems(TRANSITION_VISUAL_SYSTEMS, dt)
+		updateSystems(TRANSITION_VISUAL_SYSTEMS, dt)
 end
 
 function Game:handleDeath(dt)
-        if self.state ~= "dying" then
-                return
-        end
+		if self.state ~= "dying" then
+				return
+		end
 
 	Death:update(dt)
 	if not Death:isFinished() then
@@ -990,9 +990,9 @@ local function drawPlayfieldLayers(self, stateOverride)
 
 	RenderLayers:withLayer("main", function()
 		Fruit:draw()
-                Rocks:draw()
-                Saws:draw()
-                Lasers:draw()
+				Rocks:draw()
+				Saws:draw()
+				Lasers:draw()
 
 		local isDescending = (renderState == "descending")
 		local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
@@ -1013,23 +1013,23 @@ local function drawPlayfieldLayers(self, stateOverride)
 			Arena:drawExit()
 		end
 
-                Particles:draw()
-                VolatileBloom:draw()
-                UpgradeVisuals:draw()
-                Popup:draw()
+				Particles:draw()
+				VolatileBloom:draw()
+				UpgradeVisuals:draw()
+				Popup:draw()
 
-                RenderLayers:withLayer("overlay", function()
-                        if Arena.drawDimLighting then
-                                Arena:drawDimLighting()
-                        end
+				RenderLayers:withLayer("overlay", function()
+						if Arena.drawDimLighting then
+								Arena:drawDimLighting()
+						end
 
-                        if Arena.drawQueuedExit then
-                                Arena:drawQueuedExit()
-                        end
+						if Arena.drawQueuedExit then
+								Arena:drawQueuedExit()
+						end
 
-                        Arena:drawBorder()
-                end)
-        end)
+						Arena:drawBorder()
+				end)
+		end)
 
 	RenderLayers:present()
 end
@@ -1044,7 +1044,7 @@ local function drawInterfaceLayers(self)
 	Death:drawFlash(self.screenWidth, self.screenHeight)
 	PauseMenu:draw(self.screenWidth, self.screenHeight)
 	UI:draw()
-        Achievements:draw()
+		Achievements:draw()
 end
 
 local function drawTransitionFadeOut(self, timer, duration)
@@ -1066,13 +1066,13 @@ local function drawTransitionFadeOut(self, timer, duration)
 end
 
 local function drawTransitionShop(self, _)
-        love.graphics.setColor(0, 0, 0, 0.85)
-        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
-        love.graphics.setColor(1, 1, 1, 1)
-        Shop:draw(self.screenWidth, self.screenHeight)
-        PauseMenu:draw(self.screenWidth, self.screenHeight)
+		love.graphics.setColor(0, 0, 0, 0.85)
+		love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+		love.graphics.setColor(1, 1, 1, 1)
+		Shop:draw(self.screenWidth, self.screenHeight)
+		PauseMenu:draw(self.screenWidth, self.screenHeight)
 
-        return true
+		return true
 end
 
 local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
@@ -1323,10 +1323,10 @@ function Game:update(dt)
 		transitionBlocking = transition.isGameplayBlocked and transition:isGameplayBlocked()
 	end
 
-        if transitionBlocking then
-                self:updateTransitionVisuals(scaledDt)
-                return
-        end
+		if transitionBlocking then
+				self:updateTransitionVisuals(scaledDt)
+				return
+		end
 
 	local stateHandler = STATE_UPDATERS[self.state]
 	if stateHandler and stateHandler(self, scaledDt) then
@@ -1396,24 +1396,24 @@ function Game:draw()
 end
 
 function Game:keypressed(key)
-        if key == "escape" and self.state ~= "gameover" then
-                self:togglePause()
-                return
-        end
+		if key == "escape" and self.state ~= "gameover" then
+				self:togglePause()
+				return
+		end
 
-        if self.state == "paused" then
-                local action = PauseMenu:keypressed(key)
-                if action and self.input then
-                        return self.input:applyPauseMenuSelection(action)
-                end
-                return
-        end
+		if self.state == "paused" then
+				local action = PauseMenu:keypressed(key)
+				if action and self.input then
+						return self.input:applyPauseMenuSelection(action)
+				end
+				return
+		end
 
-        if forwardShopInput(self, "keypressed", key) then
-                return
-        end
+		if forwardShopInput(self, "keypressed", key) then
+				return
+		end
 
-        if self:confirmTransitionIntro() then
+		if self:confirmTransitionIntro() then
 		return
 	end
 
