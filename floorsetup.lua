@@ -26,9 +26,9 @@ local EMBER_SAW_COLOR = {1.0, 0.47, 0.18, 1}
 local EMBER_SAW_TRAIL_COLOR = {1.0, 0.32, 0.08, 0.2}
 local EMBER_SAW_GLOW_COLOR = {1.0, 0.62, 0.22, 0.44}
 local GILDED_LASER_PALETTE = {
-		core = {1.0, 0.86, 0.32, 1},
-		glow = {1.0, 0.62, 0.24, 0.9},
-		rim = {1.0, 0.96, 0.72, 1},
+	core = {1.0, 0.86, 0.32, 1},
+	glow = {1.0, 0.62, 0.24, 0.9},
+	rim = {1.0, 0.96, 0.72, 1},
 }
 
 local DIM_FLOOR_MIN = 3
@@ -50,69 +50,69 @@ local function applyPalette(palette)
 end
 
 local function resetFloorEntities()
-		Arena:resetExit()
-		if Arena.clearSpawnDebugData then
-				Arena:clearSpawnDebugData()
-		end
-		Movement:reset()
-		FloatingText:reset()
-		Particles:reset()
-		Rocks:reset()
-		Saws:reset()
-		Lasers:reset()
+	Arena:resetExit()
+	if Arena.clearSpawnDebugData then
+		Arena:clearSpawnDebugData()
+	end
+	Movement:reset()
+	FloatingText:reset()
+	Particles:reset()
+	Rocks:reset()
+	Saws:reset()
+	Lasers:reset()
 end
 
 local function shouldTriggerDimFloor(floorNum, floorData)
-		if not floorNum then
-				return false
-		end
+	if not floorNum then
+		return false
+	end
 
-		if floorNum < DIM_FLOOR_MIN or floorNum > DIM_FLOOR_MAX then
-				return false
-		end
+	if floorNum < DIM_FLOOR_MIN or floorNum > DIM_FLOOR_MAX then
+		return false
+	end
 
-		if floorData and floorData.dimFloorChance == 0 then
-				return false
-		end
+	if floorData and floorData.dimFloorChance == 0 then
+		return false
+	end
 
-		local chance = DIM_FLOOR_CHANCE
-		if floorData and floorData.dimFloorChance then
-				chance = floorData.dimFloorChance
-		end
+	local chance = DIM_FLOOR_CHANCE
+	if floorData and floorData.dimFloorChance then
+		chance = floorData.dimFloorChance
+	end
 
-		if not chance or chance <= 0 then
-				return false
-		end
+	if not chance or chance <= 0 then
+		return false
+	end
 
-		return love.math.random() < chance
+	return love.math.random() < chance
 end
 
 local function tryApplyDimFloorAnomaly(floorNum, traitContext, floorData)
-		if shouldTriggerDimFloor(floorNum, floorData) then
-				if traitContext then
-						traitContext.environmentalAnomaly = "dimFloor"
-				end
-
-				Arena:applyDimFloor({
-						baseAlpha = 0.85,
-						headMinRadius = 120,
-						headMaxRadius = 260,
-						fruitRadius = 96,
-						hazardRadius = 88,
-						laserBeamSamples = 3,
-						glowSegments = 60,
-				})
-				return true
+	if shouldTriggerDimFloor(floorNum, floorData) then
+		if traitContext then
+			traitContext.environmentalAnomaly = "dimFloor"
 		end
 
-		return false
+		Arena:applyDimFloor({
+			baseAlpha = 0.85,
+			headMinRadius = 120,
+			headMaxRadius = 260,
+			fruitRadius = 96,
+			hazardRadius = 88,
+			laserBeamSamples = 3,
+			glowSegments = 60,
+		})
+		return true
+	end
+
+	return false
 end
 
 local function getCenterSpawnCell()
-		local cols = Arena.cols or 1
-		local rows = Arena.rows or 1
-		if cols < 1 then cols = 1 end
-		if rows < 1 then rows = 1 end
+	local cols = Arena.cols or 1
+	local rows = Arena.rows or 1
+	if cols < 1 then cols = 1 end
+	if rows < 1 then rows = 1 end
 
 	local midCol = floor(cols / 2)
 	local midRow = floor(rows / 2)
@@ -240,7 +240,7 @@ local function prepareOccupancy()
 end
 
 local function applyBaselineHazardTraits(traitContext)
-		traitContext.laserCount = max(0, traitContext.laserCount or 0)
+	traitContext.laserCount = max(0, traitContext.laserCount or 0)
 
 	if traitContext.rockSpawnChance then
 		Rocks.spawnChance = traitContext.rockSpawnChance
@@ -264,7 +264,7 @@ local function finalizeTraitContext(traitContext, spawnPlan)
 
 	traitContext.sawStall = Saws:getStallOnFruit()
 
-		traitContext.laserCount = spawnPlan.laserCount or #(spawnPlan.lasers or {})
+	traitContext.laserCount = spawnPlan.laserCount or #(spawnPlan.lasers or {})
 end
 
 local function buildCellLookup(cells)
@@ -314,8 +314,8 @@ local function trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup, option
 		return false
 	end
 
-		if SnakeUtils.sawTrackIsFree(fx, fy, "horizontal") then
-				Saws:spawn(fx, fy, bladeRadius, 8, "horizontal", nil, options)
+	if SnakeUtils.sawTrackIsFree(fx, fy, "horizontal") then
+		Saws:spawn(fx, fy, bladeRadius, 8, "horizontal", nil, options)
 		SnakeUtils.occupySawTrack(fx, fy, "horizontal")
 		return true
 	end
@@ -337,8 +337,8 @@ local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, options)
 		return false
 	end
 
-		if SnakeUtils.sawTrackIsFree(fx, fy, "vertical") then
-				Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side, options)
+	if SnakeUtils.sawTrackIsFree(fx, fy, "vertical") then
+		Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side, options)
 		SnakeUtils.occupySawTrack(fx, fy, "vertical")
 		return true
 	end
@@ -347,76 +347,76 @@ local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, options)
 end
 
 local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
-		local spawnLookup = buildCellLookup(spawnBuffer)
-		options = options or {}
-		local specialQueue = {}
-		local function addSpecial(count, specialOptions)
-				local amount = max(0, floor((count or 0) + 0.5))
-				if amount <= 0 then
-						return
-				end
-
-				specialQueue[#specialQueue + 1] = {
-						remaining = amount,
-						options = specialOptions,
-				}
+	local spawnLookup = buildCellLookup(spawnBuffer)
+	options = options or {}
+	local specialQueue = {}
+	local function addSpecial(count, specialOptions)
+		local amount = max(0, floor((count or 0) + 0.5))
+		if amount <= 0 then
+			return
 		end
 
-		addSpecial(options.radiantCount, {
-				color = options.radiantColor or GILDED_SAW_COLOR,
-				gilded = true,
-		})
+		specialQueue[#specialQueue + 1] = {
+			remaining = amount,
+			options = specialOptions,
+		}
+	end
 
-		addSpecial(options.emberCount, {
-				color = options.emberColor or EMBER_SAW_COLOR,
-				ember = true,
-				emberTrailColor = options.emberTrailColor or EMBER_SAW_TRAIL_COLOR,
-				emberGlowColor = options.emberGlowColor or EMBER_SAW_GLOW_COLOR,
-		})
+	addSpecial(options.radiantCount, {
+		color = options.radiantColor or GILDED_SAW_COLOR,
+		gilded = true,
+	})
 
-		local nextSpecialIndex = 1
+	addSpecial(options.emberCount, {
+		color = options.emberColor or EMBER_SAW_COLOR,
+		ember = true,
+		emberTrailColor = options.emberTrailColor or EMBER_SAW_TRAIL_COLOR,
+		emberGlowColor = options.emberGlowColor or EMBER_SAW_GLOW_COLOR,
+	})
 
-		local function acquireSpecial()
-				if #specialQueue == 0 then
-						return nil, nil
-				end
+	local nextSpecialIndex = 1
 
-				for offset = 0, #specialQueue - 1 do
-						local index = ((nextSpecialIndex + offset - 1) % #specialQueue) + 1
-						local special = specialQueue[index]
-						if special and special.remaining > 0 then
-								return special, index
-						end
-				end
-
-				return nil, nil
+	local function acquireSpecial()
+		if #specialQueue == 0 then
+			return nil, nil
 		end
 
-		for _ = 1, numSaws do
-				local dir = (love.math.random() < 0.5) and "horizontal" or "vertical"
-				local placed = false
-				local attempts = 0
-				local maxAttempts = 60
-				local activeSpecial, activeIndex = acquireSpecial()
-				local sawOptions = activeSpecial and activeSpecial.options or nil
-
-				while not placed and attempts < maxAttempts do
-						attempts = attempts + 1
-
-						if dir == "horizontal" then
-								placed = trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup, sawOptions)
-						else
-								placed = trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, sawOptions)
-						end
-				end
-
-				if placed and activeSpecial then
-						activeSpecial.remaining = max(0, (activeSpecial.remaining or 0) - 1)
-						nextSpecialIndex = ((activeIndex or 1) % max(#specialQueue, 1)) + 1
-				elseif activeSpecial then
-						nextSpecialIndex = ((activeIndex or 1) % max(#specialQueue, 1)) + 1
-				end
+		for offset = 0, #specialQueue - 1 do
+			local index = ((nextSpecialIndex + offset - 1) % #specialQueue) + 1
+			local special = specialQueue[index]
+			if special and special.remaining > 0 then
+				return special, index
+			end
 		end
+
+		return nil, nil
+	end
+
+	for _ = 1, numSaws do
+		local dir = (love.math.random() < 0.5) and "horizontal" or "vertical"
+		local placed = false
+		local attempts = 0
+		local maxAttempts = 60
+		local activeSpecial, activeIndex = acquireSpecial()
+		local sawOptions = activeSpecial and activeSpecial.options or nil
+
+		while not placed and attempts < maxAttempts do
+			attempts = attempts + 1
+
+			if dir == "horizontal" then
+				placed = trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup, sawOptions)
+			else
+				placed = trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, sawOptions)
+			end
+		end
+
+		if placed and activeSpecial then
+			activeSpecial.remaining = max(0, (activeSpecial.remaining or 0) - 1)
+			nextSpecialIndex = ((activeIndex or 1) % max(#specialQueue, 1)) + 1
+		elseif activeSpecial then
+			nextSpecialIndex = ((activeIndex or 1) % max(#specialQueue, 1)) + 1
+		end
+	end
 end
 
 local function spawnLasers(laserPlan)
@@ -430,8 +430,8 @@ local function spawnLasers(laserPlan)
 end
 
 local function spawnRocks(numRocks, safeZone)
-		for _ = 1, numRocks do
-				local fx, fy = SnakeUtils.getSafeSpawn(
+	for _ = 1, numRocks do
+		local fx, fy = SnakeUtils.getSafeSpawn(
 		Snake:getSegments(),
 		Fruit,
 		Rocks,
@@ -570,35 +570,35 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
 		end
 	end
 
-		local desiredRadiant = 0
-		if traitContext and traitContext.gildedObsessionExtraLasers then
-				desiredRadiant = max(0, floor((traitContext.gildedObsessionExtraLasers or 0) + 0.5))
-		end
+	local desiredRadiant = 0
+	if traitContext and traitContext.gildedObsessionExtraLasers then
+		desiredRadiant = max(0, floor((traitContext.gildedObsessionExtraLasers or 0) + 0.5))
+	end
 
-		local actualRadiant = min(desiredRadiant, #plan)
-		if actualRadiant > 0 then
-				for i = 0, actualRadiant - 1 do
-						local index = #plan - i
-						if index >= 1 then
-								local entry = plan[index]
-								entry.options = entry.options or {}
-								entry.options.firePalette = GILDED_LASER_PALETTE
-								entry.options.fireColor = nil
-								entry.options.gilded = true
-						end
-				end
+	local actualRadiant = min(desiredRadiant, #plan)
+	if actualRadiant > 0 then
+		for i = 0, actualRadiant - 1 do
+			local index = #plan - i
+			if index >= 1 then
+				local entry = plan[index]
+				entry.options = entry.options or {}
+				entry.options.firePalette = GILDED_LASER_PALETTE
+				entry.options.fireColor = nil
+				entry.options.gilded = true
+			end
 		end
+	end
 
-		if traitContext then
-				traitContext.gildedObsessionExtraLasers = actualRadiant
-		end
+	if traitContext then
+		traitContext.gildedObsessionExtraLasers = actualRadiant
+	end
 
-		return plan, desired
+	return plan, desired
 end
 
 local function mergeCells(primary, secondary)
-		if not primary or #primary == 0 then
-				return secondary
+	if not primary or #primary == 0 then
+		return secondary
 	end
 
 	if not secondary or #secondary == 0 then
@@ -620,73 +620,73 @@ local function mergeCells(primary, secondary)
 end
 
 local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
-		local halfTiles = floor((TRACK_LENGTH / Arena.tileSize) / 2)
-		local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
-		local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
+	local halfTiles = floor((TRACK_LENGTH / Arena.tileSize) / 2)
+	local laserPlan, desiredLasers = buildLaserPlan(traitContext, halfTiles, TRACK_LENGTH, floorData)
+	local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
 
-		local radiantSaws = max(0, floor((traitContext.gildedObsessionExtraSaws or 0) + 0.5))
-		local emberSaws = max(0, floor((traitContext.contractOfCindersEmberSaws or 0) + 0.5))
-		local radiantLasers = max(0, floor((traitContext.gildedObsessionExtraLasers or 0) + 0.5))
-		traitContext.gildedObsessionExtraSaws = radiantSaws
-		traitContext.contractOfCindersEmberSaws = emberSaws
-		traitContext.gildedObsessionExtraLasers = radiantLasers
+	local radiantSaws = max(0, floor((traitContext.gildedObsessionExtraSaws or 0) + 0.5))
+	local emberSaws = max(0, floor((traitContext.contractOfCindersEmberSaws or 0) + 0.5))
+	local radiantLasers = max(0, floor((traitContext.gildedObsessionExtraLasers or 0) + 0.5))
+	traitContext.gildedObsessionExtraSaws = radiantSaws
+	traitContext.contractOfCindersEmberSaws = emberSaws
+	traitContext.gildedObsessionExtraLasers = radiantLasers
 
-		return {
-				numRocks = traitContext.rocks,
-				numSaws = traitContext.saws,
-				halfTiles = halfTiles,
-				bladeRadius = DEFAULT_SAW_RADIUS,
-				safeZone = safeZone,
-				reservedCells = reservedCells,
-				reservedSafeZone = reservedSafeZone,
-				rockSafeZone = rockSafeZone,
-				spawnBuffer = spawnBuffer,
-				reservedSpawnBuffer = reservedSpawnBuffer,
-				spawnSafeCells = spawnSafeCells,
-				lasers = laserPlan,
-				laserCount = desiredLasers,
-				radiantSawCount = radiantSaws,
-				emberSawCount = emberSaws,
-				radiantLaserCount = radiantLasers,
-		}
+	return {
+		numRocks = traitContext.rocks,
+		numSaws = traitContext.saws,
+		halfTiles = halfTiles,
+		bladeRadius = DEFAULT_SAW_RADIUS,
+		safeZone = safeZone,
+		reservedCells = reservedCells,
+		reservedSafeZone = reservedSafeZone,
+		rockSafeZone = rockSafeZone,
+		spawnBuffer = spawnBuffer,
+		reservedSpawnBuffer = reservedSpawnBuffer,
+		spawnSafeCells = spawnSafeCells,
+		lasers = laserPlan,
+		laserCount = desiredLasers,
+		radiantSawCount = radiantSaws,
+		emberSawCount = emberSaws,
+		radiantLaserCount = radiantLasers,
+	}
 end
 
 function FloorSetup.prepare(floorNum, floorData)
-		applyPalette(floorData and floorData.palette)
-		Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
-		resetFloorEntities()
-		Arena:setFloorDecorations(floorNum, floorData)
-		Arena:applyDimFloor(nil)
-		local safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer = prepareOccupancy()
+	applyPalette(floorData and floorData.palette)
+	Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
+	resetFloorEntities()
+	Arena:setFloorDecorations(floorNum, floorData)
+	Arena:applyDimFloor(nil)
+	local safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer = prepareOccupancy()
 
-		local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
-		applyBaselineHazardTraits(traitContext)
+	local traitContext = FloorPlan.buildBaselineFloorContext(floorNum)
+	applyBaselineHazardTraits(traitContext)
 
-		traitContext = Upgrades:modifyFloorContext(traitContext)
-		traitContext.laserCount = max(0, traitContext.laserCount or 0)
+	traitContext = Upgrades:modifyFloorContext(traitContext)
+	traitContext.laserCount = max(0, traitContext.laserCount or 0)
 
-		local cap = FloorPlan.getLaserCap and FloorPlan.getLaserCap(traitContext.floor)
-		if cap and traitContext.laserCount ~= nil then
-				traitContext.laserCount = min(cap, traitContext.laserCount)
-		end
+	local cap = FloorPlan.getLaserCap and FloorPlan.getLaserCap(traitContext.floor)
+	if cap and traitContext.laserCount ~= nil then
+		traitContext.laserCount = min(cap, traitContext.laserCount)
+	end
 
-		local dimFloorActive = tryApplyDimFloorAnomaly(floorNum, traitContext, floorData)
-		traitContext.dimFloorActive = dimFloorActive
-		if not dimFloorActive and traitContext.environmentalAnomaly == "dimFloor" then
-				traitContext.environmentalAnomaly = nil
-		end
+	local dimFloorActive = tryApplyDimFloorAnomaly(floorNum, traitContext, floorData)
+	traitContext.dimFloorActive = dimFloorActive
+	if not dimFloorActive and traitContext.environmentalAnomaly == "dimFloor" then
+		traitContext.environmentalAnomaly = nil
+	end
 
-		local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
+	local spawnPlan = buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer, floorData)
 
-		Arena:setSpawnDebugData({
-				safeZone = safeZone,
-				rockSafeZone = rockSafeZone,
-				spawnBuffer = spawnBuffer,
-				spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
-				reservedCells = reservedCells,
-				reservedSafeZone = reservedSafeZone,
-				reservedSpawnBuffer = reservedSpawnBuffer,
-		})
+	Arena:setSpawnDebugData({
+		safeZone = safeZone,
+		rockSafeZone = rockSafeZone,
+		spawnBuffer = spawnBuffer,
+		spawnSafeCells = spawnPlan and spawnPlan.spawnSafeCells,
+		reservedCells = reservedCells,
+		reservedSafeZone = reservedSafeZone,
+		reservedSpawnBuffer = reservedSpawnBuffer,
+	})
 
 	return {
 		traitContext = traitContext,
@@ -699,47 +699,47 @@ function FloorSetup.finalizeContext(traitContext, spawnPlan)
 end
 
 function FloorSetup.spawnHazards(spawnPlan)
-		local gildedInfo
-		if Upgrades and Upgrades.consumeGildedObsessionHazards then
-				gildedInfo = Upgrades:consumeGildedObsessionHazards()
-		end
+	local gildedInfo
+	if Upgrades and Upgrades.consumeGildedObsessionHazards then
+		gildedInfo = Upgrades:consumeGildedObsessionHazards()
+	end
 
-		local radiantSawCount = 0
-		local emberSawCount = 0
-		local radiantLaserCount = 0
-		if spawnPlan then
-				radiantSawCount = spawnPlan.radiantSawCount or 0
-				emberSawCount = spawnPlan.emberSawCount or 0
-				radiantLaserCount = spawnPlan.radiantLaserCount or 0
-		end
+	local radiantSawCount = 0
+	local emberSawCount = 0
+	local radiantLaserCount = 0
+	if spawnPlan then
+		radiantSawCount = spawnPlan.radiantSawCount or 0
+		emberSawCount = spawnPlan.emberSawCount or 0
+		radiantLaserCount = spawnPlan.radiantLaserCount or 0
+	end
 
-		if gildedInfo then
-				if radiantSawCount <= 0 then
-						radiantSawCount = gildedInfo.saws or 0
-				end
-				if radiantLaserCount <= 0 then
-						radiantLaserCount = gildedInfo.lasers or 0
-				end
+	if gildedInfo then
+		if radiantSawCount <= 0 then
+			radiantSawCount = gildedInfo.saws or 0
 		end
+		if radiantLaserCount <= 0 then
+			radiantLaserCount = gildedInfo.lasers or 0
+		end
+	end
 
-		spawnSaws(
-				spawnPlan.numSaws or 0,
-				spawnPlan.halfTiles,
-				spawnPlan.bladeRadius,
-				spawnPlan.spawnSafeCells,
-				{
-						radiantCount = radiantSawCount,
-						radiantColor = GILDED_SAW_COLOR,
-						emberCount = emberSawCount,
-						emberColor = EMBER_SAW_COLOR,
-						emberTrailColor = EMBER_SAW_TRAIL_COLOR,
-						emberGlowColor = EMBER_SAW_GLOW_COLOR,
-				}
-		)
-		spawnLasers(spawnPlan.lasers or {})
-		spawnRocks(spawnPlan.numRocks or 0, spawnPlan.spawnSafeCells or spawnPlan.rockSafeZone or spawnPlan.safeZone)
-		Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
-		SnakeUtils.releaseCells(spawnPlan.reservedSafeZone)
+	spawnSaws(
+	spawnPlan.numSaws or 0,
+	spawnPlan.halfTiles,
+	spawnPlan.bladeRadius,
+	spawnPlan.spawnSafeCells,
+	{
+		radiantCount = radiantSawCount,
+		radiantColor = GILDED_SAW_COLOR,
+		emberCount = emberSawCount,
+		emberColor = EMBER_SAW_COLOR,
+		emberTrailColor = EMBER_SAW_TRAIL_COLOR,
+		emberGlowColor = EMBER_SAW_GLOW_COLOR,
+	}
+	)
+	spawnLasers(spawnPlan.lasers or {})
+	spawnRocks(spawnPlan.numRocks or 0, spawnPlan.spawnSafeCells or spawnPlan.rockSafeZone or spawnPlan.safeZone)
+	Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
+	SnakeUtils.releaseCells(spawnPlan.reservedSafeZone)
 	SnakeUtils.releaseCells(spawnPlan.reservedSpawnBuffer)
 	SnakeUtils.releaseCells(spawnPlan.reservedCells)
 end

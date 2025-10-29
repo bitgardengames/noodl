@@ -6,10 +6,10 @@ local max = math.max
 local min = math.min
 
 local Tooltip = {
-		active = false,
-		alpha = 0,
-		delayTimer = 0,
-		currentId = nil,
+	active = false,
+	alpha = 0,
+	delayTimer = 0,
+	currentId = nil,
 	text = "",
 	placement = "cursor",
 	anchorX = 0,
@@ -20,8 +20,8 @@ local Tooltip = {
 	mouseX = 0,
 	mouseY = 0,
 	defaultDelay = 0.18,
-		defaultOffset = 18,
-		defaultMaxWidth = 320,
+	defaultOffset = 18,
+	defaultMaxWidth = 320,
 }
 
 local EMPTY_TABLE = {}
@@ -35,16 +35,16 @@ local function hasContent(text)
 end
 
 local function applyDelay(self, options, changed, suppress)
-		local delay = options and options.delay
-		if delay == nil then
-				delay = self.defaultDelay or 0
-		end
+	local delay = options and options.delay
+	if delay == nil then
+		delay = self.defaultDelay or 0
+	end
 
-		if changed and not suppress then
-				self.delayTimer = -(delay or 0)
-		elseif suppress and self.delayTimer < 0 then
-				self.delayTimer = 0
-		end
+	if changed and not suppress then
+		self.delayTimer = -(delay or 0)
+	elseif suppress and self.delayTimer < 0 then
+		self.delayTimer = 0
+	end
 end
 
 function Tooltip:update(dt, mx, my)
@@ -77,14 +77,14 @@ function Tooltip:update(dt, mx, my)
 end
 
 function Tooltip:show(text, options)
-		options = options or {}
+	options = options or {}
 
-		local wasVisible = self:isVisible()
-		local id = options.id or text
-		local placement = options.placement or "cursor"
-		local x = options.x or self.anchorX
-		local y = options.y or self.anchorY
-		local maxWidth = options.maxWidth or self.defaultMaxWidth or self.maxWidth
+	local wasVisible = self:isVisible()
+	local id = options.id or text
+	local placement = options.placement or "cursor"
+	local x = options.x or self.anchorX
+	local y = options.y or self.anchorY
+	local maxWidth = options.maxWidth or self.defaultMaxWidth or self.maxWidth
 	local offset = options.offset or self.defaultOffset or self.offset
 
 	local changed = (self.currentId ~= id)
@@ -95,7 +95,7 @@ function Tooltip:show(text, options)
 	or (self.maxWidth ~= maxWidth)
 	or (self.offset ~= offset)
 
-		applyDelay(self, options, changed, wasVisible)
+	applyDelay(self, options, changed, wasVisible)
 
 	self.text = text or ""
 	self.currentId = id
@@ -155,7 +155,7 @@ function Tooltip:draw()
 	end
 
 	local sw, sh = Screen:get()
-		local fonts = UI.fonts or EMPTY_TABLE
+	local fonts = UI.fonts or EMPTY_TABLE
 	local font = fonts.caption or fonts.small or fonts.body
 	if not font then
 		return
@@ -169,7 +169,7 @@ function Tooltip:draw()
 	local lineHeight = font:getHeight()
 	local textHeight = lineCount * lineHeight
 
-		local spacing = UI.spacing or EMPTY_TABLE
+	local spacing = UI.spacing or EMPTY_TABLE
 	local paddingX = (spacing.panelPadding or 20) * 0.6
 	local paddingY = paddingX * 0.75
 	local measuredWidth = 0
@@ -239,15 +239,15 @@ function Tooltip:draw()
 		y = sh - margin - boxHeight
 	end
 
-		local colors = UI.colors or EMPTY_TABLE
-		local panelColor = Theme.tooltipBackground or colors.panel or Theme.panelColor or DEFAULT_TOOLTIP_PANEL_COLOR
-		local borderColor = Theme.tooltipBorder or colors.border or Theme.panelBorder or DEFAULT_TOOLTIP_BORDER_COLOR
-		local shadowColor = Theme.tooltipShadow or colors.shadow or Theme.shadowColor or DEFAULT_TOOLTIP_SHADOW_COLOR
-		local textColor = Theme.tooltipText or colors.text or Theme.textColor or DEFAULT_TOOLTIP_TEXT_COLOR
+	local colors = UI.colors or EMPTY_TABLE
+	local panelColor = Theme.tooltipBackground or colors.panel or Theme.panelColor or DEFAULT_TOOLTIP_PANEL_COLOR
+	local borderColor = Theme.tooltipBorder or colors.border or Theme.panelBorder or DEFAULT_TOOLTIP_BORDER_COLOR
+	local shadowColor = Theme.tooltipShadow or colors.shadow or Theme.shadowColor or DEFAULT_TOOLTIP_SHADOW_COLOR
+	local textColor = Theme.tooltipText or colors.text or Theme.textColor or DEFAULT_TOOLTIP_TEXT_COLOR
 	local radius = spacing.panelRadius or 12
 
-		love.graphics.setColor(shadowColor[1] or 0, shadowColor[2] or 0, shadowColor[3] or 0, (shadowColor[4] or 1) * alpha * 0.7)
-		love.graphics.rectangle("fill", left + 2, y + 4, boxWidth, boxHeight, radius, radius)
+	love.graphics.setColor(shadowColor[1] or 0, shadowColor[2] or 0, shadowColor[3] or 0, (shadowColor[4] or 1) * alpha * 0.7)
+	love.graphics.rectangle("fill", left + 2, y + 4, boxWidth, boxHeight, radius, radius)
 
 	love.graphics.setColor(panelColor[1] or 1, panelColor[2] or 1, panelColor[3] or 1, (panelColor[4] or 1) * alpha)
 	love.graphics.rectangle("fill", left, y, boxWidth, boxHeight, radius, radius)

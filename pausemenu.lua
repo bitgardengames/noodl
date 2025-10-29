@@ -144,9 +144,9 @@ function PauseMenu:load(screenWidth, screenHeight)
 
 	resetAnalogAxis()
 
-		local centerX = screenWidth / 2
-		local centerY = screenHeight / 2
-		local menuLayout = UI.getMenuLayout(screenWidth, screenHeight)
+	local centerX = screenWidth / 2
+	local centerY = screenHeight / 2
+	local menuLayout = UI.getMenuLayout(screenWidth, screenHeight)
 	local buttonWidth = UI.spacing.buttonWidth
 	local buttonHeight = UI.spacing.buttonHeight
 	local spacing = UI.spacing.buttonSpacing
@@ -160,16 +160,16 @@ function PauseMenu:load(screenWidth, screenHeight)
 	local panelHeight = panelPadding + titleHeight + headerSpacing + buttonArea + panelPadding
 
 	local panelX = centerX - panelWidth / 2
-		local panelY = centerY - panelHeight / 2
-		local topMargin = menuLayout.marginTop or UI.spacing.sectionSpacing
-		local bottomMargin = menuLayout.marginBottom or topMargin
-		local minPanelY = topMargin
-		local maxPanelY = (menuLayout.bottomY or (screenHeight - bottomMargin)) - panelHeight
-		if maxPanelY < minPanelY then
-				panelY = minPanelY
-		else
-				panelY = min(max(panelY, minPanelY), maxPanelY)
-		end
+	local panelY = centerY - panelHeight / 2
+	local topMargin = menuLayout.marginTop or UI.spacing.sectionSpacing
+	local bottomMargin = menuLayout.marginBottom or topMargin
+	local minPanelY = topMargin
+	local maxPanelY = (menuLayout.bottomY or (screenHeight - bottomMargin)) - panelHeight
+	if maxPanelY < minPanelY then
+		panelY = minPanelY
+	else
+		panelY = min(max(panelY, minPanelY), maxPanelY)
+	end
 
 	panelBounds.x = panelX
 	panelBounds.y = panelY
@@ -234,29 +234,29 @@ function PauseMenu:update(dt, isPaused, floorNumber, floorName)
 end
 
 function PauseMenu:draw(screenWidth, screenHeight)
-		if alpha <= 0 then return end
+	if alpha <= 0 then return end
 
-		love.graphics.setColor(0, 0, 0, 0.55 * alpha)
-		love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
+	love.graphics.setColor(0, 0, 0, 0.55 * alpha)
+	love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
 
-		local menuLayout = UI.getMenuLayout(screenWidth, screenHeight)
-		if currentFloorLabel then
-				subtitleLabelOptions.alpha = alpha
-				local topLabelY = menuLayout.marginTop or UI.spacing.panelPadding
-				UI.drawLabel(currentFloorLabel, 0, topLabelY, screenWidth, "center", subtitleLabelOptions)
-		end
+	local menuLayout = UI.getMenuLayout(screenWidth, screenHeight)
+	if currentFloorLabel then
+		subtitleLabelOptions.alpha = alpha
+		local topLabelY = menuLayout.marginTop or UI.spacing.panelPadding
+		UI.drawLabel(currentFloorLabel, 0, topLabelY, screenWidth, "center", subtitleLabelOptions)
+	end
 
-		local panel = panelBounds
+	local panel = panelBounds
 	if panel and panel.w > 0 and panel.h > 0 then
 		panelFillColor[1] = Theme.panelColor[1]
 		panelFillColor[2] = Theme.panelColor[2]
 		panelFillColor[3] = Theme.panelColor[3]
 		panelFillColor[4] = (Theme.panelColor[4] or 1) * alpha
 
-				panelBorderColor[1] = 0
-				panelBorderColor[2] = 0
-				panelBorderColor[3] = 0
-				panelBorderColor[4] = alpha
+		panelBorderColor[1] = 0
+		panelBorderColor[2] = 0
+		panelBorderColor[3] = 0
+		panelBorderColor[4] = alpha
 
 		panelDrawOptions.shadowAlpha = alpha
 
