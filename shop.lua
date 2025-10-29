@@ -232,6 +232,7 @@ local function resetAnalogAxis()
 end
 
 local MYSTERY_REVEAL_EXTRA_HOLD = 1.2
+local MYSTERY_REVEAL_EXTRA_POST_PAUSE = 1
 
 local function updateMysteryReveal(self, card, state, dt)
 	if not dt or dt <= 0 then return end
@@ -265,7 +266,7 @@ local function updateMysteryReveal(self, card, state, dt)
 			shakeMagnitude = pending.revealShakeMagnitude or 9,
 			shakeFrequency = pending.revealShakeFrequency or 26,
 			applyThreshold = pending.revealApplyThreshold or 0.6,
-			postPauseDuration = pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0,
+                        postPauseDuration = (pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0) + MYSTERY_REVEAL_EXTRA_POST_PAUSE,
 			postPauseTimer = 0,
 		}
 		state.mysteryReveal = reveal
