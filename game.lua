@@ -51,9 +51,69 @@ local Game = {}
 local clamp01 = Easing.clamp01
 local easeOutExpo = Easing.easeOutExpo
 
+local currentGame
+local currentRenderState
+
+local function drawBackgroundLayer()
+        Arena:drawBackground()
+end
+
+local function drawOverlayLayer()
+        if Arena.drawDimLighting then
+                Arena:drawDimLighting()
+        end
+
+        if Arena.drawQueuedExit then
+                Arena:drawQueuedExit()
+        end
+
+        Arena:drawBorder()
+end
+
+local function drawMainLayer()
+        local game = currentGame
+        local renderState = currentRenderState
+
+        if not game then
+                return
+        end
+
+        Fruit:draw()
+        Rocks:draw()
+        Saws:draw()
+        Darts:draw()
+        Lasers:draw()
+
+        local isDescending = (renderState == "descending")
+        local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
+
+        if not isDescending and not shouldDrawExitAfterSnake then
+                Arena:drawExit()
+        end
+
+        if isDescending then
+                game:drawDescending()
+        elseif renderState == "dying" then
+                Death:draw()
+        elseif renderState ~= "gameover" then
+                Snake:draw()
+        end
+
+        if shouldDrawExitAfterSnake then
+                Arena:drawExit()
+        end
+
+        Particles:draw()
+        Bombs:draw()
+        UpgradeVisuals:draw()
+        Popup:draw()
+
+        RenderLayers:withLayer("overlay", drawOverlayLayer)
+end
+
 local function easeOutCubic(t)
-	local inv = 1 - t
-	return 1 - inv * inv * inv
+        local inv = 1 - t
+        return 1 - inv * inv * inv
 end
 
 local function ensureTransitionTitleCanvas(self)
@@ -981,61 +1041,23 @@ function Game:handleDeath(dt)
 end
 
 local function drawPlayfieldLayers(self, stateOverride)
-	local renderState = stateOverride or self.state
+        local renderState = stateOverride or self.state
 
-	RenderLayers:begin(self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
+        RenderLayers:begin(self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
 
-	RenderLayers:withLayer("background", function()
-		Arena:drawBackground()
-	end)
+        currentGame = self
+        currentRenderState = renderState
 
-	Death:applyShake()
+        RenderLayers:withLayer("background", drawBackgroundLayer)
 
-        RenderLayers:withLayer("main", function()
-                Fruit:draw()
-                Rocks:draw()
-                Saws:draw()
-                Darts:draw()
-                Lasers:draw()
+        Death:applyShake()
 
-                local isDescending = (renderState == "descending")
-		local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
+        RenderLayers:withLayer("main", drawMainLayer)
 
-		if not isDescending and not shouldDrawExitAfterSnake then
-			Arena:drawExit()
-		end
+        RenderLayers:present()
 
-		if isDescending then
-			self:drawDescending()
-		elseif renderState == "dying" then
-			Death:draw()
-		elseif renderState ~= "gameover" then
-			Snake:draw()
-		end
-
-		if shouldDrawExitAfterSnake then
-			Arena:drawExit()
-		end
-
-                Particles:draw()
-                Bombs:draw()
-		UpgradeVisuals:draw()
-		Popup:draw()
-
-		RenderLayers:withLayer("overlay", function()
-			if Arena.drawDimLighting then
-				Arena:drawDimLighting()
-			end
-
-			if Arena.drawQueuedExit then
-				Arena:drawQueuedExit()
-			end
-
-			Arena:drawBorder()
-		end)
-	end)
-
-	RenderLayers:present()
+        currentGame = nil
+        currentRenderState = nil
 end
 
 local function drawInterfaceLayers(self)
