@@ -4,6 +4,8 @@ local SnakeUtils = require("snakeutils")
 local Audio = require("audio")
 
 local max = math.max
+local min = math.min
+local abs = math.abs
 local sqrt = math.sqrt
 local sin = math.sin
 local random = love.math.random
@@ -25,12 +27,12 @@ local BASE_EMITTER_SIZE = 18
 local FLASH_DECAY = 3.5
 local IMPACT_FLASH_DURATION = 0.32
 
-local BASE_EMITTER_COLOR = {0.34, 0.28, 0.18, 0.95}
-local BASE_ACCENT_COLOR = {0.62, 0.48, 0.29, 1.0}
-local TELEGRAPH_COLOR = {0.84, 0.72, 0.53, 0.85}
-local DART_BODY_COLOR = {0.76, 0.63, 0.38, 1.0}
-local DART_TIP_COLOR = {0.62, 0.36, 0.21, 1.0}
-local DART_TAIL_COLOR = {0.54, 0.4, 0.22, 1.0}
+local BASE_EMITTER_COLOR = {0.32, 0.34, 0.38, 0.95}
+local BASE_ACCENT_COLOR = {0.46, 0.56, 0.62, 1.0}
+local TELEGRAPH_COLOR = {0.64, 0.74, 0.82, 0.85}
+local DART_BODY_COLOR = {0.70, 0.68, 0.60, 1.0}
+local DART_TIP_COLOR = {0.82, 0.86, 0.90, 1.0}
+local DART_TAIL_COLOR = {0.42, 0.68, 0.64, 1.0}
 
 local function clamp01(value)
         if value <= 0 then
@@ -578,59 +580,89 @@ local function drawDart(emitter)
         love.graphics.push("all")
 
         if emitter.dir == "horizontal" then
-                local shaftHeight = rh * 0.38
+                local shaftHeight = rh * 0.34
                 local shaftY = ry + (rh - shaftHeight) * 0.5
-                love.graphics.setColor(bodyColor)
-                love.graphics.rectangle("fill", rx, shaftY, rw, shaftHeight, 3, 3)
-
-                local highlight = scaleColor(bodyColor, 1.15, 0.85)
-                love.graphics.setColor(highlight)
-                love.graphics.rectangle("fill", rx, shaftY + shaftHeight * 0.18, rw, shaftHeight * 0.3, 3, 3)
-
-                local shadow = scaleColor(bodyColor, 0.65, 1)
-                love.graphics.setColor(shadow)
-                love.graphics.rectangle("fill", rx, shaftY + shaftHeight * 0.55, rw, shaftHeight * 0.35, 3, 3)
-
                 local facing = emitter.facing or 1
-                local tailLength = 8 + rw * 0.2
-                local tailCenter = (emitter.dartX or emitter.startX or 0) - facing * (rw * 0.5)
-                local baseY = ry + rh * 0.5
-                love.graphics.setColor(tailColor)
-                love.graphics.polygon("fill",
-                        tailCenter - facing * tailLength, baseY,
-                        tailCenter - facing * tailLength * 0.35, baseY - rh * 0.55,
-                        tailCenter - facing * tailLength * 0.35, baseY + rh * 0.55)
-
-                love.graphics.setColor(tipColor)
                 local tipX = (emitter.dartX or emitter.startX or 0) + facing * (rw * 0.5)
-                love.graphics.polygon("fill", tipX, baseY, tipX - facing * 10, baseY - shaftHeight * 1.1, tipX - facing * 10, baseY + shaftHeight * 1.1)
-        else
-                local shaftWidth = rw * 0.38
-                local shaftX = rx + (rw - shaftWidth) * 0.5
+                local tailX = (emitter.dartX or emitter.startX or 0) - facing * (rw * 0.5)
+                local tipLength = 8
+                local tailInset = 6
+                local shaftStart = tailX + facing * tailInset
+                local shaftEnd = tipX - facing * tipLength
+                local shaftX = min(shaftStart, shaftEnd)
+                local shaftWidth = abs(shaftEnd - shaftStart)
+
                 love.graphics.setColor(bodyColor)
-                love.graphics.rectangle("fill", shaftX, ry, shaftWidth, rh, 3, 3)
+                love.graphics.rectangle("fill", shaftX, shaftY, shaftWidth, shaftHeight, 3, 3)
 
-                local highlight = scaleColor(bodyColor, 1.15, 0.85)
+                local highlight = scaleColor(bodyColor, 1.12, 0.9)
                 love.graphics.setColor(highlight)
-                love.graphics.rectangle("fill", shaftX + shaftWidth * 0.18, ry, shaftWidth * 0.3, rh, 3, 3)
+                love.graphics.rectangle("fill", shaftX, shaftY + shaftHeight * 0.18, shaftWidth, shaftHeight * 0.32, 3, 3)
 
-                local shadow = scaleColor(bodyColor, 0.65, 1)
+                local shadow = scaleColor(bodyColor, 0.7, 1)
                 love.graphics.setColor(shadow)
-                love.graphics.rectangle("fill", shaftX + shaftWidth * 0.55, ry, shaftWidth * 0.35, rh, 3, 3)
+                love.graphics.rectangle("fill", shaftX, shaftY + shaftHeight * 0.58, shaftWidth, shaftHeight * 0.34, 3, 3)
 
-                local facing = emitter.facing or 1
-                local tailLength = 8 + rh * 0.2
-                local tailCenter = (emitter.dartY or emitter.startY or 0) - facing * (rh * 0.5)
-                local baseX = rx + rw * 0.5
+                local baseY = ry + rh * 0.5
+                local fletchInner = tailX + facing * (tailInset * 0.35)
+                local fletchOuter = tailX - facing * (tailInset * 1.4 + 4)
                 love.graphics.setColor(tailColor)
                 love.graphics.polygon("fill",
-                        baseX, tailCenter - facing * tailLength,
-                        baseX - rw * 0.55, tailCenter - facing * tailLength * 0.35,
-                        baseX + rw * 0.55, tailCenter - facing * tailLength * 0.35)
+                        fletchOuter, baseY,
+                        fletchInner, baseY - rh * 0.55,
+                        tailX + facing * 2, baseY - rh * 0.22)
+                love.graphics.polygon("fill",
+                        fletchOuter, baseY,
+                        fletchInner, baseY + rh * 0.55,
+                        tailX + facing * 2, baseY + rh * 0.22)
 
                 love.graphics.setColor(tipColor)
+                love.graphics.polygon("fill",
+                        tipX, baseY,
+                        shaftEnd, baseY - shaftHeight * 1.05,
+                        shaftEnd, baseY + shaftHeight * 1.05)
+        else
+                local shaftWidth = rw * 0.34
+                local shaftX = rx + (rw - shaftWidth) * 0.5
+                local facing = emitter.facing or 1
                 local tipY = (emitter.dartY or emitter.startY or 0) + facing * (rh * 0.5)
-                love.graphics.polygon("fill", baseX, tipY, baseX - shaftWidth * 1.1, tipY - facing * 10, baseX + shaftWidth * 1.1, tipY - facing * 10)
+                local tailY = (emitter.dartY or emitter.startY or 0) - facing * (rh * 0.5)
+                local tipLength = 8
+                local tailInset = 6
+                local shaftStart = tailY + facing * tailInset
+                local shaftEnd = tipY - facing * tipLength
+                local shaftY = min(shaftStart, shaftEnd)
+                local shaftHeight = abs(shaftEnd - shaftStart)
+
+                love.graphics.setColor(bodyColor)
+                love.graphics.rectangle("fill", shaftX, shaftY, shaftWidth, shaftHeight, 3, 3)
+
+                local highlight = scaleColor(bodyColor, 1.12, 0.9)
+                love.graphics.setColor(highlight)
+                love.graphics.rectangle("fill", shaftX + shaftWidth * 0.18, shaftY, shaftWidth * 0.32, shaftHeight, 3, 3)
+
+                local shadow = scaleColor(bodyColor, 0.7, 1)
+                love.graphics.setColor(shadow)
+                love.graphics.rectangle("fill", shaftX + shaftWidth * 0.58, shaftY, shaftWidth * 0.34, shaftHeight, 3, 3)
+
+                local baseX = rx + rw * 0.5
+                local fletchInner = tailY + facing * (tailInset * 0.35)
+                local fletchOuter = tailY - facing * (tailInset * 1.4 + 4)
+                love.graphics.setColor(tailColor)
+                love.graphics.polygon("fill",
+                        baseX, fletchOuter,
+                        baseX - rw * 0.55, fletchInner,
+                        baseX - rw * 0.22, tailY + facing * 2)
+                love.graphics.polygon("fill",
+                        baseX, fletchOuter,
+                        baseX + rw * 0.55, fletchInner,
+                        baseX + rw * 0.22, tailY + facing * 2)
+
+                love.graphics.setColor(tipColor)
+                love.graphics.polygon("fill",
+                        baseX, tipY,
+                        baseX - shaftWidth * 1.05, shaftEnd,
+                        baseX + shaftWidth * 1.05, shaftEnd)
         end
 
         love.graphics.pop()
