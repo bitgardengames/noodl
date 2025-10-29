@@ -454,9 +454,9 @@ local function drawFeedbackOverlay(self)
 end
 
 local function resolveFeedbackPosition(self, options)
-	if not options then
-		options = {}
-	end
+        if not options then
+                options = {}
+        end
 
 	local x = options.hitX or options.x or options.headX or options.snakeX
 	local y = options.hitY or options.y or options.headY or options.snakeY
@@ -492,8 +492,8 @@ function Game:applyHitStop(intensity, duration)
 end
 
 function Game:triggerImpactFeedback(strength, options)
-	local state = ensureFeedbackState(self)
-	strength = max(strength or 0, 0)
+        local state = ensureFeedbackState(self)
+        strength = max(strength or 0, 0)
 
 	local duration = 0.28 + strength * 0.24
 	state.impactDuration = duration
@@ -515,12 +515,39 @@ function Game:triggerImpactFeedback(strength, options)
 	local hitStopDuration = 0.08 + strength * 0.08
 	self:applyHitStop(hitStopStrength, hitStopDuration)
 
-	if Shaders and Shaders.notify then
-		Shaders.notify("specialEvent", {
-			type = "danger",
-			strength = min(1.2, 0.45 + strength * 0.55),
-		})
-	end
+        if Shaders and Shaders.notify then
+                Shaders.notify("specialEvent", {
+                        type = "danger",
+                        strength = min(1.2, 0.45 + strength * 0.55),
+                })
+        end
+end
+
+local TAIL_HAZARD_SHAKE = {
+        saw = 0.18,
+        laser = 0.16,
+        dart = 0.14,
+}
+
+function Game:triggerScreenShake(amount)
+        if Settings.screenShake == false then
+                return
+        end
+
+        amount = max(amount or 0, 0)
+        if amount <= 0 then
+                return
+        end
+
+        local effects = self.Effects
+        if effects and effects.shake then
+                effects:shake(amount)
+        end
+end
+
+function Game:triggerTailChopShake(cause)
+        local amount = TAIL_HAZARD_SHAKE[cause or ""] or TAIL_HAZARD_SHAKE.saw
+        self:triggerScreenShake(amount)
 end
 
 local cachedMouseInterface
