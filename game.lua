@@ -903,18 +903,22 @@ function Game:load(options)
 	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
 	Face:set("idle")
 
-	self.transition = TransitionManager.new(self)
-	self.input = GameInput.new(self, self.transition)
-	self.input:resetAxes()
+        self.transition = TransitionManager.new(self)
+        self.input = GameInput.new(self, self.transition)
+        self.input:resetAxes()
 
-	resetFeedbackState(self)
+        resetFeedbackState(self)
 
-	self.singleTouchDeath = true
+        self.singleTouchDeath = true
 
-	if Snake.adrenaline then
-		Snake.adrenaline.active = false
-		Snake.adrenaline.suppressVisuals = nil
-	end
+        self.hudIndicatorRefreshInterval = 1 / 30
+        self.hudIndicatorActiveRefreshInterval = 1 / 60
+        self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshInterval
+
+        if Snake.adrenaline then
+                Snake.adrenaline.active = false
+                Snake.adrenaline.suppressVisuals = nil
+        end
 
 	self:setupFloor(self.floor)
 
@@ -943,11 +947,15 @@ function Game:reset()
 
         resetFeedbackState(self)
 
-        if self.transition then
-		self.transition:reset()
-	end
+        self.hudIndicatorRefreshInterval = 1 / 30
+        self.hudIndicatorActiveRefreshInterval = 1 / 60
+        self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshInterval
 
-	if self.input then
+        if self.transition then
+                self.transition:reset()
+        end
+
+        if self.input then
 		self.input:resetAxes()
 	end
 end
@@ -1516,15 +1524,45 @@ function Game:update(dt)
 	end
 
         self:updateEntities(scaledDt)
-        local upgradeIndicators, indicatorsUpdated = Upgrades:getHUDIndicators()
-        if indicatorsUpdated then
-                UI:setUpgradeIndicators(upgradeIndicators)
+
+        local refreshInterval = self.hudIndicatorRefreshInterval or (1 / 30)
+        local activeRefreshInterval = self.hudIndicatorActiveRefreshInterval or refreshInterval
+
+        local adrenaline = Snake and Snake.adrenaline
+        local dash = Snake and Snake.dash
+
+        if adrenaline and adrenaline.active then
+                refreshInterval = min(refreshInterval, activeRefreshInterval)
         end
 
-	local result = self:handleDeath(scaledDt)
-	if result then
-		return result
-	end
+        if dash and (dash.active or (dash.cooldownTimer or 0) > 0) then
+                refreshInterval = min(refreshInterval, activeRefreshInterval)
+        end
+
+        self.hudIndicatorRefreshTimer = (self.hudIndicatorRefreshTimer or 0) + scaledDt
+
+        local shouldRefresh = Upgrades.hudIndicatorsDirty or false
+        if self.hudIndicatorRefreshTimer >= refreshInterval then
+                shouldRefresh = true
+        end
+
+        if shouldRefresh then
+                local upgradeIndicators, indicatorsUpdated = Upgrades:getHUDIndicators()
+                if indicatorsUpdated then
+                        UI:setUpgradeIndicators(upgradeIndicators)
+                end
+
+                if self.hudIndicatorRefreshTimer >= refreshInterval then
+                        self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshTimer % refreshInterval
+                else
+                        self.hudIndicatorRefreshTimer = 0
+                end
+        end
+
+        local result = self:handleDeath(scaledDt)
+        if result then
+                return result
+        end
 end
 
 function Game:setupFloor(floorNum)
