@@ -84,12 +84,15 @@ function TransitionManager:updateGameplayState()
 end
 
 function TransitionManager:reset()
-	self.phase = nil
-	self.timer = 0
-	self.duration = 0
-	self.data = {}
-	self.shopCloseRequested = false
-	self:updateGameplayState()
+        self.phase = nil
+        self.timer = 0
+        self.duration = 0
+        self.data = {}
+        self.shopCloseRequested = false
+        if self.game and self.game.invalidateTransitionTitleCache then
+                self.game:invalidateTransitionTitleCache()
+        end
+        self:updateGameplayState()
 end
 
 function TransitionManager:isActive()
@@ -138,10 +141,13 @@ function TransitionManager:startPhase(phase, duration)
 end
 
 function TransitionManager:clearPhase()
-	self.phase = nil
-	self.timer = 0
-	self.duration = 0
-	self:updateGameplayState()
+        self.phase = nil
+        self.timer = 0
+        self.duration = 0
+        if self.game and self.game.invalidateTransitionTitleCache then
+                self.game:invalidateTransitionTitleCache()
+        end
+        self:updateGameplayState()
 end
 
 function TransitionManager:openShop()

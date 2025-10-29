@@ -117,15 +117,127 @@ local function easeOutCubic(t)
 end
 
 local function ensureTransitionTitleCanvas(self)
-	local width = max(1, ceil(self.screenWidth or love.graphics.getWidth() or 1))
-	local height = max(1, ceil(self.screenHeight or love.graphics.getHeight() or 1))
-	local canvas = self.transitionTitleCanvas
-	if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
-		canvas = love.graphics.newCanvas(width, height)
-		canvas:setFilter("linear", "linear")
-		self.transitionTitleCanvas = canvas
-	end
-	return canvas
+        local width = max(1, ceil(self.screenWidth or love.graphics.getWidth() or 1))
+        local height = max(1, ceil(self.screenHeight or love.graphics.getHeight() or 1))
+        local canvas = self.transitionTitleCanvas
+        if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
+                canvas = love.graphics.newCanvas(width, height)
+                canvas:setFilter("linear", "linear")
+                self.transitionTitleCanvas = canvas
+        end
+        return canvas
+end
+
+function Game:invalidateTransitionTitleCache()
+        if self.transitionTitleCache then
+                self.transitionTitleCache = nil
+        end
+        if self.transitionPromptCanvas then
+                self.transitionPromptCanvas = nil
+        end
+end
+
+function Game:refreshTransitionTitleCanvas(data)
+        local floorData = data and (data.transitionFloorData or self.currentFloorData) or self.currentFloorData
+        if not floorData then
+                self:invalidateTransitionTitleCache()
+                return nil
+        end
+
+        local promptText
+        if data and data.transitionAwaitInput then
+                promptText = Localization:get("game.floor_intro.prompt")
+                if not promptText or promptText == "" then
+                        promptText = nil
+                end
+        end
+
+        local titleCanvas = ensureTransitionTitleCanvas(self)
+        local width = titleCanvas:getWidth()
+        local height = titleCanvas:getHeight()
+
+        local promptCanvas = nil
+        if promptText then
+                promptCanvas = self.transitionPromptCanvas
+                if not promptCanvas or promptCanvas:getWidth() ~= width or promptCanvas:getHeight() ~= height then
+                        promptCanvas = love.graphics.newCanvas(width, height)
+                        promptCanvas:setFilter("linear", "linear")
+                        self.transitionPromptCanvas = promptCanvas
+                end
+        else
+                self.transitionPromptCanvas = nil
+        end
+
+        local cache = self.transitionTitleCache
+        if cache
+                and cache.canvas == titleCanvas
+                and cache.floorData == floorData
+                and cache.promptText == promptText
+                and cache.width == width
+                and cache.height == height
+                and cache.promptCanvas == (promptText and self.transitionPromptCanvas or nil) then
+                return cache
+        end
+
+        local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
+        local shadowAlpha = shadow[4] or 0.5
+
+        love.graphics.push("all")
+        love.graphics.setCanvas({titleCanvas, stencil = true})
+        love.graphics.clear(0, 0, 0, 0)
+        love.graphics.origin()
+        love.graphics.setBlendMode("alpha")
+
+        love.graphics.setFont(UI.fonts.title)
+        local titleY = (self.screenHeight or height) / 2 - 90
+        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
+        love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth or width, "center")
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth or width, "center")
+
+        if floorData.flavor and floorData.flavor ~= "" then
+                love.graphics.setFont(UI.fonts.button)
+                local flavorY = titleY + UI.fonts.title:getHeight() + 32
+                love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha * 0.95)
+                love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth or width, "center")
+                love.graphics.setColor(1, 1, 1, 0.95)
+                love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth or width, "center")
+        end
+
+        love.graphics.setCanvas()
+        love.graphics.pop()
+
+        if promptCanvas then
+                love.graphics.push("all")
+                love.graphics.setCanvas({promptCanvas, stencil = true})
+                love.graphics.clear(0, 0, 0, 0)
+                love.graphics.origin()
+                love.graphics.setBlendMode("alpha")
+
+                local promptFont = UI.fonts.prompt or UI.fonts.body
+                love.graphics.setFont(promptFont)
+                local promptY = (self.screenHeight or height) - promptFont:getHeight() * 2.2
+                love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
+                love.graphics.printf(promptText, 2, promptY + 2, self.screenWidth or width, "center")
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.printf(promptText, 0, promptY, self.screenWidth or width, "center")
+
+                love.graphics.setCanvas()
+                love.graphics.pop()
+        end
+
+        cache = {
+                canvas = titleCanvas,
+                promptCanvas = promptCanvas,
+                floorData = floorData,
+                promptText = promptText,
+                width = width,
+                height = height,
+        }
+
+        self.transitionTitleCache = cache
+
+        return cache
 end
 
 local RUN_ACTIVE_STATES = {
@@ -732,13 +844,15 @@ function Game:load(options)
 	self.floor = requestedFloor
 	self.runTimer = 0
 	self.floorTimer = 0
-	self.pauseReturnState = nil
+        self.pauseReturnState = nil
 
-	self.mouseCursorState = nil
+        self.mouseCursorState = nil
 
-	Screen:update()
-	self.screenWidth, self.screenHeight = Screen:get()
-	Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
+        self:invalidateTransitionTitleCache()
+
+        Screen:update()
+        self.screenWidth, self.screenHeight = Screen:get()
+        Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
 
 	Score:load()
 	Upgrades:beginRun()
@@ -768,19 +882,21 @@ function Game:load(options)
 end
 
 function Game:reset()
-	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-	Face:set("idle")
-	self.state = "playing"
-	self.floor = self.startFloor or 1
+        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+        Face:set("idle")
+        self.state = "playing"
+        self.floor = self.startFloor or 1
 	self.runTimer = 0
 	self.floorTimer = 0
 	self.pauseReturnState = nil
 
-	self.mouseCursorState = nil
+        self.mouseCursorState = nil
 
-	resetFeedbackState(self)
+        self:invalidateTransitionTitleCache()
 
-	if self.transition then
+        resetFeedbackState(self)
+
+        if self.transition then
 		self.transition:reset()
 	end
 
@@ -1154,91 +1270,62 @@ local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
 end
 
 local function drawTransitionFloorIntro(self, timer, duration, data)
-	local floorData = data.transitionFloorData or self.currentFloorData
-	if not floorData then
-		return
-	end
+        local floorData = data.transitionFloorData or self.currentFloorData
+        if not floorData then
+                return
+        end
 
-	love.graphics.setColor(1, 1, 1, 1)
-	drawPlayfieldLayers(self, "playing")
+        love.graphics.setColor(1, 1, 1, 1)
+        drawPlayfieldLayers(self, "playing")
 
-	local totalDuration = duration or 0
-	local progress = totalDuration > 0 and clamp01(timer / totalDuration) or 1
-	local awaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
-	local visualProgress = progress
-	if awaitingConfirm then
-		visualProgress = min(visualProgress, 0.7)
-	end
+        local totalDuration = duration or 0
+        local progress = totalDuration > 0 and clamp01(timer / totalDuration) or 1
+        local awaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
+        local visualProgress = progress
+        if awaitingConfirm then
+                visualProgress = min(visualProgress, 0.7)
+        end
 
-	local appearProgress = min(1, visualProgress / 0.28)
-	local appear = easeOutCubic(appearProgress)
-	local dissolveProgress = visualProgress > 0.48 and clamp01((visualProgress - 0.48) / 0.4) or 0
-	if awaitingConfirm then
-		dissolveProgress = 0
-	end
-	local overlayAlpha = 0.8 * (1 - 0.55 * dissolveProgress)
-	local highlightAlpha = appear * (1 - dissolveProgress)
+        local appearProgress = min(1, visualProgress / 0.28)
+        local appear = easeOutCubic(appearProgress)
+        local dissolveProgress = visualProgress > 0.48 and clamp01((visualProgress - 0.48) / 0.4) or 0
+        if awaitingConfirm then
+                dissolveProgress = 0
+        end
+        local overlayAlpha = 0.8 * (1 - 0.55 * dissolveProgress)
+        local highlightAlpha = appear * (1 - dissolveProgress)
 
-	love.graphics.setColor(0, 0, 0, overlayAlpha)
-	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+        love.graphics.setColor(0, 0, 0, overlayAlpha)
+        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 
-	local canvas = ensureTransitionTitleCanvas(self)
-	local shadow = Theme.shadowColor or {0, 0, 0, 0.5}
-	local titleOffset = (1 - appear) * 36
+        local cache = self:refreshTransitionTitleCanvas(data)
+        local titleCanvas = cache and cache.canvas
+        local promptCanvas = cache and cache.promptCanvas
+        local titleOffset = (1 - appear) * 36
 
-	love.graphics.push("all")
-	love.graphics.setCanvas({canvas, stencil = true})
-	love.graphics.clear(0, 0, 0, 0)
-	love.graphics.origin()
-	love.graphics.setBlendMode("alpha")
+        local canvasAlpha = 1 - clamp01(dissolveProgress)
+        if titleCanvas and highlightAlpha > 0 and canvasAlpha > 0 then
+                love.graphics.push("all")
+                love.graphics.translate(0, titleOffset)
+                love.graphics.setColor(1, 1, 1, highlightAlpha * canvasAlpha)
+                love.graphics.draw(titleCanvas, 0, 0)
+                love.graphics.pop()
+        end
 
-	love.graphics.setFont(UI.fonts.title)
-	local titleY = self.screenHeight / 2 - 90 + titleOffset
-	local shadowAlpha = (shadow[4] or 0.5) * highlightAlpha
-	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
-	love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth, "center")
-	love.graphics.setColor(1, 1, 1, highlightAlpha)
-	love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth, "center")
+        if promptCanvas and canvasAlpha > 0 then
+                local promptFade = 1 - clamp01((visualProgress - 0.72) / 0.18)
+                local promptAlpha = highlightAlpha * promptFade * canvasAlpha
+                if promptAlpha > 0 then
+                        love.graphics.setColor(1, 1, 1, promptAlpha)
+                        love.graphics.draw(promptCanvas, 0, 0)
+                end
+        end
 
-	if floorData.flavor and floorData.flavor ~= "" then
-		love.graphics.setFont(UI.fonts.button)
-		local flavorY = titleY + UI.fonts.title:getHeight() + 32
-		local flavorAlpha = highlightAlpha * 0.95
-		love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * flavorAlpha)
-		love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth, "center")
-		love.graphics.setColor(1, 1, 1, flavorAlpha)
-		love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth, "center")
-	end
+        drawTransitionNotes(self, 999, 1, nil)
 
-	if data.transitionAwaitInput then
-		local promptText = Localization:get("game.floor_intro.prompt")
-		if promptText and promptText ~= "" then
-			local promptFont = UI.fonts.prompt or UI.fonts.body
-			love.graphics.setFont(promptFont)
-			local promptFade = 1 - clamp01((visualProgress - 0.72) / 0.18)
-			local promptAlpha = highlightAlpha * promptFade
-			local y = self.screenHeight - promptFont:getHeight() * 2.2
-			love.graphics.setColor(shadow[1], shadow[2], shadow[3], (shadow[4] or 0.5) * promptAlpha)
-			love.graphics.printf(promptText, 2, y + 2, self.screenWidth, "center")
-			love.graphics.setColor(1, 1, 1, promptAlpha)
-			love.graphics.printf(promptText, 0, y, self.screenWidth, "center")
-		end
-	end
+        love.graphics.setColor(1, 1, 1, 1)
 
-	love.graphics.setCanvas()
-	love.graphics.pop()
-
-	love.graphics.push("all")
-	local canvasAlpha = 1 - clamp01(dissolveProgress)
-	love.graphics.setColor(1, 1, 1, canvasAlpha)
-	love.graphics.draw(canvas, 0, 0)
-	love.graphics.pop()
-
-	drawTransitionNotes(self, 999, 1, nil)
-
-	love.graphics.setColor(1, 1, 1, 1)
-
-	return true
+        return true
 end
 
 function Game:drawTransition()
@@ -1251,21 +1338,25 @@ function Game:drawTransition()
 	local duration = self.transition:getDuration() or 0
 	local data = self.transition:getData() or {}
 
-	if phase == "fadeout" then
-		if drawTransitionFadeOut(self, timer, duration) then
-			return
-		end
-	elseif phase == "shop" then
-		if drawTransitionShop(self, timer) then
-			return
-		end
-	elseif phase == "floorintro" then
-		if drawTransitionFloorIntro(self, timer, duration, data) then
-			return
-		end
-	elseif phase == "fadein" then
-		drawPlayfieldLayers(self, "playing")
-		drawInterfaceLayers(self)
+        if phase == "fadeout" then
+                self:invalidateTransitionTitleCache()
+                if drawTransitionFadeOut(self, timer, duration) then
+                        return
+                end
+        elseif phase == "shop" then
+                self:invalidateTransitionTitleCache()
+                if drawTransitionShop(self, timer) then
+                        return
+                end
+        elseif phase == "floorintro" then
+                if drawTransitionFloorIntro(self, timer, duration, data) then
+                        return
+                end
+                self:invalidateTransitionTitleCache()
+        elseif phase == "fadein" then
+                self:invalidateTransitionTitleCache()
+                drawPlayfieldLayers(self, "playing")
+                drawInterfaceLayers(self)
 
 		local progress
 		if not duration or duration <= 0 then
