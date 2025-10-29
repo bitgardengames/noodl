@@ -26,6 +26,26 @@ Particles.g = {}
 Particles.b = {}
 Particles.alpha = {}
 
+local PARTICLE_TEXTURE_SIZE = 16
+local PARTICLE_TEXTURE_RADIUS = PARTICLE_TEXTURE_SIZE * 0.5
+
+local particleTexture = love.graphics.newCanvas(PARTICLE_TEXTURE_SIZE, PARTICLE_TEXTURE_SIZE)
+particleTexture:setFilter("linear", "linear")
+
+love.graphics.push()
+love.graphics.origin()
+love.graphics.setCanvas(particleTexture)
+love.graphics.clear(0, 0, 0, 0)
+love.graphics.setColor(1, 1, 1, 1)
+love.graphics.circle("fill", PARTICLE_TEXTURE_RADIUS, PARTICLE_TEXTURE_RADIUS, PARTICLE_TEXTURE_RADIUS)
+love.graphics.setCanvas()
+love.graphics.pop()
+
+local spriteBatch = love.graphics.newSpriteBatch(particleTexture, 512, "dynamic")
+
+Particles.spriteBatch = spriteBatch
+Particles.textureRadius = PARTICLE_TEXTURE_RADIUS
+
 local ANGLE_JITTER = 0.2
 local SPEED_VARIANCE = 20
 local SCALE_MIN = 0.6
@@ -204,15 +224,25 @@ function Particles:draw()
                 return
         end
 
-        RenderLayers:withLayer("overlay", function()
-                for i = 1, count do
-                        local t = self.age[i] / self.life[i]
-                        local currentSize = self.baseSize[i] * (0.8 + t * 0.6)
-                        love.graphics.setColor(self.r[i], self.g[i], self.b[i], self.alpha[i])
-                        love.graphics.circle("fill", self.x[i], self.y[i], currentSize)
-                end
+        local batch = self.spriteBatch
+        local textureRadius = self.textureRadius
+        batch:clear()
 
+        for i = 1, count do
+                local t = self.age[i] / self.life[i]
+                local currentSize = self.baseSize[i] * (0.8 + t * 0.6)
+                if currentSize > 0 then
+                        local scale = currentSize / textureRadius
+                        batch:setColor(self.r[i], self.g[i], self.b[i], self.alpha[i])
+                        batch:add(self.x[i], self.y[i], 0, scale, scale, textureRadius, textureRadius)
+                end
+        end
+
+        batch:setColor(1, 1, 1, 1)
+
+        RenderLayers:withLayer("overlay", function()
                 love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(batch)
         end)
 end
 
