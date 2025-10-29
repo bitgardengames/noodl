@@ -22,16 +22,7 @@ local pi = math.pi
 local abs = math.abs
 local insert = table.insert
 
-local SHOP_PITY_MAX = 5
-local SHOP_PITY_RARITY_BONUS = {
-        rare = 0.24,
-        epic = 0.4,
-        legendary = 0.65,
-}
-
-local LEGENDARY_PITY_THRESHOLD = 5
-
-local SHOP_PITY_RARITY_RANK = {
+local SHOP_RARITY_RANK = {
         common = 1,
         uncommon = 2,
         rare = 3,
@@ -2319,18 +2310,13 @@ local pool = {
 		allowDuplicates = true,
                 onAcquire = function(state, context, card)
                         local runState = state
-                        local pityLevel = 0
-                        if runState and runState.counters then
-                                pityLevel = min(runState.counters.shopBadLuck or 0, SHOP_PITY_MAX)
-                        end
-
                         local minimumRank = 0
                         if runState and runState.effects then
                                 local effects = runState.effects
                                 if type(effects.shopMinimumRarityRank) == "number" then
                                         minimumRank = effects.shopMinimumRarityRank
-                                elseif effects.shopMinimumRarity and SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity] then
-                                        minimumRank = SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity]
+                                elseif effects.shopMinimumRarity and SHOP_RARITY_RANK[effects.shopMinimumRarity] then
+                                        minimumRank = SHOP_RARITY_RANK[effects.shopMinimumRarity]
                                 end
                         end
 
@@ -2354,9 +2340,9 @@ local pool = {
                                 local totalWeight = 0
                                 for _, upgrade in ipairs(pool) do
                                         if upgrade.id ~= "mystery_card" and Upgrades:canOffer(upgrade, context, allowTaken) then
-                                                local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+                                                local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
                                                 if rarityRank >= minimumRank then
-                                                        local weight = calculateWeight(upgrade, pityLevel)
+                                                        local weight = calculateWeight(upgrade)
                                                         totalWeight = totalWeight + weight
                                                         available[#available + 1] = {upgrade = upgrade, weight = weight}
                                                 end
@@ -3571,17 +3557,10 @@ function Upgrades:applyPersistentEffects(rebaseline)
 	Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
 end
 
-local function calculateWeight(upgrade, pityLevel)
-	local rarityInfo = getRarityInfo(upgrade.rarity)
-	local rarityWeight = rarityInfo.weight or 1
-	local weight = rarityWeight * (upgrade.weight or 1)
-
-	local bonus = SHOP_PITY_RARITY_BONUS[upgrade.rarity]
-	if bonus and pityLevel and pityLevel > 0 then
-		weight = weight * (1 + min(pityLevel, SHOP_PITY_MAX) * bonus)
-	end
-
-	return weight
+local function calculateWeight(upgrade)
+        local rarityInfo = getRarityInfo(upgrade.rarity)
+        local rarityWeight = rarityInfo.weight or 1
+        return rarityWeight * (upgrade.weight or 1)
 end
 
 function Upgrades:canOffer(upgrade, context, allowTaken)
@@ -3755,48 +3734,44 @@ function Upgrades:getShowcaseCardForUnlock(unlock)
 end
 
 function Upgrades:getRandom(n, context)
-	local state = self.runState or newRunState()
-	local pityLevel = 0
-	if state and state.counters then
-		pityLevel = min(state.counters.shopBadLuck or 0, SHOP_PITY_MAX)
-	end
+        local state = self.runState or newRunState()
 
-	local minimumRank = 0
-	if state and state.effects then
-		local effects = state.effects
-		if type(effects.shopMinimumRarityRank) == "number" then
-			minimumRank = effects.shopMinimumRarityRank
-		elseif effects.shopMinimumRarity and SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity] then
-			minimumRank = SHOP_PITY_RARITY_RANK[effects.shopMinimumRarity]
-		end
-	end
+        local minimumRank = 0
+        if state and state.effects then
+                local effects = state.effects
+                if type(effects.shopMinimumRarityRank) == "number" then
+                        minimumRank = effects.shopMinimumRarityRank
+                elseif effects.shopMinimumRarity and SHOP_RARITY_RANK[effects.shopMinimumRarity] then
+                        minimumRank = SHOP_RARITY_RANK[effects.shopMinimumRarity]
+                end
+        end
 
-	local available = {}
-	local totalWeight = 0
-	for _, upgrade in ipairs(pool) do
-		if self:canOffer(upgrade, context, false) then
-			local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
-			if rarityRank >= minimumRank then
-				local weight = calculateWeight(upgrade, pityLevel)
-				totalWeight = totalWeight + weight
-				insert(available, {upgrade = upgrade, weight = weight})
-			end
-		end
-	end
+        local available = {}
+        local totalWeight = 0
+        for _, upgrade in ipairs(pool) do
+                if self:canOffer(upgrade, context, false) then
+                        local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
+                        if rarityRank >= minimumRank then
+                                local weight = calculateWeight(upgrade)
+                                totalWeight = totalWeight + weight
+                                insert(available, {upgrade = upgrade, weight = weight})
+                        end
+                end
+        end
 
-	if #available == 0 then
-		totalWeight = 0
-		for _, upgrade in ipairs(pool) do
-			if self:canOffer(upgrade, context, true) then
-				local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
-				if rarityRank >= minimumRank then
-					local weight = calculateWeight(upgrade, pityLevel)
-					totalWeight = totalWeight + weight
-					insert(available, {upgrade = upgrade, weight = weight})
-				end
-			end
-		end
-	end
+        if #available == 0 then
+                totalWeight = 0
+                for _, upgrade in ipairs(pool) do
+                        if self:canOffer(upgrade, context, true) then
+                                local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
+                                if rarityRank >= minimumRank then
+                                        local weight = calculateWeight(upgrade)
+                                        totalWeight = totalWeight + weight
+                                        insert(available, {upgrade = upgrade, weight = weight})
+                                end
+                        end
+                end
+        end
 
 	local cards = {}
 	n = min(n or 3, #available)
@@ -3836,29 +3811,29 @@ function Upgrades:getRandom(n, context)
 			local rareChoices = {}
 			for _, upgrade in ipairs(pool) do
 				if upgrade.rarity == "rare" and self:canOffer(upgrade, context, false) then
-					local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
+                                        local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
 					if rarityRank >= minimumRank then
 						insert(rareChoices, upgrade)
 					end
 				end
 			end
 
-			if #rareChoices == 0 then
-				for _, upgrade in ipairs(pool) do
-					if upgrade.rarity == "rare" and self:canOffer(upgrade, context, true) then
-						local rarityRank = SHOP_PITY_RARITY_RANK[upgrade.rarity] or 0
-						if rarityRank >= minimumRank then
-							insert(rareChoices, upgrade)
-						end
-					end
-				end
-			end
+                        if #rareChoices == 0 then
+                                for _, upgrade in ipairs(pool) do
+                                        if upgrade.rarity == "rare" and self:canOffer(upgrade, context, true) then
+                                                local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
+                                                if rarityRank >= minimumRank then
+                                                        insert(rareChoices, upgrade)
+                                                end
+                                        end
+                                end
+                        end
 
 			if #rareChoices > 0 then
 				local replacementIndex
 				local lowestRank
-				for index, card in ipairs(cards) do
-					local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
+                                for index, card in ipairs(cards) do
+                                        local rank = SHOP_RARITY_RANK[card.rarity] or 0
 					if not replacementIndex or rank < lowestRank then
 						replacementIndex = index
 						lowestRank = rank
@@ -3875,80 +3850,7 @@ function Upgrades:getRandom(n, context)
 		end
 	end
 
-	if state and state.counters then
-		local bestRank = 0
-		for _, card in ipairs(cards) do
-			local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
-			if rank > bestRank then
-				bestRank = rank
-			end
-		end
-
-		if bestRank >= (SHOP_PITY_RARITY_RANK.rare or 0) then
-			state.counters.shopBadLuck = 0
-		else
-			local counter = (state.counters.shopBadLuck or 0) + 1
-			state.counters.shopBadLuck = min(counter, SHOP_PITY_MAX)
-		end
-
-		local legendaryUnlocked = MetaProgression and MetaProgression.isTagUnlocked and MetaProgression:isTagUnlocked("legendary")
-		if legendaryUnlocked then
-			local hasLegendary = false
-			for _, card in ipairs(cards) do
-				if card.rarity == "legendary" then
-					hasLegendary = true
-					break
-				end
-			end
-
-			if hasLegendary then
-				state.counters.legendaryBadLuck = 0
-			else
-				local legendaryCounter = (state.counters.legendaryBadLuck or 0) + 1
-				if legendaryCounter >= LEGENDARY_PITY_THRESHOLD then
-					local legendaryChoices = {}
-					for _, upgrade in ipairs(pool) do
-						if upgrade.rarity == "legendary" and self:canOffer(upgrade, context, false) then
-							insert(legendaryChoices, decorateCard(upgrade))
-						end
-					end
-					if #legendaryChoices == 0 then
-						for _, upgrade in ipairs(pool) do
-							if upgrade.rarity == "legendary" and self:canOffer(upgrade, context, true) then
-								insert(legendaryChoices, decorateCard(upgrade))
-							end
-						end
-					end
-
-					if #legendaryChoices > 0 then
-						local replacementIndex
-						local lowestRank
-						for index, card in ipairs(cards) do
-							local rank = SHOP_PITY_RARITY_RANK[card.rarity] or 0
-							if not replacementIndex or rank < lowestRank then
-								replacementIndex = index
-								lowestRank = rank
-							end
-						end
-
-						if replacementIndex then
-							cards[replacementIndex] = legendaryChoices[love.math.random(1, #legendaryChoices)]
-						else
-							insert(cards, legendaryChoices[love.math.random(1, #legendaryChoices)])
-						end
-
-						legendaryCounter = 0
-					end
-				end
-
-				state.counters.legendaryBadLuck = min(legendaryCounter, LEGENDARY_PITY_THRESHOLD)
-			end
-		else
-			state.counters.legendaryBadLuck = nil
-		end
-	end
-
-	return cards
+        return cards
 end
 
 local function applyRevealToCard(card, revealInfo)
