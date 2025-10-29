@@ -32,6 +32,46 @@ local EXPLOSION_COLOR = {1.0, 0.42, 0.22, 0.4}
 local EXPLOSION_EDGE_COLOR = {1.0, 0.64, 0.24, 0.7}
 local SHOCK_COLOR = {1.0, 0.78, 0.36, 0.65}
 
+local FUSE_SPARK_BURST = {
+	count = 2,
+	speed = 48,
+	speedVariance = 14,
+	life = 0.22,
+	size = 1.6,
+	spread = pi * 0.85,
+	angle = -pi / 2,
+	drag = 2.6,
+	gravity = 90,
+	color = FUSE_COLOR_A,
+	fadeTo = 0.05,
+}
+
+local EXPLOSION_BURST_PRIMARY = {
+	count = 12,
+	speed = 160,
+	speedVariance = 60,
+	life = 0.32,
+	size = 3.8,
+	spread = pi * 2,
+	drag = 4.2,
+	gravity = 180,
+	color = {1.0, 0.54, 0.28, 1.0},
+	fadeTo = 0,
+}
+
+local EXPLOSION_BURST_SECONDARY = {
+	count = 8,
+	speed = 110,
+	speedVariance = 40,
+	life = 0.26,
+	size = 2.4,
+	spread = pi * 2,
+	drag = 2.4,
+	gravity = 90,
+	color = {1.0, 0.84, 0.5, 0.85},
+	fadeTo = 0,
+}
+
 local function getTileSize()
 	return (Arena and Arena.tileSize) or SnakeUtils.SEGMENT_SIZE or 24
 end
@@ -53,48 +93,14 @@ local function spawnFuseSparks(bomb)
 	local tileSize = getTileSize()
 	local fuseX = bomb.x + tileSize * 0.34
 	local fuseY = bomb.y - tileSize * 0.55
-	Particles:spawnBurst(fuseX, fuseY, {
-		count = 2,
-		speed = 48,
-		speedVariance = 14,
-		life = 0.22,
-		size = 1.6,
-		spread = pi * 0.85,
-		angle = -pi / 2,
-		drag = 2.6,
-		gravity = 90,
-		color = FUSE_COLOR_A,
-		fadeTo = 0.05,
-	})
+	Particles:spawnBurst(fuseX, fuseY, FUSE_SPARK_BURST)
 end
 
 local function spawnExplosionFX(bomb, radius)
 	if not bomb then return end
 	local x, y = bomb.x, bomb.y
-	Particles:spawnBurst(x, y, {
-		count = 12,
-		speed = 160,
-		speedVariance = 60,
-		life = 0.32,
-		size = 3.8,
-		spread = pi * 2,
-		drag = 4.2,
-		gravity = 180,
-		color = {1.0, 0.54, 0.28, 1.0},
-		fadeTo = 0,
-	})
-	Particles:spawnBurst(x, y, {
-		count = 8,
-		speed = 110,
-		speedVariance = 40,
-		life = 0.26,
-		size = 2.4,
-		spread = pi * 2,
-		drag = 2.4,
-		gravity = 90,
-		color = {1.0, 0.84, 0.5, 0.85},
-		fadeTo = 0,
-	})
+	Particles:spawnBurst(x, y, EXPLOSION_BURST_PRIMARY)
+	Particles:spawnBurst(x, y, EXPLOSION_BURST_SECONDARY)
 end
 
 local function collectRocks(bomb, radius, hits)
