@@ -69,11 +69,11 @@ local WINDOW_PADDING_Y = 24
 local EXPERIENCE_LIST_TOP = EXPERIENCE_SUMMARY_TOP + SUMMARY_CONTENT_HEIGHT + WINDOW_PADDING_Y + EXPERIENCE_LIST_GAP
 
 local menuAnchors = {
-		tabY = TAB_Y,
-		tabBottom = TAB_BOTTOM,
-		contentTop = DEFAULT_LIST_TOP,
-		experienceSummaryTop = EXPERIENCE_SUMMARY_TOP,
-		experienceListTop = EXPERIENCE_LIST_TOP,
+	tabY = TAB_Y,
+	tabBottom = TAB_BOTTOM,
+	contentTop = DEFAULT_LIST_TOP,
+	experienceSummaryTop = EXPERIENCE_SUMMARY_TOP,
+	experienceListTop = EXPERIENCE_LIST_TOP,
 }
 local WINDOW_ACCENT_HEIGHT = 8
 
@@ -157,19 +157,19 @@ local activeTab = "experience"
 local cosmeticsFocusIndex = nil
 
 local function compareStatsEntries(a, b)
-		if a.label == b.label then
-				return a.id < b.id
-		end
-		return a.label < b.label
+	if a.label == b.label then
+		return a.id < b.id
+	end
+	return a.label < b.label
 end
 
 local function compareCosmeticShowcaseEntries(a, b)
-		local nameA = a.displayName or ""
-		local nameB = b.displayName or ""
-		if nameA == nameB then
-				return (a.skinName or "") < (b.skinName or "")
-		end
-		return nameA < nameB
+	local nameA = a.displayName or ""
+	local nameB = b.displayName or ""
+	if nameA == nameB then
+		return (a.skinName or "") < (b.skinName or "")
+	end
+	return nameA < nameB
 end
 local hoveredCosmeticIndex = nil
 local pressedCosmeticIndex = nil
@@ -205,12 +205,12 @@ local function computeCosmeticShowcaseLayout(sw)
 	local rows = ceil(#cosmeticShaderShowcaseEntries / maxColumns)
 	local contentWidth = maxColumns * tileWidth + (max(0, maxColumns - 1) * spacingX)
 	local startX = (sw - contentWidth) * 0.5
-		local startY = menuAnchors.tabBottom + COSMETIC_SHOWCASE_TOP_OFFSET
-		local contentHeight = rows * tileHeight + max(0, rows - 1) * spacingY
-		local contentBottom = startY + contentHeight
-		local requiredListTop = contentBottom + COSMETIC_SHOWCASE_BOTTOM_PADDING
+	local startY = menuAnchors.tabBottom + COSMETIC_SHOWCASE_TOP_OFFSET
+	local contentHeight = rows * tileHeight + max(0, rows - 1) * spacingY
+	local contentBottom = startY + contentHeight
+	local requiredListTop = contentBottom + COSMETIC_SHOWCASE_BOTTOM_PADDING
 
-		cosmeticShowcaseHeight = max(0, requiredListTop - menuAnchors.contentTop)
+	cosmeticShowcaseHeight = max(0, requiredListTop - menuAnchors.contentTop)
 
 	return {
 		startX = startX,
@@ -375,18 +375,18 @@ local function resetHeldDpad()
 end
 
 local function getListTop(tab)
-		tab = tab or activeTab
-		if tab == "experience" then
-				return menuAnchors.experienceListTop
-		end
+	tab = tab or activeTab
+	if tab == "experience" then
+		return menuAnchors.experienceListTop
+	end
 
-		if tab == "cosmetics" then
-				local sw = select(1, Screen:get())
-				computeCosmeticShowcaseLayout(sw)
-				return menuAnchors.contentTop + (cosmeticShowcaseHeight or 0)
-		end
+	if tab == "cosmetics" then
+		local sw = select(1, Screen:get())
+		computeCosmeticShowcaseLayout(sw)
+		return menuAnchors.contentTop + (cosmeticShowcaseHeight or 0)
+	end
 
-		return menuAnchors.contentTop
+	return menuAnchors.contentTop
 end
 
 local function startHeldDpad(button, action)
@@ -444,10 +444,10 @@ local function getScrollPadding()
 end
 
 local function updateScrollBounds(sw, sh)
-		local menuLayout = UI.getMenuLayout(sw, sh)
-		local footerSpacing = menuLayout.footerSpacing or 32
-		local viewportBottom = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing
-		viewportBottom = max(viewportBottom, menuAnchors.contentTop + 1)
+	local menuLayout = UI.getMenuLayout(sw, sh)
+	local footerSpacing = menuLayout.footerSpacing or 32
+	local viewportBottom = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing
+	viewportBottom = max(viewportBottom, menuAnchors.contentTop + 1)
 	local topOffset = 0
 	if activeTab == "stats" then
 		topOffset = statsSummaryHeight
@@ -626,7 +626,7 @@ local function buildStatsEntries()
 		end
 	end
 
-		sort(statsEntries, compareStatsEntries)
+	sort(statsEntries, compareStatsEntries)
 
 	local function buildStatsHighlights()
 		statsHighlights = {}
@@ -721,9 +721,9 @@ local function drawWindowFrame(x, y, width, height, options)
 	local accentInsetY = options.accentInsetY or (WINDOW_PADDING_Y * 0.35)
 
 	local shadowOffset = options.shadowOffset
-		if shadowOffset == nil then
-				shadowOffset = UI.shadowOffset or WINDOW_SHADOW_OFFSET
-		end
+	if shadowOffset == nil then
+		shadowOffset = UI.shadowOffset or WINDOW_SHADOW_OFFSET
+	end
 
 	if shadowOffset and shadowOffset ~= 0 then
 		love.graphics.setColor(withAlpha(shadowColor, shadowAlpha))
@@ -998,7 +998,7 @@ local function buildCosmeticShaderShowcaseEntries(skins)
 		end
 	end
 
-		sort(cosmeticShaderShowcaseEntries, compareCosmeticShowcaseEntries)
+	sort(cosmeticShaderShowcaseEntries, compareCosmeticShowcaseEntries)
 
 	if #cosmeticShaderShowcaseEntries == 0 then
 		cosmeticShowcaseHeight = 0
@@ -1148,8 +1148,8 @@ local function activateCosmetic(index)
 		return false
 	end
 
-		local skinId = entry.skin.id
-		local changed = SnakeCosmetics:setActiveSkin(skinId)
+	local skinId = entry.skin.id
+	local changed = SnakeCosmetics:setActiveSkin(skinId)
 	if changed then
 		buildCosmeticsEntries()
 		local newIndex
@@ -1366,23 +1366,23 @@ function ProgressionScreen:enter()
 
 	buildCosmeticsEntries()
 
-		local sw, sh = Screen:get()
-		local menuLayout = UI.getMenuLayout(sw, sh)
+	local sw, sh = Screen:get()
+	local menuLayout = UI.getMenuLayout(sw, sh)
 
-		local baseTitleY = UI.getHeaderY(sw, sh)
-		local baseTitleHeight = menuLayout.titleHeight or ((UI.fonts.title and UI.fonts.title:getHeight()) or 64)
-		local subtitleSpacing = menuLayout.subtitleSpacing or 16
-		menuAnchors.tabY = menuLayout.stackTop or (baseTitleY + baseTitleHeight + subtitleSpacing)
-		menuAnchors.tabBottom = menuAnchors.tabY + TAB_HEIGHT
-		menuAnchors.contentTop = menuAnchors.tabBottom + TAB_CONTENT_GAP
-		menuAnchors.experienceSummaryTop = menuAnchors.contentTop
-		menuAnchors.experienceListTop = menuAnchors.experienceSummaryTop + SUMMARY_CONTENT_HEIGHT + WINDOW_PADDING_Y + EXPERIENCE_LIST_GAP
-		viewportTop = menuAnchors.contentTop
+	local baseTitleY = UI.getHeaderY(sw, sh)
+	local baseTitleHeight = menuLayout.titleHeight or ((UI.fonts.title and UI.fonts.title:getHeight()) or 64)
+	local subtitleSpacing = menuLayout.subtitleSpacing or 16
+	menuAnchors.tabY = menuLayout.stackTop or (baseTitleY + baseTitleHeight + subtitleSpacing)
+	menuAnchors.tabBottom = menuAnchors.tabY + TAB_HEIGHT
+	menuAnchors.contentTop = menuAnchors.tabBottom + TAB_CONTENT_GAP
+	menuAnchors.experienceSummaryTop = menuAnchors.contentTop
+	menuAnchors.experienceListTop = menuAnchors.experienceSummaryTop + SUMMARY_CONTENT_HEIGHT + WINDOW_PADDING_Y + EXPERIENCE_LIST_GAP
+	viewportTop = menuAnchors.contentTop
 
-		local buttons = {}
-		local tabCount = #tabs
-		local totalTabWidth = tabCount * TAB_WIDTH + max(0, tabCount - 1) * TAB_SPACING
-		local startX = sw / 2 - totalTabWidth / 2
+	local buttons = {}
+	local tabCount = #tabs
+	local totalTabWidth = tabCount * TAB_WIDTH + max(0, tabCount - 1) * TAB_SPACING
+	local startX = sw / 2 - totalTabWidth / 2
 
 	for index, tab in ipairs(tabs) do
 		local buttonId = "progressionTab_" .. tab.id
@@ -1392,23 +1392,23 @@ function ProgressionScreen:enter()
 		buttons[#buttons + 1] = {
 			id = buttonId,
 			x = x,
-						y = menuAnchors.tabY,
-						w = TAB_WIDTH,
-						h = TAB_HEIGHT,
-						text = Localization:get(tab.labelKey),
-						action = tab.action,
-				}
-		end
+			y = menuAnchors.tabY,
+			w = TAB_WIDTH,
+			h = TAB_HEIGHT,
+			text = Localization:get(tab.labelKey),
+			action = tab.action,
+		}
+	end
 
-		local footerSpacing = menuLayout.footerSpacing or UI.spacing.sectionSpacing
-		local bottomLine = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing
-		local backButtonY = bottomLine - UI.spacing.buttonHeight
-		backButtonY = max(backButtonY, menuAnchors.contentTop + UI.spacing.sectionSpacing)
+	local footerSpacing = menuLayout.footerSpacing or UI.spacing.sectionSpacing
+	local bottomLine = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing
+	local backButtonY = bottomLine - UI.spacing.buttonHeight
+	backButtonY = max(backButtonY, menuAnchors.contentTop + UI.spacing.sectionSpacing)
 
-		buttons[#buttons + 1] = {
-				id = "progressionBack",
-				x = sw / 2 - UI.spacing.buttonWidth / 2,
-				y = backButtonY,
+	buttons[#buttons + 1] = {
+		id = "progressionBack",
+		x = sw / 2 - UI.spacing.buttonWidth / 2,
+		y = backButtonY,
 		w = UI.spacing.buttonWidth,
 		h = UI.spacing.buttonHeight,
 		textKey = "metaprogression.back_to_menu",
@@ -1485,10 +1485,10 @@ local function drawSummaryPanel(sw)
 	local contentHeight = SUMMARY_CONTENT_HEIGHT
 	local frameWidth = contentWidth + WINDOW_PADDING_X * 2
 	local frameHeight = contentHeight + WINDOW_PADDING_Y * 2
-		local frameX = (sw - frameWidth) / 2
-		local frameY = menuAnchors.experienceSummaryTop - WINDOW_PADDING_Y
-		local panelX = frameX + WINDOW_PADDING_X
-		local panelY = menuAnchors.experienceSummaryTop
+	local frameX = (sw - frameWidth) / 2
+	local frameY = menuAnchors.experienceSummaryTop - WINDOW_PADDING_Y
+	local panelX = frameX + WINDOW_PADDING_X
+	local panelY = menuAnchors.experienceSummaryTop
 	local padding = 24
 	local border = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
 	local accentColor = Theme.progressColor or Theme.accentTextColor or {0.6, 0.8, 0.6, 1}
@@ -1819,7 +1819,7 @@ function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, 
 end
 
 local function drawCosmeticsHeader(sw)
-		local headerY = menuAnchors.tabBottom + 28
+	local headerY = menuAnchors.tabBottom + 28
 	love.graphics.setFont(UI.fonts.button)
 	love.graphics.setColor(Theme.textColor)
 	love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, headerY, sw, "center")
@@ -2215,15 +2215,15 @@ local function drawStatsList(sw, sh)
 end
 
 function ProgressionScreen:draw()
-		local sw, sh = Screen:get()
-		local menuLayout = UI.getMenuLayout(sw, sh)
+	local sw, sh = Screen:get()
+	local menuLayout = UI.getMenuLayout(sw, sh)
 
-		drawBackground(sw, sh)
+	drawBackground(sw, sh)
 
-		love.graphics.setFont(UI.fonts.title)
-		love.graphics.setColor(Theme.textColor)
-		local headerY = UI.getHeaderY(sw, sh)
-		love.graphics.printf(Localization:get("metaprogression.title"), 0, headerY, sw, "center")
+	love.graphics.setFont(UI.fonts.title)
+	love.graphics.setColor(Theme.textColor)
+	local headerY = UI.getHeaderY(sw, sh)
+	love.graphics.printf(Localization:get("metaprogression.title"), 0, headerY, sw, "center")
 
 	if activeTab == "experience" then
 		drawSummaryPanel(sw)

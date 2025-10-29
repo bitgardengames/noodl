@@ -149,7 +149,7 @@ def format_lines(lines: Iterable[str]) -> List[str]:
 			continue
 		leading_braces = count_leading_braces(line)
 		indent = max(indent - leading_kw_dedent - leading_braces, 0)
-		new_line = "    " * indent + stripped
+		new_line = "\t" * indent + stripped
 		formatted.append(new_line)
 		indent += open_kw + open_br
 		indent -= max(close_kw - leading_kw_dedent, 0)

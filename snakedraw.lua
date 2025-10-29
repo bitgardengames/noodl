@@ -561,8 +561,8 @@ local overlayShaderSources = {
 local overlayShaderCache = {}
 
 local function safeResolveShader(typeId)
-		if overlayShaderCache[typeId] ~= nil then
-				return overlayShaderCache[typeId]
+	if overlayShaderCache[typeId] ~= nil then
+		return overlayShaderCache[typeId]
 	end
 
 	local source = overlayShaderSources[typeId]
@@ -583,180 +583,180 @@ local function safeResolveShader(typeId)
 end
 
 local function accumulateBounds(accumulator, coords, hx, hy)
-		local bounds = accumulator or {}
-		local minX = bounds.minX
-		local minY = bounds.minY
-		local maxX = bounds.maxX
-		local maxY = bounds.maxY
+	local bounds = accumulator or {}
+	local minX = bounds.minX
+	local minY = bounds.minY
+	local maxX = bounds.maxX
+	local maxY = bounds.maxY
 
-		if coords then
-				for i = 1, #coords, 2 do
-						local x = coords[i]
-						local y = coords[i + 1]
-						if x and y then
-								if not minX or x < minX then minX = x end
-								if not minY or y < minY then minY = y end
-								if not maxX or x > maxX then maxX = x end
-								if not maxY or y > maxY then maxY = y end
-						end
-				end
+	if coords then
+		for i = 1, #coords, 2 do
+			local x = coords[i]
+			local y = coords[i + 1]
+			if x and y then
+				if not minX or x < minX then minX = x end
+				if not minY or y < minY then minY = y end
+				if not maxX or x > maxX then maxX = x end
+				if not maxY or y > maxY then maxY = y end
+			end
 		end
+	end
 
-		if hx and hy then
-				if not minX or hx < minX then minX = hx end
-				if not minY or hy < minY then minY = hy end
-				if not maxX or hx > maxX then maxX = hx end
-				if not maxY or hy > maxY then maxY = hy end
-		end
+	if hx and hy then
+		if not minX or hx < minX then minX = hx end
+		if not minY or hy < minY then minY = hy end
+		if not maxX or hx > maxX then maxX = hx end
+		if not maxY or hy > maxY then maxY = hy end
+	end
 
-		bounds.minX = minX
-		bounds.minY = minY
-		bounds.maxX = maxX
-		bounds.maxY = maxY
+	bounds.minX = minX
+	bounds.minY = minY
+	bounds.maxX = maxX
+	bounds.maxY = maxY
 
-		return bounds
+	return bounds
 end
 
 local function finalizeBounds(bounds, half)
-		if not bounds or not bounds.minX or not bounds.minY or not bounds.maxX or not bounds.maxY then
-				return nil
-		end
+	if not bounds or not bounds.minX or not bounds.minY or not bounds.maxX or not bounds.maxY then
+		return nil
+	end
 
-		local bulgeRadius = half * FRUIT_BULGE_SCALE
-		local margin = max(half + OUTLINE_SIZE, bulgeRadius + OUTLINE_SIZE) + SHADOW_OFFSET + 2
+	local bulgeRadius = half * FRUIT_BULGE_SCALE
+	local margin = max(half + OUTLINE_SIZE, bulgeRadius + OUTLINE_SIZE) + SHADOW_OFFSET + 2
 
-		local minX = bounds.minX
-		local minY = bounds.minY
-		local maxX = bounds.maxX
-		local maxY = bounds.maxY
+	local minX = bounds.minX
+	local minY = bounds.minY
+	local maxX = bounds.maxX
+	local maxY = bounds.maxY
 
-		local rawX = minX - margin
-		local rawY = minY - margin
-		local rawW = (maxX - minX) + margin * 2
-		local rawH = (maxY - minY) + margin * 2
+	local rawX = minX - margin
+	local rawY = minY - margin
+	local rawW = (maxX - minX) + margin * 2
+	local rawH = (maxY - minY) + margin * 2
 
-		local offsetX = floor(rawX)
-		local offsetY = floor(rawY)
-		local width = ceil(rawX + rawW - offsetX)
-		local height = ceil(rawY + rawH - offsetY)
+	local offsetX = floor(rawX)
+	local offsetY = floor(rawY)
+	local width = ceil(rawX + rawW - offsetX)
+	local height = ceil(rawY + rawH - offsetY)
 
-		if width < 1 then width = 1 end
-		if height < 1 then height = 1 end
+	if width < 1 then width = 1 end
+	if height < 1 then height = 1 end
 
-		bounds.offsetX = offsetX
-		bounds.offsetY = offsetY
-		bounds.width = width
-		bounds.height = height
+	bounds.offsetX = offsetX
+	bounds.offsetY = offsetY
+	bounds.width = width
+	bounds.height = height
 
-		return bounds
+	return bounds
 end
 
 local function ensureSnakeCanvas(width, height)
-		if width <= 0 or height <= 0 then
-				return nil
-		end
+	if width <= 0 or height <= 0 then
+		return nil
+	end
 
-		if not snakeCanvas or snakeCanvas:getWidth() ~= width or snakeCanvas:getHeight() ~= height then
-				snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
-		end
-		return snakeCanvas
+	if not snakeCanvas or snakeCanvas:getWidth() ~= width or snakeCanvas:getHeight() ~= height then
+		snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
+	end
+	return snakeCanvas
 end
 
 
 local function renderTrailRegion(trail, half, options, overlayEffect, palette, coords, bounds)
-		if not trail or #trail == 0 then
-				return false
-		end
+	if not trail or #trail == 0 then
+		return false
+	end
 
-		coords = coords or buildCoords(trail)
+	coords = coords or buildCoords(trail)
 
-		local regionBounds = bounds
-		if not regionBounds then
-				local head = trail[1]
-				local hx = head and (head.drawX or head.x)
-				local hy = head and (head.drawY or head.y)
-				regionBounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
-		end
+	local regionBounds = bounds
+	if not regionBounds then
+		local head = trail[1]
+		local hx = head and (head.drawX or head.x)
+		local hy = head and (head.drawY or head.y)
+		regionBounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
+	end
 
-		if not regionBounds then
-				return false
-		end
+	if not regionBounds then
+		return false
+	end
 
-		local canvas = ensureSnakeCanvas(regionBounds.width, regionBounds.height)
-		if not canvas then
-				return false
-		end
+	local canvas = ensureSnakeCanvas(regionBounds.width, regionBounds.height)
+	if not canvas then
+		return false
+	end
 
-		love.graphics.setCanvas({canvas, stencil = true})
-		love.graphics.clear(0, 0, 0, 0)
-		love.graphics.push()
-		love.graphics.translate(-regionBounds.offsetX, -regionBounds.offsetY)
-		drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-		love.graphics.pop()
-		love.graphics.setCanvas()
+	love.graphics.setCanvas({canvas, stencil = true})
+	love.graphics.clear(0, 0, 0, 0)
+	love.graphics.push()
+	love.graphics.translate(-regionBounds.offsetX, -regionBounds.offsetY)
+	drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+	love.graphics.pop()
+	love.graphics.setCanvas()
 
-		presentSnakeCanvas(overlayEffect, regionBounds.width, regionBounds.height, regionBounds.offsetX, regionBounds.offsetY)
+	presentSnakeCanvas(overlayEffect, regionBounds.width, regionBounds.height, regionBounds.offsetX, regionBounds.offsetY)
 
-		return true
+	return true
 end
 
 local function renderPortalFallback(items, half, options, overlayEffect)
-		if not items or #items == 0 then
-				return false
+	if not items or #items == 0 then
+		return false
+	end
+
+	local ww, hh = love.graphics.getDimensions()
+	local fallbackCanvas = ensureSnakeCanvas(ww, hh)
+	if not fallbackCanvas then
+		return false
+	end
+
+	love.graphics.setCanvas({fallbackCanvas, stencil = true})
+	love.graphics.clear(0, 0, 0, 0)
+
+	for _, item in ipairs(items) do
+		local trail = item.trail
+		if trail and #trail > 0 then
+			drawTrailSegmentToCanvas(trail, half, options, item.palette, item.coords)
 		end
+	end
 
-		local ww, hh = love.graphics.getDimensions()
-		local fallbackCanvas = ensureSnakeCanvas(ww, hh)
-		if not fallbackCanvas then
-				return false
-		end
+	love.graphics.setCanvas()
+	presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
 
-		love.graphics.setCanvas({fallbackCanvas, stencil = true})
-		love.graphics.clear(0, 0, 0, 0)
-
-		for _, item in ipairs(items) do
-				local trail = item.trail
-				if trail and #trail > 0 then
-						drawTrailSegmentToCanvas(trail, half, options, item.palette, item.coords)
-				end
-		end
-
-		love.graphics.setCanvas()
-		presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
-
-		return true
+	return true
 end
 
 local function presentSnakeCanvas(overlayEffect, width, height, offsetX, offsetY)
-		if not snakeCanvas then
-				return false
+	if not snakeCanvas then
+		return false
+	end
+
+	local drawX = offsetX or 0
+	local drawY = offsetY or 0
+
+	RenderLayers:withLayer("shadows", function()
+		love.graphics.setColor(0, 0, 0, 0.25)
+		love.graphics.draw(snakeCanvas, drawX + SHADOW_OFFSET, drawY + SHADOW_OFFSET)
+	end)
+
+	local drewOverlay = false
+	RenderLayers:withLayer("main", function()
+		love.graphics.setColor(1, 1, 1, 1)
+		if overlayEffect then
+			drewOverlay = applyOverlay(snakeCanvas, overlayEffect, drawX, drawY)
 		end
+		if not drewOverlay then
+			love.graphics.draw(snakeCanvas, drawX, drawY)
+		end
+	end)
 
-		local drawX = offsetX or 0
-		local drawY = offsetY or 0
-
-		RenderLayers:withLayer("shadows", function()
-				love.graphics.setColor(0, 0, 0, 0.25)
-				love.graphics.draw(snakeCanvas, drawX + SHADOW_OFFSET, drawY + SHADOW_OFFSET)
-		end)
-
-		local drewOverlay = false
-		RenderLayers:withLayer("main", function()
-				love.graphics.setColor(1, 1, 1, 1)
-				if overlayEffect then
-						drewOverlay = applyOverlay(snakeCanvas, overlayEffect, drawX, drawY)
-				end
-				if not drewOverlay then
-						love.graphics.draw(snakeCanvas, drawX, drawY)
-				end
-		end)
-
-		return drewOverlay
+	return drewOverlay
 end
 
 local shadowPalette = {
-		body = {0, 0, 0, 0.25},
-		outline = {0, 0, 0, 0.25},
+	body = {0, 0, 0, 0.25},
+	outline = {0, 0, 0, 0.25},
 }
 
 local overlayPrimaryColor = {1, 1, 1, 1}
@@ -764,29 +764,29 @@ local overlaySecondaryColor = {1, 1, 1, 1}
 local overlayTertiaryColor = {1, 1, 1, 1}
 
 local function resolveColor(color, fallback, out)
-		local target = out or {}
-		if type(color) == "table" then
-				target[1] = color[1] or 0
-				target[2] = color[2] or 0
-				target[3] = color[3] or 0
-				target[4] = color[4] or 1
-				return target
-		end
-
-		if fallback then
-				return resolveColor(fallback, nil, target)
-		end
-
-		target[1], target[2], target[3], target[4] = 1, 1, 1, 1
+	local target = out or {}
+	if type(color) == "table" then
+		target[1] = color[1] or 0
+		target[2] = color[2] or 0
+		target[3] = color[3] or 0
+		target[4] = color[4] or 1
 		return target
+	end
+
+	if fallback then
+		return resolveColor(fallback, nil, target)
+	end
+
+	target[1], target[2], target[3], target[4] = 1, 1, 1, 1
+	return target
 end
 
 applyOverlay = function(canvas, config, drawX, drawY)
-		if not (canvas and config and config.type) then
-				return false
-		end
+	if not (canvas and config and config.type) then
+		return false
+	end
 
-		local shader = safeResolveShader(config.type)
+	local shader = safeResolveShader(config.type)
 	if not shader then
 		return false
 	end
@@ -794,9 +794,9 @@ applyOverlay = function(canvas, config, drawX, drawY)
 	local time = Timer.getTime()
 
 	local colors = config.colors or {}
-		local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor(), nil, overlayPrimaryColor)
-		local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor(), nil, overlaySecondaryColor)
-		local tertiary = resolveColor(colors.tertiary or secondary, nil, overlayTertiaryColor)
+	local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor(), nil, overlayPrimaryColor)
+	local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor(), nil, overlaySecondaryColor)
+	local tertiary = resolveColor(colors.tertiary or secondary, nil, overlayTertiaryColor)
 
 	shader:send("time", time)
 	shader:send("intensity", config.intensity or 0.5)
@@ -884,14 +884,14 @@ applyOverlay = function(canvas, config, drawX, drawY)
 		shader:send("colorC", tertiary)
 	end
 
-		love.graphics.push("all")
-		love.graphics.setShader(shader)
-		love.graphics.setBlendMode(config.blendMode or "alpha")
-		love.graphics.setColor(1, 1, 1, config.opacity or 1)
-		love.graphics.draw(canvas, drawX or 0, drawY or 0)
-		love.graphics.pop()
+	love.graphics.push("all")
+	love.graphics.setShader(shader)
+	love.graphics.setBlendMode(config.blendMode or "alpha")
+	love.graphics.setColor(1, 1, 1, config.opacity or 1)
+	love.graphics.draw(canvas, drawX or 0, drawY or 0)
+	love.graphics.pop()
 
-		return true
+	return true
 end
 
 -- helper: prefer drawX/drawY, fallback to x/y
@@ -910,51 +910,51 @@ local emptyCoords = {}
 
 -- polyline coords {x1,y1,x2,y2,...}
 local function buildCoords(trail)
-		if not trail then
-				return emptyCoords
-		end
+	if not trail then
+		return emptyCoords
+	end
 
-		local cached = coordsCache[trail]
-		if currentCoordsFrame > 0 and coordsCacheFrame[trail] == currentCoordsFrame and cached then
-				return cached
-		end
+	local cached = coordsCache[trail]
+	if currentCoordsFrame > 0 and coordsCacheFrame[trail] == currentCoordsFrame and cached then
+		return cached
+	end
 
-		local coords = cached or {}
-		local previousCount = coords._used or 0
-		local count = 0
-		local lastx, lasty
+	local coords = cached or {}
+	local previousCount = coords._used or 0
+	local count = 0
+	local lastx, lasty
 
-		for i = 1, #trail do
-				local x, y = ptXY(trail[i])
-				if x and y then
-						if not (lastx and lasty and x == lastx and y == lasty) then
-								local writeIndex = count + 1
-								local writeNext = writeIndex + 1
+	for i = 1, #trail do
+		local x, y = ptXY(trail[i])
+		if x and y then
+			if not (lastx and lasty and x == lastx and y == lasty) then
+				local writeIndex = count + 1
+				local writeNext = writeIndex + 1
 
-								if coords[writeIndex] ~= x then
-										coords[writeIndex] = x
-								end
-								if coords[writeNext] ~= y then
-										coords[writeNext] = y
-								end
-
-								count = writeNext
-								lastx, lasty = x, y
-						end
+				if coords[writeIndex] ~= x then
+					coords[writeIndex] = x
 				end
-		end
-
-		if count < previousCount then
-				for i = count + 1, previousCount do
-						coords[i] = nil
+				if coords[writeNext] ~= y then
+					coords[writeNext] = y
 				end
+
+				count = writeNext
+				lastx, lasty = x, y
+			end
 		end
+	end
 
-		coords._used = count
-		coordsCache[trail] = coords
-		coordsCacheFrame[trail] = currentCoordsFrame
+	if count < previousCount then
+		for i = count + 1, previousCount do
+			coords[i] = nil
+		end
+	end
 
-		return coords
+	coords._used = count
+	coordsCache[trail] = coords
+	coordsCacheFrame[trail] = currentCoordsFrame
+
+	return coords
 end
 
 local function drawFruitBulges(trail, head, radius)
@@ -1019,9 +1019,9 @@ local function drawCornerCaps(path, radius)
 end
 
 local function drawSnakeStroke(path, radius, options)
-		if not path or radius <= 0 or #path < 2 then
-				return
-		end
+	if not path or radius <= 0 or #path < 2 then
+		return
+	end
 
 	if #path == 2 then
 		if options and options.sharpCorners then
@@ -1049,12 +1049,12 @@ local function drawSnakeStroke(path, radius, options)
 		love.graphics.circle("fill", lastX, lastY, radius)
 	end
 
-		drawCornerCaps(path, radius)
+	drawCornerCaps(path, radius)
 end
 
 local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
-		local paletteBody = palette and palette.body
-		local paletteOutline = palette and palette.outline
+	local paletteBody = palette and palette.body
+	local paletteOutline = palette and palette.outline
 
 	local bodyColor = paletteBody or SnakeCosmetics:getBodyColor()
 	local outlineColor = paletteOutline or SnakeCosmetics:getOutlineColor()
@@ -1082,17 +1082,17 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 
 	love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
 	drawSnakeStroke(bodyCoords, half, options)
-		drawFruitBulges(trail, head, bulgeRadius)
+	drawFruitBulges(trail, head, bulgeRadius)
 
-		love.graphics.pop()
+	love.graphics.pop()
 
 end
 
 drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
-		if radius <= 0 then return end
+	if radius <= 0 then return end
 
-		local colorR = r or 0
-		local colorG = g or 0
+	local colorR = r or 0
+	local colorG = g or 0
 	local colorB = b or 0
 	local colorA = a or 1
 	local mode = blendMode or "add"
@@ -1120,113 +1120,113 @@ drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
 		love.graphics.circle("fill", x, y, radius * (0.55 + 0.35 * t))
 	end
 
-		love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawPortalHole(hole, isExit)
-		if not hole then
-				return
-		end
+	if not hole then
+		return
+	end
 
-		local visibility = hole.visibility or 0
-		if visibility <= 1e-3 then
-				return
-		end
+	local visibility = hole.visibility or 0
+	if visibility <= 1e-3 then
+		return
+	end
 
-		local x = hole.x or 0
-		local y = hole.y or 0
-		local radius = hole.radius or 0
-		if radius <= 1e-3 then
-				return
-		end
+	local x = hole.x or 0
+	local y = hole.y or 0
+	local radius = hole.radius or 0
+	if radius <= 1e-3 then
+		return
+	end
 
-		local open = hole.open or 0
-		local spin = hole.spin or 0
-		local fillAlpha = (isExit and (0.45 + 0.25 * open) or (0.6 + 0.3 * open)) * visibility
+	local open = hole.open or 0
+	local spin = hole.spin or 0
+	local fillAlpha = (isExit and (0.45 + 0.25 * open) or (0.6 + 0.3 * open)) * visibility
 
-		local accentR, accentG, accentB
+	local accentR, accentG, accentB
+	if isExit then
+		accentR, accentG, accentB = 1.0, 0.88, 0.4
+	else
+		accentR, accentG, accentB = 0.45, 0.78, 1.0
+	end
+
+	love.graphics.push("all")
+	love.graphics.setBlendMode("alpha", "premultiplied")
+
+	love.graphics.setColor(0, 0, 0, fillAlpha)
+	love.graphics.circle("fill", x, y, radius)
+
+	local depthLayers = 3
+	for i = 1, depthLayers do
+		local t = (i - 0.5) / depthLayers
+		local depthRadius = radius * (0.45 + 0.38 * t * (1 + 0.25 * open))
+		local depthAlpha = fillAlpha * (0.22 + 0.55 * (1 - t))
+
 		if isExit then
-				accentR, accentG, accentB = 1.0, 0.88, 0.4
+			love.graphics.setColor(0.12, 0.09, 0.02, depthAlpha)
 		else
-				accentR, accentG, accentB = 0.45, 0.78, 1.0
+			love.graphics.setColor(0.05, 0.1, 0.18, depthAlpha)
 		end
 
-		love.graphics.push("all")
-		love.graphics.setBlendMode("alpha", "premultiplied")
+		love.graphics.circle("fill", x, y, depthRadius)
+	end
 
-		love.graphics.setColor(0, 0, 0, fillAlpha)
-		love.graphics.circle("fill", x, y, radius)
+	local rimRadius = radius * (1.05 + 0.15 * open)
+	local rimAlpha = (0.35 + 0.4 * open) * visibility
+	love.graphics.setLineWidth(2 + 2 * open)
+	love.graphics.setColor(accentR, accentG, accentB, rimAlpha)
+	love.graphics.circle("line", x, y, rimRadius)
 
-		local depthLayers = 3
-		for i = 1, depthLayers do
-				local t = (i - 0.5) / depthLayers
-				local depthRadius = radius * (0.45 + 0.38 * t * (1 + 0.25 * open))
-				local depthAlpha = fillAlpha * (0.22 + 0.55 * (1 - t))
+	local arcRadius = radius * (0.68 + 0.12 * open)
+	local arcAlpha = (0.28 + 0.32 * open) * visibility
+	local arcSpan = pi * (0.75 + 0.35 * open)
+	love.graphics.setColor(accentR, accentG, accentB, arcAlpha)
+	love.graphics.arc("line", x, y, arcRadius, spin, spin + arcSpan)
+	love.graphics.arc("line", x, y, arcRadius * 0.74, spin + pi * 0.92, spin + pi * 0.92 + arcSpan * 0.6)
 
-				if isExit then
-						love.graphics.setColor(0.12, 0.09, 0.02, depthAlpha)
-				else
-						love.graphics.setColor(0.05, 0.1, 0.18, depthAlpha)
-				end
+	local swirlAlpha = (0.14 + 0.3 * open) * visibility
+	if swirlAlpha > 1e-3 then
+		love.graphics.setLineWidth(1.5 + 1.5 * open)
+		love.graphics.setColor(accentR, accentG, accentB, swirlAlpha)
 
-				love.graphics.circle("fill", x, y, depthRadius)
+		local pulse = hole.pulse or 0
+		local swirlLayers = 2
+		for i = 1, swirlLayers do
+			local layerRadius = radius * (0.42 + 0.16 * i + 0.08 * open)
+			local layerSpan = pi * (0.42 + 0.18 * open)
+			local offset = (i % 2 == 0) and (pi * 0.65) or 0
+			local startAngle = spin * (0.85 + 0.2 * i) + pulse * (0.5 + 0.15 * i) + offset
+			love.graphics.arc("line", x, y, layerRadius, startAngle, startAngle + layerSpan)
 		end
+	end
 
-		local rimRadius = radius * (1.05 + 0.15 * open)
-		local rimAlpha = (0.35 + 0.4 * open) * visibility
-		love.graphics.setLineWidth(2 + 2 * open)
-		love.graphics.setColor(accentR, accentG, accentB, rimAlpha)
-		love.graphics.circle("line", x, y, rimRadius)
-
-		local arcRadius = radius * (0.68 + 0.12 * open)
-		local arcAlpha = (0.28 + 0.32 * open) * visibility
-		local arcSpan = pi * (0.75 + 0.35 * open)
-		love.graphics.setColor(accentR, accentG, accentB, arcAlpha)
-		love.graphics.arc("line", x, y, arcRadius, spin, spin + arcSpan)
-		love.graphics.arc("line", x, y, arcRadius * 0.74, spin + pi * 0.92, spin + pi * 0.92 + arcSpan * 0.6)
-
-		local swirlAlpha = (0.14 + 0.3 * open) * visibility
-		if swirlAlpha > 1e-3 then
-				love.graphics.setLineWidth(1.5 + 1.5 * open)
-				love.graphics.setColor(accentR, accentG, accentB, swirlAlpha)
-
-				local pulse = hole.pulse or 0
-				local swirlLayers = 2
-				for i = 1, swirlLayers do
-						local layerRadius = radius * (0.42 + 0.16 * i + 0.08 * open)
-						local layerSpan = pi * (0.42 + 0.18 * open)
-						local offset = (i % 2 == 0) and (pi * 0.65) or 0
-						local startAngle = spin * (0.85 + 0.2 * i) + pulse * (0.5 + 0.15 * i) + offset
-						love.graphics.arc("line", x, y, layerRadius, startAngle, startAngle + layerSpan)
-				end
-		end
-
-		local sparkleAlpha = (0.18 + 0.22 * open) * visibility
-		if sparkleAlpha > 1e-3 then
-				love.graphics.setLineWidth(1)
-				local pulse = hole.pulse or 0
-				local sparkleCount = isExit and 4 or 3
-				for i = 1, sparkleCount do
-						local angle = spin * (0.6 + 0.18 * i) + pulse * (0.9 + 0.25 * i) + (i - 1) * tau / sparkleCount
-						local distance = radius * (0.32 + 0.22 * open)
-						local sx = x + cos(angle) * distance
-						local sy = y + sin(angle) * distance
-						local sparkleRadius = radius * (0.08 + 0.04 * open)
-						love.graphics.setColor(accentR, accentG, accentB, sparkleAlpha)
-						love.graphics.circle("fill", sx, sy, sparkleRadius)
-						love.graphics.setColor(1, 1, 1, sparkleAlpha * 0.55)
-						love.graphics.circle("fill", sx, sy, sparkleRadius * 0.55)
-				end
-		end
-
+	local sparkleAlpha = (0.18 + 0.22 * open) * visibility
+	if sparkleAlpha > 1e-3 then
 		love.graphics.setLineWidth(1)
-		love.graphics.pop()
+		local pulse = hole.pulse or 0
+		local sparkleCount = isExit and 4 or 3
+		for i = 1, sparkleCount do
+			local angle = spin * (0.6 + 0.18 * i) + pulse * (0.9 + 0.25 * i) + (i - 1) * tau / sparkleCount
+			local distance = radius * (0.32 + 0.22 * open)
+			local sx = x + cos(angle) * distance
+			local sy = y + sin(angle) * distance
+			local sparkleRadius = radius * (0.08 + 0.04 * open)
+			love.graphics.setColor(accentR, accentG, accentB, sparkleAlpha)
+			love.graphics.circle("fill", sx, sy, sparkleRadius)
+			love.graphics.setColor(1, 1, 1, sparkleAlpha * 0.55)
+			love.graphics.circle("fill", sx, sy, sparkleRadius * 0.55)
+		end
+	end
+
+	love.graphics.setLineWidth(1)
+	love.graphics.pop()
 end
 
 local function fadePalette(palette, alphaScale)
-		local scale = alphaScale or 1
-		local baseBody = (palette and palette.body) or SnakeCosmetics:getBodyColor()
-		local baseOutline = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
+	local scale = alphaScale or 1
+	local baseBody = (palette and palette.body) or SnakeCosmetics:getBodyColor()
+	local baseOutline = (palette and palette.outline) or SnakeCosmetics:getOutlineColor()
 
 	local faded = {
 		body = {
@@ -1251,12 +1251,12 @@ local function fadePalette(palette, alphaScale)
 end
 
 drawTrailSegmentToCanvas = function(trail, half, options, paletteOverride, coordsOverride)
-		if not trail or #trail == 0 then
-				return
-		end
+	if not trail or #trail == 0 then
+		return
+	end
 
-		local coords = coordsOverride or buildCoords(trail)
-		local head = trail[1]
+	local coords = coordsOverride or buildCoords(trail)
+	local head = trail[1]
 
 	if #coords >= 4 then
 		renderSnakeToCanvas(trail, coords, head, half, options, paletteOverride)
@@ -1274,11 +1274,11 @@ drawTrailSegmentToCanvas = function(trail, half, options, paletteOverride, coord
 	local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
 
 	love.graphics.push("all")
-		love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
-		love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
-		love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
-		love.graphics.circle("fill", hx, hy, half)
-		love.graphics.pop()
+	love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
+	love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+	love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
+	love.graphics.circle("fill", hx, hy, half)
+	love.graphics.pop()
 end
 
 local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
@@ -1360,35 +1360,35 @@ local function drawQuickFangsAura(hx, hy, SEGMENT_SIZE, data)
 	local spacing = headRadius * (0.35 + 0.02 * stackFactor)
 	local mouthDrop = headRadius * (0.4 + 0.03 * stackFactor)
 
-		local outlineR = 0
-		local outlineG = 0
-		local outlineB = 0
-		local outlineA = 0.75 + 0.25 * highlight
+	local outlineR = 0
+	local outlineG = 0
+	local outlineB = 0
+	local outlineA = 0.75 + 0.25 * highlight
 
 	local fillAlpha = 0.55 + 0.35 * highlight
 	local fillR = 1.0
 	local fillG = 0.96 + 0.04 * highlight
-		local fillB = 0.88 + 0.08 * highlight
+	local fillB = 0.88 + 0.08 * highlight
 
-		love.graphics.push("all")
-		love.graphics.translate(hx, hy + mouthDrop)
+	love.graphics.push("all")
+	love.graphics.translate(hx, hy + mouthDrop)
 
-		for side = -1, 1, 2 do
-				local baseX = side * spacing
-				local topLeftX = baseX - fangWidth * 0.5
-				local topRightX = baseX + fangWidth * 0.5
-				local tipX = baseX
-				local tipY = fangLength
+	for side = -1, 1, 2 do
+		local baseX = side * spacing
+		local topLeftX = baseX - fangWidth * 0.5
+		local topRightX = baseX + fangWidth * 0.5
+		local tipX = baseX
+		local tipY = fangLength
 
-				love.graphics.setColor(fillR, fillG, fillB, fillAlpha)
-				love.graphics.polygon("fill", topLeftX, 0, topRightX, 0, tipX, tipY)
+		love.graphics.setColor(fillR, fillG, fillB, fillAlpha)
+		love.graphics.polygon("fill", topLeftX, 0, topRightX, 0, tipX, tipY)
 
-				love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-				love.graphics.setLineWidth(1.4)
-				love.graphics.polygon("line", topLeftX, 0, topRightX, 0, tipX, tipY)
-		end
+		love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+		love.graphics.setLineWidth(1.4)
+		love.graphics.polygon("line", topLeftX, 0, topRightX, 0, tipX, tipY)
+	end
 
-		love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
@@ -1461,89 +1461,89 @@ local function drawSpectralHarvestEcho(trail, SEGMENT_SIZE, data)
 		end
 	end
 
-		love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, data)
-		if not (hx and hy and SEGMENT_SIZE and data) then return end
+	if not (hx and hy and SEGMENT_SIZE and data) then return end
 
-		local intensity = max(0, min(1, data.intensity or 0))
-		local flash = max(0, min(1, data.flash or 0))
-		if intensity <= 0.01 and flash <= 0.01 then return end
+	local intensity = max(0, min(1, data.intensity or 0))
+	local flash = max(0, min(1, data.flash or 0))
+	if intensity <= 0.01 and flash <= 0.01 then return end
 
-		local time = data.time or Timer.getTime()
-		local baseSize = SEGMENT_SIZE
-		local drop = baseSize * 0.08
-		local lensWidth = baseSize * (0.5 + 0.1 * intensity)
-		local lensHeight = baseSize * (0.24 + 0.04 * intensity)
-		local lensRadius = lensHeight * 0.55
-		local spacing = baseSize * (0.16 + 0.04 * intensity)
-		local frameThickness = max(1.2, baseSize * 0.055)
-		local bridgeWidth = spacing * 0.7
-		local armLength = baseSize * (0.34 + 0.06 * intensity)
-		local armLift = baseSize * (0.22 + 0.05 * intensity)
-		local wobble = 0.02 * sin(time * 3.2) * (flash * 0.7 + intensity * 0.2)
-		local pulse = 1 + 0.04 * sin(time * 5.4) * (flash * 0.6 + 0.2)
+	local time = data.time or Timer.getTime()
+	local baseSize = SEGMENT_SIZE
+	local drop = baseSize * 0.08
+	local lensWidth = baseSize * (0.5 + 0.1 * intensity)
+	local lensHeight = baseSize * (0.24 + 0.04 * intensity)
+	local lensRadius = lensHeight * 0.55
+	local spacing = baseSize * (0.16 + 0.04 * intensity)
+	local frameThickness = max(1.2, baseSize * 0.055)
+	local bridgeWidth = spacing * 0.7
+	local armLength = baseSize * (0.34 + 0.06 * intensity)
+	local armLift = baseSize * (0.22 + 0.05 * intensity)
+	local wobble = 0.02 * sin(time * 3.2) * (flash * 0.7 + intensity * 0.2)
+	local pulse = 1 + 0.04 * sin(time * 5.4) * (flash * 0.6 + 0.2)
 
-		love.graphics.push("all")
-		love.graphics.translate(hx, hy - drop)
-		love.graphics.rotate(wobble)
-		love.graphics.scale(pulse * (1 + 0.05 * flash), pulse * (1 + 0.02 * flash))
+	love.graphics.push("all")
+	love.graphics.translate(hx, hy - drop)
+	love.graphics.rotate(wobble)
+	love.graphics.scale(pulse * (1 + 0.05 * flash), pulse * (1 + 0.02 * flash))
 
-		local lensHalfWidth = lensWidth * 0.5
-		local spacingHalf = spacing * 0.5
-		local leftCenterX = -(lensHalfWidth + spacingHalf)
-		local rightCenterX = lensHalfWidth + spacingHalf
-		local top = -lensHeight * 0.5
+	local lensHalfWidth = lensWidth * 0.5
+	local spacingHalf = spacing * 0.5
+	local leftCenterX = -(lensHalfWidth + spacingHalf)
+	local rightCenterX = lensHalfWidth + spacingHalf
+	local top = -lensHeight * 0.5
 
-		local lensAlpha = 0.62 * intensity + 0.32 * flash
-		love.graphics.setColor(0.06, 0.08, 0.1, lensAlpha)
-		love.graphics.rectangle("fill", leftCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
-		love.graphics.rectangle("fill", rightCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
+	local lensAlpha = 0.62 * intensity + 0.32 * flash
+	love.graphics.setColor(0.06, 0.08, 0.1, lensAlpha)
+	love.graphics.rectangle("fill", leftCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
+	love.graphics.rectangle("fill", rightCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
 
-		love.graphics.setColor(0.02, 0.02, 0.04, lensAlpha * 0.65 + 0.18 * intensity)
-		love.graphics.rectangle("fill", leftCenterX - lensHalfWidth, top - lensHeight * 0.2, lensWidth, lensHeight * 0.55, lensRadius, lensRadius)
-		love.graphics.rectangle("fill", rightCenterX - lensHalfWidth, top - lensHeight * 0.2, lensWidth, lensHeight * 0.55, lensRadius, lensRadius)
+	love.graphics.setColor(0.02, 0.02, 0.04, lensAlpha * 0.65 + 0.18 * intensity)
+	love.graphics.rectangle("fill", leftCenterX - lensHalfWidth, top - lensHeight * 0.2, lensWidth, lensHeight * 0.55, lensRadius, lensRadius)
+	love.graphics.rectangle("fill", rightCenterX - lensHalfWidth, top - lensHeight * 0.2, lensWidth, lensHeight * 0.55, lensRadius, lensRadius)
 
-		local frameAlpha = 0.85 * intensity + 0.25 * flash
-		love.graphics.setColor(0.01, 0.01, 0.015, frameAlpha)
-		love.graphics.setLineWidth(frameThickness)
-		love.graphics.rectangle("line", leftCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
-		love.graphics.rectangle("line", rightCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
-		love.graphics.rectangle("fill", -bridgeWidth * 0.5, -lensHeight * 0.18, bridgeWidth, lensHeight * 0.36, lensRadius * 0.35, lensRadius * 0.35)
+	local frameAlpha = 0.85 * intensity + 0.25 * flash
+	love.graphics.setColor(0.01, 0.01, 0.015, frameAlpha)
+	love.graphics.setLineWidth(frameThickness)
+	love.graphics.rectangle("line", leftCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
+	love.graphics.rectangle("line", rightCenterX - lensHalfWidth, top, lensWidth, lensHeight, lensRadius, lensRadius)
+	love.graphics.rectangle("fill", -bridgeWidth * 0.5, -lensHeight * 0.18, bridgeWidth, lensHeight * 0.36, lensRadius * 0.35, lensRadius * 0.35)
 
-		local leftOuter = leftCenterX - lensHalfWidth
-		local rightOuter = rightCenterX + lensHalfWidth
-		love.graphics.setLineWidth(frameThickness * 0.85)
-		love.graphics.line(leftOuter, -lensHeight * 0.1, leftOuter - armLength, -armLift)
-		love.graphics.line(rightOuter, -lensHeight * 0.1, rightOuter + armLength, -armLift)
+	local leftOuter = leftCenterX - lensHalfWidth
+	local rightOuter = rightCenterX + lensHalfWidth
+	love.graphics.setLineWidth(frameThickness * 0.85)
+	love.graphics.line(leftOuter, -lensHeight * 0.1, leftOuter - armLength, -armLift)
+	love.graphics.line(rightOuter, -lensHeight * 0.1, rightOuter + armLength, -armLift)
 
-		local highlight = min(1, flash + intensity * 0.4)
-		if highlight > 0.01 then
-				love.graphics.setBlendMode("add")
-				local highlightAlpha = (0.18 + 0.32 * flash) * (0.6 + 0.4 * intensity)
-				love.graphics.setColor(0.82, 0.96, 1.0, highlightAlpha)
-				love.graphics.polygon("fill",
-						leftCenterX - lensHalfWidth * 0.6, top + lensHeight * 0.2,
-						leftCenterX - lensHalfWidth * 0.2, top,
-						leftCenterX + lensHalfWidth * 0.2, top + lensHeight * 0.45,
-						leftCenterX - lensHalfWidth * 0.15, top + lensHeight * 0.6
-				)
-				love.graphics.polygon("fill",
-						rightCenterX + lensHalfWidth * 0.6, top + lensHeight * 0.2,
-						rightCenterX + lensHalfWidth * 0.2, top,
-						rightCenterX - lensHalfWidth * 0.2, top + lensHeight * 0.45,
-						rightCenterX + lensHalfWidth * 0.15, top + lensHeight * 0.6
-				)
-				love.graphics.setBlendMode("alpha")
-		end
+	local highlight = min(1, flash + intensity * 0.4)
+	if highlight > 0.01 then
+		love.graphics.setBlendMode("add")
+		local highlightAlpha = (0.18 + 0.32 * flash) * (0.6 + 0.4 * intensity)
+		love.graphics.setColor(0.82, 0.96, 1.0, highlightAlpha)
+		love.graphics.polygon("fill",
+		leftCenterX - lensHalfWidth * 0.6, top + lensHeight * 0.2,
+		leftCenterX - lensHalfWidth * 0.2, top,
+		leftCenterX + lensHalfWidth * 0.2, top + lensHeight * 0.45,
+		leftCenterX - lensHalfWidth * 0.15, top + lensHeight * 0.6
+		)
+		love.graphics.polygon("fill",
+		rightCenterX + lensHalfWidth * 0.6, top + lensHeight * 0.2,
+		rightCenterX + lensHalfWidth * 0.2, top,
+		rightCenterX - lensHalfWidth * 0.2, top + lensHeight * 0.45,
+		rightCenterX + lensHalfWidth * 0.15, top + lensHeight * 0.6
+		)
+		love.graphics.setBlendMode("alpha")
+	end
 
-		love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
-		if not (trail and data) then return end
-		if #trail < 2 then return end
+	if not (trail and data) then return end
+	if #trail < 2 then return end
 
 	local intensity = max(0, data.intensity or 0)
 	if intensity <= 0.01 then return end
@@ -2332,13 +2332,13 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 end
 
 function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shieldCount, shieldFlashTimer, upgradeVisuals, drawFace)
-		currentCoordsFrame = currentCoordsFrame + 1
+	currentCoordsFrame = currentCoordsFrame + 1
 
-		-- upgradeVisuals must be treated as read-only; the table is reused each frame by Snake.collectUpgradeVisuals.
-		local options
-		if type(drawFace) == "table" then
-				options = drawFace
-				drawFace = options.drawFace
+	-- upgradeVisuals must be treated as read-only; the table is reused each frame by Snake.collectUpgradeVisuals.
+	local options
+	if type(drawFace) == "table" then
+		options = drawFace
+		drawFace = options.drawFace
 	end
 
 	if drawFace == nil then
@@ -2359,7 +2359,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		end
 	end
 
-		local overlayEffect = (options and options.overlayEffect) or (palette and palette.overlay) or SnakeCosmetics:getOverlayEffect()
+	local overlayEffect = (options and options.overlayEffect) or (palette and palette.overlay) or SnakeCosmetics:getOverlayEffect()
 
 	local head = trail[1]
 
@@ -2374,256 +2374,256 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		hx, hy = ptXY(head)
 	end
 
-		local portalInfo = options and options.portalAnimation
-		if portalInfo then
-				local exitTrail = portalInfo.exitTrail
-				if not (exitTrail and #exitTrail > 0) then
-						exitTrail = trail
-				end
+	local portalInfo = options and options.portalAnimation
+	if portalInfo then
+		local exitTrail = portalInfo.exitTrail
+		if not (exitTrail and #exitTrail > 0) then
+			exitTrail = trail
+		end
 
-				local entryTrail = portalInfo.entryTrail
-				local entryHole = portalInfo.entryHole
-				local exitHole = portalInfo.exitHole
-				local exitHead = exitTrail and exitTrail[1]
-				if exitHead then
-						local ex = exitHead.drawX or exitHead.x
-						local ey = exitHead.drawY or exitHead.y
-						if ex and ey then
-								hx, hy = ex, ey
-						end
-				else
-						hx = portalInfo.exitX or hx
-						hy = portalInfo.exitY or hy
-				end
-
-				local exitCoords = buildCoords(exitTrail)
-				local exitHX = exitHead and (exitHead.drawX or exitHead.x)
-				local exitHY = exitHead and (exitHead.drawY or exitHead.y)
-				local bounds = finalizeBounds(accumulateBounds(nil, exitCoords, exitHX, exitHY), half)
-
-				local entryCoords
-				if entryTrail and #entryTrail > 0 then
-						local entryHead = entryTrail[1]
-						local entryHX = entryHead and (entryHead.drawX or entryHead.x)
-						local entryHY = entryHead and (entryHead.drawY or entryHead.y)
-						entryCoords = buildCoords(entryTrail)
-						bounds = finalizeBounds(accumulateBounds(bounds, entryCoords, entryHX, entryHY), half) or bounds
-				end
-
-				local fallbackItems = {}
-
-				local exitPresented = renderTrailRegion(exitTrail, half, options, overlayEffect, palette, exitCoords, bounds)
-				if not exitPresented then
-						fallbackItems[#fallbackItems + 1] = {trail = exitTrail, coords = exitCoords, palette = palette, kind = "exit"}
-				end
-
-				local entryPresented = false
-				local entryPalette
-				if entryTrail and #entryTrail > 0 then
-						entryPalette = fadePalette(palette, 0.55)
-						entryPresented = renderTrailRegion(entryTrail, half, options, overlayEffect, entryPalette, entryCoords)
-						if not entryPresented then
-								fallbackItems[#fallbackItems + 1] = {trail = entryTrail, coords = entryCoords, palette = entryPalette, kind = "entry"}
-						end
-				end
-
-				if exitHole then
-						drawPortalHole(exitHole, true)
-				end
-
-				if #fallbackItems > 0 then
-						if renderPortalFallback(fallbackItems, half, options, overlayEffect) then
-								for _, item in ipairs(fallbackItems) do
-										if item.kind == "exit" then
-												exitPresented = true
-										else
-												entryPresented = true
-										end
-								end
-						end
-				end
-
-				if entryHole then
-						drawPortalHole(entryHole, false)
-				end
-
-				local entryX = (entryHole and entryHole.x) or portalInfo.entryX
-				local entryY = (entryHole and entryHole.y) or portalInfo.entryY
-				if not entryX or not entryY then
-						local entryHead = entryTrail and entryTrail[1]
-						if entryHead then
-								entryX = entryHead.drawX or entryHead.x or entryX
-								entryY = entryHead.drawY or entryHead.y or entryY
-						end
-				end
-
-				local exitX = (exitHole and exitHole.x) or portalInfo.exitX or hx
-				local exitY = (exitHole and exitHole.y) or portalInfo.exitY or hy
-				local progress = portalInfo.progress or 0
-				local clampedProgress = min(1, max(0, progress))
-
-				if entryX and entryY then
-						local entryAlpha
-						local entryRadius
-						if entryHole then
-								entryRadius = (entryHole.radius or (SEGMENT_SIZE * 0.7)) * 1.35
-								entryAlpha = (0.5 + 0.35 * (entryHole.open or 0)) * (entryHole.visibility or 0)
-						else
-								entryRadius = SEGMENT_SIZE * 1.3
-								entryAlpha = 0.75 * (1 - clampedProgress * 0.7)
-						end
-						if entryAlpha and entryAlpha > 1e-3 then
-								drawSoftGlow(entryX, entryY, entryRadius, 0.45, 0.78, 1.0, entryAlpha)
-						end
-				end
-
-				if exitX and exitY then
-						local exitAlpha
-						local exitRadius
-						if exitHole then
-								exitRadius = (exitHole.radius or (SEGMENT_SIZE * 0.75)) * 1.45
-								exitAlpha = (0.35 + 0.5 * (exitHole.open or 0)) * (exitHole.visibility or 0)
-						else
-								exitRadius = SEGMENT_SIZE * 1.4
-								exitAlpha = 0.55 + 0.45 * clampedProgress
-						end
-						if exitAlpha and exitAlpha > 1e-3 then
-								drawSoftGlow(exitX, exitY, exitRadius, 1.0, 0.88, 0.4, exitAlpha)
-						end
-				end
+		local entryTrail = portalInfo.entryTrail
+		local entryHole = portalInfo.entryHole
+		local exitHole = portalInfo.exitHole
+		local exitHead = exitTrail and exitTrail[1]
+		if exitHead then
+			local ex = exitHead.drawX or exitHead.x
+			local ey = exitHead.drawY or exitHead.y
+			if ex and ey then
+				hx, hy = ex, ey
+			end
 		else
-				local coords = buildCoords(trail)
-				if overlayEffect then
-						local bounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
-						local canvas
-						if bounds then
-								canvas = ensureSnakeCanvas(bounds.width, bounds.height)
-						end
+			hx = portalInfo.exitX or hx
+			hy = portalInfo.exitY or hy
+		end
 
-						if canvas and bounds then
-								love.graphics.setCanvas({canvas, stencil = true})
-								love.graphics.clear(0,0,0,0)
-								love.graphics.push()
-								love.graphics.translate(-bounds.offsetX, -bounds.offsetY)
-								drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-								love.graphics.pop()
-								love.graphics.setCanvas()
+		local exitCoords = buildCoords(exitTrail)
+		local exitHX = exitHead and (exitHead.drawX or exitHead.x)
+		local exitHY = exitHead and (exitHead.drawY or exitHead.y)
+		local bounds = finalizeBounds(accumulateBounds(nil, exitCoords, exitHX, exitHY), half)
 
-								presentSnakeCanvas(overlayEffect, bounds.width, bounds.height, bounds.offsetX, bounds.offsetY)
-						else
-								local ww, hh = love.graphics.getDimensions()
-								local fallbackCanvas = ensureSnakeCanvas(ww, hh)
-								if fallbackCanvas then
-										love.graphics.setCanvas({fallbackCanvas, stencil = true})
-										love.graphics.clear(0,0,0,0)
-										drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-										love.graphics.setCanvas()
-										presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
-								end
-						end
-				else
-						RenderLayers:withLayer("shadows", function()
-								love.graphics.push()
-								love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-								drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
-								love.graphics.pop()
-						end)
+		local entryCoords
+		if entryTrail and #entryTrail > 0 then
+			local entryHead = entryTrail[1]
+			local entryHX = entryHead and (entryHead.drawX or entryHead.x)
+			local entryHY = entryHead and (entryHead.drawY or entryHead.y)
+			entryCoords = buildCoords(entryTrail)
+			bounds = finalizeBounds(accumulateBounds(bounds, entryCoords, entryHX, entryHY), half) or bounds
+		end
 
-						RenderLayers:withLayer("main", function()
-								drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-						end)
+		local fallbackItems = {}
+
+		local exitPresented = renderTrailRegion(exitTrail, half, options, overlayEffect, palette, exitCoords, bounds)
+		if not exitPresented then
+			fallbackItems[#fallbackItems + 1] = {trail = exitTrail, coords = exitCoords, palette = palette, kind = "exit"}
+		end
+
+		local entryPresented = false
+		local entryPalette
+		if entryTrail and #entryTrail > 0 then
+			entryPalette = fadePalette(palette, 0.55)
+			entryPresented = renderTrailRegion(entryTrail, half, options, overlayEffect, entryPalette, entryCoords)
+			if not entryPresented then
+				fallbackItems[#fallbackItems + 1] = {trail = entryTrail, coords = entryCoords, palette = entryPalette, kind = "entry"}
+			end
+		end
+
+		if exitHole then
+			drawPortalHole(exitHole, true)
+		end
+
+		if #fallbackItems > 0 then
+			if renderPortalFallback(fallbackItems, half, options, overlayEffect) then
+				for _, item in ipairs(fallbackItems) do
+					if item.kind == "exit" then
+						exitPresented = true
+					else
+						entryPresented = true
+					end
 				end
+			end
 		end
 
-		local shouldDrawOverlay = (hx and hy and drawFace ~= false) or (popTimer and popTimer > 0 and hx and hy)
-		if shouldDrawOverlay then
-				RenderLayers:withLayer("overlay", function()
-						if hx and hy and drawFace ~= false then
-								if upgradeVisuals and upgradeVisuals.temporalAnchor then
-										drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
-								end
-
-								if upgradeVisuals and upgradeVisuals.chronoWard then
-										drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
-								end
-
-								if upgradeVisuals and upgradeVisuals.timeDilation then
-										drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
-								end
-
-								if upgradeVisuals and upgradeVisuals.adrenaline then
-										drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
-								end
-
-								if upgradeVisuals and upgradeVisuals.quickFangs then
-										drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
-								end
-
-								if upgradeVisuals and upgradeVisuals.spectralHarvest then
-										drawSpectralHarvestEcho(trail, SEGMENT_SIZE, upgradeVisuals.spectralHarvest)
-								end
-
-								if upgradeVisuals and upgradeVisuals.zephyrCoils then
-										drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
-								end
-
-								if upgradeVisuals and upgradeVisuals.dash then
-										drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
-								end
-
-								if upgradeVisuals and upgradeVisuals.speedArcs then
-										drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
-								end
-
-								local faceScale = 1
-								local faceOptions = upgradeVisuals and upgradeVisuals.face or nil
-								Face:draw(hx, hy, faceScale, faceOptions)
-
-								if upgradeVisuals and upgradeVisuals.diffractionBarrier then
-										drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, upgradeVisuals.diffractionBarrier)
-								end
-
-								drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
-
-								if upgradeVisuals and upgradeVisuals.dash then
-										drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
-								end
-
-								if upgradeVisuals and upgradeVisuals.eventHorizon then
-										drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
-								end
-
-								if upgradeVisuals and upgradeVisuals.stormchaser then
-										drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
-								end
-
-								if upgradeVisuals and upgradeVisuals.chronospiral then
-										drawChronospiralWake(trail, SEGMENT_SIZE, upgradeVisuals.chronospiral)
-								end
-
-								if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
-										drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
-								end
-
-								if upgradeVisuals and upgradeVisuals.titanblood then
-										drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
-								end
-
-								if upgradeVisuals and upgradeVisuals.phoenixEcho then
-										drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
-								end
-						end
-
-						if popTimer and popTimer > 0 and hx and hy then
-								local t = 1 - (popTimer / POP_DURATION)
-								if t < 1 then
-										local pulse = 0.8 + 0.4 * sin(t * pi)
-										love.graphics.setColor(1, 1, 1, 0.4)
-										love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
-								end
-						end
-				end)
+		if entryHole then
+			drawPortalHole(entryHole, false)
 		end
+
+		local entryX = (entryHole and entryHole.x) or portalInfo.entryX
+		local entryY = (entryHole and entryHole.y) or portalInfo.entryY
+		if not entryX or not entryY then
+			local entryHead = entryTrail and entryTrail[1]
+			if entryHead then
+				entryX = entryHead.drawX or entryHead.x or entryX
+				entryY = entryHead.drawY or entryHead.y or entryY
+			end
+		end
+
+		local exitX = (exitHole and exitHole.x) or portalInfo.exitX or hx
+		local exitY = (exitHole and exitHole.y) or portalInfo.exitY or hy
+		local progress = portalInfo.progress or 0
+		local clampedProgress = min(1, max(0, progress))
+
+		if entryX and entryY then
+			local entryAlpha
+			local entryRadius
+			if entryHole then
+				entryRadius = (entryHole.radius or (SEGMENT_SIZE * 0.7)) * 1.35
+				entryAlpha = (0.5 + 0.35 * (entryHole.open or 0)) * (entryHole.visibility or 0)
+			else
+				entryRadius = SEGMENT_SIZE * 1.3
+				entryAlpha = 0.75 * (1 - clampedProgress * 0.7)
+			end
+			if entryAlpha and entryAlpha > 1e-3 then
+				drawSoftGlow(entryX, entryY, entryRadius, 0.45, 0.78, 1.0, entryAlpha)
+			end
+		end
+
+		if exitX and exitY then
+			local exitAlpha
+			local exitRadius
+			if exitHole then
+				exitRadius = (exitHole.radius or (SEGMENT_SIZE * 0.75)) * 1.45
+				exitAlpha = (0.35 + 0.5 * (exitHole.open or 0)) * (exitHole.visibility or 0)
+			else
+				exitRadius = SEGMENT_SIZE * 1.4
+				exitAlpha = 0.55 + 0.45 * clampedProgress
+			end
+			if exitAlpha and exitAlpha > 1e-3 then
+				drawSoftGlow(exitX, exitY, exitRadius, 1.0, 0.88, 0.4, exitAlpha)
+			end
+		end
+	else
+		local coords = buildCoords(trail)
+		if overlayEffect then
+			local bounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
+			local canvas
+			if bounds then
+				canvas = ensureSnakeCanvas(bounds.width, bounds.height)
+			end
+
+			if canvas and bounds then
+				love.graphics.setCanvas({canvas, stencil = true})
+				love.graphics.clear(0,0,0,0)
+				love.graphics.push()
+				love.graphics.translate(-bounds.offsetX, -bounds.offsetY)
+				drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+				love.graphics.pop()
+				love.graphics.setCanvas()
+
+				presentSnakeCanvas(overlayEffect, bounds.width, bounds.height, bounds.offsetX, bounds.offsetY)
+			else
+				local ww, hh = love.graphics.getDimensions()
+				local fallbackCanvas = ensureSnakeCanvas(ww, hh)
+				if fallbackCanvas then
+					love.graphics.setCanvas({fallbackCanvas, stencil = true})
+					love.graphics.clear(0,0,0,0)
+					drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+					love.graphics.setCanvas()
+					presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
+				end
+			end
+		else
+			RenderLayers:withLayer("shadows", function()
+				love.graphics.push()
+				love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+				drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
+				love.graphics.pop()
+			end)
+
+			RenderLayers:withLayer("main", function()
+				drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+			end)
+		end
+	end
+
+	local shouldDrawOverlay = (hx and hy and drawFace ~= false) or (popTimer and popTimer > 0 and hx and hy)
+	if shouldDrawOverlay then
+		RenderLayers:withLayer("overlay", function()
+			if hx and hy and drawFace ~= false then
+				if upgradeVisuals and upgradeVisuals.temporalAnchor then
+					drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
+				end
+
+				if upgradeVisuals and upgradeVisuals.chronoWard then
+					drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
+				end
+
+				if upgradeVisuals and upgradeVisuals.timeDilation then
+					drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
+				end
+
+				if upgradeVisuals and upgradeVisuals.adrenaline then
+					drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
+				end
+
+				if upgradeVisuals and upgradeVisuals.quickFangs then
+					drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
+				end
+
+				if upgradeVisuals and upgradeVisuals.spectralHarvest then
+					drawSpectralHarvestEcho(trail, SEGMENT_SIZE, upgradeVisuals.spectralHarvest)
+				end
+
+				if upgradeVisuals and upgradeVisuals.zephyrCoils then
+					drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
+				end
+
+				if upgradeVisuals and upgradeVisuals.dash then
+					drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
+				end
+
+				if upgradeVisuals and upgradeVisuals.speedArcs then
+					drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
+				end
+
+				local faceScale = 1
+				local faceOptions = upgradeVisuals and upgradeVisuals.face or nil
+				Face:draw(hx, hy, faceScale, faceOptions)
+
+				if upgradeVisuals and upgradeVisuals.diffractionBarrier then
+					drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, upgradeVisuals.diffractionBarrier)
+				end
+
+				drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
+
+				if upgradeVisuals and upgradeVisuals.dash then
+					drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
+				end
+
+				if upgradeVisuals and upgradeVisuals.eventHorizon then
+					drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
+				end
+
+				if upgradeVisuals and upgradeVisuals.stormchaser then
+					drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
+				end
+
+				if upgradeVisuals and upgradeVisuals.chronospiral then
+					drawChronospiralWake(trail, SEGMENT_SIZE, upgradeVisuals.chronospiral)
+				end
+
+				if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
+					drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
+				end
+
+				if upgradeVisuals and upgradeVisuals.titanblood then
+					drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
+				end
+
+				if upgradeVisuals and upgradeVisuals.phoenixEcho then
+					drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
+				end
+			end
+
+			if popTimer and popTimer > 0 and hx and hy then
+				local t = 1 - (popTimer / POP_DURATION)
+				if t < 1 then
+					local pulse = 0.8 + 0.4 * sin(t * pi)
+					love.graphics.setColor(1, 1, 1, 0.4)
+					love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
+				end
+			end
+		end)
+	end
 
 	love.graphics.setColor(1, 1, 1, 1)
 end

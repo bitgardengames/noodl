@@ -12,10 +12,10 @@ local DEFAULT_ORDER = 1000
 local DEFAULT_OUTLINE_COLOR = {0, 0, 0, 1}
 
 local function compareSkinDefinitions(a, b)
-		if a.order == b.order then
-				return (a.id or "") < (b.id or "")
-		end
-		return (a.order or DEFAULT_ORDER) < (b.order or DEFAULT_ORDER)
+	if a.order == b.order then
+		return (a.id or "") < (b.id or "")
+	end
+	return (a.order or DEFAULT_ORDER) < (b.order or DEFAULT_ORDER)
 end
 
 local SKIN_DEFINITIONS = {
@@ -150,10 +150,10 @@ local SKIN_DEFINITIONS = {
 		unlock = {achievement = "appleTycoon"},
 		order = 40,
 	},
-		{
-				id = "abyssal_vanguard",
-				name = "Abyssal Vanguard",
-				description = "Awarded for conquering the deepest floors. Unlocks at metaprogression level 12.",
+	{
+		id = "abyssal_vanguard",
+		name = "Abyssal Vanguard",
+		description = "Awarded for conquering the deepest floors. Unlocks at metaprogression level 12.",
 		colors = {
 			body = {0.28, 0.45, 0.82, 1.0},
 			outline = {0.06, 0.12, 0.28, 1.0},
@@ -181,7 +181,7 @@ local SKIN_DEFINITIONS = {
 				step = 3,
 			},
 		},
-				unlock = {level = 12},
+		unlock = {level = 12},
 		order = 50,
 	},
 	{
@@ -218,10 +218,10 @@ local SKIN_DEFINITIONS = {
 		unlock = {level = 9},
 		order = 60,
 	},
-		{
-				id = "luminous_bloom",
-				name = "Luminous Bloom",
-				description = "Bioluminescent petals trail with every turn. Unlocks at metaprogression level 13.",
+	{
+		id = "luminous_bloom",
+		name = "Luminous Bloom",
+		description = "Bioluminescent petals trail with every turn. Unlocks at metaprogression level 13.",
 		colors = {
 			body = {0.52, 0.16, 0.58, 1.0},
 			outline = {0.14, 0.03, 0.18, 1.0},
@@ -249,13 +249,13 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-				unlock = {level = 13},
+		unlock = {level = 13},
 		order = 70,
 	},
-		{
-				id = "void_wisp",
-				name = "Void Wisp",
-				description = "An afterimage from beyond the grid. Unlocks at metaprogression level 11.",
+	{
+		id = "void_wisp",
+		name = "Void Wisp",
+		description = "An afterimage from beyond the grid. Unlocks at metaprogression level 11.",
 		colors = {
 			body = {0.08, 0.12, 0.18, 1.0},
 			outline = {0.00, 0.00, 0.00, 1.0},
@@ -283,7 +283,7 @@ local SKIN_DEFINITIONS = {
 				step = 1,
 			},
 		},
-				unlock = {level = 11},
+		unlock = {level = 11},
 		order = 80,
 	},
 	{
@@ -354,10 +354,10 @@ local SKIN_DEFINITIONS = {
 		unlock = {level = 15},
 		order = 95,
 	},
-		{
-				id = "gilded_siren",
-				name = "Gilded Siren",
-				description = "Goldleaf fins that shimmer with every high score. Unlocks at metaprogression level 15.",
+	{
+		id = "gilded_siren",
+		name = "Gilded Siren",
+		description = "Goldleaf fins that shimmer with every high score. Unlocks at metaprogression level 15.",
 		colors = {
 			body = {0.96, 0.78, 0.42, 1.0},
 			outline = {0.36, 0.20, 0.05, 1.0},
@@ -385,13 +385,13 @@ local SKIN_DEFINITIONS = {
 				step = 3,
 			},
 		},
-				unlock = {level = 15},
+		unlock = {level = 15},
 		order = 100,
 	},
-		{
-				id = "abyssal_constellation",
-				name = "Abyssal Constellation",
-				description = "Star-mapped scales that mirror the deepest currents. Unlocks at metaprogression level 14.",
+	{
+		id = "abyssal_constellation",
+		name = "Abyssal Constellation",
+		description = "Star-mapped scales that mirror the deepest currents. Unlocks at metaprogression level 14.",
 		colors = {
 			body = {0.14, 0.18, 0.34, 1.0},
 			outline = {0.04, 0.06, 0.14, 1.0},
@@ -419,7 +419,7 @@ local SKIN_DEFINITIONS = {
 				step = 2,
 			},
 		},
-				unlock = {level = 14},
+		unlock = {level = 14},
 		order = 110,
 	},
 	{
@@ -456,10 +456,10 @@ local SKIN_DEFINITIONS = {
 		unlock = {achievement = "dailyFunChampion"},
 		order = 120,
 	},
-		{
-				id = "obsidian_ritual",
-				name = "Obsidian Ritual",
-				description = "Scales quenched in volcanic rites. Unlocks at metaprogression level 10.",
+	{
+		id = "obsidian_ritual",
+		name = "Obsidian Ritual",
+		description = "Scales quenched in volcanic rites. Unlocks at metaprogression level 10.",
 		colors = {
 			body = {0.18, 0.10, 0.16, 1.0},
 			outline = {0.02, 0.01, 0.04, 1.0},
@@ -487,7 +487,7 @@ local SKIN_DEFINITIONS = {
 				step = 3,
 			},
 		},
-				unlock = {level = 10},
+		unlock = {level = 10},
 		order = 130,
 	},
 	{
@@ -684,7 +684,7 @@ function SnakeCosmetics:_buildIndex()
 		insert(self._orderedSkins, entry)
 	end
 
-		table.sort(self._orderedSkins, compareSkinDefinitions)
+	table.sort(self._orderedSkins, compareSkinDefinitions)
 
 	self._indexBuilt = true
 end

@@ -39,84 +39,84 @@ local applyColor
 local withTransformedScissor
 
 local function getLocalizationRevision()
-		if Localization and Localization.getRevision then
-				return Localization:getRevision()
-		end
+	if Localization and Localization.getRevision then
+		return Localization:getRevision()
+	end
 
-		return 0
+	return 0
 end
 
 local function ensureCardTextLayout(card, width)
-		if not card then return nil end
+	if not card then return nil end
 
-		local revision = getLocalizationRevision()
-		local name = card.name or ""
-		local desc = card.desc or ""
-		local cache = card._textLayoutCache
+	local revision = getLocalizationRevision()
+	local name = card.name or ""
+	local desc = card.desc or ""
+	local cache = card._textLayoutCache
 
-		if not cache or cache.revision ~= revision or cache.name ~= name or cache.desc ~= desc then
-				cache = {
-						revision = revision,
-						name = name,
-						desc = desc,
-						byWidth = {},
-				}
-				card._textLayoutCache = cache
-		end
-
-		local w = width or DEFAULT_CARD_WIDTH
-		local layout = cache.byWidth[w]
-		if layout then
-				return layout
-		end
-
-		local titleFont = UI.fonts.button or UI.fonts.body
-		local bodyFont = UI.fonts.body or UI.fonts.caption
-
-		if not titleFont or not bodyFont then
-				layout = cache.byWidth[w]
-				if not layout then
-						layout = {
-								titleLines = {},
-								titleLineCount = 1,
-								titleHeight = 0,
-								titleWidth = w - 28,
-								descLines = {},
-								descLineCount = 1,
-								descHeight = 0,
-								descWidth = w - 36,
-						}
-						cache.byWidth[w] = layout
-				end
-				return layout
-		end
-
-		local titleWidth = w - 28
-		local descWidth = w - 36
-
-		local _, titleLines = titleFont:getWrap(name, titleWidth)
-		local titleLineCount = max(1, #titleLines)
-		local titleLineHeight = titleFont:getHeight() * titleFont:getLineHeight()
-		local titleHeight = titleLineCount * titleLineHeight
-
-		local _, descLines = bodyFont:getWrap(desc, descWidth)
-		local descLineCount = max(1, #descLines)
-		local descLineHeight = bodyFont:getHeight() * bodyFont:getLineHeight()
-		local descHeight = descLineCount * descLineHeight
-
-		layout = {
-				titleLines = titleLines,
-				titleLineCount = titleLineCount,
-				titleHeight = titleHeight,
-				titleWidth = titleWidth,
-				descLines = descLines,
-				descLineCount = descLineCount,
-				descHeight = descHeight,
-				descWidth = descWidth,
+	if not cache or cache.revision ~= revision or cache.name ~= name or cache.desc ~= desc then
+		cache = {
+			revision = revision,
+			name = name,
+			desc = desc,
+			byWidth = {},
 		}
-		cache.byWidth[w] = layout
+		card._textLayoutCache = cache
+	end
 
+	local w = width or DEFAULT_CARD_WIDTH
+	local layout = cache.byWidth[w]
+	if layout then
 		return layout
+	end
+
+	local titleFont = UI.fonts.button or UI.fonts.body
+	local bodyFont = UI.fonts.body or UI.fonts.caption
+
+	if not titleFont or not bodyFont then
+		layout = cache.byWidth[w]
+		if not layout then
+			layout = {
+				titleLines = {},
+				titleLineCount = 1,
+				titleHeight = 0,
+				titleWidth = w - 28,
+				descLines = {},
+				descLineCount = 1,
+				descHeight = 0,
+				descWidth = w - 36,
+			}
+			cache.byWidth[w] = layout
+		end
+		return layout
+	end
+
+	local titleWidth = w - 28
+	local descWidth = w - 36
+
+	local _, titleLines = titleFont:getWrap(name, titleWidth)
+	local titleLineCount = max(1, #titleLines)
+	local titleLineHeight = titleFont:getHeight() * titleFont:getLineHeight()
+	local titleHeight = titleLineCount * titleLineHeight
+
+	local _, descLines = bodyFont:getWrap(desc, descWidth)
+	local descLineCount = max(1, #descLines)
+	local descLineHeight = bodyFont:getHeight() * bodyFont:getLineHeight()
+	local descHeight = descLineCount * descLineHeight
+
+	layout = {
+		titleLines = titleLines,
+		titleLineCount = titleLineCount,
+		titleHeight = titleHeight,
+		titleWidth = titleWidth,
+		descLines = descLines,
+		descLineCount = descLineCount,
+		descHeight = descHeight,
+		descWidth = descWidth,
+	}
+	cache.byWidth[w] = layout
+
+	return layout
 end
 
 local ANALOG_DEADZONE = 0.3
@@ -218,178 +218,178 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-		leftx = {slot = "horizontal"},
-		rightx = {slot = "horizontal"},
-		lefty = {slot = "vertical"},
-		righty = {slot = "vertical"},
-		[1] = {slot = "horizontal"},
-		[2] = {slot = "vertical"},
+	leftx = {slot = "horizontal"},
+	rightx = {slot = "horizontal"},
+	lefty = {slot = "vertical"},
+	righty = {slot = "vertical"},
+	[1] = {slot = "horizontal"},
+	[2] = {slot = "vertical"},
 }
 
 local function resetAnalogAxis()
-		analogAxisDirections.horizontal = nil
-		analogAxisDirections.vertical = nil
+	analogAxisDirections.horizontal = nil
+	analogAxisDirections.vertical = nil
 end
 
 local MYSTERY_REVEAL_EXTRA_HOLD = 1.2
 
 local function updateMysteryReveal(self, card, state, dt)
-		if not dt or dt <= 0 then return end
-		if not card or not state then return end
+	if not dt or dt <= 0 then return end
+	if not card or not state then return end
 
-		local upgrade = card.upgrade
-		if not upgrade or upgrade.id ~= "mystery_card" then
-				return
+	local upgrade = card.upgrade
+	if not upgrade or upgrade.id ~= "mystery_card" then
+		return
+	end
+
+	local pending = card.pendingRevealInfo
+	local reveal = state.mysteryReveal
+
+	if not pending and not reveal then
+		return
+	end
+
+	if pending and not reveal then
+		reveal = {
+			phase = "approach",
+			timer = 0,
+			white = 0,
+			shakeOffset = 0,
+			shakeRotation = 0,
+			applied = false,
+			info = pending,
+			approachDuration = pending.revealApproachDuration or pending.revealDelay or 0.55,
+			shakeDuration = pending.revealShakeDuration or 0.5,
+			flashInDuration = pending.revealFlashInDuration or 0.22,
+			flashOutDuration = pending.revealFlashOutDuration or 0.45,
+			shakeMagnitude = pending.revealShakeMagnitude or 9,
+			shakeFrequency = pending.revealShakeFrequency or 26,
+			applyThreshold = pending.revealApplyThreshold or 0.6,
+			postPauseDuration = pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0,
+			postPauseTimer = 0,
+		}
+		state.mysteryReveal = reveal
+		state.revealHoldTimer = nil
+	else
+		reveal = state.mysteryReveal
+	end
+
+	if not reveal then return end
+
+	reveal.info = reveal.info or pending
+	local info = reveal.info
+	if not info then
+		reveal.phase = reveal.phase or "done"
+		return
+	end
+
+	reveal.timer = (reveal.timer or 0) + dt
+
+	if reveal.phase == "approach" then
+		reveal.white = 0
+		reveal.shakeOffset = 0
+		reveal.shakeRotation = 0
+		if reveal.timer >= (reveal.approachDuration or 0) then
+			reveal.phase = "shake"
+			reveal.timer = 0
 		end
+		return
+	end
 
-		local pending = card.pendingRevealInfo
-		local reveal = state.mysteryReveal
-
-		if not pending and not reveal then
-				return
-		end
-
-		if pending and not reveal then
-				reveal = {
-						phase = "approach",
-						timer = 0,
-						white = 0,
-						shakeOffset = 0,
-						shakeRotation = 0,
-						applied = false,
-						info = pending,
-						approachDuration = pending.revealApproachDuration or pending.revealDelay or 0.55,
-						shakeDuration = pending.revealShakeDuration or 0.5,
-						flashInDuration = pending.revealFlashInDuration or 0.22,
-						flashOutDuration = pending.revealFlashOutDuration or 0.45,
-						shakeMagnitude = pending.revealShakeMagnitude or 9,
-						shakeFrequency = pending.revealShakeFrequency or 26,
-						applyThreshold = pending.revealApplyThreshold or 0.6,
-						postPauseDuration = pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0,
-						postPauseTimer = 0,
-				}
-				state.mysteryReveal = reveal
-				state.revealHoldTimer = nil
+	if reveal.phase == "shake" then
+		local duration = reveal.shakeDuration or 0
+		if duration <= 0 then
+			reveal.phase = "flashIn"
+			reveal.timer = 0
+			reveal.shakeOffset = 0
+			reveal.shakeRotation = 0
 		else
-				reveal = state.mysteryReveal
-		end
-
-		if not reveal then return end
-
-		reveal.info = reveal.info or pending
-		local info = reveal.info
-		if not info then
-				reveal.phase = reveal.phase or "done"
-				return
-		end
-
-		reveal.timer = (reveal.timer or 0) + dt
-
-		if reveal.phase == "approach" then
-				reveal.white = 0
+			local progress = min(1, reveal.timer / duration)
+			local amplitude = (1 - progress) * (reveal.shakeMagnitude or 8)
+			local frequency = reveal.shakeFrequency or 24
+			reveal.shakeOffset = sin(reveal.timer * frequency) * amplitude
+			reveal.shakeRotation = sin(reveal.timer * frequency * 0.55) * amplitude * 0.02
+			if reveal.timer >= duration then
+				reveal.phase = "flashIn"
+				reveal.timer = 0
 				reveal.shakeOffset = 0
 				reveal.shakeRotation = 0
-				if reveal.timer >= (reveal.approachDuration or 0) then
-						reveal.phase = "shake"
-						reveal.timer = 0
-				end
-				return
+			end
 		end
+		return
+	end
 
-		if reveal.phase == "shake" then
-				local duration = reveal.shakeDuration or 0
-				if duration <= 0 then
-						reveal.phase = "flashIn"
-						reveal.timer = 0
-						reveal.shakeOffset = 0
-						reveal.shakeRotation = 0
+	if reveal.phase == "flashIn" then
+		local duration = reveal.flashInDuration or 0
+		local progress = duration <= 0 and 1 or min(1, reveal.timer / duration)
+		reveal.white = progress
+		if not reveal.applied and (duration <= 0 or reveal.timer >= duration * (reveal.applyThreshold or 0.6)) then
+			Upgrades:applyCardReveal(card, info)
+			reveal.applied = true
+		end
+		if duration <= 0 or reveal.timer >= duration then
+			reveal.phase = "flashOut"
+			reveal.timer = 0
+		end
+		return
+	end
+
+	if reveal.phase == "flashOut" then
+		local duration = reveal.flashOutDuration or 0
+		if duration <= 0 then
+			reveal.white = 0
+			if (reveal.postPauseDuration or 0) > 0 then
+				reveal.phase = "postPause"
+				reveal.timer = 0
+				reveal.postPauseTimer = 0
+			else
+				reveal.phase = "done"
+				reveal.timer = 0
+			end
+		else
+			local progress = min(1, reveal.timer / duration)
+			reveal.white = 1 - progress
+			if reveal.timer >= duration then
+				reveal.white = 0
+				if (reveal.postPauseDuration or 0) > 0 then
+					reveal.phase = "postPause"
+					reveal.timer = 0
+					reveal.postPauseTimer = 0
 				else
-						local progress = min(1, reveal.timer / duration)
-						local amplitude = (1 - progress) * (reveal.shakeMagnitude or 8)
-						local frequency = reveal.shakeFrequency or 24
-						reveal.shakeOffset = sin(reveal.timer * frequency) * amplitude
-						reveal.shakeRotation = sin(reveal.timer * frequency * 0.55) * amplitude * 0.02
-						if reveal.timer >= duration then
-								reveal.phase = "flashIn"
-								reveal.timer = 0
-								reveal.shakeOffset = 0
-								reveal.shakeRotation = 0
-						end
+					reveal.phase = "done"
+					reveal.timer = 0
 				end
-				return
+			end
+		end
+		reveal.shakeOffset = 0
+		reveal.shakeRotation = 0
+		return
+	end
+
+	if reveal.phase == "postPause" then
+		reveal.white = 0
+		reveal.shakeOffset = 0
+		reveal.shakeRotation = 0
+		local duration = reveal.postPauseDuration or 0
+		if duration <= 0 then
+			reveal.phase = "done"
+			reveal.timer = 0
+			return
 		end
 
-		if reveal.phase == "flashIn" then
-				local duration = reveal.flashInDuration or 0
-				local progress = duration <= 0 and 1 or min(1, reveal.timer / duration)
-				reveal.white = progress
-				if not reveal.applied and (duration <= 0 or reveal.timer >= duration * (reveal.applyThreshold or 0.6)) then
-						Upgrades:applyCardReveal(card, info)
-						reveal.applied = true
-				end
-				if duration <= 0 or reveal.timer >= duration then
-						reveal.phase = "flashOut"
-						reveal.timer = 0
-				end
-				return
+		reveal.postPauseTimer = (reveal.postPauseTimer or 0) + dt
+		if reveal.postPauseTimer >= duration then
+			reveal.phase = "done"
+			reveal.timer = 0
 		end
+		return
+	end
 
-		if reveal.phase == "flashOut" then
-				local duration = reveal.flashOutDuration or 0
-				if duration <= 0 then
-						reveal.white = 0
-						if (reveal.postPauseDuration or 0) > 0 then
-								reveal.phase = "postPause"
-								reveal.timer = 0
-								reveal.postPauseTimer = 0
-						else
-								reveal.phase = "done"
-								reveal.timer = 0
-						end
-				else
-						local progress = min(1, reveal.timer / duration)
-						reveal.white = 1 - progress
-						if reveal.timer >= duration then
-								reveal.white = 0
-								if (reveal.postPauseDuration or 0) > 0 then
-										reveal.phase = "postPause"
-										reveal.timer = 0
-										reveal.postPauseTimer = 0
-								else
-										reveal.phase = "done"
-										reveal.timer = 0
-								end
-						end
-				end
-				reveal.shakeOffset = 0
-				reveal.shakeRotation = 0
-				return
-		end
-
-		if reveal.phase == "postPause" then
-				reveal.white = 0
-				reveal.shakeOffset = 0
-				reveal.shakeRotation = 0
-				local duration = reveal.postPauseDuration or 0
-				if duration <= 0 then
-						reveal.phase = "done"
-						reveal.timer = 0
-						return
-				end
-
-				reveal.postPauseTimer = (reveal.postPauseTimer or 0) + dt
-				if reveal.postPauseTimer >= duration then
-						reveal.phase = "done"
-						reveal.timer = 0
-				end
-				return
-		end
-
-		if reveal.phase == "done" then
-				reveal.white = 0
-				reveal.shakeOffset = 0
-				reveal.shakeRotation = 0
-		end
+	if reveal.phase == "done" then
+		reveal.white = 0
+		reveal.shakeOffset = 0
+		reveal.shakeRotation = 0
+	end
 end
 
 local function handleAnalogAxis(self, axis, value)
@@ -474,38 +474,38 @@ function Shop:refreshCards(options)
 
 	resetAnalogAxis()
 
-		for i = 1, #self.cards do
-				local card = self.cards[i]
-				local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
-				local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
-				local backgroundKey = getBackgroundCacheKey(card, style, borderColor, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
-				ensureBackgroundCanvas(backgroundKey, style, borderColor, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
-				ensureCardTextLayout(card, DEFAULT_CARD_WIDTH)
+	for i = 1, #self.cards do
+		local card = self.cards[i]
+		local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
+		local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
+		local backgroundKey = getBackgroundCacheKey(card, style, borderColor, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
+		ensureBackgroundCanvas(backgroundKey, style, borderColor, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
+		ensureCardTextLayout(card, DEFAULT_CARD_WIDTH)
 
-				-- Cache badge visuals here so `drawCard` can avoid recalculating them every frame.
-				-- Any code that mutates a card's upgrade/tags must call `Shop:refreshCards` (or
-				-- otherwise refresh this cache) before the card is rendered again.
-				local badgeStyle = getBadgeStyleForCard(card)
-				card._badgeStyle = badgeStyle
+		-- Cache badge visuals here so `drawCard` can avoid recalculating them every frame.
+		-- Any code that mutates a card's upgrade/tags must call `Shop:refreshCards` (or
+		-- otherwise refresh this cache) before the card is rendered again.
+		local badgeStyle = getBadgeStyleForCard(card)
+		card._badgeStyle = badgeStyle
 
-				self.cardStates[i] = {
-						progress = 0,
-						delay = initialDelay + (i - 1) * 0.08,
-						selection = 0,
-						selectionClock = 0,
-						hover = 0,
-						focus = 0,
-						fadeOut = 0,
-						selectionFlash = nil,
-						revealSoundPlayed = false,
-						selectSoundPlayed = false,
-						discardActive = false,
-						discard = nil,
-						mysteryReveal = nil,
-						revealHoldTimer = nil,
-						backgroundKey = backgroundKey,
-				}
-		end
+		self.cardStates[i] = {
+			progress = 0,
+			delay = initialDelay + (i - 1) * 0.08,
+			selection = 0,
+			selectionClock = 0,
+			hover = 0,
+			focus = 0,
+			fadeOut = 0,
+			selectionFlash = nil,
+			revealSoundPlayed = false,
+			selectSoundPlayed = false,
+			discardActive = false,
+			discard = nil,
+			mysteryReveal = nil,
+			revealHoldTimer = nil,
+			backgroundKey = backgroundKey,
+		}
+	end
 end
 
 function Shop:beginRestock()
@@ -670,84 +670,84 @@ function Shop:update(dt)
 			state.selectSoundPlayed = false
 		end
 
-				if state.selectionFlash then
-						local flashDuration = 0.75
-						state.selectionFlash = state.selectionFlash + dt
-						if state.selectionFlash >= flashDuration then
-								state.selectionFlash = nil
-						end
-				end
-
-				if card and card.upgrade and card.upgrade.id == "mystery_card" then
-						updateMysteryReveal(self, card, state, dt)
-				end
+		if state.selectionFlash then
+			local flashDuration = 0.75
+			state.selectionFlash = state.selectionFlash + dt
+			if state.selectionFlash >= flashDuration then
+				state.selectionFlash = nil
+			end
 		end
 
-		if self.selected then
-				self.selectionTimer = (self.selectionTimer or 0) + dt
-				if not self.selectionComplete then
-						local hold = self.selectionHoldDuration or 0
-						local state = self.selectedIndex and self.cardStates and self.cardStates[self.selectedIndex] or nil
-						local flashDone = not (state and state.selectionFlash)
-						local revealDone = true
-						if self.selected and self.selected.upgrade and self.selected.upgrade.id == "mystery_card" then
-								local revealState = state and state.mysteryReveal or nil
-								if self.selected.pendingRevealInfo then
-										revealDone = false
-										if state then
-												state.revealHoldTimer = nil
-										end
-								elseif revealState then
-										local phase = revealState.phase
-										local overlayAlpha = revealState.white or 0
-										if phase and phase ~= "done" then
-												revealDone = false
-												if state then
-														state.revealHoldTimer = nil
-												end
-										elseif overlayAlpha > 0.001 then
-												revealDone = false
-												if state then
-														state.revealHoldTimer = nil
-												end
-										else
-												if state then
-														state.revealHoldTimer = (state.revealHoldTimer or 0) + dt
-														if state.revealHoldTimer < MYSTERY_REVEAL_EXTRA_HOLD then
-																revealDone = false
-														end
-												end
-										end
-								elseif state then
-										state.revealHoldTimer = nil
-								end
-						end
-						if self.selectionTimer >= hold and flashDone and revealDone then
-								self.selectionComplete = true
-								Audio:playSound("shop_purchase")
-						end
-				end
-		else
-				if self.selectedIndex and self.cardStates then
-						local previousState = self.cardStates[self.selectedIndex]
-						if previousState then
-								previousState.revealHoldTimer = nil
-						end
-				end
-				self.selectionTimer = 0
-				self.selectionComplete = false
-				self.selectedIndex = nil
+		if card and card.upgrade and card.upgrade.id == "mystery_card" then
+			updateMysteryReveal(self, card, state, dt)
 		end
+	end
+
+	if self.selected then
+		self.selectionTimer = (self.selectionTimer or 0) + dt
+		if not self.selectionComplete then
+			local hold = self.selectionHoldDuration or 0
+			local state = self.selectedIndex and self.cardStates and self.cardStates[self.selectedIndex] or nil
+			local flashDone = not (state and state.selectionFlash)
+			local revealDone = true
+			if self.selected and self.selected.upgrade and self.selected.upgrade.id == "mystery_card" then
+				local revealState = state and state.mysteryReveal or nil
+				if self.selected.pendingRevealInfo then
+					revealDone = false
+					if state then
+						state.revealHoldTimer = nil
+					end
+				elseif revealState then
+					local phase = revealState.phase
+					local overlayAlpha = revealState.white or 0
+					if phase and phase ~= "done" then
+						revealDone = false
+						if state then
+							state.revealHoldTimer = nil
+						end
+					elseif overlayAlpha > 0.001 then
+						revealDone = false
+						if state then
+							state.revealHoldTimer = nil
+						end
+					else
+						if state then
+							state.revealHoldTimer = (state.revealHoldTimer or 0) + dt
+							if state.revealHoldTimer < MYSTERY_REVEAL_EXTRA_HOLD then
+								revealDone = false
+							end
+						end
+					end
+				elseif state then
+					state.revealHoldTimer = nil
+				end
+			end
+			if self.selectionTimer >= hold and flashDone and revealDone then
+				self.selectionComplete = true
+				Audio:playSound("shop_purchase")
+			end
+		end
+	else
+		if self.selectedIndex and self.cardStates then
+			local previousState = self.cardStates[self.selectedIndex]
+			if previousState then
+				previousState.revealHoldTimer = nil
+			end
+		end
+		self.selectionTimer = 0
+		self.selectionComplete = false
+		self.selectedIndex = nil
+	end
 end
 
 rarityBorderAlpha = 0.85
 
 rarityStyles = {
-		common = {
-				base = {0.20, 0.23, 0.28, 1},
-				shadowAlpha = 0.18,
-				aura = {
-						color = {0.52, 0.62, 0.78, 0.22},
+	common = {
+		base = {0.20, 0.23, 0.28, 1},
+		shadowAlpha = 0.18,
+		aura = {
+			color = {0.52, 0.62, 0.78, 0.22},
 			radius = 0.72,
 			y = 0.42,
 		},
@@ -793,14 +793,14 @@ rarityStyles = {
 			width = 3,
 		},
 	},
-		rare = {
-				base = {0.16, 0.24, 0.34, 1},
-				shadowAlpha = 0.30,
-				aura = {
-						color = {0.40, 0.60, 0.92, 0.32},
-						radius = 0.82,
-						y = 0.36,
-				},
+	rare = {
+		base = {0.16, 0.24, 0.34, 1},
+		shadowAlpha = 0.30,
+		aura = {
+			color = {0.40, 0.60, 0.92, 0.32},
+			radius = 0.82,
+			y = 0.36,
+		},
 		outerGlow = {
 			color = {0.48, 0.72, 1.0, 1},
 			min = 0.14,
@@ -816,640 +816,640 @@ rarityStyles = {
 			speed = 2.1,
 			inset = 8,
 			width = 3,
-				},
 		},
-		epic = {
-				base = {0.24, 0.12, 0.42, 1},
-				shadowAlpha = 0.36,
-				aura = {
-						color = {0.86, 0.56, 0.98, 0.42},
-						radius = 0.9,
-						y = 0.34,
-				},
-				outerGlow = {
-						color = {0.92, 0.74, 1.0, 1},
-						min = 0.2,
-						max = 0.46,
-						speed = 2.4,
-						expand = 9,
-						width = 8,
-				},
-				innerGlow = {
-						color = {0.98, 0.86, 1.0, 1},
-						min = 0.26,
-						max = 0.48,
-						speed = 2.6,
-						inset = 8,
-						width = 3,
-				},
+	},
+	epic = {
+		base = {0.24, 0.12, 0.42, 1},
+		shadowAlpha = 0.36,
+		aura = {
+			color = {0.86, 0.56, 0.98, 0.42},
+			radius = 0.9,
+			y = 0.34,
 		},
-		legendary = {
-				base = {0.46, 0.28, 0.06, 1},
-				shadowAlpha = 0.46,
-				outerGlow = {
-						color = {1.0, 0.82, 0.34, 1},
-						min = 0.26,
-						max = 0.56,
-						speed = 2.6,
-						expand = 10,
-						width = 10,
-				},
-				innerGlow = {
-						color = {1.0, 0.9, 0.6, 1},
-						min = 0.32,
-						max = 0.58,
-						speed = 3.0,
-						inset = 8,
-						width = 3,
-				},
-				sparkles = {
-						color = {1.0, 0.92, 0.64, 0.22},
-						radius = 9,
-						speed = 1.8,
-						driftSpeed = 0.08,
-						driftMinY = 0.16,
-						driftMaxY = 0.98,
-						positions = {
-								{0.22, 0.88, 1.05, 0.00},
-								{0.52, 0.78, 0.85, 0.28},
-								{0.72, 0.94, 1.15, 0.56},
-								{0.36, 0.82, 0.9, 0.84},
-						},
-				},
-				glow = 0.22,
-				borderWidth = 5,
+		outerGlow = {
+			color = {0.92, 0.74, 1.0, 1},
+			min = 0.2,
+			max = 0.46,
+			speed = 2.4,
+			expand = 9,
+			width = 8,
 		},
+		innerGlow = {
+			color = {0.98, 0.86, 1.0, 1},
+			min = 0.26,
+			max = 0.48,
+			speed = 2.6,
+			inset = 8,
+			width = 3,
+		},
+	},
+	legendary = {
+		base = {0.46, 0.28, 0.06, 1},
+		shadowAlpha = 0.46,
+		outerGlow = {
+			color = {1.0, 0.82, 0.34, 1},
+			min = 0.26,
+			max = 0.56,
+			speed = 2.6,
+			expand = 10,
+			width = 10,
+		},
+		innerGlow = {
+			color = {1.0, 0.9, 0.6, 1},
+			min = 0.32,
+			max = 0.58,
+			speed = 3.0,
+			inset = 8,
+			width = 3,
+		},
+		sparkles = {
+			color = {1.0, 0.92, 0.64, 0.22},
+			radius = 9,
+			speed = 1.8,
+			driftSpeed = 0.08,
+			driftMinY = 0.16,
+			driftMaxY = 0.98,
+			positions = {
+				{0.22, 0.88, 1.05, 0.00},
+				{0.52, 0.78, 0.85, 0.28},
+				{0.72, 0.94, 1.15, 0.56},
+				{0.36, 0.82, 0.9, 0.84},
+			},
+		},
+		glow = 0.22,
+		borderWidth = 5,
+	},
 }
 
 local function clamp01(value)
-		if value < 0 then
-				return 0
-		elseif value > 1 then
-				return 1
-		end
+	if value < 0 then
+		return 0
+	elseif value > 1 then
+		return 1
+	end
 
-		return value
+	return value
 end
 
 local function wrap01(value)
-		value = value - floor(value)
-		if value < 0 then
-				value = value + 1
-		end
-		return value
+	value = value - floor(value)
+	if value < 0 then
+		value = value + 1
+	end
+	return value
 end
 
 local function lerp(a, b, t)
-		return a + (b - a) * t
+	return a + (b - a) * t
 end
 
 local function scaleColor(color, factor, alphaFactor)
-		if not color then
-				return {1, 1, 1, alphaFactor or 1}
-		end
+	if not color then
+		return {1, 1, 1, alphaFactor or 1}
+	end
 
-		local alpha = (color[4] or 1) * (alphaFactor or 1)
-		return {
-				clamp01((color[1] or 0) * factor),
-				clamp01((color[2] or 0) * factor),
-				clamp01((color[3] or 0) * factor),
-				alpha,
-		}
+	local alpha = (color[4] or 1) * (alphaFactor or 1)
+	return {
+		clamp01((color[1] or 0) * factor),
+		clamp01((color[2] or 0) * factor),
+		clamp01((color[3] or 0) * factor),
+		alpha,
+	}
 end
 
 local function formatColorKey(color)
-		if not color then
-				return "nil"
-		end
+	if not color then
+		return "nil"
+	end
 
-		return string.format(
-				"%.3f,%.3f,%.3f,%.3f",
-				color[1] or 0,
-				color[2] or 0,
-				color[3] or 0,
-				color[4] or 1
-		)
+	return string.format(
+	"%.3f,%.3f,%.3f,%.3f",
+	color[1] or 0,
+	color[2] or 0,
+	color[3] or 0,
+	color[4] or 1
+	)
 end
 
 getBackgroundCacheKey = function(card, style, borderColor, w, h)
-		local rarity = card and (card.rarity or "common") or "common"
-		local styleKey = style and tostring(style) or "default"
-		local sizeKey = string.format("%sx%s", tostring(w or 0), tostring(h or 0))
-		local colorKey = formatColorKey(borderColor)
-		return table.concat({rarity, styleKey, sizeKey, colorKey}, "|")
+	local rarity = card and (card.rarity or "common") or "common"
+	local styleKey = style and tostring(style) or "default"
+	local sizeKey = string.format("%sx%s", tostring(w or 0), tostring(h or 0))
+	local colorKey = formatColorKey(borderColor)
+	return table.concat({rarity, styleKey, sizeKey, colorKey}, "|")
 end
 
 local function drawStaticStyleLayers(style, borderColor, x, y, w, h, alphaMultiplier)
-		if not style then return end
+	if not style then return end
 
-		local cardRadius = 12
+	local cardRadius = 12
 
-		local function setColor(r, g, b, a)
-				love.graphics.setColor(r, g, b, (a or 1) * (alphaMultiplier or 1))
+	local function setColor(r, g, b, a)
+		love.graphics.setColor(r, g, b, (a or 1) * (alphaMultiplier or 1))
+	end
+
+	local function drawGradientOverlay(def)
+		if not def or not def.top or not def.bottom then
+			return
 		end
 
-		local function drawGradientOverlay(def)
-				if not def or not def.top or not def.bottom then
-						return
-				end
-
-				local steps = max(1, def.steps or 16)
-				love.graphics.stencil(function()
-						love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
-				end, "replace", 1)
-				love.graphics.setStencilTest("equal", 1)
-				local segmentHeight = h / steps
-				local topAlpha = def.top[4] or 1
-				local bottomAlpha = def.bottom[4] or 1
-				for i = 0, steps - 1 do
-						local t = steps == 1 and 0 or i / (steps - 1)
-						local r = lerp(def.top[1] or 0, def.bottom[1] or 0, t)
-						local g = lerp(def.top[2] or 0, def.bottom[2] or 0, t)
-						local b = lerp(def.top[3] or 0, def.bottom[3] or 0, t)
-						local a = lerp(topAlpha, bottomAlpha, t)
-						setColor(r, g, b, a)
-						love.graphics.rectangle("fill", x, y + i * segmentHeight, w, segmentHeight + 1)
-				end
-				love.graphics.setStencilTest()
-				setColor(1, 1, 1, 1)
+		local steps = max(1, def.steps or 16)
+		love.graphics.stencil(function()
+			love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
+		end, "replace", 1)
+		love.graphics.setStencilTest("equal", 1)
+		local segmentHeight = h / steps
+		local topAlpha = def.top[4] or 1
+		local bottomAlpha = def.bottom[4] or 1
+		for i = 0, steps - 1 do
+			local t = steps == 1 and 0 or i / (steps - 1)
+			local r = lerp(def.top[1] or 0, def.bottom[1] or 0, t)
+			local g = lerp(def.top[2] or 0, def.bottom[2] or 0, t)
+			local b = lerp(def.top[3] or 0, def.bottom[3] or 0, t)
+			local a = lerp(topAlpha, bottomAlpha, t)
+			setColor(r, g, b, a)
+			love.graphics.rectangle("fill", x, y + i * segmentHeight, w, segmentHeight + 1)
 		end
-
-		local function drawShineOverlay(def)
-				if not def then
-						return
-				end
-
-				local steps = max(1, def.steps or 18)
-				love.graphics.stencil(function()
-						love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
-				end, "replace", 1)
-				love.graphics.setStencilTest("equal", 1)
-				love.graphics.push()
-				love.graphics.translate(x + w * (def.offsetX or 0.5), y + h * (def.offsetY or 0.3))
-				love.graphics.rotate(def.angle or -pi / 5)
-				local shineWidth = w * (def.widthScale or 1.4)
-				local shineHeight = h * (def.heightScale or 0.6)
-				local stepWidth = shineWidth / steps
-				for i = 0, steps - 1 do
-						local center = -shineWidth / 2 + (i + 0.5) * stepWidth
-						local normalized = (i + 0.5) / steps * 2 - 1
-						local strength = max(0, 1 - normalized * normalized)
-						if strength > 0 then
-								setColor(1, 1, 1, (def.alpha or 0.24) * strength)
-								love.graphics.rectangle("fill", center - stepWidth / 2, -shineHeight / 2, stepWidth + 1, shineHeight)
-						end
-				end
-				love.graphics.pop()
-				love.graphics.setStencilTest()
-				setColor(1, 1, 1, 1)
-		end
-
-		drawGradientOverlay(style.gradient)
-		drawShineOverlay(style.shine)
-
-		if style.aura then
-				withTransformedScissor(x, y, w, h, function()
-						applyColor(setColor, style.aura.color)
-						local radius = max(w, h) * (style.aura.radius or 0.72)
-						local centerY = y + h * (style.aura.y or 0.4)
-						love.graphics.circle("fill", x + w * 0.5, centerY, radius)
-				end)
-		end
-
-		if style.flare then
-				withTransformedScissor(x, y, w, h, function()
-						applyColor(setColor, style.flare.color)
-						local radius = min(w, h) * (style.flare.radius or 0.36)
-						love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
-				end)
-		end
-
-		if style.stripes then
-				withTransformedScissor(x, y, w, h, function()
-						love.graphics.push()
-						love.graphics.translate(x + w / 2, y + h / 2)
-						love.graphics.rotate(style.stripes.angle or -math.pi / 6)
-						local diag = math.sqrt(w * w + h * h)
-						local spacing = style.stripes.spacing or 34
-						local width = style.stripes.width or 22
-						applyColor(setColor, style.stripes.color)
-						local stripeCount = ceil((diag * 2) / spacing) + 2
-						for i = -stripeCount, stripeCount do
-								local pos = i * spacing
-								love.graphics.rectangle("fill", -diag, pos - width / 2, diag * 2, width)
-						end
-						love.graphics.pop()
-				end)
-		end
-
-		if style.sparkles and style.sparkles.positions then
-				withTransformedScissor(x, y, w, h, function()
-						local driftSpeed = style.sparkles.driftSpeed or 0
-						local driftMinY = style.sparkles.driftMinY or 0
-						local driftMaxY = style.sparkles.driftMaxY or 1
-						local driftSpan = max(0.0001, driftMaxY - driftMinY)
-						for i, pos in ipairs(style.sparkles.positions) do
-								local px = pos[1] or 0.5
-								local py = pos[2] or 0.5
-								local scale = pos[3] or 1
-								local phase = pos[4] or (i - 1) * 0.31
-								local pulse = 0.6 + 0.4 * sin(i * 0.9)
-								local radius = (style.sparkles.radius or 9) * scale * pulse
-								local sparkleColor = style.sparkles.color or borderColor
-								local sparkleAlphaBase = style.sparkles.opacity or sparkleColor[4] or 1
-								local sparkleAlpha = sparkleAlphaBase * pulse
-								local sparkleX = x + px * w
-								local sparkleY
-								if driftSpeed ~= 0 then
-										local normalized = wrap01(py - phase)
-										sparkleY = y + (driftMinY + normalized * driftSpan) * h
-								else
-										sparkleY = y + py * h
-								end
-								applyColor(setColor, sparkleColor, sparkleAlpha)
-								love.graphics.circle("fill", sparkleX, sparkleY, radius)
-						end
-				end)
-		end
-
+		love.graphics.setStencilTest()
 		setColor(1, 1, 1, 1)
+	end
+
+	local function drawShineOverlay(def)
+		if not def then
+			return
+		end
+
+		local steps = max(1, def.steps or 18)
+		love.graphics.stencil(function()
+			love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
+		end, "replace", 1)
+		love.graphics.setStencilTest("equal", 1)
+		love.graphics.push()
+		love.graphics.translate(x + w * (def.offsetX or 0.5), y + h * (def.offsetY or 0.3))
+		love.graphics.rotate(def.angle or -pi / 5)
+		local shineWidth = w * (def.widthScale or 1.4)
+		local shineHeight = h * (def.heightScale or 0.6)
+		local stepWidth = shineWidth / steps
+		for i = 0, steps - 1 do
+			local center = -shineWidth / 2 + (i + 0.5) * stepWidth
+			local normalized = (i + 0.5) / steps * 2 - 1
+			local strength = max(0, 1 - normalized * normalized)
+			if strength > 0 then
+				setColor(1, 1, 1, (def.alpha or 0.24) * strength)
+				love.graphics.rectangle("fill", center - stepWidth / 2, -shineHeight / 2, stepWidth + 1, shineHeight)
+			end
+		end
+		love.graphics.pop()
+		love.graphics.setStencilTest()
+		setColor(1, 1, 1, 1)
+	end
+
+	drawGradientOverlay(style.gradient)
+	drawShineOverlay(style.shine)
+
+	if style.aura then
+		withTransformedScissor(x, y, w, h, function()
+			applyColor(setColor, style.aura.color)
+			local radius = max(w, h) * (style.aura.radius or 0.72)
+			local centerY = y + h * (style.aura.y or 0.4)
+			love.graphics.circle("fill", x + w * 0.5, centerY, radius)
+		end)
+	end
+
+	if style.flare then
+		withTransformedScissor(x, y, w, h, function()
+			applyColor(setColor, style.flare.color)
+			local radius = min(w, h) * (style.flare.radius or 0.36)
+			love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
+		end)
+	end
+
+	if style.stripes then
+		withTransformedScissor(x, y, w, h, function()
+			love.graphics.push()
+			love.graphics.translate(x + w / 2, y + h / 2)
+			love.graphics.rotate(style.stripes.angle or -math.pi / 6)
+			local diag = math.sqrt(w * w + h * h)
+			local spacing = style.stripes.spacing or 34
+			local width = style.stripes.width or 22
+			applyColor(setColor, style.stripes.color)
+			local stripeCount = ceil((diag * 2) / spacing) + 2
+			for i = -stripeCount, stripeCount do
+				local pos = i * spacing
+				love.graphics.rectangle("fill", -diag, pos - width / 2, diag * 2, width)
+			end
+			love.graphics.pop()
+		end)
+	end
+
+	if style.sparkles and style.sparkles.positions then
+		withTransformedScissor(x, y, w, h, function()
+			local driftSpeed = style.sparkles.driftSpeed or 0
+			local driftMinY = style.sparkles.driftMinY or 0
+			local driftMaxY = style.sparkles.driftMaxY or 1
+			local driftSpan = max(0.0001, driftMaxY - driftMinY)
+			for i, pos in ipairs(style.sparkles.positions) do
+				local px = pos[1] or 0.5
+				local py = pos[2] or 0.5
+				local scale = pos[3] or 1
+				local phase = pos[4] or (i - 1) * 0.31
+				local pulse = 0.6 + 0.4 * sin(i * 0.9)
+				local radius = (style.sparkles.radius or 9) * scale * pulse
+				local sparkleColor = style.sparkles.color or borderColor
+				local sparkleAlphaBase = style.sparkles.opacity or sparkleColor[4] or 1
+				local sparkleAlpha = sparkleAlphaBase * pulse
+				local sparkleX = x + px * w
+				local sparkleY
+				if driftSpeed ~= 0 then
+					local normalized = wrap01(py - phase)
+					sparkleY = y + (driftMinY + normalized * driftSpan) * h
+				else
+					sparkleY = y + py * h
+				end
+				applyColor(setColor, sparkleColor, sparkleAlpha)
+				love.graphics.circle("fill", sparkleX, sparkleY, radius)
+			end
+		end)
+	end
+
+	setColor(1, 1, 1, 1)
 end
 
 ensureBackgroundCanvas = function(styleKey, style, borderColor, w, h)
-		local cache = Shop._backgroundCanvases
-		local entry = cache and cache[styleKey]
-		if entry and entry.width == w and entry.height == h then
-				return entry.canvas
-		end
+	local cache = Shop._backgroundCanvases
+	local entry = cache and cache[styleKey]
+	if entry and entry.width == w and entry.height == h then
+		return entry.canvas
+	end
 
-		if not cache then
-				Shop._backgroundCanvases = {}
-				cache = Shop._backgroundCanvases
-		end
+	if not cache then
+		Shop._backgroundCanvases = {}
+		cache = Shop._backgroundCanvases
+	end
 
-		if w <= 0 or h <= 0 then
-				return nil
-		end
+	if w <= 0 or h <= 0 then
+		return nil
+	end
 
-		local canvas = love.graphics.newCanvas(w, h)
-		love.graphics.push("all")
-		love.graphics.setCanvas(canvas)
-		love.graphics.clear(0, 0, 0, 0)
-		drawStaticStyleLayers(style, borderColor, 0, 0, w, h)
-		love.graphics.setColor(1, 1, 1, 1)
-		love.graphics.pop()
+	local canvas = love.graphics.newCanvas(w, h)
+	love.graphics.push("all")
+	love.graphics.setCanvas(canvas)
+	love.graphics.clear(0, 0, 0, 0)
+	drawStaticStyleLayers(style, borderColor, 0, 0, w, h)
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.pop()
 
-		cache[styleKey] = {canvas = canvas, width = w, height = h}
-		return canvas
+	cache[styleKey] = {canvas = canvas, width = w, height = h}
+	return canvas
 end
 
 local function getBackgroundCanvas(styleKey)
-		local cache = Shop._backgroundCanvases
-		if not cache then return nil end
-		local entry = cache[styleKey]
-		return entry and entry.canvas or nil
+	local cache = Shop._backgroundCanvases
+	if not cache then return nil end
+	local entry = cache[styleKey]
+	return entry and entry.canvas or nil
 end
 
 local badgeDefinitions = {
-		default = {
-				label = "General",
-				shape = "circle",
-				fallback = {0.66, 0.72, 0.9, 1},
-				outlineFactor = 0.52,
-				shadowAlpha = 0.65,
-		},
-		economy = {
-				label = "Economy",
-				shape = "circle",
-				colorKey = "goldenPearColor",
-				fallback = {0.95, 0.80, 0.45, 1},
-				outlineFactor = 0.42,
-		},
-		defense = {
-				label = "Defense",
-				shape = "diamond",
-				colorKey = "snakeDefault",
-				fallback = {0.45, 0.85, 0.70, 1},
-		},
-		mobility = {
-				label = "Mobility",
-				shape = "triangle_up",
-				colorKey = "blueberryColor",
-				fallback = {0.55, 0.65, 0.95, 1},
-				cornerRadiusScale = 0.16,
-				cornerSegments = 6,
-		},
-		risk = {
-				label = "Risk",
-				shape = "triangle_down",
-				colorKey = "warningColor",
-				fallback = {0.92, 0.55, 0.40, 1},
-				cornerRadiusScale = 0.16,
-				cornerSegments = 6,
-		},
-		utility = {
-				label = "Utility",
-				shape = "square",
-				colorKey = "panelBorder",
-				fallback = {0.32, 0.50, 0.54, 1},
-		},
-		hazard = {
-				label = "Hazard",
-				shape = "hexagon",
-				colorKey = "appleColor",
-				fallback = {0.90, 0.45, 0.55, 1},
-		},
+	default = {
+		label = "General",
+		shape = "circle",
+		fallback = {0.66, 0.72, 0.9, 1},
+		outlineFactor = 0.52,
+		shadowAlpha = 0.65,
+	},
+	economy = {
+		label = "Economy",
+		shape = "circle",
+		colorKey = "goldenPearColor",
+		fallback = {0.95, 0.80, 0.45, 1},
+		outlineFactor = 0.42,
+	},
+	defense = {
+		label = "Defense",
+		shape = "diamond",
+		colorKey = "snakeDefault",
+		fallback = {0.45, 0.85, 0.70, 1},
+	},
+	mobility = {
+		label = "Mobility",
+		shape = "triangle_up",
+		colorKey = "blueberryColor",
+		fallback = {0.55, 0.65, 0.95, 1},
+		cornerRadiusScale = 0.16,
+		cornerSegments = 6,
+	},
+	risk = {
+		label = "Risk",
+		shape = "triangle_down",
+		colorKey = "warningColor",
+		fallback = {0.92, 0.55, 0.40, 1},
+		cornerRadiusScale = 0.16,
+		cornerSegments = 6,
+	},
+	utility = {
+		label = "Utility",
+		shape = "square",
+		colorKey = "panelBorder",
+		fallback = {0.32, 0.50, 0.54, 1},
+	},
+	hazard = {
+		label = "Hazard",
+		shape = "hexagon",
+		colorKey = "appleColor",
+		fallback = {0.90, 0.45, 0.55, 1},
+	},
 }
 
 local badgeTagAliases = {
-		adrenaline = "mobility",
-		speed = "mobility",
-		rocks = "hazard",
-		shop = "economy",
-		progression = "economy",
-		reward = "economy",
-		combo = "risk",
-		control = "utility",
+	adrenaline = "mobility",
+	speed = "mobility",
+	rocks = "hazard",
+	shop = "economy",
+	progression = "economy",
+	reward = "economy",
+	combo = "risk",
+	control = "utility",
 }
 
 local resolvedBadgeStyles = setmetatable({}, {__mode = "k"})
 
 local function resolveBadgeDefinition(definition)
-		if not definition then return nil end
+	if not definition then return nil end
 
-		local resolved = resolvedBadgeStyles[definition]
-		if not resolved then
-				resolved = {color = {1, 1, 1, 1}}
-				resolvedBadgeStyles[definition] = resolved
-		end
+	local resolved = resolvedBadgeStyles[definition]
+	if not resolved then
+		resolved = {color = {1, 1, 1, 1}}
+		resolvedBadgeStyles[definition] = resolved
+	end
 
-		local colorSource
-		if definition.colorKey and Theme[definition.colorKey] then
-				colorSource = Theme[definition.colorKey]
-		elseif definition.color then
-				colorSource = definition.color
-		end
+	local colorSource
+	if definition.colorKey and Theme[definition.colorKey] then
+		colorSource = Theme[definition.colorKey]
+	elseif definition.color then
+		colorSource = definition.color
+	end
 
-		local fallback = definition.fallback or {1, 1, 1, 1}
-		colorSource = colorSource or fallback
+	local fallback = definition.fallback or {1, 1, 1, 1}
+	colorSource = colorSource or fallback
 
-		local color = resolved.color
-		color[1] = colorSource[1] or fallback[1] or 1
-		color[2] = colorSource[2] or fallback[2] or 1
-		color[3] = colorSource[3] or fallback[3] or 1
-		color[4] = colorSource[4] or fallback[4] or 1
+	local color = resolved.color
+	color[1] = colorSource[1] or fallback[1] or 1
+	color[2] = colorSource[2] or fallback[2] or 1
+	color[3] = colorSource[3] or fallback[3] or 1
+	color[4] = colorSource[4] or fallback[4] or 1
 
-		resolved.shape = definition.shape or "circle"
-		resolved.outlineFactor = definition.outlineFactor
-		resolved.outline = definition.outline
-		resolved.shadowOffset = definition.shadowOffset
-		resolved.shadowAlpha = definition.shadowAlpha
-		resolved.shadow = definition.shadow
-		resolved.cornerRadius = definition.cornerRadius
-		resolved.cornerRadiusScale = definition.cornerRadiusScale
-		resolved.cornerSegments = definition.cornerSegments
-		resolved.radiusScale = definition.radiusScale
+	resolved.shape = definition.shape or "circle"
+	resolved.outlineFactor = definition.outlineFactor
+	resolved.outline = definition.outline
+	resolved.shadowOffset = definition.shadowOffset
+	resolved.shadowAlpha = definition.shadowAlpha
+	resolved.shadow = definition.shadow
+	resolved.cornerRadius = definition.cornerRadius
+	resolved.cornerRadiusScale = definition.cornerRadiusScale
+	resolved.cornerSegments = definition.cornerSegments
+	resolved.radiusScale = definition.radiusScale
 
-		return resolved
+	return resolved
 end
 
 getBadgeStyleForCard = function(card)
-		if not card or not card.upgrade then
-				return nil
-		end
-
-		local tags = card.upgrade.tags
-		if type(tags) ~= "table" then
-				return nil
-		end
-
-		local hasTag = false
-		for _, tag in ipairs(tags) do
-				hasTag = true
-				local canonicalTag = badgeTagAliases[tag] or tag
-				local definition = badgeDefinitions[canonicalTag]
-				if definition then
-						local style = resolveBadgeDefinition(definition)
-						local label = definition.label or canonicalTag
-						return style, label
-				end
-		end
-
-		if hasTag and badgeDefinitions.default then
-				local definition = badgeDefinitions.default
-				local style = resolveBadgeDefinition(definition)
-				local label = definition.label or "default"
-				return style, label
-		end
-
+	if not card or not card.upgrade then
 		return nil
+	end
+
+	local tags = card.upgrade.tags
+	if type(tags) ~= "table" then
+		return nil
+	end
+
+	local hasTag = false
+	for _, tag in ipairs(tags) do
+		hasTag = true
+		local canonicalTag = badgeTagAliases[tag] or tag
+		local definition = badgeDefinitions[canonicalTag]
+		if definition then
+			local style = resolveBadgeDefinition(definition)
+			local label = definition.label or canonicalTag
+			return style, label
+		end
+	end
+
+	if hasTag and badgeDefinitions.default then
+		local definition = badgeDefinitions.default
+		local style = resolveBadgeDefinition(definition)
+		local label = definition.label or "default"
+		return style, label
+	end
+
+	return nil
 end
 
 local function drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-		local points = {}
-		local angleStep = (pi * 2) / sides
-		local offset = rotation or 0
-		for i = 0, sides - 1 do
-				local angle = offset + i * angleStep
-				points[#points + 1] = cx + cos(angle) * radius
-				points[#points + 1] = cy + sin(angle) * radius
-		end
+	local points = {}
+	local angleStep = (pi * 2) / sides
+	local offset = rotation or 0
+	for i = 0, sides - 1 do
+		local angle = offset + i * angleStep
+		points[#points + 1] = cx + cos(angle) * radius
+		points[#points + 1] = cy + sin(angle) * radius
+	end
 
-		love.graphics.polygon(mode, unpack(points))
+	love.graphics.polygon(mode, unpack(points))
 end
 
 local function drawRoundedTriangle(mode, cx, cy, size, rotation, style)
-		local radiusScale = 0.52
-		if style and style.radiusScale ~= nil then
-				radiusScale = style.radiusScale
+	local radiusScale = 0.52
+	if style and style.radiusScale ~= nil then
+		radiusScale = style.radiusScale
+	end
+	local radius = size * radiusScale
+	local baseCornerRadius
+	if style and style.cornerRadius then
+		baseCornerRadius = style.cornerRadius
+	else
+		local cornerScale = 0.10
+		if style and style.cornerRadiusScale ~= nil then
+			cornerScale = style.cornerRadiusScale
 		end
-		local radius = size * radiusScale
-		local baseCornerRadius
-		if style and style.cornerRadius then
-				baseCornerRadius = style.cornerRadius
-		else
-				local cornerScale = 0.10
-				if style and style.cornerRadiusScale ~= nil then
-						cornerScale = style.cornerRadiusScale
-				end
-				baseCornerRadius = size * cornerScale
-		end
-		if baseCornerRadius <= 0 then
-				drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
-				return
-		end
+		baseCornerRadius = size * cornerScale
+	end
+	if baseCornerRadius <= 0 then
+		drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+		return
+	end
 
-		local angleStep = (pi * 2) / 3
-		local offset = rotation or 0
-		local vertices = {}
-		for i = 0, 2 do
-				local angle = offset + i * angleStep
-				vertices[i + 1] = {
-						cx + cos(angle) * radius,
-						cy + sin(angle) * radius,
-				}
-		end
+	local angleStep = (pi * 2) / 3
+	local offset = rotation or 0
+	local vertices = {}
+	for i = 0, 2 do
+		local angle = offset + i * angleStep
+		vertices[i + 1] = {
+			cx + cos(angle) * radius,
+			cy + sin(angle) * radius,
+		}
+	end
 
-		local points = {}
-		local segments = 4
-		if style and style.cornerSegments ~= nil then
-				segments = style.cornerSegments
-		end
-		segments = max(1, floor(segments))
-		for i = 1, 3 do
-				local current = vertices[i]
-				local prev = vertices[i == 1 and 3 or (i - 1)]
-				local next = vertices[i == 3 and 1 or (i + 1)]
+	local points = {}
+	local segments = 4
+	if style and style.cornerSegments ~= nil then
+		segments = style.cornerSegments
+	end
+	segments = max(1, floor(segments))
+	for i = 1, 3 do
+		local current = vertices[i]
+		local prev = vertices[i == 1 and 3 or (i - 1)]
+		local next = vertices[i == 3 and 1 or (i + 1)]
 
-				local prevDirX = prev[1] - current[1]
-				local prevDirY = prev[2] - current[2]
-				local nextDirX = next[1] - current[1]
-				local nextDirY = next[2] - current[2]
+		local prevDirX = prev[1] - current[1]
+		local prevDirY = prev[2] - current[2]
+		local nextDirX = next[1] - current[1]
+		local nextDirY = next[2] - current[2]
 
-				local prevLen = sqrt(prevDirX * prevDirX + prevDirY * prevDirY)
-				local nextLen = sqrt(nextDirX * nextDirX + nextDirY * nextDirY)
+		local prevLen = sqrt(prevDirX * prevDirX + prevDirY * prevDirY)
+		local nextLen = sqrt(nextDirX * nextDirX + nextDirY * nextDirY)
 
-				if prevLen <= 0 or nextLen <= 0 then
-						drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
-						return
-				end
-
-				local cornerRadius = min(baseCornerRadius, prevLen * 0.48, nextLen * 0.48)
-				if cornerRadius <= 0 then
-						drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
-						return
-				end
-
-				local normPrevX = prevDirX / prevLen
-				local normPrevY = prevDirY / prevLen
-				local normNextX = nextDirX / nextLen
-				local normNextY = nextDirY / nextLen
-
-				local incomingPrevX = -normPrevX
-				local incomingPrevY = -normPrevY
-				local incomingNextX = -normNextX
-				local incomingNextY = -normNextY
-
-				local dot = incomingPrevX * incomingNextX + incomingPrevY * incomingNextY
-				dot = max(-1, min(1, dot))
-				local theta = acos(dot)
-				if theta <= 0 then
-						drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
-						return
-				end
-
-				local halfTheta = theta * 0.5
-				local sinHalf = sin(halfTheta)
-				local tanHalf = tan(halfTheta)
-
-				if abs(sinHalf) < 1e-4 or abs(tanHalf) < 1e-4 then
-						drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
-						return
-				end
-
-				local outwardX = incomingPrevX + incomingNextX
-				local outwardY = incomingPrevY + incomingNextY
-				local outwardLen = sqrt(outwardX * outwardX + outwardY * outwardY)
-				if outwardLen <= 1e-4 then
-						drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
-						return
-				end
-
-				outwardX = outwardX / outwardLen
-				outwardY = outwardY / outwardLen
-
-				local offsetToCenter = cornerRadius / sinHalf
-				local offsetAlongEdge = cornerRadius / tanHalf
-
-				local centerX = current[1] + outwardX * offsetToCenter
-				local centerY = current[2] + outwardY * offsetToCenter
-
-				local prevPointX = current[1] + incomingPrevX * offsetAlongEdge
-				local prevPointY = current[2] + incomingPrevY * offsetAlongEdge
-				local nextPointX = current[1] + incomingNextX * offsetAlongEdge
-				local nextPointY = current[2] + incomingNextY * offsetAlongEdge
-
-				points[#points + 1] = prevPointX
-				points[#points + 1] = prevPointY
-
-				local anglePrev = atan2(prevPointY - centerY, prevPointX - centerX)
-				local angleNext = atan2(nextPointY - centerY, nextPointX - centerX)
-				local angleDelta = angleNext - anglePrev
-				if angleDelta <= 0 then
-						angleDelta = angleDelta + (pi * 2)
-				end
-
-				for step = 1, segments do
-						local t = step / segments
-						local angle = anglePrev + angleDelta * t
-						points[#points + 1] = centerX + cos(angle) * cornerRadius
-						points[#points + 1] = centerY + sin(angle) * cornerRadius
-				end
+		if prevLen <= 0 or nextLen <= 0 then
+			drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+			return
 		end
 
-		love.graphics.polygon(mode, unpack(points))
+		local cornerRadius = min(baseCornerRadius, prevLen * 0.48, nextLen * 0.48)
+		if cornerRadius <= 0 then
+			drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+			return
+		end
+
+		local normPrevX = prevDirX / prevLen
+		local normPrevY = prevDirY / prevLen
+		local normNextX = nextDirX / nextLen
+		local normNextY = nextDirY / nextLen
+
+		local incomingPrevX = -normPrevX
+		local incomingPrevY = -normPrevY
+		local incomingNextX = -normNextX
+		local incomingNextY = -normNextY
+
+		local dot = incomingPrevX * incomingNextX + incomingPrevY * incomingNextY
+		dot = max(-1, min(1, dot))
+		local theta = acos(dot)
+		if theta <= 0 then
+			drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+			return
+		end
+
+		local halfTheta = theta * 0.5
+		local sinHalf = sin(halfTheta)
+		local tanHalf = tan(halfTheta)
+
+		if abs(sinHalf) < 1e-4 or abs(tanHalf) < 1e-4 then
+			drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+			return
+		end
+
+		local outwardX = incomingPrevX + incomingNextX
+		local outwardY = incomingPrevY + incomingNextY
+		local outwardLen = sqrt(outwardX * outwardX + outwardY * outwardY)
+		if outwardLen <= 1e-4 then
+			drawRegularPolygon(mode, cx, cy, radius, 3, rotation)
+			return
+		end
+
+		outwardX = outwardX / outwardLen
+		outwardY = outwardY / outwardLen
+
+		local offsetToCenter = cornerRadius / sinHalf
+		local offsetAlongEdge = cornerRadius / tanHalf
+
+		local centerX = current[1] + outwardX * offsetToCenter
+		local centerY = current[2] + outwardY * offsetToCenter
+
+		local prevPointX = current[1] + incomingPrevX * offsetAlongEdge
+		local prevPointY = current[2] + incomingPrevY * offsetAlongEdge
+		local nextPointX = current[1] + incomingNextX * offsetAlongEdge
+		local nextPointY = current[2] + incomingNextY * offsetAlongEdge
+
+		points[#points + 1] = prevPointX
+		points[#points + 1] = prevPointY
+
+		local anglePrev = atan2(prevPointY - centerY, prevPointX - centerX)
+		local angleNext = atan2(nextPointY - centerY, nextPointX - centerX)
+		local angleDelta = angleNext - anglePrev
+		if angleDelta <= 0 then
+			angleDelta = angleDelta + (pi * 2)
+		end
+
+		for step = 1, segments do
+			local t = step / segments
+			local angle = anglePrev + angleDelta * t
+			points[#points + 1] = centerX + cos(angle) * cornerRadius
+			points[#points + 1] = centerY + sin(angle) * cornerRadius
+		end
+	end
+
+	love.graphics.polygon(mode, unpack(points))
 end
 
 local badgeShapeDrawers = {
-		circle = function(mode, cx, cy, size)
-				love.graphics.circle(mode, cx, cy, size * 0.5, 32)
-		end,
-		square = function(mode, cx, cy, size)
-				local half = size * 0.45
-				love.graphics.rectangle(mode, cx - half, cy - half, half * 2, half * 2, size * 0.18, size * 0.18)
-		end,
-		diamond = function(mode, cx, cy, size)
-				local half = size * 0.38
-				love.graphics.push()
-				love.graphics.translate(cx, cy)
-				love.graphics.rotate(pi / 4)
-				love.graphics.rectangle(mode, -half, -half, half * 2, half * 2, size * 0.12, size * 0.12)
-				love.graphics.pop()
-		end,
-		triangle_up = function(mode, cx, cy, size, style)
-				drawRoundedTriangle(mode, cx, cy, size + 12, -pi / 2, style)
-		end,
-		triangle_down = function(mode, cx, cy, size, style)
-				drawRoundedTriangle(mode, cx, cy, size + 12, pi / 2, style)
-		end,
-		hexagon = function(mode, cx, cy, size)
-				drawRegularPolygon(mode, cx, cy, size * 0.48, 6, pi / 6)
-		end,
+	circle = function(mode, cx, cy, size)
+		love.graphics.circle(mode, cx, cy, size * 0.5, 32)
+	end,
+	square = function(mode, cx, cy, size)
+		local half = size * 0.45
+		love.graphics.rectangle(mode, cx - half, cy - half, half * 2, half * 2, size * 0.18, size * 0.18)
+	end,
+	diamond = function(mode, cx, cy, size)
+		local half = size * 0.38
+		love.graphics.push()
+		love.graphics.translate(cx, cy)
+		love.graphics.rotate(pi / 4)
+		love.graphics.rectangle(mode, -half, -half, half * 2, half * 2, size * 0.12, size * 0.12)
+		love.graphics.pop()
+	end,
+	triangle_up = function(mode, cx, cy, size, style)
+		drawRoundedTriangle(mode, cx, cy, size + 12, -pi / 2, style)
+	end,
+	triangle_down = function(mode, cx, cy, size, style)
+		drawRoundedTriangle(mode, cx, cy, size + 12, pi / 2, style)
+	end,
+	hexagon = function(mode, cx, cy, size)
+		drawRegularPolygon(mode, cx, cy, size * 0.48, 6, pi / 6)
+	end,
 }
 
 local function drawBadgeShape(shape, mode, cx, cy, size, style)
-		local drawer = badgeShapeDrawers[shape] or badgeShapeDrawers.circle
-		drawer(mode, cx, cy, size, style)
+	local drawer = badgeShapeDrawers[shape] or badgeShapeDrawers.circle
+	drawer(mode, cx, cy, size, style)
 end
 
 local function drawBadge(setColorFn, style, cx, cy, size)
-		if not style or not style.color then
-				return
-		end
+	if not style or not style.color then
+		return
+	end
 
-		local shape = style.shape or "circle"
-		local fill = style.color
-		local badgeOpacity = 0.10
-		setColorFn(fill[1], fill[2], fill[3], (fill[4] or 1) * badgeOpacity)
-		drawBadgeShape(shape, "fill", cx, cy, size, style)
+	local shape = style.shape or "circle"
+	local fill = style.color
+	local badgeOpacity = 0.10
+	setColorFn(fill[1], fill[2], fill[3], (fill[4] or 1) * badgeOpacity)
+	drawBadgeShape(shape, "fill", cx, cy, size, style)
 
-		local outlineColor = style.outline or scaleColor(fill, style.outlineFactor or 0.55)
-		local previousWidth = love.graphics.getLineWidth()
-		love.graphics.setLineWidth(style.outlineWidth or 2)
-		setColorFn(outlineColor[1], outlineColor[2], outlineColor[3], (outlineColor[4] or 1) * badgeOpacity)
-		drawBadgeShape(shape, "line", cx, cy, size, style)
-		love.graphics.setLineWidth(previousWidth)
+	local outlineColor = style.outline or scaleColor(fill, style.outlineFactor or 0.55)
+	local previousWidth = love.graphics.getLineWidth()
+	love.graphics.setLineWidth(style.outlineWidth or 2)
+	setColorFn(outlineColor[1], outlineColor[2], outlineColor[3], (outlineColor[4] or 1) * badgeOpacity)
+	drawBadgeShape(shape, "line", cx, cy, size, style)
+	love.graphics.setLineWidth(previousWidth)
 
-		setColorFn(1, 1, 1, 1)
+	setColorFn(1, 1, 1, 1)
 end
 
 function applyColor(setColorFn, color, overrideAlpha)
-		if not color then return end
-		setColorFn(color[1], color[2], color[3], overrideAlpha or color[4] or 1)
+	if not color then return end
+	setColorFn(color[1], color[2], color[3], overrideAlpha or color[4] or 1)
 end
 
 function withTransformedScissor(x, y, w, h, fn)
-		if not fn then return end
+	if not fn then return end
 
 	local sx1, sy1 = love.graphics.transformPoint(x, y)
 	local sx2, sy2 = love.graphics.transformPoint(x + w, y + h)
@@ -1487,84 +1487,84 @@ local function getAnimatedAlpha(def, time)
 end
 
 local function drawCard(card, x, y, w, h, hovered, index, animationState, isSelected, appearanceAlpha)
-		local fadeAlpha = appearanceAlpha or 1
-		local function setColor(r, g, b, a)
-				love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
-		end
+	local fadeAlpha = appearanceAlpha or 1
+	local function setColor(r, g, b, a)
+		love.graphics.setColor(r, g, b, (a or 1) * fadeAlpha)
+	end
 
-		local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
-		local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
-		local cardRadius = 12
+	local style = rarityStyles[card.rarity or "common"] or rarityStyles.common
+	local borderColor = card.rarityColor or {1, 1, 1, rarityBorderAlpha}
+	local cardRadius = 12
 
-		-- Signature drop shadow to give cards lift against the background
-		local shadowOffsetX, shadowOffsetY = 8, 10
-		setColor(0, 0, 0, 0.38)
-		love.graphics.rectangle("fill", x + shadowOffsetX, y + shadowOffsetY, w, h, 18, 18)
+	-- Signature drop shadow to give cards lift against the background
+	local shadowOffsetX, shadowOffsetY = 8, 10
+	setColor(0, 0, 0, 0.38)
+	love.graphics.rectangle("fill", x + shadowOffsetX, y + shadowOffsetY, w, h, 18, 18)
 
-		-- Consistent black outline that hugs the exterior of the card frame
-		local outlineWidth = 6
-		local outlineRadius = 16
-		setColor(0, 0, 0, 1)
-		love.graphics.rectangle("fill", x - outlineWidth, y - outlineWidth, w + outlineWidth * 2, h + outlineWidth * 2, outlineRadius, outlineRadius)
-		love.graphics.setLineWidth(4)
+	-- Consistent black outline that hugs the exterior of the card frame
+	local outlineWidth = 6
+	local outlineRadius = 16
+	setColor(0, 0, 0, 1)
+	love.graphics.rectangle("fill", x - outlineWidth, y - outlineWidth, w + outlineWidth * 2, h + outlineWidth * 2, outlineRadius, outlineRadius)
+	love.graphics.setLineWidth(4)
 
-		if isSelected then
-				local glowClock = Timer.getTime()
-				local pulse = 0.35 + 0.25 * (sin(glowClock * 5) * 0.5 + 0.5)
-				setColor(1, 0.9, 0.45, pulse)
+	if isSelected then
+		local glowClock = Timer.getTime()
+		local pulse = 0.35 + 0.25 * (sin(glowClock * 5) * 0.5 + 0.5)
+		setColor(1, 0.9, 0.45, pulse)
 		love.graphics.setLineWidth(10)
 		love.graphics.rectangle("line", x - 14, y - 14, w + 28, h + 28, 18, 18)
 		love.graphics.setLineWidth(4)
 	end
 
-		if style.shadowAlpha and style.shadowAlpha > 0 then
-				setColor(0, 0, 0, style.shadowAlpha)
-				love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
+	if style.shadowAlpha and style.shadowAlpha > 0 then
+		setColor(0, 0, 0, style.shadowAlpha)
+		love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
+	end
+
+	applyColor(setColor, style.base)
+	love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
+
+	local backgroundKey = animationState and animationState.backgroundKey
+	if not backgroundKey then
+		backgroundKey = getBackgroundCacheKey(card, style, borderColor, w, h)
+		if animationState then
+			animationState.backgroundKey = backgroundKey
 		end
+	end
 
-		applyColor(setColor, style.base)
-		love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
+	local backgroundCanvas = backgroundKey and getBackgroundCanvas(backgroundKey)
+	if not backgroundCanvas and backgroundKey then
+		backgroundCanvas = ensureBackgroundCanvas(backgroundKey, style, borderColor, w, h)
+	end
 
-		local backgroundKey = animationState and animationState.backgroundKey
-		if not backgroundKey then
-				backgroundKey = getBackgroundCacheKey(card, style, borderColor, w, h)
-				if animationState then
-						animationState.backgroundKey = backgroundKey
-				end
-		end
+	if backgroundCanvas then
+		setColor(1, 1, 1, 1)
+		love.graphics.draw(backgroundCanvas, x, y)
+	else
+		drawStaticStyleLayers(style, borderColor, x, y, w, h, fadeAlpha)
+	end
 
-		local backgroundCanvas = backgroundKey and getBackgroundCanvas(backgroundKey)
-		if not backgroundCanvas and backgroundKey then
-				backgroundCanvas = ensureBackgroundCanvas(backgroundKey, style, borderColor, w, h)
-		end
+	local currentTime = Timer.getTime()
 
-		if backgroundCanvas then
-				setColor(1, 1, 1, 1)
-				love.graphics.draw(backgroundCanvas, x, y)
-		else
-				drawStaticStyleLayers(style, borderColor, x, y, w, h, fadeAlpha)
-		end
-
-		local currentTime = Timer.getTime()
-
-		if style.outerGlow then
-				local glowAlpha = getAnimatedAlpha(style.outerGlow, currentTime)
-				if glowAlpha and glowAlpha > 0 then
-						applyColor(setColor, style.outerGlow.color or borderColor, glowAlpha)
+	if style.outerGlow then
+		local glowAlpha = getAnimatedAlpha(style.outerGlow, currentTime)
+		if glowAlpha and glowAlpha > 0 then
+			applyColor(setColor, style.outerGlow.color or borderColor, glowAlpha)
 			love.graphics.setLineWidth(style.outerGlow.width or 6)
 			local expand = style.outerGlow.expand or 6
 			love.graphics.rectangle("line", x - expand, y - expand, w + expand * 2, h + expand * 2, 18, 18)
 		end
 	end
-		if style.glow and style.glow > 0 then
-				applyColor(setColor, borderColor, style.glow)
-				love.graphics.setLineWidth(6)
-				love.graphics.rectangle("line", x - 3, y - 3, w + 6, h + 6, 16, 16)
-		end
+	if style.glow and style.glow > 0 then
+		applyColor(setColor, borderColor, style.glow)
+		love.graphics.setLineWidth(6)
+		love.graphics.rectangle("line", x - 3, y - 3, w + 6, h + 6, 16, 16)
+	end
 
-		applyColor(setColor, borderColor, rarityBorderAlpha)
-		love.graphics.setLineWidth(style.borderWidth or 4)
-		love.graphics.rectangle("line", x, y, w, h, 12, 12)
+	applyColor(setColor, borderColor, rarityBorderAlpha)
+	love.graphics.setLineWidth(style.borderWidth or 4)
+	love.graphics.rectangle("line", x, y, w, h, 12, 12)
 
 	local hoverGlowAlpha
 	if style.innerGlow then
@@ -1589,95 +1589,95 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		love.graphics.rectangle("line", x + 6, y + 6, w - 12, h - 12, 10, 10)
 	end
 
-		love.graphics.setLineWidth(4)
+	love.graphics.setLineWidth(4)
 
-		local headerPadding = 16
-		local headerInset = 18
-		local badgeStyle = card and card._badgeStyle
-		if not badgeStyle and card then
-				badgeStyle = getBadgeStyleForCard(card)
-				card._badgeStyle = card._badgeStyle or badgeStyle
-		end
-		local badgeLabelFont = UI.fonts.caption or UI.fonts.body
-		local headerHeight = 0
-		local headerTop = y + headerPadding
-		local headerCenterY = headerTop
+	local headerPadding = 16
+	local headerInset = 18
+	local badgeStyle = card and card._badgeStyle
+	if not badgeStyle and card then
+		badgeStyle = getBadgeStyleForCard(card)
+		card._badgeStyle = card._badgeStyle or badgeStyle
+	end
+	local badgeLabelFont = UI.fonts.caption or UI.fonts.body
+	local headerHeight = 0
+	local headerTop = y + headerPadding
+	local headerCenterY = headerTop
 
-		local rarityLabel = card.rarityLabel
-		local rarityFont = badgeLabelFont or UI.fonts.body
-		local hasRarity = rarityLabel and rarityLabel ~= ""
-		local rarityHeight = 0
+	local rarityLabel = card.rarityLabel
+	local rarityFont = badgeLabelFont or UI.fonts.body
+	local hasRarity = rarityLabel and rarityLabel ~= ""
+	local rarityHeight = 0
+
+	if hasRarity then
+		love.graphics.setFont(rarityFont)
+		rarityHeight = rarityFont:getHeight() * rarityFont:getLineHeight()
+		headerHeight = max(headerHeight, rarityHeight)
+	end
+
+	if headerHeight > 0 then
+		headerCenterY = headerTop + headerHeight * 0.5
 
 		if hasRarity then
-				love.graphics.setFont(rarityFont)
-				rarityHeight = rarityFont:getHeight() * rarityFont:getLineHeight()
-				headerHeight = max(headerHeight, rarityHeight)
+			love.graphics.setFont(rarityFont)
+			setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
+			local rarityWidth = rarityFont:getWidth(rarityLabel)
+			local rarityX = x + w - headerInset - rarityWidth
+			local minRarityX = x + headerInset
+			rarityX = max(rarityX, minRarityX)
+			local rarityY = headerCenterY - rarityHeight * 0.5
+			love.graphics.print(rarityLabel, rarityX, rarityY)
 		end
+	end
 
-		if headerHeight > 0 then
-				headerCenterY = headerTop + headerHeight * 0.5
+	setColor(1, 1, 1, 1)
+	local titleFont = UI.fonts.button
+	love.graphics.setFont(titleFont)
+	local textLayout = ensureCardTextLayout(card, w) or {}
+	local titleWidth = textLayout.titleWidth or (w - 28)
+	local headerBottom = headerTop + headerHeight
+	local titleSpacing = headerHeight > 0 and 12 or 8
+	local titleY = headerBottom + titleSpacing
+	local titleX = x + 14
+	setColor(0, 0, 0, 0.85)
+	love.graphics.printf(card.name or "", titleX + 1, titleY + 1, titleWidth, "center")
+	setColor(1, 1, 1, 1)
+	love.graphics.printf(card.name or "", titleX, titleY, titleWidth, "center")
 
-				if hasRarity then
-						love.graphics.setFont(rarityFont)
-						setColor(borderColor[1], borderColor[2], borderColor[3], 0.9)
-						local rarityWidth = rarityFont:getWidth(rarityLabel)
-						local rarityX = x + w - headerInset - rarityWidth
-						local minRarityX = x + headerInset
-						rarityX = max(rarityX, minRarityX)
-						local rarityY = headerCenterY - rarityHeight * 0.5
-						love.graphics.print(rarityLabel, rarityX, rarityY)
-				end
+	local titleLineCount = textLayout.titleLineCount or 1
+	local titleHeight = textLayout.titleHeight or (titleLineCount * titleFont:getHeight() * titleFont:getLineHeight())
+	local contentTop = titleY + titleHeight
+
+	setColor(1, 1, 1, 0.3)
+	love.graphics.setLineWidth(1)
+	local dividerY = contentTop + 18
+	love.graphics.line(x + 24, dividerY, x + w - 24, dividerY)
+	local descStart = dividerY + 16
+
+	love.graphics.setFont(UI.fonts.body)
+	local descX = x + 18
+	local descWidth = textLayout.descWidth or (w - 36)
+	setColor(0, 0, 0, 0.75)
+	love.graphics.printf(card.desc or "", descX + 1, descStart + 1, descWidth, "center")
+	setColor(0.92, 0.92, 0.92, 1)
+	love.graphics.printf(card.desc or "", descX, descStart, descWidth, "center")
+
+	if badgeStyle then
+		local MIN_BADGE_SIZE = 136
+		local badgeSize = max(MIN_BADGE_SIZE, badgeStyle.size or 0)
+		local badgeCenterX = x + w * 0.5
+		local badgeCenterY = y + h * (2 / 3) + h / 6 - 40
+		drawBadge(setColor, badgeStyle, badgeCenterX, badgeCenterY, badgeSize)
+	end
+
+	local revealState = animationState and animationState.mysteryReveal or nil
+	if revealState then
+		local overlayAlpha = revealState.white or 0
+		if overlayAlpha > 0 then
+			setColor(1, 1, 1, overlayAlpha)
+			love.graphics.rectangle("fill", x + 8, y + 8, w - 16, h - 16, 10, 10)
+			setColor(1, 1, 1, 1)
 		end
-
-		setColor(1, 1, 1, 1)
-		local titleFont = UI.fonts.button
-		love.graphics.setFont(titleFont)
-		local textLayout = ensureCardTextLayout(card, w) or {}
-		local titleWidth = textLayout.titleWidth or (w - 28)
-		local headerBottom = headerTop + headerHeight
-		local titleSpacing = headerHeight > 0 and 12 or 8
-		local titleY = headerBottom + titleSpacing
-		local titleX = x + 14
-		setColor(0, 0, 0, 0.85)
-		love.graphics.printf(card.name or "", titleX + 1, titleY + 1, titleWidth, "center")
-		setColor(1, 1, 1, 1)
-		love.graphics.printf(card.name or "", titleX, titleY, titleWidth, "center")
-
-		local titleLineCount = textLayout.titleLineCount or 1
-		local titleHeight = textLayout.titleHeight or (titleLineCount * titleFont:getHeight() * titleFont:getLineHeight())
-		local contentTop = titleY + titleHeight
-
-		setColor(1, 1, 1, 0.3)
-		love.graphics.setLineWidth(1)
-		local dividerY = contentTop + 18
-		love.graphics.line(x + 24, dividerY, x + w - 24, dividerY)
-		local descStart = dividerY + 16
-
-		love.graphics.setFont(UI.fonts.body)
-		local descX = x + 18
-		local descWidth = textLayout.descWidth or (w - 36)
-		setColor(0, 0, 0, 0.75)
-		love.graphics.printf(card.desc or "", descX + 1, descStart + 1, descWidth, "center")
-		setColor(0.92, 0.92, 0.92, 1)
-		love.graphics.printf(card.desc or "", descX, descStart, descWidth, "center")
-
-		if badgeStyle then
-				local MIN_BADGE_SIZE = 136
-				local badgeSize = max(MIN_BADGE_SIZE, badgeStyle.size or 0)
-				local badgeCenterX = x + w * 0.5
-				local badgeCenterY = y + h * (2 / 3) + h / 6 - 40
-				drawBadge(setColor, badgeStyle, badgeCenterX, badgeCenterY, badgeSize)
-		end
-
-		local revealState = animationState and animationState.mysteryReveal or nil
-		if revealState then
-				local overlayAlpha = revealState.white or 0
-				if overlayAlpha > 0 then
-						setColor(1, 1, 1, overlayAlpha)
-						love.graphics.rectangle("fill", x + 8, y + 8, w - 16, h - 16, 10, 10)
-						setColor(1, 1, 1, 1)
-				end
-		end
+	end
 end
 
 function Shop:draw(screenW, screenH)
@@ -1733,7 +1733,7 @@ function Shop:draw(screenW, screenH)
 	end
 
 	local cardCount = #self.cards
-		local cardWidth, cardHeight = DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT
+	local cardWidth, cardHeight = DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT
 	local baseSpacing = 48
 	local minSpacing = 28
 	local marginX = max(60, screenW * 0.05)
@@ -1796,16 +1796,16 @@ function Shop:draw(screenW, screenH)
 		local rowIndex = floor((i - 1) / columns)
 		local baseX = startX + columnIndex * (cardWidth + spacing)
 		local baseY = startY + rowIndex * (cardHeight + rowSpacing)
-				local alpha = 1
-				local scale = 1
-				local yOffset = 0
-				local state = self.cardStates and self.cardStates[i]
-				local revealState = state and state.mysteryReveal or nil
-				if state then
-						local progress = state.progress or 0
-						local eased = progress * progress * (3 - 2 * progress)
-						alpha = eased
-						yOffset = (1 - eased) * 48
+		local alpha = 1
+		local scale = 1
+		local yOffset = 0
+		local state = self.cardStates and self.cardStates[i]
+		local revealState = state and state.mysteryReveal or nil
+		if state then
+			local progress = state.progress or 0
+			local eased = progress * progress * (3 - 2 * progress)
+			alpha = eased
+			yOffset = (1 - eased) * 48
 
 			-- Start cards a touch smaller and ease them up to full size so
 			-- the reveal animation feels like a gentle pop rather than a flat fade.
@@ -1870,34 +1870,34 @@ function Shop:draw(screenW, screenH)
 				scale = scale * (1 - 0.2 * fadeEase)
 				alpha = alpha * (1 - 0.9 * fadeEase)
 			end
-				end
+		end
 
-				alpha = max(0, min(alpha, 1))
+		alpha = max(0, min(alpha, 1))
 
-				local shakeOffset = (revealState and revealState.shakeOffset) or 0
-				local extraRotation = (revealState and revealState.shakeRotation) or 0
+		local shakeOffset = (revealState and revealState.shakeOffset) or 0
+		local extraRotation = (revealState and revealState.shakeRotation) or 0
 
-				local centerX = baseX + cardWidth / 2
-				local centerY = baseY + cardHeight / 2 - yOffset
-				if card == self.selected then
-						centerX = centerX + (screenW / 2 - centerX) * focusEase
+		local centerX = baseX + cardWidth / 2
+		local centerY = baseY + cardHeight / 2 - yOffset
+		if card == self.selected then
+			centerX = centerX + (screenW / 2 - centerX) * focusEase
 			local targetY = layoutCenterY
 			centerY = centerY + (targetY - centerY) * focusEase
 		else
 			if discardData then
 				centerX = centerX + discardOffsetX
 				centerY = centerY + discardOffsetY
-						else
-								centerY = centerY + 28 * fadeEase
-						end
-				end
+			else
+				centerY = centerY + 28 * fadeEase
+			end
+		end
 
-				centerX = centerX + shakeOffset
+		centerX = centerX + shakeOffset
 
-				local drawWidth = cardWidth * scale
-				local drawHeight = cardHeight * scale
-				local drawX = centerX - drawWidth / 2
-				local drawY = centerY - drawHeight / 2
+		local drawWidth = cardWidth * scale
+		local drawHeight = cardHeight * scale
+		local drawX = centerX - drawWidth / 2
+		local drawY = centerY - drawHeight / 2
 
 		local usingFocusNavigation = self.inputMode == "gamepad" or self.inputMode == "keyboard"
 		local mouseHover = mx >= drawX and mx <= drawX + drawWidth
@@ -1911,16 +1911,16 @@ function Shop:draw(screenW, screenH)
 		(not usingFocusNavigation and mouseHover)
 		)
 
-				love.graphics.push()
-				love.graphics.translate(centerX, centerY)
-				local totalRotation = discardRotation + extraRotation
-				if totalRotation ~= 0 then
-						love.graphics.rotate(totalRotation)
-				end
-				love.graphics.scale(scale, scale)
-				love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
-				local appearanceAlpha = self.selected == card and 1 or alpha
-				drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, state, self.selected == card, appearanceAlpha)
+		love.graphics.push()
+		love.graphics.translate(centerX, centerY)
+		local totalRotation = discardRotation + extraRotation
+		if totalRotation ~= 0 then
+			love.graphics.rotate(totalRotation)
+		end
+		love.graphics.scale(scale, scale)
+		love.graphics.translate(-cardWidth / 2, -cardHeight / 2)
+		local appearanceAlpha = self.selected == card and 1 or alpha
+		drawCard(card, 0, 0, cardWidth, cardHeight, hovered, i, state, self.selected == card, appearanceAlpha)
 		love.graphics.pop()
 		card.bounds = {x = drawX, y = drawY, w = drawWidth, h = drawHeight}
 
@@ -2068,31 +2068,31 @@ function Shop:pick(i)
 	self.selectionTimer = 0
 	self.selectionComplete = false
 
-		local state = self.cardStates and self.cardStates[i]
-		if state then
-				state.selectionFlash = 0
-				state.selectSoundPlayed = true
-				state.revealHoldTimer = nil
-		end
+	local state = self.cardStates and self.cardStates[i]
+	if state then
+		state.selectionFlash = 0
+		state.selectSoundPlayed = true
+		state.revealHoldTimer = nil
+	end
 	Audio:playSound("shop_card_select")
 	return true
 end
 
 function Shop:isSelectionComplete()
-		return self.selected ~= nil and self.selectionComplete == true
+	return self.selected ~= nil and self.selectionComplete == true
 end
 
 function Shop.drawCardPreview(card, x, y, w, h, options)
-		if not card then return end
+	if not card then return end
 
-		options = options or {}
-		local hovered = options.hovered == true
-		local index = options.index or 1
-		local animationState = options.animationState or {}
-		local isSelected = options.isSelected == true
-		local appearanceAlpha = options.appearanceAlpha or 1
+	options = options or {}
+	local hovered = options.hovered == true
+	local index = options.index or 1
+	local animationState = options.animationState or {}
+	local isSelected = options.isSelected == true
+	local appearanceAlpha = options.appearanceAlpha or 1
 
-		drawCard(card, x, y, w, h, hovered, index, animationState, isSelected, appearanceAlpha)
+	drawCard(card, x, y, w, h, hovered, index, animationState, isSelected, appearanceAlpha)
 end
 
 return Shop

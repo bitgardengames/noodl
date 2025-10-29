@@ -21,15 +21,15 @@ local function loadCoreSystems(sw, sh)
 end
 
 local GAMEPLAY_SYSTEMS = ModuleUtil.prepareSystems({
-		Movement,
-		Score,
-		FloatingText,
-		Particles,
-		VolatileBloom,
-		UpgradeVisuals,
-		Rocks,
-		Saws,
-		UI,
+	Movement,
+	Score,
+	FloatingText,
+	Particles,
+	VolatileBloom,
+	UpgradeVisuals,
+	Rocks,
+	Saws,
+	UI,
 })
 
 local gameplayContext = {}

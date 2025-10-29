@@ -52,72 +52,72 @@ local recentlyVacatedCells = {}
 local recentlyVacatedCount = 0
 
 local function clearRecentlyVacatedCells()
-		if recentlyVacatedCount <= 0 then
-				recentlyVacatedCount = 0
-				return
-		end
-
-		for i = 1, recentlyVacatedCount do
-				local cell = recentlyVacatedCells[i]
-				if cell then
-						cell[1] = nil
-						cell[2] = nil
-				end
-		end
-
+	if recentlyVacatedCount <= 0 then
 		recentlyVacatedCount = 0
+		return
+	end
+
+	for i = 1, recentlyVacatedCount do
+		local cell = recentlyVacatedCells[i]
+		if cell then
+			cell[1] = nil
+			cell[2] = nil
+		end
+	end
+
+	recentlyVacatedCount = 0
 end
 
 local function markRecentlyVacatedCell(col, row)
-		if not (col and row) then
-				return
-		end
+	if not (col and row) then
+		return
+	end
 
-		local index = recentlyVacatedCount + 1
-		local cell = recentlyVacatedCells[index]
-		if cell then
-				cell[1] = col
-				cell[2] = row
-		else
-				cell = {col, row}
-				recentlyVacatedCells[index] = cell
-		end
+	local index = recentlyVacatedCount + 1
+	local cell = recentlyVacatedCells[index]
+	if cell then
+		cell[1] = col
+		cell[2] = row
+	else
+		cell = {col, row}
+		recentlyVacatedCells[index] = cell
+	end
 
-		recentlyVacatedCount = index
+	recentlyVacatedCount = index
 end
 
 local function wasRecentlyVacated(col, row)
-		if recentlyVacatedCount <= 0 or not (col and row) then
-				return false
-		end
-
-		for i = 1, recentlyVacatedCount do
-				local cell = recentlyVacatedCells[i]
-				if cell and cell[1] == col and cell[2] == row then
-						return true
-				end
-		end
-
+	if recentlyVacatedCount <= 0 or not (col and row) then
 		return false
+	end
+
+	for i = 1, recentlyVacatedCount do
+		local cell = recentlyVacatedCells[i]
+		if cell and cell[1] == col and cell[2] == row then
+			return true
+		end
+	end
+
+	return false
 end
 
 local TILE_COORD_EPSILON = 1e-9
 
 local function wipeTable(t)
-		if not t then
-				return
-		end
+	if not t then
+		return
+	end
 
-		for k in pairs(t) do
-				t[k] = nil
-		end
+	for k in pairs(t) do
+		t[k] = nil
+	end
 end
 
 local function clearSnakeBodyOccupancy()
-		for _, column in pairs(snakeBodyOccupancy) do
-				wipeTable(column)
-		end
-		clearRecentlyVacatedCells()
+	for _, column in pairs(snakeBodyOccupancy) do
+		wipeTable(column)
+	end
+	clearRecentlyVacatedCells()
 end
 local snakeOccupiedCells = {}
 local snakeOccupiedFirst = 1
@@ -128,240 +128,240 @@ local headOccupancyCol = nil
 local headOccupancyRow = nil
 
 local function resetTrackedSnakeCells()
-		if snakeOccupiedFirst > snakeOccupiedLast then
-				snakeOccupiedFirst = 1
-				snakeOccupiedLast = 0
-				return
-		end
-
-		for i = snakeOccupiedFirst, snakeOccupiedLast do
-				local cell = snakeOccupiedCells[i]
-				if cell then
-						cell[1] = nil
-						cell[2] = nil
-						snakeOccupiedCells[i] = nil
-				end
-		end
-
+	if snakeOccupiedFirst > snakeOccupiedLast then
 		snakeOccupiedFirst = 1
 		snakeOccupiedLast = 0
+		return
+	end
+
+	for i = snakeOccupiedFirst, snakeOccupiedLast do
+		local cell = snakeOccupiedCells[i]
+		if cell then
+			cell[1] = nil
+			cell[2] = nil
+			snakeOccupiedCells[i] = nil
+		end
+	end
+
+	snakeOccupiedFirst = 1
+	snakeOccupiedLast = 0
 end
 
 local function clearSnakeOccupiedCells()
-		if snakeOccupiedFirst > snakeOccupiedLast then
-				return
-		end
+	if snakeOccupiedFirst > snakeOccupiedLast then
+		return
+	end
 
-		for i = snakeOccupiedFirst, snakeOccupiedLast do
-				local cell = snakeOccupiedCells[i]
-				if cell then
-						local col, row = cell[1], cell[2]
-						if col and row then
-								SnakeUtils.setOccupied(col, row, false)
-						end
-						cell[1] = nil
-						cell[2] = nil
-						snakeOccupiedCells[i] = nil
-				end
+	for i = snakeOccupiedFirst, snakeOccupiedLast do
+		local cell = snakeOccupiedCells[i]
+		if cell then
+			local col, row = cell[1], cell[2]
+			if col and row then
+				SnakeUtils.setOccupied(col, row, false)
+			end
+			cell[1] = nil
+			cell[2] = nil
+			snakeOccupiedCells[i] = nil
 		end
+	end
 
-		snakeOccupiedFirst = 1
-		snakeOccupiedLast = 0
+	snakeOccupiedFirst = 1
+	snakeOccupiedLast = 0
 end
 
 local function recordSnakeOccupiedCell(col, row)
-		if not (col and row) then
-				return
-		end
+	if not (col and row) then
+		return
+	end
 
-		local index = snakeOccupiedLast + 1
-		local wasEmpty = snakeOccupiedFirst > snakeOccupiedLast
-		local cell = snakeOccupiedCells[index]
-		if cell then
-				cell[1] = col
-				cell[2] = row
-		else
-				cell = {col, row}
-				snakeOccupiedCells[index] = cell
-		end
+	local index = snakeOccupiedLast + 1
+	local wasEmpty = snakeOccupiedFirst > snakeOccupiedLast
+	local cell = snakeOccupiedCells[index]
+	if cell then
+		cell[1] = col
+		cell[2] = row
+	else
+		cell = {col, row}
+		snakeOccupiedCells[index] = cell
+	end
 
-		snakeOccupiedLast = index
-		if wasEmpty then
-				snakeOccupiedFirst = index
-		end
+	snakeOccupiedLast = index
+	if wasEmpty then
+		snakeOccupiedFirst = index
+	end
 
-		SnakeUtils.setOccupied(col, row, true)
+	SnakeUtils.setOccupied(col, row, true)
 end
 
 local function getSnakeTailCell()
-		if snakeOccupiedFirst > snakeOccupiedLast then
-				return nil, nil
-		end
+	if snakeOccupiedFirst > snakeOccupiedLast then
+		return nil, nil
+	end
 
-		local cell = snakeOccupiedCells[snakeOccupiedFirst]
-		if not cell then
-				return nil, nil
-		end
+	local cell = snakeOccupiedCells[snakeOccupiedFirst]
+	if not cell then
+		return nil, nil
+	end
 
-		return cell[1], cell[2]
+	return cell[1], cell[2]
 end
 
 local function popSnakeTailCell()
-		if snakeOccupiedFirst > snakeOccupiedLast then
-				return nil, nil
-		end
+	if snakeOccupiedFirst > snakeOccupiedLast then
+		return nil, nil
+	end
 
-		local cell = snakeOccupiedCells[snakeOccupiedFirst]
-		local col, row = nil, nil
-		if cell then
-				col, row = cell[1], cell[2]
-				cell[1] = nil
-				cell[2] = nil
-		end
+	local cell = snakeOccupiedCells[snakeOccupiedFirst]
+	local col, row = nil, nil
+	if cell then
+		col, row = cell[1], cell[2]
+		cell[1] = nil
+		cell[2] = nil
+	end
 
-		snakeOccupiedFirst = snakeOccupiedFirst + 1
-		if snakeOccupiedFirst > snakeOccupiedLast then
-				snakeOccupiedFirst = 1
-				snakeOccupiedLast = 0
-		end
+	snakeOccupiedFirst = snakeOccupiedFirst + 1
+	if snakeOccupiedFirst > snakeOccupiedLast then
+		snakeOccupiedFirst = 1
+		snakeOccupiedLast = 0
+	end
 
-		return col, row
+	return col, row
 end
 
 local function getSnakeHeadCell()
-		if snakeOccupiedFirst > snakeOccupiedLast then
-				return nil, nil
-		end
+	if snakeOccupiedFirst > snakeOccupiedLast then
+		return nil, nil
+	end
 
-		local cell = snakeOccupiedCells[snakeOccupiedLast]
-		if not cell then
-				return nil, nil
-		end
+	local cell = snakeOccupiedCells[snakeOccupiedLast]
+	if not cell then
+		return nil, nil
+	end
 
-		return cell[1], cell[2]
+	return cell[1], cell[2]
 end
 
 local function resetSnakeOccupancyGrid()
-		if SnakeUtils and SnakeUtils.initOccupancy then
-				SnakeUtils.initOccupancy()
-		end
+	if SnakeUtils and SnakeUtils.initOccupancy then
+		SnakeUtils.initOccupancy()
+	end
 
-		resetTrackedSnakeCells()
-		clearSnakeBodyOccupancy()
+	resetTrackedSnakeCells()
+	clearSnakeBodyOccupancy()
 
-		occupancyCols = (Arena and Arena.cols) or 0
-		occupancyRows = (Arena and Arena.rows) or 0
+	occupancyCols = (Arena and Arena.cols) or 0
+	occupancyRows = (Arena and Arena.rows) or 0
 
-		headOccupancyCol = nil
-		headOccupancyRow = nil
+	headOccupancyCol = nil
+	headOccupancyRow = nil
 end
 
 local function ensureOccupancyGrid()
-		local cols = (Arena and Arena.cols) or 0
-		local rows = (Arena and Arena.rows) or 0
-		if cols <= 0 or rows <= 0 then
-				return false
-		end
+	local cols = (Arena and Arena.cols) or 0
+	local rows = (Arena and Arena.rows) or 0
+	if cols <= 0 or rows <= 0 then
+		return false
+	end
 
-		if cols ~= occupancyCols or rows ~= occupancyRows then
-				resetSnakeOccupancyGrid()
-		elseif not SnakeUtils or not SnakeUtils.occupied or not SnakeUtils.occupied[cols] then
-				resetSnakeOccupancyGrid()
-		end
+	if cols ~= occupancyCols or rows ~= occupancyRows then
+		resetSnakeOccupancyGrid()
+	elseif not SnakeUtils or not SnakeUtils.occupied or not SnakeUtils.occupied[cols] then
+		resetSnakeOccupancyGrid()
+	end
 
-		return true
+	return true
 end
 
 local function acquireSegment()
-		if segmentPoolCount > 0 then
-				local segment = segmentPool[segmentPoolCount]
-				segmentPool[segmentPoolCount] = nil
-				segmentPoolCount = segmentPoolCount - 1
-				return segment
-		end
+	if segmentPoolCount > 0 then
+		local segment = segmentPool[segmentPoolCount]
+		segmentPool[segmentPoolCount] = nil
+		segmentPoolCount = segmentPoolCount - 1
+		return segment
+	end
 
-		return {}
+	return {}
 end
 
 local function releaseSegment(segment)
-		if not segment then
-				return
-		end
+	if not segment then
+		return
+	end
 
-		segment.drawX = nil
-		segment.drawY = nil
-		segment.x = nil
-		segment.y = nil
-		segment.dirX = nil
-		segment.dirY = nil
-		segment.fruitMarker = nil
-		segment.fruitMarkerX = nil
-		segment.fruitMarkerY = nil
+	segment.drawX = nil
+	segment.drawY = nil
+	segment.x = nil
+	segment.y = nil
+	segment.dirX = nil
+	segment.dirY = nil
+	segment.fruitMarker = nil
+	segment.fruitMarkerX = nil
+	segment.fruitMarkerY = nil
 
-		segmentPoolCount = segmentPoolCount + 1
-		segmentPool[segmentPoolCount] = segment
+	segmentPoolCount = segmentPoolCount + 1
+	segmentPool[segmentPoolCount] = segment
 end
 
 local function releaseSegmentRange(buffer, startIndex)
-		if not buffer then
-				return
-		end
+	if not buffer then
+		return
+	end
 
-		for i = #buffer, startIndex, -1 do
-				local segment = buffer[i]
-				buffer[i] = nil
-				if segment then
-						releaseSegment(segment)
-				end
+	for i = #buffer, startIndex, -1 do
+		local segment = buffer[i]
+		buffer[i] = nil
+		if segment then
+			releaseSegment(segment)
 		end
+	end
 end
 
 local function recycleTrail(buffer)
-		if not buffer then
-				return
-		end
+	if not buffer then
+		return
+	end
 
-		for i = #buffer, 1, -1 do
-				local segment = buffer[i]
-				buffer[i] = nil
-				if segment then
-						releaseSegment(segment)
-				end
+	for i = #buffer, 1, -1 do
+		local segment = buffer[i]
+		buffer[i] = nil
+		if segment then
+			releaseSegment(segment)
 		end
+	end
 end
 
 local function clearPortalAnimation(state)
-		if not state then
-				return
-		end
+	if not state then
+		return
+	end
 
-		recycleTrail(state.entrySourceTrail)
-		recycleTrail(state.entryTrail)
-		recycleTrail(state.exitTrail)
-		state.entrySourceTrail = nil
-		state.entryTrail = nil
-		state.exitTrail = nil
-		state.entryHole = nil
-		state.exitHole = nil
+	recycleTrail(state.entrySourceTrail)
+	recycleTrail(state.entryTrail)
+	recycleTrail(state.exitTrail)
+	state.entrySourceTrail = nil
+	state.entryTrail = nil
+	state.exitTrail = nil
+	state.entryHole = nil
+	state.exitHole = nil
 end
 
 local function smoothStep(edge0, edge1, value)
-		if edge0 == nil or edge1 == nil or value == nil then
-				return 0
-		end
+	if edge0 == nil or edge1 == nil or value == nil then
+		return 0
+	end
 
-		if edge0 == edge1 then
-				return value >= edge1 and 1 or 0
-		end
+	if edge0 == edge1 then
+		return value >= edge1 and 1 or 0
+	end
 
-		local t = (value - edge0) / (edge1 - edge0)
-		if t < 0 then
-				t = 0
-		elseif t > 1 then
-				t = 1
-		end
+	local t = (value - edge0) / (edge1 - edge0)
+	if t < 0 then
+		t = 0
+	elseif t > 1 then
+		t = 1
+	end
 
-		return t * t * (3 - 2 * t)
+	return t * t * (3 - 2 * t)
 end
 
 local function clearSeveredPieces()
@@ -380,104 +380,104 @@ local function clearSeveredPieces()
 end
 
 local function addSnakeBodyOccupancy(col, row)
-		if not (col and row) then
-				return
-		end
+	if not (col and row) then
+		return
+	end
 
-		local column = snakeBodyOccupancy[col]
-		if not column then
-				column = {}
-				snakeBodyOccupancy[col] = column
-		end
+	local column = snakeBodyOccupancy[col]
+	if not column then
+		column = {}
+		snakeBodyOccupancy[col] = column
+	end
 
-		column[row] = (column[row] or 0) + 1
+	column[row] = (column[row] or 0) + 1
 end
 
 local function removeSnakeBodyOccupancy(col, row)
-		if not (col and row) then
-				return
-		end
+	if not (col and row) then
+		return
+	end
 
-		local column = snakeBodyOccupancy[col]
-		if not column then
-				return
-		end
+	local column = snakeBodyOccupancy[col]
+	if not column then
+		return
+	end
 
-		local count = (column[row] or 0) - 1
-		if count <= 0 then
-				column[row] = nil
-				if not next(column) then
-						snakeBodyOccupancy[col] = nil
-				end
-		else
-				column[row] = count
+	local count = (column[row] or 0) - 1
+	if count <= 0 then
+		column[row] = nil
+		if not next(column) then
+			snakeBodyOccupancy[col] = nil
 		end
+	else
+		column[row] = count
+	end
 end
 
 local function isCellOccupiedBySnakeBody(col, row)
-		if not (col and row) then
-				return false
-		end
+	if not (col and row) then
+		return false
+	end
 
-		local column = snakeBodyOccupancy[col]
-		if not column then
-				return false
-		end
+	local column = snakeBodyOccupancy[col]
+	if not column then
+		return false
+	end
 
-		return (column[row] or 0) > 0
+	return (column[row] or 0) > 0
 end
 
 local stencilCircleX, stencilCircleY, stencilCircleRadius = 0, 0, 0
 local function drawStencilCircle()
-		love.graphics.circle("fill", stencilCircleX, stencilCircleY, stencilCircleRadius)
+	love.graphics.circle("fill", stencilCircleX, stencilCircleY, stencilCircleRadius)
 end
 
 local clippedHeadX, clippedHeadY, clipCenterX, clipCenterY, clipRadiusValue
 local function getClippedHeadPosition()
-		if not (clippedHeadX and clippedHeadY) then
-				return clippedHeadX, clippedHeadY
-		end
-
-		local radius = clipRadiusValue or 0
-		if radius > 0 then
-				local dx = clippedHeadX - (clipCenterX or 0)
-				local dy = clippedHeadY - (clipCenterY or 0)
-				if dx * dx + dy * dy < radius * radius then
-						return nil, nil
-				end
-		end
-
+	if not (clippedHeadX and clippedHeadY) then
 		return clippedHeadX, clippedHeadY
+	end
+
+	local radius = clipRadiusValue or 0
+	if radius > 0 then
+		local dx = clippedHeadX - (clipCenterX or 0)
+		local dy = clippedHeadY - (clipCenterY or 0)
+		if dx * dx + dy * dy < radius * radius then
+			return nil, nil
+		end
+	end
+
+	return clippedHeadX, clippedHeadY
 end
 
 local currentHeadOwner = nil
 local function getOwnerHead()
-		if currentHeadOwner then
-				return currentHeadOwner:getHead()
-		end
+	if currentHeadOwner then
+		return currentHeadOwner:getHead()
+	end
 
-		return nil, nil
+	return nil, nil
 end
 
 local activeTrailForHead = nil
 local function getActiveTrailHead()
-		local trailData = activeTrailForHead
-		if not trailData then
-				return nil, nil
-		end
+	local trailData = activeTrailForHead
+	if not trailData then
+		return nil, nil
+	end
 
-		local headSeg = trailData[1]
-		if not headSeg then
-				return nil, nil
-		end
+	local headSeg = trailData[1]
+	if not headSeg then
+		return nil, nil
+	end
 
-		return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
+	return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
 end
 
 local function assignDirection(target, x, y)
-		if not target then
-				return
-		end
+	if not target then
+		return
+	end
 
 	target.x = x
 	target.y = y
@@ -485,66 +485,66 @@ end
 
 local SHIELD_DAMAGE_FLOATING_TEXT_COLOR = {1, 0.78, 0.68, 1}
 local SHIELD_DAMAGE_FLOATING_TEXT_OPTIONS = {
-		scale = 1.08,
-		popScaleFactor = 1.45,
-		popDuration = 0.24,
-		wobbleMagnitude = 0.2,
-		wobbleFrequency = 4.6,
-		shadow = {
-				color = {0, 0, 0, 0.6},
-				offset = {0, 3},
-				blur = 1.6,
-		},
-		glow = {
-				color = {1, 0.42, 0.32, 0.45},
-				magnitude = 0.35,
-				frequency = 5.2,
-		},
-		jitter = 2.4,
+	scale = 1.08,
+	popScaleFactor = 1.45,
+	popDuration = 0.24,
+	wobbleMagnitude = 0.2,
+	wobbleFrequency = 4.6,
+	shadow = {
+		color = {0, 0, 0, 0.6},
+		offset = {0, 3},
+		blur = 1.6,
+	},
+	glow = {
+		color = {1, 0.42, 0.32, 0.45},
+		magnitude = 0.35,
+		frequency = 5.2,
+	},
+	jitter = 2.4,
 }
 
 -- Shared burst configuration to avoid allocations when trimming segments.
 local LOSE_SEGMENTS_DEFAULT_BURST_COLOR = {1, 0.8, 0.4, 1}
 local LOSE_SEGMENTS_SAW_BURST_COLOR = {1, 0.6, 0.3, 1}
 local LOSE_SEGMENTS_BURST_OPTIONS = {
-		count = 0,
-		speed = 120,
-		speedVariance = 46,
-		life = 0.42,
-		size = 4,
-		color = LOSE_SEGMENTS_DEFAULT_BURST_COLOR,
-		spread = pi * 2,
-		drag = 3.1,
-		gravity = 220,
-		fadeTo = 0,
+	count = 0,
+	speed = 120,
+	speedVariance = 46,
+	life = 0.42,
+	size = 4,
+	color = LOSE_SEGMENTS_DEFAULT_BURST_COLOR,
+	spread = pi * 2,
+	drag = 3.1,
+	gravity = 220,
+	fadeTo = 0,
 }
 
 local SHIELD_BREAK_PARTICLE_OPTIONS = {
-		count = 16,
-		speed = 170,
-		speedVariance = 90,
-		life = 0.48,
-		size = 5,
-		color = {1, 0.46, 0.32, 1},
-		spread = pi * 2,
-		angleJitter = pi,
-		drag = 3.2,
-		gravity = 280,
-		fadeTo = 0.05,
+	count = 16,
+	speed = 170,
+	speedVariance = 90,
+	life = 0.48,
+	size = 5,
+	color = {1, 0.46, 0.32, 1},
+	spread = pi * 2,
+	angleJitter = pi,
+	drag = 3.2,
+	gravity = 280,
+	fadeTo = 0.05,
 }
 
 local SHIELD_BLOOD_PARTICLE_OPTIONS = {
-		dirX = 0,
-		dirY = -1,
-		spread = pi * 0.65,
-		count = 10,
-		dropletCount = 6,
-		speed = 210,
-		speedVariance = 80,
-		life = 0.5,
-		size = 3.6,
-		gravity = 340,
-		fadeTo = 0.06,
+	dirX = 0,
+	dirY = -1,
+	spread = pi * 0.65,
+	count = 10,
+	dropletCount = 6,
+	speed = 210,
+	speedVariance = 80,
+	life = 0.5,
+	size = 3.6,
+	gravity = 340,
+	fadeTo = 0.06,
 }
 
 local SEVERED_TAIL_LIFE = 0.9
@@ -637,11 +637,11 @@ function Snake:addShields(n)
 end
 
 function Snake:consumeShield()
-		if (self.shields or 0) > 0 then
-				self.shields = self.shields - 1
-				self.shieldFlashTimer = SHIELD_FLASH_DURATION
-				UI:setShields(self.shields)
-				SessionStats:add("shieldsSaved", 1)
+	if (self.shields or 0) > 0 then
+		self.shields = self.shields - 1
+		self.shieldFlashTimer = SHIELD_FLASH_DURATION
+		UI:setShields(self.shields)
+		SessionStats:add("shieldsSaved", 1)
 		return true
 	end
 	return false
@@ -652,7 +652,7 @@ function Snake:resetModifiers()
 	self.shields = 0
 	self.extraGrowth  = 0
 	self.shieldFlashTimer = 0
-		self.stoneSkinSawGrace = 0
+	self.stoneSkinSawGrace = 0
 	self.dash = nil
 	self.timeDilation = nil
 	self.adrenaline = nil
@@ -663,14 +663,14 @@ function Snake:resetModifiers()
 	self.eventHorizon = nil
 	self.stormchaser = nil
 	self.titanblood = nil
-		self.temporalAnchor = nil
-		self.quickFangs = nil
-		self.zephyrCoils = nil
-		self.spectralHarvest = nil
-		self.stoneSkinVisual = nil
-		self.speedVisual = nil
-		self.diffractionBarrier = nil
-		UI:setShields(self.shields or 0, {silent = true, immediate = true})
+	self.temporalAnchor = nil
+	self.quickFangs = nil
+	self.zephyrCoils = nil
+	self.spectralHarvest = nil
+	self.stoneSkinVisual = nil
+	self.speedVisual = nil
+	self.diffractionBarrier = nil
+	UI:setShields(self.shields or 0, {silent = true, immediate = true})
 end
 
 function Snake:setQuickFangsStacks(count)
@@ -706,10 +706,10 @@ function Snake:setQuickFangsStacks(count)
 end
 
 function Snake:setZephyrCoilsStacks(count)
-		count = max(0, floor((count or 0) + 0.0001))
+	count = max(0, floor((count or 0) + 0.0001))
 
-		local state = self.zephyrCoils
-		if not state and count <= 0 then
+	local state = self.zephyrCoils
+	if not state and count <= 0 then
 		return
 	end
 
@@ -726,38 +726,38 @@ function Snake:setZephyrCoilsStacks(count)
 		end
 	else
 		state.target = 0
-		end
+	end
 end
 
 function Snake:setDiffractionBarrierActive(active)
-		if active then
-				local state = self.diffractionBarrier
-				if not state then
-						state = {intensity = 0, target = 0, time = 0, flash = 0}
-						self.diffractionBarrier = state
-				end
-
-				if not state.active then
-						state.flash = min(1.25, (state.flash or 0) + 0.9)
-						state.intensity = max(state.intensity or 0, 0.55)
-				end
-
-				state.active = true
-				state.target = 1
-		else
-				local state = self.diffractionBarrier
-				if state then
-						state.active = false
-						state.target = 0
-				end
+	if active then
+		local state = self.diffractionBarrier
+		if not state then
+			state = {intensity = 0, target = 0, time = 0, flash = 0}
+			self.diffractionBarrier = state
 		end
+
+		if not state.active then
+			state.flash = min(1.25, (state.flash or 0) + 0.9)
+			state.intensity = max(state.intensity or 0, 0.55)
+		end
+
+		state.active = true
+		state.target = 1
+	else
+		local state = self.diffractionBarrier
+		if state then
+			state.active = false
+			state.target = 0
+		end
+	end
 end
 
 function Snake:setChronospiralActive(active)
-		if active then
-				local state = self.chronospiral
-				if not state then
-						state = {intensity = 0, target = 1, spin = 0}
+	if active then
+		local state = self.chronospiral
+		if not state then
+			state = {intensity = 0, target = 1, spin = 0}
 			self.chronospiral = state
 		end
 		state.target = 1
@@ -1020,37 +1020,37 @@ function Snake:onDamageTaken(cause, info)
 		local centerX = headX + SEGMENT_SIZE * 0.5
 		local centerY = headY + SEGMENT_SIZE * 0.5
 
-				local burstDirX, burstDirY = 0, -1
-				local pushMag = sqrt(pushX * pushX + pushY * pushY)
-				if pushMag > 1e-4 then
-						burstDirX = pushX / pushMag
-						burstDirY = pushY / pushMag
-				elseif dirX and dirY and (dirX ~= 0 or dirY ~= 0) then
-						local dirMag = sqrt(dirX * dirX + dirY * dirY)
-						if dirMag > 1e-4 then
-								burstDirX = -dirX / dirMag
-								burstDirY = -dirY / dirMag
-						end
-				else
-						local faceX = direction and direction.x or 0
-						local faceY = direction and direction.y or -1
-						local faceMag = sqrt(faceX * faceX + faceY * faceY)
-						if faceMag > 1e-4 then
-								burstDirX = -faceX / faceMag
-								burstDirY = -faceY / faceMag
-						end
-				end
+		local burstDirX, burstDirY = 0, -1
+		local pushMag = sqrt(pushX * pushX + pushY * pushY)
+		if pushMag > 1e-4 then
+			burstDirX = pushX / pushMag
+			burstDirY = pushY / pushMag
+		elseif dirX and dirY and (dirX ~= 0 or dirY ~= 0) then
+			local dirMag = sqrt(dirX * dirX + dirY * dirY)
+			if dirMag > 1e-4 then
+				burstDirX = -dirX / dirMag
+				burstDirY = -dirY / dirMag
+			end
+		else
+			local faceX = direction and direction.x or 0
+			local faceY = direction and direction.y or -1
+			local faceMag = sqrt(faceX * faceX + faceY * faceY)
+			if faceMag > 1e-4 then
+				burstDirX = -faceX / faceMag
+				burstDirY = -faceY / faceMag
+			end
+		end
 
-				if Particles and Particles.spawnBurst then
-						Particles:spawnBurst(centerX, centerY, SHIELD_BREAK_PARTICLE_OPTIONS)
-				end
+		if Particles and Particles.spawnBurst then
+			Particles:spawnBurst(centerX, centerY, SHIELD_BREAK_PARTICLE_OPTIONS)
+		end
 
-				local shielded = info.damage ~= nil and info.damage <= 0
-				if Particles and Particles.spawnBlood and not shielded then
-						SHIELD_BLOOD_PARTICLE_OPTIONS.dirX = burstDirX
-						SHIELD_BLOOD_PARTICLE_OPTIONS.dirY = burstDirY
-						Particles:spawnBlood(centerX, centerY, SHIELD_BLOOD_PARTICLE_OPTIONS)
-				end
+		local shielded = info.damage ~= nil and info.damage <= 0
+		if Particles and Particles.spawnBlood and not shielded then
+			SHIELD_BLOOD_PARTICLE_OPTIONS.dirX = burstDirX
+			SHIELD_BLOOD_PARTICLE_OPTIONS.dirY = burstDirY
+			Particles:spawnBlood(centerX, centerY, SHIELD_BLOOD_PARTICLE_OPTIONS)
+		end
 
 		if FloatingText and FloatingText.add then
 			local inflicted = info.inflictedDamage or info.damage
@@ -1063,11 +1063,11 @@ function Snake:onDamageTaken(cause, info)
 				label = "HIT!"
 			end
 
-						if label then
-								FloatingText:add(label, centerX, centerY - 30, SHIELD_DAMAGE_FLOATING_TEXT_COLOR, 0.9, 36, nil, SHIELD_DAMAGE_FLOATING_TEXT_OPTIONS)
-						end
-				end
+			if label then
+				FloatingText:add(label, centerX, centerY - 30, SHIELD_DAMAGE_FLOATING_TEXT_COLOR, 0.9, 36, nil, SHIELD_DAMAGE_FLOATING_TEXT_OPTIONS)
+			end
 		end
+	end
 
 	self.shieldFlashTimer = SHIELD_FLASH_DURATION
 	self.damageFlashTimer = DAMAGE_FLASH_DURATION
@@ -1079,192 +1079,192 @@ end
 -- and then use `speed` for position updates. This gives upgrades an immediate effect.
 
 local function toCell(x, y)
-		if not (x and y) then
-				return nil, nil
-		end
+	if not (x and y) then
+		return nil, nil
+	end
 
-		if Arena and Arena.getTileFromWorld then
-				return Arena:getTileFromWorld(x, y)
-		end
+	if Arena and Arena.getTileFromWorld then
+		return Arena:getTileFromWorld(x, y)
+	end
 
-		local tileSize = Arena and Arena.tileSize or SEGMENT_SPACING or 1
-		if tileSize == 0 then
-				tileSize = 1
-		end
+	local tileSize = Arena and Arena.tileSize or SEGMENT_SPACING or 1
+	if tileSize == 0 then
+		tileSize = 1
+	end
 
-		local offsetX = (Arena and Arena.x) or 0
-		local offsetY = (Arena and Arena.y) or 0
-		local normalizedCol = ((x - offsetX) / tileSize) + TILE_COORD_EPSILON
-		local normalizedRow = ((y - offsetY) / tileSize) + TILE_COORD_EPSILON
-		local col = floor(normalizedCol) + 1
-		local row = floor(normalizedRow) + 1
+	local offsetX = (Arena and Arena.x) or 0
+	local offsetY = (Arena and Arena.y) or 0
+	local normalizedCol = ((x - offsetX) / tileSize) + TILE_COORD_EPSILON
+	local normalizedRow = ((y - offsetY) / tileSize) + TILE_COORD_EPSILON
+	local col = floor(normalizedCol) + 1
+	local row = floor(normalizedRow) + 1
 
-		if Arena then
-				local cols = Arena.cols or col
-				local rows = Arena.rows or row
-				col = max(1, min(cols, col))
-				row = max(1, min(rows, row))
-		end
+	if Arena then
+		local cols = Arena.cols or col
+		local rows = Arena.rows or row
+		col = max(1, min(cols, col))
+		row = max(1, min(rows, row))
+	end
 
-		return col, row
+	return col, row
 end
 
 local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
-		if not ensureOccupancyGrid() then
-				resetTrackedSnakeCells()
-				clearSnakeBodyOccupancy()
-				headOccupancyCol = nil
-				headOccupancyRow = nil
-				return
-		end
-
-		clearSnakeOccupiedCells()
+	if not ensureOccupancyGrid() then
+		resetTrackedSnakeCells()
 		clearSnakeBodyOccupancy()
+		headOccupancyCol = nil
+		headOccupancyRow = nil
+		return
+	end
 
-		if not trail then
-				headOccupancyCol = nil
-				headOccupancyRow = nil
-				return
-		end
+	clearSnakeOccupiedCells()
+	clearSnakeBodyOccupancy()
 
-		local assignedHeadCol, assignedHeadRow = nil, nil
+	if not trail then
+		headOccupancyCol = nil
+		headOccupancyRow = nil
+		return
+	end
 
-		for i = #trail, 1, -1 do
-				local segment = trail[i]
-				if segment then
-						local x, y = segment.drawX, segment.drawY
-						if x and y then
-								local col, row = toCell(x, y)
-								if col and row then
-										if i == 1 then
-												if headColOverride and headRowOverride then
-														col, row = headColOverride, headRowOverride
-												end
-												assignedHeadCol, assignedHeadRow = col, row
-										end
+	local assignedHeadCol, assignedHeadRow = nil, nil
 
-										recordSnakeOccupiedCell(col, row)
-
-										if i ~= 1 then
-												addSnakeBodyOccupancy(col, row)
-										end
-								end
+	for i = #trail, 1, -1 do
+		local segment = trail[i]
+		if segment then
+			local x, y = segment.drawX, segment.drawY
+			if x and y then
+				local col, row = toCell(x, y)
+				if col and row then
+					if i == 1 then
+						if headColOverride and headRowOverride then
+							col, row = headColOverride, headRowOverride
 						end
-				end
-		end
+						assignedHeadCol, assignedHeadRow = col, row
+					end
 
-		if assignedHeadCol and assignedHeadRow then
-				headOccupancyCol = assignedHeadCol
-				headOccupancyRow = assignedHeadRow
-		else
-				headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+					recordSnakeOccupiedCell(col, row)
+
+					if i ~= 1 then
+						addSnakeBodyOccupancy(col, row)
+					end
+				end
+			end
 		end
+	end
+
+	if assignedHeadCol and assignedHeadRow then
+		headOccupancyCol = assignedHeadCol
+		headOccupancyRow = assignedHeadRow
+	else
+		headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+	end
 end
 
 local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, overrideRow, tailMoved, tailAfterCol, tailAfterRow)
-		clearRecentlyVacatedCells()
+	clearRecentlyVacatedCells()
 
-		if not ensureOccupancyGrid() then
-				resetTrackedSnakeCells()
-				clearSnakeBodyOccupancy()
-				headOccupancyCol = nil
-				headOccupancyRow = nil
-				return
+	if not ensureOccupancyGrid() then
+		resetTrackedSnakeCells()
+		clearSnakeBodyOccupancy()
+		headOccupancyCol = nil
+		headOccupancyRow = nil
+		return
+	end
+
+	if not trail or #trail == 0 then
+		clearSnakeOccupiedCells()
+		clearSnakeBodyOccupancy()
+		headOccupancyCol = nil
+		headOccupancyRow = nil
+		return
+	end
+
+	if snakeOccupiedFirst > snakeOccupiedLast then
+		rebuildOccupancyFromTrail(overrideCol, overrideRow)
+		return
+	end
+
+	local processedHead = false
+
+	for i = 1, headCellCount do
+		local cell = headCells[i]
+		local headCol = cell and cell[1]
+		local headRow = cell and cell[2]
+		if headCol and headRow then
+			if headOccupancyCol ~= headCol or headOccupancyRow ~= headRow then
+				processedHead = true
+				local prevHeadCol, prevHeadRow = headOccupancyCol, headOccupancyRow
+				recordSnakeOccupiedCell(headCol, headRow)
+				if prevHeadCol and prevHeadRow then
+					addSnakeBodyOccupancy(prevHeadCol, prevHeadRow)
+				end
+				headOccupancyCol = headCol
+				headOccupancyRow = headRow
+			end
 		end
+	end
 
-		if not trail or #trail == 0 then
-				clearSnakeOccupiedCells()
-				clearSnakeBodyOccupancy()
-				headOccupancyCol = nil
-				headOccupancyRow = nil
-				return
-		end
-
-		if snakeOccupiedFirst > snakeOccupiedLast then
+	if not processedHead then
+		if overrideCol and overrideRow then
+			if headOccupancyCol ~= overrideCol or headOccupancyRow ~= overrideRow then
 				rebuildOccupancyFromTrail(overrideCol, overrideRow)
 				return
+			end
+		else
+			headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
 		end
+	end
 
-		local processedHead = false
+	if not tailMoved then
+		return
+	end
 
-		for i = 1, headCellCount do
-				local cell = headCells[i]
-				local headCol = cell and cell[1]
-				local headRow = cell and cell[2]
-				if headCol and headRow then
-						if headOccupancyCol ~= headCol or headOccupancyRow ~= headRow then
-								processedHead = true
-								local prevHeadCol, prevHeadRow = headOccupancyCol, headOccupancyRow
-								recordSnakeOccupiedCell(headCol, headRow)
-								if prevHeadCol and prevHeadRow then
-										addSnakeBodyOccupancy(prevHeadCol, prevHeadRow)
-								end
-								headOccupancyCol = headCol
-								headOccupancyRow = headRow
-						end
-				end
-		end
-
-		if not processedHead then
-				if overrideCol and overrideRow then
-						if headOccupancyCol ~= overrideCol or headOccupancyRow ~= overrideRow then
-								rebuildOccupancyFromTrail(overrideCol, overrideRow)
-								return
-						end
-				else
-						headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-				end
-		end
-
-		if not tailMoved then
-				return
-		end
-
-		if not tailAfterCol or not tailAfterRow then
-				while true do
-						local col, row = popSnakeTailCell()
-						if not (col and row) then
-								break
-						end
-						markRecentlyVacatedCell(col, row)
-						SnakeUtils.setOccupied(col, row, false)
-						removeSnakeBodyOccupancy(col, row)
-				end
-
-				headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-				return
-		end
-
-		local iterations = 0
+	if not tailAfterCol or not tailAfterRow then
 		while true do
-				local tailCol, tailRow = getSnakeTailCell()
-				if not (tailCol and tailRow) then
-						rebuildOccupancyFromTrail(overrideCol, overrideRow)
-						return
-				end
-
-				if tailCol == tailAfterCol and tailRow == tailAfterRow then
-						break
-				end
-
-				local removedCol, removedRow = popSnakeTailCell()
-				if not (removedCol and removedRow) then
-						rebuildOccupancyFromTrail(overrideCol, overrideRow)
-						return
-				end
-
-				markRecentlyVacatedCell(removedCol, removedRow)
-				SnakeUtils.setOccupied(removedCol, removedRow, false)
-				removeSnakeBodyOccupancy(removedCol, removedRow)
-
-				iterations = iterations + 1
-				if iterations > 1024 then
-						rebuildOccupancyFromTrail(overrideCol, overrideRow)
-						return
-				end
+			local col, row = popSnakeTailCell()
+			if not (col and row) then
+				break
+			end
+			markRecentlyVacatedCell(col, row)
+			SnakeUtils.setOccupied(col, row, false)
+			removeSnakeBodyOccupancy(col, row)
 		end
 
 		headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+		return
+	end
+
+	local iterations = 0
+	while true do
+		local tailCol, tailRow = getSnakeTailCell()
+		if not (tailCol and tailRow) then
+			rebuildOccupancyFromTrail(overrideCol, overrideRow)
+			return
+		end
+
+		if tailCol == tailAfterCol and tailRow == tailAfterRow then
+			break
+		end
+
+		local removedCol, removedRow = popSnakeTailCell()
+		if not (removedCol and removedRow) then
+			rebuildOccupancyFromTrail(overrideCol, overrideRow)
+			return
+		end
+
+		markRecentlyVacatedCell(removedCol, removedRow)
+		SnakeUtils.setOccupied(removedCol, removedRow, false)
+		removeSnakeBodyOccupancy(removedCol, removedRow)
+
+		iterations = iterations + 1
+		if iterations > 1024 then
+			rebuildOccupancyFromTrail(overrideCol, overrideRow)
+			return
+		end
+	end
+
+	headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
 end
 
 local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
@@ -1313,9 +1313,9 @@ local function normalizeDirection(dx, dy)
 end
 
 local function closestPointOnSegment(px, py, ax, ay, bx, by)
-		if not (px and py and ax and ay and bx and by) then
-				return nil, nil, huge, 0
-		end
+	if not (px and py and ax and ay and bx and by) then
+		return nil, nil, huge, 0
+	end
 
 	local abx = bx - ax
 	local aby = by - ay
@@ -1340,164 +1340,164 @@ local function closestPointOnSegment(px, py, ax, ay, bx, by)
 	local dx = px - cx
 	local dy = py - cy
 
-		return cx, cy, dx * dx + dy * dy, t
+	return cx, cy, dx * dx + dy * dy, t
 end
 
 local function cross2d(ax, ay, bx, by)
-		return ax * by - ay * bx
+	return ax * by - ay * bx
 end
 
 local function segmentDistanceSq(ax, ay, bx, by, cx, cy, dx, dy)
-		if not (ax and ay and bx and by and cx and cy and dx and dy) then
-				return huge
+	if not (ax and ay and bx and by and cx and cy and dx and dy) then
+		return huge
+	end
+
+	local rX = bx - ax
+	local rY = by - ay
+	local sX = dx - cx
+	local sY = dy - cy
+	local denom = cross2d(rX, rY, sX, sY)
+	local qX = cx - ax
+	local qY = cy - ay
+
+	if abs(denom) > 1e-6 then
+		local t = cross2d(qX, qY, sX, sY) / denom
+		local u = cross2d(qX, qY, rX, rY) / denom
+		if t >= 0 and t <= 1 and u >= 0 and u <= 1 then
+			return 0
 		end
+	end
 
-		local rX = bx - ax
-		local rY = by - ay
-		local sX = dx - cx
-		local sY = dy - cy
-		local denom = cross2d(rX, rY, sX, sY)
-		local qX = cx - ax
-		local qY = cy - ay
+	local minDistSq = huge
+	local _, _, distSq = closestPointOnSegment(ax, ay, cx, cy, dx, dy)
+	minDistSq = min(minDistSq, distSq)
+	_, _, distSq = closestPointOnSegment(bx, by, cx, cy, dx, dy)
+	minDistSq = min(minDistSq, distSq)
+	_, _, distSq = closestPointOnSegment(cx, cy, ax, ay, bx, by)
+	minDistSq = min(minDistSq, distSq)
+	_, _, distSq = closestPointOnSegment(dx, dy, ax, ay, bx, by)
+	minDistSq = min(minDistSq, distSq)
 
-		if abs(denom) > 1e-6 then
-				local t = cross2d(qX, qY, sX, sY) / denom
-				local u = cross2d(qX, qY, rX, rY) / denom
-				if t >= 0 and t <= 1 and u >= 0 and u <= 1 then
-						return 0
-				end
-		end
-
-		local minDistSq = huge
-		local _, _, distSq = closestPointOnSegment(ax, ay, cx, cy, dx, dy)
-		minDistSq = min(minDistSq, distSq)
-		_, _, distSq = closestPointOnSegment(bx, by, cx, cy, dx, dy)
-		minDistSq = min(minDistSq, distSq)
-		_, _, distSq = closestPointOnSegment(cx, cy, ax, ay, bx, by)
-		minDistSq = min(minDistSq, distSq)
-		_, _, distSq = closestPointOnSegment(dx, dy, ax, ay, bx, by)
-		minDistSq = min(minDistSq, distSq)
-
-		return minDistSq
+	return minDistSq
 end
 
 local function segmentRectIntersection(ax, ay, bx, by, rx, ry, rw, rh)
-		if not (ax and ay and bx and by and rx and ry and rw and rh) then
-				return false
-		end
-
-		if rw <= 0 or rh <= 0 then
-				return false
-		end
-
-		local rMaxX = rx + rw
-		local rMaxY = ry + rh
-
-		local minX = min(ax, bx)
-		local maxX = max(ax, bx)
-		local minY = min(ay, by)
-		local maxY = max(ay, by)
-
-		if maxX < rx or minX > rMaxX or maxY < ry or minY > rMaxY then
-				return false
-		end
-
-		local dx = bx - ax
-		local dy = by - ay
-		local t0 = 0
-		local t1 = 1
-
-		local function clip(p, q)
-				if abs(p) < 1e-6 then
-						if q < 0 then
-								return false
-						end
-						return true
-				end
-
-				local r = q / p
-				if p < 0 then
-						if r > t1 then
-								return false
-						end
-						if r > t0 then
-								t0 = r
-						end
-				else
-						if r < t0 then
-								return false
-						end
-						if r < t1 then
-								t1 = r
-						end
-				end
-
-				return true
-		end
-
-		if clip(-dx, ax - rx) and clip(dx, rMaxX - ax) and clip(-dy, ay - ry) and clip(dy, rMaxY - ay) then
-				local t = t0
-				if t < 0 or t > 1 then
-						t = t1
-				end
-
-				t = max(0, min(1, t or 0))
-				local ix = ax + dx * t
-				local iy = ay + dy * t
-				return true, ix, iy, t
-		end
-
+	if not (ax and ay and bx and by and rx and ry and rw and rh) then
 		return false
+	end
+
+	if rw <= 0 or rh <= 0 then
+		return false
+	end
+
+	local rMaxX = rx + rw
+	local rMaxY = ry + rh
+
+	local minX = min(ax, bx)
+	local maxX = max(ax, bx)
+	local minY = min(ay, by)
+	local maxY = max(ay, by)
+
+	if maxX < rx or minX > rMaxX or maxY < ry or minY > rMaxY then
+		return false
+	end
+
+	local dx = bx - ax
+	local dy = by - ay
+	local t0 = 0
+	local t1 = 1
+
+	local function clip(p, q)
+		if abs(p) < 1e-6 then
+			if q < 0 then
+				return false
+			end
+			return true
+		end
+
+		local r = q / p
+		if p < 0 then
+			if r > t1 then
+				return false
+			end
+			if r > t0 then
+				t0 = r
+			end
+		else
+			if r < t0 then
+				return false
+			end
+			if r < t1 then
+				t1 = r
+			end
+		end
+
+		return true
+	end
+
+	if clip(-dx, ax - rx) and clip(dx, rMaxX - ax) and clip(-dy, ay - ry) and clip(dy, rMaxY - ay) then
+		local t = t0
+		if t < 0 or t > 1 then
+			t = t1
+		end
+
+		t = max(0, min(1, t or 0))
+		local ix = ax + dx * t
+		local iy = ay + dy * t
+		return true, ix, iy, t
+	end
+
+	return false
 end
 
 local function isSelfCollisionAlongPath(startX, startY, endX, endY)
-		if not (startX and startY and endX and endY) then
-				return false
-		end
-
-		local bodyCount = trail and #trail or 0
-		if bodyCount <= 3 then
-				return false
-		end
-
-		local radiusSq = SELF_COLLISION_RADIUS_SQ
-
-		for i = 3, bodyCount do
-				local seg = trail[i]
-				local nextSeg = trail[i + 1]
-				local sx = seg and seg.drawX
-				local sy = seg and seg.drawY
-				local ex = nextSeg and nextSeg.drawX or sx
-				local ey = nextSeg and nextSeg.drawY or sy
-
-				if sx and sy and ex and ey then
-						local distSq = segmentDistanceSq(startX, startY, endX, endY, sx, sy, ex, ey)
-						if distSq <= radiusSq then
-								return true
-						end
-				end
-		end
-
+	if not (startX and startY and endX and endY) then
 		return false
+	end
+
+	local bodyCount = trail and #trail or 0
+	if bodyCount <= 3 then
+		return false
+	end
+
+	local radiusSq = SELF_COLLISION_RADIUS_SQ
+
+	for i = 3, bodyCount do
+		local seg = trail[i]
+		local nextSeg = trail[i + 1]
+		local sx = seg and seg.drawX
+		local sy = seg and seg.drawY
+		local ex = nextSeg and nextSeg.drawX or sx
+		local ey = nextSeg and nextSeg.drawY or sy
+
+		if sx and sy and ex and ey then
+			local distSq = segmentDistanceSq(startX, startY, endX, endY, sx, sy, ex, ey)
+			if distSq <= radiusSq then
+				return true
+			end
+		end
+	end
+
+	return false
 end
 
 local function copySegmentData(segment)
-		if not segment then
-				return nil
-		end
+	if not segment then
+		return nil
+	end
 
-		local copy = acquireSegment()
-		copy.drawX = segment.drawX
-		copy.drawY = segment.drawY
-		copy.dirX = segment.dirX
-		copy.dirY = segment.dirY
-		copy.x = segment.x
-		copy.y = segment.y
-		copy.fruitMarker = segment.fruitMarker
-		copy.fruitMarkerX = segment.fruitMarkerX
-		copy.fruitMarkerY = segment.fruitMarkerY
+	local copy = acquireSegment()
+	copy.drawX = segment.drawX
+	copy.drawY = segment.drawY
+	copy.dirX = segment.dirX
+	copy.dirY = segment.dirY
+	copy.x = segment.x
+	copy.y = segment.y
+	copy.fruitMarker = segment.fruitMarker
+	copy.fruitMarkerX = segment.fruitMarkerX
+	copy.fruitMarkerY = segment.fruitMarkerY
 
-		return copy
+	return copy
 end
 
 local function computeTrailLength(trailData)
@@ -1506,110 +1506,110 @@ local function computeTrailLength(trailData)
 	end
 
 	local total = 0
-		for i = 2, #trailData do
-				local prev = trailData[i - 1]
-				local curr = trailData[i]
-				local ax, ay = prev and prev.drawX, prev and prev.drawY
-				local bx, by = curr and curr.drawX, curr and curr.drawY
-				if ax and ay and bx and by then
-						local dx = bx - ax
-						local dy = by - ay
-						total = total + sqrt(dx * dx + dy * dy)
-				end
+	for i = 2, #trailData do
+		local prev = trailData[i - 1]
+		local curr = trailData[i]
+		local ax, ay = prev and prev.drawX, prev and prev.drawY
+		local bx, by = curr and curr.drawX, curr and curr.drawY
+		if ax and ay and bx and by then
+			local dx = bx - ax
+			local dy = by - ay
+			total = total + sqrt(dx * dx + dy * dy)
 		end
+	end
 
 	return total
 end
 
 local function sliceTrailByLength(sourceTrail, maxLength, destination)
-		local result = destination or {}
-		local previousCount = #result
-		local count = 0
+	local result = destination or {}
+	local previousCount = #result
+	local count = 0
 
-		if not sourceTrail or #sourceTrail == 0 then
-				releaseSegmentRange(result, 1)
-				return result
+	if not sourceTrail or #sourceTrail == 0 then
+		releaseSegmentRange(result, 1)
+		return result
+	end
+
+	if previousCount >= 1 then
+		local existing = result[1]
+		if existing then
+			releaseSegment(existing)
+		end
+	end
+	local first = copySegmentData(sourceTrail[1]) or acquireSegment()
+	count = 1
+	result[count] = first
+
+	if not (maxLength and maxLength > 0) then
+		releaseSegmentRange(result, count + 1)
+		return result
+	end
+
+	local accumulated = 0
+	for i = 2, #sourceTrail do
+		local prev = sourceTrail[i - 1]
+		local curr = sourceTrail[i]
+		local px, py = prev and prev.drawX, prev and prev.drawY
+		local cx, cy = curr and curr.drawX, curr and curr.drawY
+		if not (px and py and cx and cy) then
+			break
 		end
 
-		if previousCount >= 1 then
-				local existing = result[1]
+		local dx = cx - px
+		local dy = cy - py
+		local segLen = sqrt(dx * dx + dy * dy)
+
+		if segLen <= 1e-6 then
+			count = count + 1
+			if count <= previousCount then
+				local existing = result[count]
 				if existing then
-						releaseSegment(existing)
+					releaseSegment(existing)
 				end
-		end
-		local first = copySegmentData(sourceTrail[1]) or acquireSegment()
-		count = 1
-		result[count] = first
-
-		if not (maxLength and maxLength > 0) then
+			end
+			result[count] = copySegmentData(curr)
+		else
+			if accumulated + segLen >= maxLength then
+				local remaining = maxLength - accumulated
+				local t = remaining / segLen
+				if t < 0 then
+					t = 0
+				elseif t > 1 then
+					t = 1
+				end
+				local x = px + dx * t
+				local y = py + dy * t
+				if count + 1 <= previousCount then
+					local existing = result[count + 1]
+					if existing then
+						releaseSegment(existing)
+					end
+				end
+				local segCopy = copySegmentData(curr) or acquireSegment()
+				segCopy.drawX = x
+				segCopy.drawY = y
+				count = count + 1
+				result[count] = segCopy
 				releaseSegmentRange(result, count + 1)
 				return result
-		end
+			end
 
-		local accumulated = 0
-		for i = 2, #sourceTrail do
-				local prev = sourceTrail[i - 1]
-				local curr = sourceTrail[i]
-				local px, py = prev and prev.drawX, prev and prev.drawY
-				local cx, cy = curr and curr.drawX, curr and curr.drawY
-				if not (px and py and cx and cy) then
-						break
+			accumulated = accumulated + segLen
+			count = count + 1
+			if count <= previousCount then
+				local existing = result[count]
+				if existing then
+					releaseSegment(existing)
 				end
-
-				local dx = cx - px
-				local dy = cy - py
-				local segLen = sqrt(dx * dx + dy * dy)
-
-				if segLen <= 1e-6 then
-						count = count + 1
-						if count <= previousCount then
-								local existing = result[count]
-								if existing then
-										releaseSegment(existing)
-								end
-						end
-						result[count] = copySegmentData(curr)
-				else
-						if accumulated + segLen >= maxLength then
-								local remaining = maxLength - accumulated
-								local t = remaining / segLen
-								if t < 0 then
-										t = 0
-								elseif t > 1 then
-										t = 1
-								end
-								local x = px + dx * t
-								local y = py + dy * t
-								if count + 1 <= previousCount then
-										local existing = result[count + 1]
-										if existing then
-												releaseSegment(existing)
-										end
-								end
-								local segCopy = copySegmentData(curr) or acquireSegment()
-								segCopy.drawX = x
-								segCopy.drawY = y
-								count = count + 1
-								result[count] = segCopy
-								releaseSegmentRange(result, count + 1)
-								return result
-						end
-
-						accumulated = accumulated + segLen
-						count = count + 1
-						if count <= previousCount then
-								local existing = result[count]
-								if existing then
-										releaseSegment(existing)
-								end
-						end
-						result[count] = copySegmentData(curr)
-				end
+			end
+			result[count] = copySegmentData(curr)
 		end
+	end
 
-		releaseSegmentRange(result, count + 1)
+	releaseSegmentRange(result, count + 1)
 
-		return result
+	return result
 end
 
 local function cloneTailFromIndex(startIndex, entryX, entryY)
@@ -1786,54 +1786,54 @@ local function trimTrailToSegmentLimit()
 	local consumedLength = (descendingHole and descendingHole.consumedLength) or 0
 	local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
 
-		if maxLen <= 0 then
-				recycleTrail(trail)
-				trail = {}
-				return
+	if maxLen <= 0 then
+		recycleTrail(trail)
+		trail = {}
+		return
+	end
+
+	local traveled = 0
+	local i = 2
+	local gluttonsWakeActive = isGluttonsWakeActive()
+	while i <= #trail do
+		local prev = trail[i - 1]
+		local seg = trail[i]
+		local px, py = prev and (prev.drawX or prev.x), prev and (prev.drawY or prev.y)
+		local sx, sy = seg and (seg.drawX or seg.x), seg and (seg.drawY or seg.y)
+
+		if not (px and py and sx and sy) then
+			crystallizeGluttonsWakeSegments(trail, i, #trail, gluttonsWakeActive)
+			releaseSegmentRange(trail, i)
+			break
 		end
 
-		local traveled = 0
-		local i = 2
-		local gluttonsWakeActive = isGluttonsWakeActive()
-		while i <= #trail do
-				local prev = trail[i - 1]
-				local seg = trail[i]
-				local px, py = prev and (prev.drawX or prev.x), prev and (prev.drawY or prev.y)
-				local sx, sy = seg and (seg.drawX or seg.x), seg and (seg.drawY or seg.y)
+		local dx = px - sx
+		local dy = py - sy
+		local segLen = sqrt(dx * dx + dy * dy)
 
-				if not (px and py and sx and sy) then
-						crystallizeGluttonsWakeSegments(trail, i, #trail, gluttonsWakeActive)
-						releaseSegmentRange(trail, i)
-						break
-				end
+		if segLen <= 0 then
+			if gluttonsWakeActive then
+				spawnGluttonsWakeRock(trail[i])
+			end
+			local removed = trail[i]
+			if removed then
+				releaseSegment(removed)
+			end
+			remove(trail, i)
+		else
+			if traveled + segLen > maxLen then
+				local excess = traveled + segLen - maxLen
+				local t = 1 - (excess / segLen)
+				local tailX = px - dx * t
+				local tailY = py - dy * t
 
-				local dx = px - sx
-				local dy = py - sy
-				local segLen = sqrt(dx * dx + dy * dy)
+				crystallizeGluttonsWakeSegments(trail, i + 1, #trail, gluttonsWakeActive)
+				releaseSegmentRange(trail, i + 1)
 
-				if segLen <= 0 then
-						if gluttonsWakeActive then
-								spawnGluttonsWakeRock(trail[i])
-						end
-						local removed = trail[i]
-						if removed then
-								releaseSegment(removed)
-						end
-						remove(trail, i)
-				else
-						if traveled + segLen > maxLen then
-								local excess = traveled + segLen - maxLen
-								local t = 1 - (excess / segLen)
-								local tailX = px - dx * t
-								local tailY = py - dy * t
-
-								crystallizeGluttonsWakeSegments(trail, i + 1, #trail, gluttonsWakeActive)
-								releaseSegmentRange(trail, i + 1)
-
-								seg.drawX = tailX
-								seg.drawY = tailY
-								if not seg.dirX or not seg.dirY then
-										seg.dirX = direction.x
+				seg.drawX = tailX
+				seg.drawY = tailY
+				if not seg.dirX or not seg.dirY then
+					seg.dirX = direction.x
 					seg.dirY = direction.y
 				end
 				break
@@ -1861,13 +1861,13 @@ local function drawDescendingIntoHole(hole)
 	local entryX = hole.entryPointX or hx
 	local entryY = hole.entryPointY or hy
 
-		local dirX, dirY = hole.entryDirX or 0, hole.entryDirY or 0
-		local dirLen = sqrt(dirX * dirX + dirY * dirY)
-		if dirLen <= 1e-4 then
-				dirX = hx - entryX
-				dirY = hy - entryY
-				dirLen = sqrt(dirX * dirX + dirY * dirY)
-		end
+	local dirX, dirY = hole.entryDirX or 0, hole.entryDirY or 0
+	local dirLen = sqrt(dirX * dirX + dirY * dirY)
+	if dirLen <= 1e-4 then
+		dirX = hx - entryX
+		dirY = hy - entryY
+		dirLen = sqrt(dirX * dirX + dirY * dirY)
+	end
 
 	if dirLen <= 1e-4 then
 		dirX, dirY = 0, -1
@@ -1971,28 +1971,28 @@ local function collectUpgradeVisuals(self)
 		self._upgradeVisualPool = pool
 	end
 
-		local hasAny = false
+	local hasAny = false
 
-		local function acquireEntry(key)
-				local entry = pool[key]
-				if not entry then
-						entry = {}
-						pool[key] = entry
-				else
-						wipeTable(entry)
-				end
-
-				visuals[key] = entry
-				hasAny = true
-
-				return entry
+	local function acquireEntry(key)
+		local entry = pool[key]
+		if not entry then
+			entry = {}
+			pool[key] = entry
+		else
+			wipeTable(entry)
 		end
 
-		local adrenaline = self.adrenaline
-		if adrenaline and adrenaline.active and not adrenaline.suppressVisuals then
-				local entry = acquireEntry("adrenaline")
-				entry.active = true
-				entry.timer = adrenaline.timer or 0
+		visuals[key] = entry
+		hasAny = true
+
+		return entry
+	end
+
+	local adrenaline = self.adrenaline
+	if adrenaline and adrenaline.active and not adrenaline.suppressVisuals then
+		local entry = acquireEntry("adrenaline")
+		entry.active = true
+		entry.timer = adrenaline.timer or 0
 		entry.duration = adrenaline.duration or 0
 	end
 
@@ -2125,53 +2125,53 @@ local function collectUpgradeVisuals(self)
 		entry.time = stoneSkin.time or 0
 	end
 
-		local spectral = self.spectralHarvest
-		if spectral and (((spectral.intensity or 0) > 0.01) or (spectral.burst or 0) > 0 or (spectral.echo or 0) > 0 or spectral.ready) then
-				local entry = acquireEntry("spectralHarvest")
-				entry.intensity = spectral.intensity or 0
-				entry.burst = spectral.burst or 0
-				entry.echo = spectral.echo or 0
-				entry.ready = spectral.ready or false
-				entry.time = spectral.time or 0
-		end
+	local spectral = self.spectralHarvest
+	if spectral and (((spectral.intensity or 0) > 0.01) or (spectral.burst or 0) > 0 or (spectral.echo or 0) > 0 or spectral.ready) then
+		local entry = acquireEntry("spectralHarvest")
+		entry.intensity = spectral.intensity or 0
+		entry.burst = spectral.burst or 0
+		entry.echo = spectral.echo or 0
+		entry.ready = spectral.ready or false
+		entry.time = spectral.time or 0
+	end
 
-		local diffraction = self.diffractionBarrier
-		if diffraction then
-				local intensity = diffraction.intensity or 0
-				local flash = diffraction.flash or 0
-				if intensity > 0.001 or flash > 0.001 or diffraction.active then
-						local entry = acquireEntry("diffractionBarrier")
-						entry.intensity = intensity
-						entry.flash = flash
-						entry.time = diffraction.time or 0
-				end
+	local diffraction = self.diffractionBarrier
+	if diffraction then
+		local intensity = diffraction.intensity or 0
+		local flash = diffraction.flash or 0
+		if intensity > 0.001 or flash > 0.001 or diffraction.active then
+			local entry = acquireEntry("diffractionBarrier")
+			entry.intensity = intensity
+			entry.flash = flash
+			entry.time = diffraction.time or 0
 		end
+	end
 
-		if hasAny then
-				return visuals
-		end
+	if hasAny then
+		return visuals
+	end
 
-		return nil
+	return nil
 end
 
 -- Build initial trail aligned to CELL CENTERS
 local function buildInitialTrail()
-		local t = {}
-		local midCol = floor(Arena.cols / 2)
-		local midRow = floor(Arena.rows / 2)
-		local startX, startY = Arena:getCenterOfTile(midCol, midRow)
+	local t = {}
+	local midCol = floor(Arena.cols / 2)
+	local midRow = floor(Arena.rows / 2)
+	local startX, startY = Arena:getCenterOfTile(midCol, midRow)
 
-		for i = 0, segmentCount - 1 do
-				local cx = startX - i * SEGMENT_SPACING * direction.x
-				local cy = startY - i * SEGMENT_SPACING * direction.y
-				local segment = acquireSegment()
-				segment.drawX = cx
-				segment.drawY = cy
-				segment.dirX = direction.x
-				segment.dirY = direction.y
-				t[#t + 1] = segment
-		end
-		return t
+	for i = 0, segmentCount - 1 do
+		local cx = startX - i * SEGMENT_SPACING * direction.x
+		local cy = startY - i * SEGMENT_SPACING * direction.y
+		local segment = acquireSegment()
+		segment.drawX = cx
+		segment.drawY = cy
+		segment.dirX = direction.x
+		segment.dirY = direction.y
+		t[#t + 1] = segment
+	end
+	return t
 end
 
 function Snake:load(w, h)
@@ -2179,115 +2179,115 @@ function Snake:load(w, h)
 	assignDirection(direction, 1, 0)
 	assignDirection(pendingDir, 1, 0)
 	segmentCount = 1
-		popTimer = 0
-		moveProgress = 0
-		isDead = false
-		self.shieldFlashTimer = 0
-		self.hazardGraceTimer = 0
-		self.damageFlashTimer = 0
-		recycleTrail(trail)
-		trail = buildInitialTrail()
-		descendingHole = nil
-		clearSeveredPieces()
-		severedPieces = {}
-		clearPortalAnimation(portalAnimation)
-		portalAnimation = nil
-		local stride = (Arena and Arena.rows or 0) + 16
-		if stride <= 0 then
-				stride = 64
-		end
-		cellKeyStride = stride
-		rebuildOccupancyFromTrail()
+	popTimer = 0
+	moveProgress = 0
+	isDead = false
+	self.shieldFlashTimer = 0
+	self.hazardGraceTimer = 0
+	self.damageFlashTimer = 0
+	recycleTrail(trail)
+	trail = buildInitialTrail()
+	descendingHole = nil
+	clearSeveredPieces()
+	severedPieces = {}
+	clearPortalAnimation(portalAnimation)
+	portalAnimation = nil
+	local stride = (Arena and Arena.rows or 0) + 16
+	if stride <= 0 then
+		stride = 64
+	end
+	cellKeyStride = stride
+	rebuildOccupancyFromTrail()
 end
 
 local function getUpgradesModule()
-		return package.loaded["upgrades"]
+	return package.loaded["upgrades"]
 end
 
 isGluttonsWakeActive = function()
-		local Upgrades = getUpgradesModule()
-		if not (Upgrades and Upgrades.getEffect) then
-				return false
-		end
+	local Upgrades = getUpgradesModule()
+	if not (Upgrades and Upgrades.getEffect) then
+		return false
+	end
 
-		local effect = Upgrades:getEffect("gluttonsWake")
-		if effect == nil then
-				return false
-		end
+	local effect = Upgrades:getEffect("gluttonsWake")
+	if effect == nil then
+		return false
+	end
 
-		if type(effect) == "boolean" then
-				return effect
-		end
+	if type(effect) == "boolean" then
+		return effect
+	end
 
-		if type(effect) == "number" then
-				return effect ~= 0
-		end
+	if type(effect) == "number" then
+		return effect ~= 0
+	end
 
-		return not not effect
+	return not not effect
 end
 
 spawnGluttonsWakeRock = function(segment)
-		if not segment or not segment.fruitMarker then
-				return
-		end
+	if not segment or not segment.fruitMarker then
+		return
+	end
 
-		local x = segment.fruitMarkerX or segment.drawX or segment.x
-		local y = segment.fruitMarkerY or segment.drawY or segment.y
-		if not (x and y) then
-				return
-		end
+	local x = segment.fruitMarkerX or segment.drawX or segment.x
+	local y = segment.fruitMarkerY or segment.drawY or segment.y
+	if not (x and y) then
+		return
+	end
 
 	Rocks:spawn(x, y)
 	local col, row = Arena:getTileFromWorld(x, y)
 	if col and row then
-			SnakeUtils.setOccupied(col, row, true)
+		SnakeUtils.setOccupied(col, row, true)
 	end
 end
 
 crystallizeGluttonsWakeSegments = function(buffer, startIndex, endIndex, upgradeActive)
-		if not buffer then
-				return
-		end
+	if not buffer then
+		return
+	end
 
-		if upgradeActive == nil then
-				upgradeActive = isGluttonsWakeActive()
-		end
+	if upgradeActive == nil then
+		upgradeActive = isGluttonsWakeActive()
+	end
 
-		if not upgradeActive then
-				return
-		end
+	if not upgradeActive then
+		return
+	end
 
-		startIndex = startIndex or 1
-		endIndex = endIndex or #buffer
-		if endIndex > #buffer then
-				endIndex = #buffer
-		end
+	startIndex = startIndex or 1
+	endIndex = endIndex or #buffer
+	if endIndex > #buffer then
+		endIndex = #buffer
+	end
 
-		for i = startIndex, endIndex do
-				local segment = buffer[i]
-				if segment and segment.fruitMarker then
-						spawnGluttonsWakeRock(segment)
-				end
+	for i = startIndex, endIndex do
+		local segment = buffer[i]
+		if segment and segment.fruitMarker then
+			spawnGluttonsWakeRock(segment)
 		end
+	end
 end
 
 function Snake:setDirection(name)
-		if not isDead then
-				local nd = SnakeUtils.calculateDirection(direction, name)
-				if nd then
-						assignDirection(pendingDir, nd.x, nd.y)
+	if not isDead then
+		local nd = SnakeUtils.calculateDirection(direction, name)
+		if nd then
+			assignDirection(pendingDir, nd.x, nd.y)
 		end
 	end
 end
 
 function Snake:setDead(state)
-		isDead = not not state
-		if isDead then
-				resetSnakeOccupancyGrid()
-				clearSnakeBodyOccupancy()
-		else
-				rebuildOccupancyFromTrail()
-		end
+	isDead = not not state
+	if isDead then
+		resetSnakeOccupancyGrid()
+		clearSnakeBodyOccupancy()
+	else
+		rebuildOccupancyFromTrail()
+	end
 end
 
 function Snake:getDirection()
@@ -2303,52 +2303,52 @@ function Snake:getHead()
 end
 
 function Snake:setHeadPosition(x, y)
-		local head = trail[1]
-		if not head then
-				return
-		end
+	local head = trail[1]
+	if not head then
+		return
+	end
 
-		head.drawX = x
-		head.drawY = y
+	head.drawX = x
+	head.drawY = y
 end
 
 function Snake:resetMovementProgress()
-		moveProgress = 0
+	moveProgress = 0
 end
 
 function Snake:translate(dx, dy, options)
-		dx = dx or 0
-		dy = dy or 0
-		if dx == 0 and dy == 0 then
-				return
-		end
+	dx = dx or 0
+	dy = dy or 0
+	if dx == 0 and dy == 0 then
+		return
+	end
 
-		options = options or EMPTY_TABLE
+	options = options or EMPTY_TABLE
 
-		for i = 1, #trail do
-				local seg = trail[i]
-				if seg then
-						seg.drawX = seg.drawX + dx
+	for i = 1, #trail do
+		local seg = trail[i]
+		if seg then
+			seg.drawX = seg.drawX + dx
 			seg.drawY = seg.drawY + dy
 		end
-		end
+	end
 
-		if descendingHole then
-				descendingHole.x = (descendingHole.x or 0) + dx
-				descendingHole.y = (descendingHole.y or 0) + dy
-				if descendingHole.entryPointX then
-						descendingHole.entryPointX = descendingHole.entryPointX + dx
-				end
-				if descendingHole.entryPointY then
-						descendingHole.entryPointY = descendingHole.entryPointY + dy
-				end
+	if descendingHole then
+		descendingHole.x = (descendingHole.x or 0) + dx
+		descendingHole.y = (descendingHole.y or 0) + dy
+		if descendingHole.entryPointX then
+			descendingHole.entryPointX = descendingHole.entryPointX + dx
 		end
-
-		rebuildOccupancyFromTrail()
-
-		if options.resetMoveProgress then
-				moveProgress = 0
+		if descendingHole.entryPointY then
+			descendingHole.entryPointY = descendingHole.entryPointY + dy
 		end
+	end
+
+	rebuildOccupancyFromTrail()
+
+	if options.resetMoveProgress then
+		moveProgress = 0
+	end
 end
 
 function Snake:beginPortalWarp(params)
@@ -2395,61 +2395,61 @@ function Snake:beginPortalWarp(params)
 		warpDuration = 0.05
 	end
 
-		if (abs(dx or 0) > 0) or (abs(dy or 0) > 0) then
-				self:translate(dx or 0, dy or 0, {resetMoveProgress = true})
-		else
-				self:resetMovementProgress()
-		end
+	if (abs(dx or 0) > 0) or (abs(dy or 0) > 0) then
+		self:translate(dx or 0, dy or 0, {resetMoveProgress = true})
+	else
+		self:resetMovementProgress()
+	end
 
-		local head = trail and trail[1]
-		if head then
-				head.drawX = exitX
-				head.drawY = exitY
-		end
+	local head = trail and trail[1]
+	if head then
+		head.drawX = exitX
+		head.drawY = exitY
+	end
 
-		local entrySource = {}
-		for i = 1, #entryClone do
-				entrySource[i] = copySegmentData(entryClone[i]) or {}
-		end
-		recycleTrail(entryClone)
+	local entrySource = {}
+	for i = 1, #entryClone do
+		entrySource[i] = copySegmentData(entryClone[i]) or {}
+	end
+	recycleTrail(entryClone)
 
-		clearPortalAnimation(portalAnimation)
-		portalAnimation = {
-				timer = 0,
-				duration = warpDuration,
-				entryIndex = entryIndex,
-				entryX = entryX,
-				entryY = entryY,
-				exitX = exitX,
-				exitY = exitY,
-				totalLength = totalLength,
-				entrySourceTrail = entrySource,
-				entryTrail = sliceTrailByLength(entrySource, totalLength),
-				exitTrail = {},
-				progress = 0,
-				entryHole = {
-						x = entryX,
-						y = entryY,
-						baseRadius = SEGMENT_SIZE * 0.7,
-						radius = SEGMENT_SIZE * 0.7,
-						open = 0,
-						visibility = 0,
-						spin = 0,
-						time = 0,
-				},
-				exitHole = {
-						x = exitX,
-						y = exitY,
-						baseRadius = SEGMENT_SIZE * 0.75,
-						radius = SEGMENT_SIZE * 0.75,
-						open = 0,
-						visibility = 0,
-						spin = 0,
-						time = 0,
-				},
-		}
+	clearPortalAnimation(portalAnimation)
+	portalAnimation = {
+		timer = 0,
+		duration = warpDuration,
+		entryIndex = entryIndex,
+		entryX = entryX,
+		entryY = entryY,
+		exitX = exitX,
+		exitY = exitY,
+		totalLength = totalLength,
+		entrySourceTrail = entrySource,
+		entryTrail = sliceTrailByLength(entrySource, totalLength),
+		exitTrail = {},
+		progress = 0,
+		entryHole = {
+			x = entryX,
+			y = entryY,
+			baseRadius = SEGMENT_SIZE * 0.7,
+			radius = SEGMENT_SIZE * 0.7,
+			open = 0,
+			visibility = 0,
+			spin = 0,
+			time = 0,
+		},
+		exitHole = {
+			x = exitX,
+			y = exitY,
+			baseRadius = SEGMENT_SIZE * 0.75,
+			radius = SEGMENT_SIZE * 0.75,
+			open = 0,
+			visibility = 0,
+			spin = 0,
+			time = 0,
+		},
+	}
 
-		return true
+	return true
 end
 
 function Snake:setDirectionVector(dx, dy)
@@ -2489,91 +2489,91 @@ local safeZoneSeen = {}
 local safeZoneSeenGen = 0
 
 local function clearExcessSafeCells(cells, count)
-		for i = count + 1, #cells do
-				cells[i] = nil
-		end
+	for i = count + 1, #cells do
+		cells[i] = nil
+	end
 end
 
 local function addSafeCellUnique(cells, seen, gen, count, col, row)
-		local stride = cellKeyStride
+	local stride = cellKeyStride
+	if stride <= 0 then
+		stride = (Arena and Arena.rows or 0) + 16
 		if stride <= 0 then
-				stride = (Arena and Arena.rows or 0) + 16
-				if stride <= 0 then
-						stride = 64
-				end
-				cellKeyStride = stride
+			stride = 64
 		end
+		cellKeyStride = stride
+	end
 
-		local key = col * stride + row
-		if seen[key] ~= gen then
-				seen[key] = gen
-				count = count + 1
-				local cell = cells[count]
-				if cell then
-						cell[1] = col
-						cell[2] = row
-				else
-						cells[count] = {col, row}
-				end
+	local key = col * stride + row
+	if seen[key] ~= gen then
+		seen[key] = gen
+		count = count + 1
+		local cell = cells[count]
+		if cell then
+			cell[1] = col
+			cell[2] = row
+		else
+			cells[count] = {col, row}
 		end
+	end
 
-		return count
+	return count
 end
 
 function Snake:getSafeZone(lookahead)
-		local cells = safeZoneCellsBuffer
-		local seen = safeZoneSeen
+	local cells = safeZoneCellsBuffer
+	local seen = safeZoneSeen
 
-		safeZoneSeenGen = safeZoneSeenGen + 1
-		if safeZoneSeenGen >= SAFE_ZONE_SEEN_RESET then
-				safeZoneSeenGen = 1
-				for key in pairs(seen) do
-						seen[key] = 0
-				end
+	safeZoneSeenGen = safeZoneSeenGen + 1
+	if safeZoneSeenGen >= SAFE_ZONE_SEEN_RESET then
+		safeZoneSeenGen = 1
+		for key in pairs(seen) do
+			seen[key] = 0
 		end
+	end
 
-		local gen = safeZoneSeenGen
+	local gen = safeZoneSeenGen
 
-		local count = 0
+	local count = 0
 
-		local hx, hy = self:getHeadCell()
-		if not (hx and hy) then
-				clearExcessSafeCells(cells, count)
-				return cells
-		end
-
-		local dir = self:getDirection()
-
-		for i = 1, lookahead do
-				local cx = hx + dir.x * i
-				local cy = hy + dir.y * i
-				count = addSafeCellUnique(cells, seen, gen, count, cx, cy)
-		end
-
-		local pending = pendingDir
-		if pending and (pending.x ~= dir.x or pending.y ~= dir.y) then
-				-- Immediate turn path (if the queued direction snaps before the next tile)
-				local px, py = hx, hy
-				for i = 1, lookahead do
-						px = px + pending.x
-						py = py + pending.y
-						count = addSafeCellUnique(cells, seen, gen, count, px, py)
-				end
-
-				-- Typical turn path: advance one tile forward, then apply the queued turn
-				local turnCol = hx + dir.x
-				local turnRow = hy + dir.y
-				px, py = turnCol, turnRow
-				for i = 2, lookahead do
-						px = px + pending.x
-						py = py + pending.y
-						count = addSafeCellUnique(cells, seen, gen, count, px, py)
-				end
-		end
-
+	local hx, hy = self:getHeadCell()
+	if not (hx and hy) then
 		clearExcessSafeCells(cells, count)
-
 		return cells
+	end
+
+	local dir = self:getDirection()
+
+	for i = 1, lookahead do
+		local cx = hx + dir.x * i
+		local cy = hy + dir.y * i
+		count = addSafeCellUnique(cells, seen, gen, count, cx, cy)
+	end
+
+	local pending = pendingDir
+	if pending and (pending.x ~= dir.x or pending.y ~= dir.y) then
+		-- Immediate turn path (if the queued direction snaps before the next tile)
+		local px, py = hx, hy
+		for i = 1, lookahead do
+			px = px + pending.x
+			py = py + pending.y
+			count = addSafeCellUnique(cells, seen, gen, count, px, py)
+		end
+
+		-- Typical turn path: advance one tile forward, then apply the queued turn
+		local turnCol = hx + dir.x
+		local turnRow = hy + dir.y
+		px, py = turnCol, turnRow
+		for i = 2, lookahead do
+			px = px + pending.x
+			py = py + pending.y
+			count = addSafeCellUnique(cells, seen, gen, count, px, py)
+		end
+	end
+
+	clearExcessSafeCells(cells, count)
+
+	return cells
 end
 
 function Snake:drawClipped(hx, hy, hr)
@@ -2607,81 +2607,81 @@ function Snake:drawClipped(hx, hy, hr)
 			startIndex = startIndex + 1
 		end
 
-				if startIndex == 1 then
-						-- Head is still outside the clip region; render entire trail
-						renderTrail = trail
-				else
-						local trimmed = clippedTrailBuffer
-						local trimmedLen = #trimmed
-						if trimmedLen > 0 then
-								for i = trimmedLen, 1, -1 do
-										trimmed[i] = nil
-								end
-						end
-
-						if startIndex > #trail then
-								-- Entire snake is within the clip; nothing to draw outside
-								renderTrail = trimmed
-						else
-								local prev = trail[startIndex - 1]
-								local curr = trail[startIndex]
-								local px = prev and (prev.drawX or prev.x)
-								local py = prev and (prev.drawY or prev.y)
-								local cx = curr and (curr.drawX or curr.x)
-								local cy = curr and (curr.drawY or curr.y)
-								local ix, iy
-
-								if px and py and cx and cy then
-										ix, iy = findCircleIntersection(px, py, cx, cy, hx, hy, clipRadius)
-								end
-
-								if not (ix and iy) then
-										if descendingHole and abs((descendingHole.x or 0) - hx) < 1e-3 and abs((descendingHole.y or 0) - hy) < 1e-3 then
-												ix = descendingHole.entryPointX or px
-												iy = descendingHole.entryPointY or py
-										else
-												ix, iy = px, py
-										end
-								end
-
-								if ix and iy then
-										local proxy = clippedTrailProxy
-										proxy.drawX = ix
-										proxy.drawY = iy
-										proxy.x = nil
-										proxy.y = nil
-										trimmed[1] = proxy
-								end
-
-								local insertIndex = ix and iy and 2 or 1
-								for i = startIndex, #trail do
-										trimmed[insertIndex] = trail[i]
-										insertIndex = insertIndex + 1
-								end
-
-								renderTrail = trimmed
-						end
+		if startIndex == 1 then
+			-- Head is still outside the clip region; render entire trail
+			renderTrail = trail
+		else
+			local trimmed = clippedTrailBuffer
+			local trimmedLen = #trimmed
+			if trimmedLen > 0 then
+				for i = trimmedLen, 1, -1 do
+					trimmed[i] = nil
 				end
+			end
+
+			if startIndex > #trail then
+				-- Entire snake is within the clip; nothing to draw outside
+				renderTrail = trimmed
+			else
+				local prev = trail[startIndex - 1]
+				local curr = trail[startIndex]
+				local px = prev and (prev.drawX or prev.x)
+				local py = prev and (prev.drawY or prev.y)
+				local cx = curr and (curr.drawX or curr.x)
+				local cy = curr and (curr.drawY or curr.y)
+				local ix, iy
+
+				if px and py and cx and cy then
+					ix, iy = findCircleIntersection(px, py, cx, cy, hx, hy, clipRadius)
+				end
+
+				if not (ix and iy) then
+					if descendingHole and abs((descendingHole.x or 0) - hx) < 1e-3 and abs((descendingHole.y or 0) - hy) < 1e-3 then
+						ix = descendingHole.entryPointX or px
+						iy = descendingHole.entryPointY or py
+					else
+						ix, iy = px, py
+					end
+				end
+
+				if ix and iy then
+					local proxy = clippedTrailProxy
+					proxy.drawX = ix
+					proxy.drawY = iy
+					proxy.x = nil
+					proxy.y = nil
+					trimmed[1] = proxy
+				end
+
+				local insertIndex = ix and iy and 2 or 1
+				for i = startIndex, #trail do
+					trimmed[insertIndex] = trail[i]
+					insertIndex = insertIndex + 1
+				end
+
+				renderTrail = trimmed
+			end
 		end
+	end
 
 	love.graphics.push("all")
 	local upgradeVisuals = collectUpgradeVisuals(self)
 
-		if clipRadius > 0 then
-				stencilCircleX, stencilCircleY, stencilCircleRadius = hx, hy, clipRadius
-				love.graphics.stencil(drawStencilCircle, "replace", 1)
-				love.graphics.setStencilTest("equal", 0)
-		end
+	if clipRadius > 0 then
+		stencilCircleX, stencilCircleY, stencilCircleRadius = hx, hy, clipRadius
+		love.graphics.stencil(drawStencilCircle, "replace", 1)
+		love.graphics.setStencilTest("equal", 0)
+	end
 
 	local shouldDrawFace = descendingHole == nil
 	local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
-		if not hideDescendingBody then
-				clippedHeadX, clippedHeadY = headX, headY
-				clipCenterX, clipCenterY, clipRadiusValue = hx, hy, clipRadius
-				SnakeDraw.run(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, getClippedHeadPosition, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
-				clippedHeadX, clippedHeadY, clipCenterX, clipCenterY, clipRadiusValue = nil, nil, nil, nil, nil
-		end
+	if not hideDescendingBody then
+		clippedHeadX, clippedHeadY = headX, headY
+		clipCenterX, clipCenterY, clipRadiusValue = hx, hy, clipRadius
+		SnakeDraw.run(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, getClippedHeadPosition, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
+		clippedHeadX, clippedHeadY, clipCenterX, clipCenterY, clipRadiusValue = nil, nil, nil, nil, nil
+	end
 
 	if clipRadius > 0 and descendingHole and not hideDescendingBody and abs((descendingHole.x or 0) - hx) < 1e-3 and abs((descendingHole.y or 0) - hy) < 1e-3 then
 		love.graphics.setStencilTest("equal", 1)
@@ -2792,45 +2792,45 @@ function Snake:update(dt)
 		end
 	end
 
-		if self.titanblood then
-				local state = self.titanblood
-				state.time = (state.time or 0) + dt
-				local intensity = state.intensity or 0
-				local target = state.target or 0
-				local blend = min(1, dt * 3.4)
-				intensity = intensity + (target - intensity) * blend
-				state.intensity = intensity
-				if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.01 then
-						self.titanblood = nil
-				end
+	if self.titanblood then
+		local state = self.titanblood
+		state.time = (state.time or 0) + dt
+		local intensity = state.intensity or 0
+		local target = state.target or 0
+		local blend = min(1, dt * 3.4)
+		intensity = intensity + (target - intensity) * blend
+		state.intensity = intensity
+		if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.01 then
+			self.titanblood = nil
+		end
+	end
+
+	if self.diffractionBarrier then
+		local state = self.diffractionBarrier
+		state.time = (state.time or 0) + dt
+		local target
+		if state.active then
+			target = 1
+		else
+			target = state.target or 0
 		end
 
-		if self.diffractionBarrier then
-				local state = self.diffractionBarrier
-				state.time = (state.time or 0) + dt
-				local target
-				if state.active then
-						target = 1
-				else
-						target = state.target or 0
-				end
+		state.target = target
+		local blend = min(1, dt * 5.2)
+		local current = state.intensity or 0
+		state.intensity = current + (target - current) * blend
+		state.flash = max(0, (state.flash or 0) - dt * 2.8)
 
-				state.target = target
-				local blend = min(1, dt * 5.2)
-				local current = state.intensity or 0
-				state.intensity = current + (target - current) * blend
-				state.flash = max(0, (state.flash or 0) - dt * 2.8)
-
-				if not state.active and target <= 0 and state.intensity <= 0.02 and state.flash <= 0.02 then
-						self.diffractionBarrier = nil
-				end
+		if not state.active and target <= 0 and state.intensity <= 0.02 and state.flash <= 0.02 then
+			self.diffractionBarrier = nil
 		end
+	end
 
-		local zephyr = self.zephyrCoils
-		if zephyr then
-				zephyr.time = (zephyr.time or 0) + dt
-				local stacks = zephyr.stacks or 0
-				local target = zephyr.target or (stacks > 0 and min(1, 0.45 + 0.2 * min(stacks, 3)) or 0)
+	local zephyr = self.zephyrCoils
+	if zephyr then
+		zephyr.time = (zephyr.time or 0) + dt
+		local stacks = zephyr.stacks or 0
+		local target = zephyr.target or (stacks > 0 and min(1, 0.45 + 0.2 * min(stacks, 3)) or 0)
 		zephyr.target = target
 		local blend = min(1, dt * 3.6)
 		local intensity = (zephyr.intensity or 0) + (target - (zephyr.intensity or 0)) * blend
@@ -2871,10 +2871,10 @@ function Snake:update(dt)
 		end
 	end
 
-		-- base speed with upgrades/modifiers
-		local head = trail[1]
-		local previousHeadX, previousHeadY = head and head.drawX, head and head.drawY
-		local speed = self:getSpeed()
+	-- base speed with upgrades/modifiers
+	local head = trail[1]
+	local previousHeadX, previousHeadY = head and head.drawX, head and head.drawY
+	local speed = self:getSpeed()
 	local baselineSpeed = speed
 
 	local hole = descendingHole
@@ -3096,73 +3096,73 @@ function Snake:update(dt)
 		end
 	end
 
-		local newX, newY
-		local headCells = headCellBuffer
-		local headCellCount = 0
+	local newX, newY
+	local headCells = headCellBuffer
+	local headCellCount = 0
 
-		-- advance cell clock, maybe snap & commit queued direction
-		if hole then
+	-- advance cell clock, maybe snap & commit queued direction
+	if hole then
+		moveProgress = 0
+		local stepX = direction.x * speed * dt
+		local stepY = direction.y * speed * dt
+		newX = head.drawX + stepX
+		newY = head.drawY + stepY
+	else
+		local remaining = speed * dt
+		local currentDirX, currentDirY = direction.x, direction.y
+		local currX, currY = head.drawX, head.drawY
+		local snaps = 0
+		local segmentLength = SEGMENT_SPACING
+
+		while remaining > 0 do
+			local available = segmentLength - moveProgress
+			if available <= 0 then
+				available = segmentLength
 				moveProgress = 0
-				local stepX = direction.x * speed * dt
-				local stepY = direction.y * speed * dt
-				newX = head.drawX + stepX
-				newY = head.drawY + stepY
-		else
-				local remaining = speed * dt
-				local currentDirX, currentDirY = direction.x, direction.y
-				local currX, currY = head.drawX, head.drawY
-				local snaps = 0
-				local segmentLength = SEGMENT_SPACING
+			end
 
-				while remaining > 0 do
-						local available = segmentLength - moveProgress
-						if available <= 0 then
-								available = segmentLength
-								moveProgress = 0
-						end
+			if remaining < available then
+				currX = currX + currentDirX * remaining
+				currY = currY + currentDirY * remaining
+				moveProgress = moveProgress + remaining
+				remaining = 0
+			else
+				currX = currX + currentDirX * available
+				currY = currY + currentDirY * available
+				remaining = remaining - available
+				moveProgress = 0
+				snaps = snaps + 1
 
-						if remaining < available then
-								currX = currX + currentDirX * remaining
-								currY = currY + currentDirY * remaining
-								moveProgress = moveProgress + remaining
-								remaining = 0
-						else
-								currX = currX + currentDirX * available
-								currY = currY + currentDirY * available
-								remaining = remaining - available
-								moveProgress = 0
-								snaps = snaps + 1
-
-								local snapCol, snapRow = toCell(currX, currY)
-								if snapCol and snapRow then
-										headCellCount = headCellCount + 1
-										local cell = headCells[headCellCount]
-										if cell then
-												cell[1] = snapCol
-												cell[2] = snapRow
-												cell[3] = currX
-												cell[4] = currY
-										else
-												headCells[headCellCount] = {snapCol, snapRow, currX, currY}
-										end
-								end
-
-			assignDirection(direction, pendingDir.x, pendingDir.y)
-			currentDirX, currentDirY = direction.x, direction.y
-						end
+				local snapCol, snapRow = toCell(currX, currY)
+				if snapCol and snapRow then
+					headCellCount = headCellCount + 1
+					local cell = headCells[headCellCount]
+					if cell then
+						cell[1] = snapCol
+						cell[2] = snapRow
+						cell[3] = currX
+						cell[4] = currY
+					else
+						headCells[headCellCount] = {snapCol, snapRow, currX, currY}
+					end
 				end
 
-				if snaps > 0 then
-						SessionStats:add("tilesTravelled", snaps)
-				end
-
-				newX, newY = currX, currY
+				assignDirection(direction, pendingDir.x, pendingDir.y)
+				currentDirX, currentDirY = direction.x, direction.y
+			end
 		end
 
+		if snaps > 0 then
+			SessionStats:add("tilesTravelled", snaps)
+		end
+
+		newX, newY = currX, currY
+	end
+
 	-- spatially uniform sampling along the motion path
-		local dx = newX - head.drawX
-		local dy = newY - head.drawY
-		local dist = sqrt(dx * dx + dy * dy)
+	local dx = newX - head.drawX
+	local dy = newY - head.drawY
+	local dist = sqrt(dx * dx + dy * dy)
 
 	local nx, ny = 0, 0
 	if dist > 0 then
@@ -3172,20 +3172,20 @@ function Snake:update(dt)
 	local remaining = dist
 	local prevX, prevY = head.drawX, head.drawY
 
-		while remaining >= SAMPLE_STEP do
-				prevX = prevX + nx * SAMPLE_STEP
-				prevY = prevY + ny * SAMPLE_STEP
-				local segment = acquireSegment()
-				segment.drawX = prevX
-				segment.drawY = prevY
-				segment.dirX = direction.x
-				segment.dirY = direction.y
-				segment.fruitMarker = nil
-				segment.fruitMarkerX = nil
-				segment.fruitMarkerY = nil
-				insert(trail, 1, segment)
-				remaining = remaining - SAMPLE_STEP
-		end
+	while remaining >= SAMPLE_STEP do
+		prevX = prevX + nx * SAMPLE_STEP
+		prevY = prevY + ny * SAMPLE_STEP
+		local segment = acquireSegment()
+		segment.drawX = prevX
+		segment.drawY = prevY
+		segment.dirX = direction.x
+		segment.dirY = direction.y
+		segment.fruitMarker = nil
+		segment.fruitMarkerX = nil
+		segment.fruitMarkerY = nil
+		insert(trail, 1, segment)
+		remaining = remaining - SAMPLE_STEP
+	end
 
 	-- final correction: put true head at exact new position
 	if trail[1] then
@@ -3217,152 +3217,152 @@ function Snake:update(dt)
 	local consumedLength = (hole and hole.consumedLength) or 0
 	local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
 
-		if maxLen == 0 then
-				recycleTrail(trail)
-				trail = {}
-				len = 0
-		end
+	if maxLen == 0 then
+		recycleTrail(trail)
+		trail = {}
+		len = 0
+	end
 
-		local traveled = 0
-		local gluttonsWakeActive = isGluttonsWakeActive()
-		for i = 2, #trail do
-				local dx = trail[i - 1].drawX - trail[i].drawX
-				local dy = trail[i - 1].drawY - trail[i].drawY
-				local segLen = sqrt(dx * dx + dy * dy)
+	local traveled = 0
+	local gluttonsWakeActive = isGluttonsWakeActive()
+	for i = 2, #trail do
+		local dx = trail[i - 1].drawX - trail[i].drawX
+		local dy = trail[i - 1].drawY - trail[i].drawY
+		local segLen = sqrt(dx * dx + dy * dy)
 
-				if traveled + segLen > maxLen then
+		if traveled + segLen > maxLen then
 			local excess = traveled + segLen - maxLen
 			local t = 1 - (excess / segLen)
 			local tailX = trail[i-1].drawX - dx * t
 			local tailY = trail[i-1].drawY - dy * t
 
-						crystallizeGluttonsWakeSegments(trail, i + 1, #trail, gluttonsWakeActive)
-						releaseSegmentRange(trail, i + 1)
+			crystallizeGluttonsWakeSegments(trail, i + 1, #trail, gluttonsWakeActive)
+			releaseSegmentRange(trail, i + 1)
 
-						trail[i].drawX, trail[i].drawY = tailX, tailY
-						break
-				else
-						traveled = traveled + segLen
+			trail[i].drawX, trail[i].drawY = tailX, tailY
+			break
+		else
+			traveled = traveled + segLen
 		end
 	end
 
-		local lenAfterTrim = #trail
-		do
-				lenAfterTrim = #trail
-				if lenAfterTrim >= 1 then
-						local tailX, tailY = trail[lenAfterTrim].drawX, trail[lenAfterTrim].drawY
-						if tailX and tailY then
-								tailAfterCol, tailAfterRow = toCell(tailX, tailY)
-						end
-				end
+	local lenAfterTrim = #trail
+	do
+		lenAfterTrim = #trail
+		if lenAfterTrim >= 1 then
+			local tailX, tailY = trail[lenAfterTrim].drawX, trail[lenAfterTrim].drawY
+			if tailX and tailY then
+				tailAfterCol, tailAfterRow = toCell(tailX, tailY)
+			end
+		end
+	end
+
+	local tailMoved = false
+	if lenAfterTrim == 0 then
+		tailMoved = true
+	elseif tailBeforeCol and tailBeforeRow then
+		if not tailAfterCol or not tailAfterRow then
+			tailMoved = true
+		else
+			tailMoved = tailBeforeCol ~= tailAfterCol or tailBeforeRow ~= tailAfterRow
+		end
+	end
+
+	if headCellCount > 0 or tailMoved then
+		local overrideCol, overrideRow = nil, nil
+
+		if headCellCount > 0 then
+			local latest = headCells[headCellCount]
+			if latest then
+				overrideCol = latest[1]
+				overrideRow = latest[2]
+			end
+		else
+			overrideCol = headOccupancyCol
+			overrideRow = headOccupancyRow
 		end
 
-		local tailMoved = false
-		if lenAfterTrim == 0 then
-				tailMoved = true
-		elseif tailBeforeCol and tailBeforeRow then
-				if not tailAfterCol or not tailAfterRow then
-						tailMoved = true
-				else
-						tailMoved = tailBeforeCol ~= tailAfterCol or tailBeforeRow ~= tailAfterRow
-				end
+		if (not overrideCol) or (not overrideRow) then
+			local headSeg = trail and trail[1]
+			if headSeg then
+				overrideCol, overrideRow = toCell(headSeg.drawX, headSeg.drawY)
+			end
 		end
 
-		if headCellCount > 0 or tailMoved then
-				local overrideCol, overrideRow = nil, nil
+		applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, overrideRow, tailMoved, tailAfterCol, tailAfterRow)
+	end
 
-				if headCellCount > 0 then
-						local latest = headCells[headCellCount]
-						if latest then
-								overrideCol = latest[1]
-								overrideRow = latest[2]
+	-- collision with self (grid-cell based, only at snap ticks)
+	if headCellCount > 0 and not self:isHazardGraceActive() then
+		local hx, hy = trail[1].drawX, trail[1].drawY
+		local lastCheckedCol, lastCheckedRow = nil, nil
+		local segmentStartX = previousHeadX or hx
+		local segmentStartY = previousHeadY or hy
+
+		for i = 1, headCellCount do
+			local cell = headCells[i]
+			local headCol, headRow = cell and cell[1], cell and cell[2]
+			local headSnapX, headSnapY = cell and cell[3], cell and cell[4]
+			local targetX = headSnapX or hx
+			local targetY = headSnapY or hy
+			if headCol and headRow then
+				if lastCheckedCol == headCol and lastCheckedRow == headRow then
+					segmentStartX, segmentStartY = targetX, targetY
+					goto continue
+				end
+				lastCheckedCol, lastCheckedRow = headCol, headRow
+
+				local tailVacated = false
+				if i == 1 and tailBeforeCol and tailBeforeRow then
+					if tailBeforeCol == headCol and tailBeforeRow == headRow then
+						if not (tailAfterCol == headCol and tailAfterRow == headRow) then
+							tailVacated = true
 						end
-				else
-						overrideCol = headOccupancyCol
-						overrideRow = headOccupancyRow
+					end
 				end
 
-				if (not overrideCol) or (not overrideRow) then
-						local headSeg = trail and trail[1]
-						if headSeg then
-								overrideCol, overrideRow = toCell(headSeg.drawX, headSeg.drawY)
+				if not tailVacated and isCellOccupiedBySnakeBody(headCol, headRow) then
+					if wasRecentlyVacated(headCol, headRow) then
+						segmentStartX, segmentStartY = targetX, targetY
+						goto continue
+					end
+					local gridOccupied = SnakeUtils and SnakeUtils.isOccupied and SnakeUtils.isOccupied(headCol, headRow)
+					if gridOccupied then
+						if not isSelfCollisionAlongPath(segmentStartX, segmentStartY, targetX, targetY) then
+							segmentStartX, segmentStartY = targetX, targetY
+							goto continue
 						end
+						if self:consumeShield() then
+							self:onShieldConsumed(hx, hy, "self")
+							self:beginHazardGrace()
+							segmentStartX, segmentStartY = targetX, targetY
+							break
+						else
+							local pushX = -(direction.x or 0) * SEGMENT_SPACING
+							local pushY = -(direction.y or 0) * SEGMENT_SPACING
+							local context = {
+								pushX = pushX,
+								pushY = pushY,
+								dirX = -(direction.x or 0),
+								dirY = -(direction.y or 0),
+								grace = HAZARD_GRACE_DURATION * 2,
+								shake = 0.28,
+							}
+							return false, "self", context
+						end
+					end
 				end
-
-				applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, overrideRow, tailMoved, tailAfterCol, tailAfterRow)
+				segmentStartX, segmentStartY = targetX, targetY
+				::continue::
+			end
 		end
+	end
 
-		-- collision with self (grid-cell based, only at snap ticks)
-		if headCellCount > 0 and not self:isHazardGraceActive() then
-				local hx, hy = trail[1].drawX, trail[1].drawY
-				local lastCheckedCol, lastCheckedRow = nil, nil
-				local segmentStartX = previousHeadX or hx
-				local segmentStartY = previousHeadY or hy
-
-				for i = 1, headCellCount do
-						local cell = headCells[i]
-						local headCol, headRow = cell and cell[1], cell and cell[2]
-						local headSnapX, headSnapY = cell and cell[3], cell and cell[4]
-						local targetX = headSnapX or hx
-						local targetY = headSnapY or hy
-						if headCol and headRow then
-								if lastCheckedCol == headCol and lastCheckedRow == headRow then
-										segmentStartX, segmentStartY = targetX, targetY
-										goto continue
-								end
-								lastCheckedCol, lastCheckedRow = headCol, headRow
-
-								local tailVacated = false
-								if i == 1 and tailBeforeCol and tailBeforeRow then
-										if tailBeforeCol == headCol and tailBeforeRow == headRow then
-												if not (tailAfterCol == headCol and tailAfterRow == headRow) then
-														tailVacated = true
-												end
-										end
-								end
-
-								if not tailVacated and isCellOccupiedBySnakeBody(headCol, headRow) then
-										if wasRecentlyVacated(headCol, headRow) then
-												segmentStartX, segmentStartY = targetX, targetY
-												goto continue
-										end
-										local gridOccupied = SnakeUtils and SnakeUtils.isOccupied and SnakeUtils.isOccupied(headCol, headRow)
-										if gridOccupied then
-												if not isSelfCollisionAlongPath(segmentStartX, segmentStartY, targetX, targetY) then
-														segmentStartX, segmentStartY = targetX, targetY
-														goto continue
-												end
-												if self:consumeShield() then
-														self:onShieldConsumed(hx, hy, "self")
-														self:beginHazardGrace()
-														segmentStartX, segmentStartY = targetX, targetY
-														break
-												else
-														local pushX = -(direction.x or 0) * SEGMENT_SPACING
-														local pushY = -(direction.y or 0) * SEGMENT_SPACING
-														local context = {
-																pushX = pushX,
-																pushY = pushY,
-																dirX = -(direction.x or 0),
-																dirY = -(direction.y or 0),
-																grace = HAZARD_GRACE_DURATION * 2,
-																shake = 0.28,
-														}
-														return false, "self", context
-												end
-										end
-								end
-								segmentStartX, segmentStartY = targetX, targetY
-								::continue::
-						end
-				end
-		end
-
-		if portalAnimation then
-				local state = portalAnimation
-				local duration = state.duration or 0.3
-				if not duration or duration <= 1e-4 then
-						duration = 1e-4
+	if portalAnimation then
+		local state = portalAnimation
+		local duration = state.duration or 0.3
+		if not duration or duration <= 1e-4 then
+			duration = 1e-4
 		end
 
 		state.timer = (state.timer or 0) + dt
@@ -3383,52 +3383,52 @@ function Snake:update(dt)
 		local entryLength = totalLength * (1 - progress)
 		local exitLength = totalLength * progress
 
-				state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength, state.entryTrail)
-				state.exitTrail = sliceTrailByLength(trail, exitLength, state.exitTrail)
+		state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength, state.entryTrail)
+		state.exitTrail = sliceTrailByLength(trail, exitLength, state.exitTrail)
 
-				local entryHole = state.entryHole
-				if entryHole then
-						entryHole.x = state.entryX
-						entryHole.y = state.entryY
-						entryHole.time = (entryHole.time or 0) + dt
+		local entryHole = state.entryHole
+		if entryHole then
+			entryHole.x = state.entryX
+			entryHole.y = state.entryY
+			entryHole.time = (entryHole.time or 0) + dt
 
-						local entryOpen = smoothStep(0.0, 0.22, progress)
-						local entryClose = smoothStep(0.68, 1.0, progress)
-						local entryVisibility = max(0, entryOpen * (1 - entryClose))
+			local entryOpen = smoothStep(0.0, 0.22, progress)
+			local entryClose = smoothStep(0.68, 1.0, progress)
+			local entryVisibility = max(0, entryOpen * (1 - entryClose))
 
-						entryHole.open = entryOpen
-						entryHole.closing = entryClose
-						entryHole.visibility = entryVisibility
-						local baseRadius = entryHole.baseRadius or (SEGMENT_SIZE * 0.7)
-						entryHole.radius = baseRadius * (0.55 + 0.65 * entryOpen)
-						entryHole.spin = (entryHole.spin or 0) + dt * (2.4 + 2.1 * entryOpen)
-						entryHole.pulse = (entryHole.pulse or 0) + dt
-				end
-
-				local exitHole = state.exitHole
-				if exitHole then
-						exitHole.x = state.exitX
-						exitHole.y = state.exitY
-						exitHole.time = (exitHole.time or 0) + dt
-
-						local exitOpen = smoothStep(0.08, 0.48, progress)
-						local exitSettle = smoothStep(0.82, 1.0, progress)
-						local exitVisibility = max(exitOpen, (1 - exitSettle) * 0.45)
-
-						exitHole.open = exitOpen
-						exitHole.closing = exitSettle
-						exitHole.visibility = exitVisibility
-						local baseRadius = exitHole.baseRadius or (SEGMENT_SIZE * 0.75)
-						exitHole.radius = baseRadius * (0.5 + 0.6 * exitOpen)
-						exitHole.spin = (exitHole.spin or 0) + dt * (2.0 + 2.2 * exitOpen)
-						exitHole.pulse = (exitHole.pulse or 0) + dt
-				end
-
-				if progress >= 1 then
-						clearPortalAnimation(state)
-						portalAnimation = nil
-				end
+			entryHole.open = entryOpen
+			entryHole.closing = entryClose
+			entryHole.visibility = entryVisibility
+			local baseRadius = entryHole.baseRadius or (SEGMENT_SIZE * 0.7)
+			entryHole.radius = baseRadius * (0.55 + 0.65 * entryOpen)
+			entryHole.spin = (entryHole.spin or 0) + dt * (2.4 + 2.1 * entryOpen)
+			entryHole.pulse = (entryHole.pulse or 0) + dt
 		end
+
+		local exitHole = state.exitHole
+		if exitHole then
+			exitHole.x = state.exitX
+			exitHole.y = state.exitY
+			exitHole.time = (exitHole.time or 0) + dt
+
+			local exitOpen = smoothStep(0.08, 0.48, progress)
+			local exitSettle = smoothStep(0.82, 1.0, progress)
+			local exitVisibility = max(exitOpen, (1 - exitSettle) * 0.45)
+
+			exitHole.open = exitOpen
+			exitHole.closing = exitSettle
+			exitHole.visibility = exitVisibility
+			local baseRadius = exitHole.baseRadius or (SEGMENT_SIZE * 0.75)
+			exitHole.radius = baseRadius * (0.5 + 0.6 * exitOpen)
+			exitHole.spin = (exitHole.spin or 0) + dt * (2.0 + 2.2 * exitOpen)
+			exitHole.pulse = (exitHole.pulse or 0) + dt
+		end
+
+		if progress >= 1 then
+			clearPortalAnimation(state)
+			portalAnimation = nil
+		end
+	end
 
 	-- update timers
 	if popTimer > 0 then
@@ -3447,21 +3447,21 @@ function Snake:update(dt)
 		self.damageFlashTimer = max(0, self.damageFlashTimer - dt)
 	end
 
-		if severedPieces and #severedPieces > 0 then
-				for index = #severedPieces, 1, -1 do
-						local piece = severedPieces[index]
-						if piece then
-								piece.timer = (piece.timer or 0) - dt
-								if piece.timer <= 0 then
-										if piece.trail then
-												recycleTrail(piece.trail)
-												piece.trail = nil
-										end
-										remove(severedPieces, index)
-								end
-						end
+	if severedPieces and #severedPieces > 0 then
+		for index = #severedPieces, 1, -1 do
+			local piece = severedPieces[index]
+			if piece then
+				piece.timer = (piece.timer or 0) - dt
+				if piece.timer <= 0 then
+					if piece.trail then
+						recycleTrail(piece.trail)
+						piece.trail = nil
+					end
+					remove(severedPieces, index)
 				end
+			end
 		end
+	end
 
 	return true
 end
@@ -3700,19 +3700,19 @@ function Snake:loseSegments(count, options)
 		end
 	end
 
-		if (not options) or options.spawnParticles ~= false then
-				local burstColor = LOSE_SEGMENTS_DEFAULT_BURST_COLOR
-				if options and (options.cause == "saw" or options.cause == "laser") then
-						burstColor = LOSE_SEGMENTS_SAW_BURST_COLOR
-				end
-
-				if Particles and Particles.spawnBurst and tailX and tailY then
-						local burstOptions = LOSE_SEGMENTS_BURST_OPTIONS
-						burstOptions.count = min(10, 4 + trimmed)
-						burstOptions.color = burstColor
-						Particles:spawnBurst(tailX, tailY, burstOptions)
-				end
+	if (not options) or options.spawnParticles ~= false then
+		local burstColor = LOSE_SEGMENTS_DEFAULT_BURST_COLOR
+		if options and (options.cause == "saw" or options.cause == "laser") then
+			burstColor = LOSE_SEGMENTS_SAW_BURST_COLOR
 		end
+
+		if Particles and Particles.spawnBurst and tailX and tailY then
+			local burstOptions = LOSE_SEGMENTS_BURST_OPTIONS
+			burstOptions.count = min(10, 4 + trimmed)
+			burstOptions.color = burstColor
+			Particles:spawnBurst(tailX, tailY, burstOptions)
+		end
+	end
 
 	return trimmed
 end
@@ -3757,41 +3757,41 @@ local function getSawCenterPosition(saw)
 end
 
 local function isSawCutPointExposed(saw, sx, sy, px, py)
-		if not (saw and sx and sy and px and py) then
-				return true
+	if not (saw and sx and sy and px and py) then
+		return true
+	end
+
+	local tolerance = 1.0
+	local nx, ny
+
+	if saw.dir == "horizontal" then
+		local minX = saw.trackMinX
+		local maxX = saw.trackMaxX
+		if minX and maxX then
+			local lateralTolerance = tolerance
+			if px < minX - lateralTolerance or px > maxX + lateralTolerance then
+				return false
+			end
 		end
 
-		local tolerance = 1.0
-		local nx, ny
+		-- Horizontal saws sit in the floor and only the top half (negative Y)
+		-- should be able to slice the snake.
+		nx, ny = 0, -1
+	else
+		local minY = saw.trackMinY
+		local maxY = saw.trackMaxY
+		if minY and maxY then
+			local lateralTolerance = tolerance
+			if py < minY - lateralTolerance or py > maxY + lateralTolerance then
+				return false
+			end
+		end
 
-		if saw.dir == "horizontal" then
-				local minX = saw.trackMinX
-				local maxX = saw.trackMaxX
-				if minX and maxX then
-						local lateralTolerance = tolerance
-						if px < minX - lateralTolerance or px > maxX + lateralTolerance then
-								return false
-						end
-				end
-
-				-- Horizontal saws sit in the floor and only the top half (negative Y)
-				-- should be able to slice the snake.
-				nx, ny = 0, -1
-		else
-				local minY = saw.trackMinY
-				local maxY = saw.trackMaxY
-				if minY and maxY then
-						local lateralTolerance = tolerance
-						if py < minY - lateralTolerance or py > maxY + lateralTolerance then
-								return false
-						end
-				end
-
-				-- For vertical saws, the exposed side depends on which wall the blade
-				-- is mounted to. The sink direction indicates which side is hidden in
-				-- the track, so flip it to get the exposed normal.
-				local sinkDir = (saw.side == "left") and -1 or 1
-				nx, ny = -sinkDir, 0
+		-- For vertical saws, the exposed side depends on which wall the blade
+		-- is mounted to. The sink direction indicates which side is hidden in
+		-- the track, so flip it to get the exposed normal.
+		local sinkDir = (saw.side == "left") and -1 or 1
+		nx, ny = -sinkDir, 0
 	end
 
 	local dx = px - sx
@@ -3870,16 +3870,16 @@ local function spawnSawCutParticles(x, y, count)
 end
 
 function Snake:handleSawBodyCut(context)
-		if not context then
-				return false
-		end
+	if not context then
+		return false
+	end
 
-		local cause = context.cause or "saw"
+	local cause = context.cause or "saw"
 
-		local available = max(0, (segmentCount or 1) - 1)
-		if available <= 0 then
-				return false
-		end
+	local available = max(0, (segmentCount or 1) - 1)
+	if available <= 0 then
+		return false
+	end
 
 	local index = context.index or 2
 	if index <= 1 or index > #trail then
@@ -3914,7 +3914,7 @@ function Snake:handleSawBodyCut(context)
 			if sx and sy and prevCutX and prevCutY then
 				local ddx = sx - prevCutX
 				local ddy = sy - prevCutY
-								tailDistance = tailDistance + sqrt(ddx * ddx + ddy * ddy)
+				tailDistance = tailDistance + sqrt(ddx * ddx + ddy * ddy)
 				prevCutX, prevCutY = sx, sy
 			end
 		end
@@ -3958,139 +3958,139 @@ function Snake:handleSawBodyCut(context)
 	local severedTrail = {}
 	severedTrail[1] = copySegmentData(newTail)
 
-		for i = index, #trail do
-				local segCopy = copySegmentData(trail[i])
-				if segCopy then
-						severedTrail[#severedTrail + 1] = segCopy
-				end
+	for i = index, #trail do
+		local segCopy = copySegmentData(trail[i])
+		if segCopy then
+			severedTrail[#severedTrail + 1] = segCopy
 		end
+	end
 
-		for i = #trail, previousIndex + 1, -1 do
-				local removed = trail[i]
-				trail[i] = nil
-				if removed then
-						releaseSegment(removed)
-				end
+	for i = #trail, previousIndex + 1, -1 do
+		local removed = trail[i]
+		trail[i] = nil
+		if removed then
+			releaseSegment(removed)
 		end
+	end
 
-		trail[#trail + 1] = newTail
+	trail[#trail + 1] = newTail
 
 	addSeveredTrail(severedTrail, lostSegments + 1)
 	spawnSawCutParticles(cutX, cutY, lostSegments)
 
-		self:loseSegments(lostSegments, {cause = cause, trimTrail = false})
+	self:loseSegments(lostSegments, {cause = cause, trimTrail = false})
 
-		return true
+	return true
 end
 
 function Snake:checkLaserBodyCollision()
-		if isDead then
-				return false
+	if isDead then
+		return false
+	end
+
+	if not (trail and #trail > 2) then
+		return false
+	end
+
+	if not (Lasers and Lasers.getEmitterCount and Lasers.iterateEmitters) then
+		return false
+	end
+
+	local emitterCount = Lasers:getEmitterCount()
+	if not (emitterCount and emitterCount > 0) then
+		return false
+	end
+
+	local head = trail[1]
+	local headX = head and (head.drawX or head.x)
+	local headY = head and (head.drawY or head.y)
+	if not (headX and headY) then
+		return false
+	end
+
+	local guardDistance = SEGMENT_SPACING * 0.9
+	local bodyRadius = SEGMENT_SIZE * 0.5
+
+	local handled = Lasers:iterateEmitters(function(beam)
+		if not (beam and beam.state == "firing") then
+			return nil
 		end
 
-		if not (trail and #trail > 2) then
-				return false
+		local rect = beam.beamRect
+		if not rect then
+			return nil
 		end
 
-		if not (Lasers and Lasers.getEmitterCount and Lasers.iterateEmitters) then
-				return false
+		local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
+		if not (rw and rh and rw > 0 and rh > 0) then
+			return nil
 		end
 
-		local emitterCount = Lasers:getEmitterCount()
-		if not (emitterCount and emitterCount > 0) then
-				return false
-		end
+		local expandedX = rx - bodyRadius
+		local expandedY = ry - bodyRadius
+		local expandedW = rw + bodyRadius * 2
+		local expandedH = rh + bodyRadius * 2
 
-		local head = trail[1]
-		local headX = head and (head.drawX or head.x)
-		local headY = head and (head.drawY or head.y)
-		if not (headX and headY) then
-				return false
-		end
+		local travelled = 0
+		local prevX, prevY = headX, headY
 
-		local guardDistance = SEGMENT_SPACING * 0.9
-		local bodyRadius = SEGMENT_SIZE * 0.5
+		for index = 2, #trail do
+			local segment = trail[index]
+			local cx = segment and (segment.drawX or segment.x)
+			local cy = segment and (segment.drawY or segment.y)
+			if cx and cy then
+				local dx = cx - prevX
+				local dy = cy - prevY
+				local segLen = sqrt(dx * dx + dy * dy)
 
-		local handled = Lasers:iterateEmitters(function(beam)
-				if not (beam and beam.state == "firing") then
-						return nil
-				end
+				if segLen > 1e-6 then
+					local intersects, cutX, cutY, t = segmentRectIntersection(
+					prevX,
+					prevY,
+					cx,
+					cy,
+					expandedX,
+					expandedY,
+					expandedW,
+					expandedH
+					)
 
-				local rect = beam.beamRect
-				if not rect then
-						return nil
-				end
+					if intersects and t then
+						local along = travelled + segLen * t
+						if along > guardDistance then
+							beam.flashTimer = max(beam.flashTimer or 0, 1)
+							beam.burnAlpha = 0.92
 
-				local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
-				if not (rw and rh and rw > 0 and rh > 0) then
-						return nil
-				end
+							local handledCut = self:handleSawBodyCut({
+								index = index,
+								cutX = cutX,
+								cutY = cutY,
+								cutDistance = along,
+								cause = "laser",
+							})
 
-				local expandedX = rx - bodyRadius
-				local expandedY = ry - bodyRadius
-				local expandedW = rw + bodyRadius * 2
-				local expandedH = rh + bodyRadius * 2
-
-				local travelled = 0
-				local prevX, prevY = headX, headY
-
-				for index = 2, #trail do
-						local segment = trail[index]
-						local cx = segment and (segment.drawX or segment.x)
-						local cy = segment and (segment.drawY or segment.y)
-						if cx and cy then
-								local dx = cx - prevX
-								local dy = cy - prevY
-								local segLen = sqrt(dx * dx + dy * dy)
-
-								if segLen > 1e-6 then
-										local intersects, cutX, cutY, t = segmentRectIntersection(
-												prevX,
-												prevY,
-												cx,
-												cy,
-												expandedX,
-												expandedY,
-												expandedW,
-												expandedH
-										)
-
-										if intersects and t then
-												local along = travelled + segLen * t
-												if along > guardDistance then
-														beam.flashTimer = max(beam.flashTimer or 0, 1)
-														beam.burnAlpha = 0.92
-
-														local handledCut = self:handleSawBodyCut({
-																index = index,
-																cutX = cutX,
-																cutY = cutY,
-																cutDistance = along,
-																cause = "laser",
-														})
-
-														if handledCut then
-																return true
-														end
-												end
-										end
-								end
-
-								travelled = travelled + segLen
-								prevX, prevY = cx, cy
+							if handledCut then
+								return true
+							end
 						end
+					end
 				end
 
-				return nil
-		end)
+				travelled = travelled + segLen
+				prevX, prevY = cx, cy
+			end
+		end
 
-		return handled and true or false
+		return nil
+	end)
+
+	return handled and true or false
 end
 
 function Snake:checkSawBodyCollision()
-		if isDead then
-				return false
-		end
+	if isDead then
+		return false
+	end
 
 	if not (trail and #trail > 2) then
 		return false
@@ -4131,7 +4131,7 @@ function Snake:checkSawBodyCollision()
 					if cx and cy then
 						local dx = cx - prevX
 						local dy = cy - prevY
-												local segLen = sqrt(dx * dx + dy * dy)
+						local segLen = sqrt(dx * dx + dy * dy)
 						local minX = min(prevX, cx) - bodyRadius
 						local minY = min(prevY, cy) - bodyRadius
 						local maxX = max(prevX, cx) + bodyRadius
@@ -4218,11 +4218,11 @@ function Snake:draw()
 			for i = 1, #severedPieces do
 				local piece = severedPieces[i]
 				local trailData = piece and piece.trail
-								if trailData and #trailData > 1 then
-										local remaining = piece.timer or 0
-										local life = piece.life or SEVERED_TAIL_LIFE
-										local fadeDuration = piece.fadeDuration or SEVERED_TAIL_FADE_DURATION
-										local fade = 1
+				if trailData and #trailData > 1 then
+					local remaining = piece.timer or 0
+					local life = piece.life or SEVERED_TAIL_LIFE
+					local fadeDuration = piece.fadeDuration or SEVERED_TAIL_FADE_DURATION
+					local fade = 1
 
 					if fadeDuration and fadeDuration > 0 then
 						if remaining <= fadeDuration then
@@ -4238,45 +4238,45 @@ function Snake:draw()
 						overlayEffect = nil,
 					}
 
-										activeTrailForHead = trailData
-										SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getActiveTrailHead, 0, 0, nil, drawOptions)
-										activeTrailForHead = nil
-								end
-						end
+					activeTrailForHead = trailData
+					SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getActiveTrailHead, 0, 0, nil, drawOptions)
+					activeTrailForHead = nil
 				end
+			end
+		end
 
 		local shouldDrawFace = descendingHole == nil
 		local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
 		if not hideDescendingBody then
 			local drawOptions
-						if portalAnimation then
-								drawOptions = {
-										drawFace = shouldDrawFace,
-										portalAnimation = {
-												entryTrail = portalAnimation.entryTrail,
-												exitTrail = portalAnimation.exitTrail,
-												entryX = portalAnimation.entryX,
-												entryY = portalAnimation.entryY,
-												exitX = portalAnimation.exitX,
-												exitY = portalAnimation.exitY,
-												progress = portalAnimation.progress or 0,
-												duration = portalAnimation.duration or 0.3,
-												timer = portalAnimation.timer or 0,
-												entryHole = portalAnimation.entryHole,
-												exitHole = portalAnimation.exitHole,
-										},
-								}
-						else
-								drawOptions = shouldDrawFace
-						end
+			if portalAnimation then
+				drawOptions = {
+					drawFace = shouldDrawFace,
+					portalAnimation = {
+						entryTrail = portalAnimation.entryTrail,
+						exitTrail = portalAnimation.exitTrail,
+						entryX = portalAnimation.entryX,
+						entryY = portalAnimation.entryY,
+						exitX = portalAnimation.exitX,
+						exitY = portalAnimation.exitY,
+						progress = portalAnimation.progress or 0,
+						duration = portalAnimation.duration or 0.3,
+						timer = portalAnimation.timer or 0,
+						entryHole = portalAnimation.entryHole,
+						exitHole = portalAnimation.exitHole,
+					},
+				}
+			else
+				drawOptions = shouldDrawFace
+			end
 
-						currentHeadOwner = self
-						SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getOwnerHead, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
-						currentHeadOwner = nil
-				end
-
+			currentHeadOwner = self
+			SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getOwnerHead, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
+			currentHeadOwner = nil
 		end
+
+	end
 end
 
 function Snake:resetPosition()

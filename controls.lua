@@ -21,9 +21,9 @@ local gameplayKeyHandlers = {
 	lshift = function()
 		Snake:activateTimeDilation()
 	end,
-		rshift = function()
-				Snake:activateTimeDilation()
-		end,
+	rshift = function()
+		Snake:activateTimeDilation()
+	end,
 }
 
 local function togglePause(game)
