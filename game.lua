@@ -991,13 +991,14 @@ local function drawPlayfieldLayers(self, stateOverride)
 
 	Death:applyShake()
 
-	RenderLayers:withLayer("main", function()
-		Fruit:draw()
-		Rocks:draw()
-		Saws:draw()
-		Lasers:draw()
+        RenderLayers:withLayer("main", function()
+                Fruit:draw()
+                Rocks:draw()
+                Saws:draw()
+                Darts:draw()
+                Lasers:draw()
 
-		local isDescending = (renderState == "descending")
+                local isDescending = (renderState == "descending")
 		local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
 
 		if not isDescending and not shouldDrawExitAfterSnake then
