@@ -27,6 +27,7 @@ local Settings = require("settings")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
 local Lasers = require("lasers")
+local Darts = require("darts")
 local Death = require("death")
 local Floors = require("floors")
 local Shop = require("shop")
@@ -73,30 +74,32 @@ local RUN_ACTIVE_STATES = {
 }
 
 local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
-	Face,
-	Popup,
-	Fruit,
-	Rocks,
-	Lasers,
-	Saws,
-	Arena,
-	Particles,
+        Face,
+        Popup,
+        Fruit,
+        Rocks,
+        Lasers,
+        Darts,
+        Saws,
+        Arena,
+        Particles,
         Bombs,
-	UpgradeVisuals,
+        UpgradeVisuals,
 	Achievements,
 	FloatingText,
 	Score,
 })
 
 local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
-	Face,
-	Popup,
-	Arena,
-	Particles,
+        Face,
+        Popup,
+        Arena,
+        Darts,
+        Particles,
         Bombs,
-	UpgradeVisuals,
-	Achievements,
-	FloatingText,
+        UpgradeVisuals,
+        Achievements,
+        FloatingText,
 	Score,
 })
 

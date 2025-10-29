@@ -4,6 +4,7 @@ local SnakeDraw = require("snakedraw")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
+local Darts = require("darts")
 local UI = require("ui")
 local Fruit = require("fruit")
 local Particles = require("particles")
@@ -3702,7 +3703,7 @@ function Snake:loseSegments(count, options)
 
 	if (not options) or options.spawnParticles ~= false then
 		local burstColor = LOSE_SEGMENTS_DEFAULT_BURST_COLOR
-		if options and (options.cause == "saw" or options.cause == "laser") then
+                if options and (options.cause == "saw" or options.cause == "laser" or options.cause == "dart") then
 			burstColor = LOSE_SEGMENTS_SAW_BURST_COLOR
 		end
 
@@ -3984,9 +3985,9 @@ function Snake:handleSawBodyCut(context)
 end
 
 function Snake:checkLaserBodyCollision()
-	if isDead then
-		return false
-	end
+        if isDead then
+                return false
+        end
 
 	if not (trail and #trail > 2) then
 		return false
@@ -4084,13 +4085,106 @@ function Snake:checkLaserBodyCollision()
 		return nil
 	end)
 
-	return handled and true or false
+        return handled and true or false
+end
+
+function Snake:checkDartBodyCollision()
+        if isDead then
+                return false
+        end
+
+        if not (trail and #trail > 2) then
+                return false
+        end
+
+        if not (Darts and Darts.iterateShots) then
+                return false
+        end
+
+        local head = trail[1]
+        local headX = head and (head.drawX or head.x)
+        local headY = head and (head.drawY or head.y)
+        if not (headX and headY) then
+                return false
+        end
+
+        local guardDistance = SEGMENT_SPACING * 0.85
+        local bodyRadius = SEGMENT_SIZE * 0.45
+
+        local handled = Darts:iterateShots(function(emitter, rect)
+                if not (rect and emitter) then
+                        return nil
+                end
+
+                local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
+                if not (rw and rh and rw > 0 and rh > 0) then
+                        return nil
+                end
+
+                local expandedX = rx - bodyRadius
+                local expandedY = ry - bodyRadius
+                local expandedW = rw + bodyRadius * 2
+                local expandedH = rh + bodyRadius * 2
+
+                local travelled = 0
+                local prevX, prevY = headX, headY
+
+                for index = 2, #trail do
+                        local segment = trail[index]
+                        local cx = segment and (segment.drawX or segment.x)
+                        local cy = segment and (segment.drawY or segment.y)
+                        if cx and cy then
+                                local dx = cx - prevX
+                                local dy = cy - prevY
+                                local segLen = sqrt(dx * dx + dy * dy)
+
+                                if segLen > 1e-6 then
+                                        local intersects, cutX, cutY, t = segmentRectIntersection(
+                                                prevX,
+                                                prevY,
+                                                cx,
+                                                cy,
+                                                expandedX,
+                                                expandedY,
+                                                expandedW,
+                                                expandedH
+                                        )
+
+                                        if intersects and t then
+                                                local along = travelled + segLen * t
+                                                if along > guardDistance then
+                                                        emitter.flashTimer = max(emitter.flashTimer or 0, 1)
+
+                                                        local handledCut = self:handleSawBodyCut({
+                                                                index = index,
+                                                                cutX = cutX,
+                                                                cutY = cutY,
+                                                                cutDistance = along,
+                                                                cause = "dart",
+                                                        })
+
+                                                        if handledCut then
+                                                                return true
+                                                        end
+                                                end
+                                        end
+                                end
+
+                                travelled = travelled + segLen
+                                prevX, prevY = cx, cy
+                        end
+                end
+
+                return nil
+        end)
+
+        return handled and true or false
 end
 
 function Snake:checkSawBodyCollision()
-	if isDead then
-		return false
-	end
+        if isDead then
+                return false
+        end
 
 	if not (trail and #trail > 2) then
 		return false

@@ -4,6 +4,7 @@ local Fruit = require("fruit")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
+local Darts = require("darts")
 local Arena = require("arena")
 local Particles = require("particles")
 local Upgrades = require("upgrades")
@@ -125,19 +126,35 @@ local SAW_SHIELD_BURST_OPTIONS = {
 }
 
 local LASER_SHIELD_BURST_OPTIONS = {
-	count = 10,
-	speed = 80,
-	speedVariance = 30,
-	life = 0.25,
-	size = 2.5,
-	color = {1.0, 0.55, 0.25, 1},
-	spread = pi * 2,
-	angleJitter = pi,
-	drag = 3.4,
-	gravity = 120,
-	scaleMin = 0.45,
-	scaleVariance = 0.4,
-	fadeTo = 0,
+        count = 10,
+        speed = 80,
+        speedVariance = 30,
+        life = 0.25,
+        size = 2.5,
+        color = {1.0, 0.55, 0.25, 1},
+        spread = pi * 2,
+        angleJitter = pi,
+        drag = 3.4,
+        gravity = 120,
+        scaleMin = 0.45,
+        scaleVariance = 0.4,
+        fadeTo = 0,
+}
+
+local DART_SHIELD_BURST_OPTIONS = {
+        count = 9,
+        speed = 95,
+        speedVariance = 40,
+        life = 0.28,
+        size = 2.9,
+        color = {1.0, 0.74, 0.28, 1},
+        spread = pi * 2,
+        angleJitter = pi * 0.85,
+        drag = 3.6,
+        gravity = 140,
+        scaleMin = 0.5,
+        scaleVariance = 0.35,
+        fadeTo = 0.04,
 }
 
 local shieldStatMap = {
@@ -156,11 +173,16 @@ local shieldStatMap = {
 		run = "runShieldSawParries",
 		achievements = {"sawParry"},
 	},
-	laser = {
-		lifetime = "shieldSawParries",
-		run = "runShieldSawParries",
-		achievements = {"sawParry"},
-	},
+        laser = {
+                lifetime = "shieldSawParries",
+                run = "runShieldSawParries",
+                achievements = {"sawParry"},
+        },
+        dart = {
+                lifetime = "shieldSawParries",
+                run = "runShieldSawParries",
+                achievements = {"sawParry"},
+        },
 }
 
 local function recordShieldEvent(cause)
@@ -699,9 +721,9 @@ local function handleSawCollision(headX, headY)
 end
 
 local function handleLaserCollision(headX, headY)
-	if not Lasers or not Lasers.checkCollision then
-		return
-	end
+        if not Lasers or not Lasers.checkCollision then
+                return
+        end
 
 	if Snake:isHazardGraceActive() then
 		return
@@ -764,11 +786,86 @@ local function handleLaserCollision(headX, headY)
 		recordShieldEvent("laser")
 	end
 
-	return
+        return
+end
+
+local function handleDartCollision(headX, headY)
+        if not Darts or not Darts.checkCollision then
+                return
+        end
+
+        if Snake:isHazardGraceActive() then
+                return
+        end
+
+        local dartHit = Darts:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+        if not dartHit then
+                return
+        end
+
+        local shielded = Snake:consumeShield()
+        local survived = shielded
+
+        if not survived and Snake.consumeStoneSkinSawGrace then
+                survived = Snake:consumeStoneSkinSawGrace()
+        end
+
+        if not survived then
+                local pushX, pushY = 0, 0
+                if dartHit then
+                        local ix = dartHit.dartX or dartHit.lastImpactX or dartHit.endX or headX
+                        local iy = dartHit.dartY or dartHit.lastImpactY or dartHit.endY or headY
+                        local dx = (headX or ix) - ix
+                        local dy = (headY or iy) - iy
+                        local dist = sqrt(dx * dx + dy * dy)
+                        local pushDist = SEGMENT_SIZE * 0.85
+                        if dist > 1e-4 then
+                                pushX = (dx / dist) * pushDist
+                                pushY = (dy / dist) * pushDist
+                        else
+                                if dartHit.dir == "horizontal" then
+                                        pushX = -(dartHit.facing or 1) * pushDist
+                                else
+                                        pushY = -(dartHit.facing or 1) * pushDist
+                                end
+                        end
+                end
+
+                return "hit", "dart", {
+                        pushX = pushX,
+                        pushY = pushY,
+                        grace = DAMAGE_GRACE,
+                        shake = 0.28,
+                }
+        end
+
+        Darts:onShieldedHit(dartHit, headX, headY)
+
+        Particles:spawnBurst(headX, headY, DART_SHIELD_BURST_OPTIONS)
+
+        Audio:playSound("shield_saw")
+
+        if Snake.onShieldConsumed then
+                Snake:onShieldConsumed(headX, headY, "dart")
+        end
+
+        if Snake.chopTailByHazard then
+                Snake:chopTailByHazard("dart")
+        elseif Snake.chopTailBySaw then
+                Snake:chopTailBySaw()
+        end
+
+        Snake:beginHazardGrace()
+
+        if shielded then
+                recordShieldEvent("dart")
+        end
+
+        return
 end
 
 function Movement:reset()
-	Snake:resetPosition()
+        Snake:resetPosition()
 end
 
 function Movement:update(dt)
@@ -807,26 +904,38 @@ function Movement:update(dt)
 			return state, stateCause, stateContext
 		end
 
-		local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
-		if laserState then
-			return laserState, laserCause, laserContext
-		end
+                local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
+                if laserState then
+                        return laserState, laserCause, laserContext
+                end
 
-		local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
-		if sawState then
-			return sawState, sawCause, sawContext
-		end
+                local dartState, dartCause, dartContext = handleDartCollision(headX, headY)
+                if dartState then
+                        return dartState, dartCause, dartContext
+                end
 
-		if Snake.checkLaserBodyCollision then
-			local emitterCount = Lasers and Lasers.getEmitterCount and Lasers:getEmitterCount() or 0
-			if emitterCount > 0 then
-				Snake:checkLaserBodyCollision()
-			end
-		end
+                local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
+                if sawState then
+                        return sawState, sawCause, sawContext
+                end
 
-		if Snake.checkSawBodyCollision then
-			Snake:checkSawBodyCollision()
-		end
+                if Snake.checkLaserBodyCollision then
+                        local emitterCount = Lasers and Lasers.getEmitterCount and Lasers:getEmitterCount() or 0
+                        if emitterCount > 0 then
+                                Snake:checkLaserBodyCollision()
+                        end
+                end
+
+                if Snake.checkDartBodyCollision then
+                        local emitterCount = Darts and Darts.getEmitterCount and Darts:getEmitterCount() or 0
+                        if emitterCount > 0 then
+                                Snake:checkDartBodyCollision()
+                        end
+                end
+
+                if Snake.checkSawBodyCollision then
+                        Snake:checkSawBodyCollision()
+                end
 
 		if Fruit:checkCollisionWith(headX, headY) then
 			return "scored"
