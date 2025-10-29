@@ -1125,16 +1125,18 @@ local badgeDefinitions = {
 		fallback = {0.95, 0.80, 0.45, 1},
 		outlineFactor = 0.42,
 	},
-	defense = {
-		label = "Defense",
-		shape = "diamond",
-		colorKey = "snakeDefault",
-		fallback = {0.45, 0.85, 0.70, 1},
-	},
-	mobility = {
-		label = "Mobility",
-		shape = "triangle_up",
-		colorKey = "blueberryColor",
+        defense = {
+                label = "Defense",
+                shape = "diamond",
+                colorKey = "snakeDefault",
+                fallback = {0.45, 0.85, 0.70, 1},
+                cornerRadiusScale = 0.18,
+                cornerSegments = 6,
+        },
+        mobility = {
+                label = "Mobility",
+                shape = "triangle_up",
+                colorKey = "blueberryColor",
 		fallback = {0.55, 0.65, 0.95, 1},
 		cornerRadiusScale = 0.16,
 		cornerSegments = 6,
@@ -1153,12 +1155,14 @@ local badgeDefinitions = {
 		colorKey = "panelBorder",
 		fallback = {0.32, 0.50, 0.54, 1},
 	},
-	hazard = {
-		label = "Hazard",
-		shape = "hexagon",
-		colorKey = "appleColor",
-		fallback = {0.90, 0.45, 0.55, 1},
-	},
+        hazard = {
+                label = "Hazard",
+                shape = "hexagon",
+                colorKey = "appleColor",
+                fallback = {0.90, 0.45, 0.55, 1},
+                cornerRadiusScale = 0.14,
+                cornerSegments = 6,
+        },
 }
 
 local badgeTagAliases = {
@@ -1383,6 +1387,24 @@ local function drawPolygonShape(mode, cx, cy, size, sides, rotation, style, defa
         end
         local radius = size * radiusScale
 
+        local baseCornerRadius
+        if style then
+                if style.cornerRadius then
+                        baseCornerRadius = style.cornerRadius
+                elseif style.cornerRadiusScale then
+                        baseCornerRadius = radius * style.cornerRadiusScale
+                end
+        end
+
+        if baseCornerRadius and baseCornerRadius > 0 then
+                local segments = 4
+                if style and style.cornerSegments then
+                        segments = style.cornerSegments
+                end
+                drawRoundedRegularPolygon(mode, cx, cy, radius, sides, rotation, baseCornerRadius, segments)
+                return
+        end
+
         drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
 end
 
@@ -1398,20 +1420,15 @@ local badgeShapeDrawers = {
                 local half = size * 0.45
                 love.graphics.rectangle(mode, cx - half, cy - half, half * 2, half * 2)
         end,
-        diamond = function(mode, cx, cy, size)
-                local half = size * 0.38
-                love.graphics.push()
-                love.graphics.translate(cx, cy)
-                love.graphics.rotate(pi / 4)
-                love.graphics.rectangle(mode, -half, -half, half * 2, half * 2)
-                love.graphics.pop()
+        diamond = function(mode, cx, cy, size, style)
+                drawPolygonShape(mode, cx, cy, size, 4, pi / 4, style, 0.54)
         end,
         triangle_up = function(mode, cx, cy, size, style)
                 drawRoundedTriangle(mode, cx, cy, size + 12, -pi / 2, style)
         end,
-	triangle_down = function(mode, cx, cy, size, style)
-		drawRoundedTriangle(mode, cx, cy, size + 12, pi / 2, style)
-	end,
+        triangle_down = function(mode, cx, cy, size, style)
+                drawRoundedTriangle(mode, cx, cy, size + 12, pi / 2, style)
+        end,
         hexagon = function(mode, cx, cy, size, style)
                 drawPolygonShape(mode, cx, cy, size, 6, pi / 6, style, 0.48)
         end,
