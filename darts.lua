@@ -28,11 +28,12 @@ local TELEGRAPH_PULSE_INTENSITY = 0.65
 local FLASH_DECAY = 3.5
 local IMPACT_FLASH_DURATION = 0.32
 
-local BASE_EMITTER_COLOR = {0.22, 0.23, 0.28, 0.92}
-local BASE_ACCENT_COLOR = {1.0, 0.76, 0.32, 1.0}
+local BASE_EMITTER_COLOR = {0.32, 0.29, 0.22, 0.95}
+local BASE_ACCENT_COLOR = {0.93, 0.64, 0.28, 1.0}
 local TELEGRAPH_COLOR = {1.0, 0.88, 0.52, 0.85}
-local DART_BODY_COLOR = {0.98, 0.78, 0.22, 1.0}
-local DART_TIP_COLOR = {0.9, 0.42, 0.12, 1.0}
+local DART_BODY_COLOR = {0.86, 0.72, 0.38, 1.0}
+local DART_TIP_COLOR = {0.82, 0.33, 0.18, 1.0}
+local DART_TAIL_COLOR = {0.65, 0.47, 0.24, 1.0}
 
 local function clamp01(value)
         if value <= 0 then
@@ -58,13 +59,26 @@ local function releaseOccupancy(emitter)
         end
 end
 
+local function scaleColor(color, factor, alphaFactor)
+        if not color then
+                return {1, 1, 1, 1}
+        end
+
+        local r = clamp01((color[1] or 0) * factor)
+        local g = clamp01((color[2] or 0) * factor)
+        local b = clamp01((color[3] or 0) * factor)
+        local a = clamp01((color[4] or 1) * (alphaFactor or 1))
+        return {r, g, b, a}
+end
+
 local function getEmitterColors()
-        local body = Theme.dartBaseColor or Theme.laserBaseColor or BASE_EMITTER_COLOR
-        local accent = Theme.dartAccentColor or Theme.laserColor or BASE_ACCENT_COLOR
+        local body = Theme.dartBaseColor or BASE_EMITTER_COLOR
+        local accent = Theme.dartAccentColor or BASE_ACCENT_COLOR
         local telegraph = Theme.dartTelegraphColor or TELEGRAPH_COLOR
         local dartBody = Theme.dartBodyColor or DART_BODY_COLOR
         local dartTip = Theme.dartTipColor or DART_TIP_COLOR
-        return body, accent, telegraph, dartBody, dartTip
+        local dartTail = Theme.dartTailColor or DART_TAIL_COLOR
+        return body, accent, telegraph, dartBody, dartTip, dartTail
 end
 
 local function computeShotTargets(emitter)
@@ -440,13 +454,30 @@ local function drawEmitter(emitter)
         local baseX = (emitter.x or 0) - half
         local baseY = (emitter.y or 0) - half
 
-        love.graphics.setColor(bodyColor)
-        love.graphics.rectangle("fill", baseX, baseY, size, size, 5, 5)
+        love.graphics.push("all")
+
+        local housingColor = bodyColor
+        local insetColor = scaleColor(bodyColor, 0.72, 1)
+        love.graphics.setColor(housingColor)
+        love.graphics.rectangle("fill", baseX, baseY, size, size, 6, 6)
+
+        love.graphics.setColor(insetColor)
+        love.graphics.rectangle("fill", baseX + 3, baseY + 3, size - 6, size - 6, 5, 5)
+
+        local slotLength = size + 8
+        local slotThickness = size * 0.32
+        local slotColor = scaleColor(accentColor, 0.4, 0.75)
+        love.graphics.setColor(slotColor)
+        if emitter.dir == "horizontal" then
+                love.graphics.rectangle("fill", (emitter.x or 0) - slotLength * 0.5, (emitter.y or 0) - slotThickness * 0.5, slotLength, slotThickness, 4, 4)
+        else
+                love.graphics.rectangle("fill", (emitter.x or 0) - slotThickness * 0.5, (emitter.y or 0) - slotLength * 0.5, slotThickness, slotLength, 4, 4)
+        end
 
         local flash = emitter.flashTimer or 0
         if flash > 0 then
                 local pulse = clamp01(flash)
-                love.graphics.setColor(1, 1, 1, 0.5 * pulse)
+                love.graphics.setColor(1, 1, 1, 0.45 * pulse)
                 love.graphics.rectangle("line", baseX - 4, baseY - 4, size + 8, size + 8, 8, 8)
         end
 
@@ -455,12 +486,83 @@ local function drawEmitter(emitter)
                 local t = getTime()
                 local pulse = 0.6 + TELEGRAPH_PULSE_INTENSITY * sin(t * TELEGRAPH_PULSE_SPEED + (emitter.randomOffset or 0))
                 local alpha = clamp01(strength * (0.55 + 0.45 * pulse)) * (telegraphColor[4] or 1)
-                love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], alpha)
-                love.graphics.rectangle("fill", baseX - 6, baseY - 6, size + 12, size + 12, 8, 8)
+                local teleColor = {telegraphColor[1], telegraphColor[2], telegraphColor[3], alpha}
+                love.graphics.setColor(teleColor)
+                if emitter.dir == "horizontal" then
+                        love.graphics.rectangle("fill", (emitter.x or 0) - half - 8, baseY + half - 6, size + 16, 12, 6, 6)
+                else
+                        love.graphics.rectangle("fill", baseX + half - 6, (emitter.y or 0) - half - 8, 12, size + 16, 6, 6)
+                end
         end
 
         love.graphics.setColor(accentColor)
-        love.graphics.rectangle("line", baseX, baseY, size, size, 5, 5)
+        love.graphics.rectangle("line", baseX + 1, baseY + 1, size - 2, size - 2, 5, 5)
+        love.graphics.rectangle("line", baseX + 4, baseY + 4, size - 8, size - 8, 4, 4)
+
+        love.graphics.circle("fill", baseX + size * 0.28, baseY + size * 0.28, 1.5)
+        love.graphics.circle("fill", baseX + size * 0.72, baseY + size * 0.72, 1.5)
+
+        love.graphics.pop()
+end
+
+local function drawTelegraphPath(emitter)
+        if not (emitter and emitter.state == "telegraph") then
+                return
+        end
+
+        local _, accentColor, telegraphColor = getEmitterColors()
+        local strength = emitter.telegraphStrength or 0
+        if strength <= 0 then
+                return
+        end
+
+        local travel = emitter.travelDistance or 0
+        if travel <= 0.01 then
+                return
+        end
+
+        love.graphics.push("all")
+        local t = getTime()
+        local headAlpha = clamp01((telegraphColor[4] or 1) * strength)
+        love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], headAlpha * 0.65)
+        love.graphics.setLineWidth(3)
+        love.graphics.line(emitter.startX, emitter.startY, emitter.endX, emitter.endY)
+        love.graphics.setLineWidth(1)
+
+        local pulseOffset = (t * 55 + (emitter.randomOffset or 0)) % 18
+        local dx = emitter.endX - emitter.startX
+        local dy = emitter.endY - emitter.startY
+
+        local accentAlpha = clamp01((accentColor[4] or 1) * (0.45 + 0.55 * strength))
+        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], accentAlpha)
+        for distance = pulseOffset, travel, 18 do
+                local progress = distance / travel
+                local px = emitter.startX + dx * progress
+                local py = emitter.startY + dy * progress
+                if emitter.dir == "horizontal" then
+                        local length = 4 + strength * 5
+                        love.graphics.rectangle("fill", px - length * 0.5, py - 2, length, 4, 1, 1)
+                else
+                        local length = 4 + strength * 5
+                        love.graphics.rectangle("fill", px - 2, py - length * 0.5, 4, length, 1, 1)
+                end
+        end
+
+        love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], headAlpha)
+        local tipSize = 7 + strength * 6
+        if emitter.dir == "horizontal" then
+                local facing = emitter.facing or 1
+                local baseY = emitter.endY
+                local tipX = emitter.endX - facing * 2
+                love.graphics.polygon("fill", tipX, baseY, tipX - facing * tipSize, baseY - 5, tipX - facing * tipSize, baseY + 5)
+        else
+                local facing = emitter.facing or 1
+                local baseX = emitter.endX
+                local tipY = emitter.endY - facing * 2
+                love.graphics.polygon("fill", baseX, tipY, baseX - 5, tipY - facing * tipSize, baseX + 5, tipY - facing * tipSize)
+        end
+
+        love.graphics.pop()
 end
 
 local function drawDart(emitter)
@@ -468,36 +570,78 @@ local function drawDart(emitter)
                 return
         end
 
-        local _, _, _, bodyColor, tipColor = getEmitterColors()
+        local _, _, _, bodyColor, tipColor, tailColor = getEmitterColors()
         local rx, ry, rw, rh = emitter.shotRect[1], emitter.shotRect[2], emitter.shotRect[3], emitter.shotRect[4]
         if not (rx and ry and rw and rh) then
                 return
         end
 
         love.graphics.push("all")
-        love.graphics.setColor(bodyColor)
-        love.graphics.rectangle("fill", rx, ry, rw, rh, 4, 4)
 
-        love.graphics.setColor(tipColor)
         if emitter.dir == "horizontal" then
+                local shaftHeight = rh * 0.38
+                local shaftY = ry + (rh - shaftHeight) * 0.5
+                love.graphics.setColor(bodyColor)
+                love.graphics.rectangle("fill", rx, shaftY, rw, shaftHeight, 3, 3)
+
+                local highlight = scaleColor(bodyColor, 1.15, 0.85)
+                love.graphics.setColor(highlight)
+                love.graphics.rectangle("fill", rx, shaftY + shaftHeight * 0.18, rw, shaftHeight * 0.3, 3, 3)
+
+                local shadow = scaleColor(bodyColor, 0.65, 1)
+                love.graphics.setColor(shadow)
+                love.graphics.rectangle("fill", rx, shaftY + shaftHeight * 0.55, rw, shaftHeight * 0.35, 3, 3)
+
                 local facing = emitter.facing or 1
-                local tipX = (emitter.dartX or emitter.startX or 0) + facing * (rw * 0.5)
+                local tailLength = 8 + rw * 0.2
+                local tailCenter = (emitter.dartX or emitter.startX or 0) - facing * (rw * 0.5)
                 local baseY = ry + rh * 0.5
-                love.graphics.polygon("fill", tipX, baseY, tipX - facing * 10, baseY - rh * 0.5, tipX - facing * 10, baseY + rh * 0.5)
+                love.graphics.setColor(tailColor)
+                love.graphics.polygon("fill",
+                        tailCenter - facing * tailLength, baseY,
+                        tailCenter - facing * tailLength * 0.35, baseY - rh * 0.55,
+                        tailCenter - facing * tailLength * 0.35, baseY + rh * 0.55)
+
+                love.graphics.setColor(tipColor)
+                local tipX = (emitter.dartX or emitter.startX or 0) + facing * (rw * 0.5)
+                love.graphics.polygon("fill", tipX, baseY, tipX - facing * 10, baseY - shaftHeight * 1.1, tipX - facing * 10, baseY + shaftHeight * 1.1)
         else
+                local shaftWidth = rw * 0.38
+                local shaftX = rx + (rw - shaftWidth) * 0.5
+                love.graphics.setColor(bodyColor)
+                love.graphics.rectangle("fill", shaftX, ry, shaftWidth, rh, 3, 3)
+
+                local highlight = scaleColor(bodyColor, 1.15, 0.85)
+                love.graphics.setColor(highlight)
+                love.graphics.rectangle("fill", shaftX + shaftWidth * 0.18, ry, shaftWidth * 0.3, rh, 3, 3)
+
+                local shadow = scaleColor(bodyColor, 0.65, 1)
+                love.graphics.setColor(shadow)
+                love.graphics.rectangle("fill", shaftX + shaftWidth * 0.55, ry, shaftWidth * 0.35, rh, 3, 3)
+
                 local facing = emitter.facing or 1
-                local tipY = (emitter.dartY or emitter.startY or 0) + facing * (rh * 0.5)
+                local tailLength = 8 + rh * 0.2
+                local tailCenter = (emitter.dartY or emitter.startY or 0) - facing * (rh * 0.5)
                 local baseX = rx + rw * 0.5
-                love.graphics.polygon("fill", baseX, tipY, baseX - rw * 0.5, tipY - facing * 10, baseX + rw * 0.5, tipY - facing * 10)
+                love.graphics.setColor(tailColor)
+                love.graphics.polygon("fill",
+                        baseX, tailCenter - facing * tailLength,
+                        baseX - rw * 0.55, tailCenter - facing * tailLength * 0.35,
+                        baseX + rw * 0.55, tailCenter - facing * tailLength * 0.35)
+
+                love.graphics.setColor(tipColor)
+                local tipY = (emitter.dartY or emitter.startY or 0) + facing * (rh * 0.5)
+                love.graphics.polygon("fill", baseX, tipY, baseX - shaftWidth * 1.1, tipY - facing * 10, baseX + shaftWidth * 1.1, tipY - facing * 10)
         end
+
         love.graphics.pop()
 
         if emitter.impactTimer and emitter.impactTimer > 0 then
-                        local age = clamp01(1 - emitter.impactTimer / IMPACT_FLASH_DURATION)
-                        local radius = 10 + age * 20
-                        local alpha = clamp01(emitter.impactTimer / IMPACT_FLASH_DURATION)
-                        love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], 0.4 * alpha)
-                        love.graphics.circle("line", emitter.dartX or emitter.endX, emitter.dartY or emitter.endY, radius, 16)
+                local age = clamp01(1 - emitter.impactTimer / IMPACT_FLASH_DURATION)
+                local radius = 10 + age * 20
+                local alpha = clamp01(emitter.impactTimer / IMPACT_FLASH_DURATION)
+                love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], 0.4 * alpha)
+                love.graphics.circle("line", emitter.dartX or emitter.endX, emitter.dartY or emitter.endY, radius, 16)
         end
 end
 
@@ -509,6 +653,7 @@ function Darts:draw()
         for index = 1, #emitters do
                 local emitter = emitters[index]
                 drawEmitter(emitter)
+                drawTelegraphPath(emitter)
                 drawDart(emitter)
         end
 end
