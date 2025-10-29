@@ -1131,30 +1131,35 @@ local badgeDefinitions = {
                 shape = "diamond",
                 colorKey = "snakeDefault",
                 fallback = {0.45, 0.85, 0.70, 1},
+                cornerRadiusScale = 0.12,
         },
         mobility = {
                 label = "Mobility",
                 shape = "triangle_up",
                 colorKey = "blueberryColor",
                 fallback = {0.55, 0.65, 0.95, 1},
+                cornerRadiusScale = 0.12,
         },
         risk = {
                 label = "Risk",
                 shape = "triangle_down",
                 colorKey = "warningColor",
                 fallback = {0.92, 0.55, 0.40, 1},
+                cornerRadiusScale = 0.12,
         },
         utility = {
                 label = "Utility",
                 shape = "square",
                 colorKey = "panelBorder",
                 fallback = {0.32, 0.50, 0.54, 1},
+                cornerRadiusScale = 0.12,
         },
         hazard = {
                 label = "Hazard",
                 shape = "hexagon",
                 colorKey = "appleColor",
                 fallback = {0.90, 0.45, 0.55, 1},
+                cornerRadiusScale = 0.12,
         },
 }
 
