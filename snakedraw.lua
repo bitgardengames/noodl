@@ -652,14 +652,22 @@ local function finalizeBounds(bounds, half)
 end
 
 local function ensureSnakeCanvas(width, height)
-	if width <= 0 or height <= 0 then
-		return nil
-	end
+        if width <= 0 or height <= 0 then
+                return nil
+        end
 
-	if not snakeCanvas or snakeCanvas:getWidth() ~= width or snakeCanvas:getHeight() ~= height then
-		snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
-	end
-	return snakeCanvas
+        if not snakeCanvas then
+                snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
+        else
+                local currentWidth = snakeCanvas:getWidth()
+                local currentHeight = snakeCanvas:getHeight()
+                if width > currentWidth or height > currentHeight then
+                        local newWidth = max(width, currentWidth)
+                        local newHeight = max(height, currentHeight)
+                        snakeCanvas = love.graphics.newCanvas(newWidth, newHeight, {msaa = 8})
+                end
+        end
+        return snakeCanvas
 end
 
 
