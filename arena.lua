@@ -319,6 +319,13 @@ local Arena = {
 	_dimState = nil,
 }
 
+function Arena:invalidateBorderGeometry(clearBounds)
+	self.borderDirty = true
+	if clearBounds then
+		self._borderLastBounds = nil
+	end
+end
+
 local function calculateHeadLighting(arena, state)
 	local Snake = getModule("snake")
 	local headX, headY = nil, nil
@@ -778,8 +785,7 @@ function Arena:updateScreenBounds(sw, sh)
 		self:rebuildTileDecorations()
 	end
 
-	self.borderDirty = true
-	self._borderLastBounds = nil
+	self:invalidateBorderGeometry(true)
 end
 
 function Arena:getTilePosition(col, row)
@@ -837,6 +843,7 @@ function Arena:setFloorDecorations(floorNum, floorData)
 	if not floorNum and not floorData then
 		self._decorationConfig = nil
 		self._tileDecorations = nil
+		self:invalidateBorderGeometry()
 		return
 	end
 
@@ -852,6 +859,7 @@ function Arena:setFloorDecorations(floorNum, floorData)
 	}
 
 	self:rebuildTileDecorations()
+	self:invalidateBorderGeometry()
 end
 
 local directions = {
@@ -1535,7 +1543,7 @@ function Arena:drawBorder()
 			borderCanvas = canvas
 			self._borderCanvasSamples = samples
 			if replaced then
-				self.borderDirty = true
+				self:invalidateBorderGeometry()
 			end
 		else
 			useCanvas = false
@@ -1547,7 +1555,7 @@ function Arena:drawBorder()
 		if self.borderCanvas then
 			self.borderCanvas = nil
 			self._borderCanvasSamples = nil
-			self.borderDirty = true
+			self:invalidateBorderGeometry()
 		end
 	end
 
@@ -2063,7 +2071,6 @@ function Arena:triggerBorderFlare(strength, duration)
 	self.borderFlare = newStrength
 	self.borderFlareStrength = newStrength
 	self.borderFlareTimer = 0
-	self.borderDirty = true
 
 	if duration and duration > 0 then
 		self.borderFlareDuration = duration
