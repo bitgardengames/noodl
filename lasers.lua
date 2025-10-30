@@ -528,29 +528,33 @@ function Lasers:spawn(x, y, dir, options)
 	return beam
 end
 
+-- Returns a shallow copy of the active laser emitters.
+-- Prefer iterateEmitters for allocation-free iteration in hot paths.
 function Lasers:getEmitters()
-	local copies = {}
-	for index, beam in ipairs(emitters) do
-		copies[index] = beam
-	end
-	return copies
+        local copies = {}
+        for index, beam in ipairs(emitters) do
+                copies[index] = beam
+        end
+        return copies
 end
 
 function Lasers:getEmitterCount()
 	return #emitters
 end
 
+-- Iterates active laser emitters without allocating new tables.
+-- The callback receives (beam, index, emitters) and can return a non-nil value to stop.
 function Lasers:iterateEmitters(callback)
-	if type(callback) ~= "function" then
-		return
-	end
+        if type(callback) ~= "function" then
+                return
+        end
 
-	for index = 1, #emitters do
-		local result = callback(emitters[index], index)
-		if result ~= nil then
-			return result
-		end
-	end
+        for index = 1, #emitters do
+                local result = callback(emitters[index], index, emitters)
+                if result ~= nil then
+                        return result
+                end
+        end
 end
 
 function Lasers:stall(duration, options)
