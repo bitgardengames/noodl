@@ -700,7 +700,7 @@ function Menu:draw()
 		local targetBottom = oy - 30
 
 		local sawX = targetLeft + trackLengthWorld / 2
-		local sawY = targetBottom - slotThicknessWorld / 2
+                local sawY = targetBottom - slotThicknessWorld / 2 - 12
 
 		titleSaw:draw(sawX, sawY, sawScale)
 	end
