@@ -136,6 +136,30 @@ local function circleSegments(radius)
         return clamp(ceil(radius / 6), 12, 48)
 end
 
+local function updateScreenDimensions(self, width, height)
+        if width == nil or height == nil then
+                width = width or love.graphics.getWidth()
+                height = height or love.graphics.getHeight()
+        end
+
+        if width == nil or height == nil then
+                self.screenWidth = width
+                self.screenHeight = height
+                self.screenDiagonal = nil
+                return false
+        end
+
+        if width == self.screenWidth and height == self.screenHeight and self.screenDiagonal then
+                return false
+        end
+
+        self.screenWidth = width
+        self.screenHeight = height
+        self.screenDiagonal = sqrt(width * width + height * height)
+
+        return true
+end
+
 local function ensureTransitionTitleCanvas(self)
         local width = max(1, ceil(self.screenWidth or love.graphics.getWidth() or 1))
         local height = max(1, ceil(self.screenHeight or love.graphics.getHeight() or 1))
@@ -421,17 +445,21 @@ local function drawFeedbackOverlay(self)
 		love.graphics.pop()
 	end
 
-	local surgeTimer = state.surgeTimer or 0
-	local surgeDuration = state.surgeDuration or 1
-	local surgePeak = state.surgePeak or 0
-	if surgeTimer > 0 and surgePeak > 0 then
-		local progress = max(0, min(1, surgeTimer / surgeDuration))
-		local intensity = surgePeak * (progress ^ 0.8)
-		local expansion = 1 - progress
+        local surgeTimer = state.surgeTimer or 0
+        local surgeDuration = state.surgeDuration or 1
+        local surgePeak = state.surgePeak or 0
+        if surgeTimer > 0 and surgePeak > 0 then
+                local progress = max(0, min(1, surgeTimer / surgeDuration))
+                local intensity = surgePeak * (progress ^ 0.8)
+                local expansion = 1 - progress
 
-		love.graphics.push("all")
-		love.graphics.setBlendMode("add")
-		local radius = sqrt(screenW * screenW + screenH * screenH)
+                love.graphics.push("all")
+                love.graphics.setBlendMode("add")
+                local radius = self.screenDiagonal
+                if not radius then
+                        radius = sqrt(screenW * screenW + screenH * screenH)
+                        self.screenDiagonal = radius
+                end
                 love.graphics.setColor(1, 0.9, 0.5, 0.22 * intensity)
                 love.graphics.setLineWidth(2 + intensity * 6)
                 local surgeRingRadius = radius * (0.6 + expansion * 0.26)
@@ -900,7 +928,7 @@ function Game:load(options)
         self:invalidateTransitionTitleCache()
 
         Screen:update()
-        self.screenWidth, self.screenHeight = Screen:get()
+        updateScreenDimensions(self, Screen:get())
         Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
 
 	Score:load()
@@ -1600,10 +1628,10 @@ function Game:setupFloor(floorNum)
 end
 
 function Game:draw()
-	love.graphics.clear()
+        love.graphics.clear()
 
-	if Arena.drawBackdrop then
-		Arena:drawBackdrop(self.screenWidth, self.screenHeight)
+        if Arena.drawBackdrop then
+                Arena:drawBackdrop(self.screenWidth, self.screenHeight)
 	else
 		love.graphics.setColor(Theme.bgColor)
 		love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
@@ -1615,8 +1643,15 @@ function Game:draw()
 		return
 	end
 
-	drawPlayfieldLayers(self)
-	drawInterfaceLayers(self)
+        drawPlayfieldLayers(self)
+        drawInterfaceLayers(self)
+end
+
+function Game:resize(width, height)
+        if updateScreenDimensions(self, width, height) then
+                Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
+                self:invalidateTransitionTitleCache()
+        end
 end
 
 function Game:keypressed(key)
