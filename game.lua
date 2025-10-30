@@ -319,18 +319,19 @@ local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
 	Score,
 })
 
-local function cloneColor(color, fallback)
-	local source = color or fallback
+local function cloneColor(color, fallback, out)
+	local source = color or fallback or DEFAULT_IMPACT_RIPPLE_COLOR
 	if not source then
 		return nil
 	end
 
-	return {
-		source[1] or 1,
-		source[2] or 1,
-		source[3] or 1,
-		source[4] == nil and 1 or source[4],
-	}
+	out = out or {}
+	out[1] = source[1] or 1
+	out[2] = source[2] or 1
+	out[3] = source[3] or 1
+	out[4] = source[4] == nil and 1 or source[4]
+
+	return out
 end
 
 local function resetFeedbackState(self)
@@ -558,7 +559,7 @@ function Game:triggerImpactFeedback(strength, options)
 	impactRipple.x = rx
 	impactRipple.y = ry
 	impactRipple.baseRadius = (options and options.radius) or impactRipple.baseRadius or 54
-	impactRipple.color = cloneColor(options and options.color, {1, 0.42, 0.32, 1})
+	impactRipple.color = cloneColor(options and options.color, DEFAULT_IMPACT_RIPPLE_COLOR, impactRipple.color)
 	state.impactRipple = impactRipple
 
 	local hitStopStrength = 0.3 + strength * 0.35
