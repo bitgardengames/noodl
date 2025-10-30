@@ -1019,6 +1019,171 @@ local coordsCacheFrame = setmetatable({}, { __mode = "k" })
 local currentCoordsFrame = 0
 local emptyCoords = {}
 
+local segmentVectorCache = setmetatable({}, { __mode = "k" })
+local segmentVectorFrame = setmetatable({}, { __mode = "k" })
+
+local function buildSegmentVectors(trail)
+        if not trail then
+                return nil
+        end
+
+        local cached = segmentVectorCache[trail]
+        if currentCoordsFrame > 0 and segmentVectorFrame[trail] == currentCoordsFrame and cached then
+                return cached
+        end
+
+        local data = cached or {
+                posX = {},
+                posY = {},
+                dirX = {},
+                dirY = {},
+                perpX = {},
+                perpY = {},
+                len = {},
+                _lastCount = 0,
+        }
+
+        local posX = data.posX
+        local posY = data.posY
+        local dirX = data.dirX
+        local dirY = data.dirY
+        local perpX = data.perpX
+        local perpY = data.perpY
+        local len = data.len
+
+        local count = #trail
+        for i = 1, count do
+                local x, y = ptXY(trail[i])
+                posX[i] = x
+                posY[i] = y
+        end
+
+        for i = 1, count - 1 do
+                local x1, y1 = posX[i], posY[i]
+                local x2, y2 = posX[i + 1], posY[i + 1]
+                if x1 and y1 and x2 and y2 then
+                        local dx = x2 - x1
+                        local dy = y2 - y1
+                        local segLen = sqrt(dx * dx + dy * dy)
+                        len[i] = segLen
+                        if segLen > 1e-6 then
+                                local nx = dx / segLen
+                                local ny = dy / segLen
+                                dirX[i] = nx
+                                dirY[i] = ny
+                                perpX[i] = -ny
+                                perpY[i] = nx
+                        else
+                                dirX[i], dirY[i], perpX[i], perpY[i] = 0, 0, 0, 0
+                        end
+                else
+                        len[i] = 0
+                        dirX[i], dirY[i], perpX[i], perpY[i] = 0, 0, 0, 0
+                end
+        end
+
+        local previousCount = data._lastCount or 0
+        for i = count + 1, previousCount do
+                posX[i], posY[i], dirX[i], dirY[i], perpX[i], perpY[i], len[i] = nil, nil, nil, nil, nil, nil, nil
+        end
+
+        if count >= 1 then
+                dirX[count], dirY[count], perpX[count], perpY[count], len[count] = nil, nil, nil, nil, nil
+        end
+
+        data._lastCount = count
+        segmentVectorCache[trail] = data
+        segmentVectorFrame[trail] = currentCoordsFrame
+
+        return data
+end
+
+local function resolveSegmentSpan(trail, vectors, startIndex, endIndex)
+        if not (trail and startIndex and endIndex) then
+                return nil
+        end
+
+        if endIndex < startIndex then
+                startIndex, endIndex = endIndex, startIndex
+        end
+
+        local posX, posY
+        if vectors then
+                posX = vectors.posX
+                posY = vectors.posY
+        end
+
+        local x1 = posX and posX[startIndex]
+        local y1 = posY and posY[startIndex]
+        local x2 = posX and posX[endIndex]
+        local y2 = posY and posY[endIndex]
+
+        if not (x1 and y1) then
+                local seg = trail[startIndex]
+                x1, y1 = ptXY(seg)
+        end
+
+        if not (x2 and y2) then
+                local seg = trail[endIndex]
+                x2, y2 = ptXY(seg)
+        end
+
+        if not (x1 and y1 and x2 and y2) then
+                return nil
+        end
+
+        if endIndex <= startIndex then
+                return x1, y1, x2, y2, 0, 0, 0, 0, 0
+        end
+
+        local dirX, dirY, perpX, perpY, length = 0, 0, 0, 0, 0
+
+        if vectors then
+                if endIndex == startIndex + 1 then
+                        dirX = vectors.dirX[startIndex] or 0
+                        dirY = vectors.dirY[startIndex] or 0
+                        perpX = vectors.perpX[startIndex] or 0
+                        perpY = vectors.perpY[startIndex] or 0
+                        length = vectors.len[startIndex] or 0
+                else
+                        local totalX, totalY = 0, 0
+                        for i = startIndex, endIndex - 1 do
+                                local segLen = vectors.len[i]
+                                if segLen and segLen > 0 then
+                                        local nx = vectors.dirX[i] or 0
+                                        local ny = vectors.dirY[i] or 0
+                                        totalX = totalX + nx * segLen
+                                        totalY = totalY + ny * segLen
+                                end
+                        end
+                        length = sqrt(totalX * totalX + totalY * totalY)
+                        if length > 1e-6 then
+                                dirX = totalX / length
+                                dirY = totalY / length
+                                perpX = -dirY
+                                perpY = dirX
+                        end
+                end
+        end
+
+        if length <= 0 then
+                local dx = x2 - x1
+                local dy = y2 - y1
+                length = sqrt(dx * dx + dy * dy)
+                if length > 1e-6 then
+                        dirX = dx / length
+                        dirY = dy / length
+                        perpX = -dirY
+                        perpY = dirX
+                end
+        elseif (perpX == 0 and perpY == 0) and (dirX ~= 0 or dirY ~= 0) then
+                perpX = -dirY
+                perpY = dirX
+        end
+
+        return x1, y1, x2, y2, dirX, dirY, perpX, perpY, length
+end
+
 -- polyline coords {x1,y1,x2,y2,...}
 local function buildCoords(trail)
 	if not trail then
@@ -1536,39 +1701,33 @@ local function drawSpectralHarvestEcho(trail, SEGMENT_SIZE, data)
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
-	for i = 1, coverage do
-		local seg = trail[i]
-		local nextSeg = trail[min(#trail, i + 1)]
-		local x, y = ptXY(seg)
-		if x and y then
-			local nx, ny = ptXY(nextSeg)
-			local dirX, dirY = 0, -1
-			if nx and ny then
-				dirX, dirY = nx - x, ny - y
-				local len = sqrt(dirX * dirX + dirY * dirY)
-				if len > 1e-4 then
-					dirX, dirY = dirX / len, dirY / len
-				else
-					dirX, dirY = 0, -1
-				end
-			end
+        local segmentVectors = buildSegmentVectors(trail)
+        for i = 1, coverage do
+                local nextIndex = min(#trail, i + 1)
+                local x1, y1, _, _, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
+                if x1 and y1 then
+                        if not dirX or not dirY or length < 1e-4 then
+                                dirX, dirY = 0, -1
+                                perpX, perpY = 1, 0
+                        elseif not (perpX and perpY) then
+                                perpX, perpY = -dirY, dirX
+                        end
 
-			local perpX, perpY = -dirY, dirX
-			local progress = (i - 1) / max(coverage - 1, 1)
-			local fade = 1 - progress * 0.6
-			local wave = sin(time * 3.6 + i * 0.8) * SEGMENT_SIZE * 0.12
-			local offset = SEGMENT_SIZE * (0.4 + 0.22 * intensity + 0.28 * echo * (1 - progress))
-			local gx = x + perpX * (offset + wave)
-			local gy = y + perpY * (offset - wave * 0.4)
+                        local progress = (i - 1) / max(coverage - 1, 1)
+                        local fade = 1 - progress * 0.6
+                        local wave = sin(time * 3.6 + i * 0.8) * SEGMENT_SIZE * 0.12
+                        local offset = SEGMENT_SIZE * (0.4 + 0.22 * intensity + 0.28 * echo * (1 - progress))
+                        local gx = x1 + perpX * (offset + wave)
+                        local gy = y1 + perpY * (offset - wave * 0.4)
 
-			love.graphics.setColor(0.66, 0.9, 1.0, (0.16 + 0.26 * intensity) * fade)
-			love.graphics.setLineWidth(1.4 + intensity * 1.1)
-			love.graphics.circle("line", gx, gy, SEGMENT_SIZE * (0.28 + 0.08 * echo), 18)
+                        love.graphics.setColor(0.66, 0.9, 1.0, (0.16 + 0.26 * intensity) * fade)
+                        love.graphics.setLineWidth(1.4 + intensity * 1.1)
+                        love.graphics.circle("line", gx, gy, SEGMENT_SIZE * (0.28 + 0.08 * echo), 18)
 
-			love.graphics.setColor(0.42, 0.72, 1.0, (0.1 + 0.22 * echo) * fade)
-			love.graphics.circle("fill", gx, gy, SEGMENT_SIZE * (0.16 + 0.05 * echo), 14)
-		end
-	end
+                        love.graphics.setColor(0.42, 0.72, 1.0, (0.1 + 0.22 * echo) * fade)
+                        love.graphics.circle("fill", gx, gy, SEGMENT_SIZE * (0.16 + 0.05 * echo), 14)
+                end
+        end
 
 	local head = trail[1]
 	local hx, hy = ptXY(head)
@@ -1678,33 +1837,31 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 	local time = data.time or Timer.getTime()
 	local stride = max(1, floor(#trail / (4 + stacks * 2)))
 
-	love.graphics.push("all")
-	love.graphics.setBlendMode("add")
+        love.graphics.push("all")
+        love.graphics.setBlendMode("add")
 
         local steps = 6
         local requiredPoints = (steps + 1) * 2
         zephyrPointCapacity = ensureBufferCapacity(zephyrPoints, zephyrPointCapacity, requiredPoints)
 
-        for i = 1, #trail - stride do
-                local seg = trail[i]
-                local nextSeg = trail[i + stride]
-                local x1, y1 = ptXY(seg)
-                local x2, y2 = ptXY(nextSeg)
-                if x1 and y1 and x2 and y2 then
-			local dirX, dirY = x2 - x1, y2 - y1
-			local len = sqrt(dirX * dirX + dirY * dirY)
-			if len < 1e-4 then
-				dirX, dirY = 0, -1
-			else
-				dirX, dirY = dirX / len, dirY / len
-			end
-			local perpX, perpY = -dirY, dirX
+        local segmentVectors = buildSegmentVectors(trail)
 
-			local progress = (i - 1) / max(#trail - stride, 1)
-			local sway = sin(time * (4.8 + stacks * 0.4) + i * 0.7) * SEGMENT_SIZE * (0.22 + 0.12 * intensity)
-			local crest = sin(time * 2.6 + i) * SEGMENT_SIZE * 0.1
-			local ctrlX = (x1 + x2) * 0.5 + perpX * sway
-			local ctrlY = (y1 + y2) * 0.5 + perpY * sway
+        for i = 1, #trail - stride do
+                local nextIndex = i + stride
+                local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
+                if x1 and y1 and x2 and y2 then
+                        if not dirX or not dirY or length < 1e-4 then
+                                dirX, dirY = 0, -1
+                                perpX, perpY = 1, 0
+                        elseif not (perpX and perpY) then
+                                perpX, perpY = -dirY, dirX
+                        end
+
+                        local progress = (i - 1) / max(#trail - stride, 1)
+                        local sway = sin(time * (4.8 + stacks * 0.4) + i * 0.7) * SEGMENT_SIZE * (0.22 + 0.12 * intensity)
+                        local crest = sin(time * 2.6 + i) * SEGMENT_SIZE * 0.1
+                        local ctrlX = (x1 + x2) * 0.5 + perpX * sway
+                        local ctrlY = (y1 + y2) * 0.5 + perpY * sway
 
                         local points = zephyrPoints
                         local pointIndex = 1
@@ -1808,20 +1965,19 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
         local boltPoints = (segments + 2) * 2
         stormBoltCapacity = ensureBufferCapacity(stormBolt, stormBoltCapacity, boltPoints)
 
+        local segmentVectors = buildSegmentVectors(trail)
+
         for i = 1, #trail - stride, stride do
-                local seg = trail[i]
-                local nextSeg = trail[i + stride]
-                local x1, y1 = ptXY(seg)
-                local x2, y2 = ptXY(nextSeg)
+                local nextIndex = i + stride
+                local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
                 if x1 and y1 and x2 and y2 then
-			local dirX, dirY = x2 - x1, y2 - y1
-			local len = sqrt(dirX * dirX + dirY * dirY)
-			if len < 1e-4 then
-				dirX, dirY = 0, 1
-			else
-				dirX, dirY = dirX / len, dirY / len
-			end
-			local perpX, perpY = -dirY, dirX
+                        if not dirX or not dirY or length < 1e-4 then
+                                dirX, dirY = 0, 1
+                                perpX, perpY = -1, 0
+                                length = 0
+                        elseif not (perpX and perpY) then
+                                perpX, perpY = -dirY, dirX
+                        end
 
                         local bolt = stormBolt
                         local boltCount = 2
@@ -1830,8 +1986,8 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
                         for segIdx = 1, segments do
                                 local t = segIdx / (segments + 1)
                                 local offset = sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
-                                local px = x1 + dirX * len * t + perpX * offset
-                                local py = y1 + dirY * len * t + perpY * offset
+                                local px = x1 + dirX * length * t + perpX * offset
+                                local py = y1 + dirY * length * t + perpY * offset
                                 boltCount = boltCount + 2
                                 bolt[boltCount - 1] = px
                                 bolt[boltCount] = py
@@ -1847,11 +2003,11 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
                         love.graphics.line(bolt, 1, boltCount)
 
                         local cx = (x1 + x2) * 0.5
-			local cy = (y1 + y2) * 0.5
-			love.graphics.setColor(0.9, 0.96, 1.0, 0.16 + 0.26 * intensity)
-			love.graphics.circle("fill", cx, cy, SEGMENT_SIZE * (0.16 + 0.08 * intensity))
-		end
-	end
+                        local cy = (y1 + y2) * 0.5
+                        love.graphics.setColor(0.9, 0.96, 1.0, 0.16 + 0.26 * intensity)
+                        love.graphics.circle("fill", cx, cy, SEGMENT_SIZE * (0.16 + 0.08 * intensity))
+                end
+        end
 
 	if primed then
 		local headSeg = trail[1]
@@ -1879,34 +2035,32 @@ local function drawTitanbloodSigils(trail, SEGMENT_SIZE, data)
 
 	love.graphics.push("all")
 
-	for i = 2, sigilCount + 1 do
-		local seg = trail[i]
-		local prev = trail[i - 1]
-		local x1, y1 = ptXY(seg)
-		local x0, y0 = ptXY(prev)
-		if x1 and y1 and x0 and y0 then
-			local dirX, dirY = x1 - x0, y1 - y0
-			local len = sqrt(dirX * dirX + dirY * dirY)
-			if len < 1e-4 then
-				dirX, dirY = 0, 1
-			else
-				dirX, dirY = dirX / len, dirY / len
-			end
-			local perpX, perpY = -dirY, dirX
-			local progress = (i - 2) / max(sigilCount - 1, 1)
-			local fade = 1 - progress * 0.6
-			local sway = sin(time * 2.6 + i * 0.8) * SEGMENT_SIZE * 0.12 * fade
-			local offset = SEGMENT_SIZE * (0.45 + 0.08 * min(stacks, 4))
-			local cx = x1 + perpX * (offset + sway)
-			local cy = y1 + perpY * (offset + sway)
+        local segmentVectors = buildSegmentVectors(trail)
 
-			love.graphics.push()
-			love.graphics.translate(cx, cy)
-			love.graphics.rotate(atan2(dirY, dirX))
+        for i = 2, sigilCount + 1 do
+                local prevIndex = i - 1
+                local xPrev, yPrev, xCurr, yCurr, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, prevIndex, i)
+                if xCurr and yCurr and xPrev and yPrev then
+                        if not dirX or not dirY or length < 1e-4 then
+                                dirX, dirY = 0, 1
+                                perpX, perpY = -1, 0
+                        elseif not (perpX and perpY) then
+                                perpX, perpY = -dirY, dirX
+                        end
+                        local progress = (i - 2) / max(sigilCount - 1, 1)
+                        local fade = 1 - progress * 0.6
+                        local sway = sin(time * 2.6 + i * 0.8) * SEGMENT_SIZE * 0.12 * fade
+                        local offset = SEGMENT_SIZE * (0.45 + 0.08 * min(stacks, 4))
+                        local cx = xCurr + perpX * (offset + sway)
+                        local cy = yCurr + perpY * (offset + sway)
 
-			local base = SEGMENT_SIZE * (0.28 + 0.08 * min(stacks, 3))
-			love.graphics.setColor(0.32, 0.02, 0.08, (0.16 + 0.24 * intensity) * fade)
-			love.graphics.ellipse("fill", 0, 0, base * 1.2, base * 0.55)
+                        love.graphics.push()
+                        love.graphics.translate(cx, cy)
+                        love.graphics.rotate(atan2(dirY, dirX))
+
+                        local base = SEGMENT_SIZE * (0.28 + 0.08 * min(stacks, 3))
+                        love.graphics.setColor(0.32, 0.02, 0.08, (0.16 + 0.24 * intensity) * fade)
+                        love.graphics.ellipse("fill", 0, 0, base * 1.2, base * 0.55)
 
                         local scale = base * (1.1 + 0.45 * intensity)
                         local vertices = titanSigilVertices
@@ -1921,13 +2075,13 @@ local function drawTitanbloodSigils(trail, SEGMENT_SIZE, data)
 
                         love.graphics.setColor(0.82, 0.14, 0.22, (0.22 + 0.3 * intensity) * fade)
                         love.graphics.polygon("fill", vertices)
-			love.graphics.setColor(1.0, 0.52, 0.4, (0.2 + 0.28 * intensity) * fade)
-			love.graphics.setLineWidth(1.4)
-			love.graphics.polygon("line", vertices)
+                        love.graphics.setColor(1.0, 0.52, 0.4, (0.2 + 0.28 * intensity) * fade)
+                        love.graphics.setLineWidth(1.4)
+                        love.graphics.polygon("line", vertices)
 
-			love.graphics.pop()
-		end
-	end
+                        love.graphics.pop()
+                end
+        end
 
 	love.graphics.pop()
 end
@@ -1945,46 +2099,39 @@ local function drawChronospiralWake(trail, SEGMENT_SIZE, data)
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
-	for i = 1, #trail, step do
-		local seg = trail[i]
-		local nextSeg = trail[min(#trail, i + 1)]
-		local px, py = ptXY(seg)
-		if px and py then
-			local nx, ny = ptXY(nextSeg)
-			local dirX, dirY = 0, -1
-			if nx and ny then
-				dirX, dirY = nx - px, ny - py
-				local len = sqrt(dirX * dirX + dirY * dirY)
-				if len > 1e-3 then
-					dirX, dirY = dirX / len, dirY / len
-				else
-					dirX, dirY = 0, -1
-				end
-			end
+        local segmentVectors = buildSegmentVectors(trail)
 
-			local angle = (atan2 and atan2(dirY, dirX)) or atan(dirY, dirX)
-			local progress = (i - 1) / max(#trail - 1, 1)
-			local baseRadius = SEGMENT_SIZE * (0.55 + 0.35 * intensity)
-			local fade = 1 - progress * 0.65
-			local swirl = spin * 1.25 + progress * pi * 1.6
+        for i = 1, #trail, step do
+                local nextIndex = min(#trail, i + 1)
+                local px, py, _, _, dirX, dirY = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
+                if px and py then
+                        if not dirX or not dirY or (dirX == 0 and dirY == 0) then
+                                dirX, dirY = 0, -1
+                        end
 
-			love.graphics.setLineWidth(1.2 + intensity * 1.2)
-			love.graphics.setColor(0.56, 0.82, 1.0, (0.14 + 0.28 * intensity) * fade)
-			love.graphics.circle("line", px, py, baseRadius)
+                        local angle = (atan2 and atan2(dirY, dirX)) or atan(dirY, dirX)
+                        local progress = (i - 1) / max(#trail - 1, 1)
+                        local baseRadius = SEGMENT_SIZE * (0.55 + 0.35 * intensity)
+                        local fade = 1 - progress * 0.65
+                        local swirl = spin * 1.25 + progress * pi * 1.6
 
-			love.graphics.setColor(0.84, 0.68, 1.0, (0.16 + 0.3 * intensity) * fade)
-			love.graphics.arc("line", "open", px, py, baseRadius * 1.15, swirl, swirl + pi * 0.35)
-			love.graphics.arc("line", "open", px, py, baseRadius * 0.85, swirl + pi, swirl + pi + pi * 0.3)
+                        love.graphics.setLineWidth(1.2 + intensity * 1.2)
+                        love.graphics.setColor(0.56, 0.82, 1.0, (0.14 + 0.28 * intensity) * fade)
+                        love.graphics.circle("line", px, py, baseRadius)
 
-			love.graphics.push()
-			love.graphics.translate(px, py)
-			love.graphics.rotate(angle)
-			local ribbon = baseRadius * (0.8 + 0.25 * sin(swirl * 1.4))
-			love.graphics.setColor(0.46, 0.78, 1.0, (0.12 + 0.22 * intensity) * fade)
-			love.graphics.rectangle("fill", -ribbon, -baseRadius * 0.22, ribbon * 2, baseRadius * 0.44)
-			love.graphics.pop()
-		end
-	end
+                        love.graphics.setColor(0.84, 0.68, 1.0, (0.16 + 0.3 * intensity) * fade)
+                        love.graphics.arc("line", "open", px, py, baseRadius * 1.15, swirl, swirl + pi * 0.35)
+                        love.graphics.arc("line", "open", px, py, baseRadius * 0.85, swirl + pi, swirl + pi + pi * 0.3)
+
+                        love.graphics.push()
+                        love.graphics.translate(px, py)
+                        love.graphics.rotate(angle)
+                        local ribbon = baseRadius * (0.8 + 0.25 * sin(swirl * 1.4))
+                        love.graphics.setColor(0.46, 0.78, 1.0, (0.12 + 0.22 * intensity) * fade)
+                        love.graphics.rectangle("fill", -ribbon, -baseRadius * 0.22, ribbon * 2, baseRadius * 0.44)
+                        love.graphics.pop()
+                end
+        end
 
 	local pathStep = max(1, floor(#trail / 24))
 	local coords = chronospiralCoords
@@ -2032,40 +2179,38 @@ local function drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, data)
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
-	for i = 1, orbCount do
-		local progress = (i - 0.5) / orbCount
-		local idxFloat = 1 + progress * max(#trail - 1, 1)
-		local index = floor(idxFloat)
-		local frac = idxFloat - index
-		local seg = trail[index]
-		local nextSeg = trail[min(#trail, index + 1)]
-		local px, py = ptXY(seg)
-		local nx, ny = ptXY(nextSeg)
-		if px and py and nx and ny then
-			local x = px + (nx - px) * frac
-			local y = py + (ny - py) * frac
-			local dirX, dirY = nx - px, ny - py
-			local len = sqrt(dirX * dirX + dirY * dirY)
-			if len < 1e-4 then
-				dirX, dirY = 0, 1
-			else
-				dirX, dirY = dirX / len, dirY / len
-			end
-			local perpX, perpY = -dirY, dirX
-			local swirl = pulse * 1.4 + progress * pi * 4
-			local offset = sin(swirl) * baseRadius * (0.52 + intensity * 0.4)
-			local drift = cos(swirl * 0.8) * baseRadius * 0.18
-			local ax = x + perpX * offset + dirX * drift
-			local ay = y + perpY * offset + dirY * drift
-			local fade = 1 - progress * 0.6
-			local orbRadius = SEGMENT_SIZE * (0.16 + 0.12 * intensity * fade)
+        local segmentVectors = buildSegmentVectors(trail)
 
-			love.graphics.setColor(0.32, 0.2, 0.52, 0.24 * intensity * fade)
-			love.graphics.circle("fill", ax, ay, orbRadius * 1.4)
-			love.graphics.setColor(0.68, 0.56, 0.94, 0.18 * intensity * fade)
-			love.graphics.circle("line", ax, ay, orbRadius * 1.9)
-		end
-	end
+        for i = 1, orbCount do
+                local progress = (i - 0.5) / orbCount
+                local idxFloat = 1 + progress * max(#trail - 1, 1)
+                local index = floor(idxFloat)
+                local frac = idxFloat - index
+                local nextIndex = min(#trail, index + 1)
+                local px, py, nx, ny, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, index, nextIndex)
+                if px and py and nx and ny then
+                        if not dirX or not dirY or length < 1e-4 then
+                                dirX, dirY = 0, 1
+                                perpX, perpY = -1, 0
+                        elseif not (perpX and perpY) then
+                                perpX, perpY = -dirY, dirX
+                        end
+                        local x = px + (nx - px) * frac
+                        local y = py + (ny - py) * frac
+                        local swirl = pulse * 1.4 + progress * pi * 4
+                        local offset = sin(swirl) * baseRadius * (0.52 + intensity * 0.4)
+                        local drift = cos(swirl * 0.8) * baseRadius * 0.18
+                        local ax = x + perpX * offset + dirX * drift
+                        local ay = y + perpY * offset + dirY * drift
+                        local fade = 1 - progress * 0.6
+                        local orbRadius = SEGMENT_SIZE * (0.16 + 0.12 * intensity * fade)
+
+                        love.graphics.setColor(0.32, 0.2, 0.52, 0.24 * intensity * fade)
+                        love.graphics.circle("fill", ax, ay, orbRadius * 1.4)
+                        love.graphics.setColor(0.68, 0.56, 0.94, 0.18 * intensity * fade)
+                        love.graphics.circle("line", ax, ay, orbRadius * 1.9)
+                end
+        end
 
 	love.graphics.pop()
 end
@@ -2082,80 +2227,74 @@ local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
 
 	local time = data.time or Timer.getTime()
 
-	love.graphics.push("all")
-	love.graphics.setBlendMode("add")
+        love.graphics.push("all")
+        love.graphics.setBlendMode("add")
 
-	local wingSegments = min(#trail - 1, 8 + charges * 3)
-	for i = 1, wingSegments do
-		local seg = trail[i]
-		local nextSeg = trail[i + 1]
-		local x1, y1 = ptXY(seg)
-		local x2, y2 = ptXY(nextSeg)
-		if x1 and y1 and x2 and y2 then
-			local dirX, dirY = x2 - x1, y2 - y1
-			local len = sqrt(dirX * dirX + dirY * dirY)
-			if len < 1e-4 then
-				dirX, dirY = 0, 1
-			else
-				dirX, dirY = dirX / len, dirY / len
-			end
-			local perpX, perpY = -dirY, dirX
-			local progress = (i - 1) / max(1, wingSegments - 1)
-			local fade = 1 - progress * 0.6
-			local width = SEGMENT_SIZE * (0.32 + 0.14 * heat + 0.06 * charges)
-			local length = SEGMENT_SIZE * (0.7 + 0.25 * heat + 0.1 * charges)
-			local flutter = sin(time * 7 + i * 0.55) * width * 0.35
-			local baseX = x1 - dirX * SEGMENT_SIZE * 0.25 + perpX * flutter
-			local baseY = y1 - dirY * SEGMENT_SIZE * 0.25 + perpY * flutter
-			local tipX = baseX + dirX * length
-			local tipY = baseY + dirY * length
-			local leftX = baseX + perpX * width
-			local leftY = baseY + perpY * width
-			local rightX = baseX - perpX * width
-			local rightY = baseY - perpY * width
+        local segmentVectors = buildSegmentVectors(trail)
 
-			love.graphics.setColor(1.0, 0.58, 0.22, (0.18 + 0.3 * heat) * fade)
-			love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
-			love.graphics.setColor(1.0, 0.82, 0.32, (0.12 + 0.22 * heat) * fade)
-			love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
-			love.graphics.setColor(1.0, 0.42, 0.12, (0.16 + 0.28 * heat) * fade)
-			love.graphics.circle("fill", tipX, tipY, SEGMENT_SIZE * (0.15 + 0.08 * heat))
-		end
-	end
+        local wingSegments = min(#trail - 1, 8 + charges * 3)
+        for i = 1, wingSegments do
+                local nextIndex = i + 1
+                local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
+                if x1 and y1 and x2 and y2 then
+                        if not dirX or not dirY or length < 1e-4 then
+                                dirX, dirY = 0, 1
+                                perpX, perpY = -1, 0
+                        elseif not (perpX and perpY) then
+                                perpX, perpY = -dirY, dirX
+                        end
+                        local progress = (i - 1) / max(1, wingSegments - 1)
+                        local fade = 1 - progress * 0.6
+                        local width = SEGMENT_SIZE * (0.32 + 0.14 * heat + 0.06 * charges)
+                        local lengthScale = SEGMENT_SIZE * (0.7 + 0.25 * heat + 0.1 * charges)
+                        local flutter = sin(time * 7 + i * 0.55) * width * 0.35
+                        local baseX = x1 - dirX * SEGMENT_SIZE * 0.25 + perpX * flutter
+                        local baseY = y1 - dirY * SEGMENT_SIZE * 0.25 + perpY * flutter
+                        local tipX = baseX + dirX * lengthScale
+                        local tipY = baseY + dirY * lengthScale
+                        local leftX = baseX + perpX * width
+                        local leftY = baseY + perpY * width
+                        local rightX = baseX - perpX * width
+                        local rightY = baseY - perpY * width
 
-	local emberCount = min(32, (#trail - 2) * 2 + charges * 4)
-	for i = 1, emberCount do
-		local progress = (i - 0.5) / emberCount
-		local idxFloat = 1 + progress * max(#trail - 2, 1)
-		local index = floor(idxFloat)
-		local frac = idxFloat - index
-		local seg = trail[index]
-		local nextSeg = trail[min(#trail, index + 1)]
-		local x1, y1 = ptXY(seg)
-		local x2, y2 = ptXY(nextSeg)
-		if x1 and y1 and x2 and y2 then
-			local x = x1 + (x2 - x1) * frac
-			local y = y1 + (y2 - y1) * frac
-			local dirX, dirY = x2 - x1, y2 - y1
-			local len = sqrt(dirX * dirX + dirY * dirY)
-			if len < 1e-4 then
-				dirX, dirY = 0, 1
-			else
-				dirX, dirY = dirX / len, dirY / len
-			end
-			local perpX, perpY = -dirY, dirX
-			local sway = sin(time * 5.2 + i) * SEGMENT_SIZE * 0.22 * heat
-			local lift = cos(time * 3.4 + i * 0.8) * SEGMENT_SIZE * 0.28
-			local fx = x + perpX * sway + dirX * lift * 0.25
-			local fy = y + perpY * sway + dirY * lift
-			local fade = 0.5 + 0.5 * (1 - progress)
+                        love.graphics.setColor(1.0, 0.58, 0.22, (0.18 + 0.3 * heat) * fade)
+                        love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
+                        love.graphics.setColor(1.0, 0.82, 0.32, (0.12 + 0.22 * heat) * fade)
+                        love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
+                        love.graphics.setColor(1.0, 0.42, 0.12, (0.16 + 0.28 * heat) * fade)
+                        love.graphics.circle("fill", tipX, tipY, SEGMENT_SIZE * (0.15 + 0.08 * heat))
+                end
+        end
 
-			love.graphics.setColor(1.0, 0.5, 0.16, (0.12 + 0.2 * heat) * fade)
-			love.graphics.circle("fill", fx, fy, SEGMENT_SIZE * (0.1 + 0.05 * heat * fade))
-			love.graphics.setColor(1.0, 0.86, 0.42, (0.08 + 0.16 * heat) * fade)
-			love.graphics.circle("line", fx, fy, SEGMENT_SIZE * (0.14 + 0.06 * heat))
-		end
-	end
+        local emberCount = min(32, (#trail - 2) * 2 + charges * 4)
+        for i = 1, emberCount do
+                local progress = (i - 0.5) / emberCount
+                local idxFloat = 1 + progress * max(#trail - 2, 1)
+                local index = floor(idxFloat)
+                local frac = idxFloat - index
+                local nextIndex = min(#trail, index + 1)
+                local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, index, nextIndex)
+                if x1 and y1 and x2 and y2 then
+                        if not dirX or not dirY or length < 1e-4 then
+                                dirX, dirY = 0, 1
+                                perpX, perpY = -1, 0
+                        elseif not (perpX and perpY) then
+                                perpX, perpY = -dirY, dirX
+                        end
+                        local x = x1 + (x2 - x1) * frac
+                        local y = y1 + (y2 - y1) * frac
+                        local sway = sin(time * 5.2 + i) * SEGMENT_SIZE * 0.22 * heat
+                        local lift = cos(time * 3.4 + i * 0.8) * SEGMENT_SIZE * 0.28
+                        local fx = x + perpX * sway + dirX * lift * 0.25
+                        local fy = y + perpY * sway + dirY * lift
+                        local fade = 0.5 + 0.5 * (1 - progress)
+
+                        love.graphics.setColor(1.0, 0.5, 0.16, (0.12 + 0.2 * heat) * fade)
+                        love.graphics.circle("fill", fx, fy, SEGMENT_SIZE * (0.1 + 0.05 * heat * fade))
+                        love.graphics.setColor(1.0, 0.86, 0.42, (0.08 + 0.16 * heat) * fade)
+                        love.graphics.circle("line", fx, fy, SEGMENT_SIZE * (0.14 + 0.06 * heat))
+                end
+        end
 
 	local headSeg = trail[1]
 	local hx, hy = ptXY(headSeg)
@@ -2410,34 +2549,46 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 	local baseRadius = SEGMENT_SIZE * (0.85 + 0.3 * intensity)
 	drawSoftGlow(hx, hy, baseRadius * (1.35 + 0.25 * intensity), 1, 0.78, 0.32, 0.25 + 0.35 * intensity)
 
-	local dirX, dirY = 0, -1
-	local head = trail and trail[1]
-	if head and (head.dirX or head.dirY) then
-		dirX = head.dirX or dirX
-		dirY = head.dirY or dirY
-	end
+        local dirX, dirY = 0, -1
+        local head = trail and trail[1]
+        if head and (head.dirX or head.dirY) then
+                dirX = head.dirX or dirX
+                dirY = head.dirY or dirY
+        end
 
-	local nextSeg = trail and trail[2]
-	if head and nextSeg then
-		local hx1, hy1 = ptXY(head)
-		local hx2, hy2 = ptXY(nextSeg)
-		if hx1 and hy1 and hx2 and hy2 then
-			local dx, dy = hx2 - hx1, hy2 - hy1
-			if dx ~= 0 or dy ~= 0 then
-				dirX, dirY = dx, dy
-			end
-		end
-	end
+        local segmentVectors = buildSegmentVectors(trail)
+        local nextIndex = trail and #trail >= 2 and 2 or 1
+        local length
+        if head and nextIndex and nextIndex > 0 then
+                local hx1, hy1, hx2, hy2, cachedDirX, cachedDirY, _, _, segLen = resolveSegmentSpan(trail, segmentVectors, 1, nextIndex)
+                if hx1 and hy1 and hx2 and hy2 then
+                        if cachedDirX and cachedDirY and segLen and segLen > 1e-4 then
+                                dirX, dirY = cachedDirX, cachedDirY
+                                length = segLen
+                        else
+                                local dx, dy = hx2 - hx1, hy2 - hy1
+                                if dx ~= 0 or dy ~= 0 then
+                                        local len = sqrt(dx * dx + dy * dy)
+                                        if len > 1e-4 then
+                                                dirX, dirY = dx / len, dy / len
+                                                length = len
+                                        end
+                                end
+                        end
+                end
+        end
 
-	local length = sqrt(dirX * dirX + dirY * dirY)
-	if length > 1e-4 then
-		dirX, dirY = dirX / length, dirY / length
-	end
+        if not length then
+                local norm = sqrt(dirX * dirX + dirY * dirY)
+                if norm > 1e-4 then
+                        dirX, dirY = dirX / norm, dirY / norm
+                end
+        end
 
-	local angle
-	if atan2 then
-		angle = atan2(dirY, dirX)
-	else
+        local angle
+        if atan2 then
+                angle = atan2(dirY, dirX)
+        else
 		angle = atan(dirY, dirX)
 	end
 
