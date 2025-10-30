@@ -893,6 +893,17 @@ function Movement:update(dt)
 		end
 
 		local headX, headY = Snake:getHead()
+		local hazardGraceActive = Snake.isHazardGraceActive and Snake:isHazardGraceActive() or false
+
+		local laserEmitterCount = Lasers and Lasers.getEmitterCount and Lasers:getEmitterCount() or 0
+		local dartEmitterCount = Darts and Darts.getEmitterCount and Darts:getEmitterCount() or 0
+		local sawCount = 0
+		if Saws and Saws.getAll then
+			local allSaws = Saws:getAll()
+			if allSaws then
+				sawCount = #allSaws
+			end
+		end
 
 		local wallCause, wallContext
 		headX, headY, wallCause, wallContext = handleWallCollision(headX, headY)
@@ -905,38 +916,38 @@ function Movement:update(dt)
 			return state, stateCause, stateContext
 		end
 
-                local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
-                if laserState then
-                        return laserState, laserCause, laserContext
-                end
+		if not hazardGraceActive and laserEmitterCount > 0 then
+			local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
+			if laserState then
+				return laserState, laserCause, laserContext
+			end
+		end
 
-                local dartState, dartCause, dartContext = handleDartCollision(headX, headY)
-                if dartState then
-                        return dartState, dartCause, dartContext
-                end
+		if not hazardGraceActive and dartEmitterCount > 0 then
+			local dartState, dartCause, dartContext = handleDartCollision(headX, headY)
+			if dartState then
+				return dartState, dartCause, dartContext
+			end
+		end
 
-                local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
-                if sawState then
-                        return sawState, sawCause, sawContext
-                end
+		if not hazardGraceActive and sawCount > 0 then
+			local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
+			if sawState then
+				return sawState, sawCause, sawContext
+			end
+		end
 
-                if Snake.checkLaserBodyCollision then
-                        local emitterCount = Lasers and Lasers.getEmitterCount and Lasers:getEmitterCount() or 0
-                        if emitterCount > 0 then
-                                Snake:checkLaserBodyCollision()
-                        end
-                end
+		if Snake.checkLaserBodyCollision and not hazardGraceActive and laserEmitterCount > 0 then
+			Snake:checkLaserBodyCollision()
+		end
 
-                if Snake.checkDartBodyCollision then
-                        local emitterCount = Darts and Darts.getEmitterCount and Darts:getEmitterCount() or 0
-                        if emitterCount > 0 then
-                                Snake:checkDartBodyCollision()
-                        end
-                end
+		if Snake.checkDartBodyCollision and not hazardGraceActive and dartEmitterCount > 0 then
+			Snake:checkDartBodyCollision()
+		end
 
-                if Snake.checkSawBodyCollision then
-                        Snake:checkSawBodyCollision()
-                end
+		if Snake.checkSawBodyCollision and not hazardGraceActive and sawCount > 0 then
+			Snake:checkSawBodyCollision()
+		end
 
 		if Fruit:checkCollisionWith(headX, headY) then
 			return "scored"
