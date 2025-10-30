@@ -217,7 +217,7 @@ function Face:update(dt)
 		self.savedState = self.state
 		self.state = "blink"
 		self.timer = 0.1   -- keep blink visible for 0.1s
-		self.blinkCooldown = love.math.random(2, 4)
+		self.blinkCooldown = love.math.random(3.5, 5.5)
 	end
 end
 
