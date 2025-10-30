@@ -206,23 +206,23 @@ function Tooltip:draw()
 	or (self.cachedPaddingX ~= paddingX)
 	or (self.cachedPaddingY ~= paddingY)
 
-	local lines, lineCount, lineHeight, textHeight, measuredWidth, boxWidth, boxHeight
+        local lines, lineCount, lineHeight, textHeight, measuredWidth, boxWidth, boxHeight
 
-	if needsLayout or not self.cachedLines then
-		local _, wrappedLines = computeWrap(font, text, maxWidth)
-		lines = wrappedLines
-		lineCount = max(1, #lines)
-		lineHeight = font:getHeight()
-		textHeight = lineCount * lineHeight
+        if needsLayout or not self.cachedLines then
+                local textWidth, wrappedLines = computeWrap(font, text, maxWidth)
+                lines = wrappedLines
+                lineCount = max(1, #lines)
+                lineHeight = font:getHeight()
+                textHeight = lineCount * lineHeight
 
-		measuredWidth = 0
-		for i = 1, lineCount do
-			measuredWidth = max(measuredWidth, font:getWidth(lines[i]))
-		end
+                measuredWidth = textWidth
+                if not measuredWidth or measuredWidth <= 0 then
+                        measuredWidth = font:getWidth(text)
+                end
 
-		boxWidth = min(maxWidth, measuredWidth) + paddingX * 2
-		boxWidth = max(boxWidth, paddingX * 2 + 12)
-		boxHeight = textHeight + paddingY * 2
+                boxWidth = min(maxWidth, measuredWidth) + paddingX * 2
+                boxWidth = max(boxWidth, paddingX * 2 + 12)
+                boxHeight = textHeight + paddingY * 2
 
 		self.lastFont = font
 		self.cachedText = text
