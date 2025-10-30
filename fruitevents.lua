@@ -49,7 +49,12 @@ local comboState = {
 	baseWindow = DEFAULT_COMBO_WINDOW,
 	baseOverride = DEFAULT_COMBO_WINDOW,
 	best = 0,
+	windowDirty = true,
 }
+
+local function markComboWindowDirty()
+	comboState.windowDirty = true
+end
 
 Achievements:registerStateProvider(function()
 	return {
@@ -245,9 +250,30 @@ local function getBaseWindow()
 end
 
 local function updateComboWindow()
-	comboState.baseWindow = getBaseWindow()
-	comboState.window = max(0.75, comboState.baseWindow)
-	comboState.timer = min(comboState.timer or 0, comboState.window)
+        if not comboState.windowDirty then
+                return
+        end
+
+        comboState.baseWindow = getBaseWindow()
+        comboState.window = max(0.75, comboState.baseWindow)
+        comboState.timer = min(comboState.timer or 0, comboState.window)
+        comboState.windowDirty = false
+end
+
+if Upgrades and Upgrades.addEventHandler then
+        Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
+                if runState and runState.effects and (runState.effects.comboWindowBonus or 0) ~= 0 then
+                        markComboWindowDirty()
+                        return
+                end
+
+                if not data or not data.upgrade then return end
+
+                local effects = data.upgrade.effects
+                if effects and (effects.comboWindowBonus or 0) ~= 0 then
+                        markComboWindowDirty()
+                end
+        end)
 end
 
 local function syncComboToUI()
@@ -279,7 +305,10 @@ local function applyComboReward(x, y)
                 timer = comboState.timer or 0,
                 window = comboState.window or DEFAULT_COMBO_WINDOW,
         })
-        updateComboWindow()
+        markComboWindowDirty()
+        if comboState.windowDirty then
+                updateComboWindow()
+        end
         syncComboToUI()
 
 	if comboCount < 2 then
@@ -408,23 +437,31 @@ function FruitEvents.reset()
         comboState.baseWindow = DEFAULT_COMBO_WINDOW
         comboState.window = DEFAULT_COMBO_WINDOW
         comboState.best = 0
-        updateComboWindow()
+        markComboWindowDirty()
+        if comboState.windowDirty then
+                updateComboWindow()
+        end
         syncComboToUI()
         Shaders.notify("comboLost", {reason = "reset"})
         resetDragonfruitBloomState()
 end
 
 function FruitEvents.update(dt)
-        updateComboWindow()
+        if comboState.windowDirty then
+                updateComboWindow()
+        end
         if comboState.timer > 0 then
                 comboState.timer = max(0, comboState.timer - dt)
 
                 if comboState.timer == 0 then
                         comboState.count = 0
                         Shaders.notify("comboLost", {reason = "timeout"})
+                        markComboWindowDirty()
                 end
 
-                updateComboWindow()
+                if comboState.windowDirty then
+                        updateComboWindow()
+                end
                 syncComboToUI()
         end
 
@@ -437,9 +474,13 @@ end
 
 function FruitEvents.boostComboTimer(amount)
         if not amount or amount <= 0 then return end
-        updateComboWindow()
+        if comboState.windowDirty then
+                updateComboWindow()
+        end
         comboState.timer = min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
-        updateComboWindow()
+        if comboState.windowDirty then
+                updateComboWindow()
+        end
         syncComboToUI()
 	if (comboState.count or 0) >= 2 then
 		Shaders.notify("specialEvent", {
