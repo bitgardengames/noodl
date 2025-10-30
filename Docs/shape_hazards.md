@@ -20,3 +20,7 @@ This catalog documents every active hazard currently deployed in the arena. Each
 - **Environmental Interactions:** Laser beams extend until they strike a wall, rock, or other solid hazard. They can trigger crystal switches and ignite combustible props if the beam rests on them long enough.
 - **Snake Interaction:** The emitter tile is safe to pass when the beam is disabled. Crossing an active beam is fatal to the snake head and any body segment that intersects the path, encouraging players to time movement with the emitter’s cycle.
 
+## Hazard Grace QA
+- Trigger hazard grace by parrying a laser or saw, then remain inside overlapping beams or tracks to confirm no head or body collisions register while the grace indicator is active.
+- Visit a floor configuration that spawns zero lasers, darts, or saws and verify no hazard collision audio or hit flashes trigger while moving; this guards against regressions when hazard emitters are absent.
+- Repeat the above in a debug or practice session after reloading the run to make sure emitter counts reset correctly between steps.
