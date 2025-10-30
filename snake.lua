@@ -52,25 +52,45 @@ local headCellBuffer = {}
 local snakeBodyOccupancy = {}
 
 local recentlyVacatedCells = {}
+local recentlyVacatedLookup = {}
 local recentlyVacatedCount = 0
+
+local function recentlyVacatedKey(col, row)
+        if not (col and row) then
+                return nil
+        end
+
+        return col .. ":" .. row
+end
 
 local trailLength = 0
 
 local function clearRecentlyVacatedCells()
-	if recentlyVacatedCount <= 0 then
-		recentlyVacatedCount = 0
-		return
-	end
+        if recentlyVacatedCount <= 0 then
+                recentlyVacatedCount = 0
+                for key in pairs(recentlyVacatedLookup) do
+                        recentlyVacatedLookup[key] = nil
+                end
+                return
+        end
 
-	for i = 1, recentlyVacatedCount do
-		local cell = recentlyVacatedCells[i]
-		if cell then
-			cell[1] = nil
-			cell[2] = nil
-		end
-	end
+        for i = 1, recentlyVacatedCount do
+                local cell = recentlyVacatedCells[i]
+                if cell then
+                        local col, row = cell[1], cell[2]
+                        if col and row then
+                                local key = recentlyVacatedKey(col, row)
+                                if key then
+                                        recentlyVacatedLookup[key] = nil
+                                end
+                        end
 
-	recentlyVacatedCount = 0
+                        cell[1] = nil
+                        cell[2] = nil
+                end
+        end
+
+        recentlyVacatedCount = 0
 end
 
 local function markRecentlyVacatedCell(col, row)
@@ -78,17 +98,22 @@ local function markRecentlyVacatedCell(col, row)
 		return
 	end
 
-	local index = recentlyVacatedCount + 1
-	local cell = recentlyVacatedCells[index]
-	if cell then
-		cell[1] = col
-		cell[2] = row
-	else
-		cell = {col, row}
-		recentlyVacatedCells[index] = cell
-	end
+        local index = recentlyVacatedCount + 1
+        local cell = recentlyVacatedCells[index]
+        if cell then
+                cell[1] = col
+                cell[2] = row
+        else
+                cell = {col, row}
+                recentlyVacatedCells[index] = cell
+        end
 
-	recentlyVacatedCount = index
+        local key = recentlyVacatedKey(col, row)
+        if key then
+                recentlyVacatedLookup[key] = true
+        end
+
+        recentlyVacatedCount = index
 end
 
 local function wasRecentlyVacated(col, row)
@@ -96,14 +121,12 @@ local function wasRecentlyVacated(col, row)
 		return false
 	end
 
-	for i = 1, recentlyVacatedCount do
-		local cell = recentlyVacatedCells[i]
-		if cell and cell[1] == col and cell[2] == row then
-			return true
-		end
-	end
+        local key = recentlyVacatedKey(col, row)
+        if not key then
+                return false
+        end
 
-	return false
+        return recentlyVacatedLookup[key] or false
 end
 
 local TILE_COORD_EPSILON = 1e-9
