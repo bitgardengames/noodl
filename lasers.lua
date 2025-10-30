@@ -22,6 +22,13 @@ local stallTimer = 0
 local cachedRockLookup = nil
 local cachedRevision = nil
 
+local emitterBodyColorCache = nil
+local emitterAccentColorCache = nil
+local lastLaserBaseColorRef = nil
+local lastLaserColorRef = nil
+local lastLaserBaseColorComponents = nil
+local lastLaserColorComponents = nil
+
 Lasers.fireDurationMult = 1
 Lasers.fireDurationFlat = 0
 Lasers.chargeDurationMult = 1
@@ -153,11 +160,102 @@ local function applyPaletteOverride(beam)
 	end
 end
 
+local DEFAULT_EMITTER_BODY_COLOR = {0.18, 0.19, 0.24, 0.95}
+local DEFAULT_EMITTER_ACCENT_COLOR = {1, 0.32, 0.26, 1}
+local ACCENT_COMPONENT_FALLBACKS = {1, 0.38, 0.18, 1}
+
+local function computeBodyComponents()
+        local source = Theme.laserBaseColor
+        if type(source) == "table" then
+                return source[1], source[2], source[3], source[4], source
+        end
+
+        local defaults = DEFAULT_EMITTER_BODY_COLOR
+        return defaults[1], defaults[2], defaults[3], defaults[4], nil
+end
+
+local function computeAccentComponents()
+        local source = Theme.laserColor
+        local r
+        local g
+        local b
+        local a
+
+        if type(source) == "table" then
+                local fallbacks = ACCENT_COMPONENT_FALLBACKS
+                r = (source[1] ~= nil) and source[1] or fallbacks[1]
+                g = (source[2] ~= nil) and source[2] or fallbacks[2]
+                b = (source[3] ~= nil) and source[3] or fallbacks[3]
+                a = (source[4] ~= nil) and source[4] or fallbacks[4]
+                return r, g, b, 0.85, source
+        end
+
+        local defaults = DEFAULT_EMITTER_ACCENT_COLOR
+        r = defaults[1]
+        g = defaults[2]
+        b = defaults[3]
+        a = defaults[4]
+        return r, g, b, 0.85, nil
+end
+
+local function refreshEmitterColorCache(bodyR, bodyG, bodyB, bodyA, accentR, accentG, accentB, accentA, bodySourceRef, accentSourceRef)
+        emitterBodyColorCache = emitterBodyColorCache or {}
+        emitterAccentColorCache = emitterAccentColorCache or {}
+
+        emitterBodyColorCache[1] = bodyR
+        emitterBodyColorCache[2] = bodyG
+        emitterBodyColorCache[3] = bodyB
+        emitterBodyColorCache[4] = bodyA
+
+        emitterAccentColorCache[1] = accentR
+        emitterAccentColorCache[2] = accentG
+        emitterAccentColorCache[3] = accentB
+        emitterAccentColorCache[4] = accentA
+
+        lastLaserBaseColorComponents = lastLaserBaseColorComponents or {}
+        lastLaserBaseColorComponents[1] = bodyR
+        lastLaserBaseColorComponents[2] = bodyG
+        lastLaserBaseColorComponents[3] = bodyB
+        lastLaserBaseColorComponents[4] = bodyA
+
+        lastLaserColorComponents = lastLaserColorComponents or {}
+        lastLaserColorComponents[1] = accentR
+        lastLaserColorComponents[2] = accentG
+        lastLaserColorComponents[3] = accentB
+        lastLaserColorComponents[4] = accentA
+
+        lastLaserBaseColorRef = bodySourceRef
+        lastLaserColorRef = accentSourceRef
+end
+
+local function componentsMatch(components, r, g, b, a)
+        return components and
+                components[1] == r and
+                components[2] == g and
+                components[3] == b and
+                components[4] == a
+end
+
 local function getEmitterColors()
-	local body = Theme.laserBaseColor or {0.18, 0.19, 0.24, 0.95}
-	local accent = copyColor(Theme.laserColor or {1, 0.32, 0.26, 1})
-	accent[4] = 0.85
-	return body, accent
+        local bodyR, bodyG, bodyB, bodyA, bodySource = computeBodyComponents()
+        local accentR, accentG, accentB, accentA, accentSource = computeAccentComponents()
+
+        local needsRefresh = false
+        if not emitterBodyColorCache or not emitterAccentColorCache then
+                needsRefresh = true
+        else
+                if bodySource ~= lastLaserBaseColorRef or not componentsMatch(lastLaserBaseColorComponents, bodyR, bodyG, bodyB, bodyA) then
+                        needsRefresh = true
+                elseif accentSource ~= lastLaserColorRef or not componentsMatch(lastLaserColorComponents, accentR, accentG, accentB, accentA) then
+                        needsRefresh = true
+                end
+        end
+
+        if needsRefresh then
+                refreshEmitterColorCache(bodyR, bodyG, bodyB, bodyA, accentR, accentG, accentB, accentA, bodySource, accentSource)
+        end
+
+        return emitterBodyColorCache, emitterAccentColorCache
 end
 
 local function releaseOccupancy(beam)
@@ -453,18 +551,29 @@ local function getRockLookup()
 end
 
 function Lasers:reset()
-	for _, beam in ipairs(emitters) do
-		releaseOccupancy(beam)
-	end
+        for _, beam in ipairs(emitters) do
+                releaseOccupancy(beam)
+        end
         emitters = {}
 
         stallTimer = 0
         cachedRockLookup = nil
         cachedRevision = nil
 
+        Lasers.invalidateThemeCache()
+
         if not LASERS_ENABLED then
                 return
         end
+end
+
+function Lasers.invalidateThemeCache()
+        emitterBodyColorCache = nil
+        emitterAccentColorCache = nil
+        lastLaserBaseColorRef = nil
+        lastLaserColorRef = nil
+        lastLaserBaseColorComponents = nil
+        lastLaserColorComponents = nil
 end
 
 function Lasers:spawn(x, y, dir, options)
