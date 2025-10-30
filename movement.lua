@@ -671,8 +671,8 @@ local function handleRockCollision(headX, headY, headCol, headRow, rockRevision)
 	end
 end
 
-local function handleSawCollision(headX, headY)
-	if Snake:isHazardGraceActive() then
+local function handleSawCollision(headX, headY, hazardGraceActive)
+	if hazardGraceActive then
 		return
 	end
 
@@ -744,12 +744,12 @@ local function handleSawCollision(headX, headY)
 	return
 end
 
-local function handleLaserCollision(headX, headY)
+local function handleLaserCollision(headX, headY, hazardGraceActive)
         if not Lasers or not Lasers.checkCollision then
                 return
         end
 
-	if Snake:isHazardGraceActive() then
+	if hazardGraceActive then
 		return
 	end
 
@@ -813,14 +813,14 @@ local function handleLaserCollision(headX, headY)
         return
 end
 
-local function handleDartCollision(headX, headY)
+local function handleDartCollision(headX, headY, hazardGraceActive)
         if not Darts or not Darts.checkCollision then
                 return
         end
 
-        if Snake:isHazardGraceActive() then
-                return
-        end
+	if hazardGraceActive then
+		return
+	end
 
         local dartHit = Darts:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
         if not dartHit then
@@ -918,13 +918,23 @@ function Movement:update(dt)
 		local headX, headY = Snake:getHead()
 		local hazardGraceActive = Snake.isHazardGraceActive and Snake:isHazardGraceActive() or false
 
-		local laserEmitterCount = Lasers and Lasers.getEmitterCount and Lasers:getEmitterCount() or 0
-		local dartEmitterCount = Darts and Darts.getEmitterCount and Darts:getEmitterCount() or 0
+		local laserEmitterCount = 0
+		local dartEmitterCount = 0
 		local sawCount = 0
-		if Saws and Saws.getAll then
-			local allSaws = Saws:getAll()
-			if allSaws then
-				sawCount = #allSaws
+		if not hazardGraceActive then
+			if Lasers and Lasers.getEmitterCount then
+				laserEmitterCount = Lasers:getEmitterCount() or 0
+			end
+
+			if Darts and Darts.getEmitterCount then
+				dartEmitterCount = Darts:getEmitterCount() or 0
+			end
+
+			if Saws and Saws.getAll then
+				local allSaws = Saws:getAll()
+				if allSaws then
+					sawCount = #allSaws
+				end
 			end
 		end
 
@@ -946,21 +956,21 @@ function Movement:update(dt)
                 end
 
 		if not hazardGraceActive and laserEmitterCount > 0 then
-			local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
+			local laserState, laserCause, laserContext = handleLaserCollision(headX, headY, hazardGraceActive)
 			if laserState then
 				return laserState, laserCause, laserContext
 			end
 		end
 
 		if not hazardGraceActive and dartEmitterCount > 0 then
-			local dartState, dartCause, dartContext = handleDartCollision(headX, headY)
+			local dartState, dartCause, dartContext = handleDartCollision(headX, headY, hazardGraceActive)
 			if dartState then
 				return dartState, dartCause, dartContext
 			end
 		end
 
 		if not hazardGraceActive and sawCount > 0 then
-			local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
+			local sawState, sawCause, sawContext = handleSawCollision(headX, headY, hazardGraceActive)
 			if sawState then
 				return sawState, sawCause, sawContext
 			end
