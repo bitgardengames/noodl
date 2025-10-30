@@ -32,6 +32,8 @@ local zephyrPoints = {}
 local zephyrPointCapacity = 0
 local stormBolt = {}
 local stormBoltCapacity = 0
+local stormBoltCenters = {}
+local stormBoltCenterCapacity = 0
 local chronospiralCoords = {}
 local chronospiralCoordCapacity = 0
 local titanSigilVertices = {0, 0, 0, 0, 0, 0, 0, 0}
@@ -1967,6 +1969,18 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 
         local segmentVectors = buildSegmentVectors(trail)
 
+        local centers = stormBoltCenters
+        local centerCount = 0
+        local previousCenterCapacity = stormBoltCenterCapacity
+
+        local boltLineWidth = 2.2 + intensity * 1.2
+        local boltColorR, boltColorG, boltColorB, boltAlpha = 0.32, 0.68, 1.0, 0.2 + 0.32 * intensity
+        local flareColorR, flareColorG, flareColorB, flareAlpha = 0.9, 0.96, 1.0, 0.16 + 0.26 * intensity
+        local flareRadius = SEGMENT_SIZE * (0.16 + 0.08 * intensity)
+
+        love.graphics.setColor(boltColorR, boltColorG, boltColorB, boltAlpha)
+        love.graphics.setLineWidth(boltLineWidth)
+
         for i = 1, #trail - stride, stride do
                 local nextIndex = i + stride
                 local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
@@ -1998,19 +2012,35 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 
                         trimBuffer(bolt, boltCount, stormBoltCapacity)
 
-                        love.graphics.setColor(0.32, 0.68, 1.0, 0.2 + 0.32 * intensity)
-                        love.graphics.setLineWidth(2.2 + intensity * 1.2)
                         love.graphics.line(bolt, 1, boltCount)
 
                         local cx = (x1 + x2) * 0.5
                         local cy = (y1 + y2) * 0.5
-                        love.graphics.setColor(0.9, 0.96, 1.0, 0.16 + 0.26 * intensity)
-                        love.graphics.circle("fill", cx, cy, SEGMENT_SIZE * (0.16 + 0.08 * intensity))
+                        centerCount = centerCount + 1
+                        centers[centerCount] = cx
+                        centerCount = centerCount + 1
+                        centers[centerCount] = cy
                 end
         end
 
-	if primed then
-		local headSeg = trail[1]
+        for idx = centerCount + 1, previousCenterCapacity do
+                centers[idx] = nil
+        end
+        stormBoltCenterCapacity = centerCount
+
+        if centerCount >= 2 then
+                love.graphics.setColor(flareColorR, flareColorG, flareColorB, flareAlpha)
+                for idx = 1, centerCount, 2 do
+                        local cx = centers[idx]
+                        local cy = centers[idx + 1]
+                        if cx and cy then
+                                love.graphics.circle("fill", cx, cy, flareRadius)
+                        end
+                end
+        end
+
+        if primed then
+                local headSeg = trail[1]
 		local hx, hy = ptXY(headSeg)
 		if hx and hy then
 			love.graphics.setColor(0.38, 0.74, 1.0, 0.24 + 0.34 * intensity)
@@ -2101,6 +2131,9 @@ local function drawChronospiralWake(trail, SEGMENT_SIZE, data)
 
         local segmentVectors = buildSegmentVectors(trail)
 
+        local wakeLineWidth = 1.2 + intensity * 1.2
+        love.graphics.setLineWidth(wakeLineWidth)
+
         for i = 1, #trail, step do
                 local nextIndex = min(#trail, i + 1)
                 local px, py, _, _, dirX, dirY = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
@@ -2115,7 +2148,6 @@ local function drawChronospiralWake(trail, SEGMENT_SIZE, data)
                         local fade = 1 - progress * 0.65
                         local swirl = spin * 1.25 + progress * pi * 1.6
 
-                        love.graphics.setLineWidth(1.2 + intensity * 1.2)
                         love.graphics.setColor(0.56, 0.82, 1.0, (0.14 + 0.28 * intensity) * fade)
                         love.graphics.circle("line", px, py, baseRadius)
 
@@ -2622,15 +2654,15 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 		love.graphics.setBlendMode("alpha")
 	end
 
-	love.graphics.setColor(1, 0.68, 0.2, 0.22 + 0.4 * intensity)
-	local sparks = 6
-	for i = 1, sparks do
-		local offset = time * (data.active and 7 or 3.5) + (i / sparks) * pi * 2
-		local inner = baseRadius * 0.5
-		local outer = baseRadius * (1.1 + 0.1 * sin(time * 4 + i))
-		love.graphics.setLineWidth(1.25)
-		love.graphics.line(cos(offset) * inner, sin(offset) * inner, cos(offset) * outer, sin(offset) * outer)
-	end
+        love.graphics.setColor(1, 0.68, 0.2, 0.22 + 0.4 * intensity)
+        local sparks = 6
+        love.graphics.setLineWidth(1.25)
+        for i = 1, sparks do
+                local offset = time * (data.active and 7 or 3.5) + (i / sparks) * pi * 2
+                local inner = baseRadius * 0.5
+                local outer = baseRadius * (1.1 + 0.1 * sin(time * 4 + i))
+                love.graphics.line(cos(offset) * inner, sin(offset) * inner, cos(offset) * outer, sin(offset) * outer)
+        end
 
 	love.graphics.pop()
 end
