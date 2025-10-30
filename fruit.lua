@@ -603,7 +603,10 @@ local function drawFruitMain(data)
         if data.isActive and (data.idleSparkleCount or 0) > 0 then
                 local sparkles = data.idleSparkles
                 if sparkles then
-                        love.graphics.push("all")
+                        local prevBlendMode, prevAlphaMode = love.graphics.getBlendMode()
+                        local prevColor = { love.graphics.getColor() }
+                        local prevLineWidth = love.graphics.getLineWidth()
+
                         love.graphics.setBlendMode("add")
                         for i = 1, data.idleSparkleCount do
                                 local sparkle = sparkles[i]
@@ -621,7 +624,9 @@ local function drawFruitMain(data)
                                 love.graphics.setColor(1, 1, 1, alphaMul * 1.6)
                                 love.graphics.circle("line", px, py, glowSize * 0.9)
                         end
-                        love.graphics.pop()
+                        love.graphics.setBlendMode(prevBlendMode, prevAlphaMode)
+                        love.graphics.setColor(prevColor[1], prevColor[2], prevColor[3], prevColor[4])
+                        love.graphics.setLineWidth(prevLineWidth)
                 end
         end
 
