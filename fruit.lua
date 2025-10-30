@@ -17,15 +17,47 @@ local function markFruitWeightsDirty()
 	fruitWeightDirty = true
 end
 
+local highlightDefault = {1, 1, 1, 1}
+local defaultHighlightColor
+
+local function updateHighlightColor(out, color)
+        local r = min(1, color[1] * 1.2 + 0.08)
+        local g = min(1, color[2] * 1.2 + 0.08)
+        local b = min(1, color[3] * 1.2 + 0.08)
+        local a = (color[4] or 1) * 0.75
+        out[1], out[2], out[3], out[4] = r, g, b, a
+        return out
+end
+
+local function computeHighlightColor(color, out)
+        color = color or highlightDefault
+        out = out or {0, 0, 0, 0}
+        return updateHighlightColor(out, color)
+end
+
+local function refreshFruitHighlight(entry)
+        if not entry then
+                return nil
+        end
+
+        entry.highlightColor = computeHighlightColor(entry.color, entry.highlightColor)
+        return entry.highlightColor
+end
+
+defaultHighlightColor = computeHighlightColor(nil, {0, 0, 0, 0})
+
 local function attachFruitTypeMetatable(entry)
-	return setmetatable(entry, {
-		__newindex = function(t, key, value)
-			rawset(t, key, value)
-			if key == "weight" then
-				markFruitWeightsDirty()
-			end
-		end,
-	})
+        refreshFruitHighlight(entry)
+        return setmetatable(entry, {
+                __newindex = function(t, key, value)
+                        rawset(t, key, value)
+                        if key == "weight" then
+                                markFruitWeightsDirty()
+                        elseif key == "color" then
+                                refreshFruitHighlight(t)
+                        end
+                end,
+        })
 end
 
 local fruitTypes = {
@@ -129,28 +161,6 @@ local FADE_DURATION   = 0.20
 -- Fruit styling
 local SHADOW_OFFSET = 3
 local OUTLINE_SIZE = 3
-
-local highlightCache = setmetatable({}, { __mode = "k" })
-local highlightDefault = {1, 1, 1, 1}
-
-local function updateHighlightColor(out, color)
-	local r = min(1, color[1] * 1.2 + 0.08)
-	local g = min(1, color[2] * 1.2 + 0.08)
-	local b = min(1, color[3] * 1.2 + 0.08)
-	local a = (color[4] or 1) * 0.75
-	out[1], out[2], out[3], out[4] = r, g, b, a
-	return out
-end
-
-local function getHighlightColor(color)
-	color = color or highlightDefault
-	local cached = highlightCache[color]
-	if not cached then
-		cached = {0, 0, 0, 0}
-		highlightCache[color] = cached
-	end
-	return updateHighlightColor(cached, color)
-end
 
 -- State
 local active = {
@@ -437,7 +447,7 @@ function Fruit:update(dt)
 
 		active.sparkleTimer = (active.sparkleTimer or IDLE_SPARKLE_MAX_DELAY) - dt
 		if active.sparkleTimer <= 0 then
-			spawnIdleSparkle(active.x, active.y, getHighlightColor(active.type.color))
+			spawnIdleSparkle(active.x, active.y, (active.type and active.type.highlightColor) or defaultHighlightColor)
 			active.sparkleTimer = love.math.random(IDLE_SPARKLE_MIN_DELAY, IDLE_SPARKLE_MAX_DELAY)
 		end
 	else
@@ -480,7 +490,7 @@ function Fruit:checkCollisionWith(x, y, trail, rocks)
 		active.glowPulse = 1
 		idleSparkles = {}
 
-		local fxColor = getHighlightColor(active.type.color)
+                local fxColor = (active.type and active.type.highlightColor) or defaultHighlightColor
 		Particles:spawnBurst(active.x, active.y, {
 			count = love.math.random(10, 14),
 			speed = 120,
@@ -520,7 +530,7 @@ local function prepareFruitDrawData(f, out)
         local shadowScale = 1 + liftStrength * 0.12
         local shadowYOffset = min(0, bobOffset * 0.35)
         local bodyColor = (f.type and f.type.color) or highlightDefault
-        local highlight = getHighlightColor(bodyColor)
+        local highlight = (f.type and f.type.highlightColor) or defaultHighlightColor
         local isActive = (f == active)
 
         out.fruit = f
@@ -581,7 +591,7 @@ local function drawFruitMain(data)
         local r = data.radius
         local pulse = data.pulse
         local bodyColor = data.bodyColor or highlightDefault
-        local highlight = data.highlight or highlightDefault
+        local highlight = data.highlight or defaultHighlightColor
 
         -- fruit body
         love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], alpha)
