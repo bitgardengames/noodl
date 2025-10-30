@@ -296,17 +296,39 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 	entry.x = x
 	entry.y = y
 	entry.font = font
-	entry.duration = entryDuration
-	entry.timer = 0
-	entry.riseDistance = rise
-	entry.baseScale = baseScale
-	entry.popScale = popScale
-	entry.popDuration = popDuration
-	entry.wobbleMagnitude = wobbleMagnitude
-	entry.wobbleFrequency = wobbleFrequency
-	entry.fadeStart = clamp(fadeStart, 0, 0.99)
-	entry.fadeStartTime = fadeStartTime
-	entry.fadeDuration = fadeDuration
+        entry.duration = entryDuration
+        if entryDuration > 0 then
+                entry.durationInv = 1 / entryDuration
+        else
+                entry.durationInv = nil
+        end
+        entry.timer = 0
+        entry.riseDistance = rise
+        entry.baseScale = baseScale
+        entry.popScale = popScale
+        entry.popDuration = popDuration
+        if popDuration > 0 then
+                entry.popDurationInv = 1 / popDuration
+        else
+                entry.popDurationInv = nil
+        end
+        local settleDuration = max(entryDuration - popDuration, 0.001)
+        entry.settleDuration = settleDuration
+        if settleDuration > 0 then
+                entry.settleDurationInv = 1 / settleDuration
+        else
+                entry.settleDurationInv = nil
+        end
+        entry.wobbleMagnitude = wobbleMagnitude
+        entry.wobbleFrequency = wobbleFrequency
+        entry.fadeStart = clamp(fadeStart, 0, 0.99)
+        entry.fadeStartTime = fadeStartTime
+        entry.fadeDuration = fadeDuration
+        if fadeDuration and fadeDuration > 0 then
+                entry.fadeDurationInv = 1 / fadeDuration
+        else
+                entry.fadeDurationInv = nil
+        end
 	entry.drift = drift
 	entry.rotationAmplitude = rotationAmplitude
 	entry.rotationDirection = rotationDirection
@@ -343,13 +365,14 @@ function FloatingText:update(dt)
 		local entry = entries[index]
 		entry.timer = entry.timer + dt
 
-		local duration = entry.duration
-		local progress = duration > 0 and clamp(entry.timer / duration, 0, 1) or 1
+                local duration = entry.duration
+                local durationInv = entry.durationInv
+                local progress = durationInv and clamp(entry.timer * durationInv, 0, 1) or 1
 
-		entry.offsetY = -entry.riseDistance * easeOutCubic(progress)
-		entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * sin(entry.wobbleFrequency * entry.timer)
+                entry.offsetY = -entry.riseDistance * easeOutCubic(progress)
+                entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * sin(entry.wobbleFrequency * entry.timer)
 
-		if entry.hasJitter then
+                if entry.hasJitter then
 			local falloff = (1 - progress)
 			local jitterStrength = entry.jitter * falloff * falloff
 			local phase = entry.jitterSeed
@@ -359,15 +382,21 @@ function FloatingText:update(dt)
 			entry.jitterX, entry.jitterY = 0, 0
 		end
 
-		if entry.popDuration > 0 and entry.timer < entry.popDuration then
-			local popProgress = clamp(entry.timer / entry.popDuration, 0, 1)
-			entry.scale = lerp(entry.popScale, entry.baseScale, easeOutBack(popProgress))
-		else
-			local settleDuration = max(duration - entry.popDuration, 0.001)
-			local settleProgress = clamp((entry.timer - entry.popDuration) / settleDuration, 0, 1)
-			local pulse = sin(entry.timer * 6) * (1 - settleProgress) * 0.04
-			entry.scale = entry.baseScale * (1 + pulse)
-		end
+                local popDuration = entry.popDuration
+                if popDuration > 0 and entry.timer < popDuration then
+                        local popProgress = clamp(entry.timer * entry.popDurationInv, 0, 1)
+                        entry.scale = lerp(entry.popScale, entry.baseScale, easeOutBack(popProgress))
+                else
+                        local settleDuration = entry.settleDuration
+                        local settleProgress
+                        if settleDuration and settleDuration > 0 then
+                                settleProgress = clamp((entry.timer - popDuration) * entry.settleDurationInv, 0, 1)
+                        else
+                                settleProgress = 1
+                        end
+                        local pulse = sin(entry.timer * 6) * (1 - settleProgress) * 0.04
+                        entry.scale = entry.baseScale * (1 + pulse)
+                end
 
 		entry.rotation = entry.rotationAmplitude * entry.rotationDirection * sin(progress * pi)
 
@@ -407,12 +436,12 @@ function FloatingText:draw()
                 end
 
 		local alpha = entry.color[4] or 1
-		if entry.duration > 0 and entry.fadeStartTime then
-			if entry.timer >= entry.fadeStartTime then
-				local fadeProgress = clamp((entry.timer - entry.fadeStartTime) / entry.fadeDuration, 0, 1)
-				alpha = alpha * (1 - easeInCubic(fadeProgress))
-			end
-		end
+                if entry.duration > 0 and entry.fadeStartTime then
+                        if entry.timer >= entry.fadeStartTime then
+                                local fadeProgress = clamp((entry.timer - entry.fadeStartTime) * (entry.fadeDurationInv or 0), 0, 1)
+                                alpha = alpha * (1 - easeInCubic(fadeProgress))
+                        end
+                end
 
                 alpha = clamp(alpha, 0, 1)
 
