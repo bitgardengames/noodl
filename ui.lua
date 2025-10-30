@@ -133,6 +133,9 @@ local baseSectionHeaderPadding = 8
 UI.fonts = {}
 
 local BUTTON_POP_DURATION = 0.32
+local BUTTON_BORDER_WIDTH = 2
+
+UI.buttonBorderWidth = BUTTON_BORDER_WIDTH
 
 local function clamp01(value)
 	if value < 0 then return 0 end
@@ -151,6 +154,19 @@ local function approachExp(current, target, dt, speed)
 
 	local factor = 1 - math.exp(-speed * dt)
 	return current + (target - current) * factor
+end
+
+local function calculateShadowPadding(defaultStrokeWidth, overrideStrokeWidth)
+	local strokeWidth = overrideStrokeWidth
+	if strokeWidth == nil then
+		strokeWidth = defaultStrokeWidth
+	end
+
+	if not strokeWidth or strokeWidth <= 0 then
+		return 0
+	end
+
+	return strokeWidth * 0.5
 end
 
 local function lightenColor(color, amount, out)
@@ -512,12 +528,33 @@ end
 function UI.drawPanel(x, y, w, h, opts)
 	opts = opts or {}
 	local radius = opts.radius or UI.spacing.panelRadius
+	radius = radius or 0
+	local borderWidth = 0
+	if opts.border ~= false then
+		borderWidth = opts.borderWidth or 2
+	end
+	local shadowPadding = calculateShadowPadding(borderWidth, opts.shadowStrokeWidth)
+	local shadowRadius = radius + shadowPadding
+	if shadowRadius > 0 then
+		local maxShadowRadius = min((w + shadowPadding * 2) / 2, (h + shadowPadding * 2) / 2)
+		if maxShadowRadius > 0 then
+			shadowRadius = min(shadowRadius, maxShadowRadius)
+		end
+	end
 	local shadowOffset = opts.shadowOffset
 	if shadowOffset == nil then shadowOffset = UI.shadowOffset end
 
 	if shadowOffset and shadowOffset ~= 0 then
 		setColor(opts.shadowColor or UI.colors.shadow, opts.shadowAlpha or 1)
-		love.graphics.rectangle("fill", x + shadowOffset, y + shadowOffset, w, h, radius, radius)
+		love.graphics.rectangle(
+			"fill",
+			x + shadowOffset - shadowPadding,
+			y + shadowOffset - shadowPadding,
+			w + shadowPadding * 2,
+			h + shadowPadding * 2,
+			shadowRadius,
+			shadowRadius
+		)
 	end
 
 	local alphaMultiplier = opts.alpha or 1
@@ -548,7 +585,7 @@ function UI.drawPanel(x, y, w, h, opts)
 	if opts.border ~= false then
 		local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
 		setColor(borderColor, alphaMultiplier)
-		love.graphics.setLineWidth(opts.borderWidth or 2)
+		love.graphics.setLineWidth(borderWidth)
 		love.graphics.rectangle("line", x, y, w, h, radius, radius)
 		love.graphics.setLineWidth(1)
 	end
@@ -744,7 +781,17 @@ function UI.drawButton(id)
 	love.graphics.scale(totalScale, totalScale)
 	love.graphics.translate(-centerX, -centerY)
 
-	local radius = s.buttonRadius
+	local radius = s.buttonRadius or 0
+	local hasBorder = UI.colors.border ~= nil
+	local borderWidth = hasBorder and (UI.buttonBorderWidth or BUTTON_BORDER_WIDTH) or 0
+	local shadowPadding = calculateShadowPadding(borderWidth, UI.buttonShadowStrokeWidth)
+	local shadowRadius = radius + shadowPadding
+	if shadowRadius > 0 then
+		local maxShadowRadius = min((b.w + shadowPadding * 2) / 2, (b.h + shadowPadding * 2) / 2)
+		if maxShadowRadius > 0 then
+			shadowRadius = min(shadowRadius, maxShadowRadius)
+		end
+	end
 	local shadowOffset = s.shadowOffset
 	if shadowOffset == nil then
 		shadowOffset = UI.shadowOffset
@@ -754,7 +801,15 @@ function UI.drawButton(id)
 		local shadowOffsetX = shadowOffset - 1
 		local shadowOffsetY = shadowOffset - 1
 		setColor(UI.colors.shadow)
-		love.graphics.rectangle("fill", b.x + shadowOffsetX, b.y + shadowOffsetY + yOffset, b.w, b.h, radius, radius)
+		love.graphics.rectangle(
+			"fill",
+			b.x + shadowOffsetX - shadowPadding,
+			b.y + shadowOffsetY + yOffset - shadowPadding,
+			b.w + shadowPadding * 2,
+			b.h + shadowPadding * 2,
+			shadowRadius,
+			shadowRadius
+		)
 	end
 
 	local fillColor = UI.colors.button
@@ -778,9 +833,9 @@ function UI.drawButton(id)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
 	end
 
-	if UI.colors.border then
+	if hasBorder then
 		setColor(UI.colors.border)
-		love.graphics.setLineWidth(2)
+		love.graphics.setLineWidth(borderWidth)
 		love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 	end
 
