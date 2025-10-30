@@ -634,7 +634,6 @@ local function drawEmitter(emitter)
         local flash = clamp01(emitter.flashTimer or 0)
         local strength = clamp01(emitter.telegraphStrength or 0)
         local time = Timer.getTime()
-        local highlight = Theme.highlightColor or {1, 1, 1, 0.06}
         local shadowColor = Theme.shadowColor or {0, 0, 0, 0.45}
 
         local shadowAlpha = clamp01((shadowColor[4] or 0.45) * (0.55 + strength * 0.25 + flash * 0.2))
@@ -650,10 +649,6 @@ local function drawEmitter(emitter)
         local insetColor = scaleColor(bodyColor, 0.78 + strength * 0.12, 1)
         love.graphics.setColor(insetColor)
         love.graphics.rectangle("fill", baseX + 2, baseY + 2, tileSize - 4, tileSize - 4, 5, 5)
-
-        local highlightAlpha = clamp01((highlight[4] or 0.06) * (0.7 + strength * 0.35 + flash * 0.25))
-        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
-        love.graphics.rectangle("fill", baseX + 3, baseY + 3, tileSize * 0.46, tileSize * 0.22, 4, 4)
 
         local borderAlpha = clamp01(0.45 + flash * 0.25 + strength * 0.2)
         love.graphics.setColor(0, 0, 0, borderAlpha)
@@ -693,10 +688,6 @@ local function drawEmitter(emitter)
         local muzzleFillAlpha = clamp01(0.75 + strength * 0.15 + flash * 0.1)
         love.graphics.setColor(0, 0, 0, muzzleFillAlpha)
         love.graphics.circle("fill", muzzleX, muzzleY, muzzleRadius, 16)
-
-        local muzzleHighlightAlpha = clamp01((highlight[4] or 0.06) * (0.9 + strength * 0.5 + flash * 0.35))
-        love.graphics.setColor(highlight[1], highlight[2], highlight[3], muzzleHighlightAlpha)
-        love.graphics.circle("line", muzzleX, muzzleY, muzzleRadius * 0.65, 16)
 
         love.graphics.setColor(0, 0, 0, 0.55 + flash * 0.25)
         love.graphics.circle("line", muzzleX, muzzleY, muzzleRadius, 16)
