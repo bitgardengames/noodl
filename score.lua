@@ -6,10 +6,10 @@ local insert = table.insert
 
 local Score = {}
 
-Achievements:registerStateProvider(function()
-	return {
-		snakeScore = Score.current or 0,
-	}
+Achievements:registerStateProvider(function(state)
+	if type(state) == "table" then
+		state.snakeScore = Score.current or 0
+	end
 end)
 
 Score.current = 0
@@ -25,7 +25,6 @@ Score.runHighScoreTriggered = false
 local function updateAchievementChecks(self)
 	Achievements:checkAll({
 		totalApplesEaten = PlayerStats:get("totalApplesEaten"),
-		snakeScore = self.current,
 	})
 end
 
