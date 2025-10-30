@@ -73,33 +73,71 @@ local function mergeReplacements(base, extra)
 	return base
 end
 
-local function getStatValue(statsSource, key)
-	if not key then
-		return 0
-	end
+local NO_VALUE = {}
 
-	if statsSource then
-		if type(statsSource.get) == "function" then
-			local value = statsSource:get(key)
-			if value ~= nil then
-				return value
-			end
-		end
+local function getStatValue(statsSource, key, context)
+        if not key then
+                return 0
+        end
 
-		local value = statsSource[key]
-		if value ~= nil then
-			return value
-		end
-	end
+        local cache = context and context.statCache
 
-	if SessionStats and SessionStats.get then
-		local value = SessionStats:get(key)
-		if value ~= nil then
-			return value
-		end
-	end
+        local function getCacheKey(source)
+                if source == nil then
+                        return "__nil"
+                end
 
-	return 0
+                return source
+        end
+
+        local function fetch(source)
+                if not source then
+                        return nil
+                end
+
+                local cacheKey = getCacheKey(source)
+                local sourceCache = cache and cache[cacheKey]
+                if sourceCache and sourceCache[key] ~= nil then
+                        local cached = sourceCache[key]
+                        if cached == NO_VALUE then
+                                return nil
+                        end
+                        return cached
+                end
+
+                local value
+                if type(source.get) == "function" then
+                        value = source:get(key)
+                end
+
+                if value == nil then
+                        value = source[key]
+                end
+
+                if cache then
+                        sourceCache = sourceCache or {}
+                        cache[cacheKey] = sourceCache
+                        sourceCache[key] = value ~= nil and value or NO_VALUE
+                end
+
+                return value
+        end
+
+        if statsSource then
+                local value = fetch(statsSource)
+                if value ~= nil then
+                        return value
+                end
+        end
+
+        if SessionStats and SessionStats.get then
+                local value = fetch(SessionStats)
+                if value ~= nil then
+                        return value
+                end
+        end
+
+        return 0
 end
 
 local function callChallengeFunction(challenge, key, ...)
@@ -146,16 +184,10 @@ local function resolveCurrent(challenge, context)
 		return value
 	end
 
-	if challenge.sessionStat then
-		local statsSource = context and context.sessionStats
-		if statsSource and type(statsSource.get) == "function" then
-			return statsSource:get(challenge.sessionStat) or 0
-		end
-
-		if SessionStats and SessionStats.get then
-			return SessionStats:get(challenge.sessionStat) or 0
-		end
-	end
+        if challenge.sessionStat then
+                local statsSource = context and context.sessionStats
+                return getStatValue(statsSource, challenge.sessionStat, context)
+        end
 
 	if challenge.stat then
 		return PlayerStats:get(challenge.stat) or 0
@@ -382,10 +414,17 @@ local function evaluateChallenge(self, challenge, context)
 		return nil
 	end
 
-	context = context or {}
+        context = context or {}
+        if context.statCache then
+                for key in pairs(context.statCache) do
+                        context.statCache[key] = nil
+                end
+        else
+                context.statCache = {}
+        end
 
-	local goal = resolveGoal(challenge, context)
-	local current = resolveCurrent(challenge, context)
+        local goal = resolveGoal(challenge, context)
+        local current = resolveCurrent(challenge, context)
 	local date = context.date or context.dateOverride
 	local prefix = buildDailyStoragePrefix(self, challenge, date)
 	local storedProgress = getStoredProgress(self, challenge, date, prefix)
@@ -457,37 +496,22 @@ DailyChallenges.challenges = {
 		goal = 6,
 		progressKey = "menu.daily.shield_showoff.progress",
 		completeKey = "menu.daily.shield_showoff.complete",
-		getValue = function(self, context)
-			local rocks, saws = 0, 0
-			local statsSource = context and context.sessionStats
-			if statsSource and type(statsSource.get) == "function" then
-				rocks = statsSource:get("runShieldRockBreaks") or 0
-				saws = statsSource:get("runShieldSawParries") or 0
-			elseif SessionStats and SessionStats.get then
-				rocks = SessionStats:get("runShieldRockBreaks") or 0
-				saws = SessionStats:get("runShieldSawParries") or 0
-			end
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local rocks = getStatValue(statsSource, "runShieldRockBreaks", context)
+                        local saws = getStatValue(statsSource, "runShieldSawParries", context)
 
-			return (rocks or 0) + (saws or 0)
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local rocks, saws = 0, 0
-			local statsSource = context and context.sessionStats
-			if statsSource and type(statsSource.get) == "function" then
-				rocks = statsSource:get("runShieldRockBreaks") or 0
-				saws = statsSource:get("runShieldSawParries") or 0
-			elseif SessionStats and SessionStats.get then
-				rocks = SessionStats:get("runShieldRockBreaks") or 0
-				saws = SessionStats:get("runShieldSawParries") or 0
-			end
-
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				rocks = rocks,
-				saws = saws,
-			}
-		end,
+                        return (rocks or 0) + (saws or 0)
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                rocks = getStatValue(statsSource, "runShieldRockBreaks", context),
+                                saws = getStatValue(statsSource, "runShieldSawParries", context),
+                        }
+                end,
 		xpReward = 95,
 	},
 	{
@@ -516,41 +540,23 @@ DailyChallenges.challenges = {
 		goal = 3,
 		progressKey = "menu.daily.balanced_banquet.progress",
 		completeKey = "menu.daily.balanced_banquet.complete",
-		getValue = function(self, context)
-			local apples, combos = 0, 0
-			local statsSource = context and context.sessionStats
-			if statsSource and type(statsSource.get) == "function" then
-				apples = statsSource:get("applesEaten") or 0
-				combos = statsSource:get("combosTriggered") or 0
-			elseif SessionStats and SessionStats.get then
-				apples = SessionStats:get("applesEaten") or 0
-				combos = SessionStats:get("combosTriggered") or 0
-			end
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten", context)
+                        local combos = getStatValue(statsSource, "combosTriggered", context)
 
-			apples = apples or 0
-			combos = combos or 0
-
-			local feasts = min(floor(apples / 15), combos)
-			return max(feasts, 0)
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local apples, combos = 0, 0
-			local statsSource = context and context.sessionStats
-			if statsSource and type(statsSource.get) == "function" then
-				apples = statsSource:get("applesEaten") or 0
-				combos = statsSource:get("combosTriggered") or 0
-			elseif SessionStats and SessionStats.get then
-				apples = SessionStats:get("applesEaten") or 0
-				combos = SessionStats:get("combosTriggered") or 0
-			end
-
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				apples = apples or 0,
-				combos = combos or 0,
-			}
-		end,
+                        local feasts = min(floor(apples / 15), combos)
+                        return max(feasts, 0)
+                end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                apples = getStatValue(statsSource, "applesEaten", context),
+                                combos = getStatValue(statsSource, "combosTriggered", context),
+                        }
+                end,
 		descriptionReplacements = function(self, current, goal)
 			return {
 				goal = goal or 0,
@@ -689,11 +695,11 @@ DailyChallenges.challenges = {
 		goal = 3,
 		progressKey = "menu.daily.shield_triathlon.progress",
 		completeKey = "menu.daily.shield_triathlon.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local bounces = getStatValue(statsSource, "runShieldWallBounces")
-			local rocks = getStatValue(statsSource, "runShieldRockBreaks")
-			local saws = getStatValue(statsSource, "runShieldSawParries")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local bounces = getStatValue(statsSource, "runShieldWallBounces", context)
+                        local rocks = getStatValue(statsSource, "runShieldRockBreaks", context)
+                        local saws = getStatValue(statsSource, "runShieldSawParries", context)
 
 			local completed = 0
 			if bounces > 0 then
@@ -726,16 +732,16 @@ DailyChallenges.challenges = {
 
 			return completed
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				bounces = getStatValue(statsSource, "runShieldWallBounces"),
-				rocks = getStatValue(statsSource, "runShieldRockBreaks"),
-				saws = getStatValue(statsSource, "runShieldSawParries"),
-			}
-		end,
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        return {
+                                current = current or 0,
+                                goal = goal or 0,
+                                bounces = getStatValue(statsSource, "runShieldWallBounces", context),
+                                rocks = getStatValue(statsSource, "runShieldRockBreaks", context),
+                                saws = getStatValue(statsSource, "runShieldSawParries", context),
+                        }
+                end,
 		xpReward = 120,
 	},
 	{
@@ -746,9 +752,9 @@ DailyChallenges.challenges = {
 		progressKey = "menu.daily.floor_speedrunner.progress",
 		completeKey = "menu.daily.floor_speedrunner.complete",
 		targetSeconds = 45,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local fastest = getStatValue(statsSource, "fastestFloorClear")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local fastest = getStatValue(statsSource, "fastestFloorClear", context)
 			if fastest <= 0 then
 				return 0
 			end
@@ -763,9 +769,9 @@ DailyChallenges.challenges = {
 
 			return fastest <= (self.targetSeconds or 0) and 1 or 0
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local fastest = getStatValue(statsSource, "fastestFloorClear")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local fastest = getStatValue(statsSource, "fastestFloorClear", context)
 			local target = self.targetSeconds or 0
 
 			return {
@@ -789,10 +795,10 @@ DailyChallenges.challenges = {
 		goal = 240,
 		progressKey = "menu.daily.pace_setter.progress",
 		completeKey = "menu.daily.pace_setter.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local tiles = getStatValue(statsSource, "tilesTravelled")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local tiles = getStatValue(statsSource, "tilesTravelled", context)
+                        local timeAlive = getStatValue(statsSource, "timeAlive", context)
 			if timeAlive <= 0 then
 				return 0
 			end
@@ -808,10 +814,10 @@ DailyChallenges.challenges = {
 
 			return floor((tiles / timeAlive) * 60)
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local tiles = getStatValue(statsSource, "tilesTravelled")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local tiles = getStatValue(statsSource, "tilesTravelled", context)
+                        local timeAlive = getStatValue(statsSource, "timeAlive", context)
 			local minutes = timeAlive / 60
 			local pace = 0
 			if timeAlive > 0 then
@@ -840,10 +846,10 @@ DailyChallenges.challenges = {
 		goal = 4,
 		progressKey = "menu.daily.combo_harvester.progress",
 		completeKey = "menu.daily.combo_harvester.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten")
-			local combos = getStatValue(statsSource, "combosTriggered")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten", context)
+                        local combos = getStatValue(statsSource, "combosTriggered", context)
 			local harvests = min(floor(apples / 8), combos)
 			return max(harvests, 0)
 		end,
@@ -853,10 +859,10 @@ DailyChallenges.challenges = {
 			local harvests = min(floor(apples / 8), combos)
 			return max(harvests, 0)
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten")
-			local combos = getStatValue(statsSource, "combosTriggered")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten", context)
+                        local combos = getStatValue(statsSource, "combosTriggered", context)
 			return {
 				current = current or 0,
 				goal = goal or 0,
@@ -881,10 +887,10 @@ DailyChallenges.challenges = {
 		completeKey = "menu.daily.shielded_marathon.complete",
 		targetShields = 2,
 		targetTiles = 320,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local shields = getStatValue(statsSource, "shieldsSaved")
-			local tiles = getStatValue(statsSource, "tilesTravelled")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local shields = getStatValue(statsSource, "shieldsSaved", context)
+                        local tiles = getStatValue(statsSource, "tilesTravelled", context)
 			local completed = 0
 			if shields >= (self.targetShields or 0) then
 				completed = completed + 1
@@ -906,10 +912,10 @@ DailyChallenges.challenges = {
 			end
 			return completed
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local shields = getStatValue(statsSource, "shieldsSaved")
-			local tiles = getStatValue(statsSource, "tilesTravelled")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local shields = getStatValue(statsSource, "shieldsSaved", context)
+                        local tiles = getStatValue(statsSource, "tilesTravelled", context)
 			return {
 				current = current or 0,
 				goal = goal or 0,
@@ -934,10 +940,10 @@ DailyChallenges.challenges = {
 		goal = 16,
 		progressKey = "menu.daily.fruit_rush.progress",
 		completeKey = "menu.daily.fruit_rush.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten", context)
+                        local timeAlive = getStatValue(statsSource, "timeAlive", context)
 			if timeAlive <= 0 then
 				return 0
 			end
@@ -953,10 +959,10 @@ DailyChallenges.challenges = {
 
 			return floor((apples / timeAlive) * 60)
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten", context)
+                        local timeAlive = getStatValue(statsSource, "timeAlive", context)
 			local minutes = timeAlive / 60
 			local pace = 0
 			if timeAlive > 0 then
@@ -987,10 +993,10 @@ DailyChallenges.challenges = {
 		completeKey = "menu.daily.combo_courier.complete",
 		comboGoal = 5,
 		floorGoal = 4,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local combos = getStatValue(statsSource, "combosTriggered")
-			local floors = getStatValue(statsSource, "floorsCleared")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local combos = getStatValue(statsSource, "combosTriggered", context)
+                        local floors = getStatValue(statsSource, "floorsCleared", context)
 
 			if combos >= (self.comboGoal or 0) and floors >= (self.floorGoal or 0) then
 				return 1
@@ -1008,10 +1014,10 @@ DailyChallenges.challenges = {
 
 			return 0
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local combos = getStatValue(statsSource, "combosTriggered")
-			local floors = getStatValue(statsSource, "floorsCleared")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local combos = getStatValue(statsSource, "combosTriggered", context)
+                        local floors = getStatValue(statsSource, "floorsCleared", context)
 			local comboGoal = self.comboGoal or 0
 			local floorGoal = self.floorGoal or 0
 
@@ -1041,10 +1047,10 @@ DailyChallenges.challenges = {
 		completeKey = "menu.daily.combo_dash.complete",
 		comboGoal = 6,
 		timeGoal = 360,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local combos = getStatValue(statsSource, "combosTriggered")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local combos = getStatValue(statsSource, "combosTriggered", context)
+                        local timeAlive = getStatValue(statsSource, "timeAlive", context)
 			if timeAlive <= 0 then
 				return 0
 			end
@@ -1068,10 +1074,10 @@ DailyChallenges.challenges = {
 
 			return 0
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local combos = getStatValue(statsSource, "combosTriggered")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local combos = getStatValue(statsSource, "combosTriggered", context)
+                        local timeAlive = getStatValue(statsSource, "timeAlive", context)
 
 			return {
 				current = current or 0,
@@ -1099,10 +1105,10 @@ DailyChallenges.challenges = {
 		completeKey = "menu.daily.fruit_frenzy.complete",
 		targetApples = 45,
 		targetSeconds = 360,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten", context)
+                        local timeAlive = getStatValue(statsSource, "timeAlive", context)
 			if apples >= (self.targetApples or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
 				return 1
 			end
@@ -1116,10 +1122,10 @@ DailyChallenges.challenges = {
 			end
 			return 0
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local apples = getStatValue(statsSource, "applesEaten", context)
+                        local timeAlive = getStatValue(statsSource, "timeAlive", context)
 
 			return {
 				current = current or 0,
@@ -1146,10 +1152,10 @@ DailyChallenges.challenges = {
 		progressKey = "menu.daily.floor_cartographer.progress",
 		completeKey = "menu.daily.floor_cartographer.complete",
 		timeChunk = 180,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local floors = getStatValue(statsSource, "floorsCleared")
-			local timeSpent = getStatValue(statsSource, "totalFloorTime")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local floors = getStatValue(statsSource, "floorsCleared", context)
+                        local timeSpent = getStatValue(statsSource, "totalFloorTime", context)
 			local value = min(floors, floor(timeSpent / (self.timeChunk or 1)))
 			return max(value, 0)
 		end,
@@ -1159,10 +1165,10 @@ DailyChallenges.challenges = {
 			local value = min(floors, floor(timeSpent / (self.timeChunk or 1)))
 			return max(value, 0)
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local floors = getStatValue(statsSource, "floorsCleared")
-			local timeSpent = getStatValue(statsSource, "totalFloorTime")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local floors = getStatValue(statsSource, "floorsCleared", context)
+                        local timeSpent = getStatValue(statsSource, "totalFloorTime", context)
 			return {
 				current = current or 0,
 				goal = goal or 0,
@@ -1185,10 +1191,10 @@ DailyChallenges.challenges = {
 		goal = 3,
 		progressKey = "menu.daily.safety_dance.progress",
 		completeKey = "menu.daily.safety_dance.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local bounces = getStatValue(statsSource, "runShieldWallBounces")
-			local saws = getStatValue(statsSource, "runShieldSawParries")
+                getValue = function(self, context)
+                        local statsSource = context and context.sessionStats
+                        local bounces = getStatValue(statsSource, "runShieldWallBounces", context)
+                        local saws = getStatValue(statsSource, "runShieldSawParries", context)
 			local pairs = min(floor(bounces / 2), floor(saws / 2))
 			return max(pairs, 0)
 		end,
@@ -1198,10 +1204,10 @@ DailyChallenges.challenges = {
 			local pairs = min(floor(bounces / 2), floor(saws / 2))
 			return max(pairs, 0)
 		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local bounces = getStatValue(statsSource, "runShieldWallBounces")
-			local saws = getStatValue(statsSource, "runShieldSawParries")
+                progressReplacements = function(self, current, goal, context)
+                        local statsSource = context and context.sessionStats
+                        local bounces = getStatValue(statsSource, "runShieldWallBounces", context)
+                        local saws = getStatValue(statsSource, "runShieldSawParries", context)
 			return {
 				current = current or 0,
 				goal = goal or 0,
@@ -1264,17 +1270,13 @@ function DailyChallenges:applyRunResults(statsSource, options)
 
 	local runValue = callChallengeFunction(challenge, "getRunValue", statsSource, options)
 
-	if runValue == nil then
-		if challenge.sessionStat and statsSource then
-			if type(statsSource.get) == "function" then
-				runValue = statsSource:get(challenge.sessionStat) or 0
-			else
-				runValue = statsSource[challenge.sessionStat] or 0
-			end
-		elseif challenge.stat then
-			runValue = PlayerStats:get(challenge.stat) or 0
-		end
-	end
+        if runValue == nil then
+                if challenge.sessionStat and statsSource then
+                        runValue = getStatValue(statsSource, challenge.sessionStat)
+                elseif challenge.stat then
+                        runValue = PlayerStats:get(challenge.stat) or 0
+                end
+        end
 
 	runValue = max(0, floor(runValue or 0))
 
