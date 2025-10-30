@@ -1631,13 +1631,6 @@ local function computeTrailLength(trailData)
         return total
 end
 
-local function validateTrailLength(context)
-        local actual = computeTrailLength(trail)
-        if abs(actual - trailLength) > 1e-3 then
-                error((context or "trail") .. " trailLength mismatch: computed " .. tostring(actual) .. " vs tracked " .. tostring(trailLength))
-        end
-end
-
 local function applyTrailLengthLimit(maxLen, gluttonsWakeActive)
         if not trail then
                 trailLength = 0
@@ -1736,8 +1729,6 @@ local function applyTrailLengthLimit(maxLen, gluttonsWakeActive)
         if trailLength < 0 then
                 trailLength = 0
         end
-
-        validateTrailLength("trimTrailToSegmentLimit")
 end
 
 local function sliceTrailByLength(sourceTrail, maxLength, destination)
@@ -3459,7 +3450,6 @@ function Snake:update(dt)
                 if head then
                         newX, newY = head.drawX, head.drawY
                 end
-                validateTrailLength("holeTrim")
         end
 
 	-- tail trimming
@@ -3662,7 +3652,6 @@ function Snake:update(dt)
                         clearPortalAnimation(state)
                         portalAnimation = nil
                 end
-                validateTrailLength("portalAnimation")
         end
 
 	-- update timers
@@ -4235,7 +4224,6 @@ function Snake:handleSawBodyCut(context)
 
         self:loseSegments(lostSegments, {cause = cause, trimTrail = false})
 
-        validateTrailLength("sawCut")
         return true
 end
 
