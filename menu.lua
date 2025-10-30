@@ -696,8 +696,8 @@ function Menu:draw()
 		local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
 		local slotThicknessWorld = slotThicknessBase * sawScale
 
-		local targetLeft = ox - 15
-		local targetBottom = oy - 30
+                local targetLeft = ox - 15
+                local targetBottom = oy - 42
 
 		local sawX = targetLeft + trackLengthWorld / 2
 		local sawY = targetBottom - slotThicknessWorld / 2
