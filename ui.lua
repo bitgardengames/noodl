@@ -1410,14 +1410,25 @@ local ICON_COLOR_SEAM = {0, 0, 0, 1}
 local ICON_OVERLAY_BACKGROUND = {0, 0, 0, 1}
 local ICON_OVERLAY_TEXT_DEFAULT = {1, 1, 1, 1}
 
+--[[
+Graphics state usage:
+* transform: applies push/translate and may rotate/scale for certain icons
+* colours: adjusts active color for fills, lines, and overlay elements
+* line width: changes between multiple stroke widths
+* font: temporarily switches fonts for overlay labels
+]]
 local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
-	local accent = accentColor or ICON_ACCENT_DEFAULT
+        local accent = accentColor or ICON_ACCENT_DEFAULT
 
-	love.graphics.push("all")
-	love.graphics.translate(x, y)
+        local originalR, originalG, originalB, originalA = love.graphics.getColor()
+        local originalLineWidth = love.graphics.getLineWidth()
+        local originalFont = love.graphics.getFont()
 
-	love.graphics.setColor(0, 0, 0, 0.3)
-	love.graphics.circle("fill", 3, 4, radius + 3, 28)
+        love.graphics.push()
+        love.graphics.translate(x, y)
+
+        love.graphics.setColor(0, 0, 0, 0.3)
+        love.graphics.circle("fill", 3, 4, radius + 3, 28)
 
 	local base = darkenColor(accent, 0.6, ICON_COLOR_BASE)
 	love.graphics.setColor(base[1], base[2], base[3], base[4] or 1)
@@ -1556,13 +1567,13 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		local fontKey = overlay.font or "small"
 		local paddingX = overlay.paddingX or 6
 		local paddingY = overlay.paddingY or 2
-		local previousFont = love.graphics.getFont()
-		UI.setFont(fontKey)
-		local font = love.graphics.getFont()
-		local text = tostring(overlay.text)
-		local textWidth = font:getWidth(text)
-		local boxWidth = textWidth + paddingX * 2
-		local boxHeight = font:getHeight() + paddingY * 2
+                local overlayPreviousFont = love.graphics.getFont()
+                UI.setFont(fontKey)
+                local font = love.graphics.getFont()
+                local text = tostring(overlay.text)
+                local textWidth = font:getWidth(text)
+                local boxWidth = textWidth + paddingX * 2
+                local boxHeight = font:getHeight() + paddingY * 2
 		local position = overlay.position or "bottomRight"
 		local anchorX, anchorY
 
@@ -1601,12 +1612,18 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
 		local textY = boxY + (boxHeight - font:getHeight()) * 0.5
 		love.graphics.printf(text, boxX, textY, boxWidth, "center")
-		if previousFont then
-			love.graphics.setFont(previousFont)
-		end
-	end
+                if overlayPreviousFont then
+                        love.graphics.setFont(overlayPreviousFont)
+                end
+        end
 
-	love.graphics.pop()
+        love.graphics.pop()
+
+        love.graphics.setLineWidth(originalLineWidth)
+        if originalFont then
+                love.graphics.setFont(originalFont)
+        end
+        love.graphics.setColor(originalR, originalG, originalB, originalA)
 end
 
 local SHIELD_ACCENT_READY = {0.55, 0.82, 1.0, 1.0}
@@ -1682,6 +1699,12 @@ end
 local UPGRADE_BAR_FILL_COLOR = {0, 0, 0, 1}
 local UPGRADE_BAR_OUTLINE_COLOR = {0, 0, 0, 1}
 
+--[[
+Graphics state usage:
+* colours: sets panel, border, text, and progress bar colours
+* line width: adjusts stroke widths for borders and progress outlines
+* font: switches between UI fonts for labels, stacks, and charge text
+]]
 local function drawUpgradeIndicatorEntry(cursor, layout, colors, entry)
         if not entry then
                 return cursor.y
@@ -1700,7 +1723,9 @@ local function drawUpgradeIndicatorEntry(cursor, layout, colors, entry)
         local x = cursor.x
         local width = layout.width
 
-        love.graphics.push("all")
+        local originalR, originalG, originalB, originalA = love.graphics.getColor()
+        local originalLineWidth = love.graphics.getLineWidth()
+        local originalFont = love.graphics.getFont()
 
         love.graphics.setColor(0, 0, 0, 0.4 * visibility)
         love.graphics.rectangle("fill", x + 4, drawY + 6, width, panelHeight, 14, 14)
@@ -1788,7 +1813,11 @@ local function drawUpgradeIndicatorEntry(cursor, layout, colors, entry)
                 love.graphics.printf(entry.chargeLabel, textX, labelY, textWidth, "right")
         end
 
-        love.graphics.pop()
+        love.graphics.setLineWidth(originalLineWidth)
+        if originalFont then
+                love.graphics.setFont(originalFont)
+        end
+        love.graphics.setColor(originalR, originalG, originalB, originalA)
 
         return cursor.y + panelHeight + layout.spacing
 end
