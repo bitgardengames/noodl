@@ -399,12 +399,12 @@ function FloatingText:draw()
 	local activeGlowBlend = false
 	local currentFont = nil
 
-	for index = 1, #entries do
-		local entry = entries[index]
-		if entry.font ~= currentFont then
-			lg.setFont(entry.font)
-			currentFont = entry.font
-		end
+        for index = 1, #entries do
+                local entry = entries[index]
+                if entry.font ~= currentFont then
+                        lg.setFont(entry.font)
+                        currentFont = entry.font
+                end
 
 		local alpha = entry.color[4] or 1
 		if entry.duration > 0 and entry.fadeStartTime then
@@ -414,37 +414,39 @@ function FloatingText:draw()
 			end
 		end
 
-		alpha = clamp(alpha, 0, 1)
+                alpha = clamp(alpha, 0, 1)
 
-		lg.push()
-		lg.translate(entry.x + entry.offsetX + entry.jitterX, entry.y + entry.offsetY + entry.jitterY)
-		lg.rotate(entry.rotation)
-		lg.scale(entry.scale)
+                local baseX = (entry.x or 0) + (entry.offsetX or 0) + (entry.jitterX or 0)
+                local baseY = (entry.y or 0) + (entry.offsetY or 0) + (entry.jitterY or 0)
+                local rotation = entry.rotation or 0
+                local scale = entry.scale or 1
+                local originX = entry.ox or 0
+                local originY = entry.oy or 0
 
-		local shadow = entry.shadow
-		if shadow and shadow.alpha > 0 then
-			lg.setColor(0, 0, 0, shadow.alpha * alpha)
-			lg.print(entry.text, -entry.ox + shadow.offsetX, -entry.oy + shadow.offsetY)
-		end
+                local shadow = entry.shadow
+                if shadow and shadow.alpha > 0 then
+                        local shadowOriginX = originX - (shadow.offsetX or 0)
+                        local shadowOriginY = originY - (shadow.offsetY or 0)
+                        lg.setColor(0, 0, 0, shadow.alpha * alpha)
+                        lg.print(entry.text, baseX, baseY, rotation, scale, scale, shadowOriginX, shadowOriginY)
+                end
 
-		lg.setColor(entry.color[1], entry.color[2], entry.color[3], alpha)
-		lg.print(entry.text, -entry.ox, -entry.oy)
+                lg.setColor(entry.color[1], entry.color[2], entry.color[3], alpha)
+                lg.print(entry.text, baseX, baseY, rotation, scale, scale, originX, originY)
 
-		if entry.glowAlpha and entry.glowAlpha > 0 and entry.glowColor then
-			if not activeGlowBlend then
-				lg.setBlendMode("add", "alphamultiply")
-				activeGlowBlend = true
-			end
-			lg.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], alpha * entry.glowAlpha)
-			lg.print(entry.text, -entry.ox, -entry.oy)
-			lg.setBlendMode(defaultBlendMode, defaultAlphaMode)
-			activeGlowBlend = false
-		end
+                if entry.glowAlpha and entry.glowAlpha > 0 and entry.glowColor then
+                        if not activeGlowBlend then
+                                lg.setBlendMode("add", "alphamultiply")
+                                activeGlowBlend = true
+                        end
+                        lg.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], alpha * entry.glowAlpha)
+                        lg.print(entry.text, baseX, baseY, rotation, scale, scale, originX, originY)
+                        lg.setBlendMode(defaultBlendMode, defaultAlphaMode)
+                        activeGlowBlend = false
+                end
+        end
 
-		lg.pop()
-	end
-
-	lg.setColor(1, 1, 1, 1)
+        lg.setColor(1, 1, 1, 1)
 end
 
 function FloatingText:reset()
