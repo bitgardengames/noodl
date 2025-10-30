@@ -42,16 +42,21 @@ UI.combo = {
 }
 
 UI.shields = {
-	count = 0,
-	display = 0,
-	popDuration = 0.32,
-	popTimer = 0,
-	shakeDuration = 0.45,
-	shakeTimer = 0,
-	flashDuration = 0.4,
-	flashTimer = 0,
-	lastDirection = 0,
+        count = 0,
+        display = 0,
+        popDuration = 0.32,
+        popTimer = 0,
+        shakeDuration = 0.45,
+        shakeTimer = 0,
+        flashDuration = 0.4,
+        flashTimer = 0,
+        lastDirection = 0,
 }
+
+UI._shieldLocaleRevision = nil
+UI._shieldLabel = nil
+UI._shieldStatusKey = nil
+UI._shieldStatusText = nil
 
 UI.upgradeIndicators = {
 	items = {},
@@ -1572,56 +1577,69 @@ local SHIELD_ACCENT_DEPLETED = {1.0, 0.55, 0.45, 1.0}
 local SHIELD_OVERLAY_BACKGROUND = {0, 0, 0, 0.92}
 
 local function buildShieldIndicator(self)
-	local shields = self.shields
-	if not shields then return nil end
+        local shields = self.shields
+        if not shields then return nil end
 
-	local rawCount = shields.count
+        local rawCount = shields.count
 	if rawCount == nil then
 		rawCount = shields.display
 	end
 
-	local count = max(0, floor((rawCount or 0) + 0.5))
+        local count = max(0, floor((rawCount or 0) + 0.5))
 
-	if count <= 0 then
-		return nil
-	end
+        if count <= 0 then
+                return nil
+        end
 
-	local label = Localization:get("upgrades.hud.shields")
+        local accent = SHIELD_ACCENT_READY
+        local statusKey = "ready"
 
-	local accent = SHIELD_ACCENT_READY
-	local statusKey = "ready"
+        if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
+                accent = SHIELD_ACCENT_DEPLETED
+                statusKey = "depleted"
+        end
 
-	if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
-		accent = SHIELD_ACCENT_DEPLETED
-		statusKey = "depleted"
-	end
+        local revision = Localization:getRevision()
+        local needsRefresh = (self._shieldLocaleRevision ~= revision)
+        if not needsRefresh then
+                local cachedStatusKey = self._shieldStatusKey or "ready"
+                if cachedStatusKey ~= statusKey then
+                        needsRefresh = true
+                end
+        end
 
-	local overlayBackground = lightenColor(accent, 0.1, SHIELD_OVERLAY_BACKGROUND)
-	overlayBackground[4] = 0.92
+        if needsRefresh then
+                self._shieldLocaleRevision = revision
+                self._shieldStatusKey = statusKey
+                self._shieldLabel = Localization:get("upgrades.hud.shields")
+                if statusKey ~= "ready" then
+                        self._shieldStatusText = Localization:get("upgrades.hud." .. statusKey)
+                else
+                        self._shieldStatusText = nil
+                end
+        end
 
-	local status
-	if statusKey ~= "ready" then
-		status = Localization:get("upgrades.hud." .. statusKey)
-	end
+        local overlayBackground = lightenColor(accent, 0.1, SHIELD_OVERLAY_BACKGROUND)
+        overlayBackground[4] = 0.92
 
-	return {
-		id = "__shields",
-		label = label,
-		icon = "shield",
-		accentColor = accent,
-		iconOverlay = {
-			text = count,
-			position = "center",
+        return {
+                id = "__shields",
+                label = self._shieldLabel,
+                icon = "shield",
+                accentColor = accent,
+                iconOverlay = {
+                        text = count,
+                        position = "center",
 			font = "badge",
 			paddingX = 8,
-			paddingY = 4,
-			backgroundColor = overlayBackground,
-			textColor = Theme.textColor,
-		},
-		status = status,
-		showBar = false,
-		visibility = 1,
-	}
+                        paddingY = 4,
+                        backgroundColor = overlayBackground,
+                        textColor = Theme.textColor,
+                },
+                status = self._shieldStatusText,
+                showBar = false,
+                visibility = 1,
+        }
 end
 
 local UPGRADE_BAR_FILL_COLOR = {0, 0, 0, 1}
