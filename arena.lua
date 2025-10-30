@@ -574,6 +574,8 @@ function Arena:applyDimFloor(config)
 	state.lastHeadX = nil
 	state.lastHeadY = nil
 	state.canvas = nil
+	state.cachedShaderPayload = nil
+	state.shaderDirty = false
 	self._dimState = state
 end
 
@@ -684,6 +686,31 @@ function Arena:drawDimLighting()
 	local useShader = dimLightingShader and (highlightCount > 0 or snakeHighlight or fruitHighlight)
 
 	if useShader then
+		local function arraysDiffer(current, currentCount, cached, cachedCount)
+			if not cached or cachedCount ~= currentCount then
+				return true
+			end
+
+			for index = 1, currentCount do
+				if current[index] ~= cached[index] then
+					return true
+				end
+			end
+
+			return false
+		end
+
+		local function copyArray(source, count, destination)
+			destination = destination or {}
+			for index = 1, count do
+				destination[index] = source[index]
+			end
+			for index = count + 1, #destination do
+				destination[index] = nil
+			end
+			return destination
+		end
+
 		local snakePosition = state.snakeHeadPosition or {}
 		local snakeRadii = state.snakeHeadRadii or {}
 		state.snakeHeadPosition = snakePosition
@@ -740,17 +767,70 @@ function Arena:drawDimLighting()
 			fruitRadii[2] = 0
 		end
 
+		local payloadCache = state.cachedShaderPayload
+		local usedComponentCount = highlightCount * 2
+		local dirty = false
+
+		if not payloadCache then
+			dirty = true
+		else
+			if payloadCache.baseAlpha ~= baseAlpha or
+				payloadCache.highlightCount ~= highlightCount or
+				payloadCache.snakeActive ~= snakeActive or
+				payloadCache.fruitActive ~= fruitActive then
+				dirty = true
+			elseif arraysDiffer(positions, usedComponentCount, payloadCache.highlightPositions, payloadCache.highlightPositionsCount) then
+				dirty = true
+			elseif arraysDiffer(radii, usedComponentCount, payloadCache.highlightRadii, payloadCache.highlightRadiiCount) then
+				dirty = true
+			elseif arraysDiffer(snakePosition, 2, payloadCache.snakeHeadPosition, payloadCache.snakeHeadPositionCount) then
+				dirty = true
+			elseif arraysDiffer(snakeRadii, 2, payloadCache.snakeHeadRadii, payloadCache.snakeHeadRadiiCount) then
+				dirty = true
+			elseif arraysDiffer(fruitPosition, 2, payloadCache.fruitPosition, payloadCache.fruitPositionCount) then
+				dirty = true
+			elseif arraysDiffer(fruitRadii, 2, payloadCache.fruitRadii, payloadCache.fruitRadiiCount) then
+				dirty = true
+			end
+		end
+
+		state.shaderDirty = dirty
+
 		love.graphics.setShader(dimLightingShader)
-		dimLightingShader:send("baseAlpha", baseAlpha)
-		dimLightingShader:send("highlightCount", highlightCount)
-		dimLightingShader:send("highlightPositions", positions)
-		dimLightingShader:send("highlightRadii", radii)
-		dimLightingShader:send("snakeHeadActive", snakeActive)
-		dimLightingShader:send("snakeHeadPosition", snakePosition)
-		dimLightingShader:send("snakeHeadRadii", snakeRadii)
-		dimLightingShader:send("fruitActive", fruitActive)
-		dimLightingShader:send("fruitPosition", fruitPosition)
-		dimLightingShader:send("fruitRadii", fruitRadii)
+
+		if state.shaderDirty then
+			dimLightingShader:send("baseAlpha", baseAlpha)
+			dimLightingShader:send("highlightCount", highlightCount)
+			dimLightingShader:send("highlightPositions", positions)
+			dimLightingShader:send("highlightRadii", radii)
+			dimLightingShader:send("snakeHeadActive", snakeActive)
+			dimLightingShader:send("snakeHeadPosition", snakePosition)
+			dimLightingShader:send("snakeHeadRadii", snakeRadii)
+			dimLightingShader:send("fruitActive", fruitActive)
+			dimLightingShader:send("fruitPosition", fruitPosition)
+			dimLightingShader:send("fruitRadii", fruitRadii)
+
+			payloadCache = payloadCache or {}
+			payloadCache.baseAlpha = baseAlpha
+			payloadCache.highlightCount = highlightCount
+			payloadCache.snakeActive = snakeActive
+			payloadCache.fruitActive = fruitActive
+			payloadCache.highlightPositions = copyArray(positions, usedComponentCount, payloadCache.highlightPositions)
+			payloadCache.highlightPositionsCount = usedComponentCount
+			payloadCache.highlightRadii = copyArray(radii, usedComponentCount, payloadCache.highlightRadii)
+			payloadCache.highlightRadiiCount = usedComponentCount
+			payloadCache.snakeHeadPosition = copyArray(snakePosition, 2, payloadCache.snakeHeadPosition)
+			payloadCache.snakeHeadPositionCount = 2
+			payloadCache.snakeHeadRadii = copyArray(snakeRadii, 2, payloadCache.snakeHeadRadii)
+			payloadCache.snakeHeadRadiiCount = 2
+			payloadCache.fruitPosition = copyArray(fruitPosition, 2, payloadCache.fruitPosition)
+			payloadCache.fruitPositionCount = 2
+			payloadCache.fruitRadii = copyArray(fruitRadii, 2, payloadCache.fruitRadii)
+			payloadCache.fruitRadiiCount = 2
+			state.cachedShaderPayload = payloadCache
+			state.shaderDirty = false
+		end
+
 		love.graphics.origin()
 		love.graphics.setColor(1, 1, 1, 1)
 		love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
