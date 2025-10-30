@@ -20,6 +20,11 @@ local Rocks = {}
 local current = {}
 local rockLookup = {}
 local lookupHasEntries = false
+local revision = 0
+
+local function bumpRevision()
+        revision = revision + 1
+end
 
 Rocks.spawnChance = 0.25
 Rocks.shatterOnFruit = 0
@@ -226,11 +231,12 @@ function Rocks:spawn(x, y)
 		col = col,
 		row = row,
 	})
-	local rock = current[#current]
-	rock.shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999))
-	rock.highlightShape = buildRockHighlight(rock.shape)
+        local rock = current[#current]
+        rock.shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999))
+        rock.highlightShape = buildRockHighlight(rock.shape)
 
-	ensureLookupEntry(rock, col, row)
+        ensureLookupEntry(rock, col, row)
+        bumpRevision()
 end
 
 function Rocks:getAll()
@@ -256,9 +262,10 @@ function Rocks:reset()
 	current = {}
 	rockLookup = {}
 	lookupHasEntries = false
-	self.spawnChance = 0.25
-	self.shatterOnFruit = 0
-	self.shatterProgress = 0
+        self.spawnChance = 0.25
+        self.shatterOnFruit = 0
+        self.shatterProgress = 0
+        bumpRevision()
 end
 
 local function spawnShatterFX(x, y)
@@ -322,10 +329,11 @@ function Rocks:updateCell(rock, col, row)
 
 	removeLookupEntry(rock)
 
-	rock.col = col
-	rock.row = row
+        rock.col = col
+        rock.row = row
 
-	ensureLookupEntry(rock, col, row)
+        ensureLookupEntry(rock, col, row)
+        bumpRevision()
 end
 
 function Rocks:hasCellLookup()
@@ -377,12 +385,15 @@ function Rocks:destroy(target, opts)
 		spawnFX = true
 	end
 
-	for index, rock in ipairs(current) do
-		if rock == target then
-			removeRockAt(index, spawnFX)
-			return
-		end
-	end
+        for index, rock in ipairs(current) do
+                if rock == target then
+                        local removed = removeRockAt(index, spawnFX)
+                        if removed then
+                                bumpRevision()
+                        end
+                        return
+                end
+        end
 end
 
 function Rocks:triggerHitFlash(target)
@@ -414,13 +425,14 @@ function Rocks:shatterNearest(x, y, count)
 			end
 		end
 
-		if not bestIndex then break end
+                if not bestIndex then break end
 
-		local shattered = removeRockAt(bestIndex, true)
-		if shattered then
-			Audio:playSound("rock_shatter")
+                local shattered = removeRockAt(bestIndex, true)
+                if shattered then
+                        bumpRevision()
+                        Audio:playSound("rock_shatter")
 
-			local Upgrades = getUpgradesModule()
+                        local Upgrades = getUpgradesModule()
 			if Upgrades and Upgrades.notify then
 				local fx = shattered.x or x
 				local fy = shattered.y or y
@@ -632,7 +644,11 @@ function Rocks:beginSlide(rock, startX, startY, targetX, targetY, options)
 	rock.tremorSlideTargetY = targetY or rock.y
 	rock.tremorSlideLift = options.lift or 10
 	rock.renderX = rock.tremorSlideStartX
-	rock.renderY = rock.tremorSlideStartY
+        rock.renderY = rock.tremorSlideStartY
+end
+
+function Rocks:getRevision()
+        return revision
 end
 
 return Rocks
