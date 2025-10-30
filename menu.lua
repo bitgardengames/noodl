@@ -418,11 +418,11 @@ function Menu:enter()
 end
 
 function Menu:update(dt)
-	t = t + dt
+        t = t + dt
 
-	local mx, my = love.mouse.getPosition()
-	buttonList:updateHover(mx, my)
-	Tooltip:update(dt, mx, my)
+        local mx, my = UI.refreshCursor()
+        buttonList:updateHover(mx, my)
+        Tooltip:update(dt, mx, my)
 
 	if dailyChallenge then
 		dailyChallengeAnim = min(dailyChallengeAnim + dt * 2, 1)
@@ -514,10 +514,12 @@ function Menu:draw()
 		Face:draw(head.x, head.y, wordScale)
 	end
 
-	for _, btn in ipairs(buttons) do
-		if btn.labelKey then
-			btn.text = Localization:get(btn.labelKey)
-		end
+        UI.refreshCursor()
+
+        for _, btn in ipairs(buttons) do
+                if btn.labelKey then
+                        btn.text = Localization:get(btn.labelKey)
+                end
 
 		if btn.alpha > 0 then
 			UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
@@ -625,8 +627,8 @@ function Menu:draw()
 
 		local panelY = max(menuLayout.marginTop or 36, (menuLayout.bottomY or (sh - (menuLayout.marginBottom or 36))) - panelHeight) + panelOffsetY
 
-		local mx, my = love.mouse.getPosition()
-		local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
+                local mx, my = UI.getCursorPosition()
+                local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
 		if hovered then
 			local timeRemaining = DailyChallenges:getTimeUntilReset()
 			local tooltipText

@@ -1798,7 +1798,7 @@ function Shop:draw(screenW, screenH)
 	local startY = max(topPadding, min(preferredTop, centeredTop))
 	local layoutCenterY = startY + totalHeight / 2
 
-	local mx, my = love.mouse.getPosition()
+        local mx, my = UI.refreshCursor()
 
 	local function renderCard(i, card)
 		local columnIndex = ((i - 1) % columns)

@@ -1436,7 +1436,7 @@ function ProgressionScreen:leave()
 end
 
 function ProgressionScreen:update(dt)
-	local mx, my = love.mouse.getPosition()
+        local mx, my = UI.refreshCursor()
 	buttonList:updateHover(mx, my)
 
 	if activeTab == "cosmetics" then
@@ -2237,11 +2237,13 @@ function ProgressionScreen:draw()
 		drawStatsList(sw, sh)
 	end
 
-	buttonList:syncUI()
+        buttonList:syncUI()
 
-	for _, tab in ipairs(tabs) do
-		local id = tab.buttonId
-		if id then
+        UI.refreshCursor()
+
+        for _, tab in ipairs(tabs) do
+                local id = tab.buttonId
+                if id then
 			local button = UI.buttons[id]
 			if button then
 				button.toggled = (activeTab == tab.id) or nil

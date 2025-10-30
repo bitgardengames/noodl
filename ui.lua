@@ -20,6 +20,9 @@ local SHADOW_OFFSET = 5
 
 UI.shadowOffset = SHADOW_OFFSET
 
+UI._cursorX = nil
+UI._cursorY = nil
+
 
 UI.fruitCollected = 0
 UI.fruitRequired = 0
@@ -177,16 +180,36 @@ local function darkenColor(color, amount, out)
 end
 
 local function setColor(color, alphaMultiplier)
-	if not color then
-		love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
-		return
-	end
+        if not color then
+                love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
+                return
+        end
 
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] or 1
-	love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] or 1
+        love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
+end
+
+function UI.refreshCursor(x, y)
+        if x ~= nil and y ~= nil then
+                UI._cursorX = x
+                UI._cursorY = y
+        else
+                UI._cursorX, UI._cursorY = love.mouse.getPosition()
+        end
+
+        return UI._cursorX, UI._cursorY
+end
+
+function UI.getCursorPosition()
+        local x, y = UI._cursorX, UI._cursorY
+        if x == nil or y == nil then
+                return UI.refreshCursor()
+        end
+
+        return x, y
 end
 
 -- Button states
@@ -688,8 +711,8 @@ function UI.drawButton(id)
 	local b = btn.bounds
 	local s = UI.spacing
 
-	local mx, my = love.mouse.getPosition()
-	local hoveredByMouse = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
+        local mx, my = UI.getCursorPosition()
+        local hoveredByMouse = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
 	local displayHover = hoveredByMouse or btn.focused
 
 	if displayHover and not btn.wasHovered then
@@ -805,9 +828,10 @@ end
 
 -- Mouse press
 function UI:mousepressed(x, y, button)
-	if button == 1 then
-		for id, btn in pairs(UI.buttons) do
-			local b = btn.bounds
+        UI.refreshCursor(x, y)
+        if button == 1 then
+                for id, btn in pairs(UI.buttons) do
+                        local b = btn.bounds
 			if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
 				btn.pressed = true
 				Audio:playSound("click")
@@ -819,9 +843,10 @@ end
 
 -- Mouse release
 function UI:mousereleased(x, y, button)
-	if button == 1 then
-		for id, btn in pairs(UI.buttons) do
-			if btn.pressed then
+        UI.refreshCursor(x, y)
+        if button == 1 then
+                for id, btn in pairs(UI.buttons) do
+                        if btn.pressed then
 				btn.pressed = false
 				local b = btn.bounds
 				if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
@@ -2027,9 +2052,10 @@ function UI:drawFruitSockets()
 end
 
 function UI:draw()
-	-- draw socket grid
-	self:drawFruitSockets()
-	self:drawUpgradeIndicators()
+        self:refreshCursor()
+        -- draw socket grid
+        self:drawFruitSockets()
+        self:drawUpgradeIndicators()
 	drawComboIndicator(self)
 end
 

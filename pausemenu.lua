@@ -215,16 +215,16 @@ local function refreshFloorLabel(floorNumber, floorName)
 end
 
 function PauseMenu:update(dt, isPaused, floorNumber, floorName)
-	if isPaused then
-		alpha = math.min(alpha + dt * fadeSpeed, 1)
-	else
-		alpha = max(alpha - dt * fadeSpeed, 0)
-	end
+        if isPaused then
+                alpha = math.min(alpha + dt * fadeSpeed, 1)
+        else
+                alpha = max(alpha - dt * fadeSpeed, 0)
+        end
 
-	if alpha > 0 then
-		local mx, my = love.mouse.getPosition()
-		buttonList:updateHover(mx, my)
-	end
+        if alpha > 0 then
+                local mx, my = UI.refreshCursor()
+                buttonList:updateHover(mx, my)
+        end
 
 	if floorNumber then
 		refreshFloorLabel(floorNumber, floorName)

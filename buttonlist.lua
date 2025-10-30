@@ -116,15 +116,19 @@ function ButtonList:syncUI()
 end
 
 function ButtonList:draw()
-	self:syncUI()
-	for _, button in ipairs(self.buttons) do
-		UI.drawButton(button.id)
-	end
+        UI.refreshCursor()
+        self:syncUI()
+        for _, button in ipairs(self.buttons) do
+                UI.drawButton(button.id)
+        end
 end
 
 function ButtonList:updateHover(mx, my)
-	local hovered
-	local hoveredIndex
+        if mx ~= nil and my ~= nil then
+                UI.refreshCursor(mx, my)
+        end
+        local hovered
+        local hoveredIndex
 
 	for index, button in ipairs(self.buttons) do
 		local isHover = UI.isHovered(button.x, button.y, button.w, button.h, mx, my)
