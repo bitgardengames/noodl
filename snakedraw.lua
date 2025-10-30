@@ -28,6 +28,9 @@ local FRUIT_BULGE_SCALE = 1.25
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
 
+local glowSprite = nil
+local glowSpriteResolution = 128
+
 local zephyrPoints = {}
 local zephyrPointCapacity = 0
 local stormBolt = {}
@@ -58,6 +61,41 @@ end
 
 local applyOverlay
 local drawTrailSegmentToCanvas
+
+local function rebuildGlowSprite()
+        local size = max(8, glowSpriteResolution)
+        local imageData = love.image.newImageData(size, size)
+        local center = (size - 1) * 0.5
+        local radius = max(center, 1)
+
+        for y = 0, size - 1 do
+                for x = 0, size - 1 do
+                        local dx = (x - center) / radius
+                        local dy = (y - center) / radius
+                        local dist = sqrt(dx * dx + dy * dy)
+                        local fade = 0
+
+                        if dist < 1 then
+                                local falloff = 1 - dist
+                                fade = falloff * falloff
+                        end
+
+                        imageData:setPixel(x, y, fade, fade, fade, fade)
+                end
+        end
+
+        local sprite = love.graphics.newImage(imageData)
+        sprite:setFilter("linear", "linear")
+        glowSprite = sprite
+end
+
+local function ensureGlowSprite()
+        if not glowSprite then
+                rebuildGlowSprite()
+        end
+
+        return glowSprite
+end
 
 local overlayShaderSources = {
 	stripes = [[
@@ -1373,38 +1411,55 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 end
 
 drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
-	if radius <= 0 then return end
+        if radius <= 0 then return end
 
-	local colorR = r or 0
-	local colorG = g or 0
-	local colorB = b or 0
-	local colorA = a or 1
-	local mode = blendMode or "add"
+        local sprite = ensureGlowSprite()
+        if not sprite then return end
 
-	love.graphics.push("all")
+        local colorR = r or 0
+        local colorG = g or 0
+        local colorB = b or 0
+        local colorA = a or 1
+        local mode = blendMode or "add"
 
-	if mode == "alpha" then
-		love.graphics.setBlendMode("alpha", "premultiplied")
-	else
-		love.graphics.setBlendMode("add")
-	end
+        local previousBlendMode, previousAlphaMode = love.graphics.getBlendMode()
+        local previousR, previousG, previousB, previousA = love.graphics.getColor()
 
-	local layers = 4
-	for i = 1, layers do
-		local t = (i - 1) / (layers - 1)
-		local fade = (1 - t)
-		local layerAlpha = colorA * fade * fade
+        local targetBlendMode, targetAlphaMode
+        if mode == "alpha" then
+                targetBlendMode, targetAlphaMode = "alpha", "premultiplied"
+        else
+                targetBlendMode, targetAlphaMode = "add", nil
+        end
 
-		if mode == "alpha" then
-			love.graphics.setColor(colorR * layerAlpha, colorG * layerAlpha, colorB * layerAlpha, layerAlpha)
-		else
-			love.graphics.setColor(colorR, colorG, colorB, layerAlpha)
-		end
+        if previousBlendMode ~= targetBlendMode or previousAlphaMode ~= targetAlphaMode then
+                if targetAlphaMode then
+                        love.graphics.setBlendMode(targetBlendMode, targetAlphaMode)
+                else
+                        love.graphics.setBlendMode(targetBlendMode)
+                end
+        end
 
-		love.graphics.circle("fill", x, y, radius * (0.55 + 0.35 * t))
-	end
+        if mode == "alpha" then
+                love.graphics.setColor(colorR * colorA, colorG * colorA, colorB * colorA, colorA)
+        else
+                love.graphics.setColor(colorR, colorG, colorB, colorA)
+        end
 
-	love.graphics.pop()
+        local spriteWidth, spriteHeight = sprite:getWidth(), sprite:getHeight()
+        local scaleX = (radius * 2) / spriteWidth
+        local scaleY = (radius * 2) / spriteHeight
+        love.graphics.draw(sprite, x, y, 0, scaleX, scaleY, spriteWidth * 0.5, spriteHeight * 0.5)
+
+        love.graphics.setColor(previousR, previousG, previousB, previousA)
+
+        if previousBlendMode ~= targetBlendMode or previousAlphaMode ~= targetAlphaMode then
+                if previousAlphaMode then
+                        love.graphics.setBlendMode(previousBlendMode, previousAlphaMode)
+                else
+                        love.graphics.setBlendMode(previousBlendMode)
+                end
+        end
 end
 
 local function drawPortalHole(hole, isExit)
@@ -2962,6 +3017,16 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)
+end
+
+function SnakeDraw.setGlowSpriteResolution(resolution)
+        if not resolution then return end
+
+        local target = max(8, floor(resolution))
+        if target ~= glowSpriteResolution then
+                glowSpriteResolution = target
+                glowSprite = nil
+        end
 end
 
 return SnakeDraw
