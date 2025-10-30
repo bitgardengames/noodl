@@ -46,6 +46,8 @@ local min = math.min
 local sin = math.sin
 local sqrt = math.sqrt
 
+local EMPTY_TABLE = {}
+
 local Game = {}
 
 local clamp01 = Easing.clamp01
@@ -1408,7 +1410,7 @@ function Game:drawTransition()
 	local phase = self.transition:getPhase()
 	local timer = self.transition:getTimer() or 0
 	local duration = self.transition:getDuration() or 0
-	local data = self.transition:getData() or {}
+        local data = self.transition:getData() or EMPTY_TABLE
 
         if phase == "fadeout" then
                 self:invalidateTransitionTitleCache()
