@@ -570,11 +570,17 @@ local function handleWallCollision(headX, headY)
 end
 
 local function handleRockCollision(headX, headY)
-	local headSize = max(0, SEGMENT_SIZE - ROCK_COLLISION_INSET * 2)
-	local halfHeadSize = headSize / 2
-	local headLeft = headX - halfHeadSize
-	local headTop = headY - halfHeadSize
-        local candidates
+        local headSize = max(0, SEGMENT_SIZE - ROCK_COLLISION_INSET * 2)
+        local halfHeadSize = headSize / 2
+        local headLeft = headX - halfHeadSize
+        local headTop = headY - halfHeadSize
+        local allRocks = Rocks.getAll and Rocks:getAll() or nil
+
+        if not allRocks or #allRocks == 0 then
+                return
+        end
+
+        local candidates = allRocks
         local hasLookup = Rocks.hasCellLookup and Rocks:hasCellLookup()
 
         if hasLookup and Rocks.getNearby then
@@ -582,15 +588,13 @@ local function handleRockCollision(headX, headY)
 
                 if headCol and headRow then
                         local nearby = Rocks:getNearby(headCol, headRow, 1)
-                        candidates = nearby or Rocks:getAll()
-                else
-                        candidates = Rocks:getAll()
+                        if nearby and #nearby > 0 then
+                                candidates = nearby
+                        end
                 end
-        else
-                candidates = Rocks:getAll()
         end
 
-	for _, rock in ipairs(candidates or {}) do
+        for _, rock in ipairs(candidates or {}) do
 		local rockCenterX = rock and (rock.renderX or rock.x) or 0
 		local rockCenterY = rock and (rock.renderY or rock.y) or 0
 		local rockWidth = max(0, (rock and rock.w or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
