@@ -21,10 +21,11 @@ Score.highScoreGlowDuration = 4
 Score.highScoreGlowTimer = 0
 Score.previousHighScore = 0
 Score.runHighScoreTriggered = false
+Score._pendingApples = 0
 
 local function updateAchievementChecks(self)
 	Achievements:checkAll({
-		totalApplesEaten = PlayerStats:get("totalApplesEaten"),
+		totalApplesEaten = (PlayerStats:get("totalApplesEaten") or 0) + (self._pendingApples or 0),
 	})
 end
 
@@ -36,6 +37,7 @@ function Score:load()
 	self.highScoreGlowTimer = 0
 	self.previousHighScore = 0
 	self.runHighScoreTriggered = false
+	self._pendingApples = 0
 
 	-- Load from file
 	if love.filesystem.getInfo(self.saveFile) then
@@ -88,10 +90,12 @@ function Score:reset(mode)
 		self.highScoreGlowTimer = 0
 		self.runHighScoreTriggered = false
 		self.previousHighScore = self:getHighScore()
+		self._pendingApples = 0
 	elseif mode == "all" then
 		self.highscore = 0
 		self.previousHighScore = 0
 		self:save()
+		self._pendingApples = 0
 	end
 end
 
@@ -114,7 +118,7 @@ function Score:increase(points)
 	points = points or 1
 	self.current = self.current + points
 
-	PlayerStats:add("totalApplesEaten", 1)
+	self._pendingApples = (self._pendingApples or 0) + 1
 	updateAchievementChecks(self)
 
 	if not self.runHighScoreTriggered and (self.previousHighScore or 0) > 0 and self.current > self.previousHighScore then
@@ -171,6 +175,8 @@ local function finalizeRunResult(self, options)
 	options = options or {}
 	local cause = options.cause or "unknown"
 	local won = options.won or false
+
+	self:flushPendingStats()
 
 	PlayerStats:updateMax("snakeScore", self.current)
 
@@ -247,6 +253,13 @@ function Score:handleRunClear(options)
 	options.cause = options.cause or "victory"
 	options.won = true
 	return finalizeRunResult(self, options)
+end
+
+function Score:flushPendingStats()
+	if self._pendingApples and self._pendingApples ~= 0 then
+		PlayerStats:add("totalApplesEaten", self._pendingApples)
+		self._pendingApples = 0
+	end
 end
 
 return Score
