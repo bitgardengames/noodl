@@ -549,7 +549,7 @@ function SettingsScreen:leave()
 end
 
 function SettingsScreen:update(dt)
-	local mx, my = love.mouse.getPosition()
+        local mx, my = UI.refreshCursor()
 	hoveredIndex = nil
 
 	self:updateButtonPositions()
@@ -621,14 +621,16 @@ function SettingsScreen:draw()
 
 	local prevScissorX, prevScissorY, prevScissorW, prevScissorH = love.graphics.getScissor()
 	local appliedScissor = false
-	if viewportW > 0 and viewportH > 0 then
-		love.graphics.setScissor(viewportX, viewportY, viewportW, viewportH)
-		appliedScissor = true
-	end
+        if viewportW > 0 and viewportH > 0 then
+                love.graphics.setScissor(viewportX, viewportY, viewportW, viewportH)
+                appliedScissor = true
+        end
 
-	for index, btn in ipairs(buttons) do
-		local opt = btn.option
-		local label = Localization:get(opt.labelKey)
+        UI.refreshCursor()
+
+        for index, btn in ipairs(buttons) do
+                local opt = btn.option
+                local label = Localization:get(opt.labelKey)
 		local isFocused = (focusedIndex == index)
 		local visible = self:isOptionVisible(btn)
 

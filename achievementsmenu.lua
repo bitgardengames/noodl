@@ -731,22 +731,24 @@ function AchievementsMenu:enter()
 end
 
 function AchievementsMenu:update(dt)
-	local mx, my = love.mouse.getPosition()
-	buttonList:updateHover(mx, my)
-	Face:update(dt)
-	updateHeldDpad(dt)
+        local mx, my = UI.refreshCursor()
+        buttonList:updateHover(mx, my)
+        Face:update(dt)
+        updateHeldDpad(dt)
 end
 
 function AchievementsMenu:draw()
-	local sw, sh = Screen:get()
-	drawBackground(sw, sh)
+        local sw, sh = Screen:get()
+        drawBackground(sw, sh)
 
-	if not displayBlocks or #displayBlocks == 0 then
-		displayBlocks = Achievements:getDisplayOrder()
-	end
+        if not displayBlocks or #displayBlocks == 0 then
+                displayBlocks = Achievements:getDisplayOrder()
+        end
 
-	local layout = computeLayout(sw, sh)
-	layout = updateScrollBounds(sw, sh, layout)
+        UI.refreshCursor()
+
+        local layout = computeLayout(sw, sh)
+        layout = updateScrollBounds(sw, sh, layout)
 
 	local titleFont = UI.fonts.title
 	love.graphics.setFont(titleFont)
@@ -988,12 +990,12 @@ function AchievementsMenu:draw()
 		thumbHeight = min(thumbHeight, trackHeight)
 		local thumbY = trackY + (trackHeight - thumbHeight) * scrollProgress
 
-		local mx, my = love.mouse.getPosition()
-		local isOverScrollbar = mx >= trackX and mx <= trackX + trackWidth and my >= trackY and my <= trackY + trackHeight
-		local isOverThumb = isOverScrollbar and my >= thumbY and my <= thumbY + thumbHeight
+                local mx, my = UI.getCursorPosition()
+                local isOverScrollbar = mx >= trackX and mx <= trackX + trackWidth and my >= trackY and my <= trackY + trackHeight
+                local isOverThumb = isOverScrollbar and my >= thumbY and my <= thumbY + thumbHeight
 
-		drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isOverScrollbar, isOverThumb)
-	end
+                drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isOverScrollbar, isOverThumb)
+        end
 
 	for _, btn in buttonList:iter() do
 		if btn.textKey then
