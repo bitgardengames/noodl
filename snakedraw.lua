@@ -584,25 +584,27 @@ local overlayShaderSources = {
 local overlayShaderCache = {}
 
 local function safeResolveShader(typeId)
-	if overlayShaderCache[typeId] ~= nil then
-		return overlayShaderCache[typeId]
-	end
+        local cached = overlayShaderCache[typeId]
+        if cached ~= nil then
+                return cached
+        end
 
-	local source = overlayShaderSources[typeId]
-	if not source then
-		overlayShaderCache[typeId] = false
-		return nil
-	end
+        local source = overlayShaderSources[typeId]
+        if not source then
+                overlayShaderCache[typeId] = false
+                return nil
+        end
 
-	local ok, shader = pcall(love.graphics.newShader, source)
-	if not ok then
-		print("[snakedraw] failed to build overlay shader", typeId, shader)
-		overlayShaderCache[typeId] = false
-		return nil
-	end
+        local ok, shader = pcall(love.graphics.newShader, source)
+        if not ok then
+                print("[snakedraw] failed to build overlay shader", typeId, shader)
+                overlayShaderCache[typeId] = false
+                return nil
+        end
 
-	overlayShaderCache[typeId] = shader
-	return shader
+        overlayShaderCache[typeId] = shader
+        resetShaderUniformCache(shader)
+        return shader
 end
 
 local function accumulateBounds(accumulator, coords, hx, hy)
@@ -794,11 +796,78 @@ local overlayPrimaryColor = {1, 1, 1, 1}
 local overlaySecondaryColor = {1, 1, 1, 1}
 local overlayTertiaryColor = {1, 1, 1, 1}
 
+local overlayUniformCache = setmetatable({}, { __mode = "k" })
+local lastOverlayShader = nil
+local lastOverlayType = nil
+
+local function resetShaderUniformCache(shader)
+        if shader then
+                overlayUniformCache[shader] = nil
+        end
+end
+
+local function getShaderUniformCache(shader)
+        local cache = overlayUniformCache[shader]
+        if not cache then
+                cache = {}
+                overlayUniformCache[shader] = cache
+        end
+        return cache
+end
+
+local function copyVectorUniform(src, dest)
+        dest = dest or {}
+        for i = 1, #src do
+                dest[i] = src[i]
+        end
+        for i = #src + 1, #dest do
+                dest[i] = nil
+        end
+        return dest
+end
+
+local function sendUniformIfChanged(shader, cache, name, value)
+        if value == nil then
+                return
+        end
+
+        local valueType = type(value)
+        if valueType == "table" then
+                local cached = cache[name]
+                local changed = false
+
+                if not cached then
+                        changed = true
+                else
+                        if #cached ~= #value then
+                                changed = true
+                        else
+                                for i = 1, #value do
+                                        if cached[i] ~= value[i] then
+                                                changed = true
+                                                break
+                                        end
+                                end
+                        end
+                end
+
+                if changed then
+                        shader:send(name, value)
+                        cache[name] = copyVectorUniform(value, cached)
+                end
+        else
+                if cache[name] ~= value then
+                        shader:send(name, value)
+                        cache[name] = value
+                end
+        end
+end
+
 local function resolveColor(color, fallback, out)
-	local target = out or {}
-	if type(color) == "table" then
-		target[1] = color[1] or 0
-		target[2] = color[2] or 0
+        local target = out or {}
+        if type(color) == "table" then
+                target[1] = color[1] or 0
+                target[2] = color[2] or 0
 		target[3] = color[3] or 0
 		target[4] = color[4] or 1
 		return target
@@ -822,98 +891,106 @@ applyOverlay = function(canvas, config, drawX, drawY)
 		return false
 	end
 
-	local time = Timer.getTime()
+        local time = Timer.getTime()
 
-	local colors = config.colors or {}
-	local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor(), nil, overlayPrimaryColor)
-	local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor(), nil, overlaySecondaryColor)
-	local tertiary = resolveColor(colors.tertiary or secondary, nil, overlayTertiaryColor)
+        local colors = config.colors or {}
+        local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor(), nil, overlayPrimaryColor)
+        local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor(), nil, overlaySecondaryColor)
+        local tertiary = resolveColor(colors.tertiary or secondary, nil, overlayTertiaryColor)
 
-	shader:send("time", time)
-	shader:send("intensity", config.intensity or 0.5)
-	shader:send("colorA", primary)
-	shader:send("colorB", secondary)
+        if shader ~= lastOverlayShader or config.type ~= lastOverlayType then
+                resetShaderUniformCache(shader)
+        end
+        lastOverlayShader = shader
+        lastOverlayType = config.type
 
-	if config.type == "stripes" then
-		shader:send("frequency", config.frequency or 18)
-		shader:send("speed", config.speed or 0.6)
-		shader:send("angle", math.rad(config.angle or 45))
-	elseif config.type == "holo" then
-		shader:send("speed", config.speed or 1.0)
-		shader:send("colorC", tertiary)
-	elseif config.type == "auroraVeil" then
-		shader:send("curtainDensity", config.curtainDensity or 6.5)
-		shader:send("driftSpeed", config.driftSpeed or 0.7)
-		shader:send("parallax", config.parallax or 1.4)
-		shader:send("shimmerStrength", config.shimmerStrength or 0.6)
-		shader:send("colorC", tertiary)
-	elseif config.type == "ionStorm" then
-		shader:send("boltFrequency", config.boltFrequency or 8.5)
-		shader:send("flashFrequency", config.flashFrequency or 5.2)
-		shader:send("haze", config.haze or 0.6)
-		shader:send("turbulence", config.turbulence or 1.2)
-		shader:send("colorC", tertiary)
-	elseif config.type == "petalBloom" then
-		shader:send("petalCount", config.petalCount or 8.0)
-		shader:send("pulseSpeed", config.pulseSpeed or 1.8)
-		shader:send("trailStrength", config.trailStrength or 0.45)
-		shader:send("bloomStrength", config.bloomStrength or 0.65)
-		shader:send("colorC", tertiary)
-	elseif config.type == "abyssalPulse" then
-		shader:send("swirlDensity", config.swirlDensity or 7.0)
-		shader:send("glimmerFrequency", config.glimmerFrequency or 3.5)
-		shader:send("darkness", config.darkness or 0.25)
-		shader:send("driftSpeed", config.driftSpeed or 0.9)
-		shader:send("colorC", tertiary)
-	elseif config.type == "chronoWeave" then
-		shader:send("ringDensity", config.ringDensity or 9.0)
-		shader:send("timeFlow", config.timeFlow or 2.4)
-		shader:send("weaveStrength", config.weaveStrength or 1.0)
-		shader:send("phaseOffset", config.phaseOffset or 0.0)
-		shader:send("colorC", tertiary)
-	elseif config.type == "gildedFacet" then
-		shader:send("facetDensity", config.facetDensity or 14.0)
-		shader:send("sparkleDensity", config.sparkleDensity or 12.0)
-		shader:send("beamSpeed", config.beamSpeed or 1.4)
-		shader:send("reflectionStrength", config.reflectionStrength or 0.6)
-		shader:send("colorC", tertiary)
-	elseif config.type == "voidEcho" then
-		shader:send("veilFrequency", config.veilFrequency or 7.2)
-		shader:send("echoSpeed", config.echoSpeed or 1.2)
-		shader:send("phaseShift", config.phaseShift or 0.4)
-		shader:send("riftIntensity", config.riftIntensity or 0.4)
-		shader:send("colorC", tertiary)
-	elseif config.type == "constellationDrift" then
-		shader:send("starDensity", config.starDensity or 6.5)
-		shader:send("driftSpeed", config.driftSpeed or 1.2)
-		shader:send("parallax", config.parallax or 0.6)
-		shader:send("twinkleStrength", config.twinkleStrength or 0.8)
-		shader:send("colorC", tertiary)
-	elseif config.type == "crystalBloom" then
-		shader:send("shardDensity", config.shardDensity or 6.0)
-		shader:send("sweepSpeed", config.sweepSpeed or 1.1)
-		shader:send("refractionStrength", config.refractionStrength or 0.7)
-		shader:send("veinStrength", config.veinStrength or 0.6)
-		shader:send("colorC", tertiary)
-	elseif config.type == "emberForge" then
-		shader:send("emberFrequency", config.emberFrequency or 8.0)
-		shader:send("emberSpeed", config.emberSpeed or 1.6)
-		shader:send("emberGlow", config.emberGlow or 0.7)
-		shader:send("slagDarkness", config.slagDarkness or 0.35)
-		shader:send("colorC", tertiary)
-	elseif config.type == "mechanicalScan" then
-		shader:send("scanSpeed", config.scanSpeed or 1.8)
-		shader:send("gearFrequency", config.gearFrequency or 12.0)
-		shader:send("gearParallax", config.gearParallax or 1.2)
-		shader:send("servoIntensity", config.servoIntensity or 0.6)
-		shader:send("colorC", tertiary)
-	elseif config.type == "tidalChorus" then
-		shader:send("waveFrequency", config.waveFrequency or 6.5)
-		shader:send("crestSpeed", config.crestSpeed or 1.4)
-		shader:send("chorusStrength", config.chorusStrength or 0.6)
-		shader:send("depthShift", config.depthShift or 0.0)
-		shader:send("colorC", tertiary)
-	end
+        local uniformCache = getShaderUniformCache(shader)
+
+        shader:send("time", time)
+        sendUniformIfChanged(shader, uniformCache, "intensity", config.intensity or 0.5)
+        sendUniformIfChanged(shader, uniformCache, "colorA", primary)
+        sendUniformIfChanged(shader, uniformCache, "colorB", secondary)
+
+        if config.type == "stripes" then
+                sendUniformIfChanged(shader, uniformCache, "frequency", config.frequency or 18)
+                sendUniformIfChanged(shader, uniformCache, "speed", config.speed or 0.6)
+                sendUniformIfChanged(shader, uniformCache, "angle", math.rad(config.angle or 45))
+        elseif config.type == "holo" then
+                sendUniformIfChanged(shader, uniformCache, "speed", config.speed or 1.0)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "auroraVeil" then
+                sendUniformIfChanged(shader, uniformCache, "curtainDensity", config.curtainDensity or 6.5)
+                sendUniformIfChanged(shader, uniformCache, "driftSpeed", config.driftSpeed or 0.7)
+                sendUniformIfChanged(shader, uniformCache, "parallax", config.parallax or 1.4)
+                sendUniformIfChanged(shader, uniformCache, "shimmerStrength", config.shimmerStrength or 0.6)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "ionStorm" then
+                sendUniformIfChanged(shader, uniformCache, "boltFrequency", config.boltFrequency or 8.5)
+                sendUniformIfChanged(shader, uniformCache, "flashFrequency", config.flashFrequency or 5.2)
+                sendUniformIfChanged(shader, uniformCache, "haze", config.haze or 0.6)
+                sendUniformIfChanged(shader, uniformCache, "turbulence", config.turbulence or 1.2)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "petalBloom" then
+                sendUniformIfChanged(shader, uniformCache, "petalCount", config.petalCount or 8.0)
+                sendUniformIfChanged(shader, uniformCache, "pulseSpeed", config.pulseSpeed or 1.8)
+                sendUniformIfChanged(shader, uniformCache, "trailStrength", config.trailStrength or 0.45)
+                sendUniformIfChanged(shader, uniformCache, "bloomStrength", config.bloomStrength or 0.65)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "abyssalPulse" then
+                sendUniformIfChanged(shader, uniformCache, "swirlDensity", config.swirlDensity or 7.0)
+                sendUniformIfChanged(shader, uniformCache, "glimmerFrequency", config.glimmerFrequency or 3.5)
+                sendUniformIfChanged(shader, uniformCache, "darkness", config.darkness or 0.25)
+                sendUniformIfChanged(shader, uniformCache, "driftSpeed", config.driftSpeed or 0.9)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "chronoWeave" then
+                sendUniformIfChanged(shader, uniformCache, "ringDensity", config.ringDensity or 9.0)
+                sendUniformIfChanged(shader, uniformCache, "timeFlow", config.timeFlow or 2.4)
+                sendUniformIfChanged(shader, uniformCache, "weaveStrength", config.weaveStrength or 1.0)
+                sendUniformIfChanged(shader, uniformCache, "phaseOffset", config.phaseOffset or 0.0)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "gildedFacet" then
+                sendUniformIfChanged(shader, uniformCache, "facetDensity", config.facetDensity or 14.0)
+                sendUniformIfChanged(shader, uniformCache, "sparkleDensity", config.sparkleDensity or 12.0)
+                sendUniformIfChanged(shader, uniformCache, "beamSpeed", config.beamSpeed or 1.4)
+                sendUniformIfChanged(shader, uniformCache, "reflectionStrength", config.reflectionStrength or 0.6)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "voidEcho" then
+                sendUniformIfChanged(shader, uniformCache, "veilFrequency", config.veilFrequency or 7.2)
+                sendUniformIfChanged(shader, uniformCache, "echoSpeed", config.echoSpeed or 1.2)
+                sendUniformIfChanged(shader, uniformCache, "phaseShift", config.phaseShift or 0.4)
+                sendUniformIfChanged(shader, uniformCache, "riftIntensity", config.riftIntensity or 0.4)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "constellationDrift" then
+                sendUniformIfChanged(shader, uniformCache, "starDensity", config.starDensity or 6.5)
+                sendUniformIfChanged(shader, uniformCache, "driftSpeed", config.driftSpeed or 1.2)
+                sendUniformIfChanged(shader, uniformCache, "parallax", config.parallax or 0.6)
+                sendUniformIfChanged(shader, uniformCache, "twinkleStrength", config.twinkleStrength or 0.8)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "crystalBloom" then
+                sendUniformIfChanged(shader, uniformCache, "shardDensity", config.shardDensity or 6.0)
+                sendUniformIfChanged(shader, uniformCache, "sweepSpeed", config.sweepSpeed or 1.1)
+                sendUniformIfChanged(shader, uniformCache, "refractionStrength", config.refractionStrength or 0.7)
+                sendUniformIfChanged(shader, uniformCache, "veinStrength", config.veinStrength or 0.6)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "emberForge" then
+                sendUniformIfChanged(shader, uniformCache, "emberFrequency", config.emberFrequency or 8.0)
+                sendUniformIfChanged(shader, uniformCache, "emberSpeed", config.emberSpeed or 1.6)
+                sendUniformIfChanged(shader, uniformCache, "emberGlow", config.emberGlow or 0.7)
+                sendUniformIfChanged(shader, uniformCache, "slagDarkness", config.slagDarkness or 0.35)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "mechanicalScan" then
+                sendUniformIfChanged(shader, uniformCache, "scanSpeed", config.scanSpeed or 1.8)
+                sendUniformIfChanged(shader, uniformCache, "gearFrequency", config.gearFrequency or 12.0)
+                sendUniformIfChanged(shader, uniformCache, "gearParallax", config.gearParallax or 1.2)
+                sendUniformIfChanged(shader, uniformCache, "servoIntensity", config.servoIntensity or 0.6)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        elseif config.type == "tidalChorus" then
+                sendUniformIfChanged(shader, uniformCache, "waveFrequency", config.waveFrequency or 6.5)
+                sendUniformIfChanged(shader, uniformCache, "crestSpeed", config.crestSpeed or 1.4)
+                sendUniformIfChanged(shader, uniformCache, "chorusStrength", config.chorusStrength or 0.6)
+                sendUniformIfChanged(shader, uniformCache, "depthShift", config.depthShift or 0.0)
+                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+        end
 
 	love.graphics.push("all")
 	love.graphics.setShader(shader)
