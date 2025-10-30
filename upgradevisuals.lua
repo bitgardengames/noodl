@@ -307,6 +307,11 @@ local function drawExtraBiteChomp(effect, progress)
 	local biteRadius = bodyRadius * (0.72 + 0.05 * sin(progress * pi * 5.1))
 	local biteDepth = innerRadius * (0.85 + 0.25 * progress)
 	local toothCount = (effect.variantData and effect.variantData.teeth) or 4
+	local toothPoints = effect._extraBitePoints
+	if not toothPoints then
+		toothPoints = {}
+		effect._extraBitePoints = toothPoints
+	end
 	for index = 1, toothCount do
 		local offset = (index - 0.5) / toothCount
 		local angle = (effect.rotation or 0) + offset * pi * 2 + sin(progress * pi * (3.4 + index * 0.15)) * 0.08
@@ -319,11 +324,17 @@ local function drawExtraBiteChomp(effect, progress)
 		local tipY = y + dirY * (biteRadius + biteDepth)
 		local width = innerRadius * (0.62 + 0.16 * sin(progress * pi * 4.6 + index))
 
-		local points = {
-			baseX + perpX * width * 0.45, baseY + perpY * width * 0.45,
-			tipX, tipY,
-			baseX - perpX * width * 0.45, baseY - perpY * width * 0.45,
-		}
+		local points = toothPoints
+		local previousLength = #points
+		points[1] = baseX + perpX * width * 0.45
+		points[2] = baseY + perpY * width * 0.45
+		points[3] = tipX
+		points[4] = tipY
+		points[5] = baseX - perpX * width * 0.45
+		points[6] = baseY - perpY * width * 0.45
+		for i = 7, previousLength do
+			points[i] = nil
+		end
 
 		love.graphics.setColor(toothColor[1], toothColor[2], toothColor[3], (toothColor[4] or 1) * fruitAlpha)
 		love.graphics.polygon("fill", points)
@@ -733,6 +744,11 @@ local function drawStormBurst(effect, progress)
 	end
 
 	local branches = 3
+	local branchPoints = effect._stormBurstPoints
+	if not branchPoints then
+		branchPoints = {}
+		effect._stormBurstPoints = branchPoints
+	end
 	for branch = 1, branches do
 		local delay = (branch - 1) * 0.08
 		local branchProgress = clamp01((progress - delay) / (0.78 - delay * 0.4))
@@ -742,15 +758,24 @@ local function drawStormBurst(effect, progress)
 			local length = outerRadius * (1.25 + 0.22 * branch) * branchProgress
 			local lateral = innerRadius * (0.9 - 0.18 * branch)
 
-			local points = {x, y}
+			local points = branchPoints
+			local previousLength = #points
+			points[1] = x
+			points[2] = y
+			local pointCount = 2
 			local segments = 4
 			for seg = 1, segments do
 				local t = seg / segments
 				local wobble = sin(progress * pi * (4 + branch) + seg * 1.4) * lateral * (1 - t)
 				local px = x + cos(angle) * length * t - sin(angle) * wobble * (seg % 2 == 0 and -0.6 or 0.6)
 				local py = y + sin(angle) * length * t + cos(angle) * wobble * (seg % 2 == 0 and -0.6 or 0.6)
-				points[#points + 1] = px
-				points[#points + 1] = py
+				local index = pointCount + 1
+				points[index] = px
+				points[index + 1] = py
+				pointCount = pointCount + 2
+			end
+			for i = pointCount + 1, previousLength do
+				points[i] = nil
 			end
 
 			love.graphics.setColor(boltColor[1], boltColor[2], boltColor[3], branchAlpha)
@@ -885,6 +910,11 @@ local function drawMoltingReflex(effect, progress)
 
 	local drift = (outerRadius - innerRadius) * (0.22 + 0.58 * progress)
 	local scaleCount = (effect.variantData and effect.variantData.scales) or 8
+	local scalePoints = effect._moltingReflexPoints
+	if not scalePoints then
+		scalePoints = {}
+		effect._moltingReflexPoints = scalePoints
+	end
 	for index = 1, scaleCount do
 		local fraction = (index - 0.5) / scaleCount
 		local angle = (effect.rotation or 0) + fraction * pi * 2 + sin(progress * pi * (3.6 + index * 0.25)) * 0.1
@@ -897,12 +927,19 @@ local function drawMoltingReflex(effect, progress)
 		local length = innerRadius * (0.65 + 0.25 * (1 - progress))
 		local width = innerRadius * (0.45 + 0.15 * sin(progress * pi * 5 + index))
 
-		local points = {
-			centerX + dirX * length * 0.5, centerY + dirY * length * 0.5,
-			centerX + perpX * width, centerY + perpY * width,
-			centerX - dirX * length * 0.5, centerY - dirY * length * 0.5,
-			centerX - perpX * width, centerY - perpY * width,
-		}
+		local points = scalePoints
+		local previousLength = #points
+		points[1] = centerX + dirX * length * 0.5
+		points[2] = centerY + dirY * length * 0.5
+		points[3] = centerX + perpX * width
+		points[4] = centerY + perpY * width
+		points[5] = centerX - dirX * length * 0.5
+		points[6] = centerY - dirY * length * 0.5
+		points[7] = centerX - perpX * width
+		points[8] = centerY - perpY * width
+		for i = 9, previousLength do
+			points[i] = nil
+		end
 
 		love.graphics.setColor(scaleColor[1], scaleColor[2], scaleColor[3], scaleAlpha * (0.85 - 0.15 * fraction))
 		love.graphics.polygon("fill", points)
@@ -1120,19 +1157,31 @@ local function drawChronospiralCore(effect, progress)
 	local armCount = (effect.variantData and effect.variantData.arms) or 3
 	local rotations = 1.5 + 0.4 * (1 - progress)
 	local rotation = (effect.rotation or 0) + progress * pi * 1.6
+	local spiralPoints = effect._chronospiralPoints
+	if not spiralPoints then
+		spiralPoints = {}
+		effect._chronospiralPoints = spiralPoints
+	end
 
 	for arm = 1, armCount do
 		local angleOffset = rotation + (arm - 1) * (pi * 2 / armCount)
 		local steps = 24
-		local points = {}
+		local points = spiralPoints
+		local previousLength = #points
+		local pointCount = 0
 		for step = 0, steps do
 			local t = step / steps
 			local eased = t ^ 0.82
 			local radius = innerRadius + (outerRadius - innerRadius) * eased
 			local angle = angleOffset + eased * rotations * pi * 2
 			angle = angle + sin(progress * pi * (3.4 + arm * 0.3) + t * 4) * 0.08
-			points[#points + 1] = x + cos(angle) * radius
-			points[#points + 1] = y + sin(angle) * radius
+			local index = pointCount + 1
+			points[index] = x + cos(angle) * radius
+			points[index + 1] = y + sin(angle) * radius
+			pointCount = pointCount + 2
+		end
+		for i = pointCount + 1, previousLength do
+			points[i] = nil
 		end
 
 		love.graphics.setLineWidth(innerRadius * (0.28 - 0.06 * (arm - 1) / armCount))
