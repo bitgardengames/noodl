@@ -687,23 +687,24 @@ function Menu:draw()
         if titleSaw and sawScale and sawRadius then
                 local desiredTrackLengthWorld = wordWidth + cellSize
                 local shortenedTrackLengthWorld = max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 126)
-                local targetTrackLengthBase = shortenedTrackLengthWorld / sawScale
+                local adjustedTrackLengthWorld = shortenedTrackLengthWorld + 4
+                local targetTrackLengthBase = adjustedTrackLengthWorld / sawScale
                 if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
                         titleSaw.trackLength = targetTrackLengthBase
-		end
+                end
 
-		local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
-		local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
-		local slotThicknessWorld = slotThicknessBase * sawScale
+                local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
+                local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
+                local slotThicknessWorld = slotThicknessBase * sawScale
 
                 local targetLeft = ox - 15
                 local targetBottom = oy - 41
 
-                local sawX = targetLeft + trackLengthWorld / 2
+                local sawX = targetLeft + trackLengthWorld / 2 - 4
                 local sawY = targetBottom - slotThicknessWorld / 2
 
-		titleSaw:draw(sawX, sawY, sawScale)
-	end
+                titleSaw:draw(sawX, sawY, sawScale)
+        end
 
 	local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
 
