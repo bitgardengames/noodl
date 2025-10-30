@@ -690,7 +690,8 @@ local function drawEmitter(emitter)
                 muzzleY = centerY + facing * muzzleOffset
         end
 
-        love.graphics.setColor(scaleColor(accentColor, 0.9 + strength * 0.15, 1))
+        local muzzleFillAlpha = clamp01(0.75 + strength * 0.15 + flash * 0.1)
+        love.graphics.setColor(0, 0, 0, muzzleFillAlpha)
         love.graphics.circle("fill", muzzleX, muzzleY, muzzleRadius, 16)
 
         local muzzleHighlightAlpha = clamp01((highlight[4] or 0.06) * (0.9 + strength * 0.5 + flash * 0.35))
