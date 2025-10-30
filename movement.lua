@@ -22,6 +22,11 @@ local Movement = {}
 
 local MAX_SNAKE_TIME_STEP = 1 / 60
 
+local cachedRockCandidates = {}
+local cachedRockHeadCol
+local cachedRockHeadRow
+local cachedRockRevision
+
 function Movement:applyForcedDirection(dirX, dirY)
 	dirX = dirX or 0
 	dirY = dirY or 0
@@ -569,7 +574,7 @@ local function handleWallCollision(headX, headY)
 	return headX, headY
 end
 
-local function handleRockCollision(headX, headY)
+local function handleRockCollision(headX, headY, headCol, headRow, rockRevision)
         local headSize = max(0, SEGMENT_SIZE - ROCK_COLLISION_INSET * 2)
         local halfHeadSize = headSize / 2
         local headLeft = headX - halfHeadSize
@@ -583,14 +588,32 @@ local function handleRockCollision(headX, headY)
         local candidates = allRocks
         local hasLookup = Rocks.hasCellLookup and Rocks:hasCellLookup()
 
-        if hasLookup and Rocks.getNearby then
-                local headCol, headRow = Arena:getTileFromWorld(headX, headY)
+        if hasLookup and Rocks.getNearby and headCol and headRow then
+                local revision = rockRevision or (Rocks.getRevision and Rocks:getRevision()) or nil
 
-                if headCol and headRow then
+                if revision and cachedRockRevision == revision and cachedRockHeadCol == headCol and cachedRockHeadRow == headRow then
+                        candidates = cachedRockCandidates
+                else
+                        cachedRockRevision = revision
+                        cachedRockHeadCol = headCol
+                        cachedRockHeadRow = headRow
+
+                        for i = #cachedRockCandidates, 1, -1 do
+                                cachedRockCandidates[i] = nil
+                        end
+
                         local nearby = Rocks:getNearby(headCol, headRow, 1)
                         if nearby and #nearby > 0 then
-                                candidates = nearby
+                                for i = 1, #nearby do
+                                        cachedRockCandidates[i] = nearby[i]
+                                end
                         end
+
+                        candidates = cachedRockCandidates
+                end
+
+                if not candidates or #candidates == 0 then
+                        candidates = allRocks
                 end
         end
 
@@ -911,10 +934,16 @@ function Movement:update(dt)
 			return "hit", wallCause, wallContext
 		end
 
-		local state, stateCause, stateContext = handleRockCollision(headX, headY)
-		if state then
-			return state, stateCause, stateContext
-		end
+                local headCol, headRow
+                if Arena and Arena.getTileFromWorld then
+                        headCol, headRow = Arena:getTileFromWorld(headX, headY)
+                end
+
+                local rockRevision = Rocks.getRevision and Rocks:getRevision() or nil
+                local state, stateCause, stateContext = handleRockCollision(headX, headY, headCol, headRow, rockRevision)
+                if state then
+                        return state, stateCause, stateContext
+                end
 
 		if not hazardGraceActive and laserEmitterCount > 0 then
 			local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
