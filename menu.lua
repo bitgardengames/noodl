@@ -25,6 +25,7 @@ local Menu = {
 local ANALOG_DEADZONE = 0.3
 local buttonList = ButtonList.new()
 local buttons = {}
+local buttonLocaleRevision = nil
 local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
@@ -323,6 +324,18 @@ local function handleAnalogAxis(axis, value)
 	end
 end
 
+local function updateButtonTexts(revision)
+        local currentRevision = revision or Localization:getRevision()
+
+        for _, btn in ipairs(buttons) do
+                if btn.labelKey then
+                        btn.text = Localization:get(btn.labelKey)
+                end
+        end
+
+        buttonLocaleRevision = currentRevision
+end
+
 local function setColorWithAlpha(color, alpha)
 	local r, g, b, a = 1, 1, 1, alpha or 1
 	if color then
@@ -394,27 +407,27 @@ function Menu:enter()
 
 	local defs = {}
 
-	for i, entry in ipairs(labels) do
-		local x = centerX - UI.spacing.buttonWidth / 2
-		local y = startY + (i - 1) * (UI.spacing.buttonHeight + UI.spacing.buttonSpacing)
+        for i, entry in ipairs(labels) do
+                local x = centerX - UI.spacing.buttonWidth / 2
+                local y = startY + (i - 1) * (UI.spacing.buttonHeight + UI.spacing.buttonSpacing)
 
-		defs[#defs + 1] = {
-			id = "menuButton" .. i,
+                defs[#defs + 1] = {
+                        id = "menuButton" .. i,
 			x = x,
 			y = y,
-			w = UI.spacing.buttonWidth,
-			h = UI.spacing.buttonHeight,
-			labelKey = entry.key,
-			text = Localization:get(entry.key),
-			action = entry.action,
-			hovered = false,
-			scale = 1,
-			alpha = 0,
-			offsetY = 50,
-		}
-	end
+                        w = UI.spacing.buttonWidth,
+                        h = UI.spacing.buttonHeight,
+                        labelKey = entry.key,
+                        action = entry.action,
+                        hovered = false,
+                        scale = 1,
+                        alpha = 0,
+                        offsetY = 50,
+                }
+        end
 
-	buttons = buttonList:reset(defs)
+        buttons = buttonList:reset(defs)
+        updateButtonTexts(Localization:getRevision())
 end
 
 function Menu:update(dt)
@@ -428,7 +441,12 @@ function Menu:update(dt)
 		dailyChallengeAnim = min(dailyChallengeAnim + dt * 2, 1)
 	end
 
-	updateDailyBarCelebration(dt, shouldCelebrateDailyChallenge())
+        updateDailyBarCelebration(dt, shouldCelebrateDailyChallenge())
+
+        local currentRevision = Localization:getRevision()
+        if buttonLocaleRevision ~= currentRevision then
+                updateButtonTexts(currentRevision)
+        end
 
 	for i, btn in ipairs(buttons) do
 		if btn.hovered then
@@ -517,12 +535,8 @@ function Menu:draw()
         UI.refreshCursor()
 
         for _, btn in ipairs(buttons) do
-                if btn.labelKey then
-                        btn.text = Localization:get(btn.labelKey)
-                end
-
-		if btn.alpha > 0 then
-			UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
+                if btn.alpha > 0 then
+                        UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
 
 			love.graphics.push()
 			love.graphics.translate(btn.x + btn.w / 2, btn.y + btn.h / 2 + btn.offsetY)
