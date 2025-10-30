@@ -456,54 +456,49 @@ local function gatherLaserHighlights(arena, highlights)
 		return
 	end
 
-	local Lasers = getModule("lasers")
-	if not (Lasers and Lasers.getEmitters) then
-		return
-	end
+        local Lasers = getModule("lasers")
+        if not (Lasers and Lasers.iterateEmitters) then
+                return
+        end
 
-	local emitters = Lasers:getEmitters()
-	if not (emitters and #emitters > 0) then
-		return
-	end
+        local tileSize = arena and arena.tileSize or 24
+        local baseInner = tileSize * 0.6
+        local baseOuter = baseInner + tileSize * 2.8
+        local beamInner = tileSize * 0.35
+        local beamOuter = beamInner + tileSize * 2.0
 
-	local tileSize = arena and arena.tileSize or 24
-	local baseInner = tileSize * 0.6
-	local baseOuter = baseInner + tileSize * 2.8
-	local beamInner = tileSize * 0.35
-	local beamOuter = beamInner + tileSize * 2.0
+        Lasers:iterateEmitters(function(beam)
+                if #highlights >= MAX_DIM_HIGHLIGHTS then
+                        return true
+                end
 
-	for _, beam in ipairs(emitters) do
-		if #highlights >= MAX_DIM_HIGHLIGHTS then
-			break
-		end
+                if beam then
+                        local state = beam.state
+                        if state == "charging" or state == "firing" then
+                                local bx = beam.renderX or beam.x
+                                local by = beam.renderY or beam.y
+                                if bx and by then
+                                        pushHighlightTarget(highlights, bx, by, baseInner, baseOuter)
+                                end
+                        end
 
-		if beam then
-			local state = beam.state
-			if state == "charging" or state == "firing" then
-				local bx = beam.renderX or beam.x
-				local by = beam.renderY or beam.y
-				if bx and by then
-					pushHighlightTarget(highlights, bx, by, baseInner, baseOuter)
-				end
-			end
-
-			if state == "firing" then
-				local startX = beam.beamStartX
-				local startY = beam.beamStartY
-				local endX = beam.beamEndX or beam.impactX
-				local endY = beam.beamEndY or beam.impactY
-				if startX and startY and endX and endY then
-					local midX = (startX + endX) * 0.5
-					local midY = (startY + endY) * 0.5
-					pushHighlightTarget(highlights, midX, midY, beamInner, beamOuter)
-					if #highlights >= MAX_DIM_HIGHLIGHTS then
-						break
-					end
-					pushHighlightTarget(highlights, endX, endY, beamInner, beamOuter)
-				end
-			end
-		end
-	end
+                        if state == "firing" then
+                                local startX = beam.beamStartX
+                                local startY = beam.beamStartY
+                                local endX = beam.beamEndX or beam.impactX
+                                local endY = beam.beamEndY or beam.impactY
+                                if startX and startY and endX and endY then
+                                        local midX = (startX + endX) * 0.5
+                                        local midY = (startY + endY) * 0.5
+                                        pushHighlightTarget(highlights, midX, midY, beamInner, beamOuter)
+                                        if #highlights >= MAX_DIM_HIGHLIGHTS then
+                                                return true
+                                        end
+                                        pushHighlightTarget(highlights, endX, endY, beamInner, beamOuter)
+                                end
+                        end
+                end
+        end)
 end
 
 local function buildDimHighlights(arena, state, headLighting)

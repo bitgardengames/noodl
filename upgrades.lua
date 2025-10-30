@@ -420,39 +420,37 @@ local function getSawCenters(limit)
 end
 
 local function getLaserEmitterDetails(limit)
-	if not Lasers or not Lasers.getEmitters then
-		return {}
-	end
+        if not Lasers or not Lasers.iterateEmitters then
+                return {}
+        end
 
-	local emitters = Lasers:getEmitters()
-	if not emitters then
-		return {}
-	end
+        local targets = {}
+        local maxCount = limit
+        if maxCount and maxCount <= 0 then
+                maxCount = nil
+        end
+        Lasers:iterateEmitters(function(beam)
+                if not beam then
+                        return
+                end
 
-	local count = #emitters
-	if not count or count <= 0 then
-		return {}
-	end
+                local x = beam.x
+                local y = beam.y
+                if x and y then
+                        targets[#targets + 1] = {
+                                x = x,
+                                y = y,
+                                dir = beam.dir,
+                                facing = beam.facing,
+                        }
 
-	local targets = {}
-	local maxCount = min(limit or count, count)
-	for index = 1, maxCount do
-		local beam = emitters[index]
-		if beam then
-			local x = beam.x
-			local y = beam.y
-			if x and y then
-				targets[#targets + 1] = {
-					x = x,
-					y = y,
-					dir = beam.dir,
-					facing = beam.facing,
-				}
-			end
-		end
-	end
+                        if maxCount and #targets >= maxCount then
+                                return true
+                        end
+                end
+        end)
 
-	return targets
+        return targets
 end
 
 local function arenaHasGrid()
@@ -618,51 +616,46 @@ local function computeLaserFacing(dir, col, row)
 end
 
 local function pushNearbyLasers(originCol, originRow, positions)
-	if not Lasers or not Lasers.getEmitters or not arenaHasGrid() then
-		return false
-	end
+        if not Lasers or not Lasers.iterateEmitters or not arenaHasGrid() then
+                return false
+        end
 
-	local moved = false
-	local emitters = Lasers:getEmitters()
-	if not emitters then
-		return false
-	end
+        local moved = false
+        Lasers:iterateEmitters(function(beam)
+                local col, row = beam and beam.col, beam and beam.row
+                if col and row then
+                        local candidates = getPushCandidates(col, row, originCol, originRow)
+                        if candidates then
+                                for _, candidate in ipairs(candidates) do
+                                        local targetCol, targetRow = candidate[1], candidate[2]
+                                        if isCellOpen(targetCol, targetRow) then
+                                                local startX, startY = beam.x, beam.y
 
-	for _, beam in ipairs(emitters) do
-		local col, row = beam.col, beam.row
-		if col and row then
-			local candidates = getPushCandidates(col, row, originCol, originRow)
-			if candidates then
-				for _, candidate in ipairs(candidates) do
-					local targetCol, targetRow = candidate[1], candidate[2]
-					if isCellOpen(targetCol, targetRow) then
-						local startX, startY = beam.x, beam.y
+                                                SnakeUtils.setOccupied(col, row, false)
 
-						SnakeUtils.setOccupied(col, row, false)
+                                                local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
+                                                beam.col = targetCol
+                                                beam.row = targetRow
+                                                beam.x = centerX
+                                                beam.y = centerY
+                                                beam.facing = computeLaserFacing(beam.dir, targetCol, targetRow)
 
-						local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
-						beam.col = targetCol
-						beam.row = targetRow
-						beam.x = centerX
-						beam.y = centerY
-						beam.facing = computeLaserFacing(beam.dir, targetCol, targetRow)
+                                                Lasers:beginEmitterSlide(beam, startX, startY, centerX, centerY, {
+                                                        duration = TREMOR_BLOOM_SLIDE_DURATION,
+                                                })
 
-						Lasers:beginEmitterSlide(beam, startX, startY, centerX, centerY, {
-							duration = TREMOR_BLOOM_SLIDE_DURATION,
-						})
+                                                SnakeUtils.setOccupied(targetCol, targetRow, true)
 
-						SnakeUtils.setOccupied(targetCol, targetRow, true)
+                                                addPosition(positions, centerX, centerY)
+                                                moved = true
+                                                break
+                                        end
+                                end
+                        end
+                end
+        end)
 
-						addPosition(positions, centerX, centerY)
-						moved = true
-						break
-					end
-				end
-			end
-		end
-	end
-
-	return moved
+        return moved
 end
 
 local function nudgeSawAlongTrack(saw, originCol, originRow, positions)
