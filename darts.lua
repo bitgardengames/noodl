@@ -643,13 +643,6 @@ local function drawEmitter(emitter)
                 love.graphics.rectangle("fill", baseX + 2, baseY + 3, tileSize, tileSize, 6, 6)
         end
 
-        if strength > 0 then
-                local glowRadius = tileSize * (0.55 + strength * 0.18)
-                local glowAlpha = clamp01((telegraphColor[4] or 1) * (0.18 + strength * 0.45 + flash * 0.25))
-                love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], glowAlpha)
-                love.graphics.circle("fill", centerX, centerY, glowRadius, 24)
-        end
-
         local housingAlpha = clamp01((bodyColor[4] or 1) + flash * 0.1)
         love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], housingAlpha)
         love.graphics.rectangle("fill", baseX, baseY, tileSize, tileSize, 6, 6)
@@ -754,12 +747,6 @@ local function drawTelegraphPath(emitter)
         local tipLength = tileSize * 0.22
         local shaftLength = max(0, peekDistance - tipLength * 0.35)
 
-        local glowAlpha = clamp01((telegraphColor[4] or 1) * (0.35 + 0.45 * strength))
-        if glowAlpha > 0 then
-                love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], glowAlpha)
-                love.graphics.circle("fill", muzzleX, muzzleY, tileSize * (0.22 + strength * 0.18), 18)
-        end
-
         if emitter.dir == "horizontal" then
                 local baseX = muzzleX - facing * (tileSize * 0.02)
                 local tipX = baseX + facing * peekDistance
@@ -815,10 +802,6 @@ local function drawDart(emitter)
         end
 
         love.graphics.push("all")
-
-        local tipCenterX, tipCenterY
-        local trailDirX, trailDirY = 0, 0
-        local trailLength = 0
 
         if emitter.dir == "horizontal" then
                 local shaftHeight = rh * 0.34
@@ -922,9 +905,6 @@ local function drawDart(emitter)
                         lerp(tipX, shaftEnd, 0.24), lerp(baseY, baseY + shaftHeight * 1.05, 0.42),
                         shaftEnd, lerp(baseY + shaftHeight * 1.05, baseY, 0.18))
 
-                tipCenterX, tipCenterY = tipX, baseY
-                trailDirX, trailDirY = -(facing), 0
-                trailLength = max(12, abs(tipX - tailX) * 0.5)
         else
                 local shaftWidth = rw * 0.34
                 local shaftX = rx + (rw - shaftWidth) * 0.5
@@ -1027,32 +1007,6 @@ local function drawDart(emitter)
                         lerp(baseX, baseX - shaftWidth * 1.05, 0.42), lerp(tipY, shaftEnd, 0.8),
                         lerp(baseX, baseX + shaftWidth * 1.05, 0.42), lerp(tipY, shaftEnd, 0.8))
 
-                tipCenterX, tipCenterY = baseX, tipY
-                trailDirX, trailDirY = 0, -(facing)
-                trailLength = max(12, abs(tipY - tailY) * 0.5)
-        end
-
-        if tipCenterX and tipCenterY then
-                local glow = getTipGlowColor(tipColor)
-                local prevBlendMode, prevAlphaMode = love.graphics.getBlendMode()
-                love.graphics.setBlendMode("add", "premultiplied")
-
-                local progress = clamp01(emitter.dartProgress or 0)
-                local radius = 3.2 + 1.8 * (1 - progress)
-                love.graphics.setColor(glow[1], glow[2], glow[3], glow[4])
-                love.graphics.circle("fill", tipCenterX, tipCenterY, radius, 16)
-
-                local steps = 4
-                for step = 1, steps do
-                        local t = step / steps
-                        local fade = (1 - t) * 0.55
-                        love.graphics.setColor(glow[1], glow[2], glow[3], glow[4] * fade)
-                        local px = tipCenterX + trailDirX * (trailLength * t)
-                        local py = tipCenterY + trailDirY * (trailLength * t)
-                        love.graphics.circle("fill", px, py, radius * (0.58 - 0.28 * t), 12)
-                end
-
-                love.graphics.setBlendMode(prevBlendMode, prevAlphaMode)
         end
 
         love.graphics.pop()
