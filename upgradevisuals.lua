@@ -224,7 +224,6 @@ local function drawFangFlurry(effect, progress)
 	local fangCount = (effect.variantData and effect.variantData.fangs) or 6
 	local rotation = (effect.rotation or 0) + progress * pi * 0.8
 
-	love.graphics.push("all")
 
 	if effect.addBlend then
 		love.graphics.setBlendMode("add")
@@ -274,7 +273,9 @@ local function drawFangFlurry(effect, progress)
 		love.graphics.arc("line", "open", x, y, slashRadius, angle - slashWidth, angle + slashWidth, 14)
 	end
 
-	love.graphics.pop()
+	if effect.addBlend then
+		love.graphics.setBlendMode("alpha")
+	end
 	love.graphics.setLineWidth(1)
 end
 
@@ -289,7 +290,6 @@ local function drawExtraBiteChomp(effect, progress)
 	local fruitAlpha = (fruitColor[4] or 1) * clamp01(1.08 - progress * 1.2)
 	if fruitAlpha <= 0 then return end
 
-	love.graphics.push("all")
 
 	if effect.addBlend then
 		love.graphics.setBlendMode("add")
@@ -356,7 +356,9 @@ local function drawExtraBiteChomp(effect, progress)
 		end
 	end
 
-	love.graphics.pop()
+	if effect.addBlend then
+		love.graphics.setBlendMode("alpha")
+	end
 	love.graphics.setLineWidth(1)
 end
 
@@ -376,7 +378,6 @@ local function drawStoneguardBastion(effect, progress)
 	local bandRadius = (innerRadius + outerRadius) * 0.5
 	local bandThickness = (outerRadius - innerRadius) * (0.55 + 0.2 * (1 - progress))
 
-	love.graphics.push("all")
 
 	for index = 1, slabCount do
 		local offset = (index - 0.5) / slabCount
@@ -431,7 +432,6 @@ local function drawStoneguardBastion(effect, progress)
 		end
 	end
 
-	love.graphics.pop()
 	love.graphics.setLineWidth(1)
 end
 
@@ -815,7 +815,6 @@ local function drawGuidingCompass(effect, progress)
 	local ringAlpha = (ringColor[4] or 1) * clamp01(1.05 - progress * 1.15)
 	if ringAlpha <= 0 then return end
 
-	love.graphics.push("all")
 
 	local rotation = (effect.rotation or 0) + progress * pi * 0.7
 
@@ -887,7 +886,6 @@ local function drawGuidingCompass(effect, progress)
 		love.graphics.circle("line", x, y, innerRadius * (1.35 + 0.25 * pulse), 30)
 	end
 
-	love.graphics.pop()
 	love.graphics.setLineWidth(1)
 end
 
@@ -902,7 +900,6 @@ local function drawMoltingReflex(effect, progress)
 	local scaleAlpha = (scaleColor[4] or 1) * clamp01(1.02 - progress * 1.1)
 	if scaleAlpha <= 0 then return end
 
-	love.graphics.push("all")
 
 	if effect.addBlend then
 		love.graphics.setBlendMode("add")
@@ -966,7 +963,9 @@ local function drawMoltingReflex(effect, progress)
 		end
 	end
 
-	love.graphics.pop()
+	if effect.addBlend then
+		love.graphics.setBlendMode("alpha")
+	end
 	love.graphics.setLineWidth(1)
 end
 
@@ -983,7 +982,6 @@ local function drawResonantShell(effect, progress)
 		return
 	end
 
-	love.graphics.push("all")
 
 	if effect.addBlend then
 		love.graphics.setBlendMode("add")
@@ -1040,7 +1038,6 @@ local function drawResonantShell(effect, progress)
 		end
 	end
 
-	love.graphics.pop()
 	love.graphics.setLineWidth(1)
 end
 
@@ -1057,7 +1054,6 @@ local function drawAbyssalCatalyst(effect, progress)
 		return
 	end
 
-	love.graphics.push("all")
 
 	if effect.addBlend then
 		love.graphics.setBlendMode("add")
@@ -1128,7 +1124,6 @@ local function drawAbyssalCatalyst(effect, progress)
 		love.graphics.setBlendMode("alpha")
 	end
 
-	love.graphics.pop()
 	love.graphics.setLineWidth(1)
 end
 
@@ -1145,7 +1140,6 @@ local function drawChronospiralCore(effect, progress)
 		return
 	end
 
-	love.graphics.push("all")
 
 	if effect.addBlend then
 		love.graphics.setBlendMode("add")
@@ -1227,7 +1221,6 @@ local function drawChronospiralCore(effect, progress)
 		end
 	end
 
-	love.graphics.pop()
 	love.graphics.setLineWidth(1)
 end
 
