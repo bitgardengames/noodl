@@ -530,12 +530,12 @@ local function drawEmitter(emitter)
         love.graphics.rectangle("line", baseX + 2, baseY + 2, tileSize - 4, tileSize - 4, 4, 4)
 
         if strength > 0 then
-                local spin = (time * 2.5 + (emitter.randomOffset or 0)) % (pi * 2)
+                local spin = (time * 2.5 + (emitter.randomOffset or 0)) % (math.pi * 2)
                 local ringRadius = tileSize * 0.46 + sin(time * 3.2 + (emitter.randomOffset or 0)) * (tileSize * 0.05)
                 love.graphics.setLineWidth(2)
                 love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.28 + flash * 0.4 + strength * 0.4)
                 for i = 0, 2 do
-                        local angle = spin + i * (pi * 2 / 3)
+                        local angle = spin + i * (math.pi * 2 / 3)
                         love.graphics.arc("line", "open", centerX, centerY, ringRadius, angle - 0.34, angle + 0.34, 16)
                 end
                 love.graphics.setLineWidth(1)
