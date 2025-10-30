@@ -665,7 +665,7 @@ function Menu:draw()
 
         local baseCellSize = 20
         local baseSpacing = 10
-        local baseWordScale = 1.5
+local baseWordScale = 1.4
         local wordScale = baseWordScale
         local sawScale = nil
         local sawRadius = nil
