@@ -22,6 +22,18 @@ local Tooltip = {
 	defaultDelay = 0.18,
 	defaultOffset = 18,
 	defaultMaxWidth = 320,
+	lastFont = nil,
+	cachedText = nil,
+	cachedMaxWidth = nil,
+	cachedLines = nil,
+	cachedLineCount = nil,
+	cachedLineHeight = nil,
+	cachedTextHeight = nil,
+	cachedMeasuredWidth = nil,
+	cachedBoxWidth = nil,
+	cachedBoxHeight = nil,
+	cachedPaddingX = nil,
+	cachedPaddingY = nil,
 }
 
 local EMPTY_TABLE = {}
@@ -45,6 +57,21 @@ local function applyDelay(self, options, changed, suppress)
 	elseif suppress and self.delayTimer < 0 then
 		self.delayTimer = 0
 	end
+end
+
+local function invalidateLayout(self)
+	self.lastFont = nil
+	self.cachedText = nil
+	self.cachedMaxWidth = nil
+	self.cachedLines = nil
+	self.cachedLineCount = nil
+	self.cachedLineHeight = nil
+	self.cachedTextHeight = nil
+	self.cachedMeasuredWidth = nil
+	self.cachedBoxWidth = nil
+	self.cachedBoxHeight = nil
+	self.cachedPaddingX = nil
+	self.cachedPaddingY = nil
 end
 
 function Tooltip:update(dt, mx, my)
@@ -73,6 +100,7 @@ function Tooltip:update(dt, mx, my)
 		self.text = ""
 		self.currentId = nil
 		self.delayTimer = 0
+		invalidateLayout(self)
 	end
 end
 
@@ -106,6 +134,10 @@ function Tooltip:show(text, options)
 	self.offset = offset
 	self.followCursor = placement == "cursor" and (options.followMouse ~= false)
 	self.active = true
+
+	if changed then
+		invalidateLayout(self)
+	end
 end
 
 function Tooltip:hide(id)
@@ -163,22 +195,58 @@ function Tooltip:draw()
 
 	love.graphics.setFont(font)
 
-	local maxWidth = clamp(self.maxWidth or self.defaultMaxWidth or 320, 120, sw - 24)
-	local _, lines = computeWrap(font, text, maxWidth)
-	local lineCount = max(1, #lines)
-	local lineHeight = font:getHeight()
-	local textHeight = lineCount * lineHeight
-
 	local spacing = UI.spacing or EMPTY_TABLE
 	local paddingX = (spacing.panelPadding or 20) * 0.6
 	local paddingY = paddingX * 0.75
-	local measuredWidth = 0
-	for i = 1, lineCount do
-		measuredWidth = max(measuredWidth, font:getWidth(lines[i]))
+	local maxWidth = clamp(self.maxWidth or self.defaultMaxWidth or 320, 120, sw - 24)
+
+	local needsLayout = (self.cachedText ~= text)
+	or (self.lastFont ~= font)
+	or (self.cachedMaxWidth ~= maxWidth)
+	or (self.cachedPaddingX ~= paddingX)
+	or (self.cachedPaddingY ~= paddingY)
+
+	local lines, lineCount, lineHeight, textHeight, measuredWidth, boxWidth, boxHeight
+
+	if needsLayout or not self.cachedLines then
+		local _, wrappedLines = computeWrap(font, text, maxWidth)
+		lines = wrappedLines
+		lineCount = max(1, #lines)
+		lineHeight = font:getHeight()
+		textHeight = lineCount * lineHeight
+
+		measuredWidth = 0
+		for i = 1, lineCount do
+			measuredWidth = max(measuredWidth, font:getWidth(lines[i]))
+		end
+
+		boxWidth = min(maxWidth, measuredWidth) + paddingX * 2
+		boxWidth = max(boxWidth, paddingX * 2 + 12)
+		boxHeight = textHeight + paddingY * 2
+
+		self.lastFont = font
+		self.cachedText = text
+		self.cachedMaxWidth = maxWidth
+		self.cachedLines = lines
+		self.cachedLineCount = lineCount
+		self.cachedLineHeight = lineHeight
+		self.cachedTextHeight = textHeight
+		self.cachedMeasuredWidth = measuredWidth
+		self.cachedBoxWidth = boxWidth
+		self.cachedBoxHeight = boxHeight
+		self.cachedPaddingX = paddingX
+		self.cachedPaddingY = paddingY
+	else
+		lines = self.cachedLines
+		lineCount = self.cachedLineCount or max(1, #lines)
+		lineHeight = self.cachedLineHeight or font:getHeight()
+		textHeight = self.cachedTextHeight or (lineCount * lineHeight)
+		measuredWidth = self.cachedMeasuredWidth or 0
+		boxWidth = self.cachedBoxWidth or (min(maxWidth, measuredWidth) + paddingX * 2)
+		boxHeight = self.cachedBoxHeight or (textHeight + paddingY * 2)
+		paddingX = self.cachedPaddingX or paddingX
+		paddingY = self.cachedPaddingY or paddingY
 	end
-	local boxWidth = min(maxWidth, measuredWidth) + paddingX * 2
-	boxWidth = max(boxWidth, paddingX * 2 + 12)
-	local boxHeight = textHeight + paddingY * 2
 
 	local placement = self.placement or "cursor"
 	local offset = self.offset or self.defaultOffset or 18
