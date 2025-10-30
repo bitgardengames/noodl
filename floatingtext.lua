@@ -394,10 +394,10 @@ function FloatingText:update(dt)
 end
 
 function FloatingText:draw()
-	local entries = self.entries
-	local defaultBlendMode, defaultAlphaMode = lg.getBlendMode()
-	local activeGlowBlend = false
-	local currentFont = nil
+        local entries = self.entries
+        local defaultBlendMode, defaultAlphaMode = lg.getBlendMode()
+        local glowEntries = nil
+        local currentFont = nil
 
         for index = 1, #entries do
                 local entry = entries[index]
@@ -435,15 +435,31 @@ function FloatingText:draw()
                 lg.print(entry.text, baseX, baseY, rotation, scale, scale, originX, originY)
 
                 if entry.glowAlpha and entry.glowAlpha > 0 and entry.glowColor then
-                        if not activeGlowBlend then
-                                lg.setBlendMode("add", "alphamultiply")
-                                activeGlowBlend = true
-                        end
-                        lg.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], alpha * entry.glowAlpha)
-                        lg.print(entry.text, baseX, baseY, rotation, scale, scale, originX, originY)
-                        lg.setBlendMode(defaultBlendMode, defaultAlphaMode)
-                        activeGlowBlend = false
+                        glowEntries = glowEntries or {}
+                        glowEntries[#glowEntries + 1] = {
+                                entry = entry,
+                                baseX = baseX,
+                                baseY = baseY,
+                                rotation = rotation,
+                                scale = scale,
+                                originX = originX,
+                                originY = originY,
+                                alpha = alpha,
+                        }
                 end
+        end
+
+        if glowEntries then
+                lg.setBlendMode("add", "alphamultiply")
+
+                for index = 1, #glowEntries do
+                        local glow = glowEntries[index]
+                        local entry = glow.entry
+                        lg.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], glow.alpha * entry.glowAlpha)
+                        lg.print(entry.text, glow.baseX, glow.baseY, glow.rotation, glow.scale, glow.scale, glow.originX, glow.originY)
+                end
+
+                lg.setBlendMode(defaultBlendMode, defaultAlphaMode)
         end
 
         lg.setColor(1, 1, 1, 1)
