@@ -587,55 +587,76 @@ local function drawTelegraphPath(emitter)
                 return
         end
 
-        local _, accentColor, telegraphColor = getEmitterColors()
-        local strength = emitter.telegraphStrength or 0
+        local _, _, telegraphColor, bodyColor, tipColor = getEmitterColors()
+        local strength = clamp01(emitter.telegraphStrength or 0)
         if strength <= 0 then
                 return
         end
 
-        local travel = emitter.travelDistance or 0
-        if travel <= 0.01 then
-                return
-        end
-
         love.graphics.push("all")
-        local dx = emitter.endX - emitter.startX
-        local dy = emitter.endY - emitter.startY
 
-        local dashSpacing = 16
-        local dashLength = 7 + strength * 3
-        local offset = ((emitter.randomOffset or 0) * 0.5) % dashSpacing
-        local teleAlpha = clamp01((telegraphColor[4] or 1) * (0.35 + 0.45 * strength))
-        love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], teleAlpha)
-        for distance = offset, travel, dashSpacing do
-                local progress = distance / travel
-                local px = emitter.startX + dx * progress
-                local py = emitter.startY + dy * progress
-                if emitter.dir == "horizontal" then
-                        love.graphics.rectangle("fill", px - dashLength * 0.5, py - 1, dashLength, 2, 1, 1)
-                else
-                        love.graphics.rectangle("fill", px - 1, py - dashLength * 0.5, 2, dashLength, 1, 1)
-                end
+        local tileSize = Arena.tileSize or BASE_EMITTER_SIZE
+        local centerX = emitter.x or 0
+        local centerY = emitter.y or 0
+        local facing = emitter.facing or 1
+        local muzzleOffset = tileSize * 0.34
+        local muzzleX = centerX
+        local muzzleY = centerY
+        if emitter.dir == "horizontal" then
+                muzzleX = centerX + facing * muzzleOffset
+        else
+                muzzleY = centerY + facing * muzzleOffset
         end
 
-        local accentAlpha = clamp01((accentColor[4] or 1) * (0.25 + 0.5 * strength))
-        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], accentAlpha)
+        local peekDistance = tileSize * (0.16 + strength * 0.28)
+        local shaftThickness = tileSize * 0.18
+        local tipLength = tileSize * 0.22
+        local shaftLength = max(0, peekDistance - tipLength * 0.35)
+
+        local glowAlpha = clamp01((telegraphColor[4] or 1) * (0.35 + 0.45 * strength))
+        if glowAlpha > 0 then
+                love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], glowAlpha)
+                love.graphics.circle("fill", muzzleX, muzzleY, tileSize * (0.22 + strength * 0.18), 18)
+        end
+
         if emitter.dir == "horizontal" then
-                for distance = offset + dashSpacing * 0.5, travel, dashSpacing do
-                        local progress = distance / travel
-                        local px = emitter.startX + dx * progress
-                        love.graphics.rectangle("fill", px - 1, emitter.startY - 4, 2, 8, 1, 1)
+                local baseX = muzzleX - facing * (tileSize * 0.02)
+                local tipX = baseX + facing * peekDistance
+                local shaftStart = baseX - facing * shaftLength
+                local shaftY = muzzleY - shaftThickness * 0.34
+                local shaftHeight = shaftThickness * 0.68
+
+                if shaftLength > 0 then
+                        love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], clamp01((bodyColor[4] or 1) * (0.6 + 0.4 * strength)))
+                        love.graphics.rectangle("fill", min(shaftStart, baseX), shaftY, abs(baseX - shaftStart), shaftHeight, 3, 3)
                 end
-                local facing = emitter.facing or 1
-                love.graphics.rectangle("fill", emitter.endX - facing * 4, emitter.endY - 6, 3, 12, 1, 1)
+
+                local tipBaseY = muzzleY
+                local tipHalfHeight = shaftThickness * 0.55
+                love.graphics.setColor(tipColor[1], tipColor[2], tipColor[3], clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength)))
+                love.graphics.polygon("fill",
+                        tipX, tipBaseY,
+                        baseX, tipBaseY - tipHalfHeight,
+                        baseX, tipBaseY + tipHalfHeight)
         else
-                for distance = offset + dashSpacing * 0.5, travel, dashSpacing do
-                        local progress = distance / travel
-                        local py = emitter.startY + dy * progress
-                        love.graphics.rectangle("fill", emitter.startX - 4, py - 1, 8, 2, 1, 1)
+                local baseY = muzzleY - facing * (tileSize * 0.02)
+                local tipY = baseY + facing * peekDistance
+                local shaftStart = baseY - facing * shaftLength
+                local shaftX = muzzleX - shaftThickness * 0.34
+                local shaftWidth = shaftThickness * 0.68
+
+                if shaftLength > 0 then
+                        love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], clamp01((bodyColor[4] or 1) * (0.6 + 0.4 * strength)))
+                        love.graphics.rectangle("fill", shaftX, min(shaftStart, baseY), shaftWidth, abs(baseY - shaftStart), 3, 3)
                 end
-                local facing = emitter.facing or 1
-                love.graphics.rectangle("fill", emitter.endX - 6, emitter.endY - facing * 4, 12, 3, 1, 1)
+
+                local tipBaseX = muzzleX
+                local tipHalfWidth = shaftThickness * 0.55
+                love.graphics.setColor(tipColor[1], tipColor[2], tipColor[3], clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength)))
+                love.graphics.polygon("fill",
+                        tipBaseX, tipY,
+                        tipBaseX - tipHalfWidth, baseY,
+                        tipBaseX + tipHalfWidth, baseY)
         end
 
         love.graphics.pop()
