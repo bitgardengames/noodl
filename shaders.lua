@@ -29,12 +29,28 @@ local function lerp(a, b, t)
 	return a + (b - a) * t
 end
 
+local uniformCache = setmetatable({}, { __mode = "k" })
+
 local function shaderHasUniform(shader, name)
 	if not shader or not shader.hasUniform then
 		return true
 	end
 
-	return shader:hasUniform(name)
+	local shaderCache = uniformCache[shader]
+	if shaderCache then
+		local cached = shaderCache[name]
+		if cached ~= nil then
+			return cached
+		end
+	else
+		shaderCache = {}
+		uniformCache[shader] = shaderCache
+	end
+
+	local hasUniform = shader:hasUniform(name)
+	shaderCache[name] = hasUniform
+
+	return hasUniform
 end
 
 local function sendColor(shader, name, color)
@@ -1461,6 +1477,10 @@ registerEffect({
 })
 local function createEffect(def)
 	local shader = love.graphics.newShader(def.source)
+
+	if shader then
+		uniformCache[shader] = uniformCache[shader] or {}
+	end
 
 	local defaultBackdrop = def.backdropIntensity or 1.0
 	local defaultArena = def.arenaIntensity or 0.6
