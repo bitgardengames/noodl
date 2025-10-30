@@ -256,65 +256,40 @@ local function resolveDate(self, override)
 end
 
 
-local function buildTimeTable(date, overrides)
-	if not date then
-		return nil
-	end
-
-	local value = {
-		year = date.year,
-		month = date.month,
-		day = date.day,
-		hour = date.hour,
-		min = date.min,
-		sec = date.sec,
-		isdst = date.isdst,
-	}
-
-	if overrides then
-		for k, v in pairs(overrides) do
-			value[k] = v
-		end
-	end
-
-	return value
-end
-
 local function secondsUntilNextMidnight(date)
-	if not date then
-		return nil
-	end
+        if not date then
+                return nil
+        end
 
-	if not date.year or not date.month or not date.day then
-		return nil
-	end
+        if not date.year or not date.month or not date.day then
+                return nil
+        end
 
-	local base = buildTimeTable(date)
-	if not base or base.hour == nil or base.min == nil or base.sec == nil then
-		return nil
-	end
+        if type(date.hour) ~= "number" or type(date.min) ~= "number" or type(date.sec) ~= "number" then
+                return nil
+        end
 
-	local nowTimestamp = os.time(base)
-	if not nowTimestamp then
-		return nil
-	end
+        local secondsPerDay = 24 * 60 * 60
+        local elapsed = date.hour * 60 * 60 + date.min * 60 + date.sec
 
-	local midnightTable = buildTimeTable(date, {hour = 0, min = 0, sec = 0})
-	local midnightTimestamp = midnightTable and os.time(midnightTable)
-	if not midnightTimestamp then
-		return nil
-	end
+        if type(elapsed) ~= "number" then
+                return nil
+        end
 
-	if nowTimestamp >= midnightTimestamp then
-		midnightTimestamp = midnightTimestamp + 24 * 60 * 60
-	end
+        if elapsed < 0 then
+                return nil
+        end
 
-	local remaining = midnightTimestamp - nowTimestamp
-	if remaining < 0 then
-		remaining = 0
-	end
+        -- clamp elapsed into the range of a single day in case of slightly
+        -- out-of-range values (e.g. floating point rounding or hour == 24)
+        elapsed = elapsed % secondsPerDay
 
-	return remaining
+        local remaining = secondsPerDay - elapsed
+        if remaining <= 0 then
+                remaining = remaining + secondsPerDay
+        end
+
+        return remaining
 end
 
 local function getDayValue(date)
