@@ -663,15 +663,28 @@ function Menu:draw()
 
 	drawBackground(sw, sh)
 
-	local baseCellSize = 20
-	local baseSpacing = 10
-	local wordScale = 1.5
+        local baseCellSize = 20
+        local baseSpacing = 10
+        local baseWordScale = 1.5
+        local wordScale = baseWordScale
+        local sawScale = nil
+        local sawRadius = nil
 
-	local cellSize = baseCellSize * wordScale
-	local word = Localization:get("menu.title_word")
-	local spacing = baseSpacing * wordScale
-	local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-	local ox = (sw - wordWidth) / 2
+        if titleSaw then
+                sawRadius = titleSaw.radius or 24
+                if sawRadius > 0 then
+                        local baseWordHeight = baseCellSize * baseWordScale * 3
+                        -- Keep track of how much larger the title saw is compared to gameplay so the word can scale to match.
+                        sawScale = baseWordHeight / (2 * sawRadius)
+                        wordScale = baseWordScale * sawScale
+                end
+        end
+
+        local cellSize = baseCellSize * wordScale
+        local word = Localization:get("menu.title_word")
+        local spacing = baseSpacing * wordScale
+        local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+        local ox = (sw - wordWidth) / 2
 
 	local baseOy = menuLayout.titleY or (sh * 0.2)
 	local buttonTop = buttons[1] and buttons[1].y or (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
@@ -682,19 +695,12 @@ function Menu:draw()
 	local additionalOffset = max(0, targetBottom - currentBottom)
 	local oy = max(0, baseOy + additionalOffset - LOGO_VERTICAL_LIFT)
 
-	if titleSaw then
-		local sawRadius = titleSaw.radius or 1
-		local wordHeight = cellSize * 3
-		local sawScale = wordHeight / (2 * sawRadius)
-		if sawScale <= 0 then
-			sawScale = 1
-		end
-
-		local desiredTrackLengthWorld = wordWidth + cellSize
-		local shortenedTrackLengthWorld = max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 90)
-		local targetTrackLengthBase = shortenedTrackLengthWorld / sawScale
-		if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
-			titleSaw.trackLength = targetTrackLengthBase
+        if titleSaw and sawScale and sawRadius then
+                local desiredTrackLengthWorld = wordWidth + cellSize
+                local shortenedTrackLengthWorld = max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 90)
+                local targetTrackLengthBase = shortenedTrackLengthWorld / sawScale
+                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
+                        titleSaw.trackLength = targetTrackLengthBase
 		end
 
 		local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
