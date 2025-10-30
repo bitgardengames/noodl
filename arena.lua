@@ -1828,17 +1828,32 @@ function Arena:spawnExit()
 	local snakeSegments = nil
 	local snakeSafeZone = nil
 	local headX, headY = nil, nil
-	if Snake then
-		if Snake.getSegments then
-			snakeSegments = Snake:getSegments()
-		end
-		if Snake.getSafeZone then
-			snakeSafeZone = Snake:getSafeZone(3)
-		end
-		if Snake.getHead then
-			headX, headY = Snake:getHead()
-		end
-	end
+        local snakeSafeZoneLookup = nil
+        if Snake then
+                if Snake.getSegments then
+                        snakeSegments = Snake:getSegments()
+                end
+                if Snake.getSafeZone then
+                        snakeSafeZone = Snake:getSafeZone(3)
+                        if snakeSafeZone then
+                                snakeSafeZoneLookup = {}
+                                for _, cell in ipairs(snakeSafeZone) do
+                                        local col, row = cell[1], cell[2]
+                                        if col and row then
+                                                local rowLookup = snakeSafeZoneLookup[row]
+                                                if not rowLookup then
+                                                        rowLookup = {}
+                                                        snakeSafeZoneLookup[row] = rowLookup
+                                                end
+                                                rowLookup[col] = true
+                                        end
+                                end
+                        end
+                end
+                if Snake.getHead then
+                        headX, headY = Snake:getHead()
+                end
+        end
 
 	local threshold = (SnakeUtils and SnakeUtils.SEGMENT_SIZE) or self.tileSize
 	local halfThreshold = threshold * 0.5
@@ -1863,9 +1878,14 @@ function Arena:spawnExit()
 			end
 		end
 
-		if snakeSafeZone and isTileInSafeZone(snakeSafeZone, col, row) then
-			return false
-		end
+                if snakeSafeZoneLookup then
+                        local rowLookup = snakeSafeZoneLookup[row]
+                        if rowLookup and rowLookup[col] then
+                                return false
+                        end
+                elseif snakeSafeZone and isTileInSafeZone(snakeSafeZone, col, row) then
+                        return false
+                end
 
 		if snakeSegments then
 			for _, seg in ipairs(snakeSegments) do
