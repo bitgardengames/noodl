@@ -301,21 +301,40 @@ function TransitionManager:update(dt)
 end
 
 function TransitionManager:handleShopInput(methodName, ...)
-	if not self:isShopActive() then
-		return false
-	end
+        if not self:isShopActive() then
+                return false
+        end
 
-	local handler = Shop[methodName]
-	if not handler then
-		return true
-	end
+        local game = self.game
+        if game and game.state == "paused" then
+                return true
+        end
 
-	local result = handler(Shop, ...)
-	if result then
-		self.shopCloseRequested = true
-	end
+        if methodName == "gamepadpressed" or methodName == "joystickpressed" then
+                local _, button = ...
+                if button == "start" and game and game.enterPause then
+                        game:enterPause()
+                        return true
+                end
+        elseif methodName == "keypressed" then
+                local key = ...
+                if key == "escape" and game and game.togglePause then
+                        game:togglePause()
+                        return true
+                end
+        end
 
-	return true
+        local handler = Shop[methodName]
+        if not handler then
+                return true
+        end
+
+        local result = handler(Shop, ...)
+        if result then
+                self.shopCloseRequested = true
+        end
+
+        return true
 end
 
 function TransitionManager:completeFloorIntro()

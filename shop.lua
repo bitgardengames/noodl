@@ -2042,10 +2042,10 @@ function Shop:gamepadpressed(_, button)
 		self:moveFocus(-1)
 	elseif button == "dpdown" or button == "dpright" then
 		self:moveFocus(1)
-	elseif button == "a" or button == "start" then
-		local index = self.focusIndex or 1
-		return self:pick(index)
-	end
+        elseif button == "a" then
+                local index = self.focusIndex or 1
+                return self:pick(index)
+        end
 end
 
 Shop.joystickpressed = Shop.gamepadpressed
