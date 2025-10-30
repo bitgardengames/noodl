@@ -35,6 +35,8 @@ local Upgrades = {
         hudIndicatorsDirty = true,
 }
 
+local decorateCard
+
 function Upgrades:markHUDIndicatorsDirty()
         self.hudIndicatorsDirty = true
         self.cachedIndicators = nil
@@ -2394,7 +2396,21 @@ pool = {
                         local grantedCard = {upgrade = chosenUpgrade}
                         Upgrades:acquire(grantedCard, context)
 
-                        local decorated = decorateCard(chosenUpgrade)
+                        local decorated = decorateCard and decorateCard(chosenUpgrade)
+                        if card and decorated then
+                                card.id = decorated.id
+                                card.upgrade = chosenUpgrade
+                                card.name = decorated.name
+                                card.desc = decorated.desc
+                                card.rarity = decorated.rarity
+                                card.rarityColor = decorated.rarityColor
+                                card.rarityLabel = decorated.rarityLabel
+                                card.restockShop = decorated.restockShop
+                        elseif card then
+                                card.upgrade = chosenUpgrade
+                                card.rarity = chosenUpgrade.rarity
+                                card.restockShop = chosenUpgrade.restockShop
+                        end
                         local revealInfo = {
                                 rarity = chosenUpgrade.rarity,
                                 revealDelay = 1.15,
@@ -2408,6 +2424,11 @@ pool = {
                                 revealPostPauseDuration = 0.65,
                                 revealAnimation = "mystery_card",
                         }
+
+                        if decorated then
+                                revealInfo.rarityColor = decorated.rarityColor
+                                revealInfo.rarityLabel = decorated.rarityLabel
+                        end
 
                         if chosenUpgrade.nameKey then
                                 revealInfo.nameKey = chosenUpgrade.nameKey
@@ -3628,7 +3649,7 @@ function Upgrades:canOffer(upgrade, context, allowTaken)
 	return true
 end
 
-local function decorateCard(upgrade)
+decorateCard = function(upgrade)
 	local rarityInfo = getRarityInfo(upgrade.rarity)
 	local name = upgrade.name
 	local description = upgrade.desc
