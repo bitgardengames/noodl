@@ -834,25 +834,28 @@ local function handleDartCollision(headX, headY, hazardGraceActive)
                 survived = Snake:consumeStoneSkinSawGrace()
         end
 
+        local impactX = dartHit.dartX or dartHit.lastImpactX or dartHit.endX or headX
+        local impactY = dartHit.dartY or dartHit.lastImpactY or dartHit.endY or headY
+
         if not survived then
                 local pushX, pushY = 0, 0
-                if dartHit then
-                        local ix = dartHit.dartX or dartHit.lastImpactX or dartHit.endX or headX
-                        local iy = dartHit.dartY or dartHit.lastImpactY or dartHit.endY or headY
-                        local dx = (headX or ix) - ix
-                        local dy = (headY or iy) - iy
-                        local dist = sqrt(dx * dx + dy * dy)
-                        local pushDist = SEGMENT_SIZE * 0.85
-                        if dist > 1e-4 then
-                                pushX = (dx / dist) * pushDist
-                                pushY = (dy / dist) * pushDist
+                local dx = (headX or impactX) - impactX
+                local dy = (headY or impactY) - impactY
+                local dist = sqrt(dx * dx + dy * dy)
+                local pushDist = SEGMENT_SIZE * 0.85
+                if dist > 1e-4 then
+                        pushX = (dx / dist) * pushDist
+                        pushY = (dy / dist) * pushDist
+                else
+                        if dartHit.dir == "horizontal" then
+                                pushX = -(dartHit.facing or 1) * pushDist
                         else
-                                if dartHit.dir == "horizontal" then
-                                        pushX = -(dartHit.facing or 1) * pushDist
-                                else
-                                        pushY = -(dartHit.facing or 1) * pushDist
-                                end
+                                pushY = -(dartHit.facing or 1) * pushDist
                         end
+                end
+
+                if Darts and Darts.onSnakeImpact then
+                        Darts:onSnakeImpact(dartHit, impactX, impactY)
                 end
 
                 return "hit", "dart", {
@@ -863,7 +866,7 @@ local function handleDartCollision(headX, headY, hazardGraceActive)
                 }
         end
 
-        Darts:onShieldedHit(dartHit, headX, headY)
+        Darts:onShieldedHit(dartHit, impactX, impactY)
 
         Particles:spawnBurst(headX, headY, DART_SHIELD_BURST_OPTIONS)
 
