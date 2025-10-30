@@ -13,6 +13,14 @@ local Score = require("score")
 local SnakeCosmetics = require("snakecosmetics")
 local FloatingText = require("floatingtext")
 
+local debugConfig = {}
+do
+        local ok, config = pcall(require, "debugconfig")
+        if ok and type(config) == "table" then
+                debugConfig = config
+        end
+end
+
 local abs = math.abs
 local floor = math.floor
 local huge = math.huge
@@ -1587,6 +1595,8 @@ local function copySegmentData(segment)
         return copy
 end
 
+local VALIDATE_TRAIL = debugConfig.validateTrailLength == true
+
 local function computeTrailLength(trailData)
         if not trailData then
                 return 0
@@ -1609,6 +1619,10 @@ local function computeTrailLength(trailData)
 end
 
 local function validateTrailLength(context)
+        if not VALIDATE_TRAIL then
+                return
+        end
+
         local actual = computeTrailLength(trail)
         if abs(actual - trailLength) > 1e-3 then
                 error((context or "trail") .. " trailLength mismatch: computed " .. tostring(actual) .. " vs tracked " .. tostring(trailLength))
@@ -1714,7 +1728,9 @@ local function applyTrailLengthLimit(maxLen, gluttonsWakeActive)
                 trailLength = 0
         end
 
-        validateTrailLength("trimTrailToSegmentLimit")
+        if VALIDATE_TRAIL then
+                validateTrailLength("trimTrailToSegmentLimit")
+        end
 end
 
 local function sliceTrailByLength(sourceTrail, maxLength, destination)
@@ -3436,7 +3452,9 @@ function Snake:update(dt)
                 if head then
                         newX, newY = head.drawX, head.drawY
                 end
-                validateTrailLength("holeTrim")
+                if VALIDATE_TRAIL then
+                        validateTrailLength("holeTrim")
+                end
         end
 
 	-- tail trimming
@@ -3639,7 +3657,9 @@ function Snake:update(dt)
                         clearPortalAnimation(state)
                         portalAnimation = nil
                 end
-                validateTrailLength("portalAnimation")
+                if VALIDATE_TRAIL then
+                        validateTrailLength("portalAnimation")
+                end
         end
 
 	-- update timers
@@ -4212,7 +4232,9 @@ function Snake:handleSawBodyCut(context)
 
         self:loseSegments(lostSegments, {cause = cause, trimTrail = false})
 
-        validateTrailLength("sawCut")
+        if VALIDATE_TRAIL then
+                validateTrailLength("sawCut")
+        end
         return true
 end
 
@@ -4622,6 +4644,17 @@ function Snake:getSegments()
 		}
 	end
 	return copy
+end
+
+function Snake:setTrailValidationEnabled(enabled)
+	VALIDATE_TRAIL = not not enabled
+	if VALIDATE_TRAIL then
+		validateTrailLength("manualEnable")
+	end
+end
+
+function Snake:isTrailValidationEnabled()
+	return VALIDATE_TRAIL
 end
 
 return Snake
