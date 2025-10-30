@@ -292,7 +292,7 @@ function SawActor:draw(x, y, scale)
 	end
 
 	love.graphics.setColor(0, 0, 0, 1)
-	love.graphics.setLineWidth(3)
+	love.graphics.setLineWidth(1.5)
 	love.graphics.polygon("line", points)
 
 	if not hideHubHighlight then

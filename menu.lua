@@ -665,20 +665,9 @@ function Menu:draw()
 
         local baseCellSize = 20
         local baseSpacing = 10
-local baseWordScale = 1.4
-        local wordScale = baseWordScale
-        local sawScale = nil
-        local sawRadius = nil
-
-        if titleSaw then
-                sawRadius = titleSaw.radius or 24
-                if sawRadius > 0 then
-                        local baseWordHeight = baseCellSize * baseWordScale * 3
-                        -- Keep track of how much larger the title saw is compared to gameplay so the word can scale to match.
-                        sawScale = baseWordHeight / (2 * sawRadius)
-                        wordScale = baseWordScale * sawScale
-                end
-        end
+        local wordScale = 2
+        local sawScale = 2
+        local sawRadius = titleSaw.radius or 24
 
         local cellSize = baseCellSize * wordScale
         local word = Localization:get("menu.title_word")
