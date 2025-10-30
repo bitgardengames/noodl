@@ -40,7 +40,7 @@ function Popup.new(config)
 end
 
 function Popup:show(title, description, options)
-	options = options or {}
+        options = options or {}
 
 	if options.duration then
 		self.duration = options.duration
@@ -59,16 +59,19 @@ function Popup:show(title, description, options)
 	self.subtext = description or ""
 	self.alpha = 0
 	self.scale = startScale
-	self.offsetY = startOffsetY
-	self.active = true
+        self.offsetY = startOffsetY
+        self.active = true
+        self._layoutCache = nil
 
-	local timer = self.timer
-	if not timer then
-		timer = Timer.new(self.duration)
-		self.timer = timer
-	end
-	timer:setDuration(self.duration)
-	timer:start()
+        local timer = self.timer
+        if not timer then
+                timer = Timer.new(self.duration)
+                self.timer = timer
+        end
+        timer:setDuration(self.duration)
+        timer:start()
+
+        self:_ensureLayoutCache()
 end
 
 local function computeAlpha(self, elapsed, duration)
@@ -92,9 +95,9 @@ local function computeAlpha(self, elapsed, duration)
 end
 
 function Popup:update(dt)
-	if not self.active then
-		return
-	end
+        if not self.active then
+                return
+        end
 
 	local timer = self.timer
 	if not timer then
@@ -121,38 +124,125 @@ function Popup:update(dt)
 	end
 end
 
+function Popup:_computeLayout(sw, sh, fontTitle, fontDesc, padding, baseInnerSpacing, maxWidth)
+        local wrapWidth = maxWidth - padding * 2
+        if wrapWidth < 0 then
+                wrapWidth = 0
+        end
+
+        local hasSubtext = self.subtext and self.subtext:match("%S") ~= nil
+        local descLines = {}
+        local descHeight = 0
+        local innerSpacing = baseInnerSpacing
+
+        if hasSubtext and fontDesc and fontDesc.getWrap then
+                descLines = select(2, fontDesc:getWrap(self.subtext, wrapWidth)) or {}
+                local lineCount = #descLines > 0 and #descLines or 1
+                local descLineHeight = fontDesc:getHeight()
+                if descLineHeight then
+                        descHeight = lineCount * descLineHeight
+                end
+        else
+                innerSpacing = 0
+        end
+
+        local titleHeight = fontTitle and fontTitle.getHeight and fontTitle:getHeight() or 0
+        local boxHeight = padding * 2 + titleHeight + innerSpacing + descHeight
+
+        local scale = UI.getScale and UI.getScale() or nil
+
+        local cache = {
+                text = self.text,
+                subtext = self.subtext,
+                screenWidth = sw,
+                screenHeight = sh,
+                scale = scale,
+                fontTitle = fontTitle,
+                fontDesc = fontDesc,
+                padding = padding,
+                baseInnerSpacing = baseInnerSpacing,
+                innerSpacing = innerSpacing,
+                wrapWidth = wrapWidth,
+                boxWidth = maxWidth,
+                boxHeight = boxHeight,
+                descLines = descLines,
+                descHeight = descHeight,
+                hasSubtext = hasSubtext,
+                titleHeight = titleHeight,
+                maxWidth = maxWidth,
+        }
+
+        self.hasSubtext = hasSubtext
+        self.descLines = descLines
+        self.descHeight = descHeight
+        self.wrapWidth = wrapWidth
+        self.innerSpacing = innerSpacing
+        self.boxWidth = maxWidth
+        self.boxHeight = boxHeight
+        self.padding = padding
+        self.titleHeight = titleHeight
+
+        self._layoutCache = cache
+
+        return cache
+end
+
+function Popup:_ensureLayoutCache()
+        if not self.active then
+                self._layoutCache = nil
+                return nil
+        end
+
+        local sw, sh = Screen:get()
+        local spacing = UI.spacing or {}
+        local padding = spacing.panelPadding or (UI.scaled and UI.scaled(20, 12) or 20)
+        local baseInnerSpacing = (spacing.sectionSpacing or 28) * 0.4
+        local scaledMaxWidth = UI.scaled and UI.scaled(BASE_MAX_WIDTH, 360) or BASE_MAX_WIDTH
+        local maxWidth = min(scaledMaxWidth, sw - padding * 2)
+        local fontTitle = UI.fonts.heading or UI.fonts.subtitle
+        local fontDesc = UI.fonts.caption or UI.fonts.body
+
+        local cache = self._layoutCache
+        if cache
+                and cache.text == self.text
+                and cache.subtext == self.subtext
+                and cache.screenWidth == sw
+                and cache.screenHeight == sh
+                and cache.padding == padding
+                and cache.baseInnerSpacing == baseInnerSpacing
+                and cache.maxWidth == maxWidth
+                and cache.fontTitle == fontTitle
+                and cache.fontDesc == fontDesc
+                and cache.scale == (UI.getScale and UI.getScale() or nil) then
+                return cache
+        end
+
+        return self:_computeLayout(sw, sh, fontTitle, fontDesc, padding, baseInnerSpacing, maxWidth)
+end
+
 function Popup:draw()
-	if not self.active then return end
+        if not self.active then return end
 
-	local sw, sh = Screen:get()
-	local spacing = UI.spacing or {}
-	local padding = spacing.panelPadding or (UI.scaled and UI.scaled(20, 12) or 20)
-	local innerSpacing = (spacing.sectionSpacing or 28) * 0.4
-	local scaledMaxWidth = UI.scaled and UI.scaled(BASE_MAX_WIDTH, 360) or BASE_MAX_WIDTH
-	local maxWidth = min(scaledMaxWidth, sw - padding * 2)
-	local fontTitle = UI.fonts.heading or UI.fonts.subtitle
-	local fontDesc = UI.fonts.caption or UI.fonts.body
+        local cache = self:_ensureLayoutCache()
+        if not cache then
+                return
+        end
 
-	local titleHeight = fontTitle:getHeight()
-	local boxWidth = maxWidth
-	local wrapWidth = boxWidth - padding * 2
+        local sw, sh = cache.screenWidth, cache.screenHeight
+        local padding = cache.padding
+        local innerSpacing = cache.innerSpacing
+        local boxWidth = cache.boxWidth
+        local boxHeight = cache.boxHeight
+        local wrapWidth = cache.wrapWidth
+        local fontTitle = cache.fontTitle
+        local fontDesc = cache.fontDesc
 
-	local hasSubtext = self.subtext and self.subtext:match("%S")
-	local descHeight = 0
-	if hasSubtext then
-		local descLines = select(2, fontDesc:getWrap(self.subtext, wrapWidth))
-		descHeight = (#descLines > 0 and #descLines or 1) * fontDesc:getHeight()
-	else
-		innerSpacing = 0
-	end
+        local x = sw / 2
+        local y = sh * 0.25 + self.offsetY
 
-	local boxHeight = padding * 2 + titleHeight + innerSpacing + descHeight
-	local x = sw / 2
-	local y = sh * 0.25 + self.offsetY
-
-	love.graphics.push()
-	love.graphics.translate(x, y)
-	love.graphics.scale(self.scale, self.scale)
+        love.graphics.push()
+        love.graphics.translate(x, y)
+        love.graphics.scale(self.scale, self.scale)
 
 	local panelColor = Theme.panelColor or {1, 1, 1, 1}
 	UI.drawPanel(-boxWidth / 2, 0, boxWidth, boxHeight, {
@@ -164,18 +254,20 @@ function Popup:draw()
 
 	local colors = UI.colors or {}
 	local textColor = colors.text or {1, 1, 1, 1}
-	love.graphics.setFont(fontTitle)
-	love.graphics.setColor(textColor[1] or 1, textColor[2] or 1, textColor[3] or 1, (textColor[4] or 1) * self.alpha)
-	love.graphics.printf(self.text, -boxWidth / 2 + padding, padding, wrapWidth, "center")
+        if fontTitle then
+                love.graphics.setFont(fontTitle)
+        end
+        love.graphics.setColor(textColor[1] or 1, textColor[2] or 1, textColor[3] or 1, (textColor[4] or 1) * self.alpha)
+        love.graphics.printf(self.text, -boxWidth / 2 + padding, padding, wrapWidth, "center")
 
-	if hasSubtext then
-		local mutedText = colors.mutedText or textColor
-		love.graphics.setFont(fontDesc)
-		love.graphics.setColor(mutedText[1] or 1, mutedText[2] or 1, mutedText[3] or 1, (mutedText[4] or 1) * self.alpha)
-		love.graphics.printf(self.subtext, -boxWidth / 2 + padding, padding + titleHeight + innerSpacing, wrapWidth, "center")
-	end
+        if cache.hasSubtext and fontDesc then
+                local mutedText = colors.mutedText or textColor
+                love.graphics.setFont(fontDesc)
+                love.graphics.setColor(mutedText[1] or 1, mutedText[2] or 1, mutedText[3] or 1, (mutedText[4] or 1) * self.alpha)
+                love.graphics.printf(self.subtext, -boxWidth / 2 + padding, padding + cache.titleHeight + innerSpacing, wrapWidth, "center")
+        end
 
-	love.graphics.pop()
+        love.graphics.pop()
 end
 
 local defaultPopup = createInstance()
@@ -185,7 +277,7 @@ function defaultPopup:new(config)
 end
 
 function defaultPopup:getPrototype()
-	return Popup
+        return Popup
 end
 
 return defaultPopup
