@@ -1,6 +1,8 @@
 local Theme = require("theme")
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
+local Rocks = require("rocks")
+local Particles = require("particles")
 local Audio = require("audio")
 local Timer = require("timer")
 
@@ -9,6 +11,7 @@ local min = math.min
 local abs = math.abs
 local sqrt = math.sqrt
 local sin = math.sin
+local pi = math.pi
 local random = love.math.random
 
 local Darts = {}
@@ -27,6 +30,7 @@ local DEFAULT_DART_THICKNESS = 12
 local BASE_EMITTER_SIZE = 18
 local FLASH_DECAY = 3.5
 local IMPACT_FLASH_DURATION = 0.32
+local ROCK_EDGE_INSET = 2
 
 local BASE_EMITTER_COLOR = {0.32, 0.34, 0.38, 0.95}
 local BASE_ACCENT_COLOR = {0.46, 0.56, 0.62, 1.0}
@@ -124,6 +128,8 @@ local function computeShotTargets(emitter)
         local startX = emitter.x or 0
         local startY = emitter.y or 0
         local endX, endY
+        local impactType = "wall"
+        local impactTarget = nil
 
         if emitter.dir == "horizontal" then
                 startX = startX + facing * inset
@@ -133,6 +139,30 @@ local function computeShotTargets(emitter)
                 else
                         endX = (Arena.x or 0) + inset
                 end
+                if Rocks and Rocks.getAll then
+                        local rocks = Rocks:getAll()
+                        if rocks then
+                                local bestDistance = math.huge
+                                for _, rock in ipairs(rocks) do
+                                        if rock and rock.row == emitter.row then
+                                                local delta = (rock.x - (emitter.x or 0)) * facing
+                                                if delta and delta > 0 and delta < bestDistance then
+                                                        bestDistance = delta
+                                                        impactTarget = rock
+                                                end
+                                        end
+                                end
+
+                                if impactTarget then
+                                        local edge = tileSize * 0.5 - ROCK_EDGE_INSET
+                                        if edge < 0 then
+                                                edge = 0
+                                        end
+                                        endX = impactTarget.x - facing * edge
+                                        impactType = "rock"
+                                end
+                        end
+                end
         else
                 startY = startY + facing * inset
                 endX = startX
@@ -141,12 +171,40 @@ local function computeShotTargets(emitter)
                 else
                         endY = (Arena.y or 0) + inset
                 end
+                if Rocks and Rocks.getAll then
+                        local rocks = Rocks:getAll()
+                        if rocks then
+                                local bestDistance = math.huge
+                                for _, rock in ipairs(rocks) do
+                                        if rock and rock.col == emitter.col then
+                                                local delta = (rock.y - (emitter.y or 0)) * facing
+                                                if delta and delta > 0 and delta < bestDistance then
+                                                        bestDistance = delta
+                                                        impactTarget = rock
+                                                end
+                                        end
+                                end
+
+                                if impactTarget then
+                                        local edge = tileSize * 0.5 - ROCK_EDGE_INSET
+                                        if edge < 0 then
+                                                edge = 0
+                                        end
+                                        endY = impactTarget.y - facing * edge
+                                        impactType = "rock"
+                                end
+                        end
+                end
         end
 
         emitter.startX = startX
         emitter.startY = startY
         emitter.endX = endX or startX
         emitter.endY = endY or startY
+        emitter.targetRock = impactTarget
+        emitter.impactType = impactType
+        emitter.impactX = emitter.endX
+        emitter.impactY = emitter.endY
 
         local dx = emitter.endX - emitter.startX
         local dy = emitter.endY - emitter.startY
@@ -169,6 +227,63 @@ local function computeShotTargets(emitter)
 
         emitter.fireDuration = max(0.28, emitter.fireDuration or 0.28)
         emitter.dartSpeed = emitter.travelDistance / emitter.fireDuration
+end
+
+local function recordImpact(emitter, x, y, impactType)
+        if not emitter then
+                return
+        end
+
+        emitter.lastImpactX = x
+        emitter.lastImpactY = y
+        emitter.lastImpactType = impactType
+end
+
+local function getImpactColor(impactType)
+        if impactType == "rock" then
+                local rockColor = Theme.rock or {0.45, 0.40, 0.36, 1}
+                local color = scaleColor(rockColor, 1.25, 1)
+                color[4] = 1
+                return color
+        end
+
+        local _, _, _, _, tipColor = getEmitterColors()
+        local factor = (impactType == "snake") and 1.12 or 0.96
+        local color = scaleColor(tipColor, factor, 1)
+        color[4] = 1
+        return color
+end
+
+local function triggerImpactBurst(emitter, impactType, x, y)
+        if not (Particles and Particles.spawnBurst) then
+                return
+        end
+
+        if not (x and y) then
+                return
+        end
+
+        local color = getImpactColor(impactType)
+
+        if impactType == "rock" and Rocks and Rocks.triggerHitFlash and emitter and emitter.targetRock then
+                Rocks:triggerHitFlash(emitter.targetRock)
+        end
+
+        Particles:spawnBurst(x, y, {
+                count = random(7, 11),
+                speed = 118,
+                speedVariance = 58,
+                life = 0.3,
+                size = 2.6,
+                color = color,
+                spread = pi * 2,
+                angleJitter = pi * 0.9,
+                drag = 3.8,
+                gravity = (impactType == "rock") and 200 or 150,
+                scaleMin = 0.5,
+                scaleVariance = 0.42,
+                fadeTo = (impactType == "rock") and 0.03 or 0.07,
+        })
 end
 
 local function randomCooldownDuration(emitter)
@@ -194,6 +309,7 @@ local function enterCooldown(emitter, initial)
 end
 
 local function enterTelegraph(emitter)
+        computeShotTargets(emitter)
         emitter.state = "telegraph"
         emitter.telegraphTimer = emitter.telegraphDuration or DEFAULT_TELEGRAPH_DURATION
         emitter.telegraphStrength = 0
@@ -272,10 +388,16 @@ local function updateEmitter(emitter, dt)
                 updateShotRect(emitter)
 
                 if emitter.fireTimer <= 0 then
+                        local impactX = emitter.dartX or emitter.endX
+                        local impactY = emitter.dartY or emitter.endY
+                        local impactType = emitter.impactType or "wall"
+                        triggerImpactBurst(emitter, impactType, impactX, impactY)
+                        recordImpact(emitter, impactX, impactY, impactType)
                         emitter.flashTimer = max(emitter.flashTimer or 0, 1)
+                        emitter.impactTimer = IMPACT_FLASH_DURATION
                         enterCooldown(emitter, false)
-                        emitter.lastImpactX = emitter.endX
-                        emitter.lastImpactY = emitter.endY
+                        emitter.lastImpactX = impactX
+                        emitter.lastImpactY = impactY
                 end
         end
 
@@ -448,12 +570,31 @@ function Darts:checkCollision(x, y, w, h)
         return nil
 end
 
-function Darts:onShieldedHit(emitter)
+function Darts:onShieldedHit(emitter, hitX, hitY)
         if not emitter then
                 return
         end
 
+        local impactX = hitX or emitter.dartX or emitter.lastImpactX or emitter.endX or emitter.x or 0
+        local impactY = hitY or emitter.dartY or emitter.lastImpactY or emitter.endY or emitter.y or 0
+
         emitter.flashTimer = max(emitter.flashTimer or 0, 1)
+        recordImpact(emitter, impactX, impactY, "snake")
+        emitter.impactTimer = IMPACT_FLASH_DURATION
+end
+
+function Darts:onSnakeImpact(emitter, hitX, hitY)
+        if not emitter then
+                return
+        end
+
+        local impactX = hitX or emitter.dartX or emitter.lastImpactX or emitter.endX or emitter.x or 0
+        local impactY = hitY or emitter.dartY or emitter.lastImpactY or emitter.endY or emitter.y or 0
+
+        emitter.flashTimer = max(emitter.flashTimer or 0, 1)
+        triggerImpactBurst(emitter, "snake", impactX, impactY)
+        recordImpact(emitter, impactX, impactY, "snake")
+        emitter.impactTimer = IMPACT_FLASH_DURATION
 end
 
 function Darts:update(dt)
