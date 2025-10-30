@@ -530,6 +530,7 @@ function FruitEvents.handleConsumption(x, y)
 	end
 
 	local safeZone = Snake:getSafeZone(3)
+	local segments = Snake:getSegments()
 
 	local bloomTriggeredThisFruit = false
 	if name == "Dragonfruit" then
@@ -559,12 +560,12 @@ function FruitEvents.handleConsumption(x, y)
 	end
 
 	if not spawnHandled and not exitAlreadyOpen and not goalReached then
-		Fruit:spawn(Snake:getSegments(), Rocks, safeZone)
+		Fruit:spawn(segments, Rocks, safeZone)
 	end
 
 	if love.math.random() < Rocks:getSpawnChance() then
 		local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(
-		Snake:getSegments(),
+		segments,
 		Fruit,
 		Rocks,
 		safeZone,
