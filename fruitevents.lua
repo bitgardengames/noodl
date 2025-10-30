@@ -251,12 +251,11 @@ local function updateComboWindow()
 end
 
 local function syncComboToUI()
-	updateComboWindow()
-	UI:setCombo(
-	comboState.count or 0,
-	comboState.timer or 0,
-	comboState.window or DEFAULT_COMBO_WINDOW
-	)
+        UI:setCombo(
+                comboState.count or 0,
+                comboState.timer or 0,
+                comboState.window or DEFAULT_COMBO_WINDOW
+        )
 end
 
 local function applyComboReward(x, y)
@@ -275,12 +274,13 @@ local function applyComboReward(x, y)
 	if comboCount >= 2 then
 		SessionStats:add("combosTriggered", 1)
 	end
-	Shaders.notify("comboChanged", {
-		combo = comboCount,
-		timer = comboState.timer or 0,
-		window = comboState.window or DEFAULT_COMBO_WINDOW,
-	})
-	syncComboToUI()
+        Shaders.notify("comboChanged", {
+                combo = comboCount,
+                timer = comboState.timer or 0,
+                window = comboState.window or DEFAULT_COMBO_WINDOW,
+        })
+        updateComboWindow()
+        syncComboToUI()
 
 	if comboCount < 2 then
 		return
@@ -402,31 +402,33 @@ local function applyRunRewards(fruitType, x, y)
 end
 
 function FruitEvents.reset()
-	comboState.count = 0
-	comboState.timer = 0
-	comboState.baseOverride = DEFAULT_COMBO_WINDOW
-	comboState.baseWindow = DEFAULT_COMBO_WINDOW
-	comboState.window = DEFAULT_COMBO_WINDOW
-	comboState.best = 0
-	syncComboToUI()
-	Shaders.notify("comboLost", {reason = "reset"})
-	resetDragonfruitBloomState()
+        comboState.count = 0
+        comboState.timer = 0
+        comboState.baseOverride = DEFAULT_COMBO_WINDOW
+        comboState.baseWindow = DEFAULT_COMBO_WINDOW
+        comboState.window = DEFAULT_COMBO_WINDOW
+        comboState.best = 0
+        updateComboWindow()
+        syncComboToUI()
+        Shaders.notify("comboLost", {reason = "reset"})
+        resetDragonfruitBloomState()
 end
 
 function FruitEvents.update(dt)
-	updateComboWindow()
-	if comboState.timer > 0 then
-		comboState.timer = max(0, comboState.timer - dt)
+        updateComboWindow()
+        if comboState.timer > 0 then
+                comboState.timer = max(0, comboState.timer - dt)
 
-		if comboState.timer == 0 then
-			comboState.count = 0
-			Shaders.notify("comboLost", {reason = "timeout"})
-		end
+                if comboState.timer == 0 then
+                        comboState.count = 0
+                        Shaders.notify("comboLost", {reason = "timeout"})
+                end
 
-		syncComboToUI()
-	end
+                updateComboWindow()
+                syncComboToUI()
+        end
 
-	updateDragonfruitBloom(dt)
+        updateDragonfruitBloom(dt)
 end
 
 function FruitEvents.getComboCount()
@@ -434,10 +436,11 @@ function FruitEvents.getComboCount()
 end
 
 function FruitEvents.boostComboTimer(amount)
-	if not amount or amount <= 0 then return end
-	updateComboWindow()
-	comboState.timer = min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
-	syncComboToUI()
+        if not amount or amount <= 0 then return end
+        updateComboWindow()
+        comboState.timer = min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
+        updateComboWindow()
+        syncComboToUI()
 	if (comboState.count or 0) >= 2 then
 		Shaders.notify("specialEvent", {
 			type = "comboBoost",
