@@ -122,22 +122,26 @@ local function handleBloomFruitExpired()
 	})
 end
 
-local function spawnDragonfruitBloomFruit()
-	if not dragonfruitBloom.active then
-		return false
-	end
+local function spawnDragonfruitBloomFruit(safeZone)
+        if not dragonfruitBloom.active then
+                return false
+        end
 
-	if (dragonfruitBloom.fruitsRemaining or 0) <= 0 then
-		dragonfruitBloom.pendingSpawn = false
-		return false
-	end
+        if (dragonfruitBloom.fruitsRemaining or 0) <= 0 then
+                dragonfruitBloom.pendingSpawn = false
+                return false
+        end
 
-	dragonfruitBloom.safeZone = dragonfruitBloom.safeZone or Snake:getSafeZone(3)
+        local safeZoneSnapshot = safeZone or dragonfruitBloom.safeZone
+        if not safeZoneSnapshot then
+                safeZoneSnapshot = Snake:getSafeZone(3)
+                dragonfruitBloom.safeZone = safeZoneSnapshot
+        end
 
-	local options = {
-		isBonus = true,
-		countsForGoal = false,
-		eventTag = BLOOM_EVENT_TAG,
+        local options = {
+                isBonus = true,
+                countsForGoal = false,
+                eventTag = BLOOM_EVENT_TAG,
 	}
 
 	if BLOOM_FRUIT_LIFESPAN and BLOOM_FRUIT_LIFESPAN > 0 then
@@ -145,12 +149,12 @@ local function spawnDragonfruitBloomFruit()
 		options.onExpire = handleBloomFruitExpired
 	end
 
-	Fruit:spawn(Snake:getSegments(), Rocks, dragonfruitBloom.safeZone, options)
-	dragonfruitBloom.fruitsRemaining = max(0, (dragonfruitBloom.fruitsRemaining or 0) - 1)
-	dragonfruitBloom.pendingSpawn = false
-	dragonfruitBloom.spawnCooldown = bloomRandomDelay()
-	dragonfruitBloom.activeFruitTag = BLOOM_EVENT_TAG
-	dragonfruitBloom.safeZone = Snake:getSafeZone(3)
+        Fruit:spawn(Snake:getSegments(), Rocks, safeZoneSnapshot, options)
+        dragonfruitBloom.fruitsRemaining = max(0, (dragonfruitBloom.fruitsRemaining or 0) - 1)
+        dragonfruitBloom.pendingSpawn = false
+        dragonfruitBloom.spawnCooldown = bloomRandomDelay()
+        dragonfruitBloom.activeFruitTag = BLOOM_EVENT_TAG
+        dragonfruitBloom.safeZone = safeZoneSnapshot
 
 	Shaders.notify("specialEvent", {
 		type = BLOOM_EVENT_TAG,
@@ -203,7 +207,7 @@ local function startDragonfruitBloom(safeZone)
 		color = Theme.dragonfruitColor,
 	})
 
-	spawnDragonfruitBloomFruit()
+        spawnDragonfruitBloomFruit(dragonfruitBloom.safeZone)
 
 	return true
 end
@@ -227,7 +231,7 @@ local function updateDragonfruitBloom(dt)
 	end
 
 	if dragonfruitBloom.pendingSpawn and dragonfruitBloom.spawnCooldown <= 0 and activeTag ~= BLOOM_EVENT_TAG then
-		if not spawnDragonfruitBloomFruit() then
+                if not spawnDragonfruitBloomFruit(dragonfruitBloom.safeZone) then
 			dragonfruitBloom.pendingSpawn = false
 		end
 	end
