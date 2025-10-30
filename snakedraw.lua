@@ -32,6 +32,7 @@ local zephyrPoints = {}
 local zephyrPointCapacity = 0
 local stormBolt = {}
 local stormBoltCapacity = 0
+local titanSigilVertices = {0, 0, 0, 0, 0, 0, 0, 0}
 
 local function ensureBufferCapacity(buffer, capacity, needed)
         if capacity < needed then
@@ -1905,16 +1906,19 @@ local function drawTitanbloodSigils(trail, SEGMENT_SIZE, data)
 			love.graphics.setColor(0.32, 0.02, 0.08, (0.16 + 0.24 * intensity) * fade)
 			love.graphics.ellipse("fill", 0, 0, base * 1.2, base * 0.55)
 
-			local scale = base * (1.1 + 0.45 * intensity)
-			local vertices = {
-				0, -scale * 0.6,
-				scale * 0.45, 0,
-				0, scale * 0.6,
-				-scale * 0.45, 0,
-			}
+                        local scale = base * (1.1 + 0.45 * intensity)
+                        local vertices = titanSigilVertices
+                        vertices[1] = 0
+                        vertices[2] = -scale * 0.6
+                        vertices[3] = scale * 0.45
+                        vertices[4] = 0
+                        vertices[5] = 0
+                        vertices[6] = scale * 0.6
+                        vertices[7] = -scale * 0.45
+                        vertices[8] = 0
 
-			love.graphics.setColor(0.82, 0.14, 0.22, (0.22 + 0.3 * intensity) * fade)
-			love.graphics.polygon("fill", vertices)
+                        love.graphics.setColor(0.82, 0.14, 0.22, (0.22 + 0.3 * intensity) * fade)
+                        love.graphics.polygon("fill", vertices)
 			love.graphics.setColor(1.0, 0.52, 0.4, (0.2 + 0.28 * intensity) * fade)
 			love.graphics.setLineWidth(1.4)
 			love.graphics.polygon("line", vertices)
