@@ -32,6 +32,8 @@ local zephyrPoints = {}
 local zephyrPointCapacity = 0
 local stormBolt = {}
 local stormBoltCapacity = 0
+local chronospiralCoords = {}
+local chronospiralCoordCapacity = 0
 local titanSigilVertices = {0, 0, 0, 0, 0, 0, 0, 0}
 
 local function ensureBufferCapacity(buffer, capacity, needed)
@@ -1984,23 +1986,31 @@ local function drawChronospiralWake(trail, SEGMENT_SIZE, data)
 		end
 	end
 
-	local coords = {}
 	local pathStep = max(1, floor(#trail / 24))
+	local coords = chronospiralCoords
+	local maxPoints = floor((#trail - 1) / pathStep) + 1
+	local needed = maxPoints * 2
+	chronospiralCoordCapacity = ensureBufferCapacity(coords, chronospiralCoordCapacity, needed)
+	local used = 0
 	local jitterScale = SEGMENT_SIZE * 0.2 * intensity
 	for i = 1, #trail, pathStep do
 		local seg = trail[i]
 		local px, py = ptXY(seg)
 		if px and py then
 			local jitter = sin(spin * 2.0 + i * 0.33) * jitterScale
-			coords[#coords + 1] = px + jitter
-			coords[#coords + 1] = py - jitter * 0.4
+			used = used + 1
+			coords[used] = px + jitter
+			used = used + 1
+			coords[used] = py - jitter * 0.4
 		end
 	end
 
-	if #coords >= 4 then
+	trimBuffer(coords, used, chronospiralCoordCapacity)
+
+	if used >= 4 then
 		love.graphics.setColor(0.52, 0.86, 1.0, 0.1 + 0.18 * intensity)
 		love.graphics.setLineWidth(SEGMENT_SIZE * (0.12 + 0.05 * intensity))
-		love.graphics.line(coords)
+		love.graphics.line(coords, 1, used)
 	end
 
 	love.graphics.pop()
