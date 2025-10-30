@@ -72,6 +72,7 @@ function Popup:show(title, description, options)
         timer:start()
 
         self:_ensureLayoutCache()
+        self:_refreshTextObjects(self._layoutCache)
 end
 
 local function computeAlpha(self, elapsed, duration)
@@ -184,7 +185,61 @@ function Popup:_computeLayout(sw, sh, fontTitle, fontDesc, padding, baseInnerSpa
 
         self._layoutCache = cache
 
+        self:_refreshTextObjects(cache)
+
         return cache
+end
+
+function Popup:_refreshTextObjects(cache)
+        cache = cache or self._layoutCache
+        if not cache then
+                return
+        end
+
+        local wrapWidth = cache.wrapWidth or 0
+        local effectiveWrap = wrapWidth > 0 and wrapWidth or 1
+
+        local titleFont = cache.fontTitle
+        if titleFont then
+                if not self.titleText or self._titleFont ~= titleFont then
+                        self.titleText = love.graphics.newText(titleFont)
+                        self._titleFont = titleFont
+                        self._titleWrapWidth = nil
+                        self._titleString = nil
+                end
+
+                if self.titleText and (self._titleString ~= self.text or self._titleWrapWidth ~= wrapWidth) then
+                        self.titleText:setf(self.text or "", effectiveWrap, "center")
+                        self._titleString = self.text
+                        self._titleWrapWidth = wrapWidth
+                end
+        else
+                self.titleText = nil
+                self._titleFont = nil
+                self._titleWrapWidth = nil
+                self._titleString = nil
+        end
+
+        local descFont = cache.fontDesc
+        if cache.hasSubtext and descFont then
+                if not self.subText or self._subFont ~= descFont then
+                        self.subText = love.graphics.newText(descFont)
+                        self._subFont = descFont
+                        self._subWrapWidth = nil
+                        self._subString = nil
+                end
+
+                if self.subText and (self._subString ~= self.subtext or self._subWrapWidth ~= wrapWidth) then
+                        self.subText:setf(self.subtext or "", effectiveWrap, "center")
+                        self._subString = self.subtext
+                        self._subWrapWidth = wrapWidth
+                end
+        else
+                self.subText = nil
+                self._subFont = nil
+                self._subWrapWidth = nil
+                self._subString = nil
+        end
 end
 
 function Popup:_ensureLayoutCache()
@@ -214,6 +269,7 @@ function Popup:_ensureLayoutCache()
                 and cache.fontTitle == fontTitle
                 and cache.fontDesc == fontDesc
                 and cache.scale == (UI.getScale and UI.getScale() or nil) then
+                self:_refreshTextObjects(cache)
                 return cache
         end
 
@@ -233,10 +289,6 @@ function Popup:draw()
         local innerSpacing = cache.innerSpacing
         local boxWidth = cache.boxWidth
         local boxHeight = cache.boxHeight
-        local wrapWidth = cache.wrapWidth
-        local fontTitle = cache.fontTitle
-        local fontDesc = cache.fontDesc
-
         local x = sw / 2
         local y = sh * 0.25 + self.offsetY
 
@@ -252,19 +304,17 @@ function Popup:draw()
 		borderColor = Theme.panelBorder,
 	})
 
-	local colors = UI.colors or {}
-	local textColor = colors.text or {1, 1, 1, 1}
-        if fontTitle then
-                love.graphics.setFont(fontTitle)
+        local colors = UI.colors or {}
+        local textColor = colors.text or {1, 1, 1, 1}
+        if self.titleText then
+                love.graphics.setColor(textColor[1] or 1, textColor[2] or 1, textColor[3] or 1, (textColor[4] or 1) * self.alpha)
+                love.graphics.draw(self.titleText, -boxWidth / 2 + padding, padding)
         end
-        love.graphics.setColor(textColor[1] or 1, textColor[2] or 1, textColor[3] or 1, (textColor[4] or 1) * self.alpha)
-        love.graphics.printf(self.text, -boxWidth / 2 + padding, padding, wrapWidth, "center")
 
-        if cache.hasSubtext and fontDesc then
+        if cache.hasSubtext and self.subText then
                 local mutedText = colors.mutedText or textColor
-                love.graphics.setFont(fontDesc)
                 love.graphics.setColor(mutedText[1] or 1, mutedText[2] or 1, mutedText[3] or 1, (mutedText[4] or 1) * self.alpha)
-                love.graphics.printf(self.subtext, -boxWidth / 2 + padding, padding + cache.titleHeight + innerSpacing, wrapWidth, "center")
+                love.graphics.draw(self.subText, -boxWidth / 2 + padding, padding + cache.titleHeight + innerSpacing)
         end
 
         love.graphics.pop()
