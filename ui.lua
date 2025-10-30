@@ -1407,6 +1407,10 @@ local ICON_COLOR_HIGHLIGHT = {0, 0, 0, 1}
 local ICON_COLOR_SHEEN = {0, 0, 0, 1}
 local ICON_COLOR_RIM = {0, 0, 0, 1}
 local ICON_COLOR_SEAM = {0, 0, 0, 1}
+
+local DEFAULT_UPGRADE_PANEL_COLOR = {0.16, 0.18, 0.22, 1}
+local DEFAULT_SOCKET_PANEL_COLOR = {0.16, 0.16, 0.22, 0.94}
+local DEFAULT_HIGHLIGHT_COLOR = {1, 1, 1, 0.08}
 local ICON_OVERLAY_BACKGROUND = {0, 0, 0, 1}
 local ICON_OVERLAY_TEXT_DEFAULT = {1, 1, 1, 1}
 
@@ -1730,7 +1734,7 @@ local function drawUpgradeIndicatorEntry(cursor, layout, colors, entry)
         love.graphics.setColor(0, 0, 0, 0.4 * visibility)
         love.graphics.rectangle("fill", x + 4, drawY + 6, width, panelHeight, 14, 14)
 
-        local panelColor = Theme.arenaBG or Theme.panelColor or {0.16, 0.18, 0.22, 1}
+        local panelColor = Theme.arenaBG or Theme.panelColor or DEFAULT_UPGRADE_PANEL_COLOR
         love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * (0.95 * visibility))
         love.graphics.rectangle("fill", x, drawY, width, panelHeight, 14, 14)
 
@@ -1928,7 +1932,7 @@ function UI:drawFruitSockets()
 		love.graphics.rectangle("fill", panelX + shadowOffsetX, panelY + shadowOffsetY, panelW, panelH, 12, 12)
 	end
 
-	local basePanelColor = Theme.arenaBG or Theme.panelColor or {0.16, 0.16, 0.22, 0.94}
+        local basePanelColor = Theme.arenaBG or Theme.panelColor or DEFAULT_SOCKET_PANEL_COLOR
 	local panelColor = basePanelColor
 	if goalFlash > 0 then
 		panelColor = lightenColor(panelColor, 0.25 * goalFlash)
@@ -1950,7 +1954,7 @@ function UI:drawFruitSockets()
 	local socketFill = lightenColor(basePanelColor, 0.45, SOCKET_FILL_COLOR)
 	local socketOutline = lightenColor(UI.colors.panelBorder or Theme.textColor, 0.2, SOCKET_OUTLINE_COLOR)
 
-	local highlightColor = (UI.colors and UI.colors.highlight) or Theme.highlightColor or {1, 1, 1, 0.08}
+        local highlightColor = (UI.colors and UI.colors.highlight) or Theme.highlightColor or DEFAULT_HIGHLIGHT_COLOR
 
 	for i = 1, self.fruitRequired do
 		local row = floor((i - 1) / perRow)
