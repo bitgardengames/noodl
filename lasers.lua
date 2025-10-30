@@ -19,6 +19,8 @@ local LASERS_ENABLED = true
 
 local emitters = {}
 local stallTimer = 0
+local cachedRockLookup = nil
+local cachedRevision = nil
 
 Lasers.fireDurationMult = 1
 Lasers.fireDurationFlat = 0
@@ -399,57 +401,70 @@ local function computeBeamTarget(beam, rockLookup)
 end
 
 local function buildRockLookup()
-	local rocks = Rocks:getAll()
-	if not rocks or #rocks == 0 then
-		return {
-			rows = {},
-			cols = {},
-		}
-	end
+        local rocks = Rocks:getAll()
+        if not rocks or #rocks == 0 then
+                return {
+                        rows = {},
+                        cols = {},
+                }
+        end
 
-	local rows = {}
-	local cols = {}
+        local rows = {}
+        local cols = {}
 
-	for i = 1, #rocks do
-		local rock = rocks[i]
-		local row = rock and rock.row
-		if row then
-			local list = rows[row]
-			if list then
-				list[#list + 1] = rock
-			else
-				rows[row] = {rock}
-			end
-		end
+        for i = 1, #rocks do
+                local rock = rocks[i]
+                local row = rock and rock.row
+                if row then
+                        local list = rows[row]
+                        if list then
+                                list[#list + 1] = rock
+                        else
+                                rows[row] = {rock}
+                        end
+                end
 
-		local col = rock and rock.col
-		if col then
-			local list = cols[col]
-			if list then
-				list[#list + 1] = rock
-			else
-				cols[col] = {rock}
-			end
-		end
-	end
+                local col = rock and rock.col
+                if col then
+                        local list = cols[col]
+                        if list then
+                                list[#list + 1] = rock
+                        else
+                                cols[col] = {rock}
+                        end
+                end
+        end
 
-	return {
-		rows = rows,
-		cols = cols,
-	}
+        return {
+                rows = rows,
+                cols = cols,
+        }
+end
+
+local function getRockLookup()
+        local revision = Rocks.getRevision and Rocks:getRevision()
+        if cachedRockLookup and cachedRevision == revision then
+                return cachedRockLookup
+        end
+
+        cachedRockLookup = buildRockLookup()
+        cachedRevision = revision
+        return cachedRockLookup
 end
 
 function Lasers:reset()
 	for _, beam in ipairs(emitters) do
 		releaseOccupancy(beam)
 	end
-	emitters = {}
+        emitters = {}
 
-	stallTimer = 0
+        stallTimer = 0
+        cachedRockLookup = nil
+        cachedRevision = nil
 
-	if not LASERS_ENABLED then
-		return
-	end
+        if not LASERS_ENABLED then
+                return
+        end
 end
 
 function Lasers:spawn(x, y, dir, options)
@@ -645,7 +660,7 @@ function Lasers:update(dt)
 		return
 	end
 
-	local rockLookup = buildRockLookup()
+        local rockLookup = getRockLookup()
 
 	for _, beam in ipairs(emitters) do
 		updateEmitterSlide(beam, dt)
