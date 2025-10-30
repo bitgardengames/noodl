@@ -171,6 +171,9 @@ local function computeReactiveResponse()
 	return 1 + boost, comboStrength, comboPulse, eventPulse, tint, boost
 end
 
+local originBuffer = {0, 0}
+local resolutionBuffer = {0, 0}
+
 local function drawShader(effect, x, y, w, h, intensity, sendUniforms, drawOptions)
 	if not (effect and effect.shader) then
 		return false
@@ -187,11 +190,15 @@ local function drawShader(effect, x, y, w, h, intensity, sendUniforms, drawOptio
 	actualIntensity = actualIntensity * intensityMultiplier
 
 	if shaderHasUniform(shader, "origin") then
-		shader:send("origin", {x, y})
+		originBuffer[1] = x
+		originBuffer[2] = y
+		shader:send("origin", originBuffer)
 	end
 
 	if shaderHasUniform(shader, "resolution") then
-		shader:send("resolution", {w, h})
+		resolutionBuffer[1] = w
+		resolutionBuffer[2] = h
+		shader:send("resolution", resolutionBuffer)
 	end
 
 	local now = Timer.getTime()
