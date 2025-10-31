@@ -133,7 +133,7 @@ local baseSectionHeaderPadding = 8
 UI.fonts = {}
 
 local BUTTON_POP_DURATION = 0.32
-local BUTTON_BORDER_WIDTH = 2
+local BUTTON_BORDER_WIDTH = 3
 
 UI.buttonBorderWidth = BUTTON_BORDER_WIDTH
 
@@ -530,8 +530,8 @@ function UI.drawPanel(x, y, w, h, opts)
 	local radius = opts.radius or UI.spacing.panelRadius
 	radius = radius or 0
 	local borderWidth = 0
-	if opts.border ~= false then
-		borderWidth = opts.borderWidth or 2
+        if opts.border ~= false then
+                borderWidth = opts.borderWidth or 3
 	end
 	local shadowPadding = calculateShadowPadding(borderWidth, opts.shadowStrokeWidth)
 	local shadowRadius = radius + shadowPadding
