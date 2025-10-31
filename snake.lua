@@ -12,6 +12,7 @@ local SessionStats = require("sessionstats")
 local Score = require("score")
 local SnakeCosmetics = require("snakecosmetics")
 local FloatingText = require("floatingtext")
+local Face = require("face")
 
 local abs = math.abs
 local floor = math.floor
@@ -24,6 +25,12 @@ local Snake = {}
 local sqrt = math.sqrt
 local max = math.max
 local EMPTY_TABLE = {}
+local HIGH_PRIORITY_FACE_STATES = {
+        veryHappy = true,
+        angry = true,
+        sad = true,
+        blank = true
+}
 
 local spawnGluttonsWakeRock
 local crystallizeGluttonsWakeSegments
@@ -3961,6 +3968,17 @@ function Snake:chopTailByHazard(cause)
         local trimmed = self:loseSegments(loss, {cause = hazardCause})
 
         if trimmed > 0 then
+                if Face then
+                        local activeState = Face.state
+                        if activeState == "blink" then
+                                activeState = Face.savedState or activeState
+                        end
+
+                        if not HIGH_PRIORITY_FACE_STATES[activeState] then
+                                Face:set("shocked", 1.3)
+                        end
+                end
+
                 local Game = package.loaded["game"]
                 if Game then
                         if Game.triggerTailChopShake then
