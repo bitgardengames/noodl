@@ -1936,12 +1936,20 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
                         end
 
                         local pointCount = pointIndex - 1
-                        trimBuffer(points, pointCount, zephyrPointCapacity)
+                        local sanitizedPointCount = pointCount - (pointCount % 2)
+                        if sanitizedPointCount ~= pointCount then
+                                points[sanitizedPointCount + 1] = nil
+                        end
+                        pointCount = sanitizedPointCount
 
                         local fade = 1 - progress * 0.7
-                        love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
-                        love.graphics.setLineWidth(1.5 + intensity * 1.2)
-                        love.graphics.line(points, 1, pointCount)
+                        if pointCount >= 4 then
+                                trimBuffer(points, pointCount, zephyrPointCapacity)
+
+                                love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
+                                love.graphics.setLineWidth(1.5 + intensity * 1.2)
+                                love.graphics.line(points, 1, pointCount)
+                        end
 
                         love.graphics.setColor(0.92, 0.98, 1.0, (0.08 + 0.18 * intensity) * fade)
                         love.graphics.circle("fill", x2, y2, SEGMENT_SIZE * 0.14, 12)
