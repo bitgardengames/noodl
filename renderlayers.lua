@@ -34,31 +34,43 @@ local function ensureCanvas(name, width, height)
 end
 
 local function ensureLayerTables(name)
-	if not layerPresent[name] then
-		layerPresent[name] = true
-		layerOrder[#layerOrder + 1] = name
-	end
+        if not layerPresent[name] then
+                layerPresent[name] = true
+                layerOrder[#layerOrder + 1] = name
+        end
 
-	if layerClearedThisFrame[name] == nil then
-		layerClearedThisFrame[name] = false
-	end
+        if layerClearedThisFrame[name] == nil then
+                layerClearedThisFrame[name] = false
+        end
 
-	if layerUsedThisFrame[name] == nil then
-		layerUsedThisFrame[name] = false
-	end
+        if layerUsedThisFrame[name] == nil then
+                layerUsedThisFrame[name] = false
+        end
 
-	if not queuedDraws[name] then
-		queuedDraws[name] = {}
-	end
+        if not queuedDraws[name] then
+                queuedDraws[name] = {}
+        end
+end
+
+local function clearQueuedDrawEntries(draws)
+        if not draws then
+                return
+        end
+
+        for i = #draws, 1, -1 do
+                draws[i] = nil
+        end
 end
 
 local function resetLayerState()
-	queuedDraws = {}
-	layerOrder = {}
-	layerPresent = {}
+        for _, draws in pairs(queuedDraws) do
+                clearQueuedDrawEntries(draws)
+        end
+        layerOrder = {}
+        layerPresent = {}
 
-	for name in pairs(layerClearedThisFrame) do
-		layerClearedThisFrame[name] = false
+        for name in pairs(layerClearedThisFrame) do
+                layerClearedThisFrame[name] = false
 	end
 
 	for name in pairs(layerUsedThisFrame) do
@@ -132,12 +144,12 @@ local function processQueuedDraws()
 					i = i + 1
 				end
 
-				love.graphics.pop()
+                                love.graphics.pop()
 
-				layerUsedThisFrame[layerName] = true
-				queuedDraws[layerName] = {}
-			end
-		end
+                                layerUsedThisFrame[layerName] = true
+                                clearQueuedDrawEntries(draws)
+                        end
+                end
 
 		if not processedAny then
 			break
