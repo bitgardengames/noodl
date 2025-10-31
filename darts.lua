@@ -21,6 +21,8 @@ local stallTimer = 0
 
 local DARTS_ENABLED = true
 
+local DEFAULT_INITIAL_COOLDOWN_BONUS = 1.5 -- Extra grace period after spawning before the first telegraph.
+
 local DEFAULT_TELEGRAPH_DURATION = 1.0
 local DEFAULT_COOLDOWN_MIN = 3.8
 local DEFAULT_COOLDOWN_MAX = 6.2
@@ -296,6 +298,28 @@ local function randomCooldownDuration(emitter)
         return minCooldown + (maxCooldown - minCooldown) * random()
 end
 
+local function resolveInitialCooldownBonus(options)
+        if not options then
+                return DEFAULT_INITIAL_COOLDOWN_BONUS
+        end
+
+        local override = options.initialCooldownBonus
+        if override ~= nil then
+                if type(override) == "number" then
+                        return max(0, override)
+                elseif type(override) == "string" then
+                        local numeric = tonumber(override)
+                        if numeric then
+                                return max(0, numeric)
+                        end
+                end
+
+                return 0
+        end
+
+        return DEFAULT_INITIAL_COOLDOWN_BONUS
+end
+
 local function enterCooldown(emitter, initial)
         emitter.state = "cooldown"
         emitter.cooldownTimer = randomCooldownDuration(emitter)
@@ -434,6 +458,8 @@ function Darts:spawn(x, y, dir, options)
                 return nil
         end
 
+        local initialCooldownBonus = resolveInitialCooldownBonus(options)
+
         local emitter = {
                 x = x,
                 y = y,
@@ -456,6 +482,10 @@ function Darts:spawn(x, y, dir, options)
 
         computeShotTargets(emitter)
         enterCooldown(emitter, true)
+
+        if initialCooldownBonus and initialCooldownBonus > 0 then
+                emitter.cooldownTimer = (emitter.cooldownTimer or 0) + initialCooldownBonus
+        end
 
         emitters[#emitters + 1] = emitter
         return emitter
