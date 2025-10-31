@@ -353,16 +353,33 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 	local cols, rows = Arena.cols, Arena.rows
 
 	trail = trail or {}
-	local fruitX, fruitY = 0, 0
-	if fruit and fruit.getPosition then
-		fruitX, fruitY = fruit:getPosition()
-	end
-	local rockList = (rocks and rocks.getAll and rocks:getAll()) or {}
-	local safeCells = safeZone or {}
+        local fruitX, fruitY = 0, 0
+        if fruit and fruit.getPosition then
+                fruitX, fruitY = fruit:getPosition()
+        end
+        local rockList = (rocks and rocks.getAll and rocks:getAll()) or {}
+        local safeCells = safeZone or {}
 
-	local avoidFront = not not opts.avoidFrontOfSnake
-	local frontCells
-	local frontLookup
+        local safeLookup
+        if safeCells and #safeCells > 0 then
+                safeLookup = {}
+                for i = 1, #safeCells do
+                        local cell = safeCells[i]
+                        local cellCol, cellRow = cell[1], cell[2]
+                        if cellCol and cellRow then
+                                local column = safeLookup[cellCol]
+                                if not column then
+                                        column = {}
+                                        safeLookup[cellCol] = column
+                                end
+                                column[cellRow] = true
+                        end
+                end
+        end
+
+        local avoidFront = not not opts.avoidFrontOfSnake
+        local frontCells
+        local frontLookup
 
 	if avoidFront and trail[1] then
 		local head = trail[1]
@@ -387,63 +404,185 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 							frontLookup = {}
 						end
 
-						local key = aheadCol .. "," .. aheadRow
-						if not frontLookup[key] then
-							frontLookup[key] = true
-							frontCells[#frontCells + 1] = {aheadCol, aheadRow}
-						end
-					else
-						break
-					end
-				end
-			end
-		end
-	end
+                                                local column = frontLookup[aheadCol]
+                                                if not column then
+                                                        column = {}
+                                                        frontLookup[aheadCol] = column
+                                                end
 
-	local function cellIsBlocked(col, row, cx, cy)
-		if SnakeUtils.isOccupied(col, row) then
-			return true
-		end
+                                                if not column[aheadRow] then
+                                                        column[aheadRow] = true
+                                                        frontCells[#frontCells + 1] = {aheadCol, aheadRow}
+                                                end
+                                        else
+                                                break
+                                        end
+                                end
+                        end
+                end
+        end
+
+        local segmentBuckets
+        if trail and #trail > 0 then
+                segmentBuckets = {}
+                local tileSize = Arena.tileSize or SEGMENT_SIZE
+                local arenaX, arenaY = Arena.x or 0, Arena.y or 0
+
+                local function addSegment(col, row, segment)
+                        local column = segmentBuckets[col]
+                        if not column then
+                                column = {}
+                                segmentBuckets[col] = column
+                        end
+
+                        local list = column[row]
+                        if not list then
+                                list = {}
+                                column[row] = list
+                        end
+
+                        list[#list + 1] = segment
+                end
+
+                for i = 1, #trail do
+                        local segment = trail[i]
+                        local segX, segY = segment.drawX, segment.drawY
+                        if segX and segY then
+                                local half = (segment.segmentSize or SEGMENT_SIZE) * 0.5
+                                local left = segX - half
+                                local right = segX + half
+                                local top = segY - half
+                                local bottom = segY + half
+
+                                local minCol = floor(((left - arenaX) / tileSize)) + 1
+                                local maxCol = floor(((right - arenaX) / tileSize)) + 1
+                                local minRow = floor(((top - arenaY) / tileSize)) + 1
+                                local maxRow = floor(((bottom - arenaY) / tileSize)) + 1
+
+                                minCol = max(1, min(cols, minCol))
+                                maxCol = max(1, min(cols, maxCol))
+                                minRow = max(1, min(rows, minRow))
+                                maxRow = max(1, min(rows, maxRow))
+
+                                for col = minCol, maxCol do
+                                        for row = minRow, maxRow do
+                                                addSegment(col, row, segment)
+                                        end
+                                end
+                        end
+                end
+        end
+
+        local rockBuckets
+        if rockList and #rockList > 0 then
+                rockBuckets = {}
+                local tileSize = Arena.tileSize or SEGMENT_SIZE
+                local arenaX, arenaY = Arena.x or 0, Arena.y or 0
+
+                local function addRock(col, row, rock)
+                        local column = rockBuckets[col]
+                        if not column then
+                                column = {}
+                                rockBuckets[col] = column
+                        end
+
+                        local list = column[row]
+                        if not list then
+                                list = {}
+                                column[row] = list
+                        end
+
+                        list[#list + 1] = rock
+                end
+
+                for i = 1, #rockList do
+                        local rock = rockList[i]
+                        local rockX, rockY = rock.x, rock.y
+                        if rockX and rockY then
+                                local half = (rock.w or tileSize) * 0.5
+                                local left = rockX - half
+                                local right = rockX + half
+                                local top = rockY - half
+                                local bottom = rockY + half
+
+                                local minCol = floor(((left - arenaX) / tileSize)) + 1
+                                local maxCol = floor(((right - arenaX) / tileSize)) + 1
+                                local minRow = floor(((top - arenaY) / tileSize)) + 1
+                                local maxRow = floor(((bottom - arenaY) / tileSize)) + 1
+
+                                minCol = max(1, min(cols, minCol))
+                                maxCol = max(1, min(cols, maxCol))
+                                minRow = max(1, min(rows, minRow))
+                                maxRow = max(1, min(rows, maxRow))
+
+                                for col = minCol, maxCol do
+                                        for row = minRow, maxRow do
+                                                addRock(col, row, rock)
+                                        end
+                                end
+                        end
+                end
+        end
+
+        local function cellIsBlocked(col, row, cx, cy)
+                if SnakeUtils.isOccupied(col, row) then
+                        return true
+                end
 
 		if not (cx and cy) then
 			return true
 		end
 
-		for _, segment in ipairs(trail) do
-			if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, segment.drawX, segment.drawY, SEGMENT_SIZE, SEGMENT_SIZE) then
-				return true
-			end
-		end
+                if segmentBuckets then
+                        local column = segmentBuckets[col]
+                        if column then
+                                local list = column[row]
+                                if list then
+                                        for i = 1, #list do
+                                                local segment = list[i]
+                                                if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, segment.drawX, segment.drawY, SEGMENT_SIZE, SEGMENT_SIZE) then
+                                                        return true
+                                                end
+                                        end
+                                end
+                        end
+                end
 
-		if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, fruitX, fruitY, SEGMENT_SIZE) then
-			return true
-		end
+                if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, fruitX, fruitY, SEGMENT_SIZE) then
+                        return true
+                end
 
-		for _, rock in ipairs(rockList) do
-			if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, rock.x, rock.y, rock.w) then
-				return true
-			end
-		end
+                if rockBuckets then
+                        local column = rockBuckets[col]
+                        if column then
+                                local list = column[row]
+                                if list then
+                                        for i = 1, #list do
+                                                local rock = list[i]
+                                                if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, rock.x, rock.y, rock.w) then
+                                                        return true
+                                                end
+                                        end
+                                end
+                        end
+                end
 
-		if safeZone then
-			for _, cell in ipairs(safeCells) do
-				if cell[1] == col and cell[2] == row then
-					return true
-				end
-			end
-		end
+                if safeLookup then
+                        local column = safeLookup[col]
+                        if column and column[row] then
+                                return true
+                        end
+                end
 
-		if frontCells then
-			for i = 1, #frontCells do
-				local cell = frontCells[i]
-				if cell[1] == col and cell[2] == row then
-					return true
-				end
-			end
-		end
+                if frontLookup then
+                        local column = frontLookup[col]
+                        if column and column[row] then
+                                return true
+                        end
+                end
 
-		return false
-	end
+                return false
+        end
 
 	for _ = 1, maxAttempts do
 		local col = love.math.random(1, cols)
