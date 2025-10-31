@@ -34,6 +34,23 @@ local SPEED_VARIANCE = 20
 local SCALE_MIN = 0.6
 local SCALE_VARIANCE = 0.8
 
+local function drawParticleBatch(particles)
+        local count = particles.count
+        for i = 1, count do
+                local normAge = particles.normAge[i]
+                if normAge == nil then
+                        local currentT = particles.t[i] or 1
+                        normAge = 1 - currentT
+                end
+
+                local currentSize = particles.baseSize[i] * (0.8 + normAge * 0.6)
+                love.graphics.setColor(particles.r[i], particles.g[i], particles.b[i], particles.alpha[i])
+                love.graphics.circle("fill", particles.x[i], particles.y[i], currentSize)
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
+end
+
 local function normalizeDirection(dx, dy)
 	local length = math.sqrt((dx or 0) * (dx or 0) + (dy or 0) * (dy or 0))
 	if not length or length < 1e-4 then
@@ -222,21 +239,7 @@ function Particles:draw()
                 return
         end
 
-        RenderLayers:withLayer("overlay", function()
-                for i = 1, count do
-                        local normAge = self.normAge[i]
-                        if normAge == nil then
-                                local currentT = self.t[i] or 1
-                                normAge = 1 - currentT
-                        end
-
-                        local currentSize = self.baseSize[i] * (0.8 + normAge * 0.6)
-                        love.graphics.setColor(self.r[i], self.g[i], self.b[i], self.alpha[i])
-                        love.graphics.circle("fill", self.x[i], self.y[i], currentSize)
-                end
-
-                love.graphics.setColor(1, 1, 1, 1)
-        end)
+        RenderLayers:queue("overlay", RenderLayers:acquireCommand(drawParticleBatch, self))
 end
 
 function Particles:reset()

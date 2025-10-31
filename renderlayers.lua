@@ -20,6 +20,9 @@ local layerUsedThisFrame = {}
 local layerPresent = {}
 local layerOrder = {}
 local queuedDraws = {}
+local reusableCommandPool = {}
+local reusableCommandPoolSize = 0
+local table_unpack = table.unpack
 local canvasWidth = 0
 local canvasHeight = 0
 
@@ -98,19 +101,80 @@ function RenderLayers:begin(width, height)
 	end
 end
 
-function RenderLayers:queue(layerName, drawFunc)
-	if not drawFunc then
-		return
-	end
+local function acquireCommandTable()
+        if reusableCommandPoolSize > 0 then
+                local command = reusableCommandPool[reusableCommandPoolSize]
+                reusableCommandPool[reusableCommandPoolSize] = nil
+                reusableCommandPoolSize = reusableCommandPoolSize - 1
+                return command
+        end
 
-	ensureLayerTables(layerName)
+        return {}
+end
 
-	local entries = queuedDraws[layerName]
-	entries[#entries + 1] = drawFunc
+local function releaseCommandTable(command)
+        local numericLength = command._length or #command
+
+        for i = 1, numericLength do
+                command[i] = nil
+        end
+
+        command._length = nil
+        command.fn = nil
+        command.args = nil
+        command.argCount = nil
+        command.argStart = nil
+        command.argEnd = nil
+
+        reusableCommandPoolSize = reusableCommandPoolSize + 1
+        reusableCommandPool[reusableCommandPoolSize] = command
+end
+
+function RenderLayers:acquireCommand(fn, ...)
+        local command = acquireCommandTable()
+
+        local argc = select("#", ...)
+        command[1] = fn
+        for i = 1, argc do
+                command[i + 1] = select(i, ...)
+        end
+
+        command._length = argc + 1
+
+        return command
+end
+
+local function normalizeCommand(layerName, command)
+        if type(command) == "function" then
+                return command
+        end
+
+        if type(command) == "table" then
+                return command
+        end
+
+        if command ~= nil then
+                error(string.format("RenderLayers:queue expected function or table for layer '%s'", tostring(layerName)))
+        end
+
+        return nil
+end
+
+function RenderLayers:queue(layerName, drawCommand)
+        local command = normalizeCommand(layerName, drawCommand)
+
+        if not command then
+                return
+        end
+
+        ensureLayerTables(layerName)
+
+        local entries = queuedDraws[layerName]
+        entries[#entries + 1] = command
 end
 
 function RenderLayers:withLayer(layerName, drawFunc)
-	self:queue(layerName, drawFunc)
+        self:queue(layerName, drawFunc)
 end
 
 local function processQueuedDraws()
@@ -138,11 +202,40 @@ local function processQueuedDraws()
 					layerClearedThisFrame[layerName] = true
 				end
 
-				local i = 1
-				while i <= #draws do
-					draws[i]()
-					i = i + 1
-				end
+                                local i = 1
+                                while i <= #draws do
+                                        local entry = draws[i]
+                                        local entryType = type(entry)
+
+                                        if entryType == "function" then
+                                                entry()
+                                        elseif entryType == "table" then
+                                                local fn = entry.fn or entry[1]
+                                                if fn then
+                                                        local argStart = entry.argStart
+                                                        if argStart then
+                                                                local argEnd = entry.argEnd or entry.argCount or entry._length or #entry
+                                                                fn(table_unpack(entry, argStart, argEnd))
+                                                        else
+                                                                local argCount = entry.argCount or entry._length or #entry
+                                                                if entry.args then
+                                                                        local args = entry.args
+                                                                        local argsCount = entry.argCount or #args
+                                                                        fn(table_unpack(args, 1, argsCount))
+                                                                elseif argCount > 1 then
+                                                                        fn(table_unpack(entry, 2, argCount))
+                                                                else
+                                                                        fn()
+                                                                end
+                                                        end
+                                                end
+
+                                                releaseCommandTable(entry)
+                                        end
+
+                                        draws[i] = nil
+                                        i = i + 1
+                                end
 
                                 love.graphics.pop()
 
