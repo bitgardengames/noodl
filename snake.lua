@@ -674,6 +674,8 @@ local POP_DURATION = SnakeUtils.POP_DURATION
 local SHIELD_FLASH_DURATION = 0.3
 local HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after surviving certain hazards
 local DAMAGE_FLASH_DURATION = 0.45
+local TAIL_HIT_FLASH_DURATION = 0.18
+local TAIL_HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
 -- keep polyline spacing stable for rendering
 local SAMPLE_STEP = SEGMENT_SPACING * 0.1  -- 4 samples per tile is usually enough
 local SELF_COLLISION_RADIUS = SEGMENT_SPACING * 0.48
@@ -684,6 +686,7 @@ Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
 Snake.shields = 0 -- shield protection: number of hits the snake can absorb
 Snake.extraGrowth = 0
 Snake.shieldFlashTimer = 0
+Snake.tailHitFlashTimer = 0
 Snake.stoneSkinSawGrace = 0
 Snake.dash = nil
 Snake.timeDilation = nil
@@ -2395,7 +2398,8 @@ function Snake:load(w, h)
 	self.shieldFlashTimer = 0
 	self.hazardGraceTimer = 0
 	self.damageFlashTimer = 0
-        recycleTrail(trail)
+	self.tailHitFlashTimer = 0
+	recycleTrail(trail)
         trail = buildInitialTrail()
         syncTrailLength()
         descendingHole = nil
@@ -3678,6 +3682,10 @@ function Snake:update(dt)
 		self.damageFlashTimer = max(0, self.damageFlashTimer - dt)
 	end
 
+	if self.tailHitFlashTimer and self.tailHitFlashTimer > 0 then
+		self.tailHitFlashTimer = max(0, self.tailHitFlashTimer - dt)
+	end
+
 	if severedPieces and #severedPieces > 0 then
 		for index = #severedPieces, 1, -1 do
 			local piece = severedPieces[index]
@@ -3932,9 +3940,9 @@ function Snake:loseSegments(count, options)
 	end
 
 	if (not options) or options.spawnParticles ~= false then
-		local burstColor = LOSE_SEGMENTS_DEFAULT_BURST_COLOR
-                if options and (options.cause == "saw" or options.cause == "laser" or options.cause == "dart") then
-			burstColor = LOSE_SEGMENTS_SAW_BURST_COLOR
+	local burstColor = LOSE_SEGMENTS_DEFAULT_BURST_COLOR
+	if options and (options.cause == "saw" or options.cause == "laser" or options.cause == "dart") then
+		burstColor = LOSE_SEGMENTS_SAW_BURST_COLOR
 		end
 
 		if Particles and Particles.spawnBurst and tailX and tailY then
@@ -3943,6 +3951,12 @@ function Snake:loseSegments(count, options)
 			burstOptions.color = burstColor
 			Particles:spawnBurst(tailX, tailY, burstOptions)
 		end
+	end
+
+	if trimmed > 0 then
+		local remaining = self.tailHitFlashTimer or 0
+		local refresh = max(remaining, TAIL_HIT_FLASH_DURATION)
+		self.tailHitFlashTimer = refresh
 	end
 
 	return trimmed
@@ -4094,6 +4108,63 @@ local function buildSeveredPalette(fade)
 		body = scaleColorAlpha(bodyColor, alpha),
 		outline = scaleColorAlpha(outlineColor, alpha),
 	}
+end
+
+local defaultBodyColor = {1, 1, 1, 1}
+local defaultOutlineColor = {0, 0, 0, 1}
+local tailHitFlashPalette = {
+	body = {0, 0, 0, 1},
+	outline = {0, 0, 0, 1},
+}
+local tailHitFlashOutlineTarget = {0, 0, 0, 1}
+
+local function mixIntoColor(out, from, target, t)
+	local blend = clamp01(t or 0)
+
+	local fr = (from and from[1]) or 0
+	local fg = (from and from[2]) or 0
+	local fb = (from and from[3]) or 0
+	local fa = (from and from[4])
+	if fa == nil then
+		fa = 1
+	end
+
+	local tr = (target and target[1]) or fr
+	local tg = (target and target[2]) or fg
+	local tb = (target and target[3]) or fb
+	local ta = (target and target[4])
+	if ta == nil then
+		ta = fa
+	end
+
+	out[1] = fr + (tr - fr) * blend
+	out[2] = fg + (tg - fg) * blend
+	out[3] = fb + (tb - fb) * blend
+	out[4] = fa + (ta - fa) * blend
+
+	return out
+end
+
+local function buildTailHitFlashPalette(intensity)
+	if not intensity or intensity <= 0 then
+		return nil
+	end
+
+	local palette = SnakeCosmetics and SnakeCosmetics:getPaletteForSkin() or nil
+	local bodyColor = palette and palette.body or (SnakeCosmetics and SnakeCosmetics.getBodyColor and SnakeCosmetics:getBodyColor()) or defaultBodyColor
+	local outlineColor = palette and palette.outline or (SnakeCosmetics and SnakeCosmetics.getOutlineColor and SnakeCosmetics:getOutlineColor()) or defaultOutlineColor
+
+	mixIntoColor(tailHitFlashPalette.body, bodyColor or defaultBodyColor, TAIL_HIT_FLASH_COLOR, intensity)
+
+	tailHitFlashOutlineTarget[1] = TAIL_HIT_FLASH_COLOR[1]
+	tailHitFlashOutlineTarget[2] = TAIL_HIT_FLASH_COLOR[2]
+	tailHitFlashOutlineTarget[3] = TAIL_HIT_FLASH_COLOR[3]
+	tailHitFlashOutlineTarget[4] = (outlineColor and outlineColor[4]) or 1
+	mixIntoColor(tailHitFlashPalette.outline, outlineColor or defaultOutlineColor, tailHitFlashOutlineTarget, intensity)
+
+	tailHitFlashPalette.overlay = nil
+
+	return tailHitFlashPalette
 end
 
 local function addSeveredTrail(pieceTrail, segmentEstimate)
@@ -4611,9 +4682,9 @@ function Snake:draw()
 		local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
 		if not hideDescendingBody then
-			local drawOptions
-			if portalAnimation then
-				drawOptions = {
+		local drawOptions
+		if portalAnimation then
+			drawOptions = {
 					drawFace = shouldDrawFace,
 					portalAnimation = {
 						entryTrail = portalAnimation.entryTrail,
@@ -4629,14 +4700,33 @@ function Snake:draw()
 						exitHole = portalAnimation.exitHole,
 					},
 				}
+		else
+			drawOptions = shouldDrawFace
+		end
+
+		local flashPalette
+		if self.tailHitFlashTimer and self.tailHitFlashTimer > 0 then
+			local intensity = clamp01(self.tailHitFlashTimer / TAIL_HIT_FLASH_DURATION)
+			flashPalette = buildTailHitFlashPalette(intensity)
+		end
+
+		if flashPalette then
+			if type(drawOptions) ~= "table" then
+				drawOptions = {drawFace = drawOptions ~= false}
 			else
-				drawOptions = shouldDrawFace
+				if drawOptions.drawFace == nil then
+					drawOptions.drawFace = true
+				end
 			end
 
-			currentHeadOwner = self
-			SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getOwnerHead, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
-			currentHeadOwner = nil
+			drawOptions.paletteOverride = flashPalette
+			drawOptions.overlayEffect = {}
 		end
+
+		currentHeadOwner = self
+		SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getOwnerHead, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
+		currentHeadOwner = nil
+	end
 
 	end
 end
