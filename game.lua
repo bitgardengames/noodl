@@ -60,6 +60,7 @@ local DEATH_HOLD_DURATION = 0.5
 local DEFAULT_SHADOW_COLOR = {0, 0, 0, 0.5}
 local DEFAULT_IMPACT_RIPPLE_COLOR = {1, 0.42, 0.32, 1}
 local DEFAULT_SURGE_RIPPLE_COLOR = {1, 0.9, 0.55, 1}
+local TAIL_CHOP_FEEDBACK_COLOR = {0.98, 0.22, 0.24, 1}
 
 local function drawBackgroundLayer()
         Arena:drawBackground()
@@ -599,6 +600,20 @@ end
 function Game:triggerTailChopShake(cause)
         local amount = TAIL_HAZARD_SHAKE[cause or ""] or TAIL_HAZARD_SHAKE.saw
         self:triggerScreenShake(amount)
+end
+
+function Game:triggerTailChopFeedback(cause, x, y)
+        self:triggerTailChopShake(cause)
+
+        local feedbackOptions = {
+                x = x,
+                y = y,
+                color = TAIL_CHOP_FEEDBACK_COLOR,
+                radius = 60,
+        }
+
+        local strength = 0.42
+        self:triggerImpactFeedback(strength, feedbackOptions)
 end
 
 local cachedMouseInterface
