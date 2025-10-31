@@ -63,6 +63,10 @@ UI.upgradeIndicators = {
         order = {},
         layout = {},
         visibleList = {},
+        _iterationList = {},
+        _iterationSeen = {},
+        _removeBuffer = {},
+        _listDirty = true,
 }
 
 local BASE_SCREEN_WIDTH = 1920
@@ -236,33 +240,115 @@ end
 
 -- Button states
 UI.buttons = {}
+UI._buttonList = {}
+UI._buttonIndex = {}
 
 local function createButtonState()
-	return {
-		pressed = false,
-		anim = 0,
-		hoverAnim = 0,
-		focusAnim = 0,
-		hoverTarget = 0,
-		glow = 0,
-		popProgress = 0,
-	}
+        return {
+                pressed = false,
+                anim = 0,
+                hoverAnim = 0,
+                focusAnim = 0,
+                hoverTarget = 0,
+                glow = 0,
+                popProgress = 0,
+        }
+end
+
+local function addButtonToList(id, btn)
+        if not id or not btn then return end
+
+        btn._id = id
+
+        local index = UI._buttonIndex[id]
+        if not index then
+                index = #UI._buttonList + 1
+                UI._buttonList[index] = btn
+                UI._buttonIndex[id] = index
+        else
+                UI._buttonList[index] = btn
+        end
+end
+
+local function removeButtonFromList(id)
+        local index = UI._buttonIndex[id]
+        if not index then return end
+
+        local lastIndex = #UI._buttonList
+        if lastIndex <= 0 then
+                UI._buttonIndex[id] = nil
+                return
+        end
+        local lastButton = UI._buttonList[lastIndex]
+
+        if index ~= lastIndex then
+                UI._buttonList[index] = lastButton
+                if lastButton then
+                        UI._buttonIndex[lastButton._id] = index
+                end
+        end
+
+        UI._buttonList[lastIndex] = nil
+        UI._buttonIndex[id] = nil
+end
+
+local function rebuildUpgradeIterationList(container)
+        local list = container._iterationList or {}
+        container._iterationList = list
+
+        local seen = container._iterationSeen or {}
+        container._iterationSeen = seen
+
+        local items = container.items or {}
+        local count = 0
+
+        if container.order then
+                for _, id in ipairs(container.order) do
+                        local item = items[id]
+                        if item then
+                                count = count + 1
+                                list[count] = item
+                                seen[id] = true
+                        end
+                end
+        end
+
+        for id, item in pairs(items) do
+                if not seen[id] then
+                        count = count + 1
+                        list[count] = item
+                end
+        end
+
+        for key in pairs(seen) do
+                seen[key] = nil
+        end
+
+        for i = count + 1, #list do
+                list[i] = nil
+        end
+
+        container._listDirty = false
 end
 
 function UI.clearButtons()
-	UI.buttons = {}
+        UI.buttons = {}
+        UI._buttonList = {}
+        UI._buttonIndex = {}
 end
 
 function UI.setButtonFocus(id, focused)
-	if not id then return end
+        if not id then return end
 
-	local btn = UI.buttons[id]
-	if not btn then
-		btn = createButtonState()
-		UI.buttons[id] = btn
-	end
+        local btn = UI.buttons[id]
+        if not btn then
+                btn = createButtonState()
+                UI.buttons[id] = btn
+        end
 
-	btn.focused = focused or nil
+        addButtonToList(id, btn)
+
+        btn.focused = focused or nil
 end
 
 local function round(value)
@@ -732,18 +818,34 @@ end
 
 -- Register a button (once per frame in your draw code)
 function UI.registerButton(id, x, y, w, h, text)
-	UI.buttons[id] = UI.buttons[id] or createButtonState()
-	local btn = UI.buttons[id]
-	local bounds = btn.bounds
-	if not bounds then
-		bounds = {}
-		btn.bounds = bounds
-	end
-	bounds.x = x
-	bounds.y = y
-	bounds.w = w
-	bounds.h = h
-	btn.text = text
+        local btn = UI.buttons[id]
+        if not btn then
+                btn = createButtonState()
+                UI.buttons[id] = btn
+        end
+
+        addButtonToList(id, btn)
+
+        local bounds = btn.bounds
+        if not bounds then
+                bounds = {}
+                btn.bounds = bounds
+        end
+        bounds.x = x
+        bounds.y = y
+        bounds.w = w
+        bounds.h = h
+        btn.text = text
+end
+
+function UI.unregisterButton(id)
+        if not id then return end
+
+        if UI.buttons[id] then
+                UI.buttons[id] = nil
+        end
+
+        removeButtonFromList(id)
 end
 
 -- Draw button (render only)
@@ -891,33 +993,36 @@ end
 function UI:mousepressed(x, y, button)
         UI.refreshCursor(x, y)
         if button == 1 then
-                for id, btn in pairs(UI.buttons) do
-                        local b = btn.bounds
-			if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
-				btn.pressed = true
-				Audio:playSound("click")
-				return id
-			end
-		end
-	end
+                for _, btn in ipairs(UI._buttonList) do
+                        local id = btn._id
+                        if id then
+                                local b = btn.bounds
+                                if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
+                                        btn.pressed = true
+                                        Audio:playSound("click")
+                                        return id
+                                end
+                        end
+                end
+        end
 end
 
 -- Mouse release
 function UI:mousereleased(x, y, button)
         UI.refreshCursor(x, y)
         if button == 1 then
-                for id, btn in pairs(UI.buttons) do
+                for _, btn in ipairs(UI._buttonList) do
                         if btn.pressed then
-				btn.pressed = false
-				local b = btn.bounds
-				if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
-					btn.popTimer = 0
-					btn.popProgress = 0
-					return id -- valid click
-				end
-			end
-		end
-	end
+                                btn.pressed = false
+                                local b = btn.bounds
+                                if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
+                                        btn.popTimer = 0
+                                        btn.popProgress = 0
+                                        return btn._id -- valid click
+                                end
+                        end
+                end
+        end
 end
 
 function UI:reset()
@@ -1061,12 +1166,12 @@ function UI:celebrateGoal()
 end
 
 function UI:update(dt)
-	for _, button in pairs(UI.buttons) do
-		local hoverTarget = button.hoverTarget or 0
-		local focusTarget = button.focused and 1 or 0
-		button.anim = approachExp(button.anim or 0, button.pressed and 1 or 0, dt, 18)
-		if hoverTarget > 0 then
-			button.hoverAnim = approachExp(button.hoverAnim or 0, hoverTarget, dt, 12)
+        for _, button in ipairs(UI._buttonList) do
+                local hoverTarget = button.hoverTarget or 0
+                local focusTarget = button.focused and 1 or 0
+                button.anim = approachExp(button.anim or 0, button.pressed and 1 or 0, dt, 18)
+                if hoverTarget > 0 then
+                        button.hoverAnim = approachExp(button.hoverAnim or 0, hoverTarget, dt, 12)
 		else
 			button.hoverAnim = 0
 		end
@@ -1202,57 +1307,70 @@ function UI:update(dt)
         local container = self.upgradeIndicators
         if container and container.items then
                 local smoothing = min(dt * 8, 1)
-                local toRemove = {}
-                for id, item in pairs(container.items) do
-			item.visibility = item.visibility or 0
-			local targetVis = item.targetVisibility or 0
-			item.visibility = lerp(item.visibility, targetVis, smoothing)
-
-			if item.targetProgress ~= nil then
-				item.displayProgress = item.displayProgress or item.targetProgress or 0
-				item.displayProgress = lerp(item.displayProgress, item.targetProgress, smoothing)
-			else
-				item.displayProgress = nil
-			end
-
-			if item.visibility <= 0.01 and targetVis <= 0 then
-				insert(toRemove, id)
-			end
+                if container._listDirty then
+                        rebuildUpgradeIterationList(container)
                 end
 
-                for _, id in ipairs(toRemove) do
-                        container.items[id] = nil
+                local list = container._iterationList or {}
+                local removeBuffer = container._removeBuffer or {}
+                container._removeBuffer = removeBuffer
+                local removeCount = 0
+                local lastRemoveCount = container._removeCount or 0
+
+                for i = 1, #list do
+                        local item = list[i]
+                        item.visibility = item.visibility or 0
+                        local targetVis = item.targetVisibility or 0
+                        item.visibility = lerp(item.visibility, targetVis, smoothing)
+
+                        if item.targetProgress ~= nil then
+                                item.displayProgress = item.displayProgress or item.targetProgress or 0
+                                item.displayProgress = lerp(item.displayProgress, item.targetProgress, smoothing)
+                        else
+                                item.displayProgress = nil
+                        end
+
+                        if item.visibility <= 0.01 and targetVis <= 0 then
+                                removeCount = removeCount + 1
+                                removeBuffer[removeCount] = item
+                        end
+                end
+
+                if removeCount > 0 then
+                        for i = 1, removeCount do
+                                local item = removeBuffer[i]
+                                if item and item.id then
+                                        container.items[item.id] = nil
+                                end
+                                removeBuffer[i] = nil
+                        end
+                        if lastRemoveCount > removeCount then
+                                for i = removeCount + 1, lastRemoveCount do
+                                        removeBuffer[i] = nil
+                                end
+                        end
+                        container._removeCount = removeCount
+                        container._listDirty = true
+                        rebuildUpgradeIterationList(container)
+                        list = container._iterationList or {}
+                else
+                        if lastRemoveCount > 0 then
+                                for i = 1, lastRemoveCount do
+                                        removeBuffer[i] = nil
+                                end
+                        end
+                        container._removeCount = 0
                 end
 
                 local visibleList = container.visibleList
                 if visibleList then
-                        local seen = container._visibleSeen or {}
-                        container._visibleSeen = seen
-                        for key in pairs(seen) do
-                                seen[key] = nil
-                        end
-
                         local count = 0
-                        if container.order then
-                                for _, id in ipairs(container.order) do
-                                        local item = container.items[id]
-                                        if item and clamp01(item.visibility or 0) > 0.01 then
-                                                count = count + 1
-                                                visibleList[count] = item
-                                                seen[id] = true
-                                        end
-                                end
-                        end
-
-                        for id, item in pairs(container.items) do
-                                if not seen[id] and clamp01(item.visibility or 0) > 0.01 then
+                        for i = 1, #list do
+                                local item = list[i]
+                                if item and clamp01(item.visibility or 0) > 0.01 then
                                         count = count + 1
                                         visibleList[count] = item
                                 end
-                        end
-
-                        for key in pairs(seen) do
-                                seen[key] = nil
                         end
 
                         for i = count + 1, #visibleList do
@@ -1387,11 +1505,21 @@ function UI:setUpgradeIndicators(indicators)
 		end
 	end
 
-	for id, item in pairs(items) do
-		if not seen[id] then
-			item.targetVisibility = 0
-		end
-	end
+        for id, item in pairs(items) do
+                if not seen[id] then
+                        item.targetVisibility = 0
+                end
+        end
+
+        container._listDirty = true
+
+        if container._removeBuffer then
+                local maxCount = container._removeCount or #container._removeBuffer
+                for i = 1, maxCount do
+                        container._removeBuffer[i] = nil
+                end
+        end
+        container._removeCount = 0
 end
 
 local function drawComboIndicator(self)
