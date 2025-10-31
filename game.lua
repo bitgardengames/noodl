@@ -1155,15 +1155,14 @@ function Game:updateDescending(dt)
 		Saws:update(dt)
 	end
 
-	local segments = Snake:getSegments()
-	local tail = segments[#segments]
-	if not tail then
-		Snake:finishDescending()
-		self:startFloorTransition(true)
-		return
-	end
+        local tailX, tailY, tail = Snake:getTail()
+        if not tail then
+                Snake:finishDescending()
+                self:startFloorTransition(true)
+                return
+        end
 
-	local dx, dy = tail.drawX - self.hole.x, tail.drawY - self.hole.y
+        local dx, dy = tailX - self.hole.x, tailY - self.hole.y
 	local dist = sqrt(dx * dx + dy * dy)
 	if dist < self.hole.radius then
 		local finalFloor = #Floors
