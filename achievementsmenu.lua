@@ -198,6 +198,20 @@ local function withAlpha(color, alpha)
 	}
 end
 
+local function setColor(color, alphaOverride)
+	if not color then
+		love.graphics.setColor(1, 1, 1, alphaOverride or 1)
+		return
+	end
+
+	love.graphics.setColor(
+		color[1] or 1,
+		color[2] or 1,
+		color[3] or 1,
+		alphaOverride or color[4] or 1
+	)
+end
+
 local function joinWithConjunction(items)
 	local count = #items
 	if count == 0 then
@@ -223,6 +237,48 @@ local function joinWithConjunction(items)
 	end
 
 	return string.format("%s, %s %s", table.concat(buffer, ", "), conj, items[count])
+end
+
+local function resolveBackButtonY(sw, sh, layout)
+	local menuLayout = UI.getMenuLayout(sw, sh)
+	local footerSpacing = menuLayout.footerSpacing or UI.spacing.sectionSpacing or UI.spacing.buttonSpacing or 24
+	local buttonHeight = UI.spacing.buttonHeight or 0
+	local marginBottom = menuLayout.marginBottom or 0
+	local bottomY = menuLayout.bottomY or (sh - marginBottom)
+	local y = bottomY - footerSpacing - buttonHeight
+
+	if layout and layout.viewportBottom then
+		local spacing = UI.spacing.buttonSpacing or footerSpacing
+		y = max(y, layout.viewportBottom + spacing * 0.5)
+	end
+
+	local maxY = sh - buttonHeight - marginBottom
+	if y > maxY then
+		y = maxY
+	end
+
+	return y
+end
+
+local function applyBackButtonLayout(layout, sw, sh)
+	if not buttonList then
+		return
+	end
+
+	local buttonWidth = UI.spacing.buttonWidth or 0
+	local buttonHeight = UI.spacing.buttonHeight or 0
+	local x = sw / 2 - buttonWidth / 2
+	local y = resolveBackButtonY(sw, sh, layout)
+
+	for _, btn in buttonList:iter() do
+		if btn.id == "achievementsBack" then
+			btn.x = x
+			btn.y = y
+			btn.w = buttonWidth
+			btn.h = buttonHeight
+			break
+		end
+	end
 end
 
 local function formatAchievementRewards(rewards)
@@ -446,12 +502,29 @@ local function computeLayout(sw, sh)
 	local listPanelY = summaryPanel.y + summaryPanel.height + panelGap
 	layout.panelY = listPanelY
 
-	local footerReserve = (UI.spacing.buttonHeight or 0) + (UI.spacing.buttonSpacing or 0) + ((UI.scaled and UI.scaled(48, 32)) or 48)
-	local bottomMargin = max(menuLayout.marginBottom or 80, footerReserve)
+	local buttonHeight = UI.spacing.buttonHeight or 0
+	local buttonSpacing = UI.spacing.buttonSpacing or (menuLayout.sectionSpacing or panelPaddingY)
+	local footerSpacing = menuLayout.footerSpacing or buttonSpacing
+	layout.footerSpacing = footerSpacing
+
+	local scaledReserve = (UI.scaled and UI.scaled(48, 32)) or 48
+	local footerReserve = buttonHeight + buttonSpacing + scaledReserve
+	local marginBottom = menuLayout.marginBottom or 0
+	local baseBottomMargin = marginBottom + footerSpacing + buttonHeight
+	local bottomMargin = max(baseBottomMargin, footerReserve)
 	layout.bottomMargin = bottomMargin
 
-	layout.viewportBottom = (menuLayout.bottomY or (sh - bottomMargin))
+	local viewportBottom = sh - bottomMargin
+	local bottomY = menuLayout.bottomY or (sh - marginBottom)
+	local backButtonY = bottomY - footerSpacing - buttonHeight
+	layout.backButtonY = backButtonY
+
+	if backButtonY then
+		viewportBottom = min(viewportBottom, backButtonY - buttonSpacing * 0.5)
+	end
+
 	layout.startY = listPanelY + panelPaddingY
+	layout.viewportBottom = max(layout.startY, viewportBottom)
 	layout.viewportHeight = max(0, layout.viewportBottom - layout.startY)
 
 	layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
@@ -685,11 +758,18 @@ function AchievementsMenu:enter()
 
 	Face:set("idle")
 
+	iconCache = {}
+	displayBlocks = Achievements:getDisplayOrder()
+	rebuildAchievementRewards()
+
+	local layout = computeLayout(sw, sh)
+	local backButtonY = resolveBackButtonY(sw, sh, layout)
+
 	buttonList:reset({
 		{
 			id = "achievementsBack",
 			x = sw / 2 - UI.spacing.buttonWidth / 2,
-			y = sh - 80,
+			y = backButtonY,
 			w = UI.spacing.buttonWidth,
 			h = UI.spacing.buttonHeight,
 			textKey = "achievements.back_to_menu",
@@ -698,9 +778,7 @@ function AchievementsMenu:enter()
 		},
 	})
 
-	iconCache = {}
-	displayBlocks = Achievements:getDisplayOrder()
-	rebuildAchievementRewards()
+	applyBackButtonLayout(layout, sw, sh)
 
 	resetHeldDpad()
 
@@ -750,10 +828,14 @@ function AchievementsMenu:draw()
         local layout = computeLayout(sw, sh)
         layout = updateScrollBounds(sw, sh, layout)
 
+	applyBackButtonLayout(layout, sw, sh)
+
 	local titleFont = UI.fonts.title
 	love.graphics.setFont(titleFont)
-	local titleColor = Theme.textColor or {1, 1, 1, 1}
-	love.graphics.setColor(titleColor)
+	local colors = UI.colors or {}
+	local titleColor = colors.text or Theme.textColor or {1, 1, 1, 1}
+	local subtleTextColor = colors.subtleText or withAlpha(titleColor, (titleColor[4] or 1) * 0.8)
+	setColor(titleColor)
 	love.graphics.printf(Localization:get("achievements.title"), 0, layout.titleY, sw, "center")
 
 	local startY = layout.startY
@@ -769,10 +851,11 @@ function AchievementsMenu:draw()
 	local panelY = layout.panelY
 	local panelWidth = layout.panelWidth
 	local panelHeight = layout.panelHeight
-	local panelColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-	local panelBorder = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
-	local shadowColor = Theme.shadowColor or {0, 0, 0, 0.35}
-	local highlightColor = Theme.highlightColor or {1, 1, 1, 0.06}
+	local panelColor = colors.panel or Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+	local panelBorder = colors.panelBorder or colors.border or Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
+	local shadowColor = colors.shadow or Theme.shadowColor or {0, 0, 0, 0.35}
+	local highlightColor = colors.highlight or Theme.highlightColor or {1, 1, 1, 0.06}
+	local progressColor = colors.progress or Theme.progressColor or {0.6, 0.9, 0.4, 1}
 	local summaryPanel = layout.summaryPanel
 	local summaryTextX = layout.summaryTextX
 	local summaryTextY = layout.summaryTextY
@@ -787,7 +870,8 @@ function AchievementsMenu:draw()
 		alpha = 0.95,
 		borderColor = panelBorder,
 		borderWidth = 2,
-		highlight = false,
+		highlightColor = highlightColor,
+		highlightAlpha = 1,
 		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
 	})
 
@@ -803,7 +887,7 @@ function AchievementsMenu:draw()
 	local highlightW = max(0, summaryPanel.width - highlightInsetX * 2)
 	local highlightH = max(0, summaryPanel.height - highlightInsetY * 2)
 	if highlightW > 0 and highlightH > 0 then
-		love.graphics.setColor(highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 0.08) * 1.1)
+		setColor({highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 0.08) * 1.1})
 		love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, 18, 18)
 	end
 	love.graphics.pop()
@@ -820,15 +904,15 @@ function AchievementsMenu:draw()
 	local achieveFont = UI.fonts.achieve
 
 	love.graphics.setFont(achieveFont)
-	love.graphics.setColor(titleColor)
+	setColor(titleColor)
 	love.graphics.printf(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left")
 	love.graphics.printf(completionLabel, summaryTextX, summaryTextY, summaryTextWidth, "right")
 
 	local progressBarY = layout.summaryProgressY
-	love.graphics.setColor(darkenColor(panelColor, 0.4))
+	setColor(darkenColor(panelColor, 0.4))
 	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, summaryProgressHeight, 6, 6)
 
-	love.graphics.setColor(Theme.progressColor or {0.6, 0.9, 0.4, 1})
+	setColor(progressColor)
 	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
 
 	love.graphics.push("all")
@@ -838,7 +922,8 @@ function AchievementsMenu:draw()
 		alpha = 0.95,
 		borderColor = panelBorder,
 		borderWidth = 2,
-		highlight = false,
+		highlightColor = highlightColor,
+		highlightAlpha = 1,
 		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
 	})
 	love.graphics.pop()
@@ -854,8 +939,8 @@ function AchievementsMenu:draw()
 	local y = startY
 	for _, block in ipairs(displayBlocks) do
 		local categoryLabel = Localization:get("achievements.categories." .. block.id)
-		love.graphics.setFont(UI.fonts.button)
-		love.graphics.setColor(titleColor[1], titleColor[2], titleColor[3], (titleColor[4] or 1) * 0.85)
+		love.graphics.setFont(UI.fonts.heading or UI.fonts.button)
+		setColor(withAlpha(subtleTextColor, (subtleTextColor[4] or 1) * 0.85))
 		love.graphics.printf(categoryLabel, 0, y - 32, sw, "center")
 
 		for _, ach in ipairs(block.achievements) do
@@ -876,14 +961,14 @@ function AchievementsMenu:draw()
 				cardBase = darkenColor(panelColor, 0.2)
 			end
 
-			local accentBorder = Theme.borderColor or panelBorder
+			local accentBorder = colors.border or panelBorder
 			local borderTint
 			if unlocked then
 				borderTint = lightenColor(accentBorder, 0.2)
 			elseif hiddenLocked then
 				borderTint = darkenColor(panelBorder, 0.15)
 			else
-				borderTint = Theme.panelBorder or accentBorder
+				borderTint = panelBorder
 			end
 
 			love.graphics.push("all")
@@ -892,7 +977,8 @@ function AchievementsMenu:draw()
 				fill = cardBase,
 				borderColor = borderTint,
 				borderWidth = 2,
-				highlight = false,
+				highlightColor = highlightColor,
+				highlightAlpha = unlocked and 1 or 0.8,
 				shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
 			})
 			love.graphics.pop()
@@ -906,7 +992,7 @@ function AchievementsMenu:draw()
 				love.graphics.draw(icon, iconX, iconY, 0, scaleX, scaleY)
 
 				local iconBorder = hiddenLocked and darkenColor(borderTint, 0.35) or borderTint
-				love.graphics.setColor(iconBorder)
+				setColor(iconBorder)
 				love.graphics.setLineWidth(2)
 				love.graphics.rectangle("line", iconX - 2, iconY - 2, 60, 60, 8)
 			end
@@ -924,12 +1010,11 @@ function AchievementsMenu:draw()
 			end
 
 			love.graphics.setFont(UI.fonts.achieve)
-			love.graphics.setColor(titleColor)
+			setColor(titleColor)
 			love.graphics.printf(titleText, textX, cardY + 10, cardWidth - 110, "left")
 
 			love.graphics.setFont(UI.fonts.body)
-			local bodyColor = withAlpha(titleColor, (titleColor[4] or 1) * 0.8)
-			love.graphics.setColor(bodyColor)
+			setColor(subtleTextColor)
 			local textWidth = cardWidth - 110
 			love.graphics.printf(descriptionText, textX, cardY + 38, textWidth, "left")
 
@@ -944,7 +1029,7 @@ function AchievementsMenu:draw()
 
 			if rewardText and rewardText ~= "" then
 				love.graphics.setFont(UI.fonts.small)
-				love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.72))
+				setColor(withAlpha(subtleTextColor, (subtleTextColor[4] or 1) * 0.85))
 				local rewardY = barY - (hasProgress and 36 or 24)
 				love.graphics.printf(rewardText, textX, rewardY, textWidth, "left")
 			end
@@ -952,16 +1037,16 @@ function AchievementsMenu:draw()
 			if hasProgress then
 				local ratio = Achievements:getProgressRatio(ach)
 
-				love.graphics.setColor(darkenColor(cardBase, 0.45))
+				setColor(darkenColor(cardBase, 0.45))
 				love.graphics.rectangle("fill", barX, barY, barW, barH, 6)
 
-				love.graphics.setColor(Theme.progressColor)
+				setColor(progressColor)
 				love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 6)
 
 				local progressLabel = Achievements:getProgressLabel(ach)
 				if progressLabel then
 					love.graphics.setFont(UI.fonts.small)
-					love.graphics.setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.9))
+					setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.9))
 					love.graphics.printf(progressLabel, barX, barY - 18, barW, "right")
 				end
 			end
