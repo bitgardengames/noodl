@@ -4393,22 +4393,21 @@ function Snake:checkLaserBodyCollision()
 
 					if intersects and t then
 						local along = travelled + segLen * t
-						if along > guardDistance then
-							beam.flashTimer = max(beam.flashTimer or 0, 1)
-							beam.burnAlpha = 0.92
+                                                if along > guardDistance then
+                                                        local handledCut = self:handleSawBodyCut({
+                                                                index = index,
+                                                                cutX = cutX,
+                                                                cutY = cutY,
+                                                                cutDistance = along,
+                                                                cause = "laser",
+                                                        })
 
-							local handledCut = self:handleSawBodyCut({
-								index = index,
-								cutX = cutX,
-								cutY = cutY,
-								cutDistance = along,
-								cause = "laser",
-							})
-
-							if handledCut then
-								return true
-							end
-						end
+                                                        if handledCut then
+                                                                beam.flashTimer = max(beam.flashTimer or 0, 1)
+                                                                beam.burnAlpha = 0.92
+                                                                return true
+                                                        end
+                                                end
 					end
 				end
 
@@ -4488,8 +4487,6 @@ function Snake:checkDartBodyCollision()
                                         if intersects and t then
                                                 local along = travelled + segLen * t
                                                 if along > guardDistance then
-                                                        emitter.flashTimer = max(emitter.flashTimer or 0, 1)
-
                                                         local handledCut = self:handleSawBodyCut({
                                                                 index = index,
                                                                 cutX = cutX,
@@ -4499,6 +4496,7 @@ function Snake:checkDartBodyCollision()
                                                         })
 
                                                         if handledCut then
+                                                                emitter.flashTimer = max(emitter.flashTimer or 0, 1)
                                                                 return true
                                                         end
                                                 end
