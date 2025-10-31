@@ -4731,17 +4731,26 @@ function Snake:resetPosition()
 end
 
 function Snake:getSegments()
-	local copy = {}
-	for i = 1, #trail do
-		local seg = trail[i]
-		copy[i] = {
-			drawX = seg.drawX,
-			drawY = seg.drawY,
-			dirX = seg.dirX,
-			dirY = seg.dirY
-		}
-	end
-	return copy
+        local copy = {}
+        for i = 1, #trail do
+                local seg = trail[i]
+                copy[i] = {
+                        drawX = seg.drawX,
+                        drawY = seg.drawY,
+                        dirX = seg.dirX,
+                        dirY = seg.dirY
+                }
+        end
+        return copy
+end
+
+function Snake:getTail()
+        local tail = trail[#trail]
+        if not tail then
+                return nil, nil, nil
+        end
+
+        return tail.drawX, tail.drawY, tail
 end
 
 return Snake
