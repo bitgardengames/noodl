@@ -849,7 +849,13 @@ local function updateRunTimers(self, dt)
 end
 
 local function updateSystems(systems, dt)
-	ModuleUtil.runHook(systems, "update", dt)
+        local handlers = ModuleUtil.getHookHandlers(systems, "update")
+        if handlers then
+                ModuleUtil.runCachedHandlers(handlers, "update", dt)
+                return
+        end
+
+        ModuleUtil.runHook(systems, "update", dt)
 end
 
 local function updateGlobalSystems(dt)
