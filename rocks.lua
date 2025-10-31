@@ -15,6 +15,13 @@ local sin = math.sin
 local abs = math.abs
 
 local rockRng = love.math.newRandomGenerator()
+local nearbyScratch = {}
+
+local function clearArray(array)
+        for i = #array, 1, -1 do
+                array[i] = nil
+        end
+end
 
 local Rocks = {}
 local current = {}
@@ -341,11 +348,12 @@ function Rocks:hasCellLookup()
 end
 
 function Rocks:getNearby(col, row, radius)
-	local results = {}
+        local results = nearbyScratch
+        clearArray(results)
 
-	if not (col and row) then
-		return results
-	end
+        if not (col and row) then
+                return results
+        end
 
 	radius = radius or 1
 
@@ -361,19 +369,20 @@ function Rocks:getNearby(col, row, radius)
 		return results
 	end
 
-	for c = col - radius, col + radius do
-		local column = rockLookup[c]
-		if column then
-			for r = row - radius, row + radius do
-				local rock = column[r]
-				if rock then
-					results[#results + 1] = rock
-				end
-			end
-		end
-	end
+        for c = col - radius, col + radius do
+                local column = rockLookup[c]
+                if column then
+                        for r = row - radius, row + radius do
+                                local rock = column[r]
+                                if rock then
+                                        results[#results + 1] = rock
+                                end
+                        end
+                end
+        end
 
-	return results
+        -- NOTE: this table is reused internally; treat it as a transient buffer.
+        return results
 end
 
 function Rocks:destroy(target, opts)
