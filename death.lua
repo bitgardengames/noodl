@@ -35,25 +35,35 @@ function Death:spawnFromSnake(trail, SEGMENT_SIZE)
 end
 
 function Death:update(dt)
-	-- update particles
-	for i = #self.particles, 1, -1 do
-		local part = self.particles[i]
-		part.x = part.x + part.dx * dt
-		part.y = part.y + part.dy * dt
-		part.life = part.life - dt
-		part.size = part.size * 0.97
-		part.dx = part.dx * 0.95
-		part.dy = part.dy * 0.95
+        -- update particles
+        local particles = self.particles
+        local writeIndex = 1
 
-		if part.life <= 0 then
-			table.remove(self.particles, i)
-		end
-	end
+        for readIndex = 1, #particles do
+                local part = particles[readIndex]
+                part.x = part.x + part.dx * dt
+                part.y = part.y + part.dy * dt
+                part.life = part.life - dt
+                part.size = part.size * 0.97
+                part.dx = part.dx * 0.95
+                part.dy = part.dy * 0.95
 
-	-- update shake
-	if self.shakeTime > 0 then
-		self.shakeTime = self.shakeTime - dt
-		if self.shakeTime < 0 then self.shakeTime = 0 end
+                if part.life > 0 then
+                        if writeIndex ~= readIndex then
+                                particles[writeIndex] = part
+                        end
+                        writeIndex = writeIndex + 1
+                end
+        end
+
+        for i = #particles, writeIndex, -1 do
+                particles[i] = nil
+        end
+
+        -- update shake
+        if self.shakeTime > 0 then
+                self.shakeTime = self.shakeTime - dt
+                if self.shakeTime < 0 then self.shakeTime = 0 end
 	end
 
 	-- update flash timer
