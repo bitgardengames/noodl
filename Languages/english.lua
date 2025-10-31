@@ -544,10 +544,10 @@ local english = {
                                 name = "Mystery Card",
                                 description = "Select to reveal and immediately gain a random upgrade.",
                         },
-			circuit_breaker = {
-				name = "Circuit Breaker",
-				description = "Saw tracks and lasers freeze for 0.75s after each fruit.",
-			},
+                        circuit_breaker = {
+                                name = "Circuit Breaker",
+                                description = "Traps freeze for 1s after each fruit.",
+                        },
 			tremor_bloom = {
 				name = "Tremor Bloom",
 				description = "Each time you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",

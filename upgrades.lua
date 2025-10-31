@@ -3,6 +3,7 @@ local Snake = require("snake")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
+local Darts = require("darts")
 local Score = require("score")
 local UI = require("ui")
 local Arena = require("arena")
@@ -284,7 +285,7 @@ end
 local POCKET_SPRINGS_FRUIT_TARGET = 20
 local CHRONO_WARD_DEFAULT_DURATION = 0.85
 local CHRONO_WARD_DEFAULT_SCALE = 0.45
-local CIRCUIT_BREAKER_STALL_DURATION = 0.75
+local CIRCUIT_BREAKER_STALL_DURATION = 1
 local SUBDUCTION_ARRAY_SINK_DURATION = 1.6
 local SUBDUCTION_ARRAY_VISUAL_LIMIT = 3
 local RESONANT_SHELL_DEFENSE_CAP = 5
@@ -1708,12 +1709,14 @@ pool = {
 					return
 				end
 
-				local duration = (data and data.duration) or CIRCUIT_BREAKER_STALL_DURATION
-				Lasers:stall(duration, {
-					cause = data and data.cause or nil,
-					source = "circuit_breaker",
-					positionLimit = 2,
-				})
+                                local duration = (data and data.duration) or CIRCUIT_BREAKER_STALL_DURATION
+                                Lasers:stall(duration, {
+                                        cause = data and data.cause or nil,
+                                        source = "circuit_breaker",
+                                        positionLimit = 2,
+                                })
+
+                                Darts:stall(duration)
 
 				local sparkColor = {1, 0.58, 0.32, 1}
 				local baseOptions = {
