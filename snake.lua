@@ -3968,6 +3968,10 @@ function Snake:chopTailByHazard(cause)
         local trimmed = self:loseSegments(loss, {cause = hazardCause})
 
         if trimmed > 0 then
+                local tailSegment = trail[#trail]
+                local chopX = tailSegment and tailSegment.drawX
+                local chopY = tailSegment and tailSegment.drawY
+
                 if Face then
                         local activeState = Face.state
                         if activeState == "blink" then
@@ -3981,7 +3985,9 @@ function Snake:chopTailByHazard(cause)
 
                 local Game = package.loaded["game"]
                 if Game then
-                        if Game.triggerTailChopShake then
+                        if Game.triggerTailChopFeedback then
+                                Game:triggerTailChopFeedback(hazardCause, chopX, chopY)
+                        elseif Game.triggerTailChopShake then
                                 Game:triggerTailChopShake(hazardCause)
                         elseif Game.triggerScreenShake then
                                 Game:triggerScreenShake(0.16)
