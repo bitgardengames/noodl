@@ -2892,24 +2892,11 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		end
 	else
 		local coords = buildCoords(trail)
-		if overlayEffect then
-			local bounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
-			local canvas
-			if bounds then
-				canvas = ensureSnakeCanvas(bounds.width, bounds.height)
-			end
+		local bounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
+		local presented = renderTrailRegion(trail, half, options, overlayEffect, palette, coords, bounds)
 
-			if canvas and bounds then
-				love.graphics.setCanvas({canvas, stencil = true})
-				love.graphics.clear(0,0,0,0)
-				love.graphics.push()
-				love.graphics.translate(-bounds.offsetX, -bounds.offsetY)
-				drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-				love.graphics.pop()
-				love.graphics.setCanvas()
-
-				presentSnakeCanvas(overlayEffect, bounds.width, bounds.height, bounds.offsetX, bounds.offsetY)
-			else
+		if not presented then
+			if overlayEffect then
 				local ww, hh = love.graphics.getDimensions()
 				local fallbackCanvas = ensureSnakeCanvas(ww, hh)
 				if fallbackCanvas then
@@ -2918,22 +2905,23 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 					drawTrailSegmentToCanvas(trail, half, options, palette, coords)
 					love.graphics.setCanvas()
 					presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
+					presented = true
 				end
-			end
-		else
-			RenderLayers:withLayer("shadows", function()
-				love.graphics.push()
-				love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-				drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
-				love.graphics.pop()
-			end)
+			else
+				RenderLayers:withLayer("shadows", function()
+					love.graphics.push()
+					love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+					drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
+					love.graphics.pop()
+				end)
 
-			RenderLayers:withLayer("main", function()
-				drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-			end)
+				RenderLayers:withLayer("main", function()
+					drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+				end)
+				presented = true
+			end
 		end
 	end
-
 	local shouldDrawOverlay = (hx and hy and drawFace ~= false) or (popTimer and popTimer > 0 and hx and hy)
 	if shouldDrawOverlay then
 		RenderLayers:withLayer("overlay", function()
