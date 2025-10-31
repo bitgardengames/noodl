@@ -186,30 +186,132 @@ local function darkenColor(color, amount)
 end
 
 local function withAlpha(color, alpha)
-	if not color then
-		return {1, 1, 1, alpha or 1}
-	end
+        if not color then
+                return {1, 1, 1, alpha or 1}
+        end
 
-	return {
-		color[1] or 1,
-		color[2] or 1,
-		color[3] or 1,
-		alpha or (color[4] or 1),
-	}
+        return {
+                color[1] or 1,
+                color[2] or 1,
+                color[3] or 1,
+                alpha or (color[4] or 1),
+        }
+end
+
+local function mixColors(colorA, colorB, t)
+        local weight = clamp01(t or 0.5)
+        local a1 = colorA or {0, 0, 0, 1}
+        local a2 = colorB or {0, 0, 0, 1}
+
+        local r1, g1, b1, alpha1 = a1[1] or 0, a1[2] or 0, a1[3] or 0, a1[4] or 1
+        local r2, g2, b2, alpha2 = a2[1] or 0, a2[2] or 0, a2[3] or 0, a2[4] or 1
+
+        return {
+                r1 + (r2 - r1) * weight,
+                g1 + (g2 - g1) * weight,
+                b1 + (b2 - b1) * weight,
+                alpha1 + (alpha2 - alpha1) * weight,
+        }
 end
 
 local function setColor(color, alphaOverride)
-	if not color then
-		love.graphics.setColor(1, 1, 1, alphaOverride or 1)
-		return
-	end
+        if not color then
+                love.graphics.setColor(1, 1, 1, alphaOverride or 1)
+                return
+        end
 
 	love.graphics.setColor(
 		color[1] or 1,
 		color[2] or 1,
 		color[3] or 1,
-		alphaOverride or color[4] or 1
-	)
+                alphaOverride or color[4] or 1
+        )
+end
+
+local function applyPanelAccent(x, y, width, height, radius, accentColor, highlightColor, baseAlpha, inset, bandHeight)
+        accentColor = accentColor or {1, 1, 1, 1}
+        highlightColor = highlightColor or lightenColor(accentColor, 0.45)
+        local alpha = clamp01(baseAlpha or 0.2)
+        local innerInset = inset or 12
+        local topHeight = bandHeight or min(height * 0.4, 80)
+
+        if topHeight <= 0 then
+                return
+        end
+
+        love.graphics.push("all")
+
+        love.graphics.stencil(function()
+                love.graphics.rectangle("fill", x, y, width, height, radius, radius)
+        end, "replace", 1)
+
+        love.graphics.setStencilTest("greater", 0)
+
+        setColor(withAlpha(accentColor, (accentColor[4] or 1) * alpha))
+        love.graphics.rectangle("fill", x, y, width, topHeight)
+
+        local highlightHeight = min(topHeight * 0.65, topHeight - 6)
+        local highlightWidth = width - innerInset * 2
+        if highlightHeight > 0 and highlightWidth > 0 then
+                setColor(withAlpha(highlightColor, (highlightColor[4] or 1) * alpha * 1.2))
+                love.graphics.rectangle("fill", x + innerInset, y + innerInset, highlightWidth, highlightHeight)
+        end
+
+        setColor(withAlpha(highlightColor, (highlightColor[4] or 1) * alpha * 1.4))
+        love.graphics.setLineWidth(2)
+        love.graphics.line(x + innerInset, y + topHeight, x + width - innerInset, y + topHeight)
+
+        love.graphics.setStencilTest()
+        love.graphics.pop()
+end
+
+local function drawCategoryHeader(label, cardTopY, screenWidth, accentColor, textColor)
+        if not label or label == "" then
+                return
+        end
+
+        love.graphics.push("all")
+
+        local headerFont = UI.fonts.heading or UI.fonts.button
+        love.graphics.setFont(headerFont)
+
+        local textWidth = headerFont:getWidth(label)
+        local textHeight = headerFont:getHeight()
+        local paddingX = 36
+        local paddingY = 8
+        local labelY = cardTopY - 44
+        local boxWidth = textWidth + paddingX * 2
+        local boxHeight = textHeight + paddingY * 2
+        local boxX = (screenWidth - boxWidth) * 0.5
+        local boxY = labelY - paddingY
+        local radius = boxHeight * 0.5
+
+        local baseAccent = accentColor or Theme.panelBorder or {0.4, 0.5, 0.8, 1}
+        local fillColor = withAlpha(lightenColor(baseAccent, 0.35), 0.25)
+        local edgeColor = withAlpha(lightenColor(baseAccent, 0.55), 0.9)
+
+        setColor(fillColor)
+        love.graphics.rectangle("fill", boxX, boxY, boxWidth, boxHeight, radius, radius)
+
+        love.graphics.setLineWidth(2)
+        setColor(edgeColor)
+        love.graphics.rectangle("line", boxX, boxY, boxWidth, boxHeight, radius, radius)
+
+        local headerColor = withAlpha(textColor or Theme.textColor or {1, 1, 1, 1}, 1)
+        setColor(headerColor)
+        love.graphics.printf(label, 0, labelY, screenWidth, "center")
+
+        local centerX = screenWidth * 0.5
+        local lineLength = max(92, textWidth * 0.5)
+        local lineY = min(boxY + boxHeight + 6, cardTopY - 10)
+        local gap = 26
+
+        love.graphics.setLineWidth(3)
+        setColor(withAlpha(edgeColor, (edgeColor[4] or 1) * 0.55))
+        love.graphics.line(centerX - lineLength - gap, lineY, centerX - gap, lineY)
+        love.graphics.line(centerX + gap, lineY, centerX + lineLength + gap, lineY)
+
+        love.graphics.pop()
 end
 
 local function joinWithConjunction(items)
@@ -832,11 +934,17 @@ function AchievementsMenu:draw()
 
 	local titleFont = UI.fonts.title
 	love.graphics.setFont(titleFont)
-	local colors = UI.colors or {}
-	local titleColor = colors.text or Theme.textColor or {1, 1, 1, 1}
-	local subtleTextColor = colors.subtleText or withAlpha(titleColor, (titleColor[4] or 1) * 0.8)
-	setColor(titleColor)
-	love.graphics.printf(Localization:get("achievements.title"), 0, layout.titleY, sw, "center")
+        local colors = UI.colors or {}
+        local titleColor = colors.text or Theme.textColor or {1, 1, 1, 1}
+        local subtleTextColor = colors.subtleText or withAlpha(titleColor, (titleColor[4] or 1) * 0.8)
+        local baseHighlight = colors.highlight or Theme.highlightColor or {1, 1, 1, 0.06}
+        local accentColor = Theme.blueberryColor or colors.accentText or Theme.panelBorder or {0.45, 0.55, 0.9, 1}
+        local accentHighlight = lightenColor(accentColor, 0.55)
+        local accentShadow = darkenColor(accentColor, 0.35)
+        local accentTextColor = colors.accentText or Theme.accentTextColor or accentHighlight
+        local highlightColor = mixColors(baseHighlight, withAlpha(accentHighlight, 0.24), 0.55)
+        setColor(titleColor)
+        love.graphics.printf(Localization:get("achievements.title"), 0, layout.titleY, sw, "center")
 
 	local startY = layout.startY
 	local spacing = CARD_SPACING
@@ -851,11 +959,12 @@ function AchievementsMenu:draw()
 	local panelY = layout.panelY
 	local panelWidth = layout.panelWidth
 	local panelHeight = layout.panelHeight
-	local panelColor = colors.panel or Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-	local panelBorder = colors.panelBorder or colors.border or Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
-	local shadowColor = colors.shadow or Theme.shadowColor or {0, 0, 0, 0.35}
-	local highlightColor = colors.highlight or Theme.highlightColor or {1, 1, 1, 0.06}
-	local progressColor = colors.progress or Theme.progressColor or {0.6, 0.9, 0.4, 1}
+        local panelColor = colors.panel or Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+        local basePanelBorder = colors.panelBorder or colors.border or Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
+        local panelBorder = mixColors(basePanelBorder, accentHighlight, 0.45)
+        local shadowColor = colors.shadow or Theme.shadowColor or {0, 0, 0, 0.35}
+        local baseProgressColor = colors.progress or Theme.progressColor or {0.6, 0.9, 0.4, 1}
+        local progressColor = mixColors(baseProgressColor, accentHighlight, 0.4)
 	local summaryPanel = layout.summaryPanel
 	local summaryTextX = layout.summaryTextX
 	local summaryTextY = layout.summaryTextY
@@ -886,11 +995,14 @@ function AchievementsMenu:draw()
 	local highlightY = summaryPanel.y + highlightInsetY
 	local highlightW = max(0, summaryPanel.width - highlightInsetX * 2)
 	local highlightH = max(0, summaryPanel.height - highlightInsetY * 2)
-	if highlightW > 0 and highlightH > 0 then
-		setColor({highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 0.08) * 1.1})
-		love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, 18, 18)
-	end
-	love.graphics.pop()
+        if highlightW > 0 and highlightH > 0 then
+                local summaryHighlight = withAlpha(accentHighlight, (accentHighlight[4] or 1) * 0.2)
+                setColor(summaryHighlight)
+                love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, 18, 18)
+        end
+        love.graphics.pop()
+
+        applyPanelAccent(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, 24, accentColor, accentHighlight, 0.22, 18, summaryPanel.height * 0.48)
 
 	local totals = Achievements:getTotals()
 	local unlockedLabel = Localization:get("achievements.summary.unlocked", {
@@ -909,24 +1021,26 @@ function AchievementsMenu:draw()
 	love.graphics.printf(completionLabel, summaryTextX, summaryTextY, summaryTextWidth, "right")
 
 	local progressBarY = layout.summaryProgressY
-	setColor(darkenColor(panelColor, 0.4))
-	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, summaryProgressHeight, 6, 6)
+        setColor(withAlpha(mixColors(panelColor, accentShadow, 0.5), (panelColor[4] or 1) * 0.9))
+        love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, summaryProgressHeight, 6, 6)
 
-	setColor(progressColor)
-	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
+        setColor(withAlpha(progressColor, (progressColor[4] or 1)))
+        love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
 
-	love.graphics.push("all")
-	UI.drawPanel(panelX, panelY, panelWidth, panelHeight, {
-		radius = 28,
-		fill = panelColor,
-		alpha = 0.95,
-		borderColor = panelBorder,
-		borderWidth = 2,
-		highlightColor = highlightColor,
-		highlightAlpha = 1,
-		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
-	})
-	love.graphics.pop()
+        love.graphics.push("all")
+        UI.drawPanel(panelX, panelY, panelWidth, panelHeight, {
+                radius = 28,
+                fill = panelColor,
+                alpha = 0.95,
+                borderColor = panelBorder,
+                borderWidth = 2,
+                highlightColor = highlightColor,
+                highlightAlpha = 1,
+                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
+        })
+        love.graphics.pop()
+
+        applyPanelAccent(panelX, panelY, panelWidth, panelHeight, 28, accentColor, accentHighlight, 0.16, 20, min(96, panelHeight * 0.35))
 
 	local scissorTop = layout.scissorTop
 	local scissorBottom = layout.scissorBottom
@@ -936,14 +1050,12 @@ function AchievementsMenu:draw()
 	love.graphics.push()
 	love.graphics.translate(0, scrollOffset)
 
-	local y = startY
-	for _, block in ipairs(displayBlocks) do
-		local categoryLabel = Localization:get("achievements.categories." .. block.id)
-		love.graphics.setFont(UI.fonts.heading or UI.fonts.button)
-		setColor(withAlpha(subtleTextColor, (subtleTextColor[4] or 1) * 0.85))
-		love.graphics.printf(categoryLabel, 0, y - 32, sw, "center")
+        local y = startY
+        for _, block in ipairs(displayBlocks) do
+                local categoryLabel = Localization:get("achievements.categories." .. block.id)
+                drawCategoryHeader(categoryLabel, y, sw, accentColor, titleColor)
 
-		for _, ach in ipairs(block.achievements) do
+                for _, ach in ipairs(block.achievements) do
 			local unlocked = ach.unlocked
 			local goal = ach.goal or 0
 			local hiddenLocked = ach.hidden and not unlocked
@@ -956,32 +1068,43 @@ function AchievementsMenu:draw()
 			local barW = max(0, cardWidth - 120)
 			local cardY = y
 
-			local cardBase = unlocked and lightenColor(panelColor, 0.18) or darkenColor(panelColor, 0.08)
-			if hiddenLocked then
-				cardBase = darkenColor(panelColor, 0.2)
-			end
+                        local accentBlend = withAlpha(accentColor, panelColor[4] or 0.9)
+                        local cardBase = mixColors(panelColor, accentBlend, unlocked and 0.32 or 0.18)
+                        if hiddenLocked then
+                                cardBase = darkenColor(cardBase, 0.25)
+                        end
 
-			local accentBorder = colors.border or panelBorder
-			local borderTint
-			if unlocked then
-				borderTint = lightenColor(accentBorder, 0.2)
-			elseif hiddenLocked then
-				borderTint = darkenColor(panelBorder, 0.15)
-			else
-				borderTint = panelBorder
-			end
+                        local borderTint
+                        if unlocked then
+                                borderTint = mixColors(basePanelBorder, accentHighlight, 0.65)
+                        elseif hiddenLocked then
+                                borderTint = mixColors(basePanelBorder, accentShadow, 0.55)
+                        else
+                                borderTint = mixColors(basePanelBorder, accentColor, 0.35)
+                        end
 
-			love.graphics.push("all")
-			UI.drawPanel(x, cardY, cardWidth, cardHeight, {
-				radius = 18,
-				fill = cardBase,
-				borderColor = borderTint,
-				borderWidth = 2,
-				highlightColor = highlightColor,
-				highlightAlpha = unlocked and 1 or 0.8,
-				shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
-			})
-			love.graphics.pop()
+                        love.graphics.push("all")
+                        UI.drawPanel(x, cardY, cardWidth, cardHeight, {
+                                radius = 18,
+                                fill = cardBase,
+                                borderColor = borderTint,
+                                borderWidth = 2,
+                                highlightColor = highlightColor,
+                                highlightAlpha = unlocked and 1 or 0.85,
+                                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
+                        })
+                        love.graphics.pop()
+
+                        local cardAccentColor = accentColor
+                        local accentAlpha = unlocked and 0.22 or 0.16
+                        if hiddenLocked then
+                                cardAccentColor = mixColors(accentShadow, cardBase, 0.6)
+                                accentAlpha = 0.1
+                        elseif not unlocked then
+                                cardAccentColor = mixColors(accentColor, cardBase, 0.4)
+                                accentAlpha = 0.14
+                        end
+                        applyPanelAccent(x, cardY, cardWidth, cardHeight, 18, cardAccentColor, accentHighlight, accentAlpha, 14, cardHeight * 0.48)
 
 			if icon then
 				local iconX, iconY = x + 16, cardY + 18
@@ -991,8 +1114,15 @@ function AchievementsMenu:draw()
 				love.graphics.setColor(tint, tint, tint, 1)
 				love.graphics.draw(icon, iconX, iconY, 0, scaleX, scaleY)
 
-				local iconBorder = hiddenLocked and darkenColor(borderTint, 0.35) or borderTint
-				setColor(iconBorder)
+                                local iconBorder
+                                if hiddenLocked then
+                                        iconBorder = mixColors(borderTint, accentShadow, 0.6)
+                                elseif unlocked then
+                                        iconBorder = mixColors(borderTint, accentHighlight, 0.6)
+                                else
+                                        iconBorder = mixColors(borderTint, accentColor, 0.45)
+                                end
+                                setColor(iconBorder)
 				love.graphics.setLineWidth(2)
 				love.graphics.rectangle("line", iconX - 2, iconY - 2, 60, 60, 8)
 			end
@@ -1013,8 +1143,9 @@ function AchievementsMenu:draw()
 			setColor(titleColor)
 			love.graphics.printf(titleText, textX, cardY + 10, cardWidth - 110, "left")
 
-			love.graphics.setFont(UI.fonts.body)
-			setColor(subtleTextColor)
+                        love.graphics.setFont(UI.fonts.body)
+                        local bodyAlpha = hiddenLocked and (subtleTextColor[4] or 1) * 0.7 or (subtleTextColor[4] or 1) * 0.92
+                        setColor(withAlpha(subtleTextColor, bodyAlpha))
 			local textWidth = cardWidth - 110
 			love.graphics.printf(descriptionText, textX, cardY + 38, textWidth, "left")
 
@@ -1027,29 +1158,31 @@ function AchievementsMenu:draw()
 			local barX = textX
 			local barY = cardY + cardHeight - 24
 
-			if rewardText and rewardText ~= "" then
-				love.graphics.setFont(UI.fonts.small)
-				setColor(withAlpha(subtleTextColor, (subtleTextColor[4] or 1) * 0.85))
-				local rewardY = barY - (hasProgress and 36 or 24)
-				love.graphics.printf(rewardText, textX, rewardY, textWidth, "left")
-			end
+                        if rewardText and rewardText ~= "" then
+                                love.graphics.setFont(UI.fonts.small)
+                                local rewardAlpha = (accentTextColor[4] or 1) * (unlocked and 0.95 or 0.75)
+                                setColor(withAlpha(accentTextColor, rewardAlpha))
+                                local rewardY = barY - (hasProgress and 36 or 24)
+                                love.graphics.printf(rewardText, textX, rewardY, textWidth, "left")
+                        end
 
-			if hasProgress then
-				local ratio = Achievements:getProgressRatio(ach)
+                        if hasProgress then
+                                local ratio = Achievements:getProgressRatio(ach)
 
-				setColor(darkenColor(cardBase, 0.45))
-				love.graphics.rectangle("fill", barX, barY, barW, barH, 6)
+                                setColor(withAlpha(mixColors(cardBase, accentShadow, 0.55), (cardBase[4] or 1)))
+                                love.graphics.rectangle("fill", barX, barY, barW, barH, 6)
 
-				setColor(progressColor)
-				love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 6)
+                                setColor(withAlpha(progressColor, (progressColor[4] or 1)))
+                                love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 6)
 
-				local progressLabel = Achievements:getProgressLabel(ach)
-				if progressLabel then
-					love.graphics.setFont(UI.fonts.small)
-					setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.9))
-					love.graphics.printf(progressLabel, barX, barY - 18, barW, "right")
-				end
-			end
+                                local progressLabel = Achievements:getProgressLabel(ach)
+                                if progressLabel then
+                                        love.graphics.setFont(UI.fonts.small)
+                                        local progressAlpha = (accentTextColor[4] or 1) * (unlocked and 0.9 or 0.75)
+                                        setColor(withAlpha(accentTextColor, progressAlpha))
+                                        love.graphics.printf(progressLabel, barX, barY - 18, barW, "right")
+                                end
+                        end
 
 			y = y + spacing
 		end
