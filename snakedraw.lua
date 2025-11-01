@@ -2769,9 +2769,31 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 	if getHead then
 		hx, hy = getHead()
 	end
-	if not (hx and hy) then
-		hx, hy = ptXY(head)
-	end
+        if not (hx and hy) then
+                hx, hy = ptXY(head)
+        end
+
+        local faceAtBottom = options and options.faceAtBottom
+        if faceAtBottom then
+                local bottomX, bottomY = hx, hy
+                if trail then
+                        for i = 1, segmentCount do
+                                local point = trail[i]
+                                if point then
+                                        local px, py = ptXY(point)
+                                        if px and py then
+                                                if not bottomY or py > bottomY then
+                                                        bottomX, bottomY = px, py
+                                                end
+                                        end
+                                end
+                        end
+                end
+
+                if bottomX and bottomY then
+                        hx, hy = bottomX, bottomY
+                end
+        end
 
 	local portalInfo = options and options.portalAnimation
 	if portalInfo then
