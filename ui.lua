@@ -923,9 +923,9 @@ function UI.drawButton(id)
 		shadowOffset = UI.shadowOffset
 	end
 
-	if shadowOffset and shadowOffset ~= 0 then
-		local shadowOffsetX = shadowOffset - 1
-		local shadowOffsetY = shadowOffset - 1
+        if shadowOffset and shadowOffset ~= 0 then
+                local shadowOffsetX = shadowOffset - 2
+                local shadowOffsetY = shadowOffset - 2
 		setColor(UI.colors.shadow)
 		love.graphics.rectangle(
 			"fill",
