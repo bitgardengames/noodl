@@ -137,7 +137,7 @@ local baseSectionHeaderPadding = 8
 UI.fonts = {}
 
 local BUTTON_POP_DURATION = 0.32
-local BUTTON_BORDER_WIDTH = 2
+local BUTTON_BORDER_WIDTH = 3
 
 UI.buttonBorderWidth = BUTTON_BORDER_WIDTH
 
