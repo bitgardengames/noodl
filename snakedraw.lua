@@ -723,6 +723,8 @@ local function finalizeBounds(bounds, half)
 	return bounds
 end
 
+local presentSnakeCanvas
+
 local function ensureSnakeCanvas(width, height)
         if width <= 0 or height <= 0 then
                 return nil
@@ -821,7 +823,7 @@ local function drawSnakeCanvasMain(canvas, overlayEffect, drawX, drawY)
         love.graphics.draw(canvas, drawX, drawY)
 end
 
-local function presentSnakeCanvas(overlayEffect, width, height, offsetX, offsetY)
+presentSnakeCanvas = function(overlayEffect, width, height, offsetX, offsetY)
         if not snakeCanvas then
                 return false
         end
