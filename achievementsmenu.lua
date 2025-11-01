@@ -308,24 +308,23 @@ local function joinWithConjunction(items)
 end
 
 local function resolveBackButtonY(sw, sh, layout)
-	local menuLayout = UI.getMenuLayout(sw, sh)
-	local footerSpacing = menuLayout.footerSpacing or UI.spacing.sectionSpacing or UI.spacing.buttonSpacing or 24
-	local buttonHeight = UI.spacing.buttonHeight or 0
-	local marginBottom = menuLayout.marginBottom or 0
-	local bottomY = menuLayout.bottomY or (sh - marginBottom)
-	local y = bottomY - footerSpacing - buttonHeight
+        local menuLayout = UI.getMenuLayout(sw, sh)
+        local buttonHeight = UI.spacing.buttonHeight or 0
+        local marginBottom = menuLayout.marginBottom or 0
+        local bottomY = menuLayout.bottomY or (sh - marginBottom)
+        local y = bottomY - buttonHeight
 
-	if layout and layout.viewportBottom then
-		local spacing = UI.spacing.buttonSpacing or footerSpacing
-		y = max(y, layout.viewportBottom + spacing * 0.5)
-	end
+        if layout and layout.viewportBottom then
+                local spacing = UI.spacing.buttonSpacing or UI.spacing.sectionSpacing or 0
+                y = max(y, layout.viewportBottom + spacing * 0.5)
+        end
 
-	local maxY = sh - buttonHeight - marginBottom
-	if y > maxY then
-		y = maxY
-	end
+        local maxY = sh - buttonHeight - marginBottom
+        if y > maxY then
+                y = maxY
+        end
 
-	return y
+        return y
 end
 
 local function applyBackButtonLayout(layout, sw, sh)
@@ -943,24 +942,9 @@ function AchievementsMenu:draw()
 		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
 	})
 
-	local highlightInset = layout.summaryHighlightInset or {x = SUMMARY_HIGHLIGHT_INSET, y = SUMMARY_HIGHLIGHT_INSET}
-	local highlightInsetX = min(summaryPanel.width * 0.25, highlightInset.x or SUMMARY_HIGHLIGHT_INSET)
-	local highlightInsetY = highlightInset.y or SUMMARY_HIGHLIGHT_INSET
-	local maxHighlightInsetX = max(0, (summaryPanel.width - 2) * 0.5)
-	local maxHighlightInsetY = max(0, (summaryPanel.height - 2) * 0.5)
-	highlightInsetX = max(0, min(highlightInsetX, maxHighlightInsetX))
-	highlightInsetY = max(0, min(highlightInsetY, maxHighlightInsetY))
-	local highlightX = summaryPanel.x + highlightInsetX
-	local highlightY = summaryPanel.y + highlightInsetY
-	local highlightW = max(0, summaryPanel.width - highlightInsetX * 2)
-	local highlightH = max(0, summaryPanel.height - highlightInsetY * 2)
-	if highlightW > 0 and highlightH > 0 then
-		setColor({highlightColor[1], highlightColor[2], highlightColor[3], (highlightColor[4] or 0.08) * 1.1})
-		love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, 18, 18)
-	end
-	love.graphics.pop()
+        love.graphics.pop()
 
-	local totals = Achievements:getTotals()
+        local totals = Achievements:getTotals()
 	local unlockedLabel = Localization:get("achievements.summary.unlocked", {
 		unlocked = totals.unlocked,
 		total = totals.total,
@@ -1029,15 +1013,7 @@ function AchievementsMenu:draw()
 				cardBase = darkenColor(panelColor, 0.2)
 			end
 
-			local accentBorder = colors.border or panelBorder
-			local borderTint
-			if unlocked then
-				borderTint = lightenColor(accentBorder, 0.2)
-			elseif hiddenLocked then
-				borderTint = darkenColor(panelBorder, 0.15)
-			else
-				borderTint = panelBorder
-			end
+                        local borderTint = {0, 0, 0, 1}
 
 			love.graphics.push("all")
 			UI.drawPanel(x, cardY, cardWidth, cardHeight, {
