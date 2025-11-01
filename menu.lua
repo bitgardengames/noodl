@@ -40,7 +40,9 @@ local resetTooltipArgs = {time = nil}
 local DAILY_PANEL_OUTLINE_COLOR = {0, 0, 0, 1}
 local EDGE_PROXIMITY_FACTOR = 0.765
 local BUTTON_STACK_OFFSET = 80
-local LOGO_VERTICAL_LIFT = 80
+local BUTTON_VERTICAL_SHIFT = 40
+local BUTTON_EXTRA_SPACING = 2
+local LOGO_VERTICAL_LIFT = 40
 local dailyPanelCache = {}
 
 local dailyBarCelebration = {
@@ -572,13 +574,14 @@ function Menu:enter()
 		{key = "menu.quit",         action = "quit"},
 	}
 
-	local totalButtonHeight = #labels * UI.spacing.buttonHeight + max(0, #labels - 1) * UI.spacing.buttonSpacing
+	local effectiveSpacing = (UI.spacing.buttonSpacing or 0) + BUTTON_EXTRA_SPACING
+	local totalButtonHeight = #labels * UI.spacing.buttonHeight + max(0, #labels - 1) * effectiveSpacing
 	local stackBase = (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
 	local footerGuard = menuLayout.footerSpacing or UI.spacing.sectionSpacing or 24
 	local lowerBound = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or sh * 0.12))) - footerGuard
 	local availableHeight = max(0, lowerBound - stackBase)
-	local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5) + BUTTON_STACK_OFFSET
-	local minStart = stackBase + BUTTON_STACK_OFFSET
+	local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5) + BUTTON_STACK_OFFSET + BUTTON_VERTICAL_SHIFT
+	local minStart = stackBase + BUTTON_STACK_OFFSET + BUTTON_VERTICAL_SHIFT
 	local maxStart = lowerBound - totalButtonHeight
 
 	if maxStart < minStart then
@@ -596,7 +599,7 @@ function Menu:enter()
 
         for i, entry in ipairs(labels) do
                 local x = centerX - UI.spacing.buttonWidth / 2
-                local y = startY + (i - 1) * (UI.spacing.buttonHeight + UI.spacing.buttonSpacing)
+                local y = startY + (i - 1) * (UI.spacing.buttonHeight + effectiveSpacing)
 
                 defs[#defs + 1] = {
                         id = "menuButton" .. i,
