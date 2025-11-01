@@ -6,6 +6,7 @@ local Settings = require("settings")
 local Localization = require("localization")
 local Shaders = require("shaders")
 local Display = require("display")
+local SnakeCosmetics = require("snakecosmetics")
 
 local abs = math.abs
 local max = math.max
@@ -137,6 +138,20 @@ local function withAlpha(color, alpha)
         return {r, g, b, a * alpha}
 end
 
+local function setColor(color, alphaOverride)
+        if not color then
+                love.graphics.setColor(1, 1, 1, alphaOverride or 1)
+                return
+        end
+
+        love.graphics.setColor(
+                color[1] or 1,
+                color[2] or 1,
+                color[3] or 1,
+                alphaOverride or color[4] or 1
+        )
+end
+
 local displayModeLabels = {
         fullscreen = "settings.display_mode_fullscreen",
         windowed = "settings.display_mode_windowed",
@@ -221,7 +236,7 @@ local function resolveSettingsPanelWidth(sw, sh, menuLayout)
                 end
         end
 
-        return panelWidth
+        return panelWidth, widthScale, panelPaddingX, scrollbarGap, totalWidth
 end
 
 local function resolveBackButtonY(sw, sh, currentLayout)
@@ -331,12 +346,12 @@ function SettingsScreen:updateButtonPositions()
 end
 
 function SettingsScreen:updateScrollBounds()
-	local panel = layout.panel
-	local panelPadding = UI.spacing.panelPadding
-	viewportHeight = max(0, (panel and panel.h or 0) - panelPadding * 2)
-	minScrollOffset = min(0, viewportHeight - contentHeight)
-	scrollOffset = clampScroll(scrollOffset)
-	self:updateButtonPositions()
+        local panel = layout.panel
+        local panelPaddingY = layout.panelPaddingY or UI.spacing.panelPadding
+        viewportHeight = max(0, (panel and panel.h or 0) - panelPaddingY * 2)
+        minScrollOffset = min(0, viewportHeight - contentHeight)
+        scrollOffset = clampScroll(scrollOffset)
+        self:updateButtonPositions()
 end
 
 function SettingsScreen:setScroll(offset)
@@ -366,8 +381,8 @@ function SettingsScreen:isOptionVisible(btn)
                 return true
         end
 
-        local panelPadding = UI.spacing.panelPadding
-        local viewportTop = panel.y + panelPadding
+        local panelPaddingY = layout.panelPaddingY or UI.spacing.panelPadding
+        local viewportTop = panel.y + panelPaddingY
         local viewportBottom = viewportTop + viewportHeight
 
 	local top = btn.y or 0
@@ -396,8 +411,8 @@ function SettingsScreen:ensureFocusVisible()
         local btn = buttons[focusedIndex]
         if not btn or btn.scrollable == false then return end
 
-        local panelPadding = UI.spacing.panelPadding
-        local viewportTop = panel.y + panelPadding
+        local panelPaddingY = layout.panelPaddingY or UI.spacing.panelPadding
+        local viewportTop = panel.y + panelPaddingY
         local viewportBottom = viewportTop + viewportHeight
 
 	local top = btn.y
@@ -568,14 +583,18 @@ function SettingsScreen:enter()
 		end
 	end
 
-        local panelPadding = UI.spacing.panelPadding
+        local basePanelPadding = UI.spacing.panelPadding
         local baseSelectionWidth = UI.spacing.buttonWidth
-        local panelWidth = resolveSettingsPanelWidth(sw, sh, menuLayout)
+        local panelWidth, _, resolvedPaddingX, resolvedScrollbarGap, resolvedTotalWidth = resolveSettingsPanelWidth(sw, sh, menuLayout)
+        local panelPaddingY = basePanelPadding
+        local panelPaddingX = resolvedPaddingX or basePanelPadding
+        local scrollbarGap = resolvedScrollbarGap
+        local totalWidth = resolvedTotalWidth
         local selectionWidth
 
         if not panelWidth or panelWidth <= 0 then
                 local horizontalMargin = menuLayout.marginHorizontal or UI.spacing.sectionSpacing
-                local availableWidth = sw - horizontalMargin * 2 - panelPadding * 2
+                local availableWidth = sw - horizontalMargin * 2 - panelPaddingX * 2
                 selectionWidth = baseSelectionWidth
 
                 if availableWidth > baseSelectionWidth then
@@ -584,16 +603,21 @@ function SettingsScreen:enter()
                         selectionWidth = availableWidth
                 end
 
-                panelWidth = selectionWidth + panelPadding * 2
+                panelWidth = selectionWidth + panelPaddingX * 2
+                scrollbarGap = max(ACHIEVEMENT_MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
+                totalWidth = panelWidth + scrollbarGap + ACHIEVEMENT_SCROLLBAR_TRACK_WIDTH
         else
-                selectionWidth = max(0, panelWidth - panelPadding * 2)
+                selectionWidth = max(0, panelWidth - panelPaddingX * 2)
                 if selectionWidth <= 0 then
                         selectionWidth = baseSelectionWidth
-                        panelWidth = selectionWidth + panelPadding * 2
+                        panelWidth = selectionWidth + panelPaddingX * 2
                 end
+
+                scrollbarGap = scrollbarGap or max(ACHIEVEMENT_MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
+                totalWidth = totalWidth or (panelWidth + scrollbarGap + ACHIEVEMENT_SCROLLBAR_TRACK_WIDTH)
         end
-	local panelHeight = totalHeight + panelPadding * 2
-	local minPanelHeight = panelPadding * 2 + UI.spacing.buttonHeight
+        local panelHeight = totalHeight + panelPaddingY * 2
+        local minPanelHeight = panelPaddingY * 2 + UI.spacing.buttonHeight
 	local spacingGuard = menuLayout.sectionSpacing or UI.spacing.sectionSpacing
 	local desiredTopMargin = headerY + titleHeight + spacingGuard
 	local desiredBottomMargin = (menuLayout.marginBottom or spacingGuard) + UI.spacing.buttonHeight + spacingGuard
@@ -615,7 +639,12 @@ function SettingsScreen:enter()
 
 	panelHeight = maxPanelHeight
 
-	local panelX = centerX - panelWidth / 2
+        local panelX = (sw - totalWidth) * 0.5
+        local maxPanelX = sw - totalWidth - 12
+        if maxPanelX < 12 then
+                maxPanelX = 12
+        end
+        panelX = max(12, min(panelX, maxPanelX))
 
 	local minPanelY = desiredTopMargin
 	local maxPanelY = sh - desiredBottomMargin - panelHeight
@@ -638,11 +667,24 @@ function SettingsScreen:enter()
 		end
 	end
 
+        local scrollbarX = panelX + panelWidth + scrollbarGap
+
         layout.panel = {x = panelX, y = panelY, w = panelWidth, h = panelHeight}
         layout.panelX = panelX
         layout.panelY = panelY
         layout.panelWidth = panelWidth
         layout.panelHeight = panelHeight
+        layout.panelPaddingX = panelPaddingX
+        layout.panelPaddingY = panelPaddingY
+        layout.scrollbarGap = scrollbarGap
+        layout.scrollbarTrackWidth = ACHIEVEMENT_SCROLLBAR_TRACK_WIDTH
+        layout.scrollbar = {
+                x = scrollbarX,
+                y = panelY,
+                width = ACHIEVEMENT_SCROLLBAR_TRACK_WIDTH,
+                height = panelHeight,
+        }
+        layout.totalWidth = totalWidth
         layout.viewportBottom = panelY + panelHeight
         layout.title = {
                 height = titleHeight,
@@ -655,7 +697,7 @@ function SettingsScreen:enter()
         layout.backButton = buildBackButtonLayout(sw, sh, layout)
         contentHeight = totalHeight
 
-        local startY = panelY + panelPadding
+        local startY = panelY + panelPaddingY
 
 	-- reset UI.buttons so we don’t keep stale hitboxes
 	UI.clearButtons()
@@ -666,7 +708,7 @@ function SettingsScreen:enter()
 	lastNonMouseFocusIndex = nil
 
 	for i, opt in ipairs(options) do
-		local x = panelX + panelPadding
+                local x = panelX + panelPaddingX
 		local y = startY
 		local w = selectionWidth
 		local spacingAfter = spacing
@@ -796,17 +838,181 @@ function SettingsScreen:update(dt)
 
 	if hoveredIndex then
 		self:setFocus(hoveredIndex, nil, "mouse", true)
-	else
-		if focusSource == "mouse" then
-			if lastNonMouseFocusIndex and buttons[lastNonMouseFocusIndex] and isButtonFocusable(buttons[lastNonMouseFocusIndex]) then
-				self:setFocus(lastNonMouseFocusIndex)
-			else
-				self:clearFocus()
-			end
-		else
-			self:updateFocusVisuals()
-		end
-	end
+        else
+                if focusSource == "mouse" then
+                        if lastNonMouseFocusIndex and buttons[lastNonMouseFocusIndex] and isButtonFocusable(buttons[lastNonMouseFocusIndex]) then
+                                self:setFocus(lastNonMouseFocusIndex)
+                        else
+                                self:clearFocus()
+                        end
+                else
+                        self:updateFocusVisuals()
+                end
+        end
+end
+
+local function drawSettingsScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered)
+        love.graphics.push("all")
+
+        local panelColor = Theme.panelColor or (UI.colors and UI.colors.panelColor)
+        local baseTrackColor = panelColor or {0.18, 0.18, 0.22, 0.9}
+        local snakeBodyColor = Theme.snakeDefault or Theme.progressColor or {0.45, 0.85, 0.70, 1}
+        local baseAlpha = baseTrackColor[4] == nil and 1 or baseTrackColor[4]
+        local baseLighten = isHovered and 0.18 or 0.12
+        local trackColor = lightenColor(baseTrackColor, baseLighten)
+        trackColor[4] = baseAlpha
+
+        local trackRadius = max(8, trackWidth * 0.65)
+        local trackOutlineColor = darkenColor(baseTrackColor, 0.45)
+        trackOutlineColor[4] = baseAlpha
+
+        setColor(trackColor)
+        love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
+
+        local outlineAlpha = (trackOutlineColor[4] or 1) * 0.95
+        local outlineWidth = 3
+        setColor(withAlpha(trackOutlineColor, outlineAlpha))
+        love.graphics.setLineWidth(outlineWidth)
+        local inset = outlineWidth * 0.5
+        love.graphics.rectangle(
+                "line",
+                trackX + inset,
+                trackY + inset,
+                trackWidth - outlineWidth,
+                trackHeight - outlineWidth,
+                max(0, trackRadius - inset)
+        )
+
+        local thumbPadding = 2
+        local thumbWidth = max(6, trackWidth - thumbPadding * 2 + 2)
+        local thumbOffsetX = -1
+        local thumbX = trackX + thumbPadding + thumbOffsetX
+        local hoverBoost = 0
+
+        if isThumbHovered then
+                hoverBoost = 0.25
+        elseif isHovered then
+                hoverBoost = 0.15
+        end
+
+        local function adjustHover(color, factor)
+                if not color then
+                        return nil
+                end
+                local alpha = color[4] == nil and 1 or color[4]
+                if not factor or factor <= 0 then
+                        local copy = copyColor(color)
+                        copy[4] = alpha
+                        return copy
+                end
+                local adjusted = lightenColor(color, factor)
+                adjusted[4] = alpha
+                return adjusted
+        end
+
+        local snakePalette = SnakeCosmetics:getPaletteForSkin()
+        local baseBodyColor = (snakePalette and snakePalette.body) or snakeBodyColor
+        local bodyColor = adjustHover(baseBodyColor, hoverBoost)
+
+        local paletteOverride
+        if snakePalette then
+                paletteOverride = {
+                        body = bodyColor,
+                        outline = adjustHover(snakePalette.outline, hoverBoost * 0.5),
+                        glow = adjustHover(snakePalette.glow, hoverBoost * 0.35),
+                        glowEffect = snakePalette.glowEffect,
+                        overlay = snakePalette.overlay,
+                }
+        elseif hoverBoost > 0 then
+                paletteOverride = {body = bodyColor}
+        end
+
+        local shadowColor = withAlpha(darkenColor(bodyColor or snakeBodyColor, 0.55), 0.45)
+        setColor(shadowColor)
+        love.graphics.rectangle("fill", thumbX + 1, thumbY + 3, thumbWidth, thumbHeight, thumbWidth * 0.5)
+
+        local snakeDrawn = UI.drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, {
+                amplitude = 0,
+                frequency = 1.2,
+                segmentCount = 18,
+                segmentScale = 0.95,
+                falloff = 0.4,
+                lengthScale = 1,
+                paletteOverride = paletteOverride,
+                flipVertical = true,
+                drawFace = true,
+                faceAtBottom = true,
+        })
+
+        if not snakeDrawn then
+                love.graphics.push()
+                love.graphics.translate(0, 2 * thumbY + thumbHeight)
+                love.graphics.scale(1, -1)
+
+                local headHeight = min(thumbWidth * 0.9, thumbHeight * 0.42)
+                local tailHeight = min(thumbWidth * 0.55, thumbHeight * 0.28)
+                local headCenterY = thumbY + headHeight * 0.45
+                local tailStartY = thumbY + thumbHeight - tailHeight * 0.6
+                local bodyTop = thumbY + headHeight * 0.55
+                local bodyBottom = max(bodyTop, tailStartY)
+                local bodyHeight = max(0, bodyBottom - bodyTop)
+
+                setColor(bodyColor)
+                love.graphics.ellipse("fill", thumbX + thumbWidth * 0.5, headCenterY, thumbWidth * 0.5, headHeight * 0.5)
+                if bodyHeight > 0 then
+                        love.graphics.rectangle("fill", thumbX, bodyTop, thumbWidth, bodyHeight, thumbWidth * 0.45)
+                end
+                love.graphics.polygon(
+                        "fill",
+                        thumbX + thumbWidth * 0.15,
+                        bodyBottom,
+                        thumbX + thumbWidth * 0.85,
+                        bodyBottom,
+                        thumbX + thumbWidth * 0.5,
+                        min(thumbY + thumbHeight, bodyBottom + tailHeight)
+                )
+
+                local bellyWidth = thumbWidth * 0.6
+                local bellyX = thumbX + (thumbWidth - bellyWidth) * 0.5
+                local bellyTop = bodyTop + 4
+                local bellyBottom = min(bodyBottom - 2, thumbY + thumbHeight - tailHeight * 0.3)
+                if bellyBottom > bellyTop then
+                        setColor(withAlpha(lightenColor(bodyColor, 0.45), 0.9))
+                        love.graphics.rectangle("fill", bellyX, bellyTop, bellyWidth, bellyBottom - bellyTop, bellyWidth * 0.45)
+
+                        local stripeColor = withAlpha(darkenColor(bodyColor, 0.35), 0.55)
+                        local stripeSpacing = 9
+                        local stripeInset = bellyWidth * 0.12
+                        for y = bellyTop + 3, bellyBottom - 3, stripeSpacing do
+                                setColor(stripeColor)
+                                love.graphics.rectangle(
+                                        "fill",
+                                        bellyX + stripeInset,
+                                        y,
+                                        bellyWidth - stripeInset * 2,
+                                        2,
+                                        bellyWidth * 0.35
+                                )
+                        end
+                end
+
+                local eyeColor = Theme.textColor or {0.88, 0.88, 0.92, 1}
+                local pupilColor = Theme.bgColor or {0.12, 0.12, 0.14, 1}
+                local eyeRadius = max(1.2, thumbWidth * 0.08)
+                local pupilRadius = eyeRadius * 0.45
+                local eyeOffsetX = thumbWidth * 0.28
+                local eyeY = headCenterY - headHeight * 0.15
+                setColor(eyeColor)
+                love.graphics.circle("fill", thumbX + thumbWidth * 0.5 - eyeOffsetX, eyeY, eyeRadius)
+                love.graphics.circle("fill", thumbX + thumbWidth * 0.5 + eyeOffsetX, eyeY, eyeRadius)
+                setColor(pupilColor)
+                love.graphics.circle("fill", thumbX + thumbWidth * 0.5 - eyeOffsetX, eyeY, pupilRadius)
+                love.graphics.circle("fill", thumbX + thumbWidth * 0.5 + eyeOffsetX, eyeY, pupilRadius)
+
+                love.graphics.pop()
+        end
+
+        love.graphics.pop()
 end
 
 function SettingsScreen:draw()
@@ -822,11 +1028,12 @@ function SettingsScreen:draw()
 
 	self:updateButtonPositions()
 
-	local panelPadding = UI.spacing.panelPadding
-	local viewportX = panel.x + panelPadding
-	local viewportY = panel.y + panelPadding
-	local viewportW = panel.w - panelPadding * 2
-	local viewportH = max(0, viewportHeight)
+        local panelPaddingX = layout.panelPaddingX or UI.spacing.panelPadding
+        local panelPaddingY = layout.panelPaddingY or UI.spacing.panelPadding
+        local viewportX = panel.x + panelPaddingX
+        local viewportY = panel.y + panelPaddingY
+        local viewportW = panel.w - panelPaddingX * 2
+        local viewportH = max(0, viewportHeight)
 
 	local prevScissorX, prevScissorY, prevScissorW, prevScissorH = love.graphics.getScissor()
 	local appliedScissor = false
@@ -963,32 +1170,39 @@ function SettingsScreen:draw()
         end
 
         if contentHeight > viewportHeight and viewportHeight > 0 then
-                local trackWidth = 6
-                local trackRadius = trackWidth / 2
-                local trackX = panel.x + panel.w - trackWidth - panelPadding * 0.5
-		local trackY = viewportY
-		local trackHeight = viewportHeight
+                local panelPaddingX = layout.panelPaddingX or UI.spacing.panelPadding
+                local trackWidth = layout.scrollbarTrackWidth or ACHIEVEMENT_SCROLLBAR_TRACK_WIDTH
+                local scrollbarGap = layout.scrollbarGap or max(ACHIEVEMENT_MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
+                local trackX = (layout.scrollbar and layout.scrollbar.x) or (panel.x + panel.w + scrollbarGap)
+                local trackY = panel.y
+                local trackHeight = panel.h
 
-		local scrollRange = contentHeight - viewportHeight
-		local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
-		scrollProgress = max(0, min(1, scrollProgress))
+                local scrollRange = contentHeight - viewportHeight
+                local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
+                scrollProgress = max(0, min(1, scrollProgress))
 
-		local minThumbHeight = 32
-		local thumbHeight = max(minThumbHeight, trackHeight * (viewportHeight / contentHeight))
-		thumbHeight = min(thumbHeight, trackHeight)
-		local thumbY = trackY + (trackHeight - thumbHeight) * scrollProgress
+                local minThumbHeight = 36
+                local thumbHeight = max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
+                thumbHeight = min(thumbHeight, trackHeight)
+                local thumbTravel = max(0, trackHeight - thumbHeight)
+                local thumbY = trackY + thumbTravel * scrollProgress
 
-		local trackColor = Theme.panelBorder or UI.colors.panelBorder or {1, 1, 1, 0.4}
-		local thumbColor = Theme.highlightColor or UI.colors.highlight or {1, 1, 1, 0.8}
+                local mx, my = UI.getCursorPosition()
+                local isOverScrollbar = mx >= trackX and mx <= trackX + trackWidth and my >= trackY and my <= trackY + trackHeight
+                local isOverThumb = isOverScrollbar and my >= thumbY and my <= thumbY + thumbHeight
 
-		love.graphics.setColor(trackColor[1] or 1, trackColor[2] or 1, trackColor[3] or 1, (trackColor[4] or 1) * 0.4)
-		love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
+                drawSettingsScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isOverScrollbar, isOverThumb)
 
-		local thumbAlpha = min(1, (thumbColor[4] or 1) * 1.2)
-		love.graphics.setColor(thumbColor[1] or 1, thumbColor[2] or 1, thumbColor[3] or 1, thumbAlpha)
-		love.graphics.rectangle("fill", trackX, thumbY, trackWidth, thumbHeight, trackRadius)
-		love.graphics.setColor(1, 1, 1, 1)
-	end
+                layout.scrollbar = layout.scrollbar or {}
+                layout.scrollbar.x = trackX
+                layout.scrollbar.y = trackY
+                layout.scrollbar.width = trackWidth
+                layout.scrollbar.height = trackHeight
+                layout.scrollbar.thumbY = thumbY
+                layout.scrollbar.thumbHeight = thumbHeight
+        elseif layout.scrollbar then
+                layout.scrollbar.thumbHeight = 0
+        end
 end
 
 function SettingsScreen:updateFocusVisuals()
