@@ -39,7 +39,7 @@ local SCROLL_SPEED = 60
 local BASE_PANEL_PADDING_X = 48
 local BASE_PANEL_PADDING_Y = 56
 local MIN_SCROLLBAR_INSET = 16
-local SCROLLBAR_TRACK_WIDTH = 30
+local SCROLLBAR_TRACK_WIDTH = 28
 
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
@@ -498,12 +498,13 @@ local function toPercent(value)
 	return floor(value * 100 + 0.5)
 end
 
-local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered)
+local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered, panelColor)
         love.graphics.push("all")
 
-        local baseTrackColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+        local baseTrackColor = panelColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
         local snakeBodyColor = Theme.snakeDefault or Theme.progressColor or {0.45, 0.85, 0.70, 1}
-        local trackAlpha = isHovered and 0.82 or 0.68
+        local baseAlpha = baseTrackColor[4] or 1
+        local trackAlpha = panelColor and baseAlpha or (isHovered and 0.82 or 0.68)
         local trackRadius = max(8, trackWidth * 0.65)
         local trackOutlineColor = {0, 0, 0, 1}
 
@@ -1353,7 +1354,17 @@ function AchievementsMenu:draw()
                 scrollbarState.thumbHeight = thumbHeight
                 scrollbarState.scrollRange = scrollRange
 
-                drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isOverScrollbar, isOverThumb or scrollbarDrag.active)
+                drawScrollbar(
+                        trackX,
+                        trackY,
+                        trackWidth,
+                        trackHeight,
+                        thumbY,
+                        thumbHeight,
+                        isOverScrollbar,
+                        isOverThumb or scrollbarDrag.active,
+                        panelColor
+                )
         else
                 scrollbarState.visible = false
                 scrollbarState.scrollRange = 0
