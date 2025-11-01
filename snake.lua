@@ -4010,29 +4010,29 @@ function Snake:chopTailByHazard(cause)
 end
 
 function Snake:chopTailBySaw()
-	return self:chopTailByHazard("saw")
+        return self:chopTailByHazard("saw")
 end
 
 local function isSawActive(saw)
-	if not saw then
-		return false
-	end
+        if not saw then
+                return false
+        end
 
-	return not ((saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0)
+        return not ((saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0)
 end
 
 local function getSawCenterPosition(saw)
-	if not (Saws and Saws.getCollisionCenter) then
-		return nil, nil
-	end
+        if not (Saws and Saws.getCollisionCenter) then
+                return nil, nil
+        end
 
-	return Saws:getCollisionCenter(saw)
+        return Saws:getCollisionCenter(saw)
 end
 
 local function isSawCutPointExposed(saw, sx, sy, px, py)
-	if not (saw and sx and sy and px and py) then
-		return true
-	end
+        if not (saw and sx and sy and px and py) then
+                return true
+        end
 
 	local tolerance = 1.0
 	local nx, ny
@@ -4319,107 +4319,235 @@ function Snake:handleSawBodyCut(context)
         return true
 end
 
+local laserCollisionContext = {
+        snake = nil,
+        trail = nil,
+        headX = nil,
+        headY = nil,
+        guardDistance = 0,
+        bodyRadius = 0,
+        cutEvent = {cause = "laser"},
+}
+
+local dartCollisionContext = {
+        snake = nil,
+        trail = nil,
+        headX = nil,
+        headY = nil,
+        guardDistance = 0,
+        bodyRadius = 0,
+        cutEvent = {cause = "dart"},
+}
+
+local sawCollisionContext = {
+        snake = nil,
+        trail = nil,
+        headX = nil,
+        headY = nil,
+        guardDistance = 0,
+        bodyRadius = 0,
+        cutEvent = {},
+}
+
+local function resetCollisionContext(context)
+        if not context then
+                return
+        end
+
+        context.snake = nil
+        context.trail = nil
+        context.headX = nil
+        context.headY = nil
+        context.guardDistance = 0
+        context.bodyRadius = 0
+
+        local cutEvent = context.cutEvent
+        if cutEvent then
+                cutEvent.index = nil
+                cutEvent.cutX = nil
+                cutEvent.cutY = nil
+                cutEvent.cutDistance = nil
+        end
+end
+
+local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH)
+        local trailRef = context.trail
+        if not (trailRef and trailRef[1]) then
+                return nil
+        end
+
+        local headX = context.headX
+        local headY = context.headY
+        if not (headX and headY) then
+                return nil
+        end
+
+        local travelled = 0
+        local prevX, prevY = headX, headY
+
+        for index = 2, #trailRef do
+                local segment = trailRef[index]
+                local cx = segment and (segment.drawX or segment.x)
+                local cy = segment and (segment.drawY or segment.y)
+                if cx and cy then
+                        local dx = cx - prevX
+                        local dy = cy - prevY
+                        local segLen = sqrt(dx * dx + dy * dy)
+
+                        if segLen > 1e-6 then
+                                local intersects, cutX, cutY, t = segmentRectIntersection(
+                                        prevX,
+                                        prevY,
+                                        cx,
+                                        cy,
+                                        expandedX,
+                                        expandedY,
+                                        expandedW,
+                                        expandedH
+                                )
+
+                                if intersects and t then
+                                        local along = travelled + segLen * t
+                                        if along > context.guardDistance then
+                                                local cutEvent = context.cutEvent
+                                                cutEvent.index = index
+                                                cutEvent.cutX = cutX
+                                                cutEvent.cutY = cutY
+                                                cutEvent.cutDistance = along
+                                                return cutEvent
+                                        end
+                                end
+                        end
+
+                        travelled = travelled + segLen
+                        prevX, prevY = cx, cy
+                end
+        end
+
+        return nil
+end
+
+local function evaluateTrailCircleCut(context, saw, centerX, centerY, combinedRadiusSq)
+        local trailRef = context.trail
+        if not (trailRef and trailRef[1]) then
+                return nil
+        end
+
+        local headX = context.headX
+        local headY = context.headY
+        if not (headX and headY) then
+                return nil
+        end
+
+        local travelled = 0
+        local prevX, prevY = headX, headY
+        local bodyRadius = context.bodyRadius or 0
+
+        for index = 2, #trailRef do
+                local segment = trailRef[index]
+                local cx = segment and (segment.drawX or segment.x)
+                local cy = segment and (segment.drawY or segment.y)
+                if cx and cy then
+                        local dx = cx - prevX
+                        local dy = cy - prevY
+                        local segLen = sqrt(dx * dx + dy * dy)
+
+                        if segLen > 1e-6 then
+                                local candidate = true
+                                if Saws and Saws.isCollisionCandidate then
+                                        local minX = min(prevX, cx) - bodyRadius
+                                        local minY = min(prevY, cy) - bodyRadius
+                                        local maxX = max(prevX, cx) + bodyRadius
+                                        local maxY = max(prevY, cy) + bodyRadius
+                                        candidate = Saws:isCollisionCandidate(saw, minX, minY, maxX - minX, maxY - minY)
+                                end
+
+                                if candidate then
+                                        local closestX, closestY, distSq, t = closestPointOnSegment(centerX, centerY, prevX, prevY, cx, cy)
+                                        local along = travelled + segLen * (t or 0)
+                                        if along > context.guardDistance and distSq <= combinedRadiusSq then
+                                                if isSawCutPointExposed(saw, centerX, centerY, closestX, closestY) then
+                                                        local cutEvent = context.cutEvent
+                                                        cutEvent.index = index
+                                                        cutEvent.cutX = closestX
+                                                        cutEvent.cutY = closestY
+                                                        cutEvent.cutDistance = along
+                                                        return cutEvent
+                                                end
+                                        end
+                                end
+                        end
+
+                        travelled = travelled + segLen
+                        prevX, prevY = cx, cy
+                end
+        end
+
+        return nil
+end
+
 function Snake:checkLaserBodyCollision()
         if isDead then
                 return false
         end
 
-	if not (trail and #trail > 2) then
-		return false
-	end
+        if not (trail and #trail > 2) then
+                return false
+        end
 
-	if not (Lasers and Lasers.getEmitterCount and Lasers.iterateEmitters) then
-		return false
-	end
+        if not (Lasers and Lasers.getEmitterArray) then
+                return false
+        end
 
-	local emitterCount = Lasers:getEmitterCount()
-	if not (emitterCount and emitterCount > 0) then
-		return false
-	end
+        local emitters = Lasers:getEmitterArray()
+        local emitterCount = emitters and #emitters or 0
+        if emitterCount == 0 then
+                return false
+        end
 
-	local head = trail[1]
-	local headX = head and (head.drawX or head.x)
-	local headY = head and (head.drawY or head.y)
-	if not (headX and headY) then
-		return false
-	end
+        local head = trail[1]
+        local headX = head and (head.drawX or head.x)
+        local headY = head and (head.drawY or head.y)
+        if not (headX and headY) then
+                return false
+        end
 
-	local guardDistance = SEGMENT_SPACING * 0.9
-	local bodyRadius = SEGMENT_SIZE * 0.5
+        local context = laserCollisionContext
+        context.snake = self
+        context.trail = trail
+        context.headX = headX
+        context.headY = headY
+        context.guardDistance = SEGMENT_SPACING * 0.9
+        context.bodyRadius = SEGMENT_SIZE * 0.5
 
-	local handled = Lasers:iterateEmitters(function(beam)
-		if not (beam and beam.state == "firing") then
-			return nil
-		end
+        local bodyRadius = context.bodyRadius
 
-		local rect = beam.beamRect
-		if not rect then
-			return nil
-		end
+        for index = 1, emitterCount do
+                local beam = emitters[index]
+                if beam and beam.state == "firing" then
+                        local rect = beam.beamRect
+                        if rect then
+                                local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
+                                if rw and rh and rw > 0 and rh > 0 then
+                                        local expandedX = (rx or 0) - bodyRadius
+                                        local expandedY = (ry or 0) - bodyRadius
+                                        local expandedW = rw + bodyRadius * 2
+                                        local expandedH = rh + bodyRadius * 2
 
-		local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
-		if not (rw and rh and rw > 0 and rh > 0) then
-			return nil
-		end
+                                        local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH)
+                                        if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
+                                                beam.flashTimer = max(beam.flashTimer or 0, 1)
+                                                beam.burnAlpha = 0.92
+                                                resetCollisionContext(context)
+                                                return true
+                                        end
+                                end
+                        end
+                end
+        end
 
-		local expandedX = rx - bodyRadius
-		local expandedY = ry - bodyRadius
-		local expandedW = rw + bodyRadius * 2
-		local expandedH = rh + bodyRadius * 2
-
-		local travelled = 0
-		local prevX, prevY = headX, headY
-
-		for index = 2, #trail do
-			local segment = trail[index]
-			local cx = segment and (segment.drawX or segment.x)
-			local cy = segment and (segment.drawY or segment.y)
-			if cx and cy then
-				local dx = cx - prevX
-				local dy = cy - prevY
-				local segLen = sqrt(dx * dx + dy * dy)
-
-				if segLen > 1e-6 then
-					local intersects, cutX, cutY, t = segmentRectIntersection(
-					prevX,
-					prevY,
-					cx,
-					cy,
-					expandedX,
-					expandedY,
-					expandedW,
-					expandedH
-					)
-
-					if intersects and t then
-						local along = travelled + segLen * t
-                                                if along > guardDistance then
-                                                        local handledCut = self:handleSawBodyCut({
-                                                                index = index,
-                                                                cutX = cutX,
-                                                                cutY = cutY,
-                                                                cutDistance = along,
-                                                                cause = "laser",
-                                                        })
-
-                                                        if handledCut then
-                                                                beam.flashTimer = max(beam.flashTimer or 0, 1)
-                                                                beam.burnAlpha = 0.92
-                                                                return true
-                                                        end
-                                                end
-					end
-				end
-
-				travelled = travelled + segLen
-				prevX, prevY = cx, cy
-			end
-		end
-
-		return nil
-	end)
-
-        return handled and true or false
+        resetCollisionContext(context)
+        return false
 end
 
 function Snake:checkDartBodyCollision()
@@ -4431,7 +4559,13 @@ function Snake:checkDartBodyCollision()
                 return false
         end
 
-        if not (Darts and Darts.iterateShots) then
+        if not (Darts and Darts.getEmitterArray) then
+                return false
+        end
+
+        local emitters = Darts:getEmitterArray()
+        local emitterCount = emitters and #emitters or 0
+        if emitterCount == 0 then
                 return false
         end
 
@@ -4442,76 +4576,41 @@ function Snake:checkDartBodyCollision()
                 return false
         end
 
-        local guardDistance = SEGMENT_SPACING * 0.85
-        local bodyRadius = SEGMENT_SIZE * 0.45
+        local context = dartCollisionContext
+        context.snake = self
+        context.trail = trail
+        context.headX = headX
+        context.headY = headY
+        context.guardDistance = SEGMENT_SPACING * 0.85
+        context.bodyRadius = SEGMENT_SIZE * 0.45
 
-        local handled = Darts:iterateShots(function(emitter, rect)
-                if not (rect and emitter) then
-                        return nil
-                end
+        local bodyRadius = context.bodyRadius
 
-                local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
-                if not (rw and rh and rw > 0 and rh > 0) then
-                        return nil
-                end
+        for index = 1, emitterCount do
+                local emitter = emitters[index]
+                if emitter and emitter.state == "firing" then
+                        local rect = emitter.shotRect
+                        if rect then
+                                local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
+                                if rw and rh and rw > 0 and rh > 0 then
+                                        local expandedX = (rx or 0) - bodyRadius
+                                        local expandedY = (ry or 0) - bodyRadius
+                                        local expandedW = rw + bodyRadius * 2
+                                        local expandedH = rh + bodyRadius * 2
 
-                local expandedX = rx - bodyRadius
-                local expandedY = ry - bodyRadius
-                local expandedW = rw + bodyRadius * 2
-                local expandedH = rh + bodyRadius * 2
-
-                local travelled = 0
-                local prevX, prevY = headX, headY
-
-                for index = 2, #trail do
-                        local segment = trail[index]
-                        local cx = segment and (segment.drawX or segment.x)
-                        local cy = segment and (segment.drawY or segment.y)
-                        if cx and cy then
-                                local dx = cx - prevX
-                                local dy = cy - prevY
-                                local segLen = sqrt(dx * dx + dy * dy)
-
-                                if segLen > 1e-6 then
-                                        local intersects, cutX, cutY, t = segmentRectIntersection(
-                                                prevX,
-                                                prevY,
-                                                cx,
-                                                cy,
-                                                expandedX,
-                                                expandedY,
-                                                expandedW,
-                                                expandedH
-                                        )
-
-                                        if intersects and t then
-                                                local along = travelled + segLen * t
-                                                if along > guardDistance then
-                                                        local handledCut = self:handleSawBodyCut({
-                                                                index = index,
-                                                                cutX = cutX,
-                                                                cutY = cutY,
-                                                                cutDistance = along,
-                                                                cause = "dart",
-                                                        })
-
-                                                        if handledCut then
-                                                                emitter.flashTimer = max(emitter.flashTimer or 0, 1)
-                                                                return true
-                                                        end
-                                                end
+                                        local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH)
+                                        if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
+                                                emitter.flashTimer = max(emitter.flashTimer or 0, 1)
+                                                resetCollisionContext(context)
+                                                return true
                                         end
                                 end
-
-                                travelled = travelled + segLen
-                                prevX, prevY = cx, cy
                         end
                 end
+        end
 
-                return nil
-        end)
-
-        return handled and true or false
+        resetCollisionContext(context)
+        return false
 end
 
 function Snake:checkSawBodyCollision()
@@ -4519,81 +4618,56 @@ function Snake:checkSawBodyCollision()
                 return false
         end
 
-	if not (trail and #trail > 2) then
-		return false
-	end
+        if not (trail and #trail > 2) then
+                return false
+        end
 
-	if not (Saws and Saws.getAll) then
-		return false
-	end
+        if not (Saws and Saws.getAll) then
+                return false
+        end
 
-	local saws = Saws:getAll()
-	if not (saws and #saws > 0) then
-		return false
-	end
+        local saws = Saws:getAll()
+        if not (saws and #saws > 0) then
+                return false
+        end
 
-	local head = trail[1]
-	local headX = head and (head.drawX or head.x)
-	local headY = head and (head.drawY or head.y)
-	if not (headX and headY) then
-		return false
-	end
+        local head = trail[1]
+        local headX = head and (head.drawX or head.x)
+        local headY = head and (head.drawY or head.y)
+        if not (headX and headY) then
+                return false
+        end
 
-	local guardDistance = SEGMENT_SPACING * 0.9
-	local bodyRadius = SEGMENT_SIZE * 0.5
+        local context = sawCollisionContext
+        context.snake = self
+        context.trail = trail
+        context.headX = headX
+        context.headY = headY
+        context.guardDistance = SEGMENT_SPACING * 0.9
+        context.bodyRadius = SEGMENT_SIZE * 0.5
 
-	for i = 1, #saws do
-		local saw = saws[i]
-		if isSawActive(saw) then
-			local sx, sy = getSawCenterPosition(saw)
-			if sx and sy then
-				local sawRadius = (saw.collisionRadius or saw.radius or 0)
-				local travelled = 0
-				local prevX, prevY = headX, headY
+        local bodyRadius = context.bodyRadius
 
-				for index = 2, #trail do
-					local segment = trail[index]
-					local cx = segment and (segment.drawX or segment.x)
-					local cy = segment and (segment.drawY or segment.y)
-					if cx and cy then
-						local dx = cx - prevX
-						local dy = cy - prevY
-						local segLen = sqrt(dx * dx + dy * dy)
-						local minX = min(prevX, cx) - bodyRadius
-						local minY = min(prevY, cy) - bodyRadius
-						local maxX = max(prevX, cx) + bodyRadius
-						local maxY = max(prevY, cy) + bodyRadius
-						local width = maxX - minX
-						local height = maxY - minY
+        for i = 1, #saws do
+                local saw = saws[i]
+                if isSawActive(saw) then
+                        local sx, sy = getSawCenterPosition(saw)
+                        if sx and sy then
+                                local sawRadius = (saw.collisionRadius or saw.radius or 0)
+                                local combined = sawRadius + bodyRadius
+                                if combined > 0 then
+                                        local cutEvent = evaluateTrailCircleCut(context, saw, sx, sy, combined * combined)
+                                        if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
+                                                resetCollisionContext(context)
+                                                return true
+                                        end
+                                end
+                        end
+                end
+        end
 
-						if segLen > 1e-6 and (not (Saws and Saws.isCollisionCandidate) or Saws:isCollisionCandidate(saw, minX, minY, width, height)) then
-							local closestX, closestY, distSq, t = closestPointOnSegment(sx, sy, prevX, prevY, cx, cy)
-							local along = travelled + segLen * (t or 0)
-							if along > guardDistance then
-								local combined = sawRadius + bodyRadius
-								if distSq <= combined * combined and isSawCutPointExposed(saw, sx, sy, closestX, closestY) then
-									local handled = self:handleSawBodyCut({
-										index = index,
-										cutX = closestX,
-										cutY = closestY,
-										cutDistance = along,
-									})
-									if handled then
-										return true
-									end
-								end
-							end
-						end
-
-						travelled = travelled + segLen
-						prevX, prevY = cx, cy
-					end
-				end
-			end
-		end
-	end
-
-	return false
+        resetCollisionContext(context)
+        return false
 end
 
 function Snake:markFruitSegment(fruitX, fruitY)

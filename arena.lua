@@ -465,7 +465,7 @@ local function gatherLaserHighlights(arena, highlights)
 	end
 
         local Lasers = getModule("lasers")
-        if not (Lasers and Lasers.iterateEmitters) then
+        if not (Lasers and Lasers.getEmitterArray) then
                 return
         end
 
@@ -475,11 +475,18 @@ local function gatherLaserHighlights(arena, highlights)
         local beamInner = tileSize * 0.35
         local beamOuter = beamInner + tileSize * 2.0
 
-        Lasers:iterateEmitters(function(beam)
+        local emitters = Lasers:getEmitterArray()
+        local emitterCount = emitters and #emitters or 0
+        if emitterCount == 0 then
+                return
+        end
+
+        for index = 1, emitterCount do
                 if #highlights >= MAX_DIM_HIGHLIGHTS then
-                        return true
+                        break
                 end
 
+                local beam = emitters[index]
                 if beam then
                         local state = beam.state
                         if state == "charging" or state == "firing" then
@@ -487,6 +494,9 @@ local function gatherLaserHighlights(arena, highlights)
                                 local by = beam.renderY or beam.y
                                 if bx and by then
                                         pushHighlightTarget(highlights, bx, by, baseInner, baseOuter)
+                                        if #highlights >= MAX_DIM_HIGHLIGHTS then
+                                                break
+                                        end
                                 end
                         end
 
@@ -500,13 +510,13 @@ local function gatherLaserHighlights(arena, highlights)
                                         local midY = (startY + endY) * 0.5
                                         pushHighlightTarget(highlights, midX, midY, beamInner, beamOuter)
                                         if #highlights >= MAX_DIM_HIGHLIGHTS then
-                                                return true
+                                                break
                                         end
                                         pushHighlightTarget(highlights, endX, endY, beamInner, beamOuter)
                                 end
                         end
                 end
-        end)
+        end
 end
 
 local function buildDimHighlights(arena, state, headLighting)

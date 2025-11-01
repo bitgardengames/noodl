@@ -647,21 +647,41 @@ function Lasers:getEmitters()
         return copies
 end
 
+function Lasers:getEmitterArray()
+        return emitters
+end
+
 function Lasers:getEmitterCount()
-	return #emitters
+        return #emitters
 end
 
 -- Iterates active laser emitters without allocating new tables.
 -- The callback receives (beam, index, emitters) and can return a non-nil value to stop.
-function Lasers:iterateEmitters(callback)
+-- A table argument with {callback=fn, context=data} is also accepted to avoid closures.
+function Lasers:iterateEmitters(callback, context)
+        if type(callback) == "table" then
+                local spec = callback
+                callback = spec.callback
+                context = spec.context
+        end
+
         if type(callback) ~= "function" then
                 return
         end
 
-        for index = 1, #emitters do
-                local result = callback(emitters[index], index, emitters)
-                if result ~= nil then
-                        return result
+        if context ~= nil then
+                for index = 1, #emitters do
+                        local result = callback(context, emitters[index], index, emitters)
+                        if result ~= nil then
+                                return result
+                        end
+                end
+        else
+                for index = 1, #emitters do
+                        local result = callback(emitters[index], index, emitters)
+                        if result ~= nil then
+                                return result
+                        end
                 end
         end
 end
