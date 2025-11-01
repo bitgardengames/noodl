@@ -984,16 +984,16 @@ function AchievementsMenu:draw()
 	local summaryLineHeight = layout.summaryLineHeight or UI.fonts.achieve:getHeight()
 
 	love.graphics.push("all")
-	UI.drawPanel(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, {
-		radius = 24,
-		fill = panelColor,
-		alpha = 0.95,
-		borderColor = panelBorder,
-		borderWidth = 2,
-		highlightColor = highlightColor,
-		highlightAlpha = 1,
-		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
-	})
+        UI.drawPanel(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, {
+                radius = 24,
+                fill = panelColor,
+                alpha = 0.95,
+                borderColor = panelBorder,
+                borderWidth = 3,
+                highlightColor = highlightColor,
+                highlightAlpha = 1,
+                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
+        })
 
         love.graphics.pop()
 
@@ -1021,16 +1021,16 @@ function AchievementsMenu:draw()
 	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
 
 	love.graphics.push("all")
-	UI.drawPanel(panelX, panelY, panelWidth, panelHeight, {
-		radius = 28,
-		fill = panelColor,
-		alpha = 0.95,
-		borderColor = panelBorder,
-		borderWidth = 2,
-		highlightColor = highlightColor,
-		highlightAlpha = 1,
-		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
-	})
+        UI.drawPanel(panelX, panelY, panelWidth, panelHeight, {
+                radius = 28,
+                fill = panelColor,
+                alpha = 0.95,
+                borderColor = panelBorder,
+                borderWidth = 3,
+                highlightColor = highlightColor,
+                highlightAlpha = 1,
+                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
+        })
 	love.graphics.pop()
 
 	local scissorTop = layout.scissorTop
@@ -1064,15 +1064,15 @@ function AchievementsMenu:draw()
                         local borderTint = {0, 0, 0, 1}
 
 			love.graphics.push("all")
-			UI.drawPanel(x, cardY, cardWidth, cardHeight, {
-				radius = 18,
-				fill = cardBase,
-				borderColor = borderTint,
-				borderWidth = 2,
-				highlightColor = highlightColor,
-				highlightAlpha = unlocked and 1 or 0.8,
-				shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
-			})
+                        UI.drawPanel(x, cardY, cardWidth, cardHeight, {
+                                radius = 18,
+                                fill = cardBase,
+                                borderColor = borderTint,
+                                borderWidth = 3,
+                                highlightColor = highlightColor,
+                                highlightAlpha = unlocked and 1 or 0.8,
+                                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
+                        })
 			love.graphics.pop()
 
 			if icon then
