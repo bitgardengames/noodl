@@ -238,6 +238,7 @@ local function drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, 
         local headOffset = config.headOffset or 0
         local lengthScale = config.lengthScale or config.tailLength or 1
         local allowOverflow = not not config.allowOverflow
+        local flipVertical = not not config.flipVertical
 
         local headY = thumbY + headOffset * thumbHeight
         local totalLength = thumbHeight * lengthScale
@@ -270,6 +271,11 @@ local function drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, 
                 local amp = halfWidth * amplitude * waveFalloff
                 local px = centerX + wave * amp
                 local py = headY + totalLength * t
+
+                if flipVertical then
+                        local relative = py - thumbY
+                        py = thumbY + thumbHeight - relative
+                end
 
                 local point = snakeTrailBuffer[step + 1]
                 if not point then
