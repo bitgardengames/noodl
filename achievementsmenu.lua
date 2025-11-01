@@ -578,17 +578,17 @@ local function computeLayout(sw, sh)
 	local footerReserve = buttonHeight + buttonSpacing + scaledReserve
 	local marginBottom = menuLayout.marginBottom or 0
 	local baseBottomMargin = marginBottom + footerSpacing + buttonHeight
-	local bottomMargin = max(baseBottomMargin, footerReserve)
-	layout.bottomMargin = bottomMargin
+        local bottomMargin = max(baseBottomMargin, footerReserve)
+        layout.bottomMargin = bottomMargin
 
-	local viewportBottom = sh - bottomMargin
-	local bottomY = menuLayout.bottomY or (sh - marginBottom)
-	local backButtonY = bottomY - footerSpacing - buttonHeight
-	layout.backButtonY = backButtonY
+        local viewportBottom = sh - bottomMargin
+        local bottomY = menuLayout.bottomY or (sh - marginBottom)
+        local backButtonY = bottomY - buttonHeight
+        layout.backButtonY = backButtonY
 
-	if backButtonY then
-		viewportBottom = min(viewportBottom, backButtonY - buttonSpacing * 0.5)
-	end
+        if backButtonY then
+                viewportBottom = min(viewportBottom, backButtonY - buttonSpacing * 0.5)
+        end
 
 	layout.startY = listPanelY + panelPaddingY
 	layout.viewportBottom = max(layout.startY, viewportBottom)
@@ -1107,9 +1107,9 @@ function AchievementsMenu:draw()
 	if contentHeight > viewportHeight then
 		local trackWidth = SCROLLBAR_TRACK_WIDTH
 		local trackInset = max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
-		local trackX = panelX + panelWidth + trackInset
-		local trackY = startY
-		local trackHeight = viewportHeight
+                local trackX = panelX + panelWidth + trackInset
+                local trackY = panelY
+                local trackHeight = layout.panelHeight
 
 		local scrollRange = -minScrollOffset
 		local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
