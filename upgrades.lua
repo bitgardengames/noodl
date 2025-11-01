@@ -15,6 +15,7 @@ local UpgradeHelpers = require("upgradehelpers")
 local DataSchemas = require("dataschemas")
 local UpgradeVisuals = require("upgradevisuals")
 local Bombs = require("bombs")
+local MathUtil = require("noodl.mathutil")
 
 local floor = math.floor
 local max = math.max
@@ -3043,11 +3044,7 @@ Bombs:setExplosionCallback(function(event)
         handleVolatileBloomExplosion(event)
 end)
 
-local function clamp(value, min, max)
-	if min and value < min then return min end
-	if max and value > max then return max end
-	return value
-end
+local clamp = MathUtil.clamp
 
 function Upgrades:getHUDIndicators()
         local state = self.runState

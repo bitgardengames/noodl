@@ -38,6 +38,7 @@ local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
 local ModuleUtil = require("moduleutil")
 local RenderLayers = require("renderlayers")
+local MathUtil = require("noodl.mathutil")
 local Timer = require("timer")
 local ceil = math.ceil
 local floor = math.floor
@@ -124,14 +125,7 @@ local function easeOutCubic(t)
         return 1 - inv * inv * inv
 end
 
-local function clamp(value, minimum, maximum)
-        if value < minimum then
-                return minimum
-        elseif value > maximum then
-                return maximum
-        end
-        return value
-end
+local clamp = MathUtil.clamp
 
 local function circleSegments(radius)
         return clamp(ceil(radius / 6), 12, 48)
