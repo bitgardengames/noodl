@@ -503,14 +503,17 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 
         local baseTrackColor = panelColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
         local snakeBodyColor = Theme.snakeDefault or Theme.progressColor or {0.45, 0.85, 0.70, 1}
-        local trackColor = copyColor(baseTrackColor)
+        local baseAlpha = baseTrackColor[4] == nil and 1 or baseTrackColor[4]
+        local baseLighten = isHovered and 0.18 or 0.12
+        local trackColor = lightenColor(baseTrackColor, baseLighten)
         if panelColor then
-                trackColor[4] = 1
+                trackColor[4] = baseAlpha
         else
                 trackColor[4] = isHovered and 0.82 or 0.68
         end
         local trackRadius = max(8, trackWidth * 0.65)
-        local trackOutlineColor = {0, 0, 0, 1}
+        local trackOutlineColor = darkenColor(baseTrackColor, 0.45)
+        trackOutlineColor[4] = panelColor and baseAlpha or 1
 
         -- Track body
         setColor(trackColor)
